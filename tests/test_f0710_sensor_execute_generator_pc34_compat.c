@@ -1,7 +1,4 @@
-/*
- * Test F0710_SENSOR_Execute_Compat: generator sensor (type 6) emits
- * SENSOR_EXEC_EFFECT_GENERATOR with the sensor thing index.
- */
+/* ReDMCSB MOVESENS.C F0276:1704-1705: a floor C006 is not walk-triggered. */
 
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +13,7 @@ static int g_fail = 0;
     if (cond) { g_pass++; } else { g_fail++; fprintf(stderr, "FAIL: %s\n", msg); } \
 } while (0)
 
-static void test_generator_sensor_emits_effect(void) {
+static void test_generator_sensor_does_not_fire_on_party_walk_on(void) {
     struct SensorOnSquare_Compat sensor;
     struct SensorEffectList_Compat effects;
     int ok;
@@ -34,17 +31,8 @@ static void test_generator_sensor_emits_effect(void) {
                                      SENSOR_EVENT_WALK_ON, &effects);
 
     CHECK(ok == 1, "generator: returns success");
-    CHECK(effects.count == 1, "generator: one effect emitted");
-    CHECK(effects.effects[0].kind == SENSOR_EXEC_EFFECT_GENERATOR,
-          "generator: kind is SENSOR_EXEC_EFFECT_GENERATOR");
-    CHECK(effects.effects[0].sensorType == DM1_SENSOR_FLOOR_GROUP_GENERATOR,
-          "generator: sensorType preserved");
-    CHECK(effects.effects[0].textIndex == 7,
-          "generator: textIndex carries sensorIndex");
-    CHECK(effects.effects[0].destMapX == 3,
-          "generator: destMapX preserved");
-    CHECK(effects.effects[0].destMapY == 5,
-          "generator: destMapY preserved");
+    CHECK(effects.count == 0,
+          "C006 floor sensor: party walk-on emits no effect");
 }
 
 static void test_generator_sensor_not_found(void) {
@@ -70,7 +58,7 @@ static void test_generator_null_safety(void) {
 }
 
 int main(void) {
-    test_generator_sensor_emits_effect();
+    test_generator_sensor_does_not_fire_on_party_walk_on();
     test_generator_sensor_not_found();
     test_generator_null_safety();
     printf("test_f0710_sensor_execute_generator: %d passed, %d failed\n",

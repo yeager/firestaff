@@ -239,11 +239,12 @@
   actual campaign-square sensor effects through the source-owned startup path.
   M11 now preserves the source F0276 C003 party-floor-sensor gates: empty
   parties do not trigger it, and nonzero sensor data must match the party
-  direction. Focused regressions cover empty, mismatched and matching cases.
-  The authentic English v1.2 menu-to-HoC route passes after the change, but
-  does not claim its initial tile contains C003 or verify every sensor
-  type/effect. Do not invent champions or treat the partial floor view as
-  complete visual parity.
+  direction. F0276's floor C006 group-generator sensor is also skipped during
+  party walk-on; its timed generator event remains separately dispatched.
+  Focused regressions cover these gates. The authentic English v1.2 menu-to-HoC
+  route passes after the changes, but does not claim its initial tile contains
+  either sensor or verify every sensor type/effect. Do not invent champions or
+  treat the partial floor view as complete visual parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX

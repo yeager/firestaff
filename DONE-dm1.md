@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+## 2026-09-28 — Do not fire floor group generators on party entry
+
+- Aligned `F0710_SENSOR_Execute_Compat` with ReDMCSB MOVESENS.C F0276:1704-1705:
+  C006 group-generator sensors are skipped by the floor addition/removal path.
+  Their timed generation path remains independent. The focused regression now
+  guards against spawning a group merely because the party enters a square.
+  Initial-campaign sensor coverage remains open in TODO-dm1.md.
+
 ## 2026-09-28 — PC-34 AUTO start-menu route
 
 - The ordinary DM1 start-menu AUTO route discovers authentic PC-34 media in

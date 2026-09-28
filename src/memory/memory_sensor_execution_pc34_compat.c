@@ -131,21 +131,11 @@ int F0710_SENSOR_Execute_Compat(
         outList->count = 1;
         return 1;
     }
-    case 6: {
-        /* DM1_SENSOR_FLOOR_GROUP_GENERATOR — spawn creature.
-         * ReDMCSB SENSOR.C: type 6 triggers creature generation on the
-         * sensor's square.  We emit SENSOR_EFFECT_GENERATOR so the
-         * orchestrator can route it to orch_handle_group_generator_trigger.
-         * textIndex carries the sensor thing index (things.sensors[]). */
-        struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EXEC_EFFECT_GENERATOR;
-        e->sensorType = sensor->sensorType;
-        e->destMapX = sensor->targetMapX;
-        e->destMapY = sensor->targetMapY;
-        e->textIndex = sensor->sensorIndex;
-        outList->count = 1;
+    case 6:
+        /* ReDMCSB MOVESENS.C F0276:1704-1705 skips C006 in the floor-sensor
+         * addition/removal path. Group generation is driven by its timed
+         * event owner, not by a party walking onto this square. */
         return 1;
-    }
     case 9: {
         /* DM1_SENSOR_FLOOR_VERSION_CHECKER — version gate.
          * Always triggers in our implementation (we emulate latest version). */
