@@ -18213,7 +18213,7 @@ endif()
     )
     set_tests_properties(csb_v1_atari_utility_mini_cli_resume PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "tier2;csb;atari;resume;cli;real_data;in_memory;skip_safe"
+        LABELS "tier2;csb;atari;resume;cli;menu;real_data;in_memory;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_REAL_MEDIA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
         TIMEOUT 60
     )

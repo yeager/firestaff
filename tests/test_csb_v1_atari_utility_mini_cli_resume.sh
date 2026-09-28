@@ -9,9 +9,11 @@ campaign=${FIRESTAFF_CSB_ATARI_STX:-"$data_root/Chaos Strikes Back.stx"}
 utility=${FIRESTAFF_CSB_ATARI_UTILITY_STX:-"$data_root/Chaos Strikes Back Utility.stx"}
 save=${FIRESTAFF_CSB_ATARI_MINI:-"$utility::MINI.DAT"}
 media_temp_dir=""
+menu_temp_dir=""
 
 cleanup() {
     if [ -n "$media_temp_dir" ]; then rm -rf "$media_temp_dir"; fi
+    if [ -n "$menu_temp_dir" ]; then rm -rf "$menu_temp_dir"; fi
 }
 trap cleanup EXIT HUP INT TERM
 
@@ -61,3 +63,31 @@ for mode in 0 1 2; do
     printf '%s\n' "$output" | grep -Fq 'levelLoaded=1 map=4 party=22,18,2 champions=1'
     printf '%s\n' "$output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'
 done
+
+# The CLI probes above bypass M12. Also exercise the real Quick Resume row
+# with the same original Atari ST campaign and Utility STX MINI.DAT.
+menu_temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-menu-resume.XXXXXX")
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_temp_dir/runtime.json" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 45s "$firestaff" \
+    --menu --game csb --platform atari-st --data-dir "$campaign" \
+    --save "$save" --script enter,enter,enter --duration 10000 \
+    >/dev/null 2>&1
+
+python3 - "$menu_temp_dir/runtime.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "csb" or startup["receiptReady"] != 1 or
+        startup["phase"] != "inactive" or startup["active"] != 1 or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (4, 22, 18, 2, 1)):
+    raise SystemExit(f"FAIL: authentic CSB Atari ST M12 Quick Resume failed: {probe}")
+print("PASS: authentic CSB Atari ST M12 Quick Resume reached its MINI.DAT runtime pose")
+PY
