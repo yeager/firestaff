@@ -4860,6 +4860,11 @@ if(Python3_EXECUTABLE)
                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_analyze_nexus_sh2_ram_read_trace.py)
     set_tests_properties(nexus_sh2_ram_read_trace_parser PROPERTIES
         LABELS "nexus;sh2;capture;parser;regression")
+    add_test(NAME nexus_sh2_ram_write_trace_parser
+        COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_analyze_nexus_sh2_ram_write_trace.py)
+    set_tests_properties(nexus_sh2_ram_write_trace_parser PROPERTIES
+        LABELS "nexus;sh2;capture;parser;regression")
 endif()
 
 # -- zlib discovery (optional, used by asset-scanner ZIP/gzip paths) --
