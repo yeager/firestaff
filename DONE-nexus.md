@@ -1,5 +1,15 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — SH-2 RAM read receipt V2 analysis support
+
+- The fail-closed controller-buffer receipt analyzer accepts both V1 and the
+  current V2 register-owner format, rejects slave-SH-2 register ownership, and
+  can select one frame from a bounded multi-frame trace. Parser regression
+  cases cover V1 compatibility, V2 selection and owner rejection. The actual
+  TRV2 Start-only V2 receipts parse at frame 10507; their bounded address
+  filter omits downstream linked-buffer/table reads, so full consumer-chain
+  verification and all menu/action semantics remain blocked.
+
 ## 2026-09-03 — Native CUE-media regression audit
 
 - Re-ran the native production boundaries for combat, magic, light, rest,

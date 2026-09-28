@@ -992,6 +992,12 @@ This independently reset pair narrows controller transport evidence but
 still does not show a title/menu transition or authorize interactive startup.
 The next capture must follow the packet past the bounded read region into the
 retail event consumer and sample an actually interactive title/menu interval.
+The analyzer now accepts both the older V1 receipt and the instrumented
+producer's V2 register-owner receipt; `--frame` selects a single frame from a
+bounded multi-frame trace. The captures above intentionally stop their read
+filter at `0x0602c911`, so they do not contain the linked-buffer/table reads
+needed for the analyzer's complete consumer-chain check. That chain remains
+unverified until a wider, source-bounded trace is captured.
 
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were

@@ -10,12 +10,19 @@ import re
 from pathlib import Path
 
 
-HEADER = "FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V1"
-FIELDS = (
+HEADERS = {
+    "FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V1": "v1",
+    "FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V2": "v2",
+}
+COMMON_FIELDS = (
     "frame", "addr", "size", "value", "pc0", "pc1", "r0", "r1", "r2",
     "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12",
-    "r13", "r14", "r15", "pr",
+    "r13", "r14", "r15",
 )
+FIELDS_BY_VERSION = {
+    "v1": COMMON_FIELDS + ("pr",),
+    "v2": COMMON_FIELDS + ("cpu",),
+}
 ROW = re.compile(r"(?:^|\s)([a-z0-9]+)=(0x[0-9a-fA-F]+|[0-9]+)")
 
 
@@ -23,20 +30,26 @@ def fail(message: str) -> None:
     raise SystemExit(f"NEXUS_SH2_RAM_READ_TRACE_INVALID: {message}")
 
 
-def parse(path: Path):
+def parse(path: Path, frame_filter=None):
     try:
         lines = path.read_text(encoding="ascii").splitlines()
     except OSError as exc:
         fail(f"cannot read {path}: {exc}")
-    if not lines or lines[0] != HEADER:
+    return parse_lines(lines, frame_filter)
+
+
+def parse_lines(lines, frame_filter=None):
+    if not lines or lines[0] not in HEADERS:
         fail("missing or unsupported header")
+    version = HEADERS[lines[0]]
     if len(lines) == 1:
         fail("no read rows")
 
     rows = []
     for line_no, line in enumerate(lines[1:], 2):
         values = {key: int(value, 0) for key, value in ROW.findall(line)}
-        missing = [field for field in FIELDS if field not in values]
+        missing = [field for field in FIELDS_BY_VERSION[version]
+                   if field not in values]
         if missing:
             fail(f"line {line_no}: missing " + ",".join(missing))
         if values["size"] not in (1, 2, 4):
@@ -45,7 +58,13 @@ def parse(path: Path):
             fail(f"line {line_no}: address is outside WorkRAMH")
         if values["pc1"] != 0:
             fail(f"line {line_no}: unexpected slave-SH-2 reader")
+        if version == "v2" and values["cpu"] != 0:
+            fail(f"line {line_no}: unexpected slave-SH-2 register owner")
         rows.append(values)
+    if frame_filter is not None:
+        rows = [row for row in rows if row["frame"] == frame_filter]
+        if not rows:
+            fail(f"requested frame {frame_filter} is absent")
     return rows
 
 
@@ -54,14 +73,10 @@ def require(rows, description, predicate) -> None:
         fail(f"missing {description}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("trace", type=Path)
-    args = parser.parse_args()
-    rows = parse(args.trace)
+def validate_controller_consumer_chain(rows):
     frames = {row["frame"] for row in rows}
     if len(frames) != 1:
-        fail("receipt spans multiple emulation frames")
+        fail("receipt spans multiple emulation frames; select one with --frame")
 
     # Linked-list transfer at the first consumer; addresses and registers are
     # taken only from a same-session observed retail JP trace.
@@ -80,9 +95,21 @@ def main() -> None:
     require(rows, "post-normalization table reader", lambda r:
             r["pc0"] == 0x0601462C and r["addr"] == 0x0602C940 and
             r["r4"] == 0x10)
+    return next(iter(frames))
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("trace", type=Path)
+    parser.add_argument(
+        "--frame", type=int,
+        help="select one frame from a multi-frame trace receipt")
+    args = parser.parse_args()
+    rows = parse(args.trace, args.frame)
+    frame = validate_controller_consumer_chain(rows)
 
     print(f"rows={len(rows)}")
-    print(f"frame={next(iter(frames))}")
+    print(f"frame={frame}")
     print("workram_input_consumer_chain=verified")
     print("input_consumer_semantics=unbound")
     print("semantic_admission=blocked")
