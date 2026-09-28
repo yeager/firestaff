@@ -511,6 +511,70 @@ fi
 grep -Fq 'capture_exit_status=1' "$tmp_dir/manifest-timeout.txt"
 grep -Fq 'capture_termination=timeout' "$tmp_dir/manifest-timeout.txt"
 
+# A capture that finishes before its watchdog timeout must reap the watchdog's
+# sleep child as well as the shell.  Otherwise each short operator capture
+# leaves an orphan timer running until its original deadline.
+timeout_sleep_bin="$tmp_dir/timeout-sleep-bin"
+timeout_sleep_pid="$tmp_dir/timeout-sleep.pid"
+mkdir -p "$timeout_sleep_bin"
+real_sleep=$(command -v sleep)
+python3 - "$timeout_sleep_bin/sleep" "$real_sleep" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n"
+    "if [ \"$1\" = 37 ]; then echo $$ > \"$CAPTURE_TIMEOUT_SLEEP_PID_FILE\"; fi\n"
+    "exec \"$CAPTURE_REAL_SLEEP\" \"$@\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+quick_fake="$tmp_dir/quick-mednafen"
+python3 - "$quick_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
+    "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
+    "sleep 0.2\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+PATH="$timeout_sleep_bin:$PATH" \
+CAPTURE_TIMEOUT_SLEEP_PID_FILE="$timeout_sleep_pid" \
+CAPTURE_REAL_SLEEP="$real_sleep" \
+"$launcher" --operator-only --launch --mednafen "$quick_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-watchdog-cleanup.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-watchdog-cleanup.txt" \
+  --timeout-seconds 37 >/dev/null
+if [[ ! -s "$timeout_sleep_pid" ]]; then
+  echo "expected the capture timeout watchdog timer to start" >&2
+  exit 1
+fi
+python3 - "$timeout_sleep_pid" <<'PY'
+import os
+import sys
+import time
+from pathlib import Path
+
+pid = int(Path(sys.argv[1]).read_text().strip())
+for _ in range(100):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        break
+    time.sleep(0.02)
+else:
+    raise SystemExit("capture launcher left its watchdog sleep child alive")
+PY
+
 reject_validator="$tmp_dir/reject-validator"
 python3 - "$reject_validator" <<'PY'
 import os

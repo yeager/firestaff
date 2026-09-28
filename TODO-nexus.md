@@ -62,6 +62,15 @@ presentation boundary.
   confirms only that the external hook scheduled the masks, not that Saturn
   code consumed them. This later window adds no menu/gameplay semantics; the
   first input-correlated presentation change remains open.
+  A fresh cold-start matched pair then captured frames 0--279 on the
+  authenticated Japanese BIOS/disc: Start was requested at 140--199 and A at
+  210--239 in the input run; the control forced no buttons in those windows.
+  The SMPC `0x10` read at RPC `0x060103e6` returned `0x10` in the input run
+  and `0x00` in control, but all ten sampled rendered frames and the complete
+  280-frame raw VDP1/VDP2 stream were identical (both raw SHA-256
+  `ea2eb96dc56ce9505d67062b2a5f98141d2a456d413c74c19997c04346e27af3`).
+  This confirms delivered input and a live reader, not action semantics or a
+  presentation change; startup/menu admission remains blocked.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the

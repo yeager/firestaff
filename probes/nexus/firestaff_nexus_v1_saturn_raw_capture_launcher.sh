@@ -200,6 +200,7 @@ run_validator() {
 capture_child_pid=
 capture_process_group_pid=
 capture_timeout_pid=
+capture_timeout_pid_file=
 terminate_capture_process() {
   local pid="${1:-}"
   [[ -n "$pid" ]] || return 0
@@ -213,11 +214,31 @@ terminate_capture_process() {
     kill -KILL "$pid" 2>/dev/null || true
   fi
 }
+stop_capture_timeout_watchdog() {
+  [[ -n "$capture_timeout_pid" ]] || return 0
+  if [[ -n "$capture_timeout_pid_file" &&
+        -s "$capture_timeout_pid_file" ]]; then
+    local watchdog_child_pid
+    read -r watchdog_child_pid < "$capture_timeout_pid_file" || true
+    if [[ "${watchdog_child_pid:-}" =~ ^[0-9]+$ ]]; then
+      kill -TERM "$watchdog_child_pid" 2>/dev/null || true
+    fi
+  fi
+  if kill -0 "$capture_timeout_pid" 2>/dev/null; then
+    # The watchdog records its timer PID so this works on macOS and does not
+    # depend on process-table access from sandboxed test runners.
+    kill -TERM "$capture_timeout_pid" 2>/dev/null || true
+    wait "$capture_timeout_pid" 2>/dev/null || true
+  fi
+  if [[ -n "$capture_timeout_pid_file" ]]; then
+    rm -f "$capture_timeout_pid_file"
+    capture_timeout_pid_file=
+  fi
+  capture_timeout_pid=
+}
 cleanup_capture_child() {
   local status=$?
-  if [[ -n "$capture_timeout_pid" ]] && kill -0 "$capture_timeout_pid" 2>/dev/null; then
-    kill -TERM "$capture_timeout_pid" 2>/dev/null || true
-  fi
+  stop_capture_timeout_watchdog
   if [[ -n "$capture_child_pid" ]] && kill -0 "$capture_child_pid" 2>/dev/null; then
     terminate_capture_process "$capture_child_pid"
   fi
@@ -653,8 +674,12 @@ else
   [[ "$capture_process_group_pid" == "$capture_child_pid" ]] || capture_process_group_pid=
 fi
 if ((timeout_seconds > 0)); then
+  capture_timeout_pid_file="${manifest}.watchdog-$$"
   (
-    sleep "$timeout_seconds"
+    sleep "$timeout_seconds" &
+    watchdog_sleep_pid=$!
+    printf '%s\n' "$watchdog_sleep_pid" > "$capture_timeout_pid_file"
+    wait "$watchdog_sleep_pid" || exit 0
     if [[ -n "$capture_child_pid" ]] && kill -0 "$capture_child_pid" 2>/dev/null; then
       # Mednafen's signal handler flushes the capture but may not return
       # promptly. Give it a short grace period, then guarantee that the
@@ -669,15 +694,16 @@ if ((timeout_seconds > 0)); then
     fi
   ) &
   capture_timeout_pid=$!
+  while [[ ! -s "$capture_timeout_pid_file" ]] &&
+        kill -0 "$capture_timeout_pid" 2>/dev/null; do
+    sleep 0.01
+  done
 fi
 set +e
 wait "$capture_child_pid"
 capture_status=$?
 set -e
-if [[ -n "$capture_timeout_pid" ]] && kill -0 "$capture_timeout_pid" 2>/dev/null; then
-  kill -TERM "$capture_timeout_pid" 2>/dev/null || true
-fi
-capture_timeout_pid=
+stop_capture_timeout_watchdog
 capture_child_pid=
 capture_process_group_pid=
 trap - INT TERM EXIT

@@ -87,6 +87,23 @@ exposes a nonzero ID PC and its captured opcode exactly matches hash-verified
 retail `DM.BIN`; otherwise it reports `pipeline_unavailable`. Neither case
 assigns a menu action, game state, or host-rendering admission.
 
+A fresh matched cold-start pair on TRV2 tested frames 0--279 with the Japanese
+retail BIOS/disc. The input run requested START (`0x10`) at frames 140--199 and
+A (`0x20`) at 210--239; the control held the injected pad mask at zero over
+both windows. Both runs validated as complete 280-frame captures, and their
+entire raw VDP1/VDP2 streams were byte-identical with SHA-256
+`ea2eb96dc56ce9505d67062b2a5f98141d2a456d413c74c19997c04346e27af3`. The ten
+session-bound PPM samples (frames 130, 139, 140, 159, 199, 209, 210, 239, 240,
+and 279) were also identical between runs. SMPC register `0x10`, read at RPC
+`0x060103e6`, returned `0x10` during the scheduled input run and `0x00` in the
+control; the observation does not assign a separate meaning to either button
+mask. This confirms a live input-read path, but no input-correlated VDP
+presentation change in this cold-start interval, so the title/menu route stays
+blocked. The private manifests and traces remain outside the repository at
+`/home/trv2/work/firestaff-nexus-capture-20260917/runs/nexus-startup-input-f140-20260928b/`
+and
+`/home/trv2/work/firestaff-nexus-capture-20260917/runs/nexus-startup-input-control-f140-20260928a/`.
+
 The reproducible producer is the version-locked
 mednafen_1.32.1_nexus_smpc_read_trace.patch, applied by
 build_mednafen_nexus_saturn_capture.sh. Set
