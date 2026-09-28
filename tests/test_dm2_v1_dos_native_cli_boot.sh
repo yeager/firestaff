@@ -255,7 +255,7 @@ probe_input() {
     expected_party=$2
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --game dm2 --platform pc --data-dir "$archive" --boot-probe \
-        --boot-probe-frames 5000 --script "key:enter,key:enter,key:enter,$input" \
+        --boot-probe-frames 100 --script "key:enter,key:enter,key:enter,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
     case "$output" in
