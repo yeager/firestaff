@@ -155,7 +155,10 @@ built successfully; CTest passed both
 loader reports 71 TAKE/DROP cases per region, with all six type-zero records
 tested and none deferred. This is Firestaff source-integrity coverage, not
 evidence for the original T900 inventory-swap consumer or complete gameplay
-parity.
+parity. A fresh Linux build on `trv2` also produced `firestaff` and both
+focused test targets; the two tests passed 2/2 against the authentic US/JP
+Akutuba data, with the same 71 per-region TAKE/DROP cases and zero deferred
+type-zero records.
 
 2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
 passes locally and on trv2 against the complete user-provided CUE and its
@@ -687,12 +690,6 @@ open. No substitute game data has been generated.
   gör verkliga carried items åtkomliga för P/DROP även när M11:s tillfälliga
   selection har försvunnit vid resume; generiska ID-only-slots hoppas över
   och själva DROP-mutationen kräver fortfarande exakt Track 02-ledgerpost.
-- 🔒 The compact champion inventory uses item ID 0 as its empty-slot sentinel,
-  but authentic category-local type 0 is present in Track 02 records. The
-  current TAKE path therefore rejects those real records; do not remap them or
-  treat the synthetic/legacy item catalog as evidence. Resolve slot occupancy
-  against the original T900 consumer (or an authenticated runtime capture),
-  then cover type-0 TAKE/swap/drop against both authentic regional corpora.
 - ✅ Det autentiska kombinerade ISO/OGG-RAR-paketet stöds nu som komplett
   extern originalmedia för både US och JP; regionsval och återbyggd Track 02
   är hash-låsta.

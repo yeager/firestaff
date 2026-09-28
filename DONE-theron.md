@@ -49,7 +49,9 @@
   `theron_v1_inventory_id_mapping` passed 2/2 against authentic US and JP
   Track 02 media, with 71 TAKE/DROP cases and all six type-zero records tested
   per edition. This proves Firestaff's source-integrity boundary, not the
-  original T900 inventory-swap consumer.
+  original T900 inventory-swap consumer. A fresh Linux CMake build on `trv2`
+  also produced `firestaff` and both focused targets; the same CTests passed
+  2/2 against the authentic US/JP Akutuba data.
 
 ## 2026-09-28 — Type-zero item through M12 pickup and inventory selection
 
