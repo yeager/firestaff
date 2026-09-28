@@ -2,6 +2,20 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Add bounded, in-memory support for the installed multi-member Atari ST
+  preservation 7z to CSB Utility Disk discovery and Hint Oracle startup. The
+  available `Game,Chaos_Strikes_Back,Atari_ST,Software.7z` contains the
+  original game/utility STX images and the hard-disk R1 files. Its
+  `HCSB.DAT`, `HCSB.HTC`, and `MINI.DAT` members independently match the
+  authenticated Atari R1 hashes. Direct
+  `--csb-hint-oracle --data-dir <archive.7z>` currently fails closed because
+  Firestaff's native 7z reader accepts only a one-member LZMA2 folder; the
+  existing STX startup integration test stages its authentic member with an
+  external 7zz/7z test tool first. Keep extraction and game-data caching out
+  of runtime. Verify direct CLI and launcher handoff only after a native
+  bounded archive/member reader preserves the exact authenticated member
+  identities.
+
 - Complete the remaining C37 wander bridge after its shared-RNG admission was
   corrected. It now consumes persistent `G0349` exactly once for the
   `M005_RANDOM(2)` movement gate and, when admitted, once for absolute
