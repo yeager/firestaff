@@ -66,6 +66,13 @@ data.
    or make them collectible by assuming the projected tile enums are original
    T900 behavior.
 
+   The all-level authentic census also finds no direct Track 02 coordinate
+   teleporter link to any of the five cells. At the same coordinates on other
+   loaded maps, Firestaff's projection shows only floor or wall, not a
+   same-coordinate pit. These negative joins rule out those two simple route
+   explanations in the current data projection; they do not identify the
+   original pickup path or rule out another transition/input consumer.
+
 The sequence is dependency guidance, not a smaller completion target: the user
 requested complete Theron support.
 

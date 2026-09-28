@@ -5020,6 +5020,7 @@ static void test_authentic_take_requires_matching_item_record(
             if (object->item_index == THERON_ITEM_NONE) {
                 const Theron_V1_Level *level =
                     &world->levels[dungeon_id - 1][object->level];
+                unsigned int incoming_teleporters = 0u;
                 const uint8_t north = object->y > 0
                     ? level->source_tiles[object->y - 1][object->x] : 0xffu;
                 const uint8_t east = object->x + 1 < level->width
@@ -5047,6 +5048,48 @@ static void test_authentic_take_requires_matching_item_record(
                        north, east, south, west,
                        level->squares[object->y][object->x],
                        north_square, east_square, south_square, west_square);
+                for (int j = 0; j < world->object_count; ++j) {
+                    const Theron_V1_Object *teleporter =
+                        &world->objects[j];
+                    int target_level;
+                    int target_x;
+                    int target_y;
+                    if (teleporter->type != THERON_OBJTYPE_TELEPORTER ||
+                        teleporter->dungeon_id != dungeon_id ||
+                        !(teleporter->flags &
+                          THERON_OBJ_F_TRACK02_COORD_LINK))
+                        continue;
+                    target_level = (teleporter->linked_id >> 10) & 0x3f;
+                    target_x = teleporter->linked_id & 0x1f;
+                    target_y = (teleporter->linked_id >> 5) & 0x1f;
+                    if (target_level == object->level &&
+                        target_x == object->x && target_y == object->y) {
+                        ++incoming_teleporters;
+                        printf("    incoming authentic teleporter: "
+                               "level=%d pos=(%d,%d) ref=%04x active=%u\n",
+                               teleporter->level, teleporter->x, teleporter->y,
+                               teleporter->source_ref, teleporter->state);
+                    }
+                }
+                printf("    direct Track 02 coordinate teleporter links: %u\n",
+                       incoming_teleporters);
+                for (int map_level = 0;
+                     map_level < THERON_MAX_LEVELS_PER_DUNGEON;
+                     ++map_level) {
+                    const Theron_V1_Level *same_cell_level;
+                    if (!world->level_loaded[dungeon_id - 1][map_level])
+                        continue;
+                    same_cell_level =
+                        &world->levels[dungeon_id - 1][map_level];
+                    if (object->x >= same_cell_level->width ||
+                        object->y >= same_cell_level->height)
+                        continue;
+                    printf("    same-coordinate source map: level=%d "
+                           "tile=%02x square=%u\n", map_level,
+                           same_cell_level->source_tiles[object->y]
+                                                       [object->x],
+                           same_cell_level->squares[object->y][object->x]);
+                }
                 ++zero_id_deferred;
             }
             continue;

@@ -22,6 +22,11 @@
   bytes and the loader's projected square classes around them. Those
   projections show nearby pits, walls, a secret wall, a door and teleporters;
   they do not prove the original item's reachability or its T900 pickup path.
+- The authentic all-level scan found zero direct coordinate-teleporter links
+  to each deferred cell in either region. At the same coordinates on other
+  loaded levels, the projection is floor or wall, with no same-coordinate pit.
+  This is negative evidence against only those direct route candidates; it
+  does not prove that no other original transition or input route exists.
 - This verifies Firestaff's source-provenance and input plumbing on authentic
   data across all seven dungeons. It does not prove original T900 selection,
   object reachability, quest-item semantics, or full gameplay parity.
