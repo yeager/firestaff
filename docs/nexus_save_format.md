@@ -48,12 +48,14 @@ not authorize a native Saturn save decoder.
 
 ## Boundary
 
-FNXS is a Firestaff interchange/resume format. The four real payloads differ
-across the two-, three-, and four-champion samples. Bytes `0x0a..0x0b` read as
-big-endian `0x0434`, `0x0514`, and `0x05f4` in the two-, three-, and
-four-champion samples respectively; the adjacent differences are `0xe0`
-(224). The independent four-champion sample has the same observed value.
-This is a count-correlated boundary/extent observation, not a field
-assignment or a proven 224-byte champion record. Original Saturn save import
+FNXS is a Firestaff interchange/resume format. The four hash-pinned real
+payloads differ across the two-, three-, and four-champion samples. Bytes
+`0x0a..0x0b` read as big-endian `0x0434`, `0x0514`, and `0x05f4` in the two-,
+three-, and four-champion samples respectively; these values follow
+`0x0274 + champion_count * 0x00e0`. Every byte from the observed value to the
+end of the 20,480-byte payload is zero in these four samples. The independent
+four-champion sample has the same observed value. This is a count-correlated
+payload-boundary observation; it does not identify the boundary field's
+consumer or prove a 224-byte champion record. Original Saturn save import
 remains gated until the payload mapping and source-owned consumer are
 identified and exercised against the retail game.

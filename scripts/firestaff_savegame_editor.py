@@ -698,9 +698,20 @@ def self_test_saturn_bkr(require_real_corpus: bool) -> int:
         "nexus-four-champion-retail-written-20260926.bkr": 0x05F4,
         "nexus-four-champion-leader-3-retail-written-20260926.bkr": 0x05F4,
     }
+    named_champion_counts = {
+        "nexus-two-champion-retail-written-20260926.bkr": 2,
+        "nexus-three-champion-retail-written-20260926.bkr": 3,
+        "nexus-four-champion-retail-written-20260926.bkr": 4,
+        "nexus-four-champion-leader-3-retail-written-20260926.bkr": 4,
+    }
     if all(name in payloads_by_name for name in named_samples):
         for name, observed_value in named_samples.items():
-            assert int.from_bytes(payloads_by_name[name][0x0A:0x0C], "big") == observed_value
+            payload = payloads_by_name[name]
+            assert int.from_bytes(payload[0x0A:0x0C], "big") == observed_value
+            assert observed_value == 0x0274 + 0x00E0 * named_champion_counts[name]
+            assert not any(payload[observed_value:]), (
+                f"authentic Nexus payload has nonzero bytes beyond its "
+                f"observed boundary: {name}")
         assert named_samples["nexus-three-champion-retail-written-20260926.bkr"] - named_samples["nexus-two-champion-retail-written-20260926.bkr"] == 0xE0
         assert named_samples["nexus-four-champion-retail-written-20260926.bkr"] - named_samples["nexus-three-champion-retail-written-20260926.bkr"] == 0xE0
     print(f"firestaff_savegame_editor BKR corpus self-test: PASS ({len(bkr_files)} authentic images)")

@@ -26,6 +26,11 @@ self-test accepts only these four filename/SHA-256-pinned captures, while
 `nexus_v1_saturn_bkr_real_data` validates their container structure and skips
 when the private sample corpus is absent. Native Saturn save/load compatibility
 remains blocked until the payload schema and retail consumer are source-bound.
+Across the authentic two-, three-, and four-champion samples, the big-endian
+value at payload offset `0x0a` is `0x0274 + champion_count * 0x00e0`, and the
+payload tail from that value is zero in all four images. This narrows the
+observed count-correlated boundary but does not establish record or field
+semantics; trace the retail BUP save/load consumer before decoding or writing it.
 
 An end-to-end check against the installed English Saturn CUE on 2026-09-27
 confirms that `--game nexus --platform saturn` opens the original disc and

@@ -1,5 +1,16 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-29 — Pin the authentic BKR payload boundary observation
+
+- Extended the hash-pinned real-corpus self-test to verify that the value at
+  payload offset `0x0a` follows `0x0274 + 0x00e0 * champion_count` for the
+  authentic two-, three-, and four-champion images, and that the payload tail
+  after that value is zero in all four samples.
+- Re-ran the updated self-test on TRV2 against all four authentic 32 KiB BKR
+  images. Their pinned identities, `DMNEXUS__01` entries, and 20,480-byte
+  payloads passed. This records a count-correlated boundary only; no record
+  size, field semantics, or Saturn save import is inferred or enabled.
+
 ## 2026-09-28 — Verify English and French retail PLRD rows
 
 - Extended the regional CUE real-media regression to compare all 20 parsed
