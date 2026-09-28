@@ -360,6 +360,47 @@ case "$mouse_output" in
         ;;
 esac
 
+# Join the normal M12 launcher route to the authenticated F31 startup chain.
+# The scripted Enter inputs launch the selected game; after the source-owned
+# TITLE.ANM interval, the SWITCHTW Game and C004 Prison rectangles enter the
+# original MINI.DAT campaign. The expected first party is loaded from that
+# real bootstrap member, not from a generated save or test fixture.
+runtime_probe="$isolated_home/m12-runtime.json"
+menu_runtime_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy run_firestaff \
+    --width 320 --height 200 --menu --game csb --data-dir "$data_dir" \
+    --platform fm-towns $edition_arg \
+    --script 'enter,enter,enter,wait700,click:52:110,wait10,click:250:50,wait240' \
+    --duration 30000 2>&1)" || {
+    printf '%s\n' "$menu_runtime_output" >&2
+    exit 1
+}
+case "$menu_runtime_output" in
+    *"variant=csb-fmtowns-$language"*"route=startup"*"handoff=f31-title-anm"*) ;;
+    *)
+        echo "FAIL: CSB FM Towns M12 route did not reach the authentic MINI.DAT runtime" >&2
+        printf '%s\n' "$menu_runtime_output" >&2
+        exit 1
+        ;;
+esac
+python3 - "$runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["sourceId"] != "csb" or
+        startup["phase"] != "inactive" or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (4, 22, 18, 2, 1)):
+    raise SystemExit(f"FAIL: CSB FM Towns M12 did not reach the original MINI.DAT party: {probe}")
+PY
+echo "PASS: CSB FM Towns $language M12 route reached the authentic MINI.DAT party"
+
 if [ -n "$user_save" ]; then
     menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy run_firestaff \
