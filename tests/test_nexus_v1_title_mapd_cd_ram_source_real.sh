@@ -8,6 +8,12 @@ for manifest in "$root"/*/manifest.txt; do
     dir=${manifest%/*}
     fifo="$dir/cdb-fifo.trace"
     source="$dir/sh2-source-writes.trace"
+    # Current capture launchers group trace outputs under traces/, while
+    # older external receipts kept them beside the manifest.
+    if [[ ! -s "$fifo" || ! -s "$source" ]]; then
+        fifo="$dir/traces/cdb-fifo.trace"
+        source="$dir/traces/sh2-source-writes.trace"
+    fi
     [[ -s "$fifo" && -s "$source" && -s "$track1" ]] || continue
     fifo_expected=$(sed -n 's/^FIRESTAFF_NEXUS_TRACE_CD_FIFO_WORDS_sha256=//p' "$manifest" | tail -1)
     source_expected=$(sed -n 's/^FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITES_sha256=//p' "$manifest" | tail -1)

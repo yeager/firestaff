@@ -1337,6 +1337,27 @@ number, or data after the final frame is rejected. The check still proves only
 the source buffer, writer PC, VDP1 destination, and Saturn byte order. It does
 not assign pixel-format, palette, command, or resource semantics.
 
+## Retail title MAPD CD-to-RAM receipt, 2026-09-28
+
+A current instrumented JP Saturn run captured 162 frames beginning at
+`13294`, using BIOS SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac` and CUE
+SHA-256 `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`.
+The raw VDP12 receipt is SHA-256
+`3a1ceef218c8acf5f44e8fd47dac0f6fc7764b1a72890203e20d42b02a774bdc`;
+the FIFO-word and SH-2 source-write traces are bound in the manifest with
+SHA-256 values `13fd555f194efbc276c2f1d729ea1cdafbbd54f621a930565fd47b682244e301`
+and `6327a77b26cd8f832e87fa1d067a1cb867f60be03318e2667e6b31da560ffba5`.
+Against the supplied Track 1, the verifier accepts all 27,441 bounded FIFO
+words, confirms 13,312 contiguous retail-loader writes from LBAs 6063--6088
+into `0x060b7d80..0x060c4d7f`, and locates the MAPD record and palette at
+`0x060b7ff8` and `0x060c0c4c` respectively. The real-media CTest now checks
+both the legacy flat trace layout and the launcher's `traces/` subdirectory
+layout; it passes against this receipt. This establishes title MAPD CD-to-RAM
+transport only. RAM-to-VDP2 ownership and semantic admission remain blocked.
+The BIOS, disc, raw capture and traces remain on TRV2 under
+`/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/title-mapd-cd-ram-source-13294-20260928/`.
+
 ## Source references
 
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),

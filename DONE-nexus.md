@@ -1,5 +1,16 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Retail MAPD CD-to-RAM capture integration
+
+- Captured a fresh, hash-bound 162-frame JP retail receipt on TRV2. The real
+  verifier accepts all 27,441 CD FIFO words against Track 1 and 13,312
+  contiguous loader writes from LBAs 6063--6088 to WorkRAMH, locating the
+  authenticated MAPD record and palette. Updated the real-media CTest to
+  discover both flat legacy traces and current `traces/`-nested receipts;
+  the integrated test passes on the captured retail files. This proves only
+  CD-to-RAM transport; RAM-to-VDP2 ownership and semantic admission remain
+  blocked. No game media or captures were added to Git.
+
 ## 2026-09-28 — Paired Start table-reader observation
 
 - A same-scope cold-start control/Start pair on TRV2 captured frames
