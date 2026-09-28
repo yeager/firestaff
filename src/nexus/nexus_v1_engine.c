@@ -51,6 +51,15 @@ static void nexus_v1_load_shop_catalog(Nexus_V1_Engine *engine);
 
 static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"DM.BIN", "e88d60859f65f08fa622e1992b02280f"},
+    /* Authentic English and French Track 1 revisions. These identities
+     * admit exact regional resource bytes only; downstream format and
+     * presentation gates remain revision-specific. */
+    {"RLOWFIX.BIN", "14c3a7e6fed2dc9e53a727640d4c9348"},
+    {"RLOWFIX.BIN", "ecbecff383d6ee8330e68e38417be9c8"},
+    {"TITLE.BIN", "0b293be24d06eb550b27442ac9e8924c"},
+    {"TITLE.BIN", "5c917a7db5bb0409d5d84086886c9aa6"},
+    {"GAMEOVER.BIN", "d692c8f25400cdcd44559194873c1e12"},
+    {"LOGOBG.DG2", "c594ac2c06e07a9e26a9945668a7b08a"},
     {"TITLE.CG", "80fa961fa95d7a0cb57e9a62f48786c8"},
     {"WARNING.BIN", "15c87a09af36e9579dfbd88a5af87477"},
     {"WARNING.BIN", "eb246b67f7758f23310221ac9b9efe2d"},

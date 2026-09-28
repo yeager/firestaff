@@ -17,6 +17,14 @@ treated as an index into FACE.BIN. It does not establish which portrait
 belongs to each champion row. Keep `portrait_index` unknown until a Saturn
 consumer trace proves that join.
 
+The authentic English and French Track 1 revisions are now recognized by
+their exact `RLOWFIX.BIN` and `TITLE.BIN` MD5 identities, and the French
+`GAMEOVER.BIN` identity is also recorded. CUE-based regression coverage reads
+these members directly from the supplied regional discs and validates both
+their source receipts and RES* envelopes. This authenticates file identity and
+container structure only; it does not promote regional title/menu rendering,
+text interpretation, or any PLRD-to-FACE ordinal mapping.
+
 The separately hash-verified English Saturn ISO revision
 `e5cce2db884320541f91c22c1ec1ffac6efea30b2b7c3c206a442980f241a833`
 (74,980 bytes) also decodes as a 14-entry RLOWFIX resource with 20 PLRD rows.

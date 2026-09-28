@@ -2,6 +2,8 @@
 #include "nexus_v1_res.h"
 #include "nexus_v1_font012.h"
 #include "nexus_v1_iso_reader.h"
+#include "nexus_v1_engine.h"
+#include "nexus_v1_ui_surfaces.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +32,7 @@ static uint8_t *load_retail_file(const char *root, const char *name,
     static const char *const cue_names[] = {
         "Dungeon Master Nexus (Japan).cue",
         "Dungeon Master Nexus (English).cue",
+        "Dungeon Master Nexus (French).cue",
         NULL
     };
     Nexus_ISOReader iso;
@@ -82,6 +85,105 @@ static const char *retail_root(char *out, size_t out_size) {
         return out;
     }
     return NULL;
+}
+
+static int test_regional_member_identity(const char *cue_name,
+                                         const char *member_name,
+                                         const char *expected_md5) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char cue_path[1024];
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelAuxSourceReceipt receipt;
+    Nexus_V1_ResDecodeResult decoded;
+    uint8_t *member_data;
+    int member_size = 0;
+    int written;
+    int result;
+
+    if (!data_dir || !data_dir[0]) return 0;
+    written = snprintf(cue_path, sizeof(cue_path), "%s/%s", data_dir,
+                       cue_name);
+    if (written < 0 || (size_t)written >= sizeof(cue_path)) return 1;
+    memset(&engine, 0, sizeof(engine));
+    result = nexus_v1_init(&engine, cue_path);
+    if (result != 0 || engine.source != NEXUS_SRC_ISO ||
+        nexus_v1_named_asset_source_receipt(&engine, member_name, &receipt) != 0 ||
+        !receipt.exact_source_entry_observed ||
+        !receipt.canonical_hash_verified ||
+        strcmp(receipt.canonical_md5, expected_md5) != 0) {
+        fprintf(stderr,
+                "FAIL: %s::%s canonical identity init=%d source=%d "
+                "exact=%d verified=%d md5=%s expected=%s\n",
+                cue_name, member_name, result, (int)engine.source,
+                receipt.exact_source_entry_observed,
+                receipt.canonical_hash_verified, receipt.canonical_md5,
+                expected_md5);
+        if (engine.initialized) nexus_v1_shutdown(&engine);
+        return 1;
+    }
+    member_data = nexus_v1_read_file(&engine, member_name, &member_size);
+    if (!member_data || member_size <= 0 ||
+        !nexus_v1_res_decode(member_data, member_size, &decoded) ||
+        !decoded.valid) {
+        fprintf(stderr, "FAIL: %s::%s authenticated RES* decode\n", cue_name,
+                member_name);
+        free(member_data);
+        nexus_v1_shutdown(&engine);
+        return 1;
+    }
+    free(member_data);
+    printf("  PASS regional %s::%s md5=%s RES* entries=%u\n", cue_name,
+           member_name, receipt.canonical_md5, decoded.entry_count);
+    nexus_v1_shutdown(&engine);
+    return 0;
+}
+
+static int test_french_logobg_identity(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *expected_md5 = "c594ac2c06e07a9e26a9945668a7b08a";
+    char cue_path[1024];
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelAuxSourceReceipt receipt;
+    Nexus_UI_Manager ui;
+    uint8_t *member_data;
+    int member_size = 0;
+    int written;
+    int result;
+
+    if (!data_dir || !data_dir[0]) return 0;
+    written = snprintf(cue_path, sizeof(cue_path),
+                       "%s/Dungeon Master Nexus (French).cue", data_dir);
+    if (written < 0 || (size_t)written >= sizeof(cue_path)) return 1;
+    memset(&engine, 0, sizeof(engine));
+    result = nexus_v1_init(&engine, cue_path);
+    if (result != 0 || engine.source != NEXUS_SRC_ISO ||
+        nexus_v1_named_asset_source_receipt(&engine, "LOGOBG.DG2",
+                                             &receipt) != 0 ||
+        !receipt.exact_source_entry_observed ||
+        !receipt.canonical_hash_verified ||
+        strcmp(receipt.canonical_md5, expected_md5) != 0) {
+        fprintf(stderr, "FAIL: French LOGOBG.DG2 authentic identity\n");
+        if (engine.initialized) nexus_v1_shutdown(&engine);
+        return 1;
+    }
+    member_data = nexus_v1_read_file(&engine, "LOGOBG.DG2", &member_size);
+    nexus_ui_manager_init(&ui);
+    if (!member_data || member_size != 72198 ||
+        nexus_ui_load_logobg(&ui, member_data, member_size, NULL) <= 0 ||
+        ui.surfaces[NEXUS_SURFACE_LOGOBG].w != 320 ||
+        ui.surfaces[NEXUS_SURFACE_LOGOBG].h != 224) {
+        fprintf(stderr, "FAIL: French LOGOBG.DG2 bounded PP decode\n");
+        free(member_data);
+        nexus_ui_manager_free(&ui);
+        nexus_v1_shutdown(&engine);
+        return 1;
+    }
+    printf("  PASS regional French::LOGOBG.DG2 md5=%s PP=320x224\n",
+           receipt.canonical_md5);
+    free(member_data);
+    nexus_ui_manager_free(&ui);
+    nexus_v1_shutdown(&engine);
+    return 0;
 }
 
 static int test_title_cg(void) {
@@ -211,6 +313,22 @@ int main(void) {
     fail += test_title_cg();
     fail += test_res_file("TITLE.BIN");
     fail += test_res_file("RLOWFIX.BIN");
+    fail += test_regional_member_identity(
+        "Dungeon Master Nexus (English).cue", "RLOWFIX.BIN",
+        "14c3a7e6fed2dc9e53a727640d4c9348");
+    fail += test_regional_member_identity(
+        "Dungeon Master Nexus (English).cue", "TITLE.BIN",
+        "0b293be24d06eb550b27442ac9e8924c");
+    fail += test_regional_member_identity(
+        "Dungeon Master Nexus (French).cue", "RLOWFIX.BIN",
+        "ecbecff383d6ee8330e68e38417be9c8");
+    fail += test_regional_member_identity(
+        "Dungeon Master Nexus (French).cue", "TITLE.BIN",
+        "5c917a7db5bb0409d5d84086886c9aa6");
+    fail += test_regional_member_identity(
+        "Dungeon Master Nexus (French).cue", "GAMEOVER.BIN",
+        "d692c8f25400cdcd44559194873c1e12");
+    fail += test_french_logobg_identity();
     fail += test_res_file("RHIFIX.BIN");
     fail += test_res_file("POTEFT.BIN");
     fail += test_font012_headers();

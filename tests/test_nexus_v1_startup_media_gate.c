@@ -90,6 +90,32 @@ static int local_nexus_file_matches_md5(const char *name, const char *md5)
         receipt.canonical_hash_verified && strcmp(receipt.canonical_md5, md5) == 0;
 }
 
+static int local_nexus_file_has_canonical_identity(const char *name)
+{
+    static const char *const warning_hashes[] = {
+        "15c87a09af36e9579dfbd88a5af87477",
+        "eb246b67f7758f23310221ac9b9efe2d",
+        "9002866163ad733a75346547a4c7e0b5",
+        NULL
+    };
+    static const char *const logobg_hashes[] = {
+        "a1677f9abb3b25d88747ee7f82b86ec1",
+        "53916e61c9f1c19eb65dd5e8950f37ea",
+        "c594ac2c06e07a9e26a9945668a7b08a",
+        NULL
+    };
+    const char *const *hashes;
+    int index;
+
+    if (strcmp(name, "WARNING.BIN") == 0) hashes = warning_hashes;
+    else if (strcmp(name, "LOGOBG.DG2") == 0) hashes = logobg_hashes;
+    else return 0;
+    for (index = 0; hashes[index]; ++index) {
+        if (local_nexus_file_matches_md5(name, hashes[index])) return 1;
+    }
+    return 0;
+}
+
 static unsigned char *read_local_nexus_file(const char *name, size_t *out_size)
 {
     char path[2048];
@@ -329,9 +355,8 @@ int main(void)
     if (!local_warning) {
         puts("SKIP: local Nexus WARNING.BIN not present");
     } else {
-        expect_true(local_nexus_file_matches_md5(
-                        "WARNING.BIN", "15c87a09af36e9579dfbd88a5af87477"),
-                    "local WARNING.BIN matches the authenticated retail source");
+        expect_true(local_nexus_file_has_canonical_identity("WARNING.BIN"),
+                    "local WARNING.BIN matches an authenticated regional retail source");
         Nexus_TitleScreen title;
         Nexus_Framebuffer framebuffer;
         nexus_ui_manager_init(&ui);
@@ -459,9 +484,8 @@ int main(void)
     if (!local_logobg) {
         puts("SKIP: local Nexus LOGOBG.DG2 not present");
     } else {
-        expect_true(local_nexus_file_matches_md5(
-                        "LOGOBG.DG2", "a1677f9abb3b25d88747ee7f82b86ec1"),
-                    "local LOGOBG.DG2 matches the authenticated retail source");
+        expect_true(local_nexus_file_has_canonical_identity("LOGOBG.DG2"),
+                    "local LOGOBG.DG2 matches an authenticated regional retail source");
         nexus_ui_manager_init(&ui);
         expect_true(nexus_ui_load_logobg(&ui, local_logobg,
                                          (int)local_warning_size, NULL) > 0 &&

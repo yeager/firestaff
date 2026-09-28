@@ -53,7 +53,9 @@ SWTCHR.BIN (38 KB): switch/lever graphics.
 
 ### Graphics
 TITLE.CG (164 KB): title screen color graphics.
-LOGOBG.DG2 (71 KB): logo background.
+LOGOBG.DG2 (71 KB): logo background. The Japanese, English, and French retail
+  revisions are hash-identified separately; the French PP member decodes to
+  320x224. Source and format validation do not establish its Saturn placement.
 FONT256.S2D (24 KB): Saturn SCR/page data with 242 authenticated CG tiles; glyph mapping unproven.
 ITEM.IBS (98 KB): item icon/bitmap set.
 
