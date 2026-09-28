@@ -88,7 +88,10 @@ frame=300
 A marker is written at the same vertical-blanking hook as the raw dump's frame
 ID, before VDP1 writes for that frame are recorded. Writes after the `frame=300`
 marker therefore belong to the VDP1 image captured as frame 300; this is a
-transport boundary, not an asset owner. Select a frame with:
+transport boundary, not an asset owner. Since the V2 writer opens its trace on
+the first VRAM write, a trace can also contain a prefix of writes before its
+first frame marker. Analyzers retain that prefix separately as pre-capture
+activity; they do not attribute it to frame 0. Select a frame with:
 
 ```sh
 python3 scripts/analyze_nexus_vdp1_write_trace.py \

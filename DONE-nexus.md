@@ -18,6 +18,19 @@
   semantic admission therefore remain blocked. The capture and game data stay
   on TRV2.
 
+## 2026-09-28 — VDP1 write-trace pre-capture prefix
+
+- Both VDP1 write-trace analyzers now accept valid V2 records emitted before
+  the first frame marker and keep them separate from frame-bounded writes. The
+  source join reports pre-capture coverage independently; the summary tool
+  selects it only with `--pre-capture`. Parser tests cover the observed prefix
+  format and retain V1 behavior. On the hash-bound TRV2 Start/input and control
+  captures at frame 10500, both had 20,000 pre-capture rows, no writes in the
+  selected frame, and the same mode-5 source span at `0x63e00..0x6c000`; the
+  prefix did not cover that span. This is transport evidence only and neither
+  identifies the menu asset nor admits presentation. The authentic raw dumps
+  and traces remain on TRV2.
+
 ## 2026-09-28 — Retail MAPD CD-to-RAM capture integration
 
 - Captured a fresh, hash-bound 162-frame JP retail receipt on TRV2. The real

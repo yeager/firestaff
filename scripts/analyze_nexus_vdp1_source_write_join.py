@@ -30,13 +30,16 @@ LINE = re.compile(
 )
 
 
-def load_trace(path: Path, selected_frame: int = -1) -> list[tuple[int, int, int, int]]:
-    lines = path.read_text(encoding="ascii").splitlines()
+def parse_trace_lines(
+        lines: list[str], selected_frame: int = -1
+        ) -> tuple[list[tuple[int, int, int, int]],
+                   list[tuple[int, int, int, int]]]:
     if not lines or lines[0] not in HEADERS:
         raise ValueError("invalid VDP1 write-trace header")
     version = lines[0]
     rows: list[tuple[int, int, int, int]] = []
     frame_rows: dict[int, list[tuple[int, int, int, int]]] = {}
+    pre_capture_rows: list[tuple[int, int, int, int]] = []
     active_frame = -1
     for line_number, line in enumerate(lines[1:], 2):
         if line.startswith("frame="):
@@ -62,8 +65,12 @@ def load_trace(path: Path, selected_frame: int = -1) -> list[tuple[int, int, int
         )
         if version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
             if active_frame < 0:
-                raise ValueError(f"record before frame marker line {line_number}")
-            frame_rows[active_frame].append(row)
+                # The V2 trace file opens on the first VDP1 write, which can
+                # precede frame capture. Preserve those writes as a distinct
+                # pre-capture prefix; they are not attributable to frame 0.
+                pre_capture_rows.append(row)
+            else:
+                frame_rows[active_frame].append(row)
         else:
             rows.append(row)
     if version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
@@ -72,11 +79,18 @@ def load_trace(path: Path, selected_frame: int = -1) -> list[tuple[int, int, int
         if selected_frame >= 0:
             if selected_frame not in frame_rows:
                 raise ValueError(f"missing frame {selected_frame}")
-            return frame_rows[selected_frame]
-        return [row for frame in sorted(frame_rows) for row in frame_rows[frame]]
+            return pre_capture_rows, frame_rows[selected_frame]
+        return pre_capture_rows, [row for frame in sorted(frame_rows)
+                                  for row in frame_rows[frame]]
     if selected_frame >= 0:
         raise ValueError("--frame requires a V2 write trace")
-    return rows
+    return [], rows
+
+
+def load_trace(path: Path, selected_frame: int = -1
+               ) -> tuple[list[tuple[int, int, int, int]],
+                          list[tuple[int, int, int, int]]]:
+    return parse_trace_lines(path.read_text(encoding="ascii").splitlines(), selected_frame)
 
 
 def source_spans(frame: dict[str, bytes], state: str) -> list[tuple[int, int, int, int, int]]:
@@ -125,7 +139,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         frames, states = frame_regions(args.capture.read_bytes(), args.capture_frames)
-        writes = load_trace(args.write_trace, args.frame)
+        pre_capture_writes, writes = load_trace(args.write_trace, args.frame)
     except (OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_VDP1_SOURCE_WRITE_JOIN_INVALID: {error}")
         return 1
@@ -134,7 +148,8 @@ def main() -> int:
         return 1
 
     frame_indexes = [args.frame] if args.frame >= 0 else range(len(frames))
-    print(f"capture_frames={len(frames)} write_records={len(writes)}")
+    print(f"capture_frames={len(frames)} write_records={len(writes)} "
+          f"pre_capture_write_records={len(pre_capture_writes)}")
     identity = (manifest_trace_binding(args.manifest, args.capture, args.write_trace)
                 if args.manifest else "unbound")
     print(f"capture_writer_session_identity={identity}")
@@ -142,27 +157,37 @@ def main() -> int:
         for command_offset, command_type, colour_mode, source_offset, source_size in source_spans(
                 frames[frame_index], states[frame_index]):
             source_end = source_offset + source_size
-            covered: set[int] = set()
-            pcs: collections.Counter[int] = collections.Counter()
-            matching_rows = 0
-            for address, size, pc0, pc1 in writes:
-                if address < source_offset or address + size > source_end:
-                    continue
-                matching_rows += 1
-                covered.update(range(address, address + size))
-                pcs[pc0] += 1
-                if pc1:
-                    pcs[pc1] += 1
-            pc_text = ",".join(
-                f"0x{pc:08x}:{count}" for pc, count in pcs.most_common()
-            ) or "none"
+            def write_summary(
+                    rows: list[tuple[int, int, int, int]]) -> tuple[int, int, str]:
+                covered: set[int] = set()
+                pcs: collections.Counter[int] = collections.Counter()
+                matching_rows = 0
+                for address, size, pc0, pc1 in rows:
+                    if address < source_offset or address + size > source_end:
+                        continue
+                    matching_rows += 1
+                    covered.update(range(address, address + size))
+                    pcs[pc0] += 1
+                    if pc1:
+                        pcs[pc1] += 1
+                pc_text = ",".join(
+                    f"0x{pc:08x}:{count}" for pc, count in pcs.most_common()
+                ) or "none"
+                return matching_rows, len(covered), pc_text
+
+            frame_rows, frame_covered, frame_pcs = write_summary(writes)
+            prefix_rows, prefix_covered, prefix_pcs = write_summary(pre_capture_writes)
             print(
                 f"frame={frame_index} command=0x{command_offset:05x} "
                 f"type={command_type} colour_mode={colour_mode} "
                 f"source=0x{source_offset:05x}-0x{source_end:05x} "
-                f"bytes={source_size} write_rows={matching_rows} "
-                f"covered_bytes={len(covered)} coverage={len(covered)}/{source_size} "
-                f"writer_pcs={pc_text}"
+                f"bytes={source_size} frame_write_rows={frame_rows} "
+                f"frame_covered_bytes={frame_covered} "
+                f"frame_coverage={frame_covered}/{source_size} "
+                f"frame_writer_pcs={frame_pcs} "
+                f"pre_capture_write_rows={prefix_rows} "
+                f"pre_capture_covered_bytes={prefix_covered} "
+                f"pre_capture_writer_pcs={prefix_pcs}"
             )
     print("asset_owner=unbound")
     print("clut_placement_consumer=unbound")

@@ -33,7 +33,11 @@ def main() -> int:
     parser.add_argument("--require-address", type=lambda value: int(value, 0))
     parser.add_argument("--require-address-min", type=lambda value: int(value, 0))
     parser.add_argument("--require-address-max", type=lambda value: int(value, 0))
-    parser.add_argument("--frame", type=int, help="select a frame from the V2 boundary trace")
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--frame", type=int,
+                           help="select a frame from the V2 boundary trace")
+    selection.add_argument("--pre-capture", action="store_true",
+                           help="select V2 writes before its first frame marker")
     args = parser.parse_args()
     try:
         lines = args.trace.read_text(encoding="ascii").splitlines()
@@ -49,6 +53,7 @@ def main() -> int:
     addresses: collections.Counter[int] = collections.Counter()
     values: collections.Counter[int] = collections.Counter()
     rows: list[tuple[int, int, int, int, int]] = []
+    pre_capture_rows: list[tuple[int, int, int, int, int]] = []
     frame_rows: dict[int, list[tuple[int, int, int, int, int]]] = {}
     active_frame: int | None = None
     records = 0
@@ -81,13 +86,21 @@ def main() -> int:
         row = (address, int(match["size"], 10), value, pc0, pc1)
         if version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
             if active_frame is None:
-                print("NEXUS_VDP1_WRITE_TRACE_INVALID: record before frame marker")
-                return 1
-            frame_rows[active_frame].append(row)
+                # The trace opens on its first VRAM write, before the capture
+                # hook may emit frame=0. Keep those records distinct; they
+                # cannot be attributed to a captured frame.
+                pre_capture_rows.append(row)
+            else:
+                frame_rows[active_frame].append(row)
         else:
             rows.append(row)
 
-    if args.frame is not None:
+    if args.pre_capture:
+        if version != "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
+            print("NEXUS_VDP1_WRITE_TRACE_INVALID: --pre-capture requires V2")
+            return 1
+        rows = pre_capture_rows
+    elif args.frame is not None:
         if version != "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
             print("NEXUS_VDP1_WRITE_TRACE_INVALID: --frame requires V2")
             return 1
@@ -108,8 +121,11 @@ def main() -> int:
 
     if version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
         print(f"frames={len(frame_rows)}")
+        print(f"pre_capture_records={len(pre_capture_rows)}")
         if args.frame is not None:
             print(f"selected_frame={args.frame}")
+        elif args.pre_capture:
+            print("selected_frame=pre-capture")
     print(f"records={records}")
     print("pc0_counts=" + ",".join(f"{pc}:{count}" for pc, count in pcs.most_common()))
     print(f"address_range=0x{min(addresses):05x}-0x{max(addresses):05x}" if addresses else "address_range=empty")
