@@ -1030,6 +1030,24 @@ input-event SHA-256 is
 disc and capture artifacts remain on TRV2 under
 `/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/controller-state-depth-10500-20260928/`.
 
+A paired all-PC read trace sampled only WorkRAMH addresses `0x0602c90c` and
+`0x0602c910` over the same 60-frame window. Each run recorded 105 reads, all
+from the same four SH-2 PCs (`0x06014388`, `0x0601439a`, `0x06014510`, and
+`0x0601457e`); the Start run introduced no additional observed reader PC.
+During the scheduled pulse the input trace includes `0x1000f001` at
+`0x0602c90c` (11 reads) and at `0x0602c910` (6 reads), where the control
+records `0x0000f001`. The complete raw VDP hashes still match, and the four
+sampled rendered frames are byte-identical. This wider PC scope therefore
+confirms only the bounded controller-state reads and their changed values; it
+does not show a new consumer, action dispatch, or menu transition. Control and
+input read-trace SHA-256 values are
+`b7924dde76da6a8a7607eb3f07cc94279c94478129b7b547ed854a68489433cf` and
+`e3a93335fdb349e2e1340ed1bb8507306b0366ac7cad814343d762d4a0e30acf`; the
+input event receipt has SHA-256
+`446caae2da8e1c0848c8922a828d834c99de2e66aaa67787ab26e3f492fe57ed`. The
+capture artifacts remain on TRV2 under
+`/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/controller-consumer-allpc-10500-20260928/`.
+
 The analyzer now accepts both the older V1 receipt and the instrumented
 producer's V2 register-owner receipt; `--frame` selects a single frame from a
 bounded multi-frame trace. The captures above intentionally stop their read
