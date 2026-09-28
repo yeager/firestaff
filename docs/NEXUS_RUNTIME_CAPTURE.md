@@ -999,6 +999,18 @@ filter at `0x0602c911`, so they do not contain the linked-buffer/table reads
 needed for the analyzer's complete consumer-chain check. That chain remains
 unverified until a wider, source-bounded trace is captured.
 
+A subsequent paired cold-start capture on TRV2 widened that bounded read
+filter through `0x0602c940` and captured frames 10500--10507 in control and
+one-frame Start-input runs. Their raw VDP12 streams and rendered frame 10507
+are byte-identical. Both traces reach the same table read at address
+`0x0602c940`, PC `0x0601462c`; the register `R4` is `0` in control and `0x10`
+with Start input. The analyzer reports the observed register value without
+requiring either value, and calls the resulting chain observed rather than
+verified. This does not establish the table's semantics, an action mapping, or
+a menu transition; semantic admission remains blocked. Both capture receipts
+and original media remain on TRV2 under
+`/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/button-start-consumer-frame-10507-20260928/`.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the

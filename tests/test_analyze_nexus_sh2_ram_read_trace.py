@@ -22,7 +22,7 @@ def row(frame, pc0, addr, **registers):
     return " ".join(f"{key}={value}" for key, value in values.items())
 
 
-def chain_rows(frame):
+def chain_rows(frame, table_state=0x10):
     return [
         row(frame, 0x06014388, 0x0602C90C,
             r3=0x0602C8F8, r4=0x0602C908),
@@ -33,7 +33,7 @@ def chain_rows(frame):
         row(frame, 0x0601457E, 0x0602C91C,
             r0=0x0602C918),
         row(frame, 0x0601462C, 0x0602C940,
-            r4=0x10),
+            r4=table_state),
     ]
 
 
@@ -47,6 +47,16 @@ class NexusSh2RamReadTraceTests(unittest.TestCase):
             "FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V1",
             [line + " pr=0x06014500" for line in chain_rows(10511)])
         self.assertEqual(MODULE.validate_controller_consumer_chain(rows), 10511)
+
+    def test_table_reader_state_is_reported_without_assuming_button_value(self):
+        for state in (0, 0x10):
+            with self.subTest(state=state):
+                rows = self.parse_text(
+                    "FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V2",
+                    [line + " cpu=0" for line in chain_rows(10511, state)])
+                self.assertEqual(MODULE.validate_controller_consumer_chain(rows),
+                                 10511)
+                self.assertEqual(MODULE.summarize_table_reader(rows), state)
 
     def test_v2_register_owner_format_and_frame_selection(self):
         first = [line + " cpu=0" for line in chain_rows(10511)]

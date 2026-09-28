@@ -93,9 +93,15 @@ def validate_controller_consumer_chain(rows):
             r["pc0"] == 0x0601457E and r["addr"] == 0x0602C91C and
             r["r0"] == 0x0602C918)
     require(rows, "post-normalization table reader", lambda r:
-            r["pc0"] == 0x0601462C and r["addr"] == 0x0602C940 and
-            r["r4"] == 0x10)
+            r["pc0"] == 0x0601462C and r["addr"] == 0x0602C940)
     return next(iter(frames))
+
+
+def summarize_table_reader(rows):
+    """Report the actual value loaded into R4 at the observed table read."""
+    row = next(r for r in rows
+               if r["pc0"] == 0x0601462C and r["addr"] == 0x0602C940)
+    return row["r4"]
 
 
 def main() -> None:
@@ -107,10 +113,12 @@ def main() -> None:
     args = parser.parse_args()
     rows = parse(args.trace, args.frame)
     frame = validate_controller_consumer_chain(rows)
+    table_state = summarize_table_reader(rows)
 
     print(f"rows={len(rows)}")
     print(f"frame={frame}")
-    print("workram_input_consumer_chain=verified")
+    print("workram_input_consumer_chain=observed")
+    print(f"table_reader_r4=0x{table_state:08x}")
     print("input_consumer_semantics=unbound")
     print("semantic_admission=blocked")
 

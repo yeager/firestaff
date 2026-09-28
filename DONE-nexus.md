@@ -1,5 +1,16 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Paired Start table-reader observation
+
+- A same-scope cold-start control/Start pair on TRV2 captured frames
+  10500--10507 with identical JP BIOS, retail CUE, raw VDP bytes and rendered
+  frame 10507. The broadened SH-2 trace reached the same table read at
+  `0x0602c940` / PC `0x0601462c`; `R4` was `0` in control and `0x10` in the
+  one-frame Start-input run. The analyzer now reports this register state
+  rather than assuming a button value as a chain requirement. It labels the
+  chain observed, not semantically verified; no rendered/menu transition was
+  observed and semantic admission remains blocked. Artifacts remain on TRV2.
+
 ## 2026-09-28 — SH-2 RAM read receipt V2 analysis support
 
 - The fail-closed controller-buffer receipt analyzer accepts both V1 and the
