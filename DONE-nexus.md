@@ -7,9 +7,13 @@
   backpack offsets remain empty instead of inheriting bytes from the next row
   or `CRET` resource.
 - Added a regression against the authenticated Japanese RLOWFIX SHA-256 that
-  checks the last champion row's slots and inventory remain empty. The
-  pre-fix test passed on TRV2 but did not cover this boundary; the authentic
-  source bytes confirm the final PLRD row meets `CRET` exactly.
+  compares all 20 rows' ten retained equipment words against their own source
+  bytes and checks the unsupported eleventh slot and inventory remain empty.
+  The test passed against the real Japanese RLOWFIX corpus on TRV2. A
+  temporary out-of-row mutation made it fail, and after restoring the exact
+  test source hash it passed again. The authentic bytes place the final PLRD
+  row directly before `CRET`; no BIOS or emulator was needed for this source
+  boundary check.
 
 ## 2026-09-28 — Japanese retail title corpus gate
 

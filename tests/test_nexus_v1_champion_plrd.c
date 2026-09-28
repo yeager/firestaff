@@ -115,18 +115,44 @@ int main(void) {
         }
     }
     if (!english_source) {
-        int slot;
-        int inventory_slot;
-        const Nexus_V1_Champion *last =
-            &pool.champions[NEXUS_NEXUS_PLRD_CHAMPION_COUNT - 1];
+        size_t plrd = 0U;
+        int row;
         /* The pinned Japanese PLRD has 20 64-byte records ending exactly at
          * CRET. Do not let the following resource tag become an equipment
-         * value, or invent backpack offsets beyond the 40-byte row tail. */
-        for (slot = 0; slot < NEXUS_SLOT_COUNT; ++slot) {
-            if (last->slots[slot] != -1) return 1;
+         * value, or invent backpack offsets beyond the 40-byte row tail.
+         * Compare every retained word to its own authentic row so the
+         * regression catches both cross-row reads and accidental decoding
+         * changes, while deliberately making no slot-semantics claim. */
+        for (size_t offset = 0; offset + 8U +
+                 NEXUS_NEXUS_PLRD_CHAMPION_COUNT * 64U + 4U <=
+                 (size_t)size; ++offset) {
+            if (memcmp(bytes + offset, "PLRD", 4U) == 0 &&
+                memcmp(bytes + offset + 8U +
+                       NEXUS_NEXUS_PLRD_CHAMPION_COUNT * 64U,
+                       "CRET", 4U) == 0) {
+                plrd = offset + 8U;
+                break;
+            }
         }
-        for (inventory_slot = 0; inventory_slot < 30; ++inventory_slot) {
-            if (last->inventory[inventory_slot] != 0xffU) return 1;
+        if (!plrd) return 1;
+        for (row = 0; row < NEXUS_NEXUS_PLRD_CHAMPION_COUNT; ++row) {
+            const uint8_t *source_row = bytes + plrd + (size_t)row * 64U;
+            const Nexus_V1_Champion *champion = &pool.champions[row];
+            int slot;
+            int inventory_slot;
+            for (slot = 0; slot < NEXUS_SLOT_COUNT; ++slot) {
+                int expected = -1;
+                if (slot < 10) {
+                    uint16_t item = (uint16_t)(
+                        ((uint16_t)source_row[24U + 4U * (unsigned)slot] << 8) |
+                        source_row[25U + 4U * (unsigned)slot]);
+                    expected = item == 0xffffU ? -1 : (int)item;
+                }
+                if (champion->slots[slot] != expected) return 1;
+            }
+            for (inventory_slot = 0; inventory_slot < 30; ++inventory_slot) {
+                if (champion->inventory[inventory_slot] != 0xffU) return 1;
+            }
         }
     }
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size,
