@@ -70,6 +70,48 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 print("PASS: authentic DM1 PC-34 start menu reached the source-owned runtime frame")
 PY
 
+# Verify the ordinary AUTO route separately in a clean config. Keep the
+# authenticated archive in its installed dm1/ data-root layout and omit the
+# platform selector so a saved preference cannot make this a platform-forced
+# test.
+menu_auto_home="$test_scratch/dm1-menu-auto-home-$$"
+mkdir -p "$menu_auto_home"
+menu_auto_probe_json="$menu_auto_home/runtime.json"
+menu_auto_output="$(HOME="$menu_auto_home" XDG_CONFIG_HOME="$menu_auto_home" \
+    APPDATA="$menu_auto_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_auto_probe_json" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --data-dir "$(dirname "$(dirname "$archive")")" \
+    --script "$menu_original" --duration 30000 2>&1)" || {
+    printf '%s\n' "$menu_auto_output" >&2
+    exit 1
+}
+if ! grep -Fq 'handoff=pc-img3' <<<"$menu_auto_output"; then
+    printf '%s\n' "$menu_auto_output" >&2
+    printf '%s\n' 'FAIL: DM1 AUTO route did not discover PC-34 from the installed data root' >&2
+    exit 1
+fi
+python3 - "$menu_auto_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(f"FAIL: authentic DM1 AUTO menu did not reach the PC-34 runtime: {probe}")
+print("PASS: clean-config DM1 AUTO menu discovered PC-34 and reached its runtime handoff")
+PY
+rm -rf "$menu_auto_home"
+
 # Exercise the complete authentic Hall route through the real M12->M11
 # handoff. Scripted key events carry SDL scancodes just like host key presses;
 # paced input preserves the PC-34 command cadence while the selected original

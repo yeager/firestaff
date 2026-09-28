@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+## 2026-09-28 — PC-34 AUTO start-menu route
+
+- The ordinary DM1 start-menu AUTO route discovers authentic PC-34 media in
+  the installed data root with a clean configuration and no `--platform`
+  override. It reports `handoff=pc-img3` and reaches the first source-owned
+  runtime frame with the expected zero-champion Hall-entry party state. The
+  DM1 PC-34 real-media CLI test now asserts this discovery and runtime receipt
+  in addition to its platform-forced route.
+
 - 2026-09-27: The fresh Atari startup-party handoff now preserves ReDMCSB
   MOVESENS.C:F0276's C003 guards: an empty party does not fire a floor-party
   sensor, and a data-coded sensor fires only when its facing matches the
