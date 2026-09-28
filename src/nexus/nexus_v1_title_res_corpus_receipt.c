@@ -82,7 +82,8 @@ static int title_bin_sha256_is_verified(const char *sha256_hex)
 {
     return sha256_hex &&
         (strcmp(sha256_hex, NEXUS_V1_TITLE_BIN_SHA256) == 0 ||
-         strcmp(sha256_hex, NEXUS_V1_TITLE_BIN_ENGLISH_SHA256) == 0);
+         strcmp(sha256_hex, NEXUS_V1_TITLE_BIN_ENGLISH_SHA256) == 0 ||
+         strcmp(sha256_hex, NEXUS_V1_TITLE_BIN_FRENCH_SHA256) == 0);
 }
 
 static int directory_recheck(const uint8_t *source_bytes, size_t source_size,

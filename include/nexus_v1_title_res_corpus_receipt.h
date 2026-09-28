@@ -27,6 +27,10 @@ extern "C" {
  * user's real European corpus without promoting title presentation. */
 #define NEXUS_V1_TITLE_BIN_ENGLISH_SHA256 \
     "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44"
+/* French Saturn retail revision, verified from the exact TITLE.BIN member
+ * in its CUE/ISO and independently matched to the recorded MD5 identity. */
+#define NEXUS_V1_TITLE_BIN_FRENCH_SHA256 \
+    "3bd33594cb952ea9be9e398b85bb8c9a112483088eb6c93cb628bba14c57262d"
 
 #define NEXUS_V1_TITLE_RES_ENTRY_COUNT 60U
 #define NEXUS_V1_TITLE_RES_ENTRY_BYTES 12U

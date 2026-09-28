@@ -44031,6 +44031,18 @@ add_test(NAME nexus_v1_title_res_corpus_receipt_real
 set_tests_properties(nexus_v1_title_res_corpus_receipt_real PROPERTIES
     ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+foreach(_nexus_title_region IN ITEMS English French)
+    add_test(NAME nexus_v1_title_res_corpus_receipt_real_${_nexus_title_region}
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_res_corpus_receipt_real.sh
+            $<TARGET_FILE:test_nexus_v1_title_res_corpus_receipt>)
+    set_tests_properties(
+        nexus_v1_title_res_corpus_receipt_real_${_nexus_title_region}
+        PROPERTIES
+        ENVIRONMENT
+            "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (${_nexus_title_region}).cue"
+        SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+endforeach()
+unset(_nexus_title_region)
 add_executable(test_nexus_v1_title_titl_pp_payload_admission
     tests/test_nexus_v1_title_titl_pp_payload_admission.c)
 target_sources(test_nexus_v1_title_titl_pp_payload_admission PRIVATE

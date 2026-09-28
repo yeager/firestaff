@@ -17,6 +17,7 @@ root="${FIRESTAFF_NEXUS_DATA_DIR:-$HOME/.firestaff/data/nexus}"
 asset="$root/TITLE.BIN"
 expected_sha256_canonical="51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"
 expected_sha256_english="a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44"
+expected_sha256_french="3bd33594cb952ea9be9e398b85bb8c9a112483088eb6c93cb628bba14c57262d"
 
 if [ ! -f "$asset" ]; then
     echo "SKIP: $asset not present"
@@ -39,7 +40,8 @@ else
 fi
 
 if [ "$actual" != "$expected_sha256_canonical" ] &&
-   [ "$actual" != "$expected_sha256_english" ]; then
+   [ "$actual" != "$expected_sha256_english" ] &&
+   [ "$actual" != "$expected_sha256_french" ]; then
     echo "SKIP: $asset sha256 mismatch"
     exit 77
 fi

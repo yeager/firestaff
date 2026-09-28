@@ -1,6 +1,6 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-09-28. Only open work is listed here; completed evidence belongs
+Reviewed 2026-09-29. Only open work is listed here; completed evidence belongs
 in the Nexus capture and reverse-engineering records.
 
 ## Available local retail media
@@ -16,6 +16,11 @@ planes, selector sequence and BGR555 palettes directly from the selected CUE/
 BIN media. `test_nexus_v1_title_mapd_real`, `test_m11_nexus_startup_gate` and
 `test_m11_nexus_startup_runtime_handoff` cover this bounded path. The renderer
 does not authorise the separate menu, face, HUD or dungeon compositors.
+
+The French `TITLE.BIN` now has a separate exact SHA-256 corpus profile and a
+real-CUE regression for its 60 RES* directory entries. The receipt preserves
+observed IDs, offsets, record heads and chain bounds only; regional menu
+rendering remains blocked.
 
 Four authentic 32 KiB Saturn Backup RAM images with a `DMNEXUS__01` entry
 are available in the private real-data corpus. The savegame editor now reads

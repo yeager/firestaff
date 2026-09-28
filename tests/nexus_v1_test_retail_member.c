@@ -43,7 +43,8 @@ uint8_t *nexus_v1_test_read_retail_member(const char *locator,
     }
     if ((strcmp(separator + 2, "TITLE.BIN") == 0 &&
          strcmp(out_sha256, "51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3") != 0 &&
-         strcmp(out_sha256, "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44") != 0) ||
+         strcmp(out_sha256, "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44") != 0 &&
+         strcmp(out_sha256, "3bd33594cb952ea9be9e398b85bb8c9a112483088eb6c93cb628bba14c57262d") != 0) ||
         (strcmp(separator + 2, "WARNING.BIN") == 0 &&
          strcmp(out_sha256, "8783fa9defda0a358d0474da56480d476b5511c8ca6d3eb61fe097c5697d44ab") != 0) ||
         (strcmp(separator + 2, "FONT256.S2D") == 0 &&

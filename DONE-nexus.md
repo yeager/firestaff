@@ -1,5 +1,16 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-29 — French retail title corpus receipt
+
+- Pinned the authentic French `TITLE.BIN` SHA-256
+  `3bd33594cb952ea9be9e398b85bb8c9a112483088eb6c93cb628bba14c57262d`,
+  matched to the already recorded French MD5 identity. The streamed French
+  CUE member is 112,216 bytes and has the same 60-entry RES* table, class
+  counts, IDs, offsets, record-head tags, and contiguous source-tail chain as
+  the documented Japanese/English profile. Added a real-media CTest for the
+  French CUE and a raw-file fallback SHA gate. This is structural admission
+  only; it proves no image semantics or regional presentation.
+
 ## 2026-09-29 — Pin the authentic BKR payload boundary observation
 
 - Extended the hash-pinned real-corpus self-test to verify that the value at

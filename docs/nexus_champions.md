@@ -27,10 +27,12 @@ following `CRET` resource to populate runtime inventory.
 The Japanese, English and French Track 1 `RLOWFIX.BIN` revisions are
 recognized by exact MD5 identities, with Japanese and English CUE regressions
 checking their source receipts and RES* envelopes. English and French
-`TITLE.BIN` and the French `GAMEOVER.BIN` identities are also recorded. This
-authenticates file identity and container structure only; it does not promote
-regional title/menu rendering, text interpretation, or any PLRD-to-FACE
-ordinal mapping.
+`TITLE.BIN` and the French `GAMEOVER.BIN` identities are also recorded. The
+French `TITLE.BIN` now passes the same 60-entry RES* corpus receipt as the
+Japanese and English revisions, using its exact SHA-256 identity and authentic
+French CUE. This authenticates file identity and observed container structure
+only; it does not promote regional title/menu rendering, text interpretation,
+or any PLRD-to-FACE ordinal mapping.
 
 The separately hash-verified English Saturn ISO revision
 `e5cce2db884320541f91c22c1ec1ffac6efea30b2b7c3c206a442980f241a833`
