@@ -1,6 +1,6 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-09-09. Only open work is listed here; completed evidence belongs
+Reviewed 2026-09-28. Only open work is listed here; completed evidence belongs
 in the Nexus capture and reverse-engineering records.
 
 ## Available local retail media
@@ -79,7 +79,14 @@ presentation boundary.
   280-frame raw VDP1/VDP2 stream were identical (both raw SHA-256
   `ea2eb96dc56ce9505d67062b2a5f98141d2a456d413c74c19997c04346e27af3`).
   This confirms delivered input and a live reader, not action semantics or a
-  presentation change; startup/menu admission remains blocked.
+  presentation change; startup/menu admission remains blocked. A later
+  matched frame-10500 WorkRAMH pair and retail CD-to-RAM source receipt now
+  bind the relocated reader PCs to an exact 512-byte `TM.BIN` span at file
+  offset `0x4500` (destination `0x06014500..0x060146ff`). The authenticated
+  instruction stream reads SMPC OREG and a Start pulse changes six bytes in
+  the matched input/control memory snapshots. It still does not map those
+  bytes to a Start action or menu transition; see the JP controller-reader
+  section in `docs/NEXUS_RUNTIME_CAPTURE.md`.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the

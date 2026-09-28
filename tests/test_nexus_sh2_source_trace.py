@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import struct
 from pathlib import Path
 from unittest.mock import patch
 
@@ -62,3 +63,51 @@ def test_v4_accepts_cdb_fifo_word_without_changing_row_contract() -> None:
     )
     assert rows[0] == (0x0025DAF0, 2, 0x1234, 0x05818000,
                        0x1234, 6090, 0x06090D04, 0x0608D2F2)
+
+
+def _directory_record(lba: int, size: int, flags: int, name: bytes) -> bytes:
+    length = 33 + len(name) + (1 if len(name) % 2 == 0 else 0)
+    record = bytearray(length)
+    record[0] = length
+    record[2:6] = struct.pack("<I", lba)
+    record[6:10] = struct.pack(">I", lba)
+    record[10:14] = struct.pack("<I", size)
+    record[14:18] = struct.pack(">I", size)
+    record[25] = flags
+    record[28:30] = struct.pack("<H", 1)
+    record[30:32] = struct.pack(">H", 1)
+    record[32] = len(name)
+    record[33:33 + len(name)] = name
+    return bytes(record)
+
+
+def _small_iso() -> bytes:
+    image = bytearray(19 * 2048)
+    pvd = memoryview(image)[16 * 2048:17 * 2048]
+    pvd[0:7] = b"\x01CD001\x01"
+    pvd[156:190] = _directory_record(17, 2048, 2, b"\x00")
+    directory = memoryview(image)[17 * 2048:18 * 2048]
+    directory[0:34] = _directory_record(17, 2048, 2, b"\x00")
+    directory[34:68] = _directory_record(17, 2048, 2, b"\x01")
+    file_record = _directory_record(18, 4, 0, b"FOO;1")
+    directory[68:68 + len(file_record)] = file_record
+    image[18 * 2048:18 * 2048 + 4] = b"DATA"
+    return bytes(image)
+
+
+def test_cue_track1_reads_raw2352_user_data_in_memory(tmp_path: Path) -> None:
+    iso = _small_iso()
+    raw = b"".join(
+        b"\x00" * 16 + iso[offset:offset + 2048] + b"\xff" * 288
+        for offset in range(0, len(iso), 2048)
+    )
+    track = tmp_path / "track.bin"
+    track.write_bytes(raw)
+    cue = tmp_path / "disc.cue"
+    cue.write_text('FILE "track.bin" BINARY\n  TRACK 01 MODE1/2352\n',
+                   encoding="utf-8")
+
+    image = MODULE.cue_track1_bytes(cue)
+
+    assert image == iso
+    assert MODULE.read_iso_files(image) == [(18 * 2048, 4, "FOO")]

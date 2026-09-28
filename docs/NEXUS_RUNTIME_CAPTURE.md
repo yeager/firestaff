@@ -869,6 +869,44 @@ do not identify a menu event, MAP row or SAL sample. This is authenticated
 transition evidence only; startup→menu, menu text, HUD and viewport admission
 remain blocked.
 
+### JP controller-reader retail-source join
+
+A matched Japanese retail run at emulation frame 10500 now identifies the
+controller-reader overlay from original disc bytes instead of treating its
+relocated WorkRAM PCs as if they were in `DM.BIN`. The source-write receipt
+from session `nexus-menu-source-reader-10500-20260928` joins the complete
+512-byte destination span `0x06014500..0x060146ff` to `TM.BIN` at file offset
+`0x4500`, with source-writer PC `0x00205f18`. The exact chunk is admitted by
+`scripts/analyze_nexus_sh2_source_trace.py` against the retail CUE; Track 1 is
+normalized in memory from raw 2352-byte sectors and no game member is written
+to disk. The receipt has 384 rows, three contiguous destination chunks and two
+exact retail-member matches (`0DMSTRT.BIN` and `TM.BIN`). Its source-trace
+SHA-256 is `012a0b757556688ac8e868cb0c45b6cf1ccd3b469a1557570eb23c9715f0191b`.
+The matching ISO byte offset `0xdaed00` is sector `0x1b5d` plus `0x500` bytes,
+matching the trace's source LBA for all rows in this chunk. This was a partial
+instrumentation run: the source-write trace was flushed and hash-receipted, but
+the separate raw-frame capture did not finish (`capture_exit_status=1`).
+
+Disassembly of the matched retail `TM.BIN` bytes places the live pipeline PCs
+at offsets `0x456c`, `0x4582`, `0x4594` and `0x45b0`. The containing code reads
+SMPC OREG bytes starting at `0x20100021` and processes a controller packet
+through a RAM-backed state buffer. A same-frame matched RAM snapshot pair
+(frame 10500, 1 MiB WorkRAMH each) differs in only six bytes: three at
+`0x0602c8f9..0x0602c8fb` and the corresponding three at
+`0x0602c900..0x0602c902`. The input snapshot carries `17 41 07` at both spans;
+the forced-no-button control carries `57 03 08`. The input-side SMPC trace
+independently verifies the relocated instruction words against that session's
+RAM snapshot (`master_sh2_instruction_identity=runtime_snapshot_verified`).
+
+This now binds the live input reader to exact Japanese retail code and proves
+that Start changes its controller-state bytes. It still does not decode the
+specific bytes into a Start action or connect that action to a title/menu
+transition; the trace analyzer correctly reports
+`input_consumer_semantics=unbound` and `semantic_admission=blocked`. The first
+attempted retail-to-runtime join against `DM.BIN` was invalid because this
+routine is loaded from `TM.BIN`; do not reuse that earlier static disassembly
+as the reader's source.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the

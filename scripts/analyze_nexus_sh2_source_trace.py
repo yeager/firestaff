@@ -29,47 +29,80 @@ LINE = re.compile(
     r"pc0=0x(?P<pc0>[0-9a-fA-F]+) pc1=0x(?P<pc1>[0-9a-fA-F]+)$"
 )
 SECTOR_SIZE = 2048
+RAW_SECTOR_SIZE = 2352
+RAW_USER_DATA_OFFSET = 16
 
 
-def read_iso_files(iso: Path) -> list[tuple[int, int, str]]:
-    with iso.open("rb") as stream:
-        stream.seek(16 * SECTOR_SIZE)
-        pvd = stream.read(SECTOR_SIZE)
-        root = pvd[156:]
-        if len(root) < 34:
-            raise ValueError("ISO9660 root record is truncated")
-        root_lba = int.from_bytes(root[2:6], "little")
-        root_size = int.from_bytes(root[10:14], "little")
-        files: list[tuple[int, int, str]] = []
+def cue_track1_bytes(cue: Path) -> bytes:
+    """Read the first data track from a CUE into memory as 2048-byte sectors."""
+    for line in cue.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = re.match(r'^\s*FILE\s+"([^"]+)"\s+\S+', line, re.IGNORECASE)
+        if not match:
+            continue
+        track = (cue.parent / match.group(1)).read_bytes()
+        if len(track) % RAW_SECTOR_SIZE == 0:
+            return b"".join(
+                track[offset + RAW_USER_DATA_OFFSET:
+                      offset + RAW_USER_DATA_OFFSET + SECTOR_SIZE]
+                for offset in range(0, len(track), RAW_SECTOR_SIZE)
+            )
+        if len(track) % SECTOR_SIZE == 0:
+            return track
+        raise ValueError(
+            "CUE Track 1 is neither raw 2352-byte nor ISO 2048-byte sectors"
+        )
+    raise ValueError("CUE has no quoted Track 1 file")
 
-        def walk(lba: int, size: int, prefix: str) -> None:
-            stream.seek(lba * SECTOR_SIZE)
-            data = stream.read(size)
-            offset = 0
-            while offset < len(data):
-                record_length = data[offset]
-                if record_length == 0:
-                    offset = ((offset // SECTOR_SIZE) + 1) * SECTOR_SIZE
-                    continue
-                record = data[offset : offset + record_length]
-                if len(record) < 34:
-                    raise ValueError("ISO9660 directory record is truncated")
-                child_lba = int.from_bytes(record[2:6], "little")
-                child_size = int.from_bytes(record[10:14], "little")
-                flags = record[25]
-                name_length = record[32]
-                name = record[33 : 33 + name_length].decode("ascii", "replace")
-                if name not in ("\x00", "\x01"):
-                    name = name.split(";", 1)[0].upper()
-                    child_path = f"{prefix}/{name}".strip("/")
-                    if flags & 2:
-                        walk(child_lba, child_size, child_path)
-                    else:
-                        files.append((child_lba * SECTOR_SIZE, child_size, child_path))
-                offset += record_length
 
-        walk(root_lba, root_size, "")
-        return files
+def read_iso_files(iso_bytes: bytes) -> list[tuple[int, int, str]]:
+    """Return ISO9660 file byte ranges and names from an in-memory image."""
+    def sector(lba: int) -> bytes:
+        start = lba * SECTOR_SIZE
+        end = start + SECTOR_SIZE
+        if start < 0 or end > len(iso_bytes):
+            raise ValueError("ISO sector lies outside the image")
+        return iso_bytes[start:end]
+
+    pvd = sector(16)
+    if pvd[1:6] != b"CD001":
+        raise ValueError("ISO9660 primary volume descriptor is missing")
+    root = pvd[156:]
+    if len(root) < 34:
+        raise ValueError("ISO9660 root record is truncated")
+    root_lba = int.from_bytes(root[2:6], "little")
+    root_size = int.from_bytes(root[10:14], "little")
+    files: list[tuple[int, int, str]] = []
+
+    def walk(lba: int, size: int, prefix: str) -> None:
+        start = lba * SECTOR_SIZE
+        data = iso_bytes[start:start + size]
+        if len(data) != size:
+            raise ValueError("ISO9660 directory extent is truncated")
+        offset = 0
+        while offset < len(data):
+            record_length = data[offset]
+            if record_length == 0:
+                offset = ((offset // SECTOR_SIZE) + 1) * SECTOR_SIZE
+                continue
+            record = data[offset:offset + record_length]
+            if len(record) < 34:
+                raise ValueError("ISO9660 directory record is truncated")
+            child_lba = int.from_bytes(record[2:6], "little")
+            child_size = int.from_bytes(record[10:14], "little")
+            flags = record[25]
+            name_length = record[32]
+            name = record[33:33 + name_length].decode("ascii", "replace")
+            if name not in ("\x00", "\x01"):
+                name = name.split(";", 1)[0].upper()
+                child_path = f"{prefix}/{name}".strip("/")
+                if flags & 2:
+                    walk(child_lba, child_size, child_path)
+                else:
+                    files.append((child_lba * SECTOR_SIZE, child_size, child_path))
+            offset += record_length
+
+    walk(root_lba, root_size, "")
+    return files
 
 
 def read_rows(trace: Path) -> list[tuple[int, int, int, int, int, int, int, int]]:
@@ -112,7 +145,8 @@ def chunks(rows: list[tuple[int, int, int, int, int, int, int, int]]) -> list[li
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("iso", type=Path)
+    parser.add_argument("image", type=Path,
+                         help="2048-byte ISO image or CUE with a raw/ISO Track 1")
     parser.add_argument("trace", type=Path)
     parser.add_argument("--require-member", action="append", default=[])
     parser.add_argument(
@@ -128,8 +162,9 @@ def main() -> int:
     args = parser.parse_args()
     try:
         rows = read_rows(args.trace)
-        files = read_iso_files(args.iso)
-        iso_bytes = args.iso.read_bytes()
+        iso_bytes = (cue_track1_bytes(args.image) if args.image.suffix.lower() == ".cue"
+                     else args.image.read_bytes())
+        files = read_iso_files(iso_bytes)
     except (OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_SH2_SOURCE_TRACE_INVALID: {error}")
         return 1
