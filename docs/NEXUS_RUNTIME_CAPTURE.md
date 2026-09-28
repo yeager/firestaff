@@ -115,6 +115,29 @@ byte-identical to the same no-input control in all eight captured VDP1/VDP2
 regions for the 80-frame window, so it admits neither a debug feature nor a
 menu/gameplay transition.
 
+A matched JP retail control/START pair at frames 1000--1079 exercised a
+20-frame `0x10` START pulse at frames 1020--1039. The matched SMPC read traces
+show address `0x10` returning `0x00` in the control, `0x10` during the pulse,
+and `0x00` again at frame 1040. The raw VDP capture hash and all three rendered
+frame hashes (1000, 1020, 1079) are identical between the pair. This confirms
+that the external input hook changes the observed SMPC return byte in this
+window, but not that the game interprets it as a menu action: the source
+consumer receipt rejects frame 1020 because RPC `0x06014514` has captured PIF
+`0x2310` while retail `DM.BIN` contains `0x0009` there, and both ID/IF pipeline
+PCs are zero. The sampled images remain an intro-logo sequence with no
+input-correlated presentation change; semantic admission stays blocked.
+
+The shared 80-frame raw SHA-256 is
+`c1996a2b2fab4599d275945fd98194f894941d541e992593d98ef31b6cb246db`;
+the START-run input-event trace is
+`37f69607da48713cec5eeab996a5efdfbc58f5686b11c34db52638c670e37fca` and its
+bounded SMPC-read trace is
+`bdb7b1568de800c44122e6f60a73557c66422e93d04b761c12eedbc3066e0f5b`. The
+matching rendered-frame hashes are `ef488068746129d499325a1ff8f301f7768d36a5af860e41903332276c995b1d`
+(1000), `b21d75a28fdbe57d7a22a24aff2a4270671f069d19c3b1780fbd08963c5503a9`
+(1020), and `f316d3c4410475102b15b185ed24b35f22e63668059631e7622bdd96848df4e8`
+(1079).
+
 For a diagnostic pass, `FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG=1` selects
 Mednafen's debugger CPU loop in the external capture build so `PC_ID` and
 `PC_IF` are populated. This is not an admission override: the analyzer still
