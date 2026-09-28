@@ -17,6 +17,10 @@
   word-swapped retail join; other DGN surfaces did join. Menu ownership and
   semantic admission therefore remain blocked. The capture and game data stay
   on TRV2.
+- The source-join summary now reports per-draw coverage instead of labeling
+  the whole frame `verified` after any single hit. Re-running the authentic
+  frame-700 Japanese capture reports `source_joined_draws=225/227` and
+  `source_join=partial`; the two recurring spans remain the unmatched draws.
 
 ## 2026-09-28 — VDP1 write-trace pre-capture prefix
 

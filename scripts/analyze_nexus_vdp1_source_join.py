@@ -183,6 +183,17 @@ def retail_file_matches(
     return exact, word_swap
 
 
+def aggregate_source_join_status(draw_count: int, joined_count: int) -> str:
+    """Summarize per-draw byte joins without promoting one hit to all draws."""
+    if draw_count <= 0:
+        return "no_draws"
+    if joined_count <= 0:
+        return "unbound"
+    if joined_count < draw_count:
+        return "partial"
+    return "complete"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -244,7 +255,7 @@ def main() -> int:
         f"mns_surfaces={len(mns)} dgn_structure2_surfaces={len(dgn)}"
     )
     retail_files, rejected_files = authenticated_retail_files(args.data_dir)
-    retail_join = False
+    joined_draws = 0
     for offset, colour_mode, source_offset, source in draws:
         source_hash = hashlib.sha256(source).hexdigest()
         exact: list[str] = []
@@ -262,7 +273,12 @@ def main() -> int:
             if swapped_words(surface) == source:
                 dgn_swapped_exact.append(name)
         file_exact, file_word_swap = retail_file_matches(retail_files, source)
-        retail_join = retail_join or bool(file_exact or file_word_swap)
+        draw_joined = bool(
+            exact or swapped_exact or dgn_exact or dgn_swapped_exact or
+            file_exact or file_word_swap
+        )
+        if draw_joined:
+            joined_draws += 1
         print(
             f"command_offset=0x{offset:05x} colour_mode={colour_mode} "
             f"source_offset=0x{source_offset:05x} source_bytes={len(source)} "
@@ -280,10 +296,8 @@ def main() -> int:
               ("|".join(file_word_swap) if file_word_swap else "none"))
         print(f"retail_files_scanned={len(retail_files)}")
         print(f"retail_files_hash_rejected={rejected_files}")
-    print("source_join=verified" if any(
-        surface == source or swapped_words(surface) == source
-        for _, _, _, source in draws for _, surface in (mns + dgn)
-    ) or retail_join else "source_join=unbound")
+    print(f"source_joined_draws={joined_draws}/{len(draws)}")
+    print("source_join=" + aggregate_source_join_status(len(draws), joined_draws))
     print("semantic_admission=blocked")
     return 0
 

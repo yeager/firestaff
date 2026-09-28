@@ -5,7 +5,11 @@ from __future__ import annotations
 
 import unittest
 
-from analyze_nexus_vdp1_source_join import accepted_retail_hashes, swapped_words
+from analyze_nexus_vdp1_source_join import (
+    accepted_retail_hashes,
+    aggregate_source_join_status,
+    swapped_words,
+)
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
@@ -36,6 +40,12 @@ class AcceptedRetailHashesTests(unittest.TestCase):
         self.assertEqual(swapped_words(b"\x12\x34\xab\xcd"),
                          b"\x34\x12\xcd\xab")
         self.assertEqual(swapped_words(b"\x12\x34\xab"), b"\x34\x12\xab")
+
+    def test_summary_requires_every_draw_for_complete_join(self) -> None:
+        self.assertEqual(aggregate_source_join_status(0, 0), "no_draws")
+        self.assertEqual(aggregate_source_join_status(3, 0), "unbound")
+        self.assertEqual(aggregate_source_join_status(3, 2), "partial")
+        self.assertEqual(aggregate_source_join_status(3, 3), "complete")
 
 
 if __name__ == "__main__":
