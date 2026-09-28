@@ -1,4 +1,5 @@
 #include "nexus_v1_prs3_structure2_abi.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,6 +75,7 @@ static void test_real_prs3_structure2_abi_gate(void)
     Nexus_V1_Level level;
     Nexus_V1_Prs3Structure2AbiInput input;
     Nexus_V1_Prs3Structure2AbiReceipt receipt;
+    int japanese_menu_revision;
 
     if (!nexus_path("DM.BIN", dm_path, sizeof(dm_path)) ||
         !nexus_path("MENU.BPK", menu_path, sizeof(menu_path)) ||
@@ -87,6 +89,8 @@ static void test_real_prs3_structure2_abi_gate(void)
         free(lev00);
         return;
     }
+    japanese_menu_revision = asset_file_matches_md5(
+        menu_path, "c2776768ff25287c79013a1452253ca0");
 
     memset(&level, 0, sizeof(level));
     CHECK(nexus_v1_level_load(&level, lev00, (int)lev00_size, 0) == 0,
@@ -113,21 +117,22 @@ static void test_real_prs3_structure2_abi_gate(void)
     CHECK(receipt.positive_prs3_vector_bound &&
               receipt.prs3_entry_index == 5U &&
               receipt.prs3_stream_offset == 1612U &&
-              receipt.prs3_stream_size == 560U &&
+              receipt.prs3_stream_size == (japanese_menu_revision ? 552U : 560U) &&
               receipt.prs3_expected_output_bytes == 1674U &&
               receipt.prs3_width == 54U &&
               receipt.prs3_height == 31U &&
               receipt.prs3_bpp == 1U &&
               receipt.prs3_output_fnv1a64 ==
-                  UINT64_C(0x290a9d13c0224cc6) &&
+                  (japanese_menu_revision ? UINT64_C(0x14cacc01cee292aa) :
+                                            UINT64_C(0x290a9d13c0224cc6)) &&
               receipt.prs3_header_span_fnv1a64 != 0U &&
               receipt.prs3_bitmap_candidate_fnv1a64 != 0U &&
               receipt.prs3_bitmap_candidate_offset == 1616U &&
-              receipt.prs3_bitmap_candidate_size == 556U &&
-              receipt.prs3_input_read_bytes == 529U &&
+              receipt.prs3_bitmap_candidate_size == (japanese_menu_revision ? 548U : 556U) &&
+              receipt.prs3_input_read_bytes == (japanese_menu_revision ? 514U : 529U) &&
               receipt.prs3_output_store_count == 1674U &&
-              receipt.prs3_zero_merge_count == 158U &&
-              receipt.prs3_zero_copy_count == 1503U,
+              receipt.prs3_zero_merge_count == (japanese_menu_revision ? 164U : 158U) &&
+              receipt.prs3_zero_copy_count == (japanese_menu_revision ? 1527U : 1503U),
           "entry 5 positive vector facts are retained");
     CHECK(receipt.palt_trailer_bound &&
               receipt.palt_entries_are_be16 &&

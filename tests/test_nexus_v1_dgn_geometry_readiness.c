@@ -5598,10 +5598,14 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     file = fopen(path, "rb");
     if (!file) return;
     CHECK(asset_file_matches_md5(path,
-              "be3ea97919c7e802e5b151aad20fd6ec"),
-          "real ITEM.IBS corpus matches the authenticated European retail identity");
+              "be3ea97919c7e802e5b151aad20fd6ec") ||
+              asset_file_matches_md5(path,
+              "309dc91bd14ded1223c72dd6c743f17c"),
+          "real ITEM.IBS corpus matches an authenticated regional retail identity");
     if (!asset_file_matches_md5(path,
-              "be3ea97919c7e802e5b151aad20fd6ec")) {
+              "be3ea97919c7e802e5b151aad20fd6ec") &&
+        !asset_file_matches_md5(path,
+              "309dc91bd14ded1223c72dd6c743f17c")) {
         fclose(file);
         return;
     }

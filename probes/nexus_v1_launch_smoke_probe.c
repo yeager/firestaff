@@ -163,18 +163,20 @@ int main(int argc, char **argv) {
                  "engine still initialized after 5 ticks");
 
     /* The supplied retail root is intentionally mixed: authenticated
-     * executable/levels are loose files while English disc metadata is
-     * ISO-only. Verify exact-member fallback without promoting the ISO over
-     * the loose source. */
+     * executable/levels are loose files while the original disc metadata is
+     * ISO-only. Japanese and English retail discs carry 182- and 210-byte
+     * DMN_ABS.TXT members respectively. Verify exact-member fallback without
+     * promoting the ISO over the loose source. */
     if (engine.source == NEXUS_SRC_EXTRACTED) {
         int metadata_size = 0;
         uint8_t *metadata = nexus_v1_read_file(
             &engine, "DMN_ABS.TXT", &metadata_size);
         PROBE_ASSERT(engine.supplemental_iso_valid == 1,
                      "supplemental retail ISO admitted for mixed root");
-        PROBE_ASSERT(metadata != NULL && metadata_size == 210,
+        PROBE_ASSERT(metadata != NULL &&
+                         (metadata_size == 182 || metadata_size == 210),
                      "ISO-only DMN_ABS.TXT read via supplemental ISO"
-                     " (size %d)", metadata_size);
+                     " has a known regional size (got %d)", metadata_size);
         free(metadata);
     }
 

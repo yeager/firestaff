@@ -1,4 +1,5 @@
 #include "nexus_v1_prs3_sh2_subset_trace.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,6 +71,7 @@ static void test_real_subset_trace(void)
     size_t menu_bpk_size = 0U;
     Nexus_V1_Prs3Sh2SubsetTraceInput input;
     Nexus_V1_Prs3Sh2SubsetTraceReceipt receipt;
+    int japanese_menu_revision;
 
     if (!nexus_path("DM.BIN", dm_path, sizeof(dm_path)) ||
         !nexus_path("MENU.BPK", menu_path, sizeof(menu_path)) ||
@@ -80,6 +82,8 @@ static void test_real_subset_trace(void)
         free(menu_bpk);
         return;
     }
+    japanese_menu_revision = asset_file_matches_md5(
+        menu_path, "c2776768ff25287c79013a1452253ca0");
 
     memset(&input, 0, sizeof(input));
     input.dm_bin = dm_bin;
@@ -160,24 +164,24 @@ static void test_real_subset_trace(void)
           "real DM.BIN/MENU.BPK subset trace runs for entry 5");
     CHECK(receipt.status == NEXUS_V1_PRS3_SH2_SUBSET_READY_BLOCKED &&
               receipt.entry_index == 5U &&
-              receipt.stream_size == 560U &&
-              receipt.body_size == 560U &&
+              receipt.stream_size == (japanese_menu_revision ? 552U : 560U) &&
+              receipt.body_size == (japanese_menu_revision ? 552U : 560U) &&
               receipt.expected_output_bytes == 1674U &&
               receipt.source_includes_frame_word &&
               receipt.linear_output_store_instructions_proven,
           "entry 5 binds a full real stream/output vector");
-    CHECK(receipt.executed_steps == 329U &&
-              receipt.input_read_bytes == 529U &&
-              receipt.final_r14_remaining == 31U &&
+    CHECK(receipt.executed_steps == (japanese_menu_revision ? 311U : 329U) &&
+              receipt.input_read_bytes == (japanese_menu_revision ? 514U : 529U) &&
+              receipt.final_r14_remaining == (japanese_menu_revision ? 38U : 31U) &&
               receipt.output_store_count == 1674U &&
               receipt.ring_store_count == 1674U &&
               receipt.linear_output_store_count == 1674U &&
               receipt.output_index_advance_count == 1674U &&
-              receipt.nonzero_control_count == 171U &&
-              receipt.zero_control_count == 158U &&
-              receipt.refill_count == 42U &&
-              receipt.zero_merge_count == 158U &&
-              receipt.zero_indexed_read_count == 1503U,
+              receipt.nonzero_control_count == (japanese_menu_revision ? 147U : 171U) &&
+              receipt.zero_control_count == (japanese_menu_revision ? 164U : 158U) &&
+              receipt.refill_count == (japanese_menu_revision ? 39U : 42U) &&
+              receipt.zero_merge_count == (japanese_menu_revision ? 164U : 158U) &&
+              receipt.zero_indexed_read_count == (japanese_menu_revision ? 1527U : 1503U),
           "entry 5 observes full source/output/control movement");
     CHECK(receipt.first_nonzero_input_byte == 0xa6U &&
               receipt.first_nonzero_output_byte == 0xa6U &&
@@ -188,9 +192,11 @@ static void test_real_subset_trace(void)
     CHECK(receipt.final_r6_index == 1674U &&
               receipt.final_r10_output_offset == 1674U &&
               receipt.output_prefix_fnv1a64 ==
-                  UINT64_C(0x290a9d13c0224cc6) &&
+                  (japanese_menu_revision ? UINT64_C(0x14cacc01cee292aa) :
+                                            UINT64_C(0x290a9d13c0224cc6)) &&
               receipt.control_trace_fnv1a64 ==
-                  UINT64_C(0xf305b1060657bb06),
+                  (japanese_menu_revision ? UINT64_C(0x1a0e6440b26b01bd) :
+                                            UINT64_C(0xf305b1060657bb06)),
           "entry 5 full output vector fingerprint is stable");
     CHECK(receipt.full_expected_output_observed &&
               receipt.positive_output_vector_bound &&

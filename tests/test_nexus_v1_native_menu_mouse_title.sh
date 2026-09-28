@@ -1,9 +1,8 @@
 #!/bin/sh
 # Verify the visible Nexus card flow using only pointer input.  The retail
-# Saturn CUE/BIN remains in place; this test gives Firestaff its absolute
-# source path and checks that the native MAPD title route clears before the
-# next, independently tracked startup prerequisite.  It never substitutes a
-# synthetic VDP capture for retail disc data.
+# Saturn CUE/BIN remains in place; a hash-verified extracted corpus takes
+# precedence while the CUE is admitted as supplemental media.  The title
+# route remains capture-gated, so this test must not claim a usable menu.
 set -eu
 
 firestaff_cli="${1:?Firestaff executable is required}"
@@ -44,13 +43,13 @@ if ! printf '%s\n' "$output" | grep -Fq \
         'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' ||
    ! printf '%s\n' "$output" | grep -Fq \
         'blocker=menu-bpk-prs3-capture-required' ||
-   ! printf '%s\n' "$output" | grep -Fq 'Nexus: opened disc image ' ||
+   ! printf '%s\n' "$output" | grep -Fq 'Nexus: supplemental retail ISO ' ||
    ! printf '%s\n' "$output" | grep -Fq 'TITLE.CG/4bpp-atlas' ||
    ! printf '%s\n' "$output" | grep -Fq \
-        'Nexus V1 engine initialized (source: ISO)'; then
-    echo "FAIL: pointer-only Nexus card flow did not clear the real Saturn title route" >&2
+        'Nexus V1 engine initialized (source: extracted)'; then
+    echo "FAIL: pointer-only Nexus card flow did not reach the authentic capture-gated title route" >&2
     printf '%s\n' "$output" >&2
     exit 1
 fi
 
-echo "PASS: Nexus mouse cards clear the native Saturn MAPD title route in memory"
+echo "PASS: Nexus mouse route reaches the authentic Saturn title capture gate"

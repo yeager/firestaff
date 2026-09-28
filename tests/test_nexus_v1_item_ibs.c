@@ -71,7 +71,9 @@ static int test_real_decode(void) {
     /* The format/size census is not enough to establish retail provenance:
      * a same-sized synthetic IBS could otherwise pass every decoder check. */
     if (!asset_file_matches_md5(path,
-                                "be3ea97919c7e802e5b151aad20fd6ec")) {
+                                "be3ea97919c7e802e5b151aad20fd6ec") &&
+        !asset_file_matches_md5(path,
+                                "309dc91bd14ded1223c72dd6c743f17c")) {
         printf("  FAIL ITEM.IBS is not the authenticated retail source\n");
         free(data);
         return 1;

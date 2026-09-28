@@ -41,6 +41,7 @@
  */
 
 #include "nexus_v1_bpk_archive.h"
+#include "asset_find_by_hash.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -491,12 +492,34 @@ static void test_synthetic_bppk_evidence(void) {
 static void test_optional_real_menumenu_bpk(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
+    char menu_path[1024];
     uint8_t *data = NULL;
     size_t size = 0;
+    int japanese_revision;
+    int english_revision;
+    int french_revision;
 
     printf("\n--- optional real MENU.BPK (no asset loaded in CI) ---\n");
     if (!read_optional_menumenu_bpk(data_dir, home, &data, &size)) {
         printf("  SKIP: real MENU.BPK not present\n");
+        return;
+    }
+    if (data_dir && data_dir[0]) {
+        snprintf(menu_path, sizeof(menu_path), "%s/MENU.BPK", data_dir);
+    } else {
+        snprintf(menu_path, sizeof(menu_path), "%s/.firestaff/data/nexus/MENU.BPK",
+                 home ? home : "");
+    }
+    japanese_revision = asset_file_matches_md5(
+        menu_path, "c2776768ff25287c79013a1452253ca0");
+    english_revision = asset_file_matches_md5(
+        menu_path, "a6f2272a4f6cb3c6b3b33012bc5b15ed");
+    french_revision = asset_file_matches_md5(
+        menu_path, "fcf8a00fbb92593ed9ae908f8e285cda");
+    CHECK(japanese_revision || english_revision || french_revision,
+          "real MENU.BPK matches a verified Japanese, English, or French retail identity");
+    if (!japanese_revision && !english_revision && !french_revision) {
+        free(data);
         return;
     }
 
@@ -601,9 +624,14 @@ static void test_optional_real_menumenu_bpk(void) {
                           framing.decoder_promoted == 0,
                       "real MENU.BPK framing receipt remains diagnostic-only");
                 CHECK(framing.be_at_least_stream == 161U &&
-                          framing.be_near_stream == 158U &&
+                          (japanese_revision
+                               ? framing.be_near_stream == 161U
+                               : english_revision
+                                     ? framing.be_near_stream == 158U
+                                     : framing.be_near_stream <=
+                                           framing.be_at_least_stream) &&
                           framing.le_near_stream == 0U,
-                      "real MENU.BPK first word is BE span-close on 158 entries");
+                      "real MENU.BPK regional frame spans remain diagnostic-only");
                 CHECK(framing.be_shorter_than_stream == 1U &&
                           framing.first_be_short_entry == 162U &&
                           framing.be_tail_bytes_total == 6U,
@@ -634,12 +662,19 @@ static void test_optional_real_menumenu_bpk(void) {
                         (Nexus_V1_BpkPrs3CandidateBitOrder)order,
                         framed_rows, capacity, &framed);
                     CHECK(rc == 0 && framed.prs3_surfaces == 162U &&
-                              framed.frame_validated == 158U &&
-                              framed.unvalidated_frames == 4U &&
-                              framed.evaluated == 158U &&
+                              (japanese_revision
+                                   ? framed.frame_validated == 161U &&
+                                         framed.unvalidated_frames == 1U
+                                   : english_revision
+                                         ? framed.frame_validated == 158U &&
+                                               framed.unvalidated_frames == 4U
+                                         : framed.frame_validated +
+                                               framed.unvalidated_frames ==
+                                                   framed.prs3_surfaces) &&
+                              framed.evaluated == framed.frame_validated &&
                               framed.complete_exact == 0U &&
                               framed.complete_trailing == 0U &&
-                              framed.command_failures == 158U &&
+                              framed.command_failures == framed.frame_validated &&
                               framed.decoder_promoted == 0,
                           "real MENU.BPK framed evaluation has no exact promotion");
                     printf("  INFO: framed %s valid=%u failed=%u trailing=%u exact=%u "

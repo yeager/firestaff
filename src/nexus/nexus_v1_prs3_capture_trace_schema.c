@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #define NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5 "a6f2272a4f6cb3c6b3b33012bc5b15ed"
+#define NEXUS_V1_PRS3_CAPTURE_MENU_BPK_JA_MD5 "c2776768ff25287c79013a1452253ca0"
 #define NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5 "e88d60859f65f08fa622e1992b02280f"
 #define NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES (1024U * 1024U)
 #define NEXUS_V1_PRS3_SH2_ZERO_SIDE_LINEAR_FNV1A64 \
@@ -1755,8 +1756,12 @@ int nexus_v1_prs3_vdp1_capture_validate_files(
                                &dm_bin_size);
     if (!trace_data || !menu_bpk || !dm_bin) goto done;
     md5_digest(menu_bpk, menu_bpk_size, digest);
+    /* Accept the English capture revision and the independently indexed
+     * Japanese retail revision.  The source-bound receipt still binds every
+     * trace field to the exact MENU.BPK bytes supplied by the caller. */
     receipt.menu_bpk_original_hash_verified =
-        md5_matches_hex(digest, NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5);
+        md5_matches_hex(digest, NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5) ||
+        md5_matches_hex(digest, NEXUS_V1_PRS3_CAPTURE_MENU_BPK_JA_MD5);
     md5_digest(dm_bin, dm_bin_size, digest);
     receipt.dm_bin_original_hash_verified =
         md5_matches_hex(digest, NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5);
