@@ -54,6 +54,14 @@ presentation boundary.
   texture sources for frames 30000--30037, but remains an unbound hardware
   observation rather than proof of a menu, HUD or dungeon consumer.  Search
   beyond this window for the first input-correlated presentation change.
+  A further matched JP control/input pair at frames 40000--40079 scheduled the
+  remaining Up/Down/Left/Right/X/Y/Z/L/R masks (each for two frames). The
+  80-frame raw VDP1/VDP2 capture matched the no-input control byte-for-byte
+  (`627a1055274abbd164bc1bab7a9253ae2760e0a1a039ef0c587748ff10083681`),
+  and frames 40000 and 40079 rendered identically; the input-event receipt
+  confirms only that the external hook scheduled the masks, not that Saturn
+  code consumed them. This later window adds no menu/gameplay semantics; the
+  first input-correlated presentation change remains open.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the

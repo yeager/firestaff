@@ -158,6 +158,19 @@ matching rendered-frame hashes are `99fd3ff47bf58af36c021be7695edb78498805df5346
 (40020), and `fd2ecae82077ad19818ad4de1e9d86278d71a0519667a05621651cfab2ea5eb5`
 (40079).
 
+A further matched JP pair at frames 40000--40079 schedules the nine remaining
+digital-pad masks not covered by the earlier START/A/B/C trials: Up/Down/Left/
+Right (`0x0001`, `0x0002`, `0x0004`, `0x0008`) and X/Y/Z/L/R (`0x0100`,
+`0x0200`, `0x0400`, `0x0800`, `0x1000`), each for two frames inside the
+captured window. The external input-event receipt
+`d41b8de558e270255d0ee5e7eb995f3ddc4349c2bf2b2084c26ad35bba197fb7` records
+every scheduled mask. The complete 80-frame raw VDP1/VDP2 capture is
+byte-identical to the no-input control; both have SHA-256
+`627a1055274abbd164bc1bab7a9253ae2760e0a1a039ef0c587748ff10083681`.
+Rendered frames 40000 and 40079 also compare byte-identically. This closes
+only the tested masks/window: the event trace does not prove the Saturn game
+consumed those signals, and no menu or gameplay meaning is inferred.
+
 For a diagnostic pass, `FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG=1` selects
 Mednafen's debugger CPU loop in the external capture build so `PC_ID` and
 `PC_IF` are populated. This is not an admission override: the analyzer still
