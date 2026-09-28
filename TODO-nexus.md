@@ -17,6 +17,15 @@ BIN media. `test_nexus_v1_title_mapd_real`, `test_m11_nexus_startup_gate` and
 `test_m11_nexus_startup_runtime_handoff` cover this bounded path. The renderer
 does not authorise the separate menu, face, HUD or dungeon compositors.
 
+Four authentic 32 KiB Saturn Backup RAM images with a `DMNEXUS__01` entry
+are available in the private real-data corpus. The savegame editor now reads
+their block chains and exposes each exact 20,480-byte payload as read-only
+hex; it does not assign payload fields or allow rewriting. The
+`nexus_v1_saturn_bkr_real_data` CTest validates the real samples when present
+and skips when the private sample corpus is absent. Native Saturn save/load
+compatibility remains blocked until the payload schema and retail consumer
+are source-bound.
+
 An end-to-end check against the installed English Saturn CUE on 2026-09-27
 confirms that `--game nexus --platform saturn` opens the original disc and
 reaches `phase=nexus-title` with `titleReady=1` after 140 frames. Sending Enter

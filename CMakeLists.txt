@@ -64,6 +64,17 @@ unset(_candidate_sha256)
 # calls are registered instead of silently disappearing from the test plan.
 include(CTest)
 
+if(BUILD_TESTING)
+    add_test(NAME nexus_v1_saturn_bkr_real_data
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/firestaff_savegame_editor.py
+            --self-test-bkr)
+    set_tests_properties(nexus_v1_saturn_bkr_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        SKIP_RETURN_CODE 77
+        LABELS "nexus;saturn;save;real_data;skip_safe")
+endif()
+
 if(BUILD_TESTING AND
    EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_quest_item_names.c")
     add_executable(test_theron_v1_track02_quest_item_names

@@ -1404,3 +1404,43 @@ msgstr ""
 #: scripts/firestaff_savegame_editor.py:897
 msgid "Format/Platform/Dungeon"
 msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:781
+msgid "Game-specific Nexus payload fields are not yet verified."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:831
+msgid "Comment"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:833
+msgid "Allocated blocks"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:824
+msgid "Saturn Backup RAM"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:788
+msgid "Only available for Saturn Backup RAM images."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:825
+msgid "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:832
+msgid "Payload size"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:836
+msgid "Payload starts (hex): {}…"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:757 scripts/firestaff_savegame_editor.py:766
+msgid "Read only"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:758 scripts/firestaff_savegame_editor.py:767
+msgid "Saturn Backup RAM images can be inspected but not edited or rewritten."
+msgstr ""

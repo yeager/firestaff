@@ -25,6 +25,8 @@ and CRC mismatches. Writes use a temporary file and atomic rename.
 ## Original Saturn boundary
 
 The original Dungeon Master Nexus stored saves in Saturn backup RAM or
-memory-card storage. Its record layout and source-owned load consumer remain
-unverified. An empty Mednafen backup image must not be treated as an authentic
-played save. Original Saturn save import remains capture-gated.
+memory-card storage. Four authentic Mednafen BKR images with the
+`DMNEXUS__01` save entry are available in the private real-data corpus. The
+savegame editor reads their block chains and displays the exact 20,480-byte
+payload as read-only hex. Its game-state schema and source-owned load consumer
+remain unverified, so original Saturn save import remains capture-gated.

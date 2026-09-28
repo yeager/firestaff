@@ -8,6 +8,7 @@ Supported formats:
   DM2   — SKSAVE.*    (SUPPRESS codec, 16 record types, 10 slots)
   TQ    — slotN.tqsv  (Theron's Quest, 64-byte header, XOR seed 0x5A)
   Nexus — *.fnxs      (Firestaff native, magic FNXS, CRC32)
+           *.bkr      (Saturn Backup RAM image; metadata/payload inspection)
 
 Requires Python 3.10+ and Tk 8.6+.
 """
@@ -147,7 +148,109 @@ GAME_LABELS = {
     "dm1": "Dungeon Master", "csb": "Chaos Strikes Back",
     "csbwin": "Chaos Strikes Back (CSBWin)",
     "dm2": "Dungeon Master II", "theron": "Theron's Quest", "nexus": "DM Nexus",
+    "nexus_bkr": "DM Nexus — Saturn Backup RAM",
 }
+
+SATURN_BKR_MAGIC = b"BackUpRam Format"
+SATURN_BKR_SAVE_TAG = b"\x80\x00\x00\x00"
+SATURN_BKR_CONTINUATION_TAG = b"\x00\x00\x00\x00"
+
+
+def parse_saturn_bkr(data: bytes) -> list[dict[str, Any]]:
+    """Read Saturn Backup RAM save entries without changing the image.
+
+    The block list is itself stored in save blocks and may cross into the
+    content area of blocks it names. This parser returns verified metadata
+    and byte-exact payloads; it does not interpret the game-specific bytes.
+    """
+    if len(data) < 128 or data[:len(SATURN_BKR_MAGIC)] != SATURN_BKR_MAGIC:
+        raise ValueError("not a Saturn Backup RAM image")
+    repeats = 0
+    while data[repeats * len(SATURN_BKR_MAGIC):
+               (repeats + 1) * len(SATURN_BKR_MAGIC)] == SATURN_BKR_MAGIC:
+        repeats += 1
+    block_size = repeats * 16
+    if block_size not in (64, 512) or len(data) % block_size:
+        raise ValueError("unsupported or truncated Saturn Backup RAM geometry")
+    block_count = len(data) // block_size
+    if block_count < 2:
+        raise ValueError("Saturn Backup RAM image has no save area")
+
+    def u16(offset: int) -> int:
+        if offset + 2 > len(data):
+            raise ValueError("truncated Saturn Backup RAM block list")
+        return int.from_bytes(data[offset:offset + 2], "big")
+
+    saves = []
+    claimed: set[int] = set()
+    for first_block in range(2, block_count):
+        if first_block in claimed:
+            continue
+        base = first_block * block_size
+        if data[base:base + 4] != SATURN_BKR_SAVE_TAG:
+            continue
+        name = data[base + 4:base + 15].split(b"\0", 1)[0].decode("ascii", "replace")
+        language = data[base + 15]
+        comment = data[base + 16:base + 26].split(b"\0", 1)[0].decode("ascii", "replace")
+        timestamp = int.from_bytes(data[base + 26:base + 30], "big")
+        payload_size = int.from_bytes(data[base + 30:base + 34], "big")
+
+        references: list[int] = []
+        list_block = first_block
+        cursor = base + 34
+        visited_list_blocks = {first_block}
+        terminator_at = None
+        while len(references) <= block_count:
+            block_end = (list_block + 1) * block_size
+            if cursor + 2 > block_end:
+                next_reference = len(visited_list_blocks) - 1
+                if next_reference >= len(references):
+                    raise ValueError("Saturn save block list cannot continue")
+                list_block = references[next_reference]
+                if (list_block in visited_list_blocks or list_block < 2 or
+                        list_block >= block_count):
+                    raise ValueError("invalid or cyclic Saturn save block list")
+                visited_list_blocks.add(list_block)
+                next_base = list_block * block_size
+                if data[next_base:next_base + 4] != SATURN_BKR_CONTINUATION_TAG:
+                    raise ValueError("invalid Saturn save continuation tag")
+                cursor = next_base + 4
+                continue
+            value = u16(cursor)
+            cursor += 2
+            if value == 0:
+                terminator_at = cursor
+                break
+            if (value < 2 or value >= block_count or value == first_block or
+                    value in claimed or value in references):
+                raise ValueError("invalid or overlapping Saturn save block reference")
+            references.append(value)
+        if terminator_at is None:
+            raise ValueError("unterminated Saturn save block list")
+        if payload_size == 0:
+            raise ValueError("empty Saturn save payload")
+        for block in references:
+            block_base = block * block_size
+            if data[block_base:block_base + 4] != SATURN_BKR_CONTINUATION_TAG:
+                raise ValueError("invalid Saturn save continuation tag")
+
+        stream_blocks = [first_block] + references
+        term_block = (terminator_at - 1) // block_size
+        if term_block not in stream_blocks:
+            raise ValueError("Saturn save directory escaped its block chain")
+        start_index = stream_blocks.index(term_block)
+        chunks = [data[terminator_at:(term_block + 1) * block_size]]
+        for block in stream_blocks[start_index + 1:]:
+            block_base = block * block_size
+            chunks.append(data[block_base + 4:block_base + block_size])
+        payload = b"".join(chunks)[:payload_size]
+        if len(payload) != payload_size:
+            raise ValueError("truncated Saturn save payload")
+        claimed.update(stream_blocks)
+        saves.append({"name": name, "language": language, "comment": comment,
+                      "timestamp_minutes": timestamp, "payload": payload,
+                      "blocks": tuple(stream_blocks)})
+    return saves
 CHAMPION_NAMES_DM1 = [
     "Halk", "Stamm", "Zed", "Leyla", "Mophus", "Wuuf",
     "Sonja", "Iaido", "Nabi", "Linflas", "Elija", "Chani",
@@ -363,9 +466,15 @@ class Savegame:
         self.header_data = bytearray()
         self.parts = {}
         self.modified = False
+        self.bkr_entries = []
+        self.read_only = False
         self._parse()
 
     def _parse(self):
+        if self.game == "nexus_bkr":
+            self.bkr_entries = parse_saturn_bkr(self.raw)
+            self.read_only = True
+            return
         if self.game in ("dm1", "csb"):
             self.header_data = bytearray(self.raw[:DM1_PC34_HEADER_SIZE])
             self.header_fields = DM1_PC34_HEADER_FIELDS
@@ -402,6 +511,8 @@ class Savegame:
         return bytearray(g["data"]) if g else bytearray()
 
     def save(self, path=None):
+        if self.read_only:
+            raise ValueError("Saturn Backup RAM images are inspection-only; editing is not supported")
         (path or self.path).write_bytes(bytes(self.raw))
         self.modified = False
 
@@ -419,6 +530,13 @@ def detect_game(data: bytes, filename: str = "") -> str | None:
             return "csbwin"
     if data.startswith(b"FNXS"):
         return "nexus"
+    if data.startswith(SATURN_BKR_MAGIC):
+        try:
+            if not parse_saturn_bkr(data):
+                return None
+        except ValueError:
+            return None
+        return "nexus_bkr"
     if data.startswith(b"TQSV"):
         return "theron"
     if data.startswith(b"SKSAVE"):
@@ -428,12 +546,73 @@ def detect_game(data: bytes, filename: str = "") -> str | None:
     return None
 
 
+def self_test_saturn_bkr(require_real_corpus: bool) -> int:
+    nexus_data_dir = os.environ.get("FIRESTAFF_NEXUS_DATA_DIR")
+    if not nexus_data_dir:
+        if require_real_corpus:
+            print("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not set")
+            return 77
+        return 0
+    bkr_files = sorted(Path(nexus_data_dir).glob("*.bkr"))
+    if not bkr_files:
+        if require_real_corpus:
+            print("SKIP: no real Nexus Saturn Backup RAM images found")
+            return 77
+        return 0
+
+    corpus = []
+    payloads_by_name = {}
+    for bkr_path in bkr_files:
+        raw_bkr = bkr_path.read_bytes()
+        entries = parse_saturn_bkr(raw_bkr)
+        assert detect_game(raw_bkr, bkr_path.name) == "nexus_bkr"
+        assert detect_game(raw_bkr[:-1], bkr_path.name) is None
+        assert len(entries) == 1
+        entry = entries[0]
+        assert entry["name"] == "DMNEXUS__01"
+        assert len(entry["payload"]) == 20480
+        assert len(entry["blocks"]) == 354
+        broken_bkr = bytearray(raw_bkr)
+        broken_bkr[0xA2:0xA4] = b"\xFF\xFF"
+        assert detect_game(broken_bkr, bkr_path.name) is None
+        savegame = Savegame("nexus_bkr", bkr_path, raw_bkr)
+        assert savegame.read_only and len(savegame.bkr_entries) == 1
+        try:
+            savegame.save()
+            raise AssertionError("BKR image unexpectedly writable")
+        except ValueError:
+            pass
+        corpus.append(entry["payload"])
+        payloads_by_name[bkr_path.name] = entry["payload"]
+
+    assert len(set(corpus)) == len(corpus), "real Nexus BKR saves should remain distinct"
+    named_samples = {
+        "nexus-two-champion-retail-written-20260926.bkr": 0x0434,
+        "nexus-three-champion-retail-written-20260926.bkr": 0x0514,
+        "nexus-four-champion-retail-written-20260926.bkr": 0x05F4,
+        "nexus-four-champion-leader-3-retail-written-20260926.bkr": 0x05F4,
+    }
+    if all(name in payloads_by_name for name in named_samples):
+        for name, observed_value in named_samples.items():
+            assert int.from_bytes(payloads_by_name[name][0x0A:0x0C], "big") == observed_value
+        assert named_samples["nexus-three-champion-retail-written-20260926.bkr"] - named_samples["nexus-two-champion-retail-written-20260926.bkr"] == 0xE0
+        assert named_samples["nexus-four-champion-retail-written-20260926.bkr"] - named_samples["nexus-three-champion-retail-written-20260926.bkr"] == 0xE0
+    print(f"firestaff_savegame_editor BKR corpus self-test: PASS ({len(bkr_files)} authentic images)")
+    return 0
+
+
+if "--self-test-bkr" in sys.argv:
+    raise SystemExit(self_test_saturn_bkr(require_real_corpus=True))
+
+
 if "--self-test" in sys.argv:
     assert detect_game(b"CSBGAME\0\x00\x02\x00\x00") == "csbwin"
     assert detect_game(b"FNXS\0") == "nexus"
     assert detect_game(b"TQSV\0") == "theron"
     assert detect_game(b"SKSAVE\0") == "dm2"
     assert detect_game(b"not a save") is None
+    assert detect_game(b"BackUpRam Format" * 4 + bytes(64)) is None
+    self_test_saturn_bkr(require_real_corpus=False)
     print("firestaff_savegame_editor self-test: PASS")
     raise SystemExit(0)
 
@@ -534,7 +713,7 @@ class SavegameEditor(tk.Tk):
         self._nb = ttk.Notebook(self)
         self._nb.pack(fill="both", expand=True, padx=4, pady=4)
 
-        tabs = ["Overview", "Header", "Save Parts", "Champions",
+        tabs = ["Overview", "Header", "Save Parts", "Champions", "Nexus Payload",
                 "Party Info", "Global Data", "Header Words", "Hex View"]
         self._frames = {}
         for t in tabs:
@@ -556,7 +735,7 @@ class SavegameEditor(tk.Tk):
     def open_file(self):
         path = filedialog.askopenfilename(
             title=_("Open Savegame"),
-            filetypes=[(_("All Savegames"), "*.DAT *.dat *.tqsv *.fnxs *.sav"),
+            filetypes=[(_("All Savegames"), "*.DAT *.dat *.tqsv *.fnxs *.bkr *.sav"),
                        (_("All Files"), "*")])
         if not path: return
         p = Path(path)
@@ -574,12 +753,18 @@ class SavegameEditor(tk.Tk):
     def save_file(self):
         if not self.savegame:
             messagebox.showwarning(_("Warning"), _("No savegame loaded")); return
+        if self.savegame.read_only:
+            messagebox.showinfo(_("Read only"),
+                _("Saturn Backup RAM images can be inspected but not edited or rewritten.")); return
         try: self.savegame.save(); self.status.set(_("Saved: {}").format(self.savegame.path.name))
         except Exception as e: messagebox.showerror(_("Error"), str(e))
 
     def save_as(self):
         if not self.savegame:
             messagebox.showwarning(_("Warning"), _("No savegame loaded")); return
+        if self.savegame.read_only:
+            messagebox.showinfo(_("Read only"),
+                _("Saturn Backup RAM images can be inspected but not edited or rewritten.")); return
         path = filedialog.asksaveasfilename(title=_("Save As"),
             defaultextension=self.savegame.path.suffix, initialfile=self.savegame.path.name)
         if not path: return
@@ -588,6 +773,20 @@ class SavegameEditor(tk.Tk):
 
     def _populate_all(self):
         self._populate_overview()
+        if self.savegame and self.savegame.game == "nexus_bkr":
+            for tab in ("Header", "Save Parts", "Champions", "Party Info",
+                        "Global Data", "Header Words"):
+                self._clear(tab)
+                ttk.Label(self._frames[tab],
+                          text=_("Game-specific Nexus payload fields are not yet verified."),
+                          wraplength=680, justify="left").pack(anchor="w", padx=8, pady=8)
+            self._populate_bkr_payload()
+            self._populate_hex()
+            return
+        self._clear("Nexus Payload")
+        ttk.Label(self._frames["Nexus Payload"],
+                  text=_("Only available for Saturn Backup RAM images."),
+                  wraplength=680, justify="left").pack(anchor="w", padx=8, pady=8)
         self._populate_header()
         self._populate_parts()
         self._populate_champions()
@@ -620,6 +819,23 @@ class SavegameEditor(tk.Tk):
         inner = self._scrollable("Overview")
 
         ttk.Label(inner, text=_("File Overview"), font=("",14,"bold")).pack(anchor="w", pady=(0,8))
+
+        if sg.game == "nexus_bkr":
+            card = ttk.LabelFrame(inner, text=_("Saturn Backup RAM"), padding=8)
+            card.pack(fill="x", pady=4)
+            ttk.Label(card, text=_("This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."),
+                      wraplength=680, justify="left").pack(anchor="w", pady=(0,8))
+            for entry in sg.bkr_entries:
+                entry_frame = ttk.LabelFrame(card, text=entry["name"], padding=6)
+                entry_frame.pack(fill="x", pady=3)
+                for key, value in ((_("Comment"), entry["comment"]),
+                                   (_("Payload size"), f"{len(entry['payload']):,} bytes"),
+                                   (_("Allocated blocks"), len(entry["blocks"]))):
+                    ttk.Label(entry_frame, text=f"{key}: {value}").pack(anchor="w")
+                preview = entry["payload"][:64].hex(" ").upper()
+                ttk.Label(entry_frame, text=_("Payload starts (hex): {}…").format(preview),
+                          wraplength=680, justify="left").pack(anchor="w")
+            return
 
         info = ttk.LabelFrame(inner, text=_("File Information"), padding=8)
         info.pack(fill="x", pady=4)
@@ -946,6 +1162,27 @@ class SavegameEditor(tk.Tk):
             lines.append(f"{off:08X}  {h:<48s}  |{a}|")
         self._hex_text.insert("1.0", "\n".join(lines))
         self._hex_text.config(state="disabled")
+
+    def _populate_bkr_payload(self):
+        self._clear("Nexus Payload")
+        frame = self._frames["Nexus Payload"]
+        payload_text = tk.Text(frame, font=("Menlo", 10), state="disabled", wrap="none")
+        sy = ttk.Scrollbar(frame, command=payload_text.yview)
+        sx = ttk.Scrollbar(frame, orient="horizontal", command=payload_text.xview)
+        payload_text.configure(yscrollcommand=sy.set, xscrollcommand=sx.set)
+        sy.pack(side="right", fill="y")
+        sx.pack(side="bottom", fill="x")
+        payload_text.pack(fill="both", expand=True)
+        payload_text.config(state="normal")
+        for entry in self.savegame.bkr_entries:
+            payload_text.insert("end", f"{entry['name']} — {len(entry['payload']):,} bytes\n")
+            for off in range(0, len(entry["payload"]), 16):
+                chunk = entry["payload"][off:off + 16]
+                hex_bytes = " ".join(f"{byte:02X}" for byte in chunk)
+                ascii_bytes = "".join(chr(byte) if 32 <= byte < 127 else "." for byte in chunk)
+                payload_text.insert("end", f"{off:08X}  {hex_bytes:<47}  |{ascii_bytes}|\n")
+            payload_text.insert("end", "\n")
+        payload_text.config(state="disabled")
 
     def _switch_lang(self, lang_code):
         global _current_lang, _trans, _

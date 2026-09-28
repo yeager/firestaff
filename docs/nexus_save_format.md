@@ -24,9 +24,12 @@ sizes, and CRC mismatch. Writes use a temporary file and atomic rename.
 ## Original Saturn format context
 
 The original Saturn game used backup-RAM or memory-card storage with a
-proprietary layout. The exact save-record header, record size, and fields are
-not source-locked in this codebase. The observed empty 512 KiB Mednafen
-container is only a container-size observation, not a decoded save format.
+proprietary layout. The exact game-state fields and load consumer are not
+source-locked in this codebase. Four authentic 32 KiB Mednafen Backup RAM
+images in the private real-data corpus contain a `DMNEXUS__01` entry. The
+savegame editor reads their block chains and exposes each exact 20,480-byte
+payload as read-only hex. This verifies container extraction, not payload
+semantics.
 
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the
@@ -39,6 +42,12 @@ not authorize a native Saturn save decoder.
 
 ## Boundary
 
-FNXS is a Firestaff interchange/resume format. Original Saturn save import
-remains capture-gated until a played, hash-bound memory image and its
-source-owned consumer are identified.
+FNXS is a Firestaff interchange/resume format. The four real payloads differ
+across the two-, three-, and four-champion samples. Bytes `0x0a..0x0b` read as
+big-endian `0x0434`, `0x0514`, and `0x05f4` in the two-, three-, and
+four-champion samples respectively; the adjacent differences are `0xe0`
+(224). The independent four-champion sample has the same observed value.
+This is a count-correlated boundary/extent observation, not a field
+assignment or a proven 224-byte champion record. Original Saturn save import
+remains gated until the payload mapping and source-owned consumer are
+identified and exercised against the retail game.
