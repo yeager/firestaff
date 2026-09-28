@@ -197,8 +197,9 @@ done
 
 # --boot-probe intentionally rejects --menu. Verify that the normal M12 ->
 # M11 path advances through the authentic Atari ST animation and reaches its
-# dungeon entrance. The retained ANIMATE.SCR sequence takes about 30 seconds
-# in the normal loop; a short probe would only prove that the title appeared.
+# dungeon entrance. The retained ANIMATE.SCR route needs a full 60 seconds of
+# source-loop time on this host; a shorter wait can send C200 while the title
+# animation still owns input, then falsely report a startup hang.
 case "$firestaff_cli" in
     */*) app_dir=${firestaff_cli%/*} ;;
     *) app_dir=. ;;
@@ -209,8 +210,8 @@ FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --width 960 --height 600 --menu --game csb --platform atari-st \
     --data-dir "$media_path" \
-    --script 'enter,enter,enter,wait:1800,click:813:156' \
-    --duration 60000 >/dev/null 2>&1
+    --script 'enter,enter,enter,wait:3600,click:813:156' \
+    --duration 120000 >/dev/null 2>&1
 python3 - "$menu_probe" <<'PY'
 import json
 import sys
