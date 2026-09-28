@@ -27,6 +27,16 @@
   loaded levels, the projection is floor or wall, with no same-coordinate pit.
   This is negative evidence against only those direct route candidates; it
   does not prove that no other original transition or input route exists.
+- Inspected every adjacent authentic door, teleporter and actuator record for
+  the five deferred cells in both regions. The source-bound actuator decoder
+  reports D4/L1 target coordinates `(3,13)` and `(4,13)`, and D5/L2 targets
+  `(0,0)` and `(4,13)`; none points directly to its neighboring deferred
+  scroll. This is a record-layout observation only, not proof of how the
+  original actuator consumer or an indirect route behaves.
+- Rebuilt the focused test target with `-j1` on `trv2`; the authentic-media
+  CTest passed (1/1). It reported the same deferred occurrences and adjacent
+  source records for US and JP. Optional JP BIN/CUE layouts were skipped where
+  unavailable; no synthetic data was used.
 - This verifies Firestaff's source-provenance and input plumbing on authentic
   data across all seven dungeons. It does not prove original T900 selection,
   object reachability, quest-item semantics, or full gameplay parity.

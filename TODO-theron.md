@@ -71,7 +71,11 @@ data.
    loaded maps, Firestaff's projection shows only floor or wall, not a
    same-coordinate pit. These negative joins rule out those two simple route
    explanations in the current data projection; they do not identify the
-   original pickup path or rule out another transition/input consumer.
+   original pickup path or rule out another transition/input consumer. The
+   neighboring authentic actuator records at D4/L1 and D5/L2 decode to target
+   coordinates `(3,13)`, `(4,13)`, `(0,0)`, and `(4,13)`, none matching the
+   adjacent deferred scroll cell. This only describes the record layout; the
+   original actuator consumer and any indirect route remain unbound.
 
 The sequence is dependency guidance, not a smaller completion target: the user
 requested complete Theron support.

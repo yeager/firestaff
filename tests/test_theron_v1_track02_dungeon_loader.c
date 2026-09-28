@@ -5090,6 +5090,43 @@ static void test_authentic_take_requires_matching_item_record(
                                                        [object->x],
                            same_cell_level->squares[object->y][object->x]);
                 }
+                for (unsigned int source_index = 0u;
+                     source_index < world->source_object_count;
+                     ++source_index) {
+                    const Theron_V1_SourceObjectRecord *source =
+                        &world->source_objects[source_index];
+                    int distance;
+                    if (source->dungeon_id != dungeon_id ||
+                        source->level != object->level ||
+                        (source->category != THERON_CAT_DOOR &&
+                         source->category != THERON_CAT_TELEPORTER &&
+                         source->category != THERON_CAT_ACTUATOR))
+                        continue;
+                    distance = abs(source->x - object->x) +
+                               abs(source->y - object->y);
+                    if (distance != 1) continue;
+                    printf("    adjacent source control: category=%u "
+                           "ref=%04x pos=(%d,%d) raw=",
+                           source->category, source->source_ref,
+                           source->x, source->y);
+                    for (unsigned int byte_index = 0u;
+                         byte_index < source->raw_size; ++byte_index)
+                        printf("%02x", source->raw[byte_index]);
+                    putchar('\n');
+                    if (source->category == THERON_CAT_ACTUATOR &&
+                        source->raw_size >= 8u) {
+                        Theron_Actuator actuator;
+                        assert(theron_v1_track02_actuator_decode(
+                                   source->raw, &actuator) == 0);
+                        printf("      decoded adjacent actuator: type=%u "
+                               "value=%u effect=%u target=(%u,%u) "
+                               "facing=%u local=%u\n",
+                               actuator.type, actuator.value,
+                               actuator.effect, actuator.target_x,
+                               actuator.target_y, actuator.target_facing,
+                               actuator.local_multiple);
+                    }
+                }
                 ++zero_id_deferred;
             }
             continue;
