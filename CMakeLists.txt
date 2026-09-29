@@ -12114,7 +12114,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.
     target_include_directories(test_dm2_v1_mac_movie_decoder_real PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_mac_movie_decoder_real PRIVATE
-        firestaff_dm2 firestaff_m10 m)
+        firestaff_m11 firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_mac_movie_decoder_real PRIVATE -Wall -Wextra -O2)
     endif()

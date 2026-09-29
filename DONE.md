@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Applied launcher master/music/SFX and mute before the four
+  temporary DM1/CSB SWSH/title audio owners queue their first source sound.
+  Authentic DM1 SONG.DAT/SWSH checks pass with reduced gain, mute and retained
+  host pause. The equivalent CSB PC34 test is wired but skips locally because
+  its authenticated package is unavailable; CSB runtime coverage is not claimed.
+  Mac QuickTime's complete movie mix now uses master gain, consistently with
+  DOS MVE, instead of dropping all film audio when Music is zero. SDL readback
+  of authentic Title/Swoosh/Credits/Ending PCM passes four master/music settings;
+  Mac movie startup/menu/pause regressions and the narrow app build also pass.
+  These checks do not establish physical-output listening or full startup parity.
+
 - 2026-09-29: Shared the selected playback-device name across M11 effects,
   SONG.DAT, CDDA and the independent DM2 GDAT/MVE devices. A leaf SDL library
   resolves the current name on every stream open, with default fallback for

@@ -2,6 +2,7 @@
 #define FIRESTAFF_MAIN_LOOP_M11_H
 
 #include "menu_startup_m12.h"
+#include "audio_sdl_m11.h"
 #include "gamepad_config_m12.h"
 
 #include <stddef.h>
@@ -166,13 +167,18 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronMouseButtonToInput(int button);
 M12_MenuInput M11_TheronTouchButtonInput(int longPress);
 
+/* Apply the launcher's 0..128 host volumes to a temporary intro owner
+ * before it queues source audio. NULL menu leaves the audio defaults intact. */
+int M11_ApplyIntroAudioPreferences(M11_AudioState* audio,
+                                   const M12_StartupMenuState* menu);
+
+/* Headless video has no desktop focus; all other drivers honor the setting. */
+int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver);
+
 /* Resolve whether the configured gamepad map may consume SDL controller
    events for a launcher input mode. `configuredEnabled` preserves an
    operator's persisted gamepad.toml choice; M12 modes 1 (keyboard/mouse) and
    2 (touch) additionally suppress the controller route. */
-/* Headless video has no desktop focus; all other drivers honor the setting. */
-int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver);
-
 int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled);
 
 /* Held keyboard/gamepad movement is sampled at the source input boundary,

@@ -2184,7 +2184,10 @@ int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream)
         (void)m11_sdl_queue_samples(state, state->dm2MacMoviePcm.samples,
                                     state->dm2MacMoviePcm.sampleCount,
-                                    state->musicVolume);
+                                    /* QuickTime supplies the complete film
+                                     * mix, not a separate music channel.
+                                     * Master gain already lives on sdlStream. */
+                                    M11_AUDIO_VOLUME_MAX);
 #endif
     return 1;
 }

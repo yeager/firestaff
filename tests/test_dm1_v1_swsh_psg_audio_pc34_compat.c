@@ -1,5 +1,7 @@
 /* DM1 PC34 FTL swoosh audio: consume the exact SWSH.C Dosound program. */
 #include "audio_sdl_m11.h"
+#include "main_loop_m11.h"
+#include <SDL3/SDL.h>
 #include "swsh_frontend_pc34_compat.h"
 
 #include <stdio.h>
@@ -19,6 +21,45 @@ static int path_has_zip_suffix(const char* path) {
            (suffix[1] == 'z' || suffix[1] == 'Z') &&
            (suffix[2] == 'i' || suffix[2] == 'I') &&
            (suffix[3] == 'p' || suffix[3] == 'P') && suffix[4] == '\0';
+}
+
+static int check_intro_preferences(M11_AudioState* audio) {
+    M12_StartupMenuState* menu = calloc(1, sizeof(*menu));
+    int ok = 1;
+    if (!menu) return expect(0, "intro preference test allocates menu state");
+    menu->settings.audioMasterVolume = 64;
+    menu->settings.audioMusicVolume = 32;
+    menu->settings.audioSfxVolume = 16;
+    ok &= expect(M11_ApplyIntroAudioPreferences(audio, menu) &&
+                     audio->masterVolume == 64 && audio->musicVolume == 32 &&
+                     audio->sfxVolume == 16 && audio->uiVolume == 16,
+                 "temporary intro owner inherits launcher volume scale");
+    if (getenv("SDL_AUDIODRIVER") &&
+        strcmp(getenv("SDL_AUDIODRIVER"), "dummy") == 0)
+        ok &= expect(M11_Audio_IsAvailable(audio),
+                     "explicit dummy driver must expose a real SDL stream");
+    if (M11_Audio_IsAvailable(audio)) {
+        ok &= expect(M11_Audio_SetHostPaused(audio, 1) &&
+                         M11_Audio_PlayTitleMusic(audio),
+                     "intro queues selected authentic SONG.DAT under host pause");
+        ok &= expect(audio->musicStream &&
+                         SDL_GetAudioStreamGain((SDL_AudioStream*)audio->musicStream) == 0.125f &&
+                         SDL_GetAudioStreamGain((SDL_AudioStream*)audio->sdlStream) == 0.5f,
+                     "intro source music uses master times music; effects retain host master");
+        menu->settings.audioMuted = 1;
+        ok &= expect(M11_ApplyIntroAudioPreferences(audio, menu) &&
+                         audio->masterVolume == 0 && audio->sfxVolume == 0 &&
+                         audio->musicVolume == 0 && audio->hostPaused &&
+                         SDL_GetAudioStreamGain((SDL_AudioStream*)audio->musicStream) == 0.0f &&
+                         SDL_GetAudioStreamGain((SDL_AudioStream*)audio->sdlStream) == 0.0f,
+                     "launcher mute reaches both temporary intro streams without releasing pause");
+        menu->settings.audioMuted = 0;
+        ok &= expect(M11_ApplyIntroAudioPreferences(audio, menu),
+                     "unmuted intro preferences can be restored before source SWSH");
+        ok &= expect(M11_Audio_SetHostPaused(audio, 0), "intro audio resumes after preference probe");
+    }
+    free(menu);
+    return ok;
 }
 
 int main(void) {
@@ -95,6 +136,7 @@ int main(void) {
                  "missing selected SONG.DAT clears an earlier default source");
     ok &= expect(M11_Audio_BindOriginalSongPath(&state, expectedSongPath),
                  "selected source SONG.DAT can be rebound after a failed receipt");
+    ok &= check_intro_preferences(&state);
     ok &= expect(M11_Audio_PlayDm1SwshDosoundProgram(&state, program,
                                                       (int)bytes, 20u),
                  "exact source program produces the PSG stream");

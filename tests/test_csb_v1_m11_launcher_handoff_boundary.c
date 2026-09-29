@@ -35,6 +35,7 @@
 #include "firestaff_po_loader.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
+#include <SDL3/SDL.h>
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -1314,6 +1315,55 @@ static void run_empty_launcher_boundary(void) {
                 "CSB launch intent is invalid when assets are absent");
 }
 
+static void check_real_csb_intro_audio_preferences(const CSB_V1_BootProfile* profile) {
+    M11_AudioState audio;
+    M12_StartupMenuState* menu;
+    int sourceSamples;
+    if (!profile || !profile->swoosh_source_bound) {
+        expect_skip("selected CSB profile has no authenticated PC34 swoosh sample");
+        return;
+    }
+    menu = calloc(1, sizeof(*menu));
+    expect_true(menu != NULL, "CSB intro volume probe allocates isolated menu preferences");
+    if (!menu) return;
+    menu->settings.audioMasterVolume = 64;
+    menu->settings.audioMusicVolume = 32;
+    menu->settings.audioSfxVolume = 16;
+    expect_true(M11_Audio_Init(&audio), "CSB temporary intro owner initializes");
+    expect_true(M11_ApplyIntroAudioPreferences(&audio, menu) &&
+                    audio.masterVolume == 64 && audio.sfxVolume == 16 && audio.musicVolume == 32,
+                "CSB temporary intro inherits launcher master/music/SFX");
+    if (getenv("SDL_AUDIODRIVER") && strcmp(getenv("SDL_AUDIODRIVER"), "dummy") == 0)
+        expect_true(M11_Audio_IsAvailable(&audio), "CSB dummy intro probe requires an SDL stream");
+    expect_true(M11_Audio_SetHostPaused(&audio, 1), "CSB intro probe pauses host delivery");
+    expect_true(M11_Audio_PlayCsbSwshPcm(&audio, profile->swoosh_source_bytes,
+                    (int)sizeof(profile->swoosh_source_bytes), 334,
+                    profile->swoosh_source_fnv1a),
+                "CSB intro volume probe consumes authenticated package swoosh bytes");
+    sourceSamples = audio.csbSwshPcm.sampleCount;
+    if (audio.sdlStream)
+        expect_true(SDL_GetAudioStreamGain((SDL_AudioStream*)audio.sdlStream) == 0.5f &&
+                        SDL_GetAudioStreamQueued((SDL_AudioStream*)audio.sdlStream) > 0,
+                    "quiet CSB intro queues original PCM with host master gain");
+    menu->settings.audioMuted = 1;
+    expect_true(M11_ApplyIntroAudioPreferences(&audio, menu) && audio.masterVolume == 0 &&
+                    audio.sfxVolume == 0 && audio.hostPaused,
+                "CSB intro mute preserves host pause and mutes source effects");
+    expect_true(M11_Audio_PlayCsbSwshPcm(&audio, profile->swoosh_source_bytes,
+                    (int)sizeof(profile->swoosh_source_bytes), 334,
+                    profile->swoosh_source_fnv1a) &&
+                    audio.csbSwshSourceHash == profile->swoosh_source_fnv1a &&
+                    audio.csbSwshSourceByteCount == (int)sizeof(profile->swoosh_source_bytes) &&
+                    audio.csbSwshPcm.sampleCount == sourceSamples,
+                "muting CSB intro preserves authenticated source identity and duration");
+    if (audio.sdlStream)
+        expect_true(SDL_GetAudioStreamGain((SDL_AudioStream*)audio.sdlStream) == 0.0f &&
+                        SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio.sdlStream),
+                    "CSB intro mute reaches SDL without releasing pause");
+    M11_Audio_Shutdown(&audio);
+    free(menu);
+}
+
 static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M12_LaunchIntent intent;
@@ -1441,6 +1491,7 @@ static void run_real_launcher_handoff_if_available(void) {
         M12_StartupMenu_Destroy(&menu);
         return;
     }
+    check_real_csb_intro_audio_preferences((const CSB_V1_BootProfile*)view.csbBootProfile);
     expect_true(1, "M11 opens the selected PC34 CSB menu entry");
     expect_true(view.startedFromLauncher == 1,
                 "M11 marks CSB startup as launcher-started");

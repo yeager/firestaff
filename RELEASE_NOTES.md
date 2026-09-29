@@ -2,6 +2,11 @@
 
 ## User-facing changes
 
+- `Intro audio`: DM1/CSB temporary swoosh and title playback now honors launcher
+  volume and mute before starting. DM2 Mac movies use master volume for their
+  complete audio mix, matching DOS movies; Music zero no longer suppresses
+  movie sound effects along with the soundtrack.
+
 - `Audio device`: the selected output now also applies to DM2's separate
   effect and DOS movie streams. Streams resolve the current device by name
   when opened and fall back to system default if it is unavailable.

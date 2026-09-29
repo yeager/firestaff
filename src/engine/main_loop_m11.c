@@ -2588,6 +2588,20 @@ static int m11_prepare_swsh_source_clock_after_launcher_handoff(
     return vblankMs == 0U || !m11_delay_ms_with_intro_event_pump(vblankMs);
 }
 
+int M11_ApplyIntroAudioPreferences(M11_AudioState* audio,
+                                   const M12_StartupMenuState* menu) {
+    int master, music, sfx;
+    if (!audio || !audio->initialized) return 0;
+    if (!menu) return 1;
+    /* M12 persists the same 0..128 scale consumed by the runtime owner.
+     * These are host preferences, independent of source SWSH/TITLE timing. */
+    master = menu->settings.audioMasterVolume;
+    music = menu->settings.audioMusicVolume;
+    sfx = menu->settings.audioSfxVolume;
+    if (menu->settings.audioMuted) master = music = sfx = 0;
+    return M11_Audio_SetVolumes(audio, master, sfx, music, sfx);
+}
+
 static void m11_play_ftl_swoosh_for_game_if_available(
                                               const M12_StartupMenuState* menuState,
                                               const char* dataDir,
@@ -2680,6 +2694,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           (!hasDm1Media ||
            dm1Media.swsh_vblank_ms == SWSH_COMPAT_RUNTIME_VBLANK_MS) &&
           M11_Audio_Init(&swshAudio)) {
+          (void)M11_ApplyIntroAudioPreferences(&swshAudio, menuState);
           dosoundProgram = SWSH_Compat_GetPc34DosoundProgram(
               &dosoundProgramBytes);
           if (dosoundProgram &&
@@ -2704,6 +2719,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           csb_v1_boot_profile_init(&csbBoot);
           if (csb_v1_boot_scan_assets(&csbBoot, dataDir) == 0 &&
               csbBoot.swoosh_source_bound && M11_Audio_Init(&swshAudio)) {
+              (void)M11_ApplyIntroAudioPreferences(&swshAudio, menuState);
               if (M11_Audio_PlayCsbSwshPcm(
                       &swshAudio,
                       csbBoot.swoosh_source_bytes,
@@ -2853,6 +2869,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     memset(&titleAudio, 0, sizeof(titleAudio));
     if (M11_Audio_Init(&titleAudio)) {
         titleAudioInitialized = 1;
+        (void)M11_ApplyIntroAudioPreferences(&titleAudio, menuState);
         (void)M11_Audio_PlayTitleMusic(&titleAudio);
     }
 
@@ -3089,6 +3106,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     memset(&titleAudio, 0, sizeof(titleAudio));
     if (M11_Audio_Init(&titleAudio)) {
         titleAudioInitialized = 1;
+        (void)M11_ApplyIntroAudioPreferences(&titleAudio, menuState);
         (void)M11_Audio_PlayTitleMusic(&titleAudio);
     }
 
