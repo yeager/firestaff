@@ -330,7 +330,10 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(state.launchRequested == 1);
     CHECK(state.quickResumeLaunchRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
-    CHECK(state.messageLine1 && strcmp(state.messageLine1, "READY TO LAUNCH") == 0);
+    /* The launcher uses the host's preferred language, including macOS
+     * preferences which take precedence over the shell locale. */
+    CHECK(state.messageLine1 && strcmp(state.messageLine1,
+          M12_StartupMenu_Translate(&state, "READY TO LAUNCH")) == 0);
     CHECK(state.messageLine2 && strcmp(state.messageLine2, kDm1Title) == 0);
 
     /* The resulting launch intent must validate for the V1 original

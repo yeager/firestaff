@@ -6,6 +6,8 @@
 - Verified the back-and-reselect path using the authentic Amiga v2.0 ZIP
   package in `test_dm1_v1_amiga_v20_archive_cli_boot.sh`. The complete script
   passes, including native menu handoff and the first runtime frame.
+- Corrected the required-media launcher test to compare its ready message
+  in the selected UI language; the test passes on the local macOS host.
 - Removed the new synthetic Amiga fixture extension in favor of this
   original-media regression. Refreshed startup-menu catalog source references.
 
