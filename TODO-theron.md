@@ -71,8 +71,25 @@ data.
    A later read-only trv2 readiness check on 2026-09-29 found an accessible
    X.Org display on `:0`, `/home/trv2/.Xauthority`, Mednafen, `xdotool`, and
    authentic US/JP Track 02 media. The SSH environment itself has no `DISPLAY`
-   set. No new emulator process or gameplay capture was started; the existing
-   transport-consumer and strict VDC evidence gates remain open.
+   set. That readiness check did not start an emulator; the existing
+   transport-consumer and strict VDC evidence gates remained open.
+
+   A later isolated headless JP Rev. 1 run used the authentic CUE and
+   hash-verified Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) plus the
+   authenticated System Card (`ff1a674273fe3540ccef576376407d1d`). A
+   360-second `run@9600:90,i@11000:8,ii@13000:8` replay produced three
+   scripted-input events, each followed by an original CPU controller poll;
+   all 1,048,576 bounded input-read observations were retained. The runtime
+   emitted 115 CD IRQ callbacks, 24 raw-sector spans, four SCSI READs and 24
+   sector bindings. It also emitted one `$E009` dispatch/return and five TII
+   transfers, but zero `$E009` data reads, zero byte-exact FIFO destinations
+   and zero authenticated CD-to-RAM receipts. The strict capture therefore
+   returned `BLOCKED` at its 360-second bound with `transition=missing`.
+   This is a fresh negative transport/runtime receipt, not a Track 02
+   consumer, dungeon-entry, or gameplay proof. Raw output remains outside Git
+   under `/home/trv2/firestaff-theron-auth-capture-20260929/capture/`; the
+   capture used the dummy video driver and did not access the shared `:0`
+   display or another agent's evidence directories.
 
 2. **Complete a real dungeon transaction and progress save.** Bind the quest
    artifact's name, object occurrence, pickup, exit, and next-chapter handoff

@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — isolated authentic JP controller-poll capture
+
+- Ran the instrumented Mednafen build headlessly on `trv2` with the authentic
+  JP Rev. 1 CUE, Track 02 MD5 `b7afb338ad31be1025b53f9aff12d73a`, and
+  System Card MD5 `ff1a674273fe3540ccef576376407d1d`. The independent 360-second
+  PCE replay applied `run@9600:90,i@11000:8,ii@13000:8`; all three events had
+  an original CPU controller-poll witness within the 1,048,576-read bound.
+- The trace contained 115 CD IRQs, 24 raw sectors, four SCSI READs and 24
+  sector bindings, plus one `$E009` dispatch/return and five TII transfers.
+  It contained no `$E009` data reads, byte-exact FIFO destination or
+  authenticated CD-to-RAM receipt; the strict capture exited `BLOCKED` with
+  `transition=missing`. This is verified negative evidence only, not gameplay
+  support. Private traces remain outside Git at
+  `/home/trv2/firestaff-theron-auth-capture-20260929/capture/`.
+
 ## 2026-09-29 — quest-item world helper validation
 
 - Guarded the world-level quest-item helpers against invalid dungeon IDs,
