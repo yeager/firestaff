@@ -276,6 +276,49 @@ static int test_dungeon_exit_transition_gate(void) {
     return 1;
 }
 
+static int test_world_quest_item_rejects_invalid_collection(void) {
+    TEST("World quest item helper rejects invalid/duplicate collection");
+
+    Theron_V1_World world;
+    theron_v1_world_init(&world);
+    world.current_dungeon = THERON_DUNGEON_INVALID;
+    ASSERT(theron_v1_check_quest_item(&world) == 0,
+           "invalid dungeon must not produce a quest-item shift");
+    ASSERT(theron_v1_collect_quest_item(
+               &world, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) == 0,
+           "collection in invalid dungeon must be rejected");
+    ASSERT(world.progression.quest_items_collected == 0 &&
+               world.quest_items_in_dungeon == 0,
+           "invalid dungeon collection mutated state");
+
+    world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+    ASSERT(theron_v1_check_quest_item(&world) ==
+               THERON_QUEST_ITEM_1_SHIELD_DEFIANT,
+           "valid dungeon must report its uncollected item bit");
+    ASSERT(theron_v1_collect_quest_item(
+               &world, THERON_QUEST_ITEM_2_TAZA_BOOTS) == 0,
+           "wrong-dungeon item bit must be rejected");
+    ASSERT(world.progression.quest_items_collected == 0 &&
+               world.quest_items_in_dungeon == 0,
+           "wrong-dungeon collection mutated state");
+
+    ASSERT(theron_v1_collect_quest_item(
+               &world, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) ==
+               THERON_QUEST_ITEM_1_SHIELD_DEFIANT,
+           "valid item bit was not collected");
+    ASSERT(theron_v1_collect_quest_item(
+               &world, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) ==
+               THERON_QUEST_ITEM_1_SHIELD_DEFIANT,
+           "duplicate collection must leave mask unchanged");
+    ASSERT(world.quest_items_in_dungeon == 1,
+           "duplicate collection incremented the per-dungeon item count");
+    ASSERT(theron_v1_check_quest_item(&world) == 0,
+           "collected item must no longer be reported as available");
+
+    PASS();
+    return 1;
+}
+
 /* ── Test: save/restore ──────────────────────────────────────────── */
 
 static int test_save_restore(void) {
@@ -600,6 +643,7 @@ int main(void) {
         test_wrong_dungeon_item_rejection,
         test_invalid_current_dungeon_rejection,
         test_dungeon_exit_transition_gate,
+        test_world_quest_item_rejects_invalid_collection,
         test_full_sequence,
         test_source_evidence,
     };

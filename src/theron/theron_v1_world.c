@@ -4372,6 +4372,10 @@ void theron_v1_world_hash_inject(Theron_V1_World *world, uint64_t seed) {
 int theron_v1_check_quest_item(const Theron_V1_World *world) {
     if (!world) return 0;
     /* Returns the per-dungeon quest item bit; 0 if already found */
+    if (world->current_dungeon < THERON_DUNGEON_1_AKUTUBA ||
+        world->current_dungeon > THERON_DUNGEON_7_DEMON) {
+        return 0;
+    }
     uint8_t found = world->progression.quest_items_collected;
     uint8_t dungeon_bit = (uint8_t)(1U << (world->current_dungeon - 1));
     return (found & dungeon_bit) ? 0 : dungeon_bit;
@@ -4379,8 +4383,19 @@ int theron_v1_check_quest_item(const Theron_V1_World *world) {
 
 uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit_fixed) {
     if (!world) return 0;
+    if (world->current_dungeon < THERON_DUNGEON_1_AKUTUBA ||
+        world->current_dungeon > THERON_DUNGEON_7_DEMON) {
+        return world->progression.quest_items_collected;
+    }
+    const uint8_t dungeon_bit = (uint8_t)(1U << (world->current_dungeon - 1));
+    if (item_bit_fixed != dungeon_bit ||
+        (world->progression.quest_items_collected & dungeon_bit) != 0) {
+        return world->progression.quest_items_collected;
+    }
     world->progression.quest_items_collected |= item_bit_fixed;
-    world->quest_items_in_dungeon++;
+    if (world->quest_items_in_dungeon < UINT8_MAX) {
+        world->quest_items_in_dungeon++;
+    }
 
     /* Check if dungeon is now complete */
     const Theron_DungeonMeta *meta =

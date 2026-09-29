@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — quest-item world helper validation
+
+- Guarded the world-level quest-item helpers against invalid dungeon IDs,
+  wrong-dungeon item bits and duplicate collection; invalid calls leave quest
+  state unchanged. Added regression coverage for those cases and the valid
+  single-collection path.
+- The focused `theron_v1_dungeon_progression` CTest passed 1/1 (19/19 internal
+  assertions). The touched implementation and test sources compiled in the
+  target build. The local link used Xcode's macOS 26.5 SDK because the active
+  Command Line Tools 27.0 stubs are unsupported by the installed linker.
+- This is state-integrity hardening, not authentic pickup parity. The original
+  T900 object/pickup consumer remains open in `TODO-theron.md`.
+
 ## 2026-09-29 — authentic US font-glyph source check
 
 - Added a separate real-media CTest that checks the hash-verified US Track 02
