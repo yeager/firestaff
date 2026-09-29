@@ -68,6 +68,11 @@ int FSP_FileExists(const char* path);
  */
 int FSP_DirExists(const char* path);
 
+/* Replace a destination with a completed temporary file on the same volume.
+ * Uses the same native narrow-path encoding as fopen. Never deletes the
+ * destination first. Returns 1 on success, 0 on failure. */
+int FSP_ReplaceFile(const char* temporaryPath, const char* destinationPath);
+
 /* ── Directory creation ─────────────────────────────────────────────── */
 
 /*

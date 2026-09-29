@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Windows settings`: fix repeated configuration and JSON export saves when
+  the destination file already exists. Preserve the old file on replacement failure.
+
 - `Swedish launcher`: translated the five new custom-music folder selection,
   cancellation, invalid-path and memory-error messages.
 

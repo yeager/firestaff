@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Windows settings`: fix repeated configuration and JSON export saves by replacing
+  existing files through the native file-replacement operation.
+
 - `DM2 platforms`: remove DM2 PC-9821 support. Its launcher entry, CLI aliases, native media
   admission and runtime-specific paths are removed. An explicitly selected
   PC-9821 archive cannot silently select another edition from its directory.

@@ -111,10 +111,63 @@ static void check_dialog(int font, const char* validPath) {
                           "late callback completes after Destroy and owner free");
 }
 
+static void check_repeated_file_replacements(const char* settingsJsonPath,
+                                             const char* manifestPath) {
+    M12_Config config;
+    M12_Config loaded;
+
+    M12_Config_SetDefaults(&config);
+    expect_true(M12_Config_Load(&config, NULL), "load isolated config before replacement check");
+    config.languageExplicit = 1;
+    config.languageIndex = 1;
+    expect_true(M12_Config_Save(&config) && FSP_PathExists(config.path),
+                "first config save creates destination");
+    config.languageIndex = 4;
+    expect_true(M12_Config_Save(&config), "second config save replaces existing destination");
+    M12_Config_SetDefaults(&loaded);
+    expect_true(M12_Config_Load(&loaded, NULL) && loaded.languageIndex == 4,
+                "config reload observes second save contents");
+    expect_true(!FSP_ReplaceFile(settingsJsonPath, config.path),
+                "replacement rejects a missing temporary file");
+    expect_true(M12_Config_Load(&loaded, NULL) && loaded.languageIndex == 4,
+                "failed replacement preserves existing config contents");
+
+    config.languageIndex = 2;
+    expect_true(M12_Config_ExportJSON(&config, settingsJsonPath) &&
+                FSP_PathExists(settingsJsonPath),
+                "first settings export creates destination");
+    config.languageIndex = 5;
+    expect_true(M12_Config_ExportJSON(&config, settingsJsonPath),
+                "second settings export replaces existing destination");
+    M12_Config_SetDefaults(&loaded);
+    expect_true(M12_Config_ImportJSON(&loaded, settingsJsonPath) &&
+                loaded.languageIndex == 5,
+                "settings import observes second export contents");
+
+    config.quickResumeEnabled = 1;
+    snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s",
+             "first-save-slot.dat");
+    expect_true(M12_Config_ExportSaveManifestJSON(&config, manifestPath) &&
+                FSP_PathExists(manifestPath),
+                "first save manifest export creates destination");
+    snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s",
+             "second-save-slot.dat");
+    expect_true(M12_Config_ExportSaveManifestJSON(&config, manifestPath),
+                "second save manifest export replaces existing destination");
+    M12_Config_SetDefaults(&loaded);
+    expect_true(M12_Config_ImportSaveManifestJSON(&loaded, manifestPath) &&
+                loaded.quickResumeEnabled &&
+                strcmp(loaded.lastSavePath, "second-save-slot.dat") == 0,
+                "manifest import observes second export contents");
+}
+
 int main(void) {
     const char* scratch = getenv("TMPDIR");
     char base[FSP_PATH_MAX], configPath[M12_CONFIG_PATH_CAPACITY], artpackPath[FSP_PATH_MAX];
     char tmpPath[M12_CONFIG_PATH_CAPACITY + 4], leaf[100];
+    char settingsJsonPath[FSP_PATH_MAX] = {0}, manifestPath[FSP_PATH_MAX] = {0};
+    char settingsJsonTmpPath[FSP_PATH_MAX + 5] = {0};
+    char manifestTmpPath[FSP_PATH_MAX + 5] = {0};
     char fontPath[M12_CONFIG_DATA_DIR_CAPACITY] = {0};
     char* savedConfig = copy_env("FIRESTAFF_CONFIG_PATH");
     char* savedFont = copy_env("FIRESTAFF_UI_FONT");
@@ -138,9 +191,16 @@ int main(void) {
     snprintf(tmpPath, sizeof(tmpPath), "%s.tmp", configPath);
     snprintf(leaf, sizeof(leaf), "font-artpack-%llu.fsart", (unsigned long long)SDL_GetTicksNS());
     expect_true(FSP_JoinPath(artpackPath, sizeof(artpackPath), base, leaf), "form admission fixture path");
+    snprintf(leaf, sizeof(leaf), "font-artpack-%llu-settings.json", (unsigned long long)SDL_GetTicksNS());
+    expect_true(FSP_JoinPath(settingsJsonPath, sizeof(settingsJsonPath), base, leaf), "form settings export path");
+    snprintf(leaf, sizeof(leaf), "font-artpack-%llu-manifest.json", (unsigned long long)SDL_GetTicksNS());
+    expect_true(FSP_JoinPath(manifestPath, sizeof(manifestPath), base, leaf), "form save manifest path");
+    snprintf(settingsJsonTmpPath, sizeof(settingsJsonTmpPath), "%s.tmp", settingsJsonPath);
+    snprintf(manifestTmpPath, sizeof(manifestTmpPath), "%s.tmp", manifestPath);
     if (g_failures) goto cleanup;
     expect_true(!FSP_PathExists(configPath) && !FSP_PathExists(tmpPath) &&
-                !FSP_PathExists(artpackPath), "scratch files are unclaimed");
+                !FSP_PathExists(artpackPath) && !FSP_PathExists(settingsJsonPath) &&
+                !FSP_PathExists(manifestPath), "scratch files are unclaimed");
     if (g_failures) goto cleanup;
     claimed = 1;
     expect_true(FSP_SetEnv("FIRESTAFF_CONFIG_PATH", configPath, 1) == 0, "isolate config persistence");
@@ -161,10 +221,22 @@ int main(void) {
                 !admission.fallbackVisualsPermitted, "header admission does not authorize fallback artwork");
     initialized = SDL_Init(0);
     expect_true(initialized, "initialize SDL worker primitives");
-    if (initialized) { check_dialog(1, fontPath); check_dialog(0, artpackPath); }
+    if (initialized) {
+        check_dialog(1, fontPath);
+        check_dialog(0, artpackPath);
+        check_repeated_file_replacements(settingsJsonPath, manifestPath);
+    }
 cleanup:
     if (initialized) SDL_Quit();
-    if (claimed) { remove(configPath); remove(tmpPath); remove(artpackPath); }
+    if (claimed) {
+        remove(configPath);
+        remove(tmpPath);
+        remove(artpackPath);
+        remove(settingsJsonPath);
+        remove(manifestPath);
+        remove(settingsJsonTmpPath);
+        remove(manifestTmpPath);
+    }
     restore_env("FIRESTAFF_CONFIG_PATH", savedConfig);
     restore_env("FIRESTAFF_UI_FONT", savedFont);
     if (g_failures) { fprintf(stderr, "%d failures\n", g_failures); return 1; }

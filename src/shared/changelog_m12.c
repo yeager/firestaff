@@ -17,6 +17,7 @@ static const char* const g_changelogLines[] = {
     "====================",
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-09-29)",
+    "  - Fixes repeated Windows settings and JSON export saves.",
     "  - Removes PC-9821 support from DM2 discovery, launcher choices and native startup.",
     "  - Launcher file dialogs retain safe ownership; Quick Resume preserves preferences and validated fallback saves.",
     "  - Improves original-media startup checks and shared audio-device, volume and pause handling.",

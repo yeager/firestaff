@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Release CI exposed Windows CRT rename rejecting existing
+  configuration files. Config and both JSON exports now use native replacement
+  without deleting the previous file first. Three focused launcher CTests
+  pass locally, including second-write readback and failed-replacement retention;
+  Windows verification awaits the next hosted run.
+
 - 2026-09-29: Translated the five new Custom Music folder dialog messages
   into Swedish and recorded them in the catalog maintenance table. Reviewed
   wording against Swedish terminology/translation memory and checked the

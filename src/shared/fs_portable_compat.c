@@ -51,6 +51,21 @@ static size_t fsp_copy(char* dst, size_t dstSize, const char* src) {
 
 /* ── Path manipulation ──────────────────────────────────────────────── */
 
+int FSP_ReplaceFile(const char* temporaryPath, const char* destinationPath) {
+    if (!temporaryPath || !temporaryPath[0] ||
+        !destinationPath || !destinationPath[0]) {
+        return 0;
+    }
+#if defined(_WIN32)
+    /* Unlike POSIX rename, the Windows CRT rename rejects existing targets.
+     * Match the narrow-path encoding used to create the temporary file. */
+    return MoveFileExA(temporaryPath, destinationPath,
+                      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
+#else
+    return rename(temporaryPath, destinationPath) == 0;
+#endif
+}
+
 int FSP_JoinPath(char* out, size_t outSize,
                  const char* left, const char* right) {
     char leftCopy[FSP_PATH_MAX];

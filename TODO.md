@@ -1,5 +1,9 @@
 # Firestaff TODO — active cross-game work
 
+- Verify the native Windows configuration/JSON replacement fix in hosted CI.
+  Release preparation exposed CRT rename failing on an existing destination;
+  repeat-write regressions must pass before release publication.
+
 - Verify the SDL3 drawable-coordinate input fix with native Retina events.
   Geometry and original-media launcher checks pass. Rendering, input and
   size getters now share live dimensions; the opt-in native Cocoa grow/shrink

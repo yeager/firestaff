@@ -1256,7 +1256,7 @@ int M12_Config_Save(const M12_Config* config) {
         remove(tmpPath);
         return 0;
     }
-    if (rename(tmpPath, config->path) != 0) {
+    if (!FSP_ReplaceFile(tmpPath, config->path)) {
         remove(tmpPath);
         return 0;
     }
@@ -1611,7 +1611,7 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
         remove(tmpPathBuf);
         return 0;
     }
-    if (rename(tmpPathBuf, path) != 0) {
+    if (!FSP_ReplaceFile(tmpPathBuf, path)) {
         remove(tmpPathBuf);
         return 0;
     }
@@ -2077,7 +2077,7 @@ int M12_Config_ExportSaveManifestJSON(const M12_Config* config, const char* expo
         remove(tmpPathBuf);
         return 0;
     }
-    if (rename(tmpPathBuf, path) != 0) {
+    if (!FSP_ReplaceFile(tmpPathBuf, path)) {
         remove(tmpPathBuf);
         return 0;
     }
