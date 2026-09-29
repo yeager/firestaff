@@ -5,6 +5,15 @@
   wording against Swedish terminology/translation memory and checked the
   selected strings with l10n-lint, svlang, Hunspell and GNU gettext.
 
+- 2026-09-29: Quick Resume retains its remembered save path while disabled
+  and reprobes when enabled through Settings. An unrelated settings save
+  no longer erases that path. A new isolated test reads the authentic Amiga
+  v2.0 nested ZIP/ADF save in memory: OFF-save and ON/OFF/ON checks failed
+  before the fix and pass afterward, without fabricated saves or forced
+  asset availability. Five focused CTests and rebuilt original-media handoff
+  checks pass (DM1 PC34 332, CSB Amiga 48, DM2 DOS 60 assertions). This
+  verifies menu preferences, not new save support.
+
 - 2026-09-29: Unicode Font and Artpack dialogs now apply selections and
   persist settings only from main-thread Update. Independent result tokens
   survive menu destruction until callbacks return; cancellation and

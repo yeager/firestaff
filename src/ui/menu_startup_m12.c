@@ -3964,7 +3964,13 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config_SetDefaults(&config);
     M12_Config_Load(&config, NULL);
 
-    if (!config.quickResumeEnabled) {
+    /* Remembering a save and offering Continue are separate preferences.
+     * Keep the durable path even while disabled or temporarily unavailable;
+     * saving an unrelated setting must not erase it. The live setting also
+     * covers an OFF-to-ON toggle before m12_cycle_setting persists it. */
+    snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
+             "%s", config.lastSavePath);
+    if (!state->settings.quickResumeEnabled) {
         return;
     }
 
@@ -6469,6 +6475,8 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
             if (!state->settings.quickResumeEnabled) {
                 state->quickResumeAvailable = 0;
                 state->quickResumeLaunchRequested = 0;
+            } else {
+                m12_probe_quick_resume(state);
             }
             break;
         case M12_SETTINGS_ROW_ARTPACK_PATH:

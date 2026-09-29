@@ -42,13 +42,12 @@
   callbacks now defer menu changes to Update, with cancellation/late-result
   tests; automated tests do not prove desktop dialog interaction.
 
-- Preserve the remembered Quick Resume save path while the preference is
-  disabled, and reprobe when re-enabled. The current probe clears the live
-  path before returning for OFF; saving another setting can consequently
-  overwrite lastSavePath with an empty string. OFF-to-ON also leaves resume
-  unavailable. Reproduce using the authentic Amiga v2.0 save disk in
-  test_m12_quick_resume_gate; this is menu preference handling, independent
-  of the deferred engine savegame work.
+- Correct save-manifest import after Quick Resume fallback discovery.
+  m12_import_save_manifest_json probes the imported path, then overwrites
+  the resulting path with the pre-probe config value. If a valid DM2 save
+  was discovered as fallback, its availability/game ID can become paired
+  with the rejected imported path. Add an authentic-media regression
+  before changing this separate import path.
 
 - Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
   preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale

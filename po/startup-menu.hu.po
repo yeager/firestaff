@@ -47,11 +47,11 @@ msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
-#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5554
+#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5560
 msgid "ACCESSIBILITY"
 msgstr "AKADÁLYMENTESÍTÉS"
 
-#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5551
+#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5557
 msgid "AUDIO"
 msgstr "HANG"
 
@@ -64,12 +64,12 @@ msgstr "IRÁNYÍTÁS"
 msgid "GAME"
 msgstr "JÁTÉK"
 
-#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5536
-#: src/ui/menu_startup_m12.c:10578
+#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5542
+#: src/ui/menu_startup_m12.c:10586
 msgid "GRAPHICS"
 msgstr "GRAFIKA"
 
-#: src/ui/menu_startup_m12.c:263 src/ui/menu_startup_m12.c:5557
+#: src/ui/menu_startup_m12.c:263 src/ui/menu_startup_m12.c:5563
 msgid "ONLINE"
 msgstr "ONLINE"
 
@@ -253,7 +253,7 @@ msgstr "TR"
 
 #: src/ui/menu_startup_m12.c:468 src/ui/menu_startup_m12.c:474
 #: src/ui/menu_startup_m12.c:496 src/ui/menu_startup_m12.c:499
-#: src/ui/menu_startup_m12.c:5001 src/ui/menu_startup_m12.c:5145
+#: src/ui/menu_startup_m12.c:5007 src/ui/menu_startup_m12.c:5151
 msgid "AUTO"
 msgstr "AUTO"
 
@@ -340,7 +340,7 @@ msgstr "РУССКИЙ"
 #: src/ui/menu_startup_m12.c:478 src/ui/menu_startup_m12.c:494
 #: src/ui/menu_startup_m12.c:500 src/ui/menu_startup_m12.c:502
 #: src/ui/menu_startup_m12.c:503 src/ui/menu_startup_m12.c:504
-#: src/ui/menu_startup_m12.c:5131 src/ui/menu_startup_m12.c:5236
+#: src/ui/menu_startup_m12.c:5137 src/ui/menu_startup_m12.c:5242
 msgid "OFF"
 msgstr "OFF"
 
@@ -510,14 +510,14 @@ msgid "REMASTERED"
 msgstr "FELÚJÍTOTT"
 
 #: src/ui/menu_startup_m12.c:783 src/ui/menu_startup_m12.c:804
-#: src/ui/menu_startup_m12.c:10043 src/ui/menu_startup_m12.c:10486
+#: src/ui/menu_startup_m12.c:10051 src/ui/menu_startup_m12.c:10494
 #: src/ui/menu_startup_render_modern_m12.c:1474
 #: src/ui/menu_startup_render_modern_m12.c:2652
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:784 src/ui/menu_startup_m12.c:814
-#: src/ui/menu_startup_m12.c:10045 src/ui/menu_startup_m12.c:10500
+#: src/ui/menu_startup_m12.c:10053 src/ui/menu_startup_m12.c:10508
 #: src/ui/menu_startup_render_modern_m12.c:1475
 #: src/ui/menu_startup_render_modern_m12.c:2655
 msgid "CHAOS STRIKES BACK"
@@ -544,16 +544,16 @@ msgstr "CSB UTILITY DISK (FM TOWNS)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB HASZNÁLATI LEMEZ – TIPP ORACLE"
 
-#: src/ui/menu_startup_m12.c:791 src/ui/menu_startup_m12.c:11420
-#: src/ui/menu_startup_m12.c:11423 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_m12.c:791 src/ui/menu_startup_m12.c:11428
+#: src/ui/menu_startup_m12.c:11431 src/ui/menu_startup_render_modern_m12.c:1753
 #: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "TUDÁSTÁR MÚZEUM"
 
-#: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:8398
-#: src/ui/menu_startup_m12.c:8967 src/ui/menu_startup_m12.c:10239
-#: src/ui/menu_startup_m12.c:11455 src/ui/menu_startup_m12.c:11458
-#: src/ui/menu_startup_m12.c:11603
+#: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:8406
+#: src/ui/menu_startup_m12.c:8975 src/ui/menu_startup_m12.c:10247
+#: src/ui/menu_startup_m12.c:11463 src/ui/menu_startup_m12.c:11466
+#: src/ui/menu_startup_m12.c:11611
 msgid "SETTINGS"
 msgstr "SETTINGS"
 
@@ -773,8 +773,8 @@ msgstr "A V1 MEGŐRZI AZ ALAPVISELKEDÉST"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL DOKUMENTÁLTA A LÉNYEGES TÖRTÉNETET"
 
-#: src/ui/menu_startup_m12.c:838 src/ui/menu_startup_m12.c:11437
-#: src/ui/menu_startup_m12.c:11440
+#: src/ui/menu_startup_m12.c:838 src/ui/menu_startup_m12.c:11445
+#: src/ui/menu_startup_m12.c:11448
 msgid "CREDITS"
 msgstr "KÖZREMŰKÖDŐK"
 
@@ -918,8 +918,8 @@ msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 msgid "PERSISTED OPTIONS"
 msgstr "PERSISTED OPTIONS"
 
-#: src/ui/menu_startup_m12.c:1062 src/ui/menu_startup_m12.c:10576
-#: src/ui/menu_startup_m12.c:12647
+#: src/ui/menu_startup_m12.c:1062 src/ui/menu_startup_m12.c:10584
+#: src/ui/menu_startup_m12.c:12655
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
@@ -951,7 +951,7 @@ msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER OR ESC RETURNS TO MENU"
 
-#: src/ui/menu_startup_m12.c:1070 src/ui/menu_startup_m12.c:8408
+#: src/ui/menu_startup_m12.c:1070 src/ui/menu_startup_m12.c:8416
 msgid "READY TO LAUNCH"
 msgstr "READY TO LAUNCH"
 
@@ -1025,11 +1025,11 @@ msgstr "ARCHIVE: %s  OPTION: %s"
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 
-#: src/ui/menu_startup_m12.c:1916 src/ui/menu_startup_m12.c:8978
+#: src/ui/menu_startup_m12.c:1916 src/ui/menu_startup_m12.c:8986
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:1918 src/ui/menu_startup_m12.c:8978
+#: src/ui/menu_startup_m12.c:1918 src/ui/menu_startup_m12.c:8986
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
@@ -1041,7 +1041,7 @@ msgstr "Dungeon Master II: The Legend of Skullkeep"
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:1925 src/ui/menu_startup_m12.c:8979
+#: src/ui/menu_startup_m12.c:1925 src/ui/menu_startup_m12.c:8987
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
@@ -1087,7 +1087,7 @@ msgid "REFRESHING MEDIA METADATA"
 msgstr "MÉDIA METAADATOK FRISSÍTÉSE"
 
 #: src/ui/menu_startup_m12.c:2018 src/ui/menu_startup_m12.c:3162
-#: src/ui/menu_startup_m12.c:5252 src/ui/menu_startup_m12.c:5492
+#: src/ui/menu_startup_m12.c:5258 src/ui/menu_startup_m12.c:5498
 msgid "NOT SET"
 msgstr "NINCS BEÁLLÍTVA"
 
@@ -1107,8 +1107,8 @@ msgstr "MÁSOLD AZ EREDETI JÁTÉKFÁJLOKAT IDE:"
 msgid "NO GAME DATA FOUND"
 msgstr "NEM TALÁLHATÓ JÁTÉKADAT"
 
-#: src/ui/menu_startup_m12.c:2198 src/ui/menu_startup_m12.c:9731
-#: src/ui/menu_startup_m12.c:9846
+#: src/ui/menu_startup_m12.c:2198 src/ui/menu_startup_m12.c:9739
+#: src/ui/menu_startup_m12.c:9854
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
@@ -1122,7 +1122,7 @@ msgstr "ADATKÖNYV VÁLTOZTATVA"
 
 #: src/ui/menu_startup_m12.c:2288 src/ui/menu_startup_m12.c:2386
 #: src/ui/menu_startup_m12.c:2552 src/ui/menu_startup_m12.c:2603
-#: src/ui/menu_startup_m12.c:13379
+#: src/ui/menu_startup_m12.c:13387
 msgid "SCANNING GAME DATA"
 msgstr "JÁTÉKADATOK KERESÉSE"
 
@@ -1139,19 +1139,19 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr "JÁTÉKADATOK NEM TALÁLHATÓK"
 
 #: src/ui/menu_startup_m12.c:2518 src/ui/menu_startup_m12.c:2588
-#: src/ui/menu_startup_m12.c:2634 src/ui/menu_startup_m12.c:13348
+#: src/ui/menu_startup_m12.c:2634 src/ui/menu_startup_m12.c:13356
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "VÁLASSZON EGY MEGLÉVŐ MAPPÁT"
 
-#: src/ui/menu_startup_m12.c:2630 src/ui/menu_startup_m12.c:13344
+#: src/ui/menu_startup_m12.c:2630 src/ui/menu_startup_m12.c:13352
 msgid "DATA SCAN CANCELLED"
 msgstr "ADATKEZELÉS TÖRÖLVE"
 
-#: src/ui/menu_startup_m12.c:2631 src/ui/menu_startup_m12.c:13345
+#: src/ui/menu_startup_m12.c:2631 src/ui/menu_startup_m12.c:13353
 msgid "DATA SCAN FAILED"
 msgstr "ADATKEZELÉS SIKERTELEN"
 
-#: src/ui/menu_startup_m12.c:2633 src/ui/menu_startup_m12.c:13347
+#: src/ui/menu_startup_m12.c:2633 src/ui/menu_startup_m12.c:13355
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "A JÁTÉK ELÉRHETŐSÉGE NEM FRISSÍTVE"
 
@@ -1183,7 +1183,7 @@ msgstr "PC34 EXPORT SIKERTELEN"
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "ELLENŐRIZZE A GYORS FOLYTATÁS MENTÉSÉT"
 
-#: src/ui/menu_startup_m12.c:2811 src/ui/menu_startup_m12.c:12936
+#: src/ui/menu_startup_m12.c:2811 src/ui/menu_startup_m12.c:12944
 msgid "NO SAVES FOUND"
 msgstr "NEM TALÁLHATÓ JÁTÉKADAT"
 
@@ -1219,12 +1219,12 @@ msgstr "NEM TALÁLHATÓ JÁTÉKADAT"
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "A KIVÁLASZTÁS UTÁN AZ INDÍTÓ ÚJRA LESZKEZELÉS"
 
-#: src/ui/menu_startup_m12.c:3161 src/ui/menu_startup_m12.c:5426
+#: src/ui/menu_startup_m12.c:3161 src/ui/menu_startup_m12.c:5432
 msgid "CUSTOM MUSIC"
 msgstr "EGYÉNI"
 
 #: src/ui/menu_startup_m12.c:3166 src/ui/menu_startup_m12.c:3175
-#: src/ui/menu_startup_m12.c:13171 src/ui/menu_startup_m12.c:13176
+#: src/ui/menu_startup_m12.c:13179 src/ui/menu_startup_m12.c:13184
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
 msgstr "CUSTOM MUSIC FOLDER UNCHANGED"
 
@@ -1247,7 +1247,7 @@ msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "VÁLASSZON EGY SZÉLES TTF VAGY OTF BETŰTŰT"
 
 #: src/ui/menu_startup_m12.c:3203 src/ui/menu_startup_m12.c:3211
-#: src/ui/menu_startup_m12.c:13208
+#: src/ui/menu_startup_m12.c:13216
 msgid "UNICODE FONT UNCHANGED"
 msgstr "A UNICODE BETŰTŰZÉS VÁLTOZTATVA"
 
@@ -1260,573 +1260,573 @@ msgid "SELECT A .FSART FILE"
 msgstr "VÁLASSZ CÉLT"
 
 #: src/ui/menu_startup_m12.c:3261 src/ui/menu_startup_m12.c:3269
-#: src/ui/menu_startup_m12.c:13249
+#: src/ui/menu_startup_m12.c:13257
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 ARTPACK VÁLTOZTATVA"
 
-#: src/ui/menu_startup_m12.c:5229
+#: src/ui/menu_startup_m12.c:5235
 msgid "NEEDS LOGIN"
 msgstr "BEJELENTKEZÉS SZÜKSÉGES"
 
-#: src/ui/menu_startup_m12.c:5231
+#: src/ui/menu_startup_m12.c:5237
 msgid "READY"
 msgstr "KÉSZ"
 
-#: src/ui/menu_startup_m12.c:5233
+#: src/ui/menu_startup_m12.c:5239
 msgid "BACKEND PENDING"
 msgstr "HÁTTÉR függőben"
 
-#: src/ui/menu_startup_m12.c:5258
+#: src/ui/menu_startup_m12.c:5264
 msgid "SET"
 msgstr "NYÚJTÁS"
 
-#: src/ui/menu_startup_m12.c:5275 src/ui/menu_startup_m12.c:5488
+#: src/ui/menu_startup_m12.c:5281 src/ui/menu_startup_m12.c:5494
 msgid "EDITING"
 msgstr "BEÁLLÍTÁSOK"
 
-#: src/ui/menu_startup_m12.c:5380
+#: src/ui/menu_startup_m12.c:5386
 msgid "SCALE"
 msgstr "SCALE"
 
-#: src/ui/menu_startup_m12.c:5381 src/ui/menu_startup_m12.c:12695
+#: src/ui/menu_startup_m12.c:5387 src/ui/menu_startup_m12.c:12703
 msgid "ASPECT RATIO"
 msgstr "ASPECT RATIO"
 
-#: src/ui/menu_startup_m12.c:5382
+#: src/ui/menu_startup_m12.c:5388
 msgid "PIXEL SNAP"
 msgstr "PIXEL SNAP"
 
-#: src/ui/menu_startup_m12.c:5383
+#: src/ui/menu_startup_m12.c:5389
 msgid "FILTER"
 msgstr "FILTER"
 
-#: src/ui/menu_startup_m12.c:5384
+#: src/ui/menu_startup_m12.c:5390
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:5385
+#: src/ui/menu_startup_m12.c:5391
 msgid "FPS OVERLAY"
 msgstr "FPS FEDÉS"
 
-#: src/ui/menu_startup_m12.c:5386
+#: src/ui/menu_startup_m12.c:5392
 msgid "VIEWPORT STYLE"
 msgstr "NÉZETI STÍLUS"
 
-#: src/ui/menu_startup_m12.c:5387
+#: src/ui/menu_startup_m12.c:5393
 msgid "INPUT MODE"
 msgstr "ABLAK MÓD"
 
-#: src/ui/menu_startup_m12.c:5389
+#: src/ui/menu_startup_m12.c:5395
 msgid "TOUCH CONTROLS"
 msgstr "IRÁNYÍTÁS"
 
-#: src/ui/menu_startup_m12.c:5390
+#: src/ui/menu_startup_m12.c:5396
 msgid "MOVEMENT MODE"
 msgstr "MOZGÁS ÜZEMMÓD"
 
-#: src/ui/menu_startup_m12.c:5391
+#: src/ui/menu_startup_m12.c:5397
 msgid "SMOOTH TURN PAN"
 msgstr "SIMA FORDULAT"
 
-#: src/ui/menu_startup_m12.c:5392
+#: src/ui/menu_startup_m12.c:5398
 msgid "DATA DIRECTORY"
 msgstr "ADATKÖNYVTÁR"
 
-#: src/ui/menu_startup_m12.c:5393
+#: src/ui/menu_startup_m12.c:5399
 msgid "ORIGINAL DATA"
 msgstr "EREDETI"
 
-#: src/ui/menu_startup_m12.c:5394
+#: src/ui/menu_startup_m12.c:5400
 msgid "DEBUG OVERLAY"
 msgstr "HIBAKERESÉS"
 
-#: src/ui/menu_startup_m12.c:5395
+#: src/ui/menu_startup_m12.c:5401
 msgid "DEVELOPER GATES"
 msgstr "FEJLESZTÉSI KAPU"
 
-#: src/ui/menu_startup_m12.c:5396
+#: src/ui/menu_startup_m12.c:5402
 msgid "MASTER VOLUME"
 msgstr "FELÚJÍTOTT"
 
-#: src/ui/menu_startup_m12.c:5397
+#: src/ui/menu_startup_m12.c:5403
 msgid "MUSIC VOLUME"
 msgstr "ZENE VOLUME"
 
-#: src/ui/menu_startup_m12.c:5398
+#: src/ui/menu_startup_m12.c:5404
 msgid "SFX VOLUME"
 msgstr "SFX VOLUME"
 
-#: src/ui/menu_startup_m12.c:5399
+#: src/ui/menu_startup_m12.c:5405
 msgid "MUTE AUDIO"
 msgstr "HANG"
 
-#: src/ui/menu_startup_m12.c:5400
+#: src/ui/menu_startup_m12.c:5406
 msgid "AUDIO DEVICE"
 msgstr "AUDIO ESZKÖZ"
 
-#: src/ui/menu_startup_m12.c:5401
+#: src/ui/menu_startup_m12.c:5407
 msgid "BRIGHTNESS"
 msgstr "FÉNYESSÉG"
 
-#: src/ui/menu_startup_m12.c:5402
+#: src/ui/menu_startup_m12.c:5408
 msgid "FONT SCALE"
 msgstr "MÉRETEZÉS"
 
-#: src/ui/menu_startup_m12.c:5403
+#: src/ui/menu_startup_m12.c:5409
 msgid "UNICODE FONT"
 msgstr "UNICODE FONT"
 
-#: src/ui/menu_startup_m12.c:5404
+#: src/ui/menu_startup_m12.c:5410
 msgid "HIGH CONTRAST"
 msgstr "NAGY KONTRASZT"
 
-#: src/ui/menu_startup_m12.c:5405
+#: src/ui/menu_startup_m12.c:5411
 msgid "COLORBLIND"
 msgstr "SZÍVAK"
 
-#: src/ui/menu_startup_m12.c:5406
+#: src/ui/menu_startup_m12.c:5412
 msgid "AUTO PAUSE"
 msgstr "AUTOMATIKUS SZÜNET"
 
-#: src/ui/menu_startup_m12.c:5407
+#: src/ui/menu_startup_m12.c:5413
 msgid "THEME"
 msgstr "TÉMA"
 
-#: src/ui/menu_startup_m12.c:5408
+#: src/ui/menu_startup_m12.c:5414
 msgid "BACKGROUND"
 msgstr "HÁTTÉR"
 
-#: src/ui/menu_startup_m12.c:5409
+#: src/ui/menu_startup_m12.c:5415
 msgid "QUICK RESUME"
 msgstr "GYORS FOLYTATÁS"
 
-#: src/ui/menu_startup_m12.c:5410
+#: src/ui/menu_startup_m12.c:5416
 msgid "V2.2 ARTPACK"
 msgstr "V2.2 ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5411
+#: src/ui/menu_startup_m12.c:5417
 msgid "RETROACHIEVEMENTS"
 msgstr "VISSZAÁLLÍTÁSOK"
 
-#: src/ui/menu_startup_m12.c:5412
+#: src/ui/menu_startup_m12.c:5418
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "VISSZAÁLLÍTÁSOK KEMÉNY"
 
-#: src/ui/menu_startup_m12.c:5413
+#: src/ui/menu_startup_m12.c:5419
 msgid "RETROACHIEVEMENTS USER"
 msgstr "VISSZAÁLLÍTÁSOK FELHASZNÁLÓJA"
 
-#: src/ui/menu_startup_m12.c:5414
+#: src/ui/menu_startup_m12.c:5420
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "RETROACHIEVEMENTS API-TOKEN"
 
-#: src/ui/menu_startup_m12.c:5415
+#: src/ui/menu_startup_m12.c:5421
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "RETROACHIEVEMENTS SZERVER"
 
-#: src/ui/menu_startup_m12.c:5416 src/ui/menu_startup_m12.c:12891
+#: src/ui/menu_startup_m12.c:5422 src/ui/menu_startup_m12.c:12899
 msgid "SAVE BROWSER"
 msgstr "BÖNGÉSZŐ MENTÉSE"
 
-#: src/ui/menu_startup_m12.c:5417
+#: src/ui/menu_startup_m12.c:5423
 msgid "SESSION TIMER"
 msgstr "SESSION TIMER"
 
-#: src/ui/menu_startup_m12.c:5418
+#: src/ui/menu_startup_m12.c:5424
 msgid "MINIMAP"
 msgstr "MINIMÁLIS"
 
-#: src/ui/menu_startup_m12.c:5419
+#: src/ui/menu_startup_m12.c:5425
 msgid "AUTOMAP"
 msgstr "AUTOMATIKUS"
 
-#: src/ui/menu_startup_m12.c:5420
+#: src/ui/menu_startup_m12.c:5426
 msgid "COMBAT LOG"
 msgstr "HARCNAPLÓ"
 
-#: src/ui/menu_startup_m12.c:5421
+#: src/ui/menu_startup_m12.c:5427
 msgid "SOUNDTRACK"
 msgstr "SOUNDTRACK"
 
-#: src/ui/menu_startup_m12.c:5422
+#: src/ui/menu_startup_m12.c:5428
 msgid "AMBIENT SOUND"
 msgstr "JÁTÉKADATOK NEM TALÁLHATÓK"
 
-#: src/ui/menu_startup_m12.c:5423
+#: src/ui/menu_startup_m12.c:5429
 msgid "AMBIENT VOLUME"
 msgstr "ABIENT VOLUME"
 
-#: src/ui/menu_startup_m12.c:5424
+#: src/ui/menu_startup_m12.c:5430
 msgid "UI SCALE"
 msgstr "MÉRETEZÉS"
 
-#: src/ui/menu_startup_m12.c:5425
+#: src/ui/menu_startup_m12.c:5431
 msgid "UI FONT"
 msgstr "UI FONT"
 
-#: src/ui/menu_startup_m12.c:5427
+#: src/ui/menu_startup_m12.c:5433
 msgid "CUSTOM DUNGEONS"
 msgstr "TÖMLÖC"
 
-#: src/ui/menu_startup_m12.c:5428
+#: src/ui/menu_startup_m12.c:5434
 msgid "SCREENSHOTS"
 msgstr "KÉPERNYŐKÉPEK"
 
-#: src/ui/menu_startup_m12.c:5429
+#: src/ui/menu_startup_m12.c:5435
 msgid "ARTPACK"
 msgstr "ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5430
+#: src/ui/menu_startup_m12.c:5436
 msgid "STREAMER MODE"
 msgstr "STREAMER MÓD"
 
-#: src/ui/menu_startup_m12.c:5434
+#: src/ui/menu_startup_m12.c:5440
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "EXPORT DM1 PC34 SAVE"
 
-#: src/ui/menu_startup_m12.c:5435
+#: src/ui/menu_startup_m12.c:5441
 msgid "EXPORT SAVE MANIFEST"
 msgstr "EXPORT SAVE MANIFEST"
 
-#: src/ui/menu_startup_m12.c:5436
+#: src/ui/menu_startup_m12.c:5442
 msgid "IMPORT SAVE MANIFEST"
 msgstr "IMPORTÁLÁS MENTÉSI KIJELENTÉS"
 
-#: src/ui/menu_startup_m12.c:5497
+#: src/ui/menu_startup_m12.c:5503
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:5515
+#: src/ui/menu_startup_m12.c:5521
 msgid "WRITE PC34..."
 msgstr "ÍRJ PC34-et..."
 
-#: src/ui/menu_startup_m12.c:5516
+#: src/ui/menu_startup_m12.c:5522
 msgid "WRITE..."
 msgstr "ÍRJ..."
 
-#: src/ui/menu_startup_m12.c:5517
+#: src/ui/menu_startup_m12.c:5523
 msgid "READ..."
 msgstr "OLVASSA..."
 
-#: src/ui/menu_startup_m12.c:5533
+#: src/ui/menu_startup_m12.c:5539
 msgid "GENERAL"
 msgstr "ÁLTALÁNOS"
 
-#: src/ui/menu_startup_m12.c:5539 src/ui/menu_startup_m12.c:12586
+#: src/ui/menu_startup_m12.c:5545 src/ui/menu_startup_m12.c:12594
 msgid "RENDERER"
 msgstr "RENDERER"
 
-#: src/ui/menu_startup_m12.c:5542
+#: src/ui/menu_startup_m12.c:5548
 msgid "INPUT"
 msgstr "BEMENET"
 
-#: src/ui/menu_startup_m12.c:5545
+#: src/ui/menu_startup_m12.c:5551
 msgid "DATA"
 msgstr "ADATKÖNYVTÁR"
 
-#: src/ui/menu_startup_m12.c:5548
+#: src/ui/menu_startup_m12.c:5554
 msgid "DEBUG"
 msgstr "DEBUG"
 
-#: src/ui/menu_startup_m12.c:5559
+#: src/ui/menu_startup_m12.c:5565
 msgid "APPEARANCE"
 msgstr "MEGJELENÉS"
 
-#: src/ui/menu_startup_m12.c:6023 src/ui/menu_startup_m12.c:6077
+#: src/ui/menu_startup_m12.c:6029 src/ui/menu_startup_m12.c:6083
 msgid "DATA FILES NOT FOUND"
 msgstr "EREDETI FÁJLOK NEM TALÁLHATÓK"
 
-#: src/ui/menu_startup_m12.c:6077
+#: src/ui/menu_startup_m12.c:6083
 msgid "ENTER FOR GAME MENU"
 msgstr "ENTER VAGY ESC VISSZA A MENÜBE"
 
-#: src/ui/menu_startup_m12.c:6078
+#: src/ui/menu_startup_m12.c:6084
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "EZ A JÁTÉK MÉG NINCS TÁMOGATOTT"
 
-#: src/ui/menu_startup_m12.c:6217
+#: src/ui/menu_startup_m12.c:6223
 msgid "NO DM1 SAVES FOUND"
 msgstr "NEM TALÁLHATÓ JÁTÉKADAT"
 
-#: src/ui/menu_startup_m12.c:6218
+#: src/ui/menu_startup_m12.c:6224
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "ELŐSZÖR MENTSE VAGY IMPORTÁLJA a DM1-et"
 
-#: src/ui/menu_startup_m12.c:6642
+#: src/ui/menu_startup_m12.c:6650
 msgid "LOADING SAVE"
 msgstr "BETÖLTÉS MENT"
 
-#: src/ui/menu_startup_m12.c:6682
+#: src/ui/menu_startup_m12.c:6690
 msgid "IMPORTING PARTY"
 msgstr "IMPORTÁLÓ FÉL"
 
-#: src/ui/menu_startup_m12.c:6721
+#: src/ui/menu_startup_m12.c:6729
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "DM1 FÉL IMPORTÁLÁSA A CSB-RE?"
 
-#: src/ui/menu_startup_m12.c:6723
+#: src/ui/menu_startup_m12.c:6731
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "ENTER IMPORTS / ESC TÖRLÉS"
 
-#: src/ui/menu_startup_m12.c:6735
+#: src/ui/menu_startup_m12.c:6743
 msgid "ESC SETTINGS"
 msgstr "BEÁLLÍTÁSOK"
 
-#: src/ui/menu_startup_m12.c:6739
+#: src/ui/menu_startup_m12.c:6747
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "BETÖLTÉSI MŰVELET MEGADÁSA IMPORTÁLÁS CSB-RE MENTÉS EXPORTOK PC34 ESC BEÁLLÍTÁSOK"
 
-#: src/ui/menu_startup_m12.c:6741
+#: src/ui/menu_startup_m12.c:6749
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "ENTER VAGY ESC VISSZA A MENÜBE"
 
-#: src/ui/menu_startup_m12.c:8193 src/ui/menu_startup_m12.c:8405
+#: src/ui/menu_startup_m12.c:8201 src/ui/menu_startup_m12.c:8413
 msgid "NO SOURCE"
 msgstr "NINCS FORRÁS"
 
-#: src/ui/menu_startup_m12.c:8401
+#: src/ui/menu_startup_m12.c:8409
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "EREDETI"
 
-#: src/ui/menu_startup_m12.c:8410
+#: src/ui/menu_startup_m12.c:8418
 msgid "MISSING OR MISMATCHED"
 msgstr "HIÁNYZIK VAGY NEM EGYEZIK"
 
-#: src/ui/menu_startup_m12.c:8967 src/ui/menu_startup_render_modern_m12.c:1954
+#: src/ui/menu_startup_m12.c:8975 src/ui/menu_startup_render_modern_m12.c:1954
 msgid "EXTRAS"
 msgstr "EXTRÁK"
 
-#: src/ui/menu_startup_m12.c:8967
+#: src/ui/menu_startup_m12.c:8975
 msgid "PLAY"
 msgstr "JÁTÉK"
 
-#: src/ui/menu_startup_m12.c:8967
+#: src/ui/menu_startup_m12.c:8975
 msgid "QUIT"
 msgstr "KILÉPÉS"
 
-#: src/ui/menu_startup_m12.c:8971
+#: src/ui/menu_startup_m12.c:8979
 msgid "Start or continue a game"
 msgstr "Játék indítása vagy folytatása"
 
-#: src/ui/menu_startup_m12.c:8972
+#: src/ui/menu_startup_m12.c:8980
 msgid "Display, video, audio and controls"
 msgstr "Kijelző, videó, hang és irányítás"
 
-#: src/ui/menu_startup_m12.c:8973
+#: src/ui/menu_startup_m12.c:8981
 msgid "Museum, bestiary, spell reference and more"
 msgstr "Múzeum, szörnytár, varázslat-referencia és több"
 
-#: src/ui/menu_startup_m12.c:8974
+#: src/ui/menu_startup_m12.c:8982
 msgid "Exit Firestaff"
 msgstr "Kilépés a Firestaffból"
 
-#: src/ui/menu_startup_m12.c:8979
+#: src/ui/menu_startup_m12.c:8987
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:8979
+#: src/ui/menu_startup_m12.c:8987
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:8988
+#: src/ui/menu_startup_m12.c:8996
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:8989 src/ui/menu_startup_m12.c:8990
+#: src/ui/menu_startup_m12.c:8997 src/ui/menu_startup_m12.c:8998
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:8991
+#: src/ui/menu_startup_m12.c:8999
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / SATURN RÖGZÍTÉS KORLÁTOZVA"
 
-#: src/ui/menu_startup_m12.c:8992
+#: src/ui/menu_startup_m12.c:9000
 msgid "V1 Only (Phase 1)"
 msgstr "Csak V1 (1. fázis)"
 
-#: src/ui/menu_startup_m12.c:8995 src/ui/menu_startup_m12.c:8996
-#: src/ui/menu_startup_m12.c:8997 src/ui/menu_startup_m12.c:8998
-#: src/ui/menu_startup_m12.c:8999
+#: src/ui/menu_startup_m12.c:9003 src/ui/menu_startup_m12.c:9004
+#: src/ui/menu_startup_m12.c:9005 src/ui/menu_startup_m12.c:9006
+#: src/ui/menu_startup_m12.c:9007
 msgid "No data files"
 msgstr "Nincsenek adatfájlok"
 
-#: src/ui/menu_startup_m12.c:9732
+#: src/ui/menu_startup_m12.c:9740
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:9733
+#: src/ui/menu_startup_m12.c:9741
 msgid "TITLE START"
 msgstr "TITLE START"
 
-#: src/ui/menu_startup_m12.c:9734
+#: src/ui/menu_startup_m12.c:9742
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIED SOURCE DATA"
 
-#: src/ui/menu_startup_m12.c:9850
+#: src/ui/menu_startup_m12.c:9858
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:9888
+#: src/ui/menu_startup_m12.c:9896
 msgid "New Game (Original)"
 msgstr "Új játék (eredeti)"
 
-#: src/ui/menu_startup_m12.c:9889
+#: src/ui/menu_startup_m12.c:9897
 msgid "New Game (Original + Filters)"
 msgstr "Új játék (eredeti + szűrők)"
 
-#: src/ui/menu_startup_m12.c:9890
+#: src/ui/menu_startup_m12.c:9898
 msgid "New Game (Original 10x Upscale)"
 msgstr "Új játék (eredeti 10x felskálázás)"
 
-#: src/ui/menu_startup_m12.c:9891
+#: src/ui/menu_startup_m12.c:9899
 msgid "Continue Saved Game"
 msgstr "Mentett játék folytatása"
 
-#: src/ui/menu_startup_m12.c:9892
+#: src/ui/menu_startup_m12.c:9900
 msgid "New Game (Modern Graphics)"
 msgstr "Új játék (modern grafika)"
 
-#: src/ui/menu_startup_m12.c:9900
+#: src/ui/menu_startup_m12.c:9908
 msgid "Museum of Lore"
 msgstr "Tudástár Múzeum"
 
-#: src/ui/menu_startup_m12.c:9901
+#: src/ui/menu_startup_m12.c:9909
 msgid "Manual / Docs"
 msgstr "Kézikönyv / dokumentáció"
 
-#: src/ui/menu_startup_m12.c:9902
+#: src/ui/menu_startup_m12.c:9910
 msgid "Bestiary"
 msgstr "Szörnytár"
 
-#: src/ui/menu_startup_m12.c:9903
+#: src/ui/menu_startup_m12.c:9911
 msgid "Spell Reference"
 msgstr "Varázslat-referencia"
 
-#: src/ui/menu_startup_m12.c:9904
+#: src/ui/menu_startup_m12.c:9912
 msgid "Map Viewer"
 msgstr "Térképnéző"
 
-#: src/ui/menu_startup_m12.c:9905
+#: src/ui/menu_startup_m12.c:9913
 msgid "Item Encyclopedia"
 msgstr "Tárgyenciklopédia"
 
-#: src/ui/menu_startup_m12.c:9906
+#: src/ui/menu_startup_m12.c:9914
 msgid "Changelog"
 msgstr "Változásnapló"
 
-#: src/ui/menu_startup_m12.c:9907
+#: src/ui/menu_startup_m12.c:9915
 msgid "Screenshot Gallery"
 msgstr "Képernyőkép-galéria"
 
-#: src/ui/menu_startup_m12.c:9936
+#: src/ui/menu_startup_m12.c:9944
 msgid "NO DATA SOURCE YET"
 msgstr "NINCS FORRÁS"
 
-#: src/ui/menu_startup_m12.c:10009
+#: src/ui/menu_startup_m12.c:10017
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "Fel/Le navigálás  |  Enter kiválasztás"
 
-#: src/ui/menu_startup_m12.c:10033
+#: src/ui/menu_startup_m12.c:10041
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape vissza  |  Fel/Le navigálás  |  Enter kiválasztás"
 
-#: src/ui/menu_startup_m12.c:10062
+#: src/ui/menu_startup_m12.c:10070
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape vissza  |  Fel/Le navigálás  |  Enter indítás"
 
-#: src/ui/menu_startup_m12.c:10086
+#: src/ui/menu_startup_m12.c:10094
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape vissza  |  Fel/Le navigálás  |  Enter megnyitás"
 
-#: src/ui/menu_startup_m12.c:10230
+#: src/ui/menu_startup_m12.c:10238
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > lapváltás   Fel/Le navigálás   Enter módosítás"
 
-#: src/ui/menu_startup_m12.c:12563
+#: src/ui/menu_startup_m12.c:12571
 msgid "GAME OPTIONS"
 msgstr "JÁTÉKBEÁLLÍTÁSOK"
 
-#: src/ui/menu_startup_m12.c:12600
+#: src/ui/menu_startup_m12.c:12608
 msgid "ARCHITECTURE"
 msgstr "ARCHÍVUM ÁLLAPOTA"
 
-#: src/ui/menu_startup_m12.c:12613
+#: src/ui/menu_startup_m12.c:12621
 msgid "VERSION"
 msgstr "VERZIÓ"
 
-#: src/ui/menu_startup_m12.c:12634
+#: src/ui/menu_startup_m12.c:12642
 msgid "PATCH"
 msgstr "PATCH"
 
-#: src/ui/menu_startup_m12.c:12660
+#: src/ui/menu_startup_m12.c:12668
 msgid "CHEATS"
 msgstr "CHEATS"
 
-#: src/ui/menu_startup_m12.c:12673
+#: src/ui/menu_startup_m12.c:12681
 msgid "SPEED"
 msgstr "SPEED"
 
-#: src/ui/menu_startup_m12.c:12685
+#: src/ui/menu_startup_m12.c:12693
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "KAPCSOLD BE A CSALÁSOKAT A SEBESSÉG / GYORSBILLENTYŰK FELOLDÁSÁHOZ"
 
-#: src/ui/menu_startup_m12.c:12707
+#: src/ui/menu_startup_m12.c:12715
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "ZÁROLVA A V1 EREDETI MÓD ÁLTAL"
 
-#: src/ui/menu_startup_m12.c:12717
+#: src/ui/menu_startup_m12.c:12725
 msgid "RESOLUTION"
 msgstr "RESOLUTION"
 
-#: src/ui/menu_startup_m12.c:12731
+#: src/ui/menu_startup_m12.c:12739
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "ZÁROLVA A V1 EREDETI MÓD ÁLTAL"
 
-#: src/ui/menu_startup_m12.c:12752
+#: src/ui/menu_startup_m12.c:12760
 msgid "> DATA FILES NOT FOUND"
 msgstr "EREDETI FÁJLOK NEM TALÁLHATÓK"
 
-#: src/ui/menu_startup_m12.c:12754
+#: src/ui/menu_startup_m12.c:12762
 msgid "> RENDERER UNAVAILABLE"
 msgstr "MEGJELENÍTŐ HÁTTÉR NEM ÉRHETŐ EL"
 
-#: src/ui/menu_startup_m12.c:12755
+#: src/ui/menu_startup_m12.c:12763
 msgid "> LAUNCH"
 msgstr "> INDÍTÁS"
 
-#: src/ui/menu_startup_m12.c:12768
+#: src/ui/menu_startup_m12.c:12776
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: VISSZA  NYILAK: NAVIGÁLÁS  ENTER: KIVÁLASZTÁS"
 
-#: src/ui/menu_startup_m12.c:13166
+#: src/ui/menu_startup_m12.c:13174
 msgid "CUSTOM MUSIC FOLDER SELECTED"
 msgstr "CUSTOM MUSIC FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13172
+#: src/ui/menu_startup_m12.c:13180
 msgid "NO FOLDER SELECTED"
 msgstr "NO FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13177
+#: src/ui/menu_startup_m12.c:13185
 msgid "FOLDER MISSING OR PATH TOO LONG"
 msgstr "FOLDER MISSING OR PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13202
+#: src/ui/menu_startup_m12.c:13210
 msgid "UNICODE FONT SELECTED"
 msgstr "UNICODE BETŰTŰV KIVÁLASZTVA"
 
-#: src/ui/menu_startup_m12.c:13210 src/ui/menu_startup_m12.c:13251
+#: src/ui/menu_startup_m12.c:13218 src/ui/menu_startup_m12.c:13259
 msgid "NO FILE SELECTED"
 msgstr "NINCS FÁJL KIVÁLASZTVA"
 
-#: src/ui/menu_startup_m12.c:13211 src/ui/menu_startup_m12.c:13252
+#: src/ui/menu_startup_m12.c:13219 src/ui/menu_startup_m12.c:13260
 msgid "FILE PATH TOO LONG"
 msgstr "FILE PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13236
+#: src/ui/menu_startup_m12.c:13244
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 ARTPACK KIVÁLASZTOTT"
 
-#: src/ui/menu_startup_m12.c:13242
+#: src/ui/menu_startup_m12.c:13250
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 ARTPACK ELutasítva"
 

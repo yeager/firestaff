@@ -5,6 +5,10 @@
 - `Swedish launcher`: translated the five new custom-music folder selection,
   cancellation, invalid-path and memory-error messages.
 
+- `Quick Resume`: disabling the option preserves the remembered save
+  location, including when another setting is saved. Re-enabling it checks
+  the save again immediately instead of requiring a launcher restart.
+
 - `Font and artpack selection`: dialog results are applied on the main
   thread and remain safe if the menu closes before the dialog returns.
   Overlong paths are rejected without truncating the prior selection.
