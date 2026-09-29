@@ -778,6 +778,10 @@ typedef struct {
     int startedFromLauncher;
     int dm1StartupIntroBypassed;
     int dm1StartupHandoffExecuted;
+    /* The live PC34/Atari DM1 title loop records the admitted C001 source
+     * and completed ReDMCSB F0437 steps for authentic startup regressions. */
+    int dm1StartupTitleRuntimeSource;
+    unsigned int dm1StartupTitleCompletedSteps;
     /* Retained only for the source-visible selected-launch boundary. This
      * is the ENTRANCE.C VIEWING/Hall receipt consumed before the first
      * runtime draw; direct GameView starts intentionally leave it empty. */

@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-29: Corrected the live PC/F20 M11 title selection to use the
+  ReDMCSB `TITLE.C` F0437 `GRAPHICS.DAT` C001 sequence even when the separate
+  canonical loose `TITLE` animation is installed. The authentic PC3.4 normal
+  launcher regression now asserts that C001 was selected and all 23 source
+  steps completed before the runtime handoff.
+
 - 2026-09-29: PC/F20 startup now marks the title handoff complete only after
   all 23 C001 source steps (or all 53 TITLE.DAT frames plus the final guard)
   finish presenting. Decode, presentation and event-pump interruptions no

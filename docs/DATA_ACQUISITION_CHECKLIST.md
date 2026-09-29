@@ -215,7 +215,7 @@ coverage**, not registry correctness.
 | Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
 | FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
 | PC-9801 | 🔴 | 🔴 | Preservation only: DMWeb identifies Japanese v1.0 FDI media, a no-music profile and a separate HDM/HDI demo, none of which is a Firestaff launch target. |
-| PC-9821 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a BIN/CUE CD image; six CD.DAT music tracks; PC-98 keypad / Alt-S input table; LZEXE `FIRE.EXE` CD-ROM protection notes |
+| PC-9821 | ⚪ | ⚪ | Out of Firestaff scope at the user's request. Preserve DMWeb format and provenance notes as reference only; do not acquire or admit this platform for launch/runtime support. |
 | IBM PS/V | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as original three floppy disks plus WinImage disk images; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection offsets `0x21989`/`0x1FB77` |
 | PC beta/demo | 🔴 | 🔴 | DMWeb PC page documents PC 0.9 beta plus five 1995 demo builds; earliest `FIRE.EXE`/LZ91 demo lacks music and save/load, later `SKULL.EXE`/Watcom demos vary `GRAPHICS.DAT`, `DUNGEON.DAT`, sound, logo, title, and ordering assets |
 

@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 PC 3.4 startup`: play the source-owned `GRAPHICS.DAT` C001 title sequence
+  even when the separate canonical `TITLE` animation is installed. Entrance
+  now follows after all 23 source steps complete.
+
 - `DM1 startup`: an interrupted title animation now stops the handoff instead
   of proceeding to Entrance after only a partial sequence.
 

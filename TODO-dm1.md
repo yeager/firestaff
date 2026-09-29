@@ -1,11 +1,12 @@
 # Firestaff TODO — DM1
 
-- Verify full PC/F20 title playback with authentic TITLE.DAT and C001 media
+- Verify full PC/F20 title playback from authentic GRAPHICS.DAT C001 media
   across each supported desktop target, including HiDPI presentation and
   event interruption after a rendered frame. The runtime now blocks Entrance
-  unless the complete 53-frame TITLE.DAT sequence plus guard, or all 23 C001
-  source steps, finish; the current contract regression covers the blocked
-  handoff but does not inject a renderer/event fault into the live media loop.
+  unless all 23 C001 source steps finish. The production M11 path now chooses
+  C001 even when the separate canonical TITLE animation is available, and the
+  authentic PC3.4 menu test records the selected source and all 23 completed
+  steps. Cross-desktop HiDPI and live renderer/event-fault coverage remain open.
 
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
   set as one source-locked pass: pickup-to-inventory and object-bearing Eye

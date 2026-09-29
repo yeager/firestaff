@@ -13,6 +13,7 @@ Firestaff's actual implementation state.
 | 🟡 | **Source-locked** — ReDMCSB/CSBwin/SKWIN source reverse-engineered, but no local data files (yet) for runtime proof |
 | 🔵 | **Greatstone-extracted** — Pierre Monnot's sck tool has decoded this version, data is publicly browsable at `http://greatstone.free.fr/dm/db_data/`, and `tools/verify_greatstone_db_data_paths.py` (CTest `greatstone_db_data_paths_probe`, OFFLINE by default with a metadata-only fixture) keeps the curated current-path set + the obsolete `c_dm_*` / `c_csb_*` / guessed-DM2 404-regression set in sync; per-row evidence lives at `parity-evidence/verification/greatstone_db_data_paths_probe/manifest.json` |
 | 🟣 | **Real-media bounded route** — authentic local media is read in its original container or in memory, and focused runtime gates pass; this does not claim complete campaign playability or full platform parity |
+| ❌ | **Intentionally unsupported** — retained as historical/reference inventory only; Firestaff must not select, launch or implement this platform |
 | ⚪ | **Publicly documented only** — exists in the wild, no extraction tool covers it, would require new reverse-engineering |
 
 ## DM1 (Dungeon Master) — 22+ known versions
@@ -90,7 +91,7 @@ data files.
 | Macintosh | 1.0 | EN | ✅ | `c_dm2_mac/` | yes | Authentic retail English ZIP is admitted through HFS/resource-fork media; source-owned big-endian New Game/runtime, movement, stairs/DB1 and combat/creature gates pass |
 | Macintosh | 1.0 | JP | 🔵 | `c_dm2_mac_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles archive; older 16-color graphics; intro animation also present on Sega CD; CD-audio tracks; `Skullkeep` resource-fork protection notes |
 | PC-9801 | 1.0 | JP | ❌ | `c_dm2_pc98/` | — | Preservation only. No DM2 scanner selection, startup, game-view or input route; four FDI disk images and the no-music/input facts remain documented. |
-| PC-9821 | 1.0 | JP | 🔵 | `c_dm2_pc9821/` | — | DMWeb edition page: Victor JP v1.0 BIN/CUE CD image, six CD.DAT music tracks, PC-98 keypad / Alt-S input table, LZEXE `FIRE.EXE` CD-ROM protection notes |
+| PC-9821 | 1.0 | JP | ❌ | `c_dm2_pc9821/` | — | Intentionally unsupported in Firestaff at the user's request. Keep this row only as historical DMWeb/Greatstone reference; do not add a catalog identity, CLI alias, media admission or runtime route. The regression test `dm2_unsupported_platform_cli` rejects platform aliases and the authentic archive through CLI and launcher discovery. |
 | IBM PS/V | 1.0 | JP | 🔵 | `c_dm2_ibmpsv/` | — | DMWeb edition page: Victor JP v1.0 three-floppy/WinImage media; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection notes |
 | Sega CD / Mega CD | 1.0 | EN | 🔵 | `c_dm2_segacd_en/` | — | DMWeb edition page: Europe + USA redump BIN/CUE CD images; USA also has DMFiles CD-content archive plus split data-track ISO and audio-track MP3 archives |
 | Sega CD / Mega CD | 1.0 | JP | 🔵 | `c_dm2_segacd_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles CD-content archive; same CD.DAT trigger table, but track 7 is a 15-second silent track |
@@ -157,7 +158,7 @@ support is to add any one of these data files:
 | Medium | DM PC 3.4 VGA/EGA and PC-only presentation receipts | Existing hash-verified PC runtime target; add focused receipts for DMWeb's VGA/EGA split, PC ending animation, entrance music excerpt, DOS keypad / Alt-S / analog-joystick / mouse-simulation input table, and Spanish fan-translation non-canonical boundary |
 | Medium | DM1 overview version-comparison receipts | Cross-port proof from DMWeb's overview page: two perspective families, sound/stereo/missing-effect behavior, fountain/wall-click differences, Kid Dungeon gates, Atari ST-vs-PC dungeon deltas, PC-only ending/music, PC-9801 light-level boundary, SNES presentation differences, and FM Towns CD-audio receipts |
 | Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
-| Medium | DM2 PC-9821 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, PC-98 keyboard bridge, `FIRE.EXE` CD-ROM protection behavior evidence |
+| Out of scope | DM2 PC-9821 1.0 BIN/CUE CD image | Retain historical format/provenance notes only. Firestaff does not acquire, catalog, launch or implement this platform. |
 | Medium | DM2 IBM PS/V 1.0 floppy/WinImage set | Japanese three-floppy media, no-music behavior, IBM PS/V keyboard bridge, `FIRE.EXE` protection behavior evidence |
 | Medium | DM2 Macintosh 1.0 BIN/CUE/CD-content set | Japanese + USA CD media, StuffIt/HQX/resource-fork handling, QuickTime/MooV animations, MIDI/SoundMusicSys resources, Mac keyboard/menu bridge |
 | Medium | DM2 PC demo/build matrix | five 1995 DOS demo builds, `FIRE.EXE`/LZ91 versus `SKULL.EXE`/Watcom split, save/load and music differences, distinct `GRAPHICS.DAT`/`DUNGEON.DAT` evidence |

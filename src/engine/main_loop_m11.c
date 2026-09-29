@@ -2981,6 +2981,9 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         !gameView || !gameView->assetsAvailable) {
         return 0;
     }
+    gameView->dm1StartupTitleRuntimeSource =
+        V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP;
+    gameView->dm1StartupTitleCompletedSteps = 0U;
     /* TITLE.C renders before m11_present_game_frame() can activate V2.0. */
     M11_Render_SetV2PresentationActive(
         m11_dm1_v20_presentation_active(gameView));
@@ -2999,6 +3002,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                 (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
             return 0;
         }
+        gameView->dm1StartupTitleRuntimeSource =
+            sourceReceipt.selected_runtime_source;
     }
     framebuffer = M11_Render_GetFramebuffer();
     if (!framebuffer) {
@@ -3116,6 +3121,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         presentationStartedMs = 0U;
         if (!command.present_frame) {
             ++completedSteps;
+            gameView->dm1StartupTitleCompletedSteps = completedSteps;
             continue;
         }
         if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
@@ -3171,6 +3177,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             presentationStartedMs = 0U;
         }
         ++completedSteps;
+        gameView->dm1StartupTitleCompletedSteps = completedSteps;
     }
     if (completedSteps == V1_TitleFrontend_GetSourceAnimationStepCount()) {
         if (outCompleted) {
@@ -3187,157 +3194,18 @@ static int m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState*
                                                      int* outCompleted,
                                                      const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
                                                          dm1MediaReceipt) {
-    char titlePath[FSP_PATH_MAX];
-    unsigned char* packedStorage;
-    unsigned char* packedScreen;
-    unsigned char* indexedScreen;
-    char err[160];
-    unsigned int step;
-    unsigned int completedFrames = 0U;
-    V1_TitleFrontendSourceTiming timing;
-    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
-    int hasDm1Media;
-    int completed = 0;
-
     if (outCompleted) {
         *outCompleted = 0;
     }
-    /* TITLE.C:309-409 is the DM1 PC/F20 branch. CSB enters the distinct
-     * A31 branch at TITLE.C:412 and must use its own title implementation. */
+    /* ReDMCSB TITLE.C F0437 PC/F20 loads GRAPHICS.DAT C001 at lines 309-310
+     * and builds PRESENTS/MASTER from that bitmap through line 409. The loose
+     * TITLE animation is separate provenance and cannot replace those source
+     * blits, even when its canonical file is installed. */
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
         return 0;
     }
-    /* The TITLE animation file contains the full 53-frame sequence including
-     * the letter-by-letter MASTER reveal and authentic palette transitions.
-     * Prefer it over the simplified C001 runtime zoom when available. */
-    if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
-        if (m11_play_redmcsb_title_graphic_intro_if_available(menuState, gameView,
-                                                              sourceId,
-                                                              outCompleted,
-                                                              dm1MediaReceipt)) {
-            return 1;
-        }
-        fprintf(stderr,
-                "Firestaff V1 original TITLE intro skipped: no TITLE animation file "
-                "or GRAPHICS.DAT C001 title graphic found; set FIRESTAFF_TITLE_DAT or install "
-                "the original TITLE file under FIRESTAFF_DM1_DATA_DIR or "
-                "$HOME/.firestaff/data/dm1.\n");
-        return 0;
-    }
-    packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
-    indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES + (size_t)M11_FB_BYTES * 4u);
-    if (!packedStorage || !indexedScreen) {
-        free(packedStorage);
-        free(indexedScreen);
-        return 0;
-    }
-    packedScreen = packedStorage + 4U;
-    timing = V1_TitleFrontend_GetSourceTimingEvidence();
-    memset(&dm1Media, 0, sizeof(dm1Media));
-    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
-        dm1Media = *dm1MediaReceipt;
-        hasDm1Media = 1;
-    } else {
-        hasDm1Media =
-            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
-                "dm1",
-                &dm1Media);
-    }
-
-    /* ReDMCSB TITLE.C PC/F20 source-lock:
-     *   TITLE.C:319-324 draws PRESENTS from the decompressed title graphic.
-     *   TITLE.C:340-360 builds 18 shrinked title bitmaps; TITLE.C:385-387
-     *               waits M526_WaitVerticalBlank() before each reverse-order zoom blit.
-     *   TITLE.C:395-402 waits two more VBlanks and draws STRIKES BACK.
-     *   TITLE.C:409 adds the final guard before the next screen.
-     * Runtime normally uses GRAPHICS.DAT C001 above.  If that bitmap is not
-     * available, keep the hash-locked TITLE.DAT bank as a last-resort visible
-     * fallback rather than skipping straight to the entrance. */
-    for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
-        V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
-        V1_TitleFrontendRenderResult renderResult;
-        int stepPalette;
-        memset(packedStorage, 0, 4U + 32000U);
-        memset(indexedScreen, 0, (size_t)M11_FB_BYTES);
-        memset(&renderResult, 0, sizeof(renderResult));
-        err[0] = '\0';
-        if (!V1_TitleFrontend_RenderFrameToScreen(titlePath,
-                                                  d.renderFrameOrdinal,
-                                                  packedScreen,
-                                                  &renderResult,
-                                                  err,
-                                                  sizeof(err))) {
-            fprintf(stderr,
-                    "Firestaff V1 original TITLE intro stopped: failed to render frame %u from %s: %s\n",
-                    d.renderFrameOrdinal,
-                    titlePath,
-                    err[0] ? err : "unknown TITLE decode error");
-            break;
-        }
-        (void)V1_TitleFrontend_Unpack4bppScreenToIndexed(packedScreen,
-                                                         M11_FB_WIDTH,
-                                                         M11_FB_HEIGHT,
-                                                         indexedScreen,
-                                                         M11_FB_WIDTH);
-        if (renderResult.hasPalette) {
-            /* TITLE.DAT embeds its own Amiga palette in PL records.
-             * Convert indexed pixels to RGBA using the native palette. */
-            unsigned char* rgbaScreen = indexedScreen + M11_FB_BYTES;
-            unsigned int px;
-            for (px = 0u; px < (unsigned int)(M11_FB_WIDTH * M11_FB_HEIGHT); ++px) {
-                unsigned int ci = indexedScreen[px] & 0x0fu;
-                rgbaScreen[px * 4u + 0u] = renderResult.palette.rgba[ci][0];
-                rgbaScreen[px * 4u + 1u] = renderResult.palette.rgba[ci][1];
-                rgbaScreen[px * 4u + 2u] = renderResult.palette.rgba[ci][2];
-                rgbaScreen[px * 4u + 3u] = 255u;
-            }
-            if (M11_Render_PresentRGBA(rgbaScreen,
-                                       M11_FB_WIDTH,
-                                       M11_FB_HEIGHT) != M11_RENDER_OK) {
-                fprintf(stderr,
-                        "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
-                        d.renderFrameOrdinal);
-                break;
-            }
-        } else {
-            (void)V1_TitleFrontend_GetFallbackFramePalette(renderResult.paletteOrdinal,
-                                                           &stepPalette);
-            if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
-                                                            M11_FB_WIDTH,
-                                                            M11_FB_HEIGHT,
-                                                            stepPalette) != M11_RENDER_OK) {
-                fprintf(stderr,
-                        "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
-                        d.renderFrameOrdinal);
-                break;
-            }
-        }
-        /* Each TITLE animation frame carries its own durationFrames count
-         * (VBlanks to hold before advancing).  The TITLE file is an
-         * Amiga-format animation; use PAL 20ms per VBlank for the hold. */
-        {
-            unsigned int holdMs = renderResult.durationFrames > 0u
-                ? renderResult.durationFrames * DM1_V1_PAL_VBLANK_MS
-                : (hasDm1Media ? dm1Media.title_zoom_frame_delay_ms
-                               : V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
-            if (m11_delay_ms_with_intro_event_pump(holdMs)) {
-                break;
-            }
-        }
-        ++completedFrames;
-    }
-    if (completedFrames == V1_TITLE_DAT_FRAME_MAX &&
-        !m11_delay_ms_with_intro_event_pump(
-            hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
-                          V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing))) {
-        completed = 1;
-    }
-    free(packedStorage);
-    free(indexedScreen);
-    if (outCompleted) {
-        *outCompleted = completed;
-    }
-    return completed;
+    return m11_play_redmcsb_title_graphic_intro_if_available(
+        menuState, gameView, sourceId, outCompleted, dm1MediaReceipt);
 }
 
 typedef struct M11_DM1StartupHandoffContext {
@@ -5205,7 +5073,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"csbViewportHash\": %u,\n"
             "  \"script\": {\"waitFramesRemaining\": %d, \"pending\": %d},\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
-            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
+            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupTitleRuntimeSource\": %d, \"dm1StartupTitleCompletedSteps\": %u, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
             "  \"lastAction\": \"%s\",\n"
             "  \"lastOutcome\": \"%s\",\n"
             "  \"gameTick\": %u,\n"
@@ -5247,6 +5115,9 @@ static void m11_write_autotest_runtime_probe(const char* path,
             startupReceipt.startupActive,
             startupReceipt.levelLoaded,
             gameView ? gameView->dm1StartupHandoffExecuted : 0,
+            gameView ? gameView->dm1StartupTitleRuntimeSource :
+                       V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP,
+            gameView ? gameView->dm1StartupTitleCompletedSteps : 0U,
             gameView && gameView->dm1StartupRuntimeHandoffValid &&
                     gameView->dm1StartupRuntimeHandoffReceipt
                         .hoc_first_frame_ready

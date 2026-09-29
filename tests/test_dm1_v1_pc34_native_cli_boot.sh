@@ -104,11 +104,13 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
         startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupTitleRuntimeSource"] != 1 or
+        startup["dm1StartupTitleCompletedSteps"] != 23 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(f"FAIL: authentic DM1 AUTO menu did not reach the PC-34 runtime: {probe}")
-print("PASS: clean-config DM1 AUTO menu discovered PC-34 and reached its runtime handoff")
+print("PASS: clean-config DM1 AUTO menu used all 23 GRAPHICS.DAT C001 title steps and reached runtime")
 PY
 rm -rf "$menu_auto_home"
 
@@ -124,7 +126,7 @@ FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_hoc_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game dm1 --platform pc --data-dir "$archive" \
     --presentation-mode v1 --script "enter,enter,enter,$menu_hoc_route,click:130:115,wait:30,key:kp6,wait:60" \
-    --duration 30000 >/dev/null
+    --duration 60000 >/dev/null
 python3 - "$menu_hoc_probe_json" <<'PY'
 import json
 import sys

@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Reviewed 2026-09-12.** This is the operational status matrix. It separates
+**Reviewed 2026-09-29.** This is the operational status matrix. It separates
 media recognition, verified runtime slices and end-to-end playability. A row
 marked as supported does not mean that every menu, save format or visual
 parity gate is complete.
@@ -17,8 +17,7 @@ parity gate is complete.
 
 ## Latest real-media revalidation
 
-The 2026-09-12 documentation review did not promote any platform row. Recent
-reports of DM1/CSB input and presentation faults and DM2/FM Towns
+Recent reports of DM1/CSB input and presentation faults and DM2/FM Towns
 palette/menu/dungeon faults remain open parity work until they are reproduced
 against matching original media and resolved with source or capture evidence.
 A green launch test below is therefore not a substitute for visual, audio,
@@ -80,6 +79,15 @@ startup handoff gates. Theron passed Japanese raw track-02 intake, level-block
 and later-dungeon gates, plus the Japanese CUE boot route. These are bounded
 route receipts, not a claim of complete campaign, save, audio or pixel parity.
 
+On 2026-09-29 the authentic startup smoke tests passed for DM1 PC 3.4 DOS,
+DM1 Atari ST, CSB Atari ST and DM2 Macintosh. The DM1 PC 3.4 normal start-menu
+route now also records that it selected the source-owned `GRAPHICS.DAT` C001
+intro and completed all 23 `TITLE.C` F0437 steps before entering runtime.
+`dm2_unsupported_platform_cli` passed its PC-9821 alias-rejection checks and,
+with the supplied Japanese archive present, confirmed that automatic discovery
+and the start menu do not launch it. These are bounded startup results; they
+do not establish full presentation, audio or campaign parity.
+
 ## Dungeon Master
 
 | Platform | Status | Current scope | Open boundary |
@@ -112,7 +120,7 @@ route receipts, not a claim of complete campaign, save, audio or pixel parity.
 | FM Towns | **Verified route** | Authentic Towns data and platform-specific startup, input, CD-audio and gameplay slices are tested. The HUD portrait proof reads `GRAPHICS.DAT` through the supplied ZIP → original IMG → ISO chain in RAM and verifies all 16 original `CHAMPIONS` records; it never relies on an extracted `DATA/` directory. | Complete native runtime ownership and full parity. |
 | Macintosh large retail | **Verified route** | Authentic English retail ZIP is read in RAM. HFS, big-endian dungeon data, New Game, bounded wall input, and an accepted real-GDAT frame with zero fallback draws pass. The normal Mac CLI loop now plays the complete authentic Title.MooV and reaches loaded runtime. Its 256-row `PalIRGB`/`dtPalette16` pair remains distinct from the Amiga physical 16-colour palette route. Native QuickTime code admits original `moov`/`mdat` sample spans and decodes all four retail films: Cinepak/`twos` Title, Animation RLE/`raw ` Swoosh, and Cinepak/`raw ` Credits/Ending. The normal-loop regression uses SDL dummy video/audio and does not verify a native window, HiDPI input or audible playback. No FFmpeg, BIOS, extraction, or host codec is used. | Complete Mac GAME_LOAD/Resume, dynamic pointer/drag owner, MIDI timing and full pixel/audio parity. No authentic Mac save is present. |
 | Macintosh Japanese/French | **Preservation** | Authentic media is retained or classified as preservation input. | Separate graphics/dungeon/runtime ownership and language-specific proof. |
-| PC-9821 Japanese retail | **Partial** | Hash-verified CUE/BIN-in-ZIP media is selected by CLI and launcher; original title assets, CDDA track extraction, STARTEND first-champion confirmation through the M11 viewport click, GAME_LOAD commit and a movement command that changes the runtime pose pass against the real archive. | Additional party-selection cycles, sustained gameplay and audible CDDA output remain unverified. |
+| PC-9821 Japanese retail | **Unsupported** | Removed from Firestaff discovery, launcher choices, CLI aliases and native media/runtime admission at the user's request. A regression test rejects explicit aliases and the authentic archive through both direct CLI and launcher discovery. Reference facts remain documentation only. | None; do not add a Firestaff route. |
 | PC-9801 demo / IBM PS/V | **Preservation** | Separate Japanese demo and floppy media remain classified independently. | Native startup, game-view and input are not implemented. |
 | X68000 | **Unsupported** | Not part of the DM2 support matrix. | None planned in the current target. |
 
