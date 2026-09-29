@@ -133,6 +133,18 @@ implementing transitions. The regional totals are explicit test assertions so
 a broken/empty approach selector cannot masquerade as passing coverage. See
 `DONE-theron.md` for exact test scope.
 
+For a stair promotion, start from a normal playable original US or JP session
+and enter an authentic-map stair through ordinary game input; do not edit
+party coordinates, map tiles, or transition RAM to manufacture the event. Join
+the raw source tile and its coordinates to pre/post dungeon, level, facing and
+party-position bytes, the command dispatch, the executing HuC6280 PC and MPR
+mapping, and any Track 02 read that supplies the destination level or arrival
+pose. Capture the destination's actual arrival square and original screen for
+the same transaction. Repeat for distinct stair attributes and both editions
+before generalizing a direction/destination rule. Existing forward/backward
+movement captures from the Akutuba start state do not cross a stair and cannot
+authorize this promotion.
+
 2026-09-27 authentic regional runtime input-state regression: the JP Rev. 1
 and USA raw-BIN startup tests now compare a no-motion baseline with individual
 native commands against the hash-locked regional Track 02 files; JP also
