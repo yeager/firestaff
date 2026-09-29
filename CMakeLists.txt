@@ -53645,6 +53645,12 @@ add_test(NAME theron_record_table_provenance_verifier
 set_tests_properties(theron_record_table_provenance_verifier PROPERTIES
     LABELS "theron;capture;provenance;opaque")
 
+add_test(NAME theron_v1_original_consumer_trace_markers
+    COMMAND bash
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_original_consumer_trace_markers.sh")
+set_tests_properties(theron_v1_original_consumer_trace_markers PROPERTIES
+    LABELS "theron;capture;provenance;opaque")
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_vdc_io_trace.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_mednafen_vdc_io_trace.c")
     add_executable(test_theron_v1_mednafen_vdc_io_trace

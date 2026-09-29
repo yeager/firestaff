@@ -37,6 +37,7 @@ my %required = (
     object => [ raw_to_lba_offset($object_value) ],
 );
 my %seen;
+my %origins;
 my $source = 0;
 my $dispatch = 0;
 my $receipts = 0;
@@ -47,18 +48,63 @@ while (<$fh>) {
     chomp;
     $source = 1 if /^source=mednafen-pce-instrumented/;
     $dispatch = 1 if /^main_ram_loader_e009_dispatch /;
-    $receipts++ if /^pce_cd_fifo_origin_main_ram_receipt /;
+    if (/^pce_cd_fifo_origin_main_ram_receipt /) {
+        my %field = map { split /=/, $_, 2 } grep { /=/ } split / /;
+        $receipts++;
+        if (defined $field{generation} && $field{generation} =~ /^\d+$/ &&
+            defined $field{source_lba} && $field{source_lba} =~ /^\d+$/ &&
+            defined $field{source_offset} && $field{source_offset} =~ /^\d+$/ &&
+            defined $field{fifo_sequence} && $field{fifo_sequence} =~ /^\d+$/ &&
+            defined $field{logical_destination} &&
+                $field{logical_destination} =~ /^[0-9a-f]{4}$/i &&
+            defined $field{physical_destination} &&
+                $field{physical_destination} =~ /^1f[0-7][0-9a-f]{3}$/i &&
+            defined $field{value} && $field{value} =~ /^[0-9a-f]{2}$/i) {
+            my $sequence = $field{fifo_sequence};
+            # FIFO sequence numbers must identify one unambiguous earlier
+            # write in this capture. A duplicate cannot authorize a reader.
+            if (exists $origins{$sequence}) {
+                $origins{$sequence} = undef;
+            } else {
+                $origins{$sequence} = {
+                    generation => $field{generation},
+                    source_lba => $field{source_lba},
+                    source_offset => $field{source_offset},
+                    logical_destination => lc $field{logical_destination},
+                    physical_destination => lc $field{physical_destination},
+                    value => lc $field{value},
+                };
+            }
+        }
+        next;
+    }
     next unless /^pce_cd_fifo_origin_main_ram_consumer /;
     $consumers++;
     my %field = map { split /=/, $_, 2 } grep { /=/ } split / /;
+    my $origin = defined $field{fifo_sequence} &&
+        $field{fifo_sequence} =~ /^\d+$/
+        ? $origins{$field{fifo_sequence}} : undef;
+    next unless $origin &&
+        defined $field{generation} &&
+            $field{generation} eq $origin->{generation} &&
+        defined $field{source_lba} &&
+            $field{source_lba} eq $origin->{source_lba} &&
+        defined $field{source_offset} &&
+            $field{source_offset} eq $origin->{source_offset} &&
+        defined $field{logical_address} &&
+            lc($field{logical_address}) eq $origin->{logical_destination} &&
+        defined $field{physical_address} &&
+            lc($field{physical_address}) eq $origin->{physical_destination} &&
+        defined $field{value} && lc($field{value}) eq $origin->{value} &&
+        defined $field{reader_physical_pc} &&
+            $field{reader_physical_pc} =~ /^1f[0-7][0-9a-f]{3}$/i;
     for my $role (keys %required) {
         my ($lba, $offset) = @{$required{$role}};
-        if (defined $field{source_lba} &&
-            defined $field{source_offset} &&
+        if ($field{source_lba} =~ /^\d+$/ &&
+            $field{source_offset} =~ /^\d+$/ &&
             int($field{source_lba}) == $lba &&
             int($field{source_offset}) == $offset &&
-            defined $field{reader_physical_pc} &&
-            $field{reader_physical_pc} =~ /^1f[0-7][0-9a-f]{3}$/) {
+            $field{reader_physical_pc} =~ /^1f[0-7][0-9a-f]{3}$/i) {
             $seen{$role} = 1;
         }
     }

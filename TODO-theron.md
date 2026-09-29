@@ -28,6 +28,13 @@ from their authenticated regional retrieval records using the checked CP932
 converter. This is only a launcher text fallback: the original
 pickup-to-retrieval event remains unbound.
 
+The original-consumer capture marker verifier now correlates each required
+consumer read with one unique earlier FIFO-origin receipt by sequence,
+generation, source LBA/offset, logical and physical RAM destination, and byte
+value. Its regression rejects mismatched or later receipts. This strengthens
+the admission check but does not make any current capture pass or prove the
+consumer's game semantics.
+
 ## Remaining work, ordered by the end-to-end playability dependency
 
 The repository has real-media startup, source-data loaders, bounded mechanics,

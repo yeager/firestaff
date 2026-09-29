@@ -32,6 +32,23 @@
 - This proves only the launcher's bounded display-name projection, not the
   original retrieval UI, item pickup, or T900 event consumer.
 
+## 2026-09-29 — require same-session FIFO provenance for consumer markers
+
+- The high-level original-consumer marker verifier now requires every
+  qualifying palette, non-startup-level, and object-table read to match a
+  unique preceding FIFO-origin receipt in the same trace: FIFO sequence,
+  generation, source LBA/offset, logical destination, physical RAM cell, and
+  byte value must all agree; the reader PC must also be in main RAM. Independent
+  receipt and consumer counts can no longer jointly authorize an authenticated
+  marker.
+- Expanded and registered `theron_v1_original_consumer_trace_markers` in CTest.
+  Its synthetic trace is only verifier test input; all three matching roles
+  must pass, while missing consumers, generation/sequence/destination/value
+  mismatches, and a receipt ordered after its consumer are rejected. Perl
+  syntax validation and the focused CTest pass.
+- This improves evidence admission only. It does not create a new authentic
+  capture or assert any Theron gameplay semantics.
+
 ## 2026-09-29 — keep unbound quest-item helper out of authenticated levels
 
 - Authenticated Track 02 levels now fail closed in the legacy world quest-item

@@ -39,10 +39,35 @@ grep -Fq "object_table_raw_offset=$object_raw" "$markers"
 grep -Fq 'synthetic_palette_promoted=0' "$markers"
 grep -Fq 'fallback_visuals_allowed=0' "$markers"
 
+expect_reject() {
+  local case_name=$1
+  if perl "$repo/scripts/verify_theron_original_consumer_trace_markers.pl" \
+    "$bad" 1156 0x00000101 0x00000202 0x00000303 \
+    "$palette_raw" "$nonstartup_raw" "$object_raw" >"$markers" 2>/dev/null; then
+    echo "expected rejection for $case_name" >&2
+    exit 1
+  fi
+}
+
 grep -v "source_lba=$object_lba source_offset=$object_offset" "$trace" >"$bad"
-if perl "$repo/scripts/verify_theron_original_consumer_trace_markers.pl" \
-  "$bad" 1156 0x00000101 0x00000202 0x00000303 \
-  "$palette_raw" "$nonstartup_raw" "$object_raw" >"$markers" 2>/dev/null; then
-  echo 'expected missing object-table consumer rejection' >&2
-  exit 1
-fi
+expect_reject 'missing object-table consumer'
+
+perl -pe 's/(pce_cd_fifo_origin_main_ram_consumer sequence=0 generation=)9/${1}10/' \
+  "$trace" >"$bad"
+expect_reject 'generation mismatch'
+
+perl -pe 's/(pce_cd_fifo_origin_main_ram_consumer sequence=0 generation=9 source_lba=\d+ source_offset=\d+ fifo_sequence=)100/${1}999/' \
+  "$trace" >"$bad"
+expect_reject 'FIFO sequence mismatch'
+
+perl -pe 's/(pce_cd_fifo_origin_main_ram_consumer sequence=0[^\n]*logical_address=)2300/${1}2301/; s/(pce_cd_fifo_origin_main_ram_consumer sequence=0[^\n]*physical_address=)1f2300/${1}1f2301/' \
+  "$trace" >"$bad"
+expect_reject 'RAM destination mismatch'
+
+perl -pe 's/(pce_cd_fifo_origin_main_ram_consumer sequence=0[^\n]* value=)11/${1}12/' \
+  "$trace" >"$bad"
+expect_reject 'RAM value mismatch'
+
+perl -0pe 's/(pce_cd_fifo_origin_main_ram_receipt[^\n]*\n)(pce_cd_fifo_origin_main_ram_consumer sequence=0[^\n]*\n)/$2$1/' \
+  "$trace" >"$bad"
+expect_reject 'origin receipt after consumer'
