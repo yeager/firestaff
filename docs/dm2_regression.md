@@ -10,12 +10,14 @@ no runtime emulator dependency and no game-data extraction to disk.
 | --- | --- | --- | --- |
 | DOS English | `Dungeon-Master-II-Skullkeep_DOS_EN.zip` | launcher card selection → title/menu → New Game → movement | Native runtime receipt reports `dm2RealAssets=1`, `dm2NoCoreFallbacks=1`, and `dm2FallbackDraws=0`. |
 | FM Towns Japanese | `Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip` | M12 launcher selection → normal-loop 225-frame TWANIM title → Enter/New Game → first champion selection; direct boot-probe also covers dungeon choice and movement | The continuous route asserts title completion, an empty script queue, map 0 at `(1,8)`, one champion, an accepted real-GDAT frame and zero fallback draws. |
+| Macintosh English | `Dungeon-Master-II-Skullkeep_Mac_EN.zip` | Scaled 1920x1080 M12 pointer selection → normal-loop Title.MooV → New Game → mirror | Asserts completed movie, empty input queue, map 0 at `(1,8)`, two champions, an accepted real-GDAT frame, zero fallback draws and a visible 320x200 runtime capture. This is dummy-SDL evidence, not native Retina or audio verification. |
 
 Run the real-media checks with:
 
 ```sh
 bash tests/test_dm2_v1_dos_native_cli_boot.sh <firestaff>
 bash tests/test_dm2_v1_fmtowns_native_cli_boot.sh <firestaff>
+bash tests/test_dm2_v1_mac_native_cli_boot.sh <firestaff>
 ```
 
 DOS owns its MVE/GDAT title and menu path. FM Towns owns a distinct regional
@@ -33,7 +35,8 @@ parity.
   source-owned screenshot/capture comparisons.
 - Extend real-media interaction coverage for HUD, viewport, saves, audio and
   platform-specific controls.
-- Establish equivalent native startup/gameplay evidence for Amiga and Mac.
+- Verify Mac startup with native macOS video, Retina backing-scale input and
+  audible playback; the current real-media test uses SDL dummy devices.
 
 ## Historical notes (superseded)
 

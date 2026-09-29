@@ -79,7 +79,15 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # Title.MooV must keep requesting presents until its authentic QuickTime
 # duration expires, then accept New Game and enter the selected mirror.
 runtime_probe="${app}.mac-normal-start-$$.json"
-trap 'rm -f "$runtime_probe"' EXIT
+runtime_capture="${app}.mac-normal-start-capture-$$"
+mkdir -p "$runtime_capture"
+cleanup_runtime_probe() {
+    rm -f "$runtime_probe"
+    if [ -d "$runtime_capture" ]; then
+        find "$runtime_capture" -depth -delete
+    fi
+}
+trap cleanup_runtime_probe EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
@@ -114,6 +122,81 @@ if (
     raise SystemExit("FAIL: normal Macintosh Title.MooV-to-runtime route did not complete")
 PY
 echo 'PASS: normal DM2 Macintosh Title.MooV loop reaches authentic runtime'
+
+# Join the scaled M12 pointer path to the ordinary Macintosh startup loop.
+# Scale mode 0 leaves the 320x200 source surface at 1x, centered in the
+# 1920x1080 host window, so source New Game at (100,60) maps to (900,500).
+# The script must outlive M12, the retail Title.MooV, New Game and the first
+# mirror; a launch receipt alone cannot prove that the selected retail Mac
+# package reaches a presented playable frame.
+menu_runtime_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --scale-mode 0 --width 1920 --height 1080 \
+    --menu --game dm2 --platform mac --data-dir "$archive" \
+    --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20,wait:700,key:enter,click:900:500' \
+    --duration 36000 2>&1) || {
+    printf '%s\n' "$menu_runtime_output" >&2
+    exit 1
+}
+python3 - "$runtime_probe" "$runtime_capture" <<'PY'
+import json
+from pathlib import Path
+import struct
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+
+startup = probe.get("startup", {})
+movie = probe.get("dm2Startup", {})
+party = probe.get("party", {})
+runtime_frame = probe.get("dm2RuntimeFrame", {})
+script = probe.get("script", {})
+if (
+    probe.get("sourceId") != "dm2"
+    or movie.get("platform") != 4
+    or movie.get("movieActive") != 0
+    or movie.get("movieComplete") != 1
+    or movie.get("movieRejected") != 0
+    or startup.get("phase") != "dm2-runtime"
+    or startup.get("startupActive") != 0
+    or startup.get("levelLoaded") != 1
+    or party.get("mapIndex") != 0
+    or party.get("mapX") != 1
+    or party.get("mapY") != 8
+    or party.get("direction") != 0
+    or party.get("championCount") != 2
+    or runtime_frame != {"accepted": 1, "realAssets": 1,
+                         "noCoreFallbacks": 1, "fallbackDraws": 0}
+    or script.get("waitFramesRemaining") != 0
+    or script.get("pending") != 0
+):
+    raise SystemExit(
+        "FAIL: scaled M12 Macintosh route did not finish Title.MooV, New Game, "
+        f"and mirror startup: {probe}")
+
+frames = list(Path(sys.argv[2]).glob("*.bmp"))
+if len(frames) != 1:
+    raise SystemExit("FAIL: expected one presented DM2 Macintosh runtime frame")
+blob = frames[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: DM2 Macintosh runtime screenshot is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if ((width, height, bits) != (320, 200, 24) or
+        offset + stride * height != len(blob)):
+    raise SystemExit("FAIL: invalid DM2 Macintosh runtime screenshot geometry")
+pixels = [blob[offset + y * stride + x * 3:offset + y * stride + x * 3 + 3]
+          for y in range(height) for x in range(width)]
+if sum(pixel != b"\0\0\0" for pixel in pixels) < 10000 or len(set(pixels)) < 8:
+    raise SystemExit("FAIL: DM2 Macintosh runtime frame was not visibly presented")
+print("PASS: scaled M12 Macintosh launch reaches and presents authentic runtime")
+PY
 
 # Retail Mac owns a title movie before its source New Game action.  The first
 # Enter dismisses that movie; the second is the authenticated title-menu

@@ -7,10 +7,13 @@
   decoder presented its first frame once, then stopped before the source menu
   could accept New Game. A new authentic-media CTest exercises the normal
   `--game dm2 --platform mac` loop through movie completion, New Game and the
-  selected mirror into loaded runtime. The SDL dummy backend checks source
-  state only; native macOS video, HiDPI input and audible playback remain open.
-  The authentic Mac CLI CTest passes in 123 seconds, and the focused M11
-  movie-runtime test passes in 2.30 seconds with the supplied retail ZIP.
+  selected mirror into loaded runtime. It now also starts at M12, uses pointer
+  input at 1920x1080 to select the Mac platform, and continues through the
+  movie and mirror into a presented runtime frame with an empty input queue
+  and no core fallbacks. The authentic Mac CLI CTest passes in 160.94 seconds;
+  the focused M11 movie-runtime test passes in 2.30 seconds with the supplied
+  retail ZIP. SDL dummy output verifies source state and a visible 320x200
+  frame, not native macOS video, Retina backing-scale input or audible playback.
 
 ## 2026-09-28 — Mac retail archive selection in native CLI test
 
