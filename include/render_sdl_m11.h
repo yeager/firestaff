@@ -297,15 +297,25 @@ int  M11_Render_MapPointToDrawableFramebuffer(int windowX,
                                               int* outFbX,
                                               int* outFbY);
 int  M11_Render_ResolveSdl3ResizeEvent(int eventW,
-                                        int eventH,
-                                        int liveWindowW,
-                                        int liveWindowH,
-                                        int liveRenderW,
-                                        int liveRenderH,
-                                        int* outWindowW,
-                                        int* outWindowH,
-                                        int* outRenderW,
-                                        int* outRenderH);
+                                      int eventH,
+                                      int liveWindowW,
+                                      int liveWindowH,
+                                      int liveRenderW,
+                                      int liveRenderH,
+                                      int* outWindowW,
+                                      int* outWindowH,
+                                      int* outRenderW,
+                                      int* outRenderH);
+/* Pure seam used by native SDL3 presentation/input to publish one complete
+ * logical-window + drawable-size snapshot; rejects partial/invalid queries. */
+int  M11_Render_ResolveSdl3LiveDimensions(int liveWindowW,
+                                          int liveWindowH,
+                                          int liveRenderW,
+                                          int liveRenderH,
+                                          int* outWindowW,
+                                          int* outWindowH,
+                                          int* outRenderW,
+                                          int* outRenderH);
 int  M11_Render_ToggleFullscreen(void);
 int  M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH);
 int  M11_Render_MapPointToFramebuffer(int windowX,

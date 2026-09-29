@@ -1,7 +1,10 @@
 #include "render_sdl_m11.h"
 #include "touch_click_zone_matrix_pc34_compat.h"
 
+#include <SDL3/SDL.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static int failures = 0;
 
@@ -958,6 +961,200 @@ static void check_retina_fixed_scale_input_mapping(void) {
                                  "retina 2x legacy stretch/FIT");
 }
 
+static void check_resize_before_event_mapping(void) {
+    /* Inject a native-size snapshot that changed before SDL delivers its
+     * resize event. This same resolver is used by the production refresh; a
+     * stale cache pair rejects the edge click as outside its old presentation. */
+    const int liveWindowW = 1512;
+    const int liveWindowH = 982;
+    const int liveDrawableW = 3024;
+    const int liveDrawableH = 1964;
+    const int staleWindowW = 1000;
+    const int staleWindowH = 700;
+    const int staleDrawableW = 2000;
+    const int staleDrawableH = 1400;
+    int rectX = -1, rectY = -1, rectW = -1, rectH = -1;
+    int fbX = -1, fbY = -1;
+    int resolvedWindowW = -1, resolvedWindowH = -1;
+    int resolvedDrawableW = -1, resolvedDrawableH = -1;
+    int clickX;
+    int clickY;
+
+    CHECK(M11_Render_ResolveSdl3LiveDimensions(
+              liveWindowW, liveWindowH, liveDrawableW, liveDrawableH,
+              &resolvedWindowW, &resolvedWindowH,
+              &resolvedDrawableW, &resolvedDrawableH) == M11_RENDER_OK);
+    CHECK(resolvedWindowW == liveWindowW && resolvedWindowH == liveWindowH);
+    CHECK(resolvedDrawableW == liveDrawableW &&
+          resolvedDrawableH == liveDrawableH);
+    CHECK(M11_Render_ResolveSdl3LiveDimensions(
+              liveWindowW, liveWindowH, 0, liveDrawableH,
+              &resolvedWindowW, &resolvedWindowH,
+              &resolvedDrawableW, &resolvedDrawableH) ==
+          M11_RENDER_ERR_INVALID_ARG);
+    CHECK(resolvedWindowW == liveWindowW && resolvedWindowH == liveWindowH);
+    CHECK(resolvedDrawableW == liveDrawableW &&
+          resolvedDrawableH == liveDrawableH);
+    CHECK(M11_Render_ComputeDrawablePresentationRect(
+              resolvedWindowW, resolvedWindowH,
+              resolvedDrawableW, resolvedDrawableH,
+              320, 200, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT,
+              &rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK);
+    if (rectW <= 0 || rectH <= 0) return;
+    clickX = logical_coord_before_drawable_edge(rectX + rectW,
+                                                resolvedWindowW, resolvedDrawableW);
+    clickY = logical_coord_before_drawable_edge(rectY + rectH,
+                                                resolvedWindowH, resolvedDrawableH);
+    CHECK(M11_Render_MapPointToDrawableFramebuffer(
+              clickX, clickY, resolvedWindowW, resolvedWindowH,
+              resolvedDrawableW, resolvedDrawableH, 320, 200, M11_SCALE_FIT, 0,
+              M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 1);
+    CHECK(fbX >= 317 && fbX <= 319);
+    CHECK(fbY >= 197 && fbY <= 199);
+    CHECK(M11_Render_MapPointToDrawableFramebuffer(
+              clickX, clickY, staleWindowW, staleWindowH,
+              staleDrawableW, staleDrawableH, 320, 200, M11_SCALE_FIT, 0,
+              M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 0);
+    printf("PASS resize-before-event injected live-dimension mapping\n");
+}
+
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+static int check_native_resize_snapshot(SDL_Window* window,
+                                        int requestW,
+                                        int requestH,
+                                        const char* label) {
+    int cacheW = M11_Render_GetWindowWidth();
+    int cacheH = M11_Render_GetWindowHeight();
+    int liveW = 0, liveH = 0, drawableW = 0, drawableH = 0;
+    int rectX = -1, rectY = -1, rectW = -1, rectH = -1;
+    int expectedX = -1, expectedY = -1, expectedW = -1, expectedH = -1;
+    int fbX = -1, fbY = -1;
+    int clickX, clickY;
+    int contentW = 0, contentH = 0;
+
+    if (!SDL_SetWindowSize(window, requestW, requestH) ||
+        !SDL_SyncWindow(window) ||
+        !SDL_GetWindowSize(window, &liveW, &liveH) ||
+        !SDL_GetRenderOutputSize(M11_Render_GetRenderer(),
+                                 &drawableW, &drawableH) ||
+        liveW <= 0 || liveH <= 0 || drawableW <= 0 || drawableH <= 0) {
+        fprintf(stderr, "SKIP native resize probe %s: SDL size change/query failed: %s\n",
+                label, SDL_GetError());
+        return 0;
+    }
+    if ((liveW == cacheW && liveH == cacheH) ||
+        M11_Render_GetWindowWidth() != liveW ||
+        M11_Render_GetWindowHeight() != liveH) {
+        fprintf(stderr, "SKIP native resize probe %s: native size did not change "
+                        "independently of cached size (%dx%d -> %dx%d)\n",
+                label, cacheW, cacheH, liveW, liveH);
+        return 0;
+    }
+    CHECK(M11_Render_GetContentSize(&contentW, &contentH) == 1);
+    CHECK(M11_Render_ComputeDrawablePresentationRect(
+              liveW, liveH, drawableW, drawableH, contentW, contentH,
+              M11_Render_GetScaleMode(), M11_Render_GetIntegerScaling(),
+              M11_Render_GetDisplayAspectMode(),
+              &expectedX, &expectedY, &expectedW, &expectedH) == M11_RENDER_OK);
+    CHECK(M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) ==
+          M11_RENDER_OK);
+    CHECK(rectX == expectedX && rectY == expectedY &&
+          rectW == expectedW && rectH == expectedH);
+
+    clickX = (int)(((int64_t)(rectX + rectW / 2) * liveW) / drawableW);
+    clickY = (int)(((int64_t)(rectY + rectH / 2) * liveH) / drawableH);
+    CHECK(M11_Render_MapWindowToFramebuffer(clickX, clickY, &fbX, &fbY) == 1);
+    CHECK(fbX >= contentW / 2 - 2 && fbX <= contentW / 2 + 2);
+    CHECK(fbY >= contentH / 2 - 2 && fbY <= contentH / 2 + 2);
+    printf("PASS native resize before event: %s before=%dx%d live=%dx%d "
+           "drawable=%dx%d rect=%d,%d %dx%d\n",
+           label, cacheW, cacheH, liveW, liveH, drawableW, drawableH,
+           rectX, rectY, rectW, rectH);
+    return 1;
+}
+
+static void check_native_resize_before_event_optin(void) {
+    const char* enabled = getenv("FIRESTAFF_M11_NATIVE_RESIZE_PROBE");
+    SDL_Window* m11Window;
+    SDL_Window* target = NULL;
+    SDL_Window** windows;
+    int count = 0;
+    int i;
+    int baseW = 0, baseH = 0;
+    int pass = 1;
+
+    if (!enabled || strcmp(enabled, "1") != 0) return;
+    if (M11_Render_Init(900, 650, M11_SCALE_FIT) != M11_RENDER_OK) {
+        fprintf(stderr, "SKIP native resize probe: M11_Render_Init failed\n");
+        return;
+    }
+    if (!M11_Render_HasHostPresentationWindow()) {
+        printf("SKIP native resize probe: SDL has no host presentation window\n");
+        M11_Render_Shutdown();
+        return;
+    }
+    m11Window = M11_Render_GetWindow();
+    windows = SDL_GetWindows(&count);
+    if (!windows) {
+        fprintf(stderr, "SKIP native resize probe: SDL_GetWindows failed: %s\n",
+                SDL_GetError());
+        M11_Render_Shutdown();
+        return;
+    }
+    for (i = 0; i < count; ++i) {
+        const SDL_WindowID id = SDL_GetWindowID(windows[i]);
+        if (id == SDL_GetWindowID(m11Window) &&
+            SDL_GetWindowFromID(id) == windows[i]) {
+            target = windows[i];
+            break;
+        }
+    }
+    SDL_free(windows);
+    if (!target) {
+        fprintf(stderr, "SKIP native resize probe: could not resolve M11 SDL window ID\n");
+        M11_Render_Shutdown();
+        return;
+    }
+    if ((SDL_GetWindowFlags(target) & SDL_WINDOW_MAXIMIZED) != 0) {
+        if (!SDL_RestoreWindow(target) || !SDL_SyncWindow(target)) {
+            fprintf(stderr, "SKIP native resize probe: could not restore window: %s\n",
+                    SDL_GetError());
+            M11_Render_Shutdown();
+            return;
+        }
+    }
+    if (!SDL_GetWindowSize(target, &baseW, &baseH) || baseW <= 0 || baseH <= 0) {
+        fprintf(stderr, "SKIP native resize probe: invalid restored window size\n");
+        M11_Render_Shutdown();
+        return;
+    }
+
+    /* Do not pump events or call M11_Render_HandleResize between these
+     * native changes and production queries; this is the resize-before-event
+     * condition that previously split render and pointer dimensions. */
+    if (!check_native_resize_snapshot(target, baseW + 160, baseH + 120, "grow")) {
+        pass = 0;
+    } else {
+        int liveW = 0, liveH = 0;
+        SDL_GetWindowSize(target, &liveW, &liveH);
+        if (!check_native_resize_snapshot(target,
+                                         liveW > 480 ? liveW - 120 : liveW + 120,
+                                         liveH > 380 ? liveH - 100 : liveH + 100,
+                                         "shrink")) {
+            pass = 0;
+        }
+    }
+    if (!pass) ++failures;
+    M11_Render_Shutdown();
+}
+#else
+static void check_native_resize_before_event_optin(void) {
+    if (getenv("FIRESTAFF_M11_NATIVE_RESIZE_PROBE")) {
+        printf("SKIP native resize probe: SDL 3.2+ window enumeration is required\n");
+    }
+}
+#endif
+
 static void check_sdl3_pixel_size_event_keeps_logical_mouse_space(void) {
     int windowW = -1;
     int windowH = -1;
@@ -1492,6 +1689,8 @@ int main(void) {
     check_map_point_rejection_invariants();
     check_macbook_retina_drawable_rect_regression();
     check_retina_fixed_scale_input_mapping();
+    check_resize_before_event_mapping();
+    check_native_resize_before_event_optin();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
     /* Wire the dead-code check_integer_scaled_movement_arrows_at_resolution

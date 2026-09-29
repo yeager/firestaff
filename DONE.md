@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Shared live SDL3 logical/drawable dimension queries between
+  presentation, pointer mapping and window-size getters, closing the stale
+  render/live-input split before resize-event handling. Dummy probes retain
+  cached dimensions. Geometry tests pass, and an opt-in native Cocoa probe
+  passes actual grow/shrink before M11 HandleResize: 900x650 to 1060x770 to
+  940x670. The native test checks production presentation bounds, size getters
+  and pointer mapping. Its drawable density is 1x; Retina hardware remains
+  unverified. The sandbox cannot open Cocoa, so this probe ran on the host.
+
 - 2026-09-29: Kept the final DOS MVE page for its complete source timer
   period and retained queued SDL PCM until drained before releasing the movie
   owner. Pause rebases the final-page timestamp; no-device and explicit

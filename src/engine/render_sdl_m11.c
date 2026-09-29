@@ -596,6 +596,68 @@ int M11_Render_ResolveSdl3ResizeEvent(int eventW,
     return M11_RENDER_OK;
 }
 
+int M11_Render_ResolveSdl3LiveDimensions(int liveWindowW,
+                                         int liveWindowH,
+                                         int liveRenderW,
+                                         int liveRenderH,
+                                         int* outWindowW,
+                                         int* outWindowH,
+                                         int* outRenderW,
+                                         int* outRenderH) {
+    if (liveWindowW <= 0 || liveWindowH <= 0 ||
+        liveRenderW <= 0 || liveRenderH <= 0 ||
+        !outWindowW || !outWindowH || !outRenderW || !outRenderH) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    *outWindowW = liveWindowW;
+    *outWindowH = liveWindowH;
+    *outRenderW = liveRenderW;
+    *outRenderH = liveRenderH;
+    return M11_RENDER_OK;
+}
+
+/* Keep the presentation transform on the same current logical/drawable pair
+ * used by pointer mapping. SDL3 can change these values before its resize
+ * event is delivered (notably on macOS window maximize/restore). Dummy video
+ * deliberately stays cache-backed for deterministic resize probes. */
+static int m11_refresh_presentation_dimensions(int* outWindowW,
+                                               int* outWindowH,
+                                               int* outRenderW,
+                                               int* outRenderH) {
+    int ww = g_state.windowW;
+    int wh = g_state.windowH;
+    int rw = g_state.renderW > 0 ? g_state.renderW : ww;
+    int rh = g_state.renderH > 0 ? g_state.renderH : wh;
+
+    if (!outWindowW || !outWindowH || !outRenderW || !outRenderH) return 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    if (g_state.window) {
+        const char* driver = SDL_GetCurrentVideoDriver();
+        if (!driver) return 0;
+        if (strcmp(driver, "dummy") != 0) {
+            int liveWindowW = 0;
+            int liveWindowH = 0;
+            int liveRenderW = 0;
+            int liveRenderH = 0;
+            if (!SDL_GetWindowSize(g_state.window, &liveWindowW, &liveWindowH) ||
+                !SDL_GetRenderOutputSize(g_state.renderer,
+                                         &liveRenderW, &liveRenderH) ||
+                M11_Render_ResolveSdl3LiveDimensions(
+                    liveWindowW, liveWindowH, liveRenderW, liveRenderH,
+                    &ww, &wh, &rw, &rh) != M11_RENDER_OK) {
+                return 0;
+            }
+        }
+    }
+#endif
+    if (ww <= 0 || wh <= 0 || rw <= 0 || rh <= 0) return 0;
+    *outWindowW = ww;
+    *outWindowH = wh;
+    *outRenderW = rw;
+    *outRenderH = rh;
+    return 1;
+}
+
 static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH) {
     int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
     int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
@@ -603,8 +665,11 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
      * SDL3 RenderTexture operates in pixel coordinates, not logical
      * window points.  On macOS Retina (2× scale), using logical size
      * here causes the game content to render at half size. */
+    int windowW = g_state.windowW;
+    int windowH = g_state.windowH;
     int rw = g_state.renderW > 0 ? g_state.renderW : g_state.windowW;
     int rh = g_state.renderH > 0 ? g_state.renderH : g_state.windowH;
+    (void)m11_refresh_presentation_dimensions(&windowW, &windowH, &rw, &rh);
     if (g_state.presentationFillWindow) {
         (void)M11_Render_ComputeFillWindowPresentationRect(rw, rh,
                                                             outX, outY,
@@ -612,7 +677,7 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
         return;
     }
     (void)M11_Render_ComputeDrawablePresentationRect(
-        g_state.windowW, g_state.windowH, rw, rh,
+        windowW, windowH, rw, rh,
         contentW, contentH, g_state.scaleMode, g_state.integerScaling,
         g_state.displayAspectMode, outX, outY, outW, outH);
 }
@@ -2502,11 +2567,23 @@ int M11_Render_HandleResize(int newWidth, int newHeight) {
 }
 
 int M11_Render_GetWindowWidth(void) {
-    return g_state.windowW;
+    int windowW = g_state.windowW;
+    int windowH = g_state.windowH;
+    int renderW = g_state.renderW;
+    int renderH = g_state.renderH;
+    (void)m11_refresh_presentation_dimensions(&windowW, &windowH,
+                                              &renderW, &renderH);
+    return windowW;
 }
 
 int M11_Render_GetWindowHeight(void) {
-    return g_state.windowH;
+    int windowW = g_state.windowW;
+    int windowH = g_state.windowH;
+    int renderW = g_state.renderW;
+    int renderH = g_state.renderH;
+    (void)m11_refresh_presentation_dimensions(&windowW, &windowH,
+                                              &renderW, &renderH);
+    return windowH;
 }
 
 struct SDL_Window* M11_Render_GetWindow(void) {
@@ -2697,72 +2774,32 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
         return 0;
     }
 
-    /* ReDMCSB COMMAND.C:1379-1449 F0358 / ENTRANCE.C:850-883 entrance
-     * hit-test relies on mapping the SDL mouse event to a 320x200
-     * framebuffer coordinate.  Mouse events in SDL3 use logical
-     * (window) coordinates; the cached g_state.windowW/H tracks the
-     * last SDL_GetWindowSize we observed, but the actual SDL window
-     * can grow/shrink between resize-event deliveries (e.g. macOS
-     * Maximize from the OS chrome before any PumpEvents runs, or any
-     * caller that touched SDL_SetWindowSize without going through
-     * M11_Render_HandleResize).  v2.7.4 surfaced this as a
-     * "Entrance door buttons cannot be clicked" regression on MacBook
-     * Pro: the cached windowW/H lagged the real window, so the
-     * computed presentation rect excluded the user's click, the
-     * bounds check returned 0, and the entrance wait loop silently
-     * kept polling.
-     *
-     * A real SDL window is authoritative in both directions.  The prior
-     * grow-only correction still left stale coordinates after macOS changed
-     * a maximized window back to a smaller logical size, so clicks on the
-     * champion HUD could miss their source rectangles.  Keep the cached
-     * dimensions only for the dummy driver: its test window deliberately
-     * remains at its initial size while probes exercise resize handling.
-     * Do not overwrite g_state.windowW/H here; callers of the public
-     * window-size API expect the resize-event-tracked value. */
+    /* Render and input now share one authoritative SDL3 dimension refresh,
+     * so a native resize that precedes its event cannot split their rects. */
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    if (!m11_refresh_presentation_dimensions(&mapWindowW, &mapWindowH,
+                                             &mapDrawableW, &mapDrawableH)) {
+        return 0;
+    }
+#else
     mapWindowW = g_state.windowW;
     mapWindowH = g_state.windowH;
-    /* The dummy driver deliberately keeps the cached render dimensions so
-     * resize probes can exercise logical and drawable sizes independently. */
-    mapDrawableW = g_state.renderW > 0 ? g_state.renderW : mapWindowW;
-    mapDrawableH = g_state.renderH > 0 ? g_state.renderH : mapWindowH;
+    mapDrawableW = mapWindowW;
+    mapDrawableH = mapWindowH;
     if (g_state.window) {
         int ww = 0;
         int wh = 0;
         const char* videoDriver = SDL_GetCurrentVideoDriver();
-#if SDL_VERSION_ATLEAST(3, 0, 0)
-        if (!videoDriver) return 0;
-        if (strcmp(videoDriver, "dummy") != 0) {
-            int rw = 0;
-            int rh = 0;
-            /* Live native dimensions are authoritative for event mapping.
-             * If SDL cannot provide either side of the transform, fail closed
-             * instead of mixing stale logical and drawable sizes. */
-            if (!SDL_GetWindowSize(g_state.window, &ww, &wh) ||
-                ww <= 0 || wh <= 0 ||
-                !SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh) ||
-                rw <= 0 || rh <= 0) {
-                return 0;
-            }
-            mapWindowW = ww;
-            mapWindowH = wh;
-            mapDrawableW = rw;
-            mapDrawableH = rh;
-        }
-#else
         SDL_GetWindowSize(g_state.window, &ww, &wh);
-        if (ww <= 0 || wh <= 0) {
-            SDL_GL_GetDrawableSize(g_state.window, &ww, &wh);
-        }
-        if (ww > 0 && wh > 0 && videoDriver &&
-            strcmp(videoDriver, "dummy") != 0) {
+        if (ww <= 0 || wh <= 0) SDL_GL_GetDrawableSize(g_state.window, &ww, &wh);
+        if (ww > 0 && wh > 0 && videoDriver && strcmp(videoDriver, "dummy") != 0) {
             mapWindowW = ww;
             mapWindowH = wh;
-            mapDrawableW = mapWindowW;
-            mapDrawableH = mapWindowH;
+            mapDrawableW = ww;
+            mapDrawableH = wh;
         }
-#endif
     }
+#endif
 
     if (g_state.presentationFillWindow) {
         int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;

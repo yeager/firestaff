@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `Window resize`: rendering and input now query the same live window and
+  drawable dimensions before resize events are delivered. Normalized touch
+  conversion also receives current window dimensions.
+
 - `DM2 DOS intro`: the last movie image now remains for its full source
   duration, and remaining audio drains before the movie player closes.
 
