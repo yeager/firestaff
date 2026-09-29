@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
 
 #include "vga_palette_pc34_compat.h"
 #include "dm1v2/dm1_v2_filters.h"
@@ -494,6 +495,66 @@ int M11_Render_ComputeDrawablePresentationRect(int windowW,
     if (outW) *outW = drawableRight - drawableX;
     if (outH) *outH = drawableBottom - drawableY;
     return M11_RENDER_OK;
+}
+
+int M11_Render_MapPointToDrawableFramebuffer(int windowX,
+                                              int windowY,
+                                              int windowW,
+                                              int windowH,
+                                              int drawableW,
+                                              int drawableH,
+                                              int contentW,
+                                              int contentH,
+                                              int scaleMode,
+                                              int integerScaling,
+                                              int displayAspectMode,
+                                              int* outFbX,
+                                              int* outFbY) {
+    int drawableX;
+    int drawableY;
+    int rectX;
+    int rectY;
+    int rectW;
+    int rectH;
+    int localX;
+    int localY;
+
+    if (!outFbX || !outFbY || windowW <= 0 || windowH <= 0 ||
+        drawableW <= 0 || drawableH <= 0 || contentW <= 0 || contentH <= 0 ||
+        windowX < 0 || windowY < 0 || windowX >= windowW || windowY >= windowH) {
+        return 0;
+    }
+
+    /* SDL mouse positions and SDL_GetWindowSize are in window coordinates,
+     * while SDL_RenderTexture's destination rectangle is in drawable pixels.
+     * Convert each axis independently: mixed-density displays and fractional
+     * desktop scaling need not have equal X/Y ratios.  Use a 64-bit product so
+     * large desktop sizes cannot overflow before division. */
+    drawableX = (int)(((int64_t)windowX * drawableW) / windowW);
+    drawableY = (int)(((int64_t)windowY * drawableH) / windowH);
+
+    if (M11_Render_ComputeDrawablePresentationRect(
+            windowW, windowH, drawableW, drawableH,
+            contentW, contentH, scaleMode, integerScaling, displayAspectMode,
+            &rectX, &rectY, &rectW, &rectH) != M11_RENDER_OK ||
+        rectW <= 0 || rectH <= 0) {
+        return 0;
+    }
+    /* Reject both letterbox bars and the clipped part of fixed-scale content
+     * when its drawable rectangle is larger than the host window. */
+    if (drawableX < rectX || drawableY < rectY ||
+        drawableX >= rectX + rectW || drawableY >= rectY + rectH) {
+        return 0;
+    }
+    localX = drawableX - rectX;
+    localY = drawableY - rectY;
+    *outFbX = (int)(((int64_t)localX * contentW) / rectW);
+    *outFbY = (int)(((int64_t)localY * contentH) / rectH);
+    if (*outFbX < 0) *outFbX = 0;
+    if (*outFbY < 0) *outFbY = 0;
+    if (*outFbX >= contentW) *outFbX = contentW - 1;
+    if (*outFbY >= contentH) *outFbY = contentH - 1;
+    return 1;
 }
 
 int M11_Render_ResolveSdl3ResizeEvent(int eventW,
@@ -2629,6 +2690,8 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
                                       int* outFbY) {
     int mapWindowW;
     int mapWindowH;
+    int mapDrawableW;
+    int mapDrawableH;
 
     if (!g_state.initialised || !outFbX || !outFbY) {
         return 0;
@@ -2659,21 +2722,46 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
      * window-size API expect the resize-event-tracked value. */
     mapWindowW = g_state.windowW;
     mapWindowH = g_state.windowH;
+    /* The dummy driver deliberately keeps the cached render dimensions so
+     * resize probes can exercise logical and drawable sizes independently. */
+    mapDrawableW = g_state.renderW > 0 ? g_state.renderW : mapWindowW;
+    mapDrawableH = g_state.renderH > 0 ? g_state.renderH : mapWindowH;
     if (g_state.window) {
         int ww = 0;
         int wh = 0;
+        const char* videoDriver = SDL_GetCurrentVideoDriver();
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        if (!videoDriver) return 0;
+        if (strcmp(videoDriver, "dummy") != 0) {
+            int rw = 0;
+            int rh = 0;
+            /* Live native dimensions are authoritative for event mapping.
+             * If SDL cannot provide either side of the transform, fail closed
+             * instead of mixing stale logical and drawable sizes. */
+            if (!SDL_GetWindowSize(g_state.window, &ww, &wh) ||
+                ww <= 0 || wh <= 0 ||
+                !SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh) ||
+                rw <= 0 || rh <= 0) {
+                return 0;
+            }
+            mapWindowW = ww;
+            mapWindowH = wh;
+            mapDrawableW = rw;
+            mapDrawableH = rh;
+        }
+#else
         SDL_GetWindowSize(g_state.window, &ww, &wh);
-#if !SDL_VERSION_ATLEAST(3, 0, 0)
         if (ww <= 0 || wh <= 0) {
             SDL_GL_GetDrawableSize(g_state.window, &ww, &wh);
         }
-#endif
-        const char* videoDriver = SDL_GetCurrentVideoDriver();
         if (ww > 0 && wh > 0 && videoDriver &&
             strcmp(videoDriver, "dummy") != 0) {
             mapWindowW = ww;
             mapWindowH = wh;
+            mapDrawableW = mapWindowW;
+            mapDrawableH = mapWindowH;
         }
+#endif
     }
 
     if (g_state.presentationFillWindow) {
@@ -2684,18 +2772,21 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
             contentW, contentH, outFbX, outFbY);
     }
 
-    return M11_Render_MapPointToFramebuffer(
-        windowX,
-        windowY,
-        mapWindowW,
-        mapWindowH,
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    return M11_Render_MapPointToDrawableFramebuffer(
+        windowX, windowY, mapWindowW, mapWindowH, mapDrawableW, mapDrawableH,
         g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH,
         g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT,
-        g_state.scaleMode,
-        g_state.integerScaling,
-        g_state.displayAspectMode,
-        outFbX,
-        outFbY);
+        g_state.scaleMode, g_state.integerScaling, g_state.displayAspectMode,
+        outFbX, outFbY);
+#else
+    return M11_Render_MapPointToFramebuffer(
+        windowX, windowY, mapWindowW, mapWindowH,
+        g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH,
+        g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT,
+        g_state.scaleMode, g_state.integerScaling, g_state.displayAspectMode,
+        outFbX, outFbY);
+#endif
 }
 
 int M11_Render_GetContentSize(int* outWidth, int* outHeight) {

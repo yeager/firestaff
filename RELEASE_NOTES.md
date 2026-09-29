@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `HiDPI input`: fixed-scale windowed playback now maps pointer coordinates
+  through the drawable-pixel viewport, correcting misplaced clicks on Retina
+  displays while preserving noninteractive letterbox bars.
+
 - `DM2 Macintosh verification`: the original-media regression now covers
   start-menu selection through movies and New Game to the first accepted
   gameplay frame without core fallback graphics.

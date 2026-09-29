@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Corrected SDL3 pointer mapping for fixed-scale HiDPI windows.
+  Logical window coordinates now map through the same drawable rectangle
+  as rendering, with independent density ratios per axis and rejected bars.
+  Native dimension-query failures reject input; dummy probes retain cached
+  dimensions. Geometry regressions pass for 1x-4x, both integer settings,
+  FIT, Retina and mixed-axis density. The entrance command suite passes 308
+  checks, and authentic DM1/CSB launcher regressions pass. This does not prove
+  native Retina event delivery or fix the pre-resize live/cache discrepancy.
+
 - 2026-09-29: Added a live-clock check before the DM2 Mac test's accelerated
   movie traversal. Eight authentic title-frame transitions now run under
   SDL's unmodified monotonic clock; the test requires held frames, rejects

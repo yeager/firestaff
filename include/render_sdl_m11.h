@@ -280,6 +280,22 @@ int  M11_Render_ComputeDrawablePresentationRect(int windowW,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH);
+/* Map SDL logical-window coordinates through the same drawable-pixel
+ * presentation rectangle used by SDL_RenderTexture.  The window and
+ * drawable dimensions may have independent X/Y density ratios. */
+int  M11_Render_MapPointToDrawableFramebuffer(int windowX,
+                                              int windowY,
+                                              int windowW,
+                                              int windowH,
+                                              int drawableW,
+                                              int drawableH,
+                                              int contentW,
+                                              int contentH,
+                                              int scaleMode,
+                                              int integerScaling,
+                                              int displayAspectMode,
+                                              int* outFbX,
+                                              int* outFbY);
 int  M11_Render_ResolveSdl3ResizeEvent(int eventW,
                                         int eventH,
                                         int liveWindowW,

@@ -842,6 +842,122 @@ static void check_macbook_retina_drawable_rect_regression(void) {
     CHECK(fbY == 100);
 }
 
+static int logical_coord_for_drawable_edge(int drawableEdge,
+                                           int windowExtent,
+                                           int drawableExtent) {
+    return (int)(((long long)drawableEdge * windowExtent +
+                  drawableExtent - 1) / drawableExtent);
+}
+
+static int logical_coord_before_drawable_edge(int drawableEdgeExclusive,
+                                              int windowExtent,
+                                              int drawableExtent) {
+    return (int)(((long long)drawableEdgeExclusive * windowExtent - 1) /
+                 drawableExtent);
+}
+
+static void check_drawable_input_mapping(int drawableW,
+                                        int drawableH,
+                                        int scaleMode,
+                                        int integerScaling,
+                                        const char* label) {
+    const int windowW = 1512;
+    const int windowH = 982;
+    int rectX = -1, rectY = -1, rectW = -1, rectH = -1;
+    int fbX = -1, fbY = -1;
+    int left, top, right, bottom;
+    int centerX, centerY;
+
+    CHECK(M11_Render_ComputeDrawablePresentationRect(
+              windowW, windowH, drawableW, drawableH, 320, 200,
+              scaleMode, integerScaling, M11_DISPLAY_ASPECT_CONTENT,
+              &rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK);
+    if (rectW <= 0 || rectH <= 0) return;
+    left = logical_coord_for_drawable_edge(rectX, windowW, drawableW);
+    top = logical_coord_for_drawable_edge(rectY, windowH, drawableH);
+    right = logical_coord_before_drawable_edge(rectX + rectW,
+                                               windowW, drawableW);
+    bottom = logical_coord_before_drawable_edge(rectY + rectH,
+                                                windowH, drawableH);
+    centerX = logical_coord_for_drawable_edge(rectX + rectW / 2,
+                                              windowW, drawableW);
+    centerY = logical_coord_for_drawable_edge(rectY + rectH / 2,
+                                              windowH, drawableH);
+
+    CHECK(M11_Render_MapPointToDrawableFramebuffer(
+              left, top, windowW, windowH, drawableW, drawableH,
+              320, 200, scaleMode, integerScaling,
+              M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 1);
+    CHECK(fbX >= 0 && fbX <= 2);
+    CHECK(fbY >= 0 && fbY <= 2);
+
+    CHECK(M11_Render_MapPointToDrawableFramebuffer(
+              centerX, centerY, windowW, windowH, drawableW, drawableH,
+              320, 200, scaleMode, integerScaling,
+              M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 1);
+    CHECK(fbX >= 158 && fbX <= 161);
+    CHECK(fbY >= 98 && fbY <= 101);
+
+    CHECK(M11_Render_MapPointToDrawableFramebuffer(
+              right, bottom, windowW, windowH, drawableW, drawableH,
+              320, 200, scaleMode, integerScaling,
+              M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 1);
+    CHECK(fbX >= 317 && fbX <= 319);
+    CHECK(fbY >= 197 && fbY <= 199);
+
+    /* Fixed-scale rectangles and FIT rectangles both keep their bars
+     * noninteractive after converting logical input into drawable pixels. */
+    if (left > 0) {
+        CHECK(M11_Render_MapPointToDrawableFramebuffer(
+                  left - 1, centerY, windowW, windowH, drawableW, drawableH,
+                  320, 200, scaleMode, integerScaling,
+                  M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 0);
+    }
+    if (right + 1 < windowW) {
+        CHECK(M11_Render_MapPointToDrawableFramebuffer(
+                  right + 1, centerY, windowW, windowH, drawableW, drawableH,
+                  320, 200, scaleMode, integerScaling,
+                  M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 0);
+    }
+    if (top > 0) {
+        CHECK(M11_Render_MapPointToDrawableFramebuffer(
+                  centerX, top - 1, windowW, windowH, drawableW, drawableH,
+                  320, 200, scaleMode, integerScaling,
+                  M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 0);
+    }
+    if (bottom + 1 < windowH) {
+        CHECK(M11_Render_MapPointToDrawableFramebuffer(
+                  centerX, bottom + 1, windowW, windowH, drawableW, drawableH,
+                  320, 200, scaleMode, integerScaling,
+                  M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 0);
+    }
+    printf("PASS drawable input mapping: %s (scale=%d integer=%d drawable=%dx%d)\n",
+           label, scaleMode, integerScaling, drawableW, drawableH);
+}
+
+static void check_retina_fixed_scale_input_mapping(void) {
+    int scale;
+    /* Retina 2x in both axes, then an independent 2x/1.5x density ratio. */
+    for (scale = M11_SCALE_1X; scale <= M11_SCALE_4X; ++scale) {
+        check_drawable_input_mapping(3024, 1964, scale, 0,
+                                     "retina 2x fixed scale");
+        check_drawable_input_mapping(3024, 1964, scale, 1,
+                                     "retina 2x fixed integer scale");
+        check_drawable_input_mapping(3024, 1473, scale, 0,
+                                     "independent X/Y density fixed scale");
+        check_drawable_input_mapping(3024, 1473, scale, 1,
+                                     "independent X/Y fixed integer scale");
+    }
+    check_drawable_input_mapping(3024, 1964, M11_SCALE_FIT, 0,
+                                 "retina 2x FIT smooth");
+    check_drawable_input_mapping(3024, 1964, M11_SCALE_FIT, 1,
+                                 "retina 2x FIT integer");
+    check_drawable_input_mapping(3024, 1473, M11_SCALE_FIT, 0,
+                                 "independent X/Y density FIT");
+    check_drawable_input_mapping(3024, 1964, M11_SCALE_STRETCH, 0,
+                                 "retina 2x legacy stretch/FIT");
+}
+
 static void check_sdl3_pixel_size_event_keeps_logical_mouse_space(void) {
     int windowW = -1;
     int windowH = -1;
@@ -1375,6 +1491,7 @@ int main(void) {
     check_arg_validation_invariants();
     check_map_point_rejection_invariants();
     check_macbook_retina_drawable_rect_regression();
+    check_retina_fixed_scale_input_mapping();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
     /* Wire the dead-code check_integer_scaled_movement_arrows_at_resolution
