@@ -65,7 +65,13 @@ if [[ -z "$SDL_DLL" ]]; then
   echo "Could not locate SDL3.dll" >&2
   exit 1
 fi
-cp "$SDL_DLL" "$STAGE_DIR/SDL3.dll"
+# Bundle the complete native import tree. SDL3 from MSYS2 may itself import
+# libiconv-2.dll (and compiler runtimes), which copying SDL3.dll alone misses.
+cmake \
+  -DFIRESTAFF_EXE="$BIN_SRC" \
+  -DRUNTIME_DIR="$(dirname "$SDL_DLL")" \
+  -DSTAGE_DIR="$STAGE_DIR" \
+  -P "$ROOT/scripts/bundle_windows_runtime.cmake"
 
 (
   cd "$ROOT/release/windows-stage"

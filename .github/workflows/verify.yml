@@ -164,6 +164,19 @@ jobs:
             cmake --build build --parallel
           fi
 
+      - name: Verify standalone Windows runtime bundle
+        if: runner.os == 'Windows'
+        run: |
+          stage="$PWD/build/windows-runtime-check"
+          mkdir -p "$stage"
+          cp build/firestaff.exe "$stage/firestaff.exe"
+          cmake -DFIRESTAFF_EXE="$PWD/build/firestaff.exe" \
+            -DRUNTIME_DIR="$MINGW_PREFIX/bin" -DSTAGE_DIR="$stage" \
+            -P scripts/bundle_windows_runtime.cmake
+          # The smoke test must not find missing DLLs through MSYS2's PATH.
+          system_path="$(cygpath -u "$SYSTEMROOT")/System32"
+          PATH="$system_path" "$stage/firestaff.exe" --help
+
       - name: Run Nexus production source boundary
         run: |
           ctest --test-dir build --output-on-failure \

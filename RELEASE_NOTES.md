@@ -1,5 +1,11 @@
 # Firestaff — Unreleased
 
+## User-facing changes
+
+- `Windows packaging`: includes the complete native DLL dependency tree,
+  including SDL3's `libiconv-2.dll`, in the ZIP and installer. Packaging fails
+  when an imported DLL cannot be resolved. Existing 3.0.348 assets are unchanged.
+
 # Firestaff v3.0.348
 
 ## User-facing changes

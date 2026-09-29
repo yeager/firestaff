@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Fixed the source packaging omission behind issue #12. The
+  published 3.0.348 SDL3.dll imports libiconv-2.dll, while its ZIP contains only
+  SDL3.dll. Windows packaging now resolves and copies the recursive PE import
+  tree and rejects unresolved DLLs. CMake import-graph checks with fixture
+  objdump output verify transitive copying, Windows/API-set exclusions and
+  failure on a missing libiconv dependency. Hosted Windows CI now stages the
+  actual shipping executable and runs --help without MSYS2 on PATH; that
+  native check and a replacement release remain pending.
+
 - 2026-09-28: Added a read-only comparison view for two authentic Saturn
   Backup RAM images. It shows payload-relative changed ranges and bounded raw
   byte previews without assigning field meanings or writing either image.
