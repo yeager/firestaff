@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: DM1/CSB/DM2 launcher speed now reaches the live QoL timing
+  owner using the existing in-game Cheats mapping (50/100/150 percent).
+  Cheats off or invalid speed restores 100 percent; the selected game takes
+  precedence over the previously active global multiplier at launch.
+  Authentic DOS 3.4 M12/M11 handoff: 100 passed, 0 failed, 0 skipped,
+  including all three speeds and the cheats-off reset. CSB/DM2 speed-specific
+  runtime verification remains to be extended.
+
 - 2026-09-29: Made the Custom menu SPEED HOTKEYS status tile non-interactive
   so clicking it cannot change simulation speed. Removed its SPEED selection
   highlight. The existing pointer launch test passes after rebuilding.

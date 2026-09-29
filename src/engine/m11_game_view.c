@@ -25158,6 +25158,18 @@ static void m11_apply_launcher_options_handoff(
     state->launcherOptions = spec->launcherOptions;
     state->launcherOptionsBound = 1;
 
+    /* Match the existing in-game Cheats page: the selected game's speed
+     * takes precedence at launch, and disabling cheats restores normal time. */
+    if (spec->gameId && (strcmp(spec->gameId, "dm1") == 0 ||
+                        strcmp(spec->gameId, "csb") == 0 ||
+                        strcmp(spec->gameId, "dm2") == 0)) {
+        static const int speedMultipliers[] = { 50, 100, 150 };
+        int speed = spec->launcherOptions.gameSpeed;
+        if (!spec->launcherOptions.cheatsEnabled || speed < 0 || speed > 2)
+            speed = 1;
+        M11_QolRuntime_SetSpeedMultiplier(speedMultipliers[speed]);
+    }
+
     /* M12 persists these controls and exports them with every launch, but
      * until now M11 only retained the snapshot.  That left the Audio page
      * visually changeable while its values never reached SDL3.  This is a

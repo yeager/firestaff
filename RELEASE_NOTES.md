@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Launcher`: the selected DM1/CSB/DM2 speed now takes effect at game start;
+  turning cheats off restores normal speed.
+
 - `Game options`: clicking the SPEED HOTKEYS status tile no longer changes
   simulation speed.
 

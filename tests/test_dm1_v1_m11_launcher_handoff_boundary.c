@@ -1,3 +1,4 @@
+#include "m11_qol_runtime.h"
 /*
  * test_dm1_v1_m11_launcher_handoff_boundary.c
  *
@@ -195,6 +196,9 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_GameViewState launcher_view;
     unsigned char framebuffer[320 * 200];
     int expected_resolution = mode_default_resolution(mode);
+    int speed = mode % 3;
+    int cheats = mode != M12_PRESENTATION_V22_MODERN;
+    const int speedMultipliers[] = { 50, 100, 150 };
 
     menu->selectedIndex = 0;
     menu->activatedIndex = 0;
@@ -202,6 +206,9 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     menu->settings.graphicsIndex = mode;
     menu->gameOptions[0].presentationModeIndex = mode;
     menu->gameOptions[0].resolution = expected_resolution;
+    menu->gameOptions[0].cheatsEnabled = cheats;
+    menu->gameOptions[0].gameSpeed = speed;
+    M11_QolRuntime_SetSpeedMultiplier(200);
 
     intent = M12_StartupMenu_GetLaunchIntent(menu);
     expect_mode_true(intent.valid == 1, mode,
@@ -219,6 +226,9 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_GameView_Init(&launcher_view);
     expect_mode_true(M11_GameView_OpenSelectedMenuEntry(&launcher_view, menu) == 1,
                      mode, "M11 opens through M12 selected-menu entry");
+    expect_mode_true(M11_QolRuntime_GetSpeedMultiplier() ==
+                         (cheats ? speedMultipliers[speed] : 100), mode,
+                     "M11 applies selected speed and cheats gate to live timing");
     expect_mode_true(launcher_view.startedFromLauncher == 1, mode,
                      "M11 marks startup as launcher-started");
     expect_mode_true(launcher_view.active == 1, mode,
