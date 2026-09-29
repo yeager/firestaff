@@ -5,6 +5,9 @@
 - `DM1 startup`: an interrupted title animation now stops the handoff instead
   of proceeding to Entrance after only a partial sequence.
 
+- `CSB Atari ST audio`: zero-amplitude PSG samples now produce silence in
+  both source volume modes instead of full-scale negative PCM.
+
 - `iOS packaging`: fix ARM CRC compilation by selecting portable software
   checksums without raising the minimum CPU instruction requirements.
 

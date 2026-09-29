@@ -26,8 +26,13 @@ int main(void)
 {
     /* Count 7, source F0060 high-nibble and repeat-run coding. */
     unsigned char snd1[] = {0x00, 0x07, 0x50, 0x19, 0x00};
+    /* Two source samples held at amplitude index zero. */
+    unsigned char silentSnd1[] = {0x00, 0x02, 0x00, 0x00};
     M11_AudioState state;
     unsigned int hash = fnv1a(snd1, (int)sizeof(snd1));
+    unsigned int silentHash = fnv1a(silentSnd1, (int)sizeof(silentSnd1));
+    int sourceVolume;
+    int sample;
     int ok = 1;
 
     memset(&state, 0, sizeof(state));
@@ -41,10 +46,30 @@ int main(void)
                      state.csbAtariStSoundHash == hash &&
                      state.csbAtariStPsg.sampleCount > 0,
                  "decoded PSG stream retains source identity and output");
+    ok &= expect(state.csbAtariStPsg.samples[0] != 0.0f,
+                 "nonzero source-format PSG amplitude remains audible");
     ok &= expect(M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
                      &state, snd1, (int)sizeof(snd1), 112, hash, 0) &&
                      state.csbAtariStSoundSourceVolume == 0,
                  "soft-distance SND1 selects the original soft PSG table");
+    for (sourceVolume = 0; sourceVolume <= 1; ++sourceVolume) {
+        ok &= expect(M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+                         &state, silentSnd1, (int)sizeof(silentSnd1), 112,
+                         silentHash, sourceVolume),
+                     sourceVolume
+                         ? "zero-level Atari SND1 accepts loud source mode"
+                         : "zero-level Atari SND1 accepts soft source mode");
+        ok &= expect(state.csbAtariStPsg.sampleCount > 0,
+                     sourceVolume
+                         ? "loud zero-level Atari SND1 retains its output span"
+                         : "soft zero-level Atari SND1 retains its output span");
+        for (sample = 0; sample < state.csbAtariStPsg.sampleCount; ++sample) {
+            if (state.csbAtariStPsg.samples[sample] != 0.0f) {
+                ok &= expect(0, "three zero PSG registers render as silence");
+                break;
+            }
+        }
+    }
     snd1[2] ^= 0x80u;
     ok &= expect(!M11_Audio_PlayCsbAtariStPsg(&state, snd1,
                      (int)sizeof(snd1), 112, hash),

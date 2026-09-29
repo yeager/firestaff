@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: DM1 PC/F20 no longer treats one presented title frame as a
+  completed intro. All source steps or all TITLE.DAT frames and the final
+  guard must finish before Entrance; an interrupted title aborts the handoff.
+  The post-launch regression and an authentic PC-34 M12-to-M11 startup pass.
+- 2026-09-29: CSB Atari ST SND1 zero-amplitude PSG samples now remain silent
+  in loud and soft modes. Focused PCM regressions cover both mute tables and
+  a nonzero sample; physical-device output is not established by this check.
+  Three sounds in the supplied Atari archive remain rejected by the bounded
+  source decoder, as recorded in TODO-csb.md.
+
 - 2026-09-29: Release CI verified repeated Windows config and JSON writes.
   iOS packaging then exposed LZMA ARM CRC intrinsics incompatible with the
   baseline Apple Clang target. An iOS-only source definition selects software

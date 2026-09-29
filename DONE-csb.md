@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-09-29: Atari ST SND1 playback now maps the F0061 all-zero PSG
+  amplitude registers to PCM silence in both loud and soft source modes.
+  A bounded source-format regression verifies that a held zero-level source
+  remains silent and that a nonzero source-format level remains audible.
+  Physical-device sound and captured retail sound parity remain open; the
+  supplied Atari archive has three sound rows that the current
+  packed-stream decoder still rejects, as tracked in TODO-csb.md.
+
 ## 2026-09-29 — Retain Amiga selection after presentation Back
 
 - Verified the menu Back/reselect sequence with the authentic CSB Amiga

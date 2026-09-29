@@ -2,6 +2,13 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Reconcile the Atari ST SND1 decoder with ReDMCSB SOUND.C F0060/F0061 before
+  claiming complete audio coverage. Against the supplied
+  `Game,Chaos_Strikes_Back,Atari_ST,Software.7z` hard-disk GRAPHICS.DAT, table
+  rows 1, 12 and 16 load but the bounded F0060 decoder returns -2. The
+  all-zero PSG-to-PCM fix is separately covered by a source-format edge test;
+  that does not establish the three rejected sounds or audible parity.
+
 - Complete the remaining C37 wander bridge after its shared-RNG admission was
   corrected. It now consumes persistent `G0349` exactly once for the
   `M005_RANDOM(2)` movement gate and, when admitted, once for absolute

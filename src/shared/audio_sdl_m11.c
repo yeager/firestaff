@@ -1746,10 +1746,13 @@ int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
                   (int16_t)levels[source_index]);
         summed = (int)amplitudes.channelA + (int)amplitudes.channelB +
             (int)amplitudes.channelC;
-        /* F0061 writes all three original PSG amplitude registers. The host
-         * stream is their centred mono electrical level at Timer-A cadence. */
-        state->csbAtariStPsg.samples[output_index] =
-            ((float)summed / 45.0f) * 2.0f - 1.0f;
+        /* ReDMCSB SOUND.C F0061_SOUND_SetChannelAmplitudes:1144-1307 writes
+         * all three original PSG amplitude registers. Preserve the
+         * all-zero mute state; bipolar centering alone would turn three zero
+         * registers into a full-scale negative sample. */
+        state->csbAtariStPsg.samples[output_index] = summed == 0
+            ? 0.0f
+            : ((float)summed / 45.0f) * 2.0f - 1.0f;
     }
     state->csbAtariStPsg.sampleCount = (int)output_count;
     state->csbAtariStSoundAccepted = 1;
