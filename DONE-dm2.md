@@ -10,8 +10,11 @@
   fallback. A CLI boot probe using the installed mixed media root selects
   the retail Mac asset hash (`5cab25f6b975957eae4a203174e7f2a6`); before the
   change the same command selected DOS (`25247ede4dabb6a71e5dabdfbcd5907d`).
-- The probe uses SDL dummy output and proves media selection/startup only. It
-  does not verify the native Retina window or viewport appearance.
+- The plain `--game dm2` probe then completes the Mac title/menu, New Game,
+  mirror selection and first dungeon step. Its receipt confirms two
+  champions, the Mac asset hash, `dm2RealAssets=1`, and zero fallback draws.
+  SDL dummy output proves selection and the source startup route, not native
+  Retina viewport placement or visual quality.
 
 ## 2026-09-29 — Verify the complete Mac title film on its source clock
 
