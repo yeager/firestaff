@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — Linux X11 host-input capture support
+
+- Extended the research-only Mednafen capture runner to send host keyboard
+  events through PID-verified Linux X11 windows as well as macOS Quartz. The
+  X11 route requires an explicit `x11` SDL video driver, `xdotool`, the exact
+  PCE mappings from the selected Mednafen profile, and an emulator-owned
+  `InputGrab=1` receipt before gameplay keys are sent.
+- Added a keymap regression loop for every supported SDL scancode and a
+  fail-closed case for unknown mappings. `bash -n`,
+  `tests/test_theron_v1_mednafen_live_capture_script.sh`, and
+  `git diff --check` pass; redacted Gitleaks scans of all changed files found
+  no leaks.
+- This verifies capture-tool behavior only. No active X11 display was present
+  on `trv2`, so no live emulator input, game-owned data handoff, or gameplay
+  semantics were captured or established.
+
 ## 2026-09-28 — Authentic inventory transaction regression across all dungeons
 
 - Expanded the authentic Track 02 loader regression from Akutuba alone to all
