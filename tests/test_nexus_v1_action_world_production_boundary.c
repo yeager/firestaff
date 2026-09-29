@@ -5,12 +5,15 @@
 #include "nexus_v1_squares.h"
 #include "nexus_v1_traps.h"
 #include "nexus_v1_projectiles.h"
+#include "nexus_v1_movement.h"
 
 #include <stdio.h>
 #include <string.h>
 
 int main(void)
 {
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState mechanics;
     Nexus_ActionTimers timers;
     Nexus_DoorManager doors;
     Nexus_V1_TrapManager traps;
@@ -20,6 +23,25 @@ int main(void)
     if (nexus_v1_action_semantics_proven() != 0) {
         fprintf(stderr,
                 "FAIL: un-captured Saturn action semantics opened production dispatch\n");
+        return 1;
+    }
+
+    /* A retail source identity alone is not an action receipt.  Exercise the
+     * actual production tick boundary so queued input cannot move an
+     * unplaced party or advance gameplay timers before Saturn ownership is
+     * bound. */
+    memset(&engine, 0, sizeof(engine));
+    memset(&mechanics, 0, sizeof(mechanics));
+    engine.source = NEXUS_SRC_ISO;
+    nexus_mechanics_init(&mechanics, 7, 9, 0);
+    mechanics.map_index = 1;
+    if (nexus_mechanics_push_command(&mechanics, NEXUS_CMD_FORWARD) != 0 ||
+        nexus_mechanics_tick(&mechanics, &engine) != 0 ||
+        mechanics.party_x != 7 || mechanics.party_y != 9 ||
+        mechanics.party_dir != 0 ||
+        mechanics.total_ticks != 0 || mechanics.input_count != 1) {
+        fprintf(stderr,
+                "FAIL: retail-source Nexus mechanics tick mutated world state without a Saturn action receipt\n");
         return 1;
     }
 

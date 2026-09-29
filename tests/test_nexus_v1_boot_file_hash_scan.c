@@ -95,6 +95,52 @@ static int count_real_floor_items(void) {
     return count;
 }
 
+static int verify_real_floor_item_handoff(const Nexus_V1_Engine* engine,
+                                          int level) {
+    int declared_items = 0;
+    int entry_index;
+    int matched_items = 0;
+    if (!engine || !engine->level_loaded) return 0;
+    for (entry_index = 0;
+         entry_index < engine->current_level.structure1f_entry_count;
+         ++entry_index) {
+        const Nexus_V1_DgnStructure1FEntry* entry =
+            &engine->current_level.structure1f_entries[entry_index];
+        int floor_count;
+        int floor_index;
+        int matched = 0;
+        if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS) continue;
+        ++declared_items;
+        floor_count = nexus_floor_count_at(entry->x, entry->y);
+        for (floor_index = 0; floor_index < floor_count; ++floor_index) {
+            int floor_item = -1;
+            int floor_quantity = 0;
+            uint8_t floor_attribute1 = 0;
+            uint8_t floor_attribute2 = 0;
+            int floor_source_entry = -1;
+            if (nexus_floor_get_at_source(
+                    entry->x, entry->y, floor_index,
+                    &floor_item, &floor_quantity,
+                    &floor_attribute1, &floor_attribute2,
+                    &floor_source_entry) >= 0 &&
+                floor_item == (int)entry->item_id && floor_quantity == 1 &&
+                floor_attribute1 == entry->attribute1 &&
+                floor_attribute2 == entry->attribute2 &&
+                floor_source_entry == entry_index) {
+                matched = 1;
+                ++matched_items;
+                break;
+            }
+        }
+        if (!matched) return 0;
+    }
+    return engine->item_ibs_runtime_source.source_bound == 1 &&
+        engine->item_ibs_bank.valid == 1 &&
+        count_real_floor_items() == declared_items &&
+        matched_items == declared_items &&
+        level > 0;
+}
+
 static int count_level_square_type(const Nexus_V1_Level* level, uint8_t type) {
     int x;
     int y;
@@ -772,6 +818,8 @@ int main(void) {
                     }
                     check_int(nexus_doors_count() == 0,
                               "real playable Nexus levels keep unproven door runtime state empty");
+                    check_int(verify_real_floor_item_handoff(&item_engine, i),
+                              "real playable Nexus level preserves every Structure1Fa item in the production floor registry");
                 }
                 check_int(nexus_v1_load_level(&item_engine, 1) == 0 &&
                               item_engine.level_loaded,

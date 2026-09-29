@@ -1,5 +1,21 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-29 — Verify the production floor-item handoff across playable levels
+
+- Extended the real-media boot regression to check every playable retail level
+  LEV01–LEV15 after loading it through the production engine. Each Structure1Fa
+  item must match the exact floor-registry position, declaration ID, quantity,
+  raw attributes, and source-entry index; extra floor items fail the check.
+- Extended the production semantic-boundary regression to exercise the real
+  mechanics tick with an ISO source identity and a queued forward command. The
+  tick must leave party pose, tick count, and queued command unchanged while the
+  Saturn action owner remains unbound.
+- Configured and built both test targets on TRV2 against
+  `/home/trv2/.firestaff/data/nexus`. Both CTests passed in three consecutive
+  serial loops; the all-level path used the hash-admitted retail DGN files and
+  source-bound ITEM.IBS bank. This verifies source handoff and the fail-closed
+  production boundary, not item action semantics or full Nexus playability.
+
 ## 2026-09-29 — Keep unproven Structure1B door candidates out of runtime
 
 - The retail DGN parser may retain type-8 Structure1B cells as geometry

@@ -1,5 +1,22 @@
 # Nexus: verified completion status
 
+## All-playable-level floor-item production handoff — 2026-09-29
+
+The TRV2 real-media boot regression now checks the production loader's
+`ITEM.IBS` → Structure1Fa → floor-registry handoff on every playable retail
+level, LEV01–LEV15. For each DGN item declaration it requires the registry
+record to preserve its exact `(x, y)`, declaration ID, quantity, two raw
+attributes, and Structure1F source-entry index; the total registry count must
+equal the declared count. The CTest passed in three consecutive serial loops
+against `/home/trv2/.firestaff/data/nexus`.
+
+The production-boundary CTest also now exercises `nexus_mechanics_tick()` with
+an ISO source identity and queued forward input. It passes while the Saturn
+action owner remains unbound, confirming that this tick leaves retail pose,
+tick count, and queue unchanged. These checks establish authored item-state
+handoff and a closed mutation boundary only; they do not establish Saturn item
+pickup/use behavior, a playable start, or complete Nexus support.
+
 ## Local Japanese retail-media verification — 2026-08-26
 
 The supplied Japanese retail corpus was opened directly both as its original
