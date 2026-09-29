@@ -168,6 +168,11 @@ int main(void) {
         return 77;
     }
     if (have_us) {
+        static const char *const retrieval_expected[] = {
+            "Shield Defiant", "Taza Boots", "Taza Poleyn", "Soulcage",
+            "Taza Armour", "Tazahelm", "Retaliator"
+        };
+        unsigned int i;
         if (!bind_real_bank(world, us_path, 2, 1u) ||
             !bind_real_retrieval(world, us_path, 2) ||
             theron_v1_chapter_marker_compute_world(
@@ -180,21 +185,35 @@ int main(void) {
         }
         memset(world->track02_item_names, 0,
                sizeof(world->track02_item_names));
-        if (theron_v1_chapter_marker_compute_world(
-                &profile, world, NULL, &marker) != 0 ||
-            strstr(marker.quest_summary, "next: Shield Defiant") == NULL ||
-            strstr(marker.quest_summary, "source name unavailable") != NULL) {
-            fprintf(stderr,
-                    "FAIL: authenticated US retrieval fallback was not used: %s\n",
-                    marker.quest_summary);
-            free(world);
-            return 1;
-        }
-        if (!bind_real_bank(world, us_path, 2, 1u)) {
-            fputs("FAIL: could not restore authentic US item-name bank\n",
-                  stderr);
-            free(world);
-            return 1;
+        for (i = 0u; i < 7u; ++i) {
+            uint8_t saved_control =
+                world->track02_retrieval_text.raw_messages[i][0];
+            world->progression.quest_items_collected =
+                (uint8_t)(0x7fu & ~(1u << i));
+            world->progression.current_dungeon =
+                (Theron_DungeonID)(i + 1u);
+            if (theron_v1_chapter_marker_compute_world(
+                    &profile, world, NULL, &marker) != 0 ||
+                strstr(marker.quest_summary, retrieval_expected[i]) == NULL ||
+                strstr(marker.quest_summary, "source name unavailable") !=
+                    NULL) {
+                fprintf(stderr,
+                        "FAIL: authentic US retrieval fallback %u failed: %s\n",
+                        i + 1u, marker.quest_summary);
+                free(world);
+                return 1;
+            }
+            world->track02_retrieval_text.raw_messages[i][0] = 0u;
+            if (theron_v1_chapter_marker_compute_world(
+                    &profile, world, NULL, &marker) != 0 ||
+                strstr(marker.quest_summary,
+                       "source name unavailable") == NULL) {
+                fputs("FAIL: malformed US retrieval framing was accepted\n",
+                      stderr);
+                free(world);
+                return 1;
+            }
+            world->track02_retrieval_text.raw_messages[i][0] = saved_control;
         }
     } else {
         puts("SKIP: authentic US Track 02 name bank is not staged");

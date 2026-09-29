@@ -24,11 +24,11 @@
   extracted Shift-JIS bytes, and converts them through the existing CP932
   converter. This preserves the original retrieval-message spellings rather
   than substituting the distinct parallel JP item-name spellings.
-- The real-media production gate removes each JP item-name bank in turn and
-  verifies the corresponding retrieval fallback for all seven retail records;
-  it also corrupts each record's opening frame and verifies fail-closed output.
-  The direct test passed against staged US and JP media, and the focused
-  retrieval/name/dungeon-loader CTest loop passed 3/3.
+- The real-media production gate removes each US and JP item-name bank in turn
+  and verifies the corresponding retrieval fallback for all seven retail
+  records; it also corrupts each record's opening frame and verifies
+  fail-closed output. The direct test passed against staged US and JP media,
+  and the focused retrieval/name/dungeon-loader CTest loop passed 3/3.
 - This proves only the launcher's bounded display-name projection, not the
   original retrieval UI, item pickup, or T900 event consumer.
 
