@@ -5,6 +5,10 @@
 - `Swedish launcher`: translated the five new custom-music folder selection,
   cancellation, invalid-path and memory-error messages.
 
+- `Font and artpack selection`: dialog results are applied on the main
+  thread and remain safe if the menu closes before the dialog returns.
+  Overlong paths are rejected without truncating the prior selection.
+
 - `Game data folder`: native folder selection now starts scanning on the
   main thread and safely handles a dialog returning after the menu closes.
 

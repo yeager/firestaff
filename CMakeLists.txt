@@ -27297,9 +27297,9 @@ endif()
 
     add_executable(test_m12_startup_font_artpack_settings
         tests/test_m12_startup_font_artpack_settings.c
-        src/engine/config_m12.c
-        src/shared/artpack_admission_m12.c
-        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_m12_startup_font_artpack_settings PRIVATE
+        firestaff_m12 SDL3::SDL3
     )
     target_include_directories(test_m12_startup_font_artpack_settings PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -27310,6 +27310,10 @@ endif()
     add_test(
         NAME m12_startup_font_artpack_settings
         COMMAND test_m12_startup_font_artpack_settings
+    )
+    set_tests_properties(m12_startup_font_artpack_settings PROPERTIES
+        TIMEOUT 30
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/font-dialog-scratch;SDL_VIDEODRIVER=dummy"
     )
 
     add_executable(test_dm1_csb_f0243_timeline_door_destruction_pc34_compat

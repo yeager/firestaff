@@ -70,6 +70,10 @@ static int m12_data_directory_dialog_token_is_placeholder(const char* path);
 static const char* m12_translate_for_locale(int localeIndex, const char* english);
 static int m12_ascii_equal_ci(const char* a, const char* b);
 static int m12_asset_ready_game_count(const M12_AssetStatus* status);
+static void SDLCALL m12_unicode_font_dialog_callback(
+    void* userdata, const char* const* filelist, int filter);
+static void SDLCALL m12_artpack_dialog_callback(
+    void* userdata, const char* const* filelist, int filter);
 
 typedef struct M12_DataDirScanJob {
     SDL_Thread* thread;
@@ -93,7 +97,9 @@ typedef struct M12_FolderDialogJob {
 
 enum {
     M12_FOLDER_DIALOG_CUSTOM_MUSIC = 1,
-    M12_FOLDER_DIALOG_DATA_DIRECTORY = 2
+    M12_FOLDER_DIALOG_DATA_DIRECTORY = 2,
+    M12_FOLDER_DIALOG_UNICODE_FONT = 3,
+    M12_FOLDER_DIALOG_ARTPACK = 4
 };
 
 enum {
@@ -3014,33 +3020,6 @@ static int m12_native_dialogs_disabled_for_test(void) {
     return 0;
 }
 
-static void SDLCALL m12_unicode_font_dialog_callback(void* userdata,
-                                                     const char* const* filelist,
-                                                     int filter) {
-    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
-    (void)filter;
-    if (!state) {
-        return;
-    }
-    state->dataDirPickerActive = 0;
-    if (filelist && filelist[0] && filelist[0][0] != '\0') {
-        snprintf(state->settings.unicodeFontPath,
-                 sizeof(state->settings.unicodeFontPath),
-                 "%s",
-                 filelist[0]);
-        m12_save_config(state);
-        m12_set_buffered_message(state,
-                                 m12_tr(state, "UNICODE FONT SELECTED"),
-                                 filelist[0],
-                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
-        return;
-    }
-    m12_set_buffered_message(state,
-                             m12_tr(state, "UNICODE FONT UNCHANGED"),
-                             m12_tr(state, "NO FILE SELECTED"),
-                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
-}
-
 static void m12_release_folder_dialog_job(M12_FolderDialogJob* job) {
     if (job && SDL_AtomicDecRef(&job->refs)) {
         SDL_free(job);
@@ -3054,8 +3033,22 @@ static void* m12_begin_folder_dialog_job(M12_StartupMenuState* state,
     if (!state || state->dataDirPickerActive) {
         return NULL;
     }
-    stateJob = kind == M12_FOLDER_DIALOG_CUSTOM_MUSIC
-        ? &state->customMusicDirDialogJob : &state->dataDirDialogJob;
+    switch (kind) {
+        case M12_FOLDER_DIALOG_CUSTOM_MUSIC:
+            stateJob = &state->customMusicDirDialogJob;
+            break;
+        case M12_FOLDER_DIALOG_DATA_DIRECTORY:
+            stateJob = &state->dataDirDialogJob;
+            break;
+        case M12_FOLDER_DIALOG_UNICODE_FONT:
+            stateJob = &state->unicodeFontDialogJob;
+            break;
+        case M12_FOLDER_DIALOG_ARTPACK:
+            stateJob = &state->artpackDialogJob;
+            break;
+        default:
+            return NULL;
+    }
     if (*stateJob) {
         return NULL;
     }
@@ -3120,6 +3113,27 @@ void M12_StartupMenu_CompleteDataDirDialog(void* callbackToken,
                                    M12_FOLDER_DIALOG_DATA_DIRECTORY);
 }
 
+void* M12_StartupMenu_BeginUnicodeFontDialog(M12_StartupMenuState* state) {
+    return m12_begin_folder_dialog_job(
+        state, M12_FOLDER_DIALOG_UNICODE_FONT);
+}
+
+void M12_StartupMenu_CompleteUnicodeFontDialog(void* callbackToken,
+                                               const char* selectedPath) {
+    m12_complete_folder_dialog_job(callbackToken, selectedPath,
+                                   M12_FOLDER_DIALOG_UNICODE_FONT);
+}
+
+void* M12_StartupMenu_BeginArtpackDialog(M12_StartupMenuState* state) {
+    return m12_begin_folder_dialog_job(state, M12_FOLDER_DIALOG_ARTPACK);
+}
+
+void M12_StartupMenu_CompleteArtpackDialog(void* callbackToken,
+                                          const char* selectedPath) {
+    m12_complete_folder_dialog_job(callbackToken, selectedPath,
+                                   M12_FOLDER_DIALOG_ARTPACK);
+}
+
 static void SDLCALL m12_custom_music_dir_dialog_callback(
     void* userdata,
     const char* const* filelist,
@@ -3175,25 +3189,32 @@ static void m12_begin_unicode_font_browse(M12_StartupMenuState* state) {
         {"Font files", "ttf;otf;ttc"},
         {"All files", "*"}
     };
-    if (!state || state->dataDirPickerActive) {
+    void* callbackToken;
+    if (!state || state->dataDirPickerActive || state->unicodeFontDialogJob) {
         return;
     }
-    state->dataDirPickerActive = 1;
     m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              m12_tr(state, "CHOOSE UNICODE FONT"),
                              m12_tr(state, "SELECT A BROAD TTF OR OTF FONT"),
                              m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     if (m12_native_dialogs_disabled_for_test()) {
-        state->dataDirPickerActive = 0;
         m12_set_buffered_message(state,
                                  m12_tr(state, "UNICODE FONT UNCHANGED"),
                                  m12_tr(state, "NATIVE FILE DIALOG DISABLED"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
         return;
     }
+    callbackToken = M12_StartupMenu_BeginUnicodeFontDialog(state);
+    if (!callbackToken) {
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "UNICODE FONT UNCHANGED"),
+                                 m12_tr(state, "NOT ENOUGH MEMORY"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return;
+    }
     SDL_ShowOpenFileDialog(m12_unicode_font_dialog_callback,
-                           state,
+                           callbackToken,
                            NULL,
                            filters,
                            (int)(sizeof(filters) / sizeof(filters[0])),
@@ -3201,35 +3222,24 @@ static void m12_begin_unicode_font_browse(M12_StartupMenuState* state) {
                            false);
 }
 
+static void SDLCALL m12_unicode_font_dialog_callback(void* userdata,
+                                                     const char* const* filelist,
+                                                     int filter) {
+    (void)filter;
+    M12_StartupMenu_CompleteUnicodeFontDialog(
+        userdata,
+        filelist && filelist[0] && filelist[0][0] != '\0'
+            ? filelist[0] : NULL);
+}
+
 static void SDLCALL m12_artpack_dialog_callback(void* userdata,
                                                 const char* const* filelist,
                                                 int filter) {
-    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
     (void)filter;
-    if (!state) {
-        return;
-    }
-    state->dataDirPickerActive = 0;
-    if (filelist && filelist[0] && filelist[0][0] != '\0') {
-        M12_ArtpackAdmissionReceipt receipt;
-        if (M12_StartupMenu_SelectArtpackPath(state, filelist[0], &receipt)) {
-            m12_save_config(state);
-            m12_set_buffered_message(state,
-                                     m12_tr(state, "V2.2 ARTPACK SELECTED"),
-                                     filelist[0],
-                                     m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
-        } else {
-            m12_set_buffered_message(state,
-                                     m12_tr(state, "V2.2 ARTPACK REJECTED"),
-                                     M12_ArtpackAdmission_StatusName(receipt.status),
-                                     m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
-        }
-        return;
-    }
-    m12_set_buffered_message(state,
-                             m12_tr(state, "V2.2 ARTPACK UNCHANGED"),
-                             m12_tr(state, "NO FILE SELECTED"),
-                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    M12_StartupMenu_CompleteArtpackDialog(
+        userdata,
+        filelist && filelist[0] && filelist[0][0] != '\0'
+            ? filelist[0] : NULL);
 }
 
 static void m12_begin_artpack_browse(M12_StartupMenuState* state) {
@@ -3237,25 +3247,32 @@ static void m12_begin_artpack_browse(M12_StartupMenuState* state) {
         {"Firestaff artpack", "fsart"},
         {"All files", "*"}
     };
-    if (!state || state->dataDirPickerActive) {
+    void* callbackToken;
+    if (!state || state->dataDirPickerActive || state->artpackDialogJob) {
         return;
     }
-    state->dataDirPickerActive = 1;
     m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              m12_tr(state, "CHOOSE V2.2 ARTPACK"),
                              m12_tr(state, "SELECT A .FSART FILE"),
                              m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     if (m12_native_dialogs_disabled_for_test()) {
-        state->dataDirPickerActive = 0;
         m12_set_buffered_message(state,
                                  m12_tr(state, "V2.2 ARTPACK UNCHANGED"),
                                  m12_tr(state, "NATIVE FILE DIALOG DISABLED"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
         return;
     }
+    callbackToken = M12_StartupMenu_BeginArtpackDialog(state);
+    if (!callbackToken) {
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "V2.2 ARTPACK UNCHANGED"),
+                                 m12_tr(state, "NOT ENOUGH MEMORY"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return;
+    }
     SDL_ShowOpenFileDialog(m12_artpack_dialog_callback,
-                           state,
+                           callbackToken,
                            NULL,
                            filters,
                            (int)(sizeof(filters) / sizeof(filters[0])),
@@ -13164,6 +13181,81 @@ static int m12_update_custom_music_dir_dialog(
     return 1;
 }
 
+static int m12_update_unicode_font_dialog(M12_StartupMenuState* state) {
+    M12_FolderDialogJob* job;
+    if (!state) {
+        return 0;
+    }
+    job = (M12_FolderDialogJob*)state->unicodeFontDialogJob;
+    if (!job || job->kind != M12_FOLDER_DIALOG_UNICODE_FONT ||
+        !SDL_GetAtomicInt(&job->done)) {
+        return 0;
+    }
+    state->unicodeFontDialogJob = NULL;
+    state->dataDirPickerActive = 0;
+    if (job->result == M12_FOLDER_DIALOG_SELECTED &&
+        strlen(job->path) < sizeof(state->settings.unicodeFontPath)) {
+        memcpy(state->settings.unicodeFontPath, job->path,
+               strlen(job->path) + 1U);
+        m12_save_config(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "UNICODE FONT SELECTED"),
+                                 state->settings.unicodeFontPath,
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    } else {
+        m12_set_buffered_message(
+            state,
+            m12_tr(state, "UNICODE FONT UNCHANGED"),
+            job->result == M12_FOLDER_DIALOG_CANCELLED
+                ? m12_tr(state, "NO FILE SELECTED")
+                : m12_tr(state, "FILE PATH TOO LONG"),
+            m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    }
+    m12_release_folder_dialog_job(job);
+    return 1;
+}
+
+static int m12_update_artpack_dialog(M12_StartupMenuState* state) {
+    M12_FolderDialogJob* job;
+    if (!state) {
+        return 0;
+    }
+    job = (M12_FolderDialogJob*)state->artpackDialogJob;
+    if (!job || job->kind != M12_FOLDER_DIALOG_ARTPACK ||
+        !SDL_GetAtomicInt(&job->done)) {
+        return 0;
+    }
+    state->artpackDialogJob = NULL;
+    state->dataDirPickerActive = 0;
+    if (job->result == M12_FOLDER_DIALOG_SELECTED) {
+        M12_ArtpackAdmissionReceipt receipt;
+        if (M12_StartupMenu_SelectArtpackPath(state, job->path, &receipt)) {
+            m12_save_config(state);
+            m12_set_buffered_message(
+                state,
+                m12_tr(state, "V2.2 ARTPACK SELECTED"),
+                state->settings.artpackPath,
+                m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        } else {
+            m12_set_buffered_message(
+                state,
+                m12_tr(state, "V2.2 ARTPACK REJECTED"),
+                M12_ArtpackAdmission_StatusName(receipt.status),
+                m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        }
+    } else {
+        m12_set_buffered_message(
+            state,
+            m12_tr(state, "V2.2 ARTPACK UNCHANGED"),
+            job->result == M12_FOLDER_DIALOG_CANCELLED
+                ? m12_tr(state, "NO FILE SELECTED")
+                : m12_tr(state, "FILE PATH TOO LONG"),
+            m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    }
+    m12_release_folder_dialog_job(job);
+    return 1;
+}
+
 static int m12_update_data_dir_dialog(M12_StartupMenuState* state) {
     M12_FolderDialogJob* job;
     if (!state) {
@@ -13199,6 +13291,12 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         return 0;
     }
     changed = m12_update_custom_music_dir_dialog(state);
+    if (m12_update_unicode_font_dialog(state)) {
+        changed = 1;
+    }
+    if (m12_update_artpack_dialog(state)) {
+        changed = 1;
+    }
     if (m12_update_data_dir_dialog(state)) {
         changed = 1;
     }
@@ -13336,6 +13434,8 @@ void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
     M12_DataDirScanJob* job;
     M12_FolderDialogJob* musicDialogJob;
     M12_FolderDialogJob* dataDialogJob;
+    M12_FolderDialogJob* unicodeFontDialogJob;
+    M12_FolderDialogJob* artpackDialogJob;
     if (!state) {
         return;
     }
@@ -13344,14 +13444,18 @@ void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
     state->customMusicDirDialogJob = NULL;
     dataDialogJob = (M12_FolderDialogJob*)state->dataDirDialogJob;
     state->dataDirDialogJob = NULL;
-    if (dataDialogJob) {
+    unicodeFontDialogJob = (M12_FolderDialogJob*)state->unicodeFontDialogJob;
+    state->unicodeFontDialogJob = NULL;
+    artpackDialogJob = (M12_FolderDialogJob*)state->artpackDialogJob;
+    state->artpackDialogJob = NULL;
+    if (dataDialogJob || musicDialogJob || unicodeFontDialogJob ||
+        artpackDialogJob) {
         state->dataDirPickerActive = 0;
-        m12_release_folder_dialog_job(dataDialogJob);
     }
-    if (musicDialogJob) {
-        state->dataDirPickerActive = 0;
-        m12_release_folder_dialog_job(musicDialogJob);
-    }
+    m12_release_folder_dialog_job(dataDialogJob);
+    m12_release_folder_dialog_job(musicDialogJob);
+    m12_release_folder_dialog_job(unicodeFontDialogJob);
+    m12_release_folder_dialog_job(artpackDialogJob);
     job = (M12_DataDirScanJob*)state->dataDirScanJob;
     if (!job) {
         return;

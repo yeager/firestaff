@@ -683,6 +683,8 @@ typedef struct M12_StartupMenuState {
      * result job is owned by the state and detached on completion/destroy. */
     void* customMusicDirDialogJob;
     void* dataDirDialogJob;
+    void* unicodeFontDialogJob;
+    void* artpackDialogJob;
     /* Last folder explicitly accepted by the launcher. Asset scans can
      * temporarily expose a platform-dialog token such as "."; it must
      * never replace the path shown or persisted by Settings. */
@@ -799,15 +801,21 @@ const char* M12_StartupMenu_GetArtpackPath(const M12_StartupMenuState* state);
  * configuration. Rejection preserves the previous selection. */
 int M12_StartupMenu_SetCustomMusicPath(M12_StartupMenuState* state,
                                       const char* path);
-/* Native folder-dialog adapter. Begin returns a callback-owned opaque token
- * while the menu retains its own reference. The callback must complete that
- * token exactly once, including cancellation or dialog error. Completion is
- * thread-safe; M12_StartupMenu_Update applies any result on the main thread. */
+/* Native file/folder dialog adapters. Begin returns a callback-owned opaque
+ * token while the menu retains its own reference. The callback must complete
+ * that token exactly once, including cancellation or dialog error. Completion
+ * is thread-safe; M12_StartupMenu_Update applies any result on the main thread. */
 void* M12_StartupMenu_BeginCustomMusicDirDialog(M12_StartupMenuState* state);
 void M12_StartupMenu_CompleteCustomMusicDirDialog(void* callbackToken,
                                                   const char* selectedPath);
 void* M12_StartupMenu_BeginDataDirDialog(M12_StartupMenuState* state);
 void M12_StartupMenu_CompleteDataDirDialog(void* callbackToken,
+                                           const char* selectedPath);
+void* M12_StartupMenu_BeginUnicodeFontDialog(M12_StartupMenuState* state);
+void M12_StartupMenu_CompleteUnicodeFontDialog(void* callbackToken,
+                                              const char* selectedPath);
+void* M12_StartupMenu_BeginArtpackDialog(M12_StartupMenuState* state);
+void M12_StartupMenu_CompleteArtpackDialog(void* callbackToken,
                                            const char* selectedPath);
 int M12_StartupMenu_SelectArtpackPath(M12_StartupMenuState* state,
                                       const char* path,

@@ -1,73 +1,173 @@
 #include "artpack_admission_m12.h"
 #include "config_m12.h"
 #include "fs_portable_compat.h"
-
+#include "menu_startup_m12.h"
+#include <SDL3/SDL.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-static int g_failures = 0;
-
-static void expect_true(int condition, const char* label) {
-    if (!condition) {
-        fprintf(stderr, "FAIL: %s\n", label);
-        ++g_failures;
-    }
+static int g_failures;
+static void expect_true(int ok, const char* label) {
+    if (!ok) { fprintf(stderr, "FAIL: %s\n", label); ++g_failures; }
+}
+static char* copy_env(const char* name) {
+    const char* value = getenv(name);
+    char* copy = value ? (char*)malloc(strlen(value) + 1u) : NULL;
+    if (copy) strcpy(copy, value);
+    return copy;
+}
+static void restore_env(const char* name, char* value) {
+    if (value) FSP_SetEnv(name, value, 1);
+    else FSP_UnsetEnv(name);
+    free(value);
 }
 
-static void write_bytes(const char* path, const unsigned char* data,
-                        size_t size) {
-    FILE* fp = fopen(path, "wb");
-    if (!fp) {
-        fprintf(stderr, "FAIL: open %s\n", path);
-        ++g_failures;
-        return;
+typedef void* (*BeginDialog)(M12_StartupMenuState*);
+typedef void (*CompleteDialog)(void*, const char*);
+typedef struct Completion {
+    CompleteDialog complete;
+    void* token;
+    const char* path;
+} Completion;
+static int SDLCALL complete_worker(void* userdata) {
+    Completion* completion = (Completion*)userdata;
+    completion->complete(completion->token, completion->path);
+    return 0;
+}
+static int deliver(CompleteDialog complete, void* token, const char* path) {
+    Completion completion = {complete, token, path};
+    SDL_Thread* worker = SDL_CreateThread(complete_worker, "font-artpack-result", &completion);
+    int status = -1;
+    if (!worker) { complete(token, NULL); return 0; }
+    SDL_WaitThread(worker, &status);
+    return status == 0;
+}
+static char* selected_path(M12_StartupMenuState* state, int font) {
+    return font ? state->settings.unicodeFontPath : state->settings.artpackPath;
+}
+static void* pending_job(M12_StartupMenuState* state, int font) {
+    return font ? state->unicodeFontDialogJob : state->artpackDialogJob;
+}
+static void check_dialog(int font, const char* validPath) {
+    BeginDialog begin = font ? M12_StartupMenu_BeginUnicodeFontDialog : M12_StartupMenu_BeginArtpackDialog;
+    CompleteDialog complete = font ? M12_StartupMenu_CompleteUnicodeFontDialog : M12_StartupMenu_CompleteArtpackDialog;
+    M12_StartupMenuState* state = (M12_StartupMenuState*)SDL_calloc(1, sizeof(*state));
+    char overlong[M12_CONFIG_DATA_DIR_CAPACITY + 64];
+    void* token;
+    int scenario;
+    expect_true(state != NULL, "allocate dialog owner");
+    if (!state) return;
+    strcpy(selected_path(state, font), "previous-selection");
+    memset(overlong, 'x', sizeof(overlong) - 1u);
+    overlong[sizeof(overlong) - 1u] = '\0';
+    for (scenario = 0; scenario < 2; ++scenario) {
+        token = begin(state);
+        expect_true(token && state->dataDirPickerActive && pending_job(state, font),
+                    "begin dialog creates independent pending token");
+        if (!token) continue;
+        expect_true(begin(state) == NULL, "pending dialog cannot be replaced");
+        expect_true(deliver(complete, token, scenario ? overlong : NULL),
+                    "worker delivers cancellation or overflow");
+        expect_true(state->dataDirPickerActive &&
+                    strcmp(selected_path(state, font), "previous-selection") == 0,
+                    "callback leaves owner state unchanged until Update");
+        expect_true(M12_StartupMenu_Update(state) && !state->dataDirPickerActive &&
+                    !pending_job(state, font), "Update consumes completed token");
+        expect_true(strcmp(selected_path(state, font), "previous-selection") == 0,
+                    "cancellation and overflow preserve prior selection");
     }
-    if (fwrite(data, 1U, size, fp) != size) {
-        fprintf(stderr, "FAIL: write %s\n", path);
-        ++g_failures;
-    }
-    fclose(fp);
+    if (validPath && validPath[0]) {
+        M12_Config before;
+        M12_Config after;
+        int laneFailures = g_failures;
+        (void)M12_Config_Load(&before, NULL);
+        token = begin(state);
+        expect_true(token != NULL, "begin positive installed-file selection");
+        if (token) {
+            expect_true(deliver(complete, token, validPath), "worker delivers existing file");
+            expect_true(strcmp(selected_path(state, font), "previous-selection") == 0,
+                        "positive worker completion remains deferred");
+            expect_true(M12_Config_Load(&after, NULL) &&
+                strcmp(font ? after.unicodeFontPath : after.artpackPath,
+                       font ? before.unicodeFontPath : before.artpackPath) == 0,
+                "worker completion does not persist selection before Update");
+            expect_true(M12_StartupMenu_Update(state) && !pending_job(state, font) &&
+                        strcmp(selected_path(state, font), validPath) == 0,
+                        "main-thread Update applies selected file");
+            expect_true(M12_Config_Load(&after, NULL) &&
+                strcmp(after.path, getenv("FIRESTAFF_CONFIG_PATH")) == 0 &&
+                strcmp(font ? after.unicodeFontPath : after.artpackPath, validPath) == 0,
+                "Update persists selection in the isolated config file");
+            if (font && laneFailures == g_failures)
+                puts("PASS lane: actual installed Unicode font selected and persisted");
+        }
+    } else puts("SKIP lane: installed Unicode font unavailable; lifecycle checks still run");
+    token = begin(state);
+    expect_true(token != NULL, "begin dialog before owner destruction");
+    M12_StartupMenu_Destroy(state);
+    SDL_free(state);
+    if (token) expect_true(deliver(complete, token, validPath),
+                          "late callback completes after Destroy and owner free");
 }
 
 int main(void) {
-    const char* fontPath = "/tmp/firestaff-ui-unicode-test-font.ttf";
-    const char* artpackPath = "/tmp/firestaff-v22-test-artpack.fsart";
-    const unsigned char fontBytes[] = {'t','t','f','0'};
-    const unsigned char artpackBytes[] = {'F','S','A','R','T','0','0','1'};
+    const char* scratch = getenv("TMPDIR");
+    char base[FSP_PATH_MAX], configPath[M12_CONFIG_PATH_CAPACITY], artpackPath[FSP_PATH_MAX];
+    char tmpPath[M12_CONFIG_PATH_CAPACITY + 4], leaf[100];
+    char fontPath[M12_CONFIG_DATA_DIR_CAPACITY] = {0};
+    char* savedConfig = copy_env("FIRESTAFF_CONFIG_PATH");
+    char* savedFont = copy_env("FIRESTAFF_UI_FONT");
     M12_Config config;
-    char resolvedFont[M12_CONFIG_DATA_DIR_CAPACITY];
-    M12_ArtpackAdmissionReceipt artpack;
-
-    write_bytes(fontPath, fontBytes, sizeof(fontBytes));
-    write_bytes(artpackPath, artpackBytes, sizeof(artpackBytes));
-    expect_true(FSP_SetEnv("FIRESTAFF_UI_FONT", fontPath, 1) == 0,
-                "test font env set");
-
-    expect_true(M12_Config_FindDefaultUnicodeFontPath(
-                    resolvedFont, sizeof(resolvedFont)) == 1,
-                "unicode font resolver finds override");
-    expect_true(strcmp(resolvedFont, fontPath) == 0,
-                "unicode font resolver returns override path");
-
-    M12_Config_SetDefaults(&config);
-    expect_true(strcmp(config.unicodeFontPath, fontPath) == 0,
-                "startup config defaults to UTF-8 capable font path");
-
-    expect_true(M12_ArtpackAdmission_Check(artpackPath, &artpack) == 1,
-                "startup admits fsart files produced by artpack studio");
-    expect_true(artpack.admitted == 1 &&
-                    artpack.status == M12_ARTPACK_ADMISSION_ACCEPTED_FSAR,
-                "fsart receipt is accepted-fsar");
-    expect_true(!artpack.fallbackVisualsPermitted,
-                "fsart selection never enables fallback visuals");
-
-    remove(fontPath);
-    remove(artpackPath);
-
-    if (g_failures) {
-        fprintf(stderr, "%d failures\n", g_failures);
+    M12_ArtpackAdmissionReceipt admission;
+    FILE* file;
+    int claimed = 0;
+    int initialized = 0;
+    if ((getenv("FIRESTAFF_CONFIG_PATH") && !savedConfig) ||
+        (getenv("FIRESTAFF_UI_FONT") && !savedFont)) {
+        free(savedConfig);
+        free(savedFont);
         return 1;
     }
+    if (!scratch || !scratch[0]) scratch = "build";
+    expect_true(FSP_CreateDirectoryRecursive(scratch) &&
+                FSP_ResolvePhysicalPath(base, sizeof(base), scratch), "resolve task-local scratch");
+    if (g_failures) goto cleanup;
+    snprintf(leaf, sizeof(leaf), "font-artpack-%llu.cfg", (unsigned long long)SDL_GetTicksNS());
+    expect_true(FSP_JoinPath(configPath, sizeof(configPath), base, leaf), "form isolated config path");
+    snprintf(tmpPath, sizeof(tmpPath), "%s.tmp", configPath);
+    snprintf(leaf, sizeof(leaf), "font-artpack-%llu.fsart", (unsigned long long)SDL_GetTicksNS());
+    expect_true(FSP_JoinPath(artpackPath, sizeof(artpackPath), base, leaf), "form admission fixture path");
+    if (g_failures) goto cleanup;
+    expect_true(!FSP_PathExists(configPath) && !FSP_PathExists(tmpPath) &&
+                !FSP_PathExists(artpackPath), "scratch files are unclaimed");
+    if (g_failures) goto cleanup;
+    claimed = 1;
+    expect_true(FSP_SetEnv("FIRESTAFF_CONFIG_PATH", configPath, 1) == 0, "isolate config persistence");
+    if (g_failures) goto cleanup;
+    FSP_UnsetEnv("FIRESTAFF_UI_FONT");
+    if (M12_Config_FindDefaultUnicodeFontPath(fontPath, sizeof(fontPath)) && FSP_FileExists(fontPath)) {
+        expect_true(FSP_SetEnv("FIRESTAFF_UI_FONT", fontPath, 1) == 0, "select actual installed font");
+        M12_Config_SetDefaults(&config);
+        expect_true(strcmp(config.unicodeFontPath, fontPath) == 0, "defaults retain installed font override");
+    } else fontPath[0] = '\0';
+    /* V2.2 admission metadata only: this header proves no artwork/content parity. */
+    file = fopen(artpackPath, "wb");
+    expect_true(file != NULL, "create owned FSART admission header");
+    if (!file) goto cleanup;
+    expect_true(fwrite("FSART001", 1, 8, file) == 8, "write FSART admission header");
+    expect_true(fclose(file) == 0, "close admission header");
+    expect_true(M12_ArtpackAdmission_Check(artpackPath, &admission) && admission.admitted &&
+                !admission.fallbackVisualsPermitted, "header admission does not authorize fallback artwork");
+    initialized = SDL_Init(0);
+    expect_true(initialized, "initialize SDL worker primitives");
+    if (initialized) { check_dialog(1, fontPath); check_dialog(0, artpackPath); }
+cleanup:
+    if (initialized) SDL_Quit();
+    if (claimed) { remove(configPath); remove(tmpPath); remove(artpackPath); }
+    restore_env("FIRESTAFF_CONFIG_PATH", savedConfig);
+    restore_env("FIRESTAFF_UI_FONT", savedFont);
+    if (g_failures) { fprintf(stderr, "%d failures\n", g_failures); return 1; }
     puts("m12 startup font/artpack settings: ok");
     return 0;
 }

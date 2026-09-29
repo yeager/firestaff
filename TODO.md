@@ -37,11 +37,18 @@
   teardown rules and fall back to native music on missing or undecodable
   files. Do not replace DM2 movie PCM wholesale: it may include non-music.
 
-- Move the older font/artpack native-dialog callbacks to the same
-  owned-result/main-thread pattern as Custom Music and Data Directory. SDL may invoke callbacks
-  off the main thread; those older paths still mutate menu state directly.
-  Verify native desktop folder selection and persistence separately from
-  the cancellation/late-completion tests.
+- Verify native desktop file/folder selection and persistence for Data
+  Directory, Custom Music, Unicode Font and Artpack. Their owned-result
+  callbacks now defer menu changes to Update, with cancellation/late-result
+  tests; automated tests do not prove desktop dialog interaction.
+
+- Preserve the remembered Quick Resume save path while the preference is
+  disabled, and reprobe when re-enabled. The current probe clears the live
+  path before returning for OFF; saving another setting can consequently
+  overwrite lastSavePath with an empty string. OFF-to-ON also leaves resume
+  unavailable. Reproduce using the authentic Amiga v2.0 save disk in
+  test_m12_quick_resume_gate; this is menu preference handling, independent
+  of the deferred engine savegame work.
 
 - Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
   preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale

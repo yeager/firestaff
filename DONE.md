@@ -5,6 +5,16 @@
   wording against Swedish terminology/translation memory and checked the
   selected strings with l10n-lint, svlang, Hunspell and GNU gettext.
 
+- 2026-09-29: Unicode Font and Artpack dialogs now apply selections and
+  persist settings only from main-thread Update. Independent result tokens
+  survive menu destruction until callbacks return; cancellation and
+  overlong paths preserve the prior choice. All four focused dialog tests
+  pass, including worker delivery, late callback after owner free and an
+  actual installed font path persisted to isolated configuration. Artpack
+  coverage uses admission metadata, not artwork/rendering evidence.
+  Rebuilt original-media handoff checks pass DM1 PC34 332, CSB Amiga 48
+  and DM2 DOS 60 assertions.
+
 - 2026-09-29: Data Directory folder callbacks now publish an independently
   owned result; Update starts the scan on the main thread. Destruction is
   safe before a late callback. An original PC34 archive passes folder
