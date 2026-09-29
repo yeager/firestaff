@@ -401,6 +401,39 @@ if (probe["launchedEver"] != 1 or probe["sourceId"] != "csb" or
 PY
 echo "PASS: CSB FM Towns $language M12 route reached the authentic MINI.DAT party"
 
+# Repeat the full M12 -> TITLE.ANM -> SWITCHTW -> C004 route in a large FIT
+# window. Script clicks are SDL logical-window coordinates; after FIT, the
+# source C004 Enter zone (x=270,y=50) is at (1554,270) in a 1920x1080 window.
+# The earlier x=1365 point maps to source x=234 and misses C407's x=244..298
+# zone, leaving startup waiting correctly for another command.
+scaled_runtime_probe="$isolated_home/m12-runtime-1920x1080.json"
+scaled_menu_runtime_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$scaled_runtime_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy run_firestaff \
+    --width 1920 --height 1080 --scale-mode 4 --menu --game csb \
+    --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --script 'enter,enter,enter,wait700,click:474:594,wait10,click:1554:270,wait240' \
+    --duration 30000 2>&1)" || {
+    printf '%s\n' "$scaled_menu_runtime_output" >&2
+    exit 1
+}
+python3 - "$scaled_runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["sourceId"] != "csb" or
+        startup["phase"] != "inactive" or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (4, 22, 18, 2, 1)):
+    raise SystemExit(f"FAIL: scaled CSB FM Towns M12 did not reach the original MINI.DAT party: {probe}")
+PY
+echo "PASS: CSB FM Towns $language M12 FIT route maps the original C004 Enter button in a 1920x1080 window"
+
 if [ -n "$user_save" ]; then
     menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy run_firestaff \
