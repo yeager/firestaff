@@ -4465,7 +4465,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;macintosh;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};FIRESTAFF_DM2_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR};FIRESTAFF_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}"
-        TIMEOUT 120
+        TIMEOUT 180
     )
     add_test(
         NAME dm2_v1_mac_demo_archive_rejected

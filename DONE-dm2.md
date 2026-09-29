@@ -1,5 +1,17 @@
 # Firestaff DONE — DM2
 
+## 2026-09-29 — Macintosh title movie advances in the normal loop
+
+- The ordinary M11 idle loop now continues requesting presentation while the
+  authentic Mac `Title.MooV` owns startup. Without those redraw requests the
+  decoder presented its first frame once, then stopped before the source menu
+  could accept New Game. A new authentic-media CTest exercises the normal
+  `--game dm2 --platform mac` loop through movie completion, New Game and the
+  selected mirror into loaded runtime. The SDL dummy backend checks source
+  state only; native macOS video, HiDPI input and audible playback remain open.
+  The authentic Mac CLI CTest passes in 123 seconds, and the focused M11
+  movie-runtime test passes in 2.30 seconds with the supplied retail ZIP.
+
 ## 2026-09-28 — Mac retail archive selection in native CLI test
 
 - The supplied data root contains two files named as DM2 Macintosh English

@@ -43,6 +43,15 @@ int main(void)
         return 1;
     }
 
+    if (M11_GameView_AdvanceIdleTick(&state) != M11_GAME_INPUT_REDRAW ||
+        !state.dm2MacMovieActive) {
+        fprintf(stderr,
+                "M11 Mac title movie did not request a presented idle frame: active=%d\n",
+                state.dm2MacMovieActive);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
     memset(framebuffer, 0, sizeof(framebuffer));
     /* M11_GameView_Draw uses the host monotonic clock to honour each
      * authentic QuickTime frame duration.  A tight headless loop otherwise

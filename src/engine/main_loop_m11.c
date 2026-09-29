@@ -4895,6 +4895,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
     FILE* f;
     M11_BootProbeReceipt startupReceipt;
     int startupReceiptReady;
+    int dm2Platform = -1;
     if (!path || path[0] == '\0') {
         return;
     }
@@ -4905,6 +4906,10 @@ static void m11_write_autotest_runtime_probe(const char* path,
     memset(&startupReceipt, 0, sizeof(startupReceipt));
     startupReceiptReady = M11_GameView_GetBootProbeReceipt(gameView,
                                                             &startupReceipt);
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        gameView->dm2BootProfile) {
+        dm2Platform = ((const DM2_V1_BootProfile *)gameView->dm2BootProfile)->platform;
+    }
     /* Theron keeps its source-owned party/runtime state in theronState;
      * M11_GameViewState.world is the shared DM1-compatible shell and remains
      * zeroed for this game.  Reporting the shell here made an authenticated
@@ -4954,6 +4959,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"active\": %d,\n"
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
+            "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
             "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
             "  \"lastAction\": \"%s\",\n"
@@ -4968,6 +4974,11 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->active : 0,
             gameView ? gameView->title : "",
             gameView ? gameView->sourceId : "",
+            dm2Platform,
+            gameView ? gameView->dm2MacMovieActive : 0,
+            gameView ? gameView->dm2MacMovieComplete : 0,
+            gameView ? gameView->dm2MacMovieRejected : 0,
+            gameView ? gameView->dm2MacMovieDecoder.frame_index : 0u,
             gameView ? gameView->presentationMode : -1,
             gameView ? gameView->presentationWidth : 0,
             gameView ? gameView->presentationHeight : 0,

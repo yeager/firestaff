@@ -75,6 +75,46 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
+# Exercise the ordinary game loop rather than the deterministic boot probe:
+# Title.MooV must keep requesting presents until its authentic QuickTime
+# duration expires, then accept New Game and enter the selected mirror.
+runtime_probe="${app}.mac-normal-start-$$.json"
+trap 'rm -f "$runtime_probe"' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+normal_start_output=$(FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --platform mac --data-dir "$archive" \
+    --width 320 --height 200 \
+    --script 'wait:700,key:enter,click:100:60' --duration 24000 2>&1) || {
+    printf '%s\n' "$normal_start_output" >&2
+    exit 1
+}
+python3 - "$runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+
+startup = probe.get("startup", {})
+movie = probe.get("dm2Startup", {})
+party = probe.get("party", {})
+if (
+    probe.get("sourceId") != "dm2"
+    or movie.get("platform") != 4
+    or movie.get("movieActive") != 0
+    or movie.get("movieComplete") != 1
+    or movie.get("movieRejected") != 0
+    or startup.get("phase") != "dm2-runtime"
+    or startup.get("levelLoaded") != 1
+    or party.get("championCount") != 2
+):
+    raise SystemExit("FAIL: normal Macintosh Title.MooV-to-runtime route did not complete")
+PY
+echo 'PASS: normal DM2 Macintosh Title.MooV loop reaches authentic runtime'
+
 # Retail Mac owns a title movie before its source New Game action.  The first
 # Enter dismisses that movie; the second is the authenticated title-menu
 # action.  Keep the host window at 320x200: --script pointer coordinates are

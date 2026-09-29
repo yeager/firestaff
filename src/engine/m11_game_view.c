@@ -31087,6 +31087,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 }
                 return M11_GAME_INPUT_REDRAW;
             }
+            if (state->dm2MacMovieActive) {
+                /* Keep the host idle loop requesting frames while the
+                 * QuickTime movie owns the screen. Its decoder advances
+                 * exactly one source frame from M11_GameView_Draw. */
+                return M11_GAME_INPUT_REDRAW;
+            }
             if (state->dm2FmtownsTitleBound) {
                 /* SKWIN's 0759:06C2 Timer-A interrupt owns TWANIM's DL
                  * waits.  The Amiga stream instead advances on its 50 Hz
