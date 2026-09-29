@@ -35,6 +35,11 @@ value. Its regression rejects mismatched or later receipts. This strengthens
 the admission check but does not make any current capture pass or prove the
 consumer's game semantics.
 
+The old US dungeon-lore accessor no longer carries separate paraphrased
+story strings; it returns the byte-exact US Track 02 story records and their
+control bytes from the shared source table. A dynamic, region-authenticated
+Track 02 story consumer and original presentation remain open.
+
 ## Remaining work, ordered by the end-to-end playability dependency
 
 The repository has real-media startup, source-data loaders, bounded mechanics,

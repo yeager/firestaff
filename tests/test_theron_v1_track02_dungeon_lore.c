@@ -1,4 +1,5 @@
 #include "theron_v1_track02_dungeon_lore.h"
+#include "theron_v1_track02_dungeon_text.h"
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -9,14 +10,27 @@ static void test_dungeon_count(void)
     printf("  PASS: dungeon_count\n");
 }
 
+static void test_source_story_binding(void)
+{
+    for (unsigned int i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+        const char *lore = theron_v1_track02_us_dungeon_lore(i);
+        const char *story = theron_v1_track02_us_dungeon_story(i);
+        assert(lore != NULL && lore == story);
+    }
+    printf("  PASS: source_story_binding\n");
+}
+
 static void test_lore_akutuba(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(0);
     (void)lore;
     assert(lore != NULL);
-    assert(strstr(lore, "Ak-Tu-Ba") != NULL);
+    assert(strstr(lore, "Alaphalon") != NULL);
     assert(strstr(lore, "Shield Defiant") != NULL);
     assert(strstr(lore, "Mummies") != NULL);
+    assert(strchr(lore, '\x01') != NULL);
+    assert(strchr(lore, '\x02') != NULL);
+    assert(strchr(lore, '\x03') != NULL);
     printf("  PASS: lore_akutuba\n");
 }
 
@@ -104,6 +118,7 @@ int main(void)
 {
     printf("test_theron_v1_track02_dungeon_lore:\n");
     test_dungeon_count();
+    test_source_story_binding();
     test_lore_akutuba();
     test_lore_drator();
     test_lore_formic();

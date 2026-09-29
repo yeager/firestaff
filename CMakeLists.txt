@@ -47769,6 +47769,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_track02_dungeon_lore
         tests/test_theron_v1_track02_dungeon_lore.c
         src/theron/theron_v1_track02_dungeon_lore.c
+        src/theron/theron_v1_track02_dungeon_text.c
     )
     target_include_directories(test_theron_v1_track02_dungeon_lore PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

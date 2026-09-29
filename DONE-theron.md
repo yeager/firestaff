@@ -49,6 +49,20 @@
 - This improves evidence admission only. It does not create a new authentic
   capture or assert any Theron gameplay semantics.
 
+## 2026-09-29 — remove paraphrased dungeon lore copies
+
+- Replaced the separate paraphrased seven-dungeon US lore table with a
+  source-compatible accessor to `theron_v1_track02_us_dungeon_story()`. The
+  accessor now returns the already source-locked Track 02 story bytes,
+  including original line/paragraph/section control bytes. This prevents the
+  paraphrase from standing in for retail text when an authentic story source
+  already exists.
+- Extended the lore test to require pointer identity with all seven shared
+  source records, verify authentic narrative terms and presentation controls,
+  and preserve bounds/save-label checks. The focused CTest passes 1/1.
+- This does not add a dynamic US/JP story decoder or original text renderer;
+  both remain open.
+
 ## 2026-09-29 — keep unbound quest-item helper out of authenticated levels
 
 - Authenticated Track 02 levels now fail closed in the legacy world quest-item

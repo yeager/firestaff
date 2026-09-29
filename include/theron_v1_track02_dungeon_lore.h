@@ -3,6 +3,7 @@
 
 #define THERON_TRACK02_DUNGEON_COUNT  7u
 
+/* Returns the authentic US Track 02 story record with original control bytes. */
 const char *theron_v1_track02_us_dungeon_lore(unsigned int dungeon_index);
 
 const char *theron_v1_track02_us_file_exists_warning(void);
