@@ -25171,6 +25171,14 @@ static void m11_apply_launcher_options_handoff(
         /* Menu edits occur after initial config loading. Apply the current
          * visit-recording preference before the first gameplay frame. */
         M11_QolRuntime_SetAutoMapEnabled(spec->launcherOptions.autoMapEnabled);
+        /* Retain source-owned overlay restrictions in the renderers; these
+         * setters only synchronize the user preferences at launch. */
+        M11_QolRuntime_SetMinimapEnabled(spec->launcherOptions.minimapEnabled);
+        M11_QolRuntime_SetMinimapLayout(spec->launcherOptions.minimapSize,
+                                       spec->launcherOptions.minimapCorner);
+        M11_QolRuntime_SetCombatLogEnabled(spec->launcherOptions.combatLogEnabled);
+        M11_QolRuntime_SetCombatLogMaxLines(
+            spec->launcherOptions.combatLogMaxLines);
     }
 
     /* M12 persists these controls and exports them with every launch, but

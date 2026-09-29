@@ -3214,11 +3214,29 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
     menu.gameOptions[1].cheatsEnabled = 1;
     menu.gameOptions[1].gameSpeed = 0;
     M11_QolRuntime_SetSpeedMultiplier(200);
+    menu.settings.autoMapEnabled = 0;
+    menu.settings.minimapEnabled = 1;
+    menu.settings.minimapSize = 96;
+    menu.settings.minimapCorner = 3;
+    menu.settings.combatLogEnabled = 1;
+    menu.settings.combatLogMaxLines = 100;
+    M11_QolRuntime_SetAutoMapEnabled(1);
+    M11_QolRuntime_SetMinimapEnabled(0);
+    M11_QolRuntime_SetMinimapLayout(256, 0);
+    M11_QolRuntime_SetCombatLogEnabled(0);
+    M11_QolRuntime_SetCombatLogMaxLines(500);
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                 "M11 opens Amiga 3.1 English through direct APPB C03");
     expect_true(M11_QolRuntime_GetSpeedMultiplier() == 50,
                 "real CSB launch applies selected speed to live timing");
+    expect_true(!M11_QolRuntime_GetAutoMapEnabled() &&
+                    M11_QolRuntime_GetMinimapEnabled() &&
+                    M11_QolRuntime_GetMinimapSize() == 96 &&
+                    M11_QolRuntime_GetMinimapCorner() == 3 &&
+                    M11_QolRuntime_GetCombatLogEnabled() &&
+                    M11_QolRuntime_GetCombatLogMaxLines() == 100,
+                "real launch applies current map and combat log preferences");
     profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
     expect_true(view.active == 1 && profile != NULL &&
                     profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN &&

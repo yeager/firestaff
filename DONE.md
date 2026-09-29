@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Launcher map/log preferences now replace stale QoL runtime
+  values at DM1/CSB/DM2 start: minimap visibility, size and corner, plus
+  combat-log visibility and line limit. Existing source-kind overlay gates
+  remain unchanged. Real-media handoff checks pass: DM1 DOS 3.4 112,
+  CSB Amiga A31E 45, DM2 DOS English 36, all without failures or skips.
+  The data-free QoL configuration contract also passes. These checks prove
+  live preference transfer, not overlay visuals or map-export contents.
+
 - 2026-09-29: The DM1/CSB/DM2 launcher now applies the current automap
   visit-recording preference when starting a game, replacing the stale value
   loaded before menu edits. Authentic DM1 DOS 3.4 handoff: 104 passed,

@@ -389,6 +389,17 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     menu.gameOptions[2].cheatsEnabled = 1;
     menu.gameOptions[2].gameSpeed = 2;
     M11_QolRuntime_SetSpeedMultiplier(200);
+    menu.settings.autoMapEnabled = 0;
+    menu.settings.minimapEnabled = 1;
+    menu.settings.minimapSize = 96;
+    menu.settings.minimapCorner = 3;
+    menu.settings.combatLogEnabled = 1;
+    menu.settings.combatLogMaxLines = 100;
+    M11_QolRuntime_SetAutoMapEnabled(1);
+    M11_QolRuntime_SetMinimapEnabled(0);
+    M11_QolRuntime_SetMinimapLayout(256, 0);
+    M11_QolRuntime_SetCombatLogEnabled(0);
+    M11_QolRuntime_SetCombatLogMaxLines(500);
 
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.valid == 1,
@@ -403,6 +414,13 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                 "real DM2 M12 selected-entry path opens M11");
     expect_true(M11_QolRuntime_GetSpeedMultiplier() == 150,
                 "real DM2 launch applies selected speed to live timing");
+    expect_true(!M11_QolRuntime_GetAutoMapEnabled() &&
+                    M11_QolRuntime_GetMinimapEnabled() &&
+                    M11_QolRuntime_GetMinimapSize() == 96 &&
+                    M11_QolRuntime_GetMinimapCorner() == 3 &&
+                    M11_QolRuntime_GetCombatLogEnabled() &&
+                    M11_QolRuntime_GetCombatLogMaxLines() == 100,
+                "real launch applies current map and combat log preferences");
     expect_true(view.active == 1,
                 "real DM2 M12 handoff leaves M11 active");
     expect_true(view.startedFromLauncher == 1,

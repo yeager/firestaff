@@ -211,6 +211,15 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_QolRuntime_SetSpeedMultiplier(200);
     menu->settings.autoMapEnabled = mode % 2;
     M11_QolRuntime_SetAutoMapEnabled(!menu->settings.autoMapEnabled);
+    menu->settings.minimapEnabled = mode % 2;
+    menu->settings.minimapSize = 64 + mode * 32;
+    menu->settings.minimapCorner = mode;
+    menu->settings.combatLogEnabled = (mode + 1) % 2;
+    menu->settings.combatLogMaxLines = 50 + mode * 50;
+    M11_QolRuntime_SetMinimapEnabled(!menu->settings.minimapEnabled);
+    M11_QolRuntime_SetMinimapLayout(256, (mode + 1) % 4);
+    M11_QolRuntime_SetCombatLogEnabled(!menu->settings.combatLogEnabled);
+    M11_QolRuntime_SetCombatLogMaxLines(500);
 
     intent = M12_StartupMenu_GetLaunchIntent(menu);
     expect_mode_true(intent.valid == 1, mode,
@@ -234,6 +243,13 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     expect_mode_true(M11_QolRuntime_GetAutoMapEnabled() ==
                          menu->settings.autoMapEnabled, mode,
                      "M11 applies current automap preference to visit recording");
+    expect_mode_true(M11_QolRuntime_GetMinimapEnabled() == menu->settings.minimapEnabled &&
+                         M11_QolRuntime_GetMinimapSize() == menu->settings.minimapSize &&
+                         M11_QolRuntime_GetMinimapCorner() == menu->settings.minimapCorner, mode,
+                     "M11 applies current minimap preferences");
+    expect_mode_true(M11_QolRuntime_GetCombatLogEnabled() == menu->settings.combatLogEnabled &&
+                         M11_QolRuntime_GetCombatLogMaxLines() == menu->settings.combatLogMaxLines, mode,
+                     "M11 applies current combat log preferences");
     expect_mode_true(launcher_view.startedFromLauncher == 1, mode,
                      "M11 marks startup as launcher-started");
     expect_mode_true(launcher_view.active == 1, mode,

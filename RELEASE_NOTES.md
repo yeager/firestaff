@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `Launcher`: minimap and combat-log preferences now reach the live runtime
+  at DM1/CSB/DM2 start, including map size/corner and log line limits.
+  Existing source-specific overlay restrictions still apply.
+
 - `Launcher`: changes to AUTOMAP now reach the live visit-recording setting
   when starting DM1, CSB or DM2 without restarting Firestaff.
 

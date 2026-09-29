@@ -31,6 +31,7 @@ void M11_QolRuntime_SetMinimapEnabled(int enabled);
 int  M11_QolRuntime_ToggleMinimap(void);
 int  M11_QolRuntime_GetMinimapSize(void);
 int  M11_QolRuntime_GetMinimapCorner(void);
+void M11_QolRuntime_SetMinimapLayout(int size, int corner);
 
 /* Auto-Map */
 int  M11_QolRuntime_GetAutoMapEnabled(void);
@@ -41,6 +42,7 @@ int  M11_QolRuntime_GetCombatLogEnabled(void);
 void M11_QolRuntime_SetCombatLogEnabled(int enabled);
 int  M11_QolRuntime_ToggleCombatLog(void);
 int  M11_QolRuntime_GetCombatLogMaxLines(void);
+void M11_QolRuntime_SetCombatLogMaxLines(int maxLines);
 
 #ifdef __cplusplus
 }

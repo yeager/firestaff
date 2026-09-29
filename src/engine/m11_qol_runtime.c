@@ -26,15 +26,10 @@ void M11_QolRuntime_InitFromConfig(const M12_Config* config) {
     g_speedMultiplier   = clamp_speed(config->gameSpeedMultiplier > 0
                                      ? config->gameSpeedMultiplier : 100);
     g_minimapEnabled    = config->minimapEnabled ? 1 : 0;
-    g_minimapSize       = (config->minimapSize >= 64 && config->minimapSize <= 256)
-                              ? config->minimapSize : 128;
-    g_minimapCorner     = (config->minimapCorner >= 0 && config->minimapCorner <= 3)
-                              ? config->minimapCorner : 0;
+    M11_QolRuntime_SetMinimapLayout(config->minimapSize, config->minimapCorner);
     g_autoMapEnabled    = config->autoMapEnabled ? 1 : 0;
     g_combatLogEnabled  = config->combatLogEnabled ? 1 : 0;
-    g_combatLogMaxLines = (config->combatLogMaxLines >= 50 &&
-                            config->combatLogMaxLines <= 500)
-                              ? config->combatLogMaxLines : 200;
+    M11_QolRuntime_SetCombatLogMaxLines(config->combatLogMaxLines);
 }
 
 int  M11_QolRuntime_GetSpeedMultiplier(void) { return g_speedMultiplier; }
@@ -76,3 +71,12 @@ int  M11_QolRuntime_ToggleCombatLog(void) {
     return g_combatLogEnabled;
 }
 int  M11_QolRuntime_GetCombatLogMaxLines(void) { return g_combatLogMaxLines; }
+
+void M11_QolRuntime_SetMinimapLayout(int size, int corner) {
+    g_minimapSize = (size >= 64 && size <= 256) ? size : 128;
+    g_minimapCorner = (corner >= 0 && corner <= 3) ? corner : 0;
+}
+
+void M11_QolRuntime_SetCombatLogMaxLines(int maxLines) {
+    g_combatLogMaxLines = (maxLines >= 50 && maxLines <= 500) ? maxLines : 200;
+}

@@ -1,11 +1,5 @@
 # Firestaff TODO — active cross-game work
 
-- Apply launcher minimap/combat-log preference changes to the live QoL state.
-  Audit on 2026-09-29 found that config initialization precedes menu edits,
-  while the launch handoff only retains these fields in its snapshot. Preserve
-  the existing authentic-source diagnostic-overlay restrictions; transferring
-  preferences alone must not enable unsupported overlays.
-
 - Wire the Custom menu PATCH choice to defined, source-backed behavior.
   Audit on 2026-09-29: `usePatch` / `gameUsePatch` are only read by M12
   display/configuration code. `M12_StartupMenu_GetLaunchIntent` copies the
