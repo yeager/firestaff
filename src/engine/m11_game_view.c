@@ -2252,11 +2252,27 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
     int y;
 
     if (!state || !framebuffer || !state->dm2DosMveIntroActive) return 0;
-    /* The last source page must reach one host present before the stream and
-     * its SDL device are closed.  On the following Draw call, release M11's
-     * resources and permit SKULL's GDAT menu to take over. */
+    /* MVE opcode 0x07 presents a page for its source timer period, including
+     * the final page. EOF alone must not discard that page or its last PCM.
+     * Keep the explicit boot-probe fast-forward contract independent of
+     * wall time and host output availability. */
     if (M11_GameView_IsPaused(state)) goto render_paused_frame;
     if (state->dm2DosMvePresenter.ended) {
+        SDL_AudioStream* stream =
+            (SDL_AudioStream*)state->dm2DosMvePresenter.audio.sdl_stream;
+        if (!state->bootProbeFastForward) {
+            if (!m11_dm2_mve_presenter_final_frame_elapsed(
+                    &state->dm2DosMvePresenter, SDL_GetTicksNS() / UINT64_C(1000)))
+                goto render_paused_frame;
+            /* Flush the finite source stream's conversion tail, then wait
+             * for SDL to consume it. No-device owners have nothing to drain. */
+            if (stream) {
+                (void)SDL_FlushAudioStream(stream);
+                if (SDL_GetAudioStreamQueued(stream) > 0 ||
+                    SDL_GetAudioStreamAvailable(stream) > 0)
+                    goto render_paused_frame;
+            }
+        }
         m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
         state->dm2DosMveIntroActive = 0;
         state->dm2DosMveIntroComplete = 1;
@@ -30621,6 +30637,8 @@ void M11_GameView_SetPauseReason(M11_GameViewState* state,
         if (state->dm2DosMveIntroActive) {
             state->dm2DosMvePresenter.clock_origin_us += pausedUs;
             state->dm2DosMvePresenter.last_host_time_us += pausedUs;
+            if (state->dm2DosMvePresenter.ended)
+                state->dm2DosMvePresenter.final_frame_host_time_us += pausedUs;
         }
         if (state->dm2MacMovieActive && state->dm2MacMovieStartUs)
             state->dm2MacMovieStartUs += pausedUs;

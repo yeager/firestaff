@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Kept the final DOS MVE page for its complete source timer
+  period and retained queued SDL PCM until drained before releasing the movie
+  owner. Pause rebases the final-page timestamp; no-device and explicit
+  boot-probe fast-forward retain their separate contracts. Authentic INTRO
+  tests pass the exact final-period boundary and normal final-packet drain.
+  The test locates the last audio-bearing boundary before the original's
+  eleven terminal image-only boundaries, without fabricated PCM. DOS launcher
+  checks pass 60 assertions with SDL dummy output and 55 with unavailable
+  output, all without skips; the source presenter test and narrow build pass.
+
 - 2026-09-29: Corrected SDL3 pointer mapping for fixed-scale HiDPI windows.
   Logical window coordinates now map through the same drawable rectangle
   as rendering, with independent density ratios per axis and rejected bars.

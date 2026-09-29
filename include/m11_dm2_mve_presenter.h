@@ -31,6 +31,8 @@ typedef struct {
     uint32_t next_presentation_index;
     uint64_t clock_origin_us;
     uint64_t last_host_time_us;
+    uint64_t frame_period_us;
+    uint64_t final_frame_host_time_us;
     M11_Dm2MvePresentIndexedFn present_indexed;
     void *present_context;
     int initialized;
@@ -71,6 +73,12 @@ int m11_dm2_mve_presenter_open(
  * synthesizes a frame to catch up with the host. */
 int m11_dm2_mve_presenter_advance(M11_Dm2MvePresenter *presenter,
                                   uint64_t monotonic_now_us);
+
+/* Source EOF does not end the final display's duration. This clock-only
+ * predicate waits a full source timer period after its actual presentation.
+ * The caller must also allow queued host PCM to drain before closing. */
+int m11_dm2_mve_presenter_final_frame_elapsed(
+    const M11_Dm2MvePresenter *presenter, uint64_t monotonic_now_us);
 
 /* Releases only M11-owned boundary storage and the SDL stream.  Movie bytes
  * stay caller-owned; they are never written to disk by this interface. */

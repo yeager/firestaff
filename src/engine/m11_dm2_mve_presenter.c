@@ -89,6 +89,7 @@ int m11_dm2_mve_presenter_open(
     }
     presenter->boundaries = boundaries;
     presenter->boundary_count = timeline.presentation_count;
+    presenter->frame_period_us = (uint64_t)timeline.timer_rate_us * timeline.timer_subdivision;
     presenter->clock_origin_us = clock_origin_us;
     presenter->last_host_time_us = clock_origin_us;
     presenter->present_indexed = present_indexed;
@@ -146,9 +147,19 @@ int m11_dm2_mve_presenter_advance(M11_Dm2MvePresenter *presenter,
                                        M11_DM2_MVE_FAILURE_TRAILING_SOURCE);
             return -1;
         }
+        presenter->final_frame_host_time_us = monotonic_now_us;
         presenter->ended = 1;
     }
     return 1;
+}
+
+int m11_dm2_mve_presenter_final_frame_elapsed(
+    const M11_Dm2MvePresenter *presenter, uint64_t monotonic_now_us)
+{
+    return presenter && presenter->initialized && presenter->ended &&
+        !presenter->failed && presenter->frame_period_us != 0u &&
+        monotonic_now_us >= presenter->final_frame_host_time_us &&
+        monotonic_now_us - presenter->final_frame_host_time_us >= presenter->frame_period_us;
 }
 
 void m11_dm2_mve_presenter_close(M11_Dm2MvePresenter *presenter)

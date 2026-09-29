@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM2 DOS intro`: the last movie image now remains for its full source
+  duration, and remaining audio drains before the movie player closes.
+
 - `HiDPI input`: fixed-scale windowed playback now maps pointer coordinates
   through the drawable-pixel viewport, correcting misplaced clicks on Retina
   displays while preserving noninteractive letterbox bars.

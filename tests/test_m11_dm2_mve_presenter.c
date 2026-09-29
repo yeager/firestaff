@@ -98,6 +98,14 @@ int main(void)
            * stale or substituted MVE palette even if indexed movie pixels
            * remain unchanged. */
           sink.palette_hash == 0xdf2a5af6u);
+    CHECK(presenter.frame_period_us == 83328u);
+    CHECK(presenter.final_frame_host_time_us == 1000u + 216u * 83328u);
+    CHECK(!m11_dm2_mve_presenter_final_frame_elapsed(&presenter,
+        presenter.final_frame_host_time_us + 16000u));
+    CHECK(!m11_dm2_mve_presenter_final_frame_elapsed(&presenter,
+        presenter.final_frame_host_time_us + presenter.frame_period_us - 1u));
+    CHECK(m11_dm2_mve_presenter_final_frame_elapsed(&presenter,
+        presenter.final_frame_host_time_us + presenter.frame_period_us));
     CHECK(m11_dm2_mve_presenter_advance(&presenter,
                                         1000u + 217u * 83328u) == 0);
 cleanup:

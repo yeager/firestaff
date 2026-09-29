@@ -421,9 +421,14 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     expect_true(dm2_v1_sound_sdl_backend_get_gain() > 0.124f &&
                     dm2_v1_sound_sdl_backend_get_gain() < 0.126f,
                 "real DM2 launcher replaces stale master/SFX gain before source playback");
-    expect_true(view.dm2DosMvePresenter.audio.sdl_stream &&
-                    SDL_GetAudioStreamGain((SDL_AudioStream*)
-                        view.dm2DosMvePresenter.audio.sdl_stream) == 0.5f,
+    if (getenv("SDL_AUDIODRIVER") && strcmp(getenv("SDL_AUDIODRIVER"), "dummy") == 0)
+        expect_true(view.dm2DosMvePresenter.audio.sdl_stream != NULL,
+                    "explicit dummy driver must open the original MVE audio stream");
+    expect_true(view.dm2DosMvePresenter.audio.master_volume == 64 &&
+                    (view.dm2DosMvePresenter.audio.sdl_stream
+                        ? SDL_GetAudioStreamGain((SDL_AudioStream*)
+                            view.dm2DosMvePresenter.audio.sdl_stream) == 0.5f
+                        : view.dm2DosMvePresenter.audio.output_unavailable),
                 "real DM2 intro receives master gain before first source PCM");
     expect_true(M11_QolRuntime_GetSpeedMultiplier() == 150,
                 "real DM2 launch applies selected speed to live timing");
@@ -541,15 +546,84 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                         "authentic DOS MVE advances again after focus resume");
         }
     }
+    {
+        uint32_t guard = view.dm2DosMvePresenter.boundary_count + 1u;
+        uint32_t lastAudioBoundary = view.dm2DosMvePresenter.boundary_count;
+        uint64_t packets;
+        /* Original INTRO ends with eleven display-only boundaries. Keep
+         * the last actual source PCM packet, not an invented final-frame
+         * sound. The authenticated timeline owns this association. */
+        while (lastAudioBoundary > 0u &&
+               view.dm2DosMvePresenter.boundaries[lastAudioBoundary - 1u].audio_packet_count == 0u)
+            --lastAudioBoundary;
+        expect_true(lastAudioBoundary > 0u, "original MVE timeline owns at least one PCM boundary");
+        if (lastAudioBoundary > 0u) --lastAudioBoundary;
+        expect_true(dm2_v1_mve_audio_sdl_owner_set_host_paused(
+                        &view.dm2DosMvePresenter.audio, 1),
+                    "final-frame probe holds authentic queued PCM at SDL boundary");
+        view.bootProbeFastForward = 1;
+        while (view.dm2DosMvePresenter.next_presentation_index < lastAudioBoundary && guard-- > 0u)
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+        /* The probe fast-forwards earlier media; discard only that queued
+         * backlog before the last audio-bearing boundary, so normal-time
+         * drain measures the genuine final packet rather than all music. */
+        if (view.dm2DosMvePresenter.audio.sdl_stream)
+            expect_true(SDL_ClearAudioStream((SDL_AudioStream*)
+                            view.dm2DosMvePresenter.audio.sdl_stream),
+                        "final-frame probe removes earlier fast-forward PCM backlog");
+        while (!view.dm2DosMvePresenter.ended && guard-- > 0u)
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+        view.bootProbeFastForward = 0;
+        if (view.dm2DosMvePresenter.audio.sdl_stream)
+            expect_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)
+                            view.dm2DosMvePresenter.audio.sdl_stream) > 0 &&
+                            SDL_AudioStreamDevicePaused((SDL_AudioStream*)
+                                view.dm2DosMvePresenter.audio.sdl_stream),
+                        "final source PCM remains genuinely queued under host pause");
+        expect_true(view.dm2DosMvePresenter.ended && view.dm2DosMveIntroActive,
+                    "source EOF still owns the last authentic DOS movie page");
+        packets = view.dm2DosMvePresenter.audio.queued_source_packets;
+        /* Switch the existing deterministic probe back to an actual host
+         * epoch. The source frame period remains the authenticated MVE one. */
+        view.dm2DosMvePresenter.final_frame_host_time_us = SDL_GetTicksNS() / UINT64_C(1000);
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(view.dm2DosMveIntroActive && view.dm2DosMvePresenter.initialized &&
+                        view.dm2DosMvePresenter.audio.queued_source_packets == packets,
+                    "next host draw cannot tear down the final source frame or PCM");
+        if (view.dm2DosMvePresenter.audio.sdl_stream) {
+            SDL_Delay((Uint32)(view.dm2DosMvePresenter.frame_period_us / 1000u + 2u));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(view.dm2DosMveIntroActive && view.dm2DosMvePresenter.initialized,
+                        "expired final frame retains undrained authentic SDL PCM");
+        }
+        expect_true(dm2_v1_mve_audio_sdl_owner_set_host_paused(
+                        &view.dm2DosMvePresenter.audio, 0),
+                    "last authentic PCM packet resumes normal host playback");
+        {
+            uint64_t deadline = SDL_GetTicksNS() / UINT64_C(1000) + UINT64_C(2000000);
+            while (view.dm2DosMveIntroActive && SDL_GetTicksNS() / UINT64_C(1000) < deadline) {
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                SDL_Delay(2U);
+            }
+        }
+        expect_true(!view.dm2DosMveIntroActive && view.dm2DosMveIntroComplete &&
+                        !view.dm2DosMvePresenter.initialized,
+                    "normal source hold and final PCM drain release DOS movie into menu");
+    }
     M11_GameView_Shutdown(&view);
     M11_GameView_Init(&view);
     menu.settings.audioMuted = 1;
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1 &&
                     dm2_v1_sound_sdl_backend_get_gain() == 0.0f,
                 "real DM2 relaunch applies launcher mute to the effects backend");
-    expect_true(view.dm2DosMvePresenter.audio.sdl_stream &&
-                    SDL_GetAudioStreamGain((SDL_AudioStream*)
-                        view.dm2DosMvePresenter.audio.sdl_stream) == 0.0f,
+    if (getenv("SDL_AUDIODRIVER") && strcmp(getenv("SDL_AUDIODRIVER"), "dummy") == 0)
+        expect_true(view.dm2DosMvePresenter.audio.sdl_stream != NULL,
+                    "explicit dummy driver must open the original MVE audio stream");
+    expect_true(view.dm2DosMvePresenter.audio.master_volume == 0 &&
+                    (view.dm2DosMvePresenter.audio.sdl_stream
+                        ? SDL_GetAudioStreamGain((SDL_AudioStream*)
+                            view.dm2DosMvePresenter.audio.sdl_stream) == 0.0f
+                        : view.dm2DosMvePresenter.audio.output_unavailable),
                 "real DM2 launcher mute also silences the authentic intro stream");
     M11_GameView_Shutdown(&view);
     M11_GameView_Init(&view);
