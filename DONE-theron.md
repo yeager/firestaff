@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — fresh authentic regional runtime revalidation on trv2
+
+- A clean Release build of `firestaff` and the focused Theron probes completed
+  on `trv2` with `-j1`, using the original US and JP media already staged
+  outside Git. Five Track 02 loader, production combat-source, bounded
+  mechanics, US raw-BIN boot, and JP raw-BIN startup tests passed twice (10/10
+  runs). Authentic JP CUE pair selection and raw-media intake also passed
+  twice (4/4); the JP Rev. 1 CUE Akutuba runtime and US raw CUE startup passed
+  twice each (4/4); the US CloneCD ZIP launcher runtime passed twice (2/2).
+- The real US Akutuba-complete Backup RAM Continue-to-dungeon-2 test passed
+  twice (2/2) against an isolated byte-identical copy. The source BRAM and the
+  test copy both retained MD5
+  `ffabc8d19b0915d4d9632a7ae2e90a97` before and after testing.
+- These results revalidate existing regional data intake, startup, and the
+  bounded US Continue route. They do not bind original Track 02 gameplay
+  consumers, prove changed progress saves, or establish full Theron parity.
+
 ## 2026-09-29 — regional CUE pairing in mixed authentic media directories
 
 - Bound directory CUE selection to the requested edition's already-registered
