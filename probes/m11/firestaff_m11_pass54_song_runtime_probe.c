@@ -1,5 +1,7 @@
 #include "audio_sdl_m11.h"
 #include "song_dat_loader_v1.h"
+#include "asset_find_by_hash.h"
+#include "dm1_v1_f0740_f0743_music_source_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,13 +30,10 @@ static void probe_record(ProbeTally* tally,
     }
 }
 
-static int file_exists(const char* path) {
-    FILE* f;
-    if (!path || !*path) return 0;
-    f = fopen(path, "rb");
-    if (!f) return 0;
-    fclose(f);
-    return 1;
+static int song_path_valid(const char* path) {
+    DM1_V1_F0740F0743MusicSourcePc34 source;
+    return path && path[0] &&
+        dm1_v1_f0740_f0743_bind_song_dat_pc34(path, &source);
 }
 
 static char* dup_env_value(const char* value) {
@@ -70,22 +69,26 @@ static const char* find_song_dat(char* buf, size_t cap) {
     const char* envPath = getenv("FIRESTAFF_SONG_DAT");
     const char* legacyEnvPath = getenv("SONG_DAT_PATH");
     const char* home;
-    if (file_exists(envPath)) return envPath;
-    if (file_exists(legacyEnvPath)) return legacyEnvPath;
-    if (file_exists("SONG.DAT")) return "SONG.DAT";
+    if (song_path_valid(envPath)) return envPath;
+    if (song_path_valid(legacyEnvPath)) return legacyEnvPath;
+    if (song_path_valid("SONG.DAT")) return "SONG.DAT";
     home = getenv("HOME");
     if (home && buf && cap > 0) {
         int n = snprintf(buf, cap, "%s/.firestaff/data/SONG.DAT", home);
-        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        if (n > 0 && (size_t)n < cap && song_path_valid(buf)) return buf;
         n = snprintf(buf, cap, "%s/.firestaff/data/dm1-multilingual/SONG.DAT", home);
-        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        if (n > 0 && (size_t)n < cap && song_path_valid(buf)) return buf;
         n = snprintf(buf, cap, "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/SONG.DAT", home);
-        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        if (n > 0 && (size_t)n < cap && song_path_valid(buf)) return buf;
         n = snprintf(buf, cap, "%s/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/SONG.DAT", home);
-        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        if (n > 0 && (size_t)n < cap && song_path_valid(buf)) return buf;
     }
-    if (file_exists("/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT")) {
-        return "/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT";
+    if (home && buf && cap > 0) {
+        char search[1024];
+        int n = snprintf(search, sizeof(search), "%s/.firestaff/data/dm1", home);
+        if (n > 0 && (size_t)n < sizeof(search) &&
+            asset_find_by_md5(search, "c20e5b8f756e360a631595cc9260f62d",
+                              buf, (int)cap, 3) && song_path_valid(buf)) return buf;
     }
     return NULL;
 }
@@ -120,9 +123,8 @@ static int expected_title_samples(const char* path) {
     return total;
 }
 
-static void run_live_sdl_queue_probe(ProbeTally* tally) {
+static void run_live_sdl_queue_probe(ProbeTally* tally, const char* songPath) {
     M11_AudioState state;
-    float* samples;
     int beforeQueued;
     int playResult;
 
@@ -138,26 +140,20 @@ static void run_live_sdl_queue_probe(ProbeTally* tally) {
                  state.backend == M11_AUDIO_BACKEND_SDL3 && state.sdlStream != NULL,
                  "FIRESTAFF_AUDIO_ENABLE_SDL=1 opens an SDL3 stream under the dummy audio driver");
 
-    samples = (float*)malloc(8u * sizeof(float));
-    if (samples) {
-        int i;
-        for (i = 0; i < 8; ++i) {
-            samples[i] = (i & 1) ? -0.125f : 0.125f;
-        }
-    }
-    state.originalSongAvailable = samples ? 1 : 0;
-    state.titleMusic.samples = samples;
-    state.titleMusic.sampleCount = samples ? 8 : 0;
-    state.titleMusic.capacity = samples ? 8 : 0;
-
+    unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG");
+    probe_record(tally, "P54_SONG_RUNTIME_REAL_SOURCE",
+        M11_Audio_BindOriginalSongPath(&state, songPath) &&
+        state.originalSongAvailable && state.titleMusic.sampleCount > M11_AUDIO_TITLE_QUEUE_SAMPLES,
+        "live queue uses decoded original SONG.DAT from the admitted path");
+    (void)M11_Audio_SetHostPaused(&state, 1);
     beforeQueued = state.queuedSampleCount;
     playResult = M11_Audio_PlayTitleMusic(&state);
     probe_record(tally,
                  "P54_SONG_RUNTIME_08",
                  playResult == 1 &&
                      state.titleMusicQueuedCount == 1 &&
-                     state.queuedSampleCount == beforeQueued + 8,
-                 "title-music queue path pushes deterministic PCM to the opt-in SDL stream without audible hardware");
+                     state.queuedSampleCount == beforeQueued + M11_AUDIO_TITLE_QUEUE_SAMPLES,
+                 "title-music queue path pushes bounded authentic SONG PCM to the SDL stream");
 
     M11_Audio_Shutdown(&state);
     unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG");
@@ -170,6 +166,9 @@ int main(int argc, char** argv) {
     const char* songPath;
     char* savedAudioEnable = dup_env_value(getenv("FIRESTAFF_AUDIO_ENABLE_SDL"));
     char* savedAudioDriver = dup_env_value(getenv("SDL_AUDIODRIVER"));
+    char* savedSongPath = dup_env_value(getenv("FIRESTAFF_SONG_DAT"));
+    char* savedDisableSong = dup_env_value(getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG"));
+    int missingLiveMedia = 0;
     int expectLiveSdlQueue = has_arg(argc, argv, "--expect-sdl-title-queue");
 
     setenv("FIRESTAFF_AUDIO_ENABLE_SDL", "0", 1);
@@ -196,8 +195,14 @@ int main(int argc, char** argv) {
     unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG");
     restore_env_value("FIRESTAFF_AUDIO_ENABLE_SDL", savedAudioEnable);
 
+    songPath = find_song_dat(songPathBuf, sizeof(songPathBuf));
+    if (expectLiveSdlQueue && !songPath) {
+        puts("SKIP: live title queue requires authentic SONG.DAT media");
+        missingLiveMedia = 1;
+        goto cleanup;
+    }
     if (expectLiveSdlQueue) {
-        run_live_sdl_queue_probe(&tally);
+        run_live_sdl_queue_probe(&tally, songPath);
         restore_env_value("FIRESTAFF_AUDIO_ENABLE_SDL", savedAudioEnable);
     }
 
@@ -210,15 +215,14 @@ int main(int argc, char** argv) {
                  "title music runtime gate tracks G2024_B_PendingMusicOn-style on/off state");
     M11_Audio_Shutdown(&state);
 
-    songPath = find_song_dat(songPathBuf, sizeof(songPathBuf));
     if (!songPath) {
         printf("SKIP P54_SONG_RUNTIME_ASSET no SONG.DAT found for original-title-music branch\n");
     } else {
         int expectedSamples = expected_title_samples(songPath);
         int beforeQueued;
         int playResult;
-        setenv("FIRESTAFF_SONG_DAT", songPath, 1);
         M11_Audio_Init(&state);
+        (void)M11_Audio_BindOriginalSongPath(&state, songPath);
         probe_record(&tally,
                      "P54_SONG_RUNTIME_04",
                      state.originalSongAvailable == 1 &&
@@ -229,19 +233,19 @@ int main(int argc, char** argv) {
                      state.originalSongSequenceWordCount == 20 &&
                          state.originalSongPlayablePartCount == 19 &&
                          state.originalSongLoopTargetPart == 1,
-                     "SEQ2 walk stops at the bit-15 loop-back marker and records loop target part 1");
+                     "SEQ2 walk stops at the bit-15 loop-back marker and records loop target sequence index 1");
         probe_record(&tally,
                      "P54_SONG_RUNTIME_06",
                      expectedSamples > 0 && state.titleMusic.sampleCount == expectedSamples,
-                     "11025 Hz signed SND8 parts are linearly resampled/concatenated for the fixed 22050 Hz stream");
+                     "11126 Hz signed SND8 parts are linearly resampled/concatenated for the fixed 22050 Hz stream");
         beforeQueued = state.queuedSampleCount;
         playResult = M11_Audio_PlayTitleMusic(&state);
         if (state.backend == M11_AUDIO_BACKEND_SDL3) {
             probe_record(&tally,
                          "P54_SONG_RUNTIME_07",
                          playResult == 1 && state.titleMusicQueuedCount == 1 &&
-                             state.queuedSampleCount == beforeQueued + state.titleMusic.sampleCount,
-                         "SDL3 runtime queues the decoded/resampled one-cycle title-music phrase");
+                             state.queuedSampleCount == beforeQueued + M11_AUDIO_TITLE_QUEUE_SAMPLES,
+                         "SDL3 runtime queues the decoded/resampled bounded title-music prefix");
         } else {
             probe_record(&tally,
                          "P54_SONG_RUNTIME_07",
@@ -250,13 +254,17 @@ int main(int argc, char** argv) {
                          "no-audio backend keeps title music loaded but does not queue samples");
         }
         M11_Audio_Shutdown(&state);
-        unsetenv("FIRESTAFF_SONG_DAT");
     }
 
+cleanup:
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     restore_env_value("FIRESTAFF_AUDIO_ENABLE_SDL", savedAudioEnable);
     restore_env_value("SDL_AUDIODRIVER", savedAudioDriver);
+    restore_env_value("FIRESTAFF_SONG_DAT", savedSongPath);
+    restore_env_value("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG", savedDisableSong);
+    free(savedSongPath);
+    free(savedDisableSong);
     free(savedAudioEnable);
     free(savedAudioDriver);
-    return (tally.passed == tally.total) ? 0 : 1;
+    return tally.passed != tally.total ? 1 : (missingLiveMedia ? 77 : 0);
 }

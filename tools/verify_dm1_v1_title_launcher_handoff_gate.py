@@ -3,7 +3,8 @@
 
 This is intentionally a source-shape regression gate. The user-visible bug was
 that selecting DM1 from Firestaff's launcher reached the game/entrance without
-playing the original TITLE animation or title audio cue. ReDMCSB's startup path
+playing the original TITLE animation. SONG music instead belongs to the
+PC34 SELECTOR entrance and Credits lifetime. ReDMCSB's startup path
 runs F0437_STARTEND_DrawTitle before F0441_STARTEND_ProcessEntrance, so the
 Firestaff launcher handoff must call the TITLE frontend after DM1 GRAPHICS.DAT
 is loaded and before the entrance transition. This keeps the ReDMCSB
@@ -39,9 +40,9 @@ def function_body(source, name):
                 return source[start + 1:index]
     return None
 
-body = function_body(main, "m11_open_requested_launch")
+body = function_body(main, "m11_open_requested_launch_impl")
 if body is None:
-    errors.append("m11_open_requested_launch() not found")
+    errors.append("m11_open_requested_launch_impl() not found")
 else:
     for needle in [
         "dm1HandoffCallbacks.play_title = m11_dm1_handoff_play_title",
@@ -84,9 +85,6 @@ if body is None:
     errors.append("m11_play_redmcsb_title_intro_if_available() not found")
 else:
     for needle in [
-        "M11_Audio_Init(&titleAudio)",
-        "M11_Audio_PlayTitleMusic(&titleAudio)",
-        "M11_Audio_Shutdown(&titleAudio)",
         "V1_TitleFrontend_RenderFrameToScreen",
         "M11_Render_PresentIndexed",
         "M11_RENDER_OK",
@@ -108,11 +106,33 @@ else:
         "V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION",
         "M11_AssetLoader_BlitSubRectScaled(titleGraphic",
         "VGA_PALETTE_PC34_SPECIAL_TITLE",
-        "M11_Audio_PlayTitleMusic(&titleAudio)",
         "command.post_present_delay_ms",
     ]:
         if needle not in body:
             errors.append(f"GRAPHICS.DAT C001 TITLE intro missing source runtime step: {needle}")
+
+
+# SELECTOR.C F8368/F8367/F8369 owns SONG across entrance and Credits.
+# Reject the former title-animation start instead of preserving that bug.
+for name in ("m11_play_redmcsb_title_intro_if_available",
+             "m11_play_redmcsb_title_graphic_intro_if_available"):
+    if "M11_Audio_PlayTitleMusic" in (function_body(main, name) or ""):
+        errors.append(f"{name} must not start the selector's SONG score")
+for name, tokens in {
+    "m11_open_requested_launch": ["m11_open_requested_launch_impl"],
+    "m11_play_redmcsb_entrance_transition": ["M11_Entrance_RunSourceTransition"],
+    "M11_Entrance_RunSourceTransition": [
+        "DM1_V1_STARTUP_MEDIA_PLATFORM_PC34", "dm1FmtownsStartupReceiptValid",
+        "M11_BindIntroSongForSelectedGraphics", "m11_play_redmcsb_entrance_transition_impl",
+        "M11_Audio_RequestSourceMusicTrack(owner.audio, 0)",
+        "g_m11_selector_music = previousOwner"],
+    "m11_intro_wait_for_focus": ["60U * 1000U", "DM1_V1_VGA_VBLANK_HZ",
+        "M11_Audio_PlayTitleMusic(owner->audio)", "M11_Audio_PumpTitleMusic(owner->audio)"],
+}.items():
+    body = function_body(main, name) or ""
+    for token in tokens:
+        if token not in body:
+            errors.append(f"selector ownership route {name} lost {token}")
 
 
 for needle in [
@@ -142,4 +162,4 @@ if errors:
     for e in errors:
         print(f"FAIL: {e}", file=sys.stderr)
     sys.exit(1)
-print("ok: DM1 V1 launcher handoff runs ReDMCSB TITLE animation/audio before game/entrance")
+print("ok: DM1 V1 launcher preserves TITLE order and PC34 selector-owned SONG playback")

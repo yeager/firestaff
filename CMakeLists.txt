@@ -34865,6 +34865,7 @@ endif()
     )
     set_tests_properties(m11_title_song_live_sdl_dummy_source_lock PROPERTIES
         ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy"
+        SKIP_RETURN_CODE 77
     )
 
     add_test(
@@ -37945,6 +37946,41 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_swsh_psg_audio_pc34_com
         set_tests_properties(dm1_v1_swsh_psg_audio_pc34_compat PROPERTIES
             ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
             LABELS "dm1;dos;pc34;audio;real-media;in-memory;skip-safe")
+    endif()
+endif()
+
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_selector_music_runtime_real.c")
+    add_executable(test_dm1_v1_selector_music_runtime_real
+        tests/test_dm1_v1_selector_music_runtime_real.c)
+    target_include_directories(test_dm1_v1_selector_music_runtime_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_selector_music_runtime_real PRIVATE
+        firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_selector_music_runtime_real PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_selector_music_runtime_real
+             COMMAND test_dm1_v1_selector_music_runtime_real)
+    set_tests_properties(dm1_v1_selector_music_runtime_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        TIMEOUT 30
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy")
+    add_test(NAME dm1_v1_selector_music_runtime_real_no_audio
+             COMMAND test_dm1_v1_selector_music_runtime_real)
+    set_tests_properties(dm1_v1_selector_music_runtime_real_no_audio PROPERTIES
+        SKIP_RETURN_CODE 77
+        TIMEOUT 30
+        ENVIRONMENT "FIRESTAFF_TEST_NO_AUDIO=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy")
+    if(DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
+        set_tests_properties(dm1_v1_selector_music_runtime_real PROPERTIES
+            ENVIRONMENT
+                "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+            LABELS "dm1;dos;pc34;audio;real-media;in-memory;skip-safe")
+        set_tests_properties(dm1_v1_selector_music_runtime_real_no_audio PROPERTIES
+            ENVIRONMENT
+                "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_TEST_NO_AUDIO=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+            LABELS "dm1;dos;pc34;audio;real-media;in-memory;skip-safe;no-audio")
     endif()
 endif()
 

@@ -25,7 +25,7 @@ typedef enum {
 
 #define M11_AUDIO_SAMPLE_RATE 22050
 #define M11_AUDIO_SOURCE_SND3_SAMPLE_RATE 6000
-#define M11_AUDIO_SOURCE_SND8_SAMPLE_RATE 11025
+#define M11_AUDIO_SOURCE_SND8_SAMPLE_RATE 11126
 #define M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_RATE 5500
 #define M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_BYTES 12862
 #define M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_FNV1A 0x0b829ae7u
@@ -65,7 +65,10 @@ typedef struct {
     int originalSongPartCount;
     int originalSongSequenceWordCount;
     int originalSongPlayablePartCount;
-    int originalSongLoopTargetPart;
+    int originalSongLoopTargetPart; /* Legacy terminal payload: sequence index. */
+    int originalSongLoopStartSample;
+    int titleMusicCursor;
+    int titleMusicLoopActive;
     int titleMusicQueuedCount;
     int titleMusicPlayRequestCount;
     int titleMusicEnabled;
@@ -298,7 +301,11 @@ int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);
+#define M11_AUDIO_TITLE_QUEUE_SAMPLES 22050
 int M11_Audio_PlayTitleMusic(M11_AudioState* state);
+/* Host-thread refill only; at most one second of source PCM is queued.
+ * Host pause freezes both the queue and the next-source cursor. */
+int M11_Audio_PumpTitleMusic(M11_AudioState* state);
 int M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 int M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state);

@@ -2,6 +2,14 @@
 
 ## User-facing changes
 
+- `DM1 PC34 entrance audio`: the original SONG score now starts in the
+  entrance selector after its source delay, continues through Credits and
+  loops from sequence index 1. Playback uses the source-requested 11126 Hz
+  cadence and a bounded queue. Leaving the selector stops further music.
+  Returning from Credits also avoids a null result-pointer write. Credits
+  polls input and services music every frame instead of blocking for the
+  entire 36-second page timeout between input checks.
+
 - `Settings keyboard navigation`: Left and Right now switch launcher
   Settings tabs without changing gameplay or text-editor arrow handling.
 

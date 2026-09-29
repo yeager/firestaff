@@ -1,49 +1,49 @@
-#: src/engine/main_loop_m11.c:390
+#: src/engine/main_loop_m11.c:391
 msgid "NEXUS LOAD FAILED"
 msgstr "NEXUS LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:392
+#: src/engine/main_loop_m11.c:393
 msgid "CHECK ISO/BIN OR EXTRACTED FILES"
 msgstr "CHECK ISO/BIN OR EXTRACTED FILES"
 
-#: src/engine/main_loop_m11.c:399
+#: src/engine/main_loop_m11.c:400
 msgid "THERON STARTUP FAILED"
 msgstr "THERON STARTUP FAILED"
 
-#: src/engine/main_loop_m11.c:401
+#: src/engine/main_loop_m11.c:402
 msgid "VERIFY CUE/BIN AND STARTUP DETAILS"
 msgstr "VERIFY CUE/BIN AND STARTUP DETAILS"
 
-#: src/engine/main_loop_m11.c:419
+#: src/engine/main_loop_m11.c:420
 msgid "CSB LOAD FAILED"
 msgstr "CSB LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:421
+#: src/engine/main_loop_m11.c:422
 msgid "CHECK GRAPHICS/DUNGEON DATA"
 msgstr "CHECK GRAPHICS/DUNGEON DATA"
 
-#: src/engine/main_loop_m11.c:424
+#: src/engine/main_loop_m11.c:425
 msgid "DUNGEON LOAD FAILED"
 msgstr "DUNGEON LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:426
+#: src/engine/main_loop_m11.c:427
 msgid "CHECK DUNGEON.DAT"
 msgstr "CHECK DUNGEON.DAT"
 
-#: src/engine/main_loop_m11.c:429 src/engine/main_loop_m11.c:4190
-#: src/engine/main_loop_m11.c:4213 src/ui/menu_startup_m12.c:1046
+#: src/engine/main_loop_m11.c:430 src/engine/main_loop_m11.c:4274
+#: src/engine/main_loop_m11.c:4297 src/ui/menu_startup_m12.c:1046
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC RETURNS TO MENU"
 
-#: src/engine/main_loop_m11.c:4186 src/engine/main_loop_m11.c:4209
+#: src/engine/main_loop_m11.c:4270 src/engine/main_loop_m11.c:4293
 msgid "CSB UTILITY DISK NOT READY"
 msgstr "CSB UTILITY DISK NOT READY"
 
-#: src/engine/main_loop_m11.c:4188
+#: src/engine/main_loop_m11.c:4272
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 
-#: src/engine/main_loop_m11.c:4211
+#: src/engine/main_loop_m11.c:4295
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 

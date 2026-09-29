@@ -836,6 +836,8 @@ static int m11_sound_append(M11_SoundBuffer* dst, const M11_SoundBuffer* src) {
 static int m11_stop_original_music(M11_AudioState* state) {
     int ok = 1;
     if (!state) return 0;
+    state->titleMusicLoopActive = 0;
+    state->titleMusicCursor = 0;
 #if M11_HAVE_SDL_AUDIO
     if (state->musicStream) {
         if (!SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->musicStream)) ok = 0;
@@ -856,6 +858,7 @@ static void m11_clear_original_song(M11_AudioState* state) {
     state->originalSongSequenceWordCount = 0;
     state->originalSongPlayablePartCount = 0;
     state->originalSongLoopTargetPart = 0;
+    state->originalSongLoopStartSample = 0;
 }
 
 static int m11_load_original_song_path(M11_AudioState* state,
@@ -901,7 +904,14 @@ static int m11_load_original_song_path(M11_AudioState* state,
             unsigned int word = seq.words[i];
             unsigned int itemIndex = word & 0x7FFFu;
             if (word & 0x8000u) {
-                state->originalSongLoopTargetPart = (int)itemIndex;
+                unsigned int sequenceIndex;
+                /* SELECTOR.C F8367:818-825: -1 restarts the score; other
+                 * high-bit words jump to a zero-based sequence position. */
+                unsigned int target = word == 0xFFFFu ? 0u : itemIndex;
+                state->originalSongLoopTargetPart = (int)target;
+                if (target >= i) { ok = 0; break; }
+                for (sequenceIndex = 0; sequenceIndex < target; ++sequenceIndex)
+                    state->originalSongLoopStartSample += part[seq.words[sequenceIndex]].sampleCount;
                 break;
             }
             if (itemIndex < V1_SONG_DAT_FIRST_SND8_INDEX ||
@@ -922,8 +932,8 @@ static int m11_load_original_song_path(M11_AudioState* state,
 
     if (ok && state->titleMusic.sampleCount > 0 &&
         state->originalSongPartCount == V1_SONG_DAT_MUSIC_PART_COUNT &&
-        state->originalSongLoopTargetPart >= V1_SONG_DAT_FIRST_SND8_INDEX &&
-        state->originalSongLoopTargetPart <= V1_SONG_DAT_LAST_SND8_INDEX) {
+        state->originalSongLoopStartSample >= 0 &&
+        state->originalSongLoopStartSample < state->titleMusic.sampleCount) {
         state->originalSongAvailable = 1;
     } else {
         m11_clear_original_song(state);
@@ -1035,11 +1045,11 @@ int M11_Audio_Init(M11_AudioState* state) {
     /* Pre-generate procedural sounds regardless of backend */
     m11_generate_sounds(state);
     /* Pass 54: opportunistically load SONG.DAT title music.  Source SND8
-     * buffers are signed 8-bit mono at 11025 Hz; they are linearly resampled
+     * buffers are signed 8-bit mono at 11126 Hz; they are linearly resampled
      * once at init to the fixed 22050 Hz SDL float stream and concatenated
      * according to the SEQ2 words up to (not including) the bit-15 loop-back
-     * marker.  The loop target is recorded; continuous loop scheduling is not
-     * claimed without an original runtime capture. */
+     * marker. Explicit selector playback refills a bounded queue from this
+     * buffer and jumps to the source sequence's recorded sample offset. */
     m11_try_load_original_song(state);
 
     /* Pass 53: opportunistically replace event-index playback with decoded
@@ -1211,7 +1221,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->originalSongSequenceWordCount = 0;
     state->originalSongPlayablePartCount = 0;
     state->lastMusicTrackId = -1;
+    state->titleMusicLoopActive = 0;
+    state->titleMusicCursor = 0;
     state->originalSongLoopTargetPart = 0;
+    state->originalSongLoopStartSample = 0;
     state->titleMusicQueuedCount = 0;
     state->titleMusicPlayRequestCount = 0;
     state->titleMusicEnabled = 0;
@@ -2268,6 +2281,48 @@ int M11_Audio_TitleMusicEnabled(const M11_AudioState* state) {
     return (state && state->titleMusicEnabled) ? 1 : 0;
 }
 
+static int m11_refill_title_music(M11_AudioState* state)
+{
+#if M11_HAVE_SDL_AUDIO
+    SDL_AudioStream* stream = (SDL_AudioStream*)state->musicStream;
+    int queued;
+    int remaining;
+    if (!stream || !state->titleMusicLoopActive) return 1;
+    queued = SDL_GetAudioStreamQueued(stream);
+    if (queued < 0) return 0;
+    remaining = M11_AUDIO_TITLE_QUEUE_SAMPLES - queued / (int)sizeof(float);
+    while (remaining > 0) {
+        int count;
+        if (state->titleMusicCursor >= state->titleMusic.sampleCount)
+            state->titleMusicCursor = state->originalSongLoopStartSample;
+        count = state->titleMusic.sampleCount - state->titleMusicCursor;
+        if (count > remaining) count = remaining;
+        if (count <= 0 || !SDL_PutAudioStreamData(stream,
+                state->titleMusic.samples + state->titleMusicCursor,
+                count * (int)sizeof(float))) return 0;
+        state->titleMusicCursor += count;
+        remaining -= count;
+        if (state->queuedSampleCount <= INT_MAX - count)
+            state->queuedSampleCount += count;
+        else state->queuedSampleCount = INT_MAX;
+    }
+#else
+    (void)state;
+#endif
+    return 1;
+}
+
+int M11_Audio_PumpTitleMusic(M11_AudioState* state)
+{
+    if (!state || !state->initialized) return 0;
+    if (!state->titleMusicLoopActive || state->hostPaused) return 1;
+    if (!m11_refill_title_music(state)) {
+        (void)m11_stop_original_music(state);
+        return 0;
+    }
+    return 1;
+}
+
 int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
     if (!state || !state->initialized) return 0;
     if (!state->titleMusicEnabled) return 0;
@@ -2299,16 +2354,18 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
          * replacing prevents a device callback consuming the new sequence
          * before both its source data and live gain are installed. */
         if (!m11_stop_original_music(state) ||
-            !SDL_SetAudioStreamGain(stream, gain) ||
-            !SDL_PutAudioStreamData(stream, state->titleMusic.samples,
-                state->titleMusic.sampleCount * (int)sizeof(float))) return 0;
+            !SDL_SetAudioStreamGain(stream, gain)) return 0;
+        state->titleMusicLoopActive = 1;
+        if (!m11_refill_title_music(state)) {
+            (void)m11_stop_original_music(state);
+            return 0;
+        }
         if (state->hostPaused) {
             state->hostResumeMusicStream = 1;
         } else if (!SDL_ResumeAudioStreamDevice(stream)) {
             (void)m11_stop_original_music(state);
             return 0;
         }
-        state->queuedSampleCount += state->titleMusic.sampleCount;
         state->titleMusicQueuedCount += 1;
         return 1;
     }

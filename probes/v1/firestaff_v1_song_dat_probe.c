@@ -228,7 +228,7 @@ int main(void) {
     }
     if (allSndOk) {
         report_pass("INV_V1_SONG_06",
-                    "all 9 SND8 items decode to exactly declared sample count at 11025 Hz");
+                    "all 9 SND8 items decode to exactly declared sample count at 11126 Hz");
     }
 
     /*

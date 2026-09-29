@@ -15,6 +15,7 @@
 #include "firestaff_version.h"
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
+#include "dm1_entrance_m11.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_accessibility.h"
 #include "firestaff_retroachievements.h"
@@ -1795,11 +1796,24 @@ static M11_GameViewState* g_m11_intro_game_view;
 static M11_AudioState* g_m11_intro_local_audio;
 static Uint64 g_m11_intro_paused_ms;
 
+typedef struct {
+    M11_AudioState* audio;
+    M11_EntranceObserver observer;
+    void* observerUser;
+    Uint64 waitStartedMs;
+    int waitStarted;
+    int phase;
+    int songBound;
+    int playRequested;
+} M11_SelectorMusicOwner;
+
+static M11_SelectorMusicOwner* g_m11_selector_music;
+
 static Uint64 m11_intro_active_ticks(void) {
     return SDL_GetTicks() - g_m11_intro_paused_ms;
 }
 
-static int m11_intro_wait_for_focus(void) {
+static int m11_intro_wait_for_focus_impl(void) {
     SDL_Window* window;
     const char* driver;
     Uint64 started;
@@ -1834,6 +1848,39 @@ static int m11_intro_wait_for_focus(void) {
     return quit;
 }
 
+static int m11_intro_wait_for_focus(void) {
+    M11_SelectorMusicOwner* owner = g_m11_selector_music;
+    Uint64 elapsedMs = 0U;
+    int quit = m11_intro_wait_for_focus_impl();
+    if (quit || !owner || !owner->phase) return quit;
+    if (!owner->waitStarted) {
+        owner->waitStarted = 1;
+        owner->waitStartedMs = m11_intro_active_ticks();
+    }
+    elapsedMs = m11_intro_active_ticks() - owner->waitStartedMs;
+    if (owner->songBound && owner->phase != M11_ENTRANCE_PHASE_DOORS) {
+        /* SELECTOR.C:515, F8367:814-825 waits 60 VIDRV_07 retraces.
+         * VIDEODRV.C F8153:3163-3185 polls VGA 0x3DA, mode 13h (~70 Hz).
+         * Keep the rational deadline instead of rounding each tick to 14 ms.
+         * This is the PC VGA selector, not the PAL/gameplay VBlank clock. */
+        const Uint64 initialDelayMs =
+            (60U * 1000U + DM1_V1_VGA_VBLANK_HZ - 1U) /
+            DM1_V1_VGA_VBLANK_HZ;
+        if (!owner->playRequested && elapsedMs >= initialDelayMs) {
+            owner->playRequested = 1;
+            (void)M11_Audio_PlayTitleMusic(owner->audio);
+        }
+        if (owner->playRequested) {
+            (void)M11_Audio_PumpTitleMusic(owner->audio);
+        }
+    }
+    if (owner->observer) {
+        owner->observer(owner->observerUser, owner->phase, elapsedMs,
+                          owner->audio);
+    }
+    return 0;
+}
+
 
 static unsigned int m11_v20_startup_remaining_delay_ms(
     unsigned int source_delay_ms,
@@ -1862,7 +1909,7 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
     while (SDL_PollEvent(&ev)) {
         (void)ev;
     }
-    for (ticks = 0U; ticks < ENTRANCE_Compat_GetCreditsWaitTicks(); ++ticks) {
+    for (ticks = 0U; ticks < wait_ticks; ++ticks) {
         if (m11_intro_wait_for_focus()) return M11_ENTRANCE_COMMAND_QUIT;
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -2012,10 +2059,15 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
             : !m11_present_dm1_startup_base_palette(gameView, framebuffer)) {
         return M11_ENTRANCE_COMMAND_NONE;
     }
+    if (g_m11_selector_music)
+        g_m11_selector_music->phase = M11_ENTRANCE_PHASE_CREDITS;
+    /* ENTRANCE.C F0442:1067-1091 polls after each VBlank. The command
+     * stores the whole credits timeout; use the receipt per-VBlank cadence
+     * here so one SDL_Delay does not block input/audio for 36 seconds. */
     waitResult = m11_wait_for_entrance_credits_done(command.credits_wait_ticks,
-                                                    command.vblank_delay_ms,
+                                                    media_receipt->entrance_vblank_ms,
                                                     presentationStartedMs);
-    *out_command = command;
+    if (out_command) *out_command = command;
     return waitResult;
 }
 
@@ -2106,7 +2158,7 @@ static M11_EntranceCommand m11_entrance_command_path_from_source_command(int com
     return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromSourceCommand(commandId);
 }
 
-static int m11_play_redmcsb_entrance_transition(
+static int m11_play_redmcsb_entrance_transition_impl(
     M11_GameViewState* gameView,
     int autoEnterAfterMs,
     const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
@@ -2244,6 +2296,8 @@ static int m11_play_redmcsb_entrance_transition(
             return 0;
         }
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
+            if (g_m11_selector_music)
+                g_m11_selector_music->phase = M11_ENTRANCE_PHASE_WAIT;
             M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(
                 autoEnterAfterMs,
                 mediaReceipt->platform ==
@@ -2267,20 +2321,81 @@ static int m11_play_redmcsb_entrance_transition(
                 sourceStep = 0U;
                 continue;
             }
+            if (g_m11_selector_music) {
+                /* SELECTOR.C:1026 starts the switch effect before opening
+                 * doors; F8367 no longer submits music once a command exits
+                 * the selector. Do not mix a stale music queue into gameplay. */
+                g_m11_selector_music->phase = M11_ENTRANCE_PHASE_DOORS;
+                if (g_m11_selector_music->songBound)
+                    (void)M11_Audio_RequestSourceMusicTrack(
+                        g_m11_selector_music->audio, 0);
+            }
         }
         {
             unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
                 command.delay_ms, presentationStartedMs);
-            if (delayMs > 0U) {
-                (void)m11_delay_ms_with_intro_event_pump(delayMs);
+            if (delayMs > 0U && m11_delay_ms_with_intro_event_pump(delayMs)) {
+                free(dungeonFrame);
+                return M11_ENTRANCE_COMMAND_QUIT;
             }
         }
-        if (M11_Render_PumpEvents()) break;
+        if (M11_Render_PumpEvents()) {
+            free(dungeonFrame);
+            return M11_ENTRANCE_COMMAND_QUIT;
+        }
     }
     memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
     (void)m11_present_dm1_startup_base_palette(gameView, framebuffer);
     free(dungeonFrame);
     return 1;
+}
+
+int M11_Entrance_RunSourceTransition(
+    M11_GameViewState* gameView,
+    int autoEnterAfterMs,
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt,
+    M11_EntranceObserver observer,
+    void* user) {
+    M11_SelectorMusicOwner owner;
+    M11_SelectorMusicOwner* previousOwner = g_m11_selector_music;
+    M11_GameViewState* previousView = g_m11_intro_game_view;
+    int result;
+    if (!gameView) return M11_ENTRANCE_COMMAND_NONE;
+    memset(&owner, 0, sizeof(owner));
+    owner.audio = &gameView->audioState;
+    owner.observer = observer;
+    owner.observerUser = user;
+    /* SELECTOR.C F8368:909-913 owns SONG only for PC34 E/M. The common
+     * entrance renderer also serves Atari and Towns; those must keep their
+     * original audio owners. Authenticate only this selected companion. */
+    if (gameView->active && mediaReceipt && mediaReceipt->handled &&
+        mediaReceipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 &&
+        !gameView->dm1FmtownsStartupReceiptValid &&
+        strcmp(gameView->sourceId, "dm1") == 0) {
+        owner.songBound = M11_BindIntroSongForSelectedGraphics(
+            owner.audio, gameView->assetLoader.graphicsDatPath);
+    }
+    g_m11_selector_music = &owner;
+    g_m11_intro_game_view = gameView;
+    result = m11_play_redmcsb_entrance_transition_impl(
+        gameView, autoEnterAfterMs, entranceReceipt, mediaReceipt);
+    /* F8369:1051 releases the selector score on every exit. Also cover
+     * missing assets, failed presentation, Resume and host Quit. */
+    if (owner.songBound)
+        (void)M11_Audio_RequestSourceMusicTrack(owner.audio, 0);
+    g_m11_selector_music = previousOwner;
+    g_m11_intro_game_view = previousView;
+    return result;
+}
+
+static int m11_play_redmcsb_entrance_transition(
+    M11_GameViewState* gameView,
+    int autoEnterAfterMs,
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt) {
+    return M11_Entrance_RunSourceTransition(gameView, autoEnterAfterMs,
+        entranceReceipt, mediaReceipt, NULL, NULL);
 }
 
 static M11_EntranceCommand m11_entrance_route_framebuffer_pointer(int fbX,
@@ -2838,8 +2953,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* dm1MediaReceipt) {
     const M11_AssetSlot* titleGraphic;
     unsigned char* framebuffer;
-    M11_AudioState titleAudio;
-    int titleAudioInitialized = 0;
     int titlePalette = -1;
     Uint64 presentationStartedMs = 0U;
     unsigned int sourceStep;
@@ -2850,6 +2963,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     char titleDatPath[FSP_PATH_MAX];
     const char* titleDatProvenancePath = NULL;
 
+    (void)menuState;
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
     }
@@ -2891,15 +3005,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             "dm1", &dm1Media);
     }
 
-    memset(&titleAudio, 0, sizeof(titleAudio));
-    if (M11_Audio_Init(&titleAudio)) {
-        titleAudioInitialized = 1;
-        (void)M11_ApplyIntroAudioPreferences(&titleAudio, menuState);
-        if (M11_BindIntroSongForSelectedGraphics(&titleAudio,
-                gameView ? gameView->assetLoader.graphicsDatPath : NULL))
-            (void)M11_Audio_PlayTitleMusic(&titleAudio);
-    }
-
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     memset(&titleAssetReceipt, 0, sizeof(titleAssetReceipt));
     if (!dm1_v1_startup_title_runtime_asset_receipt_pc34(
@@ -2932,7 +3037,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         return 0;
     }
 
-    g_m11_intro_local_audio = &titleAudio;
     /* ReDMCSB TITLE.C F0437 PC/F20 source-lock:
      * - TITLE.C:309 loads/decompresses C001_GRAPHIC_TITLE.
      * - TITLE.C:319-324 blits PRESENTS from source y=137 to 0,90..105.
@@ -3060,10 +3164,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             presentationStartedMs = 0U;
         }
     }
-    g_m11_intro_local_audio = NULL;
-    if (titleAudioInitialized) {
-        M11_Audio_Shutdown(&titleAudio);
-    }
     return outPlayedAnyFrame ? *outPlayedAnyFrame : 1;
 }
 
@@ -3080,8 +3180,6 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     char err[160];
     unsigned int step;
     V1_TitleFrontendSourceTiming timing;
-    M11_AudioState titleAudio;
-    int titleAudioInitialized = 0;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media;
 
@@ -3130,16 +3228,6 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                 &dm1Media);
     }
 
-    memset(&titleAudio, 0, sizeof(titleAudio));
-    if (M11_Audio_Init(&titleAudio)) {
-        titleAudioInitialized = 1;
-        (void)M11_ApplyIntroAudioPreferences(&titleAudio, menuState);
-        if (M11_BindIntroSongForSelectedGraphics(&titleAudio,
-                gameView ? gameView->assetLoader.graphicsDatPath : NULL))
-            (void)M11_Audio_PlayTitleMusic(&titleAudio);
-    }
-
-    g_m11_intro_local_audio = &titleAudio;
     /* ReDMCSB TITLE.C PC/F20 source-lock:
      *   TITLE.C:319-324 draws PRESENTS from the decompressed title graphic.
      *   TITLE.C:340-360 builds 18 shrinked title bitmaps; TITLE.C:385-387
@@ -3227,10 +3315,6 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     (void)m11_delay_ms_with_intro_event_pump(
         hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
                       V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
-    g_m11_intro_local_audio = NULL;
-    if (titleAudioInitialized) {
-        M11_Audio_Shutdown(&titleAudio);
-    }
     free(packedStorage);
     free(indexedScreen);
 }

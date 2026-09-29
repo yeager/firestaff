@@ -1,5 +1,6 @@
 #include "m11_qol_runtime.h"
 #include "main_loop_m11.h"
+#include "song_dat_loader_v1.h"
 /*
  * test_dm1_v1_m11_launcher_handoff_boundary.c
  *
@@ -297,6 +298,149 @@ cleanup:
 }
 
 /* Use the SONG.DAT bound by the authenticated selected installation. */
+static void run_original_music_loop_probe(M11_AudioState* audio, int mode)
+{
+    V1_SongManifest manifest;
+    V1_SndBuffer firstPart;
+    char error[256];
+    int expectedCursor = M11_AUDIO_TITLE_QUEUE_SAMPLES;
+    int wraps = 0;
+    int refillOk = 1;
+    int iteration;
+    int pcmWraps = 0;
+    SDL_AudioStream* deviceStream;
+    SDL_AudioStream* readbackStream;
+    SDL_AudioSpec readbackSpec;
+    float pcm[M11_AUDIO_TITLE_QUEUE_SAMPLES];
+    const int capBytes = M11_AUDIO_TITLE_QUEUE_SAMPLES * (int)sizeof(float);
+    memset(&firstPart, 0, sizeof(firstPart));
+    expect_mode_true(V1_Song_ParseManifest(audio->originalSongDatPath, &manifest,
+                        error, sizeof(error)) &&
+        V1_Song_DecodeSnd8(audio->originalSongDatPath, &manifest, 1u, &firstPart,
+                           error, sizeof(error)), mode,
+        "loop offset derives from authentic SONG first-part bytes");
+    expect_mode_true(firstPart.decodedSampleCount > 0 &&
+        audio->originalSongLoopTargetPart == 1 &&
+        audio->originalSongLoopStartSample ==
+            (int)(((unsigned long long)firstPart.decodedSampleCount * M11_AUDIO_SAMPLE_RATE +
+                   V1_SONG_DAT_SAMPLE_RATE_HZ - 1u) / V1_SONG_DAT_SAMPLE_RATE_HZ),
+        mode, "terminal 8001 targets sequence index one after the first original part");
+    V1_Song_FreeSndBuffer(&firstPart);
+    (void)M11_Audio_SetHostPaused(audio, 0);
+    expect_mode_true(M11_Audio_PlayTitleMusic(audio), mode,
+        "explicit selector playback starts bounded original PCM");
+    /* Suspend device consumption, independently of host focus, to inspect
+     * exact refill boundaries without waiting for two complete retail loops. */
+    (void)SDL_PauseAudioStreamDevice((SDL_AudioStream*)audio->musicStream);
+    deviceStream = (SDL_AudioStream*)audio->musicStream;
+    SDL_zero(readbackSpec);
+    readbackSpec.format = SDL_AUDIO_F32;
+    readbackSpec.channels = 1;
+    readbackSpec.freq = M11_AUDIO_SAMPLE_RATE;
+    readbackStream = SDL_CreateAudioStream(&readbackSpec, &readbackSpec);
+    expect_mode_true(readbackStream != NULL, mode,
+        "create identity-format SDL readback transport for authentic PCM");
+    if (!readbackStream) return;
+    (void)SDL_SetAudioStreamGain(readbackStream, 1.0f);
+    audio->musicStream = readbackStream;
+    for (iteration = 0; iteration < 200 && wraps < 2; ++iteration) {
+        int count = M11_AUDIO_TITLE_QUEUE_SAMPLES;
+        const int startCursor = expectedCursor;
+        const int tailSamples = audio->titleMusic.sampleCount - startCursor;
+        (void)SDL_ClearAudioStream((SDL_AudioStream*)audio->musicStream);
+        while (count > 0) {
+            int available;
+            if (expectedCursor == audio->titleMusic.sampleCount) {
+                expectedCursor = audio->originalSongLoopStartSample;
+                ++wraps;
+            }
+            available = audio->titleMusic.sampleCount - expectedCursor;
+            if (available > count) available = count;
+            expectedCursor += available;
+            count -= available;
+        }
+        if (!M11_Audio_PumpTitleMusic(audio) ||
+            audio->titleMusicCursor != expectedCursor ||
+            SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) != capBytes) {
+            refillOk = 0;
+            break;
+        }
+        /* Read the actual bytes queued by the production pump. Around each
+         * seam, compare the end of the original score followed by its index-1
+         * prefix; never generate substitute samples or reset the source cursor. */
+        if (SDL_GetAudioStreamData(readbackStream, pcm, capBytes) != capBytes ||
+            (tailSamples >= M11_AUDIO_TITLE_QUEUE_SAMPLES
+                ? memcmp(pcm, audio->titleMusic.samples + startCursor,
+                         (size_t)capBytes) != 0
+                : (memcmp(pcm, audio->titleMusic.samples + startCursor,
+                          (size_t)tailSamples * sizeof(float)) != 0 ||
+                   memcmp(pcm + tailSamples,
+                          audio->titleMusic.samples + audio->originalSongLoopStartSample,
+                          (size_t)(M11_AUDIO_TITLE_QUEUE_SAMPLES - tailSamples) * sizeof(float)) != 0))) {
+            refillOk = 0;
+            break;
+        }
+        if (tailSamples < M11_AUDIO_TITLE_QUEUE_SAMPLES) ++pcmWraps;
+    }
+    audio->musicStream = deviceStream;
+    SDL_DestroyAudioStream(readbackStream);
+    expect_mode_true(refillOk && pcmWraps >= 2, mode,
+        "SDL PCM readback preserves original suffix and index-one prefix across two loops");
+    expect_mode_true(refillOk && wraps >= 2 && iteration < 200 &&
+        audio->titleMusicCursor == expectedCursor && audio->titleMusicLoopActive,
+        mode, "bounded source cursor repeats sequence index one and never replays the intro");
+    (void)M11_Audio_SetHostPaused(audio, 1);
+    {
+        unsigned char prefix[4096];
+        int cursor = audio->titleMusicCursor;
+        int queued;
+        (void)SDL_GetAudioStreamData((SDL_AudioStream*)audio->musicStream,
+                                     prefix, (int)sizeof(prefix));
+        queued = SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream);
+        expect_mode_true(queued > 0 && queued < capBytes &&
+            M11_Audio_PumpTitleMusic(audio) && audio->titleMusicCursor == cursor &&
+            SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == queued,
+            mode, "host pause prevents refill and preserves source cursor");
+    }
+    (void)M11_Audio_RequestSourceMusicTrack(audio, 0);
+    (void)M11_Audio_SetHostPaused(audio, 0);
+    expect_mode_true(M11_Audio_PumpTitleMusic(audio) && !audio->titleMusicLoopActive &&
+        audio->titleMusicCursor == 0 &&
+        SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0,
+        mode, "source stop disarms refill after host resume");
+    {
+        char songPath[sizeof(audio->originalSongDatPath)];
+        M11_AudioState isolated;
+        snprintf(songPath, sizeof(songPath), "%s", audio->originalSongDatPath);
+        (void)M11_Audio_SetHostPaused(audio, 1);
+        expect_mode_true(M11_Audio_PlayTitleMusic(audio) && audio->titleMusicLoopActive,
+            mode, "rebind probe begins with an active authentic score");
+        (void)M11_Audio_BindOriginalSongPath(audio, NULL);
+        expect_mode_true(!audio->originalSongAvailable && !audio->titleMusicLoopActive &&
+            audio->titleMusicCursor == 0 && audio->originalSongLoopStartSample == 0 &&
+            !audio->hostResumeMusicStream && M11_Audio_PumpTitleMusic(audio) &&
+            SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0,
+            mode, "missing companion rebind disarms refill and clears source cursor");
+        expect_mode_true(M11_Audio_BindOriginalSongPath(audio, songPath) &&
+            M11_Audio_PumpTitleMusic(audio) && !audio->titleMusicLoopActive &&
+            SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0,
+            mode, "successful authentic rebind waits for an explicit new play request");
+        (void)M11_Audio_SetHostPaused(audio, 0);
+        memset(&isolated, 0, sizeof(isolated));
+        expect_mode_true(M11_Audio_Init(&isolated) &&
+            M11_Audio_BindOriginalSongPath(&isolated, songPath) &&
+            M11_Audio_SetHostPaused(&isolated, 1) &&
+            M11_Audio_PlayTitleMusic(&isolated) && isolated.titleMusicLoopActive,
+            mode, "shutdown probe owns a queued authentic score");
+        M11_Audio_Shutdown(&isolated);
+        expect_mode_true(!isolated.initialized && !isolated.musicStream &&
+            !isolated.titleMusicLoopActive && isolated.titleMusicCursor == 0 &&
+            isolated.originalSongLoopStartSample == 0 && !isolated.hostResumeMusicStream &&
+            !M11_Audio_PumpTitleMusic(&isolated), mode,
+            "shutdown destroys the owner and prevents subsequent refill");
+    }
+}
+
 static void run_original_music_transport_probe(M11_GameViewState* view, int mode) {
     M11_AudioState* audio = &view->audioState;
     int master, sfx, music, ui;
@@ -320,10 +464,10 @@ static void run_original_music_transport_probe(M11_GameViewState* view, int mode
         (void)M11_Audio_SetHostPaused(audio, 0);
         return;
     }
-    songBytes = audio->titleMusic.sampleCount * (int)sizeof(float);
+    songBytes = M11_AUDIO_TITLE_QUEUE_SAMPLES * (int)sizeof(float);
     expect_mode_true(SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream) &&
                          SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes,
-                     mode, "starting music during host pause preserves a single authentic sequence");
+                     mode, "starting music during host pause queues only the bounded authentic prefix");
     (void)M11_Audio_PlayTitleMusic(audio);
     expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes,
                      mode, "new music request replaces the queued song instead of appending it");
@@ -371,7 +515,9 @@ static void run_original_music_transport_probe(M11_GameViewState* view, int mode
         }
     }
     (void)M11_Audio_SetTitleMusicEnabled(audio, 0);
-    expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0 &&
+    expect_mode_true(M11_Audio_PumpTitleMusic(audio) && !audio->titleMusicLoopActive &&
+                         audio->titleMusicCursor == 0 &&
+                         SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0 &&
                          SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream) &&
                          SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->sdlStream) == effectBytes,
                      mode, "music off removes queued music and preserves the effects queue");
@@ -394,6 +540,7 @@ static void run_original_music_transport_probe(M11_GameViewState* view, int mode
     expect_mode_true(!SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream),
                      mode, "host resume restarts music that it suspended");
     (void)M11_Audio_RequestSourceMusicTrack(audio, 0);
+    run_original_music_loop_probe(audio, mode);
     (void)M11_Audio_SetVolumes(audio, master, sfx, music, ui);
 }
 

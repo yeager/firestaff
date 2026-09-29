@@ -42,7 +42,7 @@ def main() -> int:
                 raise ValueError(f"startup presenter lost {token}")
         owners = {
             "m11_show_redmcsb_entrance_credits": 1,
-            "m11_play_redmcsb_entrance_transition": 1,
+            "m11_play_redmcsb_entrance_transition_impl": 1,
             "m11_play_redmcsb_title_graphic_intro_if_available": 2,
         }
         for name, expected_calls in owners.items():

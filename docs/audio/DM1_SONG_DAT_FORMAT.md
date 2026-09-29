@@ -4,8 +4,7 @@ Pass 50 — source-backed documentation of the original Dungeon Master PC
 v3.4 `SONG.DAT` file, as a prerequisite to replacing Firestaff's V1
 procedural audio placeholders with original-faithful samples.
 
-All facts in this document are either (a) taken verbatim from the
-community format references at:
+Format evidence comes from the following community references:
 
 - dmweb — DM/CSB/DMII data-files format spec (DMCSB2 container,
   item-type map, SEQ2, SND8 decode algorithm)
@@ -13,7 +12,11 @@ community format references at:
 - Greatstone — per-item semantic labels for SONG.DAT DM PC v3.4
   <http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html>
 
-or (b) empirically verified against the real file
+Playback behavior is checked against ReDMCSB WIP20210206:
+`SELECTOR.C` F8367/F8368/F8369 (lines 810–850, 909–1051),
+`IBMIO.C` F8120/F8121/F8125 (lines 1894–2128), and
+`VIDEODRV.C` F8153 (lines 3163–3185). Container and sample counts
+are also empirically verified against the real file
 `DungeonMasterPC34/DATA/SONG.DAT` shipped in the DM1 DOS package
 (`original-games/Game,Dungeon_Master,DOS,Software.7z`, dated
 1992-02-26) using the parser in `song_dat_loader_v1.c`.
@@ -76,7 +79,7 @@ Sum of compressed sizes: **162398**.  Header: 84.  File size: **162482**
 Per the dmweb item-type map for SONG.DAT DM PC v3.4:
 
 - Item 0: **SEQ2** — music sequence (indices into items 1..9)
-- Items 1..9: **SND8** — DPCM-encoded mono 11025 Hz samples
+- Items 1..9: **SND8** — DPCM-encoded mono samples; the selector requests 11126 Hz
 
 Greatstone's per-item label table for this exact file
 (<http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html>)
@@ -113,8 +116,9 @@ These labels are surfaced at runtime by `V1_Song_ItemLabel()` in
 
 Stored as a flat list of little-endian u16 words.  Each word is an
 index into the sound-sample items (1..9 in this file).  The last word
-has bit 15 set to mark the end of the sequence; at that point the
-music loops back to the first word.
+has bit 15 set to mark a sequence jump. SELECTOR.C F8367 interprets
+its low 15 bits as a zero-based sequence index, not a sample-part index.
+The special word 0xFFFF instead jumps to sequence index zero.
 
 **Empirically observed sequence in item 0 (20 words):**
 
@@ -122,20 +126,16 @@ music loops back to the first word.
 raw words   : 0001 0002 0003 0002 0003 0002 0003 0002
               0004 0005 0006 0002 0003 0002 0004 0005
               0007 0008 0009 8001
-music parts : 1 2 3 2 3 2 3 2 4 5 6 2 3 2 4 5 7 8 9 [loop→1]
+music parts : 1 2 3 2 3 2 3 2 4 5 6 2 3 2 4 5 7 8 9 [jump to sequence index 1, whose part is 2]
 ```
 
-The pattern strongly suggests:
+The first part plays once. The terminal 0x8001 then repeats sequence
+entries 1 through 18, beginning with part 2. It does not replay part 1.
 
-- Sample 1 = intro (part 1 appears only at the loop boundary)
-- Samples 2, 3 = the main repeating motif (2-3-2-3-2-3-2)
-- Samples 4, 5, 6 = a B-section (4-5-6 … 4-5)
-- Samples 7, 8, 9 = a transition / outro block appearing once before
-  looping back to the intro.
-
-Total decoded sequence length:
-3192 + 16504 + 5640×3 + 5640×2 (…) — i.e. about **45 seconds** of
-music before the first loop point, given sample durations below.
+The first pass contains **476,494 decoded samples**, approximately
+**42.827 seconds** at the source-requested rate. Subsequent loops omit
+the first part's 6,372 samples and last approximately **42.254 seconds**.
+These are requested-rate durations, not measurements of a physical card.
 
 ---
 
@@ -148,7 +148,12 @@ offset  size  field
 2       …     packed DPCM nibbles, high nibble first
 ```
 
-Playback rate: **11025 Hz**, mono, 8-bit signed after decoding.
+Source-requested playback rate: **11126 Hz**, mono, 8-bit signed after
+decoding. This rate is supplied by SELECTOR.C F8367, not stored in SND8.
+F0786 passes the count and rate to IODRV_24; IBMIO.C F8125 starts the next
+part when its predecessor completes. Physical PC devices quantize the
+requested rate through PIT/Tandy divisors and may downsample. Firestaff
+uses the requested rate; it does not claim device-specific clock emulation.
 
 ### Decoding algorithm (verbatim from dmweb)
 
@@ -169,43 +174,45 @@ while nibbles remain and out < N_samples:
 
 ### Verified sample durations (DM PC v3.4 EN)
 
-| Item | Declared samples | Decoded samples | Duration (11025 Hz) |
+| Item | Declared samples | Decoded samples | Duration (11126 Hz) |
 |-----:|-----------------:|----------------:|--------------------:|
-|    1 |             6372 |            6372 |              577 ms |
-|    2 |            29254 |           29254 |             2653 ms |
-|    3 |             9785 |            9785 |              887 ms |
-|    4 |            37888 |           37888 |             3436 ms |
-|    5 |            43563 |           43563 |             3951 ms |
-|    6 |             7000 |            7000 |              634 ms |
+|    1 |             6372 |            6372 |              573 ms |
+|    2 |            29254 |           29254 |             2629 ms |
+|    3 |             9785 |            9785 |              879 ms |
+|    4 |            37888 |           37888 |             3405 ms |
+|    5 |            43563 |           43563 |             3915 ms |
+|    6 |             7000 |            7000 |              629 ms |
 |    7 |              535 |             535 |               48 ms |
-|    8 |            38656 |           38656 |             3506 ms |
-|    9 |            46365 |           46365 |             4205 ms |
+|    8 |            38656 |           38656 |             3474 ms |
+|    9 |            46365 |           46365 |             4167 ms |
 
 Decoded sample count matches the declared count **exactly** for all 9
 items, which validates the SND8 decoder end-to-end.
 
-Total audible content in SONG.DAT: **≈ 19.9 seconds** of raw PCM
+Total audible content in SONG.DAT: **≈ 19.721 seconds** of raw PCM
 before sequencing/looping.
 
 ---
 
 ## 5. Where SONG.DAT is used in original DM1
 
-SONG.DAT is the **music** source only (title/menu + any in-game
-loop playback), as confirmed by Greatstone's per-item labelling
-(items 1..9 are all "Music Part N").  In-game sound-effect samples
-(footsteps, doors, swings, creature voices, spells …) are not in
-SONG.DAT — they are the **SND3** items in `GRAPHICS.DAT`:
+SONG.DAT belongs to the PC34 entrance selector, including its Credits
+page. SELECTOR.C F8368 loads it before entrance setup. F8367 waits 60
+VIDRV_07 retraces before the first part, then continues the sequence while
+the user stays in the selector or Credits. F8369 releases it on exit.
+For VGA mode 13h, 60 retraces at the modeled 70 Hz are about 0.857 seconds.
+This delay is independent of the SWSH and TITLE animation schedules.
 
-- Items 671-675, 677-685, 687-693, 701-712 → 33 raw 8-bit unsigned
-  PCM samples at 6000 Hz (see dmweb SND3 section).
+In-game MUSIC.C CD-track requests are a separate interface. IBMIO.C
+F8123 is empty for PC34; those requests must not substitute SONG.DAT.
+FM Towns CDDA follows its own original platform route.
 
-This means full original-faithful V1 audio eventually requires both:
-
-1. SONG.DAT SND8 + SEQ2 decoding (title music) — documented and
-   decoded in Firestaff by this pass.
-2. GRAPHICS.DAT SND3 decoding (in-game SFX) — **not yet landed**;
-   see `V1_BLOCKERS.md` entry 15 for the remaining gap.
+In-game sound effects come from GRAPHICS.DAT SND3 items. Firestaff decodes
+those separately and maintains independent native music and effect streams.
+The music transport retains decoded PCM in bounded memory, queues at most
+one second at a time and refills from the sequence's loop offset. Host pause
+freezes refill; stop, disable, rebind and shutdown disarm it. Physical audio
+output and original sound-card behavior remain separate verification work.
 
 ---
 

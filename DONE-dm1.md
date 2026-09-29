@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-09-29: Restored PC34 selector-owned SONG playback after 60 VGA
+  retraces, with bounded refill, source-requested 11126 Hz and the authentic
+  sequence-index-1 loop. Credits preserves the stream; exits stop it.
+  Fixed a nullable Credits result write and a total-timeout/per-tick mixup
+  that blocked input and refill for 36 seconds. Authentic selector tests
+  pass Credits/Quit, Enter, Resume and early Quit with and without a device.
+  DM1 transport checks pass 332 assertions, including PCM across two loop
+  seams; CSB Amiga passes 48 and DM2 DOS passes 60 launcher assertions.
+  The authentic live SONG probe passes 11 invariants. Dummy SDL verifies
+  transport and event flow, not physical sound or Retina presentation.
+
 ## 2026-09-29 — Preserve platform selection when returning from presentation
 
 - Returning from presentation cards restores the selected platform card.

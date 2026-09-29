@@ -8,7 +8,7 @@
  *
  * Parses the DMCSB2 container, enumerates the 10 items, decodes:
  *   - SEQ2  (item 0)      : music sequence (LE u16 words, bit 15 = end)
- *   - SND8  (items 1..9)  : DPCM → signed-8-bit PCM at 11025 Hz
+ *   - SND8  (items 1..9)  : DPCM → signed-8-bit PCM at 11126 Hz
  *
  * No SDL/audio dependency.  Pure C.  Caller provides the SONG.DAT
  * path at runtime; the file itself is never vendored.
@@ -32,7 +32,9 @@ extern "C" {
 #define V1_SONG_DAT_SEQ2_INDEX        0
 #define V1_SONG_DAT_FIRST_SND8_INDEX  1
 #define V1_SONG_DAT_LAST_SND8_INDEX   9
-#define V1_SONG_DAT_SAMPLE_RATE_HZ    11025
+/* SELECTOR.C F8367:825 requests 11126 Hz through F0786/IODRV_24.
+ * This is source-requested cadence, not an emulated PIT hardware rate. */
+#define V1_SONG_DAT_SAMPLE_RATE_HZ    11126
 #define V1_SONG_DAT_EXPECTED_SIZE     162482u
 #define V1_SONG_DAT_MUSIC_PART_COUNT  9
 
@@ -91,7 +93,7 @@ typedef struct {
     unsigned int   declaredSampleCount; /* from SND8 big-endian word */
     unsigned int   decodedSampleCount;  /* filled in by the decoder */
     signed char*   samples;             /* malloc'd; caller frees via V1_Song_FreeSndBuffer */
-    unsigned int   sampleRateHz;        /* always 11025 */
+    unsigned int   sampleRateHz;        /* always 11126 */
 } V1_SndBuffer;
 
 /* Parse only the header section and fill manifest.  Does not touch
@@ -110,7 +112,7 @@ int V1_Song_DecodeSequence(const char* songDatPath,
                            size_t errMsgBytes);
 
 /* Decode a single SND8 item (1..9) into signed-8-bit mono PCM at
-   11025 Hz.  On success fills *outBuffer (caller must free with
+   11126 Hz.  On success fills *outBuffer (caller must free with
    V1_Song_FreeSndBuffer). */
 int V1_Song_DecodeSnd8(const char* songDatPath,
                        const V1_SongManifest* manifest,
