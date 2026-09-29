@@ -36,9 +36,11 @@ the admission check but does not make any current capture pass or prove the
 consumer's game semantics.
 
 The old US dungeon-lore accessor no longer carries separate paraphrased
-story strings; it returns the byte-exact US Track 02 story records and their
-control bytes from the shared source table. A dynamic, region-authenticated
-Track 02 story consumer and original presentation remain open.
+story strings; it returns the US Track 02 story records and their control
+bytes from the shared source table. A real-media gate compares all seven
+embedded records against the authentic US image byte-for-byte and guards their
+source offsets/lengths. A dynamic, region-authenticated Track 02 story consumer,
+JP story selection, and original presentation remain open.
 
 ## Remaining work, ordered by the end-to-end playability dependency
 

@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — verify all US dungeon-story literals against retail bytes
+
+- Added `theron_v1_track02_dungeon_lore_real_media`, which first verifies the
+  authentic US Track 02 MD5 and then compares each of the seven embedded story
+  records, including control bytes and padding, byte-for-byte with its
+  documented user-data offset and length. A real-media run exposed one missing
+  padding space in the Formic story; the literal now matches the retail bytes.
+- The real-media test and the existing lore contract test pass 2/2 against the
+  locally staged authentic US image. This verifies the US source strings only;
+  it does not implement JP story selection, a dynamic Track 02 story consumer,
+  or original text presentation.
+
 ## 2026-09-29 — source-bound retrieval-name fallback in production chapter marker
 
 - The production chapter marker now falls back to the selected US Track 02

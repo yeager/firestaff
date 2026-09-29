@@ -76,7 +76,7 @@ static const char *const g_stories[THERON_TRACK02_DUNGEON_COUNT] = {
     /* 2: FORMIC — UD 0x276432, 561 bytes */
     "The city of Formicia is "
     "the underground dwelling"
-    "place of the Trolins.   \x01"
+    "place of the Trolins.    \x01"
     "\x02"
     " \x01"
     "                        \x03"

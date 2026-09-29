@@ -47780,6 +47780,20 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(NAME theron_v1_track02_dungeon_lore
         COMMAND test_theron_v1_track02_dungeon_lore)
 
+    add_executable(test_theron_v1_track02_dungeon_lore_real_media
+        tests/test_theron_v1_track02_dungeon_lore_real_media.c
+        src/theron/theron_v1_track02_dungeon_text.c)
+    target_link_libraries(test_theron_v1_track02_dungeon_lore_real_media PRIVATE
+        firestaff_theron)
+    target_include_directories(test_theron_v1_track02_dungeon_lore_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_dungeon_lore_real_media PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_dungeon_lore_real_media
+        COMMAND test_theron_v1_track02_dungeon_lore_real_media)
+
     add_executable(test_theron_v1_track02_loader_output_record_admission
         tests/test_theron_v1_track02_loader_output_record_admission.c
     )
