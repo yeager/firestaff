@@ -9,7 +9,7 @@ no runtime emulator dependency and no game-data extraction to disk.
 | Platform | Retail input | Verified sequence | Result |
 | --- | --- | --- | --- |
 | DOS English | `Dungeon-Master-II-Skullkeep_DOS_EN.zip` | launcher card selection → title/menu → New Game → movement | Native runtime receipt reports `dm2RealAssets=1`, `dm2NoCoreFallbacks=1`, and `dm2FallbackDraws=0`. |
-| FM Towns Japanese | `Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip` | launcher card selection → regional title → New Game → dungeon choice → movement | Native runtime receipt reports the same no-fallback conditions from the Towns archive. |
+| FM Towns Japanese | `Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip` | M12 launcher selection → normal-loop 225-frame TWANIM title → Enter/New Game → first champion selection; direct boot-probe also covers dungeon choice and movement | The continuous route asserts title completion, an empty script queue, map 0 at `(1,8)`, one champion, an accepted real-GDAT frame and zero fallback draws. |
 
 Run the real-media checks with:
 
@@ -18,10 +18,12 @@ bash tests/test_dm2_v1_dos_native_cli_boot.sh <firestaff>
 bash tests/test_dm2_v1_fmtowns_native_cli_boot.sh <firestaff>
 ```
 
-DOS owns its MVE/GDAT title and menu path.  FM Towns owns a distinct regional
-title path; after the source New Game click it shows its regional
-`Resume`/`New Game`/`Quit` menu.  A successful boot does not prove complete
-animation, palette, HUD, audio, save, or campaign parity.
+DOS owns its MVE/GDAT title and menu path. FM Towns owns a distinct regional
+title path with its `Resume`/`New Game`/`Quit` menu. The normal-loop
+regression preserves the authentic Timer-A cadence, unlike the fast-forwarded
+boot-probe. A successful
+boot does not prove complete animation, palette, HUD, audio, save, or campaign
+parity.
 
 ## Active parity work
 

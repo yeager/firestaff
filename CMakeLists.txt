@@ -4500,7 +4500,9 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;fmtowns;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns"
-        TIMEOUT 120
+        # The normal M12 -> Towns TWANIM -> New Game route is intentionally
+        # paced by the original Timer-A clock instead of boot-probe fast-forward.
+        TIMEOUT 300
     )
     add_test(
         NAME dm2_v1_pc9821_native_cli_boot

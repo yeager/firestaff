@@ -4889,6 +4889,8 @@ static int m11_boot_probe_runtime_receipt_ready(
 static void m11_write_autotest_runtime_probe(const char* path,
                                              int launchedEver,
                                              const M11_GameViewState* gameView,
+                                             const char* scriptCursor,
+                                             int scriptWaitFramesRemaining,
                                              int inputRedrawDrawCount,
                                              int inputRedrawAfterViewportDirtyCount,
                                              int lastInputRedrawAfterViewportDirty) {
@@ -4961,6 +4963,8 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"sourceId\": \"%s\",\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
             "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
+            "  \"dm2FmtownsStartup\": {\"titleBound\": %d, \"titleFinished\": %d, \"titleRejected\": %d, \"swooshActive\": %d, \"frameIndex\": %u, \"frameCount\": %u, \"frameTicksRemaining\": %u, \"timerAccumulatorUs\": %u},\n"
+            "  \"script\": {\"waitFramesRemaining\": %d, \"pending\": %d},\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
             "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
             "  \"lastAction\": \"%s\",\n"
@@ -4984,6 +4988,16 @@ static void m11_write_autotest_runtime_probe(const char* path,
             startupReceipt.dm2RuntimeRealAssetsReady,
             startupReceipt.dm2RuntimeNoCoreFallbacks,
             startupReceipt.dm2RuntimeFallbackDrawCount,
+            gameView ? gameView->dm2FmtownsTitleBound : 0,
+            gameView ? gameView->dm2FmtownsTitleFinished : 0,
+            gameView ? gameView->dm2FmtownsTitleRejected : 0,
+            gameView ? gameView->dm2FmtownsSwooshActive : 0,
+            gameView ? gameView->dm2FmtownsTitleFrameIndex : 0u,
+            gameView ? gameView->dm2FmtownsFrameCount : 0u,
+            gameView ? gameView->dm2FmtownsFrameTimerARemaining : 0u,
+            gameView ? gameView->dm2FmtownsTimerAAccumulatorUs : 0u,
+            scriptWaitFramesRemaining,
+            scriptCursor && *scriptCursor != '\0' ? 1 : 0,
             gameView ? gameView->presentationMode : -1,
             gameView ? gameView->presentationWidth : 0,
             gameView ? gameView->presentationHeight : 0,
@@ -7456,6 +7470,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     if (rc != M11_RENDER_OK) {
         return rc;
     }
+    /* SDL's dummy driver can retain its default 1024x768 logical window even
+     * when a test requested another size.  Scripted mouse events use the
+     * requested host-window coordinates, so keep the renderer mapper on that
+     * same surface in every headless mode, including the ordinary main loop. */
+    if (SDL_GetCurrentVideoDriver() != NULL &&
+        strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
+        (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);
+    }
 
     launcherFramebuffer = (unsigned char*)calloc((size_t)M11_LAUNCHER_FB_WIDTH,
                                                  (size_t)M11_LAUNCHER_FB_HEIGHT);
@@ -7885,18 +7907,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34 selectedKindFacts;
             DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34 selectedKindReceipt;
             M11_GameSourceKind expectedSourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
-            /* SDL's dummy driver retains its implementation default window
-             * size even when the probe asked for a specific logical window.
-             * The probe's click tokens are host-window coordinates, so keep
-             * its mapper on the requested surface rather than letting a
-             * 1024x768 dummy window turn C407's (250,50) into (78,13).
-             * Production event handling continues to use the live SDL size.
-             * ReDMCSB COMMAND.C F0358 consumes the resulting 320x200 point. */
             M11_GameView_SetBootProbeMode(&gameView, 1);
-            if (SDL_GetCurrentVideoDriver() != NULL &&
-                strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
-                (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);
-            }
             m11_phase_a_advance_boot_probe_frames(&gameView, frames);
             scriptInputs = m11_phase_a_apply_boot_probe_script(&gameView,
                                                                o->script,
@@ -8611,6 +8622,8 @@ cleanup:
     m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
                                      launchedEver,
                                      &gameView,
+                                     scriptCursor,
+                                     scriptWaitFramesRemaining,
                                      inputRedrawDrawCount,
                                      inputRedrawAfterViewportDirtyCount,
                                      lastInputRedrawAfterViewportDirty);
@@ -8643,6 +8656,8 @@ boot_probe_terminal_exit:
         getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
         launchedEver,
         &gameView,
+        scriptCursor,
+        scriptWaitFramesRemaining,
         inputRedrawDrawCount,
         inputRedrawAfterViewportDirtyCount,
         lastInputRedrawAfterViewportDirty);
