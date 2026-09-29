@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+## 2026-09-29 — Preserve platform selection when returning from presentation
+
+- Returning from presentation cards restores the selected platform card.
+- Verified the back-and-reselect path using the authentic Amiga v2.0 ZIP
+  package in `test_dm1_v1_amiga_v20_archive_cli_boot.sh`. The complete script
+  passes, including native menu handoff and the first runtime frame.
+- Removed the new synthetic Amiga fixture extension in favor of this
+  original-media regression. Refreshed startup-menu catalog source references.
+
 ## 2026-09-28 — Launch authentic Atari ST 1.1 directly from the DMWeb 7z
 
 - Firestaff now reads the selected original STX and its required files from the

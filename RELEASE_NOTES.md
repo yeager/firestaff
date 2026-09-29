@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Launcher`: returning from presentation selection preserves the selected
+  platform card, avoiding an unintended switch to an unavailable edition.
+
 - `Windows packaging`: includes the complete native DLL dependency tree,
   including SDL3's `libiconv-2.dll`, in the ZIP and installer. Packaging fails
   when an imported DLL cannot be resolved. Existing 3.0.348 assets are unchanged.

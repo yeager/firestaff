@@ -68,13 +68,7 @@ static void force_dm1_available(M12_StartupMenuState *state) {
     state->assetStatus.versions[0][0].label = "PC 3.4 English";
     state->assetStatus.versions[0][0].shortLabel = "PC 3.4 EN";
     state->assetStatus.versions[0][0].matched = 1;
-    state->assetStatus.versions[0][10].gameId = "dm1";
-    state->assetStatus.versions[0][10].versionId = "amiga20-en";
-    state->assetStatus.versions[0][10].label = "Amiga 2.0 English";
-    state->assetStatus.versions[0][10].shortLabel = "Amiga 2.0 EN";
-    state->assetStatus.versions[0][10].matched = 1;
     state->gameOptions[0].versionIndex = 0;
-    state->gameOptions[0].architectureIndex = M12_ARCH_AUTO;
     state->gameOptions[0].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
@@ -184,19 +178,9 @@ int main(void) {
                 "available DM1 accept should enter platform cards")) return 1;
     if (!expect(state.gameCardFlowStage == 0 && state.launchRequested == 0,
                 "game card should wait for a verified platform choice")) return 1;
-    state.gameOptions[0].versionIndex = 10;
-    state.gameOptions[0].architectureIndex = M12_ARCH_AMIGA;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.gameCardFlowStage == 1 && state.launchRequested == 0,
                 "verified platform card should advance to presentation cards")) return 1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
-    if (!expect(state.gameCardFlowStage == 0 &&
-                state.gameOptions[0].architectureIndex == M12_ARCH_AMIGA &&
-                state.gameCardSelected == 3,
-                "presentation BACK should restore the selected Amiga platform card")) return 1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.gameCardFlowStage == 1,
-                "restored platform card should reopen presentation cards")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Original card should request launch and show ready message")) return 1;

@@ -82,9 +82,11 @@ probe_saved_input strafe-left 0 4,15,2
 probe_saved_input strafe-right 1 3,1,0
 probe_saved_input action 0 4,15,2
 
+# Returning from presentation must retain the authenticated Amiga card,
+# rather than selecting the first (unavailable FM Towns) platform.
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
-    --platform amiga --data-dir "$archive" --script enter,enter,enter --duration 1000 2>&1)" || {
+    --platform amiga --data-dir "$archive" --script enter,enter,back,enter,enter --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }

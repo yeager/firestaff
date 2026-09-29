@@ -65,7 +65,7 @@ msgid "GAME"
 msgstr "SPIEL"
 
 #: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5359
-#: src/ui/menu_startup_m12.c:10385
+#: src/ui/menu_startup_m12.c:10399
 msgid "GRAPHICS"
 msgstr "GRAFIK"
 
@@ -510,14 +510,14 @@ msgid "REMASTERED"
 msgstr "REMASTERED"
 
 #: src/ui/menu_startup_m12.c:758 src/ui/menu_startup_m12.c:779
-#: src/ui/menu_startup_m12.c:9850 src/ui/menu_startup_m12.c:10293
+#: src/ui/menu_startup_m12.c:9864 src/ui/menu_startup_m12.c:10307
 #: src/ui/menu_startup_render_modern_m12.c:1474
 #: src/ui/menu_startup_render_modern_m12.c:2652
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:759 src/ui/menu_startup_m12.c:789
-#: src/ui/menu_startup_m12.c:9852 src/ui/menu_startup_m12.c:10307
+#: src/ui/menu_startup_m12.c:9866 src/ui/menu_startup_m12.c:10321
 #: src/ui/menu_startup_render_modern_m12.c:1475
 #: src/ui/menu_startup_render_modern_m12.c:2655
 msgid "CHAOS STRIKES BACK"
@@ -544,16 +544,16 @@ msgstr "CSB UTILITY DISK (FM STÄDTE)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK – TIPP ORACLE"
 
-#: src/ui/menu_startup_m12.c:766 src/ui/menu_startup_m12.c:11227
-#: src/ui/menu_startup_m12.c:11230 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_m12.c:766 src/ui/menu_startup_m12.c:11241
+#: src/ui/menu_startup_m12.c:11244 src/ui/menu_startup_render_modern_m12.c:1753
 #: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "MUSEUM DER ÜBERLIEFERUNG"
 
-#: src/ui/menu_startup_m12.c:767 src/ui/menu_startup_m12.c:8205
-#: src/ui/menu_startup_m12.c:8774 src/ui/menu_startup_m12.c:10046
-#: src/ui/menu_startup_m12.c:11262 src/ui/menu_startup_m12.c:11265
-#: src/ui/menu_startup_m12.c:11410
+#: src/ui/menu_startup_m12.c:767 src/ui/menu_startup_m12.c:8219
+#: src/ui/menu_startup_m12.c:8788 src/ui/menu_startup_m12.c:10060
+#: src/ui/menu_startup_m12.c:11276 src/ui/menu_startup_m12.c:11279
+#: src/ui/menu_startup_m12.c:11424
 msgid "SETTINGS"
 msgstr "EINSTELLUNGEN"
 
@@ -773,8 +773,8 @@ msgstr "V1 BEWAHRT DAS URSPRÜNGLICHE VERHALTEN"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL DOKUMENTIERTE WICHTIGE GESCHICHTE"
 
-#: src/ui/menu_startup_m12.c:813 src/ui/menu_startup_m12.c:11244
-#: src/ui/menu_startup_m12.c:11247
+#: src/ui/menu_startup_m12.c:813 src/ui/menu_startup_m12.c:11258
+#: src/ui/menu_startup_m12.c:11261
 msgid "CREDITS"
 msgstr "MITWIRKENDE"
 
@@ -918,8 +918,8 @@ msgstr "AUF/AB BEWEGEN   ENTER ÖFFNEN   ESC BEENDEN"
 msgid "PERSISTED OPTIONS"
 msgstr "GESPEICHERTE OPTIONEN"
 
-#: src/ui/menu_startup_m12.c:1037 src/ui/menu_startup_m12.c:10383
-#: src/ui/menu_startup_m12.c:12454
+#: src/ui/menu_startup_m12.c:1037 src/ui/menu_startup_m12.c:10397
+#: src/ui/menu_startup_m12.c:12468
 msgid "LANGUAGE"
 msgstr "SPRACHE"
 
@@ -951,7 +951,7 @@ msgstr "LINKS/RECHTS WECHSELN   ENTER VOR   ESC ZURÜCK"
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER ODER ESC KEHREN ZUM MENÜ ZURÜCK"
 
-#: src/ui/menu_startup_m12.c:1045 src/ui/menu_startup_m12.c:8215
+#: src/ui/menu_startup_m12.c:1045 src/ui/menu_startup_m12.c:8229
 msgid "READY TO LAUNCH"
 msgstr "BEREIT ZUM STARTEN"
 
@@ -1025,11 +1025,11 @@ msgstr "ARCHIVE: %s  OPTION: %s"
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 
-#: src/ui/menu_startup_m12.c:1874 src/ui/menu_startup_m12.c:8785
+#: src/ui/menu_startup_m12.c:1874 src/ui/menu_startup_m12.c:8799
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:1876 src/ui/menu_startup_m12.c:8785
+#: src/ui/menu_startup_m12.c:1876 src/ui/menu_startup_m12.c:8799
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
@@ -1041,7 +1041,7 @@ msgstr "Dungeon Master II: The Legend of Skullkeep"
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:1883 src/ui/menu_startup_m12.c:8786
+#: src/ui/menu_startup_m12.c:1883 src/ui/menu_startup_m12.c:8800
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
@@ -1107,8 +1107,8 @@ msgstr "ORIGINALE SPIELDATEIEN IN DAS DATENVERZEICHNIS KOPIEREN"
 msgid "NO GAME DATA FOUND"
 msgstr "KEINE SPIELDATEN GEFUNDEN"
 
-#: src/ui/menu_startup_m12.c:2156 src/ui/menu_startup_m12.c:9538
-#: src/ui/menu_startup_m12.c:9653
+#: src/ui/menu_startup_m12.c:2156 src/ui/menu_startup_m12.c:9552
+#: src/ui/menu_startup_m12.c:9667
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
@@ -1122,7 +1122,7 @@ msgstr "DATENVERZEICHNIS UNVERÄNDERT"
 
 #: src/ui/menu_startup_m12.c:2246 src/ui/menu_startup_m12.c:2344
 #: src/ui/menu_startup_m12.c:2510 src/ui/menu_startup_m12.c:2561
-#: src/ui/menu_startup_m12.c:13038
+#: src/ui/menu_startup_m12.c:13052
 msgid "SCANNING GAME DATA"
 msgstr "SPIELDATEN WERDEN GESUCHT"
 
@@ -1139,19 +1139,19 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr "DATENVERZEICHNIS NICHT GEFUNDEN"
 
 #: src/ui/menu_startup_m12.c:2476 src/ui/menu_startup_m12.c:2546
-#: src/ui/menu_startup_m12.c:2592 src/ui/menu_startup_m12.c:13007
+#: src/ui/menu_startup_m12.c:2592 src/ui/menu_startup_m12.c:13021
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "WÄHLEN SIE EINEN VORHANDENEN ORDNER"
 
-#: src/ui/menu_startup_m12.c:2588 src/ui/menu_startup_m12.c:13003
+#: src/ui/menu_startup_m12.c:2588 src/ui/menu_startup_m12.c:13017
 msgid "DATA SCAN CANCELLED"
 msgstr "DATENSCAN ABGEBROCHEN"
 
-#: src/ui/menu_startup_m12.c:2589 src/ui/menu_startup_m12.c:13004
+#: src/ui/menu_startup_m12.c:2589 src/ui/menu_startup_m12.c:13018
 msgid "DATA SCAN FAILED"
 msgstr "DATENSCAN FEHLGESCHLAGEN"
 
-#: src/ui/menu_startup_m12.c:2591 src/ui/menu_startup_m12.c:13006
+#: src/ui/menu_startup_m12.c:2591 src/ui/menu_startup_m12.c:13020
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "Die Verfügbarkeit des Spiels wurde nicht aktualisiert"
 
@@ -1183,7 +1183,7 @@ msgstr "PC34-EXPORT FEHLGESCHLAGEN"
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "Aktivieren Sie „Schneller Lebenslauf speichern“."
 
-#: src/ui/menu_startup_m12.c:2769 src/ui/menu_startup_m12.c:12743
+#: src/ui/menu_startup_m12.c:2769 src/ui/menu_startup_m12.c:12757
 msgid "NO SAVES FOUND"
 msgstr "KEINE SPIELSTÄNDE GEFUNDEN"
 
@@ -1287,7 +1287,7 @@ msgstr "BEARBEITEN"
 msgid "SCALE"
 msgstr "SKALIERUNG"
 
-#: src/ui/menu_startup_m12.c:5204 src/ui/menu_startup_m12.c:12502
+#: src/ui/menu_startup_m12.c:5204 src/ui/menu_startup_m12.c:12516
 msgid "ASPECT RATIO"
 msgstr "SEITENVERHÄLTNIS"
 
@@ -1423,7 +1423,7 @@ msgstr "RETROACHIEVEMENTS API TOKEN"
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "RETROACHIEVEMENTS-SERVER"
 
-#: src/ui/menu_startup_m12.c:5239 src/ui/menu_startup_m12.c:12698
+#: src/ui/menu_startup_m12.c:5239 src/ui/menu_startup_m12.c:12712
 msgid "SAVE BROWSER"
 msgstr "BROWSER SPEICHERN"
 
@@ -1515,7 +1515,7 @@ msgstr "LESEN..."
 msgid "GENERAL"
 msgstr "ALLGEMEIN"
 
-#: src/ui/menu_startup_m12.c:5362 src/ui/menu_startup_m12.c:12393
+#: src/ui/menu_startup_m12.c:5362 src/ui/menu_startup_m12.c:12407
 msgid "RENDERER"
 msgstr "RENDERER"
 
@@ -1583,221 +1583,221 @@ msgstr "EINGEBEN AKTION LADEN IMPORTE IN CSB SPEICHERN EXPORTE PC34 ESC-EINSTELL
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "EINGABE: LADEN   ESC: EINSTELLUNGEN"
 
-#: src/ui/menu_startup_m12.c:8000 src/ui/menu_startup_m12.c:8212
+#: src/ui/menu_startup_m12.c:8014 src/ui/menu_startup_m12.c:8226
 msgid "NO SOURCE"
 msgstr "KEINE QUELLE"
 
-#: src/ui/menu_startup_m12.c:8208
+#: src/ui/menu_startup_m12.c:8222
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "AUSWÄHLEN, UM ORIGINALDATEN ZU PRÜFEN"
 
-#: src/ui/menu_startup_m12.c:8217
+#: src/ui/menu_startup_m12.c:8231
 msgid "MISSING OR MISMATCHED"
 msgstr "FEHLEND ODER NICHT ÜBEREINSTIMMEND"
 
-#: src/ui/menu_startup_m12.c:8774 src/ui/menu_startup_render_modern_m12.c:1954
+#: src/ui/menu_startup_m12.c:8788 src/ui/menu_startup_render_modern_m12.c:1954
 msgid "EXTRAS"
 msgstr "EXTRAS"
 
-#: src/ui/menu_startup_m12.c:8774
+#: src/ui/menu_startup_m12.c:8788
 msgid "PLAY"
 msgstr "SPIELEN"
 
-#: src/ui/menu_startup_m12.c:8774
+#: src/ui/menu_startup_m12.c:8788
 msgid "QUIT"
 msgstr "BEENDEN"
 
-#: src/ui/menu_startup_m12.c:8778
+#: src/ui/menu_startup_m12.c:8792
 msgid "Start or continue a game"
 msgstr "Ein Spiel starten oder fortsetzen"
 
-#: src/ui/menu_startup_m12.c:8779
+#: src/ui/menu_startup_m12.c:8793
 msgid "Display, video, audio and controls"
 msgstr "Anzeige, Video, Audio und Steuerung"
 
-#: src/ui/menu_startup_m12.c:8780
+#: src/ui/menu_startup_m12.c:8794
 msgid "Museum, bestiary, spell reference and more"
 msgstr "Museum, Bestiarium, Zauberübersicht und mehr"
 
-#: src/ui/menu_startup_m12.c:8781
+#: src/ui/menu_startup_m12.c:8795
 msgid "Exit Firestaff"
 msgstr "Firestaff beenden"
 
-#: src/ui/menu_startup_m12.c:8786
+#: src/ui/menu_startup_m12.c:8800
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:8786
+#: src/ui/menu_startup_m12.c:8800
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:8795
+#: src/ui/menu_startup_m12.c:8809
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:8796 src/ui/menu_startup_m12.c:8797
+#: src/ui/menu_startup_m12.c:8810 src/ui/menu_startup_m12.c:8811
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:8798
+#: src/ui/menu_startup_m12.c:8812
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / SATURN-ERFASSUNG GESPERRT"
 
-#: src/ui/menu_startup_m12.c:8799
+#: src/ui/menu_startup_m12.c:8813
 msgid "V1 Only (Phase 1)"
 msgstr "Nur V1 (Phase 1)"
 
-#: src/ui/menu_startup_m12.c:8802 src/ui/menu_startup_m12.c:8803
-#: src/ui/menu_startup_m12.c:8804 src/ui/menu_startup_m12.c:8805
-#: src/ui/menu_startup_m12.c:8806
+#: src/ui/menu_startup_m12.c:8816 src/ui/menu_startup_m12.c:8817
+#: src/ui/menu_startup_m12.c:8818 src/ui/menu_startup_m12.c:8819
+#: src/ui/menu_startup_m12.c:8820
 msgid "No data files"
 msgstr "Keine Datendateien"
 
-#: src/ui/menu_startup_m12.c:9539
+#: src/ui/menu_startup_m12.c:9553
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:9540
+#: src/ui/menu_startup_m12.c:9554
 msgid "TITLE START"
 msgstr "TITEL STARTEN"
 
-#: src/ui/menu_startup_m12.c:9541
+#: src/ui/menu_startup_m12.c:9555
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIZIERTE SPIELDATEN"
 
-#: src/ui/menu_startup_m12.c:9657
+#: src/ui/menu_startup_m12.c:9671
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:9695
+#: src/ui/menu_startup_m12.c:9709
 msgid "New Game (Original)"
 msgstr "Neues Spiel (Original)"
 
-#: src/ui/menu_startup_m12.c:9696
+#: src/ui/menu_startup_m12.c:9710
 msgid "New Game (Original + Filters)"
 msgstr "Neues Spiel (Original + Filter)"
 
-#: src/ui/menu_startup_m12.c:9697
+#: src/ui/menu_startup_m12.c:9711
 msgid "New Game (Original 10x Upscale)"
 msgstr "Neues Spiel (Original 10x Hochskalierung)"
 
-#: src/ui/menu_startup_m12.c:9698
+#: src/ui/menu_startup_m12.c:9712
 msgid "Continue Saved Game"
 msgstr "Gespeichertes Spiel fortsetzen"
 
-#: src/ui/menu_startup_m12.c:9699
+#: src/ui/menu_startup_m12.c:9713
 msgid "New Game (Modern Graphics)"
 msgstr "Neues Spiel (moderne Grafik)"
 
-#: src/ui/menu_startup_m12.c:9707
+#: src/ui/menu_startup_m12.c:9721
 msgid "Museum of Lore"
 msgstr "Museum der Überlieferung"
 
-#: src/ui/menu_startup_m12.c:9708
+#: src/ui/menu_startup_m12.c:9722
 msgid "Manual / Docs"
 msgstr "Handbuch / Dokumentation"
 
-#: src/ui/menu_startup_m12.c:9709
+#: src/ui/menu_startup_m12.c:9723
 msgid "Bestiary"
 msgstr "Bestiarium"
 
-#: src/ui/menu_startup_m12.c:9710
+#: src/ui/menu_startup_m12.c:9724
 msgid "Spell Reference"
 msgstr "Zauberübersicht"
 
-#: src/ui/menu_startup_m12.c:9711
+#: src/ui/menu_startup_m12.c:9725
 msgid "Map Viewer"
 msgstr "Kartenanzeige"
 
-#: src/ui/menu_startup_m12.c:9712
+#: src/ui/menu_startup_m12.c:9726
 msgid "Item Encyclopedia"
 msgstr "Gegenstands-Enzyklopädie"
 
-#: src/ui/menu_startup_m12.c:9713
+#: src/ui/menu_startup_m12.c:9727
 msgid "Changelog"
 msgstr "Änderungsprotokoll"
 
-#: src/ui/menu_startup_m12.c:9714
+#: src/ui/menu_startup_m12.c:9728
 msgid "Screenshot Gallery"
 msgstr "Screenshot-Galerie"
 
-#: src/ui/menu_startup_m12.c:9743
+#: src/ui/menu_startup_m12.c:9757
 msgid "NO DATA SOURCE YET"
 msgstr "NOCH KEINE DATENQUELLE"
 
-#: src/ui/menu_startup_m12.c:9816
+#: src/ui/menu_startup_m12.c:9830
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "Hoch/Runter navigieren  |  Enter auswählen"
 
-#: src/ui/menu_startup_m12.c:9840
+#: src/ui/menu_startup_m12.c:9854
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape zurück  |  Hoch/Runter navigieren  |  Enter auswählen"
 
-#: src/ui/menu_startup_m12.c:9869
+#: src/ui/menu_startup_m12.c:9883
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape zurück  |  Hoch/Runter navigieren  |  Enter starten"
 
-#: src/ui/menu_startup_m12.c:9893
+#: src/ui/menu_startup_m12.c:9907
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape zurück  |  Hoch/Runter navigieren  |  Enter öffnen"
 
-#: src/ui/menu_startup_m12.c:10037
+#: src/ui/menu_startup_m12.c:10051
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > Reiter wechseln   Hoch/Runter navigieren   Enter ändern"
 
-#: src/ui/menu_startup_m12.c:12370
+#: src/ui/menu_startup_m12.c:12384
 msgid "GAME OPTIONS"
 msgstr "SPIELOPTIONEN"
 
-#: src/ui/menu_startup_m12.c:12407
+#: src/ui/menu_startup_m12.c:12421
 msgid "ARCHITECTURE"
 msgstr "ARCHITEKTUR"
 
-#: src/ui/menu_startup_m12.c:12420
+#: src/ui/menu_startup_m12.c:12434
 msgid "VERSION"
 msgstr "VERSION"
 
-#: src/ui/menu_startup_m12.c:12441
+#: src/ui/menu_startup_m12.c:12455
 msgid "PATCH"
 msgstr "PATCH"
 
-#: src/ui/menu_startup_m12.c:12467
+#: src/ui/menu_startup_m12.c:12481
 msgid "CHEATS"
 msgstr "CHEATS"
 
-#: src/ui/menu_startup_m12.c:12480
+#: src/ui/menu_startup_m12.c:12494
 msgid "SPEED"
 msgstr "GESCHWINDIGKEIT"
 
-#: src/ui/menu_startup_m12.c:12492
+#: src/ui/menu_startup_m12.c:12506
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "CHEATS AKTIVIEREN, UM GESCHWINDIGKEIT / TASTENKÜRZEL FREIZUSCHALTEN"
 
-#: src/ui/menu_startup_m12.c:12514
+#: src/ui/menu_startup_m12.c:12528
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "GESPERRT DURCH V1-ORIGINALMODUS"
 
-#: src/ui/menu_startup_m12.c:12524
+#: src/ui/menu_startup_m12.c:12538
 msgid "RESOLUTION"
 msgstr "AUFLÖSUNG"
 
-#: src/ui/menu_startup_m12.c:12538
+#: src/ui/menu_startup_m12.c:12552
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "DURCH GEFILTERTEN V2.0-MODUS GESPERRT"
 
-#: src/ui/menu_startup_m12.c:12559
+#: src/ui/menu_startup_m12.c:12573
 msgid "> DATA FILES NOT FOUND"
 msgstr "> DATENDATEIEN NICHT GEFUNDEN"
 
-#: src/ui/menu_startup_m12.c:12561
+#: src/ui/menu_startup_m12.c:12575
 msgid "> RENDERER UNAVAILABLE"
 msgstr "> RENDERER NICHT VERFÜGBAR"
 
-#: src/ui/menu_startup_m12.c:12562
+#: src/ui/menu_startup_m12.c:12576
 msgid "> LAUNCH"
 msgstr "> STARTEN"
 
-#: src/ui/menu_startup_m12.c:12575
+#: src/ui/menu_startup_m12.c:12589
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: ZURÜCK  PFEILE: NAVIGIEREN  ENTER: AUSWÄHLEN"
 
