@@ -174,7 +174,8 @@ startup = probe["startup"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["receiptReady"] != 1 or startup["active"] != 1 or
         startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
-        startup["phase"] != "inactive"):
+        startup["phase"] != "inactive" or
+        probe.get("csbViewportHash", 0) == 0):
     raise SystemExit(f"FAIL: authentic CSB Amiga menu did not reach runtime: {probe}")
 print("PASS: authentic CSB Amiga start menu reached its source-owned runtime frame")
 PY

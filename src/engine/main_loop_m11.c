@@ -4964,6 +4964,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
             "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
             "  \"dm2FmtownsStartup\": {\"titleBound\": %d, \"titleFinished\": %d, \"titleRejected\": %d, \"swooshActive\": %d, \"frameIndex\": %u, \"frameCount\": %u, \"frameTicksRemaining\": %u, \"timerAccumulatorUs\": %u},\n"
+            "  \"csbViewportHash\": %u,\n"
             "  \"script\": {\"waitFramesRemaining\": %d, \"pending\": %d},\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
             "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
@@ -4996,6 +4997,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->dm2FmtownsFrameCount : 0u,
             gameView ? gameView->dm2FmtownsFrameTimerARemaining : 0u,
             gameView ? gameView->dm2FmtownsTimerAAccumulatorUs : 0u,
+            gameView ? (unsigned int)gameView->csbState.runtime_viewport_pixel_hash : 0u,
             scriptWaitFramesRemaining,
             scriptCursor && *scriptCursor != '\0' ? 1 : 0,
             gameView ? gameView->presentationMode : -1,

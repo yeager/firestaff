@@ -395,6 +395,7 @@ party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["sourceId"] != "csb" or
         startup["phase"] != "inactive" or startup["startupActive"] != 0 or
         startup["levelLoaded"] != 1 or
+        probe.get("csbViewportHash", 0) == 0 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (4, 22, 18, 2, 1)):
     raise SystemExit(f"FAIL: CSB FM Towns M12 did not reach the original MINI.DAT party: {probe}")
@@ -428,6 +429,7 @@ party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["sourceId"] != "csb" or
         startup["phase"] != "inactive" or startup["startupActive"] != 0 or
         startup["levelLoaded"] != 1 or
+        probe.get("csbViewportHash", 0) == 0 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (4, 22, 18, 2, 1)):
     raise SystemExit(f"FAIL: scaled CSB FM Towns M12 did not reach the original MINI.DAT party: {probe}")

@@ -225,6 +225,7 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["receiptReady"] != 1 or startup["phase"] != "inactive" or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["levelLoaded"] != 1 or
+        probe.get("csbViewportHash", 0) == 0 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 9, 0, 2, 0)):
     raise SystemExit(f"FAIL: authentic CSB Atari start menu did not accept source C200 and reach runtime: {probe}")

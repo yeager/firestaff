@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+## 2026-09-29 — CSB M12 viewport receipt
+
+- The runtime probe now reports the source-owned CSB viewport aperture hash.
+  The Atari ST, Amiga and FM Towns real-media M12 regressions require a
+  nonzero hash after the launcher reaches runtime. All three pass against
+  their authentic STX/7z, Amiga ZIP and FM Towns ZIP data. This proves the
+  source viewport renderer ran on the menu handoff; it does not establish
+  native macOS display behavior, pixel parity or audible output.
+
 ## 2026-09-28 — Read the authentic Atari Utility Disk 7z in memory
 
 - The bounded native 7z reader now handles the multi-member preservation
