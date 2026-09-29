@@ -88,6 +88,13 @@ with the supplied Japanese archive present, confirmed that automatic discovery
 and the start menu do not launch it. These are bounded startup results; they
 do not establish full presentation, audio or campaign parity.
 
+The focused DM2 Macintosh movie-runtime test also passed against the supplied
+retail ZIP with the full `Title.MooV` running at its per-sample QuickTime
+deadlines. It checks the source-derived total duration and that the startup
+menu is ready at EOF, closing the prior test gap that fast-forwarded the title
+after checking only its opening frames. SDL dummy output does not prove native
+window pacing or audible playback.
+
 ## Dungeon Master
 
 | Platform | Status | Current scope | Open boundary |

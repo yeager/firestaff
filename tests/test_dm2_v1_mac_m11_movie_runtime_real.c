@@ -56,6 +56,94 @@ static int check_live_movie_clock(M11_GameViewState *state, unsigned char *frame
            state->dm2MacMovieDecoder.frame_index >= first_frame + 8u;
 }
 
+static int check_natural_title_movie_completion(
+    M11_GameViewState *state,
+    unsigned char *framebuffer)
+{
+    const DM2_V1_BootProfile *profile;
+    const DM2_V1_MacMovieView *view;
+    DM2_V1_MacQuickTimeInfo info;
+    uint64_t duration_ticks = 0u;
+    uint64_t expected_duration_us;
+    uint64_t movie_start_us;
+    uint64_t started_us;
+    uint64_t timeout_us;
+    uint32_t sample_index;
+
+    if (!state || !framebuffer ||
+        !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !state->dm2MacMovieActive ||
+        state->dm2MacMovieIndex != DM2_V1_MAC_MOVIE_TITLE) {
+        return 0;
+    }
+    view = &profile->mac_movie_view[DM2_V1_MAC_MOVIE_TITLE];
+    if (!dm2_v1_mac_quicktime_inspect(view->bytes, view->size, &info) ||
+        info.video_sample_count == 0u || info.video_time_scale == 0u) {
+        return 0;
+    }
+    for (sample_index = 0u; sample_index < info.video_sample_count;
+         ++sample_index) {
+        DM2_V1_MacQuickTimeSample sample;
+        if (!dm2_v1_mac_quicktime_video_sample(
+                view->bytes, view->size, sample_index, &sample) ||
+            sample.first_sample_duration == 0u) {
+            return 0;
+        }
+        duration_ticks += sample.first_sample_duration;
+    }
+    expected_duration_us = duration_ticks * UINT64_C(1000000) /
+                           info.video_time_scale;
+    movie_start_us = state->dm2MacMovieStartUs;
+    started_us = SDL_GetTicksNS() / UINT64_C(1000);
+    timeout_us = started_us + expected_duration_us + UINT64_C(8000000);
+    state->bootProbeFastForward = 0;
+
+    while (state->dm2MacMovieActive &&
+           SDL_GetTicksNS() / UINT64_C(1000) < timeout_us) {
+        uint64_t now_us;
+        uint64_t next_frame_us;
+        uint64_t wait_us;
+
+        M11_GameView_Draw(state, framebuffer, 320, 200);
+        if (!state->dm2MacMovieActive) break;
+        now_us = SDL_GetTicksNS() / UINT64_C(1000);
+        next_frame_us = state->dm2MacMovieStartUs +
+            state->dm2MacMovieDecoder.presentation_time_us +
+            state->dm2MacMovieDecoder.frame_duration_us;
+        wait_us = next_frame_us > now_us ? next_frame_us - now_us : 0u;
+        /* Service the original SDL audio queue while sleeping near each
+         * source frame deadline; do not synthesize or fast-forward frames. */
+        if (wait_us > UINT64_C(12000)) wait_us = UINT64_C(12000);
+        SDL_Delay((Uint32)(wait_us / UINT64_C(1000)) + 1u);
+    }
+
+    {
+        const uint64_t completed_us = SDL_GetTicksNS() / UINT64_C(1000);
+        const uint64_t elapsed_us = completed_us >= movie_start_us
+            ? completed_us - movie_start_us : 0u;
+        if (state->dm2MacMovieActive || !state->dm2MacMovieComplete ||
+            state->dm2MacMovieRejected ||
+            state->dm2MacMovieIndex != DM2_V1_MAC_MOVIE_TITLE ||
+            !state->dm2State.startup_menu_active ||
+            elapsed_us + UINT64_C(500000) < expected_duration_us ||
+            elapsed_us > expected_duration_us + UINT64_C(8000000)) {
+            fprintf(stderr,
+                "Natural Mac Title.MooV handoff failed: active=%d complete=%d "
+                "rejected=%d menu=%d frames=%u elapsed_us=%llu expected_us=%llu\n",
+                state->dm2MacMovieActive, state->dm2MacMovieComplete,
+                state->dm2MacMovieRejected, state->dm2State.startup_menu_active,
+                info.video_sample_count, (unsigned long long)elapsed_us,
+                (unsigned long long)expected_duration_us);
+            return 0;
+        }
+        printf("PASS: authentic Mac Title.MooV completed %u frames in natural time "
+               "(%llu us; source %llu us) and returned to the menu\n",
+               info.video_sample_count, (unsigned long long)elapsed_us,
+               (unsigned long long)expected_duration_us);
+    }
+    return 1;
+}
+
 static int check_normal_movie_eof(M11_GameViewState* state, unsigned char* framebuffer)
 {
     DM2_V1_BootProfile* profile = (DM2_V1_BootProfile*)state->dm2BootProfile;
@@ -194,7 +282,6 @@ int main(void)
     unsigned char framebuffer[320u * 200u];
     DM2_V1_StartupMenuAuxPointerLayout aux;
     DM2_V1_StartupMenuPointerLayout menu;
-    int frame;
 
     if (!zip || !zip[0]) {
         puts("SKIP: DM2 Mac ZIP environment is not set");
@@ -362,19 +449,12 @@ int main(void)
         }
         puts("PASS: focus pause freezes authentic Mac movie/audio and resumes source decoding");
     }
-    state.bootProbeFastForward = 1;
-    for (frame = 0; state.dm2MacMovieActive && frame < 10000; ++frame) {
-        /* Advance the test clock by one source frame.  This keeps the
-         * production path wall-clock based while avoiding a multi-second
-         * wait for the complete retail title movie in CI. */
-        state.dm2MacMovieStartUs =
-            SDL_GetTicksNS() / UINT64_C(1000) -
-            state.dm2MacMovieDecoder.presentation_time_us -
-            state.dm2MacMovieDecoder.frame_duration_us - 1u;
-        M11_GameView_Draw(&state, framebuffer, 320, 200);
+    if (!check_natural_title_movie_completion(&state, framebuffer)) {
+        fprintf(stderr, "Mac Title.MooV did not finish on the authentic source clock\n");
+        M11_GameView_Shutdown(&state);
+        M12_StartupMenu_Destroy(&menuState);
+        return 1;
     }
-
-    state.bootProbeFastForward = 0;
     memset(&aux, 0, sizeof(aux));
     if (state.dm2MacMovieActive ||
         !dm2_v1_boot_startup_menu_aux_pointer_layout(
@@ -387,8 +467,9 @@ int main(void)
         !state.dm2MacMovieActive ||
         state.dm2MacMovieIndex != DM2_V1_MAC_MOVIE_CREDITS ||
         !state.dm2State.startup_credits_active) {
-        fprintf(stderr, "Mac Credits.MooV route was not bound: title_active=%d frame=%d credits_active=%d index=%d rejected=%d\n",
-                state.dm2MacMovieActive, frame,
+        fprintf(stderr, "Mac Credits.MooV route was not bound: title_active=%d title_frame=%u credits_active=%d index=%d rejected=%d\n",
+                state.dm2MacMovieActive,
+                state.dm2MacMovieDecoder.frame_index,
                 state.dm2State.startup_credits_active,
                 state.dm2MacMovieIndex, state.dm2MacMovieRejected);
         M11_GameView_Shutdown(&state);

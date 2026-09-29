@@ -1,5 +1,16 @@
 # Firestaff DONE — DM2
 
+## 2026-09-29 — Verify the complete Mac title film on its source clock
+
+- The authentic retail Mac `Title.MooV` runtime regression now keeps its
+  original QuickTime clock through all 210 video samples and requires the
+  startup menu to be ready at the natural movie/audio handoff. The expected
+  duration is computed from the original per-sample timing table, so the test
+  detects premature playback, a stalled frame sequence and a late menu.
+- The focused test passes against the supplied retail ZIP. It checks source
+  timing and menu state with SDL dummy output, not native-window presentation,
+  audible playback or Retina interaction.
+
 ## 2026-09-29 — Remove PC-9821 support
 
 - Removed the PC-9821 edition from runtime admission, launcher selection and
