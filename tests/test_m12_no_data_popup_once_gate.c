@@ -326,6 +326,35 @@ static int launcher_has_clean_settings_view(const M12_StartupMenuState* state) {
            popup_lines_are_cleared(state);
 }
 
+/* The fixture forces archive enumeration off, but the launcher distinguishes
+ * an installed host reader (actionable opt-in) from a missing reader
+ * (installation guidance). Keep both cases covered without depending on the
+ * developer machine's PATH. */
+static void check_archive_tool_popup(const M12_StartupMenuState* state,
+                                    const char* archiveName,
+                                    const char* missingTools) {
+    if (asset_external_archive_tool_available(archiveName)) {
+        CHECK(state->messageLine1 &&
+              strcmp(state->messageLine1, "ARCHIVE SCANNING IS DISABLED") == 0);
+        CHECK(state->messageLine2 &&
+              strstr(state->messageLine2, archiveName) != NULL &&
+              strstr(state->messageLine2,
+                     "--enable-external-archive-tools") != NULL);
+        CHECK(state->messageLine3 &&
+              strcmp(state->messageLine3,
+                     "RESTART WITH THE OPTION, THEN RESCAN GAME DATA") == 0);
+    } else {
+        CHECK(state->messageLine1 &&
+              strcmp(state->messageLine1, "GAME DATA ARCHIVE NEEDS A TOOL") == 0);
+        CHECK(state->messageLine2 &&
+              strstr(state->messageLine2, archiveName) != NULL &&
+              strstr(state->messageLine2, missingTools) != NULL);
+        CHECK(state->messageLine3 &&
+              strcmp(state->messageLine3,
+                     "INSTALL IT, THEN RESCAN GAME DATA") == 0);
+    }
+}
+
 /* Helper: dismiss whatever popup is currently visible via the same BACK /
  * ACCEPT / ACTION keys the real launcher uses. The destination is whatever
  * messageReturnView the launcher captured when the popup was opened. */
@@ -400,13 +429,7 @@ static void check_missing_archive_tool_popup(void) {
     CHECK(test_unsetenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS"));
 
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
-    CHECK(state.messageLine1 &&
-          strcmp(state.messageLine1, "GAME DATA ARCHIVE NEEDS A TOOL") == 0);
-    CHECK(state.messageLine2 &&
-          strstr(state.messageLine2, "original-media.7z") != NULL &&
-          strstr(state.messageLine2, "7zz/7z/bsdtar") != NULL);
-    CHECK(state.messageLine3 &&
-          strcmp(state.messageLine3, "INSTALL IT, THEN RESCAN GAME DATA") == 0);
+    check_archive_tool_popup(&state, "original-media.7z", "7zz/7z/bsdtar");
     dismiss_message(&state);
     CHECK(launcher_has_clean_main_view(&state));
 }
@@ -489,13 +512,8 @@ static void check_missing_rar_tool_popup(void) {
     CHECK(test_unsetenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS"));
 
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
-    CHECK(state.messageLine1 &&
-          strcmp(state.messageLine1, "GAME DATA ARCHIVE NEEDS A TOOL") == 0);
-    CHECK(state.messageLine2 &&
-          strstr(state.messageLine2, "original-media.rar") != NULL &&
-          strstr(state.messageLine2, "unrar/7zz/7z/bsdtar") != NULL);
-    CHECK(state.messageLine3 &&
-          strcmp(state.messageLine3, "INSTALL IT, THEN RESCAN GAME DATA") == 0);
+    check_archive_tool_popup(&state, "original-media.rar",
+                             "unrar/7zz/7z/bsdtar");
     dismiss_message(&state);
     CHECK(launcher_has_clean_main_view(&state));
 }
