@@ -242,6 +242,13 @@ This establishes preservation of the source table only: it does not prove a
 door-record-to-Structure1B mapping or authorize interaction, collision-state,
 animation, or sensor dispatch.
 
+The production mechanics loader therefore resets, but does not populate, the
+legacy DM1-shaped door-state registry from Structure1B cells. Decoded type-8
+cells remain geometry candidates; the hash-verified retail corpus and static
+tables do not establish that they correspond to Structure1E records or Saturn
+door state. A same-session Saturn trace must prove the cell/table join and
+state consumer before this registry can represent retail doors.
+
 ## Local Japanese post-render title witness — 2026-08-26
 
 A separate, temporary developer capture used the hash-verified Japanese

@@ -1,5 +1,6 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_viewport.h"
+#include "nexus_v1_squares.h"
 #include "firestaff_nexus_v1_boot_profile.h"
 #include "fs_portable_compat.h"
 
@@ -89,6 +90,19 @@ static int count_real_floor_items(void) {
     for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
         for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
             count += nexus_floor_count_at(x, y);
+        }
+    }
+    return count;
+}
+
+static int count_level_square_type(const Nexus_V1_Level* level, uint8_t type) {
+    int x;
+    int y;
+    int count = 0;
+    if (!level) return 0;
+    for (y = 0; y < level->height; ++y) {
+        for (x = 0; x < level->width; ++x) {
+            if (level->squares[y][x] == type) ++count;
         }
     }
     return count;
@@ -743,6 +757,25 @@ int main(void) {
                           nexus_v1_load_level(&item_engine, 1) == 0,
                       "real LEV01 loads for ITEM.IBS floor provenance");
             if (item_engine.level_loaded) {
+                check_int(count_level_square_type(
+                              &item_engine.current_level,
+                              NEXUS_SQUARE_DOOR) > 0,
+                          "real LEV01 contains decoded door-like geometry candidates");
+                check_int(nexus_doors_count() == 0,
+                          "real LEV01 geometry candidates do not create unproven door runtime state");
+                for (i = 1; i < NEXUS_MAX_LEVELS; ++i) {
+                    if (nexus_v1_load_level(&item_engine, i) != 0 ||
+                        !item_engine.level_loaded) {
+                        check_int(0,
+                                  "each real playable Nexus level loads for door registry audit");
+                        continue;
+                    }
+                    check_int(nexus_doors_count() == 0,
+                              "real playable Nexus levels keep unproven door runtime state empty");
+                }
+                check_int(nexus_v1_load_level(&item_engine, 1) == 0 &&
+                              item_engine.level_loaded,
+                          "real LEV01 is restored for floor-item provenance checks");
                 check_int(item_engine.font_source_loaded == 1 &&
                               nexus_v1_font_section_count(&item_engine.font_sections) == 4,
                           "real FONT256.S2D sections are retained as source evidence");

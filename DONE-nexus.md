@@ -1,5 +1,18 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-29 — Keep unproven Structure1B door candidates out of runtime
+
+- The retail DGN parser may retain type-8 Structure1B cells as geometry
+  candidates, but no authenticated Structure1E-to-cell join or Saturn state
+  consumer is established. The production mechanics loader now resets the
+  legacy door registry without populating it from those candidates.
+- The hash-bound real-media boot test confirmed LEV01 contains type-8
+  candidates, then loaded every playable retail level LEV01–LEV15 twice and
+  verified the runtime door registry stayed empty. The separate 16-level
+  Structure1E corpus test also passed twice against TRV2's authentic files.
+  This preserves the source boundary; it does not claim that retail doors are
+  implemented.
+
 ## 2026-09-29 — French retail title corpus receipt
 
 - Pinned the authentic French `TITLE.BIN` SHA-256

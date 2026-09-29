@@ -1808,7 +1808,7 @@ static int nexus_v1_decode_structure1b_cell(const uint8_t *cell) {
         return 0; /* wall / cannot enter */
     }
     if ((flags & 0x0001U) != 0) {
-        return 8; /* door present */
+        return 8; /* door-like geometry candidate; event owner unproven */
     }
     return 1; /* free corridor/floor */
 }

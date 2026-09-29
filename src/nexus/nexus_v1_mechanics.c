@@ -322,9 +322,11 @@ static int mechanics_spawn_creatures_from_dgn(Nexus_V1_Engine *engine,
 }
 
 /* Load real Track 1 mechanics data for the current engine level.
- * Resets and repopulates door/teleporter/stair/pit/altar/floor-item registries
- * from authenticated DGN Structure1F records.  Synthetic fallbacks are blocked
- * when real records are present.
+ * Resets the registries before admitting only source-bound runtime data.
+ * Structure1B door-like geometry is deliberately not copied into the
+ * DM1-shaped door-state registry: no retail source join or Saturn consumer
+ * trace proves that mapping. Synthetic fallbacks are blocked when real
+ * records are present.
  * Source: DMWeb DGN Structure1F layout, DM1 MOVESENS.C/CHAMPION.C item use,
  *         ReDMCSB DUNGEON.C / COMMAND.C.
  * Returns 0 on success, -1 on bad arguments. */
@@ -342,14 +344,10 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
     has_real_data = level->geometry_info.structure1f_valid &&
                     level->structure1f_entry_count >= 0;
 
+    /* Keep the API available for explicit NEXUS_SRC_NONE compatibility
+     * callers, but do not interpret Structure1B geometry candidates as
+     * closed doors. The authored Structure1E table has no proven cell join. */
     nexus_doors_init();
-    {
-        int dy, dx;
-        for (dy = 0; dy < level->height; ++dy)
-            for (dx = 0; dx < level->width; ++dx)
-                if (level->squares[dy][dx] == NEXUS_SQUARE_DOOR)
-                    nexus_doors_register(dx, dy);
-    }
     nexus_teleporters_init();
     nexus_stairs_init();
     nexus_pits_init();
