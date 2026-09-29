@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <SDL3/SDL.h>
 
 static uint8_t *read_original_member(const char *archive, const char *name,
                                      size_t *out_size)
@@ -50,6 +51,8 @@ int main(void)
         assert(dm2_v1_mve_presentation_owner_init(&presentation, bytes,
                                                    byte_count) == 1);
         assert(dm2_v1_mve_audio_sdl_owner_open(&audio) == 1);
+        assert(audio.master_volume == 128);
+        assert(dm2_v1_mve_audio_sdl_owner_set_host_paused(&audio, 1));
         for (;;) {
             const int next = dm2_v1_mve_presentation_owner_next_source_pcm(
                 &presentation, &frame);
@@ -64,9 +67,35 @@ int main(void)
         assert(audio.queued_source_packets == packet_count &&
                audio.queued_source_bytes == expected_bytes[movie_index] &&
                audio.queued_sample_frames == expected_bytes[movie_index] / 2u);
+        {
+            static const int volumes[] = {64, 0, -1, 256, 128};
+            static const int expected[] = {64, 0, 0, 128, 128};
+            unsigned check;
+            SDL_AudioStream* stream = (SDL_AudioStream*)audio.sdl_stream;
+            int queued = stream ? SDL_GetAudioStreamQueued(stream) : 0;
+            for (check = 0; check < sizeof(volumes) / sizeof(volumes[0]); ++check) {
+                assert(dm2_v1_mve_audio_sdl_owner_set_master_volume(&audio, volumes[check]));
+                assert(audio.master_volume == expected[check] && audio.host_paused);
+                assert(audio.queued_source_packets == packet_count &&
+                       audio.queued_source_bytes == expected_bytes[movie_index] &&
+                       audio.queued_sample_frames == expected_bytes[movie_index] / 2U &&
+                       audio.next_source_sequence == packet_count);
+                if (stream) {
+                    assert(SDL_GetAudioStreamGain(stream) == (float)expected[check] / 128.0f);
+                    assert(SDL_AudioStreamDevicePaused(stream));
+                    assert(SDL_GetAudioStreamQueued(stream) == queued);
+                } else {
+                    assert(audio.output_unavailable);
+                }
+            }
+            assert(dm2_v1_mve_audio_sdl_owner_set_host_paused(&audio, 0));
+            assert(!audio.host_paused);
+            if (stream) assert(!SDL_AudioStreamDevicePaused(stream));
+        }
         dm2_v1_mve_audio_sdl_owner_close(&audio);
+        assert(!audio.initialized && !audio.sdl_stream && audio.master_volume == 0);
         free(bytes);
     }
-    puts("PASS: DM2 MVE SDL owner queues only original U8 stereo PCM");
+    puts("PASS: DM2 MVE SDL owner preserves original PCM and pause under live master gain");
     return 0;
 }

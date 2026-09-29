@@ -28,6 +28,13 @@ void dm2_v1_sound_sdl_backend_describe(DM2_V1_SoundPlaybackBackend *out_backend)
  * Returns zero only if an SDL operation fails. */
 int dm2_v1_sound_sdl_backend_set_host_paused(int paused);
 
+/* Host preferences are independent of source voice/positional attenuation.
+ * Values clamp to 0..128 and survive close for a subsequent lazy open.
+ * Changing gain never pauses or clears voices. */
+int dm2_v1_sound_sdl_backend_set_volumes(int master, int sfx);
+/* Actual SDL gain when open; configured gain before opening. */
+float dm2_v1_sound_sdl_backend_get_gain(void);
+
 /* Observability for probes/tests. */
 int dm2_v1_sound_sdl_backend_is_ready(void);
 uint64_t dm2_v1_sound_sdl_backend_mixed_frames(void);

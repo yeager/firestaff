@@ -32,6 +32,7 @@ static DM2_V1_SdlSoundVoice g_dm2_sdl_voices[DM2_V1_SOUND_VOICE_MAX];
 static uint64_t g_dm2_sdl_mixed_frames;
 static uint32_t g_dm2_sdl_started_voices;
 static int g_dm2_sdl_ready;
+static float g_dm2_sdl_host_gain = 1.0f;
 static int g_dm2_sdl_host_paused;
 static int g_dm2_sdl_paused_before_host;
 
@@ -101,7 +102,8 @@ static int dm2_v1_sdl_backend_open(void *ctx)
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return 0;
     }
-    if (!SDL_ResumeAudioStreamDevice(g_dm2_sdl_stream)) {
+    if (!SDL_SetAudioStreamGain(g_dm2_sdl_stream, g_dm2_sdl_host_gain) ||
+        !SDL_ResumeAudioStreamDevice(g_dm2_sdl_stream)) {
         SDL_DestroyAudioStream(g_dm2_sdl_stream);
         g_dm2_sdl_stream = NULL;
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -196,6 +198,23 @@ void dm2_v1_sound_sdl_backend_describe(DM2_V1_SoundPlaybackBackend *out_backend)
     out_backend->voice_active = dm2_v1_sdl_backend_voice_active;
     out_backend->stop_all = dm2_v1_sdl_backend_stop_all;
     out_backend->close = dm2_v1_sdl_backend_close;
+}
+
+int dm2_v1_sound_sdl_backend_set_volumes(int master, int sfx)
+{
+    if (master < 0) master = 0;
+    if (master > 128) master = 128;
+    if (sfx < 0) sfx = 0;
+    if (sfx > 128) sfx = 128;
+    g_dm2_sdl_host_gain = ((float)master / 128.0f) * ((float)sfx / 128.0f);
+    return !g_dm2_sdl_stream ||
+        SDL_SetAudioStreamGain(g_dm2_sdl_stream, g_dm2_sdl_host_gain);
+}
+
+float dm2_v1_sound_sdl_backend_get_gain(void)
+{
+    return g_dm2_sdl_stream ? SDL_GetAudioStreamGain(g_dm2_sdl_stream)
+                            : g_dm2_sdl_host_gain;
 }
 
 int dm2_v1_sound_sdl_backend_set_host_paused(int paused)

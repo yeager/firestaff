@@ -12,6 +12,7 @@ int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner)
 
     if (!owner) return 0;
     memset(owner, 0, sizeof(*owner));
+    owner->master_volume = 128;
     if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
         owner->initialized = 1;
         owner->output_unavailable = 1;
@@ -105,6 +106,18 @@ int dm2_v1_mve_audio_sdl_owner_set_host_paused(
     }
     owner->host_paused = paused;
     return 1;
+}
+
+int dm2_v1_mve_audio_sdl_owner_set_master_volume(
+    DM2_V1_MveAudioSdlOwner *owner, int volume)
+{
+    if (!owner || !owner->initialized) return 0;
+    if (volume < 0) volume = 0;
+    if (volume > 128) volume = 128;
+    owner->master_volume = volume;
+    return !owner->sdl_stream ||
+        SDL_SetAudioStreamGain((SDL_AudioStream *)owner->sdl_stream,
+                                (float)volume / 128.0f);
 }
 
 void dm2_v1_mve_audio_sdl_owner_close(DM2_V1_MveAudioSdlOwner *owner)

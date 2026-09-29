@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Wired DM2 launcher master/SFX gain to the GDAT effect backend
+  before lazy device open, after binding the authenticated source session.
+  The device applies user gain separately from original voice attenuation;
+  mute preserves source voice progression. DOS MVE's separate mixed-audio
+  stream receives master/mute before its first PCM packet. Runtime setters
+  retain queue/pause ownership and the no-device MVE path retains source
+  receipts. Authentic DOS launcher checks pass 49 assertions, including
+  changed gain and muted/unmuted relaunch. Real GDAT playback and complete
+  intro/end MVE packet tests pass, including forced no-device delivery;
+  Mac retail movie regressions also pass. Narrow app build passes.
+
 - 2026-09-29: Connected master/music gain to the dedicated CDDA stream.
   FM Towns CD music now responds to either mute and to volume changes after
   PCM is queued, without clearing its position or changing pause ownership.

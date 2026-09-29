@@ -58,6 +58,7 @@
 #endif
 
 #include "m11_game_view.h"
+#include "dm2_v1_sound_sdl_backend.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -390,6 +391,10 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     menu.gameOptions[2].cheatsEnabled = 1;
     menu.gameOptions[2].gameSpeed = 2;
     M11_QolRuntime_SetSpeedMultiplier(200);
+    menu.settings.audioMasterVolume = 64;
+    menu.settings.audioSfxVolume = 32;
+    menu.settings.audioMuted = 0;
+    (void)dm2_v1_sound_sdl_backend_set_volumes(128, 128);
     menu.settings.autoMapEnabled = 0;
     menu.settings.minimapEnabled = 1;
     menu.settings.minimapSize = 96;
@@ -413,6 +418,13 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                 "real DM2 M12 selected-entry path opens M11");
+    expect_true(dm2_v1_sound_sdl_backend_get_gain() > 0.124f &&
+                    dm2_v1_sound_sdl_backend_get_gain() < 0.126f,
+                "real DM2 launcher replaces stale master/SFX gain before source playback");
+    expect_true(view.dm2DosMvePresenter.audio.sdl_stream &&
+                    SDL_GetAudioStreamGain((SDL_AudioStream*)
+                        view.dm2DosMvePresenter.audio.sdl_stream) == 0.5f,
+                "real DM2 intro receives master gain before first source PCM");
     expect_true(M11_QolRuntime_GetSpeedMultiplier() == 150,
                 "real DM2 launch applies selected speed to live timing");
     expect_true(!M11_QolRuntime_GetAutoMapEnabled() &&
@@ -529,6 +541,24 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                         "authentic DOS MVE advances again after focus resume");
         }
     }
+    M11_GameView_Shutdown(&view);
+    M11_GameView_Init(&view);
+    menu.settings.audioMuted = 1;
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1 &&
+                    dm2_v1_sound_sdl_backend_get_gain() == 0.0f,
+                "real DM2 relaunch applies launcher mute to the effects backend");
+    expect_true(view.dm2DosMvePresenter.audio.sdl_stream &&
+                    SDL_GetAudioStreamGain((SDL_AudioStream*)
+                        view.dm2DosMvePresenter.audio.sdl_stream) == 0.0f,
+                "real DM2 launcher mute also silences the authentic intro stream");
+    M11_GameView_Shutdown(&view);
+    M11_GameView_Init(&view);
+    menu.settings.audioMuted = 0;
+    menu.settings.audioMasterVolume = 128;
+    menu.settings.audioSfxVolume = 128;
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1 &&
+                    dm2_v1_sound_sdl_backend_get_gain() == 1.0f,
+                "real DM2 relaunch replaces previous muted effects preferences");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM2 audio`: launcher master/SFX settings now reach the GDAT effect device.
+  Master volume and mute also apply to the separate DOS intro audio stream
+  before playback starts, while preserving source timing and paused audio.
+
 - `CD music`: master and music volume now affect the CDDA stream, including
   mute and music already queued for playback, without resetting its position.
 

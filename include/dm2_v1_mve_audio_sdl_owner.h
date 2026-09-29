@@ -28,6 +28,7 @@ typedef struct {
      * order so a missing device cannot suppress the retail video/menu; no
      * substitute samples, mixer or resampler are introduced. */
     int output_unavailable;
+    int master_volume;
     int host_paused;
     int paused_before_host;
 } DM2_V1_MveAudioSdlOwner;
@@ -51,6 +52,12 @@ int dm2_v1_mve_audio_sdl_owner_queue(DM2_V1_MveAudioSdlOwner *owner,
  * state recorded on entry. Returns zero only if an SDL operation fails. */
 int dm2_v1_mve_audio_sdl_owner_set_host_paused(
     DM2_V1_MveAudioSdlOwner *owner, int paused);
+
+/* Movie PCM combines music and effects: apply only host master gain.
+ * Clamps to 0..128 without changing queued PCM, source receipts or pause.
+ * No-device owners retain the setting and their original source timeline. */
+int dm2_v1_mve_audio_sdl_owner_set_master_volume(
+    DM2_V1_MveAudioSdlOwner *owner, int volume);
 
 /* Destroy only the stream/subsystem reference opened above. */
 void dm2_v1_mve_audio_sdl_owner_close(DM2_V1_MveAudioSdlOwner *owner);

@@ -16,6 +16,10 @@
 #include "dm2_v1_sound_sdl_backend.h"
 #include "firestaff_zip_extract.h"
 
+/* Assertions invoke runtime operations, including in Release builds. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,6 +144,13 @@ int main(void)
     /* Bind the real SDL3 backend (SDL_AUDIODRIVER=dummy from ctest). */
     dm2_v1_sound_sdl_backend_describe(&backend);
     dm2_v1_sound_bind_playback_backend(&backend);
+    assert(dm2_v1_sound_sdl_backend_set_volumes(64, 32));
+    assert(dm2_v1_sound_sdl_backend_get_gain() == 0.125f);
+    /* Open before queueing the authentic voice so gain/host-pause checks
+     * cannot race this corpus's shortest sample completing. */
+    assert(backend.open(backend.ctx));
+    assert(dm2_v1_sound_sdl_backend_get_gain() == 0.125f);
+    assert(dm2_v1_sound_sdl_backend_set_host_paused(1));
 
     /* ── Voice 1: full audible playback of the smallest verified entry ── */
     assert(dm2_v1_sound_play_gdat_entry(small_cat, small_idx, small_field,
@@ -153,10 +164,29 @@ int main(void)
     assert(dm2_v1_sound_sdl_backend_started_voice_count() == 1u);
     frames_before = dm2_v1_sound_sdl_backend_mixed_frames();
     assert(dm2_v1_sound_voice_active(play.voice_slot));
+    {
+        static const int master[] = {0, 128, -1, 256, 64};
+        static const int sfx[] = {128, 0, 256, 256, 32};
+        static const float expected[] = {0.0f, 0.0f, 0.0f, 1.0f, 0.125f};
+        unsigned check;
+        for (check = 0; check < sizeof(expected) / sizeof(expected[0]); ++check) {
+            assert(dm2_v1_sound_sdl_backend_set_volumes(master[check], sfx[check]));
+            assert(dm2_v1_sound_sdl_backend_get_gain() == expected[check]);
+            SDL_Delay(20U);
+            assert(dm2_v1_sound_voice_active(play.voice_slot));
+            assert(dm2_v1_sound_sdl_backend_mixed_frames() == frames_before);
+            assert(dm2_v1_sound_sdl_backend_started_voice_count() == 1U);
+        }
+        /* Muting changes gain only: once host pause ends, the original
+         * voice must still complete instead of being cleared or paused. */
+        assert(dm2_v1_sound_sdl_backend_set_volumes(128, 0));
+        assert(dm2_v1_sound_sdl_backend_set_host_paused(0));
+    }
     /* The dummy driver consumes in real time; the shortest sample is well
      * under one second at 6000 Hz, so the voice must complete. */
     assert(wait_for_voice_idle(play.voice_slot, 5000));
     assert(dm2_v1_sound_sdl_backend_mixed_frames() > frames_before);
+    assert(dm2_v1_sound_sdl_backend_set_volumes(128, 128));
 
     /* ── Legacy sound_id play path resolves the raw binding from GDAT ── */
     {
@@ -202,6 +232,12 @@ int main(void)
                                         127, &play) == 1);
     assert(play.voice_slot == 0u);
     dm2_v1_sound_stop_all_voices();
+
+    assert(dm2_v1_sound_sdl_backend_set_volumes(64, 32));
+    dm2_v1_sound_sdl_backend_close();
+    assert(dm2_v1_sound_sdl_backend_get_gain() == 0.125f);
+    assert(backend.open(backend.ctx));
+    assert(dm2_v1_sound_sdl_backend_get_gain() == 0.125f);
 
     printf("PASS: SDL playback backend verified against real GRAPHICS.DAT "
            "(small entry %u/%u/%u len=%lu, large entry %u/%u/%u len=%lu)\n",

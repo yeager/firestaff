@@ -1445,7 +1445,7 @@ static void m11_dm2_cdda_stop(void *ctx)
     M11_Audio_StopCdda(&s->audioState);
 }
 
-static void m11_dm2_bind_verified_sound_playback(void)
+static void m11_dm2_bind_verified_sound_playback(M11_GameViewState* state)
 {
     static DM2_V1_SoundPlaybackBackend backend;
 
@@ -1455,6 +1455,12 @@ static void m11_dm2_bind_verified_sound_playback(void)
      * admitted, because an unverified file must never yield audible output. */
     dm2_v1_sound_sdl_backend_describe(&backend);
     dm2_v1_sound_bind_playback_backend(&backend);
+    /* Bind may close the preceding session. Copy this launch's host gains
+     * afterwards, before lazy OpenAudio, keeping source voice attenuation. */
+    if (state) {
+        (void)dm2_v1_sound_sdl_backend_set_volumes(
+            state->audioState.masterVolume, state->audioState.sfxVolume);
+    }
 }
 
 static void m11_dm2_copy_printable(unsigned char *dst,
@@ -2113,6 +2119,10 @@ static int m11_dm2_bind_dos_intro(M11_GameViewState *state)
         state->dm2DosMveIntroRejected = 1;
         return 0;
     }
+    /* Movie PCM is already a source mix. Master/mute applies before its
+     * first packet; separate music/SFX gains cannot split that mix. */
+    (void)dm2_v1_mve_audio_sdl_owner_set_master_volume(
+        &state->dm2DosMvePresenter.audio, state->audioState.masterVolume);
     state->dm2DosMveIntroActive = 1;
     return 1;
 }
@@ -25668,7 +25678,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             m11_set_status(state, NULL, NULL);
             return 0;
         }
-        m11_dm2_bind_verified_sound_playback();
+        m11_dm2_bind_verified_sound_playback(state);
         dm2_v1_runtime_set_cdda_callback(
             m11_dm2_cdda_play, m11_dm2_cdda_stop, state);
         if (spec->savePath && spec->savePath[0] != '\0') {
