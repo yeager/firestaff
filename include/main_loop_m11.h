@@ -172,6 +172,11 @@ M12_MenuInput M11_TheronTouchButtonInput(int longPress);
 int M11_ApplyIntroAudioPreferences(M11_AudioState* audio,
                                    const M12_StartupMenuState* menu);
 
+/* Bind only the authenticated SONG.DAT beside the selected GRAPHICS.DAT.
+ * Missing/incompatible companions clear any opportunistic Init binding. */
+int M11_BindIntroSongForSelectedGraphics(M11_AudioState* audio,
+                                          const char* graphicsPath);
+
 /* Headless video has no desktop focus; all other drivers honor the setting. */
 int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver);
 

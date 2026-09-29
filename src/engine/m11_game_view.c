@@ -7824,6 +7824,10 @@ static void m11_dm1_rebind_source_song(M11_GameViewState *state,
     if (!state) return;
     state->dm1MusicSourceBound = 0;
     memset(&state->dm1MusicSource, 0, sizeof(state->dm1MusicSource));
+    /* A non-PC34/unsupported selected path must also discard any song
+     * admitted opportunistically during Init, before path validation can
+     * short-circuit the explicit companion binding below. */
+    (void)M11_Audio_BindOriginalSongPath(&state->audioState, NULL);
     if (!m11_dm1_companion_song_path(graphics_path, song_path,
                                      sizeof(song_path)) ||
         !M11_Audio_BindOriginalSongPath(&state->audioState, song_path) ||

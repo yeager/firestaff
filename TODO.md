@@ -2,8 +2,7 @@
 
 - Run the CSB temporary-intro volume regression with the authenticated PC34
   package. The source-bound launcher test is present but skips on the current
-  local corpus. Also audit explicit selected SONG.DAT binding in temporary
-  DM1 title owners, which still rely on initialization-time discovery.
+  local corpus.
 
 - Complete desktop end-to-end verification of Accessibility AUTO PAUSE.
   DM1/CSB/DM2 focus policy, independent timer/focus pause ownership, source

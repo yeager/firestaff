@@ -2588,6 +2588,31 @@ static int m11_prepare_swsh_source_clock_after_launcher_handoff(
     return vblankMs == 0U || !m11_delay_ms_with_intro_event_pump(vblankMs);
 }
 
+int M11_BindIntroSongForSelectedGraphics(M11_AudioState* audio,
+                                          const char* graphicsPath) {
+    static const char graphicsName[] = "GRAPHICS.DAT";
+    static const char songName[] = "SONG.DAT";
+    char songPath[M11_GAME_VIEW_PATH_CAPACITY];
+    DM1_V1_F0740F0743MusicSourcePc34 source;
+    size_t length, prefix;
+    if (!audio || !audio->initialized) return 0;
+    /* Match m11_dm1_rebind_source_song: the companion belongs to this
+     * selected asset owner. MUSIC.C F0740-F0743:559-672 routing is admitted
+     * by the existing PC34 SONG.DAT hash/sequence receipt, never by a search
+     * for another installed edition. Clearing first also stops stale PCM. */
+    (void)M11_Audio_BindOriginalSongPath(audio, NULL);
+    if (!graphicsPath) return 0;
+    length = strlen(graphicsPath);
+    if (length <= sizeof(graphicsName) - 1U ||
+        strcmp(graphicsPath + length - (sizeof(graphicsName) - 1U), graphicsName)) return 0;
+    prefix = length - (sizeof(graphicsName) - 1U);
+    if (prefix + sizeof(songName) > sizeof(songPath)) return 0;
+    memcpy(songPath, graphicsPath, prefix);
+    memcpy(songPath + prefix, songName, sizeof(songName));
+    if (!dm1_v1_f0740_f0743_bind_song_dat_pc34(songPath, &source)) return 0;
+    return M11_Audio_BindOriginalSongPath(audio, songPath);
+}
+
 int M11_ApplyIntroAudioPreferences(M11_AudioState* audio,
                                    const M12_StartupMenuState* menu) {
     int master, music, sfx;
@@ -2870,7 +2895,9 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     if (M11_Audio_Init(&titleAudio)) {
         titleAudioInitialized = 1;
         (void)M11_ApplyIntroAudioPreferences(&titleAudio, menuState);
-        (void)M11_Audio_PlayTitleMusic(&titleAudio);
+        if (M11_BindIntroSongForSelectedGraphics(&titleAudio,
+                gameView ? gameView->assetLoader.graphicsDatPath : NULL))
+            (void)M11_Audio_PlayTitleMusic(&titleAudio);
     }
 
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
@@ -3107,7 +3134,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     if (M11_Audio_Init(&titleAudio)) {
         titleAudioInitialized = 1;
         (void)M11_ApplyIntroAudioPreferences(&titleAudio, menuState);
-        (void)M11_Audio_PlayTitleMusic(&titleAudio);
+        if (M11_BindIntroSongForSelectedGraphics(&titleAudio,
+                gameView ? gameView->assetLoader.graphicsDatPath : NULL))
+            (void)M11_Audio_PlayTitleMusic(&titleAudio);
     }
 
     g_m11_intro_local_audio = &titleAudio;

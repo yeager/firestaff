@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Bound both temporary DM1 title-music owners to authenticated
+  SONG.DAT beside the selected GRAPHICS.DAT, including virtual archive paths.
+  Missing/incompatible companions clear initialization-time fallback music;
+  the runtime binder also clears before path-validation short circuits.
+  The original-media SWSH/SONG test verifies exact selection, invalid rebind,
+  queued-music removal and no resurrection on host resume. DM1 launcher
+  coverage remains 248 passed with no skips across four presentation modes.
+  Narrow app build and refreshed localization source references pass.
+
 - 2026-09-29: Applied launcher master/music/SFX and mute before the four
   temporary DM1/CSB SWSH/title audio owners queue their first source sound.
   Authentic DM1 SONG.DAT/SWSH checks pass with reduced gain, mute and retained

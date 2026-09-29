@@ -136,6 +136,36 @@ int main(void) {
                  "missing selected SONG.DAT clears an earlier default source");
     ok &= expect(M11_Audio_BindOriginalSongPath(&state, expectedSongPath),
                  "selected source SONG.DAT can be rebound after a failed receipt");
+    ok &= expect(M11_BindIntroSongForSelectedGraphics(&state, expectedGraphicsPath) &&
+                     strcmp(state.originalSongDatPath, expectedSongPath) == 0,
+                 "temporary title owner binds only the selected original archive companion");
+    if (M11_Audio_IsAvailable(&state)) {
+        ok &= expect(M11_Audio_SetHostPaused(&state, 1) && M11_Audio_PlayTitleMusic(&state) &&
+                         state.musicStream &&
+                         SDL_GetAudioStreamQueued((SDL_AudioStream*)state.musicStream) > 0,
+                     "selected original song is queued under host pause before invalid rebind");
+    }
+    ok &= expect(!M11_BindIntroSongForSelectedGraphics(&state,
+                     "/nonexistent-selected-edition/GRAPHICS.DAT") &&
+                     !state.originalSongAvailable && !state.titleMusic.samples &&
+                     state.originalSongDatPath[0] == '\0' && !M11_Audio_PlayTitleMusic(&state),
+                 "missing selected companion clears an earlier valid song without default fallback");
+    if (state.musicStream) {
+        ok &= expect(SDL_GetAudioStreamQueued((SDL_AudioStream*)state.musicStream) == 0 &&
+                         SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.musicStream) &&
+                         !state.hostResumeMusicStream && state.hostPaused,
+                     "invalid selected companion clears queued original PCM and retains pause");
+        ok &= expect(M11_Audio_SetHostPaused(&state, 0) &&
+                         SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.musicStream),
+                     "host resume cannot resurrect invalid selected companion PCM");
+    }
+    ok &= expect(M11_BindIntroSongForSelectedGraphics(&state, expectedGraphicsPath),
+                 "selected original song can be rebound after a missing edition");
+    ok &= expect(!M11_BindIntroSongForSelectedGraphics(&state, NULL) &&
+                     !state.originalSongAvailable && !M11_Audio_PlayTitleMusic(&state),
+                 "missing selected graphics owner stays silent despite installed original song");
+    ok &= expect(M11_BindIntroSongForSelectedGraphics(&state, expectedGraphicsPath),
+                 "original song restored for intro volume and source playback checks");
     ok &= check_intro_preferences(&state);
     ok &= expect(M11_Audio_PlayDm1SwshDosoundProgram(&state, program,
                                                       (int)bytes, 20u),

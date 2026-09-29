@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 intro music`: title playback uses the selected installation's verified
+  SONG.DAT. Missing or incompatible source music clears any prior binding
+  instead of borrowing music from another installed edition.
+
 - `Intro audio`: DM1/CSB temporary swoosh and title playback now honors launcher
   volume and mute before starting. DM2 Mac movies use master volume for their
   complete audio mix, matching DOS movies; Music zero no longer suppresses
