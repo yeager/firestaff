@@ -62,6 +62,11 @@ data.
    traces remain outside Git at
    `/home/trv2/work/theron-x11-auth-capture-20260929/capture/`; these negative
    transport receipts authorize no level or gameplay semantics.
+   A later read-only trv2 readiness check on 2026-09-29 found an accessible
+   X.Org display on `:0`, `/home/trv2/.Xauthority`, Mednafen, `xdotool`, and
+   authentic US/JP Track 02 media. The SSH environment itself has no `DISPLAY`
+   set. No new emulator process or gameplay capture was started; the existing
+   transport-consumer and strict VDC evidence gates remain open.
 
 2. **Complete a real dungeon transaction and progress save.** Bind the quest
    artifact's name, object occurrence, pickup, exit, and next-chapter handoff
