@@ -11,6 +11,9 @@
 - The hash-verified authentic US and JP Track 02 probe passed: it decoded 171
   US and 170 JP stairs across the campaign; 39 US and 42 JP stairs had a
   qualifying adjacent approach, and all 81 stayed transactionally blocked.
+  The census also checks active-creature occupancy at both the stair target
+  and its approach, since movement resolves combat before stairs; neither
+  edition had an overlapping creature on a tested route.
   The probe asserts both regional census totals, so an empty or truncated
   approach selection cannot pass. Every dungeon loaded in both editions, and
   the focused CTest passed 1/1 against installed original media. This improves

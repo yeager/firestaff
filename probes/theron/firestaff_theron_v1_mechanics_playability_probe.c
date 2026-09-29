@@ -193,6 +193,19 @@ static int find_adjacent_floor(const Theron_V1_Level *level,
     return 0;
 }
 
+static int active_creature_at(const Theron_V1_World *world,
+                              int dungeon_id, int level,
+                              int x, int y) {
+    for (int i = 0; i < world->creature_count; ++i) {
+        const Theron_V1_Creature *creature = &world->creatures[i];
+        if (creature->dungeon_id == dungeon_id &&
+            creature->level == level && creature->x == x &&
+            creature->y == y && (creature->flags & THERON_CF_ACTIVE))
+            return 1;
+    }
+    return 0;
+}
+
 static int find_adjacent_door_approach(const Theron_V1_Level *level,
                                        int sx, int sy,
                                        int *out_x, int *out_y) {
@@ -746,6 +759,8 @@ static void test_real_full_dungeon_and_stairs(
     size_t sector_count = 0u, user_data_size = 0u, copied_size = 0u;
     int authentic_stair_cells = 0;
     int tested_stair_cells = 0;
+    int stairs_overlapped_by_active_creature = 0;
+    int approaches_overlapped_by_active_creature = 0;
     int blocked_stair_cells = 0;
     int loaded_dungeons = 0;
     int expected_stair_cells = 0;
@@ -812,20 +827,35 @@ static void test_real_full_dungeon_and_stairs(
                                              &approach_x, &approach_y))
                         continue;
 
+                    /* Movement resolves active-creature combat before stair
+                     * semantics. Do not count a collision as proof that a
+                     * real stair remains transactionally fail-closed. */
+                    if (active_creature_at(world, dungeon_id, level_index,
+                                           x, y)) {
+                        ++stairs_overlapped_by_active_creature;
+                        continue;
+                    }
+                    if (active_creature_at(world, dungeon_id, level_index,
+                                           approach_x, approach_y)) {
+                        ++approaches_overlapped_by_active_creature;
+                        continue;
+                    }
+
                     direction = direction_from_delta(
                         x - approach_x, y - approach_y);
                     world->current_level = level_index;
-                world->party.leader_x = approach_x;
-                world->party.leader_y = approach_y;
-                world->party.leader_dir = direction;
-                before = stair_movement_snapshot(world);
-                query = theron_v1_get_move_result(world, direction);
-                if (query == THERON_MOVE_BLOCKED &&
-                    stair_movement_state_matches(world, &before) &&
-                    theron_v1_move_party_original_command(
-                        world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
-                        THERON_MOVE_BLOCKED &&
-                    stair_movement_state_matches(world, &before)) {
+                    world->party.leader_x = approach_x;
+                    world->party.leader_y = approach_y;
+                    world->party.leader_dir = direction;
+                    before = stair_movement_snapshot(world);
+                    query = theron_v1_get_move_result(world, direction);
+                    if (query == THERON_MOVE_BLOCKED &&
+                        stair_movement_state_matches(world, &before) &&
+                        theron_v1_move_party_original_command(
+                            world,
+                            THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+                            THERON_MOVE_BLOCKED &&
+                        stair_movement_state_matches(world, &before)) {
                         ++blocked_stair_cells;
                     }
                     ++tested_stair_cells;
@@ -836,6 +866,9 @@ static void test_real_full_dungeon_and_stairs(
     test_authentic_door_boundaries(user_data, user_data_size, variant);
     printf("  authentic stair cells=%d, approached and tested=%d, ",
            authentic_stair_cells, tested_stair_cells);
+    printf("active-creature overlap stair/approach=%d/%d, ",
+           stairs_overlapped_by_active_creature,
+           approaches_overlapped_by_active_creature);
     printf("query/move fail-closed and transactional=%d\n",
            blocked_stair_cells);
     CHECK_INT("all seven authentic campaign dungeons load for stair checks",
@@ -846,6 +879,10 @@ static void test_real_full_dungeon_and_stairs(
               tested_stair_cells, expected_tested_stair_cells);
     CHECK_INT("every approachable authentic stair fails closed atomically",
               tested_stair_cells, blocked_stair_cells);
+    CHECK_INT("no authentic stair target is obscured by active combat",
+              stairs_overlapped_by_active_creature, 0);
+    CHECK_INT("no authentic stair approach is obscured by active combat",
+              approaches_overlapped_by_active_creature, 0);
     free(user_data);
     free(world);
 }
