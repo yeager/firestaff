@@ -204,6 +204,11 @@ int main(void) {
             "デフィアントシールド", "タザブーツ", "タザグリーブ",
             "ソウルケージ", "タザアーマー", "タザヘルメット", "復讐の剣"
         };
+        static const char *const retrieval_expected[] = {
+            "ディフィアント・シ－ルド", "タザ・ブ－ツ", "タザ・グリ－ブ",
+            "ソウルケ－ジ", "タザ・ア－マ－", "タザ・ヘルメット",
+            "復讐の剣"
+        };
         unsigned int i;
         if (!bind_real_retrieval(world, jp_path, 1)) {
             fputs("FAIL: could not bind authentic JP retrieval text\n", stderr);
@@ -238,15 +243,50 @@ int main(void) {
                 free(world);
                 return 1;
             }
+            memset(&world->track02_item_names[i], 0,
+                   sizeof(world->track02_item_names[i]));
+            if (theron_v1_chapter_marker_compute_world(
+                    &profile, world, NULL, &marker) != 0 ||
+                strstr(marker.quest_summary, retrieval_expected[i]) == NULL ||
+                strstr(marker.quest_summary, "source name unavailable") !=
+                    NULL) {
+                fprintf(stderr,
+                        "FAIL: authentic JP retrieval fallback %u failed: %s\n",
+                        i + 1u, marker.quest_summary);
+                free(world);
+                return 1;
+            }
+            {
+                uint8_t saved_control =
+                    world->track02_retrieval_text.raw_messages[i][0];
+                world->track02_retrieval_text.raw_messages[i][0] = 0u;
+                if (theron_v1_chapter_marker_compute_world(
+                        &profile, world, NULL, &marker) != 0 ||
+                    strstr(marker.quest_summary,
+                           "source name unavailable") == NULL) {
+                    fputs("FAIL: malformed JP retrieval framing was accepted\n",
+                          stderr);
+                    free(world);
+                    return 1;
+                }
+                world->track02_retrieval_text.raw_messages[i][0] =
+                    saved_control;
+            }
+            if (!bind_real_bank(world, jp_path, 1, i + 1u)) {
+                fputs("FAIL: could not restore authentic JP item-name bank\n",
+                      stderr);
+                free(world);
+                return 1;
+            }
         }
     } else {
         puts("SKIP: authentic JP Track 02 name banks are not staged");
     }
     free(world);
     if (have_us && have_jp) {
-        puts("PASS: production marker uses real US text and converts all seven authentic JP names");
+        puts("PASS: production marker uses authentic US/JP retrieval text and all seven JP item-name records");
     } else if (have_jp) {
-        puts("PASS: production marker converts all seven authentic JP names");
+        puts("PASS: production marker converts seven authentic JP item-name and retrieval records");
     } else {
         puts("PASS: production marker uses authentic US text");
     }

@@ -185,8 +185,43 @@ static const char *quest_item_retrieval_name(
         buffer[end - start] = '\0';
         return buffer;
     }
-    /* JP bytes carry HuC6280 text-control framing and are not yet mapped to
-     * a proven host glyph stream; leave the name unavailable. */
+    if (world->track02_retrieval_text.variant == 1) {
+        size_t first_separator = size;
+        size_t second_separator = size;
+        if (size < 6u || bytes[0] != 0x81u || bytes[1] != 0x96u)
+            return NULL;
+        for (i = 2u; i + 1u < size; ++i) {
+            if (bytes[i] == 0x81u && bytes[i + 1u] == 0x8fu) {
+                if (first_separator == size)
+                    first_separator = i;
+                else {
+                    second_separator = i;
+                    break;
+                }
+            }
+        }
+        if (first_separator == size || second_separator == size ||
+            second_separator <= first_separator + 2u)
+            return NULL;
+        start = first_separator + 2u;
+        end = second_separator;
+        for (i = start; i < end;) {
+            uint8_t lead = bytes[i++];
+            if (lead >= 0x20u && lead <= 0x7eu) continue;
+            if (lead >= 0xa1u && lead <= 0xdfu) continue;
+            if (!((lead >= 0x81u && lead <= 0x9fu) ||
+                  (lead >= 0xe0u && lead <= 0xfcu)) || i >= end)
+                return NULL;
+            {
+                uint8_t trail = bytes[i++];
+                if (trail < 0x40u || trail > 0xfcu || trail == 0x7fu)
+                    return NULL;
+            }
+        }
+        return firestaff_cp932_to_utf8((const char *)(bytes + start),
+                                       end - start, buffer, buffer_size) >= 0
+            ? buffer : NULL;
+    }
     return NULL;
 #else
     (void)world;
