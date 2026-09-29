@@ -1,15 +1,17 @@
 # Firestaff — Unreleased
 
+# Firestaff v3.0.351
+
 ## User-facing changes
 
-- `DM1 PC 3.4 startup`: play the source-owned `GRAPHICS.DAT` C001 title sequence
+- `DM1 PC 3.4 startup`: uses the source-owned `GRAPHICS.DAT` C001 title sequence
   even when the separate canonical `TITLE` animation is installed. Entrance
   now follows after all 23 source steps complete.
 
-- `DM1 startup`: an interrupted title animation now stops the handoff instead
+- `DM1 startup`: blocks handoff when the title animation is interrupted instead
   of proceeding to Entrance after only a partial sequence.
 
-- `CSB Atari ST audio`: zero-amplitude PSG samples now produce silence in
+- `CSB Atari ST audio`: fixes zero-amplitude PSG samples to produce silence in
   both source volume modes instead of full-scale negative PCM.
 
 - `iOS packaging`: fix ARM CRC compilation by selecting portable software
@@ -18,20 +20,20 @@
 - `Windows settings`: fix repeated configuration and JSON export saves when
   the destination file already exists. Preserve the old file on replacement failure.
 
-- `Swedish launcher`: translated the five new custom-music folder selection,
+- `Swedish launcher`: adds translations for the five custom-music folder selection,
   cancellation, invalid-path and memory-error messages.
 
 - `DM2 platforms`: remove PC-9821 support, including its launcher entry,
   CLI aliases and native media/runtime admission.
 
-- `Verification`: hosted CI now explicitly runs launcher settings and
+- `Verification`: fixes hosted CI to run launcher settings and
   dialog-lifetime regression tests across Linux, macOS and Windows.
 
 - `DM2 Quick Resume`: the launcher honors the existing explicit save-root
   setting after verifying DM2 media. Importing a save manifest keeps the
   validated fallback save and the chosen game-data directory.
 
-- `Quick Resume`: disabling the option preserves the remembered save
+- `Quick Resume`: fixes disabling the option to preserve the remembered save
   location, including when another setting is saved. Re-enabling it checks
   the save again immediately instead of requiring a launcher restart.
 
@@ -56,28 +58,28 @@
   entire 36-second page timeout between input checks. PC34 Credits waits
   for input instead of inheriting other editions' automatic timeout.
 
-- `Settings keyboard navigation`: Left and Right now switch launcher
+- `Settings keyboard navigation`: uses Left and Right to switch launcher
   Settings tabs without changing gameplay or text-editor arrow handling.
 
-- `DM1 PC34 music`: in-game CD-track requests no longer restart the
+- `DM1 PC34 music`: prevents in-game CD-track requests from restarting the
   unrelated SONG.DAT title score, matching the original PC driver.
 
-- `DM2 Mac film audio`: closing Credits or opening another film now clears
+- `DM2 Mac film audio`: fixes closing Credits or opening another film to clear
   only movie audio, preserving game sound effects. Normal film completion
   drains remaining PCM before returning control to the menu.
 
-- `Window resize`: rendering and input now query the same live window and
+- `Window resize`: changes rendering and input to query the same live window and
   drawable dimensions before resize events are delivered. Normalized touch
   conversion also receives current window dimensions.
 
-- `DM2 DOS intro`: the last movie image now remains for its full source
+- `DM2 DOS intro`: fixes the last movie image to remain for its full source
   duration, and remaining audio drains before the movie player closes.
 
 - `HiDPI input`: fixed-scale windowed playback now maps pointer coordinates
   through the drawable-pixel viewport, correcting misplaced clicks on Retina
   displays while preserving noninteractive letterbox bars.
 
-- `DM2 Macintosh verification`: the original-media regression now covers
+- `DM2 Macintosh verification`: adds an original-media regression covering
   start-menu selection through movies and New Game to the first accepted
   gameplay frame without core fallback graphics.
 
@@ -90,7 +92,7 @@
   complete audio mix, matching DOS movies; Music zero no longer suppresses
   movie sound effects along with the soundtrack.
 
-- `Audio device`: the selected output now also applies to DM2's separate
+- `Audio device`: binds the selected output to DM2's separate
   effect and DOS movie streams. Streams resolve the current device by name
   when opened and fall back to system default if it is unavailable.
 
@@ -117,7 +119,7 @@
   queued audio and DM2 movie position; dismissal remains possible during a
   pending DM1 food command.
 
-- `Launcher`: minimap and combat-log preferences now reach the live runtime
+- `Launcher`: uses minimap and combat-log preferences to configure the live runtime
   at DM1/CSB/DM2 start, including map size/corner and log line limits.
   Existing source-specific overlay restrictions still apply.
 
@@ -130,12 +132,18 @@
 - `Game options`: clicking the SPEED HOTKEYS status tile no longer changes
   simulation speed.
 
-- `Launcher`: returning from presentation selection preserves the selected
+- `Launcher`: fixes returning from presentation selection to preserve the selected
   platform card, avoiding an unintended switch to an unavailable edition.
 
 - `Windows packaging`: includes the complete native DLL dependency tree,
   including SDL3's `libiconv-2.dll`, in the ZIP and installer. Packaging fails
   when an imported DLL cannot be resolved. Existing 3.0.348 assets are unchanged.
+
+## Developer changes
+
+- `DM2 Macintosh startup regression`: verifies the authentic Title.MooV using
+  its source per-sample video durations and verifies natural completion reaches
+  the startup menu at the expected elapsed time.
 
 # Firestaff v3.0.348
 

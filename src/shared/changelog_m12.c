@@ -18,6 +18,7 @@ static const char* const g_changelogLines[] = {
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-09-29)",
     "  - DM1 title playback now requires the full intro before handing off to Entrance.",
+    "  - DM2 Mac startup verification now waits for the authentic Title.MooV duration before checking the menu handoff.",
     "  - CSB Atari ST zero-amplitude PSG samples now render as silence.",
     "  - Refreshes startup-menu translation catalogs and source references.",
     "",
