@@ -396,22 +396,11 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
          * teleporter, pit, or stairs route until an original-Saturn trace
          * proves that ownership and dispatch. */
 
-        /* Floor decorations are recorded as candidate altars but remain
-         * blocked: the exact altar tag/aspect is not source-locked.
-         * Source: DM1 COMMAND.C altar use dispatch. */
-        for (i = 0; i < level->structure1f_entry_count; ++i) {
-            const Nexus_V1_DgnStructure1FEntry *e =
-                &level->structure1f_entries[i];
-            uint8_t tag;
-            if (e->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) continue;
-            if (e->x >= (uint8_t)level->width || e->y >= (uint8_t)level->height)
-                continue;
-            /* Register the candidate altar with its raw model/aspect tag.
-             * The ritual itself stays blocked until COMMAND.C semantics are
-             * source-locked. */
-            tag = (uint8_t)(e->model_or_aspect & 0xFFU);
-            nexus_altars_register_tagged(e->x, e->y, tag);
-        }
+        /* Structure1F floor decorations remain raw source-bound DGN records.
+         * They do not identify Vi altars: the model/aspect-to-altar relation
+         * and Saturn interaction owner are not source-locked. Keep them out
+         * of the semantic altar registry until a retail consumer proves both
+         * joins. */
     }
 
     /* Structure1B square values remain geometry evidence only.  A door-like

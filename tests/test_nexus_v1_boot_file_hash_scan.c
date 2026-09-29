@@ -818,6 +818,8 @@ int main(void) {
                     }
                     check_int(nexus_doors_count() == 0,
                               "real playable Nexus levels keep unproven door runtime state empty");
+                    check_int(nexus_altars_count() == 0,
+                              "real playable Nexus floor decorations do not populate the unproven Vi-altar registry");
                     check_int(verify_real_floor_item_handoff(&item_engine, i),
                               "real playable Nexus level preserves every Structure1Fa item in the production floor registry");
                 }

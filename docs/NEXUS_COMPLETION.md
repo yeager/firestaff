@@ -1,5 +1,19 @@
 # Nexus: verified completion status
 
+## Structure1Fb floor-decoration boundary — 2026-09-29
+
+The production mechanics loader no longer classifies every authentic
+Structure1Fb floor-decoration record as a Vi altar. The decoder still retains
+the exact source records and model/texture fields, while the altar registry
+remains empty until both an altar-ownership join and its Saturn interaction
+consumer are established. This corrects a semantic overreach; it does not
+claim that the retail levels contain no altars.
+
+The all-playable-level real-media boot regression now checks for an empty
+altar registry after each production load of LEV01–LEV15. That regression has
+been rebuilt on TRV2 and passed three consecutive serial loops against
+`/home/trv2/.firestaff/data/nexus`.
+
 ## All-playable-level floor-item production handoff — 2026-09-29
 
 The TRV2 real-media boot regression now checks the production loader's

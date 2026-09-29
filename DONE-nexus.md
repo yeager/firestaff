@@ -1,5 +1,17 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-29 — Keep unproven floor decorations out of the altar registry
+
+- Removed the production conversion of every Structure1Fb floor-decoration
+  record into a Vi altar. The DGN decoder continues to retain the authentic raw
+  decoration records, but neither their model/aspect bytes nor the Saturn event
+  consumer proves altar ownership.
+- Extended the authentic LEV01–LEV15 production-load regression to require an
+  empty altar registry after each level load. This is a fail-closed semantic
+  boundary, not proof that the retail levels contain no altars.
+- Built the real-data regression on TRV2 and passed it in three consecutive
+  serial loops against `/home/trv2/.firestaff/data/nexus`.
+
 ## 2026-09-29 — Verify the production floor-item handoff across playable levels
 
 - Extended the real-media boot regression to check every playable retail level
