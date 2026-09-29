@@ -1,5 +1,18 @@
 # Firestaff DONE — DM2
 
+## 2026-09-29 — Prefer authentic Macintosh DM2 media on macOS AUTO launch
+
+- A normal `--game dm2` launch on macOS now selects the authenticated
+  Macintosh retail edition before DOS when both are installed; DOS remains
+  the fallback when Mac retail is absent. Other hosts keep the existing
+  PC-first policy, and explicit platform selection is unchanged.
+- The focused AUTO policy test passes on macOS for Mac preference and PC
+  fallback. A CLI boot probe using the installed mixed media root selects
+  the retail Mac asset hash (`5cab25f6b975957eae4a203174e7f2a6`); before the
+  change the same command selected DOS (`25247ede4dabb6a71e5dabdfbcd5907d`).
+- The probe uses SDL dummy output and proves media selection/startup only. It
+  does not verify the native Retina window or viewport appearance.
+
 ## 2026-09-29 — Verify the complete Mac title film on its source clock
 
 - The authentic retail Mac `Title.MooV` runtime regression now keeps its

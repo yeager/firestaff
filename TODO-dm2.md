@@ -2,6 +2,12 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Verify the live macOS Retina dungeon viewport with a real runtime capture.
+  The direct `--game dm2` AUTO route now binds authenticated Macintosh retail
+  media when present, eliminating the DOS asset set previously selected on
+  macOS. Headless evidence confirms the selected retail hash and logical
+  320x200 framebuffer only; it does not prove the native window's drawable
+  size, viewport placement or visual quality.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`

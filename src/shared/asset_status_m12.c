@@ -38,6 +38,9 @@
 #include <sys/stat.h>
 #include <utime.h>
 #include <unistd.h>
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 #endif
 
 /* dm1_v2_modern_assets_pc34.h provides the V2.2 modern-assets pipeline
@@ -8129,10 +8132,20 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     int gameIndex;
     size_t i;
     static const int pcFirstAutoPriority[] = {
-        /* DM1 and DM2 have a verified PC primary route. */
+        /* Keep the PC primary route first except for DM2 on macOS below. */
         M12_ARCH_PC, M12_ARCH_MAC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
+#if defined(__APPLE__) && TARGET_OS_OSX
+    static const int dm2MacHostAutoPriority[] = {
+        /* On macOS, use DM2's authenticated native Macintosh retail route
+         * when present. Otherwise fall back to the same PC-first route used
+         * on hosts without the Macintosh runtime. */
+        M12_ARCH_MAC, M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST,
+        M12_ARCH_FM_TOWNS, M12_ARCH_PCE, M12_ARCH_SATURN,
+        M12_ARCH_APPLE_IIGS
+    };
+#endif
     static const int csbAutoPriority[] = {
         /* Chaos Strikes Back was never released for DOS.  Its original
          * routes in Firestaff's authenticated catalogue are Amiga, FM Towns
@@ -8160,6 +8173,13 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             autoPriorityCount = sizeof(csbAutoPriority) /
                                 sizeof(csbAutoPriority[0]);
         }
+#if defined(__APPLE__) && TARGET_OS_OSX
+        else if (strcmp(gameId, "dm2") == 0) {
+            autoPriority = dm2MacHostAutoPriority;
+            autoPriorityCount = sizeof(dm2MacHostAutoPriority) /
+                                sizeof(dm2MacHostAutoPriority[0]);
+        }
+#endif
         for (p = 0U; p < autoPriorityCount; ++p) {
             if (autoPriority[p] == M12_ARCH_ATARI_ST) {
                 int preferred = m12_dm1_atari_st_reference_version_index(

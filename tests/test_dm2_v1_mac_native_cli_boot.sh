@@ -51,6 +51,25 @@ fi
 
 archive_hash_before=$(sha256sum "$archive")
 
+if [ "$(uname -s)" = Darwin ]; then
+    # A normal direct launch on macOS must choose authenticated Macintosh
+    # retail media automatically even when DOS data is also installed.
+    auto_probe_output=$(FIRESTAFF_DATA="$data_root" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --boot-probe \
+        --boot-probe-frames 1 --duration 0 2>&1) || {
+        printf '%s\n' 'FAIL: DM2 macOS AUTO boot probe failed' "$auto_probe_output" >&2
+        exit 1
+    }
+    case "$auto_probe_output" in
+        *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*) ;;
+        *)
+            printf '%s\n' 'FAIL: DM2 macOS AUTO did not select authenticated Macintosh retail assets' "$auto_probe_output" >&2
+            exit 1
+            ;;
+    esac
+fi
+
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform mac --data-dir "$archive" \

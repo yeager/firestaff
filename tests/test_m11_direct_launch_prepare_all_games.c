@@ -400,9 +400,9 @@ static void run_real_data_handoff_if_available(void) {
             continue;
         }
         ++available_count;
-        /* Direct --game without an explicit platform is AUTO.  Test the same
-         * PC-first policy the user receives, rather than catalogue order
-         * (which deliberately lists FM Towns before PC for several games). */
+        /* Direct --game without an explicit platform is AUTO. Test the host's
+         * native DM2 Macintosh preference when authenticated Mac retail media
+         * is present; all other routes retain their game-specific policy. */
         autoVersionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &menu.assetStatus, kCases[i].gameId, M12_ARCH_AUTO);
         autoMatchedVersion = autoVersionIndex >= 0

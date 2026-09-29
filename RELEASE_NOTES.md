@@ -1,5 +1,10 @@
 # Firestaff — Unreleased
 
+## User-facing changes
+
+- `DM2 on macOS`: a direct `--game dm2` launch now prefers authenticated
+  Macintosh retail assets when installed, with DOS as the fallback.
+
 # Firestaff v3.0.352
 
 ## Developer changes

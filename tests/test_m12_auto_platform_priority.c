@@ -7,18 +7,21 @@
 
 #include <stdio.h>
 #include <string.h>
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 
 int main(void)
 {
-    static const char *const pc_games[] = {"dm1", "dm2"};
-    static const char *const pc_versions[] = {"pc34-en", "pc-en"};
+    static const char *const pc_games[] = {"dm1"};
+    static const char *const pc_versions[] = {"pc34-en"};
     static const char *const fmtowns_versions[] = {"fmtowns-en", "fmtowns-ja"};
     M12_AssetStatus status;
     size_t i;
 
     memset(&status, 0, sizeof(status));
     for (i = 0u; i < sizeof(pc_games) / sizeof(pc_games[0]); ++i) {
-        const int game_index = strcmp(pc_games[i], "dm1") == 0 ? 0 : 2;
+        const int game_index = 0;
         int pc = M12_AssetStatus_FindVersionIndex(pc_games[i], pc_versions[i]);
         int fmtowns = M12_AssetStatus_FindVersionIndex(pc_games[i],
                                                         fmtowns_versions[i]);
@@ -36,7 +39,45 @@ int main(void)
             return 1;
         }
     }
-    puts("PASS: AUTO keeps PC-first DM1/DM2 selection");
+    puts("PASS: AUTO keeps PC-first DM1 selection");
+    {
+        int pc = M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
+        int mac = M12_AssetStatus_FindVersionIndex("dm2", "mac-en-retail");
+        int selected;
+        memset(&status, 0, sizeof(status));
+        if (pc < 0 || mac < 0) {
+            fprintf(stderr, "FAIL: missing DM2 AUTO platform identities\n");
+            return 1;
+        }
+        status.versions[2][pc].matched = 1;
+        status.versions[2][mac].matched = 1;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "dm2", M12_ARCH_AUTO);
+#if defined(__APPLE__) && TARGET_OS_OSX
+        if (selected != mac) {
+            fprintf(stderr, "FAIL: macOS AUTO did not prefer authenticated Macintosh DM2\n");
+            return 1;
+        }
+        puts("PASS: macOS AUTO prefers Macintosh DM2 retail media");
+#else
+        if (selected != pc) {
+            fprintf(stderr, "FAIL: non-macOS AUTO did not prefer PC DM2\n");
+            return 1;
+        }
+        puts("PASS: non-macOS AUTO keeps PC-first DM2 selection");
+#endif
+#if defined(__APPLE__) && TARGET_OS_OSX
+        memset(&status, 0, sizeof(status));
+        status.versions[2][pc].matched = 1;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "dm2", M12_ARCH_AUTO);
+        if (selected != pc) {
+            fprintf(stderr, "FAIL: macOS AUTO did not fall back to PC without Mac retail\n");
+            return 1;
+        }
+        puts("PASS: macOS AUTO falls back to PC when Mac retail is absent");
+#endif
+    }
     {
         int fmtowns = M12_AssetStatus_FindVersionIndex("csb", "fmtowns-en");
         int amiga = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
