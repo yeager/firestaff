@@ -15,6 +15,7 @@ static const char *fixture =
     "track02_mode=MODE1/2352\n"
     "track02_md5=f23601102138f87c33025877767ebf76\n"
     "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
+    "system_card_runtime_md5=38179df8f4ac870017db21ebcbf53114\n"
     "input_transactions=1\ncd_irq_callbacks=1\nraw_sector_spans=1\n"
     "scsi_read_commands=1\nscsi_read_sector_bindings=1\n"
     "byte_exact_origin_ram_receipts=1\nauthenticated_cd_ram_receipts=1\n"
@@ -30,6 +31,7 @@ static const char *iso_fixture =
     "track02_mode=MODE1/2048\n"
     "track02_md5=ceb02343868f80cec899e9b239aff2da\n"
     "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
+    "system_card_runtime_md5=38179df8f4ac870017db21ebcbf53114\n"
     "input_transactions=1\ncd_irq_callbacks=1\nraw_sector_spans=1\n"
     "scsi_read_commands=1\nscsi_read_sector_bindings=1\n"
     "byte_exact_origin_ram_receipts=1\nauthenticated_cd_ram_receipts=1\n"
@@ -61,6 +63,9 @@ int main(void) {
     assert(receipt.status == THERON_V1_MEDNAFEN_TRANSITION_READY);
     assert(receipt.transport_verified && !receipt.semantic_publication_allowed);
     assert(receipt.authenticated_cd_ram_receipts == 1u);
+    assert(receipt.system_card_runtime_md5_verified);
+    assert(strcmp(receipt.system_card_runtime_md5,
+                  "38179df8f4ac870017db21ebcbf53114") == 0);
     assert(receipt.main_ram_consumer_reads == 1u);
     assert(receipt.main_ram_target_reads == 0u);
     assert(receipt.vdc_io_writes == 1u);
@@ -84,6 +89,55 @@ int main(void) {
         assert(!theron_v1_mednafen_transition_receipt_parse_file(path, &receipt));
         assert(receipt.status == THERON_V1_MEDNAFEN_TRANSITION_REJECTED);
         assert(!receipt.transport_verified);
+        unlink(path);
+    }
+
+    {
+        char missing_runtime_bios[2048];
+        const char *runtime_bios = strstr(fixture, "system_card_runtime_md5=");
+        const char *line_end;
+        size_t prefix_size;
+        size_t suffix_size;
+        assert(runtime_bios != NULL);
+        line_end = strchr(runtime_bios, '\n');
+        assert(line_end != NULL);
+        prefix_size = (size_t)(runtime_bios - fixture);
+        suffix_size = strlen(line_end + 1);
+        assert(prefix_size + suffix_size < sizeof(missing_runtime_bios));
+        memcpy(missing_runtime_bios, fixture, prefix_size);
+        memcpy(missing_runtime_bios + prefix_size, line_end + 1, suffix_size + 1u);
+        assert(snprintf(path, sizeof(path), "%s/firestaff-theron-transition-XXXXXX",
+                        tmpdir) > 0);
+        fd = mkstemp(path);
+        assert(fd >= 0);
+        file = fdopen(fd, "wb");
+        assert(file);
+        assert(fputs(missing_runtime_bios, file) >= 0);
+        assert(fclose(file) == 0);
+        assert(!theron_v1_mednafen_transition_receipt_parse_file(path, &receipt));
+        assert(receipt.status == THERON_V1_MEDNAFEN_TRANSITION_REJECTED);
+        unlink(path);
+    }
+
+    {
+        char wrong_runtime_bios[2048];
+        char *runtime_hash;
+        assert(snprintf(wrong_runtime_bios, sizeof(wrong_runtime_bios), "%s",
+                        fixture) > 0);
+        runtime_hash = strstr(wrong_runtime_bios, "system_card_runtime_md5=");
+        assert(runtime_hash != NULL);
+        runtime_hash += strlen("system_card_runtime_md5=");
+        runtime_hash[0] = '0';
+        assert(snprintf(path, sizeof(path), "%s/firestaff-theron-transition-XXXXXX",
+                        tmpdir) > 0);
+        fd = mkstemp(path);
+        assert(fd >= 0);
+        file = fdopen(fd, "wb");
+        assert(file);
+        assert(fputs(wrong_runtime_bios, file) >= 0);
+        assert(fclose(file) == 0);
+        assert(!theron_v1_mednafen_transition_receipt_parse_file(path, &receipt));
+        assert(receipt.status == THERON_V1_MEDNAFEN_TRANSITION_REJECTED);
         unlink(path);
     }
 

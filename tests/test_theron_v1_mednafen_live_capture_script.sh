@@ -178,6 +178,14 @@ if ! grep -Fq 'THERON_US_CUE:-${THERON_CUE:-}' "$script" ||
     printf 'FAIL: live capture must support the authenticated Japanese CUE/ISO route\n' >&2
     exit 1
 fi
+if ! grep -Fq 'bs=512 skip=1' "$script" ||
+   ! grep -Fq '38179df8f4ac870017db21ebcbf53114' "$script" ||
+   ! grep -Fq 'system_card_runtime_md5=%s' "$script" ||
+   ! grep -Fq '"$capture_cdbios_setting" "$capture_system_card"' "$script" ||
+   ! grep -Fq '"$capture_cue"' "$script"; then
+    printf '%s\n' 'FAIL: capture must strip and hash-check the 512-byte System Card header before launching Mednafen' >&2
+    exit 1
+fi
 if ! grep -Fq 'capture_clonecd_track02=0' "$script" ||
    ! grep -Fq 'clonecd_start" == 3234' "$script" ||
    ! grep -Fq 'clonecd_count" == 3371' "$script" ||

@@ -414,6 +414,7 @@ system_card_md5=$(md5_file "$system_card") || {
     printf '%s\n' 'FAIL: md5 or md5sum is required for authentic media capture' >&2
     exit 1
 }
+system_card_runtime_md5=unverified
 track02_md5=unverified
 if [[ "$capture_clonecd_track02" == 0 ]]; then
     track02_md5=$(md5_file "$track02_path") || {
@@ -1133,6 +1134,27 @@ cleanup_capture() {
 }
 trap cleanup_capture EXIT INT TERM
 
+# The locally supplied SysCard3 dump is a 512-byte-headered image. Keep its
+# source hash above for provenance, but pass Mednafen the byte-exact ROM body;
+# the resulting image must match the canonical Japanese v3.0 firmware hash.
+capture_system_card="$home_dir/theron-system-card-v3.pce"
+if [[ -e "$capture_system_card" || -L "$capture_system_card" ]]; then
+    printf '%s\n' 'FAIL: normalized System Card destination collides with capture-home data' >&2
+    exit 1
+fi
+if ! dd if="$system_card" of="$capture_system_card" bs=512 skip=1 2>/dev/null; then
+    printf '%s\n' 'FAIL: could not remove the verified 512-byte System Card header in the private capture home' >&2
+    exit 1
+fi
+system_card_runtime_md5=$(md5_file "$capture_system_card") || {
+    printf '%s\n' 'FAIL: could not hash the normalized System Card ROM body' >&2
+    exit 1
+}
+if [[ "$system_card_runtime_md5" != 38179df8f4ac870017db21ebcbf53114 ]]; then
+    printf '%s\n' 'FAIL: normalized System Card is not the canonical Japanese v3.0 ROM body' >&2
+    exit 1
+fi
+
 # RMDUI defaults to the first disc, but make the capture contract explicit:
 # the authenticated Track 02 medium must be inserted before BIOS execution.
 launch=(
@@ -1194,7 +1216,7 @@ launch=(
     -pce.input.multitap 0 \
     -pce.input.port1 gamepad \
     -"$capture_arcadecard_setting" 0 \
-    -"$capture_cdbios_setting" "$system_card"
+    -"$capture_cdbios_setting" "$capture_system_card" \
     "$capture_cue"
 )
 set +e
@@ -1685,6 +1707,7 @@ fi
     printf 'track02_mode=%s\n' "$track02_mode"
     printf 'track02_md5=%s\n' "$track02_md5"
     printf 'system_card_md5=%s\n' "$system_card_md5"
+    printf 'system_card_runtime_md5=%s\n' "$system_card_runtime_md5"
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"

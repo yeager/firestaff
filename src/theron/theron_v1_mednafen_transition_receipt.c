@@ -10,6 +10,7 @@
 #define THERON_JP_TRACK02_MODE1_2048_MD5 "397039af02d50d15c70b74088eb8a1cb"
 #define THERON_US_TRACK02_MODE1_2048_MD5 "ceb02343868f80cec899e9b239aff2da"
 #define THERON_SYSTEM_CARD_MD5 "ff1a674273fe3540ccef576376407d1d"
+#define THERON_SYSTEM_CARD_RUNTIME_MD5 "38179df8f4ac870017db21ebcbf53114"
 
 static int read_line(FILE *file, char *line, size_t capacity) {
     size_t length;
@@ -127,14 +128,22 @@ int theron_v1_mednafen_transition_receipt_parse_file(
                 theron_v1_mednafen_transition_region_for_track02_md5(value);
             if (receipt.track02_md5_verified ||
                 region == THERON_V1_MEDNAFEN_REGION_UNKNOWN) goto reject;
-            snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", value);
+            memcpy(receipt.track02_md5, value,
+                   sizeof(receipt.track02_md5));
             receipt.region = region;
             receipt.track02_md5_verified = 1;
         } else if (strcmp(key, "system_card_md5") == 0) {
             if (receipt.system_card_md5_verified ||
                 strcmp(value, THERON_SYSTEM_CARD_MD5)) goto reject;
-            snprintf(receipt.system_card_md5, sizeof(receipt.system_card_md5), "%s", value);
+            memcpy(receipt.system_card_md5, value,
+                   sizeof(receipt.system_card_md5));
             receipt.system_card_md5_verified = 1;
+        } else if (strcmp(key, "system_card_runtime_md5") == 0) {
+            if (receipt.system_card_runtime_md5_verified ||
+                strcmp(value, THERON_SYSTEM_CARD_RUNTIME_MD5)) goto reject;
+            memcpy(receipt.system_card_runtime_md5, value,
+                   sizeof(receipt.system_card_runtime_md5));
+            receipt.system_card_runtime_md5_verified = 1;
         } else if (strcmp(key, "transition") == 0) {
             if (receipt.transition_observed || strcmp(value, "observed")) goto reject;
             receipt.transition_observed = 1;
@@ -145,7 +154,9 @@ int theron_v1_mednafen_transition_receipt_parse_file(
     fclose(file);
     if (!receipt.source_header_verified || !receipt.pce_module_verified ||
         !receipt.mode_verified || !receipt.track02_md5_verified ||
-        !receipt.system_card_md5_verified || !receipt.transition_observed ||
+        !receipt.system_card_md5_verified ||
+        !receipt.system_card_runtime_md5_verified ||
+        !receipt.transition_observed ||
         seen_counts != required_counts || receipt.input_transactions == 0u ||
         receipt.cd_irq_callbacks == 0u || receipt.raw_sector_spans == 0u ||
         receipt.scsi_read_commands == 0u ||

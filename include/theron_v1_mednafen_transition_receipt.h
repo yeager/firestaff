@@ -30,6 +30,7 @@ typedef struct {
     int track02_md5_verified;
     Theron_V1MednafenRegion region;
     int system_card_md5_verified;
+    int system_card_runtime_md5_verified;
     int transition_observed;
     int transport_verified;
     int semantic_publication_allowed;
@@ -52,6 +53,7 @@ typedef struct {
     uint64_t vdc_io_writes;
     char track02_md5[33];
     char system_card_md5[33];
+    char system_card_runtime_md5[33];
     char source_trace_path[THERON_V1_MEDNAFEN_TRANSITION_PATH_CAPACITY];
 } Theron_V1MednafenTransitionReceipt;
 
