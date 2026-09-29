@@ -1,7 +1,7 @@
 #include "theron_v1_track02_font_glyphs.h"
 
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
- * 96 glyphs × 6 bytes from UD 0x09A000. */
+ * 120 glyphs × 6 bytes from UD 0x09A000. */
 
 static const uint8_t g_glyphs[THERON_TRACK02_FONT_GLYPH_COUNT][THERON_TRACK02_FONT_BYTES_PER_GLYPH] = {
     /*  0 |/SPC */ { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },

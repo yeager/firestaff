@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — authentic US font-glyph source check
+
+- Added a separate real-media CTest that checks the hash-verified US Track 02
+  byte span at user-data offset `0x09A000` against all 120 checked-in 8×6
+  glyphs. Missing media is an explicit skip; a present file with the wrong
+  identity fails. The existing data-free glyph unit checks remain independent.
+- On `trv2`, the focused unit and real-media tests passed 2/2. The source span
+  matched all 720 bytes exactly for `TQUS02.bin` (MD5
+  `f23601102138f87c33025877767ebf76`). This authenticates the fixture glyph
+  bytes only; it does not add a production font consumer or prove item-name
+  display, Japanese Shift-JIS rendering, or original UI parity.
+
 ## 2026-09-29 — authentic stair fail-closed census
 
 - Expanded the real-data mechanics probe to visit every authentic stair cell

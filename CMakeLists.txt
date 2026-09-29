@@ -53927,6 +53927,29 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_font_glyphs.
         NAME theron_v1_track02_font_glyphs
         COMMAND test_theron_v1_track02_font_glyphs
     )
+
+    add_executable(test_theron_v1_track02_font_glyphs_real_data
+        tests/test_theron_v1_track02_font_glyphs_real_data.c
+        src/theron/theron_v1_track02_font_glyphs.c
+    )
+    target_link_libraries(test_theron_v1_track02_font_glyphs_real_data PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_font_glyphs_real_data PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_font_glyphs_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_font_glyphs_real_data
+        COMMAND test_theron_v1_track02_font_glyphs_real_data
+    )
+    set_tests_properties(theron_v1_track02_font_glyphs_real_data PROPERTIES
+        ENVIRONMENT
+            "THERON_TRACK02_US_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
+        SKIP_RETURN_CODE 77
+        LABELS "theron;track02;real_data;skip_safe")
 endif()
 
 # Theron Track 02 combat messages (item conditions, feedback, system msgs)
