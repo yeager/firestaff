@@ -435,11 +435,12 @@ static void check_missing_archive_tool_popup(void) {
 }
 
 /* Use authentic CSB Atari ST software media to verify the actionable opt-in
- * message. The source archive is linked into an isolated data directory so
- * the test neither copies nor rewrites licensed media. */
+ * message. A hard link exposes the same bytes inside an isolated data root
+ * without copying or rewriting licensed media. The scanner intentionally
+ * does not follow symbolic links, so a symlink would not exercise discovery. */
 static int check_external_archive_opt_in_popup(void) {
 #ifdef _WIN32
-    puts("SKIP: authentic archive opt-in popup test requires POSIX symlinks");
+    puts("SKIP: authentic archive opt-in popup test requires POSIX hard links");
     return 77;
 #else
     const char* archive = getenv("FIRESTAFF_CSB_ATARI_ARCHIVE");
@@ -459,8 +460,8 @@ static int check_external_archive_opt_in_popup(void) {
     }
     if (snprintf(linkedArchive, sizeof(linkedArchive), "%s/%s", dataRoot,
                  "Chaos Strikes Back Atari ST original.7z") >=
-        (int)sizeof(linkedArchive) || symlink(archive, linkedArchive) != 0) {
-        puts("SKIP: could not link authentic CSB Atari archive into isolated data root");
+        (int)sizeof(linkedArchive) || link(archive, linkedArchive) != 0) {
+        puts("SKIP: could not hard-link authentic CSB Atari archive into isolated data root");
         return 77;
     }
     CHECK(test_unsetenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS"));
