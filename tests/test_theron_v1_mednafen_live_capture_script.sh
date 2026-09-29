@@ -21,6 +21,7 @@ ram_provenance_patch=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.p
 loader_write_v3_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch
 input_grab_patch=$repo/scripts/mednafen_1.32.1_theron_input_grab_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
+x11_keymap=$repo/scripts/theron_x11_keymap.sh
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
@@ -108,6 +109,47 @@ if [[ ! -x "$later_raw_receipt" ]] ||
     exit 1
 fi
 bash -n "$script"
+if [[ ! -f "$x11_keymap" ]]; then
+    printf '%s\n' 'FAIL: X11 keyboard mapping helper is missing' >&2
+    exit 1
+fi
+source "$x11_keymap"
+while IFS=' ' read -r key scancode expected; do
+    [[ -n "$key" ]] || continue
+    actual=$(theron_x11_key_for_sdl_mapping "$key" "$scancode") || {
+        printf 'FAIL: no X11 key for SDL mapping %s:%s\n' "$key" "$scancode" >&2
+        exit 1
+    }
+    if [[ "$actual" != "$expected" ]]; then
+        printf 'FAIL: X11 mapping %s:%s returned %s, expected %s\n' \
+            "$key" "$scancode" "$actual" "$expected" >&2
+        exit 1
+    fi
+done <<'THERON_X11_KEYMAP'
+i 91 KP_3
+ii 90 KP_2
+up 26 w
+down 22 s
+left 4 a
+right 7 d
+i 32 3
+ii 31 2
+up 82 Up
+down 81 Down
+left 80 Left
+right 79 Right
+i 12 i
+i 29 z
+ii 27 x
+i 54 comma
+i 55 period
+ii 54 comma
+ii 55 period
+THERON_X11_KEYMAP
+if theron_x11_key_for_sdl_mapping run 0 >/dev/null 2>&1; then
+    printf '%s\n' 'FAIL: X11 keymap accepted an unlisted PCE mapping' >&2
+    exit 1
+fi
 if grep -Eq '/tmp|TMPDIR' "$script" ||
    ! grep -Fq 'capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$script_dir/../.codex-scratch"}' "$script" ||
    ! grep -Fq 'mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX"' "$script"; then
@@ -524,11 +566,11 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'down) printf '\''%s'\'' "$capture_down_host_code" ;;' "$script" ||
    ! grep -Fq 'left) printf '\''%s'\'' "$capture_left_host_code" ;;' "$script" ||
    ! grep -Fq 'right) printf '\''%s'\'' "$capture_right_host_code" ;;' "$script" ||
-   ! grep -Fq 'i:91) printf '\''%s'\'' KP_3 ;;' "$script" ||
-   ! grep -Fq 'ii:90) printf '\''%s'\'' KP_2 ;;' "$script" ||
-   ! grep -Fq 'up:82) printf '\''%s'\'' Up ;;' "$script" ||
-   ! grep -Fq 'i:32) printf '\''%s'\'' 3 ;;' "$script" ||
-   ! grep -Fq 'right:7) printf '\''%s'\'' d ;;' "$script" ||
+   ! grep -Fq 'i:91) printf '\''%s'\'' KP_3 ;;' "$x11_keymap" ||
+   ! grep -Fq 'ii:90) printf '\''%s'\'' KP_2 ;;' "$x11_keymap" ||
+   ! grep -Fq 'up:82) printf '\''%s'\'' Up ;;' "$x11_keymap" ||
+   ! grep -Fq 'i:32) printf '\''%s'\'' 3 ;;' "$x11_keymap" ||
+   ! grep -Fq 'right:7) printf '\''%s'\'' d ;;' "$x11_keymap" ||
    ! grep -Fq 'Linux host input requires SDL_VIDEODRIVER=x11 and xdotool' "$script" ||
    ! grep -Fq 'Linux X11 host input requires THERON_CAPTURE_INPUT_ROUTE=pid' "$script" ||
    ! grep -Fq 'xdotool search --onlyvisible --pid "$mednafen_ui_pid"' "$script" ||
