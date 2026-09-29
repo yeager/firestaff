@@ -52,6 +52,10 @@ static int test_all_levels(const char *data_dir) {
         "a634dd5e95567ecbbbc332350c8cf12b",
         "5e6e237074f1e6b0decc629868a51f3c"
     };
+    static const int expected_door_counts[16] = {
+        2, 8, 24, 49, 21, 30, 15, 44,
+        29, 5, 15, 28, 60, 8, 10, 16
+    };
     static const struct {
         int level;
         int items, decors, sensors, alcoves, wdecors, wsensors;
@@ -101,6 +105,68 @@ static int test_all_levels(const char *data_dir) {
             fail++;
             free(buf);
             continue;
+        }
+
+        /* The file hash above authenticates each retail DGN before this
+         * Structure1E census is admitted. Preserve/verify the source bytes;
+         * this does not bind the records to runtime door behavior. */
+        if (!res.door_table_present || !res.door_table_terminated ||
+            res.door_count != expected_door_counts[i]) {
+            printf("FAIL LEV%02d Structure1E: present=%d terminated=%d "
+                   "count=%d expected=%d\n", i, res.door_table_present,
+                   res.door_table_terminated, res.door_count,
+                   expected_door_counts[i]);
+            fail++;
+            free(buf);
+            continue;
+        }
+        {
+            size_t door_offset =
+                (size_t)res.s1_block_offset * NEXUS_DGN_BLOCK_SIZE +
+                (size_t)res.s1e_offset;
+            int door_index;
+            for (door_index = 0; door_index < res.door_count; ++door_index) {
+                const Nexus_V1_DgnDoor *door = &res.doors[door_index];
+                const uint8_t *raw;
+                if (door_offset > (size_t)sz ||
+                    (size_t)sz - door_offset <
+                        ((size_t)door_index + 1U) *
+                            NEXUS_DGN_DOOR_RECORD_SIZE) {
+                    printf("FAIL LEV%02d Structure1E record %d bounds\n",
+                           i, door_index);
+                    fail++;
+                    break;
+                }
+                raw = buf + door_offset +
+                    (size_t)door_index * NEXUS_DGN_DOOR_RECORD_SIZE;
+                if (memcmp(door->raw_record, raw,
+                           NEXUS_DGN_DOOR_RECORD_SIZE) != 0 ||
+                    door->y != raw[0] || door->x != raw[1] ||
+                    door->flags != raw[2] ||
+                    door->orientation_and_index != raw[3] ||
+                    door->model_index != raw[4] || door->width != raw[5] ||
+                    door->initial_state !=
+                        raw[NEXUS_DGN_DOOR_INITIAL_STATE_OFFSET] ||
+                    door->movable_wall_type !=
+                        raw[NEXUS_DGN_DOOR_MOVABLE_WALL_TYPE_OFFSET]) {
+                    printf("FAIL LEV%02d Structure1E record %d raw binding\n",
+                           i, door_index);
+                    fail++;
+                    break;
+                }
+            }
+            if (door_index == res.door_count && i == 1) {
+                const Nexus_V1_DgnDoor *first = &res.doors[0];
+                if (first->y != 0x0eU || first->x != 0x24U ||
+                    first->flags != 0x02U ||
+                    first->orientation_and_index != 0x00U ||
+                    first->model_index != 0x26U || first->width != 0x50U ||
+                    first->initial_state != 0x00U ||
+                    first->movable_wall_type != 0x00U) {
+                    printf("FAIL LEV01 first retail Structure1E field map\n");
+                    fail++;
+                }
+            }
         }
 
         if (i == 1) {

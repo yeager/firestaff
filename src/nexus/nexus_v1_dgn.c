@@ -101,18 +101,40 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
         out->s2_hash = s2fnv;
     }
 
-    if (out->s1e_offset && (uint64_t)out->s1e_offset + 16U <= out->s1_data_size &&
-        (uint64_t)s1_abs + out->s1e_offset + 16U <= (uint64_t)data_size) {
+    if (out->s1e_offset) {
+        out->door_table_present = 1;
+    }
+    if (out->s1e_offset &&
+        (uint64_t)out->s1e_offset + NEXUS_DGN_DOOR_RECORD_SIZE <=
+            out->s1_data_size &&
+        (uint64_t)s1_abs + out->s1e_offset +
+                NEXUS_DGN_DOOR_RECORD_SIZE <= (uint64_t)data_size) {
         const uint8_t *doors = data + s1_abs + out->s1e_offset;
-        int dc = 0;
         uint32_t door_bytes = out->s1_data_size - out->s1e_offset;
-        int door_limit = (int)(door_bytes / 16U);
+        int door_limit = (int)(door_bytes / NEXUS_DGN_DOOR_RECORD_SIZE);
         if (door_limit > NEXUS_DGN_MAX_DOORS) door_limit = NEXUS_DGN_MAX_DOORS;
         for (i = 0; i < door_limit; ++i) {
-            if (doors[i * 16] == 0xFF) break;
-            dc++;
+            const uint8_t *src = doors +
+                (size_t)i * NEXUS_DGN_DOOR_RECORD_SIZE;
+            Nexus_V1_DgnDoor *dst;
+            if (src[0] == 0xFF) {
+                out->door_table_terminated = 1;
+                break;
+            }
+            dst = &out->doors[out->door_count];
+            dst->y = src[0];
+            dst->x = src[1];
+            dst->flags = src[2];
+            dst->orientation_and_index = src[3];
+            dst->model_index = src[4];
+            dst->width = src[5];
+            dst->initial_state =
+                src[NEXUS_DGN_DOOR_INITIAL_STATE_OFFSET];
+            dst->movable_wall_type =
+                src[NEXUS_DGN_DOOR_MOVABLE_WALL_TYPE_OFFSET];
+            memcpy(dst->raw_record, src, NEXUS_DGN_DOOR_RECORD_SIZE);
+            out->door_count++;
         }
-        out->door_count = dc;
     }
 
     /* Structure1C: collision descriptors */

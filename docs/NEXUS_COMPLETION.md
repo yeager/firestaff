@@ -232,6 +232,16 @@ Saturn input/trigger dispatcher, state-write timing, audio consumer, or VDP
 consumer.  Firestaff therefore must not enable the DM1-shaped door or sensor
 runtime merely from these fields.
 
+The DGN decoder now retains each bounded 16-byte Structure1E record verbatim
+and exposes only the documented coordinate/descriptor bytes, initial-state
+byte (`0x08`), and movable-wall-type byte (`0x0d`). The hash-verified retail
+LEV00–LEV15 corpus contains respectively 2, 8, 24, 49, 21, 30, 15, 44, 29, 5,
+15, 28, 60, 8, 10, and 16 terminated records. A real-data regression checks
+the per-level census and each retained record against its original file bytes.
+This establishes preservation of the source table only: it does not prove a
+door-record-to-Structure1B mapping or authorize interaction, collision-state,
+animation, or sensor dispatch.
+
 ## Local Japanese post-render title witness — 2026-08-26
 
 A separate, temporary developer capture used the hash-verified Japanese

@@ -13,6 +13,9 @@
 #define NEXUS_DGN_MAX_TEXTURES    128
 #define NEXUS_DGN_MAX_MODELS      128
 #define NEXUS_DGN_MAX_DOORS       128
+#define NEXUS_DGN_DOOR_RECORD_SIZE 16
+#define NEXUS_DGN_DOOR_INITIAL_STATE_OFFSET 0x08
+#define NEXUS_DGN_DOOR_MOVABLE_WALL_TYPE_OFFSET 0x0D
 #define NEXUS_DGN_MAX_FLOOR_ITEMS 256
 #define NEXUS_DGN_MAX_FLOOR_DECORS 128
 #define NEXUS_DGN_MAX_FLOOR_SENSORS 64
@@ -61,6 +64,11 @@ typedef struct {
     uint8_t  orientation_and_index;
     uint8_t  model_index;
     uint8_t  width;
+    uint8_t  initial_state;
+    uint8_t  movable_wall_type;
+    /* Retain all 16 authored bytes. Only the fields above documented by the
+     * Nexus DGN format are named; the remainder stays opaque. */
+    uint8_t  raw_record[NEXUS_DGN_DOOR_RECORD_SIZE];
 } Nexus_V1_DgnDoor;
 
 typedef struct {
@@ -87,6 +95,9 @@ typedef struct {
     int      texture_count;
     int      s3_model_count;
     int      door_count;
+    int      door_table_present;
+    int      door_table_terminated;
+    Nexus_V1_DgnDoor doors[NEXUS_DGN_MAX_DOORS];
     int      wall_cell_count;
     int      open_cell_count;
 
