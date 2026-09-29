@@ -77,6 +77,10 @@
   normal CLI route now clicks the authentic C200 hit box and verifies the
   runtime startup receipt after the doors open. Its initial state has zero
   champions, so this does not prove a playable campaign party. The optional
+  DM2 Macintosh retail regression now drives M12 game/platform/Custom/launch
+  pointer selection through films, New Game and mirror selection to an
+  accepted original-asset runtime frame with no core fallback draws; its
+  separate CLI boot probe also passes the startup boundary. The optional
   French DOS original-save regression's M12 leg now uses normal Quick Resume
   and a runtime receipt (not the rejected `--menu --boot-probe` pair), but this
   local checkout lacks the authentic unpacked French EUDATA needed to execute

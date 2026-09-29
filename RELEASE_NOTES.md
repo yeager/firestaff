@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM2 Macintosh verification`: the original-media regression now covers
+  start-menu selection through movies and New Game to the first accepted
+  gameplay frame without core fallback graphics.
+
 - `DM1 intro music`: title playback uses the selected installation's verified
   SONG.DAT. Missing or incompatible source music clears any prior binding
   instead of borrowing music from another installed edition.

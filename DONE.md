@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Extended the authentic DM2 Macintosh retail movie regression
+  through normal M12 pointer selection: game card, Mac platform, Custom
+  options and verified launch intent. The same session passes title/credits,
+  timer/focus pause, New Game and source mirror selection, then draws an
+  accepted runtime frame with real assets, no core fallbacks and zero fallback
+  draws. The narrow build/test passes on the installed retail ZIP. A separate
+  CLI boot probe also reaches its admitted startup phase. This proves the
+  headless menu/API path, not desktop input delivery or visual parity.
+
 - 2026-09-29: Bound both temporary DM1 title-music owners to authenticated
   SONG.DAT beside the selected GRAPHICS.DAT, including virtual archive paths.
   Missing/incompatible companions clear initialization-time fallback music;
