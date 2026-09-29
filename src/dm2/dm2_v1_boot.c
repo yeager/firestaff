@@ -2380,7 +2380,6 @@ static const char *const g_dm2_graphics_hashes[] = {
     "5cab25f6b975957eae4a203174e7f2a6",  /* Mac EN/FR retail */
     "1c940ea95703eaea0ecdf84d17e954b9",  /* Amiga EN */
     "a654ba19e9a6919f46818ecd23d7ea9d",  /* Mega CD Japanese */
-    "a80c555a858ef7770e1d7f3d2e37fec3",  /* PC-9821 Japanese */
     NULL
 };
 
@@ -2389,7 +2388,6 @@ static const char *const g_dm2_dungeon_hashes [] = {
     "719ae78bc124027806c65491a256827d",  /* Mac/Amiga retail (BE) */
     "74c7549f174574201988bf936385841a",  /* FM Towns Japanese (LE) */
     "92f83c251fec69e01c594bc01ce5cd51",  /* Mega CD Japanese (BE) */
-    "fa644b2451af197874ee7dc3951e7033",  /* PC-9821 Japanese (LE) */
     NULL
 };
 
@@ -2412,7 +2410,6 @@ static const DM2_V1_AssetHashPair g_dm2_asset_hash_pairs[] = {
     {"4bf28b3d84e6799d7686c6aaf96cbf23", "c9c909cb8cc2ed68def20211b8c1caf6"},
     {"1c940ea95703eaea0ecdf84d17e954b9", "719ae78bc124027806c65491a256827d"},
     {"a654ba19e9a6919f46818ecd23d7ea9d", "92f83c251fec69e01c594bc01ce5cd51"},
-    {"a80c555a858ef7770e1d7f3d2e37fec3", "fa644b2451af197874ee7dc3951e7033"}
 };
 
 /* PC SONGLIST.DAT, 63 bytes. SHA-256:
@@ -2432,8 +2429,8 @@ static const char *const g_dm2_music_map_hashes[] = {
     NULL
 };
 
-/* FM Towns / Mega CD / PC-9821 40-byte CDDA coordinate trigger CD.DAT.
- * All three platform variants are byte-identical. */
+/* FM Towns / Mega CD 40-byte CDDA coordinate trigger CD.DAT.
+ * Both platform variants are byte-identical. */
 static const char *const g_dm2_cdda_cd_dat_hashes[] = {
     "f09f14379326d7d4544b266790e2f84e",
     NULL
@@ -2450,7 +2447,6 @@ static const char *const g_platform_labels[DM2_PLATFORM_COUNT] = {
     [DM2_PLATFORM_MAC_FR]      = "Macintosh French",
     [DM2_PLATFORM_AMIGA_EN]    = "Amiga English",
     [DM2_PLATFORM_MEGACD_JA]   = "Mega CD Japanese",
-    [DM2_PLATFORM_PC9821_JA]   = "PC-9821 Japanese",
 };
 
 /* ── Path separator ──────────────────────────────────────────────────── */
@@ -2546,10 +2542,7 @@ static int dm2_try_hash_scan_root(const char *root,
                                   char dungeon_path[512],
                                   size_t *dungeon_size,
                                   char dungeon_md5[33]) {
-    /* Keep room for every supported graphics and dungeon identity.  The
-     * PC-9821 graphics addition made the old seven-entry fill limit consume
-     * the temporary list before any DUNGEON.DAT hash was appended, making
-     * valid PC-DOS boot scans fail despite authenticated files. */
+    /* Keep room for every supported graphics and dungeon identity. */
     const char *hashes[16];
     char paths[16][ASSET_PATH_MAX];
     int matched[16];
@@ -3541,128 +3534,6 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
     return 1;
 }
 
-/* The authentic PC-9821 retail medium is a mixed-mode CUE/BIN image whose
- * ISO9660 data track contains DATA/GRAPHICS.DAT, DATA/DUNGEON.DAT and
- * DATA/CD.DAT. Keep the selected ZIP as owner and the original raw disc in
- * RAM; the recognized content hashes bind this to DMWeb's PC-9821 edition. */
-static int dm2_v1_boot_load_pc9821_archive(DM2_V1_BootProfile *profile,
-                                           const char *archive_path)
-{
-    static const char graphics_md5[] = "a80c555a858ef7770e1d7f3d2e37fec3";
-    static const char dungeon_md5[] = "fa644b2451af197874ee7dc3951e7033";
-    static const char cdda_md5[] = "f09f14379326d7d4544b266790e2f84e";
-    uint8_t *cue = NULL, *image = NULL, *graphics = NULL;
-    uint8_t *dungeon = NULL, *cd_dat = NULL;
-    size_t cue_size = 0U, image_size = 0U, graphics_size = 0U;
-    size_t dungeon_size = 0U, cd_dat_size = 0U;
-    char image_member[512], graphics_hash[33], dungeon_hash[33];
-    char cd_dat_hash[33], *cue_text = NULL;
-    uint32_t track_starts[9] = {0};
-    int track_count, accepted = 0;
-    DM2_V1_FmtownsDiscReceipt disc;
-
-    if (!profile || !archive_path || !FSP_FileExists(archive_path) ||
-        !strstr(archive_path, "Dungeon-Master-II-Skullkeep_PC-9821_JA.zip") ||
-        firestaff_zip_extract_by_suffix(archive_path, ".cue", &cue,
-                                        &cue_size) != 0 ||
-        !cue || cue_size == 0U || cue_size > 65536U) goto done;
-    cue_text = (char *)malloc(cue_size + 1U);
-    if (!cue_text) goto done;
-    memcpy(cue_text, cue, cue_size);
-    cue_text[cue_size] = '\0';
-    if (!strstr(cue_text, "TRACK 01 MODE1/2352") ||
-        !strstr(cue_text, "TRACK 02 AUDIO") ||
-        !fmtowns_cue_parse_image_member(cue_text, cue_size, image_member,
-                                         sizeof(image_member))) goto done;
-    track_count = fmtowns_cue_parse_track_starts(
-        cue_text, cue_size, track_starts,
-        (int)(sizeof(track_starts) / sizeof(track_starts[0])));
-    if (track_count < 2 ||
-        firestaff_zip_extract_by_name(archive_path, image_member,
-                                      &image, &image_size) != 0 ||
-        !image || dm2_v1_fmtowns_disc_probe(image, image_size, &disc) != 0 ||
-        !disc.has_graphics_dat || !disc.has_dungeon_dat || !disc.has_cd_dat ||
-        dm2_v1_fmtowns_disc_extract_alloc(image, image_size,
-                                           &disc.graphics_dat,
-                                           &graphics, &graphics_size) != 0 ||
-        dm2_v1_fmtowns_disc_extract_alloc(image, image_size,
-                                           &disc.dungeon_dat,
-                                           &dungeon, &dungeon_size) != 0 ||
-        dm2_v1_fmtowns_disc_extract_alloc(image, image_size,
-                                           &disc.cd_dat,
-                                           &cd_dat, &cd_dat_size) != 0) goto done;
-    dm2_md5_bytes_hex(graphics, graphics_size, graphics_hash);
-    dm2_md5_bytes_hex(dungeon, dungeon_size, dungeon_hash);
-    dm2_md5_bytes_hex(cd_dat, cd_dat_size, cd_dat_hash);
-    if (strcmp(graphics_hash, graphics_md5) != 0 ||
-        strcmp(dungeon_hash, dungeon_md5) != 0 ||
-        strcmp(cd_dat_hash, cdda_md5) != 0 || cd_dat_size != 40U) goto done;
-
-    profile->graphics_mem = graphics;
-    profile->graphics_mem_size = graphics_size;
-    profile->dungeon_mem = dungeon;
-    profile->dungeon_mem_size = dungeon_size;
-    graphics = NULL;
-    dungeon = NULL;
-    profile->graphics_size = graphics_size;
-    profile->dungeon_size = dungeon_size;
-    snprintf(profile->graphics_md5, sizeof(profile->graphics_md5), "%s",
-             graphics_md5);
-    snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5), "%s",
-             dungeon_md5);
-    snprintf(profile->graphics_path, sizeof(profile->graphics_path),
-             "%s::DATA/GRAPHICS.DAT", archive_path);
-    snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
-             "%s::DATA/DUNGEON.DAT", archive_path);
-    snprintf(profile->pc9821_zip_path, sizeof(profile->pc9821_zip_path), "%s",
-             archive_path);
-    profile->pc9821_disc_image = image;
-    profile->pc9821_disc_image_size = image_size;
-    memcpy(profile->pc9821_cdda_track_starts, track_starts,
-           sizeof(profile->pc9821_cdda_track_starts));
-    profile->pc9821_cdda_track_count = track_count;
-    image = NULL;
-    memcpy(profile->cdda_cd_dat_data, cd_dat, cd_dat_size);
-    profile->cdda_cd_dat_size = cd_dat_size;
-    profile->cdda_cd_dat_verified = 1;
-    snprintf(profile->cdda_cd_dat_md5, sizeof(profile->cdda_cd_dat_md5), "%s",
-             cdda_md5);
-    snprintf(profile->cdda_cd_dat_path, sizeof(profile->cdda_cd_dat_path),
-             "%s::DATA/CD.DAT", archive_path);
-    copy_parent_dir(profile->asset_root, archive_path);
-    accepted = 1;
-
-done:
-    free(cue);
-    free(cue_text);
-    free(image);
-    free(graphics);
-    free(dungeon);
-    free(cd_dat);
-    return accepted;
-}
-
-static int dm2_v1_boot_find_pc9821_archive(DM2_V1_BootProfile *profile,
-                                           const char *base)
-{
-    static const char archive_name[] =
-        "Dungeon-Master-II-Skullkeep_PC-9821_JA.zip";
-    char candidates[2][512];
-    size_t i;
-    if (!profile || !base || !base[0]) return 0;
-    if (strstr(base, archive_name) && FSP_FileExists(base))
-        return dm2_v1_boot_load_pc9821_archive(profile, base);
-    if (snprintf(candidates[0], sizeof(candidates[0]), "%s/%s", base,
-                 archive_name) >= (int)sizeof(candidates[0]) ||
-        snprintf(candidates[1], sizeof(candidates[1]), "%s/dm2/%s", base,
-                 archive_name) >= (int)sizeof(candidates[1])) return 0;
-    for (i = 0U; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
-        if (FSP_FileExists(candidates[i]) &&
-            dm2_v1_boot_load_pc9821_archive(profile, candidates[i])) return 1;
-    }
-    return 0;
-}
-
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir) {
     char path[512];
@@ -3670,7 +3541,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     int explicit_amiga_archive;
     int explicit_mac_archive;
     int explicit_pc_dos_archive;
-    int explicit_pc9821_archive;
     (void)path;
     const char *base = data_dir ? data_dir : ".";
 
@@ -3679,9 +3549,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         FSP_FileExists(base);
     explicit_pc_dos_archive = strstr(base,
                                      "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
-        FSP_FileExists(base);
-    explicit_pc9821_archive =
-        strstr(base, "Dungeon-Master-II-Skullkeep_PC-9821_JA.zip") != NULL &&
         FSP_FileExists(base);
     explicit_mac_archive = strstr(base,
                                   "Dungeon-Master-II-Skullkeep_Mac_") != NULL &&
@@ -3698,12 +3565,16 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     dm2_v1_boot_profile_init(profile);
     memcpy(profile->save_root, save_root, sizeof(profile->save_root));
 
+    /* An explicitly selected unsupported archive must not launch a sibling
+     * supported medium through the generic discovery fallbacks below. */
+    if (strstr(base, "Dungeon-Master-II-Skullkeep_PC-9821_JA.zip") != NULL) {
+        return -1;
+    }
+
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not
      * depend on PC install names or directory layout. */
-    if (explicit_pc9821_archive) {
-        if (!dm2_v1_boot_load_pc9821_archive(profile, base)) return -1;
-    } else if (explicit_pc_dos_archive) {
+    if (explicit_pc_dos_archive) {
         (void)dm2_v1_boot_load_pc_dos_archive(profile, base);
     } else if (explicit_amiga_archive) {
         (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
@@ -3765,9 +3636,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
         (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
     }
-    if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
-        (void)dm2_v1_boot_find_pc9821_archive(profile, base);
-    }
 
     /* Determine if using DM2-specific filenames */
     profile->use_dm2_filenames =
@@ -3797,8 +3665,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             profile->platform = DM2_PLATFORM_AMIGA_EN;
         } else if (md5_matches(profile->graphics_md5, "a654ba19e9a6919f46818ecd23d7ea9d")) {
             profile->platform = DM2_PLATFORM_MEGACD_JA;
-        } else if (md5_matches(profile->graphics_md5, "a80c555a858ef7770e1d7f3d2e37fec3")) {
-            profile->platform = DM2_PLATFORM_PC9821_JA;
         }
     }
 
@@ -3813,10 +3679,7 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             dm2_v1_boot_load_fmtowns_loose_media(profile, base);
         }
     }
-    if (profile->platform == DM2_PLATFORM_PC9821_JA &&
-        !profile->pc9821_disc_image) {
-        (void)dm2_v1_boot_find_pc9821_archive(profile, base);
-    }
+
     strncpy(profile->platform_label,
             g_platform_labels[profile->platform],
             sizeof(profile->platform_label) - 1);
@@ -3832,7 +3695,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         case DM2_PLATFORM_MAC_FR:      strncpy(profile->version_id, "mac-fr",      sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_AMIGA_EN:    strncpy(profile->version_id, "amiga-en",    sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_MEGACD_JA:   strncpy(profile->version_id, "megacd-ja",   sizeof(profile->version_id) - 1); break;
-        case DM2_PLATFORM_PC9821_JA:   strncpy(profile->version_id, "pc9821-ja",   sizeof(profile->version_id) - 1); break;
         default:                       strncpy(profile->version_id, "unknown",     sizeof(profile->version_id) - 1); break;
     }
 
@@ -4085,11 +3947,10 @@ int dm2_v1_boot_music_track_for_level(const DM2_V1_BootProfile *profile,
         return 0;
 
     case DM2_MUSIC_SYSTEM_CDDA_COORD:
-        /* CD.DAT is shared by FM Towns, Mega CD and PC-9821. A coordinate
+        /* CD.DAT is shared by FM Towns and Mega CD. A coordinate
          * track is exposed only when the selected original BIN is retained
          * and its own CUE supplied the track boundaries. */
-        if (profile->platform != DM2_PLATFORM_FMTOWNS_JA &&
-            profile->platform != DM2_PLATFORM_PC9821_JA) return 0;
+        if (profile->platform != DM2_PLATFORM_FMTOWNS_JA) return 0;
         if (profile->cdda_cd_dat_verified) {
             DM2_V1_CddaCdDat cd;
             if (dm2_v1_cdda_cd_dat_parse(&cd, profile->cdda_cd_dat_data,
@@ -4138,32 +3999,6 @@ size_t dm2_v1_boot_load_cdda_track(const DM2_V1_BootProfile *profile,
             if (dm2_v1_fmtowns_cdda_extract(
                     profile->fmtowns_disc_image,
                     profile->fmtowns_disc_image_size,
-                    info.start_sector, info.sector_count,
-                    &pcm, &pcm_size) == 0) {
-                *out_data = pcm;
-                *out_media_verified = 1;
-                return pcm_size;
-            }
-        }
-    }
-    if (profile->assets_verified && profile->cdda_cd_dat_verified &&
-        profile->platform == DM2_PLATFORM_PC9821_JA &&
-        profile->pc9821_disc_image && profile->pc9821_disc_image_size > 0u &&
-        disc_track >= (int)DM2_FMTOWNS_CDDA_FIRST_TRACK &&
-        disc_track <= (int)DM2_FMTOWNS_CDDA_LAST_TRACK &&
-        disc_track <= profile->pc9821_cdda_track_count) {
-        DM2_V1_FmtownsCddaTrackInfo info;
-        if (dm2_v1_fmtowns_cdda_track_info(
-                disc_track, profile->pc9821_cdda_track_starts,
-                profile->pc9821_cdda_track_count,
-                (uint32_t)(profile->pc9821_disc_image_size /
-                           DM2_FMTOWNS_SECTOR_SIZE),
-                &info) == 0) {
-            uint8_t *pcm = NULL;
-            size_t pcm_size = 0u;
-            if (dm2_v1_fmtowns_cdda_extract(
-                    profile->pc9821_disc_image,
-                    profile->pc9821_disc_image_size,
                     info.start_sector, info.sector_count,
                     &pcm, &pcm_size) == 0) {
                 *out_data = pcm;
@@ -4485,7 +4320,6 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         DM2_V1_BootGraphicsDat *gfx =
             (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
         if (profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
-            profile->platform == DM2_PLATFORM_PC9821_JA ||
             profile->platform == DM2_PLATFORM_AMIGA_EN ||
             profile->platform == DM2_PLATFORM_PC_EN ||
             profile->platform == DM2_PLATFORM_PC_FR ||
@@ -15110,38 +14944,6 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
         !dm2_v1_boot_prepared_new_game_mirror_roster(profile, &roster)) {
         return 0;
     }
-    /* PC-9821 follows GAME_LOAD's scripted INIT_CHAMPIONS first member from
-     * the File_header (0,0) chain. A viewport click confirms that already
-     * selected source hero; it must not append the next roster member or
-     * require a nonexistent D0C mirror. Admit only that exact released DB3
-     * record and its retained single-member selection. */
-    if (profile->platform == DM2_PLATFORM_PC9821_JA &&
-        owner->source_startend_first_champion_released &&
-        owner->source_startend_first_champion_tick == 0u &&
-        owner->source_startend_first_champion_object_id == mirror_object_id &&
-        owner->selected_mirror_count == 1u &&
-        owner->selected_mirrors[0].mirror_object_id == mirror_object_id &&
-        owner->champion_selection_materialized &&
-        owner->selected_party.heros_in_party == 1 &&
-        (owner->selected_party.hero[0].heroflag & 0x4000) != 0) {
-        uint16_t source_first_mirror_object = 0u;
-        if (!dm2_v1_boot_startend_first_mirror_from_file_header(
-                owner, &source_first_mirror_object) ||
-            source_first_mirror_object != mirror_object_id) {
-            return 0;
-        }
-        for (i = 0; i < roster.candidate_count; ++i) {
-            const DM2_V1_BootChampionSelectionCandidate *candidate =
-                &roster.candidates[i];
-            if (candidate->valid &&
-                candidate->mirror.object_id == mirror_object_id &&
-                candidate->mirror.map == owner->current_map &&
-                candidate->mirror.x == 0u && candidate->mirror.y == 0u) {
-                return 1;
-            }
-        }
-        return 0;
-    }
     /* STARTEND has already admitted its first File_header-rooted champion
      * before presenting the FM Towns viewport.  The visible mirror event is
      * its confirmation, not a request to append an unrelated next roster
@@ -15269,22 +15071,6 @@ int dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
             front = cell;
             break;
         }
-    }
-    /* The PC-9821 STARTEND route has already selected the authentic first
-     * champion from map (0,0) before the preselection viewport appears. Its
-     * explicit viewport click confirms that retained member; it is not a
-     * click on a second, forward-facing D0C mirror. The by-mirror admission
-     * below rechecks the File_header chain and selected roster identity. */
-    if (profile->platform == DM2_PLATFORM_PC9821_JA &&
-        owner->source_startend_first_champion_released &&
-        owner->source_startend_first_champion_object_id != 0u &&
-        owner->selected_mirror_count == 1u &&
-        owner->selected_mirrors[0].mirror_object_id ==
-            owner->source_startend_first_champion_object_id &&
-        owner->champion_selection_materialized &&
-        owner->selected_party.heros_in_party == 1) {
-        return dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
-            profile, owner->source_startend_first_champion_object_id);
     }
     if (!front && !owner->dungeon.source_words_big_endian &&
         !fmtowns_startend) return 0;
@@ -15476,13 +15262,6 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     free(profile->fmtowns_disc_image);
     profile->fmtowns_disc_image = NULL;
     profile->fmtowns_disc_image_size = 0u;
-    free(profile->pc9821_disc_image);
-    profile->pc9821_disc_image = NULL;
-    profile->pc9821_disc_image_size = 0u;
-    profile->pc9821_zip_path[0] = '\0';
-    memset(profile->pc9821_cdda_track_starts, 0,
-           sizeof(profile->pc9821_cdda_track_starts));
-    profile->pc9821_cdda_track_count = 0;
     free(profile->fmtowns_twanim_bytes);
     free(profile->fmtowns_skull_bytes);
     free(profile->fmtowns_swoosh_bytes);

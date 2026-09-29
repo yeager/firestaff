@@ -2,7 +2,7 @@
  * test_dm2_v1_i18n_real_data.c
  *
  * Validates DM2 i18n text extraction against real GRAPHICS.DAT files.
- * Loads EN, FR, DE, Mac FR, FM Towns JP, and PC-9821 JP GDAT files
+ * Loads EN, FR, DE, Mac FR, and FM Towns JP GDAT files
  * and extracts text entries from each.
  */
 

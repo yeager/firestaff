@@ -15,7 +15,6 @@
 #define P_MAC  FIRESTAFF_PLATFORM_MACINTOSH
 #define P_SCD  FIRESTAFF_PLATFORM_SEGA_CD
 #define P_PSV  FIRESTAFF_PLATFORM_IBM_PSV
-#define P_9821 FIRESTAFF_PLATFORM_PC9821
 #define L_EN   FIRESTAFF_LANG_ENGLISH
 #define L_FR   FIRESTAFF_LANG_FRENCH
 #define L_DE   FIRESTAFF_LANG_GERMAN
@@ -202,9 +201,6 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     /* DM2 PC-9801 */
     {MD5(A0,27,71,95,09,9B,2A,CE,51,D4,E0,85,F7,EE,F8,35), G_DM2, P_98, L_JP, F_GFX, "Demo", "DMII PC-9801 Japanese Demo GRAPHICS.DAT"},
     {MD5(A6,69,AD,F2,A6,FF,88,7E,0D,45,1D,93,C8,46,F5,7F), G_DM2, P_98, L_JP, F_GFX, NULL, "DMII PC-9801 Japanese GRAPHICS.DAT"},
-    /* DM2 PC-9821 */
-    {MD5(A3,10,23,DB,49,D5,D8,5E,46,9C,93,23,67,18,12,C7), G_DM2, P_9821, L_JP, F_GFX, "R1", "DMII PC-9821 Japanese Release 1 GRAPHICS.DAT"},
-    {MD5(A8,0C,55,5A,85,8E,F7,77,0E,1D,7F,3D,2E,37,FE,C3), G_DM2, P_9821, L_JP, F_GFX, "R2", "DMII PC-9821 Japanese Release 2 GRAPHICS.DAT"},
     /* DM2 Sega CD */
     {MD5(DB,CE,D1,3A,38,D3,03,6F,42,B9,79,71,75,B7,EC,88), G_DM2, P_SCD, L_EN, F_GFX, NULL, "DMII Sega CD English GRAPHICS.DAT"},
     {MD5(A6,54,BA,19,E9,A6,91,9F,46,81,8E,CD,23,D7,EA,9D), G_DM2, P_SCD, L_JP, F_GFX, NULL, "DMII Sega CD Japanese GRAPHICS.DAT"},
@@ -281,7 +277,6 @@ const char *firestaff_platform_name(FirestaffPlatform platform) {
     case FIRESTAFF_PLATFORM_MACINTOSH: return "Macintosh";
     case FIRESTAFF_PLATFORM_SEGA_CD:   return "Sega CD";
     case FIRESTAFF_PLATFORM_IBM_PSV:   return "IBM PS/V";
-    case FIRESTAFF_PLATFORM_PC9821:    return "PC-9821";
     default: return "Unknown";
     }
 }

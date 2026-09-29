@@ -2,7 +2,7 @@
  * test_dm2_v1_cdda_cd_dat.c
  *
  * Validates DM2 CDDA Red Book music trigger format (40 bytes)
- * against FM Towns, Mega CD, and PC-9821 CD.DAT files.
+ * against FM Towns and Mega CD CD.DAT files.
  * All three are byte-identical.
  */
 
@@ -97,7 +97,7 @@ static void test_lookup(void) {
 
 int main(void) {
     const char *home;
-    char path_fmtowns[512], path_megacd[512], path_pc9821[512];
+    char path_fmtowns[512], path_megacd[512];
     uint8_t *ref_data = NULL;
     size_t ref_size = 0;
 
@@ -110,13 +110,10 @@ int main(void) {
              "%s/.firestaff/data/dm2-extras/fm-towns-ja/extracted/CD.DAT", home);
     snprintf(path_megacd, sizeof(path_megacd),
              "%s/.firestaff/data/dm2-extras/mega-cd-jp-extracted/CD.DAT", home);
-    snprintf(path_pc9821, sizeof(path_pc9821),
-             "%s/.firestaff/data/dm2-extras/pc9821-jp-extracted/CD.DAT", home);
 
     ref_data = read_file(path_fmtowns, &ref_size);
     test_cdda_file("FM Towns CD.DAT", path_fmtowns, NULL, 0);
     test_cdda_file("Mega CD CD.DAT", path_megacd, ref_data, ref_size);
-    test_cdda_file("PC-9821 CD.DAT", path_pc9821, ref_data, ref_size);
 
     printf("Coordinate lookup tests:\n");
     test_lookup();

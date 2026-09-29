@@ -91,7 +91,7 @@ int main(void)
     puts("PASS: CSB Amiga selection admits verified native A31E");
     {
         static const char *const pc98_versions[] = {
-            "pc98-ja-demo", "pc9821-ja"
+            "pc98-ja-demo"
         };
         static const char *const game_ids[] = {
             "dm1", "csb", "dm2", "nexus", "theron"
@@ -99,10 +99,12 @@ int main(void)
         size_t version_index;
         size_t game_index;
 
-        /* The PC-9801 demo remains preservation-only. PC-9821 retail is
-         * launchable only when its authenticated original ZIP owns the
-         * virtual data paths. Neither version may enter AUTO priority.
-         * X68000 remains preservation-only for every game. */
+        /* PC-9821 has no supported catalog identity. PC-9801 demo and
+         * X68000 remain preservation-only and cannot enter AUTO priority. */
+        if (M12_AssetStatus_FindVersionIndex("dm2", "pc9821-ja") >= 0) {
+            fputs("FAIL: removed PC-9821 edition returned to the catalog\n", stderr);
+            return 1;
+        }
         for (version_index = 0u;
              version_index < sizeof(pc98_versions) / sizeof(pc98_versions[0]);
              ++version_index) {
@@ -125,18 +127,6 @@ int main(void)
                         "FAIL: PC-9801 demo became launchable: %s\n",
                         pc98_versions[version_index]);
                 return 1;
-            }
-            if (strcmp(pc98_versions[version_index], "pc9821-ja") == 0) {
-                snprintf(status.versions[2][pc98].matchedPath,
-                         sizeof(status.versions[2][pc98].matchedPath),
-                         "/media/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip::DATA/GRAPHICS.DAT");
-                selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-                    &status, "dm2", M12_ARCH_PC98);
-                if (selected != pc98) {
-                    fprintf(stderr,
-                            "FAIL: authenticated PC-9821 source did not become launchable\n");
-                    return 1;
-                }
             }
             selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
                 &status, "dm2", M12_ARCH_AUTO);
@@ -162,6 +152,6 @@ int main(void)
             }
         }
     }
-    puts("PASS: PC-9801 demo stays blocked; PC-9821 requires its original ZIP; AUTO excludes both");
+    puts("PASS: PC-9801 demo stays blocked; PC-9821 is absent from the catalog");
     return 0;
 }

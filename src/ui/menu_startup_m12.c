@@ -5635,11 +5635,8 @@ static int m12_version_architecture_launchable(const char* gameId,
                                                size_t versionIndex) {
     int architecture = M12_AssetStatus_GetVersionArchitecture(gameId,
                                                                versionIndex);
-    const char* versionId = M12_AssetStatus_GetVersionId(gameId, versionIndex);
     return architecture > M12_ARCH_AUTO && architecture < M12_ARCH_COUNT &&
-           (architecture != M12_ARCH_PC98 ||
-            (gameId && strcmp(gameId, "dm2") == 0 && versionId &&
-             strcmp(versionId, "pc9821-ja") == 0)) &&
+           architecture != M12_ARCH_PC98 &&
            architecture != M12_ARCH_X68000 &&
            !(gameId && strcmp(gameId, "csb") == 0 &&
              architecture == M12_ARCH_PC);
@@ -6114,11 +6111,7 @@ static int m12_collect_card_platforms(const M12_StartupMenuState* state,
         int seen = 0;
         int j;
         if (architecture <= M12_ARCH_AUTO ||
-            (architecture == M12_ARCH_PC98 &&
-             !(strcmp(gameId, "dm2") == 0 &&
-               M12_AssetStatus_GetVersionId(gameId, i) &&
-               strcmp(M12_AssetStatus_GetVersionId(gameId, i),
-                      "pc9821-ja") == 0)) ||
+            architecture == M12_ARCH_PC98 ||
             architecture == M12_ARCH_X68000 ||
             /* CSB shipped for Atari ST, Amiga and FM Towns; its PC3.4
              * compatibility source is a reference implementation, never a

@@ -30,7 +30,6 @@ static const PlatformDef g_platforms[] = {
     {"FM Towns",   "dm2-extras/fm-towns-ja/extracted/GRAPHICS.DAT",0},
     {"Amiga EN",   "dm2-extras/amiga-en-extracted/GRAPHICS.DAT",   1},
     {"Mega CD",    "dm2-extras/mega-cd-jp-extracted/GRAPHICS.DAT", 1},
-    {"PC-9821",    "dm2-extras/pc9821-jp-extracted/GRAPHICS.DAT",  0},
 };
 #define PLATFORM_COUNT (sizeof(g_platforms) / sizeof(g_platforms[0]))
 

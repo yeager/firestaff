@@ -34,13 +34,11 @@ int main(void) {
            == DM2_MUSIC_SYSTEM_CDDA_COORD);
     assert(dm2_v1_platform_music_system(DM2_PLATFORM_MEGACD_JA)
            == DM2_MUSIC_SYSTEM_CDDA_COORD);
-    assert(dm2_v1_platform_music_system(DM2_PLATFORM_PC9821_JA)
-           == DM2_MUSIC_SYSTEM_CDDA_COORD);
-    printf("  PASS: FM Towns/Mega CD/PC-9821 -> CDDA_COORD\n");
+    printf("  PASS: FM Towns/Mega CD -> CDDA_COORD\n");
 
     printf("  Platform count: %d\n", DM2_PLATFORM_COUNT);
-    assert(DM2_PLATFORM_COUNT == 9);
-    printf("  PASS: 9 platforms defined\n");
+    assert(DM2_PLATFORM_COUNT == 8);
+    printf("  PASS: 8 platforms defined\n");
 
     printf("\nAll platform music system tests passed.\n");
     return 0;

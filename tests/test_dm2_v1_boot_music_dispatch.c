@@ -88,10 +88,6 @@ static void test_music_system_routing(void) {
     profile.cdda_cd_dat_data[3] = 7;
     assert(dm2_v1_boot_music_track_for_level(&profile, 2, 5, 3, &track) == 0);
     assert(track == -1);
-    profile.platform = DM2_PLATFORM_PC9821_JA;
-    assert(dm2_v1_boot_music_track_for_level(&profile, 2, 5, 3, &track) == 0);
-    assert(track == -1);
-    assert(dm2_v1_boot_music_track_for_level(&profile, 1, 0, 0, &track) == 0);
 
     printf("  PASS: CDDA routing stays silent without native disc owner\n");
 }
@@ -103,6 +99,10 @@ int main(void) {
     test_songlist_dispatch();
     test_cdda_dispatch();
     test_music_system_routing();
+    assert(!dm2_v1_boot_asset_hash_pair_supported(
+        "a80c555a858ef7770e1d7f3d2e37fec3",
+        "fa644b2451af197874ee7dc3951e7033"));
+    puts("  PASS: removed PC-9821 edition is not admitted");
     printf("\nAll boot music dispatch tests passed.\n");
     return 0;
 }

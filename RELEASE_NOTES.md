@@ -5,6 +5,9 @@
 - `Swedish launcher`: translated the five new custom-music folder selection,
   cancellation, invalid-path and memory-error messages.
 
+- `DM2 platforms`: remove PC-9821 support, including its launcher entry,
+  CLI aliases and native media/runtime admission.
+
 - `Verification`: hosted CI now explicitly runs launcher settings and
   dialog-lifetime regression tests across Linux, macOS and Windows.
 

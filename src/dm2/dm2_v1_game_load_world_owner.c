@@ -343,7 +343,7 @@ static int dm2_v1_game_load_owner_materialize_caii_capacity(
  * Source: SKProject SKULLWIN/c_creature.cpp:3217-3278. */
 static int dm2_v1_game_load_owner_static_caii_animation_frame(
     const DM2_V1_AssetLoader *loader, uint8_t creature_type,
-    uint16_t packed_position, DM2_Platform platform, uint16_t *out_frame)
+    uint16_t packed_position, uint16_t *out_frame)
 {
     const uint8_t *attribution;
     const uint8_t *info;
@@ -362,15 +362,7 @@ static int dm2_v1_game_load_owner_static_caii_animation_frame(
     attribution = dm2_v1_asset_load_typed_sized(loader,
         DM2_GDAT_CATEGORY_CREATURES, creature_type, DM2_GDAT_ENTRY_TYPE_RAW8,
         DM2_GDAT_CREATURE_ANIM_ATTRIBUTION, &attribution_size);
-    if (!attribution) {
-        /* SKProject SKULLWIN/c_creature.cpp::DM2_GET_CREATURE_ANIMATION_FRAME
-         * returns 0 when the selected GDAT has no RAW8/0xfb entry. Its
-         * static-record caller, DM2_1c9a_09db, ignores that return and leaves
-         * the animation frame absent. The authentic PC-9821 set has this
-         * exact case (creature type 41); retain the source's no-frame state
-         * instead of rejecting the entire New Game load. */
-        return platform == DM2_PLATFORM_PC9821_JA;
-    }
+    if (!attribution) return 0;
     if (attribution_size < 4u) return 0;
     for (row = 0u; row * 4u + 3u < attribution_size; ++row) {
         const uint16_t command = (uint16_t)attribution[row * 4u] |
@@ -518,7 +510,6 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                             if (!dm2_v1_game_load_owner_static_caii_animation_frame(
                                 owner->asset_loader, record[4],
                                 candidate->packed_position,
-                                owner->boot_profile->platform,
                                 &candidate->static_animation_frame)) {
                                 /* FM Towns has authentic static creature
                                  * records outside the 42-entry type-06

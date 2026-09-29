@@ -72,7 +72,6 @@ typedef enum {
     DM2_PLATFORM_MAC_FR,       /* Macintosh French */
     DM2_PLATFORM_AMIGA_EN,     /* Amiga English, 68020+ */
     DM2_PLATFORM_MEGACD_JA,    /* Mega CD / Sega CD Japanese */
-    DM2_PLATFORM_PC9821_JA,    /* PC-9821 Japanese */
     DM2_PLATFORM_COUNT
 } DM2_Platform;
 
@@ -85,12 +84,12 @@ int dm2_v1_boot_asset_hash_pair_supported(const char *graphics_md5,
 /* Music system classification by platform.
  * PC:           HMP via SONGLIST.DAT (63B, per-map index)
  * Mac/Amiga:    HMP/MOD via CD.DAT/md.dat (176B, per-map mapping)
- * FM Towns/Mega CD/PC-9821: CDDA via CD.DAT (40B, coordinate triggers) */
+ * FM Towns/Mega CD: CDDA via CD.DAT (40B, coordinate triggers) */
 typedef enum {
     DM2_MUSIC_SYSTEM_HMP_SONGLIST,   /* PC: SONGLIST.DAT -> GDAT HMP */
     DM2_MUSIC_SYSTEM_HMP_MAP176,     /* Mac: md.dat -> external HMP files */
     DM2_MUSIC_SYSTEM_MOD_MAP176,     /* Amiga: CD.DAT -> MOD files */
-    DM2_MUSIC_SYSTEM_CDDA_COORD,     /* FM Towns/Mega CD/PC-9821: CD.DAT -> disc tracks */
+    DM2_MUSIC_SYSTEM_CDDA_COORD,     /* FM Towns/Mega CD: CD.DAT -> disc tracks */
 } DM2_MusicSystem;
 
 static inline DM2_MusicSystem dm2_v1_platform_music_system(DM2_Platform p) {
@@ -99,8 +98,7 @@ static inline DM2_MusicSystem dm2_v1_platform_music_system(DM2_Platform p) {
     case DM2_PLATFORM_MAC_FR:       return DM2_MUSIC_SYSTEM_HMP_MAP176;
     case DM2_PLATFORM_AMIGA_EN:     return DM2_MUSIC_SYSTEM_MOD_MAP176;
     case DM2_PLATFORM_FMTOWNS_JA:
-    case DM2_PLATFORM_MEGACD_JA:
-    case DM2_PLATFORM_PC9821_JA:    return DM2_MUSIC_SYSTEM_CDDA_COORD;
+    case DM2_PLATFORM_MEGACD_JA:    return DM2_MUSIC_SYSTEM_CDDA_COORD;
     default:                        return DM2_MUSIC_SYSTEM_HMP_SONGLIST;
     }
 }
@@ -490,7 +488,7 @@ typedef struct {
     uint8_t music_map_data[176];
     int     music_map_verified;
 
-    /* ── CDDA coordinate table (FM Towns/Mega CD/PC-9821) ──── */
+    /* ── CDDA coordinate table (FM Towns/Mega CD) ──── */
     char    cdda_cd_dat_path[512];
     char    cdda_cd_dat_md5[33];
     size_t  cdda_cd_dat_size;
@@ -516,13 +514,6 @@ typedef struct {
     size_t   fmtowns_end_byte_count;
     uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
     int      fmtowns_cdda_track_count;
-    /* Original PC-9821 CUE/BIN remains the selected CDDA owner.  Runtime
-     * game data is separately retained in graphics_mem/dungeon_mem. */
-    char     pc9821_zip_path[512];
-    uint8_t *pc9821_disc_image;
-    size_t   pc9821_disc_image_size;
-    uint32_t pc9821_cdda_track_starts[9];
-    int      pc9821_cdda_track_count;
     /* Phar Lap P3 executable receipts for the selected native programs.
      * They record only bounded header facts from in-memory disc members; no
      * program image is unpacked or executed by either receipt. */

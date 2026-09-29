@@ -91,7 +91,7 @@ static void usage(const char* prog) {
             "  --music             Enable title and in-game music\n"
             "  --fps               Show FPS counter\n"
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
-            "  --platform <name>   Select source platform: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pc98 (DM2 PC-9821), pce, saturn\n"
+            "  --platform <name>   Select source platform: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn\n"
             "  --fm-towns          Select the verified FM Towns edition (dm1, csb, or dm2)\n"
             "  --dm1-fmtowns-ja    Select DM1's verified Japanese FM Towns edition\n"
             "  --csb-fmtowns-ja    Select CSB's verified Japanese FM Towns edition\n"
@@ -634,9 +634,6 @@ static int parse_architecture(const char* value, int* out_architecture) {
         *out_architecture = M12_ARCH_FM_TOWNS;
     else if (strcmp(value, "mac") == 0)
         *out_architecture = M12_ARCH_MAC;
-    else if (strcmp(value, "pc98") == 0 || strcmp(value, "pc-98") == 0 ||
-             strcmp(value, "pc9821") == 0 || strcmp(value, "pc-9821") == 0)
-        *out_architecture = M12_ARCH_PC98;
     else if (strcmp(value, "pce") == 0 || strcmp(value, "pc-engine") == 0)
         *out_architecture = M12_ARCH_PCE;
     else if (strcmp(value, "saturn") == 0) *out_architecture = M12_ARCH_SATURN;
@@ -969,7 +966,7 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--platform") == 0 && i + 1 < argc) {
             if (!parse_architecture(argv[++i], &opts.architectureOverride)) {
                 fprintf(stderr,
-                        "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pc98, pce, or saturn\n");
+                        "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, or saturn\n");
                 return 2;
             }
             continue;

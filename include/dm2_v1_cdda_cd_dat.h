@@ -4,7 +4,7 @@
 /*
  * dm2_v1_cdda_cd_dat.h — DM2 CDDA Red Book music trigger format.
  *
- * Used by FM Towns, Mega CD, and PC-9821.
+ * Used by FM Towns and Mega CD.
  * 40 bytes = 10 entries × 4 bytes: [X, Y, level_index, track_index]
  *
  * Unlike the 176-byte Amiga/Mac format (which maps by map index),

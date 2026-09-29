@@ -1,5 +1,18 @@
 # Firestaff DONE — DM2
 
+## 2026-09-29 — Remove PC-9821 support
+
+- Removed the PC-9821 edition from runtime admission, launcher selection and
+  CLI platform aliases at the user’s request. Its dedicated archive reader,
+  audio/startup branches and positive support tests are removed.
+- Historical source references do not grant runtime support. DOS, Amiga,
+  Macintosh and FM Towns remain in scope.
+- The explicit-alias/archive rejection, supported-catalog, music-route,
+  fingerprint integrity and DOS HUD regressions pass. Original-media
+  Macintosh, Amiga and FM Towns normal startup routes pass, and the shared launcher
+  handoff checks pass with DM1 (332 assertions), CSB Amiga (55) and DM2 DOS
+  (60). SDL dummy runs do not prove physical audio or Retina behavior.
+
 ## 2026-09-29 — Amiga startup regression rerun
 
 - After rebuilding the application with the latest launcher input and music
@@ -19,15 +32,6 @@
   an empty script queue and an accepted original-asset frame without core
   fallback draws. The archive hash remains unchanged. SDL dummy output does
   not establish audible playback or original-emulator visual parity.
-
-## 2026-09-29 — PC-9821 startup regression rerun
-
-- The authentic ZIP passes keyboard and 1920x1080 pointer selection through
-  M12, original-title admission, and CLI New Game/mirror input into map 0 at
-  (1,8,0) with one champion. The runtime probe accepts original assets with
-  zero core fallback draws, and the archive hash remains unchanged. This
-  uses SDL dummy output and a bounded boot probe; physical audio, native
-  Retina delivery and sustained gameplay remain separate checks.
 
 ## 2026-09-29 — Retain Amiga selection after presentation Back
 

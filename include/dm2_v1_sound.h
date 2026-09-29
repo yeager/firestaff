@@ -39,9 +39,6 @@
 #define DM2_SOUND_STD_THROW            0x86  /* throw/shoot item */
 #define DM2_SOUND_STD_ACTIVATION       0x88  /* GDAT2 V5 activation */
 #define DM2_SOUND_STD_TELEPORT         0x89  /* GDAT2 V5 teleport */
-#define DM2_SOUND_STD_ACTIVATION_MSG   0x00  /* message tick (PC9821 only) */
-#define DM2_SOUND_STD_SPELL_MESSAGE    0x01  /* spell message (PC9821 only) */
-#define DM2_SOUND_STD_TELEPORT_MSG     0x02  /* teleporter message (PC9821 only) */
 
 /* ── Champion SFX constants ────────────────────────────────────────── */
 

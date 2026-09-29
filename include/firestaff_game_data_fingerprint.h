@@ -26,8 +26,7 @@ typedef enum {
     FIRESTAFF_PLATFORM_APPLE_IIGS = 7,
     FIRESTAFF_PLATFORM_MACINTOSH = 8,
     FIRESTAFF_PLATFORM_SEGA_CD   = 9,
-    FIRESTAFF_PLATFORM_IBM_PSV   = 10,
-    FIRESTAFF_PLATFORM_PC9821    = 11
+    FIRESTAFF_PLATFORM_IBM_PSV   = 10
 } FirestaffPlatform;
 
 typedef enum {
@@ -83,7 +82,7 @@ typedef struct {
     const FirestaffGameDataFingerprint *entry;
 } FirestaffGameDataClassifyResult;
 
-#define FIRESTAFF_FINGERPRINT_COUNT 115
+#define FIRESTAFF_FINGERPRINT_COUNT 112
 
 extern const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERPRINT_COUNT];
 

@@ -224,8 +224,6 @@ static const M12_KnownChecksum g_knownChecksums[] = {
     {"dm2", "GRAPHICS.DAT", "e52ab5e01715042b16a4dcff02052e5d", "DMII PC German and English JewelCase GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "a0277195099b2ace51d4e085f7eef835", "DMII PC-9801 Japanese Demo GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "a669adf2a6ff887e0d451d93c846f57f", "DMII PC-9801 Japanese GRAPHICS.DAT"},
-    {"dm2", "GRAPHICS.DAT", "a31023db49d5d85e469c9323671812c7", "DMII PC-9821 Japanese Release 1 GRAPHICS.DAT"},
-    {"dm2", "GRAPHICS.DAT", "a80c555a858ef7770e1d7f3d2e37fec3", "DMII PC-9821 Japanese Release 2 GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "dbced13a38d3036f42b9797175b7ec88", "DMII Sega CD English GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "a654ba19e9a6919f46818ecd23d7ea9d", "DMII Sega CD Japanese GRAPHICS.DAT"}
 };

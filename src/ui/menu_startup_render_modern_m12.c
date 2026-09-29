@@ -2146,11 +2146,7 @@ static int card_platforms_for_game(const char* gameId, int out[M12_ARCH_COUNT]) 
         size_t j;
         int seen = 0;
         if (architecture <= M12_ARCH_AUTO ||
-            (architecture == M12_ARCH_PC98 &&
-             !(gameId && strcmp(gameId, "dm2") == 0 &&
-               M12_AssetStatus_GetVersionId(gameId, i) &&
-               strcmp(M12_AssetStatus_GetVersionId(gameId, i),
-                      "pc9821-ja") == 0)) ||
+            architecture == M12_ARCH_PC98 ||
             architecture == M12_ARCH_X68000 ||
             /* ReDMCSB's PC3.4 material is a compatibility reference, not
              * an original CSB DOS release. */

@@ -125,6 +125,12 @@ static void test_binary_classify(void) {
 int main(void) {
     test_classify_known_hashes();
     test_classify_unknown();
+    ASSERT(!firestaff_game_data_classify_hex(
+        "a31023db49d5d85e469c9323671812c7").valid,
+        "removed PC-9821 R1 is not classified");
+    ASSERT(!firestaff_game_data_classify_hex(
+        "a80c555a858ef7770e1d7f3d2e37fec3").valid,
+        "removed PC-9821 R2 is not classified");
     test_name_functions();
     test_table_integrity();
     test_binary_classify();

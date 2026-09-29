@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.348 LANGUAGES C)
+project(Firestaff VERSION 3.0.349 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -4505,15 +4505,14 @@ if(BUILD_TESTING)
         TIMEOUT 300
     )
     add_test(
-        NAME dm2_v1_pc9821_native_cli_boot
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_pc9821_native_cli_boot.sh"
+        NAME dm2_unsupported_platform_cli
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_unsupported_platform_cli.sh"
             "$<TARGET_FILE:firestaff>"
     )
-    set_tests_properties(dm2_v1_pc9821_native_cli_boot PROPERTIES
-        SKIP_RETURN_CODE 77
-        LABELS "tier2;dm2;pc9821;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_PC9821_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-pc9821;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-pc9821;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-pc9821"
-        TIMEOUT 180
+    set_tests_properties(dm2_unsupported_platform_cli PROPERTIES
+        LABELS "dm2;cli;platform-policy"
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_REMOVED_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/removed-platform-scratch"
+        TIMEOUT 30
     )
     add_test(
         NAME dm1_v1_pc34_native_cli_boot
@@ -18458,23 +18457,6 @@ endif()
         COMMAND test_dm2_v1_dungeon_loader_mega_cd
     )
 
-    add_executable(test_dm2_v1_dungeon_loader_pc9821
-        tests/test_dm2_v1_dungeon_loader_pc9821.c
-        src/dm2/dm2_v1_dungeon_loader.c
-        src/dm2/dm2_v1_asset_loader.c
-    )
-    target_include_directories(test_dm2_v1_dungeon_loader_pc9821 PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm2_v1_dungeon_loader_pc9821 PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm2_v1_dungeon_loader_pc9821
-        COMMAND test_dm2_v1_dungeon_loader_pc9821
-    )
-
     add_executable(test_dm2_v1_asset_loader_be
         tests/test_dm2_v1_asset_loader_be.c
         src/dm2/dm2_v1_asset_loader.c
@@ -18489,22 +18471,6 @@ endif()
     add_test(
         NAME dm2_v1_asset_loader_be
         COMMAND test_dm2_v1_asset_loader_be
-    )
-
-    add_executable(test_dm2_v1_asset_loader_pc9821
-        tests/test_dm2_v1_asset_loader_pc9821.c
-        src/dm2/dm2_v1_asset_loader.c
-    )
-    target_include_directories(test_dm2_v1_asset_loader_pc9821 PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm2_v1_asset_loader_pc9821 PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm2_v1_asset_loader_pc9821
-        COMMAND test_dm2_v1_asset_loader_pc9821
     )
 
     add_executable(test_dm2_v1_asset_loader_mac_fr
@@ -20533,31 +20499,6 @@ endif()
         COMMAND test_dm2_v1_boot_music_dispatch
     )
 
-    add_executable(test_dm2_v1_pc9821_cdda_real_media
-        tests/test_dm2_v1_pc9821_cdda_real_media.c
-    )
-    target_include_directories(test_dm2_v1_pc9821_cdda_real_media PRIVATE
-        ${CMAKE_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm2_v1_pc9821_cdda_real_media PRIVATE
-        firestaff_dm2 firestaff_m10 firestaff_m12 m
-    )
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
-        target_compile_options(test_dm2_v1_pc9821_cdda_real_media PRIVATE
-            -Wall -Wextra -O2
-        )
-    endif()
-    add_test(
-        NAME dm2_v1_pc9821_cdda_real_media
-        COMMAND test_dm2_v1_pc9821_cdda_real_media
-    )
-    set_tests_properties(dm2_v1_pc9821_cdda_real_media PROPERTIES
-        SKIP_RETURN_CODE 77
-        LABELS "tier2;dm2;pc9821;cdda;real-media;no-synthesis;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_PC9821_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip"
-        TIMEOUT 120
-    )
-
     add_executable(test_dm2_v1_i18n_real_data
         tests/test_dm2_v1_i18n_real_data.c
     )
@@ -21576,6 +21517,10 @@ endif()
     add_test(
         NAME dm1_v1_m11_launcher_handoff_boundary
         COMMAND test_dm1_v1_m11_launcher_handoff_boundary
+    )
+    # Validate stream/device ownership without requiring host audio hardware.
+    set_tests_properties(dm1_v1_m11_launcher_handoff_boundary PROPERTIES
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
     )
 
     # -- M11 CLI Direct Launch Preparation Boundary ----------------

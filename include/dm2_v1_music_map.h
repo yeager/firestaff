@@ -8,7 +8,7 @@
  *
  * 1. PC SONGLIST.DAT: 63 bytes, one byte per map (handled by dm2_v1_songlist_dat.h)
  * 2. Amiga CD.DAT / Mac md.dat: 176 bytes, 44 x 4-byte entries [0xFF 0xFF map track]
- * 3. FM Towns/Mega CD/PC-9821 CD.DAT: 40 bytes, CDDA Red Book format
+ * 3. FM Towns/Mega CD CD.DAT: 40 bytes, CDDA Red Book format
  *
  * This header handles format 2 (the 176-byte map-to-track format) with
  * configurable track count to support both MOD (10 tracks) and HMP (29 tracks).

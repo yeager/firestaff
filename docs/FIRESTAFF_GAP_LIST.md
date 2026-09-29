@@ -16,11 +16,9 @@
 This document does not replace the active per-game TODO files. It remains a
 source-cited technical index for historical context and future research.
 
-2026-09-28 platform boundary correction: DM1 PC-9801, DM2's separate PC-9801
-demo, and X68000 remain preservation-only. DM2 PC-9821 retail is a distinct
-Japanese release; its source-owned ZIP/CUE/BIN admission and launch route are
-under implementation and must not be described as playable until the
-real-media startup and first-map test passes.
+2026-09-29 platform boundary correction: DM2 PC-9821 support is removed
+at the user's request. It has no catalog, startup, or runtime route.
+DM1 PC-9801, DM2's separate PC-9801 demo, and X68000 remain preservation-only.
 
 2026-08-12 Hint Oracle graphics correction: original `HCSB.DAT` is now
 strictly indexed as a four-segment archive from the real Utility Disk
@@ -321,7 +319,7 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone `g_dm2.html`
 | DM2 Amiga 1.0 (en-fr-ge) | EXTRACTED — `dm2-extras/amiga-en/`; DMWeb's Amiga edition page identifies the release as Europe-only v1.0 with Germany/UK edition pages, six ADF/IPF floppy images that cannot be played directly from floppy and require hard-disk installation, MOD music files keyed by `CD.DAT`, WinUAE-captured Smacker videos, 68020+ / OCS/ECS hardware reality notes, and an undocumented Ctrl-S / Del-Help / keypad wall-ornate command table |
 | DM2 MegaCD/SegaCD 1.0 (jp/en) | EXTRACTED — `dm2-extras/mega-cd-jp/`; DMWeb's Sega CD / Mega CD edition page identifies Europe/USA English and Japan Japanese v1.0 releases as redump BIN/CUE CD images, lists DMFiles CD-content archives for USA/JP, documents a data-track ISO plus audio-track MP3 split, and notes that track 7 is replaced by 15 seconds of silence |
 | DM2 Macintosh 1.0 (retail EN) — uses QuickTime `.moov` | PARTIAL — the large retail ZIP (`mac-en-retail`) is read from its HFS media in RAM and is the only supported Macintosh English edition. Its keyboard/menu table, sound queue, QuickTime resources and bounded game routes are source-locked. Japanese and French remain preservation inputs. Remaining: complete original QuickTime timing/presentation ownership, remote wall owners, menu owners, MIDI scheduling, balloon help, save corpus, and JP/FR runtime proof. |
-| DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | PC-9801 demo remains preservation-only. PC-9821 retail reaches title, confirms STARTEND's File_header-rooted first champion through the M11 viewport click, commits GAME_LOAD, extracts original CDDA tracks and accepts one movement command that changes the runtime pose; additional party-selection cycles, sustained gameplay and audible CDDA output remain open. IBM PS/V remains preservation-only pending its distinct floppy media, input and protection audit. |
+| DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | INTENTIONALLY UNSUPPORTED — PC-9821 support is removed at the user's request; no catalog, startup or runtime route. PC-9801 demo and IBM PS/V remain preservation-only. |
 | DM2 FM-Towns 1.0 (jp) | EXTRACTED — `dm2-extras/fm-towns-ja/`; DMWeb's FM Towns edition page identifies the JP v1.0 release as a redump BIN/CUE CD image with CD-audio differences (tracks 2-6 slightly quieter, extra silent track 8) and a distinct Ctrl-Shift-S / shifted-arrow command table |
 
 **DM2 Macintosh status correction (reviewed 2026-08-27):** the English retail

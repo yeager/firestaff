@@ -17,7 +17,7 @@ when no corpus is configured, and use the mounted PC-DOS data when
 | Area | Evidence | Honest status |
 | --- | --- | --- |
 | Boot, title and menu | Original `TITLE` and `INTERFACE_GENERAL` GDAT records, source pointer rectangles and palette receipts | Real-data startup is covered. Full original keyboard-event translation remains open. |
-| GDAT | PC-DOS, Mac, Amiga, FM Towns, PC-9821 and Mega-CD parser boundaries; raw image, palette, animation and command plans | Decoding and provenance are covered; every presentation family still needs a live runtime owner. |
+| GDAT | PC-DOS, Mac, Amiga, FM Towns and Mega-CD parser boundaries; raw image, palette, animation and command plans | Decoding and provenance are covered; every presentation family still needs a live runtime owner. |
 | Dungeon and G1 | Map header, first-map, record-base, tile links, scene/material, static object and local-palette gates | Real input is decoded and bounded. Complete live dungeon rendering and mechanics remain open. |
 | HUD and viewport | GDAT HUD-command receipts, portraits, item/creature local palettes, M11 material handoffs | The active path is source-owned and rejects generated overlays. It is not yet full original GUI/viewport parity. |
 | Save corpus | Header, raw dungeon prefix, fixed `DM2_GAME_LOAD` SUPPRESS sections, DB-pool records and transactional rejection | The real PC-DOS corpus is inspected without unpacking or modifying it. The eight supplied DOS save/backup members resume through the menu into an accepted M11 frame; original writing and broader record-link/possession parity remain open. |
