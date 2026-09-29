@@ -93,7 +93,7 @@ probe_runtime_input action 9,0,2
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game csb --platform amiga --data-dir "$archive" \
-    --script enter,enter,enter --duration 1000 2>&1) || {
+    --script enter,enter,back,enter,enter --duration 1000 2>&1) || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }

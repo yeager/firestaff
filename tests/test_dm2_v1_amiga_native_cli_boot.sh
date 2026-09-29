@@ -17,7 +17,7 @@ archive_hash_before=$(sha256sum "$archive")
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform amiga --data-dir "$archive" \
-    --script 'key:enter,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
+    --script 'key:enter,key:enter,key:escape,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
 # DM2's third platform card is Amiga; retain the real archive through a
 # pointer-only game -> platform -> Original selection.

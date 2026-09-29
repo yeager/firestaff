@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+## 2026-09-29 — Retain Amiga selection after presentation Back
+
+- Verified the menu Back/reselect sequence with the authentic DM2 Amiga
+  archive and the existing menu launch gate checks. Added the sequence
+  to the original-media startup script. This verifies launcher navigation;
+  it does not establish complete game parity.
+
 ## 2026-09-29 — Macintosh title movie advances in the normal loop
 
 - The ordinary M11 idle loop now continues requesting presentation while the

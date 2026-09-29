@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+## 2026-09-29 — Retain Amiga selection after presentation Back
+
+- Verified the menu Back/reselect sequence with the authentic CSB Amiga
+  archive and the existing A31E startup handoff checks. Added the sequence
+  to the original-media startup script. This verifies launcher navigation;
+  it does not establish complete game parity.
+
 ## 2026-09-29 — CSB M12 viewport receipt
 
 - The runtime probe now reports the source-owned CSB viewport aperture hash.
