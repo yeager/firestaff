@@ -72,12 +72,14 @@ typedef struct {
     void* sdlStream;
     /* Independent native SONG.DAT transport; never contains SFX PCM. */
     void* musicStream;
+    void* movieStream; /* DM2 Mac mixed film PCM, isolated from SFX. */
     void* cddaStream;
     int   cddaPlaying;
     int   cddaPaused;
     int   hostPaused;
     int   hostResumeSdlStream;
     int   hostResumeMusicStream;
+    int   hostResumeMovieStream;
     int   hostResumeCddaStream;
     M11_SoundBuffer sounds[M11_AUDIO_MARKER_COUNT];
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
@@ -285,6 +287,10 @@ int M11_Audio_PlayDm2MacSndPcm(M11_AudioState* state,
                                int sourceRateHz,
                                int resourceId,
                                unsigned int sourceHash);
+/* Stop only Mac film PCM on cancel/replacement, retaining unrelated SFX. */
+int M11_Audio_StopDm2MacMovie(M11_AudioState* state);
+/* Flush finite conversion tail; no output device means no drain to await. */
+int M11_Audio_Dm2MacMovieDrained(M11_AudioState* state);
 int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
                                  const int16_t* source,
                                  int sourceSamples,

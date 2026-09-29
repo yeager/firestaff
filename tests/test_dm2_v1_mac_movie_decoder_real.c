@@ -23,23 +23,23 @@ static int check_movie_pcm_gain(const int16_t *source, int count, int rate,
     memset(&state, 0, sizeof(state));
     state.initialized = 1;
     state.backend = M11_AUDIO_BACKEND_SDL3;
-    state.sdlStream = SDL_CreateAudioStream(&spec, &spec);
-    if (!state.sdlStream) return 0;
+    state.movieStream = SDL_CreateAudioStream(&spec, &spec);
+    if (!state.movieStream) return 0;
     for (trial = 0; ok && trial < sizeof(masters) / sizeof(masters[0]); ++trial) {
         float *receipt;
         int bytes;
         int index;
-        SDL_ClearAudioStream((SDL_AudioStream *)state.sdlStream);
+        SDL_ClearAudioStream((SDL_AudioStream *)state.movieStream);
         ok = M11_Audio_SetVolumes(&state, masters[trial], 0, music[trial], 0) &&
              M11_Audio_PlayDm2MacMoviePcm(&state, source, count, rate);
         bytes = state.dm2MacMoviePcm.sampleCount * (int)sizeof(float);
         receipt = bytes > 0 ? (float *)malloc((size_t)bytes) : NULL;
         if (!ok || !receipt ||
-            SDL_GetAudioStreamGain((SDL_AudioStream *)state.sdlStream) !=
+            SDL_GetAudioStreamGain((SDL_AudioStream *)state.movieStream) !=
                 (float)masters[trial] / 128.0f ||
-            SDL_GetAudioStreamQueued((SDL_AudioStream *)state.sdlStream) != bytes ||
-            !SDL_FlushAudioStream((SDL_AudioStream *)state.sdlStream) ||
-            SDL_GetAudioStreamData((SDL_AudioStream *)state.sdlStream,
+            SDL_GetAudioStreamQueued((SDL_AudioStream *)state.movieStream) != bytes ||
+            !SDL_FlushAudioStream((SDL_AudioStream *)state.movieStream) ||
+            SDL_GetAudioStreamData((SDL_AudioStream *)state.movieStream,
                                    receipt, bytes) != bytes) {
             free(receipt);
             ok = 0;
@@ -57,7 +57,7 @@ static int check_movie_pcm_gain(const int16_t *source, int count, int rate,
         }
         free(receipt);
     }
-    SDL_DestroyAudioStream((SDL_AudioStream *)state.sdlStream);
+    SDL_DestroyAudioStream((SDL_AudioStream *)state.movieStream);
     free(state.dm2MacMoviePcm.samples);
     return ok;
 }

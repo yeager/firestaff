@@ -2141,6 +2141,7 @@ static int m11_dm2_bind_mac_movie_index(M11_GameViewState *state, int movie_inde
         movie_index >= DM2_V1_MAC_MOVIE_COUNT) return 0;
     if ((profile->mac_movie_view_present_mask &
          (1u << movie_index)) == 0u) return 0;
+    (void)M11_Audio_StopDm2MacMovie(&state->audioState);
     dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
     view = &profile->mac_movie_view[movie_index];
     if (!dm2_v1_mac_movie_decoder_open(&state->dm2MacMovieDecoder,
@@ -2189,6 +2190,7 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
     frame_deadline_us = state->dm2MacMovieDecoder.presentation_time_us;
     if (state->dm2MacMovieDecoder.frame_duration_us == 0u) {
         state->dm2MacMovieRejected = 1;
+        (void)M11_Audio_StopDm2MacMovie(&state->audioState);
         state->dm2MacMovieActive = 0;
         return 0;
     }
@@ -2206,6 +2208,15 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
     if (!state->dm2MacMovieFrameShown) {
         state->dm2MacMovieFrameShown = 1;
     } else if (!dm2_v1_mac_movie_decoder_next(&state->dm2MacMovieDecoder)) {
+        /* A decoder may return final audio while discovering video EOF.
+         * Admit that original tail before deciding whether SDL is drained. */
+        if (dm2_v1_mac_movie_decoder_take_audio(&state->dm2MacMovieDecoder,
+                &audio_samples, &audio_sample_count, &audio_rate_hz))
+            (void)M11_Audio_PlayDm2MacMoviePcm(&state->audioState, audio_samples,
+                                            audio_sample_count, audio_rate_hz);
+        if (!state->bootProbeFastForward && !state->dm2MacMovieDecoder.rejected &&
+            !M11_Audio_Dm2MacMovieDrained(&state->audioState)) goto render_frame;
+        (void)M11_Audio_StopDm2MacMovie(&state->audioState);
         state->dm2MacMovieActive = 0;
         state->dm2MacMovieComplete = 1;
         if (state->dm2MacMovieIndex == DM2_V1_MAC_MOVIE_CREDITS) {
@@ -2227,6 +2238,7 @@ render_frame:
     if (M11_Render_SetIndexedPaletteRgb6(
             state->dm2MacMovieDecoder.palette_rgb6) != M11_RENDER_OK) {
         state->dm2MacMovieRejected = 1;
+        (void)M11_Audio_StopDm2MacMovie(&state->audioState);
         state->dm2MacMovieActive = 0;
         return 0;
     }
@@ -3553,6 +3565,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
             state->dm2State.startup_credits_active = 0;
             if (state->dm2MacMovieActive) {
                 state->dm2MacMovieActive = 0;
+                (void)M11_Audio_StopDm2MacMovie(&state->audioState);
                 dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
             }
             return M11_GAME_INPUT_REDRAW;
@@ -36266,6 +36279,7 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
             state->dm2State.startup_credits_remaining_ticks = 0;
             if (state->dm2MacMovieActive) {
                 state->dm2MacMovieActive = 0;
+                (void)M11_Audio_StopDm2MacMovie(&state->audioState);
                 dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
             }
             return M11_GAME_INPUT_REDRAW;

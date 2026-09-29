@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM2 Mac film audio`: closing Credits or opening another film now clears
+  only movie audio, preserving game sound effects. Normal film completion
+  drains remaining PCM before returning control to the menu.
+
 - `Window resize`: rendering and input now query the same live window and
   drawable dimensions before resize events are delivered. Normalized touch
   conversion also receives current window dimensions.

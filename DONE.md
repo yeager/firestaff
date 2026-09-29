@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Isolated DM2 Mac film PCM in a dedicated stream with live
+  master gain, selected-device routing, host pause and shutdown ownership.
+  Credits cancellation/reopen clears only film audio, preserving original
+  snd-resource effects. EOF queues any decoder tail before waiting for SDL
+  drain, then clears the movie owner. Authentic tests pass cancellation with
+  queued Credits PCM plus snd 10001, reopen, normal final-frame/tail drain,
+  four movie gain readbacks and explicit unavailable-audio operation. The
+  menu-to-gameplay and live-clock checks remain enabled. Narrow build and
+  DM1/CSB original-media launcher regressions pass; physical listening and
+  FFmpeg-specific end-packet execution remain separate verification work.
+
 - 2026-09-29: Added opt-in full-duration DOS intro playback to the authentic
   DM2 launcher test (`FIRESTAFF_DM2_LIVE_INTRO=1`). A fresh selected-media
   session runs without clock writes, fast-forward or audio-queue clearing;

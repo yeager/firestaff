@@ -1,5 +1,7 @@
 #include "m11_game_view.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_mac_sound.h"
+#include "dm2_v1_mac_quicktime.h"
 #include "menu_hit_m12.h"
 
 #include <stdio.h>
@@ -7,6 +9,21 @@
 #include <string.h>
 
 #include <SDL3/SDL.h>
+
+static int explicit_no_audio_mode(void)
+{
+    const char* driver = getenv("SDL_AUDIODRIVER");
+    return driver && strcmp(driver, "firestaff-no-such-driver") == 0;
+}
+
+static int no_audio_output(const M11_AudioState* audio)
+{
+    return !M11_Audio_IsAvailable(audio) && !audio->sdlStream && !audio->movieStream;
+}
+
+#define AUDIO_CHECK(condition, checkpoint) do { if (!(condition)) { \
+    fprintf(stderr, "Mac movie audio checkpoint failed: %s (SDL: %s)\n", \
+            checkpoint, SDL_GetError()); return 0; } } while (0)
 
 static int dm2_version_id_is(int version_index, const char *expected)
 {
@@ -37,6 +54,133 @@ static int check_live_movie_clock(M11_GameViewState *state, unsigned char *frame
     }
     return state->dm2MacMovieActive && held_frame &&
            state->dm2MacMovieDecoder.frame_index >= first_frame + 8u;
+}
+
+static int check_normal_movie_eof(M11_GameViewState* state, unsigned char* framebuffer)
+{
+    DM2_V1_BootProfile* profile = (DM2_V1_BootProfile*)state->dm2BootProfile;
+    const DM2_V1_MacMovieView* view = &profile->mac_movie_view[DM2_V1_MAC_MOVIE_CREDITS];
+    DM2_V1_MacQuickTimeInfo info;
+    uint64_t deadline;
+    uint32_t guard;
+    const int no_audio = explicit_no_audio_mode();
+    if (!dm2_v1_mac_quicktime_inspect(view->bytes, view->size, &info) ||
+        info.video_sample_count < 11u) return 0;
+    state->bootProbeFastForward = 1;
+    guard = info.video_sample_count + 1u;
+    while (state->dm2MacMovieActive &&
+           state->dm2MacMovieDecoder.frame_index < info.video_sample_count - 10u && guard-- > 0u)
+        M11_GameView_Draw(state, framebuffer, 320, 200);
+    if (!state->dm2MacMovieActive || !guard) return 0;
+    /* Discard accelerated backlog; retain only actual final source frames. */
+    if (!M11_Audio_StopDm2MacMovie(&state->audioState) ||
+        !M11_Audio_SetHostPaused(&state->audioState, 1)) return 0;
+    while (state->dm2MacMovieActive &&
+           state->dm2MacMovieDecoder.frame_index < info.video_sample_count && guard-- > 0u)
+        M11_GameView_Draw(state, framebuffer, 320, 200);
+    if (!state->dm2MacMovieActive || !guard) return 0;
+    state->bootProbeFastForward = 0;
+    state->dm2MacMovieStartUs = SDL_GetTicksNS() / UINT64_C(1000) -
+        state->dm2MacMovieDecoder.presentation_time_us;
+    AUDIO_CHECK(no_audio ? no_audio_output(&state->audioState) :
+        (state->audioState.movieStream &&
+         SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.movieStream) > 0),
+        "EOF authentic tail transport");
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    if (!state->dm2MacMovieActive) return 0;
+    SDL_Delay((Uint32)(state->dm2MacMovieDecoder.frame_duration_us / 1000u + 2u));
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    AUDIO_CHECK(state->audioState.hostPaused &&
+        (no_audio ? !state->dm2MacMovieActive : state->dm2MacMovieActive),
+        "EOF source deadline versus paused output drain");
+    if (!M11_Audio_SetHostPaused(&state->audioState, 0)) return 0;
+    deadline = SDL_GetTicksNS() / UINT64_C(1000) + UINT64_C(3000000);
+    while (state->dm2MacMovieActive && SDL_GetTicksNS() / UINT64_C(1000) < deadline) {
+        M11_GameView_Draw(state, framebuffer, 320, 200);
+        SDL_Delay(2U);
+    }
+    if (state->dm2MacMovieActive || !state->dm2MacMovieComplete ||
+        (no_audio ? !no_audio_output(&state->audioState) :
+         SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.movieStream) != 0)) return 0;
+    puts(no_audio ? "PASS: no-device authentic Mac movie finishes at its source deadline" :
+         "PASS: authentic Mac movie final frame and PCM drain finish in normal time");
+    return 1;
+}
+
+static int check_credits_audio_cancel(M11_GameViewState* state,
+                                      unsigned char* framebuffer)
+{
+    DM2_V1_BootProfile* profile = (DM2_V1_BootProfile*)state->dm2BootProfile;
+    DM2_V1_MacSoundSample sample;
+    unsigned int hash = 2166136261u;
+    size_t i;
+    int before = 0;
+    const int no_audio = explicit_no_audio_mode();
+    const uint32_t first_frame = state->dm2MacMovieDecoder.frame_index;
+    AUDIO_CHECK(profile && (no_audio ? no_audio_output(&state->audioState) :
+        M11_Audio_IsAvailable(&state->audioState)), "credits output mode");
+    AUDIO_CHECK(M11_Audio_SetHostPaused(&state->audioState, 1), "credits host pause");
+    /* Queue isolation needs an audible domain irrespective of saved preferences. */
+    AUDIO_CHECK(M11_Audio_SetVolumes(&state->audioState, 128, 128, 128, 128),
+        "audible isolation volumes");
+    /* Keep both real streams paused at SDL only; the movie still decodes
+     * through normal Draw, so Return exercises actual queued credits PCM. */
+    state->bootProbeFastForward = 1;
+    for (i = 0; i < 8u && (no_audio ||
+             state->dm2MacMovieDecoder.frame_index <= first_frame ||
+             !state->audioState.movieStream ||
+             SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.movieStream) <= 0); ++i)
+        M11_GameView_Draw(state, framebuffer, 320, 200);
+    state->bootProbeFastForward = 0;
+    fprintf(stderr, "Credits PCM checkpoint: first=%u frame=%u draws=%zu samples=%d "
+        "queued=%d active=%d backend=%d master=%d hostPaused=%d resume=%d\n",
+        (unsigned)first_frame, (unsigned)state->dm2MacMovieDecoder.frame_index, i,
+        state->audioState.dm2MacMoviePcm.sampleCount,
+        state->audioState.movieStream ?
+            SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.movieStream) : -1,
+        state->dm2MacMovieActive, (int)state->audioState.backend,
+        state->audioState.masterVolume, state->audioState.hostPaused,
+        state->audioState.hostResumeMovieStream);
+    AUDIO_CHECK(state->dm2MacMovieActive &&
+        state->dm2MacMovieDecoder.frame_index > first_frame &&
+        state->audioState.dm2MacMoviePcm.sampleCount > 0 &&
+        (no_audio ? no_audio_output(&state->audioState) :
+         (state->audioState.movieStream &&
+          SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.movieStream) > 0)),
+        "credits authentic PCM decoded and transported");
+    AUDIO_CHECK(dm2_v1_mac_sound_find(profile->mac_sound_resource_fork[DM2_V1_MAC_SOUND_GENERAL],
+            profile->mac_sound_resource_fork_size[DM2_V1_MAC_SOUND_GENERAL], 10001, &sample) == 0 &&
+        sample.valid && sample.sample_data_size, "original snd resource lookup");
+    for (i = 0; i < sample.sample_data_size; ++i) {
+        hash ^= sample.sample_data[i];
+        hash *= 16777619u;
+    }
+    AUDIO_CHECK(M11_Audio_PlayDm2MacSndPcm(&state->audioState,
+            (const int8_t*)sample.sample_data, (int)sample.sample_data_size,
+            (int)((sample.sample_rate_fixed + 0x8000u) >> 16), sample.resource_id,
+            hash ? hash : 1u), "original snd playback receipt");
+    AUDIO_CHECK(state->audioState.dm2MacSndAccepted &&
+        state->audioState.dm2MacSndPcm.sampleCount > 0, "authentic snd resource accepted");
+    if (!no_audio) {
+        before = SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.sdlStream);
+        AUDIO_CHECK(before > 0, "authentic SFX queue populated");
+    }
+    AUDIO_CHECK(M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT) !=
+        M11_GAME_INPUT_IGNORED && !state->dm2MacMovieActive &&
+        !state->dm2State.startup_credits_active && !state->audioState.hostResumeMovieStream,
+        "Return cancels credits source and pending resume");
+    AUDIO_CHECK(no_audio ? no_audio_output(&state->audioState) :
+        (SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.movieStream) == 0 &&
+         SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->audioState.movieStream) &&
+         SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.sdlStream) == before),
+        "cancel clears movie only");
+    AUDIO_CHECK(M11_Audio_SetHostPaused(&state->audioState, 0) &&
+        (no_audio ? no_audio_output(&state->audioState) :
+         SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->audioState.movieStream)),
+        "host resume cannot restart cancelled movie");
+    puts(no_audio ? "PASS: no-device authentic Credits decoding and cancellation" :
+         "PASS: authentic Credits cancellation clears movie PCM and preserves queued original snd resource");
+    return 1;
 }
 
 int main(void)
@@ -155,8 +299,8 @@ int main(void)
         if (!state.sessionTimerForcedPauseDialogActive ||
             state.dm2MacMovieDecoder.frame_index != pausedFrameIndex ||
             !state.audioState.hostPaused ||
-            (state.audioState.sdlStream &&
-             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.audioState.sdlStream))) {
+            (state.audioState.movieStream &&
+             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.audioState.movieStream))) {
             fprintf(stderr, "Timer pause did not freeze authentic Mac movie/audio\n");
             M11_GameView_Shutdown(&state);
             M12_StartupMenu_Destroy(&menuState);
@@ -187,8 +331,8 @@ int main(void)
             state.dm2MacMovieStartUs != originalStartUs ||
             state.audioState.queuedSampleCount != queuedSamples ||
             !state.audioState.hostPaused ||
-            (state.audioState.sdlStream &&
-             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.audioState.sdlStream))) {
+            (state.audioState.movieStream &&
+             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.audioState.movieStream))) {
             fprintf(stderr, "Focus pause did not freeze authentic Mac movie decoding/audio\n");
             M11_GameView_Shutdown(&state);
             M12_StartupMenu_Destroy(&menuState);
@@ -218,6 +362,7 @@ int main(void)
         }
         puts("PASS: focus pause freezes authentic Mac movie/audio and resumes source decoding");
     }
+    state.bootProbeFastForward = 1;
     for (frame = 0; state.dm2MacMovieActive && frame < 10000; ++frame) {
         /* Advance the test clock by one source frame.  This keeps the
          * production path wall-clock based while avoiding a multi-second
@@ -229,6 +374,7 @@ int main(void)
         M11_GameView_Draw(&state, framebuffer, 320, 200);
     }
 
+    state.bootProbeFastForward = 0;
     memset(&aux, 0, sizeof(aux));
     if (state.dm2MacMovieActive ||
         !dm2_v1_boot_startup_menu_aux_pointer_layout(
@@ -250,12 +396,39 @@ int main(void)
         return 1;
     }
 
+    if (!check_credits_audio_cancel(&state, framebuffer)) {
+        fprintf(stderr, "Mac credits audio cancellation did not isolate authentic film/SFX queues\n");
+        M11_GameView_Shutdown(&state);
+        M12_StartupMenu_Destroy(&menuState);
+        return 1;
+    }
+    /* Reopen the same real credits movie: its previous queue must be empty. */
+    if (M11_GameView_HandlePointer(&state, aux.show_credits.x + aux.show_credits.w / 2,
+            aux.show_credits.y + aux.show_credits.h / 2, 1) == M11_GAME_INPUT_IGNORED ||
+        !state.dm2MacMovieActive ||
+        (explicit_no_audio_mode() ? !no_audio_output(&state.audioState) :
+         (!state.audioState.movieStream ||
+          SDL_GetAudioStreamQueued((SDL_AudioStream*)state.audioState.movieStream) != 0))) {
+        fprintf(stderr, "Mac credits reopen retained prior movie PCM\n");
+        M11_GameView_Shutdown(&state);
+        M12_StartupMenu_Destroy(&menuState);
+        return 1;
+    }
     /* The authentic Mac input table closes credits on Return/Enter.  The
      * missing PC dismissal rectangle must not become a synthetic mouse hit. */
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) ==
             M11_GAME_INPUT_IGNORED || state.dm2MacMovieActive ||
         state.dm2State.startup_credits_active) {
         fprintf(stderr, "Mac Credits.MooV did not close through Return/Enter\n");
+        M11_GameView_Shutdown(&state);
+        M12_StartupMenu_Destroy(&menuState);
+        return 1;
+    }
+
+    if (M11_GameView_HandlePointer(&state, aux.show_credits.x + aux.show_credits.w / 2,
+            aux.show_credits.y + aux.show_credits.h / 2, 1) == M11_GAME_INPUT_IGNORED ||
+        !check_normal_movie_eof(&state, framebuffer)) {
+        fprintf(stderr, "Mac normal movie EOF/drain lifecycle failed\n");
         M11_GameView_Shutdown(&state);
         M12_StartupMenu_Destroy(&menuState);
         return 1;

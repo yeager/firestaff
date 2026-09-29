@@ -1141,6 +1141,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     if (!state) return;
 
 #if M11_HAVE_SDL_AUDIO
+    if (state->movieStream) {
+        SDL_DestroyAudioStream((SDL_AudioStream*)state->movieStream);
+        state->movieStream = NULL;
+    }
     if (state->musicStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->musicStream);
         state->musicStream = NULL;
@@ -1194,6 +1198,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->hostPaused = 0;
     state->hostResumeSdlStream = 0;
     state->hostResumeMusicStream = 0;
+    state->hostResumeMovieStream = 0;
     state->hostResumeCddaStream = 0;
     state->initialized = 0;
     state->backend = M11_AUDIO_BACKEND_NONE;
@@ -1279,6 +1284,9 @@ int M11_Audio_SetVolumes(M11_AudioState* state,
                      ((float)state->musicVolume / M11_AUDIO_VOLUME_MAX);
         SDL_SetAudioStreamGain((SDL_AudioStream*)state->musicStream, gain);
     }
+    if (state->movieStream)
+        SDL_SetAudioStreamGain((SDL_AudioStream*)state->movieStream,
+            (float)state->masterVolume / (float)M11_AUDIO_VOLUME_MAX);
     if (state->cddaStream) {
         float gain = ((float)state->masterVolume / M11_AUDIO_VOLUME_MAX) *
                      ((float)state->musicVolume / M11_AUDIO_VOLUME_MAX);
@@ -2157,6 +2165,35 @@ int M11_Audio_PlayDm2MacSndPcm(M11_AudioState* state,
     return 1;
 }
 
+int M11_Audio_StopDm2MacMovie(M11_AudioState* state)
+{
+    int ok = 1;
+    if (!state || !state->initialized) return 0;
+#if M11_HAVE_SDL_AUDIO
+    if (state->movieStream) {
+        if (SDL_GetAudioStreamDevice((SDL_AudioStream*)state->movieStream) &&
+            !SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->movieStream)) ok = 0;
+        if (!SDL_ClearAudioStream((SDL_AudioStream*)state->movieStream)) ok = 0;
+    }
+#endif
+    state->hostResumeMovieStream = 0;
+    return ok;
+}
+
+int M11_Audio_Dm2MacMovieDrained(M11_AudioState* state)
+{
+#if M11_HAVE_SDL_AUDIO
+    if (state && state->movieStream) {
+        SDL_AudioStream* stream = (SDL_AudioStream*)state->movieStream;
+        (void)SDL_FlushAudioStream(stream);
+        return SDL_GetAudioStreamQueued(stream) <= 0 && SDL_GetAudioStreamAvailable(stream) <= 0;
+    }
+#else
+    (void)state;
+#endif
+    return 1;
+}
+
 int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
                                  const int16_t* source,
                                  int sourceSamples,
@@ -2181,13 +2218,28 @@ int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
     }
     state->dm2MacMoviePcm.sampleCount = (int)outputCount;
 #if M11_HAVE_SDL_AUDIO
-    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream)
-        (void)m11_sdl_queue_samples(state, state->dm2MacMoviePcm.samples,
-                                    state->dm2MacMoviePcm.sampleCount,
-                                    /* QuickTime supplies the complete film
-                                     * mix, not a separate music channel.
-                                     * Master gain already lives on sdlStream. */
-                                    M11_AUDIO_VOLUME_MAX);
+    if (state->backend == M11_AUDIO_BACKEND_SDL3) {
+        SDL_AudioStream* stream = (SDL_AudioStream*)state->movieStream;
+        if (!stream) {
+            SDL_AudioSpec spec;
+            SDL_zero(spec);
+            spec.format = SDL_AUDIO_F32;
+            spec.channels = 1;
+            spec.freq = M11_AUDIO_SAMPLE_RATE;
+            stream = SDL_OpenAudioDeviceStream(Firestaff_AudioDevice_ResolvePlayback(),
+                                                &spec, NULL, NULL);
+            if (!stream) return 1; /* Keep the original visual timeline without a device. */
+            state->movieStream = stream;
+        }
+        /* QuickTime supplies a complete film mix. Host master gain applies
+         * live; music/SFX controls cannot separate that source mixture. */
+        if (!SDL_SetAudioStreamGain(stream, (float)state->masterVolume / M11_AUDIO_VOLUME_MAX) ||
+            !SDL_PutAudioStreamData(stream, state->dm2MacMoviePcm.samples,
+                                    state->dm2MacMoviePcm.sampleCount * (int)sizeof(float))) return 0;
+        state->queuedSampleCount += state->dm2MacMoviePcm.sampleCount;
+        if (state->hostPaused) state->hostResumeMovieStream = 1;
+        else if (SDL_GetAudioStreamDevice(stream) && !SDL_ResumeAudioStreamDevice(stream)) return 0;
+    }
 #endif
     return 1;
 }
@@ -2395,6 +2447,12 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
                 state->hostResumeMusicStream = 1;
             else ok = 0;
         }
+        if (state->movieStream &&
+            !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->movieStream)) {
+            if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->movieStream))
+                state->hostResumeMovieStream = 1;
+            else ok = 0;
+        }
         if (state->cddaStream &&
             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->cddaStream)) {
             if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
@@ -2412,6 +2470,11 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
             if (!state->musicStream || !state->titleMusicEnabled ||
                 SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->musicStream))
                 state->hostResumeMusicStream = 0;
+            else ok = 0;
+        }
+        if (state->hostResumeMovieStream) {
+            if (!state->movieStream || SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->movieStream))
+                state->hostResumeMovieStream = 0;
             else ok = 0;
         }
         if (state->hostResumeCddaStream) {
