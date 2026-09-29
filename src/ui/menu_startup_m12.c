@@ -2926,16 +2926,17 @@ static void m12_export_save_browser_settings_action(M12_StartupMenuState* state)
     }
 }
 
-static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
+int M12_StartupMenu_ImportSaveManifestPath(M12_StartupMenuState* state,
+                                           const char* path) {
     M12_Config config;
     if (!state) {
-        return;
+        return 0;
     }
     M12_Config_Load(&config, NULL);
     m12_enter_message_view(state);
-    if (M12_Config_ImportSaveManifestJSON(&config, NULL)) {
+    if (M12_Config_ImportSaveManifestJSON(&config, path)) {
         M12_Config_Save(&config);
-        m12_apply_loaded_config(state, NULL, NULL, NULL);
+        m12_apply_loaded_config(state, config.dataDir, NULL, NULL);
         m12_sync_entries_from_assets(state);
         m12_publish_game_availability(state);
         m12_sync_card_art(state);
@@ -2943,18 +2944,25 @@ static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
                              M12_AssetStatus_GetDataDir(&state->assetStatus),
                              (unsigned int)time(NULL));
         m12_probe_quick_resume(state);
-        snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
-                 "%s", config.lastSavePath);
+        /* Probe owns the final save identity, including a validated fallback.
+         * Persist that identity instead of restoring rejected manifest input. */
+        m12_save_config(state);
         m12_set_buffered_message(state,
                                  m12_tr(state, "SAVE MANIFEST IMPORTED"),
                                  m12_tr(state, "QUICK RESUME PATH UPDATED"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return 1;
     } else {
         m12_set_buffered_message(state,
                                  m12_tr(state, "IMPORT FAILED"),
                                  m12_tr(state, "EXPORT A SAVE MANIFEST FIRST"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     }
+    return 0;
+}
+
+static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
+    (void)M12_StartupMenu_ImportSaveManifestPath(state, NULL);
 }
 
 static void SDLCALL m12_data_dir_dialog_callback(void* userdata,
@@ -3906,41 +3914,43 @@ static int m12_infer_quick_resume_game_id(const M12_StartupMenuState* state,
 
 static int m12_discover_dm2_download_save(
     const M12_StartupMenuState* state, char* out_path, size_t out_size) {
+    const char* configured = getenv("FIRESTAFF_DM2_SAVE_ROOT");
     const char* home = getenv("HOME");
-    const char* data_dir;
-    char dm2_data_dir[512];
-    char root[512];
+    const char* roots[2];
+    char legacyRoot[512];
+    int length;
+    size_t rootIndex;
     DM2_SKSaveCorpusReceipt corpus;
 
-    if (!state || !out_path || out_size == 0u || !home || !home[0]) {
-        return 0;
+    if (!state || !out_path || out_size == 0u) return 0;
+    out_path[0] = '\0';
+    /* Bind automatic discovery to admitted DM2 media, including direct ZIP
+     * and canonical data roots; a directory name is not media evidence. */
+    if (!M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2")) return 0;
+    roots[0] = configured;
+    roots[1] = NULL;
+    if (home && home[0]) {
+        length = snprintf(legacyRoot, sizeof(legacyRoot), "%s/<downloads>/dm2", home);
+        if (length > 0 && (size_t)length < sizeof(legacyRoot)) roots[1] = legacyRoot;
     }
-    /* Keep the global launcher probe tied to a real DM2 data selection. */
-    data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
-    if (!data_dir || !data_dir[0]) return 0;
-    snprintf(dm2_data_dir, sizeof(dm2_data_dir), "%s/dm2", data_dir);
-    if (!FSP_DirExists(dm2_data_dir) &&
-        !(strlen(data_dir) >= 4u &&
-          m12_ascii_equal_ci(data_dir + strlen(data_dir) - 4u, "/dm2"))) {
-        return 0;
-    }
-    snprintf(root, sizeof(root), "%s/<downloads>/dm2", home);
-    if (!dm2_v1_sksave_corpus_scan(root, &corpus)) {
-        return 0;
-    }
-    /* M12's Continue handoff must carry a primary .dat path.  A .bak is
-     * still available to the DM2 startup menu's own fallback policy, but it
-     * is not a stable quick-resume identity for this global launcher slot. */
-    for (uint8_t i = 0u; i < corpus.candidate_receipt_count; ++i) {
-        const char* candidate = corpus.candidate_receipts[i].path;
-        size_t length;
-        if (!candidate || !candidate[0]) continue;
-        length = strlen(candidate);
-        if (length < 4u ||
-            !m12_ascii_equal_ci(candidate + length - 4u, ".dat")) continue;
-        if (!m12_is_valid_dm2_quick_resume_path(candidate)) continue;
-        snprintf(out_path, out_size, "%s", candidate);
-        return 1;
+    /* Match the explicit root supported by dm2_v1_boot_discover_dosbox_save_root.
+     * Each candidate still passes the original SKSave corpus and slot checks. */
+    for (rootIndex = 0u; rootIndex < 2u; ++rootIndex) {
+        if (!roots[rootIndex] || !roots[rootIndex][0] ||
+            !dm2_v1_sksave_corpus_scan(roots[rootIndex], &corpus)) continue;
+        /* Continue carries a primary .dat identity; .bak remains available
+         * to the native game's own fallback policy. */
+        for (uint8_t i = 0u; i < corpus.candidate_receipt_count; ++i) {
+            const char* candidate = corpus.candidate_receipts[i].path;
+            size_t candidateLength;
+            if (!candidate || !candidate[0]) continue;
+            candidateLength = strlen(candidate);
+            if (candidateLength < 4u || candidateLength >= out_size ||
+                !m12_ascii_equal_ci(candidate + candidateLength - 4u, ".dat") ||
+                !m12_is_valid_dm2_quick_resume_path(candidate)) continue;
+            memcpy(out_path, candidate, candidateLength + 1u);
+            return 1;
+        }
     }
     return 0;
 }

@@ -42,13 +42,6 @@
   callbacks now defer menu changes to Update, with cancellation/late-result
   tests; automated tests do not prove desktop dialog interaction.
 
-- Correct save-manifest import after Quick Resume fallback discovery.
-  m12_import_save_manifest_json probes the imported path, then overwrites
-  the resulting path with the pre-probe config value. If a valid DM2 save
-  was discovered as fallback, its availability/game ID can become paired
-  with the rejected imported path. Add an authentic-media regression
-  before changing this separate import path.
-
 - Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
   preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale
   getters/apply functions have no renderer/hit-test consumers (also noted in

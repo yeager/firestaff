@@ -47,11 +47,11 @@ msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
-#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5560
+#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5570
 msgid "ACCESSIBILITY"
 msgstr "ESTEETTÖMYYS"
 
-#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5557
+#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5567
 msgid "AUDIO"
 msgstr "ÄÄNI"
 
@@ -64,12 +64,12 @@ msgstr "OHJAIMET"
 msgid "GAME"
 msgstr "PELI"
 
-#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5542
-#: src/ui/menu_startup_m12.c:10586
+#: src/ui/menu_startup_m12.c:262 src/ui/menu_startup_m12.c:5552
+#: src/ui/menu_startup_m12.c:10596
 msgid "GRAPHICS"
 msgstr "GRAFIIKKA"
 
-#: src/ui/menu_startup_m12.c:263 src/ui/menu_startup_m12.c:5563
+#: src/ui/menu_startup_m12.c:263 src/ui/menu_startup_m12.c:5573
 msgid "ONLINE"
 msgstr "VERKOSSA"
 
@@ -253,7 +253,7 @@ msgstr "TR"
 
 #: src/ui/menu_startup_m12.c:468 src/ui/menu_startup_m12.c:474
 #: src/ui/menu_startup_m12.c:496 src/ui/menu_startup_m12.c:499
-#: src/ui/menu_startup_m12.c:5007 src/ui/menu_startup_m12.c:5151
+#: src/ui/menu_startup_m12.c:5017 src/ui/menu_startup_m12.c:5161
 msgid "AUTO"
 msgstr "AUTO"
 
@@ -340,7 +340,7 @@ msgstr "РУССКИЙ"
 #: src/ui/menu_startup_m12.c:478 src/ui/menu_startup_m12.c:494
 #: src/ui/menu_startup_m12.c:500 src/ui/menu_startup_m12.c:502
 #: src/ui/menu_startup_m12.c:503 src/ui/menu_startup_m12.c:504
-#: src/ui/menu_startup_m12.c:5137 src/ui/menu_startup_m12.c:5242
+#: src/ui/menu_startup_m12.c:5147 src/ui/menu_startup_m12.c:5252
 msgid "OFF"
 msgstr "OFF"
 
@@ -510,14 +510,14 @@ msgid "REMASTERED"
 msgstr "UUDISTETTU"
 
 #: src/ui/menu_startup_m12.c:783 src/ui/menu_startup_m12.c:804
-#: src/ui/menu_startup_m12.c:10051 src/ui/menu_startup_m12.c:10494
+#: src/ui/menu_startup_m12.c:10061 src/ui/menu_startup_m12.c:10504
 #: src/ui/menu_startup_render_modern_m12.c:1474
 #: src/ui/menu_startup_render_modern_m12.c:2652
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:784 src/ui/menu_startup_m12.c:814
-#: src/ui/menu_startup_m12.c:10053 src/ui/menu_startup_m12.c:10508
+#: src/ui/menu_startup_m12.c:10063 src/ui/menu_startup_m12.c:10518
 #: src/ui/menu_startup_render_modern_m12.c:1475
 #: src/ui/menu_startup_render_modern_m12.c:2655
 msgid "CHAOS STRIKES BACK"
@@ -544,16 +544,16 @@ msgstr "CSB-APULEVY (FM KAUPUNGIT)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK — VIHJE ORACLE"
 
-#: src/ui/menu_startup_m12.c:791 src/ui/menu_startup_m12.c:11428
-#: src/ui/menu_startup_m12.c:11431 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_m12.c:791 src/ui/menu_startup_m12.c:11438
+#: src/ui/menu_startup_m12.c:11441 src/ui/menu_startup_render_modern_m12.c:1753
 #: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "LEGENDOJEN MUSEO"
 
-#: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:8406
-#: src/ui/menu_startup_m12.c:8975 src/ui/menu_startup_m12.c:10247
-#: src/ui/menu_startup_m12.c:11463 src/ui/menu_startup_m12.c:11466
-#: src/ui/menu_startup_m12.c:11611
+#: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:8416
+#: src/ui/menu_startup_m12.c:8985 src/ui/menu_startup_m12.c:10257
+#: src/ui/menu_startup_m12.c:11473 src/ui/menu_startup_m12.c:11476
+#: src/ui/menu_startup_m12.c:11621
 msgid "SETTINGS"
 msgstr "SETTINGS"
 
@@ -773,8 +773,8 @@ msgstr "V1 SÄILYTTÄÄ PERUSKÄYTTÄYTYMISEN"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL DOKUMENTOI TÄRKEÄN HISTORIAN"
 
-#: src/ui/menu_startup_m12.c:838 src/ui/menu_startup_m12.c:11445
-#: src/ui/menu_startup_m12.c:11448
+#: src/ui/menu_startup_m12.c:838 src/ui/menu_startup_m12.c:11455
+#: src/ui/menu_startup_m12.c:11458
 msgid "CREDITS"
 msgstr "TEKIJÄT"
 
@@ -918,8 +918,8 @@ msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 msgid "PERSISTED OPTIONS"
 msgstr "PERSISTED OPTIONS"
 
-#: src/ui/menu_startup_m12.c:1062 src/ui/menu_startup_m12.c:10584
-#: src/ui/menu_startup_m12.c:12655
+#: src/ui/menu_startup_m12.c:1062 src/ui/menu_startup_m12.c:10594
+#: src/ui/menu_startup_m12.c:12665
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
@@ -951,7 +951,7 @@ msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER OR ESC RETURNS TO MENU"
 
-#: src/ui/menu_startup_m12.c:1070 src/ui/menu_startup_m12.c:8416
+#: src/ui/menu_startup_m12.c:1070 src/ui/menu_startup_m12.c:8426
 msgid "READY TO LAUNCH"
 msgstr "READY TO LAUNCH"
 
@@ -1025,11 +1025,11 @@ msgstr "ARCHIVE: %s  OPTION: %s"
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 
-#: src/ui/menu_startup_m12.c:1916 src/ui/menu_startup_m12.c:8986
+#: src/ui/menu_startup_m12.c:1916 src/ui/menu_startup_m12.c:8996
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:1918 src/ui/menu_startup_m12.c:8986
+#: src/ui/menu_startup_m12.c:1918 src/ui/menu_startup_m12.c:8996
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
@@ -1041,7 +1041,7 @@ msgstr "Dungeon Master II: The Legend of Skullkeep"
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:1925 src/ui/menu_startup_m12.c:8987
+#: src/ui/menu_startup_m12.c:1925 src/ui/menu_startup_m12.c:8997
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
@@ -1086,8 +1086,8 @@ msgstr "KÄYNNISTYSVÄLIMÄÄRÄN MATERILISOINTI"
 msgid "REFRESHING MEDIA METADATA"
 msgstr "PÄIVITETTÄVÄT MEDIATIEDOT"
 
-#: src/ui/menu_startup_m12.c:2018 src/ui/menu_startup_m12.c:3162
-#: src/ui/menu_startup_m12.c:5258 src/ui/menu_startup_m12.c:5498
+#: src/ui/menu_startup_m12.c:2018 src/ui/menu_startup_m12.c:3170
+#: src/ui/menu_startup_m12.c:5268 src/ui/menu_startup_m12.c:5508
 msgid "NOT SET"
 msgstr "EI ASETETTU"
 
@@ -1107,8 +1107,8 @@ msgstr "KOPIOI VÄHITTÄISMYYNTIPELIN TIEDOSTOT KANSIOON:"
 msgid "NO GAME DATA FOUND"
 msgstr "PELIDATAA EI LÖYTYNYT"
 
-#: src/ui/menu_startup_m12.c:2198 src/ui/menu_startup_m12.c:9739
-#: src/ui/menu_startup_m12.c:9854
+#: src/ui/menu_startup_m12.c:2198 src/ui/menu_startup_m12.c:9749
+#: src/ui/menu_startup_m12.c:9864
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
@@ -1116,13 +1116,13 @@ msgstr "TITLE START AVAILABLE"
 msgid "DATA DIRECTORY UPDATED"
 msgstr "TIETOHAKEMISTO PÄIVITETTY"
 
-#: src/ui/menu_startup_m12.c:2246 src/ui/menu_startup_m12.c:3005
+#: src/ui/menu_startup_m12.c:2246 src/ui/menu_startup_m12.c:3013
 msgid "DATA DIRECTORY UNCHANGED"
 msgstr "TIETOHAKEMISTO MUUTTUMATTA"
 
 #: src/ui/menu_startup_m12.c:2288 src/ui/menu_startup_m12.c:2386
 #: src/ui/menu_startup_m12.c:2552 src/ui/menu_startup_m12.c:2603
-#: src/ui/menu_startup_m12.c:13387
+#: src/ui/menu_startup_m12.c:13397
 msgid "SCANNING GAME DATA"
 msgstr "SKANNATAAN PELIDATAA"
 
@@ -1139,19 +1139,19 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr "PELIDATAA EI LÖYTYNYT"
 
 #: src/ui/menu_startup_m12.c:2518 src/ui/menu_startup_m12.c:2588
-#: src/ui/menu_startup_m12.c:2634 src/ui/menu_startup_m12.c:13356
+#: src/ui/menu_startup_m12.c:2634 src/ui/menu_startup_m12.c:13366
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "VALITSE OLEMASSA OLEMASSA OLEVA KANSIJO"
 
-#: src/ui/menu_startup_m12.c:2630 src/ui/menu_startup_m12.c:13352
+#: src/ui/menu_startup_m12.c:2630 src/ui/menu_startup_m12.c:13362
 msgid "DATA SCAN CANCELLED"
 msgstr "TIETOJEN SKANNAUS PERUUTETTU"
 
-#: src/ui/menu_startup_m12.c:2631 src/ui/menu_startup_m12.c:13353
+#: src/ui/menu_startup_m12.c:2631 src/ui/menu_startup_m12.c:13363
 msgid "DATA SCAN FAILED"
 msgstr "TIETOJEN SKANNAUS Epäonnistui"
 
-#: src/ui/menu_startup_m12.c:2633 src/ui/menu_startup_m12.c:13355
+#: src/ui/menu_startup_m12.c:2633 src/ui/menu_startup_m12.c:13365
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "PELIN SAATAVUUSA EI PÄIVITETTY"
 
@@ -1183,7 +1183,7 @@ msgstr "PC34 VIENTI Epäonnistunut"
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "TARKISTA PIKAJATKA TALLENNUS"
 
-#: src/ui/menu_startup_m12.c:2811 src/ui/menu_startup_m12.c:12944
+#: src/ui/menu_startup_m12.c:2811 src/ui/menu_startup_m12.c:12954
 msgid "NO SAVES FOUND"
 msgstr "PELIDATAA EI LÖYTYNYT"
 
@@ -1195,638 +1195,638 @@ msgstr "TALLENNA PELI ENSIN"
 msgid "SELECT A VALID DM1 SAVE"
 msgstr "VALITSE VOIMASSA DM1-TALLENNUS"
 
-#: src/ui/menu_startup_m12.c:2949
+#: src/ui/menu_startup_m12.c:2951
 msgid "SAVE MANIFEST IMPORTED"
 msgstr "TALLENNA MANIFESTIT TUOTU"
 
-#: src/ui/menu_startup_m12.c:2950
+#: src/ui/menu_startup_m12.c:2952
 msgid "QUICK RESUME PATH UPDATED"
 msgstr "NOPEA JATKAMINEN PÄIVITETTY"
 
-#: src/ui/menu_startup_m12.c:2954
+#: src/ui/menu_startup_m12.c:2957
 msgid "IMPORT FAILED"
 msgstr "TUONTI Epäonnistui"
 
-#: src/ui/menu_startup_m12.c:2955
+#: src/ui/menu_startup_m12.c:2958
 msgid "EXPORT A SAVE MANIFEST FIRST"
 msgstr "VIE SÄÄSTÖ-ILMOITUS ENSIN"
 
-#: src/ui/menu_startup_m12.c:2988
+#: src/ui/menu_startup_m12.c:2996
 msgid "CHOOSE GAME DATA FOLDER"
 msgstr "PELIDATAA EI LÖYTYNYT"
 
-#: src/ui/menu_startup_m12.c:2989
+#: src/ui/menu_startup_m12.c:2997
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "KÄYTTÖLAITE SKANAA UUDELLEEN VALINTA JÄLKEEN"
 
-#: src/ui/menu_startup_m12.c:3161 src/ui/menu_startup_m12.c:5432
+#: src/ui/menu_startup_m12.c:3169 src/ui/menu_startup_m12.c:5442
 msgid "CUSTOM MUSIC"
 msgstr "MUKAUTETTU"
 
-#: src/ui/menu_startup_m12.c:3166 src/ui/menu_startup_m12.c:3175
-#: src/ui/menu_startup_m12.c:13179 src/ui/menu_startup_m12.c:13184
+#: src/ui/menu_startup_m12.c:3174 src/ui/menu_startup_m12.c:3183
+#: src/ui/menu_startup_m12.c:13189 src/ui/menu_startup_m12.c:13194
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
 msgstr "CUSTOM MUSIC FOLDER UNCHANGED"
 
-#: src/ui/menu_startup_m12.c:3167 src/ui/menu_startup_m12.c:3204
-#: src/ui/menu_startup_m12.c:3262
+#: src/ui/menu_startup_m12.c:3175 src/ui/menu_startup_m12.c:3212
+#: src/ui/menu_startup_m12.c:3270
 msgid "NATIVE FILE DIALOG DISABLED"
 msgstr "ALKUTIEDOSTOJEN DIALOG POIS KÄYTÖSTÄ"
 
-#: src/ui/menu_startup_m12.c:3176 src/ui/menu_startup_m12.c:3212
-#: src/ui/menu_startup_m12.c:3270
+#: src/ui/menu_startup_m12.c:3184 src/ui/menu_startup_m12.c:3220
+#: src/ui/menu_startup_m12.c:3278
 msgid "NOT ENOUGH MEMORY"
 msgstr "NOT ENOUGH MEMORY"
 
-#: src/ui/menu_startup_m12.c:3198
+#: src/ui/menu_startup_m12.c:3206
 msgid "CHOOSE UNICODE FONT"
 msgstr "VALITSE UNICODE-FONTTI"
 
-#: src/ui/menu_startup_m12.c:3199
+#: src/ui/menu_startup_m12.c:3207
 msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "VALITSE LEVEÄ TTF TAI OTF-FONTTI"
 
-#: src/ui/menu_startup_m12.c:3203 src/ui/menu_startup_m12.c:3211
-#: src/ui/menu_startup_m12.c:13216
+#: src/ui/menu_startup_m12.c:3211 src/ui/menu_startup_m12.c:3219
+#: src/ui/menu_startup_m12.c:13226
 msgid "UNICODE FONT UNCHANGED"
 msgstr "UNICODE-FONTTI EI MUUTTU"
 
-#: src/ui/menu_startup_m12.c:3256
+#: src/ui/menu_startup_m12.c:3264
 msgid "CHOOSE V2.2 ARTPACK"
 msgstr "VALITSE V2.2 ARTPACK"
 
-#: src/ui/menu_startup_m12.c:3257
+#: src/ui/menu_startup_m12.c:3265
 msgid "SELECT A .FSART FILE"
 msgstr "VALITSE KOHDE"
 
-#: src/ui/menu_startup_m12.c:3261 src/ui/menu_startup_m12.c:3269
-#: src/ui/menu_startup_m12.c:13257
+#: src/ui/menu_startup_m12.c:3269 src/ui/menu_startup_m12.c:3277
+#: src/ui/menu_startup_m12.c:13267
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 ARTPACK MUUTTUMATTA"
 
-#: src/ui/menu_startup_m12.c:5235
+#: src/ui/menu_startup_m12.c:5245
 msgid "NEEDS LOGIN"
 msgstr "TARVITSE KIRJAUDUUN"
 
-#: src/ui/menu_startup_m12.c:5237
+#: src/ui/menu_startup_m12.c:5247
 msgid "READY"
 msgstr "VALMIS"
 
-#: src/ui/menu_startup_m12.c:5239
+#: src/ui/menu_startup_m12.c:5249
 msgid "BACKEND PENDING"
 msgstr "TAUSTAA ODOTTAA"
 
-#: src/ui/menu_startup_m12.c:5264
+#: src/ui/menu_startup_m12.c:5274
 msgid "SET"
 msgstr "VENYTÄ"
 
-#: src/ui/menu_startup_m12.c:5281 src/ui/menu_startup_m12.c:5494
+#: src/ui/menu_startup_m12.c:5291 src/ui/menu_startup_m12.c:5504
 msgid "EDITING"
 msgstr "ASETUKSET"
 
-#: src/ui/menu_startup_m12.c:5386
+#: src/ui/menu_startup_m12.c:5396
 msgid "SCALE"
 msgstr "SCALE"
 
-#: src/ui/menu_startup_m12.c:5387 src/ui/menu_startup_m12.c:12703
+#: src/ui/menu_startup_m12.c:5397 src/ui/menu_startup_m12.c:12713
 msgid "ASPECT RATIO"
 msgstr "ASPECT RATIO"
 
-#: src/ui/menu_startup_m12.c:5388
+#: src/ui/menu_startup_m12.c:5398
 msgid "PIXEL SNAP"
 msgstr "PIXEL SNAP"
 
-#: src/ui/menu_startup_m12.c:5389
+#: src/ui/menu_startup_m12.c:5399
 msgid "FILTER"
 msgstr "FILTER"
 
-#: src/ui/menu_startup_m12.c:5390
+#: src/ui/menu_startup_m12.c:5400
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:5391
+#: src/ui/menu_startup_m12.c:5401
 msgid "FPS OVERLAY"
 msgstr "FPS-PEITTOKUVA"
 
-#: src/ui/menu_startup_m12.c:5392
+#: src/ui/menu_startup_m12.c:5402
 msgid "VIEWPORT STYLE"
 msgstr "NÄKYMÄPORTTI TYYLI"
 
-#: src/ui/menu_startup_m12.c:5393
+#: src/ui/menu_startup_m12.c:5403
 msgid "INPUT MODE"
 msgstr "IKKUNATILA"
 
-#: src/ui/menu_startup_m12.c:5395
+#: src/ui/menu_startup_m12.c:5405
 msgid "TOUCH CONTROLS"
 msgstr "OHJAIMET"
 
-#: src/ui/menu_startup_m12.c:5396
+#: src/ui/menu_startup_m12.c:5406
 msgid "MOVEMENT MODE"
 msgstr "LIIKKE-TILA"
 
-#: src/ui/menu_startup_m12.c:5397
+#: src/ui/menu_startup_m12.c:5407
 msgid "SMOOTH TURN PAN"
 msgstr "SILMAINEN KÄÄNTÖ"
 
-#: src/ui/menu_startup_m12.c:5398
+#: src/ui/menu_startup_m12.c:5408
 msgid "DATA DIRECTORY"
 msgstr "DATAHAKEMISTO"
 
-#: src/ui/menu_startup_m12.c:5399
+#: src/ui/menu_startup_m12.c:5409
 msgid "ORIGINAL DATA"
 msgstr "ALKUPERÄINEN"
 
-#: src/ui/menu_startup_m12.c:5400
+#: src/ui/menu_startup_m12.c:5410
 msgid "DEBUG OVERLAY"
 msgstr "DEBUG-PEITTOKÄYTTÖ"
 
-#: src/ui/menu_startup_m12.c:5401
+#: src/ui/menu_startup_m12.c:5411
 msgid "DEVELOPER GATES"
 msgstr "KEHITTÄJIEN PORTIT"
 
-#: src/ui/menu_startup_m12.c:5402
+#: src/ui/menu_startup_m12.c:5412
 msgid "MASTER VOLUME"
 msgstr "UUDISTETTU"
 
-#: src/ui/menu_startup_m12.c:5403
+#: src/ui/menu_startup_m12.c:5413
 msgid "MUSIC VOLUME"
 msgstr "MUSIIKIN ÄÄNENVOIMAKKUUS"
 
-#: src/ui/menu_startup_m12.c:5404
+#: src/ui/menu_startup_m12.c:5414
 msgid "SFX VOLUME"
 msgstr "SFX VOLUME"
 
-#: src/ui/menu_startup_m12.c:5405
+#: src/ui/menu_startup_m12.c:5415
 msgid "MUTE AUDIO"
 msgstr "ÄÄNI"
 
-#: src/ui/menu_startup_m12.c:5406
+#: src/ui/menu_startup_m12.c:5416
 msgid "AUDIO DEVICE"
 msgstr "AUDIOLAITE"
 
-#: src/ui/menu_startup_m12.c:5407
+#: src/ui/menu_startup_m12.c:5417
 msgid "BRIGHTNESS"
 msgstr "KIRKKAUS"
 
-#: src/ui/menu_startup_m12.c:5408
+#: src/ui/menu_startup_m12.c:5418
 msgid "FONT SCALE"
 msgstr "SKAALAUS"
 
-#: src/ui/menu_startup_m12.c:5409
+#: src/ui/menu_startup_m12.c:5419
 msgid "UNICODE FONT"
 msgstr "UNICODE-FONTTI"
 
-#: src/ui/menu_startup_m12.c:5410
+#: src/ui/menu_startup_m12.c:5420
 msgid "HIGH CONTRAST"
 msgstr "SUURI KONTRASTI"
 
-#: src/ui/menu_startup_m12.c:5411
+#: src/ui/menu_startup_m12.c:5421
 msgid "COLORBLIND"
 msgstr "VÄRISOKEA"
 
-#: src/ui/menu_startup_m12.c:5412
+#: src/ui/menu_startup_m12.c:5422
 msgid "AUTO PAUSE"
 msgstr "AUTOMAATTINEN TAUKO"
 
-#: src/ui/menu_startup_m12.c:5413
+#: src/ui/menu_startup_m12.c:5423
 msgid "THEME"
 msgstr "TEEMA"
 
-#: src/ui/menu_startup_m12.c:5414
+#: src/ui/menu_startup_m12.c:5424
 msgid "BACKGROUND"
 msgstr "TAUSTA"
 
-#: src/ui/menu_startup_m12.c:5415
+#: src/ui/menu_startup_m12.c:5425
 msgid "QUICK RESUME"
 msgstr "NOPEA JATKOTUS"
 
-#: src/ui/menu_startup_m12.c:5416
+#: src/ui/menu_startup_m12.c:5426
 msgid "V2.2 ARTPACK"
 msgstr "V2.2 ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5417
+#: src/ui/menu_startup_m12.c:5427
 msgid "RETROACHIEVEMENTS"
 msgstr "SAAVUTUKSET"
 
-#: src/ui/menu_startup_m12.c:5418
+#: src/ui/menu_startup_m12.c:5428
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "RETROACHIEVEMENTS HARDCORE"
 
-#: src/ui/menu_startup_m12.c:5419
+#: src/ui/menu_startup_m12.c:5429
 msgid "RETROACHIEVEMENTS USER"
 msgstr "RETROSAAVUTUSTEN KÄYTTÄJÄ"
 
-#: src/ui/menu_startup_m12.c:5420
+#: src/ui/menu_startup_m12.c:5430
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "RETROACHIEVEMENTS API TOKEN"
 
-#: src/ui/menu_startup_m12.c:5421
+#: src/ui/menu_startup_m12.c:5431
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "RETROACHIEVEMENTS PALVELIN"
 
-#: src/ui/menu_startup_m12.c:5422 src/ui/menu_startup_m12.c:12899
+#: src/ui/menu_startup_m12.c:5432 src/ui/menu_startup_m12.c:12909
 msgid "SAVE BROWSER"
 msgstr "TALLENNA SELAIN"
 
-#: src/ui/menu_startup_m12.c:5423
+#: src/ui/menu_startup_m12.c:5433
 msgid "SESSION TIMER"
 msgstr "ISTUNNON AJASTIN"
 
-#: src/ui/menu_startup_m12.c:5424
+#: src/ui/menu_startup_m12.c:5434
 msgid "MINIMAP"
 msgstr "MINIMAALINEN"
 
-#: src/ui/menu_startup_m12.c:5425
+#: src/ui/menu_startup_m12.c:5435
 msgid "AUTOMAP"
 msgstr "AUTO"
 
-#: src/ui/menu_startup_m12.c:5426
+#: src/ui/menu_startup_m12.c:5436
 msgid "COMBAT LOG"
 msgstr "TAISTOLOKI"
 
-#: src/ui/menu_startup_m12.c:5427
+#: src/ui/menu_startup_m12.c:5437
 msgid "SOUNDTRACK"
 msgstr "ÄÄNIRAIDA"
 
-#: src/ui/menu_startup_m12.c:5428
+#: src/ui/menu_startup_m12.c:5438
 msgid "AMBIENT SOUND"
 msgstr "PELIDATAA EI LÖYTYNYT"
 
-#: src/ui/menu_startup_m12.c:5429
+#: src/ui/menu_startup_m12.c:5439
 msgid "AMBIENT VOLUME"
 msgstr "AMBIENT VOLUME"
 
-#: src/ui/menu_startup_m12.c:5430
+#: src/ui/menu_startup_m12.c:5440
 msgid "UI SCALE"
 msgstr "SKAALAUS"
 
-#: src/ui/menu_startup_m12.c:5431
+#: src/ui/menu_startup_m12.c:5441
 msgid "UI FONT"
 msgstr "UI FONTTI"
 
-#: src/ui/menu_startup_m12.c:5433
+#: src/ui/menu_startup_m12.c:5443
 msgid "CUSTOM DUNGEONS"
 msgstr "LUOLASTO"
 
-#: src/ui/menu_startup_m12.c:5434
+#: src/ui/menu_startup_m12.c:5444
 msgid "SCREENSHOTS"
 msgstr "KUVAKUVAUKSET"
 
-#: src/ui/menu_startup_m12.c:5435
+#: src/ui/menu_startup_m12.c:5445
 msgid "ARTPACK"
 msgstr "ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5436
+#: src/ui/menu_startup_m12.c:5446
 msgid "STREAMER MODE"
 msgstr "STREAMER-TILA"
 
-#: src/ui/menu_startup_m12.c:5440
+#: src/ui/menu_startup_m12.c:5450
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "VIE DM1 PC34 SAVE"
 
-#: src/ui/menu_startup_m12.c:5441
+#: src/ui/menu_startup_m12.c:5451
 msgid "EXPORT SAVE MANIFEST"
 msgstr "VIE SAVE MANIFEST"
 
-#: src/ui/menu_startup_m12.c:5442
+#: src/ui/menu_startup_m12.c:5452
 msgid "IMPORT SAVE MANIFEST"
 msgstr "TUO TALLENNUSTIEDOT"
 
-#: src/ui/menu_startup_m12.c:5503
+#: src/ui/menu_startup_m12.c:5513
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:5521
+#: src/ui/menu_startup_m12.c:5531
 msgid "WRITE PC34..."
 msgstr "KIRJOITTAA PC34..."
 
-#: src/ui/menu_startup_m12.c:5522
+#: src/ui/menu_startup_m12.c:5532
 msgid "WRITE..."
 msgstr "KIRJOITA..."
 
-#: src/ui/menu_startup_m12.c:5523
+#: src/ui/menu_startup_m12.c:5533
 msgid "READ..."
 msgstr "LUE..."
 
-#: src/ui/menu_startup_m12.c:5539
+#: src/ui/menu_startup_m12.c:5549
 msgid "GENERAL"
 msgstr "YLEISTÄ"
 
-#: src/ui/menu_startup_m12.c:5545 src/ui/menu_startup_m12.c:12594
+#: src/ui/menu_startup_m12.c:5555 src/ui/menu_startup_m12.c:12604
 msgid "RENDERER"
 msgstr "RENDERER"
 
-#: src/ui/menu_startup_m12.c:5548
+#: src/ui/menu_startup_m12.c:5558
 msgid "INPUT"
 msgstr "INPUT"
 
-#: src/ui/menu_startup_m12.c:5551
+#: src/ui/menu_startup_m12.c:5561
 msgid "DATA"
 msgstr "DATAHAKEMISTO"
 
-#: src/ui/menu_startup_m12.c:5554
+#: src/ui/menu_startup_m12.c:5564
 msgid "DEBUG"
 msgstr "DEBUG"
 
-#: src/ui/menu_startup_m12.c:5565
+#: src/ui/menu_startup_m12.c:5575
 msgid "APPEARANCE"
 msgstr "ULKOPUOLINEN"
 
-#: src/ui/menu_startup_m12.c:6029 src/ui/menu_startup_m12.c:6083
+#: src/ui/menu_startup_m12.c:6039 src/ui/menu_startup_m12.c:6093
 msgid "DATA FILES NOT FOUND"
 msgstr "ALKUPERÄISIÄ TIEDOSTOJA EI LÖYTYNYT"
 
-#: src/ui/menu_startup_m12.c:6083
+#: src/ui/menu_startup_m12.c:6093
 msgid "ENTER FOR GAME MENU"
 msgstr "ENTER TAI ESC PALAA VALIKKOON"
 
-#: src/ui/menu_startup_m12.c:6084
+#: src/ui/menu_startup_m12.c:6094
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "TÄTÄ PELIÄ EI OLE VIELÄ TUETTU"
 
-#: src/ui/menu_startup_m12.c:6223
+#: src/ui/menu_startup_m12.c:6233
 msgid "NO DM1 SAVES FOUND"
 msgstr "PELIDATAA EI LÖYTYNYT"
 
-#: src/ui/menu_startup_m12.c:6224
+#: src/ui/menu_startup_m12.c:6234
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "TALLENNA TAI TUO DM1 ENSIN"
 
-#: src/ui/menu_startup_m12.c:6650
+#: src/ui/menu_startup_m12.c:6660
 msgid "LOADING SAVE"
 msgstr "LADATAAN TALLENNAA"
 
-#: src/ui/menu_startup_m12.c:6690
+#: src/ui/menu_startup_m12.c:6700
 msgid "IMPORTING PARTY"
 msgstr "TUOTAVA PUOLA"
 
-#: src/ui/menu_startup_m12.c:6729
+#: src/ui/menu_startup_m12.c:6739
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "TUODA DM1 PARTY CSB:hen?"
 
-#: src/ui/menu_startup_m12.c:6731
+#: src/ui/menu_startup_m12.c:6741
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "ANNA TUONTI / ESC PERUUTUKSET"
 
-#: src/ui/menu_startup_m12.c:6743
+#: src/ui/menu_startup_m12.c:6753
 msgid "ESC SETTINGS"
 msgstr "ASETUKSET"
 
-#: src/ui/menu_startup_m12.c:6747
+#: src/ui/menu_startup_m12.c:6757
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "ANNA LATAA TOIMINTO TUONTI CSB:hen TALLENNA VIENTI PC34 ESC -ASETUKSET"
 
-#: src/ui/menu_startup_m12.c:6749
+#: src/ui/menu_startup_m12.c:6759
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "ENTER TAI ESC PALAA VALIKKOON"
 
-#: src/ui/menu_startup_m12.c:8201 src/ui/menu_startup_m12.c:8413
+#: src/ui/menu_startup_m12.c:8211 src/ui/menu_startup_m12.c:8423
 msgid "NO SOURCE"
 msgstr "EI LÄHDETTÄ"
 
-#: src/ui/menu_startup_m12.c:8409
+#: src/ui/menu_startup_m12.c:8419
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "ALKUPERÄINEN"
 
-#: src/ui/menu_startup_m12.c:8418
+#: src/ui/menu_startup_m12.c:8428
 msgid "MISSING OR MISMATCHED"
 msgstr "PUUTTUU TAI EI TÄSMÄÄ"
 
-#: src/ui/menu_startup_m12.c:8975 src/ui/menu_startup_render_modern_m12.c:1954
+#: src/ui/menu_startup_m12.c:8985 src/ui/menu_startup_render_modern_m12.c:1954
 msgid "EXTRAS"
 msgstr "LISÄSISÄLTÖ"
 
-#: src/ui/menu_startup_m12.c:8975
+#: src/ui/menu_startup_m12.c:8985
 msgid "PLAY"
 msgstr "PELAA"
 
-#: src/ui/menu_startup_m12.c:8975
+#: src/ui/menu_startup_m12.c:8985
 msgid "QUIT"
 msgstr "LOPETA"
 
-#: src/ui/menu_startup_m12.c:8979
+#: src/ui/menu_startup_m12.c:8989
 msgid "Start or continue a game"
 msgstr "Aloita tai jatka peliä"
 
-#: src/ui/menu_startup_m12.c:8980
+#: src/ui/menu_startup_m12.c:8990
 msgid "Display, video, audio and controls"
 msgstr "Näyttö, video, ääni ja ohjaimet"
 
-#: src/ui/menu_startup_m12.c:8981
+#: src/ui/menu_startup_m12.c:8991
 msgid "Museum, bestiary, spell reference and more"
 msgstr "Museo, hirviökirja, loitsuopas ja muuta"
 
-#: src/ui/menu_startup_m12.c:8982
+#: src/ui/menu_startup_m12.c:8992
 msgid "Exit Firestaff"
 msgstr "Poistu Firestaffista"
 
-#: src/ui/menu_startup_m12.c:8987
+#: src/ui/menu_startup_m12.c:8997
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:8987
+#: src/ui/menu_startup_m12.c:8997
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:8996
+#: src/ui/menu_startup_m12.c:9006
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:8997 src/ui/menu_startup_m12.c:8998
+#: src/ui/menu_startup_m12.c:9007 src/ui/menu_startup_m12.c:9008
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:8999
+#: src/ui/menu_startup_m12.c:9009
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / SATURN-KAAPPAUS LUKITTU"
 
-#: src/ui/menu_startup_m12.c:9000
+#: src/ui/menu_startup_m12.c:9010
 msgid "V1 Only (Phase 1)"
 msgstr "Vain V1 (vaihe 1)"
 
-#: src/ui/menu_startup_m12.c:9003 src/ui/menu_startup_m12.c:9004
-#: src/ui/menu_startup_m12.c:9005 src/ui/menu_startup_m12.c:9006
-#: src/ui/menu_startup_m12.c:9007
+#: src/ui/menu_startup_m12.c:9013 src/ui/menu_startup_m12.c:9014
+#: src/ui/menu_startup_m12.c:9015 src/ui/menu_startup_m12.c:9016
+#: src/ui/menu_startup_m12.c:9017
 msgid "No data files"
 msgstr "Ei datatiedostoja"
 
-#: src/ui/menu_startup_m12.c:9740
+#: src/ui/menu_startup_m12.c:9750
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:9741
+#: src/ui/menu_startup_m12.c:9751
 msgid "TITLE START"
 msgstr "TITLE START"
 
-#: src/ui/menu_startup_m12.c:9742
+#: src/ui/menu_startup_m12.c:9752
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIED SOURCE DATA"
 
-#: src/ui/menu_startup_m12.c:9858
+#: src/ui/menu_startup_m12.c:9868
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:9896
+#: src/ui/menu_startup_m12.c:9906
 msgid "New Game (Original)"
 msgstr "Uusi peli (alkuperäinen)"
 
-#: src/ui/menu_startup_m12.c:9897
+#: src/ui/menu_startup_m12.c:9907
 msgid "New Game (Original + Filters)"
 msgstr "Uusi peli (alkuperäinen + suodattimet)"
 
-#: src/ui/menu_startup_m12.c:9898
+#: src/ui/menu_startup_m12.c:9908
 msgid "New Game (Original 10x Upscale)"
 msgstr "Uusi peli (alkuperäinen 10x skaalaus)"
 
-#: src/ui/menu_startup_m12.c:9899
+#: src/ui/menu_startup_m12.c:9909
 msgid "Continue Saved Game"
 msgstr "Jatka tallennettua peliä"
 
-#: src/ui/menu_startup_m12.c:9900
+#: src/ui/menu_startup_m12.c:9910
 msgid "New Game (Modern Graphics)"
 msgstr "Uusi peli (moderni grafiikka)"
 
-#: src/ui/menu_startup_m12.c:9908
+#: src/ui/menu_startup_m12.c:9918
 msgid "Museum of Lore"
 msgstr "Legendojen museo"
 
-#: src/ui/menu_startup_m12.c:9909
+#: src/ui/menu_startup_m12.c:9919
 msgid "Manual / Docs"
 msgstr "Käyttöohje / dokumentaatio"
 
-#: src/ui/menu_startup_m12.c:9910
+#: src/ui/menu_startup_m12.c:9920
 msgid "Bestiary"
 msgstr "Hirviökirja"
 
-#: src/ui/menu_startup_m12.c:9911
+#: src/ui/menu_startup_m12.c:9921
 msgid "Spell Reference"
 msgstr "Loitsuopas"
 
-#: src/ui/menu_startup_m12.c:9912
+#: src/ui/menu_startup_m12.c:9922
 msgid "Map Viewer"
 msgstr "Kartannäytin"
 
-#: src/ui/menu_startup_m12.c:9913
+#: src/ui/menu_startup_m12.c:9923
 msgid "Item Encyclopedia"
 msgstr "Esineiden tietosanakirja"
 
-#: src/ui/menu_startup_m12.c:9914
+#: src/ui/menu_startup_m12.c:9924
 msgid "Changelog"
 msgstr "Muutosloki"
 
-#: src/ui/menu_startup_m12.c:9915
+#: src/ui/menu_startup_m12.c:9925
 msgid "Screenshot Gallery"
 msgstr "Kuvakaappausgalleria"
 
-#: src/ui/menu_startup_m12.c:9944
+#: src/ui/menu_startup_m12.c:9954
 msgid "NO DATA SOURCE YET"
 msgstr "EI LÄHDETTÄ"
 
-#: src/ui/menu_startup_m12.c:10017
+#: src/ui/menu_startup_m12.c:10027
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "Ylös/Alas siirry  |  Enter valitse"
 
-#: src/ui/menu_startup_m12.c:10041
+#: src/ui/menu_startup_m12.c:10051
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape takaisin  |  Ylös/Alas siirry  |  Enter valitse"
 
-#: src/ui/menu_startup_m12.c:10070
+#: src/ui/menu_startup_m12.c:10080
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape takaisin  |  Ylös/Alas siirry  |  Enter aloita"
 
-#: src/ui/menu_startup_m12.c:10094
+#: src/ui/menu_startup_m12.c:10104
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape takaisin  |  Ylös/Alas siirry  |  Enter avaa"
 
-#: src/ui/menu_startup_m12.c:10238
+#: src/ui/menu_startup_m12.c:10248
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > vaihda välilehteä   Ylös/Alas siirry   Enter muuta"
 
-#: src/ui/menu_startup_m12.c:12571
+#: src/ui/menu_startup_m12.c:12581
 msgid "GAME OPTIONS"
 msgstr "PELIASETUKSET"
 
-#: src/ui/menu_startup_m12.c:12608
+#: src/ui/menu_startup_m12.c:12618
 msgid "ARCHITECTURE"
 msgstr "ARKISTON TILA"
 
-#: src/ui/menu_startup_m12.c:12621
+#: src/ui/menu_startup_m12.c:12631
 msgid "VERSION"
 msgstr "VERSIO"
 
-#: src/ui/menu_startup_m12.c:12642
+#: src/ui/menu_startup_m12.c:12652
 msgid "PATCH"
 msgstr "PATCH"
 
-#: src/ui/menu_startup_m12.c:12668
+#: src/ui/menu_startup_m12.c:12678
 msgid "CHEATS"
 msgstr "CHEATS"
 
-#: src/ui/menu_startup_m12.c:12681
+#: src/ui/menu_startup_m12.c:12691
 msgid "SPEED"
 msgstr "SPEED"
 
-#: src/ui/menu_startup_m12.c:12693
+#: src/ui/menu_startup_m12.c:12703
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "OTA HUIJAUSKOODIT KÄYTTÖÖN AVATAKSESI NOPEUDEN / PIKANÄPPÄIMET"
 
-#: src/ui/menu_startup_m12.c:12715
+#: src/ui/menu_startup_m12.c:12725
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "LUKITTU V1 ALKUPERÄISTILAN TOIMESTA"
 
-#: src/ui/menu_startup_m12.c:12725
+#: src/ui/menu_startup_m12.c:12735
 msgid "RESOLUTION"
 msgstr "RESOLUTION"
 
-#: src/ui/menu_startup_m12.c:12739
+#: src/ui/menu_startup_m12.c:12749
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "LUKITTU V1 ALKUPERÄISTILAN TOIMESTA"
 
-#: src/ui/menu_startup_m12.c:12760
+#: src/ui/menu_startup_m12.c:12770
 msgid "> DATA FILES NOT FOUND"
 msgstr "ALKUPERÄISIÄ TIEDOSTOJA EI LÖYTYNYT"
 
-#: src/ui/menu_startup_m12.c:12762
+#: src/ui/menu_startup_m12.c:12772
 msgid "> RENDERER UNAVAILABLE"
 msgstr "RENDERÖINTIMOOTTORI EI SAATAVILLA"
 
-#: src/ui/menu_startup_m12.c:12763
+#: src/ui/menu_startup_m12.c:12773
 msgid "> LAUNCH"
 msgstr "> KÄYNNISTÄ"
 
-#: src/ui/menu_startup_m12.c:12776
+#: src/ui/menu_startup_m12.c:12786
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: TAKAISIN  NUOLET: SIIRRY  ENTER: VALITSE"
 
-#: src/ui/menu_startup_m12.c:13174
+#: src/ui/menu_startup_m12.c:13184
 msgid "CUSTOM MUSIC FOLDER SELECTED"
 msgstr "CUSTOM MUSIC FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13180
+#: src/ui/menu_startup_m12.c:13190
 msgid "NO FOLDER SELECTED"
 msgstr "NO FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13185
+#: src/ui/menu_startup_m12.c:13195
 msgid "FOLDER MISSING OR PATH TOO LONG"
 msgstr "FOLDER MISSING OR PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13210
+#: src/ui/menu_startup_m12.c:13220
 msgid "UNICODE FONT SELECTED"
 msgstr "UNICODE-FONTTI VALITTU"
 
-#: src/ui/menu_startup_m12.c:13218 src/ui/menu_startup_m12.c:13259
+#: src/ui/menu_startup_m12.c:13228 src/ui/menu_startup_m12.c:13269
 msgid "NO FILE SELECTED"
 msgstr "EI VALITTU TIEDOSTOA"
 
-#: src/ui/menu_startup_m12.c:13219 src/ui/menu_startup_m12.c:13260
+#: src/ui/menu_startup_m12.c:13229 src/ui/menu_startup_m12.c:13270
 msgid "FILE PATH TOO LONG"
 msgstr "FILE PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13244
+#: src/ui/menu_startup_m12.c:13254
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 ARTPACK VALITTU"
 
-#: src/ui/menu_startup_m12.c:13250
+#: src/ui/menu_startup_m12.c:13260
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 ARTPACK hylätty"
 

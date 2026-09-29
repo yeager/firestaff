@@ -5,6 +5,16 @@
   wording against Swedish terminology/translation memory and checked the
   selected strings with l10n-lint, svlang, Hunspell and GNU gettext.
 
+- 2026-09-29: DM2 launcher save discovery honors FIRESTAFF_DM2_SAVE_ROOT,
+  matching the existing runtime override, and requires hash-admitted DM2
+  media rather than a directory named dm2. Candidates still pass primary
+  DAT and original SKSave checks. Save-manifest import preserves the chosen
+  data root and persists the validated fallback save instead of overwriting
+  it with a missing imported path. The authentic DOS corpus regression
+  failed before the fix and passes afterward, including the no-media gate.
+  Six focused CTests pass, plus rebuilt DM1 PC34 332, CSB Amiga 48 and
+  DM2 DOS 60 original-media handoff assertions.
+
 - 2026-09-29: Quick Resume retains its remembered save path while disabled
   and reprobes when enabled through Settings. An unrelated settings save
   no longer erases that path. A new isolated test reads the authentic Amiga

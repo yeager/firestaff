@@ -27663,6 +27663,21 @@ endif()
         ENVIRONMENT
             "HOME=${CMAKE_CURRENT_BINARY_DIR}/m12_config_audio_device_test_home;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/m12_config_audio_device_test_home;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/m12_config_audio_device_test_xdg")
 
+    add_executable(test_m12_dm2_manifest_fallback_real
+        tests/test_m12_dm2_manifest_fallback_real.c)
+    target_link_libraries(test_m12_dm2_manifest_fallback_real PRIVATE
+        firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_dm2_manifest_fallback_real PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m12_dm2_manifest_fallback_real
+        COMMAND test_m12_dm2_manifest_fallback_real)
+    set_tests_properties(m12_dm2_manifest_fallback_real PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 30
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/manifest-fallback-scratch;SDL_VIDEODRIVER=dummy"
+        LABELS "dm2;real-media;menu;skip-safe")
+
     add_executable(test_m12_quick_resume_preference_real
         tests/test_m12_quick_resume_preference_real.c)
     target_link_libraries(test_m12_quick_resume_preference_real PRIVATE

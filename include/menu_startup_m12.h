@@ -933,6 +933,10 @@ int M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
     M12_StartupMenuState* state,
     const CSB_V1_CSBWinSaveCorpusDiscoveryReceipt_PC34* discovery);
 void M12_StartupMenu_SaveConfig(M12_StartupMenuState* state);
+/* Apply an exported save manifest through the menu's normal validation.
+ * NULL selects the standard manifest location used by Settings. */
+int M12_StartupMenu_ImportSaveManifestPath(M12_StartupMenuState* state,
+                                           const char* path);
 
 /* ── Language cycle accessors ───────────────────────────────────────
  * M12_StartupMenu_GetLanguageCount() returns the number of locales

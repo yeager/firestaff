@@ -5,6 +5,10 @@
 - `Swedish launcher`: translated the five new custom-music folder selection,
   cancellation, invalid-path and memory-error messages.
 
+- `DM2 Quick Resume`: the launcher honors the existing explicit save-root
+  setting after verifying DM2 media. Importing a save manifest keeps the
+  validated fallback save and the chosen game-data directory.
+
 - `Quick Resume`: disabling the option preserves the remembered save
   location, including when another setting is saved. Re-enabling it checks
   the save again immediately instead of requiring a launcher restart.
