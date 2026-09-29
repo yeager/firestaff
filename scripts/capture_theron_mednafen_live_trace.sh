@@ -868,6 +868,29 @@ resolve_mednafen_ui_pid_with_retry() {
     return 1
 }
 
+resolve_mednafen_window_id_with_retry() {
+    local target_pid=$1
+    local attempts=${2:-40}
+    local attempt
+    local candidate_window
+    local search_output
+    local owner_pid
+
+    for ((attempt = 0; attempt < attempts; ++attempt)); do
+        search_output=$(xdotool search --onlyvisible --pid "$target_pid" 2>/dev/null || true)
+        candidate_window=${search_output%%$'\n'*}
+        if [[ "$candidate_window" =~ ^[1-9][0-9]*$ ]]; then
+            owner_pid=$(xdotool getwindowpid "$candidate_window" 2>/dev/null || true)
+            if [[ "$owner_pid" == "$target_pid" ]]; then
+                printf '%s\n' "$candidate_window"
+                return 0
+            fi
+        fi
+        sleep 0.25
+    done
+    return 1
+}
+
 activate_mednafen_ui_pid_with_retry() {
     local target_pid=$1
     local attempts=${2:-20}
@@ -1179,9 +1202,8 @@ if [[ "$host_input_requested" == 1 ]]; then
         exit 1
     fi
     if [[ "$host_input_backend" == xdotool_x11 ]]; then
-        mednafen_window_id=$(xdotool search --onlyvisible --pid "$mednafen_ui_pid" 2>/dev/null | head -n 1 || true)
-        if [[ ! "$mednafen_window_id" =~ ^[1-9][0-9]*$ ]] ||
-           [[ "$(xdotool getwindowpid "$mednafen_window_id" 2>/dev/null || true)" != "$mednafen_ui_pid" ]]; then
+        mednafen_window_id=$(resolve_mednafen_window_id_with_retry "$mednafen_ui_pid" || true)
+        if [[ ! "$mednafen_window_id" =~ ^[1-9][0-9]*$ ]]; then
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
             printf '%s\n' 'FAIL: could not resolve an X11 window owned by the launched Mednafen process' >&2

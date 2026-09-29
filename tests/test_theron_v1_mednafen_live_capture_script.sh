@@ -573,8 +573,9 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'right:7) printf '\''%s'\'' d ;;' "$x11_keymap" ||
    ! grep -Fq 'Linux host input requires SDL_VIDEODRIVER=x11 and xdotool' "$script" ||
    ! grep -Fq 'Linux X11 host input requires THERON_CAPTURE_INPUT_ROUTE=pid' "$script" ||
-   ! grep -Fq 'xdotool search --onlyvisible --pid "$mednafen_ui_pid"' "$script" ||
-   ! grep -Fq 'xdotool getwindowpid "$mednafen_window_id"' "$script" ||
+   ! grep -Fq 'resolve_mednafen_window_id_with_retry "$mednafen_ui_pid"' "$script" ||
+   ! grep -Fq 'xdotool search --onlyvisible --pid "$target_pid"' "$script" ||
+   ! grep -Fq 'xdotool getwindowpid "$candidate_window"' "$script" ||
    ! grep -Fq 'xdotool windowfocus --sync "$mednafen_window_id"' "$script" ||
    ! grep -Fq 'xdotool getwindowfocus 2>/dev/null' "$script" ||
    ! grep -Fq 'xdotool key ctrl+shift+g' "$script" ||
@@ -740,6 +741,47 @@ if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$scrip
    ! grep -Fq 'verify_theron_stage2_system_card_call_trace.sh' "$script" ||
    ! grep -Fq 'Absence is expected for captures that do not reach this exact stage.' "$script"; then
     printf 'FAIL: capture script must preserve a separate fail-closed stage-two loader receipt\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'resolve_mednafen_window_id_with_retry "$mednafen_ui_pid"' "$script" ||
+   ! grep -Fq 'for ((attempt = 0; attempt < attempts; ++attempt)); do' "$script" ||
+   ! grep -Fq 'xdotool search --onlyvisible --pid "$target_pid"' "$script" ||
+   ! grep -Fq 'owner_pid=$(xdotool getwindowpid "$candidate_window"' "$script"; then
+    printf '%s\n' 'FAIL: X11 capture must retry SDL window discovery after the Mednafen process starts' >&2
+    exit 1
+fi
+window_retry_harness=$(mktemp -d "${TMPDIR:-/dev/shm}/theron-x11-window-retry.XXXXXX")
+trap 'rm -rf "$window_retry_harness"' EXIT
+sed -n '/^resolve_mednafen_window_id_with_retry()/,/^}/p' "$script" >"$window_retry_harness/resolver.sh"
+cat >"$window_retry_harness/xdotool" <<'MOCK_XDOTOOL'
+#!/usr/bin/env bash
+set -euo pipefail
+state_file=${THERON_X11_MOCK_STATE:?}
+case "$1" in
+    search)
+        count=0
+        [[ ! -f "$state_file" ]] || count=$(<"$state_file")
+        count=$((count + 1))
+        printf '%s\n' "$count" >"$state_file"
+        if (( count >= 3 )); then printf '%s\n' 4194305; fi
+        ;;
+    getwindowpid)
+        if [[ "$2" == 4194305 ]]; then printf '%s\n' "${THERON_X11_MOCK_WINDOW_PID:?}"; fi
+        ;;
+    *) exit 2 ;;
+esac
+MOCK_XDOTOOL
+chmod +x "$window_retry_harness/xdotool"
+if ! PATH="$window_retry_harness:$PATH" THERON_X11_MOCK_STATE="$window_retry_harness/searches" \
+    THERON_X11_MOCK_WINDOW_PID=7319 bash -c 'source "$1"; resolve_mednafen_window_id_with_retry 7319 5' \
+    _ "$window_retry_harness/resolver.sh" | grep -Fxq 4194305; then
+    printf '%s\n' 'FAIL: X11 window discovery did not retry until SDL created the owned window' >&2
+    exit 1
+fi
+if PATH="$window_retry_harness:$PATH" THERON_X11_MOCK_STATE="$window_retry_harness/foreign-searches" \
+    THERON_X11_MOCK_WINDOW_PID=7320 bash -c 'source "$1"; resolve_mednafen_window_id_with_retry 7319 3' \
+    _ "$window_retry_harness/resolver.sh" >/dev/null 2>&1; then
+    printf '%s\n' 'FAIL: X11 window discovery accepted a window owned by another process' >&2
     exit 1
 fi
 

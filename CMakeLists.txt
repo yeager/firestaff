@@ -47366,6 +47366,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_handoff_capture_plan_script.sh
     )
     add_test(
+        NAME theron_v1_mednafen_live_capture_script
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_live_capture_script.sh
+    )
+    add_test(
         NAME theron_v1_track02_dungeon_handoff_artifact_verifier
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_handoff_artifact_verifier.sh
     )
