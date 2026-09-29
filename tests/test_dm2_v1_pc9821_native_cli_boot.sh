@@ -41,8 +41,15 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # The title rectangle is read from the authentic GDAT in the companion media
 # test; its center is (115,65), and the original viewport confirmation is at
 # (100,100). No party or map state is synthesized by this test.
-probe_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-dm2-pc9821.XXXXXX")
-trap 'rm -rf "$probe_dir"' EXIT HUP INT TERM
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$scratch_root"
+probe_dir=$(mktemp -d "$scratch_root/dm2-pc9821.XXXXXX")
+cleanup_probe_dir() {
+    if [ -d "$probe_dir" ]; then
+        find "$probe_dir" -depth -delete
+    fi
+}
+trap cleanup_probe_dir EXIT HUP INT TERM
 runtime_probe="$probe_dir/runtime.json"
 runtime_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \

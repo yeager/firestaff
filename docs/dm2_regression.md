@@ -9,6 +9,7 @@ no runtime emulator dependency and no game-data extraction to disk.
 | Platform | Retail input | Verified sequence | Result |
 | --- | --- | --- | --- |
 | DOS English | `Dungeon-Master-II-Skullkeep_DOS_EN.zip` | launcher card selection → title/menu → New Game → movement | Native runtime receipt reports `dm2RealAssets=1`, `dm2NoCoreFallbacks=1`, and `dm2FallbackDraws=0`. |
+| Amiga English | `Dungeon-Master-II-Skullkeep_Amiga_EN.zip` | M12 selection → SWSH/TITL → GDAT New Game → first runtime frame and movement | The normal start-menu route asserts map 0 at `(1,8)`, one champion, a visible 320x200 frame, real-GDAT admission and zero fallback draws. |
 | FM Towns Japanese | `Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip` | M12 launcher selection → normal-loop 225-frame TWANIM title → Enter/New Game → first champion selection; direct boot-probe also covers dungeon choice and movement | The continuous route asserts title completion, an empty script queue, map 0 at `(1,8)`, one champion, an accepted real-GDAT frame and zero fallback draws. |
 | Macintosh English | `Dungeon-Master-II-Skullkeep_Mac_EN.zip` | Scaled 1920x1080 M12 pointer selection → normal-loop Title.MooV → New Game → mirror | Asserts completed movie, empty input queue, map 0 at `(1,8)`, two champions, an accepted real-GDAT frame, zero fallback draws and a visible 320x200 runtime capture. This is dummy-SDL evidence, not native Retina or audio verification. |
 
@@ -16,6 +17,7 @@ Run the real-media checks with:
 
 ```sh
 bash tests/test_dm2_v1_dos_native_cli_boot.sh <firestaff>
+bash tests/test_dm2_v1_amiga_native_cli_boot.sh <firestaff>
 bash tests/test_dm2_v1_fmtowns_native_cli_boot.sh <firestaff>
 bash tests/test_dm2_v1_mac_native_cli_boot.sh <firestaff>
 ```
@@ -35,8 +37,9 @@ parity.
   source-owned screenshot/capture comparisons.
 - Extend real-media interaction coverage for HUD, viewport, saves, audio and
   platform-specific controls.
-- Verify Mac startup with native macOS video, Retina backing-scale input and
-  audible playback; the current real-media test uses SDL dummy devices.
+- Verify DM1, CSB and DM2 startup on native macOS video with Retina
+  backing-scale input and audible playback; their headless CTests use SDL dummy
+  devices and do not establish display or audio behavior on the user's Mac.
 
 ## Historical notes (superseded)
 
