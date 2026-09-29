@@ -56,7 +56,8 @@ input_trace_limit_default=65536
 if [[ -n "$replay_input_script" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
     # scheduled input is polled by the original CPU. Keep enough post-event
-    # reads to prove consumption instead of treating the event log as proof.
+    # reads to prove post-event controller polling instead of treating the
+    # event log itself as proof of input delivery.
     input_trace_limit_default=1048576
 fi
 input_trace_limit=${THERON_CAPTURE_INPUT_TRACE_LIMIT:-$input_trace_limit_default}

@@ -43,16 +43,19 @@ pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
 THERON_CONSUMED_INPUT
 consumption_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/consumed.trace" run@9600:90 131072)
-if [[ "$consumption_receipt" != *'event_frames_followed_by_controller_read=1'* ||
-      "$consumption_receipt" != *'consumption_boundary=verified'* ]]; then
+if [[ "$consumption_receipt" != *'event_frames_with_apply=1'* ||
+      "$consumption_receipt" != *'event_frames_followed_by_controller_read=1'* ||
+      "$consumption_receipt" != *'controller_poll_boundary=verified'* ]]; then
     printf 'FAIL: post-event controller read was not verified:\n%s\n' \
         "$consumption_receipt" >&2
     exit 1
 fi
 cat >"$input_test_dir/multiple-events.trace" <<'THERON_MULTI_EVENT_INPUT'
 scripted_pce_input_event frame=10 key=run mask=0008 hold=1
+scripted_pce_input_apply frame=10 physical=0000 scripted=0008 combined=0008
 pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
 scripted_pce_input_event frame=12 key=ii mask=0002 hold=1
+scripted_pce_input_apply frame=12 physical=0008 scripted=0002 combined=000a
 pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0
 THERON_MULTI_EVENT_INPUT
 "$scripted_input_consumption_verifier" \
@@ -60,6 +63,7 @@ THERON_MULTI_EVENT_INPUT
 cat >"$input_test_dir/same-frame-events.trace" <<'THERON_SAME_FRAME_INPUT'
 scripted_pce_input_event frame=20 key=run mask=0008 hold=1
 scripted_pce_input_event frame=20 key=ii mask=0002 hold=1
+scripted_pce_input_apply frame=20 physical=0000 scripted=000a combined=000a
 pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0
 THERON_SAME_FRAME_INPUT
 "$scripted_input_consumption_verifier" \
@@ -68,6 +72,7 @@ cat >"$input_test_dir/event-at-read-cap.trace" <<'THERON_CAPPED_INPUT'
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
 scripted_pce_input_event frame=12 key=run mask=0008 hold=1
+scripted_pce_input_apply frame=12 physical=0000 scripted=0008 combined=0008
 THERON_CAPPED_INPUT
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/event-at-read-cap.trace" run@12 2 \
@@ -82,6 +87,7 @@ if ! grep -Fq 'final scripted event frame has no subsequent controller-port read
 fi
 cat >"$input_test_dir/unconsumed-event.trace" <<'THERON_UNCONSUMED_INPUT'
 scripted_pce_input_event frame=20 key=run mask=0008 hold=1
+scripted_pce_input_apply frame=20 physical=0000 scripted=0008 combined=0008
 pce_input_write cpu_pc=8123 register=1000 data=0008 sel_before=0 clr_before=0 index=0
 THERON_UNCONSUMED_INPUT
 if "$scripted_input_consumption_verifier" \
@@ -93,6 +99,21 @@ fi
 if ! grep -Fq 'final scripted event frame has no subsequent controller-port read' \
     "$input_test_dir/unconsumed.stderr"; then
     printf '%s\n' 'FAIL: unconsumed scripted input rejection lacked a precise diagnostic' >&2
+    exit 1
+fi
+cat >"$input_test_dir/no-apply.trace" <<'THERON_NO_APPLY_INPUT'
+scripted_pce_input_event frame=30 key=run mask=0008 hold=1
+pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+THERON_NO_APPLY_INPUT
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/no-apply.trace" run@30 2 \
+    >"$input_test_dir/no-apply.stdout" 2>"$input_test_dir/no-apply.stderr"; then
+    printf '%s\n' 'FAIL: controller polling without a scripted apply receipt was accepted' >&2
+    exit 1
+fi
+if ! grep -Fq 'final scripted event frame has no nonzero apply receipt' \
+    "$input_test_dir/no-apply.stderr"; then
+    printf '%s\n' 'FAIL: scripted apply rejection lacked a precise diagnostic' >&2
     exit 1
 fi
 if route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \

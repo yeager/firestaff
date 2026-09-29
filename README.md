@@ -93,12 +93,18 @@ screens, a short touch is Button I and a long touch is Button II.
 ### Theron's Quest runtime status
 
 The native Track 02 runtime can select co-located US or Japanese data
-explicitly with `--theron-native us` or `--theron-native jp`. README
-screenshots are Firestaff-rendered screenshots only. Original-media
-emulator captures are kept out of the public README and are not presented as
-Firestaff output. Theron's Quest remains in source-bound runtime bring-up;
-see the [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
-for the non-visual media and trace evidence.
+explicitly with `--theron-native us` or `--theron-native jp`. Verified bounded
+routes include Japanese Rev. 1 title-to-Akutuba startup and US Continue from
+the authentic Akutuba-complete Backup RAM into dungeon 2, level 0, followed by
+three native movement inputs on a floor-only path. Source-only loaders also
+verify all seven dungeon sources in both regions; that is data coverage, not
+proof of the original game's transitions. Broader campaign progression,
+original T900 item placement/use, gameplay presentation, combat, audio and
+save parity remain open. README screenshots are Firestaff-rendered only;
+original-emulator captures are not presented as Firestaff output. See the
+[platform status](docs/PLATFORM_STATUS.md) and
+[capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
+for the evidence boundaries.
 
 ## Chaos Strikes Back editions
 
@@ -202,7 +208,7 @@ packaging. Generated `.mo` files are not stored in the source tree.
 | CSB | — | Atari ST, Amiga and FM Towns title/start-menu routes | — | PC-9801, X68000 |
 | DM2 | — | DOS, Amiga, FM Towns and Macintosh startup plus selected runtime routes | Mac JP/FR preservation | X68000 |
 | Nexus | — | Saturn disc/resource parsing and bounded native MAPD title presentation | Saturn demo/fan translations | — |
-| Theron's Quest | — | PC Engine/TurboGrafx US ZIP and Japanese CUE/Track 02 startup plus initial dungeon parsing | Later gameplay, saves and presentation remain evidence-gated | — |
+| Theron's Quest | — | PC Engine/TurboGrafx Japanese Rev. 1 title-to-Akutuba route; US authentic Continue to dungeon 2 level 0 with bounded movement; all seven US/JP dungeon sources load | Original transitions, T900 item use/placement, broader campaign/save, presentation, combat and audio parity remain evidence-gated | — |
 
 This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
 the exact feature boundary and [Project status](docs/PROJECT_STATUS.md) for

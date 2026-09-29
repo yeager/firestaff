@@ -5,14 +5,19 @@
 - Scripted PCE replays now default to a 1,048,576-read trace allowance (the
   interactive route retains 65,536) and must show an original CPU read from
   controller register `$1000` after each scheduled event-frame group before
-  the capture appends a consumption receipt. Events on the same frame combine
-  before that poll. The verifier rejects missing reads, over-limit traces and
-  events left at the read ceiling.
-- Looped fixtures cover one and multiple consumed events, an event at the read
-  cap, and an event with no later CPU poll. `bash -n`,
+  the capture appends a controller-poll receipt. Events on the same frame
+  combine before that poll. The verifier rejects missing reads, over-limit
+  traces and events left at the read ceiling.
+- Looped fixtures cover one and multiple event frames followed by polls, an
+  event at the read cap, and an event with no later CPU poll. `bash -n`,
   `tests/test_theron_v1_mednafen_live_capture_script.sh`, and
-  `git diff --check` pass. These fixtures verify the capture gate only; no new
-  authentic replay has yet proven a post-event CPU read or menu/game response.
+  `git diff --check` pass. On `trv2`, a 600-second authentic US CloneCD/System
+  Card cold-start with `run@9600:90` passed the verifier against the private
+  input sidecar: one event frame, one nonzero apply receipt, and a subsequent
+  `$1000` controller poll at read sequence 505,423 of 1,048,576 logged reads.
+  This proves controller-port polling only, not a menu/game response. The full
+  capture still failed its stricter VDC boundary gate: it reached 49,350 VDC
+  writes, below the required 65,536, so no transition receipt was emitted.
 
 ## 2026-09-29 — Linux X11 host-input capture support
 

@@ -37,10 +37,25 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             failure = "trace exceeds its declared controller-read limit"
             next
         }
-        if (pending_frame != "" && $0 ~ / register=1000([[:space:]]|$)/) {
+        if (pending_frame != "" && pending_apply && !pending_read &&
+            $0 ~ / register=1000([[:space:]]|$)/) {
             pending_read = 1
             controller_read_witness_sequence = input_reads
         }
+        next
+    }
+    /^scripted_pce_input_apply / {
+        apply_frame = ""
+        scripted_mask = ""
+        for (i = 1; i <= NF; i++) {
+            if ($i ~ /^frame=[0-9]+$/)
+                apply_frame = substr($i, 7)
+            if ($i ~ /^scripted=[0-9a-fA-F]+$/)
+                scripted_mask = substr($i, 10)
+        }
+        if (pending_frame != "" && apply_frame == pending_frame &&
+            scripted_mask != "" && scripted_mask !~ /^0+$/)
+            pending_apply = 1
         next
     }
     /^scripted_pce_input_event / {
@@ -53,10 +68,14 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             next
         }
         if (pending_frame != "" && event_frame != pending_frame) {
-            if (!pending_read)
+            if (!pending_apply)
+                failure = "a scripted event frame has no nonzero apply receipt before the next frame"
+            else if (!pending_read)
                 failure = "a scripted event frame was not followed by a controller-port read before the next frame"
-            else
+            else {
+                frames_with_apply++
                 frames_with_controller_read++
+            }
             pending_frame = ""
         }
         if (pending_frame == "")
@@ -64,16 +83,21 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         events++
         # Events scheduled on one frame combine before the CPU can poll them.
         # Require a controller read after the last event in that frame group.
+        pending_apply = 0
         pending_read = 0
         next
     }
     END {
         if (events != expected_events)
             failure = "observed scripted-event count does not match the requested plan"
+        else if (pending_frame != "" && !pending_apply)
+            failure = "the final scripted event frame has no nonzero apply receipt"
         else if (pending_frame != "" && !pending_read)
             failure = "the final scripted event frame has no subsequent controller-port read"
-        else if (pending_frame != "")
+        else if (pending_frame != "") {
+            frames_with_apply++
             frames_with_controller_read++
+        }
         if (failure != "") {
             printf "BLOCKED: %s (events=%d/%d input_reads=%d read_limit=%d)\n", \
                 failure, events, expected_events, input_reads, read_limit > "/dev/stderr"
@@ -81,10 +105,11 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         }
         printf "source=mednafen-scripted-input-consumption-v1\n"
         printf "scripted_input_events=%d\n", events
+        printf "event_frames_with_apply=%d\n", frames_with_apply
         printf "event_frames_followed_by_controller_read=%d\n", frames_with_controller_read
         printf "controller_read_witness_sequence=%d\n", controller_read_witness_sequence
         printf "observed_input_reads=%d\n", input_reads
         printf "input_read_limit=%d\n", read_limit
-        print "consumption_boundary=verified"
+        print "controller_poll_boundary=verified"
     }
 ' "$trace"
