@@ -14,7 +14,9 @@
   no leaks.
 - The Linux grab chord now comes from the selected profile's actual
   `command.toggle_grab` SDL binding rather than assuming Ctrl+Shift+G. The
-  focused regression checks Menu/G mappings and rejects unsupported bindings.
+  regression loops cover standard SDL letter, digit, navigation, function,
+  keypad and modifier scancodes, including both the current Ctrl+Shift+Menu
+  profile and the prior Ctrl+Shift+E mapping; unsupported bindings fail closed.
   On `trv2`, an authenticated temporary Xvfb accepted the profile's
   Ctrl+Shift+Menu chord; instrumented Mednafen recorded `InputGrab=1` and the
   requested Right key-down/up from the authentic US Akutuba state.

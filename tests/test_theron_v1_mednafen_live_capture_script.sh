@@ -160,12 +160,131 @@ while IFS=' ' read -r binding expected; do
 done <<'THERON_X11_CHORDS'
 101+ctrl+shift ctrl+shift+Menu
 10+ctrl+shift ctrl+shift+g
+8+ctrl+shift ctrl+shift+e
 82+alt+meta alt+super+Up
 THERON_X11_CHORDS
 for binding in '' 101 999+ctrl+shift 101+unknown; do
     if theron_x11_chord_for_sdl_binding "$binding" >/dev/null 2>&1; then
         printf 'FAIL: X11 grab chord parser accepted unsupported binding %s\n' \
             "${binding:-<empty>}" >&2
+        exit 1
+    fi
+done
+while IFS=' ' read -r scancode expected; do
+    [[ -n "$scancode" ]] || continue
+    actual=$(theron_x11_key_for_sdl_scancode "$scancode") || {
+        printf 'FAIL: no X11 keysym for supported SDL scancode %s\n' "$scancode" >&2
+        exit 1
+    }
+    if [[ "$actual" != "$expected" ]]; then
+        printf 'FAIL: SDL scancode %s returned X11 keysym %s, expected %s\n' \
+            "$scancode" "$actual" "$expected" >&2
+        exit 1
+    fi
+done <<'THERON_X11_SCANCODES'
+4 a
+5 b
+6 c
+7 d
+8 e
+9 f
+10 g
+11 h
+12 i
+13 j
+14 k
+15 l
+16 m
+17 n
+18 o
+19 p
+20 q
+21 r
+22 s
+23 t
+24 u
+25 v
+26 w
+27 x
+28 y
+29 z
+30 1
+31 2
+32 3
+33 4
+34 5
+35 6
+36 7
+37 8
+38 9
+39 0
+40 Return
+41 Escape
+42 BackSpace
+43 Tab
+44 space
+45 minus
+46 equal
+47 bracketleft
+48 bracketright
+49 backslash
+50 numbersign
+51 semicolon
+52 apostrophe
+53 grave
+54 comma
+55 period
+56 slash
+57 Caps_Lock
+58 F1
+59 F2
+60 F3
+61 F4
+62 F5
+63 F6
+64 F7
+65 F8
+66 F9
+67 F10
+68 F11
+69 F12
+70 Print
+71 Scroll_Lock
+72 Pause
+73 Insert
+74 Home
+75 Page_Up
+76 Delete
+77 End
+78 Page_Down
+79 Right
+80 Left
+81 Down
+82 Up
+89 KP_1
+90 KP_2
+91 KP_3
+92 KP_4
+93 KP_5
+94 KP_6
+95 KP_7
+96 KP_8
+97 KP_9
+98 KP_0
+101 Menu
+224 Control_L
+225 Shift_L
+226 Alt_L
+227 Super_L
+228 Control_R
+229 Shift_R
+230 Alt_R
+231 Super_R
+THERON_X11_SCANCODES
+for scancode in 0 3 83 88 99 100 102 223 232; do
+    if theron_x11_key_for_sdl_scancode "$scancode" >/dev/null 2>&1; then
+        printf 'FAIL: X11 scancode mapper accepted unsupported SDL scancode %s\n' \
+            "$scancode" >&2
         exit 1
     fi
 done
