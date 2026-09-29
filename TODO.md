@@ -42,6 +42,13 @@
   callbacks now defer menu changes to Update, with cancellation/late-result
   tests; automated tests do not prove desktop dialog interaction.
 
+- Connect the active COLORBLIND preference to the intended host UI/HUD
+  rendering boundary. The menu cycles and saves it, but no production
+  consumer calls M11_Colorblind_* outside the helper implementation.
+  Existing tests cover only the matrices. Verify the actual UI path and
+  bit-identical OFF behavior without unintentionally filtering original
+  game imagery. Visual parity remains deferred.
+
 - Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
   preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale
   getters/apply functions have no renderer/hit-test consumers (also noted in

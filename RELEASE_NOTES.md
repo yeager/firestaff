@@ -5,6 +5,9 @@
 - `Swedish launcher`: translated the five new custom-music folder selection,
   cancellation, invalid-path and memory-error messages.
 
+- `Verification`: hosted CI now explicitly runs launcher settings and
+  dialog-lifetime regression tests across Linux, macOS and Windows.
+
 - `DM2 Quick Resume`: the launcher honors the existing explicit save-root
   setting after verifying DM2 media. Importing a save manifest keeps the
   validated fallback save and the chosen game-data directory.

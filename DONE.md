@@ -5,6 +5,12 @@
   wording against Swedish terminology/translation memory and checked the
   selected strings with l10n-lint, svlang, Hunspell and GNU gettext.
 
+- 2026-09-29: Added an explicit hosted CI build/run step for the launcher
+  options, data-directory cancellation and font/artpack dialog regressions
+  on Linux, macOS and Windows. The exact three-test command passes locally
+  and workflow YAML parses. Hosted results remain pending publication;
+  these tests cover settings/ownership contracts, not original-media parity.
+
 - 2026-09-29: DM2 launcher save discovery honors FIRESTAFF_DM2_SAVE_ROOT,
   matching the existing runtime override, and requires hash-admitted DM2
   media rather than a directory named dm2. Candidates still pass primary

@@ -164,6 +164,21 @@ jobs:
             cmake --build build --parallel
           fi
 
+      - name: Build launcher settings regressions
+        run: |
+          cmake --build build --parallel 2 --target \
+            test_m12_launcher_options_runtime_handoff \
+            test_m12_data_dir_cancel \
+            test_m12_startup_font_artpack_settings
+
+      - name: Run launcher settings regressions
+        run: |
+          # These exercise settings persistence and dialog ownership without
+          # licensed game media. Original-media startup remains a separate gate.
+          ctest --test-dir build --output-on-failure --no-tests=error \
+            --parallel 2 --timeout 30 \
+            -R '^(m12_launcher_options_runtime_handoff|m12_data_dir_cancel|m12_startup_font_artpack_settings)$'
+
       - name: Verify standalone Windows runtime bundle
         if: runner.os == 'Windows'
         run: |
