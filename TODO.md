@@ -14,6 +14,13 @@
   consumer reads it. `M11_Soundtrack_GetTrackPath` has no caller in `src`.
   Use authenticated or explicitly selected media and retain each edition's
   original audio behavior; selecting a mode alone does not prove playback.
+  Audit on 2026-09-29: no local remastered/custom music directory is
+  installed. The resolver also returns a relative remastered path despite
+  its absolute-path contract and assumes a launcher chdir that is absent.
+  Define explicit game/track identities and a stable root before wiring
+  replacement playback. A dedicated music owner must share pause/volume/
+  teardown rules and fall back to native music on missing or undecodable
+  files. Do not replace DM2 movie PCM wholesale: it may include non-music.
 
 - Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
   preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale
