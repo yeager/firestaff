@@ -69,6 +69,7 @@ typedef struct FakeDm1StartupCallbacks {
     char order[128];
     unsigned int order_len;
     int title_played;
+    int fail_title_after_partial;
     int entrance_command;
     int entrance_timeout_ms;
     int active;
@@ -176,7 +177,12 @@ static int fake_play_title(void* user,
     FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
     (void)source_id;
     fake_append(fake, 'T');
+    /* The failure mode models a sequence interrupted after one frame: the
+     * frame exists, but the callback's completion output remains false. */
     fake->title_played = 1;
+    if (fake->fail_title_after_partial) {
+        return 0;
+    }
     if (out_played_any_frame) {
         *out_played_any_frame = 1;
     }
@@ -3023,6 +3029,31 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch outcome maps resume action",
              (int)outcome.action,
              (int)DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.fail_title_after_partial = 1;
+    callbacks = fake_callbacks(&fake);
+    title_played = 1;
+    entrance_command = 2;
+    expect_i("DM1 post-launch executor rejects an interrupted title",
+             dm1_v1_startup_execute_handoff_post_launch_pc34(
+                 "dm1",
+                 &callbacks,
+                 &title_played,
+                 &entrance_command),
+             0);
+    expect_i("DM1 interrupted title does not run Entrance",
+             strcmp(fake.order, "RT"),
+             0);
+    expect_i("DM1 interrupted title still closes its receipt",
+             fake.post_begin_count == 1 && fake.post_end_count == 1,
+             1);
+    expect_i("DM1 interrupted title records partial frame without completion",
+             fake.title_played == 1,
+             1);
+    expect_i("DM1 interrupted title leaves completion outputs clear",
+             title_played == 0 && entrance_command == 0,
+             1);
 
     memset(&fake, 0, sizeof(fake));
     callbacks = fake_callbacks(&fake);

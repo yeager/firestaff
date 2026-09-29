@@ -2955,13 +2955,14 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     const M12_StartupMenuState* menuState,
     M11_GameViewState* gameView,
     const char* sourceId,
-    int* outPlayedAnyFrame,
+    int* outCompleted,
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* dm1MediaReceipt) {
     const M11_AssetSlot* titleGraphic;
     unsigned char* framebuffer;
     int titlePalette = -1;
     Uint64 presentationStartedMs = 0U;
     unsigned int sourceStep;
+    unsigned int completedSteps = 0U;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
     DM1_V1_StartupTitleSourceHandoffReceipt_PC34 titleSourceHandoff;
@@ -2970,8 +2971,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     const char* titleDatProvenancePath = NULL;
 
     (void)menuState;
-    if (outPlayedAnyFrame) {
-        *outPlayedAnyFrame = 0;
+    if (outCompleted) {
+        *outCompleted = 0;
     }
     /* ReDMCSB TITLE.C has separate PC/F20 and CSB/A31 implementations.
      * C001 plus C12/C13/C14 is the PC/F20 DM1 contract only; never let a
@@ -3113,7 +3114,10 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             break;
         }
         presentationStartedMs = 0U;
-        if (!command.present_frame) continue;
+        if (!command.present_frame) {
+            ++completedSteps;
+            continue;
+        }
         if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
             M11_AssetLoader_BlitRegion(titleGraphic,
                                        (int)blitPlan.srcX,
@@ -3141,7 +3145,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                                               (int)blitPlan.srcH,
                                               blitPlan.transparentColor);
         } else {
-            continue;
+            break;
         }
 
         /* ReDMCSB TITLE.C F0437 PC/F20: PRESENTS uses C12_PRESENTS
@@ -3157,9 +3161,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                 gameView, framebuffer, stepPalette)) {
             break;
         }
-        if (outPlayedAnyFrame) {
-            *outPlayedAnyFrame = 1;
-        }
         if (command.post_present_delay_ms > 0U &&
             m11_delay_ms_with_intro_event_pump(
                 m11_v20_startup_remaining_delay_ms(
@@ -3169,33 +3170,42 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (command.post_present_delay_ms > 0U) {
             presentationStartedMs = 0U;
         }
+        ++completedSteps;
     }
-    return outPlayedAnyFrame ? *outPlayedAnyFrame : 1;
+    if (completedSteps == V1_TitleFrontend_GetSourceAnimationStepCount()) {
+        if (outCompleted) {
+            *outCompleted = 1;
+        }
+        return 1;
+    }
+    return 0;
 }
 
-static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
-                                                      M11_GameViewState* gameView,
-                                                      const char* sourceId,
-                                                      int* outPlayedAnyFrame,
-                                                      const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
-                                                          dm1MediaReceipt) {
+static int m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
+                                                     M11_GameViewState* gameView,
+                                                     const char* sourceId,
+                                                     int* outCompleted,
+                                                     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
+                                                         dm1MediaReceipt) {
     char titlePath[FSP_PATH_MAX];
     unsigned char* packedStorage;
     unsigned char* packedScreen;
     unsigned char* indexedScreen;
     char err[160];
     unsigned int step;
+    unsigned int completedFrames = 0U;
     V1_TitleFrontendSourceTiming timing;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media;
+    int completed = 0;
 
-    if (outPlayedAnyFrame) {
-        *outPlayedAnyFrame = 0;
+    if (outCompleted) {
+        *outCompleted = 0;
     }
     /* TITLE.C:309-409 is the DM1 PC/F20 branch. CSB enters the distinct
      * A31 branch at TITLE.C:412 and must use its own title implementation. */
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
-        return;
+        return 0;
     }
     /* The TITLE animation file contains the full 53-frame sequence including
      * the letter-by-letter MASTER reveal and authentic palette transitions.
@@ -3203,23 +3213,23 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
         if (m11_play_redmcsb_title_graphic_intro_if_available(menuState, gameView,
                                                               sourceId,
-                                                              outPlayedAnyFrame,
+                                                              outCompleted,
                                                               dm1MediaReceipt)) {
-            return;
+            return 1;
         }
         fprintf(stderr,
                 "Firestaff V1 original TITLE intro skipped: no TITLE animation file "
                 "or GRAPHICS.DAT C001 title graphic found; set FIRESTAFF_TITLE_DAT or install "
                 "the original TITLE file under FIRESTAFF_DM1_DATA_DIR or "
                 "$HOME/.firestaff/data/dm1.\n");
-        return;
+        return 0;
     }
     packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
     indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES + (size_t)M11_FB_BYTES * 4u);
     if (!packedStorage || !indexedScreen) {
         free(packedStorage);
         free(indexedScreen);
-        return;
+        return 0;
     }
     packedScreen = packedStorage + 4U;
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
@@ -3302,9 +3312,6 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                 break;
             }
         }
-        if (outPlayedAnyFrame) {
-            *outPlayedAnyFrame = 1;
-        }
         /* Each TITLE animation frame carries its own durationFrames count
          * (VBlanks to hold before advancing).  The TITLE file is an
          * Amiga-format animation; use PAL 20ms per VBlank for the hold. */
@@ -3317,12 +3324,20 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                 break;
             }
         }
+        ++completedFrames;
     }
-    (void)m11_delay_ms_with_intro_event_pump(
-        hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
-                      V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
+    if (completedFrames == V1_TITLE_DAT_FRAME_MAX &&
+        !m11_delay_ms_with_intro_event_pump(
+            hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
+                          V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing))) {
+        completed = 1;
+    }
     free(packedStorage);
     free(indexedScreen);
+    if (outCompleted) {
+        *outCompleted = completed;
+    }
+    return completed;
 }
 
 typedef struct M11_DM1StartupHandoffContext {
@@ -3432,12 +3447,11 @@ static int m11_dm1_handoff_play_title(void* user,
         ctx->activePostLaunchPlan.media_receipt.handled) {
         media = &ctx->activePostLaunchPlan.media_receipt;
     }
-    m11_play_redmcsb_title_intro_if_available(ctx->menuState,
-                                              ctx->gameView,
-                                              source_id,
-                                              out_played_any_frame,
-                                              media);
-    return 1;
+    return m11_play_redmcsb_title_intro_if_available(ctx->menuState,
+                                                     ctx->gameView,
+                                                     source_id,
+                                                     out_played_any_frame,
+                                                     media);
 }
 
 static int m11_dm1_handoff_play_entrance(void* user,

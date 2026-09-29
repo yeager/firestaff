@@ -1336,7 +1336,9 @@ typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     int (*raise_window)(void* user);
     int (*play_swsh)(void* user, const char* game_id, int preserve_audio);
     int (*discard_presentation_texture)(void* user);
-    int (*play_title)(void* user, const char* source_id, int* out_played_any_frame);
+    /* Returns success only when the complete required title sequence and its
+     * final guard delay were presented; partial playback must fail startup. */
+    int (*play_title)(void* user, const char* source_id, int* out_completed);
     int (*play_entrance)(void* user,
                          const char* source_id,
                          int auto_enter_after_ms,

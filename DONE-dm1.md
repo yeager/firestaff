@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-29: PC/F20 startup now marks the title handoff complete only after
+  all 23 C001 source steps (or all 53 TITLE.DAT frames plus the final guard)
+  finish presenting. Decode, presentation and event-pump interruptions no
+  longer count as a completed intro or allow the Entrance handoff. The
+  post-launch contract regression confirms that partial title playback closes
+  its receipt and stops before Entrance; authentic-media startup coverage is
+  still needed to prove the full sequence on each PC/F20 host.
+
 - 2026-09-29: PC34 DM1 Credits now waits for input without inheriting
   the ENTRANCE.C 1800-tick timeout, matching SELECTOR.C:1002-1004. Other
   entrance media keep their existing timed wait. Authentic runtime coverage
