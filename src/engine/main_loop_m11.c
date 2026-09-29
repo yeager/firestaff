@@ -4960,6 +4960,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
+            "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
             "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
             "  \"lastAction\": \"%s\",\n"
@@ -4979,6 +4980,10 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->dm2MacMovieComplete : 0,
             gameView ? gameView->dm2MacMovieRejected : 0,
             gameView ? gameView->dm2MacMovieDecoder.frame_index : 0u,
+            startupReceipt.dm2RuntimeFrameAccepted,
+            startupReceipt.dm2RuntimeRealAssetsReady,
+            startupReceipt.dm2RuntimeNoCoreFallbacks,
+            startupReceipt.dm2RuntimeFallbackDrawCount,
             gameView ? gameView->presentationMode : -1,
             gameView ? gameView->presentationWidth : 0,
             gameView ? gameView->presentationHeight : 0,

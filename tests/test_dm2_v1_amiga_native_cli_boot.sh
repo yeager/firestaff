@@ -61,10 +61,13 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
 party = probe["party"]
+runtime_frame = probe["dm2RuntimeFrame"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm2" or startup["receiptReady"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm2-runtime" or
+        runtime_frame != {"accepted": 1, "realAssets": 1,
+                          "noCoreFallbacks": 1, "fallbackDraws": 0} or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 8, 0, 1)):
     raise SystemExit(f"FAIL: authentic DM2 Amiga start menu did not reach runtime: {probe}")
