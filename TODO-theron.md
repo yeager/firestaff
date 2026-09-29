@@ -38,6 +38,26 @@ data.
    the strict VDC boundary gate (49,350 writes versus 65,536 required), so no
    transition receipt was emitted. Continue closing original game-owned
    consumers; a controller poll alone is not a Track 02 consumer.
+
+   2026-09-29 authentic Linux-X11 capture loop: the JP Rev. 1 retail CUE
+   (Track 02 MD5 `b7afb338ad31be1025b53f9aff12d73a`) with the hash-verified
+   System Card produced 115 CD IRQ callbacks, 24 raw-sector spans and four
+   SCSI read commands with 24 sector bindings. It reached the original
+   `$40a4 -> $e00f` second-stage call but emitted no matching `$40a7` return
+   and no authenticated CD-to-RAM origin receipt. The strict stage-two
+   verifier therefore rejects this capture. A second cold start used the
+   authentic US CUE and all 19 track files extracted from the operator's
+   original archive into private trv2 scratch; Track 02 matched MD5
+   `f23601102138f87c33025877767ebf76`. That run observed one CD IRQ, no raw
+   sector spans, no stage-two calls and no authenticated CD-to-RAM receipts.
+   Mednafen logged the CUE's unsupported `CATALOG` directive but continued
+   opening its TOC; the capture does not show whether that warning affected
+   boot. Both runs recorded host Run events followed by controller polling,
+   which does not prove that the original game consumed the input. The raw
+   traces remain outside Git at
+   `/home/trv2/work/theron-x11-auth-capture-20260929/capture/`; these negative
+   transport receipts authorize no level or gameplay semantics.
+
 2. **Complete a real dungeon transaction and progress save.** Bind the quest
    artifact's name, object occurrence, pickup, exit, and next-chapter handoff
    to original gameplay consumers. The authentic US DMS-SG.001 container,
