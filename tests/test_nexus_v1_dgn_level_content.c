@@ -29,6 +29,16 @@ static uint8_t *load_file(const char *path, int *size_out) {
     return buf;
 }
 
+static uint64_t fnv1a64(const uint8_t *bytes, size_t size) {
+    uint64_t value = UINT64_C(1469598103934665603);
+    size_t index;
+    for (index = 0; index < size; ++index) {
+        value ^= bytes[index];
+        value *= UINT64_C(1099511628211);
+    }
+    return value;
+}
+
 static int test_all_levels(const char *data_dir) {
     /* Keep this corpus regression on the same authenticated European
      * identities as the production level loader.  Counts alone are not
@@ -169,14 +179,18 @@ static int test_all_levels(const char *data_dir) {
             }
         }
 
-        if (i == 1) {
+        {
             Nexus_V1_Level level;
-            int entry;
-            int saw_inscription = 0;
-            int saw_champion = 0;
+            Nexus_V1_DgnStructure1Layout layout;
+            int entry, item_index = 0;
             memset(&level, 0, sizeof(level));
-            if (nexus_v1_level_load(&level, buf, sz, i) != 0) {
-                printf("FAIL LEV01 Structure1F load for sensor-type regression\n");
+            memset(&layout, 0, sizeof(layout));
+            if (nexus_v1_level_load(&level, buf, sz, i) != 0 ||
+                nexus_v1_dgn_structure1_layout(&layout, buf, sz) != 0 ||
+                !layout.structure1f.valid ||
+                layout.structure1f.family_count[
+                    NEXUS_V1_DGN_STRUCTURE1F_ITEMS] != expected[i].items) {
+                printf("FAIL LEV%02d Structure1F load/item table\n", i);
                 fail++;
                 free(buf);
                 continue;
@@ -184,16 +198,65 @@ static int test_all_levels(const char *data_dir) {
             for (entry = 0; entry < level.structure1f_entry_count; ++entry) {
                 const Nexus_V1_DgnStructure1FEntry *record =
                     &level.structure1f_entries[entry];
-                if (record->family != NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS)
+                const size_t record_size = 8U;
+                const size_t expected_offset =
+                    (size_t)layout.structure1_offset +
+                    (size_t)layout.structure1f.family_offset[
+                        NEXUS_V1_DGN_STRUCTURE1F_ITEMS] +
+                    (size_t)item_index * record_size;
+                const uint8_t *raw;
+                if (record->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS)
                     continue;
-                if (record->sensor_type == 0x8bU) saw_inscription = 1;
-                if (record->sensor_type == 0x63U) saw_champion = 1;
+                if (item_index >= expected[i].items ||
+                    record->raw_record_offset != expected_offset ||
+                    record->raw_record_length != record_size ||
+                    expected_offset > (size_t)sz ||
+                    (size_t)sz - expected_offset < record_size) {
+                    printf("FAIL LEV%02d Structure1Fa record %d source bounds\n",
+                           i, item_index);
+                    fail++;
+                    break;
+                }
+                raw = buf + expected_offset;
+                if (record->raw_record_fnv1a64 !=
+                        fnv1a64(raw, record_size) ||
+                    record->tag != raw[0] || record->x != raw[1] ||
+                    record->y != raw[2] || record->location != raw[3] ||
+                    record->item_id != raw[4] ||
+                    record->attribute1 != raw[5] ||
+                    record->attribute2 != raw[7]) {
+                    printf("FAIL LEV%02d Structure1Fa record %d raw binding\n",
+                           i, item_index);
+                    fail++;
+                    break;
+                }
+                ++item_index;
             }
-            if (!saw_inscription || !saw_champion) {
-                printf("FAIL LEV01 wall sensor type byte was not retained\n");
+            if (item_index != expected[i].items) {
+                printf("FAIL LEV%02d Structure1Fa count: got %d expected %d\n",
+                       i, item_index, expected[i].items);
                 fail++;
                 free(buf);
                 continue;
+            }
+            if (i == 1) {
+                int saw_inscription = 0;
+                int saw_champion = 0;
+                for (entry = 0; entry < level.structure1f_entry_count; ++entry) {
+                    const Nexus_V1_DgnStructure1FEntry *record =
+                        &level.structure1f_entries[entry];
+                    if (record->family !=
+                        NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS)
+                        continue;
+                    if (record->sensor_type == 0x8bU) saw_inscription = 1;
+                    if (record->sensor_type == 0x63U) saw_champion = 1;
+                }
+                if (!saw_inscription || !saw_champion) {
+                    printf("FAIL LEV01 wall sensor type byte was not retained\n");
+                    fail++;
+                    free(buf);
+                    continue;
+                }
             }
         }
 
