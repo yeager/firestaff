@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-29: The authentic FM Towns EN/JA Game-handoff regressions now run
+  SDL's dummy audio backend and verify that C0_MUSIC_ENTRANCE resolves to
+  physical CD-DA track 02 and queues the selected original CUE/IMG PCM in an
+  active, unpaused stream with remaining source time. Both real-media tests
+  pass. This proves source-track selection and stream acceptance, not audible
+  hardware or original-vs-Firestaff sound parity.
+
 - 2026-09-29: Atari ST SND1 playback now maps the F0061 all-zero PSG
   amplitude registers to PCM silence in both loud and soft source modes.
   A bounded source-format regression verifies that a held zero-level source

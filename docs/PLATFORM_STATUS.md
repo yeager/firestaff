@@ -95,6 +95,12 @@ menu is ready at EOF, closing the prior test gap that fast-forwarded the title
 after checking only its opening frames. SDL dummy output does not prove native
 window pacing or audible playback.
 
+The authentic FM Towns CSB EN/JA handoff tests also ran with SDL's dummy audio
+driver. Both verified that C0_MUSIC_ENTRANCE resolves to physical CD-DA track
+02 and that its selected CUE/IMG PCM reaches an active, unpaused audio stream
+after the original Game-program handoff. This verifies source selection and
+queue acceptance, not audible hardware or retail sound parity.
+
 ## Dungeon Master
 
 | Platform | Status | Current scope | Open boundary |

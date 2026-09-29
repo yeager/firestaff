@@ -368,6 +368,7 @@ int main(void)
     uint32_t live_viewport_hash = 0u;
     int game_music_started = 0;
     uint8_t expected_game_music_track = 0u;
+    uint8_t entrance_music_track = 0u;
     CSB_V1_FmtownsSwitchInputReceipt switch_input;
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
@@ -1964,6 +1965,18 @@ int main(void)
               view.csbState.startup_entrance_active &&
               !view.csbState.startup_title_active,
           "Game click opens only the verified language-owned entrance owner");
+    CHECK(csb_v1_fmtowns_game_entrance_music_track(
+              &view.csbFmtownsGameHandoffReceipt, &entrance_music_track) &&
+              entrance_music_track ==
+                  CSB_V1_FMTOWNS_GAME_ENTRANCE_CDDA_TRACK &&
+              entrance_music_track == 2u,
+          "F31 Game handoff resolves C0_MUSIC_ENTRANCE to original CD-DA track 02");
+    CHECK(M11_Audio_IsAvailable(&view.audioState) &&
+              view.audioState.cddaStream &&
+              view.csbFmtownsCddaPlaying && view.audioState.cddaPlaying &&
+              !view.csbFmtownsCddaPaused && !view.audioState.cddaPaused &&
+              view.csbFmtownsCddaSourceTicksRemaining > 0u,
+          "F31 Game handoff queues selected original CUE/IMG PCM in the live CD-DA stream");
     {
         const CSB_V1_BootProfile *text_profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
