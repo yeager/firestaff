@@ -319,6 +319,33 @@ static int test_world_quest_item_rejects_invalid_collection(void) {
     return 1;
 }
 
+static int test_world_quest_item_helper_fails_closed_for_source_level(void) {
+    TEST("World quest item helper cannot complete authenticated Track 02 level");
+
+    Theron_V1_World world;
+    theron_v1_world_init(&world);
+    world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+    world.current_level = 0;
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].source_header_verified = 1;
+    world.levels[0][0].squares[2][1] = THERON_SQUARE_EXIT;
+
+    ASSERT(theron_v1_check_quest_item(&world) == 0,
+           "unbound source level must not offer fixture quest bit");
+    ASSERT(theron_v1_collect_quest_item(
+               &world, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) == 0,
+           "unbound source level collection must fail closed");
+    ASSERT(world.progression.quest_items_collected == 0 &&
+               world.quest_items_in_dungeon == 0 && !world.dungeon_complete,
+           "unbound quest helper mutated source-level completion state");
+    ASSERT(theron_v1_check_transition(&world, 1, 2) == 0 &&
+               !world.transition_pending,
+           "unbound quest helper opened the source-level exit");
+
+    PASS();
+    return 1;
+}
+
 /* ── Test: save/restore ──────────────────────────────────────────── */
 
 static int test_save_restore(void) {
@@ -644,6 +671,7 @@ int main(void) {
         test_invalid_current_dungeon_rejection,
         test_dungeon_exit_transition_gate,
         test_world_quest_item_rejects_invalid_collection,
+        test_world_quest_item_helper_fails_closed_for_source_level,
         test_full_sequence,
         test_source_evidence,
     };

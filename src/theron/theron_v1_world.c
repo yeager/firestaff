@@ -4376,6 +4376,18 @@ int theron_v1_check_quest_item(const Theron_V1_World *world) {
         world->current_dungeon > THERON_DUNGEON_7_DEMON) {
         return 0;
     }
+    /* Quest-item identity is not yet bound to the original T900 object
+     * consumer. Never offer the fixture helper's chapter bit for an
+     * authenticated Track 02 level: that would turn an unrelated object or
+     * synthetic call into a real dungeon-completion route. */
+    if (world->current_level >= 0 &&
+        world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+        world->level_loaded[world->current_dungeon - 1]
+                           [world->current_level] &&
+        world->levels[world->current_dungeon - 1]
+                     [world->current_level].source_header_verified) {
+        return 0;
+    }
     uint8_t found = world->progression.quest_items_collected;
     uint8_t dungeon_bit = (uint8_t)(1U << (world->current_dungeon - 1));
     return (found & dungeon_bit) ? 0 : dungeon_bit;
@@ -4385,6 +4397,14 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit_fi
     if (!world) return 0;
     if (world->current_dungeon < THERON_DUNGEON_1_AKUTUBA ||
         world->current_dungeon > THERON_DUNGEON_7_DEMON) {
+        return world->progression.quest_items_collected;
+    }
+    if (world->current_level >= 0 &&
+        world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+        world->level_loaded[world->current_dungeon - 1]
+                           [world->current_level] &&
+        world->levels[world->current_dungeon - 1]
+                     [world->current_level].source_header_verified) {
         return world->progression.quest_items_collected;
     }
     const uint8_t dungeon_bit = (uint8_t)(1U << (world->current_dungeon - 1));

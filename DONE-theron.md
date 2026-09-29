@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — keep unbound quest-item helper out of authenticated levels
+
+- Authenticated Track 02 levels now fail closed in the legacy world quest-item
+  helper while the original T900 pickup consumer is unbound. Fixture worlds
+  retain the old helper path, but it can no longer set a real level's quest
+  bit, `dungeon_complete`, or exit transition without an authentic object
+  transaction.
+- Added a regression asserting that a source-header-verified level rejects
+  the helper and keeps its quest mask, completion flag, and exit gate intact.
+  This is a provenance safety boundary, not quest-item pickup parity.
+
 ## 2026-09-29 — isolated authentic JP controller-poll capture
 
 - Ran the instrumented Mednafen build headlessly on `trv2` with the authentic

@@ -14,11 +14,12 @@ identity. Bounded hashing now accepts single-image CUE slices in RAM. Track 01
 availability is verified, but the original gameplay CDDA selection/event
 consumer remains open below.
 
-The world-level quest-item helper now rejects invalid dungeon IDs, a bit that
-does not match the current dungeon, and duplicate collection. Its focused
-regression passes, but this is state-integrity hardening only: it does not bind
-authentic Track 02 object occurrences to the original T900 pickup consumer or
-close the quest-item gameplay gap below.
+The world-level quest-item helper rejects invalid dungeon IDs, wrong-dungeon
+bits and duplicate collection. It now also refuses to mutate a source-header-
+verified level while the original T900 pickup consumer remains unbound, so a
+fixture helper cannot synthetically unlock a real Track 02 exit. This keeps
+production fail-closed; it does not bind authentic object occurrences to the
+original pickup transaction or close the quest-item gameplay gap below.
 
 ## Remaining work, ordered by the end-to-end playability dependency
 
