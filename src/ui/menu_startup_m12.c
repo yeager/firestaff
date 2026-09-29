@@ -6631,7 +6631,21 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             if (input == M12_MENU_INPUT_BACK) {
                 if (state->gameCardFlowStage == 1) {
                     state->gameCardFlowStage = 0;
-                    state->gameCardSelected = 0;
+                    {
+                        int platforms[M12_ARCH_COUNT];
+                        int count = m12_collect_card_platforms(
+                            state, cardEntry->gameId, platforms);
+                        int architecture =
+                            state->gameOptions[gi].architectureIndex;
+                        int i;
+                        state->gameCardSelected = 0;
+                        for (i = 0; i < count; ++i) {
+                            if (platforms[i] == architecture) {
+                                state->gameCardSelected = i;
+                                break;
+                            }
+                        }
+                    }
                 } else {
                     m12_return_to_main_view(state);
                 }
