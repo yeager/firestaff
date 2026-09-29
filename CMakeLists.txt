@@ -37949,6 +37949,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_swsh_psg_audio_pc34_com
     endif()
 endif()
 
+if(BUILD_TESTING)
+    add_executable(test_m11_soundtrack_paths_real tests/test_m11_soundtrack_paths_real.c)
+    target_link_libraries(test_m11_soundtrack_paths_real PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_soundtrack_paths_real PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_soundtrack_paths_real COMMAND test_m11_soundtrack_paths_real)
+    set_tests_properties(m11_soundtrack_paths_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        TIMEOUT 30
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/soundtrack-path-scratch"
+        LABELS "dm1;audio;real-media;paths;skip-safe")
+endif()
+
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_selector_music_runtime_real.c")
     add_executable(test_dm1_v1_selector_music_runtime_real
         tests/test_dm1_v1_selector_music_runtime_real.c)

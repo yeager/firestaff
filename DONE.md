@@ -1,5 +1,19 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Connected Custom Music folder selection to a native folder
+  picker. Admission stores a complete absolute directory and preserves the
+  previous choice on invalid/cancelled input. Native callbacks publish to
+  an independently owned result; the main-thread Update applies it, and late
+  callbacks remain safe after menu destruction. Worker cancellation and
+  late-completion tests pass in the launcher-options handoff test.
+  Soundtrack file resolution now returns absolute paths and rejects short
+  output buffers; a test derives a WAV from authenticated SONG PCM and
+  verifies relative-path resolution, WAV readability and missing-file fallback.
+  Both focused CTests pass. Rebuilt original-media launcher checks pass
+  DM1 PC34 332, CSB Amiga 48 and DM2 DOS 60 assertions. These checks do not
+  prove native desktop picker
+  interaction or replacement soundtrack playback, which remains unwired.
+
 - 2026-09-29: PC34 DM1 Credits now waits for input without inheriting
   the ENTRANCE.C 1800-tick timeout, matching SELECTOR.C:1002-1004. Other
   entrance media keep their existing timed wait. Authentic runtime coverage

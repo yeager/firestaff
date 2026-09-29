@@ -30,12 +30,18 @@
   Use authenticated or explicitly selected media and retain each edition's
   original audio behavior; selecting a mode alone does not prove playback.
   Audit on 2026-09-29: no local remastered/custom music directory is
-  installed. The resolver also returns a relative remastered path despite
-  its absolute-path contract and assumes a launcher chdir that is absent.
+  installed. Folder selection and absolute-path resolution are implemented;
+  this does not yet connect the selected replacement file to game audio.
   Define explicit game/track identities and a stable root before wiring
   replacement playback. A dedicated music owner must share pause/volume/
   teardown rules and fall back to native music on missing or undecodable
   files. Do not replace DM2 movie PCM wholesale: it may include non-music.
+
+- Move the older data/font/artpack native-dialog callbacks to the same
+  owned-result/main-thread pattern as Custom Music. SDL may invoke callbacks
+  off the main thread; those older paths still mutate menu state directly.
+  Verify native desktop folder selection and persistence separately from
+  the cancellation/late-completion tests.
 
 - Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
   preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale

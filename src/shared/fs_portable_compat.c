@@ -134,12 +134,22 @@ int FSP_ResolvePhysicalPath(char* out, size_t outSize, const char* path) {
 #if defined(_WIN32)
     {
         DWORD written = GetFullPathNameA(path, (DWORD)outSize, out, NULL);
-        return written > 0U && (size_t)written < outSize;
+        if (written == 0U || (size_t)written >= outSize) {
+            out[0] = '\0';
+            return 0;
+        }
+        return 1;
     }
 #else
     {
         char *resolved = realpath(path, NULL);
         if (!resolved) {
+            out[0] = '\0';
+            return 0;
+        }
+        if (strlen(resolved) >= outSize) {
+            free(resolved);
+            out[0] = '\0';
             return 0;
         }
         fsp_copy(out, outSize, resolved);

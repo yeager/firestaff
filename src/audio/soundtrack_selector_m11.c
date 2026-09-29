@@ -11,6 +11,7 @@
  */
 
 #include "soundtrack_selector_m11.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,16 +55,21 @@ static int probe_with_extensions(const char* dir,
                                  char* outPath,
                                  int outSize) {
     int ei;
+    char candidate[FSP_PATH_MAX];
+    char resolved[FSP_PATH_MAX];
     if (!dir || !trackName || !outPath || outSize <= 0) {
         return 0;
     }
     for (ei = 0; g_extensions[ei] != NULL; ++ei) {
-        int n = snprintf(outPath, (size_t)outSize, "%s/%s%s",
+        int n = snprintf(candidate, sizeof(candidate), "%s/%s%s",
                          dir, trackName, g_extensions[ei]);
-        if (n <= 0 || n >= outSize) {
+        if (n <= 0 || n >= (int)sizeof(candidate)) {
             continue;
         }
-        if (file_exists(outPath)) {
+        if (file_exists(candidate) &&
+            FSP_ResolvePhysicalPath(resolved, sizeof(resolved), candidate) &&
+            strlen(resolved) < (size_t)outSize) {
+            memcpy(outPath, resolved, strlen(resolved) + 1U);
             return 1;
         }
     }
@@ -102,10 +108,8 @@ int M11_Soundtrack_GetTrackPath(int mode,
         return M11_SOUNDTRACK_RESULT_ORIGINAL;
     }
     if (mode == M11_SOUNDTRACK_MODE_REMASTERED) {
-        /* Look under data/music/remastered/ relative to CWD first.
-         * The launcher typically chdir()s into the data dir at start,
-         * so this is the cheapest and most portable probe. Callers
-         * that want a different root can use CUSTOM with a path. */
+        /* Resolve the existing CWD-relative search root before returning.
+         * The launcher does not change CWD; CUSTOM supplies another root. */
         if (outPath && outSize > 0 &&
             probe_with_extensions("data/music/remastered", trackName,
                                   outPath, outSize)) {

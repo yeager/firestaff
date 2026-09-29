@@ -2,6 +2,11 @@
 
 ## User-facing changes
 
+- `Custom music folder`: the path row now opens a folder picker and
+  preserves the previous selection when cancelled or rejected. Folder paths
+  are stored absolutely; dialog results are applied safely on the main
+  thread. Replacement soundtrack playback remains pending.
+
 - `DM1 PC34 entrance audio`: the original SONG score now starts in the
   entrance selector after its source delay, continues through Credits and
   loops from sequence index 1. Playback uses the source-requested 11126 Hz

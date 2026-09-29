@@ -22,6 +22,8 @@
 
 #include "menu_startup_m12.h"
 #include "firestaff_l10n.h"
+#include "fs_portable_compat.h"
+#include <SDL3/SDL.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -366,6 +368,132 @@ static void test_invalid_intent_leaves_options_unbound(void) {
           "no activated entry -> launcherOptions unbound");
 }
 
+static void test_custom_music_directory_selection_validation(void) {
+    M12_StartupMenuState state;
+    char currentDirectory[FSP_PATH_MAX] = {0};
+    char missingDirectory[FSP_PATH_MAX];
+    char overlongPath[M12_CONFIG_DATA_DIR_CAPACITY + 32];
+    memset(&state, 0, sizeof(state));
+    snprintf(state.settings.customMusicPath,
+             sizeof(state.settings.customMusicPath),
+             "%s", "previous/music/folder");
+
+    check(FSP_ResolvePhysicalPath(currentDirectory, sizeof(currentDirectory), "."),
+          "resolve existing directory for custom music path test");
+    check(M12_StartupMenu_SetCustomMusicPath(&state, currentDirectory),
+          "accept existing custom music directory");
+    check(strcmp(state.settings.customMusicPath, currentDirectory) == 0,
+          "store selected custom music directory in full");
+
+    check(M12_StartupMenu_SetCustomMusicPath(&state, ".") &&
+          strcmp(state.settings.customMusicPath, currentDirectory) == 0,
+          "relative selection is stored as an absolute directory");
+    check(FSP_JoinPath(missingDirectory, sizeof(missingDirectory),
+          currentDirectory, "firestaff-custom-music-folder-that-does-not-exist"),
+          "construct missing directory path without truncation");
+    check(!FSP_DirExists(missingDirectory),
+          "missing custom music directory fixture is absent");
+    check(!M12_StartupMenu_SetCustomMusicPath(&state, missingDirectory),
+          "reject missing custom music directory");
+    check(strcmp(state.settings.customMusicPath, currentDirectory) == 0,
+          "missing directory leaves previous custom music path unchanged");
+
+    memset(overlongPath, 'x', sizeof(overlongPath) - 1U);
+    overlongPath[sizeof(overlongPath) - 1U] = '\0';
+    check(!M12_StartupMenu_SetCustomMusicPath(&state, overlongPath),
+          "reject overlong custom music path before truncation");
+    check(strcmp(state.settings.customMusicPath, currentDirectory) == 0,
+          "overlong path leaves previous custom music path unchanged");
+    check(!M12_StartupMenu_SetCustomMusicPath(&state, ""),
+          "reject empty custom music path");
+}
+
+typedef struct CustomMusicDialogCompletion {
+    void* callbackToken;
+    const char* selectedPath;
+} CustomMusicDialogCompletion;
+
+static int SDLCALL complete_custom_music_dialog_on_worker(void* userdata) {
+    CustomMusicDialogCompletion* completion =
+        (CustomMusicDialogCompletion*)userdata;
+    M12_StartupMenu_CompleteCustomMusicDirDialog(
+        completion->callbackToken, completion->selectedPath);
+    return 0;
+}
+
+static int run_custom_music_dialog_completion_thread(
+    void* callbackToken,
+    const char* selectedPath) {
+    CustomMusicDialogCompletion completion;
+    SDL_Thread* thread;
+    int threadStatus = 0;
+    completion.callbackToken = callbackToken;
+    completion.selectedPath = selectedPath;
+    thread = SDL_CreateThread(complete_custom_music_dialog_on_worker,
+                              "custom-music-dialog-test",
+                              &completion);
+    if (!thread) {
+        M12_StartupMenu_CompleteCustomMusicDirDialog(callbackToken, NULL);
+        return 0;
+    }
+    SDL_WaitThread(thread, &threadStatus);
+    return threadStatus == 0;
+}
+
+static void test_custom_music_dialog_thread_handoff_and_destroy(void) {
+    M12_StartupMenuState state;
+    M12_StartupMenuState* destroyedState;
+    void* callbackToken;
+    int changed;
+
+    memset(&state, 0, sizeof(state));
+    snprintf(state.settings.customMusicPath,
+             sizeof(state.settings.customMusicPath),
+             "%s", "previous/music/folder");
+    callbackToken = M12_StartupMenu_BeginCustomMusicDirDialog(&state);
+    check(callbackToken != NULL && state.dataDirPickerActive,
+          "begin custom music dialog creates callback token");
+    if (callbackToken) {
+        check(M12_StartupMenu_BeginCustomMusicDirDialog(&state) == NULL,
+              "a pending dialog cannot be replaced by another request");
+        check(run_custom_music_dialog_completion_thread(callbackToken, NULL),
+              "native cancel result can complete on a worker thread");
+        check(state.dataDirPickerActive &&
+                  strcmp(state.settings.customMusicPath,
+                         "previous/music/folder") == 0,
+              "worker completion does not mutate menu state");
+        changed = M12_StartupMenu_Update(&state);
+        check(changed && !state.dataDirPickerActive &&
+                  state.customMusicDirDialogJob == NULL,
+              "main-thread update consumes the dialog result");
+        check(strcmp(state.settings.customMusicPath,
+                     "previous/music/folder") == 0,
+              "cancelled folder dialog preserves the previous path");
+    }
+
+    destroyedState = (M12_StartupMenuState*)SDL_calloc(1U,
+                                                       sizeof(*destroyedState));
+    check(destroyedState != NULL,
+          "allocate menu state for late callback lifetime test");
+    if (!destroyedState) {
+        return;
+    }
+    callbackToken = M12_StartupMenu_BeginCustomMusicDirDialog(destroyedState);
+    check(callbackToken != NULL,
+          "begin second dialog before menu destruction");
+    if (callbackToken) {
+        M12_StartupMenu_Destroy(destroyedState);
+        check(destroyedState->customMusicDirDialogJob == NULL,
+              "destroy detaches the menu-owned callback reference");
+        SDL_free(destroyedState);
+        check(run_custom_music_dialog_completion_thread(callbackToken, "."),
+              "late native callback can finish after menu destruction");
+    } else {
+        M12_StartupMenu_Destroy(destroyedState);
+        SDL_free(destroyedState);
+    }
+}
+
 int main(void) {
     test_export_null_safety();
     test_export_field_mapping();
@@ -374,6 +502,13 @@ int main(void) {
     test_launch_intent_carries_options();
     test_launch_intent_options_follow_constraints();
     test_invalid_intent_leaves_options_unbound();
+    test_custom_music_directory_selection_validation();
+    if (SDL_Init(0)) {
+        test_custom_music_dialog_thread_handoff_and_destroy();
+        SDL_Quit();
+    } else {
+        check(0, "initialize SDL for custom music dialog lifetime tests");
+    }
     test_global_language_and_preference_rows();
     test_music_off_preference();
 

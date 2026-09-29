@@ -679,6 +679,9 @@ typedef struct M12_StartupMenuState {
     char csbImportDm1ConfirmFilename[128];
     M12_MenuView saveBrowserReturnView;
     int dataDirPickerActive;
+    /* SDL's native folder-dialog callback may run off-thread. This opaque
+     * result job is owned by the state and detached on completion/destroy. */
+    void* customMusicDirDialogJob;
     /* Last folder explicitly accepted by the launcher. Asset scans can
      * temporarily expose a platform-dialog token such as "."; it must
      * never replace the path shown or persisted by Settings. */
@@ -791,6 +794,17 @@ const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
                                              int row);
 const char* M12_StartupMenu_GetUnicodeFontPath(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetArtpackPath(const M12_StartupMenuState* state);
+/* Admit an existing directory and store its absolute path without saving
+ * configuration. Rejection preserves the previous selection. */
+int M12_StartupMenu_SetCustomMusicPath(M12_StartupMenuState* state,
+                                      const char* path);
+/* Native folder-dialog adapter. Begin returns a callback-owned opaque token
+ * while the menu retains its own reference. The callback must complete that
+ * token exactly once, including cancellation or dialog error. Completion is
+ * thread-safe; M12_StartupMenu_Update applies any result on the main thread. */
+void* M12_StartupMenu_BeginCustomMusicDirDialog(M12_StartupMenuState* state);
+void M12_StartupMenu_CompleteCustomMusicDirDialog(void* callbackToken,
+                                                  const char* selectedPath);
 int M12_StartupMenu_SelectArtpackPath(M12_StartupMenuState* state,
                                       const char* path,
                                       M12_ArtpackAdmissionReceipt* outReceipt);

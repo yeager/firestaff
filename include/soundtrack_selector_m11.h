@@ -38,7 +38,7 @@ enum {
 
 /* Return values from M11_Soundtrack_GetTrackPath. */
 enum {
-    M11_SOUNDTRACK_RESULT_ORIGINAL  = 0,  /* use built-in V1 path; outPath untouched */
+    M11_SOUNDTRACK_RESULT_ORIGINAL  = 0,  /* use built-in V1 path; outPath cleared */
     M11_SOUNDTRACK_RESULT_RESOLVED  = 1,  /* outPath filled with absolute path */
     M11_SOUNDTRACK_RESULT_FALLBACK  = 2   /* requested file missing — fall back to Original */
 };
@@ -56,7 +56,7 @@ int M11_Soundtrack_IsValid(int mode);
  *   trackName      : logical name, e.g. "title", "dungeon1" (no
  *                    extension; resolver probes .ogg/.mp3/.wav).
  *   customMusicPath: directory to probe when mode = CUSTOM; may be
- *                    NULL/empty (then CUSTOM degrades to FALLBACK).
+ *                    NULL/empty (then probes the default custom directory).
  *   outPath        : caller-owned buffer for the resolved path. May be
  *                    NULL if the caller only wants the result code.
  *   outSize        : size of outPath in bytes.
