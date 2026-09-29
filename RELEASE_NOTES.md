@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `CD music`: master and music volume now affect the CDDA stream, including
+  mute and music already queued for playback, without resetting its position.
+
 - `Original music`: stopping SONG.DAT playback clears the music queue without
   interrupting sound effects. New requests replace queued music, volume changes
   affect music already playing, and focus/timer pause retains the music position.

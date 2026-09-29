@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Connected master/music gain to the dedicated CDDA stream.
+  FM Towns CD music now responds to either mute and to volume changes after
+  PCM is queued, without clearing its position or changing pause ownership.
+  The opt-in audio transport regression passes with one second of authentic
+  DM1 FM Towns track 2 read from the retail CUE/BIN ZIP in memory. It checks
+  gain before/after queueing, both mutes, full gain, queue retention and
+  overlapping source/host pause. Assertions remain active in Release builds.
+  This is SDL dummy-device evidence, not a physical-output listening test.
+
 - 2026-09-29: Gave native SONG.DAT playback a dedicated SDL music stream.
   Source track zero and Music Off now stop queued music without touching SFX;
   subsequent requests replace the prior queue. Master/music gain changes

@@ -1303,6 +1303,13 @@ int M11_Audio_SetVolumes(M11_AudioState* state,
                      ((float)state->musicVolume / M11_AUDIO_VOLUME_MAX);
         SDL_SetAudioStreamGain((SDL_AudioStream*)state->musicStream, gain);
     }
+    if (state->cddaStream) {
+        float gain = ((float)state->masterVolume / M11_AUDIO_VOLUME_MAX) *
+                     ((float)state->musicVolume / M11_AUDIO_VOLUME_MAX);
+        /* CDDA carries source PCM unchanged; apply user gain at playback so
+         * queued music responds without discarding its position or pause. */
+        SDL_SetAudioStreamGain((SDL_AudioStream*)state->cddaStream, gain);
+    }
 #endif
 
     return 1;
