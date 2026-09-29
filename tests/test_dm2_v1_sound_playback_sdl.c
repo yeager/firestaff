@@ -15,6 +15,7 @@
 #include "dm2_v1_sound.h"
 #include "dm2_v1_sound_sdl_backend.h"
 #include "firestaff_zip_extract.h"
+#include "firestaff_audio_device.h"
 
 /* Assertions invoke runtime operations, including in Release builds. */
 #ifdef NDEBUG
@@ -109,6 +110,7 @@ int main(void)
     int failures = 0;
     int raw_id;
     int load_result;
+    char selected_device_name[256];
 
     load_result = load_graphics_dat(&graphics, &graphics_size);
     if (load_result < 0) {
@@ -141,6 +143,29 @@ int main(void)
                                         127, &play) == 0);
     assert(play.rejected_no_backend);
 
+    assert(SDL_InitSubSystem(SDL_INIT_AUDIO));
+    {
+        int count = 0;
+        SDL_AudioDeviceID* devices = SDL_GetAudioPlaybackDevices(&count);
+        const char* name;
+        assert(devices && count > 0);
+        name = SDL_GetAudioDeviceName(devices[0]);
+        assert(name && name[0]);
+        snprintf(selected_device_name, sizeof(selected_device_name), "%s", name);
+        Firestaff_AudioDevice_SetPreferredName(NULL);
+        assert(Firestaff_AudioDevice_ResolvePlayback() == SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK);
+        {
+            const char* missing = "Firestaff unavailable playback-device probe";
+            int device_index;
+            for (device_index = 0; device_index < count; ++device_index)
+                assert(strcmp(SDL_GetAudioDeviceName(devices[device_index]), missing) != 0);
+            Firestaff_AudioDevice_SetPreferredName(missing);
+            assert(Firestaff_AudioDevice_ResolvePlayback() == SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK);
+        }
+        Firestaff_AudioDevice_SetPreferredName(selected_device_name);
+        assert(Firestaff_AudioDevice_ResolvePlayback() == devices[0]);
+        SDL_free(devices);
+    }
     /* Bind the real SDL3 backend (SDL_AUDIODRIVER=dummy from ctest). */
     dm2_v1_sound_sdl_backend_describe(&backend);
     dm2_v1_sound_bind_playback_backend(&backend);
@@ -149,6 +174,8 @@ int main(void)
     /* Open before queueing the authentic voice so gain/host-pause checks
      * cannot race this corpus's shortest sample completing. */
     assert(backend.open(backend.ctx));
+    assert(strcmp(SDL_GetAudioDeviceName(
+               dm2_v1_sound_sdl_backend_playback_device()), selected_device_name) == 0);
     assert(dm2_v1_sound_sdl_backend_get_gain() == 0.125f);
     assert(dm2_v1_sound_sdl_backend_set_host_paused(1));
 

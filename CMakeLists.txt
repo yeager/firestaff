@@ -4845,6 +4845,12 @@ if(NOT TARGET SDL3::SDL3 AND TARGET PkgConfig::SDL3)
     add_library(SDL3::SDL3 ALIAS PkgConfig::SDL3)
 endif()
 
+# Host playback-device preference is shared by M11 and independent DM2
+# stream owners. Keep this leaf library free of game/runtime dependencies.
+add_library(firestaff_audio_device STATIC src/shared/firestaff_audio_device.c)
+target_include_directories(firestaff_audio_device PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_audio_device PUBLIC SDL3::SDL3)
+
 # Theron's local original CD corpus stores Track 01 as OGG transcodes while
 # its CUE retains the original WAV names.  Keep Vorbis optional so platforms
 # without the decoder remain fail-closed rather than treating compressed bytes
@@ -7257,7 +7263,7 @@ if(DM2_SOURCES)
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     # dm2_v1_sound_sdl_backend.c (DM2-008 cycle 16) is the concrete SDL3
     # playback backend; propagate SDL3 headers/symbols to every consumer.
-    target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 SDL3::SDL3 m)
+    target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 SDL3::SDL3 m firestaff_audio_device)
     if(APPLE)
         # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly.
         # Keep the framework dependency on its owning library so the app and
@@ -7782,7 +7788,7 @@ list(REMOVE_ITEM M11_SOURCES
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron firestaff_retroachievements SDL3::SDL3 m)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron firestaff_retroachievements SDL3::SDL3 m firestaff_audio_device)
 if(DM2_SOURCES)
     # 2026-06-17: DM2 V1 hand-off added in M11_GameView_Start (see
     # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
@@ -21931,7 +21937,7 @@ endif()
     target_include_directories(test_dm2_v1_sound_playback_sdl PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_sound_playback_sdl PRIVATE firestaff_m10 SDL3::SDL3 m)
+    target_link_libraries(test_dm2_v1_sound_playback_sdl PRIVATE firestaff_m10 SDL3::SDL3 m firestaff_audio_device)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_sound_playback_sdl PRIVATE -Wall -Wextra -O2)
     endif()
@@ -60948,7 +60954,7 @@ add_executable(test_dm2_v1_mve_audio_sdl_owner
     src/shared/asset_find_by_hash.c
 )
 target_include_directories(test_dm2_v1_mve_audio_sdl_owner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_dm2_v1_mve_audio_sdl_owner PRIVATE SDL3::SDL3 firestaff_zip_extract)
+target_link_libraries(test_dm2_v1_mve_audio_sdl_owner PRIVATE SDL3::SDL3 firestaff_zip_extract firestaff_audio_device)
 add_test(NAME test_dm2_v1_mve_audio_sdl_owner COMMAND test_dm2_v1_mve_audio_sdl_owner)
 set_tests_properties(test_dm2_v1_mve_audio_sdl_owner PROPERTIES
     SKIP_RETURN_CODE 77

@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `Audio device`: the selected output now also applies to DM2's separate
+  effect and DOS movie streams. Streams resolve the current device by name
+  when opened and fall back to system default if it is unavailable.
+
 - `DM2 audio`: launcher master/SFX settings now reach the GDAT effect device.
   Master volume and mute also apply to the separate DOS intro audio stream
   before playback starts, while preserving source timing and paused audio.

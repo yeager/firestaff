@@ -1,4 +1,5 @@
 #include "audio_sdl_m11.h"
+#include "firestaff_audio_device.h"
 #include "asset_find_by_hash.h"
 #include "graphics_dat_snd3_loader_v1.h"
 #include "song_dat_loader_v1.h"
@@ -25,7 +26,6 @@
 #define M11_AUDIO_SOUND_PACK_MAX_BYTES (64u * 1024u * 1024u)
 #define M11_AUDIO_CSB_SWSH_BYTES 9078
 #define M11_AUDIO_CSB_SWSH_PERIOD 334
-#define M11_AUDIO_DEVICE_NAME_CAPACITY 128
 
 /*
  * Guard: SDL3 headers are only included when we actually attempt real audio.
@@ -46,33 +46,9 @@ static int m11_clamp_volume(int value) {
     return value;
 }
 
-static char g_m11_preferred_audio_device[M11_AUDIO_DEVICE_NAME_CAPACITY];
-
 void M11_Audio_SetPreferredPlaybackDeviceName(const char* name) {
-    snprintf(g_m11_preferred_audio_device, sizeof(g_m11_preferred_audio_device),
-             "%s", name ? name : "");
+    Firestaff_AudioDevice_SetPreferredName(name);
 }
-
-#if M11_HAVE_SDL_AUDIO
-static SDL_AudioDeviceID m11_preferred_playback_device(void) {
-    SDL_AudioDeviceID* devices;
-    SDL_AudioDeviceID result = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
-    int count = 0;
-    int i;
-    if (!g_m11_preferred_audio_device[0]) return result;
-    devices = SDL_GetAudioPlaybackDevices(&count);
-    if (!devices) return result;
-    for (i = 0; i < count; ++i) {
-        const char* name = SDL_GetAudioDeviceName(devices[i]);
-        if (name && strcmp(name, g_m11_preferred_audio_device) == 0) {
-            result = devices[i];
-            break;
-        }
-    }
-    SDL_free(devices);
-    return result;
-}
-#endif
 
 static void m11_sound_free(M11_SoundBuffer* buf) {
     if (!buf) return;
@@ -1122,7 +1098,7 @@ int M11_Audio_Init(M11_AudioState* state) {
         spec.freq     = M11_AUDIO_SAMPLE_RATE;
 
         stream = SDL_OpenAudioDeviceStream(
-            m11_preferred_playback_device(),
+            Firestaff_AudioDevice_ResolvePlayback(),
             &spec,
             NULL,  /* no callback — we push data */
             NULL
@@ -1146,7 +1122,7 @@ int M11_Audio_Init(M11_AudioState* state) {
             cdda_spec.channels = 2;
             cdda_spec.freq     = 44100;
             cdda = SDL_OpenAudioDeviceStream(
-                m11_preferred_playback_device(),
+                Firestaff_AudioDevice_ResolvePlayback(),
                 &cdda_spec, NULL, NULL);
             if (cdda) {
                 SDL_ResumeAudioStreamDevice(cdda);
@@ -2260,7 +2236,7 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
             spec.format = SDL_AUDIO_F32;
             spec.channels = 1;
             spec.freq = M11_AUDIO_SAMPLE_RATE;
-            stream = SDL_OpenAudioDeviceStream(m11_preferred_playback_device(),
+            stream = SDL_OpenAudioDeviceStream(Firestaff_AudioDevice_ResolvePlayback(),
                                                 &spec, NULL, NULL);
             if (!stream) return 0;
             state->musicStream = stream;

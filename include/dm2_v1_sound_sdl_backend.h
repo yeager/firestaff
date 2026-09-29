@@ -36,6 +36,7 @@ int dm2_v1_sound_sdl_backend_set_volumes(int master, int sfx);
 float dm2_v1_sound_sdl_backend_get_gain(void);
 
 /* Observability for probes/tests. */
+uint32_t dm2_v1_sound_sdl_backend_playback_device(void);
 int dm2_v1_sound_sdl_backend_is_ready(void);
 uint64_t dm2_v1_sound_sdl_backend_mixed_frames(void);
 uint32_t dm2_v1_sound_sdl_backend_started_voice_count(void);

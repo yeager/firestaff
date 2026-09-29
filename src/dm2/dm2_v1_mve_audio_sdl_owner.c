@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <SDL3/SDL.h>
+#include "firestaff_audio_device.h"
 
 int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner)
 {
@@ -23,7 +24,7 @@ int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner)
     spec.format = SDL_AUDIO_U8;
     spec.channels = DM2_V1_MVE_AUDIO_CHANNELS;
     spec.freq = (int)DM2_V1_MVE_AUDIO_SAMPLE_RATE;
-    stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+    stream = SDL_OpenAudioDeviceStream(Firestaff_AudioDevice_ResolvePlayback(),
                                        &spec, NULL, NULL);
     if (!stream || !SDL_ResumeAudioStreamDevice(stream)) {
         if (stream) SDL_DestroyAudioStream(stream);

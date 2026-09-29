@@ -2,6 +2,7 @@
 #include "dm2_v1_mve_audio_sdl_owner.h"
 #include "dm2_v1_mve_presentation_owner.h"
 #include "firestaff_zip_extract.h"
+#include "firestaff_audio_device.h"
 
 /* Original PCM queue receipts must remain active in Release. */
 #ifdef NDEBUG
@@ -10,6 +11,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <SDL3/SDL.h>
 
 static uint8_t *read_original_member(const char *archive, const char *name,
@@ -29,10 +31,23 @@ int main(void)
     static const uint64_t expected_bytes[] = { 797426u, 2204900u };
     const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     size_t movie_index;
+    char selected_device_name[256] = {0};
 
     if (!archive || !archive[0]) {
         puts("SKIP: no DM2 DOS archive");
         return 77;
+    }
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        int count = 0;
+        SDL_AudioDeviceID* devices = SDL_GetAudioPlaybackDevices(&count);
+        if (devices && count > 0) {
+            const char* name = SDL_GetAudioDeviceName(devices[0]);
+            assert(name && name[0]);
+            snprintf(selected_device_name, sizeof(selected_device_name), "%s", name);
+            Firestaff_AudioDevice_SetPreferredName(selected_device_name);
+            assert(Firestaff_AudioDevice_ResolvePlayback() == devices[0]);
+        }
+        SDL_free(devices);
     }
     for (movie_index = 0u; movie_index < sizeof(names) / sizeof(names[0]);
          ++movie_index) {
@@ -52,6 +67,11 @@ int main(void)
                                                    byte_count) == 1);
         assert(dm2_v1_mve_audio_sdl_owner_open(&audio) == 1);
         assert(audio.master_volume == 128);
+        if (selected_device_name[0]) {
+            assert(audio.sdl_stream && strcmp(SDL_GetAudioDeviceName(
+                SDL_GetAudioStreamDevice((SDL_AudioStream*)audio.sdl_stream)),
+                selected_device_name) == 0);
+        }
         assert(dm2_v1_mve_audio_sdl_owner_set_host_paused(&audio, 1));
         for (;;) {
             const int next = dm2_v1_mve_presentation_owner_next_source_pcm(

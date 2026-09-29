@@ -381,6 +381,21 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
                          !M11_FocusPauseRequired(1, 1, "cocoa") &&
                          M11_FocusPauseRequired(1, 0, "cocoa"), mode,
                      "focus policy honors the setting and excludes headless video");
+    {
+        int count = 0;
+        SDL_AudioDeviceID* devices;
+        expect_mode_true(SDL_InitSubSystem(SDL_INIT_AUDIO), mode,
+                         "audio device selection can enumerate the actual SDL backend");
+        devices = SDL_GetAudioPlaybackDevices(&count);
+        expect_mode_true(devices && count > 0, mode,
+                         "audio device selection has a real SDL device name");
+        if (devices && count > 0) {
+            const char* name = SDL_GetAudioDeviceName(devices[0]);
+            if (name) snprintf(menu->settings.audioDeviceName,
+                sizeof(menu->settings.audioDeviceName), "%s", name);
+        }
+        SDL_free(devices);
+    }
     menu->selectedIndex = 0;
     menu->activatedIndex = 0;
     menu->launchRequested = 1;
@@ -421,6 +436,18 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
                      mode, "M11 opens through M12 selected-menu entry");
     run_native_focus_probe(&launcher_view, menu, mode);
     run_original_music_transport_probe(&launcher_view, mode);
+    expect_mode_true(launcher_view.audioState.sdlStream &&
+        strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
+            launcher_view.audioState.sdlStream)), menu->settings.audioDeviceName) == 0,
+        mode, "M12 audio device name reaches the M11 effects stream");
+    expect_mode_true(launcher_view.audioState.musicStream &&
+        strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
+            launcher_view.audioState.musicStream)), menu->settings.audioDeviceName) == 0,
+        mode, "M12 audio device name reaches the independent song stream");
+    expect_mode_true(launcher_view.audioState.cddaStream &&
+        strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
+            launcher_view.audioState.cddaStream)), menu->settings.audioDeviceName) == 0,
+        mode, "M12 audio device name reaches the independent CDDA stream");
     expect_mode_true(M11_QolRuntime_GetSpeedMultiplier() ==
                          (cheats ? speedMultipliers[speed] : 100), mode,
                      "M11 applies selected speed and cheats gate to live timing");

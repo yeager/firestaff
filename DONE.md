@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Shared the selected playback-device name across M11 effects,
+  SONG.DAT, CDDA and the independent DM2 GDAT/MVE devices. A leaf SDL library
+  resolves the current name on every stream open, with default fallback for
+  empty or unavailable names, avoiding stale device IDs and circular runtime
+  dependencies. Authentic DM1 launcher tests pass 248 checks, including
+  actual SDL device names for all three M11 streams. Real GDAT and MVE tests
+  verify the selected opened device; empty/missing-name fallback and no-device
+  MVE also pass. Narrow app/standalone builds and localization checks pass.
+  Dummy-device evidence does not establish physical multi-device hotplug.
+
 - 2026-09-29: Wired DM2 launcher master/SFX gain to the GDAT effect backend
   before lazy device open, after binding the authenticated source session.
   The device applies user gain separately from original voice attenuation;

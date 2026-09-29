@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include <SDL3/SDL.h>
+#include "firestaff_audio_device.h"
 
 typedef struct {
     const uint8_t *pcm;
@@ -96,7 +97,7 @@ static int dm2_v1_sdl_backend_open(void *ctx)
     spec.channels = 1;
     spec.freq = (int)DM2_V1_SOUND_PCM_SAMPLE_RATE_HZ;
     g_dm2_sdl_stream = SDL_OpenAudioDeviceStream(
-        SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec,
+        Firestaff_AudioDevice_ResolvePlayback(), &spec,
         dm2_v1_sdl_stream_callback, NULL);
     if (!g_dm2_sdl_stream) {
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -258,4 +259,9 @@ uint32_t dm2_v1_sound_sdl_backend_started_voice_count(void)
 void dm2_v1_sound_sdl_backend_close(void)
 {
     dm2_v1_sdl_backend_close(NULL);
+}
+
+uint32_t dm2_v1_sound_sdl_backend_playback_device(void)
+{
+    return g_dm2_sdl_stream ? SDL_GetAudioStreamDevice(g_dm2_sdl_stream) : 0U;
 }
