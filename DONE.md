@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: The DM1/CSB/DM2 launcher now applies the current automap
+  visit-recording preference when starting a game, replacing the stale value
+  loaded before menu edits. Authentic DM1 DOS 3.4 handoff: 104 passed,
+  0 failed, 0 skipped, including enabled/disabled runtime values across four
+  presentation modes. This verifies the preference handoff, not map-export
+  contents or visual overlay parity.
+
 - 2026-09-29: DM1/CSB/DM2 launcher speed now reaches the live QoL timing
   owner using the existing in-game Cheats mapping (50/100/150 percent).
   Cheats off or invalid speed restores 100 percent; the selected game takes

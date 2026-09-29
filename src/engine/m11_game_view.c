@@ -25168,6 +25168,9 @@ static void m11_apply_launcher_options_handoff(
         if (!spec->launcherOptions.cheatsEnabled || speed < 0 || speed > 2)
             speed = 1;
         M11_QolRuntime_SetSpeedMultiplier(speedMultipliers[speed]);
+        /* Menu edits occur after initial config loading. Apply the current
+         * visit-recording preference before the first gameplay frame. */
+        M11_QolRuntime_SetAutoMapEnabled(spec->launcherOptions.autoMapEnabled);
     }
 
     /* M12 persists these controls and exports them with every launch, but

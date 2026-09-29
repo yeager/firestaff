@@ -34,6 +34,7 @@ int  M11_QolRuntime_GetMinimapCorner(void);
 
 /* Auto-Map */
 int  M11_QolRuntime_GetAutoMapEnabled(void);
+void M11_QolRuntime_SetAutoMapEnabled(int enabled);
 
 /* Combat Log */
 int  M11_QolRuntime_GetCombatLogEnabled(void);

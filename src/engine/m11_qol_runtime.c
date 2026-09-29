@@ -63,6 +63,9 @@ int  M11_QolRuntime_GetMinimapSize(void)   { return g_minimapSize; }
 int  M11_QolRuntime_GetMinimapCorner(void) { return g_minimapCorner; }
 
 int  M11_QolRuntime_GetAutoMapEnabled(void) { return g_autoMapEnabled; }
+void M11_QolRuntime_SetAutoMapEnabled(int enabled) {
+    g_autoMapEnabled = enabled ? 1 : 0;
+}
 
 int  M11_QolRuntime_GetCombatLogEnabled(void) { return g_combatLogEnabled; }
 void M11_QolRuntime_SetCombatLogEnabled(int enabled) {

@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Launcher`: changes to AUTOMAP now reach the live visit-recording setting
+  when starting DM1, CSB or DM2 without restarting Firestaff.
+
 - `Launcher`: the selected DM1/CSB/DM2 speed now takes effect at game start;
   turning cheats off restores normal speed.
 

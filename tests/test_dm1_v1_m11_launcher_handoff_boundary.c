@@ -209,6 +209,8 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     menu->gameOptions[0].cheatsEnabled = cheats;
     menu->gameOptions[0].gameSpeed = speed;
     M11_QolRuntime_SetSpeedMultiplier(200);
+    menu->settings.autoMapEnabled = mode % 2;
+    M11_QolRuntime_SetAutoMapEnabled(!menu->settings.autoMapEnabled);
 
     intent = M12_StartupMenu_GetLaunchIntent(menu);
     expect_mode_true(intent.valid == 1, mode,
@@ -229,6 +231,9 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     expect_mode_true(M11_QolRuntime_GetSpeedMultiplier() ==
                          (cheats ? speedMultipliers[speed] : 100), mode,
                      "M11 applies selected speed and cheats gate to live timing");
+    expect_mode_true(M11_QolRuntime_GetAutoMapEnabled() ==
+                         menu->settings.autoMapEnabled, mode,
+                     "M11 applies current automap preference to visit recording");
     expect_mode_true(launcher_view.startedFromLauncher == 1, mode,
                      "M11 marks startup as launcher-started");
     expect_mode_true(launcher_view.active == 1, mode,
