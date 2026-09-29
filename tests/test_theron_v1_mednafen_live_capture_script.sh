@@ -185,7 +185,7 @@ if [[ ! -f "$input_grab_patch" ]] ||
    ! grep -Fq 'input_grab_state enabled=%u' "$input_grab_patch" ||
    ! grep -Fq 'TheronTraceHostInput' "$input_grab_patch" ||
    ! grep -Fq 'input_grab_state enabled=1' "$script" ||
-   ! grep -Fq 'did not attest InputGrab=1' "$script"; then
+   ! grep -Fq 'did not attest InputGrab=1 after host chord retries' "$script"; then
    printf 'FAIL: capture must require Mednafen-owned InputGrab=1 provenance\n' >&2
    exit 1
 fi
@@ -323,7 +323,7 @@ if [[ ! -f "$quartz_grab_helper" ]] ||
    exit 1
 fi
 if ! grep -Fq 'quartz_grab_script=' "$script" ||
-   ! grep -Fq 'Quartz chord retries' "$script" ||
+   ! grep -Fq 'host chord retries' "$script" ||
    ! grep -Fq 'input_grab_state enabled=1' "$script" ||
    ! grep -Fq 'input_grab_chord_events=%s' "$script"; then
    printf 'FAIL: capture must attest input-grab activation before host input\n' >&2
@@ -516,14 +516,28 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'mednafen_ui_pid=$(resolve_mednafen_ui_pid_with_retry "$mednafen_pid" || true)' "$script" ||
    ! grep -Fq 'activate_mednafen_ui_pid_with_retry "$mednafen_ui_pid"' "$script" ||
    grep -Fq 'pgrep -f "$mednafen_bin"' "$script" ||
-   ! grep -Fq 'return) host_key_code=36' "$script" ||
-   ! grep -Fq 'select) host_key_code=48' "$script" ||
-   ! grep -Fq 'i) host_key_code=$capture_i_host_code' "$script" ||
-   ! grep -Fq 'ii) host_key_code=$capture_ii_host_code' "$script" ||
-   ! grep -Fq 'up) host_key_code=$capture_up_host_code' "$script" ||
-   ! grep -Fq 'down) host_key_code=$capture_down_host_code' "$script" ||
-   ! grep -Fq 'left) host_key_code=$capture_left_host_code' "$script" ||
-   ! grep -Fq 'right) host_key_code=$capture_right_host_code' "$script" ||
+   ! grep -Fq 'run|return) printf '\''%s'\'' 36 ;;' "$script" ||
+   ! grep -Fq 'select) printf '\''%s'\'' 48 ;;' "$script" ||
+   ! grep -Fq 'i) printf '\''%s'\'' "$capture_i_host_code" ;;' "$script" ||
+   ! grep -Fq 'ii) printf '\''%s'\'' "$capture_ii_host_code" ;;' "$script" ||
+   ! grep -Fq 'up) printf '\''%s'\'' "$capture_up_host_code" ;;' "$script" ||
+   ! grep -Fq 'down) printf '\''%s'\'' "$capture_down_host_code" ;;' "$script" ||
+   ! grep -Fq 'left) printf '\''%s'\'' "$capture_left_host_code" ;;' "$script" ||
+   ! grep -Fq 'right) printf '\''%s'\'' "$capture_right_host_code" ;;' "$script" ||
+   ! grep -Fq 'i:91) printf '\''%s'\'' KP_3 ;;' "$script" ||
+   ! grep -Fq 'ii:90) printf '\''%s'\'' KP_2 ;;' "$script" ||
+   ! grep -Fq 'up:82) printf '\''%s'\'' Up ;;' "$script" ||
+   ! grep -Fq 'i:32) printf '\''%s'\'' 3 ;;' "$script" ||
+   ! grep -Fq 'right:7) printf '\''%s'\'' d ;;' "$script" ||
+   ! grep -Fq 'Linux host input requires SDL_VIDEODRIVER=x11 and xdotool' "$script" ||
+   ! grep -Fq 'Linux X11 host input requires THERON_CAPTURE_INPUT_ROUTE=pid' "$script" ||
+   ! grep -Fq 'xdotool search --onlyvisible --pid "$mednafen_ui_pid"' "$script" ||
+   ! grep -Fq 'xdotool getwindowpid "$mednafen_window_id"' "$script" ||
+   ! grep -Fq 'xdotool windowfocus --sync "$mednafen_window_id"' "$script" ||
+   ! grep -Fq 'xdotool getwindowfocus 2>/dev/null' "$script" ||
+   ! grep -Fq 'xdotool key ctrl+shift+g' "$script" ||
+   ! grep -Fq 'xdotool keydown "$host_key_current_code"' "$script" ||
+   ! grep -Fq 'xdotool keyup "$host_key_current_code"' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_INPUT_ROUTE must be pid or global_hid' "$script" ||
    ! grep -Fq 'quartz_arguments+=(--global-hid)' "$script" ||
    ! grep -Fq 'if [[ "$input_route" == global_hid ]]; then' "$script" ||
@@ -533,8 +547,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated PCE key@seconds entries' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
-   ! grep -Fq 'i) host_key_sequence_codes+=($capture_i_host_code)' "$script" ||
-   ! grep -Fq 'ii) host_key_sequence_codes+=($capture_ii_host_code)' "$script" ||
+   ! grep -Fq 'host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")' "$script" ||
    ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' "$script" ||
    ! grep -Fq 'requested host key was not observed by Mednafen SDL dispatch' "$script"; then
@@ -628,7 +641,10 @@ if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'host_input_delivery=quartz_%s_key_down_up' "$script" ||
    ! grep -Fq 'host_input_delivery_attempts=%s' "$script" ||
    ! grep -Fq 'wait_for_host_key_events()' "$script" ||
-   ! grep -Fq 'Mednafen did not observe preflight key-down attempt %s after Quartz delivery' "$script" ||
+   ! grep -Fq 'Mednafen did not observe preflight key-down attempt %s after host delivery' "$script" ||
+   ! grep -Fq 'host_input_backend=%s' "$script" ||
+   ! grep -Fq 'host_input_focus=x11_window:%s' "$script" ||
+   ! grep -Fq 'host_input_delivery=xdotool_x11_key_down_up' "$script" ||
    ! grep -Fq 'if (( host_key_attempt <= 2 ))' "$script" ||
    ! grep -Fq 'wait_for_host_key_events "$input_trace" "$((host_key_attempt * 2 - 1))" 40' "$script" ||
    ! grep -Fq 'trace_input_order_receipt()' "$script" ||

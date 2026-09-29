@@ -55,6 +55,14 @@ input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
 host_key_code=
+host_input_backend=
+capture_i_x11_key=
+capture_ii_x11_key=
+capture_up_x11_key=
+capture_down_x11_key=
+capture_left_x11_key=
+capture_right_x11_key=
+mednafen_window_id=
 host_input_requested=0
 if [[ -n "$host_key" || -n "$host_key_sequence" ]]; then
     host_input_requested=1
@@ -167,6 +175,62 @@ capture_host_code_for_mapping() {
     esac
 }
 
+capture_x11_key_for_mapping() {
+    local key=$1
+    local scancode=$2
+    case "$key:$scancode" in
+        i:91) printf '%s' KP_3 ;;
+        ii:90) printf '%s' KP_2 ;;
+        up:26) printf '%s' w ;;
+        down:22) printf '%s' s ;;
+        left:4) printf '%s' a ;;
+        right:7) printf '%s' d ;;
+        i:32) printf '%s' 3 ;;
+        ii:31) printf '%s' 2 ;;
+        up:82) printf '%s' Up ;;
+        down:81) printf '%s' Down ;;
+        left:80) printf '%s' Left ;;
+        right:79) printf '%s' Right ;;
+        i:12) printf '%s' i ;;
+        i:29) printf '%s' z ;;
+        ii:27) printf '%s' x ;;
+        i:54) printf '%s' comma ;;
+        i:55) printf '%s' period ;;
+        ii:54) printf '%s' comma ;;
+        ii:55) printf '%s' period ;;
+        *) return 1 ;;
+    esac
+}
+
+capture_host_key_for_label() {
+    local label=$1
+    if [[ "$host_input_backend" == xdotool_x11 ]]; then
+        case "$label" in
+            run|return) printf '%s' Return ;;
+            select) printf '%s' Tab ;;
+            i) printf '%s' "$capture_i_x11_key" ;;
+            ii) printf '%s' "$capture_ii_x11_key" ;;
+            up) printf '%s' "$capture_up_x11_key" ;;
+            down) printf '%s' "$capture_down_x11_key" ;;
+            left) printf '%s' "$capture_left_x11_key" ;;
+            right) printf '%s' "$capture_right_x11_key" ;;
+            *) return 1 ;;
+        esac
+    else
+        case "$label" in
+            run|return) printf '%s' 36 ;;
+            select) printf '%s' 48 ;;
+            i) printf '%s' "$capture_i_host_code" ;;
+            ii) printf '%s' "$capture_ii_host_code" ;;
+            up) printf '%s' "$capture_up_host_code" ;;
+            down) printf '%s' "$capture_down_host_code" ;;
+            left) printf '%s' "$capture_left_host_code" ;;
+            right) printf '%s' "$capture_right_host_code" ;;
+            *) return 1 ;;
+        esac
+    fi
+}
+
 require_capture_profile_mappings() {
     if [[ ! -f "$configured_home/mednafen.cfg" ]]; then
         printf '%s\n' 'FAIL: THERON_MEDNAFEN_HOME has no Mednafen configuration file' >&2
@@ -198,12 +262,20 @@ require_capture_profile_mappings() {
         esac
         scancode=$(capture_profile_scancode "pce.input.port1.gamepad.$key")
         host_code=$(capture_host_code_for_mapping "$key" "$scancode" || true)
-        if [[ -z "$host_code" ]]; then
+        local x11_key
+        x11_key=$(capture_x11_key_for_mapping "$key" "$scancode" || true)
+        if [[ "$host_input_backend" == xdotool_x11 && -z "$x11_key" ]]; then
+            printf 'FAIL: THERON_MEDNAFEN_HOME does not retain a supported X11 %s mapping (SDL scancode %s)\n' \
+                "$label" "${scancode:-missing}" >&2
+            exit 1
+        fi
+        if [[ "$host_input_backend" == quartz && -z "$host_code" ]]; then
             printf 'FAIL: THERON_MEDNAFEN_HOME does not retain a supported %s mapping (SDL scancode %s)\n' \
                 "$label" "${scancode:-missing}" >&2
             exit 1
         fi
         printf -v "capture_${key}_host_code" '%s' "$host_code"
+        printf -v "capture_${key}_x11_key" '%s' "$x11_key"
     done
 }
 
@@ -459,6 +531,21 @@ if [[ "$replay_post_dungeon_overlay" == 1 ]]; then
     post_dungeon_overlay_iso=$track02_path
 fi
 if [[ "$host_input_requested" == 1 ]]; then
+    case "$(uname -s)" in
+        Darwin) host_input_backend=quartz ;;
+        Linux)
+            host_input_backend=xdotool_x11
+            if [[ "$capture_sdl_video_driver" != x11 ]] ||
+               ! command -v xdotool >/dev/null 2>&1; then
+                printf '%s\n' 'FAIL: Linux host input requires SDL_VIDEODRIVER=x11 and xdotool' >&2
+                exit 1
+            fi
+            ;;
+        *)
+            printf '%s\n' 'FAIL: host keyboard capture supports only macOS Quartz or Linux X11' >&2
+            exit 1
+            ;;
+    esac
     if [[ -z "$configured_home" ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' >&2
         exit 1
@@ -480,30 +567,27 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_ROUTE must be pid or global_hid' >&2
         exit 1
     fi
+    if [[ "$host_input_backend" == xdotool_x11 && "$input_route" != pid ]]; then
+        printf '%s\n' 'FAIL: Linux X11 host input requires THERON_CAPTURE_INPUT_ROUTE=pid' >&2
+        exit 1
+    fi
     if [[ -z "$host_key_sequence" ]]; then
-        case "$host_key" in
-            run|return) host_key_code=36 ;;
-            select) host_key_code=48 ;;
-            i) host_key_code=$capture_i_host_code ;;
-            ii) host_key_code=$capture_ii_host_code ;;
-            up) host_key_code=$capture_up_host_code ;;
-            down) host_key_code=$capture_down_host_code ;;
-            left) host_key_code=$capture_left_host_code ;;
-            right) host_key_code=$capture_right_host_code ;;
-        esac
+        host_key_code=$(capture_host_key_for_label "$host_key")
     fi
     if [[ "$capture_sdl_video_driver" == dummy ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' >&2
         exit 1
     fi
-    if [[ "$(uname -s)" != Darwin ]] || ! command -v osascript >/dev/null 2>&1; then
+    if [[ "$host_input_backend" == quartz ]] && ! command -v osascript >/dev/null 2>&1; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY=return requires macOS osascript accessibility input' >&2
         exit 1
     fi
-    if [[ ! -f "$quartz_keypair_script" || ! -f "$quartz_grab_script" ]] ||
-       ! command -v swift >/dev/null 2>&1; then
-        printf '%s\n' 'FAIL: host input requires Swift and the checked-in Quartz keypair helper' >&2
-        exit 1
+    if [[ "$host_input_backend" == quartz ]]; then
+        if [[ ! -f "$quartz_keypair_script" || ! -f "$quartz_grab_script" ]] ||
+           ! command -v swift >/dev/null 2>&1; then
+            printf '%s\n' 'FAIL: host input requires Swift and the checked-in Quartz keypair helper' >&2
+            exit 1
+        fi
     fi
     if [[ ! "$host_key_delay" =~ ^[0-9]+$ ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' >&2
@@ -1096,16 +1180,7 @@ if [[ "$host_input_requested" == 1 ]]; then
         for host_key_sequence_entry in "${host_key_sequence_entries[@]}"; do
             host_key_sequence_label=${host_key_sequence_entry%@*}
             host_key_sequence_delays+=("${host_key_sequence_entry#*@}")
-            case "$host_key_sequence_label" in
-                run|return) host_key_sequence_codes+=(36) ;;
-                select) host_key_sequence_codes+=(48) ;;
-                i) host_key_sequence_codes+=($capture_i_host_code) ;;
-                ii) host_key_sequence_codes+=($capture_ii_host_code) ;;
-                up) host_key_sequence_codes+=($capture_up_host_code) ;;
-                down) host_key_sequence_codes+=($capture_down_host_code) ;;
-                left) host_key_sequence_codes+=($capture_left_host_code) ;;
-                right) host_key_sequence_codes+=($capture_right_host_code) ;;
-            esac
+            host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")
         done
     elif [[ -n "$host_key_delays" ]]; then
         IFS=',' read -r -a host_key_delay_entries <<<"$host_key_delays"
@@ -1123,6 +1198,28 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: could not resolve the launched Mednafen UI process' >&2
         exit 1
     fi
+    if [[ "$host_input_backend" == xdotool_x11 ]]; then
+        mednafen_window_id=$(xdotool search --onlyvisible --pid "$mednafen_ui_pid" 2>/dev/null | head -n 1 || true)
+        if [[ ! "$mednafen_window_id" =~ ^[1-9][0-9]*$ ]] ||
+           [[ "$(xdotool getwindowpid "$mednafen_window_id" 2>/dev/null || true)" != "$mednafen_ui_pid" ]]; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf '%s\n' 'FAIL: could not resolve an X11 window owned by the launched Mednafen process' >&2
+            exit 1
+        fi
+        if ! xdotool windowfocus --sync "$mednafen_window_id"; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf '%s\n' 'FAIL: could not focus the launched Mednafen X11 window' >&2
+            exit 1
+        fi
+        if [[ "$(xdotool getwindowfocus 2>/dev/null || true)" != "$mednafen_window_id" ]]; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf '%s\n' 'FAIL: Mednafen did not retain X11 keyboard focus' >&2
+            exit 1
+        fi
+    fi
     if [[ "$input_route" == global_hid ]]; then
         if ! cliclick "c:${host_focus_x},${host_focus_y}" ||
            ! activate_mednafen_ui_pid_with_retry "$mednafen_ui_pid"; then
@@ -1139,7 +1236,7 @@ if [[ "$host_input_requested" == 1 ]]; then
     fi
     # The CPU trace is stdio-buffered until shutdown. The input producer is
     # flushed per capture event and is the safe readiness boundary for
-    # scheduling real Quartz input while the process is still running.
+    # scheduling real host input while the process is still running.
     if ! wait_for_trace_producer "$input_trace" \
         "$((capture_startup_grace * 4))" \
         'source=mednafen-pce-instrumented-input'; then
@@ -1149,29 +1246,37 @@ if [[ "$host_input_requested" == 1 ]]; then
         exit 1
     fi
     # Mednafen does not deliver emulated keyboard state until input grab is
-    # active. The checked-in macOS profile uses Ctrl+Shift+G because the
-    # default Menu-key shortcut is unavailable on most Mac keyboards.
-    grab_quartz_arguments=("$mednafen_ui_pid")
-    if [[ "$input_route" == global_hid ]]; then
-        grab_quartz_arguments+=(--global-hid)
-    fi
-    expected_grab_route=quartz_chord=posted_to_pid
-    if [[ "$input_route" == global_hid ]]; then
-        expected_grab_route=quartz_chord=posted_to_global_hid
-    fi
+    # active. The checked-in profile uses Ctrl+Shift+G because the default
+    # Menu-key shortcut is unavailable on common host keyboards.
     grab_trace_ready=0
     grab_receipt_valid=0
-    # A foreground SDL window can be replaced by another app between the
-    # activation receipt and the first chord. Retry only this reversible input
-    # handshake, and require both Quartz's receipt and Mednafen's own
-    # input_grab_state marker before sending any gameplay keys.
+    # A foreground SDL window can be replaced by another app between focus
+    # and the first chord. Retry only this reversible input handshake, and
+    # require the emulator's own input_grab_state marker before gameplay keys.
     for ((grab_attempt = 1; grab_attempt <= 4; ++grab_attempt)); do
-        grab_receipt=$(swift "$quartz_grab_script" "${grab_quartz_arguments[@]}" 2>/dev/null || true)
-        if [[ "$grab_receipt" == *$'quartz_event_access=granted'* &&
-              "$grab_receipt" == *"$expected_grab_route"* &&
-              "$grab_receipt" == *"quartz_target_pid=$mednafen_ui_pid"* &&
-              "$grab_receipt" == *'quartz_chord_keys=ctrl+shift+g'* ]]; then
-            grab_receipt_valid=1
+        if [[ "$host_input_backend" == xdotool_x11 ]]; then
+            if [[ "$(xdotool getwindowfocus 2>/dev/null || true)" == "$mednafen_window_id" ]] &&
+               xdotool key ctrl+shift+g; then
+                grab_receipt_valid=1
+            fi
+        else
+            grab_quartz_arguments=("$mednafen_ui_pid")
+            if [[ "$input_route" == global_hid ]]; then
+                grab_quartz_arguments+=(--global-hid)
+            fi
+            expected_grab_route=quartz_chord=posted_to_pid
+            if [[ "$input_route" == global_hid ]]; then
+                expected_grab_route=quartz_chord=posted_to_global_hid
+            fi
+            grab_receipt=$(swift "$quartz_grab_script" "${grab_quartz_arguments[@]}" 2>/dev/null || true)
+            if [[ "$grab_receipt" == *$'quartz_event_access=granted'* &&
+                  "$grab_receipt" == *"$expected_grab_route"* &&
+                  "$grab_receipt" == *"quartz_target_pid=$mednafen_ui_pid"* &&
+                  "$grab_receipt" == *'quartz_chord_keys=ctrl+shift+g'* ]]; then
+                grab_receipt_valid=1
+            fi
+        fi
+        if [[ "$grab_receipt_valid" == 1 ]]; then
             for ((grab_wait = 0; grab_wait < 40; ++grab_wait)); do
                 if grep -Fq 'input_grab_state enabled=1' "$input_trace"; then
                     grab_trace_ready=1
@@ -1186,12 +1291,12 @@ if [[ "$host_input_requested" == 1 ]]; then
     if [[ "$grab_receipt_valid" != 1 || "$grab_trace_ready" != 1 ]]; then
         kill "$mednafen_pid" 2>/dev/null || true
         wait "$mednafen_pid" 2>/dev/null || true
-        printf 'FAIL: Mednafen did not attest InputGrab=1 after Quartz chord retries (receipt=%s trace=%s)\n' \
+        printf 'FAIL: Mednafen did not attest InputGrab=1 after host chord retries (receipt=%s trace=%s)\n' \
             "$grab_receipt_valid" "$grab_trace_ready" >&2
         exit 1
     fi
-    printf 'host_input_grab_chord route=%s target_pid=%s keys=ctrl+shift+g attempts=%s\n' \
-        "${input_route}" "$mednafen_ui_pid" "$grab_attempt" >>"$input_trace"
+    printf 'host_input_grab_chord route=%s target_pid=%s window_id=%s keys=ctrl+shift+g attempts=%s\n' \
+        "$host_input_backend" "$mednafen_ui_pid" "${mednafen_window_id:-none}" "$grab_attempt" >>"$input_trace"
     sleep 0.2
     host_key_schedule_seconds=$SECONDS
     # Send real Quartz key-down/up pairs after PID-bound focus.
@@ -1227,37 +1332,49 @@ if [[ "$host_input_requested" == 1 ]]; then
             sleep "$((host_key_current_delay - host_key_elapsed_seconds))"
         fi
         host_key_previous_delay=$host_key_current_delay
-        quartz_arguments=("$host_key_current_code" "$host_key_hold" "$mednafen_ui_pid")
-        if [[ "$input_route" == global_hid ]]; then
-            quartz_arguments+=(--global-hid)
-        fi
-        quartz_receipt=$(swift "$quartz_keypair_script" "${quartz_arguments[@]}") || {
-            kill "$mednafen_pid" 2>/dev/null || true
-            wait "$mednafen_pid" 2>/dev/null || true
-            printf '%s\n' 'FAIL: macOS could not deliver the requested Quartz key pair' >&2
-            exit 1
-        }
-        expected_quartz_route=quartz_keypair=posted_to_pid
-        expected_quartz_activation=quartz_activation=not_required
-        if [[ "$input_route" == global_hid ]]; then
-            expected_quartz_route=quartz_keypair=posted_to_global_hid
-            expected_quartz_activation=quartz_activation=accepted
-        fi
-        if [[ "$quartz_receipt" != *$'quartz_event_access=granted'* ||
-              "$quartz_receipt" != *"$expected_quartz_route"* ||
-              "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ||
-              "$quartz_receipt" != *"$expected_quartz_activation"* ]]; then
-            kill "$mednafen_pid" 2>/dev/null || true
-            wait "$mednafen_pid" 2>/dev/null || true
-            printf '%s\n' 'FAIL: Quartz helper did not attest requested key delivery' >&2
-            exit 1
-        fi
-        if [[ "$input_route" == global_hid &&
-              "$quartz_receipt" != *"quartz_frontmost_pid=$mednafen_ui_pid"* ]]; then
-            kill "$mednafen_pid" 2>/dev/null || true
-            wait "$mednafen_pid" 2>/dev/null || true
-            printf '%s\n' 'FAIL: Quartz global HID delivery requires Mednafen to own the foreground' >&2
-            exit 1
+        if [[ "$host_input_backend" == xdotool_x11 ]]; then
+            if [[ "$(xdotool getwindowfocus 2>/dev/null || true)" != "$mednafen_window_id" ]] ||
+               ! xdotool keydown "$host_key_current_code" ||
+               ! sleep "$host_key_hold" ||
+               ! xdotool keyup "$host_key_current_code"; then
+                kill "$mednafen_pid" 2>/dev/null || true
+                wait "$mednafen_pid" 2>/dev/null || true
+                printf '%s\n' 'FAIL: xdotool could not deliver the requested X11 key pair' >&2
+                exit 1
+            fi
+        else
+            quartz_arguments=("$host_key_current_code" "$host_key_hold" "$mednafen_ui_pid")
+            if [[ "$input_route" == global_hid ]]; then
+                quartz_arguments+=(--global-hid)
+            fi
+            quartz_receipt=$(swift "$quartz_keypair_script" "${quartz_arguments[@]}") || {
+                kill "$mednafen_pid" 2>/dev/null || true
+                wait "$mednafen_pid" 2>/dev/null || true
+                printf '%s\n' 'FAIL: macOS could not deliver the requested Quartz key pair' >&2
+                exit 1
+            }
+            expected_quartz_route=quartz_keypair=posted_to_pid
+            expected_quartz_activation=quartz_activation=not_required
+            if [[ "$input_route" == global_hid ]]; then
+                expected_quartz_route=quartz_keypair=posted_to_global_hid
+                expected_quartz_activation=quartz_activation=accepted
+            fi
+            if [[ "$quartz_receipt" != *$'quartz_event_access=granted'* ||
+                  "$quartz_receipt" != *"$expected_quartz_route"* ||
+                  "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ||
+                  "$quartz_receipt" != *"$expected_quartz_activation"* ]]; then
+                kill "$mednafen_pid" 2>/dev/null || true
+                wait "$mednafen_pid" 2>/dev/null || true
+                printf '%s\n' 'FAIL: Quartz helper did not attest requested key delivery' >&2
+                exit 1
+            fi
+            if [[ "$input_route" == global_hid &&
+                  "$quartz_receipt" != *"quartz_frontmost_pid=$mednafen_ui_pid"* ]]; then
+                kill "$mednafen_pid" 2>/dev/null || true
+                wait "$mednafen_pid" 2>/dev/null || true
+                printf '%s\n' 'FAIL: Quartz global HID delivery requires Mednafen to own the foreground' >&2
+                exit 1
+            fi
         fi
         # The first two Run presses prove PID-bound delivery before the route
         # enters original loading screens. Later screens can intentionally
@@ -1266,7 +1383,7 @@ if [[ "$host_input_requested" == 1 ]]; then
            ! wait_for_host_key_events "$input_trace" "$((host_key_attempt * 2 - 1))" 40; then
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
-            printf 'FAIL: Mednafen did not observe preflight key-down attempt %s after Quartz delivery\n' "$host_key_attempt" >&2
+            printf 'FAIL: Mednafen did not observe preflight key-down attempt %s after host delivery\n' "$host_key_attempt" >&2
             exit 1
         fi
         sleep 0.2
@@ -1624,8 +1741,14 @@ fi
             printf 'requested_host_key=%s\n' "$host_key"
         fi
         printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
-        printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
-        printf 'host_input_delivery=quartz_%s_key_down_up\n' "$input_route"
+        printf 'host_input_backend=%s\n' "$host_input_backend"
+        if [[ "$host_input_backend" == xdotool_x11 ]]; then
+            printf 'host_input_focus=x11_window:%s\n' "$mednafen_window_id"
+            printf '%s\n' 'host_input_delivery=xdotool_x11_key_down_up'
+        else
+            printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
+            printf 'host_input_delivery=quartz_%s_key_down_up\n' "$input_route"
+        fi
         printf '%s\n' 'host_input_schedule_origin=trace_ready'
         printf 'host_input_startup_grace_seconds=%s\n' "$capture_startup_grace"
         if [[ -n "$host_key_sequence" ]]; then

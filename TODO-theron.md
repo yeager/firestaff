@@ -1,6 +1,6 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-09-26. Only open work is listed here.
+Reviewed 2026-09-29. Only open work is listed here.
 
 ## Remaining work, ordered by the end-to-end playability dependency
 
@@ -55,7 +55,12 @@ data.
    first bind authentic gameplay VRAM/VCE/BAT state to the source-owned
    map/object consumer for both regions, then implement and capture the
    production drawing path. Installed authentic Track 02 BINs alone do not
-   supply those semantics.
+   supply those semantics. The research capture runner now has PID-bound Linux
+   X11 host-key delivery alongside its macOS Quartz route, with profile-derived
+   key mappings and a Mednafen input-grab receipt gate. Shell/static regression
+   checks pass, but trv2 currently has no active display and this new X11 route
+   has not yet produced an authenticated game capture; it proves no gameplay
+   semantics.
 4. **Broader mechanics and completion tests.** Once each original consumer is
    bound, verify later-level transitions, objects, doors/actuators, combat,
    spells, inventory, chapter progression, and save/resume against both
