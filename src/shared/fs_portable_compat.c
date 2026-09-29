@@ -329,6 +329,19 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
         return 0;
     }
 
+    /* A process may select a separate originals root without changing the
+     * desktop profile. Tests use this to avoid scanning installed media. */
+    {
+        const char* override = getenv("FIRESTAFF_ORIGINALS_DIR");
+        if (override && override[0] != '\0') {
+            size_t length = strlen(override);
+            out[0] = '\0';
+            if (length >= outSize) return 0;
+            memcpy(out, override, length + 1U);
+            return 1;
+        }
+    }
+
 #if defined(__ANDROID__)
     /* Android: app-private external storage under Documents/Firestaff/data.
      * SDL_GetPrefPath is not available here (no SDL dependency), so use the

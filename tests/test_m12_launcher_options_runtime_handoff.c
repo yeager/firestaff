@@ -26,9 +26,23 @@
 #include <SDL3/SDL.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include "config_m12.h"
+#ifdef _WIN32
+#include <direct.h>
+#define TEST_RMDIR _rmdir
+#define TEST_SETENV(k,v) _putenv_s((k),(v))
+#define TEST_UNSETENV(k) _putenv_s((k), "")
+#else
+#include <unistd.h>
+#define TEST_RMDIR rmdir
+#define TEST_SETENV(k,v) setenv((k),(v),1)
+#define TEST_UNSETENV(k) unsetenv(k)
+#endif
 #include <string.h>
 
 static int failures = 0;
+static char ownedDataDirectory[FSP_PATH_MAX];
 
 static void check(int ok, const char* name) {
     if (!ok) {
@@ -45,7 +59,7 @@ static void seed_dm1_state(M12_StartupMenuState* state) {
     M12_AssetVersionStatus* version;
 
     M12_StartupMenu_InitWithDataDir(
-        state, "/tmp/firestaff-test-m12-launcher-options-handoff", NULL);
+        state, ownedDataDirectory, NULL);
 
     state->entries[0].title = "DUNGEON MASTER";
     state->entries[0].gameId = "dm1";
@@ -360,7 +374,7 @@ static void test_invalid_intent_leaves_options_unbound(void) {
     memset(&state, 0, sizeof(state));
     /* No activated entry: GetLaunchIntent bails before the gate. */
     M12_StartupMenu_InitWithDataDir(
-        &state, "/tmp/firestaff-test-m12-launcher-options-handoff", NULL);
+        &state, ownedDataDirectory, NULL);
     state.activatedIndex = -1;
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     check(intent.valid == 0, "no activated entry -> invalid intent");
@@ -495,6 +509,63 @@ static void test_custom_music_dialog_thread_handoff_and_destroy(void) {
 }
 
 int main(void) {
+    const char* previous = getenv("FIRESTAFF_CONFIG_PATH");
+    const char* scratch = getenv("TMPDIR");
+    char* saved = NULL;
+    char base[FSP_PATH_MAX];
+    char configPath[M12_CONFIG_PATH_CAPACITY];
+    char tmpPath[M12_CONFIG_PATH_CAPACITY + 4];
+    char leaf[80];
+    M12_Config isolated;
+    int result;
+    int dataDirectoryCreated = 0;
+    if (previous) {
+        saved = (char*)malloc(strlen(previous) + 1u);
+        if (!saved) return 1;
+        strcpy(saved, previous);
+    }
+    if (!scratch || !scratch[0]) scratch = "build";
+    snprintf(leaf, sizeof(leaf), "launcher-options-%llu.cfg",
+             (unsigned long long)SDL_GetTicksNS());
+    if (!FSP_CreateDirectoryRecursive(scratch) ||
+        !FSP_ResolvePhysicalPath(base, sizeof(base), scratch) ||
+        !FSP_JoinPath(configPath, sizeof(configPath), base, leaf)) {
+        free(saved);
+        fprintf(stderr, "Cannot prepare isolated launcher config path\n");
+        return 1;
+    }
+    snprintf(tmpPath, sizeof(tmpPath), "%s.tmp", configPath);
+    if (FSP_PathExists(configPath) || FSP_PathExists(tmpPath) ||
+        TEST_SETENV("FIRESTAFF_CONFIG_PATH", configPath) != 0) {
+        free(saved);
+        fprintf(stderr, "Cannot claim unique launcher config path\n");
+        return 1;
+    }
+    snprintf(leaf, sizeof(leaf), "launcher-empty-data-%llu",
+             (unsigned long long)SDL_GetTicksNS());
+    if (!FSP_JoinPath(ownedDataDirectory, sizeof(ownedDataDirectory), base, leaf) ||
+        FSP_PathExists(ownedDataDirectory) || !FSP_CreateDirectory(ownedDataDirectory)) {
+        check(0, "create owned empty launcher data directory");
+        goto cleanup;
+    }
+    dataDirectoryCreated = 1;
+    M12_Config_SetDefaults(&isolated);
+    check(strcmp(isolated.path, configPath) == 0,
+          "config override preserves exact task-local path");
+    {
+        char overlong[M12_CONFIG_PATH_CAPACITY + 32];
+        memset(overlong, 'x', sizeof(overlong) - 1u);
+        overlong[sizeof(overlong) - 1u] = '\0';
+        check(TEST_SETENV("FIRESTAFF_CONFIG_PATH", overlong) == 0,
+              "set overlong config override");
+        M12_Config_SetDefaults(&isolated);
+        check(isolated.path[0] == '\0' && !M12_Config_Save(&isolated),
+              "overlong config override fails closed without saving");
+    }
+    if (TEST_SETENV("FIRESTAFF_CONFIG_PATH", configPath) != 0) {
+        check(0, "restore isolated path before launcher settings actions");
+        goto cleanup;
+    }
     test_export_null_safety();
     test_export_field_mapping();
     test_export_clamps();
@@ -512,6 +583,16 @@ int main(void) {
     test_global_language_and_preference_rows();
     test_music_off_preference();
 
+cleanup:
+    /* Remove only paths claimed above; never touch the user's profile. */
+    remove(configPath);
+    remove(tmpPath);
+    if (dataDirectoryCreated)
+        check(TEST_RMDIR(ownedDataDirectory) == 0, "remove owned empty data directory");
+    if (saved) result = TEST_SETENV("FIRESTAFF_CONFIG_PATH", saved);
+    else result = TEST_UNSETENV("FIRESTAFF_CONFIG_PATH");
+    free(saved);
+    check(result == 0, "restore previous config override environment");
     if (failures) {
         printf("test_m12_launcher_options_runtime_handoff: FAIL %d\n",
                failures);

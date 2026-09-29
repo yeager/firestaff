@@ -110,6 +110,8 @@ int FSP_GetUserConfigDir(char* out, size_t outSize);
  *   Android:     /sdcard/Documents/Firestaff/data
  * Returns 1 on success, 0 on error.
  */
+/* A nonempty FIRESTAFF_ORIGINALS_DIR overrides the default for this
+ * process. An overlong override fails instead of truncating or falling back. */
 int FSP_GetDefaultOriginalsDir(char* out, size_t outSize);
 
 /*

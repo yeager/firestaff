@@ -682,6 +682,7 @@ typedef struct M12_StartupMenuState {
     /* SDL's native folder-dialog callback may run off-thread. This opaque
      * result job is owned by the state and detached on completion/destroy. */
     void* customMusicDirDialogJob;
+    void* dataDirDialogJob;
     /* Last folder explicitly accepted by the launcher. Asset scans can
      * temporarily expose a platform-dialog token such as "."; it must
      * never replace the path shown or persisted by Settings. */
@@ -805,6 +806,9 @@ int M12_StartupMenu_SetCustomMusicPath(M12_StartupMenuState* state,
 void* M12_StartupMenu_BeginCustomMusicDirDialog(M12_StartupMenuState* state);
 void M12_StartupMenu_CompleteCustomMusicDirDialog(void* callbackToken,
                                                   const char* selectedPath);
+void* M12_StartupMenu_BeginDataDirDialog(M12_StartupMenuState* state);
+void M12_StartupMenu_CompleteDataDirDialog(void* callbackToken,
+                                           const char* selectedPath);
 int M12_StartupMenu_SelectArtpackPath(M12_StartupMenuState* state,
                                       const char* path,
                                       M12_ArtpackAdmissionReceipt* outReceipt);

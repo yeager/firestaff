@@ -37,8 +37,8 @@
   teardown rules and fall back to native music on missing or undecodable
   files. Do not replace DM2 movie PCM wholesale: it may include non-music.
 
-- Move the older data/font/artpack native-dialog callbacks to the same
-  owned-result/main-thread pattern as Custom Music. SDL may invoke callbacks
+- Move the older font/artpack native-dialog callbacks to the same
+  owned-result/main-thread pattern as Custom Music and Data Directory. SDL may invoke callbacks
   off the main thread; those older paths still mutate menu state directly.
   Verify native desktop folder selection and persistence separately from
   the cancellation/late-completion tests.

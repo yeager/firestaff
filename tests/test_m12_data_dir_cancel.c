@@ -12,6 +12,8 @@
 #include "fs_portable_compat.h"
 
 #include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_timer.h>
 
 #include <stdio.h>
@@ -30,16 +32,7 @@ static int test_setenv(const char* name, const char* value) {
 static int test_unsetenv(const char* name) {
     return _putenv_s(name, "") == 0;
 }
-static char* test_mkdtemp(char* templ) {
-    char* marker = strstr(templ, "XXXXXX");
-    int i;
-    if (!marker) return NULL;
-    for (i = 0; i < 1000; ++i) {
-        snprintf(marker, 7, "%06ld", ((long)_getpid() + i) % 1000000L);
-        if (_mkdir(templ) == 0) return templ;
-    }
-    return NULL;
-}
+static unsigned long test_process_id(void) { return (unsigned long)_getpid(); }
 #else
 #include <sys/stat.h>
 #include <unistd.h>
@@ -52,9 +45,7 @@ static int test_setenv(const char* name, const char* value) {
 static int test_unsetenv(const char* name) {
     return unsetenv(name) == 0;
 }
-static char* test_mkdtemp(char* templ) {
-    return mkdtemp(templ);
-}
+static unsigned long test_process_id(void) { return (unsigned long)getpid(); }
 #endif
 
 enum {
@@ -68,6 +59,7 @@ static char dialogDefaultLocation[M12_ASSET_DATA_DIR_CAPACITY];
 static char dialogSelectedPath[M12_ASSET_DATA_DIR_CAPACITY];
 static SDL_DialogFileCallback dialogPendingCallback = NULL;
 static void* dialogPendingUserdata = NULL;
+static unsigned int testScratchOrdinal = 0U;
 
 #define CHECK(expr) do { \
     if (!(expr)) { \
@@ -114,6 +106,38 @@ static void complete_pending_dialog_cancel(void) {
     }
 }
 
+typedef struct DataDirDialogCompletion {
+    void* callbackToken;
+    const char* selectedPath;
+} DataDirDialogCompletion;
+
+static int SDLCALL complete_data_dir_dialog_on_worker(void* userdata) {
+    DataDirDialogCompletion* completion =
+        (DataDirDialogCompletion*)userdata;
+    M12_StartupMenu_CompleteDataDirDialog(completion->callbackToken,
+                                          completion->selectedPath);
+    return 0;
+}
+
+static int complete_data_dir_dialog_on_worker_and_join(
+    void* callbackToken,
+    const char* selectedPath) {
+    DataDirDialogCompletion completion;
+    SDL_Thread* thread;
+    int threadStatus = 0;
+    completion.callbackToken = callbackToken;
+    completion.selectedPath = selectedPath;
+    thread = SDL_CreateThread(complete_data_dir_dialog_on_worker,
+                              "data-dir-dialog-test",
+                              &completion);
+    if (!thread) {
+        M12_StartupMenu_CompleteDataDirDialog(callbackToken, selectedPath);
+        return 0;
+    }
+    SDL_WaitThread(thread, &threadStatus);
+    return threadStatus == 0;
+}
+
 static void reset_dialog_stub(void) {
     dialogCalls = 0;
     dialogHoldOpen = 0;
@@ -123,36 +147,69 @@ static void reset_dialog_stub(void) {
     dialogSelectedPath[0] = '\0';
 }
 
-static int make_child_dir(const char* parent,
-                          const char* leaf,
-                          char out[M12_ASSET_DATA_DIR_CAPACITY]) {
-    snprintf(out, M12_ASSET_DATA_DIR_CAPACITY, "%s/%s", parent, leaf);
-    return MKDIR(out) == 0;
+static void use_english_for_text_assertions(M12_StartupMenuState* state) {
+    if (!state) {
+        return;
+    }
+    /* Init follows the host locale when config is isolated; these assertions
+     * intentionally pin the launcher copy to English. */
+    state->settings.languageIndex = 0;
+    state->languageExplicit = 1;
 }
 
-static int isolate_home_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_CAPACITY]) {
-#ifdef _WIN32
-    char home[256];
-    snprintf(home, sizeof(home), ".\\firestaff_m12_data_dir_cancel_home_%lu",
-             (unsigned long)rand());
-    if (MKDIR(home) != 0) {
+static int create_build_scratch_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_CAPACITY]) {
+    char scratchBase[FSP_PATH_MAX];
+    char scratchRoot[FSP_PATH_MAX];
+    char configPath[FSP_PATH_MAX];
+    char originalsRoot[FSP_PATH_MAX];
+    char resolvedOriginals[FSP_PATH_MAX];
+    char tooSmall[2];
+    const char* configuredTmpDir = getenv("TMPDIR");
+    char leaf[128];
+    unsigned int attempt;
+    if (!configuredTmpDir || !configuredTmpDir[0]) {
+        configuredTmpDir = "build";
+    }
+    if (!FSP_CreateDirectoryRecursive(configuredTmpDir) ||
+        !FSP_ResolvePhysicalPath(scratchBase, sizeof(scratchBase),
+                                 configuredTmpDir)) {
         return 0;
     }
-    if (!test_setenv("HOME", home) || !test_setenv("USERPROFILE", home)) {
+    for (attempt = 0U; attempt < 100U; ++attempt) {
+        snprintf(leaf, sizeof(leaf), "m12-data-dir-cancel-%lu-%u",
+                 test_process_id(), testScratchOrdinal++);
+        if (!FSP_JoinPath(scratchRoot, sizeof(scratchRoot), scratchBase, leaf)) {
+            return 0;
+        }
+        if (!FSP_PathExists(scratchRoot) && FSP_CreateDirectory(scratchRoot)) {
+            break;
+        }
+    }
+    if (attempt == 100U ||
+        !FSP_JoinPath(dataRoot, M12_ASSET_DATA_DIR_CAPACITY,
+                      scratchRoot, "empty-data-root") ||
+        !FSP_CreateDirectoryRecursive(dataRoot) ||
+        !FSP_JoinPath(originalsRoot, sizeof(originalsRoot),
+                      scratchRoot, "default-originals") ||
+        !FSP_CreateDirectoryRecursive(originalsRoot) ||
+        !FSP_JoinPath(configPath, sizeof(configPath),
+                      scratchRoot, "startup-menu.toml") ||
+        !test_setenv("FIRESTAFF_CONFIG_PATH", configPath) ||
+        !test_setenv("FIRESTAFF_ORIGINALS_DIR", originalsRoot)) {
         return 0;
     }
-    return make_child_dir(home, "empty-data-root", dataRoot);
-#else
-    char homeTemplate[] = "/tmp/firestaff_m12_data_dir_cancel_home_XXXXXX";
-    char* home = test_mkdtemp(homeTemplate);
-    if (!home) {
+    if (!FSP_GetDefaultOriginalsDir(resolvedOriginals,
+                                    sizeof(resolvedOriginals)) ||
+        strcmp(resolvedOriginals, originalsRoot) != 0) {
         return 0;
     }
-    if (!test_setenv("HOME", home)) {
+    tooSmall[0] = 'x';
+    tooSmall[1] = '\0';
+    if (FSP_GetDefaultOriginalsDir(tooSmall, sizeof(tooSmall)) ||
+        tooSmall[0] != '\0') {
         return 0;
     }
-    return make_child_dir(home, "empty-data-root", dataRoot);
-#endif
+    return 1;
 }
 
 static int write_text_file(const char* path, const char* text) {
@@ -245,12 +302,13 @@ static void check_cancel_preserves_no_data_state(void) {
     const char* beforeVersionId;
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     if (failures) {
         return;
     }
 
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataRoot) == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
     CHECK(state.launchRequested == 0);
@@ -268,6 +326,7 @@ static void check_cancel_preserves_no_data_state(void) {
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    (void)M12_StartupMenu_Update(&state);
 
     CHECK(dialogCalls == 1);
     CHECK(strcmp(dialogDefaultLocation, beforeDataDir) == 0);
@@ -275,6 +334,11 @@ static void check_cancel_preserves_no_data_state(void) {
     CHECK(state.dataDirScanActive == 0);
     CHECK(state.dataDirScanCancelRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    if (!state.messageLine1 ||
+        strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") != 0) {
+        fprintf(stderr, "data-dir cancel message was: %s\n",
+                state.messageLine1 ? state.messageLine1 : "<null>");
+    }
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), beforeDataDir) == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
@@ -313,7 +377,7 @@ static void check_active_picker_blocks_message_reentry(void) {
     int callsBefore;
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     if (failures) {
         return;
     }
@@ -323,6 +387,7 @@ static void check_active_picker_blocks_message_reentry(void) {
     dialogPendingUserdata = NULL;
 
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -333,7 +398,8 @@ static void check_active_picker_blocks_message_reentry(void) {
 
     CHECK(dialogCalls == 1);
     CHECK(dialogPendingCallback != NULL);
-    CHECK(dialogPendingUserdata == &state);
+    CHECK(dialogPendingUserdata != NULL);
+    CHECK(dialogPendingUserdata != &state);
     CHECK(state.dataDirPickerActive == 1);
     CHECK(state.dataDirScanActive == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
@@ -355,6 +421,9 @@ static void check_active_picker_blocks_message_reentry(void) {
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "CHOOSE GAME DATA FOLDER") == 0);
 
     complete_pending_dialog_cancel();
+    CHECK(state.dataDirPickerActive == 1);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "CHOOSE GAME DATA FOLDER") == 0);
+    (void)M12_StartupMenu_Update(&state);
     CHECK(state.dataDirPickerActive == 0);
     CHECK(state.dataDirScanActive == 0);
     CHECK(state.dataDirScanCancelRequested == 0);
@@ -368,17 +437,76 @@ static void check_active_picker_blocks_message_reentry(void) {
     CHECK(state.quickResumeLaunchRequested == 0);
 }
 
+static void check_data_dir_callback_isolated_from_state_lifetime(void) {
+    M12_StartupMenuState state;
+    M12_StartupMenuState* destroyedState;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char beforeDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    void* callbackToken;
+
+    reset_dialog_stub();
+    CHECK(create_build_scratch_and_data_root(dataRoot));
+    if (failures) {
+        return;
+    }
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    snprintf(beforeDataDir, sizeof(beforeDataDir), "%s",
+             M12_AssetStatus_GetDataDir(&state.assetStatus));
+    callbackToken = M12_StartupMenu_BeginDataDirDialog(&state);
+    CHECK(callbackToken != NULL && state.dataDirPickerActive);
+    if (!callbackToken) {
+        M12_StartupMenu_Destroy(&state);
+        return;
+    }
+    CHECK(complete_data_dir_dialog_on_worker_and_join(callbackToken, NULL));
+    CHECK(state.dataDirPickerActive == 1);
+    CHECK(state.dataDirDialogJob != NULL);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
+                 beforeDataDir) == 0);
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.dataDirPickerActive == 0);
+    CHECK(state.dataDirDialogJob == NULL);
+    CHECK(state.messageLine1 &&
+          strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
+                 beforeDataDir) == 0);
+    M12_StartupMenu_Destroy(&state);
+
+    destroyedState = (M12_StartupMenuState*)SDL_calloc(1U,
+                                                       sizeof(*destroyedState));
+    CHECK(destroyedState != NULL);
+    if (!destroyedState) {
+        return;
+    }
+    callbackToken = M12_StartupMenu_BeginDataDirDialog(destroyedState);
+    CHECK(callbackToken != NULL);
+    if (!callbackToken) {
+        M12_StartupMenu_Destroy(destroyedState);
+        SDL_free(destroyedState);
+        return;
+    }
+    M12_StartupMenu_Destroy(destroyedState);
+    CHECK(destroyedState->dataDirDialogJob == NULL);
+    SDL_free(destroyedState);
+    CHECK(complete_data_dir_dialog_on_worker_and_join(callbackToken, NULL));
+}
+
 static void check_active_scan_message_requests_cancel(void) {
     M12_StartupMenuState state;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     if (failures) {
         return;
     }
 
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -405,7 +533,7 @@ static void check_selected_folder_scans_asynchronously(void) {
     int i;
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     CHECK(FSP_ResolvePhysicalPath(selectedPhysical, sizeof(selectedPhysical),
                                   dataRoot));
     if (failures) {
@@ -414,6 +542,7 @@ static void check_selected_folder_scans_asynchronously(void) {
     snprintf(dialogSelectedPath, sizeof(dialogSelectedPath), "%s", dataRoot);
 
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -421,6 +550,7 @@ static void check_selected_folder_scans_asynchronously(void) {
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    (void)M12_StartupMenu_Update(&state);
 
     CHECK(dialogCalls == 1);
     CHECK(state.dataDirPickerActive == 0);
@@ -448,6 +578,7 @@ static void check_selected_folder_scans_asynchronously(void) {
     M12_Config_Load(&config, NULL);
     CHECK(strcmp(config.dataDir, selectedPhysical) == 0);
     M12_StartupMenu_Init(&reloadedState);
+    use_english_for_text_assertions(&reloadedState);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&reloadedState.assetStatus),
                  selectedPhysical) == 0);
     M12_StartupMenu_Destroy(&reloadedState);
@@ -462,11 +593,12 @@ static void check_dot_dialog_result_preserves_data_directory(void) {
     size_t i;
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     if (failures) {
         return;
     }
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -478,6 +610,7 @@ static void check_dot_dialog_result_preserves_data_directory(void) {
         state.view = M12_MENU_VIEW_SETTINGS;
         state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+        (void)M12_StartupMenu_Update(&state);
 
         CHECK(dialogCalls == (int)i + 1);
         CHECK(state.dataDirPickerActive == 0);
@@ -509,7 +642,7 @@ static void check_parent_dialog_result_is_not_a_placeholder(void) {
     int i;
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     CHECK(TEST_GETCWD(originalCwd, sizeof(originalCwd)) != NULL);
     snprintf(parentPath, sizeof(parentPath), "%s/..", dataRoot);
     CHECK(FSP_ResolvePhysicalPath(expectedParent, sizeof(expectedParent),
@@ -521,12 +654,14 @@ static void check_parent_dialog_result_is_not_a_placeholder(void) {
     snprintf(dialogSelectedPath, sizeof(dialogSelectedPath), "..");
 
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    (void)M12_StartupMenu_Update(&state);
 
     CHECK(dialogCalls == 1);
     CHECK(state.dataDirScanActive == 1);
@@ -551,13 +686,14 @@ static void check_default_data_dir_scans_asynchronously(void) {
     int i;
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     CHECK(FSP_GetDefaultOriginalsDir(defaultRoot, sizeof(defaultRoot)));
     if (failures) {
         return;
     }
 
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -595,7 +731,7 @@ static void check_start_menu_keeps_saved_game_leaf_scoped(void) {
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     CHECK(FSP_JoinPath(nexusLeaf, sizeof(nexusLeaf), dataRoot, "nexus"));
     CHECK(FSP_CreateDirectoryRecursive(nexusLeaf));
     CHECK(seed_dm1_under_data_root(dataRoot, graphicsMd5, dungeonMd5));
@@ -605,6 +741,7 @@ static void check_start_menu_keeps_saved_game_leaf_scoped(void) {
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
     M12_StartupMenu_InitWithDataDir(&state, nexusLeaf, NULL);
+    use_english_for_text_assertions(&state);
 
     /* An explicit saved game leaf is a scoped launch selection.  The
      * startup menu must not promote it to the parent and scan unrelated
@@ -628,7 +765,7 @@ static void check_dot_config_migrates_to_default_data_directory(void) {
     size_t i;
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     CHECK(FSP_GetDefaultOriginalsDir(expected, sizeof(expected)));
     if (failures) {
         return;
@@ -650,7 +787,7 @@ static void check_dot_environment_never_persists_as_data_directory(void) {
     char expected[M12_ASSET_DATA_DIR_CAPACITY];
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     CHECK(FSP_GetDefaultOriginalsDir(expected, sizeof(expected)));
     CHECK(test_setenv("FIRESTAFF_DATA", "."));
     if (failures) {
@@ -672,7 +809,7 @@ static void check_fresh_config_repairs_dot_in_memory(void) {
     char expected[M12_ASSET_DATA_DIR_CAPACITY];
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     CHECK(FSP_GetDefaultOriginalsDir(expected, sizeof(expected)));
     CHECK(test_setenv("FIRESTAFF_DATA", "."));
     if (failures) {
@@ -696,11 +833,12 @@ static void check_dot_asset_status_does_not_replace_saved_directory(void) {
     char expected[M12_ASSET_DATA_DIR_CAPACITY];
 
     reset_dialog_stub();
-    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(create_build_scratch_and_data_root(dataRoot));
     if (failures) {
         return;
     }
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    use_english_for_text_assertions(&state);
     CHECK(M12_StartupMenu_SetDataDirectory(&state, dataRoot) == 1);
     M12_Config_Load(&config, NULL);
     snprintf(expected, sizeof(expected), "%s", config.dataDir);
@@ -732,6 +870,7 @@ static void check_active_scan_renders_progress_bar(void) {
         return;
     }
     M12_StartupMenu_Init(&state);
+    use_english_for_text_assertions(&state);
     state.view = M12_MENU_VIEW_MESSAGE;
     state.messageLine1 = "SCANNING GAME DATA";
     state.messageLine2 = "csb 50%  checking files";
@@ -787,9 +926,26 @@ static void check_scan_progress_uses_display_names(void) {
 }
 
 int main(void) {
+    char previousConfigPath[FSP_PATH_MAX] = {0};
+    char previousOriginalsDir[FSP_PATH_MAX] = {0};
+    const char* envValue;
+    int hadConfigPath;
+    int hadOriginalsDir;
+    envValue = getenv("FIRESTAFF_CONFIG_PATH");
+    hadConfigPath = envValue && envValue[0] != '\0';
+    if (hadConfigPath) {
+        snprintf(previousConfigPath, sizeof(previousConfigPath), "%s", envValue);
+    }
+    envValue = getenv("FIRESTAFF_ORIGINALS_DIR");
+    hadOriginalsDir = envValue && envValue[0] != '\0';
+    if (hadOriginalsDir) {
+        snprintf(previousOriginalsDir, sizeof(previousOriginalsDir), "%s", envValue);
+    }
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
+    CHECK(SDL_Init(0));
     check_cancel_preserves_no_data_state();
     check_active_picker_blocks_message_reentry();
+    check_data_dir_callback_isolated_from_state_lifetime();
     check_active_scan_message_requests_cancel();
     check_selected_folder_scans_asynchronously();
     check_dot_dialog_result_preserves_data_directory();
@@ -802,6 +958,18 @@ int main(void) {
     check_dot_asset_status_does_not_replace_saved_directory();
     check_active_scan_renders_progress_bar();
     check_scan_progress_uses_display_names();
+    SDL_Quit();
+
+    if (hadConfigPath) {
+        CHECK(test_setenv("FIRESTAFF_CONFIG_PATH", previousConfigPath));
+    } else {
+        CHECK(test_unsetenv("FIRESTAFF_CONFIG_PATH"));
+    }
+    if (hadOriginalsDir) {
+        CHECK(test_setenv("FIRESTAFF_ORIGINALS_DIR", previousOriginalsDir));
+    } else {
+        CHECK(test_unsetenv("FIRESTAFF_ORIGINALS_DIR"));
+    }
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

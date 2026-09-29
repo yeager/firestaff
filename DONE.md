@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Data Directory folder callbacks now publish an independently
+  owned result; Update starts the scan on the main thread. Destruction is
+  safe before a late callback. An original PC34 archive passes folder
+  selection, hash admission and isolated configuration persistence. Rebuilt
+  launcher checks pass DM1 PC34 332, CSB Amiga 48 and DM2 DOS 60 assertions.
+  Process-specific configuration/originals overrides isolate integration
+  checks without changing HOME or scanning the installed media collection.
+  All three focused dialog/handoff CTests pass; desktop interaction remains
+  a separate verification task.
+
 - 2026-09-29: Connected Custom Music folder selection to a native folder
   picker. Admission stores a complete absolute directory and preserves the
   previous choice on invalid/cancelled input. Native callbacks publish to

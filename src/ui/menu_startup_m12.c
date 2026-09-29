@@ -83,17 +83,23 @@ typedef struct M12_DataDirScanJob {
     M12_AssetScanProgress progress;
 } M12_DataDirScanJob;
 
-typedef struct M12_CustomMusicDirDialogJob {
+typedef struct M12_FolderDialogJob {
     SDL_AtomicInt refs;
     SDL_AtomicInt done;
+    int kind;
     int result;
-    char path[M12_CONFIG_DATA_DIR_CAPACITY];
-} M12_CustomMusicDirDialogJob;
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+} M12_FolderDialogJob;
 
 enum {
-    M12_CUSTOM_MUSIC_DIALOG_CANCELLED = 0,
-    M12_CUSTOM_MUSIC_DIALOG_SELECTED = 1,
-    M12_CUSTOM_MUSIC_DIALOG_PATH_TOO_LONG = 2
+    M12_FOLDER_DIALOG_CUSTOM_MUSIC = 1,
+    M12_FOLDER_DIALOG_DATA_DIRECTORY = 2
+};
+
+enum {
+    M12_FOLDER_DIALOG_CANCELLED = 0,
+    M12_FOLDER_DIALOG_SELECTED = 1,
+    M12_FOLDER_DIALOG_PATH_TOO_LONG = 2
 };
 
 enum {
@@ -2948,27 +2954,18 @@ static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
 static void SDLCALL m12_data_dir_dialog_callback(void* userdata,
                                                  const char* const* filelist,
                                                  int filter) {
-    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
     (void)filter;
-    if (!state) {
-        return;
-    }
-    state->dataDirPickerActive = 0;
-    if (filelist && filelist[0] && filelist[0][0] != '\0') {
-        if (m12_data_directory_dialog_token_is_placeholder(filelist[0])) {
-            m12_show_data_dir_result_popup(state, 0);
-            return;
-        }
-        (void)m12_begin_async_data_dir_scan(state, filelist[0]);
-        return;
-    }
-    m12_show_data_dir_result_popup(state, 0);
+    M12_StartupMenu_CompleteDataDirDialog(
+        userdata,
+        filelist && filelist[0] && filelist[0][0] != '\0'
+            ? filelist[0] : NULL);
 }
 
 static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
     const char* current;
+    void* callbackToken;
     char line3[160];
-    if (!state || state->dataDirPickerActive) {
+    if (!state || state->dataDirPickerActive || state->dataDirDialogJob) {
         return;
     }
     /* Use the same defensive value shown in Settings.  SDL's macOS dialog
@@ -2979,15 +2976,19 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
     if (!current || current[0] == '\0') {
         current = NULL;
     }
-    state->dataDirPickerActive = 1;
     m12_enter_message_view(state);
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_set_buffered_message(state,
                              m12_tr(state, "CHOOSE GAME DATA FOLDER"),
                              m12_tr(state, "THE LAUNCHER WILL RESCAN AFTER SELECTION"),
                              line3);
+    callbackToken = M12_StartupMenu_BeginDataDirDialog(state);
+    if (!callbackToken) {
+        m12_show_data_dir_result_popup(state, 0);
+        return;
+    }
     SDL_ShowOpenFolderDialog(m12_data_dir_dialog_callback,
-                             state,
+                             callbackToken,
                              NULL,
                              current,
                              false);
@@ -3040,55 +3041,83 @@ static void SDLCALL m12_unicode_font_dialog_callback(void* userdata,
                              m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
 }
 
-static void m12_release_custom_music_dir_dialog_job(
-    M12_CustomMusicDirDialogJob* job) {
+static void m12_release_folder_dialog_job(M12_FolderDialogJob* job) {
     if (job && SDL_AtomicDecRef(&job->refs)) {
         SDL_free(job);
     }
 }
 
-void* M12_StartupMenu_BeginCustomMusicDirDialog(
-    M12_StartupMenuState* state) {
-    M12_CustomMusicDirDialogJob* job;
-    if (!state || state->dataDirPickerActive ||
-        state->customMusicDirDialogJob) {
+static void* m12_begin_folder_dialog_job(M12_StartupMenuState* state,
+                                         int kind) {
+    M12_FolderDialogJob* job;
+    void** stateJob;
+    if (!state || state->dataDirPickerActive) {
         return NULL;
     }
-    job = (M12_CustomMusicDirDialogJob*)SDL_calloc(1U, sizeof(*job));
+    stateJob = kind == M12_FOLDER_DIALOG_CUSTOM_MUSIC
+        ? &state->customMusicDirDialogJob : &state->dataDirDialogJob;
+    if (*stateJob) {
+        return NULL;
+    }
+    job = (M12_FolderDialogJob*)SDL_calloc(1U, sizeof(*job));
     if (!job) {
         return NULL;
     }
+    job->kind = kind;
     SDL_SetAtomicInt(&job->refs, 2);
     SDL_SetAtomicInt(&job->done, 0);
-    state->customMusicDirDialogJob = job;
+    *stateJob = job;
     state->dataDirPickerActive = 1;
     return job;
 }
 
-void M12_StartupMenu_CompleteCustomMusicDirDialog(
-    void* callbackToken,
-    const char* selectedPath) {
-    M12_CustomMusicDirDialogJob* job =
-        (M12_CustomMusicDirDialogJob*)callbackToken;
+static void m12_complete_folder_dialog_job(void* callbackToken,
+                                           const char* selectedPath,
+                                           int expectedKind) {
+    M12_FolderDialogJob* job = (M12_FolderDialogJob*)callbackToken;
     size_t pathLength;
-    if (!job) {
+    if (!job || job->kind != expectedKind) {
         return;
     }
     if (selectedPath && selectedPath[0] != '\0') {
         pathLength = strlen(selectedPath);
         if (pathLength >= sizeof(job->path)) {
-            job->result = M12_CUSTOM_MUSIC_DIALOG_PATH_TOO_LONG;
+            job->result = M12_FOLDER_DIALOG_PATH_TOO_LONG;
         } else {
             memcpy(job->path, selectedPath, pathLength + 1U);
-            job->result = M12_CUSTOM_MUSIC_DIALOG_SELECTED;
+            job->result = M12_FOLDER_DIALOG_SELECTED;
         }
     } else {
-        job->result = M12_CUSTOM_MUSIC_DIALOG_CANCELLED;
+        job->result = M12_FOLDER_DIALOG_CANCELLED;
     }
     /* Publish the bounded result before dropping the callback's reference.
      * SDL atomics provide the cross-thread visibility required by Update. */
     SDL_SetAtomicInt(&job->done, 1);
-    m12_release_custom_music_dir_dialog_job(job);
+    m12_release_folder_dialog_job(job);
+}
+
+void* M12_StartupMenu_BeginCustomMusicDirDialog(
+    M12_StartupMenuState* state) {
+    return m12_begin_folder_dialog_job(
+        state, M12_FOLDER_DIALOG_CUSTOM_MUSIC);
+}
+
+void M12_StartupMenu_CompleteCustomMusicDirDialog(
+    void* callbackToken,
+    const char* selectedPath) {
+    m12_complete_folder_dialog_job(callbackToken, selectedPath,
+                                   M12_FOLDER_DIALOG_CUSTOM_MUSIC);
+}
+
+void* M12_StartupMenu_BeginDataDirDialog(M12_StartupMenuState* state) {
+    return m12_begin_folder_dialog_job(
+        state, M12_FOLDER_DIALOG_DATA_DIRECTORY);
+}
+
+void M12_StartupMenu_CompleteDataDirDialog(void* callbackToken,
+                                           const char* selectedPath) {
+    m12_complete_folder_dialog_job(callbackToken, selectedPath,
+                                   M12_FOLDER_DIALOG_DATA_DIRECTORY);
 }
 
 static void SDLCALL m12_custom_music_dir_dialog_callback(
@@ -3104,7 +3133,7 @@ static void SDLCALL m12_custom_music_dir_dialog_callback(
 
 static void m12_begin_custom_music_dir_browse(M12_StartupMenuState* state) {
     const char* current = NULL;
-    M12_CustomMusicDirDialogJob* job;
+    M12_FolderDialogJob* job;
     if (!state || state->dataDirPickerActive ||
         state->customMusicDirDialogJob) {
         return;
@@ -3125,7 +3154,7 @@ static void m12_begin_custom_music_dir_browse(M12_StartupMenuState* state) {
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
         return;
     }
-    job = (M12_CustomMusicDirDialogJob*)
+    job = (M12_FolderDialogJob*)
         M12_StartupMenu_BeginCustomMusicDirDialog(state);
     if (!job) {
         m12_set_buffered_message(state,
@@ -13102,24 +13131,25 @@ const char* M12_Museum_GetBullet(int categoryIndex, int pageIndex, int bulletInd
 
 static int m12_update_custom_music_dir_dialog(
     M12_StartupMenuState* state) {
-    M12_CustomMusicDirDialogJob* job;
+    M12_FolderDialogJob* job;
     if (!state) {
         return 0;
     }
-    job = (M12_CustomMusicDirDialogJob*)state->customMusicDirDialogJob;
-    if (!job || !SDL_GetAtomicInt(&job->done)) {
+    job = (M12_FolderDialogJob*)state->customMusicDirDialogJob;
+    if (!job || job->kind != M12_FOLDER_DIALOG_CUSTOM_MUSIC ||
+        !SDL_GetAtomicInt(&job->done)) {
         return 0;
     }
     state->customMusicDirDialogJob = NULL;
     state->dataDirPickerActive = 0;
-    if (job->result == M12_CUSTOM_MUSIC_DIALOG_SELECTED &&
+    if (job->result == M12_FOLDER_DIALOG_SELECTED &&
         M12_StartupMenu_SetCustomMusicPath(state, job->path)) {
         m12_save_config(state);
         m12_set_buffered_message(state,
                                  m12_tr(state, "CUSTOM MUSIC FOLDER SELECTED"),
                                  state->settings.customMusicPath,
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
-    } else if (job->result == M12_CUSTOM_MUSIC_DIALOG_CANCELLED) {
+    } else if (job->result == M12_FOLDER_DIALOG_CANCELLED) {
         m12_set_buffered_message(state,
                                  m12_tr(state, "CUSTOM MUSIC FOLDER UNCHANGED"),
                                  m12_tr(state, "NO FOLDER SELECTED"),
@@ -13130,7 +13160,35 @@ static int m12_update_custom_music_dir_dialog(
                                  m12_tr(state, "FOLDER MISSING OR PATH TOO LONG"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     }
-    m12_release_custom_music_dir_dialog_job(job);
+    m12_release_folder_dialog_job(job);
+    return 1;
+}
+
+static int m12_update_data_dir_dialog(M12_StartupMenuState* state) {
+    M12_FolderDialogJob* job;
+    if (!state) {
+        return 0;
+    }
+    job = (M12_FolderDialogJob*)state->dataDirDialogJob;
+    if (!job || job->kind != M12_FOLDER_DIALOG_DATA_DIRECTORY ||
+        !SDL_GetAtomicInt(&job->done)) {
+        return 0;
+    }
+    state->dataDirDialogJob = NULL;
+    state->dataDirPickerActive = 0;
+    if (job->result == M12_FOLDER_DIALOG_SELECTED &&
+        !m12_data_directory_dialog_token_is_placeholder(job->path)) {
+        (void)m12_begin_async_data_dir_scan(state, job->path);
+    } else {
+        m12_show_data_dir_result_popup(state, 0);
+        /* A cancelled/invalid folder selection has always returned to the
+         * launcher root after its acknowledgement, including the original
+         * synchronous native-dialog path. Keep that navigation contract
+         * independent of the platform callback thread. */
+        state->messageReturnView = M12_MENU_VIEW_MAIN;
+        state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    }
+    m12_release_folder_dialog_job(job);
     return 1;
 }
 
@@ -13141,6 +13199,9 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         return 0;
     }
     changed = m12_update_custom_music_dir_dialog(state);
+    if (m12_update_data_dir_dialog(state)) {
+        changed = 1;
+    }
     job = (M12_DataDirScanJob*)state->dataDirScanJob;
     if (!job) {
         return changed;
@@ -13273,16 +13334,23 @@ void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
 
 void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
     M12_DataDirScanJob* job;
-    M12_CustomMusicDirDialogJob* musicDialogJob;
+    M12_FolderDialogJob* musicDialogJob;
+    M12_FolderDialogJob* dataDialogJob;
     if (!state) {
         return;
     }
-    musicDialogJob = (M12_CustomMusicDirDialogJob*)
+    musicDialogJob = (M12_FolderDialogJob*)
         state->customMusicDirDialogJob;
     state->customMusicDirDialogJob = NULL;
+    dataDialogJob = (M12_FolderDialogJob*)state->dataDirDialogJob;
+    state->dataDirDialogJob = NULL;
+    if (dataDialogJob) {
+        state->dataDirPickerActive = 0;
+        m12_release_folder_dialog_job(dataDialogJob);
+    }
     if (musicDialogJob) {
         state->dataDirPickerActive = 0;
-        m12_release_custom_music_dir_dialog_job(musicDialogJob);
+        m12_release_folder_dialog_job(musicDialogJob);
     }
     job = (M12_DataDirScanJob*)state->dataDirScanJob;
     if (!job) {

@@ -27707,6 +27707,8 @@ endif()
         NAME m12_launcher_options_runtime_handoff
         COMMAND test_m12_launcher_options_runtime_handoff
     )
+    set_tests_properties(m12_launcher_options_runtime_handoff PROPERTIES
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/launcher-options-scratch;SDL_VIDEODRIVER=dummy")
 
     add_executable(test_m12_version_changelog_consistency
         tests/test_m12_version_changelog_consistency.c
@@ -54623,6 +54625,19 @@ endif()
 # M12 data-directory picker/scan cancel gate: regression for cancelling the
 # native folder picker and for mapping message-view Enter/Esc to scan cancel
 # while a game-data scan is active.
+if(BUILD_TESTING)
+    add_executable(test_m12_data_dir_dialog_real tests/test_m12_data_dir_dialog_real.c)
+    target_link_libraries(test_m12_data_dir_dialog_real PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_data_dir_dialog_real PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m12_data_dir_dialog_real COMMAND test_m12_data_dir_dialog_real)
+    set_tests_properties(m12_data_dir_dialog_real PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 30
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dialog-scratch;SDL_VIDEODRIVER=dummy"
+        LABELS "dm1;pc34;real-media;in-memory;menu;skip-safe")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_data_dir_cancel.c")
     add_executable(test_m12_data_dir_cancel
         tests/test_m12_data_dir_cancel.c
@@ -54637,6 +54652,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_data_dir_cancel.c")
         NAME m12_data_dir_cancel
         COMMAND test_m12_data_dir_cancel
     )
+    set_tests_properties(m12_data_dir_cancel PROPERTIES
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dir-cancel-scratch;SDL_VIDEODRIVER=dummy")
 endif()
 
 # M11 gameplay-side screen reader / accessibility state manifest

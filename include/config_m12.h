@@ -184,6 +184,8 @@ typedef struct {
     char cloudSyncDir[M12_CONFIG_DATA_DIR_CAPACITY];  /* empty = default (~/.firestaff/sync/) */
 } M12_Config;
 
+/* A nonempty FIRESTAFF_CONFIG_PATH selects a per-process config file.
+ * An overlong override fails closed instead of writing to the user profile. */
 void M12_Config_SetDefaults(M12_Config* config);
 int M12_Config_Load(M12_Config* config, const char* dataDirOverride);
 int M12_Config_Save(const M12_Config* config);

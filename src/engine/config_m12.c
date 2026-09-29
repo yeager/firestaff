@@ -278,6 +278,16 @@ int M12_Config_FindDefaultUnicodeFontPath(char* out, size_t outSize) {
 
 static void m12_default_config_path(char* out, size_t outSize) {
     char configDir[FSP_PATH_MAX];
+    const char* override = getenv("FIRESTAFF_CONFIG_PATH");
+    if (!out || outSize == 0U) return;
+    /* Explicit per-process configuration also isolates integration tests
+     * without changing HOME or the user's desktop profile directories. */
+    if (override && override[0] != '\0') {
+        size_t length = strlen(override);
+        out[0] = '\0';
+        if (length < outSize) memcpy(out, override, length + 1U);
+        return;
+    }
     if (FSP_GetUserConfigDir(configDir, sizeof(configDir))) {
         if (FSP_JoinPath(out, outSize, configDir, "startup-menu.toml")) {
             return;

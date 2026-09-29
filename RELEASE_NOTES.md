@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Game data folder`: native folder selection now starts scanning on the
+  main thread and safely handles a dialog returning after the menu closes.
+
 - `Custom music folder`: the path row now opens a folder picker and
   preserves the previous selection when cancelled or rejected. Folder paths
   are stored absolutely; dialog results are applied safely on the main
