@@ -36,6 +36,17 @@ if [ -n "$removed_archive" ] && [ -f "$removed_archive" ]; then
         *'firestaff: game unavailable for --game: dm2'*) ;;
         *) printf '%s\n' "$output" >&2; exit 1 ;;
     esac
-    echo 'PASS: original PC-9821 archive cannot launch through automatic discovery'
+    if output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --menu --game dm2 --data-dir "$removed_archive" \
+        --script 'key:enter,key:enter,key:enter' --duration 1000 2>&1); then
+        echo 'FAIL: removed PC-9821 archive launched through the menu' >&2
+        exit 1
+    fi
+    case "$output" in
+        *'firestaff: launch smoke failed: no launch reached before exit'*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+    echo 'PASS: original PC-9821 archive cannot launch through automatic discovery or the menu'
 fi
 echo 'PASS: removed PC-9821 platform aliases are rejected before launch'
