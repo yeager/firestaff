@@ -425,6 +425,21 @@ static int check_original_food_completion(M11_GameViewState *state)
                 state->world.party.champions[0].food);
         return 0;
     }
+    /* Timer modality must not deadlock F0349's real synchronous wait. */
+    SessionTimerRuntime_Init(&state->sessionTimerRuntime, 15);
+    (void)M11_GameView_TickSessionTimerMs(state, 900000);
+    if (!state->sessionTimerForcedPauseDialogActive ||
+        M11_GameView_AdvanceFoodSourceVblank(state) != M11_GAME_INPUT_IGNORED ||
+        M11_GameView_AdvanceFoodClockMs(state, 1000) != M11_GAME_INPUT_IGNORED ||
+        !state->v1FoodCommandPending || state->v1FoodCompletionCount != 0 ||
+        state->audioState.queuedSampleCount != queuedBefore ||
+        M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK) != M11_GAME_INPUT_REDRAW ||
+        state->sessionTimerForcedPauseDialogActive || state->audioState.hostPaused ||
+        !state->v1FoodCommandPending) {
+        fputs("timer pause blocked dismissal or advanced pending original food\n", stderr);
+        return 0;
+    }
+    SessionTimerRuntime_Init(&state->sessionTimerRuntime, 0);
     for (int edge = 1; edge <= 36; ++edge) {
         if (state->audioState.lastSoundIndex != -1 ||
             state->audioState.queuedSampleCount != queuedBefore) return 0;

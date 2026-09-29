@@ -59,6 +59,33 @@ int main(void)
      * movie, making the following menu click occur before the Mac title
      * event loop has returned. */
     M11_GameView_Draw(&state, framebuffer, 320, 200);
+    {
+        uint32_t pausedFrameIndex = state.dm2MacMovieDecoder.frame_index;
+        uint64_t originalStartUs = state.dm2MacMovieStartUs;
+        SessionTimerRuntime_Init(&state.sessionTimerRuntime, 15);
+        (void)M11_GameView_TickSessionTimerMs(&state, 900000);
+        state.bootProbeFastForward = 1;
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        state.bootProbeFastForward = 0;
+        if (!state.sessionTimerForcedPauseDialogActive ||
+            state.dm2MacMovieDecoder.frame_index != pausedFrameIndex ||
+            !state.audioState.hostPaused ||
+            (state.audioState.sdlStream &&
+             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.audioState.sdlStream))) {
+            fprintf(stderr, "Timer pause did not freeze authentic Mac movie/audio\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        SDL_Delay(2);
+        M11_GameView_ClearSessionTimerForcedPause(&state);
+        if (state.dm2MacMovieStartUs <= originalStartUs || state.audioState.hostPaused) {
+            fprintf(stderr, "Timer resume did not rebase Mac movie clock/release audio\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        SessionTimerRuntime_Init(&state.sessionTimerRuntime, 0);
+        puts("PASS: timer pause freezes authentic Mac movie/audio and rebases resume");
+    }
     for (frame = 0; state.dm2MacMovieActive && frame < 10000; ++frame) {
         /* Advance the test clock by one source frame.  This keeps the
          * production path wall-clock based while avoiding a multi-second

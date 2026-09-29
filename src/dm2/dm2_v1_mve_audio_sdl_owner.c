@@ -77,6 +77,36 @@ int dm2_v1_mve_audio_sdl_owner_queue(DM2_V1_MveAudioSdlOwner *owner,
     return 1;
 }
 
+int dm2_v1_mve_audio_sdl_owner_set_host_paused(
+    DM2_V1_MveAudioSdlOwner *owner, int paused)
+{
+    SDL_AudioStream *stream;
+    SDL_AudioDeviceID device;
+    int was_paused;
+
+    if (!owner || !owner->initialized) return 1;
+    paused = paused != 0;
+    if (owner->host_paused == paused) return 1;
+    stream = (SDL_AudioStream *)owner->sdl_stream;
+    if (!stream) {
+        owner->host_paused = paused;
+        owner->paused_before_host = 0;
+        return 1;
+    }
+    if (paused) {
+        device = SDL_GetAudioStreamDevice(stream);
+        if (!device) return 0;
+        was_paused = SDL_AudioDevicePaused(device) ? 1 : 0;
+        if (!was_paused && !SDL_PauseAudioStreamDevice(stream)) return 0;
+        owner->paused_before_host = was_paused;
+    } else if (!owner->paused_before_host &&
+               !SDL_ResumeAudioStreamDevice(stream)) {
+        return 0;
+    }
+    owner->host_paused = paused;
+    return 1;
+}
+
 void dm2_v1_mve_audio_sdl_owner_close(DM2_V1_MveAudioSdlOwner *owner)
 {
     if (!owner) return;

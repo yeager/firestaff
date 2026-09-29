@@ -8265,6 +8265,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         now = SDL_GetTicks();
         if (gameView.active) {
             uint32_t loopDeltaMs = (uint32_t)(now - lastLoopTick);
+            int timerReminderBefore = gameView.sessionTimerReminderOverlayActive;
+            int timerPauseBefore = gameView.sessionTimerForcedPauseDialogActive;
+            if (timerPauseBefore) loopDeltaMs = 0;
             int foodCommandWasPending = gameView.v1FoodCommandPending;
             uint32_t foodElapsedMs = (uint32_t)now - foodClockLastMs;
             foodClockLastMs = (uint32_t)now;
@@ -8277,24 +8280,22 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             /* Source F0349 cannot run ordinary game-loop work during its
              * synchronous waits. Keep pumping host events, but discard
              * simulation debt including the command's completion slice. */
-            if (foodCommandWasPending || gameView.v1FoodCommandPending)
+            if (timerPauseBefore || foodCommandWasPending || gameView.v1FoodCommandPending)
                 idleAccumulatorMs = 0;
             else
                 idleAccumulatorMs += loopDeltaMs;
             /* DM1 V1: feed elapsed time to VBlank simulation */
             DM1_V1_VBlankTiming_Update(&gameView.vblankTiming, loopDeltaMs);
-            /* Session timer runtime handoff: tick the in-game runtime
-             * once per ~1 second of active gameplay.  We round down
-             * to whole seconds so the tick boundary is deterministic
-             * across host framerates.  The runtime enforces its own
-             * Off-mode + post-limit no-op semantics, so this loop is
-             * safe even when the user has the Session Timer set to
-             * Off or when the FORCED_PAUSE latch is already set. */
-            if (loopDeltaMs >= 1000) {
-                SessionTimerRuntimeEvent stEvent =
-                    M11_GameView_TickSessionTimer(&gameView,
-                                                  (int)(loopDeltaMs / 1000));
-                (void)stEvent;
+            /* Preserve subsecond frame time; ordinary frames are much shorter
+             * than one second. The view resets the remainder per session. */
+            (void)M11_GameView_TickSessionTimerMs(&gameView, loopDeltaMs);
+            if (timerReminderBefore != gameView.sessionTimerReminderOverlayActive ||
+                timerPauseBefore != gameView.sessionTimerForcedPauseDialogActive) {
+                if (gameView.sessionTimerForcedPauseDialogActive)
+                    idleAccumulatorMs = 0;
+                M11_GameView_Draw(&gameView, M11_Render_GetFramebuffer(),
+                                  M11_FB_WIDTH, M11_FB_HEIGHT);
+                gameFrameNeedsPresent = 1;
             }
             firestaff_ra_overlay_tick(&gameView.retroAchievementsOverlay,
                                       (int)loopDeltaMs);

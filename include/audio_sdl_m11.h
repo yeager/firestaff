@@ -73,6 +73,9 @@ typedef struct {
     void* cddaStream;
     int   cddaPlaying;
     int   cddaPaused;
+    int   hostPaused;
+    int   hostResumeSdlStream;
+    int   hostResumeCddaStream;
     M11_SoundBuffer sounds[M11_AUDIO_MARKER_COUNT];
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
     M11_SoundBuffer titleMusic;
@@ -313,6 +316,10 @@ int M11_Audio_PlayCdda(M11_AudioState* state,
                        int loop);
 /* Preserve the queued original CDDA stream across the FM Towns F0740/F0738
  * pause/continue boundary. These never create replacement PCM. */
+/* Idempotent host suspension. Preserve queued samples and independently
+ * paused streams. Returns 0 on invalid state or an SDL transition failure;
+ * successful partial transitions remain tracked so a retry is safe. */
+int M11_Audio_SetHostPaused(M11_AudioState* state, int paused);
 int M11_Audio_PauseCdda(M11_AudioState* state);
 int M11_Audio_ResumeCdda(M11_AudioState* state);
 int M11_Audio_StopCdda(M11_AudioState* state);

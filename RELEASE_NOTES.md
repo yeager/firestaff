@@ -2,6 +2,12 @@
 
 ## User-facing changes
 
+- `Session timer`: retains the launcher setting at startup and counts normal
+  frame intervals. The time-limit dialog now appears over DM1/CSB/DM2 source
+  frames and blocks gameplay, mouse and quick-save/load input. Pausing keeps
+  queued audio and DM2 movie position; dismissal remains possible during a
+  pending DM1 food command.
+
 - `Launcher`: minimap and combat-log preferences now reach the live runtime
   at DM1/CSB/DM2 start, including map size/corner and log line limits.
   Existing source-specific overlay restrictions still apply.

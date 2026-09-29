@@ -1,5 +1,22 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Fixed session-timer startup and frame-time accounting. Timer
+  initialization now follows per-game startup resets, and millisecond carry
+  preserves ordinary subsecond frames. The deadline requests a redraw and
+  its dialog is composed after source rendering, including CSB/DM2 early
+  return paths. Forced pause gates idle/food clocks, pointer input and direct
+  save/load shortcuts while permitting dismissal of a pending F0349 command.
+  Host audio pause preserves queued PCM and existing device/CDDA pause state;
+  DOS MVE and Mac movie draws freeze decoding and resume with rebased clocks.
+  Evidence: real-media handoff checks DM1 152, CSB Amiga 48, DM2 DOS 41,
+  all without failures/skips; DOS test requires an active authentic MVE.
+  Mac full retail Title.MooV pause/audio/resume and subsequent New Game pass.
+  Repeated paused CSB redraw is byte-stable. The real DM1 object corpus passes
+  43 chest residents and 976 records, including timer dismissal during the
+  original food wait and source C08 completion. Main-loop syntax check and
+  independent review pass. Audio evidence uses SDL dummy devices; physical
+  audio output and window-focus AUTO PAUSE remain separate verification/work.
+
 - 2026-09-29: Launcher map/log preferences now replace stale QoL runtime
   values at DM1/CSB/DM2 start: minimap visibility, size and corner, plus
   combat-log visibility and line limit. Existing source-kind overlay gates

@@ -1194,6 +1194,9 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->dm2MacMoviePcm);
     }
 
+    state->hostPaused = 0;
+    state->hostResumeSdlStream = 0;
+    state->hostResumeCddaStream = 0;
     state->initialized = 0;
     state->backend = M11_AUDIO_BACKEND_NONE;
     state->originalSnd3Available = 0;
@@ -2306,7 +2309,7 @@ int M11_Audio_PlayCdda(M11_AudioState* state,
     /* A later F0719 request replaces a paused F0740 track.  SDL keeps the
      * dedicated device paused across ClearAudioStream, so resume it before
      * queuing the next source-owned Red Book span. */
-    if (state->cddaPaused &&
+    if (state->cddaPaused && !state->hostPaused &&
         !SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream)) {
         free(little_endian_pcm);
         return 0;
@@ -2321,12 +2324,56 @@ int M11_Audio_PlayCdda(M11_AudioState* state,
     free(little_endian_pcm);
     state->cddaPlaying = 1;
     state->cddaPaused = 0;
+    if (state->hostPaused) state->hostResumeCddaStream = 1;
     (void)loop;
     return 1;
 #else
     (void)state; (void)pcm_data; (void)pcm_size; (void)loop;
     return 0;
 #endif
+}
+
+int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
+{
+    int ok = 1;
+    if (!state || !state->initialized) return 0;
+    paused = paused ? 1 : 0;
+#if M11_HAVE_SDL_AUDIO
+    if (paused) {
+        /* Remember only transitions owned by the host. In particular an
+         * F0740-paused CDDA device must stay paused after focus returns. */
+        state->hostPaused = 1;
+        if (state->sdlStream &&
+            !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->sdlStream)) {
+            if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->sdlStream))
+                state->hostResumeSdlStream = 1;
+            else ok = 0;
+        }
+        if (state->cddaStream &&
+            !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->cddaStream)) {
+            if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
+                state->hostResumeCddaStream = 1;
+            else ok = 0;
+        }
+    } else {
+        if (state->hostResumeSdlStream) {
+            if (!state->sdlStream ||
+                SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->sdlStream))
+                state->hostResumeSdlStream = 0;
+            else ok = 0;
+        }
+        if (state->hostResumeCddaStream) {
+            if (!state->cddaStream || state->cddaPaused ||
+                SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
+                state->hostResumeCddaStream = 0;
+            else ok = 0;
+        }
+        if (ok) state->hostPaused = 0;
+    }
+#else
+    state->hostPaused = paused;
+#endif
+    return ok;
 }
 
 int M11_Audio_PauseCdda(M11_AudioState* state)
@@ -2349,8 +2396,10 @@ int M11_Audio_ResumeCdda(M11_AudioState* state)
 #if M11_HAVE_SDL_AUDIO
     if (!state || !state->cddaStream || !state->cddaPlaying ||
         !state->cddaPaused) return 0;
-    if (!SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
+    if (!state->hostPaused &&
+        !SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
         return 0;
+    if (state->hostPaused) state->hostResumeCddaStream = 1;
     state->cddaPaused = 0;
     return 1;
 #else
@@ -2363,12 +2412,13 @@ int M11_Audio_StopCdda(M11_AudioState* state)
 {
 #if M11_HAVE_SDL_AUDIO
     if (!state || !state->cddaStream) return 0;
-    if (state->cddaPaused) {
+    if (state->cddaPaused && !state->hostPaused) {
         (void)SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream);
     }
     SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
     state->cddaPlaying = 0;
     state->cddaPaused = 0;
+    if (state->hostPaused) state->hostResumeCddaStream = 1;
     return 1;
 #else
     (void)state;

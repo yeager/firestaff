@@ -1107,6 +1107,8 @@ typedef struct {
      * M12-owned Session Timer setting; the launcher side persists the
      * setting and exposes the limit/remaining-time helpers. */
     SessionTimerRuntime sessionTimerRuntime;
+    uint32_t sessionTimerRemainderMs;
+    uint64_t sessionTimerPauseStartedUs;
     /* Latched while the M11 main loop has surfaced a forced-pause
      * confirm dialog and is awaiting user input.  Cleared once the
      * user picks a confirm-dialog choice (Continue / Return to menu)
@@ -2140,6 +2142,9 @@ int M11_GameView_GetLauncherRuntimeOptions(
     M12_LauncherRuntimeOptions* out);
 SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
     M11_GameViewState* state, int seconds);
+/* Accumulate active host-frame time without dropping fractional seconds. */
+SessionTimerRuntimeEvent M11_GameView_TickSessionTimerMs(
+    M11_GameViewState* state, uint32_t elapsedMs);
 void M11_GameView_AcknowledgeSessionTimerReminder(M11_GameViewState* state);
 void M11_GameView_ClearSessionTimerForcedPause(M11_GameViewState* state);
 int M11_GameView_GetSessionTimerForcedPauseDialogActive(

@@ -469,6 +469,33 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                 view.dm2State.tick_count == initialTick,
                 "startup draw cannot enter or age the dungeon runtime");
 
+    {
+        unsigned char timerFrame[320 * 200];
+        M11_ForcedPauseDialogLayout layout;
+        unsigned int tick = view.world.gameTick;
+        uint32_t movieIndex = view.dm2DosMvePresenter.next_presentation_index;
+        uint64_t moviePackets = view.dm2DosMvePresenter.audio.queued_source_packets;
+        expect_true(view.dm2DosMveIntroActive && view.dm2DosMvePresenter.initialized,
+                    "timer pause test owns an active authentic DOS MVE intro");
+        menu.settings.sessionTimerIndex = 1;
+        M11_GameView_InitFromMenuSessionTimer(&view, &menu);
+        (void)M11_GameView_TickSessionTimerMs(&view, 900000);
+        expect_true(view.sessionTimerForcedPauseDialogActive &&
+                        M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_IGNORED &&
+                        view.world.gameTick == tick,
+                    "real-media timer deadline blocks source idle simulation");
+        memset(timerFrame, 0, sizeof(timerFrame));
+        M11_GameView_GetForcedPauseDialogLayout(&view, 320, 200, &layout);
+        M11_GameView_Draw(&view, timerFrame, 320, 200);
+        expect_true(timerFrame[layout.boxY * 320 + layout.boxX] == 2,
+                    "real-media source frame receives the forced pause dialog");
+        expect_true(view.dm2DosMvePresenter.next_presentation_index == movieIndex &&
+                        view.dm2DosMvePresenter.audio.queued_source_packets == moviePackets,
+                    "paused draw does not advance the DOS movie or queue source PCM");
+        M11_GameView_ClearSessionTimerForcedPause(&view);
+        expect_true(!view.audioState.hostPaused && !view.sessionTimerForcedPauseDialogActive,
+                    "clearing forced pause releases host audio ownership");
+    }
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

@@ -29,6 +29,7 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -204,6 +205,7 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     menu->activatedIndex = 0;
     menu->launchRequested = 1;
     menu->settings.graphicsIndex = mode;
+    menu->settings.sessionTimerIndex = 1;
     menu->gameOptions[0].presentationModeIndex = mode;
     menu->gameOptions[0].resolution = expected_resolution;
     menu->gameOptions[0].cheatsEnabled = cheats;
@@ -250,6 +252,54 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     expect_mode_true(M11_QolRuntime_GetCombatLogEnabled() == menu->settings.combatLogEnabled &&
                          M11_QolRuntime_GetCombatLogMaxLines() == menu->settings.combatLogMaxLines, mode,
                      "M11 applies current combat log preferences");
+    {
+        int frame;
+        int before = SessionTimerRuntime_RemainingSeconds(&launcher_view.sessionTimerRuntime);
+        for (frame = 0; frame < 125; ++frame)
+            (void)M11_GameView_TickSessionTimerMs(&launcher_view, 16);
+        expect_mode_true(SessionTimerRuntime_RemainingSeconds(&launcher_view.sessionTimerRuntime) == before - 2 &&
+                             launcher_view.sessionTimerRemainderMs == 0, mode,
+                         "125 normal 16ms frames advance session timer by two seconds");
+        (void)M11_GameView_TickSessionTimerMs(&launcher_view, 999);
+        expect_mode_true(SessionTimerRuntime_RemainingSeconds(&launcher_view.sessionTimerRuntime) == before - 2, mode,
+                         "session timer retains a fractional second");
+        (void)M11_GameView_TickSessionTimerMs(&launcher_view, 1);
+        expect_mode_true(SessionTimerRuntime_RemainingSeconds(&launcher_view.sessionTimerRuntime) == before - 3, mode,
+                         "session timer carries fractional time across frames");
+        (void)M11_GameView_TickSessionTimerMs(&launcher_view, 999);
+        M11_GameView_InitFromMenuSessionTimer(&launcher_view, menu);
+        expect_mode_true(launcher_view.sessionTimerRemainderMs == 0 &&
+                             SessionTimerRuntime_RemainingSeconds(&launcher_view.sessionTimerRuntime) == before, mode,
+                         "new session resets elapsed and fractional timer time");
+        (void)M11_GameView_TickSessionTimerMs(&launcher_view, (uint32_t)before * 1000U);
+        expect_mode_true(launcher_view.sessionTimerForcedPauseDialogActive, mode,
+                         "session timer reaches forced pause with original media");
+        expect_mode_true(launcher_view.audioState.hostPaused &&
+                             (!launcher_view.audioState.sdlStream ||
+                              SDL_AudioStreamDevicePaused((SDL_AudioStream*)launcher_view.audioState.sdlStream)), mode,
+                         "forced pause suspends the original-media SDL audio owner");
+        {
+            M11_ForcedPauseDialogLayout layout;
+            M11_GameView_GetForcedPauseDialogLayout(&launcher_view, 320, 200, &layout);
+            M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
+            expect_mode_true(framebuffer[layout.boxY * 320 + layout.boxX] == 2, mode,
+                             "forced pause dialog is drawn over original-media frame");
+        }
+        {
+            unsigned int tick = launcher_view.world.gameTick;
+            uint64_t phase = launcher_view.v1FoodVblankPhase;
+            expect_mode_true(M11_GameView_AdvanceIdleTick(&launcher_view) == M11_GAME_INPUT_IGNORED &&
+                                 launcher_view.world.gameTick == tick, mode,
+                             "forced pause blocks source idle simulation");
+            expect_mode_true(M11_GameView_AdvanceFoodClockMs(&launcher_view, 1000) == M11_GAME_INPUT_IGNORED &&
+                                 launcher_view.v1FoodVblankPhase == phase, mode,
+                             "forced pause freezes source food-clock phase");
+            expect_mode_true(M11_GameView_HandlePointerButton(&launcher_view, 100, 100, 1) == M11_GAME_INPUT_IGNORED &&
+                                 M11_GameView_HandlePointerButtonRelease(&launcher_view, 100, 100, 1) == M11_GAME_INPUT_IGNORED, mode,
+                             "forced pause blocks pointer ingress behind the modal");
+        }
+        M11_GameView_InitFromMenuSessionTimer(&launcher_view, menu);
+    }
     expect_mode_true(launcher_view.startedFromLauncher == 1, mode,
                      "M11 marks startup as launcher-started");
     expect_mode_true(launcher_view.active == 1, mode,

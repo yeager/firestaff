@@ -3274,6 +3274,28 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
         &view, "A31E candidate route presents original Amiga C026 without a PC34 portrait");
     expect_native_live_mirror_and_command_handoff(
         &view, "A31E direct APPB handoff reaches a live native C127 mirror");
+    {
+        unsigned char timerFrame[320 * 200];
+        unsigned char pausedFrame[320 * 200];
+        M11_ForcedPauseDialogLayout layout;
+        unsigned int tick = view.world.gameTick;
+        menu.settings.sessionTimerIndex = 1;
+        M11_GameView_InitFromMenuSessionTimer(&view, &menu);
+        (void)M11_GameView_TickSessionTimerMs(&view, 900000);
+        expect_true(view.sessionTimerForcedPauseDialogActive &&
+                        M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_IGNORED &&
+                        view.world.gameTick == tick,
+                    "real-media timer deadline blocks source idle simulation");
+        memset(timerFrame, 0, sizeof(timerFrame));
+        M11_GameView_GetForcedPauseDialogLayout(&view, 320, 200, &layout);
+        M11_GameView_Draw(&view, timerFrame, 320, 200);
+        expect_true(timerFrame[layout.boxY * 320 + layout.boxX] == 2,
+                    "real-media source frame receives the forced pause dialog");
+        memcpy(pausedFrame, timerFrame, sizeof(timerFrame));
+        M11_GameView_Draw(&view, timerFrame, 320, 200);
+        expect_true(memcmp(pausedFrame, timerFrame, sizeof(timerFrame)) == 0,
+                    "repeated paused CSB redraw preserves the same source frame and overlay");
+    }
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

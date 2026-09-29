@@ -28,6 +28,8 @@ typedef struct {
      * order so a missing device cannot suppress the retail video/menu; no
      * substitute samples, mixer or resampler are introduced. */
     int output_unavailable;
+    int host_paused;
+    int paused_before_host;
 } DM2_V1_MveAudioSdlOwner;
 
 /* Opens an SDL stream in the original MVE PCM format when the host exposes a
@@ -43,6 +45,12 @@ int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner);
  * explicit silence, not generated or substituted audio. */
 int dm2_v1_mve_audio_sdl_owner_queue(DM2_V1_MveAudioSdlOwner *owner,
                                      const DM2_V1_MvePcmFrame *frame);
+
+/* Temporarily pause host delivery without discarding queued source PCM.
+ * Repeated calls are idempotent; releasing the pause restores the device
+ * state recorded on entry. Returns zero only if an SDL operation fails. */
+int dm2_v1_mve_audio_sdl_owner_set_host_paused(
+    DM2_V1_MveAudioSdlOwner *owner, int paused);
 
 /* Destroy only the stream/subsystem reference opened above. */
 void dm2_v1_mve_audio_sdl_owner_close(DM2_V1_MveAudioSdlOwner *owner);

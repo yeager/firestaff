@@ -32,6 +32,8 @@ static DM2_V1_SdlSoundVoice g_dm2_sdl_voices[DM2_V1_SOUND_VOICE_MAX];
 static uint64_t g_dm2_sdl_mixed_frames;
 static uint32_t g_dm2_sdl_started_voices;
 static int g_dm2_sdl_ready;
+static int g_dm2_sdl_host_paused;
+static int g_dm2_sdl_paused_before_host;
 
 /* sdlAudMix-shaped mixer: additive per-voice contribution, clamped. */
 static void dm2_v1_sdl_mix(uint8_t *out, int frames)
@@ -84,6 +86,8 @@ static int dm2_v1_sdl_backend_open(void *ctx)
     (void)ctx;
     if (g_dm2_sdl_ready)
         return 1;
+    g_dm2_sdl_host_paused = 0;
+    g_dm2_sdl_paused_before_host = 0;
     if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
         return 0;
     memset(g_dm2_sdl_voices, 0, sizeof(g_dm2_sdl_voices));
@@ -177,6 +181,8 @@ static void dm2_v1_sdl_backend_close(void *ctx)
     }
     memset(g_dm2_sdl_voices, 0, sizeof(g_dm2_sdl_voices));
     g_dm2_sdl_ready = 0;
+    g_dm2_sdl_host_paused = 0;
+    g_dm2_sdl_paused_before_host = 0;
 }
 
 void dm2_v1_sound_sdl_backend_describe(DM2_V1_SoundPlaybackBackend *out_backend)
@@ -190,6 +196,29 @@ void dm2_v1_sound_sdl_backend_describe(DM2_V1_SoundPlaybackBackend *out_backend)
     out_backend->voice_active = dm2_v1_sdl_backend_voice_active;
     out_backend->stop_all = dm2_v1_sdl_backend_stop_all;
     out_backend->close = dm2_v1_sdl_backend_close;
+}
+
+int dm2_v1_sound_sdl_backend_set_host_paused(int paused)
+{
+    SDL_AudioDeviceID device;
+    int was_paused;
+
+    if (!g_dm2_sdl_ready || !g_dm2_sdl_stream) return 1;
+    paused = paused != 0;
+    if (g_dm2_sdl_host_paused == paused) return 1;
+    if (paused) {
+        device = SDL_GetAudioStreamDevice(g_dm2_sdl_stream);
+        if (!device) return 0;
+        was_paused = SDL_AudioDevicePaused(device) ? 1 : 0;
+        if (!was_paused && !SDL_PauseAudioStreamDevice(g_dm2_sdl_stream))
+            return 0;
+        g_dm2_sdl_paused_before_host = was_paused;
+    } else if (!g_dm2_sdl_paused_before_host &&
+               !SDL_ResumeAudioStreamDevice(g_dm2_sdl_stream)) {
+        return 0;
+    }
+    g_dm2_sdl_host_paused = paused;
+    return 1;
 }
 
 int dm2_v1_sound_sdl_backend_is_ready(void)

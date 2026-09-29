@@ -23,6 +23,11 @@ extern "C" {
 /* Fill *out_backend with the SDL3 callback table (static storage, no ctx). */
 void dm2_v1_sound_sdl_backend_describe(DM2_V1_SoundPlaybackBackend *out_backend);
 
+/* Temporarily pause host playback, retaining voices and queued PCM.
+ * Releasing this idempotent pause restores the previous device pause state.
+ * Returns zero only if an SDL operation fails. */
+int dm2_v1_sound_sdl_backend_set_host_paused(int paused);
+
 /* Observability for probes/tests. */
 int dm2_v1_sound_sdl_backend_is_ready(void);
 uint64_t dm2_v1_sound_sdl_backend_mixed_frames(void);

@@ -2172,6 +2172,7 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
     int y;
     if (!state || !framebuffer || !state->dm2MacMovieActive ||
         !state->dm2MacMovieDecoder.frame_ready) return 0;
+    if (state->sessionTimerForcedPauseDialogActive) goto render_frame;
     if (state->dm2MacMovieStartUs == 0u) {
         state->dm2MacMovieStartUs = now_us;
     }
@@ -2205,7 +2206,8 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
         return 0;
     }
 render_frame:
-    if (dm2_v1_mac_movie_decoder_take_audio(
+    if (!state->sessionTimerForcedPauseDialogActive &&
+        dm2_v1_mac_movie_decoder_take_audio(
             &state->dm2MacMovieDecoder, &audio_samples,
             &audio_sample_count, &audio_rate_hz)) {
         (void)M11_Audio_PlayDm2MacMoviePcm(
@@ -2243,6 +2245,7 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
     /* The last source page must reach one host present before the stream and
      * its SDL device are closed.  On the following Draw call, release M11's
      * resources and permit SKULL's GDAT menu to take over. */
+    if (state->sessionTimerForcedPauseDialogActive) goto render_paused_frame;
     if (state->dm2DosMvePresenter.ended) {
         m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
         state->dm2DosMveIntroActive = 0;
@@ -2262,6 +2265,7 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
         state->dm2DosMveIntroRejected = 1;
         return -1;
     }
+render_paused_frame:
     if (M11_Render_SetIndexedPaletteRgb6(state->dm2DosMvePaletteRgb6) !=
         M11_RENDER_OK) {
         state->dm2DosMveFailureCode = M11_DM2_MVE_FAILURE_PRESENT_CALLBACK;
@@ -24287,6 +24291,8 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    if (state->sessionTimerForcedPauseDialogActive)
+        M11_GameView_ClearSessionTimerForcedPause(state);
     /* Session teardown cancels the command; never emit queued audio into
      * the next session or preserve an unverified source-clock binding. */
     state->v1FoodCommandPending = 0;
@@ -26601,9 +26607,11 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
      * M12 menu owns the limit preference; the M11 game view consumes
      * it at launch so the runtime can tick + surface the reminder /
      * forced-pause events during gameplay. */
-    M11_GameView_InitFromMenuSessionTimer(state, menuState);
     {
         int ok = M11_GameView_Start(state, &spec);
+        /* Per-game startup reinitializes the view, so seed the timer only
+         * after successful startup has established the live session. */
+        if (ok) M11_GameView_InitFromMenuSessionTimer(state, menuState);
         if (ok && entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
             (void)m11_apply_dm1_startup_launch_path_receipt(
                 state,
@@ -29985,7 +29993,8 @@ static void m11_dm2_clear_unbound_feedback(M11_GameViewState *state)
 int M11_GameView_QuickSave(M11_GameViewState* state) {
     /* PANEL.C F0349:1928-1944 owns the command until the final delay.
      * Direct host shortcuts must not persist an unfinished consumption. */
-    if (state && state->v1FoodCommandPending) return 0;
+    if (state && (state->v1FoodCommandPending ||
+                  state->sessionTimerForcedPauseDialogActive)) return 0;
     /* Sensor state persistence: sensor effects that modify dungeon squares
      * (door open/close, pit toggle, teleporter toggle) are persisted through
      * the dungeon square byte array in world.dungeon.tiles[].squareData[].
@@ -30415,7 +30424,8 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
 
     /* PANEL.C F0349:1928-1944: do not replace the world beneath its
      * pending consumption or deliver the old completion into a new world. */
-    if (state && state->v1FoodCommandPending) return 0;
+    if (state && (state->v1FoodCommandPending ||
+                  state->sessionTimerForcedPauseDialogActive)) return 0;
     if (!state || !state->active) {
         return 0;
     }
@@ -30548,7 +30558,10 @@ void M11_GameView_InitFromMenuSessionTimer(M11_GameViewState* state,
     if (menu) {
         limitMinutes = M12_StartupMenu_SessionTimerLimitMinutes(menu);
     }
+    if (state->sessionTimerForcedPauseDialogActive)
+        M11_GameView_ClearSessionTimerForcedPause(state);
     SessionTimerRuntime_Init(&state->sessionTimerRuntime, limitMinutes);
+    state->sessionTimerRemainderMs = 0;
     state->sessionTimerForcedPauseDialogActive = 0;
     state->sessionTimerReminderOverlayActive = 0;
 }
@@ -30582,12 +30595,34 @@ SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
      * the forced-pause latch fires, the confirm dialog wins until the
      * user releases it. */
     if (event == SESSION_TIMER_RUNTIME_EVENT_FORCED_PAUSE) {
+        if (!state->sessionTimerForcedPauseDialogActive)
+            state->sessionTimerPauseStartedUs = SDL_GetTicksNS() / UINT64_C(1000);
         state->sessionTimerForcedPauseDialogActive = 1;
+        (void)M11_Audio_SetHostPaused(&state->audioState, 1);
+        if (state->dm2DosMveIntroActive)
+            (void)dm2_v1_mve_audio_sdl_owner_set_host_paused(
+                &state->dm2DosMvePresenter.audio, 1);
+        if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT)
+            (void)dm2_v1_sound_sdl_backend_set_host_paused(1);
         state->sessionTimerReminderOverlayActive = 0;
     } else if (event == SESSION_TIMER_RUNTIME_EVENT_REMINDER_DUE) {
         state->sessionTimerReminderOverlayActive = 1;
     }
     return event;
+}
+
+SessionTimerRuntimeEvent M11_GameView_TickSessionTimerMs(
+    M11_GameViewState* state, uint32_t elapsedMs) {
+    uint64_t totalMs;
+    if (!state) return SESSION_TIMER_RUNTIME_EVENT_RUNNING;
+    if (state->sessionTimerRuntime.limitSeconds <= 0 ||
+        state->sessionTimerRuntime.forcedPauseLatched) {
+        state->sessionTimerRemainderMs = 0;
+        return M11_GameView_TickSessionTimer(state, 0);
+    }
+    totalMs = (uint64_t)state->sessionTimerRemainderMs + elapsedMs;
+    state->sessionTimerRemainderMs = (uint32_t)(totalMs % 1000U);
+    return M11_GameView_TickSessionTimer(state, (int)(totalMs / 1000U));
 }
 
 void M11_GameView_AcknowledgeSessionTimerReminder(M11_GameViewState* state) {
@@ -30602,7 +30637,25 @@ void M11_GameView_ClearSessionTimerForcedPause(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    if (state->sessionTimerForcedPauseDialogActive) {
+        uint64_t nowUs = SDL_GetTicksNS() / UINT64_C(1000);
+        uint64_t pausedUs = nowUs - state->sessionTimerPauseStartedUs;
+        if (state->dm2DosMveIntroActive) {
+            state->dm2DosMvePresenter.clock_origin_us += pausedUs;
+            state->dm2DosMvePresenter.last_host_time_us += pausedUs;
+        }
+        if (state->dm2MacMovieActive && state->dm2MacMovieStartUs)
+            state->dm2MacMovieStartUs += pausedUs;
+    }
+    (void)M11_Audio_SetHostPaused(&state->audioState, 0);
+    if (state->dm2DosMveIntroActive)
+        (void)dm2_v1_mve_audio_sdl_owner_set_host_paused(
+            &state->dm2DosMvePresenter.audio, 0);
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT)
+        (void)dm2_v1_sound_sdl_backend_set_host_paused(0);
+    state->sessionTimerPauseStartedUs = 0;
     SessionTimerRuntime_ClearForcedPause(&state->sessionTimerRuntime);
+    state->sessionTimerRemainderMs = 0;
     state->sessionTimerForcedPauseDialogActive = 0;
     state->sessionTimerReminderOverlayActive = 0;
 }
@@ -30811,7 +30864,7 @@ int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state) {
 
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     int mouthRedraw;
-    if (!state || !state->active) {
+    if (!state || !state->active || state->sessionTimerForcedPauseDialogActive) {
         return M11_GAME_INPUT_IGNORED;
     }
     /* F0349's synchronous source command does not run the game loop while
@@ -34621,7 +34674,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
     const char* label = "NONE";
-    if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
+    if (state && state->v1FoodCommandPending &&
+        !state->sessionTimerForcedPauseDialogActive) return M11_GAME_INPUT_IGNORED;
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -36320,7 +36374,8 @@ static int m11_start_i34e_food_command(M11_GameViewState* state,
 }
 
 M11_GameInputResult M11_GameView_AdvanceFoodSourceVblank(M11_GameViewState* state) {
-    if (!state || !state->active || !state->v1FoodCommandPending)
+    if (!state || !state->active || state->sessionTimerForcedPauseDialogActive ||
+        !state->v1FoodCommandPending)
         return M11_GAME_INPUT_IGNORED;
     if (state->v1FoodAwaitingPresentation) return M11_GAME_INPUT_IGNORED;
     if (state->v1FoodPaletteWaitPending) {
@@ -36364,7 +36419,8 @@ M11_GameInputResult M11_GameView_AdvanceFoodClockMs(M11_GameViewState* state,
                                                   uint32_t elapsedMs) {
     uint64_t threshold, wholeEdges, added;
     M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
-    if (!state || !state->active || !state->v1FoodVblankHzNumerator ||
+    if (!state || !state->active || state->sessionTimerForcedPauseDialogActive ||
+        !state->v1FoodVblankHzNumerator ||
         !state->v1FoodVblankHzDenominator) return result;
     threshold = (uint64_t)state->v1FoodVblankHzDenominator * 1000u;
     added = (uint64_t)elapsedMs * state->v1FoodVblankHzNumerator;
@@ -36559,6 +36615,8 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int destinationAccepted;
     int sourceSlotBox;
     int destinationSlotBox;
+    if (state && state->sessionTimerForcedPauseDialogActive)
+        return M11_GAME_INPUT_IGNORED;
     if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
     if (!state || !state->active ||
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
@@ -36970,6 +37028,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int y,
                                                      int buttonMask) {
     int slot;
+    if (state && state->sessionTimerForcedPauseDialogActive)
+        return M11_GAME_INPUT_IGNORED;
     if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
 
     if (!state || !state->active || buttonMask == 0) {
@@ -68733,7 +68793,7 @@ static int m11_draw_dm2_source_inventory_panel(
     return 1;
 }
 
-void M11_GameView_Draw(M11_GameViewState* state,
+static void m11_game_view_draw_source(M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight) {
@@ -70270,84 +70330,6 @@ void M11_GameView_Draw(M11_GameViewState* state,
         }
     }
 
-    /* ── Session-timer runtime overlay (in-game UX boundary) ────────
-     * Draw the reminder banner + forced-pause confirm dialog on top of
-     * the gameplay viewport.  See include/session_timer_runtime.h +
-     * src/shared/session_timer_runtime.c + the M11_TickSessionTimer
-     * branch in src/engine/main_loop_m11.c for the runtime state
-     * machine that drives these latches. */
-    if (state->sessionTimerReminderOverlayActive &&
-        !state->sessionTimerForcedPauseDialogActive &&
-        !state->dialogOverlayActive) {
-        char reminderLine[64];
-        M11_TextStyle remindStyle = g_text_small;
-        enum {
-            TIMER_REMINDER_X = 4,
-            TIMER_REMINDER_Y = 4,
-            TIMER_REMINDER_W = 312,
-            TIMER_REMINDER_H = 28,
-            TIMER_REMINDER_TEXT_INSET = 8,
-            TIMER_REMINDER_TEXT_Y = 8
-        };
-        m11_format_session_timer_reminder_line(
-            state, reminderLine, sizeof(reminderLine));
-        /* Firestaff-specific overlay: keep all reminder pixels in the
-         * y=4..31 top strip so the source-owned DM1 dungeon viewport
-         * at y=33..168 remains untouched even when fontScale is 3. */
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      TIMER_REMINDER_X, TIMER_REMINDER_Y,
-                      TIMER_REMINDER_W, TIMER_REMINDER_H,
-                      M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      TIMER_REMINDER_X, TIMER_REMINDER_Y,
-                      TIMER_REMINDER_W, TIMER_REMINDER_H,
-                      M11_COLOR_YELLOW);
-        remindStyle.color = M11_COLOR_YELLOW;
-        remindStyle.shadowColor = M11_COLOR_DARK_GRAY;
-        m11_draw_text_centered_in_rect(
-            framebuffer, framebufferWidth, framebufferHeight,
-            TIMER_REMINDER_X + TIMER_REMINDER_TEXT_INSET,
-            TIMER_REMINDER_TEXT_Y,
-            TIMER_REMINDER_W - (2 * TIMER_REMINDER_TEXT_INSET),
-            reminderLine,
-            &remindStyle);
-    }
-    if (state->sessionTimerForcedPauseDialogActive &&
-        !state->dialogOverlayActive &&
-        !state->returnToMenuConfirmActive) {
-        M11_ForcedPauseDialogLayout pauseLayout;
-        M11_TextStyle pauseStyle = g_text_small;
-        m11_forced_pause_dialog_layout_for(state, framebufferWidth,
-                                           framebufferHeight, &pauseLayout);
-        m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
-                     0, 0, framebufferWidth, framebufferHeight, 5);
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      pauseLayout.boxX, pauseLayout.boxY,
-                      pauseLayout.boxW, pauseLayout.boxH,
-                      M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      pauseLayout.boxX, pauseLayout.boxY,
-                      pauseLayout.boxW, pauseLayout.boxH,
-                      M11_COLOR_LIGHT_GRAY);
-        if (pauseLayout.boxW >= 4 && pauseLayout.boxH >= 4) {
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          pauseLayout.boxX + 1, pauseLayout.boxY + 1,
-                          pauseLayout.boxW - 2, pauseLayout.boxH - 2,
-                          M11_COLOR_DARK_GRAY);
-        }
-        pauseStyle.color = M11_COLOR_WHITE;
-        pauseStyle.shadowColor = M11_COLOR_DARK_GRAY;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      pauseLayout.titleX, pauseLayout.titleY,
-                      pauseLayout.title, &pauseStyle);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      pauseLayout.line1X, pauseLayout.line1Y,
-                      pauseLayout.line1, &pauseStyle);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      pauseLayout.line2X, pauseLayout.line2Y,
-                      pauseLayout.line2, &pauseStyle);
-    }
-
     /* Rest / death overlay */
     if (state->partyDead) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -70552,6 +70534,118 @@ void M11_GameView_Draw(M11_GameViewState* state,
     g_drawState = NULL;
     g_activeOriginalFont = NULL;
     g_m11_font_scale_override = 0;
+}
+
+/* Timer dialogs belong to the host presentation boundary. Source renderers
+ * may return after committing their own frame; they must not bypass a modal
+ * which already owns input. Preserve their pixels when no timer is visible. */
+static void m11_draw_session_timer_overlay(
+    const M11_GameViewState* state, unsigned char* framebuffer,
+    int framebufferWidth, int framebufferHeight) {
+    const M11_GameViewState* savedDrawState;
+    const M11_FontState* savedFont;
+    int savedFontScale;
+    if (!state || !state->active || !framebuffer ||
+        framebufferWidth <= 0 || framebufferHeight <= 0 ||
+        (!state->sessionTimerReminderOverlayActive &&
+         !state->sessionTimerForcedPauseDialogActive)) return;
+    savedDrawState = g_drawState;
+    savedFont = g_activeOriginalFont;
+    savedFontScale = g_m11_font_scale_override;
+    g_drawState = state;
+    g_activeOriginalFont = state->originalFontAvailable
+        ? &state->originalFont : NULL;
+    g_m11_font_scale_override = state->fontScale;
+
+    /* ── Session-timer runtime overlay (in-game UX boundary) ────────
+     * Draw the reminder banner + forced-pause confirm dialog on top of
+     * the gameplay viewport.  See include/session_timer_runtime.h +
+     * src/shared/session_timer_runtime.c + the M11_TickSessionTimer
+     * branch in src/engine/main_loop_m11.c for the runtime state
+     * machine that drives these latches. */
+    if (state->sessionTimerReminderOverlayActive &&
+        !state->sessionTimerForcedPauseDialogActive &&
+        !state->dialogOverlayActive) {
+        char reminderLine[64];
+        M11_TextStyle remindStyle = g_text_small;
+        enum {
+            TIMER_REMINDER_X = 4,
+            TIMER_REMINDER_Y = 4,
+            TIMER_REMINDER_W = 312,
+            TIMER_REMINDER_H = 28,
+            TIMER_REMINDER_TEXT_INSET = 8,
+            TIMER_REMINDER_TEXT_Y = 8
+        };
+        m11_format_session_timer_reminder_line(
+            state, reminderLine, sizeof(reminderLine));
+        /* Firestaff-specific overlay: keep all reminder pixels in the
+         * y=4..31 top strip so the source-owned DM1 dungeon viewport
+         * at y=33..168 remains untouched even when fontScale is 3. */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      TIMER_REMINDER_X, TIMER_REMINDER_Y,
+                      TIMER_REMINDER_W, TIMER_REMINDER_H,
+                      M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      TIMER_REMINDER_X, TIMER_REMINDER_Y,
+                      TIMER_REMINDER_W, TIMER_REMINDER_H,
+                      M11_COLOR_YELLOW);
+        remindStyle.color = M11_COLOR_YELLOW;
+        remindStyle.shadowColor = M11_COLOR_DARK_GRAY;
+        m11_draw_text_centered_in_rect(
+            framebuffer, framebufferWidth, framebufferHeight,
+            TIMER_REMINDER_X + TIMER_REMINDER_TEXT_INSET,
+            TIMER_REMINDER_TEXT_Y,
+            TIMER_REMINDER_W - (2 * TIMER_REMINDER_TEXT_INSET),
+            reminderLine,
+            &remindStyle);
+    }
+    if (state->sessionTimerForcedPauseDialogActive) {
+        M11_ForcedPauseDialogLayout pauseLayout;
+        M11_TextStyle pauseStyle = g_text_small;
+        m11_forced_pause_dialog_layout_for(state, framebufferWidth,
+                                           framebufferHeight, &pauseLayout);
+        m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
+                     0, 0, framebufferWidth, framebufferHeight, 5);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      pauseLayout.boxX, pauseLayout.boxY,
+                      pauseLayout.boxW, pauseLayout.boxH,
+                      M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      pauseLayout.boxX, pauseLayout.boxY,
+                      pauseLayout.boxW, pauseLayout.boxH,
+                      M11_COLOR_LIGHT_GRAY);
+        if (pauseLayout.boxW >= 4 && pauseLayout.boxH >= 4) {
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          pauseLayout.boxX + 1, pauseLayout.boxY + 1,
+                          pauseLayout.boxW - 2, pauseLayout.boxH - 2,
+                          M11_COLOR_DARK_GRAY);
+        }
+        pauseStyle.color = M11_COLOR_WHITE;
+        pauseStyle.shadowColor = M11_COLOR_DARK_GRAY;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      pauseLayout.titleX, pauseLayout.titleY,
+                      pauseLayout.title, &pauseStyle);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      pauseLayout.line1X, pauseLayout.line1Y,
+                      pauseLayout.line1, &pauseStyle);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      pauseLayout.line2X, pauseLayout.line2Y,
+                      pauseLayout.line2, &pauseStyle);
+    }
+
+    g_drawState = savedDrawState;
+    g_activeOriginalFont = savedFont;
+    g_m11_font_scale_override = savedFontScale;
+}
+
+void M11_GameView_Draw(M11_GameViewState* state,
+                       unsigned char* framebuffer,
+                       int framebufferWidth,
+                       int framebufferHeight) {
+    m11_game_view_draw_source(state, framebuffer,
+                              framebufferWidth, framebufferHeight);
+    m11_draw_session_timer_overlay(state, framebuffer,
+                                   framebufferWidth, framebufferHeight);
 }
 
 /* ── Creature animation implementation ── */
