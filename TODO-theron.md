@@ -41,13 +41,21 @@ data.
    and ADPCM/SFX events. The admitted US capture is a bounded screen-space
    frame, while JP boot captures remain System Card/startup evidence; neither
    proves gameplay presentation. Track 01 playback alone does not establish
-   gameplay audio selection. The current production tile-renderer seam is
-   explicitly a no-op (`src/theron/theron_v1_tile_renderer_runtime_noop.c`),
-   and repository search finds no caller of `tr_render_dungeon()`. Do not
-   replace it with inferred tile/depth mapping: first bind authentic gameplay
-   VRAM/VCE/BAT state and the source-owned map/object consumer for both
-   regions, then implement and capture the production drawing path. The
-   installed authentic Track 02 BINs alone do not supply those semantics.
+   gameplay audio selection. The live production route is
+   `M11_GameView_StartTheron()` → `theron_v1_boot_startup_launch_alloc()` →
+   `theron_v1_startup_runtime_load_initial_level()` → the Theron draw branch
+   in `M11_GameView_Draw()` → `theron_v1_boot_runtime_render_frame()`. Level
+   startup stays closed without a source-bound semantic handoff; its
+   synthetic room fallback is fixture-only. Production viewport code in
+   `src/theron/theron_v1_viewport_runtime_noop.c` can present an authenticated
+   screen-space VDC/VCE capture, but has no source-bound square, object, or HUD
+   renderer. The separate `tr_render_dungeon()` stub in
+   `theron_v1_tile_renderer_runtime_noop.c` has no callers and is not the live
+   rendering seam. Do not wire inferred tile/depth mapping into either path:
+   first bind authentic gameplay VRAM/VCE/BAT state to the source-owned
+   map/object consumer for both regions, then implement and capture the
+   production drawing path. Installed authentic Track 02 BINs alone do not
+   supply those semantics.
 4. **Broader mechanics and completion tests.** Once each original consumer is
    bound, verify later-level transitions, objects, doors/actuators, combat,
    spells, inventory, chapter progression, and save/resume against both
