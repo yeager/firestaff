@@ -259,6 +259,28 @@ static void test_real_item_name_sources(
             world->dungeon_complete = 0;
         }
         {
+            /* Exercise this low-level projection helper with a reserved-stage
+             * bit. Original BRAM Continue rejects masked campaign values >= 7;
+             * see the body-layout source lock before interpreting this as a
+             * reachable save state. */
+            Theron_DungeonProgression saved_progression = world->progression;
+            uint8_t saved_completion_mask = world->campaign_completion_mask;
+            int saved_dungeon_complete = world->dungeon_complete;
+            world->progression.current_dungeon = THERON_DUNGEON_7_DEMON;
+            world->progression.quest_items_collected = 0x05u;
+            assert(theron_v1_world_apply_campaign_completion_byte(
+                       world, 0x40u) == 1);
+            assert(world->campaign_completion_mask == 0x40u);
+            assert(world->progression.quest_items_collected == 0x05u);
+            assert(world->progression.dungeon_states[
+                       THERON_DUNGEON_7_DEMON - 1] !=
+                   THERON_DUNGEON_STATE_COMPLETE);
+            assert(world->dungeon_complete == 0);
+            world->progression = saved_progression;
+            world->campaign_completion_mask = saved_completion_mask;
+            world->dungeon_complete = saved_dungeon_complete;
+        }
+        {
             Theron_Track02CampaignMaskSource forged = campaign_mask;
             forged.post_dungeon_cd_base_track_bcd = 0x02u;
             assert(theron_v1_world_bind_track02_campaign_mask_source(

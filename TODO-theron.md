@@ -2,6 +2,12 @@
 
 Reviewed 2026-09-29. Only open work is listed here.
 
+The low-level campaign-mask projection now preserves raw bit 6 without
+projecting it onto Demon completion. The original ordinal-6 capture stalls
+before the completion write, so Demon completion semantics remain open; the
+regression's `0x40` value is not a valid BRAM Continue state because the
+source-locked restore routine rejects masked campaign values >= 7.
+
 The mixed-region data-directory regression for authentic JP Rev. 1 CUE
 selection is closed by binding the Track 01/02 pair to the requested Track 02
 identity. Bounded hashing now accepts single-image CUE slices in RAM. Track 01

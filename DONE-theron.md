@@ -1,5 +1,24 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — conservative campaign-bit projection guard
+
+- Kept the authenticated raw `$267C` campaign mask intact while limiting its
+  dungeon-progression projection to bits 0–5. The source-locked ordinal-6
+  Akutuba sweep reaches a distinct final-stage branch and stalls before a
+  completion write; it does not prove Demon incomplete or complete. This guard
+  therefore prevents an unsupported Demon-complete projection without
+  claiming the meaning of bit 6. The source lock is
+  `docs/source-lock/theron-original-akutuba-completion-capture-2026-08-21.md`.
+- Added a low-level projection regression with `0x40`, retaining the raw byte
+  and quest-item state while refusing to mark Demon complete. This byte is
+  deliberately not represented as a valid Continue state: the original BRAM
+  restore rejects campaign values >= 7, as documented in
+  `docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`.
+- On `trv2`, built the focused loader target and passed its CTest against the
+  installed authentic US and JP Track 02 media (1/1). This verifies the
+  projection guard in the real-media loader test; it does not establish Demon
+  completion semantics or broader campaign parity.
+
 ## 2026-09-29 — fresh authentic regional runtime revalidation on trv2
 
 - A clean Release build of `firestaff` and the focused Theron probes completed

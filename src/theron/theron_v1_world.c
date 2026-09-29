@@ -2619,6 +2619,7 @@ int theron_v1_world_apply_campaign_completion_byte(
     uint8_t serialized_campaign_byte) {
     Theron_DungeonProgression restored;
     uint8_t completion_mask;
+    uint8_t progression_mask;
     Theron_DungeonID current;
     if (!world || !theron_v1_world_campaign_completion_mask(
             world, serialized_campaign_byte, &completion_mask))
@@ -2627,14 +2628,22 @@ int theron_v1_world_apply_campaign_completion_byte(
     if (current < THERON_DUNGEON_1_AKUTUBA ||
         current > THERON_DUNGEON_7_DEMON)
         return 0;
+
+    /* DMS-SG.001 ordinal dispatch at $DE21 takes a distinct final-stage
+     * branch for ordinal 6 at $DE38. The authenticated ordinal sweep proves
+     * bits 0..5 only; ordinal 6 stalls before a completion write. Preserve
+     * bit 6 as raw BRAM state, but do not project it to Demon completion.
+     * Evidence: docs/source-lock/theron-original-akutuba-completion-capture-
+     * 2026-08-21.md:70-88. */
+    progression_mask = (uint8_t)(completion_mask & 0x3fu);
     theron_v1_dungeon_progression_restore(
-        &restored, completion_mask, current,
+        &restored, progression_mask, current,
         world->progression.dungeon_seeds);
     memcpy(world->progression.dungeon_states, restored.dungeon_states,
            sizeof(world->progression.dungeon_states));
     world->campaign_completion_mask = completion_mask;
-    world->dungeon_complete =
-        (completion_mask &
+    world->dungeon_complete = current < THERON_DUNGEON_7_DEMON &&
+        (progression_mask &
          (uint8_t)THERON_QUEST_ITEM_MASK_FROM_DUNGEON(current)) != 0u;
     return 1;
 }
