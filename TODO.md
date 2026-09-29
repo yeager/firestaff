@@ -1,5 +1,23 @@
 # Firestaff TODO — active cross-game work
 
+- Implement the active Accessibility AUTO PAUSE setting. Audit on 2026-09-29:
+  `config_m12.h` defines pause on focus loss, but `autoPause` is only consumed
+  by UI/configuration code and `main_loop_m11.c` has no window-focus handler.
+  Preserve source-owned startup/game clocks, audio and input state across
+  focus loss/regain; verify that resume does not replay accumulated host time.
+
+- Connect the active Audio SOUNDTRACK choice to playback. The menu exposes
+  ORIGINAL/REMASTERED/CUSTOM and exports `soundtrackMode`, but no runtime
+  consumer reads it. `M11_Soundtrack_GetTrackPath` has no caller in `src`.
+  Use authenticated or explicitly selected media and retain each edition's
+  original audio behavior; selecting a mode alone does not prove playback.
+
+- Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
+  preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale
+  getters/apply functions have no renderer/hit-test consumers (also noted in
+  `hit_zone_audit_m11.h`). These are functional gaps, not verified features;
+  scaling must keep rendered controls and pointer geometry aligned on HiDPI.
+
 - Wire the Custom menu PATCH choice to defined, source-backed behavior.
   Audit on 2026-09-29: `usePatch` / `gameUsePatch` are only read by M12
   display/configuration code. `M12_StartupMenu_GetLaunchIntent` copies the
