@@ -1,5 +1,21 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Gave native SONG.DAT playback a dedicated SDL music stream.
+  Source track zero and Music Off now stop queued music without touching SFX;
+  subsequent requests replace the prior queue. Master/music gain changes
+  already queued playback. Host pause retains PCM, resumes only its own
+  suspension, and cannot resurrect music stopped while paused. Rebinding and
+  shutdown clear the music owner. Authentic DM1 DOS launcher tests pass 228
+  checks across four modes using selected SONG.DAT and SND3, including a live
+  effects queue. CSB Amiga 48, DM2 DOS 44 and Mac retail movie tests pass.
+  Narrow app build and independent review pass. This preserves the existing
+  sequence decoder; it does not establish per-track selection/loop parity.
+
+- 2026-09-29: Refreshed startup-menu POT/PO source references after AUTO PAUSE
+  changed main-loop line numbers. This fixes the localization-catalogs failure
+  in Actions run 36539879762; local `bash po/update.sh --check` passes with
+  current catalogs and no structural errors.
+
 - 2026-09-29: Implemented DM1/CSB/DM2 AUTO PAUSE runtime wiring. Focus
   loss and session-timer pause use independent reason bits, preserving audio
   suspension until the last owner releases it. Source idle/food/movie clocks

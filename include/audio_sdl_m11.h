@@ -70,11 +70,14 @@ typedef struct {
     int titleMusicPlayRequestCount;
     int titleMusicEnabled;
     void* sdlStream;
+    /* Independent native SONG.DAT transport; never contains SFX PCM. */
+    void* musicStream;
     void* cddaStream;
     int   cddaPlaying;
     int   cddaPaused;
     int   hostPaused;
     int   hostResumeSdlStream;
+    int   hostResumeMusicStream;
     int   hostResumeCddaStream;
     M11_SoundBuffer sounds[M11_AUDIO_MARKER_COUNT];
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];

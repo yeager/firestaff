@@ -9,6 +9,12 @@
   synchronous intros, without accumulated-time replay, on supported desktops.
   Physical audio and MacBook Pro M5 HiDPI behavior remain unverified here.
 
+- Complete native SONG.DAT per-track selection and loop scheduling against
+  the original driver/sequence behavior. The independent music transport now
+  handles stop, replacement, volume and host pause, but positive source track
+  requests still use the existing decoded full sequence. Transport tests do not
+  prove original track selection, continuous looping or physical audio output.
+
 - Connect the active Audio SOUNDTRACK choice to playback. The menu exposes
   ORIGINAL/REMASTERED/CUSTOM and exports `soundtrackMode`, but no runtime
   consumer reads it. `M11_Soundtrack_GetTrackPath` has no caller in `src`.

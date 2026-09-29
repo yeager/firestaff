@@ -7,6 +7,7 @@
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
 
+#include <limits.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -854,8 +855,24 @@ static int m11_sound_append(M11_SoundBuffer* dst, const M11_SoundBuffer* src) {
     return 1;
 }
 
+/* ReDMCSB MUSIC.C F0740:559-565 requests driver track zero (silence).
+ * Stop only the native music owner: the sound-effect queue is independent. */
+static int m11_stop_original_music(M11_AudioState* state) {
+    int ok = 1;
+    if (!state) return 0;
+#if M11_HAVE_SDL_AUDIO
+    if (state->musicStream) {
+        if (!SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->musicStream)) ok = 0;
+        if (!SDL_ClearAudioStream((SDL_AudioStream*)state->musicStream)) ok = 0;
+    }
+#endif
+    state->hostResumeMusicStream = 0;
+    return ok;
+}
+
 static void m11_clear_original_song(M11_AudioState* state) {
     if (!state) return;
+    (void)m11_stop_original_music(state);
     m11_sound_free(&state->titleMusic);
     state->originalSongAvailable = 0;
     state->originalSongDatPath[0] = '\0';
@@ -1148,6 +1165,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     if (!state) return;
 
 #if M11_HAVE_SDL_AUDIO
+    if (state->musicStream) {
+        SDL_DestroyAudioStream((SDL_AudioStream*)state->musicStream);
+        state->musicStream = NULL;
+    }
     if (state->cddaStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->cddaStream);
         state->cddaStream = NULL;
@@ -1196,6 +1217,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
 
     state->hostPaused = 0;
     state->hostResumeSdlStream = 0;
+    state->hostResumeMusicStream = 0;
     state->hostResumeCddaStream = 0;
     state->initialized = 0;
     state->backend = M11_AUDIO_BACKEND_NONE;
@@ -1275,6 +1297,11 @@ int M11_Audio_SetVolumes(M11_AudioState* state,
         float gain = (float)state->masterVolume / (float)M11_AUDIO_VOLUME_MAX;
         SDL_SetAudioStreamGain((SDL_AudioStream*)state->sdlStream,
                                gain);
+    }
+    if (state->musicStream) {
+        float gain = ((float)state->masterVolume / M11_AUDIO_VOLUME_MAX) *
+                     ((float)state->musicVolume / M11_AUDIO_VOLUME_MAX);
+        SDL_SetAudioStreamGain((SDL_AudioStream*)state->musicStream, gain);
     }
 #endif
 
@@ -2182,11 +2209,11 @@ int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
     if (!state || !state->initialized) return 0;
     state->lastMusicTrackId = musicTrackId;
-    /* ReDMCSB SOUND.C F0741: plays the SONG.DAT sequence regardless of
-     * trackId — the trackId is state for F0742/F0743 map-track routing,
-     * but the actual playback is always the full sequence loop.  Queue
-     * the decoded SONG.DAT music for any valid track request. */
-    if (musicTrackId >= 0) {
+    /* MUSIC.C F0740/F0741:559-581 sends silence or a mapped track to
+     * IO.C F0719:3950-3959. This native transport retains the existing
+     * authenticated SONG.DAT sequence binding; it does not invent tracks. */
+    if (musicTrackId == 0) return m11_stop_original_music(state);
+    if (musicTrackId > 0) {
         (void)M11_Audio_PlayTitleMusic(state);
     }
     return 1;
@@ -2195,6 +2222,8 @@ int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled) {
     if (!state || !state->initialized) return 0;
     state->titleMusicEnabled = enabled ? 1 : 0;
+    if (!state->titleMusicEnabled) return m11_stop_original_music(state);
+    /* Enabling permits the next source request; it never replays stale PCM. */
     return 1;
 }
 
@@ -2213,13 +2242,38 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
     }
 
 #if M11_HAVE_SDL_AUDIO
-    if (state->sdlStream) {
-        if (m11_sdl_queue_samples(state, state->titleMusic.samples,
-                                  state->titleMusic.sampleCount,
-                                  state->musicVolume)) {
-            state->titleMusicQueuedCount += 1;
-            return 1;
+    {
+        SDL_AudioStream* stream = (SDL_AudioStream*)state->musicStream;
+        SDL_AudioSpec spec;
+        float gain = ((float)state->masterVolume / M11_AUDIO_VOLUME_MAX) *
+                     ((float)state->musicVolume / M11_AUDIO_VOLUME_MAX);
+        if (state->titleMusic.sampleCount > INT_MAX / (int)sizeof(float)) return 0;
+        if (!stream) {
+            SDL_zero(spec);
+            spec.format = SDL_AUDIO_F32;
+            spec.channels = 1;
+            spec.freq = M11_AUDIO_SAMPLE_RATE;
+            stream = SDL_OpenAudioDeviceStream(m11_preferred_playback_device(),
+                                                &spec, NULL, NULL);
+            if (!stream) return 0;
+            state->musicStream = stream;
         }
+        /* A source play request replaces the prior track. Pausing while
+         * replacing prevents a device callback consuming the new sequence
+         * before both its source data and live gain are installed. */
+        if (!m11_stop_original_music(state) ||
+            !SDL_SetAudioStreamGain(stream, gain) ||
+            !SDL_PutAudioStreamData(stream, state->titleMusic.samples,
+                state->titleMusic.sampleCount * (int)sizeof(float))) return 0;
+        if (state->hostPaused) {
+            state->hostResumeMusicStream = 1;
+        } else if (!SDL_ResumeAudioStreamDevice(stream)) {
+            (void)m11_stop_original_music(state);
+            return 0;
+        }
+        state->queuedSampleCount += state->titleMusic.sampleCount;
+        state->titleMusicQueuedCount += 1;
+        return 1;
     }
 #endif
 
@@ -2349,6 +2403,12 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
                 state->hostResumeSdlStream = 1;
             else ok = 0;
         }
+        if (state->musicStream &&
+            !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->musicStream)) {
+            if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->musicStream))
+                state->hostResumeMusicStream = 1;
+            else ok = 0;
+        }
         if (state->cddaStream &&
             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->cddaStream)) {
             if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
@@ -2360,6 +2420,12 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
             if (!state->sdlStream ||
                 SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->sdlStream))
                 state->hostResumeSdlStream = 0;
+            else ok = 0;
+        }
+        if (state->hostResumeMusicStream) {
+            if (!state->musicStream || !state->titleMusicEnabled ||
+                SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->musicStream))
+                state->hostResumeMusicStream = 0;
             else ok = 0;
         }
         if (state->hostResumeCddaStream) {

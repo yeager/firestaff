@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `Original music`: stopping SONG.DAT playback clears the music queue without
+  interrupting sound effects. New requests replace queued music, volume changes
+  affect music already playing, and focus/timer pause retains the music position.
+
 - `AUTO PAUSE`: wires the accessibility setting to DM1/CSB/DM2 window focus,
   including synchronous startup waits. Focus and session-timer pauses retain
   independent ownership of audio and movie clocks; resuming clears accumulated

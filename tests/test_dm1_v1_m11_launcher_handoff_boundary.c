@@ -296,6 +296,77 @@ cleanup:
     if (video_initialized) SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
+/* Use the SONG.DAT bound by the authenticated selected installation. */
+static void run_original_music_transport_probe(M11_GameViewState* view, int mode) {
+    M11_AudioState* audio = &view->audioState;
+    int master, sfx, music, ui;
+    int effectBytes;
+    int songBytes;
+    expect_mode_true(audio->originalSongAvailable && audio->titleMusic.sampleCount > 0,
+                     mode, "selected original SONG.DAT supplies the music transport test");
+    if (!audio->originalSongAvailable || audio->titleMusic.sampleCount <= 0) return;
+    (void)M11_Audio_GetVolumes(audio, &master, &sfx, &music, &ui);
+    (void)M11_Audio_SetHostPaused(audio, 1);
+    (void)M11_Audio_SetVolumes(audio, master, 100, music, ui);
+    expect_mode_true(M11_Audio_EmitSourceSoundIndex(audio, 0), mode,
+                     "authenticated SND3 effect supplies a nonempty independent queue");
+    effectBytes = audio->sdlStream
+        ? SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->sdlStream) : -1;
+    (void)M11_Audio_SetTitleMusicEnabled(audio, 1);
+    expect_mode_true(M11_Audio_PlayTitleMusic(audio) && audio->musicStream &&
+                         audio->musicStream != audio->sdlStream, mode,
+                     "authentic song uses a dedicated music stream");
+    if (!audio->musicStream) {
+        (void)M11_Audio_SetHostPaused(audio, 0);
+        return;
+    }
+    songBytes = audio->titleMusic.sampleCount * (int)sizeof(float);
+    expect_mode_true(SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream) &&
+                         SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes,
+                     mode, "starting music during host pause preserves a single authentic sequence");
+    (void)M11_Audio_PlayTitleMusic(audio);
+    expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes,
+                     mode, "new music request replaces the queued song instead of appending it");
+    (void)M11_Audio_SetVolumes(audio, 64, sfx, 32, ui);
+    {
+        float gain = SDL_GetAudioStreamGain((SDL_AudioStream*)audio->musicStream);
+        expect_mode_true(gain > 0.124f && gain < 0.126f, mode,
+                         "live master and music volume update already queued music");
+    }
+    (void)M11_Audio_RequestSourceMusicTrack(audio, 0);
+    expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0 &&
+                         M11_Audio_TitleMusicEnabled(audio), mode,
+                     "source track zero stops music without changing user preference");
+    (void)M11_Audio_RequestSourceMusicTrack(audio, 1);
+    expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes,
+                     mode, "positive source track request queues authentic song after stop");
+    (void)M11_Audio_SetTitleMusicEnabled(audio, 0);
+    expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0 &&
+                         SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream) &&
+                         SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->sdlStream) == effectBytes,
+                     mode, "music off removes queued music and preserves the effects queue");
+    (void)M11_Audio_SetHostPaused(audio, 0);
+    expect_mode_true(SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream), mode,
+                     "host resume cannot restart source-stopped music");
+    (void)M11_Audio_SetTitleMusicEnabled(audio, 1);
+    expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0,
+                     mode, "enabling music does not resurrect an old queued track");
+    expect_mode_true(M11_Audio_PlayTitleMusic(audio) &&
+                         !SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream),
+                     mode, "new music request starts the dedicated playback device");
+    (void)M11_Audio_SetHostPaused(audio, 1);
+    songBytes = SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream);
+    SDL_Delay(10U);
+    expect_mode_true(songBytes > 0 &&
+                         SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes,
+                     mode, "host pause retains active authentic music PCM without consumption");
+    (void)M11_Audio_SetHostPaused(audio, 0);
+    expect_mode_true(!SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream),
+                     mode, "host resume restarts music that it suspended");
+    (void)M11_Audio_RequestSourceMusicTrack(audio, 0);
+    (void)M11_Audio_SetVolumes(audio, master, sfx, music, ui);
+}
+
 static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) {
     M12_LaunchIntent intent;
     M11_GameViewState launcher_view;
@@ -349,6 +420,7 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     expect_mode_true(M11_GameView_OpenSelectedMenuEntry(&launcher_view, menu) == 1,
                      mode, "M11 opens through M12 selected-menu entry");
     run_native_focus_probe(&launcher_view, menu, mode);
+    run_original_music_transport_probe(&launcher_view, mode);
     expect_mode_true(M11_QolRuntime_GetSpeedMultiplier() ==
                          (cheats ? speedMultipliers[speed] : 100), mode,
                      "M11 applies selected speed and cheats gate to live timing");
