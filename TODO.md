@@ -1,5 +1,20 @@
 # Firestaff TODO — active cross-game work
 
+- Wire the Custom menu PATCH choice to defined, source-backed behavior.
+  Audit on 2026-09-29: `usePatch` / `gameUsePatch` are only read by M12
+  display/configuration code. `M12_StartupMenu_GetLaunchIntent` copies the
+  field, but `M11_GameView_StartFromMenu` does not consume it. No patch-set
+  semantics were found in the current documentation. Define the supported
+  changes per original edition before implementing or advertising PATCHED.
+
+- Connect the Custom menu SPEED choice to the live runtime timing owner.
+  Audit on 2026-09-29: M12 exports `launcherOptions.gameSpeed`, but
+  `m11_apply_launcher_options_handoff` only retains that field. The main
+  loop uses `M11_QolRuntime_GetSpeedMultiplier`, initialized from global
+  configuration before menu interaction. Define precedence against the
+  global multiplier, preserve normal original timing and the cheats gate,
+  then verify a real-media menu launch changes the runtime tick interval.
+
 - Verify the Windows DLL bundle in hosted CI, then publish it in the next
   explicitly requested release. Issue #12 affects the existing 3.0.348 ZIP;
   a source packaging fix does not replace that release asset.
