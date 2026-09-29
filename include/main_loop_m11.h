@@ -158,6 +158,13 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
                                          M12_AxisRole role,
                                          int processedValue,
                                          int gameplayActive);
+/* Horizontal arrows are settings-tab navigation only while the launcher is
+ * in Settings; active game input keeps its existing movement mapping. */
+M12_MenuInput M11_StartupSettingsHorizontalKeyInput(
+    int keycode,
+    const M12_StartupMenuState* menuState,
+    int gameplayActive,
+    int textEditingActive);
 
 /* Theron host controls. W/S are forward/backward, A/D are the original
    lower-panel left/right steps, arrow Left/Right turn, mouse button 1/2 are

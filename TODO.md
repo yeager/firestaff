@@ -19,11 +19,14 @@
   synchronous intros, without accumulated-time replay, on supported desktops.
   Physical audio and MacBook Pro M5 HiDPI behavior remain unverified here.
 
-- Complete native SONG.DAT per-track selection and loop scheduling against
-  the original driver/sequence behavior. The independent music transport now
-  handles stop, replacement, volume and host pause, but positive source track
-  requests still use the existing decoded full sequence. Transport tests do not
-  prove original track selection, continuous looping or physical audio output.
+- Complete native SONG.DAT loop scheduling against SELECTOR.C F8367/F8368.
+  The authentic terminal 0x8001 jumps to sequence index 1: play the first
+  segment once, then repeat sequence entries 1 through 18. It is not a
+  sample-part or CD-track identifier. Keep refill bounded and preserve pause,
+  stop, rebind and shutdown ownership. Positive PC34 CD requests belong to
+  IBMIO.C F8123's empty operation and must not substitute the title score.
+  Current title playback still queues only one sequence; continuous looping
+  and physical audio output remain unverified.
 
 - Connect the active Audio SOUNDTRACK choice to playback. The menu exposes
   ORIGINAL/REMASTERED/CUSTOM and exports `soundtrackMode`, but no runtime

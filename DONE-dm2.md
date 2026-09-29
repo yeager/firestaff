@@ -1,5 +1,24 @@
 # Firestaff DONE — DM2
 
+## 2026-09-29 — FM Towns startup regression rerun
+
+- The authentic Japanese ZIP passes M12 keyboard and platform-card pointer
+  routes, CLI New Game/mirror input, and the uninterrupted normal-loop route
+  through all 225 TWANIM startup frames to the first champion. The runtime
+  receipt requires map 0 at (1,8,0), one champion, completed title animation,
+  an empty script queue and an accepted original-asset frame without core
+  fallback draws. The archive hash remains unchanged. SDL dummy output does
+  not establish audible playback or original-emulator visual parity.
+
+## 2026-09-29 — PC-9821 startup regression rerun
+
+- The authentic ZIP passes keyboard and 1920x1080 pointer selection through
+  M12, original-title admission, and CLI New Game/mirror input into map 0 at
+  (1,8,0) with one champion. The runtime probe accepts original assets with
+  zero core fallback draws, and the archive hash remains unchanged. This
+  uses SDL dummy output and a bounded boot probe; physical audio, native
+  Retina delivery and sustained gameplay remain separate checks.
+
 ## 2026-09-29 — Retain Amiga selection after presentation Back
 
 - Verified the menu Back/reselect sequence with the authentic DM2 Amiga

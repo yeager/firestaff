@@ -2247,13 +2247,12 @@ int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
     if (!state || !state->initialized) return 0;
     state->lastMusicTrackId = musicTrackId;
-    /* MUSIC.C F0740/F0741:559-581 sends silence or a mapped track to
-     * IO.C F0719:3950-3959. This native transport retains the existing
-     * authenticated SONG.DAT sequence binding; it does not invent tracks. */
+    /* PC34 MUSIC.C F0741:579 routes CD track numbers through IO.C
+     * F0719:3956 to IBMIO.C F8123:2080-2083, an empty driver operation.
+     * SONG.DAT belongs to the separate SELECTOR.C F8367/F8368 sequence;
+     * a positive CD request must never substitute the title score.
+     * FM Towns CDDA has its own PlayCdda transport and does not use this API. */
     if (musicTrackId == 0) return m11_stop_original_music(state);
-    if (musicTrackId > 0) {
-        (void)M11_Audio_PlayTitleMusic(state);
-    }
     return 1;
 }
 

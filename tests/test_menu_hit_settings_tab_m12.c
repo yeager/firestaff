@@ -14,6 +14,9 @@
 #include "menu_startup_m12.h"
 #include "config_m12.h"
 #include "menu_row_metrics_m12.h"
+#include "main_loop_m11.h"
+
+#include <SDL3/SDL.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +28,42 @@ static int g_fail = 0;
     if (cond) { ++g_pass; printf("  PASS: %s\n", msg); } \
     else      { ++g_fail; printf("  FAIL: %s\n", msg); } \
 } while (0)
+
+static void test_keyboard_settings_tab_routing(void) {
+    M12_StartupMenuState state;
+    M12_MenuInput input;
+
+    memset(&state, 0, sizeof(state));
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
+
+    input = M11_StartupSettingsHorizontalKeyInput(
+        SDLK_RIGHT, &state, 0, 0);
+    CHECK(input == M12_MENU_INPUT_RIGHT,
+          "launcher Right arrow routes to settings tab navigation");
+    M12_StartupMenu_HandleInput(&state, input);
+    CHECK(state.settingsTabIndex == M12_SETTINGS_TAB_GRAPHICS,
+          "keyboard Right advances from Game to Graphics settings");
+
+    input = M11_StartupSettingsHorizontalKeyInput(
+        SDLK_LEFT, &state, 0, 0);
+    CHECK(input == M12_MENU_INPUT_LEFT,
+          "launcher Left arrow routes to settings tab navigation");
+    M12_StartupMenu_HandleInput(&state, input);
+    CHECK(state.settingsTabIndex == M12_SETTINGS_TAB_GAME,
+          "keyboard Left returns from Graphics to Game settings");
+
+    CHECK(M11_StartupSettingsHorizontalKeyInput(
+              SDLK_RIGHT, &state, 1, 0) == M12_MENU_INPUT_NONE,
+          "active-game Right arrow is left to gameplay routing");
+    CHECK(M11_StartupSettingsHorizontalKeyInput(
+              SDLK_LEFT, &state, 0, 1) == M12_MENU_INPUT_NONE,
+          "text-edit Left arrow is left to the editor");
+    state.view = M12_MENU_VIEW_MAIN;
+    CHECK(M11_StartupSettingsHorizontalKeyInput(
+              SDLK_RIGHT, &state, 0, 0) == M12_MENU_INPUT_NONE,
+          "main-menu Right arrow keeps existing movement mapping");
+}
 
 int main(void) {
     M12_StartupMenuState state;
@@ -38,6 +77,7 @@ int main(void) {
     const int settingsRowYOffset[] = { 0, 70, 140, 210, 280 };
 
     printf("=== M12 settings tab hit-test (v2.7.15) ===\n");
+    test_keyboard_settings_tab_routing();
 
     /* The tab strip is at y=52 and uses the renderer's complete height.
      * Margin is fw/30 = 64. */

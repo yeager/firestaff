@@ -2,6 +2,12 @@
 
 ## User-facing changes
 
+- `Settings keyboard navigation`: Left and Right now switch launcher
+  Settings tabs without changing gameplay or text-editor arrow handling.
+
+- `DM1 PC34 music`: in-game CD-track requests no longer restart the
+  unrelated SONG.DAT title score, matching the original PC driver.
+
 - `DM2 Mac film audio`: closing Credits or opening another film now clears
   only movie audio, preserving game sound effects. Normal film completion
   drains remaining PCM before returning control to the menu.

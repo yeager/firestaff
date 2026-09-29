@@ -1,5 +1,19 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Stopped substituting SONG.DAT for positive PC34 CD-track
+  requests, matching ReDMCSB MUSIC.C/IO.C and IBMIO.C F8123's empty PC driver
+  operation. Explicit title playback remains separate, as does FM Towns CDDA.
+  Authentic tests cover track IDs 1, 15, 20 and 5 with stopped music and with
+  a partially consumed paused title queue, preserving gain and effects.
+  DM1 launcher checks pass 280 assertions and CSB Amiga checks pass 48,
+  without skips. Continuous title looping remains tracked in TODO.md.
+
+- 2026-09-29: Restored keyboard Left/Right navigation between launcher
+  Settings tabs. The SDL key route now emits menu navigation in Settings
+  while preserving active gameplay and text-editor input. The focused
+  regression exercises Game to Graphics and back through the production
+  mapping and Settings handler; the narrow build and CTest pass.
+
 - 2026-09-29: Isolated DM2 Mac film PCM in a dedicated stream with live
   master gain, selected-device routing, host pause and shutdown ownership.
   Credits cancellation/reopen clears only film audio, preserving original

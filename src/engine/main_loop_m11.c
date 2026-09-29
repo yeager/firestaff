@@ -6398,6 +6398,20 @@ static void m11_sync_focus_pause(M11_GameViewState* gameView,
                                     hasFocus, SDL_GetCurrentVideoDriver()));
 }
 
+M12_MenuInput M11_StartupSettingsHorizontalKeyInput(
+    int keycode,
+    const M12_StartupMenuState* menuState,
+    int gameplayActive,
+    int textEditingActive) {
+    if (!menuState || gameplayActive || textEditingActive ||
+        menuState->view != M12_MENU_VIEW_SETTINGS) {
+        return M12_MENU_INPUT_NONE;
+    }
+    if (keycode == SDLK_LEFT) return M12_MENU_INPUT_LEFT;
+    if (keycode == SDLK_RIGHT) return M12_MENU_INPUT_RIGHT;
+    return M12_MENU_INPUT_NONE;
+}
+
 static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          M12_StartupMenuState* menuState,
                                          const M12_GamepadMap* gamepadMap,
@@ -6816,6 +6830,18 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 mappedInput = m11_motion_input_from_scancode(ev.key.scancode);
                 if (mappedInput != M12_MENU_INPUT_NONE) {
                     return mappedInput;
+                }
+            }
+            {
+                M12_MenuInput settingsInput =
+                    M11_StartupSettingsHorizontalKeyInput(
+                        (int)ev.key.key,
+                        menuState,
+                        gameView && gameView->active,
+                        menuState &&
+                            M12_StartupMenu_TextEditActive(menuState));
+                if (settingsInput != M12_MENU_INPUT_NONE) {
+                    return settingsInput;
                 }
             }
             switch (ev.key.key) {

@@ -337,9 +337,39 @@ static void run_original_music_transport_probe(M11_GameViewState* view, int mode
     expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0 &&
                          M11_Audio_TitleMusicEnabled(audio), mode,
                      "source track zero stops music without changing user preference");
-    (void)M11_Audio_RequestSourceMusicTrack(audio, 1);
-    expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes,
-                     mode, "positive source track request queues authentic song after stop");
+    {
+        static const int cdTracks[] = { 1, 15, 20, 5 };
+        size_t i;
+        for (i = 0; i < sizeof(cdTracks) / sizeof(cdTracks[0]); ++i) {
+            expect_mode_true(M11_Audio_RequestSourceMusicTrack(audio, cdTracks[i]) &&
+                audio->lastMusicTrackId == cdTracks[i] &&
+                SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0 &&
+                SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream) &&
+                !audio->hostResumeMusicStream, mode,
+                "PC34 CD requests do not restart a stopped original title score");
+        }
+        (void)M11_Audio_PlayTitleMusic(audio);
+        {
+            unsigned char prefix[4096];
+            int consumed = SDL_GetAudioStreamData((SDL_AudioStream*)audio->musicStream,
+                                                  prefix, (int)sizeof(prefix));
+            int remaining = SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream);
+            expect_mode_true(consumed > 0 && remaining > 0 && remaining < songBytes,
+                mode, "consume an authentic prefix to distinguish replacement from preservation");
+            songBytes = remaining;
+        }
+        for (i = 0; i < sizeof(cdTracks) / sizeof(cdTracks[0]); ++i) {
+            expect_mode_true(M11_Audio_RequestSourceMusicTrack(audio, cdTracks[i]) &&
+                audio->lastMusicTrackId == cdTracks[i] &&
+                SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == songBytes &&
+                SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream) &&
+                audio->hostPaused && audio->hostResumeMusicStream &&
+                SDL_GetAudioStreamGain((SDL_AudioStream*)audio->musicStream) > 0.124f &&
+                SDL_GetAudioStreamGain((SDL_AudioStream*)audio->musicStream) < 0.126f &&
+                SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->sdlStream) == effectBytes,
+                mode, "PC34 CD requests preserve paused authentic title and SFX queues");
+        }
+    }
     (void)M11_Audio_SetTitleMusicEnabled(audio, 0);
     expect_mode_true(SDL_GetAudioStreamQueued((SDL_AudioStream*)audio->musicStream) == 0 &&
                          SDL_AudioStreamDevicePaused((SDL_AudioStream*)audio->musicStream) &&
