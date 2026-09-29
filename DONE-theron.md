@@ -12,9 +12,19 @@
   `tests/test_theron_v1_mednafen_live_capture_script.sh`, and
   `git diff --check` pass; redacted Gitleaks scans of all changed files found
   no leaks.
-- This verifies capture-tool behavior only. No active X11 display was present
-  on `trv2`, so no live emulator input, game-owned data handoff, or gameplay
-  semantics were captured or established.
+- The Linux grab chord now comes from the selected profile's actual
+  `command.toggle_grab` SDL binding rather than assuming Ctrl+Shift+G. The
+  focused regression checks Menu/G mappings and rejects unsupported bindings.
+  On `trv2`, an authenticated temporary Xvfb accepted the profile's
+  Ctrl+Shift+Menu chord; instrumented Mednafen recorded `InputGrab=1` and the
+  requested Right key-down/up from the authentic US Akutuba state.
+- The complete live-capture runner still exits at its VDC-trace validation
+  before emitting a receipt. A later one-second control run ended after only
+  3,338 VDC writes, below its 2,097,152-write trace limit. The earlier full
+  run's sidecar was overwritten before its exact footer and sequence could be
+  checked, so the VDC validation failure's cause remains open. This evidence
+  verifies profile-derived X11 input delivery only; it establishes no
+  game-owned data handoff, item behavior, or gameplay semantics.
 
 ## 2026-09-28 — Authentic inventory transaction regression across all dungeons
 

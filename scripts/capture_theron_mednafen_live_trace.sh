@@ -64,6 +64,7 @@ capture_down_x11_key=
 capture_left_x11_key=
 capture_right_x11_key=
 mednafen_window_id=
+input_grab_x11_chord=
 host_input_requested=0
 if [[ -n "$host_key" || -n "$host_key_sequence" ]]; then
     host_input_requested=1
@@ -131,6 +132,13 @@ md5_file() {
 }
 
 capture_profile_scancode() {
+    local key=$1
+    awk -v key="$key" '
+        $1 == key && $2 == "keyboard" && $3 == "0x0" { print $4; exit }
+    ' "$configured_home/mednafen.cfg"
+}
+
+capture_profile_binding() {
     local key=$1
     awk -v key="$key" '
         $1 == key && $2 == "keyboard" && $3 == "0x0" { print $4; exit }
@@ -257,6 +265,16 @@ require_capture_profile_mappings() {
         printf -v "capture_${key}_host_code" '%s' "$host_code"
         printf -v "capture_${key}_x11_key" '%s' "$x11_key"
     done
+    if [[ "$host_input_backend" == xdotool_x11 ]]; then
+        local grab_binding
+        grab_binding=$(capture_profile_binding command.toggle_grab)
+        input_grab_x11_chord=$(theron_x11_chord_for_sdl_binding "$grab_binding" || true)
+        if [[ -z "$input_grab_x11_chord" ]]; then
+            printf 'FAIL: THERON_MEDNAFEN_HOME has no supported keyboard command.toggle_grab binding (got %s)\n' \
+                "${grab_binding:-missing}" >&2
+            exit 1
+        fi
+    fi
 }
 
 track02_mode=$(awk '
@@ -1248,8 +1266,8 @@ if [[ "$host_input_requested" == 1 ]]; then
         exit 1
     fi
     # Mednafen does not deliver emulated keyboard state until input grab is
-    # active. The checked-in profile uses Ctrl+Shift+G because the default
-    # Menu-key shortcut is unavailable on common host keyboards.
+    # active. Derive the Linux X11 chord from the copied profile; the macOS
+    # Quartz helper retains its checked-in Ctrl+Shift+G shortcut.
     grab_trace_ready=0
     grab_receipt_valid=0
     # A foreground SDL window can be replaced by another app between focus
@@ -1258,7 +1276,7 @@ if [[ "$host_input_requested" == 1 ]]; then
     for ((grab_attempt = 1; grab_attempt <= 4; ++grab_attempt)); do
         if [[ "$host_input_backend" == xdotool_x11 ]]; then
             if [[ "$(xdotool getwindowfocus 2>/dev/null || true)" == "$mednafen_window_id" ]] &&
-               xdotool key ctrl+shift+g; then
+               xdotool key "$input_grab_x11_chord"; then
                 grab_receipt_valid=1
             fi
         else
@@ -1297,8 +1315,14 @@ if [[ "$host_input_requested" == 1 ]]; then
             "$grab_receipt_valid" "$grab_trace_ready" >&2
         exit 1
     fi
-    printf 'host_input_grab_chord route=%s target_pid=%s window_id=%s keys=ctrl+shift+g attempts=%s\n' \
-        "$host_input_backend" "$mednafen_ui_pid" "${mednafen_window_id:-none}" "$grab_attempt" >>"$input_trace"
+    if [[ "$host_input_backend" == xdotool_x11 ]]; then
+            printf 'host_input_grab_chord route=%s target_pid=%s window_id=%s keys=%s attempts=%s\n' \
+            "$host_input_backend" "$mednafen_ui_pid" "${mednafen_window_id:-none}" \
+            "$input_grab_x11_chord" "$grab_attempt" >>"$input_trace"
+    else
+        printf 'host_input_grab_chord route=%s target_pid=%s keys=ctrl+shift+g attempts=%s\n' \
+            "$host_input_backend" "$mednafen_ui_pid" "$grab_attempt" >>"$input_trace"
+    fi
     sleep 0.2
     host_key_schedule_seconds=$SECONDS
     # Send real Quartz key-down/up pairs after PID-bound focus.

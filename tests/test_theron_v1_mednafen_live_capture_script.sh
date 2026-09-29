@@ -146,6 +146,29 @@ i 55 period
 ii 54 comma
 ii 55 period
 THERON_X11_KEYMAP
+while IFS=' ' read -r binding expected; do
+    [[ -n "$binding" ]] || continue
+    actual=$(theron_x11_chord_for_sdl_binding "$binding") || {
+        printf 'FAIL: no X11 chord for SDL binding %s\n' "$binding" >&2
+        exit 1
+    }
+    if [[ "$actual" != "$expected" ]]; then
+        printf 'FAIL: SDL binding %s returned X11 chord %s, expected %s\n' \
+            "$binding" "$actual" "$expected" >&2
+        exit 1
+    fi
+done <<'THERON_X11_CHORDS'
+101+ctrl+shift ctrl+shift+Menu
+10+ctrl+shift ctrl+shift+g
+82+alt+meta alt+super+Up
+THERON_X11_CHORDS
+for binding in '' 101 999+ctrl+shift 101+unknown; do
+    if theron_x11_chord_for_sdl_binding "$binding" >/dev/null 2>&1; then
+        printf 'FAIL: X11 grab chord parser accepted unsupported binding %s\n' \
+            "${binding:-<empty>}" >&2
+        exit 1
+    fi
+done
 if theron_x11_key_for_sdl_mapping run 0 >/dev/null 2>&1; then
     printf '%s\n' 'FAIL: X11 keymap accepted an unlisted PCE mapping' >&2
     exit 1
@@ -578,7 +601,9 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'xdotool getwindowpid "$candidate_window"' "$script" ||
    ! grep -Fq 'xdotool windowfocus --sync "$mednafen_window_id"' "$script" ||
    ! grep -Fq 'xdotool getwindowfocus 2>/dev/null' "$script" ||
-   ! grep -Fq 'xdotool key ctrl+shift+g' "$script" ||
+   ! grep -Fq 'grab_binding=$(capture_profile_binding command.toggle_grab)' "$script" ||
+   ! grep -Fq 'theron_x11_chord_for_sdl_binding "$grab_binding"' "$script" ||
+   ! grep -Fq 'xdotool key "$input_grab_x11_chord"' "$script" ||
    ! grep -Fq 'xdotool keydown "$host_key_current_code"' "$script" ||
    ! grep -Fq 'xdotool keyup "$host_key_current_code"' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_INPUT_ROUTE must be pid or global_hid' "$script" ||
