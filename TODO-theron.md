@@ -121,6 +121,18 @@ data.
 The sequence is dependency guidance, not a smaller completion target: the user
 requested complete Theron support.
 
+2026-09-29 stair census: the authentic probe now checks all 171 US and 170 JP
+stairs across all seven dungeons. Of these, 39 US and 42 JP have an adjacent
+ordinary-floor approach; all 81 query and original-command paths remain
+blocked without mutating party pose, world tick, transition metadata, or queued
+actuator-event count. This is regression
+coverage of the source-evidence gate, not traversal support. Recover the
+original consumer or an authenticated runtime transaction that binds each
+stair attribute to direction, destination map and destination pose before
+implementing transitions. The regional totals are explicit test assertions so
+a broken/empty approach selector cannot masquerade as passing coverage. See
+`DONE-theron.md` for exact test scope.
+
 2026-09-27 authentic regional runtime input-state regression: the JP Rev. 1
 and USA raw-BIN startup tests now compare a no-motion baseline with individual
 native commands against the hash-locked regional Track 02 files; JP also

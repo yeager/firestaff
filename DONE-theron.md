@@ -1,5 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — authentic stair fail-closed census
+
+- Expanded the real-data mechanics probe to visit every authentic stair cell
+  across all seven dungeons in both US and JP Track 02 editions.
+  For each approachable cell, both the move query and original forward-command
+  route must remain blocked without changing dungeon/level, party pose, world
+  tick, transition metadata, or queued actuator-event count. Non-approachable
+  stair cells remain counted but are not mutated into reachable fixtures.
+- The hash-verified authentic US and JP Track 02 probe passed: it decoded 171
+  US and 170 JP stairs across the campaign; 39 US and 42 JP stairs had a
+  qualifying adjacent approach, and all 81 stayed transactionally blocked.
+  The probe asserts both regional census totals, so an empty or truncated
+  approach selection cannot pass. Every dungeon loaded in both editions, and
+  the focused CTest passed 1/1 against installed original media. This improves
+  fail-closed coverage only;
+  the original stair direction/destination consumer remains unbound and stair
+  traversal is not claimed as supported.
+
 ## 2026-09-29 — conservative campaign-bit projection guard
 
 - Kept the authenticated raw `$267C` campaign mask intact while limiting its

@@ -4,15 +4,17 @@
  * Theron's Quest V1 — Real-Data Mechanics Playability Probe
  *
  * Headless mechanics verification against the authentic JP/US Track 02
- * Hall-of-Records and full AKUTUBA dungeon. Unlike the synthetic cross-route
+ * Hall-of-Records and all seven dungeons. Unlike the synthetic cross-route
  * probe, this probe contains no constructed levels or object tables: it loads
  * real startup and full-dungeon bytes, then exercises movement, turning,
- * blocking and stairs on the decoded Track 02 grids.
+ * blocking and stairs on the decoded Track 02 grids. Stair attributes remain
+ * unresolved per docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §2.3;
+ * this probe verifies the real-data path remains fail-closed.
  *
  * Run:
  *   ./build/firestaff_theron_v1_mechanics_playability_probe
  *   FIRESTAFF_THERON_DATA_DIR=/path/to/data ./build/firestaff_theron_v1_mechanics_playability_probe
- *   ctest --test-dir build -R theron_v1_mechanics_playability -j4 --output-on-failure
+ *   ctest --test-dir build -R theron_v1_mechanics_playability -j2 --output-on-failure
  *
  * Source-lock references:
  *   THQUEST.ASM T520/T560/T600/T700/T800/T900
@@ -222,6 +224,59 @@ static int direction_from_delta(int dx, int dy) {
     if (dx > 0) return THERON_DIR_EAST;
     if (dx < 0) return THERON_DIR_WEST;
     return THERON_DIR_NORTH;
+}
+
+typedef struct {
+    int current_dungeon;
+    int current_level;
+    int party_x;
+    int party_y;
+    int party_direction;
+    int transition_pending;
+    Theron_TransitionType transition_type;
+    int transition_target_level;
+    int transition_spawn_x;
+    int transition_spawn_y;
+    unsigned int source_actuator_event_count;
+    uint64_t world_tick;
+} Theron_StairMovementSnapshot;
+
+static Theron_StairMovementSnapshot stair_movement_snapshot(
+    const Theron_V1_World *world) {
+    Theron_StairMovementSnapshot snapshot;
+    snapshot.current_dungeon = world->current_dungeon;
+    snapshot.current_level = world->current_level;
+    snapshot.party_x = world->party.leader_x;
+    snapshot.party_y = world->party.leader_y;
+    snapshot.party_direction = world->party.leader_dir;
+    snapshot.transition_pending = world->transition_pending;
+    snapshot.transition_type = world->transition_type;
+    snapshot.transition_target_level = world->transition_target_level;
+    snapshot.transition_spawn_x = world->transition_spawn_x;
+    snapshot.transition_spawn_y = world->transition_spawn_y;
+    snapshot.source_actuator_event_count =
+        world->source_actuator_event_count;
+    snapshot.world_tick = world->world_tick;
+    return snapshot;
+}
+
+static int stair_movement_state_matches(
+    const Theron_V1_World *world,
+    const Theron_StairMovementSnapshot *snapshot) {
+    return world && snapshot &&
+        world->current_dungeon == snapshot->current_dungeon &&
+        world->current_level == snapshot->current_level &&
+        world->party.leader_x == snapshot->party_x &&
+        world->party.leader_y == snapshot->party_y &&
+        world->party.leader_dir == snapshot->party_direction &&
+        world->transition_pending == snapshot->transition_pending &&
+        world->transition_type == snapshot->transition_type &&
+        world->transition_target_level == snapshot->transition_target_level &&
+        world->transition_spawn_x == snapshot->transition_spawn_x &&
+        world->transition_spawn_y == snapshot->transition_spawn_y &&
+        world->source_actuator_event_count ==
+            snapshot->source_actuator_event_count &&
+        world->world_tick == snapshot->world_tick;
 }
 
 static void test_authentic_door_boundaries(
@@ -689,8 +744,20 @@ static void test_real_full_dungeon_and_stairs(
     Theron_DungeonLoadResult result;
     uint8_t *user_data = NULL;
     size_t sector_count = 0u, user_data_size = 0u, copied_size = 0u;
-    int stair_level = -1, stair_x = -1, stair_y = -1;
-    int approach_x = -1, approach_y = -1;
+    int authentic_stair_cells = 0;
+    int tested_stair_cells = 0;
+    int blocked_stair_cells = 0;
+    int loaded_dungeons = 0;
+    int expected_stair_cells = 0;
+    int expected_tested_stair_cells = 0;
+
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        expected_stair_cells = 171;
+        expected_tested_stair_cells = 39;
+    } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        expected_stair_cells = 170;
+        expected_tested_stair_cells = 42;
+    }
 
     printf("[test:real_full_dungeon_and_stairs]\n");
     world = (Theron_V1_World *)calloc(1u, sizeof(*world));
@@ -712,62 +779,73 @@ static void test_real_full_dungeon_and_stairs(
         free(world);
         return;
     }
-    theron_v1_world_init(world);
-    world->current_dungeon = THERON_DUNGEON_1_AKUTUBA;
-    CHECK_INT("load complete real dungeon",
-              theron_v1_track02_load_full_dungeon_for_variant(
-                  world, THERON_DUNGEON_1_AKUTUBA,
-                  user_data, user_data_size,
-                  variant, &result), 0);
-    CHECK_INT("real dungeon has multiple levels", result.levels_loaded > 1, 1);
-    for (int level_index = 0; level_index < result.levels_loaded; ++level_index) {
-        const Theron_V1_Level *level = &world->levels[0][level_index];
-        CHECK_INT("real level header verified", level->source_header_verified, 1);
-        for (int y = 0; y < level->height && stair_level < 0; ++y) {
-            for (int x = 0; x < level->width && stair_level < 0; ++x) {
-                uint8_t tile = level->squares[y][x];
-                if ((tile == THERON_SQUARE_STAIRS_UP ||
-                     tile == THERON_SQUARE_STAIRS_DOWN ||
-                     tile == THERON_SQUARE_STAIRS_UNRESOLVED) &&
-                    find_adjacent_floor(level, x, y,
-                                        &approach_x, &approach_y)) {
-                    stair_level = level_index;
-                    stair_x = x;
-                    stair_y = y;
+    for (int dungeon_id = 1; dungeon_id <= THERON_DUNGEON_COUNT;
+         ++dungeon_id) {
+        theron_v1_world_init(world);
+        world->current_dungeon = dungeon_id;
+        if (theron_v1_track02_load_full_dungeon_for_variant(
+                world, (Theron_DungeonID)dungeon_id,
+                user_data, user_data_size, variant, &result) != 0) {
+            continue;
+        }
+        ++loaded_dungeons;
+        for (int level_index = 0; level_index < result.levels_loaded;
+             ++level_index) {
+            const Theron_V1_Level *level =
+                &world->levels[dungeon_id - 1][level_index];
+            if (!level->source_header_verified) continue;
+            for (int y = 0; y < level->height; ++y) {
+                for (int x = 0; x < level->width; ++x) {
+                    uint8_t tile = level->squares[y][x];
+                    int approach_x = -1;
+                int approach_y = -1;
+                int direction;
+                Theron_StairMovementSnapshot before;
+                Theron_MoveResult query;
+
+                    if (tile != THERON_SQUARE_STAIRS_UP &&
+                        tile != THERON_SQUARE_STAIRS_DOWN &&
+                        tile != THERON_SQUARE_STAIRS_UNRESOLVED)
+                        continue;
+                    ++authentic_stair_cells;
+                    if (!find_adjacent_floor(level, x, y,
+                                             &approach_x, &approach_y))
+                        continue;
+
+                    direction = direction_from_delta(
+                        x - approach_x, y - approach_y);
+                    world->current_level = level_index;
+                world->party.leader_x = approach_x;
+                world->party.leader_y = approach_y;
+                world->party.leader_dir = direction;
+                before = stair_movement_snapshot(world);
+                query = theron_v1_get_move_result(world, direction);
+                if (query == THERON_MOVE_BLOCKED &&
+                    stair_movement_state_matches(world, &before) &&
+                    theron_v1_move_party_original_command(
+                        world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+                        THERON_MOVE_BLOCKED &&
+                    stair_movement_state_matches(world, &before)) {
+                        ++blocked_stair_cells;
+                    }
+                    ++tested_stair_cells;
                 }
             }
         }
     }
     test_authentic_door_boundaries(user_data, user_data_size, variant);
-    if (stair_level < 0) {
-        printf("  [FAIL] no traversable authentic stair edge\n");
-        g_fail++;
-        free(user_data);
-        free(world);
-        return;
-    }
-    world->current_level = stair_level;
-    world->party.leader_x = approach_x;
-    world->party.leader_y = approach_y;
-    world->party.leader_dir = direction_from_delta(
-        stair_x - approach_x, stair_y - approach_y);
-    {
-        int before_level = world->current_level;
-        int before_x = world->party.leader_x;
-        int before_y = world->party.leader_y;
-        CHECK_INT("authentic stairs block without source-owned destination",
-              theron_v1_move_party_original_command(
-                  world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD),
-              THERON_MOVE_BLOCKED);
-        CHECK_INT("unresolved authentic stairs preserve level",
-                  world->current_level, before_level);
-        CHECK_INT("unresolved authentic stairs preserve party x",
-                  world->party.leader_x, before_x);
-        CHECK_INT("unresolved authentic stairs preserve party y",
-                  world->party.leader_y, before_y);
-        CHECK_INT("unresolved authentic stairs leave no queued transition",
-                  world->transition_pending, 0);
-    }
+    printf("  authentic stair cells=%d, approached and tested=%d, ",
+           authentic_stair_cells, tested_stair_cells);
+    printf("query/move fail-closed and transactional=%d\n",
+           blocked_stair_cells);
+    CHECK_INT("all seven authentic campaign dungeons load for stair checks",
+              loaded_dungeons, THERON_DUNGEON_COUNT);
+    CHECK_INT("regional authentic stair census matches the locked source",
+              authentic_stair_cells, expected_stair_cells);
+    CHECK_INT("regional approachable-stair coverage matches the locked source",
+              tested_stair_cells, expected_tested_stair_cells);
+    CHECK_INT("every approachable authentic stair fails closed atomically",
+              tested_stair_cells, blocked_stair_cells);
     free(user_data);
     free(world);
 }
