@@ -6402,8 +6402,6 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             overlayFingerActive = 0;
             continue;
         }
-        if (gameView &&
-            (gameView->pauseReasons & M11_GAME_PAUSE_REASON_FOCUS)) continue;
         if (ev.type == SDL_EVENT_GAMEPAD_ADDED ||
             ev.type == SDL_EVENT_GAMEPAD_REMOVED) {
             if (gamepadStatus) {
@@ -6411,6 +6409,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        /* Device topology still changes while gameplay is suspended. */
+        if (gameView &&
+            (gameView->pauseReasons & M11_GAME_PAUSE_REASON_FOCUS)) continue;
         if (ev.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
             M12_MenuInput gpadInput =
                 m11_gamepad_button_input(gamepadMap,
