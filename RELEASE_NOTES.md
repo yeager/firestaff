@@ -1,5 +1,15 @@
 # Firestaff — Unreleased
 
+# Firestaff v3.0.352
+
+## Developer changes
+
+- `CSB FM Towns entrance-audio test`: adds an original-media integration assertion that authentic CD-DA track 2 PCM reaches SDL's CDDA stream after selecting Game.
+
+## Verification limits
+
+- `SDL dummy-audio test`: verifies that PCM is queued in the SDL stream; it does not establish physical audio output or audible parity.
+
 # Firestaff v3.0.351
 
 ## User-facing changes

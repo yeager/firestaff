@@ -20,6 +20,7 @@ static const char* const g_changelogLines[] = {
     "  - DM1 title playback now requires the full intro before handing off to Entrance.",
     "  - DM2 Mac startup verification now waits for the authentic Title.MooV duration before checking the menu handoff.",
     "  - CSB Atari ST zero-amplitude PSG samples now render as silence.",
+    "  - CSB FM Towns original-media tests verify entrance CDDA track 2 PCM reaches the SDL stream.",
     "  - Refreshes startup-menu translation catalogs and source references.",
     "",
     "  - Fixes repeated Windows settings and JSON export saves, and iOS archive CRC compilation.",
