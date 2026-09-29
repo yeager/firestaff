@@ -16,6 +16,29 @@ static int dm2_version_id_is(int version_index, const char *expected)
     return version_id && strcmp(version_id, expected) == 0;
 }
 
+static int check_live_movie_clock(M11_GameViewState *state, unsigned char *framebuffer)
+{
+    const uint64_t timeout = SDL_GetTicksNS() / UINT64_C(1000) + UINT64_C(5000000);
+    const uint32_t first_frame = state->dm2MacMovieDecoder.frame_index;
+    int held_frame = 0;
+    /* Exercise the production monotonic clock before the later accelerated
+     * traversal. No source clock or fast-forward flag is changed here. */
+    while (state->dm2MacMovieActive &&
+           state->dm2MacMovieDecoder.frame_index < first_frame + 8u) {
+        uint32_t before = state->dm2MacMovieDecoder.frame_index;
+        uint64_t now;
+        M11_GameView_Draw(state, framebuffer, 320, 200);
+        now = SDL_GetTicksNS() / UINT64_C(1000);
+        if (!state->dm2MacMovieStartUs || now >= timeout ||
+            state->dm2MacMovieDecoder.presentation_time_us > now - state->dm2MacMovieStartUs)
+            return 0;
+        if (state->dm2MacMovieDecoder.frame_index == before) held_frame = 1;
+        SDL_Delay(1);
+    }
+    return state->dm2MacMovieActive && held_frame &&
+           state->dm2MacMovieDecoder.frame_index >= first_frame + 8u;
+}
+
 int main(void)
 {
     M11_GameViewState state;
@@ -108,6 +131,13 @@ int main(void)
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));
+    if (!check_live_movie_clock(&state, framebuffer)) {
+        fprintf(stderr, "Mac title failed live source-deadline pacing\n");
+        M11_GameView_Shutdown(&state);
+        M12_StartupMenu_Destroy(&menuState);
+        return 1;
+    }
+    puts("PASS: Mac title holds source deadlines and advances under the live clock");
     /* M11_GameView_Draw uses the host monotonic clock to honour each
      * authentic QuickTime frame duration.  A tight headless loop otherwise
      * redraws frame 1 thousands of times without advancing the source

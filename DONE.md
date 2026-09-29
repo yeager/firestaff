@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Added a live-clock check before the DM2 Mac test's accelerated
+  movie traversal. Eight authentic title-frame transitions now run under
+  SDL's unmodified monotonic clock; the test requires held frames, rejects
+  frames ahead of their source timestamp and fails if progress stalls.
+  The narrow build and full M12/movie/runtime test pass. This checks a short
+  pacing segment, not full-film timing, physical audio/video sync or HiDPI.
+
 - 2026-09-29: Extended the authentic DM2 Macintosh retail movie regression
   through normal M12 pointer selection: game card, Mac platform, Custom
   options and verified launch intent. The same session passes title/credits,
