@@ -1,3 +1,4 @@
+#include "m11_qol_runtime.h"
 /*
  * test_csb_v1_m11_launcher_handoff_boundary.c
  *
@@ -3210,9 +3211,14 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
     menu.activatedIndex = 1;
     menu.launchRequested = 1;
     menu.gameOptions[1].versionIndex = version_index;
+    menu.gameOptions[1].cheatsEnabled = 1;
+    menu.gameOptions[1].gameSpeed = 0;
+    M11_QolRuntime_SetSpeedMultiplier(200);
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                 "M11 opens Amiga 3.1 English through direct APPB C03");
+    expect_true(M11_QolRuntime_GetSpeedMultiplier() == 50,
+                "real CSB launch applies selected speed to live timing");
     profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
     expect_true(view.active == 1 && profile != NULL &&
                     profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN &&

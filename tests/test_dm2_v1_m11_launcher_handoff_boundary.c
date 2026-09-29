@@ -1,3 +1,4 @@
+#include "m11_qol_runtime.h"
 /*
  * test_dm2_v1_m11_launcher_handoff_boundary.c
  *
@@ -385,6 +386,9 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     }
     menu.gameOptions[2].architectureIndex = M12_ARCH_PC;
     menu.gameOptions[2].versionIndex = pc_version_index;
+    menu.gameOptions[2].cheatsEnabled = 1;
+    menu.gameOptions[2].gameSpeed = 2;
+    M11_QolRuntime_SetSpeedMultiplier(200);
 
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.valid == 1,
@@ -397,6 +401,8 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                 "real DM2 M12 selected-entry path opens M11");
+    expect_true(M11_QolRuntime_GetSpeedMultiplier() == 150,
+                "real DM2 launch applies selected speed to live timing");
     expect_true(view.active == 1,
                 "real DM2 M12 handoff leaves M11 active");
     expect_true(view.startedFromLauncher == 1,

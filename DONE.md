@@ -5,8 +5,9 @@
   Cheats off or invalid speed restores 100 percent; the selected game takes
   precedence over the previously active global multiplier at launch.
   Authentic DOS 3.4 M12/M11 handoff: 100 passed, 0 failed, 0 skipped,
-  including all three speeds and the cheats-off reset. CSB/DM2 speed-specific
-  runtime verification remains to be extended.
+  including all three speeds and the cheats-off reset. Authentic CSB Amiga
+  A31E handoff passes 44 checks including 50 percent; DM2 DOS English passes
+  35 checks including 150 percent. Both report zero failures and zero skips.
 
 - 2026-09-29: Made the Custom menu SPEED HOTKEYS status tile non-interactive
   so clicking it cannot change simulation speed. Removed its SPEED selection
