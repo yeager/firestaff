@@ -42,6 +42,14 @@ embedded records against the authentic US image byte-for-byte and guards their
 source offsets/lengths. A dynamic, region-authenticated Track 02 story consumer,
 JP story selection, and original presentation remain open.
 
+The US skill-name API now shares the authentic 15-record text table at
+UD `0x1C9B6B`; its real-media test verifies all records, including custom
+prefix-glyph bytes for the six `MASTER` ranks. Rank index 15 has no verified
+text record, so the API returns no label there rather than repeating
+`ARCHMASTER`. The 64-entry experience table does not establish that missing
+mapping. JP rank strings/glyphs and original rank-icon presentation remain
+unverified.
+
 ## Remaining work, ordered by the end-to-end playability dependency
 
 The repository has real-media startup, source-data loaders, bounded mechanics,

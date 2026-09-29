@@ -18,9 +18,10 @@ static const char *const g_resources[THERON_TRACK02_RESOURCE_COUNT] = {
     "HEALTH", "STAMINA", "MANA",
 };
 
-/* UD 0x1C9B6B: 16 skill level names.
+/* UD 0x1C9B6B: 15 null-terminated skill level text records.
  * Levels 8-13 have prefix glyphs 0x60-0x65 in the original binary
- * (custom font indices for rank icons). We store only the text. */
+ * (custom font indices for rank icons). We store only the text. Rank index
+ * 15 has no corresponding record here and is not assigned a fallback name. */
 static const char *const g_skill_levels[THERON_TRACK02_SKILL_LEVEL_COUNT] = {
     "NEOPHYTE",    /* 0 */
     "NOVICE",      /* 1 */
@@ -37,7 +38,6 @@ static const char *const g_skill_levels[THERON_TRACK02_SKILL_LEVEL_COUNT] = {
     "MASTER",      /* 12 — prefix glyph 0x64 */
     "MASTER",      /* 13 — prefix glyph 0x65 */
     "ARCHMASTER",  /* 14 */
-    "ARCHMASTER",  /* 15 — guard entry */
 };
 
 /* UD 0x1DEEA5: 4 object/shield actions (precede hand actions in binary) */

@@ -5,9 +5,11 @@
  * (MD5: f23601102138f87c33025877767ebf76).
  *
  * 64-entry word table at UD 0x1DA890.  Monotonically increasing cumulative
- * experience thresholds (0–214).  Likely maps to 4 skill classes × 16 skill
- * levels (NEOPHYTE through ARCHMASTER), matching the 16 skill level names
- * at UD 0x1C9B6B and 4 champion classes at UD 0x1C9A32.
+ * experience thresholds (0–214).  The 64-entry shape may relate to four
+ * classes and sixteen progression slots, but the authenticated text table at
+ * UD 0x1C9B6B contains only 15 rank-name records.  Their relationship and the
+ * display name for progression slot 15 remain unproven; do not synthesize one.
+ * Four champion classes are independently recorded at UD 0x1C9A32.
  *
  * Preceded at UD 0x1DA870 by what appears to be class base-stat parameters:
  *   0x1DA870: 0, 0, 60, 50, 256, 256, 256, 256 (words)

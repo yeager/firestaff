@@ -3,7 +3,8 @@
 
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
  * Action/spell names from UD 0x09EEA3, null-terminated ASCII.
- * Skill level names from UD 0x089B6B. */
+ * Skill-level text comes from the canonical 15-entry source table at
+ * UD 0x1C9B6B in theron_v1_track02_champion_strings.c. */
 
 static const char *const g_action_spell_names[THERON_TRACK02_ACTION_SPELL_COUNT] = {
     /* 0-19: combat actions */
@@ -25,18 +26,6 @@ const char *theron_v1_track02_us_action_spell_name(unsigned int index) {
 
 size_t theron_v1_track02_us_action_spell_count(void) {
     return THERON_TRACK02_ACTION_SPELL_COUNT;
-}
-
-static const char *const g_skill_levels[THERON_TRACK02_SKILL_LEVEL_COUNT] = {
-    "NEOPHYTE", "NOVICE", "APPRENTICE", "JOURNEYMAN",
-    "CRAFTSMAN", "ARTISAN", "ADEPT", "EXPERT",
-    "` MASTER", "a MASTER", "b MASTER", "c MASTER",
-    "d MASTER", "e MASTER", "ARCHMASTER",
-};
-
-const char *theron_v1_track02_us_skill_level_name(unsigned int index) {
-    if (index >= THERON_TRACK02_SKILL_LEVEL_COUNT) return NULL;
-    return g_skill_levels[index];
 }
 
 size_t theron_v1_track02_us_skill_level_count(void) {

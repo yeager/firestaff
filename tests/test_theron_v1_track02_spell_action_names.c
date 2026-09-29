@@ -1,4 +1,5 @@
 #include "theron_v1_track02_spell_action_names.h"
+#include "theron_v1_track02_champion_strings.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +27,8 @@ int main(void) {
 
     assert(strcmp(theron_v1_track02_us_skill_level_name(0), "NEOPHYTE") == 0);
     assert(strcmp(theron_v1_track02_us_skill_level_name(7), "EXPERT") == 0);
+    assert(strcmp(theron_v1_track02_us_skill_level_name(8), "MASTER") == 0);
+    assert(strcmp(theron_v1_track02_us_skill_level_name(13), "MASTER") == 0);
     assert(strcmp(theron_v1_track02_us_skill_level_name(14), "ARCHMASTER") == 0);
 
     for (unsigned i = 0; i < 41; i++) {

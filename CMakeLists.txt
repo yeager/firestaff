@@ -53366,13 +53366,15 @@ set_tests_properties(theron_v1_chapter_marker_production_text_gate PROPERTIES
     LABELS "theron;production;text;hygiene")
 endif()
 
-# Theron Track 02 spell/action names + skill levels (real data from UD 0x09EEA3/0x089B6B)
+# Theron Track 02 spell/action names + canonical skill levels
+# (real data from UD 0x09EEA3/0x1C9B6B)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_spell_action_names.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_spell_action_names.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_spell_action_names.h")
     add_executable(test_theron_v1_track02_spell_action_names
         tests/test_theron_v1_track02_spell_action_names.c
         src/theron/theron_v1_track02_spell_action_names.c
+        src/theron/theron_v1_track02_champion_strings.c
     )
     target_include_directories(test_theron_v1_track02_spell_action_names PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -53383,6 +53385,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_spell_action
         NAME theron_v1_track02_spell_action_names
         COMMAND test_theron_v1_track02_spell_action_names
     )
+endif()
+
+if(BUILD_TESTING AND THERON_SOURCES AND EXISTS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_skill_levels_real_media.c")
+    add_executable(test_theron_v1_track02_skill_levels_real_media
+        tests/test_theron_v1_track02_skill_levels_real_media.c
+        src/theron/theron_v1_track02_champion_strings.c)
+    target_link_libraries(test_theron_v1_track02_skill_levels_real_media PRIVATE
+        firestaff_theron)
+    target_include_directories(test_theron_v1_track02_skill_levels_real_media PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_skill_levels_real_media PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_skill_levels_real_media
+        COMMAND test_theron_v1_track02_skill_levels_real_media)
+    set_tests_properties(theron_v1_track02_skill_levels_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;text")
 endif()
 
 # Theron Track 02 HUD strings (flask levels, directions, stat names, messages)

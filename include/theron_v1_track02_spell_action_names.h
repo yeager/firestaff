@@ -2,6 +2,7 @@
 #define THERON_V1_TRACK02_SPELL_ACTION_NAMES_H
 
 #include <stddef.h>
+#include "theron_v1_track02_champion_strings.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,11 +20,9 @@ extern "C" {
 const char *theron_v1_track02_us_action_spell_name(unsigned int index);
 size_t theron_v1_track02_us_action_spell_count(void);
 
-/* Skill level names from UD 0x089B6B.
- * 16 levels: NEOPHYTE through ARCHMASTER. */
-#define THERON_TRACK02_SKILL_LEVEL_COUNT  15u
-
-const char *theron_v1_track02_us_skill_level_name(unsigned int index);
+/* Skill level text is shared with the authentic 15-entry record at
+ * UD 0x1C9B6B in theron_v1_track02_champion_strings.c. Custom rank-prefix
+ * glyphs are not printable text. */
 size_t theron_v1_track02_us_skill_level_count(void);
 
 #ifdef __cplusplus

@@ -36,13 +36,13 @@ static int test_resources(void) {
 }
 
 static int test_skill_levels(void) {
-    TEST("16 skill levels (NEOPHYTE through ARCHMASTER)");
+    TEST("15 authentic skill-level text records");
     ASSERT(strcmp(theron_v1_track02_us_skill_level_name(0), "NEOPHYTE") == 0, "0");
     ASSERT(strcmp(theron_v1_track02_us_skill_level_name(7), "EXPERT") == 0, "7");
     ASSERT(strcmp(theron_v1_track02_us_skill_level_name(8), "MASTER") == 0, "8");
     ASSERT(strcmp(theron_v1_track02_us_skill_level_name(13), "MASTER") == 0, "13");
     ASSERT(strcmp(theron_v1_track02_us_skill_level_name(14), "ARCHMASTER") == 0, "14");
-    ASSERT(theron_v1_track02_us_skill_level_name(16) == NULL, "out of range");
+    ASSERT(theron_v1_track02_us_skill_level_name(15) == NULL, "unbound rank");
     PASS();
 }
 

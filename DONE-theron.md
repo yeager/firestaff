@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — remove unsupported Theron skill-rank labels
+
+- The skill-name API now shares the source-backed champion string table instead
+  of carrying a divergent duplicate. It exposes the 15 null-terminated US
+  Track 02 text records; ranks 8–13 are represented as `MASTER` while a
+  real-media test verifies their distinct `0x60`–`0x65` prefix bytes. Removed
+  the extra duplicated `ARCHMASTER` guard label at index 15 and the invented
+  printable `a`–`e` prefixes.
+- The new real-media CTest authenticates the US BIN by MD5 and checks all 15
+  records against UD `0x1C9B6B`. The skill-name, champion-string, and real-media
+  tests pass 3/3 against staged original US media.
+- The 64-entry experience-threshold table does not prove a display-name record
+  for progression slot 15. JP rank text/glyph data and original rank-icon
+  rendering remain unverified; those paths stay fail-closed/unclaimed.
+
 ## 2026-09-29 — verify all US dungeon-story literals against retail bytes
 
 - Added `theron_v1_track02_dungeon_lore_real_media`, which first verifies the
