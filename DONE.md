@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Translated the five new Custom Music folder dialog messages
+  into Swedish and recorded them in the catalog maintenance table. Reviewed
+  wording against Swedish terminology/translation memory and checked the
+  selected strings with l10n-lint, svlang, Hunspell and GNU gettext.
+
 - 2026-09-29: Data Directory folder callbacks now publish an independently
   owned result; Update starts the scan on the main thread. Destruction is
   safe before a late callback. An original PC34 archive passes folder

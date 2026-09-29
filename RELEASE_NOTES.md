@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Swedish launcher`: translated the five new custom-music folder selection,
+  cancellation, invalid-path and memory-error messages.
+
 - `Game data folder`: native folder selection now starts scanning on the
   main thread and safely handles a dialog returning after the menu closes.
 

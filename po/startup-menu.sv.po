@@ -1238,7 +1238,7 @@ msgstr "EGEN MUSIK"
 #: src/ui/menu_startup_m12.c:3152 src/ui/menu_startup_m12.c:3161
 #: src/ui/menu_startup_m12.c:13154 src/ui/menu_startup_m12.c:13159
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
-msgstr "CUSTOM MUSIC FOLDER UNCHANGED"
+msgstr "MAPP FÖR EGEN MUSIK OFÖRÄNDRAD"
 
 #: src/ui/menu_startup_m12.c:3153 src/ui/menu_startup_m12.c:3191
 #: src/ui/menu_startup_m12.c:3253
@@ -1247,7 +1247,7 @@ msgstr "SYSTEMETS FILDIALOG ÄR INAKTIVERAD"
 
 #: src/ui/menu_startup_m12.c:3162
 msgid "NOT ENOUGH MEMORY"
-msgstr "NOT ENOUGH MEMORY"
+msgstr "SLUT PÅ MINNE"
 
 #: src/ui/menu_startup_m12.c:3184
 msgid "CHOOSE UNICODE FONT"
@@ -1813,15 +1813,15 @@ msgstr "ESC: TILLBAKA  PILAR: NAVIGERA  ENTER: VÄLJ"
 
 #: src/ui/menu_startup_m12.c:13149
 msgid "CUSTOM MUSIC FOLDER SELECTED"
-msgstr "CUSTOM MUSIC FOLDER SELECTED"
+msgstr "MAPP FÖR EGEN MUSIK VALD"
 
 #: src/ui/menu_startup_m12.c:13155
 msgid "NO FOLDER SELECTED"
-msgstr "NO FOLDER SELECTED"
+msgstr "INGEN MAPP VALD"
 
 #: src/ui/menu_startup_m12.c:13160
 msgid "FOLDER MISSING OR PATH TOO LONG"
-msgstr "FOLDER MISSING OR PATH TOO LONG"
+msgstr "MAPP SAKNAS ELLER SÖKVÄG FÖR LÅNG"
 
 # Firestaff — startup-menu domain, Swedish catalog.
 # Swedish translations for the startup menu / launcher domain.

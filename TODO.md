@@ -56,9 +56,10 @@
   semantics were found in the current documentation. Define the supported
   changes per original edition before implementing or advertising PATCHED.
 
-- Verify the Windows DLL bundle in hosted CI, then publish it in the next
-  explicitly requested release. Issue #12 affects the existing 3.0.348 ZIP;
-  a source packaging fix does not replace that release asset.
+- Publish the verified Windows DLL bundle in the next explicitly requested
+  release. The isolated Windows runtime test passed in hosted CI run
+  36529772413. Issue #12 affects the existing 3.0.348 ZIP; a source packaging
+  fix does not replace that release asset.
 
 - Extend real-media start-menu launch coverage for DM1, CSB, DM2, Nexus and
   Theron's Quest. `m11_direct_launch_prepare_all_games` now drives the game-card,
