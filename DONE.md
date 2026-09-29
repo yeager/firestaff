@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Added opt-in full-duration DOS intro playback to the authentic
+  DM2 launcher test (`FIRESTAFF_DM2_LIVE_INTRO=1`). A fresh selected-media
+  session runs without clock writes, fast-forward or audio-queue clearing;
+  it verifies ordered delivery of all 217 frames, the 18,082,176-us source
+  duration, completion without rejection and return to the source menu.
+  This host completes in 18.717 seconds with SDL dummy audio; all 63 checks
+  pass without skips. Audible synchronization and physical display delivery
+  are separate from this real-time host-clock test.
+
 - 2026-09-29: Shared live SDL3 logical/drawable dimension queries between
   presentation, pointer mapping and window-size getters, closing the stale
   render/live-input split before resize-event handling. Dummy probes retain

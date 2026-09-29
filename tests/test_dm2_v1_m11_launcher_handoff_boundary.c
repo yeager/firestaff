@@ -633,6 +633,39 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1 &&
                     dm2_v1_sound_sdl_backend_get_gain() == 1.0f,
                 "real DM2 relaunch replaces previous muted effects preferences");
+    if (getenv("FIRESTAFF_DM2_LIVE_INTRO")) {
+        const uint32_t expectedFrames = view.dm2DosMvePresenter.boundary_count;
+        const uint64_t origin = view.dm2DosMvePresenter.clock_origin_us;
+        const uint64_t duration = expectedFrames * view.dm2DosMvePresenter.frame_period_us;
+        const uint64_t timeout = SDL_GetTicksNS() / UINT64_C(1000) + duration + UINT64_C(5000000);
+        uint32_t observedFrames = 0;
+        int ordered = 1;
+        /* Optional full-duration regression: no clock writes, fast-forward,
+         * queue clearing or substituted media in this playback session. */
+        expect_true(view.dm2DosMveIntroActive && expectedFrames > 0 &&
+                        duration > 0 && !view.bootProbeFastForward,
+                    "live intro starts from the selected original MVE timeline");
+        while (view.dm2DosMveIntroActive && SDL_GetTicksNS() / UINT64_C(1000) < timeout) {
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            if (view.dm2DosMvePresenter.initialized) {
+                uint32_t next = view.dm2DosMvePresenter.next_presentation_index;
+                if (next < observedFrames || next > observedFrames + 1u) ordered = 0;
+                observedFrames = next;
+            }
+            SDL_Delay(2U);
+        }
+        expect_true(ordered && observedFrames == expectedFrames &&
+                        !view.dm2DosMveIntroActive && view.dm2DosMveIntroComplete &&
+                        !view.dm2DosMveIntroRejected &&
+                        SDL_GetTicksNS() / UINT64_C(1000) - origin >= duration,
+                    "live original intro presents every frame for its source time and completes");
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(view.dm2State.startup_menu_active && !view.dm2State.level_loaded,
+                    "live intro returns to the source menu before New Game");
+        printf("live_intro_frames=%u duration_us=%llu elapsed_us=%llu\n",
+               observedFrames, (unsigned long long)duration,
+               (unsigned long long)(SDL_GetTicksNS() / UINT64_C(1000) - origin));
+    }
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
@@ -640,7 +673,7 @@ static void run_real_m12_dm2_handoff_if_available(void) {
 int main(void) {
 #if !defined(_WIN32)
     signal(SIGALRM, alarm_handler);
-    alarm(20);
+    alarm(getenv("FIRESTAFF_DM2_LIVE_INTRO") ? 60 : 20);
 #endif
     printf("=== DM2 V1 M12/M11 launcher handoff boundary ===\n");
 
