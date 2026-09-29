@@ -1,5 +1,15 @@
 # Firestaff DONE — DM2
 
+## 2026-09-29 — Amiga startup regression rerun
+
+- After rebuilding the application with the latest launcher input and music
+  changes, the authentic Amiga ZIP passes keyboard Back/reselect and pointer
+  launch routes. The normal loop completes SWSH/TITL, accepts New Game and
+  presents an original-asset runtime frame with no core fallback draws.
+  Separate CLI probes pass forward/backward, turns, strafes and action with
+  the expected party poses, and the archive hash remains unchanged. These
+  SDL dummy checks do not prove physical sound or original visual parity.
+
 ## 2026-09-29 — FM Towns startup regression rerun
 
 - The authentic Japanese ZIP passes M12 keyboard and platform-card pointer
