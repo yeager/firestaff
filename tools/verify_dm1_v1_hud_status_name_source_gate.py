@@ -29,7 +29,12 @@ def main() -> int:
     source = M11.read_text(encoding="utf-8")
     status_name = function_body(source, "static void m11_draw_dm1_status_name_text")
     party_panel = function_body(source, "static void m11_draw_party_panel")
-    screen = function_body(source, "void M11_GameView_Draw")
+    screen = function_body(source, "static void m11_game_view_draw_source")
+    draw = function_body(source, "void M11_GameView_Draw")
+    source_draw = draw.find("m11_game_view_draw_source(")
+    timer_draw = draw.find("m11_draw_session_timer_overlay(")
+    assert 0 <= source_draw < timer_draw, (
+        "public Draw must compose the source frame before the timer overlay")
 
     assert "g_activeOriginalFont" in status_name
     assert "M11_Font_IsLoaded(g_activeOriginalFont)" in status_name
@@ -45,6 +50,11 @@ def main() -> int:
     assert "m11_draw_text_centered_in_rect" not in party_panel, (
         "normal V1 status names must not be host-font centered")
 
+    # Earlier source-specific branches (for example CSB) can draw their own
+    # spell area and return. Lock the normal DM1 HUD lane, not those branches.
+    normal_start = screen.find("/* Normal V1 presentation intentionally")
+    assert normal_start >= 0, "normal DM1 HUD lane must remain identifiable"
+    screen = screen[normal_start:]
     party = screen.find("m11_draw_party_panel")
     icons = screen.find("m11_draw_v1_champion_icons")
     spell = screen.find("m11_draw_v1_spell_area_overlay")

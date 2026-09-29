@@ -14,7 +14,9 @@
   Repeated paused CSB redraw is byte-stable. The real DM1 object corpus passes
   43 chest residents and 976 records, including timer dismissal during the
   original food wait and source C08 completion. Main-loop syntax check and
-  independent review pass. Audio evidence uses SDL dummy devices; physical
+  independent review pass. The HUD source gate follows the extracted source
+  renderer and also locks source-before-timer composition in the public wrapper.
+  Audio evidence uses SDL dummy devices; physical
   audio output and window-focus AUTO PAUSE remain separate verification/work.
 
 - 2026-09-29: Launcher map/log preferences now replace stale QoL runtime
