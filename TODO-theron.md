@@ -21,6 +21,12 @@ fixture helper cannot synthetically unlock a real Track 02 exit. This keeps
 production fail-closed; it does not bind authentic object occurrences to the
 original pickup transaction or close the quest-item gameplay gap below.
 
+The production chapter marker can now recover US artifact display names from
+the hash-verified Track 02 retrieval-message records when the parallel item
+name bank is unavailable. The actual game-text framing is parsed with bounded
+checks. This is only a launcher text fallback: JP host glyph conversion and
+the original pickup-to-retrieval event remain unbound.
+
 ## Remaining work, ordered by the end-to-end playability dependency
 
 The repository has real-media startup, source-data loaders, bounded mechanics,

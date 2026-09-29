@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — source-bound retrieval-name fallback in production chapter marker
+
+- The production chapter marker now falls back to the selected US Track 02
+  retrieval record when that dungeon's item-name source is not bound. It
+  accepts only the authenticated source framing (`05 03`, `THERON has
+  retrieved`, the source `01` fragment separator, `the <name>.`) and rejects
+  malformed or non-ASCII display bytes. JP retrieval records remain raw until
+  their control bytes and Shift-JIS glyph path are proven for host rendering.
+- Extended the production real-media gate to remove the already-bound US item
+  name table and assert that the retrieval record alone displays “Shield
+  Defiant”; the same test continues checking authentic US and all seven JP
+  item-name paths. The focused production CTest passes 1/1 against locally
+  staged original media.
+- This verifies launcher text sourcing only. It does not prove a pickup,
+  retrieval event, quest-bit mutation, or full regional UI parity.
+
 ## 2026-09-29 — keep unbound quest-item helper out of authenticated levels
 
 - Authenticated Track 02 levels now fail closed in the legacy world quest-item

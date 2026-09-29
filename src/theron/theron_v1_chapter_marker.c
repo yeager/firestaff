@@ -30,10 +30,9 @@
 #include "firestaff_cp932.h"
 #endif
 
-/* Quest item display names come from the authenticated US Track 02 retrieval
- * table (UD 0x27715B-0x277272). Keep one source-owned order for both the
- * progression model and this launcher marker; a duplicated host table had
- * previously swapped the middle five treasures. */
+/* Quest item display names come from authenticated regional Track 02 banks.
+ * Item-name records are used when available; the original post-dungeon
+ * retrieval messages provide a separate source-locked ordinal fallback. */
 
 /* ── Local helpers ──────────────────────────────────────────────── */
 
@@ -121,6 +120,80 @@ static const char *quest_item_source_name(
     (void)buffer;
     (void)buffer_size;
     return theron_v1_track02_us_treasure_name(index);
+#endif
+}
+
+static const char *quest_item_retrieval_name(
+    const Theron_V1_World *world,
+    unsigned int index,
+    char *buffer,
+    size_t buffer_size) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    const uint8_t *bytes = NULL;
+    size_t size = 0u;
+    size_t start = 0u;
+    size_t end;
+    size_t i;
+    if (!world || !buffer || buffer_size == 0u ||
+        index >= THERON_TRACK02_RETRIEVAL_TEXT_COUNT ||
+        !theron_v1_world_retrieval_text_record_raw(
+            world, index, &bytes, &size))
+        return NULL;
+    /* The verified retail message is "THERON has retrieved the <name>.".
+     * Strip only that exact ASCII framing; reject malformed or regional
+     * encodings rather than manufacture a display name. */
+    if (world->track02_retrieval_text.variant == 2) {
+        static const char lead[] = "THERON has retrieved";
+        static const char item_intro[] = "the ";
+        size_t intro = 0u;
+        /* US message records begin with the source text controls 05 03;
+         * 01 bytes delimit the source's two text fragments. */
+        if (size < 2u || bytes[0] != 0x05u || bytes[1] != 0x03u)
+            return NULL;
+        start = 2u;
+        while (start < size &&
+               (bytes[start] == 0x01u || bytes[start] == 0x20u))
+            ++start;
+        if (size <= start + sizeof(lead) - 1u ||
+            memcmp(bytes + start, lead, sizeof(lead) - 1u) != 0)
+            return NULL;
+        start += sizeof(lead) - 1u;
+        while (start < size &&
+               (bytes[start] == 0x01u || bytes[start] == 0x20u))
+            ++start;
+        while (start < size && bytes[start] != 0x01u && bytes[start] != 0x00u) {
+            if (size - start >= sizeof(item_intro) - 1u &&
+                memcmp(bytes + start, item_intro,
+                       sizeof(item_intro) - 1u) == 0) {
+                intro = start;
+                break;
+            }
+            ++start;
+        }
+        if (!intro) return NULL;
+        start = intro + sizeof(item_intro) - 1u;
+        end = start;
+        while (end < size && bytes[end] != '.' && bytes[end] != 0x00u &&
+               bytes[end] != 0x01u)
+            ++end;
+        if (end >= size || bytes[end] != '.') return NULL;
+        if (end - start >= buffer_size) return NULL;
+        for (i = start; i < end; ++i) {
+            if (bytes[i] < 0x20u || bytes[i] > 0x7eu) return NULL;
+        }
+        memcpy(buffer, bytes + start, end - start);
+        buffer[end - start] = '\0';
+        return buffer;
+    }
+    /* JP bytes carry HuC6280 text-control framing and are not yet mapped to
+     * a proven host glyph stream; leave the name unavailable. */
+    return NULL;
+#else
+    (void)world;
+    (void)index;
+    (void)buffer;
+    (void)buffer_size;
+    return NULL;
 #endif
 }
 
@@ -270,6 +343,11 @@ static int theron_v1_chapter_marker_compute_internal(
                 ? quest_item_source_name(
                     world, (unsigned int)cur_bit, source_name,
                     sizeof(source_name)) : NULL;
+            if (!name) {
+                name = quest_item_retrieval_name(
+                    world, (unsigned int)cur_bit, source_name,
+                    sizeof(source_name));
+            }
             if (name) {
                 snprintf(marker->quest_summary,
                          sizeof(marker->quest_summary),
@@ -289,6 +367,11 @@ static int theron_v1_chapter_marker_compute_internal(
                 next_name = quest_item_source_name(
                     world, (unsigned int)(next_bit - 1), source_name,
                     sizeof(source_name));
+                if (!next_name) {
+                    next_name = quest_item_retrieval_name(
+                        world, (unsigned int)(next_bit - 1), source_name,
+                        sizeof(source_name));
+                }
             }
             if (next_name) {
                 snprintf(marker->quest_summary,

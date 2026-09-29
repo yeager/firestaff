@@ -31,6 +31,24 @@ int theron_v1_world_quest_item_name_raw(
         &world->track02_item_names[quest_index], out_bytes, out_size);
 }
 
+int theron_v1_world_retrieval_text_record_raw(
+    const Theron_V1_World *world,
+    unsigned int record_index,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size || record_index >= 7u ||
+        !world->track02_retrieval_text.valid ||
+        !world->track02_retrieval_text.retrieval_event_relation_proven ||
+        world->track02_retrieval_text.host_text_rendering_proven ||
+        !world->track02_retrieval_text.raw_message_sizes[record_index])
+        return 0;
+    *out_bytes = world->track02_retrieval_text.raw_messages[record_index];
+    *out_size = world->track02_retrieval_text.raw_message_sizes[record_index];
+    return 1;
+}
+
 static uint8_t *load_user_data(const char *path, size_t *out_size) {
     FILE *file = fopen(path, "rb");
     long raw_size;
@@ -73,6 +91,19 @@ static int bind_real_bank(Theron_V1_World *world,
     int ok = user_data && theron_v1_track02_decode_item_name_source(
         user_data, user_data_size, variant, dungeon_id, &source);
     if (ok) world->track02_item_names[dungeon_id - 1u] = source;
+    free(user_data);
+    return ok;
+}
+
+static int bind_real_retrieval(Theron_V1_World *world,
+                               const char *path,
+                               int variant) {
+    Theron_Track02RetrievalTextSource source;
+    size_t user_data_size = 0u;
+    uint8_t *user_data = load_user_data(path, &user_data_size);
+    int ok = user_data && theron_v1_track02_decode_retrieval_text_source(
+        user_data, user_data_size, variant, &source);
+    if (ok) world->track02_retrieval_text = source;
     free(user_data);
     return ok;
 }
@@ -138,10 +169,29 @@ int main(void) {
     }
     if (have_us) {
         if (!bind_real_bank(world, us_path, 2, 1u) ||
+            !bind_real_retrieval(world, us_path, 2) ||
             theron_v1_chapter_marker_compute_world(
                 &profile, world, NULL, &marker) != 0 ||
             strstr(marker.quest_summary, "next: SHIELD DEFIANT") == NULL) {
             fputs("FAIL: production marker did not publish authentic US name\n",
+                  stderr);
+            free(world);
+            return 1;
+        }
+        memset(world->track02_item_names, 0,
+               sizeof(world->track02_item_names));
+        if (theron_v1_chapter_marker_compute_world(
+                &profile, world, NULL, &marker) != 0 ||
+            strstr(marker.quest_summary, "next: Shield Defiant") == NULL ||
+            strstr(marker.quest_summary, "source name unavailable") != NULL) {
+            fprintf(stderr,
+                    "FAIL: authenticated US retrieval fallback was not used: %s\n",
+                    marker.quest_summary);
+            free(world);
+            return 1;
+        }
+        if (!bind_real_bank(world, us_path, 2, 1u)) {
+            fputs("FAIL: could not restore authentic US item-name bank\n",
                   stderr);
             free(world);
             return 1;
@@ -155,6 +205,11 @@ int main(void) {
             "ソウルケージ", "タザアーマー", "タザヘルメット", "復讐の剣"
         };
         unsigned int i;
+        if (!bind_real_retrieval(world, jp_path, 1)) {
+            fputs("FAIL: could not bind authentic JP retrieval text\n", stderr);
+            free(world);
+            return 1;
+        }
         for (i = 0u; i < 7u; ++i) {
             if (!bind_real_bank(world, jp_path, 1, i + 1u)) {
                 fputs("FAIL: could not bind authentic JP name bank\n", stderr);

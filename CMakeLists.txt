@@ -53334,6 +53334,7 @@ add_executable(test_theron_v1_chapter_marker_production_text_gate
     src/theron/theron_v1_chapter_marker.c
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_track02_item_name_source.c
+    src/theron/theron_v1_track02_retrieval_text_source.c
     src/shared/firestaff_cp932.c)
 target_include_directories(test_theron_v1_chapter_marker_production_text_gate
     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
