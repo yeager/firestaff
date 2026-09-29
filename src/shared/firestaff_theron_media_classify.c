@@ -1100,6 +1100,53 @@ int FirestaffTheronMedia_FindCuePairForTrack02(
         ? 0 : -1;
 }
 
+int FirestaffTheronMedia_FindCuePackageByTrack02Md5(
+    const char* root,
+    const char* expected_track02_md5,
+    FirestaffTheronMediaStatus* status) {
+    char cue_paths[FIRESTAFF_THERON_MEDIA_MAX_CUE_PATHS]
+                  [FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    FirestaffTheronMediaStatus selected;
+    int cue_count;
+    int i;
+    int found = 0;
+
+    if (!root || !expected_track02_md5 || strlen(expected_track02_md5) != 32U ||
+        !status) {
+        if (status) FirestaffTheronMedia_Init(status);
+        return -1;
+    }
+    cue_count = FirestaffTheronMedia_CollectCuePaths(
+        root, cue_paths, FIRESTAFF_THERON_MEDIA_MAX_CUE_PATHS);
+    for (i = 0; i < cue_count; ++i) {
+        FirestaffTheronMediaStatus candidate;
+        if (FirestaffTheronMedia_ClassifyPath(cue_paths[i], &candidate) != 0 ||
+            !candidate.has_cue || !candidate.has_valid_track02_mode1 ||
+            !candidate.paired_track01_track02 || !candidate.track01_path[0] ||
+            !candidate.track02_path[0] ||
+            !asset_file_matches_md5(candidate.track02_path,
+                                    expected_track02_md5)) {
+            continue;
+        }
+        if (found &&
+            (strcmp(selected.track01_path, candidate.track01_path) != 0 ||
+             strcmp(selected.track02_path, candidate.track02_path) != 0)) {
+            /* Do not choose arbitrarily between distinct original audio/data
+             * pairings that claim the same edition identity. */
+            FirestaffTheronMedia_Init(status);
+            return -1;
+        }
+        selected = candidate;
+        found = 1;
+    }
+    if (!found) {
+        FirestaffTheronMedia_Init(status);
+        return -1;
+    }
+    *status = selected;
+    return 0;
+}
+
 const char* FirestaffTheronMedia_LayoutId(FirestaffTheronMediaLayout layout) {
     switch (layout) {
         case FIRESTAFF_THERON_MEDIA_LAYOUT_RAW_BIN: return "raw-bin";

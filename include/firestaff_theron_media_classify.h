@@ -9,6 +9,7 @@ extern "C" {
 
 #define FIRESTAFF_THERON_MEDIA_PATH_CAPACITY 512
 #define FIRESTAFF_THERON_MEDIA_MAX_TRACKS 32
+#define FIRESTAFF_THERON_MEDIA_MAX_CUE_PATHS 160
 
 typedef enum {
     FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN = 0,
@@ -96,6 +97,13 @@ int FirestaffTheronMedia_CollectCuePaths(
 int FirestaffTheronMedia_FindCuePairForTrack02(
     const char* root,
     const char* verified_track02_path,
+    FirestaffTheronMediaStatus* status);
+
+/* Find a unique readable CUE-paired Track 01/02 package whose Track 02
+ * hashes to the caller's already-authorized edition identity. */
+int FirestaffTheronMedia_FindCuePackageByTrack02Md5(
+    const char* root,
+    const char* expected_track02_md5,
     FirestaffTheronMediaStatus* status);
 
 const char* FirestaffTheronMedia_LayoutId(FirestaffTheronMediaLayout layout);

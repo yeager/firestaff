@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — regional CUE pairing in mixed authentic media directories
+
+- Bound directory CUE selection to the requested edition's already-registered
+  Track 02 MD5, and require a readable, complete Track 01 AUDIO/Track 02 MODE1
+  pair. Distinct matching pairs fail closed. This prevents a higher-ranked
+  authentic USA CUE from displacing the requested JP CUE in a mixed regional
+  data directory. Hashing explicit bounded single-image CUE slices now uses
+  the same in-memory path reader as other virtual media; no game data is
+  extracted or cached.
+- On `trv2`, the authentic JP Rev. 1 media test retained its expected CUE
+  pair and the authentic USA single-image CUE Track 02 slice hashed in bounded
+  memory. The JP raw-BIN startup regression now only expects Track 01 CDDA
+  readiness when both split tracks are installed; the Track 02-only variant
+  remains a separate accepted data shape. These checks prove package identity
+  and Track 01 availability, not original gameplay CDDA selection or full
+  audio/event parity.
+
 ## 2026-09-29 — post-event controller-read evidence gate
 
 - Scripted PCE replays now default to a 1,048,576-read trace allowance (the

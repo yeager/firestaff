@@ -42530,6 +42530,23 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_firestaff_theron_media_classify
     )
 
+    # When authentic JP Rev. 1 CUE media is staged, prove its exact Track 02
+    # identity can be selected from a mixed regional data directory without
+    # borrowing the higher-ranked USA CUE package.
+    if(EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue" AND
+       EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 01).bin" AND
+       EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin")
+        add_test(
+            NAME theron_v1_jp_cue_pair_selection
+            COMMAND test_firestaff_theron_media_classify
+        )
+        set_tests_properties(theron_v1_jp_cue_pair_selection PROPERTIES
+            ENVIRONMENT
+                "FIRESTAFF_THERON_MEDIA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron;FIRESTAFF_THERON_MEDIA_EXPECTED_TRACK02_MD5=b7afb338ad31be1025b53f9aff12d73a"
+            LABELS "theron;real-media;cue;regional;no-synthetic"
+        )
+    endif()
+
     # ── CSB V1 CMP import glue (Utility Disk Champion Editor flow) ──
     # Wires the existing firestaff_cmp_decode.c decoder to the
     # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.

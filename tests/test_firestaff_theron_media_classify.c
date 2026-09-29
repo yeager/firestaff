@@ -65,12 +65,59 @@ static int test_authentic_theron_rar_split(void) {
     return 0;
 }
 
-int main(void) {
-    if (FirestaffTheronMedia_SelfTest() == 0 &&
-        test_authentic_theron_rar_split() == 0) {
-        printf("test_firestaff_theron_media_classify: PASS\n");
+static int test_authentic_theron_directory_cue_pair(void) {
+    const char *directory = getenv("FIRESTAFF_THERON_MEDIA_DIR");
+    const char *expected_md5 =
+        getenv("FIRESTAFF_THERON_MEDIA_EXPECTED_TRACK02_MD5");
+    char track02_md5[33] = {0};
+    FirestaffTheronMediaStatus media;
+
+    if (!directory || !directory[0] || !expected_md5 || !expected_md5[0]) {
         return 0;
     }
-    printf("test_firestaff_theron_media_classify: FAIL\n");
-    return 1;
+    if (FirestaffTheronMedia_FindCuePackageByTrack02Md5(
+            directory, expected_md5, &media) != 0 ||
+        !media.has_cue || !media.has_valid_track02_mode1 ||
+        !media.paired_track01_track02 || !media.track01_path[0] ||
+        !media.track02_path[0] ||
+        !asset_file_md5_hex(media.track02_path, track02_md5) ||
+        strcmp(track02_md5, expected_md5) != 0) {
+        fprintf(stderr,
+                "FAIL: authentic Theron data directory did not retain its expected CUE-paired Track 01/02 (cue=%d data=%d paired=%d layout=%s track02-md5=%s)\n",
+                media.has_cue, media.has_valid_track02_mode1,
+                media.paired_track01_track02,
+                FirestaffTheronMedia_LayoutId(media.layout),
+                track02_md5);
+        return 1;
+    }
+    printf("PASS: authentic Theron data directory retains expected CUE-paired Track 01/02 (%s; md5=%s)\n",
+           FirestaffTheronMedia_LayoutId(media.layout), track02_md5);
+    if (FirestaffTheronMedia_FindCuePackageByTrack02Md5(
+            directory, "168bd6a63784e91885df8c47be62ab5a", &media) == 0) {
+        memset(track02_md5, 0, sizeof(track02_md5));
+        if (!asset_file_md5_hex(media.track02_path, track02_md5) ||
+            strcmp(track02_md5, "168bd6a63784e91885df8c47be62ab5a") != 0) {
+            fputs("FAIL: authentic USA single-image CUE Track 02 slice hash changed\n",
+                  stderr);
+            return 1;
+        }
+        printf("PASS: authentic USA single-image CUE Track 02 slice hashes in bounded memory\n");
+    }
+    return 0;
+}
+
+int main(void) {
+    if (FirestaffTheronMedia_SelfTest() != 0 ||
+        test_authentic_theron_rar_split() != 0) {
+        printf("test_firestaff_theron_media_classify: FAIL\n");
+        return 1;
+    }
+    {
+        int rc = test_authentic_theron_directory_cue_pair();
+        if (rc != 0) {
+            return rc;
+        }
+    }
+    printf("test_firestaff_theron_media_classify: PASS\n");
+    return 0;
 }

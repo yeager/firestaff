@@ -456,11 +456,12 @@ int asset_file_md5_hex(const char *path, char outHex[33]) {
 
     if (!outHex) return 0;
     outHex[0] = '\0';
-    /* A virtual locator identifies an original archive/disk member, not a
-     * host path.  Hash its bytes in RAM so callers can keep using the same
-     * admission gate without materialising that member beside the archive. */
+    /* A virtual locator identifies an original archive/disk member or an
+     * explicit bounded slice of a single-image CUE BIN. Hash its bytes in
+     * RAM so callers can keep using the same admission gate without
+     * materialising game data beside the original media. */
     if (path && strstr(path, "::") != NULL) {
-        if (!asset_read_virtual_path_alloc(path, &bytes, &byte_count) ||
+        if (!asset_read_path_alloc(path, &bytes, &byte_count) ||
             !bytes || byte_count == 0U) {
             free(bytes);
             return 0;

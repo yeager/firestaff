@@ -9,8 +9,9 @@ fi
 app=$1
 data_root=${FIRESTAFF_THERON_JP_RAW_BIN_ROOT:-"$HOME/.firestaff/data/theron"}
 track02="$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin"
+track01="$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 01).bin"
 expected_track01_cdda=1
-if [[ ! -f "$track02" ]]; then
+if [[ ! -f "$track02" || ! -f "$track01" ]]; then
     track02="$data_root/TQJP02.bin"
     expected_track01_cdda=0
 fi

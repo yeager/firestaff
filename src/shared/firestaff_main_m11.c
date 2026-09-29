@@ -281,6 +281,20 @@ static int resolve_theron_native_track02(
             FSP_PATH_MAX) return 0;
         return 1;
     }
+    /* A mixed data directory can contain several authentic editions and
+     * containers. Select a complete CUE package only after binding its
+     * Track 02 bytes to the explicitly requested regional identity; generic
+     * directory classification may otherwise return a different region's
+     * higher-ranked CUE before this edition's loose BIN is found. */
+    if (FSP_DirExists(root)) {
+        FirestaffTheronMediaStatus media;
+        if (FirestaffTheronMedia_FindCuePackageByTrack02Md5(
+                root, expected_md5, &media) == 0 && media.cue_path[0] &&
+            snprintf(outPath, FSP_PATH_MAX, "%s", media.cue_path) <
+                FSP_PATH_MAX) {
+            return 1;
+        }
+    }
     /* Resolve loose files and explicitly enabled preservation archives by
      * the registered digest. Never trust a regional filename by itself; the
      * returned archive::member path is consumed in bounded memory. */

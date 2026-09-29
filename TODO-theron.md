@@ -2,6 +2,12 @@
 
 Reviewed 2026-09-29. Only open work is listed here.
 
+The mixed-region data-directory regression for authentic JP Rev. 1 CUE
+selection is closed by binding the Track 01/02 pair to the requested Track 02
+identity. Bounded hashing now accepts single-image CUE slices in RAM. Track 01
+availability is verified, but the original gameplay CDDA selection/event
+consumer remains open below.
+
 ## Remaining work, ordered by the end-to-end playability dependency
 
 The repository has real-media startup, source-data loaders, bounded mechanics,
