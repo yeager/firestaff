@@ -36,7 +36,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 |---|---|
 | Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
-| Dungeon Master II: Skullkeep | DOS, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga startup and source movement are covered, but its initial M11 viewport currently fails the real-GDAT frame receipt and remains fail-closed. Title timing/palette, menu handoff, input, audio and dungeon-composition parity remain open per edition. |
+| Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Full presentation, transitions, saves and gameplay remain evidence-gated. |
 
@@ -47,7 +47,7 @@ DM2 has bounded native routes from four authenticated source families:
 | Edition | Accepted source data | Verified runtime scope |
 |---|---|---|
 | DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; matching DOS saves are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
-| Amiga English | Original installer archive, read and verified in memory | New Game and source movement; initial M11 dungeon frame currently fails real-GDAT admission and remains fail-closed |
+| Amiga English | Original installer archive, read and verified in memory | M12 → SWSH/TITL → GDAT New Game → initial runtime frame and movement; receipt confirms real assets, zero core fallbacks and a visible frame |
 | FM Towns Japanese | Original HME-242 ZIP/disc image; non-Japanese text uses the built-in GDAT-keyed l10n bridge | Title sequence, New Game, inventory, movement, level transitions and creatures |
 | Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs, level transitions and combat/creature handoff |
 
