@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-29: PC34 DM1 Credits now waits for input without inheriting
+  the ENTRANCE.C 1800-tick timeout, matching SELECTOR.C:1002-1004. Other
+  entrance media keep their existing timed wait. Authentic runtime coverage
+  holds Credits for over 37 seconds before sending Return, then checks the
+  same score owner and a prompt return to the entrance. The long scenario
+  and both normal/no-device selector scenarios pass through CTest.
+
 - 2026-09-29: Restored PC34 selector-owned SONG playback after 60 VGA
   retraces, with bounded refill, source-requested 11126 Hz and the authentic
   sequence-index-1 loop. Credits preserves the stream; exits stop it.

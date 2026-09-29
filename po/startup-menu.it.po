@@ -30,20 +30,20 @@ msgstr "DUNGEON LOAD FAILED"
 msgid "CHECK DUNGEON.DAT"
 msgstr "CHECK DUNGEON.DAT"
 
-#: src/engine/main_loop_m11.c:430 src/engine/main_loop_m11.c:4274
-#: src/engine/main_loop_m11.c:4297 src/ui/menu_startup_m12.c:1046
+#: src/engine/main_loop_m11.c:430 src/engine/main_loop_m11.c:4280
+#: src/engine/main_loop_m11.c:4303 src/ui/menu_startup_m12.c:1046
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC RETURNS TO MENU"
 
-#: src/engine/main_loop_m11.c:4270 src/engine/main_loop_m11.c:4293
+#: src/engine/main_loop_m11.c:4276 src/engine/main_loop_m11.c:4299
 msgid "CSB UTILITY DISK NOT READY"
 msgstr "CSB UTILITY DISK NOT READY"
 
-#: src/engine/main_loop_m11.c:4272
+#: src/engine/main_loop_m11.c:4278
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 
-#: src/engine/main_loop_m11.c:4295
+#: src/engine/main_loop_m11.c:4301
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 

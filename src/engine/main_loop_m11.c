@@ -1895,6 +1895,7 @@ static unsigned int m11_v20_startup_remaining_delay_ms(
 }
 
 static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
+                                              int input_only,
                                               unsigned int vblank_delay_ms,
                                               Uint64 presentation_started_ms) {
     unsigned int ticks;
@@ -1909,7 +1910,9 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
     while (SDL_PollEvent(&ev)) {
         (void)ev;
     }
-    for (ticks = 0U; ticks < wait_ticks; ++ticks) {
+    /* SELECTOR.C:1002-1004 (MEDIA707_I34E_I34M) instead pumps F8367
+     * until F8327 reports input, without the ENTRANCE.C timeout. */
+    for (ticks = 0U; input_only || ticks < wait_ticks; ++ticks) {
         if (m11_intro_wait_for_focus()) return M11_ENTRANCE_COMMAND_QUIT;
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -1936,7 +1939,7 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
             }
 #endif
         }
-        if (v20TimingActive) {
+        if (v20TimingActive && !input_only) {
             const Uint64 nowMs = m11_intro_active_ticks();
             const Uint64 remainingMs = nowMs >= sourceDeadlineMs
                 ? 0U : sourceDeadlineMs - nowMs;
@@ -2064,9 +2067,12 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
     /* ENTRANCE.C F0442:1067-1091 polls after each VBlank. The command
      * stores the whole credits timeout; use the receipt per-VBlank cadence
      * here so one SDL_Delay does not block input/audio for 36 seconds. */
-    waitResult = m11_wait_for_entrance_credits_done(command.credits_wait_ticks,
-                                                    media_receipt->entrance_vblank_ms,
-                                                    presentationStartedMs);
+    waitResult = m11_wait_for_entrance_credits_done(
+        command.credits_wait_ticks,
+        media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 &&
+        !gameView->dm1FmtownsStartupReceiptValid &&
+        strcmp(gameView->sourceId, "dm1") == 0,
+        media_receipt->entrance_vblank_ms, presentationStartedMs);
     if (out_command) *out_command = command;
     return waitResult;
 }

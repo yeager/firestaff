@@ -8,7 +8,8 @@
   cadence and a bounded queue. Leaving the selector stops further music.
   Returning from Credits also avoids a null result-pointer write. Credits
   polls input and services music every frame instead of blocking for the
-  entire 36-second page timeout between input checks.
+  entire 36-second page timeout between input checks. PC34 Credits waits
+  for input instead of inheriting other editions' automatic timeout.
 
 - `Settings keyboard navigation`: Left and Right now switch launcher
   Settings tabs without changing gameplay or text-editor arrow handling.

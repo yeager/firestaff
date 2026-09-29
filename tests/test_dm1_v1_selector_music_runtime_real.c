@@ -25,6 +25,7 @@ typedef struct ScenarioState {
     enum Scenario scenario;
     int failures;
     int noAudio;
+    uint64_t creditsHoldMs;
     uint64_t lastWaitMs;
     int waitSeen;
     int creditsRequested;
@@ -109,6 +110,12 @@ static void observe_entrance(void* user, int phase, uint64_t activeWaitMs,
     if (phase == M11_ENTRANCE_PHASE_WAIT) {
         state->waitSeen = 1;
         state->lastWaitMs = activeWaitMs;
+        if (state->creditsSeen && !state->creditsDismissed) {
+            check(state, 0, "PC34 Credits waits for fresh input beyond 1800 VBlanks");
+            state->quitRequested = 1;
+            push_quit(state);
+            return;
+        }
         if (audio->titleMusicPlayRequestCount > state->playRequestsAtStart) {
             if (!state->sourceMusicStarted) {
                 state->sourceMusicStarted = 1;
@@ -167,7 +174,7 @@ static void observe_entrance(void* user, int phase, uint64_t activeWaitMs,
                   audio->titleMusicPlayRequestCount == state->playRequestsAtStart + 1,
                   "credits page does not restart the selector score");
         } else if (!state->creditsDismissed &&
-                   activeWaitMs >= state->creditsObservedAtMs + 200U) {
+                   activeWaitMs >= state->creditsObservedAtMs + state->creditsHoldMs) {
             check(state, audio->musicStream == state->musicStreamAtCredits,
                   "credits wait preserves the same SDL music stream owner");
             check(state,
@@ -297,6 +304,8 @@ static int run_scenario(const char* dataDir, enum Scenario scenario,
     memset(&state, 0, sizeof(state));
     state.scenario = scenario;
     state.noAudio = expectNoAudio;
+    state.creditsHoldMs = getenv("FIRESTAFF_TEST_CREDITS_LONG_WAIT")
+        ? 37000U : 200U;
     state.playRequestsAtStart = view.audioState.titleMusicPlayRequestCount;
     /* A bounded test watchdog. It remains long enough for source events and
      * only replaces the no-input policy; all observed input is pushed through
@@ -308,7 +317,7 @@ static int run_scenario(const char* dataDir, enum Scenario scenario,
     fprintf(stderr, "selector timing %s: last_wait=%llu credits_start=%llu\n",
             label, (unsigned long long)state.lastWaitMs,
             (unsigned long long)state.creditsObservedAtMs);
-    check(&state, state.lastWaitMs < 5000U,
+    check(&state, state.lastWaitMs < state.creditsHoldMs + 4800U,
           "source input completes before the automatic Enter watchdog");
     if (scenario == SCENARIO_CREDITS_THEN_QUIT) {
         check(&state, state.creditsSeen && state.creditsDismissed,
@@ -389,12 +398,14 @@ int main(void)
 
     failures += run_scenario(dataDir, SCENARIO_CREDITS_THEN_QUIT,
         "real PC34 selector survives credits and stops on Quit", noAudio);
-    failures += run_scenario(dataDir, SCENARIO_ENTER,
-        "real PC34 selector stops on Enter", noAudio);
-    failures += run_scenario(dataDir, SCENARIO_RESUME,
-        "real PC34 selector stops on Resume", noAudio);
-    failures += run_scenario(dataDir, SCENARIO_EARLY_QUIT,
-        "real PC34 early quit before music deadline", noAudio);
+    if (!getenv("FIRESTAFF_TEST_CREDITS_LONG_WAIT")) {
+        failures += run_scenario(dataDir, SCENARIO_ENTER,
+            "real PC34 selector stops on Enter", noAudio);
+        failures += run_scenario(dataDir, SCENARIO_RESUME,
+            "real PC34 selector stops on Resume", noAudio);
+        failures += run_scenario(dataDir, SCENARIO_EARLY_QUIT,
+            "real PC34 early quit before music deadline", noAudio);
+    }
 
     M11_Render_Shutdown();
     SDL_QuitSubSystem(SDL_INIT_VIDEO |

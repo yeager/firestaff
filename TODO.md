@@ -23,9 +23,6 @@
   looping, authentic PCM at both loop seams, source-requested 11126 Hz,
   Credits continuity and stop/rebind/pause ownership now pass local tests.
   PIT/Tandy device divisor timing and physical listening remain unverified.
-  The shared Credits page still uses an ENTRANCE.C 1800-tick timeout;
-  PC34 SELECTOR.C:1002-1004 waits for input without that timeout. Complete
-  edition-specific Credits timeout parity separately.
 
 - Connect the active Audio SOUNDTRACK choice to playback. The menu exposes
   ORIGINAL/REMASTERED/CUSTOM and exports `soundtrackMode`, but no runtime

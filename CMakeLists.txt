@@ -37972,7 +37972,16 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_selec
         SKIP_RETURN_CODE 77
         TIMEOUT 30
         ENVIRONMENT "FIRESTAFF_TEST_NO_AUDIO=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy")
+    add_test(NAME dm1_v1_selector_credits_input_only_real
+             COMMAND test_dm1_v1_selector_music_runtime_real)
+    set_tests_properties(dm1_v1_selector_credits_input_only_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        TIMEOUT 60
+        LABELS "dm1;dos;pc34;audio;real-media;in-memory;skip-safe"
+        ENVIRONMENT "FIRESTAFF_TEST_CREDITS_LONG_WAIT=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy")
     if(DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
+        set_property(TEST dm1_v1_selector_credits_input_only_real APPEND PROPERTY
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip")
         set_tests_properties(dm1_v1_selector_music_runtime_real PROPERTIES
             ENVIRONMENT
                 "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
