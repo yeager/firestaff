@@ -93,11 +93,11 @@ jobs:
             generator: Ninja
             exe: '.exe'
             # Compile every production object through the shipping executable,
-            # then the two portable headless probes.  Building all 940 CMake
+            # then three portable headless probes. Building all 940 CMake
             # targets on MSYS2 is redundant with the full Ubuntu/macOS CTest
             # matrix and can exceed the runner limit before any Windows binary
             # is exercised.
-            build_targets: 'firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe'
+            build_targets: 'firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe firestaff_m12_startup_flow_probe'
             full_ctest: false
             build_parallel: '3'
 
@@ -173,6 +173,10 @@ jobs:
         run: |
           ctest --test-dir build --output-on-failure \
             -R '^(csb_fssb_production_boundary|csb_compact_save_import_production_boundary|csb_cmp_import_production_boundary|csb_hidden_item_skip_production_boundary|csb_viewport_side_wall_production_boundary|csb_viewport_contract_bundle_production_boundary)$'
+
+      - name: Run portable M12 startup menu test (Windows)
+        if: runner.os == 'Windows'
+        run: ctest --test-dir build --output-on-failure -R '^m12_startup_menu$'
 
       - name: Run unit tests (ctest)
         if: matrix.full_ctest
