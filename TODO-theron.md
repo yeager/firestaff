@@ -4183,6 +4183,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   seeded copy remain outside Git under
   `/home/trv2/work/firestaff-theron-inventory-id-integrity-20260928/.codex-scratch/`.
 
+- 🔒 2026-09-29 read-only audit of that retained controller trace: of
+  1,048,575 CPU-read rows, 524,287/524,286 are at the System Card poll PCs
+  `$E4B7`/`$E4C8`; the two remaining reads are at `$E4B4`/`$E4C5`. The
+  title-wait and Drator menu poll
+  sites `$0865`, `$7557`, `$6E44`, `$5C97` and `$6DBD` have zero reads. This
+  confirms the scheduled RUN was consumed only by the System Card loop; the
+  capture never reached the title/menu route, so changing only the controller
+  trace bound or repeating the same timing cannot establish gameplay. The
+  trace remains private on trv2 and no game payload was copied into the repo.
+
 ## 2026-09-27 — authentic closed-door boundary coverage
 
 - ✅ The real-data mechanics probe now classifies every source-backed door in
