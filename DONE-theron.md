@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-29 — post-event controller-read evidence gate
+
+- Scripted PCE replays now default to a 1,048,576-read trace allowance (the
+  interactive route retains 65,536) and must show an original CPU read from
+  controller register `$1000` after each scheduled event-frame group before
+  the capture appends a consumption receipt. Events on the same frame combine
+  before that poll. The verifier rejects missing reads, over-limit traces and
+  events left at the read ceiling.
+- Looped fixtures cover one and multiple consumed events, an event at the read
+  cap, and an event with no later CPU poll. `bash -n`,
+  `tests/test_theron_v1_mednafen_live_capture_script.sh`, and
+  `git diff --check` pass. These fixtures verify the capture gate only; no new
+  authentic replay has yet proven a post-event CPU read or menu/game response.
+
 ## 2026-09-29 — Linux X11 host-input capture support
 
 - Extended the research-only Mednafen capture runner to send host keyboard

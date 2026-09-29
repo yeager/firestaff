@@ -22,9 +22,77 @@ loader_write_v3_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write
 input_grab_patch=$repo/scripts/mednafen_1.32.1_theron_input_grab_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 x11_keymap=$repo/scripts/theron_x11_keymap.sh
+scripted_input_consumption_verifier=$repo/scripts/verify_theron_scripted_input_consumption.sh
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
+    exit 1
+fi
+if [[ ! -x "$scripted_input_consumption_verifier" ]]; then
+    printf '%s\n' 'FAIL: scripted-input consumption verifier is not executable' >&2
+    exit 1
+fi
+mkdir -p "$repo/build"
+input_test_dir=$(mktemp -d "$repo/build/theron-input-consumption.XXXXXX")
+trap 'rm -rf -- "$input_test_dir"' EXIT
+cat >"$input_test_dir/consumed.trace" <<'THERON_CONSUMED_INPUT'
+source=mednafen-pce-scripted-input
+scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
+scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
+pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+THERON_CONSUMED_INPUT
+consumption_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/consumed.trace" run@9600:90 131072)
+if [[ "$consumption_receipt" != *'event_frames_followed_by_controller_read=1'* ||
+      "$consumption_receipt" != *'consumption_boundary=verified'* ]]; then
+    printf 'FAIL: post-event controller read was not verified:\n%s\n' \
+        "$consumption_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/multiple-events.trace" <<'THERON_MULTI_EVENT_INPUT'
+scripted_pce_input_event frame=10 key=run mask=0008 hold=1
+pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+scripted_pce_input_event frame=12 key=ii mask=0002 hold=1
+pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0
+THERON_MULTI_EVENT_INPUT
+"$scripted_input_consumption_verifier" \
+    "$input_test_dir/multiple-events.trace" run@10,ii@12 4 >/dev/null
+cat >"$input_test_dir/same-frame-events.trace" <<'THERON_SAME_FRAME_INPUT'
+scripted_pce_input_event frame=20 key=run mask=0008 hold=1
+scripted_pce_input_event frame=20 key=ii mask=0002 hold=1
+pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0
+THERON_SAME_FRAME_INPUT
+"$scripted_input_consumption_verifier" \
+    "$input_test_dir/same-frame-events.trace" run@20,ii@20 2 >/dev/null
+cat >"$input_test_dir/event-at-read-cap.trace" <<'THERON_CAPPED_INPUT'
+pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
+pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
+scripted_pce_input_event frame=12 key=run mask=0008 hold=1
+THERON_CAPPED_INPUT
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/event-at-read-cap.trace" run@12 2 \
+    >"$input_test_dir/capped.stdout" 2>"$input_test_dir/capped.stderr"; then
+    printf '%s\n' 'FAIL: scripted input at the read-trace cap was accepted without a later CPU read' >&2
+    exit 1
+fi
+if ! grep -Fq 'final scripted event frame has no subsequent controller-port read' \
+    "$input_test_dir/capped.stderr"; then
+    printf '%s\n' 'FAIL: capped scripted input rejection lacked a precise diagnostic' >&2
+    exit 1
+fi
+cat >"$input_test_dir/unconsumed-event.trace" <<'THERON_UNCONSUMED_INPUT'
+scripted_pce_input_event frame=20 key=run mask=0008 hold=1
+pce_input_write cpu_pc=8123 register=1000 data=0008 sel_before=0 clr_before=0 index=0
+THERON_UNCONSUMED_INPUT
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/unconsumed-event.trace" run@20 2 \
+    >"$input_test_dir/unconsumed.stdout" 2>"$input_test_dir/unconsumed.stderr"; then
+    printf '%s\n' 'FAIL: scripted input without a controller-port read was accepted' >&2
+    exit 1
+fi
+if ! grep -Fq 'final scripted event frame has no subsequent controller-port read' \
+    "$input_test_dir/unconsumed.stderr"; then
+    printf '%s\n' 'FAIL: unconsumed scripted input rejection lacked a precise diagnostic' >&2
     exit 1
 fi
 if route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
@@ -410,9 +478,13 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
 fi
 if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit"' "$script" ||
+   ! grep -Fq 'input_trace_limit_default=65536' "$script" ||
+   ! grep -Fq 'input_trace_limit_default=1048576' "$script" ||
    ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 1048576' "$script" ||
+   ! grep -Fq 'verify_theron_scripted_input_consumption.sh' "$script" ||
+   ! grep -Fq 'event_frames_followed_by_controller_read' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'input_trace_limit=%s' "$script"; then
-    printf 'FAIL: live capture must expose, bound, and receipt its controller input trace limit\n' >&2
+    printf 'FAIL: live capture must bound the controller trace and require post-event CPU polling\n' >&2
     exit 1
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$build_script" ||

@@ -16,6 +16,16 @@ data.
    transaction chain. Current loaders and mechanics expose authentic bytes and
    bounded routes, but stairs, quest artifacts, pickups/use, creatures, combat,
    and chapter completion still lack their corresponding original consumers.
+   The authentic cold-start RUN replay previously reached its 65,536-read
+   controller trace ceiling at the scheduled event, so later original CPU
+   polling was not observable. A fresh authentic-media capture with 131,072
+   allowed reads likewise emitted RUN at frame 9600 only after exhausting all
+   logged controller reads; its trace cannot establish a later poll. The
+   research capture now defaults scripted plans to the maximum supported
+   1,048,576-read bound and requires a post-event controller-port read before
+   emitting a scripted-input consumption receipt. Loop fixtures verify that
+   gate only; an authentic replay still needs to pass it, and a controller
+   read alone would not establish title selection or gameplay.
 2. **Complete a real dungeon transaction and progress save.** Bind the quest
    artifact's name, object occurrence, pickup, exit, and next-chapter handoff
    to original gameplay consumers. The authentic US DMS-SG.001 container,

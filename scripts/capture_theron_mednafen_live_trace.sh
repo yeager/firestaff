@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source "$script_dir/theron_x11_keymap.sh"
+scripted_input_consumption_verifier="$script_dir/verify_theron_scripted_input_consumption.sh"
 mednafen_bin=${MEDNAFEN_BIN:-}
 cue=${THERON_US_CUE:-${THERON_CUE:-}}
 system_card=${THERON_SYSTEM_CARD:-}
@@ -51,7 +52,14 @@ rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
-input_trace_limit=${THERON_CAPTURE_INPUT_TRACE_LIMIT:-65536}
+input_trace_limit_default=65536
+if [[ -n "$replay_input_script" ]]; then
+    # Long boot/replay plans can reach the old 65,536-read ceiling before the
+    # scheduled input is polled by the original CPU. Keep enough post-event
+    # reads to prove consumption instead of treating the event log as proof.
+    input_trace_limit_default=1048576
+fi
+input_trace_limit=${THERON_CAPTURE_INPUT_TRACE_LIMIT:-$input_trace_limit_default}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -962,6 +970,7 @@ command_code_snapshot="${trace}.command-code"
 command_ram_before_snapshot="${trace}.command-before.ram"
 command_ram_after_snapshot="${trace}.command-after.ram"
 transition_receipt="${trace}.transition"
+scripted_input_consumption_receipt="${trace}.scripted-input-consumption"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
@@ -974,7 +983,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ "$capture_clonecd_track02" == 1 ]]; then
@@ -1803,6 +1812,15 @@ fi
 } >"$transition_receipt"
 if ! verify_scripted_input_masks; then
     exit 1
+fi
+if [[ -n "$replay_input_script" ]]; then
+    if ! "$scripted_input_consumption_verifier" \
+        "$input_trace" "$replay_input_script" "$input_trace_limit" \
+        >"$scripted_input_consumption_receipt"; then
+        cat "$scripted_input_consumption_receipt" >&2
+        exit 1
+    fi
+    cat "$scripted_input_consumption_receipt" >>"$transition_receipt"
 fi
 if [[ "$host_input_requested" == 1 && "$transition_host_key_count" -eq 0 ]]; then
     printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch; sdl_events=%s window_events=%s focus_events=%s (exit=%s)\n' "$transition_host_sdl_event_count" "$transition_host_window_event_count" "$transition_host_focus_state_count" "$status"
