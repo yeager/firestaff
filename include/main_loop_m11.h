@@ -170,6 +170,9 @@ M12_MenuInput M11_TheronTouchButtonInput(int longPress);
    events for a launcher input mode. `configuredEnabled` preserves an
    operator's persisted gamepad.toml choice; M12 modes 1 (keyboard/mouse) and
    2 (touch) additionally suppress the controller route. */
+/* Headless video has no desktop focus; all other drivers honor the setting. */
+int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver);
+
 int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled);
 
 /* Held keyboard/gamepad movement is sampled at the source input boundary,

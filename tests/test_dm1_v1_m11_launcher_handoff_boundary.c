@@ -1,4 +1,5 @@
 #include "m11_qol_runtime.h"
+#include "main_loop_m11.h"
 /*
  * test_dm1_v1_m11_launcher_handoff_boundary.c
  *
@@ -192,6 +193,109 @@ static void expect_mode_true(int condition, int mode, const char* suffix) {
     expect_true(condition, message);
 }
 
+/* Optional desktop-only evidence: use the window manager's real focus state,
+ * never injected focus events. The ordinary headless gate remains unchanged. */
+static int native_focus_wait(SDL_Window* window, int focused) {
+    Uint64 deadline = SDL_GetTicks() + 2000U;
+    do {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) return 0;
+        }
+        if (((SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0) == focused)
+            return 1;
+        SDL_Delay(10U);
+    } while (SDL_GetTicks() < deadline);
+    return 0;
+}
+
+static void run_native_focus_probe(M11_GameViewState* view,
+                                     const M12_StartupMenuState* menu, int mode) {
+    SDL_Window* window = NULL;
+    const char* driver;
+    void* world_copy = NULL;
+    int before;
+    unsigned int phase;
+    int focused;
+    int video_initialized = 0;
+    if (!getenv("FIRESTAFF_NATIVE_FOCUS_PROBE") ||
+        mode != M12_PRESENTATION_V1_ORIGINAL) return;
+    if (!view->active) {
+        expect_true(0, "native focus probe unavailable: original-media session not active");
+        return;
+    }
+    if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
+        fprintf(stderr, "Native focus video unavailable: %s\n", SDL_GetError());
+        expect_true(0, "native focus probe requires a desktop video driver");
+        return;
+    }
+    video_initialized = 1;
+    driver = SDL_GetCurrentVideoDriver();
+    if (!driver || strcmp(driver, "dummy") == 0 || strcmp(driver, "offscreen") == 0) {
+        expect_true(0, "native focus probe unavailable with headless video");
+        goto cleanup;
+    }
+    window = SDL_CreateWindow("Firestaff original-media focus probe", 640, 400,
+                               SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    if (!window) {
+        fprintf(stderr, "Native focus window unavailable: %s\n", SDL_GetError());
+        expect_true(0, "native focus probe creates a real desktop window");
+        goto cleanup;
+    }
+    SDL_ShowWindow(window);
+    SDL_RaiseWindow(window);
+    focused = native_focus_wait(window, 1);
+    expect_true(focused, "native focus probe obtains actual SDL input focus within two seconds");
+    if (!focused) goto cleanup;
+    world_copy = malloc(sizeof(view->world));
+    if (!world_copy) {
+        expect_true(0, "native focus probe allocates original world snapshot");
+        goto cleanup;
+    }
+    memcpy(world_copy, &view->world, sizeof(view->world));
+    phase = view->v1FoodVblankPhase;
+    before = SessionTimerRuntime_RemainingSeconds(&view->sessionTimerRuntime);
+    (void)M11_GameView_TickSessionTimerMs(view, 500U);
+    SDL_HideWindow(window);
+    focused = native_focus_wait(window, 0);
+    expect_true(focused, "native window hide causes actual SDL input focus loss");
+    if (!focused) goto cleanup;
+    M11_GameView_SetPauseReason(view, M11_GAME_PAUSE_REASON_FOCUS,
+        M11_FocusPauseRequired(1,
+            (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0, driver));
+    expect_true(M11_GameView_IsPaused(view) && view->audioState.hostPaused,
+                "actual native focus loss pauses original-media runtime and audio");
+    (void)M11_GameView_AdvanceIdleTick(view);
+    (void)M11_GameView_AdvanceFoodClockMs(view, 1000U);
+    (void)M11_GameView_TickSessionTimerMs(view, 5000U);
+    expect_true(memcmp(world_copy, &view->world, sizeof(view->world)) == 0 &&
+                    phase == view->v1FoodVblankPhase &&
+                    before == SessionTimerRuntime_RemainingSeconds(&view->sessionTimerRuntime) &&
+                    view->sessionTimerRemainderMs == 500U,
+                "native focus pause freezes original world, food clock and fractional timer");
+    SDL_ShowWindow(window);
+    SDL_RaiseWindow(window);
+    focused = native_focus_wait(window, 1);
+    expect_true(focused, "native window regains actual SDL input focus within two seconds");
+    if (!focused) goto cleanup;
+    M11_GameView_SetPauseReason(view, M11_GAME_PAUSE_REASON_FOCUS,
+        M11_FocusPauseRequired(1,
+            (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0, driver));
+    expect_true(!M11_GameView_IsPaused(view) && !view->audioState.hostPaused &&
+                    memcmp(world_copy, &view->world, sizeof(view->world)) == 0,
+                "native focus return resumes audio without changing original world data");
+    (void)M11_GameView_TickSessionTimerMs(view, 500U);
+    expect_true(SessionTimerRuntime_RemainingSeconds(&view->sessionTimerRuntime) == before - 1 &&
+                    view->sessionTimerRemainderMs == 0U,
+                "native focus return resumes the retained fractional timer");
+cleanup:
+    M11_GameView_SetPauseReason(view, M11_GAME_PAUSE_REASON_FOCUS, 0);
+    M11_GameView_InitFromMenuSessionTimer(view, menu);
+    free(world_copy);
+    if (window) SDL_DestroyWindow(window);
+    if (video_initialized) SDL_QuitSubSystem(SDL_INIT_VIDEO);
+}
+
 static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) {
     M12_LaunchIntent intent;
     M11_GameViewState launcher_view;
@@ -201,6 +305,11 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     int cheats = mode != M12_PRESENTATION_V22_MODERN;
     const int speedMultipliers[] = { 50, 100, 150 };
 
+    expect_mode_true(!M11_FocusPauseRequired(1, 0, "dummy") &&
+                         !M11_FocusPauseRequired(0, 0, "cocoa") &&
+                         !M11_FocusPauseRequired(1, 1, "cocoa") &&
+                         M11_FocusPauseRequired(1, 0, "cocoa"), mode,
+                     "focus policy honors the setting and excludes headless video");
     menu->selectedIndex = 0;
     menu->activatedIndex = 0;
     menu->launchRequested = 1;
@@ -239,6 +348,7 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_GameView_Init(&launcher_view);
     expect_mode_true(M11_GameView_OpenSelectedMenuEntry(&launcher_view, menu) == 1,
                      mode, "M11 opens through M12 selected-menu entry");
+    run_native_focus_probe(&launcher_view, menu, mode);
     expect_mode_true(M11_QolRuntime_GetSpeedMultiplier() ==
                          (cheats ? speedMultipliers[speed] : 100), mode,
                      "M11 applies selected speed and cheats gate to live timing");
@@ -298,6 +408,32 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
                                  M11_GameView_HandlePointerButtonRelease(&launcher_view, 100, 100, 1) == M11_GAME_INPUT_IGNORED, mode,
                              "forced pause blocks pointer ingress behind the modal");
         }
+        M11_GameView_InitFromMenuSessionTimer(&launcher_view, menu);
+        (void)M11_GameView_TickSessionTimerMs(&launcher_view, 500);
+        M11_GameView_SetPauseReason(&launcher_view, M11_GAME_PAUSE_REASON_FOCUS, 1);
+        (void)M11_GameView_TickSessionTimerMs(&launcher_view, 5000);
+        expect_mode_true(M11_GameView_IsPaused(&launcher_view) &&
+                             launcher_view.sessionTimerRemainderMs == 500 &&
+                             SessionTimerRuntime_RemainingSeconds(&launcher_view.sessionTimerRuntime) == before, mode,
+                         "focus pause preserves timer seconds and fractional remainder");
+        M11_GameView_SetPauseReason(&launcher_view, M11_GAME_PAUSE_REASON_FOCUS, 0);
+        (void)M11_GameView_TickSessionTimerMs(&launcher_view, (uint32_t)before * 1000U);
+        M11_GameView_SetPauseReason(&launcher_view, M11_GAME_PAUSE_REASON_FOCUS, 1);
+        M11_GameView_SetPauseReason(&launcher_view, M11_GAME_PAUSE_REASON_FOCUS, 0);
+        expect_mode_true(M11_GameView_IsPaused(&launcher_view) &&
+                             launcher_view.sessionTimerForcedPauseDialogActive &&
+                             launcher_view.audioState.hostPaused, mode,
+                         "focus return does not release the timer pause");
+        M11_GameView_SetPauseReason(&launcher_view, M11_GAME_PAUSE_REASON_FOCUS, 1);
+        M11_GameView_ClearSessionTimerForcedPause(&launcher_view);
+        expect_mode_true(M11_GameView_IsPaused(&launcher_view) &&
+                             launcher_view.audioState.hostPaused &&
+                             !launcher_view.sessionTimerForcedPauseDialogActive, mode,
+                         "clearing timer pause preserves overlapping focus pause");
+        M11_GameView_SetPauseReason(&launcher_view, M11_GAME_PAUSE_REASON_FOCUS, 0);
+        expect_mode_true(!M11_GameView_IsPaused(&launcher_view) &&
+                             !launcher_view.audioState.hostPaused, mode,
+                         "last pause owner releases the original-media audio runtime");
         M11_GameView_InitFromMenuSessionTimer(&launcher_view, menu);
     }
     expect_mode_true(launcher_view.startedFromLauncher == 1, mode,

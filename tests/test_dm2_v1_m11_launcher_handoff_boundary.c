@@ -61,6 +61,7 @@
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -492,9 +493,41 @@ static void run_real_m12_dm2_handoff_if_available(void) {
         expect_true(view.dm2DosMvePresenter.next_presentation_index == movieIndex &&
                         view.dm2DosMvePresenter.audio.queued_source_packets == moviePackets,
                     "paused draw does not advance the DOS movie or queue source PCM");
-        M11_GameView_ClearSessionTimerForcedPause(&view);
-        expect_true(!view.audioState.hostPaused && !view.sessionTimerForcedPauseDialogActive,
-                    "clearing forced pause releases host audio ownership");
+        {
+            uint64_t origin = view.dm2DosMvePresenter.clock_origin_us;
+            uint64_t lastHost = view.dm2DosMvePresenter.last_host_time_us;
+            M11_GameView_SetPauseReason(&view, M11_GAME_PAUSE_REASON_FOCUS, 1);
+            M11_GameView_ClearSessionTimerForcedPause(&view);
+            expect_true(M11_GameView_IsPaused(&view) && view.audioState.hostPaused &&
+                            view.dm2DosMvePresenter.audio.host_paused &&
+                            !view.sessionTimerForcedPauseDialogActive,
+                        "DOS focus pause survives clearing overlapping timer pause");
+            view.bootProbeFastForward = 1;
+            M11_GameView_Draw(&view, timerFrame, 320, 200);
+            view.bootProbeFastForward = 0;
+            expect_true(view.dm2DosMvePresenter.next_presentation_index == movieIndex &&
+                            view.dm2DosMvePresenter.audio.queued_source_packets == moviePackets &&
+                            view.dm2DosMvePresenter.clock_origin_us == origin &&
+                            view.dm2DosMvePresenter.last_host_time_us == lastHost &&
+                            (!view.dm2DosMvePresenter.audio.sdl_stream ||
+                             SDL_AudioStreamDevicePaused((SDL_AudioStream*)
+                                 view.dm2DosMvePresenter.audio.sdl_stream)),
+                        "focus-only draw freezes authentic DOS MVE frames, clock and PCM delivery");
+            SDL_Delay(2U);
+            M11_GameView_SetPauseReason(&view, M11_GAME_PAUSE_REASON_FOCUS, 0);
+            expect_true(!M11_GameView_IsPaused(&view) && !view.audioState.hostPaused &&
+                            !view.dm2DosMvePresenter.audio.host_paused &&
+                            view.dm2DosMvePresenter.clock_origin_us > origin &&
+                            view.dm2DosMvePresenter.last_host_time_us - lastHost ==
+                                view.dm2DosMvePresenter.clock_origin_us - origin,
+                        "last DOS pause owner releases audio and rebases both MVE host clocks equally");
+            view.bootProbeFastForward = 1;
+            M11_GameView_Draw(&view, timerFrame, 320, 200);
+            view.bootProbeFastForward = 0;
+            expect_true(view.dm2DosMvePresenter.next_presentation_index > movieIndex &&
+                            view.dm2DosMvePresenter.audio.queued_source_packets >= moviePackets,
+                        "authentic DOS MVE advances again after focus resume");
+        }
     }
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);

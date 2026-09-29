@@ -86,6 +86,48 @@ int main(void)
         SessionTimerRuntime_Init(&state.sessionTimerRuntime, 0);
         puts("PASS: timer pause freezes authentic Mac movie/audio and rebases resume");
     }
+    {
+        uint32_t pausedFrameIndex = state.dm2MacMovieDecoder.frame_index;
+        uint64_t originalStartUs = state.dm2MacMovieStartUs;
+        int queuedSamples = state.audioState.queuedSampleCount;
+        M11_GameView_SetPauseReason(&state, M11_GAME_PAUSE_REASON_FOCUS, 1);
+        M11_GameView_SetPauseReason(&state, M11_GAME_PAUSE_REASON_FOCUS, 1);
+        state.bootProbeFastForward = 1;
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        state.bootProbeFastForward = 0;
+        if (!M11_GameView_IsPaused(&state) ||
+            state.dm2MacMovieDecoder.frame_index != pausedFrameIndex ||
+            state.dm2MacMovieStartUs != originalStartUs ||
+            state.audioState.queuedSampleCount != queuedSamples ||
+            !state.audioState.hostPaused ||
+            (state.audioState.sdlStream &&
+             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state.audioState.sdlStream))) {
+            fprintf(stderr, "Focus pause did not freeze authentic Mac movie decoding/audio\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        SDL_Delay(2U);
+        M11_GameView_SetPauseReason(&state, M11_GAME_PAUSE_REASON_FOCUS, 0);
+        if (M11_GameView_IsPaused(&state) || state.audioState.hostPaused ||
+            state.dm2MacMovieStartUs <= originalStartUs ||
+            state.dm2MacMovieDecoder.frame_index != pausedFrameIndex) {
+            fprintf(stderr, "Focus resume did not rebase Mac movie clock without decoding ahead\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        /* The existing original-frame clock step below checks actual resume;
+         * no substitute video/audio samples are introduced. */
+        state.dm2MacMovieStartUs = SDL_GetTicksNS() / UINT64_C(1000) -
+            state.dm2MacMovieDecoder.presentation_time_us -
+            state.dm2MacMovieDecoder.frame_duration_us - 1u;
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        if (state.dm2MacMovieDecoder.frame_index <= pausedFrameIndex) {
+            fprintf(stderr, "Authentic Mac movie did not decode the next frame after focus resume\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        puts("PASS: focus pause freezes authentic Mac movie/audio and resumes source decoding");
+    }
     for (frame = 0; state.dm2MacMovieActive && frame < 10000; ++frame) {
         /* Advance the test clock by one source frame.  This keeps the
          * production path wall-clock based while avoiding a multi-second

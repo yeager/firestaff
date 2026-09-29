@@ -1485,6 +1485,37 @@ int main(void)
                                   resumed_view.csbState.party_dir ==
                                       resumed_profile->runtime.party_dir,
                               "touch swipe reaches C002 through the real Atari GAMEBLOCK command queue");
+                        /* A suspended contact must not survive focus loss.
+                         * Reuse the authenticated Atari session and its C002
+                         * route rather than constructing a test dungeon. */
+                        resumed_direction = resumed_profile->runtime.party_dir;
+                        CHECK(M11_GameView_HandleTouchEvent(
+                                  &resumed_view, M11_TOUCH_EVENT_DOWN,
+                                  120, 100, 1200u) == M11_GAME_INPUT_IGNORED,
+                              "real Atari touch begins before focus pause");
+                        M11_GameView_SetPauseReason(&resumed_view,
+                            M11_GAME_PAUSE_REASON_FOCUS, 1);
+                        CHECK(M11_GameView_HandleTouchEvent(
+                                  &resumed_view, M11_TOUCH_EVENT_UP,
+                                  190, 100, 1250u) == M11_GAME_INPUT_IGNORED &&
+                                  resumed_profile->runtime.party_dir == resumed_direction,
+                              "focus pause rejects touch completion without turning");
+                        M11_GameView_SetPauseReason(&resumed_view,
+                            M11_GAME_PAUSE_REASON_FOCUS, 0);
+                        CHECK(M11_GameView_HandleTouchEvent(
+                                  &resumed_view, M11_TOUCH_EVENT_UP,
+                                  190, 100, 1300u) == M11_GAME_INPUT_IGNORED &&
+                                  resumed_profile->runtime.party_dir == resumed_direction,
+                              "focus return cannot complete the stale Atari swipe");
+                        CHECK(M11_GameView_HandleTouchEvent(
+                                  &resumed_view, M11_TOUCH_EVENT_DOWN,
+                                  120, 100, 1400u) == M11_GAME_INPUT_IGNORED &&
+                                  M11_GameView_HandleTouchEvent(
+                                      &resumed_view, M11_TOUCH_EVENT_UP,
+                                      190, 100, 1500u) == M11_GAME_INPUT_REDRAW &&
+                                  resumed_profile->runtime.party_dir ==
+                                      ((resumed_direction + 1) & 3),
+                              "fresh Atari swipe works after focus return");
                         CHECK(M11_GameView_HandleTouchEvent(
                                   &resumed_view, M11_TOUCH_EVENT_DOWN,
                                   234, 43, 2000u) ==

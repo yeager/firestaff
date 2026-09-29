@@ -1,5 +1,19 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Implemented DM1/CSB/DM2 AUTO PAUSE runtime wiring. Focus
+  loss and session-timer pause use independent reason bits, preserving audio
+  suspension until the last owner releases it. Source idle/food/movie clocks
+  and input stop during focus pause. Synchronous intro waits measure active
+  time, and the main loop rebases after pause or a completed synchronous
+  launch. New pause ownership resets the gesture recognizer.
+  Authentic-media checks: DM1 DOS 172, CSB Amiga 48, DM2 DOS 44 pass without
+  skips; Mac retail movie focus/timer pause, resume and New Game also pass.
+  Authentic Atari MINI.DAT cold-resume checks reject a stale swipe across
+  focus pause and accept a fresh swipe. Main-loop
+  syntax and HUD source gates pass. The optional Cocoa probe opens a window
+  outside the sandbox but cannot acquire actual input focus; desktop focus
+  behavior through the complete main loop remains an explicit TODO.
+
 - 2026-09-29: Fixed session-timer startup and frame-time accounting. Timer
   initialization now follows per-game startup resets, and millisecond carry
   preserves ordinary subsecond frames. The deadline requests a redraw and

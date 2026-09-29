@@ -1108,7 +1108,8 @@ typedef struct {
      * setting and exposes the limit/remaining-time helpers. */
     SessionTimerRuntime sessionTimerRuntime;
     uint32_t sessionTimerRemainderMs;
-    uint64_t sessionTimerPauseStartedUs;
+    uint64_t hostPauseStartedUs;
+    unsigned int pauseReasons;
     /* Latched while the M11 main loop has surfaced a forced-pause
      * confirm dialog and is awaiting user input.  Cleared once the
      * user picks a confirm-dialog choice (Continue / Return to menu)
@@ -2140,6 +2141,14 @@ void M11_GameView_InitFromMenuSessionTimer(M11_GameViewState* state,
 int M11_GameView_GetLauncherRuntimeOptions(
     const M11_GameViewState* state,
     M12_LauncherRuntimeOptions* out);
+enum {
+    M11_GAME_PAUSE_REASON_TIMER = 1u,
+    M11_GAME_PAUSE_REASON_FOCUS = 2u
+};
+/* Independent host reasons share one audio/movie-clock suspension. */
+void M11_GameView_SetPauseReason(M11_GameViewState* state,
+                                  unsigned int reason, int enabled);
+int M11_GameView_IsPaused(const M11_GameViewState* state);
 SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
     M11_GameViewState* state, int seconds);
 /* Accumulate active host-frame time without dropping fractional seconds. */

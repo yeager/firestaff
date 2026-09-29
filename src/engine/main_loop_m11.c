@@ -1781,7 +1781,59 @@ typedef enum {
     M11_ENTRANCE_COMMAND_CREDITS = ENTRANCE_COMPAT_COMMAND_PATH_CREDITS
 } M11_EntranceCommand;
 
+int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
+    return enabled && !hasFocus &&
+           (!videoDriver || strcmp(videoDriver, "dummy") != 0);
+}
+
+static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
+/* Scope is installed from the current launch menu and removed on every launch
+ * return. These host focus waits do not change ReDMCSB's VBlank counts. */
+static const M12_StartupMenuState* g_m11_intro_menu;
+static M11_GameViewState* g_m11_intro_game_view;
+static M11_AudioState* g_m11_intro_local_audio;
+static Uint64 g_m11_intro_paused_ms;
+
+static Uint64 m11_intro_active_ticks(void) {
+    return SDL_GetTicks() - g_m11_intro_paused_ms;
+}
+
+static int m11_intro_wait_for_focus(void) {
+    SDL_Window* window;
+    const char* driver;
+    Uint64 started;
+    int quit = 0;
+    if (!g_m11_intro_menu || !g_m11_intro_menu->settings.autoPause) return 0;
+    window = M11_Render_GetWindow();
+    driver = SDL_GetCurrentVideoDriver();
+    /* A dummy device has no desktop focus to regain. */
+    if (!window) return 0;
+    SDL_PumpEvents();
+    if (!M11_FocusPauseRequired(g_m11_intro_menu->settings.autoPause,
+            (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0,
+            driver)) return 0;
+    started = SDL_GetTicks();
+    if (g_m11_intro_local_audio)
+        (void)M11_Audio_SetHostPaused(g_m11_intro_local_audio, 1);
+    if (g_m11_intro_game_view)
+        M11_GameView_SetPauseReason(g_m11_intro_game_view,
+                                    M11_GAME_PAUSE_REASON_FOCUS, 1);
+    while (!(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS)) {
+        /* Pump quit/resize while suspended; no source animation advances. */
+        if (M11_Render_PumpEvents()) { quit = 1; break; }
+        SDL_Delay(10U);
+        SDL_PumpEvents();
+    }
+    g_m11_intro_paused_ms += SDL_GetTicks() - started;
+    if (g_m11_intro_local_audio)
+        (void)M11_Audio_SetHostPaused(g_m11_intro_local_audio, 0);
+    if (g_m11_intro_game_view)
+        M11_GameView_SetPauseReason(g_m11_intro_game_view,
+                                    M11_GAME_PAUSE_REASON_FOCUS, 0);
+    return quit;
+}
+
 
 static unsigned int m11_v20_startup_remaining_delay_ms(
     unsigned int source_delay_ms,
@@ -1792,7 +1844,7 @@ static unsigned int m11_v20_startup_remaining_delay_ms(
         return source_delay_ms;
     }
     return dm1_v20_startup_presentation_remaining_delay_ms_pc34(
-        source_delay_ms, SDL_GetTicks() - presentation_started_ms);
+        source_delay_ms, m11_intro_active_ticks() - presentation_started_ms);
 }
 
 static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
@@ -1811,6 +1863,7 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
         (void)ev;
     }
     for (ticks = 0U; ticks < ENTRANCE_Compat_GetCreditsWaitTicks(); ++ticks) {
+        if (m11_intro_wait_for_focus()) return M11_ENTRANCE_COMMAND_QUIT;
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
@@ -1837,7 +1890,7 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
 #endif
         }
         if (v20TimingActive) {
-            const Uint64 nowMs = SDL_GetTicks();
+            const Uint64 nowMs = m11_intro_active_ticks();
             const Uint64 remainingMs = nowMs >= sourceDeadlineMs
                 ? 0U : sourceDeadlineMs - nowMs;
             if (remainingMs == 0U) {
@@ -1952,7 +2005,7 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
     }
     M11_AssetLoader_Blit(credits, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
                          0, 0, -1);
-    presentationStartedMs = SDL_GetTicks();
+    presentationStartedMs = m11_intro_active_ticks();
     if (command.special_palette >= 0
             ? !m11_present_dm1_startup_special_palette(
                   gameView, framebuffer, command.special_palette)
@@ -2179,7 +2232,7 @@ static int m11_play_redmcsb_entrance_transition(
                 free(dungeonFrame);
                 return 0;
             }
-            presentationStartedMs = SDL_GetTicks();
+            presentationStartedMs = m11_intro_active_ticks();
             if (!m11_present_dm1_startup_special_palette(
                     gameView, framebuffer, command.entrance_palette)) {
                 free(dungeonFrame);
@@ -2323,9 +2376,10 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
     if (g_m11_intro_delay_fast_forward) {
         return M11_ENTRANCE_COMMAND_ENTER;
     }
-    started = SDL_GetTicks();
+    started = m11_intro_active_ticks();
 
     for (;;) {
+        if (m11_intro_wait_for_focus()) return M11_ENTRANCE_COMMAND_QUIT;
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
@@ -2401,7 +2455,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
         if (ENTRANCE_Compat_ShouldAutoEnterForTimeout(
                 allowHeadlessTimeout,
                 autoEnterAfterMs,
-                (unsigned long long)(SDL_GetTicks() - started))) {
+                (unsigned long long)(m11_intro_active_ticks() - started))) {
             return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);
@@ -2461,20 +2515,22 @@ static void m11_swsh_unpack_4bpp_to_indexed(const unsigned char* packed,
 
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     Uint64 start;
+    if (m11_intro_wait_for_focus()) return 1;
     if (g_m11_intro_delay_fast_forward) {
         return M11_Render_PumpEvents();
     }
     if (delayMs == 0U) {
         return M11_Render_PumpEvents();
     }
-    start = SDL_GetTicks();
-    while ((SDL_GetTicks() - start) < (Uint64)delayMs) {
+    start = m11_intro_active_ticks();
+    while ((m11_intro_active_ticks() - start) < (Uint64)delayMs) {
         Uint64 elapsed;
         unsigned int remaining;
+        if (m11_intro_wait_for_focus()) return 1;
         if (M11_Render_PumpEvents()) {
             return 1;
         }
-        elapsed = SDL_GetTicks() - start;
+        elapsed = m11_intro_active_ticks() - start;
         if (elapsed >= (Uint64)delayMs) {
             break;
         }
@@ -2587,6 +2643,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
         free(logoImg);
         return;
     }
+    g_m11_intro_local_audio = &swshAudio;
     /* Atari ST low-res FTL logo: 4bpp packed, 160 bytes/row, 32000 bytes total.
      * Use a dedicated packed buffer for the SWSH_Compat_ExpandLogoToBitmap
      * output (was previously aliased onto screenFb which is 1bpp). */
@@ -2709,6 +2766,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           hasDm1Media ? dm1Media.swsh_final_hold_ms :
                         SWSH_Compat_GetRuntimeFinalHoldMs()); }
 cleanup:
+    g_m11_intro_local_audio = NULL;
     if (swshAudioInitialized || csbSwshAudioInitialized) {
         M11_Audio_Shutdown(&swshAudio);
     }
@@ -2830,6 +2888,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         return 0;
     }
 
+    g_m11_intro_local_audio = &titleAudio;
     /* ReDMCSB TITLE.C F0437 PC/F20 source-lock:
      * - TITLE.C:309 loads/decompresses C001_GRAPHIC_TITLE.
      * - TITLE.C:319-324 blits PRESENTS from source y=137 to 0,90..105.
@@ -2883,7 +2942,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * latch visible before waiting. */
         if (command.palette_before_pre_present_delay &&
             titlePalette != stepPalette) {
-            presentationStartedMs = SDL_GetTicks();
+            presentationStartedMs = m11_intro_active_ticks();
             if (!m11_present_dm1_startup_special_palette(
                     gameView, framebuffer, stepPalette)) {
                 break;
@@ -2939,7 +2998,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * truth for that mapping; v2.7.4 always used
          * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
          * the "PRESENTS" word red instead of plain white. */
-        presentationStartedMs = SDL_GetTicks();
+        presentationStartedMs = m11_intro_active_ticks();
         if (!m11_present_dm1_startup_special_palette(
                 gameView, framebuffer, stepPalette)) {
             break;
@@ -2957,6 +3016,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             presentationStartedMs = 0U;
         }
     }
+    g_m11_intro_local_audio = NULL;
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }
@@ -3032,6 +3092,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         (void)M11_Audio_PlayTitleMusic(&titleAudio);
     }
 
+    g_m11_intro_local_audio = &titleAudio;
     /* ReDMCSB TITLE.C PC/F20 source-lock:
      *   TITLE.C:319-324 draws PRESENTS from the decompressed title graphic.
      *   TITLE.C:340-360 builds 18 shrinked title bitmaps; TITLE.C:385-387
@@ -3119,6 +3180,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     (void)m11_delay_ms_with_intro_event_pump(
         hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
                       V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
+    g_m11_intro_local_audio = NULL;
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }
@@ -3595,7 +3657,7 @@ static int m11_game_option_slot(const char *gameId) {
     return 0;
 }
 
-static int m11_open_requested_launch(M11_GameViewState* gameView,
+static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
                                      const char* dataDir,
@@ -4010,6 +4072,31 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     }
     m11_set_launch_failed_message(menuState);
     return 0;
+}
+
+/* Keep synchronous intro policy local to this launch, including failure exits. */
+static int m11_open_requested_launch(M11_GameViewState* gameView,
+                                     M12_StartupMenuState* menuState,
+                                     uint32_t* idleAccumulatorMs,
+                                     const char* dataDir,
+                                     int bootProbe) {
+    const M12_StartupMenuState* previousMenu = g_m11_intro_menu;
+    M11_GameViewState* previousView = g_m11_intro_game_view;
+    M11_AudioState* previousAudio = g_m11_intro_local_audio;
+    Uint64 previousPausedMs = g_m11_intro_paused_ms;
+    int result;
+    g_m11_intro_menu = menuState;
+    g_m11_intro_game_view = gameView;
+    g_m11_intro_local_audio = NULL;
+    g_m11_intro_paused_ms = 0U;
+    result = m11_open_requested_launch_impl(gameView, menuState,
+                                            idleAccumulatorMs, dataDir, bootProbe);
+    g_m11_intro_menu = previousMenu;
+    g_m11_intro_game_view = previousView;
+    g_m11_intro_local_audio = previousAudio;
+    g_m11_intro_paused_ms = previousPausedMs;
+    ++g_m11_sync_launch_serial;
+    return result;
 }
 
 /* The F31 Utility route is not a generic game launch and must not inherit
@@ -6249,6 +6336,21 @@ static int m11_csb_fmtowns_utility_handle_keydown(
     return 1;
 }
 
+/* Host accessibility policy, independent of each original game's clocks. */
+static void m11_sync_focus_pause(M11_GameViewState* gameView,
+                                  const M12_StartupMenuState* menuState,
+                                  int hasFocus) {
+    int supported;
+    if (!gameView || !gameView->active || !menuState) return;
+    supported = m11_game_view_is_dm1(gameView) ||
+                m11_game_view_is_csb(gameView) ||
+                gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT;
+    if (!supported) return;
+    M11_GameView_SetPauseReason(gameView, M11_GAME_PAUSE_REASON_FOCUS,
+                                M11_FocusPauseRequired(menuState->settings.autoPause,
+                                    hasFocus, SDL_GetCurrentVideoDriver()));
+}
+
 static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          M12_StartupMenuState* menuState,
                                          const M12_GamepadMap* gamepadMap,
@@ -6293,6 +6395,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if (ev.type == SDL_EVENT_WINDOW_FOCUS_LOST ||
+            ev.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
+            m11_sync_focus_pause(gameView, menuState,
+                                ev.type == SDL_EVENT_WINDOW_FOCUS_GAINED);
+            overlayFingerActive = 0;
+            continue;
+        }
+        if (gameView &&
+            (gameView->pauseReasons & M11_GAME_PAUSE_REASON_FOCUS)) continue;
         if (ev.type == SDL_EVENT_GAMEPAD_ADDED ||
             ev.type == SDL_EVENT_GAMEPAD_REMOVED) {
             if (gamepadStatus) {
@@ -8233,6 +8344,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     int gameFrameNeedsPresent = 0;
     uint32_t foodClockLastMs = (uint32_t)SDL_GetTicks();
+    unsigned int observedLaunchSerial = 0;
 
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
@@ -8262,12 +8374,30 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #endif
             if (gameTickInterval < 1) gameTickInterval = 1;
         }
+        /* SDL updates window focus while pumping. Observe it before advancing
+         * any source clocks, including when scripted input bypasses polling. */
+        {
+            int wasPaused = M11_GameView_IsPaused(&gameView);
+            SDL_Window* window = M11_Render_GetWindow();
+            SDL_PumpEvents();
+            if (window)
+                m11_sync_focus_pause(&gameView, &menuState,
+                    (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0);
+            if (wasPaused || M11_GameView_IsPaused(&gameView) ||
+                observedLaunchSerial != g_m11_sync_launch_serial) {
+                observedLaunchSerial = g_m11_sync_launch_serial;
+                lastLoopTick = SDL_GetTicks();
+                foodClockLastMs = (uint32_t)lastLoopTick;
+                idleAccumulatorMs = 0;
+                DM1_V1_PendingMotionQueue_ClearPc34Compat(&pendingDm1V1MotionQueue);
+            }
+        }
         now = SDL_GetTicks();
         if (gameView.active) {
             uint32_t loopDeltaMs = (uint32_t)(now - lastLoopTick);
             int timerReminderBefore = gameView.sessionTimerReminderOverlayActive;
             int timerPauseBefore = gameView.sessionTimerForcedPauseDialogActive;
-            if (timerPauseBefore) loopDeltaMs = 0;
+            if (M11_GameView_IsPaused(&gameView)) loopDeltaMs = 0;
             int foodCommandWasPending = gameView.v1FoodCommandPending;
             uint32_t foodElapsedMs = (uint32_t)now - foodClockLastMs;
             foodClockLastMs = (uint32_t)now;
@@ -8280,7 +8410,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             /* Source F0349 cannot run ordinary game-loop work during its
              * synchronous waits. Keep pumping host events, but discard
              * simulation debt including the command's completion slice. */
-            if (timerPauseBefore || foodCommandWasPending || gameView.v1FoodCommandPending)
+            if (M11_GameView_IsPaused(&gameView) || foodCommandWasPending || gameView.v1FoodCommandPending)
                 idleAccumulatorMs = 0;
             else
                 idleAccumulatorMs += loopDeltaMs;

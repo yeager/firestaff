@@ -2172,7 +2172,7 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
     int y;
     if (!state || !framebuffer || !state->dm2MacMovieActive ||
         !state->dm2MacMovieDecoder.frame_ready) return 0;
-    if (state->sessionTimerForcedPauseDialogActive) goto render_frame;
+    if (M11_GameView_IsPaused(state)) goto render_frame;
     if (state->dm2MacMovieStartUs == 0u) {
         state->dm2MacMovieStartUs = now_us;
     }
@@ -2206,7 +2206,7 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
         return 0;
     }
 render_frame:
-    if (!state->sessionTimerForcedPauseDialogActive &&
+    if (!M11_GameView_IsPaused(state) &&
         dm2_v1_mac_movie_decoder_take_audio(
             &state->dm2MacMovieDecoder, &audio_samples,
             &audio_sample_count, &audio_rate_hz)) {
@@ -2245,7 +2245,7 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
     /* The last source page must reach one host present before the stream and
      * its SDL device are closed.  On the following Draw call, release M11's
      * resources and permit SKULL's GDAT menu to take over. */
-    if (state->sessionTimerForcedPauseDialogActive) goto render_paused_frame;
+    if (M11_GameView_IsPaused(state)) goto render_paused_frame;
     if (state->dm2DosMvePresenter.ended) {
         m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
         state->dm2DosMveIntroActive = 0;
@@ -24293,6 +24293,8 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     }
     if (state->sessionTimerForcedPauseDialogActive)
         M11_GameView_ClearSessionTimerForcedPause(state);
+    M11_GameView_SetPauseReason(state,
+        M11_GAME_PAUSE_REASON_TIMER | M11_GAME_PAUSE_REASON_FOCUS, 0);
     /* Session teardown cancels the command; never emit queued audio into
      * the next session or preserve an unverified source-clock binding. */
     state->v1FoodCommandPending = 0;
@@ -29994,7 +29996,7 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     /* PANEL.C F0349:1928-1944 owns the command until the final delay.
      * Direct host shortcuts must not persist an unfinished consumption. */
     if (state && (state->v1FoodCommandPending ||
-                  state->sessionTimerForcedPauseDialogActive)) return 0;
+                  M11_GameView_IsPaused(state))) return 0;
     /* Sensor state persistence: sensor effects that modify dungeon squares
      * (door open/close, pit toggle, teleporter toggle) are persisted through
      * the dungeon square byte array in world.dungeon.tiles[].squareData[].
@@ -30425,7 +30427,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     /* PANEL.C F0349:1928-1944: do not replace the world beneath its
      * pending consumption or deliver the old completion into a new world. */
     if (state && (state->v1FoodCommandPending ||
-                  state->sessionTimerForcedPauseDialogActive)) return 0;
+                  M11_GameView_IsPaused(state))) return 0;
     if (!state || !state->active) {
         return 0;
     }
@@ -30558,8 +30560,7 @@ void M11_GameView_InitFromMenuSessionTimer(M11_GameViewState* state,
     if (menu) {
         limitMinutes = M12_StartupMenu_SessionTimerLimitMinutes(menu);
     }
-    if (state->sessionTimerForcedPauseDialogActive)
-        M11_GameView_ClearSessionTimerForcedPause(state);
+    M11_GameView_ClearSessionTimerForcedPause(state);
     SessionTimerRuntime_Init(&state->sessionTimerRuntime, limitMinutes);
     state->sessionTimerRemainderMs = 0;
     state->sessionTimerForcedPauseDialogActive = 0;
@@ -30580,12 +30581,54 @@ int M11_GameView_GetLauncherRuntimeOptions(
     return 1;
 }
 
+int M11_GameView_IsPaused(const M11_GameViewState* state) {
+    return state && state->pauseReasons != 0u;
+}
+
+void M11_GameView_SetPauseReason(M11_GameViewState* state,
+                                  unsigned int reason, int enabled) {
+    unsigned int previous;
+    int paused;
+    if (!state) return;
+    reason &= M11_GAME_PAUSE_REASON_TIMER | M11_GAME_PAUSE_REASON_FOCUS;
+    if (!reason) return;
+    previous = state->pauseReasons;
+    if (enabled) state->pauseReasons |= reason;
+    else state->pauseReasons &= ~reason;
+    if (state->pauseReasons & ~previous)
+        fs_gesture_recognizer_reset();
+    paused = state->pauseReasons != 0u;
+    if (!previous && paused) {
+        state->hostPauseStartedUs = SDL_GetTicksNS() / UINT64_C(1000);
+    } else if (previous && !paused) {
+        uint64_t nowUs = SDL_GetTicksNS() / UINT64_C(1000);
+        uint64_t pausedUs = nowUs >= state->hostPauseStartedUs
+            ? nowUs - state->hostPauseStartedUs : 0u;
+        if (state->dm2DosMveIntroActive) {
+            state->dm2DosMvePresenter.clock_origin_us += pausedUs;
+            state->dm2DosMvePresenter.last_host_time_us += pausedUs;
+        }
+        if (state->dm2MacMovieActive && state->dm2MacMovieStartUs)
+            state->dm2MacMovieStartUs += pausedUs;
+        state->hostPauseStartedUs = 0u;
+    }
+    /* Idempotent audio owners also permit retry after an SDL failure. */
+    (void)M11_Audio_SetHostPaused(&state->audioState, paused);
+    if (state->dm2DosMveIntroActive)
+        (void)dm2_v1_mve_audio_sdl_owner_set_host_paused(
+            &state->dm2DosMvePresenter.audio, paused);
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT)
+        (void)dm2_v1_sound_sdl_backend_set_host_paused(paused);
+}
+
 SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
     M11_GameViewState* state, int seconds) {
     SessionTimerRuntimeEvent event = SESSION_TIMER_RUNTIME_EVENT_RUNNING;
     if (!state) {
         return SESSION_TIMER_RUNTIME_EVENT_RUNNING;
     }
+    if (state->pauseReasons & M11_GAME_PAUSE_REASON_FOCUS)
+        return SessionTimerRuntime_Poll(&state->sessionTimerRuntime);
     SessionTimerRuntime_Tick(&state->sessionTimerRuntime, seconds);
     event = SessionTimerRuntime_Poll(&state->sessionTimerRuntime);
     /* Update the M11-side latches that drive the dialog overlay
@@ -30595,15 +30638,8 @@ SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
      * the forced-pause latch fires, the confirm dialog wins until the
      * user releases it. */
     if (event == SESSION_TIMER_RUNTIME_EVENT_FORCED_PAUSE) {
-        if (!state->sessionTimerForcedPauseDialogActive)
-            state->sessionTimerPauseStartedUs = SDL_GetTicksNS() / UINT64_C(1000);
         state->sessionTimerForcedPauseDialogActive = 1;
-        (void)M11_Audio_SetHostPaused(&state->audioState, 1);
-        if (state->dm2DosMveIntroActive)
-            (void)dm2_v1_mve_audio_sdl_owner_set_host_paused(
-                &state->dm2DosMvePresenter.audio, 1);
-        if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT)
-            (void)dm2_v1_sound_sdl_backend_set_host_paused(1);
+        M11_GameView_SetPauseReason(state, M11_GAME_PAUSE_REASON_TIMER, 1);
         state->sessionTimerReminderOverlayActive = 0;
     } else if (event == SESSION_TIMER_RUNTIME_EVENT_REMINDER_DUE) {
         state->sessionTimerReminderOverlayActive = 1;
@@ -30615,6 +30651,8 @@ SessionTimerRuntimeEvent M11_GameView_TickSessionTimerMs(
     M11_GameViewState* state, uint32_t elapsedMs) {
     uint64_t totalMs;
     if (!state) return SESSION_TIMER_RUNTIME_EVENT_RUNNING;
+    if (state->pauseReasons & M11_GAME_PAUSE_REASON_FOCUS)
+        return SessionTimerRuntime_Poll(&state->sessionTimerRuntime);
     if (state->sessionTimerRuntime.limitSeconds <= 0 ||
         state->sessionTimerRuntime.forcedPauseLatched) {
         state->sessionTimerRemainderMs = 0;
@@ -30637,23 +30675,7 @@ void M11_GameView_ClearSessionTimerForcedPause(M11_GameViewState* state) {
     if (!state) {
         return;
     }
-    if (state->sessionTimerForcedPauseDialogActive) {
-        uint64_t nowUs = SDL_GetTicksNS() / UINT64_C(1000);
-        uint64_t pausedUs = nowUs - state->sessionTimerPauseStartedUs;
-        if (state->dm2DosMveIntroActive) {
-            state->dm2DosMvePresenter.clock_origin_us += pausedUs;
-            state->dm2DosMvePresenter.last_host_time_us += pausedUs;
-        }
-        if (state->dm2MacMovieActive && state->dm2MacMovieStartUs)
-            state->dm2MacMovieStartUs += pausedUs;
-    }
-    (void)M11_Audio_SetHostPaused(&state->audioState, 0);
-    if (state->dm2DosMveIntroActive)
-        (void)dm2_v1_mve_audio_sdl_owner_set_host_paused(
-            &state->dm2DosMvePresenter.audio, 0);
-    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT)
-        (void)dm2_v1_sound_sdl_backend_set_host_paused(0);
-    state->sessionTimerPauseStartedUs = 0;
+    M11_GameView_SetPauseReason(state, M11_GAME_PAUSE_REASON_TIMER, 0);
     SessionTimerRuntime_ClearForcedPause(&state->sessionTimerRuntime);
     state->sessionTimerRemainderMs = 0;
     state->sessionTimerForcedPauseDialogActive = 0;
@@ -30864,7 +30886,7 @@ int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state) {
 
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     int mouthRedraw;
-    if (!state || !state->active || state->sessionTimerForcedPauseDialogActive) {
+    if (!state || !state->active || M11_GameView_IsPaused(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
     /* F0349's synchronous source command does not run the game loop while
@@ -34672,6 +34694,8 @@ static uint32_t m11_quit_guard_clock(const M11_GameViewState* state)
 
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
+    if (state && (state->pauseReasons & M11_GAME_PAUSE_REASON_FOCUS))
+        return M11_GAME_INPUT_IGNORED;
     uint8_t command = CMD_NONE;
     const char* label = "NONE";
     if (state && state->v1FoodCommandPending &&
@@ -34705,6 +34729,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         return M11_GAME_INPUT_IGNORED;
     }
+
+    if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
 
     /* The runtime graphics panel is presentation-only and owns its keys
      * while visible. Keep it ahead of source-specific dispatch so changing
@@ -36374,7 +36400,7 @@ static int m11_start_i34e_food_command(M11_GameViewState* state,
 }
 
 M11_GameInputResult M11_GameView_AdvanceFoodSourceVblank(M11_GameViewState* state) {
-    if (!state || !state->active || state->sessionTimerForcedPauseDialogActive ||
+    if (!state || !state->active || M11_GameView_IsPaused(state) ||
         !state->v1FoodCommandPending)
         return M11_GAME_INPUT_IGNORED;
     if (state->v1FoodAwaitingPresentation) return M11_GAME_INPUT_IGNORED;
@@ -36419,7 +36445,7 @@ M11_GameInputResult M11_GameView_AdvanceFoodClockMs(M11_GameViewState* state,
                                                   uint32_t elapsedMs) {
     uint64_t threshold, wholeEdges, added;
     M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
-    if (!state || !state->active || state->sessionTimerForcedPauseDialogActive ||
+    if (!state || !state->active || M11_GameView_IsPaused(state) ||
         !state->v1FoodVblankHzNumerator ||
         !state->v1FoodVblankHzDenominator) return result;
     threshold = (uint64_t)state->v1FoodVblankHzDenominator * 1000u;
@@ -36495,7 +36521,7 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
     FsGestureType gesture = FS_GG_GESTURE_NONE;
     FsGestureGameCommand command;
 
-    if (!state || !state->active) {
+    if (!state || !state->active || M11_GameView_IsPaused(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!fs_gesture_gate_is_initialized() ||
@@ -36615,7 +36641,7 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int destinationAccepted;
     int sourceSlotBox;
     int destinationSlotBox;
-    if (state && state->sessionTimerForcedPauseDialogActive)
+    if (M11_GameView_IsPaused(state))
         return M11_GAME_INPUT_IGNORED;
     if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
     if (!state || !state->active ||
@@ -37028,7 +37054,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int y,
                                                      int buttonMask) {
     int slot;
-    if (state && state->sessionTimerForcedPauseDialogActive)
+    if (M11_GameView_IsPaused(state))
         return M11_GAME_INPUT_IGNORED;
     if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
 

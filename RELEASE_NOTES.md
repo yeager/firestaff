@@ -2,6 +2,12 @@
 
 ## User-facing changes
 
+- `AUTO PAUSE`: wires the accessibility setting to DM1/CSB/DM2 window focus,
+  including synchronous startup waits. Focus and session-timer pauses retain
+  independent ownership of audio and movie clocks; resuming clears accumulated
+  host time and discards touch gestures begun before the pause. Desktop
+  end-to-end focus verification remains outstanding.
+
 - `Session timer`: retains the launcher setting at startup and counts normal
   frame intervals. The time-limit dialog now appears over DM1/CSB/DM2 source
   frames and blocks gameplay, mouse and quick-save/load input. Pausing keeps

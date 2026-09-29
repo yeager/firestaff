@@ -1,10 +1,13 @@
 # Firestaff TODO — active cross-game work
 
-- Implement the active Accessibility AUTO PAUSE setting. Audit on 2026-09-29:
-  `config_m12.h` defines pause on focus loss, but `autoPause` is only consumed
-  by UI/configuration code and `main_loop_m11.c` has no window-focus handler.
-  Preserve source-owned startup/game clocks, audio and input state across
-  focus loss/regain; verify that resume does not replay accumulated host time.
+- Complete desktop end-to-end verification of Accessibility AUTO PAUSE.
+  DM1/CSB/DM2 focus policy, independent timer/focus pause ownership, source
+  clock/audio suspension and synchronous intro time rebasing are implemented.
+  Authentic-media API tests pass; the optional Cocoa window probe cannot
+  acquire actual input focus in this agent session and therefore fails.
+  Verify real focus loss/regain through the complete main loop, including
+  synchronous intros, without accumulated-time replay, on supported desktops.
+  Physical audio and MacBook Pro M5 HiDPI behavior remain unverified here.
 
 - Connect the active Audio SOUNDTRACK choice to playback. The menu exposes
   ORIGINAL/REMASTERED/CUSTOM and exports `soundtrackMode`, but no runtime
