@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Game options`: clicking the SPEED HOTKEYS status tile no longer changes
+  simulation speed.
+
 - `Launcher`: returning from presentation selection preserves the selected
   platform card, avoiding an unintended switch to an unavailable edition.
 

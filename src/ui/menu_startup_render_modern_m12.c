@@ -2355,7 +2355,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SPEED", speeds[speedIdx],
                        sel == M12_GAME_OPT_ROW_SPEED, !opts->cheatsEnabled);
         draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "SPEED HOTKEYS", hotkeysLabel,
-                       sel == M12_GAME_OPT_ROW_SPEED, !opts->cheatsEnabled);
+                       0, !opts->cheatsEnabled);
         draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "QUICK RESUME",
                        state->settings.quickResumeEnabled ? "ON" : "OFF", 0, 0);
 

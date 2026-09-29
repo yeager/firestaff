@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Made the Custom menu SPEED HOTKEYS status tile non-interactive
+  so clicking it cannot change simulation speed. Removed its SPEED selection
+  highlight. The existing pointer launch test passes after rebuilding.
+
 - 2026-09-29: Fixed the source packaging omission behind issue #12. The
   published 3.0.348 SDL3.dll imports libiconv-2.dll, while its ZIP contains only
   SDL3.dll. Windows packaging now resolves and copies the recursive PE import

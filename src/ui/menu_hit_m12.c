@@ -252,8 +252,8 @@ static int m12_hit_gameopt_tile(int x, int y, M12_MouseHit* out) {
         else return 0; /* No other interactive tile on this row. */
     } else if (grid_row == 1) {
         if (column == 0) out->index = M12_GAME_OPT_ROW_CHEATS;
-        else if (column == 1 || column == 2) out->index = M12_GAME_OPT_ROW_SPEED;
-        else return 0; /* Quick Resume belongs to global settings. */
+        else if (column == 1) out->index = M12_GAME_OPT_ROW_SPEED;
+        else return 0; /* Hotkey status and Quick Resume are informational. */
     } else if (grid_row == 2) {
         if (column == 0) out->index = M12_GAME_OPT_ROW_ASPECT;
         else if (column == 1) out->index = M12_GAME_OPT_ROW_RESOLUTION;
