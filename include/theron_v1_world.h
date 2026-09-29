@@ -1077,7 +1077,6 @@ typedef struct {
     int generator_identity_verified;
     int generator_raw_verified;
     int event_bound_rng_witness_verified;
-    int materialization_allowed;
     unsigned int generator_index;
     uint16_t creature_type_value;
     uint8_t count_is_random;
@@ -1098,14 +1097,10 @@ typedef struct {
     uint32_t runtime_lifecycle_sequence[8];
     uint16_t runtime_lifecycle_pc[8];
     uint32_t runtime_lifecycle_physical_pc[8];
-    /* Legacy field names below describe the working hypothesis only.  The
-     * authenticated C852 span proves byte copies and the two-bit transform,
-     * not host-local coordinates or a direction consumer. */
-    int runtime_position_fields_source_verified;
-    uint8_t runtime_x;
-    uint8_t runtime_y;
-    uint8_t runtime_direction_raw;
-    uint8_t runtime_direction;
+    /* C852 statically copies working-row offsets 6..8, but that bank-mapped
+     * source span was not consumed in the same runtime capture. Keep the
+     * payload opaque here: these bytes are not verified host coordinates or
+     * direction and must not be used to place a native creature. */
 } Theron_V1_GeneratorMaterializationReceipt;
 
 /* Correlates an event, its unique type-6 record and a live RNG witness.

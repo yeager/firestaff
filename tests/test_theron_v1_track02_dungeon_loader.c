@@ -4663,7 +4663,6 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                                            receipt.generator_identity_verified &&
                                            receipt.generator_raw_verified &&
                                            !receipt.event_bound_rng_witness_verified &&
-                                           !receipt.materialization_allowed &&
                                            receipt.generator_index == generator_index &&
                                            receipt.creature_type_value == plan.creature_type_value &&
                                            receipt.toughness == plan.toughness &&
@@ -4762,7 +4761,7 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 1);
-                                        assert(receipt.materialization_allowed &&
+                                        assert(receipt.event_bound_rng_witness_verified &&
                                                receipt.rng_return_value == 0x8fu &&
                                                receipt.creature_type_value == 12u &&
                                                !receipt.count_is_random &&
@@ -4789,54 +4788,51 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                                                memcmp(receipt.runtime_lifecycle_physical_pc,
                                                       lifecycle_physical_pc,
                                                       sizeof(lifecycle_physical_pc)) == 0 &&
-                                               receipt.runtime_position_fields_source_verified &&
-                                               receipt.runtime_x == 17u &&
-                                               receipt.runtime_y == 3u &&
-                                               receipt.runtime_direction_raw == 8u &&
-                                               receipt.runtime_direction == 0u);
+                                               receipt.runtime_record[6] == 17u &&
+                                               receipt.runtime_record[7] == 3u &&
+                                               receipt.runtime_record[8] == 8u);
                                         witness.successor_state_before[0] ^= 1u;
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 0);
-                                        assert(!receipt.materialization_allowed);
+                                        assert(!receipt.event_bound_rng_witness_verified);
                                         witness.successor_state_before[0] ^= 1u;
                                         witness.rng_caller_source[0] ^= 1u;
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 0);
-                                        assert(!receipt.materialization_allowed);
+                                        assert(!receipt.event_bound_rng_witness_verified);
                                         witness.rng_caller_source[0] ^= 1u;
                                         witness.runtime_record[4] ^= 1u;
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 0);
-                                        assert(!receipt.materialization_allowed);
+                                        assert(!receipt.event_bound_rng_witness_verified);
                                         witness.runtime_record[4] ^= 1u;
                                         witness.runtime_first_consumer_value[0] ^= 1u;
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 0);
-                                        assert(!receipt.materialization_allowed);
+                                        assert(!receipt.event_bound_rng_witness_verified);
                                         witness.runtime_first_consumer_value[0] ^= 1u;
                                         ++witness.runtime_lifecycle_sequence[4];
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 0);
-                                        assert(!receipt.materialization_allowed &&
+                                        assert(!receipt.event_bound_rng_witness_verified &&
                                                !receipt.runtime_lifecycle_window_verified);
                                         --witness.runtime_lifecycle_sequence[4];
                                         witness.runtime_position_consumer_source[0] ^= 1u;
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 0);
-                                        assert(!receipt.materialization_allowed &&
-                                               !receipt.runtime_position_fields_source_verified);
+                                        assert(!receipt.event_bound_rng_witness_verified);
                                         witness.runtime_position_consumer_source[0] ^= 1u;
                                         ++witness.runtime_position_consumer_raw_offset;
                                         assert(theron_v1_world_bind_track02_generator_execution_witness(
                                                    &world, event, &witness,
                                                    &receipt) == 0);
-                                        assert(!receipt.materialization_allowed);
+                                        assert(!receipt.event_bound_rng_witness_verified);
                                         --witness.runtime_position_consumer_raw_offset;
                                     }
                                     witness.generator_raw[0] ^= 1u;
@@ -4845,7 +4841,7 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                                                &receipt) == 0);
                                     assert(receipt.event_raw_verified &&
                                            !receipt.generator_raw_verified &&
-                                           !receipt.materialization_allowed);
+                                           !receipt.event_bound_rng_witness_verified);
                                     ++resolved_generator_events;
                                     queued = 1;
                                     break;

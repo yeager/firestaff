@@ -260,11 +260,12 @@ ac37e03a137a21e7f41b48c65d60b9ab  RNG generator contexts
 045a7a41f938863a5771a7f3fbe76989  RNG entry/return state
 ```
 
-The materialization receipt now checks the exact logical and physical entry,
+The runtime-witness receipt now checks the exact logical and physical entry,
 `$cc55` return owner, caller bytes, pre/post state, `$8f` result and the
-`$4639` successor continuity.  A changed caller byte or successor state is
-rejected.  This opens only the captured Drator `0c81` fixed-one-member plan;
-other events and unobserved direction/HP/timer consumers remain closed.
+`$4639` successor continuity. A changed caller byte or successor state is
+rejected. This verifies only the captured Drator `0c81` event-bound runtime
+witness; other events and unobserved direction/HP/timer consumers remain
+closed, and it does not authorize native creature materialization.
 
 ## Same-transaction runtime group write
 
@@ -291,8 +292,9 @@ shows why the slot cannot be treated as a permanent host creature record:
 the original runtime consumes and unlinks it during the same event flow.
 
 This proves the byte-exact generated runtime row, its allocation and its first
-consumer lifecycle in the same transaction as the event-bound RNG call. It
-does not by itself name
+consumer lifecycle in the same transaction as the event-bound RNG call. The
+receipt records that witness only; it does not authorize Firestaff-native
+creature materialization. It does not by itself name
 runtime byte `$20`, `$ee`, `$11`, `$03` or `$08` as creature type, HP,
 direction, position or timer. Production therefore verifies and retains the
 raw row but does not yet translate those bytes into native creature fields.
@@ -317,14 +319,14 @@ captured row the retained values are byte 6 = 17, byte 7 = 3, byte 8 = 8 and
 the transformed low-two-bit value = 0.
 
 The materialization receipt requires the exact logical address, raw offset and
-source bytes before exposing those four retained values. Its field names are
-provisional and do not authorize host-coordinate placement. A changed source
+source bytes as provenance, but keeps the row bytes opaque. A changed source
 byte or file offset closes the gate. This is a static source join against the
 same authenticated retail BIN. The research probe in
 `work/theron-drator-generated-working-consumers-v7/` did not observe `$c852`
 consume this exact generated row during the captured session. Accordingly the
-receipt calls the fields source-verified, not same-session-consumed. The row's
-type, HP and timer ownership remain unproven and are not materialized.
+receipt proves a byte-copy transform only; it does not publish coordinates or
+direction. The row's type, HP and timer ownership remain unproven and are not
+materialized.
 
 ## Post-event bank-dispatch trace
 

@@ -26,8 +26,13 @@ data.
 1. **Track 02 runtime and object consumers (US and JP).** Close the source-LBA
    → game-owned RAM → executing consumer → source-record → reproducible input
    transaction chain. Current loaders and mechanics expose authentic bytes and
-   bounded routes, but stairs, quest artifacts, pickups/use, creatures, combat,
-   and chapter completion still lack their corresponding original consumers.
+   bounded routes, but stairs, quest artifacts, pickups/use, dynamic creature
+   generation and combat, and chapter completion still lack their corresponding
+   original consumers. One US Drator `0c81` generator event now has a
+   same-transaction runtime-witness receipt for its raw row, first consumer and
+   unlink lifecycle. That receipt does not translate the row into a native
+   creature and leaves type, HP, timer, map-local position, AI and JP parity
+   unproven; it is evidence only, not generator support.
    Earlier authentic RUN replays exhausted their 65,536- and 131,072-read
    controller traces before the scheduled event's later poll could be observed.
    The research capture now defaults scripted plans to the maximum supported

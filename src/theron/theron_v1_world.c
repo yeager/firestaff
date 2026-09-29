@@ -3342,14 +3342,10 @@ int theron_v1_world_bind_track02_generator_execution_witness(
         memcpy(out->runtime_lifecycle_physical_pc,
                witness->runtime_lifecycle_physical_pc,
                sizeof(out->runtime_lifecycle_physical_pc));
-        out->runtime_position_fields_source_verified = 1;
-        out->runtime_x = witness->runtime_record[6];
-        out->runtime_y = witness->runtime_record[7];
-        out->runtime_direction_raw = witness->runtime_record[8];
-        out->runtime_direction = witness->runtime_record[8] & 0x03u;
     }
-    out->materialization_allowed = out->event_bound_rng_witness_verified;
-    return out->materialization_allowed;
+    /* This authentic witness is not sufficient to create a native creature:
+     * type, HP, timer and same-session position semantics remain unbound. */
+    return out->event_bound_rng_witness_verified;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

@@ -5831,13 +5831,15 @@ metadata and locally staged CD-DA tracks.
   tre fristående assetscannerprov länkar det fullständiga Theron-arkivet och
   transition-receipt-provet kör sina assertions även i `NDEBUG`-byggen i
   stället för att krascha efter bortkompilerade sidoeffekter.
-- ✅ Generatorvägen har nu ett explicit eventbundet materialiseringskvitto.
+- ✅ Generatorvägen har nu ett explicit eventbundet runtime-beviskvitto.
   Det matchar både kategori-3-händelsens och typ-6-generatorns exakta
   åttabytesposter mot den riktiga världens Track 02-register och behåller den
-  källbundna planen. Samtliga sju autentiska USA-händelser når detta steg, men
-  kvittot tillåter ingen materialisering utan samma-körningsbevis för
-  `$4644/$4667`-retur, fysisk anropsägare och generatorns konsument. Dagens
-  smoke-spår nekas därför korrekt; även en enda ändrad generatorbyte nekas.
+  källbundna planen. Samtliga sju autentiska USA-händelser når källjoinen; ett
+  komplett kvitto verifierar endast det fångade Drator-eventets runtime-
+  witness och auktoriserar inte Firestaff-native creature-materialisering.
+  Samma-körningsbevis för `$4644/$4667`-retur, fysisk anropsägare och
+  generatorns konsument krävs för witness-verifieringen. Smoke-spår och
+  ändrade generatorbytes nekas.
 - ✅ RNG-producenten sparar nu hela autentiska 8 KiB huvud-RAM och 32
   bankmappade instruktionsbytes runt varje fysisk returägare. En riktig
   Drator-körning gav 156 kompletta kontexter och band de tidigare osedda
@@ -5848,11 +5850,11 @@ metadata and locally staged CD-DA tracks.
 - ✅ Den genererade Drator-radens byte 6–8 är nu bundna till originalets
   autentiserade Track 02-kod vid logisk `$C852`, råoffset `$A1612`. Exakta 27
   instruktionsbyte visar kopieringen till `$B5/$B6/$B4`, tvåbitsmaskningen till
-  `$BB` och det avslutande anropet `$51F8`. Kvittot behåller därför 17, 3, 8
-  och det transformerade värdet 0. Kodspannet bevisar däremot inte ensamt att
-  paret är kartlokalt X/Y eller att `$BB` är riktning; samma sessions körning
-  mot just denna rad observerades inte. Firestaff placerar därför inget
-  hostmonster från värdena. Typ, lokalkoordinater, HP och timer förblir stängda.
+  `$BB` och det avslutande anropet `$51F8`. Eftersom samma sessions konsumtion
+  av just denna rad inte observerades, förblir dess byte opaka i
+  materialiseringskvittot och publiceras inte som koordinater eller riktning.
+  Firestaff placerar därför inget hostmonster från dem. Typ, lokalkoordinater,
+  HP och timer förblir stängda.
 - ✅ Ett nytt autentiskt bankdispatchspår visar att anropet `$5D58` efter
   radbygget går via `$45E3` till fysisk `$0E0AF5`. Målrutinen uppdaterar
   rumsliga gräns- och pekartabeller men ger inget stöd för typ, HP eller timer.
