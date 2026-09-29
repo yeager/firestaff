@@ -1,8 +1,8 @@
 # Firestaff TODO — active cross-game work
 
-- Verify the native Windows configuration/JSON replacement fix in hosted CI.
-  Release preparation exposed CRT rename failing on an existing destination;
-  repeat-write regressions must pass before release publication.
+- Verify iOS release packaging after the LZMA software-CRC selection fix
+  using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and
+  CRC-vector checks pass; complete release publication depends on all jobs.
 
 - Verify the SDL3 drawable-coordinate input fix with native Retina events.
   Geometry and original-media launcher checks pass. Rendering, input and

@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `iOS packaging`: fix ARM CRC compilation by selecting portable software
+  checksums without raising the minimum CPU instruction requirements.
+
 - `Windows settings`: fix repeated configuration and JSON export saves when
   the destination file already exists. Preserve the old file on replacement failure.
 

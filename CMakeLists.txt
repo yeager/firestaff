@@ -4323,6 +4323,15 @@ if(NOT DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_DM1_WORKSPACE_DATA_DIR "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1")
 endif()
 
+# Apple Clang 15 arm_acle wrappers require a CRC-enabled target even when
+# the SDK applies a target attribute to its caller. Keep iOS on the SDK
+# software CRC implementation without raising the minimum CPU ISA. Source
+# scope also covers firestaff_m12 when BUILD_TESTING is disabled.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set_property(SOURCE third_party/lzma_sdk/7zCrc.c APPEND PROPERTY
+        COMPILE_DEFINITIONS Z7_CRC_NO_HW)
+endif()
+
 if(BUILD_TESTING)
     add_executable(test_firestaff_7z_extract
         tests/test_firestaff_7z_extract.c

@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-29: Release CI verified repeated Windows config and JSON writes.
+  iOS packaging then exposed LZMA ARM CRC intrinsics incompatible with the
+  baseline Apple Clang target. An iOS-only source definition selects software
+  CRC; arm64 iPhoneOS compilation, no-CRC-instruction assembly inspection and
+  the standard CRC32 test vector pass locally. Hosted iOS packaging remains
+  the final check against the release runner compiler.
+
 - 2026-09-29: Release CI exposed Windows CRT rename rejecting existing
   configuration files. Config and both JSON exports now use native replacement
   without deleting the previous file first. Three focused launcher CTests
