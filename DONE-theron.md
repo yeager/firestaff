@@ -29,6 +29,11 @@
   records; it also corrupts each record's opening frame and verifies
   fail-closed output. The direct test passed against staged US and JP media,
   and the focused retrieval/name/dungeon-loader CTest loop passed 3/3.
+- Rebuilt the production marker, story, and real-data quest-name targets in an
+  isolated `trv2` checkout and ran the four directly relevant CTests there;
+  all 4/4 passed. Direct executions reported authentic US and JP quest-artifact
+  names and the seven JP retrieval fallback records, so neither media path
+  skipped.
 - This proves only the launcher's bounded display-name projection, not the
   original retrieval UI, item pickup, or T900 event consumer.
 
@@ -48,6 +53,10 @@
   syntax validation and the focused CTest pass.
 - This improves evidence admission only. It does not create a new authentic
   capture or assert any Theron gameplay semantics.
+- Rebuilt the three standalone source/probe targets on `trv2`; the production
+  text, story, quest-name, and FIFO-correlation CTests passed 4/4 with `-j2`.
+  The script test used an isolated `/dev/shm` checkout; the dirty shared
+  checkout was not changed.
 
 ## 2026-09-29 — remove paraphrased dungeon lore copies
 
