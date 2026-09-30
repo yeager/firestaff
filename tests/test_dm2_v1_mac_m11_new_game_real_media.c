@@ -433,7 +433,7 @@ int main(void)
 
     if (!zip || !zip[0]) {
         puts("SKIP: FIRESTAFF_DM2_MAC_EN_ZIP is not set");
-        return 0;
+        return 77;
     }
     memset(&view, 0, sizeof(view));
     memset(&spec, 0, sizeof(spec));

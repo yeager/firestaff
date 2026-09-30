@@ -60569,6 +60569,7 @@ endif()
 add_test(NAME test_dm2_v1_mac_new_game_real_media
     COMMAND test_dm2_v1_mac_new_game_real_media)
 set_tests_properties(test_dm2_v1_mac_new_game_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
     LABELS "dm2;macintosh;new-game;real-media;in-memory;skip-safe")
 
@@ -60584,6 +60585,7 @@ endif()
 add_test(NAME test_dm2_v1_mac_m11_new_game_real_media
     COMMAND test_dm2_v1_mac_m11_new_game_real_media)
 set_tests_properties(test_dm2_v1_mac_m11_new_game_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};SDL_AUDIODRIVER=dummy"
     LABELS "dm2;macintosh;new-game;real-media;in-memory;skip-safe")
 

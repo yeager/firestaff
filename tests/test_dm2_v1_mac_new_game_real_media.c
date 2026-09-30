@@ -29,7 +29,7 @@ int main(void)
 
     if (!zip || !zip[0]) {
         puts("SKIP: FIRESTAFF_DM2_MAC_EN_ZIP is not set");
-        return 0;
+        return 77;
     }
     memset(&launch, 0, sizeof(launch));
     expect(dm2_v1_boot_startup_launch_alloc(zip, &launch) == 1 &&
