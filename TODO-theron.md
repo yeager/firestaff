@@ -19,6 +19,26 @@ Reviewed 2026-09-30. Only open work is listed here.
   still did not reach an authenticated game-owned data consumer, so it adds no
   independent original-runtime gameplay evidence.
 
+## 2026-09-30 — explicit US menu target still does not reach the title route
+
+- A ten-minute isolated trv2 replay used the authentic US CUE (MD5
+  `63dbd2fab613b2e8030ff4e44b978a39`), Track 02
+  (`f23601102138f87c33025877767ebf76`), System Card
+  (`ff1a674273fe3540ccef576376407d1d`) and campaign BRAM
+  (`ffabc8d19b0915d4d9632a7ae2e90a97`). The final 2 KiB BRAM snapshot was
+  byte-identical to the configured authentic save. The signed US menu-route
+  target `7549` was explicitly supplied alongside `drator-generator` and the
+  original scripted `run@9600:90` input.
+- The input event was applied and followed only by a System Card controller
+  poll at `$E4B7`; no non-System-Card poll or Drator route-hook receipt appeared.
+  The run recorded 115 CD IRQs, 25 raw-sector spans and four SCSI READs, plus
+  one `$E009` dispatch/return but zero `$E009` data reads and zero authenticated
+  CD-to-RAM receipts. The capture ended `BLOCKED` with `transition=missing`.
+- Supplying the authenticated route target did not advance the cold start to
+  the title/menu path. This remains negative startup evidence, not Drator or
+  gameplay proof. Private traces remain on trv2 under
+  `/home/trv2/work/theron-stair-capture-20260930/capture/`.
+
 ## 2026-09-30 — authentic JP full-CUE capture still stops before Track 02 consumer
 
 - On trv2, an isolated 120-second run used the complete hash-verified JP
