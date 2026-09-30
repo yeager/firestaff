@@ -240,6 +240,15 @@ implementing transitions. The regional totals are explicit test assertions so
 a broken/empty approach selector cannot masquerade as passing coverage. See
 `DONE-theron.md` for exact test scope.
 
+2026-09-30 authentic stair-hosted actuator census: the Track 02 real-media
+test now lists every floor-party actuator whose occurrence is on a verified
+stair tile. The eight US and eight JP occurrences are byte-identical across
+the hash-verified regional files. Three linked records share one Drator stair
+square; the remaining five occur on four other squares. This source census
+selects future normal-play capture targets but binds none of the raw stair
+attribute to a traversal direction or destination. See `DONE-theron.md` for
+the regional hashes and full test result.
+
 For a stair promotion, start from a normal playable original US or JP session
 and enter an authentic-map stair through ordinary game input; do not edit
 party coordinates, map tiles, or transition RAM to manufacture the event. Join

@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — census stair-hosted party actuators in authentic regions
+
+- Extended `theron_v1_track02_dungeon_loader` to enumerate floor-party actuator
+  occurrences hosted on source-authenticated stair tiles. It prints each raw
+  eight-byte record, linked reference, map location and raw stair tile, then
+  asserts eight records for each retail region.
+- The US Track 02 (`f23601102138f87c33025877767ebf76`) and JP Track 02
+  (`b7afb338ad31be1025b53f9aff12d73a`) real-media run passed. All eight
+  occurrences match byte-for-byte across editions. Three records are linked
+  at one Drator stair square; the other five records occupy four more squares.
+- This narrows capture targets and validates a source census only. It does not
+  establish stair traversal, destination, party arrival pose, or the original
+  actuator consumer; those remain open in TODO.
+
 ## 2026-09-30 — remove unsupported Theron skill-rank labels
 
 - The skill-name API now shares the source-backed champion string table instead

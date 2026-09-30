@@ -2339,6 +2339,86 @@ static unsigned int census_real_carryable_not_first(
     return count;
 }
 
+#define THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT 8u
+
+typedef struct {
+    uint8_t dungeon;
+    uint8_t level;
+    uint8_t x;
+    uint8_t y;
+    uint8_t stair_tile;
+    uint8_t position;
+    uint16_t source_ref;
+    uint16_t next_ref;
+    uint16_t source_index;
+    uint8_t raw[8];
+} Theron_StairPartyActuatorOccurrence;
+
+static Theron_StairPartyActuatorOccurrence g_us_stair_party_actuators[
+    THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT];
+static Theron_StairPartyActuatorOccurrence g_jp_stair_party_actuators[
+    THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT];
+static unsigned int g_us_stair_party_actuator_count;
+static unsigned int g_jp_stair_party_actuator_count;
+static int g_us_stair_party_actuator_census_valid;
+static int g_jp_stair_party_actuator_census_valid;
+
+static unsigned int print_real_stair_party_actuator_census(
+    const char *region, const Theron_V1_World *world,
+    Theron_StairPartyActuatorOccurrence *out, unsigned int out_capacity) {
+    unsigned int count = 0u;
+
+    assert(region != NULL && world != NULL);
+    for (unsigned int i = 0u; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *source = &world->source_objects[i];
+        const Theron_V1_Level *level;
+        Theron_Actuator actuator;
+
+        if (source->dungeon_id < 1 ||
+            source->dungeon_id > THERON_DUNGEON_COUNT || source->level < 0 ||
+            source->level >= THERON_MAX_LEVELS_PER_DUNGEON || source->x < 0 ||
+            source->x >= THERON_MAX_MAP_SIZE || source->y < 0 ||
+            source->y >= THERON_MAX_MAP_SIZE ||
+            source->category != THERON_CAT_ACTUATOR || source->raw_size != 8u ||
+            theron_v1_track02_actuator_decode(source->raw, &actuator) != 0 ||
+            actuator.type != TQ_ACT_FLOOR_PARTY)
+            continue;
+
+        level = &world->levels[source->dungeon_id - 1][source->level];
+        if (!level->source_header_verified || source->x >= level->width ||
+            source->y >= level->height ||
+            (level->source_tiles[source->y][source->x] >> 5) !=
+                THERON_TILE_STAIRS)
+            continue;
+
+        ++count;
+        assert(count <= out_capacity);
+        memset(&out[count - 1u], 0, sizeof(out[count - 1u]));
+        out[count - 1u].dungeon = (uint8_t)source->dungeon_id;
+        out[count - 1u].level = (uint8_t)source->level;
+        out[count - 1u].x = (uint8_t)source->x;
+        out[count - 1u].y = (uint8_t)source->y;
+        out[count - 1u].stair_tile =
+            level->source_tiles[source->y][source->x];
+        out[count - 1u].position = source->position;
+        out[count - 1u].source_ref = source->source_ref;
+        out[count - 1u].next_ref = source->next_ref;
+        out[count - 1u].source_index = source->source_index;
+        memcpy(out[count - 1u].raw, source->raw, sizeof(out[count - 1u].raw));
+        printf("  authentic %s stair-hosted party actuator: dungeon=%d "
+               "level=%d xy=(%d,%d) stair=%02x ref=%04x index=%u "
+               "next=%04x position=%u target=(%u,%u,%u) raw=",
+               region, source->dungeon_id, source->level, source->x, source->y,
+               out[count - 1u].stair_tile, source->source_ref,
+               source->source_index, source->next_ref, source->position,
+               actuator.target_x, actuator.target_y, actuator.target_facing);
+        for (unsigned int byte = 0u; byte < source->raw_size; ++byte)
+            printf("%02x", source->raw[byte]);
+        printf("\n");
+    }
+    return count;
+}
+
 static void test_all_dungeons(
     const uint8_t *ud, size_t ud_size,
     const uint8_t *track02, size_t track02_size) {
@@ -2385,6 +2465,7 @@ static void test_all_dungeons(
     unsigned int target_categories[8][16] = {{0}};
     unsigned int targets_without_things[8] = {0};
     unsigned int target_actuator_types[8][128] = {{0}};
+    unsigned int stair_party_actuator_count = 0u;
 
     for (int d = 0; d < 7; d++) {
         Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
@@ -2410,6 +2491,11 @@ static void test_all_dungeons(
         Theron_DungeonData source_maps;
         assert(theron_v1_track02_dungeon_map_load(
                    ud, ud_size, (unsigned int)d, &source_maps));
+        stair_party_actuator_count += print_real_stair_party_actuator_census(
+            "US", world,
+            g_us_stair_party_actuators + stair_party_actuator_count,
+            THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT -
+                stair_party_actuator_count);
         assert(source_maps.map_count == (uint8_t)result.levels_loaded);
         assert(world->source_thing_directory_verified[d] == 1);
         assert(world->source_column_thing_count_total[d] ==
@@ -2757,6 +2843,12 @@ static void test_all_dungeons(
         "US", local_multiples, remote_target_tiles,
         target_categories, targets_without_things,
         target_actuator_types);
+    printf("  authentic US stair-hosted party actuators: %u\n",
+           stair_party_actuator_count);
+    assert(stair_party_actuator_count ==
+           THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT);
+    g_us_stair_party_actuator_count = stair_party_actuator_count;
+    g_us_stair_party_actuator_census_valid = 1;
     assert(nonfirst_take_roundtrips > 0u);
 }
 
@@ -2799,6 +2891,7 @@ static void test_all_jp_dungeons(
     unsigned int target_categories[8][16] = {{0}};
     unsigned int targets_without_things[8] = {0};
     unsigned int target_actuator_types[8][128] = {{0}};
+    unsigned int stair_party_actuator_count = 0u;
     for (int d = 0; d < 7; d++) {
         Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
         Theron_DungeonData source_maps;
@@ -2824,6 +2917,11 @@ static void test_all_jp_dungeons(
         assert(theron_v1_track02_dungeon_map_load_for_variant(
                    ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN,
                    (unsigned int)d, &source_maps) == 1);
+        stair_party_actuator_count += print_real_stair_party_actuator_census(
+            "JP", world,
+            g_jp_stair_party_actuators + stair_party_actuator_count,
+            THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT -
+                stair_party_actuator_count);
         assert(result.levels_loaded > 0);
         assert(result.source_records_decoded > 0);
         assert(result.raw_only_item_refs == 0);
@@ -2948,6 +3046,12 @@ static void test_all_jp_dungeons(
         "JP", local_multiples, remote_target_tiles,
         target_categories, targets_without_things,
         target_actuator_types);
+    printf("  authentic JP stair-hosted party actuators: %u\n",
+           stair_party_actuator_count);
+    assert(stair_party_actuator_count ==
+           THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT);
+    g_jp_stair_party_actuator_count = stair_party_actuator_count;
+    g_jp_stair_party_actuator_census_valid = 1;
     assert(nonfirst_take_roundtrips > 0u);
     printf("  JP Track 02: all dungeon object records OK\n");
 }
@@ -5388,6 +5492,19 @@ int main(void) {
     raw = load_raw_bytes(path, &raw_size);
     assert(raw != NULL);
     test_all_dungeons(ud, ud_size, raw, raw_size);
+    if (g_jp_stair_party_actuator_census_valid) {
+        assert(g_us_stair_party_actuator_census_valid);
+        assert(g_jp_stair_party_actuator_count ==
+               g_us_stair_party_actuator_count);
+        for (unsigned int i = 0u; i < g_us_stair_party_actuator_count; ++i)
+            assert(memcmp(&g_us_stair_party_actuators[i],
+                          &g_jp_stair_party_actuators[i],
+                          sizeof(g_us_stair_party_actuators[i])) == 0);
+        printf("  authentic US/JP stair-hosted party actuator source "
+               "occurrences match byte-for-byte (%u records); semantics "
+               "remain unbound\n",
+               g_us_stair_party_actuator_count);
+    }
     test_real_us_iso_dungeons_against_raw(ud, ud_size);
     test_real_item_name_sources(ud, ud_size, 2);
     for (int dungeon_id = 1;
