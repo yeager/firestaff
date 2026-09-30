@@ -45,9 +45,24 @@ consumption_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/consumed.trace" run@9600:90 131072)
 if [[ "$consumption_receipt" != *'event_frames_with_apply=1'* ||
       "$consumption_receipt" != *'event_frames_followed_by_controller_read=1'* ||
-      "$consumption_receipt" != *'controller_poll_boundary=verified'* ]]; then
+      "$consumption_receipt" != *'controller_poll_boundary=verified'* ||
+      "$consumption_receipt" != *'game_or_non_system_card_poll_boundary=observed'* ]]; then
     printf 'FAIL: post-event controller read was not verified:\n%s\n' \
         "$consumption_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
+scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
+scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
+pce_input_read cpu_pc=e4c8 register=1000 raw=0008 sel=0 clr=0 index=0
+THERON_SYSTEM_CARD_INPUT
+system_card_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/system-card-only.trace" run@9600:90 131072)
+if [[ "$system_card_receipt" != *'controller_poll_boundary=verified'* ||
+      "$system_card_receipt" != *'system_card_poll_reads=1'* ||
+      "$system_card_receipt" != *'game_or_non_system_card_poll_boundary=not_observed'* ]]; then
+    printf 'FAIL: System Card-only input poll was not distinguished from game input:\n%s\n' \
+        "$system_card_receipt" >&2
     exit 1
 fi
 cat >"$input_test_dir/multiple-events.trace" <<'THERON_MULTI_EVENT_INPUT'
@@ -513,6 +528,7 @@ if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 1048576' "$script" ||
    ! grep -Fq 'verify_theron_scripted_input_consumption.sh' "$script" ||
    ! grep -Fq 'event_frames_followed_by_controller_read' "$scripted_input_consumption_verifier" ||
+   ! grep -Fq 'game_or_non_system_card_poll_boundary=not_observed' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'input_trace_limit=%s' "$script"; then
     printf 'FAIL: live capture must bound the controller trace and require post-event CPU polling\n' >&2
     exit 1

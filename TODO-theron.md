@@ -2,6 +2,21 @@
 
 Reviewed 2026-09-30. Only open work is listed here.
 
+## 2026-09-30 — distinguish BIOS-only controller polls
+
+- ✅ `verify_theron_scripted_input_consumption.sh` now reports the PC of the
+  first authentic controller-read witness and distinguishes the observed
+  System Card polling sites `$E4B4/$E4B7/$E4C5/$E4C8` from a non-System-Card
+  poll. The regression test accepts a generic non-System-Card witness but
+  explicitly keeps a `$E4C8`-only trace at
+  `game_or_non_system_card_poll_boundary=not_observed`.
+- ✅ `tests/test_theron_v1_mednafen_live_capture_script.sh`, both shell syntax
+  checks, and `git diff --check` pass. This improves evidence classification
+  only; it does not change runtime behavior or prove title/menu input.
+- 🔒 The authentic cold-start trace still shows the RUN event only at BIOS
+  polling sites and no title/menu poll PC. Resolve why instrumented Mednafen
+  remains on the System Card path before treating it as a gameplay capture.
+
 ## 2026-09-30 — isolate Theron menu-route input instrumentation
 
 - ✅ The Mednafen 1.32.1 research patch previously ORed

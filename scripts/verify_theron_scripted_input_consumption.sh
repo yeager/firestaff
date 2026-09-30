@@ -41,6 +41,17 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             $0 ~ / register=1000([[:space:]]|$)/) {
             pending_read = 1
             controller_read_witness_sequence = input_reads
+            for (i = 1; i <= NF; i++)
+                if ($i ~ /^cpu_pc=[0-9a-fA-F]+$/)
+                    controller_read_witness_pc = substr($i, 8)
+            if (controller_read_witness_pc ~ /^[0-9a-fA-F]+$/) {
+                pc = tolower(controller_read_witness_pc)
+                if (pc == "e4b7" || pc == "e4c8" ||
+                    pc == "e4b4" || pc == "e4c5")
+                    system_card_poll_reads++
+                else
+                    non_system_card_poll_reads++
+            }
         }
         next
     }
@@ -108,8 +119,17 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         printf "event_frames_with_apply=%d\n", frames_with_apply
         printf "event_frames_followed_by_controller_read=%d\n", frames_with_controller_read
         printf "controller_read_witness_sequence=%d\n", controller_read_witness_sequence
+        printf "controller_read_witness_pc=%s\n", controller_read_witness_pc
+        printf "system_card_poll_reads=%d\n", system_card_poll_reads
+        printf "non_system_card_poll_reads=%d\n", non_system_card_poll_reads
         printf "observed_input_reads=%d\n", input_reads
         printf "input_read_limit=%d\n", read_limit
         print "controller_poll_boundary=verified"
+        if (non_system_card_poll_reads > 0)
+            print "game_or_non_system_card_poll_boundary=observed"
+        else if (system_card_poll_reads > 0)
+            print "game_or_non_system_card_poll_boundary=not_observed"
+        else
+            print "game_or_non_system_card_poll_boundary=unknown"
     }
 ' "$trace"

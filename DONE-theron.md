@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — classify scripted controller-read witnesses
+
+- The scripted-input verifier now reports the authentic CPU PC of the first
+  post-event controller read and counts reads at observed System Card poll
+  PCs separately from other PCs. `game_or_non_system_card_poll_boundary` is
+  explicitly `not_observed` when the only witness is `$E4B4/$E4B7/$E4C5/$E4C8`.
+- Regression coverage passes for both a generic non-System-Card witness and a
+  BIOS-only `$E4C8` witness. This is evidence-gate precision only; it does not
+  claim a Theron title/menu response.
+
 ## 2026-09-30 — census stair-hosted party actuators in authentic regions
 
 - Extended `theron_v1_track02_dungeon_loader` to enumerate floor-party actuator
