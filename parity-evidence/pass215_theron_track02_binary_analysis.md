@@ -223,16 +223,23 @@ DM1/CSB creatures:
 Immediately after: "GAME SPEED" options menu label (UD 0x274228), followed
 by level names at UD 0x27423B.
 
-### Experience Threshold Table (UD 0x1DA890)
+### 64-word data block (US UD 0x1DA890; JP Rev. 1 UD 0x1DA0BC)
 
-64-entry word table (little-endian uint16). Monotonically increasing values
-from 0 to 214. Its relationship to the 4 champion classes and the 15 named
-rank records is unproven; it does not establish a display name for progression
-slot 15.
+The authenticated US Track 02 contains 64 little-endian words at UD `0x1DA890`;
+the authenticated JP Rev. 1 Track 02 contains the same 128 bytes at UD
+`0x1DA0BC`. In both editions the preceding 32 bytes are also identical. A
+real-media regression verifies each region-specific offset against the source
+array and compares the 160-byte context-plus-data spans byte-for-byte.
 
-Preceded at UD 0x1DA870 by class base-stat parameters:
-- UD 0x1DA870: 0, 0, 60, 50, 256, 256, 256, 256 (words)
-- UD 0x1DA880: 3, 3, 3, 3, 0, 10, 54, 90 (words)
+The block is monotonically increasing from 0 to 214 in the US build. Its
+meaning and relationship to champion classes or rank records remain unproven:
+it is not established here as an XP-threshold table or as a runtime consumer,
+and it does not establish a display name for progression slot 15.
+
+The preceding words are byte-bound data only, not proven class base-stat
+parameters:
+- US UD `0x1DA870`: 0, 0, 60, 50, 256, 256, 256, 256 (words)
+- US UD `0x1DA880`: 3, 3, 3, 3, 0, 10, 54, 90 (words)
 
 ### Dungeon Lore / Quest Narrative (UD 0x27613E–0x276CCB)
 

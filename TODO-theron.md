@@ -2,6 +2,15 @@
 
 Reviewed 2026-09-30. Only open work is listed here.
 
+## 2026-09-30 — preserve the semantics gap for the regional 64-word block
+
+Authenticated US and JP Rev. 1 Track 02 tests now verify the same 64 words at
+their edition-specific offsets (`0x1DA890` and `0x1DA0BC`) and byte-identical
+preceding context. This establishes source identity only. The block's purpose,
+any XP/rank interpretation, and its original runtime consumer remain open;
+do not describe it as an authenticated XP table until original code or runtime
+evidence binds that meaning.
+
 ## 2026-09-30 — keep original-consumer test fixtures out of `/tmp`
 
 The main-RAM consumer-trace test requires `TMPDIR` to point to a task-specific

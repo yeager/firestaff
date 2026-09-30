@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — bind a regional 64-word source block to authentic media
+
+- Added real-media CTests for US and JP Rev. 1 Track 02 at their distinct
+  logical offsets (`0x1DA890` and `0x1DA0BC`). Each verifies all 64 words
+  against the existing source array and checks the preceding 32 bytes; a third
+  test verifies the complete 160-byte spans are identical across editions.
+- On trv2, the data-free regression and all three hash-verified real-media
+  tests passed. An explicit unreadable media override failed closed, while
+  absent default media returned CTest's configured skip code.
+- This proves only byte identity and source-array agreement. The block's
+  semantics and original runtime consumer remain unverified and are recorded
+  in `TODO-theron.md`.
+
 ## 2026-09-30 — authenticate JP skill-rank source records
 
 - Added a test-only raw JP Rev. 1 rank-record reference that preserves the six
