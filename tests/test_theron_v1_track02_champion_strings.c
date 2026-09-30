@@ -44,6 +44,14 @@ static int test_skill_levels(void) {
     ASSERT(strcmp(theron_v1_track02_us_skill_level_name(13), "MASTER") == 0, "13");
     ASSERT(strcmp(theron_v1_track02_us_skill_level_name(14), "ARCHMASTER") == 0, "14");
     ASSERT(theron_v1_track02_us_skill_level_name(15) == NULL, "unbound rank");
+    ASSERT(strcmp(theron_v1_track02_jp_skill_level_name(0), "NEOPHYTE") == 0,
+           "JP 0");
+    ASSERT(strcmp(theron_v1_track02_jp_skill_level_name(8), "MASTER") == 0,
+           "JP 8 visible text");
+    ASSERT(strcmp(theron_v1_track02_jp_skill_level_name(14), "ARCHMASTER") == 0,
+           "JP 14");
+    ASSERT(theron_v1_track02_jp_skill_level_name(15) == NULL,
+           "JP unbound rank");
     {
         const uint8_t *record = NULL;
         size_t record_size = 0u;

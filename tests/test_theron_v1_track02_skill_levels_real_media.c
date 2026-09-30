@@ -173,12 +173,27 @@ int main(int argc, char **argv)
         } else {
             const uint8_t *record = NULL;
             size_t record_size = 0u;
+            const char *display =
+                theron_v1_track02_jp_skill_level_name(rank);
             if (!theron_v1_track02_jp_skill_level_source_record(
                     rank, &record, &record_size) ||
                 source_size != record_size ||
                 memcmp(user_data + cursor, record, record_size) != 0) {
                 fprintf(stderr,
                         "FAIL: JP raw skill-rank record binding %u\n", rank);
+                goto cleanup;
+            }
+            if (!display ||
+                source_size != strlen(display) +
+                    ((rank >= 8u && rank <= 13u) ? 2u : 0u) ||
+                ((rank < 8u || rank > 13u) &&
+                 memcmp(user_data + cursor, display, source_size) != 0) ||
+                ((rank >= 8u && rank <= 13u) &&
+                 (user_data[cursor + 1u] != (uint8_t)' ' ||
+                  memcmp(user_data + cursor + 2u, display,
+                         strlen(display)) != 0))) {
+                fprintf(stderr,
+                        "FAIL: JP skill-rank display text binding %u\n", rank);
                 goto cleanup;
             }
             if (rank >= 8u && rank <= 13u &&

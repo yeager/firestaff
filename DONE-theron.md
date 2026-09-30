@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — expose authenticated JP skill-rank display text
+
+- Added a bounds-checked JP rank-name accessor for the 15 visible text records
+  shared by the hash-authenticated US and JP Track 02 binaries. Regional media
+  verification binds the JP accessor's text to each retail record while
+  preserving the six custom rank-prefix glyph bytes as separate source data.
+- This is a data accessor only. It does not establish the rank-icon renderer,
+  an in-game display consumer, or a name for progression slot 15.
+
 ## 2026-09-30 — remove unsupported semantics from two raw-data APIs
 
 - Renamed the 64-word accessor from “experience threshold” to `raw_word` and

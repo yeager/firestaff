@@ -20,6 +20,9 @@ const char *theron_v1_track02_us_class_name(unsigned int index);
 const char *theron_v1_track02_us_stat_name(unsigned int index);
 const char *theron_v1_track02_us_resource_name(unsigned int index);
 const char *theron_v1_track02_us_skill_level_name(unsigned int index);
+/* JP Rev. 1 has the same visible text in its authenticated rank records;
+ * custom rank-prefix glyphs remain separate raw source bytes. */
+const char *theron_v1_track02_jp_skill_level_name(unsigned int index);
 const char *theron_v1_track02_us_object_action_name(unsigned int index);
 const char *theron_v1_track02_us_hand_action_name(unsigned int index);
 const char *theron_v1_track02_us_action_name(unsigned int index);

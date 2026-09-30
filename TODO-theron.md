@@ -21,10 +21,11 @@ Track 02 consumers and end-to-end Theron gameplay remain open below.
 ## 2026-09-30 — bind authentic JP rank source records
 
 The 15 JP Rev. 1 rank records at UD `0x89333` are authenticated as
-byte-identical to the US table at UD `0x1C9B6B`. Test-only source references
-and regional real-media checks cover the rank bytes; rank-icon presentation
-and the unrecorded progression slot 15 remain open. This does not establish
-an original in-game rank display consumer.
+byte-identical in visible text to the US table at UD `0x1C9B6B`. A bounds-
+checked JP text accessor is now covered by regional real-media tests. Its six
+custom prefix glyphs are still separate raw bytes; rank-icon presentation, an
+original in-game display consumer, and the unrecorded progression slot 15
+remain open.
 
 ## 2026-09-30 — keep Theron public status evidence-bounded
 

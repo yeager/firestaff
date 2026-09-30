@@ -113,6 +113,13 @@ const char *theron_v1_track02_us_skill_level_name(unsigned int index) {
     return g_skill_levels[index];
 }
 
+const char *theron_v1_track02_jp_skill_level_name(unsigned int index) {
+    /* JP Rev. 1 UD 0x89333 rank records are byte-identical in visible text
+     * to US UD 0x1C9B6B; their 0x60-0x65 prefix glyphs are kept separately. */
+    if (index >= THERON_TRACK02_SKILL_LEVEL_COUNT) return NULL;
+    return g_skill_levels[index];
+}
+
 const char *theron_v1_track02_us_object_action_name(unsigned int index) {
     if (index >= THERON_TRACK02_OBJECT_ACTION_COUNT) return NULL;
     return g_object_actions[index];
