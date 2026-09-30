@@ -18,7 +18,9 @@
 #include <direct.h>
 #include <process.h>
 static int test_mkdir(const char* path) { return _mkdir(path) == 0; }
-static int test_setenv(const char* name, const char* value) { return _putenv_s(name, value) == 0; }
+static int test_setenv(const char* name, const char* value) {
+    return _putenv_s(name, value ? value : "") == 0;
+}
 static char* test_mkdtemp(char* templ) {
     char* marker = strstr(templ, "XXXXXX");
     int i;
