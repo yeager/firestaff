@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — guard campaign completion against fabricated quest items
+
+- Extended the real-media M11 Continue test to assert that the authenticated
+  Akutuba-complete Backup RAM byte restores campaign bit 0 and marks Akutuba's
+  progression state complete while leaving `quest_items_collected` at zero and
+  `quest_complete` false. This checks the existing campaign-mask projection
+  against the authentic artifact; it does not claim an original quest-item
+  pickup consumer.
+- Built the test translation unit with `-Wall -Wextra -Werror` on trv2 and ran
+  it against hash-verified US Track 02 plus the original 2 KiB Backup RAM
+  capture. The Continue test passed. `TODO-theron.md` retains the outstanding
+  original pickup and gameplay-consumer gaps.
+
 ## 2026-09-30 — expose authenticated JP skill-rank display text
 
 - Added a bounds-checked JP rank-name accessor for the 15 visible text records

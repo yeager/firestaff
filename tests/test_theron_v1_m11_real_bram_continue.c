@@ -92,6 +92,17 @@ int main(int argc, char** argv) {
         ++failures;
         fprintf(stderr, "FAIL: Continue remains at the source-backed stage boundary before an explicit dungeon-entry action\n");
     }
+    if (!world || !source_body_ready ||
+        source_body.ram_267c_campaign_byte != 0x01u ||
+        world->campaign_completion_mask != 0x01u ||
+        world->progression.dungeon_states[0] !=
+            THERON_DUNGEON_STATE_COMPLETE ||
+        world->progression.quest_items_collected != 0u ||
+        world->progression.quest_complete) {
+        ++failures;
+        fprintf(stderr,
+                "FAIL: authentic Akutuba campaign bit restores chapter completion without inventing quest-item collection\n");
+    }
     if (world->party.champions[0].max_health != 175 ||
         world->party.champions[0].max_stamina != 1500 ||
         world->party.champions[0].max_mana != 50 ||

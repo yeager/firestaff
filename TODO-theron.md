@@ -20,6 +20,16 @@ Reviewed 2026-09-30. Only open work is listed here.
   cap, so it is incomplete. This capture supplies no level/object semantics,
   gameplay transition, or rendering evidence; the original consumer gap
   remains open.
+- A second isolated 120-second JP replay varied only the scripted event to a
+  90-frame `run@9600` hold. It again observed 115 CD IRQs, 24 raw-sector
+  spans, four SCSI reads, 24 sector bindings, no authenticated CD→RAM origin,
+  and a single `$E009` dispatch with zero data reads. The event was consumed
+  only at System Card poll `$E4B7`; no game/non-System-Card poll was observed.
+  The longer hold therefore did not advance the capture boundary. Both runs'
+  traces remain private under their separate trv2 work directories. Do not
+  interpret this repeated startup path as evidence for JP world data or
+  gameplay parity; next work needs an independently source-bound original
+  title/menu entry route or a proven consumer trace.
 
 ## 2026-09-30 — preserve the semantics gap for the regional 64-word block
 
@@ -250,7 +260,12 @@ data.
    `docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`.
    The `$267C` campaign-completion mask is kept separate from quest-item
    collection; the original pickup consumer and a changed in-game save
-   transaction remain unproven.
+   transaction remain unproven. The authentic Continue regression now checks
+   the real Akutuba-complete Backup RAM record independently: campaign bit 0
+   marks Akutuba complete in Firestaff's progression state, while
+   `quest_items_collected` remains zero and quest completion stays false. The
+   source-locked ordinal capture proves this campaign bit but not the original
+   pickup consumer or wholly independent state semantics in the original game.
    Firestaff now has a source-gated in-memory encoder for Theron's persistent
    runtime fields and the selected original record. An unchanged Continue
    round-trips the authentic Akutuba-complete artifact byte for byte. There is
