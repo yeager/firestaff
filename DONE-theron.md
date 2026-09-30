@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — complete registered Theron test selection on trv2
+
+- Built the missing Theron-labeled test executables and the `firestaff`
+  application in the isolated trv2 build tree, using sequential `-j1` builds.
+- Ran all 75 Theron-labeled CTests with `-j2`: 67 executed and passed; eight
+  skipped because their optional operator-owned capture or media artifacts
+  were not staged. Zero tests failed. Authentic US/JP raw BIN, CUE, JP 7z,
+  US CloneCD startup routes, Track 02 loaders, and BRAM Continue tests passed.
+- The skipped original-runtime capture cases remain missing evidence; this
+  suite result does not establish complete gameplay or campaign parity.
+
 ## 2026-09-30 — verify retrieval text source ordinals byte-for-byte
 
 - The production chapter-marker gate now compares all seven decoded retrieval
