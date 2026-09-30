@@ -144,6 +144,52 @@ static void check_repeated_file_replacements(const char* settingsJsonPath,
                 loaded.languageIndex == 5,
                 "settings import observes second export contents");
 
+    /* Import must not accept a truncated root object or leak fields parsed
+     * before the missing closing brace into the caller's live config. */
+    {
+        static const char truncated_json[] =
+            "{\"language_index\":5,\"data_dir\":\"partial-write\",";
+        int before_language;
+        char before_data_dir[M12_CONFIG_DATA_DIR_CAPACITY];
+        FILE* truncated = fopen(settingsJsonPath, "wb");
+        M12_Config_SetDefaults(&loaded);
+        loaded.languageIndex = 2;
+        snprintf(loaded.dataDir, sizeof(loaded.dataDir), "%s", "keep-this-dir");
+        before_language = loaded.languageIndex;
+        snprintf(before_data_dir, sizeof(before_data_dir), "%s", loaded.dataDir);
+        expect_true(truncated != NULL, "open truncated settings fixture");
+        if (truncated) {
+            expect_true(fwrite(truncated_json, 1u, sizeof(truncated_json) - 1u,
+                               truncated) == sizeof(truncated_json) - 1u,
+                        "write truncated settings object");
+            expect_true(fclose(truncated) == 0, "close truncated settings fixture");
+            expect_true(!M12_Config_ImportJSON(&loaded, settingsJsonPath),
+                        "settings import rejects a missing root-object close");
+            expect_true(loaded.languageIndex == before_language &&
+                        strcmp(loaded.dataDir, before_data_dir) == 0,
+                        "truncated settings import leaves the live config unchanged");
+        }
+    }
+    {
+        static const char trailing_json[] =
+            "{\"language_index\":5} trailing";
+        FILE* trailing = fopen(settingsJsonPath, "wb");
+        M12_Config_SetDefaults(&loaded);
+        loaded.languageIndex = 2;
+        expect_true(trailing != NULL, "open trailing-token settings fixture");
+        if (trailing) {
+            expect_true(fwrite(trailing_json, 1u, sizeof(trailing_json) - 1u,
+                               trailing) == sizeof(trailing_json) - 1u,
+                        "write settings object followed by an invalid token");
+            expect_true(fclose(trailing) == 0,
+                        "close trailing-token settings fixture");
+            expect_true(!M12_Config_ImportJSON(&loaded, settingsJsonPath),
+                        "settings import rejects data after the root object");
+            expect_true(loaded.languageIndex == 2,
+                        "trailing-token settings import leaves config unchanged");
+        }
+    }
+
     config.quickResumeEnabled = 1;
     snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s",
              "first-save-slot.dat");

@@ -1722,16 +1722,24 @@ static int m12_manifest_path_is_valid(const char* path, size_t cap) {
  * Returns 1 on success, 0 on failure (file not found, parse error).
  * ───────────────────────────────────────────────────────────────────── */
 int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
+    M12_Config parsed;
+    M12_Config* destination = config;
     char pathBuf[FSP_PATH_MAX];
     const char* path;
     FILE* fp;
     char token[256];
     char key[128];
     int gi;
+    int root_closed = 0;
 
     if (!config) {
         return 0;
     }
+
+    /* Keep malformed or truncated settings files from partially mutating
+     * the caller's live configuration. Commit only after a full root object. */
+    parsed = *config;
+    config = &parsed;
 
     if (!importPath || importPath[0] == '\0') {
         m12_default_export_path(pathBuf, sizeof(pathBuf));
@@ -1754,6 +1762,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
     /* Parse JSON object — read key-value pairs */
     while (m12_json_next_token(fp, token, sizeof(token))) {
         if (strcmp(token, "}") == 0) {
+            root_closed = 1;
             break;  /* End of object */
         }
         if (strcmp(token, ",") == 0) {
@@ -2003,7 +2012,13 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         (void)0; /* placeholder to absorb the defines */
     }
 
+    if (!root_closed || m12_json_next_token(fp, token, sizeof(token))) {
+        fclose(fp);
+        return 0;
+    }
+
     fclose(fp);
+    *destination = parsed;
     return 1;
 }
 
