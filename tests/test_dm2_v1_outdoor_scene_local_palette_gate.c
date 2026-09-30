@@ -1,5 +1,7 @@
 /* Source: skproject SKWIN/SkWinCore.cpp T600 GRAPHICSSET scene material
- * lookup and QUERY_GDAT_IMAGE_LOCALPAL.
+ * lookup and QUERY_GDAT_IMAGE_LOCALPAL. Source-required outdoor rendering
+ * accepts the authenticated UPDATE_GFXSET scene plan only; generic callbacks
+ * cannot stand in for its paired image/palette receipts.
  *
  * Provenance: introduced in 232a21a1e with a viewport-side FNV re-hash of
  * the decoded palette bytes.  Re-anchored after 5c21e5561 ("Fix DM2 scene
@@ -137,16 +139,14 @@ int main(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     setup_outdoor(&viewport, framebuffer, &trace, 1);
     dm2_v1_viewport_render(&viewport);
-    CHECK("outdoor scene consumes each source IMG3 local palette",
-          trace.asset_fetches == 2 && trace.palette_fetches == 2 &&
-              trace.palette_seen[0] && trace.palette_seen[1] &&
-              framebuffer[40 * DM2_VP_WIDTH + 100] == 0x21u &&
-              framebuffer[140 * DM2_VP_WIDTH + 100] == 0x42u &&
-              viewport.asset_outdoor_sky_drawn_count == 1 &&
-              viewport.asset_outdoor_ground_drawn_count == 1 &&
-              viewport.gdat_local_palette_consumed_count > 0 &&
+    CHECK("outdoor source render rejects callback-only material plans",
+          trace.asset_fetches == 0 && trace.palette_fetches == 0 &&
+              viewport.asset_outdoor_sky_drawn_count == 0 &&
+              viewport.asset_outdoor_ground_drawn_count == 0 &&
               (viewport.blocked_material_mask &
-               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u);
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) != 0u &&
+              framebuffer[40 * DM2_VP_WIDTH + 100] == 0x00u &&
+              framebuffer[140 * DM2_VP_WIDTH + 100] == 0x00u);
 
     memset(framebuffer, 0x3c, sizeof(framebuffer));
     memset(&trace, 0, sizeof(trace));
@@ -157,8 +157,8 @@ int main(void)
     trace.corrupt_palette = 1;
     setup_outdoor(&viewport, framebuffer, &trace, 1);
     dm2_v1_viewport_render(&viewport);
-    CHECK("outdoor scene rejects an invalid source palette receipt before either plane",
-          trace.asset_fetches == 2 && trace.palette_fetches == 2 &&
+    CHECK("outdoor scene never consumes an unowned callback palette",
+          trace.asset_fetches == 0 && trace.palette_fetches == 0 &&
               viewport.asset_outdoor_sky_drawn_count == 0 &&
               viewport.asset_outdoor_ground_drawn_count == 0 &&
               (viewport.blocked_material_mask &
@@ -174,11 +174,9 @@ int main(void)
         0, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
     setup_outdoor(&viewport, framebuffer, &trace, 0);
     dm2_v1_viewport_render(&viewport);
-    /* 5c21e5561 moved this fail-closed decision into the UPDATE_GFXSET
-     * transaction gate itself: with no local-palette provider bound the
-     * scene blocks before any asset is fetched, which is strictly earlier
-     * than the original per-plane discovery (asset_fetches == 1). */
-    CHECK("source-required outdoor scene fails closed without local palettes",
+    /* The source-owned scene plan includes each decoded plane and palette.
+     * Neither a raw texture callback nor a palette callback can replace it. */
+    CHECK("source-required outdoor scene fails closed without its source plan",
           trace.asset_fetches == 0 && trace.palette_fetches == 0 &&
               viewport.asset_outdoor_sky_drawn_count == 0 &&
               viewport.asset_outdoor_ground_drawn_count == 0 &&

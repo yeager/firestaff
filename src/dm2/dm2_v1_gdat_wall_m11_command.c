@@ -14,6 +14,22 @@ static const int8_t s_dm2_draw_wall_movement_offsets[23] = {
     0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2,
     3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4
 };
+static const int8_t s_dm2_source_cell_lateral[23] = {
+    0, -1, 1, 0, -1, 1, 0, -1, 1, -2, 2, 0,
+    -1, 1, -2, 2, 0, -1, 1, -2, 2, -3, 3
+};
+/* SKProject dm2data.cpp::table1d6b2c, probed at +0xb0 by DM2_DRAW_WALL. */
+static const uint8_t s_dm2_wall_mirror_cell[23] = {
+    0x00u, 0x02u, 0x01u, 0x03u, 0x05u, 0x04u, 0x06u, 0x08u,
+    0x07u, 0x0au, 0x09u, 0x0bu, 0x0du, 0x0cu, 0x0fu, 0x0eu,
+    0x10u, 0x12u, 0x11u, 0x14u, 0x13u, 0x16u, 0x15u
+};
+static const uint8_t s_dm2_draw_dungeon_tiles_cells[20] = {
+    0x13u, 0x14u, 0x11u, 0x12u, 0x10u,
+    0x0eu, 0x0fu, 0x0cu, 0x0du, 0x0bu,
+    0x09u, 0x0au, 0x07u, 0x08u, 0x06u,
+    0x04u, 0x05u, 0x03u, 0x01u, 0x02u
+};
 
 static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 {
@@ -68,7 +84,7 @@ static int16_t read_word_signed(const uint8_t *bytes, int big_endian)
 
 static int load_graphicsset_wall_local_palette(
     const DM2_V1_AssetLoader *loader, int graphicsset, int field,
-    uint8_t out_palette16[16], uint32_t *out_hash)
+    DM2_ImageFormat format, uint8_t out_palette16[16], uint32_t *out_hash)
 {
     const uint8_t *raw;
     size_t raw_size = 0u;
@@ -76,6 +92,20 @@ static int load_graphicsset_wall_local_palette(
     if (out_hash) *out_hash = 0u;
     if (!out_palette16) return 0;
     memset(out_palette16, 0, DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE);
+    /* QUERY_GDAT_IMAGE_LOCALPAL supplies a translation only for C4. IMG9
+     * and raw U8 pixels index the active 256-colour palette directly; their
+     * trailing bytes are image payload, not a sixteen-colour palette. */
+    if (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4) {
+        uint32_t hash = 2166136261u;
+        for (unsigned color = 0;
+             color < DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE;
+             ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash = hash_bytes(hash, &out_palette16[color], 1u);
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
     /* FM Towns IMG2/IMG6 has no PC IMG3 local-palette trailer.  Its C4
      * stream is variable length, so the last sixteen bytes are picture
      * payload, never a palette.  The active GRAPHICSSET physical palette
@@ -98,9 +128,7 @@ static int load_graphicsset_wall_local_palette(
         return 0;
     }
     /* DM2_DRAW_WALL consumes QUERY_TEMP_PICST's image-local palette from the
-     * source GRAPHICSSET image record. Canonical wall fields include C8/IMG9
-     * records that weather/environment helpers intentionally reject, so bind
-     * the wall command to the source record's trailing 16-byte palette here. */
+     * source GRAPHICSSET image record only for C4 wall images. */
     memcpy(out_palette16,
            raw + raw_size - DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE,
            DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE);
@@ -325,12 +353,8 @@ static int query_raw4_wall_blit_rect(
 
 static int wall_cell_for_square(int square, int *out_cell, int *out_flip)
 {
-    /* Firestaff's admitted ten-panel route is the same source draw subset
-     * that currently owns GRAPHICSSET fields 0x24..0x2d.  The field itself
-     * is the only proven bridge to the `iViewportCell + 0x22` RAW4 input. */
-    static const uint8_t flips[DM2_SQ_COUNT] = {
-        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1
-    };
+    /* The source cell is encoded by GRAPHICSSET[cell + 0x22]. Use the mapped
+     * Skproject cell ID for RAW4's rect number and movement offset too. */
     int field;
 
     if (!out_cell || !out_flip || square < 0 || square >= DM2_SQ_COUNT)
@@ -338,7 +362,7 @@ static int wall_cell_for_square(int square, int *out_cell, int *out_flip)
     field = dm2_v1_viewport_wall_field_for_square(square);
     if (field < 0x22 || field >= 0x40) return 0;
     *out_cell = field - 0x22;
-    *out_flip = flips[square];
+    *out_flip = s_dm2_source_cell_lateral[*out_cell] > 0;
     return 1;
 }
 
@@ -350,9 +374,10 @@ void dm2_v1_gdat_wall_m11_command_plan_free(DM2_V1_GdatWallM11CommandPlan *plan)
     memset(plan, 0, sizeof(*plan));
 }
 
-int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
+int dm2_v1_gdat_wall_m11_command_plan_build_for_scene(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
-    int movement_active, DM2_V1_GdatWallM11CommandPlan *out_plan)
+    int movement_active, int graphics_flip_parity,
+    DM2_V1_GdatWallM11CommandPlan *out_plan)
 {
     DM2_V1_GdatWallM11CommandPlan candidate;
     uint32_t hash = 2166136261u;
@@ -361,8 +386,14 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
     memset(&candidate, 0, sizeof(candidate));
     if (!loader || !dm2_v1_asset_loader_verify(loader)) return 0;
     candidate.graphicsset = graphicsset;
-    for (int square = 0; square < DM2_SQ_COUNT; ++square) {
-        int field = dm2_v1_viewport_wall_field_for_square(square);
+    candidate.graphics_flip_parity = graphics_flip_parity ? 1u : 0u;
+    hash = hash_bytes(hash, &candidate.graphicsset, sizeof(candidate.graphicsset));
+    hash = hash_bytes(hash, &candidate.graphics_flip_parity,
+                      sizeof(candidate.graphics_flip_parity));
+    for (int pass = 0; pass < DM2_V1_SKPROJECT_WALL_CELL_COUNT; ++pass) {
+        int cell = s_dm2_draw_dungeon_tiles_cells[pass];
+        int square = -1;
+        int field = 0x22 + (cell < 16 ? cell : 0x10);
         DM2_V1_GdatWallM11Command *command;
         const uint8_t *raw;
         const uint8_t *raw4;
@@ -370,29 +401,70 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
         size_t raw_size = 0u;
         size_t raw4_size = 0u;
         int width = 0, height = 0;
-        int cell, mirror_flip;
+        DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+        int mirror_flip = 0;
         int offset_x, offset_y;
         int source_x, source_y;
         uint16_t raw_index;
         DM2_V1_GdatGfxRawMaterialReceipt material;
         DM2_V1_WallRawRect destination;
         DM2_V1_GdatImageMetadata metadata;
-        if (field < DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) continue;
-        /* DM2_DRAW_DUNGEON_TILES schedules only the ten side/deep wall cells;
-         * D0C is the front-player tile and D3C has no wall field. */
-        if (dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(square) < 0)
-            continue;
+        for (int candidate_square = 0; candidate_square < DM2_SQ_COUNT;
+             ++candidate_square) {
+            if (dm2_v1_viewport_skproject_cell_for_square(candidate_square) == cell) {
+                square = candidate_square;
+                break;
+            }
+        }
+        /* D0C is cell zero and is drawn by the separate front-player-tile route. */
+        if (cell == 0) continue;
         if (candidate.command_count >= DM2_V1_GDAT_WALL_M11_COMMAND_MAX) goto fail;
-        if (!wall_cell_for_square(square, &cell, &mirror_flip)) goto fail;
+        if (square >= 0) {
+            int mapped_cell = cell;
+            if (!wall_cell_for_square(square, &mapped_cell, &mirror_flip) ||
+                mapped_cell != cell) goto fail;
+        } else {
+            mirror_flip = s_dm2_source_cell_lateral[cell] > 0;
+        }
+        if (cell >= 16) {
+            if (s_dm2_source_cell_lateral[cell] == -2 ||
+                s_dm2_source_cell_lateral[cell] == 2)
+                mirror_flip = 0;
+            mirror_flip ^= graphics_flip_parity ? 1 : 0;
+        } else if (graphics_flip_parity) {
+            field = 0xb0 + s_dm2_wall_mirror_cell[cell];
+        }
         command = &candidate.commands[candidate.command_count];
         raw = dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
                                       graphicsset, field, &raw_size);
         command->pixels = dm2_v1_asset_load_image_field(
             loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
-            &width, &height, NULL);
+            &width, &height, &format);
+        if (cell < 16 && graphics_flip_parity &&
+            (!raw || !raw_size || !command->pixels || width <= 0 || height <= 0)) {
+            dm2_v1_asset_free_pixels(command->pixels);
+            memset(command, 0, sizeof(*command));
+            field = 0x22 + cell;
+            if (s_dm2_source_cell_lateral[cell] == 0) mirror_flip = 1;
+            command = &candidate.commands[candidate.command_count];
+            raw = dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                                          graphicsset, field, &raw_size);
+            command->pixels = dm2_v1_asset_load_image_field(
+                loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
+                &width, &height, &format);
+        }
+        /* Some source cells intentionally have no wall image in a graphics
+         * set. Keep those cells out of the available command inventory; the
+         * live map's required-cell mask will still reject a frame if one of
+         * those absent images is actually needed. */
+        if (!raw || !raw_size || !command->pixels || width <= 0 || height <= 0) {
+            dm2_v1_asset_free_pixels(command->pixels);
+            memset(command, 0, sizeof(*command));
+            continue;
+        }
         {
             int palette_ok = load_graphicsset_wall_local_palette(
-                loader, graphicsset, field, command->palette16,
+                loader, graphicsset, field, format, command->palette16,
                 &command->palette_hash);
             int metadata_ok = dm2_v1_asset_load_image_metadata(
                 loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
@@ -411,8 +483,7 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
                     2166136261u, raw, raw_size);
                 metadata_ok = metadata.metadata_hash != 0u;
             }
-            if (!raw || !raw_size || raw_size > UINT32_MAX ||
-                !command->pixels || width <= 0 || height <= 0 ||
+            if (raw_size > UINT32_MAX ||
                 !palette_ok || !command->palette_hash || !metadata_ok) goto fail;
         }
         if (!wall_source_raw_index(loader, raw, raw_size, &raw_index) ||
@@ -446,7 +517,12 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
             offset_y += command->movement_query_offset_y;
         }
         if (mirror_flip) offset_x = -offset_x;
-        if (!raw4 || !raw4_size || !raw4_row ||
+        if (!raw4 || !raw4_size || !raw4_row) {
+            dm2_v1_asset_free_pixels(command->pixels);
+            memset(command, 0, sizeof(*command));
+            continue;
+        }
+        if (
             !query_raw4_wall_blit_rect(raw4, raw4_size, command->rect_number,
                                        loader->big_endian,
                                        width, height, offset_x, offset_y,
@@ -454,7 +530,8 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
             destination.x > INT16_MAX || destination.y > INT16_MAX ||
             destination.w > UINT16_MAX || destination.h > UINT16_MAX ||
             source_x > UINT16_MAX || source_y > UINT16_MAX) goto fail;
-        command->view_square = (uint8_t)square;
+        command->view_square = square >= 0 ? (uint8_t)square : UINT8_MAX;
+        command->skproject_cell = (uint8_t)cell;
         command->field = (uint8_t)field;
         command->width = (uint16_t)width;
         command->height = (uint16_t)height;
@@ -528,4 +605,12 @@ int dm2_v1_gdat_wall_m11_command_plan_build(
 {
     return dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
         loader, graphicsset, 0, out_plan);
+}
+
+int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
+    int movement_active, DM2_V1_GdatWallM11CommandPlan *out_plan)
+{
+    return dm2_v1_gdat_wall_m11_command_plan_build_for_scene(
+        loader, graphicsset, movement_active, 0, out_plan);
 }

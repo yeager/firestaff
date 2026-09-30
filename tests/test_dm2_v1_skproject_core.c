@@ -2225,11 +2225,13 @@ static void test_map_helpers(void)
 
         memset(maps, 0, sizeof(maps));
         maps[0].map_id = 0u;
+        maps[0].level = 0u;
         maps[0].world_x = 20;
         maps[0].world_y = 40;
         maps[0].width = 10;
         maps[0].height = 8;
         maps[1].map_id = 1u;
+        maps[1].level = 1u;
         maps[1].world_x = 23;
         maps[1].world_y = 41;
         maps[1].width = 7;
@@ -2237,12 +2239,14 @@ static void test_map_helpers(void)
         maps[1].tile_type_at_local = 5u;
         maps[1].teleporter_record_active = 1u;
         maps[2].map_id = 2u;
+        maps[2].level = 1u;
         maps[2].world_x = 24;
         maps[2].world_y = 42;
         maps[2].width = 8;
         maps[2].height = 7;
         maps[2].tile_type_at_local = 7u;
         maps[3].map_id = 3u;
+        maps[3].level = 1u;
         maps[3].world_x = 22;
         maps[3].world_y = 39;
         maps[3].width = 8;

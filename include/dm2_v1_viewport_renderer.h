@@ -362,7 +362,9 @@ typedef struct {
     int animated_frame_route;
 } DM2_V1_FloorGfxViewportOwnershipReceipt;
 
-#define DM2_V1_WALL_PANEL_RENDER_MAX DM2_SQ_COUNT
+#define DM2_V1_WALL_PANEL_RENDER_MAX DM2_V1_SKPROJECT_WALL_CELL_COUNT
+#define DM2_V1_SKPROJECT_VIEW_CELL_COUNT 23
+#define DM2_V1_SKPROJECT_WALL_CELL_COUNT 20
 
 typedef struct {
     int render_step;
@@ -380,6 +382,7 @@ typedef struct {
      * current direction after G1 has classified the actual visible cells. */
     int party_direction;
     uint16_t selected_square_mask;
+    uint32_t selected_cell_mask;
 } DM2_V1_WallPanelRenderPlan;
 
 /* skproject SkWinCore map-load scene state. It is a typed source record, not
@@ -1603,6 +1606,8 @@ typedef struct {
 
     /* View squares — populated by the world model (Phase 3) */
     DM2_ViewSquare squares[DM2_SQ_COUNT];
+    /* Wall classes for Skproject's complete 23-cell view lattice. */
+    uint32_t skproject_wall_cell_mask;
 
     /* Sprite pools */
     DM2_CreatureSprite creatures[DM2_MAX_CREATURES_PER_SQ];
@@ -1743,6 +1748,7 @@ typedef struct {
     /* G1 map-header coordinates belong to the original plane-flip predicate. */
     int gdat_scene_map_offset_x;
     int gdat_scene_map_offset_y;
+    int gdat_scene_map_flip_seed;
     int gdat_scene_material_index;
     /* The active MAP's decoded GRAPHICSSET planes are retained by the runtime
      * plan. These are never synthesized and are preferred over a second GDAT
@@ -1841,6 +1847,8 @@ typedef struct {
     uint16_t last_outdoor_scene_material_consumed_mask;
     uint16_t last_dungeon_wall_material_required_mask;
     uint16_t last_dungeon_wall_material_consumed_mask;
+    uint32_t last_dungeon_wall_source_cell_required_mask;
+    uint32_t last_dungeon_wall_source_cell_consumed_mask;
     uint16_t last_wall_ornament_material_required_mask;
     uint16_t last_wall_ornament_material_consumed_mask;
     DM2_V1_ViewportSceneControlCommand last_scene_control_presentation_command;
@@ -2105,6 +2113,8 @@ void dm2_v1_viewport_set_gdat_scene_movement_active(
     DM2_V1_ViewportState *s, int active);
 void dm2_v1_viewport_set_gdat_scene_map_origin(
     DM2_V1_ViewportState *s, int map_offset_x, int map_offset_y);
+void dm2_v1_viewport_set_gdat_scene_map_flip_seed(
+    DM2_V1_ViewportState *s, int map_flip_seed);
 void dm2_v1_viewport_set_gdat_wall_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatWallM11CommandPlan *plan);

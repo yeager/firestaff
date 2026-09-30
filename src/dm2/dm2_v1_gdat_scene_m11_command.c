@@ -1,4 +1,5 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_fmtowns_graphics_dat.h"
 
 #include <string.h>
 
@@ -68,7 +69,7 @@ static int scene_rect_pair_valid(uint16_t floor_rect, uint16_t ceiling_rect)
 
 static int dm2_v1_gdat_scene_image_local_palette(
     const DM2_V1_AssetLoader *loader, int graphicsset, int field,
-    uint8_t out_palette16[16], uint32_t *out_hash)
+    DM2_ImageFormat format, uint8_t out_palette16[16], uint32_t *out_hash)
 {
     const uint8_t *raw;
     size_t raw_size = 0u;
@@ -77,6 +78,21 @@ static int dm2_v1_gdat_scene_image_local_palette(
     if (out_hash) *out_hash = 0u;
     if (!out_palette16) return 0;
     memset(out_palette16, 0, DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE);
+    /* QUERY_GDAT_IMAGE_LOCALPAL only returns a local translation for C4.
+     * IMG9 and raw U8 pixels are already indexes in the active 256-colour
+     * palette. Reading their final sixteen image bytes as a C4 palette turns
+     * low-valued Mac pixels into unrelated palette indexes (often black). */
+    if (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4) {
+        uint32_t hash = 2166136261u;
+        for (unsigned color = 0;
+             color < DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE;
+             ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash = hash_bytes(hash, &out_palette16[color], 1u);
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
     if (loader && loader->gdat_version == 4u) {
         DM2_V1_InterfacePalette palette;
         if (!dm2_v1_asset_load_interface_palette(
@@ -99,10 +115,9 @@ static int dm2_v1_gdat_scene_image_local_palette(
             DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE) {
         return 0;
     }
-    /* QUERY_TEMP_PICST binds the image-local palette carried by the source
-     * record.  The canonical G1 dungeon planes include both IMG3 and IMG9
-     * encodings, so retain the record's trailing 16-byte palette instead of
-     * deriving one from format-specific pixel payload heuristics. */
+    /* QUERY_TEMP_PICST binds the image-local palette carried by a C4 source
+     * record. The trailing sixteen bytes are valid only for those 4-bit
+     * encodings; 8-bit IMG9/U8 records were admitted above with identity. */
     palette_offset = raw_size - DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE;
     memcpy(out_palette16, raw + palette_offset,
            DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE);
@@ -189,6 +204,8 @@ static uint32_t dm2_v1_gdat_scene_draw_order_hash(
         hash = hash_bytes(hash,
                           (const uint8_t *)&command->palette_transform_hash,
                           sizeof(command->palette_transform_hash));
+        hash = hash_bytes(hash, &command->physical_palette_indices,
+                          sizeof(command->physical_palette_indices));
         hash = hash_bytes(hash, (const uint8_t *)&command->geometry_hash,
                           sizeof(command->geometry_hash));
     }
@@ -345,15 +362,22 @@ static int decode_viewport_root_rect(const DM2_V1_AssetLoader *loader,
           read_words(loader, row + 6u) != 0))) {
         return 0;
     }
-    /* Macintosh GRAPHICS.DAT retains the same authenticated rect table but
-     * its scene rows are native Mac compositor records, not the PC 11/14
-     * root indirections.  The source viewport draws these floor/ceiling
-     * images at the viewport origin; keep the native table receipt and bind
-     * that direct geometry without inventing a PC reference chain. */
+    /* Macintosh GRAPHICS.DAT stores native anchor records (11=top, 14=bottom)
+     * in the same authenticated rect table. Do not follow the second word as
+     * the PC reference chain, but do honor the source anchor: RECT_700 starts
+     * at the viewport top and RECT_701 is bottom-aligned. Treating both as
+     * origin-aligned hid the Mac floor behind the wall planes. */
     if (loader && loader->big_endian) {
+        const int16_t anchor = read_words(loader, row);
+        if ((anchor != 11 && anchor != 14) ||
+            read_words(loader, row + 4u) != 0 ||
+            read_words(loader, row + 6u) != 0) {
+            return 0;
+        }
         out_rect->rect_number = rect_number;
         out_rect->x = 0;
-        out_rect->y = 0;
+        out_rect->y = anchor == 11 ? 0 :
+            (int16_t)(DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT - height);
         out_rect->width = width;
         out_rect->height = height;
         return 1;
@@ -600,13 +624,18 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
             DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, fields[i], &width,
             &height, &command->format);
         palette_ok = dm2_v1_gdat_scene_image_local_palette(loader, graphicsset,
-            fields[i], command->palette16, &command->palette_hash);
+            fields[i], command->format, command->palette16,
+            &command->palette_hash);
         if (!raw || raw_size == 0u || !command->pixels || width <= 0 || height <= 0 ||
             command->format == DM2_IMG_FMT_UNKNOWN ||
             !palette_ok ||
             !command->palette_hash) {
             dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0;
         }
+        /* Towns GDAT v4 U4 pixels index its source-owned physical palette. */
+        command->physical_palette_indices =
+            loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION &&
+            command->format == DM2_IMG_FMT_U4;
         if (!scene_source_raw_index(loader, raw, raw_size, &raw_index) ||
             !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
                 loader, raw_index, &material) ||

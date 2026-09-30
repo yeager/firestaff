@@ -139,9 +139,9 @@ static size_t build_skproject_layout_fixture(uint8_t *buf, size_t cap)
 
     desc = buf + header_size;
     put16le(desc + 0, 0); /* map data offset */
-    desc[6] = 0;
-    desc[7] = 0;
-    put16le(desc + 8, (uint16_t)(((w - 1) << 6) | ((h - 1) << 11)));
+    desc[6] = 5;
+    desc[7] = 8;
+    put16le(desc + 8, (uint16_t)(0x15u | ((w - 1) << 6) | ((h - 1) << 11)));
 
     put16le(buf + column_base + 0, 0);
     put16le(buf + column_base + 2, 0);
@@ -522,6 +522,10 @@ static void test_skproject_layout_first_thing_and_door_record(void)
           "skproject layout uses byte-sized map squares");
     CHECK(dungeon.level_widths[0] == 2 && dungeon.level_heights[0] == 2,
           "skproject map dimensions come from Map_definitions.w8");
+    CHECK(dungeon.map_offset_x[0] == 5 && dungeon.map_offset_y[0] == 8 &&
+              dungeon.map_level_number[0] == 0x5u &&
+              dungeon.map_graphics_flip_seed[0] == 0x5u,
+              "map level number comes from w8 low six bits independently of dimensions");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 1, 0) == 4,
           "byte-square door type is read from the high three bits");
     CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x90,

@@ -46,35 +46,35 @@ static void test_static_object_side_deep_cell_ordering(void)
 
     /* Party faces north (dir=0) at (10,10). */
     CHECK("D1L maps to source cell 9 with valid pass",
-          dm2_v1_viewport_static_object_cell_for_map(9, 8, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(9, 9, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
-              cell == 9 && pass == 10);
+              cell == 4 && pass == 15);
     CHECK("D1R maps to source cell 10 with valid pass",
-          dm2_v1_viewport_static_object_cell_for_map(11, 8, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(11, 9, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
-              cell == 10 && pass == 11);
+              cell == 5 && pass == 16);
     CHECK("D2L maps to source cell 7 with valid pass",
-          dm2_v1_viewport_static_object_cell_for_map(9, 7, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(9, 8, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
               cell == 7 && pass == 12);
     CHECK("D2R maps to source cell 8 with valid pass",
-          dm2_v1_viewport_static_object_cell_for_map(11, 7, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(11, 8, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
               cell == 8 && pass == 13);
     CHECK("D3L maps to source cell 4 with valid pass",
-          dm2_v1_viewport_static_object_cell_for_map(9, 6, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(9, 7, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
-              cell == 4 && pass == 15);
+              cell == 12 && pass == 7);
     CHECK("D3R maps to source cell 5 with valid pass",
-          dm2_v1_viewport_static_object_cell_for_map(11, 6, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(11, 7, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
-              cell == 5 && pass == 16);
+              cell == 13 && pass == 8);
     CHECK("D3C maps to source cell 11 with valid pass",
-          dm2_v1_viewport_static_object_cell_for_map(10, 6, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(10, 7, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
               cell == 11 && pass == 9);
     CHECK("D0C remains without a generic table pass",
-          dm2_v1_viewport_static_object_cell_for_map(10, 9, 0, 10, 10,
+          dm2_v1_viewport_static_object_cell_for_map(10, 10, 0, 10, 10,
                                                      &cell, &pass) == 0);
     CHECK("out-of-range lateral is rejected",
           dm2_v1_viewport_static_object_cell_for_map(12, 8, 0, 10, 10,
@@ -91,12 +91,12 @@ static void test_static_object_side_deep_cell_ordering(void)
         DM2_V1_StaticObjectSourcePlan plan;
         CHECK("D1L source plan derives its side-cell placement",
               dm2_v1_viewport_static_object_source_plan(
-                  9, 10, 0x10, 0, 0, 0, 0, 1u,
+                  4, 15, 0x10, 0, 0, 0, 0, 1u,
                   1u << 6, &plan) == 1 &&
                   plan.position_5x5 == 6 &&
-                  plan.clip_rect_id == (0x8000 | (5000 + 9 * 25 + 6)) &&
-                  plan.y_distance == 2 &&
-                  plan.stretch_factor64 == 0x2b &&
+                  plan.clip_rect_id == (0x8000 | (5000 + 4 * 25 + 6)) &&
+                  plan.y_distance == 1 &&
+                  plan.stretch_factor64 == 0x40 &&
                   plan.slot_x_offset == 2 &&
                   plan.slot_y_offset == -3);
         CHECK("D3C source plan derives its deep-cell placement",

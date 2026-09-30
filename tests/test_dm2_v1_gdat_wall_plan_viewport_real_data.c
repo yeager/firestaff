@@ -133,6 +133,8 @@ static void mark_plan_walls_visible(
     if (!viewport || !plan) return;
     for (int i = 0; i < plan->command_count; ++i) {
         int square = plan->commands[i].view_square;
+        viewport->skproject_wall_cell_mask |=
+            UINT32_C(1) << plan->commands[i].skproject_cell;
         if (square >= 0 && square < DM2_SQ_COUNT) {
             viewport->squares[square].flags |= DM2_SQF_HAS_WALL;
         }
@@ -211,7 +213,8 @@ int main(void)
     if (!dm2_v1_gdat_wall_m11_command_plan_build(
             &loader, (uint8_t)graphicsset, &wall_plan) || !wall_plan.valid ||
         wall_plan.graphicsset != (uint8_t)graphicsset ||
-        wall_plan.command_count == 0 || wall_plan.command_hash == 0u) {
+        wall_plan.command_count != DM2_V1_GDAT_WALL_M11_COMMAND_MAX ||
+        wall_plan.command_hash == 0u) {
         fputs("FAIL: canonical GRAPHICSSET wall command plan was incomplete\n", stderr);
         failures = 1;
         goto done;
@@ -229,18 +232,33 @@ int main(void)
         goto done;
     }
     {
+        static const int expected_source_cells[DM2_SQ_COUNT] = {
+            11, 12, 13, 6, 7, 8, 3, 4, 5, 0, 1, 2
+        };
         static const int expected_squares[] = {
-            DM2_SQ_D0R, DM2_SQ_D0L,
-            DM2_SQ_D1L, DM2_SQ_D1R, DM2_SQ_D1C,
+            DM2_SQ_D3L, DM2_SQ_D3R, DM2_SQ_D3C,
             DM2_SQ_D2L, DM2_SQ_D2R, DM2_SQ_D2C,
-            DM2_SQ_D3L, DM2_SQ_D3R
+            DM2_SQ_D1L, DM2_SQ_D1R, DM2_SQ_D1C,
+            DM2_SQ_D0L, DM2_SQ_D0R
         };
         static const int expected_passes[] = {
-            9, 11, 12, 13, 14, 15, 16, 17, 18, 19
+            7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19
         };
         DM2_V1_ViewportState order_viewport;
         DM2_V1_WallPanelRenderPlan order_plan;
         uint8_t order_framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+        for (int square = 0; square < DM2_SQ_COUNT; ++square) {
+            if (dm2_v1_viewport_skproject_cell_for_square(square) !=
+                    expected_source_cells[square] ||
+                dm2_v1_viewport_wall_field_for_square(square) !=
+                    0x22 + expected_source_cells[square]) {
+                fputs("FAIL: logical wall frame selected the wrong Skproject cell/asset field\n",
+                      stderr);
+                failures = 1;
+                goto done;
+            }
+        }
 
         memset(order_framebuffer, 0, sizeof(order_framebuffer));
         dm2_v1_viewport_init(&order_viewport, order_framebuffer, DM2_VP_WIDTH);
@@ -261,6 +279,11 @@ int main(void)
              ++i) {
             if (order_plan.panels[i].view_square != expected_squares[i] ||
                 order_plan.panels[i].render_step != expected_passes[i] ||
+                order_plan.panels[i].skproject_cell !=
+                    expected_source_cells[expected_squares[i]] ||
+                order_plan.panels[i].gdat_index !=
+                    dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+                        graphicsset, expected_squares[i]) ||
                 dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(
                     expected_squares[i]) != expected_passes[i]) {
                 fputs("FAIL: M11 wall plan diverged from SKProject table1d7029\n",
@@ -269,9 +292,9 @@ int main(void)
                 goto done;
             }
         }
-        if (dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(DM2_SQ_D3C) >= 0 ||
+        if (dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(DM2_SQ_D3C) != 9 ||
             dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(DM2_SQ_D0C) >= 0) {
-            fputs("FAIL: a non-geometry center cell was promoted to DRAW_WALL\n",
+            fputs("FAIL: source wall cells were not mapped to DRAW_WALL correctly\n",
                   stderr);
             failures = 1;
             goto done;
@@ -317,12 +340,15 @@ int main(void)
         int resolved_field = -1;
         const DM2_V1_GdatWallM11Command *command = &wall_plan.commands[i];
         if (wall_plan.graphicsset != (uint8_t)graphicsset ||
-            !dm2_v1_viewport_wall_graphic_address(
+            command->field != 0x22 + (command->skproject_cell < 16
+                ? command->skproject_cell : 0x10) ||
+            (command->view_square != UINT8_MAX &&
+            (!dm2_v1_viewport_wall_graphic_address(
                 dm2_v1_viewport_wall_graphic_index_for_graphicsset(
                     graphicsset, command->view_square),
                 &resolved_graphicsset, &resolved_field) ||
             resolved_graphicsset != graphicsset ||
-            resolved_field != command->field) {
+            resolved_field != command->field))) {
             fputs("FAIL: real wall command was not bound to its live GRAPHICSSET address\n",
                   stderr);
             failures = 1;
@@ -423,8 +449,7 @@ int main(void)
     }
     {
         const uint16_t selected =
-            (uint16_t)((1u << DM2_SQ_D3L) | (1u << DM2_SQ_D2R) |
-                       (1u << DM2_SQ_D0L));
+            (uint16_t)((1u << DM2_SQ_D3L) | (1u << DM2_SQ_D2R));
 
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
@@ -438,7 +463,9 @@ int main(void)
         dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &wall_plan);
         viewport.squares[DM2_SQ_D3L].flags |= DM2_SQF_HAS_WALL;
         viewport.squares[DM2_SQ_D2R].flags |= DM2_SQF_HAS_WALL;
-        viewport.squares[DM2_SQ_D0L].flags |= DM2_SQF_HAS_WALL;
+        viewport.skproject_wall_cell_mask =
+            (UINT32_C(1) << dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D3L)) |
+            (UINT32_C(1) << dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D2R));
         dm2_v1_render_walls(&viewport);
         {
             DM2_V1_WallPanelRenderPlan selected_plan;
@@ -446,9 +473,9 @@ int main(void)
                     &viewport, &selected_plan) ||
                 selected_plan.party_direction != 3 ||
                 selected_plan.selected_square_mask != selected ||
-                selected_plan.panel_count != 3 ||
-                viewport.asset_wall_drawn_count != 3 ||
-                viewport.gdat_wall_material_plan_consumed_count != 3 ||
+                selected_plan.panel_count != 2 ||
+                viewport.asset_wall_drawn_count != 2 ||
+                viewport.gdat_wall_material_plan_consumed_count != 2 ||
                 viewport.last_dungeon_wall_material_required_mask != selected ||
                 viewport.last_dungeon_wall_material_consumed_mask != selected ||
                 (viewport.blocked_material_mask &
@@ -547,6 +574,7 @@ int main(void)
         scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
         scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
         scene_plan.ambient_darkness);
+    viewport.skproject_wall_cell_mask = UINT32_C(1) << 1;
     dm2_v1_render_walls(&viewport);
     if (trace.fetch_calls != 0 || trace.palette_calls != 0 ||
         viewport.asset_wall_drawn_count != 0 ||

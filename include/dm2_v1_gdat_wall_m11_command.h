@@ -6,10 +6,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DM2_V1_GDAT_WALL_M11_COMMAND_MAX 12
+#define DM2_V1_GDAT_WALL_M11_COMMAND_MAX 20
 
 typedef struct {
     uint8_t view_square;
+    uint8_t skproject_cell;
     uint8_t field;
     uint8_t *pixels;
     uint16_t width;
@@ -48,6 +49,7 @@ typedef struct {
 typedef struct DM2_V1_GdatWallM11CommandPlan {
     int valid;
     uint8_t graphicsset;
+    uint8_t graphics_flip_parity;
     uint8_t command_count;
     uint32_t command_hash;
     DM2_V1_GdatWallM11Command commands[DM2_V1_GDAT_WALL_M11_COMMAND_MAX];
@@ -59,6 +61,10 @@ int dm2_v1_gdat_wall_m11_command_plan_build(
 int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     int movement_active, DM2_V1_GdatWallM11CommandPlan *out_plan);
+int dm2_v1_gdat_wall_m11_command_plan_build_for_scene(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
+    int movement_active, int graphics_flip_parity,
+    DM2_V1_GdatWallM11CommandPlan *out_plan);
 void dm2_v1_gdat_wall_m11_command_plan_free(
     DM2_V1_GdatWallM11CommandPlan *plan);
 

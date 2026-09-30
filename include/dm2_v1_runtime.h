@@ -123,6 +123,8 @@ typedef struct {
     int wall_gdat_material_evidence_count;
     uint32_t wall_gdat_material_evidence_hash;
     int gdat_wall_material_plan_consumed;
+    uint32_t wall_source_cell_required_mask;
+    uint32_t wall_source_cell_consumed_mask;
     int item_gdat_blits;
     int item_gdat_material_evidence_count;
     uint32_t item_gdat_material_evidence_hash;
@@ -1333,6 +1335,12 @@ typedef struct DM2_V1_RuntimeCreatureRecordReceipt {
 } DM2_V1_RuntimeCreatureRecordReceipt;
 int dm2_v1_runtime_creature_record_receipt(
     int16_t record_handle, DM2_V1_RuntimeCreatureRecordReceipt *out);
+/* Read the live DB4 creature chain at a source map cell after GAME_LOAD.
+ * Returns 1 when the query could be performed (including an empty cell) and
+ * writes DM2_V1_RECORD_HANDLE_NULL for an empty cell; returns 0 if the live
+ * dungeon/pools or coordinates are unavailable. */
+int dm2_v1_runtime_query_creature_at(
+    int map, int x, int y, int16_t *out_record_handle);
 int dm2_v1_runtime_last_creature_damage_receipt(
     DM2_V1_RuntimeCreatureDamageReceipt *out);
 int dm2_v1_runtime_last_wield_attack_receipt(

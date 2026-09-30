@@ -313,7 +313,7 @@ static void test_door_rect_contracts(void)
     CHECK("DM2 D2C maps to skproject viewport cell 6",
           dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D2C) == 6);
     CHECK("DM2 side squares are not default-door-button cells",
-          dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D1L) < 0 &&
+          dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D1L) == 4 &&
               dm2_v1_viewport_door_button_rectno_for_square(DM2_SQ_D1L) < 0);
     CHECK("DM2 D0C/D1C/D2C default buttons use skproject rectnos",
           dm2_v1_viewport_door_button_rectno_for_square(DM2_SQ_D0C) == 4 &&
@@ -512,32 +512,29 @@ static void test_floor_ceiling_asset_provider(void)
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     memset(&wall_plan, 0, sizeof(wall_plan));
     /* The source scheduler owns wall traversal order: DM2_DRAW_DUNGEON_TILES
-     * walks table1d7029, so the plan lists cells in skproject pass order
-     * (D0R, D0L, D1L, D1R, D1C, D2L, D2R, D2C, D3L, D3R at passes
-     * 9, 11..19) — not the old DM1 back-to-front depth order. */
+     * walks table1d7029. Logical wall frames occupy its cells 1..13, with
+     * D3C included at source pass 9. */
     CHECK("wall panel render plan builds explicit asset-backed cells",
           dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
                                                        &wall_plan) == 1 &&
-              wall_plan.panel_count == 10 &&
-              wall_plan.panels[0].render_step == 9 &&
-              wall_plan.panels[0].view_square == DM2_SQ_D0R &&
+              wall_plan.panel_count == 11 &&
+              wall_plan.panels[0].render_step == 7 &&
+              wall_plan.panels[0].view_square == DM2_SQ_D3L &&
               wall_plan.panels[0].gdat_index ==
                   dm2_v1_viewport_wall_graphic_index_for_square(
-                      DM2_SQ_D0R) &&
-              rect_equals(&wall_plan.panels[0].dst_rect, 192, 0, 32, 136) &&
-              wall_plan.panels[1].view_square == DM2_SQ_D0L &&
-              rect_equals(&wall_plan.panels[1].src_rect, 0, 0, 16, 136) &&
-              rect_equals(&wall_plan.panels[1].dst_rect, 0, 0, 32, 136) &&
-              wall_plan.panels[8].view_square == DM2_SQ_D3L &&
-              wall_plan.panels[9].view_square == DM2_SQ_D3R);
+                      DM2_SQ_D3L) &&
+              wall_plan.panels[1].view_square == DM2_SQ_D3R &&
+              wall_plan.panels[2].view_square == DM2_SQ_D3C &&
+              wall_plan.panels[10].render_step == 19 &&
+              wall_plan.panels[10].view_square == DM2_SQ_D0R);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 3, 0x4d415047u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     memset(&wall_plan, 0, sizeof(wall_plan));
     CHECK("wall plan carries MapGraphicsStyle into GRAPHICSSET GDAT addresses",
           dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
                                                        &wall_plan) == 1 &&
-              wall_plan.panel_count == 10 &&
-              wall_plan.panels[8].gdat_index ==
+              wall_plan.panel_count == 11 &&
+              wall_plan.panels[0].gdat_index ==
                   dm2_v1_viewport_wall_graphic_index_for_graphicsset(
                       3, DM2_SQ_D3L));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -583,8 +580,8 @@ static void test_floor_ceiling_asset_provider(void)
                                        NULL);
     dm2_v1_render_walls(&viewport);
     CHECK("wall pass fetches the DM2 viewport-cell wall assets",
-          s_asset_fetch_calls == 10 &&
-              viewport.asset_wall_drawn_count == 10 &&
+          s_asset_fetch_calls == 11 &&
+              viewport.asset_wall_drawn_count == 11 &&
               viewport.fallback_wall_drawn_count == 0);
     CHECK("wall assets are scaled into the left and right forward cells",
           framebuffer[0] == 11 &&
@@ -603,8 +600,8 @@ static void test_floor_ceiling_asset_provider(void)
                                        NULL);
     dm2_v1_render_walls(&viewport);
     CHECK("wall pass leaves a missing panel unpainted",
-          s_asset_fetch_calls == 10 &&
-              viewport.asset_wall_drawn_count == 9 &&
+          s_asset_fetch_calls == 11 &&
+              viewport.asset_wall_drawn_count == 10 &&
               viewport.fallback_wall_drawn_count == 0);
     s_fail_asset_index = 0;
 

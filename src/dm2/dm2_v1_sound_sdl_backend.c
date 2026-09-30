@@ -20,6 +20,8 @@
 #include <SDL3/SDL.h>
 #include "firestaff_audio_device.h"
 
+#include <stdio.h>
+
 typedef struct {
     const uint8_t *pcm;
     uint32_t length;
@@ -31,6 +33,7 @@ typedef struct {
 static SDL_AudioStream *g_dm2_sdl_stream;
 static DM2_V1_SdlSoundVoice g_dm2_sdl_voices[DM2_V1_SOUND_VOICE_MAX];
 static uint64_t g_dm2_sdl_mixed_frames;
+static uint64_t g_dm2_sdl_non_silent_frames;
 static uint32_t g_dm2_sdl_started_voices;
 static int g_dm2_sdl_ready;
 static float g_dm2_sdl_host_gain = 1.0f;
@@ -58,6 +61,7 @@ static void dm2_v1_sdl_mix(uint8_t *out, int frames)
         }
         if (acc > 127) acc = 127;
         if (acc < -128) acc = -128;
+        if (acc != 0) g_dm2_sdl_non_silent_frames++;
         out[f] = (uint8_t)(0x80 + acc);
     }
     g_dm2_sdl_mixed_frames += (uint64_t)frames;
@@ -90,9 +94,15 @@ static int dm2_v1_sdl_backend_open(void *ctx)
         return 1;
     g_dm2_sdl_host_paused = 0;
     g_dm2_sdl_paused_before_host = 0;
-    if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        fprintf(stderr, "firestaff: DM2 SDL audio initialization failed: %s\n",
+                SDL_GetError());
         return 0;
+    }
     memset(g_dm2_sdl_voices, 0, sizeof(g_dm2_sdl_voices));
+    g_dm2_sdl_mixed_frames = 0u;
+    g_dm2_sdl_non_silent_frames = 0u;
+    g_dm2_sdl_started_voices = 0u;
     spec.format = SDL_AUDIO_U8;
     spec.channels = 1;
     spec.freq = (int)DM2_V1_SOUND_PCM_SAMPLE_RATE_HZ;
@@ -100,11 +110,22 @@ static int dm2_v1_sdl_backend_open(void *ctx)
         Firestaff_AudioDevice_ResolvePlayback(), &spec,
         dm2_v1_sdl_stream_callback, NULL);
     if (!g_dm2_sdl_stream) {
+        fprintf(stderr, "firestaff: DM2 SDL playback stream open failed: %s\n",
+                SDL_GetError());
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return 0;
     }
-    if (!SDL_SetAudioStreamGain(g_dm2_sdl_stream, g_dm2_sdl_host_gain) ||
-        !SDL_ResumeAudioStreamDevice(g_dm2_sdl_stream)) {
+    if (!SDL_SetAudioStreamGain(g_dm2_sdl_stream, g_dm2_sdl_host_gain)) {
+        fprintf(stderr, "firestaff: DM2 SDL playback gain setup failed: %s\n",
+                SDL_GetError());
+        SDL_DestroyAudioStream(g_dm2_sdl_stream);
+        g_dm2_sdl_stream = NULL;
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        return 0;
+    }
+    if (!SDL_ResumeAudioStreamDevice(g_dm2_sdl_stream)) {
+        fprintf(stderr, "firestaff: DM2 SDL playback stream resume failed: %s\n",
+                SDL_GetError());
         SDL_DestroyAudioStream(g_dm2_sdl_stream);
         g_dm2_sdl_stream = NULL;
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -186,6 +207,9 @@ static void dm2_v1_sdl_backend_close(void *ctx)
     g_dm2_sdl_ready = 0;
     g_dm2_sdl_host_paused = 0;
     g_dm2_sdl_paused_before_host = 0;
+    g_dm2_sdl_mixed_frames = 0u;
+    g_dm2_sdl_non_silent_frames = 0u;
+    g_dm2_sdl_started_voices = 0u;
 }
 
 void dm2_v1_sound_sdl_backend_describe(DM2_V1_SoundPlaybackBackend *out_backend)
@@ -248,7 +272,22 @@ int dm2_v1_sound_sdl_backend_is_ready(void)
 
 uint64_t dm2_v1_sound_sdl_backend_mixed_frames(void)
 {
-    return g_dm2_sdl_mixed_frames;
+    uint64_t frames;
+    if (!g_dm2_sdl_stream) return g_dm2_sdl_mixed_frames;
+    if (!SDL_LockAudioStream(g_dm2_sdl_stream)) return 0u;
+    frames = g_dm2_sdl_mixed_frames;
+    SDL_UnlockAudioStream(g_dm2_sdl_stream);
+    return frames;
+}
+
+uint64_t dm2_v1_sound_sdl_backend_non_silent_frames(void)
+{
+    uint64_t frames;
+    if (!g_dm2_sdl_stream) return g_dm2_sdl_non_silent_frames;
+    if (!SDL_LockAudioStream(g_dm2_sdl_stream)) return 0u;
+    frames = g_dm2_sdl_non_silent_frames;
+    SDL_UnlockAudioStream(g_dm2_sdl_stream);
+    return frames;
 }
 
 uint32_t dm2_v1_sound_sdl_backend_started_voice_count(void)

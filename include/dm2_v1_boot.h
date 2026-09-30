@@ -2465,6 +2465,11 @@ typedef struct {
 int dm2_v1_boot_query_expanded_rect_receipt(
     const DM2_V1_BootProfile *profile, uint16_t rect_id,
     DM2_V1_BootExpandedRectReceipt *out_receipt);
+/* Resolves QUERY_BLIT_RECT placement for a source image's decoded dimensions
+ * through the retail INTERFACE_GENERAL/0 RAW4 graph. */
+int dm2_v1_boot_query_blit_rect_for_dimensions(
+    const DM2_V1_BootProfile *profile, uint16_t rect_id,
+    int source_width, int source_height, DM2_V1_InterfaceRect *out_rect);
 
 int dm2_v1_boot_g1_static_object_material_receipt(
     const DM2_V1_BootProfile *profile,
@@ -2780,6 +2785,10 @@ int dm2_v1_boot_gdat_scene_m11_command_plan(
     DM2_V1_GdatSceneM11CommandPlan *out_plan);
 int dm2_v1_boot_gdat_wall_m11_command_plan(
     DM2_V1_BootProfile *profile, int graphicsset_index,
+    DM2_V1_GdatWallM11CommandPlan *out_plan);
+int dm2_v1_boot_gdat_wall_m11_command_plan_for_scene(
+    DM2_V1_BootProfile *profile, int graphicsset_index,
+    int movement_active, int graphics_flip_parity,
     DM2_V1_GdatWallM11CommandPlan *out_plan);
 int dm2_v1_boot_gdat_door_overlay_m11_command_plan(
     DM2_V1_BootProfile *profile, const DM2_V1_DoorRenderPlan *door_plan,

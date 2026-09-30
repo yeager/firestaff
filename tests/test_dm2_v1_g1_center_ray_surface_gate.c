@@ -63,9 +63,9 @@ int main(void)
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 0x2a, 0x47315431u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
         0u);
-    viewport.squares[DM2_SQ_D0C].square_type =
+    viewport.squares[DM2_SQ_D1C].square_type =
         (uint8_t)dm2_v1_viewport_g1_tile_class_to_square_type(0u);
-    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_WALL;
+    viewport.squares[DM2_SQ_D1C].flags = DM2_SQF_HAS_WALL;
     viewport.squares[DM2_SQ_D1R].square_type =
         (uint8_t)dm2_v1_viewport_g1_tile_class_to_square_type(0u);
     viewport.squares[DM2_SQ_D1R].flags = DM2_SQF_HAS_WALL;

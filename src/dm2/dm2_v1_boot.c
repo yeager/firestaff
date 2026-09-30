@@ -3583,7 +3583,10 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
          * HFS reader is the selected-medium owner; scanning the containing
          * data directory first can otherwise bind a sibling FM Towns
          * GRAPHICS.DAT and silently launch the wrong platform. */
-        (void)dm2_v1_boot_load_mac_zip(profile, base);
+        /* A selected Macintosh archive is authoritative. If it is a demo,
+         * corrupt, or otherwise lacks the supported HFS payload, fail now;
+         * later platform probes must not substitute a neighboring edition. */
+        if (!dm2_v1_boot_load_mac_zip(profile, base)) return -1;
     } else {
         (void)dm2_scan_known_hash_assets(base,
                                          profile->graphics_path,
@@ -3626,14 +3629,17 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     /* A selected Macintosh ZIP also has a CUE sheet.  Probe its HFS owner
      * before the generic disc-image route, otherwise the MODE1 track can be
      * mistaken for FM Towns merely because the container carries a cue. */
-    if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
+    if (!explicit_mac_archive &&
+        (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
         (void)dm2_v1_boot_load_mac_zip(profile, base);
     }
     /* If no loose files found, try FM Towns disc image in ZIP */
-    if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
+    if (!explicit_mac_archive &&
+        (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
         dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
     }
-    if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
+    if (!explicit_mac_archive &&
+        (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
         (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
     }
 
@@ -7978,6 +7984,21 @@ int dm2_v1_boot_gdat_wall_m11_command_plan(
         &gfx->loader, (uint8_t)graphicsset_index, out_plan);
 }
 
+int dm2_v1_boot_gdat_wall_m11_command_plan_for_scene(
+    DM2_V1_BootProfile *profile, int graphicsset_index,
+    int movement_active, int graphics_flip_parity,
+    DM2_V1_GdatWallM11CommandPlan *out_plan)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
+    if (!profile || !profile->graphics_dat || !out_plan ||
+        graphicsset_index < 0 || graphicsset_index > 0xff) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_gdat_wall_m11_command_plan_build_for_scene(
+        &gfx->loader, (uint8_t)graphicsset_index, movement_active,
+        graphics_flip_parity, out_plan);
+}
+
 int dm2_v1_boot_gdat_door_overlay_m11_command_plan(
     DM2_V1_BootProfile *profile, const DM2_V1_DoorRenderPlan *door_plan,
     DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan)
@@ -8090,6 +8111,31 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
      * rejecting the authenticated indoor frame. */
     if (!dm2_v1_boot_interface_action_table(profile, &table)) {
         if (profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
+            candidate = *plan;
+            for (size_t i = 0u; i < 2u; ++i) {
+                DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
+                if (command->format == DM2_IMG_FMT_U4 &&
+                    command->physical_palette_indices) {
+                    command->palette_translation_field = 0u;
+                    command->palette_translation_hash = 0u;
+                    command->palette_darkness = 0u;
+                    command->palette_light_receipt_hash = c_light_receipt_hash;
+                    /* A nonzero transform receipt is required by M11. Its
+                     * hash binds source mode, scene, c_light and palette. */
+                    uint32_t hash = dm2_v1_boot_packaged_capture_hash_step(
+                        2166136261u, c_light_receipt_hash);
+                    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                        command->field);
+                    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                        command->physical_palette_indices);
+                    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                        command->palette_hash);
+                    command->palette_transform_hash = hash ? hash : 1u;
+                }
+            }
+            if (!dm2_v1_gdat_scene_m11_command_plan_refresh_draw_order(
+                    &candidate)) return 0;
+            *plan = candidate;
             return 1;
         }
         return 0;
@@ -8102,6 +8148,22 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
         uint8_t translation_field;
         uint8_t darkness;
         uint32_t hash = 2166136261u;
+
+        /* _32cb_0804's dt07/2 pass remaps the 16 entries of a C4 image-local
+         * palette. IMG9/U8 pixels address the active 256-colour display
+         * palette directly; remapping only palette16 here turns source pixel
+         * indices 0..15 into unrelated colors while leaving 16..255 alone.
+         * Keep the source index identity intact until the full display
+         * palette light transaction is available for this platform. */
+        if (command->format != DM2_IMG_FMT_IMG3 &&
+            command->format != DM2_IMG_FMT_U4) {
+            command->palette_translation_field = 0u;
+            command->palette_translation_hash = 0u;
+            command->palette_darkness = 0u;
+            command->palette_light_receipt_hash = 0u;
+            command->palette_transform_hash = 0u;
+            continue;
+        }
 
         if (!dm2_v1_gdat_scene_m11_plane_translation_field(
                 command->field, movement_active, &translation_field)) {
@@ -8169,6 +8231,27 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     return 1;
 }
 
+static int dm2_v1_boot_gdat_hud_mac_move_arrow_plan(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_GdatHudM11CommandPlan *out_plan)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_ViewportRect destinations[6];
+    if (!profile || profile->platform != DM2_PLATFORM_MAC_EN ||
+        !profile->graphics_dat || !out_plan) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    for (int arrow = 0; arrow < 6; ++arrow) {
+        DM2_V1_InterfaceRect source_rect;
+        if (!dm2_v1_boot_query_blit_rect_for_dimensions(
+                profile, (uint16_t)(40 + arrow), 29, 23, &source_rect))
+            return 0;
+        destinations[arrow] = (DM2_V1_ViewportRect){
+            source_rect.x, source_rect.y, source_rect.w, source_rect.h };
+    }
+    return dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+        &gfx->loader, destinations, out_plan);
+}
+
 int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_BootProfile *profile,
     const DM2_V1_HudPartyState *party,
@@ -8183,6 +8266,32 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !profile->graphics_dat || !party || !out_plan) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (profile->platform == DM2_PLATFORM_MAC_EN) {
+        DM2_V1_ViewportRect arrow_destinations[6];
+        if (!dm2_v1_boot_gdat_hud_mac_move_arrow_plan(
+                profile, out_plan)) return 0;
+        for (int arrow = 0; arrow < 6; ++arrow)
+            arrow_destinations[arrow] = out_plan->commands[arrow].destination;
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        if (!dm2_v1_boot_interface_hud_portrait_destinations(
+                profile, source_portraits, &table_hash) || !table_hash) {
+            return 0;
+        }
+        for (slot = 0; slot < 4; ++slot) {
+            if (source_portraits[slot].x < 0 ||
+                source_portraits[slot].y < 0 ||
+                source_portraits[slot].w <= 0 ||
+                source_portraits[slot].h <= 0) return 0;
+            portrait_destinations[slot] = (DM2_V1_ViewportRect){
+                source_portraits[slot].x / 2,
+                source_portraits[slot].y / 2,
+                source_portraits[slot].w / 2,
+                source_portraits[slot].h / 2 };
+        }
+        return dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
+            &gfx->loader, arrow_destinations, party,
+            portrait_destinations, table_hash, out_plan);
+    }
     if (!dm2_v1_gdat_hud_m11_command_plan_build_for_party(
             &gfx->loader, party, out_plan) ||
         !dm2_v1_boot_interface_hud_portrait_destinations(
@@ -8215,6 +8324,8 @@ int dm2_v1_boot_gdat_hud_static_m11_command_plan(
 
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !profile->graphics_dat || !out_plan) return 0;
+    if (profile->platform == DM2_PLATFORM_MAC_EN)
+        return dm2_v1_boot_gdat_hud_mac_move_arrow_plan(profile, out_plan);
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     return dm2_v1_gdat_hud_m11_command_plan_build(
         &gfx->loader, is_outdoor, out_plan);
@@ -9872,6 +9983,146 @@ static int dm2_v1_boot_query_blit_text_rect(
     return out->w > 0 && out->h > 0;
 }
 
+/* c_xrect.cpp::DM2_QUERY_BLIT_RECT for a positive rectangle ID and an image
+ * already decoded by the caller. The query graph supplies both its anchor and
+ * clipping window; the image's own dimensions supply the unscaled blit size. */
+static int dm2_v1_boot_query_blit_image_rect(
+    const uint8_t *raw, size_t raw_size, uint16_t rect_id,
+    int image_width, int image_height, DM2_V1_InterfaceRect *out)
+{
+    DM2_V1_InterfaceRect current, next, clip;
+    int mode, x0, y0, dx = 0, dy = 0, flag = 0;
+    int clip_x = -10000, clip_y = -10000;
+    int clip_w = 20000, clip_h = 20000;
+    int query_w2 = 0;
+
+    if (!out || !raw || rect_id == 0u || image_width <= 0 ||
+        image_height <= 0 ||
+        !dm2_v1_boot_query_compressed_rect(raw, raw_size, rect_id, &current))
+        return 0;
+    mode = current.x;
+    if (mode < 0 || mode > 18 || mode == 9) return 0;
+    if (mode > 8) {
+        x0 = 0;
+        y0 = 0;
+        mode -= 10;
+    } else {
+        x0 = current.w;
+        y0 = current.h;
+    }
+
+    for (int guard = 0; current.y != 0 && guard < 64; ++guard) {
+        if (current.x < 10 || current.x > 18) {
+            if (!dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                                    (uint16_t)current.y, &next))
+                break;
+            query_w2 = current.y;
+            dx = next.w;
+            dy = next.h;
+            if (next.x != 1) {
+                if (next.x == 9) {
+                    if (current.x <= 8 &&
+                        !dm2_v1_boot_blit_anchor(current.x, current.w,
+                            current.h, next.w, next.h, &clip)) return 0;
+                    if (current.x <= 8) {
+                        dx = clip.x;
+                        dy = clip.y;
+                    }
+                    if (flag) {
+                        flag = 0;
+                        x0 += dx;
+                        y0 += dy;
+                        clip_x += dx;
+                        clip_y += dy;
+                    }
+                    if (dx > clip_x) clip_x = dx;
+                    if (clip_x + clip_w - 1 >= dx + next.w)
+                        clip_w = next.w - clip_x + dx;
+                    if (clip_y < dy) clip_y = dy;
+                    dy += next.h;
+                    if (clip_y + clip_h - 1 >= dy)
+                        clip_h = dy - clip_y;
+                } else if (next.x <= 8) {
+                    flag = 1;
+                } else {
+                    return 0;
+                }
+            } else {
+                x0 += dx;
+                y0 += dy;
+                clip_x += dx;
+                clip_y += dy;
+            }
+        } else {
+            DM2_V1_InterfaceRect link;
+            if (!dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                                    (uint16_t)current.y, &link) ||
+                link.y == 0 || link.x < 0 || link.x > 8 ||
+                !dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                                    (uint16_t)link.y, &next))
+                break;
+            query_w2 = link.y;
+            dx = link.w;
+            dy = link.h;
+            switch (link.x) {
+            case 0: dy -= (next.h + 1) / 2; /* fall through */
+            case 5: dx -= (next.w + 1) / 2; break;
+            case 1: break;
+            case 3: dy -= next.h - 1; /* fall through */
+            case 2: dx -= next.w - 1; break;
+            case 6: dx -= next.w - 1; /* fall through */
+            case 8: dy -= (next.h + 1) / 2; break;
+            case 7: dx -= (next.w + 1) / 2; /* fall through */
+            case 4: dy -= next.h - 1; break;
+            default: return 0;
+            }
+            clip_x += dx;
+            if (dx > clip_x) clip_x = dx;
+            clip_w = next.w + dx <= clip_x + clip_w - 1
+                ? next.w - clip_x + dx : next.w + dx;
+            clip_y += dy;
+            if (clip_y < dy) clip_y = dy;
+            if (dy + next.h <= clip_y + clip_h - 1)
+                clip_h = dy + next.h - clip_y;
+            switch (current.x - 10) {
+            case 0: dy += (next.h + 1) / 2; /* fall through */
+            case 5: dx += (next.w + 1) / 2; break;
+            case 1: break;
+            case 3: dy += next.h - 1; /* fall through */
+            case 2: dx += next.w - 1; break;
+            case 6: dx += next.w - 1; /* fall through */
+            case 8: dy += (next.h + 1) / 2; break;
+            case 7: dx += (next.w + 1) / 2; /* fall through */
+            case 4: dy += next.h - 1; break;
+            default: return 0;
+            }
+            dx += current.w;
+            x0 += dx;
+            y0 += dy + current.h;
+        }
+        current = next;
+    }
+    if (query_w2 < 0 ||
+        !dm2_v1_boot_blit_anchor(mode, x0, y0, image_width, image_height, out))
+        return 0;
+
+    dx = clip_x - out->x;
+    if (dx > 0) {
+        out->x = clip_x;
+        out->w = image_width - dx < clip_w ? image_width - dx : clip_w;
+    } else {
+        out->w = image_width < dx + clip_w ? image_width : dx + clip_w;
+    }
+    dy = clip_y - out->y;
+    if (dy > 0) {
+        out->y = clip_y;
+        out->h = image_height - dy < clip_h ? image_height - dy : clip_h;
+    } else {
+        out->h = image_height < dy + clip_h ? image_height : dy + clip_h;
+    }
+    return out->w > 0 && out->h > 0;
+}
+
 int dm2_v1_boot_query_expanded_rect_receipt(
     const DM2_V1_BootProfile *profile, uint16_t rect_id,
     DM2_V1_BootExpandedRectReceipt *out_receipt)
@@ -9911,6 +10162,27 @@ int dm2_v1_boot_query_expanded_rect_receipt(
     out_receipt->receipt_hash = hash ? hash : 1u;
     out_receipt->valid = 1;
     return 1;
+}
+
+int dm2_v1_boot_query_blit_rect_for_dimensions(
+    const DM2_V1_BootProfile *profile, uint16_t rect_id,
+    int source_width, int source_height, DM2_V1_InterfaceRect *out_rect)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+
+    if (out_rect) memset(out_rect, 0, sizeof(*out_rect));
+    if (!profile || !profile->graphics_dat || !out_rect || rect_id == 0u ||
+        source_width <= 0 || source_height <= 0) return 0;
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    return raw && raw_size >= 4u &&
+        dm2_v1_boot_query_blit_image_rect(raw, raw_size, rect_id,
+                                          source_width, source_height,
+                                          out_rect);
 }
 
 int dm2_v1_boot_g1_static_object_material_receipt(

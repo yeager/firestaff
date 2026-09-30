@@ -15,10 +15,11 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_GOLD_BOX,
     DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
-    DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT
+    DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
+    DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW
 };
 
-#define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 13
+#define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 20
 /* The static source family contains only the four surfaces whose exact
  * address is independently retained here. Hand/action backdrops are dynamic:
  * DRAW_HAND_ACTION_ICONS selects INTERFACE_GENERAL/4 fields 2..5 and
@@ -53,6 +54,7 @@ typedef struct DM2_V1_GdatHudM11Command {
 
 typedef struct DM2_V1_GdatHudM11CommandPlan {
     int valid;
+    int mac_native_layout;
     int command_count;
     uint32_t command_hash;
     DM2_V1_GdatHudM11Command commands[DM2_V1_GDAT_HUD_M11_COMMAND_MAX];
@@ -113,6 +115,17 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
 int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_ViewportRect destinations[6],
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_ViewportRect arrow_destinations[6],
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_ViewportRect portrait_destinations[4],
+    uint32_t portrait_table_hash,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 /* Binds original INTERFACE_GENERAL/0/dt04 portrait rectangles

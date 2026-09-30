@@ -106,6 +106,8 @@ int main(void)
     uint8_t large_cat = 0, large_idx = 0, large_field = 0;
     uint32_t small_len = 0u, large_len = 0u;
     uint64_t frames_before;
+    uint8_t *small_pcm = NULL;
+    uint32_t non_silent_samples = 0u;
     unsigned i;
     int failures = 0;
     int raw_id;
@@ -137,6 +139,24 @@ int main(void)
     }
 
     dm2_v1_sound_bind_gdat_loader(&loader, 1);
+    small_pcm = (uint8_t *)malloc((size_t)small_len);
+    if (!small_pcm || !dm2_v1_sound_decode_gdat_pcm(
+            small_cat, small_idx, small_field, small_pcm,
+            (size_t)small_len, NULL)) {
+        fputs("FAIL: selected original DM2 sound entry did not decode\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    for (i = 0; i < small_len; ++i)
+        if (small_pcm[i] != 0x80u) ++non_silent_samples;
+    free(small_pcm);
+    small_pcm = NULL;
+    if (non_silent_samples == 0u) {
+        fputs("FAIL: selected original DM2 sound entry decodes to silence\n",
+              stderr);
+        failures = 1;
+        goto done;
+    }
 
     /* Fail-closed before any backend binding. */
     assert(dm2_v1_sound_play_gdat_entry(small_cat, small_idx, small_field,
@@ -204,13 +224,15 @@ int main(void)
             assert(dm2_v1_sound_sdl_backend_mixed_frames() == frames_before);
             assert(dm2_v1_sound_sdl_backend_started_voice_count() == 1U);
         }
-        /* Muting changes gain only: once host pause ends, the original
-         * voice must still complete instead of being cleared or paused. */
+        /* Verify muting changes gain without discarding the source voice. */
         assert(dm2_v1_sound_sdl_backend_set_volumes(128, 0));
         assert(dm2_v1_sound_sdl_backend_set_host_paused(0));
     }
-    /* The dummy driver consumes in real time; the shortest sample is well
-     * under one second at 6000 Hz, so the voice must complete. */
+    SDL_Delay(20U);
+    assert(dm2_v1_sound_voice_active(play.voice_slot));
+    assert(dm2_v1_sound_sdl_backend_set_volumes(128, 128));
+    /* The dummy driver consumes in real time.  Restore audible gain before
+     * the remaining authentic source PCM reaches the playback device. */
     assert(wait_for_voice_idle(play.voice_slot, 5000));
     assert(dm2_v1_sound_sdl_backend_mixed_frames() > frames_before);
     assert(dm2_v1_sound_sdl_backend_set_volumes(128, 128));
@@ -274,6 +296,7 @@ int main(void)
            (unsigned long)large_len);
 
 done:
+    free(small_pcm);
     dm2_v1_sound_bind_playback_backend(NULL);
     dm2_v1_sound_sdl_backend_close();
     dm2_v1_sound_bind_gdat_loader(NULL, 0);

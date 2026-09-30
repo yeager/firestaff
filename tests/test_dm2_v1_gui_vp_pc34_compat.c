@@ -138,8 +138,8 @@ static void test_table1d27a0_entries(void) {
 }
 
 static void test_table1d7029_first_last(void) {
-    assert(dm2_guivp_table1d7029[0] == 0x16);
-    assert(dm2_guivp_table1d7029[19] == 0x03);
+    assert(dm2_guivp_table1d7029[0] == 0x13);
+    assert(dm2_guivp_table1d7029[19] == 0x02);
 }
 
 /* ── guivp_32cb_35c1 null ptrs ─────────────────────────────────────── */

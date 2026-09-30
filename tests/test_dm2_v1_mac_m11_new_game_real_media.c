@@ -4,7 +4,11 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_spell.h"
+#include "dm2_v1_weather_gdat.h"
+#include "dm2_v1_mac_input.h"
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
@@ -14,6 +18,71 @@
 static int find_mac_creature_material(
     const DM2_V1_DungeonData *dungeon, int map, int16_t creature_record,
     DM2_V1_G1CreatureMapChipMaterial *out);
+
+static int mac_non_c4_palette_is_identity(const uint8_t palette[16])
+{
+    if (!palette) return 0;
+    for (int color = 0; color < 16; ++color) {
+        if (palette[color] != (uint8_t)color) return 0;
+    }
+    return 1;
+}
+
+static uint32_t mac_dungeon_view_hash(const unsigned char *framebuffer)
+{
+    uint32_t hash = 2166136261u;
+    if (!framebuffer) return 0u;
+    for (int y = 40; y < 176; ++y) {
+        for (int x = 0; x < 224; ++x) {
+            hash ^= framebuffer[(size_t)y * 320u + (size_t)x];
+            hash *= 16777619u;
+        }
+    }
+    return hash ? hash : 1u;
+}
+
+static size_t mac_nonzero_in_rect(const unsigned char *framebuffer,
+                                  int x, int y, int width, int height)
+{
+    size_t count = 0u;
+    if (!framebuffer || x < 0 || y < 0 || width <= 0 || height <= 0 ||
+        x + width > 320 || y + height > 200) return 0u;
+    for (int row = y; row < y + height; ++row)
+        for (int col = x; col < x + width; ++col)
+            if (framebuffer[(size_t)row * 320u + (size_t)col] != 0u)
+                ++count;
+    return count;
+}
+
+static int mac_live_map_has_nearby_creature(
+    const DM2_V1_DungeonData *dungeon, int map, int party_x, int party_y,
+    int *out_x, int *out_y)
+{
+    if (out_x) *out_x = -1;
+    if (out_y) *out_y = -1;
+    if (!dungeon || map < 0 || map >= dungeon->level_count) return -1;
+    for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+        for (int x = 0; x < dungeon->level_widths[map]; ++x) {
+            DM2_V1_RuntimeCreatureRecordReceipt record;
+            int16_t handle = DM2_V1_RECORD_HANDLE_NULL;
+            int dx = x - party_x;
+            int dy = y - party_y;
+            if (!dm2_v1_runtime_query_creature_at(map, x, y, &handle))
+                return -1;
+            if (handle == DM2_V1_RECORD_HANDLE_NULL) continue;
+            memset(&record, 0, sizeof(record));
+            if (!dm2_v1_runtime_creature_record_receipt(handle, &record) ||
+                !record.valid) return -1;
+            if (!record.kill_flag && dx >= -1 && dx <= 1 &&
+                dy >= -1 && dy <= 1) {
+                if (out_x) *out_x = x;
+                if (out_y) *out_y = y;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 
 static int exercise_authentic_active_mac_creature(
     DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon,
@@ -319,7 +388,7 @@ static int exercise_authentic_mac_stairs(
     for (int map = 0; map < dungeon->level_count; ++map) {
         for (int y = 0; y < dungeon->level_heights[map]; ++y) {
             for (int x = 0; x < dungeon->level_widths[map]; ++x) {
-                int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+        int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
                 if (raw < 0 || dm2_v1_dungeon_get_square_type(
                         dungeon, map, x, y) != 3)
                     continue;
@@ -409,32 +478,686 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
-    /* The retail source keeps the title/menu boundary alive while GAME_LOAD
-     * prepares the mirror view. A viewport click is the source confirmation
-     * that commits the selected champion and only then closes the menu. */
+    /* Resolve Mac's source mirror selection through the same native viewport
+     * input used by the player. Never reuse a previous test's global runtime. */
+    view.dm2State.music_elapsed_us = 123456u;
     if (M11_GameView_HandlePointerButton(
-            &view, 100, 60, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            &view, 112, 130, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_REDRAW ||
-        view.dm2State.startup_menu_active || !view.dm2State.level_loaded) {
-        fprintf(stderr, "FAIL: Mac M11 source mirror click did not commit runtime\n");
-        M11_GameView_Shutdown(&view);
-        return 1;
-    }
-    memset(&runtime, 0, sizeof(runtime));
-    if (!dm2_v1_boot_runtime_capture(
+        !((DM2_V1_BootProfile *)view.dm2BootProfile)
+             ->source_game_load_session_ready ||
+        view.dm2State.music_elapsed_us != 0u ||
+        !dm2_v1_boot_runtime_capture(
             (DM2_V1_BootProfile *)view.dm2BootProfile, &runtime) ||
         !runtime.runtime_ready) {
-        fprintf(stderr, "FAIL: Mac M11 active session did not capture runtime\n");
+        fprintf(stderr,
+                "FAIL: Mac source mirror selection did not complete GAME_LOAD and reset the music clock\n");
         M11_GameView_Shutdown(&view);
         return 1;
     }
-    if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) !=
-            M11_GAME_INPUT_REDRAW ||
-        M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
-            M11_GAME_INPUT_REDRAW) {
-        fprintf(stderr, "FAIL: Mac M11 active session rejected movement\n");
+    /* Check the session pose immediately after the real New Game/mirror
+     * input. Later portions of this test deliberately teleport the runtime
+     * to exercise render assets, so they cannot guard the spawn location. */
+    if (runtime.current_level != 0 || runtime.party_x != 1 ||
+        runtime.party_y != 8 || runtime.party_dir != 0) {
+        fprintf(stderr,
+                "FAIL: Mac New Game spawned at map %d (%d,%d) facing %d; expected source start (0,1,8) facing north\n",
+                runtime.current_level, runtime.party_x, runtime.party_y,
+                runtime.party_dir);
         M11_GameView_Shutdown(&view);
         return 1;
+    }
+    {
+        DM2_V1_G1CreatureMapChipRuntimeReceipt creatures;
+        memset(&creatures, 0, sizeof(creatures));
+        if (!dm2_v1_runtime_g1_creature_map_chip_receipt(&creatures) ||
+            !creatures.valid || creatures.map != runtime.current_level) {
+            fprintf(stderr,
+                    "FAIL: Mac New Game could not inspect authentic creatures on the spawn map\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        for (int i = 0; i < creatures.material_count; ++i) {
+            const DM2_V1_G1CreatureMapChipMaterial *creature =
+                &creatures.materials[i];
+            int dx = creature->x - runtime.party_x;
+            int dy = creature->y - runtime.party_y;
+            if (dx >= -1 && dx <= 1 && dy >= -1 && dy <= 1 &&
+                (dx != 0 || dy != 0)) {
+                fprintf(stderr,
+                        "FAIL: Mac New Game spawned within one tile of source creature type %u at (%d,%d); party at (%d,%d)\n",
+                        creature->creature_type, creature->x, creature->y,
+                        runtime.party_x, runtime.party_y);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+    }
+    view.dm2State.startup_menu_active = 0;
+    view.dm2State.level_loaded = 1;
+    /* The retail map-chip census above catches a creature already occupying
+     * a neighboring tile. Also let the real spawn session run long enough for
+     * its source creature scheduler to act, then query the live DB4 chains.
+     * This matches the reported "monster beside me" symptom more closely
+     * than inspecting the immutable dungeon bytes alone. */
+    for (int tick = 0; tick < 16; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    {
+        const DM2_V1_DungeonData *spawn_dungeon =
+            (const DM2_V1_DungeonData *)
+                ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
+        DM2_V1_BootRuntimeReceipt spawn_after_ticks;
+        int nearby;
+        int nearby_x;
+        int nearby_y;
+        memset(&spawn_after_ticks, 0, sizeof(spawn_after_ticks));
+        if (!dm2_v1_boot_runtime_capture(
+                (DM2_V1_BootProfile *)view.dm2BootProfile,
+                &spawn_after_ticks) || !spawn_after_ticks.runtime_ready ||
+            spawn_after_ticks.current_level != 0 ||
+            spawn_after_ticks.party_x != 1 || spawn_after_ticks.party_y != 8 ||
+            spawn_after_ticks.party_dir != 0) {
+            fprintf(stderr,
+                    "FAIL: Mac spawn pose changed during 16 source ticks "
+                    "(ready=%d map=%d party=%d,%d,%d)\n",
+                    spawn_after_ticks.runtime_ready,
+                    spawn_after_ticks.current_level,
+                    spawn_after_ticks.party_x, spawn_after_ticks.party_y,
+                    spawn_after_ticks.party_dir);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        nearby = mac_live_map_has_nearby_creature(
+            spawn_dungeon, spawn_after_ticks.current_level,
+            spawn_after_ticks.party_x, spawn_after_ticks.party_y,
+            &nearby_x, &nearby_y);
+        if (nearby != 0) {
+            fprintf(stderr,
+                    "FAIL: live Mac DB4 creature is within one tile of "
+                    "New Game spawn after 16 source ticks "
+                    "(nearby=%d creature=%d,%d party=%d,%d)\n",
+                    nearby, nearby_x, nearby_y,
+                    spawn_after_ticks.party_x, spawn_after_ticks.party_y);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
+    {
+        const DM2_V1_DungeonData *dungeon =
+            (const DM2_V1_DungeonData *)
+                ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
+        int raw = -1;
+        int middle_raw = -1;
+        if (!dungeon || dungeon->level_count < 1 ||
+            !dungeon->initial_party_pose_valid ||
+            dungeon->initial_party_x != 1 || dungeon->initial_party_y != 8 ||
+            dungeon->initial_party_dir != 0 ||
+            (middle_raw = dm2_v1_dungeon_c_map_get_tile_value(
+                 dungeon, 0, dungeon->initial_party_x,
+                 dungeon->initial_party_y - 1)) < 0 ||
+            (raw = dm2_v1_dungeon_c_map_get_tile_value(
+                 dungeon, 0, dungeon->initial_party_x,
+                 dungeon->initial_party_y - 2)) < 0 ||
+            dm2_v1_viewport_g1_tile_class_to_square_type(
+                (uint8_t)((unsigned int)middle_raw >> 5)) != DM2_SQUARE_FLOOR ||
+            dm2_v1_viewport_g1_tile_class_to_square_type(
+                (uint8_t)((unsigned int)raw >> 5)) != DM2_SQUARE_WALL) {
+            fprintf(stderr,
+                    "FAIL: Mac retail start corridor no longer has its source "
+                    "floor at distance 1 and wall at distance 2 "
+                    "(middle=%d far=%d)\n", middle_raw, raw);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
+    {
+        DM2_V1_BootProfile *profile =
+            (DM2_V1_BootProfile *)view.dm2BootProfile;
+        DM2_V1_DungeonData *dungeon = profile
+            ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
+        DM2_V1_GdatSceneM11CommandPlan scene_plan;
+        DM2_V1_GdatWallM11CommandPlan wall_plan;
+        DM2_V1_GdatWallM11CommandPlan expected_wall_plan;
+        static const int16_t mac_arrow_positions[6][2] = {
+            { 229, 129 }, { 291, 129 }, { 260, 129 },
+            { 291, 153 }, { 260, 153 }, { 229, 153 }
+        };
+        for (uint16_t rect_id = 40; rect_id <= 45; ++rect_id) {
+            DM2_V1_InterfaceRect rect;
+            int slot = (int)(rect_id - 40u);
+            if (!dm2_v1_boot_query_blit_rect_for_dimensions(
+                    profile, rect_id, 29, 23, &rect) ||
+                rect.x != mac_arrow_positions[slot][0] ||
+                rect.y != mac_arrow_positions[slot][1] ||
+                rect.w != 29 || rect.h != 23) {
+                fprintf(stderr,
+                        "FAIL: Mac movement arrow RECT_%03u did not match its retail RAW4 placement\n",
+                        rect_id);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        {
+            DM2_V1_GdatHudM11CommandPlan mac_hud;
+            memset(&mac_hud, 0, sizeof(mac_hud));
+            if (!dm2_v1_boot_gdat_hud_static_m11_command_plan(
+                    profile, 0, &mac_hud) || !mac_hud.mac_native_layout ||
+                mac_hud.command_count != 6) {
+                fprintf(stderr,
+                        "FAIL: Mac HUD did not bind its six retail movement images\n");
+                dm2_v1_gdat_hud_m11_command_plan_free(&mac_hud);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            for (int arrow = 0; arrow < 6; ++arrow) {
+                const DM2_V1_GdatHudM11Command *command =
+                    &mac_hud.commands[arrow];
+                uint8_t source_palette[16];
+                uint32_t source_palette_hash = 0u;
+                if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW ||
+                    command->gdat_category !=
+                        DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                    command->gdat_index != 3 ||
+                    command->gdat_field != 2 + arrow * 2 ||
+                    command->destination_rect_id != (uint16_t)(40 + arrow) ||
+                    command->destination.x != mac_arrow_positions[arrow][0] ||
+                    command->destination.y != mac_arrow_positions[arrow][1] ||
+                    command->width != 29 || command->height != 23 ||
+                    !command->pixels || command->decoded_hash == 0u ||
+                    command->palette_hash == 0u ||
+                    !dm2_v1_asset_load_image_local_palette(
+                        dm2_v1_boot_asset_loader(profile),
+                        DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 3,
+                        2 + arrow * 2, source_palette,
+                        &source_palette_hash) ||
+                    memcmp(command->palette16, source_palette,
+                           sizeof(source_palette)) != 0 ||
+                    command->palette_hash != source_palette_hash) {
+                    fprintf(stderr,
+                            "FAIL: Mac HUD arrow %d lost its retail image or destination binding\n",
+                            arrow);
+                    dm2_v1_gdat_hud_m11_command_plan_free(&mac_hud);
+                    M11_GameView_Shutdown(&view);
+                    return 1;
+                }
+            }
+            dm2_v1_gdat_hud_m11_command_plan_free(&mac_hud);
+        }
+        int graphicsset = dungeon
+            ? dm2_v1_dungeon_get_map_graphics_style(dungeon, 0) : -1;
+        memset(&scene_plan, 0, sizeof(scene_plan));
+        memset(&wall_plan, 0, sizeof(wall_plan));
+        memset(&expected_wall_plan, 0, sizeof(expected_wall_plan));
+        if (!profile || graphicsset < 0 ||
+            !dm2_v1_boot_gdat_scene_m11_command_plan(
+                profile, (uint8_t)graphicsset, &scene_plan) ||
+            !dm2_v1_boot_gdat_wall_m11_command_plan(
+                profile, (uint8_t)graphicsset, &wall_plan) ||
+            !dm2_v1_boot_gdat_wall_m11_command_plan_for_scene(
+                profile, graphicsset, 0,
+                (dungeon->initial_party_x + dungeon->initial_party_y +
+                 dungeon->initial_party_dir + dungeon->map_offset_x[0] +
+                 dungeon->map_offset_y[0] +
+                 dungeon->map_graphics_flip_seed[0]) & 1,
+                &expected_wall_plan)) {
+            fprintf(stderr, "FAIL: Mac source-backed scene plans did not bind\n");
+            dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+            dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+            dm2_v1_gdat_wall_m11_command_plan_free(&expected_wall_plan);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (wall_plan.command_count != DM2_V1_GDAT_WALL_M11_COMMAND_MAX) {
+            fprintf(stderr,
+                    "FAIL: Mac wall plan omitted source cells (%u/%d)\n",
+                    wall_plan.command_count,
+                    DM2_V1_GDAT_WALL_M11_COMMAND_MAX);
+            dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+            dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+            dm2_v1_gdat_wall_m11_command_plan_free(&expected_wall_plan);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        {
+            const DM2_V1_GdatWallM11Command *center_far_wall = NULL;
+            for (int i = 0; i < expected_wall_plan.command_count; ++i) {
+                const DM2_V1_GdatWallM11Command *command =
+                    &expected_wall_plan.commands[i];
+                if (command->skproject_cell == 6u) {
+                    center_far_wall = command;
+                    break;
+                }
+            }
+            if (!center_far_wall || center_far_wall->field != 0x28u ||
+                center_far_wall->rect_number != 0x2c4u ||
+                center_far_wall->view_square != DM2_SQ_D2C ||
+                !center_far_wall->decoded_hash ||
+                !center_far_wall->geometry_hash ||
+                !center_far_wall->destination_width ||
+                !center_far_wall->destination_height ||
+                center_far_wall->destination_x +
+                    center_far_wall->destination_width > DM2_VP_WIDTH ||
+                center_far_wall->destination_y +
+                    center_far_wall->destination_height > DM2_VP_HEIGHT) {
+                fprintf(stderr,
+                        "FAIL: Mac map-0 wall at distance two lacks its exact "
+                        "source image and in-viewport RAW4 placement\n");
+                dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+                dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+                dm2_v1_gdat_wall_m11_command_plan_free(&expected_wall_plan);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        {
+            static const uint8_t mirror_cells[16] = {
+                0x00u, 0x02u, 0x01u, 0x03u, 0x05u, 0x04u, 0x06u, 0x08u,
+                0x07u, 0x0au, 0x09u, 0x0bu, 0x0du, 0x0cu, 0x0fu, 0x0eu
+            };
+            DM2_V1_GdatWallM11CommandPlan flipped_plan;
+            const DM2_V1_AssetLoader *loader =
+                dm2_v1_boot_asset_loader(profile);
+            memset(&flipped_plan, 0, sizeof(flipped_plan));
+            if (!loader || !dm2_v1_boot_gdat_wall_m11_command_plan_for_scene(
+                    profile, graphicsset, 0, 1, &flipped_plan) ||
+                flipped_plan.graphics_flip_parity != 1u ||
+                flipped_plan.command_count != wall_plan.command_count) {
+                fprintf(stderr,
+                        "FAIL: Mac source-backed parity-one wall plan did not bind\n");
+                dm2_v1_gdat_wall_m11_command_plan_free(&flipped_plan);
+                dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+                dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            for (int i = 0; i < flipped_plan.command_count; ++i) {
+                const DM2_V1_GdatWallM11Command *command =
+                    &flipped_plan.commands[i];
+                int expected_field = 0x32;
+                if (command->skproject_cell < 16u) {
+                    int cell = command->skproject_cell;
+                    int width = 0, height = 0;
+                    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+                    uint8_t *mirrored = dm2_v1_asset_load_image_field(
+                        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+                        0xb0 + mirror_cells[cell], &width, &height, &format);
+                    expected_field = mirrored && width > 0 && height > 0
+                        ? 0xb0 + mirror_cells[cell] : 0x22 + cell;
+                    dm2_v1_asset_free_pixels(mirrored);
+                }
+                if (command->field != expected_field) {
+                    fprintf(stderr,
+                            "FAIL: Mac wall parity chose field %02x for cell %02x; expected %02x\n",
+                            command->field, command->skproject_cell,
+                            expected_field);
+                    dm2_v1_gdat_wall_m11_command_plan_free(&flipped_plan);
+                    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+                    dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+                    dm2_v1_gdat_wall_m11_command_plan_free(&expected_wall_plan);
+                    M11_GameView_Shutdown(&view);
+                    return 1;
+                }
+            }
+            dm2_v1_gdat_wall_m11_command_plan_free(&flipped_plan);
+        }
+        /* The Macintosh retail set uses an 8-bit IMG9 floor and a 4-bit
+         * IMG3 ceiling. Plausible dimensions alone can admit a wrong asset. */
+        if (scene_plan.commands[0].format != DM2_IMG_FMT_IMG9 ||
+            scene_plan.commands[1].format != DM2_IMG_FMT_IMG3) {
+            fprintf(stderr,
+                    "FAIL: Mac scene selected unexpected plane formats "
+                    "(floor=%d ceiling=%d)\n",
+                    scene_plan.commands[0].format,
+                    scene_plan.commands[1].format);
+            dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+            dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (scene_plan.rects[1].y != 0 ||
+            scene_plan.rects[0].y + scene_plan.rects[0].height != 136 ||
+            scene_plan.rects[0].width != 224u ||
+            scene_plan.rects[1].width != 224u) {
+            fprintf(stderr,
+                    "FAIL: Mac RECT_700/701 anchors do not place the ceiling "
+                    "at the top and floor at the bottom\n");
+            dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+            dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        for (int i = 0; i < 2; ++i) {
+            if (scene_plan.commands[i].format != DM2_IMG_FMT_IMG3 &&
+                scene_plan.commands[i].format != DM2_IMG_FMT_U4 &&
+                !mac_non_c4_palette_is_identity(
+                    scene_plan.commands[i].palette16)) {
+                fprintf(stderr,
+                        "FAIL: Mac 8-bit scene plane used a C4 local palette\n");
+                dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+                dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        if (!dm2_v1_boot_gdat_scene_m11_apply_light_palette(
+                profile, 0, 1u, 0x4d41434cu, &scene_plan)) {
+            fprintf(stderr,
+                    "FAIL: Mac source-backed light pass rejected the scene plan\n");
+            dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+            dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        for (int i = 0; i < 2; ++i) {
+            const DM2_V1_GdatSceneM11Command *command =
+                &scene_plan.commands[i];
+            int local_palette = command->format == DM2_IMG_FMT_IMG3 ||
+                                command->format == DM2_IMG_FMT_U4;
+            if (command->decoded_hash !=
+                    dm2_v1_gdat_scene_m11_command_pixel_hash(command) ||
+                (!local_palette &&
+                 (!mac_non_c4_palette_is_identity(command->palette16) ||
+                  command->palette_light_receipt_hash != 0u ||
+                  command->palette_transform_hash != 0u)) ||
+                (local_palette &&
+                 (command->palette_light_receipt_hash == 0u ||
+                  command->palette_transform_hash == 0u))) {
+                fprintf(stderr,
+                        "FAIL: Mac light pass changed global-index pixels via a "
+                        "16-color local palette (field=%02x format=%d)\n",
+                        command->field, command->format);
+                dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+                dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        {
+            const DM2_V1_AssetLoader *loader =
+                dm2_v1_boot_asset_loader(profile);
+            for (int i = 0; loader && i < wall_plan.command_count; ++i) {
+                const DM2_V1_GdatWallM11Command *command =
+                    &wall_plan.commands[i];
+                DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+                int width = 0;
+                int height = 0;
+                uint8_t *pixels = dm2_v1_asset_load_image_field(
+                    loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+                    command->field, &width, &height, &format);
+                int local_palette = format == DM2_IMG_FMT_IMG3 ||
+                                    format == DM2_IMG_FMT_U4;
+                dm2_v1_asset_free_pixels(pixels);
+                if (!local_palette &&
+                    !mac_non_c4_palette_is_identity(command->palette16)) {
+                    fprintf(stderr,
+                            "FAIL: Mac 8-bit wall used a C4 local palette "
+                            "(field=%02x format=%d %dx%d)\n",
+                            command->field, format, width, height);
+                    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+                    dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+                    M11_GameView_Shutdown(&view);
+                    return 1;
+                }
+            }
+        }
+        dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+        dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+        dm2_v1_gdat_wall_m11_command_plan_free(&expected_wall_plan);
+    }
+    {
+        DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
+        DM2_V1_ViewportM11FrameReceipt hud_receipt;
+        size_t viewport_nonblack = 0u;
+        size_t mac_hud_nonblack = 0u;
+        memset(&frame_ownership, 0, sizeof(frame_ownership));
+        memset(&hud_receipt, 0, sizeof(hud_receipt));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (int y = 40; y < 176; ++y) {
+            for (int x = 0; x < 224; ++x) {
+                if (framebuffer[(size_t)y * 320u + (size_t)x] != 0u)
+                    ++viewport_nonblack;
+            }
+        }
+        if (mac_nonzero_in_rect(framebuffer, 56, 62, 112, 48) < 1500u) {
+            fprintf(stderr,
+                    "FAIL: Mac spawn's authentic center wall is absent from "
+                    "the expected close-wall region\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        for (int y = 0; y < 28; ++y)
+            for (int x = 0; x < 320; ++x)
+                if (framebuffer[(size_t)y * 320u + (size_t)x] != 0u)
+                    ++mac_hud_nonblack;
+        (void)dm2_v1_runtime_last_m11_frame_receipt(&hud_receipt);
+        if (viewport_nonblack < 22000u ||
+            mac_hud_nonblack < 100u ||
+            !hud_receipt.valid || !hud_receipt.hud_material_plan_required ||
+            !hud_receipt.hud_material_plan_consumed ||
+            hud_receipt.hud_material_plan_command_count != 8 ||
+            !dm2_v1_runtime_last_frame_ownership(&frame_ownership) ||
+            !frame_ownership.full_gdat_frame_valid ||
+            !frame_ownership.floor_ceiling_materials_complete ||
+            (frame_ownership.wall_source_cell_required_mask & (1u << 6)) == 0u ||
+            (frame_ownership.wall_source_cell_required_mask & (1u << 3)) != 0u ||
+            frame_ownership.wall_source_cell_required_mask !=
+                frame_ownership.wall_source_cell_consumed_mask ||
+            frame_ownership.total_runtime_fallback_draws != 0) {
+            fprintf(stderr,
+                    "FAIL: Mac New Game did not render its source-backed RECT_7/HUD "
+                    "(view=%zu hud=%zu hudReceipt=%d/%d/%d frame=%d planes=%d fallbacks=%d)\n",
+                    viewport_nonblack, mac_hud_nonblack,
+                    hud_receipt.hud_material_plan_required,
+                    hud_receipt.hud_material_plan_consumed,
+                    hud_receipt.hud_material_plan_command_count,
+                    frame_ownership.full_gdat_frame_valid,
+                    frame_ownership.floor_ceiling_materials_complete,
+                    frame_ownership.total_runtime_fallback_draws);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
+    {
+        uint32_t direction_hashes[4] = { 0u, 0u, 0u, 0u };
+        for (int direction = 0; direction < 4; ++direction) {
+            DM2_V1_RuntimeFrameOwnershipReceipt ownership;
+            DM2_V1_ViewportM11FrameReceipt m11_receipt;
+            size_t nonblack = 0u;
+            memset(&ownership, 0, sizeof(ownership));
+            memset(&m11_receipt, 0, sizeof(m11_receipt));
+            dm2_v1_runtime_set_position(0, 1, 8, direction);
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            for (int y = 40; y < 176; ++y) {
+                for (int x = 0; x < 224; ++x) {
+                    if (framebuffer[(size_t)y * 320u + (size_t)x] != 0u)
+                        ++nonblack;
+                }
+            }
+            direction_hashes[direction] = mac_dungeon_view_hash(framebuffer);
+            if (!dm2_v1_runtime_last_frame_ownership(&ownership) ||
+                !dm2_v1_runtime_last_m11_frame_receipt(&m11_receipt) ||
+                ownership.is_outdoor != 0 ||
+                !ownership.full_gdat_frame_valid ||
+                !ownership.floor_ceiling_materials_complete ||
+                ownership.creature_gdat_blits != 0 ||
+                ownership.total_runtime_fallback_draws != 0 ||
+                !m11_receipt.valid || !m11_receipt.m11_consume_frame ||
+                nonblack < 22000u ||
+                (direction == 1 && ownership.wall_gdat_blits == 0)) {
+                fprintf(stderr,
+                        "FAIL: Mac real-media viewport rejected direction %d "
+                        "(frame=%d planes=%d m11=%d consume=%d pixels=%zu fallbacks=%d)\n",
+                        direction, ownership.full_gdat_frame_valid,
+                        ownership.floor_ceiling_materials_complete,
+                        m11_receipt.valid, m11_receipt.m11_consume_frame,
+                        nonblack, ownership.total_runtime_fallback_draws);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        for (int direction = 0; direction < 4; ++direction) {
+            for (int previous = 0; previous < direction; ++previous) {
+                if (direction_hashes[direction] == direction_hashes[previous]) {
+                    fprintf(stderr,
+                            "FAIL: Mac dungeon view did not change between directions %d and %d\n",
+                            previous, direction);
+                    M11_GameView_Shutdown(&view);
+                    return 1;
+                }
+            }
+        }
+        dm2_v1_runtime_set_position(0, 1, 8, 0);
+    }
+    /* Retail Mac movement arrows are outside the dungeon C080 viewport.
+     * Clicking RECT_42 (top-center/forward) must still enter the ordinary
+     * source movement pipeline. */
+    if (M11_GameView_HandlePointerButton(
+            &view, 274, 140, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr,
+                "FAIL: Mac retail forward-arrow click was not routed to movement\n");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    (void)M11_GameView_AdvanceIdleTick(&view);
+    if (dm2_v1_runtime_get_party_x() != 1 ||
+        dm2_v1_runtime_get_party_y() != 7 ||
+        dm2_v1_runtime_get_party_dir() != 0) {
+        fprintf(stderr,
+                "FAIL: Mac forward-arrow click did not move north to (1,7) (party=%d,%d,%d)\n",
+                dm2_v1_runtime_get_party_x(), dm2_v1_runtime_get_party_y(),
+                dm2_v1_runtime_get_party_dir());
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    {
+        const DM2_V1_DungeonData *live_dungeon =
+            (const DM2_V1_DungeonData *)
+                ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
+        int nearby_x;
+        int nearby_y;
+        int nearby = mac_live_map_has_nearby_creature(
+            live_dungeon, 0, dm2_v1_runtime_get_party_x(),
+            dm2_v1_runtime_get_party_y(), &nearby_x, &nearby_y);
+        printf("Mac first forward step from New Game: party=(%d,%d) nearby-live-DB4=%d creature=(%d,%d)\n",
+               dm2_v1_runtime_get_party_x(), dm2_v1_runtime_get_party_y(),
+               nearby, nearby_x, nearby_y);
+        if (nearby < 0) {
+            fprintf(stderr,
+                    "FAIL: Mac live DB4 map could not be inspected after "
+                    "the first forward step\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
+    dm2_v1_runtime_set_position(0, 1, 8, 0);
+    if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) !=
+            M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr, "FAIL: Mac M11 active session rejected turn input\n");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    (void)M11_GameView_AdvanceIdleTick(&view);
+    {
+        DM2_V1_RuntimeMusicMapReceipt music;
+        memset(&music, 0, sizeof(music));
+        if (!dm2_v1_runtime_last_music_map_receipt(&music) ||
+            music.blocked_no_session || music.selected_track < 0 ||
+            !music.source_stream_resolved ||
+            view.dm2State.music_events_due == 0u ||
+            (music.queue_result != DM2_V1_MUSIC_QUEUE_READY &&
+             music.queue_result !=
+                 DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE)) {
+            fprintf(stderr,
+                    "FAIL: Mac post-move source music route unavailable "
+                    "(valid=%d track=%d blocked=%d resolved=%d result=%d due=%u)\n",
+                    music.valid, music.selected_track, music.blocked_no_session,
+                    music.source_stream_resolved, music.queue_result,
+                    view.dm2State.music_events_due);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
+    if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
+            M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr, "FAIL: Mac M11 active session rejected move input\n");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    (void)M11_GameView_AdvanceIdleTick(&view);
+    if (dm2_v1_runtime_get_party_x() != 2 ||
+        dm2_v1_runtime_get_party_y() != 8 ||
+        dm2_v1_runtime_get_party_dir() != 1) {
+        fprintf(stderr,
+                "FAIL: Mac movement did not apply to the authentic map "
+                "(party=%d,%d,%d)\n",
+                dm2_v1_runtime_get_party_x(), dm2_v1_runtime_get_party_y(),
+                dm2_v1_runtime_get_party_dir());
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    /* Exercise the retail Mac forward key after a genuine New Game and let
+     * ordinary source ticks run. The earlier spawn-only check could miss a
+     * bad move destination or a nearby DB4 that appears after timer updates. */
+    {
+        DM2_V1_MacInputReceipt key_receipt;
+        DM2_V1_BootRuntimeReceipt after_ticks;
+        if (!dm2_v1_mac_input_resolve('k', 0,
+                                      DM2_V1_MAC_INPUT_GAMEPLAY,
+                                      &key_receipt) ||
+            key_receipt.action != DM2_V1_MAC_ACTION_MOVE_FORWARD ||
+            M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
+                M11_GAME_INPUT_REDRAW) {
+            fprintf(stderr,
+                    "FAIL: retail Mac forward key did not reach the active movement route\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        (void)M11_GameView_AdvanceIdleTick(&view);
+        if (dm2_v1_runtime_get_party_x() != 3 ||
+            dm2_v1_runtime_get_party_y() != 8 ||
+            dm2_v1_runtime_get_party_dir() != 1) {
+            fprintf(stderr,
+                    "FAIL: second Mac forward move did not advance to (3,8) facing east (party=%d,%d,%d)\n",
+                    dm2_v1_runtime_get_party_x(),
+                    dm2_v1_runtime_get_party_y(),
+                    dm2_v1_runtime_get_party_dir());
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        for (int tick = 0; tick < 16; ++tick)
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        memset(&after_ticks, 0, sizeof(after_ticks));
+        if (!dm2_v1_boot_runtime_capture(
+                (DM2_V1_BootProfile *)view.dm2BootProfile, &after_ticks) ||
+            !after_ticks.runtime_ready || after_ticks.current_level != 0 ||
+            after_ticks.party_x != 3 || after_ticks.party_y != 8 ||
+            after_ticks.party_dir != 1) {
+            fprintf(stderr,
+                    "FAIL: Mac source ticks changed movement state unexpectedly (ready=%d map=%d party=%d,%d,%d)\n",
+                    after_ticks.runtime_ready, after_ticks.current_level,
+                    after_ticks.party_x, after_ticks.party_y,
+                    after_ticks.party_dir);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        {
+            const DM2_V1_DungeonData *live_dungeon =
+                (const DM2_V1_DungeonData *)
+                    ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
+            int nearby = mac_live_map_has_nearby_creature(
+                live_dungeon, after_ticks.current_level, after_ticks.party_x,
+                after_ticks.party_y, NULL, NULL);
+            if (nearby != 0) {
+                fprintf(stderr,
+                        "FAIL: live Mac DB4 creature is within one tile after movement and 16 source ticks (nearby=%d party=%d,%d)\n",
+                        nearby, after_ticks.party_x, after_ticks.party_y);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
     }
     {
         if (!M11_GameView_OpenSpellPanel(&view)) {

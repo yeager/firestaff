@@ -373,6 +373,8 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
         out->level_offsets[i] = rel_offset;
         out->map_offset_x[i] = (int)map_desc[6];
         out->map_offset_y[i] = (int)map_desc[7];
+        out->map_level_number[i] = (uint8_t)(RD16(map_desc + 8) & 0x3fu);
+        out->map_graphics_flip_seed[i] = out->map_level_number[i];
         out->map_door_set0[i] = (int)((RD16(map_desc + 14) >> 8) & 0x0fu);
         out->map_door_set1[i] = (int)((RD16(map_desc + 14) >> 12) & 0x0fu);
         out->map_use_door0[i] = (int)((RD16(map_desc + 2) >> 7) & 1u);
@@ -514,6 +516,8 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         out->level_offsets[i] = rel_offset;
         out->map_offset_x[i] = (int)map_desc[6];
         out->map_offset_y[i] = (int)map_desc[7];
+        out->map_level_number[i] = (uint8_t)(RD16(map_desc + 8) & 0x3fu);
+        out->map_graphics_flip_seed[i] = out->map_level_number[i];
         out->map_door_set0[i] = (int)((RD16(map_desc + 14) >> 8) & 0x0fu);
         out->map_door_set1[i] = (int)((RD16(map_desc + 14) >> 12) & 0x0fu);
         out->map_use_door0[i] = (int)((RD16(map_desc + 2) >> 7) & 1u);
@@ -719,6 +723,8 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
         out->level_offsets[i] = rel_offset;
         out->map_offset_x[i] = (int)map_desc[6];
         out->map_offset_y[i] = (int)map_desc[7];
+        out->map_level_number[i] = (uint8_t)(rd16be(map_desc + 8) & 0x3fu);
+        out->map_graphics_flip_seed[i] = out->map_level_number[i];
         out->map_door_set0[i] = (int)((rd16be(map_desc + 14) >> 8) & 0x0fu);
         out->map_door_set1[i] = (int)((rd16be(map_desc + 14) >> 12) & 0x0fu);
         out->map_use_door0[i] = (int)((rd16be(map_desc + 2) >> 7) & 1u);

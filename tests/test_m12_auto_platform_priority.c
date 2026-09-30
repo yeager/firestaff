@@ -1,7 +1,7 @@
 /* AUTO platform selection must be a media policy, not catalogue order.
- * DM1/DM2 prefer their original PC routes.  CSB never had a DOS release:
- * it defaults to its verified native Amiga route before FM Towns, Atari and
- * any accidental compatibility catalogue row. */
+ * DM1 prefers its original PC route. DM2 prefers authenticated Macintosh
+ * retail on macOS and falls back to PC; other hosts prefer PC. CSB never had
+ * a DOS release and defaults to verified native Amiga before FM Towns/Atari. */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 

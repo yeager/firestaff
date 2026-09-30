@@ -13,9 +13,21 @@ int main(void)
     DM2_V1_MusicScheduleReceipt repeated_schedule;
     int result;
 
-    if (!zip || !zip[0]) {
-        puts("SKIP: DM2 Mac retail ZIP is not set");
-        return 0;
+    if (dm2_v1_sound_scale_midi_channel_volume(100u, 128) != 100u ||
+        dm2_v1_sound_scale_midi_channel_volume(100u, 64) != 50u ||
+        dm2_v1_sound_scale_midi_channel_volume(100u, 0) != 0u ||
+        dm2_v1_sound_scale_midi_channel_volume(100u, 200) != 100u) {
+        fprintf(stderr, "DM2 Mac MIDI controller volume scaling failed\n");
+        return 1;
+    }
+
+    {
+        FILE *archive = zip && zip[0] ? fopen(zip, "rb") : NULL;
+        if (!archive) {
+            puts("SKIP: authentic DM2 Mac retail ZIP is not staged");
+            return 77;
+        }
+        fclose(archive);
     }
     if (dm2_v1_mac_media_read_zip(zip, &media) != 0 ||
         !media.application_resource || media.application_resource_size == 0u) {
@@ -39,16 +51,28 @@ int main(void)
     if (!dm2_v1_sound_schedule_music(0u, &first_schedule) ||
         !dm2_v1_sound_schedule_music(0u, &repeated_schedule) ||
         first_schedule.event_count_due == 0u ||
+        first_schedule.delivery_failed ||
+        first_schedule.backend_proven != receipt.backend_proven ||
         repeated_schedule.event_count_due != 0u) {
         fprintf(stderr,
-                "authentic Mac Midi scheduler resent an already-consumed prefix: first=%u repeated=%u\n",
+                "authentic Mac Midi scheduler delivery/prefix check failed: first_due=%u first_sent=%u failed=%d first_backend=%d expected_backend=%d repeated=%u\n",
                 first_schedule.event_count_due,
+                first_schedule.event_count_sent,
+                first_schedule.delivery_failed,
+                first_schedule.backend_proven,
+                receipt.backend_proven,
                 repeated_schedule.event_count_due);
         dm2_v1_mac_media_free(&media);
         return 1;
     }
     dm2_v1_mac_media_free(&media);
-    printf("PASS: authentic Mac Midi(1000) reached SMF scheduling: result=%d events=%u\n",
-           result, receipt.schedule_event_count);
+    printf("PASS: authentic Mac Midi(1000) reached SMF scheduling: events=%u sent=%u backend=%s\n",
+           receipt.schedule_event_count,
+           first_schedule.event_count_sent,
+           receipt.backend_proven ? "ready" : "unavailable");
+    if (!receipt.backend_proven) {
+        puts("SKIP: source parsing passed, but no native MIDI playback backend is available");
+        return 77;
+    }
     return 0;
 }

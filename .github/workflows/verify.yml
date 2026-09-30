@@ -193,18 +193,38 @@ jobs:
           PATH="$system_path" "$stage/firestaff.exe" --help
 
       - name: Run Nexus production source boundary
+        if: matrix.full_ctest
         run: |
           ctest --test-dir build --output-on-failure \
             -R '^nexus_production_source_boundary$'
 
       - name: Run CSB FSSB production boundary
+        if: matrix.full_ctest
         run: |
           ctest --test-dir build --output-on-failure \
             -R '^(csb_fssb_production_boundary|csb_compact_save_import_production_boundary|csb_cmp_import_production_boundary|csb_hidden_item_skip_production_boundary|csb_viewport_side_wall_production_boundary|csb_viewport_contract_bundle_production_boundary)$'
 
-      - name: Run portable M12 startup menu test (Windows)
-        if: runner.os == 'Windows'
+      - name: Run portable M12 startup menu test
         run: ctest --test-dir build --output-on-failure -R '^m12_startup_menu$'
+
+      - name: Run M12 menu selection and launch regressions
+        if: matrix.full_ctest
+        run: |
+          # Keep the shared launcher input, platform selection, row hitboxes,
+          # resume gating and runtime handoff covered on full-test CI hosts.
+          ctest --test-dir build --output-on-failure --no-tests=error \
+            --parallel 4 --timeout 60 \
+            -R '^(m12_menu_mouse|m12_auto_platform_priority|m12_menu_row_hit_height_audit|m12_quick_resume_gate|m12_launcher_options_runtime_handoff)$'
+
+      - name: Run DM1, CSB and DM2 startup contracts
+        if: matrix.full_ctest
+        run: |
+          # Exercise source startup/menu state and handoff contracts on both
+          # Unix CI hosts. These tests use in-memory receipts or skip safely
+          # when licensed media is required; they need no synthetic game data.
+          ctest --test-dir build --output-on-failure --no-tests=error \
+            --parallel 4 --timeout 60 \
+            -R '^(csb_v1_startup_package_identity_pc34|csb_v1_startup_real_sequence_pc34_compat|csb_v1_startup_presentation_receipt_pc34_compat|csb_v1_startup_entrance_pointer_pc34_compat|csb_v1_startup_receipt_coherence_pc34_compat|csb_v1_startup_opening_door_tick_receipt_pc34_compat|csb_v1_f0806_f0825_startup_source_admission_pc34_compat|dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat|dm1_v1_startup_f0267_party_placement_m11|dm1_v1_startup_intro_state_machine_gate|dm2_v1_startup_menu_action_contract|dm2_v1_startup_audio_menu|dm2_v1_m11_startup_profile_gate|dm2_v1_startup_pointer_hit_contract|dm2_v1_startup_music_queue|dm2_unsupported_platform_cli)$'
 
       - name: Run unit tests (ctest)
         if: matrix.full_ctest

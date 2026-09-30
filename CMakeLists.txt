@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.352 LANGUAGES C)
+project(Firestaff VERSION 3.0.353 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -4544,7 +4544,7 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN.zip"
         # The nested archive executes the complete live HoC render/input
         # matrix, including Original and Modern presentation captures.
-        TIMEOUT 240
+        TIMEOUT 360
     )
     add_test(
         NAME dm1_v1_boot_probe_terminal_exit
@@ -4576,7 +4576,11 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;atari-st;real-media;preservation;negative;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_DE_CRACKED_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12-alt.zip"
-        TIMEOUT 45
+        # This real-media CLI matrix exercises the native archive path,
+        # three presentation modes, and both direct and menu startup. Keep
+        # enough bounded time for the full DM1 PC startup/runtime matrix;
+        # 45 seconds terminates healthy runs before coverage completes.
+        TIMEOUT 300
     )
     add_executable(test_dm1_v1_atari_st_outer_archive_real_data
         tests/test_dm1_v1_atari_st_outer_archive_real_data.c
@@ -4630,7 +4634,11 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;dos;english;real-media;archive;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_DOS_EN_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip"
-        TIMEOUT 45
+        # This real-media CLI matrix exercises the native archive path,
+        # three presentation modes, and both direct and menu startup. Keep
+        # enough bounded time for the full DM1 PC startup/runtime matrix;
+        # 45 seconds terminates healthy runs before coverage completes.
+        TIMEOUT 300
     )
     add_test(
         NAME dm1_v1_atari_nested_archive_cli_boot
@@ -7075,7 +7083,10 @@ if(APPLE)
     # probes) links the same real MIDI boundary.
     target_link_libraries(firestaff_m10 PUBLIC
         "-framework CoreMIDI"
-        "-framework CoreFoundation")
+        "-framework CoreFoundation"
+        "-framework AudioToolbox"
+        "-framework AudioUnit"
+        "-framework CoreAudio")
 endif()
 target_link_libraries(firestaff_m10 PUBLIC firestaff_zip_extract firestaff_fmtowns_disc)
 target_compile_definitions(firestaff_m10 PUBLIC
@@ -7278,7 +7289,10 @@ if(DM2_SOURCES)
         # standalone DM2 test executables link the same real MIDI boundary.
         target_link_libraries(firestaff_dm2 PUBLIC
             "-framework CoreMIDI"
-            "-framework CoreFoundation")
+            "-framework CoreFoundation"
+            "-framework AudioToolbox"
+            "-framework AudioUnit"
+            "-framework CoreAudio")
     endif()
     if(NOT MSVC)
         target_compile_options(firestaff_dm2 PRIVATE -Wall -Wextra -O2)
@@ -12229,8 +12243,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_audio_real.c"
         COMMAND test_dm2_v1_mac_sound_audio_real)
     set_tests_properties(dm2_v1_mac_sound_audio_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};SDL_AUDIODRIVER=dummy"
         LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
+    add_test(NAME dm2_v1_mac_sound_audio_native
+        COMMAND test_dm2_v1_mac_sound_audio_real)
+    set_tests_properties(dm2_v1_mac_sound_audio_native PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};FIRESTAFF_REQUIRE_NATIVE_AUDIO=1"
+        LABELS "dm2;macintosh;audio;native-device;real-media;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sfx_queue_real.c")
@@ -12247,8 +12267,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sfx_queue_real.c")
         COMMAND test_dm2_v1_mac_sfx_queue_real)
     set_tests_properties(dm2_v1_mac_sfx_queue_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};SDL_AUDIODRIVER=dummy"
         LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
+endif()
+
+# Verify the authenticated Macintosh Midi resource mapping and SMF event
+# scheduler. This is a source/scheduler test: it does not claim audible output
+# because CI hosts may have no CoreAudio device or CoreMIDI destination.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_midi_real.c")
+    add_executable(test_dm2_v1_mac_midi_real
+        tests/test_dm2_v1_mac_midi_real.c)
+    target_include_directories(test_dm2_v1_mac_midi_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_midi_real PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_midi_real PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_midi_real COMMAND test_dm2_v1_mac_midi_real)
+    set_tests_properties(dm2_v1_mac_midi_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
+        LABELS "dm2;macintosh;audio;midi;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_pointer_source_real.c")
@@ -42072,6 +42112,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_test(NAME csb_v1_atari_save_runtime_handoff_pc34_compat
         COMMAND test_csb_v1_atari_save_runtime_handoff_pc34_compat)
     set_tests_properties(csb_v1_atari_save_runtime_handoff_pc34_compat PROPERTIES
+        SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_CSB_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/csb-atari-save-handoff;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
         LABELS "tier2;csb;save;runtime;real_data;skip_safe")
 

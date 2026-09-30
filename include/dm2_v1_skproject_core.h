@@ -1338,6 +1338,7 @@ typedef struct {
 
 typedef struct {
     uint8_t map_id;
+    uint8_t level;
     int16_t world_x;
     int16_t world_y;
     int16_t width;

@@ -1,13 +1,15 @@
 /* Authentic Mac GDAT SFX queue proof.
  *
- * The queue rows and PCM bytes come from the original Mac ZIP.  The test only
- * supplies a capture backend, so it never needs an audio device and never
- * fabricates a sound row or sample payload.
+ * Queue rows and PCM bytes come from the original Mac ZIP. The test checks
+ * both a capture backend and SDL's real mixer using the dummy audio device.
  */
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_sound.h"
+#include "dm2_v1_sound_sdl_backend.h"
+
+#include <SDL3/SDL.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +20,9 @@ typedef struct {
     uint16_t raw_index;
     uint32_t sample_count;
     uint8_t volume;
+    uint32_t non_silent_samples;
+    uint8_t min_sample;
+    uint8_t max_sample;
 } Capture;
 
 static int capture_ready(void *ctx) { (void)ctx; return 1; }
@@ -30,6 +35,14 @@ static int capture_start(void *ctx, unsigned slot, const uint8_t *pcm,
     capture->starts++;
     capture->sample_count = count;
     capture->volume = volume;
+    capture->min_sample = 255u;
+    capture->max_sample = 0u;
+    capture->non_silent_samples = 0u;
+    for (uint32_t i = 0u; i < count; ++i) {
+        if (pcm[i] != 128u) capture->non_silent_samples++;
+        if (pcm[i] < capture->min_sample) capture->min_sample = pcm[i];
+        if (pcm[i] > capture->max_sample) capture->max_sample = pcm[i];
+    }
     return 1;
 }
 static int capture_active(void *ctx, unsigned slot)
@@ -89,6 +102,7 @@ static int exercise_zip(const char *zip)
         result = 1;
         goto done;
     }
+    capture.raw_index = (uint16_t)source->w_05;
     dm2_v1_sound_bind_gdat_loader(loader, 1);
     dm2_v1_sound_bind_playback_backend(&backend);
     dm2_v1_sound_queue_state_init(&state, owner->sound_owner.queue_entry_count);
@@ -107,18 +121,19 @@ static int exercise_zip(const char *zip)
     env.gate_map_a = 0;
     env.gate_map_b = 0;
 
-    /* delay_mode 0 is the source's immediate scratch path. */
+    /* delay_mode 0 writes the immediate-play scratch event to positional[0]
+     * without incrementing the queued positional count. */
     if (!dm2_v1_sound_queue_noise_gen1(
             &state, source->b_02, source->b_03, source->b_04,
             1, 255, 0, 0, 0, &env, &queued) ||
-        !queued.play_sound_requested || state.immediate_count != 0u) {
+        !queued.play_sound_requested || state.positional_count != 0u) {
         fprintf(stderr, "Mac ZIP did not queue authenticated immediate SFX: %s\n",
                 zip);
         result = 1;
         goto done;
     }
     memset(&played, 0, sizeof(played));
-    if (!dm2_v1_sound_queue_play_sound(&state, &state.immediate[0], 1,
+    if (!dm2_v1_sound_queue_play_sound(&state, &state.positional[0], 1,
                                        &played) ||
         played.played_count != 1u || played.playback_unavailable ||
         capture.starts != 1u || capture.sample_count == 0u ||
@@ -133,7 +148,7 @@ static int exercise_zip(const char *zip)
      * would incorrectly consume a new slot on every source SFX. */
     capture.starts = 0u;
     memset(&played, 0, sizeof(played));
-    if (!dm2_v1_sound_queue_play_sound(&state, &state.immediate[0], 1,
+    if (!dm2_v1_sound_queue_play_sound(&state, &state.positional[0], 1,
                                        &played) ||
         played.played_count != 1u || capture.starts != 1u ||
         state.sample_slots[0] != source->w_00) {
@@ -141,8 +156,57 @@ static int exercise_zip(const char *zip)
         result = 1;
         goto done;
     }
-    printf("PASS: authenticated Mac SFX raw=%d pcm=%u from %s\n",
-           source->w_05, capture.sample_count, profile.version_id);
+
+    /* Keep the capture assertions above, then exercise the same authentic
+     * Mac GDAT event through the production SDL3 mixer. CTest selects SDL's
+     * dummy device so this verifies decode, voice start, and device mixing
+     * without claiming that a physical speaker was audible. */
+    dm2_v1_sound_bind_playback_backend(NULL);
+    dm2_v1_sound_sdl_backend_describe(&backend);
+    if (!dm2_v1_sound_sdl_backend_set_volumes(128, 128)) {
+        fprintf(stderr, "Mac ZIP SDL SFX gain setup failed: %s\n", zip);
+        result = 1;
+        goto done;
+    }
+    dm2_v1_sound_bind_playback_backend(&backend);
+    memset(&played, 0, sizeof(played));
+    if (!dm2_v1_sound_queue_play_sound(&state, &state.positional[0], 1,
+                                       &played) ||
+        played.played_count != 1u || played.playback_unavailable ||
+        !dm2_v1_sound_sdl_backend_is_ready() ||
+        dm2_v1_sound_sdl_backend_started_voice_count() == 0u) {
+        fprintf(stderr,
+                "Mac ZIP authentic SFX did not start on SDL3 (played=%u unavailable=%d ready=%d voices=%u): %s\n",
+                played.played_count, played.playback_unavailable,
+                dm2_v1_sound_sdl_backend_is_ready(),
+                dm2_v1_sound_sdl_backend_started_voice_count(), zip);
+        result = 1;
+        goto done;
+    }
+    for (unsigned int wait = 0u; wait < 100u &&
+         dm2_v1_sound_sdl_backend_non_silent_frames() == 0u; ++wait) {
+        SDL_Delay(10u);
+    }
+    if (dm2_v1_sound_sdl_backend_mixed_frames() == 0u ||
+        dm2_v1_sound_sdl_backend_non_silent_frames() == 0u) {
+        fprintf(stderr,
+                "Mac ZIP authentic SFX produced no non-silent SDL output (frames=%llu signal=%llu): %s\n",
+                (unsigned long long)dm2_v1_sound_sdl_backend_mixed_frames(),
+                (unsigned long long)dm2_v1_sound_sdl_backend_non_silent_frames(),
+                zip);
+        fprintf(stderr,
+                "Source SFX raw=%d volume=%u pcm=%u non-silent=%u range=%u..%u\n",
+                capture.raw_index, capture.volume, capture.sample_count,
+                capture.non_silent_samples, capture.min_sample,
+                capture.max_sample);
+        result = 1;
+        goto done;
+    }
+    printf("PASS: authenticated Mac SFX raw=%d pcm=%u SDL frames=%llu non-silent=%llu from %s\n",
+           source->w_05, capture.sample_count,
+           (unsigned long long)dm2_v1_sound_sdl_backend_mixed_frames(),
+           (unsigned long long)dm2_v1_sound_sdl_backend_non_silent_frames(),
+           profile.version_id);
 
 done:
     dm2_v1_sound_stop_all_voices();

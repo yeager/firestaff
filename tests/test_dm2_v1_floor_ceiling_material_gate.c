@@ -128,6 +128,7 @@ int main(void)
     dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
     dm2_v1_viewport_set_level(&viewport, 0);
     dm2_v1_viewport_set_gdat_scene_map_origin(&viewport, 0, 0);
+    dm2_v1_viewport_set_gdat_scene_map_flip_seed(&viewport, 0);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 3, 0x6d324741u,
         10, 2, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -139,8 +140,22 @@ int main(void)
     memset(&trace, 0, sizeof(trace));
     prepare(&viewport, framebuffer, &trace);
     dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    dm2_v1_viewport_set_gdat_scene_map_origin(&viewport, 0, 0);
+    dm2_v1_viewport_set_gdat_scene_map_flip_seed(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 3, 0x6d324741u,
+        10, 2, 0, 0, 0, 0, 0, 0, 0, 0);
+    dm2_v1_render_floor_ceiling(&viewport);
+    CHECK("source w8 parity seed changes the ceiling flip decision",
+          framebuffer[0] == 1 && framebuffer[1] == 2);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&trace, 0, sizeof(trace));
+    prepare(&viewport, framebuffer, &trace);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
     dm2_v1_viewport_set_level(&viewport, 0);
     dm2_v1_viewport_set_gdat_scene_map_origin(&viewport, 1, 0);
+    dm2_v1_viewport_set_gdat_scene_map_flip_seed(&viewport, 0);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 3, 0x6d324741u,
         10, 8, 0, 0, 0, 0, 0, 0, 0, 0);

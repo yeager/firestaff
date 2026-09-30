@@ -32,6 +32,7 @@ static uint32_t g_dm2_music_loop_duration_us;
 static int g_dm2_music_loop_enabled;
 static int g_dm2_music_backend_proven;
 static uint16_t g_dm2_music_ticks_per_quarter = 96u;
+static int g_dm2_music_volume_0_128 = 128;
 /* The source MIDI player consumes each event once as its playhead crosses
  * the event tick.  Keep this clock separate from the host's frame clock so
  * repeated M11 idle calls cannot resend the already-consumed prefix. */
@@ -164,6 +165,23 @@ static void dm2_music_reset_schedule_clock(void)
     g_dm2_music_schedule_clock_valid = 0;
     g_dm2_music_schedule_loop_count = 0u;
     g_dm2_music_schedule_playhead_us = 0u;
+}
+
+uint8_t dm2_v1_sound_scale_midi_channel_volume(uint8_t source_volume,
+                                               int host_volume_0_128)
+{
+    if (host_volume_0_128 < 0) host_volume_0_128 = 0;
+    if (host_volume_0_128 > 128) host_volume_0_128 = 128;
+    return (uint8_t)(((unsigned)source_volume *
+                      (unsigned)host_volume_0_128 + 64u) / 128u);
+}
+
+void dm2_v1_sound_set_music_volume(int volume_0_128)
+{
+    if (volume_0_128 < 0) volume_0_128 = 0;
+    if (volume_0_128 > 128) volume_0_128 = 128;
+    g_dm2_music_volume_0_128 = volume_0_128;
+    dm2_v1_midi_backend_set_music_volume((unsigned)volume_0_128);
 }
 
 static int dm2_inspect_smf_track(const uint8_t *data,
@@ -1810,7 +1828,9 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
     uint32_t playhead = elapsed_us;
     uint16_t loop_count = 0;
     uint16_t due = 0;
+    uint16_t sent = 0;
     int first_schedule;
+    int delivery_failed = 0;
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (g_dm2_music_event_count == 0u || !out_receipt) return 0;
     if (g_dm2_music_loop_enabled && g_dm2_music_loop_duration_us != 0u &&
@@ -1836,7 +1856,13 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
             if (g_dm2_music_backend_proven &&
                 g_dm2_music_events[i].status >= 0x80u &&
                 g_dm2_music_events[i].status < 0xf0u) {
-                (void)dm2_v1_midi_backend_send(&g_dm2_music_events[i]);
+                if (dm2_v1_midi_backend_send(&g_dm2_music_events[i])) {
+                    sent++;
+                } else {
+                    delivery_failed = 1;
+                    g_dm2_music_backend_proven = 0;
+                    break;
+                }
             }
         }
     }
@@ -1845,8 +1871,11 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
     g_dm2_music_schedule_playhead_us = playhead;
     out_receipt->valid = 1;
     out_receipt->event_count_due = due;
+    out_receipt->event_count_sent = sent;
     out_receipt->loop_count = loop_count;
-    out_receipt->backend_proven = g_dm2_music_backend_proven;
+    out_receipt->backend_proven = g_dm2_music_backend_proven &&
+        dm2_v1_midi_backend_state() == DM2_V1_MIDI_BACKEND_READY;
+    out_receipt->delivery_failed = delivery_failed;
     out_receipt->pcm_handoff_ready = 0;
     return 1;
 }

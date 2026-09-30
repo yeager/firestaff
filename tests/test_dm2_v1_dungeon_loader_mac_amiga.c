@@ -89,9 +89,12 @@ static void test_be_load(const char *path, const char *platform) {
      * GRAPHICSSET for Amiga/Mac viewport material. */
     for (int level = 0; level < dungeon.level_count; ++level) {
         const uint8_t *descriptor = data + 44 + level * 16;
+        uint16_t w8 = (uint16_t)((uint16_t)descriptor[8] << 8 |
+                                 descriptor[9]);
         int expected_style =
             (int)((((uint16_t)descriptor[14] << 8 | descriptor[15]) >> 4) &
                   0x0fu);
+        assert(dungeon.map_level_number[level] == (uint8_t)(w8 & 0x3fu));
         assert(dm2_v1_dungeon_get_map_graphics_style(&dungeon, level) ==
                expected_style);
     }

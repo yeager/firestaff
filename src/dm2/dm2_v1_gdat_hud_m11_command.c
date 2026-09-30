@@ -5,6 +5,7 @@
 #include "dm2_v1_gdat_hud_m11_command.h"
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_weather_gdat.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -128,6 +129,9 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
     int i;
     if (!plan || plan->command_count <= 0 ||
         plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX) return 0u;
+    hash = dm2_v1_gdat_hud_hash_bytes(hash,
+        (const uint8_t *)&plan->mac_native_layout,
+        sizeof(plan->mac_native_layout));
     for (i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
         hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->kind,
@@ -390,7 +394,8 @@ static int dm2_v1_gdat_hud_add_command(
     DM2_V1_GdatHudM11CommandPlan *plan,
     int kind,
     int viewport_gdat_index,
-    const DM2_V1_ViewportRect *destination)
+    const DM2_V1_ViewportRect *destination,
+    int direct_category, int direct_index, int direct_field)
 {
     DM2_V1_GdatHudM11Command *command;
     const uint8_t *raw;
@@ -414,7 +419,11 @@ static int dm2_v1_gdat_hud_add_command(
         ? dm2_v1_viewport_hud_portrait_graphic_index(viewport_gdat_index)
         : viewport_gdat_index;
     command->destination = *destination;
-    if (kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT) {
+    if (direct_category >= 0 && direct_index >= 0 && direct_field >= 0) {
+        command->gdat_category = direct_category;
+        command->gdat_index = direct_index;
+        command->gdat_field = direct_field;
+    } else if (kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT) {
         command->gdat_category = DM2_GDAT_CATEGORY_CHAMPIONS;
         command->gdat_index = viewport_gdat_index;
         command->gdat_field = DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD;
@@ -536,13 +545,15 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
         !dm2_v1_viewport_build_hud_chrome_plan(is_outdoor ? 1 : 0, &chrome) ||
         !dm2_v1_gdat_hud_add_command(loader, out_plan,
             DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR,
-            chrome.top_bar_gdat_index, &chrome.top_bar_rect) ||
+            chrome.top_bar_gdat_index, &chrome.top_bar_rect, -1, -1, -1) ||
         !dm2_v1_gdat_hud_add_command(loader, out_plan,
             DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP,
-            chrome.action_strip_gdat_index, &chrome.action_strip_rect) ||
+            chrome.action_strip_gdat_index, &chrome.action_strip_rect,
+            -1, -1, -1) ||
         !dm2_v1_gdat_hud_add_command(loader, out_plan,
             DM2_V1_GDAT_HUD_M11_COMMAND_GOLD_BOX,
-            chrome.gold_box_gdat_index, &chrome.gold_box_rect)) {
+            chrome.gold_box_gdat_index, &chrome.gold_box_rect,
+            -1, -1, -1)) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
@@ -557,7 +568,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
         (!dm2_v1_gdat_hud_add_command(loader, out_plan,
                 DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
                 chrome.portrait_panel_gdat_index,
-                &chrome.portrait_panel_rect) ||
+                &chrome.portrait_panel_rect, -1, -1, -1) ||
          out_plan->command_count != expected_count)) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
@@ -593,7 +604,8 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
         if (!champ->portrait_type_source_bound ||
             !dm2_v1_gdat_hud_add_command(loader, out_plan,
                 DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
-                champ->portrait_index, &champ->portrait_rect)) {
+                champ->portrait_index, &champ->portrait_rect,
+                -1, -1, -1)) {
             dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
             return 0;
         }
@@ -607,6 +619,98 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
         return 0;
     }
     out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
+    return 1;
+}
+
+int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_ViewportRect destinations[6],
+    DM2_V1_GdatHudM11CommandPlan *out_plan)
+{
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!loader || loader->gdat_version != 5u || !loader->big_endian ||
+        !destinations || !dm2_v1_asset_loader_verify(loader)) return 0;
+    for (int arrow = 0; arrow < 6; ++arrow) {
+        DM2_V1_GdatHudM11Command *command;
+        if (destinations[arrow].x < 0 || destinations[arrow].y < 0 ||
+            destinations[arrow].w <= 0 || destinations[arrow].h <= 0 ||
+            destinations[arrow].x + destinations[arrow].w > DM2_VP_WIDTH ||
+            destinations[arrow].y + destinations[arrow].h > DM2_VP_HEIGHT ||
+            !dm2_v1_gdat_hud_add_command(loader, out_plan,
+                DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW, -1000 - arrow,
+                &destinations[arrow], DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                3, 2 + arrow * 2)) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        command = &out_plan->commands[out_plan->command_count - 1];
+        command->destination_rect_id = (uint16_t)(40 + arrow);
+        {
+            DM2_V1_GdatImageMetadata metadata;
+            uint32_t palette_hash = 2166136261u;
+            if (!dm2_v1_asset_load_image_metadata(
+                    loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 3,
+                    2 + arrow * 2, &metadata) || metadata.bits_per_pixel != 4u ||
+                !dm2_v1_asset_load_image_local_palette(
+                    loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 3,
+                    2 + arrow * 2, command->palette16, &command->palette_hash)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            for (int color = 0; color < 16; ++color) {
+                palette_hash ^= command->palette16[color];
+                palette_hash *= 16777619u;
+            }
+            command->palette_hash = palette_hash ? palette_hash : 1u;
+        }
+    }
+    out_plan->mac_native_layout = 1;
+    out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
+    out_plan->valid = out_plan->command_hash != 0u;
+    if (!out_plan->valid) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
+    return 1;
+}
+
+int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_ViewportRect arrow_destinations[6],
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_ViewportRect portrait_destinations[4],
+    uint32_t portrait_table_hash,
+    DM2_V1_GdatHudM11CommandPlan *out_plan)
+{
+    if (!party || !portrait_destinations || !portrait_table_hash ||
+        party->champion_count > 4 ||
+        !dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+            loader, arrow_destinations, out_plan)) return 0;
+    for (int slot = 0; slot < 4; ++slot) {
+        const DM2_V1_HudChampionState *champion = &party->champions[slot];
+        const DM2_V1_ViewportRect *destination = &portrait_destinations[slot];
+        if (slot >= party->champion_count || !champion->occupied) continue;
+        if (!champion->portrait_type_source_bound || destination->x < 0 ||
+            destination->y < 0 || destination->w <= 0 || destination->h <= 0 ||
+            destination->x + destination->w > DM2_VP_WIDTH ||
+            destination->y + destination->h > DM2_VP_HEIGHT ||
+            !dm2_v1_gdat_hud_add_command(loader, out_plan,
+                DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
+                champion->portrait_index, destination, -1, -1, -1)) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        DM2_V1_GdatHudM11Command *command =
+            &out_plan->commands[out_plan->command_count - 1];
+        command->destination_rect_id = (uint16_t)(173 + slot);
+        command->destination_table_hash = portrait_table_hash;
+    }
+    out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
+    if (!out_plan->command_hash) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
     return 1;
 }
 

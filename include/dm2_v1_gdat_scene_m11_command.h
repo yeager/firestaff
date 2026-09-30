@@ -30,6 +30,8 @@ typedef struct {
     uint32_t palette_translation_hash;
     uint32_t palette_light_receipt_hash;
     uint32_t palette_transform_hash;
+    /* Towns U4 pixels address the active physical 16-colour palette. */
+    uint8_t physical_palette_indices;
 } DM2_V1_GdatSceneM11Command;
 
 typedef struct {

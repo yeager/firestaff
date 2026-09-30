@@ -202,13 +202,16 @@ PY
 # installation data root and reach the same first dungeon state without an
 # explicit --platform override. This keeps menu card readiness and the runtime
 # handoff under test together instead of proving only that a card can launch.
+mkdir -p "$auto_home/data/dm2"
+ln -s "$archive" "$auto_home/data/dm2/$(basename "$archive")"
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_DATA="$auto_home/data" \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$auto_runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$auto_runtime_capture" \
 HOME="$auto_home" XDG_CONFIG_HOME="$auto_home" APPDATA="$auto_home" \
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game dm2 \
-    --data-dir "$(dirname "$(dirname "$archive")")" \
+    --data-dir "$auto_home/data" \
     --script 'key:enter,key:enter,key:enter,wait:1000,key:enter,key:enter' \
     --duration 30000 >/dev/null 2>&1
 python3 - "$auto_runtime_probe" "$auto_runtime_capture" <<'PY'

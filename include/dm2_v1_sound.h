@@ -148,8 +148,10 @@ typedef struct {
 typedef struct {
     int valid;
     uint16_t event_count_due;
+    uint16_t event_count_sent;
     uint16_t loop_count;
     int backend_proven;
+    int delivery_failed;
     int pcm_handoff_ready;
 } DM2_V1_MusicScheduleReceipt;
 
@@ -532,6 +534,9 @@ int  dm2_v1_sound_queue_music(int track, int loop,
 int  dm2_v1_sound_queue_mac_midi(const uint8_t *resource_fork,
                                  size_t resource_fork_size, int resource_id,
                                  int loop, DM2_V1_MusicQueueReceipt *out_receipt);
+void dm2_v1_sound_set_music_volume(int volume_0_128);
+uint8_t dm2_v1_sound_scale_midi_channel_volume(uint8_t source_volume,
+                                               int host_volume_0_128);
 /* Queue CDDA music: raw 16-bit signed LE stereo 44100Hz PCM from a verified
  * original medium. The queue copies the data; caller may free after.
  * `media_verified` must be the boot loader's receipt for the same buffer.

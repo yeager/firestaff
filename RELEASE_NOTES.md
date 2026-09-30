@@ -1,9 +1,36 @@
-# Firestaff — Unreleased
+# Firestaff v3.0.353
 
 ## User-facing changes
 
-- `DM2 on macOS`: a direct `--game dm2` launch now prefers authenticated
-  Macintosh retail assets when installed, with DOS as the fallback.
+- `DM2 Macintosh AUTO launch`: uses authenticated Macintosh retail assets
+  when installed and keeps a selected Macintosh archive authoritative, so
+  incomplete Mac media cannot silently load assets from another edition.
+- `DM2 Macintosh viewport and controls`: loads the Mac edition's own dungeon
+  wall, floor, ceiling and movement-arrow assets, and routes the native arrow
+  controls through the game's movement path.
+- `DM2 Macintosh sound`: uses the system General MIDI synthesizer for the
+  original Mac MIDI stream when available, while keeping game sound effects
+  on the SDL playback path.
+
+## Developer changes
+
+- `DM2 Macintosh real-media regression`: verifies AUTO platform identity,
+  source spawn position, first movement, adjacent-creature census, Mac HUD and
+  viewport materials, and zero renderer fallbacks using authenticated retail
+  media. The CLI boot receipt reports the selected media owner rather than a
+  different edition's directory from the shared data root.
+- `DM1, CSB and DM2 startup CI`: adds launcher selection, hitbox, resume,
+  platform policy, startup and runtime-handoff regressions to the Linux and
+  macOS verification jobs.
+
+## Verification limits
+
+- `Macintosh sound output`: the SDL dummy-device checks verify decoded PCM and
+  stream delivery, but do not establish audible output. Native-device and MIDI
+  tests skip when the host has no audio or MIDI endpoint.
+- `MacBook Pro M5 presentation`: the 2× Retina coordinate regression is
+  covered by a geometry test; the rendered game has not been inspected on an
+  M5 display.
 
 # Firestaff v3.0.352
 

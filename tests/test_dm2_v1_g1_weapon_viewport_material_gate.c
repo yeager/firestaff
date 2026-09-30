@@ -161,11 +161,11 @@ int main(void)
         DM2_V1_StaticObjectSourcePlan static_plan;
         CHECK("D1 center maps to exact static-object source pass",
               dm2_v1_viewport_static_object_cell_for_map(
-                  10, 8, 0, 10, 10, &cell, &pass) == 1 &&
+                  10, 9, 0, 10, 10, &cell, &pass) == 1 &&
                   cell == 3 && pass == 17);
         CHECK("D0 center has no generic static-object pass",
               dm2_v1_viewport_static_object_cell_for_map(
-                  10, 9, 0, 10, 10, &cell, &pass) == 0 &&
+                  10, 10, 0, 10, 10, &cell, &pass) == 0 &&
                   cell == -1 && pass == -1);
         CHECK("DRAW_ITEM DB5 D1 north derives F0 rect, scale and slot zero",
               dm2_v1_viewport_static_object_source_plan(

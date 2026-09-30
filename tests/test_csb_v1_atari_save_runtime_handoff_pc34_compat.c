@@ -412,7 +412,11 @@ int main(void)
     /* Archive members stay virtual: this is the production representation
      * for the supplied STX/ZIP media, and must never be materialized as a
      * temporary MINI.DAT merely for the native resume probe. */
-    if (!asset_read_path_alloc(path, &bytes, &size) ||
+    if (!asset_read_path_alloc(path, &bytes, &size)) {
+        puts("SKIP: configured Atari CSB MINI.DAT media is unavailable");
+        return 77;
+    }
+    if (
         !csb_v1_runtime_can_load_resume_path(path) ||
         csb_v1_runtime_load_game_from_path(&runtime, path) != CSB_V1_LOAD_OK ||
         runtime.dungeon_handle == NULL || runtime.level_count != 11 || runtime.current_level != 4 ||

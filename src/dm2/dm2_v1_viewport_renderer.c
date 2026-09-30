@@ -53,6 +53,15 @@ static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
                                                     int height,
                                                     int stride);
 
+static int dm2_v1_viewport_graphics_flip_parity(
+    const DM2_V1_ViewportState *s)
+{
+    if (!s) return 0;
+    return (int)(((int64_t)s->party_x + s->party_y + s->party_dir +
+        s->gdat_scene_map_offset_x + s->gdat_scene_map_offset_y +
+        s->gdat_scene_map_flip_seed) & 1);
+}
+
 /* Exact SKProject dm2data.cpp::table1d7029, read by
  * c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES. */
 static const uint8_t s_dm2_draw_dungeon_tiles_cells[20] = {
@@ -218,18 +227,13 @@ int dm2_v1_viewport_static_object_cell_for_map(
 {
     static const int dx[4] = { 0, 1, 0, -1 };
     static const int dy[4] = { -1, 0, 1, 0 };
-    /* SKProject dm2data.cpp::table1d7029 cell order for the visible 4×3 grid,
-     * indexed by [forward-1][lateral+1].  Forward runs D0..D3 away from the
-     * party; lateral runs L(-1)/C(0)/R(+1).  Cell 0 (D0C) and the side/deep
-     * rows are carried here so the runtime can apply the same source pass
-     * lookup; downstream DRAW_ITEM placement remains blocked until the
-     * visibility mask, record ordinal and Rect14 tables for that cell are
-     * source-owned. */
+    /* Inverse of SKProject dm2data.cpp::table1d6ad0 for the four source map
+     * rows admitted by this source-object bridge. */
     static const int8_t cell_by_forward_lateral[4][3] = {
-        /* forward 1: D0L/D0C/D0R */ {  1,  0,  2 },
-        /* forward 2: D1L/D1C/D1R */ {  9,  3, 10 },
-        /* forward 3: D2L/D2C/D2R */ {  7,  6,  8 },
-        /* forward 4: D3L/D3C/D3R */ {  4, 11,  5 },
+        /* forward 1: D1L/D1C/D1R */ {  4,  3,  5 },
+        /* forward 2: D2L/D2C/D2R */ {  7,  6,  8 },
+        /* forward 3: D3L/D3C/D3R */ { 12, 11, 13 },
+        /* forward 4: D4L/D4C/D4R */ { 17, 16, 18 },
     };
     int dir;
     int right;
@@ -1777,6 +1781,14 @@ void dm2_v1_viewport_set_gdat_scene_map_origin(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_scene_map_flip_seed(
+    DM2_V1_ViewportState *s, int map_flip_seed)
+{
+    if (!s) return;
+    s->gdat_scene_map_flip_seed = map_flip_seed & 0x3f;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_wall_material_plan(
     DM2_V1_ViewportState *s, const DM2_V1_GdatWallM11CommandPlan *plan)
 {
@@ -2693,32 +2705,33 @@ const DM2_WallFrame *dm2_v1_get_wall_frame(int view_square)
 
 int dm2_v1_viewport_wall_field_for_square(int view_square)
 {
+    int cell;
     if (view_square < 0 || view_square >= DM2_SQ_COUNT) return -1;
     if (g_dm2_wall_frames[view_square].byte_width == 0 ||
         g_dm2_wall_frames[view_square].height == 0) {
         return -1;
     }
-    if (view_square == DM2_SQ_D3C) return -1;
-    /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/QUERY_TEMP_PICST
-     * lines ~47373-47474 maps normal wall cells through
-     * `iViewportCell + 0x22`.  The admitted startup route retains the
-     * original ten drawable cells in command order. */
-    return DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST + view_square;
+    cell = dm2_v1_viewport_skproject_cell_for_square(view_square);
+    if (cell < 0) return -1;
+    /* SKULLWIN/c_gui_vp.cpp::DM2_DRAW_WALL uses cell+0x22 through cell 15,
+     * then shares GRAPHICSSET field 0x32 for source cells 16..22. */
+    return DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST +
+        (cell < 16 ? cell : 0x10);
 }
 
 int dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(int view_square)
 {
-    /* D3C has no DRAW_WALL GRAPHICSSET field.  D0C is the front-player tile
-     * and is drawn outside table1d7029 (via the door/player-tile path), so it
-     * must not be promoted to a generic DRAW_WALL pass either.  The remaining
-     * fields use iViewportCell + 0x22, so their source cell is the square
-     * ordinal. */
-    if (view_square == DM2_SQ_D3C || view_square == DM2_SQ_D0C ||
+    int cell;
+    if (view_square < 0 || view_square >= DM2_SQ_COUNT ||
         dm2_v1_viewport_wall_field_for_square(view_square) <
             DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) {
         return -1;
     }
-    return dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(view_square);
+    cell = dm2_v1_viewport_skproject_cell_for_square(view_square);
+    /* Cell zero is the player tile and is handled by the later front-tile
+     * route; all other mapped cells belong to table1d7029. */
+    if (cell == 0) return -1;
+    return dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(cell);
 }
 
 int dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(int skproject_cell)
@@ -2808,37 +2821,54 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
     for (int step = 0; step < (int)(sizeof(s_dm2_draw_dungeon_tiles_cells) /
                                     sizeof(s_dm2_draw_dungeon_tiles_cells[0]));
          ++step) {
-        int square = s_dm2_draw_dungeon_tiles_cells[step];
-        const DM2_WallFrame *frame = dm2_v1_get_wall_frame(square);
+        int cell = s_dm2_draw_dungeon_tiles_cells[step];
+        int square = -1;
+        const DM2_WallFrame *frame;
+        const DM2_V1_GdatWallM11Command *source_command = NULL;
         int graphicsset_index = s && s->gdat_scene_control_ready
             ? s->gdat_scene_material_index
             : DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
-        int gdat_index = dm2_v1_viewport_wall_graphic_index_for_graphicsset(
-            graphicsset_index, square);
+        int gdat_index;
         DM2_V1_WallPanelRender *row;
 
-        /* G1/c_map has already projected the actual dungeon tile into this
-         * view square for the current party direction.  In source-required
-         * M10 mode, an absent wall fact is not permission to draw the generic
-         * GRAPHICSSET panel.  The cell value from table1d7029 is the Firestaff
-         * view-square index for wall panels; the step itself is the source
-         * draw order (DUNVIEW.C:8466-8542). */
-        if (square < 0 || square >= DM2_SQ_COUNT ||
-            s_dm2_draw_dungeon_tiles_cells[step] != (uint8_t)square ||
-            (s && s->source_materials_required &&
-             (s->squares[square].flags & DM2_SQF_HAS_WALL) == 0u)) {
+        for (int candidate = 0; candidate < DM2_SQ_COUNT; ++candidate) {
+            if (dm2_v1_viewport_skproject_cell_for_square(candidate) == cell) {
+                square = candidate;
+                break;
+            }
+        }
+        frame = square >= 0 ? dm2_v1_get_wall_frame(square) : NULL;
+        gdat_index = square >= 0
+            ? dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+                graphicsset_index, square)
+            : 0;
+
+        /* G1/c_map has already projected this source cell into the matching
+         * logical frame. In source-required mode, absent terrain is not
+         * permission to draw the generic GRAPHICSSET panel. */
+        if (s && s->source_materials_required &&
+            (s->gdat_wall_material_plan || s->skproject_wall_cell_mask != 0u)) {
+            if ((s->skproject_wall_cell_mask & (UINT32_C(1) << cell)) == 0u)
+                continue;
+            if (s->gdat_wall_material_plan) {
+                for (int j = 0; j < s->gdat_wall_material_plan->command_count; ++j) {
+                    if (s->gdat_wall_material_plan->commands[j].skproject_cell == cell) {
+                        source_command = &s->gdat_wall_material_plan->commands[j];
+                        break;
+                    }
+                }
+            }
+            if (!source_command) continue;
+            gdat_index = source_command->field;
+        } else if (square < 0) {
+            continue;
+        } else if (s && s->source_materials_required &&
+                   (s->squares[square].flags & DM2_SQF_HAS_WALL) == 0u) {
             continue;
         }
-        /* D0C is the front-player tile; it is scheduled by the door/player-tile
-         * path, not by the generic table1d7029 wall scheduler.  Keep it out of
-         * the source GDAT wall plan and of non-source previews.  The bounded
-         * asset-fallback path (G1 unit tests with no pre-built wall plan) is
-         * allowed to draw it as a wall when the square is explicitly flagged. */
-        if (square == DM2_SQ_D0C &&
-            !(s && s->source_materials_required && !s->gdat_wall_material_plan)) {
-            continue;
-        }
-        if (!frame || frame->byte_width == 0 || frame->height == 0 ||
+        /* Cell zero is not listed by table1d7029 and reaches the front tile
+         * through its separate source route. */
+        if ((!source_command && (!frame || frame->byte_width == 0 || frame->height == 0)) ||
             gdat_index == 0 ||
             out_plan->panel_count >= DM2_V1_WALL_PANEL_RENDER_MAX) {
             continue;
@@ -2846,15 +2876,21 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
         row = &out_plan->panels[out_plan->panel_count++];
         row->render_step = step;
         row->view_square = square;
-        row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
+        row->skproject_cell = cell;
         row->gdat_index = gdat_index;
-        row->src_rect = (DM2_V1_ViewportRect){
+        row->src_rect = source_command ? (DM2_V1_ViewportRect){
+            source_command->source_x, source_command->source_y,
+            source_command->source_width, source_command->source_height
+        } : (DM2_V1_ViewportRect){
             frame->blit_x,
             frame->blit_y,
             frame->byte_width,
             frame->height
         };
-        row->dst_rect = (DM2_V1_ViewportRect){
+        row->dst_rect = source_command ? (DM2_V1_ViewportRect){
+            source_command->destination_x, source_command->destination_y,
+            source_command->destination_width, source_command->destination_height
+        } : (DM2_V1_ViewportRect){
             frame->left_x,
             frame->top_y,
             frame->right_x - frame->left_x + 1,
@@ -2863,7 +2899,9 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
         /* SKWIN c_gui_vp.cpp::DM2_DRAW_WALL resolves this cell's GDAT
          * image before blitting. The plan intentionally has no colour
          * fallback: an unresolved source image is a no-draw condition. */
-        out_plan->selected_square_mask |= (uint16_t)(1u << (unsigned)square);
+        out_plan->selected_cell_mask |= UINT32_C(1) << cell;
+        if (square >= 0)
+            out_plan->selected_square_mask |= (uint16_t)(1u << (unsigned)square);
     }
     return 1;
 }
@@ -3073,15 +3111,11 @@ int dm2_v1_viewport_door_open_pct_from_state(int door_state,
 }
 
 static const int8_t s_dm2_square_to_skproject_cell[DM2_SQ_COUNT] = {
-    /* Firestaff D3/D2/D1/D0 center rows do not have the same ordinal as
-     * skproject's tblCellTilesRoom viewport cells.  skproject SKWINSPX
-     * kskval1.h line 62 defines tlbRectnoDoorButton for cells 0,3,6,11,13;
-     * SkWinCore.cpp DRAW_DOOR_TILE lines ~46650-46700 dispatches center-door
-     * cells 0,3,6 through DRAW_DOOR for the D0/D1/D2 startup path. */
-    /* D3C */ 11, /* D3L */ -1, /* D3R */ -1,
-    /* D2C */  6, /* D2L */ -1, /* D2R */ -1,
-    /* D1C */  3, /* D1L */ -1, /* D1R */ -1,
-    /* D0C */  0, /* D0L */ -1, /* D0R */ -1,
+    /* c_map.cpp table1d6ad0 coordinates for the twelve frame slots. */
+    /* D3C */ 11, /* D3L */ 12, /* D3R */ 13,
+    /* D2C */  6, /* D2L */  7, /* D2R */  8,
+    /* D1C */  3, /* D1L */  4, /* D1R */  5,
+    /* D0C */  0, /* D0L */  1, /* D0R */  2,
 };
 
 static const int8_t s_dm2_skproject_rectno_door_button[14] = {
@@ -4350,16 +4384,13 @@ static void dm2_v1_blit_tiled_material_bitmap(DM2_V1_ViewportState *s,
 static int dm2_v1_scene_plane_flip_from_position(
     const DM2_V1_ViewportState *s, uint8_t kind)
 {
-    int64_t parity;
+    int parity;
 
     if (!s) return 0;
     /* SKProject SkWinCore.cpp SET_GRAPHICS_FLIP_FROM_POSITION (32CB:59CA).
      * DISPLAY_VIEWPORT uses kind 0x20 for ceiling rect 700 and 1 for floor
      * rect 701; no other caller is admitted by this plane route. */
-    parity = (int64_t)s->party_x + s->party_y + s->party_dir +
-        s->gdat_scene_map_offset_x + s->gdat_scene_map_offset_y +
-        s->dungeon_level;
-    parity &= 1;
+    parity = dm2_v1_viewport_graphics_flip_parity(s);
     if (kind == 1u) {
         if ((s->gdat_scene_flags & 8u) != 0u) {
             if ((s->gdat_scene_flags & 0x10u) != 0u)
@@ -5478,17 +5509,29 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
             }
-            if ((floor->palette_light_receipt_hash != 0u ||
-                 ceiling->palette_light_receipt_hash != 0u) &&
-                (!s->gdat_c_light_receipt_ready ||
-                 floor->palette_light_receipt_hash == 0u ||
-                 ceiling->palette_light_receipt_hash == 0u ||
+            if (((floor->palette_light_receipt_hash != 0u ||
+                  ceiling->palette_light_receipt_hash != 0u) &&
+                 !s->gdat_c_light_receipt_ready) ||
+                ((floor->format == DM2_IMG_FMT_IMG3 ||
+                  floor->format == DM2_IMG_FMT_U4) &&
+                 !floor->physical_palette_indices &&
+                 s->gdat_c_light_receipt_ready &&
+                 (floor->palette_light_receipt_hash !=
+                      s->gdat_c_light_receipt_hash ||
+                  floor->palette_transform_hash == 0u)) ||
+                ((ceiling->format == DM2_IMG_FMT_IMG3 ||
+                  ceiling->format == DM2_IMG_FMT_U4) &&
+                 !ceiling->physical_palette_indices &&
+                 s->gdat_c_light_receipt_ready &&
+                 (ceiling->palette_light_receipt_hash !=
+                      s->gdat_c_light_receipt_hash ||
+                  ceiling->palette_transform_hash == 0u)) ||
+                (floor->palette_light_receipt_hash != 0u &&
                  floor->palette_light_receipt_hash !=
-                     s->gdat_c_light_receipt_hash ||
+                     s->gdat_c_light_receipt_hash) ||
+                (ceiling->palette_light_receipt_hash != 0u &&
                  ceiling->palette_light_receipt_hash !=
-                     s->gdat_c_light_receipt_hash ||
-                 floor->palette_transform_hash == 0u ||
-                 ceiling->palette_transform_hash == 0u)) {
+                     s->gdat_c_light_receipt_hash)) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
@@ -5907,6 +5950,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     memset(materials, 0, sizeof(materials));
     s->last_dungeon_wall_material_required_mask = 0u;
     s->last_dungeon_wall_material_consumed_mask = 0u;
+    s->last_dungeon_wall_source_cell_required_mask = 0u;
+    s->last_dungeon_wall_source_cell_consumed_mask = 0u;
 
     /* DM2 wall rendering: draw back-to-front (D3→D2→D1→D0).
      * For each depth level, draw side walls first (L,R), then center (C).
@@ -5934,6 +5979,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     if (s->source_materials_required &&
         (!s->gdat_scene_control_ready ||
          (!s->gdat_wall_material_plan && !s->asset_fetch) ||
+         (s->gdat_static_scene_wall_material_owned &&
+          !s->gdat_wall_material_plan) ||
          (s->gdat_wall_material_plan &&
           s->gdat_wall_material_plan_scene_control_hash !=
               s->gdat_scene_control_hash))) {
@@ -5956,14 +6003,17 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
      * pretend a missing canonical plan is acceptable. */
     if (s->source_materials_required &&
         s->gdat_scene_control_ready &&
-        !s->gdat_wall_material_plan &&
-        plan.panel_count == 0) {
+        !s->gdat_wall_material_plan && plan.panel_count == 0 &&
+        s->skproject_wall_cell_mask != 0u) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
     }
     if (s->source_materials_required &&
-        plan.party_direction != (s->party_dir & 3)) {
+        (plan.party_direction != (s->party_dir & 3) ||
+         (s->gdat_wall_material_plan &&
+          s->gdat_wall_material_plan->graphics_flip_parity !=
+              dm2_v1_viewport_graphics_flip_parity(s)))) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
@@ -5980,22 +6030,55 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             DM2_V1_WallMaterial *material = &materials[i];
             const DM2_V1_GdatWallM11Command *command = NULL;
 
-            s->last_dungeon_wall_material_required_mask |=
-                (uint16_t)(1u << (unsigned)panel->view_square);
+            s->last_dungeon_wall_source_cell_required_mask |=
+                UINT32_C(1) << (unsigned)panel->skproject_cell;
+            if (panel->view_square >= 0 && panel->view_square < DM2_SQ_COUNT)
+                s->last_dungeon_wall_material_required_mask |=
+                    (uint16_t)(1u << (unsigned)panel->view_square);
             if (s->gdat_wall_material_plan) {
                 const DM2_V1_GdatWallM11CommandPlan *wall_plan =
                     s->gdat_wall_material_plan;
                 if (!wall_plan->valid || !wall_plan->command_hash ||
-                    wall_plan->graphicsset != (uint8_t)s->gdat_scene_material_index) {
+                    wall_plan->graphicsset != (uint8_t)s->gdat_scene_material_index ||
+                    wall_plan->graphics_flip_parity !=
+                        dm2_v1_viewport_graphics_flip_parity(s)) {
                     dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
                     return;
                 }
-                for (int j = 0; j < wall_plan->command_count; ++j)
-                    if (wall_plan->commands[j].view_square == panel->view_square) {
-                        command = &wall_plan->commands[j]; break;
+                {
+                    int cell = panel->skproject_cell;
+                    int parity = wall_plan->graphics_flip_parity;
+                    int normal_field = 0x22 + (cell < 16 ? cell : 0x10);
+                    static const uint8_t mirror_cells[16] = {
+                        0x00u, 0x02u, 0x01u, 0x03u, 0x05u, 0x04u, 0x06u, 0x08u,
+                        0x07u, 0x0au, 0x09u, 0x0bu, 0x0du, 0x0cu, 0x0fu, 0x0eu
+                    };
+                    int preferred_field = parity && cell < 16
+                        ? 0xb0 + mirror_cells[cell] : normal_field;
+                    for (int j = 0; j < wall_plan->command_count; ++j) {
+                        const DM2_V1_GdatWallM11Command *candidate =
+                            &wall_plan->commands[j];
+                        if (candidate->skproject_cell == cell &&
+                            candidate->field == preferred_field) {
+                            command = candidate;
+                            break;
+                        }
                     }
-                if (!command || command->field !=
-                        dm2_v1_viewport_wall_field_for_square(panel->view_square) ||
+                    /* The original probes a mirrored image and falls back to
+                     * the normal image when it is not loadable. */
+                    if (!command && preferred_field != normal_field) {
+                        for (int j = 0; j < wall_plan->command_count; ++j) {
+                            const DM2_V1_GdatWallM11Command *candidate =
+                                &wall_plan->commands[j];
+                            if (candidate->skproject_cell == cell &&
+                                candidate->field == normal_field) {
+                                command = candidate;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!command ||
                     !command->pixels || !command->width || !command->height ||
                     !command->decoded_hash || !command->palette_hash ||
                     !command->material_source_bytes ||
@@ -6121,8 +6204,11 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             ++s->gdat_scene_control_consumed_count;
         }
         if (s->source_materials_required) {
-            s->last_dungeon_wall_material_consumed_mask |=
-                (uint16_t)(1u << (unsigned)panel->view_square);
+            s->last_dungeon_wall_source_cell_consumed_mask |=
+                UINT32_C(1) << (unsigned)panel->skproject_cell;
+            if (panel->view_square >= 0 && panel->view_square < DM2_SQ_COUNT)
+                s->last_dungeon_wall_material_consumed_mask |=
+                    (uint16_t)(1u << (unsigned)panel->view_square);
             if (s->gdat_wall_material_plan) {
                 ++s->gdat_wall_material_plan_consumed_count;
             }
@@ -6131,8 +6217,10 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     }
 
     if (s->source_materials_required &&
-        s->last_dungeon_wall_material_required_mask !=
-            s->last_dungeon_wall_material_consumed_mask) {
+        (s->last_dungeon_wall_source_cell_required_mask !=
+             s->last_dungeon_wall_source_cell_consumed_mask ||
+         s->last_dungeon_wall_source_cell_required_mask !=
+             plan.selected_cell_mask)) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
@@ -8510,6 +8598,43 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             &plan)) {
         return;
     }
+    if (s->source_materials_required && s->gdat_hud_material_plan &&
+        s->gdat_hud_material_plan->mac_native_layout) {
+        const DM2_V1_GdatHudM11CommandPlan *mac_plan =
+            s->gdat_hud_material_plan;
+        if (!mac_plan->valid || mac_plan->command_count < 6 ||
+            mac_plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            mac_plan->command_hash == 0u ||
+            mac_plan->command_hash !=
+                dm2_v1_gdat_hud_m11_command_plan_hash(mac_plan)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            return;
+        }
+        for (int arrow = 0; arrow < 6; ++arrow) {
+            const DM2_V1_GdatHudM11Command *command =
+                &mac_plan->commands[arrow];
+            if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW ||
+                command->destination_rect_id != (uint16_t)(40 + arrow) ||
+                command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 3 ||
+                command->gdat_field != 2 + arrow * 2 ||
+                !dm2_v1_render_hud_plan_command(
+                    s, command->viewport_gdat_index,
+                    &command->destination,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW)) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                return;
+            }
+            ++s->asset_hud_core_drawn_count;
+            s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+                s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+                command->width, command->height);
+            s->last_hud_core_pixel_count +=
+                (uint32_t)(command->destination.w * command->destination.h);
+        }
+    }
     if (!plan.outdoor && s->gdat_interface_hud_layout) {
         /* skproject _098d_1208 expands the original 640-wide dt04/0 rect
          * table. Firestaff's indexed game surface is 320 wide, so consume
@@ -8538,19 +8663,22 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         }
     }
 
-    if (!dm2_v1_render_hud_core_asset(s,
+    const int mac_native_hud = s->source_materials_required &&
+        s->gdat_hud_material_plan &&
+        s->gdat_hud_material_plan->mac_native_layout;
+    if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.top_bar_rect,
                                       plan.top_bar_gdat_index)) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
-    if (!dm2_v1_render_hud_core_asset(s,
+    if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.action_strip_rect,
                                       plan.action_strip_gdat_index)) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
-    if (!dm2_v1_render_hud_core_asset(s,
+    if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.gold_box_rect,
                                       plan.gold_box_gdat_index)) {
         dm2_v1_block_source_material(
@@ -8562,7 +8690,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      * route below owns that draw; never substitute its old generic icon row. */
 
     if (!plan.outdoor) {
-        if (!dm2_v1_render_hud_core_asset(s,
+        if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                           &plan.portrait_panel_rect,
                                           plan.portrait_panel_gdat_index)) {
             dm2_v1_block_source_material(

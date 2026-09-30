@@ -13,6 +13,7 @@ typedef enum DM2_V1_MidiBackendState {
 int dm2_v1_midi_backend_is_compiled(void);
 DM2_V1_MidiBackendState dm2_v1_midi_backend_open(void);
 DM2_V1_MidiBackendState dm2_v1_midi_backend_state(void);
+void dm2_v1_midi_backend_set_music_volume(unsigned volume_0_128);
 int dm2_v1_midi_backend_send(const DM2_V1_MusicScheduledEvent *event);
 void dm2_v1_midi_backend_close(void);
 

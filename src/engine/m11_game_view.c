@@ -1429,6 +1429,15 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->world.party.championCount = dm2_v1_runtime_get_champion_count();
     if (dm2_v1_runtime_get_session_snapshot(&session)) {
         m11_dm2_mirror_session_party(state, &session);
+        /* GAME_LOAD/session snapshots retain the initial party pose. After a
+         * movement command the live c_map party position belongs to the
+         * runtime receipt above; do not let the immutable session snapshot
+         * roll the M11 presentation mirror (or its startup diagnostics) back
+         * to the entrance coordinates. */
+        state->world.party.mapIndex = receipt.current_level;
+        state->world.party.mapX = receipt.party_x;
+        state->world.party.mapY = receipt.party_y;
+        state->world.party.direction = receipt.party_dir;
     }
 }
 
@@ -1460,6 +1469,7 @@ static void m11_dm2_bind_verified_sound_playback(M11_GameViewState* state)
     if (state) {
         (void)dm2_v1_sound_sdl_backend_set_volumes(
             state->audioState.masterVolume, state->audioState.sfxVolume);
+        dm2_v1_sound_set_music_volume(state->audioState.musicVolume);
     }
 }
 
@@ -1585,6 +1595,9 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
         state->dm2State.leader_hand_object = 0u;
         state->dm2State.startup_menu_active = 0;
         state->dm2State.level_loaded = 1;
+        state->dm2State.music_elapsed_us = 0u;
+        state->dm2State.music_schedule_ready = 0;
+        state->dm2State.music_events_due = 0u;
         m11_sync_dm2_state_from_runtime(state);
         return 1;
     }
@@ -3379,6 +3392,9 @@ static M11_GameInputResult m11_dm2_preselection_mirror_pointer(
     }
     state->dm2State.startup_menu_active = 0;
     state->dm2State.level_loaded = 1;
+    state->dm2State.music_elapsed_us = 0u;
+    state->dm2State.music_schedule_ready = 0;
+    state->dm2State.music_events_due = 0u;
     m11_sync_dm2_state_from_runtime(state);
     return M11_GAME_INPUT_REDRAW;
 }
@@ -38283,6 +38299,31 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
              * owner.  Bypass the PC admission gate here or this path can
              * never reach m11_process_dm2_v1_c080_click. */
             if (profile && m11_dm2_is_mac_profile(profile)) {
+                /* The retail Mac HUD draws six independent movement
+                 * buttons in RAW4 RECT_40..RECT_45. They sit outside the
+                 * 224x136 dungeon viewport, so C080's viewport hit list can
+                 * never receive their clicks. Resolve the source rectangles
+                 * first and feed the same movement pipeline as keyboard
+                 * input. */
+                static const M12_MenuInput mac_arrow_inputs[6] = {
+                    M12_MENU_INPUT_TURN_LEFT,
+                    M12_MENU_INPUT_TURN_RIGHT,
+                    M12_MENU_INPUT_UP,
+                    M12_MENU_INPUT_STRAFE_RIGHT,
+                    M12_MENU_INPUT_DOWN,
+                    M12_MENU_INPUT_STRAFE_LEFT
+                };
+                int arrow;
+                for (arrow = 0; arrow < 6; ++arrow) {
+                    DM2_V1_InterfaceRect rect;
+                    if (dm2_v1_boot_query_blit_rect_for_dimensions(
+                            profile, (uint16_t)(40 + arrow), 29, 23, &rect) &&
+                        m11_point_in_rect(x, y, rect.x, rect.y,
+                                          rect.w, rect.h)) {
+                        return M11_GameView_HandleInput(
+                            state, (int)mac_arrow_inputs[arrow]);
+                    }
+                }
                 return m11_process_dm2_v1_c080_click(state, x, y);
             }
 

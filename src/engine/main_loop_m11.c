@@ -4766,6 +4766,17 @@ static void m11_phase_a_print_boot_probe_receipt(
     if (!runtimeDir) {
         runtimeDir = "";
     }
+    /* Asset status can point at another installed edition's extracted
+     * directory even after DM2's hash admission has selected a Macintosh
+     * archive. Report the boot profile's owner so diagnostics and CLI tests
+     * identify the data actually backing the running game. */
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        gameView->dm2BootProfile) {
+        const DM2_V1_BootProfile *profile =
+            (const DM2_V1_BootProfile *)gameView->dm2BootProfile;
+        if (profile->asset_root[0] != '\0')
+            runtimeDir = profile->asset_root;
+    }
     if (!M11_GameView_GetBootProbeReceipt(gameView, &receipt)) {
         fprintf(stderr,
                 "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d\n",
@@ -6069,34 +6080,22 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
         if (sc >= 0 && sc < count && keys[sc]) {
             if (m11_game_view_is_dm2_mac(gameView)) {
                 M12_MenuInput macInput = M12_MENU_INPUT_NONE;
-                switch (preferred[i]) {
-                case SDL_SCANCODE_UP:
-                case SDL_SCANCODE_W:
-                case SDL_SCANCODE_S:
-                case SDL_SCANCODE_KP_5:
-                    macInput = M12_MENU_INPUT_UP; break;
-                case SDL_SCANCODE_DOWN:
-                case SDL_SCANCODE_X:
-                case SDL_SCANCODE_KP_2:
-                    macInput = M12_MENU_INPUT_DOWN; break;
-                case SDL_SCANCODE_LEFT:
-                case SDL_SCANCODE_A:
-                case SDL_SCANCODE_KP_4:
-                    macInput = M12_MENU_INPUT_TURN_LEFT; break;
-                case SDL_SCANCODE_RIGHT:
-                case SDL_SCANCODE_D:
-                case SDL_SCANCODE_KP_6:
-                    macInput = M12_MENU_INPUT_TURN_RIGHT; break;
-                case SDL_SCANCODE_KP_1:
-                case SDL_SCANCODE_Z:
-                    macInput = M12_MENU_INPUT_STRAFE_LEFT; break;
-                case SDL_SCANCODE_KP_3:
-                case SDL_SCANCODE_C:
-                    macInput = M12_MENU_INPUT_STRAFE_RIGHT; break;
-                default:
-                    break;
+                SDL_KeyboardEvent keyEvent;
+                memset(&keyEvent, 0, sizeof(keyEvent));
+                keyEvent.scancode = preferred[i];
+                keyEvent.mod = SDL_GetModState();
+                keyEvent.key = SDL_GetKeyFromScancode(
+                    preferred[i], keyEvent.mod, true);
+                if (m11_dm2_mac_sdl_key_to_menu_input(
+                        gameView, &keyEvent, &macInput) &&
+                    (macInput == M12_MENU_INPUT_UP ||
+                     macInput == M12_MENU_INPUT_DOWN ||
+                     macInput == M12_MENU_INPUT_TURN_LEFT ||
+                     macInput == M12_MENU_INPUT_TURN_RIGHT ||
+                     macInput == M12_MENU_INPUT_STRAFE_LEFT ||
+                     macInput == M12_MENU_INPUT_STRAFE_RIGHT)) {
+                    return macInput;
                 }
-                if (macInput != M12_MENU_INPUT_NONE) return macInput;
                 continue;
             }
             M12_MenuInput input =

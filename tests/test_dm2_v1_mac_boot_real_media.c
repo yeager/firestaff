@@ -6,12 +6,32 @@
 
 int main(void) {
     const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
+    const char *demo_zip = getenv("FIRESTAFF_DM2_MAC_DEMO_ARCHIVE");
     DM2_V1_BootProfile profile;
     const DM2_V1_DungeonData *dungeon;
 
     if (!zip || !zip[0]) {
         puts("SKIP: DM2 Mac ZIP environment is not set");
         return 77;
+    }
+    /* The workspace contains both the full retail disc and the unrelated
+     * First Chapter demo. Scan the demo while its sibling retail media is
+     * still visible: a failed explicit selection must not silently become a
+     * verified FM Towns (or any other sibling) boot profile. */
+    if (demo_zip && demo_zip[0]) {
+        int demo_rc;
+        dm2_v1_boot_profile_init(&profile);
+        demo_rc = dm2_v1_boot_scan_assets(&profile, demo_zip);
+        if (demo_rc == 0 || profile.assets_verified) {
+            fprintf(stderr,
+                    "DM2 Mac demo selection fell through to another edition: "
+                    "rc=%d platform=%d version=%s graphics=%s\n",
+                    demo_rc, profile.platform, profile.version_id,
+                    profile.graphics_path);
+            dm2_v1_boot_cleanup(&profile);
+            return 1;
+        }
+        dm2_v1_boot_cleanup(&profile);
     }
     dm2_v1_boot_profile_init(&profile);
     if (dm2_v1_boot_scan_assets(&profile, zip) != 0 ||

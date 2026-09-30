@@ -1,6 +1,6 @@
 # DM2 V1 original-overlay pair readiness
 
-Status: `FAIL_ORIGINAL_CAPTURE_INCOMPLETE`
+Status: `OPEN_BOUNDED_NO_ORIGINAL_CAPTURE`
 
 This gate checks whether operator-local H2313 original viewport crops
 and Firestaff-side 224x136 viewport crops are ready to be compared as
@@ -14,7 +14,7 @@ it does not claim pixel parity.
 
 ## Result
 
-- Original manifests present: `True`
+- Original manifests present: `False`
 - Original crop rows OK: `False`
 - Firestaff pair manifest present: `False`
 - Firestaff pair rows OK: `False`

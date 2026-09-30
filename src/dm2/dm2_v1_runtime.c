@@ -486,7 +486,7 @@ static int dm2_runtime_resolve_entered_stairs(
     int *out_map, int *out_x, int *out_y)
 {
     DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
-    uint8_t cursor[DM2_V1_MAX_LEVELS];
+    uint8_t cursor[DM2_V1_MAX_LEVELS + 1];
     int raw;
     int16_t x;
     int16_t y;
@@ -507,6 +507,7 @@ static int dm2_runtime_resolve_entered_stairs(
     memset(maps, 0, sizeof(maps));
     for (int map = 0; map < dungeon->level_count; ++map) {
         maps[map].map_id = (uint8_t)map;
+        maps[map].level = dungeon->map_level_number[map];
         maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
         maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
         maps[map].width = (int16_t)dungeon->level_widths[map];
@@ -514,19 +515,29 @@ static int dm2_runtime_resolve_entered_stairs(
         /* The locator only needs this field to reject a known teleporter
          * target. The actual destination tile is revalidated below. */
         maps[map].tile_type_at_local = 0;
-        cursor[map] = (uint8_t)map;
     }
-    /* A stair must leave its source map. Keep the source out of the scan; the
-     * source routine otherwise legitimately returns the same map when the
-     * world-coordinate rectangle overlaps itself. */
-    cursor[source_map] = 0xffu;
     delta = (raw & 0x04) ? -1 : 1;
-    x = (int16_t)source_x;
-    y = (int16_t)source_y;
-    target = dm2_v1_skproject_locate_other_level(
-        maps, (uint16_t)dungeon->level_count, (int16_t)source_map,
-        (int16_t)delta, &x, &y, cursor, (uint16_t)dungeon->level_count,
-        0, NULL, NULL);
+    {
+        int target_level = (int)dungeon->map_level_number[source_map] + delta;
+        uint16_t candidate_count = 0;
+        if (target_level < 0 || target_level >= 64)
+            return -1;
+        /* SKProject indexes its candidate cursor by altitude. Scanning every
+         * map lets overlapping world rectangles on unrelated floors win. */
+        for (int map = 0; map < dungeon->level_count; ++map) {
+            if ((int)dungeon->map_level_number[map] == target_level)
+                cursor[candidate_count++] = (uint8_t)map;
+        }
+        cursor[candidate_count] = 0xffu;
+        if (candidate_count == 0u)
+            return -1;
+        x = (int16_t)source_x;
+        y = (int16_t)source_y;
+        target = dm2_v1_skproject_locate_other_level(
+            maps, (uint16_t)dungeon->level_count, (int16_t)source_map,
+            (int16_t)delta, &x, &y, cursor,
+            (uint16_t)(candidate_count + 1u), 0, NULL, NULL);
+    }
     if (target < 0 || target == source_map || x < 0 || y < 0 ||
         x >= dungeon->level_widths[target] ||
         y >= dungeon->level_heights[target])
@@ -542,7 +553,7 @@ static int dm2_runtime_resolve_entered_pit(
     int *out_map, int *out_x, int *out_y)
 {
     DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
-    uint8_t cursor[DM2_V1_MAX_LEVELS];
+    uint8_t cursor[DM2_V1_MAX_LEVELS + 1];
     int raw;
     int16_t x;
     int16_t y;
@@ -562,21 +573,33 @@ static int dm2_runtime_resolve_entered_pit(
     memset(maps, 0, sizeof(maps));
     for (int map = 0; map < dungeon->level_count; ++map) {
         maps[map].map_id = (uint8_t)map;
+        maps[map].level = dungeon->map_level_number[map];
         maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
         maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
         maps[map].width = (int16_t)dungeon->level_widths[map];
         maps[map].height = (int16_t)dungeon->level_heights[map];
         maps[map].tile_type_at_local = 0;
-        cursor[map] = (uint8_t)map;
     }
-    cursor[source_map] = 0xffu;
-    x = (int16_t)source_x;
-    y = (int16_t)source_y;
     /* DM2_query_19f0_124b's open-pit branch uses direction=1 and
      * flags=0x8; the locator delta is the same source level step. */
-    target = dm2_v1_skproject_locate_other_level(
-        maps, (uint16_t)dungeon->level_count, (int16_t)source_map, 1,
-        &x, &y, cursor, (uint16_t)dungeon->level_count, 0, NULL, NULL);
+    {
+        int target_level = (int)dungeon->map_level_number[source_map] + 1;
+        uint16_t candidate_count = 0;
+        if (target_level < 0 || target_level >= 64)
+            return -1;
+        for (int map = 0; map < dungeon->level_count; ++map) {
+            if ((int)dungeon->map_level_number[map] == target_level)
+                cursor[candidate_count++] = (uint8_t)map;
+        }
+        cursor[candidate_count] = 0xffu;
+        if (candidate_count == 0u)
+            return -1;
+        x = (int16_t)source_x;
+        y = (int16_t)source_y;
+        target = dm2_v1_skproject_locate_other_level(
+            maps, (uint16_t)dungeon->level_count, (int16_t)source_map, 1,
+            &x, &y, cursor, (uint16_t)(candidate_count + 1u), 0, NULL, NULL);
+    }
     if (target < 0 || target == source_map || x < 0 || y < 0 ||
         x >= dungeon->level_widths[target] ||
         y >= dungeon->level_heights[target])
@@ -1620,19 +1643,25 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         int forward;
         int lateral;
     } visible_cells[] = {
-        /* SKProject c_gui_vp.cpp consumes these D0..D3 center/side cells
-         * through the existing wall panel plan. D0 sides are adjacent to the
-         * party. D3L/D3R are the final side cells in SKProject's four-deep
-         * projection (cell 4/5 in tblCellTilesRoom): four cells ahead and
-         * one cell out from the centre ray. D3C has no source GRAPHICSSET
-         * wall field, so it is deliberately not promoted to a drawable
-         * terrain surface here. */
-        { DM2_SQ_D0C, 1,  0 }, { DM2_SQ_D1C, 2,  0 },
-        { DM2_SQ_D2C, 3,  0 },
+        /* Source table1d6ad0 cells 0..13 map to the D0..D3 center/side rows. */
+        { DM2_SQ_D0C, 0,  0 }, { DM2_SQ_D1C, 1,  0 },
+        { DM2_SQ_D2C, 2,  0 }, { DM2_SQ_D3C, 3,  0 },
         { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0R, 0,  1 },
         { DM2_SQ_D1L, 1, -1 }, { DM2_SQ_D1R, 1,  1 },
         { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2R, 2,  1 },
-        { DM2_SQ_D3L, 4, -1 }, { DM2_SQ_D3R, 4,  1 },
+        { DM2_SQ_D3L, 3, -1 }, { DM2_SQ_D3R, 3,  1 },
+    };
+    static const int8_t source_lateral[DM2_V1_SKPROJECT_VIEW_CELL_COUNT] = {
+        0, -1, 1, 0, -1, 1, 0, -1, 1, -2, 2, 0, -1, 1, -2, 2,
+        0, -1, 1, -2, 2, -3, 3
+    };
+    static const int8_t source_forward[DM2_V1_SKPROJECT_VIEW_CELL_COUNT] = {
+        0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3,
+        4, 4, 4, 4, 4, 4, 4
+    };
+    static const uint8_t source_wall_draw_cells[DM2_V1_SKPROJECT_WALL_CELL_COUNT] = {
+        19, 20, 17, 18, 16, 14, 15, 12, 13, 11,
+        9, 10, 7, 8, 6, 4, 5, 3, 1, 2
     };
     DM2_V1_DungeonData *dd;
     int dir;
@@ -1643,6 +1672,29 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
     }
     dir = party_dir & 3;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    viewport->skproject_wall_cell_mask = 0u;
+    for (int cell = 0; cell < DM2_V1_SKPROJECT_VIEW_CELL_COUNT; ++cell) {
+        int map_x = party_x + dx[dir] * source_forward[cell] -
+            dy[dir] * source_lateral[cell];
+        int map_y = party_y + dy[dir] * source_forward[cell] +
+            dx[dir] * source_lateral[cell];
+        int raw = dm2_v1_dungeon_c_map_get_tile_value(
+            dd, rt->dungeon_level, map_x, map_y);
+        int square_type;
+        if (raw < 0) continue;
+        square_type = dd->square_bytes == 1
+            ? dm2_v1_viewport_g1_tile_class_to_square_type(
+                (uint8_t)((unsigned int)raw >> 5))
+            : dm2_v1_dungeon_get_square_type(
+                dd, rt->dungeon_level, map_x, map_y);
+        if (square_type != DM2_SQUARE_WALL) continue;
+        for (int pass = 0; pass < DM2_V1_SKPROJECT_WALL_CELL_COUNT; ++pass) {
+            if (source_wall_draw_cells[pass] == (uint8_t)cell) {
+                viewport->skproject_wall_cell_mask |= UINT32_C(1) << cell;
+                break;
+            }
+        }
+    }
     for (size_t i = 0; i < sizeof(visible_cells) / sizeof(visible_cells[0]); ++i) {
         int map_x = party_x + dx[dir] * visible_cells[i].forward -
             dy[dir] * visible_cells[i].lateral;
@@ -4034,26 +4086,26 @@ static int dm2_runtime_wall_drawn_material_identity(
     if (!viewport || !out_hash || !out_count ||
         !viewport->source_materials_required ||
         viewport->asset_wall_drawn_count <= 0 ||
-        viewport->last_dungeon_wall_material_required_mask == 0u ||
-        viewport->last_dungeon_wall_material_required_mask !=
-            viewport->last_dungeon_wall_material_consumed_mask ||
+        viewport->last_dungeon_wall_source_cell_required_mask == 0u ||
+        viewport->last_dungeon_wall_source_cell_required_mask !=
+            viewport->last_dungeon_wall_source_cell_consumed_mask ||
         !dm2_v1_viewport_build_wall_panel_render_plan(viewport, &plan)) {
         return 0;
     }
     for (i = 0; i < plan.panel_count; ++i) {
         const DM2_V1_WallPanelRender *panel = &plan.panels[i];
-        uint16_t bit;
+        uint32_t bit;
 
-        if (panel->view_square < 0 || panel->view_square >= 16 ||
+        if (panel->skproject_cell < 0 || panel->skproject_cell >= 23 ||
             panel->gdat_index == 0) {
             return 0;
         }
-        bit = (uint16_t)(1u << (unsigned)panel->view_square);
-        if ((viewport->last_dungeon_wall_material_consumed_mask & bit) == 0u) {
+        bit = UINT32_C(1) << (unsigned)panel->skproject_cell;
+        if ((viewport->last_dungeon_wall_source_cell_consumed_mask & bit) == 0u) {
             return 0;
         }
         hash = dm2_runtime_creature_material_plan_step(
-            hash, (uint32_t)panel->view_square);
+            hash, (uint32_t)panel->skproject_cell);
         hash = dm2_runtime_creature_material_plan_step(
             hash, (uint32_t)panel->gdat_index);
         ++count;
@@ -11491,6 +11543,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_OutdoorWeatherM11Receipt weather_m11;
     int map_offset_x = 0;
     int map_offset_y = 0;
+    int map_flip_seed = 0;
     uint32_t scene_map_token = 0u;
     static const int forward_dx[4] = { 0, 1, 0, -1 };
     static const int forward_dy[4] = { -1, 0, 1, 0 };
@@ -11521,20 +11574,22 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
-    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the PC and FM Towns indoor
+    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the PC, FM Towns and Macintosh indoor
      * scenes into the local 0xe0x88 bitmap.  Their c_gfx_main
      * DM2_DRAWINGS_COMPLETED route copies that exact surface through
      * expanded RECT_7; it does not use the 320x200 HUD as a dungeon scratch
-     * buffer.  HME-242's authenticated RECT_7 is (0,40,224,136), just like
-     * the PC aperture.  Treating its IMG2/IMG6 scene as a direct 320x200
-     * surface stretched the floor, ceiling and wall planes over the HUD.
-     * Amiga and Macintosh do not carry this compatible RECT_7 route, so
-     * their admitted GDAT surface remains direct. */
+     * buffer. Authenticated retail RECT_7 receipts for PC, Towns and
+     * Macintosh are (0,40,224,136). Treating Mac IMG3/IMG9 scenes as a direct
+     * 320x200 surface left their 224x136 scene at the framebuffer origin,
+     * 40 pixels above the source aperture. Amiga does not yet have a verified
+     * compatible RECT_7 route, so its admitted GDAT surface remains direct. */
     use_rect7_backbuffer = rt->boot &&
         (rt->boot->platform == DM2_PLATFORM_PC_EN ||
          rt->boot->platform == DM2_PLATFORM_PC_FR ||
          rt->boot->platform == DM2_PLATFORM_PC_JEWEL ||
-         rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA);
+         rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA ||
+         rt->boot->platform == DM2_PLATFORM_MAC_EN ||
+         rt->boot->platform == DM2_PLATFORM_MAC_FR);
     memset(&rect7_receipt, 0, sizeof(rect7_receipt));
     if (use_rect7_backbuffer) {
         memset(dungeon_backbuffer, 0, sizeof(dungeon_backbuffer));
@@ -11560,8 +11615,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             dm2_v1_viewport_set_gdat_scene_map_origin(
                 &viewport, dungeon->map_offset_x[rt->dungeon_level],
                 dungeon->map_offset_y[rt->dungeon_level]);
+            dm2_v1_viewport_set_gdat_scene_map_flip_seed(
+                &viewport, dungeon->map_graphics_flip_seed[rt->dungeon_level]);
             map_offset_x = dungeon->map_offset_x[rt->dungeon_level];
             map_offset_y = dungeon->map_offset_y[rt->dungeon_level];
+            map_flip_seed = dungeon->map_graphics_flip_seed[rt->dungeon_level];
         }
     }
     dm2_v1_viewport_set_outdoor(&viewport, rt->outdoor);
@@ -11636,7 +11694,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             weather_context.map_y = (int16_t)party_y;
             weather_context.map_offset_x = (int16_t)map_offset_x;
             weather_context.map_offset_y = (int16_t)map_offset_y;
-            weather_context.map_level = (int16_t)rt->dungeon_level;
+            weather_context.map_level = (int16_t)map_flip_seed;
             weather_context.scene_flags = rt->gdat_scene_flags;
             weather_context.game_tick = (uint16_t)rt->tick_count;
             if (dm2_v1_boot_weather_renderer_receipt(
@@ -11754,8 +11812,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             /* c_light transforms the indoor scene palette. T600 outdoor
              * presentation consumes UPDATE_GFXSET's base local-palette
              * plan; retaining that plan prevents a fallback to the legacy
-             * tiled asset callback when a new session carries c_light state. */
-            scene_material_plan_for_m11 = rt->outdoor
+             * tiled asset callback when a new session carries c_light state.
+             * FM Towns IMG2/IMG6 planes use the active physical 16-colour
+             * palette rather than the PC C4 local-palette remap. If that
+             * remap has no defined transform, retain the authenticated Towns
+             * images and indices so the native display-palette transaction
+             * can still present them. */
+            scene_material_plan_for_m11 =
+                (rt->outdoor ||
+                 (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA))
                 ? &rt->gdat_scene_material_plan : NULL;
         } else {
             scene_material_plan_for_m11 = &scene_material_plan;
@@ -11765,6 +11830,22 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport, scene_material_plan_for_m11);
     dm2_v1_viewport_set_gdat_scene_movement_active(
         &viewport, 0);
+    if (!rt->outdoor && rt->boot && rt->map_graphics_style >= 0) {
+        int flip_parity = (party_x + party_y + party_dir + map_offset_x +
+                           map_offset_y + map_flip_seed) & 1;
+        if (rt->gdat_wall_material_plan.valid &&
+            rt->gdat_wall_material_plan.graphics_flip_parity != flip_parity) {
+            DM2_V1_GdatWallM11CommandPlan replacement;
+            memset(&replacement, 0, sizeof(replacement));
+            if (dm2_v1_boot_gdat_wall_m11_command_plan_for_scene(
+                    rt->boot, rt->map_graphics_style, 0, flip_parity,
+                    &replacement)) {
+                dm2_v1_gdat_wall_m11_command_plan_free(
+                    &rt->gdat_wall_material_plan);
+                rt->gdat_wall_material_plan = replacement;
+            }
+        }
+    }
     dm2_v1_viewport_set_gdat_wall_material_plan(
         &viewport, &rt->gdat_wall_material_plan);
     memset(&door_render_plan, 0, sizeof(door_render_plan));
@@ -12145,6 +12226,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         wall_drawn_material_hash;
     g_dm2_frame_ownership.gdat_wall_material_plan_consumed =
         viewport.gdat_wall_material_plan_consumed_count;
+    g_dm2_frame_ownership.wall_source_cell_required_mask =
+        viewport.last_dungeon_wall_source_cell_required_mask;
+    g_dm2_frame_ownership.wall_source_cell_consumed_mask =
+        viewport.last_dungeon_wall_source_cell_consumed_mask;
     g_dm2_frame_ownership.hud_core_gdat_blits =
         viewport.asset_hud_core_drawn_count;
     g_dm2_frame_ownership.hud_gdat_blits =
@@ -13473,6 +13558,27 @@ int dm2_v1_runtime_creature_record_receipt(
     return 1;
 }
 
+int dm2_v1_runtime_query_creature_at(
+    int map, int x, int y, int16_t *out_record_handle)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_DungeonData *dungeon;
+
+    if (out_record_handle) *out_record_handle = DM2_V1_RECORD_HANDLE_NULL;
+    if (!out_record_handle || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (map < 0 || map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map]) {
+        return 0;
+    }
+    *out_record_handle = dm2_v1_get_creature_at(
+        &rt->record_pools, dungeon, map, x, y);
+    return 1;
+}
+
 int dm2_v1_runtime_last_flying_item_receipt(
     DM2_V1_RuntimeFlyingItemReceipt *out_receipt) {
     if (!out_receipt || !g_dm2_last_flying_item.valid) {
@@ -14506,6 +14612,9 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     gs->party_dir = dir & 3;
     rt->dungeon_level = level;
     rt->view_dir = gs->party_dir;
+    rt->outdoor = dm2_v1_dungeon_is_outdoor(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data, level);
+    gs->outdoor = rt->outdoor;
     dm2_runtime_refresh_g1_map0_teleporter_transition(rt, level, x, y);
     dm2_runtime_refresh_map_transition_context(rt);
 }

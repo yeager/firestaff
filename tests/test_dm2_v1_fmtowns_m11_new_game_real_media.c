@@ -3,6 +3,7 @@
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
@@ -112,13 +113,32 @@ int main(void)
         !view.dm2LastRuntimeRealAssetsReady ||
         !view.dm2LastRuntimeNoCoreFallbacks ||
         view.dm2LastRuntimeFallbackDrawCount != 0) {
+        DM2_V1_RuntimeFrameOwnershipReceipt ownership;
+        DM2_V1_ViewportM11FrameReceipt frame;
+        memset(&ownership, 0, sizeof(ownership));
+        memset(&frame, 0, sizeof(frame));
+        (void)dm2_v1_runtime_last_frame_ownership(&ownership);
+        (void)dm2_v1_runtime_last_m11_frame_receipt(&frame);
         fprintf(stderr,
                 "FAIL: Towns map-0 runtime frame was not admitted "
-                "(accepted=%d real=%d noFallbacks=%d fallbackDraws=%d)\n",
+                "(accepted=%d real=%d noFallbacks=%d fallbackDraws=%d "
+                "outdoor=%d full=%d planes=%d scene=%d/%d walls=%d/%d "
+                "mask=%08x/%08x m11=%d/%d required=%d blocked=%d)\n",
                 view.dm2LastRuntimeFrameAccepted,
                 view.dm2LastRuntimeRealAssetsReady,
                 view.dm2LastRuntimeNoCoreFallbacks,
-                view.dm2LastRuntimeFallbackDrawCount);
+                view.dm2LastRuntimeFallbackDrawCount,
+                ownership.is_outdoor, ownership.full_gdat_frame_valid,
+                ownership.floor_ceiling_materials_complete,
+                ownership.gdat_scene_control_ready,
+                ownership.gdat_scene_control_consumed,
+                ownership.wall_gdat_blits,
+                ownership.gdat_wall_material_plan_consumed,
+                ownership.wall_source_cell_required_mask,
+                ownership.wall_source_cell_consumed_mask,
+                frame.valid, frame.m11_consume_frame,
+                frame.source_materials_required,
+                ownership.blocked_material_draws);
         M11_GameView_Shutdown(&view);
         return 1;
     }

@@ -1088,7 +1088,8 @@ int M11_Audio_Init(M11_AudioState* state) {
         SDL_SetHint(SDL_HINT_AUDIO_CATEGORY, "playback");
 #endif
         if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
-            /* Audio init failed — stay in fallback mode */
+            fprintf(stderr, "firestaff: SDL audio initialization failed: %s\n",
+                    SDL_GetError());
             state->backend = M11_AUDIO_BACKEND_NONE;
             return 1;
         }
@@ -1115,12 +1116,20 @@ int M11_Audio_Init(M11_AudioState* state) {
         );
 
         if (!stream) {
+            fprintf(stderr, "firestaff: SDL playback stream open failed: %s\n",
+                    SDL_GetError());
             SDL_QuitSubSystem(SDL_INIT_AUDIO);
             state->backend = M11_AUDIO_BACKEND_NONE;
             return 1;
         }
 
-        SDL_ResumeAudioStreamDevice(stream);
+        if (!SDL_ResumeAudioStreamDevice(stream)) {
+            fprintf(stderr, "firestaff: SDL playback stream resume failed: %s\n",
+                    SDL_GetError());
+            SDL_DestroyAudioStream(stream);
+            state->backend = M11_AUDIO_BACKEND_NONE;
+            return 1;
+        }
         state->sdlStream = stream;
         state->backend   = M11_AUDIO_BACKEND_SDL3;
 

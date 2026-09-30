@@ -120,6 +120,17 @@ static void print_authentic_mac_map0_specials(
     printf("  Mac map0 offsets=%d,%d size=%dx%d specials:",
            dungeon->map_offset_x[0], dungeon->map_offset_y[0],
            dungeon->level_widths[0], dungeon->level_heights[0]);
+    puts("\n  Mac map0 c_map rows (x increases left-to-right):");
+    for (int y = 0; y < dungeon->level_heights[0]; ++y) {
+        printf("    y=%02d", y);
+        for (int x = 0; x < dungeon->level_widths[0]; ++x) {
+            int raw = dm2_v1_dungeon_c_map_get_tile_value(
+                dungeon, 0, x, y);
+            printf(" %02x", raw < 0 ? 0xffu : (unsigned)raw & 0xffu);
+        }
+        putchar('\n');
+    }
+    printf("  Mac map0 specials:");
     for (int y = 0; y < dungeon->level_heights[0]; ++y) {
         for (int x = 0; x < dungeon->level_widths[0]; ++x) {
             int raw = dm2_v1_dungeon_get_tile_raw(dungeon, 0, x, y);
@@ -169,17 +180,17 @@ static void print_authentic_source_square_census(
 static void print_authentic_stair_routes(const DM2_V1_DungeonData *dungeon)
 {
     DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
-    uint8_t cursor[DM2_V1_MAX_LEVELS];
+    uint8_t cursor[DM2_V1_MAX_LEVELS + 1];
     if (!dungeon || dungeon->level_count <= 0 ||
         dungeon->level_count > DM2_V1_MAX_LEVELS) return;
     memset(maps, 0, sizeof(maps));
     for (int map = 0; map < dungeon->level_count; ++map) {
         maps[map].map_id = (uint8_t)map;
+        maps[map].level = dungeon->map_level_number[map];
         maps[map].world_x = dungeon->map_offset_x[map];
         maps[map].world_y = dungeon->map_offset_y[map];
         maps[map].width = (int16_t)dungeon->level_widths[map];
         maps[map].height = (int16_t)dungeon->level_heights[map];
-        cursor[map] = (uint8_t)map;
     }
     for (int map = 0; map < dungeon->level_count; ++map) {
         for (int y = 0; y < dungeon->level_heights[map]; ++y) {
@@ -193,11 +204,20 @@ static void print_authentic_stair_routes(const DM2_V1_DungeonData *dungeon)
                 if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 3)
                     continue;
                 delta = (raw & 0x04) ? -1 : 1;
-                memset(&receipt, 0, sizeof(receipt));
-                target = dm2_v1_skproject_locate_other_level(
-                    maps, (uint16_t)dungeon->level_count, (int16_t)map,
-                    (int16_t)delta, &tx, &ty, cursor,
-                    (uint16_t)dungeon->level_count, 0, NULL, &receipt);
+                {
+                    int target_level = (int)dungeon->map_level_number[map] + delta;
+                    uint16_t candidate_count = 0;
+                    if (target_level < 0 || target_level >= 64) continue;
+                    for (int candidate = 0; candidate < dungeon->level_count; ++candidate)
+                        if ((int)dungeon->map_level_number[candidate] == target_level)
+                            cursor[candidate_count++] = (uint8_t)candidate;
+                    cursor[candidate_count] = 0xffu;
+                    memset(&receipt, 0, sizeof(receipt));
+                    target = dm2_v1_skproject_locate_other_level(
+                        maps, (uint16_t)dungeon->level_count, (int16_t)map,
+                        (int16_t)delta, &tx, &ty, cursor,
+                        (uint16_t)(candidate_count + 1u), 0, NULL, &receipt);
+                }
                 printf("  stair route map=%d x=%d y=%d raw=%02x dir=%+d -> map=%d x=%d y=%d found=%d target_class=%d\n",
                        map, x, y, raw & 0xff, delta, target, tx, ty,
                        receipt.found,
@@ -214,17 +234,17 @@ static void print_authentic_stair_routes(const DM2_V1_DungeonData *dungeon)
 static void print_authentic_pit_routes(const DM2_V1_DungeonData *dungeon)
 {
     DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
-    uint8_t cursor[DM2_V1_MAX_LEVELS];
+    uint8_t cursor[DM2_V1_MAX_LEVELS + 1];
     if (!dungeon || dungeon->level_count <= 0 ||
         dungeon->level_count > DM2_V1_MAX_LEVELS) return;
     memset(maps, 0, sizeof(maps));
     for (int map = 0; map < dungeon->level_count; ++map) {
         maps[map].map_id = (uint8_t)map;
+        maps[map].level = dungeon->map_level_number[map];
         maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
         maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
         maps[map].width = (int16_t)dungeon->level_widths[map];
         maps[map].height = (int16_t)dungeon->level_heights[map];
-        cursor[map] = (uint8_t)map;
     }
     for (int map = 0; map < dungeon->level_count; ++map) {
         for (int y = 0; y < dungeon->level_heights[map]; ++y) {
@@ -235,12 +255,19 @@ static void print_authentic_pit_routes(const DM2_V1_DungeonData *dungeon)
                 int target;
                 if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 2 ||
                     (raw & 0x08) == 0 || (raw & 0x01) != 0) continue;
-                cursor[map] = 0xffu;
-                target = dm2_v1_skproject_locate_other_level(
-                    maps, (uint16_t)dungeon->level_count, (int16_t)map, 1,
-                    &tx, &ty, cursor, (uint16_t)dungeon->level_count,
-                    0, NULL, NULL);
-                cursor[map] = (uint8_t)map;
+                {
+                    int target_level = (int)dungeon->map_level_number[map] + 1;
+                    uint16_t candidate_count = 0;
+                    if (target_level < 0 || target_level >= 64) continue;
+                    for (int candidate = 0; candidate < dungeon->level_count; ++candidate)
+                        if ((int)dungeon->map_level_number[candidate] == target_level)
+                            cursor[candidate_count++] = (uint8_t)candidate;
+                    cursor[candidate_count] = 0xffu;
+                    target = dm2_v1_skproject_locate_other_level(
+                        maps, (uint16_t)dungeon->level_count, (int16_t)map, 1,
+                        &tx, &ty, cursor, (uint16_t)(candidate_count + 1u),
+                        0, NULL, NULL);
+                }
                 if (target >= 0 && target != map && tx >= 0 && ty >= 0 &&
                     tx < dungeon->level_widths[target] &&
                     ty < dungeon->level_heights[target]) {
