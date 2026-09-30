@@ -93,11 +93,12 @@ jobs:
             generator: Ninja
             exe: '.exe'
             # Compile every production object through the shipping executable,
-            # then three portable headless probes. Building all 940 CMake
+            # then portable headless probes and the focused DM1/CSB/DM2
+            # startup-menu contract. Building all 940 CMake
             # targets on MSYS2 is redundant with the full Ubuntu/macOS CTest
             # matrix and can exceed the runner limit before any Windows binary
             # is exercised.
-            build_targets: 'firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe firestaff_m12_startup_flow_probe'
+            build_targets: 'firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe firestaff_m12_startup_flow_probe test_menu_hit_launch_direct_click_m12'
             full_ctest: false
             build_parallel: '3'
 
@@ -191,6 +192,9 @@ jobs:
           # The smoke test must not find missing DLLs through MSYS2's PATH.
           system_path="$(cygpath -u "$SYSTEMROOT")/System32"
           PATH="$system_path" "$stage/firestaff.exe" --help
+
+      - name: Run DM1/CSB/DM2 launcher click contract (all platforms)
+        run: ./build/test_menu_hit_launch_direct_click_m12${{ matrix.exe }}
 
       - name: Run Nexus production source boundary
         if: matrix.full_ctest

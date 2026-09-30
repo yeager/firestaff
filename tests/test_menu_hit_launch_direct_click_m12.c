@@ -429,6 +429,58 @@ int main(void) {
         }
     }
 
-    puts("ok: mouse cards launch DM1 through platform/preset choices; blank platform cells are inert; every launcher menu has mouse navigation");
+    /* The DM1 ready path above uses a deliberately forced match so this
+     * asset-free UI contract can reach presentation options. Separately,
+     * keep the real no-media behavior covered for each in-scope game: a
+     * pointer-selected game and its first platform must report that game's
+     * own missing-data diagnostic and must never request launch. */
+    {
+        static const struct {
+            int entryIndex;
+            int cardColumn;
+            const char* gameId;
+        } missingDataCases[] = {
+            {0, 0, "dm1"},
+            {1, 1, "csb"},
+            {2, 2, "dm2"}
+        };
+        size_t caseIndex;
+        for (caseIndex = 0;
+             caseIndex < sizeof(missingDataCases) / sizeof(missingDataCases[0]);
+             ++caseIndex) {
+            const int cardX = gridLeft + missingDataCases[caseIndex].cardColumn *
+                                          (cardW + 22) + cardW / 2;
+            M12_LaunchIntent blockedIntent;
+            M12_StartupMenu_InitWithDataDir(&state, manualDir, NULL);
+            while (state.view == M12_MENU_VIEW_MESSAGE) {
+                M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+            }
+            state.view = M12_MENU_VIEW_MAIN;
+            state.selectedIndex = 0;
+            hit = M12_ModernMenu_HitTest(&state, cardX, cardCenterY);
+            if (!expect(hit.kind == M12_HIT_MAIN_CARD &&
+                        hit.index == missingDataCases[caseIndex].entryIndex,
+                        "DM1/CSB/DM2 cover clicks should resolve to their own launcher entry")) return 1;
+            changed = M12_ModernMenu_ApplyHit(&state, hit);
+            if (!expect(changed == 1 &&
+                        state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                        state.activatedIndex == missingDataCases[caseIndex].entryIndex,
+                        "DM1/CSB/DM2 cover clicks should open the selected game's platform picker")) return 1;
+            hit = M12_ModernMenu_HitTest(&state, platformCardCenterX,
+                                         presentationCardCenterY);
+            if (!expect(hit.kind == M12_HIT_GAMEOPT_ROW && hit.index == 0,
+                        "first platform card should remain visible when original game data is absent")) return 1;
+            changed = M12_ModernMenu_ApplyHit(&state, hit);
+            blockedIntent = M12_StartupMenu_GetLaunchIntent(&state);
+            if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE &&
+                        state.launchRequested == 0 && state.messageIsMissingGameData == 1 &&
+                        blockedIntent.valid == 0 &&
+                        strcmp(state.messageGameId,
+                               missingDataCases[caseIndex].gameId) == 0,
+                        "unverified DM1/CSB/DM2 platform clicks should show a game-specific blocker without launching")) return 1;
+        }
+    }
+
+    puts("ok: DM1/CSB/DM2 mouse cards and media gates; mouse cards launch DM1 through platform/preset choices; every launcher menu has mouse navigation");
     return 0;
 }
