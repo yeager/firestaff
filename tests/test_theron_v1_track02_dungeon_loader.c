@@ -5076,6 +5076,8 @@ static int authentic_teleporter_test_terminal(
     unsigned int visited_count = 0u;
     unsigned int chain_hops = 0u;
 
+    *out_chain_hops = 0u;
+
     for (unsigned int iteration = 0u;
          iteration < THERON_TELEPORTER_CHAIN_MAX;
          ++iteration) {
@@ -5141,15 +5143,13 @@ static int authentic_teleporter_test_terminal(
             if (target_teleporter->state != 0u) {
                 current = target_teleporter;
                 ++chain_hops;
+                *out_chain_hops = chain_hops;
                 continue;
             }
             /* The source's C24C OPEN-bit test falls through on a closed
              * arrival pad; it is a terminal tile, not another chain hop. */
             terminal_closed_teleporter = 1;
         }
-        if (destination->squares[target_y][target_x] != THERON_SQUARE_FLOOR &&
-            !terminal_closed_teleporter)
-            return 0;
         *out_level = target_level;
         *out_x = target_x;
         *out_y = target_y;
@@ -5180,6 +5180,12 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     unsigned int closed_terminal_routes_tested = 0u;
     unsigned int chained_routes_tested = 0u;
     unsigned int chained_wall_routes_blocked = 0u;
+    unsigned int active_chain_roots = 0u;
+    unsigned int unresolved_chained_routes_with_approach = 0u;
+    unsigned int unresolved_chained_routes_blocked = 0u;
+    unsigned int special_terminal_routes_deferred = 0u;
+    unsigned int special_terminal_chains_deferred = 0u;
+    unsigned int chained_routes_without_floor_approach = 0u;
 
     assert(world != NULL);
     assert(ud != NULL && track02 != NULL);
@@ -5223,9 +5229,12 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
             terminal_status = authentic_teleporter_test_terminal(
                     world, dungeon_id, teleporter, &target_level, &target_x,
                     &target_y, &terminal_closed_teleporter, &chain_hops);
-            if (terminal_status != 1 &&
-                !(terminal_status == 2 && chain_hops > 0u))
-                continue;
+            if (chain_hops > 0u) ++active_chain_roots;
+            if (terminal_status == 3) {
+                ++special_terminal_routes_deferred;
+                if (chain_hops > 0u)
+                    ++special_terminal_chains_deferred;
+            }
 
             for (int direction = 0; direction < THERON_DIR_COUNT;
                  ++direction) {
@@ -5244,7 +5253,26 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                     break;
                 }
             }
-            if (approach_direction < 0) continue;
+            if (approach_direction < 0) {
+                if (chain_hops > 0u)
+                    ++chained_routes_without_floor_approach;
+                continue;
+            }
+
+            /* THQUEST.ASM $C240-$C2D8 re-enters the destination-tile test for
+             * open pads, while the host resolver fails closed without a
+             * supported terminal. Exercise unresolved authentic chains here;
+             * defer special-square policy until its consumer is source-bound.
+             * See theron_v1_teleporter_resolve() and
+             * docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-477.
+             */
+            if (terminal_status == 0 && chain_hops > 0u)
+                ++unresolved_chained_routes_with_approach;
+            if (terminal_status == 3) continue;
+            if (terminal_status != 1 &&
+                !(terminal_status == 2 && chain_hops > 0u) &&
+                !(terminal_status == 0 && chain_hops > 0u))
+                continue;
 
             world->current_level = teleporter->level;
             world->party.leader_dir = 0;
@@ -5257,7 +5285,7 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                            THERON_ORIGINAL_COMMAND_TURN_LEFT) == 0);
             }
             assert(world->party.leader_dir == approach_direction);
-            if (terminal_status == 2) {
+            if (terminal_status == 2 || terminal_status == 0) {
                 const int source_x = world->party.leader_x;
                 const int source_y = world->party.leader_y;
                 const int source_dir = world->party.leader_dir;
@@ -5284,7 +5312,10 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                        previous_target_level);
                 assert(world->transition_spawn_x == previous_spawn_x);
                 assert(world->transition_spawn_y == previous_spawn_y);
-                ++chained_wall_routes_blocked;
+                if (terminal_status == 2)
+                    ++chained_wall_routes_blocked;
+                else
+                    ++unresolved_chained_routes_blocked;
             } else {
                 assert(theron_v1_move_party_original_command(
                            world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
@@ -5310,12 +5341,20 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     assert(closed_terminal_routes_tested == 8u);
     assert(chained_routes_tested == 0u);
     assert(chained_wall_routes_blocked == 4u);
+    assert(unresolved_chained_routes_blocked ==
+           unresolved_chained_routes_with_approach);
     printf("  authentic %s coordinate-teleporter movement routes: %u total, "
-           "%u cross-level, %u closed-pad terminals, %u chained, "
-           "%u chained-to-wall blocked\n",
+           "%u cross-level, %u closed-pad terminals, %u chained routes, "
+           "%u active-chain roots, %u chain walls blocked, "
+           "%u unresolved chains blocked, %u special terminals deferred "
+           "(%u chained), "
+           "%u chains without floor approach\n",
            variant == 1 ? "JP" : "US", routes_tested,
            cross_level_routes_tested, closed_terminal_routes_tested,
-           chained_routes_tested, chained_wall_routes_blocked);
+           chained_routes_tested, active_chain_roots,
+           chained_wall_routes_blocked, unresolved_chained_routes_blocked,
+           special_terminal_routes_deferred, special_terminal_chains_deferred,
+           chained_routes_without_floor_approach);
     free(world);
 }
 

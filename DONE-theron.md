@@ -1,5 +1,24 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — census authentic active-link teleporter chains
+
+- Extended the real-media movement loop to retain the active-chain hop count
+  even when a route has no supported terminal, and to distinguish special
+  square terminals from invalid/cyclic chains. The original runtime reference
+  for open-pad re-entry and destination-tile handling is recorded in
+  `docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-477`;
+  the host iteration cap remains a fail-closed guard, not original behavior.
+- Hash-verified US and JP Track 02 each contain 14 active-chain roots across
+  their seven banks. In each region, four chains with a floor approach end at
+  walls and are rejected without party or transition mutation; one chain with
+  a floor approach ends at a special square and remains deferred; nine chains
+  have no adjacent floor approach. No unresolved chain with a direct floor
+  approach appears in either current retail BIN.
+- The isolated target built on trv2 with `-j1`; the authentic dungeon-loader
+  CTest passed three repetitions with `-j2`, and direct US/JP executions
+  printed the same census. This is source-data and fail-closed test coverage,
+  not proof of special-square arrivals or the original in-game consumer.
+
 ## 2026-09-30 — exercise authentic coordinate-teleporter movement corpus
 
 - The real-media dungeon-loader test now finds active coordinate-linked pads

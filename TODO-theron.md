@@ -8,14 +8,16 @@ Reviewed 2026-09-30. Only open work is listed here.
   `(0,0)` pad to `(2,3)` commits through the original movement command and
   transition executor. The real-media movement corpus now also exercises 41
   eligible routes each from US and JP Track 02, including four cross-level
-  routes and eight closed-pad terminal arrivals per region; four additional
-  active-to-active chains per region with a floor approach terminate at a wall
-  and remain blocked without party/transition mutation; see `DONE-theron.md`.
-  The other active-link chains, direct wall-target movement, special-square
-  arrivals, pads without a floor approach and original source-owned runtime
-  consumers remain unverified. The JP full-CUE capture still did not reach an
-  authenticated game-owned data consumer, so it adds no independent
-  original-runtime gameplay evidence.
+  routes and eight closed-pad terminal arrivals per region. The real-media
+  census finds 14 active-chain roots in each region: four floor-approachable
+  chains end at walls and block unchanged, one chain with a floor approach
+  ends at a special square and is deferred, and nine chains have no adjacent
+  floor approach. No unresolved chain with a direct floor approach occurs in
+  either current retail BIN; see `DONE-theron.md`. Special-square arrivals,
+  routes without a floor approach, direct wall-target movement and original
+  source-owned runtime consumers remain unverified. The JP full-CUE capture
+  still did not reach an authenticated game-owned data consumer, so it adds no
+  independent original-runtime gameplay evidence.
 
 ## 2026-09-30 — authentic JP full-CUE capture still stops before Track 02 consumer
 
