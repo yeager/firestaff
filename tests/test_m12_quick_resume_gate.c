@@ -39,9 +39,9 @@ static const unsigned char g_valid_gzip_srm[] = {
 
 static int m12_test_setenv(const char* name, const char* value) {
 #ifdef _WIN32
-    return _putenv_s(name, value);
+    return _putenv_s(name, value) == 0;
 #else
-    return setenv(name, value, 1);
+    return setenv(name, value, 1) == 0;
 #endif
 }
 
@@ -874,6 +874,7 @@ static int select_save_entry(M12_StartupMenuState* state,
 int main(void) {
     char tmpTemplate[] = "firestaff-m12-qr-XXXXXX";
     char noDm1Template[] = "firestaff-m12-csb-no-dm1-XXXXXX";
+    char configPath[512];
     char savePath[512];
     char csbSavePath[512];
     char csbBrowserSavePath[512];
@@ -911,7 +912,15 @@ int main(void) {
         perror("mkdtemp");
         return 1;
     }
-    m12_test_setenv("HOME", tmpTemplate);
+    snprintf(configPath, sizeof(configPath), "%s/startup-menu.toml", tmpTemplate);
+    if (!m12_test_setenv("HOME", tmpTemplate)) {
+        fprintf(stderr, "FAIL: temporary Quick Resume HOME setup failed\n");
+        return 1;
+    }
+    if (!m12_test_setenv("FIRESTAFF_CONFIG_PATH", configPath)) {
+        fprintf(stderr, "FAIL: temporary Quick Resume config path setup failed\n");
+        return 1;
+    }
 
     if (!test_real_amiga_virtual_save_quick_resume()) return 1;
 
