@@ -78,6 +78,7 @@ int main(void) {
     char homeTemplate[] = ".firestaff-m12-hit-home-XXXXXX";
     char* homeDir = test_mkdtemp(homeTemplate);
     char configPath[512];
+    char homePhysicalDir[512];
     char manualDir[512];
     char manualPhysicalDir[512];
     const int gridLeft = 42 + 390 + 44;
@@ -110,8 +111,14 @@ int main(void) {
         fprintf(stderr, "FAIL: temporary HOME creation failed\n");
         return 1;
     }
+    if (!FSP_ResolvePhysicalPath(homePhysicalDir, sizeof(homePhysicalDir),
+                                 homeDir)) {
+        fprintf(stderr, "FAIL: temporary HOME path resolution failed\n");
+        return 1;
+    }
     snprintf(configPath, sizeof(configPath), "%s/startup-menu.toml", homeDir);
     if (!test_setenv("HOME", homeDir) ||
+        !test_setenv("APPDATA", homePhysicalDir) ||
         !test_setenv("FIRESTAFF_CONFIG_PATH", configPath) ||
         !test_setenv("FIRESTAFF_DATA", NULL) ||
         !test_setenv("SDL_VIDEODRIVER", "dummy")) {
