@@ -5,7 +5,7 @@
 int main(void)
 {
     DM2_V1_MidiBackendState state;
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(FIRESTAFF_IOS)
     if (!dm2_v1_midi_backend_is_compiled()) {
         fprintf(stderr, "macOS build omitted the DM2 CoreMIDI backend\n");
         return 1;

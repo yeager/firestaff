@@ -1,6 +1,6 @@
 #include "dm2_v1_midi_backend.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(FIRESTAFF_IOS)
 #include <CoreMIDI/CoreMIDI.h>
 #include <AudioToolbox/AudioToolbox.h>
 #include <AudioUnit/AudioUnit.h>
@@ -19,7 +19,7 @@ static enum {
 static DM2_V1_MidiBackendState g_dm2_midi_state;
 static unsigned g_dm2_music_volume_0_128 = 128u;
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(FIRESTAFF_IOS)
 static int dm2_v1_midi_backend_open_audio_unit(void)
 {
     AudioComponentDescription synth_desc = {
@@ -102,7 +102,7 @@ static int dm2_v1_midi_endpoint_can_render(
 
 int dm2_v1_midi_backend_is_compiled(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(FIRESTAFF_IOS)
     return 1;
 #else
     return 0;
@@ -111,7 +111,7 @@ int dm2_v1_midi_backend_is_compiled(void)
 
 DM2_V1_MidiBackendState dm2_v1_midi_backend_open(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(FIRESTAFF_IOS)
     OSStatus status;
     ItemCount destination_count;
     ItemCount destination_index;
@@ -190,7 +190,7 @@ void dm2_v1_midi_backend_set_music_volume(unsigned volume_0_128)
 
 int dm2_v1_midi_backend_send(const DM2_V1_MusicScheduledEvent *event)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(FIRESTAFF_IOS)
     MIDIPacketList packets;
     MIDIPacket *packet;
     uint8_t bytes[3];
@@ -237,7 +237,7 @@ int dm2_v1_midi_backend_send(const DM2_V1_MusicScheduledEvent *event)
 
 void dm2_v1_midi_backend_close(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(FIRESTAFF_IOS)
     unsigned channel;
     if (g_dm2_midi_state == DM2_V1_MIDI_BACKEND_READY) {
         /* MIDI All Notes Off prevents a track/session change from leaving
