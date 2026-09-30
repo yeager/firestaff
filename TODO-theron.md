@@ -155,6 +155,10 @@ data.
    authentic US/JP Track 02 media. The SSH environment itself has no `DISPLAY`
    set. That readiness check did not start an emulator; the existing
    transport-consumer and strict VDC evidence gates remained open.
+   A new read-only check on 2026-09-30 found no Mednafen or Xorg process, no
+   `DISPLAY` in the SSH environment, and `xdpyinfo :0` could not connect. Do
+   not launch a capture against the shared display until a fresh readiness
+   check confirms it is available.
 
    A later isolated headless JP Rev. 1 run used the authentic CUE and
    hash-verified Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) plus the
