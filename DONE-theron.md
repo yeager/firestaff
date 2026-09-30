@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — keep consumer-trace test files in task scratch
+
+- The focused main-RAM consumer-trace CTest now requires an explicit
+  task-specific `TMPDIR` instead of falling back to `/tmp`. Its three fixture
+  writers also close the file after a failed write before removing it.
+- The target built on trv2 with `-j1`; its parser-only CTest passed against the
+  existing authentic US Drator main-RAM-consumer trace. The task `TMPDIR` was
+  empty after the run. A negative run with `TMPDIR` unset failed closed with
+  the expected diagnostic instead of using `/tmp`. This is test-harness
+  hygiene only; it proves no new gameplay semantics or Theron parity.
+
 ## 2026-09-30 — rebuild original-runtime capture instrument on trv2
 
 - Built the project-patched Mednafen 1.32.1 from its official source archive

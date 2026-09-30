@@ -2,6 +2,13 @@
 
 Reviewed 2026-09-30. Only open work is listed here.
 
+## 2026-09-30 — keep original-consumer test fixtures out of `/tmp`
+
+The main-RAM consumer-trace test requires `TMPDIR` to point to a task-specific
+test directory. Its authentic parser-only trv2 CTest passed and left that
+directory empty. This removes a test-harness `/tmp` fallback only; original
+Track 02 consumers and end-to-end Theron gameplay remain open below.
+
 ## 2026-09-30 — keep Theron public status evidence-bounded
 
 The gap list now labels rendering, mechanics, and seven-dungeon progression

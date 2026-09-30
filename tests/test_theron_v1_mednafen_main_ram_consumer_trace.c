@@ -20,7 +20,10 @@ static int test_escaped_newline_trace(void) {
         "main_ram_consumer_read sequence=1 logical_address=2c55 physical_address=1f2c55 value=08 reader_pc=2c54 reader_physical_pc=1f2c54\\n";
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
     static const unsigned char code[] = { 0xad };
-    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    if (!tmpdir || !tmpdir[0]) {
+        fprintf(stderr, "TMPDIR must name a task-specific test directory\n");
+        return 0;
+    }
     if (snprintf(path, sizeof(path), "%s/firestaff-theron-consumer-XXXXXX",
                  tmpdir) <= 0) return 0;
     int fd = mkstemp(path);
@@ -34,7 +37,9 @@ static int test_escaped_newline_trace(void) {
         unlink(path);
         return 0;
     }
-    if (fputs(trace, file) == EOF || fclose(file) != 0) {
+    result = fputs(trace, file) != EOF;
+    if (fclose(file) != 0) result = 0;
+    if (!result) {
         unlink(path);
         return 0;
     }
@@ -58,7 +63,10 @@ static int test_code_bank_reader_trace(void) {
         "source=mednafen-pce-instrumented-main-ram-consumer\n"
         "main_ram_consumer_read sequence=0 logical_address=21f9 physical_address=1f01f9 value=46 reader_pc=4630 reader_physical_pc=0d0630\n";
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
-    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    if (!tmpdir || !tmpdir[0]) {
+        fprintf(stderr, "TMPDIR must name a task-specific test directory\n");
+        return 0;
+    }
     if (snprintf(path, sizeof(path), "%s/firestaff-theron-consumer-bank-XXXXXX",
                  tmpdir) <= 0) return 0;
     int fd = mkstemp(path);
@@ -72,7 +80,9 @@ static int test_code_bank_reader_trace(void) {
         unlink(path);
         return 0;
     }
-    if (fputs(trace, file) == EOF || fclose(file) != 0) {
+    result = fputs(trace, file) != EOF;
+    if (fclose(file) != 0) result = 0;
+    if (!result) {
         unlink(path);
         return 0;
     }
@@ -99,7 +109,10 @@ static int test_target_window_provenance(void) {
         "main_ram_consumer_read sequence=4 logical_address=611d physical_address=0ee11d value=7f reader_pc=c68c reader_physical_pc=0d268c a=00 x=00 y=00 sp=fa p=04\n"
         "main_ram_consumer_read sequence=0 logical_address=611e physical_address=0ee11e value=00 reader_pc=c68c reader_physical_pc=0d268c a=00 x=00 y=00 sp=fa p=04\n";
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
-    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    if (!tmpdir || !tmpdir[0]) {
+        fprintf(stderr, "TMPDIR must name a task-specific test directory\n");
+        return 0;
+    }
     if (snprintf(path, sizeof(path), "%s/firestaff-theron-target-window-XXXXXX",
                  tmpdir) <= 0) return 0;
     int fd = mkstemp(path);
@@ -113,7 +126,9 @@ static int test_target_window_provenance(void) {
         unlink(path);
         return 0;
     }
-    if (fputs(trace, file) == EOF || fclose(file) != 0) {
+    result = fputs(trace, file) != EOF;
+    if (fclose(file) != 0) result = 0;
+    if (!result) {
         unlink(path);
         return 0;
     }
