@@ -5056,6 +5056,99 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
     }
 }
 
+static int authentic_teleporter_test_terminal(
+    const Theron_V1_World *world,
+    int dungeon_id,
+    const Theron_V1_Object *source,
+    int *out_level,
+    int *out_x,
+    int *out_y,
+    int *out_terminal_closed_teleporter,
+    unsigned int *out_chain_hops) {
+    const Theron_V1_Object *current = source;
+    int visited_level[THERON_TELEPORTER_CHAIN_MAX];
+    int visited_x[THERON_TELEPORTER_CHAIN_MAX];
+    int visited_y[THERON_TELEPORTER_CHAIN_MAX];
+    unsigned int visited_count = 0u;
+    unsigned int chain_hops = 0u;
+
+    for (unsigned int iteration = 0u;
+         iteration < THERON_TELEPORTER_CHAIN_MAX;
+         ++iteration) {
+        int target_level;
+        int target_x;
+        int target_y;
+        const Theron_V1_Level *destination;
+        int terminal_closed_teleporter = 0;
+
+        if (current->dungeon_id != dungeon_id ||
+            current->type != THERON_OBJTYPE_TELEPORTER ||
+            !(current->flags & THERON_OBJ_F_TRACK02_COORD_LINK) ||
+            current->state == 0u || current->level < 0 ||
+            current->level >= THERON_MAX_LEVELS_PER_DUNGEON)
+            return 0;
+        for (unsigned int i = 0u; i < visited_count; ++i) {
+            if (visited_level[i] == current->level &&
+                visited_x[i] == current->x && visited_y[i] == current->y)
+                return 0;
+        }
+        visited_level[visited_count] = current->level;
+        visited_x[visited_count] = current->x;
+        visited_y[visited_count] = current->y;
+        ++visited_count;
+
+        target_level = (current->linked_id >> 10) & 0x3f;
+        target_x = current->linked_id & 0x1f;
+        target_y = (current->linked_id >> 5) & 0x1f;
+        if (target_level < 0 ||
+            target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            !world->level_loaded[dungeon_id - 1][target_level])
+            return 0;
+        destination = &world->levels[dungeon_id - 1][target_level];
+        if (target_x < 0 || target_x >= destination->width ||
+            target_y < 0 || target_y >= destination->height ||
+            destination->squares[target_y][target_x] == THERON_SQUARE_WALL)
+            return 0;
+
+        if (destination->squares[target_y][target_x] ==
+            THERON_SQUARE_TELEPORTER) {
+            const Theron_V1_Object *target_teleporter = NULL;
+            for (int i = 0; i < world->object_count; ++i) {
+                const Theron_V1_Object *candidate = &world->objects[i];
+                if (candidate->dungeon_id == dungeon_id &&
+                    candidate->level == target_level &&
+                    candidate->x == target_x && candidate->y == target_y &&
+                    candidate->type == THERON_OBJTYPE_TELEPORTER) {
+                    target_teleporter = candidate;
+                    break;
+                }
+            }
+            if (!target_teleporter ||
+                !(target_teleporter->flags &
+                  THERON_OBJ_F_TRACK02_COORD_LINK))
+                return 0;
+            if (target_teleporter->state != 0u) {
+                current = target_teleporter;
+                ++chain_hops;
+                continue;
+            }
+            /* The source's C24C OPEN-bit test falls through on a closed
+             * arrival pad; it is a terminal tile, not another chain hop. */
+            terminal_closed_teleporter = 1;
+        }
+        if (destination->squares[target_y][target_x] != THERON_SQUARE_FLOOR &&
+            !terminal_closed_teleporter)
+            return 0;
+        *out_level = target_level;
+        *out_x = target_x;
+        *out_y = target_y;
+        *out_terminal_closed_teleporter = terminal_closed_teleporter;
+        *out_chain_hops = chain_hops;
+        return 1;
+    }
+    return 0;
+}
+
 static void test_authentic_coordinate_teleporter_movement_corpus(
     const uint8_t *ud, size_t ud_size,
     const uint8_t *track02, size_t track02_size,
@@ -5070,6 +5163,8 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
         (Theron_V1_World *)calloc(1u, sizeof(*world));
     unsigned int routes_tested = 0u;
     unsigned int cross_level_routes_tested = 0u;
+    unsigned int closed_terminal_routes_tested = 0u;
+    unsigned int chained_routes_tested = 0u;
 
     assert(world != NULL);
     assert(ud != NULL && track02 != NULL);
@@ -5088,10 +5183,11 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
              ++object_index) {
             Theron_V1_Object *teleporter = &world->objects[object_index];
             Theron_V1_Level *source_level;
-            Theron_V1_Level *destination_level;
             int target_level;
             int target_x;
             int target_y;
+            int terminal_closed_teleporter = 0;
+            unsigned int chain_hops = 0u;
             int approach_direction = -1;
 
             if (teleporter->dungeon_id != dungeon_id ||
@@ -5102,25 +5198,14 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                 !world->level_loaded[dungeon_id - 1][teleporter->level])
                 continue;
 
-            target_level = (teleporter->linked_id >> 10) & 0x3f;
-            target_x = teleporter->linked_id & 0x1f;
-            target_y = (teleporter->linked_id >> 5) & 0x1f;
-            if (target_level < 0 ||
-                target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
-                !world->level_loaded[dungeon_id - 1][target_level])
-                continue;
-
             source_level = &world->levels[dungeon_id - 1][teleporter->level];
-            destination_level =
-                &world->levels[dungeon_id - 1][target_level];
             if (teleporter->x < 0 || teleporter->x >= source_level->width ||
                 teleporter->y < 0 || teleporter->y >= source_level->height ||
                 source_level->squares[teleporter->y][teleporter->x] !=
                     THERON_SQUARE_TELEPORTER ||
-                target_x < 0 || target_x >= destination_level->width ||
-                target_y < 0 || target_y >= destination_level->height ||
-                destination_level->squares[target_y][target_x] !=
-                    THERON_SQUARE_FLOOR)
+                !authentic_teleporter_test_terminal(
+                    world, dungeon_id, teleporter, &target_level, &target_x,
+                    &target_y, &terminal_closed_teleporter, &chain_hops))
                 continue;
 
             for (int direction = 0; direction < THERON_DIR_COUNT;
@@ -5164,14 +5249,18 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
             ++routes_tested;
             if (target_level != teleporter->level)
                 ++cross_level_routes_tested;
+            if (terminal_closed_teleporter)
+                ++closed_terminal_routes_tested;
+            if (chain_hops > 0u) ++chained_routes_tested;
         }
     }
     assert(routes_tested > 0u);
     assert(cross_level_routes_tested > 0u);
     printf("  authentic %s coordinate-teleporter movement routes: %u total, "
-           "%u cross-level\n",
+           "%u cross-level, %u closed-pad terminals, %u chained\n",
            variant == 1 ? "JP" : "US", routes_tested,
-           cross_level_routes_tested);
+           cross_level_routes_tested, closed_terminal_routes_tested,
+           chained_routes_tested);
     free(world);
 }
 

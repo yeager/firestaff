@@ -6,14 +6,16 @@ Reviewed 2026-09-30. Only open work is listed here.
 
 - The authentic US AKUTUBA M0 route from `(1,0,north)` through the active
   `(0,0)` pad to `(2,3)` commits through the original movement command and
-  transition executor. The real-media movement corpus now also exercises 33
+  transition executor. The real-media movement corpus now also exercises 41
   eligible routes each from US and JP Track 02, including four cross-level
-  routes per region; see `DONE-theron.md`. This proves those source-derived
-  ordinary-floor approach/destination cases only. Chained pads, wall targets,
-  special-square arrivals, pads without a floor approach and the original
-  source-owned runtime consumers remain unverified. The JP full-CUE capture
-  still did not reach an authenticated game-owned data consumer, so it adds no
-  independent original-runtime gameplay evidence.
+  routes and eight closed-pad terminal arrivals per region; see
+  `DONE-theron.md`. It proves only these source-derived approach/destination
+  cases. No active-to-active chain met the bounded test filter, which does not
+  establish chain behavior. Other chained pads, wall targets, special-square
+  arrivals, pads without a floor approach and original source-owned runtime
+  consumers remain unverified. The JP full-CUE capture still did not reach an
+  authenticated game-owned data consumer, so it adds no independent
+  original-runtime gameplay evidence.
 
 ## 2026-09-30 — authentic JP full-CUE capture still stops before Track 02 consumer
 

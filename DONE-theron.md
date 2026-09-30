@@ -7,12 +7,14 @@
   that has an adjacent floor approach and an ordinary-floor destination through
   the original turn/forward commands. It asserts the committed destination
   level and pose and that no transition remains pending.
-- The installed, hash-verified Track 02 files yielded 33 tested routes per
-  region, including four cross-level routes per region. Trv2 built the target
-  serially; the focused real-media CTest passed three consecutive runs. Direct
-  execution also passed both regional route loops. Chained-pad, wall-target,
-  special-square arrivals and pads without a floor approach are outside this
-  test filter and remain open; this is not a claim of complete parity.
+- The installed, hash-verified Track 02 files yielded 41 tested routes per
+  region, including four cross-level routes and eight closed-pad terminal
+  arrivals per region. Trv2 built the target serially; the focused real-media
+  CTest passed three consecutive runs. Direct execution also passed both
+  regional route loops. No active-to-active chain met this test's bounded
+  approach/terminal filter, so chained-pad, wall-target, special-square
+  arrivals and pads without a floor approach remain open. This is not a claim
+  of complete parity.
 
 ## 2026-09-30 — commit the authentic coordinate-teleporter movement handoff
 
