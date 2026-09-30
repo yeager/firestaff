@@ -1044,10 +1044,13 @@ int main(void)
         printf("Mac first forward step from New Game: party=(%d,%d) nearby-live-DB4=%d creature=(%d,%d)\n",
                dm2_v1_runtime_get_party_x(), dm2_v1_runtime_get_party_y(),
                nearby, nearby_x, nearby_y);
-        if (nearby < 0) {
+        if (nearby != 0) {
             fprintf(stderr,
-                    "FAIL: Mac live DB4 map could not be inspected after "
-                    "the first forward step\n");
+                    "FAIL: Mac first forward step left a live DB4 creature "
+                    "within one tile (nearby=%d creature=%d,%d party=%d,%d)\n",
+                    nearby, nearby_x, nearby_y,
+                    dm2_v1_runtime_get_party_x(),
+                    dm2_v1_runtime_get_party_y());
             M11_GameView_Shutdown(&view);
             return 1;
         }

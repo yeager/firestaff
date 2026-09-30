@@ -109,8 +109,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   SDL keydown north move from (1,8) to (1,7). The real-media M11 New Game test
   now checks a second forward move through the retail Mac action table, 16
   source ticks, stable party coordinates and distance to the map's authentic
-  DB4 roots. Both pass. The M11 test now also scans live DB4 chains in the
-  runtime map after those ticks, rather than treating the original map-chip
+  DB4 roots. Both pass. The M11 test scans live DB4 chains in the runtime map
+  after those ticks and after the first forward move, failing if a live
+  creature is within one tile rather than treating the original map-chip
   census as live AI state. This covers the observed post-movement snapshot;
   it does not prove that monsters never approach during longer play. These
   checks do not establish physical M5 key repeat
