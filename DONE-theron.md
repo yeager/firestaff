@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — exercise authentic coordinate-teleporter movement corpus
+
+- The real-media dungeon-loader test now finds active coordinate-linked pads
+  across all seven US and JP dungeon banks and drives every matching route
+  that has an adjacent floor approach and an ordinary-floor destination through
+  the original turn/forward commands. It asserts the committed destination
+  level and pose and that no transition remains pending.
+- The installed, hash-verified Track 02 files yielded 33 tested routes per
+  region, including four cross-level routes per region. Trv2 built the target
+  serially; the focused real-media CTest passed three consecutive runs. Direct
+  execution also passed both regional route loops. Chained-pad, wall-target,
+  special-square arrivals and pads without a floor approach are outside this
+  test filter and remain open; this is not a claim of complete parity.
+
 ## 2026-09-30 — commit the authentic coordinate-teleporter movement handoff
 
 - Coordinate-linked Track 02 movement now commits the transition prepared by

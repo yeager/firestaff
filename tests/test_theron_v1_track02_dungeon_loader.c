@@ -5056,6 +5056,125 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
     }
 }
 
+static void test_authentic_coordinate_teleporter_movement_corpus(
+    const uint8_t *ud, size_t ud_size,
+    const uint8_t *track02, size_t track02_size,
+    int variant) {
+    const Theron_Track02Variant track02_variant = variant == 1
+        ? THERON_TRACK02_VARIANT_JP_BIN
+        : THERON_TRACK02_VARIANT_US_BIN;
+    const char *md5_hex = variant == 1
+        ? THERON_TRACK02_MD5_JP_BIN
+        : THERON_TRACK02_MD5_US_BIN;
+    Theron_V1_World *world =
+        (Theron_V1_World *)calloc(1u, sizeof(*world));
+    unsigned int routes_tested = 0u;
+    unsigned int cross_level_routes_tested = 0u;
+
+    assert(world != NULL);
+    assert(ud != NULL && track02 != NULL);
+    theron_v1_world_init(world);
+    for (int dungeon_id = 1; dungeon_id <= THERON_DUNGEON_COUNT;
+         ++dungeon_id) {
+        Theron_DungeonLoadResult result;
+        world->current_dungeon = dungeon_id;
+        world->current_level = 0;
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   world, dungeon_id, ud, ud_size, track02_variant,
+                   &result) == 0);
+        bind_real_track02_party(world, track02, track02_size, md5_hex);
+
+        for (int object_index = 0; object_index < world->object_count;
+             ++object_index) {
+            Theron_V1_Object *teleporter = &world->objects[object_index];
+            Theron_V1_Level *source_level;
+            Theron_V1_Level *destination_level;
+            int target_level;
+            int target_x;
+            int target_y;
+            int approach_direction = -1;
+
+            if (teleporter->dungeon_id != dungeon_id ||
+                teleporter->type != THERON_OBJTYPE_TELEPORTER ||
+                !(teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK) ||
+                teleporter->state == 0u || teleporter->level < 0 ||
+                teleporter->level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+                !world->level_loaded[dungeon_id - 1][teleporter->level])
+                continue;
+
+            target_level = (teleporter->linked_id >> 10) & 0x3f;
+            target_x = teleporter->linked_id & 0x1f;
+            target_y = (teleporter->linked_id >> 5) & 0x1f;
+            if (target_level < 0 ||
+                target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+                !world->level_loaded[dungeon_id - 1][target_level])
+                continue;
+
+            source_level = &world->levels[dungeon_id - 1][teleporter->level];
+            destination_level =
+                &world->levels[dungeon_id - 1][target_level];
+            if (teleporter->x < 0 || teleporter->x >= source_level->width ||
+                teleporter->y < 0 || teleporter->y >= source_level->height ||
+                source_level->squares[teleporter->y][teleporter->x] !=
+                    THERON_SQUARE_TELEPORTER ||
+                target_x < 0 || target_x >= destination_level->width ||
+                target_y < 0 || target_y >= destination_level->height ||
+                destination_level->squares[target_y][target_x] !=
+                    THERON_SQUARE_FLOOR)
+                continue;
+
+            for (int direction = 0; direction < THERON_DIR_COUNT;
+                 ++direction) {
+                int approach_x =
+                    teleporter->x - g_theron_dir_dx[direction];
+                int approach_y =
+                    teleporter->y - g_theron_dir_dy[direction];
+                if (approach_x >= 0 && approach_y >= 0 &&
+                    approach_x < source_level->width &&
+                    approach_y < source_level->height &&
+                    source_level->squares[approach_y][approach_x] ==
+                        THERON_SQUARE_FLOOR) {
+                    approach_direction = direction;
+                    world->party.leader_x = approach_x;
+                    world->party.leader_y = approach_y;
+                    break;
+                }
+            }
+            if (approach_direction < 0) continue;
+
+            world->current_level = teleporter->level;
+            world->party.leader_dir = 0;
+            for (int turns = 0;
+                 world->party.leader_dir != approach_direction &&
+                 turns < THERON_DIR_COUNT;
+                 ++turns) {
+                assert(theron_v1_turn_party_original_command(
+                           world,
+                           THERON_ORIGINAL_COMMAND_TURN_LEFT) == 0);
+            }
+            assert(world->party.leader_dir == approach_direction);
+            assert(theron_v1_move_party_original_command(
+                       world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+                   THERON_MOVE_TELEPORT);
+            assert(world->current_dungeon == dungeon_id);
+            assert(world->current_level == target_level);
+            assert(world->party.leader_x == target_x);
+            assert(world->party.leader_y == target_y);
+            assert(world->transition_pending == 0);
+            ++routes_tested;
+            if (target_level != teleporter->level)
+                ++cross_level_routes_tested;
+        }
+    }
+    assert(routes_tested > 0u);
+    assert(cross_level_routes_tested > 0u);
+    printf("  authentic %s coordinate-teleporter movement routes: %u total, "
+           "%u cross-level\n",
+           variant == 1 ? "JP" : "US", routes_tested,
+           cross_level_routes_tested);
+    free(world);
+}
+
 static void test_authentic_take_requires_matching_item_record(
     const uint8_t *ud, size_t ud_size,
     const uint8_t *track02, size_t track02_size, int variant,
@@ -5466,6 +5585,8 @@ int main(void) {
             raw = load_raw_bytes(jp_path, &raw_size);
             assert(raw != NULL);
             test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
+            test_authentic_coordinate_teleporter_movement_corpus(
+                jp_ud, jp_ud_size, raw, raw_size, 1);
             test_real_item_name_sources(jp_ud, jp_ud_size, 1);
             for (int dungeon_id = 1;
                  dungeon_id <= THERON_DUNGEON_COUNT; ++dungeon_id) {
@@ -5498,6 +5619,8 @@ int main(void) {
     raw = load_raw_bytes(path, &raw_size);
     assert(raw != NULL);
     test_all_dungeons(ud, ud_size, raw, raw_size);
+    test_authentic_coordinate_teleporter_movement_corpus(
+        ud, ud_size, raw, raw_size, 2);
     if (g_jp_stair_party_actuator_census_valid) {
         assert(g_us_stair_party_actuator_census_valid);
         assert(g_jp_stair_party_actuator_count ==
