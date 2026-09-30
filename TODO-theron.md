@@ -2,6 +2,14 @@
 
 Reviewed 2026-09-30. Only open work is listed here.
 
+## 2026-09-30 — keep Theron public status evidence-bounded
+
+The gap list now labels rendering, mechanics, and seven-dungeon progression
+as partial rather than fixed. Existing tests establish bounded data/runtime
+paths, not original in-game presentation or end-to-end stair, pickup/use,
+combat, and chapter-completion behavior. Continue the original-consumer work
+below; do not promote these rows until authentic evidence closes those gaps.
+
 ## 2026-09-30 — distinguish BIOS-only controller polls
 
 - ✅ `verify_theron_scripted_input_consumption.sh` now reports the PC of the

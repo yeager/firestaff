@@ -6138,3 +6138,13 @@ metadata and locally staged CD-DA tracks.
   Körningen passerade utan att ändra speldata. Den visar fortfarande inte att
   en riktig gzip-baserad Save Disk `.srm` kan importeras; det formatet är
   separat och kvarstår som öppet arbete.
+# ✅ 2026-09-30 Theron public status corrected to match evidence
+
+`docs/FIRESTAFF_GAP_LIST.md` no longer marks the rendering pipeline,
+mechanics, or seven-dungeon progression as fixed. These rows now distinguish
+the passing bounded data/runtime tests from unverified original presentation
+and the remaining stair/exit, pickup/use, combat, and chapter-completion
+consumer gaps. `TODO-theron.md` retains those gaps as open work.
+
+Verification: documentation diff review and `git diff --check` passed. No
+runtime behavior changed.

@@ -374,11 +374,11 @@ probes.
 | Gap | Status |
 |---|---|
 | V1 parser | FIXED |
-| Rendering pipeline | FIXED |
-| Mechanics | FIXED |
+| Rendering pipeline | PARTIAL — real-media decoding and bounded viewport/runtime paths are tested, but an original-runtime capture has not established authentic in-game rendering or presentation parity. |
+| Mechanics | PARTIAL — bounded mechanics and command-path tests pass, but original consumers for stairs, quest-item pickup/use, dynamic creatures/combat, and chapter completion remain unbound; see `TODO-theron.md`. |
 | Save/load (.SRM) | PARTIAL — data-free `.tqsv` slot round-trip, rejection, verification, and cross-slot export/import are CTest-gated; 2026-06-25 adds `theron_v1_srm_classifier` (probe + unit test) as a bounded Save Disk manifest that detects the gzipped-deflate body dmweb references, reports a clean ABSENT manifest on the current host, and accepts a real `.srm` when one is staged under the configured root. No real `.srm`/Track 02 save artifact is present locally yet. |
 | Track02 bank routing | FIXED |
-| Dungeon progression (7 dungeons) | FIXED |
+| Dungeon progression (7 dungeons) | PARTIAL — campaign-state projection and bounded level handoffs are tested, but the original stair/exit and completion transactions have not been verified end to end across the seven dungeons. |
 | **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
 | **Theron m11 runtime command proof** | FIXED — 2026-06-21 (commit `cd86d520`): `firestaff_theron_v1_cross_route_mechanics_probe` CTest-gates a real `firestaff --game theron` run via temporary launcher config, captures a M11 run receipt (launch + early command tick), verifies M11 reports source `theron` plus command processing, and proves the M11 run path is launchable on this host. 2026-06-21 (commit `363bf3b9`): `tqr_v1_track02_bank_signal_2026-06-03.md` locks raw Track 02 bank anchors (`0x1F000..0x1FFFF` graphics bank + 0x20000..0x27FFF dialogue + `0x28000..0x2BFFF` map-data) against the CD-ROM2 1MB sector map. |
 | **Theron 24h readiness rollup** | FIXED — 2026-06-21 (commit `a0592d6d`): `tools/theron_24h_readiness.py` + `parity-evidence/verification/theron_24h_readiness/manifest.json` + `docs/THERON_CAPTURE_READINESS.md` roll up 7 Theron V1 readiness gates (track02 bank, save/load, cross-route mechanics, runtime screenshot, dungeon progression, cross-slot, m11 launch) into a single per-day PASS/FAIL line, mirroring the DM1 24h readiness pattern. 2026-06-21 (commit `393d9f64`): `theron: refresh readiness reports` re-emits the manifest with current commit SHAs. |
