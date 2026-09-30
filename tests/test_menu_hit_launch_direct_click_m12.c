@@ -77,6 +77,7 @@ int main(void) {
     int changed;
     char homeTemplate[] = ".firestaff-m12-hit-home-XXXXXX";
     char* homeDir = test_mkdtemp(homeTemplate);
+    char configPath[512];
     char manualDir[512];
     char manualPhysicalDir[512];
     const int gridLeft = 42 + 390 + 44;
@@ -105,7 +106,13 @@ int main(void) {
     const int gameTileW = (1656 - 3 * 16) / 4;
     const int gameTileY = 190 + 220;
 
-    if (!homeDir || !test_setenv("HOME", homeDir) ||
+    if (!homeDir) {
+        fprintf(stderr, "FAIL: temporary HOME creation failed\n");
+        return 1;
+    }
+    snprintf(configPath, sizeof(configPath), "%s/startup-menu.toml", homeDir);
+    if (!test_setenv("HOME", homeDir) ||
+        !test_setenv("FIRESTAFF_CONFIG_PATH", configPath) ||
         !test_setenv("FIRESTAFF_DATA", NULL) ||
         !test_setenv("SDL_VIDEODRIVER", "dummy")) {
         fprintf(stderr, "FAIL: temporary HOME setup failed\n");
