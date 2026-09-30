@@ -168,6 +168,18 @@ data.
    not launch a capture against the shared display until a fresh readiness
    check confirms it is available.
 
+   2026-09-30 capture preparation: an isolated workspace on trv2 now contains
+   a fresh instrumented Mednafen 1.32.1 build from the official source archive
+   (SHA-256 `de7eb94ab66212ae7758376524368a8ab208234b33796625ca630547dbc83832`).
+   The build used the repository patch set and one build job; all eight runtime
+   instrumentation markers are present, and the live-capture, controller
+   patch, and palette patch checks pass against the clean source tree. This is
+   capture-tool readiness only, not runtime/game evidence. The authentic
+   System Card image (required MD5 `ff1a674273fe3540ccef576376407d1d`) is not
+   staged in the trv2 Mednafen or Theron-data directories, so no capture was
+   launched. The binary and source remain outside Git in the task-specific
+   trv2 workspace.
+
    A later isolated headless JP Rev. 1 run used the authentic CUE and
    hash-verified Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) plus the
    authenticated System Card (`ff1a674273fe3540ccef576376407d1d`). A

@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — rebuild original-runtime capture instrument on trv2
+
+- Built the project-patched Mednafen 1.32.1 from its official source archive
+  in a fresh task-specific trv2 workspace. The archive SHA-256 matches the
+  official release value; the resulting binary SHA-256 is
+  `199df986d425a97c1603d49142537c6e95c7fbc3626f0b88fd2b14a1276a7595`.
+- The build used one job. All eight required Firestaff runtime markers are
+  present, and the live-capture, controller-patch, and palette-patch checks
+  pass against the clean source tree. Fixed the palette-patch dry-run test to
+  use `git apply --recount`, matching the supported build script's handling
+  of the patch's historical hunk counts.
+- No original-runtime capture was run: the authentic System Card is absent
+  from the trv2 Mednafen and Theron data directories. This verifies the
+  capture tool only, not game behavior or Theron parity. The source, binary,
+  and build artifacts remain outside Git in the isolated task workspace.
+
 ## 2026-09-30 — complete registered Theron test selection on trv2
 
 - Built the missing Theron-labeled test executables and the `firestaff`
