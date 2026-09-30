@@ -13,7 +13,6 @@
  *   THQUEST.ASM T900  — object database / altar-of-vi
  *
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
- *   docs/source-lock/movement_features.md  (pit fall / teleporter chains)
  *   docs/source-lock/movement_forward_step.md
  */
 
@@ -1018,12 +1017,13 @@ bool theron_v1_pit_check_and_trigger(Theron_V1_World *world,
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * Teleporter chain
+ * Track 02 coordinate-teleporter chain
  *
- * Source: movement_features.md — MOVESENS.C:475-537
- * Up to 100 iterations (100 for S21E+; S0 for older).
- * Resolves destination → checks if destination is itself a teleporter
- * and continues until reaching a non-teleporter square.
+ * Theron source lock: THQUEST.ASM $C240-$C2D8 re-tests the destination tile;
+ * an open destination teleporter continues the loop and a closed one settles.
+ * See docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md
+ * lines 466-477. The host iteration limit below is a fail-closed guard, not a
+ * claim about an original iteration cap.
  * ══════════════════════════════════════════════════════════════════════ */
 
 int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
@@ -1422,6 +1422,6 @@ int theron_v1_trigger_activate(Theron_V1_World *world, int x, int y) {
 const char *theron_v1_mechanics_source_evidence(void) {
     return "THQUEST.ASM T520/T560/T600/T700/T800/T900  "
            "+ tqr_v1_phase2_data_formats_H2339.md  "
-           "+ movement_collision.md / movement_features.md "
-           "(ReDMCSB CLIKMENU.C F0366, MOVESENS.C:475-538)";
+           "+ Theron Track 02 movement source lock "
+           "(C240-C2D8; theron-runtime-spawn-capture.md:466-477)";
 }

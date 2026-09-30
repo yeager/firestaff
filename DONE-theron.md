@@ -7,14 +7,17 @@
   that has an adjacent floor approach and an ordinary-floor destination through
   the original turn/forward commands. It asserts the committed destination
   level and pose and that no transition remains pending.
-- The installed, hash-verified Track 02 files yielded 41 tested routes per
+- The installed, hash-verified Track 02 files yielded 41 committed routes per
   region, including four cross-level routes and eight closed-pad terminal
-  arrivals per region. Trv2 built the target serially; the focused real-media
-  CTest passed three consecutive runs. Direct execution also passed both
-  regional route loops. No active-to-active chain met this test's bounded
-  approach/terminal filter, so chained-pad, wall-target, special-square
-  arrivals and pads without a floor approach remain open. This is not a claim
-  of complete parity.
+  arrivals per region. Four additional active-to-active chains per region with
+  an ordinary-floor approach terminate at a wall; the original movement
+  command blocks them without changing the party pose or transition state.
+  Trv2 built the target serially, and the focused real-media CTest passed three
+  consecutive runs. Direct execution passed both regional route loops.
+- This does not prove the remaining active-link chains, direct wall-target
+  policy beyond the source-locked reject gate, special-square arrivals, pads
+  without a floor approach, or the full runtime consumer. Complete Theron
+  parity remains open.
 
 ## 2026-09-30 — commit the authentic coordinate-teleporter movement handoff
 

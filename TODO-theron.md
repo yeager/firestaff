@@ -8,10 +8,10 @@ Reviewed 2026-09-30. Only open work is listed here.
   `(0,0)` pad to `(2,3)` commits through the original movement command and
   transition executor. The real-media movement corpus now also exercises 41
   eligible routes each from US and JP Track 02, including four cross-level
-  routes and eight closed-pad terminal arrivals per region; see
-  `DONE-theron.md`. It proves only these source-derived approach/destination
-  cases. No active-to-active chain met the bounded test filter, which does not
-  establish chain behavior. Other chained pads, wall targets, special-square
+  routes and eight closed-pad terminal arrivals per region; four additional
+  active-to-active chains per region with a floor approach terminate at a wall
+  and remain blocked without party/transition mutation; see `DONE-theron.md`.
+  The other active-link chains, direct wall-target movement, special-square
   arrivals, pads without a floor approach and original source-owned runtime
   consumers remain unverified. The JP full-CUE capture still did not reach an
   authenticated game-owned data consumer, so it adds no independent
@@ -3341,6 +3341,12 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   teleporter endpoints are present. Keep wall-target and chained routes
   fail-closed until a source consumer or authenticated movement capture binds
   their exact outcomes.
+
+  2026-09-30 update: the real-media movement regression now exercises four
+  US and four JP active-to-active chains whose final decoded destination is a
+  wall. Original movement blocks each attempted route without changing party
+  position or transition fields. This is bounded parity for those records;
+  the other active-link chains and direct wall-target paths remain open.
 
 - [ ] THERON-V1-TRACK02-JP-LEVEL-DATA: the authenticated Japanese Track 02
   framing and bounded HuC6280 resource admission are verified for all seven
