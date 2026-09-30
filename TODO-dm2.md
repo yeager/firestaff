@@ -144,6 +144,16 @@ Reviewed 2026-08-29. Only open work is listed here.
   but the actual reported M5 session still needs paired runtime evidence:
   pose and live creature coordinates, SDL logical/drawable dimensions, an
   observed key event, and native SFX/MIDI output.
+  The authenticated Mac start corridor is a floor at (1,7) and a wall at
+  (1,6); after one north step, another north step is correctly blocked. The
+  M11 real-media test already proves that a right turn followed by two forward
+  steps reaches (3,8) facing east. The normal SDL startup test now exercises
+  that same three-key sequence and requires the final pose, so a single
+  successful north key can no longer stand in for continued movement. This
+  explains the close wall when continuing straight, but does not establish
+  whether the reported M5 keyboard, visible monster, Retina presentation or
+  native audio issue is the same behavior. The Codex Mac remains locked, so
+  those hardware observations are still unavailable here.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`

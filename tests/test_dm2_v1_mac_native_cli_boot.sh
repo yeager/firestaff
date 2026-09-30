@@ -114,7 +114,7 @@ normal_start_output=$(FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm2 --platform mac --data-dir "$archive" \
     --width 320 --height 200 \
-    --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait:30,key:up' --duration 36000 2>&1) || {
+    --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait:30,key:right,wait:30,key:up,wait:30,key:up' --duration 36000 2>&1) || {
     printf '%s\n' "$normal_start_output" >&2
     exit 1
 }
@@ -137,17 +137,17 @@ if (
     or startup.get("phase") != "dm2-runtime"
     or startup.get("levelLoaded") != 1
     or party.get("mapIndex") != 0
-    or party.get("mapX") != 1
-    or party.get("mapY") != 7
-    or party.get("direction") != 0
+    or party.get("mapX") != 3
+    or party.get("mapY") != 8
+    or party.get("direction") != 1
     or party.get("championCount") != 2
 ):
     raise SystemExit(
-        "FAIL: normal Macintosh Title.MooV-to-runtime route did not move north "
-        "from the authentic (1,8) start to (1,7) after a native SDL key: "
+        "FAIL: normal Macintosh Title.MooV-to-runtime route did not turn east "
+        "and move two tiles from the authentic (1,8) start after SDL keys: "
         f"{probe}")
 PY
-echo 'PASS: normal DM2 Macintosh Title.MooV loop reaches authentic runtime'
+echo 'PASS: normal DM2 Macintosh Title.MooV loop turns and moves twice in authentic runtime'
 
 # Join the scaled M12 pointer path to the ordinary Macintosh startup loop.
 # Scale mode 0 leaves the 320x200 source surface at 1x, centered in the
