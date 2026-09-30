@@ -9,6 +9,14 @@ test directory. Its authentic parser-only trv2 CTest passed and left that
 directory empty. This removes a test-harness `/tmp` fallback only; original
 Track 02 consumers and end-to-end Theron gameplay remain open below.
 
+## 2026-09-30 — bind authentic JP rank source records
+
+The 15 JP Rev. 1 rank records at UD `0x89333` are authenticated as
+byte-identical to the US table at UD `0x1C9B6B`. Test-only source references
+and regional real-media checks cover the rank bytes; rank-icon presentation
+and the unrecorded progression slot 15 remain open. This does not establish
+an original in-game rank display consumer.
+
 ## 2026-09-30 — keep Theron public status evidence-bounded
 
 The gap list now labels rendering, mechanics, and seven-dungeon progression
@@ -111,10 +119,11 @@ JP story selection, and original presentation remain open.
 
 The US skill-name API now shares the authentic 15-record text table at
 UD `0x1C9B6B`; its real-media test verifies all records, including custom
-prefix-glyph bytes for the six `MASTER` ranks. Rank index 15 has no verified
-text record, so the API returns no label there rather than repeating
-`ARCHMASTER`. The 64-entry experience table does not establish that missing
-mapping. JP rank strings/glyphs and original rank-icon presentation remain
+prefix-glyph bytes for the six `MASTER` ranks. Progression slot 15 has no
+verified text record, so the API returns no label there rather than repeating
+`ARCHMASTER`. Both US and JP Rev. 1 Track 02 rank records are now verified at
+their regional offsets; the 64-entry experience table does not establish a
+record for progression slot 15. Original rank-icon presentation remains
 unverified.
 
 ## Remaining work, ordered by the end-to-end playability dependency

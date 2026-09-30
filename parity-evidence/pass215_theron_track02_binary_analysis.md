@@ -153,11 +153,17 @@ LIGHT, SPIT, BRANDISH, THROW.
 
 FIGHTER, NINJA, PRIEST, WIZARD.
 
-### Skill Level Names (UD 0x1C9B6B)
+### Skill Level Names
+
+The US Track 02 table is at UD `0x1C9B6B`. Hash-verified JP Rev. 1 Track 02
+contains the same 15 NUL-terminated records byte-for-byte at UD `0x89333`
+(US MD5 `f23601102138f87c33025877767ebf76`; JP MD5
+`b7afb338ad31be1025b53f9aff12d73a`).
 
 NEOPHYTE, NOVICE, APPRENTICE, JOURNEYMAN, CRAFTSMAN, ARTISAN, ADEPT, EXPERT,
 then 6 MASTER variants with prefix glyphs 0x60-0x65 (custom font rank icons),
-then ARCHMASTER (16 entries total).
+then ARCHMASTER. There are 15 records; no rank-name record is established for
+progression slot 15.
 
 ### Stat Names (UD 0x1C9B15)
 
@@ -220,9 +226,9 @@ by level names at UD 0x27423B.
 ### Experience Threshold Table (UD 0x1DA890)
 
 64-entry word table (little-endian uint16). Monotonically increasing values
-from 0 to 214. Likely maps to 4 skill classes × 16 skill levels (matching
-the 16 skill level names at UD 0x1C9B6B and 4 champion classes at UD
-0x1C9A32).
+from 0 to 214. Its relationship to the 4 champion classes and the 15 named
+rank records is unproven; it does not establish a display name for progression
+slot 15.
 
 Preceded at UD 0x1DA870 by class base-stat parameters:
 - UD 0x1DA870: 0, 0, 60, 50, 256, 256, 256, 256 (words)

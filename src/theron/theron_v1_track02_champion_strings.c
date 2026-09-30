@@ -18,10 +18,12 @@ static const char *const g_resources[THERON_TRACK02_RESOURCE_COUNT] = {
     "HEALTH", "STAMINA", "MANA",
 };
 
-/* UD 0x1C9B6B: 15 null-terminated skill level text records.
+/* US UD 0x1C9B6B; JP Rev. 1 UD 0x89333: 15 null-terminated skill level
+ * records, byte-identical in the hash-verified regional Track 02 BINs.
  * Levels 8-13 have prefix glyphs 0x60-0x65 in the original binary
- * (custom font indices for rank icons). We store only the text. Rank index
- * 15 has no corresponding record here and is not assigned a fallback name. */
+ * (custom font indices for rank icons). We store only the text. The
+ * progression slot numbered 15 has no corresponding record here and is not
+ * assigned a fallback name. */
 static const char *const g_skill_levels[THERON_TRACK02_SKILL_LEVEL_COUNT] = {
     "NEOPHYTE",    /* 0 */
     "NOVICE",      /* 1 */

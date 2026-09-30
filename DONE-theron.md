@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — authenticate JP skill-rank source records
+
+- Added a test-only raw JP Rev. 1 rank-record reference that preserves the six
+  original prefix glyph bytes and all 15 NUL-terminated payloads without
+  linking this catalog into the runtime or assigning UI behavior to it.
+- A direct comparison of hash-verified US and JP Track 02 BINs found the US
+  records at UD `0x1C9B6B` and JP records at UD `0x89333`; all 15 payloads are
+  byte-identical (134 bytes including terminators). The source-offset note
+  also corrects an older claim of 16 name records: progression slot 15 has no
+  verified name record.
+- Separate CTests now verify each authentic edition independently. This binds
+  source bytes only; original rank-icon rendering and an in-game display
+  consumer remain unverified.
+
 ## 2026-09-30 — keep consumer-trace test files in task scratch
 
 - The focused main-RAM consumer-trace CTest now requires an explicit
