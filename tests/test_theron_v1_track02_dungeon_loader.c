@@ -5340,7 +5340,13 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     assert(cross_level_routes_tested == 4u);
     assert(closed_terminal_routes_tested == 8u);
     assert(chained_routes_tested == 0u);
+    assert(active_chain_roots == 14u);
     assert(chained_wall_routes_blocked == 4u);
+    assert(unresolved_chained_routes_with_approach == 0u);
+    assert(unresolved_chained_routes_blocked == 0u);
+    assert(special_terminal_routes_deferred == 9u);
+    assert(special_terminal_chains_deferred == 1u);
+    assert(chained_routes_without_floor_approach == 9u);
     assert(unresolved_chained_routes_blocked ==
            unresolved_chained_routes_with_approach);
     printf("  authentic %s coordinate-teleporter movement routes: %u total, "
