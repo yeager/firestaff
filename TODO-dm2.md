@@ -132,6 +132,18 @@ Reviewed 2026-08-29. Only open work is listed here.
   GRAPHICSSET 2. The dedicated demo-rejection CTest passes, so this naming
   collision does not explain the reported wrong gameplay assets.
   These checks do not establish physical Retina output.
+  On 2026-09-30, downloaded and exercised the exact published v3.0.353
+  macOS arm64 app bundle against the authenticated full Mac retail ZIP. Both
+  direct `--game dm2` startup and the M12 → Mac → title movie → New Game route
+  reached the active runtime; scripted north movement changed the pose from
+  (1,8) to (1,7). The M11 test checks that no live DB4 creature is adjacent at
+  spawn, after 16 source ticks, or after that first step. These checks run on
+  the local Mac build host and capture logical 320x200 output; they do not
+  establish physical M5 keyboard input, HiDPI presentation, visual quality or
+  audible sound. The source audit found no concrete Retina coordinate defect,
+  but the actual reported M5 session still needs paired runtime evidence:
+  pose and live creature coordinates, SDL logical/drawable dimensions, an
+  observed key event, and native SFX/MIDI output.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`
