@@ -3376,18 +3376,24 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
     }
 
     /* Authentic US AKUTUBA M0 teleporter record 0 is at (0,0) and points to
-     * (2,3) on M0.  (2,3) is a real floor square without a second object
-     * record, so requiring an endpoint object would reject source data. */
-    assert(theron_v1_teleporter_resolve(&world, 0, 0) == 0);
-    assert(world.transition_pending == 1);
-    assert(world.transition_target_level == 0);
-    assert(world.transition_spawn_x == 2);
-    assert(world.transition_spawn_y == 3);
-    assert(theron_v1_transition_execute(&world) == 0);
+     * (2,3) on M0. Start from the source-verified pose (1,0,north), turn
+     * left, and enter the real active pad through the original command path.
+     * (2,3) is a floor square without a second object record, so requiring
+     * an endpoint object would reject this authentic destination. */
+    world.party.leader_x = 1;
+    world.party.leader_y = 0;
+    world.party.leader_dir = 0;
+    assert(theron_v1_turn_party_original_command(
+               &world, THERON_ORIGINAL_COMMAND_TURN_LEFT) == 0);
+    assert(world.party.leader_dir == 3);
+    assert(theron_v1_move_party_original_command(
+               &world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+           THERON_MOVE_TELEPORT);
     assert(world.current_level == 0);
     assert(world.party.leader_x == 2);
     assert(world.party.leader_y == 3);
-    printf("  authentic Track 02 coordinate teleporter lands on floor OK\n");
+    assert(world.transition_pending == 0);
+    printf("  authentic Track 02 coordinate teleporter movement commits OK\n");
 
     /* The original accepts a northward step from (2,2) onto the B4 pad but
      * leaves the party on (2,1), map 0.  Its clear OPEN bit therefore means

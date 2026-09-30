@@ -702,13 +702,41 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
             teleporter->state == 0u) {
             tile = THERON_SQUARE_FLOOR;
         } else {
-        /* The resolver is transactional: an incomplete/cyclic destination
-         * leaves party and transition state untouched and returns -1.  Do
-         * not turn that failed source-data lookup into a successful move. */
-        if (theron_v1_teleporter_resolve(world, nx, ny) < 0)
-            return THERON_MOVE_BLOCKED;
-        theron_v1_apply_post_move_effects(world);
-        return THERON_MOVE_TELEPORT;
+            const int previous_level = world->current_level;
+            const int previous_x = world->party.leader_x;
+            const int previous_y = world->party.leader_y;
+            const int previous_transition_pending = world->transition_pending;
+            const int previous_transition_type = world->transition_type;
+            const int previous_target_level = world->transition_target_level;
+            const int previous_spawn_x = world->transition_spawn_x;
+            const int previous_spawn_y = world->transition_spawn_y;
+
+            /* The original C27A-C2D8 path commits the coordinate-linked
+             * destination and re-tests its arrival tile; see the authentic
+             * Track 02 witness in
+             * docs/source-lock/theron-disassembly/
+             * theron-runtime-spawn-capture.md:466-477. */
+            if (theron_v1_teleporter_resolve(world, nx, ny) < 0)
+                return THERON_MOVE_BLOCKED;
+
+            /* Resolving is only preparation. Publish the loaded destination
+             * and arrival pose together; restore caller-visible state if the
+             * queued handoff cannot be committed. */
+            if (!world->transition_pending ||
+                world->transition_type != THERON_TRANSITION_TELEPORTER ||
+                theron_v1_transition_execute(world) < 0) {
+                world->current_level = previous_level;
+                world->party.leader_x = previous_x;
+                world->party.leader_y = previous_y;
+                world->transition_pending = previous_transition_pending;
+                world->transition_type = previous_transition_type;
+                world->transition_target_level = previous_target_level;
+                world->transition_spawn_x = previous_spawn_x;
+                world->transition_spawn_y = previous_spawn_y;
+                return THERON_MOVE_BLOCKED;
+            }
+            theron_v1_apply_post_move_effects(world);
+            return THERON_MOVE_TELEPORT;
         }
     }
 

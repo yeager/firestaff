@@ -2,6 +2,16 @@
 
 Reviewed 2026-09-30. Only open work is listed here.
 
+## 2026-09-30 — remaining coordinate-teleporter parity
+
+- The authentic US AKUTUBA M0 route from `(1,0,north)` through the active
+  `(0,0)` pad to `(2,3)` now commits through the movement command and existing
+  transition executor; see `DONE-theron.md`. Keep the broader gap open:
+  JP movement, multi-map link parity, chained pads, wall-target outcomes, and
+  source-owned consumers are not established by this single US route. The
+  current JP full-CUE capture also did not reach an authenticated game-owned
+  data consumer, so it supplies no JP gameplay evidence.
+
 ## 2026-09-30 — authentic JP full-CUE capture still stops before Track 02 consumer
 
 - On trv2, an isolated 120-second run used the complete hash-verified JP

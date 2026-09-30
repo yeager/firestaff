@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — commit the authentic coordinate-teleporter movement handoff
+
+- Coordinate-linked Track 02 movement now commits the transition prepared by
+  the source-data resolver through the existing transition executor. If the
+  handoff is absent, malformed, or cannot commit, movement fails closed and
+  restores the previous level, party pose, and transition fields.
+- The authentic US AKUTUBA M0 regression starts at the captured `(1,0,north)`
+  pose, turns left, and enters the real active `(0,0)` pad through the original
+  movement command. It verifies arrival at `(2,3)` on M0, a real floor square
+  with no endpoint object record. On trv2, the target built with `-j1`, the
+  focused CTest passed three repetitions with `-j2`, and the direct
+  real-media test confirmed the route.
+- Scope is limited to this authenticated US route and the transition-state
+  invariant. It does not establish JP movement, chained or wall-target
+  outcomes, stairs, or complete Theron/platform parity; those remain open in
+  `TODO-theron.md`.
+
 ## 2026-09-30 — guard campaign completion against fabricated quest items
 
 - Extended the real-media M11 Continue test to assert that the authenticated
