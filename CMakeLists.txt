@@ -7077,7 +7077,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_midi_backend.c
     src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-if(APPLE)
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
     # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly; keep the
     # framework dependency on this library so every consumer (app, tests,
     # probes) links the same real MIDI boundary.
@@ -7283,7 +7283,7 @@ if(DM2_SOURCES)
     # dm2_v1_sound_sdl_backend.c (DM2-008 cycle 16) is the concrete SDL3
     # playback backend; propagate SDL3 headers/symbols to every consumer.
     target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 SDL3::SDL3 m firestaff_audio_device)
-    if(APPLE)
+    if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
         # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly.
         # Keep the framework dependency on its owning library so the app and
         # standalone DM2 test executables link the same real MIDI boundary.
@@ -57570,7 +57570,7 @@ endif()
 # Standalone test/probe executables that compile dm2_v1_midi_backend.c
 # directly (not via the firestaff_dm2 library) must link the same native
 # CoreMIDI boundary as the library itself.
-if(APPLE)
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
     get_property(_dm2_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
     foreach(_dm2_t IN LISTS _dm2_all_targets)
         get_target_property(_dm2_srcs ${_dm2_t} SOURCES)
