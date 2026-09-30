@@ -47,6 +47,13 @@ before the completion write, so Demon completion semantics remain open; the
 regression's `0x40` value is not a valid BRAM Continue state because the
 source-locked restore routine rejects masked campaign values >= 7.
 
+The runtime keeps the authenticated `$267C` campaign-completion mask separate
+from quest-item collection: bits 0–5 project only to dungeon-completion state,
+while bit 6 remains raw and does not complete Demon. Host item helpers can no
+longer mark a dungeon complete, and exhausting stage selection cannot claim
+quest completion. This closes a false host-side parity path only; the original
+T900 pickup/retrieval consumer and final-stage completion event remain unbound.
+
 The mixed-region data-directory regression for authentic JP Rev. 1 CUE
 selection is closed by binding the Track 01/02 pair to the requested Track 02
 identity. Bounded hashing now accepts single-image CUE slices in RAM. Track 01
@@ -66,6 +73,12 @@ name bank is unavailable. It can also extract all seven JP artifact spellings
 from their authenticated regional retrieval records using the checked CP932
 converter. This is only a launcher text fallback: the original
 pickup-to-retrieval event remains unbound.
+
+The production text gate now verifies that every decoded US/JP retrieval
+record is byte-identical to its ordinal slice in the authenticated Track 02
+message span and checks the source selector provenance fields. This proves
+ordinal-to-retail-text binding only; pickup identity, possession, T900 state,
+and campaign completion remain unbound.
 
 The original-consumer capture marker verifier now correlates each required
 consumer read with one unique earlier FIFO-origin receipt by sequence,

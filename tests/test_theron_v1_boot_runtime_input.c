@@ -120,6 +120,11 @@ static void setup_room_with_exit(Theron_V1_World *world)
     world->party.leader_y = 3;
     world->party.leader_dir = THERON_DIR_NORTH;
     world->world_tick = 10;
+    /* Mechanics-only exit fixture, not original pickup/T900 evidence. */
+    world->progression.quest_items_collected =
+        THERON_QUEST_ITEM_1_SHIELD_DEFIANT;
+    world->progression.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
+        THERON_DUNGEON_STATE_COMPLETE;
     world->dungeon_complete = 1;
 }
 

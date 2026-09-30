@@ -108,6 +108,59 @@ static int bind_real_retrieval(Theron_V1_World *world,
     return ok;
 }
 
+static int retrieval_records_match_source(
+    const Theron_V1_World *world,
+    const char *path,
+    int variant) {
+    const Theron_Track02RetrievalTextSource *source;
+    size_t user_data_size = 0u;
+    uint8_t *user_data = load_user_data(path, &user_data_size);
+    size_t cursor;
+    size_t span_end;
+    unsigned int ordinal;
+    int ok = 0;
+
+    if (!world || !path || !user_data) {
+        free(user_data);
+        return 0;
+    }
+    source = &world->track02_retrieval_text;
+    if (!source->valid || !source->retrieval_event_relation_proven ||
+        source->variant != variant || source->text_group != 2u ||
+        source->raw_message_sizes[0] == 0u ||
+        source->source_offset > user_data_size ||
+        source->source_span_bytes > user_data_size - source->source_offset ||
+        source->post_dungeon_ordinal_dispatch_offset >= user_data_size ||
+        source->post_dungeon_text_selector_offset >= user_data_size ||
+        source->post_dungeon_text_ordinal_advance_offset >= user_data_size)
+        goto done;
+
+    cursor = source->source_offset;
+    span_end = source->source_offset + source->source_span_bytes;
+    for (ordinal = 0u;
+         ordinal < THERON_TRACK02_RETRIEVAL_TEXT_COUNT;
+         ++ordinal) {
+        size_t size = source->raw_message_sizes[ordinal];
+        if (size == 0u || size > THERON_TRACK02_RETRIEVAL_TEXT_CAPACITY ||
+            cursor > span_end || size > span_end - cursor ||
+            memcmp(source->raw_messages[ordinal], user_data + cursor, size) != 0)
+            goto done;
+        cursor += size;
+        /* US records omit the NUL from the copied payload; JP records include
+         * their two-byte terminator. These are source framing, not semantics. */
+        if (variant == 2) {
+            if (cursor >= span_end || user_data[cursor] != 0u)
+                goto done;
+            ++cursor;
+        }
+    }
+    ok = cursor == span_end;
+
+done:
+    free(user_data);
+    return ok;
+}
+
 int main(void) {
     Theron_V1_BootProfile profile;
     Theron_DungeonProgression progression;
@@ -175,10 +228,11 @@ int main(void) {
         unsigned int i;
         if (!bind_real_bank(world, us_path, 2, 1u) ||
             !bind_real_retrieval(world, us_path, 2) ||
+            !retrieval_records_match_source(world, us_path, 2) ||
             theron_v1_chapter_marker_compute_world(
                 &profile, world, NULL, &marker) != 0 ||
             strstr(marker.quest_summary, "next: SHIELD DEFIANT") == NULL) {
-            fputs("FAIL: production marker did not publish authentic US name\n",
+            fputs("FAIL: authentic US retrieval ordinal/source binding failed\n",
                   stderr);
             free(world);
             return 1;
@@ -229,8 +283,10 @@ int main(void) {
             "復讐の剣"
         };
         unsigned int i;
-        if (!bind_real_retrieval(world, jp_path, 1)) {
-            fputs("FAIL: could not bind authentic JP retrieval text\n", stderr);
+        if (!bind_real_retrieval(world, jp_path, 1) ||
+            !retrieval_records_match_source(world, jp_path, 1)) {
+            fputs("FAIL: authentic JP retrieval ordinal/source binding failed\n",
+                  stderr);
             free(world);
             return 1;
         }

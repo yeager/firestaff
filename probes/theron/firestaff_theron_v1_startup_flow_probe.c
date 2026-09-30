@@ -1224,7 +1224,10 @@ int main(void) {
         {
             Theron_DungeonProgression progressed;
             theron_v1_dungeon_progression_init(&progressed);
-            (void)theron_v1_dungeon_advance(&progressed);
+            /* Model the source-projected bit used by the stage-select test;
+             * this is not a pickup or original T900 consumer fixture. */
+            theron_v1_dungeon_progression_apply_campaign_completion(
+                &progressed, 0x01u);
             result = theron_v1_startup_handle_input_with_progression(
                 THERON_STARTUP_PHASE_STAGE_SELECT,
                 THERON_DUNGEON_1_AKUTUBA,
@@ -2194,7 +2197,8 @@ int main(void) {
         {
             Theron_DungeonProgression progressed_hit;
             theron_v1_dungeon_progression_init(&progressed_hit);
-            (void)theron_v1_dungeon_advance(&progressed_hit);
+            theron_v1_dungeon_progression_apply_campaign_completion(
+                &progressed_hit, 0x01u);
             result = theron_v1_startup_handle_hit_with_progression(
                 THERON_STARTUP_PHASE_STAGE_SELECT,
                 THERON_DUNGEON_1_AKUTUBA,
@@ -2492,7 +2496,8 @@ int main(void) {
                                             THERON_DUNGEON_2_DRATOR);
     check_int("locked stage rejected", result, THERON_STARTUP_ERR_STAGE_LOCKED);
 
-    theron_v1_dungeon_advance(&progression);
+    theron_v1_dungeon_progression_apply_campaign_completion(
+        &progression, 0x01u);
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
                                             THERON_DUNGEON_5_SHADO);
@@ -3315,6 +3320,8 @@ after_track02_fixture_runtime_checks:
             theron_v1_world_init(&world);
             world.progression.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
                 THERON_DUNGEON_STATE_COMPLETE;
+            world.progression.quest_items_collected =
+                THERON_QUEST_ITEM_1_SHIELD_DEFIANT;
             world.party.champion_count = 4;
             world.party.active_slot = 2;
             world.party.leader_x = 7;
@@ -3400,7 +3407,7 @@ after_track02_fixture_runtime_checks:
                       THERON_STARTUP_ERR_DUNGEON_ENTRY);
             check_contains("exit return rejects incomplete receipt",
                            exit_receipt,
-                           "dungeon exit rejected");
+                           "dungeon completion lacks source campaign receipt");
         }
     }
 

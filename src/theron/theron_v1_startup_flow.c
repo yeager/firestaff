@@ -4542,6 +4542,19 @@ Theron_StartupResult theron_v1_startup_return_to_stage_select_after_exit(
         return THERON_STARTUP_ERR_NULL;
     }
 
+    /* THQUEST.ASM T900's runtime pickup consumer is not admitted by the
+     * capture chain; only the source-bound campaign-byte route may set this
+     * completion token. See docs/source-lock/theron_t900_proof_2026-08-08.md
+     * lines 29-35 and theron-original-akutuba-completion-capture-2026-08-21.md. */
+    if (!world->dungeon_complete) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "dungeon completion lacks source campaign receipt");
+        }
+        return THERON_STARTUP_ERR_DUNGEON_ENTRY;
+    }
+
     next = theron_v1_dungeon_exit(&world->progression);
     if (next == THERON_DUNGEON_INVALID &&
         !theron_v1_quest_complete(&world->progression)) {

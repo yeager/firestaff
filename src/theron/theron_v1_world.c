@@ -2004,10 +2004,12 @@ int theron_v1_transition_execute(Theron_V1_World *world) {
             world->transition_pending = 0;
             return -1;
         }
-        next_dungeon = theron_v1_dungeon_next(world->current_dungeon);
-        (void)theron_v1_dungeon_advance(&world->progression);
+        next_dungeon = theron_v1_dungeon_exit(&world->progression);
         if (next_dungeon == THERON_DUNGEON_INVALID) {
-            world->progression.quest_complete = 1;
+            if (!theron_v1_quest_complete(&world->progression)) {
+                world->transition_pending = 0;
+                return -1;
+            }
             world->transition_pending = 0;
             theron_v1_world_runtime_media_invalidate_cache(world);
             return 0;
@@ -2617,9 +2619,8 @@ int theron_v1_world_campaign_completion_mask(
 int theron_v1_world_apply_campaign_completion_byte(
     Theron_V1_World *world,
     uint8_t serialized_campaign_byte) {
-    Theron_DungeonProgression restored;
     uint8_t completion_mask;
-    uint8_t progression_mask;
+    uint8_t current_bit;
     Theron_DungeonID current;
     if (!world || !theron_v1_world_campaign_completion_mask(
             world, serialized_campaign_byte, &completion_mask))
@@ -2628,23 +2629,15 @@ int theron_v1_world_apply_campaign_completion_byte(
     if (current < THERON_DUNGEON_1_AKUTUBA ||
         current > THERON_DUNGEON_7_DEMON)
         return 0;
+    current_bit = (uint8_t)(1u << ((unsigned int)current - 1u));
 
-    /* DMS-SG.001 ordinal dispatch at $DE21 takes a distinct final-stage
-     * branch for ordinal 6 at $DE38. The authenticated ordinal sweep proves
-     * bits 0..5 only; ordinal 6 stalls before a completion write. Preserve
-     * bit 6 as raw BRAM state, but do not project it to Demon completion.
-     * Evidence: docs/source-lock/theron-original-akutuba-completion-capture-
-     * 2026-08-21.md:70-88. */
-    progression_mask = (uint8_t)(completion_mask & 0x3fu);
-    theron_v1_dungeon_progression_restore(
-        &restored, progression_mask, current,
-        world->progression.dungeon_seeds);
-    memcpy(world->progression.dungeon_states, restored.dungeon_states,
-           sizeof(world->progression.dungeon_states));
+    /* Apply this independently from quest-item collection. The campaign
+     * capture proves bits 0..5; ordinal 6 stalls before a final write. */
+    theron_v1_dungeon_progression_apply_campaign_completion(
+        &world->progression, completion_mask);
     world->campaign_completion_mask = completion_mask;
     world->dungeon_complete = current < THERON_DUNGEON_7_DEMON &&
-        (progression_mask &
-         (uint8_t)THERON_QUEST_ITEM_MASK_FROM_DUNGEON(current)) != 0u;
+        (completion_mask & current_bit) != 0u;
     return 1;
 }
 
@@ -4417,12 +4410,9 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit_fi
         world->quest_items_in_dungeon++;
     }
 
-    /* Check if dungeon is now complete */
-    const Theron_DungeonMeta *meta =
-        theron_v1_dungeon_meta((Theron_DungeonID)world->current_dungeon);
-    if (meta && world->quest_items_in_dungeon >= meta->quest_item_count) {
-        world->dungeon_complete = 1;
-    }
+    /* Keep this legacy fixture bit provisional. THQUEST.ASM T900 has no
+     * admitted runtime pickup consumer yet; see
+     * docs/source-lock/theron_t900_proof_2026-08-08.md:32-35. */
     return world->progression.quest_items_collected;
 }
 

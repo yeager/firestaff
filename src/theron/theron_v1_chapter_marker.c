@@ -323,8 +323,12 @@ static int theron_v1_chapter_marker_compute_internal(
         }
     }
 
+    /* Keep item-count display separate from the campaign-completion byte.
+     * THQUEST.ASM ordinal dispatch $DE21/$DE38 has no admitted final write;
+     * see docs/source-lock/theron-original-akutuba-completion-capture-
+     * 2026-08-21.md. */
+    int all_collected = theron_v1_quest_complete(progression);
     int collected_count = bit_count(items);
-    int all_collected   = (items == THERON_QUEST_ALL_ITEMS);
 
     /* ── Chapter label ─────────────────────────────────── */
 #if defined(THERON_STARTUP_RECEIPT_FIXTURE_PROFILE_ONLY)

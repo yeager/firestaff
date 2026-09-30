@@ -276,7 +276,7 @@ static void check_mid_progression(void) {
           "mid: marker stores the 3-bit bitmask (0x07)");
 }
 
-static void check_quest_complete(void) {
+static void check_unverified_final_stage(void) {
     Theron_V1_BootProfile profile;
     Theron_DungeonProgression prog;
     Theron_ChapterMarker m;
@@ -284,18 +284,22 @@ static void check_quest_complete(void) {
     theron_v1_boot_profile_init(&profile);
     profile.assets_verified = 1;
     theron_v1_dungeon_progression_init(&prog);
-    prog.quest_items_collected = THERON_QUEST_ALL_ITEMS;
-    prog.quest_complete = 1;
+    {
+        uint32_t seeds[THERON_DUNGEON_COUNT] = {0};
+        theron_v1_dungeon_progression_restore(
+            &prog, THERON_QUEST_ALL_ITEMS, THERON_DUNGEON_7_DEMON, seeds);
+    }
 
     theron_v1_chapter_marker_compute(&profile, &prog, NULL, &m);
 
-    CHECK(m.verdict == THERON_MARKER_VERDICT_OK_QUEST_COMPLETE,
-          "complete: verdict == OK_QUEST_COMPLETE");
-    CHECK(strstr(m.chapter_label, "Quest Complete") != NULL &&
-          strstr(m.chapter_label, "7/7") != NULL,
-          "complete: chapter label says Quest Complete (7/7)");
-    CHECK(strstr(m.quest_summary, "7/7") != NULL,
-          "complete: quest summary shows 7/7 collected");
+    CHECK(m.verdict == THERON_MARKER_VERDICT_OK_PROGRESSION_ONLY,
+          "unverified final bit: verdict remains progression-only");
+    CHECK(strstr(m.chapter_label, "Quest Complete") == NULL &&
+          strstr(m.quest_summary, "quest complete") == NULL,
+          "unverified final bit is not presented as quest completion");
+    CHECK(strstr(m.quest_summary, "7/7") != NULL &&
+          strstr(m.quest_summary, "quest complete") == NULL,
+          "item bits remain visible without asserting campaign completion");
 }
 
 static void check_save_promotes_verdict(void) {
@@ -541,7 +545,7 @@ int main(void) {
     check_no_asset_synthetic();
     check_fresh_profile();
     check_mid_progression();
-    check_quest_complete();
+    check_unverified_final_stage();
     check_save_promotes_verdict();
     check_save_compute_empty_root();
     check_save_compute_null_root();

@@ -1,5 +1,33 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — verify retrieval text source ordinals byte-for-byte
+
+- The production chapter-marker gate now compares all seven decoded retrieval
+  records, in ordinal order, with their exact byte slices in the authenticated
+  regional Track 02 source span. It also checks the selector provenance fields
+  and region-specific record framing.
+- The updated test target built on `trv2` and passed against the staged
+  authentic US and JP Track 02 media.
+- This proves ordinal-to-retail-text source binding only. It does not prove
+  pickup identity, item possession, T900 state, or campaign completion.
+
+## 2026-09-30 — separate campaign completion from quest-item collection
+
+- Added a campaign-mask projection that changes dungeon stage state without
+  writing `quest_items_collected`. The authenticated `$267C` bits 0–5 mark
+  their captured dungeon completions; bit 6 remains raw and cannot complete
+  Demon. Host item helpers now record provisional bits only, and stage advance
+  no longer manufactures dungeon or quest completion.
+- Startup exit handling requires the source campaign completion token. The
+  chapter marker can still report saved quest-item bits and their authentic
+  regional names, but it does not label the quest complete without the final
+  completion state.
+- Fresh Linux build on `trv2` succeeded. Nine focused CTests passed 9/9,
+  including the real US/JP Track 02 dungeon-loader test and the production
+  retrieval-name gate.
+- This is a fail-closed regression fix, not proof of T900 pickup/retrieval,
+  Demon completion, or complete Theron gameplay; those gaps remain in TODO.
+
 ## 2026-09-30 — classify scripted controller-read witnesses
 
 - The scripted-input verifier now reports the authentic CPU PC of the first

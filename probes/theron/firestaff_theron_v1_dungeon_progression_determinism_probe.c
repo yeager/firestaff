@@ -4,36 +4,34 @@
  *
  * Theron V1 dungeon-progression determinism probe (Tier 4 #20 polish).
  *
- * Verifies the source-locked 7-dungeon progression in
- * theron_v1_dungeon_progression.c is deterministic across many runs.
- * Each dungeon has a state (LOCKED / AVAILABLE / COMPLETE) and the
- * advance() operation transitions current -> next, marking the
- * previous COMPLETE, unlocks the original stage-select set, and moves focus
- * to the first available incomplete dungeon. After dungeon 7, quest_complete
- * becomes 1 and further advances return THERON_DUNGEON_INVALID.
+ * Verifies fail-closed progression projection in
+ * theron_v1_dungeon_progression.c. Stage focus and provisional host item bits
+ * cannot manufacture original T900 completion. Only the six captured source
+ * campaign bits can restore completed dungeons; the final-stage consumer is
+ * still unbound.
  *
  * Source-lock:
  *   - THQUEST.ASM T080 (between-dungeon save/load)
  *   - ReDMCSB analogue siblings GROUP.C / CLIKMENU.C
  *   - src/theron/theron_v1_dungeon_progression.c
  *
- * Coverage (11/11 invariants):
+ * Coverage includes:
  *   1. Init: dungeon 1 AVAILABLE, others LOCKED, quest_complete=0.
  *   2. Init NULL-safety.
- *   3. Advance 1 marks 1 COMPLETE, unlocks 2..6, keeps 7 LOCKED.
- *   4. After six completed dungeons, dungeon 7 becomes AVAILABLE.
- *   5. Advance 7->end sets quest_complete=1, returns INVALID.
+ *   3. An unverified advance does not mutate completion state.
+ *   4. Six source-proven completion bits unlock dungeon 7.
+ *   5. A host-supplied final bit cannot complete the campaign.
  *   6. Advance NULL-safety.
  *   7. theron_v1_dungeon_next invalid input returns INVALID.
- *   8. Full 1..7 progression reaches COMPLETE for all 7.
- *   9. Final state is quest_complete=1.
- *  10. Reset (init) after full progression restores dungeon 1 AVAILABLE.
- *  11. Determinism: 50 full progressions produce identical state hash.
+ *   8. Only the first six source-proven dungeons project COMPLETE.
+ *   9. Final state remains quest-incomplete without original evidence.
+ *  10. Reset (init) restores dungeon 1 AVAILABLE.
+ *  11. Determinism: identical source masks produce identical state hashes.
  *
  * Run:
  *   ./build/firestaff_theron_v1_dungeon_progression_determinism_probe
  *
- * Pass: 11/11 invariants.
+ * Pass: all fail-closed and deterministic invariants.
  */
 
 #include <stdio.h>
@@ -97,6 +95,7 @@ int main(void) {
         Theron_DungeonProgression prog;
         int middle_available = 0;
         theron_v1_dungeon_progression_init(&prog);
+        theron_v1_dungeon_progression_apply_campaign_completion(&prog, 0x01u);
         Theron_DungeonID next = theron_v1_dungeon_advance(&prog);
         CHECK(next == THERON_DUNGEON_2_DRATOR,
               "advance 1: focus returns dungeon 2");
@@ -117,7 +116,12 @@ int main(void) {
     {
         Theron_DungeonProgression prog;
         theron_v1_dungeon_progression_init(&prog);
+        uint8_t campaign_mask = 0u;
         for (int i = 0; i < THERON_DUNGEON_COUNT - 1; ++i) {
+            Theron_DungeonID current = prog.current_dungeon;
+            campaign_mask |= (uint8_t)(1u << (current - 1));
+            theron_v1_dungeon_progression_apply_campaign_completion(
+                &prog, campaign_mask);
             theron_v1_dungeon_advance(&prog);
         }
         CHECK(prog.dungeon_states[6] == THERON_DUNGEON_STATE_AVAILABLE,
@@ -126,22 +130,25 @@ int main(void) {
               "after six advances: focus moves to dungeon 7");
     }
 
-    /* 5. Advance 7->end sets quest_complete=1, returns INVALID. */
+    /* 5. Exhausting choices does not authenticate final-stage completion. */
     {
         Theron_DungeonProgression prog;
         theron_v1_dungeon_progression_init(&prog);
+        uint8_t campaign_mask = 0u;
         for (int i = 0; i < THERON_DUNGEON_COUNT - 1; ++i) {
+            Theron_DungeonID current = prog.current_dungeon;
+            campaign_mask |= (uint8_t)(1u << (current - 1));
+            theron_v1_dungeon_progression_apply_campaign_completion(
+                &prog, campaign_mask);
             theron_v1_dungeon_advance(&prog);
         }
-        /* After 6 advances we're in dungeon 7. One more advance should
-         * mark 7 COMPLETE and set quest_complete=1 with INVALID return. */
+        theron_v1_dungeon_progression_apply_campaign_completion(
+            &prog, 0x7fu);
         Theron_DungeonID next = theron_v1_dungeon_advance(&prog);
         CHECK(next == THERON_DUNGEON_INVALID,
-              "advance 7->end: returns INVALID sentinel");
-        CHECK(prog.quest_complete == 1,
-              "advance 7->end: quest_complete == 1");
-        CHECK(prog.dungeon_states[6] == THERON_DUNGEON_STATE_COMPLETE,
-              "advance 7->end: dungeon 7 marked COMPLETE");
+              "unverified final advance returns INVALID sentinel");
+        CHECK(!theron_v1_quest_complete(&prog),
+              "unverified final advance leaves quest incomplete");
     }
 
     /* 6. Advance NULL-safety. */
@@ -168,7 +175,12 @@ int main(void) {
     {
         Theron_DungeonProgression prog;
         theron_v1_dungeon_progression_init(&prog);
-        for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+        uint8_t campaign_mask = 0u;
+        for (int i = 0; i < THERON_DUNGEON_COUNT - 1; ++i) {
+            Theron_DungeonID current = prog.current_dungeon;
+            campaign_mask |= (uint8_t)(1u << (current - 1));
+            theron_v1_dungeon_progression_apply_campaign_completion(
+                &prog, campaign_mask);
             theron_v1_dungeon_advance(&prog);
         }
         int complete_count = 0;
@@ -177,29 +189,39 @@ int main(void) {
                 ++complete_count;
             }
         }
-        CHECK(complete_count == THERON_DUNGEON_COUNT,
-              "after 7 advances: all 7 dungeons COMPLETE");
+        CHECK(complete_count == THERON_DUNGEON_COUNT - 1,
+              "only six source-proven dungeons project COMPLETE");
     }
 
     /* 8. Final state after full progression. */
     {
         Theron_DungeonProgression prog;
         theron_v1_dungeon_progression_init(&prog);
-        for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+        uint8_t campaign_mask = 0u;
+        for (int i = 0; i < THERON_DUNGEON_COUNT - 1; ++i) {
+            Theron_DungeonID current = prog.current_dungeon;
+            campaign_mask |= (uint8_t)(1u << (current - 1));
+            theron_v1_dungeon_progression_apply_campaign_completion(
+                &prog, campaign_mask);
             theron_v1_dungeon_advance(&prog);
         }
-        CHECK(prog.quest_complete == 1,
-              "after 7 advances: quest_complete == 1");
+        CHECK(!theron_v1_quest_complete(&prog),
+              "six advances do not claim campaign completion");
     }
 
     /* 9. Reset (init) after full progression restores dungeon 1 AVAILABLE. */
     {
         Theron_DungeonProgression prog;
         theron_v1_dungeon_progression_init(&prog);
-        for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+        uint8_t campaign_mask = 0u;
+        for (int i = 0; i < THERON_DUNGEON_COUNT - 1; ++i) {
+            Theron_DungeonID current = prog.current_dungeon;
+            campaign_mask |= (uint8_t)(1u << (current - 1));
+            theron_v1_dungeon_progression_apply_campaign_completion(
+                &prog, campaign_mask);
             theron_v1_dungeon_advance(&prog);
         }
-        /* Now quest_complete=1. Re-init should reset. */
+        /* Re-init clears the source-projected campaign state. */
         theron_v1_dungeon_progression_init(&prog);
         CHECK(prog.quest_complete == 0,
               "re-init after quest complete: quest_complete reset to 0");
@@ -214,7 +236,12 @@ int main(void) {
         for (int rep = 0; rep < 50; ++rep) {
             Theron_DungeonProgression prog;
             theron_v1_dungeon_progression_init(&prog);
-            for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+            uint8_t campaign_mask = 0u;
+            for (int i = 0; i < THERON_DUNGEON_COUNT - 1; ++i) {
+                Theron_DungeonID current = prog.current_dungeon;
+                campaign_mask |= (uint8_t)(1u << (current - 1));
+                theron_v1_dungeon_progression_apply_campaign_completion(
+                    &prog, campaign_mask);
                 theron_v1_dungeon_advance(&prog);
             }
             uint32_t h = progression_hash(&prog);

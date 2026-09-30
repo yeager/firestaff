@@ -707,6 +707,12 @@ static void test_between_dungeon_exit(void) {
     int moved;
 
     make_world(&w);
+    /* Mechanics fixture with a pre-restored stage-completion token; it does
+     * not model the unbound original T900 pickup consumer. */
+    w.progression.quest_items_collected = THERON_QUEST_ITEM_1_SHIELD_DEFIANT;
+    w.progression.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+    w.progression.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
+        THERON_DUNGEON_STATE_COMPLETE;
     w.dungeon_complete = 1;
     w.levels[0][0].squares[8][9] = THERON_SQUARE_EXIT;
 

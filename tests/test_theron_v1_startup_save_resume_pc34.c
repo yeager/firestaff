@@ -4372,6 +4372,7 @@ static void test_startup_session_facts_wrappers(void) {
     world.progression.quest_items_collected =
         THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
             THERON_DUNGEON_1_AKUTUBA);
+    world.dungeon_complete = 1; /* completion-token mechanics fixture only */
     expect_true(world.progression.dungeon_states[
                     THERON_DUNGEON_1_AKUTUBA - 1] ==
                     THERON_DUNGEON_STATE_COMPLETE,
@@ -4407,6 +4408,7 @@ static void test_startup_session_facts_wrappers(void) {
     world.progression.quest_items_collected =
         THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
             THERON_DUNGEON_1_AKUTUBA);
+    world.dungeon_complete = 1; /* completion-token mechanics fixture only */
     world.party.champion_count = 3;
     world.party.leader_x = 4;
     world.party.leader_y = 5;

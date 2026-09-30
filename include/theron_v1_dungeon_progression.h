@@ -130,7 +130,7 @@ typedef struct {
     Theron_DungeonID    current_dungeon;
     Theron_DungeonState dungeon_states[THERON_DUNGEON_COUNT]; /* index 0 = INVALID */
 
-    /* Quest items collected — bitmask of THERON_QUEST_ITEM_* flags */
+    /* Quest-item mask; separate from the campaign-completion byte. */
     uint8_t             quest_items_collected;          /* 7-bit bitmap (0..127) */
     uint8_t             quest_items_in_current_dungeon;  /* items found so far */
 
@@ -154,8 +154,8 @@ typedef struct {
     /* Playtime tracking (seconds since dungeon start) */
     uint32_t             dungeon_playtime_seconds;
 
-    /* Quest complete flag */
-    uint8_t              quest_complete; /* 1 when all 7 items collected */
+    /* Source-authenticated final completion only. */
+    uint8_t              quest_complete;
     uint8_t              padding[3];
 } Theron_DungeonProgression;
 
@@ -170,14 +170,13 @@ const Theron_DungeonMeta *theron_v1_dungeon_meta(Theron_DungeonID id);
 /* Get the next dungeon ID after completion, or INVALID if all done. */
 Theron_DungeonID theron_v1_dungeon_next(Theron_DungeonID current);
 
-/* Advance dungeon sequence after quest item collected and exit triggered.
- * Updates dungeon_states[current] → COMPLETE, next → AVAILABLE.
- * Returns next dungeon ID, or INVALID if game complete. */
+/* Advance only from an already-recorded COMPLETE stage state.
+ * This function never creates completion state; INVALID means rejected or no
+ * selectable stage. The original final-stage completion consumer is unbound. */
 Theron_DungeonID theron_v1_dungeon_advance(Theron_DungeonProgression *prog);
 
-/* Collect a quest item in the current dungeon.
- * Sets the corresponding bit in quest_items_collected.
- * If all items in current dungeon found, marks dungeon COMPLETE. */
+/* Compatibility helper that records a provisional host bit only. It does not
+ * authenticate a T900 pickup, complete a dungeon, or complete the quest. */
 int theron_v1_quest_item_collect(Theron_DungeonProgression *prog,
                                   Theron_QuestItem item);
 
@@ -198,7 +197,7 @@ int theron_v1_dungeon_enter(Theron_DungeonProgression *prog,
  * On failure (not complete), returns INVALID. */
 Theron_DungeonID theron_v1_dungeon_exit(Theron_DungeonProgression *prog);
 
-/* Check if all 7 quest items collected. */
+/* Check source-backed final quest completion state. */
 int theron_v1_quest_complete(const Theron_DungeonProgression *prog);
 
 /* Get quest item bitmask (for serialization). */
@@ -210,6 +209,12 @@ void theron_v1_dungeon_progression_restore(Theron_DungeonProgression *prog,
                                             uint8_t quest_items_bitmask,
                                             Theron_DungeonID current,
                                             const uint32_t seeds[THERON_DUNGEON_COUNT]);
+
+/* Project the source-bound $267C campaign-completion byte into dungeon states
+ * without changing quest-item bits or claiming final-stage completion. */
+void theron_v1_dungeon_progression_apply_campaign_completion(
+    Theron_DungeonProgression *prog,
+    uint8_t campaign_completion_mask);
 
 /* Human-readable dungeon name lookup. */
 const char *theron_v1_dungeon_name(Theron_DungeonID id);

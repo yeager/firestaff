@@ -99,26 +99,20 @@ static int test_dungeon_advance(void) {
     Theron_DungeonProgression prog;
     theron_v1_dungeon_progression_init(&prog);
 
-    /* Simulate completing each dungeon in sequence */
-    for (int d = 1; d <= THERON_DUNGEON_COUNT; d++) {
-        /* Simulate dungeon completion */
-        Theron_DungeonID current = prog.current_dungeon;
-        prog.dungeon_states[current - 1] = THERON_DUNGEON_STATE_COMPLETE;
-
+    /* Apply only the six source-proven campaign bits, then advance focus. */
+    uint8_t campaign_mask = 0u;
+    for (int d = 1; d <= 6; d++) {
+        campaign_mask |= (uint8_t)(1u << (d - 1));
+        theron_v1_dungeon_progression_apply_campaign_completion(
+            &prog, campaign_mask);
         Theron_DungeonID next = theron_v1_dungeon_advance(&prog);
-
-        if (d < THERON_DUNGEON_COUNT) {
-            ASSERT(next == (Theron_DungeonID)(d + 1),
-                   "next dungeon wrong");
-            ASSERT(prog.current_dungeon == (Theron_DungeonID)(d + 1),
-                   "current_dungeon not advanced");
-            ASSERT(prog.dungeon_states[d] == THERON_DUNGEON_STATE_AVAILABLE,
-                   "next dungeon not AVAILABLE after advance");
-        } else {
-            ASSERT(next == THERON_DUNGEON_INVALID, "final next != INVALID");
-            ASSERT(prog.quest_complete == 1, "quest_complete not set after dungeon 7");
-        }
+        ASSERT(next == (Theron_DungeonID)(d + 1),
+               "source-proven completion did not advance focus");
+        ASSERT(prog.dungeon_states[d] == THERON_DUNGEON_STATE_AVAILABLE,
+               "next dungeon not AVAILABLE after advance");
     }
+    ASSERT(!theron_v1_quest_complete(&prog),
+           "six source-proven bits must not complete the campaign");
 
     PASS();
     return 1;
@@ -147,10 +141,14 @@ static int test_quest_item_collect(void) {
                "bitmask mismatch after collection");
     }
 
-    /* All 7 collected → quest complete */
+    /* Host collection bits are provisional, not an original T900 receipt. */
     ASSERT(prog.quest_items_collected == THERON_QUEST_ALL_ITEMS,
            "all items not collected");
-    ASSERT(prog.quest_complete == 1, "quest_complete not set");
+    ASSERT(!theron_v1_quest_complete(&prog),
+           "host item bits must not complete the quest");
+    ASSERT(prog.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] ==
+               THERON_DUNGEON_STATE_AVAILABLE,
+           "host item helper must not complete a dungeon");
 
     PASS();
     return 1;
@@ -178,6 +176,7 @@ static int test_item_reset(void) {
     ASSERT(enter_result == 0, "dungeon enter failed");
 
     /* After completing and advancing to dungeon 2, reset needed again */
+    prog.quest_items_collected |= THERON_QUEST_ITEM_1_SHIELD_DEFIANT;
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
     theron_v1_dungeon_advance(&prog);
 
@@ -210,7 +209,7 @@ static int test_dungeon_exit(void) {
     ASSERT(exit_result == THERON_DUNGEON_INVALID,
            "exit succeeded before COMPLETE");
 
-    /* After completion, exit succeeds */
+    /* An already restored completion state authorizes the sequence API. */
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
     exit_result = theron_v1_dungeon_exit(&prog);
     ASSERT(exit_result == THERON_DUNGEON_2_DRATOR,
@@ -253,13 +252,19 @@ static int test_dungeon_exit_transition_gate(void) {
     ASSERT(none == 0, "exit transition should be locked before completion");
     ASSERT(world.transition_pending == 0, "transition should stay unqueued");
 
-    /* Collect item for dungeon 1 and verify in-world completion flag flips. */
+    /* The unbound host helper records a provisional bit, not completion. */
     ASSERT(theron_v1_collect_quest_item(&world, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) ==
            THERON_QUEST_ITEM_1_SHIELD_DEFIANT,
            "quest item collection should return collected bit");
-    ASSERT(world.dungeon_complete == 1, "dungeon_complete flag did not set");
+    ASSERT(world.dungeon_complete == 0,
+           "host quest helper must not authorize dungeon completion");
 
-    /* Exit transition now allowed and queued for execution. */
+    /* Mechanics-only transition fixture: inject the separately restored
+     * completion state and token; this does not prove the pickup consumer. */
+    world.progression.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
+    world.dungeon_complete = 1;
+
+    /* Exit transition now exercises the mechanics route. */
     Theron_TransitionType transition = theron_v1_check_transition(&world, 1, 2);
     ASSERT(transition == THERON_TRANSITION_EXIT, "exit transition not detected after complete");
     ASSERT(world.transition_pending == 1, "transition was not queued");
@@ -403,6 +408,16 @@ static int test_save_restore(void) {
                "dungeon state wrong after restore");
     }
 
+    /* The final bit is not inferred from the ordinal-6 capture and may not
+     * fabricate Demon completion from a serialized host value. */
+    theron_v1_dungeon_progression_restore(
+        &restored, THERON_QUEST_ALL_ITEMS, THERON_DUNGEON_7_DEMON, seeds);
+    ASSERT(restored.quest_items_collected == THERON_QUEST_ALL_ITEMS &&
+               restored.dungeon_states[THERON_DUNGEON_7_DEMON - 1] ==
+                   THERON_DUNGEON_STATE_AVAILABLE &&
+               !theron_v1_quest_complete(&restored),
+           "unverified final campaign bit must remain fail-closed");
+
     PASS();
     return 1;
 }
@@ -423,13 +438,15 @@ static int test_quest_complete_detection(void) {
         theron_v1_quest_item_collect(&prog, (Theron_QuestItem)(1 << i));
     }
 
-    ASSERT(theron_v1_quest_complete(&prog), "quest not complete after 7 items");
+    ASSERT(!theron_v1_quest_complete(&prog),
+           "seven host bits must not assert original campaign completion");
 
     /* Duplicate collection doesn't affect completion */
     prog.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     int r = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_1_SHIELD_DEFIANT);
     ASSERT(r == 0, "duplicate collection should be no-op");
-    ASSERT(theron_v1_quest_complete(&prog), "quest complete broken by dup collection");
+    ASSERT(!theron_v1_quest_complete(&prog),
+           "duplicate host pickup must not assert campaign completion");
 
     PASS();
     return 1;
@@ -587,47 +604,30 @@ static int test_invalid_current_dungeon_rejection(void) {
 /* ── Test: full sequence simulation ──────────────────────────────── */
 
 static int test_full_sequence(void) {
-    TEST("Full 7-dungeon sequence simulation");
+    TEST("Captured campaign-mask projection leaves final stage open");
 
     Theron_DungeonProgression prog;
     theron_v1_dungeon_progression_init(&prog);
+    uint8_t campaign_mask = 0u;
 
-    /* Simulate completing all 7 dungeons */
-    for (int d = 1; d <= THERON_DUNGEON_COUNT; d++) {
-        prog.current_dungeon = (Theron_DungeonID)d;
-
-        /* Mark available */
-        prog.dungeon_states[d - 1] = THERON_DUNGEON_STATE_AVAILABLE;
-
-        /* Enter dungeon */
-        int enter = theron_v1_dungeon_enter(&prog, (Theron_DungeonID)d);
-        ASSERT(enter == 0, "dungeon enter failed");
-
-        /* Apply item reset */
-        ASSERT(theron_v1_item_reset_required(&prog, (Theron_DungeonID)d) == 1,
-               "reset not required");
-        theron_v1_item_reset_mark_applied(&prog);
-
-        /* Collect quest item */
-        Theron_QuestItem item = (Theron_QuestItem)(1 << (d - 1));
-        int coll = theron_v1_quest_item_collect(&prog, item);
-        ASSERT(coll == 1, "quest item collect failed");
-
-        /* Mark complete and exit */
-        prog.dungeon_states[d - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    /* The authentic ordinal sweep proves campaign bits 0..5, not pickups. */
+    for (int d = 1; d <= 6; d++) {
+        campaign_mask |= (uint8_t)(1u << (d - 1));
+        theron_v1_dungeon_progression_apply_campaign_completion(
+            &prog, campaign_mask);
         Theron_DungeonID next = theron_v1_dungeon_exit(&prog);
-
-        if (d < THERON_DUNGEON_COUNT) {
-            ASSERT(next == (Theron_DungeonID)(d + 1), "wrong next dungeon");
-        } else {
-            ASSERT(next == THERON_DUNGEON_INVALID, "last dungeon exit != INVALID");
-            ASSERT(prog.quest_complete == 1, "quest not complete");
-        }
+        ASSERT(next == (Theron_DungeonID)(d + 1),
+               "source-projected campaign state returned wrong next stage");
     }
 
-    /* Verify all items collected */
-    ASSERT(prog.quest_items_collected == THERON_QUEST_ALL_ITEMS,
-           "not all items collected");
+    /* Bit 6 remains raw and cannot manufacture Demon completion. */
+    theron_v1_dungeon_progression_apply_campaign_completion(&prog, 0x7fu);
+    ASSERT(theron_v1_dungeon_exit(&prog) == THERON_DUNGEON_INVALID,
+           "unverified final-stage exit must remain closed");
+    ASSERT(prog.quest_items_collected == 0u,
+           "campaign bits leaked into the quest-item collection channel");
+    ASSERT(!theron_v1_quest_complete(&prog),
+           "campaign-mask exhaustion must not claim quest completion");
 
     PASS();
     return 1;

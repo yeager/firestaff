@@ -157,8 +157,7 @@ static int tqr_dungeon_is_complete(const Theron_DungeonProgression *prog,
     if (!prog || id < 1 || id > THERON_DUNGEON_COUNT) {
         return 0;
     }
-    return prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_COMPLETE ||
-           (prog->quest_items_collected & THERON_QUEST_ITEM_MASK_FROM_DUNGEON(id)) != 0;
+    return prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_COMPLETE;
 }
 
 static int tqr_first_six_complete(const Theron_DungeonProgression *prog) {
@@ -232,9 +231,12 @@ Theron_DungeonID theron_v1_dungeon_advance(Theron_DungeonProgression *prog) {
 
     Theron_DungeonID current = prog->current_dungeon;
 
-    /* Mark current as complete */
-    if (current >= 1 && current <= THERON_DUNGEON_COUNT) {
-        prog->dungeon_states[current - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    /* Stage focus cannot manufacture a completion receipt. The world-level
+     * exit path additionally requires the source-bound campaign token. */
+    if (current < THERON_DUNGEON_1_AKUTUBA ||
+        current > THERON_DUNGEON_7_DEMON ||
+        prog->dungeon_states[current - 1] != THERON_DUNGEON_STATE_COMPLETE) {
+        return THERON_DUNGEON_INVALID;
     }
 
     tqr_unlock_available_dungeons(prog);
@@ -243,8 +245,7 @@ Theron_DungeonID theron_v1_dungeon_advance(Theron_DungeonProgression *prog) {
      * select can still choose any AVAILABLE dungeon. */
     Theron_DungeonID next = tqr_first_available_dungeon(prog);
     if (next == THERON_DUNGEON_INVALID) {
-        /* All dungeons complete — quest done */
-        prog->quest_complete = 1;
+        /* Exhausting stage choices is not proof of the final T900 event. */
         return THERON_DUNGEON_INVALID;
     }
 
@@ -303,16 +304,8 @@ int theron_v1_quest_item_collect(Theron_DungeonProgression *prog,
     prog->quest_items_collected |= (uint8_t)item;
     prog->quest_items_in_current_dungeon++;
 
-    /* If all quest items in current dungeon found, mark complete */
-    const Theron_DungeonMeta *meta = theron_v1_dungeon_meta(current);
-    if (meta && prog->quest_items_in_current_dungeon >= meta->quest_item_count) {
-        prog->dungeon_states[current - 1] = THERON_DUNGEON_STATE_COMPLETE;
-    }
-
-    /* Check quest completion */
-    if (prog->quest_items_collected == THERON_QUEST_ALL_ITEMS) {
-        prog->quest_complete = 1;
-    }
+    /* This compatibility helper records a provisional host bit only. The
+     * original T900 pickup/retrieval consumer is not bound to this API. */
 
     return 1; /* newly collected */
 }
@@ -366,16 +359,23 @@ Theron_DungeonID theron_v1_dungeon_exit(Theron_DungeonProgression *prog) {
         return THERON_DUNGEON_INVALID;
     }
 
-    /* Must be COMPLETE to exit */
+    /* Campaign completion and quest-item collection are separate state. */
     if (prog->dungeon_states[current - 1] != THERON_DUNGEON_STATE_COMPLETE) {
-        return THERON_DUNGEON_INVALID; /* cannot exit — quest item not yet found */
+        return THERON_DUNGEON_INVALID; /* no source-projected completion state */
+    }
+    if (current == THERON_DUNGEON_7_DEMON &&
+        !theron_v1_quest_complete(prog)) {
+        return THERON_DUNGEON_INVALID;
     }
 
     return theron_v1_dungeon_advance(prog);
 }
 
 int theron_v1_quest_complete(const Theron_DungeonProgression *prog) {
-    return prog && prog->quest_complete;
+    return prog && prog->quest_complete &&
+           prog->quest_items_collected == THERON_QUEST_ALL_ITEMS &&
+           prog->dungeon_states[THERON_DUNGEON_7_DEMON - 1] ==
+               THERON_DUNGEON_STATE_COMPLETE;
 }
 
 uint8_t theron_v1_quest_item_bitmask(const Theron_DungeonProgression *prog) {
@@ -394,12 +394,18 @@ void theron_v1_dungeon_progression_restore(Theron_DungeonProgression *prog,
      * dungeon i+1 is COMPLETE; next is AVAILABLE; rest LOCKED. */
     memset(prog, 0, sizeof(*prog));
 
-    prog->quest_items_collected = quest_items_bitmask;
+    prog->quest_items_collected =
+        (uint8_t)(quest_items_bitmask & THERON_QUEST_ALL_ITEMS);
     prog->current_dungeon = current;
 
     /* Infer dungeon states from item bitmask */
     for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
         uint8_t item_bit = (uint8_t)(1 << i);
+        if (i == THERON_DUNGEON_7_DEMON - 1) {
+            /* Its item bit does not prove the separate final completion event. */
+            prog->dungeon_states[i] = THERON_DUNGEON_STATE_LOCKED;
+            continue;
+        }
         if ((quest_items_bitmask & item_bit) != 0) {
             prog->dungeon_states[i] = THERON_DUNGEON_STATE_COMPLETE;
         } else if (i + 1 == (int) current) {
@@ -417,13 +423,41 @@ void theron_v1_dungeon_progression_restore(Theron_DungeonProgression *prog,
     prog->current_level = 1;
     prog->dungeon_playtime_seconds = 0;
     prog->quest_items_in_current_dungeon = 0;
-    prog->quest_complete = (quest_items_bitmask == THERON_QUEST_ALL_ITEMS);
+    prog->quest_complete = 0;
 
     if (seeds) {
         for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
             prog->dungeon_seeds[i] = seeds[i];
         }
     }
+}
+
+void theron_v1_dungeon_progression_apply_campaign_completion(
+    Theron_DungeonProgression *prog,
+    uint8_t campaign_completion_mask) {
+    int i;
+    if (!prog || prog->current_dungeon < THERON_DUNGEON_1_AKUTUBA ||
+        prog->current_dungeon > THERON_DUNGEON_7_DEMON) {
+        return;
+    }
+
+    /* DMS-SG.001 ordinal dispatch $DE21/$DE38 proves campaign bits 0..5;
+     * ordinal 6 stalls before a final write. Keep this channel separate from
+     * quest-item bits; see docs/source-lock/theron-original-akutuba-
+     * completion-capture-2026-08-21.md:70-88. */
+    for (i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+        uint8_t bit = (uint8_t)(1u << i);
+        if (i < THERON_DUNGEON_7_DEMON - 1 &&
+            (campaign_completion_mask & bit) != 0u) {
+            prog->dungeon_states[i] = THERON_DUNGEON_STATE_COMPLETE;
+        } else if (i < THERON_DUNGEON_7_DEMON - 1 &&
+                   i == (int)prog->current_dungeon - 1) {
+            prog->dungeon_states[i] = THERON_DUNGEON_STATE_AVAILABLE;
+        } else {
+            prog->dungeon_states[i] = THERON_DUNGEON_STATE_LOCKED;
+        }
+    }
+    tqr_unlock_available_dungeons(prog);
 }
 
 const char *theron_v1_dungeon_name(Theron_DungeonID id) {
