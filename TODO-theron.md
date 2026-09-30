@@ -2,6 +2,25 @@
 
 Reviewed 2026-09-30. Only open work is listed here.
 
+## 2026-09-30 — authentic JP full-CUE capture still stops before Track 02 consumer
+
+- On trv2, an isolated 120-second run used the complete hash-verified JP
+  Rev. 1 CUE, its Track 02 BIN (`b7afb338ad31be1025b53f9aff12d73a`), and the
+  already-installed System Card (`ff1a674273fe3540ccef576376407d1d`). The
+  instrumented Mednafen binary's MD5 was `e69796b508d306844ffdee039858b4a1`;
+  capture scratch and traces remain outside Git.
+- The run observed 115 CD IRQs, 24 raw-sector spans, four SCSI reads and 24
+  sector bindings. The scripted RUN was applied and read only at the System
+  Card poll `$E4B7`; the game/non-System-Card poll gate remained unobserved.
+  Stage two recorded two calls and one return, but the authenticated `$40A4`
+  → `$E00F` call had no `$40A7` return. Strict verification rejected it.
+- There were zero authenticated CD→RAM origin receipts, zero dynamic CD_READ
+  transactions, and no direct RAM-provenance sidecar. The single `$E009`
+  dispatch had zero data reads. The VDC I/O trace reached its 2,097,152-row
+  cap, so it is incomplete. This capture supplies no level/object semantics,
+  gameplay transition, or rendering evidence; the original consumer gap
+  remains open.
+
 ## 2026-09-30 — preserve the semantics gap for the regional 64-word block
 
 Authenticated US and JP Rev. 1 Track 02 tests now verify the same 64 words at
