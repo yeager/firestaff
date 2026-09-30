@@ -1,6 +1,30 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-09-29. Only open work is listed here.
+Reviewed 2026-09-30. Only open work is listed here.
+
+## 2026-09-30 — isolate Theron menu-route input instrumentation
+
+- ✅ The Mednafen 1.32.1 research patch previously ORed
+  `TheronDratorGeneratorInputMask()` into every gamepad update, even when the
+  Drator route was not selected. Its route-stage counters start at zero, so
+  ordinary instrumented boots received unsolicited RUN pulses. The input
+  producer is now gated on the explicit `FIRESTAFF_THERON_MENU_ROUTE=drator-generator`
+  setting. The full research patchset applied to a fresh authentic source
+  archive, the instrumented binary built serially on trv2, and the focused
+  live-capture script test passed.
+- 🔒 A real-media startup with the new binary, the authenticated JP Rev. 1 CUE
+  and System Card, and host RUN at 25 seconds reached Mednafen's original
+  controller poll. Capture stopped because the bounded VDC snapshot validator
+  did not produce its required atomic receipt; therefore this is only an
+  input-isolation check, not proof of menu artwork, gameplay, or Theron parity.
+  A 105-second run recorded only 11,783 VDC writes and remained in the
+  System Card input loop. Repeating with the input-read bound raised to
+  1,048,576 observed the host RUN at `$E4C8` (`raw=0008`, `value=37`) after
+  497,855 trace rows, but still recorded no authenticated Track 02 handoff;
+  its VDC trace stopped at 40,354 writes before the 65,536 boundary. The
+  controller poll is verified, while title selection and game launch are not.
+  Both failed traces were reviewed and then removed with their isolated
+  `/dev/shm` build artifacts; no media or trace payload entered Git.
 
 The low-level campaign-mask projection now preserves raw bit 6 without
 projecting it onto Demon completion. The original ordinal-6 capture stalls
@@ -3887,6 +3911,30 @@ av bankladdningen. Se
   MD5 `2c063b192787ac9e7528c0e2096fc034`, distinct from the untouched JP user
   save (`dbdedb0ec809227b289c2bc5b18b9c9d`). Raw capture artifacts remain
   outside Git. The run does not change the earlier negative gameplay result.
+- ✅ A 2026-09-29 capture-helper audit found and fixed two launch-contract
+  defects: the CUE path was not a separate Mednafen argument, and the locally
+  supplied SysCard3 image included a 512-byte copier header. The capture now
+  keeps the source MD5 `ff1a674273fe3540ccef576376407d1d`, strips the header
+  only in its private capture home, requires runtime-image MD5
+  `38179df8f4ac870017db21ebcbf53114`, and records both values in the receipt.
+  The C helper parser and capture-script checks pass on trv2. A fresh authentic
+  JP Rev. 1 capture sent RUN at 25 seconds and the input trace records PCE port
+  value `$0008`; its receipt verifies both BIOS hashes and the JP Track 02 MD5.
+  After 125 seconds the instrumented run still ended with only 24 raw sectors,
+  four SCSI reads, 115 CD IRQs, one `$E009` dispatch/entry, zero `$E009` data
+  reads and zero authenticated CD-to-RAM receipts. Screens at 60/90/110
+  seconds remain on `SUPER SYSTEM CARD needed` / old-CD-ROM2 warnings, not game
+  artwork. This proves input reached the controller port but does not establish
+  a playable session, stair transaction, or Theron parity. The private trace
+  remains on trv2 outside Git. A clean-home control using stock Mednafen 1.32.1,
+  the same CUE and the same normalized BIOS displayed `SUPER CD-ROM SYSTEM VER.
+  3.00`; with RUN at the observed 25-second prompt, it reached authentic
+  opening artwork by 55 seconds. `strace` confirms the instrumented binary also
+  opened the exact normalized BIOS path, so its startup divergence is not
+  explained by a missing BIOS file. The runs are not frame-aligned, but the
+  instrumented binary is not yet a trustworthy gameplay oracle. Do not use its
+  negative CD-to-RAM result as parity evidence until this source/runtime
+  discrepancy is resolved.
 - ✅ The live capture now also admits the authentic US CloneCD single-BIN CUE
   without rewriting its media: it bounds Track 02 from CUE `INDEX 01` sector
   3234 to the next track at sector 6605, extracts only that range in its

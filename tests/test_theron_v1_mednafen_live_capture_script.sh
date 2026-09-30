@@ -160,6 +160,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_MENU_ROUTE="$menu_route"' "$script" ||
     exit 1
 fi
 if ! grep -Fq '!strcmp(route, "drator-generator")' "$drator_menu_patch" ||
+   ! grep -Fq 'if(!route || strcmp(route, "drator-generator")) return 0;' "$drator_menu_patch" ||
    ! grep -Fq 'The authentic cold-start RUN is supplied by the replay script' "$drator_menu_patch" ||
    grep -Fq 'TheronScriptInputFrame() % 300u' "$drator_menu_patch" ||
    grep -Fq 'return 0x0008' "$drator_menu_patch" ||

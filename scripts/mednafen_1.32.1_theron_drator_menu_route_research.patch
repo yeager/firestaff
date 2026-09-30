@@ -1,7 +1,7 @@
 diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
-@@ -42,4 +42,50 @@ namespace MDFN_IEN_PCE
+@@ -42,4 +42,52 @@ namespace MDFN_IEN_PCE
  static bool TheronPostDungeonOrdinalInjected;
  static bool TheronPostDungeonEntryInjected;
  static bool TheronTitleWaitInputInjected;
@@ -18,6 +18,8 @@ diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
 + * periodic startup presses that can skip or alter the menu handoff. */
 +uint16 TheronDratorGeneratorInputMask(void)
 +{
++ const char *route = getenv("FIRESTAFF_THERON_MENU_ROUTE");
++ if(!route || strcmp(route, "drator-generator")) return 0;
 + if(TheronDratorGeneratorRouteStage == 1 || TheronDratorGeneratorRouteStage == 3)
 + {
 +  const unsigned route_frame = TheronScriptInputFrame() - TheronDratorGeneratorInputStartFrame;
@@ -185,8 +187,9 @@ diff --git a/src/pce/input/gamepad.cpp b/src/pce/input/gamepad.cpp
 +uint16 TheronDratorGeneratorInputMask(void);
 
  class PCE_Input_Gamepad : public PCE_Input_Device
-@@ -116,3 +117,4 @@ void PCE_Input_Gamepad::Update(const uint8* data)
+@@ -116,3 +117,5 @@ void PCE_Input_Gamepad::Update(const uint8* data)
  {
   buttons = MDFN_de16lsb(data);
++ /* Research-only navigation must never inject input into ordinary captures. */
 + buttons |= TheronDratorGeneratorInputMask();
   if(theron_script_run_valid)
