@@ -2597,6 +2597,21 @@ static int dm2_data_dir_is_explicit(void) {
     return 0;
 }
 
+static int dm2_data_root_exists(const char *data_dir) {
+    struct stat info;
+    char root[PATH_MAX];
+    const char *member;
+    size_t length;
+
+    if (!data_dir || !data_dir[0]) return 0;
+    member = strstr(data_dir, "::");
+    length = member ? (size_t)(member - data_dir) : strlen(data_dir);
+    if (length == 0u || length >= sizeof(root)) return 0;
+    memcpy(root, data_dir, length);
+    root[length] = '\0';
+    return stat(root, &info) == 0;
+}
+
 static int dm2_test_paths_name_same_file(const char *left, const char *right) {
     struct stat left_stat;
     struct stat right_stat;
@@ -2993,6 +3008,14 @@ int main(void) {
     if (!data_dir || !data_dir[0]) {
         puts("skip: no DM2 data directory configured");
         return g_failures == 0 ? 0 : 1;
+    }
+
+    /* CI explicitly supplies the canonical archive path even on public
+     * runners where licensed media is absent. Missing media is a skip; an
+     * existing but unrecognized archive remains a hard failure below. */
+    if (!dm2_data_root_exists(data_dir)) {
+        printf("skip: DM2 data is not installed at %s\n", data_dir);
+        return 77;
     }
 
     dm2_v1_boot_profile_init(&preflight);

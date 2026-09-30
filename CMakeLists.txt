@@ -18023,7 +18023,8 @@ endif()
     # the supplied DOS corpus.  Keep the original ZIP as the selected source;
     # the test and runtime read its members in memory.
     set_tests_properties(dm2_v1_m11_startup_profile_gate PROPERTIES
-        ENVIRONMENT "FIRESTAFF_DM2_V1_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_V1_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;SDL_AUDIODRIVER=dummy"
         LABELS "dm2;dos;real-media;native;m11;startup;skip-safe"
     )
 
@@ -57576,7 +57577,10 @@ if(APPLE)
         if(_dm2_srcs AND "src/dm2/dm2_v1_midi_backend.c" IN_LIST _dm2_srcs)
             target_link_libraries(${_dm2_t} PRIVATE
                 "-framework CoreMIDI"
-                "-framework CoreFoundation")
+                "-framework CoreFoundation"
+                "-framework AudioToolbox"
+                "-framework AudioUnit"
+                "-framework CoreAudio")
         endif()
     endforeach()
 endif()
