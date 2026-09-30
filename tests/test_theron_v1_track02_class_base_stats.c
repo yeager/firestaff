@@ -3,9 +3,9 @@
 #include <stdio.h>
 
 int main(void) {
-    assert(theron_v1_track02_class_base_word_count() == 16);
+    assert(theron_v1_track02_prefix_word_count() == 16);
 
-    const uint16_t *w = theron_v1_track02_class_base_words();
+    const uint16_t *w = theron_v1_track02_prefix_words();
     assert(w != NULL);
 
     assert(w[0] == 0);

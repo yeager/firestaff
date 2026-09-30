@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-30 — remove unsupported semantics from two raw-data APIs
+
+- Renamed the 64-word accessor from “experience threshold” to `raw_word` and
+  the preceding 16-word accessor from “class base” to `prefix_words`. Updated
+  the tests and the reverse-engineering category; no production consumer used
+  either API.
+- Extended each authentic US/JP region test to compare the 16 preceding words
+  with the source array, in addition to verifying the byte context and all 64
+  following words. On trv2, both data-free tests and all three hash-verified
+  real-media tests passed (5/5 total).
+- The source meanings and original consumers remain unknown; `TODO-theron.md`
+  records that gap explicitly.
+
 ## 2026-09-30 — bind a regional 64-word source block to authentic media
 
 - Added real-media CTests for US and JP Rev. 1 Track 02 at their distinct

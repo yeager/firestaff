@@ -1,4 +1,5 @@
 #include "theron_v1_dungeon_handoff.h"
+#include "theron_v1_track02_class_base_stats.h"
 #include "theron_v1_track02_experience_table.h"
 
 #include <stdio.h>
@@ -10,7 +11,7 @@
 #define RAW_USER_DATA_OFFSET 16u
 #define US_TABLE_UD_OFFSET 0x1DA890u
 #define JP_TABLE_UD_OFFSET 0x1DA0BCu
-#define TABLE_BYTES (THERON_TRACK02_EXPERIENCE_ENTRY_COUNT * 2u)
+#define TABLE_BYTES (THERON_TRACK02_RAW_WORD_COUNT * 2u)
 #define TABLE_CONTEXT_BYTES 32u
 
 typedef struct Track02Media {
@@ -156,18 +157,34 @@ static int verify_table(const char *edition, const Track02Media *media)
                 strcmp(edition, "us") == 0 ? "US" : "JP Rev. 1");
         return 0;
     }
-    for (unsigned int i = 0u; i < THERON_TRACK02_EXPERIENCE_ENTRY_COUNT; ++i) {
+    for (unsigned int i = 0u; i < THERON_TRACK02_RAW_WORD_COUNT; ++i) {
         const size_t entry_offset = offset + (size_t)i * 2u;
         const unsigned int actual =
             (unsigned int)media->user_data[entry_offset] |
             ((unsigned int)media->user_data[entry_offset + 1u] << 8u);
         const unsigned int expected =
-            theron_v1_track02_us_experience_threshold(i);
+            theron_v1_track02_us_raw_word(i);
         if (actual != expected) {
             fprintf(stderr,
                     "FAIL: %s 64-word source table differs at word %u\n",
                     strcmp(edition, "us") == 0 ? "US" : "JP Rev. 1", i);
             return 0;
+        }
+    }
+    {
+        const uint16_t *prefix_words = theron_v1_track02_prefix_words();
+        const size_t prefix_offset = offset - TABLE_CONTEXT_BYTES;
+        for (unsigned int i = 0u; i < THERON_TRACK02_PREFIX_WORD_COUNT; ++i) {
+            const size_t word_offset = prefix_offset + (size_t)i * 2u;
+            const unsigned int actual =
+                (unsigned int)media->user_data[word_offset] |
+                ((unsigned int)media->user_data[word_offset + 1u] << 8u);
+            if (actual != prefix_words[i]) {
+                fprintf(stderr,
+                        "FAIL: %s 16-word preceding source block differs at word %u\n",
+                        strcmp(edition, "us") == 0 ? "US" : "JP Rev. 1", i);
+                return 0;
+            }
         }
     }
     return 1;

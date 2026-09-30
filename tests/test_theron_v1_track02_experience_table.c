@@ -4,30 +4,30 @@
 
 static void test_count(void)
 {
-    assert(THERON_TRACK02_EXPERIENCE_ENTRY_COUNT == 64);
+    assert(THERON_TRACK02_RAW_WORD_COUNT == 64);
     printf("  PASS: count\n");
 }
 
 static void test_first_entries(void)
 {
-    assert(theron_v1_track02_us_experience_threshold(0) == 0);
-    assert(theron_v1_track02_us_experience_threshold(1) == 3);
-    assert(theron_v1_track02_us_experience_threshold(2) == 8);
-    assert(theron_v1_track02_us_experience_threshold(3) == 11);
+    assert(theron_v1_track02_us_raw_word(0) == 0);
+    assert(theron_v1_track02_us_raw_word(1) == 3);
+    assert(theron_v1_track02_us_raw_word(2) == 8);
+    assert(theron_v1_track02_us_raw_word(3) == 11);
     printf("  PASS: first_entries\n");
 }
 
 static void test_last_entry(void)
 {
-    assert(theron_v1_track02_us_experience_threshold(63) == 214);
+    assert(theron_v1_track02_us_raw_word(63) == 214);
     printf("  PASS: last_entry\n");
 }
 
 static void test_monotonic(void)
 {
-    for (unsigned int i = 1; i < THERON_TRACK02_EXPERIENCE_ENTRY_COUNT; i++) {
-        unsigned int prev = theron_v1_track02_us_experience_threshold(i - 1);
-        unsigned int curr = theron_v1_track02_us_experience_threshold(i);
+    for (unsigned int i = 1; i < THERON_TRACK02_RAW_WORD_COUNT; i++) {
+        unsigned int prev = theron_v1_track02_us_raw_word(i - 1);
+        unsigned int curr = theron_v1_track02_us_raw_word(i);
         (void)prev; (void)curr;
         assert(curr >= prev);
     }
@@ -36,8 +36,8 @@ static void test_monotonic(void)
 
 static void test_bounds(void)
 {
-    assert(theron_v1_track02_us_experience_threshold(64) == 0);
-    assert(theron_v1_track02_us_experience_threshold(255) == 0);
+    assert(theron_v1_track02_us_raw_word(64) == 0);
+    assert(theron_v1_track02_us_raw_word(255) == 0);
     printf("  PASS: bounds\n");
 }
 

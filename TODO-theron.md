@@ -6,10 +6,10 @@ Reviewed 2026-09-30. Only open work is listed here.
 
 Authenticated US and JP Rev. 1 Track 02 tests now verify the same 64 words at
 their edition-specific offsets (`0x1DA890` and `0x1DA0BC`) and byte-identical
-preceding context. This establishes source identity only. The block's purpose,
-any XP/rank interpretation, and its original runtime consumer remain open;
-do not describe it as an authenticated XP table until original code or runtime
-evidence binds that meaning.
+preceding 16-word span. This establishes source identity only. Both raw-word
+APIs now avoid assigning class/stat or XP/rank meaning; the blocks' purpose and
+original runtime consumer remain open. Do not restore semantic naming until
+original code or runtime evidence binds those meanings.
 
 ## 2026-09-30 — keep original-consumer test fixtures out of `/tmp`
 

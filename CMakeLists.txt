@@ -47760,6 +47760,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
 
     add_executable(test_theron_v1_track02_experience_table_real_media
         tests/test_theron_v1_track02_experience_table_real_media.c
+        src/theron/theron_v1_track02_class_base_stats.c
         src/theron/theron_v1_track02_experience_table.c)
     target_link_libraries(test_theron_v1_track02_experience_table_real_media PRIVATE
         firestaff_theron)
