@@ -14,6 +14,12 @@
 
 ## Developer changes
 
+- `DM1 archive handoff`: fixes M12 source-root selection by preserving the
+  authenticated ZIP for M11 when an archive sits directly under the configured
+  data directory.
+- `DM1 and CSB Atari sound evidence`: adds authentic SND1 cross-media checks;
+  the DM1 playback test tracks accepted events reaching the SDL PCM queue and
+  rejected events leaving it unchanged.
 - `DM2 Macintosh real-media regression`: verifies AUTO platform identity,
   source spawn position, first movement, adjacent-creature census, Mac HUD and
   viewport materials, and zero renderer fallbacks using authenticated retail
