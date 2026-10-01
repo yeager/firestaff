@@ -9,6 +9,10 @@
   ReDMCSB COMMAND.C. The Atari handoff passed all four presentation modes
   (4,537 checks); a further original-media route confirms that movement
   resumes with the recruited leader and synchronized GAMEBLOCK coordinates.
+  The original Atari 7z CLI regression now also drives this complete path with
+  `wait:32` host loop-frame tokens, which let movement cooldowns expire, then
+  asserts C127 ordinal 4, one recruited champion, and resumed movement at
+  (9,7). These waits are not original Atari VBlanks.
   The A31M real-media handoff passed 55 checks.
 
 - 2026-10-01: Retired the CSB FM Towns startup test that required the
@@ -29,9 +33,9 @@
   facing south, with zero champions is intentional. `LOADSAVE.C` initializes
   an empty CSB party, and `CLIKMENU.C` explains that movement without champions
   is safe on original maps that contain champion mirrors and no creature types.
-  Firestaff's authentic-media regression verifies a route to a C127 mirror.
-  Champion recruitment remains unverified, and the supplied Atari save disk
-  contains no campaign save files; no party or save was synthesized.
+  Firestaff's authentic-media regression verifies a route to a C127 mirror
+  and recruitment of the first champion. The supplied Atari save disk contains
+  no campaign save files; no party or save was synthesized.
 - 2026-10-01: The original Atari ST v2.1 Utility Disk `ANIMATE.SCR` trace
   requires exactly 2,036 source VBlanks (40.72 seconds at 50 Hz) before its
   FTLCODE handoff. The real-media parser verifies the sequence and now prints

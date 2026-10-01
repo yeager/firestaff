@@ -87,8 +87,10 @@ Reviewed 2026-09-05. Only open work is listed here.
   and passed against the original Atari ST preservation archive
   `Game,Chaos_Strikes_Back,Atari_ST,Software.7z` (authenticated asset MD5
   `ebf6a57af3f27782e358c0490bfd2f2e`). It covers the `ANIMATE.SCR` title,
-  direct CLI runtime movement and M12 menu launch. This proves that startup
-  route only; Atari capture/audio comparisons remain open. The separate nested
+  direct CLI runtime movement, C127/C160 first-champion recruitment with
+  host loop-frame `wait:32` steps for movement cooldowns, resumed post-recruit
+  movement, and M12 menu launch. These waits are not original Atari VBlanks.
+  Atari capture/audio comparisons remain open. The separate nested
   ZIP test still skips when its nested ZIP package is not installed.
 - Extend source-text extraction beyond the now-bound object/action names and
   reviewed Utility Disk DB2 instruction. Atari ST now

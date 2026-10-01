@@ -125,6 +125,36 @@ probe_runtime_input strafe-left  9,0,2
 probe_runtime_input strafe-right 9,0,2
 probe_runtime_input action       9,0,2
 
+# Keep the authenticated first-champion route in the production CLI loop.
+# Explicit wait:32 tokens advance host loop frames between commands, including
+# after title acceptance; no pose or save state is injected by the test.
+if [ -e "$archive_path" ]; then
+    champion_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --width 640 --height 400 --game csb --platform atari-st --data-dir "$archive_path" \
+        --boot-probe --boot-probe-frames 2 \
+        --script 'enter,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,strafe-left,wait:32,right,wait:32,right,wait:32,click:224:164,click:260:230,wait:32,strafe-left' \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1)" || {
+        printf '%s\n' "$champion_output" >&2
+        exit 1
+    }
+    case "$champion_output" in
+        *assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=inactive*levelLoaded=1*'party=9,7,0'*'champions=1'*) ;;
+        *)
+            echo "FAIL: authentic Atari CLI route did not recruit C127 and resume movement"
+            printf '%s\n' "$champion_output" >&2
+            exit 1
+            ;;
+    esac
+    printf '%s\n' "$champion_output" | grep -Fq 'dm1HocCandidateOrdinal=4' || {
+        echo "FAIL: authentic Atari CLI route did not select C127 ordinal 4" >&2
+        printf '%s\n' "$champion_output" >&2
+        exit 1
+    }
+else
+    echo "SKIP: authentic Atari ST 7z archive unavailable for champion CLI regression"
+fi
+
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --platform atari-st --data-dir "$media_path" \
