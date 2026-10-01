@@ -154,6 +154,16 @@ Reviewed 2026-08-29. Only open work is listed here.
   whether the reported M5 keyboard, visible monster, Retina presentation or
   native audio issue is the same behavior. The Codex Mac remains locked, so
   those hardware observations are still unavailable here.
+  On 2026-10-01, reran the exact staged macOS arm64 3.0.353 application bundle
+  (`Firestaff.app/Contents/MacOS/Firestaff`) with the authenticated Mac retail
+  ZIP. Its ordinary CLI path turned east and moved twice to (3,8); the scaled
+  M12 Mac platform → game → retail title → New Game path also reached and
+  presented an active runtime after movement. The archive hash gate and
+  `--game dm2` AUTO selection passed. The test used SDL's dummy audio device,
+  so it validates neither audible playback nor the reported M5's native
+  keyboard/audio devices. The initial failed invocation targeted the bundled
+  Dungeon Studio UI executable, not `Firestaff.app`, and is not game-engine
+  evidence.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`
