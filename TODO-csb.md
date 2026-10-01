@@ -79,19 +79,22 @@ Reviewed 2026-09-05. Only open work is listed here.
   M12-to-M11 test drives production input from the untouched spawn to C127
   ordinal 4, selects its C026 portrait, and confirms it through source C160.
   The supplied Atari save-disk MSA has no root files, so there is no authentic
-  campaign save available to substitute. This verifies title/menu-to-runtime
-  and first-champion recruitment, not sustained campaign play or capture.
+  campaign save available to substitute. This verifies title/menu-to-runtime,
+  two consecutive C127/C160 champion recruitments, and movement after the
+  second confirmation, not sustained campaign play or capture. The second
+  source-authentic route approaches the C127 wall at (12,8) from the open
+  corridor at (11,8).
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
   platforms. On 2026-10-01, `csb_v1_atari_original_archive_cli_boot` was added
   and passed against the original Atari ST preservation archive
   `Game,Chaos_Strikes_Back,Atari_ST,Software.7z` (authenticated asset MD5
   `ebf6a57af3f27782e358c0490bfd2f2e`). It covers the `ANIMATE.SCR` title,
-  direct CLI runtime movement, C127/C160 first-champion recruitment with
-  host loop-frame `wait:32` steps for movement cooldowns, then a further
-  eastward continuation to (10,7) with a viewport receipt. This closes the
-  immediate post-recruit input continuation gap, not sustained campaign play.
-  The waits are not original Atari VBlanks.
+  direct CLI runtime movement, C127/C160 recruitment through ordinal 4, then
+  a source-verified corridor route to ordinal 5, its C160 confirmation, and
+  resumed movement to (11,7), with a nonzero viewport receipt. Host loop-frame
+  `wait:32` steps let movement cooldowns expire; these waits are not original
+  Atari VBlanks. Sustained campaign play remains open.
   Atari capture/audio comparisons remain open. The separate nested
   ZIP test still skips when its nested ZIP package is not installed.
 - Extend source-text extraction beyond the now-bound object/action names and

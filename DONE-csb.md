@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+- 2026-10-02: The authentic Atari ST CLI route now continues from its first
+  recruited champion to the next source-authenticated C127 mirror. It follows
+  open map squares (12,7) → (11,7) → (11,8), faces east toward the C127 wall
+  at (12,8), selects its portrait at source screen center (112,82), confirms
+  through C160, and resumes movement to (11,7). The final real-media receipt
+  shows two champions, a closed candidate panel, and a nonzero viewport hash.
+  The extended test uses `wait:32` host loop frames between commands so
+  movement cooldowns expire; these waits are not original Atari VBlanks.
+
 - 2026-10-01: The authentic Atari ST M12-to-M11 route now follows production
   input and collision from the untouched empty-party spawn at map 0 (9,0),
   facing south, to retail C127 ordinal 4 at (10,7), clicks its C026 portrait,
