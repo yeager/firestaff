@@ -5062,6 +5062,14 @@ static void m11_write_autotest_runtime_probe(const char* path,
     M11_BootProbeReceipt startupReceipt;
     int startupReceiptReady;
     int dm2Platform = -1;
+    const char *dm1FmtownsProgram = "";
+    const char *dm1FmtownsProgramMd5 = "";
+    int dm1FmtownsMenuSelectsProgram = 0;
+    int outputDimensionsReady = 0;
+    int windowWidth = 0;
+    int windowHeight = 0;
+    int drawableWidth = 0;
+    int drawableHeight = 0;
     if (!path || path[0] == '\0') {
         return;
     }
@@ -5072,9 +5080,21 @@ static void m11_write_autotest_runtime_probe(const char* path,
     memset(&startupReceipt, 0, sizeof(startupReceipt));
     startupReceiptReady = M11_GameView_GetBootProbeReceipt(gameView,
                                                             &startupReceipt);
+    outputDimensionsReady = M11_Render_GetWindowAndDrawableSize(
+        &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         gameView->dm2BootProfile) {
         dm2Platform = ((const DM2_V1_BootProfile *)gameView->dm2BootProfile)->platform;
+    }
+    if (gameView && gameView->dm1FmtownsStartupReceiptValid &&
+        dm1_v1_fmtowns_startup_receipt_is_native(
+            &gameView->dm1FmtownsStartupReceipt)) {
+        dm1FmtownsProgram =
+            gameView->dm1FmtownsStartupReceipt.game_program_name;
+        dm1FmtownsProgramMd5 =
+            gameView->dm1FmtownsStartupReceipt.game_program_md5;
+        dm1FmtownsMenuSelectsProgram =
+            gameView->dm1FmtownsStartupReceipt.menu_info_selects_game;
     }
     /* Theron keeps its source-owned party/runtime state in theronState;
      * M11_GameViewState.world is the shared DM1-compatible shell and remains
@@ -5125,12 +5145,15 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"active\": %d,\n"
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
+            "  \"bootAssetMd5\": \"%s\",\n"
+            "  \"dm1FmtownsStartup\": {\"program\": \"%s\", \"programMd5\": \"%s\", \"menuSelectsProgram\": %d},\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
             "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
             "  \"dm2FmtownsStartup\": {\"titleBound\": %d, \"titleFinished\": %d, \"titleRejected\": %d, \"swooshActive\": %d, \"frameIndex\": %u, \"frameCount\": %u, \"frameTicksRemaining\": %u, \"timerAccumulatorUs\": %u},\n"
             "  \"csbViewportHash\": %u,\n"
             "  \"script\": {\"waitFramesRemaining\": %d, \"pending\": %d},\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
+            "  \"outputSize\": {\"valid\": %d, \"windowWidth\": %d, \"windowHeight\": %d, \"drawableWidth\": %d, \"drawableHeight\": %d},\n"
             "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupTitleRuntimeSource\": %d, \"dm1StartupTitleCompletedSteps\": %u, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
             "  \"lastAction\": \"%s\",\n"
             "  \"lastOutcome\": \"%s\",\n"
@@ -5144,6 +5167,10 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->active : 0,
             gameView ? gameView->title : "",
             gameView ? gameView->sourceId : "",
+            startupReceipt.bootAssetMd5,
+            dm1FmtownsProgram,
+            dm1FmtownsProgramMd5,
+            dm1FmtownsMenuSelectsProgram,
             dm2Platform,
             gameView ? gameView->dm2MacMovieActive : 0,
             gameView ? gameView->dm2MacMovieComplete : 0,
@@ -5167,6 +5194,11 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->presentationMode : -1,
             gameView ? gameView->presentationWidth : 0,
             gameView ? gameView->presentationHeight : 0,
+            outputDimensionsReady,
+            windowWidth,
+            windowHeight,
+            drawableWidth,
+            drawableHeight,
             startupReceiptReady,
             startupReceipt.startupPhase,
             startupReceipt.active,

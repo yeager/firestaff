@@ -40,6 +40,21 @@ int main(void)
     const char *root = getenv("FIRESTAFF_CSB_ANIMATE_ROOT");
     const char *cache_root = getenv("FIRESTAFF_CSB_ANIMATE_CACHE");
 
+    /* This binary also has a data-free unit-test registration. The real-media
+     * registration supplies an explicit Utility Disk path; on CI machines
+     * without the user's private media, report CTest's configured skip code
+     * instead of turning absent input into a set of misleading failures. */
+    if (root && root[0] && cache_root && cache_root[0]) {
+        FILE *media = fopen(root, "rb");
+        if (!media) {
+            fprintf(stderr,
+                    "SKIP: authentic Atari Utility Disk media is unavailable: %s\n",
+                    root);
+            return 77;
+        }
+        fclose(media);
+    }
+
     CHECK(csb_v1_atari_st_animation_decode_p4b1_palette(palette_bytes,
               sizeof(palette_bytes), palette) && palette[0][0] == 0u &&
               palette[1][0] == 255u && palette[1][1] == 218u &&
@@ -176,6 +191,12 @@ int main(void)
                   &trace) && trace.valid && trace.waited_vbl_count >
                   trace.presented_vbls[1],
                   "launcher route exposes ANIM.C's final VBlank for FTLCODE handoff");
+        if (trace.valid) {
+            printf("INFO: authentic Atari ANIMATE.SCR requires %u source VBlanks at 50 Hz\n",
+                   (unsigned int)trace.waited_vbl_count);
+            printf("FIRESTAFF_CSB_ANIMATE_WAITED_VBL=%u\n",
+                   (unsigned int)trace.waited_vbl_count);
+        }
         {
             uint8_t sound[4096];
             size_t sound_size = 0u;

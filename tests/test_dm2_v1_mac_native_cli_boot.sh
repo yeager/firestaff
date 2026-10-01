@@ -150,6 +150,7 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
 startup = probe.get("startup", {})
 movie = probe.get("dm2Startup", {})
 party = probe.get("party", {})
+output_size = probe.get("outputSize", {})
 if (
     probe.get("sourceId") != "dm2"
     or movie.get("platform") != 4
@@ -163,6 +164,10 @@ if (
     or party.get("mapY") != 8
     or party.get("direction") != 1
     or party.get("championCount") != 2
+    or output_size.get("valid") != 1
+    or (output_size.get("windowWidth"), output_size.get("windowHeight"),
+        output_size.get("drawableWidth"), output_size.get("drawableHeight"))
+       != (320, 200, 320, 200)
 ):
     raise SystemExit(
         "FAIL: normal Macintosh Title.MooV-to-runtime route did not turn east "
@@ -204,6 +209,7 @@ movie = probe.get("dm2Startup", {})
 party = probe.get("party", {})
 runtime_frame = probe.get("dm2RuntimeFrame", {})
 script = probe.get("script", {})
+output_size = probe.get("outputSize", {})
 if (
     probe.get("sourceId") != "dm2"
     or movie.get("platform") != 4
@@ -222,6 +228,10 @@ if (
                          "noCoreFallbacks": 1, "fallbackDraws": 0}
     or script.get("waitFramesRemaining") != 0
     or script.get("pending") != 0
+    or output_size.get("valid") != 1
+    or (output_size.get("windowWidth"), output_size.get("windowHeight"),
+        output_size.get("drawableWidth"), output_size.get("drawableHeight"))
+       != (1920, 1080, 1920, 1080)
 ):
     raise SystemExit(
         "FAIL: scaled M12 Macintosh route did not finish Title.MooV, New Game, "

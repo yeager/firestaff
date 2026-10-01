@@ -1,5 +1,23 @@
 # Firestaff DONE — DM2
 
+- 2026-10-01: The authentic-media CLI startup matrix passed for all five
+  registered DM2 editions: DOS English, DOS French, Macintosh retail, Amiga,
+  and FM Towns. The four non-Mac tests passed in 442.74 seconds total; the Mac
+  normal CLI/M12 route passed separately in 190.37 seconds. These cover each
+  edition's own title/start path and scripted movement. They do not establish
+  complete platform parity or the reported M5's physical input, Retina output,
+  or audible playback.
+- 2026-10-01: Re-ran the authenticated Macintosh retail regressions from the
+  current checkout. `dm2_v1_mac_native_cli_boot` passed in 190.37 seconds and
+  `test_dm2_v1_mac_m11_new_game_real_media` passed in 2.38 seconds. These
+  verify source startup, simulated keyboard/menu input, movement, real-media
+  viewport receipt and basic visible-pixel gates. SDL dummy presentation does
+  not prove that the reported M5 shows a usable view, receives physical input,
+  presents correctly on Retina, or plays audible audio.
+- The M11 runtime diagnostic now records SDL logical-window and physical
+  drawable dimensions separately. The Mac dummy-video regression requires
+  valid, nonzero values for both, making presentation geometry available for
+  a paired hardware report; dummy output is not Retina evidence.
 - 2026-10-01: Re-ran the authenticated Macintosh retail startup checks on the
   macOS host. The direct M11 New Game route reached active runtime, moved, and
   reported no living creature adjacent to the initial party pose; the native

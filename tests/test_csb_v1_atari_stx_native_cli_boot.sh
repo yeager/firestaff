@@ -197,9 +197,8 @@ done
 
 # --boot-probe intentionally rejects --menu. Verify that the normal M12 ->
 # M11 path advances through the authentic Atari ST animation and reaches its
-# dungeon entrance. The retained ANIMATE.SCR route needs a full 60 seconds of
-# source-loop time on this host; a shorter wait can send C200 while the title
-# animation still owns input, then falsely report a startup hang.
+# dungeon entrance. Its animation clock is source-owned at 50 Hz; this full
+# menu-loop case stays separate from the accelerated boot probes above.
 case "$firestaff_cli" in
     */*) app_dir=${firestaff_cli%/*} ;;
     *) app_dir=. ;;
@@ -229,6 +228,6 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 9, 0, 2, 0)):
     raise SystemExit(f"FAIL: authentic CSB Atari start menu did not accept source C200 and reach runtime: {probe}")
-print("PASS: authentic CSB Atari start menu accepted the source C200 pointer command and reached runtime")
+print("PASS: authentic CSB Atari start menu accepted source C200 and reached runtime")
 PY
 echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu-to-runtime C200 route"

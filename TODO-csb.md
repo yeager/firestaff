@@ -73,8 +73,14 @@ Reviewed 2026-09-05. Only open work is listed here.
   the ordinary M12-to-M11 menu route now reaches the live Atari dungeon
   runtime after the authentic `ANIMATE.SCR` sequence and FTLCODE handoff. The
   tested source start is map 0 at (9,0), facing south, with zero champions.
-  This verifies the menu-to-runtime transition, not a playable campaign party,
-  an authentic CSB save, or a campaign capture.
+  ReDMCSB LOADSAVE.C F0435 initializes a new CSB game with an empty party;
+  CLIKMENU.C F0366 documents that empty-party movement is valid on the original
+  maps containing champion mirrors and no creature types. The native runtime
+  currently verifies one northward step to (9,1), but this does not establish
+  a complete route to a mirror or usable champion recruitment in Firestaff.
+  The supplied Atari save-disk MSA has no root files, so there is no authentic
+  campaign save available to substitute. This verifies title/menu-to-runtime
+  and one movement input only, not a playable campaign party or capture.
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
   platforms. On 2026-10-01, `csb_v1_atari_original_archive_cli_boot` was added

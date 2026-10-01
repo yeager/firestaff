@@ -2836,6 +2836,29 @@ int M11_Render_GetContentSize(int* outWidth, int* outHeight) {
     return 1;
 }
 
+int M11_Render_GetWindowAndDrawableSize(int* outWindowWidth,
+                                       int* outWindowHeight,
+                                       int* outDrawableWidth,
+                                       int* outDrawableHeight) {
+    int windowWidth = 0;
+    int windowHeight = 0;
+    int drawableWidth = 0;
+    int drawableHeight = 0;
+
+    if (!g_state.initialised || !outWindowWidth || !outWindowHeight ||
+        !outDrawableWidth || !outDrawableHeight ||
+        !m11_refresh_presentation_dimensions(&windowWidth, &windowHeight,
+                                             &drawableWidth,
+                                             &drawableHeight)) {
+        return 0;
+    }
+    *outWindowWidth = windowWidth;
+    *outWindowHeight = windowHeight;
+    *outDrawableWidth = drawableWidth;
+    *outDrawableHeight = drawableHeight;
+    return 1;
+}
+
 int M11_Render_MapPointToFramebuffer(int windowX,
                                      int windowY,
                                      int windowW,

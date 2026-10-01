@@ -611,7 +611,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   therefore preserve both the event and its dungeontail owner.
 - Extend real-media parity beyond bounded Atari ST and Amiga routes to native
   end-to-end gameplay, input and presentation evidence. FM Towns now has a
-  real ZIP CLI/start-menu receipt through TMENU → EDM/JDM, the authenticated
+  real ZIP CLI/start-menu receipt through TMENU → EDM/JDM. The authenticated
+  M12 Version tile is tested selecting JDM without a CLI language override.
+  Also covered are the
   18-frame English title plan, source-decoded PRESENTS/DUNGEON/MASTER palette
   transactions, CDDA title track, and its input matrix. The stripped JDM path
   now has its own unique disassembly fingerprint, recovered geometry/data

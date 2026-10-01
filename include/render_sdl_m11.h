@@ -336,6 +336,13 @@ int  M11_Render_MapWindowToFramebuffer(int windowX,
 /* Dimensions of the current source/presentation target used by
  * M11_Render_MapWindowToFramebuffer. */
 int  M11_Render_GetContentSize(int* outWidth, int* outHeight);
+/* Current SDL logical window and physical renderer-output dimensions. The
+ * latter differs on HiDPI displays and is useful to diagnose the final
+ * presentation transform without changing the source framebuffer. */
+int  M11_Render_GetWindowAndDrawableSize(int* outWindowWidth,
+                                         int* outWindowHeight,
+                                         int* outDrawableWidth,
+                                         int* outDrawableHeight);
 int  M11_Render_SetWindowMode(int windowModeIndex);
 int  M11_Render_GetWindowMode(void);
 int  M11_Render_SyncWindowModeFromWindow(void);

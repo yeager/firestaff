@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-10-01: Extended the authentic FM Towns M12 test to use its Version tile
+  to select Japanese data without `--dm1-fmtowns-ja`. The runtime probe now
+  reports the bound GRAPHICS.DAT and source-owned `JDM.EXP` hashes; the real
+  ZIP test asserts both and the first live dungeon frame. The complete
+  `dm1_v1_fmtowns_archive_cli_boot` CTest row passed with separate expected
+  Japanese graphics and executable hashes. This proves the tested menu route,
+  not Japanese visual, sound or broader gameplay parity.
+
 - 2026-10-01: Added an autotest-only host-quit injection after the first
   rendered Atari ST C001 title frame and exercised it with the authenticated
   French v1.3 archive through the normal M12 launcher. The check requires the

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.353 LANGUAGES C)
+project(Firestaff VERSION 3.0.354 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -18393,17 +18393,6 @@ endif()
         # presentation modes, and screenshot measurements.  Keep enough
         # wall-clock room for all source-owned Entrance checks on CI hosts.
         TIMEOUT 300
-    )
-    add_test(
-        NAME csb_v1_fmtowns_rar_cli_boot
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_rar_cli_boot.sh"
-            "$<TARGET_FILE:firestaff>"
-    )
-    set_tests_properties(csb_v1_fmtowns_rar_cli_boot PROPERTIES
-        SKIP_RETURN_CODE 77
-        LABELS "tier2;csb;fmtowns;rar;startup;cli;menu;real_media;in_memory;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_RAR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for FM-Towns.rar;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        TIMEOUT 180
     )
     # Keep both language-private F31 program chains independently runnable.
     # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
@@ -41598,6 +41587,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     set_tests_properties(csb_v1_atari_st_animation_assets_real PROPERTIES
         ENVIRONMENT "FIRESTAFF_CSB_ANIMATE_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx;FIRESTAFF_CSB_ANIMATE_CACHE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;animation;title;audio;real-media;in-memory;native;skip-safe"
     )
 

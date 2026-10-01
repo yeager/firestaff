@@ -1,11 +1,32 @@
 # Firestaff DONE — CSB
 
+- 2026-10-01: Retired the CSB FM Towns startup test that required the
+  separately supplied RAR and external archive tools. The registered native
+  test uses the authenticated FM Towns ZIP and already covers CLI startup,
+  start-menu selection, CUE/BIN handoff, and the live campaign route. Both
+  English and Japanese ZIP-backed CTest startup/menu rows passed on the
+  authenticated bilingual archive (111.57 and 111.16 seconds). RAR ingestion
+  is no longer a requirement for this supported startup path.
+
 - 2026-10-01: Re-ran the authentic A31 Amiga CLI suite on the macOS host.
   Original and Modern title handoffs reached runtime movement, the complete
   initial-input matrix passed, the M12 start menu published a nonzero source
   viewport receipt, and AUTO discovered the installed A31E archive. SDL used
   its dummy video/audio drivers, so this does not verify native HiDPI output
   or audible device playback on MacBook hardware.
+- 2026-10-01: ReDMCSB confirms the Atari new-game start at map 0 (9,0),
+  facing south, with zero champions is intentional. `LOADSAVE.C` initializes
+  an empty CSB party, and `CLIKMENU.C` explains that movement without champions
+  is safe on original maps that contain champion mirrors and no creature types.
+  Firestaff's authentic-media regression verifies one northward move to (9,1).
+  A full route to a usable mirror is still unverified, and the supplied Atari
+  save disk contains no campaign save files; no party or save was synthesized.
+- 2026-10-01: The original Atari ST v2.1 Utility Disk `ANIMATE.SCR` trace
+  requires exactly 2,036 source VBlanks (40.72 seconds at 50 Hz) before its
+  FTLCODE handoff. The real-media parser verifies the sequence and now prints
+  that measured duration for startup diagnostics; host script `wait:N` counts
+  loop frames and must not be confused with source VBlanks.
+
 - 2026-10-01: The production CLI also reached CSB Atari ST runtime from the
   authentic ST 2.0/2.1 media in the installed 7z archive. The `ANIMATE.SCR`
   handoff completed, `levelLoaded=1`, the runtime advanced 2,459 ticks, and a
@@ -681,11 +702,3 @@ Reviewed 2026-08-29. Completed work only.
   selected dungeon, catalogued without the adjacent encoded champion-stat
   payloads, and translated only at the CSB PO presentation boundary. The
   real ZIP → ADF → M11 test proves the Swedish result and original fallback.
-
-- 2026-09-27: Added in-memory support for the authentic FM Towns retail RAR
-  in the CSB M12 admission and M11 startup handoff. The CUE-selected BIN is
-  read through the explicitly enabled external archive reader; its uppercase
-  CUE suffix is reconciled with the lowercase suffix in the preserved RAR.
-  The new `csb_v1_fmtowns_rar_cli_boot` regression verifies the authentic
-  title probe and startup-menu handoff, and confirms the original archive
-  hash is unchanged. This verifies startup ownership, not a playable campaign.

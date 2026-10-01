@@ -125,6 +125,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   compiles and source/scheduling tests pass, but no physical output or external
   synth endpoint is available here to exercise it. These host results do not
   explain or resolve the M5 report.
+  The M11 runtime JSON probe now records SDL logical-window and renderer
+  drawable dimensions separately; the dummy-driver Mac test checks both are
+  valid, but its equal 1920x1080 values do not exercise Retina scaling. An
+  attempted native SDL run on this build host exited before game startup with
+  `The video driver did not add any displays`, so paired display evidence still
+  requires a Mac session with an accessible display.
   On 2026-10-01, the shared M11 SDL path was also fixed so a failed attempt to
   open its playback stream neither reinitializes an already-active audio
   subsystem nor shuts that process-wide subsystem down. A dummy-device

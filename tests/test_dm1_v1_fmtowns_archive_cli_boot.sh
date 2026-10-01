@@ -130,6 +130,47 @@ PY
 expect_menu_runtime en
 expect_menu_runtime ja
 
+# Also exercise the edition selector itself.  The CLI platform filter leaves
+# both authentic FM Towns languages available; select the Japanese package
+# through the Version tile without --dm1-fmtowns-ja, then require the original
+# launcher receipt to identify JDM.EXP and its verified source hash.
+expect_menu_version_japanese() {
+    local probe_root probe_file
+    probe_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+    probe_root="$probe_root/firestaff-dm1-fmtowns-menu-$$"
+    mkdir -p "$probe_root"
+    trap 'rm -rf "$probe_root"' RETURN
+    probe_file="$probe_root/dm1-fmtowns-menu-version-ja-$$.json"
+    HOME="$probe_root/home-ja" \
+    FIRESTAFF_CONFIG_PATH="$probe_root/config-ja.cfg" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe_file" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --width 1920 --height 1080 --menu --game dm1 --platform fm-towns \
+        --data-dir "$archive" \
+        --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:1400:405,wait20,click:500:440,wait20,click:1400:440,wait20,click:960:920,wait:900' \
+        --duration 45000 >/dev/null 2>&1
+    python3 - "$probe_file" "$expected_japanese_md5" "$expected_jdm_md5" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+fmtowns = probe["dm1FmtownsStartup"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["phase"] != "dm1-runtime" or
+        startup["levelLoaded"] != 1 or
+        probe["bootAssetMd5"] != sys.argv[2] or
+        fmtowns["program"] != "JDM.EXP" or
+        fmtowns["programMd5"] != sys.argv[3] or
+        fmtowns["menuSelectsProgram"] != 1):
+    raise SystemExit(f"FAIL: DM1 FM Towns menu did not select authentic JDM: {probe}")
+print("PASS: DM1 FM Towns menu selected authentic JDM and reached runtime")
+PY
+}
+expect_menu_version_japanese
+
 expect_gameplay_input() {
     local input=$1 expected_party=$2 gameplay_output
     local language=${3:-en} program=EDM.EXP handoff=fmtowns-tmenu-edm

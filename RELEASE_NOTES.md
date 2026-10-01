@@ -1,3 +1,20 @@
+# Firestaff v3.0.354
+
+## User-facing changes
+
+- `DM1 Atari startup`: fixes quit handling during the title sequence so the
+  game exits cleanly when startup is cancelled.
+
+## Developer changes
+
+- `DM1 FM Towns version menu`: authentic-media coverage now verifies that the
+  Japanese Version tile selects the Japanese game program without a CLI
+  language override.
+- `M11 runtime probe`: adds SDL logical-window and drawable-pixel sizes to
+  support HiDPI presentation diagnosis.
+- `CSB Atari animation tests`: skips cleanly when original game media is not
+  installed, and the obsolete FM Towns RAR-only test has been removed.
+
 # Firestaff v3.0.353
 
 ## User-facing changes
