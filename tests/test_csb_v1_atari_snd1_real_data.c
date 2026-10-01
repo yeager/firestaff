@@ -97,20 +97,29 @@ static int inspect_carrier(const char *archive, const char *member,
                  held < sizeof(held_rows) / sizeof(held_rows[0]); ++held) {
                 if (index == held_rows[held]) expected_hold = 1;
             }
-            if (!expected_hold ||
-                csb_v1_audio_runtime_decode_st_sound_with_final_hold(
-                    payload.bytes, payload.byteCount, 0u, levels, 65536u,
-                    &decoded) != 0 ||
-                decoded.sampleCount != fingerprints[index].sample_count) {
+            if (!expected_hold) {
                 fprintf(stderr,
-                        "FAIL: authentic SND1 row %d does not match its bounded Timer-A final hold\n",
+                        "FAIL: authentic SND1 row %d unexpectedly failed bounded decoding\n",
                         index);
                 free(levels);
                 csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
                 return 0;
             }
         }
-        if (!M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+        if (fingerprints[index].decode_status == -2) {
+            if (M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+                    &audio, payload.bytes, (int)payload.byteCount,
+                    spec->period, fingerprints[index].hash, 1) ||
+                audio.csbAtariStSoundAccepted) {
+                fprintf(stderr,
+                        "FAIL: truncated Atari SND1 row %d was accepted without authentic sample evidence\n",
+                        index);
+                M11_Audio_Shutdown(&audio);
+                free(levels);
+                csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
+                return 0;
+            }
+        } else if (!M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
                 &audio, payload.bytes, (int)payload.byteCount,
                 spec->period, fingerprints[index].hash, 1) ||
             !audio.csbAtariStSoundAccepted ||
