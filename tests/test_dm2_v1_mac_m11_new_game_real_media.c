@@ -1179,9 +1179,31 @@ int main(void)
             const DM2_V1_DungeonData *live_dungeon =
                 (const DM2_V1_DungeonData *)
                     ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
+            int forward_raw = dm2_v1_dungeon_c_map_get_tile_value(
+                live_dungeon, after_ticks.current_level,
+                after_ticks.party_x + 1, after_ticks.party_y);
+            int far_raw = dm2_v1_dungeon_c_map_get_tile_value(
+                live_dungeon, after_ticks.current_level,
+                after_ticks.party_x + 2, after_ticks.party_y);
+            int forward_square = forward_raw < 0 ? -1 :
+                dm2_v1_viewport_g1_tile_class_to_square_type(
+                    (uint8_t)((unsigned int)forward_raw >> 5));
+            int far_square = far_raw < 0 ? -1 :
+                dm2_v1_viewport_g1_tile_class_to_square_type(
+                    (uint8_t)((unsigned int)far_raw >> 5));
             int nearby = mac_live_map_has_nearby_creature(
                 live_dungeon, after_ticks.current_level, after_ticks.party_x,
                 after_ticks.party_y, NULL, NULL);
+            if (forward_square != DM2_SQUARE_FLOOR ||
+                far_square != DM2_SQUARE_WALL) {
+                fprintf(stderr,
+                        "FAIL: authentic Mac east lane from (3,7) should be floor at distance 1 and wall at distance 2 (raw=%d/%d square=%d/%d)\n",
+                        forward_raw, far_raw, forward_square, far_square);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            printf("Mac moved pose=(%d,%d) east lane: floor at distance 1, wall at distance 2 (live-adjacent-creatures=%d)\n",
+                   after_ticks.party_x, after_ticks.party_y, nearby);
             if (nearby != 0) {
                 fprintf(stderr,
                         "FAIL: live Mac DB4 creature is within one tile after movement and 16 source ticks (nearby=%d party=%d,%d)\n",

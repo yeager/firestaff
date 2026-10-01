@@ -79,6 +79,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   presented view from the initial (1,8) pose. The frame still looks like a
   close wall; those movement and asset receipts do not establish usable wall
   selection or perspective. Keep this Mac viewport issue open.
+  A local dummy-video capture of the scripted Mac menu route after turning
+  east and moving twice ends at (3,7); the authenticated map has floor one
+  square ahead, a wall two squares ahead, and no live DB4 creature within one
+  square. The runtime scene's large centered wall therefore matches this
+  route's source map and is not evidence of an adjacent creature. It still
+  does not establish that the reported M5 screen or physical key input behaves
+  the same way.
   The held-key sampler had a second, conflicting generic mapping for Mac:
   W/E (retail wall buttons) could be treated as forward/right-turn motion
   while held. It now resolves held scancodes through the same authenticated
