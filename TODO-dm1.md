@@ -19,15 +19,16 @@
   renderer/event-fault coverage remain open.
 
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
-  set as one source-locked pass: pickup-to-inventory and object-bearing Eye
+  set as one source-locked pass: object-bearing Eye
   scroll reads, Vi
   altar wall material, stairs occlusion, complete door
   composition, pressure-plate near/far visibility, wall-torch placement, and
-  held-item striping/loss on inventory placement. A private original PC 3.4
-  run now visibly covers the post-resurrection FOOD/WATER panel, an item in
-  the action hand, and that item in a backpack slot. It is useful reference
-  evidence for those three poses, but it does not prove a floor pickup or an
-  Eye-scroll read. Existing raw-format pointer, F0128 scheduler, and
+  held-item striping/loss on inventory placement. The authentic PC 3.4
+  runtime regression now follows normal movement and C127/C040 recruitment to
+  HoC (4,15), picks up the source WATER with the production pickup action, and
+  places it in backpack slot 1. This proves the pickup-to-inventory
+  transaction, not its DOS pixel parity, scroll reading, or the other live
+  combinations. Existing raw-format pointer, F0128 scheduler, and
   individual material tests are necessary but do not prove these live
   combinations. Use an authenticated PC3.4 HoC route or a
   generated-in-original-runtime C13 save as the state driver; do not promote
@@ -35,8 +36,12 @@
   exact square/pose/input and compare source-order command receipts before
   changing a renderer or inventory transaction.
 
-- Extend the validated original PC 3.4 same-state C127/C040 comparison through
-  a real pickup. A prior private capture set with three bit-identical Hall
+- Complete the validated original PC 3.4 same-state C127/C040 comparison
+  against authentic DOS capture through a real pickup and inventory. The
+  native PC3.4 regression now proves WATER pickup and backpack placement with
+  production inputs, but the original-media capture route has not established
+  pickup pixels or native-vs-DOS inventory parity. A prior private capture set
+  with three bit-identical Hall
   frames must not be used as source-modal proof. The separate private retail
   route visibly contains a C040 panel followed by C007 inventory state. A
   same-state native C040 measurement is now recorded, but it does not prove

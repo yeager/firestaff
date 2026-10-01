@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-10-01: Extended the authentic PC 3.4 HoC source-placement regression
+  through a live production-input route. Starting from the archive bootstrap,
+  it replays keypad movement, clicks C127 ordinal 5, confirms the candidate
+  through C040, and walks to map 0 `(4,15)`. It verifies the source pile's
+  closed scroll 0 -> text 33, picks up the pile's top WATER (`0x280b`) with the
+  normal pickup action, opens C007 and places WATER in backpack slot 1. The
+  test passes against the original PC 3.4 ZIP without a save or pose override.
+  This proves the native pickup-to-inventory transaction; authentic DOS pixel
+  parity and the object-bearing Eye scroll read remain open.
+
 - 2026-10-01: Strengthened the authentic PC 3.4 normal M12-to-M11 startup
   regression with the retained source-owned handoff receipt. The runtime probe
   now reports whether SWSH, C001 TITLE, ENTRANCE, and the complete graphics

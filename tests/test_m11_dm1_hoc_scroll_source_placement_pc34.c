@@ -1,8 +1,8 @@
-/* Real-media guard for the Hall of Champions scroll used by the original
- * DOS capture route.  It deliberately checks source ownership only; it does
- * not claim that an emulator route reached or picked up the object. */
+/* Real-media Hall of Champions interaction guard for original PC 3.4. */
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
+#include "menu_input_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +13,38 @@ int main(void)
     M11_GameViewState state;
     unsigned short thing;
     int steps = 0;
+    static const M12_MenuInput route_to_c127[] = {
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_TURN_RIGHT, M12_MENU_INPUT_TURN_RIGHT
+    };
+    static const M12_MenuInput route_to_scroll[] = {
+        M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN, M12_MENU_INPUT_DOWN
+    };
+    size_t i;
+    int tick;
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM1_PC34_ARCHIVE is not set");
@@ -23,6 +55,59 @@ int main(void)
         !state.world.things || state.world.dungeon->header.mapCount < 1 ||
         state.world.things->scrollCount != 35) {
         fputs("FAIL: canonical PC34 dungeon did not load\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
+    /* Replay the same 28-command PC-3.4 keypad route as hoc_route in the
+     * native CLI regression, using production runtime inputs. The direct M11
+     * test advances five idle ticks after each input so one command completes
+     * before the next; this is deterministic runtime pacing, not a claim that
+     * the CLI script has identical tick timing. Start from the source
+     * bootstrap pose; no save or pose is fabricated. */
+    for (tick = 0; tick < 5; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    for (i = 0u; i < sizeof(route_to_c127) / sizeof(route_to_c127[0]); ++i) {
+        M11_GameInputResult result =
+            M11_GameView_HandleInput(&state, route_to_c127[i]);
+        if (result == M11_GAME_INPUT_IGNORED) {
+            fputs("FAIL: authentic PC34 Hall route input was ignored\n", stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        for (tick = 0; tick < 5; ++tick)
+            (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    if (M11_GameView_HandlePointerButton(&state, 112, 83,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state.candidateMirrorPanelActive ||
+        state.candidateMirrorOrdinal != 5) {
+        fputs("FAIL: source route did not open C127 ordinal 5\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (M11_GameView_HandlePointerButton(&state, 130, 115,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state.world.party.championCount != 1) {
+        fputs("FAIL: C040 did not recruit the authentic C127 candidate\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    for (i = 0u; i < sizeof(route_to_scroll) / sizeof(route_to_scroll[0]); ++i) {
+        M11_GameInputResult result =
+            M11_GameView_HandleInput(&state, route_to_scroll[i]);
+        if (result == M11_GAME_INPUT_IGNORED) {
+            fputs("FAIL: authentic Hall route to scroll was ignored\n", stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        for (tick = 0; tick < 5; ++tick)
+            (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    if (state.world.party.mapIndex != 0 || state.world.party.mapX != 4 ||
+        state.world.party.mapY != 15 || state.world.party.direction != 0) {
+        fputs("FAIL: production movement did not reach authentic HoC (4,15)\n",
+              stderr);
         M11_GameView_Shutdown(&state);
         return 1;
     }
@@ -47,7 +132,32 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+
+    /* The source pile's top object is water (0x280b); pickup is the original
+     * G action, and C007 plus an ordinary slot click must place that exact
+     * object into the backpack. */
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_PICKUP_ITEM) ==
+            M11_GAME_INPUT_IGNORED ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != 0x280bu) {
+        fputs("FAIL: PC34 HoC production pickup did not collect source WATER\n",
+              stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (M11_GameView_HandlePointerButton(&state, 54, 14,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state.inventoryPanelActive ||
+        M11_GameView_HandlePointerButton(&state, 74, 74,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] !=
+            0x280bu ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != THING_NONE) {
+        fputs("FAIL: PC34 HoC WATER did not transfer from hand to backpack\n",
+              stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     M11_GameView_Shutdown(&state);
-    puts("PASS: canonical PC34 HoC (4,15) owns closed scroll 0 -> text 33");
+    puts("PASS: authentic PC34 HoC movement, WATER pickup and backpack transfer; scroll 0 -> text 33");
     return 0;
 }
