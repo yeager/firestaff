@@ -13,7 +13,6 @@
  *   THQUEST.ASM T900  — object database / thing list
  *
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
- *   docs/source-lock/movement_features.md            (pit/teleporter Chain)
  *   docs/source-lock/movement_forward_step.md
  *   docs/source-lock/movement_collision.md
  */
@@ -70,7 +69,9 @@ extern "C" {
 extern const int8_t g_theron_dir_dx[THERON_DIR_COUNT];
 extern const int8_t g_theron_dir_dy[THERON_DIR_COUNT];
 
-/* ── Teleporter chain limits (matches DM1 S21E+) ─────────────────── */
+/* ── Teleporter chain safety guard ───────────────────────────────── */
+/* Defensive host bound only; no matching original-game iteration cap has
+ * been source-locked for Theron's Quest. */
 #define THERON_TELEPORTER_CHAIN_MAX  100
 
 /* ── Click/command routes ─────────────────────────────────────────── */
@@ -143,9 +144,11 @@ bool theron_v1_pit_check_and_trigger(Theron_V1_World *world,
 
 /* ── Teleporter chain ─────────────────────────────────────────────── */
 /*
- * theron_v1_teleporter_resolve — resolve a teleporter square;
- *   follows chains up to THERON_TELEPORTER_CHAIN_MAX iterations.
- *   Source: movement_features.md — MOVESENS.C:475-537 teleporter loop
+ * theron_v1_teleporter_resolve — resolve a source-backed Track 02
+ *   coordinate link using Theron's C240-C2D8 destination-tile loop.
+ *   THERON_TELEPORTER_CHAIN_MAX is a host-side fail-closed guard, not an
+ *   original-game iteration limit. The separate non-Track-02 object-ID path
+ *   is legacy compatibility and does not establish Track 02 behavior.
  *
  * On return, world->transition_target_level / spawn_x / spawn_y are set.
  */

@@ -3376,18 +3376,24 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
     }
 
     /* Authentic US AKUTUBA M0 teleporter record 0 is at (0,0) and points to
-     * (2,3) on M0.  (2,3) is a real floor square without a second object
-     * record, so requiring an endpoint object would reject source data. */
-    assert(theron_v1_teleporter_resolve(&world, 0, 0) == 0);
-    assert(world.transition_pending == 1);
-    assert(world.transition_target_level == 0);
-    assert(world.transition_spawn_x == 2);
-    assert(world.transition_spawn_y == 3);
-    assert(theron_v1_transition_execute(&world) == 0);
+     * (2,3) on M0. Start from the source-verified pose (1,0,north), turn
+     * left, and enter the real active pad through the original command path.
+     * (2,3) is a floor square without a second object record, so requiring
+     * an endpoint object would reject this authentic destination. */
+    world.party.leader_x = 1;
+    world.party.leader_y = 0;
+    world.party.leader_dir = 0;
+    assert(theron_v1_turn_party_original_command(
+               &world, THERON_ORIGINAL_COMMAND_TURN_LEFT) == 0);
+    assert(world.party.leader_dir == 3);
+    assert(theron_v1_move_party_original_command(
+               &world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+           THERON_MOVE_TELEPORT);
     assert(world.current_level == 0);
     assert(world.party.leader_x == 2);
     assert(world.party.leader_y == 3);
-    printf("  authentic Track 02 coordinate teleporter lands on floor OK\n");
+    assert(world.transition_pending == 0);
+    printf("  authentic Track 02 coordinate teleporter movement commits OK\n");
 
     /* The original accepts a northward step from (2,2) onto the B4 pad but
      * leaves the party on (2,1), map 0.  Its clear OPEN bit therefore means
@@ -5050,6 +5056,368 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
     }
 }
 
+/* Follow only authentic Track 02 coordinate records. The Theron source lock
+ * records the C240-C2D8 destination-tile re-test and wall rejection at
+ * docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-477.
+ * This helper leaves special-square arrivals outside the movement claim. */
+static int authentic_teleporter_test_terminal(
+    const Theron_V1_World *world,
+    int dungeon_id,
+    const Theron_V1_Object *source,
+    int *out_level,
+    int *out_x,
+    int *out_y,
+    int *out_terminal_closed_teleporter,
+    unsigned int *out_chain_hops) {
+    const Theron_V1_Object *current = source;
+    int visited_level[THERON_TELEPORTER_CHAIN_MAX];
+    int visited_x[THERON_TELEPORTER_CHAIN_MAX];
+    int visited_y[THERON_TELEPORTER_CHAIN_MAX];
+    unsigned int visited_count = 0u;
+    unsigned int chain_hops = 0u;
+
+    *out_chain_hops = 0u;
+
+    for (unsigned int iteration = 0u;
+         iteration < THERON_TELEPORTER_CHAIN_MAX;
+         ++iteration) {
+        int target_level;
+        int target_x;
+        int target_y;
+        const Theron_V1_Level *destination;
+        int terminal_closed_teleporter = 0;
+
+        if (current->dungeon_id != dungeon_id ||
+            current->type != THERON_OBJTYPE_TELEPORTER ||
+            !(current->flags & THERON_OBJ_F_TRACK02_COORD_LINK) ||
+            current->state == 0u || current->level < 0 ||
+            current->level >= THERON_MAX_LEVELS_PER_DUNGEON)
+            return 0;
+        for (unsigned int i = 0u; i < visited_count; ++i) {
+            if (visited_level[i] == current->level &&
+                visited_x[i] == current->x && visited_y[i] == current->y)
+                return 0;
+        }
+        visited_level[visited_count] = current->level;
+        visited_x[visited_count] = current->x;
+        visited_y[visited_count] = current->y;
+        ++visited_count;
+
+        target_level = (current->linked_id >> 10) & 0x3f;
+        target_x = current->linked_id & 0x1f;
+        target_y = (current->linked_id >> 5) & 0x1f;
+        if (target_level < 0 ||
+            target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            !world->level_loaded[dungeon_id - 1][target_level])
+            return 0;
+        destination = &world->levels[dungeon_id - 1][target_level];
+        if (target_x < 0 || target_x >= destination->width ||
+            target_y < 0 || target_y >= destination->height)
+            return 0;
+        if (destination->squares[target_y][target_x] == THERON_SQUARE_WALL) {
+            *out_level = target_level;
+            *out_x = target_x;
+            *out_y = target_y;
+            *out_terminal_closed_teleporter = 0;
+            *out_chain_hops = chain_hops;
+            return 2;
+        }
+
+        if (destination->squares[target_y][target_x] ==
+            THERON_SQUARE_TELEPORTER) {
+            const Theron_V1_Object *target_teleporter = NULL;
+            for (int i = 0; i < world->object_count; ++i) {
+                const Theron_V1_Object *candidate = &world->objects[i];
+                if (candidate->dungeon_id == dungeon_id &&
+                    candidate->level == target_level &&
+                    candidate->x == target_x && candidate->y == target_y &&
+                    candidate->type == THERON_OBJTYPE_TELEPORTER) {
+                    target_teleporter = candidate;
+                    break;
+                }
+            }
+            if (!target_teleporter ||
+                !(target_teleporter->flags &
+                  THERON_OBJ_F_TRACK02_COORD_LINK))
+                return 0;
+            if (target_teleporter->state != 0u) {
+                current = target_teleporter;
+                ++chain_hops;
+                *out_chain_hops = chain_hops;
+                continue;
+            }
+            /* The source's C24C OPEN-bit test falls through on a closed
+             * arrival pad; it is a terminal tile, not another chain hop. */
+            terminal_closed_teleporter = 1;
+        }
+        *out_level = target_level;
+        *out_x = target_x;
+        *out_y = target_y;
+        *out_terminal_closed_teleporter = terminal_closed_teleporter;
+        *out_chain_hops = chain_hops;
+        return destination->squares[target_y][target_x] == THERON_SQUARE_FLOOR ||
+                       terminal_closed_teleporter
+                   ? 1
+                   : 3;
+    }
+    return 0;
+}
+
+static void test_authentic_coordinate_teleporter_movement_corpus(
+    const uint8_t *ud, size_t ud_size,
+    const uint8_t *track02, size_t track02_size,
+    int variant) {
+    const Theron_Track02Variant track02_variant = variant == 1
+        ? THERON_TRACK02_VARIANT_JP_BIN
+        : THERON_TRACK02_VARIANT_US_BIN;
+    const char *md5_hex = variant == 1
+        ? THERON_TRACK02_MD5_JP_BIN
+        : THERON_TRACK02_MD5_US_BIN;
+    Theron_V1_World *world =
+        (Theron_V1_World *)calloc(1u, sizeof(*world));
+    Theron_V1_World *attempt_world =
+        (Theron_V1_World *)calloc(1u, sizeof(*attempt_world));
+    unsigned int routes_tested = 0u;
+    unsigned int preview_comparisons = 0u;
+    unsigned int preview_teleports = 0u;
+    unsigned int preview_blocks = 0u;
+    unsigned int direct_wall_routes_blocked = 0u;
+    unsigned int cross_level_routes_tested = 0u;
+    unsigned int closed_terminal_routes_tested = 0u;
+    unsigned int chained_routes_tested = 0u;
+    unsigned int chained_wall_routes_blocked = 0u;
+    unsigned int active_chain_roots = 0u;
+    unsigned int unresolved_chained_routes_with_approach = 0u;
+    unsigned int unresolved_chained_routes_blocked = 0u;
+    unsigned int special_terminal_routes_deferred = 0u;
+    unsigned int special_terminal_chains_deferred = 0u;
+    unsigned int chained_routes_without_floor_approach = 0u;
+
+    assert(world != NULL && attempt_world != NULL);
+    assert(ud != NULL && track02 != NULL);
+    theron_v1_world_init(world);
+    for (int dungeon_id = 1; dungeon_id <= THERON_DUNGEON_COUNT;
+         ++dungeon_id) {
+        Theron_DungeonLoadResult result;
+        world->current_dungeon = dungeon_id;
+        world->current_level = 0;
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   world, dungeon_id, ud, ud_size, track02_variant,
+                   &result) == 0);
+        bind_real_track02_party(world, track02, track02_size, md5_hex);
+
+        for (int object_index = 0; object_index < world->object_count;
+             ++object_index) {
+            Theron_V1_Object *teleporter = &world->objects[object_index];
+            Theron_V1_Level *source_level;
+            int target_level;
+            int target_x;
+            int target_y;
+            int terminal_closed_teleporter = 0;
+            int terminal_status;
+            unsigned int chain_hops = 0u;
+            int approach_direction = -1;
+
+            if (teleporter->dungeon_id != dungeon_id ||
+                teleporter->type != THERON_OBJTYPE_TELEPORTER ||
+                !(teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK) ||
+                teleporter->state == 0u || teleporter->level < 0 ||
+                teleporter->level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+                !world->level_loaded[dungeon_id - 1][teleporter->level])
+                continue;
+
+            source_level = &world->levels[dungeon_id - 1][teleporter->level];
+            if (teleporter->x < 0 || teleporter->x >= source_level->width ||
+                teleporter->y < 0 || teleporter->y >= source_level->height ||
+                source_level->squares[teleporter->y][teleporter->x] !=
+                    THERON_SQUARE_TELEPORTER)
+                continue;
+            terminal_status = authentic_teleporter_test_terminal(
+                    world, dungeon_id, teleporter, &target_level, &target_x,
+                    &target_y, &terminal_closed_teleporter, &chain_hops);
+            if (chain_hops > 0u) ++active_chain_roots;
+            if (terminal_status == 3) {
+                ++special_terminal_routes_deferred;
+                if (chain_hops > 0u)
+                    ++special_terminal_chains_deferred;
+            }
+
+            for (int direction = 0; direction < THERON_DIR_COUNT;
+                 ++direction) {
+                int approach_x =
+                    teleporter->x - g_theron_dir_dx[direction];
+                int approach_y =
+                    teleporter->y - g_theron_dir_dy[direction];
+                if (approach_x >= 0 && approach_y >= 0 &&
+                    approach_x < source_level->width &&
+                    approach_y < source_level->height &&
+                    source_level->squares[approach_y][approach_x] ==
+                        THERON_SQUARE_FLOOR) {
+                    approach_direction = direction;
+                    world->party.leader_x = approach_x;
+                    world->party.leader_y = approach_y;
+                    break;
+                }
+            }
+            if (approach_direction < 0) {
+                if (chain_hops > 0u)
+                    ++chained_routes_without_floor_approach;
+                continue;
+            }
+
+            world->current_level = teleporter->level;
+            world->party.leader_dir = approach_direction;
+            {
+                const uint64_t before_preview_hash =
+                    theron_v1_world_hash(world);
+                const Theron_MoveResult preview_result =
+                    theron_v1_get_move_result(world, approach_direction);
+                int command_result;
+
+                assert(theron_v1_world_hash(world) == before_preview_hash);
+                memcpy(attempt_world, world, sizeof(*world));
+                command_result = theron_v1_move_party_original_command(
+                    attempt_world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD);
+                assert(command_result == (int)preview_result);
+                assert(preview_result == THERON_MOVE_TELEPORT ||
+                       preview_result == THERON_MOVE_BLOCKED);
+                ++preview_comparisons;
+                if (preview_result == THERON_MOVE_TELEPORT)
+                    ++preview_teleports;
+                else
+                    ++preview_blocks;
+                if (terminal_status == 1)
+                    assert(preview_result == THERON_MOVE_TELEPORT);
+                else if (terminal_status == 2 || terminal_status == 0)
+                    assert(preview_result == THERON_MOVE_BLOCKED);
+                if (terminal_status == 2 && chain_hops == 0u &&
+                    preview_result == THERON_MOVE_BLOCKED)
+                    ++direct_wall_routes_blocked;
+            }
+
+            /* THQUEST.ASM $C240-$C2D8 re-enters the destination-tile test for
+             * open pads, while the host resolver fails closed without a
+             * supported terminal. Exercise authentic wall terminals and
+             * unresolved chains through the command path below. Special-square
+             * arrivals above check host preview/mutator consistency only;
+             * defer their game policy until its consumer is source-bound.
+             * See theron_v1_teleporter_resolve() and
+             * docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-477.
+             */
+            if (terminal_status == 0 && chain_hops > 0u)
+                ++unresolved_chained_routes_with_approach;
+            if (terminal_status == 3) continue;
+            if (terminal_status != 1 &&
+                !(terminal_status == 2) &&
+                !(terminal_status == 0 && chain_hops > 0u))
+                continue;
+
+            world->current_level = teleporter->level;
+            world->party.leader_dir = 0;
+            for (int turns = 0;
+                 world->party.leader_dir != approach_direction &&
+                 turns < THERON_DIR_COUNT;
+                 ++turns) {
+                assert(theron_v1_turn_party_original_command(
+                           world,
+                           THERON_ORIGINAL_COMMAND_TURN_LEFT) == 0);
+            }
+            assert(world->party.leader_dir == approach_direction);
+            if (terminal_status == 2 || terminal_status == 0) {
+                const int source_x = world->party.leader_x;
+                const int source_y = world->party.leader_y;
+                const int source_dir = world->party.leader_dir;
+                const int previous_transition_pending =
+                    world->transition_pending;
+                const Theron_TransitionType previous_transition_type =
+                    world->transition_type;
+                const int previous_target_level =
+                    world->transition_target_level;
+                const int previous_spawn_x = world->transition_spawn_x;
+                const int previous_spawn_y = world->transition_spawn_y;
+                /* Keep the read-only movement preview aligned with the
+                 * original-command path for authentic coordinate chains
+                 * whose destination is unsupported or a wall. */
+                assert(theron_v1_get_move_result(
+                           world, approach_direction) == THERON_MOVE_BLOCKED);
+                assert(theron_v1_move_party_original_command(
+                           world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+                       THERON_MOVE_BLOCKED);
+                assert(world->current_dungeon == dungeon_id);
+                assert(world->current_level == teleporter->level);
+                assert(world->party.leader_x == source_x);
+                assert(world->party.leader_y == source_y);
+                assert(world->party.leader_dir == source_dir);
+                assert(world->transition_pending ==
+                       previous_transition_pending);
+                assert(world->transition_type == previous_transition_type);
+                assert(world->transition_target_level ==
+                       previous_target_level);
+                assert(world->transition_spawn_x == previous_spawn_x);
+                assert(world->transition_spawn_y == previous_spawn_y);
+                if (terminal_status == 2 && chain_hops > 0u)
+                    ++chained_wall_routes_blocked;
+                else if (terminal_status == 0)
+                    ++unresolved_chained_routes_blocked;
+            } else {
+                assert(theron_v1_get_move_result(
+                           world, approach_direction) == THERON_MOVE_TELEPORT);
+                assert(theron_v1_move_party_original_command(
+                           world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+                       THERON_MOVE_TELEPORT);
+                assert(world->current_dungeon == dungeon_id);
+                assert(world->current_level == target_level);
+                assert(world->party.leader_x == target_x);
+                assert(world->party.leader_y == target_y);
+                assert(world->transition_pending == 0);
+                ++routes_tested;
+                if (target_level != teleporter->level)
+                    ++cross_level_routes_tested;
+                if (terminal_closed_teleporter)
+                    ++closed_terminal_routes_tested;
+                if (chain_hops > 0u) ++chained_routes_tested;
+            }
+        }
+    }
+    assert(routes_tested > 0u);
+    assert(preview_comparisons == 91u);
+    assert(preview_teleports == 45u);
+    assert(preview_blocks == 46u);
+    assert(cross_level_routes_tested > 0u);
+    assert(routes_tested == 41u);
+    assert(cross_level_routes_tested == 4u);
+    assert(closed_terminal_routes_tested == 8u);
+    assert(chained_routes_tested == 0u);
+    assert(active_chain_roots == 14u);
+    assert(chained_wall_routes_blocked == 4u);
+    assert(direct_wall_routes_blocked == 42u);
+    assert(unresolved_chained_routes_with_approach == 0u);
+    assert(unresolved_chained_routes_blocked == 0u);
+    assert(special_terminal_routes_deferred == 9u);
+    assert(special_terminal_chains_deferred == 1u);
+    assert(chained_routes_without_floor_approach == 9u);
+    assert(unresolved_chained_routes_blocked ==
+           unresolved_chained_routes_with_approach);
+    printf("  authentic %s coordinate-teleporter movement routes: %u total, "
+           "%u preview/command comparisons (%u teleport, %u blocked; "
+           "%u direct-wall blocks), "
+           "%u cross-level, %u closed-pad terminals, %u chained routes, "
+           "%u active-chain roots, %u chain walls blocked, "
+           "%u unresolved chains blocked, %u special terminals deferred "
+           "(%u chained), "
+           "%u chains without floor approach\n",
+           variant == 1 ? "JP" : "US", routes_tested,
+           preview_comparisons, preview_teleports, preview_blocks,
+           direct_wall_routes_blocked,
+           cross_level_routes_tested, closed_terminal_routes_tested,
+           chained_routes_tested, active_chain_roots,
+           chained_wall_routes_blocked, unresolved_chained_routes_blocked,
+           special_terminal_routes_deferred, special_terminal_chains_deferred,
+           chained_routes_without_floor_approach);
+    free(world);
+    free(attempt_world);
+}
+
 static void test_authentic_take_requires_matching_item_record(
     const uint8_t *ud, size_t ud_size,
     const uint8_t *track02, size_t track02_size, int variant,
@@ -5460,6 +5828,8 @@ int main(void) {
             raw = load_raw_bytes(jp_path, &raw_size);
             assert(raw != NULL);
             test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
+            test_authentic_coordinate_teleporter_movement_corpus(
+                jp_ud, jp_ud_size, raw, raw_size, 1);
             test_real_item_name_sources(jp_ud, jp_ud_size, 1);
             for (int dungeon_id = 1;
                  dungeon_id <= THERON_DUNGEON_COUNT; ++dungeon_id) {
@@ -5492,6 +5862,8 @@ int main(void) {
     raw = load_raw_bytes(path, &raw_size);
     assert(raw != NULL);
     test_all_dungeons(ud, ud_size, raw, raw_size);
+    test_authentic_coordinate_teleporter_movement_corpus(
+        ud, ud_size, raw, raw_size, 2);
     if (g_jp_stair_party_actuator_census_valid) {
         assert(g_us_stair_party_actuator_census_valid);
         assert(g_jp_stair_party_actuator_count ==

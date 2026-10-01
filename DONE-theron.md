@@ -1,5 +1,94 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-01 — expose authentic regional skill-rank source records
+
+- US and JP Rev. 1 now expose bounds-checked raw accessors for all 15 authentic
+  skill-rank records, preserving their bytes without NUL terminators. The six
+  `0x60`–`0x65` prefix bytes are available as data in both editions; this does
+  not infer glyph rendering or bind an original rank-display consumer.
+- The regional real-media test compares every returned byte and record length
+  against hash-verified Track 02, and the API regression covers missing outputs
+  and unbound slot 15. Original in-game presentation remains open in TODO.
+
+## 2026-10-01 — keep coordinate-teleporter preview consistent with authentic movement
+
+- The read-only movement query now follows Track 02 coordinate-link records,
+  validates loaded destination bounds, rejects wall/cyclic/incomplete chains,
+  and treats an authenticated closed arrival pad as terminal. It does not
+  mutate party or transition state. The rule is bounded to the source-locked
+  destination-tile loop in `theron-runtime-spawn-capture.md:466-477`.
+- The authentic US/JP corpus now checks that preview and Firestaff's mutating
+  original-command API agree for every active coordinate link with an adjacent
+  authentic floor:
+  91 cases per region. Both regions produce 45 `TELEPORT` and 46 `BLOCKED`
+  results, including 42 direct wall targets and four chains ending at a wall.
+  The existing world-state hash confirms the query does not mutate the state
+  it covers. The cloned mutating original-command path and preview agree even
+  for special-square arrivals, but those arrivals remain deferred as game
+  semantics.
+- On trv2, the authentic dungeon-loader CTest passed three consecutive runs.
+  Combat mechanics, teleporter chain and mechanics hardening probes passed.
+  The cross-route probe exposed stale assertions for queued transitions and
+  the obsolete MOVESENS citation; those assertions now match committed
+  transitions and the Theron Track 02 source lock. The five-test focused
+  selection then passed three repetitions. This is preview/mutator consistency,
+  not an original runtime consumer capture; full Theron parity remains open.
+
+## 2026-09-30 — census authentic active-link teleporter chains
+
+- Extended the real-media movement loop to retain the active-chain hop count
+  even when a route has no supported terminal, and to distinguish special
+  square terminals from invalid/cyclic chains. The original runtime reference
+  for open-pad re-entry and destination-tile handling is recorded in
+  `docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-477`;
+  the host iteration cap remains a fail-closed guard, not original behavior.
+- Hash-verified US and JP Track 02 each contain 14 active-chain roots across
+  their seven banks. In each region, four chains with a floor approach end at
+  walls and are rejected without party or transition mutation; one chain with
+  a floor approach ends at a special square and remains deferred; nine chains
+  have no adjacent floor approach. No unresolved chain with a direct floor
+  approach appears in either current retail BIN.
+- The isolated target built on trv2 with `-j1`; the authentic dungeon-loader
+  CTest passed three repetitions with `-j2`, and direct US/JP executions
+  printed the same census. This is source-data and fail-closed test coverage,
+  not proof of special-square arrivals or the original in-game consumer.
+
+## 2026-09-30 — exercise authentic coordinate-teleporter movement corpus
+
+- The real-media dungeon-loader test now finds active coordinate-linked pads
+  across all seven US and JP dungeon banks and drives every matching route
+  that has an adjacent floor approach and an ordinary-floor destination through
+  the original turn/forward commands. It asserts the committed destination
+  level and pose and that no transition remains pending.
+- The installed, hash-verified Track 02 files yielded 41 committed routes per
+  region, including four cross-level routes and eight closed-pad terminal
+  arrivals per region. Four additional active-to-active chains per region with
+  an ordinary-floor approach terminate at a wall; the original movement
+  command blocks them without changing the party pose or transition state.
+  Trv2 built the target serially, and the focused real-media CTest passed three
+  consecutive runs. Direct execution passed both regional route loops.
+- This does not prove the remaining active-link chains, direct wall-target
+  policy beyond the source-locked reject gate, special-square arrivals, pads
+  without a floor approach, or the full runtime consumer. Complete Theron
+  parity remains open.
+
+## 2026-09-30 — commit the authentic coordinate-teleporter movement handoff
+
+- Coordinate-linked Track 02 movement now commits the transition prepared by
+  the source-data resolver through the existing transition executor. If the
+  handoff is absent, malformed, or cannot commit, movement fails closed and
+  restores the previous level, party pose, and transition fields.
+- The authentic US AKUTUBA M0 regression starts at the captured `(1,0,north)`
+  pose, turns left, and enters the real active `(0,0)` pad through the original
+  movement command. It verifies arrival at `(2,3)` on M0, a real floor square
+  with no endpoint object record. On trv2, the target built with `-j1`, the
+  focused CTest passed three repetitions with `-j2`, and the direct
+  real-media test confirmed the route.
+- Scope is limited to this authenticated US route and the transition-state
+  invariant. It does not establish JP movement, chained or wall-target
+  outcomes, stairs, or complete Theron/platform parity; those remain open in
+  `TODO-theron.md`.
+
 ## 2026-09-30 — guard campaign completion against fabricated quest items
 
 - Extended the real-media M11 Continue test to assert that the authenticated

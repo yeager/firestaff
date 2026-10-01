@@ -1,5 +1,5 @@
 #include "theron_v1_track02_champion_strings.h"
-#include "theron_v1_track02_skill_rank_source.h"
+#include "theron_v1_track02_skill_rank_raw.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -55,11 +55,19 @@ static int test_skill_levels(void) {
     {
         const uint8_t *record = NULL;
         size_t record_size = 0u;
+        ASSERT(theron_v1_track02_us_skill_level_source_record(
+                   8u, &record, &record_size), "US raw rank record");
+        ASSERT(record_size == sizeof("\x60 MASTER") - 1u &&
+                   memcmp(record, "\x60 MASTER", record_size) == 0,
+               "US rank preserves prefix glyph");
         ASSERT(theron_v1_track02_jp_skill_level_source_record(
                    8u, &record, &record_size), "JP raw rank record");
         ASSERT(record_size == sizeof("\x60 MASTER") - 1u &&
                    memcmp(record, "\x60 MASTER", record_size) == 0,
                "JP rank preserves prefix glyph");
+        ASSERT(!theron_v1_track02_us_skill_level_source_record(
+                   15u, &record, &record_size) && !record && record_size == 0u,
+               "US unbound rank");
         ASSERT(!theron_v1_track02_jp_skill_level_source_record(
                    15u, &record, &record_size) && !record && record_size == 0u,
                "JP unbound rank");
@@ -71,6 +79,14 @@ static int test_skill_levels(void) {
         ASSERT(!theron_v1_track02_jp_skill_level_source_record(
                    0u, &record, NULL) && !record,
                "JP rank source rejects missing size output");
+        record = (const uint8_t *)"stale";
+        record_size = 99u;
+        ASSERT(!theron_v1_track02_us_skill_level_source_record(
+                   0u, NULL, &record_size) && !record_size,
+               "US rank source rejects missing byte output");
+        ASSERT(!theron_v1_track02_us_skill_level_source_record(
+                   0u, &record, NULL) && !record,
+               "US rank source rejects missing size output");
     }
     PASS();
 }

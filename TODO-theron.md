@@ -1,6 +1,47 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-09-30. Only open work is listed here.
+Reviewed 2026-10-01. Only open work is listed here.
+
+## 2026-09-30 — remaining coordinate-teleporter parity
+
+- The authentic US AKUTUBA M0 route from `(1,0,north)` through the active
+  `(0,0)` pad to `(2,3)` commits through Firestaff's mutating movement-command
+  API and transition executor. The real-media movement corpus now exercises 41
+  eligible routes each from US and JP Track 02, including four cross-level
+  routes and eight closed-pad terminal arrivals per region. The real-media
+  census finds 14 active-chain roots in each region: four floor-approachable
+  chains end at walls and block unchanged, one chain with a floor approach
+  ends at a special square and is deferred, and nine chains have no adjacent
+  floor approach. No unresolved chain with a direct floor approach occurs in
+  either current retail BIN; see `DONE-theron.md`. On all 91 active links per
+  region with an adjacent authentic floor, the read-only preview now agrees
+  with Firestaff's mutating original-command API on a cloned world and leaves
+  the source world unchanged. Special-square behavior and routes without a
+  floor approach,
+  direct wall-target behavior in the original runtime, and original source-owned
+  runtime consumers remain unverified. The JP full-CUE capture
+  still did not reach an authenticated game-owned data consumer, so it adds no
+  independent original-runtime gameplay evidence.
+
+## 2026-09-30 — explicit US menu target still does not reach the title route
+
+- A ten-minute isolated trv2 replay used the authentic US CUE (MD5
+  `63dbd2fab613b2e8030ff4e44b978a39`), Track 02
+  (`f23601102138f87c33025877767ebf76`), System Card
+  (`ff1a674273fe3540ccef576376407d1d`) and campaign BRAM
+  (`ffabc8d19b0915d4d9632a7ae2e90a97`). The final 2 KiB BRAM snapshot was
+  byte-identical to the configured authentic save. The signed US menu-route
+  target `7549` was explicitly supplied alongside `drator-generator` and the
+  original scripted `run@9600:90` input.
+- The input event was applied and followed only by a System Card controller
+  poll at `$E4B7`; no non-System-Card poll or Drator route-hook receipt appeared.
+  The run recorded 115 CD IRQs, 25 raw-sector spans and four SCSI READs, plus
+  one `$E009` dispatch/return but zero `$E009` data reads and zero authenticated
+  CD-to-RAM receipts. The capture ended `BLOCKED` with `transition=missing`.
+- Supplying the authenticated route target did not advance the cold start to
+  the title/menu path. This remains negative startup evidence, not Drator or
+  gameplay proof. Private traces remain on trv2 under
+  `/home/trv2/work/theron-stair-capture-20260930/capture/`.
 
 ## 2026-09-30 — authentic JP full-CUE capture still stops before Track 02 consumer
 
@@ -47,14 +88,14 @@ test directory. Its authentic parser-only trv2 CTest passed and left that
 directory empty. This removes a test-harness `/tmp` fallback only; original
 Track 02 consumers and end-to-end Theron gameplay remain open below.
 
-## 2026-09-30 — bind authentic JP rank source records
+## 2026-10-01 — preserve authentic US/JP rank prefix bytes
 
 The 15 JP Rev. 1 rank records at UD `0x89333` are authenticated as
-byte-identical in visible text to the US table at UD `0x1C9B6B`. A bounds-
-checked JP text accessor is now covered by regional real-media tests. Its six
-custom prefix glyphs are still separate raw bytes; rank-icon presentation, an
-original in-game display consumer, and the unrecorded progression slot 15
-remain open.
+byte-identical in visible text to the US table at UD `0x1C9B6B`. Both editions
+now expose bounds-checked raw-record accessors, and the real-media tests compare
+all returned record bytes against the authenticated BINs. The six custom prefix
+bytes remain semantically opaque: rank-icon presentation, an original in-game
+display consumer, and unrecorded progression slot 15 remain open.
 
 ## 2026-09-30 — keep Theron public status evidence-bounded
 
@@ -3326,6 +3367,12 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   teleporter endpoints are present. Keep wall-target and chained routes
   fail-closed until a source consumer or authenticated movement capture binds
   their exact outcomes.
+
+  2026-09-30 update: the real-media movement regression now exercises four
+  US and four JP active-to-active chains whose final decoded destination is a
+  wall. Original movement blocks each attempted route without changing party
+  position or transition fields. This is bounded parity for those records;
+  the other active-link chains and direct wall-target paths remain open.
 
 - [ ] THERON-V1-TRACK02-JP-LEVEL-DATA: the authenticated Japanese Track 02
   framing and bounded HuC6280 resource admission are verified for all seven
