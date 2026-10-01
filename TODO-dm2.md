@@ -171,6 +171,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   script passed against the staged bundle and authentic ZIP. This confirms
   software input and source runtime movement after both CLI and M12 starts,
   but does not verify physical M5 input or audio output.
+  The corresponding CTest row now passes in 178 seconds against its configured
+  authenticated ZIP. The M12 sessions scan a temporary two-package install
+  containing the original Mac ZIP and, when staged, the original DOS ZIP;
+  AUTO reaches Mac gameplay within 500 probe frames. Its CTest timeout is 240
+  seconds because the full host install scan plus source-movie checks exceeded
+  the previous 180-second limit.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`

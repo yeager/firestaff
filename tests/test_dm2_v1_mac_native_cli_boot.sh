@@ -49,6 +49,27 @@ if [ ! -f "$archive" ]; then
     exit 77
 fi
 
+# Keep the end-to-end M12 sessions representative while avoiding repeated
+# scans of unrelated DM1/CSB/DM2 archives in the user's shared data root. The
+# bytes remain the same authenticated retail ZIP; the temporary install uses
+# only a symlink under the normal .firestaff/data/<game> layout.
+menu_data_root=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-dm2-mac-menu.XXXXXX")
+mkdir -p "$menu_data_root/dm2"
+archive_dir=$(cd "$(dirname "$archive")" && pwd)
+archive_name=${archive##*/}
+ln -s "$archive_dir/$archive_name" "$menu_data_root/dm2/$archive_name"
+auto_data_archive="$menu_data_root/dm2/$archive_name"
+dos_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+if [ -f "$dos_archive" ]; then
+    ln -s "$dos_archive" "$menu_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+fi
+cleanup_menu_data() {
+    if [ -d "$menu_data_root" ]; then
+        rm -rf "$menu_data_root"
+    fi
+}
+trap cleanup_menu_data EXIT
+
 archive_hash_before=$(sha256sum "$archive")
 
 if [ "$(uname -s)" = Darwin ]; then
@@ -70,7 +91,7 @@ if [ "$(uname -s)" = Darwin ]; then
     esac
 fi
 
-FIRESTAFF_DATA="$data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+FIRESTAFF_DATA="$menu_data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform mac \
     --width 320 --height 200 \
@@ -88,7 +109,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # Macintosh is the first card on the second platform row.  This remains a
 # launcher-only pointer sequence; the native movie and mirror clicks are
 # separately covered below at their original 320x200 coordinate space.
-FIRESTAFF_DATA="$data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+FIRESTAFF_DATA="$menu_data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm2 --platform mac \
     --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20' \
@@ -105,6 +126,7 @@ cleanup_runtime_probe() {
     if [ -d "$runtime_capture" ]; then
         find "$runtime_capture" -depth -delete
     fi
+    cleanup_menu_data
 }
 trap cleanup_runtime_probe EXIT
 trap 'exit 129' HUP
@@ -157,14 +179,14 @@ echo 'PASS: normal DM2 Macintosh Title.MooV loop turns and moves twice in authen
 # route and issue real turn/move commands after the menu handoff. A launch
 # receipt or a changed mirror position alone cannot prove that gameplay input
 # reaches the selected retail Mac runtime.
-menu_runtime_output=$(FIRESTAFF_DATA="$data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+menu_runtime_output=$(FIRESTAFF_DATA="$menu_data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --scale-mode 0 --width 1920 --height 1080 \
     --menu --game dm2 --platform mac \
     --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20,wait:1200,key:enter,click:900:500,wait:20,click:1074:580,wait:30,key:right,wait:30,key:up,wait:30,key:up' \
-    --duration 60000 2>&1) || {
+    --duration 42000 2>&1) || {
     printf '%s\n' "$menu_runtime_output" >&2
     exit 1
 }
@@ -258,16 +280,16 @@ PY
 
 # The same original-media route must be chosen by a plain `--game dm2` on a
 # macOS host, even when the shared root also contains a complete DOS install.
-auto_root_output=$(FIRESTAFF_DATA="$data_root" \
+auto_root_output=$(FIRESTAFF_DATA="$menu_data_root" \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --boot-probe --boot-probe-frames 2000 \
+    --game dm2 --boot-probe --boot-probe-frames 500 \
     --width 320 --height 200 \
     --script 'key:enter,key:enter,click:100:60,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$auto_root_output" >&2; exit 1; }
 case "$auto_root_output" in
-    *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*"dataDir=$archive"*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
+    *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*"dataDir=$auto_data_archive"*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
     *) printf '%s\n' "$auto_root_output" >&2; exit 1 ;;
 esac
 python3 - "$runtime_probe" <<'PY'
