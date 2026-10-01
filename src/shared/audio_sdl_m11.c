@@ -38,6 +38,16 @@
 #define M11_HAVE_SDL_AUDIO 1
 #endif
 
+#if M11_HAVE_SDL_AUDIO
+#ifndef FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM
+#define FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM SDL_OpenAudioDeviceStream
+#else
+SDL_AudioStream *FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(
+    SDL_AudioDeviceID device, const SDL_AudioSpec *spec,
+    SDL_AudioStreamCallback callback, void *userdata);
+#endif
+#endif
+
 /* ── helpers ─────────────────────────────────────────────────────── */
 
 static int m11_clamp_volume(int value) {
@@ -1087,7 +1097,11 @@ int M11_Audio_Init(M11_AudioState* state) {
          * the Firestaff render thread is presenting a frame. */
         SDL_SetHint(SDL_HINT_AUDIO_CATEGORY, "playback");
 #endif
-        if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        /* Audio may already be owned by a title/MVE/DM2 stream. SDL subsystem
+         * initialization is process-wide here; don't take another reference
+         * that this short-lived M11 state would need to release. */
+        if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) &&
+            !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
             fprintf(stderr, "firestaff: SDL audio initialization failed: %s\n",
                     SDL_GetError());
             state->backend = M11_AUDIO_BACKEND_NONE;
@@ -1108,7 +1122,7 @@ int M11_Audio_Init(M11_AudioState* state) {
         spec.channels = 1;
         spec.freq     = M11_AUDIO_SAMPLE_RATE;
 
-        stream = SDL_OpenAudioDeviceStream(
+        stream = FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(
             Firestaff_AudioDevice_ResolvePlayback(),
             &spec,
             NULL,  /* no callback — we push data */
@@ -1118,7 +1132,10 @@ int M11_Audio_Init(M11_AudioState* state) {
         if (!stream) {
             fprintf(stderr, "firestaff: SDL playback stream open failed: %s\n",
                     SDL_GetError());
-            SDL_QuitSubSystem(SDL_INIT_AUDIO);
+            /* The SDL audio subsystem is process-shared. Another owner
+             * (for example an intro or DM2 stream) may still be using it. A
+             * failed attempt to add this stream must not tear that owner
+             * down; SDL_Quit() handles the subsystem at process exit. */
             state->backend = M11_AUDIO_BACKEND_NONE;
             return 1;
         }
@@ -1140,7 +1157,7 @@ int M11_Audio_Init(M11_AudioState* state) {
             cdda_spec.format   = SDL_AUDIO_S16LE;
             cdda_spec.channels = 2;
             cdda_spec.freq     = 44100;
-            cdda = SDL_OpenAudioDeviceStream(
+            cdda = FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(
                 Firestaff_AudioDevice_ResolvePlayback(),
                 &cdda_spec, NULL, NULL);
             if (cdda) {
@@ -2251,7 +2268,7 @@ int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
             spec.format = SDL_AUDIO_F32;
             spec.channels = 1;
             spec.freq = M11_AUDIO_SAMPLE_RATE;
-            stream = SDL_OpenAudioDeviceStream(Firestaff_AudioDevice_ResolvePlayback(),
+            stream = FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(Firestaff_AudioDevice_ResolvePlayback(),
                                                 &spec, NULL, NULL);
             if (!stream) return 1; /* Keep the original visual timeline without a device. */
             state->movieStream = stream;
@@ -2357,7 +2374,7 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
             spec.format = SDL_AUDIO_F32;
             spec.channels = 1;
             spec.freq = M11_AUDIO_SAMPLE_RATE;
-            stream = SDL_OpenAudioDeviceStream(Firestaff_AudioDevice_ResolvePlayback(),
+            stream = FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(Firestaff_AudioDevice_ResolvePlayback(),
                                                 &spec, NULL, NULL);
             if (!stream) return 0;
             state->musicStream = stream;

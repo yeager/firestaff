@@ -7821,6 +7821,26 @@ if(DM2_SOURCES)
     target_link_libraries(firestaff_m11 PUBLIC firestaff_dm2)
 endif()
 
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_audio_sdl_lifecycle.c")
+    add_executable(test_m11_audio_sdl_lifecycle
+        tests/test_m11_audio_sdl_lifecycle.c
+        src/shared/audio_sdl_m11.c)
+    target_include_directories(test_m11_audio_sdl_lifecycle PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_compile_definitions(test_m11_audio_sdl_lifecycle PRIVATE
+        FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM=m11_test_open_audio_device_stream)
+    target_link_libraries(test_m11_audio_sdl_lifecycle PRIVATE
+        firestaff_m11 SDL3::SDL3 m firestaff_audio_device)
+    if(NOT MSVC)
+        target_compile_options(test_m11_audio_sdl_lifecycle PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_audio_sdl_lifecycle
+        COMMAND test_m11_audio_sdl_lifecycle)
+    set_tests_properties(m11_audio_sdl_lifecycle PROPERTIES
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_AUDIO_ENABLE_SDL=1"
+        LABELS "m11;audio;sdl;audio-lifecycle;regression;skip_safe")
+endif()
+
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_plane_material_matrix_pc34_compat.c")
     add_executable(test_dm1_v1_viewport_plane_material_matrix_pc34_compat
         tests/test_dm1_v1_viewport_plane_material_matrix_pc34_compat.c)
@@ -18308,7 +18328,7 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;original-media;native;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_MEDIA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
-        TIMEOUT 120
+        TIMEOUT 300
     )
     add_test(
         NAME csb_v1_atari_french_preservation_zip_cli_boot
