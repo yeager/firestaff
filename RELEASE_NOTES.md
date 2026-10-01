@@ -7,6 +7,10 @@
 
 ## Developer changes
 
+- `SDL audio lifecycle`: shares macOS playback preparation across DM1/CSB and
+  DM2 sound and MVE streams, and avoids an extra SDL audio subsystem reference
+  on each DM2 MVE opening. Dummy-device tests cover the shared owner and
+  authentic DM2 PCM; physical macOS playback remains unverified.
 - `DM1 FM Towns version menu`: authentic-media coverage now verifies that the
   Japanese Version tile selects the Japanese game program without a CLI
   language override.

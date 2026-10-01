@@ -14,12 +14,11 @@ int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner)
     if (!owner) return 0;
     memset(owner, 0, sizeof(*owner));
     owner->master_volume = 128;
-    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+    if (!Firestaff_AudioDevice_PreparePlayback()) {
         owner->initialized = 1;
         owner->output_unavailable = 1;
         return 1;
     }
-    owner->owns_audio_subsystem = 1;
     memset(&spec, 0, sizeof(spec));
     spec.format = SDL_AUDIO_U8;
     spec.channels = DM2_V1_MVE_AUDIO_CHANNELS;
@@ -126,9 +125,8 @@ void dm2_v1_mve_audio_sdl_owner_close(DM2_V1_MveAudioSdlOwner *owner)
     if (!owner) return;
     if (owner->sdl_stream)
         SDL_DestroyAudioStream((SDL_AudioStream *)owner->sdl_stream);
-    /* Do NOT call SDL_QuitSubSystem(SDL_INIT_AUDIO) here even though we
-     * ref-took it via SDL_InitSubSystem above.  See the same comment in
-     * audio_sdl_m11.c and dm2_v1_sound_sdl_backend.c: Firestaff runs
+    /* Do NOT call SDL_QuitSubSystem(SDL_INIT_AUDIO) here. See the same
+     * comment in audio_sdl_m11.c and dm2_v1_sound_sdl_backend.c: Firestaff runs
      * several audio owners per launch, and SDL_QuitAudio's hash-table
      * iteration segfaults on macOS 26 when the subsystem is bounced
      * repeatedly.  Process SDL_Quit() at exit handles the subsystem. */

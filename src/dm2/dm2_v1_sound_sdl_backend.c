@@ -102,8 +102,7 @@ static int dm2_v1_sdl_backend_open(void *ctx)
         return 1;
     g_dm2_sdl_host_paused = 0;
     g_dm2_sdl_paused_before_host = 0;
-    if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) &&
-        !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+    if (!Firestaff_AudioDevice_PreparePlayback()) {
         fprintf(stderr, "firestaff: DM2 SDL audio initialization failed: %s\n",
                 SDL_GetError());
         return 0;

@@ -1090,33 +1090,12 @@ int M11_Audio_Init(M11_AudioState* state) {
             return 1;
         }
 
-#ifdef __APPLE__
-        /* Use Apple's playback category for game audio. The default ambient
-         * category can route SDL's mono stream through CoreAudio's
-         * head-tracking session; macOS 26 has crashed in that session while
-         * the Firestaff render thread is presenting a frame. */
-        SDL_SetHint(SDL_HINT_AUDIO_CATEGORY, "playback");
-#endif
-        /* Audio may already be owned by a title/MVE/DM2 stream. SDL subsystem
-         * initialization is process-wide here; don't take another reference
-         * that this short-lived M11 state would need to release. */
-        if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) &&
-            !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        if (!Firestaff_AudioDevice_PreparePlayback()) {
             fprintf(stderr, "firestaff: SDL audio initialization failed: %s\n",
                     SDL_GetError());
             state->backend = M11_AUDIO_BACKEND_NONE;
             return 1;
         }
-
-#ifdef __APPLE__
-        /* macOS CoreAudio workaround: pump the Cocoa event loop once before
-         * opening an audio device so that HALC_ShellObjectMap's dispatch_once
-         * initialiser runs on the main thread.  Without this, the audio
-         * device thread and CFRunLoop can race on the same dispatch_once
-         * block, dereferencing an uninitialised proxy object (SIGSEGV in
-         * HALC_ProxyObjectMap::_GetProxyForObject). */
-        SDL_PumpEvents();
-#endif
 
         spec.format   = SDL_AUDIO_F32;
         spec.channels = 1;

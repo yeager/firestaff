@@ -139,6 +139,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   failure; authentic DM1, CSB Atari, and DM2 Mac startup checks pass with the
   change. This closes the shared-owner failure path, but it does not prove
   native output or resolve the M5 audio report.
+  DM2's GDAT and DOS MVE streams now share that macOS playback preparation;
+  MVE no longer repeats SDL audio subsystem initialization while it is live.
+  Authentic PCM and lifecycle checks pass with the dummy device, but this host
+  still reports no CoreAudio output and cannot establish audible M5 behavior.
   Downloaded and launched the published v3.0.352 arm64 app bundle with direct
   `--game dm2`; it reports the PC-DOS media hash
   `25247ede4dabb6a71e5dabdfbcd5907d`. The rebuilt macOS AUTO route selects the

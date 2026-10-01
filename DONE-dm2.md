@@ -1,5 +1,10 @@
 # Firestaff DONE — DM2
 
+- 2026-10-01: DM2 GDAT effects and DOS MVE audio now use the same macOS
+  playback preparation as the shared DM1/CSB SDL path. MVE startup no longer
+  takes an additional SDL audio subsystem reference on every opening. The
+  shared-owner lifecycle check and authentic DOS GRAPHICS.DAT/MVE PCM tests
+  pass with an SDL dummy device. Physical CoreAudio output remains unverified.
 - 2026-10-01: The authentic-media CLI startup matrix passed for all five
   registered DM2 editions: DOS English, DOS French, Macintosh retail, Amiga,
   and FM Towns. The four non-Mac tests passed in 442.74 seconds total; the Mac

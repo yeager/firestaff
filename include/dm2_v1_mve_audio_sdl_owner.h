@@ -23,7 +23,6 @@ typedef struct {
     uint16_t next_source_sequence;
     int have_source_sequence;
     int initialized;
-    int owns_audio_subsystem;
     /* No host output device was available.  Source PCM is still admitted in
      * order so a missing device cannot suppress the retail video/menu; no
      * substitute samples, mixer or resampler are introduced. */
@@ -59,7 +58,7 @@ int dm2_v1_mve_audio_sdl_owner_set_host_paused(
 int dm2_v1_mve_audio_sdl_owner_set_master_volume(
     DM2_V1_MveAudioSdlOwner *owner, int volume);
 
-/* Destroy only the stream/subsystem reference opened above. */
+/* Destroy only the stream; SDL_Quit() releases process-wide audio at exit. */
 void dm2_v1_mve_audio_sdl_owner_close(DM2_V1_MveAudioSdlOwner *owner);
 
 #endif /* FIRESTAFF_DM2_V1_MVE_AUDIO_SDL_OWNER_H */
