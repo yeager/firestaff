@@ -164,6 +164,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   keyboard/audio devices. The initial failed invocation targeted the bundled
   Dungeon Studio UI executable, not `Firestaff.app`, and is not game-engine
   evidence.
+  The M12 part of this regression now sends a right turn and two forward
+  commands after the mirror handoff and requires map-0 pose (3,7), facing
+  east. It also uses `FIRESTAFF_DATA` for the shared data root; passing the ZIP
+  itself as `--data-dir` had produced a false “Data missing” menu. The updated
+  script passed against the staged bundle and authentic ZIP. This confirms
+  software input and source runtime movement after both CLI and M12 starts,
+  but does not verify physical M5 input or audio output.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`

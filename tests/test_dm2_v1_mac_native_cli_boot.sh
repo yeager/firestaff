@@ -70,9 +70,9 @@ if [ "$(uname -s)" = Darwin ]; then
     esac
 fi
 
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+FIRESTAFF_DATA="$data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm2 --platform mac --data-dir "$archive" \
+    --menu --game dm2 --platform mac \
     --width 320 --height 200 \
     --script 'key:enter,key:enter,click:100:60' --duration 1000 >/dev/null 2>&1
 
@@ -88,9 +88,9 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # Macintosh is the first card on the second platform row.  This remains a
 # launcher-only pointer sequence; the native movie and mirror clicks are
 # separately covered below at their original 320x200 coordinate space.
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+FIRESTAFF_DATA="$data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 1920 --height 1080 --menu --game dm2 --platform mac --data-dir "$archive" \
+    --width 1920 --height 1080 --menu --game dm2 --platform mac \
     --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
@@ -154,16 +154,17 @@ echo 'PASS: normal DM2 Macintosh Title.MooV loop turns and moves twice in authen
 # 1920x1080 host window, so source New Game at (100,60) maps to (900,500).
 # The script must outlive M12, the 17.5-second retail Title.MooV, New Game and the first
 # mirror; then click the retail Mac forward arrow through the scaled pointer
-# route. A launch receipt alone cannot prove that the selected retail Mac
-# package reaches a presented, movable frame.
-menu_runtime_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+# route and issue real turn/move commands after the menu handoff. A launch
+# receipt or a changed mirror position alone cannot prove that gameplay input
+# reaches the selected retail Mac runtime.
+menu_runtime_output=$(FIRESTAFF_DATA="$data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --scale-mode 0 --width 1920 --height 1080 \
-    --menu --game dm2 --platform mac --data-dir "$archive" \
-    --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20,wait:1200,key:enter,click:900:500,wait:20,click:1074:580' \
-    --duration 36000 2>&1) || {
+    --menu --game dm2 --platform mac \
+    --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20,wait:1200,key:enter,click:900:500,wait:20,click:1074:580,wait:30,key:right,wait:30,key:up,wait:30,key:up' \
+    --duration 60000 2>&1) || {
     printf '%s\n' "$menu_runtime_output" >&2
     exit 1
 }
@@ -191,9 +192,9 @@ if (
     or startup.get("startupActive") != 0
     or startup.get("levelLoaded") != 1
     or party.get("mapIndex") != 0
-    or party.get("mapX") != 1
+    or party.get("mapX") != 3
     or party.get("mapY") != 7
-    or party.get("direction") != 0
+    or party.get("direction") != 1
     or party.get("championCount") != 2
     or runtime_frame != {"accepted": 1, "realAssets": 1,
                          "noCoreFallbacks": 1, "fallbackDraws": 0}
@@ -202,7 +203,8 @@ if (
 ):
     raise SystemExit(
         "FAIL: scaled M12 Macintosh route did not finish Title.MooV, New Game, "
-        f"and mirror startup: {probe}")
+        "mirror startup, and two source runtime moves: "
+        f"{probe}")
 
 frames = list(Path(sys.argv[2]).glob("*.bmp"))
 if len(frames) != 1:
@@ -251,7 +253,7 @@ for arrow, (x0, y0) in enumerate(arrow_rects):
         raise SystemExit(
             f"FAIL: Mac retail movement image {arrow} was not presented "
             f"inside its RAW4 destination {(x0, y0, 29, 23)}")
-print("PASS: scaled M12 Macintosh launch reaches and presents authentic runtime")
+print("PASS: scaled M12 Macintosh launch turns and moves twice in authentic runtime")
 PY
 
 # The same original-media route must be chosen by a plain `--game dm2` on a
@@ -289,4 +291,4 @@ if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
     echo 'FAIL: DM2 Macintosh retail archive changed during native launch' >&2
     exit 1
 fi
-echo 'PASS: native DM2 Macintosh ZIP AUTO start menu, title, mirror selection, and movement run in memory'
+echo 'PASS: native DM2 Macintosh ZIP AUTO start menu, title, mirror selection, and post-launch movement run in memory'
