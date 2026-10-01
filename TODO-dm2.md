@@ -106,6 +106,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   compiles and source/scheduling tests pass, but no physical output or external
   synth endpoint is available here to exercise it. These host results do not
   explain or resolve the M5 report.
+  On 2026-10-01, the shared M11 SDL path was also fixed so a failed attempt to
+  open its playback stream neither reinitializes an already-active audio
+  subsystem nor shuts that process-wide subsystem down. A dummy-device
+  lifecycle regression keeps another owner's live stream usable across the
+  failure; authentic DM1, CSB Atari, and DM2 Mac startup checks pass with the
+  change. This closes the shared-owner failure path, but it does not prove
+  native output or resolve the M5 audio report.
   Downloaded and launched the published v3.0.352 arm64 app bundle with direct
   `--game dm2`; it reports the PC-DOS media hash
   `25247ede4dabb6a71e5dabdfbcd5907d`. The rebuilt macOS AUTO route selects the
