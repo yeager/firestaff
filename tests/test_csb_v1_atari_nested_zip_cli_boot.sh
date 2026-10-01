@@ -6,7 +6,7 @@ set -eu
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 
 firestaff_cli="${1:?Firestaff executable is required}"
-media_path="${FIRESTAFF_CSB_ATARI_NESTED_ZIP:-$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip}"
+media_path="${FIRESTAFF_CSB_ATARI_MEDIA:-${FIRESTAFF_CSB_ATARI_NESTED_ZIP:-$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip}}"
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$media_path" ]; then
     echo "SKIP: nested CSB Atari ST campaign archive or Firestaff executable is unavailable"
@@ -88,4 +88,4 @@ case "$menu_output" in
         ;;
 esac
 
-echo "PASS: native CSB ZIP -> ZIP -> STX title, runtime movement, and start-menu launch"
+echo "PASS: authentic CSB Atari archive -> STX title, runtime movement, and start-menu launch"

@@ -70,7 +70,13 @@ Reviewed 2026-09-05. Only open work is listed here.
   an authentic CSB save, or a campaign capture.
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
-  platforms.
+  platforms. On 2026-10-01, `csb_v1_atari_original_archive_cli_boot` was added
+  and passed against the original Atari ST preservation archive
+  `Game,Chaos_Strikes_Back,Atari_ST,Software.7z` (authenticated asset MD5
+  `ebf6a57af3f27782e358c0490bfd2f2e`). It covers the `ANIMATE.SCR` title,
+  direct CLI runtime movement and M12 menu launch. This proves that startup
+  route only; Atari capture/audio comparisons remain open. The separate nested
+  ZIP test still skips when its nested ZIP package is not installed.
 - Extend source-text extraction beyond the now-bound object/action names and
   reviewed Utility Disk DB2 instruction. Atari ST now
   supplies M564 from item 556 and the G0490 subtable from C560 item 560 to
