@@ -24380,6 +24380,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         /* The SDL device is a host resource, while decoded PCM remains
          * owned by the verified GDAT loader in the DM2 boot profile. */
+        /* SKProject SKULLWIN/c_midi.cpp::c_midi::stop_music (40-54)
+         * destroys the active MIDI sequence at session teardown. */
+        (void)dm2_v1_sound_stop_music();
         dm2_v1_sound_bind_playback_backend(NULL);
         m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
         dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);

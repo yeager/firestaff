@@ -93,7 +93,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   available`. Authentic Mac MIDI parsing and scheduling find 4,328 events.
   The Mac M11 New Game real-media test now also requires the selected MIDI cue
   to advance at the first gameplay tick; that source-timeline assertion passes
-  even on the no-output host. The native backend remains unavailable here and
+  even on the no-output host. M11 now calls SKProject's stop-music owner when a
+  DM2 session shuts down, and the same real-media test verifies that no MIDI
+  schedule remains afterward. The native backend remains unavailable here and
   delivers zero events. The MIDI test reports that case as skipped rather than
   green; a separate native SDL audio
   test also skips when the required output device is absent. Run both checks on

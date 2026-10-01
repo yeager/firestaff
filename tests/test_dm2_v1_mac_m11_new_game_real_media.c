@@ -3,6 +3,7 @@
 #include "m11_game_view.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
@@ -1249,5 +1250,14 @@ int main(void)
     }
     puts("PASS: authentic Mac M11 NEW GAME reaches active runtime");
     M11_GameView_Shutdown(&view);
+    {
+        DM2_V1_MusicScheduleReceipt stopped_schedule;
+        memset(&stopped_schedule, 0, sizeof(stopped_schedule));
+        if (dm2_v1_sound_schedule_music(0u, &stopped_schedule)) {
+            fprintf(stderr,
+                    "FAIL: DM2 MIDI schedule remained active after Mac M11 shutdown\n");
+            return 1;
+        }
+    }
     return 0;
 }
