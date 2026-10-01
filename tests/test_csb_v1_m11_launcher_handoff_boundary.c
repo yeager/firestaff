@@ -947,6 +947,31 @@ static void expect_atari_first_mirror_from_fresh_start(
                     profile->runtime.party_state.LeaderIndex == 0 &&
                     profile->runtime.party_state.Champions[0].Name[0] != '\0',
                 "Atari source C160 click confirms the first champion as party leader");
+    {
+        int cooldown_ticks = 0;
+        M11_GameInputResult movement_result = M11_GAME_INPUT_IGNORED;
+        while (view->world.disabledMovementTicks > 0 && cooldown_ticks++ < 32) {
+            (void)M11_GameView_AdvanceIdleTick(view);
+        }
+        movement_result = M11_GameView_HandleInput(
+            view, M12_MENU_INPUT_STRAFE_LEFT);
+        expect_true(movement_result == M11_GAME_INPUT_REDRAW &&
+                        view->world.party.mapIndex == 0 &&
+                        view->world.party.mapX == 9 &&
+                        view->world.party.mapY == 7 &&
+                        (view->world.party.direction & 3) == 0 &&
+                        profile->runtime.current_level == 0 &&
+                        profile->runtime.party_x == 9 &&
+                        profile->runtime.party_y == 7 &&
+                        (profile->runtime.party_dir & 3) == 0 &&
+                        profile->runtime.party_state.PartyMapX == 9 &&
+                        profile->runtime.party_state.PartyMapY == 7 &&
+                        profile->runtime.party_state.PartyDirection == 0 &&
+                        view->world.party.championCount == 1 &&
+                        profile->runtime.party_state.ChampionCount == 1 &&
+                        profile->runtime.party_state.LeaderIndex == 0,
+                    "Atari source C160 returns to live movement with synchronized leader pose");
+    }
 }
 
 static void expect_native_live_mirror_and_command_handoff(

@@ -7,7 +7,9 @@
   the portrait click uses source screen coordinates (112,82). C040 command
   handling now precedes the overlapping C017 inventory hit tests, matching
   ReDMCSB COMMAND.C. The Atari handoff passed all four presentation modes
-  (4,537 checks); the A31M real-media handoff passed 55 checks.
+  (4,537 checks); a further original-media route confirms that movement
+  resumes with the recruited leader and synchronized GAMEBLOCK coordinates.
+  The A31M real-media handoff passed 55 checks.
 
 - 2026-10-01: Retired the CSB FM Towns startup test that required the
   separately supplied RAR and external archive tools. The registered native
