@@ -90,9 +90,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   `system_profiler` reports no audio devices. With the authentic Mac retail ZIP,
   the SDL dummy-device SFX test passes its decoded/mixed-sample checks, while
   the native-output check skips after SDL reports `No default audio device
-  available`. Authentic Mac MIDI parsing and scheduling find 4,328 events, but
-  the native backend is unavailable and delivers zero events. The MIDI test now
-  reports that case as skipped rather than green; a separate native SDL audio
+  available`. Authentic Mac MIDI parsing and scheduling find 4,328 events.
+  The Mac M11 New Game real-media test now also requires the selected MIDI cue
+  to advance at the first gameplay tick; that source-timeline assertion passes
+  even on the no-output host. The native backend remains unavailable here and
+  delivers zero events. The MIDI test reports that case as skipped rather than
+  green; a separate native SDL audio
   test also skips when the required output device is absent. Run both checks on
   a Mac with an available output, then verify audible output on the M5. The
   CoreMIDI fallback now rejects offline endpoints and only accepts destinations
