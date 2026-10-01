@@ -677,6 +677,11 @@ typedef struct {
     int startupTitleFrame;
     int startupTitleFrameMax;
     int startupTitleReady;
+    /* Source-owned phases consumed by the normal DM1 M12-to-M11 handoff. */
+    int dm1StartupSwshConsumed;
+    int dm1StartupTitleConsumed;
+    int dm1StartupEntranceConsumed;
+    int dm1StartupFullGraphicsConsumed;
     int startupInputReady;
     int startupHudMenuReady;
     int startupHudMenuKind;

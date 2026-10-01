@@ -5154,7 +5154,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"script\": {\"waitFramesRemaining\": %d, \"pending\": %d},\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
             "  \"outputSize\": {\"valid\": %d, \"windowWidth\": %d, \"windowHeight\": %d, \"drawableWidth\": %d, \"drawableHeight\": %d},\n"
-            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupTitleRuntimeSource\": %d, \"dm1StartupTitleCompletedSteps\": %u, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
+            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupTitleRuntimeSource\": %d, \"dm1StartupTitleCompletedSteps\": %u, \"dm1StartupSwshConsumed\": %d, \"dm1StartupTitleConsumed\": %d, \"dm1StartupEntranceConsumed\": %d, \"dm1StartupFullGraphicsConsumed\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
             "  \"lastAction\": \"%s\",\n"
             "  \"lastOutcome\": \"%s\",\n"
             "  \"gameTick\": %u,\n"
@@ -5208,6 +5208,10 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->dm1StartupTitleRuntimeSource :
                        V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP,
             gameView ? gameView->dm1StartupTitleCompletedSteps : 0U,
+            startupReceipt.dm1StartupSwshConsumed,
+            startupReceipt.dm1StartupTitleConsumed,
+            startupReceipt.dm1StartupEntranceConsumed,
+            startupReceipt.dm1StartupFullGraphicsConsumed,
             gameView && gameView->dm1StartupRuntimeHandoffValid &&
                     gameView->dm1StartupRuntimeHandoffReceipt
                         .hoc_first_frame_ready

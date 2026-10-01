@@ -26982,6 +26982,16 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         M11_GameView_Dm1StartupIntroBypassed(state) ? 1 : 0;
     out->dm1StartupHandoffExecuted =
         state->dm1StartupHandoffExecuted ? 1 : 0;
+    if (state->dm1StartupRuntimeHandoffValid) {
+        out->dm1StartupSwshConsumed =
+            state->dm1StartupRuntimeHandoffReceipt.swsh_consumed ? 1 : 0;
+        out->dm1StartupTitleConsumed =
+            state->dm1StartupRuntimeHandoffReceipt.title_consumed ? 1 : 0;
+        out->dm1StartupEntranceConsumed =
+            state->dm1StartupRuntimeHandoffReceipt.entrance_consumed ? 1 : 0;
+        out->dm1StartupFullGraphicsConsumed =
+            state->dm1StartupRuntimeHandoffReceipt.full_graphics_consumed ? 1 : 0;
+    }
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {

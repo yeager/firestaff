@@ -41,6 +41,34 @@ probe --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-f
 probe --game dm1 --platform pc --data-dir "$archive" --script "$menu_original" \
     --boot-probe --boot-probe-frames 120 --duration 0
 
+# The public --game CLI route still enters through M12. Its boot probe must
+# retain the source-owned M12-to-M11 startup receipts instead of passing on a
+# runtime-only state.
+direct_probe_json="$test_scratch/dm1-pc34-direct-probe-$$.json"
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$direct_probe_json" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$archive" --boot-probe \
+    --boot-probe-frames 120 --duration 0 >/dev/null 2>&1
+python3 - "$direct_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["sourceId"] != "dm1" or startup["phase"] != "dm1-runtime" or
+        startup["dm1StartupTitleRuntimeSource"] != 1 or
+        startup["dm1StartupTitleCompletedSteps"] != 23 or
+        startup["dm1StartupSwshConsumed"] != 1 or
+        startup["dm1StartupTitleConsumed"] != 1 or
+        startup["dm1StartupEntranceConsumed"] != 1 or
+        startup["dm1StartupFullGraphicsConsumed"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1):
+    raise SystemExit(f"FAIL: DM1 --game CLI boot probe missed a source startup phase: {probe}")
+print("PASS: DM1 --game CLI boot probe confirms SWSH, C001, ENTRANCE and the HoC handoff")
+PY
+rm -f "$direct_probe_json"
+
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 --platform pc \
@@ -106,6 +134,10 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["dm1StartupHandoffExecuted"] != 1 or
         startup["dm1StartupTitleRuntimeSource"] != 1 or
         startup["dm1StartupTitleCompletedSteps"] != 23 or
+        startup["dm1StartupSwshConsumed"] != 1 or
+        startup["dm1StartupTitleConsumed"] != 1 or
+        startup["dm1StartupEntranceConsumed"] != 1 or
+        startup["dm1StartupFullGraphicsConsumed"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):

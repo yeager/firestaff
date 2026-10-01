@@ -6,9 +6,11 @@
   unless all 23 C001 source steps finish. The production M11 path now chooses
   C001 even when the separate canonical TITLE animation is available, and the
   authentic PC3.4 menu test records the selected source and all 23 completed
-  steps. Atari ST Escape/window-close during C001/Entrance now exits through
-  the launcher loop instead of being reported as missing/corrupt media; its
-  authentic French v1.3 M12 regression now injects a host quit after the first
+  steps plus the source-owned SWSH, TITLE, ENTRANCE and full-graphics handoff
+  receipts. The public `--game dm1` CLI probe now requires the same phases and
+  first HoC frame. Atari ST Escape/window-close during C001/Entrance now exits
+  through the launcher loop instead of being reported as missing/corrupt media;
+  its authentic French v1.3 M12 regression now injects a host quit after the first
   rendered C001 frame and confirms clean exit before gameplay, then verifies
   the ordinary M12-to-runtime route. Cross-desktop HiDPI and live
   renderer/event-fault coverage remain open.
