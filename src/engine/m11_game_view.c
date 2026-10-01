@@ -37413,6 +37413,65 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
     }
 
+    /* ReDMCSB COMMAND.C F0359:1985-1990 dispatches G0457's C160..C162
+     * buttons (COMMAND.C:228-238) on the C040 overlay installed over C017.
+     * Resolve this modal layer before the CSB inventory slot hit tests below,
+     * whose source rectangles overlap Atari C160. */
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
+        if (state->candidateMirrorRenameActive) {
+            if (!m11_dm1_hoc_c027_input_material_ready(state)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            if (m11_point_in_rect(x, y, 197, 147, 19, 9)) {
+                int sensorIndex;
+                if (!m11_front_mirror_first_sensor_index_pc34(state,
+                                                               &sensorIndex)) {
+                    return M11_GAME_INPUT_IGNORED;
+                }
+            }
+            return M11_GameView_HandleMirrorCandidateRenameClick(state, x, y)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        if (!m11_dm1_hoc_c040_input_material_ready(state)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        /* ReDMCSB COMMAND.C F0359:1985-1990 checks G0415 before it even
+         * scans G0457's C160/C161/C162 boxes.  A C040 panel restored while
+         * the transient G4055 leader hand is occupied must therefore remain
+         * modal: its buttons neither finalize nor cancel the candidate.
+         * This matters equally to the native A31/A35 path, where C017/C040
+         * is rendered from the selected ADF rather than a PC34 session. */
+        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) !=
+            THING_NONE) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_point_in_rect(x, y, 104, 86, 55, 57)) {
+            int sensorIndex;
+            if (!m11_front_mirror_first_sensor_index_pc34(state,
+                                                           &sensorIndex)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GameView_ConfirmMirrorCandidate(state, 0)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_point_in_rect(x, y, 163, 86, 55, 57)) {
+            if (!m11_dm1_hoc_c027_input_material_ready(state)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GameView_BeginMirrorCandidateReincarnateRename(state)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_point_in_rect(x, y, 104, 146, 114, 11)) {
+            return M11_GameView_CancelMirrorCandidate(state)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     /* CSBWin stores C232's eye/mouth hit boxes in the top status-band
      * coordinate range (the verified mouth box is x55..72, y12..29).  While
      * C017 owns the visible page they are not champion-status clicks, so
@@ -37718,67 +37777,6 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* Source-backed champion mirror panel.  ReDMCSB routes the
-     * Resurrect/Reincarnate/Cancel overlay through COMMAND.C C160..C162
-     * with PC boxes 104..158/163..217 x 86..142 and cancel 104..217 x
-     * 146..156 (Atari boxes are slightly wider; these are the PC rows
-     * behind COMMAND.C 231..238 and 509..511).  Handle them before the
-     * generic viewport hit test so x=130/y=115 and x=186/y=115 do not
-     * get reinterpreted as movement/inspect clicks. */
-    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
-        if (state->candidateMirrorRenameActive) {
-            if (!m11_dm1_hoc_c027_input_material_ready(state)) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-            if (m11_point_in_rect(x, y, 197, 147, 19, 9)) {
-                int sensorIndex;
-                if (!m11_front_mirror_first_sensor_index_pc34(state,
-                                                               &sensorIndex)) {
-                    return M11_GAME_INPUT_IGNORED;
-                }
-            }
-            return M11_GameView_HandleMirrorCandidateRenameClick(state, x, y)
-                       ? M11_GAME_INPUT_REDRAW
-                       : M11_GAME_INPUT_IGNORED;
-        }
-        if (!m11_dm1_hoc_c040_input_material_ready(state)) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        /* ReDMCSB COMMAND.C F0359:1985-1990 checks G0415 before it even
-         * scans G0457's C160/C161/C162 boxes.  A C040 panel restored while
-         * the transient G4055 leader hand is occupied must therefore remain
-         * modal: its buttons neither finalize nor cancel the candidate.
-         * This matters equally to the native A31/A35 path, where C017/C040
-         * is rendered from the selected ADF rather than a PC34 session. */
-        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) !=
-            THING_NONE) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        if (m11_point_in_rect(x, y, 104, 86, 55, 57)) {
-            int sensorIndex;
-            if (!m11_front_mirror_first_sensor_index_pc34(state,
-                                                           &sensorIndex)) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-            return M11_GameView_ConfirmMirrorCandidate(state, 0)
-                       ? M11_GAME_INPUT_REDRAW
-                       : M11_GAME_INPUT_IGNORED;
-        }
-        if (m11_point_in_rect(x, y, 163, 86, 55, 57)) {
-            if (!m11_dm1_hoc_c027_input_material_ready(state)) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-            return M11_GameView_BeginMirrorCandidateReincarnateRename(state)
-                       ? M11_GAME_INPUT_REDRAW
-                       : M11_GAME_INPUT_IGNORED;
-        }
-        if (m11_point_in_rect(x, y, 104, 146, 114, 11)) {
-            return M11_GameView_CancelMirrorCandidate(state)
-                       ? M11_GAME_INPUT_REDRAW
-                       : M11_GAME_INPUT_IGNORED;
-        }
-        return M11_GAME_INPUT_IGNORED;
-    }
 
     /* CSB uses the same PC34 G0447 primary interface table for its
      * right-button champion inventory toggles.  Keep this restricted to the

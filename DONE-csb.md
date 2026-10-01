@@ -1,10 +1,13 @@
 # Firestaff DONE — CSB
 
-- 2026-10-01: The authentic Atari ST M12-to-M11 handoff test now moves the
-  untouched empty party from map 0 (9,0), facing south, to map 0 (10,7),
-  facing retail C127 mirror ordinal 4. Every step uses the production input
-  and collision path. The real-media regression passed 1,520 checks with no
-  failures or skips. It does not verify champion selection or recruitment.
+- 2026-10-01: The authentic Atari ST M12-to-M11 route now follows production
+  input and collision from the untouched empty-party spawn at map 0 (9,0),
+  facing south, to retail C127 ordinal 4 at (10,7), clicks its C026 portrait,
+  and confirms C160 as party leader. The source viewport origin is (0,33), so
+  the portrait click uses source screen coordinates (112,82). C040 command
+  handling now precedes the overlapping C017 inventory hit tests, matching
+  ReDMCSB COMMAND.C. The Atari handoff passed all four presentation modes
+  (4,537 checks); the A31M real-media handoff passed 55 checks.
 
 - 2026-10-01: Retired the CSB FM Towns startup test that required the
   separately supplied RAR and external archive tools. The registered native

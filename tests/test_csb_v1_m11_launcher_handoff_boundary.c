@@ -930,6 +930,23 @@ static void expect_atari_first_mirror_from_fresh_start(
                     view->world.party.championCount == 0 &&
                     M11_GameView_GetFrontMirrorOrdinal(view) == 4,
                 "authentic Atari input reaches retail C127 ordinal 4 from the new-game spawn");
+    expect_true(M11_GameView_HandlePointerButton(
+                    view, 112, 82, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW && view->candidateMirrorPanelActive &&
+                    view->candidateMirrorOrdinal == 4 &&
+                    view->world.party.championCount == 1 &&
+                    profile->runtime.party_state.ChampionCount == 1 &&
+                    profile->runtime.party_state.Champions[0].Name[0] != '\0',
+                "Atari source portrait click selects the authentic C127 champion");
+    expect_true(M11_GameView_HandlePointerButton(
+                    view, 130, 115, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW && !view->candidateMirrorPanelActive &&
+                    view->world.party.championCount == 1 &&
+                    view->world.party.activeChampionIndex == 0 &&
+                    profile->runtime.party_state.ChampionCount == 1 &&
+                    profile->runtime.party_state.LeaderIndex == 0 &&
+                    profile->runtime.party_state.Champions[0].Name[0] != '\0',
+                "Atari source C160 click confirms the first champion as party leader");
 }
 
 static void expect_native_live_mirror_and_command_handoff(

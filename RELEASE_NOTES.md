@@ -16,6 +16,10 @@
   language override.
 - `M11 runtime probe`: adds SDL logical-window and drawable-pixel sizes to
   support HiDPI presentation diagnosis.
+- `CSB Atari ST champion mirror`: starts from the authentic empty-party pose,
+  reaches the first retail C127 through production movement, recruits its
+  C026 portrait, and confirms the champion through C160. C040 modal input now
+  takes priority over overlapping C017 inventory hit boxes.
 - `CSB Atari animation tests`: skips cleanly when original game media is not
   installed, and the obsolete FM Towns RAR-only test has been removed.
 
