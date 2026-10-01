@@ -6,9 +6,12 @@
   through C040, and walks to map 0 `(4,15)`. It verifies the source pile's
   closed scroll 0 -> text 33, picks up the pile's top WATER (`0x280b`) with the
   normal pickup action, opens C007 and places WATER in backpack slot 1. The
+  test then picks up scroll 0, holds Eye with a separate production press,
+  confirms the source panel decoder returns the same text as scroll 0/text 33,
+  and releases Eye to verify panel cleanup while retaining the scroll. The
   test passes against the original PC 3.4 ZIP without a save or pose override.
-  This proves the native pickup-to-inventory transaction; authentic DOS pixel
-  parity and the object-bearing Eye scroll read remain open.
+  This proves runtime selection and decoding of source text 33; an eye-held
+  presented-frame capture and authentic DOS pixel parity remain open.
 
 - 2026-10-01: Strengthened the authentic PC 3.4 normal M12-to-M11 startup
   regression with the retained source-owned handoff receipt. The runtime probe

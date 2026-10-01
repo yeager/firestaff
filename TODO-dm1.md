@@ -19,18 +19,19 @@
   renderer/event-fault coverage remain open.
 
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
-  set as one source-locked pass: object-bearing Eye
-  scroll reads, Vi
-  altar wall material, stairs occlusion, complete door
+  set as one source-locked pass: presented-frame evidence for object-bearing
+  Eye scroll reads, Vi altar wall material, stairs occlusion, complete door
   composition, pressure-plate near/far visibility, wall-torch placement, and
   held-item striping/loss on inventory placement. The authentic PC 3.4
   runtime regression now follows normal movement and C127/C040 recruitment to
   HoC (4,15), picks up the source WATER with the production pickup action, and
-  places it in backpack slot 1. This proves the pickup-to-inventory
-  transaction, not its DOS pixel parity, scroll reading, or the other live
-  combinations. Existing raw-format pointer, F0128 scheduler, and
-  individual material tests are necessary but do not prove these live
-  combinations. Use an authenticated PC3.4 HoC route or a
+  places it in backpack slot 1. It then holds Eye through separate production
+  press/release calls and confirms scroll 0 remains selected while the panel
+  decoder returns source text 33. This proves the pickup-to-inventory and
+  source-text selection paths, not the eye-held presented frame, DOS pixel
+  parity, or the other live combinations. Existing raw-format pointer, F0128
+  scheduler, and individual material tests are necessary but do not prove
+  these live combinations. Use an authenticated PC3.4 HoC route or a
   generated-in-original-runtime C13 save as the state driver; do not promote
   a hand-made save or substitute graphics from another platform. Capture the
   exact square/pose/input and compare source-order command receipts before
@@ -39,8 +40,9 @@
 - Complete the validated original PC 3.4 same-state C127/C040 comparison
   against authentic DOS capture through a real pickup and inventory. The
   native PC3.4 regression now proves WATER pickup and backpack placement with
-  production inputs, but the original-media capture route has not established
-  pickup pixels or native-vs-DOS inventory parity. A prior private capture set
+  production inputs and decodes Eye-held scroll text 33, but the original-media
+  capture route has not established pickup/Eye-held pixels or native-vs-DOS
+  inventory parity. A prior private capture set
   with three bit-identical Hall
   frames must not be used as source-modal proof. The separate private retail
   route visibly contains a C040 panel followed by C007 inventory state. A

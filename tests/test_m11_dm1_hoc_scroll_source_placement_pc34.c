@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(void)
 {
@@ -13,6 +14,8 @@ int main(void)
     M11_GameViewState state;
     unsigned short thing;
     int steps = 0;
+    char panelText[512];
+    char sourceText[512];
     static const M12_MenuInput route_to_c127[] = {
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
@@ -157,7 +160,47 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+
+    /* Once WATER is stored, G picks the newly exposed scroll 0. C071 is a
+     * held control: inspect its source text while the production press is
+     * active, then verify F0353-equivalent release cleanup. */
+    if (M11_GameView_HandlePointerButton(&state, 54, 14,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state.inventoryPanelActive ||
+        M11_GameView_HandleInput(&state, M12_MENU_INPUT_PICKUP_ITEM) ==
+            M11_GAME_INPUT_IGNORED ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != thing ||
+        THING_GET_TYPE(thing) != THING_TYPE_SCROLL ||
+        THING_GET_INDEX(thing) != 0u ||
+        state.world.things->scrolls[0].textStringThingIndex != 33u ||
+        M11_GameView_HandlePointerButton(&state, 54, 14,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state.inventoryPanelActive ||
+        M11_GameView_HandlePointerButton(&state, 20, 53,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state.v1EyePressActive || !state.v1ScrollPanelActive ||
+        state.v1ScrollPanelThing != thing ||
+        DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+            &state, panelText, (int)sizeof(panelText)) <= 0 ||
+        F0509_DUNGEON_DecodeScrollText_Compat(state.world.things, 0,
+            sourceText, (int)sizeof(sourceText)) <= 0 ||
+        strcmp(panelText, sourceText) != 0) {
+        fputs("FAIL: Eye press did not select and decode authentic scroll 0/text 33\n",
+              stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (M11_GameView_HandlePointerButtonRelease(&state, 20, 53,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state.v1EyePressActive || state.v1ScrollPanelActive ||
+        state.inventoryPanelActive == 0 ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != thing) {
+        fputs("FAIL: Eye release did not restore inventory and retain scroll\n",
+              stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     M11_GameView_Shutdown(&state);
-    puts("PASS: authentic PC34 HoC movement, WATER pickup and backpack transfer; scroll 0 -> text 33");
+    puts("PASS: authentic PC34 HoC WATER transfer, Eye-held scroll 0/text 33 decode and release");
     return 0;
 }
