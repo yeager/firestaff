@@ -3,8 +3,11 @@
 - 2026-10-01: Re-ran the production CLI boot probe against the authenticated
   PC 3.4 archive on the macOS host. The source title completed all 23 steps,
   loaded the dungeon, and published `phase=dm1-runtime` after 120 runtime
-  ticks. This confirms the current PC 3.4 CLI route; it does not verify
-  physical-device sound or the separate Atari/Amiga/FMTowns startup routes.
+  ticks. The same probe reached runtime from authentic Atari ST 1.2, Amiga
+  2.0 and FM Towns Japanese/English archives. FM Towns selected its source
+  TMENU `EDM.EXP` program and published the CDDA track-5 receipt. These are
+  direct CLI boot checks; they do not verify physical-device sound or visual
+  parity on MacBook hardware.
 
 - 2026-09-29: Corrected the live PC/F20 M11 title selection to use the
   ReDMCSB `TITLE.C` F0437 `GRAPHICS.DAT` C001 sequence even when the separate

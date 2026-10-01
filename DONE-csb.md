@@ -6,6 +6,12 @@
   viewport receipt, and AUTO discovered the installed A31E archive. SDL used
   its dummy video/audio drivers, so this does not verify native HiDPI output
   or audible device playback on MacBook hardware.
+- 2026-10-01: The production CLI also reached CSB Atari ST runtime from the
+  authentic ST 2.0/2.1 media in the installed 7z archive. The `ANIMATE.SCR`
+  handoff completed, `levelLoaded=1`, the runtime advanced 2,459 ticks, and a
+  nonzero source viewport receipt was published. This long source-sequence
+  probe used SDL dummy video/audio and does not verify displayed viewport
+  quality or audible sound.
 
 - 2026-10-01: Removed the hash-based Atari ST SND1 final-hold approximation
   from production playback and deleted its public decoder API. ReDMCSB
