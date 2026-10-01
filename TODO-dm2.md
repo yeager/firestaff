@@ -212,6 +212,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   AUTO reaches Mac gameplay within 500 probe frames. Its CTest timeout is 240
   seconds because the full host install scan plus source-movie checks exceeded
   the previous 180-second limit.
+  On 2026-10-01, an isolated normal-loop run against the same authenticated
+  retail ZIP completed Title.MooV with `movieActive=0`, `movieComplete=1`, and
+  `movieRejected=0`, then reached the first source-owned runtime frame and
+  accepted a turn plus two forward moves at the exact 320x200 test geometry.
+  The standalone 45-second run took 47.57 seconds including media admission;
+  its final party pose was map 0 `(3,8)`, east, with two champions and no core
+  fallback draws. This rules out a repeatable local decoder hang for that
+  route, but does not establish physical M5 playback cadence, audio, HiDPI or
+  explain a hardware-specific stall.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`
