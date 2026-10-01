@@ -259,6 +259,15 @@ static int test_dungeon_exit_transition_gate(void) {
     ASSERT(world.dungeon_complete == 0,
            "host quest helper must not authorize dungeon completion");
 
+    world.dungeon_complete = 1;
+    world.progression.current_dungeon = THERON_DUNGEON_2_DRATOR;
+    world.transition_pending = 1;
+    world.transition_type = THERON_TRANSITION_EXIT;
+    ASSERT(theron_v1_transition_execute(&world) == -1 &&
+               !world.transition_pending,
+           "stale progression dungeon must reject a world exit");
+    world.progression.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+
     /* Mechanics-only transition fixture: inject the separately restored
      * completion state and token; this does not prove the pickup consumer. */
     world.progression.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
@@ -354,7 +363,7 @@ static int test_world_quest_item_helper_fails_closed_for_source_level(void) {
 /* ── Test: save/restore ──────────────────────────────────────────── */
 
 static int test_save_restore(void) {
-    TEST("Save/restore — quest bitmask + dungeon state reconstruction");
+    TEST("Save/restore keeps item bits separate from campaign completion");
 
     Theron_DungeonProgression original;
     theron_v1_dungeon_progression_init(&original);
@@ -387,18 +396,18 @@ static int test_save_restore(void) {
            "quest_complete set before all items collected");
 
     /* Dungeon 4 should be AVAILABLE after restore */
-    ASSERT(restored.dungeon_states[3] == THERON_DUNGEON_STATE_AVAILABLE,
-           "dungeon 4 state wrong after restore");
+    ASSERT(restored.dungeon_states[3] == THERON_DUNGEON_STATE_LOCKED,
+           "item bits must not make the saved current stage campaign-available");
 
-    /* Dungeons 1-3 should be COMPLETE */
+    /* Item bits alone are not an original campaign-completion receipt. */
     for (int i = 0; i < 3; i++) {
-        ASSERT(restored.dungeon_states[i] == THERON_DUNGEON_STATE_COMPLETE,
-               "dungeon state wrong after restore");
+        ASSERT(restored.dungeon_states[i] == THERON_DUNGEON_STATE_LOCKED,
+               "quest-item bit incorrectly reconstructed campaign completion");
     }
 
-    /* Dungeons 5-6 are available once dungeon 1 has been completed. */
+    /* Without the separate campaign byte, later stages remain locked. */
     for (int i = 4; i <= 5; i++) {
-        ASSERT(restored.dungeon_states[i] == THERON_DUNGEON_STATE_AVAILABLE,
+        ASSERT(restored.dungeon_states[i] == THERON_DUNGEON_STATE_LOCKED,
                "middle dungeon state wrong after restore");
     }
 
@@ -408,15 +417,31 @@ static int test_save_restore(void) {
                "dungeon state wrong after restore");
     }
 
+    Theron_DungeonProgression campaign_restore;
+    theron_v1_dungeon_progression_restore(
+        &campaign_restore, 0u, THERON_DUNGEON_4_SARMON, seeds);
+    theron_v1_dungeon_progression_apply_campaign_completion(
+        &campaign_restore, 0x07u);
+    ASSERT(campaign_restore.quest_items_collected == 0u &&
+               campaign_restore.dungeon_states[0] ==
+                   THERON_DUNGEON_STATE_COMPLETE &&
+               campaign_restore.dungeon_states[2] ==
+                   THERON_DUNGEON_STATE_COMPLETE &&
+               campaign_restore.dungeon_states[3] ==
+                   THERON_DUNGEON_STATE_AVAILABLE &&
+               campaign_restore.dungeon_states[4] ==
+                   THERON_DUNGEON_STATE_AVAILABLE,
+           "campaign completion must project independently from item bits");
+
     /* The final bit is not inferred from the ordinal-6 capture and may not
      * fabricate Demon completion from a serialized host value. */
     theron_v1_dungeon_progression_restore(
         &restored, THERON_QUEST_ALL_ITEMS, THERON_DUNGEON_7_DEMON, seeds);
     ASSERT(restored.quest_items_collected == THERON_QUEST_ALL_ITEMS &&
                restored.dungeon_states[THERON_DUNGEON_7_DEMON - 1] ==
-                   THERON_DUNGEON_STATE_AVAILABLE &&
+                   THERON_DUNGEON_STATE_LOCKED &&
                !theron_v1_quest_complete(&restored),
-           "unverified final campaign bit must remain fail-closed");
+           "item bits cannot unlock or complete an unauthenticated final stage");
 
     PASS();
     return 1;

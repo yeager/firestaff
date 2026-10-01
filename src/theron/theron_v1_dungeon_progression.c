@@ -388,34 +388,24 @@ void theron_v1_dungeon_progression_restore(Theron_DungeonProgression *prog,
                                             const uint32_t seeds[THERON_DUNGEON_COUNT]) {
     if (!prog) return;
 
-    /* Reconstruct progression from save data.
-     * We know which items were collected (bitmask) and the current dungeon.
-     * Dungeon states are inferred from item bitmask: if item i is collected,
-     * dungeon i+1 is COMPLETE; next is AVAILABLE; rest LOCKED. */
+    /* Restore the host item mask and saved current stage independently.
+     * This record does not carry the original $267C campaign byte, so item
+     * bits cannot reconstruct campaign-completion state. */
     memset(prog, 0, sizeof(*prog));
 
     prog->quest_items_collected =
         (uint8_t)(quest_items_bitmask & THERON_QUEST_ALL_ITEMS);
     prog->current_dungeon = current;
 
-    /* Infer dungeon states from item bitmask */
+    /* Only the saved current stage is available here. Authenticated campaign
+     * completion must be projected separately through
+     * theron_v1_dungeon_progression_apply_campaign_completion(). */
     for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
-        uint8_t item_bit = (uint8_t)(1 << i);
-        if (i == THERON_DUNGEON_7_DEMON - 1) {
-            /* Its item bit does not prove the separate final completion event. */
-            prog->dungeon_states[i] = THERON_DUNGEON_STATE_LOCKED;
-            continue;
-        }
-        if ((quest_items_bitmask & item_bit) != 0) {
-            prog->dungeon_states[i] = THERON_DUNGEON_STATE_COMPLETE;
-        } else if (i + 1 == (int) current) {
-            prog->dungeon_states[i] = THERON_DUNGEON_STATE_AVAILABLE;
-        } else {
-            prog->dungeon_states[i] = THERON_DUNGEON_STATE_LOCKED;
-        }
+        prog->dungeon_states[i] =
+            i == 0 && current == THERON_DUNGEON_1_AKUTUBA
+                ? THERON_DUNGEON_STATE_AVAILABLE
+                : THERON_DUNGEON_STATE_LOCKED;
     }
-
-    tqr_unlock_available_dungeons(prog);
 
     prog->item_reset_applied = 0;
     prog->champion_stats_persist = 1;
@@ -450,12 +440,14 @@ void theron_v1_dungeon_progression_apply_campaign_completion(
         if (i < THERON_DUNGEON_7_DEMON - 1 &&
             (campaign_completion_mask & bit) != 0u) {
             prog->dungeon_states[i] = THERON_DUNGEON_STATE_COMPLETE;
-        } else if (i < THERON_DUNGEON_7_DEMON - 1 &&
-                   i == (int)prog->current_dungeon - 1) {
-            prog->dungeon_states[i] = THERON_DUNGEON_STATE_AVAILABLE;
         } else {
             prog->dungeon_states[i] = THERON_DUNGEON_STATE_LOCKED;
         }
+    }
+    if (prog->current_dungeon == THERON_DUNGEON_1_AKUTUBA &&
+        (campaign_completion_mask & 0x01u) == 0u) {
+        prog->dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
+            THERON_DUNGEON_STATE_AVAILABLE;
     }
     tqr_unlock_available_dungeons(prog);
 }

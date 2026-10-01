@@ -1,152 +1,152 @@
-# Therons ursprungliga viewportkommando `$50`
+# Theron's Original Viewport Command `$50`
 
-## Autentisk fångst
+## Authentic Capture
 
-Fångsten använder USA-utgåvans riktiga Track 02 med MD5
-`ceb02343868f80cec899e9b239aff2da`, System Card 3.0 med MD5
-`ff1a674273fe3540ccef576376407d1d` och Mednafen-savestatet
-`f17f377df210b4a3ae904a13fb85a7f0`. Den instrumenterade Mednafen-binärens
-MD5 är `3731a8a78f91c5cc355546b27e7ba418`.
+The capture uses the US edition's authentic Track 02 with MD5
+`ceb02343868f80cec899e9b239aff2da`, System Card 3.0 with MD5
+`ff1a674273fe3540ccef576376407d1d` and the Mednafen save state
+`f17f377df210b4a3ae904a13fb85a7f0`. The instrumented Mednafen binary's MD5 is
+`3731a8a78f91c5cc355546b27e7ba418`.
 
-Button I skrivs som `$28b8=$01` från logisk PC `$44e5` och fysisk PC
-`$0d04e5`. Viewportklicket `$3c/$78` köar `$2905=$50` från
-`$ccdb/$0dacdb`. Kön nollställs vid skrivning 308 från `$d3a0/$0db3a0`.
-Spåret fortsätter till den uttryckliga gränsen på 65 536 ordnade
-huvud-RAM-skrivningar.
+Button I is written as `$28b8=$01` from logical PC `$44e5` and physical PC
+`$0d04e5`. The viewport click `$3c/$78` queues `$2905=$50` from
+`$ccdb/$0dacdb`. The queue is cleared at write 308 from `$d3a0/$0db3a0`.
+The trace continues to the explicit boundary of 65,536 ordered main-RAM
+writes.
 
-Verifierade MD5:
+Verified MD5s:
 
-- kommandospår: `a66d3a52cf2d246f80a915017a70a053`
-- main-RAM-konsumentspår: `84634112aaa47e0ada4f86d453697aa6`
-- 64 KiB kodbild: `036f62625740c7c887b0c588f2fa175b`
-- RAM före: `a321518da370a456a36758b7c54a0cf1`
-- RAM efter `$2905=$00`: `2c4953862f6f6d52dbe2985ad0f9cf39`
+- command trace: `a66d3a52cf2d246f80a915017a70a053`
+- main-RAM consumer trace: `84634112aaa47e0ada4f86d453697aa6`
+- 64 KiB code image: `036f62625740c7c887b0c588f2fa175b`
+- RAM before: `a321518da370a456a36758b7c54a0cf1`
+- RAM after `$2905=$00`: `2c4953862f6f6d52dbe2985ad0f9cf39`
 
-En kontrollkörning från samma savestate utan knapptryck skriver bara
-indatabuffertens tomma `$f0/$00`-pollningar. Den skapar inga kommando- eller
-RAM-bilder.
+A control run from the same save state without a button press writes only the
+input buffer's empty `$f0/$00` polls. It creates no command or RAM images.
 
-## Maskinell grind
+## Machine Gate
 
-`theron_v1_original_command_capture_admit()` kräver alla identiteter ovan,
-den exakta Button-I-kanten, en obruten sekvens `0..65535`, korrekt fysisk
-huvud-RAM-adress för varje skrivning, kökommandot, köavslutet och rätt storlek
-på kod- och RAM-bilderna. Kvittot hashberäknar samtliga artefakter på nytt.
+`theron_v1_original_command_capture_admit()` requires all identities above,
+the exact Button-I edge, an unbroken sequence `0..65535`, the correct physical
+main-RAM address for each write, the queued command, queue termination and
+the correct code and RAM image sizes. The receipt re-hashes all artifacts.
 
-Konsumentspåret ingår i samma kvitto. Mellan originalets första läsning av
-`$2905=$50` vid `$D34D` och den första efterföljande läsningen av
-`$2905=$00` finns **0** läsningar i `$2600–$27FF`. Ett saknat, omordnat eller
-felformaterat konsumentspår underkänns.
+The consumer trace is part of the same receipt. Between the original's first
+read of `$2905=$50` at `$D34D` and the first subsequent read of `$2905=$00`,
+there are **0** reads in `$2600–$27FF`. A missing, reordered or
+malformed consumer trace is rejected.
 
-## Semantisk gräns
+## Semantic Boundary
 
-`$50` är här endast en verifierad originalkommandotyp för ett viewportklick.
-Fångsten identifierar inte den klickade Track 02-postens dungeon, level,
-kedjereferens eller T900-konsument. Kvittot sätter därför alltid
-`semantic_publication_allowed=0`. Det får inte användas för att öppna en dörr,
-använda ett föremål eller binda startutrustning förrän samma transaktion kan
-kopplas till en exakt source-förekomst och en observerad tillståndsändring.
+`$50` here is only a verified original command type for a viewport click.
+The capture does not identify the clicked Track 02 record's dungeon, level,
+chain reference or T900 consumer. The receipt therefore always sets
+`semantic_publication_allowed=0`. It must not be used to open a door, use an
+item or bind starting equipment until that same transaction can be connected
+to an exact source occurrence and an observed state change.
 
-En separat forskningssond flyttade en kopia av det autentiska sparläget från
-`(2,3)` till `(4,4)`, framför den verkliga US Track 02-dörren på karta 0 vid
-`(5,4)` (`source_ref=0015`, index 21, råpost `fe ff 20 00`). Även där gav
-standardklicket `$3c/$78` noll källområdesläsningar i kommandofönstret.
-Positionskopian är syntetiskt styrd enbart för att hitta nästa riktiga
-konsument och är uttryckligen inte godkänd som spelstate eller semantiskt
-bevis.
+A separate research probe moved a copy of the authentic save state from
+`(2,3)` to `(4,4)`, in front of the real US Track 02 door on map 0 at
+`(5,4)` (`source_ref=0015`, index 21, raw record `fe ff 20 00`). Even there,
+the standard click `$3c/$78` yielded zero source-area reads in the command
+window. The position copy was synthetically adjusted solely to find the next
+real consumer and is explicitly not admitted as game state or semantic
+evidence.
 
-## Avgränsad framåtkollision mot den riktiga dörren
+## Bounded Forward Collision with the Real Door
 
-En ny forskningsproducent armar på Button I-kanten och loggar enbart läsningar
-i HuC6280:s huvud-RAM-fönster `$2000–$3fff` tills originalet nollställer
-kommandotypen. Det förhindrar att instruktionshämtningar fyller den begränsade
-bufferten före ett sent kommando. Samma positionskopia och den reproducerbara
-planen `right@1:140,down@2:33,i@145:5` gav originalkommando `$03`, följt av
-`$2905=$00`, och en fullständig gräns efter 55 078 ordnade RAM-läsningar.
+A new research producer arms on the Button I edge and logs only reads in the
+HuC6280 main-RAM window `$2000–$3fff` until the original clears the command
+type. This prevents instruction fetches from filling the bounded buffer before
+a late command. The same position copy and reproducible plan
+`right@1:140,down@2:33,i@145:5` produced original command `$03`, followed by
+`$2905=$00`, and a complete boundary after 55,078 ordered RAM reads.
 
-Fönstret innehåller 96 läsningar i `$2600–$27ff`. De observerade adresserna
-ligger främst i `$271b–$2724` och `$27af–$27c8`; bland läsar-PC:erna finns
-`$c1fd`, `$c2d8–$c450` och `$a01e–$a6e6`. Spårets MD5 är
+The window contains 96 reads in `$2600–$27ff`. Observed addresses are primarily
+in `$271b–$2724` and `$27af–$27c8`; reader PCs include
+`$c1fd`, `$c2d8–$c450` and `$a01e–$a6e6`. The trace MD5 is
 `6cdee36618c6cdbd43ad3f4fe39a6c47`.
 
-En fysisk ommappning av kodbilden skiljer nu förarbetet från själva
-kommandodispatchen. `$2905=$03` läses vid originalets `$d34d` först i sekvens
-50 862. Efter den punkten finns **0** läsningar i `$2600–$27ff`. Samtliga 96
-läsningar ovan inträffar alltså före originalets dispatch av framåtkommandot.
-Capturekvittot redovisar därför `command_consumer_source_reads` och
+Physical remapping of the code image now separates preparatory work from the
+command dispatch itself. `$2905=$03` is first read at the original's `$d34d`
+at sequence 50,862. After that point there are **0** reads in `$2600–$27ff`.
+All 96 reads above therefore occur before the original dispatches the forward
+command. The capture receipt consequently reports `command_consumer_source_reads` and
 `command_consumer_post_dispatch_source_reads` separat.
 
-Detta är ett positivt tidsfönster för huvud-RAM, men inte i sig ett kausalt
-konsumentbevis. HuC6280-kärnan kan avbryta en pågående blocköverföring utan att
-den PC som rapporteras av minnesinstrumenteringen lämnar blockinstruktionens
-adress. Läsningar från avbrottsrutiner kan därför få en missvisande PC-etikett
-inne i rörelserutinen.
+This is a positive main-RAM time window, but not in itself causal consumer
+evidence. The HuC6280 core can interrupt an ongoing block transfer without the
+PC reported by memory instrumentation leaving the block instruction's
+address. Reads from interrupt routines can therefore receive a misleading PC
+label inside the movement routine.
 
-Riktade forskningsmutationer bekräftade gränsen. `$271b/$c450`,
-`$271e/$c3f1`, `$272b/$c1fd` och `$27af–$27c8` ändrade loop-, renderings- eller
-tillfälligt arbetsstate, men band inte den riktiga dörrposten. `$2098` fick
-värdet `$81`, vars höga bitar strukturellt liknar kartformatets dörrtyp, men
-varken en punktmutation på läsningen, en beständig mutation vid Button I-kanten
-eller en mutation av skrivningen `$81→$01` ändrade rörelsen eller
-slutpositionen. Fältet är alltså inte styrkt som rörelsekonsument.
+Targeted research mutations confirmed the boundary. `$271b/$c450`,
+`$271e/$c3f1`, `$272b/$c1fd` and `$27af–$27c8` changed loop, rendering or
+temporary working state, but did not bind the real door record. `$2098` was
+given value `$81`, whose high bits structurally resemble the map format's door
+type, but neither a point mutation on the read, a persistent mutation at the
+Button I edge nor a mutation of the write `$81→$01` changed movement or final
+position. The field is therefore not proven as a movement consumer.
 
-Dörrsemantik förblir fail-closed tills ett spår med faktisk exekverings-PC
-eller en skriv-/grenmutation kan binda en exakt omformad runtime-byte till den
-riktiga posten `fe ff 20 00` och en observerad tillståndsgren.
+Door semantics remain fail-closed until a trace with the actual execution PC
+or a write/branch mutation can bind an exactly transformed runtime byte to the
+real record `fe ff 20 00` and an observed state branch.
 
-## Dataminnesspår och verifierad öppen kontroll
+## Data-Read Trace and Verified Open-Cell Control
 
-En isolerad forskningsbyggnad skiljer nu HuC6280:s dataläsningar från
-instruktions- och operandhämtningar och armar först när `$2905=$03` faktiskt
-läses vid `$d34d`. Dörrkörningen avslutades efter 5 016 dataläsningar
-(`f8a8b69d6ec82118a45b11b00b21e2df`). En kontroll från samma autentiska
-savestate ändrade endast de två serialiserade X-koordinaterna från `2` till
-`1`; gruppen stod då på `(1,3)` och originalet flyttade den till den verkligt
-öppna rutan `(2,3)`. Kontrollspåret avslutades efter 6 830 dataläsningar
+An isolated research build now distinguishes HuC6280 data reads from
+instruction and operand fetches and arms only when `$2905=$03` is actually
+read at `$d34d`. The door run ended after 5,016 data reads
+(`f8a8b69d6ec82118a45b11b00b21e2df`). A control from the same authentic
+save state changed only the two serialized X coordinates from `2` to `1`;
+the party then stood at `(1,3)` and the original moved it to the genuinely
+open cell `(2,3)`. The control trace ended after 6,830 data reads
 (`21cc2557bc97a16cc04c2c9e975fe018`).
 
-Den första kontrollflödesskillnaden finns i originalets gränskontroll. För
-dörrpositionen beräknas mål-X `5`, som jämförs med nivåns exklusiva X-gräns
-`5` vid `$4fbb–$4fbd`; rutinen returnerar blockerad innan motsvarande
-Y-/rutkontroll. Den öppna kontrollens mål-X `2` passerar och fortsätter via
-`$4fc0`. Den bankade läsningen vid fysisk adress `$0e8af7` gav `$10` i
-dörrfallet, medan kontrollens koordinatberoende adress `$0e8ae1` gav `$20`.
-En forskningsmutation `$0e8af7:10→20` ändrade senare arbetsstate men varken
-gränsgrenen eller slutpositionen.
+The first control-flow difference is in the original's boundary check. For
+the door position, target X `5` is calculated and compared against the level's
+exclusive X boundary `5` at `$4fbb–$4fbd`; the routine returns blocked before
+the corresponding Y/cell check. The open control's target X `2` passes and
+continues through
+`$4fc0`. The banked read at physical address `$0e8af7` returned `$10` in the
+door case, while the control's coordinate-dependent address `$0e8ae1` returned
+`$20`. A research mutation `$0e8af7:10→20` later changed working state but
+neither the boundary branch nor the final position.
 
-Det bevisar att den observerade framåtkollisionen är en kartgräns, inte en
-öppna-dörr-konsument. Den får därför inte användas för att härleda T900,
-dörrknapp, nyckel eller actuatorsemantik. Nästa positiva dörrfångst måste
-använda originalets interaktionsväg och visa en source-bunden tillståndsgren;
-produktionsvägen för riktiga dörrar förblir stängd under tiden.
+This proves that the observed forward collision is a map boundary, not an
+open-door consumer. It must therefore not be used to infer T900, door-button,
+key or actuator semantics. The next positive door capture must use the
+original interaction path and show a source-bound state branch; the production
+path for real doors remains closed in the meantime.
 
-## Originalets högerspaltskommando `$74`
+## Original Right-Column Command `$74`
 
-Den autentiska VDC/VCE-bilden från dörrpositionen visar att `$3c/$78` inte
-träffar frontytan. Med samma riktiga skiva, BIOS och savestate flyttade en
-reproducerbar PCE-inmatningsplan markören till `$79/$62`. Originalets egen
-hoverrutt skrev då `$2911=$74` vid `$d57e`, och Button I köade `$2905=$74`
-från `$ccdb`. Kommandot nollställdes från `$d3a0` efter 69 208 ordnade
-huvud-RAM-skrivningar. Det fullständiga data-only-fönstret innehåller 72 693
-läsningar och en explicit gränspost; spårets MD5 är
+The authentic VDC/VCE image from the door position shows that `$3c/$78` does
+not hit the front face. With the same real disc, BIOS and save state, a
+reproducible PCE input plan moved the cursor to `$79/$62`. The original's own
+hover routine then wrote `$2911=$74` at `$d57e`, and Button I queued
+`$2905=$74` from `$ccdb`. The command was cleared from `$d3a0` after 69,208
+ordered main-RAM writes. The complete data-only window contains 72,693 reads
+and an explicit boundary record; the trace MD5 is
 `c9078f2d894ce3025ebe094714a7aeea`.
 
-Ett horisontellt hover-svep vid logiskt Y `$78` visar den relevanta gränsen:
-originalet skriver `$50` för X `$00–$6f`, snappar därefter markören till
-`$79/$78` och skriver `$74`. En senare vertikal förflyttning ger `$79/$62`
-med samma kommando. `$74` tillhör alltså högerspalten och är inte en
-frontcells- eller dörrzon.
+A horizontal hover sweep at logical Y `$78` shows the relevant boundary: the
+original writes `$50` for X `$00–$6f`, then snaps the cursor to `$79/$78` and
+writes `$74`. A later vertical movement gives `$79/$62` with the same command.
+Thus, `$74` belongs to the right column and is not a front-cell or door zone.
 
-Samma högerspaltspunkt och kommando kördes från den verifierade öppna kontrollpositionen.
-De första 4 381 dataläsningarna hade samma kontrollväg, och båda körningarna
-läste samma 60 byte i `$2600–$27ff`. Varken slutposition eller någon
-source-bunden dörrpost ändrades. `$74` är därför en bevisad originalkod för
-högerspalten, men inte en dörrkonsument eller grund för vygeometri.
+The same right-column point and command were run from the verified open
+control position. The first 4,381 data reads followed the same control path,
+and both runs read the same 60 bytes in `$2600–$27ff`. Neither the final
+position nor any source-bound door record changed. `$74` is therefore a proven
+original code for the right column, but not a door consumer or basis for view
+geometry.
 
-Firestaffs äldre V1-klickmatris publicerade nio hostskapade 320×240-rutor som
-om de vore Therons V1-geometri. Originalbilden är 320×200, och två bevisade
-punkter räcker inte för att härleda rektangelgränser. De nio V1-rutorna har
-därför tagits bort. V1-frågor returnerar nu inga zoner tills originalets hela
-rektangeltabell eller motsvarande kompletta gränsspår har återfunnits. Den
-uttryckligt moderna V2-overlayen ligger kvar som presentationsgeometri och
-används inte som originaldata.
+Firestaff's older V1 click matrix published nine host-created 320×240 regions
+as though they were Theron's V1 geometry. The original image is 320×200, and
+two proven points are insufficient to infer rectangle boundaries. The nine V1
+regions have therefore been removed. V1 queries now return no zones until the
+original's complete rectangle table or equivalent complete boundary trace is
+recovered. The explicitly modern V2 overlay remains as presentation geometry
+and is not used as original data.

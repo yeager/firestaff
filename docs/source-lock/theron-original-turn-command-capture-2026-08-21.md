@@ -1,46 +1,46 @@
-# Therons ursprungliga rotationskommandon
+# Theron's Original Turn Commands
 
-## Källor och gemensam startpunkt
+## Sources and Shared Starting Point
 
-Fångsterna kommer från den autentiska USA-skivan med Track 02-MD5
+The captures come from the authentic US disc with Track 02 MD5
 `ceb02343868f80cec899e9b239aff2da`, System Card 3.0-MD5
-`ff1a674273fe3540ccef576376407d1d` och samma Mednafen-savestate med MD5
-`f17f377df210b4a3ae904a13fb85a7f0`. Ingen genererad karta, RAM-bild,
-palett eller knapphändelse ingår.
+`ff1a674273fe3540ccef576376407d1d` and the same Mednafen save state with MD5
+`f17f377df210b4a3ae904a13fb85a7f0`. No generated map, RAM image, palette or
+button event is included.
 
-Button I observeras i originalets indatabuffert som `$28B8=$01`, skriven från
-logisk HuC6280-PC `$44E5` och fysisk PC `$0D04E5`. Kommandospåret börjar vid
-denna kant och innehåller exakt 65 536 ordnade skrivningar till huvud-RAM.
+Button I is observed in the original input buffer as `$28B8=$01`, written from
+logical HuC6280 PC `$44E5` and physical PC `$0D04E5`. The command trace begins
+at this edge and contains exactly 65,536 ordered writes to main RAM.
 
-## Vänsterrotation
+## Left Turn
 
-Den vänstra rörelsepanelsknappen köar kommandotyp `$01`. Det verifierade
-klicket har intern koordinat `$7B/$8F`; X-värdet motsvarar den nio bitar breda
-skärmkoordinaten genom originalets dubblering i `$D56A..$D578`.
+The left movement-panel button queues command type `$01`. The verified click
+has internal coordinate `$7B/$8F`; its X value corresponds to the nine-bit
+screen coordinate through the original's doubling in `$D56A..$D578`.
 
-Originalrutinen `$D900..$D92E` ändrar global riktning `$203F` från `1` till
-`0`. Gruppfälten `$2944` och `$2948` ändras samtidigt från `1` till `0`.
-Före- och efterbilderna av 8 KiB huvud-RAM har MD5
-`2449d5b14c41565a9d6c71c7c61f481d` respektive
+The original routine `$D900..$D92E` changes global direction `$203F` from `1`
+to `0`. Group fields `$2944` and `$2948` simultaneously change from `1` to
+`0`. The before and after images of 8 KiB main RAM have MD5
+`2449d5b14c41565a9d6c71c7c61f481d` and, respectively,
 `4072c735edbe4d60182870876a8ceb79`.
 
-Ett längre klick-/kontrollpar från samma startpunkt skiljer 27 226 presenterade
-bildpunkter inom `(0,0)..(271,175)`. Klickets VRAM-MD5 är
-`01ec4386a553b0382c737c593f8dc04d`; kontrollens är
+An extended click/control pair from the same starting point differs at 27,226
+presented pixels within `(0,0)..(271,175)`. The click's VRAM MD5 is
+`01ec4386a553b0382c737c593f8dc04d`; the control's is
 `a44656d752b2910f48944831eaf23d61`.
 
-## Högerrotation
+## Right Turn
 
-Den högra rörelsepanelsknappen köar kommandotyp `$02` vid intern koordinat
-`$98/$8F`. Samma originalrutin ändrar `$203F`, `$2944` och `$2948` från `1`
-till `2`. Den tidigare synliga klick-/kontrollfångsten skiljer 27 430
-bildpunkter.
+The right movement-panel button queues command type `$02` at internal
+coordinate `$98/$8F`. The same original routine changes `$203F`, `$2944` and
+`$2948` from `1` to `2`. The earlier visible click/control capture differs at
+27,430 pixels.
 
-## Produktionsgräns
+## Production Boundary
 
-Firestaff mappar endast originalkommandona `$01` och `$02` till vänster
-respektive höger kvartsrotation. Övriga kommandotyper avvisas. Fångster vid
-2 097 152 VDC-poster används som presentationsbevis men tas inte upp i den
-atomiska VRAM-produktionslistan, eftersom CPU-portspåret korsar HuC6270:s
-interna DMA. Den äldre rena 65 536-postersgränsen och kommando-RAM-beviset
-förblir separata grindar.
+Firestaff maps only original commands `$01` and `$02` to left and right
+quarter-turns, respectively. Other command types are rejected. Captures at
+2,097,152 VDC records are used as presentation evidence but are not admitted
+to the atomic VRAM production list because the CPU-port trace crosses the
+HuC6270's internal DMA. The earlier clean 65,536-record boundary and
+command-RAM evidence remain separate gates.

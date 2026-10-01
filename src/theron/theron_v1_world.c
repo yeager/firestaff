@@ -2004,6 +2004,11 @@ int theron_v1_transition_execute(Theron_V1_World *world) {
             world->transition_pending = 0;
             return -1;
         }
+        if (world->progression.current_dungeon !=
+            (Theron_DungeonID)world->current_dungeon) {
+            world->transition_pending = 0;
+            return -1;
+        }
         next_dungeon = theron_v1_dungeon_exit(&world->progression);
         if (next_dungeon == THERON_DUNGEON_INVALID) {
             if (!theron_v1_quest_complete(&world->progression)) {
@@ -4625,6 +4630,27 @@ static int theron_v1_world_deserialize_into(Theron_V1_World *world,
     in += sizeof(world->progression);
     world->campaign_completion_mask = ver >= 19u
         ? (uint8_t)(header_flags & 0x7fu) : 0u;
+    /* The world header is the canonical current stage. Older serialized
+     * progression structs may contain a stale host-side copy. */
+    world->progression.current_dungeon =
+        (Theron_DungeonID)world->current_dungeon;
+    theron_v1_dungeon_progression_apply_campaign_completion(
+        &world->progression, world->campaign_completion_mask);
+    /* Legacy snapshots have no authenticated campaign byte. Preserve only
+     * their canonical current stage as resumable; never infer completion or
+     * unlock other stages from the older host item mask. */
+    if (ver < 19u && world->current_dungeon >=
+            (uint8_t)THERON_DUNGEON_1_AKUTUBA &&
+        world->current_dungeon <= (uint8_t)THERON_DUNGEON_7_DEMON) {
+        world->progression.dungeon_states[world->current_dungeon - 1u] =
+            THERON_DUNGEON_STATE_IN_PROGRESS;
+    }
+    world->dungeon_complete = world->current_dungeon >=
+        (uint8_t)THERON_DUNGEON_1_AKUTUBA &&
+        world->current_dungeon < (uint8_t)THERON_DUNGEON_7_DEMON &&
+        (world->campaign_completion_mask &
+         (uint8_t)THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
+             world->current_dungeon)) != 0u;
 
     if (_tqw_party_unpack(&world->party, in,
                          bufsize - (in - (const uint8_t *)buf), ver) != 0) {

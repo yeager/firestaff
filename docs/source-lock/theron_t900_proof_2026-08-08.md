@@ -1,189 +1,191 @@
-# Theron's Quest T900-bevis (2026-08-08)
+# Theron's Quest T900 Evidence (2026-08-08)
 
-## Slutsats
+## Conclusion
 
-T900 är ännu inte bevisad som körbar object-/inventorykonsument. Det som är
-bevisat är den autentiska datan och den statiska loadern runt den. Att kalla
-detta full T900 skulle vara att lägga till spelbetydelse som inte finns i
-bevismaterialet.
+T900 has not yet been proven as an executable object/inventory consumer. What
+has been proven is the authentic data and the static loader around it. Calling
+this full T900 support would add gameplay meaning that is not present in the
+evidence.
 
-## Senaste transportcapture (2026-08-09)
+## Latest Transport Capture (2026-08-09)
 
-Capture-gaten godkänner nu den lägre, source-bundna CD/FIFO→RAM-vägen även när
-de valfria high-level-markörerna saknas. En extern-disk-körning med äkta US
-Track 02 och System Card producerade 161 råsektorspaner, 51 SCSI READ-kommandon,
-161 sektorbindningar, 25 CDIRQ-kvitton och två byte-exakta
-`pce_cd_origin_ram_receipt`-poster. Den loggade dessutom 32
-`game_main_ram_e009_dispatch`-poster och 4 096 main-RAM-konsumentläsningar.
+The capture gate now admits the lower, source-bound CD/FIFO→RAM path even when
+the optional high-level markers are absent. A run from an external drive with
+authentic US Track 02 and System Card produced 161 raw-sector spans, 51 SCSI
+READ commands, 161 sector bindings, 25 CDIRQ receipts and two byte-exact
+`pce_cd_origin_ram_receipt` records. It also logged 32
+`game_main_ram_e009_dispatch` records and 4,096 main-RAM consumer reads.
 
-Detta är ett godkänt transportkvitto, inte ett T900- eller level/object-bevis:
-ingen `$2600`-konsument, RNG-retur, spawn-/AI-/combat-/loot-kedja eller
-T700-tick publiceras från capturen. De semantiska spärrarna förblir därför
-oförändrade.
+This is an admitted transport receipt, not T900 or level/object evidence: the
+capture publishes no `$2600` consumer, RNG return, spawn/AI/combat/loot chain
+or T700 tick. The semantic gates therefore remain unchanged.
 
-## Beviskedja
+## Evidence Chain
 
-| Led | Autentiskt bevis | Resultat |
+| Link | Authentic evidence | Result |
 | --- | --- | --- |
-| Track 02-identitet | US `TQUS02.bin`, MD5 `f23601102138f87c33025877767ebf76`; JP `TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a` | Godkänt |
-| Object-/thing-records | Kategorier 0..10, 14 och 15 avkodas från riktiga Track 02-user-data; monster, weapon, clothing, scroll, potion, chest och misc behåller råfält och provenance | Datapost godkänd, semantik ej godkänd |
-| Item properties | 66 × 6 byte matchar den riktiga US/JP-tabellen byte för byte; US/JP Track 19-proben passerar | Propertypayload godkänd, T900-consumer ej godkänd |
-| Dungeonlokala item-namn | Sju 66-posters Track 02-tabeller per region läses från sina autentiska user-data-span; varje offset, längd och FNV verifieras | Objektets verifierade dungeon + item type får slå upp rånamnet; text-/glyphkonsument ej godkänd |
-| Inventory-provenance | Pickup kopierar nu hela källrecorden (storlek + 16 bytes), bevarar property-category och v7-save roundtrip återställer den för samma object | Provenance/integritetskontroll godkänd, T900-regler ej godkända |
-| Dungeon-textkälla | US-loadern bevarar hela den riktiga codonströmmen i load-resultatet; JP Track 02 rapporterar verifierat noll textord | Source stream godkänd, HuC6280-textkonsument ej godkänd |
-| Statisk HuC6280-kedja | `theron-us-bank1f-consumer.asm` och `$2386–$252A` verifieras mot båda retailbilderna | Loader/dekomprimering godkänd |
-| Runtime object-consumer | En autentiserad Mednafen/System Card-körning på extern-disk når BIOS och producerar snapshots; den nya GUI-körningen bevisar BIOS Run → Track 02-sektorläsning, men ingen verifierad spelruntime-läsning i `$2600–$27FF` | T900-konsument saknas fortfarande i beviset |
-| Capture-instrumentering | Mednafen-harnessen fångar nu både läsningar och skrivningar i `$2600–$27FF`, med PC, fysisk adress och MPR-avledd fysisk PC | Mätväg godkänd, ingen semantik godkänd |
+| Track 02 identity | US `TQUS02.bin`, MD5 `f23601102138f87c33025877767ebf76`; JP `TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a` | Admitted |
+| Object/thing records | Categories 0..10, 14 and 15 decoded from real Track 02 user data; monster, weapon, clothing, scroll, potion, chest and misc retain raw fields and provenance | Data record admitted, semantics not admitted |
+| Item properties | 66 × 6 bytes match the real US/JP table byte for byte; US/JP Track 19 probe passes | Property payload admitted, T900 consumer not admitted |
+| Dungeon-local item names | Seven 66-entry Track 02 tables per region are read from their authentic user-data spans; every offset, length and FNV is verified | The object's verified dungeon + item type may look up the raw name; text/glyph consumer not admitted |
+| Inventory provenance | Pickup now copies the complete source record (size + 16 bytes), preserves property category, and the v7 save roundtrip restores it for the same object | Provenance/integrity check admitted, T900 rules not admitted |
+| Dungeon text source | US loader preserves the complete real codon stream in the load result; JP Track 02 reports verified zero text words | Source stream admitted, HuC6280 text consumer not admitted |
+| Static HuC6280 chain | `theron-us-bank1f-consumer.asm` and `$2386–$252A` verified against both retail images | Loader/decompression admitted |
+| Runtime object consumer | An authenticated Mednafen/System Card run on the external drive reaches BIOS and produces snapshots; the new GUI run proves BIOS Run → Track 02 sector reads, but no verified game-runtime read in `$2600–$27FF` | T900 consumer remains unproven |
+| Capture instrumentation | Mednafen harness now captures both reads and writes in `$2600–$27FF`, with PC, physical address and MPR-derived physical PC | Measurement path admitted, no semantics admitted |
 
-Den lokala real-data-körningen `test_theron_v1_track02_thing_data` passerar
-dessutom mot `TQUS02.bin` och `TQJP02.bin`: båda varianterna matchar den
-source-bound 66×6-byte propertytabellen, och alla sju dungeonblock laddar sina
-riktiga ground refs, object counts och kategori-4 monsterrecords. Detta
-bevisar att T900:s råa object-/propertyunderlag når Firestaffs data-lager; det
-bevisar inte att originalets T900-rutiner konsumerar eller muterar state.
+The local real-data run `test_theron_v1_track02_thing_data` also passes
+against `TQUS02.bin` and `TQJP02.bin`: both variants match the source-bound
+66×6-byte property table, and all seven dungeon blocks load their real ground
+refs, object counts and category-4 monster records. This proves that T900's
+raw object/property inputs reach Firestaff's data layer; it does not prove
+that the original T900 routines consume or mutate state.
 
-`test_theron_v1_track02_dungeon_loader` verifierar dessutom att varje
-source-bunden kategori-4-grupp med giltig typ/count/HP projiceras till den
-levande creature-poolen för US, och nu även JP, med bibehållen source-ref,
-cell, typ och HP. Attack, AI, loot och generator-spawn lämnas avsiktligt
-obundna tills deras originalkonsumenter är fångade.
+`test_theron_v1_track02_dungeon_loader` also verifies that each source-bound
+category-4 group with valid type/count/HP is projected into the live creature
+pool for US, and now JP as well, preserving source ref, cell, type and HP.
+Attack, AI, loot and generator spawning intentionally remain unbound until
+their original consumers are captured.
 
-Inventoryprovenancen är nu också lossless genom pickup, drop och save/load:
-den fullständiga råa itemrecorden följer med utöver propertyraden och de
-namngivna tillståndsfälten. Detta är ett källbytebevarande, inte ett påstående
-om att Firestaff har återfunnit T900:s equip/use/stack-regler.
+Inventory provenance is now also lossless through pickup, drop and save/load:
+the complete raw item record accompanies the property row and named state
+fields. This preserves source bytes; it does not claim that Firestaff has
+recovered T900's equip/use/stack rules.
 
-Den tidigare statiska US-listan vid `$21A08E` visade sig vara enbart dungeon
-7:s tabell. De sex andra questblocken har egna 66-posters listor, och JP har
-sju motsvarande Shift-JIS-listor på regionala offseter. Produktionen läser nu
-alla 14 listor direkt ur den redan autentiserade Track 02-user-data-strömmen.
-Varje tabell har en låst offset, exakt byteantal och egen FNV-1a. Objektets
-redan verifierade `source_dungeon` och `source_item_type` väljer post; ingen
-Track 19-indexering eller reservtext används. Dungeon 6, post 64 är tom i både
-US och JP och bevaras därför som en giltig tom källpost.
+The earlier static US list at `$21A08E` turned out to be only dungeon 7's
+table. The six other quest blocks have their own 66-entry lists, and JP has
+seven corresponding Shift-JIS lists at regional offsets. Production now reads
+all 14 lists directly from the already authenticated Track 02 user-data
+stream. Each table has a pinned offset, exact byte count and its own FNV-1a.
+The object's already verified `source_dungeon` and `source_item_type` select
+the entry; no Track 19 indexing or fallback text is used. Dungeon 6, entry 64
+is empty in both US and JP and is therefore preserved as a valid empty source
+entry.
 
-Detta bevisar den statiska relationen mellan source-objektets lokala item type
-och questblockets parallella namnpost. Det bevisar inte originalets
-skärmritning, Shift-JIS-glyphval, use/equip/stack-regler eller någon mutation
-av T900-state.
+This proves the static relation between the source object's local item type
+and the quest block's parallel name entry. It does not prove the original's
+screen rendering, Shift-JIS glyph selection, use/equip/stack rules or any
+mutation of T900 state.
 
-Den parallella 66-bytetabellen vid `$21A046` var också felklassad. Värdena
-`$22/$80/$81/$82` gäller Demon-blocket, men samma strukturella tabell använder
-andra typkoder i övriga dungeons, exempelvis `$95–$98` i Akutuba. JP har
-ytterligare regionala avvikelser. Tabellen får därför inte avgöra om en
-thing-post är weapon, clothing, scroll, potion eller misc. Den kategorin finns
-redan explicit i postreferensen som 5, 6, 7, 8 eller 10.
+The parallel 66-byte table at `$21A046` was also misclassified. Values
+`$22/$80/$81/$82` apply to the Demon block, but the same structural table uses
+other type codes in other dungeons, for example `$95–$98` in Akutuba. JP has
+additional regional variations. The table must therefore not determine
+whether a thing record is weapon, clothing, scroll, potion or misc. That
+category is already explicit in the record reference as 5, 6, 7, 8 or 10.
 
-Firestaff bevarar nu varje dungeonlokal typkodstabell med exakt offset och
-FNV, men använder postreferensens kategori för att binda den item-indexerade
-6-byte propertyraden. Realdatakorpusen kräver att varje materialiserad
-item-post får en propertyrad och att endast category-9-kistor undantas. Det
-öppnar fortfarande inga use/equip/stack-regler; typkoden behålls rå tills dess
-originalkonsument är identifierad.
+Firestaff now preserves every dungeon-local type-code table with its exact
+offset and FNV, but uses the record reference's category to bind the
+item-indexed 6-byte property row. The real-data corpus requires every
+materialized item record to have a property row and exempts only category-9
+chests. This still opens no use/equip/stack rules; the type code remains raw
+until its original consumer is identified.
 
-Kategori 4 har nu rättats mot hela DMBUILDER-kontraktet. `item.c:getItem()`
-hoppar över postens generiska tvåbyteslänk innan pekaren till den 14 byte
-långa `dms.h:dm_monster`-strukturen returneras. Firestaff hade tidigare läst
-länkordet som `chested` och därmed förskjutit typ, position och samtliga HP.
-Dekodern läser nu `next_ref` vid byte 0, `chested` vid byte 2, typ/position vid
-byte 4/5, fyra HP-ord vid byte 6–13 och slutordet vid byte 14.
+Category 4 has now been corrected against the complete DMBUILDER contract.
+`item.c:getItem()` skips the record's generic two-byte link before returning a
+pointer to the 14-byte `dms.h:dm_monster` structure. Firestaff previously read
+the link word as `chested`, thereby shifting the type, position and all HP
+values. The decoder now reads `next_ref` at byte 0, `chested` at byte 2,
+type/position at bytes 4/5, four HP words at bytes 6–13 and the trailing word
+at byte 14.
 
-Ground-reference-walkern följer därför också kategori-4-postens riktiga
-`next_ref`. Mot den autentiska US-kampanjen återställs censusen till
-`640/2189` source-/placerade poster; de tre följdobjekten är verkliga länkar.
-Monsterantalet `165` och generatorantalet `46` ändras inte.
+The ground-reference walker therefore also follows the real `next_ref` of a
+category-4 record. Against the authentic US campaign, the census returns to
+`640/2189` source/placed records; the three chained objects are real links.
+Monster count `165` and generator count `46` are unchanged.
 
-Fältet följer nu också den source-bundna monsterrecorden till live creature
-och save/load-version 9. Det är en lossless state-bindning av ett verkligt
-källfält, inte en tolkning av vad T900 gör med det.
+The field now also follows the source-bound monster record into the live
+creature and save/load version 9. This is a lossless state binding of a real
+source field, not an interpretation of what T900 does with it.
 
-## Vad T900-bevis skulle behöva innehålla
+## Required T900 Evidence
 
-En godkänd capture måste samtidigt visa:
+An admitted capture must show all of the following at once:
 
-1. CD/FIFO-källan och bytes som laddas till RAM-fönstret runt `$2600`.
-2. Exekverande HuC6280-PC och bank/MPR-läge när objectrecorden läses.
-3. Käll-LBA eller Track 02-user-data-offset för samma record.
-4. Vilka bytes som skrivs till object-/thing-/inventory-state efter läsningen.
-5. En reproducerbar use/equip/stack/drop/loot-transaktion mot samma
-   source-record.
+1. The CD/FIFO source and bytes loaded into the RAM window around `$2600`.
+2. The executing HuC6280 PC and bank/MPR state when the object record is read.
+3. The source LBA or Track 02 user-data offset for that same record.
+4. Which bytes are written to object/thing/inventory state after the read.
+5. A reproducible use/equip/stack/drop/loot transaction against that same
+   source record.
 
-Den statiska VCE- och bank-$1f-receipten uppfyller inte dessa krav. Inte heller
-gör ett fixture-test, en hostmodell, en propertytabell eller ett strukturellt
-objectrecord det.
+The static VCE and bank-$1f receipt do not satisfy these requirements.
+Neither does a fixture test, host model, property table or structural object
+record.
 
-Captureharnessen har en definierad `main_ram_target_write`-rapport för framtida
-state-skrivningar när originalmedia och System Card faktiskt körs. Den
-autentiserade System Card 3.0-identiteten är nu verifierad
-(`ff1a674273fe3540ccef576376407d1d`), liksom US Track 02 ISO-identiteten
-(`ceb02343868f80cec899e9b239aff2da`). Den externa capturekörningen producerar
-dessutom 64 KiB VDC-VRAM och 1 KiB VCE-palette snapshots. Den nådde dock inte
-en godkänd spelägd `$2600–$27FF`-läsning eller state-skrivning; RNG, AI, T700
-och T900 förblir därför fail-closed.
+The capture harness has a defined `main_ram_target_write` report for future
+state writes when the original media and System Card are actually running.
+The authenticated System Card 3.0 identity is now verified
+(`ff1a674273fe3540ccef576376407d1d`), as well as the US Track 02 ISO identity
+(`ceb02343868f80cec899e9b239aff2da`). The external capture run also produces
+64 KiB VDC-VRAM and 1 KiB VCE-palette snapshots. However, it did not reach an
+admitted game-owned `$2600–$27FF` read or state write; RNG, AI, T700 and T900
+therefore remain fail-closed.
 
-Capturevägen stöder `THERON_CAPTURE_AUTOLOAD_STATE`, men den kandidat som
-fanns på extern-disken var inte en Mednafen-savestate. Den är en 2 KiB
-`HUBM`-SRAM-fil, vilket tidigare gav ett missvisande Mednafenfel om
-`Unexpected EOF`. Capture-scriptet avvisar nu filen före emulatorstart med en
-tydlig signaturkontroll. Någon fullständig, autentiserad Mednafen-savestate
-med spelägd återupptagning är därför ännu inte tillgänglig eller bevisad.
-En separat frame-bunden replay med äkta Track 02/System Card gav 47
-inputtransaktioner och 2 CD-IRQ, men 0 icke-System-Card-CD-anrop och 0
-`$2600–$27FF`-konsumentläsningar. Det är en negativ capturegräns, inte ett
-tillstånd att aktivera RNG, AI, T700 eller T900.
+The capture path supports `THERON_CAPTURE_AUTOLOAD_STATE`, but the candidate
+found on the external drive was not a Mednafen save state. It is a 2 KiB
+`HUBM` SRAM file, which previously caused a misleading Mednafen `Unexpected
+EOF` error. The capture script now rejects the file before emulator startup
+with a clear signature check. A complete, authenticated Mednafen save state
+with game-owned resumption is therefore not yet available or proven. A
+separate frame-bound replay with authentic Track 02/System Card produced 47
+input transactions and 2 CD IRQs, but 0 non-System-Card CD calls and 0
+`$2600–$27FF` consumer reads. This is a negative capture boundary, not
+permission to enable RNG, AI, T700 or T900.
 
-Captureinfrastrukturen är nu också verifierad med en native SDL 2.30.9-build
-på extern-disken och Cocoa som faktisk macOS-videobackend. En körning med
-äkta Quartz RUN-events producerade fyra host key-events, 47 PCE-input-
-transaktioner, två CD-IRQ samt VCE/VRAM-snapshots. Den gav fortfarande noll
-icke-System-Card-CD-anrop och noll `$2600–$27FF`-konsumentläsningar. Det
-stärker capturebevisets reproducerbarhet, men ändrar inte den semantiska
-gränsen.
+The capture infrastructure has also been verified with a native SDL 2.30.9
+build on the external drive and Cocoa as the actual macOS video backend. A run
+with authentic Quartz RUN events produced four host key events, 47 PCE input
+transactions, two CD IRQs and VCE/VRAM snapshots. It still yielded zero
+non-System-Card CD calls and zero `$2600–$27FF` consumer reads. This strengthens
+the reproducibility of the capture evidence but does not change the semantic
+boundary.
 
-Den senaste native-körningen på extern-disken loggade dessutom BIOS-CD-portarna
-med HuC6280-PC: `$1804` resetades med `02` och därefter `00`, följt av skrivningar
-till `$1802` och statusläsningar från `$1802/$1803`. BIOS lämnar ändå inte denna
-CD-initieringsväg: SCSI READ-kommandon, råa sektorer, FIFO-bindningar och
-spelägda RAM-konsumenter är fortfarande noll. Detta skiljer ett verifierat
-BIOS/CD-resetförsök från en faktisk Track 02-handoff och låser fortsatt
-RNG-, AI-, T700- och T900-semantik.
+The latest native run on the external drive also logged BIOS CD ports with
+HuC6280 PC: `$1804` was reset with `02` and then `00`, followed by writes to
+`$1802` and status reads from `$1802/$1803`. BIOS still does not leave this CD
+initialization path: SCSI READ commands, raw sectors, FIFO bindings and
+game-owned RAM consumers remain zero. This distinguishes a verified BIOS/CD
+reset attempt from an actual Track 02 handoff and continues to gate RNG, AI,
+T700 and T900 semantics.
 
-Capture-scriptet stöder nu också `THERON_CAPTURE_SOUND=1` för en diagnostisk
-CDDA-aktiverad körning; standardvärdet är fortfarande tyst (`0`). Den
-autentiska US-körningen med ljud aktiverat gav samma negativa gräns
-(`cd_irq_callbacks=2`, `non_system_card_pcecd_reads=0`), så ljudflaggan är en
-capture-reproducerbarhet och inte ett bevis på en spelägd ljud- eller
-objectkonsument.
+The capture script also supports `THERON_CAPTURE_SOUND=1` for a diagnostic
+CDDA-enabled run; the default remains silent (`0`). The authentic US run with
+audio enabled produced the same negative boundary
+(`cd_irq_callbacks=2`, `non_system_card_pcecd_reads=0`), so the audio flag is
+for capture reproducibility and is not evidence of a game-owned audio or
+object consumer.
 
-Den positiva GUI-körningen är nu ett separat startup-/mediareceipt: en riktig
-macOS Quartz Return-händelse (`SDL scancode 40`) når Mednafen, PCE-input visar
-Run-biten `raw=0008`, och samma körning loggar 56 SCSI-läsningar samt 175
-råsektorer från autentiserat US Track 02. Den första menyrutan är ett
-lokalt originalemulatorartefakt; inga sådana skärmbilder trackas eller används
-som Firestaff-output. Fullständiga hashar och begränsningar finns i
+The positive GUI run is now a separate startup/media receipt: a real macOS
+Quartz Return event (`SDL scancode 40`) reaches Mednafen, PCE input shows the
+Run bit `raw=0008`, and the same run logs 56 SCSI reads and 175 raw sectors
+from authenticated US Track 02. The first menu screen is a local original
+emulator artifact; no such screenshots are tracked or used as Firestaff
+output. Full hashes and limitations are in
 `docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`.
-Detta ersätter den tidigare negativa slutsatsen om att ingen Track 02-handoff
-alls var bevisad, men den visar fortfarande inte `$2600`-konsumenten eller
-någon T900/RNG/AI/T700-semantik.
+This supersedes the earlier negative conclusion that no Track 02 handoff at
+all had been proven, but it still does not show the `$2600` consumer or any
+T900/RNG/AI/T700 semantics.
 
-En äldre captureväg väljer explicit Mednafen-medieindex `0` via
-`-which_medium 0`. Den eliminerar en initieringsambiguity i RMDUI-defaults:
-extern-disken loggar att den autentiska Track 02-skivan faktiskt sätts in och
-tray stängs, men just den körningen fastnade i BIOS-CD-statusloopen utan SCSI
-READ. Den nya GUI-körningen ovan ersätter den gamla negativa slutsatsen för
-startup-handoffens del. RNG-, AI-, T700- och T900-konsumenterna är fortfarande
-inte bevisade.
+An older capture path explicitly selects Mednafen media index `0` using
+`-which_medium 0`. It removes an initialization ambiguity in RMDUI defaults:
+the external drive logs that the authentic Track 02 disc is actually inserted
+and the tray closed, but that particular run stalled in the BIOS CD status
+loop without SCSI READ. The new GUI run above supersedes the old negative
+conclusion for the startup handoff. RNG, AI, T700 and T900 consumers remain
+unproven.
 
-Capture-scriptet kan välja den andra officiella HuC6280-kärnan med
-`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` endast när Mednafen själv annonserar
-modulen i `-help`; standarden är fortsatt `pce`. En tidigare extern körning
-visade att binären kan innehålla `pce_fast`-strängar utan att acceptera
-`-force_module pce_fast`. Den vägen avvisas nu direkt, före capture, i stället
-för att skapa en tom eller missvisande receipt. En faktisk `pce_fast`-modul
-måste därför först bevisas av Mednafen:s modulista och får därefter samma
-System Card-, CUE-, Track 02- och semantikgrindar som `pce`.
+The capture script can select the second official HuC6280 core with
+`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` only when Mednafen itself lists the
+module in `-help`; the default remains `pce`. An earlier external run showed
+that the binary can contain `pce_fast` strings without accepting
+`-force_module pce_fast`. That path is now rejected immediately, before
+capture, rather than producing an empty or misleading receipt. An actual
+`pce_fast` module must first be confirmed by Mednafen's module list, and is
+then subject to the same System Card, CUE, Track 02 and semantic gates as
+`pce`.
 
-## Verifiering
+## Verification
 
 ```text
 test_theron_v1_bank1f_consumer_receipt          PASS
@@ -194,6 +196,6 @@ test_theron_v1_track02_thing_data (US + JP real BIN) PASS
 test_theron_v1_track02_dungeon_loader (US + JP live creature projection) PASS
 ```
 
-Detta är ett bevis på den nuvarande gränsen, inte ett påstående om färdig
-T900-paritet. Produktionen ska fortsätta neka T900-driven inventory-, loot-,
-use- och equipsemantik tills `$2600`-konsumenten är fångad från originalmedia.
+This is evidence of the current boundary, not a claim of complete T900 parity.
+Production must continue to reject T900-driven inventory, loot, use and equip
+semantics until the `$2600` consumer is captured from original media.

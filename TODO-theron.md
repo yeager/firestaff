@@ -307,6 +307,12 @@ data.
    `quest_items_collected` remains zero and quest completion stays false. The
    source-locked ordinal capture proves this campaign bit but not the original
    pickup consumer or wholly independent state semantics in the original game.
+   Generic host item-mask restore now leaves campaign completion unset; only
+   the separately authenticated campaign-byte projection may mark stages 1–6
+   complete. This is a Firestaff fail-closed rule, not proof of the original
+   game's pickup or save transaction. Legacy snapshots that predate the
+   campaign byte may resume only their saved current stage; they do not infer
+   campaign completion or unlock other stages.
    Firestaff now has a source-gated in-memory encoder for Theron's persistent
    runtime fields and the selected original record. An unchanged Continue
    round-trips the authentic Akutuba-complete artifact byte for byte. There is
@@ -915,215 +921,224 @@ open. No substitute game data has been generated.
   from US media.
 # Firestaff TODO - THERON
 
-## 2026-08-20 — rå japansk Track 02 når spelruntimen
+## 2026-08-20 — Japanese raw Track 02 reaches the game runtime
 
-- ✅ Kompletta original-CUE:er med de autentiska WAV-ljudspåren godkänns nu
-  av samma strikta 19-spårsgrind som arkivens OGG-materialisering. Tidigare
-  räknade medieklassaren bara OGG-filer och avvisade därför en fullständig
-  WAV/ISO-skiva som om ljudspåren saknades. USA, Japan, den kombinerade
-  RAR-vägen och felregionsavvisningen är verifierade mot riktig media.
+- ✅ Complete original CUEs with authentic WAV audio tracks are now accepted
+  by the same strict 19-track gate as archive-backed OGG materialization.
+  Previously, the media classifier counted only OGG files and therefore
+  rejected a complete WAV/ISO disc as if its audio tracks were missing. The
+  US, Japanese, combined-RAR, and wrong-region rejection paths are verified
+  against real media.
 
-### Track 19-namn i native-runtimen
+### Track 19 names in the native runtime
 
-- ✅ Objektens namn hämtas inte längre ur den enda hårdkodade tabellen för
-  dungeon 7. Var och en av de sju dungeons har en egen 66-posters tabell i
-  Track 02, och samtliga 14 regionala tabeller läses nu direkt ur de riktiga
-  US- och JP-filerna. Varje tabell måste stämma i offset, längd och FNV innan
-  den binds till live-världen.
-- ✅ Ett källbundet objekt med verifierad propertypost kan slå upp sitt namn
-  med objektets dungeon och `source_item_type`. Det gör att samma index får
-  rätt dungeonlokala namn. Den verkligt tomma posten 64 i dungeon 6 förblir
-  tom i båda regionerna i stället för att fyllas med en reservtext.
-- ✅ Den intilliggande 66-bytetabellen var felklassad som en global
-  kategoriindelning från Demon. De riktiga tabellerna innehåller i stället
-  dungeonlokala typkoder och skiljer sig mellan samtliga questblock samt
-  mellan US och JP. Produktionen bevarar nu alla 924 typkoder med egna FNV
-  och använder thing-postens verkliga kategori 5, 6, 7, 8 eller 10 för
-  propertybindningen. Därmed får varje verkligt materialiserat föremål utom
-  kistor sin autentiska 6-byte propertypost.
-- ✅ Native-starten läser nu alla 69 riktiga Track 19-namn från exakt den
-  region som den hashverifierade Track 02-filen anger. US lagras som
-  källans ASCII och JP som oförändrade Shift-JIS-bytar; avvikande filhash,
-  region eller tabellspann avvisas. US- och JP-starttesten kräver att rätt
-  namn­bank finns i live-världen.
-- 🔒 Track 02-objekten använder sin egen dungeonlokala namnrymd. Det finns
-  ingen enkel indexkoppling till den annorlunda 69-posters Track 19-tabellen.
-  Track 19-banken kan därför fortfarande bara läsas med ett uttryckligt
-  Track 19-index. JP-bytarna skickas inte till värdens textrenderare;
-  originalets T900-konsument och en verifierad Shift-JIS-glyphväg återstår.
+- ✅ Object names are no longer read from a single hard-coded table for
+  dungeon 7. Each of the seven dungeons has its own 66-entry table in Track
+  02, and all 14 regional tables are now read directly from the authentic US
+  and JP files. Each table's offset, length, and FNV must match before it is
+  bound to the live world.
+- ✅ A source-bound object with a verified property record can look up its
+  name using the object's dungeon and `source_item_type`. This gives the same
+  index the correct dungeon-local name. Entry 64 in dungeon 6 is genuinely
+  empty in both regions and remains empty rather than being filled with
+  fallback text.
+- ✅ The adjacent 66-byte table was misclassified as a global category map
+  derived from Demon. The authentic tables instead contain dungeon-local
+  type codes and differ across every quest block and between US and JP.
+  Production now preserves all 924 type codes with their own FNV values and
+  uses the thing record's actual category 5, 6, 7, 8, or 10 for property
+  binding. Thus every real materialized item other than chests receives its
+  authentic 6-byte property record.
+- ✅ Native startup now reads all 69 authentic Track 19 names from exactly
+  the region identified by the hash-verified Track 02 file. US text is stored
+  as source ASCII and JP text as unchanged Shift-JIS bytes; a mismatched file
+  hash, region, or table span is rejected. US and JP startup tests require
+  the correct name bank to be present in the live world.
+- 🔒 Track 02 objects use their own dungeon-local namespace. There is no
+  simple index mapping to the differently sized 69-entry Track 19 table.
+  The Track 19 bank can therefore only be read using an explicit Track 19
+  index. JP bytes are not sent to the host text renderer; the original T900
+  consumer and a verified Shift-JIS glyph path remain open.
 
-### Autentisk VDC-geometri för capture-replay
+### Authentic VDC geometry for capture replay
 
-- Den nya samtidiga HuC6270-snapshoten från en riktig amerikansk dungeon-
-  savestate är `BXR=0000`, `BYR=0000`, `MWR=005a`, `HDR=0327` och
-  `VDR=00c7`. Det bevisar 64×64 BAT samt 320×200 aktiv bakgrund, inte den
-  tidigare hårdkodade 256×224/32×28-vyn.
-- ✅ Firestaffs tilebas, GRB333-kanaler, gemensamma BG-färg 0 och unmapped
-  12-bitars tileindex följer nu HuC6270/HuC6260. Produktgrinden kräver samma
-  ögonblicks VRAM, VCE, `.vdc-state` och 512-byte-SAT och renderar
-  `MWR/HDR/VDR/BXR/BYR`-geometrin utan crop- eller fixtureantaganden.
-- ✅ SAT-replay följer originalhårdvarans 64 poster, högst 16 sprite-delar per
-  scanline, SAT-prioritet, BG-prioritet, transparens, 16/32/64-höjd,
-  16/32-bredd och H/V-flip. PCE:s använda 9-bitars palettindex komprimeras
-  förlustfritt till M11:s 8-bitars yta; den riktiga ramen använder 52
-  källposter och innehåller 211 verifierade spritepixlar.
-- 🔒 Denna autentiska skärmcapture är en verifierad bildruta, inte en dynamisk
-  native-grafikmotor. Full spelstyrd VDC/SAT-uppdatering i den interna
-  Track 02-runtimen kräver fortfarande den senare grafik-/objektkonsumenten;
-  den kompletta originalruntimen finns tills dess via Mednafen-vägen.
-- ✅ Den interna grafikens verifierade stage-2-kedja omfattar nu även den
-  riktiga bank-2-frame-dispatchern `$4215..$424B` och dess
-  koordinatuppdaterare `$4417..$4552` samt hela `$42DB..$43A1` med de lokala
-  delrutinerna `$4358` och `$4386`. Callerens JSR binder `$42DB`, `$4417`,
-  `$424B` och `$458E`; de underliggande anropen binder de redan verifierade
-  `$43A1`, `$43D6` och `$4552`-kropparna. Även den riktiga bankade
-  grafik-/VDC-dispatchern `$4943..$49FA` är bunden, inklusive MPR-save/restore
-  och dess nio absoluta delrutinmål. Dess direkta `$49FA..$4A09`-dispatcher
-  binder i sin tur `$4A09`- och `$4A84`-renderingsvägarna. Den första kroppen,
-  `$4A09..$4A84`, och den andra `$4A84..$4B24` är nu bundna tillsammans med
-  den gemensamma `$4B24..$4B3C`-adressberäkningen. Även `$491F..$4932`, som
-  aktiverar VDC-kontrollbiten före den andra remsan, är verifierad. Därtill är
-  scrollkonsumenten `$4BB0..$4C0D` bunden mot de verkliga
-  `$220C/$220D/$2210/$2211`-registren, liksom `$56DE..$571A` med sin
-  1 KiB-TIA-överföring från `$58E0`. `$50F1..$5111` binder dessutom en
-  512-byte-VDC-skrivning från `$4EF1`, medan `$5E2B..$5E81` binder originalets
-  register-6/7-dispatcher. `$5CE4..$5D1C` binder även producentens riktiga
-  initiering och nollställning av 1 KiB-bufferten vid `$58E0`. Den direkta
-  `$5111..$533D`-familjen är också bunden: åtta 32-byteposter, `$533D`-
-  anropsstället, de lokala `$517A/$519F`-målen och `$51E8`-tabellens samtliga
-  15 verkliga handleradresser. Den sekundära `$533D..$555E`-familjen binder
-  dessutom sin 16-posters `mål−1`-tabell och alla handlerkroppar.
-  `$55EF..$560B` och de överlappande `$55F4/$55FF/$5617/$562A/$563D`-
-  ingångarna nu också verifierade; den direkta `$563D`-strömmen skiljs från
-  huvudflödets BCC-operand. Dess signerade BBR4-gren till mittingången
-  `$55C8` är bunden tillsammans med hela `$55B6..$55E0`. Totalt är 4 899
-  originalbytes (14,1
-  procent av stage-2-bilden) nu exakt bundna. `$3B75` är runtime-data, inte
-  en kodlucka. Ytterligare stage-2-rutter och en native-konsument återstår
-  innan Firestaff kan köra grafikkedjan internt, men `$4943`-dispatcherns nio
-  direkta mål och den här dynamiska grafikunderkedjan är nu bytebundna.
+- A new simultaneous HuC6270 snapshot from an authentic US dungeon save
+  state has `BXR=0000`, `BYR=0000`, `MWR=005a`, `HDR=0327`, and `VDR=00c7`.
+  This proves a 64×64 BAT and a 320×200 active background, not the previously
+  hard-coded 256×224/32×28 view.
+- ✅ Firestaff's tile base, GRB333 channels, shared BG color 0, and unmapped
+  12-bit tile indices now follow HuC6270/HuC6260. The production gate
+  requires VRAM, VCE, `.vdc-state`, and 512-byte SAT data from the same
+  snapshot, and renders the `MWR/HDR/VDR/BXR/BYR` geometry without crop or
+  fixture assumptions.
+- ✅ SAT replay follows the original hardware's 64 entries, maximum of 16
+  sprite parts per scanline, SAT priority, BG priority, transparency,
+  16/32/64-pixel height, 16/32-pixel width, and H/V flipping. The PCE's used
+  9-bit palette indices are losslessly compressed to M11's 8-bit surface;
+  the real frame uses 52 source entries and contains 211 verified sprite
+  pixels.
+- 🔒 This authentic screen capture is a verified frame, not a dynamic native
+  graphics engine. Full game-driven VDC/SAT updates in the internal Track 02
+  runtime still require the later graphics/object consumer; until then, the
+  complete original runtime remains available through Mednafen.
+- ✅ The verified internal graphics stage-2 chain now also includes the real
+  bank-2 frame dispatcher `$4215..$424B`, its coordinate updater
+  `$4417..$4552`, and the complete `$42DB..$43A1` routine with local
+  subroutines `$4358` and `$4386`. The caller's JSRs bind `$42DB`, `$4417`,
+  `$424B`, and `$458E`; nested calls bind the already verified `$43A1`,
+  `$43D6`, and `$4552` bodies. The authentic banked graphics/VDC dispatcher
+  `$4943..$49FA` is also bound, including MPR save/restore and all nine
+  absolute subroutine targets. Its direct `$49FA..$4A09` dispatcher in turn
+  binds rendering paths `$4A09` and `$4A84`. Bodies `$4A09..$4A84` and
+  `$4A84..$4B24` are now bound together with shared address calculation
+  `$4B24..$4B3C`. `$491F..$4932`, which enables the VDC control bit before
+  the second strip, is also verified. In addition, scroll consumer
+  `$4BB0..$4C0D` is bound to the real `$220C/$220D/$2210/$2211` registers, as
+  is `$56DE..$571A` with its 1 KiB TIA transfer from `$58E0`. `$50F1..$5111`
+  also binds a 512-byte VDC write from `$4EF1`, while `$5E2B..$5E81` binds
+  the original register 6/7 dispatcher. `$5CE4..$5D1C` binds the producer's
+  real initialization and clearing of the 1 KiB buffer at `$58E0`. The
+  direct `$5111..$533D` family is also bound: eight 32-byte entries, call
+  site `$533D`, local targets `$517A/$519F`, and all 15 real handler
+  addresses in the `$51E8` table. The secondary `$533D..$555E` family also
+  binds its 16-entry target-minus-one table and every handler body.
+  `$55EF..$560B` and the overlapping entry points
+  `$55F4/$55FF/$5617/$562A/$563D` are also verified; the direct `$563D`
+  stream is distinguished from the main flow's BCC operand. Its signed BBR4
+  branch to mid-entry `$55C8` is bound along with the entire `$55B6..$55E0`
+  range. A total of 4,899 original bytes (14.1 percent of the stage-2 image)
+  are now exactly bound. `$3B75` is runtime data, not a code gap. Additional
+  stage-2 routes and a native consumer are still needed before Firestaff can
+  run the graphics chain internally, but the nine direct targets of
+  dispatcher `$4943` and this dynamic graphics subchain are now byte-bound.
 
-- ✅ Native-loadern skiljer nu dörrpostens riktiga materialtyp och tvåbitars
-  thing-position från runtime-state och mutationsflaggor. Tidigare blev järn
-  felaktigt ett öppningssteg, medan position 1/2 kunde se ut som låst/trasig.
-  Alla riktiga dörrar i samtliga sju US- och sju JP-dungeons verifieras nu
-  mot sin exakta 4-bytepost, startar stängda och behåller material, position,
-  ornament, öppningsriktning, knapp, förstörbarhet och bashbarhet i separata
-  metadatafält. 🔒 Detta öppnar inte lås/nycklar, dörrskada eller ljud; deras
-  T900-, combat- och ADPCM-konsumenter återstår.
-- ✅ Samma källpositionsfält är nu separerat från runtimeflaggorna för
-  teleporterare och actuatorer. Position 1/2 kan därför inte längre göra en
-  riktig kontrollpost `PICKED_UP` eller `OPENED` vid laddning. Category-3-
-  actuatorer använder dessutom en neutral source-typ i stället för att
-  felaktigt aliasa fixturetypen `BUTTON`. Teleporterarnas destinationsnivå
-  dekodas enligt postformatets sex bitar; den riktiga US/JP-korpusen använder
-  för närvarande nivå 0–7. 🔒 Actuatorns länkeffekt och ljud är fortfarande
-  spärrade tills originalkonsumenten är verifierad.
-- ✅ TAKE följer nu den riktiga ground-reference-kedjan till första ännu inte
-  upplockade carryable source-posten på rutan. Korpusen innehåller 402 sådana
-  US-poster och 402 JP-poster som inte ligger först bakom kontroll-, chest-
-  eller andra objektposter; de var tidigare oåtkomliga eftersom den generiska
-  hostrutten bara prövade rutans första objekt. Varje dungeon realtestar nu en
-  sådan icke-förstaposter genom pickup, source-inventory och drop-roundtrip.
-- ✅ Dörr- och teleporterarkonsumenterna söker uttryckligen sin source-typ i
-  rutan i stället för att låta kedjans första godtyckliga objekt äga
-  kontrollsemantiken. Den aktuella US/JP-korpusen har noll ordningskonflikter
-  för dessa två typer, vilket nu mäts som regressionsgräns. Runtime-masken för
-  teleporterarens destinationsnivå använder också formatets fulla sex bitar.
-- ✅ Native US/JP laddar nu riktig Track 01-CDDA från matchande hashkänt
-  fullskivearkiv. 🔒 Gameplay-SFX förblir separata och väntar på den
-  autentiska ADPCM event/sample-konsumenten.
-- ✅ `USE_ITEM` är kopplat till runtimens befintliga frontdörrskommando för
-  isolerade fixtures. Riktiga Track 02-dörrar identifieras nu genom sin exakta
-  source-post och förblir stängda; den generella hostmodellen får inte längre
-  hitta på en omedelbar `OPEN`-övergång i riktig speldata. 🔒 Knapp/
-  actuatorflödet, låsta dörrars nyckelval och annan inventory-use väntar på
-  den autentiska T900-konsumenten.
-- ✅ Ett lyckat source-pickup-kvitto väljer nu exakt den inventory-slot som
-  fylldes. `DROP`/P får endast återföra denna fullständigt verifierade råpost
-  till gruppens validerade ruta; saknat val, fixture-ID, ofullständig property
-  eller mästarbyte stänger rutten. US/JP-realdatatestet kör M12-input genom
-  pickup och drop för en icke-första kedjepost i varje dungeon.
-- ✅ Carried-object-proveniensen behåller nu även den ursprungliga dungeon-,
-  level- och rutkoordinaten genom golvobjekt, inventory, DROP och save/load.
-  Det krävs eftersom den riktiga US-korpusen har 204 annars identiska source-
-  identitetspar på olika ursprungsrutor. Runtime-position och source-origin
-  kan därför inte längre blandas ihop eller bytas vid ett andra pickup-varv.
-- ✅ `I` återväljer nästa source-backed inventory-slot för aktiv mästare. Det
-  gör verkliga carried items åtkomliga för P/DROP även när M11:s tillfälliga
-  selection har försvunnit vid resume; generiska ID-only-slots hoppas över
-  och själva DROP-mutationen kräver fortfarande exakt Track 02-ledgerpost.
-- ✅ Det autentiska kombinerade ISO/OGG-RAR-paketet stöds nu som komplett
-  extern originalmedia för både US och JP; regionsval och återbyggd Track 02
-  är hash-låsta.
-- ✅ Den autentiska `TQJP02.bin` verifieras nu genom M11-startvägen utan att
-  en CUE-fil eller USA-media finns i samma datakatalog. Regressionen kräver
-  JP-hashen `b7afb338ad31be1025b53f9aff12d73a`, riktiga Soul Room-poster och
-  `theron-runtime` med laddad 32 × 27-bana; syntetiska reservdata är
-  förbjudna.
-- ✅ Råsektorsnormaliseringen skiljer nu JP-BIN från ISO. JP-data extraheras
-  ur sina egna MODE1/2352-sektorer och går till den befintliga
-  variantspecifika kartladdaren. Den USA-specifika spawnkällan förblir
-  spärrad för JP.
-- ✅ Den japanska spawnkällans regionspecifika block är nu autentiserat direkt
-  ur `TQJP02.bin`: pointertabellen ligger vid UD `$273818`, de fem zonposterna
-  vid `$273858..$273950`, bankordet är `$2780` och den japanska rosterprefixen
-  vid `$2739EF` krävs. Inga USA-offsetar lånas.
-- 🔒 Japanska spawnkategorier, grafik och senare objektrutter kräver fortfarande
-  egna körda konsumentbevis. Den regionspecifika statiska spawnkoden är nu
-  källbunden vid JP UD `$0868D2` (269 byte, `7dc1e453`), jämte USA-koden vid
-  `$0870E5` (`eb241d19`). JP-posterna får lagras med källproveniens, men
-  runtimekategorin lämnas `$FF` tills den japanska kodvägen har observerats i
-  en autentisk körning. En statisk jämförelse 2026-09-24 fann samma
-  122-instruktionsföljd i båda hashverifierade regionerna, med flyttade helper-
-  anrop och JP-ackumulatorfält ett byte tidigare. Detta bevisar inte en live
-  JP-caller, RNG-retur eller spawnpost. Se
-  `docs/source-lock/theron-jp-us-spawn-consumer-static-comparison-2026-09-24.md`.
-- ✅ Skannern redovisar både verifierad JP- och US-BIN när båda finns i den
-  riktiga Theron-katalogen. `--theron-native us|jp` väljer nu exakt regional
-  canonical BIN från samma katalog och skickar den genom den befintliga
-  hashgrinden. Realdatatester startar båda regionerna direkt ur den gemensamma
-  katalogen; ett US-only-test kräver att JP-valet avvisas utan regionsfallback.
-- ✅ Den autentiserade VDC/VCE-capturen kan nu väljas direkt med
-  `--theron-vram-snapshot` och `--theron-vce-snapshot`. Produktionsviewporten
-  använder då den befintliga hash- och storleksverifierade screen-space-
-  konsumenten; ingen syntetisk tile- eller palettrutt öppnas.
-- ✅ En komplett originalruntime kan nu startas explicit i Mednafen från en
-  fullständig 19-spårs-CUE. Grinden kräver 17 läsbara ljudspår, 19 BIN-filer,
-  känd JP/US Track 02-hash och System Card 3.0-hashen. En ensam Track 02-fil
-  kan därför inte felaktigt markeras som komplett extern runtime.
-- ✅ De tre autentiska 19-spårsarkiven i `.firestaff/data/theron` kan nu
-  användas direkt som `--theron-disc`. Firestaff godkänner endast deras tre
-  exakta arkivhashar, materialiserar vald utgåva i en privat hashad cache och
-  verifierar därefter samtliga CUE-medlemmar och Track 02 igen. USA-arkivet
-  har verifierats både vid första extraheringen och vid cacheåteranvändning.
-  Det japanska arkivet har också materialiserats och godkänts med JP-hashen
-  `b7afb338ad31be1025b53f9aff12d73a` och 17 autentiska ljudspår.
-- ✅ `--theron-original us|jp` gör originalruntimen valbar utan fyra manuella
-  sökvägar. Den följer `--data-dir`, `FIRESTAFF_DATA` och därefter
-  `~/.firestaff/data`, väljer bara den begärda regionens hashverifierade arkiv
-  och hittar Mednafen samt System Card 3.0 på standardplatserna. Explicita
-  overrides går igenom samma region- och hashgrind.
-- ✅ Rå US- och JP-BIN hoppar inte längre direkt in i banan med
-  fixture-initierade mästare. Den riktiga titel-/nivåvals-/Soul Room-kedjan
-  väljer gruppen innan forcefield-handoffen. Båda realdatatesterna verifierar
-  nu en tvåmannagrupp och icke-noll source-objekt från respektive Track 02.
-- ✅ Native-inputfasaden skickar nu det explicita `pickup`-kommandot till
-  frontcellens TAKE-rutt. Den riktiga banans strikta objectrecord/property/
-  occurrence-grind återanvänds; inga generiska item-ID:n kan smita förbi.
-  `drop` och `use` nekas fortfarande tills originalets inventory-slotval och
-  T900-konsument är verifierade.
-- ✅ Tab växlar nu aktiv mästare inom den valda, levande Soul Room-gruppen.
-  Boot-kvittot redovisar `theronActiveChampion`; autentisk US- och JP-start
-  kräver slot 1 efter växlingen. Attackinput förblir spärrad eftersom de
-  source-materialiserade monstren ännu saknar verifierad damage-konsument.
-- ✅ Den automatiska kompletta originalruntimen är kalltestad från
-  `~/.firestaff/data` för både US och JP, inte bara mot en explicit redan
-  uppackad CUE. Varje region materialiserade sina 20 originalfiler och
-  passerade 19-spårs-, 17-ljudspårs-, Track 02- och System Card-grindarna.
-- 🔒 Native-runtimens square-to-tile-, perspektiv-, HUD-, objekt-, strids-,
-  AI- och ljudkonsumenter återstår fortfarande. Mednafen-vägen kör originalet
-  och räknas inte som bevis för att de inbyggda konsumenterna är färdiga.
+- ✅ The native loader now keeps a door record's actual material type and
+  two-bit thing position separate from runtime state and mutation flags.
+  Previously, iron could be misread as an opening step, while positions 1/2
+  could be mistaken for locked/broken states. Every real door across all
+  seven US and seven JP dungeons is now checked against its exact 4-byte
+  record, starts closed, and retains material, position, ornament, opening
+  direction, button, destructibility, and bashability in separate metadata
+  fields. 🔒 This does not enable lock/key behavior, door damage, or sound;
+  their T900, combat, and ADPCM consumers remain open.
+- ✅ The same source-position field is now separate from runtime flags for
+  teleporters and actuators. Positions 1/2 can no longer make a real control
+  record `PICKED_UP` or `OPENED` on load. Category-3 actuators also use a
+  neutral source type instead of incorrectly aliasing the fixture type
+  `BUTTON`. Teleporter destination levels are decoded from the format's six
+  bits; the current real US/JP corpus uses levels 0–7. 🔒 Actuator link effects
+  and sound remain gated until the original consumer is verified.
+- ✅ TAKE now follows the authentic ground-reference chain to the first
+  unpicked carryable source record on the tile. The corpus contains 402 such
+  US records and 402 JP records that are not first in a chain behind a
+  control, chest, or other object; these were previously unreachable because
+  the generic host path checked only the first object on the tile. Each
+  dungeon now has a real-data test for picking up, inventorying, and dropping
+  one such non-first record.
+- ✅ Door and teleporter consumers now search a tile explicitly for their
+  source type instead of letting the chain's first arbitrary object own the
+  control semantics. The current US/JP corpus has zero order conflicts for
+  these two types, now measured as a regression boundary. The runtime mask
+  for teleporter destination levels also uses the format's full six bits.
+- ✅ Native US/JP now loads authentic Track 01 CDDA from a matching,
+  hash-verified full-disc archive. 🔒 Gameplay SFX remain separate and await
+  the authentic ADPCM event/sample consumer.
+- ✅ `USE_ITEM` is connected to the runtime's existing front-door command
+  for isolated fixtures. Real Track 02 doors are now identified by their
+  exact source records and remain closed; the generic host model can no
+  longer invent an immediate `OPEN` transition in real game data. 🔒
+  Button/actuator flow, key selection for locked doors, and other inventory
+  use await the authentic T900 consumer.
+- ✅ A successful source-pickup receipt now selects exactly the inventory
+  slot that was filled. `DROP`/P may only return this fully verified raw
+  record to the party's validated tile; missing selection, fixture ID,
+  incomplete property data, or a champion change closes the path. The US/JP
+  real-data test drives M12 input through pickup and drop for a non-first
+  chain record in each dungeon.
+- ✅ Carried-object provenance now also retains the original dungeon, level,
+  and tile coordinates through floor objects, inventory, DROP, and save/load.
+  This is required because the real US corpus has 204 pairs with otherwise
+  identical source identities on different origin tiles. Runtime position
+  and source origin can no longer be confused or swapped during a second
+  pickup cycle.
+- ✅ `I` now selects the next source-backed inventory slot for the active
+  champion. This makes real carried items available to P/DROP even when M11's
+  temporary selection is lost on resume; generic ID-only slots are skipped,
+  and the DROP mutation still requires the exact Track 02 ledger record.
+- ✅ The authentic combined ISO/OGG RAR package is now supported as complete
+  external original media for both US and JP; region selection and rebuilt
+  Track 02 data are hash-locked.
+- ✅ Authentic `TQJP02.bin` is now verified through the M11 startup path
+  without a CUE file or US media in the same data directory. The regression
+  requires JP hash `b7afb338ad31be1025b53f9aff12d73a`, real Soul Room records,
+  and `theron-runtime` with a loaded 32 × 27 map; synthetic fallback data is
+  forbidden.
+- ✅ Raw-sector normalization now distinguishes JP BIN from ISO. JP data is
+  extracted from its own MODE1/2352 sectors and passed to the existing
+  variant-specific map loader. The US-specific spawn source remains gated
+  for JP.
+- ✅ The Japanese spawn source's region-specific block is now authenticated
+  directly from `TQJP02.bin`: the pointer table is at UD `$273818`, the five
+  zone records are at `$273858..$273950`, bank word `$2780` is used, and the
+  Japanese roster prefix at `$2739EF` is required. No US offsets are borrowed.
+- 🔒 Japanese spawn categories, graphics, and later object routes still
+  require their own executed consumer evidence. The region-specific static
+  spawn code is now source-bound at JP UD `$0868D2` (269 bytes, `7dc1e453`),
+  alongside US code at `$0870E5` (`eb241d19`). JP records may be stored with
+  source provenance, but their runtime category remains `$FF` until the
+  Japanese code path is observed in an authentic run. A static comparison on
+  2026-09-24 found the same 122-instruction sequence in both hash-verified
+  regions, with helper calls moved and JP accumulator fields one byte
+  earlier. This does not prove a live JP caller, RNG return, or spawn record.
+  See `docs/source-lock/theron-jp-us-spawn-consumer-static-comparison-2026-09-24.md`.
+- ✅ The scanner now reports both verified JP and US BIN files when both are
+  present in the real Theron data directory. `--theron-native us|jp` selects
+  exactly the requested region's canonical BIN from that directory and
+  subjects it to the existing hash gate. Real-data tests start both regions
+  from the shared directory; a US-only test requires JP selection to be
+  rejected without regional fallback.
+- ✅ The authenticated VDC/VCE capture can now be selected directly with
+  `--theron-vram-snapshot` and `--theron-vce-snapshot`. The production
+  viewport then uses the existing hash- and size-verified screen-space
+  consumer; no synthetic tile or palette route is enabled.
+- ✅ A complete original runtime can now be started explicitly in Mednafen
+  from a complete 19-track CUE. The gate requires 17 readable audio tracks,
+  19 BIN files, a known JP/US Track 02 hash, and the System Card 3.0 hash. A
+  lone Track 02 file therefore cannot be incorrectly marked as a complete
+  external runtime.
+- ✅ The three authentic 19-track archives in `.firestaff/data/theron` can
+  now be used directly as `--theron-disc`. Firestaff accepts only their
+  three exact archive hashes, materializes the selected edition in a private
+  hash-keyed cache, and then verifies all CUE members and Track 02 again. The
+  US archive has been verified both on initial extraction and on cache reuse.
+  The Japanese archive has also been materialized and accepted with JP hash
+  `b7afb338ad31be1025b53f9aff12d73a` and 17 authentic audio tracks.
+- ✅ `--theron-original us|jp` makes the original runtime selectable without
+  four manual paths. It follows `--data-dir`, `FIRESTAFF_DATA`, then
+  `~/.firestaff/data`, selects only the requested region's hash-verified
+  archive, and locates Mednafen and System Card 3.0 in standard locations.
+  Explicit overrides pass through the same region and hash gates.
+- ✅ Raw US and JP BIN startup no longer jumps directly into a level with
+  fixture-initialized champions. The authentic title/level-select/Soul Room
+  sequence selects the party before the forcefield handoff. Both real-data
+  tests now verify a two-member party and nonzero source objects from the
+  corresponding Track 02.
+- ✅ The native input facade now sends the explicit `pickup` command through
+  the front-cell TAKE route. It reuses the real level's strict
+  object-record/property/occurrence gate; generic item IDs cannot bypass it.
+  `drop` and `use` remain rejected until original inventory-slot selection
+  and the T900 consumer are verified.
+- ✅ Tab now switches the active champion within the selected, live Soul Room
+  party. The boot receipt reports `theronActiveChampion`; authentic US and JP
+  startup require slot 1 after switching. Attack input remains gated because
+  source-materialized monsters still lack a verified damage consumer.
+- ✅ The automatic complete original runtime has been cold-tested from
+  `~/.firestaff/data` for both US and JP, not only from an explicitly
+  extracted CUE. Each region materialized its 20 original files and passed
+  the 19-track, 17-audio-track, Track 02, and System Card gates.
+- 🔒 Native runtime square-to-tile, perspective, HUD, object, combat, AI, and
+  audio consumers remain open. The Mednafen path runs the original game and
+  does not prove that Firestaff's built-in consumers are complete.
 
 > **Latest capture boundary (2026-08-14):** The authenticated external-disk
 > r25 capture contains a source-LBA→RAM→`$611D` record join and 7,100
@@ -1167,93 +1182,95 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-14 — r26 state replay reaches the runtime `$2600` consumer window
 
-- ✅ En aktuell r26-replay mot den hashverifierade US Track 02/System Card
-  accepterar den lokala `main-ram-consumer`-sidecaren i parser-only-läge:
+- ✅ A current r26 replay against the hash-verified US Track 02/System Card
+  accepts the local `main-ram-consumer` sidecar in parser-only mode:
   `reads=65,536`, `$2600–$27ff` `target_reads=311`, `target_nonzero=128`,
-  `target_runtime=311`, `target_c3a0=47`, `target_c3a0_nonzero=13` och sex
-  distinkta `$C3A0–$C429`-reader-PC:er. Detta är nu verifierad runtime-
-  adress-/körningsproveniens, inte en semantisk level/object-publicering.
-- ❌ Samma sidecar verifierar inte det source-owned kodfönstret
-  `$2c54–$2c69`, och capturens transition receipt har noll CD-origin-
-  receipts, noll game-owned `$E009`-dispatchar och `transition=missing`.
-  State-replayen får därför inte öppna `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`,
-  JP-level-data, VRAM/VCE-semantik eller HuC6280-RAM-publicering.
+  `target_runtime=311`, `target_c3a0=47`, `target_c3a0_nonzero=13`, and six
+  distinct `$C3A0–$C429` reader PCs. This verifies runtime address/execution
+  provenance, not semantic level/object publication.
+- ❌ The same sidecar does not verify the source-owned code window
+  `$2c54–$2c69`, and the capture's transition receipt has zero CD-origin
+  receipts, zero game-owned `$E009` dispatches, and `transition=missing`.
+  The state replay therefore cannot open
+  `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`, JP level data, VRAM/VCE semantics,
+  or HuC6280 RAM publication.
 - 🔒 Capture identity: main-RAM sidecar MD5
-  `021efea135de2ac0b8ae241ffd63eaf6`, instrumenterad r26-binär MD5
+  `021efea135de2ac0b8ae241ffd63eaf6`, instrumented r26 binary MD5
   `ab6dbf674c68ee4891a185b83cff3149`, state MD5
-  `82e151fa51aa3e7d578d0dfdb09eb55b`. Sidecars och binär ligger lokalt på
-  extern-disk och ska inte committas.
+  `82e151fa51aa3e7d578d0dfdb09eb55b`. Sidecars and the binary remain local
+  on the external drive and must not be committed.
 
 ## 2026-08-14 — r26 cold start proves same-session CD→RAM transport
 
-- ✅ En ny kall autentisk körning med samma US Track 02/System Card gav
-  `raw_sector_spans=161`, `cd_irq_callbacks=25`, två byte-exakta och
-  autentiserade CD→RAM-kvitton samt 32 game-owned `$E009`-dispatchar.
-  `transition=observed` och `main_ram_consumer_reads=65536` är verifierade.
-- 🔒 Körningen når ännu inte den dynamiska `$2600`-konsumenten:
-  `target_reads=512`, alla värden är noll och läsningarna är initiering från
-  `$CB22`; `$C3A0`-läsningar saknas. Detta öppnar därför inte
-  `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`, JP-level-data, VRAM/VCE-semantik
-  eller HuC6280-RAM-publicering.
+- ✅ A new authentic cold-start run with the same US Track 02/System Card
+  produced `raw_sector_spans=161`, `cd_irq_callbacks=25`, two byte-exact,
+  authenticated CD→RAM receipts, and 32 game-owned `$E009` dispatches.
+  `transition=observed` and `main_ram_consumer_reads=65536` are verified.
+- 🔒 The run still does not reach the dynamic `$2600` consumer:
+  `target_reads=512`, all values are zero, and the reads are initialization
+  from `$CB22`; `$C3A0` reads are absent. This therefore does not open
+  `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`, JP level data, VRAM/VCE semantics,
+  or HuC6280 RAM publication.
 - 🔒 Capture-identitet: main-RAM-sidecar MD5
   `21f771f92a35704cf0ea8be3a2adf199`, transition-sidecar MD5
-  `c92f8d31269cdd1771464937f32d69bf`. Sidecars och binär ligger lokalt på
-  extern-disk och ska inte committas.
+  `c92f8d31269cdd1771464937f32d69bf`. Sidecars and the binary remain local
+  on the external drive and must not be committed.
 
 ## 2026-08-14 — synthetic cross-route regression follows explicit door use
 
-- ✅ Cross-route-proben använder nu den verifierade mechanics-kontrakten:
-  `theron_v1_door_open()` körs explicit före rörelse över en stängd,
-  olåst fixture-dörr. Rörelse konsumerar inte implicit nyckel eller ändrar
-  dörrstate.
-- ✅ Hela Theron-regexen är grön efter korrigeringen: 45 Theron-labeltester
-  passerar; sex lokala capturetester skippar korrekt när råa externa sidecars
-  saknas.
-- 🔒 Detta ändrar inte source-level gates eller öppnar någon oidentifierad
-  T500/T600/T700/T900-konsument.
+- ✅ The cross-route probe now uses the verified mechanics contract:
+  `theron_v1_door_open()` is called explicitly before moving through a
+  closed, unlocked fixture door. Movement does not implicitly consume a key
+  or change door state.
+- ✅ The full Theron regression suite is green after the correction: all 45
+  Theron-labeled tests pass; six local capture tests correctly skip when raw
+  external sidecars are absent.
+- 🔒 This does not change source-level gates or enable any unidentified
+  T500/T600/T700/T900 consumer.
 
 ## 2026-08-14 — state replay rejects the `$B0E5` overlay
 
-- ✅ En r26-autoloadad Mednafen-state gav 65 756 registerprover och 256
-  logiska `$B0E5`-passager, men alla hade overlayvärdena `A=$2C/$85` vid
-  fysisk PC `$000E10E5`. Detta är inte den source-lockade regular-spawn-
-  entryn och ger noll giltiga kategorier, noll CD-origin och ingen target-
+- ✅ An r26-autoloaded Mednafen state produced 65,756 register samples and
+  256 logical `$B0E5` hits, but all contained overlay values `A=$2C/$85` at
+  physical PC `$000E10E5`. This is not the source-locked regular-spawn entry
+  and yields zero valid categories, zero CD-origin records, and no target
   join.
-- 🔒 Nästa positiva witness måste fortfarande binda source-bankens riktiga
-  `$B0E5` med kategori `0..3`, föregående `$4644/$4667`-kedja, returägarskap
-  och samma-sessionens live creature-record. Overlayträffen får inte öppna
-  RNG, spawn, AI, combat, loot, generator, T700 eller T900.
+- 🔒 The next positive witness must still bind the source bank's real `$B0E5`
+  with category `0..3`, the preceding `$4644/$4667` chain, return ownership,
+  and the same-session live creature record. The overlay hit must not enable
+  RNG, spawning, AI, combat, loot, generators, T700, or T900.
 
-## 2026-08-14 — bredare provenance-capture: record-table-join verifierad
+## 2026-08-14 — Broader provenance capture: record-table join verified
 
-- ✅ Den korrigerade Mednafen-instrumenteringen separerar den bounded receipt-
-  räknaren från provenance-seedningen och bevakar `$6000`, `$611D–$6126` samt
-  `$2935–$293E` i samma autentiska körning.
-- ✅ Den verifierade 120-sekunders r25-capturen gav 238 autentiserade CD→RAM-
-  kvitton, fyra kompletta source-LBA-bundna tio-byte-records och 7 100
-  `$C3A0–$C429`-registerrader i samma process.
-- 🔒 Provenance/exekveringskedjan är nu stängd, men recordens level/object/
-  gameplay-roll är inte identifierad. Capture-sidecars och instrumenterad
-  binär ligger lokalt på extern-disk.
-- ✅ Med autentiska US CUE/BIN, konverterad US ISO, JP CUE, r25 VDC/VCE-
-  snapshot och CD-sidecar är Theron-sviten 45/45 grön. Utan dessa lokala
-  externa inputs är fem av samma tester avsiktliga `SKIP`, inte failures.
+- ✅ Corrected Mednafen instrumentation now separates the bounded receipt
+  counter from provenance seeding and watches `$6000`, `$611D–$6126`, and
+  `$2935–$293E` in the same authentic run.
+- ✅ The verified 120-second r25 capture produced 238 authenticated CD→RAM
+  receipts, four complete ten-byte records bound to source LBAs, and 7,100
+  `$C3A0–$C429` register rows in the same process.
+- 🔒 The provenance/execution chain is now closed, but the record's
+  level/object/gameplay role remains unidentified. Capture sidecars and the
+  instrumented binary remain local on the external drive.
+- ✅ With authentic US CUE/BIN, converted US ISO, JP CUE, the r25 VDC/VCE
+  snapshot, and CD sidecar, the Theron suite is green at 45/45. Without these
+  local external inputs, five of the same tests intentionally `SKIP` rather
+  than fail.
 
 ## 2026-08-13 — scripted replay reaches authenticated transport, not gameplay
 
-- ✅ En extern-disk-körning med hashverifierad US Track 02 och System Card
-  accepterar den scriptade PCE-sekvensen `run@1:1,run@480:30,i@900:30` och
-  ger ett parser-godkänt transition-receipt: 240 råsektorspann, 25 CD-IRQ-
-  callbacks, 256 autentiserade CD-RAM-kvitton och 32 game-owned `$E009`-
-  dispatchar.
-- ✅ Main-RAM-sidecaren är verifierad med `reads=65536`, `target_reads=512`,
-  `target_nonzero=0`, `target_init=512` och `target_runtime=0`. Den separata
-  transition-testen passerar också.
-- 🔒 Replayen visar fortfarande ingen dynamisk level/object-consumer: ingen
-  `$C3A0`-läsare, ingen source-owned publicering och ingen square/tile/HUD/
-  T700/T900-semantik får öppnas. Sidecars och den instrumenterade binären
-  ligger kvar lokalt på extern-disk och ska inte committas.
-- ✅ Reproducerbarheten är dokumenterad i
+- ✅ A run from the external drive with hash-verified US Track 02 and System
+  Card accepts the scripted PCE sequence `run@1:1,run@480:30,i@900:30` and
+  produces a parser-accepted transition receipt: 240 raw-sector spans, 25 CD
+  IRQ callbacks, 256 authenticated CD-to-RAM receipts, and 32 game-owned
+  `$E009` dispatches.
+- ✅ The main-RAM sidecar is verified with `reads=65536`, `target_reads=512`,
+  `target_nonzero=0`, `target_init=512`, and `target_runtime=0`. The separate
+  transition test also passes.
+- 🔒 The replay still shows no dynamic level/object consumer: there is no
+  `$C3A0` reader or source-owned publication, and no square/tile/HUD/T700/T900
+  semantics may be enabled. Sidecars and the instrumented binary remain
+  local on the external drive and must not be committed.
+- ✅ Reproducibility is documented in
   `docs/source-lock/theron-disassembly/theron-scripted-replay-transport-boundary-20260813.md`.
 
 ## 2026-08-13 — Door movement remains fail-closed
@@ -1279,328 +1296,336 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   missing post-CD level/object consumer or any square/tile/HUD/T700/T900
   semantics.
 
-## 2026-08-13 — split-CUE-normalisering ger starkare transport-witness
+## 2026-08-13 — Split-CUE normalization strengthens transport evidence
 
-- ✅ Den privata split-ISO-normaliseringen (`TQUS19.iso + TQUS02End.iso`)
-  gav en parser-godkänd samma-session med 161 råsektorer, 32 game-owned
-  `$E009`-dispatchar och 65 536 main-RAM-läsningar.
-- 🔒 `$2600–$27FF` innehåller fortfarande endast 512 noll-läsningar från
-  initieringsläsaren `$CB22`; runtime-/`$C3A0–$C429`-läsningar saknas.
-  Spawnsidecaren saknar giltig `$B0E5`, source-owned target-publicering och
-  live creature-record. Ingen level/object/square/HUD/T700/T900-semantik
-  öppnas.
-- ✅ Proveniens och sidecar-hashar är dokumenterade i
+- ✅ Private split-ISO normalization (`TQUS19.iso + TQUS02End.iso`) produced
+  a parser-accepted same-session capture with 161 raw sectors, 32 game-owned
+  `$E009` dispatches, and 65,536 main-RAM reads.
+- 🔒 `$2600–$27FF` still contains only 512 zero-valued reads from the
+  initialization reader `$CB22`; runtime reads in `$C3A0–$C429` are absent.
+  The spawn sidecar has no valid `$B0E5`, source-owned target publication,
+  or live creature record. No level/object/square/HUD/T700/T900 semantics
+  are enabled.
+- ✅ Provenance and sidecar hashes are documented in
   `docs/source-lock/theron-disassembly/theron-split-cue-consumer-capture-20260813.md`.
 
-## 2026-08-13 — source-bound pit blockeras utan fixture-skada
+## 2026-08-13 — Source-bound pit blocks without fixture damage
 
-- ✅ Query, movement och den publika pit-handlern känner nu igen att T700-
-  konsumenten saknas på source-levels. Pit-rutan rapporteras som blocked i
-  stället för att använda hostens HP/stamina-skada eller falla igenom som golv.
-- ✅ Hardening-proben verifierar oförändrad position, HP och stamina.
-- 🔒 Detta öppnar inte originalets pit/fall/levitation-konsument; fixture-
-  nivåer behåller den tidigare ReDMCSB-baserade probe-semantiken.
+- ✅ Query, movement, and the public pit handler now recognize that the T700
+  consumer is absent for source levels. A pit tile is reported as blocked
+  instead of applying host HP/stamina damage or falling through as floor.
+- ✅ The hardening probe verifies that position, HP, and stamina are unchanged.
+- 🔒 This does not enable the original pit/fall/levitation consumer; fixture
+  levels retain the previous ReDMCSB-based probe semantics.
 
-## 2026-08-13 — ofullständig dungeon-exit blockeras fail-closed
+## 2026-08-13 — Incomplete dungeon exits fail closed
 
-- ✅ Exit-query och movement använder nu samma `dungeon_complete`-grind och
-  kräver lyckad transition-exekvering. En ofullständig eller olösbar exit
-  rapporteras som `THERON_MOVE_BLOCKED` utan move-effects.
-- ✅ Hardening-proben verifierar att partyposition, transition-state och
-  stamina förblir oförändrade på en ofullständig exit.
-- 🔒 Detta öppnar inte quest-completion eller nästa dungeon; den source-owned
-  completion-consumern är fortfarande separat från movement-invarianten.
+- ✅ Exit queries and movement now use the same `dungeon_complete` gate and
+  require successful transition execution. An incomplete or unresolvable
+  exit is reported as `THERON_MOVE_BLOCKED` with no movement effects.
+- ✅ The hardening probe verifies that party position, transition state, and
+  stamina remain unchanged at an incomplete exit.
+- 🔒 This does not enable quest completion or the next dungeon; the
+  source-owned completion consumer remains separate from the movement
+  invariant.
 
-## 2026-08-13 — oladdade stairs blockeras fail-closed
+## 2026-08-13 — Unloaded stairs fail closed
 
-- ✅ Movement query och mutation kräver nu att stairs-målleveln faktiskt är
-  laddad. Ett misslyckat `transition_execute()` rapporteras inte längre som en
-  lyckad `THERON_MOVE_STAIRS` och inga move-effects körs.
-- ✅ Hardening-proben verifierar att en stairs-down utan laddad level lämnar
-  partyposition, level, transition-state och stamina oförändrade.
-- 🔒 Detta är en state-invariant; dynamisk source-owned level loading och
-  originalets stairs-consumer är fortfarande separata capture-gated frågor.
+- ✅ Movement query and mutation now require the stair destination level to
+  be loaded. A failed `transition_execute()` is no longer reported as a
+  successful `THERON_MOVE_STAIRS`, and no movement effects run.
+- ✅ The hardening probe verifies that moving down unloaded stairs leaves
+  party position, level, transition state, and stamina unchanged.
+- 🔒 This is a state invariant; dynamic source-owned level loading and the
+  original stairs consumer remain separate capture-gated questions.
 
-## 2026-08-13 — olösbar teleportering blockeras fail-closed
+## 2026-08-13 — Unresolvable teleporters fail closed
 
-- ✅ Rörelsevägen respekterar nu `theron_v1_teleporter_resolve()`-returen:
-  saknad endpoint, cykel eller annan olösbar source-data rapporteras som
-  `THERON_MOVE_BLOCKED` och avancerar varken party, transition eller move-
-  effects.
-- ✅ Hardening-proben täcker en teleporter utan endpoint och verifierar att
-  position, transition-state och stamina förblir oförändrade.
-- 🔒 Detta öppnar inte nya teleporteringssemantiker. Endast redan verifierade
-  object-ID- och Track 02-koordinatlänkar får passera resolver-grinden.
+- ✅ The movement path now respects the return value of
+  `theron_v1_teleporter_resolve()`: a missing endpoint, cycle, or other
+  unresolvable source data is reported as `THERON_MOVE_BLOCKED`, without
+  advancing the party, transition, or movement effects.
+- ✅ The hardening probe covers a teleporter without an endpoint and verifies
+  that position, transition state, and stamina remain unchanged.
+- 🔒 This does not enable new teleporter semantics. Only already verified
+  object-ID and Track 02 coordinate links may pass the resolver gate.
 
-## 2026-08-13 — låst dörr är åter en blockerande sentinel
+## 2026-08-13 — Locked door restored as a blocking sentinel
 
-- ✅ Dörrmaskinen skiljer nu `LOCKED=6` från öppningsframerna
-  `QUARTER_OPEN..DESTROYED`. Query, movement och `door_open()` kan inte längre
-  råka behandla den numeriskt högre låsta sentinelstaten som passabel.
-- ✅ Mechanics-hardening-proben täcker låst sentinel i både query och muterande
-  öppningsväg. Detta är en lokal state-machine-korrigering; den öppnar inte
-  den fortfarande capture-gated T900 key/object-consumern för source-levels.
+- ✅ The door state machine now distinguishes `LOCKED=6` from the opening
+  frames `QUARTER_OPEN..DESTROYED`. Query, movement, and `door_open()` can no
+  longer accidentally treat the numerically higher locked sentinel state as
+  passable.
+- ✅ The mechanics hardening probe covers the locked sentinel in both query
+  and mutating open paths. This is a local state-machine correction; it does
+  not enable the still capture-gated T900 key/object consumer for source
+  levels.
 
-## 2026-08-13 — ny instrumenterad cold-start når bara CD-transport
+## 2026-08-13 — New instrumented cold start reaches CD transport only
 
-- ✅ En färsk extern-disk-körning mot hashverifierad US Track 02/System Card
-  läser 256 råa 2352-byte-sektorer från LBA 3234. Den visar dessutom 3 584
-  target-writes och 4 096 spawn-consumer-läsningar som rå provenance.
-- 🔒 Körningen loopar i BIOS/CD-läsaren: den ger noll game-owned `$E009`-
-  dispatchar, noll CD/FIFO→RAM-origin-kvittot, noll RNG-fönster och noll
-  autentiserad level/object-consumer. De 512 läsningarna i `$2600–$27FF` är
-  alla nollor från `$CB22`; de får inte öppna level, object, square, HUD,
-  creature, combat, T700 eller T900.
-- 🔒 Spawn-sidecaren läser endast initieringsområdet `$20EC–$20EE` och
-  saknar `$B0E5`-kategori, returägarskap och source-owned target-publicering.
-  Capturet är därför ett reproducerbart negativt witness, inte ny gameplay-
-  semantik. Råa sidecars och den instrumenterade byggningen ligger kvar på
-  extern-disk.
+- ✅ A fresh run from the external drive against hash-verified US Track
+  02/System Card reads 256 raw 2,352-byte sectors from LBA 3234. It also
+  shows 3,584 target writes and 4,096 spawn-consumer reads as raw provenance.
+- 🔒 The run loops in the BIOS/CD reader: it produces zero game-owned `$E009`
+  dispatches, zero CD/FIFO-to-RAM origin receipts, zero RNG windows, and zero
+  authenticated level/object consumers. All 512 reads in `$2600–$27FF` are
+  zero-valued reads from `$CB22`; they must not enable level, object, square,
+  HUD, creature, combat, T700, or T900 behavior.
+- 🔒 The spawn sidecar reads only initialization range `$20EC–$20EE` and has
+  no `$B0E5` category, return ownership, or source-owned target publication.
+  The capture is therefore reproducible negative evidence, not new gameplay
+  semantics. Raw sidecars and the instrumented build remain on the external
+  drive.
 
 ## 2026-08-13 — source-gated object handoff is transactional
 
-- ✅ Den redan source-gated object-gameplay-handoffen validerar nu hela den
-  valda nivån före mutation och återställer objektpool, aktuell nivå,
-  `thing_count` och runtime-media om ett senare placement-steg fallerar.
-  Regressionen tvingar fram ett `INT_MAX`-ID på ett kvarvarande objekt och
-  verifierar att världens hash och objektpool är oförändrade efter avslag.
-- 🔒 Detta ändrar inte semantikgrinden: samma-sessionens autentiserade
-  object-consumer krävs fortfarande innan handoffen får öppna dungeon-draw,
-  square-to-tile eller fallback-free gameplay.
+- ✅ The existing source-gated object/gameplay handoff now validates the
+  entire selected level before mutation and restores the object pool, current
+  level, `thing_count`, and runtime media if a later placement step fails.
+  The regression forces an `INT_MAX` ID on a remaining object and verifies
+  that the world hash and object pool are unchanged after rejection.
+- 🔒 This does not change the semantic gate: a same-session authenticated
+  object consumer is still required before the handoff can enable dungeon
+  rendering, square-to-tile mapping, or gameplay without fallbacks.
 
 ## 2026-08-13 — source-runtime state invariants are no longer no-op
 
-- ✅ Produktionsadaptern klampar nu championens HP, stamina och mana till
-  respektive maxvärde och nollgräns. Champion-death nollställer dessutom
-  health och `alive` på samma rena state-livscykel som den redan source-bundna
-  creature-retire-rutinen.
-- 🔒 Detta öppnar inte attack, spell, AI, RNG, loot, ljud eller T700/T900;
-  deras originalkonsumenter är fortfarande fail-closed.
+- ✅ The production adapter now clamps champion HP, stamina, and mana to
+  their respective maxima and zero lower bounds. Champion death also clears
+  health and `alive` through the same clean state lifecycle as the already
+  source-bound creature-retire routine.
+- 🔒 This does not enable attack, spells, AI, RNG, loot, sound, or T700/T900;
+  their original consumers remain fail-closed.
 
-## 2026-08-13 — längre replay når source-owned spawnförkonsument
+## 2026-08-13 — Longer replay reaches source-owned spawn pre-consumer
 
-- ✅ Den autentiserade replayen parseras nu som en positiv execution-window:
-  `$CC4C`-konsumenten, 48 `$4644`-förkonsumentprover och 160 `$4667`-helper-
-  prover finns i samma sidecar. Testet kräver dessa edges och skyddar samtidigt
-  att ingen giltig `$B0E5`-kategori eller RAM-laddad helpergren har observerats.
-- 🔒 `$B3=$FF` vid samtliga `$4667`-prover innebär att den särskilda
-  `$B3 & 7 == 4`-grenen inte nås. Utan `$B0E5` med A=`0..3`, returägarskap,
-  source-owned target-write och live creature-record öppnas inte spawn, RNG,
-  AI, combat, loot, generator, T700 eller T900.
+- ✅ The authenticated replay now parses as a positive execution window:
+  the `$CC4C` consumer, 48 `$4644` pre-consumer samples, and 160 `$4667`
+  helper samples are present in the same sidecar. The test requires these
+  edges while also ensuring that no valid `$B0E5` category or RAM-loaded
+  helper branch was observed.
+- 🔒 `$B3=$FF` in every `$4667` sample means the special `$B3 & 7 == 4`
+  branch is not reached. Without `$B0E5` with A=`0..3`, return ownership,
+  source-owned target write, and a live creature record, spawning, RNG, AI,
+  combat, loot, generators, T700, and T900 remain disabled.
 
-## 2026-08-13 — autentiserad CD→RAM-transport från replay är nu verifierad
+## 2026-08-13 — Authenticated CD→RAM transport from replay verified
 
-- ✅ Replayens transition-receipt (`theron-capture-20260813/replay`) är
-  parserad som `observed`: 161 råsektorer, 47 byte-exakta CD→RAM-origin-
-  receipts och 32 game-owned `$E009`-dispatchar, med hashverifierad US Track
-  02 och System Card.
-- ✅ Regressionen kräver nu verifierade minimikrav i stället för den tidigare
-  felaktiga exakta kampanjlängden (`2` CD-receipts/`3584` RNG-prover), så nya
-  autentiserade replaylängder inte avvisas godtyckligt.
-- 🔒 Samma replay har fortfarande 512 `$2600`-läsningar, alla från `$CB22`
-  och med noll icke-nollvärden. Transporten öppnar därför inte level/object,
-  square-to-tile, HUD, creature, combat, T700 eller T900-semantik.
+- ✅ The replay transition receipt (`theron-capture-20260813/replay`) now
+  parses as `observed`: 161 raw sectors, 47 byte-exact CD→RAM origin
+  receipts, and 32 game-owned `$E009` dispatches, with hash-verified US
+  Track 02 and System Card.
+- ✅ The regression now requires verified minimums instead of the previously
+  incorrect exact campaign length (`2` CD receipts/`3584` RNG samples), so
+  new authenticated replay lengths are not rejected arbitrarily.
+- 🔒 The same replay still has 512 `$2600` reads, all from `$CB22`, with no
+  nonzero values. Transport therefore does not enable level/object,
+  square-to-tile, HUD, creature, combat, T700, or T900 semantics.
 
-## 2026-08-13 — consumer-receipt skiljer initiering från source-caller
+## 2026-08-13 — Consumer receipt separates initialization from source caller
 
-- ✅ Receipten räknar nu separat `$CB22`-initieringsläsningar, övriga
-  runtime-läsningar och läsningar från det byte-lockade `$C3A0–$C429`-fönstret.
-  För C3A0-fönstret behålls även icke-nollantal och distinkta reader-PC:er.
-- ✅ Den externa VDC-replayens main-RAM-sidecar (MD5
-  `c6f8f3bc32ce4b29ac32b376096756d1`) passerar parser-only med 311
-  target-läsningar, 128 icke-noll, och fortsatt `semantic_publication=blocked`.
-  Fälten bevarar caller-proveniens men klassificerar inte level, square,
-  object, HUD, creature, T700 eller T900.
-- 🔒 Replayen saknar fortfarande autentiserad CD/FIFO→RAM-origin i samma
-  session. Ingen gameplaysemantik öppnas av den nya shape-kvittensen.
+- ✅ The receipt now separately counts `$CB22` initialization reads, other
+  runtime reads, and reads from the byte-locked `$C3A0–$C429` window. For the
+  C3A0 window it also retains nonzero counts and distinct reader PCs.
+- ✅ The external VDC replay's main-RAM sidecar (MD5
+  `c6f8f3bc32ce4b29ac32b376096756d1`) passes parser-only with 311
+  target reads, 128 nonzero values, and `semantic_publication=blocked`.
+  These fields preserve caller provenance but do not classify level, square,
+  object, HUD, creature, T700, or T900 semantics.
+- 🔒 The replay still lacks authenticated CD/FIFO-to-RAM origin in the same
+  session. The new shape receipt enables no gameplay semantics.
 
-## 2026-08-13 — autentiserad VDC/VCE-pair från RAM-replay admitted screen-space
+## 2026-08-13 — Authenticated VDC/VCE pair from RAM replay admitted for screen space
 
-- ✅ `theron_v1_vram_trace_load_known_capture_files()` accepterar nu den
-  externa, hashverifierade pairen `theron-vdc-ram.exXuQu`:
+- ✅ `theron_v1_vram_trace_load_known_capture_files()` now accepts the
+  external, hash-verified pair `theron-vdc-ram.exXuQu`:
   VRAM FNV-1a `087da136`, VCE FNV-1a `5376a91b`.
-- ✅ Pairen kan användas av produktionsviewportens autentiserade
-  screen-space-rendering; råfilerna ligger kvar lokalt på extern-disk och
-  kopieras inte till GitHub.
-- 🔒 Capturens `$2600–$27FF`-läsningar föregås av samma `$CB22`-rutin som
-  skriver nollor till RAM-fönstret. Det är därför inte ett bevis på level-,
-  object-, square-, HUD-, T700- eller T900-konsument. De semantiska grindarna
-  förblir stängda.
+- ✅ This pair can be used by the production viewport's authenticated
+  screen-space renderer; the raw files remain local on the external drive
+  and are not copied to GitHub.
+- 🔒 The capture's `$2600–$27FF` reads are preceded by the same `$CB22`
+  routine that writes zeros to the RAM window. This is therefore not evidence
+  for a level, object, square, HUD, T700, or T900 consumer. The semantic gates
+  remain closed.
 
-## 2026-08-13 — consumer-receipt skiljer initiering från runtime-läsning
+## 2026-08-13 — Consumer receipt distinguishes initialization from runtime reads
 
-- ✅ Receipten behåller nu antal `$2600–$27FF`-läsningar, antal icke-nollvärden
-  och antal distinkta reader-PC:er.
-- ✅ Den externa combat-replayen (`live.trace.main-ram-consumer`, MD5
-  `4d9da34dd8a0042dc302449af78c54cc`) visar 19 target-läsningar, 3 icke-noll-
-  värden och 19 reader-PC:er. Det är starkare runtime-proveniens än
-  `$CB22`-initieringen, men replayen saknar CD/FIFO-join och får inte öppna
-  level/object, creature, combat, T700 eller T900-semantik.
+- ✅ The receipt now retains the number of `$2600–$27FF` reads, the number of
+  nonzero values, and the number of distinct reader PCs.
+- ✅ The external combat replay (`live.trace.main-ram-consumer`, MD5
+  `4d9da34dd8a0042dc302449af78c54cc`) shows 19 target reads, 3 nonzero
+  values, and 19 reader PCs. This is stronger runtime provenance than
+  `$CB22` initialization, but the replay lacks a CD/FIFO join and must not
+  enable level/object, creature, combat, T700, or T900 semantics.
 
-## 2026-08-13 — game-owned `$2600`-fönster bevaras som proveniens
+## 2026-08-13 — Game-owned `$2600` window retained as provenance
 
-- ✅ `theron_v1_mednafen_main_ram_consumer_trace_parse_file()` behåller nu
-  `target_2600_bytes_present` när en verifierad `main_ram_consumer_read`
-  faktiskt ligger i `$2600–$27FF`. Den tidigare slutinitieringen nollställde
-  flaggan och kastade bort observationen.
-- ✅ Ett nytt parser-test täcker en läsning över fönstergränsen. Den lokala
-  MPR-capturen från extern-disken (`mpr.trace.main-ram-consumer`, MD5
-  `12f470ef2c38febd9b2c9699dad3b4cb`) passerar parser-only och rapporterar
+- ✅ `theron_v1_mednafen_main_ram_consumer_trace_parse_file()` now preserves
+  `target_2600_bytes_present` when a verified `main_ram_consumer_read` is
+  actually within `$2600–$27FF`. Previously, final initialization cleared
+  the flag and discarded the observation.
+- ✅ A new parser test covers a read across the window boundary. The local
+  MPR capture from the external drive (`mpr.trace.main-ram-consumer`, MD5
+  `12f470ef2c38febd9b2c9699dad3b4cb`) passes parser-only and reports
   `target_2600=present`.
-- 🔒 Detta klassificerar endast adressproveniens. Det identifierar inte bytes
-  som level, object, T700 eller T900 och öppnar ingen gameplaysemantik.
+- 🔒 This classifies address provenance only. It does not identify the bytes
+  as level, object, T700, or T900 data and enables no gameplay semantics.
 
-## 2026-08-13 — textcodonens positionsproveniens är nu bevarad
+## 2026-08-13 — Text codon positional provenance is now preserved
 
-- ✅ Track 02-textavkodaren behåller varje packat 5-bitarsvärde tillsammans
-  med källord och slot (`word_index`/`packed_slot`) i en tokenvy.
-- ✅ Codec-lagret skiljer nu råtecken, kända codec-markörer och slutmarkör
-  utan att påstå vad de ursprungliga HuC6280-kontrollkoderna betyder.
-- ✅ Live world state behåller nu både råa textord och deras positionsbundna
-  tokenvy genom dungeon-loadern; en senare consumer-bindning behöver inte
-  återskapa tokenpositioner från media.
-- 🔒 Detta är förlustfri positionsproveniens, inte en öppning av text-, meny-
-  eller HUD-semantik. Den game-owned textkonsumenten och dess VDC-mål måste
-  fortfarande bindas i samma körning innan world/UI-publicering tillåts.
+- ✅ The Track 02 text decoder now retains each packed 5-bit value together
+  with its source word and slot (`word_index`/`packed_slot`) in a token view.
+- ✅ The codec layer now distinguishes raw characters, known codec markers,
+  and the terminator without claiming to know the original HuC6280 control
+  codes' meanings.
+- ✅ Live world state now retains both raw text words and their
+  position-bound token view through the dungeon loader; a later consumer
+  binding does not need to reconstruct token positions from media.
+- 🔒 This is lossless positional provenance, not enablement of text, menu, or
+  HUD semantics. The game-owned text consumer and its VDC target must still
+  be bound in the same run before world/UI publication is allowed.
 
-## 2026-08-13 — savestate-replayen är fortfarande negativ för game-owned CD
+## 2026-08-13 — Save-state replay remains negative for game-owned CD
 
-- ✅ En ny lokal replay från den autentiserade dungeon-savestaten gav 65 756
-  registerprover, 256 `$B0E5`-adressöverlagringar, 4 096
-  `spawn_consumer_read`-rader och 2 213 RNG-prover. US Track 02 och System
-  Card var hashverifierade.
-- 🔒 Replayen gav bara en CD IRQ efter autoload: noll råsektorer, noll
-  source-backed CD→RAM-receipts, noll giltiga `$B0E5`-kategorier och noll
-  `$4644/$4667`-prover. Den får därför inte öppna spawn, RNG, AI, combat,
-  loot, T700 eller T900.
-- ✅ Samma externa US/JP mechanics-playability-probe passerar 79/79 och
-  fortsätter att täcka source-bound grid/loader medan de dynamiska
-  originalkonsumenterna är fail-closed.
+- ✅ A new local replay from the authenticated dungeon save state produced
+  65,756 register samples, 256 `$B0E5` address overlays, 4,096
+  `spawn_consumer_read` rows, and 2,213 RNG samples. US Track 02 and the
+  System Card were hash-verified.
+- 🔒 The replay produced only one CD IRQ after autoload: zero raw sectors,
+  zero source-backed CD→RAM receipts, zero valid `$B0E5` categories, and zero
+  `$4644/$4667` samples. It therefore must not enable spawning, RNG, AI,
+  combat, loot, T700, or T900.
+- ✅ The same external US/JP mechanics-playability probe passes 79/79 and
+  continues to cover the source-bound grid/loader while dynamic original
+  consumers remain fail-closed.
 
-## 2026-08-13 — capturebaserad Theron-regression är verifierad
+## 2026-08-13 — Capture-based Theron regression verified
 
-- ✅ Hela Theron-regressionen på extern `TMPDIR` passerar: 253 valda tester,
-  varav 247 körda och 6 korrekta capture-skippar utan lokala fixtures.
-- ✅ Med autentiserade lokala fixtures passerar även VRAM/VCE-readiness,
-  Main-RAM-consumer och CD-state-sidecar. Den färska replayen ger 161 råa
-  sektorer, 51 SCSI-läsningar, 25 CD IRQ, 47 FIFO→RAM-receipts och 65 536
-  VDC-skrivningar.
-- 🔒 Detta löser testmiljö- och transportblockern. Gameplaysemantik är ännu
-  inte öppnad: sessionen saknar game-owned FIFO→RAM-receipt, spawn-consumer
-  och RNG-window.
+- ✅ The full Theron regression suite passes with an external `TMPDIR`: 253
+  selected tests, 247 executed, and 6 expected capture skips without local
+  fixtures.
+- ✅ With authenticated local fixtures, VRAM/VCE readiness, the main-RAM
+  consumer, and the CD-state sidecar also pass. The fresh replay produces
+  161 raw sectors, 51 SCSI reads, 25 CD IRQs, 47 FIFO→RAM receipts, and
+  65,536 VDC writes.
+- 🔒 This resolves the test-environment and transport blockers. Gameplay
+  semantics are still not enabled: the session lacks a game-owned FIFO→RAM
+  receipt, spawn consumer, and RNG window.
 
-## 2026-08-13 — VDC-I/O-proveniens ingår nu i transition-admission
+## 2026-08-13 — VDC I/O provenance now included in transition admission
 
-- ✅ VDC-I/O-parsern accepterar nu den riktiga 65 536-postersfilen. Mednafens
-  råa bussadress får endast använda bit 31 som markör och normaliseras då
-  separat (`$801FE000` → `$001FE000`); övriga höga bitar avvisas. Dess
-  `HuCPU.Timestamp()` verifieras som 24 monotona epoker med exakt 23
-  observerade räknarresetter, i stället för att felaktigt krävas vara globalt
-  monoton.
-- ✅ Samma parser kan nu behålla samtliga verifierade writeposter i en
-  explicit frigörbar, 65 536-poster begränsad replaystruktur. Hela filen
-  måste passera innan arrayen publiceras; varje post bevarar sekvens,
-  timestamp, logisk adress, rå och normaliserad fysisk adress, värde,
-  skrivar-PC och A/X/Y.
-- ✅ Capture-skriptet räknar autentiska `vdc_io_write`-rader och skriver
-  `vdc_io_writes` i transition-receiptet. Receipt-parsern kräver ett positivt
-  antal tillsammans med 64 KiB VDC-VRAM och 1 KiB VCE.
-- 🔒 Detta binder transportproveniens, inte text-, BAT-, square-, HUD- eller
-  gameplaysemantik. En preliminär exakt HuC6270-replay ger 26 048 VWR-commits
-  och matchar 6 898 av 7 328 skrivna snapshotadresser; 430 avvikelser visar
-  att write- och snapshotgränsen måste tidsbindas innan viewport-VRAM får
-  muteras.
-- ✅ Instrumenteringspatchen tar nu VRAM/VCE/VDC/SAT-snapshoten omedelbart
-  efter att write 65 536 har passerat den riktiga VDC:n, skriver
-  `vdc_snapshot_boundary sequence=65536` och hindrar CloseGame från att
-  skriva över bundeln senare. Capture-skriptet avvisar nya körningar utan
-  denna footer. 🔒 Den befintliga realfilen saknar footern och får därför
-  bara användas som äldre transportbevis tills en ny autentisk körning gjorts.
+- ✅ The VDC I/O parser now accepts the real 65,536-entry file. Mednafen's
+  raw bus address may use bit 31 only as a marker and is normalized
+  separately (`$801FE000` → `$001FE000`); other high bits are rejected. Its
+  `HuCPU.Timestamp()` is verified as 24 monotonic epochs with exactly 23
+  observed counter resets, rather than being incorrectly required to be
+  globally monotonic.
+- ✅ The same parser can now retain all verified write entries in an
+  explicitly freeable replay structure capped at 65,536 entries. The entire
+  file must pass before the array is published; every entry preserves
+  sequence, timestamp, logical address, raw and normalized physical address,
+  value, writer PC, and A/X/Y.
+- ✅ The capture script counts authentic `vdc_io_write` rows and writes
+  `vdc_io_writes` to the transition receipt. The receipt parser requires a
+  positive count together with 64 KiB of VDC VRAM and 1 KiB of VCE data.
+- 🔒 This binds transport provenance, not text, BAT, square, HUD, or gameplay
+  semantics. A preliminary exact HuC6270 replay produces 26,048 VWR commits
+  and matches 6,898 of 7,328 written snapshot addresses; 430 mismatches show
+  that write and snapshot boundaries must be correlated in time before
+  viewport VRAM can be mutated.
+- ✅ The instrumentation patch now captures the VRAM/VCE/VDC/SAT snapshot
+  immediately after write 65,536 passes through the real VDC, writes
+  `vdc_snapshot_boundary sequence=65536`, and prevents CloseGame from later
+  overwriting the bundle. The capture script rejects new runs without this
+  footer. 🔒 The existing real file lacks the footer and may therefore only
+  be used as older transport evidence until a new authentic run is made.
 
-## 2026-08-13 — TQTR-verifieringen kan köras på extern temporär disk
+## 2026-08-13 — TQTR verification can run on an external temporary drive
 
-- ✅ `test_theron_v1_vram_trace_loader` använder nu `TMPDIR` för sin utökade
-  TQTR-fixture. Därmed kan den köras när macOS-systemvolymens `/tmp` är full,
-  utan att testet skriver till eller kräver plats där.
-- ✅ Den autentiserade US screen-space-capturen passerar separat med
-  `vram_nonzero=24336`, `bat_tiles=1057` och `presented_nonzero=44947`.
-- 🔒 Detta öppnar fortfarande inte square-to-tile, text, HUD- eller
-  gameplaysemantik.
+- ✅ `test_theron_v1_vram_trace_loader` now uses `TMPDIR` for its expanded
+  TQTR fixture. It can therefore run when the macOS system volume's `/tmp` is
+  full without writing to or requiring space there.
+- ✅ The authenticated US screen-space capture passes separately with
+  `vram_nonzero=24336`, `bat_tiles=1057`, and `presented_nonzero=44947`.
+- 🔒 This still does not enable square-to-tile, text, HUD, or gameplay
+  semantics.
 
 ## 2026-08-11 — RNG edge capture is still not a spawn handoff
 
-- 🔒 En extern autentiserad US-save-replay observerar `$4644`/`$4667` och
-  RNG-fönster, men ingen giltig `$B0E5`-kategori eller target-publicering.
-  Den får inte öppna RNG-return, monsterstats, AI, combat, loot, generatorer,
-  T700 eller T900.
-- ✅ Den äldre 18-fälts-sidecarens 192-stegsformat kan nu läsas utan att
-  moderna return-boundary-fält eller semantik uppfinns.
+- 🔒 An external authenticated US save replay observes `$4644`/`$4667` and
+  RNG windows, but no valid `$B0E5` category or target publication. It must
+  not enable RNG return, monster stats, AI, combat, loot, generators, T700,
+  or T900.
+- ✅ The older 18-field sidecar's 192-step format can now be read without
+  inventing modern return-boundary fields or semantics.
 
-## 2026-08-12 — rått A-värde vid RNG-returgräns sparas, semantik fortsatt stängd
+## 2026-08-12 — Raw A value at RNG return boundary retained; semantics remain closed
 
-- ✅ RNG-parsern sparar nu A-registret och antal observationer vid den
-  instrumenterade stackbaserade returgränsen.
-- 🔒 Fältet är endast provenance. Det öppnar inte RNG-return, spawnstats eller
-  AI utan en source-bound caller och samma-session target-consumer.
+- ✅ The RNG parser now retains the A register and observation count at the
+  instrumented stack-based return boundary.
+- 🔒 This field is provenance only. It does not enable RNG return, spawn
+  stats, or AI without a source-bound caller and same-session target consumer.
 
-## 2026-08-12 — C96B-only combat-capture registreras som negativt testfall
+## 2026-08-12 — C96B-only combat capture registered as a negative test case
 
-- ✅ Den autentiserade externa combat-capturen kan nu köras som ett explicit
-  negativt parserfall: `$C96B`-läsningar och `$B0E5`-adressöverlagringar
-  bevaras, medan avsaknad av `$CC4C` och giltig kategori fortsätter att
-  avvisa runtime-semantic publication.
-- 🔒 Detta är captureklassificering, inte återvunnen RNG, AI, combat, T700,
-  generator eller T900-semantik.
+- ✅ The authenticated external combat capture can now run as an explicit
+  negative parser case: `$C96B` reads and `$B0E5` address overlays are
+  preserved, while the absence of `$CC4C` and a valid category continues to
+  reject runtime semantic publication.
+- 🔒 This is capture classification, not recovered RNG, AI, combat, T700,
+  generator, or T900 semantics.
 
-## 2026-08-12 — ny Stage-2-session saknar fortfarande gameplay-consumer
+## 2026-08-12 — New Stage-2 session still lacks a gameplay consumer
 
-- ✅ En ny isolerad session med verifierad direkt-SDL2-binär nådde riktig
-  Stage-2/System Card-kod och producerade 2 048 registerprover.
-- 🔒 Sessionen saknade `$CC4C`, `$B0E5` och efterföljande dungeon-/objectmål;
-  den får därför inte öppna creature-, RNG-, T700- eller T900-semantik.
+- ✅ A new isolated session with a verified direct-SDL2 binary reached real
+  Stage-2/System Card code and produced 2,048 register samples.
+- 🔒 The session lacked `$CC4C`, `$B0E5`, and subsequent dungeon/object
+  targets; it therefore must not enable creature, RNG, T700, or T900 semantics.
 
-## 2026-08-12 — JP-porträtt och originalmekanik är fortfarande öppna
+## 2026-08-12 — JP portraits and original mechanics remain open
 
-- 🔒 JP Track 02-rosterposterna är autentiserade, men ingen source-bound
-  porträttpixelkonsument eller porträtt-ID-bindning är fångad. `portrait_index`
-  ska därför fortsätta vara `THERON_PORTRAIT_UNAVAILABLE`.
-- 🔒 Paritetsmatrisen räknar nu fixture-/numeric-record-bevis som `PARTIAL` för
-  combat och champion-systemet; T500/T600/T900-konsumenterna måste fortfarande
-  bindas mot samma-session runtime-data innan produktionen öppnas.
-- 🔒 Den nya externa combat-capturen är verifierad som autoload/C96B-only:
-  ingen `$CC4C`, giltig `$B0E5`-kategori eller CD→RAM-loadertransition. Den får
-  inte användas för att fylla i syntetisk AI, RNG, T700 eller T900-semantik.
-- 🔒 Samma capture har ett nytt VDC/VCE-par som nu kan replayas screen-space;
-  square-to-tile, HUD- och gameplayägarskap är fortfarande separata gates.
+- 🔒 JP Track 02 roster records are authenticated, but no source-bound
+  portrait-pixel consumer or portrait-ID binding has been captured.
+  `portrait_index` must therefore remain `THERON_PORTRAIT_UNAVAILABLE`.
+- 🔒 The parity matrix now counts fixture/numeric-record evidence as `PARTIAL`
+  for combat and the champion system; T500/T600/T900 consumers must still be
+  bound to same-session runtime data before production is enabled.
+- 🔒 The new external combat capture is verified as autoload/C96B-only: no
+  `$CC4C`, valid `$B0E5` category, or CD→RAM loader transition. It must not be
+  used to invent synthetic AI, RNG, T700, or T900 semantics.
+- 🔒 The same capture has a new VDC/VCE pair that can now be replayed in
+  screen space; square-to-tile, HUD, and gameplay ownership remain separate
+  gates.
 
-## 2026-08-11 — ljudkonsument förblir capture-gated
+## 2026-08-11 — Audio consumer remains capture-gated
 
-- 🔒 Den statiska System Card-katalogen klassificerar riktiga CD/ADPCM-vektor-
-  anrop, och den autentiserade capture-vägen binder CD/FIFO→ADPCM-RAM.
-- 🔒 Ingen samma-session CPU-läsning, sample-start eller spelhändelseägare är
-  verifierad ännu. `theron_v1_play_sound()` ska därför fortsätta returnera
-  fail-closed; inga creature-, actuator- eller menyhändelser får trigga
-  syntetiska ljud. Paritetsmatrisens tidigare `PROVEN`-rad är korrigerad till
+- 🔒 The static System Card catalog classifies real CD/ADPCM vector calls,
+  and the authenticated capture path binds CD/FIFO→ADPCM RAM.
+- 🔒 No same-session CPU read, sample start, or game-event ownership has yet
+  been verified. `theron_v1_play_sound()` must therefore remain fail-closed;
+  creature, actuator, and menu events must not trigger synthetic sound. The
+  parity matrix's previous `PROVEN` row has been corrected to
   `PARTIAL`.
 
-## 2026-08-11 — registertrace kan nu binda `$C3A0`-callerfönstret
+## 2026-08-11 — Register trace can now bind the `$C3A0` caller window
 
-- ✅ Mednafen-instrumenteringen skriver nu optional `record_c3a0_window=1`
-  i samma registertrace som `$C96B/$CC4C`; parsern räknar fönstret utan att
-  bryta äldre v3-traces.
-- 🔒 Flaggan är captureproveniens, inte semantik. `$C3A0` måste fortfarande
-  fångas i samma körning som dess `$C96B/$CC4C`-anrop och målskrivningar innan
-  creature-, objekt-, generator-, T700- eller T900-regler öppnas.
+- ✅ Mednafen instrumentation now writes optional `record_c3a0_window=1` in
+  the same register trace as `$C96B/$CC4C`; the parser counts the window
+  without breaking older v3 traces.
+- 🔒 The flag is capture provenance, not semantics. `$C3A0` must still be
+  captured in the same run as its `$C96B/$CC4C` calls and target writes before
+  creature, object, generator, T700, or T900 rules can be enabled.
 
-## 2026-08-11 — ny autentiserad `$C3A0`-caller är source-lockad
+## 2026-08-11 — New authenticated `$C3A0` caller is source-locked
 
-- ✅ Ett nytt 150-byte US Track 02-fragment från raw-offset `$9C450` / HuC6280
-  `$C3A0` matchar `TQUS02.bin` byte för byte och FNV-1a `$666DED61`.
-- ✅ Disassembly-admissionen verifierar nu fragmentet tillsammans med de
-  befintliga `$4667`, `$C96B` och `$CC4C`-fönstren.
-- 🔒 Fragmentet visar källkodens caller-/tabellflöde men identifierar inte
-  `$2998/$299C` som creature-, generator-, T700- eller T900-records. Ingen
-  spelsemantik öppnas utan samma-session runtime-bevis.
+- ✅ A new 150-byte US Track 02 fragment from raw offset `$9C450` / HuC6280
+  `$C3A0` matches `TQUS02.bin` byte for byte and has FNV-1a `$666DED61`.
+- ✅ Disassembly admission now verifies the fragment together with the
+  existing `$4667`, `$C96B`, and `$CC4C` windows.
+- 🔒 The fragment shows the source code's caller/table flow but does not
+  identify
+  whether `$2998/$299C` are creature, generator, T700, or T900 records. No
+  game semantics may be enabled without same-session runtime evidence.
 
 ## 2026-08-11 — live source creatures no longer receive synthetic PASSIVE AI
 
@@ -1611,15 +1636,15 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   AI, attacks, damage, loot, generator timing, T700 and T900 remain closed
   until the disassembly consumer and a same-session runtime capture agree.
 
-## 2026-08-11 — flerfönster-RNG-captures valideras korrekt
+## 2026-08-11 — Multi-window RNG captures validate correctly
 
-- ✅ RNG-consumer-parsern räknar nu kompletta 512-stegsfönster i en längre
-  samma-session-trace; en korrekt trace avvisas inte längre bara för att den
-  innehåller flera fönster.
-- ✅ Extern US Track 02-capture har 22 kompletta `$5D64`-fönster och en
-  source-byte-matchad `$5D64`-kodwindow.
-- 🔒 Detta bevisar källkonsumentens körning och kodproveniens, men inte ännu
-  vilket returvärde som ägs av spawnstats eller senare creature-semantik.
+- ✅ The RNG consumer parser now counts complete 512-step windows in a longer
+  same-session trace; a valid trace is no longer rejected merely because it
+  contains multiple windows.
+- ✅ An external US Track 02 capture has 22 complete `$5D64` windows and a
+  source-byte-matched `$5D64` code window.
+- 🔒 This proves source-consumer execution and code provenance, but not yet
+  which return value belongs to spawn stats or later creature semantics.
 
 ## 2026-08-11 — inventory transitions now require the authenticated property table
 
@@ -1718,42 +1743,42 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-11 — production replay now uses the authenticated native screen consumer
 
-- ✅ När ett hashverifierat VRAM/VCE-par uttryckligen monteras går Therons
-  produktionsviewport nu via den explicita 256×224 native-screen-konsumenten.
-  Det riktade real-capture-testet jämför produktionsframebuffern byte för byte
-  med den autentiserade screen-routen.
-- 🔒 Detta är fortfarande screen-space BAT/tile/VCE-bindning. Ingen cell
-  tilldelas till square-to-tile, perspektiv, HUD, objekt eller creature-
-  semantik utan motsvarande originalkonsument.
+- ✅ When a hash-verified VRAM/VCE pair is explicitly mounted, Theron's
+  production viewport now uses the explicit 256×224 native screen consumer.
+  The focused real-capture test compares the production framebuffer byte for
+  byte with the authenticated screen route.
+- 🔒 This is still screen-space BAT/tile/VCE binding. No cell is assigned to
+  square-to-tile, perspective, HUD, object, or creature semantics without the
+  corresponding original consumer.
 
 ## 2026-08-11 — save-state `$B0E5` hits are not the regular-spawn caller
 
-- ✅ Den ombyggda externa Mednafen-capturen mot den riktiga US-CUE:n loggade
-  nu även HuC6280-stackens returord vid varje `$B0E5`-träff. Den autentiserade
-  Track 02-hashen är fortsatt `f23601102138f87c33025877767ebf76` och capturen
-  gav 50 `$B0E5`-träffar.
-- 🔒 Alla 50 träffar hade A=`$2C` eller A=`$85`, inte disassemblyns spawn-
-  kategori 0–3, och ingen träff följdes av `$4667`, `$5D64` eller `$5D6A`.
-  Stackorden var dessutom `return_pc=$0002`/`$3F3F`, vilket inte är en
-  verifierad game-code caller. Detta är därför ett avvisat overlay-/state-
-  witness, inte ett RNG- eller spawnbevis. RNG, AI, generatorer, T700, T900,
-  loot och combat får inte öppnas från denna session.
-- 🔧 Nästa capture måste nå en faktisk dungeon-tick eller objektaktion och
-  samtidigt visa giltig caller, kategoriargument, RNG-retur och konsumentens
-  målskrivning i samma autentiserade session.
+- ✅ The rebuilt external Mednafen capture against the authentic US CUE now
+  also logged the HuC6280 stack return word at every `$B0E5` hit. The
+  authenticated Track 02 hash remains `f23601102138f87c33025877767ebf76`,
+  and the capture produced 50 `$B0E5` hits.
+- 🔒 All 50 hits had A=`$2C` or A=`$85`, not disassembly's spawn categories
+  0–3, and no hit was followed by `$4667`, `$5D64`, or `$5D6A`. The stack
+  words were also `return_pc=$0002`/`$3F3F`, which is not a verified game-code
+  caller. This is therefore a rejected overlay/state witness, not RNG or
+  spawn evidence. RNG, AI, generators, T700, T900, loot, and combat must not
+  be enabled from this session.
+- 🔧 The next capture must reach an actual dungeon tick or object action and
+  show a valid caller, category argument, RNG return, and the consumer's
+  target write in the same authenticated session.
 
 ## 2026-08-11 — `$B07D` caller window is source-locked
 
-- ✅ Den statiska US-disassemblyn har nu en separat, hashverifierad caller-
-  window för `$B07D-$B1EB`. Den visar fyra `$4644`-anrop före `$B0E5` och
-  vilka register-/RAM-fält som förs in i dispatchen.
-- 🔒 Window:n bevisar ännu inte att `$2980/$2990/$29A0` eller `$2A20/$2A28`
-  är creature-statistik. Nästa positiva capture ska binda samma caller,
-  giltig kategori 0–3, RNG-retur och efterföljande writes till ett riktigt
-  Track 02-record innan någon gameplaysemantik aktiveras.
-- ✅ Register-sidecaren kan nu märka den statiska caller-window:n som
-  `caller_b07d_window=1`; äldre v3-sidecars fortsätter att läsas som
-  provenance utan den nya flaggan.
+- ✅ The static US disassembly now has a separate, hash-verified caller
+  window for `$B07D-$B1EB`. It shows four `$4644` calls before `$B0E5` and
+  which register/RAM fields are passed into the dispatch.
+- 🔒 The window does not yet prove that `$2980/$2990/$29A0` or `$2A20/$2A28`
+  are creature stats. The next positive capture must bind the same caller,
+  valid category 0–3, RNG return, and subsequent writes to a real Track 02
+  record before any gameplay semantics are enabled.
+- ✅ The register sidecar can now mark the static caller window as
+  `caller_b07d_window=1`; older v3 sidecars continue to be read as provenance
+  without the new flag.
 
 ## 2026-08-10 — README capture is reference-only
 
@@ -1771,47 +1796,50 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-10 — File-select replay still lacks regular-spawn handoff
 
-- ✅ Kompletta `Run → Button I → rörelse`-replayen mot verklig US Track 02
-  gav 28 autentiserade CD→RAM-originreceipts och 32 `$E009`-dispatchar.
-- 🔒 Samma session gav noll `$B0E5`, RNG-returner, spawn-consumer reads och
-  target writes. Nästa capture måste nå en verifierad dungeon-tick innan
-  RNG/AI/generator/T700/T900 eller loot kan implementeras.
+- ✅ The complete `Run → Button I → movement` replay against authentic US
+  Track 02 produced 28 authenticated CD→RAM origin receipts and 32 `$E009`
+  dispatches.
+- 🔒 The same session produced zero `$B0E5` hits, RNG returns, spawn-consumer
+  reads, or target writes. The next capture must reach a verified dungeon
+  tick before RNG/AI/generator/T700/T900 or loot can be implemented.
 
 ## 2026-08-10 — save-state replay reaches only a rejected `$B0E5` overlay
 
-- ✅ En autentisk Mednafen-save-state kördes mot den kompletta råa
-  MODE1/2352-US-CUE:n på extern disk. Capturen verifierade Track 02-hashen
-  `f23601102138f87c33025877767ebf76` och observerade 30 träffar på `$B0E5`.
-- 🔒 Samtliga träffar hade A=`$2C` eller A=`$85`, inte disassemblyns giltiga
-  regular-spawn-kategorier 0–3. Parsern avvisar därför korrekt träffarna som
-  samma-adress-overlay; ingen RNG-return, spawnrecord, AI, loot, T700 eller
-  T900-semantik öppnas. Den tidigare 2048-byte CUE-körningen avvisades också
-  eftersom den saknade authenticated CD→RAM-origin.
+- ✅ An authentic Mednafen save state was run against the complete raw
+  MODE1/2352 US CUE on the external drive. The capture verified Track 02 hash
+  `f23601102138f87c33025877767ebf76` and observed 30 `$B0E5` hits.
+- 🔒 Every hit had A=`$2C` or A=`$85`, not disassembly's valid regular-spawn
+  categories 0–3. The parser therefore correctly rejects these hits as
+  same-address overlays; no RNG return, spawn record, AI, loot, T700, or T900
+  semantics are enabled. The earlier 2,048-byte CUE run was also rejected
+  because it lacked authenticated CD→RAM origin.
 
 ## 2026-08-10 — complete US CUE capture remains transport-only
 
-- ✅ Kompletta `TQUS.cue` med 19 spår kördes från extern disk. Track 02
-  rekonstruerades med arkivets verkliga `TQUS19.iso + TQUS02End.iso`.
-- 🔒 Sessionen gav 159 råsektorer, 88 spawn-registersamples, 17 `$4644` och
-  64 `$4667`, men noll giltiga `$B0E5`, RNG-windows, spawn-consumer reads eller
-  target writes. Semantiska konsumenter är fortsatt stängda.
+- ✅ Complete `TQUS.cue` with 19 tracks was run from the external drive.
+  Track 02 was reconstructed from the archive's authentic
+  `TQUS19.iso + TQUS02End.iso`.
+- 🔒 The session produced 159 raw sectors, 88 spawn-register samples, 17
+  `$4644` and 64 `$4667` samples, but zero valid `$B0E5` hits, RNG windows,
+  spawn-consumer reads, or target writes. Semantic consumers remain closed.
 
 ## 2026-08-10 — all decoded Track 02 occurrences retained; consumers gated
 
-- ✅ Den riktiga US-kampanjen behåller nu alla 2 266 autentiska ground-reference-
-  occurrences i world source-ledgern, inklusive control records och carried
-  objects. Detta är lossless provenance från Track 02, inte syntetisk data.
-- 🔒 Originalets RNG, spawn-timing, creature-AI, attack/skada/loot, T700/T900,
-  itemsemantik och source-bound presentation/ljud är fortsatt spärrade tills
-  deras riktiga consumers är bundna av disassembly och samma-körnings-capture.
+- ✅ The real US campaign now retains all 2,266 authentic ground-reference
+  occurrences in the world source ledger, including control records and
+  carried objects. This is lossless provenance from Track 02, not synthetic
+  data.
+- 🔒 Original RNG, spawn timing, creature AI, attack/damage/loot, T700/T900,
+  item semantics, and source-bound presentation/audio remain gated until
+  their real consumers are bound by disassembly and a same-run capture.
 
-## 2026-08-10 — inputfix klar; semantikspärrar kvar
+## 2026-08-10 — Input fix complete; semantic gates remain
 
-- ✅ Held WASD/piltangent-input är nu kopplad till Therons egen tick-cadence.
-  Vanlig mus rör pekaren fritt utan objekt-hopp; Button I/II och touch är
-  oförändrade.
-- 🔒 Detta ändrar inte den separata spärren för originalets RNG, creature-AI,
-  T700/T900, objectrecords eller source-bound ljud/presentation.
+- ✅ Held WASD/arrow-key input is now connected to Theron's own tick cadence.
+  The ordinary mouse moves the pointer freely without object jumping; Button
+  I/II and touch are unchanged.
+- 🔒 This does not change the separate gate on original RNG, creature AI,
+  T700/T900, object records, or source-bound audio/presentation.
 
 ## 2026-08-10 — remaining creature semantics are source-capture gated
 
@@ -1823,253 +1851,258 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-10 — cold-start transport witness is still semantically negative
 
-- ✅ En extern cold-start mot US Track 02 verifierade 159 råsektorer, 32
-  `$E009`-dispatchar, två CD→RAM-originreceipts, 17 `$4644`- och 64
-  `$4667`-observationer samt VDC/VCE-snapshots i samma autentiserade session.
-- 🔒 Samma körning gav noll `$B0E5`, noll specialgren, noll RNG-fönster och
-  noll målskrivningar. Implementera inte RNG, spawn, AI, strid, loot,
-  generatorer, T700 eller T900 från detta; nästa witness måste fånga en
-  faktisk dungeon-/spawn- eller objektkonsument.
-- ✅ 2026-08-20 uppföljningen band det första spelägda `$3840`-anropets
-  färdiga `$2800`-block byteexakt till US Track 02-post `$4E0` vid nästa
-  `$3840`-dispatch. Transport- och destinationsleden är därmed bevisade.
-- 🔒 Payloadens interna grammatik och den efterföljande VDC-/dungeon-
-  konsumenten är fortfarande inte bundna. Använd inte sektorbindningen för
-  att öppna RNG, spawn, AI, strid, loot, T700/T900 eller native dungeonritning.
+- ✅ An external cold start against US Track 02 verified 159 raw sectors, 32
+  `$E009` dispatches, two CD→RAM origin receipts, 17 `$4644` and 64 `$4667`
+  observations, and VDC/VCE snapshots in the same authenticated session.
+- 🔒 The same run produced zero `$B0E5` hits, special branches, RNG windows,
+  or target writes. Do not implement RNG, spawning, AI, combat, loot,
+  generators, T700, or T900 from this; the next witness must capture an
+  actual dungeon/spawn or object consumer.
+- ✅ The 2026-08-20 follow-up byte-exactly bound the completed `$2800` block
+  from the first game-owned `$3840` call to US Track 02 record `$4E0` at the
+  next `$3840` dispatch. The transport and destination chain are therefore
+  proven.
+- 🔒 The payload's internal grammar and the subsequent VDC/dungeon consumer
+  remain unbound. Do not use the sector binding to enable RNG, spawning, AI,
+  combat, loot, T700/T900, or native dungeon rendering.
 
 ## 2026-08-10 — VDC/VCE screen-space capture admission
 
-- ✅ Produktionsintaget har nu en stängd allow-list för fem verifierade
-  kompletta VRAM/VCE-hashpar. US-dungeon, US-interaktiv, JP-start och
-  US-cold-start passerar den riktiga BAT/tile/palett-bindningen och M11-
-  presentationen från extern disk.
-- 🔒 Detta är fortfarande en skärmkvittens. Square-to-tile, perspektiv,
-  HUD-/objektkonsument, monster, RNG, T700 och T900 öppnas inte av en
-  screen-space-snapshot.
+- ✅ Production intake now has a closed allowlist of five verified complete
+  VRAM/VCE hash pairs. US dungeon, US interactive, JP startup, and US cold
+  start pass the authentic BAT/tile/palette binding and M11 presentation
+  from the external drive.
+- 🔒 This remains a screen receipt. A screen-space snapshot does not enable
+  square-to-tile, perspective, HUD/object consumer, monster, RNG, T700, or
+  T900 behavior.
 
-## 2026-08-09 — aktuell kalla capture har endast transportbevis
+## 2026-08-09 — Current cold capture has transport evidence only
 
-- ✅ Den autentiska US-körningen når `transition=observed` och ger fyra
-  byteidentiska source-backed CD→RAM-receipts som nu kan verifieras i båda
-  receiptformaten.
-- 🔒 Samma körning har inga `pce_cd_fifo_origin_main_ram_consumer`-rader och
-  ingen RNG-return/spawn-entry. Originalets creature-, T700-, T900-, item-,
-  grafik- och ljudsemantik får därför fortfarande inte implementeras från
-  denna transport-only evidens.
+- ✅ The authentic US run reaches `transition=observed` and produces four
+  byte-identical source-backed CD→RAM receipts that can now be verified in
+  both receipt formats.
+- 🔒 The same run has no `pce_cd_fifo_origin_main_ram_consumer` rows and no
+  RNG return/spawn entry. Original creature, T700, T900, item, graphics, and
+  audio semantics therefore still must not be implemented from this
+  transport-only evidence.
 
-## 2026-08-09 — nästa capture kräver aktiv dungeon
+## 2026-08-09 — Next capture requires an active dungeon
 
-- 🔧 Capture-scriptets macOS-input-grab är nu retry-säkert och väntar på både
-  Quartz-kvitto och Mednafen-gjord `InputGrab=1` innan sekvensen skickas.
-- 🔒 Nästa autentiserade körning måste använda den verifierade startupkedjan
-  till Akutuba och därefter nå aktiv dungeon; den tidigare bounded-körningen
-  stannade före game-owned CD→RAM-consumer. RNG, spawn, AI, T700, T900 och
-  presentation är fortsatt spärrade tills samma körning binder konsumenterna.
+- 🔧 The capture script's macOS input grab is now retry-safe and waits for
+  both a Quartz receipt and Mednafen-reported `InputGrab=1` before sending
+  the sequence.
+- 🔒 The next authenticated run must use the verified startup sequence to
+  Akutuba and then reach an active dungeon; the previous bounded run stopped
+  before the game-owned CD→RAM consumer. RNG, spawning, AI, T700, T900, and
+  presentation remain gated until one run binds those consumers.
 
-## 2026-08-09 — summary-only original-consumer admission stängd
+## 2026-08-09 — Summary-only original-consumer admission closed
 
-- ✅ Runtime-admission kräver nu råa, exakt sammanfogade
-  `pce_cd_fifo_origin_main_ram_receipt`/`...consumer`-rader i samma capture
-  för palett-, non-startup- och object-table-offsetarna. Ett sammanfattnings-
-  kvitto utan dessa rows öppnar inte längre original-consumersemantik.
-- 🔒 Den riktiga externa US-sessionen är fortfarande korrekt blockerad: den
-  har två CD→RAM-originreceipts men ingen game-owned FIFO-consumer. Nästa
-  steg är en ny autentiserad session som faktiskt producerar dessa rader;
-  RNG, spawn, AI, T700, T900, rendering och save förblir stängda tills dess.
+- ✅ Runtime admission now requires raw, exactly joined
+  `pce_cd_fifo_origin_main_ram_receipt`/`...consumer` rows in the same
+  capture for palette, non-startup, and object-table offsets. A summary
+  receipt without these rows no longer enables original-consumer semantics.
+- 🔒 The authentic external US session remains correctly blocked: it has two
+  CD→RAM origin receipts but no game-owned FIFO consumer. The next step is a
+  new authenticated session that actually produces these rows; RNG,
+  spawning, AI, T700, T900, rendering, and save remain closed until then.
 
-## 2026-08-09 — kombinerad cold-start fortfarande utan spawnretur
+## 2026-08-09 — Combined cold start still has no spawn return
 
-- 🔒 En ny bounded cold-start på autentisk US Track 02 gav 256 verifierade
-  CD→RAM-originreceipts, 26 `$E009`, 33 `$4644` och 96 `$4667` i samma
-  session, men noll `$B0E5`, RNG-samples och `.rng-code`-windows. De
-  förkonsumenterna är därför inte en RNG-retur eller spawnhändelse.
-- 🔧 Capture-scriptets `pce_fast`-gate avvisar nu builds som bara innehåller
-  `pce_fast`-strängar men inte annonserar modulen i Mednafen:s egen modulista.
+- 🔒 A new bounded cold start on authentic US Track 02 produced 256 verified
+  CD→RAM origin receipts, 26 `$E009`, 33 `$4644`, and 96 `$4667` events in
+  the same session, but zero `$B0E5` events, RNG samples, or `.rng-code`
+  windows. These pre-consumer events therefore do not constitute an RNG
+  return or spawn event.
+- 🔧 The capture script's `pce_fast` gate now rejects builds that contain
+  `pce_fast` strings but do not advertise the module in Mednafen's own module
+  list.
 
-## 2026-08-09 — råkodens source-byte-join verifierad
+## 2026-08-09 — Raw-code source-byte join verified
 
-- ✅ Parsern för `.rng-code` kräver nu sidecar-header, korrekt `$5D64/$5D6A`,
-  256 byte hexkod, HuC6280-adressgräns och den riktiga 8 104 992-byte US
-  Track 02-filen. Den jämför hela fönstret mot de sju observerade offsetarna
-  `0x975c4 + n*0x49800` och körs med den riktiga externa capture-receipten.
-- 🔒 Det här bevisar byteproveniens men inte mappad bank, RNG-returvärde,
-  caller, spawnkategori eller gameplaysemantik. Nästa witness måste fortfarande
-  binda samma körning till den riktiga retur- och spawnkonsumenten.
+- ✅ The `.rng-code` parser now requires a sidecar header, correct
+  `$5D64/$5D6A`, 256 bytes of hex code, a valid HuC6280 address range, and
+  the authentic 8,104,992-byte US Track 02 file. It compares the complete
+  window against the seven observed offsets `0x975c4 + n*0x49800` and runs
+  against the authentic external capture receipt.
+- 🔒 This proves byte provenance, but not the mapped bank, RNG return value,
+  caller, spawn category, or gameplay semantics. The next witness must still
+  bind the same run to the real return and spawn consumers.
 
-## 2026-08-09 — rå RNG-kod fångad, semantiken fortfarande spärrad
+## 2026-08-09 — Raw RNG code captured; semantics remain gated
 
-- 🔧 Capture-scriptet och den reproducerbara Mednafen-patchkedjan skriver nu
-  `.rng-code` med 256 faktiska byte vid `$5D64/$5D6A`, logisk PC och fysisk
-  HuC6280-adress. En autentiserad `.mc0`-körning gav `$5D64`, 50 `$B0E5`-
-  entries och 512 instruktionsprover.
-- 🔒 Körningen saknade CD→RAM-originreceipts och visade ingen verifierad
-  RNG-returägare. Råkodsidecaren får därför inte användas för att hitta på
-  RNG-värden, monsterstats, AI, loot, T700 eller T900.
+- 🔧 The capture script and reproducible Mednafen patch chain now write
+  `.rng-code` with 256 actual bytes at `$5D64/$5D6A`, logical PC, and physical
+  HuC6280 address. An authenticated `.mc0` run produced `$5D64`, 50 `$B0E5`
+  entries, and 512 instruction samples.
+- 🔒 The run lacked CD→RAM origin receipts and showed no verified RNG return
+  owner. The raw-code sidecar must therefore not be used to invent RNG
+  values, monster stats, AI, loot, T700, or T900 behavior.
 
-## 2026-08-09 — kvarvarande Theron-semantik efter teleporterfix
+## 2026-08-09 — Remaining Theron semantics after teleporter fix
 
-- 🔧 Den externa Mednafen-capturen har nu en explicit förlängd, begränsad
-  registergräns. En autentiserad `.mc0`-körning nådde `$B0E5` och `$5D64`,
-  medan en separat cold-start bevisade CD→RAM-transport och `$4644`/`$4667`.
-  Sessionerna hålls separata; inget RNG-, spawn-, AI-, T700- eller T900-
-  resultat publiceras från dem.
+- 🔧 The external Mednafen capture now has an explicitly extended, bounded
+  register limit. An authenticated `.mc0` run reached `$B0E5` and `$5D64`,
+  while a separate cold start proved CD→RAM transport and `$4644`/`$4667`.
+  The sessions remain separate; neither publishes RNG, spawn, AI, T700, or
+  T900 results.
 
-- 🔒 RNG-return, levande creature-AI, attacker/skada/loot, generatorernas
-  timing, T700-statistik och T900-regler är fortfarande spärrade tills samma
-  autentiserade runtime-capture binder deras riktiga konsumenter.
-- 🔒 Dungeonmaterialbank, perspektiv/square-to-tile, VCE-palettägare,
-  bitmapdekomprimering, US-textconsumer, JP-porträtt och ljud/ADPCM/SFX-
-  konsument är fortfarande separata source-join-gates.
+- 🔒 RNG return, live creature AI, attacks/damage/loot, generator timing,
+  T700 stats, and T900 rules remain gated until the same authenticated
+  runtime capture binds their real consumers.
+- 🔒 Dungeon material bank, perspective/square-to-tile, VCE palette ownership,
+  bitmap decompression, US text consumer, JP portraits, and audio/ADPCM/SFX
+  consumer remain separate source-join gates.
 
-## 2026-08-09 — native SDL-capture verifierad men semantik fortsatt spärrad
+## 2026-08-09 — Native SDL capture verified but semantics remain gated
 
-- ✅ Capture-scriptet accepterar nu en autentiserad instrumenterad Mednafen-
-  PCE-binär även när dess `-help` saknar modul-listan. Fallbacken kräver
-  binärsignaturerna för PCE CD-kärnan och lämnar media-, runtime- och
-  semantikgates oförändrade.
-- 🔒 En riktig körning med native SDL 2.32.10, USA Track 02, System Card och
-  savestate producerade VDC/VCE-snapshots och autentiserade input/CD-start-
-  receipts, men nådde inte game-owned CD→RAM-consumer: `host_keys=0`,
-  `authenticated_cd_ram=0` och inga dynamiska RNG/creature/AI/T700/T900-
-  receipts. Ingen semantik får därför öppnas från denna körning.
+- ✅ The capture script now accepts an authenticated instrumented Mednafen
+  PCE binary even when its `-help` output lacks the module list. The fallback
+  requires the PCE CD-core binary signatures and leaves media, runtime, and
+  semantic gates unchanged.
+- 🔒 A real run with native SDL 2.32.10, US Track 02, System Card, and a save
+  state produced VDC/VCE snapshots and authenticated input/CD-start receipts,
+  but did not reach the game-owned CD→RAM consumer: `host_keys=0`,
+  `authenticated_cd_ram=0`, and no dynamic RNG/creature/AI/T700/T900 receipts.
+  No semantics may therefore be enabled from this run.
 
-## 2026-08-09 — verifierad spärr för senare-nivåns frame-chain
+## 2026-08-09 — Verified gate on later-level frame chain
 
-- 🔒 Äkta US/JP senare-nivåblock och deras sexbytesframing är hashverifierade,
-  men ett direkt försök att köra US nivå 1 genom den platta host-liften
-  stannar vid `DECODE_POINTER_TABLE`, även när den gemensamma `$E8`-prologen
-  endast används som diagnostiskt seed. Det är ett negativt bevis, inte en
-  anledning att skapa en tabell.
-- 🔧 Nästa capture måste binda rekursionen `$23DC -> $23AD`, frame-chainens
-  slut, destinationspekaren, MPR-tabellen `$3B7E-$3B85` och den efterföljande
-  `$2600`-konsumenten i samma autentiserade körning. Fram till dess är
-  bitmap/tileatlas, square-to-tile, perspektiv, VCE-palett och objektsemantic
-  fortsatt stängda.
+- 🔒 Authentic US/JP later-level blocks and their six-byte framing are
+  hash-verified, but a direct attempt to run US level 1 through the flat host
+  lift stops at `DECODE_POINTER_TABLE`, even when the shared `$E8` prologue
+  is used only as a diagnostic seed. This is negative evidence, not a reason
+  to create a table.
+- 🔧 The next capture must bind the `$23DC -> $23AD` recursion, end of the
+  frame chain, destination pointer, MPR table `$3B7E-$3B85`, and the following
+  `$2600` consumer in the same authenticated run. Until then, bitmap/tile
+  atlas, square-to-tile, perspective, VCE palette, and object semantics
+  remain closed.
 
-## 2026-08-09 — kvarvarande source-semantik efter dungeon-lookup-fix
+## 2026-08-09 — Remaining source semantics after dungeon lookup fix
 
-- 🔒 Dungeon-aware source-creature lookup är verifierad. Den stora spärren
-  kvarstår: originalets `$B0E5`/`$4644`/`$4667`-RNG/spawnretur, T500/T600-AI
-  och attack/skada/loot, T700-statkonsument samt T900 object/inventory-ägare
-  har ännu inget komplett autentiserat runtime-bevis och får därför inte
-  ersättas med hostdata.
+- 🔒 Dungeon-aware source-creature lookup is verified. The major gate remains:
+  the original `$B0E5`/`$4644`/`$4667` RNG/spawn return, T500/T600 AI and
+  attack/damage/loot, T700 stat consumer, and T900 object/inventory ownership
+  still lack complete authenticated runtime evidence and must not be replaced
+  with host data.
 
-## 2026-08-09 — kvarvarande startupspärr efter InputGrab-bevis
+## 2026-08-09 — Remaining startup gate after InputGrab evidence
 
-- 🔒 Den nya v15-capture-binären bekräftar Mednafen-ägda
-  `input_grab_state enabled=1` efter den riktiga macOS-
-  `Ctrl+Shift+G`-chorden. `Z`/`X` levereras som SDL-scancode 29/27 och
-  Run som 40, men den autentiska US Track 02-körningen står fortfarande i
-  System Card/BIOS: 47 PCE-inputtransaktioner, 2 IRQ2-callbacks, 0 råa
-  sektorer och alla PCE-läsningar returnerar `0x3f`. Nästa steg är därför
-  startup-/CD-frame progression med autentisk runtime, inte fler host-
-  tangentbindningar. Ingen RNG-, creature-, AI-, T700- eller T900-semantik
-  får öppnas från denna negativa capture.
+- 🔒 The new v15 capture binary confirms Mednafen-owned
+  `input_grab_state enabled=1` after the real macOS `Ctrl+Shift+G` chord.
+  `Z`/`X` are delivered as SDL scancodes 29/27 and Run as 40, but the
+  authentic US Track 02 run remains in the System Card/BIOS: 47 PCE input
+  transactions, 2 IRQ2 callbacks, 0 raw sectors, and every PCE read returns
+  `0x3f`. The next step is therefore startup/CD frame progression with the
+  authentic runtime, not more host key bindings. No RNG, creature, AI, T700,
+  or T900 semantics may be enabled from this negative capture.
 
 ## 2026-08-09 — loader-write instrumentation
 
-- 🔧 Capture-builden applicerar nu en post-patch `v3`
-  `main_ram_loader_write`-hook. En ny riktig Mednafen-körning med en native
-  SDL2-runtime återstår; den kompilerade lokala binären är därför ännu inte
-  ett runtimebevis.
+- 🔧 The capture build now applies a post-patch `v3`
+  `main_ram_loader_write` hook. A new real Mednafen run with a native SDL2
+  runtime is still needed; the compiled local binary is therefore not yet
+  runtime evidence.
 
-## 2026-08-09 — efter byte-dekomprimeringslyftet
+## 2026-08-09 — After the byte-decompression lift
 
-- 🔒 Den fullständiga retailrutinen `$23AD–$252A` är nu lyft på byte-nivå och
-  testad med säkra gränser. Nästa nödvändiga bevis är samma-capture MPR-tabell,
-  destination och pointer-table-state från stage-2 för en verklig senare nivå.
-  Utan den får de autentiska avkodade bytesen inte kallas tileatlas, bitmap,
-  dungeonmap eller objektrecord.
-- 🔧 Bind `theron_v1_huc6280_decode_resource()` till en sådan autentiserad
-  runtime-window och kontrollera resultatets längd/hash mot spelkonsumentens
-  CD-sektor och `$2600`-RAM. Därefter kan atlasbindning och square-to-tile-
-  mappning tas vidare; RNG/AI/T700/T900 förblir separata capture-gates.
+- 🔒 The complete retail routine `$23AD–$252A` has now been lifted at the
+  byte level and tested with safe bounds. The next required evidence is the
+  MPR table, destination, and pointer-table state from stage 2 in the same
+  capture for a real later level. Without it, the authentic decoded bytes
+  must not be called a tile atlas, bitmap, dungeon map, or object record.
+- 🔧 Bind `theron_v1_huc6280_decode_resource()` to such an authenticated
+  runtime window and check the result length/hash against the game consumer's
+  CD sector and `$2600` RAM. Atlas binding and square-to-tile mapping can
+  then proceed; RNG/AI/T700/T900 remain separate capture gates.
 
-## 2026-08-09 — fortsatt autentisk runtimecapture
+## 2026-08-09 — Continued authentic runtime capture
 
-- 🔒 Den senaste rena v3-capturen använde replayen
-  `run@8:60,i@480:30,i@900:30,i@1320:30,i@1800:30` på äkta US Track 02.
-  Alla fem scripted events verifierades på PCE-bussen: Run=`0x0008` och
-  Button I=`0x0001`. Capturen producerade 5 943 inputprover, 161 råa sektorer
-  och 87 MPR-bundna spawnregisterprover. Den nådde fortfarande inte `$B0E5`,
-  någon spelägd dynamisk CD-läsning eller ett dynamiskt returkontrakt; RNG,
-  creatures, AI, loot, T700 och T900 förblir därför spärrade.
+- 🔒 The latest clean v3 capture used replay
+  `run@8:60,i@480:30,i@900:30,i@1320:30,i@1800:30` on authentic US Track
+  02. All five scripted events were verified on the PCE bus: Run=`0x0008`
+  and Button I=`0x0001`. The capture produced 5,943 input samples, 161 raw
+  sectors, and 87 MPR-bound spawn-register samples. It still did not reach
+  `$B0E5`, a game-owned dynamic CD read, or a dynamic return contract; RNG,
+  creatures, AI, loot, T700, and T900 therefore remain gated.
 
-- 🔒 En ny 120-sekunders v3-capture med replayen `run@8:60,i@480:30,i@900:30`
-  använder nu den korrekta startupsekvensen Run följt av Button I på äkta US
-  Track 02-media. Den verifierade PCE-inputreceipten innehåller 10 145
-  inputprover, `I=0x0001` och `Run=0x0008`, samt 161 råa sektorer och 215
-  spawnregisterprover. Capturen saknar fortfarande `$B0E5`, spelägd dynamisk
-  CD-läsning och `$C96B/$CC4C`-konsumentretur; den avvisas därför fortsatt av
-  den strikta grinden och får inte driva T900, RNG, AI, loot eller T700.
-- 🔒 Den nya v3-sidecaren är nu strikt: en semantisk spawn-korrelation måste
-  observera `LB0E5` (`$B0E5`) i samma körning som `$4644`/`$4667`, konsument-
-  fönstren och det dynamiska returkontraktet. En v3-capture nådde 161 äkta
-  Track 02-sektorer och 87 registerprover men saknade `$B0E5`; den avvisas
-  därför korrekt och får inte driva T900, RNG, AI, loot eller T700.
+- 🔒 A new 120-second v3 capture with replay
+  `run@8:60,i@480:30,i@900:30` now uses the correct startup sequence of Run
+  followed by Button I on authentic US Track 02 media. The verified PCE
+  input receipt contains 10,145 input samples, `I=0x0001`, `Run=0x0008`,
+  161 raw sectors, and 215 spawn-register samples. The capture still lacks
+  `$B0E5`, a game-owned dynamic CD read, and `$C96B/$CC4C` consumer return; it
+  therefore remains rejected by the strict gate and must not drive T900,
+  RNG, AI, loot, or T700.
+- 🔒 The new v3 sidecar is now strict: a semantic spawn correlation must
+  observe `LB0E5` (`$B0E5`) in the same run as `$4644`/`$4667`, the consumer
+  windows, and the dynamic return contract. A v3 capture reached 161
+  authentic Track 02 sectors and 87 register samples but lacked `$B0E5`; it
+  is therefore correctly rejected and must not drive T900, RNG, AI, loot, or
+  T700.
 
-- 🔒 Om komma/punkt inte reagerar i en native Mac-körning ska fångsten först
-  ha ett godkänt Quartz-hjälparbygge och Mednafen måste ha input-grab aktivt.
-  `Z`/`X` är den layoutstabila Button I/II-fallbacken. Detta påverkar inte
-  spärren för spelägd CD-läsning eller den senare RNG/AI/T700/T900-semantiken.
-- 🔧 macOS global-HID-hjälparen rapporterar nu den observerade frontmost-PID:n
-  och använder den som fokusbevis. En lokal körning stoppades fortfarande när
-  macOS höll ett annat fönster frontmost; detta är ännu inte ett spelägt
-  input- eller CD-handoffbevis.
-- ✅ En separat execution-window-parser godkänner nu den riktiga state-capturens
-  2 048 registerprover i `$C96B–$CA69`/`$CC4C–$CD13` även när `$4644` och
-  `$4667` saknas. Register-PC:n valideras mot HuC6280:s fulla 21-bitars
-  bankadressrymd i stället för felaktigt enbart `$1fxxxx`.
-- 🔒 Den strikta semantikgrinden kräver fortfarande `$B0E5`-spawnentry,
-  `$4644`-preconsumer, `$4667`-helper och dynamiskt returkontrakt. Den nya
-  receipt-vägen publicerar inga RNG-, creature-, AI-, loot-, T700- eller
-  T900-regler.
-- 🔧 Förena i en och samma autentiserade körning `$4644`/`$4667`, hela
-  `$C96B–$CA69`-konsumentfönstret och de RAM-läsningar som instrumenteras som
-  `spawn_consumer_read`. Nyspelsreplay bevisar nu preconsumer/helper, medan
-  state-autoload bevisar `$C96B`-fönstret; två separata körningar får inte
-  blandas till ett syntetiskt spawnrecord.
-- ✅ Macens Mednafen-profil har nu en fungerande input-grab-genväg på
-  `Ctrl+Shift+G`; standardens `Ctrl+Shift+Menu` fungerar inte på tangentbord
-  utan Menu-tangent. Därmed kan explicit konfigurerade komma/punkt-bindningar
-  för Button I/II nå den emulerade PCE-handkontrollen.
-- 🔧 Capture-scriptet verifierar nu själva PCE-wiremaskerna i varje scripted
-  input-receipt: Button I `0x0001`, Button II `0x0002`, Select `0x0004`, Run
-  `0x0008` och riktningsbitarna `0x0010..0x0080`. En gammal eller felbyggd
-  Mednafen-binär stoppas i stället för att kunna ge ett falskt positivt
-  inputunderlag. Den nya rena instrumenteringen passerar maskkontrollen med
-  riktig US Track 02-media; spelägd CD-läsning är fortfarande nästa spärr.
+- 🔒 If comma/period do not respond in a native Mac run, the capture must
+  first have an approved Quartz helper build and Mednafen must have input grab
+  active. `Z`/`X` are the layout-stable Button I/II fallback. This does not
+  affect the gate on game-owned CD reads or later RNG/AI/T700/T900 semantics.
+- 🔧 The macOS global-HID helper now reports the observed frontmost PID and
+  uses it as focus evidence. A local run was still stopped when macOS kept
+  another window frontmost; this is not yet evidence of game-owned input or
+  CD handoff.
+ - ✅ A separate execution-window parser now accepts the real state capture's
+  2,048 register samples in `$C96B–$CA69`/`$CC4C–$CD13` even when `$4644` and
+  `$4667` are absent. Register PCs are validated against the HuC6280's full
+  21-bit bank address space rather than incorrectly requiring only `$1fxxxx`.
+- 🔒 The strict semantic gate still requires the `$B0E5` spawn entry,
+  `$4644` pre-consumer, `$4667` helper, and dynamic return contract. The new
+  receipt path publishes no RNG, creature, AI, loot, T700, or T900 rules.
+- 🔧 Combine `$4644`/`$4667`, the complete `$C96B–$CA69` consumer window, and
+  the RAM reads instrumented as `spawn_consumer_read` in one authenticated
+  run. The new-game replay now proves the pre-consumer/helper, while the
+  state autoload proves the `$C96B` window; two separate runs must not be
+  combined into a synthetic spawn record.
+- ✅ The Mac Mednafen profile now has a working input-grab shortcut at
+  `Ctrl+Shift+G`; the default `Ctrl+Shift+Menu` does not work on keyboards
+  without a Menu key. Explicitly configured comma/period bindings can thus
+  reach the emulated PCE controller for Button I/II.
+- 🔧 The capture script now verifies the actual PCE wire masks in each
+  scripted input receipt: Button I `0x0001`, Button II `0x0002`, Select
+  `0x0004`, Run `0x0008`, and direction bits `0x0010..0x0080`. An old or
+  incorrectly built Mednafen binary is stopped rather than allowed to
+  produce false-positive input evidence. The new clean instrumentation
+  passes the mask check with authentic US Track 02 media; game-owned CD
+  reading remains the next gate.
 
-## 2026-08-08 — nästa T900-bevis
+## 2026-08-08 — Next T900 evidence
 
-- 🔧 Inputtransporten är nu verifierad med riktiga PCE-wiremasker och lokal
-  macOS-profil: Button I `Z`, Button II `X` (layout-stabila SDL-bindningar).
-  Komma/punkt får bara användas när de uttryckligen finns i `mednafen.cfg`.
-  IRQ2-tracen har nu korrekt MPR-baserad fysisk PC-proveniens. Fortsätt fånga den saknade
-  spelägda CD-läsningen efter de 161 autentiska Track 02-sektorerna innan
-  någon RNG-, AI-, T700- eller T900-semantik aktiveras.
+- 🔧 Input transport is now verified with real PCE wire masks and the local
+  macOS profile: Button I `Z`, Button II `X` (layout-stable SDL bindings).
+  Comma/period may only be used when explicitly present in `mednafen.cfg`.
+  The IRQ2 trace now has correct MPR-based physical-PC provenance. Continue
+  capturing the missing game-owned CD read after the 161 authentic Track 02
+  sectors before enabling any RNG, AI, T700, or T900 semantics.
 
-- 🔧 Använd den sparade source-spawnkategorin när den autentiserade RNG-
-  konsumenten fångas. Kategorin är nu provenance i live-poolen, men får inte
-  driva HP, AI, attack eller generatorer innan `$4667`/`$5D64`/`$5D6A` är
-  runtimebundna.
+- 🔧 Use the saved source spawn category when the authenticated RNG consumer
+  is captured. The category is now provenance in the live pool, but must not
+  drive HP, AI, attacks, or generators until `$4667`/`$5D64`/`$5D6A` are
+  bound at runtime.
 
-- 🔧 Råa itemrecords följer nu inventory genom pickup, drop och save/load.
-  Bind den ursprungliga T900-konsumenten för equip/use/stack och validera
-  dess state-skrivningar mot samma bytes innan någon regel aktiveras.
+- 🔧 Raw item records now follow inventory through pickup, drop, and save/load.
+  Bind the original T900 consumer for equip/use/stack and validate its state
+  writes against the same bytes before enabling any rules.
 
-- 🔧 Kör den befintliga Mednafen/System Card-capturevägen med originalmedia
-  för att ersätta `ram_consumer_2600=not_present`; utan den fångsten ska
-  T700/T900-statistik, loot, AI och generatorlogik fortsatt neka mutation.
+- 🔧 Run the existing Mednafen/System Card capture path with original media
+  to replace `ram_consumer_2600=not_present`; without that capture, T700/T900
+  stats, loot, AI, and generator logic must continue to reject mutation.
 
-- 🔧 Bind den bevarade US-textcodonströmmen till originalets HuC6280
-  textkonsument och kontrollkodtabell. Loadern får inte göra en hoststräng av
-  `{...}`-värden innan den kedjan är fångad.
+- 🔧 Bind the preserved US text codon stream to the original HuC6280 text
+  consumer and control-code table. The loader must not turn `{...}` values
+  into a host string before that chain is captured.
 
-- 🔧 CDDA-intag och stream-handoff är verifierade mot den lokala original-RAR-
-  korpusen. Bind fortfarande originalets spelhändelser till rätt CDDA/ADPCM-
-  eller SFX-konsument innan ljud triggas från creature-, actuator- eller
-  menylogik.
+- 🔧 CDDA intake and stream handoff are verified against the local original
+  RAR corpus. Still bind original game events to the correct CDDA/ADPCM or
+  SFX consumer before triggering audio from creature, actuator, or menu logic.
 
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 
@@ -2092,19 +2125,20 @@ physical MODE1 sectors are validated in JP/US media. Its payload role remains
 
 ## Theron Original SRM Body Correlation Follow-up (2026-07-11)
 
-2026-08-20: den lokala Mednafen-korpusen innehåller autentiska 2 KiB PC Engine
-Backup RAM-filer med `HUBM`-header och Theron-markören `DMS-SG.001`. En senare,
-originalägd save-transaktion gav dessutom en icke-tom fil där byte `$20` är
-`$01`. Den autentiserade filhanteraren läser och skriver hela `$0199` byte:
-tre `$88`-bytesplatser och originalets valda platsindex. Den separat
-autentiserade skrivarrutinen bygger de första `$86` byten i den valda platsen
-från RAM med början vid `$267C`; platsens första byte motsvarar därmed direkt
-den serialiserade kampanjbyten `$267C`. Dess låga sju bitar har i sin tur
-bundits till originalets ordningsstyrda artefakthämtning. Firestaff kan därför
-återställa just kampanjmasken från den verkliga filen när Track 02-källkedjan
-är hashverifierad. Detta gör inte filen till ett spelbart Fortsätt-läge:
-aktuell bana, grupp, inventarier, de två platssvansbyten och resten av
-409-byteposten är fortfarande okända och får inte tillskrivas semantik.
+2026-08-20: The local Mednafen corpus contains authentic 2 KiB PC Engine
+Backup RAM files with a `HUBM` header and the Theron marker `DMS-SG.001`. A
+later, original-owned save transaction also produced a nonempty file where
+byte `$20` is `$01`. The authenticated file handler reads and writes the full
+`$0199` bytes: three `$88`-byte slots and the original selected-slot index.
+The separately authenticated writer routine builds the first `$86` bytes of
+the selected slot from RAM starting at `$267C`; the slot's first byte thus
+directly corresponds to the serialized campaign byte at `$267C`. Its low
+seven bits have in turn been bound to the original ordered artifact pickup.
+Firestaff can therefore restore this campaign mask from the real file when
+the Track 02 source chain is hash-verified. This does not make the file a
+playable Continue state: the current level, party, inventory, the two slot
+tail bytes, and the rest of the 409-byte record remain unknown and must not
+be assigned semantics.
 
 Startup now exposes only fully gzip-trailer-authenticated unknown Save Disk
 containers as opaque transfer candidates. They remain unavailable to Continue,
@@ -2123,35 +2157,34 @@ slot selection is now source-bound through
 `$278C=00/$42B8=01` runtime receipt.
 The remaining Backup RAM blocker is field-consumer correlation.
 
-2026-08-21: produktionsviewporten kan nu hitta en autentiserad atomisk
-VDC/VCE-capture direkt i `<theron-data>/capture/trace.*` eller
-`<theron-data>/trace.*`. Den lokala originalcapturen `work/theron-atomic`
-passerar den slutna filhashkontrollen och bevisar att VDC-skrivströmmen
-återskapar samma VRAM-snapshot: 1 650 BAT-celler, 63 923 icke-nollpixlar och
-85 spritepixlar presenteras genom den vanliga start-/renderingsvägen. Detta är
-fortfarande en autentisk skärmbild, inte en världsstyrd dungeonrenderer.
-Kopplingen från nivåcell, vägg, objekt och HUD-tillstånd till originalets
-grafikval återstår.
+2026-08-21: The production viewport can now find an authenticated atomic
+VDC/VCE capture directly in `<theron-data>/capture/trace.*` or
+`<theron-data>/trace.*`. The local original capture `work/theron-atomic`
+passes the closed file-hash check and proves that the VDC write stream
+reconstructs the same VRAM snapshot: 1,650 BAT cells, 63,923 nonzero pixels,
+and 85 sprite pixels are presented through the normal startup/rendering path.
+This remains an authentic screenshot, not a world-driven dungeon renderer.
+The mapping from level cell, wall, object, and HUD state to the original
+graphics selection remains open.
 
-2026-08-21: samma amerikanska originalmedia, System Card och autentiska
-aktiva-dungeon-savestate har nu körts med ett styrt `RIGHT`-kommando vid
-emulatorbildruta 1, hållet i 10 bildrutor. Originalets polling läste råmask
-`$0020` som resultat `$3D`. Den efterföljande atomiska capturen skiljer sig i
-VRAM, SAT och VDC-skrivström men behåller samma VCE-palett och geometri.
-Replaykontrollen verifierar 25 890 skrivningar och 8 784 av 8 784 berörda
-VRAM-ord utan avvikelse. Produktionsviewporten kan nu binda just denna
-input-till-skärm-relation när även de fullständiga `trace.input`- och
-`trace.transition`-filerna matchar. Den får ännu inte tolkas som ändrad
-partyriktning eller position; RAM-korsbindningen återstår.
+2026-08-21: The same authentic US media, System Card, and active-dungeon
+save state were run with a scripted `RIGHT` command at emulator frame 1,
+held for 10 frames. The original polling read raw mask `$0020` with result
+`$3D`. The subsequent atomic capture differs in VRAM, SAT, and VDC write
+stream but retains the same VCE palette and geometry. Replay verification
+checks 25,890 writes and all 8,784 affected VRAM words with no mismatch. The
+production viewport can now bind this specific input-to-screen relation when
+the complete `trace.input` and `trace.transition` files also match. It must
+not yet be interpreted as a change in party direction or position; the RAM
+join remains outstanding.
 
-En oberoende `LEFT`-körning från samma savestate ger råmask `$0080`,
-pollingresultat `$37` och en tredje atomisk VRAM/SAT/VDC-bild. Även den
-replayverifierar 25 890 skrivningar och 8 784 av 8 784 berörda VRAM-ord.
-Minnesläsningarna visar den förväntade knappbufferten vid `$28B8`: baslinje
-`$F0/$00`, höger `$D0/$20` och vänster `$70/$80`. Detta bevisar den ursprungliga
-inputkedjan men ännu inte ett riktningstillstånd. Nästa korrelation ska leta
-efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
-`$28B8` återgått till noll.
+An independent `LEFT` run from the same save state produces raw mask `$0080`,
+polling result `$37`, and a third atomic VRAM/SAT/VDC image. It also verifies
+25,890 writes and all 8,784 affected VRAM words. Memory reads show the expected
+button buffer at `$28B8`: baseline `$F0/$00`, right `$D0/$20`, and left
+`$70/$80`. This proves the original input chain but not yet a direction
+state. The next correlation should look for a separate stable RAM field that
+distinguishes right and left after `$28B8` returns to zero.
 
 ## Theron's Quest
 
@@ -3656,22 +3689,24 @@ required before semantic promotion.
   four-member source bound in its counting and materialization passes.
 - Remaining: authenticate dynamic RNG, AI, T700 and T900 consumers.
 
-# 2026-08-20 — atomisk VDC-bunt finns, källjoin återstår
+# 2026-08-20 — Atomic VDC bundle exists; source join remains open
 
-- Completed: en riktig US-skiva, System Card 3.0, dungeon-savestate och ett
-  rent Mednafen 1.32.1-bygge mot riktig SDL2 gav 65 536 sekvenserade
-  VDC-skrivningar samt samma-ögonblicks VRAM, VCE, VDC-register och SAT.
-  Sidecaren slutar med den verifierbara gränsen
+- Completed: an authentic US disc, System Card 3.0, dungeon save state, and a
+  clean Mednafen 1.32.1 build against real SDL2 produced 65,536 sequenced
+  VDC writes and same-instant VRAM, VCE, VDC-register, and SAT snapshots.
+  The sidecar ends with the verifiable boundary
   `vdc_snapshot_boundary sequence=65536`.
-- Remaining: sessionen laddades från savestate och gav ingen autentiserad
-  game-owned CD→RAM-receipt. Bunta samma VDC-gräns med en riktig Track 02-
-  konsument innan replay får mutera produktens viewport.
-- Completed: en separat kall US-start gav samma-sessionens Track 02-transport,
-  32 main-RAM-`$E009`-dispatchar och en exakt atomisk 24 576-ords VDC-replay.
-  Native viewport kräver nu fem filer och avvisar den äldre fyrfilsbunten.
-- Remaining: de två bytekvittona ägs fortfarande av System Card-rutinen vid
-  fysisk `$1F01E7` och har noll provenienskopior. Bind ett faktiskt spelägt
-  `$E009`-destinationsblock till dess Track 02-sektorer och senare VDC-konsument.
+- Remaining: the session was loaded from a save state and produced no
+  authenticated game-owned CD→RAM receipt. Join the same VDC boundary to a
+  real Track 02 consumer before replay can mutate the production viewport.
+- Completed: a separate cold US start produced same-session Track 02
+  transport, 32 main-RAM `$E009` dispatches, and an exact atomic 24,576-word
+  VDC replay. The native viewport now requires five files and rejects the
+  older four-file bundle.
+- Remaining: the two byte receipts are still owned by the System Card
+  routine at physical `$1F01E7` and have zero provenance copies. Bind an
+  actual game-owned `$E009` destination block to its Track 02 sectors and
+  later VDC consumer.
 
 # 2026-08-13 — Theron-verifier tests respect external TMPDIR
 
@@ -3685,47 +3720,46 @@ required before semantic promotion.
   text, square/material, RNG/AI/loot and T700/T900 consumers remain closed
   until their source/runtime joins are proven.
 
-## Första spelägda E009-konsumenten (2026-08-20)
+## First game-owned E009 consumer (2026-08-20)
 
-Den autentiska kalla US-körningen binder nu Track 02-post `$4E0` till
-huvud-RAM `$2800` och vidare till fem ordnade läsningar av blockoffset
-`$513..$517` före nästa `$3840 → $E009`-dispatch. Detta stänger den tidigare
-luckan mellan den första färdiga payloaden och en verklig spelkodskonsument.
+The authentic cold US run now binds Track 02 record `$4E0` to main RAM
+`$2800` and then to five ordered reads of block offsets `$513..$517` before
+the next `$3840 → $E009` dispatch. This closes the previous gap between the
+first completed payload and a real game-code consumer.
 
-Koden `$37C8..$383F` är nu källbunden till Track 02-posterna `$4C4/$4C5`.
-Den bevisade adressrelationen är `$2803 + 6 × $D8 = $2D13`; därefter läser
-rutinen fem byte och nästa `$3840 → $E009`-dispatch observeras.
+Code `$37C8..$383F` is now source-bound to Track 02 records `$4C4/$4C5`.
+The proven address relation is `$2803 + 6 × $D8 = $2D13`; the routine then
+reads five bytes, and the next `$3840 → $E009` dispatch is observed.
 
-De fem utgående värdenas lagring och det efterföljande `$3840`-anropets
-råparametrar är nu bundna till samma kodexekvering. Parameterblocket
-`00 20 00 10 00 06 F8 FE` är nu dessutom bundet till READ(6) generation 6,
-LBA 5018–5021 och 8 192 byteexakta VDC-portskrivningar från Track 02-posterna
-`$7D9..$7DC`. Ett nytt snapshot exakt vid generationens slut visar den
-verkliga VDC-effekten: varje 16-bitars källord skrivs två gånger, vilket fyller
-8 192 VRAM-ord `$1000..$2FFF`; snapshot-FNV är `9B9F7361`. En autentisk
-negativ kontroll visar att den första
-anropsgrammatiken inte får återanvändas: `$FA/$FB = $1000` mappar via MPR
-`$FF` till fysisk I/O-rymd `$1FF000`, inte huvud-RAM, och ett 8 KiB-RAMhash
-där är därför ogiltigt som payloadbevis. Generation 7:s BAT-byggare,
-VCE-palett och aktiverade bakgrund är nu också bundna:
-alla 960 aktiva 32×30-celler använder 60 unika källbundna tileindex och den
-dekodade 256×240-indexbilden innehåller 2 848 icke-transparenta pixlar.
-Palettgrupp 0 är byteverifierad mot samma snapshot. Körkoden är nu förenad med
-den statiskt bytebundna Stage 2-rutinen `$466B`: dess självmodifierade `TIA`
-överför den genererade raden vid `$47E0` till VDC:s VWR-port `$0002`. Nästa
-12-sektorslast är också bytebunden: generation 49 läser LBA 4622–4633,
-Track 02 `$64D..$658`, och skickar samtliga 24 576 byte till VDC i ordning.
-Generation 51 är därefter en kontinuerlig `$50F1/$5111`-ritloop. Ett atomiskt
-snapshot vid den första kompletta 1 035-posters ramgränsen visar fortfarande
-en övergångsbild och noll SAT-spritepixlar. Nästa grind är därför att binda
-anroparen till `$50F1/$5111`, dess kommandotabell och den bildfas där loopen
-övergår till den efterföljande menyn eller spelbilden
-innan parametrarna eller payloaden får någon gameplaybetydelse.
-Värdena `F9 02 04 00 20` får inte namnges som koordinater, postfält, grafik,
-objekt eller dungeondata förrän den semantiska kedjan är bevisad. Ogiltiga
-provenancefält i sidecaren får inte användas som byteursprung; bindningen
-vilar på destinationens redan hashverifierade 2 048-byteblock och bytejämförelse
-mot samma autentiserade råsektor.
+Storage for the five output values and the raw parameters of the subsequent
+`$3840` call are now bound to the same code execution. Parameter block
+`00 20 00 10 00 06 F8 FE` is also bound to READ(6) generation 6, LBA
+5018–5021, and 8,192 byte-exact VDC port writes from Track 02 records
+`$7D9..$7DC`. A new snapshot exactly at the end of the generation shows the
+real VDC effect: each 16-bit source word is written twice, filling 8,192 VRAM
+words `$1000..$2FFF`; the snapshot FNV is `9B9F7361`. An authentic negative
+control shows that the first call grammar must not be reused: `$FA/$FB =
+$1000` maps through MPR `$FF` to physical I/O space `$1FF000`, not main RAM,
+so an 8 KiB RAM hash there is invalid as payload evidence. Generation 7's
+BAT builder, VCE palette, and enabled background are also bound: all 960
+active 32×30 cells use 60 unique source-bound tile indices, and the decoded
+256×240 indexed image contains 2,848 nontransparent pixels. Palette group 0
+is byte-verified against the same snapshot. The executed code is now joined
+to statically byte-bound Stage 2 routine `$466B`: its self-modifying `TIA`
+transfers the generated row at `$47E0` to the VDC VWR port `$0002`. The next
+12-sector load is also byte-bound: generation 49 reads LBAs 4622–4633, Track
+02 `$64D..$658`, and sends all 24,576 bytes to the VDC in order. Generation
+51 is then a continuous `$50F1/$5111` drawing loop. An atomic snapshot at the
+first complete 1,035-entry frame boundary still shows a transition image and
+zero SAT sprite pixels. The next gate is therefore to bind the caller to
+`$50F1/$5111`, its command table, and the frame phase where the loop changes
+to the following menu or gameplay image before the parameters or payload are
+given any gameplay meaning. The values `F9 02 04 00 20` must not be named as
+coordinates, record fields, graphics, objects, or dungeon data until the
+semantic chain is proven. Invalid provenance fields in the sidecar must not
+be used as byte origins; the binding relies on the destination's already
+hash-verified 2,048-byte block and byte comparison against the same
+authenticated raw sector.
 
 # 2026-08-13 — fresh System Card replay confirms transport-only boundary
 
@@ -3757,136 +3791,139 @@ mot samma autentiserade råsektor.
   local and is not pushed.
 ## Theron gameplay ADPCM event correlation (2026-08-20)
 
-Capturen instrumenterar nu originalets `$180D` ADPCM-control och `$180E`
-playback-rate med logisk och MPR-härledd fysisk HuC6280-PC samt adress,
-längd, frekvens och startövergång. Nästa realdatakörning ska utlösa en ensam
-source-identifierbar dörr-, pickup- eller attackhändelse i en autentisk
-dungeon-savestate och binda samma eventfönster till en verklig playback-start.
-Inga `Theron_SoundID` öppnas innan event, PC, ADPCM-RAM-intervall och samplebyte
-finns i samma originalsession.
+The capture now instruments the original `$180D` ADPCM control and `$180E`
+playback rate with the logical and MPR-derived physical HuC6280 PC, as well as
+address, length, frequency, and start transition. The next real-data run
+should trigger one isolated, source-identifiable door, pickup, or attack event
+in an authentic dungeon save state and bind the same event window to a real
+playback start. No `Theron_SoundID` may be enabled until the event, PC,
+ADPCM-RAM range, and sample byte are present in the same original session.
 
-Den första autentiska körningen är nu genomförd. Kallstarten laddade 2 048
-byte från Track 02 LBA 4719 och gav 140 `$180D/$180E`-poster, men samtliga var
-System Card-bankkonfiguration och ingen hade `playback_start=1`. Den autentiska
-savestate-replayen gav noll controlposter. Det kvarvarande arbetet är därför
-en ny originalsession som når ett isolerat gameplay-event, inte mer tolkning
-av bankladdningen. Se
+The first authentic run is now complete. Cold startup loaded 2,048 bytes from
+Track 02 LBA 4719 and produced 140 `$180D/$180E` records, but all were System
+Card bank configuration and none had `playback_start=1`. The authentic
+save-state replay produced zero control records. The remaining work is
+therefore a new original session that reaches an isolated gameplay event,
+not further interpretation of bank loading. See
 `docs/source-lock/theron-adpcm-playback-capture-2026-08-20.md`.
 
-## Atomär dungeonindata och RAM-gräns (2026-08-21)
+## Atomic dungeon input and RAM boundary (2026-08-21)
 
-- ✅ VDC-spårningen kan nu väljas mellan 65 536 och 2 097 152 verkliga
-  CPU-portskrivningar. Läsaren godtar den äldre gränsen och den nya övre
-  gränsen utan att göra längden till semantik. Baslinje-, RIGHT- och
-  LEFT-fångsterna återspelar fortsatt 8 816 respektive 8 784 skrivna
-  VRAM-ord med noll avvikelser.
-- ✅ Samma ögonblicksbild kan nu även innehålla hela originalets 8 KiB
-  huvud-RAM. Fångstskriptet kräver exakt 8 192 byte när producenten aktiveras;
-  ingen syntetisk RAM-bild eller värdfallback skapas.
-- ✅ Ett autentiskt kontrollpar från savestate
-  `f17f377df210b4a3ae904a13fb85a7f0` läser RIGHT `$0020`, DOWN `$0040`
-  och I `$0001` genom originalets indataport. Klickkörningen och kontrollen
-  har identiska VRAM-, VCE-, VDC- och SAT-bilder vid sekvens 262 144 men
-  olika RAM-bilder (`8a635d6d31631a2ac60778525b5ae603` mot
-  `bdfee2baab717b3e3f13ca290284c116`), med 14 skilda byte.
-- ✅ Ett senare klick-/kontrollpar från exakt samma originalskiva och savestate
-  ger 27 430 skilda bildpunkter. Knapp I observeras som `$28B8=$01` från
-  original-PC `$44E5`. I samma körning går den globala riktningen `$203F`
-  från `1` till `2`; den fångade originalrutinen `$D900..$D92E` beräknar
-  riktningsskillnaden modulo fyra och uppdaterar gruppfälten `$2944/$2948`
-  från `1` till `2`. Händelsen är därmed verifierad som en kvartsrotation,
-  inte som det tidigare antagna steget framåt.
-- ✅ Motsatt klickfångst köar kommandotyp `$01` vid `$7B/$8F` och binder
-  `$203F`, `$2944` och `$2948` från `1` till `0`. Ett långt klick-/kontrollpar
-  skiljer 27 226 presenterade bildpunkter. Typ `$01` är därmed vänster och
-  typ `$02` höger; Firestaffs runtime använder nu dessa två originalkommandon
-  i stället för fristående värddelta.
-- 🔒 Positions- och rörelsebyte förblir opublicerade tills deras egna
-  originalskrivare är fångade.
-- 🔒 En längre CPU-portåterspelning korsar VDC:ns interna DMA och
-  reproducerar därför inte ensam hela VRAM-bilden. Den längre fångsten tas
-  inte upp i produktionslistan över atomiskt godkända skärmar förrän DMA:n
-  själv har spårats eller en tidigare ren gräns har verifierats. Den synliga
-  2 097 152-postersbilden är därför analysbevis och inte produktionsgodkänd.
+- ✅ VDC tracing can now be selected between 65,536 and 2,097,152 real CPU
+  port writes. The reader accepts the old boundary and the new upper boundary
+  without assigning semantics to the length. Baseline, RIGHT, and LEFT
+  captures continue to replay 8,816 and 8,784 written VRAM words,
+  respectively, with zero mismatches.
+- ✅ The same snapshot can now also contain the original full 8 KiB main RAM.
+  The capture script requires exactly 8,192 bytes when the producer is
+  enabled; no synthetic RAM image or host fallback is created.
+- ✅ An authentic control pair from save state
+  `f17f377df210b4a3ae904a13fb85a7f0` reads RIGHT `$0020`, DOWN `$0040`, and I
+  `$0001` through the original input port. The click run and control have
+  identical VRAM, VCE, VDC, and SAT images at sequence 262,144 but different
+  RAM images (`8a635d6d31631a2ac60778525b5ae603` vs.
+  `bdfee2baab717b3e3f13ca290284c116`), with 14 differing bytes.
+- ✅ A later click/control pair from the exact same original disc and save
+  state differs by 27,430 pixels. Button I is observed as `$28B8=$01` from
+  original PC `$44E5`. In the same run, global direction `$203F` changes
+  from `1` to `2`; captured original routine `$D900..$D92E` computes the
+  direction difference modulo four and updates party fields `$2944/$2948`
+  from `1` to `2`. The event is therefore verified as a quarter-turn, not
+  the previously assumed forward step.
+- ✅ The opposite click capture queues command type `$01` at `$7B/$8F` and
+  binds `$203F`, `$2944`, and `$2948` from `1` to `0`. A long click/control
+  pair differs by 27,226 presented pixels. Type `$01` is therefore left and
+  type `$02` right; Firestaff runtime now uses these original commands rather
+  than standalone host deltas.
+- 🔒 Position and movement bytes remain unpublished until their own original
+  writers are captured.
+- 🔒 A longer CPU-port replay crosses the VDC's internal DMA and therefore
+  cannot by itself reproduce the full VRAM image. The longer capture is not
+  added to the production list of atomically approved screens until the DMA
+  itself is traced or an earlier clean boundary is verified. The visible
+  2,097,152-entry image is therefore analysis evidence, not production-
+  approved.
 
 ## 2026-08-20 — File-select text source bound; screen consumer still open
 
-- ✅ Alla tre verkliga US Track 02-kopior av PLAY/LOAD-prompten är nu bundna
-  till exakta MODE1/2352-koordinater och bytehashar; ändrad verklig media
-  avvisas.
-- 🔒 Den visuellt observerade filvalsskärmen räcker inte som textkonsumentbevis.
-  Nästa riktade capture ska logga CPU-läsningen från `$4EA/$4EC/$4EE`-payloaden
-  till text-/VDC-rutinen i samma session. Generation 51:s `$64D..$658`-läsning
-  är grafiktransport och får inte felaktigt tillskrivas prompttexten.
-- 🔒 Riktad RAM-skanning efter Button I bekräftar att klartexten inte finns i
-  runtime-RAM. Nästa capture ska provta verkliga dataoperander per bildruta
-  efter `$4698/$511B`-bulkfasen och binda den kodade glyphströmmen till dess
-  Track 02-/Track 19-källa och VDC-skrivare. `$3C2A..$3D2B` är endast en
-  observerad kandidatloop tills källbyte och presenterade glyphar förenas.
-- 🔒 Den stabila filvalsfasen och dess VDC-konsument är nu lokaliserade:
-  `$5561..$55D0` läser den fysiska banken `$0D1D58..` och `$5110` skriver
-  VDC-portströmmen i samma `frame 8580`. Nästa grind är att instrumentera
-  skrivningen/laddningen som först fyller `$0D1D58..`, binda den till exakt
-  verklig Track 02-/Track 19-post och därefter verifiera att den resulterande
-  VDC/BAT-referensen presenterar promptglypharna. Ingen av dessa byte får
-  kallas text eller glyph innan mediekedjan och ett negativt realdatatest
-  finns.
-- ✅ Media→RAM→VDC-transporten för post `$67B` är single-write-verifierad.
-  De 512 VDC-portbyten är bundna via MAWR `$0800` till VRAM-staging
-  `$0800..$08FF` och en atomisk bild visar att stagingområdet är identiskt
-  med VDC:ns interna SAT. Området är inte ett BAT-refererat patternblock.
-- 🔒 Betydelsen av de 195 källbyten och de 18 SAT-posterna är fortfarande
-  stängd. SAT-posterna är bundna till spritepattern `$108..$10F` och den
-  exakta 256×240-bilden är komponerad med den autentiska VCE-paletten.
-  Spriteplanet ger 24 576 svarta källpixlar i två band, men geometrin ensam
-  bevisar inte vad banden betyder. Jämförelsen mellan bildruta 8579 och 8581
-  visar nu att banden ligger helt stilla när spelkod `$4993/$4999/$499F`
-  minskar BYR från `$00E9` till `$00E8`; 12 644 pixlar ändras endast i den
-  omaskerade mittdelen. Styrkedjan är nu bunden: spelkod `$4993` läser BYR
-  från `$2210/$2211`, loopen vid `$4175` minskar `$2210` från `$F0` till
-  `$60` i 144 steg och `$47BC/$47BD` räknar ned `$0090` till noll. Nästa
-  autentiska kontrollfas är också avgränsad: `$47BA/$47BB` räknar
-  `$0040→$0000` i 64 tiobildrutorssteg vid `$4B1B/$4B20` mellan bildruta
-  10632 och 11274, före återställningen 11578. Nästa grind är att fånga den
-  stabila bildytan efter respektive stopp och binda dess
-  presenterade BAT/pattern-innehåll till samma körning. Banden och de 195
-  källbytena får fortfarande inte kallas filval, prompt eller något annat
-  skärminnehåll utan den länken.
-- ✅ Generation 6 och 7 är nu ominspelade med den nya single-write-byggkedjan
-  och verifierade av separata negativa realdatatester. Presentationen binds
-  först efter 2 187 generation-7-rader; 2 151 är bara BAT-slutet och får
-  inte användas som skärmgräns.
-- ✅ Generation 49 och 51 är ominspelade med den nya single-write-byggkedjan.
-  Deras bindningar och negativa realdatatester använder nu 24 580 respektive
-  54 842 rader. De gamla radantalen 49 160 och 100 755 är återkallade.
-- 🔒 Nästa grafikgrind är att binda generation-51-bildens verifierade
-  VRAM-, VCE- och SAT-innehåll till konkreta filvals- eller dungeonobjekt.
-  Transport- och bildrutebeviset öppnar inte skärm-, tile- eller
-  objektsemantik på egen hand.
+- ✅ All three real US Track 02 copies of the PLAY/LOAD prompt are now bound
+  to exact MODE1/2352 coordinates and byte hashes; modified real media is
+  rejected.
+- 🔒 The visually observed file-selection screen is not sufficient evidence
+  for a text consumer. The next focused capture should log CPU reads from the
+  `$4EA/$4EC/$4EE` payload to the text/VDC routine in the same session.
+  Generation 51's `$64D..$658` reads are graphics transport and must not be
+  misattributed to prompt text.
+- 🔒 A focused RAM scan after Button I confirms that plaintext is absent from
+  runtime RAM. The next capture should sample real data operands per frame
+  after the `$4698/$511B` bulk phase and bind the encoded glyph stream to its
+  Track 02/Track 19 source and VDC writer. `$3C2A..$3D2B` is only an observed
+  candidate loop until source bytes and presented glyphs are joined.
+- 🔒 The stable file-selection phase and its VDC consumer are now located:
+  `$5561..$55D0` reads physical bank `$0D1D58..`, and `$5110` writes the VDC
+  port stream in the same `frame 8580`. The next gate is to instrument the
+  write/load that first fills `$0D1D58..`, bind it to the exact real Track
+  02/Track 19 record, and then verify that the resulting VDC/BAT reference
+  presents the prompt glyphs. None of these bytes may be called text or
+  glyphs until the media chain and a negative real-data test are available.
+- ✅ Media→RAM→VDC transport for record `$67B` is single-write verified. The
+  512 VDC port bytes are bound through MAWR `$0800` to VRAM staging
+  `$0800..$08FF`, and an atomic image shows that the staging area is identical
+  to the VDC's internal SAT. The area is not a BAT-referenced pattern block.
+- 🔒 The meaning of the 195 source bytes and 18 SAT entries remains closed.
+  The SAT entries are bound to sprite pattern `$108..$10F`, and the exact
+  256×240 image is composed with the authentic VCE palette. The sprite plane
+  yields 24,576 black source pixels in two bands, but geometry alone does not
+  prove what those bands mean. Comparing frames 8579 and 8581 now shows that
+  the bands remain completely still while game code `$4993/$4999/$499F`
+  reduces BYR from `$00E9` to `$00E8`; 12,644 pixels change only in the
+  unmasked center. The control chain is now bound: game code `$4993` reads BYR
+  from `$2210/$2211`, the loop at `$4175` reduces `$2210` from `$F0` to `$60`
+  in 144 steps, and `$47BC/$47BD` counts `$0090` down to zero. The next
+  authentic control phase is also bounded: `$47BA/$47BB` counts
+  `$0040→$0000` in 64 ten-frame steps at `$4B1B/$4B20` between frames 10632
+  and 11274, before reset at 11578. The next gate is to capture the stable
+  surface after each stop and bind its presented BAT/pattern content to the
+  same run. The bands and 195 source bytes still must not be called a
+  file-selection screen, prompt, or any other screen content without that
+  link.
+- ✅ Generations 6 and 7 have now been recaptured with the new single-write
+  build chain and verified by separate negative real-data tests. Presentation
+  is bound only after 2,187 generation-7 rows; 2,151 is only the BAT end and
+  must not be used as the screen boundary.
+- ✅ Generations 49 and 51 have been recaptured with the new single-write
+  build chain. Their bindings and negative real-data tests now use 24,580
+  and 54,842 rows, respectively. The old row counts 49,160 and 100,755 are
+  revoked.
+- 🔒 The next graphics gate is to bind the verified VRAM, VCE, and SAT
+  contents of the generation-51 frame to concrete file-selection or dungeon
+  objects. Transport and frame evidence do not independently enable screen,
+  tile, or object semantics.
 
 ## Dungeonbundna objektegenskaper (2026-08-20)
 
-- ✅ Den levande Track 02-världen använder nu alla sju verkliga regionala
-  namn-, typkod- och egenskapsbanker och avvisar global fallback.
-- 🔒 Den äldre kompatibilitetsstridens kompakta champion-slot-ID saknar
-  objektets ursprungsfängelsehåla. Hela kompatibilitetsstriden är därför
-  fixture-only; produktionsruntime returnerar stängt läge och länkar inte den
-  statiska 66-raderskatalogen. Strid och utrustning öppnas först när
-  originalets T600/T900-konsument och utrustningsägande är källbundna.
-- ✅ Produktionsarkivet innehåller inte längre kompatibilitetsstridens
-  statiska handlingskostnader eller de oanvända US-klartextkatalogerna. Deras
-  fixturer får inte användas som runtime-fallback; nästa text- eller
-  stridskonsument måste läsa autentiserad regional media.
-- ✅ Produktionsarkivet är även rensat från tolv ytterligare statiska
-  fixture-kataloger utan runtime-konsument. Detta öppnar ingen ny semantik;
-  om text, glypher, klassdata eller handlingsparametrar senare behövs måste
-  de hämtas ur verifierad regional media och bindas till en verklig konsument.
-- ✅ Championernas numeriska roster är nu regionalt källbunden i både US och
-  JP. US använder den riktiga packade 5-bitarsbanken och JP sin riktiga
-  A–P-bank; produktionsstarten har ingen statisk rosterfallback kvar.
-- 🔒 Startutrustning, porträtt och titlarnas kontrollkodstolkning är fortfarande
-  separata originalkonsumenter. DMWeb-utrustningen förblir fixture-only tills
-  Track 02:s verkliga objektägande och T900-handoff är avkodade.
+- ✅ The live Track 02 world now uses all seven authentic regional name,
+  type-code, and property banks and rejects global fallback.
+- 🔒 The older compatibility combat's compact champion-slot ID lacks the
+  object's origin dungeon. The entire compatibility combat path is therefore
+  fixture-only; production runtime returns closed and does not link the static
+  66-row catalog. Combat and equipment are enabled only after the original
+  T600/T900 consumer and equipment ownership are source-bound.
+- ✅ The production archive no longer contains the compatibility combat's
+  static action costs or unused US plaintext catalogs. Their fixtures must
+  not be used as runtime fallbacks; the next text or combat consumer must
+  read authenticated regional media.
+- ✅ The production archive has also been cleared of twelve additional
+  static fixture catalogs with no runtime consumer. This enables no new
+  semantics; if text, glyphs, class data, or action parameters are later
+  needed, they must be obtained from verified regional media and bound to a
+  real consumer.
+- ✅ The champions' numeric roster is now source-bound regionally in both US
+  and JP. US uses its authentic packed 5-bit bank and JP its authentic
+  A–P bank; production startup no longer has a static roster fallback.
+- 🔒 Starting equipment, portraits, and title control-code interpretation
+  remain separate original consumers. DMWeb equipment remains fixture-only
+  until Track 02's real object ownership and T900 handoff are decoded.
 ## Quest-artifact presentation after authentic name binding
 
 - The seven regional raw names are now bound from real Track 02 media.
@@ -3910,112 +3947,113 @@ av bankladdningen. Se
   authenticated through text group 2, its `$00CA` command and the regional
   message-list offsets `$013D/$016D`; the decoder may therefore publish the
   original retrieval-event relation. 🔒 Host-side text rendering remains off.
-- ✅ Den autentiska US/JP-kedjan efter ett fängelse är nu följd genom det
-  gemensamma programmet på 17 sektorer. Initieringen anropar `$8243`, som
-  kopierar originalets val och fängelseordinal från `$2700/$2701` till
-  parameterblocket vid `$2780`; en senare gemensam rutin för sedan
-  `$2781..$2787` till sin lokala sjubytestabell. Båda regionala programhasharna
-  och båda kopieringsinstruktionerna är produktionsgrindade. Detta bevisar
-  ordinaltransporten.
-- ✅ Den efterföljande ordinaldispatchen är nu också autentiserad separat för
-  US och JP. Sju jämförelser väljer sju 32-bytesblock; varje block kör
-  textkommandot `2B 02 n`, där grupp `2` väljs och `n` används av textmotorn
-  för att gå fram motsvarande antal poster. Textgruppens interna pekare leder
-  direkt till de sju meddelandena i `$40C/$40D`, så fyndrelationen är sluten.
-- ✅ Samma kedja autentiserar nu också originalrutinen som sätter CD-basen till
-  spår 19 och den gemensamma 2 KiB-laddarhjälpen i både US och JP. Hjälpen
-  bygger sektornumret från descriptorens två första byte, hämtar måltyp,
-  måladress och sektorsantal ur de följande fälten och anropar sedan `$E009`.
-  Världsbindningen kräver både programhashen och de exakta anropssekvenserna.
-  🔒 Detta visar hur en resurs laddas, men ännu inte vilken descriptor som
-  väljs av den vidarebefordrade ordinalen.
-- ✅ Den dungeonlokala övergången binder nu även hela den ursprungliga
-  sektorberäkningen: post `$3C7 + 4 × ordinal` läses som fyra sektorer till
-  `$4000`. Varje sådant program läser därefter två stödsektorer från `$3E3`
-  och ersätter sig självt med det gemensamma 17-sektorsprogrammet från `$3E7`.
-  Samtliga tabeller, BIOS-anrop och US/JP-programhashar ingår i grinden.
-  🔒 Retrieval-resursen `$40C/$40D` ligger senare i flödet och är därför inte
-  samma post som ordinalformeln ovan.
-- ✅ Den verifierade regionala meddelandebanken binds till den levande världen
-  vid varje riktig dungeonladdning. En separat råpostsåtkomst kan läsa exakt
-  post 0–6 och kräver nu den bevisade originalrelationen. 🔒 Hostrendering av
-  de regionala kontrollkoderna är fortfarande inte aktiverad.
-- ✅ Originalets sjubitars kampanj-/dungeonstatus är nu lokaliserad till
-  HuC6280-RAM `$267C`. Dungeonrutinen tar först ett ordinalvärde 0–6, slår upp
-  `01 02 04 08 10 20 40`, slår ihop biten med `ORA $267C` och laddar därefter
-  nästa kodresurs innan den hoppar till `$4000`. Den byteidentiska gemensamma
-  US/JP-rutinen bevarar bit 7 och serialiserar samma byte. Hela kodfönstren är
-  hashbundna och negativa realdatatest ändrar både gemensam kod och en
-  dungeonlokal bit. Den levande världen korsbinder nu denna skrivare med den
-  autentiserade meddelandeselektorn innan de sju låga bitarna får publiceras
-  som fyndstatus; bit 7 ingår inte i fyndmasken.
-- ✅ Den riktiga PC Engine Backup RAM-behållaren är nu bunden till samma byte.
-  Originalrutinen läser `$86` byte ur `DMS-SG.001` till `$267C`; HUBM-postens
-  kropp börjar vid filoffset `$20`, så offset `$20` är den serialiserade
-  kampanjbyten. Den levande världen kan återställa fyndmask och färdigstatus
-  från denna byte utan att ersätta aktuell dungeon, nivå, speltid eller seeds.
-- ✅ System Card-argumenten i samma originalrutin är nu upplösta mot riktig
-  skivlayout. `$FC:$FD:$FE = $0003C7 + 4×ordinal`, `$F8=4`, `$FF=1` och
-  `$FA:$FB=$4000` laddar fyra sektorer lokalt och startar dem på `$4000`.
-  INDEX 01 ligger efter 225 råsektorer i US och 224 i JP, vilket binder de
-  sju regionala programmen till råpost `$4A8/$4A7 + 4×ordinal`. Varje program
-  skriver ordinalen till `$2701`; dungeon 1–6 skriver `$09` till `$2700` och
-  finalen `$0F`. Den efterföljande konsumenten och rätt regionalt
-  fyndmeddelande är nu korsbundna enligt kedjan ovan.
-- ✅ Originalets fyra rörelsekommandon `$03..$06` är bytebundna från kön vid
-  `$D3B0..$D3CB`, genom rörelserutinen `$CD87`, till positionscommitten
-  `TII $20B4,$2040,$0002` vid `$C1FA`. Firestaffs uppåtingång använder nu
-  dessa originaltyper mot den laddade Track 02-världens riktiga rut- och
-  objektdata. `$05` är autentiserat som bakåt och committar `$02/$03→$01/$03`.
-  `$04/$06` är höger/vänster och båda fångsterna bevisar blockeringsvägen utan
-  någon skrivning till permanent position. A/D-värdvägen når nu `$06/$04`
-  i stället för de äldre rotationstokens som gjorde sidstegen oåtkomliga.
-  US/JP-realdataprovet verifierar alla fyra relativa kommandon mot både riktig
-  golvpassering och riktig väggblockering.
-- ✅ Realdataprovet skapar inte längre en syntetisk nivå 1, dörr, grop eller
-  trappa efter Hall-of-Records-kontrollen. Samma autentiska rå-BIN normaliseras
-  via den verifierade MODE1-bryggan, hela AKUTUBA laddas och varje riktigt
-  nivåhuvud verifieras. Originalkommando `$03` går därefter genom en faktisk
-  Track 02-trappa till den laddade destinationsnivån i både US och JP.
-- ✅ Samma realdataprov fyller inte längre världen med fyra konstruerade
-  hjältar, godtyckliga 50-värden eller 1 000 guld. Rörelse-, vägg- och
-  trappbevisen kör med endast den autentiska kartan och källans startpose;
-  regional roster och sparstatus förblir separata riktiga datakonsumenter.
-- ✅ Dungeonkartornas källprov verifierar nu US- och JP-Track 02-identitet
-  med de publicerade rå-BIN-hasharna innan det räknar trappfamiljens byte i
-  alla sju dungeons: 171 US och 170 JP. Kandidatkoordinaterna skrivs ut som
-  rå källinformation för framtida fångstmål; provet tillskriver inte
-  attributen riktning eller destinationsnivå. Utan US-källdata rapporteras
-  CTest-skip i stället för ett falskt godkänt resultat.
-- ✅ Det separata dörr-/teleportertestet binder nu både US- och JP-filerna till
-  sina publicerade rå-BIN-hashar innan det laddar alla sju dungeonernas
-  tabeller. Båda regionerna verifierar samma dörr-/teleporterantal; saknad US-
-  media ger CTest-skip och `assert()`-kontroller förblir aktiva i Release.
-  Detta verifierar källposter och dekodning, inte oinfångade knapp-, nyckel-
-  eller teleporterhändelser.
-- ✅ De äldre Track 02-proven för föremål, dungeonkartor/-objekt, text,
-  aktuatorer och ground-referenser använder nu CTest-skipstatus när deras
-  obligatoriska riktiga BIN saknas eller inte kan normaliseras. Deras
-  `assert()`-baserade källkontroller är också kvar i Release/NDEBUG-byggen.
+- ✅ The authentic US/JP post-dungeon chain is now traced through the shared
+  17-sector program. Initialization calls `$8243`, which copies the original
+  selection and dungeon ordinal from `$2700/$2701` into the parameter block
+  at `$2780`; a later shared routine then copies `$2781..$2787` into its local
+  seven-byte table. Both regional program hashes and both copy instructions
+  are production-gated. This proves
+  ordinal transport.
+- ✅ The subsequent ordinal dispatch is now also authenticated separately
+  for US and JP. Seven comparisons select seven 32-byte blocks; each block
+  executes text command `2B 02 n`, selecting group `2` and using `n` to
+  advance the corresponding number of entries in the text engine. The text
+  group's internal pointer leads directly to the seven messages at `$40C/$40D`,
+  closing the discovery relation.
+- ✅ The same chain now also authenticates the original routine that sets
+  the CD base to track 19 and the shared 2 KiB loader helper in both US and
+  JP. The helper builds the sector number from the descriptor's first two
+  bytes, reads target type, target address, and sector count from the next
+  fields, then calls `$E009`. World binding requires both the program hash
+  and the exact call sequences. 🔒 This shows how a resource is loaded, but
+  not yet which descriptor is selected by the forwarded ordinal.
+- ✅ The dungeon-local transition now also binds the complete original
+  sector calculation: record `$3C7 + 4 × ordinal` is read as four sectors to
+  `$4000`. Each such program then reads two support sectors from `$3E3` and
+  replaces itself with the shared 17-sector program from `$3E7`. All tables,
+  BIOS calls, and US/JP program hashes are included in the gate.
+  🔒 The retrieval resource `$40C/$40D` occurs later in the flow and is
+  the same record as the ordinal formula above.
+- ✅ The verified regional message bank is bound to the live world on every
+  real dungeon load. Separate raw-record access can read exactly records 0–6
+  and now requires the proven original relation. 🔒 Host rendering of the
+  regional control codes remains disabled.
+- ✅ The original seven-bit campaign/dungeon status is now located at
+  HuC6280 RAM `$267C`. The dungeon routine first takes an ordinal 0–6, looks
+  up `01 02 04 08 10 20 40`, merges the bit with `ORA $267C`, then loads the
+  next code resource before jumping to `$4000`. The byte-identical shared
+  US/JP routine preserves bit 7 and serializes the same byte. All code
+  windows are hash-bound, and negative real-data tests mutate both shared
+  code and one dungeon-local bit. The live world now cross-binds this writer
+  with the authenticated message selector before publishing the seven low
+  bits as discovery status; bit 7 is not part of the discovery mask.
+- ✅ The real PC Engine Backup RAM container is now bound to the same byte.
+  The original routine reads `$86` bytes from `DMS-SG.001` into `$267C`; the
+  HUBM record body starts at file offset `$20`, so offset `$20` is the
+  serialized campaign byte. The live world can restore the discovery mask
+  and completion status from this byte without replacing the current
+  dungeon, level, game time, or seeds.
+  disc layout. `$FC:$FD:$FE = $0003C7 + 4×ordinal`, `$F8=4`, `$FF=1`, and
+  `$FA:$FB=$4000` load four sectors locally and start them at `$4000`.
+  INDEX 01 follows 225 raw sectors in US and 224 in JP, binding the seven
+  regional programs to raw record `$4A8/$4A7 + 4×ordinal`. Each program writes
+  the ordinal to `$2701`; dungeons 1–6 write `$09` to `$2700`, and the final
+  dungeon writes `$0F`. The subsequent consumer and correct regional
+  discovery message are now cross-bound by the chain above.
+- ✅ The original four movement commands `$03..$06` are byte-bound from the
+  queue at `$D3B0..$D3CB`, through movement routine `$CD87`, to the position
+  commit `TII $20B4,$2040,$0002` at `$C1FA`. Firestaff's up-input path now
+  uses these original command types with the loaded Track 02 world's real
+  tile and object data. `$05` is authenticated as backward and commits
+  `$02/$03→$01/$03`. `$04/$06` are right/left, and both captures prove the
+  blocking path without a write to permanent position. The A/D host path now
+  reaches `$06/$04` instead of the older rotation tokens that made side steps
+  inaccessible. The US/JP real-data test verifies all four relative commands
+  against both real floor traversal and real wall blocking.
+- ✅ The real-data test no longer creates a synthetic level 1, door, pit, or
+  stair after the Hall-of-Records check. The same authentic raw BIN is
+  normalized through the verified MODE1 bridge, all of AKUTUBA is loaded,
+  and every real level header is verified. Original command `$03` then takes
+  an actual Track 02 stair to the loaded destination level in both US and JP.
+- ✅ The same real-data test no longer fills the world with four fabricated
+  champions, arbitrary values of 50, or 1,000 gold. Movement, wall, and stair
+  evidence uses only the authentic map and source starting pose; regional
+  roster and save status remain separate real-data consumers.
+- ✅ Dungeon-map source tests now verify US and JP Track 02 identity against
+  the published raw-BIN hashes before counting stair-family bytes across all
+  seven dungeons: 171 US and 170 JP. Candidate coordinates are printed as
+  raw source information for future capture targets; the test does not
+  attribute direction or destination-level semantics. Without US source
+  data, it reports a CTest skip instead of a false pass.
+- ✅ The separate door/teleporter test now binds both US and JP files to
+  their published raw-BIN hashes before loading all seven dungeon tables.
+  Both regions verify the same door/teleporter counts; missing US media
+  results in a CTest skip, and `assert()` checks remain active in Release.
+  This verifies source records and decoding, not uncaptured button, key, or
+  teleporter events.
+- ✅ Older Track 02 tests for items, dungeon maps/objects, text, actuators,
+  and ground references now use CTest skip status when their required real BIN
+  is missing or cannot be normalized. Their `assert()`-based source checks
+  also remain enabled in Release/NDEBUG builds.
 
-## 2026-09-25 — rå kallstart återspelad med full controller-trace
+## 2026-09-25 — Cold start replayed with full controller trace
 
-- ✅ Samma autentiska USA-CUE, Track 02, System Card 3.0 och oförändrade BRAM
-  återspelades med RUN vid frame 9600 och en controllertracegräns på 262144
-  läsningar plus 262144 skrivningar. RUN-masken applicerades, men inga
-  `$1000`-CPU-läsresultat med `raw=0008` förekom i just den sena körningen.
-  BRAM-hashen före/efter är identisk.
-- 🔒 Resultatet är fortfarande negativt: 25 råsektorer i fyra SCSI-läsningar,
-  noll spelägda CD→RAM-kvitton, noll autentiserade CD→RAM-destinationer,
-  noll `$E009`-dataläsningar och `$20DB=00`. Den råa kallstarten når inte den
-  tidigare signerade Drator-menykoden. Ökad logggräns löste avklippningen men
-  inte övergången. Den tidigare planen
-  `run@1:1,run@480:30,i@900:30` når faktiskt BIOS: CPU-läsningar observerar
-  RUN=`0008` och I=`0001`. Ändå gav både rå MODE1/2352 och en kontrollerad
-  MODE1/2048-körning samma 25 sektorer och inga CD→RAM-kvitton. Nästa
-  felsökning ska följa BIOS-/CD-kommandovägen efter inputläsningen och
-  jämföra den med en positiv host-inputsession. Ingen semantik får öppnas
-  från dessa negativa körningar.
+- ✅ The same authentic US CUE, Track 02, System Card 3.0, and unchanged BRAM
+  were replayed with RUN at frame 9600 and a controller-trace limit of 262144
+  reads plus 262144 writes. The RUN mask was applied, but no `$1000` CPU read
+  results with `raw=0008` occurred in this late run. The BRAM hash is
+  identical before and after.
+- 🔒 The result remains negative: 25 raw sectors in four SCSI reads, zero
+  game-owned CD→RAM receipts, zero authenticated CD→RAM destinations, zero
+  `$E009` data reads, and `$20DB=00`. The raw cold start does not reach the
+  previously signed Drator menu code. Increasing the log limit fixed
+  truncation but not the transition. The earlier plan
+  `run@1:1,run@480:30,i@900:30` does reach the BIOS: CPU reads observe
+  RUN=`0008` and I=`0001`. However, both the raw MODE1/2352 run and a
+  controlled MODE1/2048 run produced the same 25 sectors and no CD→RAM
+  receipts. The next investigation should follow the BIOS/CD command path
+  after input reads and compare it with a positive host-input session. No
+  semantics may be enabled from these negative runs.
 
 ## 2026-09-25 — authentic empty JP Backup RAM stays out of Continue
 

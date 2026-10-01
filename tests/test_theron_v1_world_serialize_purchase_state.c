@@ -14,6 +14,7 @@
  */
 
 #include "theron_v1_world.h"
+#include "theron_v1_startup_flow.h"
 #include "theron_v1_track02_actuator.h"
 #include "theron_v1_track02_thing_data.h"
 
@@ -302,17 +303,30 @@ static void test_round_trip_keeps_purchase_state(void) {
     expect_true(theron_v1_world_deserialize(&restored, buffer, size) == 0,
                 "deserialize succeeds");
     expect_true(restored.campaign_completion_mask == 0x01u &&
-                restored.progression.quest_items_collected == 0u,
-                "campaign completion and quest-item state round-trip separately");
+                restored.progression.quest_items_collected == 0u &&
+                restored.progression.dungeon_states[0] ==
+                    THERON_DUNGEON_STATE_COMPLETE &&
+                !restored.dungeon_complete,
+                "campaign header projects independently from quest-item state");
     buffer[4] = 18u;
     buffer[5] = 0u;
     buffer[6] = 0u;
     buffer[7] = 0u;
     memset(&restored, 0, sizeof(restored));
-    expect_true(theron_v1_world_deserialize(&restored, buffer, size) == 0 &&
-                restored.campaign_completion_mask == 0u &&
-                restored.progression.quest_items_collected == 0u,
-                "version-18 saves remain readable without campaign-mask data");
+    expect_true(theron_v1_world_deserialize(&restored, buffer, size) == 0,
+                "version-18 save deserializes without campaign data");
+    expect_true(restored.campaign_completion_mask == 0u &&
+                restored.progression.quest_items_collected == 0u &&
+                !restored.dungeon_complete,
+                "version-18 save does not infer completion from host item state");
+    expect_true(restored.progression.dungeon_states[0] ==
+                    THERON_DUNGEON_STATE_LOCKED,
+                "version-18 save does not unlock Akutuba without campaign data");
+    expect_true(restored.progression.dungeon_states[2] ==
+                    THERON_DUNGEON_STATE_IN_PROGRESS &&
+                theron_v1_startup_stage_available(
+                    &restored.progression, THERON_DUNGEON_3_FORMIC),
+                "version-18 save can resume only its current stage");
     expect_true(restored.party.gold == original.party.gold,
                 "party gold survives round-trip");
     expect_true(restored.party.champion_count == 3 &&
@@ -355,8 +369,8 @@ static void test_round_trip_keeps_purchase_state(void) {
     expect_true(restored.progression.quest_items_collected ==
                 original.progression.quest_items_collected,
                 "quest item bitmask survives round-trip");
-    expect_true(restored.dungeon_complete == original.dungeon_complete,
-                "dungeon completion flag survives round-trip");
+    expect_true(!restored.dungeon_complete,
+                "legacy host exit flag is recomputed from current campaign state");
     expect_true(restored.object_count == 1 &&
                 restored.objects[0].id == 0x10203040 &&
                 restored.objects[0].type == THERON_OBJTYPE_WEAPON &&

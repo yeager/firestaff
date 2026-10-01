@@ -203,8 +203,9 @@ int theron_v1_quest_complete(const Theron_DungeonProgression *prog);
 /* Get quest item bitmask (for serialization). */
 uint8_t theron_v1_quest_item_bitmask(const Theron_DungeonProgression *prog);
 
-/* Restore progression state from saved bitmask + dungeon state.
- * Used when loading a between-dungeon save. */
+/* Restore the provisional quest-item mask and saved current stage. This
+ * function does not infer campaign completion from quest-item bits. Project
+ * authenticated campaign state separately with the API below. */
 void theron_v1_dungeon_progression_restore(Theron_DungeonProgression *prog,
                                             uint8_t quest_items_bitmask,
                                             Theron_DungeonID current,
