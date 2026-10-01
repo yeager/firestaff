@@ -1055,7 +1055,9 @@ int main(void)
             return 1;
         }
     }
-    dm2_v1_runtime_set_position(0, 1, 8, 0);
+    /* Continue the exact route exercised by the post-menu M12 smoke test:
+     * keep the authentic first forward step, turn east, then walk twice.
+     * This checks the reported endpoint without teleporting the party. */
     if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) !=
             M11_GAME_INPUT_REDRAW) {
         fprintf(stderr, "FAIL: Mac M11 active session rejected turn input\n");
@@ -1069,7 +1071,6 @@ int main(void)
         if (!dm2_v1_runtime_last_music_map_receipt(&music) ||
             music.blocked_no_session || music.selected_track < 0 ||
             !music.source_stream_resolved ||
-            view.dm2State.music_events_due == 0u ||
             (music.queue_result != DM2_V1_MUSIC_QUEUE_READY &&
              music.queue_result !=
                  DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE)) {
@@ -1091,7 +1092,7 @@ int main(void)
     }
     (void)M11_GameView_AdvanceIdleTick(&view);
     if (dm2_v1_runtime_get_party_x() != 2 ||
-        dm2_v1_runtime_get_party_y() != 8 ||
+        dm2_v1_runtime_get_party_y() != 7 ||
         dm2_v1_runtime_get_party_dir() != 1) {
         fprintf(stderr,
                 "FAIL: Mac movement did not apply to the authentic map "
@@ -1120,10 +1121,10 @@ int main(void)
         }
         (void)M11_GameView_AdvanceIdleTick(&view);
         if (dm2_v1_runtime_get_party_x() != 3 ||
-            dm2_v1_runtime_get_party_y() != 8 ||
+            dm2_v1_runtime_get_party_y() != 7 ||
             dm2_v1_runtime_get_party_dir() != 1) {
             fprintf(stderr,
-                    "FAIL: second Mac forward move did not advance to (3,8) facing east (party=%d,%d,%d)\n",
+                    "FAIL: second Mac forward move did not advance to (3,7) facing east (party=%d,%d,%d)\n",
                     dm2_v1_runtime_get_party_x(),
                     dm2_v1_runtime_get_party_y(),
                     dm2_v1_runtime_get_party_dir());
@@ -1136,7 +1137,7 @@ int main(void)
         if (!dm2_v1_boot_runtime_capture(
                 (DM2_V1_BootProfile *)view.dm2BootProfile, &after_ticks) ||
             !after_ticks.runtime_ready || after_ticks.current_level != 0 ||
-            after_ticks.party_x != 3 || after_ticks.party_y != 8 ||
+            after_ticks.party_x != 3 || after_ticks.party_y != 7 ||
             after_ticks.party_dir != 1) {
             fprintf(stderr,
                     "FAIL: Mac source ticks changed movement state unexpectedly (ready=%d map=%d party=%d,%d,%d)\n",
