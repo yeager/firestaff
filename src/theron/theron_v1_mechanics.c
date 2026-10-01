@@ -530,6 +530,93 @@ static int queue_party_pose_change_events(
     return 1;
 }
 
+/* Keep the read-only preview aligned with the Track 02 coordinate-link
+ * resolver without modifying party or transition state. THQUEST.ASM
+ * $C240-$C2D8 re-tests destination tiles, follows open destination pads and
+ * rejects wall arrivals; see
+ * docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-477.
+ */
+static int source_coordinate_teleporter_query_resolves(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *source) {
+    const Theron_V1_Object *current = source;
+    int visited_level[THERON_TELEPORTER_CHAIN_MAX];
+    int visited_x[THERON_TELEPORTER_CHAIN_MAX];
+    int visited_y[THERON_TELEPORTER_CHAIN_MAX];
+    unsigned int visited_count = 0u;
+
+    if (!world || !source || world->current_dungeon < 1 ||
+        world->current_dungeon > THERON_DUNGEON_COUNT ||
+        world->object_count < 0 ||
+        world->object_count > THERON_MAX_OBJECTS)
+        return 0;
+
+    for (unsigned int iteration = 0u;
+         iteration < THERON_TELEPORTER_CHAIN_MAX;
+         ++iteration) {
+        int target_level;
+        int target_x;
+        int target_y;
+        int dungeon_slot = world->current_dungeon - 1;
+        const Theron_V1_Level *destination;
+
+        if (!current || current->dungeon_id != world->current_dungeon ||
+            current->type != THERON_OBJTYPE_TELEPORTER ||
+            !(current->flags & THERON_OBJ_F_TRACK02_COORD_LINK) ||
+            current->state == 0u || current->level < 0 ||
+            current->level >= THERON_MAX_LEVELS_PER_DUNGEON)
+            return 0;
+        for (unsigned int i = 0u; i < visited_count; ++i) {
+            if (visited_level[i] == current->level &&
+                visited_x[i] == current->x &&
+                visited_y[i] == current->y)
+                return 0;
+        }
+        visited_level[visited_count] = current->level;
+        visited_x[visited_count] = current->x;
+        visited_y[visited_count] = current->y;
+        ++visited_count;
+
+        target_level = (current->linked_id >> 10) & 0x3f;
+        target_x = current->linked_id & 0x1f;
+        target_y = (current->linked_id >> 5) & 0x1f;
+        if (target_level < 0 ||
+            target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            !world->level_loaded[dungeon_slot][target_level])
+            return 0;
+        destination = &world->levels[dungeon_slot][target_level];
+        if (target_x < 0 || target_x >= destination->width ||
+            target_y < 0 || target_y >= destination->height)
+            return 0;
+
+        if (destination->squares[target_y][target_x] == THERON_SQUARE_WALL)
+            return 0;
+        if (destination->squares[target_y][target_x] !=
+            THERON_SQUARE_TELEPORTER)
+            return 1;
+
+        current = NULL;
+        for (int i = 0; i < world->object_count; ++i) {
+            const Theron_V1_Object *candidate = &world->objects[i];
+            if (candidate->dungeon_id == world->current_dungeon &&
+                candidate->level == target_level &&
+                candidate->x == target_x && candidate->y == target_y &&
+                candidate->type == THERON_OBJTYPE_TELEPORTER) {
+                current = candidate;
+                break;
+            }
+        }
+        if (!current ||
+            !(current->flags & THERON_OBJ_F_TRACK02_COORD_LINK))
+            return 0;
+        /* A closed destination pad is a terminal arrival, just as in the
+         * mutating resolver; it is not another link in the chain. */
+        if (current->state == 0u)
+            return 1;
+    }
+    return 0;
+}
+
 Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int direction) {
     if (!world) return THERON_MOVE_BLOCKED;
     int dir = normalize_dir(direction);
@@ -600,9 +687,13 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
             }
         }
         if (teleporter &&
-            (teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK) &&
-            teleporter->state == 0u)
-            return THERON_MOVE_OK;
+            (teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK)) {
+            if (teleporter->state == 0u)
+                return THERON_MOVE_OK;
+            if (!source_coordinate_teleporter_query_resolves(world,
+                                                              teleporter))
+                return THERON_MOVE_BLOCKED;
+        }
         return THERON_MOVE_TELEPORT;
     }
     if (tile == THERON_SQUARE_EXIT) {

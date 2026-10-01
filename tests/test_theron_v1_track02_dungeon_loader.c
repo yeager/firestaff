@@ -5297,6 +5297,11 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                     world->transition_target_level;
                 const int previous_spawn_x = world->transition_spawn_x;
                 const int previous_spawn_y = world->transition_spawn_y;
+                /* Keep the read-only movement preview aligned with the
+                 * original-command path for authentic coordinate chains
+                 * whose destination is unsupported or a wall. */
+                assert(theron_v1_get_move_result(
+                           world, approach_direction) == THERON_MOVE_BLOCKED);
                 assert(theron_v1_move_party_original_command(
                            world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
                        THERON_MOVE_BLOCKED);
@@ -5317,6 +5322,8 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                 else
                     ++unresolved_chained_routes_blocked;
             } else {
+                assert(theron_v1_get_move_result(
+                           world, approach_direction) == THERON_MOVE_TELEPORT);
                 assert(theron_v1_move_party_original_command(
                            world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
                        THERON_MOVE_TELEPORT);

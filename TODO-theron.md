@@ -13,9 +13,11 @@ Reviewed 2026-09-30. Only open work is listed here.
   chains end at walls and block unchanged, one chain with a floor approach
   ends at a special square and is deferred, and nine chains have no adjacent
   floor approach. No unresolved chain with a direct floor approach occurs in
-  either current retail BIN; see `DONE-theron.md`. Special-square arrivals,
-  routes without a floor approach, direct wall-target movement and original
-  source-owned runtime consumers remain unverified. The JP full-CUE capture
+  either current retail BIN; see `DONE-theron.md`. The read-only preview now
+  agrees with the original-command route for covered ordinary-floor and
+  wall-ending cases. Special-square arrivals, routes without a floor approach,
+  direct wall-target movement and original source-owned runtime consumers
+  remain unverified. The JP full-CUE capture
   still did not reach an authenticated game-owned data consumer, so it adds no
   independent original-runtime gameplay evidence.
 

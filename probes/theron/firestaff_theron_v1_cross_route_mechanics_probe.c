@@ -220,7 +220,7 @@ static void check_summary(const RouteSummary *s) {
     CHECK("trigger activates linked object", (s->linked_flags & THERON_OBJ_F_ACTIVATED) != 0);
     CHECK("trigger marks itself active", (s->trigger_flags & THERON_OBJ_F_ACTIVATED) != 0);
 
-    CHECK_INT("teleporter transition pending", s->transition_pending, 1);
+    CHECK_INT("teleporter transition is committed", s->transition_pending, 0);
     CHECK_INT("teleporter transition type", s->transition_type, THERON_TRANSITION_TELEPORTER);
     CHECK_INT("teleporter spawn x", s->transition_spawn_x, 14);
     CHECK_INT("teleporter spawn y", s->transition_spawn_y, 10);
@@ -244,7 +244,8 @@ static void check_source_evidence(void) {
     const char *evidence = theron_v1_mechanics_source_evidence();
     CHECK("mechanics evidence string present", evidence && strlen(evidence) > 40);
     CHECK("mechanics evidence cites THQUEST", evidence && strstr(evidence, "THQUEST.ASM"));
-    CHECK("mechanics evidence cites MOVESENS", evidence && strstr(evidence, "MOVESENS.C"));
+    CHECK("mechanics evidence cites Track 02 movement source lock",
+          evidence && strstr(evidence, "theron-runtime-spawn-capture.md"));
 }
 
 int main(void) {

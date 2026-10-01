@@ -1,5 +1,24 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-01 — keep coordinate-teleporter preview consistent with authentic movement
+
+- The read-only movement query now follows Track 02 coordinate-link records,
+  validates loaded destination bounds, rejects wall/cyclic/incomplete chains,
+  and treats an authenticated closed arrival pad as terminal. It does not
+  mutate party or transition state. The rule is bounded to the source-locked
+  destination-tile loop in `theron-runtime-spawn-capture.md:466-477`.
+- The authentic US/JP corpus now checks preview and original-command results
+  agree on successful routes and on chained wall blocks. Its eight accessible
+  wall-ending routes report `BLOCKED` in both paths; 82 successful routes,
+  including 16 closed-pad terminal arrivals, report `TELEPORT`. No unsupported
+  special-square behavior was opened.
+- On trv2, the authentic dungeon-loader CTest passed three consecutive runs.
+  Combat mechanics, teleporter chain and mechanics hardening probes passed.
+  The cross-route probe exposed stale assertions for queued transitions and
+  the obsolete MOVESENS citation; those assertions now match committed
+  transitions and the Theron Track 02 source lock. The five-test focused
+  selection then passed. Full Theron parity remains open.
+
 ## 2026-09-30 — census authentic active-link teleporter chains
 
 - Extended the real-media movement loop to retain the active-chain hop count
