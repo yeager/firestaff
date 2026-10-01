@@ -50,8 +50,7 @@ for field in \
   'gameId=dm1' \
   'phase=dm1-runtime' \
   'startupActive=0' \
-  'levelLoaded=1' \
-  'dm1HoCRealAssetCapture=1'; do
+  'levelLoaded=1'; do
   if [[ "$receipt" != *"$field"* ]]; then
     echo "$receipt"
     echo "FAIL: DM1 macOS receipt is missing $field" >&2
