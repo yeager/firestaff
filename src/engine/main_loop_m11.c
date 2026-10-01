@@ -2963,6 +2963,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     Uint64 presentationStartedMs = 0U;
     unsigned int sourceStep;
     unsigned int completedSteps = 0U;
+    int autotestQuitInjected = 0;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
     DM1_V1_StartupTitleSourceHandoffReceipt_PC34 titleSourceHandoff;
@@ -3178,6 +3179,27 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         }
         ++completedSteps;
         gameView->dm1StartupTitleCompletedSteps = completedSteps;
+        /* Deterministically exercise host close handling against the first
+         * rendered source frame. This hook is inert unless both explicit
+         * autotest switches are set; ReDMCSB TITLE.C F0437 itself has no
+         * host-window close event to consume. */
+        if (!autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+            getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME"),
+                   "1") == 0) {
+            SDL_Event event;
+            memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            event.type = SDL_EVENT_QUIT;
+#else
+            event.type = SDL_QUIT;
+#endif
+            if (SDL_PushEvent(&event)) {
+                autotestQuitInjected = 1;
+                fprintf(stderr,
+                        "AUTOTEST: DM1 C001 quit injected after first rendered frame\n");
+            }
+        }
     }
     if (completedSteps == V1_TitleFrontend_GetSourceAnimationStepCount()) {
         if (outCompleted) {

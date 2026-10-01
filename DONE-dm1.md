@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-10-01: Added an autotest-only host-quit injection after the first
+  rendered Atari ST C001 title frame and exercised it with the authenticated
+  French v1.3 archive through the normal M12 launcher. The check requires the
+  injected quit receipt, a clean process exit, and no launch-failure message;
+  the same full original-media test then verifies ordinary M12 startup,
+  C127 recruitment and live movement. The complete CTest row passed in 65.57
+  seconds. This covers the Atari close-event path, not PC/F20 event timing or
+  native HiDPI behavior.
+
 - 2026-10-01: Re-ran the production CLI boot probe against the authenticated
   PC 3.4 archive on the macOS host. The source title completed all 23 steps,
   loaded the dungeon, and published `phase=dm1-runtime` after 120 runtime

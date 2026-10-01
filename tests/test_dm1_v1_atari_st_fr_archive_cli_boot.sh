@@ -64,11 +64,44 @@ case "$app" in
     *) app_dir=. ;;
 esac
 runtime_probe="$app_dir/dm1-atari-st-fr-runtime-$$.json"
+quit_probe="$app_dir/dm1-atari-st-fr-title-quit-$$.json"
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 menu_home="$scratch_root/dm1-atari-st-fr-menu-home-$$"
 mkdir -p "$menu_home"
-trap 'rm -f "$runtime_probe"; rm -rf "$menu_home"' EXIT
+trap 'rm -f "$runtime_probe" "$quit_probe"; rm -rf "$menu_home"' EXIT
+
+# Interrupt the authenticated C001 title after its first rendered frame.
+# This verifies that a host quit exits through the launcher instead of being
+# mislabeled as missing or corrupt startup media.
+quit_output=$(HOME="$menu_home" FIRESTAFF_AUTOTEST=1 \
+FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME=1 \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$quit_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --platform atari-st --data-dir "$archive" \
+    --script enter,enter,enter --duration 10000 2>&1) || {
+    printf '%s\n' "$quit_output" >&2
+    exit 1
+}
+if ! grep -Fq 'AUTOTEST: DM1 C001 quit injected after first rendered frame' \
+        <<<"$quit_output" ||
+   grep -qi 'launch failed' <<<"$quit_output"; then
+    printf '%s\n' "$quit_output" >&2
+    printf '%s\n' 'FAIL: DM1 C001 quit was not handled as a clean application exit' >&2
+    exit 1
+fi
+python3 - "$quit_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+if probe.get("launchedEver") != 1 or probe.get("active") != 0:
+    raise SystemExit(f"FAIL: DM1 C001 quit did not end before gameplay: {probe}")
+print("PASS: authentic French DM1 Atari C001 quit exits cleanly after first frame")
+PY
+
 # The default 960x540 host view presents a centered 640x400 game image. This
 # point maps to the source C127 portrait hit point (112,83).
 m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
