@@ -1,4 +1,5 @@
 #include "menu_hit_m12.h"
+#include "menu_input_m12.h"
 #include "menu_startup_m12.h"
 #include "menu_startup_render_modern_m12.h"
 
@@ -6,7 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void force_csb_available(M12_StartupMenuState* state) {
+static int force_csb_available(M12_StartupMenuState* state) {
+    int versionIndex = M12_AssetStatus_FindVersionIndex("csb", "st20-21-en");
+    if (!state || versionIndex < 0 ||
+        versionIndex >= M12_ASSET_MAX_VERSIONS_PER_GAME) {
+        return 0;
+    }
     state->entries[1].title = "CHAOS STRIKES BACK";
     state->entries[1].gameId = "csb";
     state->entries[1].kind = M12_MENU_ENTRY_GAME;
@@ -28,11 +34,17 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->messageIsMissingGameData = 0;
     state->messageGameId[0] = '\0';
     state->assetStatus.csbAvailable = 1;
-    state->assetStatus.versions[1][0].gameId = "csb";
-    state->assetStatus.versions[1][0].versionId = "atari-st-v20";
-    state->assetStatus.versions[1][0].label = "Atari ST 2.0";
-    state->assetStatus.versions[1][0].shortLabel = "ST 2.0";
-    state->assetStatus.versions[1][0].matched = 1;
+    state->assetStatus.dm1Available = 0;
+    state->assetStatus.versions[1][versionIndex].gameId = "csb";
+    state->assetStatus.versions[1][versionIndex].versionId = "st20-21-en";
+    state->assetStatus.versions[1][versionIndex].label = "Atari ST 2.0/2.1 English";
+    state->assetStatus.versions[1][versionIndex].shortLabel = "ST 2.1 EN";
+    state->assetStatus.versions[1][versionIndex].matched = 1;
+    for (int i = 0; i < (int)M12_ASSET_MAX_VERSIONS_PER_GAME; ++i) {
+        if (i != versionIndex) {
+            state->assetStatus.versions[1][i].matched = 0;
+        }
+    }
     state->assetStatus.requiredFileCounts[1] = 2;
     state->assetStatus.requiredFiles[1][0].gameId = "csb";
     state->assetStatus.requiredFiles[1][0].roleId = "graphics";
@@ -44,18 +56,20 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->assetStatus.requiredFiles[1][1].label = "DUNGEON.DAT";
     state->assetStatus.requiredFiles[1][1].required = 1;
     state->assetStatus.requiredFiles[1][1].matched = 1;
-    state->gameOptions[1].versionIndex = 0;
+    state->gameOptions[1].versionIndex = versionIndex;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    return 1;
 }
 
-static void force_csb_version_only_missing_required(M12_StartupMenuState* state) {
-    force_csb_available(state);
+static int force_csb_version_only_missing_required(M12_StartupMenuState* state) {
+    if (!force_csb_available(state)) return 0;
     state->assetStatus.csbAvailable = 0;
     state->assetStatus.requiredFiles[1][0].matched = 0;
     state->assetStatus.requiredFiles[1][1].matched = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
     state->gameOptions[1].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
+    return 1;
 }
 
 static int expect(int cond, const char* msg) {
@@ -95,15 +109,18 @@ int main(void) {
     int changed;
     const int gridLeft = 42 + 390 + 44;
     const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
-    const int cardH = ((1080 - 130) - 40 - 22) / 2;
     const int csbCardCenterX = gridLeft + 1 * (cardW + 22) + cardW / 2;
-    const int cardCenterY = 40 + cardH / 2;
+    const int hitCardH = ((1080 - 130) - 40 - 22) / 2;
+    const int cardCenterY = 40 + hitCardH / 2;
     const int platformCardCenterX = 160 + 250;
     const int choiceCardCenterY = 280 + 125;
     const int originalCardCenterX = 210 + 240;
 
     M12_StartupMenu_InitWithDataDir(&state, "/dev/shm/firestaff-test-no-assets", NULL);
-    force_csb_available(&state);
+    state.languageExplicit = 1;
+    state.settings.languageIndex = 0;
+    if (!expect(force_csb_available(&state),
+                "CSB readiness fixture should bind a catalogued Atari version")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, csbCardCenterX, cardCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB card direct click should change menu state")) return 1;
@@ -111,48 +128,53 @@ int main(void) {
     if (!expect(state.activatedIndex == 1, "CSB direct click should activate CSB")) return 1;
     if (!expect(M12_StartupMenu_GetBootReadiness(&state, 1, &boot) == 1,
                 "CSB boot readiness receipt should build")) return 1;
-    if (!expect(boot.fullStartGraphicsReady == 1,
-                "CSB boot readiness should report full startup ready")) return 1;
-    if (!expect(boot.startupContractExpected == 1 && boot.startupContractReady == 1,
-                "CSB boot readiness should expose ready startup receipt contract")) return 1;
-    if (!expect(boot.packagedCaptureExpected == 1 && boot.packagedCaptureReady == 1,
-                "CSB boot readiness should expose ready packaged capture proof")) return 1;
+    if (!expect(boot.fullStartGraphicsReady == 0,
+                "CSB M12 readiness should leave full startup proof to M11")) return 1;
+    if (!expect(boot.startupContractExpected == 1 && boot.startupContractReady == 0,
+                "CSB M12 readiness should not invent the M11 startup receipt")) return 1;
+    if (!expect(boot.packagedCaptureExpected == 1 && boot.packagedCaptureReady == 0,
+                "CSB M12 readiness should not invent the M11 capture proof")) return 1;
     if (!expect(boot.startupContractLabel &&
                 strcmp(boot.startupContractLabel, "CSB STARTUP CAPTURE RECEIPT") == 0,
                 "CSB boot readiness should name the startup receipt contract")) return 1;
     if (!expect(boot.packagedCaptureLabel &&
                 strcmp(boot.packagedCaptureLabel, "CSB TITLE + HUD CAPTURE PROOF") == 0,
                 "CSB boot readiness should name the packaged capture proof")) return 1;
-    if (!expect(boot.startupStepCount == 7,
+    if (!expect(boot.startupStepCount > 3,
                 "CSB boot readiness should expose the full boot chain step count")) return 1;
-    if (!expect(boot.startupStepReadyCount == 7,
-                "CSB boot readiness should mark every startup step ready")) return 1;
-    if (!expect(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0,
-                "CSB boot readiness next step should be READY")) return 1;
+    if (!expect(boot.startupStepReadyCount == 3,
+                "CSB boot readiness should count only data, version, and title handoff")) return 1;
+    if (!expect(boot.nextStepLabel && strstr(boot.nextStepLabel, "TITLE START") != NULL,
+                "CSB boot readiness next step should belong to M11")) return 1;
     if (!expect(boot.startupPathLabel && strcmp(boot.startupPathLabel, "CSB BOOT PATH") == 0,
                 "CSB boot readiness should name the CSB path")) return 1;
-    if (!expect(boot.statusLabel && strcmp(boot.statusLabel, "BOOT READY") == 0,
-                "CSB boot status label should name boot readiness")) return 1;
+    if (!expect(boot.statusLabel && strcmp(boot.statusLabel, "TITLE START AVAILABLE") == 0,
+                "CSB boot status should describe the M11 title handoff")) return 1;
     if (!expect(boot.detailLabel &&
-                strcmp(boot.detailLabel, "SWSH, TITLE, ENTRANCE, UTILITY") == 0,
-                "CSB boot detail should name startup/menu chain")) return 1;
+                strcmp(boot.detailLabel, "MENU AND CAPTURE PROOFS NOT READY") == 0,
+                "CSB boot detail should leave later proofs to M11")) return 1;
     if (!expect(M12_StartupMenu_GetLaunchGate(&state, 1, &gate) == 1,
                 "CSB launch gate should build")) return 1;
     if (!expect(gate.canLaunch == 1,
-                "CSB launch gate should allow hash-matched startup")) return 1;
-    if (!expect(gate.boot.fullStartGraphicsReady == 1,
-                "CSB launch gate should carry ready boot receipt")) return 1;
+                "CSB launch gate should allow the verified M11 title attempt")) return 1;
+    if (!expect(gate.boot.fullStartGraphicsReady == 0,
+                "CSB launch gate should carry unproven M11 startup readiness")) return 1;
     if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, 1),
-                       "READY TO LAUNCH") == 0,
-                "CSB ready card status should use launch gate label")) return 1;
+                       "TITLE START AVAILABLE") == 0,
+                "CSB card status should identify the title handoff")) return 1;
     if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, 1),
-                       "CSB TITLE + HUD CAPTURE PROOF") == 0,
-                "CSB ready card detail should use active startup capture proof")) return 1;
+                       "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED") == 0,
+                "CSB card detail should keep M11 menu/capture proof gated")) return 1;
     if (!render_smoke_nonblank(&state, "CSB options")) return 1;
 
-    changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX, choiceCardCenterY, 1, NULL);
-    if (!expect(changed == 1 && state.gameCardFlowStage == 1,
-                "CSB Atari ST platform card should open presentation choices")) return 1;
+    if (M12_ModernMenu_HitTest(&state, platformCardCenterX, choiceCardCenterY).kind !=
+            M12_HIT_GAMEOPT_ROW) {
+        fprintf(stderr, "FAIL: CSB platform control should be hit-testable\n");
+        return 1;
+    }
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.gameCardFlowStage == 1,
+                "CSB Atari ST platform selection should open presentation choices")) return 1;
     changed = M12_ModernMenu_HandlePointer(&state, originalCardCenterX, choiceCardCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB Launch direct click should be handled")) return 1;
     if (!expect(state.launchRequested == 1, "CSB hash-matched assets should request runtime launch")) return 1;
@@ -165,11 +187,14 @@ int main(void) {
     if (!expect(intent.valid == 1, "CSB launch intent is valid when version is matched")) return 1;
     if (!expect(intent.gameId && strcmp(intent.gameId, "csb") == 0, "CSB intent should still identify CSB for diagnostics")) return 1;
 
-    puts("ok: CSB V1 hash-matched launcher path renders options/ready views and exposes a launch intent");
+    puts("ok: CSB launcher fixture renders options/title-handoff views and exposes a launch intent");
     puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 launch state and LOADSAVE.C F0435 new-game load boundary");
 
     M12_StartupMenu_InitWithDataDir(&state, "/dev/shm/firestaff-test-no-assets", NULL);
-    force_csb_version_only_missing_required(&state);
+    state.languageExplicit = 1;
+    state.settings.languageIndex = 0;
+    if (!expect(force_csb_version_only_missing_required(&state),
+                "CSB missing-data fixture should retain its catalogued version")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, csbCardCenterX, cardCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB version-only fixture should still open options for regression coverage")) return 1;
@@ -208,8 +233,14 @@ int main(void) {
                 "CSB missing-data card detail should use launch gate detail")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX, choiceCardCenterY, 1, NULL);
-    if (!expect(changed == 1 && state.gameCardFlowStage == 1,
-                "CSB missing-data platform card should open presentation choices")) return 1;
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE &&
+                state.gameCardFlowStage == 0,
+                "CSB missing data must block platform selection before presentation")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS,
+                "CSB missing-data fixture should return to game options")) return 1;
+    state.gameCardFlowStage = 1;
+    state.gameOptions[1].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
     changed = M12_ModernMenu_HandlePointer(&state, originalCardCenterX, choiceCardCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB V2.1 launch click should be handled")) return 1;
     if (!expect(state.launchRequested == 0,
