@@ -2923,6 +2923,7 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     char candidate_root[ASSET_PATH_MAX];
     char graphics_path[ASSET_PATH_MAX] = {0};
     char dungeon_path[ASSET_PATH_MAX] = {0};
+    char disc_root[ASSET_PATH_MAX] = {0};
     char selected_data_directory[ASSET_PATH_MAX] = {0};
     const char *mini_md5;
     const char *executable_name;
@@ -3163,6 +3164,12 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
             asset_file_matches_md5(dungeon_path, dungeon_md5)) {
             csb_v1_boot_copy(graphics_path, sizeof(graphics_path),
                              candidate_root);
+            csb_v1_boot_copy(disc_root, sizeof(disc_root), data_dir);
+            if (!FSP_JoinPath(selected_data_directory,
+                              sizeof(selected_data_directory), data_dir,
+                              directory)) {
+                return 0;
+            }
         }
     }
     if (!graphics_path[0]) {
@@ -3178,18 +3185,16 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
             !asset_file_matches_md5(dungeon_path, dungeon_md5)) {
             return 0;
         }
-    } else if (!FSP_JoinPath(dungeon_path, sizeof(dungeon_path), data_dir,
-                             "DUNGEON.DAT")) {
-        return 0;
+        if (!FSP_JoinPath(disc_root, sizeof(disc_root), data_dir,
+                          "fmtowns_iso") ||
+            !FSP_JoinPath(selected_data_directory,
+                          sizeof(selected_data_directory), disc_root,
+                          directory)) {
+            return 0;
+        }
     }
-    if (!FSP_JoinPath(selected_data_directory, sizeof(selected_data_directory),
-                      data_dir, "fmtowns_iso")) {
-        return 0;
-    }
-    if (!FSP_JoinPath(candidate_root, sizeof(candidate_root),
-                      selected_data_directory, directory) ||
-        !csb_v1_boot_load_fmtowns_loose_media_pc34(
-            profile, selected_data_directory, candidate_root, graphics_path,
+    if (!csb_v1_boot_load_fmtowns_loose_media_pc34(
+            profile, disc_root, selected_data_directory, graphics_path,
             dungeon_path, mini_md5, executable_name, utility_name)) {
         return 0;
     }
