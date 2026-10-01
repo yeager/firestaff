@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-10-01: Re-ran the authentic A31 Amiga CLI suite on the macOS host.
+  Original and Modern title handoffs reached runtime movement, the complete
+  initial-input matrix passed, the M12 start menu published a nonzero source
+  viewport receipt, and AUTO discovered the installed A31E archive. SDL used
+  its dummy video/audio drivers, so this does not verify native HiDPI output
+  or audible device playback on MacBook hardware.
+
 - 2026-10-01: Removed the hash-based Atari ST SND1 final-hold approximation
   from production playback and deleted its public decoder API. ReDMCSB
   SOUND.C F0061 lines 1164-1209 disables Timer A when the declared sample

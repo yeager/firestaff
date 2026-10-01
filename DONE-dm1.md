@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-01: Re-ran the production CLI boot probe against the authenticated
+  PC 3.4 archive on the macOS host. The source title completed all 23 steps,
+  loaded the dungeon, and published `phase=dm1-runtime` after 120 runtime
+  ticks. This confirms the current PC 3.4 CLI route; it does not verify
+  physical-device sound or the separate Atari/Amiga/FMTowns startup routes.
+
 - 2026-09-29: Corrected the live PC/F20 M11 title selection to use the
   ReDMCSB `TITLE.C` F0437 `GRAPHICS.DAT` C001 sequence even when the separate
   canonical loose `TITLE` animation is installed. The authentic PC3.4 normal

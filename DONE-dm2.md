@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-01: Re-ran the authenticated Macintosh retail startup checks on the
+  macOS host. The direct M11 New Game route reached active runtime, moved, and
+  reported no living creature adjacent to the initial party pose; the native
+  CLI suite passed title-loop movement, scaled M12 menu movement, AUTO Mac
+  selection, and post-launch movement. Tests used SDL dummy presentation, so
+  physical Retina rendering and native-device audio remain unverified.
+
 ## 2026-10-01 — Reject DM2 Resume on the incomplete Mac load path
 
 - The launcher no longer offers a DOS SKSave as Quick Resume when the
