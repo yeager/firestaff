@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+- 2026-10-01: Removed the hash-based Atari ST SND1 final-hold approximation
+  from production playback and deleted its public decoder API. ReDMCSB
+  SOUND.C F0061 lines 1164-1209 disables Timer A when the declared sample
+  counter reaches zero; it does not establish a substitute sample when
+  packed source data ends early. The authentic hard-disk and retail v2.1
+  floppy carriers still agree on all 22 row fingerprints. Their three
+  bounded-decoder failures are now explicitly rejected by the real-media
+  transport test instead of being presented as original audio. Recovering
+  those sounds still requires an
+  authentic Atari memory-boundary trace; see TODO-csb.md.
+
 - 2026-09-29: The authentic FM Towns EN/JA Game-handoff regressions now run
   SDL's dummy audio backend and verify that C0_MUSIC_ENTRANCE resolves to
   physical CD-DA track 02 and queues the selected original CUE/IMG PCM in an

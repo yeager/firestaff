@@ -243,15 +243,6 @@ int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
                                          size_t outLevelCapacity,
                                          CsbV1StSoundDecodeResult* outResult);
 
-/* CSB Atari SND1 has three source-verified records whose Timer-A sample
- * counter consumes one final tick after the packed stream ends. The original
- * PSG holds its last level for that tick. This variant admits only that
- * single bounded final hold; incomplete repeat-count groups still fail. */
-int csb_v1_audio_runtime_decode_st_sound_with_final_hold(
-    const uint8_t* encoded, size_t encodedSize, uint8_t initialLevel,
-    uint8_t* outLevels, size_t outLevelCapacity,
-    CsbV1StSoundDecodeResult* outResult);
-
 int csb_v1_audio_runtime_amiga_sound_payload_view(
     const uint8_t* decompressedRecord, size_t recordSize,
     CsbV1AmigaSoundPayloadView* outView);
