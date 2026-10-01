@@ -5433,7 +5433,13 @@ static void m12_preserve_dm1_game_data_root(M12_AssetStatus* status,
         return;
     }
     runtimeDir = status->runtimeDataDirs[gameIndex];
-    if (!runtimeDir[0] || m12_path_is_virtual_asset(runtimeDir) ||
+    /* A DM1 ZIP directly inside the configured data root has the same
+     * physical parent as <data-root>/dm1, but the archive itself is the
+     * runtime owner. Only collapse an actual directory leaf; treating the
+     * ZIP file as a game subdirectory silently hands M11 the containing
+     * folder and lets a sibling edition take over. */
+    if (!runtimeDir[0] || !FSP_DirExists(runtimeDir) ||
+        m12_path_is_virtual_asset(runtimeDir) ||
         !FSP_ParentDir(parent, sizeof(parent), runtimeDir) ||
         strcmp(parent, status->dataDir) != 0) {
         return;

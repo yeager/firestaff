@@ -136,7 +136,7 @@ normal_start_output=$(FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm2 --platform mac --data-dir "$archive" \
     --width 320 --height 200 \
-    --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait:30,key:right,wait:30,key:up,wait:30,key:up' --duration 36000 2>&1) || {
+    --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait:30,key:right,wait:30,key:s,wait:30,key:up' --duration 36000 2>&1) || {
     printf '%s\n' "$normal_start_output" >&2
     exit 1
 }

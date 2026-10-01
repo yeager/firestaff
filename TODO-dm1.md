@@ -431,7 +431,13 @@ Reviewed 2026-08-29. Only open work is listed here.
 
 - Complete legacy gameplay sound parity. Atari now selects original SND1
   records through a source-locked event map; verify live event timing,
-  arbitration and PSG output against original captures. FM Towns local
+  arbitration and PSG output against original captures. The authenticated
+  English, German and French Atari real-media tests now run with SDL's dummy
+  playback device and require every accepted event to add decoded original
+  PCM to the device queue; the three known short records must leave the queue
+  unchanged. This proves source-to-queue transport, not audible output,
+  queue-drain timing, arbitration under overlapping events or PSG waveform
+  parity. FM Towns local
   events now read F20 unsigned PCM from retained media; verify distance
   attenuation, channel scheduling and original-driver output. Amiga local
   effects now read original signed PCM with the native period; verify
@@ -452,7 +458,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   `5393932066f3199a6a653dfd1f1524bb52375ae0ad0831720743c2e015360a2b`).
   The ST/1 MiB run reaches an EmuTOS bus-error screen at PC `00e14aac`,
   not the game sound consumer. Do not admit that dump as gameplay evidence;
-  establish a compatible reference boot before taking the SND1 trace.
+  establish a compatible reference boot before taking the SND1 trace. On the
+  current macOS host, direct `hatari --help` and `hatari --version` invocations
+  also abort in AppKit's `NSMenuBarPresentationInstance` registration before
+  emulation starts; the crash report is host-launch evidence, not game runtime
+  evidence. No TOS ROM was found in the staged game-data or mounted
+  Firestaff-archive trees.
 
 - Compare original Atari pixel captures after the corrected F0497/F0496
   decoder. English, German and French original-media name/all-record checks

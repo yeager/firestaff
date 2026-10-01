@@ -1136,6 +1136,9 @@ int main(void)
     {
         DM2_V1_MacInputReceipt key_receipt;
         DM2_V1_BootRuntimeReceipt after_ticks;
+        const DM2_V1_DungeonData *live_dungeon =
+            (const DM2_V1_DungeonData *)
+                ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
         if (!dm2_v1_mac_input_resolve('k', 0,
                                       DM2_V1_MAC_INPUT_GAMEPLAY,
                                       &key_receipt) ||
@@ -1159,8 +1162,27 @@ int main(void)
             M11_GameView_Shutdown(&view);
             return 1;
         }
-        for (int tick = 0; tick < 16; ++tick)
+        /* A nearby-creature assertion after only sixteen source ticks can
+         * miss a spawn that is activated by the normal AI schedule later in
+         * the opening route. Keep the party at its genuine post-input pose
+         * and sample live DB4 occupancy throughout another full source
+         * minute, just as above at the New Game spawn. */
+        for (int tick = 0; tick < 3600; ++tick) {
+            int nearby_x = -1;
+            int nearby_y = -1;
+            int nearby;
             (void)M11_GameView_AdvanceIdleTick(&view);
+            if ((tick % 10) != 9 && tick != 3599) continue;
+            nearby = mac_live_map_has_nearby_creature(
+                live_dungeon, 0, 3, 7, &nearby_x, &nearby_y);
+            if (nearby != 0) {
+                fprintf(stderr,
+                        "FAIL: live Mac DB4 creature query during the post-movement source minute returned %d at source tick %d (creature=%d,%d party=3,7)\n",
+                        nearby, tick + 1, nearby_x, nearby_y);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
         memset(&after_ticks, 0, sizeof(after_ticks));
         if (!dm2_v1_boot_runtime_capture(
                 (DM2_V1_BootProfile *)view.dm2BootProfile, &after_ticks) ||
@@ -1168,7 +1190,7 @@ int main(void)
             after_ticks.party_x != 3 || after_ticks.party_y != 7 ||
             after_ticks.party_dir != 1) {
             fprintf(stderr,
-                    "FAIL: Mac source ticks changed movement state unexpectedly (ready=%d map=%d party=%d,%d,%d)\n",
+                    "FAIL: Mac source ticks changed movement state unexpectedly after a one-minute live creature sweep (ready=%d map=%d party=%d,%d,%d)\n",
                     after_ticks.runtime_ready, after_ticks.current_level,
                     after_ticks.party_x, after_ticks.party_y,
                     after_ticks.party_dir);
@@ -1176,9 +1198,6 @@ int main(void)
             return 1;
         }
         {
-            const DM2_V1_DungeonData *live_dungeon =
-                (const DM2_V1_DungeonData *)
-                    ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
             int forward_raw = dm2_v1_dungeon_c_map_get_tile_value(
                 live_dungeon, after_ticks.current_level,
                 after_ticks.party_x + 1, after_ticks.party_y);
@@ -1202,11 +1221,11 @@ int main(void)
                 M11_GameView_Shutdown(&view);
                 return 1;
             }
-            printf("Mac moved pose=(%d,%d) east lane: floor at distance 1, wall at distance 2 (live-adjacent-creatures=%d)\n",
-                   after_ticks.party_x, after_ticks.party_y, nearby);
+            printf("Mac moved pose=(%d,%d) east lane: floor at distance 1, wall at distance 2 (live-adjacent-creatures=0 throughout 3600 source ticks)\n",
+                   after_ticks.party_x, after_ticks.party_y);
             if (nearby != 0) {
                 fprintf(stderr,
-                        "FAIL: live Mac DB4 creature is within one tile after movement and 16 source ticks (nearby=%d party=%d,%d)\n",
+                        "FAIL: live Mac DB4 creature is within one tile after the source-minute movement sweep (nearby=%d party=%d,%d)\n",
                         nearby, after_ticks.party_x, after_ticks.party_y);
                 M11_GameView_Shutdown(&view);
                 return 1;

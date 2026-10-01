@@ -12740,13 +12740,13 @@ if(BUILD_TESTING)
     add_test(NAME dm1_atari_de_names_real COMMAND test_dm1_atari_names_real 2bdc5f431f84c0ece738f54dbd787c3b)
     add_test(NAME dm1_atari_fr_names_real COMMAND test_dm1_atari_names_real 0d7af44dd14f383464288abdcec76afc)
     set_tests_properties(dm1_atari_de_names_real PROPERTIES SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12.zip"
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12.zip"
         LABELS "dm1;atari;real-media;objects;skip-safe")
     set_tests_properties(dm1_atari_fr_names_real PROPERTIES SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_FR_Version-13.zip"
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_FR_Version-13.zip"
         LABELS "dm1;atari;real-media;objects;skip-safe")
     set_tests_properties(dm1_atari_names_real PROPERTIES SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
         LABELS "dm1;atari;real-media;objects;skip-safe")
     foreach(load_edition amiga amiga_hd atari atari_de atari_fr)
         set(load_args)
@@ -38153,6 +38153,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_st_sound_audio.c"
              COMMAND test_csb_v1_atari_st_sound_audio)
     set_tests_properties(csb_v1_atari_st_sound_audio PROPERTIES
         LABELS "tier2;csb;atari;audio;data_free")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_snd1_real_data.c")
+    add_executable(test_csb_v1_atari_snd1_real_data
+        tests/test_csb_v1_atari_snd1_real_data.c)
+    target_include_directories(test_csb_v1_atari_snd1_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_atari_snd1_real_data PRIVATE
+        firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_snd1_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_atari_snd1_real_data
+        COMMAND test_csb_v1_atari_snd1_real_data)
+    set_tests_properties(csb_v1_atari_snd1_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MEDIA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
+        LABELS "csb;atari;audio;real-media;preserved-archive;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_boot_swoosh_source_pc34_compat.c")

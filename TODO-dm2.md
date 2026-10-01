@@ -90,7 +90,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   W/E (retail wall buttons) could be treated as forward/right-turn motion
   while held. It now resolves held scancodes through the same authenticated
   Mac key table as key-down events; the real-media CLI startup/movement test
-  passes after rebuilding. This does not establish M5 keyboard feel, audible
+  now drives one forward step with the source Mac `S` key and another with Up
+  through the production SDL event loop, then checks the resulting party pose;
+  the end-to-end test passes against authentic retail media. The Mac input unit
+  test also locks arrows, A/S/D, lateral movement and the W/Q/E wall controls.
+  This does not establish M5 keyboard feel, audible
   sound or viewport quality. The user reports that the latest release has no
   audible sound, an unusable dungeon view, no movement and a monster seemingly
   adjacent to the party on a MacBook Pro M5. On the local Mac M4 build host,
@@ -128,10 +132,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   SDL keydown north move from (1,8) to (1,7). The real-media M11 New Game test
   now checks a second forward move through the retail Mac action table and a
   one-minute stationary New Game interval (3,600 source ticks), sampling live
-  DB4 chains every ten ticks and requiring stable party coordinates. It also
+  DB4 chains every ten ticks and requiring stable party coordinates. After the
+  real turn-and-move sequence to (3,7), it now samples live DB4 occupancy every
+  ten ticks for another source minute without teleporting the party. It also
   checks the first forward move. These passed against the authentic Mac retail
-  archive; no live DB4 creature approached within one tile during the sampled
-  minute. This improves the spawn-distance evidence but does not prove monster
+  archive; no live DB4 creature approached within one tile during either
+  sampled minute. This improves opening-route evidence but does not prove monster
   behavior during a longer campaign. These checks do not establish physical M5 key repeat
   or Retina presentation. A fresh logical 320x200 screenshot still shows a
   dominant close wall; visual parity and

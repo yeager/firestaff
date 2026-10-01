@@ -186,10 +186,16 @@ int main(int argc, char **argv) {
             -1, -1, -1, -1, -1, -1, -1
         };
         if (!state->audioState.initialized && !M11_Audio_Init(&state->audioState)) goto done;
+        if (state->audioState.backend != M11_AUDIO_BACKEND_SDL3) {
+            fputs("FAIL: SDL dummy playback backend unavailable for Atari SND1 queue test\n",
+                  stderr);
+            goto done;
+        }
         for (int i = 0; i < 35; ++i) {
             int index = expected[i];
             int playable = index >= 0 && index != 1 && index != 12 && index != 16;
             int markers = state->audioState.playedMarkerCount;
+            int queued = state->audioState.csbAtariStSoundQueuedCount;
             if (M11_Audio_Dm1AtariSoundIndex(i) != index ||
                 M11_Audio_EmitDm1AtariSound(&state->audioState,
                     state->assetLoader.graphicsDatPath, i, 3) != playable ||
@@ -198,7 +204,18 @@ int main(int argc, char **argv) {
                 goto done;
             }
             if (playable && (state->audioState.lastSoundIndex != i ||
-                state->audioState.csbAtariStSoundPeriod != (i == 3 ? 145 : i == 15 ? 138 : 112))) goto done;
+                state->audioState.csbAtariStSoundPeriod != (i == 3 ? 145 : i == 15 ? 138 : 112) ||
+                state->audioState.csbAtariStSoundQueuedCount != queued + 1)) {
+                fprintf(stderr,
+                    "FAIL: authentic Atari sound event %d did not queue PCM\n", i);
+                goto done;
+            }
+            if (!playable &&
+                state->audioState.csbAtariStSoundQueuedCount != queued) {
+                fprintf(stderr,
+                    "FAIL: rejected Atari sound event %d changed the PCM queue\n", i);
+                goto done;
+            }
         }
         if (M11_Audio_Dm1AtariSoundIndex(-1) != -1 ||
             M11_Audio_Dm1AtariSoundIndex(35) != -1) goto done;
