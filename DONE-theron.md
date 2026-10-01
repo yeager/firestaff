@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-01 — expose authentic regional skill-rank source records
+
+- US and JP Rev. 1 now expose bounds-checked raw accessors for all 15 authentic
+  skill-rank records, preserving their bytes without NUL terminators. The six
+  `0x60`–`0x65` prefix bytes are available as data in both editions; this does
+  not infer glyph rendering or bind an original rank-display consumer.
+- The regional real-media test compares every returned byte and record length
+  against hash-verified Track 02, and the API regression covers missing outputs
+  and unbound slot 15. Original in-game presentation remains open in TODO.
+
 ## 2026-10-01 — keep coordinate-teleporter preview consistent with authentic movement
 
 - The read-only movement query now follows Track 02 coordinate-link records,
@@ -7,13 +17,15 @@
   and treats an authenticated closed arrival pad as terminal. It does not
   mutate party or transition state. The rule is bounded to the source-locked
   destination-tile loop in `theron-runtime-spawn-capture.md:466-477`.
-- The authentic US/JP corpus now checks preview and original-command results
-  agree for every active coordinate link with an adjacent authentic floor:
+- The authentic US/JP corpus now checks that preview and Firestaff's mutating
+  original-command API agree for every active coordinate link with an adjacent
+  authentic floor:
   91 cases per region. Both regions produce 45 `TELEPORT` and 46 `BLOCKED`
   results, including 42 direct wall targets and four chains ending at a wall.
-  A full-world hash confirms the query does not mutate state. The cloned
-  original-command path and preview agree even for special-square arrivals,
-  but those arrivals remain deferred as game semantics.
+  The existing world-state hash confirms the query does not mutate the state
+  it covers. The cloned mutating original-command path and preview agree even
+  for special-square arrivals, but those arrivals remain deferred as game
+  semantics.
 - On trv2, the authentic dungeon-loader CTest passed three consecutive runs.
   Combat mechanics, teleporter chain and mechanics hardening probes passed.
   The cross-route probe exposed stale assertions for queued transitions and

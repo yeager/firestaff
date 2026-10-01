@@ -1,12 +1,12 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-09-30. Only open work is listed here.
+Reviewed 2026-10-01. Only open work is listed here.
 
 ## 2026-09-30 — remaining coordinate-teleporter parity
 
 - The authentic US AKUTUBA M0 route from `(1,0,north)` through the active
-  `(0,0)` pad to `(2,3)` commits through the original movement command and
-  transition executor. The real-media movement corpus now also exercises 41
+  `(0,0)` pad to `(2,3)` commits through Firestaff's mutating movement-command
+  API and transition executor. The real-media movement corpus now exercises 41
   eligible routes each from US and JP Track 02, including four cross-level
   routes and eight closed-pad terminal arrivals per region. The real-media
   census finds 14 active-chain roots in each region: four floor-approachable
@@ -15,8 +15,9 @@ Reviewed 2026-09-30. Only open work is listed here.
   floor approach. No unresolved chain with a direct floor approach occurs in
   either current retail BIN; see `DONE-theron.md`. On all 91 active links per
   region with an adjacent authentic floor, the read-only preview now agrees
-  with an original-command attempt on a cloned world and leaves the source
-  world unchanged. Special-square behavior, routes without a floor approach,
+  with Firestaff's mutating original-command API on a cloned world and leaves
+  the source world unchanged. Special-square behavior and routes without a
+  floor approach,
   direct wall-target behavior in the original runtime, and original source-owned
   runtime consumers remain unverified. The JP full-CUE capture
   still did not reach an authenticated game-owned data consumer, so it adds no
@@ -87,14 +88,14 @@ test directory. Its authentic parser-only trv2 CTest passed and left that
 directory empty. This removes a test-harness `/tmp` fallback only; original
 Track 02 consumers and end-to-end Theron gameplay remain open below.
 
-## 2026-09-30 — bind authentic JP rank source records
+## 2026-10-01 — preserve authentic US/JP rank prefix bytes
 
 The 15 JP Rev. 1 rank records at UD `0x89333` are authenticated as
-byte-identical in visible text to the US table at UD `0x1C9B6B`. A bounds-
-checked JP text accessor is now covered by regional real-media tests. Its six
-custom prefix glyphs are still separate raw bytes; rank-icon presentation, an
-original in-game display consumer, and the unrecorded progression slot 15
-remain open.
+byte-identical in visible text to the US table at UD `0x1C9B6B`. Both editions
+now expose bounds-checked raw-record accessors, and the real-media tests compare
+all returned record bytes against the authenticated BINs. The six custom prefix
+bytes remain semantically opaque: rank-icon presentation, an original in-game
+display consumer, and unrecorded progression slot 15 remain open.
 
 ## 2026-09-30 — keep Theron public status evidence-bounded
 

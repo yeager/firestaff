@@ -1,6 +1,6 @@
 #include "theron_v1_dungeon_handoff.h"
 #include "theron_v1_track02_champion_strings.h"
-#include "theron_v1_track02_skill_rank_source.h"
+#include "theron_v1_track02_skill_rank_raw.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -146,10 +146,16 @@ int main(int argc, char **argv)
         }
         source_size = (size_t)(terminator - (user_data + cursor));
         if (is_us) {
+            const uint8_t *record = NULL;
+            size_t record_size = 0u;
             const char *display =
                 theron_v1_track02_us_skill_level_name(rank);
-            if (!display) {
-                fprintf(stderr, "FAIL: missing US rank name %u\n", rank);
+            if (!display ||
+                !theron_v1_track02_us_skill_level_source_record(
+                    rank, &record, &record_size) ||
+                source_size != record_size ||
+                memcmp(user_data + cursor, record, record_size) != 0) {
+                fprintf(stderr, "FAIL: US raw skill-rank record %u\n", rank);
                 goto cleanup;
             }
             if (rank >= 8u && rank <= 13u) {

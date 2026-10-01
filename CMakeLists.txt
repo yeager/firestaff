@@ -7536,9 +7536,8 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_spell_action_names\\
 # consumer is authenticated, so do not link this static table there.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_spell_descriptors\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_champion_strings\\.c$")
-# The JP rank records below are a real-media regression reference only; they
-# are not linked as a runtime string catalog or presentation implementation.
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_skill_rank_source\\.c$")
+# The rank display-label catalog remains fixture-only; raw authentic rank
+# bytes are exposed separately by theron_v1_track02_skill_rank_raw.c.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_combat_messages\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_lore\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_font_glyphs\\.c$")
@@ -47810,12 +47809,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
 
     add_executable(test_theron_v1_track02_champion_strings
         tests/test_theron_v1_track02_champion_strings.c
-        src/theron/theron_v1_track02_skill_rank_source.c
+        src/theron/theron_v1_track02_skill_rank_raw.c
         src/theron/theron_v1_track02_champion_strings.c
     )
     target_include_directories(test_theron_v1_track02_champion_strings PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
     if(NOT MSVC)
         target_compile_options(test_theron_v1_track02_champion_strings PRIVATE -Wall -Wextra -Werror -O2)
@@ -53539,13 +53537,11 @@ if(BUILD_TESTING AND THERON_SOURCES AND EXISTS
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_skill_levels_real_media.c")
     add_executable(test_theron_v1_track02_skill_levels_real_media
         tests/test_theron_v1_track02_skill_levels_real_media.c
-        src/theron/theron_v1_track02_skill_rank_source.c
         src/theron/theron_v1_track02_champion_strings.c)
     target_link_libraries(test_theron_v1_track02_skill_levels_real_media PRIVATE
         firestaff_theron)
     target_include_directories(test_theron_v1_track02_skill_levels_real_media PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
         target_compile_options(test_theron_v1_track02_skill_levels_real_media PRIVATE
             -Wall -Wextra -Werror -O2)
