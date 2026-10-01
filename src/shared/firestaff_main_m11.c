@@ -1,12 +1,8 @@
 /*
- * firestaff_main_m11.c — Phase A proof-of-life main binary.
+ * firestaff_main_m11.c — Firestaff command-line entry point.
  *
- * Opens a black 640x400 window via main_loop_m11, holds it for the
- * requested number of milliseconds (default 500), then exits cleanly.
- * Accepts "--duration <ms>" to override.
- *
- * This is the skeleton of the real game entry point; later phases will
- * replace the body with the full semi-fixed-timestep loop.
+ * Parses launcher, direct-game, data-scan, and verification options, then
+ * delegates runtime and startup-menu handling to main_loop_m11.
  */
 
 #include "main_loop_m11.h"
