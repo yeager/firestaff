@@ -3,8 +3,9 @@
 ## 2026-10-01 — keep restored campaign and quest-item state independent
 
 - A saved quest-item mask now restores only its provisional item bits and
-  current stage. It cannot reconstruct dungeon completion or unlock later
-  stages; the separately authenticated `$267C` campaign byte projects bits
+  marks only its canonical current stage `IN_PROGRESS`. It cannot reconstruct
+  dungeon completion or unlock later stages; the separately authenticated
+  `$267C` campaign byte projects bits
   0–5 into stage state, without treating bit 6 as Demon completion.
 - World deserialization now rebuilds progression from that campaign byte and
   derives the exit-complete flag from the same bounded projection. Exit

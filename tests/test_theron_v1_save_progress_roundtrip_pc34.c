@@ -214,7 +214,7 @@ static void populate_party_at_progress(Theron_V1_Party *party) {
  * Build a Theron_DungeonProgression that matches the same checkpoint:
  *   - dungeon 2 in progress (Crypt of Shadows, entered)
  *   - first quest item collected
- *   - dungeon_states: 1=COMPLETE, 2=IN_PROGRESS
+ *   - dungeon_states include a prior completion for byte-preservation coverage
  *   - per-dungeon seeds distinct
  *   - playtime non-zero
  */
@@ -463,7 +463,7 @@ int main(void) {
     expect_true(prog_read.current_level == prog_before.current_level,
                 "progression current_level preserved");
     expect_true(prog_read.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] ==
-                THERON_DUNGEON_STATE_COMPLETE,
+                prog_before.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1],
                 "progression dungeon 1 state preserved");
     expect_true(prog_read.dungeon_states[THERON_DUNGEON_2_DRATOR - 1] ==
                 THERON_DUNGEON_STATE_IN_PROGRESS,

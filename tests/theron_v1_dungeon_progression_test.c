@@ -395,9 +395,9 @@ static int test_save_restore(void) {
     ASSERT(restored.quest_complete == 0,
            "quest_complete set before all items collected");
 
-    /* Dungeon 4 should be AVAILABLE after restore */
-    ASSERT(restored.dungeon_states[3] == THERON_DUNGEON_STATE_LOCKED,
-           "item bits must not make the saved current stage campaign-available");
+    /* The saved current stage remains resumable without a campaign receipt. */
+    ASSERT(restored.dungeon_states[3] == THERON_DUNGEON_STATE_IN_PROGRESS,
+           "saved current stage must resume without inferred completion");
 
     /* Item bits alone are not an original campaign-completion receipt. */
     for (int i = 0; i < 3; i++) {
@@ -439,9 +439,9 @@ static int test_save_restore(void) {
         &restored, THERON_QUEST_ALL_ITEMS, THERON_DUNGEON_7_DEMON, seeds);
     ASSERT(restored.quest_items_collected == THERON_QUEST_ALL_ITEMS &&
                restored.dungeon_states[THERON_DUNGEON_7_DEMON - 1] ==
-                   THERON_DUNGEON_STATE_LOCKED &&
+                   THERON_DUNGEON_STATE_IN_PROGRESS &&
                !theron_v1_quest_complete(&restored),
-           "item bits cannot unlock or complete an unauthenticated final stage");
+           "item bits cannot infer completion of the saved final stage");
 
     PASS();
     return 1;

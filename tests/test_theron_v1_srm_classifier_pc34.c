@@ -539,10 +539,10 @@ static void test_progression_payload_import(void) {
                 "progression playtime restored");
     expect_true(prog.quest_items_collected == 0x03u,
                 "progression quest mask restored");
-    expect_true(prog.dungeon_states[0] == THERON_DUNGEON_STATE_COMPLETE &&
-                prog.dungeon_states[1] == THERON_DUNGEON_STATE_COMPLETE &&
-                prog.dungeon_states[2] == THERON_DUNGEON_STATE_AVAILABLE,
-                "progression completed-prefix states restored");
+    expect_true(prog.dungeon_states[0] == THERON_DUNGEON_STATE_LOCKED &&
+                prog.dungeon_states[1] == THERON_DUNGEON_STATE_LOCKED &&
+                prog.dungeon_states[2] == THERON_DUNGEON_STATE_IN_PROGRESS,
+                "progression restores only the current stage as in progress");
     expect_true(prog.item_reset_mode == THERON_ITEM_RESET_MODE_CHAMPION,
                 "progression reset mode restored for next dungeon");
     expect_true(prog.champion_stats_persist == 1 &&

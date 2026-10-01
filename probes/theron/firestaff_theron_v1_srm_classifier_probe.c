@@ -661,15 +661,15 @@ static void probe_progression_payload_import(void) {
               THERON_DUNGEON_3_FORMIC);
     check_int("progression quest mask",
               prog.quest_items_collected, 0x03);
-    check_int("progression dungeon 1 complete",
+    check_int("progression dungeon 1 remains unverified",
               prog.dungeon_states[0],
-              THERON_DUNGEON_STATE_COMPLETE);
-    check_int("progression dungeon 2 complete",
+              THERON_DUNGEON_STATE_LOCKED);
+    check_int("progression dungeon 2 remains unverified",
               prog.dungeon_states[1],
-              THERON_DUNGEON_STATE_COMPLETE);
-    check_int("progression dungeon 3 available",
+              THERON_DUNGEON_STATE_LOCKED);
+    check_int("progression dungeon 3 is resumable",
               prog.dungeon_states[2],
-              THERON_DUNGEON_STATE_AVAILABLE);
+              THERON_DUNGEON_STATE_IN_PROGRESS);
     check_int("progression playtime",
               (int)prog.dungeon_playtime_seconds,
               300);

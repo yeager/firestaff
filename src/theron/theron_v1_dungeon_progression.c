@@ -397,13 +397,13 @@ void theron_v1_dungeon_progression_restore(Theron_DungeonProgression *prog,
         (uint8_t)(quest_items_bitmask & THERON_QUEST_ALL_ITEMS);
     prog->current_dungeon = current;
 
-    /* Only the saved current stage is available here. Authenticated campaign
-     * completion must be projected separately through
+    /* Restore only the saved current stage as in progress. Authenticated
+     * campaign completion must be projected separately through
      * theron_v1_dungeon_progression_apply_campaign_completion(). */
     for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
         prog->dungeon_states[i] =
-            i == 0 && current == THERON_DUNGEON_1_AKUTUBA
-                ? THERON_DUNGEON_STATE_AVAILABLE
+            i + 1 == (int)current
+                ? THERON_DUNGEON_STATE_IN_PROGRESS
                 : THERON_DUNGEON_STATE_LOCKED;
     }
 

@@ -306,6 +306,8 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.progression.quest_items_collected == 0u &&
                 restored.progression.dungeon_states[0] ==
                     THERON_DUNGEON_STATE_COMPLETE &&
+                restored.progression.dungeon_states[2] ==
+                    THERON_DUNGEON_STATE_IN_PROGRESS &&
                 !restored.dungeon_complete,
                 "campaign header projects independently from quest-item state");
     buffer[4] = 18u;

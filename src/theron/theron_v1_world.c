@@ -4636,6 +4636,14 @@ static int theron_v1_world_deserialize_into(Theron_V1_World *world,
         (Theron_DungeonID)world->current_dungeon;
     theron_v1_dungeon_progression_apply_campaign_completion(
         &world->progression, world->campaign_completion_mask);
+    if (world->current_dungeon >=
+            (uint8_t)THERON_DUNGEON_1_AKUTUBA &&
+        world->current_dungeon <= (uint8_t)THERON_DUNGEON_7_DEMON &&
+        world->progression.dungeon_states[world->current_dungeon - 1u] ==
+            THERON_DUNGEON_STATE_AVAILABLE) {
+        world->progression.dungeon_states[world->current_dungeon - 1u] =
+            THERON_DUNGEON_STATE_IN_PROGRESS;
+    }
     /* Legacy snapshots have no authenticated campaign byte. Preserve only
      * their canonical current stage as resumable; never infer completion or
      * unlock other stages from the older host item mask. */
