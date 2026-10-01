@@ -56,7 +56,9 @@
   the 28-command `KP5/KP1/KP2/KP6` sequence before the C127 click `(112,83)`.
   Use the visibly distinct source C040 geometry to compare material/cadence
   to the same-state native frame, and then extend it through a real inventory
-  interaction. A dedicated all-mouse movement route remains desirable, but it
+  interaction. The native PC 3.4 CLI regression now confirms one original
+  C070 forward-arrow click moves the retail fresh party from `(1,3)` to
+  `(1,4)`. A dedicated all-mouse Hall movement route remains desirable, but it
   must not replace the verified keypad sequence or be inferred from it. Keep
   raw captures operator-local under `.codex-scratch` and do not substitute a
   save, graphics, or a Firestaff-native result for this evidence.

@@ -290,6 +290,24 @@ probe_runtime_input strafe-left 1,3,2
 probe_runtime_input strafe-right 1,3,2
 probe_runtime_input action 1,3,2
 
+# ReDMCSB COMMAND.C:107-112 G0448 and 323-328 G0463 map C070's
+# x=263..289/y=125..145 arrow to C003 forward movement. Exercise that
+# source mouse route with the authenticated PC 3.4 ZIP at native 320x200.
+mouse_move_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$archive" --width 320 --height 200 \
+    --boot-probe --boot-probe-frames 500 --script 'click:275:135' \
+    --duration 0 2>&1) || {
+    printf '%s\n' "$mouse_move_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$mouse_move_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$mouse_move_output" ||
+   ! grep -Fq 'map=0 party=1,4,2' <<<"$mouse_move_output"; then
+    printf '%s\n' "$mouse_move_output" >&2
+    printf '%s\n' 'FAIL: authentic DM1 PC-34 C070 mouse arrow did not move forward' >&2
+    exit 1
+fi
+
 # Authentic Hall of Champions route, derived from the mounted PC 3.4
 # DUNGEON.DAT rather than from a save or a coordinate fixture.  The terminal
 # C127 portrait is ordinal 5: after the source movement sequence, its C026

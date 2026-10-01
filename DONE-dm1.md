@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-10-02: Added an authentic PC 3.4 CLI mouse-movement assertion. A click
+  in ReDMCSB COMMAND.C's C070 forward-arrow box at source point `(275,135)`
+  advances the retail ZIP's fresh party from map 0 `(1,3)`, facing 2, to
+  `(1,4)`, facing 2. The original-media run uses a native 320x200 window so
+  the scripted click follows the production pointer hit route. This covers
+  one arrow and one open square; the full mouse movement route remains open.
+
 - 2026-10-01: Extended the authentic PC 3.4 HoC source-placement regression
   through a live production-input route. Starting from the archive bootstrap,
   it replays keypad movement, clicks C127 ordinal 5, confirms the candidate
