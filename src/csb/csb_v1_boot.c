@@ -2773,6 +2773,145 @@ static int csb_v1_boot_read_fmtowns_archive_member_pc34(
     return asset_read_virtual_path_alloc(virtual_path, out_bytes, out_size);
 }
 
+static int csb_v1_boot_read_loose_file_pc34(const char *path,
+                                             uint8_t **out_bytes,
+                                             size_t *out_size)
+{
+    FILE *file;
+    long file_size;
+    uint8_t *bytes;
+    size_t read_count;
+    int close_result;
+    const long max_file_size = 64L * 1024L * 1024L;
+
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!path || !out_bytes || !out_size) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || file_size > max_file_size ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    if (!bytes) {
+        fclose(file);
+        return 0;
+    }
+    read_count = fread(bytes, 1u, (size_t)file_size, file);
+    close_result = fclose(file);
+    if (read_count != (size_t)file_size || close_result != 0) {
+        free(bytes);
+        return 0;
+    }
+    *out_bytes = bytes;
+    *out_size = (size_t)file_size;
+    return 1;
+}
+
+static int csb_v1_boot_read_loose_member_pc34(
+    const char *root, const char *name, uint8_t **out_bytes,
+    size_t *out_size)
+{
+    char path[ASSET_PATH_MAX];
+    return root && name && FSP_JoinPath(path, sizeof(path), root, name) &&
+           csb_v1_boot_read_loose_file_pc34(path, out_bytes, out_size);
+}
+
+static int csb_v1_boot_load_fmtowns_loose_media_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *disc_root,
+    const char *data_directory,
+    const char *graphics_path,
+    const char *dungeon_path,
+    const char *mini_md5,
+    const char *executable_name,
+    const char *utility_name)
+{
+    static const char *const portrait_names[] = {
+        "LEYLA.CMP", "TIGGY.CMP", "WUTSE.CMP", "LEIF.CMP", "ELIJA.CMP",
+        "STAMM.CMP", "HALK.CMP", "ZED.CMP", "DAROOU.CMP", "CHANI.CMP",
+        "SYRA.CMP", "IAIDO.CMP", "GANDO.CMP", "HISSSSA.CMP", "WUUF.CMP",
+        "NABI.CMP", "AZIZI.CMP", "SONJA.CMP", "GOTHMOG.CMP", "BORIS.CMP",
+        "MOPHUS.CMP", "ALEX.CMP", "HAWK.CMP", "LINFLAS.CMP"
+    };
+    char portrait_root[ASSET_PATH_MAX];
+    size_t index;
+
+    if (!profile || !disc_root || !data_directory || !graphics_path ||
+        !dungeon_path || !mini_md5 || !executable_name || !utility_name)
+        return 0;
+    csb_v1_boot_free_fmtowns_media(profile);
+
+#define READ_FMT_MEMBER(label, root, name, bytes, size) \
+    do { \
+        if (!csb_v1_boot_read_loose_member_pc34(root, name, bytes, size)) { \
+            csb_v1_boot_free_fmtowns_media(profile); return 0; \
+        } \
+    } while (0)
+    if (!csb_v1_boot_read_loose_file_pc34(
+            graphics_path, &profile->fmtowns_graphics_bytes,
+            &profile->fmtowns_graphics_size) ||
+        !csb_v1_boot_read_loose_file_pc34(
+            dungeon_path, &profile->fmtowns_dungeon_bytes,
+            &profile->fmtowns_dungeon_size)) {
+        csb_v1_boot_free_fmtowns_media(profile);
+        return 0;
+    }
+    READ_FMT_MEMBER("executable", disc_root, executable_name,
+                    &profile->fmtowns_executable_bytes, &profile->fmtowns_executable_size);
+    READ_FMT_MEMBER("mini", data_directory, "MINI.DAT",
+                    &profile->fmtowns_mini_bytes, &profile->fmtowns_mini_size);
+    READ_FMT_MEMBER("title", disc_root, "TITLE.ANM",
+                    &profile->fmtowns_title_bytes, &profile->fmtowns_title_size);
+    READ_FMT_MEMBER("story", disc_root, "STORY.ANM",
+                    &profile->fmtowns_story_bytes, &profile->fmtowns_story_size);
+    READ_FMT_MEMBER("ending", disc_root, "ENDING.ANM",
+                    &profile->fmtowns_ending_bytes, &profile->fmtowns_ending_size);
+    READ_FMT_MEMBER("switch", disc_root, "SWITCHTW.EXP",
+                    &profile->fmtowns_switch_bytes, &profile->fmtowns_switch_size);
+    READ_FMT_MEMBER("utility", disc_root, utility_name,
+                    &profile->fmtowns_utility_bytes, &profile->fmtowns_utility_size);
+#undef READ_FMT_MEMBER
+    {
+        char mini_path[ASSET_PATH_MAX];
+        if (!mini_md5 ||
+            !FSP_JoinPath(mini_path, sizeof(mini_path), data_directory,
+                          "MINI.DAT") ||
+            !asset_file_matches_md5(mini_path, mini_md5)) {
+            csb_v1_boot_free_fmtowns_media(profile);
+            return 0;
+        }
+    }
+    if (!FSP_JoinPath(portrait_root, sizeof(portrait_root), disc_root,
+                      "PORTRAIT")) {
+        csb_v1_boot_free_fmtowns_media(profile);
+        return 0;
+    }
+    profile->fmtowns_portrait_count = 0u;
+    for (index = 0u; index < sizeof(portrait_names) / sizeof(portrait_names[0]);
+         ++index) {
+        uint16_t portrait = (uint16_t)index;
+        /* Use the exact 508-byte F31 resource size enforced by the CD reader. */
+        if (!csb_v1_boot_read_loose_member_pc34(
+                portrait_root, portrait_names[index],
+                &profile->fmtowns_portrait_bytes[portrait],
+                &profile->fmtowns_portrait_sizes[portrait]) ||
+            profile->fmtowns_portrait_sizes[portrait] !=
+                CSB_FMTOWNS_PORTRAIT_FILE_SIZE) {
+            csb_v1_boot_free_fmtowns_media(profile);
+            return 0;
+        }
+        csb_v1_boot_copy(profile->fmtowns_portrait_names[portrait],
+                         sizeof(profile->fmtowns_portrait_names[portrait]),
+                         portrait_names[index]);
+        ++profile->fmtowns_portrait_count;
+    }
+    return profile->fmtowns_portrait_count == 24u;
+}
+
 static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     CSB_V1_BootProfile *profile,
     const char *data_dir,
@@ -2782,8 +2921,12 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     const char *graphics_md5;
     const char *dungeon_md5;
     char candidate_root[ASSET_PATH_MAX];
-    char graphics_path[ASSET_PATH_MAX];
-    char dungeon_path[ASSET_PATH_MAX];
+    char graphics_path[ASSET_PATH_MAX] = {0};
+    char dungeon_path[ASSET_PATH_MAX] = {0};
+    char selected_data_directory[ASSET_PATH_MAX] = {0};
+    const char *mini_md5;
+    const char *executable_name;
+    const char *utility_name;
 
     /* A selected FM Towns ZIP is a source container, not a directory.  Read
      * its original IMG/BIN member into bounded RAM and expose the selected
@@ -3002,6 +3145,13 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     dungeon_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
         ? "7ca51c17ef8bd542ca5f0273672ec1a5"
         : "83c56cf1b779e7460a55c9299ebeb04b";
+    mini_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+        ? "dcac9931a5a1f1fd5fbb99ebb89e68d0"
+        : "a5a82d0bda4c6ac7d55f63a7b4ca3862";
+    executable_name = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+        ? "CHTWJ.EXP" : "CHTWE.EXP";
+    utility_name = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+        ? "UTILJ.EXP" : "UTILE.EXP";
     /* M12's materialized cache has the selected pair at its root.  A loose
      * original extraction has it below CDATA/CJDATA.  Try both layouts, but
      * admit only the requested hash pair. */
@@ -3011,47 +3161,52 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
                      "DUNGEON.DAT")) {
         if (asset_file_matches_md5(candidate_root, graphics_md5) &&
             asset_file_matches_md5(dungeon_path, dungeon_md5)) {
-            snprintf(profile->graphics_path, sizeof(profile->graphics_path),
-                     "%s", candidate_root);
-            snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
-                     "%s", dungeon_path);
-            snprintf(profile->graphics_md5, sizeof(profile->graphics_md5),
-                     "%s", graphics_md5);
-            snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5),
-                     "%s", dungeon_md5);
-            profile->graphics_kind = csb_v1_boot_graphics_kind(candidate_root);
-            profile->variant_id = (CSB_V1_VariantId)requested_variant;
-            profile->graphics_verified = 1;
-            profile->dungeon_verified = 1;
-            profile->assets_verified = 1;
-            return 1;
+            csb_v1_boot_copy(graphics_path, sizeof(graphics_path),
+                             candidate_root);
         }
     }
-    if (!FSP_JoinPath(candidate_root, sizeof(candidate_root), data_dir,
-                      directory) ||
-        !FSP_JoinPath(graphics_path, sizeof(graphics_path), candidate_root,
-                      "GRAPHICS.DAT") ||
-        !FSP_JoinPath(dungeon_path, sizeof(dungeon_path), candidate_root,
-                      "DUNGEON.DAT")) {
+    if (!graphics_path[0]) {
+        if (!FSP_JoinPath(candidate_root, sizeof(candidate_root), data_dir,
+                          "fmtowns_iso") ||
+            !FSP_JoinPath(candidate_root, sizeof(candidate_root), candidate_root,
+                          directory) ||
+            !FSP_JoinPath(graphics_path, sizeof(graphics_path), candidate_root,
+                          "GRAPHICS.DAT") ||
+            !FSP_JoinPath(dungeon_path, sizeof(dungeon_path), candidate_root,
+                          "DUNGEON.DAT") ||
+            !asset_file_matches_md5(graphics_path, graphics_md5) ||
+            !asset_file_matches_md5(dungeon_path, dungeon_md5)) {
+            return 0;
+        }
+    } else if (!FSP_JoinPath(dungeon_path, sizeof(dungeon_path), data_dir,
+                             "DUNGEON.DAT")) {
         return 0;
     }
-    if (!asset_file_matches_md5(graphics_path, graphics_md5) ||
-        !asset_file_matches_md5(dungeon_path, dungeon_md5)) {
+    if (!FSP_JoinPath(selected_data_directory, sizeof(selected_data_directory),
+                      data_dir, "fmtowns_iso")) {
         return 0;
     }
-    snprintf(profile->graphics_path, sizeof(profile->graphics_path), "%s",
-             graphics_path);
-    snprintf(profile->dungeon_path, sizeof(profile->dungeon_path), "%s",
-             dungeon_path);
-    snprintf(profile->graphics_md5, sizeof(profile->graphics_md5), "%s",
-             graphics_md5);
-    snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5), "%s",
-             dungeon_md5);
+    if (!FSP_JoinPath(candidate_root, sizeof(candidate_root),
+                      selected_data_directory, directory) ||
+        !csb_v1_boot_load_fmtowns_loose_media_pc34(
+            profile, selected_data_directory, candidate_root, graphics_path,
+            dungeon_path, mini_md5, executable_name, utility_name)) {
+        return 0;
+    }
+    csb_v1_boot_copy(profile->graphics_path, sizeof(profile->graphics_path),
+                     graphics_path);
+    csb_v1_boot_copy(profile->dungeon_path, sizeof(profile->dungeon_path),
+                     dungeon_path);
+    csb_v1_boot_copy(profile->graphics_md5, sizeof(profile->graphics_md5),
+                     graphics_md5);
+    csb_v1_boot_copy(profile->dungeon_md5, sizeof(profile->dungeon_md5),
+                     dungeon_md5);
     profile->graphics_kind = csb_v1_boot_graphics_kind(graphics_path);
     profile->variant_id = (CSB_V1_VariantId)requested_variant;
     profile->graphics_verified = 1;
     profile->dungeon_verified = 1;
     profile->assets_verified = 1;
+    csb_v1_boot_startup_assets_resolve_pc34(profile);
     return 1;
 }
 
@@ -9687,6 +9842,15 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     profile->fmtowns_inventory_rectangles_valid = 0;
     if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
         profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        /* Direct boot probes/CLI users can hand this API the authenticated
+         * loose CD tree. M12 may already have staged the selected F31 into
+         * bounded memory; when it has not, bind the same source-owned
+         * CDATA/CJDATA files and companions here before validating C696. */
+        if (!profile->fmtowns_graphics_bytes &&
+            !csb_v1_boot_reselect_fmtowns_variant_pc34(
+                profile, profile->asset_root, profile->variant_id)) {
+            return -1;
+        }
         /* F0641 loads C696 only after the selected F31 graphics package is
          * admitted. Preserve that exact ownership at the host boundary. */
         if (!profile->fmtowns_graphics_bytes ||

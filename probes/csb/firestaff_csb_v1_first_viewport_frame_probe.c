@@ -261,10 +261,24 @@ static void probe_first_viewport_frame(CSB_V1_BootProfile *profile,
     int nonzero_b;
     int identical;
     int rows_below_clear;
+    int enter_result;
     size_t i;
 
-    CHECK(csb_v1_boot_enter_game(profile) == 0,
+    enter_result = csb_v1_boot_enter_game(profile);
+    CHECK(enter_result == 0,
           "boot profile enters the CSB V1 runtime");
+    if (enter_result != 0) {
+        fprintf(stderr,
+                "FAIL: CSB V1 runtime handoff failed; variant=%s version=%s "
+                "graphics=%s dungeon=%s assumption=%s\n",
+                profile->variant_label[0] ? profile->variant_label : "unknown",
+                profile->version_id[0] ? profile->version_id : "unknown",
+                profile->graphics_path[0] ? profile->graphics_path : "(missing)",
+                profile->dungeon_path[0] ? profile->dungeon_path : "(missing)",
+                csb_v1_boot_last_assumption_reason());
+        csb_v1_boot_cleanup(profile);
+        return;
+    }
     CHECK(profile->state == CSB_V1_BOOT_STATE_RUNTIME_READY,
           "boot state advances to RUNTIME_READY");
     CHECK(profile->runtime.state == CSB_STATE_TITLE,
