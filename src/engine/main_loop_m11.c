@@ -3185,6 +3185,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         }
         return 1;
     }
+    /* A user quit during the source-timed C001 animation is a normal app
+     * exit, not missing or corrupt title media. Let the selected startup
+     * route propagate that command without displaying a launch failure. */
+    if (M11_Render_PumpEvents()) {
+        return M11_ENTRANCE_COMMAND_QUIT;
+    }
     return 0;
 }
 
@@ -3892,20 +3898,37 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                  * or claim the title phase was consumed without presenting
                  * its original source surface. */
                 M11_Render_RaiseWindow();
-                if (!m11_play_redmcsb_title_graphic_intro_if_available(
+                {
+                    int titleResult =
+                        m11_play_redmcsb_title_graphic_intro_if_available(
                         menuState, gameView, "dm1", &titlePlayed,
-                        &entrancePlan.media_receipt) || !titlePlayed) {
-                    g_m11_intro_delay_fast_forward = oldFastForward;
-                    M11_GameView_Shutdown(gameView);
-                    M11_GameView_Init(gameView);
-                    m11_set_launch_failed_message(menuState);
-                    return 0;
+                        &entrancePlan.media_receipt);
+                    if (titleResult == M11_ENTRANCE_COMMAND_QUIT) {
+                        g_m11_intro_delay_fast_forward = oldFastForward;
+                        M11_GameView_Shutdown(gameView);
+                        M11_GameView_Init(gameView);
+                        menuState->launchRequested = 0;
+                        return 1;
+                    }
+                    if (!titleResult || !titlePlayed) {
+                        g_m11_intro_delay_fast_forward = oldFastForward;
+                        M11_GameView_Shutdown(gameView);
+                        M11_GameView_Init(gameView);
+                        m11_set_launch_failed_message(menuState);
+                        return 0;
+                    }
                 }
                 entranceCommand = m11_play_redmcsb_entrance_transition(
                     gameView, -1,
                     &entrancePlan.entrance_full_start_receipt,
                     &entrancePlan.media_receipt);
                 g_m11_intro_delay_fast_forward = oldFastForward;
+                if (entranceCommand == M11_ENTRANCE_COMMAND_QUIT) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    menuState->launchRequested = 0;
+                    return 1;
+                }
                 if (entranceCommand != M11_ENTRANCE_COMMAND_ENTER) {
                     M11_GameView_Shutdown(gameView);
                     M11_GameView_Init(gameView);
