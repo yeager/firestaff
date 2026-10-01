@@ -62,6 +62,29 @@ static void test_malformed_and_short_output_are_rejected(void)
                                                 16, &level, 1, &result) == -1);
 }
 
+static void test_timer_a_final_hold_is_explicit_and_bounded(void)
+{
+    const uint8_t one_final_hold[] = {0x00, 0x03, 0x59};
+    const uint8_t truncatedRepeat[] = {0x00, 0x03, 0x50, 0x88};
+    const uint8_t expected[] = {5, 9, 9};
+    uint8_t levels[3] = {0};
+    CsbV1StSoundDecodeResult result;
+
+    CHECK(csb_v1_audio_runtime_decode_st_sound(one_final_hold,
+            sizeof(one_final_hold), 0, levels, sizeof(levels), &result) == -2);
+    CHECK(csb_v1_audio_runtime_decode_st_sound_with_final_hold(
+            one_final_hold, sizeof(one_final_hold), 0, levels,
+            sizeof(levels), &result) == 0);
+    CHECK(result.sampleCount == sizeof(expected));
+    CHECK(result.encodedBytesConsumed == sizeof(one_final_hold));
+    for (size_t i = 0u; i < sizeof(expected); ++i) {
+        CHECK(levels[i] == expected[i]);
+    }
+    CHECK(csb_v1_audio_runtime_decode_st_sound_with_final_hold(
+            truncatedRepeat, sizeof(truncatedRepeat), 0, levels,
+            sizeof(levels), &result) == -2);
+}
+
 static void test_f0061_loud_table_and_index_mask(void)
 {
     CsbV1PsgChannelAmplitudes amplitudes;
@@ -211,6 +234,7 @@ int main(void)
     test_high_nibble_first_and_repeat_runs();
     test_leading_repeat_uses_existing_psg_level();
     test_malformed_and_short_output_are_rejected();
+    test_timer_a_final_hold_is_explicit_and_bounded();
     test_f0061_loud_table_and_index_mask();
     test_f0064_f0065_pending_sound_runtime();
     test_load_snapshot_restarts_transient_audio_state();

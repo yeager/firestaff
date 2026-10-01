@@ -656,12 +656,10 @@ void csb_v1_audio_runtime_load_snapshot(CsbV1AudioRuntime* runtime,
     csb_v1_audio_clear_pending(runtime);
 }
 
-int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
-                                         size_t encodedSize,
-                                         uint8_t initialLevel,
-                                         uint8_t* outLevels,
-                                         size_t outLevelCapacity,
-                                         CsbV1StSoundDecodeResult* outResult)
+static int csb_v1_audio_runtime_decode_st_sound_internal(
+    const uint8_t* encoded, size_t encodedSize, uint8_t initialLevel,
+    uint8_t* outLevels, size_t outLevelCapacity,
+    CsbV1StSoundDecodeResult* outResult, int allowFinalHold)
 {
     size_t declaredSamples;
     size_t emitted = 0;
@@ -690,6 +688,11 @@ int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
 
             if (!csb_v1_audio_read_nibble(encoded + 2u, encodedSize - 2u,
                                           &nibbleIndex, &nibble)) {
+                if (allowFinalHold && emitted + 1u == declaredSamples &&
+                    nibbleIndex == (encodedSize - 2u) * 2u) {
+                    outLevels[emitted++] = currentLevel;
+                    break;
+                }
                 return -2;
             }
             if (nibble != 0u) {
@@ -720,6 +723,28 @@ int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
     outResult->sampleCount = emitted;
     outResult->encodedBytesConsumed = 2u + ((nibbleIndex + 1u) / 2u);
     return 0;
+}
+
+int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
+                                         size_t encodedSize,
+                                         uint8_t initialLevel,
+                                         uint8_t* outLevels,
+                                         size_t outLevelCapacity,
+                                         CsbV1StSoundDecodeResult* outResult)
+{
+    return csb_v1_audio_runtime_decode_st_sound_internal(
+        encoded, encodedSize, initialLevel, outLevels, outLevelCapacity,
+        outResult, 0);
+}
+
+int csb_v1_audio_runtime_decode_st_sound_with_final_hold(
+    const uint8_t* encoded, size_t encodedSize, uint8_t initialLevel,
+    uint8_t* outLevels, size_t outLevelCapacity,
+    CsbV1StSoundDecodeResult* outResult)
+{
+    return csb_v1_audio_runtime_decode_st_sound_internal(
+        encoded, encodedSize, initialLevel, outLevels, outLevelCapacity,
+        outResult, 1);
 }
 
 const char* csb_v1_audio_runtime_source_evidence(void)

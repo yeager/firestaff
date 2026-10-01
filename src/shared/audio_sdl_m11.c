@@ -1724,12 +1724,19 @@ done:
 int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
     M11_AudioState* state, const unsigned char* source, int sourceBytes,
     int sourcePeriod, unsigned int sourceHash, int sourceVolume) {
+    static const unsigned int csb_final_hold_hashes[] = {
+        0x934d67d8u, /* DATA.C item 534, 100 samples */
+        0x46b80977u, /* DATA.C item 544, 1019 samples */
+        0xec9430c2u  /* DATA.C item 546, 962 samples */
+    };
     CsbV1StSoundDecodeResult decoded;
     uint8_t* levels = NULL;
     size_t level_count;
     unsigned int source_rate;
     unsigned int output_count;
     unsigned int output_index;
+    size_t hash_index;
+    int allow_final_hold = 0;
 
     /* This receipt describes the current request, not a previous accepted
      * sound. Do not retain successful provenance when validation fails. */
@@ -1746,14 +1753,28 @@ int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
         m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
         return 0;
     }
+    for (hash_index = 0u;
+         hash_index < sizeof(csb_final_hold_hashes) /
+                          sizeof(csb_final_hold_hashes[0]);
+         ++hash_index) {
+        if (sourceHash == csb_final_hold_hashes[hash_index]) {
+            allow_final_hold = 1;
+            break;
+        }
+    }
     level_count = ((size_t)source[0] << 8) | source[1];
     if (level_count == 0u || level_count > 65536u ||
         (source_rate = 2457600u / (4u * (unsigned int)sourcePeriod)) == 0u) {
         return 0;
     }
     levels = (uint8_t*)malloc(level_count);
-    if (!levels || csb_v1_audio_runtime_decode_st_sound(source,
-            (size_t)sourceBytes, 0u, levels, level_count, &decoded) != 0 ||
+    if (!levels || (allow_final_hold
+            ? csb_v1_audio_runtime_decode_st_sound_with_final_hold(
+                  source, (size_t)sourceBytes, 0u, levels, level_count,
+                  &decoded)
+            : csb_v1_audio_runtime_decode_st_sound(
+                  source, (size_t)sourceBytes, 0u, levels, level_count,
+                  &decoded)) != 0 ||
         decoded.sampleCount != level_count) goto done;
     output_count = (unsigned int)((level_count * M11_AUDIO_SAMPLE_RATE +
         source_rate - 1u) / source_rate);

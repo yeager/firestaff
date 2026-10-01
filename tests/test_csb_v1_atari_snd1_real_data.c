@@ -1,6 +1,7 @@
 /* Compare authentic Atari ST SND1 rows in both preserved CSB carriers. */
 
 #include "csb_v1_audio_runtime_pc34_compat.h"
+#include "audio_sdl_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,11 +39,17 @@ static int inspect_carrier(const char *archive, const char *member,
     unsigned char *levels = NULL;
     CsbV1AtariStSoundPayload payload = {0};
     CsbV1StSoundDecodeResult decoded = {0};
+    M11_AudioState audio = {0};
     int result;
 
     if (snprintf(graphics_path, sizeof(graphics_path), "%s::%s", archive,
                  member) >= (int)sizeof(graphics_path)) {
         fputs("FAIL: CSB source path too long\n", stderr);
+        return 0;
+    }
+    if (!M11_Audio_Init(&audio)) {
+        fprintf(stderr, "FAIL: audio transport did not initialize for %s\n",
+                member);
         return 0;
     }
     for (int index = 0; index < CSB_V1_ATARI_ST_SOUND_COUNT; ++index) {
@@ -83,10 +90,44 @@ static int inspect_carrier(const char *archive, const char *member,
             csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
             return 0;
         }
+        if (result == -2) {
+            static const int held_rows[] = {1, 12, 16};
+            int expected_hold = 0;
+            for (size_t held = 0u;
+                 held < sizeof(held_rows) / sizeof(held_rows[0]); ++held) {
+                if (index == held_rows[held]) expected_hold = 1;
+            }
+            if (!expected_hold ||
+                csb_v1_audio_runtime_decode_st_sound_with_final_hold(
+                    payload.bytes, payload.byteCount, 0u, levels, 65536u,
+                    &decoded) != 0 ||
+                decoded.sampleCount != fingerprints[index].sample_count) {
+                fprintf(stderr,
+                        "FAIL: authentic SND1 row %d does not match its bounded Timer-A final hold\n",
+                        index);
+                free(levels);
+                csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
+                return 0;
+            }
+        }
+        if (!M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+                &audio, payload.bytes, (int)payload.byteCount,
+                spec->period, fingerprints[index].hash, 1) ||
+            !audio.csbAtariStSoundAccepted ||
+            audio.csbAtariStSoundHash != fingerprints[index].hash) {
+            fprintf(stderr,
+                    "FAIL: authentic Atari SND1 row %d was not accepted by the audio transport\n",
+                    index);
+            M11_Audio_Shutdown(&audio);
+            free(levels);
+            csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
+            return 0;
+        }
         free(levels);
         levels = NULL;
         csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
     }
+    M11_Audio_Shutdown(&audio);
     return 1;
 }
 
