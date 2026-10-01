@@ -11,8 +11,9 @@
   resumes with the recruited leader and synchronized GAMEBLOCK coordinates.
   The original Atari 7z CLI regression now also drives this complete path with
   `wait:32` host loop-frame tokens, which let movement cooldowns expire, then
-  asserts C127 ordinal 4, one recruited champion, and resumed movement at
-  (9,7). These waits are not original Atari VBlanks.
+  asserts C127 ordinal 4 and one recruited champion, then verifies another
+  eastward movement to (10,7) with a live viewport receipt. These waits are
+  not original Atari VBlanks.
   The A31M real-media handoff passed 55 checks.
 
 - 2026-10-01: Retired the CSB FM Towns startup test that required the
