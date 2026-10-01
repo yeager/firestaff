@@ -46,6 +46,12 @@ This is separate from the DOS little-endian loader: a Mac-shaped header is not
 admitted to Resume until the remaining `DM2_GAME_LOAD` record and possession
 stream has a live source owner.
 
+M12 offers the current DOS `SKSave` Quick Resume path only when the selected
+DM2 architecture is PC. Amiga and FM Towns use distinct native save owners;
+their Resume paths remain closed until those complete importers are available.
+An AUTO selection follows the host's actual matched-platform priority before
+the Resume gate is evaluated.
+
 No Mac save file is currently present in `.firestaff/data/dm2`, so this is
 format support and preservation evidence, not a claim that Mac Resume is
 complete. Firestaff does not create a fixture or synthetic Mac save to close

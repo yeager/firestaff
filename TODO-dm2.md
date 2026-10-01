@@ -2,13 +2,14 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
-- Complete Macintosh Resume from an authentic Mac save. The launcher now
-  keeps Quick Resume closed for a selected Mac edition and rejects an explicit
-  DOS SKSave on the Mac CLI path. Header/prefix admission does not implement
-  SKProject `DM2_GAME_LOAD` record and possession reconstruction. Obtain an
-  authentic Mac save corpus and trace, implement the full native load owner,
-  and verify a saved party pose through normal M12 Resume. Do not synthesize a
-  save to close this gap.
+- Complete native Resume for Macintosh, Amiga and FM Towns. The DOS `SKSave`
+  importer is offered only when M12 selects the PC edition; a selected or
+  AUTO-resolved non-DOS platform no longer receives a DOS save through Quick
+  Resume or explicit `--save`. Mac header/prefix admission still does not
+  implement SKProject `DM2_GAME_LOAD` record and possession reconstruction.
+  Obtain authentic platform save corpora and traces, implement each native
+  load owner, and verify saved party poses through normal M12 Resume. Do not
+  synthesize saves to close these gaps.
 
 - Verify the live macOS Retina dungeon viewport with a real runtime capture.
   The direct `--game dm2` AUTO route now binds authenticated Macintosh retail

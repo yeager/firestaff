@@ -3667,7 +3667,7 @@ static int m12_is_valid_dm2_quick_resume_path(const char* path) {
            (corpus.valid_slot_mask & (uint16_t)(1u << slot)) != 0u;
 }
 
-static int m12_dm2_resume_uses_mac_platform(
+static int m12_dm2_resume_uses_pc_platform(
     const M12_StartupMenuState* state) {
     int architecture;
     if (!state) return 0;
@@ -3681,12 +3681,16 @@ static int m12_dm2_resume_uses_mac_platform(
                 "dm2", (size_t)versionIndex);
         }
     }
-    return architecture == M12_ARCH_MAC;
+    /* m12_is_valid_dm2_quick_resume_path admits the DOS SKSave container.
+     * Mac has a separate big-endian GAME_LOAD owner, and Amiga/FM Towns
+     * retain distinct native save owners; none may consume the DOS save via
+     * the shared menu path. */
+    return architecture == M12_ARCH_PC;
 }
 
 int M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(
     const M12_StartupMenuState* state) {
-    return state && !m12_dm2_resume_uses_mac_platform(state);
+    return state && m12_dm2_resume_uses_pc_platform(state);
 }
 
 static int m12_is_quick_resume_game_supported(const char* gameId) {

@@ -167,6 +167,64 @@ int main(void)
         "report Mac DM2 Resume as unavailable until full GAME_LOAD is owned");
     CHECK(!menu->quickResumeAvailable,
         "do not offer an authentic DOS SKSave to the incomplete Mac GAME_LOAD path");
+
+    /* The admitted SKSave importer is DOS-specific. Amiga and FM Towns
+     * have distinct native save owners; until those complete owners are
+     * implemented, an authentic DOS SKSave must not appear as Continue for
+     * either selected edition. */
+    {
+        static const int unsupportedArchitectures[] = {
+            M12_ARCH_AMIGA,
+            M12_ARCH_FM_TOWNS
+        };
+        for (size_t i = 0u;
+             i < sizeof(unsupportedArchitectures) /
+                     sizeof(unsupportedArchitectures[0]);
+             ++i) {
+            M12_Architecture architecture =
+                (M12_Architecture)unsupportedArchitectures[i];
+            M12_Config_SetDefaults(&config);
+            config.quickResumeEnabled = 1;
+            config.gameArchitectureIndex[2] = architecture;
+            snprintf(config.dataDir, sizeof(config.dataDir), "%s", dataRoot);
+            snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s",
+                     expected);
+            CHECK(M12_Config_Save(&config),
+                "persist authentic DOS save under a non-DOS DM2 selection");
+            M12_StartupMenu_Destroy(menu);
+            memset(menu, 0, sizeof(*menu));
+            M12_StartupMenu_InitWithOptions(menu, dataRoot, "dm2", &options);
+            CHECK(menu->gameOptions[2].architectureIndex == (int)architecture,
+                "retain the selected native non-DOS DM2 architecture");
+            CHECK(!M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(menu),
+                "do not route DOS SKSave through a non-DOS DM2 loader");
+            CHECK(!menu->quickResumeAvailable,
+                "hide DOS SKSave from native non-DOS Quick Resume");
+        }
+    }
+
+    M12_Config_SetDefaults(&config);
+    config.quickResumeEnabled = 1;
+    config.gameArchitectureIndex[2] = M12_ARCH_AUTO;
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", dataRoot);
+    snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", expected);
+    CHECK(M12_Config_Save(&config), "persist DOS save with DM2 AUTO selected");
+    M12_StartupMenu_Destroy(menu);
+    memset(menu, 0, sizeof(*menu));
+    M12_StartupMenu_InitWithOptions(menu, dataRoot, "dm2", &options);
+    {
+        int autoVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &menu->assetStatus, "dm2", M12_ARCH_AUTO);
+        int autoArchitecture = autoVersion >= 0
+            ? M12_AssetStatus_GetVersionArchitecture("dm2", (size_t)autoVersion)
+            : M12_ARCH_AUTO;
+        int expectResume = autoArchitecture == M12_ARCH_PC;
+        CHECK(M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(menu) ==
+                  expectResume,
+              "AUTO Resume support follows the selected native platform");
+        CHECK(menu->quickResumeAvailable == expectResume,
+              "AUTO Quick Resume never offers DOS SKSave to a non-DOS owner");
+    }
 cleanup:
     if (menu) { M12_StartupMenu_Destroy(menu); free(menu); }
     if (emptyCreated) CHECK(TEST_RMDIR(emptyData) == 0, "remove owned empty data directory");
