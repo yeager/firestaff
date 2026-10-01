@@ -112,14 +112,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   authentic Mac retail hash `5cab25f6b975957eae4a203174e7f2a6`. Its real-media
   CLI CTest passes the standard movie-to-runtime path and one scripted native
   SDL keydown north move from (1,8) to (1,7). The real-media M11 New Game test
-  now checks a second forward move through the retail Mac action table, 16
-  source ticks, stable party coordinates and distance to the map's authentic
-  DB4 roots. Both pass. The M11 test scans live DB4 chains in the runtime map
-  after those ticks and after the first forward move, failing if a live
-  creature is within one tile rather than treating the original map-chip
-  census as live AI state. This covers the observed post-movement snapshot;
-  it does not prove that monsters never approach during longer play. These
-  checks do not establish physical M5 key repeat
+  now checks a second forward move through the retail Mac action table and a
+  one-minute stationary New Game interval (3,600 source ticks), sampling live
+  DB4 chains every ten ticks and requiring stable party coordinates. It also
+  checks the first forward move. These passed against the authentic Mac retail
+  archive; no live DB4 creature approached within one tile during the sampled
+  minute. This improves the spawn-distance evidence but does not prove monster
+  behavior during a longer campaign. These checks do not establish physical M5 key repeat
   or Retina presentation. A fresh logical 320x200 screenshot still shows a
   dominant close wall; visual parity and
   HiDPI remain unverified.
@@ -141,9 +140,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   macOS arm64 app bundle against the authenticated full Mac retail ZIP. Both
   direct `--game dm2` startup and the M12 → Mac → title movie → New Game route
   reached the active runtime; scripted north movement changed the pose from
-  (1,8) to (1,7). The M11 test checks that no live DB4 creature is adjacent at
-  spawn, after 16 source ticks, or after that first step. These checks run on
-  the local Mac build host and capture logical 320x200 output; they do not
+  (1,8) to (1,7). The M11 test checks the spawn through a one-minute stationary
+  interval with live DB4 sampling every ten ticks, and again after that first
+  step. These checks run on the local Mac build host and capture logical
+  320x200 output; they do not
   establish physical M5 keyboard input, HiDPI presentation, visual quality or
   audible sound. The source audit found no concrete Retina coordinate defect,
   but the actual reported M5 session still needs paired runtime evidence:
@@ -166,7 +166,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   presented an active runtime after movement. The archive hash gate and
   `--game dm2` AUTO selection passed. The test used SDL's dummy audio device,
   so it validates neither audible playback nor the reported M5's native
-  keyboard/audio devices. The initial failed invocation targeted the bundled
+  keyboard/audio devices. The M11 real-media test now samples live creature
+  chains during one stationary game minute and found none adjacent to the
+  retail spawn. The initial failed invocation targeted the bundled
   Dungeon Studio UI executable, not `Firestaff.app`, and is not game-engine
   evidence.
   The M12 part of this regression now sends a right turn and two forward

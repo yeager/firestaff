@@ -537,12 +537,33 @@ int main(void)
     view.dm2State.startup_menu_active = 0;
     view.dm2State.level_loaded = 1;
     /* The retail map-chip census above catches a creature already occupying
-     * a neighboring tile. Also let the real spawn session run long enough for
-     * its source creature scheduler to act, then query the live DB4 chains.
-     * This matches the reported "monster beside me" symptom more closely
-     * than inspecting the immutable dungeon bytes alone. */
-    for (int tick = 0; tick < 16; ++tick)
-        (void)M11_GameView_AdvanceIdleTick(&view);
+     * a neighboring tile. Let the real spawn session run one source minute
+     * and sample its live DB4 chains throughout that minute. Inspecting only
+     * the immutable dungeon bytes or a single final tick can miss a monster
+     * that approaches the reported start position during normal scheduling. */
+    {
+        const DM2_V1_DungeonData *spawn_dungeon =
+            (const DM2_V1_DungeonData *)
+                ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
+        for (int tick = 0; tick < 3600; ++tick) {
+            int nearby_x = -1;
+            int nearby_y = -1;
+            int nearby;
+            (void)M11_GameView_AdvanceIdleTick(&view);
+            if ((tick % 10) != 9 && tick != 3599) continue;
+            nearby = mac_live_map_has_nearby_creature(
+                spawn_dungeon, 0, 1, 8, &nearby_x, &nearby_y);
+            if (nearby != 0) {
+                fprintf(stderr,
+                        "FAIL: live Mac DB4 creature query during stationary start minute returned %d at source tick %d (creature=%d,%d party=1,8)\n",
+                        nearby, tick + 1, nearby_x, nearby_y);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        puts("Mac stationary New Game: 3600 source ticks; "
+             "live DB4 sampled every 10 ticks, no adjacent creature");
+    }
     {
         const DM2_V1_DungeonData *spawn_dungeon =
             (const DM2_V1_DungeonData *)
@@ -559,7 +580,7 @@ int main(void)
             spawn_after_ticks.party_x != 1 || spawn_after_ticks.party_y != 8 ||
             spawn_after_ticks.party_dir != 0) {
             fprintf(stderr,
-                    "FAIL: Mac spawn pose changed during 16 source ticks "
+                    "FAIL: Mac spawn pose changed during 3600 source ticks "
                     "(ready=%d map=%d party=%d,%d,%d)\n",
                     spawn_after_ticks.runtime_ready,
                     spawn_after_ticks.current_level,
@@ -575,7 +596,7 @@ int main(void)
         if (nearby != 0) {
             fprintf(stderr,
                     "FAIL: live Mac DB4 creature is within one tile of "
-                    "New Game spawn after 16 source ticks "
+                    "New Game spawn after 3600 source ticks "
                     "(nearby=%d creature=%d,%d party=%d,%d)\n",
                     nearby, nearby_x, nearby_y,
                     spawn_after_ticks.party_x, spawn_after_ticks.party_y);
