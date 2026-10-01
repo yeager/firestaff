@@ -4,8 +4,11 @@
   in ReDMCSB COMMAND.C's C070 forward-arrow box at source point `(275,135)`
   advances the retail ZIP's fresh party from map 0 `(1,3)`, facing 2, to
   `(1,4)`, facing 2. The original-media run uses a native 320x200 window so
-  the scripted click follows the production pointer hit route. This covers
-  one arrow and one open square; the full mouse movement route remains open.
+  the scripted click follows the production pointer hit route. The same
+  original-media test now replays the Hall path with 28 movement-arrow clicks,
+  opens C127 ordinal 5 by clicking its portrait, and resurrects that champion
+  through C040. It verifies map 0 `(14,3)`, facing 0, one champion, and a
+  closed candidate panel without keyboard input, a save, or a pose override.
 
 - 2026-10-01: Extended the authentic PC 3.4 HoC source-placement regression
   through a live production-input route. Starting from the archive bootstrap,

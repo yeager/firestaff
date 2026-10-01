@@ -308,6 +308,35 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$mouse_move_output" ||
     exit 1
 fi
 
+# ReDMCSB COMMAND.C:107-112 G0448 maps all six movement boxes to C001..C006.
+# Replay the Hall path with source-space mouse clicks only, then use the
+# portrait's C080 viewport route and C040 RESURRECT button. The fresh PC 3.4
+# archive supplies every tile, mirror, and champion throughout this route.
+mouse_hoc_route=${hoc_route//key:kp5/click:275:135,wait5}
+mouse_hoc_route=${mouse_hoc_route//key:kp1/click:247:157,wait5}
+mouse_hoc_route=${mouse_hoc_route//key:kp2/click:275:157,wait5}
+mouse_hoc_route=${mouse_hoc_route//key:kp6/click:305:135,wait5}
+if [[ "$mouse_hoc_route" == *key:* ]]; then
+    printf '%s\n' 'FAIL: PC-34 Hall mouse route still contains keyboard input' >&2
+    exit 1
+fi
+mouse_hoc_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$archive" --width 320 --height 200 \
+    --boot-probe --boot-probe-frames 500 \
+    --script "$mouse_hoc_route,click:130:115,wait5" --duration 0 2>&1) || {
+    printf '%s\n' "$mouse_hoc_output" >&2
+    exit 1
+}
+for receipt in 'phase=dm1-runtime' 'levelLoaded=1' \
+    'map=0 party=14,3,0' 'champions=1' \
+    'dm1HocCandidatePanel=0' 'dm1HocCandidateOrdinal=-1'; do
+    if ! grep -Fq "$receipt" <<<"$mouse_hoc_output"; then
+        printf '%s\n' "$mouse_hoc_output" >&2
+        printf 'FAIL: authentic PC-34 mouse-only Hall route missed %s\n' "$receipt" >&2
+        exit 1
+    fi
+done
+
 # Authentic Hall of Champions route, derived from the mounted PC 3.4
 # DUNGEON.DAT rather than from a save or a coordinate fixture.  The terminal
 # C127 portrait is ordinal 5: after the source movement sequence, its C026
