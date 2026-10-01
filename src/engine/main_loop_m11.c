@@ -3908,6 +3908,7 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                         M11_GameView_Shutdown(gameView);
                         M11_GameView_Init(gameView);
                         menuState->launchRequested = 0;
+                        menuState->shouldExit = 1;
                         return 1;
                     }
                     if (!titleResult || !titlePlayed) {
@@ -3927,6 +3928,7 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                     M11_GameView_Shutdown(gameView);
                     M11_GameView_Init(gameView);
                     menuState->launchRequested = 0;
+                    menuState->shouldExit = 1;
                     return 1;
                 }
                 if (entranceCommand != M11_ENTRANCE_COMMAND_ENTER) {
@@ -8425,7 +8427,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     uint32_t foodClockLastMs = (uint32_t)SDL_GetTicks();
     unsigned int observedLaunchSerial = 0;
 
-    while (o->durationMs < 0 || (now - start) < duration) {
+    while (!menuState.shouldExit &&
+           (o->durationMs < 0 || (now - start) < duration)) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
         uint32_t tickBeforeEvents = gameView.world.gameTick;
