@@ -86,7 +86,7 @@ typedef enum {
     FS_GG_GAME_CSB,
     FS_GG_GAME_DM2,
     FS_GG_GAME_NEXUS,
-    FS_GG_GAME_THERON = 5 /* placeholder; matches firestaff_cli.c */
+    FS_GG_GAME_THERON = 5 /* stable slot reserved for Theron */
 } FsGgGameId;
 
 #define FS_GG_GAME_ID_COUNT 6
