@@ -285,8 +285,10 @@ int main(void)
     assert(dm2_v1_sound_sdl_backend_set_volumes(64, 32));
     dm2_v1_sound_sdl_backend_close();
     assert(dm2_v1_sound_sdl_backend_get_gain() == 0.125f);
+    assert((SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) != 0u);
     assert(backend.open(backend.ctx));
     assert(dm2_v1_sound_sdl_backend_get_gain() == 0.125f);
+    assert((SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) != 0u);
 
     printf("PASS: SDL playback backend verified against real GRAPHICS.DAT "
            "(small entry %u/%u/%u len=%lu, large entry %u/%u/%u len=%lu)\n",

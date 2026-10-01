@@ -21959,6 +21959,31 @@ endif()
         LABELS "dm2;v1;sound;playback;dos;real-media;in-memory;skip-safe"
     )
 
+    add_executable(test_dm2_v1_sound_sdl_lifecycle
+        tests/test_dm2_v1_sound_sdl_lifecycle.c
+        src/dm2/dm2_v1_sound_sdl_backend.c
+    )
+    target_include_directories(test_dm2_v1_sound_sdl_lifecycle PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_dm2_v1_sound_sdl_lifecycle PRIVATE
+        FIRESTAFF_DM2_SDL_OPEN_AUDIO_DEVICE_STREAM=dm2_test_open_audio_device_stream
+    )
+    target_link_libraries(test_dm2_v1_sound_sdl_lifecycle PRIVATE
+        SDL3::SDL3 firestaff_audio_device
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_sound_sdl_lifecycle PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_sound_sdl_lifecycle
+        COMMAND test_dm2_v1_sound_sdl_lifecycle
+    )
+    set_tests_properties(dm2_v1_sound_sdl_lifecycle PROPERTIES
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy"
+        LABELS "dm2;v1;sound;sdl;audio-lifecycle;regression;skip_safe"
+    )
+
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
     add_executable(test_dm2_v1_combat_pc34_compat
         tests/test_dm2_v1_combat_pc34_compat.c

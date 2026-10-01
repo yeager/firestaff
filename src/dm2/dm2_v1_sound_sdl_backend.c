@@ -22,6 +22,14 @@
 
 #include <stdio.h>
 
+#ifndef FIRESTAFF_DM2_SDL_OPEN_AUDIO_DEVICE_STREAM
+#define FIRESTAFF_DM2_SDL_OPEN_AUDIO_DEVICE_STREAM SDL_OpenAudioDeviceStream
+#else
+SDL_AudioStream *FIRESTAFF_DM2_SDL_OPEN_AUDIO_DEVICE_STREAM(
+    SDL_AudioDeviceID device, const SDL_AudioSpec *spec,
+    SDL_AudioStreamCallback callback, void *userdata);
+#endif
+
 typedef struct {
     const uint8_t *pcm;
     uint32_t length;
@@ -94,7 +102,8 @@ static int dm2_v1_sdl_backend_open(void *ctx)
         return 1;
     g_dm2_sdl_host_paused = 0;
     g_dm2_sdl_paused_before_host = 0;
-    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+    if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) &&
+        !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
         fprintf(stderr, "firestaff: DM2 SDL audio initialization failed: %s\n",
                 SDL_GetError());
         return 0;
@@ -106,13 +115,15 @@ static int dm2_v1_sdl_backend_open(void *ctx)
     spec.format = SDL_AUDIO_U8;
     spec.channels = 1;
     spec.freq = (int)DM2_V1_SOUND_PCM_SAMPLE_RATE_HZ;
-    g_dm2_sdl_stream = SDL_OpenAudioDeviceStream(
+    g_dm2_sdl_stream = FIRESTAFF_DM2_SDL_OPEN_AUDIO_DEVICE_STREAM(
         Firestaff_AudioDevice_ResolvePlayback(), &spec,
         dm2_v1_sdl_stream_callback, NULL);
     if (!g_dm2_sdl_stream) {
         fprintf(stderr, "firestaff: DM2 SDL playback stream open failed: %s\n",
                 SDL_GetError());
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        /* M11 and other game owners can already have live streams on this
+         * process-wide subsystem. Match the successful-open lifetime below:
+         * leave subsystem teardown to SDL_Quit() at process exit. */
         return 0;
     }
     if (!SDL_SetAudioStreamGain(g_dm2_sdl_stream, g_dm2_sdl_host_gain)) {
@@ -120,7 +131,6 @@ static int dm2_v1_sdl_backend_open(void *ctx)
                 SDL_GetError());
         SDL_DestroyAudioStream(g_dm2_sdl_stream);
         g_dm2_sdl_stream = NULL;
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return 0;
     }
     if (!SDL_ResumeAudioStreamDevice(g_dm2_sdl_stream)) {
@@ -128,7 +138,6 @@ static int dm2_v1_sdl_backend_open(void *ctx)
                 SDL_GetError());
         SDL_DestroyAudioStream(g_dm2_sdl_stream);
         g_dm2_sdl_stream = NULL;
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return 0;
     }
     g_dm2_sdl_ready = 1;
