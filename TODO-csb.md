@@ -75,12 +75,13 @@ Reviewed 2026-09-05. Only open work is listed here.
   tested source start is map 0 at (9,0), facing south, with zero champions.
   ReDMCSB LOADSAVE.C F0435 initializes a new CSB game with an empty party;
   CLIKMENU.C F0366 documents that empty-party movement is valid on the original
-  maps containing champion mirrors and no creature types. The native runtime
-  currently verifies one northward step to (9,1), but this does not establish
-  a complete route to a mirror or usable champion recruitment in Firestaff.
+  maps containing champion mirrors and no creature types. An authentic Atari
+  M12-to-M11 test now drives production input from the untouched (9,0)
+  empty-party spawn to (10,7), facing retail C127 mirror ordinal 4. Champion
+  selection and confirmation remain unverified.
   The supplied Atari save-disk MSA has no root files, so there is no authentic
   campaign save available to substitute. This verifies title/menu-to-runtime
-  and one movement input only, not a playable campaign party or capture.
+  and the first reachable mirror, not a playable campaign party or capture.
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
   platforms. On 2026-10-01, `csb_v1_atari_original_archive_cli_boot` was added

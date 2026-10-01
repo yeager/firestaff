@@ -870,6 +870,68 @@ static int native_handoff_find_live_c127_pose(M11_GameViewState *view,
     return 0;
 }
 
+/* Source-locked steps from the authentic Atari new-game pose to the first
+ * reachable C127 stance. The integration test verifies every movement via
+ * M11 input and checks the retail sensor ordinal at the destination. */
+static void expect_atari_first_mirror_from_fresh_start(
+    M11_GameViewState *view)
+{
+    static const M12_MenuInput route[] = {
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_TURN_RIGHT, M12_MENU_INPUT_TURN_RIGHT
+    };
+    CSB_V1_BootProfile *profile;
+    size_t index;
+
+    if (!view || !(profile = (CSB_V1_BootProfile *)view->csbBootProfile)) {
+        expect_true(0, "authentic Atari campaign starts from a valid boot profile");
+        return;
+    }
+    expect_true(view->world.party.mapIndex == 0 &&
+                    view->world.party.mapX == 9 && view->world.party.mapY == 0 &&
+                    (view->world.party.direction & 3) == 2 &&
+                    view->world.party.championCount == 0 &&
+                    profile->runtime.party_x == 9 && profile->runtime.party_y == 0 &&
+                    (profile->runtime.party_dir & 3) == 2,
+                "authentic Atari route begins at the untouched empty-party spawn");
+    for (index = 0u; index < sizeof(route) / sizeof(route[0]); ++index) {
+        const int old_x = profile->runtime.party_x;
+        const int old_y = profile->runtime.party_y;
+        const int old_dir = profile->runtime.party_dir & 3;
+        int wait_ticks = 0;
+        M11_GameInputResult result;
+
+        if (route[index] <= M12_MENU_INPUT_STRAFE_RIGHT) {
+            while (view->world.disabledMovementTicks > 0 && wait_ticks++ < 32)
+                (void)M11_GameView_AdvanceIdleTick(view);
+        }
+        result = M11_GameView_HandleInput(view, route[index]);
+        expect_true(result == M11_GAME_INPUT_REDRAW,
+                    "Atari C127 route step uses production input and collision handling");
+        if (route[index] == M12_MENU_INPUT_TURN_RIGHT) {
+            expect_true(profile->runtime.party_x == old_x &&
+                            profile->runtime.party_y == old_y &&
+                            (profile->runtime.party_dir & 3) == ((old_dir + 1) & 3),
+                        "Atari route turn changes direction through source input handling");
+        } else {
+            expect_true(profile->runtime.party_x != old_x ||
+                            profile->runtime.party_y != old_y,
+                        "Atari route movement advances through source collision handling");
+        }
+    }
+    expect_true(view->world.party.mapIndex == 0 &&
+                    view->world.party.mapX == 10 && view->world.party.mapY == 7 &&
+                    (view->world.party.direction & 3) == 0 &&
+                    profile->runtime.current_level == 0 &&
+                    profile->runtime.party_x == 10 && profile->runtime.party_y == 7 &&
+                    (profile->runtime.party_dir & 3) == 0 &&
+                    view->world.party.championCount == 0 &&
+                    M11_GameView_GetFrontMirrorOrdinal(view) == 4,
+                "authentic Atari input reaches retail C127 ordinal 4 from the new-game spawn");
+}
+
 static void expect_native_live_mirror_and_command_handoff(
     M11_GameViewState *view, const char *label)
 {
@@ -2804,9 +2866,13 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "Atari ST source frame does not publish diagnostic chrome");
         expect_true(view.presentationMode == requested,
                     "Atari ST runtime retains the requested presentation mode");
-        expect_native_live_mirror_and_command_handoff(
-            &view,
-            "Atari ST ANIM.C handoff reaches a live native C127 mirror");
+        if (requested == M12_PRESENTATION_V1_ORIGINAL) {
+            expect_atari_first_mirror_from_fresh_start(&view);
+        } else {
+            expect_native_live_mirror_and_command_handoff(
+                &view,
+                "Atari ST ANIM.C handoff reaches a live native C127 mirror");
+        }
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
     }

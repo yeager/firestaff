@@ -1,5 +1,11 @@
 # Firestaff DONE — CSB
 
+- 2026-10-01: The authentic Atari ST M12-to-M11 handoff test now moves the
+  untouched empty party from map 0 (9,0), facing south, to map 0 (10,7),
+  facing retail C127 mirror ordinal 4. Every step uses the production input
+  and collision path. The real-media regression passed 1,520 checks with no
+  failures or skips. It does not verify champion selection or recruitment.
+
 - 2026-10-01: Retired the CSB FM Towns startup test that required the
   separately supplied RAR and external archive tools. The registered native
   test uses the authenticated FM Towns ZIP and already covers CLI startup,
@@ -18,9 +24,9 @@
   facing south, with zero champions is intentional. `LOADSAVE.C` initializes
   an empty CSB party, and `CLIKMENU.C` explains that movement without champions
   is safe on original maps that contain champion mirrors and no creature types.
-  Firestaff's authentic-media regression verifies one northward move to (9,1).
-  A full route to a usable mirror is still unverified, and the supplied Atari
-  save disk contains no campaign save files; no party or save was synthesized.
+  Firestaff's authentic-media regression verifies a route to a C127 mirror.
+  Champion recruitment remains unverified, and the supplied Atari save disk
+  contains no campaign save files; no party or save was synthesized.
 - 2026-10-01: The original Atari ST v2.1 Utility Disk `ANIMATE.SCR` trace
   requires exactly 2,036 source VBlanks (40.72 seconds at 50 Hz) before its
   FTLCODE handoff. The real-media parser verifies the sequence and now prints

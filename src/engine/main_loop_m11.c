@@ -1405,6 +1405,40 @@ static void m11_capture_csb_presented_runtime_source(void)
     fprintf(stderr, "CSB PRESENTED RUNTIME CAPTURE: %s\n", output_path);
 }
 
+/* Optional DM1 startup evidence uses the same post-present RGBA screenshot
+ * path as the normal screenshot hook. Capture only after a real PC34 page has
+ * been presented; this records source frames without making capture a launch
+ * dependency or a pixel-parity assertion. */
+static void m11_capture_dm1_startup_presented_frame(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media,
+    const char* phase)
+{
+    const char* capture_root = getenv("FIRESTAFF_DM1_STARTUP_CAPTURE_DIR");
+    char capture_dir[1024];
+    char output_path[1280];
+    int written;
+
+    if (!capture_root || !capture_root[0] || !media || !media->handled ||
+        media->platform != DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 ||
+        !phase || !phase[0]) {
+        return;
+    }
+    written = snprintf(capture_dir, sizeof(capture_dir), "%s/%s",
+                       capture_root, phase);
+    if (written < 0 || written >= (int)sizeof(capture_dir)) {
+        fprintf(stderr, "firestaff: DM1 startup capture path is too long\n");
+        return;
+    }
+    if (!M11_Screenshot_CapturePresentedRGBA(capture_dir, output_path,
+                                              (int)sizeof(output_path))) {
+        fprintf(stderr, "firestaff: DM1 startup presented capture failed: %s\n",
+                phase);
+        return;
+    }
+    fprintf(stderr, "DM1 STARTUP PRESENTED CAPTURE: %s %s\n",
+            phase, output_path);
+}
+
 /* CSB V2.0 has two source-preserving presentation passes: indexed cleanup
  * happens before palette conversion in m11_present_game_frame(), while CRT
  * scanlines operate on the final RGBA surface. Keep the second pass here,
@@ -2301,6 +2335,12 @@ static int m11_play_redmcsb_entrance_transition_impl(
             free(dungeonFrame);
             return 0;
         }
+        if (mediaReceipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 &&
+            (sourceStep == 3U || sourceStep == 7U)) {
+            m11_capture_dm1_startup_presented_frame(
+                mediaReceipt,
+                sourceStep == 3U ? "c004-closed" : "c004-door-step-1");
+        }
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
             if (g_m11_selector_music)
                 g_m11_selector_music->phase = M11_ENTRANCE_PHASE_WAIT;
@@ -3167,6 +3207,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (!m11_present_dm1_startup_special_palette(
                 gameView, framebuffer, stepPalette)) {
             break;
+        }
+        if (sourceStep == 1U || sourceStep == 10U || sourceStep == 19U) {
+            const char* phase = sourceStep == 1U
+                ? "c001-first-frame"
+                : (sourceStep == 10U ? "c001-zoom-mid" : "c001-zoom-full");
+            m11_capture_dm1_startup_presented_frame(&dm1Media, phase);
         }
         if (command.post_present_delay_ms > 0U &&
             m11_delay_ms_with_intro_event_pump(

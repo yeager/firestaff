@@ -5,8 +5,11 @@
   now reports whether SWSH, C001 TITLE, ENTRANCE, and the complete graphics
   sequence were consumed; both the public `--game dm1` CLI route and the
   normal M12 menu route require all four plus the first HoC runtime frame.
-  This verifies successful source handoff, not the intermediate animation
-  pixels or Mac M5 HiDPI presentation.
+  The opt-in startup capture also stores the actual post-present C001 first,
+  mid-zoom and full-zoom frames, closed C004 Entrance and first door-opening
+  frame from original media. Checks require visible non-flat frames and frame
+  changes, without pixel-parity claims. This does not verify Mac M5 HiDPI
+  presentation.
 
 - 2026-10-01: Extended the authentic FM Towns M12 test to use its Version tile
   to select Japanese data without `--dm1-fmtowns-ja`. The runtime probe now

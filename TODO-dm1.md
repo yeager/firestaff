@@ -8,7 +8,10 @@
   authentic PC3.4 menu test records the selected source and all 23 completed
   steps plus the source-owned SWSH, TITLE, ENTRANCE and full-graphics handoff
   receipts. The public `--game dm1` CLI probe now requires the same phases and
-  first HoC frame. Atari ST Escape/window-close during C001/Entrance now exits
+  first HoC frame. Its opt-in real-media capture stores post-present C001
+  first/mid/full zoom frames, closed C004 Entrance and the first door-opening
+  frame, with only nonblank/content-change checks; it does not establish pixel
+  parity. Atari ST Escape/window-close during C001/Entrance now exits
   through the launcher loop instead of being reported as missing/corrupt media;
   its authentic French v1.3 M12 regression now injects a host quit after the first
   rendered C001 frame and confirms clean exit before gameplay, then verifies

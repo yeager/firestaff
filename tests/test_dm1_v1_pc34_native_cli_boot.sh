@@ -104,10 +104,12 @@ PY
 # test.
 menu_auto_home="$test_scratch/dm1-menu-auto-home-$$"
 mkdir -p "$menu_auto_home"
+startup_capture_root=$(mktemp -d "$test_scratch/dm1-pc34-startup-$$.XXXXXX")
 menu_auto_probe_json="$menu_auto_home/runtime.json"
 menu_auto_output="$(HOME="$menu_auto_home" XDG_CONFIG_HOME="$menu_auto_home" \
     APPDATA="$menu_auto_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_auto_probe_json" \
+    FIRESTAFF_DM1_STARTUP_CAPTURE_DIR="$startup_capture_root" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --data-dir "$(dirname "$(dirname "$archive")")" \
     --script "$menu_original" --duration 30000 2>&1)" || {
@@ -128,7 +130,9 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
 startup = probe["startup"]
 party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
-        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        probe["sourceId"] != "dm1" or
+        probe["bootAssetMd5"] != "fa6b1aa29e191418713bf2cda93d962e" or
+        startup["receiptReady"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
         startup["dm1StartupHandoffExecuted"] != 1 or
@@ -144,7 +148,59 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
     raise SystemExit(f"FAIL: authentic DM1 AUTO menu did not reach the PC-34 runtime: {probe}")
 print("PASS: clean-config DM1 AUTO menu used all 23 GRAPHICS.DAT C001 title steps and reached runtime")
 PY
+python3 - "$startup_capture_root" <<'PY'
+from pathlib import Path
+import hashlib
+import struct
+import sys
+
+root = Path(sys.argv[1])
+frames = {}
+geometry = None
+for phase in ("c001-first-frame", "c001-zoom-mid", "c001-zoom-full",
+              "c004-closed", "c004-door-step-1"):
+    captures = list((root / phase).glob("*.bmp"))
+    if len(captures) != 1:
+        raise SystemExit(f"FAIL: expected one presented authentic {phase} frame; found {captures}")
+    blob = captures[0].read_bytes()
+    if len(blob) < 54 or blob[:2] != b"BM":
+        raise SystemExit(f"FAIL: {phase} capture is not a BMP")
+    offset = struct.unpack_from("<I", blob, 10)[0]
+    width, signed_height = struct.unpack_from("<Ii", blob, 18)
+    height = abs(signed_height)
+    bits = struct.unpack_from("<H", blob, 28)[0]
+    if width < 320 or height < 200 or bits != 24:
+        raise SystemExit(f"FAIL: unexpected {phase} presented geometry {width}x{height}x{bits}")
+    if geometry is None:
+        geometry = (width, height)
+    elif geometry != (width, height):
+        raise SystemExit(f"FAIL: startup phases changed presented geometry: {geometry} vs {(width, height)}")
+    stride = ((width * bits + 31) // 32) * 4
+    if offset + stride * height > len(blob):
+        raise SystemExit(f"FAIL: truncated {phase} frame")
+    colors = set()
+    nonblack = 0
+    for y in range(height):
+        row = offset + y * stride
+        for x in range(width):
+            pixel = tuple(blob[row + x * 3:row + x * 3 + 3])
+            colors.add(pixel)
+            nonblack += pixel != (0, 0, 0)
+    if nonblack == 0 or len(colors) < 2:
+        raise SystemExit(f"FAIL: {phase} is blank/flat (nonblack={nonblack}, colours={len(colors)})")
+    frames[phase] = hashlib.sha256(blob).hexdigest()
+    print(f"PASS: authentic {phase} was presented ({nonblack} nonblack pixels, {len(colors)} colours)")
+if (frames["c001-first-frame"] == frames["c001-zoom-mid"] or
+        frames["c001-zoom-mid"] == frames["c001-zoom-full"]):
+    raise SystemExit("FAIL: authentic C001 zoom frames did not change")
+print("PASS: authentic C001 Presents, mid-zoom and full-zoom frames differ")
+if frames["c004-closed"] == frames["c004-door-step-1"]:
+    raise SystemExit("FAIL: Entrance closed-door and first door-animation frames did not change")
+print("PASS: authentic Entrance presentation advanced from closed C004 to door step 1")
+print(f"PASS: authentic startup captures share presented geometry {geometry[0]}x{geometry[1]}")
+PY
 rm -rf "$menu_auto_home"
+rm -rf "$startup_capture_root"
 
 # Exercise the complete authentic Hall route through the real M12->M11
 # handoff. Scripted key events carry SDL scancodes just like host key presses;
