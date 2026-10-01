@@ -5175,7 +5175,13 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
         : THERON_TRACK02_MD5_US_BIN;
     Theron_V1_World *world =
         (Theron_V1_World *)calloc(1u, sizeof(*world));
+    Theron_V1_World *attempt_world =
+        (Theron_V1_World *)calloc(1u, sizeof(*attempt_world));
     unsigned int routes_tested = 0u;
+    unsigned int preview_comparisons = 0u;
+    unsigned int preview_teleports = 0u;
+    unsigned int preview_blocks = 0u;
+    unsigned int direct_wall_routes_blocked = 0u;
     unsigned int cross_level_routes_tested = 0u;
     unsigned int closed_terminal_routes_tested = 0u;
     unsigned int chained_routes_tested = 0u;
@@ -5187,7 +5193,7 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     unsigned int special_terminal_chains_deferred = 0u;
     unsigned int chained_routes_without_floor_approach = 0u;
 
-    assert(world != NULL);
+    assert(world != NULL && attempt_world != NULL);
     assert(ud != NULL && track02 != NULL);
     theron_v1_world_init(world);
     for (int dungeon_id = 1; dungeon_id <= THERON_DUNGEON_COUNT;
@@ -5259,10 +5265,42 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                 continue;
             }
 
+            world->current_level = teleporter->level;
+            world->party.leader_dir = approach_direction;
+            {
+                const uint64_t before_preview_hash =
+                    theron_v1_world_hash(world);
+                const Theron_MoveResult preview_result =
+                    theron_v1_get_move_result(world, approach_direction);
+                int command_result;
+
+                assert(theron_v1_world_hash(world) == before_preview_hash);
+                memcpy(attempt_world, world, sizeof(*world));
+                command_result = theron_v1_move_party_original_command(
+                    attempt_world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD);
+                assert(command_result == (int)preview_result);
+                assert(preview_result == THERON_MOVE_TELEPORT ||
+                       preview_result == THERON_MOVE_BLOCKED);
+                ++preview_comparisons;
+                if (preview_result == THERON_MOVE_TELEPORT)
+                    ++preview_teleports;
+                else
+                    ++preview_blocks;
+                if (terminal_status == 1)
+                    assert(preview_result == THERON_MOVE_TELEPORT);
+                else if (terminal_status == 2 || terminal_status == 0)
+                    assert(preview_result == THERON_MOVE_BLOCKED);
+                if (terminal_status == 2 && chain_hops == 0u &&
+                    preview_result == THERON_MOVE_BLOCKED)
+                    ++direct_wall_routes_blocked;
+            }
+
             /* THQUEST.ASM $C240-$C2D8 re-enters the destination-tile test for
              * open pads, while the host resolver fails closed without a
-             * supported terminal. Exercise unresolved authentic chains here;
-             * defer special-square policy until its consumer is source-bound.
+             * supported terminal. Exercise authentic wall terminals and
+             * unresolved chains through the command path below. Special-square
+             * arrivals above check host preview/mutator consistency only;
+             * defer their game policy until its consumer is source-bound.
              * See theron_v1_teleporter_resolve() and
              * docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-477.
              */
@@ -5270,7 +5308,7 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                 ++unresolved_chained_routes_with_approach;
             if (terminal_status == 3) continue;
             if (terminal_status != 1 &&
-                !(terminal_status == 2 && chain_hops > 0u) &&
+                !(terminal_status == 2) &&
                 !(terminal_status == 0 && chain_hops > 0u))
                 continue;
 
@@ -5317,9 +5355,9 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                        previous_target_level);
                 assert(world->transition_spawn_x == previous_spawn_x);
                 assert(world->transition_spawn_y == previous_spawn_y);
-                if (terminal_status == 2)
+                if (terminal_status == 2 && chain_hops > 0u)
                     ++chained_wall_routes_blocked;
-                else
+                else if (terminal_status == 0)
                     ++unresolved_chained_routes_blocked;
             } else {
                 assert(theron_v1_get_move_result(
@@ -5342,6 +5380,9 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
         }
     }
     assert(routes_tested > 0u);
+    assert(preview_comparisons == 91u);
+    assert(preview_teleports == 45u);
+    assert(preview_blocks == 46u);
     assert(cross_level_routes_tested > 0u);
     assert(routes_tested == 41u);
     assert(cross_level_routes_tested == 4u);
@@ -5349,6 +5390,7 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     assert(chained_routes_tested == 0u);
     assert(active_chain_roots == 14u);
     assert(chained_wall_routes_blocked == 4u);
+    assert(direct_wall_routes_blocked == 42u);
     assert(unresolved_chained_routes_with_approach == 0u);
     assert(unresolved_chained_routes_blocked == 0u);
     assert(special_terminal_routes_deferred == 9u);
@@ -5357,18 +5399,23 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     assert(unresolved_chained_routes_blocked ==
            unresolved_chained_routes_with_approach);
     printf("  authentic %s coordinate-teleporter movement routes: %u total, "
+           "%u preview/command comparisons (%u teleport, %u blocked; "
+           "%u direct-wall blocks), "
            "%u cross-level, %u closed-pad terminals, %u chained routes, "
            "%u active-chain roots, %u chain walls blocked, "
            "%u unresolved chains blocked, %u special terminals deferred "
            "(%u chained), "
            "%u chains without floor approach\n",
            variant == 1 ? "JP" : "US", routes_tested,
+           preview_comparisons, preview_teleports, preview_blocks,
+           direct_wall_routes_blocked,
            cross_level_routes_tested, closed_terminal_routes_tested,
            chained_routes_tested, active_chain_roots,
            chained_wall_routes_blocked, unresolved_chained_routes_blocked,
            special_terminal_routes_deferred, special_terminal_chains_deferred,
            chained_routes_without_floor_approach);
     free(world);
+    free(attempt_world);
 }
 
 static void test_authentic_take_requires_matching_item_record(

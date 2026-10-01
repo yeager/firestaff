@@ -8,16 +8,19 @@
   mutate party or transition state. The rule is bounded to the source-locked
   destination-tile loop in `theron-runtime-spawn-capture.md:466-477`.
 - The authentic US/JP corpus now checks preview and original-command results
-  agree on successful routes and on chained wall blocks. Its eight accessible
-  wall-ending routes report `BLOCKED` in both paths; 82 successful routes,
-  including 16 closed-pad terminal arrivals, report `TELEPORT`. No unsupported
-  special-square behavior was opened.
+  agree for every active coordinate link with an adjacent authentic floor:
+  91 cases per region. Both regions produce 45 `TELEPORT` and 46 `BLOCKED`
+  results, including 42 direct wall targets and four chains ending at a wall.
+  A full-world hash confirms the query does not mutate state. The cloned
+  original-command path and preview agree even for special-square arrivals,
+  but those arrivals remain deferred as game semantics.
 - On trv2, the authentic dungeon-loader CTest passed three consecutive runs.
   Combat mechanics, teleporter chain and mechanics hardening probes passed.
   The cross-route probe exposed stale assertions for queued transitions and
   the obsolete MOVESENS citation; those assertions now match committed
   transitions and the Theron Track 02 source lock. The five-test focused
-  selection then passed. Full Theron parity remains open.
+  selection then passed three repetitions. This is preview/mutator consistency,
+  not an original runtime consumer capture; full Theron parity remains open.
 
 ## 2026-09-30 — census authentic active-link teleporter chains
 
