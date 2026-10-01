@@ -1032,6 +1032,12 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    if (view.dm2State.music_events_due == 0u) {
+        fprintf(stderr,
+                "FAIL: Mac New Game did not advance the selected MIDI cue on its first gameplay tick\n");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     {
         const DM2_V1_DungeonData *live_dungeon =
             (const DM2_V1_DungeonData *)
