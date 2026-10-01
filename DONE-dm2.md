@@ -1,5 +1,16 @@
 # Firestaff DONE — DM2
 
+## 2026-10-01 — Reject DM2 Resume on the incomplete Mac load path
+
+- The launcher no longer offers a DOS SKSave as Quick Resume when the
+  selected DM2 edition is Macintosh. Explicit `--save` requests are rejected
+  on that path with a clear CLI error instead of failing later as a generic
+  launch error. Selecting DOS still retains authentic Resume.
+- A real-media M12 regression checks the DOS-versus-Mac platform gate using
+  the original DOS save corpus. A separate Mac+DOS media regression verifies
+  the explicit CLI rejection. Full Macintosh `DM2_GAME_LOAD` reconstruction
+  remains open in TODO-dm2.md; no synthetic save was added.
+
 ## 2026-09-29 — Prefer authentic Macintosh DM2 media on macOS AUTO launch
 
 - A normal `--game dm2` launch on macOS now selects the authenticated

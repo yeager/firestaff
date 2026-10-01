@@ -3667,6 +3667,28 @@ static int m12_is_valid_dm2_quick_resume_path(const char* path) {
            (corpus.valid_slot_mask & (uint16_t)(1u << slot)) != 0u;
 }
 
+static int m12_dm2_resume_uses_mac_platform(
+    const M12_StartupMenuState* state) {
+    int architecture;
+    if (!state) return 0;
+    architecture = state->gameOptions[2].architectureIndex;
+    if (architecture == M12_ARCH_AUTO) {
+        int versionIndex =
+            M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &state->assetStatus, "dm2", M12_ARCH_AUTO);
+        if (versionIndex >= 0) {
+            architecture = M12_AssetStatus_GetVersionArchitecture(
+                "dm2", (size_t)versionIndex);
+        }
+    }
+    return architecture == M12_ARCH_MAC;
+}
+
+int M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(
+    const M12_StartupMenuState* state) {
+    return state && !m12_dm2_resume_uses_mac_platform(state);
+}
+
 static int m12_is_quick_resume_game_supported(const char* gameId) {
     return gameId && (strcmp(gameId, "dm1") == 0 ||
                       strcmp(gameId, "csb") == 0 ||
@@ -3698,6 +3720,13 @@ static int m12_is_valid_quick_resume_path_for_game(
         return m12_is_valid_csb_quick_resume_path(path);
     }
     if (strcmp(gameId, "dm2") == 0) {
+        /* Mac header parsing is preservation evidence, not Resume support.
+         * SKProject SKWINSPX/SKSVGAME.CPP DM2_GAME_LOAD (1392-1487) still
+         * owns full record/possession reconstruction; see
+         * docs/dm2_save_format.md. */
+        if (!M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(state)) {
+            return 0;
+        }
         return m12_is_valid_dm2_quick_resume_path(path);
     }
     if (strcmp(gameId, "nexus") == 0) {
@@ -5690,6 +5719,7 @@ static void m12_cycle_game_architecture(M12_StartupMenuState* state,
             m12_version_architecture_launchable(gameIds[gameIndex],
                                                  (size_t)versionIndex)) {
             state->gameOptions[gameIndex].versionIndex = versionIndex;
+            if (gameIndex == 2) m12_probe_quick_resume(state);
             return;
         }
         for (version = 0U; version < versionCount; ++version) {
@@ -5698,10 +5728,11 @@ static void m12_cycle_game_architecture(M12_StartupMenuState* state,
             if (m12_version_architecture_launchable(gameIds[gameIndex], version) &&
                 (current == M12_ARCH_AUTO || candidateArchitecture == current)) {
                 state->gameOptions[gameIndex].versionIndex = (int)version;
-                return;
+                break;
             }
         }
     }
+    if (gameIndex == 2) m12_probe_quick_resume(state);
 }
 
 static int m12_cycle_game_version_index(const M12_StartupMenuState* state,
@@ -5755,6 +5786,7 @@ static void m12_select_game_version(M12_StartupMenuState* state,
             M12_AssetStatus_GetVersionArchitecture(gameIds[gameIndex],
                                                     (size_t)versionIndex);
     }
+    if (gameIndex == 2) m12_probe_quick_resume(state);
 }
 
 static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex) {
@@ -6917,6 +6949,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     }
                     state->gameOptions[gi].architectureIndex = platforms[index];
                     state->gameOptions[gi].versionIndex = version;
+                    if (gi == 2) m12_probe_quick_resume(state);
                     /* Selecting a data card is not consent to launch. Keep
                      * an explicit CLI --save only for its requested game;
                      * ordinary discovered saves never set this request. */

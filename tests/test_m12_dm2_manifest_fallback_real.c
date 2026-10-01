@@ -95,6 +95,7 @@ int main(void)
     claimed = 1;
     M12_Config_SetDefaults(&config);
     config.quickResumeEnabled = 1;
+    config.gameArchitectureIndex[2] = M12_ARCH_PC;
     config.lastSavePath[0] = '\0';
     CHECK(strlen(dataRoot) < sizeof(config.dataDir), "selected data root fits config");
     if (failures) goto cleanup;
@@ -123,6 +124,8 @@ int main(void)
     CHECK(menu->quickResumeAvailable && strcmp(menu->quickResumeGameId, "dm2") == 0 &&
         strcmp(menu->quickResumeSavePath, expected) == 0,
         "empty selection discovers original save from the explicit runtime save root");
+    CHECK(M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(menu),
+        "retain authenticated DM2 DOS Resume on the DOS platform");
     snprintf(selectedRoot, sizeof(selectedRoot), "%s",
         M12_AssetStatus_GetDataDir(&menu->assetStatus));
     M12_Config_SetDefaults(&config);
@@ -144,6 +147,26 @@ int main(void)
     CHECK(M12_Config_Load(&config, dataRoot) && strcmp(config.path, configPath) == 0 &&
         strcmp(config.lastSavePath, expected) == 0,
         "subsequent settings persistence agrees with the discovered resume identity");
+
+    /* A valid DOS SKSave is not a Macintosh Resume candidate. Mac header and
+     * dungeon-prefix parsing do not yet cover SKProject DM2_GAME_LOAD's full
+     * record and possession reconstruction. */
+    M12_Config_SetDefaults(&config);
+    config.quickResumeEnabled = 1;
+    config.gameArchitectureIndex[2] = M12_ARCH_MAC;
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", dataRoot);
+    snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", expected);
+    CHECK(M12_Config_Save(&config),
+        "persist authentic DOS save identity with explicit Mac selection");
+    M12_StartupMenu_Destroy(menu);
+    memset(menu, 0, sizeof(*menu));
+    M12_StartupMenu_InitWithOptions(menu, dataRoot, "dm2", &options);
+    CHECK(menu->gameOptions[2].architectureIndex == M12_ARCH_MAC,
+        "retain explicit Mac architecture for the resume check");
+    CHECK(!M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(menu),
+        "report Mac DM2 Resume as unavailable until full GAME_LOAD is owned");
+    CHECK(!menu->quickResumeAvailable,
+        "do not offer an authentic DOS SKSave to the incomplete Mac GAME_LOAD path");
 cleanup:
     if (menu) { M12_StartupMenu_Destroy(menu); free(menu); }
     if (emptyCreated) CHECK(TEST_RMDIR(emptyData) == 0, "remove owned empty data directory");

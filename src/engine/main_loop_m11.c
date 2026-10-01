@@ -7994,6 +7994,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
      * same supplied path when Enter requests its later handoff.  The
      * game-specific importer remains the only authority on the bytes. */
     if (o->savePath && o->savePath[0] != '\0' && !o->csbHintOracle) {
+        if (o->gameId && strcmp(o->gameId, "dm2") == 0 &&
+            !M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(
+                &menuState)) {
+            fprintf(stderr,
+                    "firestaff: DM2 Macintosh Resume is unavailable until its complete original GAME_LOAD path is supported\n");
+            runRc = 2;
+            goto cleanup;
+        }
         snprintf(menuState.quickResumeSavePath,
                  sizeof(menuState.quickResumeSavePath),
                  "%s", o->savePath);
