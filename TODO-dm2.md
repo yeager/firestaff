@@ -398,9 +398,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   `CODE(8)+0x265e..+0x267e` -> `CODE(8)+0x2000` -> `A5+$a72` ->
   `CODE(7)+0x1b36`. Its DB3 subtype-`0x7e` arm at `+0x1fce` calls
   `SELECT_CHAMPION` (`CODE(10)+0x4fb2`) when mirror flags and facing match.
-  Selection increments the party count and queues a same-map event via
-  `CODE(7)+0x1720`; neither branch directly moves the party. Trace that
-  queued event's consumer before changing the spawn.
+  Selection increments the party count and queues a same-map type-4 event
+  via `CODE(7)+0x1720`. The consumer `CODE(7)+0x60f8` dispatches it to the
+  wall handler `CODE(7)+0x4d4c`; the handler admits only DB3 subtypes
+  `7..0x49`, so it skips the subtype-`0x7e` mirror. This event does not
+  move the party. Find the separate post-selection transition before
+  changing the spawn.
   The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
