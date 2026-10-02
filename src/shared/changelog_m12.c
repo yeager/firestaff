@@ -19,6 +19,7 @@ static const char* const g_changelogLines[] = {
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-02)",
     "  - DM1 and CSB AUTO startup prefer authenticated FM Towns media on every host.",
     "  - CSB FM Towns selects the complete CD when a loose data tree is also present.",
+    "  - FM Towns CD audio preserves the original little-endian PCM sample order.",
     "  - DM2 AUTO startup prefers FM Towns and reaches its menu after the source title duration.",
     "  - Verbose startup diagnostics list platform candidates and media search results.",
     "  - DM2 FM Towns viewport decoding uses source wall records, light tables and verified room-summary branches.",

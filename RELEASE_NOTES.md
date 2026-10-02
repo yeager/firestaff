@@ -11,6 +11,10 @@
   platform candidates and filenames searched for DM1, CSB and DM2.
 - `DM1 PC 3.4 audio`: restores original GRAPHICS.DAT effects for events not
   replaced by a partial sound pack.
+- `FM Towns CD audio`: fixes distorted music in DM1, CSB and DM2 by preserving
+  the little-endian sample order present in the original disc tracks. Original
+  tracks from all three games were checked; an authentic DM1 playback test
+  passed through SDL's dummy device.
 - `CSB Atari ST viewport`: adds the first source DB5 weapon in the near
   front cell using the original scaling and palette.
 - `CSB FM Towns media selection`: changes selection to the authenticated complete CD
@@ -33,8 +37,9 @@
 
 ## Known limitations
 
-- DM1 and CSB audio and dungeon presentation have not been verified on the
-  reported MacBook Pro M5 HiDPI hardware.
+- DM1 and CSB dungeon presentation and audible playback after the CD audio
+  correction have not been verified on the reported MacBook Pro M5 HiDPI
+  hardware.
 - DM2 FM Towns dungeon presentation currently fails an original-media frame
   ownership check after map 3 to map 38 teleportation. The movement itself
   reaches the source coordinates, but dynamic-light rendering is incomplete.
