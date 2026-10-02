@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-10-03: The original-media FM Towns CLI regression now covers bare
+  `--game csb --data-dir <F31 ZIP>` as well as explicit `--platform fm-towns`.
+  It requires the authenticated F31 English or Japanese edition, TITLE.ANM
+  handoff, and an unloaded dungeon at the first frame. The full English
+  CLI/menu/Entrance regression and the Japanese bare-title probe passed with
+  the preserved F31 ZIP. This is startup-route coverage, not an audible-device
+  or full gameplay parity claim.
+
 - 2026-10-02: Extended the source DB5 weapon pass to the Atari D1C front
   cell with F0129 fixed-point D2 scaling and G0214 palette. The authentic
   Utility STX MINI map-9 pose draws weapon `0x144e` from original graphic 372;
