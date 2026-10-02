@@ -39,13 +39,15 @@
 - `CSB FM Towns dungeon tests`: verify English and Japanese complete-disc
   startup through the original dungeon and open the inventory through live
   input before checking chest pickup.
+- `DM1 FM Towns Hall test`: verifies original English-media recruitment from
+  a Hall portrait through RESURRECT and a subsequent turn; the full archive
+  script also covers Japanese startup and input.
 
 ## Known limitations
 
-- DM1 FM Towns reaches its dungeon map, but its full viewport rendering route
-  remains incomplete according to the runtime receipt. The reported DM1 and
-  CSB dungeon presentation faults have not been resolved or verified on the
-  MacBook Pro M5 HiDPI hardware.
+- DM1 FM Towns reaches the Hall of Champions and recruits a champion with
+  original media. The reported DM1 and CSB dungeon presentation faults have
+  not been resolved or visually verified on the MacBook Pro M5 HiDPI hardware.
 - Audible playback after the CD audio correction has not been verified on the
   reported MacBook Pro M5.
 - DM2 FM Towns dungeon presentation currently fails an original-media frame
