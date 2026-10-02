@@ -12,6 +12,7 @@
 #include "dm2_v1_dungeon_input_owner.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_skproject_core.h"
+#include "dm2_v1_light_visibility.h"
 #include "firestaff_po_loader.h"
 
 #include <stdio.h>
@@ -61,7 +62,8 @@ static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
     valid &= dm2_v1_skproject_get_teleporter_detail_dungeon(
         dungeon, &pools, 38, 6, 5, &detail, &detail_receipt) &&
         detail_receipt.valid && detail.b_04 == 3u &&
-        detail.b_02 == 13u && detail.b_03 == 10u;
+        detail.b_02 == 13u && detail.b_03 == 10u &&
+        !dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x1bu);
     memset(&sensor, 0, sizeof(sensor));
     valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 6, 4) == 0xb8 &&
         !dm2_v1_skproject_query_0cee_0897_dungeon(

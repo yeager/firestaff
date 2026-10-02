@@ -63,6 +63,14 @@ int dm2_v1_1c9a_light_extended_search(uint16_t source_flags)
            (source_flags & 0x118u) != 0u;
 }
 
+int dm2_v1_1c9a_light_action_prefetches_start_teleporter(
+    unsigned action)
+{
+    /* SK1C9A.cpp:6720-6907 sets skip00557 only for 1, 3, 11, 12;
+     * vl_48 gates the initial GET_TELEPORTER_DETAIL at :6704. */
+    return action == 1u || action == 3u || action == 11u || action == 12u;
+}
+
 uint8_t dm2_v1_1c9a_light_node_next_direction(
     const DM2_V1_1c9aLightNodeDecision *decision,
     uint8_t previous_direction)

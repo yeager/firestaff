@@ -626,6 +626,15 @@ TEST(light_node_action_flags_select_source_attempt_sequence) {
         &node, 0x2118u, 6u) == 0xffu);
 }
 
+TEST(light_action_prepass_gates_start_teleporter_detail) {
+    assert(dm2_v1_1c9a_light_action_prefetches_start_teleporter(1u));
+    assert(dm2_v1_1c9a_light_action_prefetches_start_teleporter(3u));
+    assert(dm2_v1_1c9a_light_action_prefetches_start_teleporter(11u));
+    assert(dm2_v1_1c9a_light_action_prefetches_start_teleporter(12u));
+    assert(!dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x17u));
+    assert(!dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x1bu));
+}
+
 TEST(light_ring_packet_reads_live_xp_bc_score) {
     DM2_V1_1c9aLightWorkNode grid[2u * 32u * 32u] = {{0}};
     uint8_t score = 0xffu;
@@ -1173,6 +1182,7 @@ int main(void) {
     RUN(light_walk_rng_uses_source_lfsr);
     RUN(light_node_rng_branch_rotates_source_direction);
     RUN(light_node_action_flags_select_source_attempt_sequence);
+    RUN(light_action_prepass_gates_start_teleporter_detail);
     RUN(light_ring_packet_reads_live_xp_bc_score);
     RUN(light_mode7_skips_mode8_cells_beyond_source_radius);
 

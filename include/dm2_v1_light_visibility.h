@@ -85,6 +85,9 @@ DM2_V1_1c9aLightNodeDecision dm2_v1_1c9a_light_node_decision(
 /* Both CHECK_RECOMPUTE_LIGHT action flags select five attempts; the
  * seven-attempt branch remains available to other FIND_WALK_PATH callers. */
 int dm2_v1_1c9a_light_extended_search(uint16_t source_flags);
+/* SK1C9A action prepass sets vl_48 only for these action types. */
+int dm2_v1_1c9a_light_action_prefetches_start_teleporter(
+    unsigned action);
 uint8_t dm2_v1_1c9a_light_node_next_direction(
     const DM2_V1_1c9aLightNodeDecision *decision,
     uint8_t previous_direction);

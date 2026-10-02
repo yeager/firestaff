@@ -1788,7 +1788,8 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
         return;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     rt->c_light_visibility.alternate_projection_valid = 0u;
-    if (rt->record_pools_valid &&
+    if (dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x1bu) &&
+        rt->record_pools_valid &&
         dm2_v1_skproject_get_teleporter_detail_dungeon(
             dungeon, &rt->record_pools, rt->dungeon_level, x, y,
             &detail, &detail_receipt) && detail_receipt.valid)
