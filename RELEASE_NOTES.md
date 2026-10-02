@@ -37,6 +37,14 @@
   live party movement and future cross-map path traversal. Original media
   verifies both map 3 to map 38 and return coordinates and rotation; light
   path traversal remains incomplete.
+- `DM2 FM Towns game-load order`: refreshes map and GDAT state after the
+  runtime receives the original party, savegame, weather and light state.
+- `DM2 light calculation`: corrects unsigned item handles and the single
+  adjacent charge-ordering pass with SKProject. An original SKULL.EXP table
+  test covers the helper; live dynamic-light integration remains incomplete.
+- `DM2 FM Towns teleport frame test`: adds checks for source-owned frames
+  both entering and leaving map 38. It currently exposes the missing dynamic
+  light receipt and must pass before this release is published.
 - `DM2 tile-light compatibility`: removes an unused synthetic radius-based
   light helper whose result disagreed with SKProject; the original-media
   ceiling contribution test now provides a source-backed starting point.
