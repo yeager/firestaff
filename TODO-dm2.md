@@ -289,9 +289,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   SKProject `c_light.cpp:490-592` requires FIND_WALK_PATH modes 8 and 7,
   visibility buffers, live light accumulators, party possessions, spells,
   savegame light and weather. Firestaff's current pathfinders handle creature
-  movement and do not implement those light modes. GAME_LOAD also refreshes
-  the map scene before copying the live party and light state. Do not fill the
-  receipt from a map descriptor or a guessed minimum light level.
+  movement and do not implement those light modes. GAME_LOAD now refreshes
+  the map scene after copying the live party and light state, but the light
+  traversal remains absent. Do not fill the receipt from a map descriptor or
+  a guessed minimum light level.
   The source order is `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v5/sklight.cpp`,
   lines 490-592): mode 8 clears and fills `v1e08c8/v1e08cc` visibility data;
   mode 7 traverses the admitted cells and calls

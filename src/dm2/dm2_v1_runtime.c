@@ -3403,12 +3403,6 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->dungeon_level = game->current_level;
     rt->view_dir = game->party_dir;
     rt->outdoor = game->outdoor;
-    /* GAME_LOAD changes the active map after the boot-time runtime bind.
-     * Rebuild the source-owned map/GDAT/light/material context now; otherwise
-     * the first M11 frame keeps the pre-party context and is correctly
-     * rejected with no floor, wall or frame receipt. */
-    dm2_runtime_refresh_map_transition_context(rt);
-
     /* GAME_LOAD restores the s_savegamebuffer clock and c_random state
      * before it sorts the timer heap.  On Resume, it has also restored the
      * serialized c_weather fields; the active map's v1e1472 selector was
@@ -3474,6 +3468,11 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->session_snapshot_valid = 1;
     rt->leader_hand_object = (uint32_t)(uint16_t)
         candidate->leader_hand_record;
+
+    /* GAME_LOAD changes the active map after the boot-time bind.  Refresh
+     * map/GDAT/light/material context only after the source party, savegame
+     * globals, weather and light state have become the runtime's owners. */
+    dm2_runtime_refresh_map_transition_context(rt);
 
     boot_profile->source_game_load_session_ready = 1;
     return 1;
