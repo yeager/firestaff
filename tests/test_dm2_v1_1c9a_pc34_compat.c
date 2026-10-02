@@ -1,5 +1,6 @@
 #include "dm2_v1_1c9a_pc34_compat.h"
 #include "dm2_v1_light_visibility.h"
+#include "dm2_v1_light_ops_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -463,10 +464,12 @@ typedef struct {
 } LightMode7Actions;
 
 static int light_mode7_record_action(void *context, int map, int x, int y,
-                                     unsigned score, unsigned source_flags)
+                                     unsigned score, unsigned source_flags,
+                                     uint8_t effective_flags)
 {
     LightMode7Actions *actions = (LightMode7Actions *)context;
     assert(map == 38);
+    assert(effective_flags == 0x4fu);
     if (source_flags == 3u) {
         assert(x == 6 && y == 6);
         ++actions->start_calls;
@@ -491,6 +494,60 @@ static int light_mode7_one_edge(void *context, int map, int x, int y,
     *next_y = y - 1;
     *projection_map = *projection_x = *projection_y = -1;
     return 1;
+}
+
+typedef struct {
+    DM2_V1_Mode7TileCache cache;
+    int saw_start, saw_edge;
+} LightMode7CacheProbe;
+
+static int light_mode7_original_tile(void *context, int map, int x, int y,
+                                     uint8_t *out_tile)
+{
+    (void)context;
+    if (map != 38 || x != 6 || (y != 6 && y != 5)) return 0;
+    *out_tile = y == 6 ? 0x40u : 0xb0u;
+    return 1;
+}
+
+static int light_mode7_cache_action(void *context, int map, int x, int y,
+                                    unsigned score, unsigned source_flags,
+                                    uint8_t effective_flags)
+{
+    LightMode7CacheProbe *probe = (LightMode7CacheProbe *)context;
+    DM2_V1_Mode7Action23Node node = {0};
+    int16_t ambient = 0, darkness = 0;
+    int result;
+    if (source_flags == 3u) {
+        if (!dm2_v1_mode7_tile_cache_start(&probe->cache, map, x, y,
+                                           light_mode7_original_tile, NULL))
+            return -1;
+        ++probe->saw_start;
+    } else {
+        if (!dm2_v1_mode7_tile_cache_node(&probe->cache, effective_flags,
+                map, x, y, light_mode7_original_tile, NULL)) return -1;
+        ++probe->saw_edge;
+    }
+    node.cached_tile = probe->cache.tile;
+    node.effective_flags = effective_flags;
+    node.source_flags = (uint8_t)source_flags;
+    node.distance = (uint8_t)score;
+    result = dm2_v1_mode7_on_node(&node, &ambient, &darkness);
+    return result;
+}
+
+TEST(light_mode7_cached_b0_requires_authenticated_receipt) {
+    DM2_V1_1c9aLightVisibility state;
+    LightMode7CacheProbe probe = {0};
+    uint16_t rng = 0xb400u;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    assert(!dm2_v1_1c9a_light_mode7_frontier_with_rng(
+        &state, 38, 6, 6, 8u, light_mode7_one_edge,
+        light_mode7_cache_action, &probe, &rng));
+    assert(probe.saw_start == 1 && probe.saw_edge == 1 &&
+           probe.cache.valid && probe.cache.tile == 0xb0u &&
+           rng == 0x5a00u && !state.mode7_complete &&
+           state.source_state_hash == 0u);
 }
 
 TEST(light_mode7_uses_separate_walk_and_shared_rng_cursor) {
@@ -1293,6 +1350,7 @@ int main(void) {
     RUN(light_work_grid_node_packs_source_position);
     RUN(light_mode8_frontier_is_fail_closed);
     RUN(light_mode7_uses_separate_walk_and_shared_rng_cursor);
+    RUN(light_mode7_cached_b0_requires_authenticated_receipt);
     RUN(light_mode8_teleporter_projection_uses_source_destination);
     RUN(light_action27_writes_both_matching_planes);
     RUN(light_mode8_start_action_does_not_prefetch_projection);

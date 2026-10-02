@@ -71,7 +71,7 @@ typedef int (*DM2_V1_1c9aLightStep)(
  * cached tile or source light branch cannot be established. */
 typedef int (*DM2_V1_1c9aLightNodeAction)(
     void *context, int map, int x, int y, unsigned score,
-    unsigned source_flags);
+    unsigned source_flags, uint8_t effective_flags);
 /* Traverses admitted source edges without claiming complete mode-8 coverage. */
 int dm2_v1_1c9a_light_mode8_frontier(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,

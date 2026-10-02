@@ -262,8 +262,11 @@ static int light_walk_core(
         if (!dm2_v1_1c9a_light_visibility_mark_action27(
                 state, start_map, start_x, start_y, -1, -1, -1, 0u))
             goto incomplete;
+    /* dm2data.cpp table1d62ee[23] = 0x4f. With the one action-23 button
+     * used by CHECK_RECOMPUTE_LIGHT, SK1C9A ORs that value into vb_140
+     * before both the prepass and the edge-loop cache refresh. */
     } else if (!on_node || on_node(context, start_map, start_x,
-                                   start_y, 0u, 3u) < 0) {
+                                   start_y, 0u, 3u, 0x4fu) < 0) {
         goto incomplete;
     }
     queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
@@ -340,7 +343,7 @@ static int light_walk_core(
                         projection_map, projection_x, projection_y, score))
                     goto incomplete;
             } else if (on_node(context, next_map, next_x, next_y,
-                               score, 4u) < 0) {
+                               score, 4u, 0x4fu) < 0) {
                 goto incomplete;
             }
             if ((unsigned)score + (unsigned)result > max_score ||
