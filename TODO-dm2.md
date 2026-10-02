@@ -341,8 +341,7 @@ Reviewed 2026-08-29. Only open work is listed here.
   actual map change or tile mutation. Resolve the Mac New Game transition before
   assuming the map 0 boundary can be crossed. The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
-  pixels, including a linked record. Linked DB5–DB9 rendering and placement
-  back onto a tile remain open.
+  pixels, including a linked record. Linked DB5–DB9 rendering remains open.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
@@ -350,10 +349,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   `c_events.cpp:973` removes the chosen tile record before taking it into
   the hand. Retail Mac `CODE(8)+0x2838` handles an occupied hand through
   placement rect IDs `0x2f8`–`0x2fb`; `CODE(9)+0x02d8` resolves them from
-  a dynamic tree at `A5-0x662`. Static Mac RAW4 entries for `0x2fa`/`0x2fb`
-  are offscreen, so capture or reconstruct the live rect nodes before binding
-  a pointer drop. Reach an item through normal movement and prove a pointer
-  pickup/placement round trip before calling exchange complete.
+  a dynamic tree at `A5-0x662`. The Mac RAW4 FC0D graph now expands their
+  ordinary viewport-local boxes to `(24,115,88,21)`, `(112,115,88,21)`,
+  `(112,89,72,26)`, and `(40,89,72,26)`. A retail-media diagnostic at
+  map 9 (1,1) facing north verifies DB10 `0x2831` pickup, placement through
+  Rect `0x2fa` onto the front tile as `0xa831`, redraw, and opaque repick.
+  This proves the local item transaction; reach an item through normal New
+  Game movement before calling the gameplay exchange complete. Other live
+  Mac clipping states also need source receipts before using these boxes.
   An original-media diagnostic pose on map 9 at (1,1) facing north found DB10
   `0x2831` on the floor directly ahead at (1,0). Its original category
   `0x15`, type `0x2c`, field-0 image now reaches the M11 frame as one drawn
