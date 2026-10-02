@@ -103,10 +103,11 @@ static void check_real_startup_region(const char *env_name, const char *leaf,
 
     track02 = load_real_track02(env_name, leaf, &track02_size);
     if (!track02) {
-        printf("SKIP: authentic %s Track 02 BIN is not staged; "
-               "regional startup/combat integration was not run\n",
-               env_name);
-        return;
+        fprintf(stderr,
+                "SKIP: authentic %s Track 02 BIN is not staged; "
+                "regional startup/combat integration was not run\n",
+                env_name);
+        exit(77);
     }
 
     theron_v1_dungeon_progression_init(&progression);
@@ -536,6 +537,8 @@ int main(void) {
               strstr(theron_v1_combat_source_evidence(), "blocked") != NULL,
           "production evidence names the narrow blocked regular-spawn boundary");
 
+    /* A green production integration result must include both original
+     * regional media paths; missing copyrighted media is a CTest skip. */
     check_real_startup_region(
         "THERON_TRACK02_US_BIN", "TQUS02.bin", THERON_TRACK02_MD5_US_BIN);
     check_real_startup_region(

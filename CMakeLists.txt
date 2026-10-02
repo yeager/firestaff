@@ -46001,6 +46001,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_combat_runtime_source
         COMMAND test_theron_v1_combat_runtime_source)
     set_tests_properties(theron_v1_combat_runtime_source PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "theron;production;real-media;no-fallback")
 
     add_executable(test_theron_v1_combat_mechanics

@@ -2,6 +2,20 @@
 
 Reviewed 2026-10-02. Only open work is listed here.
 
+## 2026-10-02 — authentic combat integration media is an explicit CTest skip
+
+- `theron_v1_combat_runtime_source` now returns CTest's configured skip code
+  when either authentic regional Track 02 BIN is unavailable. Missing-media
+  startup/combat integration can no longer appear as a green test that only
+  exercised data-independent gates.
+- Focused local CTest passed with authentic US and JP Track 02 BINs
+  (`f23601102138f87c33025877767ebf76` and
+  `b7afb338ad31be1025b53f9aff12d73a`); a separate run with both paths
+  unavailable was reported as `Skipped`. The authentic US Track 02 ISO
+  cross-check was also supplied and hash-verified by the test.
+- This corrects test reporting only. Combat/action semantics remain
+  source-gated, and no save data or synthetic gameplay data was introduced.
+
 ## 2026-10-02 — authentic launcher scan reuse and regional disassembly checks
 
 - Replaced the Theron launcher scan-reuse test's synthetic media/hash fixture
