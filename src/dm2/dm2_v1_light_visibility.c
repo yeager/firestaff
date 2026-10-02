@@ -57,24 +57,41 @@ int dm2_v1_1c9a_light_visibility_mark(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     unsigned depth)
 {
+    return dm2_v1_1c9a_light_visibility_mark_action27(
+        state, map, x, y, -1, -1, -1, depth);
+}
+
+int dm2_v1_1c9a_light_visibility_mark_action27(
+    DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
+    int projection_map, int projection_x, int projection_y,
+    unsigned score)
+{
     uint8_t value;
     int wrote = 0;
-    if (!state || x < 0 || y < 0 || y >= 32 || depth >= 255u)
+    if (!state || x < 0 || y < 0 || y >= 32 || score >= 255u)
         return 0;
-    value = (uint8_t)(depth + 1u);
+    value = (uint8_t)(score + 1u);
     /* SK1C9A.cpp action 27 indexes both buffers as (x << 5) + y. */
     if (map == state->current_map && x < state->current_width) {
         state->current[(size_t)x * 32u + (size_t)y] = value;
         wrote = 1;
     }
-    else if (map == state->alternate_map &&
-             state->alternate_projection_valid) {
-        int projected_x = state->alternate_projection_valid ?
-            state->alternate_projection_x : x;
-        int projected_y = state->alternate_projection_valid ?
-            state->alternate_projection_y : y;
-        state->alternate[(size_t)projected_x * 32u +
-                         (size_t)projected_y] = value;
+    else if (projection_map == state->current_map &&
+             projection_x >= 0 && projection_x < state->current_width &&
+             projection_y >= 0 && projection_y < 32) {
+        state->current[(size_t)projection_x * 32u +
+                       (size_t)projection_y] = value;
+        wrote = 1;
+    }
+    if (map == state->alternate_map && x < state->alternate_width) {
+        state->alternate[(size_t)x * 32u + (size_t)y] = value;
+        wrote = 1;
+    }
+    else if (projection_map == state->alternate_map &&
+             projection_x >= 0 && projection_x < state->alternate_width &&
+             projection_y >= 0 && projection_y < 32) {
+        state->alternate[(size_t)projection_x * 32u +
+                         (size_t)projection_y] = value;
         wrote = 1;
     }
     return wrote;
@@ -93,14 +110,8 @@ int dm2_v1_1c9a_light_visibility_or_mask(
         state->current[(size_t)x * 32u + (size_t)y] |= mask;
         wrote = 1;
     }
-    else if (map == state->alternate_map &&
-             state->alternate_projection_valid) {
-        int projected_x = state->alternate_projection_valid ?
-            state->alternate_projection_x : x;
-        int projected_y = state->alternate_projection_valid ?
-            state->alternate_projection_y : y;
-        state->alternate[(size_t)projected_x * 32u +
-                         (size_t)projected_y] |= mask;
+    if (map == state->alternate_map && x < state->alternate_width) {
+        state->alternate[(size_t)x * 32u + (size_t)y] |= mask;
         wrote = 1;
     }
     return wrote;
@@ -182,8 +193,13 @@ int dm2_v1_1c9a_light_mode8_frontier(
             continue;
         /* vo_e8 reads xp_bc's first byte. Action 27 stores vo_e8 + 1
          * in the separate 32-stride visibility plane. */
-        if (!dm2_v1_1c9a_light_visibility_mark(
+        if (!dm2_v1_1c9a_light_visibility_mark_action27(
                 state, cell.map, cell.x, cell.y,
+                cell.map == start_map && cell.x == start_x &&
+                cell.y == start_y && state->alternate_projection_valid ?
+                    state->alternate_map : -1,
+                state->alternate_projection_x,
+                state->alternate_projection_y,
                 work_grid[cell_index].score))
             goto incomplete;
         /* CHECK_RECOMPUTE_LIGHT supplies action 0x1b with byte 0x19, a

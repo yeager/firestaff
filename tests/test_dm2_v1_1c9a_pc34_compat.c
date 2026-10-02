@@ -414,19 +414,53 @@ TEST(light_mode8_frontier_is_fail_closed) {
 TEST(light_mode8_teleporter_projection_uses_source_destination) {
     DM2_V1_1c9aLightVisibility state;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
-    assert(!dm2_v1_1c9a_light_visibility_mark(&state, 3, 13, 9, 2u));
+    assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 13, 9, 2u));
+    assert(state.alternate[13u * 32u + 9u] == 3u);
     assert(!dm2_v1_1c9a_light_visibility_project_teleporter(
         &state, 3, 16, 10));
     assert(dm2_v1_1c9a_light_visibility_project_teleporter(
         &state, 3, 13, 10));
-    assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 13, 9, 2u));
+    assert(dm2_v1_1c9a_light_visibility_mark_action27(
+        &state, 38, 6, 5, 3, 13, 10, 2u));
+    assert(state.current[6u * 32u + 5u] == 3u);
     assert(state.alternate[13u * 32u + 10u] == 3u);
-    assert(state.alternate[13u * 32u + 9u] == 0u);
+    assert(state.alternate[13u * 32u + 9u] == 3u);
     assert(dm2_v1_1c9a_light_visibility_or_mask(
         &state, 3, 13, 9, 0x80u));
-    assert(state.alternate[13u * 32u + 10u] == 0x83u);
-    assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 20, 9, 3u));
-    assert(state.alternate[13u * 32u + 10u] == 4u);
+    assert(state.alternate[13u * 32u + 9u] == 0x83u);
+    assert(state.alternate[13u * 32u + 10u] == 3u);
+    assert(!dm2_v1_1c9a_light_visibility_mark(
+        &state, 3, 20, 9, 3u));
+}
+
+TEST(light_action27_writes_both_matching_planes) {
+    DM2_V1_1c9aLightVisibility state;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 38, 16);
+    assert(dm2_v1_1c9a_light_visibility_mark_action27(
+        &state, 38, 6, 5, -1, -1, -1, 2u));
+    assert(state.current[6u * 32u + 5u] == 3u);
+    assert(state.alternate[6u * 32u + 5u] == 3u);
+}
+
+static int light_no_edges(void *context, int map, int x, int y,
+                          int direction, int *next_map,
+                          int *next_x, int *next_y)
+{
+    (void)context; (void)map; (void)x; (void)y; (void)direction;
+    (void)next_map; (void)next_x; (void)next_y;
+    return 0;
+}
+
+TEST(light_mode8_start_sensor_projects_action27) {
+    DM2_V1_1c9aLightVisibility state;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
+    assert(dm2_v1_1c9a_light_visibility_project_teleporter(
+        &state, 3, 13, 10));
+    assert(dm2_v1_1c9a_light_mode8_frontier(
+        &state, 38, 6, 5, light_no_edges, NULL));
+    assert(state.current[6u * 32u + 5u] == 1u);
+    assert(state.alternate[13u * 32u + 10u] == 1u);
+    assert(!state.mode8_complete);
 }
 
 static int light_grid_step(void *context, int map, int x, int y,
@@ -1038,6 +1072,8 @@ int main(void) {
     RUN(light_work_grid_node_packs_source_position);
     RUN(light_mode8_frontier_is_fail_closed);
     RUN(light_mode8_teleporter_projection_uses_source_destination);
+    RUN(light_action27_writes_both_matching_planes);
+    RUN(light_mode8_start_sensor_projects_action27);
     RUN(light_mode8_work_ring_wraps_after_256_nodes);
     RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
     RUN(light_mode8_ring_rotates_higher_score_packets);

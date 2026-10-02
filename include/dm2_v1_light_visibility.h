@@ -46,6 +46,12 @@ int dm2_v1_1c9a_light_visibility_project_teleporter(
 int dm2_v1_1c9a_light_visibility_mark(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     unsigned depth);
+/* SK1C9A action 27: write direct coordinates on matching map planes, or
+ * projected coordinates when this node has a teleporter to that plane. */
+int dm2_v1_1c9a_light_visibility_mark_action27(
+    DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
+    int projection_map, int projection_x, int projection_y,
+    unsigned score);
 int dm2_v1_1c9a_light_visibility_or_mask(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     uint8_t mask);
