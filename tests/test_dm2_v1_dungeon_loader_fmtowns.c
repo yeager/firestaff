@@ -184,8 +184,15 @@ static void test_fmtowns_load(const char *path) {
                room.ceiling_ornament_word == 0x00ffu &&
                room.ceiling_ornament_index == 0xffu &&
                room.ornament_source_hash == 0u);
-        assert(!dm2_v1_dungeon_c_light_stone_room_receipt(
+        /* The immediate northern cell is an original DB1 teleporter. Its
+         * first record is skipped by SUMMARIZE_STONE_ROOM's DB0..DB3 loop,
+         * leaving the same GRAPHICSSET ceiling ornament as the destination. */
+        assert(dm2_v1_dungeon_c_light_stone_room_receipt(
             &dungeon, &loader, 38, 6, 5, 0u, &room));
+        assert(room.valid && room.raw_tile == 0xb0u &&
+               room.source_tile_type == 1u &&
+               room.first_record_link == 0x0442u &&
+               room.ceiling_ornament_index == 0x28u);
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
         printf("  PASS: FM Towns map 38 source stone-room light inputs\n");

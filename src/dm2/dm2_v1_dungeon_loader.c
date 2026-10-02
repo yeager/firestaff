@@ -6714,15 +6714,19 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     if (!d || !loader || !loader->loaded) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
-    /* SKProject c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-2820:
-     * class-2 tiles without records have two source branches. Bit 0x08
-     * keeps type two and has no ceiling ornament; without it, source
-     * changes the summary type to one and reads GRAPHICSSET word 0x6b. */
-    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 2u ||
-        first != -1) {
+    /* SKProject skguivwp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-3100:
+     * class-2 no-record tiles and class-5 teleporter tiles with DB1 as the
+     * first record both reach the type-1 ceiling-ornament branch when bit
+     * 0x08 is clear. A DB1 is above the summarizer's DB0..DB3 loop and is
+     * not consumed as an ornament. Other record chains stay fail-closed. */
+    if (raw < 0 || raw > 0xff ||
+        !((((unsigned)raw >> 5) == 2u && first == -1) ||
+          (((unsigned)raw >> 5) == 5u && (raw & 0x0c) != 0x0c &&
+           first >= 0 &&
+           (((unsigned)first >> 10) & 0x0fu) == 1u))) {
         return 0;
     }
-    if ((raw & 0x08) != 0) {
+    if (((unsigned)raw >> 5) == 2u && (raw & 0x08) != 0) {
         out->level = level;
         out->x = x;
         out->y = y;
@@ -6754,7 +6758,8 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     out->y = y;
     out->raw_tile = (uint8_t)raw;
     out->source_tile_type = 1u;
-    out->first_record_link = DM2_THING_NULL_MARKER;
+    out->first_record_link = first < 0 ? DM2_THING_NULL_MARKER :
+                             (uint16_t)first;
     out->ceiling_ornament_index = (uint8_t)(graphicsset_word & 0xffu);
     out->ceiling_animation_frame = animation.frame;
     out->ceiling_ornament_word = (uint16_t)(
