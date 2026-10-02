@@ -387,11 +387,12 @@ static void test_mode7_flags4_original_media(void)
                                     graphics_size) == 0);
     memset(&pools, 0, sizeof(pools));
     assert(dm2_v1_record_pool_set_init_from_dungeon(&pools, &dungeon));
-    assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 13, 9) == 0x30);
-    {
-        int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, 9);
+    for (int y = 8; y <= 9; ++y) {
+        int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, y);
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
         unsigned length = 0u;
+        assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 13, y) == 0x30);
+        if (y == 8) assert(first == 0x0da2);
         assert(dm2_v1_mode7_go_there_tile_admission(0x30u, first) == -1);
         while (link != (int16_t)0xfffe) {
             int16_t next;
