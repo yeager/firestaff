@@ -1203,6 +1203,13 @@ int main(void)
                       ownership.viewport_raw_gdat_asset_count ==
                           ownership.viewport_decoded_gdat_asset_count,
                   "FM Towns map 38 proves each consumed raw and decoded GDAT material");
+            check(ownership.full_gdat_frame_valid &&
+                      ownership.floor_ceiling_gdat_blits == 2 &&
+                      ownership.wall_gdat_blits == 0 &&
+                      ownership.wall_source_cell_required_mask == 0u &&
+                      ownership.wall_source_cell_consumed_mask == 0u &&
+                      ownership.total_runtime_fallback_draws == 0,
+                  "FM Towns map 38 admits a source-backed clear view without invented walls");
         }
     }
     check(exercise_authentic_db1(

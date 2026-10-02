@@ -13743,15 +13743,22 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.real_gdat_evidence_valid &&
         g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2 &&
         (g_dm2_frame_ownership.is_outdoor ||
-         g_dm2_frame_ownership.wall_gdat_blits > 0) &&
+         g_dm2_frame_ownership.wall_gdat_blits > 0 ||
+         (g_dm2_frame_ownership.wall_source_cell_required_mask == 0u &&
+          g_dm2_frame_ownership.wall_source_cell_consumed_mask == 0u)) &&
         g_dm2_frame_ownership.gdat_scene_control_ready &&
-        g_dm2_frame_ownership.gdat_scene_control_consumed > 0 &&
+        (g_dm2_frame_ownership.gdat_scene_control_consumed > 0 ||
+         (!g_dm2_frame_ownership.is_outdoor &&
+          g_dm2_frame_ownership.wall_source_cell_required_mask == 0u &&
+          g_dm2_frame_ownership.wall_source_cell_consumed_mask == 0u)) &&
         g_dm2_frame_ownership.gdat_scene_control_hash != 0u &&
         g_dm2_frame_ownership.gdat_interface_palette_ready &&
         g_dm2_frame_ownership.gdat_interface_palette_consumed > 0 &&
         g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed > 0 &&
         (g_dm2_frame_ownership.is_outdoor ||
-         g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0) &&
+         g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0 ||
+         (g_dm2_frame_ownership.wall_source_cell_required_mask == 0u &&
+          g_dm2_frame_ownership.wall_source_cell_consumed_mask == 0u)) &&
         (viewport.asset_door_frame_drawn_count == 0 ||
          g_dm2_frame_ownership.gdat_material_palette_door_frame_consumed > 0) &&
         g_dm2_frame_ownership.gdat_interface_palette_hash != 0u &&

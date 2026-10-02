@@ -12044,14 +12044,17 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
             dm2_v1_runtime_last_fallback_projectile_count();
-        /* Indoor frames must consume floor, ceiling, and at least one wall.
-         * Outdoor frames consume sky and ground planes instead; no wall pass
-         * is expected. */
+        /* Indoor frames consume floor and ceiling, then the source-selected
+         * wall panels.  A clear view can select no wall cells at all; the
+         * empty required/consumed masks prove that a wall blit was not
+         * skipped.  Outdoor frames consume sky and ground planes. */
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
             (frame_ownership.is_outdoor ||
-             out_receipt->runtime_render_asset_wall_count > 0) &&
+             out_receipt->runtime_render_asset_wall_count > 0 ||
+             (frame_ownership.wall_source_cell_required_mask == 0u &&
+              frame_ownership.wall_source_cell_consumed_mask == 0u)) &&
             out_receipt->runtime_render_fallback_wall_count == 0 &&
             out_receipt->runtime_render_fallback_door_count == 0 &&
             out_receipt->runtime_render_fallback_creature_count == 0 &&
