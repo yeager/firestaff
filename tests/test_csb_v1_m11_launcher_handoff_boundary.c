@@ -2795,10 +2795,11 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
     M11_AssetSlot *graphic;
     unsigned char with_weapon[320 * 200];
     unsigned char without_weapon[320 * 200];
+    unsigned char d1_with_weapon[320 * 200];
     uint8_t *record;
     int old_level, old_x, old_y, old_dir, old_inventory;
     int type, size, thing;
-    int matched = 0, changed = 0;
+    int matched = 0, changed = 0, d0_matched = 0, d0_changed = 0;
 
     if (!view || !data_dir ||
         snprintf(save_path, sizeof(save_path), "%s/Chaos Strikes Back Utility.stx::MINI.DAT",
@@ -2843,6 +2844,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
     csb_v1_dungeon_set_current_level(6);
     memset(with_weapon, 0, sizeof(with_weapon));
     M11_GameView_Draw(view, with_weapon, 320, 200);
+    memcpy(d1_with_weapon, with_weapon, sizeof(d1_with_weapon));
     graphic = (M11_AssetSlot *)M11_AssetLoader_Load(&view->assetLoader, 372u);
     if (graphic && graphic->loaded && graphic->pixels &&
         graphic->width == 64u && graphic->height == 4u) {
@@ -2851,6 +2853,21 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                 if (graphic->pixels[row * 64 + col] != 10u &&
                     with_weapon[(138 + row) * 320 + 167 + col] ==
                         graphic->pixels[row * 64 + col]) ++matched;
+    }
+    /* The same genuine map-6 floor square is D0C when the party stands
+     * on it facing north. G0218/F0115 places its cell-0 object at x85..148,
+     * y158..161 in the 320x200 screen. */
+    profile->runtime.party_y = 18;
+    profile->runtime.party_dir = 0;
+    memset(with_weapon, 0, sizeof(with_weapon));
+    M11_GameView_Draw(view, with_weapon, 320, 200);
+    if (graphic && graphic->loaded && graphic->pixels &&
+        graphic->width == 64u && graphic->height == 4u) {
+        for (int row = 0; row < 4; ++row)
+            for (int col = 0; col < 64; ++col)
+                if (graphic->pixels[row * 64 + col] != 10u &&
+                    with_weapon[(158 + row) * 320 + 85 + col] ==
+                        graphic->pixels[row * 64 + col]) ++d0_matched;
     }
     /* ReDMCSB F0267/F0163 unlinks the genuine first-and-only DB5 record
      * from this decoded source square; no synthetic replacement is used. */
@@ -2861,10 +2878,18 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
     M11_GameView_Draw(view, without_weapon, 320, 200);
     for (int row = 0; row < 4; ++row)
         for (int col = 0; col < 64; ++col)
-            if (with_weapon[(138 + row) * 320 + 167 + col] !=
+            if (with_weapon[(158 + row) * 320 + 85 + col] !=
+                without_weapon[(158 + row) * 320 + 85 + col]) ++d0_changed;
+    profile->runtime.party_y = 17;
+    profile->runtime.party_dir = 2;
+    memset(without_weapon, 0, sizeof(without_weapon));
+    M11_GameView_Draw(view, without_weapon, 320, 200);
+    for (int row = 0; row < 4; ++row)
+        for (int col = 0; col < 64; ++col)
+            if (d1_with_weapon[(138 + row) * 320 + 167 + col] !=
                 without_weapon[(138 + row) * 320 + 167 + col]) ++changed;
-    expect_true(matched > 0 && changed > 0,
-                "Atari D1C weapon uses source graphic 372 and vanishes after source F0267 unlinks it");
+    expect_true(matched > 0 && changed > 0 && d0_matched > 0 && d0_changed > 0,
+                "Atari D1C/D0C weapon uses source graphic 372 and vanishes after source F0267 unlinks it");
     profile->runtime.dungeon_handle = original;
     profile->runtime.current_level = old_level;
     profile->runtime.party_x = old_x;

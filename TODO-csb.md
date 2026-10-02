@@ -94,15 +94,18 @@ Reviewed 2026-09-05. Only open work is listed here.
   Entry 510, used by the PC3.4 mapping, also decodes but belongs to a
   different Atari graphic category and must not be used for this weapon.
   The Atari presenter now uses G0237/G0209 data for all 46 DB5 weapon
-  subtypes in the bounded open D1C back-right, first-and-only-thing case.
+  subtypes in the bounded open D1C back-cell and D0C back-cell,
+  first-and-only-thing cases, using source G0218 coordinates and G0217/G0223
+  first-item offsets. D1C executes within the F1 wall-command pass; D0C
+  executes after the nearer side-wall passes, matching F0115 ordering.
   All 27 distinct Atari graphics selected by those subtypes decoded from
   the original Game STX at the source dimensions. The original Atari M12-to-M11
-  test resumes authentic MINI data in a diagnostic pose, checks graphic-372
-  pixels on screen, and confirms they disappear when F0267 unlinks the real
+  test resumes authentic MINI data in diagnostic D1C and D0C poses, checks
+  graphic-372 pixels on screen, and confirms they disappear when F0267 unlinks the real
   weapon from the decoded source square in test memory. A missing or
   malformed admitted graphic rejects the Atari viewport frame instead of
   silently omitting that weapon.
-  Other view cells, mixed thing chains, piles, DB6–DB10 objects, creatures,
+  Far view cells, mixed thing chains, piles, DB6–DB10 objects, creatures,
   projectiles and explosions still need their native draw passes and
   real-media receipts; they remain invisible in the Atari viewport.
   Amiga RGB4 register expansion is now compared and fixed from an authentic

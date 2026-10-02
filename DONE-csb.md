@@ -1,10 +1,10 @@
 # Firestaff DONE — CSB
 
 - 2026-10-02: The Atari ST viewport now draws first-and-only DB5 weapons
-  in the open D1C back-right cell using the 46 source object aspects and
+  in the open D1C and D0C back cells using the 46 source object aspects and
   original GRAPHICS.DAT bitmaps. A real Atari Game/Utility STX test resumes
-  MINI map 6, matches weapon `0x1423` against graphic 372 on screen, and
-  confirms the pixels change when source F0267 removes the weapon. All
+  MINI map 6, matches weapon `0x1423` against graphic 372 in both positions,
+  and confirms the pixels change when source F0267 removes it. All
   admitted presentation modes pass; other item cells and creature classes
   remain open.
 

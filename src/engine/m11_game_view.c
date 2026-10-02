@@ -5302,7 +5302,8 @@ static int m11_csb_atari_st_draw_ceiling_pit(
  * resulting {graphic, pixel width, height, G0218 coordinate set} for DB5.
  * Every distinct source graphic was decoded from original Atari ST v2.1
  * GRAPHICS.DAT and had the G0209 dimensions. This pass still covers only
- * one first/only D1C back-right thing; complete F0115 ordering is pending. */
+ * one first/only DB5 thing in the source D1C/D0C back-cell passes;
+ * complete F0115 ordering is pending. */
 static const struct {
     uint16_t graphic;
     uint8_t width;
@@ -5323,9 +5324,9 @@ static const struct {
     {406,80,25,2}, {443,80,13,1}
 };
 
-static int m11_csb_atari_st_draw_d1c_weapon(
+static int m11_csb_atari_st_draw_near_weapon(
     M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_RuntimeProfile *runtime, unsigned char *viewport)
+    const CSB_V1_RuntimeProfile *runtime, unsigned char *viewport, int d0c)
 {
     const M11_AssetSlot *graphic;
     const uint8_t *record;
@@ -5341,15 +5342,19 @@ static int m11_csb_atari_st_draw_d1c_weapon(
     int top;
     int x;
     int y;
+    int cell;
+    int coordinate_set;
+    int center;
 
     if (!state || !dungeon || !runtime || !viewport) return 0;
-    x = runtime->party_x + (int[]){ 0, 1, 0, -1 }[runtime->party_dir & 3];
-    y = runtime->party_y + (int[]){ -1, 0, 1, 0 }[runtime->party_dir & 3];
+    x = runtime->party_x + (d0c ? 0 : (int[]){ 0, 1, 0, -1 }[runtime->party_dir & 3]);
+    y = runtime->party_y + (d0c ? 0 : (int[]){ -1, 0, 1, 0 }[runtime->party_dir & 3]);
     if (csb_v1_dungeon_get_square_type(dungeon, runtime->current_level, x, y) != 1)
         return 0;
     thing = csb_v1_dungeon_get_first_thing(dungeon, runtime->current_level, x, y);
-    if (thing < 0 || ((unsigned)thing >> 14) !=
-            (unsigned)((runtime->party_dir + 2) & 3)) return 0;
+    if (thing < 0) return 0;
+    cell = (((unsigned)thing >> 14) - (runtime->party_dir & 3)) & 3;
+    if (d0c ? cell > 1 : cell < 2) return 0;
     record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
                                                &type, NULL, &size);
     if (!record || type != 5 || size < 4 ||
@@ -5360,12 +5365,14 @@ static int m11_csb_atari_st_draw_d1c_weapon(
     graphic_index = m11_csb_atari_st_db5_d1c_material[subtype].graphic;
     width = m11_csb_atari_st_db5_d1c_material[subtype].width;
     height = m11_csb_atari_st_db5_d1c_material[subtype].height;
-    /* G0218 D1C back-right: all three source coordinate sets use x=148;
-     * sets 0/1 use y=111 and set 2 uses y=115. The first object in cell0
-     * adds G0217[0]/G0223[shift set0] = (+2,-3). */
-    bottom = m11_csb_atari_st_db5_d1c_material[subtype].coordinate_set == 2
-        ? 112 : 108;
-    left = 150 - width / 2 + 1;
+    coordinate_set = m11_csb_atari_st_db5_d1c_material[subtype].coordinate_set;
+    /* Atari G0218: D1C cells 3/2 at x76/148,y111 (set2 y115),
+     * D0C cells 0/1 at x66/158,y131 (set2 y135). F0115's first-object
+     * G0217/G0223 shift is (+2,-3) for even absolute cells, (-3,-3) for odd. */
+    center = d0c ? (cell == 0 ? 66 : 158) : (cell == 3 ? 76 : 148);
+    center += (((unsigned)thing >> 14) & 1u) ? -3 : 2;
+    bottom = (d0c ? 131 : 111) + (coordinate_set == 2 ? 4 : 0) - 3;
+    left = center - width / 2 + 1;
     top = bottom - height + 1;
     if (left < 0 || left + width > 224 || top < 0 || bottom >= 136 ||
         !m11_csb_install_runtime_source_graphic(state,
@@ -5631,8 +5638,8 @@ static int m11_csb_present_atari_st_runtime_viewport(
                 (uint8_t)raw_square)) {
             if (draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F1 &&
                 square_type == 1 &&
-                m11_csb_atari_st_draw_d1c_weapon(
-                    state, dungeon, &profile->runtime, viewport) < 0)
+                m11_csb_atari_st_draw_near_weapon(
+                    state, dungeon, &profile->runtime, viewport, 0) < 0)
                 return 0;
             continue;
         }
@@ -5661,6 +5668,9 @@ static int m11_csb_present_atari_st_runtime_viewport(
         }
         free(packed);
     }
+    /* F0115 draws D0C's back cells after the nearer side-wall passes. */
+    if (m11_csb_atari_st_draw_near_weapon(
+            state, dungeon, &profile->runtime, viewport, 1) < 0) return 0;
     for (y = 0; y < VIEWPORT_HEIGHT; ++y) {
         memcpy(framebuffer + (size_t)(VIEWPORT_Y + y) * framebuffer_width + VIEWPORT_X,
                viewport + (size_t)y * VIEWPORT_WIDTH, VIEWPORT_WIDTH);
