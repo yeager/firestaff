@@ -43,6 +43,9 @@
   adjacent charge-ordering pass with SKProject, and uses its boolean
   darkness gate after both map branches. An original SKULL.EXP table test
   covers the helper; live dynamic-light integration remains incomplete.
+- `DM2 saved light and timers`: replaces an incorrect light curve with the
+  sixteen values from the original FM Towns SKULL.EXP and SKProject table,
+  affecting restored light effects and timer deltas.
 - `DM2 FM Towns teleport frame test`: adds checks for source-owned frames
   both entering and leaving map 38. It currently exposes the missing dynamic
   light receipt and must pass before this release is published.

@@ -106,7 +106,7 @@ static void test_light_positive(void)
     set_timer(t, 0x46, 0, 5);
     DM2_V1_SimpleTimerCallbacks cb = make_cb();
     assert(dm2_v1_handle_timer_light(t, &cb) == 1);
-    assert(g_light_delta == 248);
+    assert(g_light_delta == 40);
     printf("  PASS: light_positive\n");
 }
 
@@ -117,7 +117,7 @@ static void test_light_negative(void)
     set_timer(t, 0x46, 0, -1);
     DM2_V1_SimpleTimerCallbacks cb = make_cb();
     assert(dm2_v1_handle_timer_light(t, &cb) == 1);
-    assert(g_light_delta == -8);
+    assert(g_light_delta == -5);
     printf("  PASS: light_negative\n");
 }
 

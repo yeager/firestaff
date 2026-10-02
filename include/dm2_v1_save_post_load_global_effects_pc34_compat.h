@@ -19,10 +19,11 @@ extern "C" {
 #endif
 
 /* Light level lookup table (table1d6702).
- * Source: dm2data.cpp — 16 entries, indexed by abs(valueA). */
+ * Source: SKProject dm2data.cpp:73-78 and retail FM Towns SKULL.EXP 0x3c44.
+ * These are the original sixteen signed-byte values, widened for callers. */
 static const int16_t dm2_v1_light_table[16] = {
-    0, 8, 24, 56, 120, 248, 504, 1016,
-    2040, 4088, 8184, 16376, 32760, 32760, 32760, 32760
+    0, 5, 12, 24, 33, 40, 46, 51,
+    59, 68, 76, 82, 89, 94, 97, 100
 };
 
 typedef struct {

@@ -105,7 +105,7 @@ static void test_light_positive(void)
     DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 0, &cb, &r) == 0);
-    assert(r.light_accumulator == -112);
+    assert(r.light_accumulator == -48);
     printf("  PASS: light_positive\n");
 }
 
@@ -117,7 +117,7 @@ static void test_light_negative(void)
     DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 0, &cb, &r) == 0);
-    assert(r.light_accumulator == 24);
+    assert(r.light_accumulator == 12);
     printf("  PASS: light_negative\n");
 }
 
@@ -239,7 +239,7 @@ static void test_owner_phase_uses_retained_state_only(void)
     set_timer(owner.timers[2].bytes, 0x48, 3, 4);
     set_timer(owner.timers[3].bytes, 0x4b, 1, 9);
     assert(dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(&owner));
-    assert(owner.savegames1[0] == 0xd0 && owner.savegames1[1] == 0xff);
+    assert(owner.savegames1[0] == 0xe8 && owner.savegames1[1] == 0xff);
     assert(owner.savegames1[2] == 1);
     assert(owner.heroes[0].ench_power == 4 && owner.heroes[1].ench_power == 0);
     assert(owner.heroes[1].poisoned == 1 && owner.heroes[1].poison == 9);

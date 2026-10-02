@@ -1,6 +1,7 @@
 /* Test DM2 V1 light operations (c_light.cpp). */
 
 #include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_save_post_load_global_effects_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,7 +121,10 @@ static void test_recalc_light_level_original_tables(void)
     assert(fread(source_bytes, 1u, sizeof(source_bytes), source) ==
            sizeof(source_bytes));
     fclose(source);
-    for (int i = 0; i < 16; ++i) charges_table[i] = source_bytes[i];
+    for (int i = 0; i < 16; ++i) {
+        charges_table[i] = source_bytes[i];
+        assert(dm2_v1_light_table[i] == charges_table[i]);
+    }
     for (int i = 0; i < 5; ++i) light_table[i] = source_bytes[28 + i];
     light_table[5] = source_bytes[35];
     memset(&cb, 0, sizeof(cb));
@@ -159,25 +163,19 @@ static void mock_queue(void *ctx, int16_t val, uint32_t tick)
 
 static void mock_recalc(void *ctx) { (void)ctx; g_recalc = 1; }
 
-static const int16_t mock_table[16] = {
-    0, 10, 25, 45, 70, 100, 135, 175, 220, 270, 325, 385, 450, 520, 595, 675
-};
-
 static void test_proceed_light_darkness(void)
 {
     g_light = 500;
     g_recalc = 0;
     DM2_V1_ProceedLightCallbacks cb = {
-        &g_light, mock_table, 16, 1000, mock_queue, mock_recalc
+        &g_light, dm2_v1_light_table, 16, 1000, mock_queue, mock_recalc
     };
-    dm2_v1_proceed_light(0x06, 100, &cb, NULL);
+    dm2_v1_proceed_light(0x06, 64, &cb, NULL);
     assert(g_recalc == 1);
-    /* step = max(8, between(32,256,101)/8) = max(8,12) = 12
-     * darkness: delay = 16*(12-8)+16 = 80
-     * timer_val = 12 (positive for darkness)
-     * dir_mult = -2, light_delta = table[12]*(-2) = 450*(-2) = -900 */
-    assert(g_queued_val > 0); /* darkness stores positive */
-    assert(g_light < 500);
+    /* Retail SKULL.EXP table1d6702[8] = 59.  The clamped step is eight,
+     * darkness schedules timer value eight and applies -2 * 59. */
+    assert(g_queued_val == 8);
+    assert(g_light == 382);
     printf("  PASS: proceed_light_darkness\n");
 }
 
@@ -186,7 +184,7 @@ static void test_proceed_light_torch(void)
     g_light = 100;
     g_recalc = 0;
     DM2_V1_ProceedLightCallbacks cb = {
-        &g_light, mock_table, 16, 500, mock_queue, mock_recalc
+        &g_light, dm2_v1_light_table, 16, 500, mock_queue, mock_recalc
     };
     dm2_v1_proceed_light(0x26, 80, &cb, NULL);
     assert(g_recalc == 1);
@@ -203,7 +201,7 @@ static void test_proceed_light_invalid(void)
     g_light = 100;
     g_recalc = 0;
     DM2_V1_ProceedLightCallbacks cb = {
-        &g_light, mock_table, 16, 0, mock_queue, mock_recalc
+        &g_light, dm2_v1_light_table, 16, 0, mock_queue, mock_recalc
     };
     dm2_v1_proceed_light(0x05, 50, &cb, NULL);
     assert(g_recalc == 0);
