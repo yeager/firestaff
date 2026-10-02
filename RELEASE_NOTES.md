@@ -35,6 +35,9 @@
   live party movement and future cross-map path traversal. Original media
   verifies both map 3 to map 38 and return coordinates and rotation; light
   path traversal remains incomplete.
+- `DM2 tile-light compatibility`: removes an unused synthetic radius-based
+  light helper whose result disagreed with SKProject; the original-media
+  ceiling contribution test now provides a source-backed starting point.
 - `DM1, CSB and DM2 startup tests`: verify automatic FM Towns selection with
   original media and retain explicit platform overrides. The CSB M12 menu
   route also verifies that a complete FM Towns CD wins over a simultaneous
