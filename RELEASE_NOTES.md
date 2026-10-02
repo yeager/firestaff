@@ -61,6 +61,9 @@
   record-chain gates. The mode-7 probe uses the source flags-4 wall and floor
   ornament path, including original map 3 and 38 floor records. Neither pass
   yet claims complete light traversal.
+- `DM2 light update order`: runs the source light walks after map and GDAT
+  controls load and before dynamic frame recalculation. Teleporter sensor
+  queries use original dungeon record links in both light modes.
 - `DM2 tile-light compatibility`: removes an unused synthetic radius-based
   light helper whose result disagreed with SKProject; the original-media
   ceiling contribution test now provides a source-backed starting point.
@@ -72,6 +75,9 @@
   original media and retain explicit platform overrides. The CSB M12 menu
   route also verifies that a complete FM Towns CD wins over a simultaneous
   loose data tree.
+- `CSB Atari ST CI`: changes the original STX startup test's CTest timeout
+  from 300 to 900 seconds after its complete CLI, input and menu route
+  exceeded the former limit.
 - `DM2 Macintosh source tests`: verify the retail start corridor, linked item
   records and original map transitions with authentic media.
 - `CSB FM Towns dungeon tests`: verify English and Japanese complete-disc
