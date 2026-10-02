@@ -114,6 +114,8 @@ int dm2_v1_mode7_go_there_empty_class0_admission(
     uint8_t raw_tile, int first_record_link, int party_square);
 int dm2_v1_mode7_go_there_class1_raw30_admission(
     uint8_t raw_tile, int no_creature_proven, int party_square);
+int dm2_v1_mode7_go_there_class1_no_record_admission(
+    uint8_t raw_tile, int first_record_link, int party_square);
 int dm2_v1_mode7_go_there_class0_record_admission(
     uint8_t raw_tile, int first_record_link,
     int no_creature_proven, int party_square);

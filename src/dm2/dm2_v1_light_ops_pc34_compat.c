@@ -58,6 +58,18 @@ int dm2_v1_mode7_go_there_class1_raw30_admission(
     return party_square ? 0 : 1;
 }
 
+int dm2_v1_mode7_go_there_class1_no_record_admission(
+    uint8_t raw_tile, int first_record_link, int party_square)
+{
+    /* SK1C9A.cpp:3184-3187 assigns every class-1 tile capability 0x2,
+     * admitted by action 23's 0x227. At :3380-3445 the party square adds
+     * blocker 0x800; an empty record chain proves no DB4 creature blocker. */
+    if ((raw_tile >> 5) != 1u || (raw_tile & 0x10u) != 0u ||
+        first_record_link != -1)
+        return -1;
+    return party_square ? 0 : 1;
+}
+
 int dm2_v1_mode7_go_there_class0_record_admission(
     uint8_t raw_tile, int first_record_link,
     int no_creature_proven, int party_square)

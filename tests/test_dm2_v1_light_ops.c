@@ -293,6 +293,16 @@ static void test_mode7_go_there_tile_admission(void)
         0x30u, 0, 0) == -1);
     assert(dm2_v1_mode7_go_there_class1_raw30_admission(
         0x31u, 1, 0) == -1);
+    assert(dm2_v1_mode7_go_there_class1_no_record_admission(
+        0x20u, -1, 0) == 1);
+    assert(dm2_v1_mode7_go_there_class1_no_record_admission(
+        0x2fu, -1, 1) == 0);
+    assert(dm2_v1_mode7_go_there_class1_no_record_admission(
+        0x20u, 0x0da2, 0) == -1);
+    assert(dm2_v1_mode7_go_there_class1_no_record_admission(
+        0x30u, -1, 0) == -1);
+    assert(dm2_v1_mode7_go_there_class1_no_record_admission(
+        0x10u, -1, 0) == -1);
     assert(dm2_v1_mode7_go_there_class0_record_admission(
         0x10u, 0x0855, 1, 0) == 1);
     assert(dm2_v1_mode7_go_there_class0_record_admission(
@@ -404,6 +414,11 @@ static void test_mode7_flags4_original_media(void)
                                     graphics_size) == 0);
     memset(&pools, 0, sizeof(pools));
     assert(dm2_v1_record_pool_set_init_from_dungeon(&pools, &dungeon));
+    assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 12, 7) == 0x20);
+    assert(dm2_v1_dungeon_get_first_thing(&dungeon, 3, 12, 7) == -1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x20u, -1) == -1);
+    assert(dm2_v1_mode7_go_there_class1_no_record_admission(
+        0x20u, -1, 0) == 1);
     for (int y = 8; y <= 9; ++y) {
         int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, y);
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
