@@ -98,12 +98,14 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 print("PASS: authentic DM1 PC-34 start menu reached the source-owned runtime frame")
 PY
 
-# Verify the ordinary AUTO route separately in a clean config. Keep the
-# authenticated archive in its installed dm1/ data-root layout and omit the
-# platform selector so a saved preference cannot make this a platform-forced
-# test.
+# Verify the PC fallback of the ordinary AUTO route in a clean config. Keep
+# only this authenticated PC archive in an installed dm1/ data-root layout:
+# AUTO correctly prefers FM Towns when both editions are available.
 menu_auto_home="$test_scratch/dm1-menu-auto-home-$$"
 mkdir -p "$menu_auto_home"
+menu_auto_data_root="$menu_auto_home/data"
+mkdir -p "$menu_auto_data_root/dm1"
+cp "$archive" "$menu_auto_data_root/dm1/$(basename "$archive")"
 startup_capture_root=$(mktemp -d "$test_scratch/dm1-pc34-startup-$$.XXXXXX")
 menu_auto_probe_json="$menu_auto_home/runtime.json"
 menu_auto_output="$(HOME="$menu_auto_home" XDG_CONFIG_HOME="$menu_auto_home" \
@@ -111,7 +113,7 @@ menu_auto_output="$(HOME="$menu_auto_home" XDG_CONFIG_HOME="$menu_auto_home" \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_auto_probe_json" \
     FIRESTAFF_DM1_STARTUP_CAPTURE_DIR="$startup_capture_root" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --data-dir "$(dirname "$(dirname "$archive")")" \
+    --menu --game dm1 --data-dir "$menu_auto_data_root" \
     --script "$menu_original" --duration 30000 2>&1)" || {
     printf '%s\n' "$menu_auto_output" >&2
     exit 1
