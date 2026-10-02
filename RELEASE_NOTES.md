@@ -57,7 +57,8 @@
 - `DM2 light runtime linkage`: moves visibility state into a production
   module so the M11 runtime links without including unfinished creature-AI
   compatibility stubs. A bounded mode-8 frontier now visits admitted source
-  cells, but it does not claim complete light traversal.
+  cells. A mode-7 probe evaluates observed DB1/DB3 teleporter ornament light
+  with source weather input; neither pass yet claims complete light traversal.
 - `DM2 tile-light compatibility`: removes an unused synthetic radius-based
   light helper whose result disagreed with SKProject; the original-media
   ceiling contribution test now provides a source-backed starting point.
