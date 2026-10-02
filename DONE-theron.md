@@ -2,7 +2,7 @@
 
 ## 2026-10-03 — authenticate the shared UI glyph bank in both regions
 
-- The existing 120-glyph 8×6 viewport bank now has a real-media regression
+- The source-only 120-glyph 8×6 viewport bank now has a real-media regression
   for both original editions: US Track 02 UD `0x09A000` and JP Rev. 1 Track 02
   UD `0x099800`. Both source spans match all 720 checked-in bytes after the
   Track 02 hash and raw-sector mapping are verified.
@@ -10,10 +10,11 @@
   tests passed three consecutive loops against the authentic US and JP BINs.
   The unavailable JP CUE ISO projection was explicitly skipped.
 - US and JP font checks are independent CTest entries; an unavailable region
-  skips only its own test. A missing-US-media probe returned the configured
-  skip code while preserving the independent JP check.
-- Only the common Latin/UI glyph bank is verified. JP kana, original text
-  consumption, and full rendering parity remain open.
+  skips only its own test. Direct missing-US and missing-JP media probes each
+  returned the configured skip code independently.
+- Only the common Latin/UI glyph bank is verified. The viewport/font module is
+  excluded from the production library; JP kana, original text consumption,
+  and full rendering parity remain open.
 
 ## 2026-10-02 — keep unbound Track 02 teleporter sound mapping closed
 

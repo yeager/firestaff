@@ -23,7 +23,8 @@ extern "C" {
  *
  * The text codec at UD 0x09D44F uses indices 0-32 directly.
  * For ASCII rendering, use the character code as the glyph index
- * (e.g. 'A' = 65, '0' = 48). */
+ * (e.g. 'A' = 65, '0' = 48). This source-only table does not prove the
+ * original text consumer or authorize the excluded viewport in production. */
 
 #define THERON_TRACK02_FONT_GLYPH_COUNT     120u
 #define THERON_TRACK02_FONT_BYTES_PER_GLYPH  6u

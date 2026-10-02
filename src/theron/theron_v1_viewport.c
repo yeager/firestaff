@@ -50,9 +50,9 @@ static const int8_t g_left_dy[4] = { 0, -1,  0,  1};
 
 /* -- Track 02 UI font -------------------------------------------------
  *
- * The HUD text uses the 8x6 glyphs extracted from authenticated US Track 02
- * at UD 0x09A000; the exact bank also occurs in JP Rev. 1 at UD 0x099800.
- * Keep this separate from the still-blocked
+ * This source-only HUD helper draws with 8x6 glyphs from authenticated US
+ * Track 02 at UD 0x09A000; the exact bank also occurs in JP Rev. 1 at
+ * UD 0x099800. Keep this separate from the still-blocked
  * panel/portrait art: having a real font does not prove the surrounding
  * chrome bank or its draw order.
  */
