@@ -13,6 +13,8 @@ fi
 mixed=$(mktemp -d "${PWD}/.firestaff-csb-menu-media.XXXXXX")
 trap 'rm -rf "$mixed"' EXIT
 mkdir "$mixed/csb"
+mkdir "$mixed/home"
 ln -s "$archive" "$mixed/csb/$(basename "$archive")"
 ln -s "$loose" "$mixed/csb/fmtowns_iso"
-"$test_bin" "$mixed" "$(basename "$archive")"
+HOME="$mixed/home" XDG_CONFIG_HOME="$mixed/home" \
+    "$test_bin" "$mixed" "$(basename "$archive")"
