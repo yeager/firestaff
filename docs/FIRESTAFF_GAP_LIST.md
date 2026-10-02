@@ -705,7 +705,7 @@ Marked above as **EXTRACTED** (new rows in C2, D3, E1, F1), previously
 match a canonical hash. Update 2026-06-21: Theron JP/US Track 02 is also
 launch-tested through `tier1_strict_boot_probe`.
 
-| Spel | Version | Status |
+| Game | Version | Status |
 |---|---|---|
 | DM1 | PC 3.4 (legacy-dos) | EXTRACTED + VERIFIED + LAUNCH-TESTED; DMWeb PC page pins the USA EN and Europe EN/FR/GE 3.4 edition boundary plus VGA/EGA, PC ending, entrance music, and DOS input receipts |
 | CSB | Amiga 3.3 (Meynaf FR hack) | EXTRACTED + VERIFIED |

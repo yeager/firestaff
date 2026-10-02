@@ -281,7 +281,7 @@ Immediate sub-goal:
 - focus on richer submenu/game-state consequences, broader interaction coverage, and higher title/menu/submenu fidelity
 - keep the crash band around `671..687` separate unless it becomes directly relevant
 
-## What to beta av next
+## What to beta-test next
 
 1. Use `m7_reachability_b` as the current stable held-state baseline and `m8_loop_stability_a` as the first loop-stability-oriented probe
 2. The first command/input-facing seam now exists above the startup/main-loop-entry chain as `memory_graphics_dat_main_loop_command_pc34_compat.{c,h}`

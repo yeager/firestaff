@@ -512,8 +512,8 @@ witness plus an actual Nexus post-render image.
 Current external-disk audit, 2026-08-13: the verified game corpus contains
 CUE/ISO and extracted retail files. A new isolated J-BIOS/English-Merged
 capture is now available as operator evidence on external disk:
-`/Volumes/Extern-disk/nexus-capture-20260813/run-jp-merged/`. Den binder
-binds BIOS and disc hashes, 60 raw frames, and 16 active VDP1 observations;
+`/Volumes/Extern-disk/nexus-capture-20260813/run-jp-merged/`. The capture binds
+the BIOS and disc hashes, 60 raw frames, and 16 active VDP1 observations;
 the separate validator passes with `--require-frames 60 --require-vdp1-activity`.
 The capture is nevertheless semantic-blocked: no byte-exact startup→menu
 identity, start pose, HUD/viewport consumer, or SLEV/SAL dispatch is verified.
@@ -645,8 +645,8 @@ mode-5 record still has no byte-exact retail owner; its command-chain join also
 lacks sufficient valid screen coordinates to open full replay.
 
 The authenticated raw-frame chain is also now available as
-`nexus_v1_vdp1_capture_decode_direct_color_runtime_frame()`. Den binder frame,
-binds frame, COPR/command list, display origin, and the selected mode-5 command
+`nexus_v1_vdp1_capture_decode_direct_color_runtime_frame()`. The capture binds
+the frame, COPR/command list, display origin, and selected mode-5 command
 to the same raw capture and returns the command offset in its receipt. The API
 remains explicitly capture-only; it creates neither menu identity, material
 ownership, nor a production consumer.

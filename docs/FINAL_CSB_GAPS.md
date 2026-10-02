@@ -8,7 +8,7 @@ after this session's work.  Each gap classified:
 - **AUDIT-ONLY** — no functional gap in Firestaff (cleanup fix
   in original; not blocking; deferred to code-review)
 - **OPEN-BOUNDED** — tractable, can be implemented in a focused commit
-- **OPEN-OMFATTANDE** — out of scope, would need separate milestone
+- **OPEN-EXTENSIVE** — out of scope, would need a separate milestone
 
 Source: `docs/csb_gap_*.md` (5 files, 870 lines) plus
 `docs/REDMCSB_REFERENCE.md` for the BugsAndChanges.htm
@@ -70,7 +70,7 @@ cross-reference.
 
 ---
 
-## Summary (v2.7.24 — OMFATTANDE batch closed)
+## Summary (v2.7.24 — broad-scope batch closed)
 
 27 gaps total (re-verified 2026-06-16 / branch
 `csb-v1-omfattande-batch-2026-06-16`):
@@ -78,12 +78,12 @@ cross-reference.
   - **5 ALREADY-DONE** (Combat 4, Dungeon 5, Mechanics 1+4+5, Combat 5)
   - **3 AUDIT-ONLY** (Graphics 3, 4, 5)
   - **1 PARTIAL** (Graphics 1: BUG0_03 live palette-consumer binding)
-  - **0 OPEN-OMFATTANDE** — all three (Champions 3, Dungeon 4, Graphics 6) now shipped as bounded source-faithful implementations
+  - **0 OPEN-EXTENSIVE** — all three (Champions 3, Dungeon 4, Graphics 6) now shipped as bounded source-faithful implementations
 
 Net: **21 of 27 gaps fully closed (FIXED + ALREADY-DONE),** 4
-AUDIT-ONLY (no functional gap), 0 OMFATTANDE remaining.
+AUDIT-ONLY (no functional gap), 0 broad-scope gaps remaining.
 
-The three previously-OMFATTANDE gaps shipped this batch are
+The three previously broad-scope gaps shipped in this batch are
 bounded source-faithful slices, not exhaustive ports:
   - **Champions 3**: CSB v2.0/v2.1 roster import maps the
     documented record layout; deeper save sections (combat
@@ -98,10 +98,10 @@ bounded source-faithful slices, not exhaustive ports:
 
 ---
 
-## Group 7 — OMFATTANDE status update (v2.7.20)
+## Group 7 — broad-scope status update (v2.7.20)
 
-The three OMFATTANDE gaps (Champions 3, Dungeon 4, Graphics 6)
-remain genuinely OMFATTANDE.  v1 ships bounded stubs and
+The three broad-scope gaps (Champions 3, Dungeon 4, Graphics 6)
+remain genuinely broad in scope. v1 ships bounded stubs and
 dispatchers to make the gaps visible without pretending
 they're closed:
 
@@ -113,7 +113,7 @@ they're closed:
   - **Dungeon 4 (Compressed dungeon DECOMPDU.C)**: helper
     `csb_v1_decompdu_detect()` recognises the "CDU\0" 4-byte
     magic + sub-format byte, returns 1 on match.  The
-    full decompressor is OPEN-OMFATTANDE; v1 ships a
+    full decompressor is OPEN-EXTENSIVE; v1 ships a
     graceful-fail shim.
   - **Graphics 6 (Code-to-asm CHANGE7_16)**: deferred; the
     Atari ST 68k-assembly translation is out of scope for

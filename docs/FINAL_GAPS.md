@@ -9,14 +9,14 @@ Firestaff runtime as of 2026-06-15, after a verification pass
 against the 2026-06-14 BUG_AUDIT inventory + current main HEAD
 (`e2168ebe`). This doc was previously dated 2026-06-14
 (v2.7.14 → v2.7.15 snapshot) and listed many items as
-OPEN-BOUNDED / OPEN-OMFATTANDE that are now actually FIXED in
+OPEN-BOUNDED / OPEN-EXTENSIVE that are now actually FIXED in
 main. Statuses have been re-verified.
 
 Each gap is classified as:
 - **FIXED** — implementation exists, source-locked
 - **DOCUMENTED** — v1 simplification cited to ReDMCSB
 - **OPEN-BOUNDED** — can be implemented in a future commit
-- **OPEN-OMFATTANDE** — out of scope, would need separate milestone
+- **OPEN-EXTENSIVE** — out of scope, would need a separate milestone
 - **OUT-OF-SCOPE** — DM2 / CSB / Nexus / Theron; launcher extras without data source
 
 ---
@@ -58,7 +58,7 @@ Each gap is classified as:
 ## Group 3 — BUG items (from BUG_AUDIT.md) — ALL FIXED in HEAD
 
 The 2026-06-14 snapshot listed several BUGs as OPEN-BOUNDED /
-OPEN-OMFATTANDE. Re-verification on 2026-06-15 confirms every
+OPEN-EXTENSIVE. Re-verification on 2026-06-15 confirms every
 Group 3 BUG now has source-locked implementation in HEAD:
 
 | ID | Title | Severity | Status | ReDMCSB Citation | Verified at |
@@ -181,7 +181,7 @@ be read with these cross-references rather than at face value.
 | **MNU-02 / BUG-107** (F0757 Thieves Eye duration) | "`spellPower*40`, lasts longer than original" | Confirmed intentional: `memory_magic_pc34_compat.c:663` uses the source-locked envelope rather than the original's uninitialised-stack value. | **DOCUMENTED** (intentional) |
 | **DUN-05 / BUG0_08** (thing overfill) | "silently dropped, not crashed" | Deliberate defensive guard with explicit diagnostic at `memory_dungeon_dat_pc34_compat.c:431`; surfaced via `memory_tick_orchestrator_pc34_compat.c:891`. | **DOCUMENTED** (intentional defensive) |
 | **PJE-05 / BUG0_16** (projectile list overfill) | "silently dropped, not crashed" | Deliberate v1 hard cap with diagnostic at `memory_projectile_pc34_compat.c:255-270`. | **DOCUMENTED** (intentional defensive) |
-| **LSV-01/02/03 / SAV-01** (save/load not original-compatible) | "native format, not PC 3.4 interop" | By design: Firestaff uses its own atomic native save format (`dm1_v1_save_load.c`). Original-save interop is an OPEN-OMFATTANDE milestone, not a parity gap. | **OPEN-OMFATTANDE** (separate milestone) |
+| **LSV-01/02/03 / SAV-01** (save/load not original-compatible) | "native format, not PC 3.4 interop" | By design: Firestaff uses its own atomic native save format (`dm1_v1_save_load.c`). Original-save interop is an OPEN-EXTENSIVE milestone, not a parity gap. | **OPEN-EXTENSIVE** (separate milestone) |
 | **REV-01** (F0281 CHAMPION_Rename UI) | "resurrection rename prompt silently missing" | 2026-06-28 data-free `dm1_v1_resurrection_rename_ui_gate_pc34_compat` pins the source-locked F0281 panel/input contract. 2026-06-30 live M11 now opens the non-blocking rename panel from C161, forwards SDL text input, handles backspace/escape/return, and rejects duplicate party names before finalizing reincarnation. Real GRAPHICS.DAT C027 screenshot proof and original-vs-Firestaff pixel evidence remain future work. | **FIXED-RUNTIME / OPEN-EVIDENCE** |
 | **MOV-05** (F0284 rotates Direction but not Cell) | "inventory panel may mis-render when turning with a candidate present" | `dm1_v1_mov05_f0284_cell_rotation_pc34_compat` is now CTest-registered and pins the bounded F0284 party cell/direction rotation contract for no-op turns, present-list rotation, active champion tracking, empty-slot preservation, two- and three-champion parties, portrait identity preservation, and cardinal reachability. This is source-lock fixture coverage only; it does not claim live inventory redraw, candidate-panel runtime, DOSBox evidence, or pixel parity. | **FIXED** (bounded source-lock fixture) |
 
@@ -224,5 +224,5 @@ remaining work is:
 
 The previous 2026-06-14 snapshot listed 6 Group 3 BUG items
 (BUG-106, 108, 109, 111, 116) as OPEN-BOUNDED, 2 as
-OPEN-OMFATTANDE (BUG-107, 112, 118), and 1 as DOCUMENTED
+OPEN-EXTENSIVE (BUG-107, 112, 118), and 1 as DOCUMENTED
 (BUG-115). All of these are now FIXED in main.

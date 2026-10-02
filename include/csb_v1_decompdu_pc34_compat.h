@@ -48,7 +48,7 @@ int csb_v1_decompdu_detect(const unsigned char* header, int headerLen);
 typedef enum {
     CSB_V1_DECOMPDU_OK = 0,             /* successful decompress */
     CSB_V1_DECOMPDU_NOT_COMPRESSED = 1, /* not a CDU file */
-    CSB_V1_DECOMPDU_NOT_IMPLEMENTED = 2, /* OPEN-OMFATTANDE */
+    CSB_V1_DECOMPDU_NOT_IMPLEMENTED = 2, /* OPEN-EXTENSIVE */
     CSB_V1_DECOMPDU_BAD_HEADER = 3,    /* magic mismatch */
     CSB_V1_DECOMPDU_IO_ERROR = 4        /* read/write failure */
 } CSB_V1_DecompduResult;

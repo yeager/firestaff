@@ -2,7 +2,7 @@
 
 DM1 V1 hero subtitle (Group 7) is now visible, F0192 poison cloud
 resistance-adjusted attack re-applied, CSB V1 closes all 3 remaining
-OPEN-OMFATTANDE gaps (Champions 3 / Dungeon 4 / Graphics 6).
+OPEN-EXTENSIVE gaps (Champions 3 / Dungeon 4 / Graphics 6).
 
 ## DM1 V1
 
@@ -65,7 +65,7 @@ OPEN-OMFATTANDE gaps (Champions 3 / Dungeon 4 / Graphics 6).
 - `docs/FINAL_GAPS.md` v2.7.23 snapshot — DM1: all 21 BUG items
   + Group 7 verified FIXED in HEAD `9f32b8a1`.
 - `docs/FINAL_CSB_GAPS.md` v2.7.23 snapshot — CSB: 21/27 gaps
-  closed (13 FIXED, 5 ALREADY-DONE, 0 OPEN-BOUNDED, 3 OPEN-OMFATTANDE
+  closed (13 FIXED, 5 ALREADY-DONE, 0 OPEN-BOUNDED, 3 OPEN-EXTENSIVE
   all closed this release).
 
 ## Test regressions

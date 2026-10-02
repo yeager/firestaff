@@ -1211,7 +1211,7 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   from `$CB22`; `$C3A0` reads are absent. This therefore does not open
   `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`, JP level data, VRAM/VCE semantics,
   or HuC6280 RAM publication.
-- 🔒 Capture-identitet: main-RAM-sidecar MD5
+- 🔒 Capture identity: main-RAM sidecar MD5
   `21f771f92a35704cf0ea8be3a2adf199`, transition-sidecar MD5
   `c92f8d31269cdd1771464937f32d69bf`. Sidecars and the binary remain local
   on the external drive and must not be committed.

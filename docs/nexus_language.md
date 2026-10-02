@@ -7,7 +7,7 @@ rendering without proof from the local corpus.
 ## Verified in the local corpus
 
 - The European English ISO contains `DMN_ABS.TXT`, `DMN_BIB.TXT`, and
-  `DMN_CPY.TXT`; deras bytesidentitet verifieras av
+  `DMN_CPY.TXT`; their byte identity is verified by
   `scripts/verify_nexus_v1_asset_manifest.py`.
 - `RLOWFIX.BIN` contains a verified `PLRD` resource with 20 records of 64
   bytes each. Each record retains six `TABL` indices and the raw glyph codes in
