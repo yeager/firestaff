@@ -141,6 +141,12 @@ int dm2_v1_mode7_flags4_class2_terms(
     const DM2_V1_CLightStoneRoomReceipt *room,
     int16_t *out_tile_light, int16_t *out_darkness,
     int16_t *out_weather_light);
+/* Source flags 4 skip the ceiling/record branch (bit 1) and creature
+ * branch (bit 2) even on a class-5 DB1 teleporter tile. */
+int dm2_v1_mode7_flags4_class5_terms(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    int16_t *out_tile_light, int16_t *out_darkness,
+    int16_t *out_weather_light);
 
 /* The v1e08ae cache owned by SK1C9A::DM2_19f0_045a. Zero-initialize once;
  * the source cache persists across FIND_WALK_PATH calls. A full traversal

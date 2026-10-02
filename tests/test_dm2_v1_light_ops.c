@@ -384,6 +384,15 @@ static void test_mode7_flags4_original_media(void)
     node.source_flags = 4u;
     node.effective_flags = 2u;
     assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == -1);
+    assert(dm2_v1_dungeon_c_light_stone_room_receipt(
+        &dungeon, &graphics, 38, 6, 5, 0u, &room));
+    assert(room.raw_tile == 0xb0u &&
+           ((room.first_record_link >> 10) & 0x0fu) == 1u);
+    assert(dm2_v1_mode7_flags4_class5_terms(
+        &room, &tile_light, &room_darkness, &weather_light));
+    assert(tile_light == 0 && room_darkness == 0 && weather_light == 0);
+    node.stone_room = &room;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
     assert(accumulated == 0 && darkness == 0);
     assert(dm2_v1_mode7_tile_cache_start(
         &cache, 38, 6, 6, read_mode7_dungeon_tile, &dungeon));
