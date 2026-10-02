@@ -77,6 +77,7 @@ static void mark_game_ready(M12_StartupMenuState* state, int slot, const char* g
     state->assetStatus.versions[slot][0].shortLabel = "READY";
     state->assetStatus.versions[slot][0].matched = 1;
     state->entries[slot].available = 1;
+    state->gameOptions[slot].architectureIndex = M12_ARCH_AUTO;
     state->gameOptions[slot].versionIndex = 0;
     if (strcmp(gameId, "dm1") == 0) {
         M12_DM1HoCPresentedCaptureReceipt receipt;
@@ -358,10 +359,9 @@ int main(void) {
                     "launch intent should use the auto-selected matched version")) return 1;
     }
 
-    /* AUTO must be resolved again at the final launch boundary.  DM1/DM2
-     * recover their PC route from a stale FM Towns row; CSB has no DOS
-     * release and retains its native Amiga route over a stale FM Towns row.
-     * This exercises the same M12 handoff without constructing media. */
+    /* AUTO must be resolved again at the final launch boundary. All three
+     * games prefer matched FM Towns media, then recover PC/Amiga when that
+     * match disappears. This exercises the M12 handoff without game bytes. */
     {
         static const char *const game_ids[] = {"dm1", "csb", "dm2"};
         static const char *const pc_ids[] = {"pc34-en", "", "pc-en"};
@@ -380,12 +380,16 @@ int main(void) {
                         "the selected original-platform catalogue rows should exist")) return 1;
             state.activatedIndex = (int)game;
             state.gameOptions[game].architectureIndex = M12_ARCH_AUTO;
-            state.gameOptions[game].versionIndex = game == 1u ? pc : fmtowns;
+            state.gameOptions[game].versionIndex = pc;
             state.assetStatus.versions[game][pc].matched = 1;
             state.assetStatus.versions[game][fmtowns].matched = 1;
             intent = M12_StartupMenu_GetLaunchIntent(&state);
+            if (!expect(intent.valid == 1 && intent.options.versionIndex == fmtowns,
+                        "AUTO launch intent must prefer matched FM Towns media")) return 1;
+            state.assetStatus.versions[game][fmtowns].matched = 0;
+            intent = M12_StartupMenu_GetLaunchIntent(&state);
             if (!expect(intent.valid == 1 && intent.options.versionIndex == pc,
-                        "AUTO launch intent must choose the original platform route")) return 1;
+                        "AUTO launch intent must recover the original fallback route")) return 1;
         }
     }
 
