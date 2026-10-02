@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-10-02: The Atari ST viewport now draws first-and-only DB5 weapons
+  in the open D1C back-right cell using the 46 source object aspects and
+  original GRAPHICS.DAT bitmaps. A real Atari Game/Utility STX test resumes
+  MINI map 6, matches weapon `0x1423` against graphic 372 on screen, and
+  confirms the pixels change when source F0267 removes the weapon. All
+  admitted presentation modes pass; other item cells and creature classes
+  remain open.
+
 - 2026-10-02: A C37 creature group falling through an open pit no longer
   requests the teleporter BUZZ sound. ReDMCSB MOVESENS.C F0267 reserves that
   request for audible teleporters. The existing group-fall fixture retains

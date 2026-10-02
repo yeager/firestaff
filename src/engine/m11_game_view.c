@@ -5297,6 +5297,96 @@ static int m11_csb_atari_st_draw_ceiling_pit(
  * yields the same source pixels as indexed bytes, so re-pack them through
  * the reversible four-plane boundary before TAG0088b2-equivalent wall
  * commands consume their byte strides. */
+/* ReDMCSB DUNGEON.C G0237 rows 23..68 select Atari MEDIA009 DUNVIEW.C
+ * G0209's native object aspect. DEFS.H M612=360. These 46 entries are the
+ * resulting {graphic, pixel width, height, G0218 coordinate set} for DB5.
+ * Every distinct source graphic was decoded from original Atari ST v2.1
+ * GRAPHICS.DAT and had the G0209 dimensions. This pass still covers only
+ * one first/only D1C back-right thing; complete F0115 ordering is pending. */
+static const struct {
+    uint16_t graphic;
+    uint8_t width;
+    uint8_t height;
+    uint8_t coordinate_set;
+} m11_csb_atari_st_db5_d1c_material[46] = {
+    {399,16,3,1}, {399,16,3,1}, {396,64,7,1}, {398,32,8,0},
+    {372,64,4,1}, {373,80,8,1}, {373,80,8,1}, {400,80,9,1},
+    {378,32,9,0}, {373,80,8,1}, {373,80,8,1}, {373,80,8,1},
+    {373,80,8,1}, {373,80,8,1}, {373,80,8,1}, {373,80,8,1},
+    {403,80,15,1}, {373,80,8,1}, {374,64,17,0}, {374,64,17,0},
+    {382,64,14,1}, {382,64,14,1}, {394,80,16,0}, {404,64,10,1},
+    {405,64,19,0}, {375,80,17,2}, {406,80,25,2}, {377,48,5,1},
+    {407,48,7,1}, {372,64,4,1}, {408,16,7,1}, {409,32,5,1},
+    {410,16,9,1}, {411,64,11,1}, {372,64,4,1}, {392,32,3,1},
+    {392,32,3,1}, {372,64,4,1}, {372,64,4,1}, {372,64,4,1},
+    {412,64,14,0}, {393,64,5,1}, {391,80,9,1}, {426,32,14,0},
+    {406,80,25,2}, {443,80,13,1}
+};
+
+static int m11_csb_atari_st_draw_d1c_weapon(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, unsigned char *viewport)
+{
+    const M11_AssetSlot *graphic;
+    const uint8_t *record;
+    int thing;
+    int type;
+    int size;
+    int subtype;
+    int graphic_index;
+    int width;
+    int height;
+    int bottom;
+    int left;
+    int top;
+    int x;
+    int y;
+
+    if (!state || !dungeon || !runtime || !viewport) return 0;
+    x = runtime->party_x + (int[]){ 0, 1, 0, -1 }[runtime->party_dir & 3];
+    y = runtime->party_y + (int[]){ -1, 0, 1, 0 }[runtime->party_dir & 3];
+    if (csb_v1_dungeon_get_square_type(dungeon, runtime->current_level, x, y) != 1)
+        return 0;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, runtime->current_level, x, y);
+    if (thing < 0 || ((unsigned)thing >> 14) !=
+            (unsigned)((runtime->party_dir + 2) & 3)) return 0;
+    record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
+                                               &type, NULL, &size);
+    if (!record || type != 5 || size < 4 ||
+        csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, (uint16_t)thing) !=
+            0xfffeu) return 0;
+    subtype = record[2] & 0x7f;
+    if (subtype >= 46) return 0;
+    graphic_index = m11_csb_atari_st_db5_d1c_material[subtype].graphic;
+    width = m11_csb_atari_st_db5_d1c_material[subtype].width;
+    height = m11_csb_atari_st_db5_d1c_material[subtype].height;
+    /* G0218 D1C back-right: all three source coordinate sets use x=148;
+     * sets 0/1 use y=111 and set 2 uses y=115. The first object in cell0
+     * adds G0217[0]/G0223[shift set0] = (+2,-3). */
+    bottom = m11_csb_atari_st_db5_d1c_material[subtype].coordinate_set == 2
+        ? 112 : 108;
+    left = 150 - width / 2 + 1;
+    top = bottom - height + 1;
+    if (left < 0 || left + width > 224 || top < 0 || bottom >= 136 ||
+        !m11_csb_install_runtime_source_graphic(state,
+                                                (unsigned int)graphic_index))
+        return -1;
+    graphic = M11_AssetLoader_Load(&state->assetLoader,
+                                   (unsigned int)graphic_index);
+    if (!graphic || !graphic->loaded || !graphic->pixels ||
+        graphic->width != (unsigned)width ||
+        graphic->height != (unsigned)height) return -1;
+    /* F0115 F0132 uses C10 transparency on the native bitmap. */
+    for (int row = 0; row < height; ++row) {
+        for (int col = 0; col < width; ++col) {
+            const unsigned char pixel = graphic->pixels[row * width + col];
+            if (pixel != 10u)
+                viewport[(top + row) * 224 + left + col] = pixel;
+        }
+    }
+    return 1;
+}
+
 static int m11_csb_present_atari_st_runtime_viewport(
     M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height,
@@ -5538,7 +5628,14 @@ static int m11_csb_present_atari_st_runtime_viewport(
          * do not turn that state into a host wall. Every other room kind
          * owns a different source command. */
         if (!csb_v1_csbwin_viewport_square_uses_stone_material(
-                (uint8_t)raw_square)) continue;
+                (uint8_t)raw_square)) {
+            if (draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F1 &&
+                square_type == 1 &&
+                m11_csb_atari_st_draw_d1c_weapon(
+                    state, dungeon, &profile->runtime, viewport) < 0)
+                return 0;
+            continue;
+        }
         if (!m11_csb_install_runtime_source_graphic(state, draw->graphic_index)) {
             return 0;
         }

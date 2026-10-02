@@ -69,6 +69,42 @@ Reviewed 2026-09-05. Only open work is listed here.
   use them to extend native gameplay, timer and transaction coverage.
 - Add original-data HUD, viewport, title, door and audio capture comparisons
   for Atari ST, Amiga and FM Towns. Do not use CSBWin as a PC game route.
+  The native Atari ST runtime viewport in `src/engine/m11_game_view.c`
+  (`m11_csb_present_atari_st_runtime_viewport`) draws the original ceiling,
+  floor, stone walls, pits, stairs and doors, but still lacks general visible
+  square thing-chain traversal and most object, creature, projectile and
+  explosion rendering. ReDMCSB `DUNVIEW.C` F0115 draws these in the D3
+  through D0 cells (for example lines 6816, 7368, 7937 and 8294). The
+  original Atari M12-to-M11 startup route only checks the prison map's
+  nonzero static viewport;
+  that map contains no object or creature things, so its viewport hash cannot
+  verify this missing pass. The available M11 sprite callbacks use PC3.4
+  F0115 source zones and DM1 placement geometry. Bind the Atari-native
+  graphics indices and placement tables before reusing any of them; then use
+  an authentic thing-bearing pose and pixel-level assertions. Do not draw
+  PC3.4 sprites as an Atari fallback. The original Atari Utility STX
+  `MINI.DAT` contains 11 maps and offers a controlled candidate: map 6,
+  party (21,17) facing south sees floor square (21,18), whose first thing is
+  DB5 weapon `0x1423` (record `fe ff a7 00`, subtype 39). ReDMCSB
+  `DUNGEON.C` G0237 row 62 maps that subtype to ObjectAspectIndex 11;
+  the Atari MEDIA009 `DUNVIEW.C` G0209 row 11 has
+  FirstNativeBitmapRelativeIndex 12. Atari `DEFS.H` sets M612 to 360, so the
+  source item is 372. It decodes from the original Atari Game STX
+  `GRAPHICS.DAT` as a 64x4 indexed surface through the existing Atari loader.
+  Entry 510, used by the PC3.4 mapping, also decodes but belongs to a
+  different Atari graphic category and must not be used for this weapon.
+  The Atari presenter now uses G0237/G0209 data for all 46 DB5 weapon
+  subtypes in the bounded open D1C back-right, first-and-only-thing case.
+  All 27 distinct Atari graphics selected by those subtypes decoded from
+  the original Game STX at the source dimensions. The original Atari M12-to-M11
+  test resumes authentic MINI data in a diagnostic pose, checks graphic-372
+  pixels on screen, and confirms they disappear when F0267 unlinks the real
+  weapon from the decoded source square in test memory. A missing or
+  malformed admitted graphic rejects the Atari viewport frame instead of
+  silently omitting that weapon.
+  Other view cells, mixed thing chains, piles, DB6–DB10 objects, creatures,
+  projectiles and explosions still need their native draw passes and
+  real-media receipts; they remain invisible in the Atari viewport.
   Amiga RGB4 register expansion is now compared and fixed from an authentic
   FS-UAE/Kickstart 1.3 title route; retain as open only a same-source-VBlank
   image pair plus the remaining HUD/viewport/door/audio comparisons. A

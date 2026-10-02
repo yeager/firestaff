@@ -26,6 +26,9 @@
 #include "m11_game_view.h"
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_atari_save_decode_pc34_compat.h"
+#include "csb_v1_dungeon_world_pc34_compat.h"
+#include "asset_find_by_hash.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_f0070_champion_formation_pc34_compat.h"
@@ -2779,6 +2782,102 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
  * the PC34 C001/C004 sequence.  Keep this optional real-data lane separate
  * from the PC test above: it proves that the source script crosses its final
  * VBlank into the normal M11 runtime in every supported presentation mode. */
+static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
+                                                 const char *data_dir)
+{
+    char save_path[1024];
+    uint8_t *save_bytes = NULL;
+    size_t save_size = 0u;
+    CSB_V1_DungeonData *candidate = NULL;
+    CSB_V1_DungeonData *original;
+    CSB_V1_AtariSaveInfo save_info;
+    CSB_V1_BootProfile *profile;
+    M11_AssetSlot *graphic;
+    unsigned char with_weapon[320 * 200];
+    unsigned char without_weapon[320 * 200];
+    uint8_t *record;
+    int old_level, old_x, old_y, old_dir, old_inventory;
+    int type, size, thing;
+    int matched = 0, changed = 0;
+
+    if (!view || !data_dir ||
+        snprintf(save_path, sizeof(save_path), "%s/Chaos Strikes Back Utility.stx::MINI.DAT",
+                 data_dir) >= (int)sizeof(save_path) ||
+        !asset_read_virtual_path_alloc(save_path, &save_bytes, &save_size) ||
+        !(candidate = (CSB_V1_DungeonData *)calloc(1u, sizeof(*candidate))) ||
+        csb_v1_atari_save_load_dungeon_pc34_compat(
+            save_bytes, save_size, candidate, &save_info) != CSB_V1_ATARI_SAVE_OK) {
+        expect_true(0, "original Atari MINI.DAT opens for native D1C item receipt");
+        if (candidate) csb_v1_dungeon_free(candidate);
+        free(candidate);
+        free(save_bytes);
+        return;
+    }
+    profile = (CSB_V1_BootProfile *)view->csbBootProfile;
+    thing = csb_v1_dungeon_get_first_thing(candidate, 6, 21, 18);
+    record = (uint8_t *)csb_v1_dungeon_get_thing_record(
+        candidate, (uint16_t)thing, &type, NULL, &size);
+    if (!profile || thing != 0x1423 || !record || type != 5 || size != 4 ||
+        record[2] != 0xa7u || record[3] != 0u ||
+        csb_v1_dungeon_get_raw_square(candidate, 6, 21, 17) != 0x30 ||
+        csb_v1_dungeon_get_raw_square(candidate, 6, 21, 18) != 0x30) {
+        expect_true(0, "original Atari MINI map 6 owns D1C weapon 0x1423");
+        csb_v1_dungeon_free(candidate);
+        free(candidate);
+        free(save_bytes);
+        return;
+    }
+    original = profile->runtime.dungeon_handle;
+    old_level = profile->runtime.current_level;
+    old_x = profile->runtime.party_x;
+    old_y = profile->runtime.party_y;
+    old_dir = profile->runtime.party_dir;
+    old_inventory = view->inventoryPanelActive;
+    view->inventoryPanelActive = 0;
+    profile->runtime.dungeon_handle = candidate;
+    profile->runtime.current_level = 6;
+    profile->runtime.party_x = 21;
+    profile->runtime.party_y = 17;
+    profile->runtime.party_dir = 2;
+    csb_v1_dungeon_set_current(candidate);
+    csb_v1_dungeon_set_current_level(6);
+    memset(with_weapon, 0, sizeof(with_weapon));
+    M11_GameView_Draw(view, with_weapon, 320, 200);
+    graphic = (M11_AssetSlot *)M11_AssetLoader_Load(&view->assetLoader, 372u);
+    if (graphic && graphic->loaded && graphic->pixels &&
+        graphic->width == 64u && graphic->height == 4u) {
+        for (int row = 0; row < 4; ++row)
+            for (int col = 0; col < 64; ++col)
+                if (graphic->pixels[row * 64 + col] != 10u &&
+                    with_weapon[(138 + row) * 320 + 167 + col] ==
+                        graphic->pixels[row * 64 + col]) ++matched;
+    }
+    /* ReDMCSB F0267/F0163 unlinks the genuine first-and-only DB5 record
+     * from this decoded source square; no synthetic replacement is used. */
+    if (csb_dungeon_move_thing_default((uint16_t)thing, 21, 18, -1, -1) != 0 ||
+        csb_v1_dungeon_get_first_thing(candidate, 6, 21, 18) >= 0)
+        matched = 0;
+    memset(without_weapon, 0, sizeof(without_weapon));
+    M11_GameView_Draw(view, without_weapon, 320, 200);
+    for (int row = 0; row < 4; ++row)
+        for (int col = 0; col < 64; ++col)
+            if (with_weapon[(138 + row) * 320 + 167 + col] !=
+                without_weapon[(138 + row) * 320 + 167 + col]) ++changed;
+    expect_true(matched > 0 && changed > 0,
+                "Atari D1C weapon uses source graphic 372 and vanishes after source F0267 unlinks it");
+    profile->runtime.dungeon_handle = original;
+    profile->runtime.current_level = old_level;
+    profile->runtime.party_x = old_x;
+    profile->runtime.party_y = old_y;
+    profile->runtime.party_dir = old_dir;
+    view->inventoryPanelActive = old_inventory;
+    csb_v1_dungeon_set_current(original);
+    csb_v1_dungeon_set_current_level(old_level);
+    csb_v1_dungeon_free(candidate);
+    free(candidate);
+    free(save_bytes);
+}
+
 static void run_real_atari_st_launcher_handoffs_if_available(void) {
     static const int requested_modes[] = {
         M12_PRESENTATION_V1_ORIGINAL,
@@ -2973,6 +3072,8 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                 &view,
                 "Atari ST ANIM.C handoff reaches a live native C127 mirror");
         }
+        if (requested == M12_PRESENTATION_V1_ORIGINAL)
+            expect_atari_mini_native_d1c_weapon(&view, data_dir);
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
     }
