@@ -381,12 +381,19 @@ Reviewed 2026-08-29. Only open work is listed here.
   `+0x29e6..+0x29f8` can instead restore the map from a save buffer.
   `CODE(4)+0x02f4..+0x034a` consumes pending map `A5-0x66b2` through
   `CODE(4)+0x029a`, the map setter and the party mover, then clears it.
-  A scan of `CODE(0..16)` found no direct write of a new map ID to that
-  pending variable. The retail HFS catalog has one `Dungeon.dat` and no
-  bundled save, so a separate post-selection dungeon file is unsupported.
-  No mirror-selection-to-map-change edge has been established. Trace
-  indirect writes to `A5-0x66b2` or a post-selection handler that moves
-  the party to another map in an original run before changing the spawn.
+  A chunked read of the original Mac code corrected an earlier incomplete
+  disassembly: `CODE(7)+0x1212` and `+0x1314` do write the mover's resolved
+  destination map to `A5-0x66b2`; `+0x124c` clears it on same-map
+  restoration. `CODE(4)+0x0314..+0x034a` consumes that pending map.
+  `CODE(8)+0x246c..+0x298a` handles viewport clicks. Its mirror/wall
+  branch reaches `A5+$a32` at `+0x27e6`; this is `CODE(7)+0x0006`, which
+  only rotates linked record orientation bits and does not move the party.
+  Another callback, `A5+$aca`, is `CODE(11)+0x0308` and still needs its
+  DB3 subtype-`0x7e` branch traced. The retail HFS catalog has one
+  `Dungeon.dat` and no bundled save, so a separate post-selection dungeon
+  file is unsupported. No mirror-selection-to-party-map-change edge has
+  been established. Trace the `CODE(11)+0x0308` DB3 mirror branch and any
+  party mover call before changing the spawn.
   The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
