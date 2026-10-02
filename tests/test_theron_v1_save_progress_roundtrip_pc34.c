@@ -2,14 +2,12 @@
  * Theron V1 save/load progress round-trip regression.
  *
  * Source-locked against:
- *   THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon saves)
- *   THQUEST.ASM T800  — champion persistence between dungeons
- *   include/theron_v1_save_load.h           — slotN.tqsv layout
+ *   include/theron_v1_save_load.h           — Firestaff host slotN.tqsv layout
  *   include/theron_v1_champions.h           — Theron_V1_Party + Theron_V1_Champion
  *   include/theron_v1_dungeon_progression.h — Theron_DungeonProgression
  *
- * Scope: a single dungeon-2 mid-quest between-dungeon save/restore with a
- * real Theron_V1_Party. The party is built via theron_v1_party_init,
+ * Scope: a single dungeon-2 mid-quest Firestaff host-state round-trip with a
+ * Theron_V1_Party model. The party is built via theron_v1_party_init,
  * mutated into a realistic mid-quest snapshot, packed through the public
  * theron_v1_party_pack API into a slot-sized opaque buffer, written to
  * a slot via theron_v1_save_to_slot, read back via

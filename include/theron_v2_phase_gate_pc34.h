@@ -27,7 +27,7 @@ extern "C" {
  * - theron_v1_dungeon_progression.c  dungeon progression / level
  * - theron_v1_mechanics.c   click routes, doors, pits, teleporters,
  *                           altars, combat, drops, sounds
- * - theron_v1_save_load.c   between-dungeon save/load (8 slots)
+ * - theron_v1_save_load.c   Firestaff host/interchange save/load (8 slots)
  * - theron_v1_shop.c        shop price table + purchase state
  * - theron_v1_tile_renderer.c  tile rendering
  * - theron_v1_viewport.c    viewport + presentation
@@ -42,13 +42,13 @@ extern "C" {
  * - theron_v22_shapes.c                  V2.2 modern shape book
  *
  * Theron-specific references:
- * - THQUEST.ASM T080  between-dungeon save/load
+ * - DMS-SG.001 source lock  original Backup RAM save boundary/body
  * - THQUEST.ASM T400  dungeon bank loading
  * - THQUEST.ASM T520  party placement / start position
  * - THQUEST.ASM T560  dungeon loading (header parsing, dungeon_seed)
  * - THQUEST.ASM T600  map transitions
  * - THQUEST.ASM T700  timers / world tick
- * - THQUEST.ASM T800  champion persistence + inventory reset
+ * - THQUEST.ASM T800  original gameplay routine; individual fields gated
  * - THQUEST.ASM T900  object database / thing list
  * - HuC6260/HuC6270 VDC/VCE        PC Engine video chip datasheet
  * - HuC6280 CPU                    PC Engine CPU datasheet
@@ -88,10 +88,11 @@ typedef enum {
          * with Theron-specific mechanics. */
 
     THERON_V2_PHASE_DOMAIN_SAVE_LOAD = 5,
-        /* theron_v1_save_load.c - between-dungeon save/load (8 slots,
-         * 64-byte header + champion blocks + footer). No in-dungeon
-         * saves (TQ design restriction). V2 config persistence is
-         * explicitly separate. */
+        /* theron_v1_save_load.c - Firestaff host/interchange save/load
+         * (8 slots, 64-byte header + champion blocks + footer). This is
+         * not the original PC Engine Backup RAM or community SRM format.
+         * Original gameplay saves only between dungeons; V2 config
+         * persistence is explicitly separate. */
 
     THERON_V2_PHASE_DOMAIN_SHOP = 6,
         /* theron_v1_shop.c - shop price table + purchase state

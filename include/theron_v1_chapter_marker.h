@@ -18,8 +18,9 @@
  *     theron_v1_chapter_marker_compute_save() and the marker will
  *     enumerate saves/theron/ for the freshest slot.  If no save
  *     is found the marker falls back to "no saves" without failing.
- *   - Source-locked to THQUEST.ASM T000 (startup entry), T080
- *     (between-dungeon save/load), and T800 (champion persistence).
+ *   - Source-locked to THQUEST.ASM T000 (startup entry), the host save/load
+ *     integration associated with T080, and the original T800 routine label.
+ *     Those labels alone do not prove modeled save or champion semantics.
  *
  * Pass scope: theron_startup_chapter_progression_marker_gate
  *   Bound to one marker (chapter label + quest summary + save slot

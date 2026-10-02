@@ -5,33 +5,31 @@
 #include <stddef.h>
 
 /* ══════════════════════════════════════════════════════════════════════
- * Theron V1 Phase 6 — Between-Dungeon Save/Load
+ * Theron V1 Phase 6 — Firestaff Host Save/Load
  *
- * Theron's Quest has a strict save restriction: no in-dungeon saves.
- * Saves are only permitted at dungeon entrances (between-dungeon).
- * This is a design constraint from the original PC Engine game.
+ * The original PC Engine game saves between dungeons and has no in-dungeon
+ * save transaction. This module's eight-slot TQSV format is Firestaff host
+ * state, not an implementation of the retail Backup RAM or community SRM.
  *
- * Save format (saves/theron/slotN.tqsv):
+ * Firestaff host/interchange format (not a retail save):
  *   Header: 64 bytes
  *   Champion state: variable (same as DM1 champion block)
  *   Dungeon progression: ~32 bytes
  *   Footer: 4 bytes checksum
  *
- * Source: THQUEST.ASM T080 — between-dungeon save/load
- *         THQUEST.ASM T800 — champion persistence
+ * Retail evidence: docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* ── Save slot constants ─────────────────────────────────────────── */
 
-#define THERON_SAVE_SLOT_COUNT   8   /* 8 between-dungeon save slots */
+#define THERON_SAVE_SLOT_COUNT   8   /* Firestaff host slots */
 #define THERON_SAVE_MAGIC        0x54515220U  /* 'TQR ' in ASCII */
 #define THERON_SAVE_VERSION      1   /* Format version */
 #define THERON_SAVE_HEADER_SIZE  64
 #define THERON_SAVE_FOOTER_SIZE   4
 
-/* Obfuscation seed for between-dungeon saves.
- * TQR uses a simple XOR obfuscation — different from CSB's CRC approach.
- * Source: THQUEST.ASM T080 save routine. */
+/* Firestaff host-format obfuscation seed. This is not an authenticated
+ * retail PC Engine Backup RAM or community SRM encoding. */
 #define THERON_SAVE_OBFUSCATE_SEED  0x5A
 
 /* ── Save slot descriptor (in-memory) ─────────────────────────── */
@@ -41,7 +39,7 @@ typedef struct {
     int         slot_index;   /* 0..THERON_SAVE_SLOT_COUNT-1 */
     char        label[32];    /* User label, e.g. "After Dungeon 2" */
     uint32_t    timestamp;    /* Unix timestamp of save */
-    uint8_t     quest_items;  /* Quest items collected (7-bit bitmap) */
+    uint8_t     quest_items;  /* Host-format field; retail persistence is partial */
     uint8_t     current_dungeon;
     uint8_t     dungeon_state; /* Current dungeon state */
     uint32_t    party_gold;     /* Shared party gold from save header */
@@ -49,9 +47,9 @@ typedef struct {
     size_t      size_bytes;   /* Total save file size */
 } Theron_SaveSlot;
 
-/* ── Between-dungeon save header ────────────────────────────────── */
+/* ── Firestaff host-format header ───────────────────────────────── */
 
-/* Layout of the 64-byte header (THQUEST.ASM T080):
+/* Layout of the Firestaff TQSV 64-byte host header (not retail):
  *   Offset  Size  Field
  *   0x00    4     magic  = 0x54515220 ('TQR ')
  *   0x04    2     version = 1
@@ -71,14 +69,16 @@ typedef struct {
  *
  * Champion state (variable after header):
  *   4 champion slots × champion_block_size (same layout as DM1 v1).
- *   No in-dungeon save = no creature/object state to serialize.
+ *   No in-dungeon Firestaff host save = no creature/object state in this
+ *   container; the original game's separately authenticated save boundary
+ *   does not make this TQSV format a retail format.
  *
  * Footer: 4 bytes: little-endian checksum plus 0x5A, 0xA5 marker.
  *
  * The compact header summaries are Firestaff metadata.  The full
- * Theron_DungeonProgression snapshot follows the champion stream; T080/T800
- * are the source evidence for the save boundary and persistence rule, not a
- * claim that this host-side container is the original PC Engine file format.
+ * Theron_DungeonProgression snapshot follows the champion stream. The
+ * DMS-SG.001 System Card source lock documents the original save boundary and
+ * bounded restore fields; TQSV remains a Firestaff host/interchange format.
  */
 
 #define THERON_SAVE_CHAMPION_BLOCK_SIZE  128  /* per champion slot */
@@ -108,9 +108,12 @@ int theron_v1_save_enum_slots(const char *save_root,
                                Theron_SaveSlot *slots,
                                int max_slots);
 
-/* Save current game state to slot index (0..7).
+/* Save current Firestaff host state to slot index (0..7).
  * Returns 0 on success, -1 on error.
- * Will overwrite existing save in that slot. */
+ * Will overwrite existing host-format save in that slot. This TQR/.tqsv
+ * container is not the original PC Engine Backup RAM or community SRM
+ * format; original-format writes use theron_v1_pce_bram_encode_original_*
+ * only with authenticated receipts. */
 int theron_v1_save_to_slot(const char *save_root,
                            int slot_index,
                            const void *champion_data,   /* 4 × champion blocks */
@@ -129,7 +132,7 @@ int theron_v1_save_to_slot_with_gold(const char *save_root,
                                      uint32_t party_gold,
                                      const char *label);
 
-/* Load game state from slot index (0..7).
+/* Load Firestaff host state from slot index (0..7).
  * Populates champion_data and dungeon_progression from the save.
  * Returns 0 on success, -1 if slot empty/corrupt, -2 if slot invalid. */
 int theron_v1_save_load_from_slot(const char *save_root,

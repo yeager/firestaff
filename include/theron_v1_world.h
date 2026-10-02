@@ -35,12 +35,13 @@ typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
  * Map loading, party placement (Theron + 3 champions), map transitions,
  * timers, object database, and deterministic world-state hashing.
  *
- * Key design constraints (from TQR provenance):
+ * Represented game facts and evidence boundaries:
  *   - 7 mini-dungeons, 3-8 maps each including the hub map (matching Track 02 quest blocks).
- *   - Between-dungeon saves only (no in-dungeon save).
- *   - Theron persists fully across dungeons.
- *   - Champions reset inventories each dungeon, keep stats/skills.
- *   - 7 quest items (one per dungeon) must be found before exit.
+ *   - Original save transaction is between dungeons; no in-dungeon save.
+ *   - Retail Theron/companion persistence is only enabled for fields with
+ *     authenticated writer and restore consumers.
+ *   - Authentic Track 02 identifies seven quest artifacts; acquisition and
+ *     exit transactions are not implied by their host-side flags.
  *   - Party of 1-4: Theron plus up to 3 companions chosen in the Soul Room.
  *
  * Source references:
@@ -50,7 +51,7 @@ typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
  *   THQUEST.ASM T560  — dungeon loading (header parsing, dungeon_seed)
  *   THQUEST.ASM T600  — map transitions
  *   THQUEST.ASM T700  — timers / world tick
- *   THQUEST.ASM T800  — champion persistence + inventory reset
+ *   THQUEST.ASM T800  — original routine; individual persistence fields remain gated
  *   THQUEST.ASM T900  — object database / thing list
  * ══════════════════════════════════════════════════════════════════════ */
 
@@ -1187,8 +1188,8 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
 /* ── Portable in-memory world snapshots ────────────────────────────
  * This private TRNW format is used for deterministic world round-trips.
- * It is separate from the user-facing between-dungeon slotN.tqsv format in
- * theron_v1_save_load.h; changing this version does not change TQSV. */
+ * It is separate from Firestaff's host/interchange slotN.tqsv format in
+ * theron_v1_save_load.h and from both original save formats. */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
 #define THERON_WORLD_SAVE_VERSION 19
 

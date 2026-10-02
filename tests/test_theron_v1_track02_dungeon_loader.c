@@ -114,11 +114,11 @@ static void bind_real_track02_party(
         names[i] = catalog.names[i].name;
 
     /* TAKE owns an inventory transition and therefore requires a live
-     * champion.  Bind Theron's regional source record through the same
+     * champion. Bind Theron's regional source record through the same
      * authenticated Track 02 roster route as production; never seed a test
-     * champion into this real-data regression.  Theron persists between
-     * dungeon banks, so the unlocked Akutuba entry is the correct source
-     * handoff even while the loop inspects later banks independently. */
+     * champion into this real-data regression. The Akutuba roster entry is
+     * the authenticated source handoff while the loop inspects later banks;
+     * it makes no claim about cross-dungeon save persistence. */
     theron_v1_startup_flow_init(&flow);
     theron_v1_dungeon_progression_init(&progression);
     assert(theron_v1_startup_choose_stage(

@@ -7,14 +7,14 @@
  * Source/evidence (also exposed via theron_v1_srm_source_evidence()):
  *   - docs/DMWEB_REFERENCE.md §6 "Theron's Quest savegame format"
  *   - docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md
- *   - THQUEST.ASM T080 — no in-dungeon saves (TQR design)
+ *   - docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
+ *     original DMS-SG.001 body layout and between-dungeon save boundary
  *   - DMWeb community docs credit Sphenx with several custom TQ saves
  *     documented at greatstone; Sphenx is also a SKWIN co-author.
  *
- * Status (this commit, 2026-06-27/28):
- *   - The classifier is data-free and runs anywhere.  It is the bounded
- *     real-artifact counterpart to the synthetic slot-N.tqsv in-game
- *     save format in theron_v1_save_load.c.
+ * Status (updated 2026-10-02):
+ *   - The classifier is data-free and runs anywhere. The separate TQSV
+ *     serializer is a Firestaff host/interchange format, not retail SRM.
  *   - No real .srm file is present in the local data root
  *     (~/.firestaff/data/theron/save/) on this host, so the
  *     classification outcome for the default root is `present_count=0,
@@ -967,8 +967,7 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
         seeds[i] = rd32le(payload + 16u + ((size_t)i * 4u));
     }
 
-    /* Source: THQUEST.ASM T080/T800 between-dungeon save semantics,
-     * encoded here only for the Firestaff readiness envelope.  Unknown
+    /* Firestaff-only readiness envelope. Unknown
      * Sphenx/Greatstone custom bodies remain unsupported until decoded. */
     theron_v1_dungeon_progression_restore(
         &restored,
@@ -1071,9 +1070,8 @@ static int import_body_record(Theron_V1_Champion *champion,
         champion->attributes &= (uint16_t)~THERON_ATTR_DEAD;
     }
 
-    /* Source: THQUEST.ASM T080/T800 plus
-     * docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §5/§9.
-     * This readiness envelope imports body/state fields only.  It
+    /* This Firestaff-only readiness envelope imports host body/state fields.
+     * It
      * keeps inventory and equipment empty until the real Sphenx /
      * Greatstone Save Disk body has been decoded. */
     theron_v1_champion_reset_inventory(champion);
@@ -1821,14 +1819,14 @@ const char *theron_v1_srm_source_evidence(void) {
         "       gzipped custom format with a header).'\n"
         "  - dmweb community docs credit Sphenx with several custom TQ saves\n"
         "    documented at greatstone; Sphenx is also a SKWIN DM2 skproject\n"
-        "    co-author.\n"
+        "    co-author; custom SRM bodies are distinct from Firestaff TQSV.\n"
         "  - docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md anchors\n"
-        "    the JP/US Track 02 hash and the THQUEST.ASM T080 (no in-dungeon\n"
-        "    saves) design rule.\n"
-        "  - THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)\n"
-        "  - THQUEST.ASM T800  — champion persistence between dungeons\n"
+        "    the JP/US Track 02 hash. Original save evidence is separately\n"
+        "    locked to the DMS-SG.001 System Card writer/restore routines.\n"
+        "  - docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md\n"
+        "    authenticated 134-byte writer body and restore consumer.\n"
         "\n"
-        "Status (2026-09-23):\n"
+        "Status (2026-10-02):\n"
         "  - Authentic 2 KiB PC Engine HUBM Backup RAM is classified\n"
         "    separately from gzip SRM and Firestaff TQSV. DMS-SG.001 at\n"
         "    HUBM offset $16 has a $0199-byte data area: three $88-byte\n"

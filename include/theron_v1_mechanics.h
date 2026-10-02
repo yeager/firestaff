@@ -9,7 +9,7 @@
  *   THQUEST.ASM T560  — dungeon loading (header + dungeon_seed)
  *   THQUEST.ASM T600  — map transitions + teleporter chains
  *   THQUEST.ASM T700  — tick world / per-tick stat updates
- *   THQUEST.ASM T800  — champion persistence + inventory reset per dungeon
+ *   THQUEST.ASM T800  — gameplay source label; save fields remain gated
  *   THQUEST.ASM T900  — object database / thing list
  *
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md

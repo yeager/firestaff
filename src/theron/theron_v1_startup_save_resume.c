@@ -10,8 +10,10 @@
  * Source/evidence:
  *   - docs/DMWEB_REFERENCE.md §6 "Theron's Quest savegame format"
  *   - docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md
- *   - THQUEST.ASM T080  — between-dungeon save/load
- *   - THQUEST.ASM T800  — champion persistence between dungeons
+ *   - docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
+ *     authentic DMS-SG.001 writer/restore body and supported restore fields
+ *   - THQUEST.ASM T800  — source routine label; persistence fields are
+ *     established only by the DMS-SG.001 writer/restore evidence above
  *
  * Status (this commit):
  *   - Reads only an explicit save path, an explicit Backup RAM override or
@@ -347,7 +349,8 @@ static void scan_tqsv_slots(Theron_V1StartupSaveResume *snap) {
     /* .tqsv is a Firestaff-era fixture/container, not an authenticated PC
      * Engine Backup RAM format. Production may inspect real .srm artifacts
      * below, but must not advertise a synthetic Continue route while the
-     * original T080/T800 payload consumer remains undecoded. */
+     * community Save Disk body remains undecoded. The separate authentic
+     * DMS-SG.001 Backup RAM path is limited to its authenticated fields. */
     snap->tqsv_total_slots = 0;
     return;
 #endif
@@ -2999,13 +3002,14 @@ const char *theron_v1_startup_save_resume_source_evidence(void) {
         "Theron V1 startup save/resume smoke gate\n"
         "\n"
         "Source/evidence:\n"
-        "  - THQUEST.ASM T080 — between-dungeon save/load (no in-dungeon)\n"
-        "  - THQUEST.ASM T800 — champion persistence between dungeons\n"
+        "  - DMS-SG.001 original Backup RAM body; restore is limited to authenticated fields\n"
+        "  - THQUEST.ASM T800 — source routine label; field semantics remain gated\n"
         "  - docs/DMWEB_REFERENCE.md §6 'Theron's Quest savegame format':\n"
         "      'TQ's save format is *completely different* from DM's (it\n"
         "       uses gzipped custom format with a header).'\n"
         "  - docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md\n"
-        "    anchors the JP/US Track 02 MD5s and the T080 design rule.\n"
+        "    anchors the JP/US Track 02 MD5s. Original save evidence is\n"
+        "    separately locked to the DMS-SG.001 System Card routines.\n"
         "  - dmweb community docs credit Sphenx with several custom TQ\n"
         "    saves documented at greatstone; Sphenx is also a SKWIN DM2\n"
         "    skproject co-author.\n"
@@ -3014,9 +3018,9 @@ const char *theron_v1_startup_save_resume_source_evidence(void) {
         "  - Data-free startup gate; the clean-host default outcome is\n"
         "    SKIP_SAFE_NO_SAVE_ROOT with NO_RESUME_CLAIM.\n"
         "  - Reads the existing theron_v1_srm_classifier manifest\n"
-        "    (5-slot Save Disk classifier, gzip magic/method detection)\n"
-        "    and theron_v1_save_load .tqsv enumerator (8-slot\n"
-        "    between-dungeon slot model); no parallel decoders.\n"
+        "    (5-slot gzip SRM candidate classifier) and the Firestaff\n"
+        "    host-format .tqsv enumerator (8 host slots); no parallel\n"
+        "    retail decoder is implied.\n"
         "  - Reports one of four skip-safe verdicts:\n"
         "      SOURCES_LIVE,\n"
         "      SKIP_SAFE_NO_SAVE_ROOT,\n"

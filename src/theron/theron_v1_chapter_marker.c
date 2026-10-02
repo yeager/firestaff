@@ -9,8 +9,9 @@
  *   - Skip-safe by design: no asset required, no save_root required.
  *     Real-asset path is opt-in via theron_v1_chapter_marker_compute_save.
  *   - Source-locked to THQUEST.ASM T000 (startup entry), T080
- *     (between-dungeon save/load), T520 (party placement), T560
- *     (dungeon header parsing), T800 (champion persistence).
+ *     (host save/load integration), T520 (party placement), T560
+ *     (dungeon header parsing), and the original T800 routine label.
+ *     T080/T800 labels alone do not prove the modeled save semantics.
  *
  * The marker is what an M12 launcher / boot-profile consumer reads
  * to surface "what chapter are we on?" without doing any I/O beyond
@@ -269,10 +270,10 @@ const char *theron_v1_chapter_marker_source_evidence(void) {
     return
         "Theron V1 Chapter/Progression Startup Marker — source-lock\n"
         "THQUEST.ASM T000  — title/startup entry (chapter label projection)\n"
-        "THQUEST.ASM T080  — between-dungeon save/load (freshest slot)\n"
+        "DMS-SG.001 evidence — original Backup RAM body; chapter marker remains host-side\n"
         "THQUEST.ASM T520  — party placement / start position\n"
         "THQUEST.ASM T560  — dungeon header parsing (dungeon_seed, level_count)\n"
-        "THQUEST.ASM T800  — champion persistence (per-dungeon reset)\n"
+        "THQUEST.ASM T800  — source label only; retail field semantics remain gated\n"
         "Marker scope: ONE chapter label + quest summary + freshest save.\n"
         "Does NOT parse Track 02 BIN, does NOT decode full save body.\n"
         "Phase 0 provenance: docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md\n"

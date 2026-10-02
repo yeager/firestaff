@@ -15,8 +15,10 @@
  *   - src/theron/theron_v1_boot.c           — boot profile + direct launch
  *   - include/asset_status_m12.h m12_file_md5_hex — file-MD5 helper
  *   - src/shared/asset_status_m12.c g_theronVersions — known Track 02 MD5s
- *   - THQUEST.ASM T000 (startup), T080 (save ns), T400 (data track load),
- *     T520 (party placement), T560 (dungeon load), T800 (champion persist)
+ *   - THQUEST.ASM T000 (startup), authenticated DMS-SG.001 save-body receipt,
+ *     T400 (data track load),
+ *     T520 (party placement), T560 (dungeon load), T800 (source routine label;
+ *     retail persistence is established only for authenticated fields)
  *   - ReDMCSB has no Theron code; the Theron-side evidence is local byte
  *     inspection of the four cataloged Track 02 MD5s
  *   - docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md

@@ -66,8 +66,10 @@
  *   - It does not claim screenshot or playability parity.
  *
  * Source/evidence:
- *   - THQUEST.ASM T080  — between-dungeon save/load
- *   - THQUEST.ASM T800  — champion persistence between dungeons
+ *   - docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
+ *     authentic DMS-SG.001 writer/restore body
+ *   - THQUEST.ASM T800  — source routine label; persistence fields are
+ *     established only by the DMS-SG.001 writer/restore evidence above
  *   - docs/DMWEB_REFERENCE.md §6 'Theron's Quest savegame format'
  *     (greatstone: gzipped custom format with a header; "completely
  *     different" from DM).
@@ -266,8 +268,8 @@ int theron_v1_startup_restore_pce_bram_campaign_path(
     const char *save_path,
     Theron_V1PceBramReceipt *out_receipt);
 
-/* Restore the source-proven campaign byte and Theron's original T800
- * maximum vital, maximum attribute and 20-skill experience state.  Companion
+/* Restore the source-proven campaign byte and Theron's authenticated
+ * maximum vital, maximum attribute and 20-skill experience state. Companion
  * selection, inventory, position and dungeon runtime state are not present
  * in the between-dungeon body and remain unchanged. */
 int theron_v1_startup_restore_pce_bram_theron_path(

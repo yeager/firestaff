@@ -1611,8 +1611,10 @@ static void test_source_evidence_string(void) {
     const char *ev = theron_v1_startup_save_resume_source_evidence();
     expect_true(ev != NULL && strlen(ev) > 50,
                 "source evidence non-empty");
-    expect_true(strstr(ev, "T080") != NULL,
-                "source cites THQUEST.ASM T080");
+    expect_true(strstr(ev, "DMS-SG.001 original Backup RAM body") != NULL,
+                "source cites authenticated original Backup RAM body");
+    expect_true(strstr(ev, "Firestaff host-format .tqsv") != NULL,
+                "source labels TQSV as a host format");
     expect_true(strstr(ev, "T800") != NULL,
                 "source cites THQUEST.ASM T800");
     expect_true(strstr(ev, "DMWEB_REFERENCE") != NULL,

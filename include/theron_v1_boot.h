@@ -21,7 +21,7 @@
  * Separates Theron's Quest boot/runtime from DM1/CSB/DM2/Nexus:
  *   - Asset discovery (PC Engine HuCard data layout)
  *   - Menu launch routing (M12 game-card → boot profile)
- *   - Save namespace: saves/theron/ (between-dungeon only)
+ *   - Firestaff host save namespace: saves/theron/ (between-dungeon model)
  *   - Platform diagnostics (PC Engine HuCard JP/US)
  *   - Deterministic config (PC Engine fixed-tick, no chivalry)
  *
@@ -41,11 +41,11 @@
  *   g_theronVersions[] version slots (pce-jp, pce-en) are wired in
  *   asset_status_m12.c with Track 02 MD5s.
  *
- * Save namespace design (distinct from DM1/CSB/DM2):
+ * Firestaff host save namespace (distinct from DM1/CSB/DM2):
  *   Theron's Quest was a "light" version — smaller dungeon set,
  *   4-character party (Theron + 3 champions), 7 mini-dungeons.
- *   No in-dungeon save. Between-dungeon saves only (saves/theron/).
- *   This separates TQ save timing semantics from full DM games.
+ *   Original save boundary is documented separately below. Firestaff TQSV files
+ *   are separate from authentic PC Engine Backup RAM and community SRM.
  *
  * Source references:
  *   THQUEST.ASM T000  — Theron's Quest title/startup entry
@@ -53,8 +53,8 @@
  *   THQUEST.ASM T400  — Dungeon bank loading (HuCard ROM mapping)
  *   THQUEST.ASM T520  — Party placement and start position
  *   THQUEST.ASM T560  — Dungeon loading (header parsing, dungeon_seed)
- *   THQUEST.ASM T800  — Champion persistence between dungeons
- *   THQUEST.ASM T080  — Save/load (between-dungeon only, no in-dungeon saves)
+ *   THQUEST.ASM T800  — original routine; persistence fields remain gated
+ *   DMS-SG.001 System Card writer/restore source lock — original Backup RAM
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* Theron's Quest supported platform/region IDs.
@@ -91,9 +91,8 @@ typedef struct Theron_V1_BootProfile {
     uint32_t dungeon_move_speed;    /* Q8: default 0x0080 (=0.5 sq/tick) */
     uint32_t outdoor_move_speed;    /* Q8: same as dungeon (no outdoor map) */
 
-    /* Party: Theron + 3 champion slots (4 total). No minion slots.
-     * Champions persist stats/skills between dungeons but lose
-     * current inventory on dungeon restart (per design docs). */
+    /* Firestaff party model: Theron + 3 champion slots (4 total), with no
+     * minion slots. Retail champion persistence remains field-gated. */
     uint32_t max_champions;         /* 4 (1 Theron + 3 champions) */
     uint32_t max_party_members;     /* 4 */
 
@@ -112,8 +111,8 @@ typedef struct Theron_V1_BootProfile {
     uint32_t dungeon_seed;          /* 0 until a verified dungeon header is loaded */
 
     /* TQ-specific: quest goal item (7 dungeon → 7 quest items).
-     * quest_items_collected ranges 0..7 in saves/theron/namespace. */
-    uint32_t quest_items_collected; /* persists across between-dungeon saves */
+     * quest_items_collected ranges 0..7 in Firestaff host state. */
+    uint32_t quest_items_collected; /* Firestaff model; retail persistence is field-gated */
 
     uint32_t reserved[2];
 } Theron_V1_DeterministicConfig;
@@ -121,9 +120,9 @@ typedef struct Theron_V1_BootProfile {
 /* Theron boot profile — collected at startup before game loop begins.
  * All fields are set once and read-only during gameplay.
  *
- * Save namespace: saves/theron/slotN.tqsv
- *   Format: between-dungeon only. In-dungeon saves mocked.
- *   (TQ design: you can save only at dungeon entrance, not mid-dungeon)
+ * Firestaff host save namespace: saves/theron/slotN.tqsv
+ *   Firestaff TQSV format: between-dungeon host model; not a retail save path.
+ *   In-dungeon host saves are mocked and are not original-game evidence.
  */
 typedef struct {
     int valid;
@@ -154,9 +153,9 @@ typedef struct {
     int     track02_cue_consumed;
     int     assets_verified;   /* 1 when Track 02 matches a known JP/US MD5 */
 
-    /* ── Save namespace (between-dungeon only) ─────────── */
+    /* ── Firestaff host save namespace ─────────────────── */
     char    save_root[512];     /* saves/theron/ — NOT saves/dm1/ */
-    int     in_dungeon_save_allowed; /* 0 — design restriction */
+    int     in_dungeon_save_allowed; /* host-model setting; not retail evidence */
 
     /* ── Detected file sizes (diagnostic) ───────────────── */
     size_t  graphics_size;

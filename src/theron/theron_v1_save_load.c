@@ -1,16 +1,18 @@
 /*
- * theron_v1_save_load.c — Theron's Quest V1 Phase 6: Between-Dungeon Save/Load
+ * theron_v1_save_load.c — Theron's Quest V1 Phase 6: Host Save/Load
  *
- * Implements save/load for Theron's Quest between-dungeon saves only.
- * No in-dungeon saves (TQ design restriction enforced here).
+ * Implements Firestaff host/interchange save/load for Theron's Quest.
+ * The original game saves only between dungeons; this TQSV container is
+ * not the original PC Engine Backup RAM or community SRM format.
  *
  * Save format: saves/theron/slotN.tqsv (64-byte header + champion blocks + footer)
  * Slot count: 8 (0..7)
  *
- * Source references:
- *   THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)
- *   THQUEST.ASM T800  — champion persistence between dungeons
- *   docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md
+ * Source/evidence boundary:
+ *   docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
+ *     authentic DMS-SG.001 Backup RAM writer and restore body
+ *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
+ *     host TQSV format versus retail format distinction
  *
  * Phase 6 source-lock (2026-05-27)
  */
@@ -46,20 +48,19 @@ static int dir_exists(const char *path) {
     return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
-/* ── Obfuscation (THQUEST.ASM T080) ─────────────────────────────── */
+/* ── Firestaff host-format obfuscation ──────────────────────────── */
 
-/* TQR uses a simple byte-XOR obfuscation with a per-slot seed.
- * The seed is derived from the slot index + magic constant.
- * This is lighter than CSB's 16-entry key table. */
+/* TQSV host files use a reversible byte-XOR obfuscation with a per-slot
+ * seed. This algorithm is not evidence about original retail saves. */
 static void obfuscate_buf(uint8_t *buf, size_t size, uint8_t seed) {
     for (size_t i = 0; i < size; i++) {
         buf[i] ^= (seed + i);
     }
 }
 
-/* ── Checksum (16-bit sum, THQUEST.ASM T080) ─────────────────────── */
+/* ── Firestaff host-format checksum ──────────────────────────────── */
 
-/* TQR checksum: sum of all 16-bit words in the data block.
+/* TQSV checksum: sum of all 16-bit words in the host-format data block.
  * The header checksum is stored at offset 6 (little-endian uint16).
  * The footer checksum covers the entire file (header + data + footer).
  * Corrupt saves are detected by checksum mismatch → -1 on load. */
@@ -802,9 +803,9 @@ int theron_v1_save_verify_slot(const char *save_root, int slot_index) {
 const char *theron_v1_save_source_evidence(void) {
     return
         "Theron V1 Save/Load — Phase 6 source-lock\n"
-        "THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon saves)\n"
-        "THQUEST.ASM T800  — champion persistence between dungeons\n"
-        "TQR design: saves allowed ONLY at dungeon entrance; 8 save slots (slotN.tqsv);\n"
+        "Firestaff TQSV host/interchange format; original saves are between dungeons\n"
+        "TQSV host serializer; original champion/body fields remain bounded to authentic BRAM receipts\n"
+        "TQSV is not original PC Engine Backup RAM or community SRM; 8 host slots (slotN.tqsv);\n"
         "  XOR obfuscation (seed 0x5A + slot index); 16-bit checksum footer;\n"
         "  magic 'TQR '; version 1; 64-byte header; champion blocks after header;\n"
         "  exported/imported slots must validate before becoming launchable metadata\n"

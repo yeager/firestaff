@@ -10,7 +10,8 @@
 /* Runtime interchange for Firestaff's bounded FSTQPTY1 Save Disk body.
  * The gzip .srm container is real file I/O; only the body mapping is the
  * documented Firestaff envelope, not a claim about unknown Sphenx bodies.
- * ReDMCSB: THQUEST.ASM T080/T800, between-dungeon persistence. */
+ * The community body layout remains opaque; T080/T800 source labels do not
+ * establish the Firestaff envelope as an original between-dungeon save. */
 typedef enum {
     THERON_V1_SRM_RUNTIME_OK = 1,
     THERON_V1_SRM_RUNTIME_ZLIB_UNAVAILABLE = 0,

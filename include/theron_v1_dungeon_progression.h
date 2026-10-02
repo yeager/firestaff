@@ -6,32 +6,32 @@
 /* ══════════════════════════════════════════════════════════════════════
  * Theron V1 Phase 6 — Dungeon Progression
  *
- * Implements the 7-dungeon stage-select progression for Theron's Quest,
- * per-dungeon item reset semantics, and seven-quest-item retrieval goal.
+ * Represents Firestaff's seven-dungeon progression model and quest-item
+ * state. Retail transition and persistence semantics remain evidence-gated.
  *
- * Key design constraints (from TQR provenance):
+ * Established game facts and current model boundary:
  *   - 7 mini-dungeons, 3-8 maps each (1 hub + 2-7 dungeon levels).
- *   - Dungeon 1 is available first; completing it unlocks dungeons 2..6;
- *     dungeon 7 unlocks after the first six are complete.
- *   - Between-dungeon saves only (no in-dungeon save).
- *   - Champion inventory resets each dungeon; Theron's stats/skills persist.
- *   - 7 quest items must be collected across the sequence.
- *   - Dungeon exits only after all quest items in that dungeon are found.
+ *   - Seven named dungeons and their authentic campaign-entry order are
+ *     represented; per-edition unlock transitions require original evidence.
+ *   - Original saves occur between dungeons (no in-dungeon save transaction).
+ *   - Quest-item identity is backed by authentic Track 02 data; acquisition,
+ *     reset, and exit transactions remain independently evidence-gated.
  *
  * Source references:
  *   THQUEST.ASM T000 — title/startup entry
- *   THQUEST.ASM T080 — between-dungeon save/load
+ *   docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
+ *       authentic DMS-SG.001 writer/restore body and save boundary
  *   THQUEST.ASM T400 — dungeon bank loading
  *   THQUEST.ASM T520 — party placement / start position
  *   THQUEST.ASM T560 — dungeon loading (header parsing, dungeon_seed)
- *   THQUEST.ASM T800 — champion persistence between dungeons
+ *   THQUEST.ASM T800 — source label retained for future verification only
  *   docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md (JP/US disc hashes)
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* ── Dungeon IDs ─────────────────────────────────────────────────── */
 
-/* Theron's Quest 7-dungeon stage set. Dungeon 1 is first, dungeons 2..6
- * become selectable together, and dungeon 7 is final. */
+/* Firestaff's seven-dungeon model. Retail unlock order and availability
+ * transitions remain edition- and evidence-gated. */
 typedef enum {
     THERON_DUNGEON_1_AKUTUBA = 1,  /* Shield Defiant */
     THERON_DUNGEON_2_DRATOR  = 2,  /* Taza Boots */
@@ -51,20 +51,20 @@ typedef struct {
     uint8_t           level_count;          /* 3–8 maps (incl. hub) */
     uint8_t           quest_item_count;    /* 1 quest item per dungeon */
     uint8_t           quest_item_bit;       /* 1 << (id-1) — tracks collected */
-    uint8_t           champion_reset;       /* 1 = reset inventory; 0 = keep */
+    uint8_t           champion_reset;       /* Firestaff host reset policy */
     uint32_t          dungeon_seed;        /* deterministic RNG seed */
     uint32_t          size_bytes;           /* dungeon data size */
 } Theron_DungeonMeta;
 
 /* ── Quest items ─────────────────────────────────────────────────── */
 
-/* Seven quest items — one per dungeon.
+/* Seven quest-item identities from the authenticated Track 02 retrieval
+ * messages, represented here in Firestaff progression state.
  * These are unique artifacts that must be retrieved in sequence.
  * Each is tracked as a bit in the quest_items_collected bitmap.
  *
- * TQR design: item is placed in the final room / treasure vault
- * of each dungeon. Champions reset per dungeon but Theron persists
- * with stats, skills, and accumulated quest items. */
+ * Per-dungeon placement, reset transaction and persistence are runtime
+ * behaviors; do not infer them solely from these host-side flags. */
 typedef enum {
     THERON_QUEST_ITEM_NONE = 0,
 
@@ -89,42 +89,37 @@ typedef enum {
 
 /* ── Dungeon state machine ───────────────────────────────────────── */
 
-/* Each dungeon has 2-7 playable sub-levels after its hub map. State transitions:
+/* Firestaff host-model state transitions (not asserted as retail behavior):
  *   DUNGEON_STATE_LOCKED → DUNGEON_STATE_AVAILABLE (between-dungeon save restored)
  *   DUNGEON_STATE_AVAILABLE → DUNGEON_STATE_IN_PROGRESS (entered dungeon)
  *   DUNGEON_STATE_IN_PROGRESS → DUNGEON_STATE_COMPLETE (quest item found + exit)
  *   DUNGEON_STATE_COMPLETE → DUNGEON_STATE_NEXT_UNLOCKED (auto on exit)
  *
- * No mid-dungeon saves; player must complete dungeon or forfeit progress. */
+ * The source-locked retail save boundary is between dungeons; acquisition,
+ * reset, unlock and exit transitions still require original evidence. */
 typedef enum {
     THERON_DUNGEON_STATE_LOCKED       = 0,
-    THERON_DUNGEON_STATE_AVAILABLE    = 1, /* Between-dungeon save slot ready */
+    THERON_DUNGEON_STATE_AVAILABLE    = 1, /* Host model: available */
     THERON_DUNGEON_STATE_IN_PROGRESS  = 2, /* Currently exploring */
     THERON_DUNGEON_STATE_COMPLETE     = 3, /* Quest item collected, can exit */
     THERON_DUNGEON_STATE_COUNT
 } Theron_DungeonState;
 
-/* ── Per-dungeon item reset semantics ───────────────────────────── */
+/* ── Firestaff per-dungeon reset policy ──────────────────────────── */
 
-/* TQR design: per-dungeon item reset.
- * On dungeon entry (THERON_DUNGEON_STATE_LOCKED → IN_PROGRESS):
- *   - Champion inventories are CLEARED (all items removed).
- *   - Champion gold is KEPT (gold persists between dungeons).
- *   - Champion stats/skills persist (no stat reset).
- *   - Theron (party leader) keeps equipped items.
- *   - Floor/decoration items in dungeon are regenerated.
- *
- * Source: THQUEST.ASM T800 — champion persistence + inventory reset logic */
+/* These modes describe the host-side progression model. Do not treat them
+ * as original T800 behavior until each reset/persistence field is bound to
+ * the authentic writer and restore consumers. */
 typedef enum {
     THERON_ITEM_RESET_MODE_NONE     = 0, /* No reset (dungeon 1 start) */
-    THERON_ITEM_RESET_MODE_CHAMPION = 1, /* Clear champion inventories */
-    THERON_ITEM_RESET_MODE_PARTY   = 2, /* Clear all (Theron too — rare) */
+    THERON_ITEM_RESET_MODE_CHAMPION = 1, /* Host clears companion inventories */
+    THERON_ITEM_RESET_MODE_PARTY   = 2, /* Host clears the modeled party */
 } Theron_ItemResetMode;
 
 /* ── Dungeon progression state ───────────────────────────────────── */
 
-/* Tracks the overall 7-dungeon sequence progress.
- * Persisted in between-dungeon saves (saves/theron/slotN.tqsv). */
+/* Tracks Firestaff progression state. The TQSV host format includes this
+ * structure, but retail persistence is established field-by-field only. */
 typedef struct {
     /* Current position in the sequence */
     Theron_DungeonID    current_dungeon;
@@ -138,11 +133,9 @@ typedef struct {
     Theron_ItemResetMode item_reset_mode;               /* reset mode for current dungeon */
     uint8_t              item_reset_applied;             /* flag: reset applied this entry */
 
-    /* Champion persistence (per dungeon):
-     * champion_stats_persist = 1 (Theron and champions keep stat growth)
-     * champion_inv_persist   = 0 (inventories reset each dungeon) */
-    uint8_t              champion_stats_persist;  /* always 1 for TQR */
-    uint8_t              champion_inv_persist;    /* always 0 (reset per design) */
+    /* Firestaff host policy flags; these do not assert retail persistence. */
+    uint8_t              champion_stats_persist;
+    uint8_t              champion_inv_persist;
 
     /* Dungeon seeds — one per dungeon (read from dungeon headers).
      * Used for deterministic RNG during dungeon generation/placement. */

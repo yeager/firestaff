@@ -369,17 +369,28 @@ an established original-game save-slot count.
 
 The host format is defined by the application serializer and must not be
 presented as a reverse-engineered retail save format. Retail save ownership,
-encoding, offsets, checksum, and in-dungeon restrictions remain unverified in
-the authenticated evidence reviewed here.
+encoding and checksum are not defined by this host serializer. Subsequent
+authenticated System Card source analysis supersedes the earlier uncertainty
+about the retail save owner and boundary: the original `DMS-SG.001` writer
+stores a byte-bound 134-byte body in one of three 136-byte transport slots in
+the PC Engine Backup RAM record, and the original restore consumer accepts
+campaign bytes 1 through 6. Original gameplay has no in-dungeon save
+transaction; saving is performed between dungeons. See
+[`theron-original-backup-ram-body-layout-2026-09-23.md`](theron-original-backup-ram-body-layout-2026-09-23.md),
+[`theron-original-akutuba-completion-capture-2026-08-21.md`](theron-original-akutuba-completion-capture-2026-08-21.md),
+and `docs/DMWEB_REFERENCE.md` §3. The eight-slot `.tqsv` file remains a
+Firestaff host/interchange format only and must not be advertised as a retail
+save or substitute for authentic Backup RAM persistence.
 
 Source: `include/theron_v1_save_load.h` and
 `src/theron/theron_v1_save_load.c` (Firestaff host format only).
 
 ### 9.2 Obfuscation
 
-The host serializer applies its own reversible encoding and validation. No
-retail save obfuscation or checksum has been established; host implementation
-details are not evidence of the original format.
+The host serializer applies its own reversible encoding and validation. This
+does not describe the original Backup RAM container, whose authenticated
+`HUBM`/`DMS-SG.001` structure is documented separately. Do not infer retail
+obfuscation or checksum behavior from the host serializer.
 
 Source: `src/theron/theron_v1_save_load.c` (host-side implementation only).
 
@@ -387,11 +398,11 @@ Source: `src/theron/theron_v1_save_load.c` (host-side implementation only).
 
 | Host data field | Firestaff application behavior | Retail behavior |
 |-----------------|-----------------------------------|------------------------------|
-| Theron state | Serializer-defined | Not fully authenticated |
-| Companion champions | Serializer-defined | Not fully authenticated |
-| Gold | Serializer-defined | Not fully authenticated |
-| Quest progress | Serializer-defined | Not fully authenticated |
-| Dungeon completion | Serializer-defined | Not fully authenticated |
+| Theron state | Serializer-defined | Only the original Theron body through `$2701` is byte-bound; do not generalize to every host field |
+| Companion champions | Serializer-defined | Not established by the authenticated `DMS-SG.001` restore body |
+| Gold | Serializer-defined | Not established by the authenticated `DMS-SG.001` restore body |
+| Quest progress | Serializer-defined | Campaign completion byte is proven; broader quest-item persistence is not |
+| Dungeon completion | Serializer-defined | Campaign-bit restore and several completion writes are proven; all seven progression semantics are not |
 
 Source: `include/theron_v1_save_load.h` and
 `src/theron/theron_v1_save_load.c` (host-side behavior only).

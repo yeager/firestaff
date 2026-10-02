@@ -5,19 +5,16 @@
 #include <stddef.h>
 
 /* ══════════════════════════════════════════════════════════════════════
- * Theron V1 Phase 3 — Champion State & Persistence
+ * Theron V1 Phase 3 — Champion State
  *
  * Champion structs for Theron's Quest: Theron + up to 3 companions.
- * Key TQR persistence rule:
- *   - Theron  (slot 0): stats AND skills AND equipped items PERSIST
- *                       across dungeons.
- *   - Companions (slots 1-3): chosen from Soul Room mirrors for a dungeon;
- *                             stats/skills persist where save data carries
- *                             them, but inventories reset each dungeon.
+ * Firestaff party model: Theron plus up to three temporary companions.
+ * Retail persistence is admitted only for fields with authenticated
+ * original writer and restore consumers; see the DMS-SG.001 source lock.
  *
  * Source references:
  *   THQUEST.ASM T520  — party placement / start position
- *   THQUEST.ASM T800  — champion persistence + inventory reset per dungeon
+ *   THQUEST.ASM T800  — original gameplay routine label; field semantics remain gated
  *   THQUEST.ASM T560  — dungeon loading (header + dungeon_seed)
  * ══════════════════════════════════════════════════════════════════════ */
 
@@ -26,7 +23,7 @@ extern "C" {
 #endif
 
 /* ── Champion slot indices ────────────────────────────────────────── */
-#define THERON_CHAMPION_SLOT_THERON     0   /* Theron — persistent across dungeons */
+#define THERON_CHAMPION_SLOT_THERON     0   /* Theron — host party slot */
 #define THERON_CHAMPION_SLOT_COMPANION_1 1
 #define THERON_CHAMPION_SLOT_COMPANION_2 2
 #define THERON_CHAMPION_SLOT_COMPANION_3 3
@@ -127,8 +124,9 @@ typedef enum {
 } Theron_EquipSlot;
 
 /* ── Champion struct ──────────────────────────────────────────────── */
-/* 128 bytes per champion — mirrors DM1 v1 champion block size.
- * Persists across dungeons: Theron fully, companions partially. */
+/* 128-byte Firestaff host-model record; this is not a retail save layout.
+ * Only the original Theron fields documented by the DMS-SG.001 source lock
+ * have authenticated writer and restore consumers. */
 typedef struct {
     /* Identity */
     char     name[24];               /* null-terminated champion name */
@@ -136,12 +134,12 @@ typedef struct {
     Theron_ChampionClass primary_class;
     uint8_t  alive;                 /* 1 = alive, 0 = dead */
 
-    /* Vital stats (persist for all champions) */
+    /* Host-model vital stats; retail save semantics are field-gated. */
     int16_t  health,  max_health;
     int16_t  stamina, max_stamina;
     int16_t  mana,    max_mana;
 
-    /* Attribute stats (persist for all champions) */
+    /* Host-model attribute stats; retail save semantics are field-gated. */
     int16_t  luck;
     int16_t  strength;
     int16_t  dexterity;
@@ -150,36 +148,35 @@ typedef struct {
     int16_t  anti_magic;
     int16_t  anti_fire;
 
-    /* Class levels (persist for all champions — XP earned stays) */
+    /* Host-model class levels; do not infer retail persistence. */
     int16_t  fighter_level;
     int16_t  ninja_level;
     int16_t  priest_level;
     int16_t  wizard_level;
 
-    /* Original PC Engine T800 state: 20 skill ordinals, each with the
-     * temporary 16-bit and persistent 32-bit experience consumed by the
-     * regional dungeon code. */
+    /* Original Backup RAM evidence authenticates 20 skill ordinals with
+     * temporary 16-bit and persistent 32-bit experience columns for Theron.
+     * The arrays remain in this shared host record for every modeled slot. */
     uint16_t skill_temporary_experience[20];
     uint32_t skill_experience[20];
 
-    /* Wound bitmask (persists) */
+    /* Host-model wound bitmask; retail persistence is not established. */
     uint8_t  wounds;
 
     /* Attribute flags */
     uint16_t attributes;
 
-    /* Inventory — RESET each dungeon for all companions.
-     * Theron's inventory persists across dungeons. */
+    /* Host-model inventory; original save-body restore does not cover it. */
     uint8_t  inventory[THERON_INVENTORY_SLOTS];
 
-    /* Equipment slots — RESET for companions, persist for Theron. */
+    /* Host-model equipment; original save-body restore does not cover it. */
     int16_t  slots[THERON_EQUIP_SLOT_COUNT];  /* item IDs or -1 */
 
     /* Load tracking (recalculated each dungeon entry) */
     int16_t  load;
     int16_t  max_load;
 
-    /* Consumables (food/water — persist across dungeons) */
+    /* Host-model consumables; retail persistence is not established. */
     int16_t  food;
     int16_t  water;
 
@@ -188,8 +185,8 @@ typedef struct {
 
 /* ── Party struct ─────────────────────────────────────────────────── */
 
-/* Party = Theron + up to 3 companions (4 slots).
- * Gold is shared and persists for all champions. */
+/* Firestaff host party model: Theron + up to 3 companions (4 slots).
+ * Gold is shared in this model; original save-body restore does not cover it. */
 typedef struct {
     Theron_V1_Champion champions[THERON_MAX_CHAMPIONS];
     int                champion_count;   /* 1..4 after startup selection */
@@ -209,12 +206,12 @@ typedef struct {
 
 /* ── Persistence mode descriptors ─────────────────────────────────── */
 
-/* Describes how each champion slot behaves on dungeon entry/exit.
- * Source: THQUEST.ASM T800. */
+/* Describes Firestaff's host-side champion policy on dungeon entry/exit.
+ * Original T800 persistence semantics remain field-gated. */
 typedef enum {
-    /* Theron persists fully: stats, skills, equipped items, inventory */
+    /* Host model retains Theron's stats, skills, and inventory */
     THERON_PERSIST_FULL     = 0,
-    /* Companion: stats/skills/gold persist; inventory and equip reset */
+    /* Host model applies companion stat/skill/gold retention and inventory reset */
     THERON_PERSIST_PARTIAL  = 1,
 } Theron_PersistMode;
 

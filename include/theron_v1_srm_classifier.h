@@ -20,11 +20,11 @@
  *     Sphenx with several custom Theron's Quest save games documented
  *     at greatstone; Sphenx is also credited alongside kentaro.k-21
  *     on the SKWIN DM2 skproject.
- *   - The original PC Engine CD "Save Disk" cartridge stores 5 named
- *     disk slots (TQR uses a 5-slot disk save model per Sphenx's
- *     TQ-RTC tool chain). Firestaff keeps a 5-slot disk manifest
- *     here, not a slot-N.tqsv manifest (which is the synthetic native
- *     in-game save format already covered by theron_v1_save_load.c).
+ *   - The Sphenx TQ-RTC community tool chain exposes five named slots for
+ *     its Save Disk artifacts. Firestaff's five-slot manifest is an
+ *     application boundary only; it does not establish a retail slot count.
+ *     The serializer is a Firestaff host/interchange format, not a retail
+ *     Save Disk body or original PC Engine Backup RAM format.
  *
  * What this module does:
  *   - Enumerates up to THERON_V1_SRM_DISK_SLOT_COUNT disk slots under
@@ -56,11 +56,10 @@
  *     files that lack the gzip magic stay UNRECOGNIZED.
  *
  * Track 02 + Track 02 SRM interplay:
- *   - Theron's Quest has a strict "no in-dungeon saves" design rule
- *     (THQUEST.ASM T080). The real save model is the Save Disk
- *     cartridge, written only at dungeon entrance. This module is the
- *     bounded real-artifact counterpart to the synthetic in-game
- *     theron_v1_save_load.c slot model.
+ *   - Original gameplay saves between dungeons; it has no in-dungeon
+ *     save transaction. The PC Engine Backup RAM `DMS-SG.001` body and
+ *     community gzip SRM are distinct formats. This classifier keeps
+ *     unknown SRM bodies opaque and separate from Firestaff host saves.
  * ══════════════════════════════════════════════════════════════════════ */
 
 #define THERON_V1_SRM_DISK_SLOT_COUNT    5
@@ -565,15 +564,13 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
     Theron_V1SrmProgressionReceipt *out_receipt);
 
 /* Interpret one inflated SRM body as a Firestaff-only readiness envelope
- * carrying both between-dungeon progression and bounded champion body state.
+ * carrying modeled progression and bounded host champion state.
  *
- * Accepted magic: "FSTQPTY1".  This is not the Sphenx/Greatstone real-body
- * layout.  Unknown real bodies still return UNSUPPORTED_BODY.  The imported
- * champion body fields deliberately exclude inventory/equipment because the
- * most of the real Save Disk body is not decoded yet.  Its first byte is now
- * independently bound to RAM $267C and the seven campaign completion bits, but
- * THQUEST.ASM T080/T800 still does not prove the party record layout used by
- * the original body. */
+ * Accepted magic: "FSTQPTY1". This Firestaff-only body is not the
+ * Sphenx/Greatstone real-body layout. Unknown real bodies still return
+ * UNSUPPORTED_BODY. Imported party fields are host readiness data, not an
+ * original party-record decode. The independently bound campaign byte is
+ * handled by the separate DMS-SG.001 Backup RAM path. */
 Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
     const uint8_t *payload,
     size_t payload_size,

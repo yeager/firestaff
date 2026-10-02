@@ -2,7 +2,8 @@
  * theron_v1_champions.c — Theron's Quest V1 Phase 7: Champion State & Pack/Unpack
  *
  * Champion structs for Theron's Quest: Theron + up to 3 companions.
- * Companion persistence: THQUEST.ASM T800.
+ * Original save persistence is admitted field-by-field from DMS-SG.001
+ * writer and restore evidence; the remaining struct is host model state.
  *
  * Phase 7 additions:
  *   - theron_v1_party_pack / unpack / pack_size — wire 4×128-byte champion
@@ -12,7 +13,7 @@
  *
  * Source references:
  *   THQUEST.ASM T520  — party placement / start position
- *   THQUEST.ASM T800  — champion persistence + inventory reset per dungeon
+ *   THQUEST.ASM T800  — original gameplay routine label; save semantics gated
  *   THQUEST.ASM T560  — dungeon loading (header + dungeon_seed)
  */
 

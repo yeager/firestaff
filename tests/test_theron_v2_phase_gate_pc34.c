@@ -251,7 +251,8 @@ static void check_source_evidence(void)
     check_true("evidence.theron_v1_world", strstr(e, "theron_v1_world") != 0);
     check_true("evidence.theron_v1_palette", strstr(e, "theron_v1_palette") != 0);
     check_true("evidence.theron_v1_ui_chrome", strstr(e, "theron_v1_ui_chrome") != 0);
-    check_true("evidence.THQUEST_T080", strstr(e, "T080") != 0);
+    check_true("evidence.host_save_format", strstr(e, "Firestaff host/interchange save format") != 0);
+    check_true("evidence.authentic_DMS_SG_001", strstr(e, "DMS-SG.001") != 0);
     check_true("evidence.THQUEST_T400", strstr(e, "T400") != 0);
     check_true("evidence.THQUEST_T520", strstr(e, "T520") != 0);
     check_true("evidence.THQUEST_T560", strstr(e, "T560") != 0);

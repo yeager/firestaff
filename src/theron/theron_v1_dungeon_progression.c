@@ -1,25 +1,25 @@
 /*
  * theron_v1_dungeon_progression.c — Theron's Quest V1 Phase 6
- * Dungeon progression: 7-dungeon sequence, per-dungeon item reset,
- * between-dungeon save, seven-quest-item retrieval goal.
+ * Dungeon progression state: seven authentic dungeon identities, plus
+ * Firestaff progression and quest-item bookkeeping.
  *
  * Phase 6 source-lock (2026-05-27)
  *
  * Source references:
  *   THQUEST.ASM T000  — title/startup entry
- *   THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)
+ *   docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
+ *       original DMS-SG.001 save body and between-dungeon boundary
  *   THQUEST.ASM T400  — dungeon bank loading
  *   THQUEST.ASM T520  — party placement / start position
  *   THQUEST.ASM T560  — dungeon loading (header parsing, dungeon_seed)
- *   THQUEST.ASM T800  — champion persistence + inventory reset per dungeon
+ *   THQUEST.ASM T800  — source label; reset and persistence fields remain gated
  *   docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md
  *
- * Key design constraints:
+ * Current evidence boundary:
  *   - 7 mini-dungeons, 3-8 maps each including the hub map.
- *   - Between-dungeon saves only (in_dungeon_save_allowed = 0).
- *   - Champion inventory resets each dungeon; Theron stats/skills persist.
- *   - 7 quest items collected across sequence (one per dungeon).
- *   - Dungeon exits only after quest item is found.
+ *   - Original saves are between dungeons; Firestaff TQSV is host-only.
+ *   - Track 02 authentic item identities do not by themselves prove pickup,
+ *     inventory-reset, or dungeon-exit transactions.
  */
 
 #include "theron_v1_dungeon_progression.h"
@@ -135,8 +135,8 @@ void theron_v1_dungeon_progression_init(Theron_DungeonProgression *prog) {
     prog->quest_items_in_current_dungeon = 0;
     prog->item_reset_mode              = THERON_ITEM_RESET_MODE_CHAMPION;
     prog->item_reset_applied           = 0;
-    prog->champion_stats_persist       = 1;   /* TQR design: stats persist */
-    prog->champion_inv_persist         = 0;   /* TQR design: inventories reset */
+    prog->champion_stats_persist       = 1;   /* Firestaff host policy */
+    prog->champion_inv_persist         = 0;   /* Firestaff host policy */
     prog->current_level                 = 1;
     prog->dungeon_playtime_seconds     = 0;
     prog->quest_complete               = 0;
@@ -523,18 +523,17 @@ const char *theron_v1_dungeon_progression_source_evidence(void) {
     return
         "Theron V1 Dungeon Progression — Phase 6 source-lock\n"
         "THQUEST.ASM T000  — title/startup entry\n"
-        "THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon saves)\n"
+        "DMS-SG.001 source lock — authentic Backup RAM body; original saves between dungeons\n"
         "THQUEST.ASM T400  — dungeon bank loading (HuCard ROM mapping)\n"
         "THQUEST.ASM T520  — party placement / start position\n"
         "THQUEST.ASM T560  — dungeon loading (header parsing, dungeon_seed)\n"
-        "THQUEST.ASM T800  — champion persistence between dungeons\n"
-        "TQR: 7 mini-dungeons, 3-8 maps including each hub; dungeon 1 first, dungeons\n"
-        "  2..6 unlocked after the first quest item, dungeon 7 after the first six;\n"
-        "  champion inv reset per dungeon; Theron persists with stats/skills;\n"
-        "  7 quest items one per dungeon;\n"
+        "THQUEST.ASM T800  — gameplay source label; host reset policy is not retail field proof\n"
+        "Track 02: seven authentic dungeon names and quest-item identities;\n"
+        "  Firestaff models campaign unlock and reset states, but retail field\n"
+        "  persistence and acquisition/exit transactions remain source-gated;\n"
         "Manual/dmweb/forum: stage select, Shield Defiant unlocks middle stages,\n"
         "  final stage locked until the other stages are complete;\n"
-        "  no in-dungeon saves; between-dungeon saves only (saves/theron/)\n"
+        "  original save boundary is between dungeons; Firestaff slotN.tqsv is host/interchange only\n"
         "Phase 0 provenance: docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md\n"
         "  JP MD5: b7afb338ad31be1025b53f9aff12d73a\n"
         "  US MD5: f23601102138f87c33025877767ebf76";

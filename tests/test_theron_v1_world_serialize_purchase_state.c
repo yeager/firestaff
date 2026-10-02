@@ -1,16 +1,17 @@
 /*
  * test_theron_v1_world_serialize_purchase_state.c
  *
- * Focused Theron's Quest V1 regression for persistent purchase-state data.
+ * Focused Firestaff host-serialization regression for purchase-state data.
  *
  * The current Theron codebase stores party gold and champion inventories in
  * the world serialization stream, so this fixture-driven test guards that the
  * "shop / item purchase" state survives a serialize -> deserialize round-trip
  * and that the gold field remains at the front of the packed party block.
  *
- * Source-lock note: THQUEST.ASM T800 covers champion persistence / inventory
- * reset. The test intentionally stays inside the existing public API and does
- * not require Track 02 assets or a full launch.
+ * Scope: this test covers only the Firestaff host-world round trip. It is not
+ * evidence for original Theron persistence or retail inventory-reset rules.
+ * It intentionally stays inside the existing public API and does not require
+ * Track 02 assets or a full launch.
  */
 
 #include "theron_v1_world.h"

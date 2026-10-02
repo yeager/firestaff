@@ -2,6 +2,42 @@
 
 Reviewed 2026-10-02. Only open work is listed here.
 
+## 2026-10-02 — separate Firestaff TQSV state from retail Theron saves
+
+- Corrected save-format provenance across the save/progression interfaces:
+  eight-slot `.tqsv`, its 64-byte header, XOR transform and checksum are now
+  labeled Firestaff host/interchange behavior, not original retail fields.
+  T800 is retained as an original routine label, not evidence for those host
+  champion reset/persistence rules.
+- Updated source evidence and string-contract tests to point at the
+  authenticated `DMS-SG.001` Backup RAM writer/restore body and its bound
+  fields. The gzip community `.srm` Save Disk body remains separately opaque
+  and non-launchable; no data was synthesized or imported.
+- Reconciled the champion, progression, boot, SRM, shop and startup comments
+  with that boundary: Firestaff policies and DMWeb summaries are identified
+  as host behavior or secondary evidence, not unqualified retail semantics.
+  Host round-trip tests are labeled as such and no longer cite T800 as proof
+  of retail inventory or champion persistence.
+- Marked the older 2026-08-20 BRAM uncertainty as superseded: the later
+  source lock proves the two slot-tail bytes are padding and binds all 134
+  writer bytes, while the production restore remains limited to the proven
+  Theron fields and campaign value.
+- A fresh emulator dungeon checkpoint is still unverified. Mednafen state
+  files exist, but the Mac remained locked, so I could not verify the foreground
+  window or confirm their in-game location. Repeat with RUN held for 3–5
+  seconds, follow the source-locked Drator route, then capture and reload only
+  after the active dungeon view is visibly confirmed. The isolated 2 KiB BRAM
+  still matches the authenticated Akutuba-complete artifact
+  (`ffabc8d19b0915d4d9632a7ae2e90a97`).
+- `git diff --check` and C11 syntax-only checks pass for the changed runtime
+  and test files. On an isolated trv2 clone of the exact current main
+  revision, the V2 phase-gate test passes 231/231; CMake-flagged object builds
+  pass for the save/load, progression-roundtrip, and startup-resume sources
+  and tests. Full link/CTest for those save paths remains open because the
+  target graph pulled in the broad shared M10 library; that unrelated build
+  was stopped before completion. The local macOS CMake check also remains
+  unavailable because its SDK linker rejects the `arm64e.x1` architecture.
+
 ## 2026-10-02 — authentic combat integration media is an explicit CTest skip
 
 - `theron_v1_combat_runtime_source` now returns CTest's configured skip code
@@ -2244,39 +2280,30 @@ physical MODE1 sectors are validated in JP/US media. Its payload role remains
 
 ## Theron Track 02 Semantic Binding Follow-up (2026-07-11)
 
-## Theron Original SRM Body Correlation Follow-up (2026-07-11)
+## Theron Original Backup RAM and Save Disk Follow-up (2026-07-11)
 
-2026-08-20: The local Mednafen corpus contains authentic 2 KiB PC Engine
-Backup RAM files with a `HUBM` header and the Theron marker `DMS-SG.001`. A
-later, original-owned save transaction also produced a nonempty file where
-byte `$20` is `$01`. The authenticated file handler reads and writes the full
-`$0199` bytes: three `$88`-byte slots and the original selected-slot index.
-The separately authenticated writer routine builds the first `$86` bytes of
-the selected slot from RAM starting at `$267C`; the slot's first byte thus
-directly corresponds to the serialized campaign byte at `$267C`. Its low
-seven bits have in turn been bound to the original ordered artifact pickup.
-Firestaff can therefore restore this campaign mask from the real file when
-the Track 02 source chain is hash-verified. This does not make the file a
-playable Continue state: the current level, party, inventory, the two slot
-tail bytes, and the rest of the 409-byte record remain unknown and must not
-be assigned semantics.
+Historical capture status (2026-08-20; superseded by the authenticated source
+lock linked below): at that point, the campaign byte and selected-slot route
+were mapped, while the two slot-tail bytes and the remaining body fields had
+not yet been correlated. The note correctly withheld gameplay semantics for
+those then-unidentified bytes.
 
-Startup now exposes only fully gzip-trailer-authenticated unknown Save Disk
-containers as opaque transfer candidates. They remain unavailable to Continue,
-and failed SRM Continue leaves the world unchanged. The outstanding work is
-still source-backed load/use correlation for the preserved opaque fields
-before original Backup RAM can restore party or runtime state.
-Firestaff-native SRM export
-also now publishes atomically without replacement, so it cannot overwrite a
-staged original Save Disk artifact while the corpus remains unbound. The
-direct SRM runtime handoff now requires all four hash-verified Track 02 media
-surfaces and a selected real-media level bank before committing a restored
-world; identity-only media rejects without mutation. Its structured receipt
-now exposes the consumed media route mask, checksum, and selected level bank;
-slot selection is now source-bound through
-`$0198 → $278C → INY → $42B8 → {0000,0088,0110}` and a same-session
-`$278C=00/$42B8=01` runtime receipt.
-The remaining Backup RAM blocker is field-consumer correlation.
+The 2026-09-23 source lock subsequently established the complete
+`DMS-SG.001` record boundary and all 134 writer-owned body bytes. The final two
+bytes in each 136-byte slot are transport padding. The original restore
+consumer now binds the campaign byte, Theron's maximum vitals, seven maximum
+attributes and 20 temporary plus 20 persistent skill-experience values. The
+native Backup RAM restore/encode path uses those authenticated fields only;
+it leaves companions, inventory, equipment, position and loaded dungeon media
+unchanged. Later completion values rejected by the original Continue branch
+remain a documented compatibility gap. See
+[`docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`](docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
+
+The community gzip `.srm` Save Disk body is a separate format and remains
+opaque and non-launchable. Firestaff's `.tqsv` and `FSTQPTY1` serializers are
+host/interchange formats, not substitutes for either original save path.
+SRM import/export and unknown-body rejection are tracked separately from the
+authenticated PC Engine Backup RAM restore.
 
 2026-08-21: The production viewport can now find an authenticated atomic
 VDC/VCE capture directly in `<theron-data>/capture/trace.*` or

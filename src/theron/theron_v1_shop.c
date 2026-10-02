@@ -7,7 +7,8 @@
  * the real THQUEST.ASM shop block is identified.
  *
  * Source/evidence:
- *   THQUEST.ASM T560 item table; THQUEST.ASM T800 champion persistence/gold;
+ *   THQUEST.ASM T560 item table; original save-body evidence does not
+ *   authenticate gold persistence or retail shop transactions;
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md sections 1, 5.3,
  *   and save offset notes for the gold field.
  */
@@ -156,6 +157,6 @@ const char *theron_v1_shop_status_name(Theron_ShopStatus status) {
 const char *theron_v1_shop_source_evidence(void) {
     return "ReDMCSB_WIP20210206/Toolchains/Common/Source contains no Theron "
            "shop code; fixture guard follows THQUEST.ASM T560 item table, "
-           "T800 champion persistence/gold, and "
+           "no retail gold-persistence claim, and "
            "docs/source-lock/tqr_v1_phase2_data_formats_H2339.md gold notes.";
 }

@@ -126,7 +126,7 @@ const char *theron_v2_phase_gate_source_evidence(void)
         "theron_v1_champions.c (4-champion party: Theron + 3 companions); "
         "theron_v1_dungeon_progression.c (dungeon index, level transitions, dungeon_seed); "
         "theron_v1_mechanics.c (click routes, doors, pits, teleporters, altars, combat, drops, sounds); "
-        "theron_v1_save_load.c (between-dungeon save/load, 8 slots, no in-dungeon saves); "
+        "theron_v1_save_load.c (Firestaff host/interchange save format, 8 slots); "
         "theron_v1_shop.c (shop price table + purchase state); "
         "theron_v1_tile_renderer.c (16-color PC Engine tile rendering); "
         "theron_v1_viewport.c (V1 viewport + presentation); "
@@ -134,13 +134,13 @@ const char *theron_v2_phase_gate_source_evidence(void)
         "theron_v1_palette.c (PC Engine 16-color palette); "
         "theron_v1_ui_chrome.c (UI chrome: boxes, fonts, icons); "
         "theron_v2_hud_launch_mode_pc34.c (OFF/OVERLAY/TOUCH/CONTROLLER gate); "
-        "THQUEST.ASM T080 (between-dungeon save/load); "
+        "authenticated DMS-SG.001 evidence (original Backup RAM, between-dungeon save boundary); "
         "THQUEST.ASM T400 (dungeon bank loading); "
         "THQUEST.ASM T520 (party placement / start position); "
         "THQUEST.ASM T560 (dungeon loading: header parsing, dungeon_seed); "
         "THQUEST.ASM T600 (map transitions); "
         "THQUEST.ASM T700 (timers / world tick); "
-        "THQUEST.ASM T800 (champion persistence + inventory reset); "
+        "THQUEST.ASM T800 (original gameplay routine; champion fields remain gated); "
         "THQUEST.ASM T900 (object database / thing list); "
         "HuC6260/HuC6270 (PC Engine VDC/VCE datasheet); "
         "HuC6280 (PC Engine CPU datasheet); "
@@ -182,7 +182,7 @@ THERON_V2_PhaseGateDecision theron_v2_phase_gate_decide(
         case THERON_V2_PHASE_DOMAIN_CHAMPION_PARTY:
             return make_decision(
                 1, 0,
-                "theron_v1_champions.c (4-champion party, THQUEST.ASM T800)",
+                "theron_v1_champions.c (Firestaff party model; retail fields remain gated)",
                 "Champion stats, level-up, food/water/stamina, gold, and "
                 "inventory reset per dungeon stay V1-source-locked; V2 must "
                 "not mutate champion state");
@@ -206,11 +206,12 @@ THERON_V2_PhaseGateDecision theron_v2_phase_gate_decide(
         case THERON_V2_PHASE_DOMAIN_SAVE_LOAD:
             return make_decision(
                 1, 0,
-                "theron_v1_save_load.c (between-dungeon save/load, 8 slots, no in-dungeon)",
-                "Between-dungeon save/load (8 slots, 64-byte header + "
-                "champion blocks + footer, no in-dungeon saves) stays "
-                "V1-source-locked; V2 config persistence is explicitly "
-                "separate and gated by v2ConfigPersistenceEnabled");
+                "theron_v1_save_load.c (Firestaff TQSV host/interchange format, 8 slots)",
+                "Firestaff host save/load (8 slots, 64-byte header + "
+                "champion blocks + footer) stays V1-source-locked and is "
+                "not retail Backup RAM or SRM. Original gameplay saves "
+                "between dungeons; V2 config persistence is separate and "
+                "gated by v2ConfigPersistenceEnabled");
 
         case THERON_V2_PHASE_DOMAIN_SHOP:
             return make_decision(

@@ -5,10 +5,10 @@
  * Separates TQ boot from DM1/CSB/DM2/Nexus, including:
  *   - Asset discovery (PC Engine HuCard data format)
  *   - Menu launch routing (M12 game-card → boot profile pipeline)
- *   - Save namespace (saves/theron/ — between-dungeon only)
+ *   - Firestaff host save namespace (saves/theron/; between-dungeon model)
  *   - Platform/region diagnostics (PC Engine JP / TurboGrafx-16 US)
  *   - Deterministic config (PC Engine fixed-tick, no chivalry)
- *   - No in-dungeon saves (TQ design restriction — save at dungeon entrance only)
+ *   - No in-dungeon Firestaff host saves; this setting is not retail evidence
  *
  * Provenance gate:
  *   The supported launch source is the hash-verified Track 02 BIN
@@ -28,8 +28,9 @@
  *   THQUEST.ASM T400  — dungeon bank loading (HuCard ROM mapping)
  *   THQUEST.ASM T520  — party placement / start position
  *   THQUEST.ASM T560  — dungeon loading (header parsing, dungeon_seed)
- *   THQUEST.ASM T800  — champion persistence between dungeons
- *   THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)
+ *   THQUEST.ASM T800  — original gameplay source label; fields stay individually gated
+ *   docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md
+ *       authenticated original Backup RAM body and save boundary
  */
 
 #include "theron_v1_boot.h"
@@ -1062,8 +1063,8 @@ void theron_v1_boot_set_save_root(Theron_V1_BootProfile *profile,
         strncpy(profile->save_root, save_dir, sizeof(profile->save_root) - 1);
     } else {
         /* Default: <data_dir>/../saves/theron/ */
-        /* Note: saves/theron/ is distinct from saves/dm1/, saves/csb/,
-         * saves/dm2/, saves/nexus/ — TQ has its own save namespace. */
+        /* Firestaff host namespace is distinct from saves/dm1/, saves/csb/,
+         * saves/dm2/ and saves/nexus/. It is not a retail save path. */
         snprintf(profile->save_root, sizeof(profile->save_root),
                  "%s%c..%csaves%ctheron",
                  profile->asset_root[0] ? profile->asset_root : ".",
@@ -7235,10 +7236,10 @@ const char *theron_v1_boot_source_evidence(void) {
      * The runtime now locks identity to the verified Track 02 route;
      * remaining work is semantic dungeon/graphics binding. */
     return "theron_v1_boot.c: "
-           "THQUEST.ASM T000 (startup), T080 (save ns), "
+           "THQUEST.ASM T000 (startup), authenticated DMS-SG.001 save body, "
            "T200 (platform diag), T400 (bank load), "
            "T520 (party placement), T560 (dungeon load), "
-           "T800 (champion persistence) — "
+           "T800 (original routine label; retail fields remain gated) — "
            "verified Track 02 identity locked; awaiting semantic dungeon "
            "format binding (TQR data extracted from Track 02 BIN)";
 }

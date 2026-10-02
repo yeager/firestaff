@@ -9,7 +9,7 @@
  *   THQUEST.ASM T560  — dungeon loading
  *   THQUEST.ASM T600  — map transitions / teleporter chains
  *   THQUEST.ASM T700  — per-tick champion stat updates
- *   THQUEST.ASM T800  — champion persistence + inventory reset
+ *   THQUEST.ASM T800  — original gameplay routine label; save semantics gated
  *   THQUEST.ASM T900  — object database / altar-of-vi
  *
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
@@ -1240,8 +1240,9 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
  * TQ-specific: altar squares placed in dungeon 3 (Abyss of Flames) and
  * dungeon 6 (Castle of Fate). When a dead champion (health == 0,
  * alive == 0) steps onto an altar square, they are resurrected for a
- * gold cost. Theron's stats (fighter levels) persist across dungeons;
- * companions reset their inventory each dungeon (T800).
+ * gold cost. This code does not implement or assert cross-dungeon save
+ * persistence; the authentic Backup RAM restore boundary is documented
+ * separately in the DMS-SG.001 source lock.
  *
  * Source: THQUEST.ASM T900 altar processing.
  *

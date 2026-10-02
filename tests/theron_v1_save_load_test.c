@@ -553,7 +553,10 @@ static int test_source_evidence(void) {
 
     const char *ev = theron_v1_save_source_evidence();
     ASSERT(ev != NULL && strlen(ev) > 10, "source evidence too short");
-    ASSERT(strstr(ev, "THQUEST") != NULL, "source evidence missing THQUEST");
+    ASSERT(strstr(ev, "TQSV host/interchange format") != NULL,
+           "source evidence must label the Firestaff host format");
+    ASSERT(strstr(ev, "not original PC Engine Backup RAM") != NULL,
+           "source evidence must distinguish retail Backup RAM");
 
     PASS();
     return 1;

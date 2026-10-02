@@ -5010,7 +5010,8 @@ const char *theron_v1_startup_flow_source_evidence(void) {
            "Hexa, Pental as the seven selectable heroes; "
            "raw JP Track 02 roster order: THERON, MARA, LINOS, HEXA, "
            "HAKAR, TIRAN, DOTAN, PENTAI; "
-           "dmweb Theron's Quest: Theron plus three champions, companions reset "
-           "after dungeon completion; PC Engine Software Bible: console control "
+           "DMWeb secondary overview: Theron plus three champions and reported "
+           "companion reset after dungeon completion (not source-locked parity); "
+           "PC Engine Software Bible: console control "
            "profile for Dungeon Master: Theron's Quest.";
 }
