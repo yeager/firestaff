@@ -1004,6 +1004,10 @@ int dm2_v1_g1_static_container_material_selector(
 int dm2_v1_g1_static_misc_material_selector(
     uint16_t object_id, int x, int y, uint8_t item_type,
     uint16_t image_offset, DM2_V1_G1StaticObjectMaterialSelector *out);
+int dm2_v1_g1_static_chain_material_selector(
+    uint16_t object_id, int x, int y, uint8_t category, uint8_t item_type,
+    uint8_t image_field, uint16_t image_offset,
+    DM2_V1_G1StaticObjectMaterialSelector *out);
 
 typedef struct {
     int x;

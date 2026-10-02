@@ -10293,10 +10293,8 @@ int dm2_v1_boot_g1_static_object_material_receipt(
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (!profile || !profile->graphics_dat || !selector || !selector->valid ||
-        (selector->category != 0x10u && selector->category != 0x14u &&
-         selector->category != 0x15u) ||
-        (selector->category == 0x10u && selector->image_field != 0u) ||
-        (selector->category == 0x15u && selector->image_field != 0u) ||
+        (selector->category < 0x10u || selector->category > 0x15u) ||
+        (selector->category != 0x14u && selector->image_field != 0u) ||
         (selector->category == 0x14u && selector->image_field != 0u &&
          selector->image_field != 4u) || clip_rect_id == 0u) return 0;
     gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;

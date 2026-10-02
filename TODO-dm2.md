@@ -294,9 +294,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   empty slot 4 selection with both F1 ownership and ownerless inventory,
   plus an outside click. Both new-game
   champions have empty inventories. New Game starts on map 0 at (1,8),
-  layer 7; tile-record census finds no DB5–15 item on maps 0–8. The first
-  floor-item candidate is DB10 handle 0x2831 on map 9 at (1,0), layer 5;
-  map 16 also has items, including DB10 at (4,7). The current Mac C080
+  layer 7. A later direct File_header chain census found DB5–DB10 records
+  on map 0, including a mirror/text-prefixed DB6/DB10 chain at (4,7);
+  the earlier claim that maps 0–8 had no DB5–15 records was false.
+  Original-media rendering now admits the DB6 items from the reachable
+  corridor, but this does not yet prove a normal pointer pickup there.
+  A separate DB10 pickup diagnostic uses handle 0x2831 on map 9 at (1,0),
+  layer 5; map 16 also has items, including DB10 at (4,7). The current Mac C080
   New Game movement reaches map 0 (4,7) through ordinary M11 commands
   (`UP`, `TURN_RIGHT`, `UP` three times), but the next east move to (5,7)
   is blocked. Retail map 0 contains 33 floor, 35 wall and two pit tiles;
@@ -339,9 +343,24 @@ Reviewed 2026-08-29. Only open work is listed here.
   its 33 connected floor cells; ordinary edge movement also meets source
   wall tiles. Trace the original post-selection event and timer path for an
   actual map change or tile mutation. Resolve the Mac New Game transition before
-  assuming the map 0 boundary can be crossed. The Mac C080 production
+  assuming the map 0 boundary can be crossed.
+  A 2026-10-02 read of retail Mac CODE resources narrows that trace:
+  `CODE(8)+0x1aa8..0x1ad4` sends events 1–2 to turn at `+0x2afc` and
+  events 3–6 to movement at `+0x2ca0`; events 7–11 are hero actions.
+  `CODE(8)+0x1f2e..0x1f5a` sets or clears the New Game flag for events
+  `0xd7..0xd9`, without changing the map. The map setter is
+  `CODE(15)+0x20bc`, writing `A5-0x6684`/`-0x6682`/`-0x6680` (x/y/map),
+  reached directly from `CODE(7)+0x35dc` through `A5+0x8ca`.
+  The movement path calls `CODE(15)+0x2806`; its later record/timer chain
+  still needs a live trace to show whether it reaches the map setter.
+  Instrument these offsets in an original run before changing the spawn.
+  The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
-  pixels, including a linked record. Linked DB5–DB9 rendering remains open.
+  pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
+  the live File_header chain and original category/type fields; positive
+  retail-media render receipts cover each category. A normally reachable
+  map-0 corridor pose renders DB6. Pointer pickup for DB5–DB9 still needs
+  an original-media transaction test.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
@@ -366,8 +385,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   map-10 viewport now draws all five linked DB10 records with source draw
   slots. The outdoor map-15 viewport also draws both linked DB10 records.
   A pointer click at the map-10 diagnostic pose can take linked `0xe813`
-  while preserving the remaining chain. Extend linked DB5–DB9 admission,
-  placement, and the normal gameplay route to these items.
+  while preserving the remaining chain. Prove pointer pickup and placement
+  for linked DB5–DB9, and the normal gameplay route to the later-map items.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first

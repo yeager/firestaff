@@ -316,8 +316,7 @@ int dm2_v1_viewport_static_object_source_plan(
     if (source_cell < 1 || source_cell > 15 ||
         source_pass != dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
             source_cell) ||
-        (item_category != 0x10 && item_category != 0x14 &&
-         item_category != 0x15) ||
+        (item_category < 0x10 || item_category > 0x15) ||
         draw_slot < 0 || draw_slot >= 16) {
         return 0;
     }
@@ -2506,8 +2505,7 @@ void dm2_v1_viewport_set_g1_scene_item_material_direct(
 {
     if (!s) return;
     s->g1_scene_item_material_ready =
-        ready && (item_category == 0x10 || item_category == 0x14 ||
-                  item_category == 0x15) &&
+        ready && item_category >= 0x10 && item_category <= 0x15 &&
         item_type >= 0 && item_type <= 0xff && gdat_index != 0 &&
         object_id != 0xfffeu && pixels && width > 0 && height > 0 &&
         stride >= width && palette16 && palette_hash != 0u &&
@@ -2591,8 +2589,7 @@ void dm2_v1_viewport_set_g1_scene_static_item_materials_direct(
         uint32_t pixel_hash;
 
         if (!source->ready ||
-            (source->item_category != 0x10 && source->item_category != 0x14 &&
-             source->item_category != 0x15) ||
+            (source->item_category < 0x10 || source->item_category > 0x15) ||
             source->item_type < 0 || source->item_type > 0xff ||
             source->gdat_index == 0 || source->object_id == 0xfffeu ||
             !source->pixels || source->width <= 0 || source->height <= 0 ||
@@ -10051,11 +10048,8 @@ int dm2_v1_viewport_build_static_object_m11_delivery_plan(
         !material->raw4_receipt_hash) return 0;
     selector = &material->selector;
     if (!selector->valid || !selector->object_id || !selector->identity_hash ||
-        (selector->category != 0x10u && selector->category != 0x14u &&
-         selector->category != 0x15u) ||
-        (selector->category == 0x10u &&
-         (selector->image_field != 0u || selector->container_open)) ||
-        (selector->category == 0x15u &&
+        (selector->category < 0x10u || selector->category > 0x15u) ||
+        (selector->category != 0x14u &&
          (selector->image_field != 0u || selector->container_open)) ||
         (selector->category == 0x14u &&
          (selector->image_field != 0u && selector->image_field != 4u)) ||

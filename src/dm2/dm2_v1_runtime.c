@@ -4844,9 +4844,11 @@ static void dm2_runtime_populate_g1_static_object_materials(
         dungeon, rt->dungeon_level, &containers);
     for (int pass = 0; pass < 3; ++pass) {
         int count = pass == 0 ?
-            (weapons.committed ? weapons.weapon_root_count : 0) :
+            (dungeon->g1_w0_chains_disabled && weapons.committed ?
+                weapons.weapon_root_count : 0) :
             pass == 1 ?
-            (containers.committed ? containers.container_root_count : 0) :
+            (dungeon->g1_w0_chains_disabled && containers.committed ?
+                containers.container_root_count : 0) :
             dungeon->level_widths[rt->dungeon_level] *
                 dungeon->level_heights[rt->dungeon_level];
         for (int i = 0; i < count && rt->g1_static_object_material_count < 48; ++i) {
@@ -4873,6 +4875,9 @@ static void dm2_runtime_populate_g1_static_object_materials(
             int misc_root = -1;
             const uint8_t *misc_record = NULL;
             uint16_t misc_offset = 0u;
+            uint8_t chain_category = 0u;
+            uint8_t chain_item_type = 0u;
+            uint8_t chain_image_field = 0u;
             int draw_slot = 0;
             if (pass == 2) {
                 int repeated = 0;
@@ -4884,10 +4889,32 @@ static void dm2_runtime_populate_g1_static_object_materials(
                 misc_root = chain_thing;
                 chain_thing = dungeon->g1_w0_chains_disabled ? 0xfffe :
                     dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)misc_root);
-                if ((((unsigned)misc_root >> 10) & 15u) != 10u) continue;
-                misc_record = dm2_v1_dungeon_get_thing_record(
-                    dungeon, (uint16_t)misc_root, NULL, NULL, NULL);
-                if (!misc_record) continue;
+                {
+                    unsigned record_type = ((unsigned)misc_root >> 10) & 15u;
+                    uint16_t w2, w4;
+                    if (record_type < 5u || record_type > 10u) continue;
+                    if (dungeon->g1_w0_chains_disabled &&
+                        record_type != 10u) continue;
+                    chain_category = (uint8_t)(record_type + 0x0bu);
+                    misc_record = dm2_v1_dungeon_get_thing_record(
+                        dungeon, (uint16_t)misc_root, NULL, NULL, NULL);
+                    if (!misc_record) continue;
+                    w2 = dm2_v1_dungeon_read_record_u16(dungeon, misc_record + 2);
+                    w4 = record_type == 9u ?
+                        dm2_v1_dungeon_read_record_u16(dungeon, misc_record + 4) : 0u;
+                    /* SKProject c_record.cpp QUERY_CLS2_FROM_RECORD:
+                     * DB5/6/10 use w2 low seven bits, DB7 is zero, DB8
+                     * uses w2 bits 8..14, and DB9 uses w4's container
+                     * type bits. All Mac File_header words are big-endian. */
+                    chain_item_type = (uint8_t)(
+                        record_type == 7u ? 0u :
+                        record_type == 8u ? ((w2 >> 8) & 0x7fu) :
+                        record_type == 9u ?
+                            ((((w4 & 7u) >> 1) * 8u) | (w4 >> 13)) :
+                            (w2 & 0x7fu));
+                    chain_image_field = (uint8_t)(
+                        record_type == 9u && (w4 & 1u) ? 4u : 0u);
+                }
                 for (int n = 0; n + 1 < seen_count; ++n) {
                     int prior = seen[n];
                     int type = ((unsigned)prior >> 10) & 15u;
@@ -4896,8 +4923,9 @@ static void dm2_runtime_populate_g1_static_object_materials(
                         draw_slot = (draw_slot + 1) & 15;
                 }
                 if (!dm2_v1_asset_load_image_offset(
-                        dm2_v1_boot_asset_loader(rt->boot), 0x15, 0xfe,
-                        0u, &misc_offset)) misc_offset = 0u;
+                        dm2_v1_boot_asset_loader(rt->boot), chain_category,
+                        0xfe, chain_image_field, &misc_offset))
+                    misc_offset = 0u;
             }
             if (!dm2_v1_viewport_static_object_cell_for_map(x, y, party_dir,
                     party_x, party_y, &cell, &source_pass) ||
@@ -4905,10 +4933,9 @@ static void dm2_runtime_populate_g1_static_object_materials(
                                &weapons.weapons[i], &selector) :
                   pass == 1 ? dm2_v1_boot_g1_static_container_selector(rt->boot,
                                &containers.containers[i], &selector) :
-                  dm2_v1_g1_static_misc_material_selector(
-                      (uint16_t)misc_root, x, y,
-                      (uint8_t)(dm2_v1_dungeon_read_record_u16(
-                          dungeon, misc_record + 2) & 0x7fu),
+                  dm2_v1_g1_static_chain_material_selector(
+                      (uint16_t)misc_root, x, y, chain_category,
+                      chain_item_type, chain_image_field,
                       misc_offset, &selector)) ||
                 !dm2_v1_viewport_static_object_source_plan(cell, source_pass,
                     selector.category, selector.direction, selector.container_open,
@@ -5015,7 +5042,8 @@ static void dm2_runtime_populate_g1_misc_static_items(
             &rt->g1_static_object_source_plans[i];
         DM2_V1_ViewportSpritePlacement placement;
         DM2_ItemSprite *dst;
-        if (material->selector.category != 0x15u ||
+        if (material->selector.category < 0x10u ||
+            material->selector.category > 0x15u ||
             !dm2_v1_viewport_project_map_to_sprite(
                 material->selector.x, material->selector.y,
                 party_dir, party_x, party_y, &placement)) continue;

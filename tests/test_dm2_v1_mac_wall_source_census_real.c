@@ -820,6 +820,167 @@ static int run_one(const char *zip, const char *source_id)
     putchar('\n');
     {
         uint8_t frame[320u * 200u];
+        DM2_V1_RuntimeItemRenderReceipt weapon_render;
+        const uint8_t *weapon;
+        int record_type = -1;
+        /* Retail Mac File_header has a direct DB5 weapon root on the
+         * corridor square immediately ahead of this diagnostic pose. */
+        weapon = dm2_v1_dungeon_get_thing_record(
+            dungeon, 0xd407u, &record_type, NULL, NULL);
+        if (dm2_v1_dungeon_get_square_type(dungeon, 11, 10, 1) != 1 ||
+            dm2_v1_dungeon_get_square_type(dungeon, 11, 10, 0) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != 0xd407 ||
+            !weapon || record_type != 5 ||
+            dm2_v1_dungeon_read_record_u16(dungeon, weapon + 2) != 0x3c85u) {
+            fprintf(stderr, "Mac retail DB5 source pose invalid: %s\n", source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        dm2_v1_runtime_set_position(11, 10, 1, 0);
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        memset(&weapon_render, 0, sizeof(weapon_render));
+        if (dm2_v1_runtime_last_asset_item_count() < 1 ||
+            !dm2_v1_runtime_last_item_render_receipt(&weapon_render) ||
+            !weapon_render.valid || !weapon_render.asset_blit_ready ||
+            weapon_render.object_id != 0xd407u ||
+            weapon_render.item_category != 0x10 ||
+            weapon_render.item_type != 0x05) {
+            fprintf(stderr,
+                    "Mac retail DB5 viewport missing: %s last=%04x cat=%x type=%x blit=%d items=%d\n",
+                    source_id, weapon_render.object_id,
+                    weapon_render.item_category, weapon_render.item_type,
+                    weapon_render.asset_blit_ready,
+                    dm2_v1_runtime_last_asset_item_count());
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
+    {
+        static const struct {
+            int map, item_x, item_y, pose_x, pose_y, dir;
+            uint16_t object_id;
+            uint16_t w2, w4;
+            uint8_t category, item_type;
+        } source_items[] = {
+            { 7, 20, 1, 20, 0, 2, 0x5c01u, 0xa050u, 0u, 0x12u, 0u },
+            { 17, 3, 5, 3, 4, 2, 0xa037u, 0x93ffu, 0u, 0x13u, 0x13u },
+            { 14, 6, 6, 6, 5, 2, 0x240eu, 0x1476u, 0x6000u, 0x14u, 3u }
+        };
+        for (size_t item = 0; item < sizeof(source_items) / sizeof(source_items[0]); ++item) {
+            uint8_t frame[320u * 200u];
+            DM2_V1_RuntimeItemRenderReceipt render;
+            const uint8_t *record;
+            int record_type = -1;
+            const int map = source_items[item].map;
+            const int x = source_items[item].item_x;
+            const int y = source_items[item].item_y;
+            record = dm2_v1_dungeon_get_thing_record(
+                dungeon, source_items[item].object_id, &record_type, NULL, NULL);
+            if (!record || record_type != (int)item + 7 ||
+                dm2_v1_dungeon_read_record_u16(dungeon, record + 2) !=
+                    source_items[item].w2 ||
+                (record_type == 9 &&
+                 dm2_v1_dungeon_read_record_u16(dungeon, record + 4) !=
+                    source_items[item].w4) ||
+                dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 1 ||
+                dm2_v1_dungeon_get_square_type(
+                    dungeon, map, source_items[item].pose_x,
+                    source_items[item].pose_y) != 1) {
+                fprintf(stderr, "Mac retail DB7-9 source pose invalid: %s db=%d\n",
+                        source_id, record_type);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            dm2_v1_runtime_set_position(map, source_items[item].pose_x,
+                                        source_items[item].pose_y,
+                                        source_items[item].dir);
+            memset(frame, 0, sizeof(frame));
+            M11_GameView_Draw(&state, frame, 320, 200);
+            memset(&render, 0, sizeof(render));
+            if (dm2_v1_runtime_last_asset_item_count() != 1 ||
+                !dm2_v1_runtime_last_item_render_receipt(&render) ||
+                !render.valid || !render.asset_blit_ready ||
+                render.object_id != source_items[item].object_id ||
+                render.item_category != source_items[item].category ||
+                render.item_type != source_items[item].item_type ||
+                render.frame_index != 0) {
+                fprintf(stderr,
+                        "Mac retail DB%d bitmap missing: %s last=%04x cat=%x type=%x field=%x count=%d\n",
+                        record_type, source_id, render.object_id,
+                        render.item_category, render.item_type,
+                        render.frame_index,
+                        dm2_v1_runtime_last_asset_item_count());
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+        }
+    }
+    {
+        uint8_t frame[320u * 200u];
+        DM2_V1_RuntimeItemRenderReceipt item_render;
+        /* New Game reaches (3,7) by ordinary movement. The floor square
+         * directly east contains a mirror/text prefix and linked DB6/DB10
+         * records; the renderer must skip the non-item prefix. */
+        if (dm2_v1_dungeon_get_square_type(dungeon, 0, 3, 7) != 1 ||
+            dm2_v1_dungeon_get_square_type(dungeon, 0, 4, 7) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 0, 4, 7) != 0x0c0e ||
+            dm2_v1_dungeon_get_next_thing(dungeon, 0x0c0e) != 0x08fe ||
+            dm2_v1_dungeon_get_next_thing(dungeon, 0x08fe) != 0x18a9) {
+            fprintf(stderr, "Mac corridor item chain invalid: %s\n", source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        dm2_v1_runtime_set_position(0, 3, 7, 1);
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        memset(&item_render, 0, sizeof(item_render));
+        if (dm2_v1_runtime_last_asset_item_count() != 8 ||
+            !dm2_v1_runtime_last_item_render_receipt(&item_render) ||
+            !item_render.asset_blit_ready ||
+            item_render.object_id != 0x28bau) {
+            fprintf(stderr,
+                    "Mac corridor DB6/DB10 item chain missing: %s count=%d last=%04x\n",
+                    source_id, dm2_v1_runtime_last_asset_item_count(),
+                    item_render.object_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        /* The next ordinary east-facing pose sees the linked DB6 tail on
+         * the source wall. This last-item receipt proves a DB6 bitmap was
+         * actually blitted, without adding a test-only item-list API. */
+        {
+            int db6_type = -1;
+            const uint8_t *db6 = dm2_v1_dungeon_get_thing_record(
+                dungeon, 0xd882u, &db6_type, NULL, NULL);
+            if (dm2_v1_dungeon_get_first_thing(dungeon, 0, 5, 7) != 0xcc10 ||
+                !db6 || db6_type != 6 ||
+                dm2_v1_dungeon_read_record_u16(dungeon, db6 + 2) != 0x0084u) {
+                fprintf(stderr, "Mac corridor DB6 source wall invalid: %s\n", source_id);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+        }
+        dm2_v1_runtime_set_position(0, 4, 7, 1);
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        memset(&item_render, 0, sizeof(item_render));
+        if (!dm2_v1_runtime_last_item_render_receipt(&item_render) ||
+            !item_render.valid || !item_render.asset_blit_ready ||
+            item_render.object_id != 0xd882u ||
+            item_render.item_category != 0x11 ||
+            item_render.item_type != 0x04) {
+            fprintf(stderr,
+                    "Mac corridor DB6 bitmap missing: %s last=%04x cat=%x type=%x blit=%d\n",
+                    source_id, item_render.object_id,
+                    item_render.item_category, item_render.item_type,
+                    item_render.asset_blit_ready);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
+    {
+        uint8_t frame[320u * 200u];
         DM2_V1_RuntimeItemRenderReceipt item_render;
         /* Diagnostic pose: the retail DB10 square is one step in front of
          * this source floor square. This does not assert a New Game route. */

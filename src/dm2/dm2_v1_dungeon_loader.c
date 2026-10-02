@@ -5773,9 +5773,8 @@ static int dm2_v1_g1_static_object_material_selector_fill(
     uint32_t hash = 2166136261u;
 
     if (!out || object_id == 0xfffeu ||
-        (category != 0x10u && category != 0x14u && category != 0x15u) ||
-        (category == 0x10u && image_field != 0u) ||
-        (category == 0x15u && image_field != 0u) ||
+        (category < 0x10u || category > 0x15u) ||
+        (category != 0x14u && image_field != 0u) ||
         (category == 0x14u && image_field != 0u && image_field != 4u)) {
         if (out) memset(out, 0, sizeof(*out));
         return 0;
@@ -5826,6 +5825,17 @@ int dm2_v1_g1_static_misc_material_selector(
     return dm2_v1_g1_static_object_material_selector_fill(
         object_id, x, y, 0x15u, item_type, 0u,
         (uint8_t)(object_id >> 14), 0u, image_offset, out);
+}
+
+int dm2_v1_g1_static_chain_material_selector(
+    uint16_t object_id, int x, int y, uint8_t category, uint8_t item_type,
+    uint8_t image_field, uint16_t image_offset,
+    DM2_V1_G1StaticObjectMaterialSelector *out)
+{
+    return dm2_v1_g1_static_object_material_selector_fill(
+        object_id, x, y, category, item_type, image_field,
+        (uint8_t)(object_id >> 14), (uint8_t)(image_field != 0),
+        image_offset, out);
 }
 
 int dm2_v1_g1_query_creature_blit_recti(int cell_pos, int position_5x5,
