@@ -1047,6 +1047,23 @@ int main(void)
     {
         DM2_V1_BootRuntimeRenderReceipt render;
         size_t high_physical_indices = 0u;
+        const DM2_V1_BootProfile *profile =
+            (const DM2_V1_BootProfile *)view.dm2BootProfile;
+        const DM2_V1_DungeonData *dungeon = profile ?
+            (const DM2_V1_DungeonData *)profile->dungeon_data : NULL;
+        const DM2_V1_AssetLoader *graphics =
+            dm2_v1_boot_asset_loader(profile);
+        int style = dungeon ?
+            dm2_v1_dungeon_get_map_graphics_style(dungeon, 3) : -1;
+        uint16_t highest = 0u;
+        uint16_t rain = 0xffffu;
+        check(style >= 0 && graphics &&
+                  !dm2_v1_query_gdat_entry_data_index(
+                      graphics, 8, style, 11, 0x67, &rain) &&
+                  dm2_v1_query_gdat_entry_data_index(
+                      graphics, 8, style, 11, 0x68, &highest) &&
+                  highest == 1u,
+              "FM Towns map 3 uses absent type-11 rain word as source zero");
         memset(&render, 0, sizeof(render));
         memset(framebuffer, 0, sizeof(framebuffer));
         (void)dm2_v1_boot_runtime_render_frame(

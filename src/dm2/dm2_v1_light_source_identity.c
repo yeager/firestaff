@@ -6,6 +6,16 @@
 #define HASH_START UINT64_C(14695981039346656037)
 #define HASH_PRIME UINT64_C(1099511628211)
 
+uint32_t dm2_v1_light_source_identity_fold(uint64_t identity)
+{
+    uint32_t hash = 2166136261u;
+    for (unsigned i = 0u; i < 8u; ++i) {
+        hash = (hash ^ (uint8_t)identity) * 16777619u;
+        identity >>= 8u;
+    }
+    return hash;
+}
+
 static uint64_t hash_bytes(uint64_t h, const void *data, size_t size)
 {
     const uint8_t *bytes = (const uint8_t *)data;

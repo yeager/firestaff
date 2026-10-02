@@ -415,6 +415,10 @@ static void test_light_identity_original_media(
     in.champion_inventory_objects = inventory;
     in.champion_inventory_count = sizeof(inventory) / sizeof(inventory[0]);
     assert(dm2_v1_light_source_identity(&in, &base) && base.valid);
+    assert(dm2_v1_light_source_identity_fold(UINT64_C(0x100000000)) !=
+           dm2_v1_light_source_identity_fold(0u));
+    assert(dm2_v1_light_source_identity_fold(1u) !=
+           dm2_v1_light_source_identity_fold(0u));
 
     in.graphics_style ^= 1;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
@@ -422,7 +426,9 @@ static void test_light_identity_original_media(
     in.graphics_style ^= 1;
     map.descriptor_hash ^= 1u;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
-           changed.map != base.map && changed.combined != base.combined);
+           changed.map != base.map && changed.combined != base.combined &&
+           dm2_v1_light_source_identity_fold(changed.map) !=
+               dm2_v1_light_source_identity_fold(base.map));
     map.descriptor_hash ^= 1u;
     tile_offset = dungeon->raw_map_data_base + dungeon->level_offsets[3] +
         13 * dungeon->level_heights[3] + 10;
@@ -431,7 +437,9 @@ static void test_light_identity_original_media(
            link_offset >= 0 && link_offset < dungeon->raw_size);
     dungeon->raw_data[tile_offset] ^= 1u;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
-           changed.dungeon != base.dungeon);
+           changed.dungeon != base.dungeon &&
+           dm2_v1_light_source_identity_fold(changed.dungeon) !=
+               dm2_v1_light_source_identity_fold(base.dungeon));
     dungeon->raw_data[tile_offset] ^= 1u;
     dungeon->raw_data[link_offset] ^= 1u;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
@@ -440,11 +448,15 @@ static void test_light_identity_original_media(
     assert(pools->pools[4].record_count > 0 && pools->pools[4].bytes);
     pools->pools[4].bytes[0] ^= 1u;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
-           changed.records != base.records);
+           changed.records != base.records &&
+           dm2_v1_light_source_identity_fold(changed.records) !=
+               dm2_v1_light_source_identity_fold(base.records));
     pools->pools[4].bytes[0] ^= 1u;
     graphics->entries[0].cls1 ^= 1u;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
-           changed.gdat != base.gdat);
+           changed.gdat != base.gdat &&
+           dm2_v1_light_source_identity_fold(changed.gdat) !=
+               dm2_v1_light_source_identity_fold(base.gdat));
     graphics->entries[0].cls1 ^= 1u;
     if (graphics->raw_data_count) {
         graphics->raw_offsets[0] ^= 1u;
@@ -458,7 +470,9 @@ static void test_light_identity_original_media(
     ((uint8_t *)graphics->data)[0] ^= 1u;
     ((uint8_t *)&party.hero[0])[0] ^= 1u;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
-           changed.party_light != base.party_light);
+           changed.party_light != base.party_light &&
+           dm2_v1_light_source_identity_fold(changed.party_light) !=
+               dm2_v1_light_source_identity_fold(base.party_light));
     ((uint8_t *)&party.hero[0])[0] ^= 1u;
     game.party_x ^= 1;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
@@ -482,7 +496,9 @@ static void test_light_identity_original_media(
     in.source_light_level ^= 1;
     weather.weather_seed ^= 1u;
     assert(dm2_v1_light_source_identity(&in, &changed) &&
-           changed.weather != base.weather);
+           changed.weather != base.weather &&
+           dm2_v1_light_source_identity_fold(changed.weather) !=
+               dm2_v1_light_source_identity_fold(base.weather));
     weather.weather_seed ^= 1u;
     weather_chain.intensity ^= 1;
     assert(dm2_v1_light_source_identity(&in, &changed) &&

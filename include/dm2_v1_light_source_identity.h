@@ -49,5 +49,7 @@ typedef struct {
 int dm2_v1_light_source_identity(
     const DM2_V1_LightSourceIdentityInputs *inputs,
     DM2_V1_LightSourceIdentity *out);
+/* Fold every byte of a live 64-bit identity into the terminal receipt ABI. */
+uint32_t dm2_v1_light_source_identity_fold(uint64_t identity);
 
 #endif

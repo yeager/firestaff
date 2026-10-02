@@ -61,6 +61,7 @@
 #include "dm2_v1_light_ops_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_light_visibility.h"
+#include "dm2_v1_light_terminal_receipt.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include "dm2_v1_creature_attacks_party_pc34_compat.h"
@@ -1659,12 +1660,161 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     rt->music_map_receipt = receipt;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_Mode7TileCache cache;
+    DM2_V1_LightSourceIdentity identity;
+    struct {
+        int map, x, y, direction, cost;
+        unsigned score;
+        int next_map, next_x, next_y;
+        int projection_map, projection_x, projection_y;
+        uint32_t hash;
+    } edge;
+    struct {
+        int map, x, y, direction;
+        unsigned score, source_flags;
+        uint8_t effective_flags;
+        int16_t ambient_before, darkness_before;
+        int16_t ambient_after, darkness_after;
+        uint32_t hash;
+    } node;
+} DM2_RuntimeMode7Walk;
+
+static uint64_t dm2_runtime_light_proof_mix(uint64_t hash, uint64_t value)
+{
+    for (unsigned i = 0u; i < 8u; ++i) {
+        hash = (hash ^ (uint8_t)value) * UINT64_C(1099511628211);
+        value >>= 8u;
+    }
+    return hash;
+}
+
+static int dm2_runtime_light_edge_finish(
+    DM2_RuntimeMode7Walk *walk, unsigned branch,
+    int map, int x, int y, int direction, unsigned score,
+    int raw, int first, int cost,
+    int next_map, int next_x, int next_y,
+    int projection_map, int projection_x, int projection_y)
+{
+    uint64_t hash;
+    if (cost < 0 || !walk || !walk->identity.valid || !branch) return -1;
+    hash = dm2_runtime_light_proof_mix(walk->identity.combined, branch);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint8_t)map << 24) | ((uint64_t)(uint8_t)x << 16) |
+        ((uint64_t)(uint8_t)y << 8) | (uint8_t)direction);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint8_t)score << 32) |
+        ((uint64_t)(uint8_t)raw << 24) |
+        ((uint64_t)(uint16_t)first << 8) | (uint8_t)cost);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint8_t)next_map << 16) |
+        ((uint64_t)(uint8_t)next_x << 8) | (uint8_t)next_y);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint8_t)projection_map << 16) |
+        ((uint64_t)(uint8_t)projection_x << 8) | (uint8_t)projection_y);
+    walk->edge.map = map;
+    walk->edge.x = x;
+    walk->edge.y = y;
+    walk->edge.direction = direction;
+    walk->edge.score = score;
+    walk->edge.cost = cost;
+    walk->edge.next_map = next_map;
+    walk->edge.next_x = next_x;
+    walk->edge.next_y = next_y;
+    walk->edge.projection_map = projection_map;
+    walk->edge.projection_x = projection_x;
+    walk->edge.projection_y = projection_y;
+    walk->edge.hash = dm2_v1_light_source_identity_fold(hash);
+    return walk->edge.hash ? cost : -1;
+}
+
+static uint32_t dm2_runtime_light_edge_receipt(
+    void *context, int map, int x, int y, int direction, unsigned score,
+    int cost, int next_map, int next_x, int next_y,
+    int projection_map, int projection_x, int projection_y)
+{
+    DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
+    if (!walk || walk->edge.map != map || walk->edge.x != x ||
+        walk->edge.y != y || walk->edge.direction != direction ||
+        walk->edge.score != score || walk->edge.cost != cost ||
+        walk->edge.next_map != next_map || walk->edge.next_x != next_x ||
+        walk->edge.next_y != next_y ||
+        walk->edge.projection_map != projection_map ||
+        walk->edge.projection_x != projection_x ||
+        walk->edge.projection_y != projection_y) return 0u;
+    return walk->edge.hash;
+}
+
+static int dm2_runtime_light_node_finish(
+    DM2_RuntimeMode7Walk *walk, unsigned branch,
+    int map, int x, int y, int direction, unsigned score,
+    unsigned source_flags, uint8_t effective_flags,
+    int raw, int first, int16_t ambient_before,
+    int16_t darkness_before, int result)
+{
+    uint64_t hash;
+    DM2_V1_1c9aLightVisibility *state;
+    if (!walk || !walk->rt || !walk->identity.valid || !branch ||
+        result < 0) return -1;
+    state = &walk->rt->c_light_visibility;
+    hash = dm2_runtime_light_proof_mix(walk->identity.combined, branch);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint8_t)map << 24) | ((uint64_t)(uint8_t)x << 16) |
+        ((uint64_t)(uint8_t)y << 8) | (uint8_t)direction);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint8_t)score << 32) |
+        ((uint64_t)(uint8_t)source_flags << 24) |
+        ((uint64_t)effective_flags << 16) |
+        ((uint64_t)(uint8_t)raw << 8) | (uint8_t)walk->cache.tile);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint16_t)first << 32) |
+        ((uint64_t)(uint16_t)ambient_before << 16) |
+        (uint16_t)darkness_before);
+    hash = dm2_runtime_light_proof_mix(hash,
+        ((uint64_t)(uint16_t)state->v1e0974 << 16) |
+        (uint16_t)state->v1e0978);
+    walk->node.map = map;
+    walk->node.x = x;
+    walk->node.y = y;
+    walk->node.direction = direction;
+    walk->node.score = score;
+    walk->node.source_flags = source_flags;
+    walk->node.effective_flags = effective_flags;
+    walk->node.ambient_before = ambient_before;
+    walk->node.darkness_before = darkness_before;
+    walk->node.ambient_after = state->v1e0974;
+    walk->node.darkness_after = state->v1e0978;
+    walk->node.hash = dm2_v1_light_source_identity_fold(hash);
+    return walk->node.hash ? result : -1;
+}
+
+static uint32_t dm2_runtime_light_node_receipt(
+    void *context, int map, int x, int y, int direction,
+    unsigned score, unsigned source_flags, uint8_t effective_flags,
+    int16_t ambient_before, int16_t darkness_before,
+    int16_t ambient_after, int16_t darkness_after)
+{
+    DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
+    if (!walk || walk->node.map != map || walk->node.x != x ||
+        walk->node.y != y || walk->node.direction != direction ||
+        walk->node.score != score ||
+        walk->node.source_flags != source_flags ||
+        walk->node.effective_flags != effective_flags ||
+        walk->node.ambient_before != ambient_before ||
+        walk->node.darkness_before != darkness_before ||
+        walk->node.ambient_after != ambient_after ||
+        walk->node.darkness_after != darkness_after) return 0u;
+    return walk->node.hash;
+}
+
 static int dm2_runtime_light_mode8_step(
     void *context, int map, int x, int y, int direction,
     unsigned score, int *next_map, int *next_x, int *next_y,
     int *projection_map, int *projection_x, int *projection_y)
 {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
+    DM2_V1_RuntimeState *rt = walk ? walk->rt : NULL;
     DM2_V1_DungeonData *dungeon;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_CLightStoneRoomReceipt room;
@@ -1673,12 +1823,17 @@ static int dm2_runtime_light_mode8_step(
     DM2_V1_SkprojectD283Receipt d283;
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
-    int nx, ny, raw, first;
-    (void)score;
+    int nx, ny, raw = -1, first = -1;
+    unsigned branch = 0u;
+    if (walk) walk->edge.hash = 0u;
     if (!rt || !rt->boot || !rt->boot->dungeon_data || !next_map ||
         !next_x || !next_y || !projection_map || !projection_x ||
         !projection_y || map < 0 || direction < 0 || direction > 3)
         return -1;
+#define DM2_LIGHT_EDGE_RETURN(B, R) \
+    return dm2_runtime_light_edge_finish(walk, (B), map, x, y, direction, \
+        score, raw, first, (R), *next_map, *next_x, *next_y, \
+        *projection_map, *projection_x, *projection_y)
     *projection_map = *projection_x = *projection_y = -1;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     if (map >= dungeon->level_count) return -1;
@@ -1686,22 +1841,24 @@ static int dm2_runtime_light_mode8_step(
     ny = y + dy[direction];
     if (nx < 0 || ny < 0 || nx >= dungeon->level_widths[map] ||
         ny >= dungeon->level_heights[map])
-        return 0;
+        DM2_LIGHT_EDGE_RETURN(1u, 0);
     raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, nx, ny);
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
     if (raw < 0) return -1;
     if ((raw >> 5) == 0 && first == -1) {
         /* The source's empty floor has no record or teleporter branch. */
+        branch = 2u;
     } else if ((raw >> 5) == 0 && (raw & 0x10) != 0) {
         /* SK1C9A/19f0_05e8 case 8 passes argl2=0. A marked class-0
          * square stops this probe before its DB2/DB3 record scan. */
-        return 0;
+        DM2_LIGHT_EDGE_RETURN(3u, 0);
     } else if ((raw == 0x50 || raw == 0x58) && first >= 0 &&
                (((uint16_t)first >> 10) & 0x0fu) == 2u) {
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
         unsigned length = 0u;
         /* SK1C9A/1BAAD's special wall blockers are DBF subtype 0xe and
          * DB4 creatures. Admit only complete DB2-only original chains. */
+        branch = 4u;
         if (!rt->record_pools_valid) return -1;
         while (link != (int16_t)0xfffe) {
             if (link == (int16_t)0xffff || ++length > 256u ||
@@ -1712,8 +1869,9 @@ static int dm2_runtime_light_mode8_step(
         }
     } else if ((raw >> 5) == 7) {
         /* SK1C9A GO_THERE case 7 exits before the capability mask. */
-        return 0;
+        DM2_LIGHT_EDGE_RETURN(5u, 0);
     } else if ((raw >> 5) == 4 && (raw & 7) == 4 && first >= 0) {
+        branch = 6u;
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)rt->boot->dm2_state;
         DM2_V1_FirstCreatureReceipt creature;
@@ -1725,10 +1883,13 @@ static int dm2_runtime_light_mode8_step(
         party_square = game->current_level == map &&
             game->party_x == nx && game->party_y == ny;
         if (dm2_v1_mode8_class4_single_db0_admission(
-                (uint8_t)raw, &creature, 0x36e7u, party_square) != 1)
-            return party_square ? 0 : -1;
+                (uint8_t)raw, &creature, 0x36e7u, party_square) != 1) {
+            if (party_square) DM2_LIGHT_EDGE_RETURN(6u, 0);
+            return -1;
+        }
     } else if (raw == 0xb8 && first >= 0 &&
                (((uint16_t)first >> 10) & 0x0fu) == 1u) {
+        branch = 7u;
         int16_t next;
         /* SK1C9A/19f0_05e8 enters the class-5 bit-8 D283 branch
          * directly. Its recursive arg-6 probe does not require a room
@@ -1748,18 +1909,23 @@ static int dm2_runtime_light_mode8_step(
             int dest_raw;
             if (dest_map != rt->c_light_visibility.current_map &&
                 dest_map != rt->c_light_visibility.alternate_map)
-                return 0;
+                DM2_LIGHT_EDGE_RETURN(8u, 0);
             dest_raw = dm2_v1_dungeon_get_tile_raw(
                 dungeon, dest_map, dest_x, dest_y);
             if (dest_raw < 0) return -1;
-            return dm2_v1_1c9a_light_arg6_destination_admission(
-                (uint8_t)dest_raw);
+            {
+                int admission = dm2_v1_1c9a_light_arg6_destination_admission(
+                    (uint8_t)dest_raw);
+                if (admission < 0) return -1;
+                DM2_LIGHT_EDGE_RETURN(9u, admission);
+            }
         }
         *next_map = map;
         *next_x = nx;
         *next_y = ny;
-        return 1;
+        DM2_LIGHT_EDGE_RETURN(10u, 1);
     } else if ((raw >> 5) == 5 && (raw & 0x08) == 0) {
+        branch = 11u;
         int found;
         /* GO_THERE class 5 without bit 8 maps a missing teleporter detail
          * to capability 0x402, which action 27's 0x36e7 mask admits. */
@@ -1776,12 +1942,13 @@ static int dm2_runtime_light_mode8_step(
             if (!detail_receipt.valid) return -1;
             if (detail.b_04 != rt->c_light_visibility.current_map &&
                 detail.b_04 != rt->c_light_visibility.alternate_map)
-                return 0;
+                DM2_LIGHT_EDGE_RETURN(12u, 0);
             *projection_map = detail.b_04;
             *projection_x = detail.b_02;
             *projection_y = detail.b_03;
         }
     } else if (raw == 0x30 || (raw == 0x20 && first == -1)) {
+        branch = 13u;
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)rt->boot->dm2_state;
         DM2_V1_FirstCreatureReceipt creature;
@@ -1806,14 +1973,18 @@ static int dm2_runtime_light_mode8_step(
                     (uint8_t)raw, 1, party_square) :
                 dm2_v1_mode7_go_there_class1_no_record_admission(
                     (uint8_t)raw, first, party_square);
-        if (admitted != 1) return admitted;
+        if (admitted != 1) {
+            if (admitted < 0) return -1;
+            DM2_LIGHT_EDGE_RETURN(14u, admitted);
+        }
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
+        branch = 15u;
         loader = dm2_v1_boot_asset_loader(rt->boot);
         if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(
                 dungeon, loader, map, nx, ny, (uint32_t)rt->tick_count,
                 &room))
             return -1;
-        if (room.source_tile_type == 2u) return 0;
+        if (room.source_tile_type == 2u) DM2_LIGHT_EDGE_RETURN(16u, 0);
         if ((raw >> 5) == 5) {
             if ((raw & 0x08) != 0) return -1;
             if (!rt->record_pools_valid ||
@@ -1823,7 +1994,7 @@ static int dm2_runtime_light_mode8_step(
                 return -1;
             if (detail.b_04 != rt->c_light_visibility.current_map &&
                 detail.b_04 != rt->c_light_visibility.alternate_map)
-                return 0;
+                DM2_LIGHT_EDGE_RETURN(17u, 0);
             *projection_map = detail.b_04;
             *projection_x = detail.b_02;
             *projection_y = detail.b_03;
@@ -1836,13 +2007,9 @@ static int dm2_runtime_light_mode8_step(
     *next_map = map;
     *next_x = nx;
     *next_y = ny;
-    return 1;
+    DM2_LIGHT_EDGE_RETURN(branch, 1);
+#undef DM2_LIGHT_EDGE_RETURN
 }
-
-typedef struct {
-    DM2_V1_RuntimeState *rt;
-    DM2_V1_Mode7TileCache cache;
-} DM2_RuntimeMode7Walk;
 
 static uint8_t dm2_runtime_attack_cls1(void *ctx, uint16_t record);
 static uint8_t dm2_runtime_attack_cls2(void *ctx, uint16_t record);
@@ -1873,23 +2040,30 @@ static int dm2_runtime_mode7_step(
     DM2_V1_DungeonData *dungeon;
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
-    int nx, ny, raw, first, admitted;
+    int nx, ny, raw = -1, first = -1, admitted;
+    unsigned branch = 18u;
+    if (walk) walk->edge.hash = 0u;
     if (!walk || !walk->rt || !walk->rt->boot ||
         !walk->rt->boot->dungeon_data || !next_map || !next_x || !next_y ||
         !projection_map || !projection_x || !projection_y || map < 0 ||
         direction < 0 || direction > 3) return -1;
+#define DM2_LIGHT_EDGE_RETURN(B, R) \
+    return dm2_runtime_light_edge_finish(walk, (B), map, x, y, direction, \
+        score, raw, first, (R), *next_map, *next_x, *next_y, \
+        *projection_map, *projection_x, *projection_y)
     *projection_map = *projection_x = *projection_y = -1;
     dungeon = (DM2_V1_DungeonData *)walk->rt->boot->dungeon_data;
     if (map >= dungeon->level_count) return -1;
     nx = x + dx[direction];
     ny = y + dy[direction];
     if (nx < 0 || ny < 0 || nx >= dungeon->level_widths[map] ||
-        ny >= dungeon->level_heights[map]) return 0;
+        ny >= dungeon->level_heights[map]) DM2_LIGHT_EDGE_RETURN(19u, 0);
     raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, nx, ny);
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
     if (raw < 0 || first < -1) return -1;
     admitted = dm2_v1_mode7_go_there_tile_admission((uint8_t)raw, first);
     if (admitted < 0 && raw == 0xb8 && walk->rt->record_pools_valid) {
+        branch = 20u;
         DM2_V1_SkprojectD283Receipt d283;
         memset(&d283, 0, sizeof(d283));
         if (dm2_v1_skproject_d283_dungeon(
@@ -1899,6 +2073,7 @@ static int dm2_runtime_mode7_step(
                 (uint8_t)raw, d283.record_word2);
     }
     if (admitted < 0 && (raw >> 5) == 0 && first == -1) {
+        branch = 21u;
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
         int party_square;
@@ -1910,6 +2085,7 @@ static int dm2_runtime_mode7_step(
     }
     if (admitted < 0 && (raw >> 5) == 1 && (raw & 0x10) == 0 &&
         first == -1) {
+        branch = 22u;
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
         int party_square;
@@ -1920,6 +2096,7 @@ static int dm2_runtime_mode7_step(
             (uint8_t)raw, first, party_square);
     }
     if (admitted < 0 && raw == 0xb0 && walk->rt->record_pools_valid) {
+        branch = 23u;
         DM2_V1_SkprojectTeleporterDetail detail;
         DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
         memset(&detail, 0, sizeof(detail));
@@ -1932,6 +2109,7 @@ static int dm2_runtime_mode7_step(
     }
     if (admitted < 0 && raw == 0x30 && first >= 0 &&
         walk->rt->record_pools_valid) {
+        branch = 24u;
         DM2_V1_FirstCreatureReceipt creature;
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
@@ -1957,6 +2135,7 @@ static int dm2_runtime_mode7_step(
     }
     if (admitted < 0 &&
         (raw == 0x30 || (raw == 0x10 && first >= 0))) {
+        branch = 25u;
         int no_creature = 0;
         int party_square = 0;
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
@@ -1984,11 +2163,15 @@ static int dm2_runtime_mode7_step(
             dm2_v1_mode7_go_there_class1_raw30_admission(
                 (uint8_t)raw, no_creature, party_square);
     }
-    if (admitted != 1) return admitted;
+    if (admitted != 1) {
+        if (admitted < 0) return -1;
+        DM2_LIGHT_EDGE_RETURN(branch, admitted);
+    }
     *next_map = map;
     *next_x = nx;
     *next_y = ny;
-    return 1;
+    DM2_LIGHT_EDGE_RETURN(branch, 1);
+#undef DM2_LIGHT_EDGE_RETURN
 }
 
 static int dm2_runtime_mode7_flags3_class5_evidence(
@@ -2075,7 +2258,11 @@ static int dm2_runtime_mode7_on_node(
     DM2_V1_CLightStoneRoomReceipt room;
     DM2_V1_Mode7Flags3Evidence prepass;
     DM2_V1_Mode7Action23Node node;
-    int raw, first, result;
+    int raw = -1, first = -1, result;
+    unsigned branch = 0u;
+    int16_t ambient_before = rt->c_light_visibility.v1e0974;
+    int16_t darkness_before = rt->c_light_visibility.v1e0978;
+    walk->node.hash = 0u;
     /* The current class-0/2/5 receipts do not consume viewing direction.
      * Keep both source values distinct for the remaining record branches. */
     (void)direction;
@@ -2093,10 +2280,14 @@ static int dm2_runtime_mode7_on_node(
     node.effective_flags = effective_flags;
     node.source_flags = (uint8_t)source_flags;
     node.distance = (uint8_t)score;
-    if (!dm2_v1_mode7_tile_cache_action23_gate(&walk->cache))
-        return dm2_v1_mode7_on_node(&node,
+    if (!dm2_v1_mode7_tile_cache_action23_gate(&walk->cache)) {
+        result = dm2_v1_mode7_on_node(&node,
             &rt->c_light_visibility.v1e0974,
             &rt->c_light_visibility.v1e0978);
+        return dm2_runtime_light_node_finish(walk, 26u, map, x, y,
+            direction, score, source_flags, effective_flags,
+            raw, first, ambient_before, darkness_before, result);
+    }
     if (!loader) goto unknown;
     if (rt->weather_chain.storm_active < 0 ||
         rt->weather_chain.storm_active > 5 ||
@@ -2108,6 +2299,7 @@ static int dm2_runtime_mode7_on_node(
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
     if (raw < 0 || first < -1) goto unknown;
     if (source_flags == 3u && (raw >> 5) == 5) {
+        branch = 27u;
         if (!dm2_v1_dungeon_c_light_stone_room_receipt(
                 dungeon, loader, map, x, y,
                 (uint32_t)rt->tick_count, &room) &&
@@ -2118,6 +2310,7 @@ static int dm2_runtime_mode7_on_node(
         node.stone_room = &room;
         node.prepass = &prepass;
     } else if (source_flags == 3u && (raw >> 5) == 1) {
+        branch = 28u;
         uint16_t ceiling_word = 0u;
         if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
                 dungeon, loader, map, x, y, &room)) goto unknown;
@@ -2135,6 +2328,7 @@ static int dm2_runtime_mode7_on_node(
     } else if (source_flags != 4u) {
         goto unknown;
     } else if ((raw >> 5) == 0) {
+        branch = first == -1 ? 29u : 30u;
         result = first == -1 ?
             dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
                 dungeon, map, x, y, &floor) :
@@ -2144,10 +2338,12 @@ static int dm2_runtime_mode7_on_node(
         if (!result) goto unknown;
         node.floor = &floor;
     } else if (raw == 0x30) {
+        branch = 31u;
         if (!dm2_v1_dungeon_c_light_class1_flags4_receipt(
                 dungeon, map, x, y, &room)) goto unknown;
         node.stone_room = &room;
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
+        branch = 32u;
         if (!dm2_v1_dungeon_c_light_stone_room_receipt(
                 dungeon, loader, map, x, y,
                 (uint32_t)rt->tick_count, &room)) goto unknown;
@@ -2157,37 +2353,96 @@ static int dm2_runtime_mode7_on_node(
         &rt->c_light_visibility.v1e0974,
         &rt->c_light_visibility.v1e0978);
     if (result < 0) goto unknown;
-    return result;
+    return dm2_runtime_light_node_finish(walk, branch, map, x, y,
+        direction, score, source_flags, effective_flags,
+        raw, first, ambient_before, darkness_before, result);
 unknown:
     return -1;
 }
 
 static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
 {
-    DM2_RuntimeMode7Walk mode7;
+    DM2_RuntimeMode7Walk mode8, mode7;
+    DM2_V1_LightWalkSourceReceipts receipts;
+    DM2_V1_LightWalkTerminalProof mode8_proof, mode7_proof;
+    DM2_V1_LightTerminalSourceInputs inputs;
+    DM2_V1_LightSourceIdentity identity;
     uint16_t uncommitted_rng = 1u;
     uint16_t source_radius = 0u;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    uint32_t prepass_hash;
+    uint64_t prepass_identity;
+    int raw_start;
     if (!rt || !rt->source_party_valid ||
         !rt->c_light_map_descriptor.valid ||
         !rt->c_light_map_descriptor.dynamic_light)
         return;
+    rt->c_light_visibility.mode8_complete = 0u;
+    rt->c_light_visibility.mode7_complete = 0u;
+    rt->c_light_visibility.source_state_hash = 0u;
+    /* Only these original FM Towns starts have independently covered walk
+     * branches and a checked map-3/map-38 teleporter handoff. */
+    if (!((rt->dungeon_level == 3 && x == 13 && (y == 9 || y == 10)) ||
+          (rt->dungeon_level == 38 && x == 6 && (y == 5 || y == 6))) ||
+        !dm2_v1_runtime_light_source_identity(&identity) ||
+        !identity.valid) return;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw_start = dm2_v1_dungeon_get_tile_raw(
+        dungeon, rt->dungeon_level, x, y);
+    if (raw_start < 0) return;
+    prepass_identity = dm2_runtime_light_proof_mix(identity.combined,
+        ((uint64_t)(uint8_t)rt->dungeon_level << 24) |
+        ((uint64_t)(uint8_t)x << 16) | ((uint64_t)(uint8_t)y << 8) |
+        (uint8_t)raw_start);
     rt->c_light_visibility.alternate_projection_valid = 0u;
     if (dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x1bu) &&
-        rt->record_pools_valid &&
-        dm2_v1_skproject_get_teleporter_detail_dungeon(
+        (raw_start >> 5) == 5) {
+        int found;
+        if (!rt->record_pools_valid) return;
+        memset(&detail, 0, sizeof(detail));
+        memset(&detail_receipt, 0, sizeof(detail_receipt));
+        found = dm2_v1_skproject_get_teleporter_detail_dungeon(
             dungeon, &rt->record_pools, rt->dungeon_level, x, y,
-            &detail, &detail_receipt) && detail_receipt.valid)
-        (void)dm2_v1_1c9a_light_visibility_project_teleporter(
-            &rt->c_light_visibility, detail.b_04,
-            detail.b_02, detail.b_03);
+            &detail, &detail_receipt);
+        if (found) {
+            if (!detail_receipt.valid ||
+                !dm2_v1_1c9a_light_visibility_project_teleporter(
+                    &rt->c_light_visibility, detail.b_04,
+                    detail.b_02, detail.b_03)) return;
+            prepass_identity = dm2_runtime_light_proof_mix(
+                prepass_identity, 1u);
+            prepass_identity = dm2_runtime_light_proof_mix(
+                prepass_identity,
+                ((uint64_t)detail.b_04 << 16) |
+                ((uint64_t)detail.b_02 << 8) | detail.b_03);
+        } else {
+            if (!detail_receipt.blocked_tile_not_teleporter &&
+                !detail_receipt.blocked_missing_origin) return;
+            prepass_identity = dm2_runtime_light_proof_mix(
+                prepass_identity, 2u);
+        }
+    } else {
+        prepass_identity = dm2_runtime_light_proof_mix(
+            prepass_identity, 3u);
+    }
+    prepass_hash = dm2_v1_light_source_identity_fold(prepass_identity);
+    if (!prepass_hash) return;
+    memset(&mode8, 0, sizeof(mode8));
+    mode8.rt = rt;
+    mode8.identity = identity;
+    memset(&receipts, 0, sizeof(receipts));
+    receipts.edge = dm2_runtime_light_edge_receipt;
+    receipts.context = &mode8;
     /* A missing cell branch leaves the pass incomplete and c_light blocked. */
-    (void)dm2_v1_1c9a_light_mode8_frontier_with_rng(
+    if (!dm2_v1_1c9a_light_mode8_frontier_with_proof(
         &rt->c_light_visibility, rt->dungeon_level, x, y,
-        dm2_runtime_light_mode8_step, rt, &uncommitted_rng);
+        dm2_runtime_light_mode8_step, &mode8, &uncommitted_rng,
+        &receipts, &mode8_proof)) return;
+    mode8_proof.source_edge_hash = (mode8_proof.source_edge_hash ^
+        prepass_hash) * 16777619u;
+    if (!mode8_proof.source_edge_hash) return;
     if (rt->map_graphics_style < 0 || rt->map_graphics_style > 0xff ||
         !dm2_v1_boot_asset_loader(rt->boot)) return;
     /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero for an absent word. Source
@@ -2196,17 +2451,41 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
     (void)dm2_v1_query_gdat_entry_data_index(
         dm2_v1_boot_asset_loader(rt->boot), 8,
         rt->map_graphics_style, 11, 0x6d, &source_radius);
-    if (source_radius == 0u) {
-        rt->c_light_visibility.v1e0974 = 0;
-        rt->c_light_visibility.v1e0978 = 0;
-        return;
-    }
+    if (source_radius > 8u) source_radius = 8u;
     memset(&mode7, 0, sizeof(mode7));
     mode7.rt = rt;
-    (void)dm2_v1_1c9a_light_mode7_frontier_with_rng(
-        &rt->c_light_visibility, rt->dungeon_level, x, y,
-        rt->view_dir, source_radius, dm2_runtime_mode7_step,
-        dm2_runtime_mode7_on_node, &mode7, &uncommitted_rng);
+    mode7.identity = identity;
+    if (source_radius == 0u) {
+        if (!dm2_v1_1c9a_light_mode7_zero_radius_proof(
+                &rt->c_light_visibility, rt->dungeon_level, x, y,
+                uncommitted_rng,
+                dm2_v1_light_source_identity_fold(identity.gdat),
+                &mode7_proof)) return;
+    } else {
+        receipts.node = dm2_runtime_light_node_receipt;
+        receipts.context = &mode7;
+        if (!dm2_v1_1c9a_light_mode7_frontier_with_proof(
+                &rt->c_light_visibility, rt->dungeon_level, x, y,
+                rt->view_dir, source_radius, dm2_runtime_mode7_step,
+                dm2_runtime_mode7_on_node, &mode7,
+                &uncommitted_rng, &receipts, &mode7_proof)) return;
+    }
+    memset(&inputs, 0, sizeof(inputs));
+    inputs.map = (int16_t)rt->dungeon_level;
+    inputs.x = (uint8_t)x;
+    inputs.y = (uint8_t)y;
+    inputs.radius = (uint8_t)source_radius;
+    inputs.savegame_light = (uint16_t)rt->source_light_level;
+    inputs.rng_final = uncommitted_rng;
+    inputs.map_descriptor_hash = dm2_v1_light_source_identity_fold(identity.map);
+    inputs.dungeon_hash = dm2_v1_light_source_identity_fold(identity.dungeon);
+    inputs.record_pool_hash = dm2_v1_light_source_identity_fold(identity.records);
+    inputs.gdat_hash = dm2_v1_light_source_identity_fold(identity.gdat);
+    inputs.party_inventory_hash = dm2_v1_light_source_identity_fold(
+        identity.party_light);
+    inputs.weather_hash = dm2_v1_light_source_identity_fold(identity.weather);
+    (void)dm2_v1_light_terminal_receipt_commit(&rt->c_light_visibility,
+        &mode8_proof, &mode7_proof, &inputs);
 }
 
 /* UPDATE_GFXSET, CHECK_RECOMPUTE_LIGHT and c_weather all consume the active
@@ -17266,8 +17545,9 @@ static int dm2_runtime_recalc_dynamic_light(
         !rt->source_weather_light_valid ||
         rt->source_party.heros_in_party < 0 ||
         rt->source_party.heros_in_party > DM2_MAX_HEROES ||
-        (scene_mask & ((1u << 2) | (1u << 4))) !=
-            ((1u << 2) | (1u << 4)) ||
+        /* GRAPHICSSET 0x67 may be absent: source type-11 lookup returns
+         * zero for that entry. 0x68 is present on these admitted maps. */
+        (scene_mask & (1u << 4)) == 0u ||
         scene_rain > UINT16_MAX || highest_light_level > UINT16_MAX ||
         !dm2_v1_1c9a_light_visibility_level_inputs(
             &rt->c_light_visibility, rt->dungeon_level,
