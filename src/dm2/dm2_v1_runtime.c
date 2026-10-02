@@ -4826,7 +4826,7 @@ static void dm2_runtime_populate_g1_static_object_materials(
      * present after DM2_MOVE_RECORD_TO removes its source record. */
     rt->g1_static_object_material_count = 0;
     rt->g1_static_object_delivery_plan_count = 0;
-    if (!rt->boot || rt->outdoor || !rt->boot->dungeon_data ||
+    if (!rt->boot || !rt->boot->dungeon_data ||
         !rt->session_snapshot_valid) return;
     session_identity = dm2_v1_runtime_dm2_viewport_session_identity(
         &rt->session_snapshot);
@@ -5006,7 +5006,7 @@ static void dm2_runtime_populate_g1_misc_static_items(
 {
     /* SKProject skguidrw.cpp:5646-5685 DRAW_STATIC_OBJECT and :4733-4780
      * DRAW_PUT_DOWN_ITEM pass visible DB10 through DRAW_ITEM. */
-    if (!rt || !viewport || rt->outdoor) return;
+    if (!rt || !viewport) return;
     for (int i = 0; i < rt->g1_static_object_material_count &&
                     viewport->item_count < DM2_MAX_ITEMS_PER_SQ; ++i) {
         const DM2_V1_G1StaticObjectMaterialReceipt *material =

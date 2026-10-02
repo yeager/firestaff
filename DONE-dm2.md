@@ -1,5 +1,11 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: The Mac outdoor viewport now draws source-admitted DB10 items
+  after its ground layer, following SKProject's outdoor tile/static-object
+  pass. Retail map 15 (10,6), viewed from (10,5) facing south, draws both
+  original linked records `0x2848` and `0x6849`; the second has chain
+  ordinal 2. Other outdoor item categories and interactions remain open.
+
 - 2026-10-02: The indoor Mac viewport now walks authenticated DB10 tile
   chains and carries each record's source draw slot into placement. At retail
   map 10 (4,0), a diagnostic pose at (3,0) facing east draws all five original

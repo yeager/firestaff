@@ -33,9 +33,9 @@
   original Mac DB10 image now renders at an authenticated diagnostic pose.
   An opaque pointer click can move that square-head item into the leader
   hand. Mac retail record chains now follow their original big-endian links,
-  and the indoor viewport renders linked DB10 items with source draw slots.
-  Outdoor item drawing, linked DB5–DB9 items, normal traversal to the item,
-  and placement remain open.
+  and indoor and outdoor viewports render linked DB10 items with source draw
+  slots. Other outdoor item categories, linked DB5–DB9 items, normal
+  traversal to the item, and placement remain open.
 - `DM2 Macintosh wall controls`: local actuator list rotation now writes
   record links in Mac byte order. A live local-action switch was not found in
   the supplied retail actuator census, so that route remains unverified.

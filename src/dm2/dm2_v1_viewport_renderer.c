@@ -9576,6 +9576,17 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
             return;
         }
+        /* SKProject skguivwp.cpp DRAW_DUNGEON_TILES calls
+         * DRAW_STATIC_OBJECT after DRAW_EXTERNAL_TILE on outdoor cells.
+         * The DB10 objects use their DRAW_ITEM F0 receipt and placement. */
+        dm2_v1_render_items(s);
+        if (s->source_materials_required &&
+            s->last_item_presentation_command.valid) {
+            s->last_frame_composition.item_presentation_stage = 7;
+            s->last_frame_composition.item_command_consumed = 1;
+            s->last_frame_composition.item_command =
+                s->last_item_presentation_command;
+        }
     } else {
         /* DM2 indoor dungeon rendering:
          * Draw order (same as DM1): D3→D2→D1→D0 per depth.

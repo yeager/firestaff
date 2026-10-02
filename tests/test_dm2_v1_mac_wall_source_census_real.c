@@ -882,6 +882,39 @@ static int run_one(const char *zip, const char *source_id)
     }
     {
         uint8_t frame[320u * 200u];
+        DM2_V1_RuntimeItemRenderReceipt outdoor_item;
+        /* Original Mac retail map 15: two linked DB10 records are on the
+         * floor square directly ahead of this outdoor party pose. */
+        if (dm2_v1_dungeon_get_square_type(dungeon, 15, 10, 5) != 1 ||
+            dm2_v1_dungeon_get_square_type(dungeon, 15, 10, 6) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 15, 10, 6) != 0x2848 ||
+            dm2_v1_dungeon_get_next_thing(dungeon, 0x2848u) != 0x6849) {
+            fprintf(stderr, "Mac outdoor DB10 source pose invalid: %s\n", source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        dm2_v1_runtime_set_position(15, 10, 5, 2);
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        memset(&outdoor_item, 0, sizeof(outdoor_item));
+        if (dm2_v1_runtime_last_asset_item_count() != 2 ||
+            !dm2_v1_runtime_last_item_render_receipt(&outdoor_item) ||
+            !outdoor_item.valid || !outdoor_item.asset_blit_ready ||
+            outdoor_item.item_category != 0x15 ||
+            outdoor_item.object_id != 0x6849u ||
+            outdoor_item.source_static_object_draw_slot != 0 ||
+            outdoor_item.source_static_object_record_ordinal != 2) {
+            fprintf(stderr,
+                    "Mac outdoor DB10 viewport missing: %s last=%04x blit=%d items=%d\n",
+                    source_id, outdoor_item.object_id,
+                    outdoor_item.asset_blit_ready,
+                    dm2_v1_runtime_last_asset_item_count());
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
+    {
+        uint8_t frame[320u * 200u];
         DM2_V1_ViewportRect rect;
         DM2_V1_RuntimeViewportClickReceipt on_image, above_image;
         DM2_V1_BootExpandedRectReceipt rect7;

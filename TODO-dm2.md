@@ -338,8 +338,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   reverse route. Resolve the original Mac New Game start/transition before
   assuming the map 0 boundary can be crossed. The current Mac C080
   production pointer route now accepts source-admitted square-head floor
-  items through opaque pixels. Linked DB5–DB9 rendering, outdoor item
-  drawing, linked-item pickup, and placement back onto a tile remain open.
+  items through opaque pixels. Linked DB5–DB9 rendering, linked-item pickup,
+  and placement back onto a tile remain open.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
@@ -354,8 +354,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   exact square-root record into the hand. The original Mac graph contains
   linked DB10 records, proven at map 10 (4,0) and map 15 (10,6). The indoor
   map-10 viewport now draws all five linked DB10 records with source draw
-  slots. Extend the outdoor path, linked DB5–DB9 admission, and item
-  interaction beyond square-root records.
+  slots. The outdoor map-15 viewport also draws both linked DB10 records.
+  Extend linked DB5–DB9 admission and item interaction beyond square-root
+  records.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first
