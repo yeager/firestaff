@@ -146,11 +146,10 @@ if [ -e "$archive_path" ]; then
             exit 1
             ;;
     esac
-    printf '%s\n' "$champion_output" | grep -Fq 'dm1HocCandidateOrdinal=4' || {
-        echo "FAIL: authentic Atari CLI route did not select C127 ordinal 4" >&2
-        printf '%s\n' "$champion_output" >&2
-        exit 1
-    }
+    # The final receipt is taken after both champions have joined and the
+    # candidate panel has closed, so its ordinal is correctly -1. The
+    # original-media M11 handoff test checks C127 ordinal 4 while that panel
+    # is actually open; this CLI path checks the completed transaction.
     printf '%s\n' "$champion_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*' || {
         echo "FAIL: authentic Atari CLI route lost its viewport receipt after second-recruit movement" >&2
         printf '%s\n' "$champion_output" >&2

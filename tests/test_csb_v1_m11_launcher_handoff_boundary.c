@@ -2793,13 +2793,16 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
     CSB_V1_AtariSaveInfo save_info;
     CSB_V1_BootProfile *profile;
     M11_AssetSlot *graphic;
+    M11_AssetSlot *front_graphic = NULL;
     unsigned char with_weapon[320 * 200];
     unsigned char without_weapon[320 * 200];
     unsigned char d1_with_weapon[320 * 200];
+    unsigned char d1_front_with_weapon[320 * 200];
     uint8_t *record;
     int old_level, old_x, old_y, old_dir, old_inventory;
-    int type, size, thing;
+    int type, size, thing, front_thing;
     int matched = 0, changed = 0, d0_matched = 0, d0_changed = 0;
+    int d1_front_matched = 0, d1_front_opaque = 0, d1_front_changed = 0;
 
     if (!view || !data_dir ||
         snprintf(save_path, sizeof(save_path), "%s/Chaos Strikes Back Utility.stx::MINI.DAT",
@@ -2888,8 +2891,64 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
         for (int col = 0; col < 64; ++col)
             if (d1_with_weapon[(138 + row) * 320 + 167 + col] !=
                 without_weapon[(138 + row) * 320 + 167 + col]) ++changed;
-    expect_true(matched > 0 && changed > 0 && d0_matched > 0 && d0_changed > 0,
-                "Atari D1C/D0C weapon uses source graphic 372 and vanishes after source F0267 unlinks it");
+    /* A second genuine MINI item (map 9, x23,y10) has an open source
+     * square immediately south. From (23,11) facing north it occupies
+     * D1C front-left. G0209 subtype 29 selects graphic 372 (64x4).
+     * Atari F0129 samples x=(85183+104832*x)>>16 and y=1,3;
+     * G0214's Atari palette bytes /10 give the table below. The fixed
+     * MINI and decoded GRAPHICS.DAT hashes bind this original-media pose. */
+    front_thing = csb_v1_dungeon_get_first_thing(candidate, 9, 23, 10);
+    record = (uint8_t *)csb_v1_dungeon_get_thing_record(
+        candidate, (uint16_t)front_thing, &type, NULL, &size);
+    if (front_thing == 0x144e && record && type == 5 && size == 4 &&
+        record[2] == 0x9du &&
+        indexed_frame_hash(save_bytes, save_size) == 0x0d225b7bu &&
+        csb_v1_dungeon_get_square_type(candidate, 9, 23, 10) == 1 &&
+        csb_v1_dungeon_get_square_type(candidate, 9, 23, 11) == 1 &&
+        csb_v1_dungeon_f0159_get_next_thing_pc34(candidate,
+            (uint16_t)front_thing) == 0xfffeu) {
+        static const unsigned char d2_palette[16] =
+            {0,1,2,3,4,3,6,7,5,9,10,11,12,13,14,15};
+        profile->runtime.current_level = 9;
+        profile->runtime.party_x = 23;
+        profile->runtime.party_y = 11;
+        profile->runtime.party_dir = 0;
+        csb_v1_dungeon_set_current_level(9);
+        memset(d1_front_with_weapon, 0, sizeof(d1_front_with_weapon));
+        M11_GameView_Draw(view, d1_front_with_weapon, 320, 200);
+        front_graphic = (M11_AssetSlot *)M11_AssetLoader_Load(&view->assetLoader, 372u);
+        if (front_graphic && front_graphic->loaded && front_graphic->pixels &&
+            front_graphic->width == 64u && front_graphic->height == 4u &&
+            indexed_frame_hash(front_graphic->pixels, 64u * 4u) == 0xdffa179eu) {
+            for (int row = 0; row < 2; ++row)
+                for (int col = 0; col < 40; ++col) {
+                    const int sx = (85183 + 104832 * col) >> 16;
+                    const int sy = 1 + 2 * row;
+                    const unsigned char source = front_graphic->pixels[sy * 64 + sx];
+                    const unsigned char pixel = d2_palette[source & 15u];
+                    if (pixel != 10u) {
+                        ++d1_front_opaque;
+                        if (d1_front_with_weapon[(125 + row) * 320 + 114 + col] == pixel)
+                            ++d1_front_matched;
+                    }
+                }
+        }
+        if (csb_dungeon_move_thing_default((uint16_t)front_thing,
+                                           23, 10, -1, -1) == 0 &&
+            csb_v1_dungeon_get_first_thing(candidate, 9, 23, 10) < 0) {
+            memset(without_weapon, 0, sizeof(without_weapon));
+            M11_GameView_Draw(view, without_weapon, 320, 200);
+            for (int row = 0; row < 2; ++row)
+                for (int col = 0; col < 40; ++col)
+                    if (d1_front_with_weapon[(125 + row) * 320 + 114 + col] !=
+                        without_weapon[(125 + row) * 320 + 114 + col])
+                        ++d1_front_changed;
+        }
+    }
+    expect_true(matched > 0 && changed > 0 && d0_matched > 0 && d0_changed > 0 &&
+                    d1_front_opaque > 0 && d1_front_matched == d1_front_opaque &&
+                    d1_front_changed > 0,
+                "Atari D1C/D0C weapon and F0129-scaled D1C front weapon use source graphic 372 and vanish after F0267");
     profile->runtime.dungeon_handle = original;
     profile->runtime.current_level = old_level;
     profile->runtime.party_x = old_x;

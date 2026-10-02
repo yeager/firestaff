@@ -5302,7 +5302,8 @@ static int m11_csb_atari_st_draw_ceiling_pit(
  * resulting {graphic, pixel width, height, G0218 coordinate set} for DB5.
  * Every distinct source graphic was decoded from original Atari ST v2.1
  * GRAPHICS.DAT and had the G0209 dimensions. This pass still covers only
- * one first/only DB5 thing in the source D1C/D0C back-cell passes;
+ * one first/only DB5 thing in the source D1C front/back and D0C back passes.
+ * None of these 46 G0209 aspects has FLIP_ON_RIGHT or ALCOVE graphic flags;
  * complete F0115 ordering is pending. */
 static const struct {
     uint16_t graphic;
@@ -5326,8 +5327,10 @@ static const struct {
 
 static int m11_csb_atari_st_draw_near_weapon(
     M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_RuntimeProfile *runtime, unsigned char *viewport, int d0c)
+    const CSB_V1_RuntimeProfile *runtime, unsigned char *viewport, int view_cell)
 {
+    static const unsigned char d2_palette[16] =
+        {0,1,2,3,4,3,6,7,5,9,10,11,12,13,14,15};
     const M11_AssetSlot *graphic;
     const uint8_t *record;
     int thing;
@@ -5345,16 +5348,22 @@ static int m11_csb_atari_st_draw_near_weapon(
     int cell;
     int coordinate_set;
     int center;
+    int scaled;
+    int drawn_width;
+    int drawn_height;
+    unsigned int x_step = 0u;
+    unsigned int y_step = 0u;
 
     if (!state || !dungeon || !runtime || !viewport) return 0;
-    x = runtime->party_x + (d0c ? 0 : (int[]){ 0, 1, 0, -1 }[runtime->party_dir & 3]);
-    y = runtime->party_y + (d0c ? 0 : (int[]){ -1, 0, 1, 0 }[runtime->party_dir & 3]);
+    x = runtime->party_x + (view_cell == 1 ? 0 : (int[]){ 0, 1, 0, -1 }[runtime->party_dir & 3]);
+    y = runtime->party_y + (view_cell == 1 ? 0 : (int[]){ -1, 0, 1, 0 }[runtime->party_dir & 3]);
     if (csb_v1_dungeon_get_square_type(dungeon, runtime->current_level, x, y) != 1)
         return 0;
     thing = csb_v1_dungeon_get_first_thing(dungeon, runtime->current_level, x, y);
     if (thing < 0) return 0;
     cell = (((unsigned)thing >> 14) - (runtime->party_dir & 3)) & 3;
-    if (d0c ? cell > 1 : cell < 2) return 0;
+    if (view_cell == 1 ? cell > 1 : view_cell == 2 ? cell >= 2 : cell < 2)
+        return 0;
     record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
                                                &type, NULL, &size);
     if (!record || type != 5 || size < 4 ||
@@ -5366,15 +5375,25 @@ static int m11_csb_atari_st_draw_near_weapon(
     width = m11_csb_atari_st_db5_d1c_material[subtype].width;
     height = m11_csb_atari_st_db5_d1c_material[subtype].height;
     coordinate_set = m11_csb_atari_st_db5_d1c_material[subtype].coordinate_set;
-    /* Atari G0218: D1C cells 3/2 at x76/148,y111 (set2 y115),
-     * D0C cells 0/1 at x66/158,y131 (set2 y135). F0115's first-object
+    /* Atari G0218: D1C front cells 0/1 at x83/141,y96 (set2 y98),
+     * back cells 3/2 at x76/148,y111 (set2 y115), and D0C cells
+     * 0/1 at x66/158,y131 (set2 y135). F0115's first-object
      * G0217/G0223 shift is (+2,-3) for even absolute cells, (-3,-3) for odd. */
-    center = d0c ? (cell == 0 ? 66 : 158) : (cell == 3 ? 76 : 148);
+    center = view_cell == 1 ? (cell == 0 ? 66 : 158) :
+        view_cell == 2 ? (cell == 0 ? 83 : 141) :
+        (cell == 3 ? 76 : 148);
     center += (((unsigned)thing >> 14) & 1u) ? -3 : 2;
-    bottom = (d0c ? 131 : 111) + (coordinate_set == 2 ? 4 : 0) - 3;
-    left = center - width / 2 + 1;
-    top = bottom - height + 1;
-    if (left < 0 || left + width > 224 || top < 0 || bottom >= 136 ||
+    bottom = (view_cell == 1 ? 131 : view_cell == 2 ? 96 : 111) +
+        (coordinate_set == 2 ? (view_cell == 1 ? 4 : view_cell == 2 ? 2 : 4) : 0) - 3;
+    scaled = view_cell == 2;
+    /* Atari F0115 M078 rounds object byte width and height independently.
+     * D1C front cells use C20_SCALE_D2 and F0129's D2 palette. */
+    drawn_width = scaled ? (((width / 2 * 20 + 10) >> 5) << 1) : width;
+    drawn_height = scaled ? ((height * 20 + 10) >> 5) : height;
+    if (drawn_width == 0 || drawn_height == 0) return 0;
+    left = center - drawn_width / 2 + 1;
+    top = bottom - drawn_height + 1;
+    if (left < 0 || left + drawn_width > 224 || top < 0 || bottom >= 136 ||
         !m11_csb_install_runtime_source_graphic(state,
                                                 (unsigned int)graphic_index))
         return -1;
@@ -5383,10 +5402,28 @@ static int m11_csb_atari_st_draw_near_weapon(
     if (!graphic || !graphic->loaded || !graphic->pixels ||
         graphic->width != (unsigned)width ||
         graphic->height != (unsigned)height) return -1;
-    /* F0115 F0132 uses C10 transparency on the native bitmap. */
-    for (int row = 0; row < height; ++row) {
-        for (int col = 0; col < width; ++col) {
-            const unsigned char pixel = graphic->pixels[row * width + col];
+    if (scaled) {
+        x_step = (1024u * (unsigned)width / (unsigned)drawn_width) << 6;
+        y_step = (1024u * (unsigned)height / (unsigned)drawn_height) << 6;
+    }
+    /* BLTSHRNK.C F0129 Atari: 10-bit source/destination ratio promoted to
+     * 16.16, with a half-source-pixel bias. Indexed input is the lossless
+     * decode of the four-plane native bitmap; the D2 table stores colors
+     * multiplied by ten for the original jump table. */
+    for (int row = 0; row < drawn_height; ++row) {
+        const unsigned int sy = scaled ?
+            ((y_step / 2u + 32767u + (unsigned)row * y_step) >> 16) :
+            (unsigned)row;
+        for (int col = 0; col < drawn_width; ++col) {
+            const unsigned int sx = scaled ?
+                ((x_step / 2u + 32767u + (unsigned)col * x_step) >> 16) :
+                (unsigned)col;
+            unsigned char source;
+            unsigned char pixel;
+            if (sx >= (unsigned)width || sy >= (unsigned)height) return -1;
+            source = graphic->pixels[sy * width + sx];
+            if (source >= 16u) return -1;
+            pixel = scaled ? d2_palette[source] : source;
             if (pixel != 10u)
                 viewport[(top + row) * 224 + left + col] = pixel;
         }
@@ -5637,10 +5674,13 @@ static int m11_csb_present_atari_st_runtime_viewport(
         if (!csb_v1_csbwin_viewport_square_uses_stone_material(
                 (uint8_t)raw_square)) {
             if (draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F1 &&
-                square_type == 1 &&
-                m11_csb_atari_st_draw_near_weapon(
-                    state, dungeon, &profile->runtime, viewport, 0) < 0)
-                return 0;
+                square_type == 1) {
+                if (m11_csb_atari_st_draw_near_weapon(
+                        state, dungeon, &profile->runtime, viewport, 2) < 0 ||
+                    m11_csb_atari_st_draw_near_weapon(
+                        state, dungeon, &profile->runtime, viewport, 0) < 0)
+                    return 0;
+            }
             continue;
         }
         if (!m11_csb_install_runtime_source_graphic(state, draw->graphic_index)) {

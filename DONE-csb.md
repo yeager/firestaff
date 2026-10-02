@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-10-02: Extended the source DB5 weapon pass to the Atari D1C front
+  cell with F0129 fixed-point D2 scaling and G0214 palette. The authentic
+  Utility STX MINI map-9 pose draws weapon `0x144e` from original graphic 372;
+  all 78 opaque scaled pixels match the independent source sampling receipt,
+  and 73 pixels change when F0267 unlinks it. The Game/Utility STX boundary
+  suite passes 4,554 checks with no failures or skips.
+
 - 2026-10-02: The Atari ST viewport now draws first-and-only DB5 weapons
   in the open D1C and D0C back cells using the 46 source object aspects and
   original GRAPHICS.DAT bitmaps. A real Atari Game/Utility STX test resumes

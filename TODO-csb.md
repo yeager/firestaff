@@ -94,7 +94,7 @@ Reviewed 2026-09-05. Only open work is listed here.
   Entry 510, used by the PC3.4 mapping, also decodes but belongs to a
   different Atari graphic category and must not be used for this weapon.
   The Atari presenter now uses G0237/G0209 data for all 46 DB5 weapon
-  subtypes in the bounded open D1C back-cell and D0C back-cell,
+  subtypes in the bounded open D1C front/back cells and D0C back cell,
   first-and-only-thing cases, using source G0218 coordinates and G0217/G0223
   first-item offsets. D1C executes within the F1 wall-command pass; D0C
   executes after the nearer side-wall passes, matching F0115 ordering.
@@ -104,8 +104,11 @@ Reviewed 2026-09-05. Only open work is listed here.
   graphic-372 pixels on screen, and confirms they disappear when F0267 unlinks the real
   weapon from the decoded source square in test memory. A missing or
   malformed admitted graphic rejects the Atari viewport frame instead of
-  silently omitting that weapon.
-  Far view cells, mixed thing chains, piles, DB6–DB10 objects, creatures,
+  silently omitting that weapon. The D1C front pass follows Atari F0129's
+  fixed-point D2 scaling and G0214 palette; a second genuine MINI map-9
+  pose compares all 78 opaque scaled pixels with original graphic 372 and
+  checks their disappearance after F0267. No mapped DB5 weapon uses Atari's
+  native flip flag. Far view cells, mixed thing chains, piles, DB6–DB10 objects, creatures,
   projectiles and explosions still need their native draw passes and
   real-media receipts; they remain invisible in the Atari viewport.
   Amiga RGB4 register expansion is now compared and fixed from an authentic
