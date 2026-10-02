@@ -623,11 +623,11 @@ static void check_source_evidence(InvTally* t) {
           evidence && strlen(evidence) > 40);
     CHECK(t, "mechanics evidence cites THQUEST.ASM",
           evidence && strstr(evidence, "THQUEST.ASM") != NULL);
-    CHECK(t, "mechanics evidence cites movement_collision",
-          evidence && strstr(evidence, "movement_collision") != NULL);
-    CHECK(t, "mechanics evidence cites CLIKMENU.F0366 or MOVESENS",
-          evidence && (strstr(evidence, "F0366") != NULL ||
-                       strstr(evidence, "MOVESENS") != NULL));
+    CHECK(t, "mechanics evidence cites the phase-2 data-format record",
+          evidence && strstr(evidence, "phase2_data_formats") != NULL);
+    CHECK(t, "mechanics evidence cites the unresolved C240 code window",
+          evidence && (strstr(evidence, "C240") != NULL ||
+                       strstr(evidence, "c240") != NULL));
 }
 
 /* ── Main ──────────────────────────────────────────────────────── */
@@ -642,9 +642,9 @@ int main(int argc, char** argv) {
     InvTally tally = { 0, 0, 0 };
 
     printf("# firestaff_theron_v1_startup_wall_block_gate_probe\n");
-    printf("# Source: THQUEST.ASM T520/T600/T700 + ReDMCSB CLIKMENU.C:270-314 F0366\n");
-    printf("#         + ReDMCSB MOVESENS.C F0267 + docs/source-lock/movement_collision.md\n");
-    printf("# Data: data-free (mirrors Theron runtime-entry fallback startup room)\n");
+    printf("# Evidence: THQUEST.ASM and the phase-2/C240 source records\n");
+    printf("# Scope: host-model input behavior only; no authentic collision consumer is proven.\n");
+    printf("# Data: data-free 8x8 harness; this is not a retail gameplay parity result.\n");
     printf("# Headless: SDL_VIDEODRIVER=dummy is enforced above.\n");
     printf("#\n");
 

@@ -46717,6 +46717,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_launcher_scan_reuse
         COMMAND test_theron_v1_launcher_scan_reuse
     )
+    set_tests_properties(theron_v1_launcher_scan_reuse PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;launcher;scan-reuse"
+        ENVIRONMENT "FIRESTAFF_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}"
+    )
 endif()
 
 # ── Theron V1 Phase 5 — Direct Launch Stale-Path Rejection Test ─────

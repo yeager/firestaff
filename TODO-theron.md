@@ -2,6 +2,27 @@
 
 Reviewed 2026-10-02. Only open work is listed here.
 
+## 2026-10-02 — authentic launcher scan reuse and regional disassembly checks
+
+- Replaced the Theron launcher scan-reuse test's synthetic media/hash fixture
+  with the installed authentic `.firestaff/data/theron` files. It verifies the
+  detected Track 02 identity and required-file marker against the actual file
+  bytes, then loops three launcher refreshes to check reuse without repeating
+  full-root hash scans. The test correctly skips when authentic Theron media
+  is unavailable; it does not claim scanner coverage in that environment.
+- Made the HUC6280 source-disassembly test skip an unavailable regional input
+  instead of failing the whole test. On trv2, the authentic raw BIN checks ran
+  and the unavailable JP ISO was reported as a skip; no ISO parity is claimed.
+- Updated the startup wall-block harness's evidence assertions to match its
+  current THQUEST/phase-2/C240 citations and explicitly labeled its data-free
+  8x8 host model as not proving retail collision/gameplay parity.
+- On trv2, built the affected targets and ran all 290 selected `theron_*`
+  CTest entries with two workers. There were no failures; 19 entries were
+  reported skipped for unavailable capture, archive-tool, ISO, or operator
+  inputs. The corrected launcher scan-reuse test passed against authentic
+  installed media. This regression result does not close the original-runtime
+  gameplay and rendering gaps below.
+
 ## 2026-09-30 — remaining coordinate-teleporter parity
 
 - The authentic US AKUTUBA M0 route from `(1,0,north)` through the active

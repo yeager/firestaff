@@ -27,6 +27,10 @@ static void verify(const char *env_name, const char *name, int variant,
         return;
     }
     assert(theron_v1_huc6280_disassembly_read_file(path, variant, &receipt));
+    if (receipt.status == THERON_V1_HUC6280_DISASSEMBLY_UNAVAILABLE) {
+        printf("SKIP: authentic %s disassembly source is not installed\n", label);
+        return;
+    }
     assert(receipt.status == THERON_V1_HUC6280_DISASSEMBLY_READY);
     assert(receipt.source_file_identity_verified);
     assert(receipt.bank_window_verified);
