@@ -509,6 +509,17 @@ TEST(light_walk_rng_uses_source_lfsr) {
     assert(dm2_v1_1c9a_light_walk_rng_advance(3u) == 0xb401u);
 }
 
+TEST(light_mode7_skips_mode8_cells_beyond_source_radius) {
+    DM2_V1_1c9aLightVisibility state;
+    unsigned observed = 0u;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    state.current[6u * 32u + 6u] = 1u;
+    state.current[2u * 32u + 9u] = 10u;
+    assert(dm2_v1_1c9a_light_mode7_observed_cells(
+        &state, light_observed_tile, NULL, &observed));
+    assert(observed == 1u && !state.mode7_complete);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -1013,6 +1024,7 @@ int main(void) {
     RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
     RUN(light_mode8_ring_rotates_higher_score_packets);
     RUN(light_walk_rng_uses_source_lfsr);
+    RUN(light_mode7_skips_mode8_cells_beyond_source_radius);
 
     /* Popcount */
     RUN(popcount_zero);

@@ -218,7 +218,9 @@ int dm2_v1_1c9a_light_mode7_observed_cells(
             uint8_t visit = state->current[(size_t)x * 32u + (size_t)y];
             int16_t ambient = 0, darkness = 0;
             if (!visit) continue;
-            if (visit > 9u) goto incomplete;
+            /* sklight.cpp clamps the mode-7 action-0x17 radius to eight.
+             * Mode-8 marks farther cells, which this pass does not visit. */
+            if (visit > 9u) continue;
             if (tile(context, state->current_map, x, y, visit - 1u,
                      &ambient, &darkness) < 0)
                 goto incomplete;
