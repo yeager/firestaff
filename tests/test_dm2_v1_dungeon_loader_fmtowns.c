@@ -211,14 +211,19 @@ static void test_fmtowns_load(const char *path) {
             DM2_V1_CLightTileOrnamentReceipt normal;
             DM2_V1_CLightTileOrnamentReceipt via_teleporter;
             DM2_V1_CLightTileOrnamentReceipt dark_weather;
+            DM2_V1_CLightTileOrnamentReceipt mode7;
             assert(dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
                 &room, &loader, 0, 1u, 0, 0, &normal));
             assert(dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
                 &room, &loader, 0, 1u, 1, 0, &via_teleporter));
             assert(dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
                 &room, &loader, 0, 1u, 1, 5, &dark_weather));
+            assert(dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
+                &room, &loader, 0, 4u, 1, 0, &mode7));
             assert(normal.valid && via_teleporter.valid &&
-                   dark_weather.valid &&
+                   dark_weather.valid && mode7.valid &&
+                   mode7.v1e0974_delta == 0 &&
+                   mode7.v1e0978_delta == 0 &&
                    normal.gdat_light_word == via_teleporter.gdat_light_word &&
                    via_teleporter.v1e0974_delta ==
                      (int16_t)((normal.v1e0974_delta * 99) / 100) &&
