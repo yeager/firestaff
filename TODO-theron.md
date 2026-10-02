@@ -41,6 +41,16 @@ Reviewed 2026-10-02. Only open work is listed here.
   consumer or transition was observed. The strict capture rejected the run
   because it did not produce a valid bounded VDC snapshot; its trace and BRAM
   snapshot remain private on trv2 and are not parity proof.
+- A second isolated headless cold-start used the authenticated US CUE and
+  hash-verified System Card 3.0 with scheduled RUN at PCE input frame 480,
+  held for 240 frames. The instrumentation verified that the input was
+  consumed and followed by a controller read at System Card PC `$E4B7`, with
+  no non-System-Card controller poll. It read 25 authentic raw sectors,
+  beginning at LBA 3234, but recorded no CD-to-game-RAM data transfer; the
+  strict capture therefore stopped at its missing-origin gate. The delayed
+  240-frame RUN input (nominally four emulated seconds) still did not reach a
+  dungeon and created no valid game save. Its trace and BRAM remain private at
+  `/home/trv2/work/firestaff-theron-run-save-capture-20261002/pce-scheduled-run-20261003/`.
 
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
