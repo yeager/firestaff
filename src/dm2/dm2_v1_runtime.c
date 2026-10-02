@@ -12985,7 +12985,8 @@ static void dm2_v1_runtime_append_mac_wall_targets(
                 &g_dm2_runtime.record_pools, walk);
             int16_t next;
             if (record && dm2_v1_record_handle_pool(walk) == DM2_DB_ACTUATOR) {
-                uint8_t type = dm2_actu_type(record);
+                uint8_t type = (uint8_t)(dm2_runtime_missile_rd16(
+                    &g_dm2_runtime.record_pools, record + 2) & 0x7fu);
                 if (type == DM2_ACTU_2_STATE_SWITCH ||
                     type == DM2_ACTU_WALL_SWITCH || type == DM2_ACTU_KEY_HOLE) {
                     source = walk;
@@ -13157,8 +13158,10 @@ int dm2_v1_runtime_activate_mac_wall_button(
                  (uint16_t)source_handle ==
                      (uint16_t)DM2_V1_RECORD_HANDLE_NULL)) {
                 source_handle = (uint16_t)walk;
-                source_type = dm2_actu_type(record);
-                source_local = (uint8_t)((dm2_actu_w4(record) >> 11) & 1u);
+                source_type = (uint8_t)(dm2_runtime_missile_rd16(
+                    &g_dm2_runtime.record_pools, record + 2) & 0x7fu);
+                source_local = (uint8_t)((dm2_runtime_missile_rd16(
+                    &g_dm2_runtime.record_pools, record + 4) >> 11) & 1u);
                 if ((uint16_t)walk == source_object) break;
             }
             if (!dm2_v1_record_pool_next_link(

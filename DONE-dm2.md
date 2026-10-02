@@ -1,5 +1,10 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: Mac wall-control fallback now reads DB3 actuator words in the
+  source byte order. Retail record `0x8c72` has BE word `0x1888` and subtype
+  `0x08`; a PC-order read would misclassify it as switch subtype `0x18`.
+  The original-media census and New Game mirror rejection pass. A live
+  pointer transaction at that later-map record remains unverified.
 - 2026-10-02: Macintosh CHARSHEET pointer dispatch now reads retail view-8
   object records and masked RAW4 rectangles for champion slots 4–29.
   CODE(8) event dispatch and CODE(10) slot conversion determine the mapping;

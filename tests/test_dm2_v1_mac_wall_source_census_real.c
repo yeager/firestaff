@@ -10,6 +10,7 @@
 #include <string.h>
 
 typedef struct {
+    const DM2_V1_DungeonData *dungeon;
     unsigned counts[0x80];
     unsigned first_map[0x80];
     unsigned first_x[0x80];
@@ -434,6 +435,61 @@ static int exercise_authentic_mac_door_action(
     return 0;
 }
 
+static int exercise_authentic_mac_mirror_not_wall_button(
+    M11_GameViewState *state, const DM2_V1_DungeonData *dungeon)
+{
+    uint8_t frame[320u * 200u];
+    DM2_V1_RuntimeMacWallButtonReceipt action;
+    const uint8_t *mirror;
+    int type = -1;
+    int thing;
+
+    /* From the original New Game pose (1,8,N), the D1C wall at (1,6)
+     * owns a Mac BE DB3 subtype-0x7e champion mirror. Its raw bytes must
+     * never be interpreted as a little-endian wall switch. */
+    thing = dm2_v1_dungeon_get_first_thing(dungeon, 0, 1, 6);
+    mirror = thing >= 0 ? dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)thing, &type, NULL, NULL) : NULL;
+    if (!state || !mirror || type != 3 ||
+        (dm2_v1_dungeon_read_record_u16(dungeon, mirror + 2) & 0x7fu) != 0x7eu ||
+        dm2_v1_runtime_get_party_x() != 1 ||
+        dm2_v1_runtime_get_party_y() != 8 ||
+        dm2_v1_runtime_get_party_dir() != 0)
+        return 0;
+    memset(frame, 0, sizeof(frame));
+    M11_GameView_Draw(state, frame, 320, 200);
+    memset(&action, 0, sizeof(action));
+    return !dm2_v1_runtime_activate_mac_wall_button(1, &action) &&
+           !action.accepted;
+}
+
+static int authentic_mac_false_switch_word_is_source_type(
+    const DM2_V1_DungeonData *dungeon)
+{
+    DM2_V1_G1RuntimeMapActuatorReceipt source;
+    int found = 0;
+
+    /* The BE DB3 word 0x1888 on map-2 wall (7,1) is an original subtype
+     * 0x08 mechanism. A PC-order read yields false subtype 0x18, which
+     * the Mac wall-control fallback would incorrectly admit as a switch. */
+    memset(&source, 0, sizeof(source));
+    if (!dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
+            dungeon, 2, &source) || !source.committed)
+        return 0;
+    for (int i = 0; i < source.actuator_root_count; ++i) {
+        const DM2_V1_G1DirectActuatorRoot *record = &source.actuators[i];
+        if (record->x != 7 || record->y != 1 ||
+            record->object_id != 0x8c72u)
+            continue;
+        if (record->attributes != 0x1888u ||
+            record->actuator_type != 0x08u ||
+            dm2_v1_dungeon_get_square_type(dungeon, 2, 7, 1) != 0)
+            return 0;
+        ++found;
+    }
+    return found == 1;
+}
+
 static int census_thing(void *user, uint16_t thing, int type, int index,
                         const uint8_t *record, int record_size,
                         int level, int x, int y)
@@ -444,7 +500,8 @@ static int census_thing(void *user, uint16_t thing, int type, int index,
     (void)index;
     if (!c || type != 3 || !record || record_size < 8)
         return 0;
-    cls = (unsigned)dm2_actu_type(record);
+    cls = (unsigned)(dm2_v1_dungeon_read_record_u16(c->dungeon,
+                                                     record + 2) & 0x7fu);
     if (cls >= 0x80u)
         return 0;
     ++c->counts[cls];
@@ -452,14 +509,16 @@ static int census_thing(void *user, uint16_t thing, int type, int index,
         cls == 0x27u || cls == 0x46u)
         printf("  actuator type=%02x object=%04x map=%d x=%d y=%d w2=%04x w4=%04x w6=%04x\n",
                cls, thing, level, x, y,
-               dm2_actu_w2(record), dm2_actu_w4(record), dm2_actu_w6(record));
+               dm2_v1_dungeon_read_record_u16(c->dungeon, record + 2),
+               dm2_v1_dungeon_read_record_u16(c->dungeon, record + 4),
+               dm2_v1_dungeon_read_record_u16(c->dungeon, record + 6));
     if (c->counts[cls] == 1u) {
         c->first_map[cls] = (unsigned)level;
         c->first_x[cls] = (unsigned)x;
         c->first_y[cls] = (unsigned)y;
-        c->first_w2[cls] = record[2] | ((unsigned)record[3] << 8);
-        c->first_w4[cls] = record[4] | ((unsigned)record[5] << 8);
-        c->first_w6[cls] = record[6] | ((unsigned)record[7] << 8);
+        c->first_w2[cls] = dm2_v1_dungeon_read_record_u16(c->dungeon, record + 2);
+        c->first_w4[cls] = dm2_v1_dungeon_read_record_u16(c->dungeon, record + 4);
+        c->first_w6[cls] = dm2_v1_dungeon_read_record_u16(c->dungeon, record + 6);
     }
     return 0;
 }
@@ -642,6 +701,7 @@ static int run_one(const char *zip, const char *source_id)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    census.dungeon = dungeon;
     print_authentic_mac_map0_specials(dungeon);
     print_authentic_source_square_census(dungeon);
     print_authentic_stair_routes(dungeon);
@@ -678,6 +738,17 @@ static int run_one(const char *zip, const char *source_id)
                             (int)census.first_y[cls]);
             }
         }
+    }
+    if (!exercise_authentic_mac_mirror_not_wall_button(&state, dungeon)) {
+        fprintf(stderr, "Mac retail mirror published as wall button: %s\n", source_id);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (!authentic_mac_false_switch_word_is_source_type(dungeon)) {
+        fprintf(stderr, "Mac retail DB3 source word decoded as false switch: %s\n",
+                source_id);
+        M11_GameView_Shutdown(&state);
+        return 1;
     }
     if (!exercise_authentic_mac_db1_transition(&state, dungeon)) {
         fprintf(stderr, "Mac authentic DB1 transition fixture did not commit: %s\n",

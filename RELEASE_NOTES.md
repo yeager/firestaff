@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM2 Macintosh wall controls`: reads original big-endian actuator words
+  before deciding whether a wall target is a switch or keyhole. The retail
+  source check passes; a later-map switch click still needs live verification.
 - `DM2 Macintosh inventory mouse`: source-backed pointer selection is
   available for champion slots 4–29 when CHARSHEET is open. Empty slot 4 was
   verified with original Mac media; item pickup and placement by pointer

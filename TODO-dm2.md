@@ -311,9 +311,23 @@ Reviewed 2026-08-29. Only open work is listed here.
   `CODE(16)+0x21d2..0x25de` loads map columns, records and level tables;
   it does not by itself prove a later scripted transition or exit. Trace
   the live post-selection event and timer path before changing the spawn.
-  The DB3 type 0x05 record at wall (5,7) is named a DM1 bitfields trigger
-  and marked unused in DM2 by SKProject; Mac CODE has not yet shown whether
-  it enables progression. Same-layer map 12 touches map 0 only at map 0
+  A previous little-endian census mislabelled the DB3 record at wall (5,7)
+  as subtype 0x05. Its Mac big-endian word is 0x057e: subtype 0x7e, a
+  champion mirror. All map-0 DB3 chains inspected so far contain mirror
+  (0x7e) or ornate animator (0x2c) records; no exit actuator is established.
+  The production Mac wall-control fallback had the same endian mistake when
+  reading live DB3 words; it now uses the record pool's source byte order.
+  The original-media test renders the map-0 mirror from the normal New Game
+  pose and verifies that a center wall-button action is not accepted. That
+  negative click also passed with the old decoder, so it is not a
+  red-before-green proof of the BE fix. A direct File_header source receipt
+  additionally locks map-2 wall (7,1), DB3 0x8c72, to BE attributes
+  0x1888/subtype 0x08; PC-order decoding would incorrectly call it a 0x18
+  wall switch. A
+  positive switch/keyhole pointer transaction remains open: their original
+  records occur on later maps, and no normal New Game route to one is yet
+  verified.
+  Same-layer map 12 touches map 0 only at map 0
   (6,0), a wall tile. The verified map16→map0 stair does not establish a
   reverse route. Resolve the original Mac New Game start/transition before
   assuming the map 0 boundary can be crossed. The current Mac C080
