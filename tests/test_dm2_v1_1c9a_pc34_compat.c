@@ -488,6 +488,27 @@ TEST(light_mode8_work_ring_wraps_after_256_nodes) {
     assert(!state.mode8_complete && state.source_state_hash == 0u);
 }
 
+static int light_blocked_start_step(void *context, int map, int x, int y,
+                                    int direction, int *next_map,
+                                    int *next_x, int *next_y)
+{
+    unsigned *calls = (unsigned *)context;
+    (void)map; (void)x; (void)y; (void)direction;
+    (void)next_map; (void)next_x; (void)next_y;
+    ++*calls;
+    return 0;
+}
+
+TEST(light_mode8_start_action_precedes_empty_ring_terminal) {
+    DM2_V1_1c9aLightVisibility state;
+    unsigned calls = 0u;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    assert(dm2_v1_1c9a_light_mode8_frontier(
+        &state, 38, 6, 6, light_blocked_start_step, &calls));
+    assert(calls == 4u && state.current[6u * 32u + 6u] == 1u);
+    assert(!state.mode8_complete && state.source_state_hash == 0u);
+}
+
 static int light_weighted_step(void *context, int map, int x, int y,
                                int direction, int *next_map,
                                int *next_x, int *next_y)
@@ -1146,6 +1167,7 @@ int main(void) {
     RUN(light_action27_writes_both_matching_planes);
     RUN(light_mode8_start_sensor_projects_action27);
     RUN(light_mode8_work_ring_wraps_after_256_nodes);
+    RUN(light_mode8_start_action_precedes_empty_ring_terminal);
     RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
     RUN(light_mode8_ring_rotates_higher_score_packets);
     RUN(light_walk_rng_uses_source_lfsr);

@@ -201,6 +201,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
     uint8_t head = 0u, tail = 0u;
     unsigned pending = 0u;
     unsigned lowest = 0u;
+    int start_phase = 1;
     int selector;
     if (!state) return 0;
     memset(work_grid, 0, sizeof(work_grid));
@@ -216,11 +217,6 @@ int dm2_v1_1c9a_light_mode8_frontier(
         start_x >= state->current_width)
         return 0;
     if (start_map >= 64) return 0;
-    queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
-                         (uint8_t)start_map, 0u};
-    ++tail;
-    score_bucket[0u] = 1u;
-    pending = 1u;
     {
         size_t start_index = (size_t)start_x * 32u + (size_t)start_y;
         seen[start_index] = 1u;
@@ -229,7 +225,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
                 &work_grid[start_index], start_map, start_x, start_y))
             goto incomplete;
     }
-    while (pending != 0u) {
+    while (start_phase || pending != 0u) {
         unsigned rotations = 0u;
         Cell cell;
         uint8_t score;
@@ -238,25 +234,35 @@ int dm2_v1_1c9a_light_mode8_frontier(
         /* SK1C9A rotates higher-score xp_90 packets to the write cursor
          * while vba_08 still has packets at the current score. The cursors
          * wrap as bytes; no array compaction takes place. */
-        while (lowest < sizeof(score_bucket) && !score_bucket[lowest])
-            ++lowest;
-        if (lowest == sizeof(score_bucket)) goto incomplete;
-        for (;;) {
-            cell = queue[head];
-            if (!dm2_v1_1c9a_light_work_node_score(
-                    work_grid, state->current_map, state->alternate_map,
-                    cell.map, cell.x, cell.y, &score))
-                goto incomplete;
-            if (score <= lowest) break;
-            if (++rotations >= pending) goto incomplete;
-            queue[tail] = queue[head];
-            ++head;
-            ++tail;
+        if (start_phase) {
+            /* SK1C9A starts with vw_130=1/vw_f8=-1 and evaluates the
+             * initial action before xp_90 has a packet to dequeue. */
+            cell = (Cell){(uint8_t)start_x, (uint8_t)start_y,
+                          (uint8_t)start_map, 0u};
+            score = 0u;
+            start_phase = 0;
         }
-        if (!score_bucket[lowest]) goto incomplete;
-        --score_bucket[lowest];
-        ++head;
-        --pending;
+        else {
+            while (lowest < sizeof(score_bucket) && !score_bucket[lowest])
+                ++lowest;
+            if (lowest == sizeof(score_bucket)) goto incomplete;
+            for (;;) {
+                cell = queue[head];
+                if (!dm2_v1_1c9a_light_work_node_score(
+                        work_grid, state->current_map, state->alternate_map,
+                        cell.map, cell.x, cell.y, &score))
+                    goto incomplete;
+                if (score <= lowest) break;
+                if (++rotations >= pending) goto incomplete;
+                queue[tail] = queue[head];
+                ++head;
+                ++tail;
+            }
+            if (!score_bucket[lowest]) goto incomplete;
+            --score_bucket[lowest];
+            ++head;
+            --pending;
+        }
         cell_selector = cell.map == state->current_map ? 0 : 1;
         cell_index = (size_t)cell_selector * 1024u +
                      (size_t)cell.x * 32u + (size_t)cell.y;
