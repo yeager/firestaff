@@ -5735,16 +5735,6 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
             *inout_map_x = target_x;
             *inout_map_y = target_y;
             moved_count++;
-            {
-                CsbV1AudioRequest buzz_request;
-                memset(&buzz_request, 0, sizeof(buzz_request));
-                buzz_request.soundIndex = CSB_V1_SOUND_BUZZ;
-                buzz_request.mapX = (int16_t)target_x;
-                buzz_request.mapY = (int16_t)target_y;
-                buzz_request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-                (void)csb_v1_runtime_request_source_sound(
-                    profile, &buzz_request);
-            }
             if (csb_v1_runtime_apply_group_fall_damage(
                     profile,
                     group_thing,
@@ -5882,8 +5872,8 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
      * DUNGEON.C F0154 to resolve the lower target map/coordinate. This
      * bounded CSB runtime bridge handles generated groups with raw C04
      * records and mirrors the surviving group's native active-group side
-     * state; F0191 fall damage is applied via apply_group_fall_damage
-     * and M560_SOUND_BUZZ plays at the target square on pit entry. */
+     * state; F0191 fall damage is applied via apply_group_fall_damage.
+     * Only audible teleporters request M560_SOUND_BUZZ. */
     return moved_count;
 }
 

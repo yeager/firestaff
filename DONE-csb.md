@@ -1,5 +1,10 @@
 # Firestaff DONE — CSB
 
+- 2026-10-02: A C37 creature group falling through an open pit no longer
+  requests the teleporter BUZZ sound. ReDMCSB MOVESENS.C F0267 reserves that
+  request for audible teleporters. The existing group-fall fixture retains
+  its creature movement sound and fails against the previous extra request.
+
 - 2026-10-02: Atari ST PSG playback now interrupts its preceding queued cue
   when ReDMCSB SOUND.C F0060 replaces the Timer-A sample pointer and count.
   The authenticated v2.1 `ANIMATE.SCR` title cues occur at source VBlanks

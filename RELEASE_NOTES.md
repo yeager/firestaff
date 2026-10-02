@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `CSB creature sound`: groups falling through ordinary pits no longer play
+  the teleporter BUZZ effect; their movement sound remains.
 - `DM2 Macintosh wall controls`: reads original big-endian actuator words
   before deciding whether a wall target is a switch or keyhole. The retail
   source check passes; a later-map switch click still needs live verification.

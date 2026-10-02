@@ -3525,6 +3525,10 @@ static void test_c37_group_approach_teleporter_rotation(void)
           "C37 group pit-fall terminates the moved group chain");
     CHECK(test_get_le16(raw, 158) > 0 && test_get_le16(raw, 158) < 40u,
           "C37 group pit-fall applies bounded F0191 fall damage to survivors");
+    CHECK(profile.audio_runtime.totalRequests == 1u &&
+              profile.audio_runtime.pendingSoundIndex ==
+                  CSB_V1_SOUND_MOVE_MUMMY_TROLIN_ANTMAN_STONE_GOLEM_GIGGLER_VEXIRK_DEMON,
+          "C37 group pit-fall retains creature movement audio without teleporter BUZZ");
     event_index = find_queued_event_type(&profile,
                                          DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
     CHECK(event_index >= 0 &&
