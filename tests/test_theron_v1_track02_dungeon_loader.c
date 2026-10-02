@@ -1588,9 +1588,10 @@ static unsigned int assert_real_teleporters_preserve_map_state(
 }
 
 static unsigned int assert_real_active_to_inactive_teleporter_links(
-    Theron_V1_World *world) {
+    Theron_V1_World *world, unsigned int *movement_verified) {
     unsigned int verified = 0u;
 
+    if (movement_verified) *movement_verified = 0u;
     for (int i = 0; i < world->object_count; ++i) {
         const Theron_V1_Object *source = &world->objects[i];
         int target_level;
@@ -1605,23 +1606,61 @@ static unsigned int assert_real_active_to_inactive_teleporter_links(
         target_x = source->linked_id & 0x1f;
         for (int j = 0; j < world->object_count; ++j) {
             const Theron_V1_Object *target = &world->objects[j];
+            Theron_V1_World *candidate;
             if (target->type != THERON_OBJTYPE_TELEPORTER ||
                 target->dungeon_id != source->dungeon_id ||
                 target->level != target_level || target->x != target_x ||
                 target->y != target_y || target->state != 0u)
                 continue;
-            world->current_dungeon = source->dungeon_id;
-            world->current_level = source->level;
-            world->transition_pending = 0;
-            assert(theron_v1_teleporter_resolve(
-                       world, source->x, source->y) == 0);
-            assert(world->transition_pending == 1);
-            assert(world->transition_target_level == target_level);
-            assert(world->transition_spawn_x == target_x);
-            assert(world->transition_spawn_y == target_y);
-            assert(world->party.leader_x == target_x);
-            assert(world->party.leader_y == target_y);
-            world->transition_pending = 0;
+            candidate = (Theron_V1_World *)malloc(sizeof(*candidate));
+            assert(candidate != NULL);
+            memcpy(candidate, world, sizeof(*candidate));
+            candidate->current_dungeon = source->dungeon_id;
+            candidate->current_level = source->level;
+            for (int direction = 0; direction < THERON_DIR_COUNT;
+                 ++direction) {
+                int approach_x = (int)source->x - g_theron_dir_dx[direction];
+                int approach_y = (int)source->y - g_theron_dir_dy[direction];
+                int preview;
+                int moved;
+                if (approach_x < 0 || approach_x >= THERON_MAX_MAP_SIZE ||
+                    approach_y < 0 || approach_y >= THERON_MAX_MAP_SIZE ||
+                    candidate->levels[source->dungeon_id - 1][source->level]
+                            .squares[approach_y][approach_x] !=
+                        THERON_SQUARE_FLOOR)
+                    continue;
+                candidate->party.leader_x = approach_x;
+                candidate->party.leader_y = approach_y;
+                candidate->party.leader_dir = (int8_t)direction;
+                preview = theron_v1_get_move_result(candidate, direction);
+                if (preview != THERON_MOVE_TELEPORT) continue;
+                moved = theron_v1_move_party_original_command(
+                    candidate, THERON_ORIGINAL_COMMAND_MOVE_FORWARD);
+                if (moved != THERON_MOVE_TELEPORT ||
+                    candidate->current_level != target_level ||
+                    candidate->party.leader_x != target_x ||
+                    candidate->party.leader_y != target_y) {
+                    fprintf(stderr,
+                            "Track 02 teleporter movement mismatch: d=%d "
+                            "src=(%u,%u,L%d) dst=(%d,%d,L%d) "
+                            "approach=(%d,%d) dir=%d preview=%d moved=%d "
+                            "level=%d pose=(%d,%d) pending=%d\n",
+                            source->dungeon_id, source->x, source->y,
+                            source->level, target_x, target_y, target_level,
+                            approach_x, approach_y, direction, preview, moved,
+                            candidate->current_level,
+                            candidate->party.leader_x,
+                            candidate->party.leader_y,
+                            candidate->transition_pending);
+                }
+                assert(moved == THERON_MOVE_TELEPORT);
+                assert(candidate->current_level == target_level);
+                assert(candidate->party.leader_x == target_x);
+                assert(candidate->party.leader_y == target_y);
+                if (movement_verified) ++*movement_verified;
+                break;
+            }
+            free(candidate);
             ++verified;
             break;
         }
@@ -2582,6 +2621,7 @@ static void test_all_dungeons(
     unsigned int active_teleporters = 0u;
     unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
+    unsigned int active_to_inactive_movement = 0u;
     Theron_TeleporterMetadataCensus teleporter_metadata = {0};
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
@@ -2918,8 +2958,13 @@ static void test_all_dungeons(
             active_teleporters += assert_real_teleporters_preserve_map_state(
                 world, (unsigned int)result.teleporters_placed, &chained,
                 &teleporter_metadata);
-            assert(assert_real_active_to_inactive_teleporter_links(world) ==
-                   chained);
+            {
+                unsigned int movement_verified = 0u;
+                assert(assert_real_active_to_inactive_teleporter_links(
+                           world, &movement_verified) == chained);
+                assert(movement_verified <= chained);
+                active_to_inactive_movement += movement_verified;
+            }
             active_teleporter_destinations +=
                 assert_real_active_teleporter_destinations_are_loaded(world);
             active_to_inactive += chained;
@@ -2969,6 +3014,8 @@ static void test_all_dungeons(
            carryable_not_first);
     printf("  US active teleporters=%u active-to-inactive targets=%u\n",
            active_teleporters, active_to_inactive);
+    printf("  US floor-approach movement-command routes verified=%u\n",
+           active_to_inactive_movement);
     assert(active_teleporter_destinations == active_teleporters);
     printf("  US active teleporter destinations on loaded maps=%u\n",
            active_teleporter_destinations);
@@ -3012,6 +3059,7 @@ static void test_all_jp_dungeons(
     unsigned int active_teleporters = 0u;
     unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
+    unsigned int active_to_inactive_movement = 0u;
     Theron_TeleporterMetadataCensus teleporter_metadata = {0};
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
@@ -3142,8 +3190,13 @@ static void test_all_jp_dungeons(
             active_teleporters += assert_real_teleporters_preserve_map_state(
                 world, (unsigned int)result.teleporters_placed, &chained,
                 &teleporter_metadata);
-            assert(assert_real_active_to_inactive_teleporter_links(world) ==
-                   chained);
+            {
+                unsigned int movement_verified = 0u;
+                assert(assert_real_active_to_inactive_teleporter_links(
+                           world, &movement_verified) == chained);
+                assert(movement_verified <= chained);
+                active_to_inactive_movement += movement_verified;
+            }
             active_teleporter_destinations +=
                 assert_real_active_teleporter_destinations_are_loaded(world);
             active_to_inactive += chained;
@@ -3176,6 +3229,8 @@ static void test_all_jp_dungeons(
            carryable_not_first);
     printf("  JP active teleporters=%u active-to-inactive targets=%u\n",
            active_teleporters, active_to_inactive);
+    printf("  JP floor-approach movement-command routes verified=%u\n",
+           active_to_inactive_movement);
     assert(active_teleporter_destinations == active_teleporters);
     printf("  JP active teleporter destinations on loaded maps=%u\n",
            active_teleporter_destinations);

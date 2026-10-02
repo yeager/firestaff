@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-02 — exercise authentic teleporter movement-command routes
+
+- The US/JP real-media loader regression now verifies active-to-closed
+  coordinate links through an adjacent floor approach, the read-only movement
+  preview, and Firestaff's original movement-command API on a cloned world.
+  It checks the committed destination level and party pose without mutating
+  the authentic census world.
+- Three consecutive trv2 loops passed against the authentic US and JP Track 02
+  files. Each edition exposed eight such routes in this case; unavailable JP
+  ISO/CUE projection subchecks were skipped and are not claimed as verified.
+- This is test coverage of Firestaff's own path and data, not evidence that the
+  original game consumes these records identically. Scope, rotation,
+  absolute-facing, sound, and original gameplay consumer evidence remain open
+  in TODO.
+
 ## 2026-10-02 — census active authentic teleporter metadata
 
 - The real-media loader regression now counts each open teleporter occurrence

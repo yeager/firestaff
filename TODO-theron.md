@@ -33,7 +33,11 @@ Reviewed 2026-10-02. Only open work is listed here.
   real-media test locks each count. Firestaff's normal movement regression
   reaches 41 floor-approachable floor/closed-pad routes per region across 15
   of those tuples; that is a capture-candidate inventory, not evidence of
-  field behavior. This is source-record/map evidence only.
+  field behavior. The real-media test now also sends each reachable
+  active-to-closed target through a floor approach, read-only preview, and
+  original movement command, verifying the committed destination pose for
+  eight routes per region. This remains Firestaff-path consistency, not
+  original-runtime proof or field-semantics evidence.
   Next, capture ordinary-input before/after party and item state for
   representative cases or bind the missing branches in the authenticated
   Theron routine. Until then, keep these semantics unsupported and update the
