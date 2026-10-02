@@ -22,8 +22,7 @@
  * Source/evidence:
  *   - include/theron_v1_startup_save_resume.h
  *   - theron_v1_startup_save_resume_source_evidence()
- *   - THQUEST.ASM T080  — between-dungeon save/load
- *   - THQUEST.ASM T800  — champion persistence between dungeons
+ *   - THQUEST.ASM T800  — source routine label; field semantics remain gated
  *   - docs/DMWEB_REFERENCE.md §6 'Theron's Quest savegame format'
  */
 
@@ -691,8 +690,9 @@ static void probe_source_evidence_string(void) {
         ++g_fail;
         return;
     }
-    if (!strstr(ev, "T080") || !strstr(ev, "T800")) {
-        printf("FAIL source_evidence missing THQUEST.ASM T080/T800\n");
+    if (!strstr(ev, "T800") ||
+        !strstr(ev, "field semantics remain gated")) {
+        printf("FAIL source_evidence missing bounded THQUEST.ASM T800 citation\n");
         ++g_fail;
         return;
     }

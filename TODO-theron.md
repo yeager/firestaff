@@ -17,10 +17,22 @@ Reviewed 2026-10-02. Only open work is listed here.
   of the retail Theron code. It does not demonstrate that the retail game
   created a new save, capture an original-engine dungeon session, or prove
   full gameplay parity.
-  The isolated Mednafen profile's BRAM is still byte-identical to the existing
-  authentic save. Emulator capture remains open pending an unlocked Mac and a
-  visibly confirmed dungeon view; when resuming, hold RUN for 3–5 seconds as
-  the user specified before following the source-locked Drator route.
+- The isolated Mednafen profile's BRAM is still byte-identical to the
+  existing authentic save. Emulator capture remains open pending an unlocked
+  Mac and a visibly confirmed dungeon view; when resuming, hold RUN for 3–5
+  seconds as the user specified before following the source-locked Drator
+  route.
+- Corrected the startup save/resume probe's stale citation: it now treats
+  THQUEST.ASM T800 as a routine label only and keeps field semantics gated by
+  the authenticated DMS-SG.001 evidence, rather than attributing save behavior
+  to T080/T800 from the generic resume gate. Both startup save/resume checks
+  pass.
+- Built all missing binaries for the Theron-labeled CTest selection on trv2;
+  all 80 entries then completed with 72 passing and 8 skipped for unavailable
+  authentic captures, archives, converted ISO or operator inputs. There were
+  no failing entries. Authentic-media US/JP boot, scan, data and M11 Continue
+  checks ran against the installed game files; this does not establish retail
+  engine parity beyond those bounded host-path assertions.
 
 ## 2026-10-02 — separate Firestaff TQSV state from retail Theron saves
 
