@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-03: The original-media FM Towns CLI regression now also launches
+  bare `--game dm1` with no platform override. The published macOS arm64
+  v3.0.355 binary selected the authenticated EDM program and reached the
+  first runnable Hall frame; the complete English/Japanese ZIP startup script
+  passed. This does not prove physical M5 HiDPI or audible playback.
+
 - 2026-10-02: Restored the F0345 FOOD/WATER inventory page after releasing
   Eye with an empty or ordinary action hand. PANEL.C F0353 calls F0347 for
   that selection; the native held-scroll path had cleared the page and left

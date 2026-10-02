@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-03: The original-media FM Towns CLI regression now checks the
+  unqualified `--menu --game dm2` route as well as direct `--game dm2`.
+  The published macOS arm64 v3.0.355 binary selected `fmtowns-ja`, completed
+  the source title, opened New Game, and reached the first champion in the
+  normal runtime loop. The complete ZIP startup script passed. Physical M5
+  HiDPI presentation remains unverified.
+
 - 2026-10-02: Re-admitted the authentic Macintosh retail dungeon's declared
   12,603-byte map-data span. The map starts at byte 26,806; the previous
   descriptor-maximum calculation started it nine bytes late and shifted tile
