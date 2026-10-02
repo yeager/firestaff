@@ -3,6 +3,7 @@
 #include "dm2_v1_light_ops_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int16_t g_light;
@@ -15,24 +16,30 @@ static int16_t g_light_level;
 static int16_t g_dbspec_key;
 static int16_t g_light_charges[16];
 static int16_t g_hero_items[4][2];
+static int16_t g_leader_item = 1;
+static int g_high_handle_queried;
 
 static uint8_t mock_map_tile(void *ctx, int16_t map, int offset)
 {
     (void)ctx; (void)map; assert(offset == 0x0d); return g_map_tile_byte;
 }
-static int16_t mock_leader_item(void *ctx) { (void)ctx; return 1; }
+static int16_t mock_leader_item(void *ctx) { (void)ctx; return g_leader_item; }
 static int16_t mock_hero_count(void *ctx) { (void)ctx; return 0; }
+static int16_t mock_one_hero(void *ctx) { (void)ctx; return 1; }
 static int16_t mock_hero_item(void *ctx, int hero, int hand)
 {
     (void)ctx; return g_hero_items[hero][hand];
 }
 static uint16_t mock_dbspec(void *ctx, int16_t item, int key)
 {
-    (void)ctx; (void)item; g_dbspec_key = (int16_t)key; return 0x10;
+    (void)ctx; g_dbspec_key = (int16_t)key;
+    if ((uint16_t)item == 0x9807u) g_high_handle_queried = 1;
+    return 0x10;
 }
 static int16_t mock_charge(void *ctx, int16_t item, int mode)
 {
-    (void)ctx; (void)mode; return g_light_charges[item];
+    (void)ctx; (void)mode;
+    return g_light_charges[(uint16_t)item == 0x9807u ? 0 : item];
 }
 static int16_t mock_gdat(void *ctx, int a, int b, int c, int d)
 {
@@ -84,6 +91,60 @@ static void test_recalc_light_level_source_branches(void)
     dm2_v1_recalc_light_level_pc34(&cb, NULL);
     assert(g_light_level == 2);
     printf("  PASS: recalc_light_level follows source tile branches\n");
+}
+
+static void test_recalc_light_level_original_tables(void)
+{
+    const char *home = getenv("HOME");
+    char path[1024];
+    unsigned char source_bytes[49];
+    int16_t charges_table[16];
+    int16_t light_table[6];
+    FILE *source;
+    DM2_V1_RecalcLightLevelCallbacks cb;
+    if (!home || snprintf(path, sizeof(path),
+            "%s/.firestaff/data/dm2/fmtowns_iso/SKULL.EXP", home) >=
+            (int)sizeof(path)) return;
+    source = fopen(path, "rb");
+    if (!source) {
+        puts("SKIP: original FM Towns SKULL.EXP is unavailable");
+        return;
+    }
+    /* Retail SKULL.EXP 0x3c44/0x3c60 provides the light tables consumed
+     * by sklight.cpp:114-177; controlled item state isolates the one-pass
+     * charge ordering and unsigned record-handle admission. */
+    assert(fseek(source, 0x3c44, SEEK_SET) == 0);
+    assert(fread(source_bytes, 1u, sizeof(source_bytes), source) ==
+           sizeof(source_bytes));
+    fclose(source);
+    for (int i = 0; i < 16; ++i) charges_table[i] = source_bytes[i];
+    for (int i = 0; i < 5; ++i) light_table[i] = source_bytes[28 + i];
+    light_table[5] = source_bytes[35];
+    memset(&cb, 0, sizeof(cb));
+    cb.get_map_tile_byte = mock_map_tile;
+    cb.get_leader_item = mock_leader_item;
+    cb.get_heros_in_party = mock_one_hero;
+    cb.get_hero_item = mock_hero_item;
+    cb.query_gdat_dbspec_word = mock_dbspec;
+    cb.add_item_charge = mock_charge;
+    cb.query_gdat_entry_data_index = mock_gdat;
+    cb.table1d6702 = charges_table;
+    cb.table1d6702_size = 16;
+    cb.table1d6712 = light_table;
+    cb.table1d6712_size = 6;
+    cb.set_light_level = mock_set_level;
+    g_leader_item = (int16_t)0x9807u;
+    g_high_handle_queried = 0;
+    g_map_tile_byte = 0x40;
+    memset(g_light_charges, 0, sizeof(g_light_charges));
+    g_hero_items[0][0] = 2;
+    g_hero_items[0][1] = 3;
+    g_light_charges[3] = 1;
+    dm2_v1_recalc_light_level_pc34(&cb, NULL);
+    assert(g_high_handle_queried);
+    assert(g_light_level == 5);
+    g_leader_item = 1;
+    puts("PASS: original FM Towns light tables retain source charge order");
 }
 
 static void mock_queue(void *ctx, int16_t val, uint32_t tick)
@@ -184,6 +245,7 @@ int main(void)
     test_proceed_light_torch();
     test_proceed_light_invalid();
     test_recalc_light_level_source_branches();
+    test_recalc_light_level_original_tables();
     test_check_recompute_clean();
     test_check_recompute_dirty();
     printf("All light_ops tests passed.\n");

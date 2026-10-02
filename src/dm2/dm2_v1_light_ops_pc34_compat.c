@@ -43,8 +43,9 @@ void dm2_v1_recalc_light_level_pc34(
     int16_t charges[9];
     int charge_count = 0;
     int16_t item = cb->get_leader_item(ctx);
-    if (item >= 0 &&
-        (cb->query_gdat_dbspec_word(ctx, item, 0) & 0x10u) != 0u) {
+    /* sklight.cpp:35-42 passes the record as an unsigned 16-bit handle.
+     * A set sign bit is part of a valid record id, not an absence marker. */
+    if ((cb->query_gdat_dbspec_word(ctx, item, 0) & 0x10u) != 0u) {
         int16_t charge = cb->add_item_charge(ctx, item, 0);
         if (charge >= 0 && charge_count < (int)(sizeof(charges) / sizeof(charges[0])))
             charges[charge_count++] = charge;
@@ -56,8 +57,6 @@ void dm2_v1_recalc_light_level_pc34(
     for (int16_t hero = 0; hero < hero_count; hero++) {
         for (int hand = 0; hand < 2; hand++) {
             item = cb->get_hero_item(ctx, hero, hand);
-            if (item < 0)
-                continue;
             if ((cb->query_gdat_dbspec_word(ctx, item, 0) & 0x10u) == 0u)
                 continue;
             int16_t charge = cb->add_item_charge(ctx, item, 0);
@@ -66,15 +65,14 @@ void dm2_v1_recalc_light_level_pc34(
         }
     }
 
-    /* sklight.cpp:92-113 — source bubble pass, descending by charge. */
-    for (int i = 1; i < charge_count; i++) {
-        int16_t key = charges[i];
-        int j = i - 1;
-        while (j >= 0 && charges[j] < key) {
-            charges[j + 1] = charges[j];
-            j--;
+    /* sklight.cpp:87-112 makes exactly one adjacent pass, swapping only
+     * when the left charge is greater. Later charges are not fully sorted. */
+    for (int i = 0; i + 1 < charge_count; ++i) {
+        if (charges[i] > charges[i + 1]) {
+            int16_t tmp = charges[i];
+            charges[i] = charges[i + 1];
+            charges[i + 1] = tmp;
         }
-        charges[j + 1] = key;
     }
 
     /* sklight.cpp:115-157 — table1d6702 contribution starts with a six-bit
