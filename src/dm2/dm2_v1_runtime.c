@@ -1672,12 +1672,7 @@ static int dm2_runtime_light_mode7_tile(
     DM2_V1_SkprojectQuery0cee0897Receipt sensor;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
     DM2_V1_SkprojectTeleporterDetail detail;
-    const uint8_t *tiles;
-    const uint8_t *destination_tiles;
-    const uint8_t *db1;
-    int16_t width, height;
-    int16_t destination_width, destination_height;
-    int first, destination_map, detail_valid = 0, weather_index;
+    int detail_valid = 0, weather_index;
     int16_t record, next;
     unsigned chain_length = 0u;
     int raw;
@@ -1710,32 +1705,15 @@ static int dm2_runtime_light_mode7_tile(
         if (type == 14u || type == 15u) return -1;
         record = next;
     }
-    tiles = dm2_v1_dungeon_level_tile_data(dungeon, map, &width, &height);
-    if (!tiles) return -1;
     memset(&sensor, 0, sizeof(sensor));
-    if (dm2_v1_skproject_query_0cee_0897(
-            (int16_t)x, (int16_t)y, tiles, width, height,
-            &rt->record_pools, NULL, NULL, &sensor)) {
-        first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
-        db1 = first >= 0 ? dm2_v1_record_pool_address(
-            &rt->record_pools, (int16_t)first) : NULL;
-        if (!db1) return -1;
-        destination_map = (int)db1[5];
-        if (destination_map < 0 || destination_map >= dungeon->level_count)
-            return -1;
-        destination_tiles = dm2_v1_dungeon_level_tile_data(
-            dungeon, destination_map, &destination_width,
-            &destination_height);
-        if (!destination_tiles) return -1;
+    if (dm2_v1_skproject_query_0cee_0897_dungeon(
+            dungeon, &rt->record_pools, map, x, y, &sensor)) {
         memset(&detail, 0, sizeof(detail));
         memset(&detail_receipt, 0, sizeof(detail_receipt));
-        if (dm2_v1_skproject_get_teleporter_detail(
-                (int16_t)x, (int16_t)y, tiles, width, height,
-                &rt->record_pools, (uint8_t)map, destination_tiles,
-                destination_width, destination_height, &detail,
-                &detail_receipt)) {
-            if (!detail_receipt.valid ||
-                detail.b_04 != (uint8_t)destination_map) return -1;
+        if (dm2_v1_skproject_get_teleporter_detail_dungeon(
+                dungeon, &rt->record_pools, map, x, y,
+                &detail, &detail_receipt)) {
+            if (!detail_receipt.valid) return -1;
             detail_valid = 1;
         } else if (!detail_receipt.blocked_tile_not_teleporter) {
             return -1;
