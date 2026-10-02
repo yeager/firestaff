@@ -2949,6 +2949,91 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                     d1_front_opaque > 0 && d1_front_matched == d1_front_opaque &&
                     d1_front_changed > 0,
                 "Atari D1C/D0C weapon and F0129-scaled D1C front weapon use source graphic 372 and vanish after F0267");
+    /* Original MINI map 3 (14,11) is a mixed F0159 chain: DB3 0x0dd1,
+     * DB5 0x5427 in absolute cell 1, then DB5 0xd428 in cell 3. From
+     * (15,11) facing west both weapons occupy different D1C cells. F0115
+     * restarts at 0x0dd1 for each cell and must reach both DB5 records. */
+    {
+        const int head = csb_v1_dungeon_get_first_thing(candidate, 3, 14, 11);
+        const int first = head >= 0 ?
+            csb_v1_dungeon_f0159_get_next_thing_pc34(candidate, (uint16_t)head) : -1;
+        const int second = first >= 0 ?
+            csb_v1_dungeon_f0159_get_next_thing_pc34(candidate, (uint16_t)first) : -1;
+        M11_AssetSlot *chain_graphic;
+        unsigned char chain_with[320 * 200];
+        unsigned char chain_without[320 * 200];
+        int back_opaque = 0, back_matched = 0, back_changed = 0;
+        int front_opaque = 0, front_matched = 0, front_changed = 0;
+        int removed = 0;
+        static const unsigned char d2_palette[16] =
+            {0,1,2,3,4,3,6,7,5,9,10,11,12,13,14,15};
+        if (head == 0x0dd1 && first == 0x5427 && second == 0xd428 &&
+            csb_v1_dungeon_f0159_get_next_thing_pc34(
+                candidate, (uint16_t)second) == 0xfffeu &&
+            csb_v1_dungeon_get_square_type(candidate, 3, 14, 11) == 1 &&
+            csb_v1_dungeon_get_square_type(candidate, 3, 15, 11) == 1) {
+            profile->runtime.current_level = 3;
+            profile->runtime.party_x = 15;
+            profile->runtime.party_y = 11;
+            profile->runtime.party_dir = 3;
+            csb_v1_dungeon_set_current_level(3);
+            memset(chain_with, 0, sizeof(chain_with));
+            M11_GameView_Draw(view, chain_with, 320, 200);
+            chain_graphic = (M11_AssetSlot *)M11_AssetLoader_Load(
+                &view->assetLoader, 408u);
+            if (chain_graphic && chain_graphic->loaded &&
+                chain_graphic->pixels && chain_graphic->width == 16u &&
+                chain_graphic->height == 7u) {
+                for (int row = 0; row < 7; ++row)
+                    for (int col = 0; col < 16; ++col) {
+                        const unsigned char pixel =
+                            chain_graphic->pixels[row * 16 + col];
+                        if (pixel != 10u) {
+                            ++back_opaque;
+                            if (chain_with[(135 + row) * 320 + 186 + col] == pixel)
+                                ++back_matched;
+                        }
+                    }
+                for (int row = 0; row < 4; ++row)
+                    for (int col = 0; col < 10; ++col) {
+                        const unsigned sx =
+                            (85183u + (1024u * 16u / 10u << 6) * (unsigned)col) >> 16;
+                        const unsigned sy =
+                            (90111u + (1024u * 7u / 4u << 6) * (unsigned)row) >> 16;
+                        const unsigned char pixel =
+                            d2_palette[chain_graphic->pixels[sy * 16 + sx]];
+                        if (pixel != 10u) {
+                            ++front_opaque;
+                            if (chain_with[(123 + row) * 320 + 124 + col] == pixel)
+                                ++front_matched;
+                        }
+                    }
+            }
+            removed = csb_dungeon_move_thing_default((uint16_t)first,
+                                                       14, 11, -1, -1) == 0 &&
+                      csb_dungeon_move_thing_default((uint16_t)second,
+                                                       14, 11, -1, -1) == 0 &&
+                      csb_v1_dungeon_f0159_get_next_thing_pc34(
+                          candidate, (uint16_t)head) == 0xfffeu;
+            memset(chain_without, 0, sizeof(chain_without));
+            M11_GameView_Draw(view, chain_without, 320, 200);
+            for (int row = 0; row < 7; ++row)
+                for (int col = 0; col < 16; ++col)
+                    if (chain_with[(135 + row) * 320 + 186 + col] !=
+                        chain_without[(135 + row) * 320 + 186 + col])
+                        ++back_changed;
+            for (int row = 0; row < 4; ++row)
+                for (int col = 0; col < 10; ++col)
+                    if (chain_with[(123 + row) * 320 + 124 + col] !=
+                        chain_without[(123 + row) * 320 + 124 + col])
+                        ++front_changed;
+        }
+        expect_true(removed && back_opaque > 0 &&
+                        back_matched == back_opaque && back_changed > 0 &&
+                        front_opaque > 0 && front_matched > 0 &&
+                        front_changed > 0,
+                    "Atari D1C traverses authentic MINI DB3/DB5/DB5 chain in source cell order");
+    }
     profile->runtime.dungeon_handle = original;
     profile->runtime.current_level = old_level;
     profile->runtime.party_x = old_x;

@@ -5302,7 +5302,8 @@ static int m11_csb_atari_st_draw_ceiling_pit(
  * resulting {graphic, pixel width, height, G0218 coordinate set} for DB5.
  * Every distinct source graphic was decoded from original Atari ST v2.1
  * GRAPHICS.DAT and had the G0209 dimensions. This pass still covers only
- * one first/only DB5 thing in the source D1C front/back and D0C back passes.
+ * the first matching DB5 thing per visible cell in the source D1C front/back
+ * and D0C back passes, even when unrelated records precede it in the chain.
  * None of these 46 G0209 aspects has FLIP_ON_RIGHT or ALCOVE graphic flags;
  * complete F0115 ordering is pending. */
 static const struct {
@@ -5351,6 +5352,7 @@ static int m11_csb_atari_st_draw_near_weapon(
     int scaled;
     int drawn_width;
     int drawn_height;
+    int chain_step;
     unsigned int x_step = 0u;
     unsigned int y_step = 0u;
 
@@ -5361,14 +5363,26 @@ static int m11_csb_atari_st_draw_near_weapon(
         return 0;
     thing = csb_v1_dungeon_get_first_thing(dungeon, runtime->current_level, x, y);
     if (thing < 0) return 0;
-    cell = (((unsigned)thing >> 14) - (runtime->party_dir & 3)) & 3;
-    if (view_cell == 1 ? cell > 1 : view_cell == 2 ? cell >= 2 : cell < 2)
-        return 0;
-    record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
-                                               &type, NULL, &size);
-    if (!record || type != 5 || size < 4 ||
-        csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, (uint16_t)thing) !=
-            0xfffeu) return 0;
+    /* F0115 restarts at the square's first THING for each view cell and
+     * follows F0159 through non-object records. A visible DB5 can therefore
+     * sit after a text/actuator or an object in a different cell. This
+     * bounded pass still draws only the first admitted DB5 in this cell. */
+    for (chain_step = 0; chain_step < 16384; ++chain_step) {
+        int next;
+        cell = (((unsigned)thing >> 14) - (runtime->party_dir & 3)) & 3;
+        record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
+                                                   &type, NULL, &size);
+        if (!record) return -1;
+        if (type == 5 && size >= 4 &&
+            !(view_cell == 1 ? cell > 1 :
+              view_cell == 2 ? cell >= 2 : cell < 2))
+            break;
+        next = csb_v1_dungeon_f0159_get_next_thing_pc34(
+            dungeon, (uint16_t)thing);
+        if (next == 0xfffeu || next == 0xffffu) return 0;
+        thing = next;
+    }
+    if (chain_step == 16384) return -1;
     subtype = record[2] & 0x7f;
     if (subtype >= 46) return 0;
     graphic_index = m11_csb_atari_st_db5_d1c_material[subtype].graphic;
