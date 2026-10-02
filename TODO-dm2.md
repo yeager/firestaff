@@ -335,7 +335,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   successful switch transaction.
   Same-layer map 12 touches map 0 only at map 0
   (6,0), a wall tile. The verified map16→map0 stair does not establish a
-  reverse route. Resolve the original Mac New Game start/transition before
+  reverse route. Both map-0 pits are enclosed and cannot be entered from
+  its 33 connected floor cells; ordinary edge movement also meets source
+  wall tiles. Trace the original post-selection event and timer path for an
+  actual map change or tile mutation. Resolve the Mac New Game transition before
   assuming the map 0 boundary can be crossed. The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Linked DB5–DB9 rendering and placement
@@ -345,7 +348,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
   builds item zones from the drawn `dm2_image2.rect`, and
   `c_events.cpp:973` removes the chosen tile record before taking it into
-  the hand. Reach an item through normal movement and prove a pointer
+  the hand. Retail Mac `CODE(8)+0x2838` handles an occupied hand through
+  placement rect IDs `0x2f8`–`0x2fb`; `CODE(9)+0x02d8` resolves them from
+  a dynamic tree at `A5-0x662`. Static Mac RAW4 entries for `0x2fa`/`0x2fb`
+  are offscreen, so capture or reconstruct the live rect nodes before binding
+  a pointer drop. Reach an item through normal movement and prove a pointer
   pickup/placement round trip before calling exchange complete.
   An original-media diagnostic pose on map 9 at (1,1) facing north found DB10
   `0x2831` on the floor directly ahead at (1,0). Its original category
