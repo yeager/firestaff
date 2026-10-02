@@ -2,6 +2,31 @@
 
 Reviewed 2026-10-02. Only open work is listed here.
 
+## 2026-10-02 — original raw Track 01 audio from US/JP 7z discs
+
+- ✅ M11 now binds Track 01 directly from the selected hash-verified US or JP
+  7z Track 02 edition. It reads the matching archive CUE and its exact
+  CUE-declared raw Track 01 BIN into bounded memory, then starts the existing
+  CDDA stream from original 2352-byte sectors. No archive members are written
+  or cached to disk. Other 7z layouts, loose Track 02 files, and unpaired audio
+  remain closed.
+- ✅ Extended the memory-backed CDDA lifecycle to queue authentic raw sectors
+  as well as the existing bounded OGG input. The authentic US/JP archive test
+  verifies both the filesystem-backed and memory-backed stream with original
+  Track 01 data.
+- ✅ On trv2, the `theron_v1_jp_7z_direct_boot`,
+  `theron_v1_us_7z_direct_boot`, `theron_v1_track01_cdda_authentic_archive`,
+  and `theron_v1_m11_launcher_handoff_boundary` CTests passed. Both archive
+  boot tests reported `theronTrack01CddaReady=1`; the audio test queued raw
+  sectors from both original editions. This establishes authentic title
+  Track 01 availability and startup only—not audible device output, gameplay
+  CDDA command selection, or a game-owned event-to-track mapping.
+- 🔒 A fresh original-emulator dungeon save is still unavailable. The Mac was
+  locked and trv2 was running another agent's Nexus capture during this work;
+  do not infer in-game progress or save creation from the Firestaff boot probe.
+  Continue that capture after the Mac is unlocked and the emulator window is
+  visibly confirmed; hold RUN for 3–5 seconds as instructed.
+
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
 - ✅ On the isolated trv2 build, `test_theron_v1_pce_bram_real_artifact`

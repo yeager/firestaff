@@ -6469,3 +6469,19 @@ Verification: built the hardware-configuration test on `trv2` and ran the
 filtered census three times against the authentic US and JP Track 02 BINs; all
 six region-results matched. Runtime caller, event ownership and actual audio
 start remain open in `TODO-theron.md`.
+
+# ✅ 2026-10-02 Original 7z Track 01 audio handoff
+
+M11 now reads the exact US/JP archive CUE and its declared raw Track 01 BIN
+after the paired Track 02 edition has been verified by hash. The bounded
+memory-backed CDDA stream queues the original 2352-byte sectors; no game data
+is extracted or cached to disk. Other archive variants and unpaired audio
+remain fail-closed.
+
+Verification on trv2: authentic `theron_v1_us_7z_direct_boot` and
+`theron_v1_jp_7z_direct_boot` both reported `theronTrack01CddaReady=1`;
+`theron_v1_track01_cdda_authentic_archive` queued US and JP original sectors
+through both file- and memory-backed stream paths; and
+`theron_v1_m11_launcher_handoff_boundary` passed. These checks prove title
+Track 01 availability/startup only. Gameplay CDDA selection and original
+emulator dungeon-save capture remain open in `TODO-theron.md`.
