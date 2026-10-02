@@ -1,7 +1,51 @@
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+static void test_fmtowns_source_light_tables(void)
+{
+    const char *home = getenv("HOME");
+    char path[1024];
+    uint8_t data[96];
+    FILE *source;
+
+    if (!home || snprintf(path, sizeof(path),
+            "%s/.firestaff/data/dm2/fmtowns_iso/SKULL.EXP", home) >=
+            (int)sizeof(path)) return;
+    source = fopen(path, "rb");
+    if (!source) {
+        puts("SKIP: original FM Towns SKULL.EXP is unavailable");
+        return;
+    }
+    /* Retail FM Towns SKULL.EXP stores the two SKProject c_light tables at
+     * file offsets 0x3c44 and 0x3c60.  The latter has two source padding
+     * bytes after its fifth entry.  Compare the original executable bytes
+     * rather than inferring cross-platform equivalence from source names. */
+    assert(fseek(source, 0x3c44, SEEK_SET) == 0);
+    assert(fread(data, 1u, sizeof(data), source) == sizeof(data));
+    fclose(source);
+    assert(memcmp(data, dm2_v1_table_1d6702, 16u) == 0);
+    assert(memcmp(data + 28u, dm2_v1_table_1d6712, 5u) == 0);
+    assert(data[33] == 0u && data[34] == 0u);
+    assert(memcmp(data + 35u, dm2_v1_table_1d6712 + 5u, 16u) == 0);
+    /* The two radius/attenuation tables immediately follow at 0x3c7c
+     * and 0x3c90.  The FM Towns executable stores little-endian words and
+     * inserts two zero padding bytes between these arrays. */
+    for (size_t i = 0u; i < 9u; ++i) {
+        uint16_t word = (uint16_t)data[56u + i * 2u] |
+            ((uint16_t)data[57u + i * 2u] << 8);
+        assert(word == (uint16_t)dm2_v1_table_1d672b[i]);
+    }
+    assert(data[74] == 0u && data[75] == 0u);
+    for (size_t i = 0u; i < 7u; ++i) {
+        uint16_t word = (uint16_t)data[76u + i * 2u] |
+            ((uint16_t)data[77u + i * 2u] << 8);
+        assert(word == (uint16_t)dm2_v1_table_1d673d[i]);
+    }
+    puts("test_fmtowns_source_light_tables OK");
+}
 
 static void test_dir_dx(void)
 {
@@ -371,6 +415,7 @@ static void test_gdat_cmdstr_types(void)
 
 int main(void)
 {
+    test_fmtowns_source_light_tables();
     test_dir_dx();
     test_dir_dy();
     test_dir_opposite();
