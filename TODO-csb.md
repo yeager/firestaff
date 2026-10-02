@@ -87,7 +87,11 @@ Reviewed 2026-09-05. Only open work is listed here.
   The real-media CLI route now also sends source F1 and F2 inventory keys
   after the second recruitment and verifies an open inventory panel. A
   separate authentic M12-to-M11 receipt verifies the selected inventory
-  ordinal and unchanged leader. Further item handling remains open.
+  ordinal and unchanged leader. Further item handling remains open: both
+  recruited champions have empty inventories, and a read-only census of the
+  original 20x16 prison map 0 found no object or teleporter things. ReDMCSB
+  PANEL.C F0355 closes an open chest when switching inventories; verify that
+  transition only after reaching an authentic chest beyond the prison map.
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
   platforms. On 2026-10-01, `csb_v1_atari_original_archive_cli_boot` was added
