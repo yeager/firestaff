@@ -22,6 +22,8 @@
   entrance CD audio route to start from original media.
 - `DM2 Macintosh floor items`: loads the retail map span and reads linked
   records for original floor-item pickup and placement routes.
+- `DM2 FM Towns first dungeon frame`: stops drawing a spell-failure image as
+  a permanent action strip. An original-media test verifies the initial HUD.
 
 ## Developer changes
 
