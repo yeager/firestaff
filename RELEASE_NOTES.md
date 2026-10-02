@@ -36,6 +36,9 @@
   loose data tree.
 - `DM2 Macintosh source tests`: verify the retail start corridor, linked item
   records and original map transitions with authentic media.
+- `CSB FM Towns dungeon tests`: verify English and Japanese complete-disc
+  startup through the original dungeon and open the inventory through live
+  input before checking chest pickup.
 
 ## Known limitations
 
