@@ -292,6 +292,19 @@ Reviewed 2026-08-29. Only open work is listed here.
   movement and do not implement those light modes. GAME_LOAD also refreshes
   the map scene before copying the live party and light state. Do not fill the
   receipt from a map descriptor or a guessed minimum light level.
+  The source order is `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v5/sklight.cpp`,
+  lines 490-592): mode 8 clears and fills `v1e08c8/v1e08cc` visibility data;
+  mode 7 traverses the admitted cells and calls
+  `ADD_BACKGROUND_LIGHT_FROM_TILE` through `SK1C9A.cpp`'s actions 0x17/0x18.
+  Those calls update `v1e0974/v1e0978`; only then may
+  `RECALC_LIGHT_LEVEL` combine the party hand charges, `savegames1.w_00`,
+  GRAPHICSSET words 0x67/0x68 and weather into the clamped light level.
+  The current `dm2_v1_1c9a_pc34_compat` and runtime adapters implement
+  creature movement, not these actions or their visibility buffers. An
+  implementation must retain the map, party position, tick, records and GDAT
+  identities across both traversals and the final frame receipt. The
+  original-media acceptance case is map 3 (13,11) -> map 38 (6,6), then map
+  38 (6,4) -> map 3 (13,9), with valid `c_light` on both resulting frames.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
   Firestaff at the same game state. The retired H2313 crops remain
   non-promotable because they are byte-identical and lack route labels; they
