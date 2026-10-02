@@ -215,6 +215,7 @@ struct DM2_V1_RuntimeState {
     DM2_V1_GdatSceneLightM11Receipt gdat_scene_light_receipt;
     DM2_V1_CLightM11Receipt c_light_receipt;
     DM2_V1_1c9aLightVisibility c_light_visibility;
+    uint16_t light_walk_rng; /* dm2data.cpp v1d62ec, separate from weather */
     DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan gdat_door_material_plan;
     int gdat_scene_control_ready;
@@ -2564,6 +2565,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         dm2_v1_i18n_destroy(&g_dm2_runtime.i18n);
     }
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
+    g_dm2_runtime.light_walk_rng = 1u;
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     memset(&g_dm2_last_missile_impact, 0,
            sizeof(g_dm2_last_missile_impact));

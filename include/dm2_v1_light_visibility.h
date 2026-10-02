@@ -48,6 +48,9 @@ typedef int (*DM2_V1_1c9aLightStep)(
 int dm2_v1_1c9a_light_mode8_frontier(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context);
+/* SK1C9A v1d62ec is a separate 16-bit walk RNG, initialized to 1 by
+ * dm2data.cpp. Call only at source branches that consume that state. */
+uint16_t dm2_v1_1c9a_light_walk_rng_advance(uint16_t state);
 typedef int (*DM2_V1_1c9aLightTile)(
     void *context, int map, int x, int y, int distance,
     int16_t *ambient_delta, int16_t *darkness_delta);

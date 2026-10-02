@@ -498,6 +498,17 @@ TEST(light_mode8_ring_rotates_higher_score_packets) {
     assert(!state.mode8_complete);
 }
 
+TEST(light_walk_rng_uses_source_lfsr) {
+    uint16_t state = 1u;
+    state = dm2_v1_1c9a_light_walk_rng_advance(state);
+    assert(state == 0xb400u);
+    state = dm2_v1_1c9a_light_walk_rng_advance(state);
+    assert(state == 0x5a00u);
+    state = dm2_v1_1c9a_light_walk_rng_advance(state);
+    assert(state == 0x2d00u);
+    assert(dm2_v1_1c9a_light_walk_rng_advance(3u) == 0xb401u);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -1001,6 +1012,7 @@ int main(void) {
     RUN(light_mode8_work_ring_wraps_after_256_nodes);
     RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
     RUN(light_mode8_ring_rotates_higher_score_packets);
+    RUN(light_walk_rng_uses_source_lfsr);
 
     /* Popcount */
     RUN(popcount_zero);

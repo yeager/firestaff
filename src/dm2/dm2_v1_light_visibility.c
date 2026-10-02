@@ -3,6 +3,13 @@
 #include <stddef.h>
 #include <string.h>
 
+uint16_t dm2_v1_1c9a_light_walk_rng_advance(uint16_t state)
+{
+    /* SK1C9A.cpp:9521-9540 shifts v1d62ec and XORs its high byte with
+     * 0xb4 when the discarded low bit was set. */
+    return (uint16_t)((state >> 1) ^ ((state & 1u) ? 0xb400u : 0u));
+}
+
 void dm2_v1_1c9a_light_visibility_reset(
     DM2_V1_1c9aLightVisibility *state, int current_map,
     int current_width, int alternate_map, int alternate_width)
