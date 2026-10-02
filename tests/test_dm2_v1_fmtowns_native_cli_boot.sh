@@ -19,6 +19,18 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform fm-towns --data-dir "$archive" \
     --script 'key:enter,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
+# The unqualified menu route must resolve the authenticated FM Towns edition
+# before applying the same platform-card and New Game inputs.
+auto_menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm2 --data-dir "$archive" --verbose \
+    --script 'key:enter,key:enter,key:enter' --duration 1000 2>&1) || {
+    printf '%s\n' "$auto_menu_output" >&2
+    exit 1
+}
+printf '%s\n' "$auto_menu_output" | grep -q \
+    'selected game=dm2 platform=FM Towns edition=fmtowns-ja'
+
 # FM Towns is the first DM2 platform card.  This asserts that the launcher
 # admits the authentic disc solely through mouse selection before the source
 # title and New Game input path below takes over.
