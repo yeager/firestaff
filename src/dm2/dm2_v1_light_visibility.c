@@ -1,10 +1,18 @@
 #include "dm2_v1_light_visibility.h"
+#include "dm2_v1_light_terminal_receipt.h"
 
 #include <stddef.h>
 #include <string.h>
 
 _Static_assert(sizeof(DM2_V1_1c9aLightWorkNode) == 4u,
                "SK1C9A xp_bc cells are four bytes");
+
+static uint32_t light_proof_mix(uint32_t hash, uint32_t value)
+{
+    for (unsigned shift = 0; shift < 32u; shift += 8u)
+        hash = (hash ^ (uint8_t)(value >> shift)) * 16777619u;
+    return hash;
+}
 
 int dm2_v1_1c9a_light_work_node_position(
     DM2_V1_1c9aLightWorkNode *node, int map, int x, int y)
@@ -212,7 +220,9 @@ static int light_walk_core(
     int start_y, DM2_V1_1c9aLightStep step, void *context,
     uint16_t *walk_rng, uint16_t source_flags, unsigned action,
     unsigned max_score, int source_facing,
-    DM2_V1_1c9aLightNodeAction on_node)
+    DM2_V1_1c9aLightNodeAction on_node,
+    const DM2_V1_LightWalkSourceReceipts *receipts,
+    DM2_V1_LightWalkTerminalProof *proof)
 {
     typedef struct { uint8_t x, y, map, reserved; } Cell;
     /* SK1C9A xp_90 stores x, y, map in four-byte work entries. Scores live
@@ -226,10 +236,16 @@ static int light_walk_core(
     uint8_t head = 0u, tail = 0u;
     unsigned pending = 0u;
     unsigned lowest = 0u;
+    uint32_t node_hash = 2166136261u;
+    uint32_t edge_hash = 2166136261u;
+    uint16_t rng_before = walk_rng ? *walk_rng : 0u;
     int selector;
+    if (proof) memset(proof, 0, sizeof(*proof));
     if (!state || !walk_rng || max_score == 0u || max_score > 50u ||
         source_facing < 0 || source_facing > 3 ||
         (action != 0x1bu && action != 0x17u)) return 0;
+    if (proof && (!receipts || !receipts->edge ||
+                  (action == 0x17u && !receipts->node))) return 0;
     memset(work_grid, 0, sizeof(work_grid));
     memset(seen, 0, sizeof(seen));
     memset(score_bucket, 0, sizeof(score_bucket));
@@ -266,10 +282,21 @@ static int light_walk_core(
     /* dm2data.cpp table1d62ee[23] = 0x4f. With the one action-23 button
      * used by CHECK_RECOMPUTE_LIGHT, SK1C9A ORs that value into vb_140
      * before both the prepass and the edge-loop cache refresh. */
-    } else if (!on_node || on_node(context, start_map, start_x,
-                                   start_y, -1, source_facing,
-                                   0u, 3u, 0x4fu) < 0) {
-        goto incomplete;
+    } else {
+        uint32_t source_hash;
+        int16_t ambient_before = state->v1e0974;
+        int16_t darkness_before = state->v1e0978;
+        if (!on_node || on_node(context, start_map, start_x,
+                               start_y, -1, source_facing,
+                               0u, 3u, 0x4fu) < 0) goto incomplete;
+        if (proof) {
+            source_hash = receipts->node(receipts->context,
+                start_map, start_x, start_y, -1, 0u, 3u, 0x4fu,
+                ambient_before, darkness_before,
+                state->v1e0974, state->v1e0978);
+            if (!source_hash) goto incomplete;
+            edge_hash = light_proof_mix(edge_hash, source_hash);
+        }
     }
     queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
                          (uint8_t)start_map, 0u};
@@ -311,6 +338,12 @@ static int light_walk_core(
         cell_index = (size_t)cell_selector * 1024u +
                      (size_t)cell.x * 32u + (size_t)cell.y;
         if (!seen[cell_index]) goto incomplete;
+        if (proof) {
+            node_hash = light_proof_mix(node_hash, (uint32_t)cell.map);
+            node_hash = light_proof_mix(node_hash,
+                ((uint32_t)cell.x << 16) | ((uint32_t)cell.y << 8) | score);
+            node_hash = light_proof_mix(node_hash, *walk_rng);
+        }
         /* vo_e8 is the consumed xp_bc score. Action 27 writes vo_e8+1
          * at each admitted target before its edge cost enters xp_90. */
         decision = dm2_v1_1c9a_light_node_decision(
@@ -323,12 +356,35 @@ static int light_walk_core(
                 &decision, source_flags, attempt);
             int next_map = -1, next_x = -1, next_y = -1;
             int projection_map = -1, projection_x = -1, projection_y = -1;
+            int16_t ambient_before = state->v1e0974;
+            int16_t darkness_before = state->v1e0978;
             int result = step(context, cell.map, cell.x, cell.y, direction,
                               score, &next_map, &next_x, &next_y,
                               &projection_map, &projection_x,
                               &projection_y);
             size_t index;
             if (result < 0) goto incomplete;
+            if (proof) {
+                uint32_t source_hash = receipts->edge(receipts->context,
+                    cell.map, cell.x, cell.y, direction, score, result,
+                    next_map, next_x, next_y,
+                    projection_map, projection_x, projection_y);
+                if (!source_hash) goto incomplete;
+                edge_hash = light_proof_mix(edge_hash, source_hash);
+                edge_hash = light_proof_mix(edge_hash,
+                    ((uint32_t)direction << 16) | ((uint32_t)score << 8) |
+                    (uint8_t)result);
+                if (result > 0) {
+                    edge_hash = light_proof_mix(edge_hash,
+                        ((uint32_t)(uint8_t)next_map << 16) |
+                        ((uint32_t)(uint8_t)next_x << 8) |
+                        (uint8_t)next_y);
+                    edge_hash = light_proof_mix(edge_hash,
+                        ((uint32_t)(uint8_t)projection_map << 16) |
+                        ((uint32_t)(uint8_t)projection_x << 8) |
+                        (uint8_t)projection_y);
+                }
+            }
             if (result == 0) continue;
             selector = next_map == state->current_map ? 0 :
                        next_map == state->alternate_map ? 1 : -1;
@@ -344,10 +400,19 @@ static int light_walk_core(
                         state, next_map, next_x, next_y,
                         projection_map, projection_x, projection_y, score))
                     goto incomplete;
-            } else if (on_node(context, next_map, next_x, next_y,
-                               direction, source_facing,
-                               score, 4u, 0x4fu) < 0) {
-                goto incomplete;
+            } else {
+                uint32_t source_hash;
+                if (on_node(context, next_map, next_x, next_y,
+                            direction, source_facing,
+                            score, 4u, 0x4fu) < 0) goto incomplete;
+                if (proof) {
+                    source_hash = receipts->node(receipts->context,
+                        next_map, next_x, next_y, direction,
+                        score, 4u, 0x4fu, ambient_before, darkness_before,
+                        state->v1e0974, state->v1e0978);
+                    if (!source_hash) goto incomplete;
+                    edge_hash = light_proof_mix(edge_hash, source_hash);
+                }
             }
             if ((unsigned)score + (unsigned)result > max_score ||
                 (seen[index] &&
@@ -370,6 +435,25 @@ static int light_walk_core(
             ++pending;
         }
     }
+    if (proof) {
+        proof->valid = 1u;
+        proof->action = (uint8_t)action;
+        proof->mode = action == 0x1bu ? 8u : 7u;
+        proof->terminal_exhausted = 1u;
+        proof->callbacks_authenticated = 1u;
+        proof->map = (int16_t)start_map;
+        proof->x = (uint8_t)start_x;
+        proof->y = (uint8_t)start_y;
+        proof->radius = (uint8_t)max_score;
+        proof->rng_before = rng_before;
+        proof->rng_after = *walk_rng;
+        proof->ordered_node_hash = node_hash;
+        proof->source_edge_hash = edge_hash;
+        proof->result_hash = action == 0x1bu ?
+            dm2_v1_light_terminal_visibility_hash(state) :
+            dm2_v1_light_terminal_accumulator_hash(
+                state->v1e0974, state->v1e0978);
+    }
     return 1;
 incomplete:
     /* Retain observed cells for an incomplete mode-7 probe; completion
@@ -385,7 +469,19 @@ int dm2_v1_1c9a_light_mode8_frontier_with_rng(
     /* SK1C9A action 27 installs v1e0576=0x36e7 in its prepass. */
     return light_walk_core(state, start_map, start_x, start_y, step,
                            context, walk_rng, 0x36e7u, 0x1bu, 25u, 0,
-                           NULL);
+                           NULL, NULL, NULL);
+}
+
+int dm2_v1_1c9a_light_mode8_frontier_with_proof(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, DM2_V1_1c9aLightStep step, void *context,
+    uint16_t *walk_rng, const DM2_V1_LightWalkSourceReceipts *receipts,
+    DM2_V1_LightWalkTerminalProof *proof)
+{
+    if (!proof) return 0;
+    return light_walk_core(state, start_map, start_x, start_y, step,
+                           context, walk_rng, 0x36e7u, 0x1bu, 25u, 0,
+                           NULL, receipts, proof);
 }
 
 int dm2_v1_1c9a_light_mode7_frontier_with_rng(
@@ -401,7 +497,56 @@ int dm2_v1_1c9a_light_mode7_frontier_with_rng(
     if (source_radius > 8u) source_radius = 8u;
     return light_walk_core(state, start_map, start_x, start_y, step,
                            context, walk_rng, 0x227u, 0x17u,
-                           source_radius, source_facing, on_node);
+                           source_radius, source_facing, on_node,
+                           NULL, NULL);
+}
+
+int dm2_v1_1c9a_light_mode7_frontier_with_proof(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, int source_facing, unsigned source_radius,
+    DM2_V1_1c9aLightStep step, DM2_V1_1c9aLightNodeAction on_node,
+    void *context, uint16_t *walk_rng,
+    const DM2_V1_LightWalkSourceReceipts *receipts,
+    DM2_V1_LightWalkTerminalProof *proof)
+{
+    if (!proof) return 0;
+    memset(proof, 0, sizeof(*proof));
+    if (source_radius == 0u || source_radius > 8u || !on_node) return 0;
+    return light_walk_core(state, start_map, start_x, start_y, step,
+                           context, walk_rng, 0x227u, 0x17u,
+                           source_radius, source_facing, on_node,
+                           receipts, proof);
+}
+
+int dm2_v1_1c9a_light_mode7_zero_radius_proof(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, uint16_t walk_rng, uint32_t radius_source_receipt_hash,
+    DM2_V1_LightWalkTerminalProof *proof)
+{
+    if (proof) memset(proof, 0, sizeof(*proof));
+    if (!state || !proof || !radius_source_receipt_hash ||
+        start_map != state->current_map || start_map < 0 ||
+        start_map >= 64 || start_x < 0 ||
+        start_x >= state->current_width || start_y < 0 || start_y >= 32)
+        return 0;
+    state->v1e0974 = 0;
+    state->v1e0978 = 0;
+    state->mode7_complete = 0u;
+    state->source_state_hash = 0u;
+    proof->valid = 1u;
+    proof->action = 0x17u;
+    proof->mode = 7u;
+    proof->terminal_exhausted = 1u;
+    proof->callbacks_authenticated = 1u;
+    proof->skipped_zero_radius = 1u;
+    proof->map = (int16_t)start_map;
+    proof->x = (uint8_t)start_x;
+    proof->y = (uint8_t)start_y;
+    proof->rng_before = walk_rng;
+    proof->rng_after = walk_rng;
+    proof->radius_source_receipt_hash = radius_source_receipt_hash;
+    proof->result_hash = dm2_v1_light_terminal_accumulator_hash(0, 0);
+    return 1;
 }
 
 int dm2_v1_1c9a_light_mode8_frontier(

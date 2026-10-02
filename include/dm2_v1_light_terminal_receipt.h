@@ -29,8 +29,44 @@ typedef struct {
     uint16_t rng_after;
     uint32_t ordered_node_hash;
     uint32_t source_edge_hash;
+    uint32_t radius_source_receipt_hash;
     uint32_t result_hash;
 } DM2_V1_LightWalkTerminalProof;
+
+/* An observer must bind each callback outcome to the live tile/record/GDAT
+ * evidence it used. A hash of coordinates or an edge cost is insufficient. */
+typedef uint32_t (*DM2_V1_LightEdgeSourceReceipt)(
+    void *context, int map, int x, int y, int direction, unsigned score,
+    int cost, int next_map, int next_x, int next_y,
+    int projection_map, int projection_x, int projection_y);
+typedef uint32_t (*DM2_V1_LightNodeSourceReceipt)(
+    void *context, int map, int x, int y, int direction,
+    unsigned score, unsigned source_flags, uint8_t effective_flags,
+    int16_t ambient_before, int16_t darkness_before,
+    int16_t ambient_after, int16_t darkness_after);
+typedef struct {
+    DM2_V1_LightEdgeSourceReceipt edge;
+    DM2_V1_LightNodeSourceReceipt node;
+    void *context;
+} DM2_V1_LightWalkSourceReceipts;
+
+int dm2_v1_1c9a_light_mode8_frontier_with_proof(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, DM2_V1_1c9aLightStep step, void *context,
+    uint16_t *walk_rng, const DM2_V1_LightWalkSourceReceipts *receipts,
+    DM2_V1_LightWalkTerminalProof *proof);
+int dm2_v1_1c9a_light_mode7_frontier_with_proof(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, int source_facing, unsigned source_radius,
+    DM2_V1_1c9aLightStep step, DM2_V1_1c9aLightNodeAction on_node,
+    void *context, uint16_t *walk_rng,
+    const DM2_V1_LightWalkSourceReceipts *receipts,
+    DM2_V1_LightWalkTerminalProof *proof);
+/* sklight.cpp skips action 23 when the authenticated GDAT radius is zero. */
+int dm2_v1_1c9a_light_mode7_zero_radius_proof(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, uint16_t walk_rng, uint32_t radius_source_receipt_hash,
+    DM2_V1_LightWalkTerminalProof *proof);
 
 /* Live source identities required by DM2_RECALC_LIGHT_LEVEL and both walks.
  * Zero is a missing authentication receipt, except for numeric values such

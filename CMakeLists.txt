@@ -23275,6 +23275,20 @@ endif()
     add_test(NAME dm2_v1_light_terminal_receipt
              COMMAND test_dm2_v1_light_terminal_receipt)
 
+    add_executable(test_dm2_v1_light_walk_source_proof
+        tests/test_dm2_v1_light_walk_source_proof.c
+        src/dm2/dm2_v1_light_visibility.c
+        src/dm2/dm2_v1_light_terminal_receipt.c
+    )
+    target_include_directories(test_dm2_v1_light_walk_source_proof PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_light_walk_source_proof
+            PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_light_walk_source_proof
+             COMMAND test_dm2_v1_light_walk_source_proof)
+
     # ── DM2: GFX blit engine (c_gfx_blit.cpp) ──
     add_executable(test_dm2_v1_gfx_blit_pc34_compat
         tests/test_dm2_v1_gfx_blit_pc34_compat.c

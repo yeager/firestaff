@@ -83,10 +83,12 @@ int dm2_v1_light_terminal_receipt_commit(
         mode7->radius != inputs->radius ||
         (inputs->radius == 0u ?
             (!mode7->skipped_zero_radius || mode7->ordered_node_hash ||
-             mode7->source_edge_hash || mode7->rng_before != mode7->rng_after ||
+             mode7->source_edge_hash ||
+             mode7->radius_source_receipt_hash != inputs->gdat_hash ||
+             mode7->rng_before != mode7->rng_after ||
              state->v1e0974 != 0 || state->v1e0978 != 0) :
             (mode7->skipped_zero_radius || !mode7->ordered_node_hash ||
-             !mode7->source_edge_hash)))
+             !mode7->source_edge_hash || mode7->radius_source_receipt_hash)))
         return 0;
     visibility_hash = dm2_v1_light_terminal_visibility_hash(state);
     accumulator_hash = dm2_v1_light_terminal_accumulator_hash(

@@ -129,6 +129,7 @@ int main(void)
     inputs.rng_final = mode7.rng_after;
     mode7.ordered_node_hash = 0u;
     mode7.source_edge_hash = 0u;
+    mode7.radius_source_receipt_hash = inputs.gdat_hash;
     mode7.result_hash = dm2_v1_light_terminal_accumulator_hash(0, 0);
     assert(dm2_v1_light_terminal_receipt_commit(
         &state, &mode8, &mode7, &inputs));
