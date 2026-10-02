@@ -31,7 +31,9 @@
   original map 38 teleport destination; it does not yet provide a complete
   dynamic-light frame.
 - `DM1, CSB and DM2 startup tests`: verify automatic FM Towns selection with
-  original media and retain explicit platform overrides.
+  original media and retain explicit platform overrides. The CSB M12 menu
+  route also verifies that a complete FM Towns CD wins over a simultaneous
+  loose data tree.
 - `DM2 Macintosh source tests`: verify the retail start corridor, linked item
   records and original map transitions with authentic media.
 
