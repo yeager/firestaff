@@ -6895,6 +6895,116 @@ int dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightFlags4FloorReceipt *out)
+{
+    int raw;
+    int first;
+    uint16_t thing;
+    uint16_t floor_word = 0x00ffu;
+    uint16_t light_word = 0u;
+    uint16_t weather_word = 0u;
+    uint32_t source_hash = 0u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !loader || !loader->loaded ||
+        !dm2_v1_dungeon_record_list_traversal_allowed(d)) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 0u ||
+        first < 0) return 0;
+
+    /* skguivwp.cpp::DM2_SUMMARIZE_STONE_ROOM stops at the first DB type
+     * above 3. A type-2 floor text with ext usage zero is an unconditional
+     * FLOOR_GFX ornament. An actuator with no floor ordinal cannot replace
+     * it. Other record effects require source state not owned here. */
+    thing = (uint16_t)first;
+    for (int step = 0; step < 256; ++step) {
+        int type = -1;
+        int size = 0;
+        int next;
+        const uint8_t *record;
+        uint16_t w2;
+
+        if (thing == DM2_THING_END_MARKER) break;
+        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL,
+                                                   &size);
+        if (!record || size < 2) return 0;
+        if (type > 3) break;
+        if (type == 2) {
+            uint8_t ornament;
+            DM2_V1_QueryOrnateAnimFrameReceipt animation;
+            if (size < 4) return 0;
+            w2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
+            if ((w2 & 0x6u) == 0x2u) {
+                if (((unsigned)w2 >> 11) != 0u) return 0;
+                ornament = (uint8_t)(w2 >> 3);
+                memset(&animation, 0, sizeof(animation));
+                if (!dm2_v1_query_ornate_anim_frame_receipt(
+                        loader, 10, ornament, tick, 0u, &animation) ||
+                    !animation.accepted || animation.receipt_hash == 0u) {
+                    uint16_t word = 0u;
+                    size_t text_size = 0u;
+                    const uint8_t *text = dm2_v1_asset_load_text_sized(
+                        loader, 10, ornament, 0x0d, &text_size);
+                    /* skgdtqdb.cpp::QUERY_ORNATE_ANIM_FRAME returns one
+                     * when both animation entries are absent. Do not turn a
+                     * present but malformed entry into that fallback. */
+                    if (dm2_v1_asset_load_word_value(loader, 10, ornament,
+                                                       0x0d, &word) ||
+                        (text && text_size > 0u && text[0] != 0u))
+                        return 0;
+                    animation.frame = 1u;
+                    animation.receipt_hash = 0x4f414c45u ^
+                        ((uint32_t)ornament << 16) ^ (uint32_t)thing;
+                    if (animation.receipt_hash == 0u) return 0;
+                }
+                floor_word = (uint16_t)(ornament |
+                    (uint16_t)((uint32_t)animation.frame * 10u << 8));
+                source_hash = animation.receipt_hash;
+            }
+        } else if (type == 3) {
+            uint16_t w4;
+            if (size < 6) return 0;
+            w4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
+            if ((w4 >> 12) != 0u) return 0;
+        }
+        next = dm2_v1_dungeon_get_next_thing(d, thing);
+        if (next < 0 || next == (int)thing) return 0;
+        thing = (uint16_t)next;
+    }
+    if (thing != DM2_THING_END_MARKER) return 0;
+
+    if ((floor_word & 0xffu) != 0xffu) {
+        uint8_t ornament = (uint8_t)floor_word;
+        /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero for an absent scalar. */
+        (void)dm2_v1_query_gdat_entry_data_index(
+            loader, 9, ornament, 11, 0xf8, &light_word);
+        if (light_word != 0u)
+            (void)dm2_v1_query_gdat_entry_data_index(
+                loader, 9, ornament, 11, 0x63, &weather_word);
+    }
+
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->first_record_link = (uint16_t)first;
+    out->floor_ornament_word = floor_word;
+    out->floor_light_word = light_word;
+    out->weather_light_word = weather_word;
+    out->source_flags = 4u;
+    out->contributes_light = (uint8_t)((light_word & 0x7fffu) != 0u &&
+        (weather_word != 0u || (light_word & 0x8000u) == 0u ||
+         (floor_word & 0xff00u) != 0u));
+    out->ornament_source_hash = source_hash;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;

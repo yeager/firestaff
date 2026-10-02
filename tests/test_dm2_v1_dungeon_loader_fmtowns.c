@@ -286,6 +286,8 @@ static void test_fmtowns_load(const char *path) {
             DM2_V1_CLightFlags4FloorReceipt floor;
             int no_record_count = 0;
             int record_count = 0;
+            int admitted_record_count = 0;
+            int ornament_record_count = 0;
             for (int level = 3; level <= 38; level += 35) {
                 for (int y = 0; y < dungeon.level_heights[level]; ++y) {
                     for (int x = 0; x < dungeon.level_widths[level]; ++x) {
@@ -304,14 +306,30 @@ static void test_fmtowns_load(const char *path) {
                         } else {
                             assert(!dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
                                 &dungeon, level, x, y, &floor));
+                            if (dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                                    &dungeon, &loader, level, x, y, 0u,
+                                    &floor)) {
+                                assert(floor.valid && floor.source_flags == 4u &&
+                                       floor.first_record_link == (uint16_t)first);
+                                ++admitted_record_count;
+                                if ((floor.floor_ornament_word & 0xffu) != 0xffu) {
+                                    assert((floor.floor_ornament_word & 0xffu) != 0xffu &&
+                                           floor.ornament_source_hash != 0u);
+                                    ++ornament_record_count;
+                                }
+                                assert(floor.floor_light_word == 0u &&
+                                       floor.contributes_light == 0u);
+                            }
                             ++record_count;
                         }
                     }
                 }
             }
-            assert(no_record_count > 0 && record_count > 0);
-            printf("  PASS: FM Towns source flags-4 floor FF gate (%d no-record, %d record-bearing)\n",
-                   no_record_count, record_count);
+            printf("  PASS: FM Towns source flags-4 floor gates (%d no-record, %d record-bearing, %d admitted, %d ornament)\n",
+                   no_record_count, record_count, admitted_record_count,
+                   ornament_record_count);
+            assert(no_record_count > 0 && record_count > 0 &&
+                   admitted_record_count > 0 && ornament_record_count > 0);
         }
         dm2_v1_asset_loader_free(&loader);
         free(graphics);

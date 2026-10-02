@@ -1729,11 +1729,18 @@ typedef struct {
     uint8_t raw_tile;
     uint16_t first_record_link;
     uint16_t floor_ornament_word;
+    uint16_t floor_light_word;
+    uint16_t weather_light_word;
     uint8_t source_flags;
     uint8_t contributes_light;
+    uint32_t ornament_source_hash;
 } DM2_V1_CLightFlags4FloorReceipt;
 int dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_CLightFlags4FloorReceipt *out);
+int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
     DM2_V1_CLightFlags4FloorReceipt *out);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
