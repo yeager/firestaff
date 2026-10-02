@@ -46,6 +46,7 @@ static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
     DM2_V1_SkprojectQuery0cee0897Receipt sensor;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
     DM2_V1_SkprojectTeleporterDetail detail;
+    int16_t next;
     int valid = 1;
     memset(&pools, 0, sizeof(pools));
     if (!dm2_v1_record_pool_set_init_from_dungeon(&pools, dungeon)) return 0;
@@ -66,13 +67,17 @@ static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
         !dm2_v1_skproject_query_0cee_0897_dungeon(
             dungeon, &pools, 38, 6, 4, &sensor) &&
         sensor.first_record_link == 0x044eu &&
-        sensor.blocked_no_teleporter;
+        sensor.blocked_no_teleporter &&
+        dm2_v1_record_pool_next_link(&pools, 0x044e, &next) &&
+        next == (int16_t)0xfffe;
     memset(&sensor, 0, sizeof(sensor));
     valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 3, 13, 11) == 0xb8 &&
         !dm2_v1_skproject_query_0cee_0897_dungeon(
             dungeon, &pools, 3, 13, 11, &sensor) &&
         sensor.first_record_link == 0x0443u &&
-        sensor.blocked_no_teleporter;
+        sensor.blocked_no_teleporter &&
+        dm2_v1_record_pool_next_link(&pools, 0x0443, &next) &&
+        next == (int16_t)0xfffe;
     dm2_v1_record_pool_set_free(&pools);
     return valid;
 }

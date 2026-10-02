@@ -1639,9 +1639,21 @@ static int dm2_runtime_light_mode8_step(
         if (room.source_tile_type == 2u) return 0;
         if ((raw >> 5) == 5) {
             if ((raw & 0x08) != 0) {
-                /* The movement DB1 without a 0x27 sensor does not satisfy
-                 * the light walker's GET_TELEPORTER_DETAIL contract. */
-                return -1;
+                int16_t next;
+                /* SK1C9A/19f0_05e8 checks the creature on class-5 tiles
+                 * whose 0x10 bit is set. The original movement b8 square
+                 * has only DB1, then END, so that creature branch is empty.
+                 * It does not call GET_TELEPORTER_DETAIL here. */
+                if (!rt->record_pools_valid || raw != 0xb8 || first < 0 ||
+                    (((uint16_t)first >> 10) & 0x0fu) != 1u ||
+                    !dm2_v1_record_pool_next_link(
+                        &rt->record_pools, (int16_t)first, &next) ||
+                    next != (int16_t)0xfffe)
+                    return -1;
+                *next_map = map;
+                *next_x = nx;
+                *next_y = ny;
+                return 1;
             }
             if (!rt->record_pools_valid ||
                 !dm2_v1_skproject_get_teleporter_detail_dungeon(
