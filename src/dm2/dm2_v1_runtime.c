@@ -99,6 +99,8 @@ static void dm2_v1_runtime_append_mac_wall_targets(
 typedef struct DM2_V1_RuntimeState DM2_V1_RuntimeState;
 static void dm2_runtime_refresh_map_transition_context(
     DM2_V1_RuntimeState *rt);
+static void dm2_runtime_try_light_mode8(
+    DM2_V1_RuntimeState *rt, int x, int y);
 static int dm2_runtime_recalc_dynamic_light(
     DM2_V1_RuntimeState *rt, uint32_t scene_mask,
     uint32_t scene_rain, uint32_t highest_light_level);
@@ -1443,6 +1445,14 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         rt->gdat_scene_material_plan.highest_light_level;
     rt->gdat_ambient_darkness = rt->gdat_scene_material_plan.ambient_darkness;
     if (rt->c_light_map_descriptor.dynamic_light) {
+        /* CHECK_RECOMPUTE_LIGHT completes its mode-8 and mode-7 walks before
+         * RECALC_LIGHT_LEVEL reads their accumulators. The map descriptor
+         * and GDAT controls above must be ready before starting those walks. */
+        if (rt->source_party_valid && rt->boot->dm2_state) {
+            const DM2_V1_GameState *game =
+                (const DM2_V1_GameState *)rt->boot->dm2_state;
+            dm2_runtime_try_light_mode8(rt, game->party_x, game->party_y);
+        }
         (void)dm2_runtime_recalc_dynamic_light(
             rt, scene_word_mask, scene_rain, highest_light_level);
     }
@@ -1826,11 +1836,6 @@ static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_g1_runtime_materials(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
-    if (rt->source_party_valid && rt->boot && rt->boot->dm2_state) {
-        const DM2_V1_GameState *game =
-            (const DM2_V1_GameState *)rt->boot->dm2_state;
-        dm2_runtime_try_light_mode8(rt, game->party_x, game->party_y);
-    }
 }
 
 static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
