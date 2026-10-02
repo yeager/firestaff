@@ -2351,3 +2351,15 @@ Reviewed 2026-08-29. Completed work only.
   with the retail DOS EN 3.4 ZIP through CLI, start-menu launch, and native
   runtime input. The same shared-path change leaves the CSB FM Towns RAR and
   DM2 Mac retail CLI/start-menu regressions passing.
+
+- Added a PC 3.4 original-media combat regression from Hall of Champions
+  recruitment through the first door. Production inputs reach map 1 at
+  `(6,1)` facing south with champion HP 47 and original group thing `0x10a9`
+  at `(6,2)`; the occupied square blocks forward movement. Four action-row
+  attacks use original action indices `6,7,8`. Group `0x10a9` remains after
+  the first three rounds and disappears after the fourth. Forward movement
+  then reaches `(6,2)` and `(6,3)`; the next wall blocks it. The group's
+  original possession slot is `0xfffe`, so this test makes no loot claim.
+  Focused real-media CTest `m11_dm1_pc34_first_monster_combat_real` passes.
+  This verifies the Firestaff runtime route with retail media, not XP,
+  attack-roll parity, or an original-executable capture.

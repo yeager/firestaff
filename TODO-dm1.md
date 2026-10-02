@@ -232,8 +232,12 @@
 
 - Extend original-media combat XP integration coverage before publishing
   the XP batch. Paired fatal/nonfatal RAM tests do not replace an authentic
-  fight capture. Extend startup sentinel proof to remaining editions and
-  actual launcher UI routes; completed regression evidence is in DONE-dm1.md.
+  fight capture. A PC 3.4 original-media regression now reaches and defeats
+  the first map-1 group through four action-row attacks, then walks through
+  its cleared square; it does not compare XP, damage rolls, RNG, or an
+  original executable capture. Extend startup sentinel proof to remaining
+  editions and actual launcher UI routes; completed regression evidence is in
+  DONE-dm1.md.
   English and German Atari ST 1.2, French Atari ST 1.3, and English Atari ST
   1.0a, 1.0b and 1.1 reach `dm1-runtime` through M12 with first-runtime
   receipts at `championCount=0`. All six Atari ST editions now follow the
