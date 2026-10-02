@@ -264,24 +264,28 @@
   (1,3), facing south, `championCount=0`, and `dm1StartupHandoffExecuted=1`.
   The production M11 handoff calls its dedicated party-placement branch; the
   ordinary Thing-chain F0267 helper's rejection of PARTY/GROUP does not apply
-  to that branch. A local read of the authentic English ST 1.2 STX, normalized
-  using MEDIA240's Motorola word order and loaded through F0882, reports C04 at
-  that initial square. The fresh-start receipt and party tuple now pass on all
+  to that branch. Source-order reads of DUNGEON.DAT from all six authenticated
+  Atari ST editions correct an earlier C04 claim: map 0 (1,3) is raw square
+  `0xb0` in each, with an
+  inactive C01 teleporter (`0x0441`) followed by two C008 party-possession
+  sensors (`0x0e14`, `0x0e12`). Both sensors require item 27; the fresh party
+  has no champions or hand object. ReDMCSB MOVESENS.C F0267 therefore does
+  not teleport the party, and F0274/F0276 produce no remote sensor effect.
+  The fresh-start receipt and party tuple now pass on all
   six authenticated Atari ST editions. The real-media M12 probe now records
   the production F0267 placement receipt and its F0276 sensor-effect count;
   all six editions reach map 0 (1,3) with zero applied startup sensor effects.
-  This does not prove that the square has no sensors. The raw C04 sensor chain
-  and any non-effect sensor handling still need source-backed inspection.
-  Remaining evidence must trace campaign-square sensor effects through the
-  source-owned startup path.
+  The identical source chains explain the zero-effect startup receipts.
+  Later campaign sensor effects still need original-runtime evidence before
+  claiming complete startup behavior.
   M11 now preserves the source F0276 C003 party-floor-sensor gates: empty
   parties do not trigger it, and nonzero sensor data must match the party
   direction. F0276's C006 group-generator and C007 floor-creature sensors are
   skipped during party walk-on; the timed C006 generator event remains
   separately dispatched. Focused regressions cover these gates. The authentic
   English v1.2 menu-to-HoC
-  route passes after the changes, but does not claim its initial tile contains
-  either sensor or verify every sensor type/effect. Do not invent champions or
+  route passes after the changes, but does not verify every later sensor
+  type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by

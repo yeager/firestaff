@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-02: Re-read the authenticated start square in all six Atari ST
+  editions in Motorola source order. Every map 0 (1,3) square has an inactive
+  teleporter followed by the same two item-27 party-possession sensors; an
+  empty fresh party triggers none. This corrects a prior C04 claim in TODO
+  without changing runtime behavior.
+
 - 2026-10-02: Restored the authentic PC 3.4 D0C floor-item route. ReDMCSB
   DUNVIEW.C F0127/F0115 uses C2500 cells 0/1 for objects on the party square;
   the materialization gate had required cell 2 and withheld the rendered
