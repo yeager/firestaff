@@ -1753,15 +1753,29 @@ static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
 {
     DM2_V1_DungeonData *dungeon;
     int width = 0;
+    int alternate_map = -1;
+    int alternate_width = 0;
     if (!rt) return;
     dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
     if (dungeon && rt->dungeon_level >= 0 &&
         rt->dungeon_level < dungeon->level_count)
         width = dungeon->level_widths[rt->dungeon_level];
+    /* move_2fcf_0b8b's v1e027c is handed off with the sound spatial
+     * context. CHECK_RECOMPUTE_LIGHT uses it for the second 32-stride
+     * visibility plane when a neighbouring teleporter shows another map. */
+    if (dungeon && rt->sound_env.gate_map_b >= 0 &&
+        rt->sound_env.gate_map_b < dungeon->level_count &&
+        rt->sound_env.gate_map_b != rt->dungeon_level) {
+        alternate_map = rt->sound_env.gate_map_b;
+        alternate_width = dungeon->level_widths[alternate_map];
+    }
     if (rt->c_light_visibility.current_map != rt->dungeon_level ||
-        rt->c_light_visibility.current_width != (uint8_t)width)
+        rt->c_light_visibility.current_width != (uint8_t)width ||
+        rt->c_light_visibility.alternate_map != alternate_map ||
+        rt->c_light_visibility.alternate_width !=
+            (uint8_t)alternate_width)
         dm2_v1_1c9a_light_visibility_reset(&rt->c_light_visibility,
-            rt->dungeon_level, width, -1, 0);
+            rt->dungeon_level, width, alternate_map, alternate_width);
     dm2_runtime_refresh_music_map_trigger(rt);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_g1_runtime_materials(rt);
