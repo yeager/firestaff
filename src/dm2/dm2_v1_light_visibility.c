@@ -90,11 +90,12 @@ int dm2_v1_1c9a_light_mode8_frontier(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context)
 {
-    typedef struct { uint8_t map, x, y, depth; } Cell;
-    /* SK1C9A allocates xp_90 as 0x400 bytes and stores four-byte work
-     * entries through byte-sized producer/consumer cursors. Keep this
-     * partial traversal to the same 256 pending-node slots. */
+    typedef struct { uint8_t x, y, map, reserved; } Cell;
+    /* SK1C9A xp_90 stores x, y, map in four-byte work entries. Scores live
+     * in the grid and vba_08 buckets, rather than in the work entry. */
     Cell queue[256u];
+    uint8_t queued_score[256u];
+    uint8_t score_bucket[0x33u];
     _Static_assert(sizeof(queue) == 0x400u,
                    "SK1C9A work ring must be 0x400 bytes");
     uint8_t best[2u * 32u * 32u];
@@ -103,6 +104,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
     int selector;
     if (!state) return 0;
     memset(best, 0xff, sizeof(best));
+    memset(score_bucket, 0, sizeof(score_bucket));
     memset(state->current, 0, sizeof(state->current));
     memset(state->alternate, 0, sizeof(state->alternate));
     state->mode8_complete = 0u;
@@ -113,39 +115,50 @@ int dm2_v1_1c9a_light_mode8_frontier(
         start_x >= state->current_width)
         return 0;
     if (start_map > 255) return 0;
-    queue[tail++] = (Cell){(uint8_t)start_map, (uint8_t)start_x,
-                           (uint8_t)start_y, 0u};
+    queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
+                         (uint8_t)start_map, 0u};
+    queued_score[tail++] = 0u;
+    score_bucket[0u] = 1u;
     pending = 1u;
     best[(size_t)start_x * 32u + (size_t)start_y] = 0u;
     while (pending != 0u) {
         unsigned selected = 0u;
+        unsigned lowest = 0u;
         Cell cell;
+        uint8_t score;
         int cell_selector;
         size_t cell_index;
-        /* SK1C9A keeps score-bucket counts alongside its 0x400-byte
-         * ring. Select the lowest score, preserving insertion order among
-         * equal scores; the source tile evaluator supplies each edge cost. */
-        for (unsigned offset = 1u; offset < pending; ++offset)
-            if (queue[(uint8_t)(head + offset)].depth <
-                queue[(uint8_t)(head + selected)].depth)
-                selected = offset;
+        /* vba_08 records pending nodes by score. Resolve the lowest live
+         * bucket, then preserve source insertion order within that bucket. */
+        while (lowest < sizeof(score_bucket) && !score_bucket[lowest])
+            ++lowest;
+        if (lowest == sizeof(score_bucket)) goto incomplete;
+        while (selected < pending &&
+               queued_score[(uint8_t)(head + selected)] != lowest)
+            ++selected;
+        if (selected == pending) goto incomplete;
         cell = queue[(uint8_t)(head + selected)];
-        for (unsigned offset = selected; offset > 0u; --offset)
+        score = queued_score[(uint8_t)(head + selected)];
+        --score_bucket[score];
+        for (unsigned offset = selected; offset > 0u; --offset) {
             queue[(uint8_t)(head + offset)] =
                 queue[(uint8_t)(head + offset - 1u)];
+            queued_score[(uint8_t)(head + offset)] =
+                queued_score[(uint8_t)(head + offset - 1u)];
+        }
         ++head;
         --pending;
         cell_selector = cell.map == state->current_map ? 0 : 1;
         cell_index = (size_t)cell_selector * 1024u +
                      (size_t)cell.x * 32u + (size_t)cell.y;
-        if (cell.depth != best[cell_index]) continue;
+        if (score != best[cell_index]) continue;
         if (!dm2_v1_1c9a_light_visibility_mark(
-                state, cell.map, cell.x, cell.y, cell.depth))
+                state, cell.map, cell.x, cell.y, score))
             goto incomplete;
         /* CHECK_RECOMPUTE_LIGHT supplies action 0x1b with byte 0x19, a
          * maximum source depth of 25. Only an admitted source edge enters
          * this queue; unknown record/teleporter cases invalidate the pass. */
-        if (cell.depth == 25u) continue;
+        if (score == 25u) continue;
         for (int direction = 0; direction < 4; ++direction) {
             int next_map = -1, next_x = -1, next_y = -1;
             int result = step(context, cell.map, cell.x, cell.y, direction,
@@ -162,14 +175,18 @@ int dm2_v1_1c9a_light_mode8_frontier(
                 goto incomplete;
             index = (size_t)selector * 1024u + (size_t)next_x * 32u +
                     (size_t)next_y;
-            if ((unsigned)cell.depth + (unsigned)result > 25u ||
-                (unsigned)cell.depth + (unsigned)result >= best[index])
+            if ((unsigned)score + (unsigned)result > 25u ||
+                (unsigned)score + (unsigned)result >= best[index])
                 continue;
-            if (pending == 256u) goto incomplete;
-            best[index] = (uint8_t)(cell.depth + result);
-            queue[tail++] = (Cell){(uint8_t)next_map, (uint8_t)next_x,
-                                   (uint8_t)next_y,
-                                   (uint8_t)(cell.depth + result)};
+            if (pending == 256u ||
+                score_bucket[(unsigned)score + (unsigned)result] == 255u)
+                goto incomplete;
+            best[index] = (uint8_t)(score + result);
+            queue[tail] = (Cell){(uint8_t)next_x, (uint8_t)next_y,
+                                 (uint8_t)next_map, 0u};
+            queued_score[tail] = (uint8_t)(score + result);
+            ++score_bucket[queued_score[tail]];
+            ++tail;
             ++pending;
         }
     }
