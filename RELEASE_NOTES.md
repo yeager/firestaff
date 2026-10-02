@@ -30,6 +30,10 @@
   room summary now covers two record-free stone-room tile branches at the
   original map 38 teleport destination; it does not yet provide a complete
   dynamic-light frame.
+- `DM2 FM Towns teleporters`: uses one original DB1 map-edge decoder for
+  live party movement and future cross-map path traversal. Original media
+  verifies both map 3 to map 38 and return coordinates and rotation; light
+  path traversal remains incomplete.
 - `DM1, CSB and DM2 startup tests`: verify automatic FM Towns selection with
   original media and retain explicit platform overrides. The CSB M12 menu
   route also verifies that a complete FM Towns CD wins over a simultaneous
