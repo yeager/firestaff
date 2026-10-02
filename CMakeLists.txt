@@ -6846,6 +6846,8 @@ list(REMOVE_ITEM M10_SOURCES
 # consumes it. Keep the M10 glob from compiling a second archive copy.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_light_visibility.c")
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_light_terminal_receipt.c")
 # `dm2_v1_0aaf_pc34_compat.c` has no M11/runtime caller and its callback
 # contract still omits the original menu selector plus dialogue-rectangle
 # placement.  Keep the audit test-only rather than linking a guessed dialogue
@@ -23259,6 +23261,19 @@ endif()
         NAME dm2_v1_1c9a_pc34_compat
         COMMAND test_dm2_v1_1c9a_pc34_compat
     )
+
+    add_executable(test_dm2_v1_light_terminal_receipt
+        tests/test_dm2_v1_light_terminal_receipt.c
+        src/dm2/dm2_v1_light_terminal_receipt.c
+    )
+    target_include_directories(test_dm2_v1_light_terminal_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_light_terminal_receipt
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_light_terminal_receipt
+             COMMAND test_dm2_v1_light_terminal_receipt)
 
     # ── DM2: GFX blit engine (c_gfx_blit.cpp) ──
     add_executable(test_dm2_v1_gfx_blit_pc34_compat
