@@ -394,8 +394,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   retail HFS catalog has one
   `Dungeon.dat` and no bundled save, so a separate post-selection dungeon
   file is unsupported. No mirror-selection-to-party-map-change edge has
-  been established through these callbacks. Find the mirror's actual event
-  path and trace its party mover call before changing the spawn.
+  been established through these callbacks. The separate mirror event is
+  `CODE(8)+0x265e..+0x267e` -> `CODE(8)+0x2000` -> `A5+$a72` ->
+  `CODE(7)+0x1b36`. Its DB3 subtype-`0x7e` arm at `+0x1fce` calls
+  `SELECT_CHAMPION` (`CODE(10)+0x4fb2`) when mirror flags and facing match.
+  Selection increments the party count and queues a same-map event via
+  `CODE(7)+0x1720`; neither branch directly moves the party. Trace that
+  queued event's consumer before changing the spawn.
   The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
