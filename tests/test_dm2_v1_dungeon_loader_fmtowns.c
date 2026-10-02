@@ -222,6 +222,14 @@ static void test_fmtowns_load(const char *path) {
                        & 0x7fu) == 0x27u &&
                    dm2_v1_dungeon_read_record_u16(&dungeon, sensor) ==
                        0x10a1u);
+            {
+                const uint8_t *creature =
+                    dm2_v1_dungeon_get_thing_record(
+                        &dungeon, 0x10a1u, &type, NULL, NULL);
+                assert(creature && type == 4 && creature[4] == 0x46u &&
+                       dm2_v1_dungeon_read_record_u16(
+                           &dungeon, creature) == 0xfffeu);
+            }
         }
         {
             int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, 11);
