@@ -1652,9 +1652,26 @@ static int dm2_runtime_light_mode8_step(
                 const uint8_t *sensor;
                 if ((((uint16_t)next_record >> 10) & 0x0fu) != 3u ||
                     !dm2_v1_record_pool_next_link(
-                        &rt->record_pools, next_record, &sensor_next) ||
-                    sensor_next != (int16_t)0xfffe)
+                        &rt->record_pools, next_record, &sensor_next))
                     return -1;
+                if (sensor_next != (int16_t)0xfffe) {
+                    int16_t creature = (int16_t)0xffff;
+                    int16_t creature_next;
+                    DM2_V1_SkprojectGetCreatureAtReceipt creature_receipt;
+                    /* Mode 8's creature-target scan runs at score 0x19;
+                     * this frontier expands only nodes below that score.
+                     * A single trailing DB4 is therefore a source-known
+                     * occupant, not an unbounded record chain. */
+                    if ((((uint16_t)sensor_next >> 10) & 0x0fu) != 4u ||
+                        !dm2_v1_record_pool_next_link(
+                            &rt->record_pools, sensor_next, &creature_next) ||
+                        creature_next != (int16_t)0xfffe ||
+                        !dm2_v1_skproject_get_creature_at(
+                            &rt->record_pools, dungeon, map, nx, ny,
+                            &creature, &creature_receipt) ||
+                        !creature_receipt.valid || creature != sensor_next)
+                        return -1;
+                }
                 sensor = dm2_v1_record_pool_address(
                     &rt->record_pools, next_record);
                 if (!sensor || ((sensor[2] | ((unsigned)sensor[3] << 8)) &
