@@ -46,6 +46,10 @@ Reviewed 2026-10-02. Only open work is listed here.
   manufacture a gameplay result. Recover an authorized authentic gameplay
   state or establish a fresh source-bound route first; then add PC-attributed
   party/item and sound-register observation before drawing field semantics.
+  A read-only trv2 check on 2026-10-02 found no Mednafen state or movie files in
+  its configured save directory or Firestaff work trees; the SSH session had
+  no display, and `:0` was unavailable. This does not authorize starting a
+  capture against a shared display.
 
 ## 2026-09-30 — explicit US menu target still does not reach the title route
 
