@@ -128,18 +128,20 @@ static int exercise_authentic_active_creature(
 }
 
 static int exercise_authentic_db1(
-    DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon)
+    DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon,
+    int source_map, int source_x, int source_y, int expected_map)
 {
     static const int dx[4] = { 0, 1, 0, -1 };
     static const int dy[4] = { -1, 0, 1, 0 };
     if (!profile || !dungeon || !dungeon->record_graph_complete) return 0;
-    for (int map = 0; map < dungeon->level_count; ++map) {
+    for (int map = source_map; map <= source_map; ++map) {
         for (int y = 0; y < dungeon->level_heights[map]; ++y) {
             for (int x = 0; x < dungeon->level_widths[map]; ++x) {
                 int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
                 int first, type = -1;
                 const uint8_t *record;
                 int w2, w4, dest_map, dest_x, dest_y, rotation, rotation_type;
+                if (x != source_x || y != source_y) continue;
                 if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 5 ||
                     (raw & 0x08) == 0)
                     continue;
@@ -157,7 +159,7 @@ static int exercise_authentic_db1(
                 if (dest_map < 0 || dest_map >= dungeon->level_count ||
                     dest_x >= dungeon->level_widths[dest_map] ||
                     dest_y >= dungeon->level_heights[dest_map] ||
-                    (w2 & 0x6000) != 0x4000)
+                    dest_map != expected_map || (w2 & 0x6000) != 0x6000)
                     continue;
                 for (int dir = 0; dir < 4; ++dir) {
                     int px = x - dx[dir], py = y - dy[dir];
@@ -1042,8 +1044,19 @@ int main(void)
     check(exercise_authentic_db1(
               (DM2_V1_BootProfile *)view.dm2BootProfile,
               (const DM2_V1_DungeonData *)
-                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data),
-          "FM Towns commits an authentic DB1 transition with rotation");
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
+              3, 13, 11, 38),
+          "FM Towns commits the authentic party teleporter into map 38");
+    {
+        DM2_V1_CLightMapDescriptorReceipt light_map;
+        memset(&light_map, 0, sizeof(light_map));
+        check(dm2_v1_dungeon_c_light_map_descriptor_receipt(
+                  (const DM2_V1_DungeonData *)
+                      ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
+                  38, &light_map) && light_map.valid &&
+                  light_map.dynamic_light,
+              "FM Towns destination map requires source dynamic light state");
+    }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     {
@@ -1059,8 +1072,52 @@ int main(void)
                     post_render.render_result, post_render.v1_succeeded);
         for (size_t i = 0u; i < sizeof(framebuffer); ++i)
             if (framebuffer[i] != 0u) ++post_teleport_pixels;
-        check(post_teleport_pixels > 0u,
-              "FM Towns renders a source-owned frame after DB1 map handoff");
+        check(post_teleport_pixels > 0u &&
+                  post_render.render_result == 0 &&
+                  post_render.v1_succeeded &&
+                  post_render.runtime_m11_frame_receipt_consumed &&
+                  post_render.runtime_render_no_core_fallbacks &&
+                  post_render.runtime_render_blocked_material_draw_count == 0,
+              "FM Towns renders a source-owned frame after entering map 38");
+    }
+    check(exercise_authentic_db1(
+              (DM2_V1_BootProfile *)view.dm2BootProfile,
+              (const DM2_V1_DungeonData *)
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
+              38, 6, 4, 3),
+          "FM Towns commits the authentic party teleporter out of map 38");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    {
+        DM2_V1_BootRuntimeRenderReceipt return_render;
+        memset(&return_render, 0, sizeof(return_render));
+        int return_result = dm2_v1_boot_runtime_render_frame(
+            (DM2_V1_BootProfile *)view.dm2BootProfile, framebuffer,
+            M11_FB_WIDTH, M11_FB_WIDTH, M11_FB_HEIGHT, NULL, NULL,
+            &return_render);
+        if (!return_result || !return_render.v1_succeeded ||
+            !return_render.runtime_m11_frame_receipt_consumed ||
+            !return_render.runtime_render_no_core_fallbacks ||
+            return_render.runtime_render_blocked_material_draw_count != 0) {
+            DM2_V1_RuntimeFrameOwnershipReceipt ownership;
+            memset(&ownership, 0, sizeof(ownership));
+            (void)dm2_v1_runtime_last_frame_ownership(&ownership);
+            fprintf(stderr, "  FM return render result=%d v1=%d receipt=%d no-fallback=%d blocked=%d\n",
+                    return_result, return_render.v1_succeeded,
+                    return_render.runtime_m11_frame_receipt_consumed,
+                    return_render.runtime_render_no_core_fallbacks,
+                    return_render.runtime_render_blocked_material_draw_count);
+            fprintf(stderr, "  FM return scene=%d consumed=%d c-light=%d light-consumed=%d full=%d\n",
+                    ownership.gdat_scene_control_ready,
+                    ownership.gdat_scene_control_consumed,
+                    ownership.gdat_c_light_receipt_ready,
+                    ownership.gdat_c_light_consumed,
+                    ownership.full_gdat_frame_valid);
+        }
+        check(return_result && return_render.v1_succeeded &&
+                  return_render.runtime_m11_frame_receipt_consumed &&
+                  return_render.runtime_render_no_core_fallbacks &&
+                  return_render.runtime_render_blocked_material_draw_count == 0,
+              "FM Towns restores a source-owned frame after leaving map 38");
     }
     check(exercise_authentic_active_creature(
               (DM2_V1_BootProfile *)view.dm2BootProfile,
