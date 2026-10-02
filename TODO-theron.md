@@ -2,6 +2,26 @@
 
 Reviewed 2026-10-02. Only open work is listed here.
 
+## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
+
+- ✅ On the isolated trv2 build, `test_theron_v1_pce_bram_real_artifact`
+  passed against the installed authentic Akutuba-complete US Backup RAM and
+  authentic JP empty-save artifact. `theron_v1_m11_real_bram_continue` also
+  passed (CTest 1/1) using the authentic US Track 02
+  (`f23601102138f87c33025877767ebf76`) and 2 KiB BRAM
+  (`ffabc8d19b0915d4d9632a7ae2e90a97`). The protected test copy retained the
+  same MD5 after the run. The test drives Firestaff's M11 APIs through its
+  Continue path, source-backed Drator Soul Room entry, and native movement
+  checks. It is labeled `no-synthetic` and `real-media`.
+- This is authentic-media evidence for Firestaff's host path, not execution
+  of the retail Theron code. It does not demonstrate that the retail game
+  created a new save, capture an original-engine dungeon session, or prove
+  full gameplay parity.
+  The isolated Mednafen profile's BRAM is still byte-identical to the existing
+  authentic save. Emulator capture remains open pending an unlocked Mac and a
+  visibly confirmed dungeon view; when resuming, hold RUN for 3–5 seconds as
+  the user specified before following the source-locked Drator route.
+
 ## 2026-10-02 — separate Firestaff TQSV state from retail Theron saves
 
 - Corrected save-format provenance across the save/progression interfaces:
