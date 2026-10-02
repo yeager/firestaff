@@ -1610,6 +1610,12 @@ static int dm2_runtime_light_mode8_step(
     DM2_V1_DungeonData *dungeon;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    const uint8_t *source_tiles, *destination_tiles, *db1;
+    int16_t source_width, source_height;
+    int16_t destination_width, destination_height;
+    int16_t next_record;
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
     int nx, ny, raw, first;
@@ -1635,9 +1641,37 @@ static int dm2_runtime_light_mode8_step(
                 &room))
             return -1;
         if (room.source_tile_type == 2u) return 0;
-        /* The enabled DB1 case crosses maps through FIND_WALK_PATH's own
-         * teleporter detail, not the party movement gate. */
-        if ((raw >> 5) == 5 && (raw & 0x08) != 0) return -1;
+        if ((raw >> 5) == 5 && (raw & 0x08) != 0) {
+            /* The active DB1 branch follows GET_TELEPORTER_DETAIL. Admit
+             * only its single-record chain until source sensor handling is
+             * represented in the node evaluator. */
+            if (!rt->record_pools_valid || first < 0 ||
+                (((unsigned)first >> 10) & 0x0fu) != 1u ||
+                !dm2_v1_record_pool_next_link(
+                    &rt->record_pools, (int16_t)first, &next_record) ||
+                next_record != (int16_t)0xfffe)
+                return -1;
+            db1 = dm2_v1_record_pool_address(
+                &rt->record_pools, (int16_t)first);
+            if (!db1 || db1[5] >= dungeon->level_count) return -1;
+            source_tiles = dm2_v1_dungeon_level_tile_data(
+                dungeon, map, &source_width, &source_height);
+            destination_tiles = dm2_v1_dungeon_level_tile_data(
+                dungeon, db1[5], &destination_width, &destination_height);
+            if (!source_tiles || !destination_tiles ||
+                !dm2_v1_skproject_get_teleporter_detail(
+                    (int16_t)nx, (int16_t)ny,
+                    source_tiles, source_width, source_height,
+                    &rt->record_pools, (uint8_t)map, destination_tiles,
+                    destination_width, destination_height,
+                    &detail, &detail_receipt) || !detail_receipt.valid ||
+                detail.b_04 != db1[5])
+                return -1;
+            *next_map = detail.b_04;
+            *next_x = detail.b_02;
+            *next_y = detail.b_03;
+            return 1;
+        }
     } else {
         /* DB0/DB2/DB3, doors and other tile branches need their source
          * evaluator before this traversal can authenticate completion. */

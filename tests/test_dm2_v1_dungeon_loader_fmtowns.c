@@ -218,7 +218,23 @@ static void test_fmtowns_load(const char *path) {
             w2 = dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 2);
             w4 = dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 4);
             assert((w2 & 0x1fu) == 6u && ((w2 >> 5) & 0x1fu) == 6u &&
-                   ((w4 >> 8) & 0xffu) == 38u);
+                   ((w4 >> 8) & 0xffu) == 38u &&
+                   dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 13, 11) ==
+                       0xb8 &&
+                   dm2_v1_dungeon_read_record_u16(&dungeon, db1) ==
+                       0xfffeu);
+            first = dm2_v1_dungeon_get_first_thing(&dungeon, 38, 6, 4);
+            db1 = first >= 0 ? dm2_v1_dungeon_get_thing_record(
+                &dungeon, (uint16_t)first, &type, NULL, NULL) : NULL;
+            assert(db1 && type == 1);
+            w2 = dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 2);
+            w4 = dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 4);
+            assert((w2 & 0x1fu) == 13u && ((w2 >> 5) & 0x1fu) == 9u &&
+                   ((w4 >> 8) & 0xffu) == 3u &&
+                   dm2_v1_dungeon_get_tile_raw(&dungeon, 38, 6, 4) ==
+                       0xb8 &&
+                   dm2_v1_dungeon_read_record_u16(&dungeon, db1) ==
+                       0xfffeu);
         }
         {
             DM2_V1_CLightTileOrnamentReceipt normal;
