@@ -42025,6 +42025,17 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
         return M11_GAME_INPUT_IGNORED;
     }
 
+    if (m11_dm2_is_mac_profile(
+            (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+        dm2_v1_runtime_get_leader_hand_object() != 0u &&
+        dm2_v1_runtime_get_leader_hand_object() != 0xffffu) {
+        if (dm2_v1_runtime_place_mac_hand_on_floor(x, y)) {
+            m11_sync_dm2_state_from_runtime(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     /* DM2's C080 path is c_events.cpp::CLICK_VWPT.  Its hit list is
      * produced by the source viewport renderer (c_rwbb), not by DM1's
      * front-cell/door/mirror handler.  Until the corresponding DM2

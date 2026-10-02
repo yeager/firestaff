@@ -485,6 +485,10 @@ typedef struct DM2_V1_RuntimeMacFloorPickupReceipt {
 int dm2_v1_runtime_pickup_mac_floor_target(
     int target_index, DM2_V1_RuntimeMacFloorPickupReceipt *out_receipt);
 
+/* CODE(8) held-hand event 0x50: place into one of the four source floor
+ * cells selected by the retail Mac RAW4 0x2f8..0x2fb rectangles. */
+int dm2_v1_runtime_place_mac_hand_on_floor(int screen_x, int screen_y);
+
 typedef struct DM2_V1_RuntimeMacWallButtonReceipt {
     int valid;
     int accepted;

@@ -660,6 +660,31 @@ int main(void)
             }
         }
         {
+            /* Retail CODE(8)+0x2838 probes these IDs for held-object
+             * placement. Mac RAW4 rows link to size markers 758/759; their
+             * raw words are not direct screen coordinates. These are the
+             * ordinary viewport's local boxes before RECT_7 translation. */
+            static const int16_t placement[4][4] = {
+                { 24, 115, 88, 21 }, { 112, 115, 88, 21 },
+                { 112, 89, 72, 26 }, { 40, 89, 72, 26 }
+            };
+            for (uint16_t slot = 0u; slot < 4u; ++slot) {
+                DM2_V1_BootExpandedRectReceipt source_rect;
+                if (!dm2_v1_boot_query_expanded_rect_receipt(
+                        profile, (uint16_t)(0x2f8u + slot), &source_rect) ||
+                    source_rect.rect.x != placement[slot][0] ||
+                    source_rect.rect.y != placement[slot][1] ||
+                    source_rect.rect.w != placement[slot][2] ||
+                    source_rect.rect.h != placement[slot][3]) {
+                    fprintf(stderr,
+                            "FAIL: Mac held-object placement RECT_%03x did not expand from retail RAW4\n",
+                            0x2f8u + slot);
+                    M11_GameView_Shutdown(&view);
+                    return 1;
+                }
+            }
+        }
+        {
             DM2_V1_GdatHudM11CommandPlan mac_hud;
             memset(&mac_hud, 0, sizeof(mac_hud));
             if (!dm2_v1_boot_gdat_hud_static_m11_command_plan(

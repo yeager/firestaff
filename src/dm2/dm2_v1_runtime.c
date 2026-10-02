@@ -13215,6 +13215,144 @@ int dm2_v1_runtime_pickup_mac_floor_target(
     return 1;
 }
 
+int dm2_v1_runtime_place_mac_hand_on_floor(int screen_x, int screen_y)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_BootExpandedRectReceipt rect7, zone;
+    DM2_V1_SkprojectAppendRecordReceipt append;
+    int cell = -1, x, y, dir, contains = 0, actuator = 0, db;
+    int16_t original_head, pool_head, raw_head, held, placed, tail;
+    uint8_t *pool_held, *raw_held, *pool_tail = NULL, *raw_tail = NULL;
+    uint8_t pool_held_link[2], raw_held_link[2];
+    uint8_t pool_tail_link[2], raw_tail_link[2];
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+
+    if (!rt->boot ||
+        (rt->boot->platform != DM2_PLATFORM_MAC_EN &&
+         rt->boot->platform != DM2_PLATFORM_MAC_FR) ||
+        !rt->boot->source_game_load_session_ready ||
+        !g_dm2_last_m11_frame.valid || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid ||
+        rt->source_event_hero_index < 0 ||
+        rt->source_event_hero_index >= rt->source_party.heros_in_party ||
+        rt->source_party.hero[rt->source_event_hero_index].curHP <= 0 ||
+        rt->leader_hand_object == 0u ||
+        rt->leader_hand_object == 0xffffu ||
+        rt->leader_hand_object > 0xffffu ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !rt->boot->dm2_state ||
+        !dm2_v1_boot_query_expanded_rect_receipt(rt->boot, 7u, &rect7) ||
+        !rect7.valid || rect7.rect.w != DM2_GFX_BACKBUFFER_W ||
+        rect7.rect.h != DM2_GFX_BACKBUFFER_H ||
+        screen_x < rect7.rect.x || screen_y < rect7.rect.y ||
+        screen_x >= rect7.rect.x + rect7.rect.w ||
+        screen_y >= rect7.rect.y + rect7.rect.h)
+        return 0;
+    for (int i = 0; i < 4; ++i) {
+        if (!dm2_v1_boot_query_expanded_rect_receipt(
+                rt->boot, (uint16_t)(0x2f8u + i), &zone) || !zone.valid)
+            return 0;
+        if (screen_x - rect7.rect.x >= zone.rect.x &&
+            screen_y - rect7.rect.y >= zone.rect.y &&
+            screen_x - rect7.rect.x < zone.rect.x + zone.rect.w &&
+            screen_y - rect7.rect.y < zone.rect.y + zone.rect.h) {
+            cell = i;
+            break;
+        }
+    }
+    if (cell < 0) return 0;
+    dir = rt->view_dir & 3;
+    x = dm2_v1_runtime_get_party_x() + (cell >= 2 ? dx[dir] : 0);
+    y = dm2_v1_runtime_get_party_y() + (cell >= 2 ? dy[dir] : 0);
+    if (rt->dungeon_level < 0 || rt->dungeon_level >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[rt->dungeon_level] ||
+        y >= dungeon->level_heights[rt->dungeon_level] ||
+        dm2_v1_dungeon_get_square_type(dungeon, rt->dungeon_level, x, y) != 1)
+        return 0;
+
+    held = (int16_t)(uint16_t)rt->leader_hand_object;
+    db = ((uint16_t)held >> 10) & 0x0f;
+    if (db < 5 || db > 10) return 0;
+    placed = (int16_t)(((uint16_t)held & 0x3fffu) |
+                       (uint16_t)(((dir + cell) & 3) << 14));
+    if (!dm2_runtime_record_chain_mirrors_complete(
+            rt, dungeon, rt->dungeon_level, x, y, held,
+            &contains, &actuator) || contains || actuator)
+        return 0;
+    pool_held = dm2_v1_record_pool_address_mut(&rt->record_pools, held);
+    raw_held = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)held, NULL, NULL, NULL);
+    if (!pool_held || !raw_held ||
+        dm2_v1_dungeon_read_record_u16(dungeon, raw_held) !=
+            (uint16_t)DM2_V1_RECORD_HANDLE_END)
+        return 0;
+    {
+        int16_t held_next;
+        if (!dm2_v1_record_pool_next_link(
+                &rt->record_pools, held, &held_next) ||
+            held_next != DM2_V1_RECORD_HANDLE_END)
+            return 0;
+    }
+    memcpy(pool_held_link, pool_held, 2);
+    memcpy(raw_held_link, raw_held, 2);
+    original_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, rt->dungeon_level, x, y);
+    tail = original_head;
+    if (tail != DM2_V1_RECORD_HANDLE_END) {
+        int budget = 1;
+        for (int type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type)
+            budget += rt->record_pools.pools[type].record_count +
+                      rt->record_pools.pools[type].extension_count;
+        while (budget-- > 0) {
+            int16_t next;
+            if (!dm2_v1_record_pool_next_link(&rt->record_pools, tail, &next))
+                return 0;
+            if (next == DM2_V1_RECORD_HANDLE_END) break;
+            tail = next;
+        }
+        if (budget < 0 ||
+            !(pool_tail = dm2_v1_record_pool_address_mut(
+                &rt->record_pools, tail)) ||
+            !(raw_tail = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)tail, NULL, NULL, NULL)))
+            return 0;
+        memcpy(pool_tail_link, pool_tail, 2);
+        memcpy(raw_tail_link, raw_tail, 2);
+    }
+    pool_head = original_head;
+    raw_head = original_head;
+    memset(&append, 0, sizeof(append));
+    if (!dm2_v1_record_pool_append_to_list(
+            &rt->record_pools, &pool_head, placed) ||
+        !dm2_v1_skproject_append_record_to(
+            dungeon, (uint16_t)placed, (uint16_t *)&raw_head,
+            -1, -1, -1, &append) || !append.valid ||
+        pool_head != raw_head ||
+        dm2_v1_dungeon_set_first_thing(
+            dungeon, rt->dungeon_level, x, y, (uint16_t)raw_head) != 0 ||
+        !dm2_runtime_record_chain_mirrors_complete(
+            rt, dungeon, rt->dungeon_level, x, y, placed,
+            &contains, &actuator) || !contains ||
+        dm2_v1_runtime_set_leader_hand_object(0xffffu) != 0) {
+        memcpy(pool_held, pool_held_link, 2);
+        memcpy(raw_held, raw_held_link, 2);
+        if (pool_tail) {
+            memcpy(pool_tail, pool_tail_link, 2);
+            memcpy(raw_tail, raw_tail_link, 2);
+        }
+        (void)dm2_v1_dungeon_set_first_thing(
+            dungeon, rt->dungeon_level, x, y, (uint16_t)original_head);
+        return 0;
+    }
+    rt->source_click_target_count = 0u;
+    memset(rt->source_click_item_pixels, 0,
+           sizeof(rt->source_click_item_pixels));
+    return 1;
+}
+
 static int dm2_v1_runtime_mac_wall_target_exists(int view_slot)
 {
     for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {

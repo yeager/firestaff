@@ -36,6 +36,7 @@
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_skproject_core.h"
+#include "dm2_v1_xrect_pc34_compat.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_music_map.h"
 #include "dm2_v1_cdda_cd_dat.h"
@@ -4843,6 +4844,96 @@ static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw,
                                              size_t raw_size,
                                              uint16_t rect_id,
                                              DM2_V1_InterfaceRect *out);
+static uint16_t dm2_v1_boot_be16(const uint8_t *p);
+
+typedef struct {
+    uint8_t *bytes;
+    size_t capacity;
+    size_t used;
+} DM2_V1_MacRectArena;
+
+static void *dm2_v1_boot_mac_rect_alloc(void *ctx, int32_t size, bool clear)
+{
+    DM2_V1_MacRectArena *arena = (DM2_V1_MacRectArena *)ctx;
+    size_t aligned;
+    void *result;
+    if (!arena || size <= 0) return NULL;
+    aligned = (arena->used + sizeof(void *) - 1u) &
+        ~(sizeof(void *) - 1u);
+    if (aligned > arena->capacity ||
+        (size_t)size > arena->capacity - aligned) return NULL;
+    result = arena->bytes + aligned;
+    arena->used = aligned + (size_t)size;
+    if (clear) memset(result, 0, (size_t)size);
+    return result;
+}
+
+/* Retail Mac CODE(9)+0x0dbe loads INTERFACE_GENERAL/0/RAW4/0 into its
+ * FC0D rectangle tree. CODE(8)'s held-hand event 0x50 probes 0x2f8..0x2fb
+ * through CODE(9)+0x02d8 (QUERY_EXPANDED_RECT + point-in-rect). The raw
+ * rows are links/anchors, not screen x/y/w/h. Query with the source xrect
+ * engine after converting the big-endian media words to host order. The
+ * ordinary viewport has the source clipping flags cleared; a future live
+ * Mac clipping receipt must bind those callbacks before admitting a
+ * different control state. */
+static int dm2_v1_boot_query_mac_placement_rect(
+    const uint8_t *raw, size_t raw_size, uint16_t rect_id,
+    DM2_V1_InterfaceRect *out)
+{
+    DM2_V1_XrectState state;
+    DM2_V1_XrectCallbacks callbacks;
+    DM2_V1_MacRectArena arena;
+    DM2_V1_RNode head;
+    DM2_V1_Rect expanded;
+    uint8_t *host_words = NULL;
+    uint16_t groups;
+    size_t pos;
+    int accepted = 0;
+
+    if (!raw || !out || rect_id < 0x2f8u || rect_id > 0x2fbu ||
+        raw_size < 4u || raw_size > 1024u * 1024u || (raw_size & 1u) ||
+        dm2_v1_boot_be16(raw) != 0xfc0du) return 0;
+    groups = dm2_v1_boot_be16(raw + 2u);
+    if (groups == 0u || groups > 256u ||
+        4u + (size_t)groups * 4u > raw_size) return 0;
+    pos = 4u + (size_t)groups * 4u;
+    for (uint16_t i = 0u; i < groups; ++i) {
+        uint16_t first = dm2_v1_boot_be16(raw + 4u + (size_t)i * 4u);
+        uint16_t last = dm2_v1_boot_be16(raw + 6u + (size_t)i * 4u);
+        if (last < first || (size_t)(last - first + 1u) >
+            (raw_size - pos) / 8u) return 0;
+        pos += (size_t)(last - first + 1u) * 8u;
+    }
+    host_words = (uint8_t *)malloc(raw_size);
+    arena.bytes = (uint8_t *)malloc(raw_size * 4u + 4096u);
+    if (!host_words || !arena.bytes) goto done;
+    arena.capacity = raw_size * 4u + 4096u;
+    arena.used = 0u;
+    for (size_t i = 0u; i < raw_size; i += 2u) {
+        uint16_t word = dm2_v1_boot_be16(raw + i);
+        memcpy(host_words + i, &word, sizeof(word));
+    }
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.ctx = &arena;
+    callbacks.alloc_freepool = dm2_v1_boot_mac_rect_alloc;
+    dm2_v1_xrect_init(&state);
+    memset(&head, 0, sizeof(head));
+    state.rnodep_rectanglelist = &head;
+    dm2_v1_compress_rects(&state, &callbacks, host_words, &head);
+    if (dm2_v1_query_expanded_rect(&state, &callbacks,
+                                   (int16_t)rect_id, &expanded) &&
+        expanded.w > 0 && expanded.h > 0) {
+        out->x = expanded.x;
+        out->y = expanded.y;
+        out->w = expanded.w;
+        out->h = expanded.h;
+        accepted = 1;
+    }
+done:
+    free(arena.bytes);
+    free(host_words);
+    return accepted;
+}
 static int dm2_v1_boot_blit_anchor(int mode, int x0, int y0, int width,
                                    int height,
                                    DM2_V1_InterfaceRect *out);
@@ -10140,10 +10231,15 @@ int dm2_v1_boot_query_expanded_rect_receipt(
         &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
     if (!raw || raw_size < 4u ||
-        (!dm2_v1_boot_expand_hud_rect(raw, raw_size, rect_id,
-                                      &out_receipt->rect) &&
-         !dm2_v1_boot_query_compressed_rect(raw, raw_size, rect_id,
-                                            &out_receipt->rect)) ||
+        (((profile->platform == DM2_PLATFORM_MAC_EN ||
+           profile->platform == DM2_PLATFORM_MAC_FR) &&
+          rect_id >= 0x2f8u && rect_id <= 0x2fbu)
+            ? !dm2_v1_boot_query_mac_placement_rect(
+                  raw, raw_size, rect_id, &out_receipt->rect)
+            : (!dm2_v1_boot_expand_hud_rect(raw, raw_size, rect_id,
+                                            &out_receipt->rect) &&
+               !dm2_v1_boot_query_compressed_rect(
+                   raw, raw_size, rect_id, &out_receipt->rect))) ||
         out_receipt->rect.w <= 0 || out_receipt->rect.h <= 0) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
