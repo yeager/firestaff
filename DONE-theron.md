@@ -6473,10 +6473,11 @@ start remain open in `TODO-theron.md`.
 # ✅ 2026-10-02 Original 7z Track 01 audio handoff
 
 M11 now reads the exact US/JP archive CUE and its declared raw Track 01 BIN
-after the paired Track 02 edition has been verified by hash. The bounded
-memory-backed CDDA stream queues the original 2352-byte sectors; no game data
-is extracted or cached to disk. Other archive variants and unpaired audio
-remain fail-closed.
+after the paired Track 02 edition has been verified by hash, then independently
+checks Track 01 against its known regional SHA-256. The bounded memory-backed
+CDDA stream queues the original 2352-byte sectors; no game data is extracted or
+cached to disk. Other archive variants and unpaired or substituted audio remain
+fail-closed.
 
 Verification on trv2: authentic `theron_v1_us_7z_direct_boot` and
 `theron_v1_jp_7z_direct_boot` both reported `theronTrack01CddaReady=1`;

@@ -28516,6 +28516,7 @@ static int m11_theron_bind_7z_track01_cdda(
     const char *separator;
     const char *cue_member;
     const char *expected_audio_member;
+    const char *expected_audio_sha256;
     const char *track02_member;
     char archive_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
     char cue_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
@@ -28524,6 +28525,7 @@ static int m11_theron_bind_7z_track01_cdda(
     size_t cue_size = 0u;
     uint8_t *audio_bytes = NULL;
     size_t audio_size = 0u;
+    char audio_sha256[65];
     FirestaffTheronMediaStatus cue;
     size_t archive_path_size;
     size_t track02_member_size;
@@ -28535,10 +28537,14 @@ static int m11_theron_bind_7z_track01_cdda(
         cue_member = "Dungeon Master - Theron's Quest (USA).cue";
         expected_audio_member =
             "Dungeon Master - Theron's Quest (USA) (Track 01).bin";
+        expected_audio_sha256 =
+            "8c5603906ff0428f62046e47add6b6f9f9fd0c4bd787ede1fd67cff42bd99e48";
     } else if (strcmp(verified_track02_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
         cue_member = "Dungeon Master - Theron's Quest (Japan).cue";
         expected_audio_member =
             "Dungeon Master - Theron's Quest (Japan) (Track 01).bin";
+        expected_audio_sha256 =
+            "b30dc3c2355a4213424a2d06e224ef8c0a421ff2c070f5db71c49dd3fd7fed59";
     } else {
         return 0;
     }
@@ -28575,7 +28581,10 @@ static int m11_theron_bind_7z_track01_cdda(
              expected_audio_member);
     if (!asset_read_path_alloc(audio_path, &audio_bytes, &audio_size) ||
         !audio_bytes || audio_size == 0u || audio_size > 16u * 1024u * 1024u ||
-        audio_size % THERON_TRACK01_CDDA_SECTOR_BYTES != 0u) {
+        audio_size % THERON_TRACK01_CDDA_SECTOR_BYTES != 0u ||
+        firestaff_x68k_media_receipt_sha256_hex(
+            audio_bytes, audio_size, audio_sha256, sizeof(audio_sha256)) != 0 ||
+        strcmp(audio_sha256, expected_audio_sha256) != 0) {
         free(audio_bytes);
         return 0;
     }

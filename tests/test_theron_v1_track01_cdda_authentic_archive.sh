@@ -26,6 +26,22 @@ if [[ -z "$extractor" ]]; then
     exit 77
 fi
 
+hash_file() {
+    local algorithm=$1
+    local path=$2
+    if [[ "$algorithm" == sha256 ]]; then
+        if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "$path" | cut -d ' ' -f 1
+        else
+            shasum -a 256 "$path" | cut -d ' ' -f 1
+        fi
+    elif command -v md5sum >/dev/null 2>&1; then
+        md5sum "$path" | cut -d ' ' -f 1
+    else
+        md5 -q "$path"
+    fi
+}
+
 temporary_root=$(mktemp -d "$(dirname "$1")/firestaff-theron-cdda.XXXXXX")
 trap 'rm -rf "$temporary_root"' EXIT
 
@@ -57,11 +73,19 @@ jp_track02="Dungeon Master - Theron's Quest (Japan) (Track 02).bin"
 extract_disc "$us_archive" US "$us_cue" "$us_track01" "$us_track02"
 extract_disc "$jp_archive" JP "$jp_cue" "$jp_track01" "$jp_track02"
 
-us_md5=$(md5sum "$temporary_root/$us_track02" | cut -d ' ' -f 1)
-jp_md5=$(md5sum "$temporary_root/$jp_track02" | cut -d ' ' -f 1)
+us_md5=$(hash_file md5 "$temporary_root/$us_track02")
+jp_md5=$(hash_file md5 "$temporary_root/$jp_track02")
 if [[ "$us_md5" != f23601102138f87c33025877767ebf76 ||
       "$jp_md5" != b7afb338ad31be1025b53f9aff12d73a ]]; then
-    printf 'FAIL: authentic US/JP Track 02 pair failed its known SHA-256\n' >&2
+    printf 'FAIL: authentic US/JP Track 02 pair failed its known MD5\n' >&2
+    exit 1
+fi
+
+us_track01_sha256=$(hash_file sha256 "$temporary_root/$us_track01")
+jp_track01_sha256=$(hash_file sha256 "$temporary_root/$jp_track01")
+if [[ "$us_track01_sha256" != 8c5603906ff0428f62046e47add6b6f9f9fd0c4bd787ede1fd67cff42bd99e48 ||
+      "$jp_track01_sha256" != b30dc3c2355a4213424a2d06e224ef8c0a421ff2c070f5db71c49dd3fd7fed59 ]]; then
+    printf 'FAIL: authentic US/JP Track 01 raw audio failed its known SHA-256\n' >&2
     exit 1
 fi
 
