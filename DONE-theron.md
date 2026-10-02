@@ -9,6 +9,9 @@
 - On trv2, the font, quest-item-name, production text-gate and seven-dungeon
   tests passed three consecutive loops against the authentic US and JP BINs.
   The unavailable JP CUE ISO projection was explicitly skipped.
+- US and JP font checks are independent CTest entries; an unavailable region
+  skips only its own test. A missing-US-media probe returned the configured
+  skip code while preserving the independent JP check.
 - Only the common Latin/UI glyph bank is verified. JP kana, original text
   consumption, and full rendering parity remain open.
 

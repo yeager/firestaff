@@ -12,6 +12,9 @@ Reviewed 2026-10-03. Only open work is listed here.
   seven-dungeon real-media tests passed three consecutive loops against the
   authentic US and JP BINs. The JP CUE ISO projection was not staged and its
   subcheck reported `SKIP`.
+- ✅ US and JP font checks are separate CTest cases, so missing regional media
+  skips only its own check. A direct missing-US-media probe returned CTest's
+  configured skip code without affecting the JP case.
 - 🔒 This verifies the common glyph asset used by Firestaff's Latin viewport
   text only. It does not prove Japanese kana glyphs, the retail text consumer,
   or complete regional text-rendering parity.

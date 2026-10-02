@@ -54247,14 +54247,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_font_glyphs.
         target_compile_options(test_theron_v1_track02_font_glyphs_real_data PRIVATE
             -Wall -Wextra -O2)
     endif()
-    add_test(
-        NAME theron_v1_track02_font_glyphs_real_data
-        COMMAND test_theron_v1_track02_font_glyphs_real_data
-    )
     set(_THERON_TRACK02_FONT_GLYPHS_REAL_DATA_ENV
         "THERON_TRACK02_US_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
         "THERON_TRACK02_JP_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin")
-    set_tests_properties(theron_v1_track02_font_glyphs_real_data PROPERTIES
+    add_test(
+        NAME theron_v1_track02_font_glyphs_us_real_data
+        COMMAND test_theron_v1_track02_font_glyphs_real_data us
+    )
+    add_test(
+        NAME theron_v1_track02_font_glyphs_jp_real_data
+        COMMAND test_theron_v1_track02_font_glyphs_real_data jp
+    )
+    set_tests_properties(
+        theron_v1_track02_font_glyphs_us_real_data
+        theron_v1_track02_font_glyphs_jp_real_data PROPERTIES
         ENVIRONMENT "${_THERON_TRACK02_FONT_GLYPHS_REAL_DATA_ENV}"
         SKIP_RETURN_CODE 77
         LABELS "theron;track02;real_data;regional;skip_safe")

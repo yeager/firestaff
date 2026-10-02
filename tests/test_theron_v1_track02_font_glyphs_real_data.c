@@ -96,14 +96,21 @@ static int verify_region(const char *region, const char *environment_name,
     return 0;
 }
 
-int main(void) {
-    int us_result = verify_region(
-        "US", "THERON_TRACK02_US_BIN", THERON_TRACK02_MD5_US_BIN,
-        0x09A000u);
-    int jp_result = verify_region(
-        "JP Rev. 1", "THERON_TRACK02_JP_BIN", THERON_TRACK02_MD5_JP_BIN,
-        0x099800u);
-    if (us_result != 0 && us_result != 77) return us_result;
-    if (jp_result != 0 && jp_result != 77) return jp_result;
-    return us_result == 77 && jp_result == 77 ? 77 : 0;
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "FAIL: select exactly one font media region (US or JP)\n");
+        return 2;
+    }
+    if (strcmp(argv[1], "us") == 0) {
+        return verify_region(
+            "US", "THERON_TRACK02_US_BIN", THERON_TRACK02_MD5_US_BIN,
+            0x09A000u);
+    }
+    if (strcmp(argv[1], "jp") == 0) {
+        return verify_region(
+            "JP Rev. 1", "THERON_TRACK02_JP_BIN",
+            THERON_TRACK02_MD5_JP_BIN, 0x099800u);
+    }
+    fprintf(stderr, "FAIL: unsupported font media region '%s'\n", argv[1]);
+    return 2;
 }
