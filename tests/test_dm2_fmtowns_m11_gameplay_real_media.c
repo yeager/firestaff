@@ -1194,6 +1194,16 @@ int main(void)
                   post_render.runtime_render_no_core_fallbacks &&
                   post_render.runtime_render_blocked_material_draw_count == 0,
               "FM Towns renders a source-owned frame after entering map 38");
+        {
+            DM2_V1_RuntimeFrameOwnershipReceipt ownership;
+            memset(&ownership, 0, sizeof(ownership));
+            (void)dm2_v1_runtime_last_frame_ownership(&ownership);
+            check(ownership.real_gdat_evidence_valid &&
+                      ownership.viewport_raw_gdat_asset_count >= 3 &&
+                      ownership.viewport_raw_gdat_asset_count ==
+                          ownership.viewport_decoded_gdat_asset_count,
+                  "FM Towns map 38 proves each consumed raw and decoded GDAT material");
+        }
     }
     check(exercise_authentic_db1(
               (DM2_V1_BootProfile *)view.dm2BootProfile,
@@ -1242,6 +1252,24 @@ int main(void)
                   return_render.runtime_render_no_core_fallbacks &&
                   return_render.runtime_render_blocked_material_draw_count == 0,
               "FM Towns restores a source-owned frame after leaving map 38");
+        {
+            DM2_V1_RuntimeFrameOwnershipReceipt ownership;
+            memset(&ownership, 0, sizeof(ownership));
+            (void)dm2_v1_runtime_last_frame_ownership(&ownership);
+            check(ownership.real_gdat_evidence_valid &&
+                      ownership.viewport_raw_gdat_asset_count >= 3 &&
+                      ownership.viewport_raw_gdat_asset_count ==
+                          ownership.viewport_decoded_gdat_asset_count,
+                  "FM Towns return scene proves each consumed raw and decoded GDAT material");
+            {
+                DM2_V1_BootViewportAssetEvidence missing;
+                memset(&missing, 0, sizeof(missing));
+                check(!dm2_v1_boot_viewport_asset_evidence(
+                          (DM2_V1_BootProfile *)view.dm2BootProfile,
+                          0x7fffffff, &missing),
+                      "FM Towns rejects an unaddressable GDAT material proof");
+            }
+        }
     }
     check(exercise_authentic_active_creature(
               (DM2_V1_BootProfile *)view.dm2BootProfile,

@@ -913,10 +913,43 @@ static void dm2_runtime_refresh_g1_scene_handoff(
     (void)dm2_runtime_promote_direct_g1_front_door(rt);
 }
 
+/* A source image may be blitted at several viewport cells.  Count the
+ * category/set/field asset once while retaining every draw-plan receipt. */
+static int g_dm2_viewport_evidence_keys[256];
+static int g_dm2_viewport_evidence_key_count;
+static int g_dm2_viewport_evidence_key_overflow;
+
+static uint32_t dm2_runtime_viewport_evidence_hash_bytes(
+    const uint8_t *bytes, size_t count)
+{
+    uint32_t hash = 2166136261u;
+    if (!bytes || !count) return 0u;
+    for (size_t i = 0; i < count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int dm2_runtime_claim_viewport_asset_evidence(int key)
+{
+    for (int i = 0; i < g_dm2_viewport_evidence_key_count; ++i)
+        if (g_dm2_viewport_evidence_keys[i] == key) return 0;
+    if (g_dm2_viewport_evidence_key_count >=
+        (int)(sizeof(g_dm2_viewport_evidence_keys) /
+              sizeof(g_dm2_viewport_evidence_keys[0]))) {
+        g_dm2_viewport_evidence_key_overflow = 1;
+        return -1;
+    }
+    g_dm2_viewport_evidence_keys[g_dm2_viewport_evidence_key_count++] = key;
+    return 1;
+}
+
 static void dm2_runtime_add_viewport_asset_evidence(
     DM2_V1_RuntimeFrameOwnershipReceipt *receipt, int gdat_index)
 {
     DM2_V1_BootViewportAssetEvidence evidence;
+    if (dm2_runtime_claim_viewport_asset_evidence(gdat_index) != 1) return;
     if (!receipt || g_dm2_runtime.viewport_asset_fetch !=
                          dm2_v1_boot_viewport_asset_fetch ||
         !g_dm2_runtime.viewport_asset_user ||
@@ -13353,13 +13386,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.fallback_carried_item_drawn_count +
         viewport.fallback_projectile_drawn_count;
     g_dm2_frame_ownership.viewport_raw_gdat_asset_count = 0;
+    g_dm2_viewport_evidence_key_count = 0;
+    g_dm2_viewport_evidence_key_overflow = 0;
     g_dm2_frame_ownership.viewport_decoded_gdat_asset_count = 0;
     g_dm2_frame_ownership.viewport_raw_gdat_byte_count = 0u;
     g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count = 0u;
     g_dm2_frame_ownership.viewport_raw_gdat_hash = 0x32445652u;
     g_dm2_frame_ownership.viewport_decoded_gdat_hash = 0x32445644u;
     if (viewport.asset_floor_ceiling_drawn_count > 0) {
-        viewport_expected_gdat_evidence_count += 2;
         dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
             dm2_v1_viewport_scene_material_graphic_index(
                 viewport.gdat_scene_material_index,
@@ -13373,26 +13407,75 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         DM2_V1_WallPanelRenderPlan wall_plan;
         if (dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
                                                          &wall_plan)) {
-            viewport_expected_gdat_evidence_count += wall_plan.panel_count;
             if (wall_plan.panel_count != viewport.asset_wall_drawn_count)
                 viewport_gdat_evidence_complete = 0;
             for (int i = 0; i < wall_plan.panel_count; ++i) {
-                dm2_runtime_add_viewport_asset_evidence(
-                    &g_dm2_frame_ownership,
-                    wall_plan.panels[i].gdat_index);
+                const DM2_V1_WallPanelRender *panel = &wall_plan.panels[i];
+                const DM2_V1_GdatWallM11Command *source = NULL;
+                /* SKProject skguivwp.cpp::DM2_DRAW_WALL queries the live
+                 * GRAPHICSSET field for each cell.  The panel's positive
+                 * value is that field, not a boot asset index.  The consumed
+                 * wall command owns the raw bytes and decoded pixels. */
+                int key = DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE -
+                    (viewport.gdat_scene_material_index << 8) -
+                    panel->gdat_index;
+                int claim = dm2_runtime_claim_viewport_asset_evidence(key);
+                if (claim == 0) continue;
+                if (claim < 0) {
+                    viewport_gdat_evidence_complete = 0;
+                    continue;
+                }
+                if (viewport.gdat_wall_material_plan) {
+                    const DM2_V1_GdatWallM11CommandPlan *plan =
+                        viewport.gdat_wall_material_plan;
+                    for (int j = 0; j < plan->command_count; ++j) {
+                        if (plan->commands[j].skproject_cell ==
+                                panel->skproject_cell &&
+                            plan->commands[j].field == panel->gdat_index) {
+                            source = &plan->commands[j];
+                            break;
+                        }
+                    }
+                }
+                if (!source || !source->material_source_bytes ||
+                    source->material_source_byte_count == 0u ||
+                    source->material_source_byte_count > UINT32_MAX ||
+                    !source->pixels || !source->width || !source->height ||
+                    !source->raw_hash || !source->decoded_hash ||
+                    source->raw_hash !=
+                        dm2_runtime_viewport_evidence_hash_bytes(
+                            source->material_source_bytes,
+                            source->material_source_byte_count) ||
+                    source->decoded_hash !=
+                        dm2_runtime_viewport_evidence_hash_bytes(
+                            source->pixels,
+                            (size_t)source->width * source->height)) {
+                    viewport_gdat_evidence_complete = 0;
+                    continue;
+                }
+                g_dm2_frame_ownership.viewport_raw_gdat_hash =
+                    g_dm2_frame_ownership.viewport_raw_gdat_hash * 33u +
+                    source->raw_hash;
+                g_dm2_frame_ownership.viewport_raw_gdat_byte_count +=
+                    (uint32_t)source->material_source_byte_count;
+                g_dm2_frame_ownership.viewport_decoded_gdat_hash =
+                    g_dm2_frame_ownership.viewport_decoded_gdat_hash * 33u +
+                    source->decoded_hash;
+                g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count +=
+                    (uint32_t)source->width * (uint32_t)source->height;
+                ++g_dm2_frame_ownership.viewport_raw_gdat_asset_count;
+                ++g_dm2_frame_ownership.viewport_decoded_gdat_asset_count;
             }
         } else viewport_gdat_evidence_complete = 0;
     }
     if (viewport.asset_wall_drawn_count > 0 && !wall_material_plan_consumed)
         viewport_gdat_evidence_complete = 0;
     if (viewport.asset_teleporter_drawn_count > 0) {
-        ++viewport_expected_gdat_evidence_count;
         dm2_runtime_add_viewport_asset_evidence(
             &g_dm2_frame_ownership,
             dm2_v1_viewport_teleporter_map_chip_graphic_index());
     }
     if (viewport.asset_hud_core_drawn_count > 0) {
-        viewport_expected_gdat_evidence_count += 4;
         /* skproject loads interface GDAT through
          * DM2_LOAD_GDAT_INTERFACE_00_02 before the runtime HUD draw. */
         dm2_runtime_add_viewport_asset_evidence(
@@ -13415,7 +13498,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (viewport.asset_hud_portrait_drawn_count > 0) {
         int portrait_count = viewport.asset_hud_portrait_drawn_count;
         if (portrait_count > 4) portrait_count = 4;
-        viewport_expected_gdat_evidence_count += portrait_count;
         if (portrait_count != viewport.asset_hud_portrait_drawn_count)
             viewport_gdat_evidence_complete = 0;
         for (int i = 0; i < portrait_count; ++i) {
@@ -13431,7 +13513,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             g_dm2_last_door_render.panel_gdat_index);
     }
     if (viewport.asset_door_panel_drawn_count > 0) {
-        ++viewport_expected_gdat_evidence_count;
         if (g_dm2_last_door_render.panel_gdat_index == 0)
             viewport_gdat_evidence_complete = 0;
     }
@@ -13444,7 +13525,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             g_dm2_last_door_render.ornate_gdat_index);
     }
     if (g_dm2_last_door_render.ornate_asset_drawn) {
-        ++viewport_expected_gdat_evidence_count;
         if (g_dm2_last_door_render.ornate_gdat_index == 0)
             viewport_gdat_evidence_complete = 0;
     }
@@ -13457,7 +13537,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             g_dm2_last_door_render.destroyed_mask_gdat_index);
     }
     if (g_dm2_last_door_render.destroyed_mask_asset_drawn) {
-        ++viewport_expected_gdat_evidence_count;
         if (g_dm2_last_door_render.destroyed_mask_gdat_index == 0)
             viewport_gdat_evidence_complete = 0;
     }
@@ -13468,8 +13547,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             g_dm2_last_door_render.side_frame_gdat_index[1]
         };
         int frame_evidence_count = 0;
-        viewport_expected_gdat_evidence_count +=
-            viewport.asset_door_frame_drawn_count;
         for (int i = 0; i < 3 &&
              frame_evidence_count < viewport.asset_door_frame_drawn_count;
              ++i) {
@@ -13482,8 +13559,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             viewport_gdat_evidence_complete = 0;
     }
     if (viewport.asset_door_button_drawn_count > 0) {
-        viewport_expected_gdat_evidence_count +=
-            viewport.asset_door_button_drawn_count;
         if (viewport.asset_door_button_drawn_count != 1 ||
             g_dm2_last_door_render.button_gdat_index == 0)
             viewport_gdat_evidence_complete = 0;
@@ -13492,8 +13567,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             g_dm2_last_door_render.button_gdat_index);
     }
     if (creature_material_plan_consumed) {
-        viewport_expected_gdat_evidence_count +=
-            viewport.creature_material_drawn_count;
         for (int i = 0; i < viewport.creature_material_drawn_count; ++i) {
             dm2_runtime_add_viewport_asset_evidence(
                 &g_dm2_frame_ownership,
@@ -13501,8 +13574,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         }
     }
     if (item_material_plan_consumed) {
-        viewport_expected_gdat_evidence_count +=
-            viewport.item_material_drawn_count;
         for (int i = 0; i < viewport.item_material_drawn_count; ++i) {
             dm2_runtime_add_viewport_asset_evidence(
                 &g_dm2_frame_ownership,
@@ -13510,8 +13581,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         }
     }
     if (projectile_material_plan_consumed) {
-        viewport_expected_gdat_evidence_count +=
-            viewport.projectile_material_drawn_count;
         for (int i = 0; i < viewport.projectile_material_drawn_count; ++i) {
             dm2_runtime_add_viewport_asset_evidence(
                 &g_dm2_frame_ownership,
@@ -13521,6 +13590,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if ((creature_material_plan_required && !creature_material_plan_consumed) ||
         (item_material_plan_required && !item_material_plan_consumed) ||
         (projectile_material_plan_required && !projectile_material_plan_consumed))
+        viewport_gdat_evidence_complete = 0;
+    viewport_expected_gdat_evidence_count =
+        g_dm2_viewport_evidence_key_count;
+    if (g_dm2_viewport_evidence_key_overflow)
         viewport_gdat_evidence_complete = 0;
     /* SKProject skguivwp.cpp::DM2_DISPLAY_VIEWPORT draws the two planes at
      * 7443/7450 and then scene-dependent tiles at 7461.  A fixed minimum
