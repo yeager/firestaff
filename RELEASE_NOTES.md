@@ -13,6 +13,9 @@
   replaced by a partial sound pack.
 - `CSB Atari ST viewport`: adds the first source DB5 weapon in the near
   front cell using the original scaling and palette.
+- `CSB FM Towns media selection`: changes selection to the authenticated complete CD
+  archive when a loose data tree is also present, allowing the game and
+  entrance CD audio route to start from original media.
 - `DM2 Macintosh floor items`: loads the retail map span and reads linked
   records for original floor-item pickup and placement routes.
 
@@ -29,9 +32,10 @@
 
 - DM1 and CSB audio and dungeon presentation have not been verified on the
   reported MacBook Pro M5 HiDPI hardware.
-- DM2 FM Towns dungeon presentation and movement after menu entry still need
-  original-media gameplay verification; this release does not establish full
-  visual or gameplay parity.
+- DM2 FM Towns dungeon presentation currently fails an original-media frame
+  ownership check after map 3 to map 38 teleportation. The movement itself
+  reaches the source coordinates, but dynamic-light rendering is incomplete.
+  Full visual and gameplay parity have not been established.
 - DM2 Macintosh later-map routes and physical macOS audio remain unverified.
 
 # Firestaff v3.0.354
