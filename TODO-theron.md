@@ -22,8 +22,8 @@ Reviewed 2026-10-02. Only open work is listed here.
   inputs. The corrected launcher scan-reuse test passed against authentic
   installed media. This regression result does not close the original-runtime
   gameplay and rendering gaps below.
-- After rebasing the Theron batch onto the latest `main`, trv2 configured the
-  project and built the application plus affected Theron test targets. Six
+- On `main` at `a0bd259`, trv2 configured the project and built the application
+  plus affected Theron test targets. Six
   focused CTest entries passed, including authentic-media scanner, loader,
   CDDA, and disassembly checks; the hardware-configuration executable also
   passed all six checks against installed authentic media. This targeted
