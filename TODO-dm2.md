@@ -326,7 +326,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   wall switch. A
   positive switch/keyhole pointer transaction remains open: their original
   records occur on later maps, and no normal New Game route to one is yet
-  verified.
+  verified. A retail map-5 diagnostic pose at (1,3) facing north proved that
+  the drawn wall target for DB3 `0x4fa3` was left in local 224x136 coordinates
+  while RECT_7 presents the scene at y=40. The runtime now translates all
+  source click targets through RECT_7, and the original-media hit test accepts
+  the visible lower wall pixel while rejecting a pixel above the viewport.
+  This alignment check does not establish a normal route to map 5 or a
+  successful switch transaction.
   Same-layer map 12 touches map 0 only at map 0
   (6,0), a wall tile. The verified map16→map0 stair does not establish a
   reverse route. Resolve the original Mac New Game start/transition before

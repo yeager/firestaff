@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM2 Macintosh viewport clicks`: aligns wall-control hitboxes with the
+  original RECT_7 dungeon image, 40 pixels below the local render surface.
+  Original-media hit testing passes; later-map switch action still needs a
+  normal gameplay route.
 - `CSB creature sound`: groups falling through ordinary pits no longer play
   the teleporter BUZZ effect; their movement sound remains.
 - `DM2 Macintosh wall controls`: reads original big-endian actuator words

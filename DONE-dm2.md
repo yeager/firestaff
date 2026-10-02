@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: Viewport click rectangles now follow the same authenticated
+  RECT_7 placement as the rendered 224x136 scene. A Mac retail map-5
+  diagnostic pose proved that a wall target had remained 40 pixels above its
+  visible location; the original-media hit test now resolves the displayed
+  target and rejects a click above it. Live switch action and a normal route
+  to that map remain unverified.
+
 - 2026-10-02: Mac wall-control fallback now reads DB3 actuator words in the
   source byte order. Retail record `0x8c72` has BE word `0x1888` and subtype
   `0x08`; a PC-order read would misclassify it as switch subtype `0x18`.

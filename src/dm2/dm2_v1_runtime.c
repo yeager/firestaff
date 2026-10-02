@@ -12020,6 +12020,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_runtime_append_mac_wall_targets(
         (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
         (const DM2_V1_GameState *)rt->boot->dm2_state);
+    if (use_rect7_backbuffer) {
+        /* DM2_DRAWINGS_COMPLETED copies the local 224x136 scene through
+         * source RECT_7. c_rwbb hit rectangles must follow that same copy
+         * before M11 compares them with 320x200 pointer coordinates. */
+        for (int i = 0; i < (int)rt->source_click_target_count; ++i) {
+            rt->source_click_targets[i].x += rect7_receipt.rect.x;
+            rt->source_click_targets[i].y += rect7_receipt.rect.y;
+        }
+    }
     /* LOAD_GDAT_INTERFACE_00_02 must hand the full original command family
      * to M11. The count proves all chrome and four party portraits consumed
      * their plan-owned pixels; a partial plan cannot fall through to a

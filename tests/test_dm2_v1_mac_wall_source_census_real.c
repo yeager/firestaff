@@ -795,6 +795,41 @@ static int run_one(const char *zip, const char *source_id)
                census.first_x[0x46], census.first_y[0x46], census.first_w2[0x46],
                census.first_w4[0x46], census.first_w6[0x46]);
     putchar('\n');
+    {
+        uint8_t frame[320u * 200u];
+        DM2_V1_ViewportRect rect;
+        DM2_V1_RuntimeViewportClickReceipt on_image, above_image;
+        DM2_V1_BootExpandedRectReceipt rect7;
+        /* Diagnostic pose only: retail map-5 floor (1,3) faces source
+         * DB3 wall switch 0x4fa3 at (1,2). No New Game route is inferred. */
+        if (dm2_v1_dungeon_get_square_type(dungeon, 5, 1, 3) != 1 ||
+            dm2_v1_dungeon_get_square_type(dungeon, 5, 1, 2) != 0 ||
+            !dm2_v1_boot_query_expanded_rect_receipt(profile, 7u, &rect7) ||
+            !rect7.valid || rect7.rect.x != 0 || rect7.rect.y != 40) {
+            fprintf(stderr, "Mac retail wall-target source pose invalid: %s\n", source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        dm2_v1_runtime_set_position(5, 1, 3, 0);
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        memset(&on_image, 0, sizeof(on_image));
+        memset(&above_image, 0, sizeof(above_image));
+        if (!dm2_v1_viewport_wall_frame_rect_for_square(DM2_SQ_D0C, &rect) ||
+            !dm2_v1_runtime_route_viewport_click(
+                rect.x + rect.w / 2,
+                rect.y + rect.h - 5 + rect7.rect.y, &on_image) ||
+            !on_image.accepted || on_image.target_kind != 4u ||
+            on_image.object_id != 0x4fa3 ||
+            on_image.rect.y != rect.y + rect7.rect.y ||
+            dm2_v1_runtime_route_viewport_click(
+                rect.x + rect.w / 2, rect.y + 20, &above_image)) {
+            fprintf(stderr, "Mac retail RECT_7 wall hitbox is misaligned: %s\n",
+                    source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
     M11_GameView_Shutdown(&state);
     return 0;
 }
