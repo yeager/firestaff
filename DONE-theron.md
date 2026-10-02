@@ -8,9 +8,10 @@
   `(scope, rotation, absolute, sound)` combinations. The test locks every
   tuple count and reads only the local authentic files on trv2; it prints no
   game-data bytes.
-- The targeted loader test passed three consecutive loops on trv2 and a direct
-  run exited 0. Its optional JP ISO-stub and CUE-projection subchecks were
-  unavailable and skipped; both Track 02 BIN paths were present and loaded.
+- The targeted loader CTest passed three consecutive loops on trv2; direct
+  execution also exited 0. Its optional JP ISO-stub and CUE-projection
+  subchecks were unavailable and skipped; both Track 02 BIN paths were present
+  and loaded.
 - This is an inventory of source records and the map OPEN gate only. It does
   not prove the party/item scope, facing, absolute-rotation, or sound behavior;
   those semantics remain open in TODO.
