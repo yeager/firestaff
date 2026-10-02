@@ -1791,8 +1791,7 @@ static int dm2_runtime_mode7_step(
     if (admitted < 0 &&
         ((map == 3 && nx == 13 && (ny == 9 || ny == 8) &&
           raw == 0x30) ||
-         (map == 3 && x == 13 && y == 8 && direction == 1 &&
-          nx == 14 && ny == 8 && raw == 0x10))) {
+         (raw == 0x10 && (((unsigned)first >> 10) & 0x0fu) == 2u))) {
         int no_creature = 0;
         int party_square = 0;
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
@@ -1801,11 +1800,9 @@ static int dm2_runtime_mode7_step(
             (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
         if (!game || !walk->rt->source_party_valid ||
             !walk->rt->record_pools_valid) return -1;
-        /* The original class-1 DB3 and class-0 DB2 records do not change
-         * GO_THERE's tile capability. The creature blocker still requires
-         * a complete chain on either edge. */
+        /* Source class-1 and class-0 capability precedes the creature
+         * blocker; prove the full chain before admitting a record tile. */
         if (nx == 13 && ny == 8 && first != 0x0da2) return -1;
-        if (nx == 14 && first != 0x0855) return -1;
         while (link != (int16_t)0xfffe) {
             int16_t next;
             if (link == (int16_t)0xffff || ++length > 256u ||
@@ -1817,7 +1814,7 @@ static int dm2_runtime_mode7_step(
         no_creature = 1;
         party_square = game->current_level == map &&
             game->party_x == nx && game->party_y == ny;
-        admitted = nx == 14 ?
+        admitted = raw == 0x10 ?
             dm2_v1_mode7_go_there_class0_record_admission(
                 (uint8_t)raw, first, no_creature, party_square) :
             dm2_v1_mode7_go_there_class1_raw30_admission(

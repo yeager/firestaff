@@ -292,7 +292,7 @@ static void test_mode7_go_there_tile_admission(void)
     assert(dm2_v1_mode7_go_there_class0_record_admission(
         0x10u, 0x0855, 0, 0) == -1);
     assert(dm2_v1_mode7_go_there_class0_record_admission(
-        0x10u, 0x0856, 1, 0) == -1);
+        0x10u, 0x0c56, 1, 0) == -1);
 }
 
 static void test_mode7_tile_accumulator(void)
@@ -429,6 +429,29 @@ static void test_mode7_flags4_original_media(void)
         }
         assert(dm2_v1_mode7_go_there_class0_record_admission(
             0x10u, first, 1, 0) == 1);
+    }
+    {
+        static const int coordinates[2][2] = {{12, 9}, {12, 8}};
+        static const int expected_links[2] = {0x4945, 0x4946};
+        unsigned cell;
+        for (cell = 0u; cell < 2u; ++cell) {
+            int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3,
+                coordinates[cell][0], coordinates[cell][1]);
+            int16_t link = (int16_t)first;
+            unsigned length = 0u;
+            assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3,
+                coordinates[cell][0], coordinates[cell][1]) == 0x10);
+            assert(first == expected_links[cell]);
+            while (link != (int16_t)0xfffe) {
+                int16_t next;
+                assert(link != (int16_t)0xffff && ++length <= 256u);
+                assert((((uint16_t)link >> 10) & 0x0fu) != 4u);
+                assert(dm2_v1_record_pool_next_link(&pools, link, &next));
+                link = next;
+            }
+            assert(dm2_v1_mode7_go_there_class0_record_admission(
+                0x10u, first, 1, 0) == 1);
+        }
     }
     memset(&cache, 0, sizeof(cache));
     assert(dm2_v1_mode7_tile_cache_start(
