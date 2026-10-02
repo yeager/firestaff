@@ -384,7 +384,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   A chunked read of the original Mac code corrected an earlier incomplete
   disassembly: `CODE(7)+0x1212` and `+0x1314` do write the mover's resolved
   destination map to `A5-0x66b2`; `+0x124c` clears it on same-map
-  restoration. `CODE(4)+0x0314..+0x034a` consumes that pending map.
+  restoration. `CODE(8)+0x2ab4` also writes that variable during turn/move
+  normalization, separate from mirror selection. `CODE(4)+0x0314..+0x034a`
+  consumes the pending map.
   `CODE(8)+0x246c..+0x298a` handles viewport clicks. Its mirror/wall
   branch reaches `A5+$a32` at `+0x27e6`; this is `CODE(7)+0x0006`, which
   only rotates linked record orientation bits and does not move the party.
@@ -402,8 +404,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   via `CODE(7)+0x1720`. The consumer `CODE(7)+0x60f8` dispatches it to the
   wall handler `CODE(7)+0x4d4c`; the handler admits only DB3 subtypes
   `7..0x49`, so it skips the subtype-`0x7e` mirror. This event does not
-  move the party. Find the separate post-selection transition before
-  changing the spawn.
+  move the party. The start map has no stairs or teleporters; the exact
+  Hall exit event remains unidentified. Find that separate post-selection
+  transition before changing the spawn.
   The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
