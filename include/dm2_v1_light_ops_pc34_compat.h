@@ -142,6 +142,26 @@ int dm2_v1_mode7_flags4_class2_terms(
     int16_t *out_tile_light, int16_t *out_darkness,
     int16_t *out_weather_light);
 
+/* The v1e08ae cache owned by SK1C9A::DM2_19f0_045a. Zero-initialize once;
+ * the source cache persists across FIND_WALK_PATH calls. A full traversal
+ * supplies effective vb_140 flags and node order; this isolated model only
+ * reproduces the cache transition and action-0x17 gate. */
+typedef struct {
+    int valid;
+    int16_t map, x, y;
+    uint8_t tile;
+} DM2_V1_Mode7TileCache;
+typedef int (*DM2_V1_Mode7ReadTile)(void *ctx, int map, int x, int y,
+                                    uint8_t *out_tile);
+int dm2_v1_mode7_tile_cache_start(
+    DM2_V1_Mode7TileCache *cache, int map, int x, int y,
+    DM2_V1_Mode7ReadTile read_tile, void *ctx);
+int dm2_v1_mode7_tile_cache_node(
+    DM2_V1_Mode7TileCache *cache, uint8_t effective_flags,
+    int map, int x, int y, DM2_V1_Mode7ReadTile read_tile, void *ctx);
+int dm2_v1_mode7_tile_cache_action23_gate(
+    const DM2_V1_Mode7TileCache *cache);
+
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {
     if (val < lo) return lo;

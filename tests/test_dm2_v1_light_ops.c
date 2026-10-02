@@ -316,6 +316,16 @@ static uint8_t *read_mode7_media(const char *path, size_t *out_size)
     return bytes;
 }
 
+static int read_mode7_dungeon_tile(void *ctx, int map, int x, int y,
+                                   uint8_t *out_tile)
+{
+    int raw = dm2_v1_dungeon_get_tile_raw(
+        (const DM2_V1_DungeonData *)ctx, map, x, y);
+    if (!out_tile || raw < 0 || raw > 255) return 0;
+    *out_tile = (uint8_t)raw;
+    return 1;
+}
+
 static void test_mode7_flags4_original_media(void)
 {
     const char *home = getenv("HOME");
@@ -326,6 +336,7 @@ static void test_mode7_flags4_original_media(void)
     DM2_V1_AssetLoader graphics;
     DM2_V1_CLightFlags4FloorReceipt floor;
     DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_Mode7TileCache cache;
     int16_t tile_light, weather_light, room_darkness;
     int16_t accumulated = 0, darkness = 0;
     if (!home) return;
@@ -349,6 +360,24 @@ static void test_mode7_flags4_original_media(void)
                                (int)dungeon_size) == 0);
     assert(dm2_v1_asset_loader_init(&graphics, graphics_bytes,
                                     graphics_size) == 0);
+    memset(&cache, 0, sizeof(cache));
+    assert(dm2_v1_mode7_tile_cache_start(
+        &cache, 3, 2, 8, read_mode7_dungeon_tile, &dungeon));
+    assert(cache.tile == 0x00u &&
+           !dm2_v1_mode7_tile_cache_action23_gate(&cache));
+    assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 38, 6, 5) == 0xb0);
+    assert(dm2_v1_mode7_tile_cache_node(
+        &cache, 0x02u, 38, 6, 5, read_mode7_dungeon_tile, &dungeon));
+    assert(cache.tile == 0x00u &&
+           !dm2_v1_mode7_tile_cache_action23_gate(&cache));
+    assert(dm2_v1_mode7_tile_cache_node(
+        &cache, 0x0au, 38, 6, 5, read_mode7_dungeon_tile, &dungeon));
+    assert(cache.tile == 0xb0u &&
+           dm2_v1_mode7_tile_cache_action23_gate(&cache));
+    assert(dm2_v1_mode7_tile_cache_start(
+        &cache, 38, 6, 6, read_mode7_dungeon_tile, &dungeon));
+    assert(cache.tile == 0x40u &&
+           !dm2_v1_mode7_tile_cache_action23_gate(&cache));
     assert(dm2_v1_dungeon_c_light_stone_room_receipt(
         &dungeon, &graphics, 38, 6, 6, 0u, &room));
     assert(room.raw_tile == 0x40u && room.source_tile_type == 1u &&

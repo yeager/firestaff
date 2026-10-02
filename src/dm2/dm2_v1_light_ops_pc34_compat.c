@@ -124,6 +124,53 @@ int dm2_v1_mode7_flags4_class2_terms(
     return 1;
 }
 
+static int dm2_v1_mode7_tile_cache_refresh(
+    DM2_V1_Mode7TileCache *cache, int map, int x, int y,
+    DM2_V1_Mode7ReadTile read_tile, void *ctx)
+{
+    uint8_t tile;
+    if (!cache || !read_tile || map < 0 || map >= 64 ||
+        x < 0 || x >= 32 || y < 0 || y >= 32) return 0;
+    if (cache->valid && cache->map == map && cache->x == x &&
+        cache->y == y) return 1;
+    if (!read_tile(ctx, map, x, y, &tile)) return 0;
+    cache->map = (int16_t)map;
+    cache->x = (int16_t)x;
+    cache->y = (int16_t)y;
+    cache->tile = tile;
+    cache->valid = 1;
+    return 1;
+}
+
+int dm2_v1_mode7_tile_cache_start(
+    DM2_V1_Mode7TileCache *cache, int map, int x, int y,
+    DM2_V1_Mode7ReadTile read_tile, void *ctx)
+{
+    if (!cache) return 0;
+    /* SK1C9A.cpp:6699-6703 calls 19f0_045a for the start square. */
+    return dm2_v1_mode7_tile_cache_refresh(
+        cache, map, x, y, read_tile, ctx);
+}
+
+int dm2_v1_mode7_tile_cache_node(
+    DM2_V1_Mode7TileCache *cache, uint8_t effective_flags,
+    int map, int x, int y, DM2_V1_Mode7ReadTile read_tile, void *ctx)
+{
+    if (!cache || !cache->valid) return 0;
+    /* SK1C9A.cpp:8622-8638 refreshes the live cache only if vb_140 has
+     * both bits 2 and 8. Otherwise action 0x17 observes the prior tile. */
+    if ((effective_flags & 0x0au) != 0x0au) return 1;
+    return dm2_v1_mode7_tile_cache_refresh(
+        cache, map, x, y, read_tile, ctx);
+}
+
+int dm2_v1_mode7_tile_cache_action23_gate(
+    const DM2_V1_Mode7TileCache *cache)
+{
+    if (!cache || !cache->valid) return 0;
+    return dm2_v1_mode7_action23_samples_tile(cache->tile);
+}
+
 /* ---- DM2_RECALC_LIGHT_LEVEL (c_light.cpp:16-198) ---- */
 
 void dm2_v1_recalc_light_level_pc34(
