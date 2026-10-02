@@ -5506,6 +5506,10 @@ static int m11_script_keycode_from_name(const char* name) {
     if (strcmp(name, "f9") == 0) return SDLK_F9;
     if (strcmp(name, "f10") == 0) return SDLK_F10;
     if (strcmp(name, "f11") == 0) return SDLK_F11;
+    /* The script grammar uses commas between tokens, so the Macintosh
+     * lateral keys need spelled names to reach the same SDL keydown route. */
+    if (strcmp(name, "comma") == 0) return SDLK_COMMA;
+    if (strcmp(name, "period") == 0) return SDLK_PERIOD;
     if (name[1] == '\0') {
         switch (name[0]) {
             case 'a': return SDLK_A;
@@ -5514,6 +5518,9 @@ static int m11_script_keycode_from_name(const char* name) {
             case 'e': return SDLK_E;
             case 'g': return SDLK_G;
             case 'i': return SDLK_I;
+            case 'j': return SDLK_J;
+            case 'k': return SDLK_K;
+            case 'l': return SDLK_L;
             case 'm': return SDLK_M;
             case 'p': return SDLK_P;
             case 'q': return SDLK_Q;
@@ -6204,7 +6211,17 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
         SDL_SCANCODE_KP_6,
         SDL_SCANCODE_X,
         SDL_SCANCODE_Z,
-        SDL_SCANCODE_C
+        SDL_SCANCODE_C,
+        /* dm2_v1_mac_input.c:76-86 maps the retail J/K/L turn-forward and
+         * M/,/. movement keys.  SKProject SKULLWIN/c_input.cpp:818-838 polls
+         * queued keys each game tick.  SDL repeats are discarded above, so
+         * sample these held keys for movement after the first keydown. */
+        SDL_SCANCODE_J,
+        SDL_SCANCODE_K,
+        SDL_SCANCODE_L,
+        SDL_SCANCODE_M,
+        SDL_SCANCODE_COMMA,
+        SDL_SCANCODE_PERIOD
     };
 
     if (!keys || count <= 0) {

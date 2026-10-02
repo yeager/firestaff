@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-10-02: Restored the authentic PC 3.4 D0C floor-item route. ReDMCSB
+  DUNVIEW.C F0127/F0115 uses C2500 cells 0/1 for objects on the party square;
+  the materialization gate had required cell 2 and withheld the rendered
+  C080 pickup target. The original-media HoC regression now reaches map 0
+  `(4,15)` from the archive bootstrap, clicks the rendered WATER `0x280b`,
+  transfers it to backpack slot 1, clicks the exposed scroll 0, and reads
+  its source text 33 while holding Eye. The ordinary source mouse route is
+  used for both pickups, with no save or pose override.
+
 - 2026-10-02: Added an authentic PC 3.4 CLI mouse-movement assertion. A click
   in ReDMCSB COMMAND.C's C070 forward-arrow box at source point `(275,135)`
   advances the retail ZIP's fresh party from map 0 `(1,3)`, facing 2, to
@@ -14,9 +23,10 @@
   through a live production-input route. Starting from the archive bootstrap,
   it replays keypad movement, clicks C127 ordinal 5, confirms the candidate
   through C040, and walks to map 0 `(4,15)`. It verifies the source pile's
-  closed scroll 0 -> text 33, picks up the pile's top WATER (`0x280b`) with the
-  normal pickup action, opens C007 and places WATER in backpack slot 1. The
-  test then picks up scroll 0, holds Eye with a separate production press,
+  closed scroll 0 -> text 33, picks up the pile's top WATER (`0x280b`) through
+  its rendered C080 mouse target, opens C007 and places WATER in backpack slot 1.
+  The test then picks up scroll 0 through C080, holds Eye with a separate
+  production press,
   confirms the source panel decoder returns the same text as scroll 0/text 33,
   and releases Eye to verify panel cleanup while retaining the scroll. The
   test passes against the original PC 3.4 ZIP without a save or pose override.

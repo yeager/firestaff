@@ -972,6 +972,64 @@ static void expect_atari_first_mirror_from_fresh_start(
                         profile->runtime.party_state.LeaderIndex == 0,
                     "Atari source C160 returns to live movement with synchronized leader pose");
     }
+    {
+        /* Continue through open retail map-0 squares to the next C127 wall.
+         * ReDMCSB COMMAND.C:245-248 maps F1/F2 to C007/C008, while
+         * PANEL.C F0355 keeps G0423 inventory owner separate from the
+         * CLIKCHAM.C G0411 leader selected by the first C160. */
+        static const M12_MenuInput second_route[] = {
+            M12_MENU_INPUT_TURN_RIGHT,
+            M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+            M12_MENU_INPUT_TURN_RIGHT, M12_MENU_INPUT_TURN_RIGHT,
+            M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT,
+            M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT
+        };
+        size_t step;
+        for (step = 0u; step < sizeof(second_route) / sizeof(second_route[0]);
+             ++step) {
+            int cooldown_ticks = 0;
+            while (view->world.disabledMovementTicks > 0 &&
+                   cooldown_ticks++ < 32) {
+                (void)M11_GameView_AdvanceIdleTick(view);
+            }
+            expect_true(M11_GameView_HandleInput(view, second_route[step]) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "Atari second C127 corridor uses production input");
+        }
+        expect_true(view->world.party.mapX == 11 &&
+                        view->world.party.mapY == 8 &&
+                        (view->world.party.direction & 3) == 1 &&
+                        M11_GameView_GetFrontMirrorOrdinal(view) == 5,
+                    "Atari corridor reaches the second retail C127 mirror");
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 112, 82, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view->candidateMirrorPanelActive &&
+                        view->world.party.championCount == 2,
+                    "Atari second C127 appends a candidate through C026");
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 130, 115, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        !view->candidateMirrorPanelActive &&
+                        profile->runtime.party_state.LeaderIndex == 0 &&
+                        view->world.party.activeChampionIndex == 0,
+                    "Atari second C160 preserves the first champion as leader");
+        expect_true(M11_GameView_HandleInput(
+                        view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view->inventoryPanelActive &&
+                        view->dm1InventoryChampionOrdinal == 1 &&
+                        view->world.party.activeChampionIndex == 0,
+                    "Atari F1 opens first inventory without changing leader");
+        expect_true(M11_GameView_HandleInput(
+                        view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view->inventoryPanelActive &&
+                        view->dm1InventoryChampionOrdinal == 2 &&
+                        view->world.party.activeChampionIndex == 0 &&
+                        profile->runtime.party_state.LeaderIndex == 0,
+                    "Atari F2 selects second inventory while first remains leader");
+    }
 }
 
 static void expect_native_live_mirror_and_command_handoff(

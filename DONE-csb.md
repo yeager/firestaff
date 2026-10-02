@@ -1,11 +1,18 @@
 # Firestaff DONE — CSB
 
+- 2026-10-02: An authentic Atari ST M12-to-M11 route now recruits two
+  champions, then presses F1 and F2. ReDMCSB PANEL.C F0355 keeps G0423's
+  inventory owner separate from CLIKCHAM.C's G0411 leader; M11 now does the
+  same. The original-media handoff test verifies F1 selects inventory ordinal
+  1, F2 selects ordinal 2, and the first champion remains the leader in both
+  the M11 mirror and GAMEBLOCK (4,553 checks, no failures).
+
 - 2026-10-02: The production CLI script accepts source F1-F4 champion keys
   through the same SDL-to-CSB input mapping used by live keyboard events
   (ReDMCSB COMMAND.C:245-260). The authenticated Atari ST archive route now
   presses F1 then F2 after recruiting two C127 champions and confirms that
   the inventory panel opens while the two-champion party and map pose remain
-  intact. The final receipt does not identify which champion's panel is open.
+  intact. The separate M12-to-M11 receipt identifies the selected champion.
 
 - 2026-10-02: The authentic Atari ST CLI route now continues from its first
   recruited champion to the next source-authenticated C127 mirror. It follows

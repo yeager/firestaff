@@ -232,6 +232,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   fallback draws. This rules out a repeatable local decoder hang for that
   route, but does not establish physical M5 playback cadence, audio, HiDPI or
   explain a hardware-specific stall.
+  On 2026-10-02, the Mac held-key sampler gained the remaining source movement
+  keys J/K/L/M/comma/period, and CLI scripts gained those key names. The
+  authenticated Mac retail New Game route now accepts `key:k` and advances
+  from (1,8) to (1,7), whereas the previous CLI parser silently dropped K.
+  This proves one scripted keydown and the movement handoff. A physical held
+  key on the reported M5 still needs observation to confirm repeat cadence.
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`

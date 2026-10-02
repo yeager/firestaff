@@ -24,8 +24,9 @@
   composition, pressure-plate near/far visibility, wall-torch placement, and
   held-item striping/loss on inventory placement. The authentic PC 3.4
   runtime regression now follows normal movement and C127/C040 recruitment to
-  HoC (4,15), picks up the source WATER with the production pickup action, and
-  places it in backpack slot 1. It then holds Eye through separate production
+  HoC (4,15), picks up the source WATER through a rendered C080 mouse target, and
+  places it in backpack slot 1. It then picks up scroll 0 through C080 and
+  holds Eye through separate production
   press/release calls and confirms scroll 0 remains selected while the panel
   decoder returns source text 33. This proves the pickup-to-inventory and
   source-text selection paths, not the eye-held presented frame, DOS pixel

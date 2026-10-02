@@ -16,6 +16,8 @@ int main(void)
     int steps = 0;
     char panelText[512];
     char sourceText[512];
+    unsigned char framebuffer[320 * 200];
+    M11_Dm1FloorItemHostPresentationReceipt floorReceipt;
     static const M12_MenuInput route_to_c127[] = {
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
@@ -136,13 +138,20 @@ int main(void)
         return 1;
     }
 
-    /* The source pile's top object is water (0x280b); pickup is the original
-     * G action, and C007 plus an ordinary slot click must place that exact
-     * object into the backpack. */
-    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_PICKUP_ITEM) ==
+    /* DUNVIEW.C F0127:8294/F0115 draws D0C's C2500 cells 0/1 before
+     * CLIKVIEW.C F0373 can pick up the visible object through C080.
+     * The source pile's near object is WATER (0x280b); C007 and a normal
+     * slot click must then place it in the backpack. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floorReceipt);
+    if (!floorReceipt.valid || !floorReceipt.floorItemLane ||
+        !floorReceipt.destinationPixelsChanged ||
+        M11_GameView_HandlePointerButton(&state, 66, 160,
+            M11_DM1_MOUSE_MASK_LEFT) ==
             M11_GAME_INPUT_IGNORED ||
         DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != 0x280bu) {
-        fputs("FAIL: PC34 HoC production pickup did not collect source WATER\n",
+        fputs("FAIL: PC34 HoC C080 did not collect rendered source WATER\n",
               stderr);
         M11_GameView_Shutdown(&state);
         return 1;
@@ -161,13 +170,24 @@ int main(void)
         return 1;
     }
 
-    /* Once WATER is stored, G picks the newly exposed scroll 0. C071 is a
-     * held control: inspect its source text while the production press is
-     * active, then verify F0353-equivalent release cleanup. */
+    /* Once WATER is stored, redraw the exposed scroll and click its source
+     * pile box. C071 is a held control: inspect the text while pressed,
+     * then verify F0353-equivalent release cleanup. */
     if (M11_GameView_HandlePointerButton(&state, 54, 14,
             M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
-        state.inventoryPanelActive ||
-        M11_GameView_HandleInput(&state, M12_MENU_INPUT_PICKUP_ITEM) ==
+        state.inventoryPanelActive) {
+        fputs("FAIL: PC34 HoC inventory did not close after WATER transfer\n",
+              stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floorReceipt);
+    if (!floorReceipt.valid || !floorReceipt.floorItemLane ||
+        !floorReceipt.destinationPixelsChanged ||
+        M11_GameView_HandlePointerButton(&state, 150, 160,
+            M11_DM1_MOUSE_MASK_LEFT) ==
             M11_GAME_INPUT_IGNORED ||
         DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != thing ||
         THING_GET_TYPE(thing) != THING_TYPE_SCROLL ||
@@ -201,6 +221,6 @@ int main(void)
         return 1;
     }
     M11_GameView_Shutdown(&state);
-    puts("PASS: authentic PC34 HoC WATER transfer, Eye-held scroll 0/text 33 decode and release");
+    puts("PASS: authentic PC34 HoC C080 WATER/scroll pickup, WATER transfer and Eye-held scroll text 33");
     return 0;
 }

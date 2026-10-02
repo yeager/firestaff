@@ -2,6 +2,12 @@
 
 ## User-facing changes
 
+- `DM2 Macintosh movement`: holding the retail J/K/L/M/comma/period movement
+  keys now supplies repeated commands at the game's input ticks. CLI scripts
+  accept these keys by name, including `key:comma` and `key:period`.
+- `DM1 floor pickup`: objects on the party's square appear in their source
+  floor positions and can be picked up with the mouse. The authentic PC 3.4
+  Hall route verifies WATER and scroll pickup after champion recruitment.
 - `DM1 Atari startup`: fixes quit handling during the title sequence so the
   game exits cleanly when startup is cancelled.
 
@@ -23,6 +29,9 @@
 - `CSB Atari ST input probe`: CLI scripts now accept F1-F4 champion keys via
   the live SDL mapping. The original-media regression presses F1 and F2 after
   recruiting two champions and confirms that the inventory panel opens.
+- `CSB champion inventories`: F1/F2 now change the inventory owner without
+  changing the party leader. An original Atari ST route verifies the first
+  leader remains selected when the second champion's inventory opens.
 - `CSB Atari animation tests`: skips cleanly when original game media is not
   installed, and the obsolete FM Towns RAR-only test has been removed.
 

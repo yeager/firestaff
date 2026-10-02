@@ -1,5 +1,16 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: The Macintosh held-key sampler now includes the retail
+  J/K/L/M/comma/period movement keys. SDL key repeats are discarded at the
+  input boundary, so these keys must be sampled while held for another
+  source-tick command. CLI scripts now accept `key:j`, `key:k`, `key:l`,
+  `key:m`, `key:comma`, and `key:period`. The source-table test covers all six
+  mappings. An authenticated Mac retail run of `--script key:k` completed
+  Title.MooV, New Game and mirror selection, then moved the party from (1,8)
+  to (1,7) with two champions and no core fallback draws. The first run before
+  the CLI parser fix reached runtime but stayed at (1,8). Build and PO update/
+  check passed. Scripted keydown verifies the CLI path; physical held-key
+  repetition remains unverified on this host.
 - 2026-10-01: DM2 GDAT effects and DOS MVE audio now use the same macOS
   playback preparation as the shared DM1/CSB SDL path. MVE startup no longer
   takes an additional SDL audio subsystem reference on every opening. The

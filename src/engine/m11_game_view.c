@@ -6168,8 +6168,9 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
      * particular, COMMAND.C may refresh the GAMEBLOCK before handling a
      * repeated F1--F4 key; losing G0423 here prevents the second key from
      * closing its own panel. */
-    inventoryChampionIndex = state->inventoryPanelActive
-        ? state->world.party.activeChampionIndex : -1;
+    inventoryChampionIndex = state->inventoryPanelActive &&
+            state->dm1InventoryChampionOrdinal > 0
+        ? state->dm1InventoryChampionOrdinal - 1 : -1;
     state->csbState.level_loaded = receipt->view.level_loaded;
     state->csbState.current_level = receipt->view.current_level;
     state->csbState.current_map_difficulty =
@@ -6182,16 +6183,19 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
         state->world.party = receipt->party.party;
         memcpy(state->csbwinPoisonCount, receipt->party.csbwin_poison_count,
                sizeof(state->csbwinPoisonCount));
-        if (inventoryChampionIndex >= 0 &&
-            inventoryChampionIndex < state->world.party.championCount &&
-            inventoryChampionIndex < CHAMPION_MAX_PARTY &&
-            state->world.party.champions[inventoryChampionIndex].present) {
-            state->world.party.activeChampionIndex = inventoryChampionIndex;
-        } else if (state->inventoryPanelActive) {
+        /* ReDMCSB PANEL.C F0355 owns G0423 independently of
+         * CLIKCHAM.C's G0411 leader. The runtime receipt restores the
+         * leader; retain the panel ordinal while its champion is valid. */
+        if (state->inventoryPanelActive &&
+            (inventoryChampionIndex < 0 ||
+             inventoryChampionIndex >= state->world.party.championCount ||
+             inventoryChampionIndex >= CHAMPION_MAX_PARTY ||
+             !state->world.party.champions[inventoryChampionIndex].present)) {
             /* PANEL.C refuses an invalid/dead M516 record.  Do the same
              * when a live runtime update removed the open champion. */
             state->inventoryPanelActive = 0;
             state->inventorySelectedSlot = -1;
+            state->dm1InventoryChampionOrdinal = 0;
         }
     }
     if (receipt->leader_hand_present) {
@@ -17266,7 +17270,8 @@ static int m11_inventory_champion_index(const M11_GameViewState* state)
     int index;
     if (!state) return -1;
     index = state->world.party.activeChampionIndex;
-    if (m11_is_dm1_source_kind(state->sourceKind) &&
+    if ((m11_is_dm1_source_kind(state->sourceKind) ||
+         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
         state->dm1InventoryChampionOrdinal != 0) {
         if (state->dm1InventoryChampionOrdinal < 1 ||
             state->dm1InventoryChampionOrdinal > CHAMPION_MAX_PARTY) return -1;
@@ -63694,10 +63699,13 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
      * inventory input list, not G0514 or its paid Symbols. Keep the
      * primary spell controls live across DM1 inventory open/switch/close. */
     if (!m11_is_dm1_source_kind(state->sourceKind)) state->spellPanelOpen = 0;
-    if (m11_is_dm1_source_kind(state->sourceKind)) {
+    if (m11_is_dm1_source_kind(state->sourceKind) ||
+        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         /* PANEL.C F0355 owns G0423 without changing CLIKCHAM.C G0411.
          * Close the previous chest before assigning the new panel owner. */
-        DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+        if (m11_is_dm1_source_kind(state->sourceKind)) {
+            DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+        }
         state->dm1InventoryChampionOrdinal = sameOpen ? 0 : championIndex + 1;
         state->v1ScrollPanelActive = 0;
         state->v1ChampionStatsPanelActive = 0;
@@ -70906,8 +70914,11 @@ int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
         return 0;
     }
     state->inventoryPanelActive = !state->inventoryPanelActive;
-    if (m11_is_dm1_source_kind(state->sourceKind)) {
-        DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+    if (m11_is_dm1_source_kind(state->sourceKind) ||
+        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        if (m11_is_dm1_source_kind(state->sourceKind)) {
+            DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+        }
         state->dm1InventoryChampionOrdinal = state->inventoryPanelActive
             ? state->world.party.activeChampionIndex + 1 : 0;
     }

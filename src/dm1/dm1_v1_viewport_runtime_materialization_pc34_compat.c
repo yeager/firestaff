@@ -379,9 +379,15 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
     decision.f0115EligibleForSquare = f0115Eligible;
     isD1c = input->relativeForward == 1 && input->relativeSide == 0;
 
+    /* DUNVIEW.C F0127:8294 enters F0115 at D0C with the two near cells;
+     * its C2500 row 11 has points for cells 0/1 and no point for cell 2.
+     * The old cell-2 admission hid real items on the party square and left
+     * COMMAND.C C080/F0377 without a rendered F0373 pickup target. */
     if (f0115Eligible && input->floorItemCount > 0 &&
-        dm1_viewport_3d_c2500_object_raw_zone_point(decision.row, 2,
-                                                     &itemX, &itemY)) {
+        dm1_viewport_3d_c2500_object_raw_zone_point(
+            decision.row, input->relativeForward == 0 &&
+                          input->relativeSide == 0 ? 0 : 2,
+            &itemX, &itemY)) {
         (void)itemX;
         (void)itemY;
         decision.itemZone = 2500 + decision.row * 4 + 2;
