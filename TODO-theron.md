@@ -1,6 +1,20 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-10-02. Only open work is listed here.
+Reviewed 2026-10-03. Only open work is listed here.
+
+## 2026-10-03 — regional authenticity for the shared UI glyph bank
+
+- ✅ The existing 120-glyph 8×6 viewport bank is byte-identical to authentic
+  US Track 02 at UD `0x09A000` and JP Rev. 1 Track 02 at UD `0x099800`.
+  `theron_v1_track02_font_glyphs_real_data` now validates both edition hashes
+  and reads both source spans through the bounded raw-sector/user-data mapper.
+- ✅ On trv2, the focused font, quest-item-name, production text-gate and
+  seven-dungeon real-media tests passed three consecutive loops against the
+  authentic US and JP BINs. The JP CUE ISO projection was not staged and its
+  subcheck reported `SKIP`.
+- 🔒 This verifies the common glyph asset used by Firestaff's Latin viewport
+  text only. It does not prove Japanese kana glyphs, the retail text consumer,
+  or complete regional text-rendering parity.
 
 ## 2026-10-02 — original raw Track 01 audio from US/JP 7z discs
 
