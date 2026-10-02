@@ -1663,6 +1663,23 @@ static int dm2_runtime_light_mode8_step(
                     &rt->record_pools, link, &link))
                 return -1;
         }
+    } else if ((raw >> 5) == 7) {
+        /* SK1C9A GO_THERE case 7 exits before the capability mask. */
+        return 0;
+    } else if ((raw >> 5) == 4 && (raw & 7) == 4 && first >= 0) {
+        const DM2_V1_GameState *game =
+            (const DM2_V1_GameState *)rt->boot->dm2_state;
+        DM2_V1_FirstCreatureReceipt creature;
+        int party_square;
+        if (!game || !rt->source_party_valid || !rt->record_pools_valid ||
+            !dm2_v1_record_pool_first_creature_receipt(
+                &rt->record_pools, (int16_t)first, &creature))
+            return -1;
+        party_square = game->current_level == map &&
+            game->party_x == nx && game->party_y == ny;
+        if (dm2_v1_mode8_class4_single_db0_admission(
+                (uint8_t)raw, &creature, 0x36e7u, party_square) != 1)
+            return party_square ? 0 : -1;
     } else if (raw == 0xb8 && first >= 0 &&
                (((uint16_t)first >> 10) & 0x0fu) == 1u) {
         int16_t next;

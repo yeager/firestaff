@@ -118,6 +118,23 @@ int dm2_v1_mode8_class1_creature_admission(
     return party_square ? 0 : 1;
 }
 
+int dm2_v1_mode8_class4_single_db0_admission(
+    uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
+    uint16_t source_mask, int party_square)
+{
+    if ((raw_tile >> 5) != 4u || (raw_tile & 7u) != 4u ||
+        !creature || !creature->valid ||
+        (((uint16_t)creature->first_link >> 10) & 0x0fu) != 0u ||
+        creature->scanned_records != 1u ||
+        creature->creature_link != (int16_t)0xfffe ||
+        source_mask != 0x36e7u)
+        return -1;
+    /* SK1C9A:3214-3378 gives class-4 low bits 4 capability 0x4200,
+     * which intersects action 27's mask. A sole DB0 cannot trigger the
+     * DB2 direction gate or the DB4 creature blocker. */
+    return party_square ? 0 : 1;
+}
+
 int dm2_v1_mode7_action23_visit_tile(
     uint16_t cached_tile_state, uint8_t radius,
     int16_t map, int16_t x, int16_t y,

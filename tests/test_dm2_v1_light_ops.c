@@ -415,6 +415,21 @@ static void test_mode7_flags4_original_media(void)
     memset(&pools, 0, sizeof(pools));
     assert(dm2_v1_record_pool_set_init_from_dungeon(&pools, &dungeon));
     {
+        DM2_V1_FirstCreatureReceipt door;
+        assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 7, 4) == 0x94);
+        assert(dm2_v1_dungeon_get_first_thing(&dungeon, 3, 7, 4) == 0x0011);
+        assert(dm2_v1_record_pool_first_creature_receipt(
+            &pools, 0x0011, &door));
+        assert(door.valid && door.scanned_records == 1u &&
+               door.creature_link == (int16_t)0xfffe);
+        assert(dm2_v1_mode8_class4_single_db0_admission(
+            0x94u, &door, 0x36e7u, 0) == 1);
+        assert(dm2_v1_mode8_class4_single_db0_admission(
+            0x94u, &door, 0x36e7u, 1) == 0);
+        assert(dm2_v1_mode8_class4_single_db0_admission(
+            0x94u, &door, 0x227u, 0) == -1);
+    }
+    {
         DM2_V1_FirstCreatureReceipt creature;
         int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, 4);
         assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 13, 4) == 0x30);
