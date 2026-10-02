@@ -472,6 +472,32 @@ TEST(light_mode8_work_ring_prioritizes_lower_source_cost) {
     assert(!state.mode8_complete);
 }
 
+static int light_ring_rotation_step(void *context, int map, int x, int y,
+                                    int direction, int *next_map,
+                                    int *next_x, int *next_y)
+{
+    int *order = (int *)context;
+    if (direction == 0) order[1 + order[0]++] = x == 6 && y == 6 ? 0 :
+        x == 6 && y == 7 ? 1 : x == 7 && y == 6 ? 2 : 4;
+    if (x != 6 || y != 6) return 0;
+    *next_map = map;
+    if (direction == 0) { *next_x = 6; *next_y = 5; return 4; }
+    if (direction == 1) { *next_x = 7; *next_y = 6; return 2; }
+    if (direction == 2) { *next_x = 6; *next_y = 7; return 1; }
+    return 0;
+}
+
+TEST(light_mode8_ring_rotates_higher_score_packets) {
+    DM2_V1_1c9aLightVisibility state;
+    int order[5] = {0};
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    assert(dm2_v1_1c9a_light_mode8_frontier(
+        &state, 38, 6, 6, light_ring_rotation_step, order));
+    assert(order[0] == 4 && order[1] == 0 && order[2] == 1 &&
+           order[3] == 2 && order[4] == 4);
+    assert(!state.mode8_complete);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -974,6 +1000,7 @@ int main(void) {
     RUN(light_mode8_teleporter_projection_uses_source_destination);
     RUN(light_mode8_work_ring_wraps_after_256_nodes);
     RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
+    RUN(light_mode8_ring_rotates_higher_score_packets);
 
     /* Popcount */
     RUN(popcount_zero);

@@ -101,6 +101,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
     uint8_t best[2u * 32u * 32u];
     uint8_t head = 0u, tail = 0u;
     unsigned pending = 0u;
+    unsigned lowest = 0u;
     int selector;
     if (!state) return 0;
     memset(best, 0xff, sizeof(best));
@@ -122,30 +123,27 @@ int dm2_v1_1c9a_light_mode8_frontier(
     pending = 1u;
     best[(size_t)start_x * 32u + (size_t)start_y] = 0u;
     while (pending != 0u) {
-        unsigned selected = 0u;
-        unsigned lowest = 0u;
+        unsigned rotations = 0u;
         Cell cell;
         uint8_t score;
         int cell_selector;
         size_t cell_index;
-        /* vba_08 records pending nodes by score. Resolve the lowest live
-         * bucket, then preserve source insertion order within that bucket. */
+        /* SK1C9A rotates higher-score xp_90 packets to the write cursor
+         * while vba_08 still has packets at the current score. The cursors
+         * wrap as bytes; no array compaction takes place. */
         while (lowest < sizeof(score_bucket) && !score_bucket[lowest])
             ++lowest;
         if (lowest == sizeof(score_bucket)) goto incomplete;
-        while (selected < pending &&
-               queued_score[(uint8_t)(head + selected)] != lowest)
-            ++selected;
-        if (selected == pending) goto incomplete;
-        cell = queue[(uint8_t)(head + selected)];
-        score = queued_score[(uint8_t)(head + selected)];
-        --score_bucket[score];
-        for (unsigned offset = selected; offset > 0u; --offset) {
-            queue[(uint8_t)(head + offset)] =
-                queue[(uint8_t)(head + offset - 1u)];
-            queued_score[(uint8_t)(head + offset)] =
-                queued_score[(uint8_t)(head + offset - 1u)];
+        while (queued_score[head] != lowest) {
+            if (++rotations > pending) goto incomplete;
+            queue[tail] = queue[head];
+            queued_score[tail] = queued_score[head];
+            ++head;
+            ++tail;
         }
+        cell = queue[head];
+        score = queued_score[head];
+        --score_bucket[score];
         ++head;
         --pending;
         cell_selector = cell.map == state->current_map ? 0 : 1;
