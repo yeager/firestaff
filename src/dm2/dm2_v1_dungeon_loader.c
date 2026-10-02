@@ -6865,6 +6865,36 @@ int dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_CLightFlags4FloorReceipt *out)
+{
+    int raw;
+    int first;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 0u ||
+        first != -1) return 0;
+
+    /* SKProject skguivwp.cpp::DM2_SUMMARIZE_STONE_ROOM initializes summary
+     * word 5 to FF and has no record pass on this tile. sklight.cpp's
+     * flags-4/type-zero branch exits before either GDAT query for FF. */
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->first_record_link = DM2_THING_NULL_MARKER;
+    out->floor_ornament_word = 0x00ffu;
+    out->source_flags = 4u;
+    out->contributes_light = 0u;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;

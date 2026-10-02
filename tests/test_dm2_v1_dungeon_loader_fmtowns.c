@@ -282,6 +282,37 @@ static void test_fmtowns_load(const char *path) {
                      (int16_t)((normal.v1e0974_delta * 99) / 100) &&
                    dark_weather.v1e0974_delta == 0);
         }
+        {
+            DM2_V1_CLightFlags4FloorReceipt floor;
+            int no_record_count = 0;
+            int record_count = 0;
+            for (int level = 3; level <= 38; level += 35) {
+                for (int y = 0; y < dungeon.level_heights[level]; ++y) {
+                    for (int x = 0; x < dungeon.level_widths[level]; ++x) {
+                        int raw = dm2_v1_dungeon_get_tile_raw(
+                            &dungeon, level, x, y);
+                        int first = dm2_v1_dungeon_get_first_thing(
+                            &dungeon, level, x, y);
+                        if (raw < 0 || ((unsigned)raw >> 5) != 0u) continue;
+                        if (first == -1) {
+                            assert(dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
+                                &dungeon, level, x, y, &floor));
+                            assert(floor.valid && floor.source_flags == 4u &&
+                                   floor.floor_ornament_word == 0x00ffu &&
+                                   floor.contributes_light == 0u);
+                            ++no_record_count;
+                        } else {
+                            assert(!dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
+                                &dungeon, level, x, y, &floor));
+                            ++record_count;
+                        }
+                    }
+                }
+            }
+            assert(no_record_count > 0 && record_count > 0);
+            printf("  PASS: FM Towns source flags-4 floor FF gate (%d no-record, %d record-bearing)\n",
+                   no_record_count, record_count);
+        }
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
         printf("  PASS: FM Towns map 38 source stone-room light inputs\n");

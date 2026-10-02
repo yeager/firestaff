@@ -1718,6 +1718,23 @@ int dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
     const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
     int teleporter_detail_valid, int weather_index,
     DM2_V1_CLightTileOrnamentReceipt *out);
+/* c_light::ADD_BACKGROUND_LIGHT_FROM_TILE with source flags 4 reads only
+ * type-zero floor ornament metadata. A no-record tile has summary word FF;
+ * record-bearing tiles need the complete SUMMARIZE_STONE_ROOM producer. */
+typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint8_t raw_tile;
+    uint16_t first_record_link;
+    uint16_t floor_ornament_word;
+    uint8_t source_flags;
+    uint8_t contributes_light;
+} DM2_V1_CLightFlags4FloorReceipt;
+int dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_CLightFlags4FloorReceipt *out);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,
