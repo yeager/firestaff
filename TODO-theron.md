@@ -27,12 +27,15 @@ Reviewed 2026-10-02. Only open work is listed here.
   absolute-facing mode, or sound fields. The original-runtime capture documented
   in `DONE-theron.md` proves one controlled coordinate/rotation mutation and
   its resulting party facing only; it does not establish every field
-  combination or scope effect. Inventory the active combinations in authentic
-  US and JP Track 02, then capture ordinary-input before/after party and item
-  state for representative cases or bind the missing branches in the
-  authenticated Theron routine. Until then, keep these semantics unsupported
-  and update the mutating resolver and read-only preview together only from
-  Theron-specific evidence. Generic DM/ReDMCSB behavior is not sufficient.
+  combination or scope effect. The authentic US and JP census now finds the
+  same 25 `(scope, rotation, absolute, sound)` combinations among 170 open
+  teleporter occurrences in each region across all seven dungeon banks; the
+  real-media test locks each count. This is source-record/map evidence only.
+  Next, capture ordinary-input before/after party and item state for
+  representative cases or bind the missing branches in the authenticated
+  Theron routine. Until then, keep these semantics unsupported and update the
+  mutating resolver and read-only preview together only from Theron-specific
+  evidence. Generic DM/ReDMCSB behavior is not sufficient.
 
 ## 2026-09-30 — explicit US menu target still does not reach the title route
 

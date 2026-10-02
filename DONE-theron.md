@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-02 — census active authentic teleporter metadata
+
+- The real-media loader regression now counts each open teleporter occurrence
+  from the hash-verified US and JP Rev. 1 Track 02 files across all seven
+  dungeon banks. Both editions contain 170 active occurrences and the same 25
+  `(scope, rotation, absolute, sound)` combinations. The test locks every
+  tuple count and reads only the local authentic files on trv2; it prints no
+  game-data bytes.
+- The targeted loader test passed three consecutive loops on trv2 and a direct
+  run exited 0. Its optional JP ISO-stub and CUE-projection subchecks were
+  unavailable and skipped; both Track 02 BIN paths were present and loaded.
+- This is an inventory of source records and the map OPEN gate only. It does
+  not prove the party/item scope, facing, absolute-rotation, or sound behavior;
+  those semantics remain open in TODO.
+
 ## 2026-10-02 — keep restored campaign and quest-item state independent
 
 - A saved quest-item mask now restores only its provisional item bits and

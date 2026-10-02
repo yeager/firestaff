@@ -1395,13 +1395,98 @@ static void assert_real_doors_preserve_record_without_runtime_aliases(
     assert(doors == expected_doors);
 }
 
+typedef struct {
+    unsigned int count[4][4][2][2];
+    unsigned int total;
+} Theron_TeleporterMetadataCensus;
+
+static void census_real_teleporter_metadata(
+    const Theron_V1_World *world,
+    Theron_TeleporterMetadataCensus *census) {
+    assert(world != NULL && census != NULL);
+    for (int i = 0; i < world->object_count; ++i) {
+        const Theron_V1_Object *object = &world->objects[i];
+        Theron_Teleporter source;
+        if (object->type != THERON_OBJTYPE_TELEPORTER ||
+            object->state == 0u)
+            continue;
+        assert(object->source_raw_size == 6u);
+        assert(theron_v1_track02_teleporter_decode(
+                   object->source_raw, &source) == 0);
+        assert(source.scope < 4u && source.rotation < 4u &&
+               source.absolute < 2u && source.sound < 2u);
+        ++census->count[source.scope][source.rotation]
+                       [source.absolute][source.sound];
+        ++census->total;
+    }
+}
+
+static void print_real_teleporter_metadata_census(
+    const char *region, const Theron_TeleporterMetadataCensus *census) {
+    static const unsigned int expected[4][4][2][2] = {
+        [0][0][0][0] = 61u,
+        [0][1][0][0] = 5u,
+        [0][1][1][0] = 1u,
+        [0][2][0][0] = 21u,
+        [0][2][0][1] = 1u,
+        [0][3][0][0] = 2u,
+        [1][0][0][0] = 9u,
+        [1][0][1][0] = 2u,
+        [1][1][0][0] = 1u,
+        [1][3][1][0] = 2u,
+        [2][0][0][1] = 25u,
+        [2][0][1][1] = 1u,
+        [2][1][1][1] = 1u,
+        [2][3][1][1] = 2u,
+        [3][0][0][1] = 5u,
+        [3][0][1][1] = 3u,
+        [3][1][0][0] = 4u,
+        [3][1][1][0] = 7u,
+        [3][1][1][1] = 4u,
+        [3][2][0][0] = 1u,
+        [3][2][0][1] = 1u,
+        [3][2][1][0] = 2u,
+        [3][2][1][1] = 1u,
+        [3][3][0][0] = 3u,
+        [3][3][1][1] = 5u
+    };
+    unsigned int expected_total = 0u;
+
+    assert(region != NULL && census != NULL);
+    for (unsigned int scope = 0u; scope < 4u; ++scope)
+        for (unsigned int rotation = 0u; rotation < 4u; ++rotation)
+            for (unsigned int absolute = 0u; absolute < 2u; ++absolute)
+                for (unsigned int sound = 0u; sound < 2u; ++sound) {
+                    expected_total +=
+                        expected[scope][rotation][absolute][sound];
+                    assert(census->count[scope][rotation][absolute][sound] ==
+                           expected[scope][rotation][absolute][sound]);
+                }
+    assert(expected_total == 170u && census->total == expected_total);
+    printf("  authentic %s active Track 02 teleporter metadata: %u ",
+           region, census->total);
+    for (unsigned int scope = 0u; scope < 4u; ++scope)
+        for (unsigned int rotation = 0u; rotation < 4u; ++rotation)
+            for (unsigned int absolute = 0u; absolute < 2u; ++absolute)
+                for (unsigned int sound = 0u; sound < 2u; ++sound) {
+                    unsigned int count =
+                        census->count[scope][rotation][absolute][sound];
+                    if (count == 0u) continue;
+                    printf("[scope=%u rotation=%u absolute=%u sound=%u:%u] ",
+                           scope, rotation, absolute, sound, count);
+                }
+    printf("\n");
+}
+
 static unsigned int assert_real_teleporters_preserve_map_state(
     const Theron_V1_World *world, unsigned int expected_teleporters,
-    unsigned int *active_to_inactive) {
+    unsigned int *active_to_inactive,
+    Theron_TeleporterMetadataCensus *metadata_census) {
     unsigned int teleporters = 0u;
     unsigned int active = 0u;
 
     if (active_to_inactive) *active_to_inactive = 0u;
+    census_real_teleporter_metadata(world, metadata_census);
     for (int i = 0; i < world->object_count; ++i) {
         const Theron_V1_Object *object = &world->objects[i];
         Theron_Teleporter source;
@@ -2440,6 +2525,7 @@ static void test_all_dungeons(
     unsigned int active_teleporters = 0u;
     unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
+    Theron_TeleporterMetadataCensus teleporter_metadata = {0};
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
     unsigned int floor_actuators[128] = {0};
@@ -2773,7 +2859,8 @@ static void test_all_dungeons(
         {
             unsigned int chained = 0u;
             active_teleporters += assert_real_teleporters_preserve_map_state(
-                world, (unsigned int)result.teleporters_placed, &chained);
+                world, (unsigned int)result.teleporters_placed, &chained,
+                &teleporter_metadata);
             assert(assert_real_active_to_inactive_teleporter_links(world) ==
                    chained);
             active_teleporter_destinations +=
@@ -2850,6 +2937,8 @@ static void test_all_dungeons(
     g_us_stair_party_actuator_count = stair_party_actuator_count;
     g_us_stair_party_actuator_census_valid = 1;
     assert(nonfirst_take_roundtrips > 0u);
+    assert(teleporter_metadata.total == 170u);
+    print_real_teleporter_metadata_census("US", &teleporter_metadata);
 }
 
 static void test_all_jp_dungeons(
@@ -2866,6 +2955,7 @@ static void test_all_jp_dungeons(
     unsigned int active_teleporters = 0u;
     unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
+    Theron_TeleporterMetadataCensus teleporter_metadata = {0};
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
     unsigned int floor_actuators[128] = {0};
@@ -2993,7 +3083,8 @@ static void test_all_jp_dungeons(
         {
             unsigned int chained = 0u;
             active_teleporters += assert_real_teleporters_preserve_map_state(
-                world, (unsigned int)result.teleporters_placed, &chained);
+                world, (unsigned int)result.teleporters_placed, &chained,
+                &teleporter_metadata);
             assert(assert_real_active_to_inactive_teleporter_links(world) ==
                    chained);
             active_teleporter_destinations +=
@@ -3053,6 +3144,8 @@ static void test_all_jp_dungeons(
     g_jp_stair_party_actuator_count = stair_party_actuator_count;
     g_jp_stair_party_actuator_census_valid = 1;
     assert(nonfirst_take_roundtrips > 0u);
+    assert(teleporter_metadata.total == 170u);
+    print_real_teleporter_metadata_census("JP", &teleporter_metadata);
     printf("  JP Track 02: all dungeon object records OK\n");
 }
 
