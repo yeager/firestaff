@@ -29,10 +29,11 @@
 
 - `DM2 FM Towns viewport data`: decodes short IMG2 wall records and verifies
   four light tables against the original SKULL.EXP executable. A source-bound
-  room summary now covers two record-free stone-room tile branches at the
-  original map 38 teleport destination. Original GDAT also verifies the
-  ceiling ornament's distance-adjusted light contribution for one of those
-  tiles; these parts do not yet provide a complete dynamic-light frame.
+  room summary now covers two record-free stone-room tile branches and the
+  neighboring DB1 teleporter cell at the original map 38 destination.
+  Original GDAT verifies the record-free ceiling ornament's distance-adjusted
+  light and the DB1 room's weather-scaled teleporter ornament branch; these
+  parts do not yet provide a complete dynamic-light frame.
 - `DM2 FM Towns teleporters`: uses one original DB1 map-edge decoder for
   live party movement and future cross-map path traversal. Original media
   verifies both map 3 to map 38 and return coordinates and rotation; light
