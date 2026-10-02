@@ -36,6 +36,13 @@ Reviewed 2026-10-02. Only open work is listed here.
   Theron routine. Until then, keep these semantics unsupported and update the
   mutating resolver and read-only preview together only from Theron-specific
   evidence. Generic DM/ReDMCSB behavior is not sufficient.
+- Capture preparation is incomplete: the authenticated US gameplay savestate
+  used by the prior command captures is absent from trv2's configured Mednafen
+  state directory, and the checked-in scripted replay accepts controller
+  events but not the original panel click. Do not mutate a record or RAM to
+  manufacture a gameplay result. Recover an authorized authentic gameplay
+  state or establish a fresh source-bound route first; then add PC-attributed
+  party/item and sound-register observation before drawing field semantics.
 
 ## 2026-09-30 — explicit US menu target still does not reach the title route
 
