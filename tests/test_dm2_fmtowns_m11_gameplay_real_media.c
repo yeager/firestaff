@@ -396,6 +396,7 @@ int main(void)
     DM2_V1_StartupMenuPointerLayout layout;
     DM2_V1_BootStartupMenuHudGdatReceipt startup_hud;
     DM2_V1_BootRuntimeReceipt runtime_receipt;
+    DM2_V1_LightSourceIdentity map38_light_identity;
     unsigned char framebuffer[M11_FB_BYTES];
     char selected_runtime[1024];
     int step;
@@ -1133,6 +1134,13 @@ int main(void)
                   ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
               3, 13, 11, 38),
           "FM Towns commits the authentic party teleporter into map 38");
+    {
+        memset(&map38_light_identity, 0, sizeof(map38_light_identity));
+        check(dm2_v1_runtime_light_source_identity(&map38_light_identity) &&
+                  map38_light_identity.valid &&
+                  map38_light_identity.combined != 0u,
+              "FM Towns map 38 has live mutable light input identities");
+    }
     check(check_original_light_teleporters(
               (const DM2_V1_DungeonData *)
                   ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data),
@@ -1176,6 +1184,15 @@ int main(void)
                   ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
               38, 6, 4, 3),
           "FM Towns commits the authentic party teleporter out of map 38");
+    {
+        DM2_V1_LightSourceIdentity returned;
+        memset(&returned, 0, sizeof(returned));
+        check(dm2_v1_runtime_light_source_identity(&returned) &&
+                  returned.valid &&
+                  returned.combined != map38_light_identity.combined &&
+                  returned.map != map38_light_identity.map,
+              "FM Towns live light identity changes after map 38 return");
+    }
     memset(framebuffer, 0, sizeof(framebuffer));
     {
         DM2_V1_BootRuntimeRenderReceipt return_render;

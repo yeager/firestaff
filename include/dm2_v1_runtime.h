@@ -47,6 +47,7 @@
 #include "dm2_v1_weather.h"
 #include "dm2_v1_engage_command_pc34_compat.h"
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_light_source_identity.h"
 
 /* Ownership receipt for the private GAME_LOAD candidate handoff.  A valid
  * receipt proves that the candidate is now owned by runtime, not that it is
@@ -1913,6 +1914,10 @@ int dm2_v1_runtime_bind_fmtowns_english_text_companion(
 int dm2_v1_runtime_bind_fmtowns_builtin_l10n_overlay(void);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
+/* Recompute live mutable input identities. This does not certify either
+ * FIND_WALK_PATH traversal or publish a c_light frame receipt. */
+int dm2_v1_runtime_light_source_identity(
+    DM2_V1_LightSourceIdentity *out);
 const char *dm2_v1_runtime_source_evidence(void);
 
 #ifdef __cplusplus

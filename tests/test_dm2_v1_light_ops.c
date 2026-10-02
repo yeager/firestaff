@@ -1,6 +1,7 @@
 /* Test DM2 V1 light operations (c_light.cpp). */
 
 #include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_light_source_identity.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_save_post_load_global_effects_pc34_compat.h"
@@ -374,6 +375,150 @@ static int read_mode7_dungeon_tile(void *ctx, int map, int x, int y,
     return 1;
 }
 
+static void test_light_identity_original_media(
+    DM2_V1_DungeonData *dungeon, DM2_V1_RecordPoolSet *pools,
+    DM2_V1_AssetLoader *graphics)
+{
+    DM2_V1_CLightMapDescriptorReceipt map;
+    DM2_V1_GameState game;
+    DM2_V1_Party party;
+    DM2_V1_WeatherState weather;
+    DM2_V1_UpdateWeatherState weather_chain;
+    DM2_V1_LightSourceIdentityInputs in;
+    DM2_V1_LightSourceIdentity base, changed;
+    uint8_t savegames1[128] = {0};
+    uint32_t inventory[4u * 30u] = {0};
+    int tile_offset, link_offset;
+    memset(&map, 0, sizeof(map));
+    memset(&game, 0, sizeof(game));
+    memset(&party, 0, sizeof(party));
+    memset(&weather, 0, sizeof(weather));
+    memset(&weather_chain, 0, sizeof(weather_chain));
+    memset(&in, 0, sizeof(in));
+    assert(dm2_v1_dungeon_c_light_map_descriptor_receipt(
+        dungeon, 3, &map) && map.valid);
+    game.current_level = 3;
+    game.party_x = 13;
+    game.party_y = 10;
+    party.heros_in_party = 1;
+    in.map = &map;
+    in.dungeon = dungeon;
+    in.records = pools;
+    in.gdat = graphics;
+    in.game = &game;
+    in.party = &party;
+    in.weather = &weather;
+    in.weather_chain = &weather_chain;
+    in.weather_light_valid = 1;
+    in.savegames1 = savegames1;
+    in.savegames1_size = sizeof(savegames1);
+    in.champion_inventory_objects = inventory;
+    in.champion_inventory_count = sizeof(inventory) / sizeof(inventory[0]);
+    assert(dm2_v1_light_source_identity(&in, &base) && base.valid);
+
+    in.graphics_style ^= 1;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.map != base.map);
+    in.graphics_style ^= 1;
+    map.descriptor_hash ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.map != base.map && changed.combined != base.combined);
+    map.descriptor_hash ^= 1u;
+    tile_offset = dungeon->raw_map_data_base + dungeon->level_offsets[3] +
+        13 * dungeon->level_heights[3] + 10;
+    link_offset = dungeon->square_first_thing_base;
+    assert(tile_offset >= 0 && tile_offset < dungeon->raw_size &&
+           link_offset >= 0 && link_offset < dungeon->raw_size);
+    dungeon->raw_data[tile_offset] ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.dungeon != base.dungeon);
+    dungeon->raw_data[tile_offset] ^= 1u;
+    dungeon->raw_data[link_offset] ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.dungeon != base.dungeon);
+    dungeon->raw_data[link_offset] ^= 1u;
+    assert(pools->pools[4].record_count > 0 && pools->pools[4].bytes);
+    pools->pools[4].bytes[0] ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.records != base.records);
+    pools->pools[4].bytes[0] ^= 1u;
+    graphics->entries[0].cls1 ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.gdat != base.gdat);
+    graphics->entries[0].cls1 ^= 1u;
+    if (graphics->raw_data_count) {
+        graphics->raw_offsets[0] ^= 1u;
+        assert(dm2_v1_light_source_identity(&in, &changed) &&
+               changed.gdat != base.gdat);
+        graphics->raw_offsets[0] ^= 1u;
+    }
+    ((uint8_t *)graphics->data)[0] ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.gdat != base.gdat);
+    ((uint8_t *)graphics->data)[0] ^= 1u;
+    ((uint8_t *)&party.hero[0])[0] ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.party_light != base.party_light);
+    ((uint8_t *)&party.hero[0])[0] ^= 1u;
+    game.party_x ^= 1;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.party_light != base.party_light);
+    game.party_x ^= 1;
+    inventory[0] ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.party_light != base.party_light);
+    inventory[0] ^= 1u;
+    savegames1[0] ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.party_light != base.party_light);
+    savegames1[0] ^= 1u;
+    in.leader_hand_object ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.party_light != base.party_light);
+    in.leader_hand_object ^= 1u;
+    in.source_light_level ^= 1;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.party_light != base.party_light);
+    in.source_light_level ^= 1;
+    weather.weather_seed ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.weather != base.weather);
+    weather.weather_seed ^= 1u;
+    weather_chain.intensity ^= 1;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.weather != base.weather);
+    weather_chain.intensity ^= 1;
+    in.gdat_scene_rain ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.weather != base.weather);
+    in.gdat_scene_rain ^= 1u;
+    in.gdat_scene_highest_light_level ^= 1u;
+    assert(dm2_v1_light_source_identity(&in, &changed) &&
+           changed.weather != base.weather);
+    in.gdat_scene_highest_light_level ^= 1u;
+    in.gdat = NULL;
+    assert(!dm2_v1_light_source_identity(&in, &changed) && !changed.valid);
+    in.gdat = graphics;
+    in.records = NULL;
+    assert(!dm2_v1_light_source_identity(&in, &changed) && !changed.valid);
+    in.records = pools;
+    in.party = NULL;
+    assert(!dm2_v1_light_source_identity(&in, &changed) && !changed.valid);
+    in.party = &party;
+    in.weather = NULL;
+    assert(!dm2_v1_light_source_identity(&in, &changed) && !changed.valid);
+    in.weather = &weather;
+    in.weather_chain = NULL;
+    assert(!dm2_v1_light_source_identity(&in, &changed) && !changed.valid);
+    in.weather_chain = &weather_chain;
+    in.weather_light_valid = 0;
+    assert(!dm2_v1_light_source_identity(&in, &changed) && !changed.valid);
+    in.weather_light_valid = 1;
+    in.savegames1 = NULL;
+    assert(!dm2_v1_light_source_identity(&in, &changed) && !changed.valid);
+    printf("  PASS: original FM Towns mutable light source identities\n");
+}
+
 static void test_mode7_flags4_original_media(void)
 {
     const char *home = getenv("HOME");
@@ -420,6 +565,7 @@ static void test_mode7_flags4_original_media(void)
     }
     memset(&pools, 0, sizeof(pools));
     assert(dm2_v1_record_pool_set_init_from_dungeon(&pools, &dungeon));
+    test_light_identity_original_media(&dungeon, &pools, &graphics);
     {
         DM2_V1_FirstCreatureReceipt door;
         assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 7, 4) == 0x94);

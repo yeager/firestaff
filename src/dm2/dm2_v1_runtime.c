@@ -433,6 +433,52 @@ static int32_t __attribute__((unused)) dm2_runtime_mac_key_can_handle(
 
 static DM2_V1_RuntimeState g_dm2_runtime;
 
+int dm2_v1_runtime_light_source_identity(
+    DM2_V1_LightSourceIdentity *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_LightSourceIdentityInputs inputs;
+    DM2_V1_CLightMapDescriptorReceipt map;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_GameState *game;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!rt->boot || !rt->boot->dungeon_data || !rt->boot->dm2_state ||
+        !rt->source_party_valid || !rt->record_pools_valid ||
+        !rt->gdat_scene_control_ready) return 0;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    game = (const DM2_V1_GameState *)rt->boot->dm2_state;
+    memset(&map, 0, sizeof(map));
+    if (!dm2_v1_dungeon_c_light_map_descriptor_receipt(
+            dungeon, game->current_level, &map) || !map.valid)
+        return 0;
+    memset(&inputs, 0, sizeof(inputs));
+    inputs.map = &map;
+    inputs.graphics_style = rt->map_graphics_style;
+    inputs.dungeon = dungeon;
+    inputs.records = &rt->record_pools;
+    inputs.gdat = dm2_v1_boot_asset_loader(rt->boot);
+    inputs.game = game;
+    inputs.party = &rt->source_party;
+    inputs.weather = &rt->weather;
+    inputs.weather_chain = &rt->weather_chain;
+    inputs.weather_light_valid = rt->source_weather_light_valid;
+    inputs.weather_chain_started = rt->weather_chain_started;
+    inputs.savegames1 = rt->source_savegames1;
+    inputs.savegames1_size = sizeof(rt->source_savegames1);
+    inputs.champion_inventory_objects =
+        &rt->champion_inventory_objects[0][0];
+    inputs.champion_inventory_count = 4u * 30u;
+    inputs.leader_hand_object = rt->leader_hand_object;
+    inputs.source_light_level = rt->source_light_level;
+    inputs.gdat_scene_rain = rt->gdat_scene_rain;
+    inputs.gdat_scene_highest_light_level =
+        rt->gdat_scene_highest_light_level;
+    inputs.gdat_ambient_darkness = rt->gdat_ambient_darkness;
+    inputs.gdat_scene_ambient_light = rt->gdat_scene_ambient_light;
+    return dm2_v1_light_source_identity(&inputs, out);
+}
+
 static void dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y)
 {

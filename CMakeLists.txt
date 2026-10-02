@@ -6847,6 +6847,8 @@ list(REMOVE_ITEM M10_SOURCES
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_light_visibility.c")
 list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_light_source_identity.c")
+list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_light_terminal_receipt.c")
 # `dm2_v1_0aaf_pc34_compat.c` has no M11/runtime caller and its callback
 # contract still omits the original menu selector plus dialogue-rectangle
