@@ -23,8 +23,8 @@ void dm2_v1_recalc_light_level_pc34(
     tile_byte = cb->get_map_tile_byte(ctx, cb->map_index, 0x0D);
     if ((tile_byte & 0xf0u) == 0u) {
         /* sklight.cpp:184-198: the no-light-tile branch starts at one and
-         * still passes through the source v1e0978 modifier and clamp. */
-        light_level = (int16_t)(1 - cb->v1e0978);
+         * still passes through the source boolean v1e0978 gate and clamp. */
+        light_level = (int16_t)(1 - (cb->v1e0978 > 0x0c ? 1 : 0));
         cb->set_light_level(ctx, dm2_v1_between_value(0, 5, light_level));
         return;
     }
@@ -120,11 +120,10 @@ void dm2_v1_recalc_light_level_pc34(
     if (cb->v1e147f != 0 && cb->v1e024c != 0)
         light_level = 0;
 
-    /* sklight.cpp:186-190 — the original narrows v1e0978 to one when it is
-     * above 0x0c before subtracting it.  It is not an unrestricted host
-     * light delta; preserving the source normalization avoids turning an
-     * authenticated high modifier into an artificial black frame. */
-    source_light_modifier = cb->v1e0978 > 0x0c ? 1 : cb->v1e0978;
+    /* sklight.cpp:190-194 assigns the comparison result to RG1Blo, the low
+     * byte of RG1L, before masking RG1L to a byte.  The subtraction is thus
+     * the boolean (v1e0978 > 0x0c), not the accumulator itself. */
+    source_light_modifier = cb->v1e0978 > 0x0c ? 1 : 0;
     light_level = (int16_t)(light_level - source_light_modifier);
     cb->set_light_level(ctx, dm2_v1_between_value(0, 5, light_level));
 }
