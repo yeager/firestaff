@@ -324,7 +324,7 @@ static int light_walk_core(
             int next_map = -1, next_x = -1, next_y = -1;
             int projection_map = -1, projection_x = -1, projection_y = -1;
             int result = step(context, cell.map, cell.x, cell.y, direction,
-                              &next_map, &next_x, &next_y,
+                              score, &next_map, &next_x, &next_y,
                               &projection_map, &projection_x,
                               &projection_y);
             size_t index;

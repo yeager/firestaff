@@ -118,6 +118,21 @@ int dm2_v1_mode8_class1_creature_admission(
     return party_square ? 0 : 1;
 }
 
+int dm2_v1_mode7_class1_creature_admission(
+    uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
+    uint8_t score, uint16_t ai_word10, int party_square)
+{
+    if (raw_tile != 0x30u || !creature || !creature->valid ||
+        !creature->prefix_db3_only || creature->scanned_records < 1u ||
+        (((uint16_t)creature->creature_link >> 10) & 0x0fu) != 4u)
+        return -1;
+    /* SK1C9A:9505-9511 adds GO_THERE flag 0x40 after score 6.
+     * :3417-3452 then adds creature blocker 0x1000 only when that flag
+     * is absent or AI word@0x0a is zero. Action 23's 0x227 excludes it. */
+    if (party_square || score <= 6u || ai_word10 == 0u) return 0;
+    return 1;
+}
+
 int dm2_v1_mode8_class4_single_db0_admission(
     uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
     uint16_t source_mask, int party_square)

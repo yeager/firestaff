@@ -127,6 +127,9 @@ int dm2_v1_mode7_go_there_class5_b8_admission(
 int dm2_v1_mode8_class1_creature_admission(
     uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
     uint16_t source_mask, int party_square);
+int dm2_v1_mode7_class1_creature_admission(
+    uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
+    uint8_t score, uint16_t ai_word10, int party_square);
 int dm2_v1_mode8_class4_single_db0_admission(
     uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
     uint16_t source_mask, int party_square);

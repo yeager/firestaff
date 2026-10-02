@@ -446,6 +446,14 @@ static void test_mode7_flags4_original_media(void)
             0x30u, &creature, 0x36e7u, 1) == 0);
         assert(dm2_v1_mode8_class1_creature_admission(
             0x30u, &creature, 0x227u, 0) == -1);
+        assert(dm2_v1_mode7_class1_creature_admission(
+            0x30u, &creature, 7u, 0u, 0) == 0);
+        assert(dm2_v1_mode7_class1_creature_admission(
+            0x30u, &creature, 6u, 1u, 0) == 0);
+        assert(dm2_v1_mode7_class1_creature_admission(
+            0x30u, &creature, 7u, 1u, 0) == 1);
+        assert(dm2_v1_mode7_class1_creature_admission(
+            0x30u, &creature, 7u, 1u, 1) == 0);
         creature.prefix_db3_only = 0u;
         assert(dm2_v1_mode8_class1_creature_admission(
             0x30u, &creature, 0x36e7u, 0) == -1);

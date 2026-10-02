@@ -1615,7 +1615,7 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
 
 static int dm2_runtime_light_mode8_step(
     void *context, int map, int x, int y, int direction,
-    int *next_map, int *next_x, int *next_y,
+    unsigned score, int *next_map, int *next_x, int *next_y,
     int *projection_map, int *projection_x, int *projection_y)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
@@ -1628,6 +1628,7 @@ static int dm2_runtime_light_mode8_step(
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
     int nx, ny, raw, first;
+    (void)score;
     if (!rt || !rt->boot || !rt->boot->dungeon_data || !next_map ||
         !next_x || !next_y || !projection_map || !projection_x ||
         !projection_y || map < 0 || direction < 0 || direction > 3)
@@ -1819,7 +1820,7 @@ static int dm2_runtime_mode7_read_tile(void *context, int map, int x,
 
 static int dm2_runtime_mode7_step(
     void *context, int map, int x, int y, int direction,
-    int *next_map, int *next_x, int *next_y,
+    unsigned score, int *next_map, int *next_x, int *next_y,
     int *projection_map, int *projection_x, int *projection_y)
 {
     DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
@@ -1882,6 +1883,31 @@ static int dm2_runtime_mode7_step(
                 &detail, &receipt) && receipt.valid)
             admitted = dm2_v1_mode7_go_there_class5_b0_admission(
                 (uint8_t)raw, 1);
+    }
+    if (admitted < 0 && raw == 0x30 && first >= 0 &&
+        walk->rt->record_pools_valid) {
+        DM2_V1_FirstCreatureReceipt creature;
+        const DM2_V1_GameState *game =
+            (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
+        const DM2_AIDefinition *ai = NULL;
+        const uint8_t *record;
+        int party_square;
+        if (!game || !walk->rt->source_party_valid ||
+            !dm2_v1_record_pool_first_creature_receipt(
+                &walk->rt->record_pools, (int16_t)first, &creature))
+            return -1;
+        if (creature.creature_link != (int16_t)0xfffe) {
+            record = dm2_v1_record_pool_address(
+                &walk->rt->record_pools, creature.creature_link);
+            if (!record ||
+                !dm2_v1_creature_ai_spec_def((int)record[4], &ai) || !ai)
+                return -1;
+            party_square = game->current_level == map &&
+                game->party_x == nx && game->party_y == ny;
+            admitted = dm2_v1_mode7_class1_creature_admission(
+                (uint8_t)raw, &creature, (uint8_t)score,
+                ai->w10, party_square);
+        }
     }
     if (admitted < 0 &&
         (raw == 0x30 || (raw == 0x10 && first >= 0))) {

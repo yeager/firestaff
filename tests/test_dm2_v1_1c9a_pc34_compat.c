@@ -362,11 +362,12 @@ TEST(light_work_grid_node_packs_source_position) {
 }
 
 static int light_frontier_step(void *context, int map, int x, int y,
-                               int direction, int *next_map,
+                               int direction, unsigned score, int *next_map,
                                int *next_x, int *next_y,
                                int *projection_map, int *projection_x,
                                int *projection_y)
 {
+    (void)score;
     int *unknown = (int *)context;
     *projection_map = *projection_x = *projection_y = -1;
     if (*unknown && map == 38 && x == 6 && y == 6 && direction == 0)
@@ -447,11 +448,12 @@ TEST(light_action27_writes_both_matching_planes) {
 }
 
 static int light_no_edges(void *context, int map, int x, int y,
-                          int direction, int *next_map,
+                          int direction, unsigned score, int *next_map,
                           int *next_x, int *next_y,
                           int *projection_map, int *projection_x,
                           int *projection_y)
 {
+    (void)score;
     (void)context; (void)map; (void)x; (void)y; (void)direction;
     (void)next_map; (void)next_x; (void)next_y;
     (void)projection_map; (void)projection_x; (void)projection_y;
@@ -486,11 +488,12 @@ static int light_mode7_record_action(void *context, int map, int x, int y,
 }
 
 static int light_mode7_one_edge(void *context, int map, int x, int y,
-                                int direction, int *next_map,
+                                int direction, unsigned score, int *next_map,
                                 int *next_x, int *next_y,
                                 int *projection_map, int *projection_x,
                                 int *projection_y)
 {
+    (void)score;
     (void)context;
     if (map != 38 || x != 6 || y != 6 || direction != 0) return 0;
     *next_map = map;
@@ -589,11 +592,12 @@ TEST(light_mode8_start_action_does_not_prefetch_projection) {
 }
 
 static int light_grid_step(void *context, int map, int x, int y,
-                           int direction, int *next_map,
+                           int direction, unsigned score, int *next_map,
                            int *next_x, int *next_y,
                            int *projection_map, int *projection_x,
                            int *projection_y)
 {
+    (void)score;
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
     (void)context;
@@ -621,11 +625,12 @@ TEST(light_mode8_rng_direction_bounds_grid) {
 }
 
 static int light_blocked_start_step(void *context, int map, int x, int y,
-                                    int direction, int *next_map,
+                                    int direction, unsigned score, int *next_map,
                                     int *next_x, int *next_y,
                                     int *projection_map, int *projection_x,
                                     int *projection_y)
 {
+    (void)score;
     unsigned *calls = (unsigned *)context;
     (void)map; (void)x; (void)y; (void)direction;
     (void)next_map; (void)next_x; (void)next_y;
@@ -645,11 +650,12 @@ TEST(light_mode8_start_action_precedes_empty_ring_terminal) {
 }
 
 static int light_record_direction_step(void *context, int map, int x, int y,
-                                       int direction, int *next_map,
+                                       int direction, unsigned score, int *next_map,
                                        int *next_x, int *next_y,
                                        int *projection_map, int *projection_x,
                                        int *projection_y)
 {
+    assert(score == 1u);
     int *directions = (int *)context;
     (void)map; (void)x; (void)y; (void)next_map;
     (void)next_x; (void)next_y; (void)projection_map;
@@ -680,11 +686,12 @@ TEST(light_mode8_dequeued_node_consumes_rng_before_directions) {
 }
 
 static int light_weighted_step(void *context, int map, int x, int y,
-                               int direction, int *next_map,
+                               int direction, unsigned score, int *next_map,
                                int *next_x, int *next_y,
                                int *projection_map, int *projection_x,
                                int *projection_y)
 {
+    (void)score;
     int *visited = (int *)context;
     *projection_map = *projection_x = *projection_y = -1;
     if (direction == 0) ++*visited;
@@ -719,11 +726,12 @@ TEST(light_mode8_weighted_source_direction_order) {
 }
 
 static int light_ring_rotation_step(void *context, int map, int x, int y,
-                                    int direction, int *next_map,
+                                    int direction, unsigned score, int *next_map,
                                     int *next_x, int *next_y,
                                     int *projection_map, int *projection_x,
                                     int *projection_y)
 {
+    (void)score;
     int *order = (int *)context;
     *projection_map = *projection_x = *projection_y = -1;
     if (direction == 0 && order[0] < 15)

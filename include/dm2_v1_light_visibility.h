@@ -61,11 +61,11 @@ int dm2_v1_1c9a_light_visibility_mark_action27(
 int dm2_v1_1c9a_light_visibility_or_mask(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     uint8_t mask);
-/* A step returns a positive source edge cost for an admitted cell, 0 for a
- * blocked edge, or -1 when its tile/record/teleporter branch is unknown. */
+/* A step receives the consumed xp_bc score (vo_e8) and returns a positive
+ * source edge cost, 0 for a blocked edge, or -1 for an unknown branch. */
 typedef int (*DM2_V1_1c9aLightStep)(
     void *context, int map, int x, int y, int direction,
-    int *next_map, int *next_x, int *next_y,
+    unsigned score, int *next_map, int *next_x, int *next_y,
     int *projection_map, int *projection_x, int *projection_y);
 /* Action 23 observes a separate FIND_WALK_PATH pass. direction is -1 at
  * start, where SK1C9A substitutes v1e0258 (source_facing); edge calls get
