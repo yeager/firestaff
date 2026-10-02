@@ -27,6 +27,16 @@ typedef struct {
     uint32_t source_state_hash;
 } DM2_V1_1c9aLightVisibility;
 
+/* SK1C9A s_31_ac is the four-byte xp_bc cell written at x*128+y*4. */
+typedef struct {
+    uint8_t score;             /* vo_e8 reads this byte */
+    uint8_t direction;         /* vw_f8; 0xff until source RNG is bound */
+    uint16_t packed_position;  /* map:6, y:5, x:5 */
+} DM2_V1_1c9aLightWorkNode;
+
+int dm2_v1_1c9a_light_work_node_position(
+    DM2_V1_1c9aLightWorkNode *node, int map, int x, int y);
+
 void dm2_v1_1c9a_light_visibility_reset(
     DM2_V1_1c9aLightVisibility *state, int current_map,
     int current_width, int alternate_map, int alternate_width);

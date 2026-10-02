@@ -343,6 +343,23 @@ TEST(light_visibility_action27) {
     assert(state.alternate[11u * 32u + 9u] == 0u);
 }
 
+TEST(light_work_grid_node_packs_source_position) {
+    DM2_V1_1c9aLightWorkNode node;
+    DM2_V1_1c9aLightVisibility state;
+    memset(&node, 0, sizeof(node));
+    node.score = 7u;
+    node.direction = 0xffu;
+    assert(sizeof(node) == 4u);
+    assert(dm2_v1_1c9a_light_work_node_position(&node, 38, 6, 5));
+    assert(node.packed_position == 0x98a6u);
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    assert(dm2_v1_1c9a_light_visibility_mark(
+        &state, 38, 6, 5, node.score));
+    assert(state.current[6u * 32u + 5u] == 8u);
+    assert(!dm2_v1_1c9a_light_work_node_position(&node, 64, 6, 5));
+    assert(!dm2_v1_1c9a_light_work_node_position(&node, 38, 32, 5));
+}
+
 static int light_frontier_step(void *context, int map, int x, int y,
                                int direction, int *next_map,
                                int *next_x, int *next_y)
@@ -1018,6 +1035,7 @@ int main(void) {
     printf("dm2_v1_1c9a_pc34_compat tests\n");
 
     RUN(light_visibility_action27);
+    RUN(light_work_grid_node_packs_source_position);
     RUN(light_mode8_frontier_is_fail_closed);
     RUN(light_mode8_teleporter_projection_uses_source_destination);
     RUN(light_mode8_work_ring_wraps_after_256_nodes);

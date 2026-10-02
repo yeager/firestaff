@@ -3,6 +3,19 @@
 #include <stddef.h>
 #include <string.h>
 
+_Static_assert(sizeof(DM2_V1_1c9aLightWorkNode) == 4u,
+               "SK1C9A xp_bc cells are four bytes");
+
+int dm2_v1_1c9a_light_work_node_position(
+    DM2_V1_1c9aLightWorkNode *node, int map, int x, int y)
+{
+    if (!node || map < 0 || map >= 64 || x < 0 || x >= 32 ||
+        y < 0 || y >= 32)
+        return 0;
+    node->packed_position = (uint16_t)((map << 10) | (y << 5) | x);
+    return 1;
+}
+
 uint16_t dm2_v1_1c9a_light_walk_rng_advance(uint16_t state)
 {
     /* SK1C9A.cpp:9521-9540 shifts v1d62ec and XORs its high byte with
@@ -105,13 +118,15 @@ int dm2_v1_1c9a_light_mode8_frontier(
     uint8_t score_bucket[0x33u];
     _Static_assert(sizeof(queue) == 0x400u,
                    "SK1C9A work ring must be 0x400 bytes");
-    uint8_t best[2u * 32u * 32u];
+    DM2_V1_1c9aLightWorkNode work_grid[2u * 32u * 32u];
+    uint8_t seen[2u * 32u * 32u];
     uint8_t head = 0u, tail = 0u;
     unsigned pending = 0u;
     unsigned lowest = 0u;
     int selector;
     if (!state) return 0;
-    memset(best, 0xff, sizeof(best));
+    memset(work_grid, 0, sizeof(work_grid));
+    memset(seen, 0, sizeof(seen));
     memset(score_bucket, 0, sizeof(score_bucket));
     memset(state->current, 0, sizeof(state->current));
     memset(state->alternate, 0, sizeof(state->alternate));
@@ -122,13 +137,20 @@ int dm2_v1_1c9a_light_mode8_frontier(
         start_map != state->current_map ||
         start_x >= state->current_width)
         return 0;
-    if (start_map > 255) return 0;
+    if (start_map >= 64) return 0;
     queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
                          (uint8_t)start_map, 0u};
     queued_score[tail++] = 0u;
     score_bucket[0u] = 1u;
     pending = 1u;
-    best[(size_t)start_x * 32u + (size_t)start_y] = 0u;
+    {
+        size_t start_index = (size_t)start_x * 32u + (size_t)start_y;
+        seen[start_index] = 1u;
+        work_grid[start_index].direction = 0xffu;
+        if (!dm2_v1_1c9a_light_work_node_position(
+                &work_grid[start_index], start_map, start_x, start_y))
+            goto incomplete;
+    }
     while (pending != 0u) {
         unsigned rotations = 0u;
         Cell cell;
@@ -156,9 +178,13 @@ int dm2_v1_1c9a_light_mode8_frontier(
         cell_selector = cell.map == state->current_map ? 0 : 1;
         cell_index = (size_t)cell_selector * 1024u +
                      (size_t)cell.x * 32u + (size_t)cell.y;
-        if (score != best[cell_index]) continue;
+        if (!seen[cell_index] || score != work_grid[cell_index].score)
+            continue;
+        /* vo_e8 reads xp_bc's first byte. Action 27 stores vo_e8 + 1
+         * in the separate 32-stride visibility plane. */
         if (!dm2_v1_1c9a_light_visibility_mark(
-                state, cell.map, cell.x, cell.y, score))
+                state, cell.map, cell.x, cell.y,
+                work_grid[cell_index].score))
             goto incomplete;
         /* CHECK_RECOMPUTE_LIGHT supplies action 0x1b with byte 0x19, a
          * maximum source depth of 25. Only an admitted source edge enters
@@ -181,12 +207,19 @@ int dm2_v1_1c9a_light_mode8_frontier(
             index = (size_t)selector * 1024u + (size_t)next_x * 32u +
                     (size_t)next_y;
             if ((unsigned)score + (unsigned)result > 25u ||
-                (unsigned)score + (unsigned)result >= best[index])
+                (seen[index] &&
+                 (unsigned)score + (unsigned)result >=
+                     work_grid[index].score))
                 continue;
             if (pending == 256u ||
                 score_bucket[(unsigned)score + (unsigned)result] == 255u)
                 goto incomplete;
-            best[index] = (uint8_t)(score + result);
+            seen[index] = 1u;
+            work_grid[index].score = (uint8_t)(score + result);
+            work_grid[index].direction = 0xffu;
+            if (!dm2_v1_1c9a_light_work_node_position(
+                    &work_grid[index], next_map, next_x, next_y))
+                goto incomplete;
             queue[tail] = (Cell){(uint8_t)next_x, (uint8_t)next_y,
                                  (uint8_t)next_map, 0u};
             queued_score[tail] = (uint8_t)(score + result);
