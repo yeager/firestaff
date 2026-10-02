@@ -337,22 +337,22 @@ Reviewed 2026-08-29. Only open work is listed here.
   (6,0), a wall tile. The verified map16→map0 stair does not establish a
   reverse route. Resolve the original Mac New Game start/transition before
   assuming the map 0 boundary can be crossed. The current Mac C080
-  production pointer route accepts wall targets only, and the DM2 keyboard
-  branch does not bind `PICKUP_ITEM`, so a gameplay pickup cannot yet be
-  replayed. Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
+  production pointer route now accepts source-admitted square-head floor
+  items through opaque pixels. Linked item rendering and placement back
+  onto a tile remain open. Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
   builds item zones from the drawn `dm2_image2.rect`, and
   `c_events.cpp:973` removes the chosen tile record before taking it into
-  the hand. Bind that source floor-item target and record move, reach an
-  item through normal movement, and
-  prove a pointer pickup/placement round trip before calling exchange complete.
+  the hand. Reach an item through normal movement and prove a pointer
+  pickup/placement round trip before calling exchange complete.
   An original-media diagnostic pose on map 9 at (1,1) facing north found DB10
   `0x2831` on the floor directly ahead at (1,0). Its original category
   `0x15`, type `0x2c`, field-0 image now reaches the M11 frame as one drawn
-  item through source-gated placement. Extend admission beyond square-root
-  DB10 records to linked items, then bind the source click target and record
-  move before claiming a pointer pickup.
+  item through source-gated placement. An opaque pointer click now moves that
+  exact square-root record into the hand. The original Mac graph contains
+  linked DB10 records, proven at map 10 (4,0) and map 15 (10,6); extend
+  viewport admission and item interaction beyond square-root records.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first

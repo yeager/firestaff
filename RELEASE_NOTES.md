@@ -30,8 +30,11 @@
 ## Developer changes
 
 - `DM2 viewport assets`: separates item and projectile image addresses. The
-  original Mac DB10 image now renders at an authenticated diagnostic pose;
-  linked items and pointer pickup remain open.
+  original Mac DB10 image now renders at an authenticated diagnostic pose.
+  An opaque pointer click can move that square-head item into the leader
+  hand. Mac retail record chains now follow their original big-endian links;
+  linked item rendering, normal traversal to the item, and placement remain
+  open.
 - `DM2 Macintosh wall controls`: local actuator list rotation now writes
   record links in Mac byte order. A live local-action switch was not found in
   the supplied retail actuator census, so that route remains unverified.

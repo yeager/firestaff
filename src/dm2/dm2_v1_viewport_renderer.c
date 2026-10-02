@@ -1309,10 +1309,81 @@ static void dm2_v1_viewport_reset_source_click_targets(
 {
     if (!s) return;
     s->source_click_target_count = 0u;
+    memset(s->source_click_item_pixels, 0,
+           sizeof(s->source_click_item_pixels));
     for (int i = 0; i < DM2_V1_VIEWPORT_CLICK_TARGET_COUNT; ++i) {
         memset(&s->source_click_targets[i], 0,
                sizeof(s->source_click_targets[i]));
         s->source_click_targets[i].object_id = -1;
+        s->source_click_targets[i].map_x = -1;
+        s->source_click_targets[i].map_y = -1;
+    }
+}
+
+/* c_events.cpp:711-945 draws each DB5..DB10 candidate and tests its alpha
+ * mask before DM2_events_121e_013a can take it.  Record the same decoded
+ * DRAW_ITEM pixels beside the c_rwbb entry; rectangle admission alone would
+ * pick up an item through a transparent part of its image. */
+static void dm2_v1_viewport_append_source_floor_item_target(
+    DM2_V1_ViewportState *s, const DM2_V1_ItemRender *item,
+    const DM2_V1_ItemAssetBlit *blit, const uint8_t *pixels)
+{
+    DM2_V1_ViewportClickTarget *target;
+    int forward_x, forward_y, view_slot;
+    int ordinal;
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+
+    if (!s || !item || !blit || !pixels || !s->source_materials_required ||
+        !item->source_static_object_admitted ||
+        !(item->source_g1_weapon || item->source_g1_container ||
+          item->source_g1_misc) ||
+        item->object_id == 0xffffu ||
+        blit->dst_rect.w <= 0 || blit->dst_rect.h <= 0 ||
+        blit->frame_w <= 0 || blit->frame_h <= 0 || blit->src_stride <= 0 ||
+        s->source_click_target_count >= DM2_V1_VIEWPORT_CLICK_TARGET_COUNT)
+        return;
+    forward_x = s->party_x + dx[s->party_dir & 3];
+    forward_y = s->party_y + dy[s->party_dir & 3];
+    if (item->map_x == s->party_x && item->map_y == s->party_y)
+        view_slot = 0;
+    else if (item->map_x == forward_x && item->map_y == forward_y)
+        view_slot = 3;
+    else
+        return;
+
+    ordinal = (int)s->source_click_target_count;
+    target = &s->source_click_targets[s->source_click_target_count++];
+    target->x = (int16_t)blit->dst_rect.x;
+    target->y = (int16_t)blit->dst_rect.y;
+    target->w = (int16_t)blit->dst_rect.w;
+    target->h = (int16_t)blit->dst_rect.h;
+    target->object_id = (int16_t)item->object_id;
+    target->view_slot = (uint8_t)view_slot;
+    target->target_kind = 1u;
+    target->map_x = (int16_t)item->map_x;
+    target->map_y = (int16_t)item->map_y;
+    for (int y = 0; y < blit->dst_rect.h; ++y) {
+        int fy = blit->dst_rect.y + y;
+        int sy = blit->frame_y + ((blit->flip_mirror & 2)
+            ? blit->frame_h - 1 - (y * blit->frame_h) / blit->dst_rect.h
+            : (y * blit->frame_h) / blit->dst_rect.h);
+        if ((unsigned)fy >= (unsigned)dm2_v1_viewport_draw_height(s))
+            continue;
+        for (int x = 0; x < blit->dst_rect.w; ++x) {
+            int fx = blit->dst_rect.x + x;
+            int rx = (x * blit->frame_w) / blit->dst_rect.w;
+            int sx = blit->frame_x + ((blit->flip_mirror & 1)
+                ? blit->frame_w - 1 - rx : rx);
+            if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s) ||
+                sx < 0 || sy < 0 ||
+                sx >= blit->src_stride) continue;
+            if (blit->transparent_color >= 0 &&
+                pixels[sy * blit->src_stride + sx] ==
+                    (uint8_t)blit->transparent_color) continue;
+            s->source_click_item_pixels[fy * DM2_VP_WIDTH + fx] =
+                (uint8_t)(ordinal + 1);
+        }
     }
 }
 
@@ -7651,6 +7722,8 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                         blit.transparent_color,
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
+                    dm2_v1_viewport_append_source_floor_item_target(
+                        s, it, &blit, pixels);
                     ++s->asset_item_drawn_count;
                     dm2_v1_viewport_note_item_material(s, 1, it->gdat_index);
                     s->last_item_asset_blit_valid = 1;

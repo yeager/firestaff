@@ -472,6 +472,19 @@ int dm2_v1_runtime_route_viewport_click(
     int screen_x, int screen_y,
     DM2_V1_RuntimeViewportClickReceipt *out_receipt);
 
+typedef struct DM2_V1_RuntimeMacFloorPickupReceipt {
+    int valid;
+    int accepted;
+    int target_index;
+    int object_id;
+    int map;
+    int x;
+    int y;
+} DM2_V1_RuntimeMacFloorPickupReceipt;
+
+int dm2_v1_runtime_pickup_mac_floor_target(
+    int target_index, DM2_V1_RuntimeMacFloorPickupReceipt *out_receipt);
+
 typedef struct DM2_V1_RuntimeMacWallButtonReceipt {
     int valid;
     int accepted;

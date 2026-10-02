@@ -796,7 +796,11 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     out->record_graph_complete = 1;
     out->words_big_endian = 1;
     out->source_words_big_endian = 1;
-    out->g1_w0_chains_disabled = 1;
+    /* The retail Mac (0x313b) File_header stores BE w0 next links.  Other
+     * BE editions retain their existing bounded head-only graph route.
+     * SKWIN/SkWinCore.cpp:2718-2730 GET_NEXT_RECORD_LINK follows w0;
+     * map 10 (4,0) has DB10 0xe80f -> 0x2810 in the original media. */
+    out->g1_w0_chains_disabled = rd16be(dat + 2) != 0x313bu;
     if (!dm2_v1_dungeon_validate_record_graph(out))
         out->record_graph_complete = 0;
     out->partial_map_boot.valid = 1;
@@ -2485,8 +2489,8 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     const uint8_t *record;
     int size = 0;
 
-    /* G1 byte-square format: w0 in the file is game data, not a next-link.
-     * Each ground-stack entry is a standalone record -- no w0 chains. */
+    /* The PC G1 extension layout has no persisted w0 chains.  The retail
+     * Mac File_header does, and is admitted through its BE parser above. */
     if (d && d->g1_w0_chains_disabled)
         return (int)DM2_THING_END_MARKER;
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
@@ -2642,11 +2646,12 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
     }
     if (total_records <= 0) return 0;
 
-    /* G1 byte-square format: w0 in the file is game data, not a next-link.
-     * The runtime (READ_DUNGEON_STRUCTURE) builds w0 chains at load time.
+    /* The PC G1 extension format has no persisted w0 next-link.  The retail
+     * Mac File_header does, so validate its complete bounded chains below.
      * Validate that ground-stack entries resolve to valid records;
      * unresolvable entries on specific maps are blocked roots, not errors. */
-    if (d->square_bytes == 1) {
+    if (d->square_bytes == 1 &&
+        (!d->source_words_big_endian || d->g1_w0_chains_disabled)) {
         for (level = 0; level < d->level_count; ++level) {
             int x;
             for (x = 0; x < d->level_widths[level]; ++x) {
@@ -2681,6 +2686,7 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
                 if (raw < 0) return 0;
                 if ((raw & 0x10) == 0) continue;
                 thing = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+                if (thing == (int)DM2_THING_NULL_MARKER) continue;
                 while (thing != (int)DM2_THING_END_MARKER) {
                     int next;
                     if (thing < 0 || ++steps > total_records ||

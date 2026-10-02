@@ -1,5 +1,17 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: The original Mac retail File_header record graph now follows
+  big-endian `w0` links. Real-media tests confirm DB10 chains on map 10
+  (4,0) and map 15 (10,6). The source mirror gate also compares links in
+  the dungeon's byte order.
+
+- 2026-10-02: A source-admitted Mac DB10 floor item can be picked up through
+  its drawn opaque viewport pixels. At diagnostic pose map 9 (1,1,N), the
+  original `0x2831` item moves from tile (1,0) to the leader hand; a
+  transparent click leaves it untouched, and redraw removes its stale
+  click target. This proves one square-head transaction, not item placement
+  or a normal New Game route to map 9.
+
 - 2026-10-02: The authenticated Mac DB10 `0x2831` floor item now enters the
   source-gated static-object render path. At diagnostic pose map 9 (1,1,N),
   an original-media M11 frame reports a drawn category `0x15`, type `0x2c`

@@ -42036,6 +42036,18 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
         !receipt.accepted) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (m11_dm2_is_mac_profile(
+            (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+        receipt.target_kind == 1) {
+        DM2_V1_RuntimeMacFloorPickupReceipt pickup;
+        memset(&pickup, 0, sizeof(pickup));
+        if (dm2_v1_runtime_pickup_mac_floor_target(
+                receipt.target_index, &pickup) && pickup.accepted) {
+            m11_sync_dm2_state_from_runtime(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
     /* Mac c_rwbb wall targets retain the source view-cell identity. Route
      * that exact target to the authenticated wall-mechanism owner; other
      * viewport target kinds remain closed until their source callback exists. */

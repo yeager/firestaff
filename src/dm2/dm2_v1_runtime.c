@@ -279,6 +279,9 @@ struct DM2_V1_RuntimeState {
     DM2_V1_ViewportClickTarget source_click_targets[
         DM2_V1_VIEWPORT_CLICK_TARGET_COUNT];
     uint8_t source_click_target_count;
+    uint8_t source_click_item_pixels[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    int source_click_scene_x;
+    int source_click_scene_y;
     DM2_V1_WeatherTimerReceipt last_weather_timer_receipt;
     /* DM2-003: DM2-owned source-order timer queue + dispatcher receipt.
      * Every DM2 timer routes through dm2_v1_proceed_timers
@@ -4798,7 +4801,13 @@ static void dm2_runtime_populate_g1_static_object_materials(
     uint32_t rect14_hash = 0;
     int rect14_table_ready;
 
-    if (!rt || !rt->boot || rt->outdoor || !rt->boot->dungeon_data ||
+    if (!rt) return;
+    /* DRAW_STATIC_OBJECT rebuilds from the live tile graph each frame.
+     * Retaining a former receipt leaves a picked-up item visibly/clickably
+     * present after DM2_MOVE_RECORD_TO removes its source record. */
+    rt->g1_static_object_material_count = 0;
+    rt->g1_static_object_delivery_plan_count = 0;
+    if (!rt->boot || rt->outdoor || !rt->boot->dungeon_data ||
         !rt->session_snapshot_valid) return;
     session_identity = dm2_v1_runtime_dm2_viewport_session_identity(
         &rt->session_snapshot);
@@ -6441,8 +6450,8 @@ static int dm2_runtime_record_chain_mirrors_complete(
             !dm2_v1_record_pool_next_link(&rt->record_pools, pool_cursor,
                                           &pool_next))
             return 0;
-        raw_next = (int16_t)((uint16_t)raw_record[0] |
-                             ((uint16_t)raw_record[1] << 8));
+        raw_next = (int16_t)dm2_v1_dungeon_read_record_u16(
+            dungeon, raw_record);
         if (pool_next != raw_next)
             return 0;
         if (pool_cursor == needle && out_contains) *out_contains = 1;
@@ -12093,6 +12102,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memcpy(rt->source_click_targets, viewport.source_click_targets,
            (size_t)rt->source_click_target_count *
                sizeof(rt->source_click_targets[0]));
+    memcpy(rt->source_click_item_pixels, viewport.source_click_item_pixels,
+           sizeof(rt->source_click_item_pixels));
+    rt->source_click_scene_x = use_rect7_backbuffer ? rect7_receipt.rect.x : 0;
+    rt->source_click_scene_y = use_rect7_backbuffer ? rect7_receipt.rect.y : 0;
     if (rt->source_click_target_count < DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) {
         memset(rt->source_click_targets + rt->source_click_target_count, 0,
                (size_t)(DM2_V1_VIEWPORT_CLICK_TARGET_COUNT -
@@ -13002,6 +13015,15 @@ int dm2_v1_runtime_route_viewport_click(
             screen_y >= target->y + target->h) {
             continue;
         }
+        if (target->target_kind >= 1u && target->target_kind <= 3u) {
+            int local_x = screen_x - g_dm2_runtime.source_click_scene_x;
+            int local_y = screen_y - g_dm2_runtime.source_click_scene_y;
+            if ((unsigned)local_x >= DM2_VP_WIDTH ||
+                (unsigned)local_y >= DM2_VP_HEIGHT ||
+                g_dm2_runtime.source_click_item_pixels[
+                    local_y * DM2_VP_WIDTH + local_x] != (uint8_t)(i + 1))
+                continue;
+        }
         receipt.valid = 1;
         receipt.accepted = 1;
         receipt.target_index = i;
@@ -13016,6 +13038,111 @@ int dm2_v1_runtime_route_viewport_click(
         return 1;
     }
     return 0;
+}
+
+int dm2_v1_runtime_pickup_mac_floor_target(
+    int target_index, DM2_V1_RuntimeMacFloorPickupReceipt *out_receipt)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_RuntimeMacFloorPickupReceipt receipt;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_ViewportClickTarget *target;
+    DM2_V1_SkprojectCutRecordReceipt cut;
+    int16_t pool_head, raw_head, original_head;
+    uint8_t *pool_record, *raw_record;
+    uint8_t pool_link_before[2], raw_link_before[2];
+    int contains = 0, actuator = 0;
+    int db;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.target_index = target_index;
+    receipt.object_id = -1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!rt->boot ||
+        (rt->boot->platform != DM2_PLATFORM_MAC_EN &&
+         rt->boot->platform != DM2_PLATFORM_MAC_FR) ||
+        !rt->boot->source_game_load_session_ready ||
+        !g_dm2_last_m11_frame.valid || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid ||
+        rt->source_event_hero_index < 0 ||
+        rt->source_event_hero_index >= rt->source_party.heros_in_party ||
+        rt->source_party.hero[rt->source_event_hero_index].curHP <= 0 ||
+        (rt->leader_hand_object != 0u &&
+         rt->leader_hand_object != 0xffffu) ||
+        target_index < 0 || target_index >= rt->source_click_target_count ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !rt->boot->dm2_state)
+        return 0;
+    target = &rt->source_click_targets[target_index];
+    db = ((uint16_t)target->object_id >> 10) & 0x0f;
+    if (target->target_kind != 1u || target->object_id == -1 ||
+        db < 5 || db > 10 || target->map_x < 0 || target->map_y < 0 ||
+        target->map_x >= dungeon->level_widths[rt->dungeon_level] ||
+        target->map_y >= dungeon->level_heights[rt->dungeon_level] ||
+        !dm2_runtime_record_chain_mirrors_complete(
+            rt, dungeon, rt->dungeon_level, target->map_x, target->map_y,
+            target->object_id, &contains, &actuator) ||
+        !contains || actuator) return 0;
+
+    /* SKProject c_events.cpp:947-1020 selects an opaque DB5..DB10 draw,
+     * DM2_MOVE_RECORD_TO cuts it from the exact source tile, and
+     * DM2_TAKE_OBJECT installs it in the hand. Keep the decoded pool and
+     * original dungeon chain in step, as the runtime moverec path does. */
+    original_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, rt->dungeon_level, target->map_x, target->map_y);
+    /* This admitted DRAW_ITEM slice publishes only square-head records.
+     * Its head cut changes a local link until the final tile write, which
+     * gives the two source mirrors a straightforward rollback boundary. */
+    if (original_head != target->object_id ||
+        !(pool_record = dm2_v1_record_pool_address_mut(
+            &rt->record_pools, target->object_id)) ||
+        !(raw_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)target->object_id, NULL, NULL, NULL)))
+        return 0;
+    memcpy(pool_link_before, pool_record, 2);
+    memcpy(raw_link_before, raw_record, 2);
+    pool_head = original_head;
+    raw_head = original_head;
+    memset(&cut, 0, sizeof(cut));
+    if (!dm2_v1_record_pool_cut_from_list(
+            &rt->record_pools, &pool_head, target->object_id) ||
+        !dm2_v1_skproject_cut_record_from(
+            dungeon, (uint16_t)target->object_id,
+            (uint16_t *)&raw_head, -1, -1, -1, &cut) ||
+        !cut.valid || pool_head != raw_head ||
+        dm2_v1_dungeon_set_first_thing(
+            dungeon, rt->dungeon_level, target->map_x, target->map_y,
+            (uint16_t)raw_head) != 0 ||
+        dm2_v1_runtime_set_leader_hand_object(
+            (uint16_t)target->object_id) != 0) {
+        memcpy(pool_record, pool_link_before, 2);
+        memcpy(raw_record, raw_link_before, 2);
+        (void)dm2_v1_dungeon_set_first_thing(
+            dungeon, rt->dungeon_level, target->map_x, target->map_y,
+            (uint16_t)original_head);
+        return 0;
+    }
+    /* The source CUT_RECORD_FROM leaves the held record detached.  The
+     * dungeon mirror already wrote END; keep the in-memory pool's own link
+     * identical so later hand and save reads cannot see its old successor. */
+    if (rt->record_pools.source_words_big_endian) {
+        pool_record[0] = 0xffu;
+        pool_record[1] = 0xfeu;
+    } else {
+        pool_record[0] = 0xfeu;
+        pool_record[1] = 0xffu;
+    }
+    rt->source_click_target_count = 0u;
+    memset(rt->source_click_item_pixels, 0,
+           sizeof(rt->source_click_item_pixels));
+    receipt.valid = 1;
+    receipt.accepted = 1;
+    receipt.object_id = (uint16_t)target->object_id;
+    receipt.map = rt->dungeon_level;
+    receipt.x = target->map_x;
+    receipt.y = target->map_y;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 static int dm2_v1_runtime_mac_wall_target_exists(int view_slot)

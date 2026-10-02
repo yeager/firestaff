@@ -56,13 +56,42 @@ int main(void) {
     }
     dungeon = (const DM2_V1_DungeonData *)profile.dungeon_data;
     if (!dungeon || !dungeon->record_graph_complete ||
-        !dungeon->source_words_big_endian || !dungeon->initial_party_pose_valid) {
+        !dungeon->source_words_big_endian ||
+        dungeon->g1_w0_chains_disabled || !dungeon->initial_party_pose_valid) {
         fprintf(stderr, "DM2 Mac dungeon graph/endian gate failed: graph=%d source_be=%d pose=%d\n",
                 dungeon ? dungeon->record_graph_complete : 0,
                 dungeon ? dungeon->source_words_big_endian : 0,
                 dungeon ? dungeon->initial_party_pose_valid : 0);
         dm2_v1_boot_cleanup(&profile);
         return 1;
+    }
+    {
+        /* Original retail Dungeon.dat, SKWIN/SkWinCore.cpp:2718-2730:
+         * GET_NEXT_RECORD_LINK reads GenericRecord::w0 in source order. */
+        static const struct {
+            int map, x, y;
+            uint16_t links[6];
+            int count;
+        } chains[] = {
+            {10, 4, 0, {0xe80f, 0x2810, 0x6811, 0xa812, 0xe813, 0xfffe}, 6},
+            {15, 10, 6, {0x2848, 0x6849, 0xfffe}, 3},
+        };
+        for (size_t c = 0; c < sizeof(chains) / sizeof(chains[0]); ++c) {
+            int thing = dm2_v1_dungeon_get_first_thing(
+                dungeon, chains[c].map, chains[c].x, chains[c].y);
+            for (int i = 0; i < chains[c].count; ++i) {
+                if (thing != (int)chains[c].links[i]) {
+                    fprintf(stderr,
+                            "Mac DB10 chain mismatch map=%d x=%d y=%d step=%d got=0x%04x expected=0x%04x\n",
+                            chains[c].map, chains[c].x, chains[c].y, i,
+                            (unsigned int)(thing & 0xffff), chains[c].links[i]);
+                    dm2_v1_boot_cleanup(&profile);
+                    return 1;
+                }
+                if (i + 1 < chains[c].count)
+                    thing = dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)thing);
+            }
+        }
     }
     {
         if (!profile.mac_application_data ||
@@ -81,7 +110,9 @@ int main(void) {
             memset(&receipt, 0, sizeof(receipt));
             if (!dm2_v1_dungeon_validate_file_header_runtime_map(
                     dungeon, map, &receipt) || !receipt.committed ||
-                receipt.root_count < 0 || receipt.record_count < receipt.root_count) {
+                receipt.root_count < 0 || receipt.record_count < receipt.root_count ||
+                ((map == 10 || map == 15) &&
+                 receipt.record_count <= receipt.root_count)) {
                 fprintf(stderr,
                         "DM2 Mac retail map %d File_header gate failed: roots=%d records=%d\n",
                         map, receipt.root_count, receipt.record_count);

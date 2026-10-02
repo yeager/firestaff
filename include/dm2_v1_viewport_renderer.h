@@ -74,6 +74,8 @@ typedef struct {
     int16_t object_id; /* c_rwbb::w_08; -1 when no ObjectID is attached. */
     uint8_t view_slot; /* c_rwbb::b_0a */
     uint8_t target_kind; /* c_rwbb::b_0b */
+    int16_t map_x; /* authenticated floor record tile; -1 for controls */
+    int16_t map_y;
 } DM2_V1_ViewportClickTarget;
 
 /* ── Depth / distance rows ─────────────────────────────────────── */
@@ -2014,6 +2016,8 @@ typedef struct {
     DM2_V1_ViewportClickTarget
         source_click_targets[DM2_V1_VIEWPORT_CLICK_TARGET_COUNT];
     uint8_t source_click_target_count;
+    /* Target ordinal at each opaque DRAW_ITEM pixel, zero for background. */
+    uint8_t source_click_item_pixels[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     /* DM2_DISPLAY_VIEWPORT owns a 224x136 dungeon backbuffer separately
      * from the 320x200 interface surface.  The runtime uses this flag only
      * for the authenticated indoor pass before RECT_7 presentation. */
