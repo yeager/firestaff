@@ -116,8 +116,40 @@ int dm2_v1_1c9a_light_mode8_frontier(
     }
     return 1;
 incomplete:
-    memset(state->current, 0, sizeof(state->current));
-    memset(state->alternate, 0, sizeof(state->alternate));
+    /* Retain observed cells for an incomplete mode-7 probe; completion
+     * flags and source hash stay clear. */
+    return 0;
+}
+
+int dm2_v1_1c9a_light_mode7_observed_cells(
+    DM2_V1_1c9aLightVisibility *state,
+    DM2_V1_1c9aLightTile tile, void *context, unsigned *out_cells)
+{
+    unsigned cells = 0u;
+    if (out_cells) *out_cells = 0u;
+    if (!state || !tile || state->current_map < 0) return 0;
+    state->v1e0974 = 0;
+    state->v1e0978 = 0;
+    state->mode7_complete = 0u;
+    state->source_state_hash = 0u;
+    for (int x = 0; x < state->current_width; ++x) {
+        for (int y = 0; y < 32; ++y) {
+            uint8_t visit = state->current[(size_t)x * 32u + (size_t)y];
+            int16_t ambient = 0, darkness = 0;
+            if (!visit) continue;
+            if (visit > 9u) goto incomplete;
+            if (tile(context, state->current_map, x, y, visit - 1u,
+                     &ambient, &darkness) < 0)
+                goto incomplete;
+            state->v1e0974 = (int16_t)(state->v1e0974 + ambient);
+            state->v1e0978 = (int16_t)(state->v1e0978 + darkness);
+            ++cells;
+        }
+    }
+    if (out_cells) *out_cells = cells;
+    return 1;
+incomplete:
+    if (out_cells) *out_cells = cells;
     return 0;
 }
 

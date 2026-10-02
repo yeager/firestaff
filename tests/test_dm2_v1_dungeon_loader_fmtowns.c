@@ -194,6 +194,20 @@ static void test_fmtowns_load(const char *path) {
                room.first_record_link == 0x0442u &&
                room.ceiling_ornament_index == 0x28u);
         {
+            int type = -1;
+            const uint8_t *db1 = dm2_v1_dungeon_get_thing_record(
+                &dungeon, room.first_record_link, &type, NULL, NULL);
+            const uint8_t *sensor = dm2_v1_dungeon_get_thing_record(
+                &dungeon, 0x0c8cu, NULL, NULL, NULL);
+            assert(db1 && type == 1 && sensor &&
+                   dm2_v1_dungeon_read_record_u16(&dungeon, db1) ==
+                       0x0c8cu &&
+                   dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 4) ==
+                       0x0306u &&
+                   (dm2_v1_dungeon_read_record_u16(&dungeon, sensor + 2)
+                       & 0x7fu) == 0x27u);
+        }
+        {
             DM2_V1_CLightTileOrnamentReceipt normal;
             DM2_V1_CLightTileOrnamentReceipt via_teleporter;
             DM2_V1_CLightTileOrnamentReceipt dark_weather;

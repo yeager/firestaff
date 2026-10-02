@@ -1649,8 +1649,90 @@ static int dm2_runtime_light_mode8_step(
     return 1;
 }
 
+static int dm2_runtime_light_mode7_tile(
+    void *context, int map, int x, int y, int distance,
+    int16_t *ambient_delta, int16_t *darkness_delta)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_CLightTileOrnamentReceipt light;
+    DM2_V1_SkprojectQuery0cee0897Receipt sensor;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    const uint8_t *tiles;
+    const uint8_t *destination_tiles;
+    const uint8_t *db1;
+    int16_t width, height;
+    int16_t destination_width, destination_height;
+    int first, destination_map, detail_valid = 0, weather_index;
+    int raw;
+    if (!rt || !rt->boot || !rt->boot->dungeon_data ||
+        !ambient_delta || !darkness_delta || !rt->record_pools_valid)
+        return -1;
+    *ambient_delta = 0;
+    *darkness_delta = 0;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw < 0) return -1;
+    /* SK1C9A action 0x17 calls ADD_BACKGROUND_LIGHT_FROM_TILE only when
+     * the cached source tile has bit 0x10. */
+    if ((raw & 0x10) == 0) return 0;
+    loader = dm2_v1_boot_asset_loader(rt->boot);
+    if (!loader || (raw >> 5) != 5 ||
+        !dm2_v1_dungeon_c_light_stone_room_receipt(
+            dungeon, loader, map, x, y, (uint32_t)rt->tick_count, &room))
+        return -1;
+    tiles = dm2_v1_dungeon_level_tile_data(dungeon, map, &width, &height);
+    if (!tiles) return -1;
+    memset(&sensor, 0, sizeof(sensor));
+    if (dm2_v1_skproject_query_0cee_0897(
+            (int16_t)x, (int16_t)y, tiles, width, height,
+            &rt->record_pools, NULL, NULL, &sensor)) {
+        first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+        db1 = first >= 0 ? dm2_v1_record_pool_address(
+            &rt->record_pools, (int16_t)first) : NULL;
+        if (!db1) return -1;
+        destination_map = (int)db1[5];
+        if (destination_map < 0 || destination_map >= dungeon->level_count)
+            return -1;
+        destination_tiles = dm2_v1_dungeon_level_tile_data(
+            dungeon, destination_map, &destination_width,
+            &destination_height);
+        if (!destination_tiles) return -1;
+        memset(&detail, 0, sizeof(detail));
+        memset(&detail_receipt, 0, sizeof(detail_receipt));
+        if (dm2_v1_skproject_get_teleporter_detail(
+                (int16_t)x, (int16_t)y, tiles, width, height,
+                &rt->record_pools, (uint8_t)map, destination_tiles,
+                destination_width, destination_height, &detail,
+                &detail_receipt)) {
+            if (!detail_receipt.valid ||
+                detail.b_04 != (uint8_t)destination_map) return -1;
+            detail_valid = 1;
+        } else if (!detail_receipt.blocked_tile_not_teleporter) {
+            return -1;
+        }
+    } else if (!sensor.blocked_no_teleporter) {
+        return -1;
+    }
+    weather_index = rt->weather_chain.storm_active +
+                    rt->weather_chain.day_word;
+    if (weather_index < 0) weather_index = 0;
+    if (weather_index > 5) weather_index = 5;
+    if (!dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
+            &room, loader, distance, 3u, detail_valid, weather_index,
+            &light) || !light.valid)
+        return -1;
+    *ambient_delta = light.v1e0974_delta;
+    *darkness_delta = light.v1e0978_delta;
+    return 1;
+}
+
 static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
 {
+    unsigned observed_cells = 0u;
     if (!rt || !rt->source_party_valid ||
         !rt->c_light_map_descriptor.valid ||
         !rt->c_light_map_descriptor.dynamic_light)
@@ -1658,6 +1740,9 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
     /* A missing cell branch leaves the pass incomplete and c_light blocked. */
     (void)dm2_v1_1c9a_light_mode8_frontier(&rt->c_light_visibility,
         rt->dungeon_level, x, y, dm2_runtime_light_mode8_step, rt);
+    (void)dm2_v1_1c9a_light_mode7_observed_cells(
+        &rt->c_light_visibility, dm2_runtime_light_mode7_tile, rt,
+        &observed_cells);
 }
 
 /* UPDATE_GFXSET, CHECK_RECOMPUTE_LIGHT and c_weather all consume the active

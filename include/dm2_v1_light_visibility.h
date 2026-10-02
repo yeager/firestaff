@@ -42,6 +42,13 @@ typedef int (*DM2_V1_1c9aLightStep)(
 int dm2_v1_1c9a_light_mode8_frontier(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context);
+typedef int (*DM2_V1_1c9aLightTile)(
+    void *context, int map, int x, int y, int distance,
+    int16_t *ambient_delta, int16_t *darkness_delta);
+/* Consume observed cells without claiming complete mode-7 source coverage. */
+int dm2_v1_1c9a_light_mode7_observed_cells(
+    DM2_V1_1c9aLightVisibility *state,
+    DM2_V1_1c9aLightTile tile, void *context, unsigned *out_cells);
 /* Only a completed mode-8/mode-7 pair can be consumed by c_light. */
 int dm2_v1_1c9a_light_visibility_level_inputs(
     const DM2_V1_1c9aLightVisibility *state, int map,

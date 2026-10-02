@@ -1,4 +1,5 @@
 #include "dm2_v1_1c9a_pc34_compat.h"
+#include "dm2_v1_light_visibility.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -358,13 +359,24 @@ static int light_frontier_step(void *context, int map, int x, int y,
     return 0;
 }
 
+static int light_observed_tile(void *context, int map, int x, int y,
+                               int distance, int16_t *ambient,
+                               int16_t *darkness)
+{
+    (void)context;
+    *ambient = map == 38 && x == 6 && y == 5 && distance == 1 ? 70 : 0;
+    *darkness = 0;
+    return 1;
+}
+
 TEST(light_mode8_frontier_is_fail_closed) {
     DM2_V1_1c9aLightVisibility state;
     int unknown = 1;
+    unsigned observed = 0u;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
     assert(!dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 6, light_frontier_step, &unknown));
-    assert(!state.mode8_complete && state.current[6u * 32u + 6u] == 0u);
+    assert(!state.mode8_complete && state.current[6u * 32u + 6u] == 1u);
     unknown = 0;
     assert(dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 6, light_frontier_step, &unknown));
@@ -372,6 +384,10 @@ TEST(light_mode8_frontier_is_fail_closed) {
            state.current[6u * 32u + 5u] == 2u &&
            state.alternate[13u * 32u + 9u] == 3u);
     assert(!state.mode7_complete && state.source_state_hash == 0u);
+    assert(dm2_v1_1c9a_light_mode7_observed_cells(
+        &state, light_observed_tile, NULL, &observed));
+    assert(observed == 2u && state.v1e0974 == 70 &&
+           state.v1e0978 == 0 && !state.mode7_complete);
 }
 
 /* ---- Popcount ---- */
