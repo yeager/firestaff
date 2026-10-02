@@ -347,6 +347,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   the hand. Bind that source floor-item target and record move, reach an
   item through normal movement, and
   prove a pointer pickup/placement round trip before calling exchange complete.
+  An original-media diagnostic pose on map 9 at (1,1) facing north found DB10
+  `0x2831` on the floor directly ahead at (1,0), but the current M11 frame
+  reported zero drawn item assets. Resolve that render admission before
+  publishing a click target or claiming a pointer pickup.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first

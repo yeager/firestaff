@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: Macintosh wall-control list rotation now writes record links
+  in the authenticated dungeon's byte order. The rotation callback previously
+  wrote little-endian bytes even for Mac big-endian records. The existing
+  source-order writer is reused; no reachable local-action switch was found
+  in the supplied Mac retail actuator census, so a live rotation remains
+  unverified.
+
 - 2026-10-02: Viewport click rectangles now follow the same authenticated
   RECT_7 placement as the rendered 224x136 scene. A Mac retail map-5
   diagnostic pose proved that a wall target had remained 40 pixels above its

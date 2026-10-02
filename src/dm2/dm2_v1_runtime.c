@@ -13054,8 +13054,9 @@ static void dm2_v1_mac_wall_set_next_link(void *ctx, uint16_t rw,
     if (!c || !c->pools) return;
     record = dm2_v1_record_pool_address_mut(c->pools, (int16_t)rw);
     if (!record) return;
-    record[0] = (uint8_t)((uint16_t)next & 0xffu);
-    record[1] = (uint8_t)(((uint16_t)next >> 8) & 0xffu);
+    /* SKProject c_record.cpp::DM2_SET_NEXT_RECORD_LINK writes in the
+     * selected dungeon's word order. Macintosh File_header is big endian. */
+    dm2_runtime_missile_wr16(c->pools, record, (uint16_t)next);
 }
 
 static void dm2_v1_mac_wall_set_tile_link(void *ctx, int16_t x, int16_t y,

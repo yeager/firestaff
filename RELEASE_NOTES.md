@@ -29,6 +29,9 @@
 
 ## Developer changes
 
+- `DM2 Macintosh wall controls`: local actuator list rotation now writes
+  record links in Mac byte order. A live local-action switch was not found in
+  the supplied retail actuator census, so that route remains unverified.
 - `CSB Atari ST title audio`: a new PSG cue now replaces the prior queued
   sound, matching the original Timer-A player. The overlapping cues in the
   authenticated title are covered by an original-media SDL regression.
