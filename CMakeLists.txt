@@ -54251,11 +54251,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_font_glyphs.
         NAME theron_v1_track02_font_glyphs_real_data
         COMMAND test_theron_v1_track02_font_glyphs_real_data
     )
+    set(_THERON_TRACK02_FONT_GLYPHS_REAL_DATA_ENV
+        "THERON_TRACK02_US_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
+        "THERON_TRACK02_JP_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin")
     set_tests_properties(theron_v1_track02_font_glyphs_real_data PROPERTIES
-        ENVIRONMENT
-            "THERON_TRACK02_US_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
+        ENVIRONMENT "${_THERON_TRACK02_FONT_GLYPHS_REAL_DATA_ENV}"
         SKIP_RETURN_CODE 77
-        LABELS "theron;track02;real_data;skip_safe")
+        LABELS "theron;track02;real_data;regional;skip_safe")
 endif()
 
 # Theron Track 02 combat messages (item conditions, feedback, system msgs)

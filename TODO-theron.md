@@ -1,6 +1,20 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-10-02. Only open work is listed here.
+Reviewed 2026-10-03. Only open work is listed here.
+
+## 2026-10-03 — regional authenticity for the shared UI glyph bank
+
+- ✅ The existing 120-glyph 8×6 viewport bank is byte-identical to authentic
+  US Track 02 at UD `0x09A000` and JP Rev. 1 Track 02 at UD `0x099800`.
+  `theron_v1_track02_font_glyphs_real_data` now validates both edition hashes
+  and reads both source spans through the bounded raw-sector/user-data mapper.
+- ✅ On trv2, the focused font, quest-item-name, production text-gate and
+  seven-dungeon real-media tests passed three consecutive loops against the
+  authentic US and JP BINs. The JP CUE ISO projection was not staged and its
+  subcheck reported `SKIP`.
+- 🔒 This verifies the common glyph asset used by Firestaff's Latin viewport
+  text only. It does not prove Japanese kana glyphs, the retail text consumer,
+  or complete regional text-rendering parity.
 
 ## 2026-10-02 — original raw Track 01 audio from US/JP 7z discs
 
@@ -24,19 +38,33 @@ Reviewed 2026-10-02. Only open work is listed here.
 - 🔒 A fresh original-emulator dungeon save is still unavailable. On trv2, an
   isolated Mednafen/Xvfb session visibly loaded the authentic US CUE and the
   verified System Card 3.0. RUN (the profile's Return mapping) was held for
-  four seconds as instructed, but the screen changed to the
-  "disc only works on the SUPER CD-ROM2 SYSTEM" warning rather than a playable
-  dungeon. Mednafen created a 2 KiB BRAM file in the fresh private profile;
-  this is not evidence of an in-dungeon save or successful campaign progress.
-  Preserve the capture outside Git and resolve the boot/runtime incompatibility
-  before interpreting or importing that BRAM. The Mac remains locked and the
-  separate Nexus capture on trv2 was left untouched.
+  four seconds as instructed, but the display showed the authentic US Track 02
+  boot/copy-protection message at UD `0x26C348` ("This disc only works on the
+  SUPER CD-ROM2 SYSTEM") rather than a playable dungeon. Mednafen created a
+  2 KiB BRAM file in the fresh private profile; this is not evidence of an
+  in-dungeon save or successful campaign progress. The capture script
+  hash-checked and passed the normalized SysCard 3.0 path as `pce.cdbios`; the
+  CUE's first track is AUDIO, so Mednafen's `pce.cpp` GE-CD BIOS dispatcher
+  selects that standard CD BIOS setting. The remaining copy-protection failure
+  is unresolved. Preserve the capture outside Git and do not import that BRAM.
+  The Mac remains locked and the separate Nexus capture on trv2 was left
+  untouched.
 - The instrumented capture, including a read-only replay from the existing
   authentic US save-manager state, recorded RUN as PCE input `raw=0008`; every
-  controller-read PC remained in the System Card `$E4xx` path. No game-side
-  controller poll or dungeon transition was observed. The strict capture
-  rejected the run because it did not produce a valid bounded VDC snapshot;
-  its trace and BRAM snapshot remain private on trv2 and are not parity proof.
+  controller-read PC remained in the System Card `$E4xx` path. No dungeon input
+  consumer or transition was observed. The strict capture rejected the run
+  because it did not produce a valid bounded VDC snapshot; its trace and BRAM
+  snapshot remain private on trv2 and are not parity proof.
+- A second isolated headless cold-start used the authenticated US CUE and
+  hash-verified System Card 3.0 with scheduled RUN at PCE input frame 480,
+  held for 240 frames. The instrumentation verified that the input was
+  consumed and followed by a controller read at System Card PC `$E4B7`, with
+  no non-System-Card controller poll. It read 25 authentic raw sectors,
+  beginning at LBA 3234, but recorded no CD-to-game-RAM data transfer; the
+  strict capture therefore stopped at its missing-origin gate. The delayed
+  240-frame RUN input (nominally four emulated seconds) still did not reach a
+  dungeon and created no valid game save. Its trace and BRAM remain private at
+  `/home/trv2/work/firestaff-theron-run-save-capture-20261002/pce-scheduled-run-20261003/`.
 
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 

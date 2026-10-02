@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — authenticate the shared UI glyph bank in both regions
+
+- The existing 120-glyph 8×6 viewport bank now has a real-media regression
+  for both original editions: US Track 02 UD `0x09A000` and JP Rev. 1 Track 02
+  UD `0x099800`. Both source spans match all 720 checked-in bytes after the
+  Track 02 hash and raw-sector mapping are verified.
+- On trv2, the font, quest-item-name, production text-gate and seven-dungeon
+  tests passed three consecutive loops against the authentic US and JP BINs.
+  The unavailable JP CUE ISO projection was explicitly skipped.
+- Only the common Latin/UI glyph bank is verified. JP kana, original text
+  consumption, and full rendering parity remain open.
+
 ## 2026-10-02 — keep unbound Track 02 teleporter sound mapping closed
 
 - The authenticated packed-coordinate transition still commits its verified

@@ -8,9 +8,11 @@
 extern "C" {
 #endif
 
-/* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
+/* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76), UD
+ * 0x09A000; the same 720 bytes are present in JP Rev. 1 Track 02 BIN
+ * (MD5 b7afb338ad31be1025b53f9aff12d73a) at UD 0x099800.
  *
- * 120 monochrome bitmap glyphs at UD 0x09A000, 6 bytes per glyph.
+ * 120 monochrome bitmap glyphs, 6 bytes per glyph.
  * Each glyph is 8 pixels wide × 6 rows (5 active rows + 1 blank),
  * MSB-left, one byte per row.
  *
