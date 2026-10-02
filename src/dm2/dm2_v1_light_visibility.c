@@ -19,6 +19,20 @@ void dm2_v1_1c9a_light_visibility_reset(
         (uint8_t)alternate_width : 0u;
 }
 
+int dm2_v1_1c9a_light_visibility_project_teleporter(
+    DM2_V1_1c9aLightVisibility *state, int destination_map,
+    int destination_x, int destination_y)
+{
+    if (!state || destination_map != state->alternate_map ||
+        destination_x < 0 || destination_x >= state->alternate_width ||
+        destination_y < 0 || destination_y >= 32)
+        return 0;
+    state->alternate_projection_x = (int16_t)destination_x;
+    state->alternate_projection_y = (int16_t)destination_y;
+    state->alternate_projection_valid = 1u;
+    return 1;
+}
+
 int dm2_v1_1c9a_light_visibility_mark(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     unsigned depth)
@@ -34,7 +48,12 @@ int dm2_v1_1c9a_light_visibility_mark(
         wrote = 1;
     }
     if (map == state->alternate_map && x < state->alternate_width) {
-        state->alternate[(size_t)x * 32u + (size_t)y] = value;
+        int projected_x = state->alternate_projection_valid ?
+            state->alternate_projection_x : x;
+        int projected_y = state->alternate_projection_valid ?
+            state->alternate_projection_y : y;
+        state->alternate[(size_t)projected_x * 32u +
+                         (size_t)projected_y] = value;
         wrote = 1;
     }
     return wrote;
@@ -54,7 +73,12 @@ int dm2_v1_1c9a_light_visibility_or_mask(
         wrote = 1;
     }
     if (map == state->alternate_map && x < state->alternate_width) {
-        state->alternate[(size_t)x * 32u + (size_t)y] |= mask;
+        int projected_x = state->alternate_projection_valid ?
+            state->alternate_projection_x : x;
+        int projected_y = state->alternate_projection_valid ?
+            state->alternate_projection_y : y;
+        state->alternate[(size_t)projected_x * 32u +
+                         (size_t)projected_y] |= mask;
         wrote = 1;
     }
     return wrote;

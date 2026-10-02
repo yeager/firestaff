@@ -390,6 +390,21 @@ TEST(light_mode8_frontier_is_fail_closed) {
            state.v1e0978 == 0 && !state.mode7_complete);
 }
 
+TEST(light_mode8_teleporter_projection_uses_source_destination) {
+    DM2_V1_1c9aLightVisibility state;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
+    assert(!dm2_v1_1c9a_light_visibility_project_teleporter(
+        &state, 3, 16, 10));
+    assert(dm2_v1_1c9a_light_visibility_project_teleporter(
+        &state, 3, 13, 10));
+    assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 13, 9, 2u));
+    assert(state.alternate[13u * 32u + 10u] == 3u);
+    assert(state.alternate[13u * 32u + 9u] == 0u);
+    assert(dm2_v1_1c9a_light_visibility_or_mask(
+        &state, 3, 13, 9, 0x80u));
+    assert(state.alternate[13u * 32u + 10u] == 0x83u);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -889,6 +904,7 @@ int main(void) {
 
     RUN(light_visibility_action27);
     RUN(light_mode8_frontier_is_fail_closed);
+    RUN(light_mode8_teleporter_projection_uses_source_destination);
 
     /* Popcount */
     RUN(popcount_zero);

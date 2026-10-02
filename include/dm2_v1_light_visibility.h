@@ -13,6 +13,9 @@ extern "C" {
 typedef struct {
     int16_t current_map;
     int16_t alternate_map;
+    int16_t alternate_projection_x;
+    int16_t alternate_projection_y;
+    uint8_t alternate_projection_valid;
     uint8_t current_width;
     uint8_t alternate_width;
     uint8_t current[32u * 32u];
@@ -27,6 +30,9 @@ typedef struct {
 void dm2_v1_1c9a_light_visibility_reset(
     DM2_V1_1c9aLightVisibility *state, int current_map,
     int current_width, int alternate_map, int alternate_width);
+int dm2_v1_1c9a_light_visibility_project_teleporter(
+    DM2_V1_1c9aLightVisibility *state, int destination_map,
+    int destination_x, int destination_y);
 int dm2_v1_1c9a_light_visibility_mark(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     unsigned depth);

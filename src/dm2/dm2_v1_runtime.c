@@ -1748,10 +1748,39 @@ static int dm2_runtime_light_mode7_tile(
 static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
 {
     unsigned observed_cells = 0u;
+    DM2_V1_DungeonData *dungeon;
+    const uint8_t *tiles, *destination_tiles, *db1;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    int16_t width, height, destination_width, destination_height;
+    int first, destination_map;
     if (!rt || !rt->source_party_valid ||
         !rt->c_light_map_descriptor.valid ||
         !rt->c_light_map_descriptor.dynamic_light)
         return;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    rt->c_light_visibility.alternate_projection_valid = 0u;
+    first = dm2_v1_dungeon_get_first_thing(dungeon, rt->dungeon_level, x, y);
+    db1 = rt->record_pools_valid && first >= 0 &&
+        (((unsigned)first >> 10) & 0x0fu) == 1u ?
+        dm2_v1_record_pool_address(&rt->record_pools, (int16_t)first) : NULL;
+    if (db1) {
+        destination_map = db1[5];
+        tiles = dm2_v1_dungeon_level_tile_data(
+            dungeon, rt->dungeon_level, &width, &height);
+        destination_tiles = dm2_v1_dungeon_level_tile_data(
+            dungeon, destination_map, &destination_width,
+            &destination_height);
+        if (tiles && destination_tiles &&
+            dm2_v1_skproject_get_teleporter_detail(
+                (int16_t)x, (int16_t)y, tiles, width, height,
+                &rt->record_pools, (uint8_t)rt->dungeon_level,
+                destination_tiles, destination_width, destination_height,
+                &detail, &detail_receipt) && detail_receipt.valid)
+            (void)dm2_v1_1c9a_light_visibility_project_teleporter(
+                &rt->c_light_visibility, detail.b_04,
+                detail.b_02, detail.b_03);
+    }
     /* A missing cell branch leaves the pass incomplete and c_light blocked. */
     (void)dm2_v1_1c9a_light_mode8_frontier(&rt->c_light_visibility,
         rt->dungeon_level, x, y, dm2_runtime_light_mode8_step, rt);
