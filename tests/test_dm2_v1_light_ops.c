@@ -412,6 +412,12 @@ static void test_mode7_flags4_original_media(void)
                                (int)dungeon_size) == 0);
     assert(dm2_v1_asset_loader_init(&graphics, graphics_bytes,
                                     graphics_size) == 0);
+    {
+        uint16_t radius = 0xffffu;
+        assert(!dm2_v1_query_gdat_entry_data_index(
+            &graphics, 8, 0, 11, 0x6d, &radius));
+        assert(radius == 0u);
+    }
     memset(&pools, 0, sizeof(pools));
     assert(dm2_v1_record_pool_set_init_from_dungeon(&pools, &dungeon));
     {

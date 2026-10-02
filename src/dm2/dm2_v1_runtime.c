@@ -2143,10 +2143,18 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
         &rt->c_light_visibility, rt->dungeon_level, x, y,
         dm2_runtime_light_mode8_step, rt, &uncommitted_rng);
     if (rt->map_graphics_style < 0 || rt->map_graphics_style > 0xff ||
-        !dm2_v1_query_gdat_entry_data_index(
-            dm2_v1_boot_asset_loader(rt->boot), 8,
-            rt->map_graphics_style, 11, 0x6d, &source_radius))
+        !dm2_v1_boot_asset_loader(rt->boot)) return;
+    /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero for an absent word. Source
+     * sklodlvl.cpp stores that zero in v1e03f8; sklight.cpp then clears
+     * both accumulators without calling mode 7. */
+    (void)dm2_v1_query_gdat_entry_data_index(
+        dm2_v1_boot_asset_loader(rt->boot), 8,
+        rt->map_graphics_style, 11, 0x6d, &source_radius);
+    if (source_radius == 0u) {
+        rt->c_light_visibility.v1e0974 = 0;
+        rt->c_light_visibility.v1e0978 = 0;
         return;
+    }
     memset(&mode7, 0, sizeof(mode7));
     mode7.rt = rt;
     (void)dm2_v1_1c9a_light_mode7_frontier_with_rng(
