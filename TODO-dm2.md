@@ -293,9 +293,40 @@ Reviewed 2026-08-29. Only open work is listed here.
   using the unrelated attack-hero selector. The original-media test verifies
   empty slot 4 selection with both F1 ownership and ownerless inventory,
   plus an outside click. Both new-game
-  champions have empty inventories, and map 0 contains actuators but no
-  pickup item; obtain an original item through normal gameplay and prove a
-  pointer pickup/placement round trip before calling item exchange complete.
+  champions have empty inventories. New Game starts on map 0 at (1,8),
+  layer 7; tile-record census finds no DB5–15 item on maps 0–8. The first
+  floor-item candidate is DB10 handle 0x2831 on map 9 at (1,0), layer 5;
+  map 16 also has items, including DB10 at (4,7). The current Mac C080
+  New Game movement reaches map 0 (4,7) through ordinary M11 commands
+  (`UP`, `TURN_RIGHT`, `UP` three times), but the next east move to (5,7)
+  is blocked. Retail map 0 contains 33 floor, 35 wall and two pit tiles;
+  all floor cells are connected to the first north-step cell, with no
+  door, stair or teleporter tile. New Game (1,8) itself is raw wall class 0.
+  This is the retail Mac pose, not a Firestaff endian or spawn fallback:
+  `CODE(16)+0x21a8..0x21ce` reads BE File_header word 8 from `$8(a0)`,
+  masks its low five bits into party x (`A5-0x6684`), the next five into
+  party y (`A5-0x6682`), the next two into facing (`A5-0x6686`), and clears
+  map (`A5-0x6680`). It yields map 0 (1,8), facing north, and ordinary M11
+  movement leaves that entrance wall cell for floor (1,7). The subsequent
+  `CODE(16)+0x21d2..0x25de` loads map columns, records and level tables;
+  it does not by itself prove a later scripted transition or exit. Trace
+  the live post-selection event and timer path before changing the spawn.
+  The DB3 type 0x05 record at wall (5,7) is named a DM1 bitfields trigger
+  and marked unused in DM2 by SKProject; Mac CODE has not yet shown whether
+  it enables progression. Same-layer map 12 touches map 0 only at map 0
+  (6,0), a wall tile. The verified map16→map0 stair does not establish a
+  reverse route. Resolve the original Mac New Game start/transition before
+  assuming the map 0 boundary can be crossed. The current Mac C080
+  production pointer route accepts wall targets only, and the DM2 keyboard
+  branch does not bind `PICKUP_ITEM`, so a gameplay pickup cannot yet be
+  replayed. Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
+  searches live 12-byte viewport targets at `A5-0x2f72` and branches on
+  target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
+  builds item zones from the drawn `dm2_image2.rect`, and
+  `c_events.cpp:973` removes the chosen tile record before taking it into
+  the hand. Bind that source floor-item target and record move, reach an
+  item through normal movement, and
+  prove a pointer pickup/placement round trip before calling exchange complete.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first
