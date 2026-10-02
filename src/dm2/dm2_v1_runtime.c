@@ -1630,6 +1630,10 @@ static int dm2_runtime_light_mode8_step(
     if (raw < 0) return -1;
     if ((raw >> 5) == 0 && first == -1) {
         /* The source's empty floor has no record or teleporter branch. */
+    } else if ((raw >> 5) == 0 && (raw & 0x10) != 0) {
+        /* SK1C9A/19f0_05e8 case 8 passes argl2=0. A marked class-0
+         * square stops this probe before its DB2/DB3 record scan. */
+        return 0;
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         loader = dm2_v1_boot_asset_loader(rt->boot);
         if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(
