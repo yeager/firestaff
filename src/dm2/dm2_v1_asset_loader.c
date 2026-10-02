@@ -4594,11 +4594,16 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     if (out_height) *out_height = 0;
     if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
     raw = dm2_v1_load_gdat_raw_data(loader, raw_index, &raw_size);
-    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return NULL;
+    /* Towns IMG2 has only two dimension words before its command stream.
+     * SKProject ReadImgDM2C4towns() accepts four-byte headers, including
+     * GRAPHICSSET/0's six-byte wall material on the DB1 destination map. */
+    if (!raw || raw_size < (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION
+                              ? 4u : DM2_IMG3_HEADER_SIZE)) return NULL;
 
     cx = img_rd16(raw + 0, loader->big_endian);
     cy = img_rd16(raw + 2, loader->big_endian);
-    bpp = img_rd16(raw + 4, loader->big_endian);
+    bpp = raw_size >= DM2_IMG3_HEADER_SIZE
+        ? img_rd16(raw + 4, loader->big_endian) : 0u;
     width = (int)(cx & 0x03ffu);
     height = (int)(cy & 0x03ffu);
     offset_y = dm2_img3_signed_offset(cy);
@@ -4614,7 +4619,6 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
      * and desynchronizes all following pixel data. */
     if (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
         uint16_t word2;
-        if (raw_size < 8u) return NULL;
         width = (int)(((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)) &
                       0x03ffu);
         word2 = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);

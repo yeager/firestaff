@@ -190,6 +190,35 @@ int main(void)
                        DM2_FMTOWNS_STARTUP_STAGE_END,
                    "FM Towns follows its original AUTOEXEC animation and startup order");
         if (launch.profile) {
+            const DM2_V1_AssetLoader *loader =
+                dm2_v1_boot_asset_loader(launch.profile);
+            size_t raw_size = 0u;
+            const uint8_t *raw = dm2_v1_asset_load_typed_sized(
+                loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0,
+                DM2_GDAT_ENTRY_TYPE_IMAGE, 0x23, &raw_size);
+            int width = 0;
+            int height = 0;
+            DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+            uint8_t *pixels = dm2_v1_asset_load_image_field(
+                loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x23,
+                &width, &height, &format);
+            int source_pixels = pixels != NULL && width == 4 && height == 6;
+            if (source_pixels) {
+                for (int i = 0; i < 24; ++i)
+                    source_pixels &= pixels[i] == 6u;
+            }
+            /* SKProject ReadImgDM2C4towns() starts IMG2 commands after the
+             * four-byte dimensions. The original style-0 wall uses one
+             * two-byte run to fill a 4x6 image. */
+            expect(raw && raw_size == 6u && raw[0] == 4u && raw[1] == 0u &&
+                       raw[2] == 6u && raw[3] == 0u &&
+                       raw[4] == 0x86u && raw[5] == 0x17u &&
+                       width == 4 && height == 6 &&
+                       format == DM2_IMG_FMT_U4 && source_pixels,
+                   "FM Towns decodes the original six-byte style-0 wall IMG2");
+            dm2_v1_asset_free_pixels(pixels);
+        }
+        if (launch.profile) {
             DM2_V1_G1ChampionMirrorReceipt mirrors;
             DM2_V1_BootChampionSelectionCensus census;
             DM2_V1_BootChampionDyn4RosterReceipt roster;
