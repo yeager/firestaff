@@ -56,12 +56,39 @@ DM2_V1_1c9aLightNodeDecision dm2_v1_1c9a_light_node_decision(
     return decision;
 }
 
+int dm2_v1_1c9a_light_extended_search(uint16_t source_flags)
+{
+    /* SK1C9A.cpp:6642-6662 gates vl_94 by both source masks. */
+    return (source_flags & 0x2000u) != 0u &&
+           (source_flags & 0x118u) != 0u;
+}
+
 uint8_t dm2_v1_1c9a_light_node_next_direction(
     const DM2_V1_1c9aLightNodeDecision *decision,
     uint8_t previous_direction)
 {
     if (!decision) return 0xffu;
     return (uint8_t)((previous_direction + decision->direction_delta) & 3u);
+}
+
+uint8_t dm2_v1_1c9a_light_node_attempt_direction(
+    const DM2_V1_1c9aLightNodeDecision *decision,
+    uint16_t source_flags, unsigned attempt_index)
+{
+    uint8_t direction;
+    if (!decision || (decision->attempts != 5u && decision->attempts != 7u) ||
+        attempt_index >= (unsigned)decision->attempts - 1u)
+        return 0xffu;
+    direction = decision->direction;
+    for (unsigned i = 0; i <= attempt_index; ++i)
+        direction = dm2_v1_1c9a_light_node_next_direction(
+            decision, direction);
+    if (decision->attempts == 7u && attempt_index >= 4u) {
+        if (attempt_index == 4u)
+            return (source_flags & 0x108u) != 0u ? 5u : 0xffu;
+        return (source_flags & 0x110u) != 0u ? 4u : 0xffu;
+    }
+    return direction;
 }
 
 void dm2_v1_1c9a_light_visibility_reset(

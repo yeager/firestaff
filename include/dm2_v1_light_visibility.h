@@ -82,9 +82,15 @@ typedef struct {
 /* SK1C9A's branch after dequeuing a node with score <= vw_d4. */
 DM2_V1_1c9aLightNodeDecision dm2_v1_1c9a_light_node_decision(
     uint16_t rng, unsigned node_score, int extended_search);
+/* Both CHECK_RECOMPUTE_LIGHT action flags select five attempts; the
+ * seven-attempt branch remains available to other FIND_WALK_PATH callers. */
+int dm2_v1_1c9a_light_extended_search(uint16_t source_flags);
 uint8_t dm2_v1_1c9a_light_node_next_direction(
     const DM2_V1_1c9aLightNodeDecision *decision,
     uint8_t previous_direction);
+uint8_t dm2_v1_1c9a_light_node_attempt_direction(
+    const DM2_V1_1c9aLightNodeDecision *decision,
+    uint16_t source_flags, unsigned attempt_index);
 typedef int (*DM2_V1_1c9aLightTile)(
     void *context, int map, int x, int y, int distance,
     int16_t *ambient_delta, int16_t *darkness_delta);

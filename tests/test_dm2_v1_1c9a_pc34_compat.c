@@ -576,6 +576,35 @@ TEST(light_node_rng_branch_rotates_source_direction) {
     assert(dm2_v1_1c9a_light_node_next_direction(NULL, 0u) == 0xffu);
 }
 
+TEST(light_node_action_flags_select_source_attempt_sequence) {
+    DM2_V1_1c9aLightNodeDecision node;
+    assert(!dm2_v1_1c9a_light_extended_search(0x36e7u));
+    assert(!dm2_v1_1c9a_light_extended_search(0x227u));
+    assert(dm2_v1_1c9a_light_extended_search(0x2118u));
+    node = dm2_v1_1c9a_light_node_decision(
+        1u, 3u, dm2_v1_1c9a_light_extended_search(0x36e7u));
+    assert(node.attempts == 5u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x36e7u, 0u) == 3u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x36e7u, 1u) == 2u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x36e7u, 2u) == 1u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x36e7u, 3u) == 0u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x36e7u, 4u) == 0xffu);
+    node = dm2_v1_1c9a_light_node_decision(
+        0xb400u, 3u, dm2_v1_1c9a_light_extended_search(0x2118u));
+    assert(node.attempts == 7u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x2118u, 4u) == 5u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x2118u, 5u) == 4u);
+    assert(dm2_v1_1c9a_light_node_attempt_direction(
+        &node, 0x2118u, 6u) == 0xffu);
+}
+
 TEST(light_ring_packet_reads_live_xp_bc_score) {
     DM2_V1_1c9aLightWorkNode grid[2u * 32u * 32u] = {{0}};
     uint8_t score = 0xffu;
@@ -1121,6 +1150,7 @@ int main(void) {
     RUN(light_mode8_ring_rotates_higher_score_packets);
     RUN(light_walk_rng_uses_source_lfsr);
     RUN(light_node_rng_branch_rotates_source_direction);
+    RUN(light_node_action_flags_select_source_attempt_sequence);
     RUN(light_ring_packet_reads_live_xp_bc_score);
     RUN(light_mode7_skips_mode8_cells_beyond_source_radius);
 
