@@ -440,6 +440,20 @@ static void test_mode7_flags4_original_media(void)
     node.effective_flags = 0u;
     node.source_flags = 3u;
     node.stone_room = NULL;
+    assert(dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+        &dungeon, &graphics, 3, 13, 8, &class1_room));
+    assert(class1_room.raw_tile == 0x30u &&
+           class1_room.first_record_link == 0x0da2u &&
+           class1_room.ceiling_ornament_word == 35u);
+    node.cached_tile = 0x30u;
+    node.source_flags = 4u;
+    node.effective_flags = 2u;
+    node.stone_room = &class1_room;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
+    assert(accumulated == 0 && darkness == 0);
+    node.stone_room = NULL;
+    node.effective_flags = 0u;
+    node.source_flags = 3u;
     assert(room.raw_tile == 0xb0u && room.source_tile_type == 1u &&
            room.first_record_link == 0x0441u &&
            room.ceiling_ornament_word == 0x00ffu);

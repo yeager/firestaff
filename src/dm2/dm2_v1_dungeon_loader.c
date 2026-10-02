@@ -6823,29 +6823,45 @@ int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)
 {
-    const uint8_t *db3, *item;
+    const uint8_t *record;
     uint8_t floor_list[16];
-    uint16_t first, next, end, sensor_word, control_word, graphics_word = 0u;
-    int type, index, size, raw, graphicsset, floor_count, ordinal;
+    uint16_t first, link, sensor_word, control_word, graphics_word = 0u;
+    int type, index, size, raw, graphicsset, floor_count, ordinal = 0;
+    unsigned length = 0u;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!d || !loader || !loader->loaded) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = (uint16_t)dm2_v1_dungeon_get_first_thing(d, level, x, y);
     if (raw != 0x30 || ((first >> 10) & 0x0fu) != 3u) return 0;
-    db3 = dm2_v1_dungeon_get_thing_record(d, first, &type, &index, &size);
-    if (!db3 || type != 3 || size < 6) return 0;
-    sensor_word = dm2_v1_dungeon_read_record_u16(d, db3 + 2);
-    control_word = dm2_v1_dungeon_read_record_u16(d, db3 + 4);
-    ordinal = control_word >> 12;
-    if ((sensor_word & 0x7fu) != 0x32u ||
-        (control_word & 1u) != 0u || ordinal <= 0) return 0;
-    next = dm2_v1_dungeon_read_record_u16(d, db3);
-    if (((next >> 10) & 0x0fu) != 10u) return 0;
-    item = dm2_v1_dungeon_get_thing_record(d, next, &type, &index, &size);
-    if (!item || type != 10 || size < 2) return 0;
-    end = dm2_v1_dungeon_read_record_u16(d, item);
-    if (end != DM2_THING_END_MARKER) return 0;
+    link = first;
+    while (link != DM2_THING_END_MARKER) {
+        if (++length > 4u) return 0;
+        record = dm2_v1_dungeon_get_thing_record(d, link,
+                                                   &type, &index, &size);
+        if (!record || size < 2) return 0;
+        if (type == 3) {
+            if (size < 6) return 0;
+            sensor_word = dm2_v1_dungeon_read_record_u16(d, record + 2);
+            control_word = dm2_v1_dungeon_read_record_u16(d, record + 4);
+            if ((sensor_word & 0x7fu) == 3u &&
+                (control_word >> 12) == 0u) {
+                /* GET_FLOOR_DECORATION_OF_ACTUATOR returns FF. */
+            } else if ((sensor_word & 0x7fu) == 0x32u &&
+                       (control_word & 1u) == 0u &&
+                       (control_word >> 12) > 0u) {
+                ordinal = control_word >> 12;
+            } else return 0;
+        } else if (type == 2) {
+            if (size < 4 ||
+                (dm2_v1_dungeon_read_record_u16(d, record + 2) & 6u) != 2u ||
+                ((dm2_v1_dungeon_read_record_u16(d, record + 2) >> 8) &
+                 0x1fu) != 24u) return 0;
+            /* skguivwp.cpp:2957-3052: selector 24 leaves word 5. */
+        } else if (type != 10 || length != 2u) return 0;
+        link = dm2_v1_dungeon_read_record_u16(d, record);
+    }
+    if (ordinal <= 0 || (length != 2u && length != 3u)) return 0;
     graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
     if (graphicsset < 0 || graphicsset > 15 ||
         dm2_v1_query_gdat_entry_data_index(loader, 8, graphicsset, 11,
@@ -6853,9 +6869,8 @@ int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     floor_count = dm2_v1_dungeon_get_map_floor_gfx_list(
         d, level, floor_list, (int)sizeof(floor_list));
     if (floor_count < ordinal || ordinal > 16) return 0;
-    /* skguivwp.cpp:2615, 2820-3080: class 1 keeps type 1. DB3 subtype
-     * 0x32 with control bit 0 clear stores its floor decoration ordinal
-     * without an animation frame; the following DB10 stops the summary. */
+    /* skguivwp.cpp:2615, 2820-3080: class 1 keeps type 1. Subtype 0x32
+     * stores its floor decoration ordinal without an animation frame. */
     out->level = level;
     out->x = x;
     out->y = y;
