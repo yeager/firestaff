@@ -182,9 +182,9 @@ fi
 
 # Exercise the ordinary CSB default route against the complete installed
 # library as well. Platform-forced Atari launches above deliberately point at
-# the exact original 7z; the broad library also contains other authenticated
-# CSB editions, so an unforced `--game csb` should select one of those rather
-# than fail because Atari is not its default edition.
+# the exact original 7z. Automatic selection now prefers the authenticated FM
+# Towns CD; its source title remains active until its original input handoff.
+# The separate FM Towns CLI test covers title acceptance and dungeon startup.
 if [ -n "$archive_data_root" ] && [ -e "$archive_path" ]; then
     default_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game csb --data-dir "$archive_data_root" --boot-probe \
@@ -193,7 +193,7 @@ if [ -n "$archive_data_root" ] && [ -e "$archive_path" ]; then
         exit 1
     }
     case "$default_output" in
-        *'CSB READY: gameId=csb'*route=startup*'FIRESTAFF BOOT PROBE READY: gameId=csb'*sourceId=csb*levelLoaded=1*) ;;
+        *'CSB READY: gameId=csb'*variant=csb-fmtowns-en*route=startup*'FIRESTAFF BOOT PROBE READY: gameId=csb'*sourceId=csb*phase=csb-fmtowns-title*titleReady=1*levelLoaded=0*) ;;
         *)
             echo "FAIL: default CSB library route did not reach an authenticated game startup"
             printf '%s\n' "$default_output" >&2
