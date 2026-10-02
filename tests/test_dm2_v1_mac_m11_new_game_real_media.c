@@ -1335,6 +1335,105 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    {
+        /* Retail File_header map2/map3 share vertical level 2.  These are
+         * diagnostic source poses; the step itself uses normal M11 input. */
+        const DM2_V1_DungeonData *dungeon =
+            ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data;
+        DM2_V1_BootRuntimeReceipt moved;
+        if (!dungeon || dungeon->map_level_number[2] != 2u ||
+            dungeon->map_level_number[3] != 2u ||
+            dungeon->map_offset_x[2] != 35 ||
+            dungeon->map_offset_y[2] != 17 ||
+            dungeon->map_offset_x[3] != 35 ||
+            dungeon->map_offset_y[3] != 28 ||
+            dm2_v1_dungeon_get_tile_raw(dungeon, 2, 12, 15) != 0x20 ||
+            dm2_v1_dungeon_get_tile_raw(dungeon, 3, 12, 5) != 0x20) {
+            fprintf(stderr, "FAIL: retail Mac map2/map3 overlap source changed\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        dm2_v1_runtime_set_outdoor(0);
+        dm2_v1_runtime_set_position(2, 12, 15, 2);
+        if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
+                M11_GAME_INPUT_REDRAW) {
+            fprintf(stderr, "FAIL: Mac M11 rejected same-level boundary input\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        memset(&moved, 0, sizeof(moved));
+        if (!dm2_v1_boot_runtime_capture(
+                (DM2_V1_BootProfile *)view.dm2BootProfile, &moved) ||
+            moved.current_level != 3 || moved.party_x != 12 ||
+            moved.party_y != 5 || moved.party_dir != 2) {
+            fprintf(stderr,
+                    "FAIL: Mac M11 map2 south overlap did not enter map3 (map=%d x=%d y=%d dir=%d)\n",
+                    moved.current_level, moved.party_x, moved.party_y,
+                    moved.party_dir);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        dm2_v1_runtime_set_position(3, 12, 5, 0);
+        for (int tick = 0; tick < 128 && !dm2_v1_runtime_can_move();
+             ++tick)
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
+                M11_GAME_INPUT_REDRAW) {
+            fprintf(stderr, "FAIL: Mac M11 rejected reverse boundary input\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        memset(&moved, 0, sizeof(moved));
+        if (!dm2_v1_boot_runtime_capture(
+                (DM2_V1_BootProfile *)view.dm2BootProfile, &moved) ||
+            moved.current_level != 2 || moved.party_x != 12 ||
+            moved.party_y != 15 || moved.party_dir != 0) {
+            fprintf(stderr,
+                    "FAIL: Mac M11 map3 north overlap did not return to map2 (map=%d x=%d y=%d dir=%d)\n",
+                    moved.current_level, moved.party_x, moved.party_y,
+                    moved.party_dir);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        {
+            int type = -1;
+            int index = -1;
+            int size = 0;
+            int thing = dm2_v1_dungeon_get_first_thing(dungeon, 2, 19, 5);
+            const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)thing, &type, &index, &size);
+            if (dm2_v1_dungeon_get_tile_raw(dungeon, 2, 19, 4) != 0x20 ||
+                dm2_v1_dungeon_get_tile_raw(dungeon, 2, 19, 5) != 0xb0 ||
+                thing != 0x042e || type != 1 || size < 6 || !record ||
+                (record[5] & 1u) != 0u) {
+                fprintf(stderr, "FAIL: retail Mac class-five tile source changed\n");
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        dm2_v1_runtime_set_position(2, 19, 4, 2);
+        for (int tick = 0; tick < 128 && !dm2_v1_runtime_can_move();
+             ++tick)
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
+                M11_GAME_INPUT_REDRAW) {
+            fprintf(stderr, "FAIL: Mac M11 rejected class-five source input\n");
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        memset(&moved, 0, sizeof(moved));
+        if (!dm2_v1_boot_runtime_capture(
+                (DM2_V1_BootProfile *)view.dm2BootProfile, &moved) ||
+            moved.current_level != 2 || moved.party_x != 19 ||
+            moved.party_y != 5 || moved.party_dir != 2) {
+            fprintf(stderr,
+                    "FAIL: Mac M11 bit-zero-clear class-five tile did not admit movement (map=%d x=%d y=%d dir=%d)\n",
+                    moved.current_level, moved.party_x, moved.party_y,
+                    moved.party_dir);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
     puts("PASS: authentic Mac M11 NEW GAME reaches active runtime");
     M11_GameView_Shutdown(&view);
     {

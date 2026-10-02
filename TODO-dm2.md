@@ -355,9 +355,28 @@ Reviewed 2026-08-29. Only open work is listed here.
   `CODE(8)+0x1f2e..0x1f5a` sets or clears the New Game flag for events
   `0xd7..0xd9`, without changing the map. The map setter is
   `CODE(15)+0x20bc`, writing `A5-0x6684`/`-0x6682`/`-0x6680` (x/y/map),
-  reached directly from `CODE(7)+0x35dc` through `A5+0x8ca`.
-  The movement path calls `CODE(15)+0x2806`; its later record/timer chain
-  still needs a live trace to show whether it reaches the map setter.
+  `CODE(7)+0x35dc` calls the tile callback at `A5+0x8ca`, then compares
+  current and target map/position words; that call is not yet established
+  as a direct invocation of the setter. The movement path calls
+  `CODE(15)+0x2806`. Its successful-step path calls `A5+0x72a`, mapped
+  through the retail jump table to `CODE(15)+0x2482`. That routine uses
+  same-level map descriptors and global coordinates to normalize a moved
+  position into an overlapping map, rejecting candidate class 7 tiles.
+  Retail map 0 occupies global `(21,36)` at size 7x10; map 12 shares its
+  level and occupies `(27,27)` at size 26x10. Their only near boundary has
+  map-0 wall `(6,0)` and map-12 wall `(0,8)`; the east candidate on map 12
+  is class 7. This normalizer therefore does not establish a walkable Hall
+  exit. Firestaff now applies the source's ascending map membership order
+  to Mac movement. A retail-media M11 test steps from map 2 `(12,15)` south
+  into map 3 `(12,5)` and returns north through the overlapping cell, using
+  ordinary move input from diagnostic starting poses. It also enters a
+  class-5 tile whose first source record has a clear byte-five bit zero.
+  Class-5 tiles with records shorter than six bytes remain blocked because
+  the original reads beyond the logical record; an authenticated ownership
+  trace is needed before admitting those cases. Mac French has the same
+  source code path but lacks an independent original-media test. The
+  post-selection actuator/timer transfer and actual map-setter caller still
+  need a live trace.
   Instrument these offsets in an original run before changing the spawn.
   The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque

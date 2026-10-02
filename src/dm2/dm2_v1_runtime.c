@@ -14728,6 +14728,54 @@ int dm2_v1_runtime_last_perform_move_receipt(
  *
  * Source: SKULL.ASM T520
  */
+/* Retail Mac CODE(15)+0x2482 maps a step through the original File_header
+ * global offsets and vertical level number.  This also applies when the
+ * target remains inside the current map but an earlier same-level map owns
+ * that overlapping global cell.  The source rejects class-seven candidates.
+ * File_header map order is the candidate order for this source corpus.
+ * CODE(15)+0x2584..0x2598 makes class five into class seven when bit zero
+ * of the source tile record's byte five is set.  A short or absent record
+ * cannot safely provide that byte and leaves the movement fail-closed. */
+static int dm2_runtime_mac_overlap_step(const DM2_V1_DungeonData *dd,
+                                        int from_map, int *io_x, int *io_y)
+{
+    int global_x;
+    int global_y;
+    if (!dd || !io_x || !io_y || from_map < 0 ||
+        from_map >= dd->level_count) return -1;
+    global_x = dd->map_offset_x[from_map] + *io_x;
+    global_y = dd->map_offset_y[from_map] + *io_y;
+    for (int map = 0; map < dd->level_count; ++map) {
+        int x;
+        int y;
+        int raw;
+        if (dd->map_level_number[map] != dd->map_level_number[from_map])
+            continue;
+        x = global_x - dd->map_offset_x[map];
+        y = global_y - dd->map_offset_y[map];
+        if (x < 0 || y < 0 || x >= dd->level_widths[map] ||
+            y >= dd->level_heights[map]) continue;
+        raw = dm2_v1_dungeon_get_tile_raw(dd, map, x, y);
+        if (raw < 0 || (raw >> 5) == 7) continue;
+        if ((raw >> 5) == 5) {
+            int type = -1;
+            int index = -1;
+            int size = 0;
+            int thing = dm2_v1_dungeon_get_first_thing(dd, map, x, y);
+            const uint8_t *record =
+                dm2_v1_dungeon_get_thing_record(
+                    dd, (uint16_t)thing, &type, &index, &size);
+            if (!dd->record_graph_complete || !record || size < 6 ||
+                type < 0 || index < 0) return -2;
+            if (record[5] & 1u) continue;
+        }
+        *io_x = x;
+        *io_y = y;
+        return map;
+    }
+    return -1;
+}
+
 int dm2_v1_runtime_move(int dir) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
@@ -14736,6 +14784,9 @@ int dm2_v1_runtime_move(int dir) {
     int dx[] = {0, 1, 0, -1};  /* N E S W */
     int dy[] = {-1, 0, 1, 0};
     int nx, ny;
+    int target_map;
+    int entered_boundary = 0;
+    int overlap_unsafe = 0;
     int blocked = 0;
     int entered_stairs = 0;
     int stair_map = -1;
@@ -14789,6 +14840,21 @@ int dm2_v1_runtime_move(int dir) {
 
     nx = gs->party_x + dx[dir & 3];
     ny = gs->party_y + dy[dir & 3];
+    target_map = rt->dungeon_level;
+    if ((rt->boot->platform == DM2_PLATFORM_MAC_EN ||
+         rt->boot->platform == DM2_PLATFORM_MAC_FR) &&
+        rt->boot->dungeon_data && !rt->outdoor) {
+        DM2_V1_DungeonData *dd =
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        int overlap_map =
+            dm2_runtime_mac_overlap_step(dd, target_map, &nx, &ny);
+        if (overlap_map == -2) {
+            overlap_unsafe = 1;
+        } else if (overlap_map >= 0) {
+            entered_boundary = overlap_map != target_map;
+            target_map = overlap_map;
+        }
+    }
     memset(&move_request, 0, sizeof(move_request));
     move_request.runtime_ready = 1;
     move_request.can_move = 1;
@@ -14809,13 +14875,13 @@ int dm2_v1_runtime_move(int dir) {
      *         dm2_special_squares.md — door tile type and state encoding. */
     if (!rt->outdoor && rt->boot->dungeon_data) {
         DM2_V1_DungeonData *dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-        int raw = dm2_v1_dungeon_get_tile_raw(dd, rt->dungeon_level, nx, ny);
+        int raw = dm2_v1_dungeon_get_tile_raw(dd, target_map, nx, ny);
         if (raw < 0) {
             blocked = 1;
             move_request.target_raw_valid = 0;
         } else {
             int raw_tile_type = dm2_runtime_square_type_at(
-                dd, rt->dungeon_level, nx, ny, raw);
+                dd, target_map, nx, ny, raw);
             int tile_type = dm2_runtime_normalize_square_type_for_dungeon(
                 dd, raw_tile_type, raw);
             move_request.target_raw_valid = 1;
@@ -14823,7 +14889,7 @@ int dm2_v1_runtime_move(int dir) {
             move_request.target_square_type = tile_type;
             if (tile_type == DM2_SQUARE_PIT) {
                 pit_status = dm2_runtime_resolve_entered_pit(
-                    dd, rt->dungeon_level, nx, ny,
+                dd, target_map, nx, ny,
                     &pit_map, &pit_x, &pit_y);
                 if (pit_status > 0)
                     move_request.target_pit_transition_admitted = 1;
@@ -14836,7 +14902,7 @@ int dm2_v1_runtime_move(int dir) {
                 tile_type == DM2_SQUARE_INACCESSIBLE) {
                 blocked = 1;
             } else if (dm2_runtime_is_door_at(
-                           dd, rt->dungeon_level, nx, ny, raw)) {
+                           dd, target_map, nx, ny, raw)) {
                 /* Door tile: door state in lower 3 bits.
                  * DM2_DOOR_STATE_OPEN=0 (passable), DM2_DOOR_STATE_CLOSED=4 (impassable).
                  * Source: dm2_v1_object_model.h DM2_DoorState enum.
@@ -14853,14 +14919,17 @@ int dm2_v1_runtime_move(int dir) {
              * onto a live DB4 cell while that push/attack owner is absent. */
             if (!blocked && rt->record_pools_valid) {
                 int16_t creature = dm2_v1_get_creature_at(
-                    &rt->record_pools, dd, rt->dungeon_level, nx, ny);
+                    &rt->record_pools, dd, target_map, nx, ny);
                 if (creature != DM2_V1_RECORD_HANDLE_NULL) {
                     /* A source attack consumes the move attempt.  A miss is
                      * still a blocked step; only the creature-side owner is
-                     * allowed to change DB4/CAII state. */
-                    (void)dm2_runtime_attack_creature_at(
-                        rt, dd, rt->dungeon_level, old_x, old_y,
-                        nx, ny, creature, 0);
+                     * allowed to change DB4/CAII state.  For an overlap
+                     * crossing, old_x/old_y belong to the source map; do
+                     * not pass them to a target-map attack transaction. */
+                    if (!entered_boundary)
+                        (void)dm2_runtime_attack_creature_at(
+                            rt, dd, target_map, old_x, old_y,
+                            nx, ny, creature, 0);
                     blocked = 1;
                 }
             }
@@ -14875,14 +14944,15 @@ int dm2_v1_runtime_move(int dir) {
         memset(&g_dm2_last_perform_move, 0, sizeof(g_dm2_last_perform_move));
         return -1;
     }
-    blocked = move_receipt.blocked;
+    blocked = move_receipt.blocked || overlap_unsafe;
+    if (overlap_unsafe) move_receipt.blocked = 1;
     if (!blocked && pit_status > 0)
         entered_pit = 1;
 
     if (!blocked && !entered_pit && !rt->outdoor && rt->boot->dungeon_data) {
         int stair_status = dm2_runtime_resolve_entered_stairs(
             (DM2_V1_DungeonData *)rt->boot->dungeon_data,
-            rt->dungeon_level, nx, ny, &stair_map, &stair_x, &stair_y);
+            target_map, nx, ny, &stair_map, &stair_x, &stair_y);
         if (stair_status < 0) {
             /* Source movement does not leave the party stranded on an
              * unresolved ladder. Reject the step until the source-owned
@@ -14899,7 +14969,8 @@ int dm2_v1_runtime_move(int dir) {
         /* Fire smooth movement callback before updating state.
          * This gives the V2 layer the from/to positions for interpolation.
          * Source: Phase 5 runtime binding */
-        if (!entered_stairs && !entered_pit && rt->move_callback) {
+        if (!entered_stairs && !entered_pit && !entered_boundary &&
+            rt->move_callback) {
             rt->move_callback(old_x, old_y, nx, ny);
         }
         /* SKProject keeps the old pose and its glbIsPlayerMoving countdown
@@ -14911,10 +14982,13 @@ int dm2_v1_runtime_move(int dir) {
                       (entered_pit ? pit_x : nx);
         gs->party_y = entered_stairs ? stair_y :
                       (entered_pit ? pit_y : ny);
-        if (entered_stairs || entered_pit) {
-            int special_map = entered_stairs ? stair_map : pit_map;
-            int special_x = entered_stairs ? stair_x : pit_x;
-            int special_y = entered_stairs ? stair_y : pit_y;
+        if (entered_stairs || entered_pit || entered_boundary) {
+            int special_map = entered_stairs ? stair_map :
+                              (entered_pit ? pit_map : target_map);
+            int special_x = entered_stairs ? stair_x :
+                            (entered_pit ? pit_x : nx);
+            int special_y = entered_stairs ? stair_y :
+                            (entered_pit ? pit_y : ny);
             gs->current_level = special_map;
             gs->outdoor = dm2_v1_dungeon_is_outdoor(
                 (DM2_V1_DungeonData *)rt->boot->dungeon_data, special_map);
@@ -14922,7 +14996,7 @@ int dm2_v1_runtime_move(int dir) {
             rt->outdoor = gs->outdoor;
             rt->view_dir = gs->party_dir;
             dm2_runtime_refresh_map_transition_context(rt);
-            if (rt->stairs_callback) {
+            if ((entered_stairs || entered_pit) && rt->stairs_callback) {
                 rt->stairs_callback(old_x, old_y, special_x, special_y,
                                     (float)(special_map - move_request.current_level));
             }
