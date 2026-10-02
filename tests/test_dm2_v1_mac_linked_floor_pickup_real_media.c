@@ -116,6 +116,106 @@ static int exercise_mac_corridor_db6(
     return 1;
 }
 
+static int exercise_mac_retail_db5(
+    M11_GameViewState *state, DM2_V1_BootProfile *profile,
+    DM2_V1_DungeonData *dungeon, unsigned char frame[320u * 200u])
+{
+    DM2_V1_RuntimeViewportClickReceipt hit;
+    DM2_V1_BootExpandedRectReceipt rect7, zone[4];
+    int click_x = -1, click_y = -1, place_x = -1, place_y = -1;
+    int place_cell = -1;
+    uint16_t placed;
+    if (dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != 0xd407u ||
+        dm2_v1_runtime_get_leader_hand_object() != 0xffffu)
+        return 0;
+    dm2_v1_runtime_set_position(11, 10, 1, 0);
+    memset(frame, 0, 320u * 200u);
+    M11_GameView_Draw(state, frame, 320, 200);
+    for (int y = 40; y < 176 && click_x < 0; ++y)
+        for (int x = 0; x < 224; ++x) {
+            memset(&hit, 0, sizeof(hit));
+            if (dm2_v1_runtime_route_viewport_click(x, y, &hit) &&
+                hit.accepted && hit.target_kind == 1 &&
+                (uint16_t)hit.object_id == 0xd407u) {
+                click_x = x; click_y = y; break;
+            }
+        }
+    if (click_x < 0 ||
+        M11_GameView_HandlePointerButton(
+            state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        dm2_v1_runtime_get_leader_hand_object() != 0xd407u ||
+        dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) == 0xd407u)
+        return 0;
+    memset(frame, 0, 320u * 200u);
+    M11_GameView_Draw(state, frame, 320, 200);
+    if (!dm2_v1_boot_query_expanded_rect_receipt(profile, 7u, &rect7) ||
+        !rect7.valid)
+        return 0;
+    for (int cell = 0; cell < 4; ++cell)
+        if (!dm2_v1_boot_query_expanded_rect_receipt(
+                profile, (uint16_t)(0x2f8u + cell), &zone[cell]) ||
+            !zone[cell].valid)
+            return 0;
+    for (int cell = 2; cell < 4 && place_x < 0; ++cell)
+        for (int y = zone[cell].rect.y;
+             y < zone[cell].rect.y + zone[cell].rect.h && place_x < 0; ++y)
+            for (int x = zone[cell].rect.x;
+                 x < zone[cell].rect.x + zone[cell].rect.w; ++x) {
+                int sx = x + rect7.rect.x, sy = y + rect7.rect.y;
+                int covered = 0;
+                if (sx < 0 || sx >= 224 || sy < 40 || sy >= 176) continue;
+                for (int prior = 0; prior < cell; ++prior)
+                    if (x >= zone[prior].rect.x && y >= zone[prior].rect.y &&
+                        x < zone[prior].rect.x + zone[prior].rect.w &&
+                        y < zone[prior].rect.y + zone[prior].rect.h)
+                        covered = 1;
+                memset(&hit, 0, sizeof(hit));
+                if (covered || dm2_v1_runtime_route_viewport_click(sx, sy, &hit))
+                    continue;
+                place_x = sx; place_y = sy; place_cell = cell; break;
+            }
+    if (place_x < 0 ||
+        M11_GameView_HandlePointerButton(
+            state, place_x, place_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        dm2_v1_runtime_get_leader_hand_object() != 0xffffu)
+        return 0;
+    placed = (uint16_t)((0xd407u & 0x3fffu) | (place_cell << 14));
+    if (dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != placed ||
+        dm2_v1_dungeon_get_next_thing(dungeon, placed) != 0xfffeu)
+        return 0;
+    memset(frame, 0, 320u * 200u);
+    M11_GameView_Draw(state, frame, 320, 200);
+    click_x = -1;
+    for (int y = 40; y < 176 && click_x < 0; ++y)
+        for (int x = 0; x < 224; ++x) {
+            memset(&hit, 0, sizeof(hit));
+            if (dm2_v1_runtime_route_viewport_click(x, y, &hit) &&
+                hit.accepted && hit.target_kind == 1 &&
+                (uint16_t)hit.object_id == placed) {
+                click_x = x; click_y = y; break;
+            }
+        }
+    if (click_x < 0 ||
+        M11_GameView_HandlePointerButton(
+            state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        dm2_v1_runtime_get_leader_hand_object() != placed ||
+        dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != 0xfffeu)
+        return 0;
+    memset(frame, 0, 320u * 200u);
+    M11_GameView_Draw(state, frame, 320, 200);
+    if (M11_GameView_HandlePointerButton(
+            state, place_x, place_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||
+        dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != placed)
+        return 0;
+    printf("Mac retail DB5 pickup/place/repick: d407 -> %04x\n", placed);
+    return 1;
+}
+
 int main(void)
 {
     const char *retail = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
@@ -191,6 +291,7 @@ int main(void)
     }
     if (!dungeon || !dungeon->record_graph_complete ||
         !exercise_mac_corridor_db6(&state, profile, dungeon, frame)) goto fail;
+    if (!exercise_mac_retail_db5(&state, profile, dungeon, frame)) goto fail;
     if (!dungeon || !dungeon->record_graph_complete ||
         dm2_v1_dungeon_get_square_type(dungeon, 10, 3, 0) != 1 ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||

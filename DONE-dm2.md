@@ -1,5 +1,13 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: An original Mac retail DB5 weapon at map 11 (10,0) now has
+  a positive viewport transaction receipt. From a diagnostic pose, the
+  existing pointer path picks up `0xd407`, places it as `0x9407` in source
+  cell 2, picks it up again, and replaces it. The same real-media test still
+  covers the reachable DB6 corridor and linked DB10 pickup. No runtime
+  change was needed; the initial negative probe compared a signed receipt
+  against an unsigned object ID.
+
 - 2026-10-02: A linked Mac DB10 floor record can now be picked up through
   its exposed opaque pixels. At retail map 10 (4,0), a diagnostic pose at
   (3,0) facing east picks `0xe813`; the head stays `0xe80f`, predecessor

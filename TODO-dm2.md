@@ -393,7 +393,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   the live File_header chain and original category/type fields; positive
   retail-media render receipts cover each category. A normally reachable
   map-0 corridor pose renders and admits DB6 for a pointer pickup and
-  placement round trip. DB5 and DB7–DB9 pointer transactions remain open.
+  placement round trip. A retail map-11 diagnostic pose now also verifies
+  DB5 weapon `0xd407` pickup, source tile splice, cell-2 placement as
+  `0x9407`, repick, and replacement through opaque viewport pixels.
+  DB7–DB9 pointer transactions remain open.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
