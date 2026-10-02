@@ -12558,6 +12558,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int hud_material_plan_command_count = 0;
     int hud_material_plan_required = 0;
     int hud_material_plan_consumed = 0;
+    int viewport_expected_gdat_evidence_count = 0;
+    int viewport_gdat_evidence_complete = 1;
     uint32_t creature_material_plan_hash = 0u;
     uint32_t creature_drawn_material_hash = 0u;
     int creature_material_plan_required = 0;
@@ -13357,6 +13359,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.viewport_raw_gdat_hash = 0x32445652u;
     g_dm2_frame_ownership.viewport_decoded_gdat_hash = 0x32445644u;
     if (viewport.asset_floor_ceiling_drawn_count > 0) {
+        viewport_expected_gdat_evidence_count += 2;
         dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
             dm2_v1_viewport_scene_material_graphic_index(
                 viewport.gdat_scene_material_index,
@@ -13370,19 +13373,26 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         DM2_V1_WallPanelRenderPlan wall_plan;
         if (dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
                                                          &wall_plan)) {
+            viewport_expected_gdat_evidence_count += wall_plan.panel_count;
+            if (wall_plan.panel_count != viewport.asset_wall_drawn_count)
+                viewport_gdat_evidence_complete = 0;
             for (int i = 0; i < wall_plan.panel_count; ++i) {
                 dm2_runtime_add_viewport_asset_evidence(
                     &g_dm2_frame_ownership,
                     wall_plan.panels[i].gdat_index);
             }
-        }
+        } else viewport_gdat_evidence_complete = 0;
     }
+    if (viewport.asset_wall_drawn_count > 0 && !wall_material_plan_consumed)
+        viewport_gdat_evidence_complete = 0;
     if (viewport.asset_teleporter_drawn_count > 0) {
+        ++viewport_expected_gdat_evidence_count;
         dm2_runtime_add_viewport_asset_evidence(
             &g_dm2_frame_ownership,
             dm2_v1_viewport_teleporter_map_chip_graphic_index());
     }
     if (viewport.asset_hud_core_drawn_count > 0) {
+        viewport_expected_gdat_evidence_count += 4;
         /* skproject loads interface GDAT through
          * DM2_LOAD_GDAT_INTERFACE_00_02 before the runtime HUD draw. */
         dm2_runtime_add_viewport_asset_evidence(
@@ -13405,6 +13415,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (viewport.asset_hud_portrait_drawn_count > 0) {
         int portrait_count = viewport.asset_hud_portrait_drawn_count;
         if (portrait_count > 4) portrait_count = 4;
+        viewport_expected_gdat_evidence_count += portrait_count;
+        if (portrait_count != viewport.asset_hud_portrait_drawn_count)
+            viewport_gdat_evidence_complete = 0;
         for (int i = 0; i < portrait_count; ++i) {
             dm2_runtime_add_viewport_asset_evidence(
                 &g_dm2_frame_ownership,
@@ -13417,6 +13430,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             g_dm2_last_door_render.panel_gdat_index);
     }
+    if (viewport.asset_door_panel_drawn_count > 0) {
+        ++viewport_expected_gdat_evidence_count;
+        if (g_dm2_last_door_render.panel_gdat_index == 0)
+            viewport_gdat_evidence_complete = 0;
+    }
     if (g_dm2_last_door_render.ornate_asset_drawn &&
         g_dm2_last_door_render.ornate_gdat_index != 0) {
         /* skproject DRAW_DOOR renders the Door::OrnateIndex() overlay from
@@ -13424,6 +13442,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         dm2_runtime_add_viewport_asset_evidence(
             &g_dm2_frame_ownership,
             g_dm2_last_door_render.ornate_gdat_index);
+    }
+    if (g_dm2_last_door_render.ornate_asset_drawn) {
+        ++viewport_expected_gdat_evidence_count;
+        if (g_dm2_last_door_render.ornate_gdat_index == 0)
+            viewport_gdat_evidence_complete = 0;
     }
     if (g_dm2_last_door_render.destroyed_mask_asset_drawn &&
         g_dm2_last_door_render.destroyed_mask_gdat_index != 0) {
@@ -13433,7 +13456,44 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             g_dm2_last_door_render.destroyed_mask_gdat_index);
     }
+    if (g_dm2_last_door_render.destroyed_mask_asset_drawn) {
+        ++viewport_expected_gdat_evidence_count;
+        if (g_dm2_last_door_render.destroyed_mask_gdat_index == 0)
+            viewport_gdat_evidence_complete = 0;
+    }
+    if (viewport.asset_door_frame_drawn_count > 0) {
+        int frame_indices[3] = {
+            g_dm2_last_door_render.frame_gdat_index,
+            g_dm2_last_door_render.side_frame_gdat_index[0],
+            g_dm2_last_door_render.side_frame_gdat_index[1]
+        };
+        int frame_evidence_count = 0;
+        viewport_expected_gdat_evidence_count +=
+            viewport.asset_door_frame_drawn_count;
+        for (int i = 0; i < 3 &&
+             frame_evidence_count < viewport.asset_door_frame_drawn_count;
+             ++i) {
+            if (frame_indices[i] == 0) continue;
+            dm2_runtime_add_viewport_asset_evidence(
+                &g_dm2_frame_ownership, frame_indices[i]);
+            ++frame_evidence_count;
+        }
+        if (frame_evidence_count != viewport.asset_door_frame_drawn_count)
+            viewport_gdat_evidence_complete = 0;
+    }
+    if (viewport.asset_door_button_drawn_count > 0) {
+        viewport_expected_gdat_evidence_count +=
+            viewport.asset_door_button_drawn_count;
+        if (viewport.asset_door_button_drawn_count != 1 ||
+            g_dm2_last_door_render.button_gdat_index == 0)
+            viewport_gdat_evidence_complete = 0;
+        else dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            g_dm2_last_door_render.button_gdat_index);
+    }
     if (creature_material_plan_consumed) {
+        viewport_expected_gdat_evidence_count +=
+            viewport.creature_material_drawn_count;
         for (int i = 0; i < viewport.creature_material_drawn_count; ++i) {
             dm2_runtime_add_viewport_asset_evidence(
                 &g_dm2_frame_ownership,
@@ -13441,6 +13501,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         }
     }
     if (item_material_plan_consumed) {
+        viewport_expected_gdat_evidence_count +=
+            viewport.item_material_drawn_count;
         for (int i = 0; i < viewport.item_material_drawn_count; ++i) {
             dm2_runtime_add_viewport_asset_evidence(
                 &g_dm2_frame_ownership,
@@ -13448,16 +13510,30 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         }
     }
     if (projectile_material_plan_consumed) {
+        viewport_expected_gdat_evidence_count +=
+            viewport.projectile_material_drawn_count;
         for (int i = 0; i < viewport.projectile_material_drawn_count; ++i) {
             dm2_runtime_add_viewport_asset_evidence(
                 &g_dm2_frame_ownership,
                 viewport.projectile_material_gdat_indices[i]);
         }
     }
+    if ((creature_material_plan_required && !creature_material_plan_consumed) ||
+        (item_material_plan_required && !item_material_plan_consumed) ||
+        (projectile_material_plan_required && !projectile_material_plan_consumed))
+        viewport_gdat_evidence_complete = 0;
+    /* SKProject skguivwp.cpp::DM2_DISPLAY_VIEWPORT draws the two planes at
+     * 7443/7450 and then scene-dependent tiles at 7461.  A fixed minimum
+     * asset count would reject valid sparse scenes.  Require raw and decoded
+     * proof for every material this frame actually consumed instead. */
     g_dm2_frame_ownership.real_gdat_evidence_valid =
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
-        g_dm2_frame_ownership.viewport_raw_gdat_asset_count >= 5 &&
-        g_dm2_frame_ownership.viewport_decoded_gdat_asset_count >= 5 &&
+        viewport_gdat_evidence_complete &&
+        viewport_expected_gdat_evidence_count > 0 &&
+        g_dm2_frame_ownership.viewport_raw_gdat_asset_count ==
+            viewport_expected_gdat_evidence_count &&
+        g_dm2_frame_ownership.viewport_decoded_gdat_asset_count ==
+            viewport_expected_gdat_evidence_count &&
         g_dm2_frame_ownership.viewport_raw_gdat_byte_count > 0u &&
         g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count > 0u;
     g_dm2_frame_ownership.gdat_scene_control_ready =
