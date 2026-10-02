@@ -29,6 +29,9 @@
 
 ## Developer changes
 
+- `DM2 viewport assets`: separates item and projectile image addresses. The
+  production provider now resolves an original Mac DB10 image; drawing and
+  picking up that floor item remain open.
 - `DM2 Macintosh wall controls`: local actuator list rotation now writes
   record links in Mac byte order. A live local-action switch was not found in
   the supplied retail actuator census, so that route remains unverified.

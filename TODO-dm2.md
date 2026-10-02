@@ -349,8 +349,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   prove a pointer pickup/placement round trip before calling exchange complete.
   An original-media diagnostic pose on map 9 at (1,1) facing north found DB10
   `0x2831` on the floor directly ahead at (1,0), but the current M11 frame
-  reported zero drawn item assets. Resolve that render admission before
-  publishing a click target or claiming a pointer pickup.
+  reported zero drawn item assets. The original category `0x15`, type `0x2c`,
+  field-0 image now resolves through the viewport provider; the remaining
+  blocker is the DB10 tile-chain and source placement admission. Resolve that
+  before publishing a click target or claiming a pointer pickup.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first

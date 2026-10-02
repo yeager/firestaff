@@ -1,5 +1,11 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: Viewport item and projectile virtual image addresses no longer
+  overlap. The authentic Mac DB10 `0x2831` on map 9 selects category `0x15`,
+  type `0x2c`, image field 0; a real-media red/green test now fetches its
+  original 34x13 IMG9 image through the production viewport provider. This
+  proves image address resolution, not DB10 scene placement or pickup.
+
 - 2026-10-02: Macintosh wall-control list rotation now writes record links
   in the authenticated dungeon's byte order. The rotation callback previously
   wrote little-endian bytes even for Mac big-endian records. The existing

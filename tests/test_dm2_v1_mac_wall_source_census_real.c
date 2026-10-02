@@ -701,6 +701,29 @@ static int run_one(const char *zip, const char *source_id)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    {
+        const uint8_t *pixels = NULL;
+        const uint8_t *record;
+        int record_type = -1;
+        int width = 0, height = 0, stride = 0;
+        int item = dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0);
+        int image = dm2_v1_viewport_item_graphic_index(0x15, 0x2c, 0);
+        record = dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)item, &record_type, NULL, NULL);
+        /* SKProject skcore.cpp::DRAW_ITEM selects Misc::ItemType from the
+         * authenticated DB10 record, then category 0x15/Image field 0. */
+        if (item != 0x2831 || !record || record_type != 10 ||
+            (dm2_v1_dungeon_read_record_u16(dungeon, record + 2) & 0x7fu) !=
+                0x2cu ||
+            dm2_v1_boot_viewport_asset_fetch(
+                profile, image, &pixels, &width, &height, &stride) != 0 ||
+            !pixels || width != 34 || height != 13 || stride < width) {
+            fprintf(stderr, "Mac retail DB10 source image address failed: %s\n",
+                    source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
     census.dungeon = dungeon;
     print_authentic_mac_map0_specials(dungeon);
     print_authentic_source_square_census(dungeon);

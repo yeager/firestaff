@@ -13676,6 +13676,8 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     if (!profile || !profile->graphics_dat) return -1;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
 
+    /* Bound each packed sprite range before masking its category. A masked
+     * category alone can reinterpret an item address as a projectile. */
     if (dm2_v1_viewport_scene_material_graphic_address(
             gdat_index, &index, &field)) {
         if (index >= DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT) return -1;
@@ -13775,6 +13777,9 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         gfx->weather_environment_keys[slot] = gdat_index;
         category = DM2_GDAT_CATEGORY_ENVIRONMENT;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index <
+                   ((DM2_GDAT_CATEGORY_MISCELLANEOUS + 1) <<
+                    DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >=
                    DM2_GDAT_CATEGORY_SPELL_MISSILES &&
@@ -13808,6 +13813,9 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_h = &gfx->projectile_h[slot];
         gfx->projectile_keys[slot] = gdat_index;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index <
+                   ((DM2_GDAT_CATEGORY_MISCELLANEOUS + 1) <<
+                    DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) &&
                (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >=
                    DM2_GDAT_CATEGORY_WEAPONS &&
@@ -14212,6 +14220,9 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
                    gdat_index, out_index, out_field)) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index <
+                   ((DM2_GDAT_CATEGORY_MISCELLANEOUS + 1) <<
+                    DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >=
                    DM2_GDAT_CATEGORY_SPELL_MISSILES &&
@@ -14225,6 +14236,9 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
             (packed >> DM2_V1_VIEWPORT_GFX_PROJECTILE_INDEX_SHIFT) & 0xff;
         *out_field = DM2_GDAT_IMG_MAP_CHIP;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index <
+                   ((DM2_GDAT_CATEGORY_MISCELLANEOUS + 1) <<
+                    DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) &&
                (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >=
                    DM2_GDAT_CATEGORY_WEAPONS &&

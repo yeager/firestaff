@@ -173,7 +173,10 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK 0xFF
 #define DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE (-0x220000)
-#define DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE (-0x40000)
+/* Keep the full category/index/field address span separate from projectile
+ * addresses. The former base aliased Mac MISC/0x2c/0 to missile category
+ * 0x13 and made the authentic item image unreachable. */
+#define DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE (-0x10000000)
 #define DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT 16
 #define DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_ITEM_FIELD_MASK 0xFF
