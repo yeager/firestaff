@@ -90,6 +90,10 @@
   leader remains selected when the second champion's inventory opens.
 - `CSB Atari animation tests`: skips cleanly when original game media is not
   installed, and the obsolete FM Towns RAR-only test has been removed.
+- `Theron CDDA tracks`: selects region-verified original CUE audio tracks and
+  routes authenticated Vorbis audio through the bounded-memory SDL stream
+  lifecycle. Real-media checks cover candidate selection and decoding; game
+  event-to-CDDA mapping and playback at original gameplay sites remain open.
 
 # Firestaff v3.0.353
 
