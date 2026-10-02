@@ -496,6 +496,28 @@ static void test_mode7_flags4_original_media(void)
     assert(class1_room.first_record_link == 0x0e57u &&
            class1_room.ceiling_ornament_word == 35u);
     {
+        DM2_V1_CLightStoneRoomReceipt summary;
+        static const int cells[2][3] = {{15, 10, 0x0c34},
+                                         {14, 7, 0x0939}};
+        unsigned cell;
+        for (cell = 0u; cell < 2u; ++cell) {
+            assert(dm2_v1_dungeon_c_light_class1_flags4_receipt(
+                &dungeon, 3, cells[cell][0], cells[cell][1], &summary));
+            assert(summary.source_tile_type == 1u &&
+                   summary.raw_tile == 0x30u &&
+                   summary.first_record_link == (uint16_t)cells[cell][2]);
+            node.cached_tile = 0x30u;
+            node.source_flags = 4u;
+            node.effective_flags = 2u;
+            node.stone_room = &summary;
+            assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
+            assert(accumulated == 0 && darkness == 0);
+        }
+        node.stone_room = NULL;
+        node.effective_flags = 0u;
+        node.source_flags = 3u;
+    }
+    {
         int16_t link = 0x0e57;
         unsigned length = 0u;
         while (link != (int16_t)0xfffe) {

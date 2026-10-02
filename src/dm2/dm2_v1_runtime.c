@@ -1987,8 +1987,8 @@ static int dm2_runtime_mode7_on_node(
         if (!result) goto unknown;
         node.floor = &floor;
     } else if (raw == 0x30) {
-        if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
-                dungeon, loader, map, x, y, &room)) goto unknown;
+        if (!dm2_v1_dungeon_c_light_class1_flags4_receipt(
+                dungeon, map, x, y, &room)) goto unknown;
         node.stone_room = &room;
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         if (!dm2_v1_dungeon_c_light_stone_room_receipt(

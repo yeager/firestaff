@@ -1706,6 +1706,11 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
 int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out);
+/* Flags-4 only: class 1's raw summary type is known before the bounded
+ * record scan. Ornament detail is intentionally absent from this receipt. */
+int dm2_v1_dungeon_c_light_class1_flags4_receipt(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_CLightStoneRoomReceipt *out);
 /* c_light.cpp:202-481, class-2 no-record ceiling-ornament branch only.
  * The caller owns the running accumulators; this receipt never claims that
  * the party, creature, other tile, weather, or darkness inputs are complete. */

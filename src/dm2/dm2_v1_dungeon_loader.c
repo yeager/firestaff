@@ -6883,6 +6883,45 @@ int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_class1_flags4_receipt(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_CLightStoneRoomReceipt *out)
+{
+    uint16_t link;
+    int raw, first;
+    unsigned length = 0u;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw != 0x30 || first < -1) return 0;
+    link = first < 0 ? DM2_THING_END_MARKER : (uint16_t)first;
+    while (link != DM2_THING_END_MARKER) {
+        const uint8_t *record;
+        int type, index, size;
+        if (++length > 256u) return 0;
+        type = (link >> 10) & 0x0fu;
+        record = dm2_v1_dungeon_get_thing_record(d, link,
+                                                   &type, &index, &size);
+        if (!record || size < 2) return 0;
+        /* skguivwp.cpp:2878-3080 stops at the first class above DB3. */
+        if (type > 3) break;
+        link = dm2_v1_dungeon_read_record_u16(d, record);
+    }
+    /* skguivwp.cpp:2555-2560 stores class 1 before scanning records.
+     * sklight.cpp:231-435 does not consume its ornament under flags 4. */
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->source_tile_type = 1u;
+    out->first_record_link = first < 0 ? DM2_THING_NULL_MARKER :
+                             (uint16_t)first;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_tile_ornament_receipt(
     const DM2_V1_CLightStoneRoomReceipt *room,
     const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
