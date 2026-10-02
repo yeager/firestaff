@@ -237,15 +237,31 @@ int main(void)
             fprintf(stderr, "original F31 C537: %d,%d %dx%d\n", x, y, w, h);
             int count = csb_v1_runtime_read_container_slots(&profile->runtime, chest, slots);
             if (count == 0) continue;
-            view.inventoryPanelActive = 1;
-            view.world.party.activeChampionIndex = 0;
             if (count <= 0 ||
                 !csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
                     view.csbBootProfile, 0, 1, chest) ||
                 !csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
-                    view.csbBootProfile, THING_NONE) ||
-                !DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view)) {
+                    view.csbBootProfile, THING_NONE)) {
                 fputs("FAIL: original F31 chest input setup\n", stderr);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            /* ReDMCSB PANEL.C F0355 lines 2299-2305 owns G0423
+             * separately from the GAMEBLOCK leader. Open the actual
+             * champion inventory command before CHEST.C F0333; simply
+             * setting inventoryPanelActive leaves G0423 unset and the next
+             * runtime mirror correctly closes the invalid panel. */
+            if (view.inventoryPanelActive &&
+                view.dm1InventoryChampionOrdinal != 1)
+                (void)M11_GameView_HandleInput(&view,
+                    M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+            if (!view.inventoryPanelActive)
+                (void)M11_GameView_HandleInput(&view,
+                    M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+            if (!view.inventoryPanelActive ||
+                view.dm1InventoryChampionOrdinal != 1 ||
+                !DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view)) {
+                fputs("FAIL: original F31 champion inventory or chest input setup\n", stderr);
                 M11_GameView_Shutdown(&view);
                 return 1;
             }
