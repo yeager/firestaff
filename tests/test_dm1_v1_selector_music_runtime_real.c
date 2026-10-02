@@ -40,7 +40,26 @@ typedef struct ScenarioState {
     const void* musicStreamAtCredits;
     int cursorAtCredits;
     uint64_t creditsObservedAtMs;
+    uint64_t doorFrameHashes[64];
+    unsigned int distinctDoorFrames;
 } ScenarioState;
+
+static void record_door_frame(ScenarioState* state)
+{
+    const unsigned char* frame = M11_Render_GetFramebuffer();
+    uint64_t hash = UINT64_C(14695981039346656037);
+    unsigned int i;
+    if (!state || !frame) return;
+    for (i = 0; i < M11_FB_BYTES; ++i) {
+        hash ^= frame[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    for (i = 0; i < state->distinctDoorFrames; ++i) {
+        if (state->doorFrameHashes[i] == hash) return;
+    }
+    if (state->distinctDoorFrames < 64U)
+        state->doorFrameHashes[state->distinctDoorFrames++] = hash;
+}
 
 static void check(ScenarioState* state, int condition, const char* message)
 {
@@ -192,6 +211,7 @@ static void observe_entrance(void* user, int phase, uint64_t activeWaitMs,
     }
 
     if (phase == M11_ENTRANCE_PHASE_DOORS) {
+        record_door_frame(state);
         state->sourceMusicStopped =
             !audio->titleMusicLoopActive && audio->titleMusicCursor == 0;
         check(state, state->sourceMusicStopped,
@@ -327,6 +347,10 @@ static int run_scenario(const char* dataDir, enum Scenario scenario,
     } else if (scenario == SCENARIO_ENTER) {
         check(&state, result == ENTRANCE_COMPAT_COMMAND_PATH_ENTER,
               "source Enter click completes authentic entrance transition");
+        fprintf(stderr, "entrance opening: %u distinct source framebuffer frames\n",
+                state.distinctDoorFrames);
+        check(&state, state.distinctDoorFrames == 32U,
+              "source Enter click draws the initial frame and all 31 distinct door steps");
         check(&state, state.sourceMusicStopped,
               "source music is stopped before the Enter door animation");
     } else if (scenario == SCENARIO_RESUME) {
@@ -345,6 +369,58 @@ static int run_scenario(const char* dataDir, enum Scenario scenario,
     if (scenario != SCENARIO_EARLY_QUIT) {
         check(&state, state.sourceMusicStarted,
               "authenticated selector score started after its VGA wait");
+    }
+    if (scenario == SCENARIO_ENTER &&
+        result == ENTRANCE_COMPAT_COMMAND_PATH_ENTER) {
+        DM1_V1_StartupHandoffOutcome_PC34 outcome;
+        DM1_V1_StartupHostApplyResult_PC34 hostResult;
+        DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 handoff;
+        unsigned char* frame = M11_Render_GetFramebuffer();
+        const unsigned char* presented = NULL;
+        int presentedW = 0;
+        int presentedH = 0;
+        unsigned int nonblack = 0;
+        unsigned int i;
+        memset(&outcome, 0, sizeof(outcome));
+        memset(&hostResult, 0, sizeof(hostResult));
+        memset(&handoff, 0, sizeof(handoff));
+        hostResult.handled = 1;
+        {
+            int outcomeReady =
+                dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+                    result, &outcome);
+            int receiptReady;
+            int applied;
+            outcome.title_played = 1;
+            receiptReady = outcomeReady &&
+                dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+                    "dm1", "dm1", &plan.media_receipt, &outcome,
+                    &hostResult, &handoff);
+            applied = receiptReady &&
+                M11_GameView_ApplyDm1StartupRuntimeHandoff(&view, &handoff);
+            check(&state, applied,
+                  "fresh C407 Enter applies the source Hall runtime handoff");
+        }
+        check(&state, view.world.party.mapIndex == 0 &&
+              view.world.party.mapX == 1 && view.world.party.mapY == 3 &&
+              view.world.party.direction == 2 &&
+              view.world.party.championCount == 0,
+              "source Hall begins at PC34 map 0 (1,3) facing south without champions");
+        if (frame) {
+            M11_GameView_Draw(&view, frame, M11_FB_WIDTH, M11_FB_HEIGHT);
+            check(&state, M11_Render_Present() == M11_RENDER_OK,
+                  "first Hall frame is presented after source doors");
+            presented = M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
+            if (presented && presentedW == 320 && presentedH == 200) {
+                for (i = 0; i < (unsigned int)(presentedW * presentedH); ++i) {
+                    const unsigned char* pixel = presented + i * 4U;
+                    nonblack += pixel[0] != 0 || pixel[1] != 0 || pixel[2] != 0;
+                }
+            }
+        }
+        check(&state, presented && presentedW == 320 && presentedH == 200 &&
+              nonblack > 1000U,
+              "source Hall first presented frame is nonblank after the door sequence");
     }
     check(&state, !view.audioState.titleMusicLoopActive &&
                       view.audioState.titleMusicCursor == 0 &&

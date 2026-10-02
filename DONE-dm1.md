@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-10-02: The original PC 3.4 entrance observer now verifies a fresh
+  C407 click, the initial door image and all 31 distinct opening steps,
+  the Hall handoff to map 0 (1,3) facing south, and its first nonblank
+  presented frame. The real-media test passes with SDL dummy video, both
+  with and without an audio device. Native Mac M5 input and HiDPI output
+  remain unverified.
+
 - 2026-10-02: Preserved each decoded PC 3.4 GRAPHICS.DAT SND3 effect when an
   optional sound pack is empty or replaces only selected events. An incomplete
   original bank no longer loses valid samples during pack discovery. A
