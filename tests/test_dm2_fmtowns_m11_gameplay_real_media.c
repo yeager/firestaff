@@ -988,6 +988,32 @@ int main(void)
                   render.runtime_m11_frame_hud_material_plan_command_count == 0,
               "FM Towns runtime does not claim the incomplete static HUD plan");
         {
+            const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(
+                (const DM2_V1_BootProfile *)view.dm2BootProfile);
+            DM2_V1_ViewportState chrome;
+            size_t drawn_pixels = 0u;
+            memset(framebuffer, 0, sizeof(framebuffer));
+            dm2_v1_viewport_init(&chrome, framebuffer, M11_FB_WIDTH);
+            dm2_v1_viewport_set_asset_loader(&chrome, loader);
+            dm2_v1_viewport_set_source_materials_required(&chrome, 1);
+            dm2_v1_render_ui_chrome(&chrome);
+            for (size_t pixel_index = 0u;
+                 pixel_index < sizeof(framebuffer); ++pixel_index) {
+                if (framebuffer[pixel_index] != 0u) ++drawn_pixels;
+            }
+            /* SKProject c_events.cpp::DM2_PROCEED_SPELL_FAILURE draws
+             * INTERFACE_GENERAL/5/11 at RECT 92 only for class 0x30.
+             * The real FM Towns image must not become a persistent bottom
+             * strip in the first GAME_LOAD frame. The class-0x30 route has
+             * its own runtime source receipt. */
+            check(loader && loader->gdat_version == 4u &&
+                      chrome.asset_hud_core_drawn_count == 0 &&
+                      chrome.fallback_hud_core_drawn_count == 0 &&
+                      chrome.blocked_material_draw_count == 0 &&
+                      drawn_pixels == 0u,
+                  "FM Towns first GAME_LOAD HUD omits the spell-failure image");
+        }
+        {
             DM2_V1_RuntimeViewportClickReceipt click_receipt;
             memset(&click_receipt, 0, sizeof(click_receipt));
             check(!dm2_v1_runtime_route_viewport_click(0, 0, &click_receipt) &&

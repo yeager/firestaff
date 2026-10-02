@@ -8756,6 +8756,8 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      * INTERFACE_GENERAL/2/0 for a dialogue fragment, not a gold box.
      * c_gui_draw.cpp:2341-2384 selects INTERFACE_GENERAL/4 fields 2..5 for
      * live hand actions and RECT 0x46..0x4d, not field 1 as a portrait panel.
+     * SKProject c_events.cpp:2684-2724 uses INTERFACE_GENERAL/5/11 only on
+     * a spell failure at RECT 92, not as a persistent action strip.
      * Do not stretch these source images into generic chrome rectangles. */
     if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.top_bar_rect,
@@ -8763,7 +8765,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
-    if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+    if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.action_strip_rect,
                                       plan.action_strip_gdat_index)) {
         dm2_v1_block_source_material(
