@@ -168,15 +168,16 @@ int dm2_v1_mode7_tile_cache_node(
 int dm2_v1_mode7_tile_cache_action23_gate(
     const DM2_V1_Mode7TileCache *cache);
 
-/* Live evidence needed for the flags-3 class-2 no-record prepass. The
- * producer must authenticate GET_TELEPORTER_DETAIL, GET_CREATURE_AT and
- * GDAT category-10 F8 against the same node/tick. */
+/* Live evidence needed for the flags-3 stone-room prepass. Class-5 cells
+ * also require a bounded record scan excluding DBE/DBF darkness terms.
+ * The producer authenticates teleporter, creature and GDAT F8 inputs. */
 typedef struct {
     uint8_t valid;
     uint8_t teleporter_detail_known;
     uint8_t teleporter_present;
     uint8_t creature_query_known;
     uint8_t creature_present;
+    uint8_t record_chain_known_no_darkness;
     uint8_t ceiling_gdat_known;
     uint16_t ceiling_gdat_light_word;
     uint16_t creature_f8_word;

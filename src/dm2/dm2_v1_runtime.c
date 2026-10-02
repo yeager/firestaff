@@ -1760,6 +1760,59 @@ static int dm2_runtime_mode7_step(
         projection_map, projection_x, projection_y);
 }
 
+static int dm2_runtime_mode7_flags3_class5_evidence(
+    DM2_V1_RuntimeState *rt, int map, int x, int y,
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    DM2_V1_Mode7Flags3Evidence *evidence)
+{
+    DM2_V1_SkprojectTeleporterDetail detail;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+    int16_t link;
+    unsigned length = 0u;
+    uint16_t light_word = 0u;
+    if (!rt || !rt->boot || !room || !room->valid || !evidence ||
+        !rt->record_pools_valid || (room->raw_tile >> 5) != 5u)
+        return 0;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    loader = dm2_v1_boot_asset_loader(rt->boot);
+    if (!dungeon || !loader) return 0;
+    memset(evidence, 0, sizeof(*evidence));
+    link = (int16_t)room->first_record_link;
+    while (link != (int16_t)0xfffe) {
+        unsigned type;
+        int16_t next;
+        if (link == (int16_t)0xffff || ++length > 256u ||
+            !dm2_v1_record_pool_next_link(&rt->record_pools, link, &next))
+            return 0;
+        type = ((uint16_t)link >> 10) & 0x0fu;
+        if (type == 4u || type == 14u || type == 15u) return 0;
+        link = next;
+    }
+    evidence->record_chain_known_no_darkness = 1u;
+    evidence->creature_query_known = 1u;
+    memset(&detail, 0, sizeof(detail));
+    memset(&detail_receipt, 0, sizeof(detail_receipt));
+    if (dm2_v1_skproject_get_teleporter_detail_dungeon(
+            dungeon, &rt->record_pools, map, x, y,
+            &detail, &detail_receipt)) {
+        if (!detail_receipt.valid) return 0;
+        evidence->teleporter_present = 1u;
+    } else if (!detail_receipt.blocked_tile_not_teleporter) {
+        return 0;
+    }
+    evidence->teleporter_detail_known = 1u;
+    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+        !dm2_v1_query_gdat_entry_data_index(loader, 10,
+            room->ceiling_ornament_word & 0xffu, 11, 0xf8,
+            &light_word)) return 0;
+    evidence->ceiling_gdat_known = 1u;
+    evidence->ceiling_gdat_light_word = light_word;
+    evidence->valid = 1u;
+    return 1;
+}
+
 static int dm2_runtime_mode7_on_node(
     void *context, int map, int x, int y, int direction,
     int source_facing, unsigned score, unsigned source_flags,
@@ -1772,6 +1825,7 @@ static int dm2_runtime_mode7_on_node(
     const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(rt->boot);
     DM2_V1_CLightFlags4FloorReceipt floor;
     DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_Mode7Flags3Evidence prepass;
     DM2_V1_Mode7Action23Node node;
     int raw, first, result;
     /* The current class-0/2/5 receipts do not consume viewing direction.
@@ -1795,7 +1849,7 @@ static int dm2_runtime_mode7_on_node(
         return dm2_v1_mode7_on_node(&node,
             &rt->c_light_visibility.v1e0974,
             &rt->c_light_visibility.v1e0978);
-    if (source_flags != 4u || !loader) goto unknown;
+    if (!loader) goto unknown;
     if (rt->weather_chain.storm_active < 0 ||
         rt->weather_chain.storm_active > 5 ||
         rt->weather_chain.day_word < 0 ||
@@ -1805,7 +1859,17 @@ static int dm2_runtime_mode7_on_node(
     raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
     if (raw < 0 || first < -1) goto unknown;
-    if ((raw >> 5) == 0) {
+    if (source_flags == 3u && (raw >> 5) == 5) {
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+                dungeon, loader, map, x, y,
+                (uint32_t)rt->tick_count, &room)) goto unknown;
+        if (!dm2_runtime_mode7_flags3_class5_evidence(
+                rt, map, x, y, &room, &prepass)) goto unknown;
+        node.stone_room = &room;
+        node.prepass = &prepass;
+    } else if (source_flags != 4u) {
+        goto unknown;
+    } else if ((raw >> 5) == 0) {
         result = first == -1 ?
             dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
                 dungeon, map, x, y, &floor) :

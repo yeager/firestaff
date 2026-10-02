@@ -553,6 +553,17 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.creature_query_known = 0u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
     assert(ambient == 188 && darkness == 0);
+    room.raw_tile = 0xb0u;
+    room.first_record_link = 0x0441u;
+    room.ceiling_ornament_word = 0x00ffu;
+    evidence.creature_query_known = 1u;
+    evidence.creature_present = 0u;
+    evidence.teleporter_present = 0u;
+    evidence.record_chain_known_no_darkness = 0u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
+    evidence.record_chain_known_no_darkness = 1u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 188 && darkness == 0);
 }
 
 static void test_check_recompute_clean(void)

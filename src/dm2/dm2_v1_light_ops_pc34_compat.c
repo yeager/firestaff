@@ -199,8 +199,12 @@ static int dm2_v1_mode7_flags3_class2_terms(
     static const int16_t weather_scale[6] = {99, 75, 50, 25, 1, 0};
     uint16_t light;
     unsigned index;
-    if (!room || !room->valid || (room->raw_tile >> 5) != 2u ||
-        room->first_record_link != DM2_THING_NULL_MARKER ||
+    if (!room || !room->valid ||
+        !(((room->raw_tile >> 5) == 2u &&
+           room->first_record_link == DM2_THING_NULL_MARKER) ||
+          ((room->raw_tile >> 5) == 5u &&
+           ((room->first_record_link >> 10) & 0x0fu) == 1u &&
+           evidence && evidence->record_chain_known_no_darkness)) ||
         (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
         !evidence || !evidence->valid ||
         !evidence->teleporter_detail_known ||
