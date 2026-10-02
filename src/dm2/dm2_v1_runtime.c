@@ -1667,6 +1667,8 @@ static int dm2_runtime_light_mode7_tile(
     int16_t width, height;
     int16_t destination_width, destination_height;
     int first, destination_map, detail_valid = 0, weather_index;
+    int16_t record, next;
+    unsigned chain_length = 0u;
     int raw;
     if (!rt || !rt->boot || !rt->boot->dungeon_data ||
         !ambient_delta || !darkness_delta || !rt->record_pools_valid)
@@ -1684,6 +1686,19 @@ static int dm2_runtime_light_mode7_tile(
         !dm2_v1_dungeon_c_light_stone_room_receipt(
             dungeon, loader, map, x, y, (uint32_t)rt->tick_count, &room))
         return -1;
+    /* Action 0x17 passes flag 4: the class-5 ceiling ornament is not read.
+     * ADD_BACKGROUND_LIGHT_FROM_TILE still walks the summarized record
+     * chain for DBE/DBF darkness, so admit only chains proven to omit them. */
+    record = (int16_t)room.first_record_link;
+    while (record != (int16_t)0xfffe) {
+        unsigned type;
+        if (record == (int16_t)0xffff || ++chain_length > 256u ||
+            !dm2_v1_record_pool_next_link(&rt->record_pools, record, &next))
+            return -1;
+        type = ((uint16_t)record >> 10) & 0x0fu;
+        if (type == 14u || type == 15u) return -1;
+        record = next;
+    }
     tiles = dm2_v1_dungeon_level_tile_data(dungeon, map, &width, &height);
     if (!tiles) return -1;
     memset(&sensor, 0, sizeof(sensor));
@@ -1722,7 +1737,7 @@ static int dm2_runtime_light_mode7_tile(
     if (weather_index < 0) weather_index = 0;
     if (weather_index > 5) weather_index = 5;
     if (!dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
-            &room, loader, distance, 3u, detail_valid, weather_index,
+            &room, loader, distance, 4u, detail_valid, weather_index,
             &light) || !light.valid)
         return -1;
     *ambient_delta = light.v1e0974_delta;
