@@ -56,6 +56,10 @@
 - `DM2 tile-light compatibility`: removes an unused synthetic radius-based
   light helper whose result disagreed with SKProject; the original-media
   ceiling contribution test now provides a source-backed starting point.
+- `DM2 dynamic-light inputs`: binds the source party hands, record charges,
+  SKULL.EXP tables, GDAT controls, savegame light and weather to the live
+  light calculation. The frame remains gated until both original visibility
+  traversal modes complete; post-teleport presentation remains unresolved.
 - `DM1, CSB and DM2 startup tests`: verify automatic FM Towns selection with
   original media and retain explicit platform overrides. The CSB M12 menu
   route also verifies that a complete FM Towns CD wins over a simultaneous

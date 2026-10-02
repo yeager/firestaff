@@ -59,6 +59,7 @@
 #include "dm2_v1_hero_ops_pc34_compat.h"
 #include "dm2_v1_engage_command_pc34_compat.h"
 #include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_1c9a_pc34_compat.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
@@ -98,6 +99,9 @@ static void dm2_v1_runtime_append_mac_wall_targets(
 typedef struct DM2_V1_RuntimeState DM2_V1_RuntimeState;
 static void dm2_runtime_refresh_map_transition_context(
     DM2_V1_RuntimeState *rt);
+static int dm2_runtime_recalc_dynamic_light(
+    DM2_V1_RuntimeState *rt, uint32_t scene_mask,
+    uint32_t scene_rain, uint32_t highest_light_level);
 static int dm2_runtime_attack_creature_at(
     DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
     int map, int x, int y, int target_x, int target_y,
@@ -133,6 +137,7 @@ struct DM2_V1_RuntimeState {
      * mutations. */
     DM2_V1_Party source_party;
     int source_party_valid;
+    int source_weather_light_valid;
     /* c_startend.cpp/ddat.v1e0288: the one-based hero number excluded by
      * PROCESS_POISON.  This is transferred with the GAME_LOAD party owner. */
     int16_t source_next_champion_number;
@@ -1290,6 +1295,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     uint32_t misty_map = 0u;
     uint32_t thunder_position = 0u;
     uint32_t ambient_darkness = 0u;
+    uint32_t scene_word_mask = 0u;
 
     if (!rt) return;
     /* DistantEnvironment is timer-owned live state.  It is meaningful only
@@ -1359,6 +1365,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
             &ambient_darkness)) {
         return;
     }
+    scene_word_mask = rt->gdat_scene_control_present_mask;
     /* c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT resolves the selected
      * GRAPHICSSET's ceiling/floor IMG3 pair before its light and wall
      * passes.  The control words above authenticate the map identity, but
@@ -1435,6 +1442,10 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_scene_highest_light_level =
         rt->gdat_scene_material_plan.highest_light_level;
     rt->gdat_ambient_darkness = rt->gdat_scene_material_plan.ambient_darkness;
+    if (rt->c_light_map_descriptor.dynamic_light) {
+        (void)dm2_runtime_recalc_dynamic_light(
+            rt, scene_word_mask, scene_rain, highest_light_level);
+    }
     /* c_weather.cpp consumes the active MapGraphicsStyle after GRAPHICSSET
      * control resolution. Preserve the verified environment image/palette
      * receipt in the live frame boundary, but do not turn it into pixels: the
@@ -3431,9 +3442,15 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
         rt->weather.weather_seed = candidate->source_random_seed;
         rt->weather.weather_intensity =
             (int)candidate->source_weather_chain.intensity * 100 / 255;
+        rt->source_weather_light_valid =
+            candidate->source_weather_chain_valid;
     } else {
+        /* dm2data.cpp::c_dm2data initialises the fresh weather fields to
+         * zero before GAME_LOAD. Keep that exact source initial state. */
+        memset(&rt->weather_chain, 0, sizeof(rt->weather_chain));
         rt->weather_chain_started = 0;
         rt->weather_source_timer_pending = 0;
+        rt->source_weather_light_valid = 1;
     }
 
     memset(&rt->session_snapshot, 0, sizeof(rt->session_snapshot));
@@ -16472,6 +16489,236 @@ static int16_t dm2_runtime_attack_dbspec_index(
     loader = dm2_v1_boot_asset_loader(rt->boot);
     return loader && dm2_v1_query_gdat_entry_data_index(
         loader, cls1, cls2, entry_type, field, &value) ? (int16_t)value : -1;
+}
+
+typedef struct {
+    DM2_V1_RuntimeState *rt;
+    uint16_t scene_rain;
+    uint16_t highest_light_level;
+    int valid;
+    int16_t level;
+    uint32_t hash;
+} DM2_RuntimeLightQuery;
+
+static uint32_t dm2_runtime_light_hash_step(uint32_t hash, uint16_t value)
+{
+    hash ^= (uint8_t)value;
+    hash *= 16777619u;
+    hash ^= (uint8_t)(value >> 8);
+    return hash * 16777619u;
+}
+
+static uint8_t dm2_runtime_light_map_byte(void *context, int16_t map,
+                                           int offset)
+{
+    DM2_RuntimeLightQuery *query = context;
+    if (offset != 0x0d || map != query->rt->dungeon_level ||
+        !query->rt->c_light_map_descriptor.valid) {
+        query->valid = 0;
+        return 0u;
+    }
+    /* sklight.cpp:28-30 reads only the high nibble of map descriptor byte
+     * 0x0d. The admitted Difficulty() receipt owns that exact nibble. */
+    return (uint8_t)(query->rt->c_light_map_descriptor.difficulty << 4);
+}
+
+static int16_t dm2_runtime_light_leader_item(void *context)
+{
+    DM2_RuntimeLightQuery *query = context;
+    uint16_t item = (uint16_t)query->rt->leader_hand_object;
+    query->hash = dm2_runtime_light_hash_step(query->hash, item);
+    return (int16_t)item;
+}
+
+static int16_t dm2_runtime_light_hero_count(void *context)
+{
+    DM2_RuntimeLightQuery *query = context;
+    query->hash = dm2_runtime_light_hash_step(
+        query->hash, (uint16_t)query->rt->source_party.heros_in_party);
+    return query->rt->source_party.heros_in_party;
+}
+
+static int16_t dm2_runtime_light_hero_item(void *context, int hero, int hand)
+{
+    DM2_RuntimeLightQuery *query = context;
+    if (hero < 0 || hero >= query->rt->source_party.heros_in_party ||
+        hand < 0 || hand > 1) {
+        query->valid = 0;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
+    query->hash = dm2_runtime_light_hash_step(query->hash,
+        (uint16_t)query->rt->source_party.hero[hero].item[hand]);
+    return query->rt->source_party.hero[hero].item[hand];
+}
+
+static uint16_t dm2_runtime_light_dbspec(void *context, int16_t item, int key)
+{
+    DM2_RuntimeLightQuery *query = context;
+    const DM2_V1_AssetLoader *loader =
+        dm2_v1_boot_asset_loader(query->rt->boot);
+    DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    uint8_t cls1 = 0u, cls2 = 0u;
+    uint16_t value = 0u;
+    if ((uint16_t)item == 0xffffu) return 0u;
+    if (!loader || key < 0 || key > UINT8_MAX ||
+        !dm2_v1_skproject_query_cls1_from_record_ex(
+            (uint16_t)item, &query->rt->record_pools, &cls1,
+            &cls1_receipt) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            (uint16_t)item, &query->rt->record_pools, &cls2,
+            &cls2_receipt) ||
+        !dm2_v1_query_gdat_entry_data_index(
+            loader, cls1, cls2, 11, (uint8_t)key, &value)) {
+        query->valid = 0;
+        return 0u;
+    }
+    query->hash = dm2_runtime_light_hash_step(query->hash, (uint16_t)item);
+    query->hash = dm2_runtime_light_hash_step(query->hash, value);
+    return value;
+}
+
+static int16_t dm2_runtime_light_charge(void *context, int16_t item, int mode)
+{
+    DM2_RuntimeLightQuery *query = context;
+    uint8_t *record;
+    uint16_t word;
+    uint16_t charge;
+    DM2_V1_SkprojectItemChargeReceipt receipt;
+    if (mode != 0) {
+        query->valid = 0;
+        return 0;
+    }
+    record = dm2_v1_record_pool_address_mut(&query->rt->record_pools,
+                                              (uint16_t)item);
+    if (!record) {
+        query->valid = 0;
+        return 0;
+    }
+    word = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    charge = dm2_v1_skproject_add_item_charge(
+        (uint16_t)item, &word, 0, &receipt);
+    if (!receipt.valid) {
+        query->valid = 0;
+        return 0;
+    }
+    query->hash = dm2_runtime_light_hash_step(query->hash, (uint16_t)item);
+    query->hash = dm2_runtime_light_hash_step(query->hash, word);
+    return (int16_t)charge;
+}
+
+static int16_t dm2_runtime_light_gdat(void *context, int a, int b,
+                                       int c, int d)
+{
+    DM2_RuntimeLightQuery *query = context;
+    if (a != 8 || b != query->rt->map_graphics_style || c != 11) {
+        query->valid = 0;
+        return 0;
+    }
+    if (d == 0x67) return (int16_t)query->scene_rain;
+    if (d == 0x68) return (int16_t)query->highest_light_level;
+    query->valid = 0;
+    return 0;
+}
+
+static void dm2_runtime_light_set_level(void *context, int16_t level)
+{
+    ((DM2_RuntimeLightQuery *)context)->level = level;
+}
+
+static int dm2_runtime_recalc_dynamic_light(
+    DM2_V1_RuntimeState *rt, uint32_t scene_mask,
+    uint32_t scene_rain, uint32_t highest_light_level)
+{
+    DM2_V1_RecalcLightLevelCallbacks callbacks;
+    DM2_V1_CLightSourceState source;
+    DM2_RuntimeLightQuery query;
+    int16_t charges[16];
+    int16_t light_table[21];
+    int16_t v1e0974 = 0, v1e0978 = 0;
+    uint32_t visibility_hash = 0u;
+    if (!rt || !rt->boot || rt->boot->platform != DM2_PLATFORM_FMTOWNS_JA ||
+        !rt->c_light_map_descriptor.valid ||
+        !rt->c_light_map_descriptor.dynamic_light ||
+        !rt->source_party_valid || !rt->record_pools_valid ||
+        !rt->source_weather_light_valid ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+        (scene_mask & ((1u << 2) | (1u << 4))) !=
+            ((1u << 2) | (1u << 4)) ||
+        scene_rain > UINT16_MAX || highest_light_level > UINT16_MAX ||
+        !dm2_v1_1c9a_light_visibility_level_inputs(
+            &rt->c_light_visibility, rt->dungeon_level,
+            &v1e0974, &v1e0978, &visibility_hash)) return 0;
+
+    memset(&query, 0, sizeof(query));
+    query.rt = rt;
+    query.scene_rain = (uint16_t)scene_rain;
+    query.highest_light_level = (uint16_t)highest_light_level;
+    query.valid = 1;
+    query.hash = dm2_runtime_light_hash_step(2166136261u,
+                                             (uint16_t)visibility_hash);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+                                             (uint16_t)(visibility_hash >> 16));
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)rt->c_light_map_descriptor.descriptor_hash);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)(rt->c_light_map_descriptor.descriptor_hash >> 16));
+    for (int i = 0; i < 16; ++i)
+        charges[i] = dm2_v1_table_1d6702[i];
+    for (int i = 0; i < 21; ++i)
+        light_table[i] = dm2_v1_table_1d6712[i];
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.get_map_tile_byte = dm2_runtime_light_map_byte;
+    callbacks.get_leader_item = dm2_runtime_light_leader_item;
+    callbacks.get_heros_in_party = dm2_runtime_light_hero_count;
+    callbacks.get_hero_item = dm2_runtime_light_hero_item;
+    callbacks.query_gdat_dbspec_word = dm2_runtime_light_dbspec;
+    callbacks.add_item_charge = dm2_runtime_light_charge;
+    callbacks.query_gdat_entry_data_index = dm2_runtime_light_gdat;
+    callbacks.set_light_level = dm2_runtime_light_set_level;
+    callbacks.map_index = (int16_t)rt->dungeon_level;
+    callbacks.v1e0974 = v1e0974;
+    callbacks.v1e0978 = v1e0978;
+    callbacks.savegame_light = rt->source_light_level;
+    callbacks.v1d6c02 = (int16_t)rt->map_graphics_style;
+    callbacks.v1e147f = rt->weather_chain.weather_allowed;
+    callbacks.v1e1480 = rt->weather_chain.storm_active;
+    callbacks.v1e1476 = rt->weather_chain.day_word;
+    callbacks.v1e024c = rt->weather_chain.light_pending;
+    callbacks.table1d6702 = charges;
+    callbacks.table1d6702_size = 16;
+    callbacks.table1d6712 = light_table;
+    callbacks.table1d6712_size = 21;
+    dm2_v1_recalc_light_level_pc34(&callbacks, &query);
+    if (!query.valid || query.level < 0 || query.level > 5) return 0;
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)callbacks.savegame_light);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)callbacks.v1e0974);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)callbacks.v1e0978);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)callbacks.v1e147f);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)callbacks.v1e1480);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)callbacks.v1e1476);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)callbacks.v1e024c);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)query.scene_rain);
+    query.hash = dm2_runtime_light_hash_step(query.hash,
+        (uint16_t)query.highest_light_level);
+    if (!query.hash) return 0;
+    memset(&source, 0, sizeof(source));
+    source.valid = 1;
+    source.dynamic_map = 1;
+    source.base_light = (uint8_t)query.level;
+    source.source_state_hash = query.hash;
+    return dm2_v1_c_light_m11_receipt_build_for_map(
+        &rt->gdat_scene_light_receipt, &rt->c_light_map_descriptor,
+        &source, &rt->c_light_receipt);
 }
 
 /* skengage.cpp/c_hero.cpp: the party attacks the creature occupying the

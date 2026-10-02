@@ -300,8 +300,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   Those calls update `v1e0974/v1e0978`; only then may
   `RECALC_LIGHT_LEVEL` combine the party hand charges, `savegames1.w_00`,
   GRAPHICSSET words 0x67/0x68 and weather into the clamped light level.
-  The current `dm2_v1_1c9a_pc34_compat` and runtime adapters implement
-  creature movement, not these actions or their visibility buffers. An
+  The runtime now binds the original party, record charge fields, executable
+  tables, GRAPHICSSET words, savegame light and weather to the source light
+  routine. It publishes no dynamic-light receipt until the map-matched
+  visibility owner reports complete mode-8 and mode-7 traversal. Those modes
+  still lack a live producer; the existing creature movement path is not a
+  substitute. An
   implementation must retain the map, party position, tick, records and GDAT
   identities across both traversals and the final frame receipt. The
   original-media acceptance case is map 3 (13,11) -> map 38 (6,6), then map
