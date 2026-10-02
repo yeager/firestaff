@@ -82,6 +82,26 @@ case "$title_output" in
         ;;
 esac
 
+# The ordinary --game csb route must preserve the F31 source owner when the
+# supplied media authenticates a single FM Towns edition.  ReDMCSB ANIM.C
+# F2275 runs TITLE.ANM before AUTOEXEC transfers to SWITCHTW; a generic CSB
+# bootstrap receipt here would conceal a wrong automatic platform choice.
+auto_title_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
+    --game csb --data-dir "$data_dir" $edition_arg --boot-probe \
+    --boot-probe-frames 2 --boot-probe-expect-startup-active 1 \
+    --boot-probe-expect-runtime-tick-max 0 --duration 0 2>&1)" || {
+    printf '%s\n' "$auto_title_output" >&2
+    exit 1
+}
+case "$auto_title_output" in
+    *"variant=csb-fmtowns-"*"handoff=f31-title-anm"*"phase=csb-fmtowns-title"*"startupAnimation=title-anm"*"levelLoaded=0"*) ;;
+    *)
+        echo "FAIL: automatic CSB platform selection did not retain the original F31 title" >&2
+        printf '%s\n' "$auto_title_output" >&2
+        exit 1
+        ;;
+esac
+
 switch_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
     --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
     --boot-probe-frames 700 --boot-probe-expect-phase csb-fmtowns-switch \
