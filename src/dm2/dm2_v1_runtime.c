@@ -1777,8 +1777,11 @@ static int dm2_runtime_mode7_step(
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
     if (raw < 0 || first < -1) return -1;
     admitted = dm2_v1_mode7_go_there_tile_admission((uint8_t)raw, first);
-    if (admitted < 0 && map == 3 && nx == 13 &&
-        (ny == 9 || ny == 8) && raw == 0x30) {
+    if (admitted < 0 &&
+        ((map == 3 && nx == 13 && (ny == 9 || ny == 8) &&
+          raw == 0x30) ||
+         (map == 3 && x == 13 && y == 8 && direction == 1 &&
+          nx == 14 && ny == 8 && raw == 0x10))) {
         int no_creature = 0;
         int party_square = 0;
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
@@ -1787,10 +1790,11 @@ static int dm2_runtime_mode7_step(
             (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
         if (!game || !walk->rt->source_party_valid ||
             !walk->rt->record_pools_valid) return -1;
-        /* Original FM Towns map 3 (13,8) starts at DB3 0x0da2.
-         * GO_THERE's class-1 path does not evaluate that actuator, but
-         * the creature blocker still needs the entire chain proved. */
-        if (ny == 8 && first != 0x0da2) return -1;
+        /* The original class-1 DB3 and class-0 DB2 records do not change
+         * GO_THERE's tile capability. The creature blocker still requires
+         * a complete chain on either edge. */
+        if (nx == 13 && ny == 8 && first != 0x0da2) return -1;
+        if (nx == 14 && first != 0x0855) return -1;
         while (link != (int16_t)0xfffe) {
             int16_t next;
             if (link == (int16_t)0xffff || ++length > 256u ||
@@ -1802,8 +1806,11 @@ static int dm2_runtime_mode7_step(
         no_creature = 1;
         party_square = game->current_level == map &&
             game->party_x == nx && game->party_y == ny;
-        admitted = dm2_v1_mode7_go_there_class1_raw30_admission(
-            (uint8_t)raw, no_creature, party_square);
+        admitted = nx == 14 ?
+            dm2_v1_mode7_go_there_class0_record_admission(
+                (uint8_t)raw, first, no_creature, party_square) :
+            dm2_v1_mode7_go_there_class1_raw30_admission(
+                (uint8_t)raw, no_creature, party_square);
     }
     if (admitted != 1) return admitted;
     *next_map = map;

@@ -44,6 +44,19 @@ int dm2_v1_mode7_go_there_class1_raw30_admission(
     return party_square ? 0 : 1;
 }
 
+int dm2_v1_mode7_go_there_class0_record_admission(
+    uint8_t raw_tile, int first_record_link,
+    int no_creature_proven, int party_square)
+{
+    /* SK1C9A.cpp:3190-3195 gives class 0 capability 0x1 regardless of
+     * its record bit. :3380-3445 then applies the party-square 0x800 and
+     * creature 0x1000 blockers against action 23's 0x227 mask. This
+     * receipt is deliberately limited to the original DB2 0x0855 edge. */
+    if (raw_tile != 0x10u || first_record_link != 0x0855 ||
+        !no_creature_proven) return -1;
+    return party_square ? 0 : 1;
+}
+
 int dm2_v1_mode7_action23_visit_tile(
     uint16_t cached_tile_state, uint8_t radius,
     int16_t map, int16_t x, int16_t y,
