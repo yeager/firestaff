@@ -388,12 +388,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   `CODE(8)+0x246c..+0x298a` handles viewport clicks. Its mirror/wall
   branch reaches `A5+$a32` at `+0x27e6`; this is `CODE(7)+0x0006`, which
   only rotates linked record orientation bits and does not move the party.
-  Another callback, `A5+$aca`, is `CODE(11)+0x0308` and still needs its
-  DB3 subtype-`0x7e` branch traced. The retail HFS catalog has one
+  Another callback, `A5+$aca`, is `CODE(11)+0x0308`. Its class check at
+  `+0x0396` skips directly to the next record for DB0–DB4, so a DB3
+  subtype-`0x7e` mirror cannot reach that callback's action body. The
+  retail HFS catalog has one
   `Dungeon.dat` and no bundled save, so a separate post-selection dungeon
   file is unsupported. No mirror-selection-to-party-map-change edge has
-  been established. Trace the `CODE(11)+0x0308` DB3 mirror branch and any
-  party mover call before changing the spawn.
+  been established through these callbacks. Find the mirror's actual event
+  path and trace its party mover call before changing the spawn.
   The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
