@@ -1634,7 +1634,7 @@ static int dm2_runtime_light_mode8_step(
         /* SK1C9A/19f0_05e8 case 8 passes argl2=0. A marked class-0
          * square stops this probe before its DB2/DB3 record scan. */
         return 0;
-    } else if (raw == 0x50 && first >= 0 &&
+    } else if ((raw == 0x50 || raw == 0x58) && first >= 0 &&
                (((uint16_t)first >> 10) & 0x0fu) == 2u) {
         int16_t link = (int16_t)first;
         unsigned length = 0u;
