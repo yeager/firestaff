@@ -265,6 +265,35 @@ static void test_mode7_action23_visit_order(void)
     assert(probe.calls == 2);
 }
 
+static void test_mode7_tile_accumulator(void)
+{
+    int16_t base = 0;
+    int16_t dark = 0;
+    /* Original FM Towns map 38 (6,6) and admitted map 3 type-zero floor
+     * receipts resolve to zero F8 light in the dungeon-loader media test. */
+    assert(dm2_v1_mode7_light_accumulate_tile(
+        0u, 0, 0, 0, &base, &dark));
+    assert(base == 0 && dark == 0);
+    assert(dm2_v1_mode7_light_accumulate_tile(
+        3u, 50, 70, 80, &base, &dark));
+    assert(base == 55 && dark == 25); /* 50-45 + 80-30, and 70-45. */
+    assert(dm2_v1_mode7_light_accumulate_tile(
+        8u, 1, 1, 1, &base, &dark));
+    assert(base == 60 && dark == 27); /* floors 2 and 3. */
+    assert(dm2_v1_mode7_light_accumulate_tile(
+        9u, 1, 1, 100, &base, &dark));
+    assert(base == 62 && dark == 29); /* weather falls away beyond 8. */
+    base = 32767;
+    dark = 32767;
+    assert(dm2_v1_mode7_light_accumulate_tile(
+        0u, 1, 1, 0, &base, &dark));
+    assert(base == -32767 && dark == -32767); /* source i16 wrap. */
+    assert(!dm2_v1_mode7_light_accumulate_tile(
+        0u, 1, 1, 0, NULL, &dark));
+    assert(!dm2_v1_mode7_light_accumulate_tile(
+        0u, 1, 1, 0, &base, NULL));
+}
+
 static void test_check_recompute_clean(void)
 {
     g_dirty_flag = 0; g_recomputed = 0;
@@ -304,6 +333,7 @@ int main(void)
     assert(dm2_v1_mode7_action23_samples_tile(0x8010u));
     assert(!dm2_v1_mode7_action23_samples_tile(0x8000u));
     test_mode7_action23_visit_order();
+    test_mode7_tile_accumulator();
     test_proceed_light_darkness();
     test_proceed_light_torch();
     test_proceed_light_invalid();

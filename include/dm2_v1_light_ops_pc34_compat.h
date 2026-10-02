@@ -118,6 +118,14 @@ int dm2_v1_mode7_action23_visit_tile(
     int16_t map, int16_t x, int16_t y,
     DM2_V1_Mode7AddBackgroundLight add_background_light, void *ctx);
 
+/* The terminal ADD_BACKGROUND_LIGHT_FROM_TILE update. Inputs are the
+ * source-resolved RG6 (tile), RG5 (darkness), and vw_24 (weather) terms;
+ * resolving those terms still requires the stone-room and GDAT branches.
+ * This updates two live accumulators for one tile, not traversal status. */
+int dm2_v1_mode7_light_accumulate_tile(
+    uint8_t distance, int16_t tile_light, int16_t darkness,
+    int16_t weather_light, int16_t *v1e0974, int16_t *v1e0978);
+
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {
     if (val < lo) return lo;

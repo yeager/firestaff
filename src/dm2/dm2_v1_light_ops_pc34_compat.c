@@ -31,6 +31,47 @@ int dm2_v1_mode7_action23_visit_tile(
     return add_background_light(ctx, radius, map, x, y, 4u) ? 1 : -1;
 }
 
+int dm2_v1_mode7_light_accumulate_tile(
+    uint8_t distance, int16_t tile_light, int16_t darkness,
+    int16_t weather_light, int16_t *v1e0974, int16_t *v1e0978)
+{
+    static const int16_t weather_falloff[9] = {
+        0, 6, 14, 30, 42, 54, 76, 88, 96
+    };
+    static const int16_t source_falloff[6] = {
+        0, 10, 22, 45, 70, 90
+    };
+    int32_t base = tile_light;
+    int32_t dark = darkness;
+    int32_t weather = weather_light;
+    uint8_t source_distance = distance > 5u ? 5u : distance;
+
+    if (!v1e0974 || !v1e0978) return 0;
+
+    /* SKProject sklight.cpp:435-481 and dm2data.cpp:87-96. The weather
+     * term vanishes beyond eight; nonzero source terms retain a floor of
+     * two after their distance subtraction. */
+    if (distance > 8u)
+        weather = 0;
+    else if (weather != 0) {
+        weather -= weather_falloff[distance];
+        if (weather < 3) weather = 3;
+    }
+    if (base != 0) {
+        base -= source_falloff[source_distance];
+        if (base < 2) base = 2;
+    }
+    if (dark != 0) {
+        dark -= source_falloff[source_distance];
+        if (dark < 2) dark = 2;
+    }
+    *v1e0974 = (int16_t)(uint16_t)((uint32_t)(uint16_t)*v1e0974 +
+                                    (uint32_t)(uint16_t)(base + weather));
+    *v1e0978 = (int16_t)(uint16_t)((uint32_t)(uint16_t)*v1e0978 +
+                                    (uint32_t)(uint16_t)dark);
+    return 1;
+}
+
 /* ---- DM2_RECALC_LIGHT_LEVEL (c_light.cpp:16-198) ---- */
 
 void dm2_v1_recalc_light_level_pc34(
