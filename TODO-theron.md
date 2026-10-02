@@ -24,19 +24,23 @@ Reviewed 2026-10-02. Only open work is listed here.
 - 🔒 A fresh original-emulator dungeon save is still unavailable. On trv2, an
   isolated Mednafen/Xvfb session visibly loaded the authentic US CUE and the
   verified System Card 3.0. RUN (the profile's Return mapping) was held for
-  four seconds as instructed, but the screen changed to the
-  "disc only works on the SUPER CD-ROM2 SYSTEM" warning rather than a playable
-  dungeon. Mednafen created a 2 KiB BRAM file in the fresh private profile;
-  this is not evidence of an in-dungeon save or successful campaign progress.
-  Preserve the capture outside Git and resolve the boot/runtime incompatibility
-  before interpreting or importing that BRAM. The Mac remains locked and the
-  separate Nexus capture on trv2 was left untouched.
+  four seconds as instructed, but the display showed the authentic US Track 02
+  boot/copy-protection message at UD `0x26C348` ("This disc only works on the
+  SUPER CD-ROM2 SYSTEM") rather than a playable dungeon. Mednafen created a
+  2 KiB BRAM file in the fresh private profile; this is not evidence of an
+  in-dungeon save or successful campaign progress. The capture script
+  hash-checked and passed the normalized SysCard 3.0 path as `pce.cdbios`; the
+  CUE's first track is AUDIO, so Mednafen's `pce.cpp` GE-CD BIOS dispatcher
+  selects that standard CD BIOS setting. The remaining copy-protection failure
+  is unresolved. Preserve the capture outside Git and do not import that BRAM.
+  The Mac remains locked and the separate Nexus capture on trv2 was left
+  untouched.
 - The instrumented capture, including a read-only replay from the existing
   authentic US save-manager state, recorded RUN as PCE input `raw=0008`; every
-  controller-read PC remained in the System Card `$E4xx` path. No game-side
-  controller poll or dungeon transition was observed. The strict capture
-  rejected the run because it did not produce a valid bounded VDC snapshot;
-  its trace and BRAM snapshot remain private on trv2 and are not parity proof.
+  controller-read PC remained in the System Card `$E4xx` path. No dungeon input
+  consumer or transition was observed. The strict capture rejected the run
+  because it did not produce a valid bounded VDC snapshot; its trace and BRAM
+  snapshot remain private on trv2 and are not parity proof.
 
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
