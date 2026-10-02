@@ -66,6 +66,56 @@ int main(void) {
         return 1;
     }
     {
+        int total_columns = 0;
+        int ordinal = 0;
+        int checked = 0;
+        for (int map = 0; map < dungeon->level_count; ++map)
+            total_columns += dungeon->level_widths[map];
+        if (dungeon->raw_map_data_base != 26806 ||
+            dungeon->g1_extension_size != 0 || total_columns != 725) {
+            fprintf(stderr, "Mac map layout mismatch: base=%d extension=%d columns=%d\n",
+                    dungeon->raw_map_data_base, dungeon->g1_extension_size,
+                    total_columns);
+            dm2_v1_boot_cleanup(&profile);
+            return 1;
+        }
+        /* File_header column prefixes count tiles with a record root.
+         * The last column has no following prefix; all other 724 can be
+         * checked against the independently owned source map bytes. */
+        for (int map = 0; map < dungeon->level_count; ++map) {
+            for (int x = 0; x < dungeon->level_widths[map]; ++x, ++ordinal) {
+                int roots = 0;
+                int base = dungeon->column_index_base + ordinal * 2;
+                int next = base + 2;
+                int prefix = (dungeon->raw_data[base] << 8) |
+                             dungeon->raw_data[base + 1];
+                int next_prefix;
+                if (ordinal + 1 == total_columns) continue;
+                next_prefix = (dungeon->raw_data[next] << 8) |
+                              dungeon->raw_data[next + 1];
+                for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+                    int tile = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+                    if (tile < 0) {
+                        dm2_v1_boot_cleanup(&profile);
+                        return 1;
+                    }
+                    roots += (tile & 0x10) != 0;
+                }
+                if (next_prefix - prefix != roots) {
+                    fprintf(stderr, "Mac map column %d root mismatch: prefix=%d tile=%d\n",
+                            ordinal, next_prefix - prefix, roots);
+                    dm2_v1_boot_cleanup(&profile);
+                    return 1;
+                }
+                ++checked;
+            }
+        }
+        if (checked != 724) {
+            dm2_v1_boot_cleanup(&profile);
+            return 1;
+        }
+    }
+    {
         /* Original retail Dungeon.dat, SKWIN/SkWinCore.cpp:2718-2730:
          * GET_NEXT_RECORD_LINK reads GenericRecord::w0 in source order. */
         static const struct {
@@ -73,7 +123,7 @@ int main(void) {
             uint16_t links[6];
             int count;
         } chains[] = {
-            {10, 4, 0, {0xe80f, 0x2810, 0x6811, 0xa812, 0xe813, 0xfffe}, 6},
+            {10, 4, 9, {0xe80f, 0x2810, 0x6811, 0xa812, 0xe813, 0xfffe}, 6},
             {15, 10, 6, {0x2848, 0x6849, 0xfffe}, 3},
         };
         for (size_t c = 0; c < sizeof(chains) / sizeof(chains[0]); ++c) {

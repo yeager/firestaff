@@ -780,12 +780,24 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
 
     out->g1_extension_base = thing_cursor;
     out->g1_extension_size = (size - raw_map_bytes) - thing_cursor;
-    if (out->g1_extension_size <= 0) return 0;
-    /* The authenticated Mac retail member uses the same source-owned DB3/DB4
-     * continuation as the byte-square G1 corpus. Its record words are BE,
-     * but the pool counts and extension bounds are unchanged. */
+    if (rd16be(dat + 2) == 0x313bu) {
+        /* SKProject SKWINSPX/src/v4/skcore.cpp:8763-8770 reads exactly the
+         * File_header cbMapData bytes after the DB pools (dme.h:144-158).
+         * The authenticated Mac member then has its two-byte trailer.
+         * The last map descriptor ends seven bytes before cbMapData ends;
+         * tail-aligning the largest tile span skipped nine real map bytes
+         * and assigned wrong tiles to almost every column root. */
+        if (raw_map_bytes > 0x313b || size - thing_cursor != 0x313b + 2)
+            return 0;
+        out->g1_extension_size = 0;
+        out->raw_map_data_base = thing_cursor;
+    } else {
+        if (out->g1_extension_size <= 0) return 0;
+        out->raw_map_data_base = size - raw_map_bytes;
+    }
+    /* Configure any validated G1 extension records for the remaining BE
+     * layouts. The Mac retail member above has no extension. */
     dm2_v1_configure_pc_g1_extension_records(out);
-    out->raw_map_data_base = size - raw_map_bytes;
     out->column_index_base = column_index_base;
     out->square_first_thing_base = sft_base;
     out->text_data_base = text_base;
@@ -799,7 +811,7 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     /* The retail Mac (0x313b) File_header stores BE w0 next links.  Other
      * BE editions retain their existing bounded head-only graph route.
      * SKWIN/SkWinCore.cpp:2718-2730 GET_NEXT_RECORD_LINK follows w0;
-     * map 10 (4,0) has DB10 0xe80f -> 0x2810 in the original media. */
+     * map 10 (4,9) has DB10 0xe80f -> 0x2810 in the original media. */
     out->g1_w0_chains_disabled = rd16be(dat + 2) != 0x313bu;
     if (!dm2_v1_dungeon_validate_record_graph(out))
         out->record_graph_complete = 0;

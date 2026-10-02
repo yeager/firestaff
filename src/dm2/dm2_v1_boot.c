@@ -15310,8 +15310,9 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
     DM2_V1_BootChampionSelectionCandidate resolved;
     DM2_V1_BootNewGamePartySelection selection;
     const DM2_V1_GameLoadPreselectionViewCell *front = NULL;
-    const int fmtowns_startend =
-        profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
+    const int retail_68k_startend = profile &&
+        (profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
+         profile->platform == DM2_PLATFORM_MAC_EN);
     int i;
 
 
@@ -15326,11 +15327,11 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
         !dm2_v1_boot_prepared_new_game_mirror_roster(profile, &roster)) {
         return 0;
     }
-    /* STARTEND has already admitted its first File_header-rooted champion
-     * before presenting the FM Towns viewport.  The visible mirror event is
-     * its confirmation, not a request to append an unrelated next roster
-     * member.  Keep that confirmed source selection intact for GAME_LOAD. */
-    if (fmtowns_startend && owner->selected_mirror_count == 1u &&
+    /* SKProject v5/startend.cpp:1215-1240 DM2_2f3f_0789 admitted the first
+     * File_header-rooted champion before the FM Towns or Mac viewport.
+     * The visible mirror event confirms it rather than appending another
+     * roster member. Keep that source selection intact for GAME_LOAD. */
+    if (retail_68k_startend && owner->selected_mirror_count == 1u &&
         owner->selected_mirrors[0].mirror_object_id == mirror_object_id) {
         return 1;
     }
@@ -15347,7 +15348,7 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
      * not represented by the forward D0C cell; retain the authenticated
      * current-cell root as the edition-native fallback. */
     if (!front && !owner->dungeon.source_words_big_endian &&
-        !fmtowns_startend) return 0;
+        !retail_68k_startend) return 0;
 
     for (i = 0; i < roster.candidate_count; ++i) {
         const DM2_V1_BootChampionSelectionCandidate *candidate =
@@ -15371,14 +15372,14 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
                 candidate->mirror.map == owner->source_party_map &&
                 candidate->mirror.x == owner->source_party_x &&
                 candidate->mirror.y == owner->source_party_y;
-            const int at_fmtowns_startend = fmtowns_startend &&
+            const int at_retail_68k_startend = retail_68k_startend &&
                 i == (int)(owner->selected_mirror_count ?
                     owner->selected_mirror_count - 1u : 0u) &&
                 candidate->mirror.map == owner->current_map &&
                 candidate->mirror.object_id != 0u;
-            if ((!at_front && !at_current && !at_fmtowns_startend) ||
+            if ((!at_front && !at_current && !at_retail_68k_startend) ||
             (!owner->dungeon.source_words_big_endian &&
-             !fmtowns_startend &&
+             !retail_68k_startend &&
              candidate->mirror.direction !=
                  ((owner->source_party_direction + 2u) & 3u))) {
             /* PC-DOS stores the mirror-facing direction in the little-endian
@@ -15397,7 +15398,7 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
         if (!dm2_v1_boot_champion_selection_candidate(
                 profile, candidate->mirror.map, candidate->mirror.x,
                 candidate->mirror.y,
-                (owner->dungeon.source_words_big_endian || fmtowns_startend)
+                (owner->dungeon.source_words_big_endian || retail_68k_startend)
                     ? candidate->mirror.direction
                     : owner->source_party_direction,
                 &resolved) ||
@@ -15427,8 +15428,9 @@ int dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
     DM2_V1_GameLoadWorldOwner *owner;
     DM2_V1_BootChampionSelectionCensus roster;
     const DM2_V1_GameLoadPreselectionViewCell *front = NULL;
-    const int fmtowns_startend =
-        profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
+    const int retail_68k_startend = profile &&
+        (profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
+         profile->platform == DM2_PLATFORM_MAC_EN);
     int i;
 
     /* The source C080 viewport command does not use host-authored pixel
@@ -15455,7 +15457,7 @@ int dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
         }
     }
     if (!front && !owner->dungeon.source_words_big_endian &&
-        !fmtowns_startend) return 0;
+        !retail_68k_startend) return 0;
     for (i = 0; i < roster.candidate_count; ++i) {
         const DM2_V1_BootChampionSelectionCandidate *candidate =
             &roster.candidates[i];
@@ -15468,14 +15470,14 @@ int dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
             candidate->valid && candidate->mirror.map == owner->source_party_map &&
             candidate->mirror.x == owner->source_party_x &&
             candidate->mirror.y == owner->source_party_y;
-        const int at_fmtowns_startend = fmtowns_startend &&
+        const int at_retail_68k_startend = retail_68k_startend &&
             i == (int)(owner->selected_mirror_count ?
                 owner->selected_mirror_count - 1u : 0u) &&
             candidate->valid && candidate->mirror.map == owner->current_map &&
             candidate->mirror.object_id != 0u;
-        if ((!at_front && !at_current && !at_fmtowns_startend) ||
+        if ((!at_front && !at_current && !at_retail_68k_startend) ||
             (!owner->dungeon.source_words_big_endian &&
-             !fmtowns_startend &&
+             !retail_68k_startend &&
              candidate->mirror.direction !=
                  ((owner->source_party_direction + 2u) & 3u))) {
             continue;

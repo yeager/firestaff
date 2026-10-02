@@ -1,54 +1,64 @@
 # Firestaff DONE — DM2
 
-- 2026-10-02: The original Mac retail record graph now has positive pointer
-  transaction receipts for DB7, DB8 and DB9. Diagnostic source poses on
-  maps 7, 17 and 14 verify opaque pickup, source-chain removal, placement,
-  repick and replacement; the placed handles are `0x1c01`, `0x2037` and
-  `0x240e`. Normal gameplay routes to those maps remain unverified.
+- 2026-10-02: Re-admitted the authentic Macintosh retail dungeon's declared
+  12,603-byte map-data span. The map starts at byte 26,806; the previous
+  descriptor-maximum calculation started it nine bytes late and shifted tile
+  flags, column prefixes and linked records. All 724 comparable column
+  prefixes now match the original data. Earlier diagnostic coordinates and
+  close-wall claims based on the late map start are superseded below.
 
-- 2026-10-02: An original Mac retail DB5 weapon at map 11 (10,0) now has
-  a positive viewport transaction receipt. From a diagnostic pose, the
-  existing pointer path picks up `0xd407`, places it as `0x9407` in source
-  cell 2, picks it up again, and replaces it. The same real-media test still
-  covers the reachable DB6 corridor and linked DB10 pickup. No runtime
-  change was needed; the initial negative probe compared a signed receipt
-  against an unsigned object ID.
+- 2026-10-02: The current DM2 AUTO policy prefers authenticated FM Towns
+  media when installed, regardless of host. The older macOS Mac-preference
+  section below records the previous policy and is superseded. Use
+  `--platform mac` for Mac-specific regression work.
 
-- 2026-10-02: A linked Mac DB10 floor record can now be picked up through
-  its exposed opaque pixels. At retail map 10 (4,0), a diagnostic pose at
-  (3,0) facing east picks `0xe813`; the head stays `0xe80f`, predecessor
-  `0xa812` links to the end marker, and redraw removes the old target.
-  Placement and a normal New Game route to this tile remain open.
+- 2026-10-02: Corrected original-media receipts now verify DB8 `0xa037`
+  on map 17 (3,8) and DB9 `0x240e` on map 14 (6,13): both render,
+  accept opaque pickup, leave the source tile, and survive placement,
+  repick and replacement. These use diagnostic source poses; normal
+  gameplay access remains open. DB7 `0x5c01` lies on a wall at map 7
+  (20,8), with no DB7 record on an authenticated floor tile, so its old
+  pickup receipt remains invalid.
 
-- 2026-10-02: The Mac outdoor viewport now draws source-admitted DB10 items
-  after its ground layer, following SKProject's outdoor tile/static-object
-  pass. Retail map 15 (10,6), viewed from (10,5) facing south, draws both
-  original linked records `0x2848` and `0x6849`; the second has chain
-  ordinal 2. Other outdoor item categories remain open.
+- 2026-10-02: Corrected original-media tests verify DB5 weapon `0xd407`
+  at map 11 (10,3), visible from (11,3) facing west. The diagnostic
+  pointer path picks it up, removes it from its source tile, places it,
+  repicks it and replaces it. The formerly described reachable DB6 map-0
+  corridor was phantom floor; its earlier pickup receipt remains invalid.
 
-- 2026-10-02: The indoor Mac viewport now walks authenticated DB10 tile
-  chains and carries each record's source draw slot into placement. At retail
-  map 10 (4,0), a diagnostic pose at (3,0) facing east draws all five original
-  DB10 images; the fifth record `0xe813` uses slot 1, ordinal 5. Linked
-  DB5–DB9 rendering remains open.
+- 2026-10-02: Corrected original-media tests verify the five-record linked
+  DB10 chain at map 10 (4,9). From an authenticated floor pose at (4,8)
+  facing south, an opaque click takes tail `0xe813`, preserves head
+  `0xe80f` and splices predecessor `0xa812` to the end marker. Placement
+  and a normal New Game route to this tile remain open.
+
+- 2026-10-02: The Mac outdoor viewport has a source-admitted DB10
+  ground-layer pass following SKProject's outdoor tile/static-object pass.
+  Corrected original-media tests draw both linked records `0x2848` and
+  `0x6849` at map 15 (10,6) from (10,7) facing north. Other outdoor
+  item categories remain open.
+
+- 2026-10-02: The indoor Mac viewport walks DB10 tile chains and carries
+  each record's source draw slot into placement. Corrected original-media
+  capture draws all five DB10 records on map 10 (4,9) from (3,9) east;
+  the tail `0xe813` uses slot 1, ordinal 5. Linked DB5–DB9 rendering
+  remains open.
 
 - 2026-10-02: The original Mac retail File_header record graph now follows
   big-endian `w0` links. Real-media tests confirm DB10 chains on map 10
-  (4,0) and map 15 (10,6). The source mirror gate also compares links in
+  (4,9) and map 15 (10,6). The source mirror gate also compares links in
   the dungeon's byte order.
 
-- 2026-10-02: A source-admitted Mac DB10 floor item can be picked up through
-  its drawn opaque viewport pixels. At diagnostic pose map 9 (1,1,N), the
-  original `0x2831` item moves from tile (1,0) to the leader hand; a
-  transparent click leaves it untouched, and redraw removes its stale
-  click target. This proves one square-head transaction, not item placement
-  or a normal New Game route to map 9.
+- 2026-10-02: Corrected original-media tests verify DB10 `0x2831` at
+  map 9 (1,6), one step ahead of diagnostic pose (1,7,N). Its drawn opaque
+  pixels admit pickup; a transparent click leaves it untouched. Placement
+  through the source rectangle, redraw and repick also pass. Normal New
+  Game access to map 9 remains open.
 
-- 2026-10-02: The authenticated Mac DB10 `0x2831` floor item now enters the
-  source-gated static-object render path. At diagnostic pose map 9 (1,1,N),
-  an original-media M11 frame reports a drawn category `0x15`, type `0x2c`
-  item using the original 34x13 image. This initial test proved only one
-  square-root item render; later entries cover linked items and pickup.
+- 2026-10-02: The Mac DB10 static-object render path resolves `0x2831`
+  to category `0x15`, type `0x2c`, and its original 34x13 image. A
+  corrected original-media capture at map 9 (1,7,N) verifies its scene
+  placement.
 
 - 2026-10-02: Viewport item and projectile virtual image addresses no longer
   overlap. The authentic Mac DB10 `0x2831` on map 9 selects category `0x15`,

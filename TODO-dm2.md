@@ -2,6 +2,18 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Complete Macintosh dungeon visual comparison and normal gameplay routes
+  against the corrected retail map base at byte 26,806. The earlier loader
+  started map data nine bytes late by subtracting the largest descriptor tile
+  extent instead of using File_header's declared 12,603-byte span. The
+  corrected map has floor at both (1,7) and (1,6) ahead of the (1,8,north)
+  start. Earlier close-wall explanations and diagnostic coordinates derived
+  from the shifted map are invalid. Corrected original-media regressions
+  now cover the start corridor, DB10 chain on map 10 (4,9), item `0x2831`
+  on map 9 (1,6), and diagnostic DB5/DB8/DB9 pointer transactions.
+  Compare the active framebuffer and physical input on the M5 before
+  claiming that the reported problem is resolved.
+
 - Complete native Resume for Macintosh, Amiga and FM Towns. The DOS `SKSave`
   importer is offered only when M12 selects the PC edition; a selected or
   AUTO-resolved non-DOS platform no longer receives a DOS save through Quick
@@ -12,9 +24,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   synthesize saves to close these gaps.
 
 - Verify the live macOS Retina dungeon viewport with a real runtime capture.
-  The direct `--game dm2` AUTO route now binds authenticated Macintosh retail
-  media when present, eliminating the DOS asset set previously selected on
-  macOS. Authenticated Mac retail owns RECT_7=(0,40,224,136), but the runtime
+  Run this Mac-specific check with `--game dm2 --platform mac`; the current
+  default selects FM Towns when authenticated FM Towns media is present.
+  Authenticated Mac retail owns RECT_7=(0,40,224,136), but the runtime
   had excluded Macintosh from the RECT_7 pass and drawn its 224x136 scene at
   the 320x200 framebuffer origin, 40 pixels above the source aperture. Mac now
   uses the receipt-backed aperture. A real Mac capture then exposed a second
@@ -75,26 +87,25 @@ Reviewed 2026-08-29. Only open work is listed here.
   still needs a same-state original comparison to diagnose the reported
   dungeon view. The Mac M11 real-media gate now also checks the retail start
   pose from File_header::w8 (map 0, x=1, y=8, north) and queries the authentic
-  map two tiles ahead with c_map's tile-coordinate contract; that cell is a
-  wall, and the centered wall appears in the captured runtime frame. The
+  map two tiles ahead with c_map's tile-coordinate contract; the corrected
+  map identifies that cell as floor. The earlier centered wall was rendered
+  from the shifted map bytes. The
   224x136 view at (0,40) plus the six RAW4 arrow rectangles at x=229..320
   accounts for the black right-side space in the 320x200 source page. This
-  establishes source ownership for the close wall and layout, but does not
+  establishes source ownership for the layout, but does not
   resolve the user's report that the view is unusable or prove visual quality.
   Rebuilt the local app and repeated both native Mac startup routes after that
   viewport work: direct `--game dm2` AUTO and M12 → Mac → Title.MooV → New
   Game both reach the accepted real-asset frame. A separate deterministic
   boot-probe step reaches map 0 at (1,7), north, and produces a different
-  presented view from the initial (1,8) pose. The frame still looks like a
-  close wall; those movement and asset receipts do not establish usable wall
+  presented view from the initial (1,8) pose. Those movement and asset
+  receipts do not establish usable wall
   selection or perspective. Keep this Mac viewport issue open.
   A local dummy-video capture of the scripted Mac menu route after turning
-  east and moving twice ends at (3,7); the authenticated map has floor one
-  square ahead, a wall two squares ahead, and no live DB4 creature within one
-  square. The runtime scene's large centered wall therefore matches this
-  route's source map and is not evidence of an adjacent creature. It still
-  does not establish that the reported M5 screen or physical key input behaves
-  the same way.
+  east and moving twice ends at (3,7). That older capture and its
+  near-wall interpretation used the nine-byte-shifted map and must be
+  repeated with the corrected data. Its DB4 sampling does not establish that
+  the reported M5 screen or physical key input behaves the same way.
   The held-key sampler had a second, conflicting generic mapping for Mac:
   W/E (retail wall buttons) could be treated as forward/right-turn motion
   while held. It now resolves held scancodes through the same authenticated
@@ -163,7 +174,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   sampled minute. This improves opening-route evidence but does not prove monster
   behavior during a longer campaign. These checks do not establish physical M5 key repeat
   or Retina presentation. A fresh logical 320x200 screenshot still shows a
-  dominant close wall; visual parity and
+  dominant close wall with the previous nine-byte-shifted map. Repeat that
+  capture after the map-base correction; visual parity and
   HiDPI remain unverified.
   The native Mac PCM test previously proved only SDL stream creation and queue
   admission. It now also requires an active output device when native audio is
@@ -192,13 +204,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   but the actual reported M5 session still needs paired runtime evidence:
   pose and live creature coordinates, SDL logical/drawable dimensions, an
   observed key event, and native SFX/MIDI output.
-  The authenticated Mac start corridor is a floor at (1,7) and a wall at
-  (1,6); after one north step, another north step is correctly blocked. The
+  The corrected authenticated Mac start corridor has floor at (1,7) and
+  (1,6); two north steps should be admitted, subject to live movement
+  conditions. The
   M11 real-media test already proves that a right turn followed by two forward
   steps reaches (3,8) facing east. The normal SDL startup test now exercises
   that same three-key sequence and requires the final pose, so a single
   successful north key can no longer stand in for continued movement. This
-  explains the close wall when continuing straight, but does not establish
+  no longer explains the close wall reported when continuing straight, and
+  does not establish
   whether the reported M5 keyboard, visible monster, Retina presentation or
   native audio issue is the same behavior. The Codex Mac remains locked, so
   those hardware observations are still unavailable here.
@@ -295,28 +309,19 @@ Reviewed 2026-08-29. Only open work is listed here.
   plus an outside click. Both new-game
   champions have empty inventories. New Game starts on map 0 at (1,8),
   layer 7. A later direct File_header chain census found DB5–DB10 records
-  on map 0, including a mirror/text-prefixed DB6/DB10 chain at (4,7);
-  the earlier claim that maps 0–8 had no DB5–15 records was false.
-  Original-media rendering now admits DB6 from the reachable corridor.
-  A diagnostic pose at map 0 (3,7) facing east also proves an opaque
-  pointer pickup of exact DB6 `0x18a9`, source-chain splice after the
-  mirror/text prefix, placement, redraw, and repick. The original-media
-  test now reaches this pose continuously from Title → New Game through
-  ordinary M11 forward, turn, and forward inputs; no diagnostic position
-  setter is used before the click.
-  A separate DB10 pickup diagnostic uses handle 0x2831 on map 9 at (1,0),
-  layer 5; map 16 also has items, including DB10 at (4,7). The current Mac C080
-  New Game movement reaches map 0 (4,7) through ordinary M11 commands
-  (`UP`, `TURN_RIGHT`, `UP` three times), but the next east move to (5,7)
-  is blocked. Retail map 0 contains 33 floor, 35 wall and two pit tiles;
-  all floor cells are connected to the first north-step cell, with no
-  door, stair or teleporter tile. New Game (1,8) itself is raw wall class 0.
+  on map 0, but the earlier DB6/DB10 chain and reachable corridor at
+  (4,7) came from map bytes shifted nine bytes late. Its continuous
+  New Game DB6 pickup and placement receipt must be repeated after
+  correction. A separate DB10 item is handle `0x2831` on map 9 at
+  (1,6), layer 5. The previous map-0 floor census, path to (4,7), and
+  wall-class claim for the start tile are superseded; reconstruct accessible
+  map-0 paths and item routes from the corrected source tiles.
   This is the retail Mac pose, not a Firestaff endian or spawn fallback:
   `CODE(16)+0x21a8..0x21ce` reads BE File_header word 8 from `$8(a0)`,
   masks its low five bits into party x (`A5-0x6684`), the next five into
   party y (`A5-0x6682`), the next two into facing (`A5-0x6686`), and clears
   map (`A5-0x6680`). It yields map 0 (1,8), facing north, and ordinary M11
-  movement leaves that entrance wall cell for floor (1,7). The subsequent
+  movement leaves the start cell for floor (1,7), then floor (1,6). The subsequent
   `CODE(16)+0x21d2..0x25de` loads map columns, records and level tables;
   it does not by itself prove a later scripted transition or exit. Trace
   the live post-selection event and timer path before changing the spawn.
@@ -411,16 +416,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
   the live File_header chain and original category/type fields; positive
-  retail-media render receipts cover each category. A normally reachable
-  map-0 corridor pose renders and admits DB6 for a pointer pickup and
-  placement round trip. A retail map-11 diagnostic pose now also verifies
-  DB5 weapon `0xd407` pickup, source tile splice, cell-2 placement as
-  `0x9407`, repick, and replacement through opaque viewport pixels.
-  The same authentic archive now positively verifies opaque pointer pickup,
-  source-chain removal, placement, repick, and replacement for DB7 `0x5c01`
-  on map 7, DB8 `0xa037` on map 17, and DB9 `0x240e` on map 14. These use
-  diagnostic source poses; normal gameplay access to the later maps remains
-  open. Their placed handles are `0x1c01`, `0x2037`, and `0x240e` respectively.
+  corrected original-media render and pointer receipts cover DB5 weapon
+  `0xd407` on map 11 (10,3), DB8 `0xa037` on map 17 (3,8), and DB9
+  `0x240e` on map 14 (6,13), including pickup, placement and repick.
+  Their diagnostic source poses do not prove normal gameplay access.
+  The purported reachable map-0 DB6 corridor was phantom floor, and its
+  old pickup receipt remains invalid. DB7 `0x5c01` lies on a wall at
+  map 7 (20,8), with no DB7 on an authenticated floor tile.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
@@ -431,21 +433,22 @@ Reviewed 2026-08-29. Only open work is listed here.
   a dynamic tree at `A5-0x662`. The Mac RAW4 FC0D graph now expands their
   ordinary viewport-local boxes to `(24,115,88,21)`, `(112,115,88,21)`,
   `(112,89,72,26)`, and `(40,89,72,26)`. A retail-media diagnostic at
-  map 9 (1,1) facing north verifies DB10 `0x2831` pickup, placement through
-  Rect `0x2fa` onto the front tile as `0xa831`, redraw, and opaque repick.
-  This proves the local item transaction; reach an item through normal New
-  Game movement before calling the gameplay exchange complete. Other live
+  map 9 (1,7) facing north verifies DB10 `0x2831` pickup and placement
+  through a source rectangle onto the front tile, then redraw and repick.
+  Reach an item through normal New Game movement before calling the
+  gameplay exchange complete. Other live
   Mac clipping states also need source receipts before using these boxes.
-  An original-media diagnostic pose on map 9 at (1,1) facing north found DB10
-  `0x2831` on the floor directly ahead at (1,0). Its original category
+  The corrected original-media census places DB10 `0x2831` on map 9
+  (1,6), directly ahead of a diagnostic pose at (1,7) facing north. Its category
   `0x15`, type `0x2c`, field-0 image now reaches the M11 frame as one drawn
-  item through source-gated placement. An opaque pointer click now moves that
-  exact square-root record into the hand. The original Mac graph contains
-  linked DB10 records, proven at map 10 (4,0) and map 15 (10,6). The indoor
+  item through source-gated placement. A corrected-map pointer receipt
+  verifies opaque pickup. The original Mac graph contains linked DB10 records
+  on map 10 (4,9) and map 15 (10,6). The indoor
   map-10 viewport now draws all five linked DB10 records with source draw
   slots. The outdoor map-15 viewport also draws both linked DB10 records.
-  A pointer click at the map-10 diagnostic pose can take linked `0xe813`
-  while preserving the remaining chain. Prove pointer pickup and placement
+  A corrected pointer click from map 10 (4,8,south) verifies linked
+  `0xe813` removal while preserving the remaining chain.
+  Prove pointer pickup and placement
   for linked DB5–DB9, and the normal gameplay route to the later-map items.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace

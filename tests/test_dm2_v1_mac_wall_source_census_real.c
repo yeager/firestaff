@@ -444,18 +444,17 @@ static int exercise_authentic_mac_mirror_not_wall_button(
     int type = -1;
     int thing;
 
-    /* From the original New Game pose (1,8,N), the D1C wall at (1,6)
-     * owns a Mac BE DB3 subtype-0x7e champion mirror. Its raw bytes must
-     * never be interpreted as a little-endian wall switch. */
-    thing = dm2_v1_dungeon_get_first_thing(dungeon, 0, 1, 6);
+    /* The retail D1C wall at (3,2) owns a Mac BE DB3 subtype-0x7e
+     * champion mirror. Its raw bytes must never be interpreted as a
+     * little-endian wall switch. The adjacent source floor is (3,3). */
+    thing = dm2_v1_dungeon_get_first_thing(dungeon, 0, 3, 2);
     mirror = thing >= 0 ? dm2_v1_dungeon_get_thing_record(
         dungeon, (uint16_t)thing, &type, NULL, NULL) : NULL;
     if (!state || !mirror || type != 3 ||
         (dm2_v1_dungeon_read_record_u16(dungeon, mirror + 2) & 0x7fu) != 0x7eu ||
-        dm2_v1_runtime_get_party_x() != 1 ||
-        dm2_v1_runtime_get_party_y() != 8 ||
-        dm2_v1_runtime_get_party_dir() != 0)
+        dm2_v1_dungeon_get_square_type(dungeon, 0, 3, 3) != 1)
         return 0;
+    dm2_v1_runtime_set_position(0, 3, 3, 0);
     memset(frame, 0, sizeof(frame));
     M11_GameView_Draw(state, frame, 320, 200);
     memset(&action, 0, sizeof(action));
@@ -469,7 +468,7 @@ static int authentic_mac_false_switch_word_is_source_type(
     DM2_V1_G1RuntimeMapActuatorReceipt source;
     int found = 0;
 
-    /* The BE DB3 word 0x1888 on map-2 wall (7,1) is an original subtype
+    /* The BE DB3 word 0x1888 on map-2 wall (7,8) is an original subtype
      * 0x08 mechanism. A PC-order read yields false subtype 0x18, which
      * the Mac wall-control fallback would incorrectly admit as a switch. */
     memset(&source, 0, sizeof(source));
@@ -478,12 +477,12 @@ static int authentic_mac_false_switch_word_is_source_type(
         return 0;
     for (int i = 0; i < source.actuator_root_count; ++i) {
         const DM2_V1_G1DirectActuatorRoot *record = &source.actuators[i];
-        if (record->x != 7 || record->y != 1 ||
+        if (record->x != 7 || record->y != 8 ||
             record->object_id != 0x8c72u)
             continue;
         if (record->attributes != 0x1888u ||
             record->actuator_type != 0x08u ||
-            dm2_v1_dungeon_get_square_type(dungeon, 2, 7, 1) != 0)
+            dm2_v1_dungeon_get_square_type(dungeon, 2, 7, 8) != 0)
             return 0;
         ++found;
     }
@@ -706,7 +705,7 @@ static int run_one(const char *zip, const char *source_id)
         const uint8_t *record;
         int record_type = -1;
         int width = 0, height = 0, stride = 0;
-        int item = dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0);
+        int item = dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6);
         int image = dm2_v1_viewport_item_graphic_index(0x15, 0x2c, 0);
         record = dm2_v1_dungeon_get_thing_record(
             dungeon, (uint16_t)item, &record_type, NULL, NULL);
@@ -827,16 +826,16 @@ static int run_one(const char *zip, const char *source_id)
          * corridor square immediately ahead of this diagnostic pose. */
         weapon = dm2_v1_dungeon_get_thing_record(
             dungeon, 0xd407u, &record_type, NULL, NULL);
-        if (dm2_v1_dungeon_get_square_type(dungeon, 11, 10, 1) != 1 ||
-            dm2_v1_dungeon_get_square_type(dungeon, 11, 10, 0) != 1 ||
-            dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != 0xd407 ||
+        if (dm2_v1_dungeon_get_square_type(dungeon, 11, 11, 3) != 1 ||
+            dm2_v1_dungeon_get_square_type(dungeon, 11, 10, 3) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 3) != 0xd407 ||
             !weapon || record_type != 5 ||
             dm2_v1_dungeon_read_record_u16(dungeon, weapon + 2) != 0x3c85u) {
             fprintf(stderr, "Mac retail DB5 source pose invalid: %s\n", source_id);
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        dm2_v1_runtime_set_position(11, 10, 1, 0);
+        dm2_v1_runtime_set_position(11, 11, 3, 3);
         memset(frame, 0, sizeof(frame));
         M11_GameView_Draw(&state, frame, 320, 200);
         memset(&weapon_render, 0, sizeof(weapon_render));
@@ -861,11 +860,10 @@ static int run_one(const char *zip, const char *source_id)
             int map, item_x, item_y, pose_x, pose_y, dir;
             uint16_t object_id;
             uint16_t w2, w4;
-            uint8_t category, item_type;
+            uint8_t record_type, category, item_type;
         } source_items[] = {
-            { 7, 20, 1, 20, 0, 2, 0x5c01u, 0xa050u, 0u, 0x12u, 0u },
-            { 17, 3, 5, 3, 4, 2, 0xa037u, 0x93ffu, 0u, 0x13u, 0x13u },
-            { 14, 6, 6, 6, 5, 2, 0x240eu, 0x1476u, 0x6000u, 0x14u, 3u }
+            { 17, 3, 8, 3, 7, 2, 0xa037u, 0x93ffu, 0u, 8u, 0x13u, 0x13u },
+            { 14, 6, 13, 6, 12, 2, 0x240eu, 0x1476u, 0x6000u, 9u, 0x14u, 3u }
         };
         for (size_t item = 0; item < sizeof(source_items) / sizeof(source_items[0]); ++item) {
             uint8_t frame[320u * 200u];
@@ -877,7 +875,7 @@ static int run_one(const char *zip, const char *source_id)
             const int y = source_items[item].item_y;
             record = dm2_v1_dungeon_get_thing_record(
                 dungeon, source_items[item].object_id, &record_type, NULL, NULL);
-            if (!record || record_type != (int)item + 7 ||
+            if (!record || record_type != source_items[item].record_type ||
                 dm2_v1_dungeon_read_record_u16(dungeon, record + 2) !=
                     source_items[item].w2 ||
                 (record_type == 9 &&
@@ -887,7 +885,7 @@ static int run_one(const char *zip, const char *source_id)
                 dm2_v1_dungeon_get_square_type(
                     dungeon, map, source_items[item].pose_x,
                     source_items[item].pose_y) != 1) {
-                fprintf(stderr, "Mac retail DB7-9 source pose invalid: %s db=%d\n",
+                fprintf(stderr, "Mac retail DB8-9 source pose invalid: %s db=%d\n",
                         source_id, record_type);
                 M11_GameView_Shutdown(&state);
                 return 1;
@@ -919,59 +917,32 @@ static int run_one(const char *zip, const char *source_id)
     {
         uint8_t frame[320u * 200u];
         DM2_V1_RuntimeItemRenderReceipt item_render;
-        /* New Game reaches (3,7) by ordinary movement. The floor square
-         * directly east contains a mirror/text prefix and linked DB6/DB10
-         * records; the renderer must skip the non-item prefix. */
-        if (dm2_v1_dungeon_get_square_type(dungeon, 0, 3, 7) != 1 ||
-            dm2_v1_dungeon_get_square_type(dungeon, 0, 4, 7) != 1 ||
-            dm2_v1_dungeon_get_first_thing(dungeon, 0, 4, 7) != 0x0c0e ||
-            dm2_v1_dungeon_get_next_thing(dungeon, 0x0c0e) != 0x08fe ||
-            dm2_v1_dungeon_get_next_thing(dungeon, 0x08fe) != 0x18a9) {
-            fprintf(stderr, "Mac corridor item chain invalid: %s\n", source_id);
-            M11_GameView_Shutdown(&state);
-            return 1;
-        }
-        dm2_v1_runtime_set_position(0, 3, 7, 1);
-        memset(frame, 0, sizeof(frame));
-        M11_GameView_Draw(&state, frame, 320, 200);
-        memset(&item_render, 0, sizeof(item_render));
-        if (dm2_v1_runtime_last_asset_item_count() != 8 ||
-            !dm2_v1_runtime_last_item_render_receipt(&item_render) ||
-            !item_render.asset_blit_ready ||
-            item_render.object_id != 0x28bau) {
-            fprintf(stderr,
-                    "Mac corridor DB6/DB10 item chain missing: %s count=%d last=%04x\n",
-                    source_id, dm2_v1_runtime_last_asset_item_count(),
-                    item_render.object_id);
-            M11_GameView_Shutdown(&state);
-            return 1;
-        }
-        /* The next ordinary east-facing pose sees the linked DB6 tail on
-         * the source wall. This last-item receipt proves a DB6 bitmap was
-         * actually blitted, without adding a test-only item-list API. */
+        /* The authentic retail DB6 record 0x5880 is on outdoor floor map
+         * 15 (16,6). The previous corridor fixture used a wall square
+         * exposed as floor by the old map-byte offset. */
         {
             int db6_type = -1;
             const uint8_t *db6 = dm2_v1_dungeon_get_thing_record(
-                dungeon, 0xd882u, &db6_type, NULL, NULL);
-            if (dm2_v1_dungeon_get_first_thing(dungeon, 0, 5, 7) != 0xcc10 ||
+                dungeon, 0x5880u, &db6_type, NULL, NULL);
+            if (dm2_v1_dungeon_get_square_type(dungeon, 15, 16, 5) != 1 ||
+                dm2_v1_dungeon_get_square_type(dungeon, 15, 16, 6) != 1 ||
                 !db6 || db6_type != 6 ||
-                dm2_v1_dungeon_read_record_u16(dungeon, db6 + 2) != 0x0084u) {
-                fprintf(stderr, "Mac corridor DB6 source wall invalid: %s\n", source_id);
+                dm2_v1_dungeon_read_record_u16(dungeon, db6 + 2) != 0x0099u) {
+                fprintf(stderr, "Mac retail DB6 floor source invalid: %s\n", source_id);
                 M11_GameView_Shutdown(&state);
                 return 1;
             }
         }
-        dm2_v1_runtime_set_position(0, 4, 7, 1);
+        dm2_v1_runtime_set_position(15, 16, 5, 2);
         memset(frame, 0, sizeof(frame));
         M11_GameView_Draw(&state, frame, 320, 200);
         memset(&item_render, 0, sizeof(item_render));
         if (!dm2_v1_runtime_last_item_render_receipt(&item_render) ||
             !item_render.valid || !item_render.asset_blit_ready ||
-            item_render.object_id != 0xd882u ||
-            item_render.item_category != 0x11 ||
-            item_render.item_type != 0x04) {
+            item_render.object_id != 0x5880u ||
+            item_render.item_category != 0x11) {
             fprintf(stderr,
-                    "Mac corridor DB6 bitmap missing: %s last=%04x cat=%x type=%x blit=%d\n",
+                    "Mac retail DB6 bitmap missing: %s last=%04x cat=%x type=%x blit=%d\n",
                     source_id, item_render.object_id,
                     item_render.item_category, item_render.item_type,
                     item_render.asset_blit_ready);
@@ -984,13 +955,13 @@ static int run_one(const char *zip, const char *source_id)
         DM2_V1_RuntimeItemRenderReceipt item_render;
         /* Diagnostic pose: the retail DB10 square is one step in front of
          * this source floor square. This does not assert a New Game route. */
-        if (dm2_v1_dungeon_get_square_type(dungeon, 9, 1, 1) != 1 ||
-            dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) != 0x2831) {
+        if (dm2_v1_dungeon_get_square_type(dungeon, 9, 1, 7) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6) != 0x2831) {
             fprintf(stderr, "Mac retail DB10 source pose invalid: %s\n", source_id);
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        dm2_v1_runtime_set_position(9, 1, 1, 0);
+        dm2_v1_runtime_set_position(9, 1, 7, 0);
         memset(frame, 0, sizeof(frame));
         M11_GameView_Draw(&state, frame, 320, 200);
         memset(&item_render, 0, sizeof(item_render));
@@ -1014,14 +985,14 @@ static int run_one(const char *zip, const char *source_id)
     {
         uint8_t frame[320u * 200u];
         DM2_V1_RuntimeItemRenderReceipt linked_render;
-        if (dm2_v1_dungeon_get_square_type(dungeon, 10, 3, 0) != 1 ||
-            dm2_v1_dungeon_get_first_thing(dungeon, 10, 4, 0) != 0xe80f ||
+        if (dm2_v1_dungeon_get_square_type(dungeon, 10, 3, 9) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 10, 4, 9) != 0xe80f ||
             dm2_v1_dungeon_get_next_thing(dungeon, 0xe80fu) != 0x2810) {
             fprintf(stderr, "Mac linked DB10 diagnostic pose invalid: %s\n", source_id);
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        dm2_v1_runtime_set_position(10, 3, 0, 1);
+        dm2_v1_runtime_set_position(10, 3, 9, 1);
         memset(frame, 0, sizeof(frame));
         M11_GameView_Draw(&state, frame, 320, 200);
         memset(&linked_render, 0, sizeof(linked_render));
@@ -1046,7 +1017,7 @@ static int run_one(const char *zip, const char *source_id)
         DM2_V1_RuntimeItemRenderReceipt outdoor_item;
         /* Original Mac retail map 15: two linked DB10 records are on the
          * floor square directly ahead of this outdoor party pose. */
-        if (dm2_v1_dungeon_get_square_type(dungeon, 15, 10, 5) != 1 ||
+        if (dm2_v1_dungeon_get_square_type(dungeon, 15, 10, 7) != 1 ||
             dm2_v1_dungeon_get_square_type(dungeon, 15, 10, 6) != 1 ||
             dm2_v1_dungeon_get_first_thing(dungeon, 15, 10, 6) != 0x2848 ||
             dm2_v1_dungeon_get_next_thing(dungeon, 0x2848u) != 0x6849) {
@@ -1054,7 +1025,7 @@ static int run_one(const char *zip, const char *source_id)
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        dm2_v1_runtime_set_position(15, 10, 5, 2);
+        dm2_v1_runtime_set_position(15, 10, 7, 0);
         memset(frame, 0, sizeof(frame));
         M11_GameView_Draw(&state, frame, 320, 200);
         memset(&outdoor_item, 0, sizeof(outdoor_item));
@@ -1079,9 +1050,9 @@ static int run_one(const char *zip, const char *source_id)
         DM2_V1_ViewportRect rect;
         DM2_V1_RuntimeViewportClickReceipt on_image, above_image;
         DM2_V1_BootExpandedRectReceipt rect7;
-        /* Diagnostic pose only: retail map-5 floor (1,3) faces source
+        /* Diagnostic pose only: retail map-5 floor (2,2) faces source
          * DB3 wall switch 0x4fa3 at (1,2). No New Game route is inferred. */
-        if (dm2_v1_dungeon_get_square_type(dungeon, 5, 1, 3) != 1 ||
+        if (dm2_v1_dungeon_get_square_type(dungeon, 5, 2, 2) != 1 ||
             dm2_v1_dungeon_get_square_type(dungeon, 5, 1, 2) != 0 ||
             !dm2_v1_boot_query_expanded_rect_receipt(profile, 7u, &rect7) ||
             !rect7.valid || rect7.rect.x != 0 || rect7.rect.y != 40) {
@@ -1089,7 +1060,7 @@ static int run_one(const char *zip, const char *source_id)
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        dm2_v1_runtime_set_position(5, 1, 3, 0);
+        dm2_v1_runtime_set_position(5, 2, 2, 3);
         memset(frame, 0, sizeof(frame));
         M11_GameView_Draw(&state, frame, 320, 200);
         memset(&on_image, 0, sizeof(on_image));

@@ -49,14 +49,14 @@ int main(void)
 
     profile = (DM2_V1_BootProfile *)state.dm2BootProfile;
     dungeon = profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
-    /* Retail Mac DB10 0x2831 is the first record on map 9 (1,0).  The
-     * authenticated floor square (1,1) faces it north; no fixture item is
+    /* Retail Mac DB10 0x2831 is the first record on map 9 (1,6).  The
+     * authenticated floor square (1,7) faces it north; no fixture item is
      * added to either record graph. */
     if (!dungeon || !dungeon->record_graph_complete ||
-        dm2_v1_dungeon_get_square_type(dungeon, 9, 1, 1) != 1 ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) != 0x2831 ||
+        dm2_v1_dungeon_get_square_type(dungeon, 9, 1, 7) != 1 ||
+        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6) != 0x2831 ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu) goto fail;
-    dm2_v1_runtime_set_position(9, 1, 1, 0);
+    dm2_v1_runtime_set_position(9, 1, 7, 0);
     memset(frame, 0, sizeof(frame));
     M11_GameView_Draw(&state, frame, 320, 200);
     memset(&hit, 0, sizeof(hit));
@@ -90,14 +90,14 @@ int main(void)
             &state, transparent_x, transparent_y,
             DM1_V1_MOUSE_MASK_LEFT_PC34) != M11_GAME_INPUT_IGNORED ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) != 0x2831)
+        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6) != 0x2831)
         goto fail;
     {
         M11_GameInputResult click_result = M11_GameView_HandlePointerButton(
             &state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34);
         if (click_result != M11_GAME_INPUT_REDRAW ||
         dm2_v1_runtime_get_leader_hand_object() != 0x2831u ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) == 0x2831) {
+        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6) == 0x2831) {
             goto fail;
         }
     }
@@ -142,7 +142,7 @@ int main(void)
             &state, place_x, place_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_REDRAW ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) !=
+        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6) !=
             (0x2831 | (place_cell << 14)) ||
         dm2_v1_dungeon_get_next_thing(
             dungeon, (uint16_t)(0x2831 | (place_cell << 14))) != 0xfffe)
@@ -166,7 +166,7 @@ int main(void)
             M11_GAME_INPUT_REDRAW ||
         dm2_v1_runtime_get_leader_hand_object() !=
             (uint32_t)(0x2831 | (place_cell << 14)) ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) != 0xfffe)
+        dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6) != 0xfffe)
         goto fail;
     printf("Mac retail DB10 pickup/place/pickup at %d,%d, cell %d\n",
            place_x, place_y, place_cell);
@@ -178,8 +178,8 @@ fail:
             click_x, click_y, transparent_x, transparent_y,
             place_x, place_y, place_cell,
             (unsigned)dm2_v1_runtime_get_leader_hand_object(),
-            dungeon ? (unsigned)dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) : 0u,
-            dungeon ? dm2_v1_dungeon_get_square_type(dungeon, 9, 1, 0) : -1,
+            dungeon ? (unsigned)dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 6) : 0u,
+            dungeon ? dm2_v1_dungeon_get_square_type(dungeon, 9, 1, 6) : -1,
             zone[2].rect.x, zone[2].rect.y, zone[2].rect.w, zone[2].rect.h);
     M11_GameView_Shutdown(&state);
     return 1;

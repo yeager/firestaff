@@ -73,19 +73,19 @@ trap cleanup_menu_data EXIT
 archive_hash_before=$(sha256sum "$archive")
 
 if [ "$(uname -s)" = Darwin ]; then
-    # A normal direct launch on macOS must choose authenticated Macintosh
-    # retail media automatically even when DOS data is also installed.
+    # An explicit Macintosh direct launch must retain its authenticated
+    # source even when FM Towns and DOS media are also installed.
     auto_probe_output=$(FIRESTAFF_DATA="$data_root" \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --game dm2 --boot-probe \
+        --game dm2 --platform mac --boot-probe \
         --boot-probe-frames 1 --duration 0 2>&1) || {
-        printf '%s\n' 'FAIL: DM2 macOS AUTO boot probe failed' "$auto_probe_output" >&2
+        printf '%s\n' 'FAIL: explicit DM2 Macintosh boot probe failed' "$auto_probe_output" >&2
         exit 1
     }
     case "$auto_probe_output" in
         *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*) ;;
         *)
-            printf '%s\n' 'FAIL: DM2 macOS AUTO did not select authenticated Macintosh retail assets' "$auto_probe_output" >&2
+            printf '%s\n' 'FAIL: explicit DM2 Macintosh launch did not select retail assets' "$auto_probe_output" >&2
             exit 1
             ;;
     esac
@@ -163,7 +163,7 @@ if (
     or party.get("mapX") != 3
     or party.get("mapY") != 8
     or party.get("direction") != 1
-    or party.get("championCount") != 2
+    or party.get("championCount") != 1
     or output_size.get("valid") != 1
     or (output_size.get("windowWidth"), output_size.get("windowHeight"),
         output_size.get("drawableWidth"), output_size.get("drawableHeight"))
@@ -181,7 +181,8 @@ echo 'PASS: normal DM2 Macintosh Title.MooV loop turns and moves twice in authen
 # 1920x1080 host window, so source New Game at (100,60) maps to (900,500).
 # The script must outlive M12, the 17.5-second retail Title.MooV, New Game and the first
 # mirror; then click the retail Mac forward arrow through the scaled pointer
-# route and issue real turn/move commands after the menu handoff. A launch
+# route, step north again through the authentic open corridor, and issue real
+# eastward turn/move commands after the menu handoff. A launch
 # receipt or a changed mirror position alone cannot prove that gameplay input
 # reaches the selected retail Mac runtime.
 menu_runtime_output=$(FIRESTAFF_DATA="$menu_data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
@@ -190,8 +191,8 @@ menu_runtime_output=$(FIRESTAFF_DATA="$menu_data_root" FIRESTAFF_FAIL_IF_NO_LAUN
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --scale-mode 0 --width 1920 --height 1080 \
     --menu --game dm2 --platform mac \
-    --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20,wait:1200,key:enter,click:900:500,wait:20,click:1074:580,wait:30,key:right,wait:30,key:up,wait:30,key:up' \
-    --duration 42000 2>&1) || {
+    --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20,wait:1200,key:enter,click:900:500,wait:20,click:1074:580,wait:30,key:up,wait:30,key:right,wait:30,key:up,wait:30,key:up' \
+    --duration 44000 2>&1) || {
     printf '%s\n' "$menu_runtime_output" >&2
     exit 1
 }
@@ -221,9 +222,9 @@ if (
     or startup.get("levelLoaded") != 1
     or party.get("mapIndex") != 0
     or party.get("mapX") != 3
-    or party.get("mapY") != 7
+    or party.get("mapY") != 6
     or party.get("direction") != 1
-    or party.get("championCount") != 2
+    or party.get("championCount") != 1
     or runtime_frame != {"accepted": 1, "realAssets": 1,
                          "noCoreFallbacks": 1, "fallbackDraws": 0}
     or script.get("waitFramesRemaining") != 0

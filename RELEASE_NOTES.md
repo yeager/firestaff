@@ -2,6 +2,16 @@
 
 ## Unreleased changes
 
+- `DM2 Macintosh dungeon data`: reads the retail File_header's declared
+  12,603-byte map span at byte 26,806. The previous map start was nine bytes
+  late, producing incorrect tile flags, object positions and a false
+  close-wall diagnosis at New Game. The corrected start is map 0 (1,8)
+  facing north with floor at both (1,7) and (1,6). Corrected original-media
+  tests verify the start corridor, diagnostic DB5/DB8/DB9 pickup and
+  placement, DB10 `0x2831` pickup and placement, and linked DB10 tail
+  pickup. The old map-0 DB6 corridor and DB7 floor pickup were false
+  fixtures. Visual parity, normal access to later maps and M5 hardware
+  behavior remain open.
 - `DM2 automatic platform selection`: when authenticated FM Towns media is
   available, `--game dm2` selects FM Towns on every host. An explicit
   `--platform` selection still takes precedence. Original Mac and FM Towns

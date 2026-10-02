@@ -7,115 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int exercise_mac_corridor_db6(
-    M11_GameViewState *state, DM2_V1_BootProfile *profile,
-    DM2_V1_DungeonData *dungeon, unsigned char frame[320u * 200u])
-{
-    DM2_V1_RuntimeViewportClickReceipt hit;
-    DM2_V1_BootExpandedRectReceipt rect7, zone[4];
-    int click_x = -1, click_y = -1, place_x = -1, place_y = -1;
-    int place_cell = -1;
-    uint16_t placed;
-
-    if (!state || !profile || !dungeon ||
-        dm2_v1_runtime_get_party_x() != 3 ||
-        dm2_v1_runtime_get_party_y() != 7 ||
-        dm2_v1_runtime_get_party_dir() != 1 ||
-        dm2_v1_dungeon_get_square_type(dungeon, 0, 3, 7) != 1 ||
-        dm2_v1_dungeon_get_square_type(dungeon, 0, 4, 7) != 1 ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 0, 4, 7) != 0x0c0eu ||
-        dm2_v1_dungeon_get_next_thing(dungeon, 0x0c0eu) != 0x08feu ||
-        dm2_v1_dungeon_get_next_thing(dungeon, 0x08feu) != 0x18a9u ||
-        dm2_v1_dungeon_get_next_thing(dungeon, 0x18a9u) != 0x18aau ||
-        dm2_v1_runtime_get_leader_hand_object() != 0xffffu)
-        return 0;
-    memset(frame, 0, 320u * 200u);
-    M11_GameView_Draw(state, frame, 320, 200);
-    for (int y = 40; y < 176 && click_x < 0; ++y)
-        for (int x = 0; x < 224; ++x) {
-            memset(&hit, 0, sizeof(hit));
-            if (dm2_v1_runtime_route_viewport_click(x, y, &hit) &&
-                hit.accepted && hit.target_kind == 1 &&
-                hit.object_id == 0x18a9) {
-                click_x = x; click_y = y; break;
-            }
-        }
-    if (click_x < 0 ||
-        M11_GameView_HandlePointerButton(
-            state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
-            M11_GAME_INPUT_REDRAW ||
-        dm2_v1_runtime_get_leader_hand_object() != 0x18a9u ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 0, 4, 7) != 0x0c0eu ||
-        dm2_v1_dungeon_get_next_thing(dungeon, 0x08feu) != 0x18aau ||
-        dm2_v1_dungeon_get_next_thing(dungeon, 0x18a9u) != 0xfffe)
-        return 0;
-    memset(frame, 0, 320u * 200u);
-    M11_GameView_Draw(state, frame, 320, 200);
-    if (!dm2_v1_boot_query_expanded_rect_receipt(profile, 7u, &rect7) ||
-        !rect7.valid || rect7.rect.x != 0 || rect7.rect.y != 40)
-        return 0;
-    for (int i = 0; i < 4; ++i)
-        if (!dm2_v1_boot_query_expanded_rect_receipt(
-                profile, (uint16_t)(0x2f8u + i), &zone[i]) || !zone[i].valid)
-            return 0;
-    for (int cell = 2; cell < 4 && place_x < 0; ++cell)
-        for (int y = zone[cell].rect.y;
-             y < zone[cell].rect.y + zone[cell].rect.h && place_x < 0; ++y)
-            for (int x = zone[cell].rect.x;
-                 x < zone[cell].rect.x + zone[cell].rect.w; ++x) {
-                int covered = 0;
-                int sx = x + rect7.rect.x, sy = y + rect7.rect.y;
-                if (sx < 0 || sx >= 224 || sy < 40 || sy >= 176) continue;
-                for (int prior = 0; prior < cell; ++prior)
-                    if (x >= zone[prior].rect.x && y >= zone[prior].rect.y &&
-                        x < zone[prior].rect.x + zone[prior].rect.w &&
-                        y < zone[prior].rect.y + zone[prior].rect.h)
-                        covered = 1;
-                memset(&hit, 0, sizeof(hit));
-                if (covered || dm2_v1_runtime_route_viewport_click(sx, sy, &hit))
-                    continue;
-                place_x = sx; place_y = sy; place_cell = cell; break;
-            }
-    if (place_x < 0 ||
-        M11_GameView_HandlePointerButton(
-            state, place_x, place_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
-            M11_GAME_INPUT_REDRAW ||
-        dm2_v1_runtime_get_leader_hand_object() != 0xffffu)
-        return 0;
-    placed = (uint16_t)(0x18a9u | (((1 + place_cell) & 3) << 14));
-    memset(frame, 0, 320u * 200u);
-    M11_GameView_Draw(state, frame, 320, 200);
-    click_x = -1;
-    for (int y = 40; y < 176 && click_x < 0; ++y)
-        for (int x = 0; x < 224; ++x) {
-            memset(&hit, 0, sizeof(hit));
-            if (dm2_v1_runtime_route_viewport_click(x, y, &hit) &&
-                hit.accepted && hit.target_kind == 1 &&
-                (uint16_t)hit.object_id == placed) {
-                click_x = x; click_y = y; break;
-            }
-        }
-    if (click_x < 0 ||
-        M11_GameView_HandlePointerButton(
-            state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
-            M11_GAME_INPUT_REDRAW ||
-        dm2_v1_runtime_get_leader_hand_object() != placed ||
-        dm2_v1_dungeon_get_next_thing(dungeon, 0x08feu) != 0x18aau)
-        return 0;
-    memset(frame, 0, 320u * 200u);
-    M11_GameView_Draw(state, frame, 320, 200);
-    if (M11_GameView_HandlePointerButton(
-            state, place_x, place_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
-            M11_GAME_INPUT_REDRAW ||
-        dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||
-        dm2_v1_dungeon_get_next_thing(dungeon, 0x28bau) != placed ||
-        dm2_v1_dungeon_get_next_thing(dungeon, placed) != 0xfffe)
-        return 0;
-    printf("Mac retail corridor DB6 pickup/place/repick: %04x -> %04x\n",
-           0x18a9u, placed);
-    return 1;
-}
-
 static int source_tile_has_item(
     const DM2_V1_DungeonData *dungeon, int map, int x, int y,
     uint16_t object)
@@ -291,8 +182,9 @@ int main(void)
             pose.current_level != 0 || pose.party_x != 1 ||
             pose.party_y != 8 || pose.party_dir != 0)
             goto fail;
-        /* New Game → north → east turn → east twice. Every step uses M11's
-         * ordinary Mac input and source ticks; no diagnostic set_position. */
+        /* The first north move is a real Mac input transaction.  The
+         * corrected source map has a wall at (2,7), so the old east route
+         * to the former DB6 floor fixture is invalid. */
         if (M11_GameView_HandlePointerButton(
                 &state, 274, 140, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
                 M11_GAME_INPUT_REDRAW)
@@ -302,49 +194,26 @@ int main(void)
             dm2_v1_runtime_get_party_y() != 7 ||
             dm2_v1_runtime_get_party_dir() != 0)
             goto fail;
-        if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT) !=
-                M11_GAME_INPUT_REDRAW)
-            goto fail;
-        (void)M11_GameView_AdvanceIdleTick(&state);
-        for (int x = 2; x <= 3; ++x) {
-            if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) !=
-                    M11_GAME_INPUT_REDRAW)
-                goto fail;
-            (void)M11_GameView_AdvanceIdleTick(&state);
-            if (dm2_v1_runtime_get_party_x() != x ||
-                dm2_v1_runtime_get_party_y() != 7 ||
-                dm2_v1_runtime_get_party_dir() != 1)
-                goto fail;
-        }
-        if (!dm2_v1_boot_runtime_capture(profile, &pose) ||
-            pose.current_level != 0 || pose.party_x != 3 ||
-            pose.party_y != 7 || pose.party_dir != 1)
-            goto fail;
     }
-    if (!dungeon || !dungeon->record_graph_complete ||
-        !exercise_mac_corridor_db6(&state, profile, dungeon, frame)) goto fail;
     if (!exercise_mac_retail_source_item(
-            &state, profile, dungeon, frame, 5, 11, 10, 0, 10, 1, 0,
-            0xd407u, 0x9407u)) goto fail;
+            &state, profile, dungeon, frame, 5, 11, 10, 3, 11, 3, 3,
+            0xd407u, 0x5407u)) goto fail;
     if (!exercise_mac_retail_source_item(
-            &state, profile, dungeon, frame, 7, 7, 20, 1, 20, 0, 2,
-            0x5c01u, 0x1c01u)) goto fail;
-    if (!exercise_mac_retail_source_item(
-            &state, profile, dungeon, frame, 8, 17, 3, 5, 3, 4, 2,
+            &state, profile, dungeon, frame, 8, 17, 3, 8, 3, 7, 2,
             0xa037u, 0x2037u)) goto fail;
     if (!exercise_mac_retail_source_item(
-            &state, profile, dungeon, frame, 9, 14, 6, 6, 6, 5, 2,
+            &state, profile, dungeon, frame, 9, 14, 6, 13, 6, 12, 2,
             0x240eu, 0x240eu)) goto fail;
     if (!dungeon || !dungeon->record_graph_complete ||
-        dm2_v1_dungeon_get_square_type(dungeon, 10, 3, 0) != 1 ||
+        dm2_v1_dungeon_get_square_type(dungeon, 10, 4, 8) != 1 ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 10, 4, 0) != chain[0])
+        dm2_v1_dungeon_get_first_thing(dungeon, 10, 4, 9) != chain[0])
         goto fail;
     for (int i = 0; i < 5; ++i)
         if (dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)chain[i]) !=
             chain[i + 1]) goto fail;
 
-    dm2_v1_runtime_set_position(10, 3, 0, 1);
+    dm2_v1_runtime_set_position(10, 4, 8, 2);
     memset(frame, 0, sizeof(frame));
     M11_GameView_Draw(&state, frame, 320, 200);
     /* The linked tail has an exposed opaque pixel after all five draws. */
@@ -368,7 +237,7 @@ int main(void)
             &state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_REDRAW ||
         dm2_v1_runtime_get_leader_hand_object() != (uint32_t)picked ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 10, 4, 0) != chain[0] ||
+        dm2_v1_dungeon_get_first_thing(dungeon, 10, 4, 9) != chain[0] ||
         dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)previous) !=
             successor ||
         dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)picked) != 0xfffe)
@@ -379,7 +248,7 @@ int main(void)
     if (dm2_v1_runtime_route_viewport_click(click_x, click_y, &hit) &&
         hit.accepted && (uint16_t)hit.object_id == (uint16_t)picked)
         goto fail;
-    printf("Mac retail linked pickup: %04x from map 10 (4,0) at %d,%d\n",
+    printf("Mac retail linked pickup: %04x from map 10 (4,9) at %d,%d\n",
            picked, click_x, click_y);
     M11_GameView_Shutdown(&state);
     return 0;

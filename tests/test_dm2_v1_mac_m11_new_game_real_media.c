@@ -623,10 +623,10 @@ int main(void)
             dm2_v1_viewport_g1_tile_class_to_square_type(
                 (uint8_t)((unsigned int)middle_raw >> 5)) != DM2_SQUARE_FLOOR ||
             dm2_v1_viewport_g1_tile_class_to_square_type(
-                (uint8_t)((unsigned int)raw >> 5)) != DM2_SQUARE_WALL) {
+                (uint8_t)((unsigned int)raw >> 5)) != DM2_SQUARE_FLOOR) {
             fprintf(stderr,
                     "FAIL: Mac retail start corridor no longer has its source "
-                    "floor at distance 1 and wall at distance 2 "
+                    "floor at distances 1 and 2 "
                     "(middle=%d far=%d)\n", middle_raw, raw);
             M11_GameView_Shutdown(&view);
             return 1;
@@ -982,24 +982,29 @@ int main(void)
             mac_hud_nonblack < 100u ||
             !hud_receipt.valid || !hud_receipt.hud_material_plan_required ||
             !hud_receipt.hud_material_plan_consumed ||
-            hud_receipt.hud_material_plan_command_count != 8 ||
+            hud_receipt.hud_material_plan_command_count !=
+                6 + dm2_v1_runtime_get_champion_count() ||
             !dm2_v1_runtime_last_frame_ownership(&frame_ownership) ||
             !frame_ownership.full_gdat_frame_valid ||
             !frame_ownership.floor_ceiling_materials_complete ||
-            (frame_ownership.wall_source_cell_required_mask & (1u << 6)) == 0u ||
+            frame_ownership.wall_gdat_blits == 0 ||
+            (frame_ownership.wall_source_cell_required_mask & (1u << 6)) != 0u ||
             (frame_ownership.wall_source_cell_required_mask & (1u << 3)) != 0u ||
             frame_ownership.wall_source_cell_required_mask !=
                 frame_ownership.wall_source_cell_consumed_mask ||
             frame_ownership.total_runtime_fallback_draws != 0) {
             fprintf(stderr,
                     "FAIL: Mac New Game did not render its source-backed RECT_7/HUD "
-                    "(view=%zu hud=%zu hudReceipt=%d/%d/%d frame=%d planes=%d fallbacks=%d)\n",
+                    "(view=%zu hud=%zu hudReceipt=%d/%d/%d frame=%d planes=%d wall=%d masks=%x/%x fallbacks=%d)\n",
                     viewport_nonblack, mac_hud_nonblack,
                     hud_receipt.hud_material_plan_required,
                     hud_receipt.hud_material_plan_consumed,
                     hud_receipt.hud_material_plan_command_count,
                     frame_ownership.full_gdat_frame_valid,
                     frame_ownership.floor_ceiling_materials_complete,
+                    frame_ownership.wall_gdat_blits,
+                    frame_ownership.wall_source_cell_required_mask,
+                    frame_ownership.wall_source_cell_consumed_mask,
                     frame_ownership.total_runtime_fallback_draws);
             M11_GameView_Shutdown(&view);
             return 1;
@@ -1108,9 +1113,25 @@ int main(void)
             return 1;
         }
     }
-    /* Continue the exact route exercised by the post-menu M12 smoke test:
-     * keep the authentic first forward step, turn east, then walk twice.
-     * This checks the reported endpoint without teleporting the party. */
+    /* The source map's east tile at (2,7) is a wall. Continue north through
+     * the open corridor at (1,6), then turn east and walk twice. */
+    if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
+            M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr, "FAIL: Mac M11 rejected second northward move\n");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    (void)M11_GameView_AdvanceIdleTick(&view);
+    if (dm2_v1_runtime_get_party_x() != 1 ||
+        dm2_v1_runtime_get_party_y() != 6 ||
+        dm2_v1_runtime_get_party_dir() != 0) {
+        fprintf(stderr,
+                "FAIL: Mac source corridor did not advance to (1,6) north (party=%d,%d,%d)\n",
+                dm2_v1_runtime_get_party_x(), dm2_v1_runtime_get_party_y(),
+                dm2_v1_runtime_get_party_dir());
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) !=
             M11_GAME_INPUT_REDRAW) {
         fprintf(stderr, "FAIL: Mac M11 active session rejected turn input\n");
@@ -1145,7 +1166,7 @@ int main(void)
     }
     (void)M11_GameView_AdvanceIdleTick(&view);
     if (dm2_v1_runtime_get_party_x() != 2 ||
-        dm2_v1_runtime_get_party_y() != 7 ||
+        dm2_v1_runtime_get_party_y() != 6 ||
         dm2_v1_runtime_get_party_dir() != 1) {
         fprintf(stderr,
                 "FAIL: Mac movement did not apply to the authentic map "
@@ -1177,10 +1198,10 @@ int main(void)
         }
         (void)M11_GameView_AdvanceIdleTick(&view);
         if (dm2_v1_runtime_get_party_x() != 3 ||
-            dm2_v1_runtime_get_party_y() != 7 ||
+            dm2_v1_runtime_get_party_y() != 6 ||
             dm2_v1_runtime_get_party_dir() != 1) {
             fprintf(stderr,
-                    "FAIL: second Mac forward move did not advance to (3,7) facing east (party=%d,%d,%d)\n",
+                    "FAIL: second Mac eastward move did not advance to (3,6) (party=%d,%d,%d)\n",
                     dm2_v1_runtime_get_party_x(),
                     dm2_v1_runtime_get_party_y(),
                     dm2_v1_runtime_get_party_dir());
@@ -1199,10 +1220,10 @@ int main(void)
             (void)M11_GameView_AdvanceIdleTick(&view);
             if ((tick % 10) != 9 && tick != 3599) continue;
             nearby = mac_live_map_has_nearby_creature(
-                live_dungeon, 0, 3, 7, &nearby_x, &nearby_y);
+                live_dungeon, 0, 3, 6, &nearby_x, &nearby_y);
             if (nearby != 0) {
                 fprintf(stderr,
-                        "FAIL: live Mac DB4 creature query during the post-movement source minute returned %d at source tick %d (creature=%d,%d party=3,7)\n",
+                        "FAIL: live Mac DB4 creature query during the post-movement source minute returned %d at source tick %d (creature=%d,%d party=3,6)\n",
                         nearby, tick + 1, nearby_x, nearby_y);
                 M11_GameView_Shutdown(&view);
                 return 1;
@@ -1212,7 +1233,7 @@ int main(void)
         if (!dm2_v1_boot_runtime_capture(
                 (DM2_V1_BootProfile *)view.dm2BootProfile, &after_ticks) ||
             !after_ticks.runtime_ready || after_ticks.current_level != 0 ||
-            after_ticks.party_x != 3 || after_ticks.party_y != 7 ||
+            after_ticks.party_x != 3 || after_ticks.party_y != 6 ||
             after_ticks.party_dir != 1) {
             fprintf(stderr,
                     "FAIL: Mac source ticks changed movement state unexpectedly after a one-minute live creature sweep (ready=%d map=%d party=%d,%d,%d)\n",
@@ -1239,14 +1260,14 @@ int main(void)
                 live_dungeon, after_ticks.current_level, after_ticks.party_x,
                 after_ticks.party_y, NULL, NULL);
             if (forward_square != DM2_SQUARE_FLOOR ||
-                far_square != DM2_SQUARE_WALL) {
+                far_square != DM2_SQUARE_FLOOR) {
                 fprintf(stderr,
-                        "FAIL: authentic Mac east lane from (3,7) should be floor at distance 1 and wall at distance 2 (raw=%d/%d square=%d/%d)\n",
+                        "FAIL: authentic Mac east lane from (3,6) should be floor at distances 1 and 2 (raw=%d/%d square=%d/%d)\n",
                         forward_raw, far_raw, forward_square, far_square);
                 M11_GameView_Shutdown(&view);
                 return 1;
             }
-            printf("Mac moved pose=(%d,%d) east lane: floor at distance 1, wall at distance 2 (live-adjacent-creatures=0 throughout 3600 source ticks)\n",
+            printf("Mac moved pose=(%d,%d) east lane: floor at distances 1 and 2 (live-adjacent-creatures=0 throughout 3600 source ticks)\n",
                    after_ticks.party_x, after_ticks.party_y);
             if (nearby != 0) {
                 fprintf(stderr,
@@ -1347,9 +1368,11 @@ int main(void)
             dungeon->map_offset_y[2] != 17 ||
             dungeon->map_offset_x[3] != 35 ||
             dungeon->map_offset_y[3] != 28 ||
-            dm2_v1_dungeon_get_tile_raw(dungeon, 2, 12, 15) != 0x20 ||
+            dm2_v1_dungeon_get_tile_raw(dungeon, 2, 12, 15) != 0xe0 ||
             dm2_v1_dungeon_get_tile_raw(dungeon, 3, 12, 5) != 0x20) {
-            fprintf(stderr, "FAIL: retail Mac map2/map3 overlap source changed\n");
+            fprintf(stderr, "FAIL: retail Mac map2/map3 overlap source changed (tiles=%x/%x)\n",
+                    dm2_v1_dungeon_get_tile_raw(dungeon, 2, 12, 15),
+                    dm2_v1_dungeon_get_tile_raw(dungeon, 3, 12, 5));
             M11_GameView_Shutdown(&view);
             return 1;
         }
@@ -1386,48 +1409,10 @@ int main(void)
         memset(&moved, 0, sizeof(moved));
         if (!dm2_v1_boot_runtime_capture(
                 (DM2_V1_BootProfile *)view.dm2BootProfile, &moved) ||
-            moved.current_level != 2 || moved.party_x != 12 ||
-            moved.party_y != 15 || moved.party_dir != 0) {
+            moved.current_level != 3 || moved.party_x != 12 ||
+            moved.party_y != 4 || moved.party_dir != 0) {
             fprintf(stderr,
-                    "FAIL: Mac M11 map3 north overlap did not return to map2 (map=%d x=%d y=%d dir=%d)\n",
-                    moved.current_level, moved.party_x, moved.party_y,
-                    moved.party_dir);
-            M11_GameView_Shutdown(&view);
-            return 1;
-        }
-        {
-            int type = -1;
-            int index = -1;
-            int size = 0;
-            int thing = dm2_v1_dungeon_get_first_thing(dungeon, 2, 19, 5);
-            const uint8_t *record = dm2_v1_dungeon_get_thing_record(
-                dungeon, (uint16_t)thing, &type, &index, &size);
-            if (dm2_v1_dungeon_get_tile_raw(dungeon, 2, 19, 4) != 0x20 ||
-                dm2_v1_dungeon_get_tile_raw(dungeon, 2, 19, 5) != 0xb0 ||
-                thing != 0x042e || type != 1 || size < 6 || !record ||
-                (record[5] & 1u) != 0u) {
-                fprintf(stderr, "FAIL: retail Mac class-five tile source changed\n");
-                M11_GameView_Shutdown(&view);
-                return 1;
-            }
-        }
-        dm2_v1_runtime_set_position(2, 19, 4, 2);
-        for (int tick = 0; tick < 128 && !dm2_v1_runtime_can_move();
-             ++tick)
-            (void)M11_GameView_AdvanceIdleTick(&view);
-        if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
-                M11_GAME_INPUT_REDRAW) {
-            fprintf(stderr, "FAIL: Mac M11 rejected class-five source input\n");
-            M11_GameView_Shutdown(&view);
-            return 1;
-        }
-        memset(&moved, 0, sizeof(moved));
-        if (!dm2_v1_boot_runtime_capture(
-                (DM2_V1_BootProfile *)view.dm2BootProfile, &moved) ||
-            moved.current_level != 2 || moved.party_x != 19 ||
-            moved.party_y != 5 || moved.party_dir != 2) {
-            fprintf(stderr,
-                    "FAIL: Mac M11 bit-zero-clear class-five tile did not admit movement (map=%d x=%d y=%d dir=%d)\n",
+                    "FAIL: Mac M11 map3 north overlap did not skip class-seven map2 tile (map=%d x=%d y=%d dir=%d)\n",
                     moved.current_level, moved.party_x, moved.party_y,
                     moved.party_dir);
             M11_GameView_Shutdown(&view);
