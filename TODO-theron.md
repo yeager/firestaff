@@ -103,9 +103,20 @@ Reviewed 2026-10-02. Only open work is listed here.
   first; then add PC-attributed party/item and sound-register observation
   before drawing field semantics.
   The user confirmed on 2026-10-02 that no authentic in-dungeon savestate is
-  available. A separate local Mednafen run loaded the authentic US 19-track
-  CUE, but no in-game input was delivered and no savestate was created; this
-  boot is not gameplay evidence.
+  available. A new isolated local Mednafen session used the US 19-track CUE,
+  System Card 3.0 (`ff1a674273fe3540ccef576376407d1d`), and the original
+  Akutuba-complete BRAM (`ffabc8d19b0915d4d9632a7ae2e90a97`) in a private
+  profile. Real controller inputs reached the original title and campaign
+  map. Mednafen wrote two authentic emulator states: title checkpoint
+  (`a3b436167a28a48c511859909ee4ea7e`) and campaign-map checkpoint
+  (`f7183e146f181189ae1470643a949092`). The title state was reloaded to the
+  title, and the map state was reloaded to the campaign map. Loading the
+  existing file showed Tower of Drator and other continuation chapters as
+  available, but the session did not enter a dungeon. The BRAM remained
+  byte-identical after shutdown, so no new original-format game save or
+  in-dungeon state was produced. Keep both `.mc0` states and screenshots in
+  the operator's private Firestaff work directory outside Git; do not claim
+  gameplay capture or native-save creation from these states.
   A later isolated 180-second trv2 `drator-generator` replay used the
   authenticated US CloneCD CUE, System Card (`ff1a674273fe3540ccef576376407d1d`),
   and instrumented Mednafen (`9889ef7e2361d2bce69fcae327bf5f9c`). Of five
