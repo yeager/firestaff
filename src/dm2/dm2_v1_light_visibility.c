@@ -16,6 +16,25 @@ int dm2_v1_1c9a_light_work_node_position(
     return 1;
 }
 
+int dm2_v1_1c9a_light_work_node_score(
+    const DM2_V1_1c9aLightWorkNode *grids,
+    int current_map, int alternate_map, int map, int x, int y,
+    uint8_t *out_score)
+{
+    int plane;
+    size_t index;
+    if (!grids || !out_score || x < 0 || x >= 32 || y < 0 || y >= 32)
+        return 0;
+    plane = map == current_map ? 0 : map == alternate_map ? 1 : -1;
+    if (plane < 0) return 0;
+    index = (size_t)plane * 1024u + (size_t)x * 32u + (size_t)y;
+    if (grids[index].packed_position !=
+        (uint16_t)((map << 10) | (y << 5) | x))
+        return 0;
+    *out_score = grids[index].score;
+    return 1;
+}
+
 uint16_t dm2_v1_1c9a_light_walk_rng_advance(uint16_t state)
 {
     /* SK1C9A.cpp:9521-9540 shifts v1d62ec and XORs its high byte with
@@ -188,6 +207,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
         unsigned rotations = 0u;
         Cell cell;
         uint8_t score;
+        uint8_t live_score;
         int cell_selector;
         size_t cell_index;
         /* SK1C9A rotates higher-score xp_90 packets to the write cursor
@@ -211,7 +231,14 @@ int dm2_v1_1c9a_light_mode8_frontier(
         cell_selector = cell.map == state->current_map ? 0 : 1;
         cell_index = (size_t)cell_selector * 1024u +
                      (size_t)cell.x * 32u + (size_t)cell.y;
-        if (!seen[cell_index] || score != work_grid[cell_index].score)
+        if (!seen[cell_index] ||
+            !dm2_v1_1c9a_light_work_node_score(
+                work_grid, state->current_map, state->alternate_map,
+                cell.map, cell.x, cell.y, &live_score))
+            goto incomplete;
+        /* The queue byte is only Firestaff's pending bucket bookkeeping.
+         * SK1C9A reads the live score from xp_bc when consuming xp_90. */
+        if (score != live_score)
             continue;
         /* vo_e8 reads xp_bc's first byte. Action 27 stores vo_e8 + 1
          * in the separate 32-stride visibility plane. */
@@ -222,7 +249,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
                     state->alternate_map : -1,
                 state->alternate_projection_x,
                 state->alternate_projection_y,
-                work_grid[cell_index].score))
+                live_score))
             goto incomplete;
         /* CHECK_RECOMPUTE_LIGHT supplies action 0x1b with byte 0x19, a
          * maximum source depth of 25. Only an admitted source edge enters

@@ -36,6 +36,12 @@ typedef struct {
 
 int dm2_v1_1c9a_light_work_node_position(
     DM2_V1_1c9aLightWorkNode *node, int map, int x, int y);
+/* Resolve an xp_90 packet through the active map's xp_bc grid. The ring
+ * packet has coordinates and map only; its score is read from xp_bc. */
+int dm2_v1_1c9a_light_work_node_score(
+    const DM2_V1_1c9aLightWorkNode *grids,
+    int current_map, int alternate_map, int map, int x, int y,
+    uint8_t *out_score);
 
 void dm2_v1_1c9a_light_visibility_reset(
     DM2_V1_1c9aLightVisibility *state, int current_map,

@@ -575,6 +575,24 @@ TEST(light_node_rng_branch_rotates_source_direction) {
     assert(dm2_v1_1c9a_light_node_next_direction(NULL, 0u) == 0xffu);
 }
 
+TEST(light_ring_packet_reads_live_xp_bc_score) {
+    DM2_V1_1c9aLightWorkNode grid[2u * 32u * 32u] = {{0}};
+    uint8_t score = 0xffu;
+    size_t index = 1024u + 13u * 32u + 9u;
+    assert(dm2_v1_1c9a_light_work_node_position(
+        &grid[index], 3, 13, 9));
+    grid[index].score = 2u;
+    assert(dm2_v1_1c9a_light_work_node_score(
+        grid, 38, 3, 3, 13, 9, &score) && score == 2u);
+    grid[index].score = 1u;
+    assert(dm2_v1_1c9a_light_work_node_score(
+        grid, 38, 3, 3, 13, 9, &score) && score == 1u);
+    assert(!dm2_v1_1c9a_light_work_node_score(
+        grid, 38, 3, 38, 13, 9, &score));
+    assert(!dm2_v1_1c9a_light_work_node_score(
+        grid, 38, 3, 3, 13, 10, &score));
+}
+
 TEST(light_mode7_skips_mode8_cells_beyond_source_radius) {
     DM2_V1_1c9aLightVisibility state;
     unsigned observed = 0u;
@@ -1102,6 +1120,7 @@ int main(void) {
     RUN(light_mode8_ring_rotates_higher_score_packets);
     RUN(light_walk_rng_uses_source_lfsr);
     RUN(light_node_rng_branch_rotates_source_direction);
+    RUN(light_ring_packet_reads_live_xp_bc_score);
     RUN(light_mode7_skips_mode8_cells_beyond_source_radius);
 
     /* Popcount */
