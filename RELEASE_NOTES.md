@@ -1,3 +1,39 @@
+# Firestaff v3.0.355
+
+## User-facing changes
+
+- `Automatic platform selection`: changes DM1, CSB and DM2 to prefer authenticated
+  FM Towns media on every host when no platform is specified. An explicit
+  platform choice still takes precedence.
+- `DM2 FM Towns startup`: restores the source title duration and opens the
+  menu from a bare `--game dm2` launch with original media.
+- `Startup diagnostics`: changes `--verbose` to list the selected edition, available
+  platform candidates and filenames searched for DM1, CSB and DM2.
+- `DM1 PC 3.4 audio`: restores original GRAPHICS.DAT effects for events not
+  replaced by a partial sound pack.
+- `CSB Atari ST viewport`: adds the first source DB5 weapon in the near
+  front cell using the original scaling and palette.
+- `DM2 Macintosh floor items`: loads the retail map span and reads linked
+  records for original floor-item pickup and placement routes.
+
+## Developer changes
+
+- `DM2 FM Towns viewport data`: decodes short IMG2 wall records and verifies
+  four light tables against the original SKULL.EXP executable.
+- `DM1, CSB and DM2 startup tests`: verify automatic FM Towns selection with
+  original media and retain explicit platform overrides.
+- `DM2 Macintosh source tests`: verify the retail start corridor, linked item
+  records and original map transitions with authentic media.
+
+## Known limitations
+
+- DM1 and CSB audio and dungeon presentation have not been verified on the
+  reported MacBook Pro M5 HiDPI hardware.
+- DM2 FM Towns dungeon presentation and movement after menu entry still need
+  original-media gameplay verification; this release does not establish full
+  visual or gameplay parity.
+- DM2 Macintosh later-map routes and physical macOS audio remain unverified.
+
 # Firestaff v3.0.354
 
 ## Unreleased changes
