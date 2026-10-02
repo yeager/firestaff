@@ -276,6 +276,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   media preservation-only.
   Remaining work is outdoor's distinct composition, transition stretching
   and same-tuple original-capture comparison; retain only GDAT-owned pixels.
+- Implement the FM Towns dynamic-light path before accepting post-teleport
+  dungeon frames. Original-media traversal from map 3 to map 38 and back
+  reaches the source coordinates, but both frames lack a c_light receipt.
+  SKProject `c_light.cpp:490-592` requires FIND_WALK_PATH modes 8 and 7,
+  visibility buffers, live light accumulators, party possessions, spells,
+  savegame light and weather. Firestaff's current pathfinders handle creature
+  movement and do not implement those light modes. GAME_LOAD also refreshes
+  the map scene before copying the live party and light state. Do not fill the
+  receipt from a map descriptor or a guessed minimum light level.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
   Firestaff at the same game state. The retired H2313 crops remain
   non-promotable because they are byte-identical and lack route labels; they
