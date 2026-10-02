@@ -1789,9 +1789,7 @@ static int dm2_runtime_mode7_step(
                 (uint8_t)raw, 1);
     }
     if (admitted < 0 &&
-        ((map == 3 && nx == 13 && (ny == 9 || ny == 8) &&
-          raw == 0x30) ||
-         (raw == 0x10 && first >= 0))) {
+        (raw == 0x30 || (raw == 0x10 && first >= 0))) {
         int no_creature = 0;
         int party_square = 0;
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
@@ -1802,7 +1800,6 @@ static int dm2_runtime_mode7_step(
             !walk->rt->record_pools_valid) return -1;
         /* Source class-1 and class-0 capability precedes the creature
          * blocker; prove the full chain before admitting a record tile. */
-        if (nx == 13 && ny == 8 && first != 0x0da2) return -1;
         while (link != (int16_t)0xfffe) {
             int16_t next;
             if (link == (int16_t)0xffff || ++length > 256u ||

@@ -6861,7 +6861,7 @@ int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
         } else if (type != 10 || length != 2u) return 0;
         link = dm2_v1_dungeon_read_record_u16(d, record);
     }
-    if (ordinal <= 0 || (length != 2u && length != 3u)) return 0;
+    if (ordinal <= 0 || length > 3u) return 0;
     graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
     if (graphicsset < 0 || graphicsset > 15 ||
         dm2_v1_query_gdat_entry_data_index(loader, 8, graphicsset, 11,

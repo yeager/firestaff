@@ -483,6 +483,23 @@ static void test_mode7_flags4_original_media(void)
     assert(class1_room.raw_tile == 0x30u &&
            class1_room.first_record_link == 0x0e53u &&
            class1_room.ceiling_ornament_word == 35u);
+    assert(dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+        &dungeon, &graphics, 3, 13, 7, &class1_room));
+    assert(class1_room.first_record_link == 0x0e57u &&
+           class1_room.ceiling_ornament_word == 35u);
+    {
+        int16_t link = 0x0e57;
+        unsigned length = 0u;
+        while (link != (int16_t)0xfffe) {
+            int16_t next;
+            assert(++length <= 256u);
+            assert((((uint16_t)link >> 10) & 0x0fu) != 4u);
+            assert(dm2_v1_record_pool_next_link(&pools, link, &next));
+            link = next;
+        }
+        assert(dm2_v1_mode7_go_there_class1_raw30_admission(
+            0x30u, 1, 0) == 1);
+    }
     memset(&class1_prepass, 0, sizeof(class1_prepass));
     class1_prepass.valid = 1u;
     class1_prepass.ceiling_gdat_known = 1u;
