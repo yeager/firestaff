@@ -11,6 +11,7 @@
  */
 
 #include <stdint.h>
+#include "dm2_v1_dungeon_loader.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,6 +126,13 @@ int dm2_v1_mode7_action23_visit_tile(
 int dm2_v1_mode7_light_accumulate_tile(
     uint8_t distance, int16_t tile_light, int16_t darkness,
     int16_t weather_light, int16_t *v1e0974, int16_t *v1e0978);
+
+/* Resolve the flags-4/type-zero floor branch from an authenticated dungeon
+ * receipt. Other SUMMARIZE_STONE_ROOM classes are intentionally rejected. */
+int dm2_v1_mode7_flags4_floor_terms(
+    const DM2_V1_CLightFlags4FloorReceipt *floor,
+    uint8_t weather_index, uint8_t weather_delta,
+    int16_t *out_tile_light, int16_t *out_weather_light);
 
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {

@@ -72,6 +72,39 @@ int dm2_v1_mode7_light_accumulate_tile(
     return 1;
 }
 
+int dm2_v1_mode7_flags4_floor_terms(
+    const DM2_V1_CLightFlags4FloorReceipt *floor,
+    uint8_t weather_index, uint8_t weather_delta,
+    int16_t *out_tile_light, int16_t *out_weather_light)
+{
+    static const int16_t weather_scale[6] = {99, 75, 50, 25, 1, 0};
+    uint16_t light;
+    unsigned index;
+
+    if (!floor || !floor->valid || floor->source_flags != 4u ||
+        !out_tile_light || !out_weather_light) return 0;
+    *out_tile_light = 0;
+    *out_weather_light = 0;
+    if ((floor->floor_ornament_word & 0xffu) == 0xffu ||
+        floor->floor_light_word == 0u) return 1;
+
+    light = floor->floor_light_word & 0x7fffu;
+    if (floor->weather_light_word != 0u) {
+        /* sklight.cpp:255-278: the weather-scaled ornament is accumulated
+         * separately before the terminal distance falloff. */
+        index = (unsigned)weather_index + (unsigned)weather_delta;
+        if (index > 5u) index = 5u;
+        *out_weather_light = (int16_t)((uint32_t)light *
+            (uint32_t)weather_scale[index] / 100u);
+    } else if ((floor->floor_light_word & 0x8000u) == 0u ||
+               (floor->floor_ornament_word & 0xff00u) != 0u) {
+        /* The high-bit source gate requires a nonzero animation/frame byte
+         * when no weather branch is present. */
+        *out_tile_light = (int16_t)light;
+    }
+    return 1;
+}
+
 /* ---- DM2_RECALC_LIGHT_LEVEL (c_light.cpp:16-198) ---- */
 
 void dm2_v1_recalc_light_level_pc34(

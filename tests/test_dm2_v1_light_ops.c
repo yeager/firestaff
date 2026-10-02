@@ -294,6 +294,133 @@ static void test_mode7_tile_accumulator(void)
         0u, 1, 1, 0, &base, NULL));
 }
 
+static uint8_t *read_mode7_media(const char *path, size_t *out_size)
+{
+    FILE *file = fopen(path, "rb");
+    long size;
+    uint8_t *bytes;
+    if (!file) return NULL;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)size;
+    return bytes;
+}
+
+static void test_mode7_flags4_original_media(void)
+{
+    const char *home = getenv("HOME");
+    char dungeon_path[1024], graphics_path[1024];
+    uint8_t *dungeon_bytes, *graphics_bytes;
+    size_t dungeon_size = 0u, graphics_size = 0u;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_AssetLoader graphics;
+    DM2_V1_CLightFlags4FloorReceipt floor;
+    int16_t tile_light, weather_light;
+    int16_t accumulated = 0, darkness = 0;
+    if (!home) return;
+    assert(snprintf(dungeon_path, sizeof(dungeon_path),
+        "%s/.firestaff/data/dm2/fmtowns_iso/DATA/DUNGEON.DAT", home) <
+        (int)sizeof(dungeon_path));
+    assert(snprintf(graphics_path, sizeof(graphics_path),
+        "%s/.firestaff/data/dm2/fmtowns_iso/DATA/GRAPHICS.DAT", home) <
+        (int)sizeof(graphics_path));
+    dungeon_bytes = read_mode7_media(dungeon_path, &dungeon_size);
+    graphics_bytes = read_mode7_media(graphics_path, &graphics_size);
+    if (!dungeon_bytes || !graphics_bytes) {
+        free(dungeon_bytes);
+        free(graphics_bytes);
+        printf("  SKIP: FM Towns original media unavailable\n");
+        return;
+    }
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&graphics, 0, sizeof(graphics));
+    assert(dm2_v1_dungeon_load(&dungeon, dungeon_bytes,
+                               (int)dungeon_size) == 0);
+    assert(dm2_v1_asset_loader_init(&graphics, graphics_bytes,
+                                    graphics_size) == 0);
+    assert(dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+        &dungeon, &graphics, 3, 12, 0, 0u, &floor));
+    assert(floor.floor_ornament_word == 0x0a56u &&
+           floor.floor_light_word == 0u);
+    assert(dm2_v1_mode7_flags4_floor_terms(
+        &floor, 0u, 0u, &tile_light, &weather_light));
+    assert(tile_light == 0 && weather_light == 0);
+    assert(dm2_v1_mode7_light_accumulate_tile(
+        0u, tile_light, 0, weather_light, &accumulated, &darkness));
+    assert(accumulated == 0 && darkness == 0);
+    for (int map = 3; map <= 38; map += 35) {
+        int found = 0;
+        for (int x = 0; x < dungeon.level_widths[map] && !found; ++x) {
+            for (int y = 0; y < dungeon.level_heights[map]; ++y) {
+                int raw = dm2_v1_dungeon_get_tile_raw(&dungeon, map, x, y);
+                if (raw < 0 || ((unsigned)raw >> 5) != 0u ||
+                    dm2_v1_dungeon_get_first_thing(&dungeon, map, x, y) != -1)
+                    continue;
+                assert(dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
+                    &dungeon, map, x, y, &floor));
+                assert(dm2_v1_mode7_flags4_floor_terms(
+                    &floor, 5u, 5u, &tile_light, &weather_light));
+                assert(tile_light == 0 && weather_light == 0);
+                found = 1;
+                break;
+            }
+        }
+        assert(found);
+    }
+    dm2_v1_asset_loader_free(&graphics);
+    dm2_v1_dungeon_free(&dungeon);
+    free(graphics_bytes);
+    free(dungeon_bytes);
+    printf("  PASS: FM Towns map 3 flags-4 source terms\n");
+}
+
+static void test_mode7_flags4_source_branches(void)
+{
+    DM2_V1_CLightFlags4FloorReceipt floor;
+    int16_t tile = -1, weather = -1;
+    memset(&floor, 0, sizeof(floor));
+    floor.valid = 1;
+    floor.source_flags = 4u;
+    floor.floor_ornament_word = 0x0a56u;
+    floor.floor_light_word = 100u;
+    assert(dm2_v1_mode7_flags4_floor_terms(&floor, 0u, 0u,
+                                           &tile, &weather));
+    assert(tile == 100 && weather == 0);
+    floor.floor_light_word = 0x8064u;
+    floor.floor_ornament_word = 0x0056u;
+    assert(dm2_v1_mode7_flags4_floor_terms(&floor, 0u, 0u,
+                                           &tile, &weather));
+    assert(tile == 0 && weather == 0);
+    floor.floor_ornament_word = 0x0a56u;
+    assert(dm2_v1_mode7_flags4_floor_terms(&floor, 0u, 0u,
+                                           &tile, &weather));
+    assert(tile == 100 && weather == 0);
+    floor.weather_light_word = 1u;
+    assert(dm2_v1_mode7_flags4_floor_terms(&floor, 1u, 1u,
+                                           &tile, &weather));
+    assert(tile == 0 && weather == 50);
+    assert(dm2_v1_mode7_flags4_floor_terms(&floor, 5u, 5u,
+                                           &tile, &weather));
+    assert(tile == 0 && weather == 0);
+    floor.floor_ornament_word = 0x00ffu;
+    assert(dm2_v1_mode7_flags4_floor_terms(&floor, 0u, 0u,
+                                           &tile, &weather));
+    assert(tile == 0 && weather == 0);
+    floor.source_flags = 1u;
+    assert(!dm2_v1_mode7_flags4_floor_terms(&floor, 0u, 0u,
+                                            &tile, &weather));
+}
+
 static void test_check_recompute_clean(void)
 {
     g_dirty_flag = 0; g_recomputed = 0;
@@ -334,6 +461,8 @@ int main(void)
     assert(!dm2_v1_mode7_action23_samples_tile(0x8000u));
     test_mode7_action23_visit_order();
     test_mode7_tile_accumulator();
+    test_mode7_flags4_source_branches();
+    test_mode7_flags4_original_media();
     test_proceed_light_darkness();
     test_proceed_light_torch();
     test_proceed_light_invalid();
