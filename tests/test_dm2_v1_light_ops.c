@@ -423,7 +423,17 @@ static void test_mode7_flags4_original_media(void)
             &pools, (int16_t)first, &creature));
         assert(creature.valid && creature.first_link == 0x0c13 &&
                creature.creature_link == 0x104c &&
-               creature.scanned_records == 9u);
+               creature.scanned_records == 9u &&
+               creature.prefix_db3_only);
+        assert(dm2_v1_mode8_class1_creature_admission(
+            0x30u, &creature, 0x36e7u, 0) == 1);
+        assert(dm2_v1_mode8_class1_creature_admission(
+            0x30u, &creature, 0x36e7u, 1) == 0);
+        assert(dm2_v1_mode8_class1_creature_admission(
+            0x30u, &creature, 0x227u, 0) == -1);
+        creature.prefix_db3_only = 0u;
+        assert(dm2_v1_mode8_class1_creature_admission(
+            0x30u, &creature, 0x36e7u, 0) == -1);
         assert(!dm2_v1_record_pool_first_creature_receipt(
             &pools, (int16_t)0xffff, &creature));
     }

@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,6 +124,9 @@ int dm2_v1_mode7_go_there_class5_b0_admission(
     uint8_t raw_tile, int teleporter_detail_present);
 int dm2_v1_mode7_go_there_class5_b8_admission(
     uint8_t raw_tile, uint16_t db1_word2);
+int dm2_v1_mode8_class1_creature_admission(
+    uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
+    uint16_t source_mask, int party_square);
 
 /* One admitted FIND_WALK_PATH action-0x17 node. Returns 0 for a source skip,
  * 1 after the callback succeeds, and -1 if an admitted source is unresolved.

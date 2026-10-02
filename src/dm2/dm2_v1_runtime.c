@@ -1712,28 +1712,29 @@ static int dm2_runtime_light_mode8_step(
     } else if (raw == 0x30 || (raw == 0x20 && first == -1)) {
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)rt->boot->dm2_state;
-        int16_t link = first < 0 ? (int16_t)0xfffe : (int16_t)first;
-        unsigned length = 0u;
+        DM2_V1_FirstCreatureReceipt creature;
+        int admitted;
         int party_square;
         if (!game || !rt->source_party_valid ||
             !rt->record_pools_valid) return -1;
-        /* Both light actions admit class 1 through capability 2. The
-         * party and creature blockers follow that capability check. */
-        while (link != (int16_t)0xfffe) {
-            int16_t next;
-            if (link == (int16_t)0xffff || ++length > 256u ||
-                (((uint16_t)link >> 10) & 0x0fu) == 4u ||
-                !dm2_v1_record_pool_next_link(
-                    &rt->record_pools, link, &next)) return -1;
-            link = next;
-        }
+        /* GO_THERE refreshes v1e08ae for this target with 19f0_045a,
+         * then 19f0_050f scans to the first DB4 creature. */
+        if (!dm2_v1_record_pool_first_creature_receipt(
+                &rt->record_pools,
+                first < 0 ? (int16_t)0xfffe : (int16_t)first,
+                &creature)) return -1;
         party_square = game->current_level == map &&
             game->party_x == nx && game->party_y == ny;
-        if ((raw == 0x30 ?
-             dm2_v1_mode7_go_there_class1_raw30_admission(
-                 (uint8_t)raw, 1, party_square) :
-             dm2_v1_mode7_go_there_class1_no_record_admission(
-                 (uint8_t)raw, first, party_square)) != 1) return 0;
+        if (creature.creature_link != (int16_t)0xfffe)
+            admitted = dm2_v1_mode8_class1_creature_admission(
+                (uint8_t)raw, &creature, 0x36e7u, party_square);
+        else
+            admitted = raw == 0x30 ?
+                dm2_v1_mode7_go_there_class1_raw30_admission(
+                    (uint8_t)raw, 1, party_square) :
+                dm2_v1_mode7_go_there_class1_no_record_admission(
+                    (uint8_t)raw, first, party_square);
+        if (admitted != 1) return admitted;
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         loader = dm2_v1_boot_asset_loader(rt->boot);
         if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(

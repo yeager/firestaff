@@ -309,6 +309,7 @@ typedef struct {
     int16_t first_link;
     int16_t creature_link;
     uint16_t scanned_records;
+    uint8_t prefix_db3_only;
 } DM2_V1_FirstCreatureReceipt;
 int dm2_v1_record_pool_first_creature_receipt(
     const DM2_V1_RecordPoolSet *set, int16_t first_link,

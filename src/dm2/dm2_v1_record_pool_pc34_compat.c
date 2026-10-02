@@ -1457,6 +1457,7 @@ int dm2_v1_record_pool_first_creature_receipt(
 {
     int16_t link = first_link;
     unsigned scanned = 0u;
+    int prefix_db3_only = 1;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!set || link == (int16_t)0xffff) return 0;
@@ -1465,6 +1466,8 @@ int dm2_v1_record_pool_first_creature_receipt(
         if (++scanned > 256u ||
             !dm2_v1_record_pool_address(set, link)) return 0;
         if ((((uint16_t)link >> 10) & 0x0fu) == 4u) break;
+        if ((((uint16_t)link >> 10) & 0x0fu) != 3u)
+            prefix_db3_only = 0;
         if (!dm2_v1_record_pool_next_link(set, link, &next) ||
             next == (int16_t)0xffff) return 0;
         link = next;
@@ -1474,6 +1477,7 @@ int dm2_v1_record_pool_first_creature_receipt(
     out->first_link = first_link;
     out->creature_link = link;
     out->scanned_records = (uint16_t)scanned;
+    out->prefix_db3_only = (uint8_t)prefix_db3_only;
     out->valid = 1;
     return 1;
 }

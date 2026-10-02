@@ -103,6 +103,21 @@ int dm2_v1_mode7_go_there_class5_b8_admission(
     return 0;
 }
 
+int dm2_v1_mode8_class1_creature_admission(
+    uint8_t raw_tile, const DM2_V1_FirstCreatureReceipt *creature,
+    uint16_t source_mask, int party_square)
+{
+    if (raw_tile != 0x30u || !creature || !creature->valid ||
+        source_mask != 0x36e7u || !creature->prefix_db3_only ||
+        creature->scanned_records < 2u ||
+        (((uint16_t)creature->creature_link >> 10) & 0x0fu) != 4u)
+        return -1;
+    /* SK1C9A:3139-55 sees no DB2 directional blocker in the prefix.
+     * :3375-3452 admits class-1 capability 2 and creature bit 0x1000
+     * under action 27's mask. :3560-95 is restricted to class-4 tiles. */
+    return party_square ? 0 : 1;
+}
+
 int dm2_v1_mode7_action23_visit_tile(
     uint16_t cached_tile_state, uint8_t radius,
     int16_t map, int16_t x, int16_t y,
