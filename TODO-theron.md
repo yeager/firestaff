@@ -70,14 +70,22 @@ Reviewed 2026-10-03. Only open work is listed here.
   dungeon and created no valid game save. Its trace and BRAM remain private at
   `/home/trv2/work/firestaff-theron-run-save-capture-20261002/pce-scheduled-run-20261003/`.
 - A separate `pce_fast` GUI attempt confirmed that a 4-second RUN hold can
-  reach the authentic JP Rev. 1 title screen. It did not establish dungeon
-  entry or a gameplay save: the menu remained at New Game/Load Game, a later
-  relaunch lost the CUE's data-backed video window, and Mednafen exited before
-  a stable post-menu capture. Only the isolated profile's 2 KiB BRAM and
-  Mednafen save-state were written; neither is treated as gameplay evidence.
-  The experiment also wrote the shared Mednafen config on clean shutdown.
-  Preserve original game media and existing profiles; only resume this capture
-  through a truly independent Mednafen base directory/config.
+  reach the authentic JP Rev. 1 title screen; button I opened the real file
+  menu, New Game/File 1 reached the seven-dungeon map, and the first campaign
+  route displayed Ak-Tu-Ba, its Japanese narrative, and the in-dungeon
+  first-person wall view. Captures remain outside Git. This proves a retail
+  JP gameplay session can reach Akutuba, not complete gameplay parity.
+- The JP native 2 KiB BRAM written by that run has SHA-256
+  `de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa`, equal
+  to the fresh menu-only BRAM produced earlier; it remains an empty save, not
+  campaign progress. A private Mednafen autosave produced a 229 KiB `.mca`
+  state at the dungeon. Restart restored Theron's HUD/hand pointer but left
+  the first-person viewport black, so the state is not accepted as a verified
+  usable gameplay save. Keep it outside Git and do not claim native-save or
+  save/restore parity from it.
+- One earlier GUI attempt wrote Mednafen's shared global config on clean
+  shutdown. Subsequent capture used a task-private Mednafen base directory;
+  preserve original game media and all existing profiles.
 
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
