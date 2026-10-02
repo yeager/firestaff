@@ -7059,6 +7059,7 @@ void M12_AssetStatus_ScanGameWithOptions(
 #endif
     int nexusArchiveAdmitted = 0;
     int reqMatch;
+    M12_ScanProgressContext progressCtx;
     int i;
     if (!status) {
         return;
@@ -7109,6 +7110,8 @@ void M12_AssetStatus_ScanGameWithOptions(
     memset(status, 0, sizeof(*status));
     FirestaffTheronMedia_Init(&status->theronMedia);
     m12_scan_progress_init(&status->scanProgress);
+    progressCtx.status = status;
+    progressCtx.options = options;
     rootCount = m12_build_search_roots(roots,
                                        effectiveRequestedDataDir,
                                        status->legacyFallbackDir);
@@ -7127,6 +7130,13 @@ void M12_AssetStatus_ScanGameWithOptions(
     m12_init_version_metadata(status);
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         m12_init_required_file_metadata(status, i);
+    }
+    if (options && options->progressFn) {
+        size_t rootIndex;
+        for (rootIndex = 0; rootIndex < rootCount; ++rootIndex) {
+            if (!m12_scan_progress_update(&progressCtx, "search root",
+                                          gameId, roots[rootIndex], 0)) return;
+        }
     }
     if (unsupportedPc9821Explicit) {
         /* An explicit unsupported archive is not a request to fall back to
@@ -7148,6 +7158,9 @@ void M12_AssetStatus_ScanGameWithOptions(
      * path is only for `--game`/selected launch and resolves the selected
      * game's source hashes and required runtime files. */
     {
+        if (options && options->progressFn &&
+            !m12_scan_progress_update(&progressCtx, "matching editions",
+                                      gameId, requestedDataDir, 0)) return;
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
             csbFmtownsAdmitted = m12_admit_csb_fmtowns_archive(status, gameIndex,
                                                                  roots, rootCount);
@@ -7882,6 +7895,13 @@ size_t M12_AssetStatus_GetVersionCount(const char* gameId) {
     return spec ? spec->versionCount : 0U;
 }
 
+const char* const* M12_AssetStatus_GetVersionCandidateNames(
+    const char* gameId, size_t index) {
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    return spec && index < spec->versionCount
+        ? spec->versions[index].names : NULL;
+}
+
 const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* status,
                                                          const char* gameId,
                                                          size_t index) {
@@ -8138,20 +8158,25 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     int gameIndex;
     size_t i;
     static const int pcFirstAutoPriority[] = {
-        /* Keep the PC primary route first except for DM2 on macOS below. */
+        /* Keep the PC primary route first except for DM2 below. */
         M12_ARCH_PC, M12_ARCH_MAC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
+    static const int dm2AutoPriority[] = {
+        /* DM2 defaults to its authenticated FM Towns edition whenever that
+         * media is available, regardless of host. Explicit --platform still
+         * selects the requested edition. */
+        M12_ARCH_FM_TOWNS,
 #if defined(__APPLE__) && TARGET_OS_OSX
-    static const int dm2MacHostAutoPriority[] = {
-        /* On macOS, use DM2's authenticated native Macintosh retail route
-         * when present. Otherwise fall back to the same PC-first route used
-         * on hosts without the Macintosh runtime. */
-        M12_ARCH_MAC, M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST,
-        M12_ARCH_FM_TOWNS, M12_ARCH_PCE, M12_ARCH_SATURN,
-        M12_ARCH_APPLE_IIGS
-    };
+        M12_ARCH_MAC,
 #endif
+        M12_ARCH_PC,
+#if !defined(__APPLE__) || !TARGET_OS_OSX
+        M12_ARCH_MAC,
+#endif
+        M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_PCE,
+        M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
+    };
     static const int csbAutoPriority[] = {
         /* Chaos Strikes Back was never released for DOS.  Its original
          * routes in Firestaff's authenticated catalogue are Amiga, FM Towns
@@ -8179,13 +8204,11 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             autoPriorityCount = sizeof(csbAutoPriority) /
                                 sizeof(csbAutoPriority[0]);
         }
-#if defined(__APPLE__) && TARGET_OS_OSX
         else if (strcmp(gameId, "dm2") == 0) {
-            autoPriority = dm2MacHostAutoPriority;
-            autoPriorityCount = sizeof(dm2MacHostAutoPriority) /
-                                sizeof(dm2MacHostAutoPriority[0]);
+            autoPriority = dm2AutoPriority;
+            autoPriorityCount = sizeof(dm2AutoPriority) /
+                                sizeof(dm2AutoPriority[0]);
         }
-#endif
         for (p = 0U; p < autoPriorityCount; ++p) {
             if (autoPriority[p] == M12_ARCH_ATARI_ST) {
                 int preferred = m12_dm1_atari_st_reference_version_index(

@@ -1,5 +1,15 @@
 # Firestaff v3.0.354
 
+## Unreleased changes
+
+- `DM2 automatic platform selection`: when authenticated FM Towns media is
+  available, `--game dm2` selects FM Towns on every host. An explicit
+  `--platform` selection still takes precedence. Original Mac and FM Towns
+  archives together verify the default.
+- `Startup diagnostics`: `--verbose` reports the selected DM1, CSB or DM2
+  edition and source. `--debug` adds search roots and catalogue candidate
+  filenames so missing or unexpected media choices can be investigated.
+
 ## User-facing changes
 
 - `DM1 PC 3.4 sound effects`: an optional partial sound pack now preserves

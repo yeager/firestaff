@@ -1,6 +1,6 @@
 /* AUTO platform selection must be a media policy, not catalogue order.
- * DM1 prefers its original PC route. DM2 prefers authenticated Macintosh
- * retail on macOS and falls back to PC; other hosts prefer PC. CSB never had
+ * DM1 prefers its original PC route. DM2 prefers authenticated FM Towns
+ * media, then Macintosh retail on macOS and PC elsewhere. CSB never had
  * a DOS release and defaults to verified native Amiga before FM Towns/Atari. */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
@@ -43,14 +43,24 @@ int main(void)
     {
         int pc = M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
         int mac = M12_AssetStatus_FindVersionIndex("dm2", "mac-en-retail");
+        int fmtowns = M12_AssetStatus_FindVersionIndex("dm2", "fmtowns-ja");
         int selected;
         memset(&status, 0, sizeof(status));
-        if (pc < 0 || mac < 0) {
+        if (pc < 0 || mac < 0 || fmtowns < 0) {
             fprintf(stderr, "FAIL: missing DM2 AUTO platform identities\n");
             return 1;
         }
         status.versions[2][pc].matched = 1;
         status.versions[2][mac].matched = 1;
+        status.versions[2][fmtowns].matched = 1;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "dm2", M12_ARCH_AUTO);
+        if (selected != fmtowns) {
+            fprintf(stderr, "FAIL: DM2 AUTO did not prefer authenticated FM Towns\n");
+            return 1;
+        }
+        puts("PASS: DM2 AUTO prefers FM Towns on every host");
+        status.versions[2][fmtowns].matched = 0;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, "dm2", M12_ARCH_AUTO);
 #if defined(__APPLE__) && TARGET_OS_OSX

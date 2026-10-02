@@ -485,18 +485,75 @@ typedef struct {
     int width;
     int height;
     int languageIndex;
+    int debug;
 } M11_ScanProgressContext;
 
 static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                       void* userData) {
     M11_ScanProgressContext* ctx = (M11_ScanProgressContext*)userData;
     if (!ctx || !ctx->framebuffer) return 1;
+    if (ctx->debug && progress &&
+        (!progress->currentGameId[0] ||
+         strcmp(progress->currentGameId, "dm1") == 0 ||
+         strcmp(progress->currentGameId, "csb") == 0 ||
+         strcmp(progress->currentGameId, "dm2") == 0)) {
+        fprintf(stderr, "firestaff: scan game=%s task=%s path=%s\n",
+                progress->currentGameId[0] ? progress->currentGameId : "all",
+                progress->currentTask,
+                progress->currentPath[0] ? progress->currentPath : "(none)");
+    }
     M12_StartupMenu_DrawScanProgressLocalized(progress, ctx->languageIndex,
                                               ctx->framebuffer,
                                               ctx->width, ctx->height);
     M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
     if (M11_Render_PumpEvents()) return 0;
     return 1;
+}
+
+static void m11_verbose_original_media(const M12_AssetStatus* status,
+                                       const char* gameId, int debug) {
+    size_t i;
+    if (!status || !gameId) return;
+    fprintf(stderr, "firestaff: %s available=%s scan-owner=%s\n",
+            gameId, M12_AssetStatus_GameAvailable(status, gameId) ? "yes" : "no",
+            M12_AssetStatus_GetRuntimeDataDir(status, gameId));
+    for (i = 0; i < M12_AssetStatus_GetVersionCount(gameId); ++i) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(status, gameId, i);
+        if (!version || (!debug && !version->matched)) continue;
+        if (debug) {
+            const char* const* candidates =
+                M12_AssetStatus_GetVersionCandidateNames(gameId, i);
+            size_t candidateIndex;
+            for (candidateIndex = 0U; candidates && candidates[candidateIndex];
+                 ++candidateIndex) {
+                fprintf(stderr,
+                        "firestaff: %s edition=%s candidate-file=%s search=scan-roots edition-result=%s\n",
+                        gameId,
+                        version->versionId ? version->versionId : "unknown",
+                        candidates[candidateIndex],
+                        version->matched ? "matched" : "hash not found");
+            }
+        }
+        fprintf(stderr, "firestaff: %s platform=%s edition=%s %s%s%s\n",
+                gameId, M12_Architecture_Label(
+                    M12_AssetStatus_GetVersionArchitecture(gameId, i)),
+                version->versionId ? version->versionId : "unknown",
+                version->matched ? "matched" : "not matched",
+                version->matched && version->matchedPath[0] ? " source=" : "",
+                version->matched ? version->matchedPath : "");
+    }
+    for (i = 0; i < M12_AssetStatus_GetRequiredFileCount(status, gameId); ++i) {
+        const M12_AssetRequiredFileStatus* file =
+            M12_AssetStatus_GetRequiredFile(status, gameId, i);
+        if (!file) continue;
+        fprintf(stderr, "firestaff: %s inventory-file=%s %s%s%s\n", gameId,
+                file->roleId ? file->roleId : "unknown",
+                file->matched ? "matched" : "missing",
+                file->matched && (file->sourcePath[0] || file->matchedPath[0])
+                    ? " source=" : "",
+                file->sourcePath[0] ? file->sourcePath : file->matchedPath);
+    }
 }
 
 typedef struct {
@@ -7759,6 +7816,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fs_ax_set_enabled(1);
     }
     o = &runtimeOptions;
+    if (o->verbose && o->gameId &&
+        (strcmp(o->gameId, "dm1") == 0 ||
+         strcmp(o->gameId, "csb") == 0 ||
+         strcmp(o->gameId, "dm2") == 0)) {
+        fprintf(stderr, "firestaff: startup game=%s mode=%s platform=%s data=%s\n",
+                o->gameId, o->directLaunch ? "direct" : "menu",
+                o->architectureOverride == M12_ARCH_AUTO ? "auto" :
+                    M12_Architecture_Label(o->architectureOverride),
+                o->dataDir && o->dataDir[0] ? o->dataDir : "default search roots");
+    }
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
     const char* scriptCursor = o->script;
@@ -7782,6 +7849,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
     if (rc != M11_RENDER_OK) {
         return rc;
+    }
+    if (o->verbose) {
+        fprintf(stderr, "firestaff: renderer ready video-driver=%s window=%dx%d\n",
+                SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
+                M11_Render_GetWindowWidth(), M11_Render_GetWindowHeight());
     }
     /* SDL's dummy driver can retain its default 1024x768 logical window even
      * when a test requested another size.  Scripted mouse events use the
@@ -7843,12 +7915,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         scanCtx.width = M11_LAUNCHER_FB_WIDTH;
         scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
         scanCtx.languageIndex = scanConfig.languageIndex;
+        scanCtx.debug = o->debug;
         menuInitOptions.scanProgressFn = m11_scan_progress_callback;
         menuInitOptions.scanProgressUserData = &scanCtx;
         M12_StartupMenu_InitWithOptions(&menuState,
                                         o->dataDir,
                                         o->gameId,
                                         &menuInitOptions);
+        if (o->verbose) {
+            if (!o->gameId || strcmp(o->gameId, "dm1") == 0)
+                m11_verbose_original_media(&menuState.assetStatus, "dm1", o->debug);
+            if (!o->gameId || strcmp(o->gameId, "csb") == 0)
+                m11_verbose_original_media(&menuState.assetStatus, "csb", o->debug);
+            if (!o->gameId || strcmp(o->gameId, "dm2") == 0)
+                m11_verbose_original_media(&menuState.assetStatus, "dm2", o->debug);
+        }
         if (o->languageOverride >= 0 && o->languageOverride < 20) {
             static const char* const languageCodes[] = {
                 "en", "sv", "fr", "de", "ja", "zh", "cs", "da", "es", "fi",
@@ -7899,6 +7980,23 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             M11_Render_Shutdown();
             return 2;
         }
+    }
+    if (o->verbose && o->gameId &&
+        (strcmp(o->gameId, "dm1") == 0 ||
+         strcmp(o->gameId, "csb") == 0 ||
+         strcmp(o->gameId, "dm2") == 0)) {
+        int slot = m11_game_option_slot(o->gameId);
+        int selected = menuState.gameOptions[slot].versionIndex;
+        const M12_AssetVersionStatus* version = selected >= 0
+            ? M12_AssetStatus_GetVersion(&menuState.assetStatus, o->gameId,
+                                         (size_t)selected) : NULL;
+        fprintf(stderr, "firestaff: selected game=%s platform=%s edition=%s source=%s\n",
+                o->gameId,
+                selected >= 0 ? M12_Architecture_Label(
+                    M12_AssetStatus_GetVersionArchitecture(o->gameId,
+                                                            (size_t)selected)) : "unknown",
+                version && version->versionId ? version->versionId : "none",
+                version && version->matchedPath[0] ? version->matchedPath : "none");
     }
     if (o->csbFmtownsJapanese) {
         if (!o->gameId || strcmp(o->gameId, "csb") != 0 ||
@@ -8043,6 +8141,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fallbackCtx.width = M11_LAUNCHER_FB_WIDTH;
         fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
         fallbackCtx.languageIndex = menuState.settings.languageIndex;
+        fallbackCtx.debug = o->debug;
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,
                                         &fallbackCtx);
@@ -8208,6 +8307,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps
          * the ReDMCSB TITLE/ENTRANCE order (TITLE.C F0437 before
          * ENTRANCE.C F0441). */
+        if (o->verbose && o->gameId &&
+            (strcmp(o->gameId, "dm1") == 0 ||
+             strcmp(o->gameId, "csb") == 0 ||
+             strcmp(o->gameId, "dm2") == 0))
+            fprintf(stderr, "firestaff: launch phase=game-handoff game=%s\n",
+                    o->gameId);
         if (!m11_open_requested_launch(&gameView,
                                        &menuState,
                                        &idleAccumulatorMs,
@@ -8218,6 +8323,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             goto cleanup;
         }
         launchedEver = 1;
+        if (o->verbose && o->gameId &&
+            (strcmp(o->gameId, "dm1") == 0 ||
+             strcmp(o->gameId, "csb") == 0 ||
+             strcmp(o->gameId, "dm2") == 0)) {
+            M11_BootProbeReceipt startupReceipt;
+            fprintf(stderr, "firestaff: launch phase=runtime-entered game=%s\n",
+                    o->gameId);
+            if (M11_GameView_GetBootProbeReceipt(&gameView, &startupReceipt))
+                fprintf(stderr, "firestaff: runtime game=%s startup-phase=%s animation=%s active=%d\n",
+                        o->gameId, startupReceipt.startupPhase,
+                        startupReceipt.startupAnimation,
+                        startupReceipt.startupActive);
+        }
         if (o->bootProbe) {
             int frames = o->bootProbeFrames < 0 ? 0 : o->bootProbeFrames;
             int scriptInputs;

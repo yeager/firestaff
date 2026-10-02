@@ -4516,6 +4516,17 @@ if(BUILD_TESTING)
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
     )
+    add_test(
+        NAME firestaff_cli_startup_diagnostics_real_media
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_cli_startup_diagnostics_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(firestaff_cli_startup_diagnostics_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;startup;cli;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+        TIMEOUT 120
+    )
     set_tests_properties(dm2_v1_fmtowns_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;fmtowns;startup;cli;real-media;native;skip-safe"

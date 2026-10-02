@@ -80,7 +80,8 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-title-ready <0|1> Fail unless title-ready flag matches\n"
             "  --boot-probe-expect-dm1-hoc-full-graphics Fail unless DM1 HoC full graphics receipt is ready\n"
             "  --boot-probe-expect-dm1-hoc-release-app-capture Fail unless DM1 HoC release/app capture is ready\n"
-            "  --verbose, -v       Show detailed information during operations\n"
+            "  --verbose, -v       Summarize startup, platform and original media selection\n"
+            "  --debug             Trace startup scans and platform decisions\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --no-music          Disable title and in-game music (keeps sound effects)\n"
@@ -684,6 +685,7 @@ int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
     int scanData = 0;
     int verbose = 0;
+    int debug = 0;
     int theronAuthenticatedFallback = 0;
     int enableExternalArchiveTools = 0;
     const char* theronVramSnapshot = NULL;
@@ -816,6 +818,11 @@ int main(int argc, char** argv) {
             continue;
         }
         if (strcmp(a, "--verbose") == 0 || strcmp(a, "-v") == 0) {
+            verbose = 1;
+            continue;
+        }
+        if (strcmp(a, "--debug") == 0) {
+            debug = 1;
             verbose = 1;
             continue;
         }
@@ -1086,6 +1093,7 @@ int main(int argc, char** argv) {
     }
 
     opts.verbose = verbose;
+    opts.debug = debug;
     /* A boot probe emits an M11 receipt after a direct selected-game launch;
      * it does not exercise M12 card navigation. Reject the conflicting
      * request instead of silently turning `--menu --boot-probe` into a

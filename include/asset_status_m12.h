@@ -200,6 +200,9 @@ int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
     char* outPath, size_t outPathSize);
 const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status);
 size_t M12_AssetStatus_GetVersionCount(const char* gameId);
+/* Catalogue filenames tested for an edition before hash admission. */
+const char* const* M12_AssetStatus_GetVersionCandidateNames(
+    const char* gameId, size_t index);
 const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* status,
                                                          const char* gameId,
                                                          size_t index);
