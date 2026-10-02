@@ -1,5 +1,11 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: The original Mac retail record graph now has positive pointer
+  transaction receipts for DB7, DB8 and DB9. Diagnostic source poses on
+  maps 7, 17 and 14 verify opaque pickup, source-chain removal, placement,
+  repick and replacement; the placed handles are `0x1c01`, `0x2037` and
+  `0x240e`. Normal gameplay routes to those maps remain unverified.
+
 - 2026-10-02: An original Mac retail DB5 weapon at map 11 (10,0) now has
   a positive viewport transaction receipt. From a diagnostic pose, the
   existing pointer path picks up `0xd407`, places it as `0x9407` in source

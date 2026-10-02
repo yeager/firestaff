@@ -396,7 +396,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   placement round trip. A retail map-11 diagnostic pose now also verifies
   DB5 weapon `0xd407` pickup, source tile splice, cell-2 placement as
   `0x9407`, repick, and replacement through opaque viewport pixels.
-  DB7–DB9 pointer transactions remain open.
+  The same authentic archive now positively verifies opaque pointer pickup,
+  source-chain removal, placement, repick, and replacement for DB7 `0x5c01`
+  on map 7, DB8 `0xa037` on map 17, and DB9 `0x240e` on map 14. These use
+  diagnostic source poses; normal gameplay access to the later maps remains
+  open. Their placed handles are `0x1c01`, `0x2037`, and `0x240e` respectively.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`

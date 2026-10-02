@@ -116,19 +116,48 @@ static int exercise_mac_corridor_db6(
     return 1;
 }
 
-static int exercise_mac_retail_db5(
+static int source_tile_has_item(
+    const DM2_V1_DungeonData *dungeon, int map, int x, int y,
+    uint16_t object)
+{
+    uint16_t cursor = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    for (int i = 0; i < 128 && cursor != 0xfffeu; ++i) {
+        if (cursor == object) return 1;
+        cursor = dm2_v1_dungeon_get_next_thing(dungeon, cursor);
+    }
+    return 0;
+}
+
+static uint16_t source_tile_find_record(
+    const DM2_V1_DungeonData *dungeon, int map, int x, int y,
+    uint16_t record_index)
+{
+    uint16_t cursor = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    for (int i = 0; i < 128 && cursor != 0xfffeu; ++i) {
+        if ((cursor & 0x3fffu) == record_index) return cursor;
+        cursor = dm2_v1_dungeon_get_next_thing(dungeon, cursor);
+    }
+    return 0xfffeu;
+}
+
+static int exercise_mac_retail_source_item(
     M11_GameViewState *state, DM2_V1_BootProfile *profile,
-    DM2_V1_DungeonData *dungeon, unsigned char frame[320u * 200u])
+    DM2_V1_DungeonData *dungeon, unsigned char frame[320u * 200u],
+    int db, int map, int item_x, int item_y, int pose_x, int pose_y,
+    int dir, uint16_t source_object, uint16_t expected_placed)
 {
     DM2_V1_RuntimeViewportClickReceipt hit;
     DM2_V1_BootExpandedRectReceipt rect7, zone[4];
     int click_x = -1, click_y = -1, place_x = -1, place_y = -1;
-    int place_cell = -1;
     uint16_t placed;
-    if (dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != 0xd407u ||
+    int record_type = -1;
+    const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+        dungeon, source_object, &record_type, NULL, NULL);
+    if (!record || record_type != db ||
+        !source_tile_has_item(dungeon, map, item_x, item_y, source_object) ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu)
         return 0;
-    dm2_v1_runtime_set_position(11, 10, 1, 0);
+    dm2_v1_runtime_set_position(map, pose_x, pose_y, dir);
     memset(frame, 0, 320u * 200u);
     M11_GameView_Draw(state, frame, 320, 200);
     for (int y = 40; y < 176 && click_x < 0; ++y)
@@ -136,7 +165,7 @@ static int exercise_mac_retail_db5(
             memset(&hit, 0, sizeof(hit));
             if (dm2_v1_runtime_route_viewport_click(x, y, &hit) &&
                 hit.accepted && hit.target_kind == 1 &&
-                (uint16_t)hit.object_id == 0xd407u) {
+                (uint16_t)hit.object_id == source_object) {
                 click_x = x; click_y = y; break;
             }
         }
@@ -144,8 +173,8 @@ static int exercise_mac_retail_db5(
         M11_GameView_HandlePointerButton(
             state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_REDRAW ||
-        dm2_v1_runtime_get_leader_hand_object() != 0xd407u ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) == 0xd407u)
+        dm2_v1_runtime_get_leader_hand_object() != source_object ||
+        source_tile_has_item(dungeon, map, item_x, item_y, source_object))
         return 0;
     memset(frame, 0, 320u * 200u);
     M11_GameView_Draw(state, frame, 320, 200);
@@ -173,7 +202,7 @@ static int exercise_mac_retail_db5(
                 memset(&hit, 0, sizeof(hit));
                 if (covered || dm2_v1_runtime_route_viewport_click(sx, sy, &hit))
                     continue;
-                place_x = sx; place_y = sy; place_cell = cell; break;
+                place_x = sx; place_y = sy; break;
             }
     if (place_x < 0 ||
         M11_GameView_HandlePointerButton(
@@ -181,8 +210,10 @@ static int exercise_mac_retail_db5(
             M11_GAME_INPUT_REDRAW ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu)
         return 0;
-    placed = (uint16_t)((0xd407u & 0x3fffu) | (place_cell << 14));
-    if (dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != placed ||
+    placed = source_tile_find_record(
+        dungeon, map, item_x, item_y, (uint16_t)(source_object & 0x3fffu));
+    if (placed != expected_placed ||
+        !source_tile_has_item(dungeon, map, item_x, item_y, placed) ||
         dm2_v1_dungeon_get_next_thing(dungeon, placed) != 0xfffeu)
         return 0;
     memset(frame, 0, 320u * 200u);
@@ -202,7 +233,7 @@ static int exercise_mac_retail_db5(
             state, click_x, click_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_REDRAW ||
         dm2_v1_runtime_get_leader_hand_object() != placed ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != 0xfffeu)
+        source_tile_has_item(dungeon, map, item_x, item_y, placed))
         return 0;
     memset(frame, 0, 320u * 200u);
     M11_GameView_Draw(state, frame, 320, 200);
@@ -210,9 +241,10 @@ static int exercise_mac_retail_db5(
             state, place_x, place_y, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_REDRAW ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||
-        dm2_v1_dungeon_get_first_thing(dungeon, 11, 10, 0) != placed)
+        !source_tile_has_item(dungeon, map, item_x, item_y, placed))
         return 0;
-    printf("Mac retail DB5 pickup/place/repick: d407 -> %04x\n", placed);
+    printf("Mac retail DB%d pickup/place/repick: %04x -> %04x\n",
+           db, source_object, placed);
     return 1;
 }
 
@@ -291,7 +323,18 @@ int main(void)
     }
     if (!dungeon || !dungeon->record_graph_complete ||
         !exercise_mac_corridor_db6(&state, profile, dungeon, frame)) goto fail;
-    if (!exercise_mac_retail_db5(&state, profile, dungeon, frame)) goto fail;
+    if (!exercise_mac_retail_source_item(
+            &state, profile, dungeon, frame, 5, 11, 10, 0, 10, 1, 0,
+            0xd407u, 0x9407u)) goto fail;
+    if (!exercise_mac_retail_source_item(
+            &state, profile, dungeon, frame, 7, 7, 20, 1, 20, 0, 2,
+            0x5c01u, 0x1c01u)) goto fail;
+    if (!exercise_mac_retail_source_item(
+            &state, profile, dungeon, frame, 8, 17, 3, 5, 3, 4, 2,
+            0xa037u, 0x2037u)) goto fail;
+    if (!exercise_mac_retail_source_item(
+            &state, profile, dungeon, frame, 9, 14, 6, 6, 6, 5, 2,
+            0x240eu, 0x240eu)) goto fail;
     if (!dungeon || !dungeon->record_graph_complete ||
         dm2_v1_dungeon_get_square_type(dungeon, 10, 3, 0) != 1 ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu ||
