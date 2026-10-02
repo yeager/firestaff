@@ -232,6 +232,29 @@ expect_gameplay_input strafe-left  1,3,2 ja
 expect_gameplay_input strafe-right 1,3,2 ja
 expect_gameplay_input action       1,3,2 ja
 
+# ReDMCSB REVIVE.C:63 F0280 owns the candidate-party transition. Follow the
+# authenticated FM Towns Hall map to mirror ordinal 5, accept its C040
+# RESURRECT control, then turn once through the live dungeon input path.
+# The PC 3.4 support/capture aggregate is not an FM Towns gameplay receipt.
+hall_route='wait5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1,key:kp2,key:kp2,key:kp2,key:kp2,key:kp2,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp1,key:kp1,key:kp1,key:kp2,key:kp1,key:kp6,key:kp6,wait5,click:112:83,wait5,click:130:115,wait5,key:kp6'
+hall_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --data-dir "$archive" --presentation-mode v1 \
+    --width 320 --height 200 --boot-probe --boot-probe-frames 720 \
+    --script "$hall_route" --duration 0 2>&1) || {
+    printf '%s\n' "$hall_output" >&2
+    exit 1
+}
+for receipt in 'assetMd5=c10c512f63461ebe79b5ac365115b61b' \
+    'platformHandoff=fmtowns-tmenu-edm' 'fmtownsProgram=EDM.EXP' \
+    'phase=dm1-runtime' 'map=0 party=14,3,1 champions=1' \
+    'dm1HocCandidatePanel=0' 'dm1HocCandidateOrdinal=-1'; do
+    if ! grep -Fq "$receipt" <<<"$hall_output"; then
+        printf '%s\n' "$hall_output" >&2
+        printf 'FAIL: authentic DM1 FM Towns Hall route missed %s\n' "$receipt" >&2
+        exit 1
+    fi
+done
+
 if [[ ${FIRESTAFF_TEST_VISUAL_PARITY:-0} == 1 ]]; then
     # Visual parity is tracked separately from start and input support. Opt
     # in only when the image review is ready to be resumed.
