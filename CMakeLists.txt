@@ -60732,6 +60732,23 @@ set_tests_properties(test_dm2_v1_mac_floor_pickup_real_media PROPERTIES
     SKIP_RETURN_CODE 77
     LABELS "dm2;macintosh;pickup;real-media;in-memory;skip-safe")
 
+add_executable(test_dm2_v1_mac_linked_floor_pickup_real_media
+    tests/test_dm2_v1_mac_linked_floor_pickup_real_media.c)
+target_include_directories(test_dm2_v1_mac_linked_floor_pickup_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mac_linked_floor_pickup_real_media PRIVATE
+    firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_mac_linked_floor_pickup_real_media PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_mac_linked_floor_pickup_real_media
+    COMMAND test_dm2_v1_mac_linked_floor_pickup_real_media)
+set_tests_properties(test_dm2_v1_mac_linked_floor_pickup_real_media PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
+    SKIP_RETURN_CODE 77
+    LABELS "dm2;macintosh;pickup;real-media;in-memory;skip-safe")
+
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c
     src/dm2/dm2_v1_fmtowns_disc.c

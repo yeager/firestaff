@@ -13089,9 +13089,10 @@ int dm2_v1_runtime_pickup_mac_floor_target(
     DM2_V1_DungeonData *dungeon;
     const DM2_V1_ViewportClickTarget *target;
     DM2_V1_SkprojectCutRecordReceipt cut;
-    int16_t pool_head, raw_head, original_head;
-    uint8_t *pool_record, *raw_record;
+    int16_t pool_head, raw_head, original_head, predecessor = DM2_V1_RECORD_HANDLE_END;
+    uint8_t *pool_record, *raw_record, *pool_predecessor = NULL, *raw_predecessor = NULL;
     uint8_t pool_link_before[2], raw_link_before[2];
+    uint8_t pool_predecessor_link_before[2], raw_predecessor_link_before[2];
     int contains = 0, actuator = 0;
     int db;
 
@@ -13131,11 +13132,35 @@ int dm2_v1_runtime_pickup_mac_floor_target(
      * original dungeon chain in step, as the runtime moverec path does. */
     original_head = (int16_t)dm2_v1_dungeon_get_first_thing(
         dungeon, rt->dungeon_level, target->map_x, target->map_y);
-    /* This admitted DRAW_ITEM slice publishes only square-head records.
-     * Its head cut changes a local link until the final tile write, which
-     * gives the two source mirrors a straightforward rollback boundary. */
-    if (original_head != target->object_id ||
-        !(pool_record = dm2_v1_record_pool_address_mut(
+    /* For a linked draw, CUT_RECORD_FROM changes the predecessor link in
+     * both mirrors. Locate and save that link before either cut. */
+    if (original_head != target->object_id) {
+        int16_t cursor = original_head;
+        int budget = 1;
+        for (int type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type)
+            budget += rt->record_pools.pools[type].record_count +
+                      rt->record_pools.pools[type].extension_count;
+        while (cursor != DM2_V1_RECORD_HANDLE_END && budget-- > 0) {
+            int16_t next;
+            if (!dm2_v1_record_pool_next_link(&rt->record_pools, cursor, &next))
+                return 0;
+            if (next == target->object_id) {
+                predecessor = cursor;
+                break;
+            }
+            cursor = next;
+        }
+        if (predecessor == DM2_V1_RECORD_HANDLE_END ||
+            !(pool_predecessor = dm2_v1_record_pool_address_mut(
+                &rt->record_pools, predecessor)) ||
+            !(raw_predecessor = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)predecessor, NULL, NULL, NULL)))
+            return 0;
+        memcpy(pool_predecessor_link_before, pool_predecessor, 2);
+        memcpy(raw_predecessor_link_before, raw_predecessor, 2);
+    }
+    if (!(pool_record = dm2_v1_record_pool_address_mut(
             &rt->record_pools, target->object_id)) ||
         !(raw_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
             dungeon, (uint16_t)target->object_id, NULL, NULL, NULL)))
@@ -13158,6 +13183,10 @@ int dm2_v1_runtime_pickup_mac_floor_target(
             (uint16_t)target->object_id) != 0) {
         memcpy(pool_record, pool_link_before, 2);
         memcpy(raw_record, raw_link_before, 2);
+        if (pool_predecessor) {
+            memcpy(pool_predecessor, pool_predecessor_link_before, 2);
+            memcpy(raw_predecessor, raw_predecessor_link_before, 2);
+        }
         (void)dm2_v1_dungeon_set_first_thing(
             dungeon, rt->dungeon_level, target->map_x, target->map_y,
             (uint16_t)original_head);

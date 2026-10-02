@@ -336,10 +336,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   Same-layer map 12 touches map 0 only at map 0
   (6,0), a wall tile. The verified map16→map0 stair does not establish a
   reverse route. Resolve the original Mac New Game start/transition before
-  assuming the map 0 boundary can be crossed. The current Mac C080
-  production pointer route now accepts source-admitted square-head floor
-  items through opaque pixels. Linked DB5–DB9 rendering, linked-item pickup,
-  and placement back onto a tile remain open.
+  assuming the map 0 boundary can be crossed. The Mac C080 production
+  pointer route now accepts source-admitted DB10 floor items through opaque
+  pixels, including a linked record. Linked DB5–DB9 rendering and placement
+  back onto a tile remain open.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
@@ -355,8 +355,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   linked DB10 records, proven at map 10 (4,0) and map 15 (10,6). The indoor
   map-10 viewport now draws all five linked DB10 records with source draw
   slots. The outdoor map-15 viewport also draws both linked DB10 records.
-  Extend linked DB5–DB9 admission and item interaction beyond square-root
-  records.
+  A pointer click at the map-10 diagnostic pose can take linked `0xe813`
+  while preserving the remaining chain. Extend linked DB5–DB9 admission,
+  placement, and the normal gameplay route to these items.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first

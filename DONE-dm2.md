@@ -1,16 +1,22 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: A linked Mac DB10 floor record can now be picked up through
+  its exposed opaque pixels. At retail map 10 (4,0), a diagnostic pose at
+  (3,0) facing east picks `0xe813`; the head stays `0xe80f`, predecessor
+  `0xa812` links to the end marker, and redraw removes the old target.
+  Placement and a normal New Game route to this tile remain open.
+
 - 2026-10-02: The Mac outdoor viewport now draws source-admitted DB10 items
   after its ground layer, following SKProject's outdoor tile/static-object
   pass. Retail map 15 (10,6), viewed from (10,5) facing south, draws both
   original linked records `0x2848` and `0x6849`; the second has chain
-  ordinal 2. Other outdoor item categories and interactions remain open.
+  ordinal 2. Other outdoor item categories remain open.
 
 - 2026-10-02: The indoor Mac viewport now walks authenticated DB10 tile
   chains and carries each record's source draw slot into placement. At retail
   map 10 (4,0), a diagnostic pose at (3,0) facing east draws all five original
   DB10 images; the fifth record `0xe813` uses slot 1, ordinal 5. Linked
-  DB5–DB9 rendering, outdoor item drawing, and linked-item pickup remain open.
+  DB5–DB9 rendering remains open.
 
 - 2026-10-02: The original Mac retail File_header record graph now follows
   big-endian `w0` links. Real-media tests confirm DB10 chains on map 10
@@ -27,8 +33,8 @@
 - 2026-10-02: The authenticated Mac DB10 `0x2831` floor item now enters the
   source-gated static-object render path. At diagnostic pose map 9 (1,1,N),
   an original-media M11 frame reports a drawn category `0x15`, type `0x2c`
-  item using the original 34x13 image. This proves one square-root item
-  render; chained items, normal traversal to the pose, and pickup remain open.
+  item using the original 34x13 image. This initial test proved only one
+  square-root item render; later entries cover linked items and pickup.
 
 - 2026-10-02: Viewport item and projectile virtual image addresses no longer
   overlap. The authentic Mac DB10 `0x2831` on map 9 selects category `0x15`,
