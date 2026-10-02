@@ -560,6 +560,21 @@ TEST(light_walk_rng_uses_source_lfsr) {
     assert(dm2_v1_1c9a_light_walk_rng_advance(3u) == 0xb401u);
 }
 
+TEST(light_node_rng_branch_rotates_source_direction) {
+    DM2_V1_1c9aLightNodeDecision node;
+    node = dm2_v1_1c9a_light_node_decision(1u, 3u, 0);
+    assert(node.rng == 0xb400u && node.direction == 0u &&
+           node.direction_delta == 3u && node.attempts == 5u);
+    assert(dm2_v1_1c9a_light_node_next_direction(&node,
+           node.direction) == 3u);
+    assert(dm2_v1_1c9a_light_node_next_direction(&node, 3u) == 2u);
+    node = dm2_v1_1c9a_light_node_decision(node.rng, 3u, 1);
+    assert(node.rng == 0x5a00u && node.direction == 0u &&
+           node.direction_delta == 2u && node.attempts == 7u);
+    assert(dm2_v1_1c9a_light_node_next_direction(&node, 3u) == 1u);
+    assert(dm2_v1_1c9a_light_node_next_direction(NULL, 0u) == 0xffu);
+}
+
 TEST(light_mode7_skips_mode8_cells_beyond_source_radius) {
     DM2_V1_1c9aLightVisibility state;
     unsigned observed = 0u;
@@ -1086,6 +1101,7 @@ int main(void) {
     RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
     RUN(light_mode8_ring_rotates_higher_score_packets);
     RUN(light_walk_rng_uses_source_lfsr);
+    RUN(light_node_rng_branch_rotates_source_direction);
     RUN(light_mode7_skips_mode8_cells_beyond_source_radius);
 
     /* Popcount */

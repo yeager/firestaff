@@ -23,6 +23,28 @@ uint16_t dm2_v1_1c9a_light_walk_rng_advance(uint16_t state)
     return (uint16_t)((state >> 1) ^ ((state & 1u) ? 0xb400u : 0u));
 }
 
+DM2_V1_1c9aLightNodeDecision dm2_v1_1c9a_light_node_decision(
+    uint16_t rng, unsigned node_score, int extended_search)
+{
+    DM2_V1_1c9aLightNodeDecision decision;
+    /* SK1C9A.cpp:9514-9547 uses the old low bit for vl_e0, advances
+     * v1d62ec once, then takes the new low two bits for vw_f8. */
+    decision.direction_delta = (uint8_t)((node_score -
+        ((rng & 1u) == 0u ? 1u : 0u)) & 3u);
+    decision.rng = dm2_v1_1c9a_light_walk_rng_advance(rng);
+    decision.direction = (uint8_t)(decision.rng & 3u);
+    decision.attempts = extended_search ? 7u : 5u;
+    return decision;
+}
+
+uint8_t dm2_v1_1c9a_light_node_next_direction(
+    const DM2_V1_1c9aLightNodeDecision *decision,
+    uint8_t previous_direction)
+{
+    if (!decision) return 0xffu;
+    return (uint8_t)((previous_direction + decision->direction_delta) & 3u);
+}
+
 void dm2_v1_1c9a_light_visibility_reset(
     DM2_V1_1c9aLightVisibility *state, int current_map,
     int current_width, int alternate_map, int alternate_width)

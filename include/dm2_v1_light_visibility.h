@@ -67,6 +67,18 @@ int dm2_v1_1c9a_light_mode8_frontier(
 /* SK1C9A v1d62ec is a separate 16-bit walk RNG, initialized to 1 by
  * dm2data.cpp. Call only at source branches that consume that state. */
 uint16_t dm2_v1_1c9a_light_walk_rng_advance(uint16_t state);
+typedef struct {
+    uint16_t rng;
+    uint8_t direction;
+    uint8_t direction_delta;
+    uint8_t attempts;
+} DM2_V1_1c9aLightNodeDecision;
+/* SK1C9A's branch after dequeuing a node with score <= vw_d4. */
+DM2_V1_1c9aLightNodeDecision dm2_v1_1c9a_light_node_decision(
+    uint16_t rng, unsigned node_score, int extended_search);
+uint8_t dm2_v1_1c9a_light_node_next_direction(
+    const DM2_V1_1c9aLightNodeDecision *decision,
+    uint8_t previous_direction);
 typedef int (*DM2_V1_1c9aLightTile)(
     void *context, int map, int x, int y, int distance,
     int16_t *ambient_delta, int16_t *darkness_delta);
