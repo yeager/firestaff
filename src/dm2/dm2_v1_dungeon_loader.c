@@ -6971,14 +6971,25 @@ int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
         if (type == 2) {
             uint8_t ornament;
             uint16_t frame;
+            unsigned ext_usage;
             if (size < 4) return 0;
             w2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
             if ((w2 & 0x6u) == 0x2u) {
-                if (((unsigned)w2 >> 11) != 0u) return 0;
+                ext_usage = (unsigned)w2 >> 11;
+                /* Ext usages 6 and 7 have no summary-floor assignment.
+                 * Ext usage 5 uses the text-visible bit to select frame
+                 * zero or an animated frame. Other modes need additional
+                 * source state before they can be admitted. */
+                if (ext_usage == 6u || ext_usage == 7u) goto next_record;
+                if (ext_usage != 0u && ext_usage != 5u) return 0;
                 ornament = (uint8_t)(w2 >> 3);
-                if (!dm2_v1_c_light_floor_frame(loader, ornament, tick,
-                                                 thing, &frame, &source_hash))
-                    return 0;
+                if (ext_usage == 5u && (w2 & 1u) == 0u) {
+                    frame = 0u;
+                    source_hash = 0x46524d30u ^
+                        ((uint32_t)ornament << 16) ^ thing;
+                } else if (!dm2_v1_c_light_floor_frame(
+                               loader, ornament, tick, thing, &frame,
+                               &source_hash)) return 0;
                 floor_word = (uint16_t)(ornament |
                     (uint16_t)((uint32_t)frame * 10u << 8));
             }
@@ -7005,6 +7016,7 @@ int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
                     (uint16_t)((uint32_t)frame * 10u << 8));
             }
         }
+next_record:
         next = dm2_v1_dungeon_get_next_thing(d, thing);
         if (next < 0 || next == (int)thing) return 0;
         thing = (uint16_t)next;

@@ -328,8 +328,8 @@ static void test_fmtowns_load(const char *path) {
             printf("  PASS: FM Towns source flags-4 floor gates (%d no-record, %d record-bearing, %d admitted, %d ornament)\n",
                    no_record_count, record_count, admitted_record_count,
                    ornament_record_count);
-            assert(no_record_count > 0 && record_count > 0 &&
-                   admitted_record_count > 0 && ornament_record_count > 0);
+            assert(no_record_count == 127 && record_count == 34 &&
+                   admitted_record_count == 30 && ornament_record_count == 12);
             /* Source DB2 text and DB3 actuator cases on the real map. */
             assert(dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
                 &dungeon, &loader, 3, 12, 0, 0u, &floor));
