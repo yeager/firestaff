@@ -194,6 +194,47 @@ static void test_real_dungeon_scan(void)
     free(data);
 }
 
+static void test_fmtowns_source_map_edges(void)
+{
+    const char *path = getenv("FIRESTAFF_DM2_FMTOWNS_DUNGEON");
+    uint8_t *data = NULL;
+    size_t size = 0u;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_DB1TeleporterTransition entry;
+    DM2_V1_DB1TeleporterTransition exit;
+
+    if (!path || !path[0]) return;
+    if (!read_file(path, &data, &size)) {
+        CHECK(0, "FM Towns original DUNGEON.DAT is readable");
+        return;
+    }
+    memset(&dungeon, 0, sizeof(dungeon));
+    if (dm2_v1_dungeon_load(&dungeon, data, (int)size) != 0) {
+        CHECK(0, "FM Towns original DUNGEON.DAT loads");
+        free(data);
+        return;
+    }
+    CHECK(dungeon.record_graph_complete,
+          "FM Towns DB1 map edges use a complete original record graph");
+    memset(&entry, 0, sizeof(entry));
+    CHECK(dm2_v1_db1_teleporter_transition(
+              &dungeon, 3, 13, 11, &entry) && entry.gate.admitted &&
+              entry.scope == 3 && entry.destination_map == 38 &&
+              entry.destination_x == 6 && entry.destination_y == 6,
+          "original map 3 (13,11) DB1 teleporter enters map 38 (6,6)");
+    memset(&exit, 0, sizeof(exit));
+    CHECK(dm2_v1_db1_teleporter_transition(
+              &dungeon, 38, 6, 4, &exit) && exit.gate.admitted &&
+              exit.destination_map == 3 && exit.destination_x == 13 &&
+              exit.destination_y == 9,
+          "original map 38 (6,4) DB1 teleporter exits map 3 (13,9)");
+    CHECK(!dm2_v1_db1_teleporter_transition(
+              &dungeon, 3, 13, 9, &entry),
+          "a teleporter destination is not inferred as a reverse edge");
+    dm2_v1_dungeon_free(&dungeon);
+    free(data);
+}
+
 int main(void)
 {
     DM2_V1_Move2fcf0434Receipt receipt;
@@ -206,6 +247,7 @@ int main(void)
               receipt.block_reason == DM2_V1_MOVE_2FCF_0434_BLOCK_NO_DUNGEON,
           "DM2_move_2fcf_0434 reports missing dungeon explicitly");
     test_real_dungeon_scan();
+    test_fmtowns_source_map_edges();
     CHECK(dm2_v1_DM2_move_2fcf_0434_source_evidence()[0] != '\0',
           "DM2_move_2fcf_0434 exposes skproject source evidence");
 

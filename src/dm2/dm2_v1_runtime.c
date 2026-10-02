@@ -427,54 +427,22 @@ static void dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y)
 {
     DM2_V1_DungeonData *dungeon;
-    int raw;
-    int square_type;
-    int first;
-    int record_type = -1;
-    const uint8_t *record;
-    DM2_V1_Move2fcf0434Receipt gate;
-    int destination_map;
-    int destination_x;
-    int destination_y;
-    int scope;
-    int rotation;
-    int rotation_type;
+    DM2_V1_DB1TeleporterTransition transition;
 
     if (!rt || !gs || !rt->boot || !rt->boot->dungeon_data)
         return;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    raw = dm2_v1_dungeon_get_tile_raw(dungeon, level, x, y);
-    square_type = dm2_v1_dungeon_get_square_type(dungeon, level, x, y);
-    if (raw < 0 || square_type != 5 || (raw & 0x08) == 0)
+    if (!dm2_v1_db1_teleporter_transition(
+            dungeon, level, x, y, &transition))
         return;
-    first = dm2_v1_dungeon_get_first_thing(dungeon, level, x, y);
-    if (first < 0 || (((unsigned)first >> 10) & 0x0fu) != 1u)
-        return;
-    record = dm2_v1_dungeon_get_thing_record(
-        dungeon, (uint16_t)first, &record_type, NULL, NULL);
-    if (!record || record_type != 1)
-        return;
-    {
-        uint16_t w2 = dm2_v1_dungeon_read_record_u16(dungeon, record + 2);
-        uint16_t w4 = dm2_v1_dungeon_read_record_u16(dungeon, record + 4);
-        destination_x = (int)(w2 & 0x1fu);
-        destination_y = (int)((w2 >> 5) & 0x1fu);
-        scope = (int)((w2 >> 13) & 3u);
-        rotation = (int)((w2 >> 10) & 3u);
-        rotation_type = (int)((w2 >> 12) & 1u);
-        destination_map = (int)(w4 >> 8);
-    }
-    if (!dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
-            dungeon, level, x, y, record_type, first,
-            dungeon->record_graph_complete, scope, destination_map,
-            destination_x, destination_y, &gate) || !gate.admitted)
-        return;
-    gs->current_level = destination_map;
-    gs->party_x = destination_x;
-    gs->party_y = destination_y;
-    gs->party_dir = rotation_type ? rotation : ((gs->party_dir + rotation) & 3);
-    gs->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, destination_map);
-    rt->dungeon_level = destination_map;
+    gs->current_level = transition.destination_map;
+    gs->party_x = transition.destination_x;
+    gs->party_y = transition.destination_y;
+    gs->party_dir = transition.rotation_type
+        ? transition.rotation : ((gs->party_dir + transition.rotation) & 3);
+    gs->outdoor = dm2_v1_dungeon_is_outdoor(
+        dungeon, transition.destination_map);
+    rt->dungeon_level = transition.destination_map;
     rt->view_dir = gs->party_dir;
     rt->outdoor = gs->outdoor;
     dm2_runtime_refresh_map_transition_context(rt);

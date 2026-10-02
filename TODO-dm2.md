@@ -256,6 +256,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   from (1,8) to (1,7), whereas the previous CLI parser silently dropped K.
   This proves one scripted keydown and the movement handoff. A physical held
   key on the reported M5 still needs observation to confirm repeat cadence.
+
+- Bind `DM2_FIND_WALK_PATH` mode 8 to the live CAII action list, visibility
+  grid and `DM2_19f0_05e8` target evaluator. The source DB1 map-edge decoder
+  now proves the original FM Towns map 3 → 38 → 3 route, but the current
+  same-map BFS cannot traverse that edge. Do not call the edge receipt a
+  complete creature path or a dynamic-light receipt.
+
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`

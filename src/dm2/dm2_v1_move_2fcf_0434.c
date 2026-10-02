@@ -47,6 +47,61 @@ static void dm2_move_2fcf_0434_block(
     out->block_reason = reason;
 }
 
+/* SKULLWIN/c_1c9a.cpp:6438 DM2_FIND_WALK_PATH and
+ * SKULLWIN/c_querydb.cpp:3111 DM2_GET_TELEPORTER_DETAIL:
+ * the enabled source square's first DB1 record owns destination, scope and
+ * rotation. Keep this record decode beside the movement gate so path
+ * traversal and live movement cannot infer different map edges. */
+int dm2_v1_db1_teleporter_transition(
+    const DM2_V1_DungeonData *dungeon, int map, int x, int y,
+    DM2_V1_DB1TeleporterTransition *out)
+{
+    int raw;
+    int first;
+    int record_type = -1;
+    const uint8_t *record;
+    uint16_t w2;
+    uint16_t w4;
+    DM2_V1_DB1TeleporterTransition candidate;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!dungeon || !out) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 5 ||
+        (raw & DM2_V1_MOVE_2FCF_SOURCE_ENABLE_BIT) == 0)
+        return 0;
+    first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (first < 0 || (((unsigned)first >> 10) & 0x0fu) !=
+                         DM2_V1_MOVE_2FCF_DB_TELEPORTER)
+        return 0;
+    record = dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)first, &record_type, NULL, NULL);
+    if (!record || record_type != DM2_V1_MOVE_2FCF_DB_TELEPORTER)
+        return 0;
+    w2 = dm2_v1_dungeon_read_record_u16(dungeon, record + 2);
+    w4 = dm2_v1_dungeon_read_record_u16(dungeon, record + 4);
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.source_map = map;
+    candidate.source_x = x;
+    candidate.source_y = y;
+    candidate.destination_x = (int)(w2 & 0x1fu);
+    candidate.destination_y = (int)((w2 >> 5) & 0x1fu);
+    candidate.rotation = (int)((w2 >> 10) & 3u);
+    candidate.rotation_type = (int)((w2 >> 12) & 1u);
+    candidate.scope = (int)((w2 >> 13) & 3u);
+    candidate.destination_map = (int)(w4 >> 8);
+    candidate.record_id = (uint16_t)first;
+    if (!dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
+            dungeon, map, x, y, record_type, first,
+            dungeon->record_graph_complete, candidate.scope,
+            candidate.destination_map, candidate.destination_x,
+            candidate.destination_y, &candidate.gate) ||
+        !candidate.gate.admitted)
+        return 0;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
     const DM2_V1_DungeonData *dungeon,
     int source_level,

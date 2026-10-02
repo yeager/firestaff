@@ -359,6 +359,16 @@
   fallback draws. Same-state comparison with the original Amiga renderer and
   broader gameplay/render parity remain open in `TODO-dm2.md`.
 
+## 2026-10-02 — Original DB1 teleporter map-edge input
+
+- Unified live party movement and future cross-map path traversal on one
+  source-record DB1 transition decoder. It reads the enabled square's first
+  original record, applies the existing scope and bounds gate, and exposes
+  destination and rotation without inferring reverse edges. A focused test
+  against the original FM Towns DUNGEON.DAT proves map 3 (13,11) → map 38
+  (6,6) and map 38 (6,4) → map 3 (13,9). This is a pathfinding input, not a
+  completed `DM2_FIND_WALK_PATH` mode 8 implementation.
+
 ## 2026-09-16 — FM Towns New Game real-media revalidation
 
 - Rebuilt and ran the full M11 FM Towns real-media gameplay regression against

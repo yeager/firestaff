@@ -45,6 +45,27 @@ typedef struct {
     uint32_t transition_hash;
 } DM2_V1_Move2fcf0434Receipt;
 
+typedef struct {
+    int source_map;
+    int source_x;
+    int source_y;
+    int destination_map;
+    int destination_x;
+    int destination_y;
+    int scope;
+    int rotation;
+    int rotation_type;
+    uint16_t record_id;
+    DM2_V1_Move2fcf0434Receipt gate;
+} DM2_V1_DB1TeleporterTransition;
+
+/* Decode one enabled, first-link DB1 teleporter from the authenticated map
+ * and admit it through the source movement gate. This is also the map-edge
+ * input needed by FIND_WALK_PATH's later cross-map traversal. */
+int dm2_v1_db1_teleporter_transition(
+    const DM2_V1_DungeonData *dungeon, int map, int x, int y,
+    DM2_V1_DB1TeleporterTransition *out);
+
 int dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
     const DM2_V1_DungeonData *dungeon,
     int source_level,
