@@ -147,44 +147,6 @@ static void test_proceed_light_invalid(void)
     printf("  PASS: proceed_light_invalid\n");
 }
 
-/* ---- add_background_light_from_tile tests ---- */
-
-static int16_t g_added_light;
-static int16_t g_added_x, g_added_y;
-
-static int16_t mock_get_tile_light(void *ctx, int16_t x, int16_t y)
-{
-    (void)ctx; (void)x; (void)y;
-    return 10;
-}
-
-static void mock_add_light(void *ctx, int16_t x, int16_t y, int16_t amount)
-{
-    (void)ctx;
-    g_added_x = x; g_added_y = y;
-    g_added_light = amount;
-}
-
-static void test_add_background_light(void)
-{
-    g_added_light = 0;
-    DM2_V1_AddBackgroundLightCallbacks cb = { mock_get_tile_light, mock_add_light };
-    dm2_v1_add_background_light_from_tile(5, 10, 3, &cb, NULL);
-    assert(g_added_light == 7); /* 10 - 3 = 7 */
-    assert(g_added_x == 5);
-    assert(g_added_y == 10);
-    printf("  PASS: add_background_light\n");
-}
-
-static void test_add_background_light_clamped(void)
-{
-    g_added_light = 0;
-    DM2_V1_AddBackgroundLightCallbacks cb = { mock_get_tile_light, mock_add_light };
-    dm2_v1_add_background_light_from_tile(5, 10, 20, &cb, NULL);
-    assert(g_added_light == 2); /* clamped to minimum 2 */
-    printf("  PASS: add_background_light_clamped\n");
-}
-
 /* ---- check_recompute_light tests ---- */
 
 static int g_dirty_flag;
@@ -222,8 +184,6 @@ int main(void)
     test_proceed_light_torch();
     test_proceed_light_invalid();
     test_recalc_light_level_source_branches();
-    test_add_background_light();
-    test_add_background_light_clamped();
     test_check_recompute_clean();
     test_check_recompute_dirty();
     printf("All light_ops tests passed.\n");

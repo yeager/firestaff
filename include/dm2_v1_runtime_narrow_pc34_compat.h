@@ -1015,17 +1015,6 @@ void dm2_v1_delete_missile_record(
  * c_light.cpp — light ops
  * ===================================================================== */
 
-/* ---- DM2_ADD_BACKGROUND_LIGHT_FROM_TILE (c_light.cpp:202) ----
- * Accumulate a tile's static light contribution into the light map. */
-typedef struct {
-    int16_t (*get_tile_light)(void *ctx, int16_t x, int16_t y);
-    void (*add_light)(void *ctx, int16_t x, int16_t y, int16_t amount);
-} DM2_V1_AddBackgroundLightCallbacks;
-
-void dm2_v1_add_background_light_from_tile(
-    int16_t x, int16_t y, int16_t radius,
-    const DM2_V1_AddBackgroundLightCallbacks *cb, void *ctx);
-
 /* ---- DM2_CHECK_RECOMPUTE_LIGHT (c_light.cpp:490) ----
  * Check the dirty flag and recompute the light map if needed.
  * Returns 1 if a recompute was performed. */

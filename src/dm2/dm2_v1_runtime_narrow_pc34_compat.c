@@ -1426,21 +1426,6 @@ void dm2_v1_delete_missile_record(
  * c_light.cpp
  * ===================================================================== */
 
-void dm2_v1_add_background_light_from_tile(
-    int16_t x, int16_t y, int16_t radius,
-    const DM2_V1_AddBackgroundLightCallbacks *cb, void *ctx)
-{
-    if (!cb)
-        return;
-    int16_t light = cb->get_tile_light(ctx, x, y);
-    if (light == 0)
-        return;
-    int16_t amount = (int16_t)(light - radius);
-    if (amount < 2)
-        amount = 2;
-    cb->add_light(ctx, x, y, amount);
-}
-
 int32_t dm2_v1_check_recompute_light(
     const DM2_V1_CheckRecomputeLightCallbacks *cb, void *ctx)
 {
