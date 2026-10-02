@@ -325,6 +325,8 @@ TEST(light_visibility_action27) {
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 12);
     assert(dm2_v1_1c9a_light_visibility_mark(&state, 38, 6, 4, 2u));
     assert(state.current[6u * 32u + 4u] == 3u);
+    assert(dm2_v1_1c9a_light_visibility_or_mask(&state, 38, 6, 4, 0x80u));
+    assert(state.current[6u * 32u + 4u] == 0x83u);
     assert(state.alternate[6u * 32u + 4u] == 0u);
     assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 11, 9, 0u));
     assert(state.alternate[11u * 32u + 9u] == 1u);

@@ -41,6 +41,26 @@ int dm2_v1_1c9a_light_visibility_mark(
     return wrote;
 }
 
+int dm2_v1_1c9a_light_visibility_or_mask(
+    DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
+    uint8_t mask)
+{
+    int wrote = 0;
+    if (!state || x < 0 || y < 0 || y >= 32 || !mask)
+        return 0;
+    /* SK1C9A.cpp action 0x1b's later light-mode branch ORs a direction
+     * mask into the same cells written by the depth branch. */
+    if (map == state->current_map && x < state->current_width) {
+        state->current[(size_t)x * 32u + (size_t)y] |= mask;
+        wrote = 1;
+    }
+    if (map == state->alternate_map && x < state->alternate_width) {
+        state->alternate[(size_t)x * 32u + (size_t)y] |= mask;
+        wrote = 1;
+    }
+    return wrote;
+}
+
 int dm2_v1_1c9a_light_visibility_level_inputs(
     const DM2_V1_1c9aLightVisibility *state, int map,
     int16_t *v1e0974, int16_t *v1e0978, uint32_t *source_state_hash)

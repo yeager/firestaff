@@ -76,6 +76,9 @@ void dm2_v1_1c9a_light_visibility_reset(
 int dm2_v1_1c9a_light_visibility_mark(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     unsigned depth);
+int dm2_v1_1c9a_light_visibility_or_mask(
+    DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
+    uint8_t mask);
 /* Only a completed mode-8/mode-7 pair can be consumed by c_light. */
 int dm2_v1_1c9a_light_visibility_level_inputs(
     const DM2_V1_1c9aLightVisibility *state, int map,
