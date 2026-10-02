@@ -1634,6 +1634,20 @@ static int dm2_runtime_light_mode8_step(
         /* SK1C9A/19f0_05e8 case 8 passes argl2=0. A marked class-0
          * square stops this probe before its DB2/DB3 record scan. */
         return 0;
+    } else if (raw == 0x50 && first >= 0 &&
+               (((uint16_t)first >> 10) & 0x0fu) == 2u) {
+        int16_t link = (int16_t)first;
+        unsigned length = 0u;
+        /* SK1C9A/1BAAD's special wall blockers are DBF subtype 0xe and
+         * DB4 creatures. Admit only complete DB2-only original chains. */
+        if (!rt->record_pools_valid) return -1;
+        while (link != (int16_t)0xfffe) {
+            if (link == (int16_t)0xffff || ++length > 256u ||
+                (((uint16_t)link >> 10) & 0x0fu) != 2u ||
+                !dm2_v1_record_pool_next_link(
+                    &rt->record_pools, link, &link))
+                return -1;
+        }
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         loader = dm2_v1_boot_asset_loader(rt->boot);
         if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(

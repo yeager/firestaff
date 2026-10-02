@@ -72,6 +72,16 @@ static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
         next == (int16_t)0xfffe;
     valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 6, 3) == 0x10 &&
         dm2_v1_dungeon_get_first_thing(dungeon, 38, 6, 3) == 0x0f99;
+    valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 9, 13) == 0x50 &&
+        dm2_v1_dungeon_get_first_thing(dungeon, 38, 9, 13) == 0x087c &&
+        dm2_v1_record_pool_next_link(&pools, 0x087c, &next) &&
+        next == (int16_t)0xfffe;
+    valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 14, 11) == 0x50 &&
+        dm2_v1_dungeon_get_first_thing(dungeon, 38, 14, 11) == 0x0952 &&
+        dm2_v1_record_pool_next_link(&pools, 0x0952, &next) &&
+        next == (int16_t)0x08b9 &&
+        dm2_v1_record_pool_next_link(&pools, next, &next) &&
+        next == (int16_t)0xfffe;
     memset(&sensor, 0, sizeof(sensor));
     valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 3, 13, 11) == 0xb8 &&
         !dm2_v1_skproject_query_0cee_0897_dungeon(
