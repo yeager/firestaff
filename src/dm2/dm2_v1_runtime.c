@@ -1651,7 +1651,7 @@ static int dm2_runtime_light_mode8_step(
         return 0;
     } else if ((raw == 0x50 || raw == 0x58) && first >= 0 &&
                (((uint16_t)first >> 10) & 0x0fu) == 2u) {
-        int16_t link = (int16_t)first;
+        int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
         unsigned length = 0u;
         /* SK1C9A/1BAAD's special wall blockers are DBF subtype 0xe and
          * DB4 creatures. Admit only complete DB2-only original chains. */
@@ -1777,6 +1777,29 @@ static int dm2_runtime_mode7_step(
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
     if (raw < 0 || first < -1) return -1;
     admitted = dm2_v1_mode7_go_there_tile_admission((uint8_t)raw, first);
+    if (admitted < 0 && map == 3 && nx == 13 && ny == 9 && raw == 0x30) {
+        int no_creature = 0;
+        int party_square = 0;
+        int16_t link = (int16_t)first;
+        unsigned length = 0u;
+        const DM2_V1_GameState *game =
+            (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
+        if (!game || !walk->rt->source_party_valid ||
+            !walk->rt->record_pools_valid) return -1;
+        while (link != (int16_t)0xfffe) {
+            int16_t next;
+            if (link == (int16_t)0xffff || ++length > 256u ||
+                (((uint16_t)link >> 10) & 0x0fu) == 4u ||
+                !dm2_v1_record_pool_next_link(
+                    &walk->rt->record_pools, link, &next)) return -1;
+            link = next;
+        }
+        no_creature = 1;
+        party_square = game->current_level == map &&
+            game->party_x == nx && game->party_y == ny;
+        admitted = dm2_v1_mode7_go_there_class1_raw30_admission(
+            (uint8_t)raw, no_creature, party_square);
+    }
     if (admitted != 1) return admitted;
     *next_map = map;
     *next_x = nx;

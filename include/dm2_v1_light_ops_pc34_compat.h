@@ -110,6 +110,8 @@ int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state);
 /* Action-23 GO_THERE edge: 1 admitted, 0 rejected, -1 unresolved. */
 int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
                                           int first_record_link);
+int dm2_v1_mode7_go_there_class1_raw30_admission(
+    uint8_t raw_tile, int no_creature_proven, int party_square);
 
 /* One admitted FIND_WALK_PATH action-0x17 node. Returns 0 for a source skip,
  * 1 after the callback succeeds, and -1 if an admitted source is unresolved.

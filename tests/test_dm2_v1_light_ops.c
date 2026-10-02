@@ -1,6 +1,7 @@
 /* Test DM2 V1 light operations (c_light.cpp). */
 
 #include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_save_post_load_global_effects_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
@@ -275,6 +276,14 @@ static void test_mode7_go_there_tile_admission(void)
     assert(dm2_v1_mode7_go_there_tile_admission(0xb0u, -1) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0xc0u, -1) == 0);
     assert(dm2_v1_mode7_go_there_tile_admission(0xe0u, -1) == 0);
+    assert(dm2_v1_mode7_go_there_class1_raw30_admission(
+        0x30u, 1, 0) == 1);
+    assert(dm2_v1_mode7_go_there_class1_raw30_admission(
+        0x30u, 1, 1) == 0);
+    assert(dm2_v1_mode7_go_there_class1_raw30_admission(
+        0x30u, 0, 0) == -1);
+    assert(dm2_v1_mode7_go_there_class1_raw30_admission(
+        0x31u, 1, 0) == -1);
 }
 
 static void test_mode7_tile_accumulator(void)
@@ -348,6 +357,7 @@ static void test_mode7_flags4_original_media(void)
     DM2_V1_AssetLoader graphics;
     DM2_V1_CLightFlags4FloorReceipt floor;
     DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_RecordPoolSet pools;
     DM2_V1_Mode7TileCache cache;
     DM2_V1_Mode7Action23Node node;
     int16_t tile_light, weather_light, room_darkness;
@@ -373,6 +383,24 @@ static void test_mode7_flags4_original_media(void)
                                (int)dungeon_size) == 0);
     assert(dm2_v1_asset_loader_init(&graphics, graphics_bytes,
                                     graphics_size) == 0);
+    memset(&pools, 0, sizeof(pools));
+    assert(dm2_v1_record_pool_set_init_from_dungeon(&pools, &dungeon));
+    assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 13, 9) == 0x30);
+    {
+        int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, 9);
+        int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;
+        unsigned length = 0u;
+        assert(dm2_v1_mode7_go_there_tile_admission(0x30u, first) == -1);
+        while (link != (int16_t)0xfffe) {
+            int16_t next;
+            assert(link != (int16_t)0xffff && ++length <= 256u);
+            assert((((uint16_t)link >> 10) & 0x0fu) != 4u);
+            assert(dm2_v1_record_pool_next_link(&pools, link, &next));
+            link = next;
+        }
+        assert(dm2_v1_mode7_go_there_class1_raw30_admission(
+            0x30u, 1, 0) == 1);
+    }
     memset(&cache, 0, sizeof(cache));
     assert(dm2_v1_mode7_tile_cache_start(
         &cache, 3, 2, 8, read_mode7_dungeon_tile, &dungeon));
@@ -421,6 +449,7 @@ static void test_mode7_flags4_original_media(void)
     node.stone_room = &room;
     assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
     assert(accumulated == 0 && darkness == 0);
+    dm2_v1_record_pool_set_free(&pools);
     assert(dm2_v1_mode7_tile_cache_start(
         &cache, 38, 6, 6, read_mode7_dungeon_tile, &dungeon));
     assert(cache.tile == 0x40u &&

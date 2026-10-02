@@ -33,6 +33,17 @@ int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
     return -1;
 }
 
+int dm2_v1_mode7_go_there_class1_raw30_admission(
+    uint8_t raw_tile, int no_creature_proven, int party_square)
+{
+    /* SK1C9A.cpp:3160-3190 gives class 1 capability 0x2, admitted by
+     * action 23's 0x227 mask. :3380-3445 then tests the party-square
+     * blocker (0x800) and a destination creature (0x1000). The latter is
+     * absent only after a complete, bounded record-chain proof. */
+    if (raw_tile != 0x30u || !no_creature_proven) return -1;
+    return party_square ? 0 : 1;
+}
+
 int dm2_v1_mode7_action23_visit_tile(
     uint16_t cached_tile_state, uint8_t radius,
     int16_t map, int16_t x, int16_t y,
