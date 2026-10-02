@@ -110,6 +110,8 @@ int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state);
 /* Action-23 GO_THERE edge: 1 admitted, 0 rejected, -1 unresolved. */
 int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
                                           int first_record_link);
+int dm2_v1_mode7_go_there_empty_class0_admission(
+    uint8_t raw_tile, int first_record_link, int party_square);
 int dm2_v1_mode7_go_there_class1_raw30_admission(
     uint8_t raw_tile, int no_creature_proven, int party_square);
 int dm2_v1_mode7_go_there_class0_record_admission(

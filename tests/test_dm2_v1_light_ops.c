@@ -269,13 +269,21 @@ static void test_mode7_action23_visit_order(void)
 
 static void test_mode7_go_there_tile_admission(void)
 {
-    assert(dm2_v1_mode7_go_there_tile_admission(0x00u, -1) == 1);
-    assert(dm2_v1_mode7_go_there_tile_admission(0x10u, -1) == 1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x00u, -1) == -1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x10u, -1) == -1);
+    assert(dm2_v1_mode7_go_there_empty_class0_admission(
+        0x00u, -1, 0) == 1);
+    assert(dm2_v1_mode7_go_there_empty_class0_admission(
+        0x10u, -1, 1) == 0);
+    assert(dm2_v1_mode7_go_there_empty_class0_admission(
+        0x10u, 0x0855, 0) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0x10u, 0) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0x40u, -1) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0x60u, -1) == 0);
     assert(dm2_v1_mode7_go_there_tile_admission(0xb0u, -1) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0xc0u, -1) == 0);
+    assert(dm2_v1_mode7_go_there_tile_admission(0xc4u, -1) == -1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0xc5u, -1) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0xe0u, -1) == 0);
     assert(dm2_v1_mode7_go_there_class1_raw30_admission(
         0x30u, 1, 0) == 1);
@@ -622,7 +630,9 @@ static void test_mode7_flags4_original_media(void)
                 assert(dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
                     &dungeon, map, x, y, &floor));
                 assert(dm2_v1_mode7_go_there_tile_admission(
-                    (uint8_t)raw, -1) == 1);
+                    (uint8_t)raw, -1) == -1);
+                assert(dm2_v1_mode7_go_there_empty_class0_admission(
+                    (uint8_t)raw, -1, 0) == 1);
                 assert(dm2_v1_mode7_flags4_floor_terms(
                     &floor, 5u, 5u, &tile_light, &weather_light));
                 assert(tile_light == 0 && weather_light == 0);
@@ -631,6 +641,28 @@ static void test_mode7_flags4_original_media(void)
             }
         }
         assert(found);
+    }
+    {
+        unsigned seen_class6 = 0u;
+        unsigned seen_class6_bit4 = 0u;
+        for (int map = 0; map < dungeon.level_count; ++map) {
+            for (int x = 0; x < dungeon.level_widths[map]; ++x) {
+                for (int y = 0; y < dungeon.level_heights[map]; ++y) {
+                    int raw = dm2_v1_dungeon_get_tile_raw(&dungeon, map, x, y);
+                    if (raw < 0 || ((unsigned)raw >> 5) != 6u) continue;
+                    ++seen_class6;
+                    if ((raw & 0x04) != 0) {
+                        ++seen_class6_bit4;
+                        assert(dm2_v1_mode7_go_there_tile_admission(
+                            (uint8_t)raw, -1) == -1);
+                    } else {
+                        assert(dm2_v1_mode7_go_there_tile_admission(
+                            (uint8_t)raw, -1) == 0);
+                    }
+                }
+            }
+        }
+        assert(seen_class6 != 0u && seen_class6_bit4 != 0u);
     }
     dm2_v1_asset_loader_free(&graphics);
     dm2_v1_dungeon_free(&dungeon);

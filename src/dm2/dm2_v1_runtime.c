@@ -1777,6 +1777,16 @@ static int dm2_runtime_mode7_step(
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
     if (raw < 0 || first < -1) return -1;
     admitted = dm2_v1_mode7_go_there_tile_admission((uint8_t)raw, first);
+    if (admitted < 0 && (raw >> 5) == 0 && first == -1) {
+        const DM2_V1_GameState *game =
+            (const DM2_V1_GameState *)walk->rt->boot->dm2_state;
+        int party_square;
+        if (!game || !walk->rt->source_party_valid) return -1;
+        party_square = game->current_level == map &&
+            game->party_x == nx && game->party_y == ny;
+        admitted = dm2_v1_mode7_go_there_empty_class0_admission(
+            (uint8_t)raw, first, party_square);
+    }
     if (admitted < 0 && raw == 0xb0 && walk->rt->record_pools_valid) {
         DM2_V1_SkprojectTeleporterDetail detail;
         DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;

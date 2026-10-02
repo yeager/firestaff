@@ -23,14 +23,28 @@ int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
                                           int first_record_link)
 {
     unsigned type = raw_tile >> 5;
+    (void)first_record_link;
     /* SK1C9A.cpp:3190-3340 maps GO_THERE tile classes to capability
      * bits. Action 23 sets v1e0576=0x227 at :6873-6882. Empty class-0
-     * squares have bit 1 and no record branch. Classes 3, 6 and 7
+     * squares still need the party-square blocker below. Classes 3 and 7
      * have no overlapping capability bit (or are rejected outright).
+     * Class 6 with bit 0x04 has capability 0x2 and needs blocker proof;
+     * other class-6 tiles have no action-23 capability.
      * Other branches need movement and record evidence before admission. */
-    if (type == 0u && first_record_link == -1) return 1;
-    if (type == 3u || type == 6u || type == 7u) return 0;
+    if (type == 3u || type == 7u ||
+        (type == 6u && (raw_tile & 0x04u) == 0u)) return 0;
     return -1;
+}
+
+int dm2_v1_mode7_go_there_empty_class0_admission(
+    uint8_t raw_tile, int first_record_link, int party_square)
+{
+    /* SK1C9A.cpp:3179-3190 gives class 0 capability 0x1. At :3380-3445
+     * the party square adds blocker 0x800, excluded by action 23's 0x227.
+     * An empty record chain proves the destination-creature blocker absent. */
+    if ((raw_tile >> 5) != 0u || first_record_link != -1)
+        return -1;
+    return party_square ? 0 : 1;
 }
 
 int dm2_v1_mode7_go_there_class1_raw30_admission(
