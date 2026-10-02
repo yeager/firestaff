@@ -680,6 +680,9 @@ typedef struct DM2_V1_RuntimeItemRenderReceipt {
     int valid;
     int source_kind;       /* 1=floor item, 2=creature possession, 3=carried */
     int item_index;
+    uint16_t object_id;
+    int source_static_object_draw_slot;
+    int source_static_object_record_ordinal;
     int item_category;
     int item_type;
     int frame_index;

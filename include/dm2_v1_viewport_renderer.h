@@ -1066,6 +1066,7 @@ typedef struct {
     /* Record-list ordinal within the source square's object chain.  Zero is
      * unavailable and blocks M11 delivery until the runtime supplies it. */
     uint16_t record_list_ordinal;
+    uint8_t draw_slot;
     /* INTERFACE_GENERAL dt07/0x0A Rect14 row that governs this static object's
      * placement, scale and image-field selection.  When a matching row exists,
      * the render plan is gated by that row instead of by synthetic geometry. */
@@ -1391,6 +1392,8 @@ typedef struct {
     uint8_t source_static_object_admitted;
     uint8_t source_static_object_cell;
     int8_t source_static_object_pass;
+    uint8_t source_static_object_draw_slot;
+    uint16_t source_static_object_record_ordinal;
     uint16_t source_static_object_clip_rect_id;
     uint32_t source_static_object_raw_gfx256_hash;
     uint32_t source_static_object_raw_gfx256_receipt_hash;
@@ -1457,6 +1460,8 @@ typedef struct {
     int source_static_object_admitted;
     int source_static_object_cell;
     int source_static_object_pass;
+    int source_static_object_draw_slot;
+    int source_static_object_record_ordinal;
     int source_static_object_clip_rect_id;
     uint32_t source_static_object_raw_gfx256_hash;
     uint32_t source_static_object_raw_gfx256_receipt_hash;

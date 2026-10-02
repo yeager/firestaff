@@ -1,5 +1,11 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: The indoor Mac viewport now walks authenticated DB10 tile
+  chains and carries each record's source draw slot into placement. At retail
+  map 10 (4,0), a diagnostic pose at (3,0) facing east draws all five original
+  DB10 images; the fifth record `0xe813` uses slot 1, ordinal 5. Linked
+  DB5–DB9 rendering, outdoor item drawing, and linked-item pickup remain open.
+
 - 2026-10-02: The original Mac retail File_header record graph now follows
   big-endian `w0` links. Real-media tests confirm DB10 chains on map 10
   (4,0) and map 15 (10,6). The source mirror gate also compares links in

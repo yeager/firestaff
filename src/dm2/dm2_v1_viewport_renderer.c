@@ -363,6 +363,7 @@ int dm2_v1_viewport_static_object_source_plan(
     out->slot_y_offset = slot_delta[slot_axis[draw_slot][1]];
     out->object_direction = object_direction & 3;
     out->record_list_ordinal = record_list_ordinal;
+    out->draw_slot = (uint8_t)draw_slot;
     out->visibility_mask_5x5 = visibility_mask_5x5;
     return 1;
 }
@@ -4919,6 +4920,9 @@ int dm2_v1_viewport_build_item_render_plan(
             src->source_static_object_admitted;
         row->source_static_object_cell = src->source_static_object_cell;
         row->source_static_object_pass = src->source_static_object_pass;
+        row->source_static_object_draw_slot = src->source_static_object_draw_slot;
+        row->source_static_object_record_ordinal =
+            src->source_static_object_record_ordinal;
         row->source_static_object_clip_rect_id = src->source_static_object_clip_rect_id;
         row->source_static_object_raw_gfx256_hash = src->source_static_object_raw_gfx256_hash;
         row->source_static_object_raw_gfx256_receipt_hash = src->source_static_object_raw_gfx256_receipt_hash;
@@ -4991,9 +4995,8 @@ int dm2_v1_viewport_build_item_render_plan(
          * placement is re-derived from the admitted cell/pass/clip route with
          * the same source tables the runtime delivery plan used; a clip-rect
          * mismatch keeps the row fail-closed.  The bound image field owns the
-         * chest open state (F4 = open) and draw_slot stays 0: the runtime only
-         * admits tile chain heads, and the source chain walk draws the head of
-         * a matching direction group first (DRAW_PUT_DOWN_ITEM si == 0). */
+         * chest open state (F4 = open). DRAW_PUT_DOWN_ITEM advances its slot
+         * for each preceding DB5..DB10 record in the same direction group. */
         if (src->source_static_object_admitted && !row->rect14_applied &&
             row->source_static_object_pass >= 0 &&
             row->source_static_object_clip_rect_id != 0) {
@@ -5003,9 +5006,10 @@ int dm2_v1_viewport_build_item_render_plan(
                     row->source_static_object_cell,
                     row->source_static_object_pass,
                     row->item_category, row->direction,
-                    row->source_gdat_field == 4, 0,
+                    row->source_gdat_field == 4,
+                    row->source_static_object_draw_slot,
                     s->party_dir,
-                    (uint16_t)(row->item_index + 1),
+                    (uint16_t)row->source_static_object_record_ordinal,
                     dm2_v1_viewport_static_object_visibility_bit(
                         row->direction, s->party_dir),
                     &source_plan) &&

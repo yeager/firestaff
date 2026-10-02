@@ -852,6 +852,36 @@ static int run_one(const char *zip, const char *source_id)
     }
     {
         uint8_t frame[320u * 200u];
+        DM2_V1_RuntimeItemRenderReceipt linked_render;
+        if (dm2_v1_dungeon_get_square_type(dungeon, 10, 3, 0) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 10, 4, 0) != 0xe80f ||
+            dm2_v1_dungeon_get_next_thing(dungeon, 0xe80fu) != 0x2810) {
+            fprintf(stderr, "Mac linked DB10 diagnostic pose invalid: %s\n", source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        dm2_v1_runtime_set_position(10, 3, 0, 1);
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        memset(&linked_render, 0, sizeof(linked_render));
+        if (dm2_v1_runtime_last_asset_item_count() != 5 ||
+            !dm2_v1_runtime_last_item_render_receipt(&linked_render) ||
+            !linked_render.asset_blit_ready ||
+            linked_render.object_id != 0xe813u ||
+            linked_render.source_static_object_draw_slot != 1 ||
+            linked_render.source_static_object_record_ordinal != 5) {
+            fprintf(stderr,
+                    "Mac linked DB10 viewport missing: %s last=%04x slot=%d ordinal=%d asset_items=%d\n",
+                    source_id, linked_render.object_id,
+                    linked_render.source_static_object_draw_slot,
+                    linked_render.source_static_object_record_ordinal,
+                    dm2_v1_runtime_last_asset_item_count());
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
+    {
+        uint8_t frame[320u * 200u];
         DM2_V1_ViewportRect rect;
         DM2_V1_RuntimeViewportClickReceipt on_image, above_image;
         DM2_V1_BootExpandedRectReceipt rect7;

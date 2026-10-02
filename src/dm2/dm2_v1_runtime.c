@@ -4450,6 +4450,11 @@ static void dm2_runtime_finish_item_render_receipt(
     g_dm2_last_item_render.valid = 1;
     g_dm2_last_item_render.source_kind = viewport->last_item_source_kind;
     g_dm2_last_item_render.item_index = render->item_index;
+    g_dm2_last_item_render.object_id = render->object_id;
+    g_dm2_last_item_render.source_static_object_draw_slot =
+        render->source_static_object_draw_slot;
+    g_dm2_last_item_render.source_static_object_record_ordinal =
+        render->source_static_object_record_ordinal;
     g_dm2_last_item_render.item_category = render->item_category;
     g_dm2_last_item_render.item_type = render->item_type;
     g_dm2_last_item_render.frame_index = render->frame_index;
@@ -4663,6 +4668,8 @@ static void dm2_runtime_admit_static_object_draw_item_material(
      * blocked F9 field. */
     dst->source_gdat_field = material->selector.image_field;
     dst->source_static_object_clip_rect_id = material->clip_rect_id;
+    dst->source_static_object_draw_slot = plan->draw_slot;
+    dst->source_static_object_record_ordinal = plan->record_list_ordinal;
     dst->source_static_object_raw_gfx256_hash = material->raw_gfx256_hash;
     dst->source_static_object_raw_gfx256_receipt_hash =
         material->raw_gfx256_receipt_hash;
@@ -4758,7 +4765,7 @@ static uint32_t dm2_runtime_static_object_visibility_mask_5x5(
     /* SKWIN/SkWinCore.cpp lines 45361-45370: the per-cell 5x5 visibility mask
      * ((*_4976_5be2)[cellPos]) ORs 1 << QUERY_OBJECT_5x5_POS(record, view_dir)
      * for every dbWeapon..dbMiscellaneous_item record on the square.  The
-     * admitted DB5/DB9 roots and source DB10 square head contribute their
+     * admitted DB5/DB9 roots and Mac DB5..DB10 chain records contribute their
      * record-owned positions and directions. The source additionally
      * gates the bit on the tile state (xsrd.w0/w6[0]); tile-state ownership
      * stays with the dungeon materialization that admitted these roots. */
@@ -4778,12 +4785,24 @@ static uint32_t dm2_runtime_static_object_visibility_mask_5x5(
         }
     }
     if (dungeon) {
-        int root = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
-        if (root >= 0 && (((unsigned)root >> 10) & 15u) == 10u &&
-            dm2_v1_dungeon_get_thing_record(
-                dungeon, (uint16_t)root, NULL, NULL, NULL)) {
-            mask |= dm2_v1_viewport_static_object_visibility_bit(
-                root >> 14, party_dir);
+        int thing = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+        uint16_t seen[256];
+        int seen_count = 0;
+        while (thing >= 0 && thing != 0xfffe && seen_count < 256) {
+            int repeated = 0;
+            for (int n = 0; n < seen_count; ++n)
+                if (seen[n] == (uint16_t)thing) repeated = 1;
+            if (repeated) break;
+            seen[seen_count++] = (uint16_t)thing;
+            if ((((unsigned)thing >> 10) & 15u) >= 5u &&
+                (((unsigned)thing >> 10) & 15u) <= 10u &&
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)thing, NULL, NULL, NULL)) {
+                mask |= dm2_v1_viewport_static_object_visibility_bit(
+                    thing >> 14, party_dir);
+            }
+            if (dungeon->g1_w0_chains_disabled) break;
+            thing = dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)thing);
         }
     }
     return mask;
@@ -4831,6 +4850,16 @@ static void dm2_runtime_populate_g1_static_object_materials(
             dungeon->level_widths[rt->dungeon_level] *
                 dungeon->level_heights[rt->dungeon_level];
         for (int i = 0; i < count && rt->g1_static_object_material_count < 48; ++i) {
+            uint16_t seen[256];
+            int seen_count = 0;
+            int chain_thing = pass == 2 ? dm2_v1_dungeon_get_first_thing(
+                dungeon, rt->dungeon_level,
+                i / dungeon->level_heights[rt->dungeon_level],
+                i % dungeon->level_heights[rt->dungeon_level]) : -1;
+            for (int chain_ordinal = 1;
+                 chain_ordinal <= (pass == 2 && !dungeon->g1_w0_chains_disabled ? 256 : 1) &&
+                 rt->g1_static_object_material_count < 48;
+                 ++chain_ordinal) {
             DM2_V1_G1StaticObjectMaterialSelector selector;
             DM2_V1_StaticObjectSourcePlan plan;
             DM2_V1_G1StaticObjectMaterialReceipt receipt;
@@ -4844,14 +4873,28 @@ static void dm2_runtime_populate_g1_static_object_materials(
             int misc_root = -1;
             const uint8_t *misc_record = NULL;
             uint16_t misc_offset = 0u;
+            int draw_slot = 0;
             if (pass == 2) {
-                misc_root = dm2_v1_dungeon_get_first_thing(
-                    dungeon, rt->dungeon_level, x, y);
-                if (misc_root < 0 ||
-                    (((unsigned)misc_root >> 10) & 15u) != 10u) continue;
+                int repeated = 0;
+                if (chain_thing < 0 || chain_thing == 0xfffe) break;
+                for (int n = 0; n < seen_count; ++n)
+                    if (seen[n] == (uint16_t)chain_thing) repeated = 1;
+                if (repeated || seen_count >= 256) break;
+                seen[seen_count++] = (uint16_t)chain_thing;
+                misc_root = chain_thing;
+                chain_thing = dungeon->g1_w0_chains_disabled ? 0xfffe :
+                    dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)misc_root);
+                if ((((unsigned)misc_root >> 10) & 15u) != 10u) continue;
                 misc_record = dm2_v1_dungeon_get_thing_record(
                     dungeon, (uint16_t)misc_root, NULL, NULL, NULL);
                 if (!misc_record) continue;
+                for (int n = 0; n + 1 < seen_count; ++n) {
+                    int prior = seen[n];
+                    int type = ((unsigned)prior >> 10) & 15u;
+                    if (type >= 5 && type <= 10 &&
+                        (((prior >> 14) - (misc_root >> 14)) & 3) == 0)
+                        draw_slot = (draw_slot + 1) & 15;
+                }
                 if (!dm2_v1_asset_load_image_offset(
                         dm2_v1_boot_asset_loader(rt->boot), 0x15, 0xfe,
                         0u, &misc_offset)) misc_offset = 0u;
@@ -4869,15 +4912,13 @@ static void dm2_runtime_populate_g1_static_object_materials(
                       misc_offset, &selector)) ||
                 !dm2_v1_viewport_static_object_source_plan(cell, source_pass,
                     selector.category, selector.direction, selector.container_open,
-                    0, party_dir, 1u,
+                    draw_slot, party_dir, (uint16_t)chain_ordinal,
                     dm2_runtime_static_object_visibility_mask_5x5(
                         &weapons, &containers, dungeon, rt->dungeon_level,
                         x, y, party_dir),
                     &plan)) continue;
-            /* draw_slot 0 and record_list_ordinal 1 are proven, not assumed:
-             * the materializers only admit each tile's square-first-thing
-             * chain head, and DRAW_PUT_DOWN_ITEM's chain walk draws the head
-             * of a matching direction group first (si == 0). */
+            /* SKProject DRAW_PUT_DOWN_ITEM advances si only for preceding
+             * DB5..DB10 records in this direction group. */
             /* When the real INTERFACE_GENERAL dt07/0x0A Rect14 table is present,
              * bind the matching row to this static-object plan.  A missing row
              * leaves the plan in its existing source-geometry state; it does
@@ -4897,6 +4938,7 @@ static void dm2_runtime_populate_g1_static_object_materials(
             rt->g1_static_object_source_plans[rt->g1_static_object_material_count] = plan;
             ++rt->g1_static_object_material_count;
             ++rt->g1_static_object_delivery_plan_count;
+            }
         }
     }
 }
@@ -4963,8 +5005,7 @@ static void dm2_runtime_populate_g1_misc_static_items(
     int party_dir, int party_x, int party_y)
 {
     /* SKProject skguidrw.cpp:5646-5685 DRAW_STATIC_OBJECT and :4733-4780
-     * DRAW_PUT_DOWN_ITEM pass visible DB10 through DRAW_ITEM. Only admitted
-     * square heads reach this bounded pass. */
+     * DRAW_PUT_DOWN_ITEM pass visible DB10 through DRAW_ITEM. */
     if (!rt || !viewport || rt->outdoor) return;
     for (int i = 0; i < rt->g1_static_object_material_count &&
                     viewport->item_count < DM2_MAX_ITEMS_PER_SQ; ++i) {
