@@ -18322,10 +18322,10 @@ endif()
         # This test deliberately performs ten independent starts from the
         # original STX image (title, runtime, input matrix, keyboard menu and
         # pointer menu), then lets the retained ANIMATE.SCR sequence run to
-        # its source handoff in the normal menu loop. Archive hashing can
-        # exceed 90 seconds on a cold or contended worker; keep the functional
-        # assertions but give the real-media route a bounded budget.
-        TIMEOUT 300
+        # its source handoff in the normal menu loop. Original STX starts and
+        # the full input sequence exceeded 300 seconds on a contended macOS
+        # worker; keep the assertions with a bounded CI budget.
+        TIMEOUT 900
     )
     add_test(
         NAME csb_v1_atari_utility_mini_cli_resume
