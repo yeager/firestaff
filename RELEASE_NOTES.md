@@ -50,8 +50,9 @@
   both entering and leaving map 38. It currently exposes the missing dynamic
   light receipt and must pass before this release is published.
 - `DM2 light visibility state`: adds map-bound 32-stride visibility buffers
-  and the source action-27 write, while requiring completed mode 8 and mode 7
-  traversals before their light inputs can be accepted. Traversal remains open.
+  and the source action-27 depth and direction-mask writes, while requiring
+  completed mode 8 and mode 7 traversals before their light inputs can be
+  accepted. Traversal remains open.
 - `DM2 tile-light compatibility`: removes an unused synthetic radius-based
   light helper whose result disagreed with SKProject; the original-media
   ceiling contribution test now provides a source-backed starting point.
