@@ -33,6 +33,15 @@ int dm2_v1_1c9a_light_visibility_mark(
 int dm2_v1_1c9a_light_visibility_or_mask(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     uint8_t mask);
+/* A step returns 1 with an admitted source cell, 0 for a blocked edge, or
+ * -1 when its tile/record/teleporter branch is not implemented. */
+typedef int (*DM2_V1_1c9aLightStep)(
+    void *context, int map, int x, int y, int direction,
+    int *next_map, int *next_x, int *next_y);
+/* Traverses admitted source edges without claiming complete mode-8 coverage. */
+int dm2_v1_1c9a_light_mode8_frontier(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, DM2_V1_1c9aLightStep step, void *context);
 /* Only a completed mode-8/mode-7 pair can be consumed by c_light. */
 int dm2_v1_1c9a_light_visibility_level_inputs(
     const DM2_V1_1c9aLightVisibility *state, int map,

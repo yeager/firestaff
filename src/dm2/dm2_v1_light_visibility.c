@@ -60,6 +60,67 @@ int dm2_v1_1c9a_light_visibility_or_mask(
     return wrote;
 }
 
+int dm2_v1_1c9a_light_mode8_frontier(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, DM2_V1_1c9aLightStep step, void *context)
+{
+    typedef struct { int16_t map, x, y; uint8_t depth; } Cell;
+    Cell queue[2u * 32u * 32u];
+    uint8_t seen[2u * 32u * 32u] = {0};
+    size_t head = 0u, tail = 0u;
+    int selector;
+    if (!state) return 0;
+    memset(state->current, 0, sizeof(state->current));
+    memset(state->alternate, 0, sizeof(state->alternate));
+    state->mode8_complete = 0u;
+    state->mode7_complete = 0u;
+    state->source_state_hash = 0u;
+    if (!step || start_x < 0 || start_y < 0 || start_y >= 32 ||
+        start_map != state->current_map ||
+        start_x >= state->current_width)
+        return 0;
+    queue[tail++] = (Cell){(int16_t)start_map, (int16_t)start_x,
+                           (int16_t)start_y, 0u};
+    seen[(size_t)start_x * 32u + (size_t)start_y] = 1u;
+    while (head < tail) {
+        Cell cell = queue[head++];
+        if (!dm2_v1_1c9a_light_visibility_mark(
+                state, cell.map, cell.x, cell.y, cell.depth))
+            goto incomplete;
+        /* CHECK_RECOMPUTE_LIGHT supplies action 0x1b with byte 0x19, a
+         * maximum source depth of 25. Only an admitted source edge enters
+         * this queue; unknown record/teleporter cases invalidate the pass. */
+        if (cell.depth == 25u) continue;
+        for (int direction = 0; direction < 4; ++direction) {
+            int next_map = -1, next_x = -1, next_y = -1;
+            int result = step(context, cell.map, cell.x, cell.y, direction,
+                              &next_map, &next_x, &next_y);
+            size_t index;
+            if (result < 0) goto incomplete;
+            if (result == 0) continue;
+            selector = next_map == state->current_map ? 0 :
+                       next_map == state->alternate_map ? 1 : -1;
+            if (selector < 0 || next_x < 0 || next_y < 0 || next_y >= 32 ||
+                next_x >= (selector == 0 ? state->current_width :
+                                          state->alternate_width))
+                goto incomplete;
+            index = (size_t)selector * 1024u + (size_t)next_x * 32u +
+                    (size_t)next_y;
+            if (seen[index]) continue;
+            if (tail >= sizeof(queue) / sizeof(queue[0])) goto incomplete;
+            seen[index] = 1u;
+            queue[tail++] = (Cell){(int16_t)next_map, (int16_t)next_x,
+                                   (int16_t)next_y,
+                                   (uint8_t)(cell.depth + 1u)};
+        }
+    }
+    return 1;
+incomplete:
+    memset(state->current, 0, sizeof(state->current));
+    memset(state->alternate, 0, sizeof(state->alternate));
+    return 0;
+}
+
 int dm2_v1_1c9a_light_visibility_level_inputs(
     const DM2_V1_1c9aLightVisibility *state, int map,
     int16_t *v1e0974, int16_t *v1e0978, uint32_t *source_state_hash)

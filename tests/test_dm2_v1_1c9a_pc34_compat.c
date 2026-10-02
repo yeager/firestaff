@@ -340,6 +340,40 @@ TEST(light_visibility_action27) {
     assert(state.alternate[11u * 32u + 9u] == 0u);
 }
 
+static int light_frontier_step(void *context, int map, int x, int y,
+                               int direction, int *next_map,
+                               int *next_x, int *next_y)
+{
+    int *unknown = (int *)context;
+    if (*unknown && map == 38 && x == 6 && y == 6 && direction == 0)
+        return -1;
+    if (map == 38 && x == 6 && y == 6 && direction == 0) {
+        *next_map = 38; *next_x = 6; *next_y = 5;
+        return 1;
+    }
+    if (map == 38 && x == 6 && y == 5 && direction == 0) {
+        *next_map = 3; *next_x = 13; *next_y = 9;
+        return 1;
+    }
+    return 0;
+}
+
+TEST(light_mode8_frontier_is_fail_closed) {
+    DM2_V1_1c9aLightVisibility state;
+    int unknown = 1;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
+    assert(!dm2_v1_1c9a_light_mode8_frontier(
+        &state, 38, 6, 6, light_frontier_step, &unknown));
+    assert(!state.mode8_complete && state.current[6u * 32u + 6u] == 0u);
+    unknown = 0;
+    assert(dm2_v1_1c9a_light_mode8_frontier(
+        &state, 38, 6, 6, light_frontier_step, &unknown));
+    assert(!state.mode8_complete && state.current[6u * 32u + 6u] == 1u &&
+           state.current[6u * 32u + 5u] == 2u &&
+           state.alternate[13u * 32u + 9u] == 3u);
+    assert(!state.mode7_complete && state.source_state_hash == 0u);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -838,6 +872,7 @@ int main(void) {
     printf("dm2_v1_1c9a_pc34_compat tests\n");
 
     RUN(light_visibility_action27);
+    RUN(light_mode8_frontier_is_fail_closed);
 
     /* Popcount */
     RUN(popcount_zero);

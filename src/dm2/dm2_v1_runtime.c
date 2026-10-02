@@ -1602,6 +1602,64 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     rt->music_map_receipt = receipt;
 }
 
+static int dm2_runtime_light_mode8_step(
+    void *context, int map, int x, int y, int direction,
+    int *next_map, int *next_x, int *next_y)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_CLightStoneRoomReceipt room;
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int nx, ny, raw, first;
+    if (!rt || !rt->boot || !rt->boot->dungeon_data || !next_map ||
+        !next_x || !next_y || map < 0 || direction < 0 || direction > 3)
+        return -1;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (map >= dungeon->level_count) return -1;
+    nx = x + dx[direction];
+    ny = y + dy[direction];
+    if (nx < 0 || ny < 0 || nx >= dungeon->level_widths[map] ||
+        ny >= dungeon->level_heights[map])
+        return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, nx, ny);
+    first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
+    if (raw < 0) return -1;
+    if ((raw >> 5) == 0 && first == -1) {
+        /* The source's empty floor has no record or teleporter branch. */
+    } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
+        loader = dm2_v1_boot_asset_loader(rt->boot);
+        if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(
+                dungeon, loader, map, nx, ny, (uint32_t)rt->tick_count,
+                &room))
+            return -1;
+        if (room.source_tile_type == 2u) return 0;
+        /* The enabled DB1 case crosses maps through FIND_WALK_PATH's own
+         * teleporter detail, not the party movement gate. */
+        if ((raw >> 5) == 5 && (raw & 0x08) != 0) return -1;
+    } else {
+        /* DB0/DB2/DB3, doors and other tile branches need their source
+         * evaluator before this traversal can authenticate completion. */
+        return -1;
+    }
+    *next_map = map;
+    *next_x = nx;
+    *next_y = ny;
+    return 1;
+}
+
+static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
+{
+    if (!rt || !rt->source_party_valid ||
+        !rt->c_light_map_descriptor.valid ||
+        !rt->c_light_map_descriptor.dynamic_light)
+        return;
+    /* A missing cell branch leaves the pass incomplete and c_light blocked. */
+    (void)dm2_v1_1c9a_light_mode8_frontier(&rt->c_light_visibility,
+        rt->dungeon_level, x, y, dm2_runtime_light_mode8_step, rt);
+}
+
 /* UPDATE_GFXSET, CHECK_RECOMPUTE_LIGHT and c_weather all consume the active
  * map together.  A level handoff cannot retain any material from the prior
  * map: rebuild the map lists, bounded G1 record receipts and GDAT plans as
@@ -1623,6 +1681,11 @@ static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_g1_runtime_materials(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
+    if (rt->source_party_valid && rt->boot && rt->boot->dm2_state) {
+        const DM2_V1_GameState *game =
+            (const DM2_V1_GameState *)rt->boot->dm2_state;
+        dm2_runtime_try_light_mode8(rt, game->party_x, game->party_y);
+    }
 }
 
 static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
@@ -3472,6 +3535,7 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
         ? candidate->source_savegames1[4] : 0u;
     rt->source_aura_of_speed_valid = candidate->source_savegames1_valid;
     rt->source_light_level = candidate->source_light_level;
+    dm2_runtime_try_light_mode8(rt, game->party_x, game->party_y);
     rt->source_attack_counter = rt->source_hero_ench_countdown;
     rt->source_savegames1[2] = rt->source_attack_counter;
     rt->session_snapshot.champion_count =
