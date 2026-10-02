@@ -317,6 +317,21 @@ static int tests_failed = 0;
     tests_passed++; \
 } while(0)
 
+TEST(light_visibility_action27) {
+    DM2_V1_1c9aLightVisibility state;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 12);
+    assert(dm2_v1_1c9a_light_visibility_mark(&state, 38, 6, 4, 2u));
+    assert(state.current[6u * 32u + 4u] == 3u);
+    assert(state.alternate[6u * 32u + 4u] == 0u);
+    assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 11, 9, 0u));
+    assert(state.alternate[11u * 32u + 9u] == 1u);
+    assert(!dm2_v1_1c9a_light_visibility_mark(&state, 38, 16, 4, 1u));
+    assert(!dm2_v1_1c9a_light_visibility_mark(&state, 38, 6, 32, 1u));
+    dm2_v1_1c9a_light_visibility_reset(&state, 3, 12, -1, 0);
+    assert(state.current[6u * 32u + 4u] == 0u);
+    assert(state.alternate[11u * 32u + 9u] == 0u);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -813,6 +828,8 @@ TEST(null_callbacks_all) {
 
 int main(void) {
     printf("dm2_v1_1c9a_pc34_compat tests\n");
+
+    RUN(light_visibility_action27);
 
     /* Popcount */
     RUN(popcount_zero);

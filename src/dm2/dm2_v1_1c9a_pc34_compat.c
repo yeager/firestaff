@@ -3,6 +3,44 @@
 #include <stdlib.h>
 #include <string.h>
 
+void dm2_v1_1c9a_light_visibility_reset(
+    DM2_V1_1c9aLightVisibility *state, int current_map,
+    int current_width, int alternate_map, int alternate_width)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    state->current_map = current_map >= 0 && current_width > 0 &&
+        current_width <= 32 ? (int16_t)current_map : -1;
+    state->alternate_map = alternate_map >= 0 && alternate_width > 0 &&
+        alternate_width <= 32 ? (int16_t)alternate_map : -1;
+    state->current_width = state->current_map >= 0 ?
+        (uint8_t)current_width : 0u;
+    state->alternate_width = state->alternate_map >= 0 ?
+        (uint8_t)alternate_width : 0u;
+}
+
+int dm2_v1_1c9a_light_visibility_mark(
+    DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
+    unsigned depth)
+{
+    uint8_t value;
+    int wrote = 0;
+    if (!state || x < 0 || y < 0 || y >= 32 || depth >= 255u)
+        return 0;
+    value = (uint8_t)(depth + 1u);
+    /* SK1C9A.cpp action 27 indexes both buffers as (x << 5) + y.
+     * A map may match both selectors, in which case both are updated. */
+    if (map == state->current_map && x < state->current_width) {
+        state->current[(size_t)x * 32u + (size_t)y] = value;
+        wrote = 1;
+    }
+    if (map == state->alternate_map && x < state->alternate_width) {
+        state->alternate[(size_t)x * 32u + (size_t)y] = value;
+        wrote = 1;
+    }
+    return wrote;
+}
+
 /* ========================================================================
  * Tile cache
  * ======================================================================== */

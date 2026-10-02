@@ -59,6 +59,7 @@
 #include "dm2_v1_hero_ops_pc34_compat.h"
 #include "dm2_v1_engage_command_pc34_compat.h"
 #include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_1c9a_pc34_compat.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include "dm2_v1_creature_attacks_party_pc34_compat.h"
@@ -206,6 +207,7 @@ struct DM2_V1_RuntimeState {
     DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
     DM2_V1_GdatSceneLightM11Receipt gdat_scene_light_receipt;
     DM2_V1_CLightM11Receipt c_light_receipt;
+    DM2_V1_1c9aLightVisibility c_light_visibility;
     DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan gdat_door_material_plan;
     int gdat_scene_control_ready;
@@ -1595,7 +1597,17 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
  * one fail-closed transaction. */
 static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
 {
+    DM2_V1_DungeonData *dungeon;
+    int width = 0;
     if (!rt) return;
+    dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
+    if (dungeon && rt->dungeon_level >= 0 &&
+        rt->dungeon_level < dungeon->level_count)
+        width = dungeon->level_widths[rt->dungeon_level];
+    if (rt->c_light_visibility.current_map != rt->dungeon_level ||
+        rt->c_light_visibility.current_width != (uint8_t)width)
+        dm2_v1_1c9a_light_visibility_reset(&rt->c_light_visibility,
+            rt->dungeon_level, width, -1, 0);
     dm2_runtime_refresh_music_map_trigger(rt);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_g1_runtime_materials(rt);

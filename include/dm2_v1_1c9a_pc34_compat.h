@@ -52,6 +52,26 @@ typedef struct DM2_V1_1c9aPathfindReceipt {
     int     path_length;      /* number of steps, or -1 */
 } DM2_V1_1c9aPathfindReceipt;
 
+/* SKProject sklight.cpp::CHECK_RECOMPUTE_LIGHT owns two 32-stride visibility
+ * buffers. FIND_WALK_PATH action 27 writes depth + 1 to the current or
+ * alternate map, and a map handoff invalidates both. This state alone is
+ * insufficient to authenticate a dynamic-light frame. */
+typedef struct {
+    int16_t current_map;
+    int16_t alternate_map;
+    uint8_t current_width;
+    uint8_t alternate_width;
+    uint8_t current[32u * 32u];
+    uint8_t alternate[32u * 32u];
+} DM2_V1_1c9aLightVisibility;
+
+void dm2_v1_1c9a_light_visibility_reset(
+    DM2_V1_1c9aLightVisibility *state, int current_map,
+    int current_width, int alternate_map, int alternate_width);
+int dm2_v1_1c9a_light_visibility_mark(
+    DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
+    unsigned depth);
+
 typedef struct DM2_V1_1c9aCreatureGoReceipt {
     bool    moved;
     int16_t new_x;
