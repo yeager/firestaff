@@ -1712,20 +1712,28 @@ static int dm2_runtime_light_mode8_step(
         *next_x = nx;
         *next_y = ny;
         return 1;
-    } else if (raw == 0xb0) {
-        /* Class-5 bit-8 clear reads teleporter detail in GO_THERE before
-         * any action-27 room summary. */
-        if (!rt->record_pools_valid ||
-            !dm2_v1_skproject_get_teleporter_detail_dungeon(
-                dungeon, &rt->record_pools, map, nx, ny,
-                &detail, &detail_receipt) || !detail_receipt.valid)
-            return -1;
-        if (detail.b_04 != rt->c_light_visibility.current_map &&
-            detail.b_04 != rt->c_light_visibility.alternate_map)
-            return 0;
-        *projection_map = detail.b_04;
-        *projection_x = detail.b_02;
-        *projection_y = detail.b_03;
+    } else if ((raw >> 5) == 5 && (raw & 0x08) == 0) {
+        int found;
+        /* GO_THERE class 5 without bit 8 maps a missing teleporter detail
+         * to capability 0x402, which action 27's 0x36e7 mask admits. */
+        if (!rt->record_pools_valid) return -1;
+        memset(&detail_receipt, 0, sizeof(detail_receipt));
+        found = dm2_v1_skproject_get_teleporter_detail_dungeon(
+            dungeon, &rt->record_pools, map, nx, ny,
+            &detail, &detail_receipt);
+        if (!found) {
+            if (!detail_receipt.blocked_missing_origin &&
+                !detail_receipt.blocked_tile_not_teleporter)
+                return -1;
+        } else {
+            if (!detail_receipt.valid) return -1;
+            if (detail.b_04 != rt->c_light_visibility.current_map &&
+                detail.b_04 != rt->c_light_visibility.alternate_map)
+                return 0;
+            *projection_map = detail.b_04;
+            *projection_x = detail.b_02;
+            *projection_y = detail.b_03;
+        }
     } else if (raw == 0x30 || (raw == 0x20 && first == -1)) {
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)rt->boot->dm2_state;

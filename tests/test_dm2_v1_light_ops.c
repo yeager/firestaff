@@ -569,6 +569,18 @@ static void test_mode7_flags4_original_media(void)
     }
     assert(dm2_v1_mode7_go_there_tile_admission(0xb0u,
         dm2_v1_dungeon_get_first_thing(&dungeon, 38, 6, 5)) == -1);
+    {
+        DM2_V1_SkprojectTeleporterDetail detail;
+        DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
+        int found;
+        memset(&detail, 0, sizeof(detail));
+        memset(&receipt, 0, sizeof(receipt));
+        found = dm2_v1_skproject_get_teleporter_detail_dungeon(
+            &dungeon, &pools, 3, 7, 6, &detail, &receipt);
+        assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 7, 6) == 0xb4);
+        assert(dm2_v1_dungeon_get_first_thing(&dungeon, 3, 7, 6) == 0x04ab);
+        assert(!found && receipt.blocked_missing_origin && !receipt.valid);
+    }
     assert(dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
         &dungeon, &graphics, 3, 13, 10, &room));
     assert(dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
