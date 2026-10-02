@@ -1,6 +1,6 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-10-01. Only open work is listed here.
+Reviewed 2026-10-02. Only open work is listed here.
 
 ## 2026-09-30 — remaining coordinate-teleporter parity
 
@@ -22,6 +22,17 @@ Reviewed 2026-10-01. Only open work is listed here.
   runtime consumers remain unverified. The JP full-CUE capture
   still did not reach an authenticated game-owned data consumer, so it adds no
   independent original-runtime gameplay evidence.
+- Active coordinate links retain the encoded record metadata, but the Firestaff
+  resolver and preview do not yet apply its party/item scope, rotation,
+  absolute-facing mode, or sound fields. The original-runtime capture documented
+  in `DONE-theron.md` proves one controlled coordinate/rotation mutation and
+  its resulting party facing only; it does not establish every field
+  combination or scope effect. Inventory the active combinations in authentic
+  US and JP Track 02, then capture ordinary-input before/after party and item
+  state for representative cases or bind the missing branches in the
+  authenticated Theron routine. Until then, keep these semantics unsupported
+  and update the mutating resolver and read-only preview together only from
+  Theron-specific evidence. Generic DM/ReDMCSB behavior is not sufficient.
 
 ## 2026-09-30 — explicit US menu target still does not reach the title route
 
