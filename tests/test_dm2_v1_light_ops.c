@@ -504,6 +504,48 @@ static void test_mode7_flags4_source_branches(void)
         &room, &tile, &darkness, &weather));
 }
 
+static void test_mode7_flags3_prepass_evidence(void)
+{
+    DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_Mode7Flags3Evidence evidence;
+    DM2_V1_Mode7Action23Node node;
+    int16_t ambient = 0, darkness = 0;
+    memset(&room, 0, sizeof(room));
+    memset(&evidence, 0, sizeof(evidence));
+    memset(&node, 0, sizeof(node));
+    room.valid = 1;
+    room.raw_tile = 0x40u;
+    room.source_tile_type = 1u;
+    room.first_record_link = DM2_THING_NULL_MARKER;
+    room.ceiling_ornament_word = 0x0a28u;
+    node.cached_tile = 0x10u;
+    node.source_flags = 3u;
+    node.distance = 1u;
+    node.stone_room = &room;
+    node.prepass = &evidence;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
+    assert(ambient == 0 && darkness == 0);
+    evidence.valid = 1u;
+    evidence.teleporter_detail_known = 1u;
+    evidence.creature_query_known = 1u;
+    evidence.ceiling_gdat_known = 1u;
+    evidence.ceiling_gdat_light_word = 100u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 90 && darkness == 0); /* 100 - distance loss 10. */
+    evidence.teleporter_present = 1u;
+    node.weather_index = 1u;
+    node.weather_delta = 1u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 134 && darkness == 0); /* 50 - weather loss 6. */
+    evidence.creature_present = 1u;
+    evidence.creature_f8_word = 0x8014u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 188 && darkness == 0); /* creature 20-10 + 50-6. */
+    evidence.creature_query_known = 0u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
+    assert(ambient == 188 && darkness == 0);
+}
+
 static void test_check_recompute_clean(void)
 {
     g_dirty_flag = 0; g_recomputed = 0;
@@ -545,6 +587,7 @@ int main(void)
     test_mode7_action23_visit_order();
     test_mode7_tile_accumulator();
     test_mode7_flags4_source_branches();
+    test_mode7_flags3_prepass_evidence();
     test_mode7_flags4_original_media();
     test_proceed_light_darkness();
     test_proceed_light_torch();

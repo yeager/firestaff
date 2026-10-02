@@ -171,6 +171,46 @@ int dm2_v1_mode7_tile_cache_action23_gate(
     return dm2_v1_mode7_action23_samples_tile(cache->tile);
 }
 
+static int dm2_v1_mode7_flags3_class2_terms(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    const DM2_V1_Mode7Flags3Evidence *evidence,
+    uint8_t weather_index, uint8_t weather_delta,
+    int16_t *tile_light, int16_t *weather_light)
+{
+    static const int16_t weather_scale[6] = {99, 75, 50, 25, 1, 0};
+    uint16_t light;
+    unsigned index;
+    if (!room || !room->valid || (room->raw_tile >> 5) != 2u ||
+        room->first_record_link != DM2_THING_NULL_MARKER ||
+        (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
+        !evidence || !evidence->valid ||
+        !evidence->teleporter_detail_known ||
+        !evidence->creature_query_known || !evidence->ceiling_gdat_known ||
+        !tile_light || !weather_light) return 0;
+    *tile_light = 0;
+    *weather_light = 0;
+    /* sklight.cpp:292-350: flags 1 reads the class-1/2 ceiling ornament
+     * before flags 2 reads the live creature F8 term. The no-record room
+     * proves the DBE/DBF darkness chain empty for this narrow branch. */
+    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+        evidence->ceiling_gdat_light_word != 0u) {
+        light = evidence->ceiling_gdat_light_word & 0x7fffu;
+        if (evidence->teleporter_present) {
+            index = (unsigned)weather_index + (unsigned)weather_delta;
+            if (index > 5u) index = 5u;
+            *weather_light = (int16_t)((uint32_t)light *
+                (uint32_t)weather_scale[index] / 100u);
+        } else if ((evidence->ceiling_gdat_light_word & 0x8000u) == 0u ||
+                   (room->ceiling_ornament_word & 0xff00u) != 0u) {
+            *tile_light = (int16_t)light;
+        }
+    }
+    if (evidence->creature_present)
+        *tile_light = (int16_t)((uint16_t)*tile_light +
+            (evidence->creature_f8_word & 0x7fffu));
+    return 1;
+}
+
 int dm2_v1_mode7_on_node(
     const DM2_V1_Mode7Action23Node *node,
     int16_t *v1e0974, int16_t *v1e0978)
@@ -182,9 +222,14 @@ int dm2_v1_mode7_on_node(
      * entering ADD_BACKGROUND_LIGHT_FROM_TILE. */
     if (!dm2_v1_mode7_action23_samples_tile(node->cached_tile)) return 0;
     if (node->source_flags == 3u) {
-        /* SK1C9A.cpp:7768-7783 start/prepass also enters flags-1 and
-         * flags-2 source branches; no receipt authenticates those yet. */
-        return -1;
+        if (node->distance > 8u || node->floor ||
+            !dm2_v1_mode7_flags3_class2_terms(
+                node->stone_room, node->prepass,
+                node->weather_index, node->weather_delta,
+                &tile_light, &weather_light)) return -1;
+        return dm2_v1_mode7_light_accumulate_tile(
+            node->distance, tile_light, 0, weather_light,
+            v1e0974, v1e0978) ? 1 : -1;
     }
     if ((node->effective_flags & 2u) == 0u) return 0;
     if (node->distance > 8u ||
