@@ -1615,7 +1615,8 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
 
 static int dm2_runtime_light_mode8_step(
     void *context, int map, int x, int y, int direction,
-    int *next_map, int *next_x, int *next_y)
+    int *next_map, int *next_x, int *next_y,
+    int *projection_map, int *projection_x, int *projection_y)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
     DM2_V1_DungeonData *dungeon;
@@ -1623,12 +1624,15 @@ static int dm2_runtime_light_mode8_step(
     DM2_V1_CLightStoneRoomReceipt room;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    DM2_V1_SkprojectD283Receipt d283;
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
     int nx, ny, raw, first;
     if (!rt || !rt->boot || !rt->boot->dungeon_data || !next_map ||
-        !next_x || !next_y || map < 0 || direction < 0 || direction > 3)
+        !next_x || !next_y || !projection_map || !projection_x ||
+        !projection_y || map < 0 || direction < 0 || direction > 3)
         return -1;
+    *projection_map = *projection_x = *projection_y = -1;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     if (map >= dungeon->level_count) return -1;
     nx = x + dx[direction];
@@ -1679,6 +1683,22 @@ static int dm2_runtime_light_mode8_step(
                         &rt->record_pools, (int16_t)first, &next) ||
                     next != (int16_t)0xfffe)
                     return -1;
+                memset(&d283, 0, sizeof(d283));
+                if (dm2_v1_skproject_d283_dungeon(
+                        dungeon, &rt->record_pools, map, nx, ny,
+                        &d283) == first && d283.valid && d283.found) {
+                    int dest_map = d283.record_word4 >> 8;
+                    int dest_x = d283.record_word2 & 0x1f;
+                    int dest_y = (d283.record_word2 >> 5) & 0x3f;
+                    if (dest_map != rt->c_light_visibility.current_map &&
+                        dest_map != rt->c_light_visibility.alternate_map)
+                        return 0;
+                    int dest_raw = dm2_v1_dungeon_get_tile_raw(
+                        dungeon, dest_map, dest_x, dest_y);
+                    if (dest_raw < 0) return -1;
+                    return dm2_v1_1c9a_light_arg6_destination_admission(
+                        (uint8_t)dest_raw);
+                }
                 *next_map = map;
                 *next_x = nx;
                 *next_y = ny;
@@ -1689,6 +1709,12 @@ static int dm2_runtime_light_mode8_step(
                     dungeon, &rt->record_pools, map, nx, ny,
                     &detail, &detail_receipt) || !detail_receipt.valid)
                 return -1;
+            if (detail.b_04 != rt->c_light_visibility.current_map &&
+                detail.b_04 != rt->c_light_visibility.alternate_map)
+                return 0;
+            *projection_map = detail.b_04;
+            *projection_x = detail.b_02;
+            *projection_y = detail.b_03;
         }
     } else {
         /* DB0/DB2/DB3, doors and other tile branches need their source

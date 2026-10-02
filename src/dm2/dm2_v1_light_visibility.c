@@ -71,6 +71,17 @@ int dm2_v1_1c9a_light_action_prefetches_start_teleporter(
     return action == 1u || action == 3u || action == 11u || action == 12u;
 }
 
+int dm2_v1_1c9a_light_arg6_destination_admission(uint8_t raw_tile)
+{
+    unsigned type = raw_tile >> 5;
+    /* SK1C9A.cpp:2646-2820: argw1=6 starts vql_40 at zero. For
+     * class 1/2 without bit 0x02, skip00481 leaves it zero, so the
+     * capability mask check exits before any destination edge is made. */
+    if ((type == 1u || type == 2u) && (raw_tile & 0x02u) == 0u)
+        return 0;
+    return -1;
+}
+
 uint8_t dm2_v1_1c9a_light_node_next_direction(
     const DM2_V1_1c9aLightNodeDecision *decision,
     uint8_t previous_direction)
@@ -209,7 +220,6 @@ int dm2_v1_1c9a_light_mode8_frontier(
     uint8_t head = 0u, tail = 0u;
     unsigned pending = 0u;
     unsigned lowest = 0u;
-    int start_phase = 1;
     int selector;
     if (!state) return 0;
     memset(work_grid, 0, sizeof(work_grid));
@@ -228,12 +238,23 @@ int dm2_v1_1c9a_light_mode8_frontier(
     {
         size_t start_index = (size_t)start_x * 32u + (size_t)start_y;
         seen[start_index] = 1u;
+        work_grid[start_index].score = 1u;
         work_grid[start_index].direction = 0xffu;
         if (!dm2_v1_1c9a_light_work_node_position(
                 &work_grid[start_index], start_map, start_x, start_y))
             goto incomplete;
     }
-    while (start_phase || pending != 0u) {
+    /* The initial action sees vo_e8=0, then the source's default tile
+     * cost 1 places the start cell into xp_90 for its first expansion. */
+    if (!dm2_v1_1c9a_light_visibility_mark_action27(
+            state, start_map, start_x, start_y, -1, -1, -1, 0u))
+        goto incomplete;
+    queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
+                         (uint8_t)start_map, 0u};
+    ++tail;
+    score_bucket[1u] = 1u;
+    pending = 1u;
+    while (pending != 0u) {
         unsigned rotations = 0u;
         Cell cell;
         uint8_t score;
@@ -242,15 +263,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
         /* SK1C9A rotates higher-score xp_90 packets to the write cursor
          * while vba_08 still has packets at the current score. The cursors
          * wrap as bytes; no array compaction takes place. */
-        if (start_phase) {
-            /* SK1C9A starts with vw_130=1/vw_f8=-1 and evaluates the
-             * initial action before xp_90 has a packet to dequeue. */
-            cell = (Cell){(uint8_t)start_x, (uint8_t)start_y,
-                          (uint8_t)start_map, 0u};
-            score = 0u;
-            start_phase = 0;
-        }
-        else {
+        {
             while (lowest < sizeof(score_bucket) && !score_bucket[lowest])
                 ++lowest;
             if (lowest == sizeof(score_bucket)) goto incomplete;
@@ -275,25 +288,15 @@ int dm2_v1_1c9a_light_mode8_frontier(
         cell_index = (size_t)cell_selector * 1024u +
                      (size_t)cell.x * 32u + (size_t)cell.y;
         if (!seen[cell_index]) goto incomplete;
-        /* vo_e8 reads xp_bc's first byte. Action 27 stores vo_e8 + 1
-         * in the separate 32-stride visibility plane. */
-        if (!dm2_v1_1c9a_light_visibility_mark_action27(
-                state, cell.map, cell.x, cell.y,
-                cell.map == start_map && cell.x == start_x &&
-                cell.y == start_y && state->alternate_projection_valid ?
-                    state->alternate_map : -1,
-                state->alternate_projection_x,
-                state->alternate_projection_y,
-                score))
-            goto incomplete;
-        /* CHECK_RECOMPUTE_LIGHT supplies action 0x1b with byte 0x19, a
-         * maximum source depth of 25. Only an admitted source edge enters
-         * this queue; unknown record/teleporter cases invalidate the pass. */
-        if (score == 25u) continue;
+        /* vo_e8 is the consumed xp_bc score. Action 27 writes vo_e8+1
+         * at each admitted target before its edge cost enters xp_90. */
         for (int direction = 0; direction < 4; ++direction) {
             int next_map = -1, next_x = -1, next_y = -1;
+            int projection_map = -1, projection_x = -1, projection_y = -1;
             int result = step(context, cell.map, cell.x, cell.y, direction,
-                              &next_map, &next_x, &next_y);
+                              &next_map, &next_x, &next_y,
+                              &projection_map, &projection_x,
+                              &projection_y);
             size_t index;
             if (result < 0) goto incomplete;
             if (result == 0) continue;
@@ -306,6 +309,10 @@ int dm2_v1_1c9a_light_mode8_frontier(
                 goto incomplete;
             index = (size_t)selector * 1024u + (size_t)next_x * 32u +
                     (size_t)next_y;
+            if (!dm2_v1_1c9a_light_visibility_mark_action27(
+                    state, next_map, next_x, next_y,
+                    projection_map, projection_x, projection_y, score))
+                goto incomplete;
             if ((unsigned)score + (unsigned)result > 25u ||
                 (seen[index] &&
                  (unsigned)score + (unsigned)result >=

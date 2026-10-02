@@ -65,7 +65,8 @@ int dm2_v1_1c9a_light_visibility_or_mask(
  * blocked edge, or -1 when its tile/record/teleporter branch is unknown. */
 typedef int (*DM2_V1_1c9aLightStep)(
     void *context, int map, int x, int y, int direction,
-    int *next_map, int *next_x, int *next_y);
+    int *next_map, int *next_x, int *next_y,
+    int *projection_map, int *projection_x, int *projection_y);
 /* Traverses admitted source edges without claiming complete mode-8 coverage. */
 int dm2_v1_1c9a_light_mode8_frontier(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
@@ -88,6 +89,9 @@ int dm2_v1_1c9a_light_extended_search(uint16_t source_flags);
 /* SK1C9A action prepass sets vl_48 only for these action types. */
 int dm2_v1_1c9a_light_action_prefetches_start_teleporter(
     unsigned action);
+/* Recursive GO_THERE(argw1=6) returns 0 for these source tile branches;
+ * -1 means this bounded helper cannot establish admission. */
+int dm2_v1_1c9a_light_arg6_destination_admission(uint8_t raw_tile);
 uint8_t dm2_v1_1c9a_light_node_next_direction(
     const DM2_V1_1c9aLightNodeDecision *decision,
     uint8_t previous_direction);

@@ -47,6 +47,8 @@ static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
     DM2_V1_SkprojectQuery0cee0897Receipt sensor;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
     DM2_V1_SkprojectTeleporterDetail detail;
+    DM2_V1_SkprojectD283Receipt d283;
+    DM2_V1_1c9aLightVisibility visibility;
     int16_t next;
     int valid = 1;
     memset(&pools, 0, sizeof(pools));
@@ -64,6 +66,14 @@ static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
         detail_receipt.valid && detail.b_04 == 3u &&
         detail.b_02 == 13u && detail.b_03 == 10u &&
         !dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x1bu);
+    dm2_v1_1c9a_light_visibility_reset(
+        &visibility, 38, dungeon->level_widths[38],
+        3, dungeon->level_widths[3]);
+    valid &= dm2_v1_1c9a_light_visibility_mark_action27(
+        &visibility, 38, 6, 5, detail.b_04,
+        detail.b_02, detail.b_03, 1u) &&
+        visibility.current[6u * 32u + 5u] == 2u &&
+        visibility.alternate[13u * 32u + 10u] == 2u;
     memset(&sensor, 0, sizeof(sensor));
     valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 6, 4) == 0xb8 &&
         !dm2_v1_skproject_query_0cee_0897_dungeon(
@@ -72,6 +82,20 @@ static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
         sensor.blocked_no_teleporter &&
         dm2_v1_record_pool_next_link(&pools, 0x044e, &next) &&
         next == (int16_t)0xfffe;
+    memset(&d283, 0, sizeof(d283));
+    valid &= dm2_v1_skproject_d283_dungeon(
+        dungeon, &pools, 3, 13, 11, &d283) == 0x0443 &&
+        d283.valid && d283.found && d283.detail_b04 == 38u &&
+        d283.distance == 1 &&
+        dm2_v1_dungeon_get_tile_raw(dungeon, 38, 6, 6) == 0x40 &&
+        dm2_v1_1c9a_light_arg6_destination_admission(0x40u) == 0;
+    memset(&d283, 0, sizeof(d283));
+    valid &= dm2_v1_skproject_d283_dungeon(
+        dungeon, &pools, 38, 6, 4, &d283) == 0x044e &&
+        d283.valid && d283.found && d283.detail_b04 == 3u &&
+        d283.distance == 1 &&
+        dm2_v1_dungeon_get_tile_raw(dungeon, 3, 13, 9) == 0x30 &&
+        dm2_v1_1c9a_light_arg6_destination_admission(0x30u) == 0;
     valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 6, 3) == 0x10 &&
         dm2_v1_dungeon_get_first_thing(dungeon, 38, 6, 3) == 0x0f99;
     valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 9, 13) == 0x50 &&

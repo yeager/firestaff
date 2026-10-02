@@ -6941,6 +6941,11 @@ int dm2_v1_skproject_d283(
     DM2_V1_SkprojectRecordAccessorFn record_fn,
     void *user,
     DM2_V1_SkprojectD283Receipt *out_receipt);
+int dm2_v1_skproject_d283_dungeon(
+    const struct DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *pools,
+    int map, int x, int y,
+    DM2_V1_SkprojectD283Receipt *out_receipt);
 
 /* SKULLWIN/c_1c9a.cpp:2514 DM2_CREATURE_GO_THERE — source-locked narrow
    receipt for the 32-mode creature move dispatcher.  The helper decodes the

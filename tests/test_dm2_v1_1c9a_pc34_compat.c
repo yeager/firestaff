@@ -362,13 +362,17 @@ TEST(light_work_grid_node_packs_source_position) {
 
 static int light_frontier_step(void *context, int map, int x, int y,
                                int direction, int *next_map,
-                               int *next_x, int *next_y)
+                               int *next_x, int *next_y,
+                               int *projection_map, int *projection_x,
+                               int *projection_y)
 {
     int *unknown = (int *)context;
+    *projection_map = *projection_x = *projection_y = -1;
     if (*unknown && map == 38 && x == 6 && y == 6 && direction == 0)
         return -1;
     if (map == 38 && x == 6 && y == 6 && direction == 0) {
         *next_map = 38; *next_x = 6; *next_y = 5;
+        *projection_map = 3; *projection_x = 13; *projection_y = 10;
         return 1;
     }
     if (map == 38 && x == 6 && y == 5 && direction == 0) {
@@ -393,8 +397,6 @@ TEST(light_mode8_frontier_is_fail_closed) {
     int unknown = 1;
     unsigned observed = 0u;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
-    assert(dm2_v1_1c9a_light_visibility_project_teleporter(
-        &state, 3, 13, 9));
     assert(!dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 6, light_frontier_step, &unknown));
     assert(!state.mode8_complete && state.current[6u * 32u + 6u] == 1u);
@@ -403,6 +405,7 @@ TEST(light_mode8_frontier_is_fail_closed) {
         &state, 38, 6, 6, light_frontier_step, &unknown));
     assert(!state.mode8_complete && state.current[6u * 32u + 6u] == 1u &&
            state.current[6u * 32u + 5u] == 2u &&
+           state.alternate[13u * 32u + 10u] == 2u &&
            state.alternate[13u * 32u + 9u] == 3u);
     assert(!state.mode7_complete && state.source_state_hash == 0u);
     assert(dm2_v1_1c9a_light_mode7_observed_cells(
@@ -444,14 +447,17 @@ TEST(light_action27_writes_both_matching_planes) {
 
 static int light_no_edges(void *context, int map, int x, int y,
                           int direction, int *next_map,
-                          int *next_x, int *next_y)
+                          int *next_x, int *next_y,
+                          int *projection_map, int *projection_x,
+                          int *projection_y)
 {
     (void)context; (void)map; (void)x; (void)y; (void)direction;
     (void)next_map; (void)next_x; (void)next_y;
+    (void)projection_map; (void)projection_x; (void)projection_y;
     return 0;
 }
 
-TEST(light_mode8_start_sensor_projects_action27) {
+TEST(light_mode8_start_action_does_not_prefetch_projection) {
     DM2_V1_1c9aLightVisibility state;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
     assert(dm2_v1_1c9a_light_visibility_project_teleporter(
@@ -459,17 +465,20 @@ TEST(light_mode8_start_sensor_projects_action27) {
     assert(dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 5, light_no_edges, NULL));
     assert(state.current[6u * 32u + 5u] == 1u);
-    assert(state.alternate[13u * 32u + 10u] == 1u);
+    assert(state.alternate[13u * 32u + 10u] == 0u);
     assert(!state.mode8_complete);
 }
 
 static int light_grid_step(void *context, int map, int x, int y,
                            int direction, int *next_map,
-                           int *next_x, int *next_y)
+                           int *next_x, int *next_y,
+                           int *projection_map, int *projection_x,
+                           int *projection_y)
 {
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
     (void)context;
+    *projection_map = *projection_x = *projection_y = -1;
     *next_x = x + dx[direction];
     *next_y = y + dy[direction];
     if (*next_x < 0 || *next_y < 0 || *next_x >= 32 || *next_y >= 32)
@@ -490,11 +499,14 @@ TEST(light_mode8_work_ring_wraps_after_256_nodes) {
 
 static int light_blocked_start_step(void *context, int map, int x, int y,
                                     int direction, int *next_map,
-                                    int *next_x, int *next_y)
+                                    int *next_x, int *next_y,
+                                    int *projection_map, int *projection_x,
+                                    int *projection_y)
 {
     unsigned *calls = (unsigned *)context;
     (void)map; (void)x; (void)y; (void)direction;
     (void)next_map; (void)next_x; (void)next_y;
+    (void)projection_map; (void)projection_x; (void)projection_y;
     ++*calls;
     return 0;
 }
@@ -511,9 +523,12 @@ TEST(light_mode8_start_action_precedes_empty_ring_terminal) {
 
 static int light_weighted_step(void *context, int map, int x, int y,
                                int direction, int *next_map,
-                               int *next_x, int *next_y)
+                               int *next_x, int *next_y,
+                               int *projection_map, int *projection_x,
+                               int *projection_y)
 {
     int *visited = (int *)context;
+    *projection_map = *projection_x = *projection_y = -1;
     if (direction == 0) ++*visited;
     *next_map = map;
     if (x == 6 && y == 6 && direction == 0) {
@@ -547,9 +562,12 @@ TEST(light_mode8_work_ring_prioritizes_lower_source_cost) {
 
 static int light_ring_rotation_step(void *context, int map, int x, int y,
                                     int direction, int *next_map,
-                                    int *next_x, int *next_y)
+                                    int *next_x, int *next_y,
+                                    int *projection_map, int *projection_x,
+                                    int *projection_y)
 {
     int *order = (int *)context;
+    *projection_map = *projection_x = *projection_y = -1;
     if (direction == 0) order[1 + order[0]++] = x == 6 && y == 6 ? 0 :
         x == 6 && y == 7 ? 1 : x == 7 && y == 6 ? 2 : 4;
     if (x != 6 || y != 6) return 0;
@@ -633,6 +651,13 @@ TEST(light_action_prepass_gates_start_teleporter_detail) {
     assert(dm2_v1_1c9a_light_action_prefetches_start_teleporter(12u));
     assert(!dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x17u));
     assert(!dm2_v1_1c9a_light_action_prefetches_start_teleporter(0x1bu));
+}
+
+TEST(light_arg6_recursion_blocks_original_db1_destinations) {
+    assert(dm2_v1_1c9a_light_arg6_destination_admission(0x40u) == 0);
+    assert(dm2_v1_1c9a_light_arg6_destination_admission(0x30u) == 0);
+    assert(dm2_v1_1c9a_light_arg6_destination_admission(0xb8u) == -1);
+    assert(dm2_v1_1c9a_light_arg6_destination_admission(0x42u) == -1);
 }
 
 TEST(light_ring_packet_reads_live_xp_bc_score) {
@@ -1174,7 +1199,7 @@ int main(void) {
     RUN(light_mode8_frontier_is_fail_closed);
     RUN(light_mode8_teleporter_projection_uses_source_destination);
     RUN(light_action27_writes_both_matching_planes);
-    RUN(light_mode8_start_sensor_projects_action27);
+    RUN(light_mode8_start_action_does_not_prefetch_projection);
     RUN(light_mode8_work_ring_wraps_after_256_nodes);
     RUN(light_mode8_start_action_precedes_empty_ring_terminal);
     RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
@@ -1183,6 +1208,7 @@ int main(void) {
     RUN(light_node_rng_branch_rotates_source_direction);
     RUN(light_node_action_flags_select_source_attempt_sequence);
     RUN(light_action_prepass_gates_start_teleporter_detail);
+    RUN(light_arg6_recursion_blocks_original_db1_destinations);
     RUN(light_ring_packet_reads_live_xp_bc_score);
     RUN(light_mode7_skips_mode8_cells_beyond_source_radius);
 

@@ -17848,6 +17848,67 @@ int dm2_v1_skproject_d283(
     return record_handle;
 }
 
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    const DM2_V1_RecordPoolSet *pools;
+    int map;
+} DM2_V1_D283DungeonContext;
+
+static uint8_t dm2_v1_d283_dungeon_tile(int16_t x, int16_t y, void *user)
+{
+    DM2_V1_D283DungeonContext *ctx = (DM2_V1_D283DungeonContext *)user;
+    int raw = dm2_v1_dungeon_get_tile_raw(ctx->dungeon, ctx->map, x, y);
+    return raw >= 0 && raw <= 255 ? (uint8_t)raw : 0u;
+}
+
+static int dm2_v1_d283_dungeon_detail(
+    DM2_V1_SkprojectTeleporterDetail *out, int16_t x, int16_t y,
+    void *user)
+{
+    DM2_V1_D283DungeonContext *ctx = (DM2_V1_D283DungeonContext *)user;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
+    return dm2_v1_skproject_get_teleporter_detail_dungeon(
+        ctx->dungeon, ctx->pools, ctx->map, x, y, out, &receipt) &&
+        receipt.valid;
+}
+
+static int32_t dm2_v1_d283_dungeon_record(
+    int16_t x, int16_t y, void *user)
+{
+    DM2_V1_D283DungeonContext *ctx = (DM2_V1_D283DungeonContext *)user;
+    return dm2_v1_dungeon_get_first_thing(ctx->dungeon, ctx->map, x, y);
+}
+
+static const uint8_t *dm2_v1_d283_dungeon_record_address(
+    uint16_t handle, uint16_t *out_size, void *user)
+{
+    DM2_V1_D283DungeonContext *ctx = (DM2_V1_D283DungeonContext *)user;
+    if (out_size) *out_size = 0u;
+    if (((handle >> 10) & 0x0fu) != 1u) return NULL;
+    const uint8_t *record = dm2_v1_record_pool_address(
+        ctx->pools, (int16_t)handle);
+    if (record && out_size) *out_size = 6u;
+    return record;
+}
+
+int dm2_v1_skproject_d283_dungeon(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *pools,
+    int map, int x, int y,
+    DM2_V1_SkprojectD283Receipt *out_receipt)
+{
+    DM2_V1_D283DungeonContext ctx;
+    if (!dungeon || !pools || map < 0 || map >= dungeon->level_count ||
+        x < 0 || x >= dungeon->level_widths[map] ||
+        y < 0 || y >= dungeon->level_heights[map])
+        return -1;
+    ctx = (DM2_V1_D283DungeonContext){dungeon, pools, map};
+    return dm2_v1_skproject_d283(
+        (int16_t)x, (int16_t)y, dm2_v1_d283_dungeon_tile,
+        dm2_v1_d283_dungeon_detail, dm2_v1_d283_dungeon_record,
+        dm2_v1_d283_dungeon_record_address, &ctx, out_receipt);
+}
+
 /* SKULLWIN/c_1c9a.cpp:2514 DM2_CREATURE_GO_THERE — source-locked narrow
    receipt for the 32-mode creature move dispatcher.  See the header
    comment. */
