@@ -1385,6 +1385,7 @@ typedef struct {
     uint8_t source_gdat_field;
     uint8_t source_g1_weapon;
     uint8_t source_g1_container;
+    uint8_t source_g1_misc;
     uint8_t source_static_object_admitted;
     uint8_t source_static_object_cell;
     int8_t source_static_object_pass;
@@ -1450,6 +1451,7 @@ typedef struct {
     int source_gdat_field;
     int source_g1_weapon;
     int source_g1_container;
+    int source_g1_misc;
     int source_static_object_admitted;
     int source_static_object_cell;
     int source_static_object_pass;

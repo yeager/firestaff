@@ -820,6 +820,38 @@ static int run_one(const char *zip, const char *source_id)
     putchar('\n');
     {
         uint8_t frame[320u * 200u];
+        DM2_V1_RuntimeItemRenderReceipt item_render;
+        /* Diagnostic pose: the retail DB10 square is one step in front of
+         * this source floor square. This does not assert a New Game route. */
+        if (dm2_v1_dungeon_get_square_type(dungeon, 9, 1, 1) != 1 ||
+            dm2_v1_dungeon_get_first_thing(dungeon, 9, 1, 0) != 0x2831) {
+            fprintf(stderr, "Mac retail DB10 source pose invalid: %s\n", source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        dm2_v1_runtime_set_position(9, 1, 1, 0);
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        memset(&item_render, 0, sizeof(item_render));
+        if (!dm2_v1_runtime_last_item_render_receipt(&item_render) ||
+            !item_render.valid || !item_render.asset_blit_ready ||
+            item_render.item_category != 0x15 ||
+            item_render.item_type != 0x2c ||
+            item_render.asset_src_w != 34 ||
+            item_render.asset_src_h != 13 ||
+            dm2_v1_runtime_last_asset_item_count() < 1) {
+            fprintf(stderr, "Mac retail DB10 static object was not drawn: %s "
+                    "valid=%d blit=%d cat=%x type=%x size=%dx%d count=%d\n",
+                    source_id, item_render.valid, item_render.asset_blit_ready,
+                    item_render.item_category, item_render.item_type,
+                    item_render.asset_src_w, item_render.asset_src_h,
+                    dm2_v1_runtime_last_asset_item_count());
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
+    {
+        uint8_t frame[320u * 200u];
         DM2_V1_ViewportRect rect;
         DM2_V1_RuntimeViewportClickReceipt on_image, above_image;
         DM2_V1_BootExpandedRectReceipt rect7;

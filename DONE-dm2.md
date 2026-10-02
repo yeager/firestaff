@@ -1,5 +1,11 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: The authenticated Mac DB10 `0x2831` floor item now enters the
+  source-gated static-object render path. At diagnostic pose map 9 (1,1,N),
+  an original-media M11 frame reports a drawn category `0x15`, type `0x2c`
+  item using the original 34x13 image. This proves one square-root item
+  render; chained items, normal traversal to the pose, and pickup remain open.
+
 - 2026-10-02: Viewport item and projectile virtual image addresses no longer
   overlap. The authentic Mac DB10 `0x2831` on map 9 selects category `0x15`,
   type `0x2c`, image field 0; a real-media red/green test now fetches its

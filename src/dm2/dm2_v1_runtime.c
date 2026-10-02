@@ -4749,13 +4749,14 @@ static void dm2_runtime_populate_g1_weapon_map_chip_items(
 static uint32_t dm2_runtime_static_object_visibility_mask_5x5(
     const DM2_V1_G1RuntimeMapWeaponReceipt *weapons,
     const DM2_V1_G1RuntimeMapContainerReceipt *containers,
+    const DM2_V1_DungeonData *dungeon, int map,
     int x, int y, int party_dir)
 {
     /* SKWIN/SkWinCore.cpp lines 45361-45370: the per-cell 5x5 visibility mask
      * ((*_4976_5be2)[cellPos]) ORs 1 << QUERY_OBJECT_5x5_POS(record, view_dir)
-     * for every dbWeapon..dbMiscellaneous_item record on the square.  Only the
-     * declared direct G1 DB5/DB9 roots contribute; their positions and
-     * directions are record-owned real game data.  The source additionally
+     * for every dbWeapon..dbMiscellaneous_item record on the square.  The
+     * admitted DB5/DB9 roots and source DB10 square head contribute their
+     * record-owned positions and directions. The source additionally
      * gates the bit on the tile state (xsrd.w0/w6[0]); tile-state ownership
      * stays with the dungeon materialization that admitted these roots. */
     uint32_t mask = 0u;
@@ -4771,6 +4772,15 @@ static uint32_t dm2_runtime_static_object_visibility_mask_5x5(
         if (containers->containers[j].x == x && containers->containers[j].y == y) {
             mask |= dm2_v1_viewport_static_object_visibility_bit(
                 containers->containers[j].direction, party_dir);
+        }
+    }
+    if (dungeon) {
+        int root = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+        if (root >= 0 && (((unsigned)root >> 10) & 15u) == 10u &&
+            dm2_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)root, NULL, NULL, NULL)) {
+            mask |= dm2_v1_viewport_static_object_visibility_bit(
+                root >> 14, party_dir);
         }
     }
     return mask;
@@ -4800,30 +4810,60 @@ static void dm2_runtime_populate_g1_static_object_materials(
         rect14_rows != NULL && rect14_row_count > 0u && rect14_hash != 0u;
     memset(&weapons, 0, sizeof(weapons));
     memset(&containers, 0, sizeof(containers));
-    if (!dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
-            dungeon, rt->dungeon_level, &weapons) || !weapons.committed ||
-        !dm2_v1_dungeon_materialize_g1_runtime_map_containers(
-            dungeon, rt->dungeon_level, &containers) || !containers.committed) return;
-    for (int pass = 0; pass < 2; ++pass) {
-        int count = pass == 0 ? weapons.weapon_root_count : containers.container_root_count;
+    (void)dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
+        dungeon, rt->dungeon_level, &weapons);
+    (void)dm2_v1_dungeon_materialize_g1_runtime_map_containers(
+        dungeon, rt->dungeon_level, &containers);
+    for (int pass = 0; pass < 3; ++pass) {
+        int count = pass == 0 ?
+            (weapons.committed ? weapons.weapon_root_count : 0) :
+            pass == 1 ?
+            (containers.committed ? containers.container_root_count : 0) :
+            dungeon->level_widths[rt->dungeon_level] *
+                dungeon->level_heights[rt->dungeon_level];
         for (int i = 0; i < count && rt->g1_static_object_material_count < 48; ++i) {
             DM2_V1_G1StaticObjectMaterialSelector selector;
             DM2_V1_StaticObjectSourcePlan plan;
             DM2_V1_G1StaticObjectMaterialReceipt receipt;
-            int x = pass == 0 ? weapons.weapons[i].x : containers.containers[i].x;
-            int y = pass == 0 ? weapons.weapons[i].y : containers.containers[i].y;
+            int x = pass == 0 ? weapons.weapons[i].x :
+                pass == 1 ? containers.containers[i].x :
+                i / dungeon->level_heights[rt->dungeon_level];
+            int y = pass == 0 ? weapons.weapons[i].y :
+                pass == 1 ? containers.containers[i].y :
+                i % dungeon->level_heights[rt->dungeon_level];
             int cell, source_pass;
+            int misc_root = -1;
+            const uint8_t *misc_record = NULL;
+            uint16_t misc_offset = 0u;
+            if (pass == 2) {
+                misc_root = dm2_v1_dungeon_get_first_thing(
+                    dungeon, rt->dungeon_level, x, y);
+                if (misc_root < 0 ||
+                    (((unsigned)misc_root >> 10) & 15u) != 10u) continue;
+                misc_record = dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)misc_root, NULL, NULL, NULL);
+                if (!misc_record) continue;
+                if (!dm2_v1_asset_load_image_offset(
+                        dm2_v1_boot_asset_loader(rt->boot), 0x15, 0xfe,
+                        0u, &misc_offset)) misc_offset = 0u;
+            }
             if (!dm2_v1_viewport_static_object_cell_for_map(x, y, party_dir,
                     party_x, party_y, &cell, &source_pass) ||
                 !(pass == 0 ? dm2_v1_boot_g1_static_weapon_selector(rt->boot,
                                &weapons.weapons[i], &selector) :
-                              dm2_v1_boot_g1_static_container_selector(rt->boot,
-                               &containers.containers[i], &selector)) ||
+                  pass == 1 ? dm2_v1_boot_g1_static_container_selector(rt->boot,
+                               &containers.containers[i], &selector) :
+                  dm2_v1_g1_static_misc_material_selector(
+                      (uint16_t)misc_root, x, y,
+                      (uint8_t)(dm2_v1_dungeon_read_record_u16(
+                          dungeon, misc_record + 2) & 0x7fu),
+                      misc_offset, &selector)) ||
                 !dm2_v1_viewport_static_object_source_plan(cell, source_pass,
                     selector.category, selector.direction, selector.container_open,
                     0, party_dir, 1u,
                     dm2_runtime_static_object_visibility_mask_5x5(
-                        &weapons, &containers, x, y, party_dir),
+                        &weapons, &containers, dungeon, rt->dungeon_level,
+                        x, y, party_dir),
                     &plan)) continue;
             /* draw_slot 0 and record_list_ordinal 1 are proven, not assumed:
              * the materializers only admit each tile's square-first-thing
@@ -4909,6 +4949,45 @@ static void dm2_runtime_populate_g1_container_map_chip_items(
     }
 }
 
+static void dm2_runtime_populate_g1_misc_static_items(
+    const DM2_V1_RuntimeState *rt, DM2_V1_ViewportState *viewport,
+    int party_dir, int party_x, int party_y)
+{
+    /* SKProject skguidrw.cpp:5646-5685 DRAW_STATIC_OBJECT and :4733-4780
+     * DRAW_PUT_DOWN_ITEM pass visible DB10 through DRAW_ITEM. Only admitted
+     * square heads reach this bounded pass. */
+    if (!rt || !viewport || rt->outdoor) return;
+    for (int i = 0; i < rt->g1_static_object_material_count &&
+                    viewport->item_count < DM2_MAX_ITEMS_PER_SQ; ++i) {
+        const DM2_V1_G1StaticObjectMaterialReceipt *material =
+            &rt->g1_static_object_materials[i];
+        const DM2_V1_StaticObjectSourcePlan *plan =
+            &rt->g1_static_object_source_plans[i];
+        DM2_V1_ViewportSpritePlacement placement;
+        DM2_ItemSprite *dst;
+        if (material->selector.category != 0x15u ||
+            !dm2_v1_viewport_project_map_to_sprite(
+                material->selector.x, material->selector.y,
+                party_dir, party_x, party_y, &placement)) continue;
+        dst = &viewport->items[viewport->item_count++];
+        memset(dst, 0, sizeof(*dst));
+        dst->item_category = material->selector.category;
+        dst->item_type = material->selector.item_type;
+        dst->depth = (int16_t)placement.depth;
+        dst->screen_x = (int16_t)placement.screen_x;
+        dst->screen_y = (int16_t)placement.screen_y;
+        dst->direction = material->selector.direction;
+        dst->object_id = material->selector.object_id;
+        dst->map_x = (int16_t)material->selector.x;
+        dst->map_y = (int16_t)material->selector.y;
+        dst->source_g1_misc = 1;
+        dst->source_static_object_admitted = 1;
+        dst->source_static_object_cell = (uint8_t)plan->source_cell;
+        dst->source_static_object_pass = (int8_t)plan->source_pass;
+        dm2_runtime_admit_static_object_draw_item_material(rt, dst);
+    }
+}
+
 static uint32_t dm2_runtime_indexed_pixel_hash(const uint8_t *pixels,
                                                int width,
                                                int height,
@@ -4945,7 +5024,8 @@ static void dm2_runtime_bind_g1_scene_static_item_materials(
     memset(materials, 0, sizeof(materials));
     for (int i = 0; i < viewport->item_count; ++i) {
         const DM2_ItemSprite *candidate = &viewport->items[i];
-        if ((candidate->source_g1_weapon || candidate->source_g1_container) &&
+        if ((candidate->source_g1_weapon || candidate->source_g1_container ||
+             candidate->source_g1_misc) &&
             candidate->source_static_object_admitted) {
             const DM2_V1_G1StaticObjectMaterialReceipt *material;
             const uint8_t *pixels = NULL;
@@ -11643,6 +11723,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_populate_g1_weapon_map_chip_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_g1_container_map_chip_items(
+        rt, &viewport, party_dir, party_x, party_y);
+    dm2_runtime_populate_g1_misc_static_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
