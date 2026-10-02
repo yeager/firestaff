@@ -211,7 +211,7 @@ static int light_walk_core(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context,
     uint16_t *walk_rng, uint16_t source_flags, unsigned action,
-    unsigned max_score,
+    unsigned max_score, int source_facing,
     DM2_V1_1c9aLightNodeAction on_node)
 {
     typedef struct { uint8_t x, y, map, reserved; } Cell;
@@ -228,6 +228,7 @@ static int light_walk_core(
     unsigned lowest = 0u;
     int selector;
     if (!state || !walk_rng || max_score == 0u || max_score > 50u ||
+        source_facing < 0 || source_facing > 3 ||
         (action != 0x1bu && action != 0x17u)) return 0;
     memset(work_grid, 0, sizeof(work_grid));
     memset(seen, 0, sizeof(seen));
@@ -266,7 +267,8 @@ static int light_walk_core(
      * used by CHECK_RECOMPUTE_LIGHT, SK1C9A ORs that value into vb_140
      * before both the prepass and the edge-loop cache refresh. */
     } else if (!on_node || on_node(context, start_map, start_x,
-                                   start_y, 0u, 3u, 0x4fu) < 0) {
+                                   start_y, -1, source_facing,
+                                   0u, 3u, 0x4fu) < 0) {
         goto incomplete;
     }
     queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
@@ -343,6 +345,7 @@ static int light_walk_core(
                         projection_map, projection_x, projection_y, score))
                     goto incomplete;
             } else if (on_node(context, next_map, next_x, next_y,
+                               direction, source_facing,
                                score, 4u, 0x4fu) < 0) {
                 goto incomplete;
             }
@@ -381,12 +384,14 @@ int dm2_v1_1c9a_light_mode8_frontier_with_rng(
 {
     /* SK1C9A action 27 installs v1e0576=0x36e7 in its prepass. */
     return light_walk_core(state, start_map, start_x, start_y, step,
-                           context, walk_rng, 0x36e7u, 0x1bu, 25u, NULL);
+                           context, walk_rng, 0x36e7u, 0x1bu, 25u, 0,
+                           NULL);
 }
 
 int dm2_v1_1c9a_light_mode7_frontier_with_rng(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
-    int start_y, unsigned source_radius, DM2_V1_1c9aLightStep step,
+    int start_y, int source_facing, unsigned source_radius,
+    DM2_V1_1c9aLightStep step,
     DM2_V1_1c9aLightNodeAction on_node, void *context,
     uint16_t *walk_rng)
 {
@@ -396,7 +401,7 @@ int dm2_v1_1c9a_light_mode7_frontier_with_rng(
     if (source_radius > 8u) source_radius = 8u;
     return light_walk_core(state, start_map, start_x, start_y, step,
                            context, walk_rng, 0x227u, 0x17u,
-                           source_radius, on_node);
+                           source_radius, source_facing, on_node);
 }
 
 int dm2_v1_1c9a_light_mode8_frontier(

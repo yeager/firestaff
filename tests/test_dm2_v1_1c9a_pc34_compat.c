@@ -464,17 +464,21 @@ typedef struct {
 } LightMode7Actions;
 
 static int light_mode7_record_action(void *context, int map, int x, int y,
-                                     unsigned score, unsigned source_flags,
+                                     int direction, int source_facing,
+                                     unsigned score,
+                                     unsigned source_flags,
                                      uint8_t effective_flags)
 {
     LightMode7Actions *actions = (LightMode7Actions *)context;
     assert(map == 38);
+    assert(source_facing == 2);
     assert(effective_flags == 0x4fu);
     if (source_flags == 3u) {
-        assert(x == 6 && y == 6);
+        assert(x == 6 && y == 6 && direction == -1);
         ++actions->start_calls;
         actions->start_score = score;
     } else if (source_flags == 4u) {
+        assert(direction >= 0 && direction < 4);
         ++actions->edge_calls;
         actions->edge_score = score;
     } else return -1;
@@ -511,7 +515,9 @@ static int light_mode7_original_tile(void *context, int map, int x, int y,
 }
 
 static int light_mode7_cache_action(void *context, int map, int x, int y,
-                                    unsigned score, unsigned source_flags,
+                                    int direction, int source_facing,
+                                    unsigned score,
+                                    unsigned source_flags,
                                     uint8_t effective_flags)
 {
     LightMode7CacheProbe *probe = (LightMode7CacheProbe *)context;
@@ -519,11 +525,13 @@ static int light_mode7_cache_action(void *context, int map, int x, int y,
     int16_t ambient = 0, darkness = 0;
     int result;
     if (source_flags == 3u) {
+        assert(direction == -1 && source_facing == 2);
         if (!dm2_v1_mode7_tile_cache_start(&probe->cache, map, x, y,
                                            light_mode7_original_tile, NULL))
             return -1;
         ++probe->saw_start;
     } else {
+        assert(direction == 0 && source_facing == 2);
         if (!dm2_v1_mode7_tile_cache_node(&probe->cache, effective_flags,
                 map, x, y, light_mode7_original_tile, NULL)) return -1;
         ++probe->saw_edge;
@@ -542,7 +550,7 @@ TEST(light_mode7_cached_b0_requires_authenticated_receipt) {
     uint16_t rng = 0xb400u;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
     assert(!dm2_v1_1c9a_light_mode7_frontier_with_rng(
-        &state, 38, 6, 6, 8u, light_mode7_one_edge,
+        &state, 38, 6, 6, 2, 8u, light_mode7_one_edge,
         light_mode7_cache_action, &probe, &rng));
     assert(probe.saw_start == 1 && probe.saw_edge == 1 &&
            probe.cache.valid && probe.cache.tile == 0xb0u &&
@@ -559,7 +567,7 @@ TEST(light_mode7_uses_separate_walk_and_shared_rng_cursor) {
         &state, 38, 6, 6, light_no_edges, NULL, &rng));
     assert(rng == 0xb400u && state.current[6u * 32u + 6u] == 1u);
     assert(dm2_v1_1c9a_light_mode7_frontier_with_rng(
-        &state, 38, 6, 6, 8u, light_mode7_one_edge,
+        &state, 38, 6, 6, 2, 8u, light_mode7_one_edge,
         light_mode7_record_action, &actions, &rng));
     assert(rng == 0x2d00u && actions.start_calls == 1u &&
            actions.start_score == 0u && actions.edge_calls == 4u &&

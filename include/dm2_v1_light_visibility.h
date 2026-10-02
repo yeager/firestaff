@@ -67,10 +67,12 @@ typedef int (*DM2_V1_1c9aLightStep)(
     void *context, int map, int x, int y, int direction,
     int *next_map, int *next_x, int *next_y,
     int *projection_map, int *projection_x, int *projection_y);
-/* Action 23 observes a separate FIND_WALK_PATH pass. Return -1 when its
- * cached tile or source light branch cannot be established. */
+/* Action 23 observes a separate FIND_WALK_PATH pass. direction is -1 at
+ * start, where SK1C9A substitutes v1e0258 (source_facing); edge calls get
+ * the actual vw_f8 direction. Return -1 for an unknown source branch. */
 typedef int (*DM2_V1_1c9aLightNodeAction)(
-    void *context, int map, int x, int y, unsigned score,
+    void *context, int map, int x, int y, int direction,
+    int source_facing, unsigned score,
     unsigned source_flags, uint8_t effective_flags);
 /* Traverses admitted source edges without claiming complete mode-8 coverage. */
 int dm2_v1_1c9a_light_mode8_frontier(
@@ -86,7 +88,8 @@ int dm2_v1_1c9a_light_mode8_frontier_with_rng(
  * It remains observational until all source callbacks are authenticated. */
 int dm2_v1_1c9a_light_mode7_frontier_with_rng(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
-    int start_y, unsigned source_radius, DM2_V1_1c9aLightStep step,
+    int start_y, int source_facing, unsigned source_radius,
+    DM2_V1_1c9aLightStep step,
     DM2_V1_1c9aLightNodeAction on_node, void *context,
     uint16_t *walk_rng);
 /* SK1C9A v1d62ec is a separate 16-bit walk RNG, initialized to 1 by
