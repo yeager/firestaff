@@ -106,8 +106,11 @@ probe_input() {
         *) printf '%s\n' "$output" >&2; exit 1 ;;
     esac
 }
-for case_item in up:1,7,0 down:1,9,2 left:1,8,3 right:1,8,1 \
-                 strafe-left:0,8,3 strafe-right:2,8,1 action:1,8,0; do
+# The authentic Amiga map has wall tiles at (map 0, x=1, y=9,
+# raw=16) and (map 0, x=0, y=8, raw=0). The party turns toward either
+# blocked step while its position remains (1,8).
+for case_item in up:1,7,0 down:1,8,2 left:1,8,3 right:1,8,1 \
+                 strafe-left:1,8,3 strafe-right:2,8,1 action:1,8,0; do
     probe_input "${case_item%%:*}" "${case_item#*:}"
 done
 if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
