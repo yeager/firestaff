@@ -6836,11 +6836,16 @@ list(REMOVE_ITEM M10_SOURCES
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_open_mirror_rotation_three_way_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
-# intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
-# caller for it, so a broad compatibility glob must not make those stubs part
-# of a production archive.  Its dedicated test compiles the audit explicitly.
+# intentionally fail-closed AI bodies. The live visibility state is in the
+# separate dm2_v1_light_visibility.c; the broad compatibility glob must not
+# make AI stubs part of a production archive. Its dedicated test compiles the
+# audit explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_1c9a_pc34_compat.c")
+# The live light-visibility owner belongs to firestaff_dm2, whose runtime
+# consumes it. Keep the M10 glob from compiling a second archive copy.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_light_visibility.c")
 # `dm2_v1_0aaf_pc34_compat.c` has no M11/runtime caller and its callback
 # contract still omits the original menu selector plus dialogue-rectangle
 # placement.  Keep the audit test-only rather than linking a guessed dialogue
@@ -23239,6 +23244,7 @@ endif()
     add_executable(test_dm2_v1_1c9a_pc34_compat
         tests/test_dm2_v1_1c9a_pc34_compat.c
         src/dm2/dm2_v1_1c9a_pc34_compat.c
+        src/dm2/dm2_v1_light_visibility.c
     )
     target_include_directories(test_dm2_v1_1c9a_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

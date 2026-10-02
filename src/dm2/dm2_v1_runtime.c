@@ -60,7 +60,7 @@
 #include "dm2_v1_engage_command_pc34_compat.h"
 #include "dm2_v1_light_ops_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
-#include "dm2_v1_1c9a_pc34_compat.h"
+#include "dm2_v1_light_visibility.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include "dm2_v1_creature_attacks_party_pc34_compat.h"
