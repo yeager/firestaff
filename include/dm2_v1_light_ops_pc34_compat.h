@@ -134,6 +134,14 @@ int dm2_v1_mode7_flags4_floor_terms(
     uint8_t weather_index, uint8_t weather_delta,
     int16_t *out_tile_light, int16_t *out_weather_light);
 
+/* A class-2 no-record stone-room receipt may become effective class 1 or 2.
+ * With source flags 4, neither branch enters the flags-1 or flags-2 light
+ * paths, so its resolved terms are zero. */
+int dm2_v1_mode7_flags4_class2_terms(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    int16_t *out_tile_light, int16_t *out_darkness,
+    int16_t *out_weather_light);
+
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {
     if (val < lo) return lo;

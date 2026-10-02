@@ -325,7 +325,8 @@ static void test_mode7_flags4_original_media(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_AssetLoader graphics;
     DM2_V1_CLightFlags4FloorReceipt floor;
-    int16_t tile_light, weather_light;
+    DM2_V1_CLightStoneRoomReceipt room;
+    int16_t tile_light, weather_light, room_darkness;
     int16_t accumulated = 0, darkness = 0;
     if (!home) return;
     assert(snprintf(dungeon_path, sizeof(dungeon_path),
@@ -348,6 +349,19 @@ static void test_mode7_flags4_original_media(void)
                                (int)dungeon_size) == 0);
     assert(dm2_v1_asset_loader_init(&graphics, graphics_bytes,
                                     graphics_size) == 0);
+    assert(dm2_v1_dungeon_c_light_stone_room_receipt(
+        &dungeon, &graphics, 38, 6, 6, 0u, &room));
+    assert(room.raw_tile == 0x40u && room.source_tile_type == 1u &&
+           room.ceiling_ornament_word == 0x0a28u);
+    assert(dm2_v1_mode7_flags4_class2_terms(
+        &room, &tile_light, &room_darkness, &weather_light));
+    assert(tile_light == 0 && room_darkness == 0 && weather_light == 0);
+    assert(dm2_v1_dungeon_c_light_stone_room_receipt(
+        &dungeon, &graphics, 38, 5, 6, 0u, &room));
+    assert(room.raw_tile == 0x48u && room.source_tile_type == 2u);
+    assert(dm2_v1_mode7_flags4_class2_terms(
+        &room, &tile_light, &room_darkness, &weather_light));
+    assert(tile_light == 0 && room_darkness == 0 && weather_light == 0);
     assert(dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
         &dungeon, &graphics, 3, 12, 0, 0u, &floor));
     assert(floor.floor_ornament_word == 0x0a56u &&
@@ -381,13 +395,15 @@ static void test_mode7_flags4_original_media(void)
     dm2_v1_dungeon_free(&dungeon);
     free(graphics_bytes);
     free(dungeon_bytes);
-    printf("  PASS: FM Towns map 3 flags-4 source terms\n");
+    printf("  PASS: FM Towns maps 3/38 flags-4 source terms\n");
 }
 
 static void test_mode7_flags4_source_branches(void)
 {
     DM2_V1_CLightFlags4FloorReceipt floor;
+    DM2_V1_CLightStoneRoomReceipt room;
     int16_t tile = -1, weather = -1;
+    int16_t darkness = -1;
     memset(&floor, 0, sizeof(floor));
     floor.valid = 1;
     floor.source_flags = 4u;
@@ -419,6 +435,17 @@ static void test_mode7_flags4_source_branches(void)
     floor.source_flags = 1u;
     assert(!dm2_v1_mode7_flags4_floor_terms(&floor, 0u, 0u,
                                             &tile, &weather));
+    memset(&room, 0, sizeof(room));
+    room.valid = 1;
+    room.raw_tile = 0x40u;
+    room.source_tile_type = 1u;
+    room.first_record_link = DM2_THING_NULL_MARKER;
+    assert(dm2_v1_mode7_flags4_class2_terms(
+        &room, &tile, &darkness, &weather));
+    assert(tile == 0 && darkness == 0 && weather == 0);
+    room.first_record_link = 0u;
+    assert(!dm2_v1_mode7_flags4_class2_terms(
+        &room, &tile, &darkness, &weather));
 }
 
 static void test_check_recompute_clean(void)

@@ -105,6 +105,25 @@ int dm2_v1_mode7_flags4_floor_terms(
     return 1;
 }
 
+int dm2_v1_mode7_flags4_class2_terms(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    int16_t *out_tile_light, int16_t *out_darkness,
+    int16_t *out_weather_light)
+{
+    if (!room || !room->valid ||
+        (room->raw_tile >> 5) != 2u ||
+        room->first_record_link != DM2_THING_NULL_MARKER ||
+        (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
+        !out_tile_light || !out_darkness || !out_weather_light) return 0;
+    /* sklight.cpp:231-435: class 1/2 bypasses the class-0 flags-4 branch.
+     * The remaining floor and creature probes require flags 1 and 2,
+     * respectively; action 0x17 passes only 4. */
+    *out_tile_light = 0;
+    *out_darkness = 0;
+    *out_weather_light = 0;
+    return 1;
+}
+
 /* ---- DM2_RECALC_LIGHT_LEVEL (c_light.cpp:16-198) ---- */
 
 void dm2_v1_recalc_light_level_pc34(
