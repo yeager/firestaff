@@ -6,6 +6,7 @@ mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Mast
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 dm1_towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
+csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$mac_archive" ] ||
    [ ! -f "$towns_archive" ]; then
@@ -40,7 +41,8 @@ case "$towns_verbose" in
 esac
 
 combined_root=$(mktemp -d "${PWD}/.firestaff-cli-diagnostics.XXXXXX")
-trap 'rm -rf "$combined_root"' EXIT
+csb_mixed_root=
+trap 'rm -rf "$combined_root" "$csb_mixed_root"' EXIT
 ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
 ln -s "$towns_archive" "$combined_root/$(basename "$towns_archive")"
 combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
@@ -90,6 +92,24 @@ if [ -f "$csb_towns_archive" ]; then
         *"startup game=csb mode=direct platform=auto"*"selected game=csb platform=FM Towns"*) ;;
         *) echo "FAIL: bare CSB did not select original FM Towns media" >&2; exit 1 ;;
     esac
+    if [ -d "$csb_towns_loose_root/CDATA" ] &&
+       [ -d "$csb_towns_loose_root/CJDATA" ]; then
+        csb_mixed_root=$(mktemp -d "${PWD}/.firestaff-csb-mixed-media.XXXXXX")
+        mkdir "$csb_mixed_root/csb"
+        ln -s "$csb_towns_archive" "$csb_mixed_root/csb/$(basename "$csb_towns_archive")"
+        ln -s "$csb_towns_loose_root" "$csb_mixed_root/csb/fmtowns_iso"
+        csb_mixed=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --game csb --data-dir "$csb_mixed_root" \
+            --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+            printf '%s\n' "$csb_mixed" >&2
+            exit 1
+        }
+        case "$csb_mixed" in
+            *"selected game=csb platform=FM Towns edition=fmtowns-en source="*"$(basename "$csb_towns_archive")::CDATA/GRAPHICS.DAT"*"CSB READY:"*) ;;
+            *) echo "FAIL: CSB selected the loose tree over its complete original CD image" >&2; exit 1 ;;
+        esac
+        rm -rf "$csb_mixed_root"
+    fi
 fi
 
 echo "PASS: original-media startup diagnostics and FM Towns defaults"

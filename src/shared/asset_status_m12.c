@@ -6769,10 +6769,14 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
             return 0;
         }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
-            csbFmtownsAdmitted = m12_admit_csb_fmtowns_archive(status, i,
-                                                                 roots, rootCount);
             csbFmtownsAdmitted = m12_admit_csb_fmtowns_loose_tree(
-                status, i, roots, rootCount) || csbFmtownsAdmitted;
+                status, i, roots, rootCount);
+            /* A broad root may contain both an extracted CDATA tree and its
+             * authenticated retail CD image. Prefer the complete image: its
+             * CUE and audio tracks are required by the native F0719 route.
+             * ReDMCSB TOWNSIO.C F0719 and ANIM.C F2275. */
+            csbFmtownsAdmitted = m12_admit_csb_fmtowns_archive(status, i,
+                roots, rootCount) || csbFmtownsAdmitted;
         }
         m12_fill_game_versions(status,
                                i,
@@ -7162,9 +7166,9 @@ void M12_AssetStatus_ScanGameWithOptions(
             !m12_scan_progress_update(&progressCtx, "matching editions",
                                       gameId, requestedDataDir, 0)) return;
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
-            csbFmtownsAdmitted = m12_admit_csb_fmtowns_archive(status, gameIndex,
-                                                                 roots, rootCount);
             csbFmtownsAdmitted = m12_admit_csb_fmtowns_loose_tree(
+                status, gameIndex, roots, rootCount);
+            csbFmtownsAdmitted = m12_admit_csb_fmtowns_archive(
                 status, gameIndex, roots, rootCount) || csbFmtownsAdmitted;
         }
         m12_fill_game_versions(status,
