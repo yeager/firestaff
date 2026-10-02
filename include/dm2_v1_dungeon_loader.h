@@ -1701,6 +1701,11 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
 int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out);
+/* Bounded class-1 floor-actuator summary: DB3 subtype 0x32 supplies the
+ * ceiling ornament from the map-local floor list without animation. */
+int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out);
 /* c_light.cpp:202-481, class-2 no-record ceiling-ornament branch only.
  * The caller owns the running accumulators; this receipt never claims that
  * the party, creature, other tile, weather, or darkness inputs are complete. */

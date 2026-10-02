@@ -6819,6 +6819,55 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)
+{
+    const uint8_t *db3, *item;
+    uint8_t floor_list[16];
+    uint16_t first, next, end, sensor_word, control_word, graphics_word = 0u;
+    int type, index, size, raw, graphicsset, floor_count, ordinal;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !loader || !loader->loaded) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = (uint16_t)dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw != 0x30 || ((first >> 10) & 0x0fu) != 3u) return 0;
+    db3 = dm2_v1_dungeon_get_thing_record(d, first, &type, &index, &size);
+    if (!db3 || type != 3 || size < 6) return 0;
+    sensor_word = dm2_v1_dungeon_read_record_u16(d, db3 + 2);
+    control_word = dm2_v1_dungeon_read_record_u16(d, db3 + 4);
+    ordinal = control_word >> 12;
+    if ((sensor_word & 0x7fu) != 0x32u ||
+        (control_word & 1u) != 0u || ordinal <= 0) return 0;
+    next = dm2_v1_dungeon_read_record_u16(d, db3);
+    if (((next >> 10) & 0x0fu) != 10u) return 0;
+    item = dm2_v1_dungeon_get_thing_record(d, next, &type, &index, &size);
+    if (!item || type != 10 || size < 2) return 0;
+    end = dm2_v1_dungeon_read_record_u16(d, item);
+    if (end != DM2_THING_END_MARKER) return 0;
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
+    if (graphicsset < 0 || graphicsset > 15 ||
+        dm2_v1_query_gdat_entry_data_index(loader, 8, graphicsset, 11,
+                                            0x6b, &graphics_word)) return 0;
+    floor_count = dm2_v1_dungeon_get_map_floor_gfx_list(
+        d, level, floor_list, (int)sizeof(floor_list));
+    if (floor_count < ordinal || ordinal > 16) return 0;
+    /* skguivwp.cpp:2615, 2820-3080: class 1 keeps type 1. DB3 subtype
+     * 0x32 with control bit 0 clear stores its floor decoration ordinal
+     * without an animation frame; the following DB10 stops the summary. */
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->source_tile_type = 1u;
+    out->first_record_link = first;
+    out->ceiling_ornament_index = floor_list[ordinal - 1];
+    out->ceiling_ornament_word = out->ceiling_ornament_index;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_tile_ornament_receipt(
     const DM2_V1_CLightStoneRoomReceipt *room,
     const DM2_V1_AssetLoader *loader, int distance, unsigned flags,

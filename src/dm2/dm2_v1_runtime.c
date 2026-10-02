@@ -1933,6 +1933,21 @@ static int dm2_runtime_mode7_on_node(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
         node.prepass = &prepass;
+    } else if (source_flags == 3u && (raw >> 5) == 1) {
+        uint16_t ceiling_word = 0u;
+        if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+                dungeon, loader, map, x, y, &room)) goto unknown;
+        /* Source type-11 GDAT lookup returns zero for an absent F8 entry.
+         * A nonzero value needs the remaining class-1 prepass branches. */
+        if (dm2_v1_query_gdat_entry_data_index(loader, 10,
+                room.ceiling_ornament_index, 11, 0xf8,
+                &ceiling_word) && ceiling_word != 0u) goto unknown;
+        memset(&prepass, 0, sizeof(prepass));
+        prepass.valid = 1u;
+        prepass.ceiling_gdat_known = 1u;
+        prepass.ceiling_gdat_light_word = ceiling_word;
+        node.stone_room = &room;
+        node.prepass = &prepass;
     } else if (source_flags != 4u) {
         goto unknown;
     } else if ((raw >> 5) == 0) {

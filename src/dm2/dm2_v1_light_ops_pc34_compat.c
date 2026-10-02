@@ -270,6 +270,15 @@ int dm2_v1_mode7_on_node(
      * entering ADD_BACKGROUND_LIGHT_FROM_TILE. */
     if (!dm2_v1_mode7_action23_samples_tile(node->cached_tile)) return 0;
     if (node->source_flags == 3u) {
+        /* sklight.cpp:316-323 exits before teleporter, record and creature
+         * probes when the ceiling F8 query returns zero. */
+        if (node->stone_room && node->stone_room->valid &&
+            (node->stone_room->raw_tile >> 5) == 1u &&
+            node->stone_room->source_tile_type == 1u &&
+            node->prepass && node->prepass->valid &&
+            node->prepass->ceiling_gdat_known &&
+            node->prepass->ceiling_gdat_light_word == 0u)
+            return 1;
         if (node->distance > 8u || node->floor ||
             !dm2_v1_mode7_flags3_class2_terms(
                 node->stone_room, node->prepass,

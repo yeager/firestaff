@@ -358,6 +358,8 @@ static void test_mode7_flags4_original_media(void)
     DM2_V1_CLightFlags4FloorReceipt floor;
     DM2_V1_CLightStoneRoomReceipt room;
     DM2_V1_RecordPoolSet pools;
+    DM2_V1_CLightStoneRoomReceipt class1_room;
+    DM2_V1_Mode7Flags3Evidence class1_prepass;
     DM2_V1_Mode7TileCache cache;
     DM2_V1_Mode7Action23Node node;
     int16_t tile_light, weather_light, room_darkness;
@@ -415,6 +417,22 @@ static void test_mode7_flags4_original_media(void)
         dm2_v1_dungeon_get_first_thing(&dungeon, 38, 6, 5)) == -1);
     assert(dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
         &dungeon, &graphics, 3, 13, 10, &room));
+    assert(dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+        &dungeon, &graphics, 3, 13, 9, &class1_room));
+    assert(class1_room.raw_tile == 0x30u &&
+           class1_room.first_record_link == 0x0e53u &&
+           class1_room.ceiling_ornament_word == 35u);
+    memset(&class1_prepass, 0, sizeof(class1_prepass));
+    class1_prepass.valid = 1u;
+    class1_prepass.ceiling_gdat_known = 1u;
+    node.cached_tile = 0x30u;
+    node.source_flags = 3u;
+    node.stone_room = &class1_room;
+    node.prepass = &class1_prepass;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
+    assert(accumulated == 0 && darkness == 0);
+    node.stone_room = NULL;
+    node.prepass = NULL;
     assert(room.raw_tile == 0xb0u && room.source_tile_type == 1u &&
            room.first_record_link == 0x0441u &&
            room.ceiling_ornament_word == 0x00ffu);
