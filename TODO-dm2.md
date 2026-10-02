@@ -274,16 +274,20 @@ Reviewed 2026-08-29. Only open work is listed here.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
 - Restore native Macintosh CHARSHEET pointer item transactions. The current
-  `M11_GameView_HandlePointerButton` branch consumes every Mac inventory click
-  while the panel is open because CODE(3)/CODE(11) create the source controls
-  dynamically. Disassembly of the authenticated CODE(3) resource shows the
-  control-list insertion at offset `0x0b1a` and linked-rectangle hit test at
-  `0x0170`; coordinates come from live control handles, not a static DITL.
-  The authenticated Mac retail census passes keyboard item
-  exchange, but its only inventory pointer check confirms an ignored click;
-  it does not establish mouse inventory playability. Decode and bind the
-  original Control/Event records before admitting pointer slot exchanges, then
-  verify pickup and placement against the retail ZIP.
+  `M11_GameView_HandlePointerButton` branch consumes Mac inventory clicks
+  while the panel is open. Retail `CODE(0)` maps `A5+0x222` to control insert
+  (`CODE(3)+0x0b1a`), `A5+0x22a` to removal (`+0x0bd6`), and `A5+0x212` to
+  Rect allocation (`+0x0ae0`); `CODE(3)+0x0170` hit-tests linked Rects.
+  `CODE(10)+0x166e` selects CHARSHEET view 8; `CODE(8)+0x0674` toggles
+  controls from the view tree, and `+0x0446` resolves its first matching
+  object. `CODE(1)+0x006e` expands retail `DATA(0)`/`ZERO(0)` to `0x681e`
+  A5 bytes. View-8 leaf 24 starts at six-byte object record 55: event 0x20,
+  Rect 0x81ff, flags 0x0002. `CODE(8)+0x025c` masks that Rect ID with
+  `0x3fff`; Mac RAW4 Rect 0x01ff is (68,138,16,16). The event-to-inventory
+  slot mapping remains unproven in the Mac dispatch code, so these records
+  must not yet trigger item swaps. Find that dispatch and other slot owners,
+  then verify pickup/placement after obtaining an original item through
+  gameplay; both new-game champions start with empty inventories.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first
