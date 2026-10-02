@@ -284,6 +284,26 @@ static void test_fmtowns_load(const char *path) {
         }
         {
             DM2_V1_CLightFlags4FloorReceipt floor;
+            {
+                uint8_t floor_list[16];
+                uint8_t door[16];
+                /* SKProject GET_FLOOR_DECORATION indexes beyond the map's
+                 * FloorGraphics count without a bounds check. On this
+                 * original file map 3's third floor byte is the last byte
+                 * before map 4. Ordinals 4/5/6 would read map 4 tile data,
+                 * not another declared map-3 graphics entry. */
+                assert(dm2_v1_dungeon_get_map_floor_gfx_list(
+                    &dungeon, 3, floor_list, 16) == 3);
+                assert(floor_list[0] == 0x1cu &&
+                       floor_list[1] == 0x22u &&
+                       floor_list[2] == 0x23u);
+                assert(dm2_v1_dungeon_get_map_door_ornate_list(
+                    &dungeon, 3, door, 16) == 0);
+                assert(dungeon.level_offsets[4] - dungeon.level_offsets[3]
+                       == 25 * 19 + 9 + 6 + 3);
+                assert(dungeon.raw_map_data_base + dungeon.level_offsets[4]
+                       == 26868);
+            }
             int no_record_count = 0;
             int record_count = 0;
             int admitted_record_count = 0;
@@ -341,6 +361,14 @@ static void test_fmtowns_load(const char *path) {
             assert(floor.floor_ornament_word == 0x0a1cu &&
                    floor.floor_light_word == 0u &&
                    floor.contributes_light == 0u);
+            assert(!dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                &dungeon, &loader, 3, 17, 4, 0u, &floor));
+            assert(!dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                &dungeon, &loader, 3, 7, 5, 0u, &floor));
+            assert(!dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                &dungeon, &loader, 3, 11, 8, 0u, &floor));
+            assert(!dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                &dungeon, &loader, 3, 15, 8, 0u, &floor));
         }
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
