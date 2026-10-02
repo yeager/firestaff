@@ -57,6 +57,15 @@ int dm2_v1_mode7_go_there_class0_record_admission(
     return party_square ? 0 : 1;
 }
 
+int dm2_v1_mode7_go_there_class5_b0_admission(
+    uint8_t raw_tile, int teleporter_detail_present)
+{
+    if (raw_tile != 0xb0u || !teleporter_detail_present) return -1;
+    /* SK1C9A.cpp:3234-3280 assigns capability 0x2000 after a successful
+     * class-5 teleporter detail. Action 23's 0x227 mask rejects it at 3375. */
+    return 0;
+}
+
 int dm2_v1_mode7_action23_visit_tile(
     uint16_t cached_tile_state, uint8_t radius,
     int16_t map, int16_t x, int16_t y,

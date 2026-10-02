@@ -2,6 +2,7 @@
 
 #include "dm2_v1_light_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_save_post_load_global_effects_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
@@ -439,6 +440,17 @@ static void test_mode7_flags4_original_media(void)
     node.source_flags = 3u;
     assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 0);
     assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 38, 6, 5) == 0xb0);
+    {
+        DM2_V1_SkprojectTeleporterDetail detail;
+        DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
+        memset(&detail, 0, sizeof(detail));
+        memset(&receipt, 0, sizeof(receipt));
+        assert(dm2_v1_skproject_get_teleporter_detail_dungeon(
+            &dungeon, &pools, 3, 13, 10, &detail, &receipt));
+        assert(receipt.valid && detail.b_04 == 38u);
+        assert(dm2_v1_mode7_go_there_class5_b0_admission(0xb0u, 1) == 0);
+        assert(dm2_v1_mode7_go_there_class5_b0_admission(0xb0u, 0) == -1);
+    }
     assert(dm2_v1_mode7_go_there_tile_admission(0xb0u,
         dm2_v1_dungeon_get_first_thing(&dungeon, 38, 6, 5)) == -1);
     assert(dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(

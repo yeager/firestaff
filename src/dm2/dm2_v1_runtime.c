@@ -1777,6 +1777,17 @@ static int dm2_runtime_mode7_step(
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
     if (raw < 0 || first < -1) return -1;
     admitted = dm2_v1_mode7_go_there_tile_admission((uint8_t)raw, first);
+    if (admitted < 0 && raw == 0xb0 && walk->rt->record_pools_valid) {
+        DM2_V1_SkprojectTeleporterDetail detail;
+        DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
+        memset(&detail, 0, sizeof(detail));
+        memset(&receipt, 0, sizeof(receipt));
+        if (dm2_v1_skproject_get_teleporter_detail_dungeon(
+                dungeon, &walk->rt->record_pools, map, nx, ny,
+                &detail, &receipt) && receipt.valid)
+            admitted = dm2_v1_mode7_go_there_class5_b0_admission(
+                (uint8_t)raw, 1);
+    }
     if (admitted < 0 &&
         ((map == 3 && nx == 13 && (ny == 9 || ny == 8) &&
           raw == 0x30) ||
