@@ -28504,6 +28504,114 @@ static int m11_theron_bind_archive_track01_cdda(
     return 1;
 }
 
+/* The official US and JP 7z discs carry the original raw Track 01 AUDIO
+ * sectors. Read only the source CUE and its exact declared Track 01 member
+ * into bounded memory; the hash-verified Track 02 member remains the edition
+ * authority, and no archive content is written to disk. */
+static int m11_theron_bind_7z_track01_cdda(
+    M11_GameViewState *state,
+    const char *verified_track02_path,
+    const char *verified_track02_md5)
+{
+    const char *separator;
+    const char *cue_member;
+    const char *expected_audio_member;
+    const char *expected_audio_sha256;
+    const char *track02_member;
+    char archive_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char cue_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char audio_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    uint8_t *cue_bytes = NULL;
+    size_t cue_size = 0u;
+    uint8_t *audio_bytes = NULL;
+    size_t audio_size = 0u;
+    char audio_sha256[65];
+    FirestaffTheronMediaStatus cue;
+    size_t archive_path_size;
+    size_t track02_member_size;
+    size_t audio_member_size;
+
+    if (!state || !verified_track02_path || !verified_track02_md5 ||
+        !(separator = strstr(verified_track02_path, "::"))) return 0;
+    if (strcmp(verified_track02_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+        cue_member = "Dungeon Master - Theron's Quest (USA).cue";
+        expected_audio_member =
+            "Dungeon Master - Theron's Quest (USA) (Track 01).bin";
+        expected_audio_sha256 =
+            "8c5603906ff0428f62046e47add6b6f9f9fd0c4bd787ede1fd67cff42bd99e48";
+    } else if (strcmp(verified_track02_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
+        cue_member = "Dungeon Master - Theron's Quest (Japan).cue";
+        expected_audio_member =
+            "Dungeon Master - Theron's Quest (Japan) (Track 01).bin";
+        expected_audio_sha256 =
+            "b30dc3c2355a4213424a2d06e224ef8c0a421ff2c070f5db71c49dd3fd7fed59";
+    } else {
+        return 0;
+    }
+    archive_path_size = (size_t)(separator - verified_track02_path);
+    track02_member = separator + 2;
+    track02_member_size = strlen(track02_member);
+    audio_member_size = strlen(expected_audio_member);
+    if (archive_path_size == 0u || archive_path_size >= sizeof(archive_path) ||
+        track02_member_size == 0u ||
+        archive_path_size + 2u + strlen(cue_member) >= sizeof(cue_path) ||
+        archive_path_size + 2u + audio_member_size >= sizeof(audio_path)) {
+        return 0;
+    }
+    memcpy(archive_path, verified_track02_path, archive_path_size);
+    archive_path[archive_path_size] = '\0';
+    if (!m11_path_has_extension(archive_path, ".7z")) return 0;
+    snprintf(cue_path, sizeof(cue_path), "%s::%s", archive_path, cue_member);
+    if (!asset_read_path_alloc(cue_path, &cue_bytes, &cue_size) ||
+        !cue_bytes || cue_size == 0u || cue_size > 64u * 1024u ||
+        FirestaffTheronMedia_ParseCue((const char *)cue_bytes, cue_size,
+                                      &cue) != 0 ||
+        cue.layout != FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE ||
+        !cue.paired_track01_track02 || !cue.has_valid_track02_mode1 ||
+        cue.track02_mode1_sector_bytes != (int)THERON_TRACK02_RAW_SECTOR_BYTES ||
+        strcmp(cue.track02_path, track02_member) != 0 ||
+        strcmp(cue.track01_path, expected_audio_member) != 0) {
+        free(cue_bytes);
+        return 0;
+    }
+    free(cue_bytes);
+    cue_bytes = NULL;
+
+    snprintf(audio_path, sizeof(audio_path), "%s::%s", archive_path,
+             expected_audio_member);
+    if (!asset_read_path_alloc(audio_path, &audio_bytes, &audio_size) ||
+        !audio_bytes || audio_size == 0u || audio_size > 16u * 1024u * 1024u ||
+        audio_size % THERON_TRACK01_CDDA_SECTOR_BYTES != 0u ||
+        firestaff_x68k_media_receipt_sha256_hex(
+            audio_bytes, audio_size, audio_sha256, sizeof(audio_sha256)) != 0 ||
+        strcmp(audio_sha256, expected_audio_sha256) != 0) {
+        free(audio_bytes);
+        return 0;
+    }
+
+    m11_theron_clear_track01_cdda_handoff(state);
+    state->theronTrack01CddaAudioBytes = audio_bytes;
+    state->theronTrack01CddaAudioSize = audio_size;
+    state->theronTrack01CddaHandoff.status = THERON_TRACK01_CDDA_AVAILABLE;
+    state->theronTrack01CddaHandoff.track02_variant =
+        theron_v1_track02_variant_for_md5(verified_track02_md5);
+    snprintf(state->theronTrack01CddaHandoff.cue_path,
+             sizeof(state->theronTrack01CddaHandoff.cue_path), "%s", cue_path);
+    snprintf(state->theronTrack01CddaHandoff.audio_path,
+             sizeof(state->theronTrack01CddaHandoff.audio_path), "%s",
+             audio_path);
+    snprintf(state->theronTrack01CddaHandoff.track02_path,
+             sizeof(state->theronTrack01CddaHandoff.track02_path), "%s",
+             verified_track02_path);
+    state->theronTrack01CddaHandoff.audio_file_bytes = audio_size;
+    state->theronTrack01CddaHandoff.audio_sector_count =
+        audio_size / THERON_TRACK01_CDDA_SECTOR_BYTES;
+    state->theronTrack01CddaHandoff.original_cdda = 1;
+    state->theronTrack01CddaHandoff.playback_handoff_ready = 1;
+    state->theronTrack01CddaHandoff.track_number = 1u;
+    return 1;
+}
+
 /* Title music is admitted only from the same hash-verified CUE provenance
  * that admitted Track 02.  In particular, never infer a CDDA companion for
  * a loose BIN/ISO launch. */
@@ -30306,6 +30414,8 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         m11_theron_bind_track01_cdda_handoff(
             state, cdda_cue_path, verifiedMd5);
     } else if (!m11_theron_bind_archive_track01_cdda(
+                   state, verifiedPath, verifiedMd5) &&
+               !m11_theron_bind_7z_track01_cdda(
                    state, verifiedPath, verifiedMd5)) {
         m11_theron_bind_track01_cdda_handoff(state, NULL, verifiedMd5);
     }

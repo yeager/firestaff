@@ -171,44 +171,69 @@ int theron_v1_cdda_stream_start_memory(
     const uint8_t *audio_bytes,
     size_t audio_size,
     Theron_CddaStream *out_stream) {
-#if THERON_HAVE_SDL_AUDIO && THERON_HAVE_VORBISFILE
-    OggVorbis_File *vorbis;
+#if THERON_HAVE_SDL_AUDIO
+#if THERON_HAVE_VORBISFILE
+    OggVorbis_File *vorbis = NULL;
     vorbis_info *info;
     ov_callbacks callbacks;
+#endif
     SDL_AudioSpec spec;
     SDL_AudioStream *sdl_stream;
 
-    if (!handoff || !out_stream || !audio_bytes || audio_size < 4u ||
+    if (!handoff || !out_stream || !audio_bytes || audio_size == 0u ||
         audio_size > 16u * 1024u * 1024u ||
         handoff->status != THERON_TRACK01_CDDA_AVAILABLE ||
         !handoff->original_cdda || !handoff->playback_handoff_ready ||
-        !handoff->audio_is_vorbis || handoff->audio_file_bytes != audio_size ||
-        memcmp(audio_bytes, "OggS", 4u) != 0) return 0;
+        handoff->audio_file_bytes != audio_size) return 0;
+    if (handoff->audio_is_vorbis) {
+#if THERON_HAVE_VORBISFILE
+        if (audio_size < 4u || memcmp(audio_bytes, "OggS", 4u) != 0)
+            return 0;
+#else
+        return 0;
+#endif
+    } else if (handoff->audio_sector_count == 0u ||
+               handoff->audio_start_byte > audio_size ||
+               (audio_size - handoff->audio_start_byte) %
+                       THERON_TRACK01_CDDA_SECTOR_BYTES != 0u ||
+               (audio_size - handoff->audio_start_byte) /
+                       THERON_TRACK01_CDDA_SECTOR_BYTES !=
+                   handoff->audio_sector_count) {
+        return 0;
+    }
     memset(out_stream, 0, sizeof(*out_stream));
     out_stream->memory_audio_bytes = audio_bytes;
     out_stream->memory_audio_size = audio_size;
-    vorbis = (OggVorbis_File *)calloc(1u, sizeof(*vorbis));
-    if (!vorbis) return 0;
-    callbacks.read_func = theron_cdda_memory_read;
-    callbacks.seek_func = theron_cdda_memory_seek;
-    callbacks.close_func = theron_cdda_memory_close;
-    callbacks.tell_func = theron_cdda_memory_tell;
-    if (ov_open_callbacks(out_stream, vorbis, NULL, 0u, callbacks) != 0) {
-        free(vorbis);
-        memset(out_stream, 0, sizeof(*out_stream));
-        return 0;
+#if THERON_HAVE_VORBISFILE
+    if (handoff->audio_is_vorbis) {
+        vorbis = (OggVorbis_File *)calloc(1u, sizeof(*vorbis));
+        if (!vorbis) return 0;
+        callbacks.read_func = theron_cdda_memory_read;
+        callbacks.seek_func = theron_cdda_memory_seek;
+        callbacks.close_func = theron_cdda_memory_close;
+        callbacks.tell_func = theron_cdda_memory_tell;
+        if (ov_open_callbacks(out_stream, vorbis, NULL, 0u, callbacks) != 0) {
+            free(vorbis);
+            memset(out_stream, 0, sizeof(*out_stream));
+            return 0;
+        }
+        info = ov_info(vorbis, -1);
+        if (!info || info->rate != THERON_TRACK01_CDDA_SAMPLE_RATE ||
+            info->channels != THERON_TRACK01_CDDA_CHANNELS) {
+            ov_clear(vorbis);
+            free(vorbis);
+            memset(out_stream, 0, sizeof(*out_stream));
+            return 0;
+        }
     }
-    info = ov_info(vorbis, -1);
-    if (!info || info->rate != THERON_TRACK01_CDDA_SAMPLE_RATE ||
-        info->channels != THERON_TRACK01_CDDA_CHANNELS) {
-        ov_clear(vorbis);
-        free(vorbis);
-        memset(out_stream, 0, sizeof(*out_stream));
-        return 0;
-    }
+#endif
     if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
-        ov_clear(vorbis);
-        free(vorbis);
+#if THERON_HAVE_VORBISFILE
+        if (handoff->audio_is_vorbis) {
+            ov_clear(vorbis);
+            free(vorbis);
+        }
+#endif
         memset(out_stream, 0, sizeof(*out_stream));
         return 0;
     }
@@ -219,14 +244,25 @@ int theron_v1_cdda_stream_start_memory(
                                            &spec, NULL, NULL);
     if (!sdl_stream) {
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
-        ov_clear(vorbis);
-        free(vorbis);
+#if THERON_HAVE_VORBISFILE
+        if (handoff->audio_is_vorbis) {
+            ov_clear(vorbis);
+            free(vorbis);
+        }
+#endif
         memset(out_stream, 0, sizeof(*out_stream));
         return 0;
     }
-    out_stream->audio_file = vorbis;
+#if THERON_HAVE_VORBISFILE
+    if (handoff->audio_is_vorbis) {
+        out_stream->audio_file = vorbis;
+    }
+#endif
     out_stream->sdl_stream = sdl_stream;
-    out_stream->audio_is_vorbis = 1;
+    out_stream->audio_start_byte = handoff->audio_start_byte;
+    out_stream->audio_sector_count = handoff->audio_sector_count;
+    out_stream->audio_is_vorbis = handoff->audio_is_vorbis;
+    out_stream->memory_audio_offset = handoff->audio_start_byte;
     out_stream->output_started = 1;
     SDL_ResumeAudioStreamDevice(sdl_stream);
     return 1;
@@ -272,6 +308,41 @@ int theron_v1_cdda_stream_pump(Theron_CddaStream *stream) {
         return 1;
     }
 #endif
+    if (stream && stream->memory_audio_bytes &&
+        stream->memory_audio_size != 0u) {
+        uint8_t sector[THERON_TRACK01_CDDA_SECTOR_BYTES];
+        size_t queued_bytes;
+        size_t queued_sectors;
+        if (!stream->output_started || !stream->sdl_stream ||
+            stream->audio_sector_count == 0u ||
+            stream->audio_start_byte > stream->memory_audio_size ||
+            stream->audio_sector_count >
+                (stream->memory_audio_size - stream->audio_start_byte) /
+                    THERON_TRACK01_CDDA_SECTOR_BYTES) return 0;
+        const size_t audio_end = stream->audio_start_byte +
+            stream->audio_sector_count * THERON_TRACK01_CDDA_SECTOR_BYTES;
+        if (audio_end > stream->memory_audio_size ||
+            stream->memory_audio_offset < stream->audio_start_byte ||
+            stream->memory_audio_offset > audio_end) return 0;
+        queued_bytes = (size_t)SDL_GetAudioStreamQueued(
+            (SDL_AudioStream *)stream->sdl_stream);
+        queued_sectors = queued_bytes / THERON_TRACK01_CDDA_SECTOR_BYTES;
+        while (queued_sectors < THERON_TRACK01_CDDA_MAX_QUEUED_SECTORS) {
+            if (stream->memory_audio_offset == audio_end) {
+                stream->memory_audio_offset = stream->audio_start_byte;
+                ++stream->loop_count;
+            }
+            memcpy(sector, stream->memory_audio_bytes +
+                   stream->memory_audio_offset, sizeof(sector));
+            if (!SDL_PutAudioStreamData((SDL_AudioStream *)stream->sdl_stream,
+                                        sector, (int)sizeof(sector))) return 0;
+            stream->memory_audio_offset += sizeof(sector);
+            ++stream->sectors_read;
+            ++stream->sectors_queued;
+            ++queued_sectors;
+        }
+        return 1;
+    }
     uint8_t sector[THERON_TRACK01_CDDA_SECTOR_BYTES];
     size_t queued_bytes;
     size_t queued_sectors;

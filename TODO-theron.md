@@ -2,6 +2,42 @@
 
 Reviewed 2026-10-02. Only open work is listed here.
 
+## 2026-10-02 — original raw Track 01 audio from US/JP 7z discs
+
+- ✅ M11 now binds Track 01 directly from the selected hash-verified US or JP
+  7z Track 02 edition. It reads the matching archive CUE and its exact
+  CUE-declared raw Track 01 BIN into bounded memory, then starts the existing
+  CDDA stream from original 2352-byte sectors. No archive members are written
+  or cached to disk. Other 7z layouts, loose Track 02 files, and unpaired audio
+  remain closed.
+- ✅ Extended the memory-backed CDDA lifecycle to queue authentic raw sectors
+  as well as the existing bounded OGG input. The authentic US/JP archive test
+  verifies both the filesystem-backed and memory-backed stream with original
+  Track 01 data.
+- ✅ On trv2, the `theron_v1_jp_7z_direct_boot`,
+  `theron_v1_us_7z_direct_boot`, `theron_v1_track01_cdda_authentic_archive`,
+  and `theron_v1_m11_launcher_handoff_boundary` CTests passed. Both archive
+  boot tests reported `theronTrack01CddaReady=1`; the audio test queued raw
+  sectors from both original editions. This establishes authentic title
+  Track 01 availability and startup only—not audible device output, gameplay
+  CDDA command selection, or a game-owned event-to-track mapping.
+- 🔒 A fresh original-emulator dungeon save is still unavailable. On trv2, an
+  isolated Mednafen/Xvfb session visibly loaded the authentic US CUE and the
+  verified System Card 3.0. RUN (the profile's Return mapping) was held for
+  four seconds as instructed, but the screen changed to the
+  "disc only works on the SUPER CD-ROM2 SYSTEM" warning rather than a playable
+  dungeon. Mednafen created a 2 KiB BRAM file in the fresh private profile;
+  this is not evidence of an in-dungeon save or successful campaign progress.
+  Preserve the capture outside Git and resolve the boot/runtime incompatibility
+  before interpreting or importing that BRAM. The Mac remains locked and the
+  separate Nexus capture on trv2 was left untouched.
+- The instrumented capture, including a read-only replay from the existing
+  authentic US save-manager state, recorded RUN as PCE input `raw=0008`; every
+  controller-read PC remained in the System Card `$E4xx` path. No game-side
+  controller poll or dungeon transition was observed. The strict capture
+  rejected the run because it did not produce a valid bounded VDC snapshot;
+  its trace and BRAM snapshot remain private on trv2 and are not parity proof.
+
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
 - ✅ On the isolated trv2 build, `test_theron_v1_pce_bram_real_artifact`

@@ -1,6 +1,5 @@
 #include "theron_v1_track02.h"
 #include "asset_find_by_hash.h"
-#include "firestaff_x68k_media_receipt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +21,10 @@ static int test_authentic_cue_file(const char *cue_path, int japanese) {
         : "Dungeon Master - Theron's Quest (USA) (Track 02).bin";
     char audio_path[ASSET_PATH_MAX];
     char track02_path[ASSET_PATH_MAX];
+    uint8_t *audio_bytes = NULL;
+    size_t audio_size = 0u;
     Theron_Track01CddaHandoff handoff;
+    Theron_Track01CddaStream memory_stream = {0};
     Theron_Track01CddaStream file_stream = {0};
     const char *slash;
     size_t parent_len;
@@ -48,11 +50,22 @@ static int test_authentic_cue_file(const char *cue_path, int japanese) {
         strcmp(handoff.cue_path, cue_path) != 0 ||
         strcmp(handoff.audio_path, audio_path) != 0 ||
         strcmp(handoff.track02_path, track02_path) != 0 ||
-        handoff.audio_file_bytes == 0u) {
+        handoff.audio_file_bytes == 0u ||
+        !asset_read_path_alloc(audio_path, &audio_bytes, &audio_size) ||
+        !audio_bytes || audio_size != handoff.audio_file_bytes) {
         fprintf(stderr, "authentic %s CUE CDDA failed production handoff/hash admission\n",
                 japanese ? "JP" : "US");
         goto cleanup;
     }
+    if (!theron_v1_track01_cdda_stream_start_memory(
+            &handoff, audio_bytes, audio_size, &memory_stream) ||
+        !theron_v1_track01_cdda_stream_pump(&memory_stream) ||
+        !memory_stream.output_started || memory_stream.sectors_queued == 0u) {
+        fprintf(stderr, "authentic %s in-memory raw CDDA stream failed to queue\n",
+                japanese ? "JP" : "US");
+        goto cleanup;
+    }
+    theron_v1_track01_cdda_stream_stop(&memory_stream);
     if (!theron_v1_track01_cdda_lifecycle_update(&handoff, 1, &file_stream) ||
         !file_stream.output_started || file_stream.sectors_queued == 0u) {
         fprintf(stderr, "authentic %s production CDDA stream failed to queue\n",
@@ -63,7 +76,9 @@ static int test_authentic_cue_file(const char *cue_path, int japanese) {
            japanese ? "JP" : "US", handoff.audio_sector_count);
     ok = 1;
 cleanup:
+    theron_v1_track01_cdda_stream_stop(&memory_stream);
     theron_v1_track01_cdda_stream_stop(&file_stream);
+    free(audio_bytes);
     return ok;
 }
 #endif

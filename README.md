@@ -288,8 +288,10 @@ in memory when the installed host archive tool is explicitly enabled:
 ```
 
 When both a loose regional BIN and an archive member are present, the loose
-BIN is preferred. Archive-only Japanese 7z startup is covered by the
-`theron_v1_jp_7z_direct_boot` real-media test when that corpus is installed.
+BIN is preferred. Archive-only US and Japanese 7z startup—including the
+authentic Track 01 CDDA handoff—is covered by the
+`theron_v1_us_7z_direct_boot` and `theron_v1_jp_7z_direct_boot` real-media
+tests when those corpora are installed.
 
 When a complete CUE is present, native startup may bind matching original
 Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
