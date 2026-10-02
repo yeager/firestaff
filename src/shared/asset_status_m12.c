@@ -8158,9 +8158,14 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     int gameIndex;
     size_t i;
     static const int pcFirstAutoPriority[] = {
-        /* Keep the PC primary route first except for DM2 below. */
+        /* Other games retain their existing catalogue priority. */
         M12_ARCH_PC, M12_ARCH_MAC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
+    };
+    static const int dm1AutoPriority[] = {
+        M12_ARCH_FM_TOWNS, M12_ARCH_PC, M12_ARCH_AMIGA,
+        M12_ARCH_ATARI_ST, M12_ARCH_MAC, M12_ARCH_PCE,
+        M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
     static const int dm2AutoPriority[] = {
         /* DM2 defaults to its authenticated FM Towns edition whenever that
@@ -8180,13 +8185,12 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     static const int csbAutoPriority[] = {
         /* Chaos Strikes Back was never released for DOS.  Its original
          * routes in Firestaff's authenticated catalogue are Amiga, FM Towns
-         * and Atari ST.  The launcher defaults to Amiga, the established
-         * native Firestaff path, rather than treating FM Towns as a fallback
-         * preference.  Never let an internal PC34-compatibility row
+         * and Atari ST. Prefer authenticated FM Towns media when no platform
+         * was requested. Never let an internal PC34-compatibility row
          * or an unsupported architecture become an AUTO launch target.
          * DMWeb's platform matrix and the original media catalogue are the
          * authority here, not the shared GRAPHICS.DAT hash. */
-        M12_ARCH_AMIGA, M12_ARCH_FM_TOWNS, M12_ARCH_ATARI_ST
+        M12_ARCH_FM_TOWNS, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST
     };
     const int *autoPriority = pcFirstAutoPriority;
     size_t autoPriorityCount = sizeof(pcFirstAutoPriority) /
@@ -8199,7 +8203,11 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
 
     if (architecture == M12_ARCH_AUTO) {
         size_t p;
-        if (strcmp(gameId, "csb") == 0) {
+        if (strcmp(gameId, "dm1") == 0) {
+            autoPriority = dm1AutoPriority;
+            autoPriorityCount = sizeof(dm1AutoPriority) /
+                                sizeof(dm1AutoPriority[0]);
+        } else if (strcmp(gameId, "csb") == 0) {
             autoPriority = csbAutoPriority;
             autoPriorityCount = sizeof(csbAutoPriority) /
                                 sizeof(csbAutoPriority[0]);

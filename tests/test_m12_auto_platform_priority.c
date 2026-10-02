@@ -1,7 +1,6 @@
 /* AUTO platform selection must be a media policy, not catalogue order.
- * DM1 prefers its original PC route. DM2 prefers authenticated FM Towns
- * media, then Macintosh retail on macOS and PC elsewhere. CSB never had
- * a DOS release and defaults to verified native Amiga before FM Towns/Atari. */
+ * DM1, CSB and DM2 prefer authenticated FM Towns media when available;
+ * explicit platform selection and each game's fallback order remain separate. */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 
@@ -34,12 +33,19 @@ int main(void)
         status.versions[game_index][fmtowns].matched = 1;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, pc_games[i], M12_ARCH_AUTO);
+        if (selected != fmtowns) {
+            fprintf(stderr, "FAIL: AUTO did not prefer FM Towns for %s\n", pc_games[i]);
+            return 1;
+        }
+        status.versions[game_index][fmtowns].matched = 0;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, pc_games[i], M12_ARCH_AUTO);
         if (selected != pc) {
-            fprintf(stderr, "FAIL: AUTO selected the wrong PC route for %s\n", pc_games[i]);
+            fprintf(stderr, "FAIL: AUTO did not fall back to PC for %s\n", pc_games[i]);
             return 1;
         }
     }
-    puts("PASS: AUTO keeps PC-first DM1 selection");
+    puts("PASS: DM1 AUTO prefers FM Towns and falls back to PC");
     {
         int pc = M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
         int mac = M12_AssetStatus_FindVersionIndex("dm2", "mac-en-retail");
@@ -115,12 +121,19 @@ int main(void)
         status.versions[1][atari].matched = 1;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, "csb", M12_ARCH_AUTO);
+        if (selected != fmtowns) {
+            fprintf(stderr, "FAIL: AUTO did not prefer CSB FM Towns\n");
+            return 1;
+        }
+        status.versions[1][fmtowns].matched = 0;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "csb", M12_ARCH_AUTO);
         if (selected != amiga) {
-            fprintf(stderr, "FAIL: AUTO did not keep CSB on Amiga\n");
+            fprintf(stderr, "FAIL: AUTO did not fall back to CSB Amiga\n");
             return 1;
         }
     }
-    puts("PASS: AUTO keeps CSB on native Amiga media");
+    puts("PASS: CSB AUTO prefers FM Towns and falls back to native Amiga");
     {
         int a31e = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
         int a31m = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");

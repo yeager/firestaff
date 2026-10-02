@@ -26756,8 +26756,9 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                 }
             }
             /* A data root may contain both the FM Towns disc files and a
-             * hash-matched PC release.  AUTO deliberately selects PC first,
-             * but the generic DM1 runtime directory is merely the scanner's
+             * hash-matched PC release. An explicit PC selection or AUTO
+             * fallback must still bind the verified PC owner; the generic
+             * DM1 runtime directory is merely the scanner's
              * first materialised owner.  Bind a selected loose PC release to
              * the directory of its verified GRAPHICS.DAT just as DM2 does;
              * otherwise M11 can combine the PC selection with unrelated

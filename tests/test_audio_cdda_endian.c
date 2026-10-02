@@ -14,6 +14,9 @@
 #include <string.h>
 #include <SDL3/SDL.h>
 
+static void test_cdda_repeat_on_dummy_device(const uint8_t *pcm,
+                                              size_t pcm_size);
+
 static void test_original_cdda_gain_if_selected(void)
 {
     const char* archive = getenv("FIRESTAFF_DM1_FMTOWNS_ZIP");
@@ -54,6 +57,10 @@ static void test_original_cdda_gain_if_selected(void)
     assert(offset < image_size && span > 0U && span <= image_size - offset);
     for (index = 0; index < span; ++index) nonzero |= image[offset + index];
     assert(nonzero);
+    /* Repeat the first ten milliseconds of this authenticated CD track, so
+     * the transport regression does not substitute a fabricated sound. */
+    assert(span >= 1764u);
+    test_cdda_repeat_on_dummy_device(image + offset, 1764u);
     assert(M11_Audio_Init(&audio));
     assert(M11_Audio_IsAvailable(&audio) && audio.cddaStream);
     stream = (SDL_AudioStream*)audio.cddaStream;
@@ -84,6 +91,33 @@ static void test_original_cdda_gain_if_selected(void)
     assert(!audio.cddaPaused && !SDL_AudioStreamDevicePaused(stream));
     M11_Audio_Shutdown(&audio);
     puts("PASS: original FM Towns CDDA obeys live master/music gain and preserves paused PCM");
+}
+
+static void test_cdda_repeat_on_dummy_device(const uint8_t *pcm,
+                                             size_t pcm_size)
+{
+    M11_AudioState audio;
+    SDL_AudioStream *stream;
+
+    assert(SDL_setenv_unsafe("SDL_AUDIODRIVER", "dummy", 1) == 0);
+    assert(M11_Audio_Init(&audio));
+    assert(audio.cddaStream);
+    stream = (SDL_AudioStream *)audio.cddaStream;
+    assert(M11_Audio_PlayCdda(&audio, pcm, pcm_size, 1));
+    assert(audio.cddaLoopPcmSize == pcm_size);
+    SDL_Delay(100);
+    assert(SDL_LockAudioStream(stream));
+    assert(audio.cddaLoopRefillCount > 0);
+    SDL_UnlockAudioStream(stream);
+    assert(M11_Audio_StopCdda(&audio));
+    assert(audio.cddaLoopPcm == NULL);
+    assert(SDL_GetAudioStreamQueued(stream) == 0);
+    assert(M11_Audio_PlayCdda(&audio, pcm, pcm_size, 0));
+    SDL_Delay(100);
+    assert(SDL_GetAudioStreamQueued(stream) == 0);
+    assert(audio.cddaLoopPcm == NULL && audio.cddaLoopRefillCount == 0);
+    M11_Audio_Shutdown(&audio);
+    puts("PASS: repeated CDDA survives the first track and stops cleanly");
 }
 
 int main(void)

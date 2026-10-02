@@ -77,6 +77,10 @@ typedef struct {
     void* musicStream;
     void* movieStream; /* DM2 Mac mixed film PCM, isolated from SFX. */
     void* cddaStream;
+    uint8_t* cddaLoopPcm;
+    size_t cddaLoopPcmSize;
+    size_t cddaLoopCursor;
+    uint64_t cddaLoopRefillCount;
     int   cddaPlaying;
     int   cddaPaused;
     int   hostPaused;

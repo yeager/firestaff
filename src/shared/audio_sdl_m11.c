@@ -1032,6 +1032,35 @@ static void m11_try_load_sound_pack(M11_AudioState* state) {
     (void)M11_Audio_ApplySoundPackDir(state, getenv("FIRESTAFF_SOUND_PACK_DIR"));
 }
 
+#if M11_HAVE_SDL_AUDIO
+/* SKULL.EXP's FM Towns CD_PLAY request sets AL's 0xc0 auto-repeat bits
+ * (see dm2_v1_fmtowns_cd_dat.h). SDL streams do not repeat queued bytes.
+ * Feed the retained, converted track only when the device requests more. */
+static void SDLCALL m11_cdda_repeat_callback(void *userdata,
+                                              SDL_AudioStream *stream,
+                                              int additional_amount,
+                                              int total_amount)
+{
+    M11_AudioState *state = (M11_AudioState *)userdata;
+    (void)total_amount;
+    if (!state || !state->cddaLoopPcm || !state->cddaLoopPcmSize) return;
+    while (additional_amount > 0) {
+        size_t chunk = state->cddaLoopPcmSize - state->cddaLoopCursor;
+        if (chunk > (size_t)additional_amount) chunk = (size_t)additional_amount;
+        if (chunk > (size_t)INT_MAX) chunk = (size_t)INT_MAX;
+        if (!SDL_PutAudioStreamData(stream,
+                                    state->cddaLoopPcm + state->cddaLoopCursor,
+                                    (int)chunk))
+            return;
+        state->cddaLoopRefillCount++;
+        state->cddaLoopCursor += chunk;
+        if (state->cddaLoopCursor == state->cddaLoopPcmSize)
+            state->cddaLoopCursor = 0;
+        additional_amount -= (int)chunk;
+    }
+}
+#endif
+
 /* ── public API ──────────────────────────────────────────────────── */
 
 int M11_Audio_Init(M11_AudioState* state) {
@@ -1137,7 +1166,7 @@ int M11_Audio_Init(M11_AudioState* state) {
             cdda_spec.freq     = 44100;
             cdda = FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(
                 Firestaff_AudioDevice_ResolvePlayback(),
-                &cdda_spec, NULL, NULL);
+                &cdda_spec, m11_cdda_repeat_callback, state);
             if (cdda) {
                 SDL_ResumeAudioStreamDevice(cdda);
                 state->cddaStream = cdda;
@@ -1166,6 +1195,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     if (state->cddaStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->cddaStream);
         state->cddaStream = NULL;
+        free(state->cddaLoopPcm);
+        state->cddaLoopPcm = NULL;
+        state->cddaLoopPcmSize = 0;
+        state->cddaLoopCursor = 0;
         state->cddaPlaying = 0;
         state->cddaPaused = 0;
     }
@@ -2476,17 +2509,32 @@ int M11_Audio_PlayCdda(M11_AudioState* state,
         return 0;
     }
 
-    SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
-    if (!SDL_PutAudioStreamData((SDL_AudioStream*)state->cddaStream,
-                                little_endian_pcm, (int)pcm_size)) {
+    if (!SDL_LockAudioStream((SDL_AudioStream*)state->cddaStream)) {
         free(little_endian_pcm);
         return 0;
     }
-    free(little_endian_pcm);
+    SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
+    free(state->cddaLoopPcm);
+    state->cddaLoopPcm = NULL;
+    state->cddaLoopPcmSize = 0;
+    state->cddaLoopCursor = 0;
+    state->cddaLoopRefillCount = 0;
+    if (!SDL_PutAudioStreamData((SDL_AudioStream*)state->cddaStream,
+                                little_endian_pcm, (int)pcm_size)) {
+        SDL_UnlockAudioStream((SDL_AudioStream*)state->cddaStream);
+        free(little_endian_pcm);
+        return 0;
+    }
+    if (loop) {
+        state->cddaLoopPcm = little_endian_pcm;
+        state->cddaLoopPcmSize = pcm_size;
+    } else {
+        free(little_endian_pcm);
+    }
+    SDL_UnlockAudioStream((SDL_AudioStream*)state->cddaStream);
     state->cddaPlaying = 1;
     state->cddaPaused = 0;
     if (state->hostPaused) state->hostResumeCddaStream = 1;
-    (void)loop;
     return 1;
 #else
     (void)state; (void)pcm_data; (void)pcm_size; (void)loop;
@@ -2599,7 +2647,14 @@ int M11_Audio_StopCdda(M11_AudioState* state)
     if (state->cddaPaused && !state->hostPaused) {
         (void)SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream);
     }
+    if (!SDL_LockAudioStream((SDL_AudioStream*)state->cddaStream)) return 0;
     SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
+    free(state->cddaLoopPcm);
+    state->cddaLoopPcm = NULL;
+    state->cddaLoopPcmSize = 0;
+    state->cddaLoopCursor = 0;
+    state->cddaLoopRefillCount = 0;
+    SDL_UnlockAudioStream((SDL_AudioStream*)state->cddaStream);
     state->cddaPlaying = 0;
     state->cddaPaused = 0;
     if (state->hostPaused) state->hostResumeCddaStream = 1;

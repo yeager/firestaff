@@ -4,6 +4,8 @@ set -eu
 firestaff_cli=${1:?Firestaff executable is required}
 mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"}
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
+dm1_towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
+csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$mac_archive" ] ||
    [ ! -f "$towns_archive" ]; then
@@ -61,4 +63,32 @@ case "$combined_mac" in
     *) echo "FAIL: explicit DM2 Macintosh choice was overridden by FM Towns default" >&2; exit 1 ;;
 esac
 
-echo "PASS: original-media startup diagnostics and DM2 FM Towns default"
+# A bare game selection must not inherit an obsolete platform from saved
+# launcher settings. Check the other two original FM Towns archives when
+# they are staged, using the same direct CLI path as the DM2 check above.
+if [ -f "$dm1_towns_archive" ]; then
+    dm1_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm1 --data-dir "$dm1_towns_archive" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$dm1_auto" >&2
+        exit 1
+    }
+    case "$dm1_auto" in
+        *"startup game=dm1 mode=direct platform=auto"*"selected game=dm1 platform=FM Towns"*) ;;
+        *) echo "FAIL: bare DM1 did not select original FM Towns media" >&2; exit 1 ;;
+    esac
+fi
+if [ -f "$csb_towns_archive" ]; then
+    csb_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --data-dir "$csb_towns_archive" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$csb_auto" >&2
+        exit 1
+    }
+    case "$csb_auto" in
+        *"startup game=csb mode=direct platform=auto"*"selected game=csb platform=FM Towns"*) ;;
+        *) echo "FAIL: bare CSB did not select original FM Towns media" >&2; exit 1 ;;
+    esac
+fi
+
+echo "PASS: original-media startup diagnostics and FM Towns defaults"

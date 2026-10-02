@@ -7815,10 +7815,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     if (getenv("FS_ACCESSIBILITY")) {
         fs_ax_set_enabled(1);
     }
-    /* A bare direct DM2 launch follows the edition priority, even when a
-     * previous launcher session persisted a different platform choice. */
-    if (runtimeOptions.directLaunch && runtimeOptions.gameId &&
-        strcmp(runtimeOptions.gameId, "dm2") == 0 &&
+    /* An unqualified game selection follows the edition priority, even when
+     * a previous launcher session persisted a different platform choice. */
+    if (runtimeOptions.gameId &&
+        (strcmp(runtimeOptions.gameId, "dm1") == 0 ||
+         strcmp(runtimeOptions.gameId, "csb") == 0 ||
+         strcmp(runtimeOptions.gameId, "dm2") == 0) &&
         runtimeOptions.architectureOverride < M12_ARCH_AUTO)
         runtimeOptions.architectureOverride = M12_ARCH_AUTO;
     o = &runtimeOptions;

@@ -154,6 +154,21 @@ static void test_amiga_original_graphics_sound_view(void)
               payload.spec.period == 112u && payload.bytes != NULL,
           "original Amiga source table preserves record and period");
     csb_v1_audio_runtime_amiga_sound_payload_free(&payload);
+    /* ReDMCSB DATA.C:1264-1310 and SOUND.C F1051:286-291 select every
+     * A31/A35 sound through the same table and skip its two source bytes. */
+    for (int index = 0; index < CSB_V1_SOUND_COUNT; ++index) {
+        const CsbV1AmigaSoundSpec *spec =
+            csb_v1_audio_runtime_amiga_sound_spec((int16_t)index);
+        memset(&payload, 0, sizeof(payload));
+        CHECK(spec != NULL && csb_v1_audio_runtime_load_amiga_sound_payload(
+                  path, (int16_t)index, &payload) == 1,
+              "original Amiga sound table row loads");
+        CHECK(spec != NULL && payload.byteCount > 0u &&
+                  payload.spec.graphicIndex == spec->graphicIndex &&
+                  payload.spec.period == spec->period,
+              "original Amiga sound row retains source index and period");
+        csb_v1_audio_runtime_amiga_sound_payload_free(&payload);
+    }
 }
 
 static void test_pc34_source_sound_payload(void)
