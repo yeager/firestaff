@@ -487,6 +487,19 @@ static void test_mode7_flags4_original_media(void)
     assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 0);
     assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 38, 6, 5) == 0xb0);
     {
+        DM2_V1_SkprojectD283Receipt d283;
+        memset(&d283, 0, sizeof(d283));
+        assert(dm2_v1_skproject_d283_dungeon(
+            &dungeon, &pools, 3, 13, 11, &d283) == 0x0443);
+        assert(d283.valid && d283.found &&
+               d283.record_word2 == 0x60c6u &&
+               ((d283.record_word2 >> 14) & 3u) == 1u);
+        assert(dm2_v1_mode7_go_there_class5_b8_admission(
+            0xb8u, d283.record_word2) == 0);
+        assert(dm2_v1_mode7_go_there_class5_b8_admission(
+            0xb8u, 0u) == -1);
+    }
+    {
         DM2_V1_SkprojectTeleporterDetail detail;
         DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
         memset(&detail, 0, sizeof(detail));

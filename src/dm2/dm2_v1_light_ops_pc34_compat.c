@@ -92,6 +92,17 @@ int dm2_v1_mode7_go_there_class5_b0_admission(
     return 0;
 }
 
+int dm2_v1_mode7_go_there_class5_b8_admission(
+    uint8_t raw_tile, uint16_t db1_word2)
+{
+    unsigned selector = (db1_word2 >> 14) & 3u;
+    if (raw_tile != 0xb8u || (selector != 1u && selector != 3u))
+        return -1;
+    /* SK1C9A.cpp:3208-3233 assigns capability 0x400 to class-5 bit-8
+     * DB1 selectors 1/3. Action 23's 0x227 mask rejects the edge. */
+    return 0;
+}
+
 int dm2_v1_mode7_action23_visit_tile(
     uint16_t cached_tile_state, uint8_t radius,
     int16_t map, int16_t x, int16_t y,

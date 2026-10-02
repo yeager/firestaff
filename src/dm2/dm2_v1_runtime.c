@@ -1777,6 +1777,15 @@ static int dm2_runtime_mode7_step(
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
     if (raw < 0 || first < -1) return -1;
     admitted = dm2_v1_mode7_go_there_tile_admission((uint8_t)raw, first);
+    if (admitted < 0 && raw == 0xb8 && walk->rt->record_pools_valid) {
+        DM2_V1_SkprojectD283Receipt d283;
+        memset(&d283, 0, sizeof(d283));
+        if (dm2_v1_skproject_d283_dungeon(
+                dungeon, &walk->rt->record_pools, map, nx, ny,
+                &d283) == first && d283.valid && d283.found)
+            admitted = dm2_v1_mode7_go_there_class5_b8_admission(
+                (uint8_t)raw, d283.record_word2);
+    }
     if (admitted < 0 && (raw >> 5) == 0 && first == -1) {
         const DM2_V1_GameState *game =
             (const DM2_V1_GameState *)walk->rt->boot->dm2_state;

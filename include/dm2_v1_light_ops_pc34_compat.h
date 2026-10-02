@@ -121,6 +121,8 @@ int dm2_v1_mode7_go_there_class0_record_admission(
     int no_creature_proven, int party_square);
 int dm2_v1_mode7_go_there_class5_b0_admission(
     uint8_t raw_tile, int teleporter_detail_present);
+int dm2_v1_mode7_go_there_class5_b8_admission(
+    uint8_t raw_tile, uint16_t db1_word2);
 
 /* One admitted FIND_WALK_PATH action-0x17 node. Returns 0 for a source skip,
  * 1 after the callback succeeds, and -1 if an admitted source is unresolved.
