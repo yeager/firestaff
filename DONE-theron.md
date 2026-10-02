@@ -6419,3 +6419,18 @@ consumer gaps. `TODO-theron.md` retains those gaps as open work.
 
 Verification: documentation diff review and `git diff --check` passed. No
 runtime behavior changed.
+
+# ✅ 2026-10-02 CUE-selected Theron CDDA handoffs
+
+Added an explicit verified-media handoff for any CUE-declared Theron audio
+track while retaining the Track 01 wrapper used by the title lifecycle. The
+new handoff still requires a recognized Track 02 edition and the matching
+Track 02 CUE entry; it does not infer gameplay event routing. The optional
+authentic-media regression resolves Tracks 03–18 from the operator-supplied
+JP Rev. 1 CUE and verifies each selected handoff is ready with a non-empty
+original audio source.
+
+Verification: built `test_theron_v1_track01_cdda_handoff` on `trv2` and ran it
+three times against the authentic JP Rev. 1 CUE and original sibling BIN/audio
+files; all three runs passed. Gameplay event mapping and automatic in-game
+selection remain open in `TODO-theron.md`.

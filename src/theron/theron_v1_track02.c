@@ -676,9 +676,10 @@ static int tqr_file_size(const char *path, size_t *out_size) {
     return 1;
 }
 
-Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
+Theron_Track01CddaStatus theron_v1_cdda_handoff_from_verified_media(
     const char *media_path,
     const char *verified_track02_md5,
+    unsigned int requested_track,
     Theron_Track01CddaHandoff *out_handoff) {
     FILE *cue;
     char line[2048];
@@ -686,12 +687,19 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     char audio_file[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
     char track02_file[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
     char declared_track02_path[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
-    unsigned int current_track = 0u, track01_count = 0u, track01_index_count = 0u,
+    unsigned int current_track = 0u, audio_track_count = 0u, audio_index_count = 0u,
                  track02_count = 0u;
-    int current_is_track01 = 0, current_audio = 0, current_track02_mode1 = 0;
+    int current_is_requested_audio = 0, current_audio = 0, current_track02_mode1 = 0;
     if (!out_handoff) return THERON_TRACK01_CDDA_BAD_INPUT;
     memset(out_handoff, 0, sizeof(*out_handoff));
     out_handoff->status = THERON_TRACK01_CDDA_UNAVAILABLE;
+    if (requested_track < 1u || requested_track > 19u || requested_track == 2u ||
+        requested_track == 19u) {
+        out_handoff->status = THERON_TRACK01_CDDA_BAD_INPUT;
+        snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
+                 "Requested CD track is not an audio track number");
+        return out_handoff->status;
+    }
     if (!media_path || !media_path[0] || !verified_track02_md5 ||
         theron_v1_track02_variant_for_md5(verified_track02_md5) == THERON_TRACK02_VARIANT_UNKNOWN) {
         out_handoff->status = THERON_TRACK01_CDDA_UNVERIFIED;
@@ -702,7 +710,7 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     out_handoff->track02_variant = theron_v1_track02_variant_for_md5(verified_track02_md5);
     if (!tqr_path_is_cue(media_path)) {
         snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
-                 "ISO/BIN media has no Track 01 CDDA metadata");
+                 "ISO/BIN media has no CDDA track metadata");
         return out_handoff->status;
     }
     cue = fopen(media_path, "rb");
@@ -723,10 +731,10 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
         if (tqr_cue_track_number_and_mode(line, &track, &audio, &track02_mode1)) {
             current_track = track;
             current_audio = audio;
-            current_is_track01 = track == 1u;
+            current_is_requested_audio = track == requested_track;
             current_track02_mode1 = track == 2u && track02_mode1;
-            if (current_is_track01 && current_audio && current_file[0]) {
-                ++track01_count;
+            if (current_is_requested_audio && current_audio && current_file[0]) {
+                ++audio_track_count;
                 snprintf(audio_file, sizeof(audio_file), "%s", current_file);
             }
             if (current_track02_mode1 && current_file[0]) {
@@ -735,10 +743,10 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
             }
             continue;
         }
-        if (current_track == 1u && current_is_track01 && current_audio &&
+        if (current_track == requested_track && current_is_requested_audio && current_audio &&
             tqr_cue_index01(line, &out_handoff->index_minute,
                             &out_handoff->index_second, &out_handoff->index_frame)) {
-            ++track01_index_count;
+            ++audio_index_count;
             out_handoff->index_lba = out_handoff->index_minute * 60u * 75u +
                                      out_handoff->index_second * 75u + out_handoff->index_frame;
         }
@@ -754,7 +762,7 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
             declared_track02_path[0] = '\0';
         }
     }
-    if (track01_count != 1u || track01_index_count != 1u || track02_count != 1u ||
+    if (audio_track_count != 1u || audio_index_count != 1u || track02_count != 1u ||
         !audio_file[0] || !track02_file[0] ||
         !tqr_cue_path_for_file(media_path, audio_file, out_handoff->audio_path) ||
         !tqr_path_is_readable(out_handoff->audio_path) ||
@@ -780,13 +788,13 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
                      declared_track02_path) < 0 ||
             !tqr_path_is_readable(out_handoff->track02_path)) {
             snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
-                     "CUE lacks one readable Track 01 AUDIO and Track 02 MODE1/2352 pair");
+                     "CUE lacks the requested AUDIO and paired Track 02 data file");
             return out_handoff->status;
         }
     }
     if (!tqr_file_size(out_handoff->audio_path, &out_handoff->audio_file_bytes)) {
         snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
-                 "Track 01 audio size is unavailable");
+                 "Selected CDDA audio size is unavailable");
         return out_handoff->status;
     }
     out_handoff->audio_is_vorbis =
@@ -795,7 +803,7 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
         out_handoff->audio_start_byte = 0u;
         out_handoff->audio_sector_count = 0u;
         out_handoff->status = THERON_TRACK01_CDDA_AVAILABLE;
-        out_handoff->track_number = 1u;
+        out_handoff->track_number = requested_track;
         out_handoff->original_cdda = 1;
         out_handoff->playback_handoff_ready = 1;
         return out_handoff->status;
@@ -812,14 +820,14 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
                                     &pcm_offset, &pcm_size)) {
             snprintf(out_handoff->unavailable_reason,
                      sizeof(out_handoff->unavailable_reason),
-                     "Track 01 WAVE is not bounded 44.1 kHz stereo PCM CDDA");
+                     "Selected WAVE is not bounded 44.1 kHz stereo PCM CDDA");
             return out_handoff->status;
         }
         out_handoff->audio_start_byte = pcm_offset;
         out_handoff->audio_sector_count =
             pcm_size / THERON_TRACK01_CDDA_SECTOR_BYTES;
         out_handoff->status = THERON_TRACK01_CDDA_AVAILABLE;
-        out_handoff->track_number = 1u;
+        out_handoff->track_number = requested_track;
         out_handoff->original_cdda = 1;
         out_handoff->playback_handoff_ready = 1;
         return out_handoff->status;
@@ -830,17 +838,25 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
         (out_handoff->audio_file_bytes - out_handoff->audio_start_byte) %
             THERON_TRACK01_CDDA_SECTOR_BYTES != 0u) {
         snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
-                 "Track 01 AUDIO is not a bounded 2352-byte CDDA sector stream");
+                 "Selected AUDIO is not a bounded 2352-byte CDDA sector stream");
         return out_handoff->status;
     }
     out_handoff->audio_sector_count =
         (out_handoff->audio_file_bytes - out_handoff->audio_start_byte) /
         THERON_TRACK01_CDDA_SECTOR_BYTES;
     out_handoff->status = THERON_TRACK01_CDDA_AVAILABLE;
-    out_handoff->track_number = 1u;
+    out_handoff->track_number = requested_track;
     out_handoff->original_cdda = 1;
     out_handoff->playback_handoff_ready = 1;
     return out_handoff->status;
+}
+
+Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
+    const char *media_path,
+    const char *verified_track02_md5,
+    Theron_Track01CddaHandoff *out_handoff) {
+    return theron_v1_cdda_handoff_from_verified_media(
+        media_path, verified_track02_md5, 1u, out_handoff);
 }
 
 Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(

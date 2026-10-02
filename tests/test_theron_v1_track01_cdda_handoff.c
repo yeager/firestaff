@@ -255,6 +255,23 @@ int main(void) {
                     handoff.audio_path, handoff.track02_path);
             failed = 1;
         } else if (real_cue && real_cue[0]) {
+            unsigned int track;
+            for (track = 3u; track <= 18u && !failed; ++track) {
+                Theron_Track01CddaHandoff selected;
+                if (theron_v1_cdda_handoff_from_verified_media(
+                        real_cue, real_md5, track, &selected) !=
+                        THERON_TRACK01_CDDA_AVAILABLE ||
+                    selected.track_number != track ||
+                    !selected.original_cdda ||
+                    !selected.playback_handoff_ready ||
+                    !selected.audio_path[0] ||
+                    !selected.audio_file_bytes) {
+                    fprintf(stderr,
+                            "real Theron CDDA track %u handoff rejected: %s\n",
+                            track, selected.unavailable_reason);
+                    failed = 1;
+                }
+            }
             Theron_Track01CddaStream real_stream = {0};
             if (!theron_v1_track01_cdda_lifecycle_update(
                     &handoff, 1, &real_stream) ||

@@ -158,6 +158,14 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     const char *media_path,
     const char *verified_track02_md5,
     Theron_Track01CddaHandoff *out_handoff);
+/* Resolve a CUE-declared audio track after the paired Track 02 edition has
+ * been hash-verified. This selects source media only; callers must not infer
+ * gameplay event routing from track order. */
+Theron_Track01CddaStatus theron_v1_cdda_handoff_from_verified_media(
+    const char *media_path,
+    const char *verified_track02_md5,
+    unsigned int track_number,
+    Theron_Track01CddaHandoff *out_handoff);
 int theron_v1_track01_cdda_stream_start(
     const Theron_Track01CddaHandoff *handoff,
     Theron_Track01CddaStream *out_stream);

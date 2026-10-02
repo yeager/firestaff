@@ -574,8 +574,10 @@ AUDIO and two MODE1/2352 data tracks) and readable backing files for all 19
 tracks. The availability regression can optionally run the same receipt
 against an operator-supplied authentic CUE; no media is created or
 substituted. This proves complete-disc file/layout availability only. Track
-01 is the only integrated CDDA stream, and original event-to-later-CDDA/ADPCM/
-SFX routing is still unbound.
+01 remains the only CDDA stream connected to the title lifecycle. The generic
+verified-media handoff can now select CUE-declared audio tracks 03–18, but no
+original gameplay event-to-track/ADPCM/SFX mapping is bound, so these tracks
+are not automatically started during gameplay.
 `theron_v1_track01_cdda_handoff` also passes locally with this JP CUE and starts
 the original raw Track 01 through SDL's dummy output.
 
