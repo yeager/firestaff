@@ -431,8 +431,14 @@ static void test_mode7_flags4_original_media(void)
     node.prepass = &class1_prepass;
     assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
     assert(accumulated == 0 && darkness == 0);
-    node.stone_room = NULL;
+    node.source_flags = 4u;
+    node.effective_flags = 2u;
     node.prepass = NULL;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
+    assert(accumulated == 0 && darkness == 0);
+    node.effective_flags = 0u;
+    node.source_flags = 3u;
+    node.stone_room = NULL;
     assert(room.raw_tile == 0xb0u && room.source_tile_type == 1u &&
            room.first_record_link == 0x0441u &&
            room.ceiling_ornament_word == 0x00ffu);

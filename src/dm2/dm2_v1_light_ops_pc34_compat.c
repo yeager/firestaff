@@ -168,6 +168,23 @@ int dm2_v1_mode7_flags4_class5_terms(
     return 1;
 }
 
+static int dm2_v1_mode7_flags4_class1_terms(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    int16_t *out_tile_light, int16_t *out_darkness,
+    int16_t *out_weather_light)
+{
+    if (!room || !room->valid || room->raw_tile != 0x30u ||
+        ((room->first_record_link >> 10) & 0x0fu) != 3u ||
+        room->source_tile_type != 1u || !out_tile_light ||
+        !out_darkness || !out_weather_light) return 0;
+    /* sklight.cpp:231-435: flags 4 bypasses class-0 floor light,
+     * flags-1 ceiling and record light, and flags-2 creature light. */
+    *out_tile_light = 0;
+    *out_darkness = 0;
+    *out_weather_light = 0;
+    return 1;
+}
+
 static int dm2_v1_mode7_tile_cache_refresh(
     DM2_V1_Mode7TileCache *cache, int map, int x, int y,
     DM2_V1_Mode7ReadTile read_tile, void *ctx)
@@ -295,7 +312,10 @@ int dm2_v1_mode7_on_node(
         if (!dm2_v1_mode7_flags4_floor_terms(
                 node->floor, node->weather_index, node->weather_delta,
                 &tile_light, &weather_light)) return -1;
-    } else if (!dm2_v1_mode7_flags4_class2_terms(
+    } else if (!dm2_v1_mode7_flags4_class1_terms(
+                   node->stone_room, &tile_light, &darkness,
+                   &weather_light) &&
+               !dm2_v1_mode7_flags4_class2_terms(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light) &&
                !dm2_v1_mode7_flags4_class5_terms(
