@@ -1727,83 +1727,112 @@ static int dm2_runtime_light_mode8_step(
     return 1;
 }
 
-static int dm2_runtime_light_mode7_tile(
-    void *context, int map, int x, int y, int distance,
-    int16_t *ambient_delta, int16_t *darkness_delta)
+typedef struct {
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_Mode7TileCache cache;
+} DM2_RuntimeMode7Walk;
+
+static int dm2_runtime_mode7_read_tile(void *context, int map, int x,
+                                       int y, uint8_t *out_tile)
 {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
-    DM2_V1_DungeonData *dungeon;
-    const DM2_V1_AssetLoader *loader;
-    DM2_V1_CLightStoneRoomReceipt room;
-    DM2_V1_CLightTileOrnamentReceipt light;
-    DM2_V1_SkprojectQuery0cee0897Receipt sensor;
-    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
-    DM2_V1_SkprojectTeleporterDetail detail;
-    int detail_valid = 0, weather_index;
-    int16_t record, next;
-    unsigned chain_length = 0u;
+    DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
     int raw;
-    if (!rt || !rt->boot || !rt->boot->dungeon_data ||
-        !ambient_delta || !darkness_delta || !rt->record_pools_valid)
-        return -1;
-    *ambient_delta = 0;
-    *darkness_delta = 0;
-    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
-    if (raw < 0) return -1;
-    /* SK1C9A action 0x17 calls ADD_BACKGROUND_LIGHT_FROM_TILE only when
-     * the cached source tile has bit 0x10. */
-    if ((raw & 0x10) == 0) return 0;
-    loader = dm2_v1_boot_asset_loader(rt->boot);
-    if (!loader || (raw >> 5) != 5 ||
-        !dm2_v1_dungeon_c_light_stone_room_receipt(
-            dungeon, loader, map, x, y, (uint32_t)rt->tick_count, &room))
-        return -1;
-    /* Action 0x17 passes flag 4: the class-5 ceiling ornament is not read.
-     * ADD_BACKGROUND_LIGHT_FROM_TILE still walks the summarized record
-     * chain for DBE/DBF darkness, so admit only chains proven to omit them. */
-    record = (int16_t)room.first_record_link;
-    while (record != (int16_t)0xfffe) {
-        unsigned type;
-        if (record == (int16_t)0xffff || ++chain_length > 256u ||
-            !dm2_v1_record_pool_next_link(&rt->record_pools, record, &next))
-            return -1;
-        type = ((uint16_t)record >> 10) & 0x0fu;
-        if (type == 14u || type == 15u) return -1;
-        record = next;
-    }
-    memset(&sensor, 0, sizeof(sensor));
-    if (dm2_v1_skproject_query_0cee_0897_dungeon(
-            dungeon, &rt->record_pools, map, x, y, &sensor)) {
-        memset(&detail, 0, sizeof(detail));
-        memset(&detail_receipt, 0, sizeof(detail_receipt));
-        if (dm2_v1_skproject_get_teleporter_detail_dungeon(
-                dungeon, &rt->record_pools, map, x, y,
-                &detail, &detail_receipt)) {
-            if (!detail_receipt.valid) return -1;
-            detail_valid = 1;
-        } else if (!detail_receipt.blocked_tile_not_teleporter) {
-            return -1;
-        }
-    } else if (!sensor.blocked_no_teleporter) {
-        return -1;
-    }
-    weather_index = rt->weather_chain.storm_active +
-                    rt->weather_chain.day_word;
-    if (weather_index < 0) weather_index = 0;
-    if (weather_index > 5) weather_index = 5;
-    if (!dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
-            &room, loader, distance, 4u, detail_valid, weather_index,
-            &light) || !light.valid)
-        return -1;
-    *ambient_delta = light.v1e0974_delta;
-    *darkness_delta = light.v1e0978_delta;
+    if (!walk || !walk->rt || !walk->rt->boot || !out_tile) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(
+        (DM2_V1_DungeonData *)walk->rt->boot->dungeon_data,
+        map, x, y);
+    if (raw < 0 || raw > 255) return 0;
+    *out_tile = (uint8_t)raw;
     return 1;
+}
+
+static int dm2_runtime_mode7_step(
+    void *context, int map, int x, int y, int direction,
+    int *next_map, int *next_x, int *next_y,
+    int *projection_map, int *projection_x, int *projection_y)
+{
+    DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
+    /* This bounded probe reuses admitted mode-8 tile edges. Action-23's
+     * GO_THERE contract has not been fully authenticated, so neither this
+     * result nor its RNG cursor can certify mode-7 completion. */
+    return dm2_runtime_light_mode8_step(
+        walk->rt, map, x, y, direction, next_map, next_x, next_y,
+        projection_map, projection_x, projection_y);
+}
+
+static int dm2_runtime_mode7_on_node(
+    void *context, int map, int x, int y, int direction,
+    int source_facing, unsigned score, unsigned source_flags,
+    uint8_t effective_flags)
+{
+    DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
+    DM2_V1_RuntimeState *rt = walk->rt;
+    DM2_V1_DungeonData *dungeon =
+        (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(rt->boot);
+    DM2_V1_CLightFlags4FloorReceipt floor;
+    DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_Mode7Action23Node node;
+    int raw, first, result;
+    /* The current class-0/2/5 receipts do not consume viewing direction.
+     * Keep both source values distinct for the remaining record branches. */
+    (void)direction;
+    (void)source_facing;
+    if (source_flags == 3u) {
+        if (!dm2_v1_mode7_tile_cache_start(&walk->cache, map, x, y,
+                dm2_runtime_mode7_read_tile, walk)) goto unknown;
+    } else if (source_flags == 4u) {
+        if (!dm2_v1_mode7_tile_cache_node(&walk->cache, effective_flags,
+                map, x, y, dm2_runtime_mode7_read_tile, walk))
+            goto unknown;
+    } else goto unknown;
+    memset(&node, 0, sizeof(node));
+    node.cached_tile = walk->cache.tile;
+    node.effective_flags = effective_flags;
+    node.source_flags = (uint8_t)source_flags;
+    node.distance = (uint8_t)score;
+    if (!dm2_v1_mode7_tile_cache_action23_gate(&walk->cache))
+        return dm2_v1_mode7_on_node(&node,
+            &rt->c_light_visibility.v1e0974,
+            &rt->c_light_visibility.v1e0978);
+    if (source_flags != 4u || !loader) goto unknown;
+    if (rt->weather_chain.storm_active < 0 ||
+        rt->weather_chain.storm_active > 5 ||
+        rt->weather_chain.day_word < 0 ||
+        rt->weather_chain.day_word > 5) goto unknown;
+    node.weather_index = (uint8_t)rt->weather_chain.storm_active;
+    node.weather_delta = (uint8_t)rt->weather_chain.day_word;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (raw < 0 || first < -1) goto unknown;
+    if ((raw >> 5) == 0) {
+        result = first == -1 ?
+            dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
+                dungeon, map, x, y, &floor) :
+            dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                dungeon, loader, map, x, y, (uint32_t)rt->tick_count,
+                &floor);
+        if (!result) goto unknown;
+        node.floor = &floor;
+    } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+                dungeon, loader, map, x, y,
+                (uint32_t)rt->tick_count, &room)) goto unknown;
+        node.stone_room = &room;
+    } else goto unknown;
+    result = dm2_v1_mode7_on_node(&node,
+        &rt->c_light_visibility.v1e0974,
+        &rt->c_light_visibility.v1e0978);
+    if (result < 0) goto unknown;
+    return result;
+unknown:
+    return -1;
 }
 
 static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
 {
-    unsigned observed_cells = 0u;
+    DM2_RuntimeMode7Walk mode7;
+    uint16_t uncommitted_rng = 1u;
     uint16_t source_radius = 0u;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_SkprojectTeleporterDetail detail;
@@ -1823,17 +1852,20 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
             &rt->c_light_visibility, detail.b_04,
             detail.b_02, detail.b_03);
     /* A missing cell branch leaves the pass incomplete and c_light blocked. */
-    (void)dm2_v1_1c9a_light_mode8_frontier(&rt->c_light_visibility,
-        rt->dungeon_level, x, y, dm2_runtime_light_mode8_step, rt);
+    (void)dm2_v1_1c9a_light_mode8_frontier_with_rng(
+        &rt->c_light_visibility, rt->dungeon_level, x, y,
+        dm2_runtime_light_mode8_step, rt, &uncommitted_rng);
     if (rt->map_graphics_style < 0 || rt->map_graphics_style > 0xff ||
         !dm2_v1_query_gdat_entry_data_index(
             dm2_v1_boot_asset_loader(rt->boot), 8,
             rt->map_graphics_style, 11, 0x6d, &source_radius))
         return;
-    (void)dm2_v1_1c9a_light_mode7_observed_cells(
-        &rt->c_light_visibility, source_radius,
-        dm2_runtime_light_mode7_tile, rt,
-        &observed_cells);
+    memset(&mode7, 0, sizeof(mode7));
+    mode7.rt = rt;
+    (void)dm2_v1_1c9a_light_mode7_frontier_with_rng(
+        &rt->c_light_visibility, rt->dungeon_level, x, y,
+        rt->view_dir, source_radius, dm2_runtime_mode7_step,
+        dm2_runtime_mode7_on_node, &mode7, &uncommitted_rng);
 }
 
 /* UPDATE_GFXSET, CHECK_RECOMPUTE_LIGHT and c_weather all consume the active
