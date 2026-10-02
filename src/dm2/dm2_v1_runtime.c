@@ -3535,7 +3535,6 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
         ? candidate->source_savegames1[4] : 0u;
     rt->source_aura_of_speed_valid = candidate->source_savegames1_valid;
     rt->source_light_level = candidate->source_light_level;
-    dm2_runtime_try_light_mode8(rt, game->party_x, game->party_y);
     rt->source_attack_counter = rt->source_hero_ench_countdown;
     rt->source_savegames1[2] = rt->source_attack_counter;
     rt->session_snapshot.champion_count =
