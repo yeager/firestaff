@@ -1,6 +1,6 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-01 — keep restored campaign and quest-item state independent
+## 2026-10-02 — keep restored campaign and quest-item state independent
 
 - A saved quest-item mask now restores only its provisional item bits and
   marks only its canonical current stage `IN_PROGRESS`. It cannot reconstruct
@@ -13,9 +13,13 @@
 - Legacy snapshots without the campaign byte retain only their canonical
   current stage as `IN_PROGRESS` so the saved world can resume. This fallback
   does not complete or unlock other stages from the old host item mask.
-- On trv2, the five targeted Theron tests passed against authentic US Track 02
-  where required. This closes host-side inference only; the original T900
-  pickup and final-stage completion consumers remain open in TODO.
+- On the rebased `main`, trv2 built the Theron and M12 libraries plus the
+  targeted test executables. Twelve progression, serialization, SRM, startup,
+  chapter-marker, and real-media Track 02 loader tests passed in three
+  consecutive loops; the authentic loader test ran without a media skip. This
+  verifies Firestaff's bounded restore and loader paths, not full campaign
+  parity. The original T900 pickup and final-stage completion consumers remain
+  open in TODO.
 
 ## 2026-10-01 — expose authentic regional skill-rank source records
 
