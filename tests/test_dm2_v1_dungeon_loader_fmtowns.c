@@ -330,6 +330,17 @@ static void test_fmtowns_load(const char *path) {
                    ornament_record_count);
             assert(no_record_count > 0 && record_count > 0 &&
                    admitted_record_count > 0 && ornament_record_count > 0);
+            /* Source DB2 text and DB3 actuator cases on the real map. */
+            assert(dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                &dungeon, &loader, 3, 12, 0, 0u, &floor));
+            assert(floor.floor_ornament_word == 0x0a56u &&
+                   floor.floor_light_word == 0u &&
+                   floor.contributes_light == 0u);
+            assert(dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+                &dungeon, &loader, 3, 15, 0, 0u, &floor));
+            assert(floor.floor_ornament_word == 0x0a1cu &&
+                   floor.floor_light_word == 0u &&
+                   floor.contributes_light == 0u);
         }
         dm2_v1_asset_loader_free(&loader);
         free(graphics);

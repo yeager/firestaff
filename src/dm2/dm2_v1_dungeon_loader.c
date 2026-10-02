@@ -6895,6 +6895,35 @@ int dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
     return 1;
 }
 
+static int dm2_v1_c_light_floor_frame(
+    const DM2_V1_AssetLoader *loader, uint8_t ornament, uint32_t tick,
+    uint16_t thing, uint16_t *out_frame, uint32_t *out_hash)
+{
+    DM2_V1_QueryOrnateAnimFrameReceipt animation;
+    uint16_t word = 0u;
+    size_t text_size = 0u;
+    const uint8_t *text;
+
+    if (!out_frame || !out_hash) return 0;
+    memset(&animation, 0, sizeof(animation));
+    if (dm2_v1_query_ornate_anim_frame_receipt(
+            loader, 10, ornament, tick, 0u, &animation) &&
+        animation.accepted && animation.receipt_hash != 0u) {
+        *out_frame = animation.frame;
+        *out_hash = animation.receipt_hash;
+        return 1;
+    }
+    text = dm2_v1_asset_load_text_sized(loader, 10, ornament, 0x0d,
+                                         &text_size);
+    /* skgdtqdb.cpp::QUERY_ORNATE_ANIM_FRAME returns one when both
+     * animation entries are absent. A malformed present entry is rejected. */
+    if (dm2_v1_asset_load_word_value(loader, 10, ornament, 0x0d, &word) ||
+        (text && text_size > 0u && text[0] != 0u)) return 0;
+    *out_frame = 1u;
+    *out_hash = 0x4f414c45u ^ ((uint32_t)ornament << 16) ^ thing;
+    return *out_hash != 0u;
+}
+
 int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, uint32_t tick,
@@ -6907,6 +6936,8 @@ int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
     uint16_t light_word = 0u;
     uint16_t weather_word = 0u;
     uint32_t source_hash = 0u;
+    uint8_t floor_gfx[16];
+    int floor_gfx_count;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -6916,6 +6947,9 @@ int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
     if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 0u ||
         first < 0) return 0;
+    floor_gfx_count = dm2_v1_dungeon_get_map_floor_gfx_list(
+        d, level, floor_gfx, (int)sizeof(floor_gfx));
+    if (floor_gfx_count < 0) return 0;
 
     /* skguivwp.cpp::DM2_SUMMARIZE_STONE_ROOM stops at the first DB type
      * above 3. A type-2 floor text with ext usage zero is an unconditional
@@ -6936,41 +6970,40 @@ int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
         if (type > 3) break;
         if (type == 2) {
             uint8_t ornament;
-            DM2_V1_QueryOrnateAnimFrameReceipt animation;
+            uint16_t frame;
             if (size < 4) return 0;
             w2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
             if ((w2 & 0x6u) == 0x2u) {
                 if (((unsigned)w2 >> 11) != 0u) return 0;
                 ornament = (uint8_t)(w2 >> 3);
-                memset(&animation, 0, sizeof(animation));
-                if (!dm2_v1_query_ornate_anim_frame_receipt(
-                        loader, 10, ornament, tick, 0u, &animation) ||
-                    !animation.accepted || animation.receipt_hash == 0u) {
-                    uint16_t word = 0u;
-                    size_t text_size = 0u;
-                    const uint8_t *text = dm2_v1_asset_load_text_sized(
-                        loader, 10, ornament, 0x0d, &text_size);
-                    /* skgdtqdb.cpp::QUERY_ORNATE_ANIM_FRAME returns one
-                     * when both animation entries are absent. Do not turn a
-                     * present but malformed entry into that fallback. */
-                    if (dm2_v1_asset_load_word_value(loader, 10, ornament,
-                                                       0x0d, &word) ||
-                        (text && text_size > 0u && text[0] != 0u))
-                        return 0;
-                    animation.frame = 1u;
-                    animation.receipt_hash = 0x4f414c45u ^
-                        ((uint32_t)ornament << 16) ^ (uint32_t)thing;
-                    if (animation.receipt_hash == 0u) return 0;
-                }
+                if (!dm2_v1_c_light_floor_frame(loader, ornament, tick,
+                                                 thing, &frame, &source_hash))
+                    return 0;
                 floor_word = (uint16_t)(ornament |
-                    (uint16_t)((uint32_t)animation.frame * 10u << 8));
-                source_hash = animation.receipt_hash;
+                    (uint16_t)((uint32_t)frame * 10u << 8));
             }
         } else if (type == 3) {
+            uint16_t action;
             uint16_t w4;
             if (size < 6) return 0;
+            w2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
             w4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
-            if ((w4 >> 12) != 0u) return 0;
+            if ((w4 >> 12) != 0u) {
+                uint8_t ornament;
+                uint16_t frame;
+                int ordinal = (int)(w4 >> 12);
+                if (ordinal > floor_gfx_count) return 0;
+                action = (uint16_t)(w2 & 0x7fu);
+                /* skguivwp.cpp's actuator summary has stateful cases 27,
+                 * 2C and 32. Admit only the unconditional source branch. */
+                if (action == 0x27u || action >= 0x2cu) return 0;
+                ornament = floor_gfx[ordinal - 1];
+                if (!dm2_v1_c_light_floor_frame(loader, ornament, tick,
+                                                 thing, &frame, &source_hash))
+                    return 0;
+                floor_word = (uint16_t)(ornament |
+                    (uint16_t)((uint32_t)frame * 10u << 8));
+            }
         }
         next = dm2_v1_dungeon_get_next_thing(d, thing);
         if (next < 0 || next == (int)thing) return 0;
