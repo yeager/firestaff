@@ -1663,6 +1663,77 @@ static int dm2_runtime_light_mode8_step(
                     &rt->record_pools, link, &link))
                 return -1;
         }
+    } else if (raw == 0xb8 && first >= 0 &&
+               (((uint16_t)first >> 10) & 0x0fu) == 1u) {
+        int16_t next;
+        /* SK1C9A/19f0_05e8 enters the class-5 bit-8 D283 branch
+         * directly. Its recursive arg-6 probe does not require a room
+         * ornament summary for the source square. */
+        if (!rt->record_pools_valid ||
+            !dm2_v1_record_pool_next_link(
+                &rt->record_pools, (int16_t)first, &next) ||
+            next != (int16_t)0xfffe)
+            return -1;
+        memset(&d283, 0, sizeof(d283));
+        if (dm2_v1_skproject_d283_dungeon(
+                dungeon, &rt->record_pools, map, nx, ny,
+                &d283) == first && d283.valid && d283.found) {
+            int dest_map = d283.record_word4 >> 8;
+            int dest_x = d283.record_word2 & 0x1f;
+            int dest_y = (d283.record_word2 >> 5) & 0x3f;
+            int dest_raw;
+            if (dest_map != rt->c_light_visibility.current_map &&
+                dest_map != rt->c_light_visibility.alternate_map)
+                return 0;
+            dest_raw = dm2_v1_dungeon_get_tile_raw(
+                dungeon, dest_map, dest_x, dest_y);
+            if (dest_raw < 0) return -1;
+            return dm2_v1_1c9a_light_arg6_destination_admission(
+                (uint8_t)dest_raw);
+        }
+        *next_map = map;
+        *next_x = nx;
+        *next_y = ny;
+        return 1;
+    } else if (raw == 0xb0) {
+        /* Class-5 bit-8 clear reads teleporter detail in GO_THERE before
+         * any action-27 room summary. */
+        if (!rt->record_pools_valid ||
+            !dm2_v1_skproject_get_teleporter_detail_dungeon(
+                dungeon, &rt->record_pools, map, nx, ny,
+                &detail, &detail_receipt) || !detail_receipt.valid)
+            return -1;
+        if (detail.b_04 != rt->c_light_visibility.current_map &&
+            detail.b_04 != rt->c_light_visibility.alternate_map)
+            return 0;
+        *projection_map = detail.b_04;
+        *projection_x = detail.b_02;
+        *projection_y = detail.b_03;
+    } else if (raw == 0x30 || (raw == 0x20 && first == -1)) {
+        const DM2_V1_GameState *game =
+            (const DM2_V1_GameState *)rt->boot->dm2_state;
+        int16_t link = first < 0 ? (int16_t)0xfffe : (int16_t)first;
+        unsigned length = 0u;
+        int party_square;
+        if (!game || !rt->source_party_valid ||
+            !rt->record_pools_valid) return -1;
+        /* Both light actions admit class 1 through capability 2. The
+         * party and creature blockers follow that capability check. */
+        while (link != (int16_t)0xfffe) {
+            int16_t next;
+            if (link == (int16_t)0xffff || ++length > 256u ||
+                (((uint16_t)link >> 10) & 0x0fu) == 4u ||
+                !dm2_v1_record_pool_next_link(
+                    &rt->record_pools, link, &next)) return -1;
+            link = next;
+        }
+        party_square = game->current_level == map &&
+            game->party_x == nx && game->party_y == ny;
+        if ((raw == 0x30 ?
+             dm2_v1_mode7_go_there_class1_raw30_admission(
+                 (uint8_t)raw, 1, party_square) :
+             dm2_v1_mode7_go_there_class1_no_record_admission(
+                 (uint8_t)raw, first, party_square)) != 1) return 0;
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         loader = dm2_v1_boot_asset_loader(rt->boot);
         if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(
@@ -1671,39 +1742,7 @@ static int dm2_runtime_light_mode8_step(
             return -1;
         if (room.source_tile_type == 2u) return 0;
         if ((raw >> 5) == 5) {
-            if ((raw & 0x08) != 0) {
-                int16_t next;
-                /* SK1C9A/19f0_05e8 checks the creature on class-5 tiles
-                 * whose 0x10 bit is set. The original movement b8 square
-                 * has only DB1, then END, so that creature branch is empty.
-                 * It does not call GET_TELEPORTER_DETAIL here. */
-                if (!rt->record_pools_valid || raw != 0xb8 || first < 0 ||
-                    (((uint16_t)first >> 10) & 0x0fu) != 1u ||
-                    !dm2_v1_record_pool_next_link(
-                        &rt->record_pools, (int16_t)first, &next) ||
-                    next != (int16_t)0xfffe)
-                    return -1;
-                memset(&d283, 0, sizeof(d283));
-                if (dm2_v1_skproject_d283_dungeon(
-                        dungeon, &rt->record_pools, map, nx, ny,
-                        &d283) == first && d283.valid && d283.found) {
-                    int dest_map = d283.record_word4 >> 8;
-                    int dest_x = d283.record_word2 & 0x1f;
-                    int dest_y = (d283.record_word2 >> 5) & 0x3f;
-                    if (dest_map != rt->c_light_visibility.current_map &&
-                        dest_map != rt->c_light_visibility.alternate_map)
-                        return 0;
-                    int dest_raw = dm2_v1_dungeon_get_tile_raw(
-                        dungeon, dest_map, dest_x, dest_y);
-                    if (dest_raw < 0) return -1;
-                    return dm2_v1_1c9a_light_arg6_destination_admission(
-                        (uint8_t)dest_raw);
-                }
-                *next_map = map;
-                *next_x = nx;
-                *next_y = ny;
-                return 1;
-            }
+            if ((raw & 0x08) != 0) return -1;
             if (!rt->record_pools_valid ||
                 !dm2_v1_skproject_get_teleporter_detail_dungeon(
                     dungeon, &rt->record_pools, map, nx, ny,
