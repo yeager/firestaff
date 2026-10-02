@@ -8,6 +8,11 @@
   `(scope, rotation, absolute, sound)` combinations. The test locks every
   tuple count and reads only the local authentic files on trv2; it prints no
   game-data bytes.
+- The ordinary Firestaff movement regression can exercise 41 of those routes
+  per region, each with a floor approach and a floor or closed-pad terminal.
+  Those routes cover 15 metadata combinations, whose exact counts are also
+  locked. This narrows potential original-runtime capture cases but proves no
+  teleporter-field semantics.
 - The targeted loader CTest passed three consecutive loops on trv2; direct
   execution also exited 0. Its optional JP ISO-stub and CUE-projection
   subchecks were unavailable and skipped; both Track 02 BIN paths were present

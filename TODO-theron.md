@@ -30,7 +30,10 @@ Reviewed 2026-10-02. Only open work is listed here.
   combination or scope effect. The authentic US and JP census now finds the
   same 25 `(scope, rotation, absolute, sound)` combinations among 170 open
   teleporter occurrences in each region across all seven dungeon banks; the
-  real-media test locks each count. This is source-record/map evidence only.
+  real-media test locks each count. Firestaff's normal movement regression
+  reaches 41 floor-approachable floor/closed-pad routes per region across 15
+  of those tuples; that is a capture-candidate inventory, not evidence of
+  field behavior. This is source-record/map evidence only.
   Next, capture ordinary-input before/after party and item state for
   representative cases or bind the missing branches in the authenticated
   Theron routine. Until then, keep these semantics unsupported and update the

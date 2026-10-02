@@ -1400,24 +1400,32 @@ typedef struct {
     unsigned int total;
 } Theron_TeleporterMetadataCensus;
 
+static void census_real_teleporter_metadata_object(
+    const Theron_V1_Object *object,
+    Theron_TeleporterMetadataCensus *census) {
+    Theron_Teleporter source;
+    assert(object != NULL && census != NULL);
+    assert(object->type == THERON_OBJTYPE_TELEPORTER && object->state != 0u);
+    assert(object->source_raw_size == 6u);
+    assert(theron_v1_track02_teleporter_decode(
+               object->source_raw, &source) == 0);
+    assert(source.scope < 4u && source.rotation < 4u &&
+           source.absolute < 2u && source.sound < 2u);
+    ++census->count[source.scope][source.rotation]
+                   [source.absolute][source.sound];
+    ++census->total;
+}
+
 static void census_real_teleporter_metadata(
     const Theron_V1_World *world,
     Theron_TeleporterMetadataCensus *census) {
     assert(world != NULL && census != NULL);
     for (int i = 0; i < world->object_count; ++i) {
         const Theron_V1_Object *object = &world->objects[i];
-        Theron_Teleporter source;
         if (object->type != THERON_OBJTYPE_TELEPORTER ||
             object->state == 0u)
             continue;
-        assert(object->source_raw_size == 6u);
-        assert(theron_v1_track02_teleporter_decode(
-                   object->source_raw, &source) == 0);
-        assert(source.scope < 4u && source.rotation < 4u &&
-               source.absolute < 2u && source.sound < 2u);
-        ++census->count[source.scope][source.rotation]
-                       [source.absolute][source.sound];
-        ++census->total;
+        census_real_teleporter_metadata_object(object, census);
     }
 }
 
@@ -1464,6 +1472,55 @@ static void print_real_teleporter_metadata_census(
                 }
     assert(expected_total == 170u && census->total == expected_total);
     printf("  authentic %s active Track 02 teleporter metadata: %u ",
+           region, census->total);
+    for (unsigned int scope = 0u; scope < 4u; ++scope)
+        for (unsigned int rotation = 0u; rotation < 4u; ++rotation)
+            for (unsigned int absolute = 0u; absolute < 2u; ++absolute)
+                for (unsigned int sound = 0u; sound < 2u; ++sound) {
+                    unsigned int count =
+                        census->count[scope][rotation][absolute][sound];
+                    if (count == 0u) continue;
+                    printf("[scope=%u rotation=%u absolute=%u sound=%u:%u] ",
+                           scope, rotation, absolute, sound, count);
+                }
+    printf("\n");
+}
+
+static void print_real_firestaff_routed_teleporter_metadata_census(
+    const char *region, const Theron_TeleporterMetadataCensus *census,
+    unsigned int expected_routes) {
+    static const unsigned int expected[4][4][2][2] = {
+        [0][0][0][0] = 8u,
+        [0][1][0][0] = 1u,
+        [0][2][0][0] = 1u,
+        [0][2][0][1] = 1u,
+        [1][0][0][0] = 2u,
+        [1][0][1][0] = 1u,
+        [1][3][1][0] = 1u,
+        [2][0][0][1] = 10u,
+        [2][0][1][1] = 1u,
+        [3][0][0][1] = 2u,
+        [3][1][0][0] = 3u,
+        [3][1][1][0] = 7u,
+        [3][1][1][1] = 1u,
+        [3][2][0][1] = 1u,
+        [3][3][1][1] = 1u
+    };
+    unsigned int expected_total = 0u;
+
+    assert(region != NULL && census != NULL);
+    assert(census->total == expected_routes);
+    for (unsigned int scope = 0u; scope < 4u; ++scope)
+        for (unsigned int rotation = 0u; rotation < 4u; ++rotation)
+            for (unsigned int absolute = 0u; absolute < 2u; ++absolute)
+                for (unsigned int sound = 0u; sound < 2u; ++sound) {
+                    expected_total +=
+                        expected[scope][rotation][absolute][sound];
+                    assert(census->count[scope][rotation][absolute][sound] ==
+                           expected[scope][rotation][absolute][sound]);
+                }
+    assert(expected_total == expected_routes);
+    printf("  authentic %s Firestaff-routed teleporter metadata: %u ",
            region, census->total);
     for (unsigned int scope = 0u; scope < 4u; ++scope)
         for (unsigned int rotation = 0u; rotation < 4u; ++rotation)
@@ -5285,6 +5342,7 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     unsigned int special_terminal_routes_deferred = 0u;
     unsigned int special_terminal_chains_deferred = 0u;
     unsigned int chained_routes_without_floor_approach = 0u;
+    Theron_TeleporterMetadataCensus routed_metadata = {0};
 
     assert(world != NULL && attempt_world != NULL);
     assert(ud != NULL && track02 != NULL);
@@ -5463,6 +5521,8 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
                 assert(world->party.leader_x == target_x);
                 assert(world->party.leader_y == target_y);
                 assert(world->transition_pending == 0);
+                census_real_teleporter_metadata_object(
+                    teleporter, &routed_metadata);
                 ++routes_tested;
                 if (target_level != teleporter->level)
                     ++cross_level_routes_tested;
@@ -5507,6 +5567,8 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
            chained_wall_routes_blocked, unresolved_chained_routes_blocked,
            special_terminal_routes_deferred, special_terminal_chains_deferred,
            chained_routes_without_floor_approach);
+    print_real_firestaff_routed_teleporter_metadata_census(
+        variant == 1 ? "JP" : "US", &routed_metadata, routes_tested);
     free(world);
     free(attempt_world);
 }
