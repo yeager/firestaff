@@ -57837,6 +57837,16 @@ static int m11_finish_v1_eye_press(M11_GameViewState* state) {
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
     DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+    /* ReDMCSB PANEL.C F0353:2180 calls F0347 after Eye release.
+     * F0347:1654-1686 restores F0345's FOOD/WATER page for an empty or
+     * ordinary action hand; only a scroll or container selects a different
+     * panel. C071 had cleared this flag on press, leaving C017 bare. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        state->v1FoodWaterPanelActive =
+            action_hand == THING_NONE || action_hand == THING_ENDOFLIST ||
+            (THING_GET_TYPE(action_hand) != THING_TYPE_SCROLL &&
+             THING_GET_TYPE(action_hand) != THING_TYPE_CONTAINER);
+    }
     if (action_hand != THING_NONE && action_hand != THING_ENDOFLIST &&
         THING_GET_TYPE(action_hand) == THING_TYPE_CONTAINER) {
         (void)DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state);

@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-10-02: Restored the F0345 FOOD/WATER inventory page after releasing
+  Eye with an empty or ordinary action hand. PANEL.C F0353 calls F0347 for
+  that selection; the native held-scroll path had cleared the page and left
+  1,523 C101 pixels changed after release. An authentic PC 3.4 Hall test now
+  captures the panel before, during and after Eye, checks C023 source pixels
+  and M653 text ink, and requires exact panel restoration. The original-media
+  test and 140 champion-panel assertions pass locally.
+
 - 2026-10-02: The original PC 3.4 entrance observer now verifies a fresh
   C407 click, the initial door image and all 31 distinct opening steps,
   the Hall handoff to map 0 (1,3) facing south, and its first nonblank

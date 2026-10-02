@@ -3,10 +3,22 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "menu_input_m12.h"
+#include "asset_loader_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static int panel_pixel_delta(const unsigned char *a, const unsigned char *b,
+                             int x, int y, int w, int h)
+{
+    int changed = 0;
+    for (int row = 0; row < h; ++row)
+        for (int col = 0; col < w; ++col)
+            changed += a[(y + row) * 320 + x + col] !=
+                       b[(y + row) * 320 + x + col];
+    return changed;
+}
 
 int main(void)
 {
@@ -17,6 +29,11 @@ int main(void)
     char panelText[512];
     char sourceText[512];
     unsigned char framebuffer[320 * 200];
+    unsigned char beforeEyeFrame[320 * 200];
+    unsigned char heldEyeFrame[320 * 200];
+    const M11_AssetSlot *scrollPanel;
+    int panelX, panelY, panelW, panelH;
+    int sourceMatches = 0, sourceOpaque = 0, textPixels = 0;
     M11_Dm1FloorItemHostPresentationReceipt floorReceipt;
     static const M12_MenuInput route_to_c127[] = {
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
@@ -169,7 +186,6 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
-
     /* Once WATER is stored, redraw the exposed scroll and click its source
      * pile box. C071 is a held control: inspect the text while pressed,
      * then verify F0353-equivalent release cleanup. */
@@ -195,8 +211,19 @@ int main(void)
         state.world.things->scrolls[0].textStringThingIndex != 33u ||
         M11_GameView_HandlePointerButton(&state, 54, 14,
             M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
-        !state.inventoryPanelActive ||
-        M11_GameView_HandlePointerButton(&state, 20, 53,
+        !state.inventoryPanelActive) {
+        fputs("FAIL: authentic HoC scroll did not reach inventory\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    memset(beforeEyeFrame, 0, sizeof(beforeEyeFrame));
+    M11_GameView_Draw(&state, beforeEyeFrame, 320, 200);
+    if (!state.v1FoodWaterPanelActive) {
+        fputs("FAIL: empty action hand lost F0345 before Eye press\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (M11_GameView_HandlePointerButton(&state, 20, 53,
             M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
         !state.v1EyePressActive || !state.v1ScrollPanelActive ||
         state.v1ScrollPanelThing != thing ||
@@ -210,9 +237,49 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    memset(heldEyeFrame, 0, sizeof(heldEyeFrame));
+    M11_GameView_Draw(&state, heldEyeFrame, 320, 200);
+    scrollPanel = M11_AssetLoader_Load(&state.assetLoader,
+        (unsigned int)M11_GameView_GetV1OpenScrollPanelGraphicId());
+    if (!M11_GameView_GetV1InventoryPanelZone(
+            &panelX, &panelY, &panelW, &panelH) ||
+        !scrollPanel || !scrollPanel->loaded || !scrollPanel->pixels ||
+        scrollPanel->width != panelW || scrollPanel->height != panelH ||
+        panelX < 0 || panelY < 0 || panelX + panelW > 320 ||
+        panelY + 33 + panelH > 200) {
+        fputs("FAIL: authentic C023 scroll panel material/zone missing\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    /* PANEL.C F0341 blits C023 at C101 (viewport y + 33), using red 8
+     * as transparency. Text from the original M653 glyph bank then writes
+     * inside that same C101 rectangle. Compare indexed source pixels around
+     * the text, and require the text ink to change some C023 pixels. */
+    for (int row = 0; row < panelH; ++row) {
+        for (int col = 0; col < panelW; ++col) {
+            unsigned char source = scrollPanel->pixels[row * panelW + col];
+            unsigned char actual =
+                heldEyeFrame[(panelY + 33 + row) * 320 + panelX + col];
+            if (source == 8) continue;
+            ++sourceOpaque;
+            if (actual == source) ++sourceMatches;
+            else if (actual == 0 && row >= 15 && row < panelH - 10)
+                ++textPixels;
+        }
+    }
+    if (panel_pixel_delta(beforeEyeFrame, heldEyeFrame,
+                          panelX, panelY + 33, panelW, panelH) < 1000 ||
+        sourceOpaque < 1000 || sourceMatches < sourceOpaque * 3 / 4 ||
+        textPixels < 10) {
+        fprintf(stderr, "FAIL: held Eye C101 pixels: source %d/%d, ink %d\n",
+                sourceMatches, sourceOpaque, textPixels);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     if (M11_GameView_HandlePointerButtonRelease(&state, 20, 53,
             M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
         state.v1EyePressActive || state.v1ScrollPanelActive ||
+        !state.v1FoodWaterPanelActive ||
         state.inventoryPanelActive == 0 ||
         DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != thing) {
         fputs("FAIL: Eye release did not restore inventory and retain scroll\n",
@@ -220,7 +287,17 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    if (panel_pixel_delta(beforeEyeFrame, framebuffer,
+                          panelX, panelY + 33, panelW, panelH) != 0) {
+        fprintf(stderr, "FAIL: Eye release changed %d C101 pixels\n",
+                panel_pixel_delta(beforeEyeFrame, framebuffer,
+                                  panelX, panelY + 33, panelW, panelH));
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     M11_GameView_Shutdown(&state);
-    puts("PASS: authentic PC34 HoC C080 WATER/scroll pickup, WATER transfer and Eye-held scroll text 33");
+    puts("PASS: authentic PC34 HoC C080 WATER/scroll, held C023 Eye frame, F0345 release panel");
     return 0;
 }

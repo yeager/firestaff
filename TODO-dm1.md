@@ -27,10 +27,11 @@
   HoC (4,15), picks up the source WATER through a rendered C080 mouse target, and
   places it in backpack slot 1. It then picks up scroll 0 through C080 and
   holds Eye through separate production
-  press/release calls and confirms scroll 0 remains selected while the panel
-  decoder returns source text 33. This proves the pickup-to-inventory and
-  source-text selection paths, not the eye-held presented frame, DOS pixel
-  parity, or the other live combinations. Existing raw-format pointer, F0128
+  press/release calls. It now captures the presented C101 panel before,
+  during and after Eye, matches opaque C023 source pixels and M653 text ink,
+  and checks that the FOOD/WATER page returns unchanged after release. This
+  proves the pickup-to-inventory and source-material presentation paths,
+  but not DOS pixel parity or the other live combinations. Existing raw-format pointer, F0128
   scheduler, and individual material tests are necessary but do not prove
   these live combinations. Use an authenticated PC3.4 HoC route or a
   generated-in-original-runtime C13 save as the state driver; do not promote
@@ -41,8 +42,9 @@
 - Complete the validated original PC 3.4 same-state C127/C040 comparison
   against authentic DOS capture through a real pickup and inventory. The
   native PC3.4 regression now proves WATER pickup and backpack placement with
-  production inputs and decodes Eye-held scroll text 33, but the original-media
-  capture route has not established pickup/Eye-held pixels or native-vs-DOS
+  production inputs, decodes Eye-held scroll text 33, and checks C023/M653
+  Eye-held pixels, but the original-media capture route has not established
+  native-vs-DOS
   inventory parity. A prior private capture set
   with three bit-identical Hall
   frames must not be used as source-modal proof. The separate private retail
