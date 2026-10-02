@@ -1778,6 +1778,7 @@ static int dm2_runtime_light_mode7_tile(
 static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
 {
     unsigned observed_cells = 0u;
+    uint16_t source_radius = 0u;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
@@ -1797,8 +1798,14 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
     /* A missing cell branch leaves the pass incomplete and c_light blocked. */
     (void)dm2_v1_1c9a_light_mode8_frontier(&rt->c_light_visibility,
         rt->dungeon_level, x, y, dm2_runtime_light_mode8_step, rt);
+    if (rt->map_graphics_style < 0 || rt->map_graphics_style > 0xff ||
+        !dm2_v1_query_gdat_entry_data_index(
+            dm2_v1_boot_asset_loader(rt->boot), 8,
+            rt->map_graphics_style, 11, 0x6d, &source_radius))
+        return;
     (void)dm2_v1_1c9a_light_mode7_observed_cells(
-        &rt->c_light_visibility, dm2_runtime_light_mode7_tile, rt,
+        &rt->c_light_visibility, source_radius,
+        dm2_runtime_light_mode7_tile, rt,
         &observed_cells);
 }
 

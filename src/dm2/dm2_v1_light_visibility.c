@@ -253,7 +253,8 @@ incomplete:
 
 int dm2_v1_1c9a_light_mode7_observed_cells(
     DM2_V1_1c9aLightVisibility *state,
-    DM2_V1_1c9aLightTile tile, void *context, unsigned *out_cells)
+    unsigned source_radius, DM2_V1_1c9aLightTile tile, void *context,
+    unsigned *out_cells)
 {
     unsigned cells = 0u;
     if (out_cells) *out_cells = 0u;
@@ -262,14 +263,15 @@ int dm2_v1_1c9a_light_mode7_observed_cells(
     state->v1e0978 = 0;
     state->mode7_complete = 0u;
     state->source_state_hash = 0u;
+    if (source_radius == 0u) return 1;
+    if (source_radius > 8u) source_radius = 8u;
     for (int x = 0; x < state->current_width; ++x) {
         for (int y = 0; y < 32; ++y) {
             uint8_t visit = state->current[(size_t)x * 32u + (size_t)y];
             int16_t ambient = 0, darkness = 0;
             if (!visit) continue;
-            /* sklight.cpp clamps the mode-7 action-0x17 radius to eight.
-             * Mode-8 marks farther cells, which this pass does not visit. */
-            if (visit > 9u) continue;
+            /* sklight.cpp clamps the mode-7 action-0x17 radius to eight. */
+            if (visit > source_radius + 1u) continue;
             if (tile(context, state->current_map, x, y, visit - 1u,
                      &ambient, &darkness) < 0)
                 goto incomplete;

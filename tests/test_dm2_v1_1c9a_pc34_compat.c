@@ -406,7 +406,7 @@ TEST(light_mode8_frontier_is_fail_closed) {
            state.alternate[13u * 32u + 9u] == 3u);
     assert(!state.mode7_complete && state.source_state_hash == 0u);
     assert(dm2_v1_1c9a_light_mode7_observed_cells(
-        &state, light_observed_tile, NULL, &observed));
+        &state, 8u, light_observed_tile, NULL, &observed));
     assert(observed == 2u && state.v1e0974 == 70 &&
            state.v1e0978 == 0 && !state.mode7_complete);
 }
@@ -567,8 +567,16 @@ TEST(light_mode7_skips_mode8_cells_beyond_source_radius) {
     state.current[6u * 32u + 6u] = 1u;
     state.current[2u * 32u + 9u] = 10u;
     assert(dm2_v1_1c9a_light_mode7_observed_cells(
-        &state, light_observed_tile, NULL, &observed));
+        &state, 8u, light_observed_tile, NULL, &observed));
     assert(observed == 1u && !state.mode7_complete);
+    assert(dm2_v1_1c9a_light_mode7_observed_cells(
+        &state, 0u, light_observed_tile, NULL, &observed));
+    assert(observed == 0u && state.v1e0974 == 0 &&
+           state.v1e0978 == 0 && !state.mode7_complete);
+    state.current[6u * 32u + 6u] = 4u;
+    assert(dm2_v1_1c9a_light_mode7_observed_cells(
+        &state, 2u, light_observed_tile, NULL, &observed));
+    assert(observed == 0u && !state.mode7_complete);
 }
 
 /* ---- Popcount ---- */
