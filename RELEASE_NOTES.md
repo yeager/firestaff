@@ -33,34 +33,36 @@
   neighboring DB1 teleporter cell at the original map 38 destination.
   Original GDAT verifies the record-free ceiling ornament's distance-adjusted
   light and the DB1 room's weather-scaled teleporter ornament branch; these
-  parts do not yet provide a complete dynamic-light frame.
+  original-media checks now cover complete dynamic-light frames at both ends
+  of the map 3 to map 38 teleporter.
 - `DM2 FM Towns teleporters`: uses one original DB1 map-edge decoder for
   live party movement and future cross-map path traversal. Original media
   verifies both map 3 to map 38 and return coordinates and rotation; light
-  path traversal remains incomplete.
+  original-media checks cover the light path on both sides of the teleporter.
 - `DM2 FM Towns game-load order`: refreshes map and GDAT state after the
   runtime receives the original party, savegame, weather and light state.
 - `DM2 light calculation`: corrects unsigned item handles and the single
   adjacent charge-ordering pass with SKProject, and uses its boolean
   darkness gate after both map branches. An original SKULL.EXP table test
-  covers the helper; live dynamic-light integration remains incomplete.
+  covers the helper and the live original-media frame test.
 - `DM2 saved light and timers`: replaces an incorrect light curve with the
   sixteen values from the original FM Towns SKULL.EXP and SKProject table,
   affecting restored light effects and timer deltas.
 - `DM2 FM Towns teleport frame test`: adds checks for source-owned frames
-  both entering and leaving map 38. It currently exposes the missing dynamic
-  light receipt and must pass before this release is published.
+  both entering and leaving map 38. The original-media test passes, including
+  the source-backed clear view on map 38 that has no wall cells to draw.
 - `DM2 light visibility state`: adds map-bound 32-stride visibility buffers
   and the source action-27 depth and direction-mask writes, while requiring
   completed mode 8 and mode 7 traversals before their light inputs can be
-  accepted. Traversal remains open.
+  accepted. Both traversals carry terminal source receipts in the original-media
+  teleporter test.
 - `DM2 light runtime linkage`: moves visibility state into a production
   module so the M11 runtime links without including unfinished creature-AI
   compatibility stubs. A bounded mode-8 frontier now uses the source-sized
   work ring, cost ordering, authenticated teleporter links and selected
   record-chain gates. The mode-7 probe uses the source flags-4 wall and floor
-  ornament path, including original map 3 and 38 floor records. Neither pass
-  yet claims complete light traversal.
+  ornament path, including original map 3 and 38 floor records. Both passes
+  now prove frontier exhaustion for the tested original-media route.
 - `DM2 light update order`: runs the source light walks after map and GDAT
   controls load and before dynamic frame recalculation. Teleporter sensor
   queries use original dungeon record links in both light modes.
@@ -70,7 +72,8 @@
 - `DM2 dynamic-light inputs`: binds the source party hands, record charges,
   SKULL.EXP tables, GDAT controls, savegame light and weather to the live
   light calculation. The frame remains gated until both original visibility
-  traversal modes complete; post-teleport presentation remains unresolved.
+  traversal modes complete, and the post-teleport frame now passes the
+  original-media ownership check.
 - `DM1, CSB and DM2 startup tests`: verify automatic FM Towns selection with
   original media and retain explicit platform overrides. The CSB M12 menu
   route also verifies that a complete FM Towns CD wins over a simultaneous
@@ -94,10 +97,9 @@
   not been resolved or visually verified on the MacBook Pro M5 HiDPI hardware.
 - Audible playback after the CD audio correction has not been verified on the
   reported MacBook Pro M5.
-- DM2 FM Towns dungeon presentation currently fails an original-media frame
-  ownership check after map 3 to map 38 teleportation. The movement itself
-  reaches the source coordinates, but dynamic-light rendering is incomplete.
-  Full visual and gameplay parity have not been established.
+- DM2 FM Towns passes original-media frame ownership and movement checks across
+  the map 3 to map 38 teleporter. Full visual and gameplay parity on the
+  reported MacBook Pro M5 HiDPI hardware has not been established.
 - DM2 Macintosh later-map routes and physical macOS audio remain unverified.
 
 # Firestaff v3.0.354
