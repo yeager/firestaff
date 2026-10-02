@@ -166,7 +166,6 @@ int dm2_v1_1c9a_light_mode8_frontier(
     /* SK1C9A xp_90 stores x, y, map in four-byte work entries. Scores live
      * in the grid and vba_08 buckets, rather than in the work entry. */
     Cell queue[256u];
-    uint8_t queued_score[256u];
     uint8_t score_bucket[0x33u];
     _Static_assert(sizeof(queue) == 0x400u,
                    "SK1C9A work ring must be 0x400 bytes");
@@ -192,7 +191,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
     if (start_map >= 64) return 0;
     queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
                          (uint8_t)start_map, 0u};
-    queued_score[tail++] = 0u;
+    ++tail;
     score_bucket[0u] = 1u;
     pending = 1u;
     {
@@ -207,7 +206,6 @@ int dm2_v1_1c9a_light_mode8_frontier(
         unsigned rotations = 0u;
         Cell cell;
         uint8_t score;
-        uint8_t live_score;
         int cell_selector;
         size_t cell_index;
         /* SK1C9A rotates higher-score xp_90 packets to the write cursor
@@ -216,30 +214,26 @@ int dm2_v1_1c9a_light_mode8_frontier(
         while (lowest < sizeof(score_bucket) && !score_bucket[lowest])
             ++lowest;
         if (lowest == sizeof(score_bucket)) goto incomplete;
-        while (queued_score[head] != lowest) {
-            if (++rotations > pending) goto incomplete;
+        for (;;) {
+            cell = queue[head];
+            if (!dm2_v1_1c9a_light_work_node_score(
+                    work_grid, state->current_map, state->alternate_map,
+                    cell.map, cell.x, cell.y, &score))
+                goto incomplete;
+            if (score <= lowest) break;
+            if (++rotations >= pending) goto incomplete;
             queue[tail] = queue[head];
-            queued_score[tail] = queued_score[head];
             ++head;
             ++tail;
         }
-        cell = queue[head];
-        score = queued_score[head];
-        --score_bucket[score];
+        if (!score_bucket[lowest]) goto incomplete;
+        --score_bucket[lowest];
         ++head;
         --pending;
         cell_selector = cell.map == state->current_map ? 0 : 1;
         cell_index = (size_t)cell_selector * 1024u +
                      (size_t)cell.x * 32u + (size_t)cell.y;
-        if (!seen[cell_index] ||
-            !dm2_v1_1c9a_light_work_node_score(
-                work_grid, state->current_map, state->alternate_map,
-                cell.map, cell.x, cell.y, &live_score))
-            goto incomplete;
-        /* The queue byte is only Firestaff's pending bucket bookkeeping.
-         * SK1C9A reads the live score from xp_bc when consuming xp_90. */
-        if (score != live_score)
-            continue;
+        if (!seen[cell_index]) goto incomplete;
         /* vo_e8 reads xp_bc's first byte. Action 27 stores vo_e8 + 1
          * in the separate 32-stride visibility plane. */
         if (!dm2_v1_1c9a_light_visibility_mark_action27(
@@ -249,7 +243,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
                     state->alternate_map : -1,
                 state->alternate_projection_x,
                 state->alternate_projection_y,
-                live_score))
+                score))
             goto incomplete;
         /* CHECK_RECOMPUTE_LIGHT supplies action 0x1b with byte 0x19, a
          * maximum source depth of 25. Only an admitted source edge enters
@@ -287,8 +281,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
                 goto incomplete;
             queue[tail] = (Cell){(uint8_t)next_x, (uint8_t)next_y,
                                  (uint8_t)next_map, 0u};
-            queued_score[tail] = (uint8_t)(score + result);
-            ++score_bucket[queued_score[tail]];
+            ++score_bucket[(unsigned)score + (unsigned)result];
             ++tail;
             ++pending;
         }

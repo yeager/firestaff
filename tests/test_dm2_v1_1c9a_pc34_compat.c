@@ -516,7 +516,8 @@ TEST(light_mode8_work_ring_prioritizes_lower_source_cost) {
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
     assert(dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 6, light_weighted_step, &visited));
-    assert(visited == 4);
+    /* The stale packet rereads the improved xp_bc score and is consumed. */
+    assert(visited == 5);
     assert(state.current[7u * 32u + 6u] == 2u);
     assert(state.current[7u * 32u + 5u] == 3u);
     assert(state.current[6u * 32u + 5u] == 4u);
