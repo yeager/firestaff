@@ -273,6 +273,17 @@ Reviewed 2026-08-29. Only open work is listed here.
   do not promote either side as pixel parity before that comparison exists.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
+- Restore native Macintosh CHARSHEET pointer item transactions. The current
+  `M11_GameView_HandlePointerButton` branch consumes every Mac inventory click
+  while the panel is open because CODE(3)/CODE(11) create the source controls
+  dynamically. Disassembly of the authenticated CODE(3) resource shows the
+  control-list insertion at offset `0x0b1a` and linked-rectangle hit test at
+  `0x0170`; coordinates come from live control handles, not a static DITL.
+  The authenticated Mac retail census passes keyboard item
+  exchange, but its only inventory pointer check confirms an ignored click;
+  it does not establish mouse inventory playability. Decode and bind the
+  original Control/Event records before admitting pointer slot exchanges, then
+  verify pickup and placement against the retail ZIP.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first
