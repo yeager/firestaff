@@ -265,6 +265,18 @@ static void test_mode7_action23_visit_order(void)
     assert(probe.calls == 2);
 }
 
+static void test_mode7_go_there_tile_admission(void)
+{
+    assert(dm2_v1_mode7_go_there_tile_admission(0x00u, -1) == 1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x10u, -1) == 1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x10u, 0) == -1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x40u, -1) == -1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x60u, -1) == 0);
+    assert(dm2_v1_mode7_go_there_tile_admission(0xb0u, -1) == -1);
+    assert(dm2_v1_mode7_go_there_tile_admission(0xc0u, -1) == 0);
+    assert(dm2_v1_mode7_go_there_tile_admission(0xe0u, -1) == 0);
+}
+
 static void test_mode7_tile_accumulator(void)
 {
     int16_t base = 0;
@@ -371,6 +383,8 @@ static void test_mode7_flags4_original_media(void)
     node.source_flags = 3u;
     assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 0);
     assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 38, 6, 5) == 0xb0);
+    assert(dm2_v1_mode7_go_there_tile_admission(0xb0u,
+        dm2_v1_dungeon_get_first_thing(&dungeon, 38, 6, 5)) == -1);
     assert(dm2_v1_mode7_tile_cache_node(
         &cache, 0x02u, 38, 6, 5, read_mode7_dungeon_tile, &dungeon));
     assert(cache.tile == 0x00u &&
@@ -426,6 +440,8 @@ static void test_mode7_flags4_original_media(void)
         &floor, 0u, 0u, &tile_light, &weather_light));
     assert(tile_light == 0 && weather_light == 0);
     assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 7, 5) == 0x10);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x10u,
+        dm2_v1_dungeon_get_first_thing(&dungeon, 3, 7, 5)) == -1);
     assert(dm2_v1_mode7_tile_cache_start(
         &cache, 3, 7, 5, read_mode7_dungeon_tile, &dungeon));
     node.cached_tile = cache.tile;
@@ -447,6 +463,8 @@ static void test_mode7_flags4_original_media(void)
                     continue;
                 assert(dm2_v1_dungeon_c_light_flags4_no_record_floor_receipt(
                     &dungeon, map, x, y, &floor));
+                assert(dm2_v1_mode7_go_there_tile_admission(
+                    (uint8_t)raw, -1) == 1);
                 assert(dm2_v1_mode7_flags4_floor_terms(
                     &floor, 5u, 5u, &tile_light, &weather_light));
                 assert(tile_light == 0 && weather_light == 0);
@@ -605,6 +623,7 @@ int main(void)
     assert(dm2_v1_mode7_action23_samples_tile(0x8010u));
     assert(!dm2_v1_mode7_action23_samples_tile(0x8000u));
     test_mode7_action23_visit_order();
+    test_mode7_go_there_tile_admission();
     test_mode7_tile_accumulator();
     test_mode7_flags4_source_branches();
     test_mode7_flags3_prepass_evidence();

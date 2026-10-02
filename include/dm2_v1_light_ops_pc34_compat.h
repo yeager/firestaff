@@ -107,6 +107,9 @@ int dm2_v1_mode7_light_prepare(uint16_t source_radius,
 /* SK1C9A.cpp action 0x17 samples background light only if the cached tile
  * state has bit 0x10. This decision does not complete traversal. */
 int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state);
+/* Action-23 GO_THERE edge: 1 admitted, 0 rejected, -1 unresolved. */
+int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
+                                          int first_record_link);
 
 /* One admitted FIND_WALK_PATH action-0x17 node. Returns 0 for a source skip,
  * 1 after the callback succeeds, and -1 if an admitted source is unresolved.

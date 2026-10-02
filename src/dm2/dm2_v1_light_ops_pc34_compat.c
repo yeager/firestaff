@@ -19,6 +19,20 @@ int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state)
     return (cached_tile_state & 0x10u) != 0u;
 }
 
+int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
+                                          int first_record_link)
+{
+    unsigned type = raw_tile >> 5;
+    /* SK1C9A.cpp:3190-3340 maps GO_THERE tile classes to capability
+     * bits. Action 23 sets v1e0576=0x227 at :6873-6882. Empty class-0
+     * squares have bit 1 and no record branch. Classes 3, 6 and 7
+     * have no overlapping capability bit (or are rejected outright).
+     * Other branches need movement and record evidence before admission. */
+    if (type == 0u && first_record_link == -1) return 1;
+    if (type == 3u || type == 6u || type == 7u) return 0;
+    return -1;
+}
+
 int dm2_v1_mode7_action23_visit_tile(
     uint16_t cached_tile_state, uint8_t radius,
     int16_t map, int16_t x, int16_t y,

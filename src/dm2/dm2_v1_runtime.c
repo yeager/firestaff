@@ -1752,12 +1752,30 @@ static int dm2_runtime_mode7_step(
     int *projection_map, int *projection_x, int *projection_y)
 {
     DM2_RuntimeMode7Walk *walk = (DM2_RuntimeMode7Walk *)context;
-    /* This bounded probe reuses admitted mode-8 tile edges. Action-23's
-     * GO_THERE contract has not been fully authenticated, so neither this
-     * result nor its RNG cursor can certify mode-7 completion. */
-    return dm2_runtime_light_mode8_step(
-        walk->rt, map, x, y, direction, next_map, next_x, next_y,
-        projection_map, projection_x, projection_y);
+    DM2_V1_DungeonData *dungeon;
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int nx, ny, raw, first, admitted;
+    if (!walk || !walk->rt || !walk->rt->boot ||
+        !walk->rt->boot->dungeon_data || !next_map || !next_x || !next_y ||
+        !projection_map || !projection_x || !projection_y || map < 0 ||
+        direction < 0 || direction > 3) return -1;
+    *projection_map = *projection_x = *projection_y = -1;
+    dungeon = (DM2_V1_DungeonData *)walk->rt->boot->dungeon_data;
+    if (map >= dungeon->level_count) return -1;
+    nx = x + dx[direction];
+    ny = y + dy[direction];
+    if (nx < 0 || ny < 0 || nx >= dungeon->level_widths[map] ||
+        ny >= dungeon->level_heights[map]) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, nx, ny);
+    first = dm2_v1_dungeon_get_first_thing(dungeon, map, nx, ny);
+    if (raw < 0 || first < -1) return -1;
+    admitted = dm2_v1_mode7_go_there_tile_admission((uint8_t)raw, first);
+    if (admitted != 1) return admitted;
+    *next_map = map;
+    *next_x = nx;
+    *next_y = ny;
+    return 1;
 }
 
 static int dm2_runtime_mode7_flags3_class5_evidence(
