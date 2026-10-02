@@ -2463,15 +2463,15 @@ int M11_Audio_ConvertRedBookPcmToS16Le(const uint8_t *source,
                                        uint8_t *destination,
                                        size_t byte_count)
 {
-    size_t byte_index;
     if (!source || !destination || byte_count == 0u ||
         (byte_count & 3u) != 0u) {
         return 0;
     }
-    for (byte_index = 0u; byte_index < byte_count; byte_index += 2u) {
-        destination[byte_index] = source[byte_index + 1u];
-        destination[byte_index + 1u] = source[byte_index];
-    }
+    /* The authenticated FM Towns DM1, CSB and DM2 BIN/IMG audio sectors
+     * already contain little-endian signed 16-bit stereo PCM. SDL's
+     * S16LE stream consumes those bytes directly. Reversing each word
+     * changes a smooth source waveform into full-scale discontinuities. */
+    memcpy(destination, source, byte_count);
     return 1;
 }
 
@@ -2486,12 +2486,9 @@ int M11_Audio_PlayCdda(M11_AudioState* state,
         return 0;
     if (pcm_size % 4u != 0u) return 0;
 
-    /* Red Book CD-DA stores each signed 16-bit channel sample in big-endian
-     * order. The dedicated SDL stream is SDL_AUDIO_S16LE on every supported
-     * host. Passing the sector bytes through unchanged made each sample's
-     * halves swap, producing harsh distorted music (particularly audible on
-     * the FM Towns CSB entrance track). Convert an owned transient buffer;
-     * SDL copies it before this function returns. */
+    /* Keep an owned copy for the stream's optional repeat callback. The
+     * source sectors are already SDL_AUDIO_S16LE, as checked above; SDL
+     * copies the queued data before this function returns. */
     little_endian_pcm = (uint8_t *)malloc(pcm_size);
     if (!little_endian_pcm) return 0;
     if (!M11_Audio_ConvertRedBookPcmToS16Le(pcm_data, little_endian_pcm,
