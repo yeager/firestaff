@@ -147,6 +147,32 @@ static void test_fmtowns_load(const char *path) {
                room.ceiling_animation_frame == 1u &&
                room.ceiling_ornament_word == 0x0a28u &&
                room.ornament_source_hash != 0u);
+        {
+            DM2_V1_CLightTileOrnamentReceipt light;
+            uint16_t original_word = 0;
+            int16_t base;
+            assert(dm2_v1_query_gdat_entry_data_index(
+                &loader, 10, 0x28, 11, 0xf8, &original_word));
+            assert(dm2_v1_dungeon_c_light_tile_ornament_receipt(
+                &room, &loader, 0, 1u, &light));
+            assert(light.valid && light.gdat_light_word == original_word &&
+                   light.source_ornament_index == 0x28u);
+            printf("  FM Towns map 38 ceiling light: GDAT=%04x delta=%d\n",
+                   original_word, light.v1e0974_delta);
+            base = (original_word != 0u &&
+                    ((original_word & 0x8000u) == 0u ||
+                     room.ceiling_ornament_word >> 8))
+                ? (int16_t)(original_word & 0x7fffu) : 0;
+            assert(light.v1e0974_delta == base &&
+                   light.v1e0978_delta == 0);
+            assert(dm2_v1_dungeon_c_light_tile_ornament_receipt(
+                &room, &loader, 5, 1u, &light));
+            assert(light.v1e0974_delta ==
+                   (base ? (base - 90 > 2 ? base - 90 : 2) : 0));
+            assert(dm2_v1_dungeon_c_light_tile_ornament_receipt(
+                &room, &loader, 0, 0u, &light));
+            assert(light.v1e0974_delta == 0);
+        }
         assert(dm2_v1_dungeon_c_light_stone_room_receipt(
             &dungeon, &loader, 38, 6, 6, 1u, &room));
         assert(room.ceiling_animation_frame == 2u &&

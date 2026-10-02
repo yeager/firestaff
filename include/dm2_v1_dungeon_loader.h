@@ -1694,6 +1694,21 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, uint32_t tick,
     DM2_V1_CLightStoneRoomReceipt *out);
+/* c_light.cpp:202-481, class-2 no-record ceiling-ornament branch only.
+ * The caller owns the running accumulators; this receipt never claims that
+ * the party, creature, other tile, weather, or darkness inputs are complete. */
+typedef struct {
+    int valid;
+    int16_t v1e0974_delta;
+    int16_t v1e0978_delta;
+    uint16_t gdat_light_word;
+    uint8_t distance;
+    uint8_t source_ornament_index;
+} DM2_V1_CLightTileOrnamentReceipt;
+int dm2_v1_dungeon_c_light_tile_ornament_receipt(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
+    DM2_V1_CLightTileOrnamentReceipt *out);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,

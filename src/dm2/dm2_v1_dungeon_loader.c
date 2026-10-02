@@ -6765,6 +6765,47 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_tile_ornament_receipt(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
+    DM2_V1_CLightTileOrnamentReceipt *out)
+{
+    /* SKProject sklight.cpp:202-481: the no-record class-2 tile is
+     * summarized as type 1 or 2. Its ceiling ornament uses GDAT class 10,
+     * entry 0xf8; only bit 0 of argl0 admits this contribution. The
+     * subsequent record/creature/weather branches need additional state. */
+    static const int16_t distance_loss[6] = {0, 10, 22, 45, 70, 90};
+    uint16_t word = 0;
+    int16_t amount = 0;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!room || !room->valid || !loader || !loader->loaded ||
+        (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
+        room->first_record_link != DM2_THING_NULL_MARKER ||
+        distance < 0 || distance > 8 || (flags & ~7u) != 0u)
+        return 0;
+    out->distance = (uint8_t)distance;
+    out->source_ornament_index = room->ceiling_ornament_index;
+    if ((flags & 1u) && room->ceiling_ornament_index != 0xffu) {
+        if (!dm2_v1_query_gdat_entry_data_index(
+                loader, 10, room->ceiling_ornament_index, 11, 0xf8,
+                &word)) return 0;
+        out->gdat_light_word = word;
+        if (word != 0u &&
+            ((word & 0x8000u) == 0u ||
+             (room->ceiling_ornament_word >> 8) != 0u)) {
+            amount = (int16_t)(word & 0x7fffu);
+        }
+    }
+    if (amount != 0) {
+        int16_t adjusted = (int16_t)(amount -
+            distance_loss[distance > 5 ? 5 : distance]);
+        out->v1e0974_delta = adjusted > 2 ? adjusted : 2;
+    }
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;
