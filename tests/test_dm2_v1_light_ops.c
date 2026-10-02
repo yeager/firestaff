@@ -337,6 +337,7 @@ static void test_mode7_flags4_original_media(void)
     DM2_V1_CLightFlags4FloorReceipt floor;
     DM2_V1_CLightStoneRoomReceipt room;
     DM2_V1_Mode7TileCache cache;
+    DM2_V1_Mode7Action23Node node;
     int16_t tile_light, weather_light, room_darkness;
     int16_t accumulated = 0, darkness = 0;
     if (!home) return;
@@ -365,6 +366,10 @@ static void test_mode7_flags4_original_media(void)
         &cache, 3, 2, 8, read_mode7_dungeon_tile, &dungeon));
     assert(cache.tile == 0x00u &&
            !dm2_v1_mode7_tile_cache_action23_gate(&cache));
+    memset(&node, 0, sizeof(node));
+    node.cached_tile = cache.tile;
+    node.source_flags = 3u;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 0);
     assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 38, 6, 5) == 0xb0);
     assert(dm2_v1_mode7_tile_cache_node(
         &cache, 0x02u, 38, 6, 5, read_mode7_dungeon_tile, &dungeon));
@@ -374,6 +379,12 @@ static void test_mode7_flags4_original_media(void)
         &cache, 0x0au, 38, 6, 5, read_mode7_dungeon_tile, &dungeon));
     assert(cache.tile == 0xb0u &&
            dm2_v1_mode7_tile_cache_action23_gate(&cache));
+    node.cached_tile = cache.tile;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == -1);
+    node.source_flags = 4u;
+    node.effective_flags = 2u;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == -1);
+    assert(accumulated == 0 && darkness == 0);
     assert(dm2_v1_mode7_tile_cache_start(
         &cache, 38, 6, 6, read_mode7_dungeon_tile, &dungeon));
     assert(cache.tile == 0x40u &&
@@ -385,6 +396,13 @@ static void test_mode7_flags4_original_media(void)
     assert(dm2_v1_mode7_flags4_class2_terms(
         &room, &tile_light, &room_darkness, &weather_light));
     assert(tile_light == 0 && room_darkness == 0 && weather_light == 0);
+    node.cached_tile = 0xb0u;
+    node.effective_flags = 2u;
+    node.source_flags = 4u;
+    node.distance = 1u;
+    node.stone_room = &room;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
+    assert(accumulated == 0 && darkness == 0);
     assert(dm2_v1_dungeon_c_light_stone_room_receipt(
         &dungeon, &graphics, 38, 5, 6, 0u, &room));
     assert(room.raw_tile == 0x48u && room.source_tile_type == 2u);
@@ -398,6 +416,15 @@ static void test_mode7_flags4_original_media(void)
     assert(dm2_v1_mode7_flags4_floor_terms(
         &floor, 0u, 0u, &tile_light, &weather_light));
     assert(tile_light == 0 && weather_light == 0);
+    assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 7, 5) == 0x10);
+    assert(dm2_v1_mode7_tile_cache_start(
+        &cache, 3, 7, 5, read_mode7_dungeon_tile, &dungeon));
+    node.cached_tile = cache.tile;
+    node.stone_room = NULL;
+    node.floor = &floor;
+    node.distance = 3u;
+    assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
+    assert(accumulated == 0 && darkness == 0);
     assert(dm2_v1_mode7_light_accumulate_tile(
         0u, tile_light, 0, weather_light, &accumulated, &darkness));
     assert(accumulated == 0 && darkness == 0);

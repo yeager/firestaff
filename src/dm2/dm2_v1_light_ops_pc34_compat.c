@@ -171,6 +171,37 @@ int dm2_v1_mode7_tile_cache_action23_gate(
     return dm2_v1_mode7_action23_samples_tile(cache->tile);
 }
 
+int dm2_v1_mode7_on_node(
+    const DM2_V1_Mode7Action23Node *node,
+    int16_t *v1e0974, int16_t *v1e0978)
+{
+    int16_t tile_light = 0, darkness = 0, weather_light = 0;
+    if (!node || !v1e0974 || !v1e0978) return -1;
+    if (node->source_flags != 3u && node->source_flags != 4u) return -1;
+    /* Both SK1C9A action-23 call sites test v1e08ae bit 0x10 before
+     * entering ADD_BACKGROUND_LIGHT_FROM_TILE. */
+    if (!dm2_v1_mode7_action23_samples_tile(node->cached_tile)) return 0;
+    if (node->source_flags == 3u) {
+        /* SK1C9A.cpp:7768-7783 start/prepass also enters flags-1 and
+         * flags-2 source branches; no receipt authenticates those yet. */
+        return -1;
+    }
+    if ((node->effective_flags & 2u) == 0u) return 0;
+    if (node->distance > 8u ||
+        (!!node->floor == !!node->stone_room)) return -1;
+    if (node->floor) {
+        if (!dm2_v1_mode7_flags4_floor_terms(
+                node->floor, node->weather_index, node->weather_delta,
+                &tile_light, &weather_light)) return -1;
+    } else if (!dm2_v1_mode7_flags4_class2_terms(
+                   node->stone_room, &tile_light, &darkness,
+                   &weather_light)) return -1;
+    if (!dm2_v1_mode7_light_accumulate_tile(
+            node->distance, tile_light, darkness, weather_light,
+            v1e0974, v1e0978)) return -1;
+    return 1;
+}
+
 /* ---- DM2_RECALC_LIGHT_LEVEL (c_light.cpp:16-198) ---- */
 
 void dm2_v1_recalc_light_level_pc34(

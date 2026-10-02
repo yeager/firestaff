@@ -162,6 +162,25 @@ int dm2_v1_mode7_tile_cache_node(
 int dm2_v1_mode7_tile_cache_action23_gate(
     const DM2_V1_Mode7TileCache *cache);
 
+/* One action-0x17 source call for a future shared FIND_WALK_PATH core.
+ * SK1C9A's start/prepass uses flags 3, while its edge loop uses flags 4.
+ * Only the authenticated flags-4 class-0/2 branches are resolved here.
+ * Returns 0 for a cached-gate skip, 1 for a resolved node, and -1 for an
+ * unknown source branch. No result certifies traversal completion. */
+typedef struct {
+    uint8_t cached_tile;
+    uint8_t effective_flags;
+    uint8_t source_flags;
+    uint8_t distance;
+    uint8_t weather_index;
+    uint8_t weather_delta;
+    const DM2_V1_CLightFlags4FloorReceipt *floor;
+    const DM2_V1_CLightStoneRoomReceipt *stone_room;
+} DM2_V1_Mode7Action23Node;
+int dm2_v1_mode7_on_node(
+    const DM2_V1_Mode7Action23Node *node,
+    int16_t *v1e0974, int16_t *v1e0978);
+
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {
     if (val < lo) return lo;
