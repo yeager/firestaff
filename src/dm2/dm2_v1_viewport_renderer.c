@@ -8642,6 +8642,7 @@ static int dm2_v1_viewport_scene_control_command(
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
 {
     DM2_V1_HudChromeRenderPlan plan;
+    int fmtowns_unmapped_chrome;
     if (!s || !s->framebuffer) return;
     memset(&s->last_hud_top_bar_material_request, 0,
            sizeof(s->last_hud_top_bar_material_request));
@@ -8657,6 +8658,8 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
            sizeof(s->last_hud_hand_action_presentation_command));
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    fmtowns_unmapped_chrome = s->source_materials_required &&
+        s->asset_loader && s->asset_loader->gdat_version == 4u;
 
     /* DM2 UI chrome:
      *   Top status bar: 28px (champion health/magic/conditions)
@@ -8747,7 +8750,14 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
     const int mac_native_hud = s->source_materials_required &&
         s->gdat_hud_material_plan &&
         s->gdat_hud_material_plan->mac_native_layout;
-    if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+    /* SKProject c_gui_draw.cpp:390-411 crops INTERFACE_GENERAL/6/heroIndex
+     * by the hero's relative direction for RECT 0x5e. Its field zero is
+     * therefore not a full-width top bar. c_gui_draw.cpp:1732-1768 uses
+     * INTERFACE_GENERAL/2/0 for a dialogue fragment, not a gold box.
+     * c_gui_draw.cpp:2341-2384 selects INTERFACE_GENERAL/4 fields 2..5 for
+     * live hand actions and RECT 0x46..0x4d, not field 1 as a portrait panel.
+     * Do not stretch these source images into generic chrome rectangles. */
+    if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.top_bar_rect,
                                       plan.top_bar_gdat_index)) {
         dm2_v1_block_source_material(
@@ -8759,7 +8769,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
-    if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+    if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.gold_box_rect,
                                       plan.gold_box_gdat_index)) {
         dm2_v1_block_source_material(
@@ -8771,7 +8781,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      * route below owns that draw; never substitute its old generic icon row. */
 
     if (!plan.outdoor) {
-        if (!mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+        if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
                                           &plan.portrait_panel_rect,
                                           plan.portrait_panel_gdat_index)) {
             dm2_v1_block_source_material(

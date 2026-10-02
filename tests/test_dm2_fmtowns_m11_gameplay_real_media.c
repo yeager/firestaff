@@ -477,8 +477,11 @@ int main(void)
     check(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
               M11_GAME_INPUT_REDRAW &&
               M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
-              M11_GAME_INPUT_REDRAW,
-          "FM Towns active session accepts turn and movement through M11");
+              M11_GAME_INPUT_REDRAW &&
+              dm2_v1_runtime_get_party_x() == 2 &&
+              dm2_v1_runtime_get_party_y() == 8 &&
+              dm2_v1_runtime_get_party_dir() == 1,
+          "FM Towns active session turns and moves to the next source tile");
     check(M11_GameView_HandleInput(
               &view, M12_MENU_INPUT_INVENTORY_TOGGLE) ==
               M11_GAME_INPUT_REDRAW && view.inventoryPanelActive == 1,
@@ -975,10 +978,15 @@ int main(void)
             check(high_physical_indices == 0u,
                   "FM Towns IMG2/IMG6 frame keeps every physical pixel in 0..15");
         }
-        check(render.runtime_m11_frame_hud_material_plan_required &&
-                  render.runtime_m11_frame_hud_material_plan_consumed &&
-                  render.runtime_m11_frame_hud_material_plan_hash != 0u,
-              "FM Towns active session consumes the native HUD material plan");
+        /* SKProject c_gui_draw.cpp:390-411 uses /6/heroIndex as a cropped
+         * squad icon, and lines 1732-1768 use /2/0 for dialogue. Their
+         * former static chrome destinations must not count as a completed
+         * source HUD while the real dungeon frame remains presentable. */
+        check(!render.runtime_m11_frame_hud_material_plan_required &&
+                  !render.runtime_m11_frame_hud_material_plan_consumed &&
+                  render.runtime_m11_frame_hud_material_plan_hash == 0u &&
+                  render.runtime_m11_frame_hud_material_plan_command_count == 0,
+              "FM Towns runtime does not claim the incomplete static HUD plan");
         {
             DM2_V1_RuntimeViewportClickReceipt click_receipt;
             memset(&click_receipt, 0, sizeof(click_receipt));

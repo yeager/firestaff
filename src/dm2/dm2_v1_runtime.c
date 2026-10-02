@@ -12208,9 +12208,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             hud_material_plan.command_count;
     if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
         !hud_material_plan_consumed) {
-        /* FM Towns GRAPHICS.DAT has a distinct native HUD layout; this frame
-         * did not draw a host/PC HUD command, so do not mark a missing HUD
-         * transaction as required for the viewport receipt. */
+        /* Admit the source dungeon frame without claiming a complete HUD.
+         * SKProject c_gui_draw.cpp:390-411 dynamically crops
+         * INTERFACE_GENERAL/6/heroIndex for RECT 0x5e, while lines
+         * 1732-1768 use /2/0 for dialogue. Until those draws are bound,
+         * no static Towns HUD plan is consumed or published. */
         hud_material_plan_required = 0;
     }
     hud_material_plan_hash = hud_material_plan_consumed
