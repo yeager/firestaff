@@ -6427,10 +6427,11 @@ track while retaining the Track 01 wrapper used by the title lifecycle. The
 new handoff still requires a recognized Track 02 edition and the matching
 Track 02 CUE entry; it does not infer gameplay event routing. The optional
 authentic-media regression resolves Tracks 03–18 from the operator-supplied
-JP Rev. 1 CUE and verifies each selected handoff is ready with a non-empty
-original audio source.
+JP Rev. 1 CUE and starts each selected stream through SDL's dummy output,
+requiring Vorbis decode and queued audio sectors.
 
 Verification: built `test_theron_v1_track01_cdda_handoff` on `trv2` and ran it
 three times against the authentic JP Rev. 1 CUE and original sibling BIN/audio
-files; all three runs passed. Gameplay event mapping and automatic in-game
-selection remain open in `TODO-theron.md`.
+files; all three runs passed. Each run decodes and queues Tracks 03–18 and
+retains the Track 01 stream regression. Gameplay event mapping and automatic
+in-game selection remain open in `TODO-theron.md`.
