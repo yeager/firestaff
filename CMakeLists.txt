@@ -27710,6 +27710,21 @@ endif()
         COMMAND test_m12_dm1_v1_required_complete_launches
     )
 
+    add_executable(test_m12_csb_fmtowns_complete_disc_real
+        tests/test_m12_csb_fmtowns_complete_disc_real.c
+    )
+    target_link_libraries(test_m12_csb_fmtowns_complete_disc_real PRIVATE firestaff_m12)
+    add_test(
+        NAME m12_csb_fmtowns_complete_disc_real
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_csb_fmtowns_complete_disc_real.sh"
+            "$<TARGET_FILE:test_m12_csb_fmtowns_complete_disc_real>"
+    )
+    set_tests_properties(m12_csb_fmtowns_complete_disc_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;fmtowns;startup;menu;real-media;skip-safe"
+        TIMEOUT 120
+    )
+
     add_executable(test_m12_all_games_boot_readiness_receipt
         tests/test_m12_all_games_boot_readiness_receipt.c
     )
