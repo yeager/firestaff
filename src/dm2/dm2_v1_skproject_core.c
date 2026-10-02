@@ -13393,6 +13393,136 @@ int dm2_v1_skproject_query_0cee_0897(
     return 0;
 }
 
+int dm2_v1_skproject_query_0cee_0897_dungeon(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *pools,
+    int map, int x, int y,
+    DM2_V1_SkprojectQuery0cee0897Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery0cee0897Receipt receipt;
+    const uint8_t *first_record;
+    int raw, first;
+    int16_t current;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    if (!dungeon || !pools || map < 0 || map >= dungeon->level_count) {
+        receipt.blocked_missing_tiles = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw < 0) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.tile_value = (uint8_t)raw;
+    receipt.tile_type = (uint8_t)(raw >> 5);
+    if (receipt.tile_type != 5u) {
+        receipt.blocked_not_tile_type_5 = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (first < 0) {
+        receipt.blocked_no_teleporter = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.first_record_link = (uint16_t)first;
+    first_record = dm2_v1_record_pool_address(pools, (int16_t)first);
+    if (!first_record) {
+        receipt.blocked_missing_record_pool = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    current = (int16_t)first;
+    for (unsigned steps = 0u; steps < 64u; ++steps) {
+        int16_t next;
+        const uint8_t *record;
+        uint16_t word2;
+        if (!dm2_v1_record_pool_next_link(pools, current, &next)) break;
+        if (next == (int16_t)0xfffe) break;
+        if (next == (int16_t)0xffff) break;
+        record = dm2_v1_record_pool_address(pools, next);
+        if (!record) break;
+        if ((((uint16_t)next >> 10) & 0x0fu) == 3u) {
+            word2 = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+            if ((word2 & 0x7fu) == 0x27u) {
+                word2 = (uint16_t)(first_record[2] |
+                                   ((uint16_t)first_record[3] << 8));
+                receipt.found_record_link = (uint16_t)next;
+                receipt.detail = (uint8_t)((((word2 >> 14) + 2u) & 3u) + 1u);
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+        current = next;
+    }
+    receipt.blocked_no_teleporter = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_get_teleporter_detail_dungeon(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *pools,
+    int map, int x, int y,
+    DM2_V1_SkprojectTeleporterDetail *out_detail,
+    DM2_V1_SkprojectGetTeleporterDetailReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
+    DM2_V1_SkprojectQuery0cee0897Receipt origin, destination;
+    const uint8_t *db1;
+    uint16_t w2, w4;
+    int destination_map, destination_x, destination_y;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!out_detail) return 0;
+    memset(out_detail, 0, sizeof(*out_detail));
+    receipt.origin_x = (int16_t)x;
+    receipt.origin_y = (int16_t)y;
+    if (!dm2_v1_skproject_query_0cee_0897_dungeon(
+            dungeon, pools, map, x, y, &origin)) {
+        receipt.blocked_missing_origin = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    db1 = dm2_v1_record_pool_address(pools,
+                                     (int16_t)origin.first_record_link);
+    if (!db1 || ((origin.first_record_link >> 10) & 0x0fu) != 1u) {
+        receipt.blocked_missing_origin = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    w2 = (uint16_t)(db1[2] | ((uint16_t)db1[3] << 8));
+    w4 = (uint16_t)(db1[4] | ((uint16_t)db1[5] << 8));
+    destination_x = w2 & 0x1f;
+    destination_y = (w2 >> 5) & 0x1f;
+    destination_map = w4 >> 8;
+    if (!dm2_v1_skproject_query_0cee_0897_dungeon(
+            dungeon, pools, destination_map, destination_x,
+            destination_y, &destination)) {
+        receipt.blocked_tile_not_teleporter = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    out_detail->b_00 = (uint8_t)(origin.detail - 1u);
+    out_detail->b_01 = (uint8_t)(destination.detail - 1u);
+    out_detail->b_02 = (uint8_t)destination_x;
+    out_detail->b_03 = (uint8_t)destination_y;
+    out_detail->b_04 = (uint8_t)destination_map;
+    receipt.dest_x = (int16_t)destination_x;
+    receipt.dest_y = (int16_t)destination_y;
+    receipt.dest_map = (uint8_t)destination_map;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 /* SKULLWIN/c_querydb.cpp:3111 DM2_GET_TELEPORTER_DETAIL. */
 int dm2_v1_skproject_get_teleporter_detail(
     int16_t x,

@@ -5329,6 +5329,14 @@ int dm2_v1_skproject_query_0cee_0897(
     uint8_t *out_detail,
     DM2_V1_SkprojectQuery0cee0897Receipt *out_receipt);
 
+/* Original DUNGEON.DAT path: GET_TILE_RECORD_LINK comes from the parsed map
+ * column index, never from the tile byte's low bits. */
+int dm2_v1_skproject_query_0cee_0897_dungeon(
+    const struct DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *pools,
+    int map, int x, int y,
+    DM2_V1_SkprojectQuery0cee0897Receipt *out_receipt);
+
 /* SKULLWIN/c_querydb.cpp:3111 DM2_GET_TELEPORTER_DETAIL — resolves a teleporter
    sensor into its destination square/map.  The source calls DM2_query_0cee_0897
    at the origin, temporarily changes map, calls it again at the destination,
@@ -5366,6 +5374,13 @@ int dm2_v1_skproject_get_teleporter_detail(
     const uint8_t *dest_tile_values,
     int16_t dest_width,
     int16_t dest_height,
+    DM2_V1_SkprojectTeleporterDetail *out_detail,
+    DM2_V1_SkprojectGetTeleporterDetailReceipt *out_receipt);
+
+int dm2_v1_skproject_get_teleporter_detail_dungeon(
+    const struct DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *pools,
+    int map, int x, int y,
     DM2_V1_SkprojectTeleporterDetail *out_detail,
     DM2_V1_SkprojectGetTeleporterDetailReceipt *out_receipt);
 

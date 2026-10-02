@@ -10,6 +10,8 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_dungeon_input_owner.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 #include "firestaff_po_loader.h"
 
 #include <stdio.h>
@@ -37,6 +39,43 @@ static int is_loose_fmtowns_root(const char *root)
 }
 
 static int failures;
+
+static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_SkprojectQuery0cee0897Receipt sensor;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    int valid = 1;
+    memset(&pools, 0, sizeof(pools));
+    if (!dm2_v1_record_pool_set_init_from_dungeon(&pools, dungeon)) return 0;
+    memset(&sensor, 0, sizeof(sensor));
+    valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 6, 5) == 0xb0 &&
+        dm2_v1_skproject_query_0cee_0897_dungeon(
+            dungeon, &pools, 38, 6, 5, &sensor) && sensor.valid &&
+        sensor.first_record_link == 0x0442u &&
+        sensor.found_record_link == 0x0c8cu;
+    memset(&detail, 0, sizeof(detail));
+    memset(&detail_receipt, 0, sizeof(detail_receipt));
+    valid &= dm2_v1_skproject_get_teleporter_detail_dungeon(
+        dungeon, &pools, 38, 6, 5, &detail, &detail_receipt) &&
+        detail_receipt.valid && detail.b_04 == 3u &&
+        detail.b_02 == 13u && detail.b_03 == 10u;
+    memset(&sensor, 0, sizeof(sensor));
+    valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 38, 6, 4) == 0xb8 &&
+        !dm2_v1_skproject_query_0cee_0897_dungeon(
+            dungeon, &pools, 38, 6, 4, &sensor) &&
+        sensor.first_record_link == 0x044eu &&
+        sensor.blocked_no_teleporter;
+    memset(&sensor, 0, sizeof(sensor));
+    valid &= dm2_v1_dungeon_get_tile_raw(dungeon, 3, 13, 11) == 0xb8 &&
+        !dm2_v1_skproject_query_0cee_0897_dungeon(
+            dungeon, &pools, 3, 13, 11, &sensor) &&
+        sensor.first_record_link == 0x0443u &&
+        sensor.blocked_no_teleporter;
+    dm2_v1_record_pool_set_free(&pools);
+    return valid;
+}
 
 static int exercise_authentic_active_creature(
     DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon,
@@ -1047,6 +1086,10 @@ int main(void)
                   ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
               3, 13, 11, 38),
           "FM Towns commits the authentic party teleporter into map 38");
+    check(check_original_light_teleporters(
+              (const DM2_V1_DungeonData *)
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data),
+          "FM Towns light sensor b0 uses real links and movement b8 has no sensor");
     {
         DM2_V1_CLightMapDescriptorReceipt light_map;
         memset(&light_map, 0, sizeof(light_map));

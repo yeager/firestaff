@@ -1612,11 +1612,6 @@ static int dm2_runtime_light_mode8_step(
     DM2_V1_CLightStoneRoomReceipt room;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
-    DM2_V1_SkprojectQuery0cee0897Receipt sensor_receipt;
-    const uint8_t *source_tiles, *destination_tiles, *db1;
-    int16_t source_width, source_height;
-    int16_t destination_width, destination_height;
-    int16_t next_record, sensor_next;
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
     int nx, ny, raw, first;
@@ -1642,82 +1637,17 @@ static int dm2_runtime_light_mode8_step(
                 &room))
             return -1;
         if (room.source_tile_type == 2u) return 0;
-        if ((raw >> 5) == 5 && (raw & 0x08) == 0) {
-            if (!rt->record_pools_valid || first < 0 ||
-                (((unsigned)first >> 10) & 0x0fu) != 1u ||
-                !dm2_v1_record_pool_next_link(
-                    &rt->record_pools, (int16_t)first, &next_record))
+        if ((raw >> 5) == 5) {
+            if ((raw & 0x08) != 0) {
+                /* The movement DB1 without a 0x27 sensor does not satisfy
+                 * the light walker's GET_TELEPORTER_DETAIL contract. */
                 return -1;
-            if (next_record != (int16_t)0xfffe) {
-                const uint8_t *sensor;
-                if ((((uint16_t)next_record >> 10) & 0x0fu) != 3u ||
-                    !dm2_v1_record_pool_next_link(
-                        &rt->record_pools, next_record, &sensor_next))
-                    return -1;
-                if (sensor_next != (int16_t)0xfffe) {
-                    int16_t creature = (int16_t)0xffff;
-                    int16_t creature_next;
-                    DM2_V1_SkprojectGetCreatureAtReceipt creature_receipt;
-                    /* Mode 8's creature-target scan runs at score 0x19;
-                     * this frontier expands only nodes below that score.
-                     * A single trailing DB4 is therefore a source-known
-                     * occupant, not an unbounded record chain. */
-                    if ((((uint16_t)sensor_next >> 10) & 0x0fu) != 4u ||
-                        !dm2_v1_record_pool_next_link(
-                            &rt->record_pools, sensor_next, &creature_next) ||
-                        creature_next != (int16_t)0xfffe ||
-                        !dm2_v1_skproject_get_creature_at(
-                            &rt->record_pools, dungeon, map, nx, ny,
-                            &creature, &creature_receipt) ||
-                        !creature_receipt.valid || creature != sensor_next)
-                        return -1;
-                }
-                sensor = dm2_v1_record_pool_address(
-                    &rt->record_pools, next_record);
-                if (!sensor || ((sensor[2] | ((unsigned)sensor[3] << 8)) &
-                                0x7fu) != 0x27u)
-                    return -1;
-                source_tiles = dm2_v1_dungeon_level_tile_data(
-                    dungeon, map, &source_width, &source_height);
-                if (!source_tiles ||
-                    !dm2_v1_skproject_query_0cee_0897(
-                        (int16_t)nx, (int16_t)ny,
-                        source_tiles, source_width, source_height,
-                        &rt->record_pools, NULL, NULL, &sensor_receipt) ||
-                    !sensor_receipt.valid)
-                    return -1;
             }
-        }
-        if ((raw >> 5) == 5 && (raw & 0x08) != 0) {
-            /* The active DB1 branch follows GET_TELEPORTER_DETAIL. Admit
-             * only its single-record chain until source sensor handling is
-             * represented in the node evaluator. */
-            if (!rt->record_pools_valid || first < 0 ||
-                (((unsigned)first >> 10) & 0x0fu) != 1u ||
-                !dm2_v1_record_pool_next_link(
-                    &rt->record_pools, (int16_t)first, &next_record) ||
-                next_record != (int16_t)0xfffe)
+            if (!rt->record_pools_valid ||
+                !dm2_v1_skproject_get_teleporter_detail_dungeon(
+                    dungeon, &rt->record_pools, map, nx, ny,
+                    &detail, &detail_receipt) || !detail_receipt.valid)
                 return -1;
-            db1 = dm2_v1_record_pool_address(
-                &rt->record_pools, (int16_t)first);
-            if (!db1 || db1[5] >= dungeon->level_count) return -1;
-            source_tiles = dm2_v1_dungeon_level_tile_data(
-                dungeon, map, &source_width, &source_height);
-            destination_tiles = dm2_v1_dungeon_level_tile_data(
-                dungeon, db1[5], &destination_width, &destination_height);
-            if (!source_tiles || !destination_tiles ||
-                !dm2_v1_skproject_get_teleporter_detail(
-                    (int16_t)nx, (int16_t)ny,
-                    source_tiles, source_width, source_height,
-                    &rt->record_pools, (uint8_t)map, destination_tiles,
-                    destination_width, destination_height,
-                    &detail, &detail_receipt) || !detail_receipt.valid ||
-                detail.b_04 != db1[5])
-                return -1;
-            *next_map = detail.b_04;
-            *next_x = detail.b_02;
-            *next_y = detail.b_03;
-            return 1;
         }
     } else {
         /* DB0/DB2/DB3, doors and other tile branches need their source
@@ -1830,38 +1760,21 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
 {
     unsigned observed_cells = 0u;
     DM2_V1_DungeonData *dungeon;
-    const uint8_t *tiles, *destination_tiles, *db1;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
-    int16_t width, height, destination_width, destination_height;
-    int first, destination_map;
     if (!rt || !rt->source_party_valid ||
         !rt->c_light_map_descriptor.valid ||
         !rt->c_light_map_descriptor.dynamic_light)
         return;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     rt->c_light_visibility.alternate_projection_valid = 0u;
-    first = dm2_v1_dungeon_get_first_thing(dungeon, rt->dungeon_level, x, y);
-    db1 = rt->record_pools_valid && first >= 0 &&
-        (((unsigned)first >> 10) & 0x0fu) == 1u ?
-        dm2_v1_record_pool_address(&rt->record_pools, (int16_t)first) : NULL;
-    if (db1) {
-        destination_map = db1[5];
-        tiles = dm2_v1_dungeon_level_tile_data(
-            dungeon, rt->dungeon_level, &width, &height);
-        destination_tiles = dm2_v1_dungeon_level_tile_data(
-            dungeon, destination_map, &destination_width,
-            &destination_height);
-        if (tiles && destination_tiles &&
-            dm2_v1_skproject_get_teleporter_detail(
-                (int16_t)x, (int16_t)y, tiles, width, height,
-                &rt->record_pools, (uint8_t)rt->dungeon_level,
-                destination_tiles, destination_width, destination_height,
-                &detail, &detail_receipt) && detail_receipt.valid)
-            (void)dm2_v1_1c9a_light_visibility_project_teleporter(
-                &rt->c_light_visibility, detail.b_04,
-                detail.b_02, detail.b_03);
-    }
+    if (rt->record_pools_valid &&
+        dm2_v1_skproject_get_teleporter_detail_dungeon(
+            dungeon, &rt->record_pools, rt->dungeon_level, x, y,
+            &detail, &detail_receipt) && detail_receipt.valid)
+        (void)dm2_v1_1c9a_light_visibility_project_teleporter(
+            &rt->c_light_visibility, detail.b_04,
+            detail.b_02, detail.b_03);
     /* A missing cell branch leaves the pass incomplete and c_light blocked. */
     (void)dm2_v1_1c9a_light_mode8_frontier(&rt->c_light_visibility,
         rt->dungeon_level, x, y, dm2_runtime_light_mode8_step, rt);
