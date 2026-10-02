@@ -132,16 +132,16 @@ if [ -e "$archive_path" ]; then
     champion_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --width 640 --height 400 --game csb --platform atari-st --data-dir "$archive_path" \
         --boot-probe --boot-probe-frames 2 \
-        --script 'enter,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,strafe-left,wait:32,right,wait:32,right,wait:32,click:224:164,click:260:230,wait:32,strafe-left,wait:32,right,wait:32,up,wait:32,up,wait:32,up,wait:32,right,wait:32,right,wait:32,up,wait:32,left,wait:32,up,wait:32,left,wait:32,click:224:164,wait:32,click:260:230,wait:32,strafe-left' \
+        --script 'enter,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,strafe-left,wait:32,right,wait:32,right,wait:32,click:224:164,click:260:230,wait:32,strafe-left,wait:32,right,wait:32,up,wait:32,up,wait:32,up,wait:32,right,wait:32,right,wait:32,up,wait:32,left,wait:32,up,wait:32,left,wait:32,click:224:164,wait:32,click:260:230,wait:32,strafe-left,key:f1,key:f2' \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1)" || {
         printf '%s\n' "$champion_output" >&2
         exit 1
     }
     case "$champion_output" in
-        *assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=inactive*levelLoaded=1*'party=11,7,1'*'champions=2'*dm1HocCandidatePanel=0*dm1HocCandidateOrdinal=-1*) ;;
+        *assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=inactive*levelLoaded=1*'party=11,7,1'*'champions=2'*dm1HocCandidatePanel=0*dm1HocCandidateOrdinal=-1*dm1InventoryPanel=1*) ;;
         *)
-            echo "FAIL: authentic Atari CLI route did not recruit both C127 champions and resume movement"
+            echo "FAIL: authentic Atari CLI route did not recruit both C127 champions, resume movement, and open the F1/F2 inventory"
             printf '%s\n' "$champion_output" >&2
             exit 1
             ;;

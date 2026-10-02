@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-10-02: The production CLI script accepts source F1-F4 champion keys
+  through the same SDL-to-CSB input mapping used by live keyboard events
+  (ReDMCSB COMMAND.C:245-260). The authenticated Atari ST archive route now
+  presses F1 then F2 after recruiting two C127 champions and confirms that
+  the inventory panel opens while the two-champion party and map pose remain
+  intact. The final receipt does not identify which champion's panel is open.
+
 - 2026-10-02: The authentic Atari ST CLI route now continues from its first
   recruited champion to the next source-authenticated C127 mirror. It follows
   open map squares (12,7) → (11,7) → (11,8), faces east toward the C127 wall

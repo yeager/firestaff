@@ -5496,6 +5496,12 @@ static int m11_script_keycode_from_name(const char* name) {
     if (strcmp(name, "space") == 0) return SDLK_SPACE;
     if (strcmp(name, "tab") == 0) return SDLK_TAB;
     if (strcmp(name, "esc") == 0 || strcmp(name, "escape") == 0) return SDLK_ESCAPE;
+    /* ReDMCSB COMMAND.C:245-260 gives CSB its F1-F4 champion keys.  Let
+     * real-media CLI probes replay the same SDL key route as live input. */
+    if (strcmp(name, "f1") == 0) return SDLK_F1;
+    if (strcmp(name, "f2") == 0) return SDLK_F2;
+    if (strcmp(name, "f3") == 0) return SDLK_F3;
+    if (strcmp(name, "f4") == 0) return SDLK_F4;
     if (strcmp(name, "f5") == 0) return SDLK_F5;
     if (strcmp(name, "f9") == 0) return SDLK_F9;
     if (strcmp(name, "f10") == 0) return SDLK_F10;

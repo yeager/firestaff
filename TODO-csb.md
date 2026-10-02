@@ -84,6 +84,10 @@ Reviewed 2026-09-05. Only open work is listed here.
   second confirmation, not sustained campaign play or capture. The second
   source-authentic route approaches the C127 wall at (12,8) from the open
   corridor at (11,8).
+  The real-media CLI route now also sends source F1 and F2 inventory keys
+  after the second recruitment and verifies an open inventory panel. Its
+  final receipt does not identify the selected champion; retain that exact
+  selection as a separate runtime verification gap.
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
   platforms. On 2026-10-01, `csb_v1_atari_original_archive_cli_boot` was added

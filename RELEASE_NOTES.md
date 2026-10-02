@@ -20,6 +20,9 @@
   reaches the first retail C127 through production movement, recruits its
   C026 portrait, and confirms the champion through C160. C040 modal input now
   takes priority over overlapping C017 inventory hit boxes.
+- `CSB Atari ST input probe`: CLI scripts now accept F1-F4 champion keys via
+  the live SDL mapping. The original-media regression presses F1 and F2 after
+  recruiting two champions and confirms that the inventory panel opens.
 - `CSB Atari animation tests`: skips cleanly when original game media is not
   installed, and the obsolete FM Towns RAR-only test has been removed.
 
