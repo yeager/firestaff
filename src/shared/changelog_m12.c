@@ -21,7 +21,7 @@ static const char* const g_changelogLines[] = {
     "  - CSB FM Towns selects the complete CD when a loose data tree is also present.",
     "  - DM2 AUTO startup prefers FM Towns and reaches its menu after the source title duration.",
     "  - Verbose startup diagnostics list platform candidates and media search results.",
-    "  - DM2 FM Towns viewport decoding uses source wall records and light tables.",
+    "  - DM2 FM Towns viewport decoding uses source wall records, light tables and verified room-summary branches.",
     "  - DM2 Mac retail map and floor-item handling follow original record spans and links.",
     "",
     "V3.0.354  (2026-10-01)",

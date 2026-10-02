@@ -22,7 +22,10 @@
 ## Developer changes
 
 - `DM2 FM Towns viewport data`: decodes short IMG2 wall records and verifies
-  four light tables against the original SKULL.EXP executable.
+  four light tables against the original SKULL.EXP executable. A source-bound
+  room summary now covers two record-free stone-room tile branches at the
+  original map 38 teleport destination; it does not yet provide a complete
+  dynamic-light frame.
 - `DM1, CSB and DM2 startup tests`: verify automatic FM Towns selection with
   original media and retain explicit platform overrides.
 - `DM2 Macintosh source tests`: verify the retail start corridor, linked item
