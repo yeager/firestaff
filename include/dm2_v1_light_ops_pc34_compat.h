@@ -90,6 +90,23 @@ typedef struct {
 int32_t dm2_v1_check_recompute_light(
     const DM2_V1_CheckRecomputeLightCallbacks *cb, void *ctx);
 
+/* sklight.cpp::DM2_CHECK_RECOMPUTE_LIGHT prepares mode 7/action 0x17 only
+ * when the source radius is nonzero. This is a preparation receipt, not a
+ * FIND_WALK_PATH completion signal. */
+typedef struct {
+    uint8_t traversal_required;
+    uint8_t radius;
+    int16_t v1e0974;
+    int16_t v1e0978;
+} DM2_V1_Mode7LightPreparation;
+
+int dm2_v1_mode7_light_prepare(uint16_t source_radius,
+                              DM2_V1_Mode7LightPreparation *out);
+
+/* SK1C9A.cpp action 0x17 samples background light only if the cached tile
+ * state has bit 0x10. This decision does not complete traversal. */
+int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state);
+
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {
     if (val < lo) return lo;

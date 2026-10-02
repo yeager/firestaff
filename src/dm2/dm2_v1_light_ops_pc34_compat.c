@@ -3,6 +3,22 @@
 #include "dm2_v1_light_ops_pc34_compat.h"
 #include <stddef.h>
 
+int dm2_v1_mode7_light_prepare(uint16_t source_radius,
+                              DM2_V1_Mode7LightPreparation *out)
+{
+    if (!out) return 0;
+    out->v1e0974 = 0;
+    out->v1e0978 = 0;
+    out->traversal_required = source_radius != 0u;
+    out->radius = (uint8_t)(source_radius > 8u ? 8u : source_radius);
+    return 1;
+}
+
+int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state)
+{
+    return (cached_tile_state & 0x10u) != 0u;
+}
+
 /* ---- DM2_RECALC_LIGHT_LEVEL (c_light.cpp:16-198) ---- */
 
 void dm2_v1_recalc_light_level_pc34(

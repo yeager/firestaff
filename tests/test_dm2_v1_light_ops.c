@@ -241,7 +241,21 @@ static void test_check_recompute_dirty(void)
 
 int main(void)
 {
+    DM2_V1_Mode7LightPreparation mode7;
     printf("test_dm2_v1_light_ops:\n");
+    memset(&mode7, 0x7f, sizeof(mode7));
+    assert(dm2_v1_mode7_light_prepare(0u, &mode7));
+    assert(!mode7.traversal_required && mode7.radius == 0u);
+    assert(mode7.v1e0974 == 0 && mode7.v1e0978 == 0);
+    assert(dm2_v1_mode7_light_prepare(3u, &mode7));
+    assert(mode7.traversal_required && mode7.radius == 3u);
+    assert(dm2_v1_mode7_light_prepare(0xffffu, &mode7));
+    assert(mode7.traversal_required && mode7.radius == 8u);
+    assert(!dm2_v1_mode7_light_prepare(1u, NULL));
+    assert(!dm2_v1_mode7_action23_samples_tile(0x000fu));
+    assert(dm2_v1_mode7_action23_samples_tile(0x0010u));
+    assert(dm2_v1_mode7_action23_samples_tile(0x8010u));
+    assert(!dm2_v1_mode7_action23_samples_tile(0x8000u));
     test_proceed_light_darkness();
     test_proceed_light_torch();
     test_proceed_light_invalid();
