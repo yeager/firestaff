@@ -204,10 +204,13 @@ int dm2_v1_1c9a_light_visibility_or_mask(
     return wrote;
 }
 
-int dm2_v1_1c9a_light_mode8_frontier_with_rng(
+/* FIND_WALK_PATH owns the ring, score grid and RNG for each action. Keep
+ * these cursors local to one invocation; the caller supplies the cursor so
+ * consecutive light actions can share v1d62ec in source order. */
+static int light_walk_core(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context,
-    uint16_t *walk_rng)
+    uint16_t *walk_rng, uint16_t source_flags, unsigned action)
 {
     typedef struct { uint8_t x, y, map, reserved; } Cell;
     /* SK1C9A xp_90 stores x, y, map in four-byte work entries. Scores live
@@ -222,7 +225,7 @@ int dm2_v1_1c9a_light_mode8_frontier_with_rng(
     unsigned pending = 0u;
     unsigned lowest = 0u;
     int selector;
-    if (!state || !walk_rng) return 0;
+    if (!state || !walk_rng || action != 0x1bu) return 0;
     memset(work_grid, 0, sizeof(work_grid));
     memset(seen, 0, sizeof(seen));
     memset(score_bucket, 0, sizeof(score_bucket));
@@ -294,12 +297,12 @@ int dm2_v1_1c9a_light_mode8_frontier_with_rng(
          * at each admitted target before its edge cost enters xp_90. */
         decision = dm2_v1_1c9a_light_node_decision(
             *walk_rng, score,
-            dm2_v1_1c9a_light_extended_search(0x36e7u));
+            dm2_v1_1c9a_light_extended_search(source_flags));
         *walk_rng = decision.rng;
         for (unsigned attempt = 0u; attempt < decision.attempts - 1u;
              ++attempt) {
             int direction = dm2_v1_1c9a_light_node_attempt_direction(
-                &decision, 0x36e7u, attempt);
+                &decision, source_flags, attempt);
             int next_map = -1, next_x = -1, next_y = -1;
             int projection_map = -1, projection_x = -1, projection_y = -1;
             int result = step(context, cell.map, cell.x, cell.y, direction,
@@ -348,6 +351,16 @@ incomplete:
     /* Retain observed cells for an incomplete mode-7 probe; completion
      * flags and source hash stay clear. */
     return 0;
+}
+
+int dm2_v1_1c9a_light_mode8_frontier_with_rng(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, DM2_V1_1c9aLightStep step, void *context,
+    uint16_t *walk_rng)
+{
+    /* SK1C9A action 27 installs v1e0576=0x36e7 in its prepass. */
+    return light_walk_core(state, start_map, start_x, start_y, step,
+                           context, walk_rng, 0x36e7u, 0x1bu);
 }
 
 int dm2_v1_1c9a_light_mode8_frontier(
