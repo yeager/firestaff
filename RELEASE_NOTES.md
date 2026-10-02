@@ -17,8 +17,9 @@
   `--platform` selection still takes precedence. Original Mac and FM Towns
   archives together verify the default.
 - `Startup diagnostics`: `--verbose` reports the selected DM1, CSB or DM2
-  edition and source. `--debug` adds search roots and catalogue candidate
-  filenames so missing or unexpected media choices can be investigated.
+  edition and source, all catalogued platforms, and candidate filenames even
+  when no media matches. `--debug` also traces scan roots and progress so
+  missing or unexpected media choices can be investigated.
 - `CSB Atari ST dungeon view`: draws the authentic first weapon in the near
   front cell with the original Atari scaling and palette. Original Utility
   STX media verifies every opaque pixel in the tested view.

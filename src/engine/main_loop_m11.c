@@ -515,7 +515,7 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
 }
 
 static void m11_verbose_original_media(const M12_AssetStatus* status,
-                                       const char* gameId, int debug) {
+                                       const char* gameId) {
     size_t i;
     if (!status || !gameId) return;
     fprintf(stderr, "firestaff: %s available=%s scan-owner=%s\n",
@@ -524,19 +524,19 @@ static void m11_verbose_original_media(const M12_AssetStatus* status,
     for (i = 0; i < M12_AssetStatus_GetVersionCount(gameId); ++i) {
         const M12_AssetVersionStatus* version =
             M12_AssetStatus_GetVersion(status, gameId, i);
-        if (!version || (!debug && !version->matched)) continue;
-        if (debug) {
+        if (!version) continue;
+        {
             const char* const* candidates =
                 M12_AssetStatus_GetVersionCandidateNames(gameId, i);
             size_t candidateIndex;
             for (candidateIndex = 0U; candidates && candidates[candidateIndex];
                  ++candidateIndex) {
                 fprintf(stderr,
-                        "firestaff: %s edition=%s candidate-file=%s search=scan-roots edition-result=%s\n",
+                        "firestaff: %s edition=%s candidate-file=%s edition-result=%s\n",
                         gameId,
                         version->versionId ? version->versionId : "unknown",
                         candidates[candidateIndex],
-                        version->matched ? "matched" : "hash not found");
+                        version->matched ? "matched" : "not matched");
             }
         }
         fprintf(stderr, "firestaff: %s platform=%s edition=%s %s%s%s\n",
@@ -7936,11 +7936,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         &menuInitOptions);
         if (o->verbose) {
             if (!o->gameId || strcmp(o->gameId, "dm1") == 0)
-                m11_verbose_original_media(&menuState.assetStatus, "dm1", o->debug);
+                m11_verbose_original_media(&menuState.assetStatus, "dm1");
             if (!o->gameId || strcmp(o->gameId, "csb") == 0)
-                m11_verbose_original_media(&menuState.assetStatus, "csb", o->debug);
+                m11_verbose_original_media(&menuState.assetStatus, "csb");
             if (!o->gameId || strcmp(o->gameId, "dm2") == 0)
-                m11_verbose_original_media(&menuState.assetStatus, "dm2", o->debug);
+                m11_verbose_original_media(&menuState.assetStatus, "dm2");
         }
         if (o->languageOverride >= 0 && o->languageOverride < 20) {
             static const char* const languageCodes[] = {

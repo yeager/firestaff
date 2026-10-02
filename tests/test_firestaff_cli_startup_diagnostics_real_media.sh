@@ -35,10 +35,11 @@ case "$towns_verbose" in
     *) echo "FAIL: FM Towns verbose trace omitted selected edition" >&2; exit 1 ;;
 esac
 case "$towns_verbose" in
-    *"candidate-file="*) echo "FAIL: verbose emitted debug-only candidates" >&2; exit 1 ;;
+    *"candidate-file="*"edition-result="*) ;;
+    *) echo "FAIL: verbose omitted catalogued candidate filenames" >&2; exit 1 ;;
 esac
 
-combined_root=$(mktemp -d)
+combined_root=$(mktemp -d "${PWD}/.firestaff-cli-diagnostics.XXXXXX")
 trap 'rm -rf "$combined_root"' EXIT
 ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
 ln -s "$towns_archive" "$combined_root/$(basename "$towns_archive")"
