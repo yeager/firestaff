@@ -1710,6 +1710,14 @@ int dm2_v1_dungeon_c_light_tile_ornament_receipt(
     const DM2_V1_CLightStoneRoomReceipt *room,
     const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
     DM2_V1_CLightTileOrnamentReceipt *out);
+/* Class-5 DB1 room branch of ADD_BACKGROUND_LIGHT_FROM_TILE. The caller
+ * supplies the live GET_TELEPORTER_DETAIL result and weather table index;
+ * this receipt does not claim the mode-7 walk or complete map light state. */
+int dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
+    int teleporter_detail_valid, int weather_index,
+    DM2_V1_CLightTileOrnamentReceipt *out);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,

@@ -193,6 +193,23 @@ static void test_fmtowns_load(const char *path) {
                room.source_tile_type == 1u &&
                room.first_record_link == 0x0442u &&
                room.ceiling_ornament_index == 0x28u);
+        {
+            DM2_V1_CLightTileOrnamentReceipt normal;
+            DM2_V1_CLightTileOrnamentReceipt via_teleporter;
+            DM2_V1_CLightTileOrnamentReceipt dark_weather;
+            assert(dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
+                &room, &loader, 0, 1u, 0, 0, &normal));
+            assert(dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
+                &room, &loader, 0, 1u, 1, 0, &via_teleporter));
+            assert(dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
+                &room, &loader, 0, 1u, 1, 5, &dark_weather));
+            assert(normal.valid && via_teleporter.valid &&
+                   dark_weather.valid &&
+                   normal.gdat_light_word == via_teleporter.gdat_light_word &&
+                   via_teleporter.v1e0974_delta ==
+                     (int16_t)((normal.v1e0974_delta * 99) / 100) &&
+                   dark_weather.v1e0974_delta == 0);
+        }
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
         printf("  PASS: FM Towns map 38 source stone-room light inputs\n");

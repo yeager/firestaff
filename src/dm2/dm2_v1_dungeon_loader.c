@@ -6811,6 +6811,60 @@ int dm2_v1_dungeon_c_light_tile_ornament_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_teleporter_ornament_receipt(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
+    int teleporter_detail_valid, int weather_index,
+    DM2_V1_CLightTileOrnamentReceipt *out)
+{
+    /* sklight.cpp:280-350, 449-481. A class-5 DB1 room takes the ordinary
+     * ornament branch if GET_TELEPORTER_DETAIL fails, or the weather-scaled
+     * branch when it succeeds. The latter uses table1d672b rather than the
+     * ordinary table1d673d distance loss. */
+    static const int16_t weather[6] = {99, 75, 50, 25, 1, 0};
+    static const int16_t teleporter_loss[9] = {0, 6, 14, 30, 42, 54, 76, 88, 96};
+    uint16_t word;
+    int amount = 0;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!room || !room->valid || !loader || !loader->loaded ||
+        (room->raw_tile >> 5) != 5u ||
+        ((room->first_record_link >> 10) & 0x0fu) != 1u ||
+        room->source_tile_type != 1u ||
+        room->ceiling_ornament_index == 0xffu || distance < 0 ||
+        distance > 8 || (flags & ~7u) != 0u ||
+        (teleporter_detail_valid != 0 && teleporter_detail_valid != 1) ||
+        weather_index < 0 || weather_index > 5)
+        return 0;
+    out->distance = (uint8_t)distance;
+    out->source_ornament_index = room->ceiling_ornament_index;
+    if ((flags & 1u) != 0u) {
+        if (!dm2_v1_query_gdat_entry_data_index(loader, 10,
+                room->ceiling_ornament_index, 11, 0xf8, &word))
+            return 0;
+        out->gdat_light_word = word;
+        if (word != 0u && ((word & 0x8000u) == 0u ||
+                           (room->ceiling_ornament_word >> 8) != 0u))
+            amount = word & 0x7fffu;
+    }
+    if (amount != 0) {
+        if (teleporter_detail_valid) {
+            amount = amount * weather[weather_index] / 100;
+            if (amount != 0) {
+                amount -= teleporter_loss[distance];
+                if (amount < 3) amount = 3;
+            }
+        } else {
+            static const int16_t ordinary_loss[6] = {0, 10, 22, 45, 70, 90};
+            amount -= ordinary_loss[distance > 5 ? 5 : distance];
+            if (amount < 2) amount = 2;
+        }
+        out->v1e0974_delta = (int16_t)amount;
+    }
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;
