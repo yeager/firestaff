@@ -437,6 +437,41 @@ TEST(light_mode8_work_ring_wraps_after_256_nodes) {
     assert(!state.mode8_complete && state.source_state_hash == 0u);
 }
 
+static int light_weighted_step(void *context, int map, int x, int y,
+                               int direction, int *next_map,
+                               int *next_x, int *next_y)
+{
+    int *visited = (int *)context;
+    if (direction == 0) ++*visited;
+    *next_map = map;
+    if (x == 6 && y == 6 && direction == 0) {
+        *next_x = 6; *next_y = 5; return 5;
+    }
+    if (x == 6 && y == 6 && direction == 1) {
+        *next_x = 7; *next_y = 6; return 1;
+    }
+    if (x == 7 && y == 6 && direction == 0) {
+        *next_x = 7; *next_y = 5; return 1;
+    }
+    if (x == 7 && y == 5 && direction == 3) {
+        *next_x = 6; *next_y = 5; return 1;
+    }
+    return 0;
+}
+
+TEST(light_mode8_work_ring_prioritizes_lower_source_cost) {
+    DM2_V1_1c9aLightVisibility state;
+    int visited = 0;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    assert(dm2_v1_1c9a_light_mode8_frontier(
+        &state, 38, 6, 6, light_weighted_step, &visited));
+    assert(visited == 4);
+    assert(state.current[7u * 32u + 6u] == 2u);
+    assert(state.current[7u * 32u + 5u] == 3u);
+    assert(state.current[6u * 32u + 5u] == 4u);
+    assert(!state.mode8_complete);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -938,6 +973,7 @@ int main(void) {
     RUN(light_mode8_frontier_is_fail_closed);
     RUN(light_mode8_teleporter_projection_uses_source_destination);
     RUN(light_mode8_work_ring_wraps_after_256_nodes);
+    RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
 
     /* Popcount */
     RUN(popcount_zero);

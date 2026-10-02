@@ -39,8 +39,8 @@ int dm2_v1_1c9a_light_visibility_mark(
 int dm2_v1_1c9a_light_visibility_or_mask(
     DM2_V1_1c9aLightVisibility *state, int map, int x, int y,
     uint8_t mask);
-/* A step returns 1 with an admitted source cell, 0 for a blocked edge, or
- * -1 when its tile/record/teleporter branch is not implemented. */
+/* A step returns a positive source edge cost for an admitted cell, 0 for a
+ * blocked edge, or -1 when its tile/record/teleporter branch is unknown. */
 typedef int (*DM2_V1_1c9aLightStep)(
     void *context, int map, int x, int y, int direction,
     int *next_map, int *next_x, int *next_y);

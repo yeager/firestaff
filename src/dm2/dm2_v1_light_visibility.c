@@ -97,11 +97,12 @@ int dm2_v1_1c9a_light_mode8_frontier(
     Cell queue[256u];
     _Static_assert(sizeof(queue) == 0x400u,
                    "SK1C9A work ring must be 0x400 bytes");
-    uint8_t seen[2u * 32u * 32u] = {0};
+    uint8_t best[2u * 32u * 32u];
     uint8_t head = 0u, tail = 0u;
     unsigned pending = 0u;
     int selector;
     if (!state) return 0;
+    memset(best, 0xff, sizeof(best));
     memset(state->current, 0, sizeof(state->current));
     memset(state->alternate, 0, sizeof(state->alternate));
     state->mode8_complete = 0u;
@@ -115,10 +116,29 @@ int dm2_v1_1c9a_light_mode8_frontier(
     queue[tail++] = (Cell){(uint8_t)start_map, (uint8_t)start_x,
                            (uint8_t)start_y, 0u};
     pending = 1u;
-    seen[(size_t)start_x * 32u + (size_t)start_y] = 1u;
+    best[(size_t)start_x * 32u + (size_t)start_y] = 0u;
     while (pending != 0u) {
-        Cell cell = queue[head++];
+        unsigned selected = 0u;
+        Cell cell;
+        int cell_selector;
+        size_t cell_index;
+        /* SK1C9A keeps score-bucket counts alongside its 0x400-byte
+         * ring. Select the lowest score, preserving insertion order among
+         * equal scores; the source tile evaluator supplies each edge cost. */
+        for (unsigned offset = 1u; offset < pending; ++offset)
+            if (queue[(uint8_t)(head + offset)].depth <
+                queue[(uint8_t)(head + selected)].depth)
+                selected = offset;
+        cell = queue[(uint8_t)(head + selected)];
+        for (unsigned offset = selected; offset > 0u; --offset)
+            queue[(uint8_t)(head + offset)] =
+                queue[(uint8_t)(head + offset - 1u)];
+        ++head;
         --pending;
+        cell_selector = cell.map == state->current_map ? 0 : 1;
+        cell_index = (size_t)cell_selector * 1024u +
+                     (size_t)cell.x * 32u + (size_t)cell.y;
+        if (cell.depth != best[cell_index]) continue;
         if (!dm2_v1_1c9a_light_visibility_mark(
                 state, cell.map, cell.x, cell.y, cell.depth))
             goto incomplete;
@@ -142,12 +162,14 @@ int dm2_v1_1c9a_light_mode8_frontier(
                 goto incomplete;
             index = (size_t)selector * 1024u + (size_t)next_x * 32u +
                     (size_t)next_y;
-            if (seen[index]) continue;
+            if ((unsigned)cell.depth + (unsigned)result > 25u ||
+                (unsigned)cell.depth + (unsigned)result >= best[index])
+                continue;
             if (pending == 256u) goto incomplete;
-            seen[index] = 1u;
+            best[index] = (uint8_t)(cell.depth + result);
             queue[tail++] = (Cell){(uint8_t)next_map, (uint8_t)next_x,
                                    (uint8_t)next_y,
-                                   (uint8_t)(cell.depth + 1u)};
+                                   (uint8_t)(cell.depth + result)};
             ++pending;
         }
     }
