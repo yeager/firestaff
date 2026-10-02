@@ -7153,17 +7153,18 @@ int dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
             w4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
             if ((w4 >> 12) != 0u) {
                 uint8_t ornament;
-                uint16_t frame;
+                uint16_t frame = 0u;
                 int ordinal = (int)(w4 >> 12);
                 if (ordinal > floor_gfx_count) return 0;
                 action = (uint16_t)(w2 & 0x7fu);
-                /* skguivwp.cpp's actuator summary has stateful cases 27,
-                 * 2C and 32. Admit only the unconditional source branch. */
-                if (action == 0x27u || action >= 0x2cu) return 0;
+                /* skguivwp.cpp:2898-3079: most actuators write frame 0.
+                 * 0x27 depends on map state; active 0x2c/0x32 can animate. */
+                if (action == 0x27u ||
+                    ((action == 0x2cu || action == 0x32u) &&
+                     (w4 & 1u) != 0u)) return 0;
                 ornament = floor_gfx[ordinal - 1];
-                if (!dm2_v1_c_light_floor_frame(loader, ornament, tick,
-                                                 thing, &frame, &source_hash))
-                    return 0;
+                source_hash = 0x46524d30u ^
+                    ((uint32_t)ornament << 16) ^ thing;
                 floor_word = (uint16_t)(ornament |
                     (uint16_t)((uint32_t)frame * 10u << 8));
             }

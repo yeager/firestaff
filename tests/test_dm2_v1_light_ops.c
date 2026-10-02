@@ -495,6 +495,11 @@ static void test_mode7_flags4_original_media(void)
         &dungeon, &graphics, 3, 13, 7, &class1_room));
     assert(class1_room.first_record_link == 0x0e57u &&
            class1_room.ceiling_ornament_word == 35u);
+    assert(dm2_v1_dungeon_c_light_flags4_record_floor_receipt(
+        &dungeon, &graphics, 3, 15, 8, 0u, &floor));
+    assert(floor.first_record_link == 0x0c5fu &&
+           floor.floor_ornament_word == 35u &&
+           floor.floor_light_word == 0u);
     {
         DM2_V1_CLightStoneRoomReceipt summary;
         static const int cells[2][3] = {{15, 10, 0x0c34},
