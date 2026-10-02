@@ -258,7 +258,7 @@ int main(void) {
             unsigned int track;
             for (track = 3u; track <= 18u && !failed; ++track) {
                 Theron_Track01CddaHandoff selected;
-                Theron_Track01CddaStream selected_stream = {0};
+                Theron_CddaStream selected_stream = {0};
                 if (theron_v1_cdda_handoff_from_verified_media(
                         real_cue, real_md5, track, &selected) !=
                         THERON_TRACK01_CDDA_AVAILABLE ||
@@ -273,9 +273,9 @@ int main(void) {
                     failed = 1;
                     continue;
                 }
-                if (!theron_v1_track01_cdda_stream_start(
+                if (!theron_v1_cdda_stream_start(
                         &selected, &selected_stream) ||
-                    !theron_v1_track01_cdda_stream_pump(&selected_stream) ||
+                    !theron_v1_cdda_stream_pump(&selected_stream) ||
                     !selected_stream.output_started ||
                     selected_stream.sectors_queued == 0u) {
                     fprintf(stderr,
@@ -283,7 +283,7 @@ int main(void) {
                             track);
                     failed = 1;
                 }
-                theron_v1_track01_cdda_stream_stop(&selected_stream);
+                theron_v1_cdda_stream_stop(&selected_stream);
             }
             Theron_Track01CddaStream real_stream = {0};
             if (!theron_v1_track01_cdda_lifecycle_update(

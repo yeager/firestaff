@@ -75,9 +75,9 @@ static long theron_cdda_memory_tell(void *source) {
 }
 #endif
 
-int theron_v1_track01_cdda_stream_start(
-    const Theron_Track01CddaHandoff *handoff,
-    Theron_Track01CddaStream *out_stream) {
+int theron_v1_cdda_stream_start(
+    const Theron_CddaHandoff *handoff,
+    Theron_CddaStream *out_stream) {
 #if THERON_HAVE_SDL_AUDIO
     FILE *audio_file;
     SDL_AudioSpec spec;
@@ -166,11 +166,11 @@ int theron_v1_track01_cdda_stream_start(
 #endif
 }
 
-int theron_v1_track01_cdda_stream_start_memory(
-    const Theron_Track01CddaHandoff *handoff,
+int theron_v1_cdda_stream_start_memory(
+    const Theron_CddaHandoff *handoff,
     const uint8_t *audio_bytes,
     size_t audio_size,
-    Theron_Track01CddaStream *out_stream) {
+    Theron_CddaStream *out_stream) {
 #if THERON_HAVE_SDL_AUDIO && THERON_HAVE_VORBISFILE
     OggVorbis_File *vorbis;
     vorbis_info *info;
@@ -239,7 +239,7 @@ int theron_v1_track01_cdda_stream_start_memory(
 #endif
 }
 
-int theron_v1_track01_cdda_stream_pump(Theron_Track01CddaStream *stream) {
+int theron_v1_cdda_stream_pump(Theron_CddaStream *stream) {
 #if THERON_HAVE_SDL_AUDIO
 #if THERON_HAVE_VORBISFILE
     if (stream && stream->audio_is_vorbis) {
@@ -309,7 +309,7 @@ int theron_v1_track01_cdda_stream_pump(Theron_Track01CddaStream *stream) {
 #endif
 }
 
-void theron_v1_track01_cdda_stream_stop(Theron_Track01CddaStream *stream) {
+void theron_v1_cdda_stream_stop(Theron_CddaStream *stream) {
     if (!stream) return;
 #if THERON_HAVE_SDL_AUDIO
     if (stream->sdl_stream) {
@@ -327,6 +327,29 @@ void theron_v1_track01_cdda_stream_stop(Theron_Track01CddaStream *stream) {
     if (stream->audio_file) fclose((FILE *)stream->audio_file);
 #endif
     memset(stream, 0, sizeof(*stream));
+}
+
+int theron_v1_track01_cdda_stream_start(
+    const Theron_Track01CddaHandoff *handoff,
+    Theron_Track01CddaStream *out_stream) {
+    return theron_v1_cdda_stream_start(handoff, out_stream);
+}
+
+int theron_v1_track01_cdda_stream_start_memory(
+    const Theron_Track01CddaHandoff *handoff,
+    const uint8_t *audio_bytes,
+    size_t audio_size,
+    Theron_Track01CddaStream *out_stream) {
+    return theron_v1_cdda_stream_start_memory(
+        handoff, audio_bytes, audio_size, out_stream);
+}
+
+int theron_v1_track01_cdda_stream_pump(Theron_Track01CddaStream *stream) {
+    return theron_v1_cdda_stream_pump(stream);
+}
+
+void theron_v1_track01_cdda_stream_stop(Theron_Track01CddaStream *stream) {
+    theron_v1_cdda_stream_stop(stream);
 }
 
 int theron_v1_track01_cdda_lifecycle_update(

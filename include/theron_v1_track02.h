@@ -138,6 +138,7 @@ typedef struct {
     int original_cdda;
     int playback_handoff_ready;
 } Theron_Track01CddaHandoff;
+typedef Theron_Track01CddaHandoff Theron_CddaHandoff;
 
 typedef struct {
     void *audio_file;
@@ -153,6 +154,7 @@ typedef struct {
     int audio_is_vorbis;
     int output_started;
 } Theron_Track01CddaStream;
+typedef Theron_Track01CddaStream Theron_CddaStream;
 
 Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     const char *media_path,
@@ -166,11 +168,24 @@ Theron_Track01CddaStatus theron_v1_cdda_handoff_from_verified_media(
     const char *verified_track02_md5,
     unsigned int track_number,
     Theron_Track01CddaHandoff *out_handoff);
+int theron_v1_cdda_stream_start(
+    const Theron_CddaHandoff *handoff,
+    Theron_CddaStream *out_stream);
+/* The generic stream functions accept any ready CUE-selected audio handoff;
+ * they do not select or infer gameplay event routing. */
+int theron_v1_cdda_stream_start_memory(
+    const Theron_CddaHandoff *handoff,
+    const uint8_t *audio_bytes,
+    size_t audio_size,
+    Theron_CddaStream *out_stream);
+int theron_v1_cdda_stream_pump(Theron_CddaStream *stream);
+void theron_v1_cdda_stream_stop(Theron_CddaStream *stream);
+/* Track 01 compatibility API used by the title lifecycle. */
 int theron_v1_track01_cdda_stream_start(
     const Theron_Track01CddaHandoff *handoff,
     Theron_Track01CddaStream *out_stream);
-/* Start an OGG-backed CDDA stream from caller-owned bounded memory. The byte
- * buffer is borrowed until theron_v1_track01_cdda_stream_stop(); it is never
+/* Start an OGG-backed Track 01 stream from caller-owned bounded memory. The
+ * byte buffer is borrowed until theron_v1_track01_cdda_stream_stop(); it is never
  * copied to or materialized on disk. */
 int theron_v1_track01_cdda_stream_start_memory(
     const Theron_Track01CddaHandoff *handoff,

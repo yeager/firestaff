@@ -6425,7 +6425,9 @@ runtime behavior changed.
 Added an explicit verified-media handoff for any CUE-declared Theron audio
 track while retaining the Track 01 wrapper used by the title lifecycle. The
 new handoff still requires a recognized Track 02 edition and the matching
-Track 02 CUE entry; it does not infer gameplay event routing. The optional
+Track 02 CUE entry. Generic CDDA stream entry points now start/pump/stop the
+selected handoff; Track 01-named functions remain compatibility wrappers.
+This plumbing does not infer gameplay event routing. The optional
 authentic-media regression resolves Tracks 03–18 from the operator-supplied
 JP Rev. 1 CUE and starts each selected stream through SDL's dummy output,
 requiring Vorbis decode and queued audio sectors.
