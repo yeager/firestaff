@@ -69,6 +69,15 @@ Reviewed 2026-10-03. Only open work is listed here.
   240-frame RUN input (nominally four emulated seconds) still did not reach a
   dungeon and created no valid game save. Its trace and BRAM remain private at
   `/home/trv2/work/firestaff-theron-run-save-capture-20261002/pce-scheduled-run-20261003/`.
+- A separate `pce_fast` GUI attempt confirmed that a 4-second RUN hold can
+  reach the authentic JP Rev. 1 title screen. It did not establish dungeon
+  entry or a gameplay save: the menu remained at New Game/Load Game, a later
+  relaunch lost the CUE's data-backed video window, and Mednafen exited before
+  a stable post-menu capture. Only the isolated profile's 2 KiB BRAM and
+  Mednafen save-state were written; neither is treated as gameplay evidence.
+  The experiment also wrote the shared Mednafen config on clean shutdown.
+  Preserve original game media and existing profiles; only resume this capture
+  through a truly independent Mednafen base directory/config.
 
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
