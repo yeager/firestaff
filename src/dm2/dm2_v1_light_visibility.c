@@ -204,9 +204,10 @@ int dm2_v1_1c9a_light_visibility_or_mask(
     return wrote;
 }
 
-int dm2_v1_1c9a_light_mode8_frontier(
+int dm2_v1_1c9a_light_mode8_frontier_with_rng(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
-    int start_y, DM2_V1_1c9aLightStep step, void *context)
+    int start_y, DM2_V1_1c9aLightStep step, void *context,
+    uint16_t *walk_rng)
 {
     typedef struct { uint8_t x, y, map, reserved; } Cell;
     /* SK1C9A xp_90 stores x, y, map in four-byte work entries. Scores live
@@ -221,7 +222,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
     unsigned pending = 0u;
     unsigned lowest = 0u;
     int selector;
-    if (!state) return 0;
+    if (!state || !walk_rng) return 0;
     memset(work_grid, 0, sizeof(work_grid));
     memset(seen, 0, sizeof(seen));
     memset(score_bucket, 0, sizeof(score_bucket));
@@ -258,6 +259,7 @@ int dm2_v1_1c9a_light_mode8_frontier(
         unsigned rotations = 0u;
         Cell cell;
         uint8_t score;
+        DM2_V1_1c9aLightNodeDecision decision;
         int cell_selector;
         size_t cell_index;
         /* SK1C9A rotates higher-score xp_90 packets to the write cursor
@@ -290,7 +292,14 @@ int dm2_v1_1c9a_light_mode8_frontier(
         if (!seen[cell_index]) goto incomplete;
         /* vo_e8 is the consumed xp_bc score. Action 27 writes vo_e8+1
          * at each admitted target before its edge cost enters xp_90. */
-        for (int direction = 0; direction < 4; ++direction) {
+        decision = dm2_v1_1c9a_light_node_decision(
+            *walk_rng, score,
+            dm2_v1_1c9a_light_extended_search(0x36e7u));
+        *walk_rng = decision.rng;
+        for (unsigned attempt = 0u; attempt < decision.attempts - 1u;
+             ++attempt) {
+            int direction = dm2_v1_1c9a_light_node_attempt_direction(
+                &decision, 0x36e7u, attempt);
             int next_map = -1, next_x = -1, next_y = -1;
             int projection_map = -1, projection_x = -1, projection_y = -1;
             int result = step(context, cell.map, cell.x, cell.y, direction,
@@ -339,6 +348,16 @@ incomplete:
     /* Retain observed cells for an incomplete mode-7 probe; completion
      * flags and source hash stay clear. */
     return 0;
+}
+
+int dm2_v1_1c9a_light_mode8_frontier(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, DM2_V1_1c9aLightStep step, void *context)
+{
+    uint16_t uncommitted_rng = 1u;
+    return dm2_v1_1c9a_light_mode8_frontier_with_rng(
+        state, start_map, start_x, start_y, step, context,
+        &uncommitted_rng);
 }
 
 int dm2_v1_1c9a_light_mode7_observed_cells(

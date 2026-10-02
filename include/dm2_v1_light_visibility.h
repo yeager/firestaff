@@ -71,6 +71,12 @@ typedef int (*DM2_V1_1c9aLightStep)(
 int dm2_v1_1c9a_light_mode8_frontier(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context);
+/* Explicit cursor variant for source node-order verification. The runtime
+ * does not publish its persistent cursor until the walk is complete. */
+int dm2_v1_1c9a_light_mode8_frontier_with_rng(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, DM2_V1_1c9aLightStep step, void *context,
+    uint16_t *walk_rng);
 /* SK1C9A v1d62ec is a separate 16-bit walk RNG, initialized to 1 by
  * dm2data.cpp. Call only at source branches that consume that state. */
 uint16_t dm2_v1_1c9a_light_walk_rng_advance(uint16_t state);

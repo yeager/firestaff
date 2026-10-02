@@ -487,13 +487,17 @@ static int light_grid_step(void *context, int map, int x, int y,
     return 1;
 }
 
-TEST(light_mode8_work_ring_wraps_after_256_nodes) {
+TEST(light_mode8_rng_direction_bounds_grid) {
     DM2_V1_1c9aLightVisibility state;
+    unsigned cells = 0u, max = 0u;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 32, -1, 0);
     assert(dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 0, 0, light_grid_step, NULL));
-    assert(state.current[25u * 32u] == 26u);
-    assert(state.current[26u * 32u] == 0u);
+    for (size_t i = 0; i < sizeof(state.current); ++i) {
+        cells += state.current[i] != 0;
+        if (state.current[i] > max) max = state.current[i];
+    }
+    assert(cells == 187u && max == 26u);
     assert(!state.mode8_complete && state.source_state_hash == 0u);
 }
 
@@ -518,6 +522,41 @@ TEST(light_mode8_start_action_precedes_empty_ring_terminal) {
     assert(dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 6, light_blocked_start_step, &calls));
     assert(calls == 4u && state.current[6u * 32u + 6u] == 1u);
+    assert(!state.mode8_complete && state.source_state_hash == 0u);
+}
+
+static int light_record_direction_step(void *context, int map, int x, int y,
+                                       int direction, int *next_map,
+                                       int *next_x, int *next_y,
+                                       int *projection_map, int *projection_x,
+                                       int *projection_y)
+{
+    int *directions = (int *)context;
+    (void)map; (void)x; (void)y; (void)next_map;
+    (void)next_x; (void)next_y; (void)projection_map;
+    (void)projection_x; (void)projection_y;
+    if (directions[0] < 4) directions[1 + directions[0]++] = direction;
+    return 0;
+}
+
+TEST(light_mode8_dequeued_node_consumes_rng_before_directions) {
+    DM2_V1_1c9aLightVisibility state;
+    uint16_t rng = 1u;
+    int directions[5] = {0};
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    assert(dm2_v1_1c9a_light_mode8_frontier_with_rng(
+        &state, 38, 6, 6, light_record_direction_step,
+        directions, &rng));
+    assert(rng == 0xb400u && directions[0] == 4 &&
+           directions[1] == 1 && directions[2] == 2 &&
+           directions[3] == 3 && directions[4] == 0);
+    memset(directions, 0, sizeof(directions));
+    assert(dm2_v1_1c9a_light_mode8_frontier_with_rng(
+        &state, 38, 6, 6, light_record_direction_step,
+        directions, &rng));
+    assert(rng == 0x5a00u && directions[0] == 4 &&
+           directions[1] == 0 && directions[2] == 0 &&
+           directions[3] == 0 && directions[4] == 0);
     assert(!state.mode8_complete && state.source_state_hash == 0u);
 }
 
@@ -546,7 +585,7 @@ static int light_weighted_step(void *context, int map, int x, int y,
     return 0;
 }
 
-TEST(light_mode8_work_ring_prioritizes_lower_source_cost) {
+TEST(light_mode8_weighted_source_direction_order) {
     DM2_V1_1c9aLightVisibility state;
     int visited = 0;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
@@ -556,7 +595,7 @@ TEST(light_mode8_work_ring_prioritizes_lower_source_cost) {
     assert(visited == 5);
     assert(state.current[7u * 32u + 6u] == 2u);
     assert(state.current[7u * 32u + 5u] == 3u);
-    assert(state.current[6u * 32u + 5u] == 4u);
+    assert(state.current[6u * 32u + 5u] == 2u);
     assert(!state.mode8_complete);
 }
 
@@ -568,8 +607,9 @@ static int light_ring_rotation_step(void *context, int map, int x, int y,
 {
     int *order = (int *)context;
     *projection_map = *projection_x = *projection_y = -1;
-    if (direction == 0) order[1 + order[0]++] = x == 6 && y == 6 ? 0 :
-        x == 6 && y == 7 ? 1 : x == 7 && y == 6 ? 2 : 4;
+    if (direction == 0 && order[0] < 15)
+        order[1 + order[0]++] = x == 6 && y == 6 ? 0 :
+            x == 6 && y == 7 ? 1 : x == 7 && y == 6 ? 2 : 4;
     if (x != 6 || y != 6) return 0;
     *next_map = map;
     if (direction == 0) { *next_x = 6; *next_y = 5; return 4; }
@@ -580,12 +620,13 @@ static int light_ring_rotation_step(void *context, int map, int x, int y,
 
 TEST(light_mode8_ring_rotates_higher_score_packets) {
     DM2_V1_1c9aLightVisibility state;
-    int order[5] = {0};
+    int order[16] = {0};
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
     assert(dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 6, light_ring_rotation_step, order));
-    assert(order[0] == 4 && order[1] == 0 && order[2] == 1 &&
-           order[3] == 2 && order[4] == 4);
+    assert(order[0] == 8 && order[1] == 0 && order[2] == 1 &&
+           order[3] == 2 && order[4] == 2 && order[5] == 4 &&
+           order[8] == 4);
     assert(!state.mode8_complete);
 }
 
@@ -1200,9 +1241,10 @@ int main(void) {
     RUN(light_mode8_teleporter_projection_uses_source_destination);
     RUN(light_action27_writes_both_matching_planes);
     RUN(light_mode8_start_action_does_not_prefetch_projection);
-    RUN(light_mode8_work_ring_wraps_after_256_nodes);
+    RUN(light_mode8_rng_direction_bounds_grid);
     RUN(light_mode8_start_action_precedes_empty_ring_terminal);
-    RUN(light_mode8_work_ring_prioritizes_lower_source_cost);
+    RUN(light_mode8_dequeued_node_consumes_rng_before_directions);
+    RUN(light_mode8_weighted_source_direction_order);
     RUN(light_mode8_ring_rotates_higher_score_packets);
     RUN(light_walk_rng_uses_source_lfsr);
     RUN(light_node_rng_branch_rotates_source_direction);
