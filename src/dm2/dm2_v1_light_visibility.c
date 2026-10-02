@@ -47,7 +47,8 @@ int dm2_v1_1c9a_light_visibility_mark(
         state->current[(size_t)x * 32u + (size_t)y] = value;
         wrote = 1;
     }
-    if (map == state->alternate_map && x < state->alternate_width) {
+    else if (map == state->alternate_map &&
+             state->alternate_projection_valid) {
         int projected_x = state->alternate_projection_valid ?
             state->alternate_projection_x : x;
         int projected_y = state->alternate_projection_valid ?
@@ -72,7 +73,8 @@ int dm2_v1_1c9a_light_visibility_or_mask(
         state->current[(size_t)x * 32u + (size_t)y] |= mask;
         wrote = 1;
     }
-    if (map == state->alternate_map && x < state->alternate_width) {
+    else if (map == state->alternate_map &&
+             state->alternate_projection_valid) {
         int projected_x = state->alternate_projection_valid ?
             state->alternate_projection_x : x;
         int projected_y = state->alternate_projection_valid ?

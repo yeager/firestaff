@@ -208,6 +208,19 @@ static void test_fmtowns_load(const char *path) {
                        & 0x7fu) == 0x27u);
         }
         {
+            int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, 11);
+            int type = -1;
+            const uint8_t *db1 = first >= 0 ?
+                dm2_v1_dungeon_get_thing_record(
+                    &dungeon, (uint16_t)first, &type, NULL, NULL) : NULL;
+            uint16_t w2, w4;
+            assert(db1 && type == 1);
+            w2 = dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 2);
+            w4 = dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 4);
+            assert((w2 & 0x1fu) == 6u && ((w2 >> 5) & 0x1fu) == 6u &&
+                   ((w4 >> 8) & 0xffu) == 38u);
+        }
+        {
             DM2_V1_CLightTileOrnamentReceipt normal;
             DM2_V1_CLightTileOrnamentReceipt via_teleporter;
             DM2_V1_CLightTileOrnamentReceipt dark_weather;

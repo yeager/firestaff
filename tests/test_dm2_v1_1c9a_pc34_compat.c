@@ -329,6 +329,8 @@ TEST(light_visibility_action27) {
     assert(dm2_v1_1c9a_light_visibility_or_mask(&state, 38, 6, 4, 0x80u));
     assert(state.current[6u * 32u + 4u] == 0x83u);
     assert(state.alternate[6u * 32u + 4u] == 0u);
+    assert(dm2_v1_1c9a_light_visibility_project_teleporter(
+        &state, 3, 11, 9));
     assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 11, 9, 0u));
     assert(state.alternate[11u * 32u + 9u] == 1u);
     assert(!dm2_v1_1c9a_light_visibility_mark(&state, 38, 16, 4, 1u));
@@ -374,6 +376,8 @@ TEST(light_mode8_frontier_is_fail_closed) {
     int unknown = 1;
     unsigned observed = 0u;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
+    assert(dm2_v1_1c9a_light_visibility_project_teleporter(
+        &state, 3, 13, 9));
     assert(!dm2_v1_1c9a_light_mode8_frontier(
         &state, 38, 6, 6, light_frontier_step, &unknown));
     assert(!state.mode8_complete && state.current[6u * 32u + 6u] == 1u);
@@ -393,6 +397,7 @@ TEST(light_mode8_frontier_is_fail_closed) {
 TEST(light_mode8_teleporter_projection_uses_source_destination) {
     DM2_V1_1c9aLightVisibility state;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
+    assert(!dm2_v1_1c9a_light_visibility_mark(&state, 3, 13, 9, 2u));
     assert(!dm2_v1_1c9a_light_visibility_project_teleporter(
         &state, 3, 16, 10));
     assert(dm2_v1_1c9a_light_visibility_project_teleporter(
@@ -403,6 +408,8 @@ TEST(light_mode8_teleporter_projection_uses_source_destination) {
     assert(dm2_v1_1c9a_light_visibility_or_mask(
         &state, 3, 13, 9, 0x80u));
     assert(state.alternate[13u * 32u + 10u] == 0x83u);
+    assert(dm2_v1_1c9a_light_visibility_mark(&state, 3, 20, 9, 3u));
+    assert(state.alternate[13u * 32u + 10u] == 4u);
 }
 
 /* ---- Popcount ---- */
