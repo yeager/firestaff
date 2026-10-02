@@ -195,6 +195,7 @@ static void test_fmtowns_load(const char *path) {
                room.ceiling_ornament_index == 0x28u);
         {
             int type = -1;
+            int first;
             const uint8_t *db1 = dm2_v1_dungeon_get_thing_record(
                 &dungeon, room.first_record_link, &type, NULL, NULL);
             const uint8_t *sensor = dm2_v1_dungeon_get_thing_record(
@@ -205,7 +206,22 @@ static void test_fmtowns_load(const char *path) {
                    dm2_v1_dungeon_read_record_u16(&dungeon, db1 + 4) ==
                        0x0306u &&
                    (dm2_v1_dungeon_read_record_u16(&dungeon, sensor + 2)
-                       & 0x7fu) == 0x27u);
+                       & 0x7fu) == 0x27u &&
+                   dm2_v1_dungeon_read_record_u16(&dungeon, sensor) ==
+                       0xfffeu);
+            first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, 10);
+            db1 = dm2_v1_dungeon_get_thing_record(
+                &dungeon, (uint16_t)first, &type, NULL, NULL);
+            assert(db1 && type == 1 &&
+                   dm2_v1_dungeon_read_record_u16(&dungeon, db1) ==
+                       0x0e46u);
+            sensor = dm2_v1_dungeon_get_thing_record(
+                &dungeon, 0x0e46u, &type, NULL, NULL);
+            assert(sensor && type == 3 &&
+                   (dm2_v1_dungeon_read_record_u16(&dungeon, sensor + 2)
+                       & 0x7fu) == 0x27u &&
+                   dm2_v1_dungeon_read_record_u16(&dungeon, sensor) ==
+                       0x10a1u);
         }
         {
             int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3, 13, 11);

@@ -1612,10 +1612,11 @@ static int dm2_runtime_light_mode8_step(
     DM2_V1_CLightStoneRoomReceipt room;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    DM2_V1_SkprojectQuery0cee0897Receipt sensor_receipt;
     const uint8_t *source_tiles, *destination_tiles, *db1;
     int16_t source_width, source_height;
     int16_t destination_width, destination_height;
-    int16_t next_record;
+    int16_t next_record, sensor_next;
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
     int nx, ny, raw, first;
@@ -1641,6 +1642,35 @@ static int dm2_runtime_light_mode8_step(
                 &room))
             return -1;
         if (room.source_tile_type == 2u) return 0;
+        if ((raw >> 5) == 5 && (raw & 0x08) == 0) {
+            if (!rt->record_pools_valid || first < 0 ||
+                (((unsigned)first >> 10) & 0x0fu) != 1u ||
+                !dm2_v1_record_pool_next_link(
+                    &rt->record_pools, (int16_t)first, &next_record))
+                return -1;
+            if (next_record != (int16_t)0xfffe) {
+                const uint8_t *sensor;
+                if ((((uint16_t)next_record >> 10) & 0x0fu) != 3u ||
+                    !dm2_v1_record_pool_next_link(
+                        &rt->record_pools, next_record, &sensor_next) ||
+                    sensor_next != (int16_t)0xfffe)
+                    return -1;
+                sensor = dm2_v1_record_pool_address(
+                    &rt->record_pools, next_record);
+                if (!sensor || ((sensor[2] | ((unsigned)sensor[3] << 8)) &
+                                0x7fu) != 0x27u)
+                    return -1;
+                source_tiles = dm2_v1_dungeon_level_tile_data(
+                    dungeon, map, &source_width, &source_height);
+                if (!source_tiles ||
+                    !dm2_v1_skproject_query_0cee_0897(
+                        (int16_t)nx, (int16_t)ny,
+                        source_tiles, source_width, source_height,
+                        &rt->record_pools, NULL, NULL, &sensor_receipt) ||
+                    !sensor_receipt.valid)
+                    return -1;
+            }
+        }
         if ((raw >> 5) == 5 && (raw & 0x08) != 0) {
             /* The active DB1 branch follows GET_TELEPORTER_DETAIL. Admit
              * only its single-record chain until source sensor handling is
