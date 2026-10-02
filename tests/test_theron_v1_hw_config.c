@@ -4,15 +4,15 @@
 #include <string.h>
 #include "theron_v1_track02.h"
 
-static uint8_t *load_track02(size_t *out_size) {
+static uint8_t *load_track02_named(const char *basename, size_t *out_size) {
     const char *home = getenv("HOME");
     char path[1024];
     FILE *f;
     long len;
     uint8_t *buf;
 
-    if (!home) return NULL;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
+    if (!home || !basename || !out_size) return NULL;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/%s", home, basename);
     f = fopen(path, "rb");
     if (!f) return NULL;
     fseek(f, 0, SEEK_END);
@@ -31,41 +31,68 @@ static uint8_t *load_track02(size_t *out_size) {
     return buf;
 }
 
+static uint8_t *load_track02(size_t *out_size) {
+    return load_track02_named("TQUS02.bin", out_size);
+}
+
 static int test_cd_play_track_extraction(void) {
-    size_t size;
-    uint8_t *data = load_track02(&size);
-    Theron_Track02CdPlayTrackMapReceipt receipt;
-    Theron_Track02SignalStatus status;
+    static const struct {
+        const char *basename;
+        const char *md5;
+        const char *region;
+    } media[] = {
+        { "TQUS02.bin", THERON_TRACK02_MD5_US_BIN, "US" },
+        { "TQJP02.bin", THERON_TRACK02_MD5_JP_BIN, "JP" }
+    };
+    size_t available_regions = 0u;
+    size_t region_index;
 
-    if (!data) { printf("SKIP cd_play_tracks (no data)\n"); return 0; }
-
-    status = theron_v1_track02_extract_cd_play_tracks(
-        data, size, THERON_TRACK02_MD5_US_BIN, &receipt);
-    assert(status == THERON_TRACK02_SIGNAL_OK);
-    assert(receipt.valid);
-
-    printf("  CD_PLAY sites: total=%zu code=%zu with_track=%zu\n",
-           receipt.total_sites, receipt.code_sites, receipt.sites_with_track);
-
-    /* Must find at least 2 code-region CD_PLAY sites */
-    assert(receipt.code_sites >= 2u);
-    /* All code sites should have track parameter */
-    assert(receipt.sites_with_track == receipt.code_sites);
-
-    /* Both real code sites load track $0E (14 decimal = CD-DA track 14) */
-    {
+    for (region_index = 0u;
+         region_index < sizeof(media) / sizeof(media[0]); ++region_index) {
+        size_t size;
+        size_t code_sites = 0u;
+        uint8_t *data = load_track02_named(media[region_index].basename, &size);
+        Theron_Track02CdPlayTrackMapReceipt receipt;
+        Theron_Track02SignalStatus status;
         size_t i;
+
+        if (!data) {
+            printf("SKIP cd_play_tracks %s (authentic data unavailable)\n",
+                   media[region_index].region);
+            continue;
+        }
+        ++available_regions;
+        status = theron_v1_track02_extract_cd_play_tracks(
+            data, size, media[region_index].md5, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid);
+        assert(receipt.code_sites > 0u);
         for (i = 0u; i < receipt.total_sites; ++i) {
-            if (receipt.sites[i].in_code_region) {
-                assert(receipt.sites[i].track_param_found);
-                assert(receipt.sites[i].track_param == 0x0Eu);
-                printf("  CD_PLAY code site: sector %zu, track $%02X\n",
-                       receipt.sites[i].sector, receipt.sites[i].track_param);
+            if (!receipt.sites[i].in_code_region) continue;
+            ++code_sites;
+            assert(receipt.sites[i].track_param_found);
+            printf("  %s CD_PLAY candidate: sector %zu, track $%02X\n",
+                   media[region_index].region, receipt.sites[i].sector,
+                   receipt.sites[i].track_param);
+        }
+        printf("  %s static candidates: total=%zu code=%zu with_track=%zu\n",
+               media[region_index].region, receipt.total_sites,
+               receipt.code_sites, receipt.sites_with_track);
+        assert(code_sites == receipt.code_sites);
+        assert(receipt.sites_with_track == receipt.code_sites);
+        if (strcmp(media[region_index].region, "US") == 0) {
+            assert(receipt.code_sites >= 2u);
+            for (i = 0u; i < receipt.total_sites; ++i) {
+                if (receipt.sites[i].in_code_region)
+                    assert(receipt.sites[i].track_param == 0x0Eu);
             }
         }
+        free(data);
     }
-
-    free(data);
+    if (available_regions == 0u) {
+        printf("SKIP cd_play_tracks (no authentic regional data)\n");
+        return 0;
+    }
     printf("PASS cd_play_track_extraction\n");
     return 0;
 }
@@ -180,7 +207,7 @@ static int test_vdc_config_sites_populated(void) {
 
 static int test_hw_config_summary(void) {
     printf("\n=== Theron V1 Hardware Configuration Summary ===\n");
-    printf("  CD_PLAY: track $0E proven at 2 code sites\n");
+    printf("  CD_PLAY: static track-$0E candidates; runtime selection unverified\n");
     printf("  VDC: MWR/CR/SATB/HSR/HDR/VDW proven from st0/st1/st2 triplets\n");
     printf("  Joypad: all 5 button groups (I/II/Select/Run/D-pad) proven\n");
     printf("PASS hw_config_summary\n");

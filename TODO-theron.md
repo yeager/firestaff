@@ -201,6 +201,13 @@ identity. Bounded hashing now accepts single-image CUE slices in RAM. Track 01
 availability is verified, but the original gameplay CDDA selection/event
 consumer remains open below.
 
+The static Track 02 scan finds two code-region `$E03F` call-site candidates per
+authentic US and JP raw BIN, each preceded within the scan window by a pattern
+that yields track `$0E`. This is a byte-pattern census only: it does not prove
+that `$E03F` selects CDDA, that either site executes, or which gameplay event
+owns it. Keep gameplay audio dispatch disabled until same-session caller-PC,
+playback-start and source-byte provenance are captured.
+
 The world-level quest-item helper rejects invalid dungeon IDs, wrong-dungeon
 bits and duplicate collection. It now also refuses to mutate a source-header-
 verified level while the original T900 pickup consumer remains unbound, so a

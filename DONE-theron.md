@@ -6437,3 +6437,18 @@ three times against the authentic JP Rev. 1 CUE and original sibling BIN/audio
 files; all three runs passed. Each run decodes and queues Tracks 03–18 and
 retains the Track 01 stream regression. Gameplay event mapping and automatic
 in-game selection remain open in `TODO-theron.md`.
+
+# ✅ 2026-10-02 Authentic Track 02 CD-play candidate census
+
+`test_theron_v1_hw_config cd_play_track` now scans both authentic raw editions
+when present. On trv2, the US BIN yielded two heuristic code-region `$E03F`
+call-site candidates in sectors 1224 and 3095; the JP BIN yielded candidates
+in sectors 1223 and 3094. The preceding-byte scan reports parameter `$0E` for
+all four. This is static byte-pattern evidence, not proof that `$E03F` is a
+CDDA playback API or that these sites execute for a gameplay event. The test
+and hardware summary now call them candidates rather than proven playback.
+
+Verification: built the hardware-configuration test on `trv2` and ran the
+filtered census three times against the authentic US and JP Track 02 BINs; all
+six region-results matched. Runtime caller, event ownership and actual audio
+start remain open in `TODO-theron.md`.
