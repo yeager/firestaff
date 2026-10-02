@@ -412,6 +412,31 @@ TEST(light_mode8_teleporter_projection_uses_source_destination) {
     assert(state.alternate[13u * 32u + 10u] == 4u);
 }
 
+static int light_grid_step(void *context, int map, int x, int y,
+                           int direction, int *next_map,
+                           int *next_x, int *next_y)
+{
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    (void)context;
+    *next_x = x + dx[direction];
+    *next_y = y + dy[direction];
+    if (*next_x < 0 || *next_y < 0 || *next_x >= 32 || *next_y >= 32)
+        return 0;
+    *next_map = map;
+    return 1;
+}
+
+TEST(light_mode8_work_ring_wraps_after_256_nodes) {
+    DM2_V1_1c9aLightVisibility state;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 32, -1, 0);
+    assert(dm2_v1_1c9a_light_mode8_frontier(
+        &state, 38, 0, 0, light_grid_step, NULL));
+    assert(state.current[25u * 32u] == 26u);
+    assert(state.current[26u * 32u] == 0u);
+    assert(!state.mode8_complete && state.source_state_hash == 0u);
+}
+
 /* ---- Popcount ---- */
 
 TEST(popcount_zero) {
@@ -912,6 +937,7 @@ int main(void) {
     RUN(light_visibility_action27);
     RUN(light_mode8_frontier_is_fail_closed);
     RUN(light_mode8_teleporter_projection_uses_source_destination);
+    RUN(light_mode8_work_ring_wraps_after_256_nodes);
 
     /* Popcount */
     RUN(popcount_zero);

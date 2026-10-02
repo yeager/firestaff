@@ -90,10 +90,16 @@ int dm2_v1_1c9a_light_mode8_frontier(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context)
 {
-    typedef struct { int16_t map, x, y; uint8_t depth; } Cell;
-    Cell queue[2u * 32u * 32u];
+    typedef struct { uint8_t map, x, y, depth; } Cell;
+    /* SK1C9A allocates xp_90 as 0x400 bytes and stores four-byte work
+     * entries through byte-sized producer/consumer cursors. Keep this
+     * partial traversal to the same 256 pending-node slots. */
+    Cell queue[256u];
+    _Static_assert(sizeof(queue) == 0x400u,
+                   "SK1C9A work ring must be 0x400 bytes");
     uint8_t seen[2u * 32u * 32u] = {0};
-    size_t head = 0u, tail = 0u;
+    uint8_t head = 0u, tail = 0u;
+    unsigned pending = 0u;
     int selector;
     if (!state) return 0;
     memset(state->current, 0, sizeof(state->current));
@@ -105,11 +111,14 @@ int dm2_v1_1c9a_light_mode8_frontier(
         start_map != state->current_map ||
         start_x >= state->current_width)
         return 0;
-    queue[tail++] = (Cell){(int16_t)start_map, (int16_t)start_x,
-                           (int16_t)start_y, 0u};
+    if (start_map > 255) return 0;
+    queue[tail++] = (Cell){(uint8_t)start_map, (uint8_t)start_x,
+                           (uint8_t)start_y, 0u};
+    pending = 1u;
     seen[(size_t)start_x * 32u + (size_t)start_y] = 1u;
-    while (head < tail) {
+    while (pending != 0u) {
         Cell cell = queue[head++];
+        --pending;
         if (!dm2_v1_1c9a_light_visibility_mark(
                 state, cell.map, cell.x, cell.y, cell.depth))
             goto incomplete;
@@ -126,18 +135,20 @@ int dm2_v1_1c9a_light_mode8_frontier(
             if (result == 0) continue;
             selector = next_map == state->current_map ? 0 :
                        next_map == state->alternate_map ? 1 : -1;
-            if (selector < 0 || next_x < 0 || next_y < 0 || next_y >= 32 ||
+            if (selector < 0 || next_map > 255 || next_x < 0 ||
+                next_y < 0 || next_y >= 32 ||
                 next_x >= (selector == 0 ? state->current_width :
                                           state->alternate_width))
                 goto incomplete;
             index = (size_t)selector * 1024u + (size_t)next_x * 32u +
                     (size_t)next_y;
             if (seen[index]) continue;
-            if (tail >= sizeof(queue) / sizeof(queue[0])) goto incomplete;
+            if (pending == 256u) goto incomplete;
             seen[index] = 1u;
-            queue[tail++] = (Cell){(int16_t)next_map, (int16_t)next_x,
-                                   (int16_t)next_y,
+            queue[tail++] = (Cell){(uint8_t)next_map, (uint8_t)next_x,
+                                   (uint8_t)next_y,
                                    (uint8_t)(cell.depth + 1u)};
+            ++pending;
         }
     }
     return 1;
