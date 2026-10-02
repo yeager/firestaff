@@ -4400,6 +4400,15 @@ not further interpretation of bank loading. See
   `TQUS02.bin` (`f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565`).
   This proves Track 01 startup for both supplied editions,
   but still does not establish any gameplay CDDA selection.
+- ✅ Added an archive-backed CTest that extracts the authentic US and JP CUE,
+  Track 01, and Track 02 members from their supplied 7z discs into a temporary
+  build-local directory. It verifies each original Track 02 BIN against its
+  edition hash, calls the production verified-media CDDA handoff, and starts
+  the file-backed production audio lifecycle. On trv2,
+  `ctest --test-dir build -R '^theron_v1_track01_cdda_authentic_archive$'
+  --output-on-failure` passed for both editions. This verifies title Track 01
+  raw CDDA startup only; gameplay music routing and archive-native runtime
+  reads remain separate parity requirements.
 - 🔒 Runtime archive gap confirmed for both JP and US: booting directly from
   either supplied `.7z` with external archive tools enabled accepts its
   authentic Track 02, but reports `theronTrack01CddaReady=0`; the user's
@@ -4769,3 +4778,13 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   tree. The trace remains private and is not committed. This establishes the
   call receipt only, not successful stage-two handoff, menu selection, dungeon
   entry or T900 semantics.
+
+## 2026-10-02 — C3A0 caller evidence rejects unrelated rows
+
+- ✅ Tightened `verify_theron_record_table_provenance.py` so a C3A0 caller
+  witness must have a logical PC inside the source-locked `$C3A0–$C429`
+  window and a physical PC consistent with the captured MPR mapping. The
+  regression now rejects both an out-of-window row and a row whose physical
+  mapping disagrees with its logical PC; the authentic-shape fixture still
+  passes. This validates evidence coordinates only and does not promote the
+  `$611D` record table to level, object, creature, or gameplay semantics.

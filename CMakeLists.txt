@@ -46966,6 +46966,18 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_track01_cdda_handoff PROPERTIES
         ENVIRONMENT "SDL_AUDIODRIVER=dummy")
+    if(UNIX)
+        add_test(
+            NAME theron_v1_track01_cdda_authentic_archive
+            COMMAND bash
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track01_cdda_authentic_archive.sh
+                $<TARGET_FILE:test_theron_v1_track01_cdda_handoff>
+        )
+        set_tests_properties(theron_v1_track01_cdda_authentic_archive PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "theron;real-media;audio;archive;no-synthetic"
+        )
+    endif()
 
     add_executable(test_theron_v1_cd_audio_availability
         tests/test_theron_v1_cd_audio_availability.c

@@ -24,3 +24,20 @@ printf '%s\n' 'spawn_consumer_registers sequence=0 pc=c3a0 physical_pc=000d23a0 
 
 python3 "$repo/scripts/verify_theron_record_table_provenance.py" \
     "$ram" "$watch" --spawn-registers "$registers" --minimum-records 1
+
+# Every candidate C3A0 row must belong to the caller window and its physical
+# PC must agree with the captured MPR mapping. Unrelated or malformed rows
+# must not be counted as caller evidence.
+printf '%s\n' 'spawn_consumer_registers sequence=1 pc=c42a physical_pc=000d242a a=00 x=00 y=00 sp=ff p=00 mpr0=ff mpr_pc=69 b3=00 b4=00 b5=00 b6=00 b8=00 ba=00 bb=00 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0 record_c3a0_window=1' >>"$registers"
+if python3 "$repo/scripts/verify_theron_record_table_provenance.py" \
+    "$ram" "$watch" --spawn-registers "$registers" --minimum-records 1; then
+    echo 'FAIL: accepted a register row outside the C3A0 caller window' >&2
+    exit 1
+fi
+sed -i.bak 's/sequence=1 pc=c42a physical_pc=000d242a/sequence=1 pc=c3a0 physical_pc=000d242a/' "$registers"
+rm -f "$registers.bak"
+if python3 "$repo/scripts/verify_theron_record_table_provenance.py" \
+    "$ram" "$watch" --spawn-registers "$registers" --minimum-records 1; then
+    echo 'FAIL: accepted a register row with an inconsistent physical PC' >&2
+    exit 1
+fi
