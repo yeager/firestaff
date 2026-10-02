@@ -19,6 +19,18 @@ int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state)
     return (cached_tile_state & 0x10u) != 0u;
 }
 
+int dm2_v1_mode7_action23_visit_tile(
+    uint16_t cached_tile_state, uint8_t radius,
+    int16_t map, int16_t x, int16_t y,
+    DM2_V1_Mode7AddBackgroundLight add_background_light, void *ctx)
+{
+    if (!dm2_v1_mode7_action23_samples_tile(cached_tile_state)) return 0;
+    if (!add_background_light || radius == 0u || radius > 8u) return -1;
+    /* SK1C9A.cpp:8983-8995 passes vl_58, vw_f8, vo_f4, vw_12c and
+     * source flags 4, in that order, after testing v1e08ae bit 0x10. */
+    return add_background_light(ctx, radius, map, x, y, 4u) ? 1 : -1;
+}
+
 /* ---- DM2_RECALC_LIGHT_LEVEL (c_light.cpp:16-198) ---- */
 
 void dm2_v1_recalc_light_level_pc34(

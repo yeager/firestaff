@@ -107,6 +107,17 @@ int dm2_v1_mode7_light_prepare(uint16_t source_radius,
  * state has bit 0x10. This decision does not complete traversal. */
 int dm2_v1_mode7_action23_samples_tile(uint16_t cached_tile_state);
 
+/* One admitted FIND_WALK_PATH action-0x17 node. Returns 0 for a source skip,
+ * 1 after the callback succeeds, and -1 if an admitted source is unresolved.
+ * The callback must implement ADD_BACKGROUND_LIGHT_FROM_TILE with flags 4. */
+typedef int (*DM2_V1_Mode7AddBackgroundLight)(
+    void *ctx, uint8_t radius, int16_t map, int16_t x, int16_t y,
+    uint8_t source_flags);
+int dm2_v1_mode7_action23_visit_tile(
+    uint16_t cached_tile_state, uint8_t radius,
+    int16_t map, int16_t x, int16_t y,
+    DM2_V1_Mode7AddBackgroundLight add_background_light, void *ctx);
+
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {
     if (val < lo) return lo;

@@ -218,6 +218,53 @@ static int mock_is_dirty(void *ctx) { (void)ctx; return g_dirty_flag; }
 static void mock_recompute(void *ctx) { (void)ctx; g_recomputed = 1; }
 static void mock_clear_dirty(void *ctx) { (void)ctx; g_dirty_flag = 0; }
 
+typedef struct {
+    int calls;
+    int resolve;
+    uint8_t radius, flags;
+    int16_t map, x, y;
+} Mode7VisitProbe;
+
+static int mock_mode7_add_background(void *ctx, uint8_t radius,
+                                     int16_t map, int16_t x, int16_t y,
+                                     uint8_t flags)
+{
+    Mode7VisitProbe *probe = (Mode7VisitProbe *)ctx;
+    probe->calls++;
+    probe->radius = radius;
+    probe->map = map;
+    probe->x = x;
+    probe->y = y;
+    probe->flags = flags;
+    return probe->resolve;
+}
+
+static void test_mode7_action23_visit_order(void)
+{
+    Mode7VisitProbe probe;
+    memset(&probe, 0, sizeof(probe));
+    probe.resolve = 1;
+    assert(dm2_v1_mode7_action23_visit_tile(
+        0x8000u, 5u, 38, 6, 6, mock_mode7_add_background, &probe) == 0);
+    assert(probe.calls == 0);
+    assert(dm2_v1_mode7_action23_visit_tile(
+        0x8010u, 5u, 38, 6, 6, mock_mode7_add_background, &probe) == 1);
+    assert(probe.calls == 1 && probe.radius == 5u && probe.map == 38 &&
+           probe.x == 6 && probe.y == 6 && probe.flags == 4u);
+    probe.resolve = 0;
+    assert(dm2_v1_mode7_action23_visit_tile(
+        0x0010u, 5u, 3, 1, 2, mock_mode7_add_background, &probe) == -1);
+    assert(probe.calls == 2 && probe.map == 3 && probe.x == 1 &&
+           probe.y == 2);
+    assert(dm2_v1_mode7_action23_visit_tile(
+        0x0010u, 0u, 3, 1, 2, mock_mode7_add_background, &probe) == -1);
+    assert(dm2_v1_mode7_action23_visit_tile(
+        0x0010u, 9u, 3, 1, 2, mock_mode7_add_background, &probe) == -1);
+    assert(dm2_v1_mode7_action23_visit_tile(
+        0x0010u, 5u, 3, 1, 2, NULL, &probe) == -1);
+    assert(probe.calls == 2);
+}
+
 static void test_check_recompute_clean(void)
 {
     g_dirty_flag = 0; g_recomputed = 0;
@@ -256,6 +303,7 @@ int main(void)
     assert(dm2_v1_mode7_action23_samples_tile(0x0010u));
     assert(dm2_v1_mode7_action23_samples_tile(0x8010u));
     assert(!dm2_v1_mode7_action23_samples_tile(0x8000u));
+    test_mode7_action23_visit_order();
     test_proceed_light_darkness();
     test_proceed_light_torch();
     test_proceed_light_invalid();
