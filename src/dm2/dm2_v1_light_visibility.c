@@ -210,7 +210,9 @@ int dm2_v1_1c9a_light_visibility_or_mask(
 static int light_walk_core(
     DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
     int start_y, DM2_V1_1c9aLightStep step, void *context,
-    uint16_t *walk_rng, uint16_t source_flags, unsigned action)
+    uint16_t *walk_rng, uint16_t source_flags, unsigned action,
+    unsigned max_score,
+    DM2_V1_1c9aLightNodeAction on_node)
 {
     typedef struct { uint8_t x, y, map, reserved; } Cell;
     /* SK1C9A xp_90 stores x, y, map in four-byte work entries. Scores live
@@ -225,13 +227,19 @@ static int light_walk_core(
     unsigned pending = 0u;
     unsigned lowest = 0u;
     int selector;
-    if (!state || !walk_rng || action != 0x1bu) return 0;
+    if (!state || !walk_rng || max_score == 0u || max_score > 50u ||
+        (action != 0x1bu && action != 0x17u)) return 0;
     memset(work_grid, 0, sizeof(work_grid));
     memset(seen, 0, sizeof(seen));
     memset(score_bucket, 0, sizeof(score_bucket));
-    memset(state->current, 0, sizeof(state->current));
-    memset(state->alternate, 0, sizeof(state->alternate));
-    state->mode8_complete = 0u;
+    if (action == 0x1bu) {
+        memset(state->current, 0, sizeof(state->current));
+        memset(state->alternate, 0, sizeof(state->alternate));
+        state->mode8_complete = 0u;
+    } else {
+        state->v1e0974 = 0;
+        state->v1e0978 = 0;
+    }
     state->mode7_complete = 0u;
     state->source_state_hash = 0u;
     if (!step || start_x < 0 || start_y < 0 || start_y >= 32 ||
@@ -250,9 +258,14 @@ static int light_walk_core(
     }
     /* The initial action sees vo_e8=0, then the source's default tile
      * cost 1 places the start cell into xp_90 for its first expansion. */
-    if (!dm2_v1_1c9a_light_visibility_mark_action27(
-            state, start_map, start_x, start_y, -1, -1, -1, 0u))
+    if (action == 0x1bu) {
+        if (!dm2_v1_1c9a_light_visibility_mark_action27(
+                state, start_map, start_x, start_y, -1, -1, -1, 0u))
+            goto incomplete;
+    } else if (!on_node || on_node(context, start_map, start_x,
+                                   start_y, 0u, 3u) < 0) {
         goto incomplete;
+    }
     queue[tail] = (Cell){(uint8_t)start_x, (uint8_t)start_y,
                          (uint8_t)start_map, 0u};
     ++tail;
@@ -321,11 +334,16 @@ static int light_walk_core(
                 goto incomplete;
             index = (size_t)selector * 1024u + (size_t)next_x * 32u +
                     (size_t)next_y;
-            if (!dm2_v1_1c9a_light_visibility_mark_action27(
-                    state, next_map, next_x, next_y,
-                    projection_map, projection_x, projection_y, score))
+            if (action == 0x1bu) {
+                if (!dm2_v1_1c9a_light_visibility_mark_action27(
+                        state, next_map, next_x, next_y,
+                        projection_map, projection_x, projection_y, score))
+                    goto incomplete;
+            } else if (on_node(context, next_map, next_x, next_y,
+                               score, 4u) < 0) {
                 goto incomplete;
-            if ((unsigned)score + (unsigned)result > 25u ||
+            }
+            if ((unsigned)score + (unsigned)result > max_score ||
                 (seen[index] &&
                  (unsigned)score + (unsigned)result >=
                      work_grid[index].score))
@@ -360,7 +378,22 @@ int dm2_v1_1c9a_light_mode8_frontier_with_rng(
 {
     /* SK1C9A action 27 installs v1e0576=0x36e7 in its prepass. */
     return light_walk_core(state, start_map, start_x, start_y, step,
-                           context, walk_rng, 0x36e7u, 0x1bu);
+                           context, walk_rng, 0x36e7u, 0x1bu, 25u, NULL);
+}
+
+int dm2_v1_1c9a_light_mode7_frontier_with_rng(
+    DM2_V1_1c9aLightVisibility *state, int start_map, int start_x,
+    int start_y, unsigned source_radius, DM2_V1_1c9aLightStep step,
+    DM2_V1_1c9aLightNodeAction on_node, void *context,
+    uint16_t *walk_rng)
+{
+    /* Action 23 installs v1e0576=0x227; its two call sites have distinct
+     * source flags (3 at start, 4 on an admitted edge). */
+    if (source_radius == 0u || !on_node) return 0;
+    if (source_radius > 8u) source_radius = 8u;
+    return light_walk_core(state, start_map, start_x, start_y, step,
+                           context, walk_rng, 0x227u, 0x17u,
+                           source_radius, on_node);
 }
 
 int dm2_v1_1c9a_light_mode8_frontier(

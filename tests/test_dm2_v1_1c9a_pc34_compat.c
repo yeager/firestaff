@@ -457,6 +457,60 @@ static int light_no_edges(void *context, int map, int x, int y,
     return 0;
 }
 
+typedef struct {
+    unsigned start_calls, edge_calls;
+    unsigned start_score, edge_score;
+} LightMode7Actions;
+
+static int light_mode7_record_action(void *context, int map, int x, int y,
+                                     unsigned score, unsigned source_flags)
+{
+    LightMode7Actions *actions = (LightMode7Actions *)context;
+    assert(map == 38);
+    if (source_flags == 3u) {
+        assert(x == 6 && y == 6);
+        ++actions->start_calls;
+        actions->start_score = score;
+    } else if (source_flags == 4u) {
+        ++actions->edge_calls;
+        actions->edge_score = score;
+    } else return -1;
+    return 0;
+}
+
+static int light_mode7_one_edge(void *context, int map, int x, int y,
+                                int direction, int *next_map,
+                                int *next_x, int *next_y,
+                                int *projection_map, int *projection_x,
+                                int *projection_y)
+{
+    (void)context;
+    if (map != 38 || x != 6 || y != 6 || direction != 0) return 0;
+    *next_map = map;
+    *next_x = x;
+    *next_y = y - 1;
+    *projection_map = *projection_x = *projection_y = -1;
+    return 1;
+}
+
+TEST(light_mode7_uses_separate_walk_and_shared_rng_cursor) {
+    DM2_V1_1c9aLightVisibility state;
+    LightMode7Actions actions = {0};
+    uint16_t rng = 1u;
+    dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, -1, 0);
+    assert(dm2_v1_1c9a_light_mode8_frontier_with_rng(
+        &state, 38, 6, 6, light_no_edges, NULL, &rng));
+    assert(rng == 0xb400u && state.current[6u * 32u + 6u] == 1u);
+    assert(dm2_v1_1c9a_light_mode7_frontier_with_rng(
+        &state, 38, 6, 6, 8u, light_mode7_one_edge,
+        light_mode7_record_action, &actions, &rng));
+    assert(rng == 0x2d00u && actions.start_calls == 1u &&
+           actions.start_score == 0u && actions.edge_calls == 4u &&
+           actions.edge_score == 1u);
+    assert(state.current[6u * 32u + 6u] == 1u &&
+           !state.mode7_complete && state.source_state_hash == 0u);
+}
+
 TEST(light_mode8_start_action_does_not_prefetch_projection) {
     DM2_V1_1c9aLightVisibility state;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 16);
@@ -1238,6 +1292,7 @@ int main(void) {
     RUN(light_visibility_action27);
     RUN(light_work_grid_node_packs_source_position);
     RUN(light_mode8_frontier_is_fail_closed);
+    RUN(light_mode7_uses_separate_walk_and_shared_rng_cursor);
     RUN(light_mode8_teleporter_projection_uses_source_destination);
     RUN(light_action27_writes_both_matching_planes);
     RUN(light_mode8_start_action_does_not_prefetch_projection);
