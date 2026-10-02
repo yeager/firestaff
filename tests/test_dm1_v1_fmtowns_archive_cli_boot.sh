@@ -40,6 +40,11 @@ probe --game dm1 --platform fmtowns --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --game dm1 --platform fm-towns --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
+# The public bare game route must select the authenticated FM Towns edition
+# when no platform was requested. Keep this separate from the explicit
+# platform probes above so a launcher default regression cannot hide there.
+probe --game dm1 --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 2 --duration 0
 
 japanese_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform fm-towns --dm1-fmtowns-ja --data-dir "$archive" \
