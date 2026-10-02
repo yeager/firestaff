@@ -21,11 +21,22 @@ Reviewed 2026-10-02. Only open work is listed here.
   sectors from both original editions. This establishes authentic title
   Track 01 availability and startup only—not audible device output, gameplay
   CDDA command selection, or a game-owned event-to-track mapping.
-- 🔒 A fresh original-emulator dungeon save is still unavailable. The Mac was
-  locked and trv2 was running another agent's Nexus capture during this work;
-  do not infer in-game progress or save creation from the Firestaff boot probe.
-  Continue that capture after the Mac is unlocked and the emulator window is
-  visibly confirmed; hold RUN for 3–5 seconds as instructed.
+- 🔒 A fresh original-emulator dungeon save is still unavailable. On trv2, an
+  isolated Mednafen/Xvfb session visibly loaded the authentic US CUE and the
+  verified System Card 3.0. RUN (the profile's Return mapping) was held for
+  four seconds as instructed, but the screen changed to the
+  "disc only works on the SUPER CD-ROM2 SYSTEM" warning rather than a playable
+  dungeon. Mednafen created a 2 KiB BRAM file in the fresh private profile;
+  this is not evidence of an in-dungeon save or successful campaign progress.
+  Preserve the capture outside Git and resolve the boot/runtime incompatibility
+  before interpreting or importing that BRAM. The Mac remains locked and the
+  separate Nexus capture on trv2 was left untouched.
+- The instrumented capture, including a read-only replay from the existing
+  authentic US save-manager state, recorded RUN as PCE input `raw=0008`; every
+  controller-read PC remained in the System Card `$E4xx` path. No game-side
+  controller poll or dungeon transition was observed. The strict capture
+  rejected the run because it did not produce a valid bounded VDC snapshot;
+  its trace and BRAM snapshot remain private on trv2 and are not parity proof.
 
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
