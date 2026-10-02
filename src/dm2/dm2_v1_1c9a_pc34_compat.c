@@ -41,6 +41,20 @@ int dm2_v1_1c9a_light_visibility_mark(
     return wrote;
 }
 
+int dm2_v1_1c9a_light_visibility_level_inputs(
+    const DM2_V1_1c9aLightVisibility *state, int map,
+    int16_t *v1e0974, int16_t *v1e0978, uint32_t *source_state_hash)
+{
+    if (!state || !v1e0974 || !v1e0978 || !source_state_hash ||
+        map != state->current_map || !state->mode8_complete ||
+        !state->mode7_complete || !state->source_state_hash)
+        return 0;
+    *v1e0974 = state->v1e0974;
+    *v1e0978 = state->v1e0978;
+    *source_state_hash = state->source_state_hash;
+    return 1;
+}
+
 /* ========================================================================
  * Tile cache
  * ======================================================================== */

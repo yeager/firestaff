@@ -319,6 +319,9 @@ static int tests_failed = 0;
 
 TEST(light_visibility_action27) {
     DM2_V1_1c9aLightVisibility state;
+    int16_t ambient = -1;
+    int16_t darkness = -1;
+    uint32_t source_hash = 0u;
     dm2_v1_1c9a_light_visibility_reset(&state, 38, 16, 3, 12);
     assert(dm2_v1_1c9a_light_visibility_mark(&state, 38, 6, 4, 2u));
     assert(state.current[6u * 32u + 4u] == 3u);
@@ -327,6 +330,9 @@ TEST(light_visibility_action27) {
     assert(state.alternate[11u * 32u + 9u] == 1u);
     assert(!dm2_v1_1c9a_light_visibility_mark(&state, 38, 16, 4, 1u));
     assert(!dm2_v1_1c9a_light_visibility_mark(&state, 38, 6, 32, 1u));
+    assert(!dm2_v1_1c9a_light_visibility_level_inputs(
+        &state, 38, &ambient, &darkness, &source_hash));
+    assert(ambient == -1 && darkness == -1 && source_hash == 0u);
     dm2_v1_1c9a_light_visibility_reset(&state, 3, 12, -1, 0);
     assert(state.current[6u * 32u + 4u] == 0u);
     assert(state.alternate[11u * 32u + 9u] == 0u);
