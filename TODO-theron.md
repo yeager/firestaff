@@ -70,6 +70,11 @@ Reviewed 2026-10-02. Only open work is listed here.
   Theron routine. Until then, keep these semantics unsupported and update the
   mutating resolver and read-only preview together only from Theron-specific
   evidence. Generic DM/ReDMCSB behavior is not sufficient.
+  Neither the production packed-coordinate path nor the legacy object-ID
+  compatibility path maps its transition to the generic
+  `THERON_SOUND_TELEPORT` sample. The original sound event/sample ownership
+  remains unverified; this conservative gate does not imply that retail
+  teleporters are silent.
 - Capture preparation is incomplete: the authenticated US gameplay savestate
   used by the prior command captures is not available as a gameplay state.
   The older authenticated US `.mc0` has matching state, US CUE, and System
@@ -83,6 +88,10 @@ Reviewed 2026-10-02. Only open work is listed here.
   authorized authentic gameplay state or establish a fresh source-bound route
   first; then add PC-attributed party/item and sound-register observation
   before drawing field semantics.
+  The user confirmed on 2026-10-02 that no authentic in-dungeon savestate is
+  available. A separate local Mednafen run loaded the authentic US 19-track
+  CUE, but no in-game input was delivered and no savestate was created; this
+  boot is not gameplay evidence.
   A read-only trv2 check on 2026-10-02 found no other Mednafen state or movie
   files in its configured save directory or Firestaff work trees. The SSH
   session had no display, and `:0` was unavailable; this does not authorize

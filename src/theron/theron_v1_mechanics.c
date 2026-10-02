@@ -1188,7 +1188,11 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
             world->transition_target_level = target_level;
             world->party.leader_x = target_x;
             world->party.leader_y = target_y;
-            theron_v1_play_sound(THERON_SOUND_TELEPORT);
+            /* THQUEST.ASM:T600's coordinate path is recorded at
+             * docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md:466-476.
+             * The ADPCM trace proves transport, not event/sample ownership
+             * (same file:463-464); do not map this transition to a generic
+             * host sample. */
             return 0;
         }
         Theron_V1_Object *target = NULL;
@@ -1219,7 +1223,8 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
         world->transition_target_level = target_level;
         world->party.leader_x = target->x;
         world->party.leader_y = target->y;
-        theron_v1_play_sound(THERON_SOUND_TELEPORT);
+        /* The compatibility object-ID route has no authenticated sound
+         * event/sample mapping; keep it behind the same production gate. */
         return 0;
     }
 

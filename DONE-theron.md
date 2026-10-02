@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-02 — keep unbound Track 02 teleporter sound mapping closed
+
+- The authenticated packed-coordinate transition still commits its verified
+  destination, but no longer requests the generic `THERON_SOUND_TELEPORT`
+  sample. The `THQUEST.ASM:T600` route authenticates the coordinate handoff;
+  available ADPCM evidence proves transport only, not event/sample ownership.
+- The legacy object-ID compatibility route also no longer requests that
+  unbound sample, so fixture behavior cannot imply original audio semantics.
+- This does not claim that original Theron teleporters are silent. Their
+  source-owned sound behavior remains open until the authentic event and sample
+  route are bound.
+- On trv2, the affected Theron targets built successfully. The authentic
+  US/JP Track 02 dungeon-loader test, the production sound gate, and the
+  teleporter-chain regression passed three consecutive loops. This verifies
+  Firestaff's current destination handling and blocked sound boundary, not
+  original-runtime audio parity.
+
 ## 2026-10-02 — exercise authentic teleporter movement-command routes
 
 - The US/JP real-media loader regression now verifies active-to-closed
