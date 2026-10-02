@@ -37,9 +37,12 @@
 
 ## Known limitations
 
-- DM1 and CSB dungeon presentation and audible playback after the CD audio
-  correction have not been verified on the reported MacBook Pro M5 HiDPI
-  hardware.
+- DM1 FM Towns reaches its dungeon map, but its full viewport rendering route
+  remains incomplete according to the runtime receipt. The reported DM1 and
+  CSB dungeon presentation faults have not been resolved or verified on the
+  MacBook Pro M5 HiDPI hardware.
+- Audible playback after the CD audio correction has not been verified on the
+  reported MacBook Pro M5.
 - DM2 FM Towns dungeon presentation currently fails an original-media frame
   ownership check after map 3 to map 38 teleportation. The movement itself
   reaches the source coordinates, but dynamic-light rendering is incomplete.
