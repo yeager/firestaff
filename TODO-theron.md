@@ -40,16 +40,22 @@ Reviewed 2026-10-02. Only open work is listed here.
   mutating resolver and read-only preview together only from Theron-specific
   evidence. Generic DM/ReDMCSB behavior is not sufficient.
 - Capture preparation is incomplete: the authenticated US gameplay savestate
-  used by the prior command captures is absent from trv2's configured Mednafen
-  state directory, and the checked-in scripted replay accepts controller
-  events but not the original panel click. Do not mutate a record or RAM to
-  manufacture a gameplay result. Recover an authorized authentic gameplay
-  state or establish a fresh source-bound route first; then add PC-attributed
-  party/item and sound-register observation before drawing field semantics.
-  A read-only trv2 check on 2026-10-02 found no Mednafen state or movie files in
-  its configured save directory or Firestaff work trees; the SSH session had
-  no display, and `:0` was unavailable. This does not authorize starting a
-  capture against a shared display.
+  used by the prior command captures is not available as a gameplay state.
+  The older authenticated US `.mc0` has matching state, US CUE, and System
+  Card identities, but a new instrumented replay selects the original
+  `DMS-SG.001` backup-RAM manager (`$42B7/$42B8` overlay values `0f/01`), not
+  an active dungeon consumer. Scripted controller events were observed at an
+  original CPU poll, but produced no source-backed movement or teleporter
+  transition. Treat this `.mc0` as save-manager evidence, not a gameplay
+  savestate. The checked-in replay still has no panel-click event. Do not
+  mutate a record or RAM to manufacture a gameplay result. Recover an
+  authorized authentic gameplay state or establish a fresh source-bound route
+  first; then add PC-attributed party/item and sound-register observation
+  before drawing field semantics.
+  A read-only trv2 check on 2026-10-02 found no other Mednafen state or movie
+  files in its configured save directory or Firestaff work trees. The SSH
+  session had no display, and `:0` was unavailable; this does not authorize
+  starting a capture against a shared display.
 
 ## 2026-09-30 — explicit US menu target still does not reach the title route
 
