@@ -15056,6 +15056,24 @@ int dm2_v1_runtime_get_inventory_eye_champion_index(void) {
     return rt->source_v1e0976 - 1;
 }
 
+int dm2_v1_runtime_select_mac_charsheet_champion(int champion_index) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.heros_in_party <= 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+        champion_index < -1 ||
+        champion_index >= rt->source_party.heros_in_party)
+        return 0;
+    /* Retail Mac CODE(10)+0x1538 takes a zero-based champion index and
+     * writes its one-based CHARSHEET owner to A5-0x21f6 at +0x162a.
+     * CODE(10)+0x1ea2 reads that same owner for inventory events. */
+    if (champion_index >= 0 &&
+        rt->source_party.hero[champion_index].curHP <= 0)
+        return 0;
+    rt->source_v1e0976 = (int16_t)(champion_index + 1);
+    return 1;
+}
+
 void dm2_v1_runtime_clear_new_game_party_state(void) {
     /* SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON clears
      * party.heros_in_party and ddat.savegamewpc.w_00 before

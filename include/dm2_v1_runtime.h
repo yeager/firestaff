@@ -1548,6 +1548,7 @@ int dm2_v1_runtime_get_champion_count(void);
  * party.curacthero. No host champion index is accepted. */
 int dm2_v1_runtime_click_inventory_eye(void);
 int dm2_v1_runtime_get_inventory_eye_champion_index(void);
+int dm2_v1_runtime_select_mac_charsheet_champion(int champion_index);
 /* DM2_LOAD_NEW_DUNGEON clears the old party before it admits the new G1
  * structure. This clears only Firestaff's cached representation of that
  * source-owned party/hand state; it does not construct a replacement party. */

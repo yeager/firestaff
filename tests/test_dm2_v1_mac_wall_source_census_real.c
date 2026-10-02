@@ -542,6 +542,37 @@ static int run_one(const char *zip, const char *source_id)
         }
         memset(inventory_frame, 0, sizeof(inventory_frame));
         M11_GameView_Draw(&state, inventory_frame, 320, 200);
+        {
+            DM2_V1_BootExpandedRectReceipt slot_rect;
+            DM2_V1_BootProfile *mac_profile =
+                (DM2_V1_BootProfile *)state.dm2BootProfile;
+            uint32_t slot_before =
+                dm2_v1_runtime_get_champion_inventory_object(0u, 4u);
+            uint32_t hand_before = dm2_v1_runtime_get_leader_hand_object();
+            /* Retail view-8 object 55 emits event 0x20 through Rect 0x81ff.
+             * CODE(8)+0x1ae4 passes event-20=12 to CODE(10)+0x1e3c,
+             * which removes eight: this is champion inventory slot 4. */
+            if (!mac_profile ||
+                !dm2_v1_boot_query_expanded_rect_receipt(
+                    mac_profile, 0x01ffu, &slot_rect) ||
+                !slot_rect.valid || slot_rect.rect.w != 16 ||
+                slot_rect.rect.h != 16 || slot_before != 0u ||
+                hand_before != 0xffffu ||
+                M11_GameView_HandlePointerButton(
+                    &state, slot_rect.rect.x + slot_rect.rect.w / 2,
+                    slot_rect.rect.y + slot_rect.rect.h / 2,
+                    DM1_V1_MOUSE_MASK_LEFT_PC34) != M11_GAME_INPUT_REDRAW ||
+                state.inventorySelectedSlot != 4 ||
+                dm2_v1_runtime_get_champion_inventory_object(0u, 4u) !=
+                    slot_before ||
+                dm2_v1_runtime_get_leader_hand_object() != hand_before) {
+                fprintf(stderr,
+                        "Mac CHARSHEET event 0x20 did not select slot 4: %s\n",
+                        source_id);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+        }
         if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK) !=
                 M11_GAME_INPUT_REDRAW || state.inventoryPanelActive) {
             fprintf(stderr, "Mac CHARSHEET inventory did not close: %s\n",
@@ -560,6 +591,32 @@ static int run_one(const char *zip, const char *source_id)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    {
+        DM2_V1_BootExpandedRectReceipt slot_rect;
+        DM2_V1_BootProfile *mac_profile =
+            (DM2_V1_BootProfile *)state.dm2BootProfile;
+        uint32_t slot_before =
+            dm2_v1_runtime_get_champion_inventory_object(0u, 4u);
+        uint32_t hand_before = dm2_v1_runtime_get_leader_hand_object();
+        if (dm2_v1_runtime_get_inventory_eye_champion_index() != 0 ||
+            hand_before != 0xffffu || slot_before != 0u ||
+            !dm2_v1_boot_query_expanded_rect_receipt(
+                mac_profile, 0x01ffu, &slot_rect) ||
+            M11_GameView_HandlePointerButton(
+                &state, slot_rect.rect.x + slot_rect.rect.w / 2,
+                slot_rect.rect.y + slot_rect.rect.h / 2,
+                DM1_V1_MOUSE_MASK_LEFT_PC34) != M11_GAME_INPUT_REDRAW ||
+            state.inventorySelectedSlot != 4 ||
+            dm2_v1_runtime_get_champion_inventory_object(0u, 4u) !=
+                slot_before ||
+            dm2_v1_runtime_get_leader_hand_object() != 0u) {
+            fprintf(stderr,
+                    "Mac F1 CHARSHEET source owner/slot 4 pointer failed: %s\n",
+                    source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
             M11_GAME_INPUT_REDRAW || !state.inventoryPanelActive) {
         fprintf(stderr, "Mac authenticated keyboard item transaction unavailable: %s\n",
@@ -569,7 +626,8 @@ static int run_one(const char *zip, const char *source_id)
     }
     puts("  authenticated Mac keyboard item transaction accepted");
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK) !=
-            M11_GAME_INPUT_REDRAW || state.inventoryPanelActive) {
+            M11_GAME_INPUT_REDRAW || state.inventoryPanelActive ||
+        dm2_v1_runtime_get_inventory_eye_champion_index() != -1) {
         fprintf(stderr, "Mac F1 champion inventory owner did not close: %s\n",
                 source_id);
         M11_GameView_Shutdown(&state);

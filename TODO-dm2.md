@@ -273,9 +273,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   do not promote either side as pixel parity before that comparison exists.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
-- Restore native Macintosh CHARSHEET pointer item transactions. The current
-  `M11_GameView_HandlePointerButton` branch consumes Mac inventory clicks
-  while the panel is open. Retail `CODE(0)` maps `A5+0x222` to control insert
+- Complete native Macintosh CHARSHEET pointer item transactions. The current
+  `M11_GameView_HandlePointerButton` branch resolves source object events
+  32..57 to champion inventory slots 4..29; the other slot owners remain open.
+  Retail `CODE(0)` maps `A5+0x222` to control insert
   (`CODE(3)+0x0b1a`), `A5+0x22a` to removal (`+0x0bd6`), and `A5+0x212` to
   Rect allocation (`+0x0ae0`); `CODE(3)+0x0170` hit-tests linked Rects.
   `CODE(10)+0x166e` selects CHARSHEET view 8; `CODE(8)+0x0674` toggles
@@ -283,11 +284,18 @@ Reviewed 2026-08-29. Only open work is listed here.
   object. `CODE(1)+0x006e` expands retail `DATA(0)`/`ZERO(0)` to `0x681e`
   A5 bytes. View-8 leaf 24 starts at six-byte object record 55: event 0x20,
   Rect 0x81ff, flags 0x0002. `CODE(8)+0x025c` masks that Rect ID with
-  `0x3fff`; Mac RAW4 Rect 0x01ff is (68,138,16,16). The event-to-inventory
-  slot mapping remains unproven in the Mac dispatch code, so these records
-  must not yet trigger item swaps. Find that dispatch and other slot owners,
-  then verify pickup/placement after obtaining an original item through
-  gameplay; both new-game champions start with empty inventories.
+  `0x3fff`; Mac RAW4 Rect 0x01ff is (68,138,16,16). `CODE(8)+0x1ad8`
+  dispatches event 0x14..0x41 as event minus 0x14 to `A5+0xb42`, which
+  maps to `CODE(10)+0x1e3c`. That function subtracts eight for champion
+  slots, so event 0x20 selects slot 4, not slot 12. Mac
+  `CODE(10)+0x1538..0x162e` binds the one-based CHARSHEET owner at
+  `A5-0x21f6`; F1–F4 now bind the matching source runtime owner rather than
+  using the unrelated attack-hero selector. The original-media test verifies
+  empty slot 4 selection with both F1 ownership and ownerless inventory,
+  plus an outside click. Both new-game
+  champions have empty inventories, and map 0 contains actuators but no
+  pickup item; obtain an original item through normal gameplay and prove a
+  pointer pickup/placement round trip before calling item exchange complete.
 - For the Japanese FM Towns edition, pair one original-emulator session with
   Firestaff at the same startup checkpoints. The retained original trace
   proves pre-title → FTL → castle title → emulator-directed input → first

@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: Macintosh CHARSHEET pointer dispatch now reads retail view-8
+  object records and masked RAW4 rectangles for champion slots 4–29.
+  CODE(8) event dispatch and CODE(10) slot conversion determine the mapping;
+  F1–F4 selection now binds the source CHARSHEET champion owner. The retail
+  test verifies empty slot 4 selection with and without an owner and a click
+  outside the source rectangles. Pickup and placement of an original item by
+  pointer remain unverified.
 - 2026-10-02: Macintosh Title.MooV now hands off its authentic Midi(1000)
   menu cue after the final movie PCM drain. SKProject calls
   `DM2_PLAY_MUSIC(0, true)` before `SHOW_MENU_SCREEN`; the Mac retail resource

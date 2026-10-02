@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM2 Macintosh inventory mouse`: source-backed pointer selection is
+  available for champion slots 4–29 when CHARSHEET is open. Empty slot 4 was
+  verified with original Mac media; item pickup and placement by pointer
+  still require an authentic gameplay test.
 - `DM2 Macintosh menu music`: starts the original Midi(1000) menu cue after
   Title.MooV finishes. Audible output still depends on an available MIDI
   device; this host verified source scheduling with original media.

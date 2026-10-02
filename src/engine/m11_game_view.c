@@ -2145,6 +2145,97 @@ static int m11_dm2_is_mac_profile(const DM2_V1_BootProfile *profile)
     return profile && profile->platform == DM2_PLATFORM_MAC_EN;
 }
 
+static unsigned m11_dm2_mac_source_word(const uint8_t *p)
+{
+    return ((unsigned)p[0] << 8u) | p[1];
+}
+
+/* Retail CODE(1)+0x006e expands DATA(0)/ZERO(0) into these A5 globals.
+ * CHARSHEET view 8 reaches leaf 24, whose object chain starts at record 55.
+ * CODE(8)+0x0446 takes the first matching object and +0x025c masks its Rect
+ * ID with 0x3fff before the original Mac RAW4 rectangle lookup. The event
+ * dispatcher at CODE(8)+0x1ad8 sends events 20..65 as event-20 to
+ * CODE(10)+0x1e3c, which subtracts eight for champion inventory slots. */
+static int m11_dm2_mac_inventory_slot_at_pointer(
+    const DM2_V1_BootProfile *profile, int x, int y, unsigned button_mask,
+    int *out_slot)
+{
+    const uint8_t *code8 = NULL, *code10 = NULL, *data = NULL, *zero = NULL;
+    size_t code8_size = 0u, code10_size = 0u, data_size = 0u, zero_size = 0u;
+    DM2_V1_MacResourceReceipt resource_receipt;
+    uint8_t *globals = NULL;
+    size_t written = 0u, zi = 0u;
+    int found = 0;
+    if (out_slot) *out_slot = -1;
+    if (!profile || !out_slot || !profile->mac_application_resource ||
+        !m11_dm2_is_mac_profile(profile) ||
+        !(button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34)) return 0;
+    if (dm2_v1_mac_resource_find(profile->mac_application_resource,
+                                 profile->mac_application_resource_size,
+                                 "CODE", 8, &code8, &code8_size,
+                                 &resource_receipt) != 0 ||
+        dm2_v1_mac_resource_find(profile->mac_application_resource,
+                                 profile->mac_application_resource_size,
+                                 "CODE", 10, &code10, &code10_size,
+                                 &resource_receipt) != 0 ||
+        dm2_v1_mac_resource_find(profile->mac_application_resource,
+                                 profile->mac_application_resource_size,
+                                 "DATA", 0, &data, &data_size,
+                                 &resource_receipt) != 0 ||
+        dm2_v1_mac_resource_find(profile->mac_application_resource,
+                                 profile->mac_application_resource_size,
+                                 "ZERO", 0, &zero, &zero_size,
+                                 &resource_receipt) != 0 ||
+        code8_size != 14578u || code10_size != 22454u ||
+        data_size != 19300u || zero_size != 2100u ||
+        memcmp(code8 + 0x1ad8u, "\x0c\x47\x00\x14", 4u) != 0 ||
+        memcmp(code10 + 0x1e8eu, "\x70\xf8\xd0\x47", 4u) != 0)
+        return 0;
+    globals = (uint8_t *)malloc(0x681eu);
+    if (!globals) return 0;
+    for (size_t di = 0u; di + 1u < data_size; di += 2u) {
+        unsigned word = m11_dm2_mac_source_word(data + di);
+        if (written + 2u > 0x681eu) goto done;
+        globals[written++] = data[di];
+        globals[written++] = data[di + 1u];
+        if (word == 0u) {
+            unsigned zeros;
+            if (zi + 1u >= zero_size) goto done;
+            zeros = m11_dm2_mac_source_word(zero + zi);
+            zi += 2u;
+            if (zeros > 0x681eu - written) goto done;
+            memset(globals + written, 0, zeros);
+            written += zeros;
+        }
+    }
+    if (written != 0x681eu || zi != zero_size ||
+        memcmp(globals + 0x681eu - 0x103cu, "\x80\x00\x00\x17", 4u) != 0 ||
+        m11_dm2_mac_source_word(globals + 0x681eu - 0x127cu + 24u * 8u + 2u)
+            != 55u) goto done;
+    for (unsigned record = 55u; record < 55u + 64u; ++record) {
+        const uint8_t *source = globals + 0x681eu - 0x1b70u + record * 6u;
+        unsigned event = m11_dm2_mac_source_word(source) & 0x7ffu;
+        unsigned rect_id = m11_dm2_mac_source_word(source + 2u) & 0x3fffu;
+        unsigned flags = m11_dm2_mac_source_word(source + 4u);
+        DM2_V1_BootExpandedRectReceipt rect;
+        if ((flags & 0x0002u) &&
+            dm2_v1_boot_query_expanded_rect_receipt(
+                profile, (uint16_t)rect_id, &rect) &&
+            x >= rect.rect.x && x < rect.rect.x + rect.rect.w &&
+            y >= rect.rect.y && y < rect.rect.y + rect.rect.h) {
+            if (event >= 32u && event < 28u + DM2_V1_INV_SLOT_COUNT) {
+                *out_slot = (int)event - 28;
+                found = 1;
+            }
+            break;
+        }
+        if (source[0] & 0x80u) break;
+    }
+done:
+    free(globals);
+    return found;
+}
+
 static int m11_dm2_bind_mac_movie_index(M11_GameViewState *state, int movie_index)
 {
     const DM2_V1_BootProfile *profile;
@@ -35313,6 +35404,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 !state->world.party.champions[champion_index].present) {
                 return M11_GAME_INPUT_IGNORED;
             }
+            if (!dm2_v1_runtime_select_mac_charsheet_champion(
+                    same_open ? -1 : champion_index))
+                return M11_GAME_INPUT_IGNORED;
             state->mapOverlayActive = 0;
             state->world.party.activeChampionIndex = champion_index;
             if (same_open) {
@@ -35359,6 +35453,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (input == M12_MENU_INPUT_BACK) {
             if (state->inventoryPanelActive) {
+                if (m11_dm2_is_mac_profile(
+                        (const DM2_V1_BootProfile *)state->dm2BootProfile))
+                    (void)dm2_v1_runtime_select_mac_charsheet_champion(-1);
                 state->inventoryPanelActive = 0;
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -35419,6 +35516,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 dm2_v1_asset_free_pixels(frame_pixels);
                 state->mapOverlayActive = 0;
                 state->inventoryPanelActive = !state->inventoryPanelActive;
+                if (m11_dm2_is_mac_profile(profile) &&
+                    !state->inventoryPanelActive)
+                    (void)dm2_v1_runtime_select_mac_charsheet_champion(-1);
                 if (state->inventoryPanelActive &&
                     state->inventorySelectedSlot < 0)
                     state->inventorySelectedSlot = 0;
@@ -35432,6 +35532,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (input == M12_MENU_INPUT_LEADER_INVENTORY) {
             state->mapOverlayActive = 0;
             M11_GameView_ToggleInventoryPanel(state);
+            if (m11_dm2_is_mac_profile(
+                    (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+                !state->inventoryPanelActive)
+                (void)dm2_v1_runtime_select_mac_charsheet_champion(-1);
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_MAC_WALL_LEFT ||
@@ -37699,12 +37803,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         state->inventoryPanelActive &&
         m11_dm2_is_mac_profile(
             (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
-        /* The English Macintosh CHARSHEET owns pointer dispatch through
-         * dynamically published Control/Event records in CODE(3)/CODE(11).
-         * Until those records are materialized from the retained application
-         * source, consume the modal pointer event here.  Falling through to
-         * the viewport or a PC/FMTowns inventory rectangle would turn an
-         * unauthenticated click into movement or an item transaction. */
+        DM2_V1_BootProfile *profile =
+            (DM2_V1_BootProfile *)state->dm2BootProfile;
+        int slot = -1;
+        if (m11_dm2_mac_inventory_slot_at_pointer(profile, x, y,
+                                                   buttonMask, &slot)) {
+            DM2_V1_BootRuntimeInventoryReceipt receipt;
+            int champion_index =
+                dm2_v1_runtime_get_inventory_eye_champion_index();
+            state->inventorySelectedSlot = slot;
+            memset(&receipt, 0, sizeof(receipt));
+            if (champion_index >= 0 &&
+                dm2_v1_boot_runtime_swap_inventory_slot(
+                    profile, champion_index, slot, &receipt))
+                m11_sync_dm2_state_from_runtime(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        /* The open Mac CHARSHEET owns the modal pointer. Unknown source
+         * controls must not become viewport movement or host item slots. */
         return M11_GAME_INPUT_IGNORED;
     }
 
