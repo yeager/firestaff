@@ -18,6 +18,9 @@ static int exercise_mac_corridor_db6(
     uint16_t placed;
 
     if (!state || !profile || !dungeon ||
+        dm2_v1_runtime_get_party_x() != 3 ||
+        dm2_v1_runtime_get_party_y() != 7 ||
+        dm2_v1_runtime_get_party_dir() != 1 ||
         dm2_v1_dungeon_get_square_type(dungeon, 0, 3, 7) != 1 ||
         dm2_v1_dungeon_get_square_type(dungeon, 0, 4, 7) != 1 ||
         dm2_v1_dungeon_get_first_thing(dungeon, 0, 4, 7) != 0x0c0eu ||
@@ -26,7 +29,6 @@ static int exercise_mac_corridor_db6(
         dm2_v1_dungeon_get_next_thing(dungeon, 0x18a9u) != 0x18aau ||
         dm2_v1_runtime_get_leader_hand_object() != 0xffffu)
         return 0;
-    dm2_v1_runtime_set_position(0, 3, 7, 1);
     memset(frame, 0, 320u * 200u);
     M11_GameView_Draw(state, frame, 320, 200);
     for (int y = 40; y < 176 && click_x < 0; ++y)
@@ -150,6 +152,43 @@ int main(void)
 
     profile = (DM2_V1_BootProfile *)state.dm2BootProfile;
     dungeon = profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
+    {
+        DM2_V1_BootRuntimeReceipt pose;
+        if (!dungeon || !dungeon->record_graph_complete ||
+            !dm2_v1_boot_runtime_capture(profile, &pose) ||
+            pose.current_level != 0 || pose.party_x != 1 ||
+            pose.party_y != 8 || pose.party_dir != 0)
+            goto fail;
+        /* New Game → north → east turn → east twice. Every step uses M11's
+         * ordinary Mac input and source ticks; no diagnostic set_position. */
+        if (M11_GameView_HandlePointerButton(
+                &state, 274, 140, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW)
+            goto fail;
+        (void)M11_GameView_AdvanceIdleTick(&state);
+        if (dm2_v1_runtime_get_party_x() != 1 ||
+            dm2_v1_runtime_get_party_y() != 7 ||
+            dm2_v1_runtime_get_party_dir() != 0)
+            goto fail;
+        if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT) !=
+                M11_GAME_INPUT_REDRAW)
+            goto fail;
+        (void)M11_GameView_AdvanceIdleTick(&state);
+        for (int x = 2; x <= 3; ++x) {
+            if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) !=
+                    M11_GAME_INPUT_REDRAW)
+                goto fail;
+            (void)M11_GameView_AdvanceIdleTick(&state);
+            if (dm2_v1_runtime_get_party_x() != x ||
+                dm2_v1_runtime_get_party_y() != 7 ||
+                dm2_v1_runtime_get_party_dir() != 1)
+                goto fail;
+        }
+        if (!dm2_v1_boot_runtime_capture(profile, &pose) ||
+            pose.current_level != 0 || pose.party_x != 3 ||
+            pose.party_y != 7 || pose.party_dir != 1)
+            goto fail;
+    }
     if (!dungeon || !dungeon->record_graph_complete ||
         !exercise_mac_corridor_db6(&state, profile, dungeon, frame)) goto fail;
     if (!dungeon || !dungeon->record_graph_complete ||

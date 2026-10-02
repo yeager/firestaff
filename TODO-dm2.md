@@ -300,8 +300,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   Original-media rendering now admits DB6 from the reachable corridor.
   A diagnostic pose at map 0 (3,7) facing east also proves an opaque
   pointer pickup of exact DB6 `0x18a9`, source-chain splice after the
-  mirror/text prefix, placement, redraw, and repick. Reaching the pose
-  through one continuous New Game input transcript remains to be tested.
+  mirror/text prefix, placement, redraw, and repick. The original-media
+  test now reaches this pose continuously from Title → New Game through
+  ordinary M11 forward, turn, and forward inputs; no diagnostic position
+  setter is used before the click.
   A separate DB10 pickup diagnostic uses handle 0x2831 on map 9 at (1,0),
   layer 5; map 16 also has items, including DB10 at (4,7). The current Mac C080
   New Game movement reaches map 0 (4,7) through ordinary M11 commands
