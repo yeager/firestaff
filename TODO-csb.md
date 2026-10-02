@@ -15,6 +15,9 @@ Reviewed 2026-09-05. Only open work is listed here.
   memory-boundary/capture trace. The all-zero PSG-to-PCM fix is separately
   covered by a source-format edge test; that does not establish the three
   rejected sounds or audible parity.
+  The separate Atari Timer-A preemption bug is fixed: authentic title cues
+  at VBlanks 1107/1128 now replace queued PSG output. That transport proof
+  does not resolve these three rejected source streams.
 
 - Complete the remaining C37 wander bridge after its shared-RNG admission was
   corrected. It now consumes persistent `G0349` exactly once for the

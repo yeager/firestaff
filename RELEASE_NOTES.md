@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM2 Macintosh menu music`: starts the original Midi(1000) menu cue after
+  Title.MooV finishes. Audible output still depends on an available MIDI
+  device; this host verified source scheduling with original media.
 - `DM2 Macintosh movement`: holding the retail J/K/L/M/comma/period movement
   keys now supplies repeated commands at the game's input ticks. CLI scripts
   accept these keys by name, including `key:comma` and `key:period`.
@@ -13,6 +16,9 @@
 
 ## Developer changes
 
+- `CSB Atari ST title audio`: a new PSG cue now replaces the prior queued
+  sound, matching the original Timer-A player. The overlapping cues in the
+  authenticated title are covered by an original-media SDL regression.
 - `SDL audio lifecycle`: shares macOS playback preparation across DM1/CSB and
   DM2 sound and MVE streams, and avoids an extra SDL audio subsystem reference
   on each DM2 MVE opening. Dummy-device tests cover the shared owner and

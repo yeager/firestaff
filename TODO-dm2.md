@@ -120,6 +120,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   green; a separate native SDL audio
   test also skips when the required output device is absent. Run both checks on
   a Mac with an available output, then verify audible output on the M5. The
+  Mac Title.MooV-to-menu route now queues the authentic Midi(1000) cue after
+  the movie's PCM drain. The original-media movie test requires a due MIDI
+  event before Credits and New Game. This closes the missing source-schedule
+  handoff but does not establish audible output here. The
   CoreMIDI fallback now rejects offline endpoints and only accepts destinations
   advertising General MIDI or sampler output, avoiding false success on a
   silent virtual port when Apple's DLS output is unavailable. This filter

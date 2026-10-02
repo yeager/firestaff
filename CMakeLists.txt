@@ -38152,6 +38152,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_st_sound_audio.c"
              COMMAND test_csb_v1_atari_st_sound_audio)
     set_tests_properties(csb_v1_atari_st_sound_audio PROPERTIES
         LABELS "tier2;csb;atari;audio;data_free")
+    add_test(NAME csb_v1_atari_st_title_sound_preemption_real
+             COMMAND test_csb_v1_atari_st_sound_audio)
+    set_tests_properties(csb_v1_atari_st_title_sound_preemption_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_ANIMATE_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_CSB_ANIMATE_CACHE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;atari;audio;title;real-media;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_snd1_real_data.c")

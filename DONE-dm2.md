@@ -1,5 +1,13 @@
 # Firestaff DONE — DM2
 
+- 2026-10-02: Macintosh Title.MooV now hands off its authentic Midi(1000)
+  menu cue after the final movie PCM drain. SKProject calls
+  `DM2_PLAY_MUSIC(0, true)` before `SHOW_MENU_SCREEN`; the Mac retail resource
+  parses to 4,328 scheduled MIDI events. The original-media M12/M11 movie
+  regression completed all 210 title frames, required a due menu MIDI event,
+  then passed Credits cancellation and New Game. SDL dummy audio verified
+  source scheduling only; no native MIDI backend or audible output is
+  available on this host.
 - 2026-10-02: The Macintosh held-key sampler now includes the retail
   J/K/L/M/comma/period movement keys. SDL key repeats are discarded at the
   input boundary, so these keys must be sampled while held for another

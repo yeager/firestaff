@@ -1767,7 +1767,12 @@ int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
     state->csbAtariStSoundHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
-        if (m11_sdl_queue_samples(state, state->csbAtariStPsg.samples,
+        /* ReDMCSB SOUND.C F0060 lines 888-930 replaces the Timer-A sample
+         * pointer and remaining count for each Atari ST sound. The second
+         * ANIMATE.SCR cue begins before the first has finished, so the host
+         * stream must discard its old PSG tail before accepting the new cue. */
+        if (SDL_ClearAudioStream((SDL_AudioStream*)state->sdlStream) &&
+            m11_sdl_queue_samples(state, state->csbAtariStPsg.samples,
                                   state->csbAtariStPsg.sampleCount,
                                   state->sfxVolume)) {
             ++state->csbAtariStSoundQueuedCount;

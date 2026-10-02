@@ -2,6 +2,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_mac_sound.h"
 #include "dm2_v1_mac_quicktime.h"
+#include "dm2_v1_sound.h"
 #include "menu_hit_m12.h"
 
 #include <stdio.h>
@@ -454,6 +455,19 @@ int main(void)
         M11_GameView_Shutdown(&state);
         M12_StartupMenu_Destroy(&menuState);
         return 1;
+    }
+    {
+        DM2_V1_MusicScheduleReceipt menu_music;
+        memset(&menu_music, 0, sizeof(menu_music));
+        if (!dm2_v1_sound_schedule_music(0u, &menu_music) ||
+            menu_music.event_count_due == 0u ||
+            menu_music.delivery_failed) {
+            fprintf(stderr,
+                    "Mac Title.MooV did not hand off authentic Midi(1000) menu cue\n");
+            M11_GameView_Shutdown(&state);
+            M12_StartupMenu_Destroy(&menuState);
+            return 1;
+        }
     }
     memset(&aux, 0, sizeof(aux));
     if (state.dm2MacMovieActive ||

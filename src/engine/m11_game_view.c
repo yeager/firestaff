@@ -2232,6 +2232,24 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
         (void)M11_Audio_StopDm2MacMovie(&state->audioState);
         state->dm2MacMovieActive = 0;
         state->dm2MacMovieComplete = 1;
+        if (state->dm2MacMovieIndex == DM2_V1_MAC_MOVIE_TITLE &&
+            state->dm2State.startup_menu_active) {
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)state->dm2BootProfile;
+            /* SKProject SKULLWIN/startend.cpp:545 plays cue 0 before
+             * SHOW_MENU_SCREEN. The Macintosh retail owner stores it as
+             * Midi(1000); admit it after Title.MooV's final PCM drain so
+             * menu music does not overlap the source title film. */
+            if (profile && profile->mac_application_resource) {
+                DM2_V1_MusicQueueReceipt music_receipt;
+                memset(&music_receipt, 0, sizeof(music_receipt));
+                (void)dm2_v1_sound_queue_mac_midi(
+                    profile->mac_application_resource,
+                    profile->mac_application_resource_size, 1000, 1,
+                    &music_receipt);
+                state->dm2State.music_elapsed_us = 0u;
+            }
+        }
         if (state->dm2MacMovieIndex == DM2_V1_MAC_MOVIE_CREDITS) {
             state->dm2State.startup_credits_active = 0;
             state->dm2State.startup_credits_remaining_ticks = 0;

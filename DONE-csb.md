@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-10-02: Atari ST PSG playback now interrupts its preceding queued cue
+  when ReDMCSB SOUND.C F0060 replaces the Timer-A sample pointer and count.
+  The authenticated v2.1 `ANIMATE.SCR` title cues occur at source VBlanks
+  1107 and 1128; the first 3,103-sample cue lasts longer than their 21-VBlank
+  separation. A dummy-SDL original-media test verifies that the second cue
+  replaces the first queued PCM tail. Physical-device output and the three
+  separately unresolved retail SND1 rows remain open.
+
 - 2026-10-02: An authentic Atari ST M12-to-M11 route now recruits two
   champions, then presses F1 and F2. ReDMCSB PANEL.C F0355 keeps G0423's
   inventory owner separate from CLIKCHAM.C's G0411 leader; M11 now does the
