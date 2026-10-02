@@ -385,6 +385,19 @@ static void test_mode7_flags4_original_media(void)
     assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 38, 6, 5) == 0xb0);
     assert(dm2_v1_mode7_go_there_tile_admission(0xb0u,
         dm2_v1_dungeon_get_first_thing(&dungeon, 38, 6, 5)) == -1);
+    assert(dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
+        &dungeon, &graphics, 3, 13, 10, &room));
+    assert(room.raw_tile == 0xb0u && room.source_tile_type == 1u &&
+           room.first_record_link == 0x0441u &&
+           room.ceiling_ornament_word == 0x00ffu);
+    {
+        uint16_t f8 = 0xffffu;
+        assert(!dm2_v1_query_gdat_entry_data_index(
+            &graphics, 15, 70, 11, 0xf8, &f8));
+        assert(f8 == 0u);
+    }
+    assert(!dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
+        &dungeon, &graphics, 38, 6, 5, &room));
     assert(dm2_v1_mode7_tile_cache_node(
         &cache, 0x02u, 38, 6, 5, read_mode7_dungeon_tile, &dungeon));
     assert(cache.tile == 0x00u &&

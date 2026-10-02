@@ -1695,6 +1695,12 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, uint32_t tick,
     DM2_V1_CLightStoneRoomReceipt *out);
+/* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4
+ * chain whose actuator cannot decorate this map and whose map GDAT 0x6b
+ * is absent. The source summary retains ceiling word FF. */
+int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out);
 /* c_light.cpp:202-481, class-2 no-record ceiling-ornament branch only.
  * The caller owns the running accumulators; this receipt never claims that
  * the party, creature, other tile, weather, or darkness inputs are complete. */

@@ -1732,6 +1732,12 @@ typedef struct {
     DM2_V1_Mode7TileCache cache;
 } DM2_RuntimeMode7Walk;
 
+static uint8_t dm2_runtime_attack_cls1(void *ctx, uint16_t record);
+static uint8_t dm2_runtime_attack_cls2(void *ctx, uint16_t record);
+static int16_t dm2_runtime_attack_dbspec_index(
+    void *ctx, uint8_t cls1, uint8_t cls2, uint8_t entry_type,
+    uint8_t field);
+
 static int dm2_runtime_mode7_read_tile(void *context, int map, int x,
                                        int y, uint8_t *out_tile)
 {
@@ -1788,6 +1794,7 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
     DM2_V1_DungeonData *dungeon;
     const DM2_V1_AssetLoader *loader;
     int16_t link;
+    int16_t creature = (int16_t)0xffff;
     unsigned length = 0u;
     uint16_t light_word = 0u;
     if (!rt || !rt->boot || !room || !room->valid || !evidence ||
@@ -1805,11 +1812,27 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
             !dm2_v1_record_pool_next_link(&rt->record_pools, link, &next))
             return 0;
         type = ((uint16_t)link >> 10) & 0x0fu;
-        if (type == 4u || type == 14u || type == 15u) return 0;
+        if (type == 4u) {
+            if (creature != (int16_t)0xffff) return 0;
+            creature = link;
+        }
+        if (type == 14u || type == 15u) return 0;
         link = next;
     }
     evidence->record_chain_known_no_darkness = 1u;
     evidence->creature_query_known = 1u;
+    if (creature != (int16_t)0xffff) {
+        uint8_t cls1 = dm2_runtime_attack_cls1(rt, (uint16_t)creature);
+        uint8_t cls2 = dm2_runtime_attack_cls2(rt, (uint16_t)creature);
+        uint16_t f8 = 0u;
+        if (cls1 == 0xffu || cls2 == 0xffu) return 0;
+        /* skgdtqdb.cpp:105-114 returns zero for an absent type-11 word.
+         * The complete loaded GDAT index authenticates that absence. */
+        (void)dm2_v1_query_gdat_entry_data_index(
+            loader, cls1, cls2, 11, 0xf8, &f8);
+        evidence->creature_present = 1u;
+        evidence->creature_f8_word = f8;
+    }
     memset(&detail, 0, sizeof(detail));
     memset(&detail_receipt, 0, sizeof(detail_receipt));
     if (dm2_v1_skproject_get_teleporter_detail_dungeon(
@@ -1880,7 +1903,9 @@ static int dm2_runtime_mode7_on_node(
     if (source_flags == 3u && (raw >> 5) == 5) {
         if (!dm2_v1_dungeon_c_light_stone_room_receipt(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, &room)) goto unknown;
+                (uint32_t)rt->tick_count, &room) &&
+            !dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
+                dungeon, loader, map, x, y, &room)) goto unknown;
         if (!dm2_runtime_mode7_flags3_class5_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;

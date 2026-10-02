@@ -6770,6 +6770,55 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)
+{
+    const uint8_t *db1, *db3, *db4;
+    uint16_t first, sensor, creature, end, sensor_word;
+    uint16_t graphics_word = 0u;
+    int type, index, size, raw, graphicsset;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !loader || !loader->loaded) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = (uint16_t)dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw != 0xb0 || ((first >> 10) & 0x0fu) != 1u) return 0;
+    db1 = dm2_v1_dungeon_get_thing_record(d, first, &type, &index, &size);
+    if (!db1 || type != 1 || size < 2) return 0;
+    sensor = dm2_v1_dungeon_read_record_u16(d, db1);
+    if (((sensor >> 10) & 0x0fu) != 3u) return 0;
+    db3 = dm2_v1_dungeon_get_thing_record(d, sensor, &type, &index, &size);
+    if (!db3 || type != 3 || size < 6) return 0;
+    sensor_word = dm2_v1_dungeon_read_record_u16(d, db3 + 2);
+    if ((sensor_word & 0x7fu) != 0x27u ||
+        ((sensor_word >> 7) - 1u) == (unsigned)level) return 0;
+    creature = dm2_v1_dungeon_read_record_u16(d, db3);
+    if (((creature >> 10) & 0x0fu) != 4u) return 0;
+    db4 = dm2_v1_dungeon_get_thing_record(d, creature, &type, &index, &size);
+    if (!db4 || type != 4 || size < 2) return 0;
+    end = dm2_v1_dungeon_read_record_u16(d, db4);
+    if (end != DM2_THING_END_MARKER) return 0;
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
+    if (graphicsset < 0 || graphicsset > 15 ||
+        dm2_v1_query_gdat_entry_data_index(loader, 8, graphicsset, 11,
+                                            0x6b, &graphics_word)) return 0;
+    /* skguivwp.cpp:2630-3077: b0 becomes summary type 1. With no GDAT
+     * 0x6b and a DB3 0x27 for another map, word 5 stays initialized FF.
+     * DB4 ends the DB0..DB3 summary loop, then GET_CREATURE_AT handles it
+     * separately in sklight.cpp. */
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->source_tile_type = 1u;
+    out->first_record_link = first;
+    out->ceiling_ornament_word = 0x00ffu;
+    out->ceiling_ornament_index = 0xffu;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_tile_ornament_receipt(
     const DM2_V1_CLightStoneRoomReceipt *room,
     const DM2_V1_AssetLoader *loader, int distance, unsigned flags,
