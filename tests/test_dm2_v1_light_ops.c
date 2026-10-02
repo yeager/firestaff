@@ -451,6 +451,25 @@ static void test_mode7_flags4_original_media(void)
             0x30u, &creature, 0x36e7u, 0) == -1);
         assert(!dm2_v1_record_pool_first_creature_receipt(
             &pools, (int16_t)0xffff, &creature));
+        {
+            static const int cells[2][3] = {{6, 4, 0x1059},
+                                             {6, 2, 0x1058}};
+            unsigned cell;
+            for (cell = 0u; cell < 2u; ++cell) {
+                assert(dm2_v1_dungeon_get_tile_raw(
+                    &dungeon, 3, cells[cell][0], cells[cell][1]) == 0x30);
+                assert(dm2_v1_dungeon_get_first_thing(
+                    &dungeon, 3, cells[cell][0], cells[cell][1]) ==
+                    cells[cell][2]);
+                assert(dm2_v1_record_pool_first_creature_receipt(
+                    &pools, (int16_t)cells[cell][2], &creature));
+                assert(creature.valid && creature.prefix_db3_only &&
+                       creature.scanned_records == 1u &&
+                       creature.creature_link == (int16_t)cells[cell][2]);
+                assert(dm2_v1_mode8_class1_creature_admission(
+                    0x30u, &creature, 0x36e7u, 0) == 1);
+            }
+        }
     }
     assert(dm2_v1_dungeon_get_tile_raw(&dungeon, 3, 12, 7) == 0x20);
     assert(dm2_v1_dungeon_get_first_thing(&dungeon, 3, 12, 7) == -1);

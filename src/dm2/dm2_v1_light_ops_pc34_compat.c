@@ -109,7 +109,7 @@ int dm2_v1_mode8_class1_creature_admission(
 {
     if (raw_tile != 0x30u || !creature || !creature->valid ||
         source_mask != 0x36e7u || !creature->prefix_db3_only ||
-        creature->scanned_records < 2u ||
+        creature->scanned_records < 1u ||
         (((uint16_t)creature->creature_link >> 10) & 0x0fu) != 4u)
         return -1;
     /* SK1C9A:3139-55 sees no DB2 directional blocker in the prefix.
