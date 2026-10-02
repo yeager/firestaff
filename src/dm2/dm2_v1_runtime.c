@@ -13121,7 +13121,7 @@ int dm2_v1_runtime_pickup_mac_floor_target(
     uint8_t *pool_record, *raw_record, *pool_predecessor = NULL, *raw_predecessor = NULL;
     uint8_t pool_link_before[2], raw_link_before[2];
     uint8_t pool_predecessor_link_before[2], raw_predecessor_link_before[2];
-    int contains = 0, actuator = 0;
+    int contains = 0;
     int db;
 
     memset(&receipt, 0, sizeof(receipt));
@@ -13145,14 +13145,17 @@ int dm2_v1_runtime_pickup_mac_floor_target(
         return 0;
     target = &rt->source_click_targets[target_index];
     db = ((uint16_t)target->object_id >> 10) & 0x0f;
+    /* A source tile may begin with DB3/DB2 mirror metadata before its
+     * linked DB5..DB10 floor items. CLICK_VWPT cuts the selected item,
+     * while the complete pool/raw chain check preserves that prefix. */
     if (target->target_kind != 1u || target->object_id == -1 ||
         db < 5 || db > 10 || target->map_x < 0 || target->map_y < 0 ||
         target->map_x >= dungeon->level_widths[rt->dungeon_level] ||
         target->map_y >= dungeon->level_heights[rt->dungeon_level] ||
         !dm2_runtime_record_chain_mirrors_complete(
             rt, dungeon, rt->dungeon_level, target->map_x, target->map_y,
-            target->object_id, &contains, &actuator) ||
-        !contains || actuator) return 0;
+            target->object_id, &contains, NULL) ||
+        !contains) return 0;
 
     /* SKProject c_events.cpp:947-1020 selects an opaque DB5..DB10 draw,
      * DM2_MOVE_RECORD_TO cuts it from the exact source tile, and
@@ -13249,7 +13252,7 @@ int dm2_v1_runtime_place_mac_hand_on_floor(int screen_x, int screen_y)
     DM2_V1_DungeonData *dungeon;
     DM2_V1_BootExpandedRectReceipt rect7, zone;
     DM2_V1_SkprojectAppendRecordReceipt append;
-    int cell = -1, x, y, dir, contains = 0, actuator = 0, db;
+    int cell = -1, x, y, dir, contains = 0, db;
     int16_t original_head, pool_head, raw_head, held, placed, tail;
     uint8_t *pool_held, *raw_held, *pool_tail = NULL, *raw_tail = NULL;
     uint8_t pool_held_link[2], raw_held_link[2];
@@ -13305,9 +13308,11 @@ int dm2_v1_runtime_place_mac_hand_on_floor(int screen_x, int screen_y)
     if (db < 5 || db > 10) return 0;
     placed = (int16_t)(((uint16_t)held & 0x3fffu) |
                        (uint16_t)(((dir + cell) & 3) << 14));
+    /* Placement appends after the same original DB3/DB2 prefix; accepting
+     * it is safe only while both live chain mirrors remain complete. */
     if (!dm2_runtime_record_chain_mirrors_complete(
             rt, dungeon, rt->dungeon_level, x, y, held,
-            &contains, &actuator) || contains || actuator)
+            &contains, NULL) || contains)
         return 0;
     pool_held = dm2_v1_record_pool_address_mut(&rt->record_pools, held);
     raw_held = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
@@ -13363,7 +13368,7 @@ int dm2_v1_runtime_place_mac_hand_on_floor(int screen_x, int screen_y)
             dungeon, rt->dungeon_level, x, y, (uint16_t)raw_head) != 0 ||
         !dm2_runtime_record_chain_mirrors_complete(
             rt, dungeon, rt->dungeon_level, x, y, placed,
-            &contains, &actuator) || !contains ||
+            &contains, NULL) || !contains ||
         dm2_v1_runtime_set_leader_hand_object(0xffffu) != 0) {
         memcpy(pool_held, pool_held_link, 2);
         memcpy(raw_held, raw_held_link, 2);

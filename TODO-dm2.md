@@ -297,8 +297,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   layer 7. A later direct File_header chain census found DB5–DB10 records
   on map 0, including a mirror/text-prefixed DB6/DB10 chain at (4,7);
   the earlier claim that maps 0–8 had no DB5–15 records was false.
-  Original-media rendering now admits the DB6 items from the reachable
-  corridor, but this does not yet prove a normal pointer pickup there.
+  Original-media rendering now admits DB6 from the reachable corridor.
+  A diagnostic pose at map 0 (3,7) facing east also proves an opaque
+  pointer pickup of exact DB6 `0x18a9`, source-chain splice after the
+  mirror/text prefix, placement, redraw, and repick. Reaching the pose
+  through one continuous New Game input transcript remains to be tested.
   A separate DB10 pickup diagnostic uses handle 0x2831 on map 9 at (1,0),
   layer 5; map 16 also has items, including DB10 at (4,7). The current Mac C080
   New Game movement reaches map 0 (4,7) through ordinary M11 commands
@@ -359,8 +362,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
   the live File_header chain and original category/type fields; positive
   retail-media render receipts cover each category. A normally reachable
-  map-0 corridor pose renders DB6. Pointer pickup for DB5–DB9 still needs
-  an original-media transaction test.
+  map-0 corridor pose renders and admits DB6 for a pointer pickup and
+  placement round trip. DB5 and DB7–DB9 pointer transactions remain open.
   Mac `CODE(8)+0x1d7e` dispatches event 0x50 to `+0x246c`, which
   searches live 12-byte viewport targets at `A5-0x2f72` and branches on
   target kind 1–3 when the hand is empty. SKProject `c_gui_vp.cpp:3816`
