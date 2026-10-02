@@ -1791,7 +1791,7 @@ static int dm2_runtime_mode7_step(
     if (admitted < 0 &&
         ((map == 3 && nx == 13 && (ny == 9 || ny == 8) &&
           raw == 0x30) ||
-         (raw == 0x10 && (((unsigned)first >> 10) & 0x0fu) == 2u))) {
+         (raw == 0x10 && first >= 0))) {
         int no_creature = 0;
         int party_square = 0;
         int16_t link = first == -1 ? (int16_t)0xfffe : (int16_t)first;

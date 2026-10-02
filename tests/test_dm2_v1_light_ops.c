@@ -292,7 +292,7 @@ static void test_mode7_go_there_tile_admission(void)
     assert(dm2_v1_mode7_go_there_class0_record_admission(
         0x10u, 0x0855, 0, 0) == -1);
     assert(dm2_v1_mode7_go_there_class0_record_admission(
-        0x10u, 0x0c56, 1, 0) == -1);
+        0x10u, -1, 1, 0) == -1);
 }
 
 static void test_mode7_tile_accumulator(void)
@@ -431,10 +431,10 @@ static void test_mode7_flags4_original_media(void)
             0x10u, first, 1, 0) == 1);
     }
     {
-        static const int coordinates[2][2] = {{12, 9}, {12, 8}};
-        static const int expected_links[2] = {0x4945, 0x4946};
+        static const int coordinates[3][2] = {{12, 9}, {12, 8}, {14, 10}};
+        static const int expected_links[3] = {0x4945, 0x4946, 0xcc4b};
         unsigned cell;
-        for (cell = 0u; cell < 2u; ++cell) {
+        for (cell = 0u; cell < 3u; ++cell) {
             int first = dm2_v1_dungeon_get_first_thing(&dungeon, 3,
                 coordinates[cell][0], coordinates[cell][1]);
             int16_t link = (int16_t)first;

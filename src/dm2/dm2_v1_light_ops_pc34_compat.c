@@ -51,9 +51,8 @@ int dm2_v1_mode7_go_there_class0_record_admission(
     /* SK1C9A.cpp:3190-3195 gives class 0 capability 0x1 regardless of
      * its record bit. :3380-3445 then applies the party-square 0x800 and
      * creature 0x1000 blockers against action 23's 0x227 mask. This
-     * receipt requires a bounded DB2-starting chain with no creature. */
-    if (raw_tile != 0x10u ||
-        (((unsigned)first_record_link >> 10) & 0x0fu) != 2u ||
+     * receipt requires a bounded, nonempty chain with no creature. */
+    if (raw_tile != 0x10u || first_record_link < 0 ||
         !no_creature_proven) return -1;
     return party_square ? 0 : 1;
 }
