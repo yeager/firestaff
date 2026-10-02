@@ -106,6 +106,19 @@ Reviewed 2026-10-02. Only open work is listed here.
   available. A separate local Mednafen run loaded the authentic US 19-track
   CUE, but no in-game input was delivered and no savestate was created; this
   boot is not gameplay evidence.
+  A later isolated 180-second trv2 `drator-generator` replay used the
+  authenticated US CloneCD CUE, System Card (`ff1a674273fe3540ccef576376407d1d`),
+  and instrumented Mednafen (`9889ef7e2361d2bce69fcae327bf5f9c`). Of five
+  planned controller events, only RUN at frame 9600 and I at frame 12000 were
+  applied; both were read only by the System Card poll at `$E4B7`. The capture
+  had no non-System-Card poll, raw-sector span, authenticated CD-to-RAM
+  receipt, or transition (`transition=missing`); strict capture rejected the
+  three unobserved events. Mednafen emitted a 2 KiB `HUBM`/`DMS-SG.001` BRAM
+  snapshot (MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`), but it differed in only 30
+  byte positions from the existing authentic campaign BRAM and no game-owned
+  poll or gameplay transition was observed. Do not treat or import this as a
+  newly created gameplay save. The capture remains outside Git at
+  `/home/trv2/work/theron-save-attempt-20261002/capture/`.
   A read-only trv2 check on 2026-10-02 found no other Mednafen state or movie
   files in its configured save directory or Firestaff work trees. The SSH
   session had no display, and `:0` was unavailable; this does not authorize
