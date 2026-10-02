@@ -2,14 +2,14 @@
  * DM1 V1 Dungeon Square Data Structures — Implementation
  * ========================================================
  *
- * Implementerar square-dekodning, viewport-koordinatberäkning,
- * depth zone-traversering, wall zone-bestämning och ocklusionslogik.
+ * Implements square decoding, viewport coordinate calculation,
+ * depth-zone traversal, wall-zone determination, and occlusion logic.
  *
- * Source-referens (ReDMCSB WIP20210206, Toolchains/Common/Source):
+ * Source reference (ReDMCSB WIP20210206, Toolchains/Common/Source):
  *
  *   DUNGEON.C:
- *     G0233_ai_Graphic559_DirectionToStepEastCount[4]   (rad 30-34)
- *     G0234_ai_Graphic559_DirectionToStepNorthCount[4]  (rad 35-39)
+ *     G0233_ai_Graphic559_DirectionToStepEastCount[4]   (lines 30-34)
+ *     G0234_ai_Graphic559_DirectionToStepNorthCount[4]  (lines 35-39)
  *     F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement (lines 1371-1421)
  *     F0151_DUNGEON_GetSquare                            (lines 1423-1475)
  *     F0152_DUNGEON_GetRelativeSquare                    (source-adjacent helper)
@@ -22,10 +22,10 @@
  *     M597..M611 view square indices
  *     M575..M587 view wall indices
  *
- *   DUNVIEW.C (rad 700+):
- *     Viewport-ritningsloop: depth 3→0, per lane, anropar
- *     F0172 SetSquareAspect. Front walls (element==WALL i center-lane)
- *     ockluderar allt bakom dem.
+ *   DUNVIEW.C (line 700+):
+ *     Viewport draw loop: depth 3→0, per lane, calls
+ *     F0172 SetSquareAspect. Front walls (element==WALL in the center lane)
+ *     occlude everything behind them.
  *
  *   DRAWVIEW.C:
  *     F0093_DUNGEONVIEW_DrawDungeon — master viewport draw.
@@ -37,9 +37,9 @@
 
 /* =======================================================================
  * Direction-to-Step Lookup Tables
- * (DUNGEON.C rad 30-39: G0233, G0234)
+ * (DUNGEON.C lines 30-39: G0233, G0234)
  *
- *   Karta: X ökar österut, Y ökar söderut (standard DM-konvention).
+ *   Map: X increases eastward, Y increases southward (standard DM convention).
  *   North = (0, -1), East = (1, 0), South = (0, 1), West = (-1, 0).
  * ======================================================================= */
 
@@ -51,9 +51,9 @@ const int dm1_direction_to_step_east[4] = {
 };
 
 const int dm1_direction_to_step_north[4] = {
-    -1,   /* North: Y minskar */
+    -1,   /* North: Y decreases */
      0,   /* East */
-     1,   /* South: Y ökar */
+     1,   /* South: Y increases */
      0    /* West */
 };
 
@@ -61,12 +61,12 @@ const int dm1_direction_to_step_north[4] = {
 /* =======================================================================
  * dm1_decode_square
  *
- * Dekoderar en raw square-byte (som returneras av F0151_DUNGEON_GetSquare)
- * till strukturerade fält.
+ * Decodes a raw square byte (as returned by F0151_DUNGEON_GetSquare)
+ * into structured fields.
  *
  * ReDMCSB-referens:
- *   DEFS.H — M034_SQUARE_TYPE, alla MASK-definitioner per element-typ.
- *   DUNGEON.C:F0172 — Hur fält tolkas per square type.
+ *   DEFS.H — M034_SQUARE_TYPE, all MASK definitions for each element type.
+ *   DUNGEON.C:F0172 — How fields are interpreted for each square type.
  * ======================================================================= */
 
 void dm1_decode_square(uint8_t raw_byte, dm1_dungeon_square_t *out) {
@@ -118,7 +118,7 @@ void dm1_decode_square(uint8_t raw_byte, dm1_dungeon_square_t *out) {
             break;
 
         default:
-            /* Okänd typ — lämna nollat */
+            /* Unknown type — leave zeroed */
             break;
     }
 }
@@ -128,16 +128,16 @@ void dm1_decode_square(uint8_t raw_byte, dm1_dungeon_square_t *out) {
  * dm1_get_relative_map_coords
  *
  * Motsvarar F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement
- * (DUNGEON.C rad 867-935).
+ * (DUNGEON.C lines 867-935).
  *
- * Givet party-position (X,Y), riktning, steg framåt och steg höger,
- * beräkna absolut (out_x, out_y).
+ * Given the party position (X,Y), direction, forward steps, and right steps,
+ * calculate absolute coordinates (out_x, out_y).
  *
- * Algoritm (direkt från källkoden):
- *   1. Applicera steg framåt i partyts riktning:
+ * Algorithm (directly from the source code):
+ *   1. Apply forward steps in the party's direction:
  *      X += east_count[direction] * steps_forward
  *      Y += north_count[direction] * steps_forward
- *   2. Simulera höger-sväng (direction + 1) & 3:
+ *   2. Simulate a right turn (direction + 1) & 3:
  *      X += east_count[right_dir] * steps_right
  *      Y += north_count[right_dir] * steps_right
  * ======================================================================= */
@@ -149,11 +149,11 @@ void dm1_get_relative_map_coords(int party_x, int party_y, int direction,
     int x = party_x;
     int y = party_y;
 
-    /* Steg 1: Framåt i partyts riktning */
+    /* Step 1: Forward in the party's direction */
     x += dm1_direction_to_step_east[dir]  * steps_forward;
     y += dm1_direction_to_step_north[dir] * steps_forward;
 
-    /* Steg 2: Höger = direction + 1 */
+    /* Step 2: Right = direction + 1 */
     int right_dir = (dir + 1) & 3;
     x += dm1_direction_to_step_east[right_dir]  * steps_right;
     y += dm1_direction_to_step_north[right_dir] * steps_right;
@@ -300,29 +300,29 @@ int dm1_v1_dungeon_f0153_get_relative_square_type_pc34(
 /* =======================================================================
  * dm1_compute_view_square_coords
  *
- * Beräkna kartkoordinater för alla 12 viewport-rutor.
+ * Calculate map coordinates for all 12 viewport squares.
  *
  * Viewport-layout (DEFS.H view square diagram):
- *   Depth 3: C=3 framåt, L=3 framåt + 1 vänster, R=3 framåt + 1 höger
- *   Depth 2: C=2 framåt, L=2 framåt + 1 vänster, R=2 framåt + 1 höger
- *   Depth 1: C=1 framåt, L=1 framåt + 1 vänster, R=1 framåt + 1 höger
- *   Depth 0: C=0 framåt, L=0 framåt + 1 vänster, R=0 framåt + 1 höger
+ *   Depth 3: C=3 forward, L=3 forward + 1 left, R=3 forward + 1 right
+ *   Depth 2: C=2 forward, L=2 forward + 1 left, R=2 forward + 1 right
+ *   Depth 1: C=1 forward, L=1 forward + 1 left, R=1 forward + 1 right
+ *   Depth 0: C=0 forward, L=0 forward + 1 left, R=0 forward + 1 right
  *
- * "Vänster" = −1 i högerriktning.
+ * "Left" = −1 in the rightward direction.
  *
- * Ordning i arrayen: depth 3→0, per depth: C, L, R.
- * Index i arrayen: [0]=D3C, [1]=D3L, [2]=D3R, [3]=D2C, [4]=D2L, [5]=D2R,
+ * Array order: depth 3→0, each depth: C, L, R.
+ * Array indices: [0]=D3C, [1]=D3L, [2]=D3R, [3]=D2C, [4]=D2L, [5]=D2R,
  *                  [6]=D1C, [7]=D1L, [8]=D1R, [9]=D0C, [10]=D0L, [11]=D0R
  *
  * View indices (DM1_VS_*): D3C=0, D3L=1, D3R=2, D2C=3, ...
  * ======================================================================= */
 
-/* Intern lookup: depth + lane → (steps_forward, steps_right) */
+/* Internal lookup: depth + lane → (steps_forward, steps_right) */
 static const struct {
     int depth;          /* 3, 2, 1, 0 */
     int lane;           /* 0=C, 1=L, 2=R */
     int steps_forward;
-    int steps_right;    /* Negativ = vänster */
+    int steps_right;    /* Negative = left */
     int view_index;     /* DM1_VS_* */
 } viewport_layout[DM1_VIEWPORT_SQUARE_COUNT] = {
     /* depth 3 */ { 3, 0,  3,  0, DM1_VS_D3C },
@@ -361,35 +361,35 @@ void dm1_compute_view_square_coords(int party_x, int party_y, int direction,
 /* =======================================================================
  * dm1_compute_wall_visibility
  *
- * Givet en viewport-ruta och party-riktning, avgör vilka view walls
- * som ska ritas.
+ * Given a viewport square and party direction, determine which view walls
+ * should be drawn.
  *
  * Wall zone-logik (DUNVIEW.C + DEFS.H):
  *
- * Front wall vid en ruta = rutan har element == WALL.
- * Front walls ritas för den rutan vid matchande depth/lane.
+ * A square has a front wall when its element == WALL.
+ * Front walls are drawn for that square at the matching depth/lane.
  *
- * Side walls uppstår när en grannruta (left/right) är WALL.
- * T.ex. D3L right wall (index 0) ritas om D3L:s HÖGRA granne (= D3C)
- * INTE är en vägg men D3L ÄR en vägg.
+ * Side walls occur when a neighboring square (left/right) is WALL.
+ * For example, the D3L right wall (index 0) is drawn when D3L's RIGHT
+ * neighbor (= D3C) is NOT a wall but D3L IS a wall.
  *
- * Förenklad bitmask-approach: vi rapporterar vilka av de 13 wall positions
- * som berörs av denna specifika ruta. Den fulla renderingsloopen itererar
- * alla rutor och aggregerar.
+ * Simplified bitmask approach: report which of the 13 wall positions
+ * are affected by this specific square. The full rendering loop iterates
+ * over all squares and aggregates the results.
  *
- * Returvärde: 15-bit bitmask, bit N = view wall index N.
+ * Return value: 15-bit bitmask, bit N = view wall index N.
  * D0L/D0R are nearest side-wall planes; they do not center-occlude, but
  * ReDMCSB still draws their side wall bitmaps before returning.
  * ======================================================================= */
 
 uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
                                       int direction) {
-    (void)direction;  /* Riktning bakat redan i aspect-beräkningen */
+    (void)direction;  /* Direction is already baked into the aspect calculation */
 
     uint16_t mask = 0;
     int elem = square->aspect[DM1_SQA_ELEMENT];
 
-    /* Bara WALL och stängd FAKEWALL producerar väggar */
+    /* Only WALL and closed FAKEWALL produce walls */
     if (elem != DM1_ELEMENT_WALL) {
         return 0;
     }
@@ -517,27 +517,27 @@ uint8_t dm1_compute_pc34_extra_side_wall_visibility(int depth, int steps_right,
  *
  * Huvudfunktion: bygg komplett viewport-state.
  *
- * Algoritm (deriverad från DUNVIEW.C viewport-ritningsloop):
+ * Algorithm (derived from the DUNVIEW.C viewport draw loop):
  *
- *   1. Beräkna kartkoordinater för alla 12 viewport-rutor.
- *   2. För varje ruta, läs raw square byte via callback.
- *   3. Dekoda square byte → fyll aspect[0] (element).
- *      (Fullständig SetSquareAspect med ornament kräver thing-list access
- *       som hanteras av konsumenten; vi sätter element + grundflaggor.)
- *   4. Ocklusionsberäkning: iterera depth 3→0.
- *      Om center-rutan vid depth D har element == WALL:
+ *   1. Calculate map coordinates for all 12 viewport squares.
+ *   2. For each square, read the raw square byte through the callback.
+ *   3. Decode the square byte → populate aspect[0] (element).
+ *      (Full SetSquareAspect processing with ornaments requires thing-list access,
+ *       which is handled by the consumer; here we set the element + basic flags.)
+ *   4. Occlusion calculation: iterate depth 3→0.
+ *      If the center square at depth D has element == WALL:
  *        → depth_occluded[D+1..3] = true
- *        → alla rutor vid djup > D markeras occluded = true.
+ *        → mark all squares at depth > D as occluded = true.
  *
- * VIKTIGT: Ocklusionsmodellen i DM1 V1 (DRAWVIEW.C) är:
- *   - En front wall i CENTER-lane vid depth D blockerar rendering
- *     av allt vid depth D+1, D+2, D+3.
- *   - Side walls i L/R-lane ockluderar INTE rutorna bakom dem
- *     (bara center-lane front walls har full ocklusion).
- *   - Stängda fakewalls beter sig som väggar (ocklusion).
- *   - Dörrar med state >= 2 (halv-stängd till stängd) ritas som
- *     front-wall-element men ockluderar INTE fullt
- *     (man kan se genom/över dem).
+ * IMPORTANT: The DM1 V1 occlusion model (DRAWVIEW.C) is:
+ *   - A front wall in the CENTER lane at depth D blocks rendering
+ *     of everything at depth D+1, D+2, and D+3.
+ *   - Side walls in the L/R lanes do NOT occlude the squares behind them
+ *     (only center-lane front walls fully occlude).
+ *   - Closed fakewalls behave like walls (occlusion).
+ *   - Doors with state >= 2 (half-closed to closed) are drawn as
+ *     front-wall elements but do NOT fully occlude
+ *     (you can see through/over them).
  * ======================================================================= */
 
 void dm1_build_viewport(int party_x, int party_y, int direction, int party_map,
@@ -550,16 +550,16 @@ void dm1_build_viewport(int party_x, int party_y, int direction, int party_map,
     out->party_dir = direction;
     out->party_map = party_map;
 
-    /* Steg 1: Beräkna koordinater */
+    /* Step 1: Calculate coordinates */
     dm1_compute_view_square_coords(party_x, party_y, direction, out->squares);
     out->valid_count = DM1_VIEWPORT_SQUARE_COUNT;
 
-    /* Steg 2–3: Läs och dekoda varje ruta */
+    /* Steps 2–3: Read and decode each square */
     for (int i = 0; i < DM1_VIEWPORT_SQUARE_COUNT; i++) {
         dm1_view_square_t *vs = &out->squares[i];
         uint8_t raw = reader(vs->map_x, vs->map_y, user_data);
 
-        /* Fyll grundläggande aspect enligt F0172. */
+        /* Populate the basic aspect according to F0172. */
         int element = dm1_classify_square_aspect_element(raw, direction);
 
         vs->aspect[DM1_SQA_ELEMENT] = (int16_t)element;
@@ -576,26 +576,26 @@ void dm1_build_viewport(int party_x, int party_y, int direction, int party_map,
         }
     }
 
-    /* Steg 4: Ocklusionsberäkning — depth 0→3 (närmast → längst bort).
+    /* Step 4: Occlusion calculation — depth 0→3 (nearest → farthest).
      *
-     * Logik: om center-rutan vid depth D är en front wall,
-     * ockludera alla rutor vid depth D+1, D+2, D+3.
+     * Logic: if the center square at depth D is a front wall,
+     * occlude all squares at depth D+1, D+2, and D+3.
      *
-     * Vi itererar depth 0→3 och markerar ocklusion progressivt.
-     * (DRAWVIEW.C itererar 3→0 och skippar rendering; vi markerar istället.)
+     * Iterate depth 0→3 and mark occlusion progressively.
+     * (DRAWVIEW.C iterates 3→0 and skips rendering; here we mark occlusion instead.)
      */
     bool occluded_beyond[DM1_DEPTH_ZONE_COUNT + 1];
     memset(occluded_beyond, 0, sizeof(occluded_beyond));
 
-    /* Hitta center-rutor per depth och bestäm ocklusion.
-     * I vår array-layout: center-rutan vid depth D har index = (3-D)*3.
+    /* Find center squares at each depth and determine occlusion.
+     * In this array layout, the center square at depth D has index = (3-D)*3.
      * depth 3 → index 0, depth 2 → index 3, depth 1 → index 6, depth 0 → index 9.
      */
     for (int d = 0; d <= DM1_VISIBLE_DEPTH_MAX; d++) {
         int center_idx = (DM1_VISIBLE_DEPTH_MAX - d) * 3;  /* D3→0, D2→3, D1→6, D0→9 */
 
         if (out->squares[center_idx].is_front_wall) {
-            /* Allt vid djup > d är ockluderat (längre bort) */
+            /* Everything at depth > d is occluded (farther away) */
             for (int d2 = d + 1; d2 <= DM1_VISIBLE_DEPTH_MAX; d2++) {
                 occluded_beyond[d2] = true;
                 out->depth_occluded[d2] = true;
@@ -603,7 +603,7 @@ void dm1_build_viewport(int party_x, int party_y, int direction, int party_map,
         }
     }
 
-    /* Applicera ocklusionsflaggor på individuella rutor */
+    /* Apply occlusion flags to individual squares */
     for (int i = 0; i < DM1_VIEWPORT_SQUARE_COUNT; i++) {
         int d = out->squares[i].depth;
         if (occluded_beyond[d]) {
@@ -620,7 +620,7 @@ void dm1_build_viewport(int party_x, int party_y, int direction, int party_map,
 bool dm1_is_front_wall_at_depth(const dm1_viewport_state_t *vp, int depth) {
     if (depth < 0 || depth > DM1_VISIBLE_DEPTH_MAX) return false;
 
-    /* Center-ruta vid depth: index = (3-depth)*3 */
+    /* Center square at this depth: index = (3-depth)*3 */
     int center_idx = (DM1_VISIBLE_DEPTH_MAX - depth) * 3;
     return vp->squares[center_idx].is_front_wall;
 }
@@ -629,9 +629,9 @@ bool dm1_is_front_wall_at_depth(const dm1_viewport_state_t *vp, int depth) {
 /* =======================================================================
  * dm1_get_visible_squares
  *
- * Returnerar index för icke-ockluderade rutor, ordnade back-to-front
- * (depth 3→0, per depth: L, R, C, matching DUNVIEW.C:8490-8542).
- * Denna ordning matchar DM1:s renderingsordning (DRAWVIEW.C).
+ * Returns indices of non-occluded squares, ordered back-to-front
+ * (depth 3→0, each depth: L, R, C, matching DUNVIEW.C:8490-8542).
+ * This order matches the DM1 rendering order (DRAWVIEW.C).
  * ======================================================================= */
 
 int dm1_get_visible_squares(const dm1_viewport_state_t *vp,
@@ -657,15 +657,15 @@ int dm1_get_visible_squares(const dm1_viewport_state_t *vp,
 /* =======================================================================
  * dm1_square_blocks_movement
  *
- * Snabbcheck: blockerar square-byte rörelse?
+ * Quick check: does the square byte block movement?
  *
- * Baserat på CLIKMENU.C:F0366 (rad 274-290):
- *   WALL → blockerad
- *   DOOR → state >= 2 och != 5 (destroyed) → blockerad
- *   FAKEWALL → !open && !imaginary → blockerad
- *   Allt annat (CORRIDOR, PIT, STAIRS, TELEPORTER) → passabelt
+ * Based on CLIKMENU.C:F0366 (lines 274-290):
+ *   WALL → blocked
+ *   DOOR → state >= 2 and != 5 (destroyed) → blocked
+ *   FAKEWALL → !open && !imaginary → blocked
+ *   Everything else (CORRIDOR, PIT, STAIRS, TELEPORTER) → passable
  *
- * OBS: Pit-fall och kreatur-blockering hanteras av andra moduler
+ * NOTE: Pit falls and creature blocking are handled by other modules
  * (dm1_v1_collision_door_pc34_compat, dm1_v1_movement_pipeline_pc34_compat).
  * ======================================================================= */
 
@@ -679,12 +679,12 @@ bool dm1_square_blocks_movement(uint8_t raw_byte) {
 
         case DM1_ELEMENT_DOOR: {
             uint8_t state = flags & DM1_DOOR_STATE_MASK;
-            /* Passabelt om state < 2 (open / one-fourth) eller == 5 (destroyed) */
+            /* Passable if state < 2 (open / one-fourth) or == 5 (destroyed) */
             return (state >= 2) && (state != 5);
         }
 
         case DM1_ELEMENT_FAKEWALL:
-            /* Passabelt om open ELLER imaginary */
+            /* Passable if open OR imaginary */
             if (flags & DM1_FAKEWALL_OPEN)      return false;
             if (flags & DM1_FAKEWALL_IMAGINARY)  return false;
             return true;
