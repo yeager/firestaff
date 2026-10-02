@@ -356,8 +356,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   `0xd7..0xd9`, without changing the map. The map setter is
   `CODE(15)+0x20bc`, writing `A5-0x6684`/`-0x6682`/`-0x6680` (x/y/map),
   `CODE(7)+0x35dc` calls the tile callback at `A5+0x8ca`, then compares
-  current and target map/position words; that call is not yet established
-  as a direct invocation of the setter. The movement path calls
+  current and target map/position words; it does not directly call the
+  setter. `CODE(7)+0x0f06` moves the party, calling the setter at
+  `+0x10a4..+0x10c4` when the destination map differs. The movement path calls
   `CODE(15)+0x2806`. Its successful-step path calls `A5+0x72a`, mapped
   through the retail jump table to `CODE(15)+0x2482`. That routine uses
   same-level map descriptors and global coordinates to normalize a moved
@@ -374,10 +375,18 @@ Reviewed 2026-08-29. Only open work is listed here.
   Class-5 tiles with records shorter than six bytes remain blocked because
   the original reads beyond the logical record; an authenticated ownership
   trace is needed before admitting those cases. Mac French has the same
-  source code path but lacks an independent original-media test. The
-  post-selection actuator/timer transfer and actual map-setter caller still
-  need a live trace.
-  Instrument these offsets in an original run before changing the spawn.
+  source code path but lacks an independent original-media test.
+  `CODE(16)+0x21a8..+0x21ce` reads the startup pose from the sole retail
+  `Dungeon.dat` File_header and sets map 0; its save/load branch at
+  `+0x29e6..+0x29f8` can instead restore the map from a save buffer.
+  `CODE(4)+0x02f4..+0x034a` consumes pending map `A5-0x66b2` through
+  `CODE(4)+0x029a`, the map setter and the party mover, then clears it.
+  A scan of `CODE(0..16)` found no direct write of a new map ID to that
+  pending variable. The retail HFS catalog has one `Dungeon.dat` and no
+  bundled save, so a separate post-selection dungeon file is unsupported.
+  No mirror-selection-to-map-change edge has been established. Trace
+  indirect writes to `A5-0x66b2` or a post-selection handler that moves
+  the party to another map in an original run before changing the spawn.
   The Mac C080 production
   pointer route now accepts source-admitted DB10 floor items through opaque
   pixels, including a linked record. Mac linked DB5–DB9 rendering now uses
