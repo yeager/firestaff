@@ -218,7 +218,11 @@ int M11_GameView_DropsIdleCatchupForStartup(const M11_GameViewState* gameView)
     if (!gameView) return 0;
     if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         gameView->dm2State.startup_menu_active) {
-        return 1;
+        /* TWANIM and the Amiga VBlank player carry source frame durations.
+         * Keep their clock aligned to elapsed host time when presentation
+         * takes longer than one scheduler quantum. The Mac movie and other
+         * startup paths still require one presented step at a time. */
+        return !gameView->dm2FmtownsTitleBound;
     }
     return gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (gameView->csbState.startup_title_active ||
@@ -9000,25 +9004,38 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
         }
-        while (gameView.active && idleAccumulatorMs >= (uint32_t)gameTickInterval) {
-            if (M11_GameView_AdvanceIdleTick(&gameView) == M11_GAME_INPUT_REDRAW) {
+        {
+            int dm2TimedMediaRedraw = 0;
+            while (gameView.active && idleAccumulatorMs >= (uint32_t)gameTickInterval) {
+                if (M11_GameView_AdvanceIdleTick(&gameView) == M11_GAME_INPUT_REDRAW) {
+                    if (gameView.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+                        gameView.dm2State.startup_menu_active &&
+                        (gameView.dm2FmtownsTitleBound ||
+                         gameView.dm2FmtownsTitleFinished)) {
+                        dm2TimedMediaRedraw = 1;
+                    } else {
+                        M11_GameView_Draw(&gameView,
+                                          M11_Render_GetFramebuffer(),
+                                          M11_FB_WIDTH,
+                                          M11_FB_HEIGHT);
+                        gameFrameNeedsPresent = 1;
+                    }
+                }
+                idleAccumulatorMs -= (uint32_t)gameTickInterval;
+                /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0806 place a visible
+                 * raster between source VBlank waits. Preserve one presented
+                 * step there; the source-timed DM2 streams may catch up. */
+                if (M11_GameView_DropsIdleCatchupForStartup(&gameView)) {
+                    idleAccumulatorMs = 0;
+                    break;
+                }
+            }
+            if (dm2TimedMediaRedraw) {
                 M11_GameView_Draw(&gameView,
                                   M11_Render_GetFramebuffer(),
                                   M11_FB_WIDTH,
                                   M11_FB_HEIGHT);
                 gameFrameNeedsPresent = 1;
-            }
-            idleAccumulatorMs -= (uint32_t)gameTickInterval;
-            /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0806 place a visible
-             * raster between source VBlank waits.  If a host stall left a
-             * large accumulator, consuming it here would advance several
-             * title/door pages before the next present and make the sequence
-             * appear too fast.  Keep the one visible source step, discard
-             * the stale host debt, and resume from a fresh cadence interval.
-             * Gameplay remains allowed to catch up normally. */
-            if (M11_GameView_DropsIdleCatchupForStartup(&gameView)) {
-                idleAccumulatorMs = 0;
-                break;
             }
         }
         if (gameView.active) {

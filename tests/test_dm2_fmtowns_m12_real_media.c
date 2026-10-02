@@ -304,6 +304,10 @@ int main(void)
             int swoosh_first_ok = 0;
             int swoosh_last_ok = 0;
             unsigned int end_frame_count = 0u;
+            uint64_t title_timer_ticks = 0u;
+            uint64_t swoosh_timer_ticks = 0u;
+            int title_timing_complete = 1;
+            int swoosh_timing_complete = 1;
 
             memset(&disc, 0, sizeof(disc));
             memset(&first_frame, 0, sizeof(first_frame));
@@ -331,6 +335,17 @@ int main(void)
                 last_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
                            title, title_size, 224u, pixels, sizeof(pixels),
                            &last_frame);
+                for (uint32_t frame_index = 0u; frame_index < 225u;
+                     ++frame_index) {
+                    DM2_V1_FmtownsAnimFrameReceipt timing_frame;
+                    if (!dm2_v1_fmtowns_anim_stream_decode_frame(
+                            title, title_size, frame_index, pixels,
+                            sizeof(pixels), &timing_frame)) {
+                        title_timing_complete = 0;
+                        break;
+                    }
+                    title_timer_ticks += timing_frame.display_duration;
+                }
                 (void)dm2_v1_fmtowns_anim_stream_decode_palette(
                     title, title_size, &title_palette);
                 (void)dm2_v1_fmtowns_anim_stream_decode_title_sound(
@@ -359,6 +374,17 @@ int main(void)
                 swoosh_last_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
                     swoosh, swoosh_size, 18u, pixels, sizeof(pixels),
                     &swoosh_last_frame);
+                for (uint32_t frame_index = 0u; frame_index < 19u;
+                     ++frame_index) {
+                    DM2_V1_FmtownsAnimFrameReceipt timing_frame;
+                    if (!dm2_v1_fmtowns_anim_stream_decode_frame(
+                            swoosh, swoosh_size, frame_index, pixels,
+                            sizeof(pixels), &timing_frame)) {
+                        swoosh_timing_complete = 0;
+                        break;
+                    }
+                    swoosh_timer_ticks += timing_frame.display_duration;
+                }
             }
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                 dm2_v1_fmtowns_disc_probe(
@@ -407,6 +433,13 @@ int main(void)
                        first_frame.output_fnv1a == 0xc7ad2279u &&
                        last_frame.output_fnv1a == 0x5ef57a09u,
                    "FM Towns TITLE decodes its first and final retail frames in RAM");
+            printf("FM Towns startup source timing: SWOOSH %llu + TITLE %llu Timer-A ticks\n",
+                   (unsigned long long)swoosh_timer_ticks,
+                   (unsigned long long)title_timer_ticks);
+            expect(title_timing_complete && swoosh_timing_complete &&
+                       title_timer_ticks == 1344u &&
+                       swoosh_timer_ticks == 228u,
+                   "FM Towns startup retains all original Timer-A frame durations");
             expect(title_palette.valid && title_palette.color_count == 16u &&
                        title_palette.source_record_offset != 0u &&
                        title_palette.output_fnv1a != 0u,

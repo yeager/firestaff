@@ -50,6 +50,12 @@ int main(void) {
                     "DM2 startup wakes for original media clocks");
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 16u,
                     "DM2 startup ignores gameplay speed multiplier");
+    view.dm2FmtownsTitleBound = 1;
+    if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: DM2 timed title must catch up to elapsed host time\n");
+        ++failures;
+    }
+    view.dm2FmtownsTitleBound = 0;
     {
         DM2_V1_BootProfile profile;
         memset(&profile, 0, sizeof(profile));

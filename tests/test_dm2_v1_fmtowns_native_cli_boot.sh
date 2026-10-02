@@ -54,6 +54,25 @@ case "$app" in
     */*) app_dir=${app%/*} ;;
     *) app_dir=. ;;
 esac
+title_probe="$app_dir/test-dm2-fmtowns-bare-title.json"
+rm -f "$title_probe"
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$title_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --data-dir "$archive" --duration 40000 >/dev/null 2>&1
+python3 - "$title_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+towns = probe["dm2FmtownsStartup"]
+if (probe["sourceId"] != "dm2" or
+        towns["titleFinished"] != 1 or towns["titleRejected"] != 0 or
+        towns["titleBound"] != 0 or towns["frameIndex"] != 225 or
+        probe["startup"]["phase"] != "dm2-startup-menu"):
+    raise SystemExit(f"FAIL: bare DM2 did not reach the original FM Towns menu by 40 seconds: {probe}")
+print("PASS: bare DM2 reaches the FM Towns New Game menu within 40 seconds")
+PY
 runtime_probe="$app_dir/test-dm2-fmtowns-normal-loop.json"
 rm -f "$runtime_probe"
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
