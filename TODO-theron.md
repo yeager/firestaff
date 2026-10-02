@@ -4400,6 +4400,15 @@ not further interpretation of bank loading. See
   `TQUS02.bin` (`f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565`).
   This proves Track 01 startup for both supplied editions,
   but still does not establish any gameplay CDDA selection.
+- ✅ Added an archive-backed CTest that extracts the authentic US and JP CUE,
+  Track 01, and Track 02 members from their supplied 7z discs into a temporary
+  build-local directory. It verifies each original Track 02 BIN against its
+  edition hash, calls the production verified-media CDDA handoff, and starts
+  the file-backed production audio lifecycle. On trv2,
+  `ctest --test-dir build -R '^theron_v1_track01_cdda_authentic_archive$'
+  --output-on-failure` passed for both editions. This verifies title Track 01
+  raw CDDA startup only; gameplay music routing and archive-native runtime
+  reads remain separate parity requirements.
 - 🔒 Runtime archive gap confirmed for both JP and US: booting directly from
   either supplied `.7z` with external archive tools enabled accepts its
   authentic Track 02, but reports `theronTrack01CddaReady=0`; the user's

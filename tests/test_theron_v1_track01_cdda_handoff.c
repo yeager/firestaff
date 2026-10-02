@@ -1,7 +1,6 @@
 #include "theron_v1_track02.h"
 #include "asset_find_by_hash.h"
 #include "firestaff_x68k_media_receipt.h"
-#include "firestaff_theron_media_classify.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,85 +10,60 @@
 #include <unistd.h>
 #endif
 
-#define THERON_TEST_US_OGG_SHA256 \
-    "c2b296a82898a749503b10edab2523cbb5e7e165ef8c95abafe348fe36bc9c3e"
-#define THERON_TEST_JP_OGG_SHA256 \
-    "bfac627f0e1ee7debd5bb356065d11f1b3542402e8831b1634d1eab3e119a619"
-
 #if !defined(_WIN32)
-static int test_authentic_rar_ogg(const char *archive, int japanese) {
-    const char *track02_md5 = japanese ? THERON_TRACK02_MD5_JP_ISO
-                                       : THERON_TRACK02_MD5_US_ISO;
-    const char *ogg_sha256 = japanese ? THERON_TEST_JP_OGG_SHA256
-                                       : THERON_TEST_US_OGG_SHA256;
-    const char *cue_member = japanese ? "TQJP.cue" : "TQUS.cue";
-    const char *ogg_member = japanese ? "TQJP01.ogg" : "TQUS01.ogg";
-    const char *track19 = japanese ? "TQJP19.iso" : "TQUS19.iso";
-    const char *track02_tail = japanese ? "TQJP02End.iso" : "TQUS02End.iso";
-    char cue_path[ASSET_PATH_MAX];
+static int test_authentic_cue_file(const char *cue_path, int japanese) {
+    const char *track02_md5 = japanese ? THERON_TRACK02_MD5_JP_BIN
+                                       : THERON_TRACK02_MD5_US_BIN;
+    const char *audio_member = japanese
+        ? "Dungeon Master - Theron's Quest (Japan) (Track 01).bin"
+        : "Dungeon Master - Theron's Quest (USA) (Track 01).bin";
+    const char *track02_member = japanese
+        ? "Dungeon Master - Theron's Quest (Japan) (Track 02).bin"
+        : "Dungeon Master - Theron's Quest (USA) (Track 02).bin";
+    char audio_path[ASSET_PATH_MAX];
     char track02_path[ASSET_PATH_MAX];
-    char ogg_path[ASSET_PATH_MAX];
-    char audio_sha256[65];
-    uint8_t *cue_bytes = NULL;
-    uint8_t *ogg_bytes = NULL;
-    size_t cue_size = 0u;
-    size_t ogg_size = 0u;
-    FirestaffTheronMediaStatus media;
-    FirestaffTheronMediaStatus cue;
     Theron_Track01CddaHandoff handoff;
-    Theron_Track01CddaStream stream = {0};
+    Theron_Track01CddaStream file_stream = {0};
+    const char *slash;
+    size_t parent_len;
     int ok = 0;
 
-    if (snprintf(cue_path, sizeof(cue_path), "%s::%s", archive, cue_member) >=
-            (int)sizeof(cue_path) ||
-        snprintf(track02_path, sizeof(track02_path), "%s::@concat(%s,%s)",
-                 archive, track19, track02_tail) >= (int)sizeof(track02_path) ||
-        snprintf(ogg_path, sizeof(ogg_path), "%s::%s", archive, ogg_member) >=
-            (int)sizeof(ogg_path) ||
-        FirestaffTheronMedia_ClassifyPathForTrack02(
-            archive, track02_md5, &media) != 0 ||
-        strcmp(media.candidate_path, track02_path) != 0 ||
-        strcmp(media.cue_path, cue_path) != 0 ||
-        !asset_read_path_alloc(cue_path, &cue_bytes, &cue_size) ||
-        !cue_bytes || cue_size == 0u || cue_size > 64u * 1024u ||
-        FirestaffTheronMedia_ParseCue((const char *)cue_bytes, cue_size, &cue) != 0 ||
-        !cue.paired_track01_track02 ||
-        strcmp(cue.track01_path, japanese ? "TQJP01.wav" : "TQUS01.wav") != 0 ||
-        !asset_read_path_alloc(ogg_path, &ogg_bytes, &ogg_size) ||
-        !ogg_bytes || ogg_size == 0u || ogg_size > 16u * 1024u * 1024u ||
-        firestaff_x68k_media_receipt_sha256_hex(
-            ogg_bytes, ogg_size, audio_sha256, sizeof(audio_sha256)) != 0 ||
-        strcmp(audio_sha256, ogg_sha256) != 0) {
-        fprintf(stderr, "authentic %s RAR CDDA failed source/hash admission\n",
+    if (!cue_path || !cue_path[0]) return 0;
+    slash = strrchr(cue_path, '/');
+    if (!slash) slash = strrchr(cue_path, '\\');
+    parent_len = slash ? (size_t)(slash - cue_path + 1) : 0u;
+    if (parent_len + strlen(audio_member) >= sizeof(audio_path) ||
+        parent_len + strlen(track02_member) >= sizeof(track02_path)) return 0;
+    if (parent_len) memcpy(audio_path, cue_path, parent_len);
+    memcpy(audio_path + parent_len, audio_member, strlen(audio_member) + 1u);
+    if (parent_len) memcpy(track02_path, cue_path, parent_len);
+    memcpy(track02_path + parent_len, track02_member, strlen(track02_member) + 1u);
+
+    if (theron_v1_track01_cdda_handoff_from_verified_media(
+            cue_path, track02_md5, &handoff) != THERON_TRACK01_CDDA_AVAILABLE ||
+        handoff.track02_variant != theron_v1_track02_variant_for_md5(track02_md5) ||
+        handoff.track_number != 1u || !handoff.original_cdda ||
+        !handoff.playback_handoff_ready || handoff.audio_is_vorbis ||
+        handoff.audio_start_byte != 0u || handoff.audio_sector_count == 0u ||
+        strcmp(handoff.cue_path, cue_path) != 0 ||
+        strcmp(handoff.audio_path, audio_path) != 0 ||
+        strcmp(handoff.track02_path, track02_path) != 0 ||
+        handoff.audio_file_bytes == 0u) {
+        fprintf(stderr, "authentic %s CUE CDDA failed production handoff/hash admission\n",
                 japanese ? "JP" : "US");
         goto cleanup;
     }
-    memset(&handoff, 0, sizeof(handoff));
-    handoff.status = THERON_TRACK01_CDDA_AVAILABLE;
-    handoff.track02_variant = theron_v1_track02_variant_for_md5(track02_md5);
-    snprintf(handoff.cue_path, sizeof(handoff.cue_path), "%s", cue_path);
-    snprintf(handoff.audio_path, sizeof(handoff.audio_path), "%s", ogg_path);
-    snprintf(handoff.track02_path, sizeof(handoff.track02_path), "%s", track02_path);
-    handoff.audio_file_bytes = ogg_size;
-    handoff.audio_is_vorbis = 1;
-    handoff.original_cdda = 1;
-    handoff.playback_handoff_ready = 1;
-    handoff.track_number = 1u;
-    if (!theron_v1_track01_cdda_stream_start_memory(
-            &handoff, ogg_bytes, ogg_size, &stream) ||
-        !theron_v1_track01_cdda_stream_pump(&stream) ||
-        stream.sectors_queued == 0u) {
-        fprintf(stderr, "authentic %s in-memory OGG stream failed to decode\n",
+    if (!theron_v1_track01_cdda_lifecycle_update(&handoff, 1, &file_stream) ||
+        !file_stream.output_started || file_stream.sectors_queued == 0u) {
+        fprintf(stderr, "authentic %s production CDDA stream failed to queue\n",
                 japanese ? "JP" : "US");
         goto cleanup;
     }
-    printf("PASS: authentic %s RAR OGG hash-verified and decoded in memory (%zu bytes)\n",
-           japanese ? "JP" : "US", ogg_size);
+    printf("PASS: authentic %s production raw CDDA handoff/stream passed (%zu sectors)\n",
+           japanese ? "JP" : "US", handoff.audio_sector_count);
     ok = 1;
 cleanup:
-    theron_v1_track01_cdda_stream_stop(&stream);
-    free(cue_bytes);
-    free(ogg_bytes);
+    theron_v1_track01_cdda_stream_stop(&file_stream);
     return ok;
 }
 #endif
@@ -125,8 +99,10 @@ static int cue_declares_raw_track02(const char *path) {
     return raw;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
 #if defined(_WIN32)
+    (void)argc;
+    (void)argv;
     printf("test_theron_v1_track01_cdda_handoff: SKIP (fixture path)\n");
     return 0;
 #else
@@ -138,16 +114,20 @@ int main(void) {
     Theron_Track01CddaHandoff handoff;
     Theron_Track01CddaStream stream = {0};
     int failed = 0;
-    if (!mkdtemp(directory)) return 1;
-    {
-        const char *archive = getenv("FIRESTAFF_THERON_RAR");
-        if (archive && archive[0] &&
-            (!test_authentic_rar_ogg(archive, 0) ||
-             !test_authentic_rar_ogg(archive, 1))) {
-            rmdir(directory);
+
+    if (argc == 4 && strcmp(argv[1], "--authentic-only") == 0) {
+        if (!test_authentic_cue_file(argv[2], 0) ||
+            !test_authentic_cue_file(argv[3], 1)) {
             return 1;
         }
+        printf("test_theron_v1_track01_cdda_handoff: PASS (authentic US/JP production paths only)\n");
+        return 0;
     }
+    if (argc != 1) {
+        fprintf(stderr, "usage: %s [--authentic-only <us-cue> <jp-cue>]\n", argv[0]);
+        return 2;
+    }
+    if (!mkdtemp(directory)) return 1;
     snprintf(cue, sizeof(cue), "%s/original.cue", directory);
     snprintf(audio, sizeof(audio), "%s/track01.bin", directory);
     snprintf(data, sizeof(data), "%s/track02.bin", directory);
