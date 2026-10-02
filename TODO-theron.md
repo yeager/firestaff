@@ -4769,3 +4769,13 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   tree. The trace remains private and is not committed. This establishes the
   call receipt only, not successful stage-two handoff, menu selection, dungeon
   entry or T900 semantics.
+
+## 2026-10-02 — C3A0 caller evidence rejects unrelated rows
+
+- ✅ Tightened `verify_theron_record_table_provenance.py` so a C3A0 caller
+  witness must have a logical PC inside the source-locked `$C3A0–$C429`
+  window and a physical PC consistent with the captured MPR mapping. The
+  regression now rejects both an out-of-window row and a row whose physical
+  mapping disagrees with its logical PC; the authentic-shape fixture still
+  passes. This validates evidence coordinates only and does not promote the
+  `$611D` record table to level, object, creature, or gameplay semantics.
