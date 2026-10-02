@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-10-02: Preserved each decoded PC 3.4 GRAPHICS.DAT SND3 effect when an
+  optional sound pack is empty or replaces only selected events. An incomplete
+  original bank no longer loses valid samples during pack discovery. A
+  real-media DM1 regression loads the retail SND3 bank, simulates one missing
+  event, applies an empty pack and a single source-derived WAV, and confirms
+  every unaffected original buffer remains bound. Shared SDL audio lifecycle,
+  DM1 object-name audio, and CSB source-audio tests also pass locally.
+
 - 2026-10-02: Re-read the authenticated start square in all six Atari ST
   editions in Motorola source order. Every map 0 (1,3) square has an inactive
   teleporter followed by the same two item-27 party-possession sensors; an

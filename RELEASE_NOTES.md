@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM1 PC 3.4 sound effects`: an optional partial sound pack now preserves
+  authentic GRAPHICS.DAT effects for every event it does not replace.
+
 - `DM2 Macintosh viewport clicks`: aligns wall-control hitboxes with the
   original RECT_7 dungeon image, 40 pixels below the local render surface.
   Original-media hit testing passes; later-map switch action still needs a

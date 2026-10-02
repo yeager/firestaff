@@ -62,6 +62,60 @@ static int check_intro_preferences(M11_AudioState* audio) {
     return ok;
 }
 
+static int check_partial_sound_pack(M11_AudioState* audio) {
+    static const char* directory = "dm1_sound_pack_partial_test";
+    static const char* wavPath = "dm1_sound_pack_partial_test/00.wav";
+    unsigned char wav[60] = {
+        'R','I','F','F',52,0,0,0,'W','A','V','E',
+        'f','m','t',' ',16,0,0,0,1,0,1,0,0x22,0x56,0,0,
+        0x22,0x56,0,0,1,0,8,0,
+        'd','a','t','a',16,0,0,0
+    };
+    M11_SoundBuffer retained;
+    FILE* file;
+    int i;
+    int ok = 1;
+
+    if (!audio || audio->originalSnd3LoadedCount != M11_AUDIO_ORIGINAL_SOUND_COUNT ||
+        audio->originalSounds[1].sampleCount < 16) return expect(0, "original source bank is ready for partial-pack regression");
+    retained = audio->originalSounds[1];
+    free(audio->originalSounds[0].samples);
+    memset(&audio->originalSounds[0], 0, sizeof(audio->originalSounds[0]));
+    audio->originalSnd3LoadedCount -= 1;
+    audio->originalSnd3Available = 0;
+
+    ok &= expect(M11_Audio_ApplySoundPackDir(audio, "dm1_sound_pack_absent_test") == 0 &&
+                     audio->originalSounds[1].samples == retained.samples &&
+                     audio->originalSounds[1].sampleCount == retained.sampleCount &&
+                     audio->originalSnd3LoadedCount == M11_AUDIO_ORIGINAL_SOUND_COUNT - 1,
+                 "empty optional pack preserves each available authentic SND3 sample");
+    if (!SDL_CreateDirectory(directory)) return expect(0, "partial sound-pack directory created");
+    for (i = 0; i < 16; ++i) {
+        float sample = retained.samples[i];
+        if (sample < -1.0f) sample = -1.0f;
+        if (sample > 1.0f) sample = 1.0f;
+        wav[44 + i] = (unsigned char)(sample * 127.0f + 128.0f);
+    }
+    file = fopen(wavPath, "wb");
+    if (!file) return expect(0, "source-derived partial WAV opened");
+    {
+        int written = fwrite(wav, 1, sizeof(wav), file) == sizeof(wav);
+        int closed = fclose(file) == 0;
+        ok &= expect(written && closed, "source-derived partial WAV written");
+    }
+    if (ok) {
+        ok &= expect(M11_Audio_ApplySoundPackDir(audio, directory) == 1 &&
+                         audio->originalSounds[0].sampleCount == 16 &&
+                         audio->originalSounds[1].samples == retained.samples &&
+                         audio->originalSounds[1].sampleCount == retained.sampleCount &&
+                         audio->originalSnd3LoadedCount == M11_AUDIO_ORIGINAL_SOUND_COUNT - 1,
+                     "one optional WAV fills its event without clearing other source samples");
+    }
+    (void)remove(wavPath);
+    (void)SDL_RemovePath(directory);
+    return ok;
+}
+
 int main(void) {
     M11_AudioState state;
     const unsigned char* program;
@@ -105,6 +159,7 @@ int main(void) {
     ok &= expect(M11_Audio_OriginalSnd3Available(&state) &&
                      M11_Audio_BindOriginalSnd3Path(&state, expectedGraphicsPath),
                  "configured DM1 SND3 effects are consumed directly from selected media");
+    ok &= check_partial_sound_pack(&state);
     /* DM1 source effects are SND3-owned. A missing record must not revive
      * the legacy procedural door/combat/spell marker path. */
     state.originalSounds[0].sampleCount = 0;

@@ -1001,20 +1001,13 @@ static void m11_try_load_original_snd3(M11_AudioState* state) {
     (void)m11_load_original_snd3_path(state, path);
 }
 
-static void m11_try_load_sound_pack(M11_AudioState* state) {
-    const char* dir;
+int M11_Audio_ApplySoundPackDir(M11_AudioState* state, const char* dir) {
     unsigned int i;
-    if (!state) return;
-    if (getenv("FIRESTAFF_AUDIO_DISABLE_SOUND_PACK")) return;
-    dir = getenv("FIRESTAFF_SOUND_PACK_DIR");
-    if (!dir || !*dir) return;
+    if (!state || !state->initialized || !dir || !*dir) return 0;
 
-    if (!state->originalSnd3Available) {
-        for (i = 0; i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
-            m11_sound_free(&state->originalSounds[i]);
-        }
-        state->originalSnd3LoadedCount = 0;
-    }
+    /* ReDMCSB DATA.C:1265 G0060 (I34E) assigns the 35 sound events to
+     * GRAPHICS.DAT samples. A partial optional pack replaces only the
+     * explicitly named event; it must preserve every other decoded SND3. */
 
     for (i = 0; i < V1_DM_SOUND_EVENT_COUNT && i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
         const V1_SoundEventSnd3MapEntry* entry = V1_SoundEventSnd3_Find((int)i);
@@ -1031,6 +1024,12 @@ static void m11_try_load_sound_pack(M11_AudioState* state) {
         }
     }
     state->soundPackAvailable = state->soundPackLoadedCount > 0 ? 1 : 0;
+    return state->soundPackLoadedCount;
+}
+
+static void m11_try_load_sound_pack(M11_AudioState* state) {
+    if (getenv("FIRESTAFF_AUDIO_DISABLE_SOUND_PACK")) return;
+    (void)M11_Audio_ApplySoundPackDir(state, getenv("FIRESTAFF_SOUND_PACK_DIR"));
 }
 
 /* ── public API ──────────────────────────────────────────────────── */

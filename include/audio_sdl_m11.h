@@ -309,6 +309,7 @@ int M11_Audio_PumpTitleMusic(M11_AudioState* state);
 int M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 int M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state);
+int M11_Audio_ApplySoundPackDir(M11_AudioState* state, const char* directory);
 /* Rebind DM1's source SND3 bank to the exact GRAPHICS.DAT path admitted by
  * the startup asset receipt. This avoids using an unrelated default file
  * when the launcher selected a different verified installation. */
