@@ -1674,6 +1674,26 @@ typedef struct { int valid; int dir,x,y; uint8_t tile_w2,tile_type,oriented_bits
 int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int level,int dir,int x,int y,DM2_V1_StoneRoomInputReceipt *out);
 typedef struct { int valid; uint8_t w0,w2,w6[4]; uint16_t xvalue; } DM2_V1_StoneRoomBaseCellReceipt;
 int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out);
+
+/* The exact no-record, class-2 source branch of SUMMARIZE_STONE_ROOM used
+ * by c_light. Other tile and record branches remain outside this receipt. */
+typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint8_t raw_tile;
+    uint8_t source_tile_type;
+    uint16_t first_record_link;
+    uint16_t ceiling_ornament_word;
+    uint8_t ceiling_ornament_index;
+    uint16_t ceiling_animation_frame;
+    uint32_t ornament_source_hash;
+} DM2_V1_CLightStoneRoomReceipt;
+int dm2_v1_dungeon_c_light_stone_room_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,

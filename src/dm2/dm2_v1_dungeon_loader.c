@@ -6698,6 +6698,73 @@ int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int leve
 int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out){if(!out)return 0;
     memset(out,0,sizeof(*out));if(!in||!in->valid)return 0;out->w2=in->tile_w2;out->w0=(uint8_t)(in->tile_w2>>5);memset(out->w6,0xff,sizeof(out->w6));out->valid=1;return 1;}
 
+int dm2_v1_dungeon_c_light_stone_room_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out)
+{
+    DM2_V1_QueryOrnateAnimFrameReceipt animation;
+    uint16_t graphicsset_word = 0u;
+    int graphicsset;
+    int raw;
+    int first;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !loader || !loader->loaded) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    /* SKProject c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-2820:
+     * class-2 tiles without records have two source branches. Bit 0x08
+     * keeps type two and has no ceiling ornament; without it, source
+     * changes the summary type to one and reads GRAPHICSSET word 0x6b. */
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 2u ||
+        first != -1) {
+        return 0;
+    }
+    if ((raw & 0x08) != 0) {
+        out->level = level;
+        out->x = x;
+        out->y = y;
+        out->raw_tile = (uint8_t)raw;
+        out->source_tile_type = 2u;
+        out->first_record_link = DM2_THING_NULL_MARKER;
+        out->ceiling_ornament_word = 0x00ffu;
+        out->ceiling_ornament_index = 0xffu;
+        out->valid = 1;
+        return 1;
+    }
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
+    if (graphicsset < 0 || graphicsset > 15 ||
+        !dm2_v1_query_gdat_entry_data_index(loader, 8, graphicsset, 11,
+                                              0x6b, &graphicsset_word) ||
+        graphicsset_word == 0u ||
+        (graphicsset_word & 0x8000u) == 0u) {
+        return 0;
+    }
+    memset(&animation, 0, sizeof(animation));
+    if (!dm2_v1_query_ornate_anim_frame_receipt(
+            loader, 10, graphicsset_word & 0xffu, tick, 0u,
+            &animation) || !animation.accepted ||
+        animation.receipt_hash == 0u) {
+        return 0;
+    }
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->source_tile_type = 1u;
+    out->first_record_link = DM2_THING_NULL_MARKER;
+    out->ceiling_ornament_index = (uint8_t)(graphicsset_word & 0xffu);
+    out->ceiling_animation_frame = animation.frame;
+    out->ceiling_ornament_word = (uint16_t)(
+        out->ceiling_ornament_index |
+        (uint16_t)((uint32_t)animation.frame * 10u << 8));
+    out->ornament_source_hash = animation.receipt_hash;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;

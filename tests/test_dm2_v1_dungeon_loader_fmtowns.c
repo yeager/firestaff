@@ -118,6 +118,53 @@ static void test_fmtowns_load(const char *path) {
     assert(dungeon.column_index_base >= 0);
     printf("  PASS: column index base set (%d)\n", dungeon.column_index_base);
 
+    {
+        const char *home = getenv("HOME");
+        char graphics_path[1024];
+        size_t graphics_size = 0u;
+        uint8_t *graphics;
+        DM2_V1_AssetLoader loader;
+        DM2_V1_CLightStoneRoomReceipt room;
+        assert(home);
+        assert(snprintf(graphics_path, sizeof(graphics_path),
+                        "%s/.firestaff/data/dm2/fmtowns_iso/DATA/GRAPHICS.DAT",
+                        home) < (int)sizeof(graphics_path));
+        graphics = read_file(graphics_path, &graphics_size);
+        assert(graphics);
+        memset(&loader, 0, sizeof(loader));
+        assert(dm2_v1_asset_loader_init(&loader, graphics,
+                                        graphics_size) == 0);
+        /* Original map 38 DB1 destination (6,6) is a class-2, no-record
+         * tile. SKProject SUMMARIZE_STONE_ROOM promotes its effective tile
+         * type to one and resolves the GRAPHICSSET/0 animated ceiling
+         * ornament from GDAT 0x6b through FLOOR_GFX/0x28 frame data. */
+        assert(dm2_v1_dungeon_c_light_stone_room_receipt(
+            &dungeon, &loader, 38, 6, 6, 0u, &room));
+        assert(room.valid && room.raw_tile == 0x40u &&
+               room.source_tile_type == 1u &&
+               room.first_record_link == DM2_THING_NULL_MARKER &&
+               room.ceiling_ornament_index == 0x28u &&
+               room.ceiling_animation_frame == 1u &&
+               room.ceiling_ornament_word == 0x0a28u &&
+               room.ornament_source_hash != 0u);
+        assert(dm2_v1_dungeon_c_light_stone_room_receipt(
+            &dungeon, &loader, 38, 6, 6, 1u, &room));
+        assert(room.ceiling_animation_frame == 2u &&
+               room.ceiling_ornament_word == 0x1428u);
+        assert(dm2_v1_dungeon_c_light_stone_room_receipt(
+            &dungeon, &loader, 38, 5, 6, 0u, &room));
+        assert(room.raw_tile == 0x48u && room.source_tile_type == 2u &&
+               room.first_record_link == DM2_THING_NULL_MARKER &&
+               room.ceiling_ornament_word == 0x00ffu &&
+               room.ceiling_ornament_index == 0xffu &&
+               room.ornament_source_hash == 0u);
+        assert(!dm2_v1_dungeon_c_light_stone_room_receipt(
+            &dungeon, &loader, 38, 6, 5, 0u, &room));
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
+        printf("  PASS: FM Towns map 38 source stone-room light inputs\n");
+    }
+
     printf("  PASS: FM Towns dungeon loader\n");
     free(data);
 }
