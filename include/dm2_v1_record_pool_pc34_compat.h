@@ -302,6 +302,18 @@ int dm2_v1_record_pool_next_link(const DM2_V1_RecordPoolSet *set,
                                  int16_t handle,
                                  int16_t *out_next);
 
+/* SK1C9A DM2_19f0_050f: first DB4 in a tile-rooted record chain, or END.
+ * This receipt proves record traversal only; it does not admit an edge. */
+typedef struct {
+    int valid;
+    int16_t first_link;
+    int16_t creature_link;
+    uint16_t scanned_records;
+} DM2_V1_FirstCreatureReceipt;
+int dm2_v1_record_pool_first_creature_receipt(
+    const DM2_V1_RecordPoolSet *set, int16_t first_link,
+    DM2_V1_FirstCreatureReceipt *out);
+
 /* DM2_APPEND_RECORD_TO list path (x < 0): append `record` at the end of the
  * link list rooted at *list_head_io.  The appended record's own link word
  * becomes OBJECT_END_MARKER before it is chained.  Rejects null/end records

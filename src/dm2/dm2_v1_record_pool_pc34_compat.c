@@ -1451,6 +1451,33 @@ int dm2_v1_record_pool_next_link(const DM2_V1_RecordPoolSet *set,
     return 1;
 }
 
+int dm2_v1_record_pool_first_creature_receipt(
+    const DM2_V1_RecordPoolSet *set, int16_t first_link,
+    DM2_V1_FirstCreatureReceipt *out)
+{
+    int16_t link = first_link;
+    unsigned scanned = 0u;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!set || link == (int16_t)0xffff) return 0;
+    while (link != (int16_t)0xfffe) {
+        int16_t next;
+        if (++scanned > 256u ||
+            !dm2_v1_record_pool_address(set, link)) return 0;
+        if ((((uint16_t)link >> 10) & 0x0fu) == 4u) break;
+        if (!dm2_v1_record_pool_next_link(set, link, &next) ||
+            next == (int16_t)0xffff) return 0;
+        link = next;
+    }
+    /* 19f0_050f caches precisely this handle; a DB4 farther down the
+     * chain is not considered after the first creature. */
+    out->first_link = first_link;
+    out->creature_link = link;
+    out->scanned_records = (uint16_t)scanned;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_record_pool_append_to_list(DM2_V1_RecordPoolSet *set,
                                       int16_t *list_head_io,
                                       int16_t record)
