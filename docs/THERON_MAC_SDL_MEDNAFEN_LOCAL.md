@@ -220,6 +220,7 @@ Example PCE input through the host:
 ```bash
 THERON_CAPTURE_SDL_VIDEODRIVER=cocoa \
 THERON_CAPTURE_HOST_KEY_SEQUENCE='run@8,i@480,i@900' \
+THERON_CAPTURE_HOST_KEY_HOLDS=4,1,1 \
 THERON_CAPTURE_HOST_KEY_HOLD=1 \
 THERON_CAPTURE_INPUT_ROUTE=pid \
 scripts/capture_theron_mednafen_live_trace.sh

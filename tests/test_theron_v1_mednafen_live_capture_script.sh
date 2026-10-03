@@ -851,6 +851,15 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated PCE key@seconds entries' "$script" ||
+   ! grep -Fq 'if [[ -n "$host_key_holds" && -z "$host_key_sequence" ]]; then' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLDS requires THERON_CAPTURE_HOST_KEY_SEQUENCE' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLDS must be comma-separated positive seconds' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLDS must match the host-key sequence length' "$script" ||
+   ! grep -Fq 'host_key_current_hold=${host_key_sequence_holds[$((host_key_attempt - 1))]}' "$script" ||
+   ! grep -Fq 'sleep "$host_key_current_hold"' "$script" ||
+   ! grep -Fq 'quartz_arguments=("$host_key_current_code" "$host_key_current_hold" "$mednafen_ui_pid")' "$script" ||
+   ! grep -Fq 'requested_host_key_holds_seconds=%s' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLDS=4,1,1' "$repo/docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
    ! grep -Fq 'host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")' "$script" ||
    ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||

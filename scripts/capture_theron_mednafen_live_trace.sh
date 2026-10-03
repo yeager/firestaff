@@ -40,6 +40,7 @@ host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
 host_key_delays=${THERON_CAPTURE_HOST_KEY_DELAYS:-}
 host_key_sequence=${THERON_CAPTURE_HOST_KEY_SEQUENCE:-}
+host_key_holds=${THERON_CAPTURE_HOST_KEY_HOLDS:-}
 capture_input_grab_delay=${THERON_CAPTURE_INPUT_GRAB_DELAY:-2}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
@@ -75,6 +76,10 @@ capture_right_x11_key=
 mednafen_window_id=
 input_grab_x11_chord=
 host_input_requested=0
+if [[ -n "$host_key_holds" && -z "$host_key_sequence" ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_HOLDS requires THERON_CAPTURE_HOST_KEY_SEQUENCE' >&2
+    exit 1
+fi
 if [[ -n "$host_key" || -n "$host_key_sequence" ]]; then
     host_input_requested=1
 fi
@@ -566,6 +571,18 @@ if [[ "$host_input_requested" == 1 ]]; then
     if [[ -n "$host_key_sequence" && ! "$host_key_sequence" =~ ^(run|return|ii|i|select|up|down|left|right)@[0-9]+(,(run|return|ii|i|select|up|down|left|right)@[0-9]+)*$ ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated PCE key@seconds entries' >&2
         exit 1
+    fi
+    if [[ -n "$host_key_holds" ]]; then
+        if [[ ! "$host_key_holds" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]]; then
+            printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_HOLDS must be comma-separated positive seconds' >&2
+            exit 1
+        fi
+        IFS=',' read -r -a host_key_hold_entries <<<"$host_key_holds"
+        IFS=',' read -r -a host_key_sequence_entries <<<"$host_key_sequence"
+        if (( ${#host_key_hold_entries[@]} != ${#host_key_sequence_entries[@]} )); then
+            printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_HOLDS must match the host-key sequence length' >&2
+            exit 1
+        fi
     fi
     if [[ -z "$host_key_sequence" && "$host_key" != run && "$host_key" != return && "$host_key" != i && "$host_key" != ii && "$host_key" != select && "$host_key" != up && "$host_key" != down && "$host_key" != left && "$host_key" != right ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY must name a supported PCE key' >&2
@@ -1227,6 +1244,7 @@ if [[ "$host_input_requested" == 1 ]]; then
     host_key_previous_delay=0
     host_key_sequence_codes=()
     host_key_sequence_delays=()
+    host_key_sequence_holds=()
     if [[ -n "$host_key_sequence" ]]; then
         IFS=',' read -r -a host_key_sequence_entries <<<"$host_key_sequence"
         host_key_repeats=${#host_key_sequence_entries[@]}
@@ -1235,6 +1253,9 @@ if [[ "$host_input_requested" == 1 ]]; then
             host_key_sequence_delays+=("${host_key_sequence_entry#*@}")
             host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")
         done
+        if [[ -n "$host_key_holds" ]]; then
+            IFS=',' read -r -a host_key_sequence_holds <<<"$host_key_holds"
+        fi
     elif [[ -n "$host_key_delays" ]]; then
         IFS=',' read -r -a host_key_delay_entries <<<"$host_key_delays"
         host_key_repeats=${#host_key_delay_entries[@]}
@@ -1366,6 +1387,10 @@ if [[ "$host_input_requested" == 1 ]]; then
         if [[ -n "$host_key_sequence" ]]; then
             host_key_current_delay=${host_key_sequence_delays[$((host_key_attempt - 1))]}
             host_key_current_code=${host_key_sequence_codes[$((host_key_attempt - 1))]}
+            host_key_current_hold=$host_key_hold
+            if [[ -n "$host_key_holds" ]]; then
+                host_key_current_hold=${host_key_sequence_holds[$((host_key_attempt - 1))]}
+            fi
             if (( host_key_attempt > 1 && host_key_current_delay < host_key_previous_delay )); then
                 kill "$mednafen_pid" 2>/dev/null || true
                 wait "$mednafen_pid" 2>/dev/null || true
@@ -1375,6 +1400,7 @@ if [[ "$host_input_requested" == 1 ]]; then
         elif [[ -n "$host_key_delays" ]]; then
             host_key_current_delay=${host_key_delay_entries[$((host_key_attempt - 1))]}
             host_key_current_code=$host_key_code
+            host_key_current_hold=$host_key_hold
             if (( host_key_attempt > 1 && host_key_current_delay < host_key_previous_delay )); then
                 kill "$mednafen_pid" 2>/dev/null || true
                 wait "$mednafen_pid" 2>/dev/null || true
@@ -1384,6 +1410,7 @@ if [[ "$host_input_requested" == 1 ]]; then
         else
             host_key_current_delay=${host_key_delay_entries[0]}
             host_key_current_code=$host_key_code
+            host_key_current_hold=$host_key_hold
         fi
         host_key_elapsed_seconds=$((SECONDS - host_key_schedule_seconds))
         if (( host_key_current_delay > host_key_elapsed_seconds )); then
@@ -1393,7 +1420,7 @@ if [[ "$host_input_requested" == 1 ]]; then
         if [[ "$host_input_backend" == xdotool_x11 ]]; then
             if [[ "$(xdotool getwindowfocus 2>/dev/null || true)" != "$mednafen_window_id" ]] ||
                ! xdotool keydown "$host_key_current_code" ||
-               ! sleep "$host_key_hold" ||
+               ! sleep "$host_key_current_hold" ||
                ! xdotool keyup "$host_key_current_code"; then
                 kill "$mednafen_pid" 2>/dev/null || true
                 wait "$mednafen_pid" 2>/dev/null || true
@@ -1401,7 +1428,7 @@ if [[ "$host_input_requested" == 1 ]]; then
                 exit 1
             fi
         else
-            quartz_arguments=("$host_key_current_code" "$host_key_hold" "$mednafen_ui_pid")
+            quartz_arguments=("$host_key_current_code" "$host_key_current_hold" "$mednafen_ui_pid")
             if [[ "$input_route" == global_hid ]]; then
                 quartz_arguments+=(--global-hid)
             fi
@@ -1817,6 +1844,9 @@ fi
         fi
         printf 'host_input_delivery_attempts=%s\n' "$host_key_repeats"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
+        if [[ -n "$host_key_holds" ]]; then
+            printf 'requested_host_key_holds_seconds=%s\n' "$host_key_holds"
+        fi
         printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
         if [[ -n "$host_key_delays" ]]; then
             printf 'requested_host_key_delays=%s\n' "$host_key_delays"

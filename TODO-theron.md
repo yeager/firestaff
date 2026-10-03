@@ -126,6 +126,25 @@ Reviewed 2026-10-03. Only open work is listed here.
   shutdown. Subsequent capture used a task-private Mednafen base directory;
   preserve original game media and all existing profiles.
 
+## 2026-10-03 — bind the four-second startup press to original gameplay
+
+- The external authenticated JP capture harness replayed RUN at frame 480 for
+  240 frames (four seconds), followed by eight short Button-I events. Its input
+  trace records RUN `raw=0008` at the System Card controller poll `$E4B7` and
+  the full scheduled sequence, but the authentic JP CUE/System Card run still
+  produced no CD-to-game-RAM origin receipt, no party pose, and
+  `transition=missing`. It did not reach a gameplay consumer; do not promote
+  the BIOS-only input evidence.
+- A separate attempt to load the 229 KiB GUI-created Akutuba `.mca` through the
+  instrumented Mednafen `pce` core failed: the state contains `pce_fast`
+  sections that `pce` does not recognize, and the required VDC section was
+  absent. The state remains useful for GUI captures after input, but this
+  cross-core failure is not evidence of a retail save defect. A matching
+  instrumented `pce_fast` core or a `pce`-created gameplay state is still
+  needed for a same-session pose/consumer capture.
+- These experiment traces and the original state remain outside Git. No JP
+  teleporter, movement, item, or save-state semantics changed.
+
 ## 2026-10-02 — authentic US BRAM reaches Firestaff's M11 Continue route
 
 - ✅ On the isolated trv2 build, `test_theron_v1_pce_bram_real_artifact`

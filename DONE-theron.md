@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — preserve distinct authentic Mednafen input hold durations
+
+- The host-input capture sequence accepts a matching per-key hold list. This
+  lets a four-second RUN startup press be followed by short one-second menu
+  presses without holding every key equally long. Invalid lists, lists without
+  a sequence, and length mismatches fail before the emulator starts.
+- The host delivery uses each resolved hold duration for both X11 and Quartz
+  key-down/up pairs and records the requested list in the capture receipt.
+  The capture-script regression passed three consecutive loops; this verifies
+  capture-tool behavior only, not game-side input consumption or gameplay.
+
 ## 2026-10-03 — authenticate the shared UI glyph bank in both regions
 
 - The source-only 120-glyph 8×6 viewport bank now has a real-media regression
