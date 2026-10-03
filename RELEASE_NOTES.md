@@ -16,6 +16,13 @@
 - Physical MacBook Pro M5 playback and complete cross-platform game startup
   remain unverified.
 
+## Unreleased changes
+
+- `Start menu data root`: preserves an authenticated folder-picker selection
+  when the multi-game menu reopens, even if the default root contains more
+  games. Original DM1 PC 3.4 media verifies the saved selection; DM1, CSB and
+  DM2 launch handoffs from that selected root remain open.
+
 # Firestaff v3.0.355
 
 ## User-facing changes

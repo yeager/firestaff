@@ -1,10 +1,8 @@
 # Firestaff TODO — active cross-game work
 
-- Verify M12's persisted data-root preservation with the authenticated DM1
-  picker corpus while another default root contains more games. The pure
-  fallback policy and source syntax checks pass; the integrated original-media
-  menu test needs a selective linked build. Also confirm the selected root's
-  DM1/CSB/DM2 launch paths on a desktop before release.
+- Confirm launch from the selected root for DM1, CSB and DM2 through the
+  desktop start menu. The authenticated DM1 picker and reopen test proves
+  persisted-root selection, but does not exercise all three game handoffs.
 
 - Verify iOS release packaging after the LZMA software-CRC selection fix
   using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and

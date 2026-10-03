@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-03: The start menu keeps an authenticated data root selected with
+  the folder picker when reopened, even when the default root admits more
+  games. A macOS GitHub Actions build ran the original DM1 PC 3.4 picker
+  corpus locally: the previous build failed the reopen check and the corrected
+  build passed. The fallback policy test and hosted cross-platform build pass.
+  This verifies root selection, not all game launches from that root.
+
 - 2026-09-29: DM1 PC/F20 no longer treats one presented title frame as a
   completed intro. All source steps or all TITLE.DAT frames and the final
   guard must finish before Entrance; an interrupted title aborts the handoff.
