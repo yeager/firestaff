@@ -4922,13 +4922,14 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   authentic JP Rev. 1 CUE/System Card in a fresh isolated profile, holding the
   mapped RUN/Return input for four seconds at the System Card prompt reached
   the Theron's Quest title menu. Selecting NEW GAME and FILE_1 then reached
-  the authentic dungeon-selection map. The profile generated a 2-KiB
-  game-specific persistent-RAM file; this does not establish that an in-game
-  dungeon save or Mednafen save-state was created or reloadable. Autosave was
-  disabled and prior save data was kept untouched. A copied prior PCE-Fast
-  state was not accepted as a verified new save; F5/F7 save/load round-trip
-  behavior remains unverified. The capture proves startup and map navigation
-  only, not dungeon entry or gameplay parity.
+  the authentic dungeon-selection map; selecting Ak-Tu-Ba and advancing its
+  intro reached the first-person dungeon view. This is a real runtime gameplay
+  capture. The fresh profile generated a 2-KiB game-specific persistent-RAM
+  file, but no in-game save or Mednafen save-state was verified as reloadable.
+  Autosave was disabled and prior save data was kept untouched. A copied prior
+  PCE-Fast state was not accepted as a new save; F5/F7 save/load round-trip
+  behavior remains unverified. This proves a real game-to-dungeon transition,
+  not complete mechanics parity.
 
 - 🔒 2026-10-03 Track 02 thing-data test hardening: US BIN and JP BIN checks
   are now separate CTests gated by their authentic image digests; explicit
