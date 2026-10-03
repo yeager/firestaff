@@ -1,9 +1,9 @@
 # Game and platform status
 
-**Reviewed 2026-09-29.** This is the operational status matrix. It separates
-media recognition, verified runtime slices and end-to-end playability. A row
-marked as supported does not mean that every menu, save format or visual
-parity gate is complete.
+**Last full review: 2026-09-29; Theron rows updated: 2026-10-03.** This is the
+operational status matrix. It separates media recognition, verified runtime
+slices and end-to-end playability. A row marked as supported does not mean
+that every menu, save format or visual parity gate is complete.
 
 ## Status terms
 
@@ -148,7 +148,7 @@ queue acceptance, not audible hardware or retail sound parity.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| PC Engine/TurboGrafx-16 Japanese | **Verified bounded route** | Authentic Rev 1 CUE reaches native title, stage, Soul Room and Akutuba runtime (`party=1,0,0`). LOAD GAME → FILE_1 → YES returned to the selection map after emulator restart, but the 2-KiB BRAM is byte-identical to the known empty menu-only JP image; native campaign-save persistence is therefore unverified. The source-only Track 02 loader binds all seven campaign dungeons from raw BIN and the byte-matched CUE-projected ISO (34 maps, 2,269 linked source-object records; Drator: 8 maps/291 objects); the separate world ledger retains 2,266 ground-reference occurrences. Identity and level framing are verified. | Complete campaign transitions, bitmap/palette and HUD binding, native save-body semantics and end-to-end gameplay. |
+| PC Engine/TurboGrafx-16 Japanese | **Verified bounded route** | Authentic Rev 1 CUE reaches native title, stage, Soul Room and Akutuba runtime (`party=1,0,0`). LOAD GAME → FILE_1 → YES returned to the selection map after emulator restart, but the 2-KiB BRAM is byte-identical to the known empty menu-only JP image; native campaign-save persistence is therefore unverified. The source-only Track 02 loader binds all seven campaign dungeons from raw BIN and the byte-matched CUE-projected ISO (34 maps, 2,269 linked source-object records; Drator: 8 maps/291 objects); the separate world ledger retains 2,266 ground-reference occurrences. Identity and level framing are verified; the generic first-floor/North party pose is still provisional and the fresh Akutuba RAM capture is not joined to an active map. | Complete campaign transitions, initial pose/map join, bitmap/palette and HUD binding, native save-body semantics and end-to-end gameplay. |
 | PC Engine/TurboGrafx-16 US | **Verified bounded routes** | Authentic raw Track 02 BIN reaches native startup from direct launch and mouse-selected M12 game/platform/presentation cards. Authentic CloneCD ZIP (`.ccd` + bounded `.img` Track 02 slice) starts natively from memory through CLI and keyboard start-menu routes. The authentic CloneCD-derived raw CUE/BIN reaches native Track 02 startup using its compact no-pregap offsets. With the authentic Akutuba-complete Backup RAM, Continue restores the source-verified Theron attributes and skill experience, skips the completed first chapter, and reaches loaded dungeon 2 level 0 through its Track 02 roster and Soul Room route; three successive native movement inputs traverse a floor-only path in that actual loaded map. The MODE1/2048 ISO independently reaches Akutuba's source-backed forcefield handoff; all seven dungeon sources match the raw Track 02 user-data after its 225-sector pregap (34 maps, 2,269 source-object records). | Original-emulator parity for the Continue transition, JP Continue, later campaign progression, original gameplay presentation, broader save behavior, movement/mechanics parity beyond the bounded native route, combat/item/AI/audio parity and complete end-to-end gameplay. |
 
 ## Data and preservation rules

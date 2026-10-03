@@ -19,9 +19,11 @@ Reviewed 2026-10-03. Only open work is listed here.
   was source-interpreted as level 2 in a separate Drator capture, but applying
   that identity to this Akutuba session would put `(2,3)` on a wall in JP map
   2; the coordinate is open floor in JP Akutuba map 0. The authentic JP map
-  test now locks both bytes to preserve this ambiguity. The bank bytes are
-  provenance only. Capture the active map/level consumer or loaded-map pointer
-  in the same session before selecting either map or promoting the pose.
+  test now locks both bytes to preserve this ambiguity, and the US/JP full-map
+  regression verifies every decoded start pose remains labeled as a fallback.
+  The bank bytes are provenance only. Capture the active map/level consumer or
+  loaded-map pointer in the same session before selecting either map or
+  promoting the pose.
 - The new-game run's native 2 KiB BRAM matches the known empty menu-only image;
   it is not a campaign save. Emulator `.mca` autosave round-trip was verified
   separately from an existing authentic gameplay state, but this does not
