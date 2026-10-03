@@ -2,6 +2,18 @@
 
 Reviewed 2026-10-03. Only open work is listed here.
 
+## 2026-10-03 — keep creature-spawn source evidence regional
+
+- ✅ Replaced the combined spawn-source media probe with separate US and JP
+  invocations. Each validates one edition's exact Track 02 BIN identity and
+  source records. Missing default media skips only its region; an explicit
+  unreadable override or cross-edition image fails. On trv2, both authentic
+  regional CTests passed three loops, and the wrong-edition, explicit-missing,
+  and independent absent-media checks behaved as required.
+- 🔒 These assertions bind authentic regional source bytes and source-consumer
+  identity only. Retail runtime spawning, category meaning, RNG effects, and
+  resulting creature stats remain unverified.
+
 ## 2026-10-03 — regional authenticity for the shared UI glyph bank
 
 - ✅ The existing 120-glyph 8×6 viewport bank is byte-identical to authentic

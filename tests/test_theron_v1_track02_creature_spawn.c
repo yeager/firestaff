@@ -43,7 +43,8 @@ static uint8_t *read_file(const char *path, size_t *size_out) {
 }
 
 static void assert_decoded_real_bin(const char *path,
-                                    Theron_V1Track02Variant variant) {
+                                    Theron_V1Track02Variant variant,
+                                    const char *expected_md5) {
     static const uint8_t expected_zone_records[THERON_TRACK02_SPAWN_ZONE_COUNT][8] = {
         { 0x2f, 0x00, 0x2c, 0x00, 0x03, 0x05, 0x0e, 0x02 },
         { 0x1b, 0x00, 0x18, 0x00, 0x02, 0x04, 0x10, 0x02 },
@@ -62,7 +63,9 @@ static void assert_decoded_real_bin(const char *path,
     size_t size;
     uint8_t *bytes = read_file(path, &size);
 
-    if (!bytes) return;
+    assert(bytes != NULL);
+    assert(theron_v1_track02_raw_bytes_match_md5(bytes, size,
+                                                  expected_md5) == 1);
     assert(theron_v1_track02_decode_spawn_source(bytes, size, variant,
                                                  &source) == 1);
     assert(source.authenticated == 1);
@@ -140,7 +143,29 @@ static void assert_decoded_real_bin(const char *path,
     free(bytes);
 }
 
-int main(void) {
+static const char *media_path(const char *edition, const char *override_name) {
+    const char *override = getenv(override_name);
+    const char *home = getenv("HOME");
+    static char path[4096];
+    const char *filename = strcmp(edition, "US") == 0
+        ? "TQUS02.bin" : "TQJP02.bin";
+    int length;
+
+    if (override && override[0]) return override;
+    if (!home || !home[0]) return NULL;
+    length = snprintf(path, sizeof(path), "%s/.firestaff/data/theron/%s",
+                      home, filename);
+    return length >= 0 && (size_t)length < sizeof(path) ? path : NULL;
+}
+
+int main(int argc, char **argv) {
+    const int is_us = argc == 2 && strcmp(argv[1], "us") == 0;
+    const int is_jp = argc == 2 && strcmp(argv[1], "jp") == 0;
+
+    if (!is_us && !is_jp) {
+        fputs("usage: test_theron_v1_track02_creature_spawn us|jp\n", stderr);
+        return 2;
+    }
     assert(theron_v1_track02_spawn_zone_count() == 5);
 
     /* AKUTUBA: category 3, 5 creatures, map 47x44 */
@@ -268,48 +293,38 @@ int main(void) {
         assert(r.valid == 0);
     }
 
-    /* The production table must also be recoverable from the authentic raw
-     * BIN.  These paths are user-supplied data and are intentionally
-     * skip-safe for CI machines without the copyrighted game files. */
+    /* Verify only the explicitly selected authentic region.  A missing BIN
+     * skips this region alone; an explicit bad path or wrong-edition image
+     * must fail rather than hide behind the other region's evidence. */
     {
-        const char *us = getenv("THERON_TRACK02_US_BIN");
-        const char *jp = getenv("THERON_TRACK02_JP_BIN");
-        const char *home = getenv("HOME");
-        char us_default[4096];
-        char jp_default[4096];
-        if (!us || !us[0]) {
-            int length = home && home[0]
-                ? snprintf(us_default, sizeof(us_default),
-                           "%s/.firestaff/data/theron/TQUS02.bin", home)
-                : -1;
-            us = length >= 0 && (size_t)length < sizeof(us_default)
-                ? us_default : NULL;
-        }
-        if (!jp || !jp[0]) {
-            int length = home && home[0]
-                ? snprintf(jp_default, sizeof(jp_default),
-                           "%s/.firestaff/data/theron/TQJP02.bin", home)
-                : -1;
-            jp = length >= 0 && (size_t)length < sizeof(jp_default)
-                ? jp_default : NULL;
-        }
-        FILE *us_file = us ? fopen(us, "rb") : NULL;
-        FILE *jp_file = jp ? fopen(jp, "rb") : NULL;
-        if (!us_file) {
-            if (jp_file) fclose(jp_file);
-            puts("SKIP: authentic US Theron Track 02 BIN not present");
+        const char *edition = is_us ? "US" : "JP Rev. 1";
+        const char *override_name = is_us ? "THERON_TRACK02_US_BIN"
+                                          : "THERON_TRACK02_JP_BIN";
+        const char *override = getenv(override_name);
+        const char *path = media_path(edition, override_name);
+        const char *expected_md5 = is_us ? THERON_V1_TRACK02_MD5_US_BIN
+                                         : THERON_V1_TRACK02_MD5_JP_BIN;
+        const Theron_V1Track02Variant variant = is_us
+            ? THERON_V1_TRACK02_VARIANT_US_BIN
+            : THERON_V1_TRACK02_VARIANT_JP_BIN;
+        FILE *media_file = path ? fopen(path, "rb") : NULL;
+
+        if (!media_file) {
+            if (override && override[0]) {
+                fprintf(stderr,
+                        "FAIL: explicit %s Track 02 BIN cannot be read\n",
+                        edition);
+                return 1;
+            }
+            printf("SKIP: authentic %s Theron Track 02 BIN not present\n",
+                   edition);
             return 77;
         }
-        fclose(us_file);
-        assert_decoded_real_bin(us, THERON_V1_TRACK02_VARIANT_US_BIN);
-        if (jp_file) {
-            fclose(jp_file);
-            assert_decoded_real_bin(jp, THERON_V1_TRACK02_VARIANT_JP_BIN);
-        } else {
-            puts("NOTE: JP Track 02 BIN not present; JP source decode skipped");
-        }
+        fclose(media_file);
+        assert_decoded_real_bin(path, variant, expected_md5);
     }
 
-    printf("PASS: theron_v1_track02_creature_spawn\n");
+    printf("PASS: theron_v1_track02_creature_spawn_%s_real_media\n",
+           is_us ? "us" : "jp");
     return 0;
 }

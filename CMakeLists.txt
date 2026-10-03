@@ -54161,11 +54161,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spa
         target_compile_options(test_theron_v1_track02_creature_spawn PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME theron_v1_track02_creature_spawn
-        COMMAND test_theron_v1_track02_creature_spawn
+        NAME theron_v1_track02_creature_spawn_us_real_media
+        COMMAND test_theron_v1_track02_creature_spawn us
     )
-    set_tests_properties(theron_v1_track02_creature_spawn PROPERTIES
-        SKIP_RETURN_CODE 77)
+    add_test(
+        NAME theron_v1_track02_creature_spawn_jp_real_media
+        COMMAND test_theron_v1_track02_creature_spawn jp
+    )
+    set_tests_properties(
+        theron_v1_track02_creature_spawn_us_real_media
+        theron_v1_track02_creature_spawn_jp_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;regional;no-synthetic")
 endif()
 
 # Theron runtime-authenticated HuC6280 RNG consumer ($4667/$4644/$464a)

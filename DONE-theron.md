@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — report creature-spawn source checks per region
+
+- The Track 02 spawn regression now accepts `us` or `jp` and checks only that
+  edition's authentic raw BIN. It verifies the exact edition MD5 before the
+  spawn-table and source-consumer assertions. A missing default BIN skips only
+  that region; an unreadable explicit override and a wrong-edition BIN fail.
+- CTest reports independent `theron_v1_track02_creature_spawn_us_real_media`
+  and `_jp_real_media` cases with `theron;real-media;regional;no-synthetic`
+  labels. On trv2, both passed three consecutive loops against the installed
+  authentic US and JP Track 02 BINs. A US BIN presented as JP failed its hash
+  gate, explicit missing media failed, and absent default media skipped each
+  selected region independently.
+- This proves regional source-byte admission and the recorded data contracts;
+  it does not prove retail runtime creature spawning, category semantics, or
+  combat-stat parity.
+
 ## 2026-10-03 — preserve distinct authentic Mednafen input hold durations
 
 - The host-input capture sequence accepts a matching per-key hold list. This
