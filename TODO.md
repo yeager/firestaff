@@ -1,8 +1,10 @@
 # Firestaff TODO — active cross-game work
 
-- Confirm launch from the selected root for DM1, CSB and DM2 through the
-  desktop start menu. The authenticated DM1 picker and reopen test proves
-  persisted-root selection, but does not exercise all three game handoffs.
+- Extend selected-root M12-to-M11 launch verification beyond the original-media
+  DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
+  physical desktop interaction. The opt-in test covers those three source-owned
+  startup states after reopening the persisted collection root; it does not
+  establish full playability or every platform's menu route.
 
 - Verify iOS release packaging after the LZMA software-CRC selection fix
   using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and

@@ -1,5 +1,10 @@
 ## Unreleased changes
 
+- `DM1, CSB and DM2 start menu`: an opt-in original-media test now verifies
+  that a saved collection root survives menu reopen and opens DM1 PC 3.4,
+  CSB FM Towns and DM2 DOS through the selected-entry runtime handoff. The
+  macOS test passes with the local authenticated collection; other editions,
+  gameplay and physical M5 input remain outside this check.
 - `DM1 Atari ST sound effects`: runtime events now read authenticated SND1
   records from the retained GRAPHICS.DAT bytes instead of reopening the nested
   game archive for each event. Original English, German and French Atari ST

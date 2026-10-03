@@ -1,11 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-03: An opt-in original-media test persists the selected M12 data
+  root, reopens the menu, and calls the normal launch-intent and selected-entry
+  handoff for DM1 PC 3.4, CSB FM Towns and DM2 DOS. A macOS Actions-built
+  binary passed locally against the authenticated collection with SDL dummy
+  drivers. It verifies source-owned M11 startup state for these three
+  editions, not later gameplay or every platform.
+
 - 2026-10-03: The start menu keeps an authenticated data root selected with
   the folder picker when reopened, even when the default root admits more
   games. A macOS GitHub Actions build ran the original DM1 PC 3.4 picker
   corpus locally: the previous build failed the reopen check and the corrected
   build passed. The fallback policy test and hosted cross-platform build pass.
-  This verifies root selection, not all game launches from that root.
+  This picker test alone verifies root selection, not game launch.
 
 - 2026-09-29: DM1 PC/F20 no longer treats one presented title frame as a
   completed intro. All source steps or all TITLE.DAT frames and the final
