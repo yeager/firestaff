@@ -106,6 +106,19 @@ int main(void)
     CHECK(strcmp(config.path, configPath) == 0 &&
           strcmp(config.dataDir, expected) == 0,
           "main-thread completion persists only to isolated configuration");
+    /* Reopen the ordinary multi-game menu without a CLI data-dir override.
+     * Its persisted original-media root must remain selected even when the
+     * machine's default root contains other, unrelated games. */
+    M12_StartupMenu_Destroy(menu);
+    memset(menu, 0, sizeof(*menu));
+    options.scanAllGames = 1;
+    M12_StartupMenu_InitWithOptions(menu, NULL, NULL, &options);
+    CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(menu), expected) == 0 &&
+          strcmp(M12_AssetStatus_GetDataDir(&menu->assetStatus), expected) == 0,
+          "multi-game menu keeps the persisted original-media root");
+    (void)M12_Config_Load(&config, NULL);
+    CHECK(strcmp(config.dataDir, expected) == 0,
+          "menu reopen does not replace persisted media with default root");
 cleanup:
     if (menu) { M12_StartupMenu_Destroy(menu); SDL_free(menu); }
     if (created) {

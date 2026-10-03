@@ -44,6 +44,7 @@
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include "menu_row_metrics_m12.h"
+#include "menu_data_root_policy_m12.h"
 #include "manual_docs_m12.h"
 #include "cloud_sync_m12.h"
 #include "asset_find_by_hash.h"
@@ -4354,6 +4355,14 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
         }
     }
+    /* A valid configured root is already an authenticated media choice.  In
+     * particular, opening the multi-game menu must not replace a DM1/CSB/DM2
+     * collection merely because the default root contains more games. */
+    if (m12_asset_ready_game_count(&state->assetStatus) > 0 &&
+        (!gameId || gameId[0] == '\0' || scanAllGames ||
+         M12_AssetStatus_GameAvailable(&state->assetStatus, gameId))) {
+        return;
+    }
     {
         M12_AssetStatus defaultStatus;
         int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
@@ -4368,10 +4377,12 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             M12_AssetStatus_Scan(&defaultStatus, NULL);
         }
         defaultReadyCount = m12_asset_ready_game_count(&defaultStatus);
-        if (defaultReadyCount > currentReadyCount ||
-            (gameId && gameId[0] != '\0' && !scanAllGames &&
-             !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
-             M12_AssetStatus_GameAvailable(&defaultStatus, gameId))) {
+        /* Recover only when the configured root had no usable media. */
+        if (M12_MenuDataRoot_ShouldUseCandidate(
+                0, currentReadyCount, defaultReadyCount,
+                gameId && gameId[0] != '\0' && !scanAllGames,
+                gameId ? M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) : 0,
+                gameId ? M12_AssetStatus_GameAvailable(&defaultStatus, gameId) : 0)) {
             state->assetStatus = defaultStatus;
             snprintf(config->dataDir, sizeof(config->dataDir), "%s",
                      M12_AssetStatus_GetDataDir(&state->assetStatus));
@@ -4397,10 +4408,11 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                 M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
             }
             fallbackReadyCount = m12_asset_ready_game_count(&fallbackStatus);
-            if (fallbackReadyCount > currentReadyCount ||
-                (gameId && gameId[0] != '\0' && !scanAllGames &&
-                 !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
-                 M12_AssetStatus_GameAvailable(&fallbackStatus, gameId))) {
+            if (M12_MenuDataRoot_ShouldUseCandidate(
+                    0, currentReadyCount, fallbackReadyCount,
+                    gameId && gameId[0] != '\0' && !scanAllGames,
+                    gameId ? M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) : 0,
+                    gameId ? M12_AssetStatus_GameAvailable(&fallbackStatus, gameId) : 0)) {
                 state->assetStatus = fallbackStatus;
                 snprintf(config->dataDir, sizeof(config->dataDir), "%s",
                          M12_AssetStatus_GetDataDir(&state->assetStatus));
