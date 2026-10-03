@@ -98,13 +98,23 @@ Reviewed 2026-10-03. Only open work is listed here.
   yields game-owned before/after state or authenticated source binds the
   behavior.
 - A third task-private run confirmed the user-requested four-second RUN hold,
-  the JP New Game/File 1 route, and a first-person Akutuba view. Reading this
-  active Mednafen profile (rather than the older hotkey note) showed Button I
-  bound to `KP_3`, RUN to Return, and PCE left/up to `A`/`Z`. A single `A`
-  input cleared the viewport; `Z` restored the same wall. This confirms input
-  reached the retail game far enough to redraw, but supplies no coordinate,
-  movement, item, or teleporter evidence. Capture-03 images and emulator files
-  remain private outside Git.
+  the JP New Game/File 1 route, and a first-person Akutuba view. Follow-up
+  inspection corrected its Button I note: Mednafen input values are SDL
+  scancodes, so value `44` is Space, not `KP_3`. In a new isolated profile,
+  Space visibly advanced New Game to FILE_1; the source-backed JP route then
+  reached the Akutuba map, Japanese introduction, and first-person dungeon
+  view. This still supplies no party coordinates, movement, item, or
+  teleporter evidence. Capture-03 images and emulator files remain private
+  outside Git.
+- The follow-up capture is saved privately at
+  `/home/trv2/firestaff-theron-evidence/emulator-created-20261003/capture-space-run-20261003/theron-jp-akutuba-first-person.png`
+  (SHA-256 `1364c217ba5e6c0f14d8dc00e709504e2e2660ac2b69ca337d671dfe7f593cdc`).
+  It was taken from the authentic JP Rev. 1 CUE/System Card run after a
+  four-second Return/RUN hold and ordinary menu input. The PCE Fast per-module
+  override had to be loaded from `pce_fast.cfg`; a global override alone was
+  insufficient. The preceding GUI attempt did not create an F5 state or a new
+  persistent-RAM file; the separate successful state capture and its empty
+  BRAM result are recorded below.
 - The real-data loader regression now pins the JP Rev. 1 Akutuba `(0,0)` raw
   teleporter record to M0 `(2,3)` and runs Firestaff's turn-left/forward host
   movement path against authentic JP Track 02 and map bytes. It passes three
@@ -122,18 +132,31 @@ Reviewed 2026-10-03. Only open work is listed here.
 - The JP native 2 KiB BRAM written by that run has SHA-256
   `de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa`, equal
   to the fresh menu-only BRAM produced earlier; it remains an empty save, not
-  campaign progress. A private Mednafen autosave produced a 229 KiB `.mca`
-  state at the dungeon. Restart restored Theron's HUD/hand pointer but left
-  the first-person viewport black, so the state is not accepted as a verified
-  usable gameplay save. Keep it outside Git and do not claim native-save or
-  save/restore parity from it.
+  campaign progress. That run's private `.mca` was initially treated as
+  unusable because the first restored frame showed only the HUD and hand
+  pointer. A later independent F5/F7 test below supersedes that save-state
+  conclusion; neither state is a native save or evidence of campaign progress.
 - Follow-up inspection of the same private state capture found
   `snap/private-restored-after-up.png`: after an authentic Up input, the
   screenshot shows the Theron HUD, hand pointer, and Akutuba first-person wall
   and floor. This establishes that an input can redraw the restored gameplay
-  view, so the state is useful for continued emulator capture. It still does
-  not identify party coordinates, prove that the Up command moved the party,
-  or establish save/restore pose parity; retain the save boundary above.
+  view, so the state is useful for continued emulator capture. It does not
+  identify party coordinates or prove that the Up command moved the party.
+- A separate stock Mednafen 1.32.1 capture repeated the four-second RUN boot
+  with the authentic JP Rev. 1 CUE and System Card. In its isolated profile,
+  the PCE Fast module loaded keyboard bindings from its own `pce_fast.cfg`;
+  SDL scancode `44` is Space, the Button I input that advanced New Game,
+  FILE_1, Akutuba, and the Japanese introduction to the first-person dungeon
+  view. Pressing F5 then closing that profile wrote a 229,965-byte `.mca`
+  state (SHA-256 `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`).
+  A second isolated `pce_fast` profile copied that exact file and loaded it
+  with F7. Its initial frame showed the HUD with a black viewport; after a
+  normal W input, the authentic Akutuba wall/floor view was redrawn. The
+  before/after screenshots differ in 1,384 of 786,432 pixels. This verifies a
+  useful original-gameplay state round trip, but not party coordinates, pose
+  parity, movement distance, or new native BRAM progress. The state and both
+  screenshots remain private outside Git under
+  `/home/trv2/firestaff-theron-evidence/emulator-created-20261003/capture-space-run-20261003/`.
 - One earlier GUI attempt wrote Mednafen's shared global config on clean
   shutdown. Subsequent capture used a task-private Mednafen base directory;
   preserve original game media and all existing profiles.

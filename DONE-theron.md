@@ -6662,7 +6662,24 @@ save-state directory. Selecting LOAD GAME, FILE_1, and YES returned to the
 Ak-Tu-Ba dungeon-selection map, confirming the new in-game save survived a
 restart and reloaded. No BIOS, disc image, SRAM, state file, or screenshot was
 added to the repository. Mednafen's separate F5/F7 save-state round trip
-remains unverified; this one save does not establish broad gameplay parity.
+was not tested during this in-game save experiment; a later isolated
+F5/F7 gameplay-state round trip is recorded below.
+
+# ✅ 2026-10-03 Theron gameplay save-state reload
+
+With authentic Japanese Rev. 1 media and System Card under stock Mednafen
+1.32.1, the fresh isolated `pce_fast` profile held RUN for four seconds and
+used Button I (Space; SDL scancode 44) through NEW GAME, FILE_1, Akutuba, and
+the original Japanese introduction to reach the first-person dungeon view.
+F5 followed by clean emulator shutdown produced a 229,965-byte `.mca` file.
+A second isolated `pce_fast` profile loaded the byte-identical state with F7;
+after one ordinary W input, the HUD and Akutuba wall/floor view were rendered.
+The captured restored frame differs from the original first-person capture in
+1,384 of 786,432 pixels. State, screenshots, and media remain outside Git;
+the state SHA-256 is `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`.
+The accompanying 2-KiB BRAM hash equals the known empty menu-only JP image, so
+this proves an emulator gameplay-state reload, not native campaign progress,
+party-coordinate/pose parity, or complete Theron gameplay parity.
 
 # ✅ 2026-10-03 Theron regional and original-media regression loops
 
