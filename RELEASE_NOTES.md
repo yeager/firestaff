@@ -1,3 +1,21 @@
+# Firestaff v3.0.356
+
+## Developer changes
+
+- `DM1, CSB and DM2 startup verification`: adds original-media checks for
+  bare `--game dm1`, `--game csb` and `--game dm2` commands. The checks cover
+  authenticated FM Towns selection and each tested title or menu handoff.
+- `DM2 source boundary`: corrects the development record so creature action
+  mode 2 is tracked separately from the source light walks in modes 7 and 8.
+
+## Known limitations
+
+- The reported DM1, CSB and DM2 audio, viewport and movement faults remain
+  open on the MacBook Pro M5 HiDPI hardware. These startup checks do not
+  establish visual or gameplay parity.
+- Physical MacBook Pro M5 playback and complete cross-platform game startup
+  remain unverified.
+
 # Firestaff v3.0.355
 
 ## User-facing changes
