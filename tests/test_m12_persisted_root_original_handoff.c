@@ -175,7 +175,8 @@ int main(void)
         if (game == 1) {
             const CSB_V1_BootProfile* profile =
                 (const CSB_V1_BootProfile*)view->csbBootProfile;
-            CHECK(profile && strcmp(profile->version_id, autoVersions[game]) == 0 &&
+            CHECK(profile && profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN &&
+                  profile->fmtowns_executable_size > 0u &&
                   profile->fmtowns_graphics_size > 0u,
                   "CSB M11 handoff owns the verified FM Towns program and graphics");
         }
