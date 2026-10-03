@@ -7116,7 +7116,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     rootCount = m12_build_search_roots(roots,
                                        effectiveRequestedDataDir,
                                        status->legacyFallbackDir);
-    if (options && options->preferGameLeaf && rootCount == 1U &&
+    if (rootCount == 1U &&
         effectiveRequestedDataDir && effectiveRequestedDataDir[0] != '\0' &&
         (strcmp(gameId, "dm1") == 0 || strcmp(gameId, "csb") == 0 ||
          strcmp(gameId, "dm2") == 0)) {

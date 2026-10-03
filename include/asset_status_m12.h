@@ -88,8 +88,6 @@ typedef struct {
     const int* cancelFlag;
     int honorRequestedDataDir;
     int looseFilesOnly;
-    /* Direct --game lookup may use <collection>/<gameId> as its scan root. */
-    int preferGameLeaf;
 } M12_AssetStatusScanOptions;
 
 typedef struct {

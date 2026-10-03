@@ -106,7 +106,6 @@ int main(void)
             SDL_free(scoped);
             break;
         }
-        scanOptions.preferGameLeaf = 1;
         scanOptions.progressFn = record_game_leaf_search_root;
         scanOptions.progressUserData = &receipt;
         M12_AssetStatus_ScanGameWithOptions(scoped, physical, games[game],

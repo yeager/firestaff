@@ -4297,12 +4297,9 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
     }
     memset(&gameScanOptions, 0, sizeof(gameScanOptions));
     gameScanOptions.looseFilesOnly = looseFilesOnlyAssetScan ? 1 : 0;
-    gameScanOptions.preferGameLeaf =
-        (gameId && gameId[0] != '\0' && !scanAllGames) ? 1 : 0;
     gameScanOptions.progressFn = progressFn;
     gameScanOptions.progressUserData = progressUserData;
-    gameScan = (looseFilesOnlyAssetScan || progressFn ||
-                gameScanOptions.preferGameLeaf) ? &gameScanOptions : NULL;
+    gameScan = (looseFilesOnlyAssetScan || progressFn) ? &gameScanOptions : NULL;
     if (hasExplicitDataDirOverride) {
         if (gameId && gameId[0] != '\0' && !scanAllGames) {
             M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
