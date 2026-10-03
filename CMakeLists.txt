@@ -4511,10 +4511,21 @@ if(BUILD_TESTING)
         # sessions; one authentic run took 102 seconds under parallel load.
         TIMEOUT 300
     )
+    add_executable(test_dm2_v1_fmtowns_menu_source_rgb
+        tests/test_dm2_v1_fmtowns_menu_source_rgb.c)
+    target_link_libraries(test_dm2_v1_fmtowns_menu_source_rgb PRIVATE
+        firestaff_dm2 firestaff_m10)
+    target_include_directories(test_dm2_v1_fmtowns_menu_source_rgb PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_fmtowns_menu_source_rgb PRIVATE
+            -Wall -Wextra -Werror)
+    endif()
     add_test(
         NAME dm2_v1_fmtowns_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
+            "$<TARGET_FILE:test_dm2_v1_fmtowns_menu_source_rgb>"
     )
     add_test(
         NAME firestaff_cli_startup_diagnostics_real_media

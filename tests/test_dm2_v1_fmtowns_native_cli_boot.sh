@@ -2,12 +2,13 @@
 set -eu
 
 app=${1:?usage: test_dm2_v1_fmtowns_native_cli_boot.sh <firestaff>}
+source_rgb=${2:?usage: test_dm2_v1_fmtowns_native_cli_boot.sh <firestaff> <source-rgb-helper>}
 archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 
 # ZIP-contained Towns media is admitted in process, never through 7z/bsdtar.
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 
-if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
+if [ ! -x "$app" ] || [ ! -x "$source_rgb" ] || [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 FM Towns archive is not staged'
     exit 77
 fi
@@ -67,10 +68,16 @@ case "$app" in
     *) app_dir=. ;;
 esac
 title_probe="$app_dir/test-dm2-fmtowns-bare-title.json"
+title_capture="$app_dir/test-dm2-fmtowns-bare-menu-capture"
+source_digest=$("$source_rgb" "$archive")
 rm -f "$title_probe"
+mkdir -p "$title_capture"
+rm -f "$title_capture"/*.bmp
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$title_probe" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$title_capture" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --data-dir "$archive" --duration 40000 >/dev/null 2>&1
+    --width 320 --height 200 --game dm2 --data-dir "$archive" \
+    --duration 40000 >/dev/null 2>&1
 python3 - "$title_probe" <<'PY'
 import json
 import sys
@@ -84,6 +91,43 @@ if (probe["sourceId"] != "dm2" or
         probe["startup"]["phase"] != "dm2-startup-menu"):
     raise SystemExit(f"FAIL: bare DM2 did not reach the original FM Towns menu by 40 seconds: {probe}")
 print("PASS: bare DM2 reaches the FM Towns New Game menu within 40 seconds")
+PY
+python3 - "$title_capture" "$source_digest" <<'PY'
+from pathlib import Path
+import struct
+import sys
+
+frames = list(Path(sys.argv[1]).glob("*.bmp"))
+if len(frames) != 1:
+    raise SystemExit("FAIL: expected one presented DM2 FM Towns menu frame")
+blob = frames[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: presented DM2 FM Towns menu frame is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if (width, height, bits) != (320, 200, 24) or offset + stride * height > len(blob):
+    raise SystemExit("FAIL: invalid DM2 FM Towns menu frame geometry")
+
+# The phase receipt alone cannot prove that SKULL's source-owned GDAT image
+# reached the screen. Compare the actual post-present RGB pixels with the
+# TITLE/0/4 image and palette independently decoded from this original disc.
+digest = 0xcbf29ce484222325
+nonblack = 0
+for y in range(height):
+    row = offset + y * stride
+    for x in range(width):
+        b, g, r = blob[row + x * 3:row + x * 3 + 3]
+        nonblack += (r, g, b) != (0, 0, 0)
+        for channel in (r, g, b):
+            digest = ((digest ^ channel) * 0x100000001b3) & 0xffffffffffffffff
+if nonblack < 10000 or f"{digest:016x}" != sys.argv[2]:
+    raise SystemExit(
+        "FAIL: presented DM2 FM Towns menu differs from source TITLE/0/4 "
+        f"(nonblack={nonblack}, expected={sys.argv[2]}, actual={digest:016x})")
+print(f"PASS: original DM2 FM Towns menu RGB matches TITLE/0/4 digest={digest:016x}")
 PY
 runtime_probe="$app_dir/test-dm2-fmtowns-normal-loop.json"
 rm -f "$runtime_probe"
