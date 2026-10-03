@@ -1,4 +1,6 @@
-## Unreleased changes
+# Firestaff v3.0.359
+
+## Developer changes
 
 - `DM2 FM Towns startup menu`: an opt-in original-media test now captures the
   presented menu after bare `--game dm2` and compares its RGB pixels with the
@@ -10,6 +12,12 @@
   menu, and verifies that AUTO launches the authenticated FM Towns release
   through M11 for each game. The macOS test passes with the local collection;
   it does not establish physical M5 input, audio or dungeon parity.
+
+## Known limitations
+
+- DM1, CSB and DM2 dungeon viewport, movement and audio parity remain
+  unverified on the reported MacBook Pro M5 HiDPI hardware. The original-media
+  tests cover startup and source-image comparisons, not full gameplay.
 
 # Firestaff v3.0.358
 
