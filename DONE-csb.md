@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+- 2026-10-03: FM Towns F31 now retains the loudest pending request for each
+  sound index and flushes all requested indices in source order on the next
+  tick, following ReDMCSB SOUND.C F0064/F0065. Audible corridor generators
+  and wall sensors now use the edition-specific source distance gate. The
+  macOS Actions build and an original-media test passed for both F31 English
+  and Japanese: two different authenticated sounds complete in one tick, all
+  35 source PCM events decode, and the packed M11 runtime starts from the
+  preserved ZIP. This is a queue and payload check; physical speaker output
+  and full dungeon audio parity remain open.
+
 - 2026-10-03: The original-media FM Towns CLI regression now covers bare
   `--game csb --data-dir <F31 ZIP>` as well as explicit `--platform fm-towns`.
   It requires the authenticated F31 English or Japanese edition, TITLE.ANM

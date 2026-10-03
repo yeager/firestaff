@@ -3144,7 +3144,13 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
      * F0065_SOUND_ProcessPendingSound before F0261_TIMELINE_Process_CPSEF()
      * and then increments G0313_ul_GameTime.  TIMELINE.C F0240 lines
      * 702-708 expires the first heap event when event_time <= G0313_ul_GameTime. */
-    (void)csb_v1_audio_runtime_flush_pending(&profile->audio_runtime);
+    if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        (void)csb_v1_audio_runtime_flush_pending_fmtowns(
+            &profile->audio_runtime);
+    } else {
+        (void)csb_v1_audio_runtime_flush_pending(&profile->audio_runtime);
+    }
     profile->timeline_queue.gameTick = profile->game_time;
     queue_snapshot = profile->timeline_queue;
     source_queue_snapshot = queue_snapshot;
@@ -4690,7 +4696,8 @@ static int csb_v1_runtime_request_source_sound(
         if (volume < 1) return 0;
         request->volume = (int16_t)volume;
         request->priority = spec->priority;
-        return csb_v1_audio_runtime_request(&profile->audio_runtime, request);
+        return csb_v1_audio_runtime_request_fmtowns(&profile->audio_runtime,
+                                                     request);
     }
 
     if (distance > (int)spec->softDistance) return 0;
@@ -20166,10 +20173,11 @@ static void csb_v1_runtime_apply_corridor_timeline_record(
                     request.mapX = (int16_t)record->mapX;
                     request.mapY = (int16_t)record->mapY;
                     request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-                    request.volume = 64;
-                    request.priority = 4u;
-                    (void)csb_v1_audio_runtime_request(
-                        &profile->audio_runtime, &request);
+                    /* ReDMCSB TIMELINE.C F0245:976 calls F0064 with the
+                     * sensor coordinates; SOUND.C:1566-1575 derives the
+                     * F31 1..127 volume before the per-sound pending queue. */
+                    (void)csb_v1_runtime_request_source_sound(profile,
+                                                               &request);
                 }
                 if (once_only) {
                     type_data &= 0xFF80u;
@@ -20640,10 +20648,10 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     request.mapX = (int16_t)record->mapX;
                     request.mapY = (int16_t)record->mapY;
                     request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-                    request.volume = 64;
-                    request.priority = 4u;
-                    (void)csb_v1_audio_runtime_request(
-                        &profile->audio_runtime, &request);
+                    /* ReDMCSB MOVESENS.C F0270:1783 calls F0064 at the
+                     * sensor square, including F31's source distance gate. */
+                    (void)csb_v1_runtime_request_source_sound(profile,
+                                                               &request);
                 }
                 if (once_only) {
                     type_data = (uint16_t)(type_data & 0xFF80u);

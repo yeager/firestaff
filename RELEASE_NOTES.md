@@ -1,3 +1,11 @@
+## Unreleased changes
+
+- `CSB FM Towns sound queue`: source-timed events now retain one maximum
+  volume per sound and flush every requested sound index in a tick. Audible
+  corridor and wall sensors use the edition's distance calculation. An
+  original-media test passes for English and Japanese F31 with two distinct
+  sounds in one tick; audible output on the reported M5 remains unverified.
+
 # Firestaff v3.0.359
 
 ## Developer changes

@@ -76,6 +76,8 @@ typedef struct CsbV1AudioRuntime {
     int16_t pendingSoundIndex;
     int16_t pendingVolume;
     uint8_t pendingPriority;
+    /* F31 SOUND.C F0064/F0065 keeps one maximum volume per sound index. */
+    int16_t fmtownsPendingVolume[CSB_V1_SOUND_COUNT];
     int16_t lastPlayedSoundIndex;
     int32_t lastCreatureAttackTime;
     uint32_t totalRequests;
@@ -174,7 +176,10 @@ typedef struct CsbV1PsgChannelAmplitudes {
 void csb_v1_audio_runtime_init(CsbV1AudioRuntime* runtime);
 int csb_v1_audio_runtime_request(CsbV1AudioRuntime* runtime,
                                  const CsbV1AudioRequest* request);
+int csb_v1_audio_runtime_request_fmtowns(CsbV1AudioRuntime* runtime,
+                                         const CsbV1AudioRequest* request);
 int csb_v1_audio_runtime_flush_pending(CsbV1AudioRuntime* runtime);
+int csb_v1_audio_runtime_flush_pending_fmtowns(CsbV1AudioRuntime* runtime);
 /* Return the source-completed sound at a one-based sequence number. The
  * event is available only while it remains inside the bounded history. */
 int csb_v1_audio_runtime_completed_play_at(

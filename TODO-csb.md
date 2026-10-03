@@ -51,10 +51,11 @@ Reviewed 2026-09-05. Only open work is listed here.
 - Verify completed-event history for FM Towns distance-volume production.
   The real F31 archive now verifies all 35 source PCM events, the native
   5500 Hz transport, and every 1..127 driver-volume step; direct local events
-  use 127. The runtime request branch implements MEDIA551's
+  use 127. Two different authentic sounds now survive one tick in the F31
+  pending queue for English and Japanese. The runtime request branch implements MEDIA551's
   division-before-multiplication distance formula. What remains is an
   end-to-end completed-event receipt at a non-local distance, followed by an
-  original capture comparison.
+  original capture comparison and physical speaker check.
 
 - Add authentic inscription-bearing Atari, Amiga and F31E runtime fixtures or
   captures and assert the candidate framebuffer pixel delta for the now-wired

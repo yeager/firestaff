@@ -52,6 +52,56 @@ int main(void)
         return 1;
     }
     profile = (const CSB_V1_BootProfile*)view.csbBootProfile;
+    {
+        CsbV1AudioRuntime runtime;
+        CsbV1AudioRequest requests[2] = {0};
+        int16_t index = -1;
+        int16_t volume = 0;
+        int i;
+
+        csb_v1_audio_runtime_init(&runtime);
+        requests[0].soundIndex = CSB_V1_SOUND_METALLIC_THUD;
+        requests[1].soundIndex = CSB_V1_SOUND_SWITCH;
+        for (i = 0; i < 2; ++i) {
+            CsbV1FmtownsSoundPayload original = {0};
+            requests[i].mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+            requests[i].volume = (int16_t)(127 - i * 40);
+            if (!csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
+                    profile->fmtowns_graphics_bytes,
+                    profile->fmtowns_graphics_size,
+                    requests[i].soundIndex, &original) ||
+                original.byteCount == 0u ||
+                !csb_v1_audio_runtime_request_fmtowns(&runtime,
+                                                        &requests[i])) {
+                fputs("FAIL: original F31 pair did not enter sound queue\n", stderr);
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&original);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            csb_v1_audio_runtime_fmtowns_sound_payload_free(&original);
+        }
+        requests[1].volume = 128;
+        if (csb_v1_audio_runtime_request_fmtowns(&runtime, &requests[1])) {
+            fputs("FAIL: F31 sound accepted volume above source maximum\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        requests[1].volume = 87;
+        if (csb_v1_audio_runtime_flush_pending_fmtowns(&runtime) != 2 ||
+            runtime.totalCompletedPlays != 2u ||
+            !csb_v1_audio_runtime_completed_play_details_at(
+                &runtime, 1u, &index, &volume) ||
+            index != requests[0].soundIndex || volume != requests[0].volume ||
+            !csb_v1_audio_runtime_completed_play_details_at(
+                &runtime, 2u, &index, &volume) ||
+            index != requests[1].soundIndex || volume != requests[1].volume) {
+            fputs("FAIL: F31 lost one of two original sounds in one tick\n", stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        puts("PASS: two original F31 sounds survive the same source tick");
+    }
     memset(&sound, 0, sizeof(sound));
     if (!csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
             profile->fmtowns_graphics_bytes, profile->fmtowns_graphics_size,
