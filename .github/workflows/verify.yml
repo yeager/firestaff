@@ -170,7 +170,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: m12-menu-root-original-macos
-          path: build/test_m12_data_dir_dialog_real
+          path: |
+            build/test_m12_data_dir_dialog_real
+            build/test_dm1_atari_names_real
           if-no-files-found: error
 
       - name: Build launcher settings regressions

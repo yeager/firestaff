@@ -7,6 +7,7 @@
 #include "swsh_frontend_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_atari_st_graphics_dat.h"
 
 #include <limits.h>
 #include <math.h>
@@ -1664,6 +1665,39 @@ int M11_Audio_EmitDm1AtariSound(M11_AudioState* state,
         m11_fnv1a_bytes(payload.bytes, (int)payload.byteCount),
         sourceVolume > 1 ? 1 : 0);
     csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
+    if (accepted) state->lastSoundIndex = pc34Index;
+    return accepted;
+}
+
+int M11_Audio_EmitDm1AtariSoundResident(M11_AudioState* state,
+    const unsigned char* graphics, size_t graphicsSize, int pc34Index,
+    int sourceVolume)
+{
+    DM1_V1_AtariStGraphicsDat dat;
+    const CsbV1AtariStSoundSpec *spec;
+    unsigned char *bytes;
+    int index = M11_Audio_Dm1AtariSoundIndex(pc34Index);
+    int count, accepted;
+    if (!state || !graphics || index < 0 ||
+        !dm1_v1_atari_st_graphics_open(graphics, graphicsSize, &dat)) return 0;
+    spec = csb_v1_audio_runtime_atari_st_sound_spec((int16_t)index);
+    if (!spec || spec->graphicIndex >= DM1_V1_ATARI_ST_GRAPHICS_COUNT ||
+        dat.records[spec->graphicIndex].expanded_size < 2u) return 0;
+    bytes = malloc(dat.records[spec->graphicIndex].expanded_size);
+    if (!bytes) return 0;
+    count = dm1_v1_atari_st_graphics_read(&dat, spec->graphicIndex, bytes,
+        dat.records[spec->graphicIndex].expanded_size);
+    if (count != dat.records[spec->graphicIndex].expanded_size) {
+        free(bytes);
+        return 0;
+    }
+    /* ReDMCSB SOUND.C F0060 (lines 860-915) consumes the resident graphic
+     * pointer. Use the authenticated startup bytes; never reopen an archive
+     * during an effect or substitute another sound when decoding rejects it. */
+    accepted = M11_Audio_PlayCsbAtariStPsgAtSourceVolume(state, bytes, count,
+        pc34Index == 3 ? 145 : spec->period,
+        m11_fnv1a_bytes(bytes, count), sourceVolume > 1 ? 1 : 0);
+    free(bytes);
     if (accepted) state->lastSoundIndex = pc34Index;
     return accepted;
 }
