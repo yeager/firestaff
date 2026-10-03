@@ -4,6 +4,8 @@
 #include "m11_game_view.h"
 #include "config_m12.h"
 #include "fs_portable_compat.h"
+#include "csb_v1_boot.h"
+#include "dm2_v1_boot.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +22,8 @@ int main(void)
 {
     static const char* const games[] = {"dm1", "csb", "dm2"};
     static const char* const versions[] = {"pc34-en", "fmtowns-en", "pc-en"};
+    static const char* const autoVersions[] = {"fmtowns-en", "fmtowns-en", "fmtowns-ja"};
+    static const char* const staleVersions[] = {"pc34-en", "fmtowns-ja", "pc-en"};
     static const M11_GameSourceKind kinds[] = {
         M11_GAME_SOURCE_BUILTIN_CATALOG, M11_GAME_SOURCE_CSB_BOOT,
         M11_GAME_SOURCE_DM2_BOOT
@@ -68,6 +72,7 @@ int main(void)
           strcmp(M12_AssetStatus_GetDataDir(&menu->assetStatus), physical) == 0,
           "reopened menu scans the persisted root");
 
+    /* Preserve the explicit PC/FM Towns/DOS handoff coverage. */
     for (game = 0; game < 3 && !failures; ++game) {
         M12_LaunchIntent intent;
         M11_GameViewState* view;
@@ -111,10 +116,84 @@ int main(void)
         M11_GameView_Shutdown(view);
         SDL_free(view);
     }
+
+    /* AUTO must override a stale matched row after reopening the collection.
+     * The CSB disc supplies both language editions, so JPN is a real stale
+     * row rather than a fallback to the expected English edition. */
+    for (game = 0; game < 3 && !failures; ++game) {
+        M12_LaunchIntent intent;
+        M11_GameViewState* view;
+        const M12_AssetVersionStatus* version;
+        int versionIndex = M12_AssetStatus_FindVersionIndex(games[game], autoVersions[game]);
+        int staleVersionIndex = M12_AssetStatus_FindVersionIndex(
+            games[game], staleVersions[game]);
+        version = versionIndex < 0 ? NULL : M12_AssetStatus_GetVersion(
+            &menu->assetStatus, games[game], (size_t)versionIndex);
+        if (!version || !version->matched) {
+            fprintf(stderr, "FAIL: selected root lacks authenticated %s %s media\n",
+                    games[game], autoVersions[game]);
+            ++failures;
+            break;
+        }
+        if (staleVersionIndex < 0 ||
+            !M12_AssetStatus_GetVersion(&menu->assetStatus, games[game],
+                                        (size_t)staleVersionIndex)->matched) {
+            fprintf(stderr, "FAIL: selected root lacks stale %s %s media\n",
+                    games[game], staleVersions[game]);
+            ++failures;
+            break;
+        }
+        menu->selectedIndex = game;
+        menu->activatedIndex = game;
+        menu->launchRequested = 1;
+        menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        menu->gameOptions[game].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
+        menu->gameOptions[game].versionIndex = staleVersionIndex;
+        menu->gameOptions[game].architectureIndex = M12_ARCH_AUTO;
+        intent = M12_StartupMenu_GetLaunchIntent(menu);
+        CHECK(intent.valid && intent.gameId &&
+              strcmp(intent.gameId, games[game]) == 0,
+              "selected original game produces a valid launch intent");
+        CHECK(intent.versionId &&
+              strcmp(intent.versionId, autoVersions[game]) == 0 &&
+              intent.options.versionIndex == versionIndex &&
+              intent.options.architectureIndex == M12_ARCH_AUTO,
+              "AUTO resolves the authenticated FM Towns edition despite a stale version row");
+        if (failures) break;
+        view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
+        CHECK(view != NULL, "allocate game view");
+        if (!view) break;
+        M11_GameView_Init(view);
+        CHECK(M11_GameView_OpenSelectedMenuEntry(view, menu) == 1,
+              "selected menu entry opens original runtime");
+        CHECK(view->active && view->startedFromLauncher &&
+              view->sourceKind == kinds[game] &&
+              strcmp(view->sourceId, games[game]) == 0,
+              "launch reaches the game's source-owned M11 state");
+        if (game == 0) CHECK(view->dm1FmtownsStartupReceiptValid,
+                             "DM1 M11 handoff owns FM Towns startup");
+        if (game == 1) {
+            const CSB_V1_BootProfile* profile =
+                (const CSB_V1_BootProfile*)view->csbBootProfile;
+            CHECK(profile && profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN &&
+                  profile->fmtowns_executable_size > 0u &&
+                  profile->fmtowns_graphics_size > 0u,
+                  "CSB M11 handoff owns the verified FM Towns program and graphics");
+        }
+        if (game == 2) {
+            const DM2_V1_BootProfile* profile =
+                (const DM2_V1_BootProfile*)view->dm2BootProfile;
+            CHECK(profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+                  profile->fmtowns_disc_image_size > 0u,
+                  "DM2 M11 handoff owns the authenticated FM Towns disc");
+        }
+        M11_GameView_Shutdown(view);
+        SDL_free(view);
+    }
 cleanup:
     if (menu) { M12_StartupMenu_Destroy(menu); SDL_free(menu); }
     (void)remove(configPath);
     SDL_Quit();
-    if (!failures) puts("PASS: persisted original root launches DM1, CSB, and DM2");
+    if (!failures) puts("PASS: persisted original root launches explicit and AUTO DM1, CSB, and DM2 editions");
     return failures ? 1 : 0;
 }

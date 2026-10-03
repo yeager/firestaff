@@ -1,5 +1,11 @@
 ## Unreleased changes
 
+- `DM1, CSB and DM2 AUTO startup`: an opt-in original-media regression now
+  reopens a persisted collection root, leaves a stale matched edition in the
+  menu, and verifies that AUTO launches the authenticated FM Towns release
+  through M11 for each game. The macOS test passes with the local collection;
+  it does not establish physical M5 input, audio or dungeon parity.
+
 # Firestaff v3.0.358
 
 ## Developer changes

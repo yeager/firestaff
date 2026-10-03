@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-03: The opt-in persisted-root original-media handoff test now also
+  checks AUTO after a stale matched version row for DM1, CSB and DM2. Each
+  launch intent selects authenticated FM Towns media, and M11 owns the DM1
+  startup receipt, CSB English FM Towns program/graphics, and DM2 Japanese
+  FM Towns disc. The macOS Actions-built binary passed against the local
+  collection. Explicit PC 3.4/CSB FM Towns/DOS cases remain covered. This
+  proves menu-to-runtime handoff, not gameplay or physical M5 presentation.
+
 - 2026-10-03: An opt-in original-media test persists the selected M12 data
   root, reopens the menu, and calls the normal launch-intent and selected-entry
   handoff for DM1 PC 3.4, CSB FM Towns and DM2 DOS. A macOS Actions-built
