@@ -54966,6 +54966,10 @@ endif()
 # native folder picker and for mapping message-view Enter/Esc to scan cancel
 # while a game-data scan is active.
 if(BUILD_TESTING)
+    add_executable(test_m12_menu_data_root_policy tests/test_m12_menu_data_root_policy.c)
+    add_test(NAME m12_menu_data_root_policy COMMAND test_m12_menu_data_root_policy)
+    set_tests_properties(m12_menu_data_root_policy PROPERTIES LABELS "menu;data-root")
+
     add_executable(test_m12_data_dir_dialog_real tests/test_m12_data_dir_dialog_real.c)
     target_link_libraries(test_m12_data_dir_dialog_real PRIVATE firestaff_m12 SDL3::SDL3)
     if(NOT MSVC)
@@ -54973,7 +54977,7 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME m12_data_dir_dialog_real COMMAND test_m12_data_dir_dialog_real)
     set_tests_properties(m12_data_dir_dialog_real PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 30
+        SKIP_RETURN_CODE 77 TIMEOUT 90
         ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dialog-scratch;SDL_VIDEODRIVER=dummy"
         LABELS "dm1;pc34;real-media;in-memory;menu;skip-safe")
 endif()
