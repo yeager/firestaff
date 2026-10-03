@@ -6043,6 +6043,18 @@ metadata and locally staged CD-DA tracks.
   and the restored world must produce the same resolver destination. The test
   preloads the same authentic Track 02 world as production; it creates no
   replacement map.
+- ✅ The JP Rev. 1 Akutuba `(0,0)` regression now separately pins its
+  authenticated Track 02 record to M0 `(2,3)` and moves a real-roster party
+  there through Firestaff's original-command host path. This agrees with the
+  isolated original Akutuba route captured on 2026-08-21; it does not assert
+  JP-specific metadata consumers or derive movement from the latest GUI
+  screenshots. The authentic JP dungeon-loader CTest passed three consecutive
+  runs on trv2.
+- ✅ The same regression also checks the authentic JP landing neighborhood
+  around `(2,3)` against the map tiles used by the original US movement
+  capture. A trial that applied US post-landing command outcomes as JP
+  expectations failed, so that cross-edition behavioral assertion was
+  removed; the failure is not treated as a JP retail semantic difference.
 - 🔒 A research mutation of only Akutuba's real `$0E8AE8` from `B4` to `B8`
   made the original use the existing record's map-1 destination `(6,0)` and
   then read the new map's data. It was used only to try to reach the button

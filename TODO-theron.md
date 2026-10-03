@@ -76,17 +76,37 @@ Reviewed 2026-10-03. Only open work is listed here.
   first-person wall view. Captures remain outside Git. This proves a retail
   JP gameplay session can reach Akutuba, not complete gameplay parity.
 - A second clean, task-private trv2 profile repeated that route with RUN held
-  for four seconds and reached the same authentic JP Akutuba view. In that
-  profile, the PCE left/up inputs (host A/W) produced a cleared first-person
-  viewport followed by an indistinguishable wall view; the screenshots expose
-  no party coordinates or item state. The attempt therefore does not prove
-  that the `(0,0)` teleporter was entered or establish any teleporter field
-  semantics. Its screenshots remain outside Git under
+  for four seconds and reached the same authentic JP Akutuba view. Its
+  screenshots expose no party coordinates or item state. The attempt therefore
+  does not prove that the `(0,0)` teleporter was entered or establish any
+  teleporter field semantics. Its screenshots remain outside Git under
   `/home/trv2/firestaff-theron-evidence/emulator-created-20261003/teleporter-capture-01/`.
   No native BRAM progress or usable Mednafen state was created. Keep the
   teleporter resolver and preview unchanged until an ordinary-input capture
   yields game-owned before/after state or authenticated source binds the
   behavior.
+- A third task-private run confirmed the user-requested four-second RUN hold,
+  the JP New Game/File 1 route, and a first-person Akutuba view. Reading this
+  active Mednafen profile (rather than the older hotkey note) showed Button I
+  bound to `KP_3`, RUN to Return, and PCE left/up to `A`/`Z`. A single `A`
+  input cleared the viewport; `Z` restored the same wall. This confirms input
+  reached the retail game far enough to redraw, but supplies no coordinate,
+  movement, item, or teleporter evidence. Capture-03 images and emulator files
+  remain private outside Git.
+- The real-data loader regression now pins the JP Rev. 1 Akutuba `(0,0)` raw
+  teleporter record to M0 `(2,3)` and runs Firestaff's turn-left/forward host
+  movement path against authentic JP Track 02 and map bytes. It passes three
+  consecutive runs on trv2. This is regional source-data/host-path parity,
+  consistent with the isolated original Akutuba route recorded in
+  `DONE-theron.md` on 2026-08-21; it does not upgrade the failed recent GUI
+  attempt into new evidence, nor establish JP-specific scope/rotation/sound or
+  a screenshot-based movement trace. Those consumer details remain governed
+  by their existing source-lock boundary.
+- Do not apply the captured US `(2,3,north)` post-landing movement outcomes to
+  JP as retail evidence. The authentic JP map neighborhood is now recorded,
+  but a test experiment showed that asserting the US result through the
+  current JP host path fails; source-bound JP command/position capture is still
+  required before any regional behavior change.
 - The JP native 2 KiB BRAM written by that run has SHA-256
   `de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa`, equal
   to the fresh menu-only BRAM produced earlier; it remains an empty save, not

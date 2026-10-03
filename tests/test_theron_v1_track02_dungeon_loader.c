@@ -5628,6 +5628,57 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     free(attempt_world);
 }
 
+static void test_authentic_jp_akutuba_coordinate_teleporter(
+    const uint8_t *ud, size_t ud_size,
+    const uint8_t *track02, size_t track02_size) {
+    Theron_V1_World *world =
+        (Theron_V1_World *)calloc(1u, sizeof(*world));
+    Theron_DungeonLoadResult result;
+    Theron_V1_Object *teleporter;
+
+    assert(world != NULL && ud != NULL && track02 != NULL);
+    theron_v1_world_init(world);
+    world->current_dungeon = 1;
+    world->current_level = 0;
+    assert(theron_v1_track02_load_full_dungeon_for_variant(
+               world, 1, ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN,
+               &result) == 0);
+    bind_real_track02_party(
+        world, track02, track02_size, THERON_TRACK02_MD5_JP_BIN);
+
+    teleporter = theron_v1_object_at_in_dungeon(world, 1, 0, 0, 0);
+    assert(world->levels[0][0].source_tiles[0][0] == 0xB8u);
+    assert(teleporter->type == THERON_OBJTYPE_TELEPORTER);
+    assert(teleporter->state == 1u);
+    assert((teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK) != 0u);
+    assert(teleporter->linked_id == ((0 << 10) | (3 << 5) | 2));
+
+    /* The Track 02 decoder reads destination x/y from word 1 and destination
+     * level from word 2; the loader packs those decoded coordinates as
+     * level/y/x. The resulting route matches the isolated original Akutuba
+     * run captured on 2026-08-21, documented in DONE-theron.md under
+     * "Track 02 teleporter's real OPEN attribute". That capture established
+     * tile (0,0) -> (2,3), but not scope, rotation, sound, or facing policy.
+     * See theron_v1_track02_teleporter_decode() in
+     * src/theron/theron_v1_track02_door.c:28-55 and the category loader in
+     * src/theron/theron_v1_track02_dungeon_loader.c:532-566. */
+    world->party.leader_x = 1;
+    world->party.leader_y = 0;
+    world->party.leader_dir = 0;
+    assert(theron_v1_turn_party_original_command(
+               world, THERON_ORIGINAL_COMMAND_TURN_LEFT) == 0);
+    assert(theron_v1_move_party_original_command(
+               world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+           THERON_MOVE_TELEPORT);
+    assert(world->current_level == 0);
+    assert(world->party.leader_x == 2);
+    assert(world->party.leader_y == 3);
+    assert(world->transition_pending == 0);
+
+    printf("  authentic JP Akutuba coordinate teleporter host route commits OK\n");
+    free(world);
+}
+
 static void test_authentic_take_requires_matching_item_record(
     const uint8_t *ud, size_t ud_size,
     const uint8_t *track02, size_t track02_size, int variant,
@@ -6038,6 +6089,8 @@ int main(void) {
             raw = load_raw_bytes(jp_path, &raw_size);
             assert(raw != NULL);
             test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
+            test_authentic_jp_akutuba_coordinate_teleporter(
+                jp_ud, jp_ud_size, raw, raw_size);
             test_authentic_coordinate_teleporter_movement_corpus(
                 jp_ud, jp_ud_size, raw, raw_size, 1);
             test_real_item_name_sources(jp_ud, jp_ud_size, 1);
