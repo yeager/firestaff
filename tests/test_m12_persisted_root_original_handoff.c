@@ -4,6 +4,8 @@
 #include "m11_game_view.h"
 #include "config_m12.h"
 #include "fs_portable_compat.h"
+#include "csb_v1_boot.h"
+#include "dm2_v1_boot.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +21,8 @@ static int failures;
 int main(void)
 {
     static const char* const games[] = {"dm1", "csb", "dm2"};
-    static const char* const versions[] = {"pc34-en", "fmtowns-en", "pc-en"};
+    static const char* const versions[] = {"fmtowns-en", "fmtowns-en", "fmtowns-ja"};
+    static const char* const staleVersions[] = {"pc34-en", "amiga31-en", "pc-en"};
     static const M11_GameSourceKind kinds[] = {
         M11_GAME_SOURCE_BUILTIN_CATALOG, M11_GAME_SOURCE_CSB_BOOT,
         M11_GAME_SOURCE_DM2_BOOT
@@ -73,6 +76,8 @@ int main(void)
         M11_GameViewState* view;
         const M12_AssetVersionStatus* version;
         int versionIndex = M12_AssetStatus_FindVersionIndex(games[game], versions[game]);
+        int staleVersionIndex = M12_AssetStatus_FindVersionIndex(
+            games[game], staleVersions[game]);
         version = versionIndex < 0 ? NULL : M12_AssetStatus_GetVersion(
             &menu->assetStatus, games[game], (size_t)versionIndex);
         if (!version || !version->matched) {
@@ -81,18 +86,35 @@ int main(void)
             ++failures;
             break;
         }
+        if (game != 1 && (staleVersionIndex < 0 ||
+            !M12_AssetStatus_GetVersion(&menu->assetStatus, games[game],
+                                        (size_t)staleVersionIndex)->matched)) {
+            fprintf(stderr, "FAIL: selected root lacks stale %s %s media\n",
+                    games[game], staleVersions[game]);
+            ++failures;
+            break;
+        }
+        if (game == 1 && (staleVersionIndex < 0 ||
+            !M12_AssetStatus_GetVersion(&menu->assetStatus, games[game],
+                                        (size_t)staleVersionIndex)->matched)) {
+            staleVersionIndex = versionIndex;
+        }
         menu->selectedIndex = game;
         menu->activatedIndex = game;
         menu->launchRequested = 1;
         menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         menu->gameOptions[game].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
-        menu->gameOptions[game].versionIndex = versionIndex;
-        if (game == 1) menu->gameOptions[game].architectureIndex = M12_ARCH_FM_TOWNS;
-        if (game == 2) menu->gameOptions[game].architectureIndex = M12_ARCH_PC;
+        menu->gameOptions[game].versionIndex = staleVersionIndex;
+        menu->gameOptions[game].architectureIndex = M12_ARCH_AUTO;
         intent = M12_StartupMenu_GetLaunchIntent(menu);
         CHECK(intent.valid && intent.gameId &&
               strcmp(intent.gameId, games[game]) == 0,
               "selected original game produces a valid launch intent");
+        CHECK(intent.versionId &&
+              strcmp(intent.versionId, versions[game]) == 0 &&
+              intent.options.versionIndex == versionIndex &&
+              intent.options.architectureIndex == M12_ARCH_AUTO,
+              "AUTO resolves the authenticated FM Towns edition despite a stale version row");
         if (failures) break;
         view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
         CHECK(view != NULL, "allocate game view");
@@ -104,10 +126,22 @@ int main(void)
               view->sourceKind == kinds[game] &&
               strcmp(view->sourceId, games[game]) == 0,
               "launch reaches the game's source-owned M11 state");
-        if (game == 1) CHECK(view->csbBootProfile != NULL,
-                             "CSB owns a boot profile");
-        if (game == 2) CHECK(view->dm2BootProfile != NULL,
-                             "DM2 owns a boot profile");
+        if (game == 0) CHECK(view->dm1FmtownsStartupReceiptValid,
+                             "DM1 M11 handoff owns FM Towns startup");
+        if (game == 1) {
+            const CSB_V1_BootProfile* profile =
+                (const CSB_V1_BootProfile*)view->csbBootProfile;
+            CHECK(profile && strcmp(profile->version_id, versions[game]) == 0 &&
+                  profile->fmtowns_graphics_size > 0u,
+                  "CSB M11 handoff owns the verified FM Towns program and graphics");
+        }
+        if (game == 2) {
+            const DM2_V1_BootProfile* profile =
+                (const DM2_V1_BootProfile*)view->dm2BootProfile;
+            CHECK(profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+                  profile->fmtowns_disc_image_size > 0u,
+                  "DM2 M11 handoff owns the authenticated FM Towns disc");
+        }
         M11_GameView_Shutdown(view);
         SDL_free(view);
     }
