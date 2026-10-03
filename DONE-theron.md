@@ -6609,3 +6609,24 @@ default discovery isolated; wrong-region and missing explicit paths failed;
 missing defaults independently returned CTest skip code 77. The Release
 binary references `__assert_fail`. This validates descriptor receipts only,
 not dungeon loading or gameplay transitions.
+
+# ✅ 2026-10-03 Authenticated regional Track 02 thing-data coverage
+
+Split the thing-data regression into independent static, US BIN, JP BIN, and
+opt-in CloneCD raw CTests. Each real-media case authenticates the complete
+selected image against its region-specific expected digest before decoding
+all seven dungeons. A non-empty explicit media path is authoritative and
+cannot fall through to another installed edition. Only missing default BINs
+or the unconfigured optional CloneCD input return skip code 77; unreadable,
+wrong-region, and other non-missing failures fail closed. The real-media reader
+now checks seek, size, overflow, read, and close results, and map tile
+flattening is bounded before copying into its fixed buffer. Assertions remain
+enabled in Release builds.
+
+Verification on `trv2`: the 14 available roster, spawn, door, map,
+level-descriptor, and thing-data CTests passed three repeated loops against
+authentic US/JP media. The optional CloneCD CTest correctly skipped because no
+explicit CloneCD raw image was configured. Independent missing-default tests
+returned 77; missing explicit paths and wrong-region explicit media failed.
+This validates source tables and record decoding, not complete original
+object semantics or in-game parity.

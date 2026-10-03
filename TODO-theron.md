@@ -4930,6 +4930,19 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   behavior remains unverified. The capture proves startup and map navigation
   only, not dungeon entry or gameplay parity.
 
+- 🔒 2026-10-03 Track 02 thing-data test hardening: US BIN and JP BIN checks
+  are now separate CTests gated by their authentic image digests; explicit
+  paths cannot fall back to another installed edition. Default-media absence
+  is region-local; explicit unreadable and wrong-edition input fails, and the
+  reader checks seek, size, read, and close results. The optional CloneCD
+  raw-data test has its own digest gate but skipped because no explicit
+  CloneCD raw image was configured on trv2. The 14 available roster, spawn,
+  door, map, descriptor, and thing-data CTests passed three repeated loops
+  against authentic US/JP data. Negative checks
+  confirmed independent default skips, explicit-path failures, and rejection
+  of cross-region media. These source-data checks do not establish complete
+  in-game object behavior.
+
 ## 2026-09-27 — authentic closed-door boundary coverage
 
 - ✅ The real-data mechanics probe now classifies every source-backed door in

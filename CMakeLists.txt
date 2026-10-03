@@ -53763,20 +53763,35 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_thing_data.c
     )
     target_include_directories(test_theron_v1_track02_thing_data PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_theron_v1_track02_thing_data PRIVATE firestaff_m12)
     if(NOT MSVC)
         target_compile_options(test_theron_v1_track02_thing_data PRIVATE
             -UNDEBUG -Wall -Wextra -O2)
     else()
         target_compile_options(test_theron_v1_track02_thing_data PRIVATE /UNDEBUG)
     endif()
-    add_test(
-        NAME theron_v1_track02_thing_data
-        COMMAND test_theron_v1_track02_thing_data
-    )
-    set_tests_properties(theron_v1_track02_thing_data PROPERTIES
-        SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;thing-data"
-    )
+    add_test(NAME theron_v1_track02_thing_data_static
+        COMMAND test_theron_v1_track02_thing_data static)
+    add_test(NAME theron_v1_track02_thing_data_us_real_media
+        COMMAND test_theron_v1_track02_thing_data us)
+    add_test(NAME theron_v1_track02_thing_data_jp_real_media
+        COMMAND test_theron_v1_track02_thing_data jp)
+    add_test(NAME theron_v1_track02_thing_data_clonecd_real_media
+        COMMAND test_theron_v1_track02_thing_data clonecd)
+    set_tests_properties(theron_v1_track02_thing_data_static PROPERTIES
+        LABELS "theron;static;thing-data")
+    set_tests_properties(
+        theron_v1_track02_thing_data_us_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;regional;thing-data;us")
+    set_tests_properties(
+        theron_v1_track02_thing_data_jp_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;regional;thing-data;jp")
+    set_tests_properties(
+        theron_v1_track02_thing_data_clonecd_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;raw;thing-data;clonecd")
 endif()
 
 # Theron Track 02 text decode (codon-packed dungeon text strings)

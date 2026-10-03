@@ -1,13 +1,14 @@
 #include "theron_v1_track02_dungeon_map.h"
+#include "theron_v1_track02.h"
 #include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_thing_data.h"
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
+#include "asset_status_m12.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
 #include <assert.h>
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,75 +18,121 @@
 #define SYNC_OFFSET 16
 
 static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
-    FILE *fp = fopen(path, "rb");
+    FILE *fp;
+    long file_size;
+    uint8_t *raw = NULL;
+    uint8_t *user_data = NULL;
+    size_t raw_size;
+    size_t sectors;
+    size_t user_data_size;
+    size_t bytes_read;
+    int read_error;
+    int close_result;
+
+    if (out_size) *out_size = 0u;
+    fp = fopen(path, "rb");
     if (!fp) return NULL;
-    fseek(fp, 0, SEEK_END);
-    long fsize = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    if (fsize <= 0) { fclose(fp); return NULL; }
-    size_t raw_size = (size_t)fsize;
-    if (raw_size % SECTOR_SIZE != 0u) { fclose(fp); return NULL; }
-    uint8_t *raw = malloc(raw_size);
-    if (!raw) { fclose(fp); return NULL; }
-    fread(raw, 1, raw_size, fp);
-    fclose(fp);
-    size_t sectors = raw_size / SECTOR_SIZE;
-    size_t ud_size = sectors * UD_PER_SECTOR;
-    uint8_t *ud = calloc(1, ud_size);
-    if (!ud) { free(raw); return NULL; }
-    for (size_t s = 0; s < sectors; s++)
-        memcpy(ud + s * UD_PER_SECTOR, raw + s * SECTOR_SIZE + SYNC_OFFSET, UD_PER_SECTOR);
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    file_size = ftell(fp);
+    if (file_size <= 0 || (uintmax_t)file_size > (uintmax_t)SIZE_MAX ||
+        file_size % SECTOR_SIZE != 0 || fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    raw_size = (size_t)file_size;
+    sectors = raw_size / SECTOR_SIZE;
+    if (sectors > SIZE_MAX / UD_PER_SECTOR) {
+        fclose(fp);
+        return NULL;
+    }
+    user_data_size = sectors * UD_PER_SECTOR;
+    raw = (uint8_t *)malloc(raw_size);
+    user_data = (uint8_t *)malloc(user_data_size);
+    if (!raw || !user_data) {
+        free(raw);
+        free(user_data);
+        fclose(fp);
+        return NULL;
+    }
+    bytes_read = fread(raw, 1u, raw_size, fp);
+    read_error = ferror(fp);
+    close_result = fclose(fp);
+    if (bytes_read != raw_size || read_error || close_result != 0) {
+        free(raw);
+        free(user_data);
+        return NULL;
+    }
+    for (size_t sector = 0u; sector < sectors; ++sector) {
+        memcpy(user_data + sector * UD_PER_SECTOR,
+               raw + sector * SECTOR_SIZE + SYNC_OFFSET, UD_PER_SECTOR);
+    }
     free(raw);
-    *out_size = ud_size;
-    return ud;
+    if (out_size) *out_size = user_data_size;
+    return user_data;
 }
 
-static uint8_t *load_track02_ud_at_sector(const char *path, size_t start_sector,
-                                          size_t *out_size) {
-    uint8_t *whole = load_track02_ud(path, out_size);
-    if (!whole) return NULL;
-    if (start_sector > *out_size / UD_PER_SECTOR) {
-        free(whole);
-        return NULL;
-    }
-    size_t skip = start_sector * UD_PER_SECTOR;
-    size_t remaining = *out_size - skip;
-    uint8_t *track = malloc(remaining ? remaining : 1u);
-    if (!track) {
-        free(whole);
-        return NULL;
-    }
-    memcpy(track, whole + skip, remaining);
-    free(whole);
-    *out_size = remaining;
-    return track;
-}
-
-static const char *find_track02_variant(Theron_Track02Variant variant) {
+static int resolve_track02_path(const char *region, const char **path_out,
+                                char *fallback, size_t fallback_size) {
     const char *home = getenv("HOME");
-    const char *explicit_path = variant == THERON_TRACK02_VARIANT_JP_BIN
-        ? getenv("FIRESTAFF_THERON_TRACK02_JP_RAW")
-        : variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
-            ? getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW")
-            : getenv("FIRESTAFF_THERON_TRACK02_RAW");
-    static char path[512];
-    const char *candidates[2];
+    const char *override;
+    const char *filename;
+    FILE *file;
+    int written;
 
-    candidates[0] = explicit_path;
-    if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/theron/%s.bin",
-                 home, variant == THERON_TRACK02_VARIANT_JP_BIN ? "TQJP02" : "TQUS02");
-        candidates[1] = path;
+    if (strcmp(region, "jp") == 0) {
+        override = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
+        filename = "TQJP02.bin";
+    } else if (strcmp(region, "clonecd") == 0) {
+        override = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
+        filename = NULL;
+        if (!override || !override[0]) return 77;
     } else {
-        candidates[1] = NULL;
+        override = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+        filename = "TQUS02.bin";
     }
-    for (unsigned int i = 0; i < 2u; ++i) {
-        FILE *fp;
-        if (!candidates[i] || !candidates[i][0]) continue;
-        fp = fopen(candidates[i], "rb");
-        if (fp) { fclose(fp); return candidates[i]; }
+
+    if (override && override[0]) {
+        *path_out = override;
+        return 0;
     }
-    return NULL;
+    if (!filename || !home || !home[0]) return 77;
+    written = snprintf(fallback, fallback_size,
+                       "%s/.firestaff/data/theron/%s", home, filename);
+    if (written < 0 || (size_t)written >= fallback_size) {
+        fputs("FAIL: HOME-derived Track 02 path is too long\n", stderr);
+        return 1;
+    }
+    errno = 0;
+    file = fopen(fallback, "rb");
+    if (!file) {
+        if (errno == ENOENT || errno == ENOTDIR) return 77;
+        fprintf(stderr, "FAIL: cannot open default %s Track 02 media: %s\n",
+                region, strerror(errno));
+        return 1;
+    }
+    if (fclose(file) != 0) {
+        fputs("FAIL: could not close default Track 02 media\n", stderr);
+        return 1;
+    }
+    *path_out = fallback;
+    return 0;
+}
+
+static const char *expected_track02_md5(const char *region) {
+    if (strcmp(region, "jp") == 0) return THERON_TRACK02_MD5_JP_BIN;
+    if (strcmp(region, "clonecd") == 0)
+        return THERON_TRACK02_MD5_US_CLONECD_BIN;
+    return THERON_TRACK02_MD5_US_BIN;
+}
+
+static Theron_Track02Variant track02_variant(const char *region) {
+    if (strcmp(region, "jp") == 0) return THERON_TRACK02_VARIANT_JP_BIN;
+    if (strcmp(region, "clonecd") == 0)
+        return THERON_TRACK02_VARIANT_US_CLONECD_RAW;
+    return THERON_TRACK02_VARIANT_US_BIN;
 }
 
 static void test_ground_ref_count(void) {
@@ -352,6 +399,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
         for (unsigned int m = 0; m < dd.map_count; m++) {
             unsigned int w = dd.maps[m].header.x_dim + 1u;
             unsigned int h = dd.maps[m].header.y_dim + 1u;
+            size_t map_tiles = (size_t)w * (size_t)h;
+            assert(map_tiles <= sizeof(flat_tiles) - flat_pos);
             total_tiles += w * h;
             for (unsigned int x = 0; x < w; x++)
                 for (unsigned int y = 0; y < h; y++)
@@ -424,8 +473,17 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
     }
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     printf("test_theron_v1_track02_thing_data\n");
+
+    if (argc != 2 || (strcmp(argv[1], "static") != 0 &&
+                      strcmp(argv[1], "us") != 0 &&
+                      strcmp(argv[1], "jp") != 0 &&
+                      strcmp(argv[1], "clonecd") != 0)) {
+        fputs("usage: test_theron_v1_track02_thing_data static|us|jp|clonecd\n",
+              stderr);
+        return 2;
+    }
 
     test_ground_ref_count();
     test_ground_ref_count_bound();
@@ -436,47 +494,52 @@ int main(void) {
     test_source_control_record_fields();
     test_source_monster_chested_field();
 
-    /* CloneCD is opt-in because its user-data origin differs from BIN.
-     * This keeps the normal CTest invocation independent of local media. */
-    const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW")
-        ? find_track02_variant(THERON_TRACK02_VARIANT_US_CLONECD_RAW) : NULL;
-    if (clonecd_path) {
-        size_t clonecd_ud_size = 0;
-        /* The authentic raw test fixture contains only Track 02's 2352-byte
-         * sectors, so its track-relative user-data origin is sector zero. */
-        uint8_t *clonecd_ud = load_track02_ud_at_sector(
-            clonecd_path, 0u, &clonecd_ud_size);
-        assert(clonecd_ud);
-        test_all_dungeons(clonecd_ud, clonecd_ud_size,
-                          THERON_TRACK02_VARIANT_US_CLONECD_RAW, "US CloneCD");
-        free(clonecd_ud);
+    if (strcmp(argv[1], "static") == 0) {
+        printf("PASS: thing-data static checks\n");
+        return 0;
     }
 
-    const char *path = find_track02_variant(THERON_TRACK02_VARIANT_US_BIN);
-    if (!path) {
-        printf("  SKIP: Track 02 BIN not found\n");
-        return 77;
-    }
+    {
+        char fallback[4096];
+        const char *path = NULL;
+        const char *expected_md5 = expected_track02_md5(argv[1]);
+        char actual_md5[33];
+        size_t user_data_size = 0u;
+        uint8_t *user_data;
+        int resolve_result = resolve_track02_path(argv[1], &path, fallback,
+                                                  sizeof(fallback));
 
-    size_t ud_size = 0;
-    uint8_t *ud = load_track02_ud(path, &ud_size);
-    if (!ud) {
-        printf("  SKIP: could not load Track 02\n");
-        return 77;
+        if (resolve_result != 0) {
+            if (resolve_result == 77)
+                printf("SKIP: default %s Track 02 media unavailable\n",
+                       strcmp(argv[1], "jp") == 0 ? "JP" :
+                       strcmp(argv[1], "clonecd") == 0 ? "CloneCD" : "US");
+            return resolve_result;
+        }
+        if (!m12_file_md5_hex(path, actual_md5)) {
+            fprintf(stderr, "FAIL: cannot hash selected %s Track 02 media\n",
+                    argv[1]);
+            return 1;
+        }
+        if (strcmp(actual_md5, expected_md5) != 0) {
+            fprintf(stderr,
+                    "FAIL: selected %s Track 02 media has unexpected MD5\n",
+                    argv[1]);
+            return 1;
+        }
+        user_data = load_track02_ud(path, &user_data_size);
+        if (!user_data) {
+            fprintf(stderr,
+                    "FAIL: could not read selected %s Track 02 media\n",
+                    argv[1]);
+            return 1;
+        }
+        printf("  authenticated %s Track 02 media\n", argv[1]);
+        test_all_dungeons(user_data, user_data_size, track02_variant(argv[1]),
+                          strcmp(argv[1], "clonecd") == 0
+                              ? "US CloneCD" : argv[1]);
+        free(user_data);
     }
-
-    test_all_dungeons(ud, ud_size, THERON_TRACK02_VARIANT_US_BIN, "US");
-    free(ud);
-
-    path = find_track02_variant(THERON_TRACK02_VARIANT_JP_BIN);
-    if (!path) {
-        printf("  SKIP: JP Track 02 BIN not found\n");
-        return 77;
-    }
-    ud = load_track02_ud(path, &ud_size);
-    assert(ud);
-    test_all_dungeons(ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN, "JP");
-    free(ud);
     printf("PASS\n");
     return 0;
 }
