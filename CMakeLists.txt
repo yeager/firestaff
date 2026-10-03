@@ -54398,13 +54398,49 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_level_data_b
     )
     target_include_directories(test_theron_v1_track02_level_data_blocks PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_theron_v1_track02_level_data_blocks PRIVATE
+        firestaff_m12)
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_level_data_blocks PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_level_data_blocks PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_level_data_blocks PRIVATE
+            /UNDEBUG)
     endif()
-    add_test(
-        NAME theron_v1_track02_level_data_blocks
-        COMMAND test_theron_v1_track02_level_data_blocks
-    )
+    add_test(NAME theron_v1_track02_level_data_blocks_static
+        COMMAND test_theron_v1_track02_level_data_blocks static)
+    add_test(NAME theron_v1_track02_level_data_blocks_us_real_media
+        COMMAND test_theron_v1_track02_level_data_blocks us)
+    add_test(NAME theron_v1_track02_level_data_blocks_jp_real_media
+        COMMAND test_theron_v1_track02_level_data_blocks jp)
+    add_test(NAME theron_v1_track02_level_data_blocks_clonecd_real_media
+        COMMAND test_theron_v1_track02_level_data_blocks clonecd)
+    add_test(NAME theron_v1_track02_level_data_blocks_us_iso_real_media
+        COMMAND test_theron_v1_track02_level_data_blocks us_iso)
+    add_test(NAME theron_v1_track02_level_data_blocks_jp_iso_real_media
+        COMMAND test_theron_v1_track02_level_data_blocks jp_iso)
+    set_tests_properties(theron_v1_track02_level_data_blocks_static PROPERTIES
+        LABELS "theron;static;level-data-blocks")
+    set_tests_properties(
+        theron_v1_track02_level_data_blocks_us_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;regional;level-data-blocks;us")
+    set_tests_properties(
+        theron_v1_track02_level_data_blocks_jp_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;regional;level-data-blocks;jp")
+    set_tests_properties(
+        theron_v1_track02_level_data_blocks_clonecd_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;raw;level-data-blocks;clonecd")
+    set_tests_properties(
+        theron_v1_track02_level_data_blocks_us_iso_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;iso;level-data-blocks;us")
+    set_tests_properties(
+        theron_v1_track02_level_data_blocks_jp_iso_real_media
+        PROPERTIES SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;iso;level-data-blocks;jp")
 endif()
 
 # Theron Track 02 later-level source receipt runtime handoff. The target

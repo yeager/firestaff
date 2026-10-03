@@ -6630,3 +6630,22 @@ explicit CloneCD raw image was configured. Independent missing-default tests
 returned 77; missing explicit paths and wrong-region explicit media failed.
 This validates source tables and record decoding, not complete original
 object semantics or in-game parity.
+
+# ✅ 2026-10-03 Authenticated Theron level-data-block source coverage
+
+Split the level-data-block verification into static, US BIN, JP BIN, US
+CloneCD raw, US Track 19 ISO, and JP Track 19 ISO CTests. Each media test
+authenticates the exact selected file against its source digest before reading
+it. Explicit overrides are authoritative; only absent defaults may skip.
+Raw-sector and ISO file reads now validate seek, size, allocation, read, and
+close results. Release builds keep the assertion checks enabled. The static
+decoder fixture remains an algorithm-boundary test only and does not stand in
+for real game data.
+
+Verification on `trv2`: static, US/JP BIN, and US ISO cases each passed three
+repeated runs against authentic installed files. CloneCD raw and JP Track 19
+ISO cases skipped because their optional source files were unavailable. The
+missing-default cases returned 77; explicit-missing and cross-region paths
+failed. The Release test binary references `__assert_fail`. This validates
+prologue, metadata, and resource-receipt boundaries, not decompressed level
+contents or original-game semantics.

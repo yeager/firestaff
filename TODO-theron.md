@@ -4943,6 +4943,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   of cross-region media. These source-data checks do not establish complete
   in-game object behavior.
 
+- 🔒 2026-10-03 level-data-block source checks are now isolated by input:
+  static, US BIN, JP BIN, US CloneCD raw, US Track 19 ISO, and JP Track 19 ISO.
+  Each real input must match its exact source digest, with explicit paths
+  authoritative and only absent defaults returning skip 77. Four available
+  tests passed three loops against authentic US/JP BIN and US ISO data; the
+  CloneCD and JP ISO tests skipped because those inputs were unavailable.
+  Missing-default, explicit-missing, and wrong-region checks behaved as
+  expected. This proves the seven level-block receipts and metadata only, not
+  decompressed level contents or original-game use.
+
 ## 2026-09-27 — authentic closed-door boundary coverage
 
 - ✅ The real-data mechanics probe now classifies every source-backed door in
