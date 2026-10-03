@@ -8,16 +8,18 @@ Reviewed 2026-10-03. Only open work is listed here.
   `start_x/start_y` chosen by a first-floor scan and default `start_dir` to
   north. A new provenance field labels that value as a fallback, and the
   source lock/test labels no longer present it as a proven retail spawn.
-- 🔒 Production still consumes the provisional pose. No original cold-start
-  capture currently joins Akutuba's `$203F-$2041` direction/position bytes to
-  the exact hash-authenticated level. Existing instrumented Mednafen builds
-  expose only the `pce` module, while the visible JP gameplay state was made
-  by `pce_fast` and is not loadable by those builds. The supported trace hook
-  can capture the bytes once an instrumented `pce_fast` path is available.
-- Capture from a fresh authentic JP or US run with RUN held for four seconds,
-  then follow the ordinary New Game route. Bind the in-dungeon RAM snapshot,
-  bank/level provenance, and original Track 02 source cell in that same
-  session. Do not promote the provisional pose or a screenshot-only estimate.
+- 🔒 A fresh authentic JP Rev. 1 `pce_fast` session now confirms that holding
+  RUN for four seconds reaches the Theron title menu; ordinary Space input
+  proceeds through FILE_1 and Ak-Tu-Ba to a first-person dungeon view. A
+  bounded 8 KiB raw main-RAM snapshot records `$203F-$2041 = 01 02 03` in
+  that session. However, the snapshot is not yet joined to a source-authenticated
+  level/bank and exact Track 02 map cell from the same session. Do not promote
+  the parser's provisional first-floor/North pose based on this capture.
+- The new-game run's native 2 KiB BRAM matches the known empty menu-only image;
+  it is not a campaign save. Emulator `.mca` autosave round-trip was verified
+  separately from an existing authentic gameplay state, but this does not
+  create new native campaign progress. Keep savegame support deferred until
+  authentic game-owned save behavior is captured and bound.
 
 ## 2026-10-03 — exercise every captured movement command on authentic campaign maps
 

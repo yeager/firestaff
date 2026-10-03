@@ -1,0 +1,24 @@
+--- a/src/pce_fast/pce.cpp
++++ b/src/pce_fast/pce.cpp
+@@ -501,5 +501,21 @@
+ static MDFN_COLD void CloseGame(void)
+ {
++ const char *snapshot_path = getenv("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT");
++ if(snapshot_path && *snapshot_path && !IsSGX)
++ {
++  FILE *snapshot = fopen(snapshot_path, "wb");
++  if(snapshot)
++  {
++   const bool complete = fwrite(BaseRAM, 1, 8192, snapshot) == 8192;
++   const bool closed = fclose(snapshot) == 0;
++   if(complete && closed)
++    MDFN_printf("Theron pce_fast raw main-RAM snapshot written: bytes=8192 path=%s\n", snapshot_path);
++   else
++    MDFN_printf("Theron pce_fast raw main-RAM snapshot incomplete: path=%s\n", snapshot_path);
++  }
++  else
++   MDFN_printf("Theron pce_fast raw main-RAM snapshot open failed: path=%s\n", snapshot_path);
++ }
+  HuC_SaveNV();
+  Cleanup();
+ }

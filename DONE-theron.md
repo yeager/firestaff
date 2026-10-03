@@ -1,5 +1,35 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — capture a fresh authentic Ak-Tu-Ba gameplay session
+
+Built the instrumented Mednafen 1.32.1 `pce_fast` module on `trv2` with an
+opt-in, close-time raw main-RAM snapshot hook. The hook writes exactly 8 KiB
+from the non-SGX PCE main RAM to a caller-selected path and does not modify
+emulated memory. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT=1`
+enables that module in `build_mednafen_theron_irq2_trace.sh`; the default
+instrumented build remains `pce`-only. The private emulator profile used the
+authentic JP Rev. 1 CUE and System Card. Holding the mapped RUN key (Return)
+for four seconds reached the real Theron title menu; Space then followed
+FILE_1 and the Ak-Tu-Ba route into the first-person dungeon view.
+
+The fresh-run RAM snapshot contains `$203F-$2041 = 01 02 03`, and its 8 KiB
+size and digest are recorded in the private trv2 evidence directory, not in
+Git. The JP Track 02 image passed its expected MD5 gate. This is authentic
+runtime evidence for the captured bytes and route, but the same-session
+level/bank-to-map-cell join is still missing, so production start-pose
+selection remains provisional. The new run's native BRAM is 2 KiB and matches
+the known empty menu-only image; it is not a campaign save. Separately,
+Mednafen's `.mca` autosave was round-tripped twice from an existing authentic
+gameplay state in an isolated profile. That proves emulator-state persistence,
+not new native savegame progress.
+
+The patch dry-run against Mednafen 1.32.1 source, raw-RAM hook checks,
+unsupported-option rejection, and Bash syntax checks passed in three loops.
+The full instrumented build completed on `trv2` with `-j1`, and the opt-in
+capture produced exactly 8192 bytes. Fresh-start route screenshots and raw
+capture remain outside Git. Native savegame support and the source-bound pose
+join remain open in `TODO-theron.md`.
+
 ## 2026-10-03 — retain provenance for provisional level-start poses
 
 `Theron_V1_Level` now labels generic-parser first-floor/default-North values

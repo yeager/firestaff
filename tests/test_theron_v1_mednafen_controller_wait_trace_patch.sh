@@ -45,6 +45,7 @@ later_generation_filter_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_ge
 origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch
 game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+fast_ram_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch
 capture_script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 rng_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch
 vdc_io_patch_file=$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch
@@ -400,6 +401,17 @@ if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'SCSICD_GetLastDataOrigin' "$fifo_origin_v2_patch_file" ||
    ! grep -Fq 'pce_cd_origin_ram_receipt source_lba=%u source_offset=%u' "$fifo_origin_v2_patch_file"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT' "$build_script" ||
+   ! grep -Fq 'theron_pce_fast_main_ram_snapshot.patch' "$build_script" ||
+   ! grep -Fq 'configure_pce_fast=(--enable-pce-fast)' "$build_script" ||
+   ! grep -Fq 'configure_pce_fast=(--disable-pce-fast)' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT' "$fast_ram_snapshot_patch_file" ||
+   ! grep -Fq 'fwrite(BaseRAM, 1, 8192, snapshot) == 8192' "$fast_ram_snapshot_patch_file" ||
+   ! grep -Fq '!IsSGX' "$fast_ram_snapshot_patch_file" ||
+   grep -Fq 'PCE_PeekMainRAM' "$fast_ram_snapshot_patch_file"; then
+    printf '%s\n' 'FAIL: pce_fast snapshot must capture only bounded non-SGX raw main RAM' >&2
     exit 1
 fi
 

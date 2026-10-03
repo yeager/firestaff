@@ -12,6 +12,7 @@ repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 source_root=${1:-${FIRESTAFF_MEDNAFEN_SOURCE_ROOT:-}}
 sdl2_prefix=${FIRESTAFF_MEDNAFEN_SDL2_PREFIX:-}
 patch_only=${FIRESTAFF_MEDNAFEN_PATCH_ONLY:-0}
+pce_fast_snapshot=${FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT:-0}
 # An explicit build root keeps parallel local investigations from reusing an
 # instrumented binary produced from a different patch revision.
 build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-"$repo/.codex-scratch/mednafen-firestaff-irq2-trace"}
@@ -23,6 +24,10 @@ if [[ -z "$source_root" ]]; then
 fi
 if [[ "$patch_only" != 0 && "$patch_only" != 1 ]]; then
     printf 'FAIL: FIRESTAFF_MEDNAFEN_PATCH_ONLY must be 0 or 1\n' >&2
+    exit 2
+fi
+if [[ "$pce_fast_snapshot" != 0 && "$pce_fast_snapshot" != 1 ]]; then
+    printf 'FAIL: FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT must be 0 or 1\n' >&2
     exit 2
 fi
 if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
@@ -177,6 +182,8 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_selected_record_consumer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cdda_command_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
@@ -209,11 +216,16 @@ cd "$build_root/source"
 if [[ "$(uname -s)" == Darwin && -n "$sdl2_prefix" ]]; then
     export LDFLAGS="${LDFLAGS:-} -Wl,-rpath,$sdl2_prefix/lib"
 fi
+configure_pce_fast=(--disable-pce-fast)
+if [[ "$pce_fast_snapshot" == 1 ]]; then
+    configure_pce_fast=(--enable-pce-fast)
+fi
 # The PCE interpreter's unoptimized frame exceeds the default macOS emulator
 # thread stack and faults in the stack probe on Apple Silicon. Keep an
 # explicit caller-provided CXXFLAGS, but make ordinary capture builds usable.
 CXXFLAGS="${CXXFLAGS:--O2}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
-    --disable-lynx --disable-md --disable-nes --disable-ngp --disable-pce-fast \
+    --disable-lynx --disable-md --disable-nes --disable-ngp \
+    "${configure_pce_fast[@]}" \
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
     --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan \
     --without-libflac
