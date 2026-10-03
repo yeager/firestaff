@@ -54068,15 +54068,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_map.
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(test_theron_v1_track02_dungeon_map PRIVATE firestaff_m12)
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_dungeon_map PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_dungeon_map PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_dungeon_map PRIVATE
+            /UNDEBUG)
     endif()
     add_test(
-        NAME theron_v1_track02_dungeon_map
-        COMMAND test_theron_v1_track02_dungeon_map
+        NAME theron_v1_track02_dungeon_map_us_real_media
+        COMMAND test_theron_v1_track02_dungeon_map us
     )
-    set_tests_properties(theron_v1_track02_dungeon_map PROPERTIES
+    add_test(
+        NAME theron_v1_track02_dungeon_map_jp_real_media
+        COMMAND test_theron_v1_track02_dungeon_map jp
+    )
+    set_tests_properties(
+        theron_v1_track02_dungeon_map_us_real_media
+        theron_v1_track02_dungeon_map_jp_real_media
+        PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;dungeon;source-data"
+        LABELS "theron;real-media;regional;dungeon;source-data"
     )
 endif()
 

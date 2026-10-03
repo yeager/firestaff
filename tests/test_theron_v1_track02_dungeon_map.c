@@ -16,12 +16,19 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     fseek(fp, 0, SEEK_END);
     long fsize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    if (fsize <= 0) { fclose(fp); return NULL; }
+    if (fsize <= 0 || fsize % SECTOR_SIZE != 0) {
+        fclose(fp);
+        return NULL;
+    }
 
     size_t raw_size = (size_t)fsize;
     uint8_t *raw = malloc(raw_size);
     if (!raw) { fclose(fp); return NULL; }
-    fread(raw, 1, raw_size, fp);
+    if (fread(raw, 1, raw_size, fp) != raw_size) {
+        free(raw);
+        fclose(fp);
+        return NULL;
+    }
     fclose(fp);
 
     size_t sectors = raw_size / SECTOR_SIZE;
@@ -72,43 +79,70 @@ static void test_tile_helpers(void) {
     assert(theron_tile_attributes(0x3F) == 0x0F);
 }
 
-static const char *find_track02(void) {
-    const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
-    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+static const char *find_track02(const char *region,
+                                Theron_Track02Variant *variant,
+                                const char **expected_md5) {
     const char *home = getenv("HOME");
-    static char path[512];
-    const char *candidates[3] = {
-        clonecd_path && clonecd_path[0] ? clonecd_path : explicit_path,
-        NULL, NULL
-    };
-    if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
-        candidates[1] = path;
-        snprintf(path + 256, sizeof(path) - 256,
-                 "%s/.firestaff/data/theron/raw-us/"
-                 "Dungeon Master - Theron's Quest (USA) (Track 02).bin", home);
-        candidates[2] = path + 256;
-    }
-    for (unsigned int i = 0; i < 3u; ++i) {
-        FILE *fp;
-        if (!candidates[i] || !candidates[i][0]) continue;
-        fp = fopen(candidates[i], "rb");
-        if (fp) { fclose(fp); return candidates[i]; }
-    }
-    return NULL;
-}
+    static char paths[2][512];
+    const char *override;
 
-static const char *find_jp_track02(void) {
-    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
-    static char path[512];
-    const char *home = getenv("HOME");
-    if (explicit_path && explicit_path[0]) return explicit_path;
+    if (strcmp(region, "jp") == 0) {
+        static char jp_path[512];
+        *variant = THERON_TRACK02_VARIANT_JP_BIN;
+        *expected_md5 = THERON_TRACK02_MD5_JP_BIN;
+        override = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
+        if (override && override[0]) return override;
+        if (!home || !home[0]) return NULL;
+        int written = snprintf(jp_path, sizeof(jp_path),
+                              "%s/.firestaff/data/theron/TQJP02.bin", home);
+        if (written < 0 || (size_t)written >= sizeof(jp_path)) {
+            fprintf(stderr, "FAIL: HOME-derived JP Track 02 path is too long\n");
+            jp_path[0] = '\0';
+            return jp_path;
+        }
+        FILE *fp = fopen(jp_path, "rb");
+        if (!fp) return NULL;
+        fclose(fp);
+        return jp_path;
+    }
+
+    override = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
+    *variant = THERON_TRACK02_VARIANT_US_CLONECD_RAW;
+    *expected_md5 = THERON_TRACK02_MD5_US_CLONECD_BIN;
+    if (override && override[0]) return override;
+
+    override = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+    *variant = THERON_TRACK02_VARIANT_US_BIN;
+    *expected_md5 = THERON_TRACK02_MD5_US_BIN;
+    if (override && override[0]) return override;
     if (!home || !home[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQJP02.bin", home);
-    FILE *fp = fopen(path, "rb");
+
+    int written = snprintf(paths[0], sizeof(paths[0]),
+                           "%s/.firestaff/data/theron/TQUS02.bin", home);
+    if (written < 0 || (size_t)written >= sizeof(paths[0])) {
+        fprintf(stderr, "FAIL: HOME-derived US Track 02 path is too long\n");
+        paths[0][0] = '\0';
+        return paths[0];
+    }
+    FILE *fp = fopen(paths[0], "rb");
+    if (fp) {
+        fclose(fp);
+        return paths[0];
+    }
+
+    written = snprintf(paths[1], sizeof(paths[1]),
+                       "%s/.firestaff/data/theron/raw-us/"
+                       "Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+                       home);
+    if (written < 0 || (size_t)written >= sizeof(paths[1])) {
+        fprintf(stderr, "FAIL: HOME-derived US raw Track 02 path is too long\n");
+        paths[1][0] = '\0';
+        return paths[1];
+    }
+    fp = fopen(paths[1], "rb");
     if (!fp) return NULL;
     fclose(fp);
-    return path;
+    return paths[1];
 }
 
 /* Expected dimensions from dmbuilder source (stored as dim-1). */
@@ -306,68 +340,57 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
         "JP", ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN);
 }
 
-int main(void) {
-    printf("test_theron_v1_track02_dungeon_map\n");
+int main(int argc, char **argv) {
+    if (argc != 2 ||
+        (strcmp(argv[1], "us") != 0 && strcmp(argv[1], "jp") != 0)) {
+        fprintf(stderr, "usage: %s us|jp\n", argv[0]);
+        return 2;
+    }
+
+    const char *region = argv[1];
+    printf("test_theron_v1_track02_dungeon_map_%s\n", region);
 
     test_quest_block_offsets();
     test_map_counts();
     test_tile_helpers();
     printf("  Static tests OK\n");
 
-    const char *track02_path = find_track02();
-    const char *clonecd_env = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
-    Theron_Track02Variant track02_variant =
-        clonecd_env && clonecd_env[0]
-            ? THERON_TRACK02_VARIANT_US_CLONECD_RAW
-            : THERON_TRACK02_VARIANT_US_BIN;
-    const char *expected_us_md5 =
-        track02_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
-            ? THERON_TRACK02_MD5_US_CLONECD_BIN
-            : THERON_TRACK02_MD5_US_BIN;
+    Theron_Track02Variant track02_variant;
+    const char *expected_md5;
+    const char *track02_path = find_track02(
+        region, &track02_variant, &expected_md5);
     if (!track02_path) {
-        printf("  SKIP: Track 02 BIN not found\n");
+        printf("  SKIP: %s Track 02 BIN not found\n",
+               strcmp(region, "us") == 0 ? "US" : "JP");
         return 77;
     }
     char actual_md5[33] = {0};
     if (!m12_file_md5_hex(track02_path, actual_md5) ||
-        strcmp(actual_md5, expected_us_md5) != 0) {
-        fprintf(stderr, "FAIL: US Track 02 identity is not authenticated: %s\n",
-                actual_md5);
+        strcmp(actual_md5, expected_md5) != 0) {
+        fprintf(stderr, "FAIL: %s Track 02 identity is not authenticated: %s\n",
+                strcmp(region, "us") == 0 ? "US" : "JP", actual_md5);
         return 1;
     }
 
     size_t ud_size = 0;
     uint8_t *ud = load_track02_ud(track02_path, &ud_size);
     if (!ud) {
-        printf("  SKIP: could not load Track 02\n");
-        return 77;
+        fprintf(stderr, "FAIL: could not load authenticated %s Track 02\n",
+                strcmp(region, "us") == 0 ? "US" : "JP");
+        return 1;
     }
 
-    test_akutuba_maps(ud, ud_size, track02_variant);
-    test_drator_maps(ud, ud_size, track02_variant);
-    test_all_dungeons(ud, ud_size, track02_variant);
-    (void)report_authentic_stair_candidates(
-        "US", ud, ud_size, track02_variant);
-
-    free(ud);
-
-    const char *jp_path = find_jp_track02();
-    if (jp_path) {
-        if (!m12_file_md5_hex(jp_path, actual_md5) ||
-            strcmp(actual_md5, THERON_TRACK02_MD5_JP_BIN) != 0) {
-            fprintf(stderr, "FAIL: JP Track 02 identity is not authenticated: %s\n",
-                    actual_md5);
-            return 1;
-        }
-        size_t jp_ud_size = 0;
-        uint8_t *jp_ud = load_track02_ud(jp_path, &jp_ud_size);
-        if (jp_ud) {
-            test_jp_maps(jp_ud, jp_ud_size);
-            free(jp_ud);
-        }
+    if (strcmp(region, "us") == 0) {
+        test_akutuba_maps(ud, ud_size, track02_variant);
+        test_drator_maps(ud, ud_size, track02_variant);
+        test_all_dungeons(ud, ud_size, track02_variant);
+        (void)report_authentic_stair_candidates(
+            "US", ud, ud_size, track02_variant);
     } else {
-        printf("  SKIP: Japanese Track 02 BIN not found\n");
+        test_jp_maps(ud, ud_size);
     }
-    printf("PASS\n");
+    free(ud);
+    printf("PASS: %s real media\n",
+           strcmp(region, "us") == 0 ? "US" : "JP");
     return 0;
 }

@@ -6556,3 +6556,23 @@ the installed original US and JP BINs. Valid explicit overrides passed in
 three loops without default media; cross-region media and a missing explicit
 JP override failed admission; absent default media independently returned
 CTest skip code 77 for each region.
+
+# ✅ 2026-10-03 Regional authentic Track 02 dungeon-map verification
+
+Split the map regression into independent US and JP CTests. The JP case now
+runs its hash-gated seven-dungeon offset/layout checks and the 170-stair-class
+tile census even when no US media is installed. The US case retains support
+for the regular raw BIN and an explicitly supplied CloneCD-derived Track 02
+BIN, with separate expected hashes. Missing default media skips only the
+selected region; explicit unreadable or wrong-edition overrides fail closed.
+CTest compilation now undefines `NDEBUG` for this assert-based test so Release
+builds retain the checks.
+
+Verification on `trv2`: both CTests passed three repeated runs against the
+authentic installed US and JP Track 02 BINs. Explicit US and JP overrides
+passed in three loops without default-media discovery; wrong-region JP media,
+a missing JP override, and a missing CloneCD override were rejected. With
+default media hidden, both selected regions independently returned skip code
+77. The built Release test binary references `__assert_fail`, confirming its
+assertion checks remain enabled. These data checks do not establish original
+stairs, transitions, or later-dungeon runtime behavior.
