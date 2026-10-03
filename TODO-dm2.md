@@ -257,11 +257,18 @@ Reviewed 2026-08-29. Only open work is listed here.
   This proves one scripted keydown and the movement handoff. A physical held
   key on the reported M5 still needs observation to confirm repeat cadence.
 
-- Bind `DM2_FIND_WALK_PATH` mode 8 to the live CAII action list, visibility
-  grid and `DM2_19f0_05e8` target evaluator. The source DB1 map-edge decoder
-  now proves the original FM Towns map 3 → 38 → 3 route, but the current
-  same-map BFS cannot traverse that edge. Do not call the edge receipt a
-  complete creature path or a dynamic-light receipt.
+- Bind the creature `DM2_1c9a_38a8` path dispatch to its live CAII slot,
+  `s350.v1e0678` action list and `DM2_FIND_WALK_PATH` mode 2. SKProject
+  `SKULLWIN/c_1c9a.cpp:9749-9809` matches the action's byte 7 and word 8
+  against `s350.v1e07d8`, moves the selected 22-byte entry to the front,
+  then calls the pathfinder with mode 2. Firestaff's `38a8` compatibility
+  entry remains fail-closed, while the live creature route uses a same-map
+  BFS toward the party. The source DB1 map-edge decoder proves the original
+  FM Towns map 3 → 38 → 3 edge, but that BFS cannot traverse it. Keep the
+  creature path receipt separate from the dynamic-light action 0x1b/mode-8
+  visibility walk and its mode-7 successor. In the source, mode 8 evaluates
+  candidate cells through `DM2_19f0_05e8`; it does not select a CAII action
+  list (`SKULLWIN/c_1c9a.cpp:7525-7560`).
 
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
