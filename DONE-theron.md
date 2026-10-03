@@ -1,5 +1,29 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — all captured movement commands across authentic campaign maps
+
+Expanded `test_real_campaign_movement()` in the authentic US/JP mechanics
+probe. Across all seven Track 02 dungeons, the probe selects existing
+floor-to-floor and floor-to-wall neighbors from the source-header-verified
+real maps and tests command types `$03`–`$06`. Each command begins from a copy
+of the loaded world; successful routes must reach the same real floor with
+facing preserved, while wall routes must remain blocked without changing
+position or facing. The command mapping is bounded by the authenticated
+`THQUEST.ASM` queue/consumer capture: `$D3B0..$D3CB` dispatch and `$CD87` move
+route; see `docs/source-lock/theron-original-forward-command-capture-2026-08-21.md`
+lines 18–61. This does not claim an original-runtime position join or broader
+retail collision parity.
+
+On `trv2`, a fresh isolated Release build of
+`firestaff_theron_v1_mechanics_playability_probe` completed with `-j1`.
+`theron_v1_mechanics_playability` passed three consecutive CTest runs against
+the installed authentic US and JP Track 02 BINs. The direct probe reported
+215 passed, zero failed and zero skipped. Each regional pass loaded 34 levels
+and exercised all four commands on each available floor route (120 routes
+across 30 levels) and each available wall route (124 blocked attempts across
+31 levels). This remains host-path verification on authentic map data, not an
+original-game capture.
+
 ## 2026-10-03 — report creature-spawn source checks per region
 
 - The Track 02 spawn regression now accepts `us` or `jp` and checks only that

@@ -2,6 +2,17 @@
 
 Reviewed 2026-10-03. Only open work is listed here.
 
+## 2026-10-03 — exercise every captured movement command on authentic campaign maps
+
+- ✅ The US/JP hash-gated mechanics probe now runs all four original command
+  types (`$03`–`$06`) over source-loaded floor and wall routes in all seven
+  authentic dungeons. Each attempt starts from a copy of the loaded world and
+  asserts destination/facing on floor or atomic pose retention at walls.
+- 🔒 This verifies Firestaff's command mapping against authentic campaign map
+  bytes; it does not join the separate original save-state pose to a raw
+  Track 02 coordinate, prove regional original-runtime captures, or unlock
+  doors, stairs, combat, or other unresolved interactions.
+
 ## 2026-10-03 — keep creature-spawn source evidence regional
 
 - ✅ Replaced the combined spawn-source media probe with separate US and JP
