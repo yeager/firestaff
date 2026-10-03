@@ -165,6 +165,19 @@ jobs:
             cmake --build build --parallel
           fi
 
+      # Temporary local-media verification handoff. Upload only the test
+      # executable; licensed game archives stay on the operator's machine.
+      - name: Upload macOS local-media test executables
+        if: matrix.os == 'macos-14'
+        uses: actions/upload-artifact@v6
+        with:
+          name: m12-original-handoff-atari-names-macos-14
+          path: |
+            build/test_m12_persisted_root_original_handoff
+            build/test_dm1_atari_names_real
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Build launcher settings regressions
         run: |
           cmake --build build --parallel 2 --target \

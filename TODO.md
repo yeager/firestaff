@@ -1,8 +1,10 @@
 # Firestaff TODO — active cross-game work
 
-- Confirm launch from the selected root for DM1, CSB and DM2 through the
-  desktop start menu. The authenticated DM1 picker and reopen test proves
-  persisted-root selection, but does not exercise all three game handoffs.
+- Run `m12_persisted_root_original_handoff` against the local original-media
+  collection and confirm DM1 PC34, CSB Amiga 3.1, and DM2 DOS source-owned
+  starts from a reopened persisted M12 root. The opt-in test is present, but
+  its M11 target requires the dedicated build host; syntax and CMake
+  configuration checks alone do not prove the runtime handoffs.
 
 - Verify iOS release packaging after the LZMA software-CRC selection fix
   using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and

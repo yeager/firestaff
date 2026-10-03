@@ -54986,6 +54986,21 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77 TIMEOUT 90
         ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dialog-scratch;SDL_VIDEODRIVER=dummy"
         LABELS "dm1;pc34;real-media;in-memory;menu;skip-safe")
+
+    # Opt-in original-media gate for persisted M12 root to M11 launch.
+    add_executable(test_m12_persisted_root_original_handoff
+        tests/test_m12_persisted_root_original_handoff.c)
+    target_link_libraries(test_m12_persisted_root_original_handoff PRIVATE
+        firestaff_m11 firestaff_m12 firestaff_m10 firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_persisted_root_original_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m12_persisted_root_original_handoff
+        COMMAND test_m12_persisted_root_original_handoff)
+    set_tests_properties(m12_persisted_root_original_handoff PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/persisted-root-scratch;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        LABELS "dm1;csb;dm2;real-media;menu;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_data_dir_cancel.c")
