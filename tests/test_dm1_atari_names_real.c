@@ -197,8 +197,9 @@ int main(int argc, char **argv) {
             int markers = state->audioState.playedMarkerCount;
             int queued = state->audioState.csbAtariStSoundQueuedCount;
             if (M11_Audio_Dm1AtariSoundIndex(i) != index ||
-                M11_Audio_EmitDm1AtariSound(&state->audioState,
-                    state->assetLoader.graphicsDatPath, i, 3) != playable ||
+                M11_Audio_EmitDm1AtariSoundResident(&state->audioState,
+                    state->assetLoader.atariStData,
+                    (size_t)state->assetLoader.atariStDataSize, i, 3) != playable ||
                 state->audioState.playedMarkerCount != markers) {
                 fprintf(stderr, "FAIL: original Atari event transport %d\n", i);
                 goto done;
@@ -222,6 +223,23 @@ int main(int argc, char **argv) {
     }
     puts("PASS: DM1 event indices select original Atari samples and Timer-A periods without generated markers");
     {
+        char savedGraphicsPath[ASSET_PATH_MAX];
+        int scrollOk;
+        /* check_legacy_scroll_raster drives the real M11 mouse/use-item path
+         * through swallow sounds and checks accepted source indices without
+         * generated markers. A blank archive path proves the game-view
+         * dispatcher consumes retained GRAPHICS.DAT after startup. The
+         * direct event loop above checks SDL queueing separately. */
+        snprintf(savedGraphicsPath, sizeof(savedGraphicsPath), "%s",
+                 state->assetLoader.graphicsDatPath);
+        state->assetLoader.graphicsDatPath[0] = '\0';
+        scrollOk = check_legacy_scroll_raster(state);
+        snprintf(state->assetLoader.graphicsDatPath,
+                 sizeof(state->assetLoader.graphicsDatPath), "%s",
+                 savedGraphicsPath);
+        if (!scrollOk) goto done;
+    }
+    {
         M11_GameViewState *spellState = calloc(1, sizeof(*spellState));
         int spellOk;
         if (!spellState) goto done;
@@ -232,7 +250,6 @@ int main(int argc, char **argv) {
         free(spellState);
         if (!spellOk) goto done;
     }
-    if (!check_legacy_scroll_raster(state)) goto done;
     result = 0;
 done:
     free(pixels);

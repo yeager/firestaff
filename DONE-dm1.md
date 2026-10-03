@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-10-03: DM1 Atari ST sound events now use authenticated GRAPHICS.DAT
+  retained after startup. ReDMCSB SOUND.C F0060 consumes resident graphics;
+  reopening nested ZIP/STX media on every effect diverged from that route.
+  Original English 1.2, German 1.2 and French 1.3 media passed the SND1
+  source-byte and SDL dummy-queue checks. The live scroll event still selects
+  its source sound when the archive path is blank after startup. This does
+  not verify audible M5 playback, overlapping-event arbitration or PSG
+  waveform parity.
+
 - 2026-10-03: The original-media FM Towns CLI regression now also launches
   bare `--game dm1` with no platform override. The published macOS arm64
   v3.0.355 binary selected the authenticated EDM program and reached the

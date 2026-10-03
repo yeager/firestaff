@@ -158,6 +158,9 @@ typedef struct {
 int M11_Audio_EmitDm1AtariSound(M11_AudioState* state,
                                const char* graphicsPath, int pc34Index,
                                int sourceVolume);
+int M11_Audio_EmitDm1AtariSoundResident(M11_AudioState* state,
+    const unsigned char* graphics, size_t graphicsSize, int pc34Index,
+    int sourceVolume);
 int M11_Audio_EmitDm1FmtownsSound(M11_AudioState* state,
     const unsigned char* graphics, size_t graphicsSize, int pc34Index,
     int sourceVolume);

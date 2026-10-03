@@ -15441,8 +15441,10 @@ static void m11_audio_emit_source_sound_with_volume(
     }
     if (m11_is_dm1_source_kind(state->sourceKind)) {
         if (state->assetLoader.atariStDm1) {
-            (void)M11_Audio_EmitDm1AtariSound(&state->audioState,
-                state->assetLoader.graphicsDatPath, soundIndex, sourceVolume);
+            (void)M11_Audio_EmitDm1AtariSoundResident(&state->audioState,
+                state->assetLoader.atariStData,
+                (size_t)state->assetLoader.atariStDataSize,
+                soundIndex, sourceVolume);
             return;
         }
         if (state->dm1FmtownsStartupReceiptValid && state->assetLoader.legacyData) {

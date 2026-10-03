@@ -460,7 +460,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   inventory or pixel parity.
 
 - Complete legacy gameplay sound parity. Atari now selects original SND1
-  records through a source-locked event map; verify live event timing,
+  records through a source-locked event map and retained GRAPHICS.DAT bytes;
+  verify live event timing,
   arbitration and PSG output against original captures. The authenticated
   English, German and French Atari real-media tests now run with SDL's dummy
   playback device and require every accepted event to add decoded original

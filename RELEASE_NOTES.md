@@ -1,3 +1,13 @@
+## Unreleased changes
+
+- `DM1 Atari ST sound effects`: runtime events now read authenticated SND1
+  records from the retained GRAPHICS.DAT bytes instead of reopening the nested
+  game archive for each event. Original English, German and French Atari ST
+  media verify the 22 source records, the 19 accepted SDL dummy-device queues,
+  and the in-game scroll event with the archive path unavailable. Three short
+  source records remain rejected; audible M5 playback and PSG parity remain
+  unverified.
+
 # Firestaff v3.0.357
 
 ## User-facing changes
@@ -30,13 +40,6 @@
   establish visual or gameplay parity.
 - Physical MacBook Pro M5 playback and complete cross-platform game startup
   remain unverified.
-
-## Unreleased changes
-
-- `Start menu data root`: preserves an authenticated folder-picker selection
-  when the multi-game menu reopens, even if the default root contains more
-  games. Original DM1 PC 3.4 media verifies the saved selection; DM1, CSB and
-  DM2 launch handoffs from that selected root remain open.
 
 # Firestaff v3.0.355
 
