@@ -5903,12 +5903,15 @@ metadata and locally staged CD-DA tracks.
   test and runtime-input test pass. The real US/JP Track 02 playability probe
   now exercises each `$03..$06` command over an authentic floor edge and an
   authentic wall edge, preserving facing in every case: 143/143 pass.
-- Removed the two synthetic multi-level cases from the real-data mechanics
-  probe. It now converts the authenticated 2352-byte raw sectors through the
-  verified MODE1 user-data bridge, loads the complete real AKUTUBA dungeon,
-  verifies every loaded source header, and traverses an authentic stair edge
-  with original command `$03`. US and JP complete with 145/145 passes and no
-  constructed level, door, pit, object table or stair.
+- Historical result, superseded by the later source-evidence gate: that version
+  of the real-data mechanics probe converted authenticated 2352-byte raw
+  sectors through the verified MODE1 user-data bridge, loaded the real AKUTUBA
+  dungeon, and reported traversal over a stair edge. The current mechanics
+  implementation rejects stairs on authenticated Track 02 because their
+  direction, destination map, and arrival pose remain unbound. The later
+  regional probe verifies this fail-closed behavior; see the open stair work
+  in `TODO-theron.md`. Do not treat the old 145/145 result as current stair
+  traversal parity.
 - Removed the mechanics probe's unrelated four synthetic champions, fixed
   stat values and 1,000-gold seed. Real movement now runs with an empty party
   state plus only the authenticated map/start pose; regional roster and save
@@ -6723,3 +6726,21 @@ The US vector totals 171 tiles and the JP vector totals 170. This is source
 inventory only; it does not assign direction, destination level, arrival pose,
 or stairs runtime semantics. Stair movement remains blocked on authenticated
 levels pending the original consumer or a source-bound runtime capture.
+
+# ✅ 2026-10-03 Theron emulator and stair-status evidence reconciliation
+
+Corrected the historical movement entry that described stair traversal as
+current parity. The production mechanics path and current real-data probe keep
+authentic Track 02 stairs blocked until direction, destination map, and arrival
+pose are source-bound. Also narrowed the failed US emulator cold-start note to
+that attempt and linked it to the later authentic JP FILE_1 save/reload result.
+The JP native save proves persistent menu-level campaign selection only; the
+separate F5/F7 state reload is emulator-state evidence, not a native save.
+
+Verification on `trv2`: a fresh Release build from commit `9ac13263d` completed
+the `firestaff_theron_v1_mechanics_playability_probe` target with `-j1`. The
+`theron_v1_mechanics_playability` CTest passed three consecutive runs against
+the authentic US and JP Track 02 BINs. Each region reported 215 passes, zero
+failures, and zero skips; its 39 US and 42 JP approachable stair cells remained
+transactionally blocked. This verifies the documented fail-closed boundary,
+not retail stair traversal semantics.

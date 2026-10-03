@@ -21,7 +21,7 @@ Theron's Quest.
 ## Current status
 
 The table was last fully reviewed on 2026-09-12; the Theron's Quest row was
-updated on 2026-09-24. It reports what has been exercised with real media, not
+updated on 2026-10-03. It reports what has been exercised with real media, not
 a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
@@ -38,7 +38,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Full presentation, transitions, saves and gameplay remain evidence-gated. |
+| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. A Japanese retail FILE_1 save survives emulator restart and reload to the Akutuba selection map; saved in-dungeon progress is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -98,9 +98,12 @@ routes include Japanese Rev. 1 title-to-Akutuba startup and US Continue from
 the authentic Akutuba-complete Backup RAM into dungeon 2, level 0, followed by
 three native movement inputs on a floor-only path. Source-only loaders also
 verify all seven dungeon sources in both regions; that is data coverage, not
-proof of the original game's transitions. Broader campaign progression,
-original T900 item placement/use, gameplay presentation, combat, audio and
-save parity remain open. README screenshots are Firestaff-rendered only;
+proof of the original game's transitions. Separately, an authentic Japanese
+FILE_1 New Game save survived an emulator restart and loaded back to the
+Akutuba selection map; this does not prove saved in-dungeon movement or
+campaign completion. Broader progression, original T900 item placement/use,
+gameplay presentation, combat, audio and save parity remain open. README
+screenshots are Firestaff-rendered only;
 original-emulator captures are not presented as Firestaff output. See the
 [platform status](docs/PLATFORM_STATUS.md) and
 [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)

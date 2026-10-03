@@ -51,20 +51,19 @@ Reviewed 2026-10-03. Only open work is listed here.
   sectors from both original editions. This establishes authentic title
   Track 01 availability and startup only—not audible device output, gameplay
   CDDA command selection, or a game-owned event-to-track mapping.
-- 🔒 A fresh original-emulator dungeon save is still unavailable. On trv2, an
-  isolated Mednafen/Xvfb session visibly loaded the authentic US CUE and the
-  verified System Card 3.0. RUN (the profile's Return mapping) was held for
-  four seconds as instructed, but the display showed the authentic US Track 02
-  boot/copy-protection message at UD `0x26C348` ("This disc only works on the
-  SUPER CD-ROM2 SYSTEM") rather than a playable dungeon. Mednafen created a
-  2 KiB BRAM file in the fresh private profile; this is not evidence of an
-  in-dungeon save or successful campaign progress. The capture script
-  hash-checked and passed the normalized SysCard 3.0 path as `pce.cdbios`; the
-  CUE's first track is AUDIO, so Mednafen's `pce.cpp` GE-CD BIOS dispatcher
-  selects that standard CD BIOS setting. The remaining copy-protection failure
-  is unresolved. Preserve the capture outside Git and do not import that BRAM.
-  The Mac remains locked and the separate Nexus capture on trv2 was left
-  untouched.
+- 🔒 The isolated US attempt below failed to reach a playable dungeon or
+  produce a game-native progress save. It showed the authentic Track 02
+  copy-protection message at UD `0x26C348` ("This disc only works on the SUPER
+  CD-ROM2 SYSTEM") after a four-second RUN hold. Its fresh 2 KiB BRAM is not
+  evidence of campaign progress. The capture hash-checked and passed the
+  normalized System Card 3.0 path as `pce.cdbios`; because the CUE's first track
+  is AUDIO, Mednafen's `pce.cpp` GE-CD BIOS dispatcher selects that standard CD
+  BIOS setting. This US failure is limited to that capture: the later
+  authentic JP New Game/FILE_1 save and reload to the Akutuba selection map is
+  recorded in `DONE-theron.md`. That JP round trip proves persistent FILE_1
+  state, not saved in-dungeon movement or campaign completion. Preserve the US
+  capture outside Git and do not import its BRAM. The Mac remains locked and
+  the separate Nexus capture on trv2 was left untouched.
 - The instrumented capture, including a read-only replay from the existing
   authentic US save-manager state, recorded RUN as PCE input `raw=0008`; every
   controller-read PC remained in the System Card `$E4xx` path. No dungeon input
