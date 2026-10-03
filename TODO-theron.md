@@ -115,6 +115,13 @@ Reviewed 2026-10-03. Only open work is listed here.
   the first-person viewport black, so the state is not accepted as a verified
   usable gameplay save. Keep it outside Git and do not claim native-save or
   save/restore parity from it.
+- Follow-up inspection of the same private state capture found
+  `snap/private-restored-after-up.png`: after an authentic Up input, the
+  screenshot shows the Theron HUD, hand pointer, and Akutuba first-person wall
+  and floor. This establishes that an input can redraw the restored gameplay
+  view, so the state is useful for continued emulator capture. It still does
+  not identify party coordinates, prove that the Up command moved the party,
+  or establish save/restore pose parity; retain the save boundary above.
 - One earlier GUI attempt wrote Mednafen's shared global config on clean
   shutdown. Subsequent capture used a task-private Mednafen base directory;
   preserve original game media and all existing profiles.
