@@ -53565,13 +53565,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_ros
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(test_theron_v1_track02_champion_roster PRIVATE
         firestaff_theron)
-    if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_champion_roster PRIVATE -Wall -Wextra -O2)
+    if(MSVC)
+        target_compile_options(test_theron_v1_track02_champion_roster PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(test_theron_v1_track02_champion_roster PRIVATE
+            -Wall -Wextra -O2 -UNDEBUG)
     endif()
     add_test(
-        NAME theron_v1_track02_champion_roster
-        COMMAND test_theron_v1_track02_champion_roster
+        NAME theron_v1_track02_champion_roster_us_real_media
+        COMMAND test_theron_v1_track02_champion_roster us
     )
+    add_test(
+        NAME theron_v1_track02_champion_roster_jp_real_media
+        COMMAND test_theron_v1_track02_champion_roster jp
+    )
+    set_tests_properties(
+        theron_v1_track02_champion_roster_us_real_media
+        PROPERTIES SKIP_RETURN_CODE 77 LABELS "real-media;regional;theron;roster;us")
+    set_tests_properties(
+        theron_v1_track02_champion_roster_jp_real_media
+        PROPERTIES SKIP_RETURN_CODE 77 LABELS "real-media;regional;theron;roster;jp")
 endif()
 
 if(BUILD_TESTING)

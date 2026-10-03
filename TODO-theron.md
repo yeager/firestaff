@@ -4918,6 +4918,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   schedule as gameplay evidence. The trace remains private on trv2 and no game
   payload was copied into the repo.
 
+- 🔒 2026-10-03 stock Mednafen 1.32.1 cold-start confirmation: with the
+  authentic JP Rev. 1 CUE/System Card in a fresh isolated profile, holding the
+  mapped RUN/Return input for four seconds at the System Card prompt reached
+  the Theron's Quest title menu. This is a real title-screen capture, not
+  evidence of a dungeon transition. Autosave was disabled and the separate
+  profile kept prior save data untouched. A copied prior PCE-Fast state was
+  not accepted as a verified new save; F5/F7 save/load round-trip behavior
+  remains unverified. Do not treat the copied state or title screen as a new
+  dungeon save or publish it as gameplay evidence.
+
 ## 2026-09-27 — authentic closed-door boundary coverage
 
 - ✅ The real-data mechanics probe now classifies every source-backed door in

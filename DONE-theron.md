@@ -6576,3 +6576,19 @@ default media hidden, both selected regions independently returned skip code
 77. The built Release test binary references `__assert_fail`, confirming its
 assertion checks remain enabled. These data checks do not establish original
 stairs, transitions, or later-dungeon runtime behavior.
+
+# ✅ 2026-10-03 Regional authentic Track 02 champion-roster coverage
+
+Split the champion-roster real-media check into independent US and JP CTests.
+Each invocation verifies only its selected authentic BIN; missing default
+media skips that region, while a non-empty unreadable or wrong-edition override
+fails. Assertions are explicitly enabled for Release builds. The JP live-party
+source-record binding remains part of the JP invocation, and portrait artwork
+or T900 behavior is not inferred.
+
+Verification on `trv2`: both regional tests passed three repeated runs against
+the installed authentic US and JP BINs. Valid explicit overrides passed with
+an isolated HOME; cross-region and missing explicit paths failed; missing
+default paths independently returned CTest skip code 77. The Release test
+binary references `__assert_fail`. These receipt and numeric roster checks do
+not establish complete Theron champion gameplay parity.
