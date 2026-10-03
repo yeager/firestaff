@@ -5,8 +5,10 @@
   reopening nested ZIP/STX media on every effect diverged from that route.
   Original English 1.2, German 1.2 and French 1.3 media passed the SND1
   source-byte and SDL dummy-queue checks. The live scroll event still selects
-  its source sound when the archive path is blank after startup. This does
-  not verify audible M5 playback, overlapping-event arbitration or PSG
+  its source sound when the archive path is blank after startup. A subsequent
+  original-media check in all three editions measures the SDL queue directly
+  before and after an in-game food swallow and requires one queued effect.
+  This does not verify audible M5 playback, overlapping-event arbitration or PSG
   waveform parity.
 
 - 2026-10-03: The original-media FM Towns CLI regression now also launches

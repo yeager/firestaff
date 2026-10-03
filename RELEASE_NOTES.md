@@ -4,7 +4,8 @@
   records from the retained GRAPHICS.DAT bytes instead of reopening the nested
   game archive for each event. Original English, German and French Atari ST
   media verify the 22 source records, the 19 accepted SDL dummy-device queues,
-  and the in-game scroll event with the archive path unavailable. Three short
+  an in-game swallow queue increment, and the scroll event with the archive
+  path unavailable. Three short
   source records remain rejected; audible M5 playback and PSG parity remain
   unverified.
 

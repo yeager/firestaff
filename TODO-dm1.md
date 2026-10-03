@@ -466,7 +466,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   English, German and French Atari real-media tests now run with SDL's dummy
   playback device and require every accepted event to add decoded original
   PCM to the device queue; the three known short records must leave the queue
-  unchanged. This proves source-to-queue transport, not audible output,
+  unchanged. A live food-swallow event also requires one queue increment in
+  each tested edition. This proves bounded source-to-queue transport, not audible output,
   queue-drain timing, arbitration under overlapping events or PSG waveform
   parity. FM Towns local
   events now read F20 unsigned PCM from retained media; verify distance
