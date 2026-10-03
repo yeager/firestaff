@@ -6649,3 +6649,17 @@ missing-default cases returned 77; explicit-missing and cross-region paths
 failed. The Release test binary references `__assert_fail`. This validates
 prologue, metadata, and resource-receipt boundaries, not decompressed level
 contents or original-game semantics.
+
+# ✅ 2026-10-03 Theron in-game save round trip
+
+Using stock Mednafen 1.32.1 with the authentic Japanese Rev. 1 disc and
+System Card in a new isolated profile, held RUN for four seconds at the
+System Card prompt, started NEW GAME in FILE_1, selected Ak-Tu-Ba, and entered
+the real first-person dungeon view. After a graceful emulator exit, the fresh
+profile contained a 2-KiB title-specific persistent-RAM image. A second
+Mednafen process reused only that SRAM directory and a separate empty
+save-state directory. Selecting LOAD GAME, FILE_1, and YES returned to the
+Ak-Tu-Ba dungeon-selection map, confirming the new in-game save survived a
+restart and reloaded. No BIOS, disc image, SRAM, state file, or screenshot was
+added to the repository. Mednafen's separate F5/F7 save-state round trip
+remains unverified; this one save does not establish broad gameplay parity.

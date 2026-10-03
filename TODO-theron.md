@@ -4925,11 +4925,13 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   the authentic dungeon-selection map; selecting Ak-Tu-Ba and advancing its
   intro reached the first-person dungeon view. This is a real runtime gameplay
   capture. The fresh profile generated a 2-KiB game-specific persistent-RAM
-  file, but no in-game save or Mednafen save-state was verified as reloadable.
+  file and a new in-game FILE_1 save. After restarting Mednafen with the same
+  SRAM and an isolated empty state directory, LOAD GAME → FILE_1 → YES returned
+  to the dungeon-selection map, verifying the new game's reload path.
   Autosave was disabled and prior save data was kept untouched. A copied prior
-  PCE-Fast state was not accepted as a new save; F5/F7 save/load round-trip
-  behavior remains unverified. This proves a real game-to-dungeon transition,
-  not complete mechanics parity.
+  PCE-Fast state was not accepted as a new save; the separate Mednafen F5/F7
+  save-state round trip remains unverified. This proves one native save/load
+  cycle and a real game-to-dungeon transition, not complete mechanics parity.
 
 - 🔒 2026-10-03 Track 02 thing-data test hardening: US BIN and JP BIN checks
   are now separate CTests gated by their authentic image digests; explicit
