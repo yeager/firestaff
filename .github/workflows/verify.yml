@@ -165,6 +165,17 @@ jobs:
             cmake --build build --parallel
           fi
 
+      # Temporary diagnostic binary for running the opt-in licensed-media
+      # AUTO handoff check on a local Mac without uploading game data.
+      - name: Upload macOS M12 original-menu handoff test binary
+        if: matrix.os == 'macos-14'
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-m12-original-menu-handoff-test
+          path: build/test_m12_persisted_root_original_handoff
+          if-no-files-found: error
+          retention-days: 2
+
       - name: Build launcher settings regressions
         run: |
           cmake --build build --parallel 2 --target \
