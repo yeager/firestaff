@@ -567,6 +567,53 @@ int csb_v1_audio_runtime_request(CsbV1AudioRuntime* runtime,
     return 0;
 }
 
+int csb_v1_audio_runtime_request_fmtowns(CsbV1AudioRuntime* runtime,
+                                         const CsbV1AudioRequest* request)
+{
+    int16_t *pending;
+
+    if (!runtime || !request || !csb_v1_audio_valid_index(request->soundIndex) ||
+        request->volume <= 0 || request->volume > 127 ||
+        !csb_v1_audio_valid_mode(request->mode) ||
+        request->mode == CSB_V1_MODE_DO_NOT_PLAY) {
+        if (runtime) ++runtime->totalRejectedRequests;
+        return 0;
+    }
+    ++runtime->totalRequests;
+    if (request->mode == CSB_V1_MODE_PLAY_IMMEDIATELY) {
+        /* ReDMCSB SOUND.C F0064:1617-1630: F31 immediate playback does
+         * not clear the per-index delayed requests. */
+        csb_v1_audio_record_completed_play(runtime, request->soundIndex,
+                                           request->volume);
+        ++runtime->totalImmediatePlays;
+        return 1;
+    }
+    pending = &runtime->fmtownsPendingVolume[request->soundIndex];
+    /* ReDMCSB SOUND.C F0064:1625-1629 retains the loudest request for
+     * each F31 sound index, independently of other sounds' priorities. */
+    if (request->volume <= *pending) return 0;
+    *pending = request->volume;
+    return 1;
+}
+
+int csb_v1_audio_runtime_flush_pending_fmtowns(CsbV1AudioRuntime* runtime)
+{
+    int index;
+    int played = 0;
+    if (!runtime) return 0;
+    /* ReDMCSB SOUND.C F0065:1773-1789 visits all F31 indices in order,
+     * playing and clearing each nonzero volume in the same game tick. */
+    for (index = 0; index < CSB_V1_SOUND_COUNT; ++index) {
+        int16_t volume = runtime->fmtownsPendingVolume[index];
+        if (volume <= 0) continue;
+        csb_v1_audio_record_completed_play(runtime, (int16_t)index, volume);
+        runtime->fmtownsPendingVolume[index] = 0;
+        ++played;
+    }
+    if (played) ++runtime->totalPendingFlushes;
+    return played;
+}
+
 int csb_v1_audio_runtime_flush_pending(CsbV1AudioRuntime* runtime)
 {
     if (!runtime || runtime->pendingSoundIndex == CSB_V1_SOUND_NONE) {

@@ -165,6 +165,17 @@ jobs:
             cmake --build build --parallel
           fi
 
+      # Temporary transport for a local licensed-media sound check. The
+      # archive stays on the development machine and is never uploaded.
+      - name: Upload macOS CSB F31 test binary
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-csb-f31-original-media-test
+          path: build/test_csb_v1_fmtowns_packed_m11_real
+          if-no-files-found: error
+          retention-days: 2
+
       - name: Build launcher settings regressions
         run: |
           cmake --build build --parallel 2 --target \
