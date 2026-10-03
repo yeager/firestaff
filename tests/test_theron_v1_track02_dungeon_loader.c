@@ -2690,6 +2690,10 @@ static void test_all_dungeons(
             const Theron_MapHeader *src = &source_maps.maps[m].header;
             const Theron_V1_Level *dst = &world->levels[d][m];
             assert(dst->source_header_verified == 1);
+            /* Authentic map bytes do not authenticate the generic
+             * first-floor/North pose as a retail spawn. */
+            assert(dst->start_pose_provenance ==
+                   THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK);
             assert(dst->source_header_level_index == src->map_id);
             assert(dst->source_map_x_offset == src->x_offset);
             assert(dst->source_map_y_offset == src->y_offset);
@@ -3137,6 +3141,10 @@ static void test_all_jp_dungeons(
             const unsigned int width = (unsigned int)raw_map->header.x_dim + 1u;
             const unsigned int height = (unsigned int)raw_map->header.y_dim + 1u;
             assert(published->source_header_verified);
+            /* Regional source-map admission stays separate from runtime
+             * start-pose provenance. */
+            assert(published->start_pose_provenance ==
+                   THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK);
             assert(published->width == (int)width);
             assert(published->height == (int)height);
             for (unsigned int x = 0u; x < width; ++x)

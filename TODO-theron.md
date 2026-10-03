@@ -15,6 +15,13 @@ Reviewed 2026-10-03. Only open work is listed here.
   that session. However, the snapshot is not yet joined to a source-authenticated
   level/bank and exact Track 02 map cell from the same session. Do not promote
   the parser's provisional first-floor/North pose based on this capture.
+- 🔒 The same snapshot also has `$2031=02` and `$20DA/$20DB=01/00`. `$2031`
+  was source-interpreted as level 2 in a separate Drator capture, but applying
+  that identity to this Akutuba session would put `(2,3)` on a wall in JP map
+  2; the coordinate is open floor in JP Akutuba map 0. The authentic JP map
+  test now locks both bytes to preserve this ambiguity. The bank bytes are
+  provenance only. Capture the active map/level consumer or loaded-map pointer
+  in the same session before selecting either map or promoting the pose.
 - The new-game run's native 2 KiB BRAM matches the known empty menu-only image;
   it is not a campaign save. Emulator `.mca` autosave round-trip was verified
   separately from an existing authentic gameplay state, but this does not
@@ -4317,7 +4324,7 @@ not further interpretation of bank loading. See
   objects. Transport and frame evidence do not independently enable screen,
   tile, or object semantics.
 
-## Dungeonbundna objektegenskaper (2026-08-20)
+## Dungeon-specific object properties (2026-08-20)
 
 - ✅ The live Track 02 world now uses all seven authentic regional name,
   type-code, and property banks and rejects global fallback.

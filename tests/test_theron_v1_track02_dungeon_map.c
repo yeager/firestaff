@@ -360,6 +360,16 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
         assert(dd.map_count == expected_maps[d]);
         assert(dd.maps[0].header.x_dim == 5);
         assert(dd.maps[0].header.y_dim == 7);
+        if (d == 0u) {
+            /* The fresh JP PCE Fast capture records party bytes (2,3), but
+             * does not identify the active map. These authenticated source
+             * cells demonstrate why coordinates alone cannot select a map:
+             * Akutuba map 0 has floor at (2,3), while map 2 has a wall there.
+             * See theron-pce-fast-akutuba-ram-capture-2026-10-03.md. */
+            assert(dd.map_count > 2u);
+            assert(dd.maps[0].tiles[2][3] == 0x20u);
+            assert(dd.maps[2].tiles[2][3] == 0x00u);
+        }
         printf("  JP dungeon %u authentic layout: dims=%06x maps=%06x "
                "grefs=%06x items=%06x/%06x text=unbound\n",
                d + 1u, qb.dims_offset, qb.map_data_offset,

@@ -29,6 +29,16 @@ that interpretation for Ak-Tu-Ba: the exact active level/bank and source map
 cell were not captured and joined in this session. Do not use the tuple alone
 to change production spawn selection or claim regional pose parity.
 
+The hash-verified JP Track 02 decoder provides a useful cross-check of this
+gap: Akutuba map 0 stores raw tile `0x20` (open) at `(2,3)`, while map 2 stores
+`0x00` (wall) at the same coordinate. The separate Drator capture interprets
+`$2031=02` as level 2, but carrying that mapping into this JP Akutuba run would
+select the wall cell. Neither `$2031` nor `$20DA/$20DB=01/00` currently binds
+the active JP map. The authentic map regression locks both source cells so a
+coordinate-only guess cannot silently become a start-pose claim. Akutuba map
+0 is plausible, not proven, until the active map/level consumer or loaded-map
+pointer is captured in the same session.
+
 The fresh run's native BRAM image is 2048 bytes and matches the known empty
 menu-only image (MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`). It contains no proven
 campaign progress. A separate `.mca` autosave round-trip was tested from an

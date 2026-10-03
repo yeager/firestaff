@@ -1,5 +1,26 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — preserve the authentic Akutuba pose/map ambiguity
+
+The JP Rev. 1 real-media map regression now locks the source bytes at
+Akutuba `(2,3)`: map 0 is open (`0x20`), while map 2 is a wall (`0x00`). This
+is the coordinate tuple in the fresh authentic Akutuba `pce_fast` RAM capture,
+but that capture does not identify its active map. The Drator-only
+interpretation of `$2031=02` would select JP map 2 and conflict with the
+observed in-dungeon view, so the tuple is not promoted as an Akutuba spawn.
+
+The US/JP authentic full-dungeon loader regression also asserts that every
+source-loaded map retains `THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK`.
+Real map admission therefore cannot be mistaken for runtime start-pose
+provenance. On `trv2`, a fresh isolated Release build of
+`test_theron_v1_track02_dungeon_map` completed with `-j1`; the JP real-media
+map test and the combined US/JP dungeon-loader test each passed three
+consecutive CTest runs against installed hash-verified media. This records the
+ambiguity and protects the fallback boundary; it does not resolve the active
+map pointer or change production pose selection. See
+`docs/source-lock/theron-pce-fast-akutuba-ram-capture-2026-10-03.md` and
+`TODO-theron.md`.
+
 ## 2026-10-03 — capture a fresh authentic Ak-Tu-Ba gameplay session
 
 Built the instrumented Mednafen 1.32.1 `pce_fast` module on `trv2` with an
