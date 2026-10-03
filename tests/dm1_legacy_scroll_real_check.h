@@ -383,6 +383,12 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 }
                             }
                             if (food == THING_NONE) return 0;
+                            /* Measure the same live consume event, after the
+                             * direct original-sample transport checks. Other
+                             * DM1 editions use different audio backends. */
+                            int atariQueueBefore = state->assetLoader.atariStDm1
+                                ? state->audioState.csbAtariStSoundQueuedCount : -1;
+                            int atariMarkersBefore = state->audioState.playedMarkerCount;
                             state->audioState.lastSoundIndex = -1;
                             state->inventoryPanelActive = 1;
                             state->dm1InventoryChampionOrdinal = 2;
@@ -408,6 +414,23 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 state->audioState.lastSoundIndex != DM1_SND_SWALLOW ||
                                 state->world.party.champions[1].food != amount ||
                                 state->world.party.activeChampionIndex != 0) return 0;
+                            if (state->assetLoader.atariStDm1 &&
+                                (state->audioState.backend != M11_AUDIO_BACKEND_SDL3 ||
+                                 !state->audioState.sdlStream ||
+                                 !state->audioState.csbAtariStSoundAccepted ||
+                                 state->audioState.csbAtariStSoundQueuedCount != atariQueueBefore + 1 ||
+                                 state->audioState.playedMarkerCount != atariMarkersBefore)) {
+                                fprintf(stderr,
+                                    "FAIL: live Atari food swallow queue backend=%d stream=%p accepted=%d sound=%d queued=%d->%d markers=%d->%d period=%d hash=%u\n",
+                                    state->audioState.backend, state->audioState.sdlStream,
+                                    state->audioState.csbAtariStSoundAccepted,
+                                    state->audioState.lastSoundIndex, atariQueueBefore,
+                                    state->audioState.csbAtariStSoundQueuedCount,
+                                    atariMarkersBefore, state->audioState.playedMarkerCount,
+                                    state->audioState.csbAtariStSoundPeriod,
+                                    state->audioState.csbAtariStSoundHash);
+                                return 0;
+                            }
                         }
                         if (!(state->world.party.champions[1].inventory[19] == other &&
                             state->world.party.champions[1].load == otherWeight &&
