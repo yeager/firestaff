@@ -19,7 +19,7 @@ static int failures;
 int main(void)
 {
     static const char* const games[] = {"dm1", "csb", "dm2"};
-    static const char* const versions[] = {"pc34-en", "amiga31-multi", "pc-en"};
+    static const char* const versions[] = {"pc34-en", "fmtowns-en", "pc-en"};
     static const M11_GameSourceKind kinds[] = {
         M11_GAME_SOURCE_BUILTIN_CATALOG, M11_GAME_SOURCE_CSB_BOOT,
         M11_GAME_SOURCE_DM2_BOOT
@@ -87,7 +87,7 @@ int main(void)
         menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         menu->gameOptions[game].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
         menu->gameOptions[game].versionIndex = versionIndex;
-        if (game == 1) menu->gameOptions[game].architectureIndex = M12_ARCH_AMIGA;
+        if (game == 1) menu->gameOptions[game].architectureIndex = M12_ARCH_FM_TOWNS;
         if (game == 2) menu->gameOptions[game].architectureIndex = M12_ARCH_PC;
         intent = M12_StartupMenu_GetLaunchIntent(menu);
         CHECK(intent.valid && intent.gameId &&

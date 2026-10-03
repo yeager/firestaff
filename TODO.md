@@ -1,7 +1,7 @@
 # Firestaff TODO — active cross-game work
 
 - Run `m12_persisted_root_original_handoff` against the local original-media
-  collection and confirm DM1 PC34, CSB Amiga 3.1, and DM2 DOS source-owned
+  collection and confirm DM1 PC34, CSB FM Towns, and DM2 DOS source-owned
   starts from a reopened persisted M12 root. The opt-in test is present, but
   its M11 target requires the dedicated build host; syntax and CMake
   configuration checks alone do not prove the runtime handoffs.
