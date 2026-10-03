@@ -38,7 +38,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. A Japanese retail FILE_1 save survives emulator restart and reload to the Akutuba selection map; saved in-dungeon progress is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
+| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. In the Japanese emulator route, LOAD GAME returns to the Akutuba selection map, but its 2-KiB BRAM matches the known empty menu-only image, so native save persistence is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -98,10 +98,10 @@ routes include Japanese Rev. 1 title-to-Akutuba startup and US Continue from
 the authentic Akutuba-complete Backup RAM into dungeon 2, level 0, followed by
 three native movement inputs on a floor-only path. Source-only loaders also
 verify all seven dungeon sources in both regions; that is data coverage, not
-proof of the original game's transitions. Separately, an authentic Japanese
-FILE_1 New Game save survived an emulator restart and loaded back to the
-Akutuba selection map; this does not prove saved in-dungeon movement or
-campaign completion. Broader progression, original T900 item placement/use,
+proof of the original game's transitions. In the Japanese emulator run,
+LOAD GAME returned to the Akutuba selection map, but its 2-KiB BRAM is
+byte-identical to the known empty menu-only image, so native campaign-save
+persistence is unverified. Broader progression, original T900 item placement/use,
 gameplay presentation, combat, audio and save parity remain open. README
 screenshots are Firestaff-rendered only;
 original-emulator captures are not presented as Firestaff output. See the

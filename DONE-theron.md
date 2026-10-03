@@ -6653,7 +6653,7 @@ failed. The Release test binary references `__assert_fail`. This validates
 prologue, metadata, and resource-receipt boundaries, not decompressed level
 contents or original-game semantics.
 
-# ✅ 2026-10-03 Theron in-game save round trip
+# ✅ 2026-10-03 Theron Japanese gameplay boot and load-menu observation
 
 Using stock Mednafen 1.32.1 with the authentic Japanese Rev. 1 disc and
 System Card in a new isolated profile, held RUN for four seconds at the
@@ -6662,11 +6662,13 @@ the real first-person dungeon view. After a graceful emulator exit, the fresh
 profile contained a 2-KiB title-specific persistent-RAM image. A second
 Mednafen process reused only that SRAM directory and a separate empty
 save-state directory. Selecting LOAD GAME, FILE_1, and YES returned to the
-Ak-Tu-Ba dungeon-selection map, confirming the new in-game save survived a
-restart and reloaded. No BIOS, disc image, SRAM, state file, or screenshot was
-added to the repository. Mednafen's separate F5/F7 save-state round trip
-was not tested during this in-game save experiment; a later isolated
-F5/F7 gameplay-state round trip is recorded below.
+Ak-Tu-Ba dungeon-selection map. A later hash audit found the BRAM byte-identical
+to the known empty menu-only JP image (`de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa`),
+and the after-load map capture byte-identical to the after-New-Game capture.
+Thus the authentic title-to-dungeon route and a load-menu observation are
+verified, but no non-empty native campaign save or restored progress is proven.
+No BIOS, disc image, SRAM, state file, or screenshot was added to the repository.
+The separate F5/F7 reload below is emulator-state evidence, not a native save.
 
 # ✅ 2026-10-03 Theron gameplay save-state reload
 
@@ -6732,10 +6734,11 @@ levels pending the original consumer or a source-bound runtime capture.
 Corrected the historical movement entry that described stair traversal as
 current parity. The production mechanics path and current real-data probe keep
 authentic Track 02 stairs blocked until direction, destination map, and arrival
-pose are source-bound. Also narrowed the failed US emulator cold-start note to
-that attempt and linked it to the later authentic JP FILE_1 save/reload result.
-The JP native save proves persistent menu-level campaign selection only; the
-separate F5/F7 state reload is emulator-state evidence, not a native save.
+pose are source-bound. Also corrected the JP load-menu interpretation: its
+2-KiB BRAM matches the known empty menu-only image, so native campaign-save
+persistence and restored progress are not proven. The separate F5/F7 reload is
+emulator-state evidence, not a native save. The US cold-start note remains
+limited to that specific attempt.
 
 Verification on `trv2`: a fresh Release build from commit `9ac13263d` completed
 the `firestaff_theron_v1_mechanics_playability_probe` target with `-j1`. The

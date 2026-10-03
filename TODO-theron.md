@@ -59,9 +59,10 @@ Reviewed 2026-10-03. Only open work is listed here.
   normalized System Card 3.0 path as `pce.cdbios`; because the CUE's first track
   is AUDIO, Mednafen's `pce.cpp` GE-CD BIOS dispatcher selects that standard CD
   BIOS setting. This US failure is limited to that capture: the later
-  authentic JP New Game/FILE_1 save and reload to the Akutuba selection map is
-  recorded in `DONE-theron.md`. That JP round trip proves persistent FILE_1
-  state, not saved in-dungeon movement or campaign completion. Preserve the US
+  authentic JP New Game route to the Akutuba selection map and first-person
+  dungeon is recorded in `DONE-theron.md`. A later BRAM hash audit found that
+  image byte-identical to the known empty menu-only JP save, so the observed
+  load-menu return does not prove native campaign-save persistence. Preserve the US
   capture outside Git and do not import its BRAM. The Mac remains locked and
   the separate Nexus capture on trv2 was left untouched.
 - The instrumented capture, including a read-only replay from the existing
@@ -4964,13 +4965,14 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   the authentic dungeon-selection map; selecting Ak-Tu-Ba and advancing its
   intro reached the first-person dungeon view. This is a real runtime gameplay
   capture. The fresh profile generated a 2-KiB game-specific persistent-RAM
-  file and a new in-game FILE_1 save. After restarting Mednafen with the same
-  SRAM and an isolated empty state directory, LOAD GAME → FILE_1 → YES returned
-  to the dungeon-selection map, verifying the new game's reload path.
-  Autosave was disabled and prior save data was kept untouched. A copied prior
-  PCE-Fast state was not accepted as a new save; the separate Mednafen F5/F7
-  save-state round trip remains unverified. This proves one native save/load
-  cycle and a real game-to-dungeon transition, not complete mechanics parity.
+  file. After restarting Mednafen with that SRAM and an isolated empty
+  save-state directory, LOAD GAME → FILE_1 → YES returned to the
+  dungeon-selection map. A later hash audit found this BRAM byte-identical to
+  the known empty menu-only JP image (`de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa`);
+  the after-load map capture is also identical to the after-New-Game capture.
+  Therefore this observes a load-menu route but does not prove a non-empty
+  native save or restored campaign progress. The authentic title-to-dungeon
+  gameplay route remains verified. F5/F7 is emulator-state evidence only.
 
 - 🔒 2026-10-03 Track 02 thing-data test hardening: US BIN and JP BIN checks
   are now separate CTests gated by their authentic image digests; explicit
