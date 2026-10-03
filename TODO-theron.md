@@ -4921,12 +4921,14 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - 🔒 2026-10-03 stock Mednafen 1.32.1 cold-start confirmation: with the
   authentic JP Rev. 1 CUE/System Card in a fresh isolated profile, holding the
   mapped RUN/Return input for four seconds at the System Card prompt reached
-  the Theron's Quest title menu. This is a real title-screen capture, not
-  evidence of a dungeon transition. Autosave was disabled and the separate
-  profile kept prior save data untouched. A copied prior PCE-Fast state was
-  not accepted as a verified new save; F5/F7 save/load round-trip behavior
-  remains unverified. Do not treat the copied state or title screen as a new
-  dungeon save or publish it as gameplay evidence.
+  the Theron's Quest title menu. Selecting NEW GAME and FILE_1 then reached
+  the authentic dungeon-selection map. The profile generated a 2-KiB
+  game-specific persistent-RAM file; this does not establish that an in-game
+  dungeon save or Mednafen save-state was created or reloadable. Autosave was
+  disabled and prior save data was kept untouched. A copied prior PCE-Fast
+  state was not accepted as a verified new save; F5/F7 save/load round-trip
+  behavior remains unverified. The capture proves startup and map navigation
+  only, not dungeon entry or gameplay parity.
 
 ## 2026-09-27 — authentic closed-door boundary coverage
 
