@@ -4343,17 +4343,17 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                             gameId,
                                             gameScan);
     } else {
-        if (progressFn) {
-            M12_AssetStatusScanOptions scanOptions;
-            memset(&scanOptions, 0, sizeof(scanOptions));
-            scanOptions.progressFn = progressFn;
-            scanOptions.progressUserData = progressUserData;
-            (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
-                                                  config->dataDir,
-                                                  &scanOptions);
-        } else {
-            M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
-        }
+        M12_AssetStatusScanOptions scanOptions;
+        memset(&scanOptions, 0, sizeof(scanOptions));
+        /* The configured directory remains the selected menu root.  The
+         * generic scanner otherwise promotes a saved game leaf to its
+         * parent before the fallback policy can inspect the result. */
+        scanOptions.honorRequestedDataDir = 1;
+        scanOptions.progressFn = progressFn;
+        scanOptions.progressUserData = progressUserData;
+        (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                              config->dataDir,
+                                              &scanOptions);
     }
     /* A valid configured root is already an authenticated media choice.  In
      * particular, opening the multi-game menu must not replace a DM1/CSB/DM2

@@ -6687,14 +6687,11 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
     } else if (!honorRequestedDataDir &&
                m12_promote_game_subdir_scan_root(requestedDataDir,
                                                  promotedDataRoot)) {
-        /* A saved launcher config can point at ~/.firestaff/data/nexus after
-         * a direct Nexus import/launch.  `firestaff --scan-data` defaults to
-         * ~/.firestaff/data and sees every game, while the start menu would
-         * otherwise scan only the game leaf and mark the rest missing.  When
-         * the requested directory is a known game leaf under an existing
-         * parent, promote the menu scan to that parent so launcher
-         * availability matches the CLI scan.  Do not require recognizable
-         * filenames here: Firestaff discovery is hash-first, and user media
+        /* A generic cross-game scan may receive a known game leaf under an
+         * existing parent.  Promote that request to the parent so its
+         * availability matches an unscoped CLI scan.  A menu scan that must
+         * preserve a user-selected root sets honorRequestedDataDir.  Do not
+         * require recognizable filenames: discovery is hash-first, and media
          * files may be renamed archives/images/payloads. */
         effectiveRequestedDataDir = promotedDataRoot;
     }
