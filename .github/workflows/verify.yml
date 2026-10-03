@@ -165,6 +165,18 @@ jobs:
             cmake --build build --parallel
           fi
 
+      # Temporary binary transport for checks against local licensed media.
+      - name: Upload macOS game-leaf startup binaries
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-game-leaf-startup-test
+          path: |
+            build/firestaff
+            build/test_m12_persisted_root_original_handoff
+          if-no-files-found: error
+          retention-days: 2
+
       - name: Build launcher settings regressions
         run: |
           cmake --build build --parallel 2 --target \

@@ -18,6 +18,22 @@ unsigned char* G2160_puc_Bitmap_Destination;
 static int failures;
 #define CHECK(c, m) do { if (!(c)) { fprintf(stderr, "FAIL: %s\n", m); ++failures; } } while (0)
 
+typedef struct GameLeafScanReceipt {
+    char searchRoot[FSP_PATH_MAX];
+} GameLeafScanReceipt;
+
+static int record_game_leaf_search_root(const M12_AssetScanProgress* progress,
+                                        void* userData)
+{
+    GameLeafScanReceipt* receipt = (GameLeafScanReceipt*)userData;
+    if (progress && receipt &&
+        strcmp(progress->currentTask, "search root") == 0) {
+        snprintf(receipt->searchRoot, sizeof(receipt->searchRoot), "%s",
+                 progress->currentPath);
+    }
+    return 1;
+}
+
 int main(void)
 {
     static const char* const games[] = {"dm1", "csb", "dm2"};
@@ -71,6 +87,42 @@ int main(void)
     CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(menu), physical) == 0 &&
           strcmp(M12_AssetStatus_GetDataDir(&menu->assetStatus), physical) == 0,
           "reopened menu scans the persisted root");
+
+    /* Direct --game scanning narrows a collection to that game's leaf, while
+     * the visible menu above continues to own the entire persisted root. */
+    for (game = 0; game < 3 && !failures; ++game) {
+        M12_AssetStatus* scoped = (M12_AssetStatus*)SDL_calloc(1, sizeof(*scoped));
+        M12_AssetStatusScanOptions scanOptions = {0};
+        GameLeafScanReceipt receipt = {{0}};
+        char expectedLeaf[FSP_PATH_MAX];
+        int versionIndex = M12_AssetStatus_FindVersionIndex(
+            games[game], autoVersions[game]);
+        const M12_AssetVersionStatus* selectedVersion = NULL;
+        CHECK(scoped != NULL &&
+              FSP_JoinPath(expectedLeaf, sizeof(expectedLeaf), physical,
+                           games[game]),
+              "allocate original-media game-leaf scan");
+        if (failures) {
+            SDL_free(scoped);
+            break;
+        }
+        scanOptions.preferGameLeaf = 1;
+        scanOptions.progressFn = record_game_leaf_search_root;
+        scanOptions.progressUserData = &receipt;
+        M12_AssetStatus_ScanGameWithOptions(scoped, physical, games[game],
+                                            &scanOptions);
+        CHECK(strcmp(receipt.searchRoot, expectedLeaf) == 0,
+              "direct game scan visits only its collection leaf");
+        CHECK(strcmp(M12_AssetStatus_GetDataDir(scoped), physical) == 0,
+              "direct game scan retains the persisted collection root");
+        if (versionIndex >= 0) {
+            selectedVersion = M12_AssetStatus_GetVersion(
+                scoped, games[game], (size_t)versionIndex);
+        }
+        CHECK(selectedVersion && selectedVersion->matched,
+              "direct game leaf retains the authenticated AUTO edition");
+        SDL_free(scoped);
+    }
 
     /* Preserve the explicit PC/FM Towns/DOS handoff coverage. */
     for (game = 0; game < 3 && !failures; ++game) {
