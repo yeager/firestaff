@@ -286,6 +286,16 @@ Reviewed 2026-10-03. Only open work is listed here.
   runtime consumers remain unverified. The JP full-CUE capture
   still did not reach an authenticated game-owned data consumer, so it adds no
   independent original-runtime gameplay evidence.
+- The read-only preview and mutating resolver now both fail closed when an
+  authenticated Track 02 teleporter tile lacks its matching coordinate-link
+  record. The resolver also rejects a non-Track-02 object on an authenticated
+  level instead of reinterpreting its packed coordinate word as a legacy
+  object ID. Legacy object-ID fixtures remain available on unauthenticated
+  worlds. On `trv2`, the authentic US/JP BIN loader corpus passed three
+  consecutive runs; each regional case fault-injected a missing record and a
+  missing coordinate-link marker while retaining its authentic map/header.
+  The legacy combat-mechanics fixture passed three runs. These checks establish
+  fail-closed host consistency, not retail behavior for malformed source data.
 - Active coordinate links retain the encoded record metadata, but the Firestaff
   resolver and preview do not yet apply its party/item scope, rotation,
   absolute-facing mode, or sound fields. The original-runtime capture documented
@@ -752,6 +762,13 @@ stair attribute to direction, destination map and destination pose before
 implementing transitions. The regional totals are explicit test assertions so
 a broken/empty approach selector cannot masquerade as passing coverage. See
 `DONE-theron.md` for exact test scope.
+
+2026-10-03 regional stair-attribute source census: the hash-verified map test
+now asserts all sixteen low-nibble occurrence counts independently for US and
+JP Track 02. The US vector totals 171 and the JP vector totals 170. All values
+occur in both regions, but the counts bind bytes only—not direction, target
+level, target pose, or runtime behavior. The authentic transition consumer or
+an ordinary-input runtime capture is still required before enabling stairs.
 
 2026-09-30 authentic stair-hosted actuator census: the Track 02 real-media
 test now lists every floor-party actuator whose occurrence is on a verified

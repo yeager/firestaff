@@ -104,12 +104,11 @@ static int object_item_id(const Theron_V1_Object *object) {
     }
 }
 
-static int theron_v1_source_level_requires_item_provenance(
-    const Theron_V1_World *world) {
-    if (!world || world->current_dungeon < 1 ||
-        world->current_dungeon > THERON_DUNGEON_COUNT ||
-        world->current_level < 0 ||
-        world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON) {
+static int theron_v1_source_level_requires_item_provenance_at(
+    const Theron_V1_World *world, int dungeon_id, int level_id) {
+    if (!world || dungeon_id < 1 ||
+        dungeon_id > THERON_DUNGEON_COUNT || level_id < 0 ||
+        level_id >= THERON_MAX_LEVELS_PER_DUNGEON) {
         return 0;
     }
     /* Once the level header is authenticated, the generic host object path
@@ -117,10 +116,15 @@ static int theron_v1_source_level_requires_item_provenance(
      * the pickup predicate below; keeping this gate at the header boundary
      * makes a missing table fail closed instead of silently accepting a
      * synthetic compact item ID. */
-    return world->level_loaded[world->current_dungeon - 1]
-                              [world->current_level] &&
-           world->levels[world->current_dungeon - 1]
-                        [world->current_level].source_header_verified;
+    return world->level_loaded[dungeon_id - 1][level_id] &&
+           world->levels[dungeon_id - 1][level_id].source_header_verified;
+}
+
+static int theron_v1_source_level_requires_item_provenance(
+    const Theron_V1_World *world) {
+    return world &&
+           theron_v1_source_level_requires_item_provenance_at(
+               world, world->current_dungeon, world->current_level);
 }
 
 /* Declared here because T900 altar handling appears before the T700 helper
@@ -327,7 +331,7 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         Theron_V1_Object *o = theron_v1_control_object_at(
             world, world->current_level, x, y, THERON_OBJTYPE_DOOR);
         if (o) {
-            /* Door found — open it (handles locked auto-unlock) */
+            /* Dispatch door use; source-backed behavior remains T900-gated. */
             return theron_v1_door_open(world, x, y);
         }
         return -1;
@@ -685,6 +689,19 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
                 teleporter = candidate;
                 break;
             }
+        }
+        /* The bound THQUEST.ASM T600 $C240-$C2D8 route follows packed
+         * coordinate links and re-tests the destination tile; see
+         * docs/source-lock/theron-disassembly/
+         * theron-runtime-spawn-capture.md:466-477. Authenticated Track 02
+         * map bytes cannot fall back to a host object-ID route when the
+         * matching coordinate-link record is missing. Keep this preview
+         * aligned with the mutating resolver; unauthenticated fixtures retain
+         * their legacy behavior. */
+        if (theron_v1_source_level_requires_item_provenance(world) &&
+            (!teleporter ||
+             !(teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK))) {
+            return THERON_MOVE_BLOCKED;
         }
         if (teleporter &&
             (teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK)) {
@@ -1127,6 +1144,15 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
         Theron_V1_Object *o = theron_v1_control_object_at(
             world, current_level, cx, cy, THERON_OBJTYPE_TELEPORTER);
         if (!o) break;
+        /* THQUEST.ASM T600's bound $C240-$C2D8 coordinate path consumes the
+         * packed destination directly; see
+         * docs/source-lock/theron-disassembly/
+         * theron-runtime-spawn-capture.md:466-477. Never reinterpret an
+         * authenticated Track 02 coordinate word as a legacy object ID. */
+        if (theron_v1_source_level_requires_item_provenance_at(
+                world, world->current_dungeon, current_level) &&
+            !(o->flags & THERON_OBJ_F_TRACK02_COORD_LINK))
+            return -1;
         if ((o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) && o->state == 0u)
             return -1;
 

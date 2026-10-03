@@ -6677,3 +6677,32 @@ was incomplete because the isolated build had omitted auxiliary probe targets;
 its missing-binary failures were not counted as code/test passes. The selected
 tests do not establish full Theron gameplay parity or close the remaining
 retail-mechanics gaps.
+
+# ✅ 2026-10-03 Authenticated teleporter preview and resolver fail-closed gate
+
+On authenticated Track 02 levels, a teleporter map tile no longer receives a
+legacy preview result when its source coordinate-link record is absent or
+unmarked. The mutating resolver also refuses to reinterpret a packed
+coordinate word as a legacy object ID on an authenticated level. Unauthenticated
+fixture worlds retain their compatibility path. This is a data-integrity gate,
+not a claim about retail handling of damaged or incomplete records.
+
+Verification on `trv2`: the authentic US/JP Track 02 dungeon-loader CTest
+passed three consecutive runs. Both regional cases used their real maps and
+headers while fault-injecting an absent record and a removed coordinate-link
+marker; preview and movement both remained blocked without changing state.
+`theron_v1_combat_mechanics` also passed three runs, preserving legacy fixture
+coverage. Optional ISO subchecks skipped because those images were not staged.
+This does not establish teleporter scope, facing, rotation, sound, or broader
+original-runtime semantics.
+
+# ✅ 2026-10-03 Authentic regional stair-attribute source census
+
+Extended the hash-authenticated US/JP Track 02 dungeon-map test to pin the
+low-nibble occurrence count for each of the sixteen stair-class attributes
+across all seven dungeons. On trv2, an isolated build of the test and map
+decoder with Clang passed three consecutive loops for each authentic region.
+The US vector totals 171 tiles and the JP vector totals 170. This is source
+inventory only; it does not assign direction, destination level, arrival pose,
+or stairs runtime semantics. Stair movement remains blocked on authenticated
+levels pending the original consumer or a source-bound runtime capture.

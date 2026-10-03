@@ -5368,6 +5368,67 @@ static int authentic_teleporter_test_terminal(
     return 0;
 }
 
+static void assert_authentic_teleporter_preview_fails_closed_without_link(
+    const Theron_V1_World *world, Theron_V1_World *attempt_world,
+    int dungeon_id, const Theron_V1_Object *source,
+    int approach_x, int approach_y, int approach_direction) {
+    for (int missing_mode = 0; missing_mode < 2; ++missing_mode) {
+        int source_index = -1;
+        int moved;
+        uint64_t before_move_hash;
+
+        memcpy(attempt_world, world, sizeof(*attempt_world));
+        attempt_world->current_dungeon = dungeon_id;
+        attempt_world->current_level = source->level;
+        attempt_world->party.leader_x = approach_x;
+        attempt_world->party.leader_y = approach_y;
+        attempt_world->party.leader_dir = (int8_t)approach_direction;
+        assert(attempt_world->levels[dungeon_id - 1][source->level]
+                   .source_header_verified == 1);
+        for (int i = 0; i < attempt_world->object_count; ++i) {
+            const Theron_V1_Object *candidate =
+                &attempt_world->objects[i];
+            if (candidate->dungeon_id == dungeon_id &&
+                candidate->level == source->level &&
+                candidate->x == source->x && candidate->y == source->y &&
+                candidate->type == THERON_OBJTYPE_TELEPORTER &&
+                (candidate->flags & THERON_OBJ_F_TRACK02_COORD_LINK)) {
+                source_index = i;
+                break;
+            }
+        }
+        assert(source_index >= 0);
+        if (missing_mode == 0) {
+            attempt_world->objects[source_index].flags &=
+                ~THERON_OBJ_F_TRACK02_COORD_LINK;
+        } else {
+            /* Model a missing source record without changing the authentic
+             * map tile or its verified level header. */
+            attempt_world->objects[source_index].dungeon_id = 0;
+        }
+
+        before_move_hash = theron_v1_world_hash(attempt_world);
+        assert(theron_v1_get_move_result(attempt_world,
+                                          approach_direction) ==
+               THERON_MOVE_BLOCKED);
+        assert(theron_v1_world_hash(attempt_world) == before_move_hash);
+        moved = theron_v1_move_party_original_command(
+            attempt_world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD);
+        if (moved != THERON_MOVE_BLOCKED) {
+            fprintf(stderr,
+                    "missing teleporter link gate mismatch: mode=%d "
+                    "dungeon=%d level=%d tile=(%d,%d) approach=(%d,%d) "
+                    "direction=%d moved=%d source_state=%u source_flags=%08x\n",
+                    missing_mode, dungeon_id, source->level, source->x,
+                    source->y, approach_x, approach_y, approach_direction,
+                    moved, attempt_world->objects[source_index].state,
+                    attempt_world->objects[source_index].flags);
+        }
+        assert(moved == THERON_MOVE_BLOCKED);
+        assert(theron_v1_world_hash(attempt_world) == before_move_hash);
+    }
+}
+
 static void test_authentic_coordinate_teleporter_movement_corpus(
     const uint8_t *ud, size_t ud_size,
     const uint8_t *track02, size_t track02_size,
@@ -5397,6 +5458,7 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     unsigned int special_terminal_routes_deferred = 0u;
     unsigned int special_terminal_chains_deferred = 0u;
     unsigned int chained_routes_without_floor_approach = 0u;
+    int missing_link_gate_checked = 0;
     Theron_TeleporterMetadataCensus routed_metadata = {0};
 
     assert(world != NULL && attempt_world != NULL);
@@ -5473,6 +5535,13 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
 
             world->current_level = teleporter->level;
             world->party.leader_dir = approach_direction;
+            if (!missing_link_gate_checked) {
+                assert_authentic_teleporter_preview_fails_closed_without_link(
+                    world, attempt_world, dungeon_id, teleporter,
+                    world->party.leader_x, world->party.leader_y,
+                    approach_direction);
+                missing_link_gate_checked = 1;
+            }
             {
                 const uint64_t before_preview_hash =
                     theron_v1_world_hash(world);
@@ -5606,6 +5675,7 @@ static void test_authentic_coordinate_teleporter_movement_corpus(
     assert(chained_routes_without_floor_approach == 9u);
     assert(unresolved_chained_routes_blocked ==
            unresolved_chained_routes_with_approach);
+    assert(missing_link_gate_checked == 1);
     printf("  authentic %s coordinate-teleporter movement routes: %u total, "
            "%u preview/command comparisons (%u teleport, %u blocked; "
            "%u direct-wall blocks), "

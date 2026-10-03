@@ -136,6 +136,13 @@ fields. DM1's `MASK0x0004_STAIRS_UP` and
 `F0154_DUNGEON_GetLocationAfterLevelChange` are research leads, not proof that
 Theron uses the same packed attribute or transition contract.
 
+A separate hash-authenticated all-dungeon source census finds all 16 low-nibble
+values in both editions: US counts for `0x0..0xF` are
+`22,10,5,1,21,8,7,4,25,10,3,6,21,10,9,9` (171 stair-class tiles); JP counts
+are `18,6,9,10,22,3,3,6,32,4,8,4,19,1,11,14` (170 tiles). These are raw
+regional occurrence counts only; their disagreement does not establish whether
+an attribute encodes direction, destination, or another property.
+
 Source: `include/theron_v1_track02_dungeon_map.h`,
 `src/theron/theron_v1_track02_dungeon_map.c`,
 `src/theron/theron_v1_world.c:theron_v1_world_load_track02_dungeon`, and the

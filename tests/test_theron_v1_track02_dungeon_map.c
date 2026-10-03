@@ -236,10 +236,23 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
 static unsigned int report_authentic_stair_candidates(
     const char *region, const uint8_t *ud, size_t ud_size,
     Theron_Track02Variant variant) {
+    static const unsigned int expected_attributes[2][16] = {
+        [0] = {
+            22u, 10u, 5u, 1u, 21u, 8u, 7u, 4u,
+            25u, 10u, 3u, 6u, 21u, 10u, 9u, 9u
+        },
+        [1] = {
+            18u, 6u, 9u, 10u, 22u, 3u, 3u, 6u,
+            32u, 4u, 8u, 4u, 19u, 1u, 11u, 14u
+        }
+    };
     static const char *const names[] = {
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
         "SHADODAN", "THIEVES", "DEMON"
     };
+    const unsigned int region_index =
+        variant == THERON_TRACK02_VARIANT_JP_BIN ? 1u : 0u;
+    unsigned int attribute_counts[16] = {0u};
     unsigned int total = 0u;
 
     for (unsigned int dungeon = 0u; dungeon < THERON_TRACK02_DUNGEON_COUNT;
@@ -261,6 +274,7 @@ static unsigned int report_authentic_stair_candidates(
                     const uint8_t raw = data.maps[map].tiles[x][y];
                     if (theron_tile_type(raw) != THERON_TILE_STAIRS) continue;
                     ++total;
+                    ++attribute_counts[theron_tile_attributes(raw)];
                     printf("  source-only stair candidate region=%s dungeon=%s "
                            "map=%u x=%u y=%u raw=%02x attributes=%x\n",
                            region, names[dungeon], map, x, y,
@@ -277,8 +291,25 @@ static unsigned int report_authentic_stair_candidates(
                 region, total, expected);
         exit(1);
     }
+    for (unsigned int attributes = 0u; attributes < 16u; ++attributes) {
+        if (attribute_counts[attributes] !=
+            expected_attributes[region_index][attributes]) {
+            fprintf(stderr,
+                    "FAIL: %s authentic stair attribute 0x%x count %u, "
+                    "expected %u\n",
+                    region, attributes, attribute_counts[attributes],
+                    expected_attributes[region_index][attributes]);
+            exit(1);
+        }
+    }
     printf("  %s: %u authentic stair-class tiles; direction and destination unresolved\n",
            region, total);
+    for (unsigned int attributes = 0u; attributes < 16u; ++attributes) {
+        if (attribute_counts[attributes] != 0u)
+            printf("  source-only stair attribute region=%s value=0x%x count=%u; "
+                   "semantics unresolved\n",
+                   region, attributes, attribute_counts[attributes]);
+    }
     return total;
 }
 
