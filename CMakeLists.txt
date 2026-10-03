@@ -45958,13 +45958,33 @@ if(BUILD_TESTING AND THERON_SOURCES)
     target_include_directories(test_theron_v1_level_descriptor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    if(NOT MSVC)
-        target_compile_options(test_theron_v1_level_descriptor PRIVATE -Wall -Wextra -O2)
+    if(MSVC)
+        target_compile_options(test_theron_v1_level_descriptor PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(test_theron_v1_level_descriptor PRIVATE
+            -Wall -Wextra -O2 -UNDEBUG)
     endif()
     add_test(
-        NAME theron_v1_level_descriptor
-        COMMAND test_theron_v1_level_descriptor
+        NAME theron_v1_level_descriptor_static
+        COMMAND test_theron_v1_level_descriptor static
     )
+    add_test(
+        NAME theron_v1_level_descriptor_us_real_media
+        COMMAND test_theron_v1_level_descriptor us
+    )
+    add_test(
+        NAME theron_v1_level_descriptor_jp_real_media
+        COMMAND test_theron_v1_level_descriptor jp
+    )
+    set_tests_properties(
+        theron_v1_level_descriptor_static
+        PROPERTIES LABELS "static;theron;level-descriptor")
+    set_tests_properties(
+        theron_v1_level_descriptor_us_real_media
+        PROPERTIES SKIP_RETURN_CODE 77 LABELS "real-media;regional;theron;level-descriptor;us")
+    set_tests_properties(
+        theron_v1_level_descriptor_jp_real_media
+        PROPERTIES SKIP_RETURN_CODE 77 LABELS "real-media;regional;theron;level-descriptor;jp")
 endif()
 
 # ── Theron V1 — Sector Allocation Table Tests ───────────────────────────────

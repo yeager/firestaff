@@ -1,36 +1,58 @@
 #include "theron_v1_level_descriptor.h"
 #include <assert.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static uint8_t *read_normalized(const char *name, size_t *out_size) {
-    const char *home = getenv("HOME");
-    char path[1024];
+static uint8_t *read_normalized(const char *path, size_t *out_size) {
     FILE *fp;
     long raw_size;
     uint8_t *raw;
     uint8_t *user_data;
     size_t sectors;
     size_t i;
+    size_t bytes_read;
+    int read_error;
+    int close_result;
 
     if (out_size) *out_size = 0u;
-    if (!home) return NULL;
-    (void)snprintf(path, sizeof(path), "%s/.firestaff/data/theron/%s",
-                   home, name);
+    if (!path || !path[0]) return NULL;
     fp = fopen(path, "rb");
     if (!fp) return NULL;
-    assert(fseek(fp, 0, SEEK_END) == 0);
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return NULL;
+    }
     raw_size = ftell(fp);
-    assert(raw_size > 0 && raw_size % 2352 == 0);
+    if (raw_size <= 0 || (uintmax_t)raw_size > (uintmax_t)SIZE_MAX ||
+        raw_size % 2352 != 0 ||
+        fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
     sectors = (size_t)raw_size / 2352u;
-    assert(fseek(fp, 0, SEEK_SET) == 0);
+    if (sectors > SIZE_MAX / 2048u) {
+        fclose(fp);
+        return NULL;
+    }
     raw = (uint8_t *)malloc((size_t)raw_size);
     user_data = (uint8_t *)malloc(sectors * 2048u);
-    assert(raw && user_data);
-    assert(fread(raw, 1, (size_t)raw_size, fp) == (size_t)raw_size);
-    assert(fclose(fp) == 0);
+    if (!raw || !user_data) {
+        free(raw);
+        free(user_data);
+        fclose(fp);
+        return NULL;
+    }
+    bytes_read = fread(raw, 1, (size_t)raw_size, fp);
+    read_error = ferror(fp);
+    close_result = fclose(fp);
+    if (bytes_read != (size_t)raw_size || read_error || close_result != 0) {
+        free(raw);
+        free(user_data);
+        return NULL;
+    }
     for (i = 0; i < sectors; ++i)
         (void)memcpy(user_data + i * 2048u, raw + i * 2352u + 16u, 2048u);
     free(raw);
@@ -38,50 +60,104 @@ static uint8_t *read_normalized(const char *name, size_t *out_size) {
     return user_data;
 }
 
-static void test_authentic_regional_receipts(void) {
-    Theron_LevelDescriptor parsed[THERON_LEVEL_DESCRIPTOR_COUNT];
-    Theron_LevelDescriptorCorpusReceipt receipt;
-    size_t us_size = 0u;
-    size_t jp_size = 0u;
-    uint8_t *us = read_normalized("TQUS02.bin", &us_size);
-    uint8_t *jp = read_normalized("TQJP02.bin", &jp_size);
+static int resolve_track02_path(const char *region, const char **path_out,
+                                char *fallback, size_t fallback_size) {
+    const char *home = getenv("HOME");
+    const char *override = strcmp(region, "jp") == 0
+        ? getenv("FIRESTAFF_THERON_TRACK02_JP_RAW")
+        : getenv("FIRESTAFF_THERON_TRACK02_RAW");
+    const char *filename = strcmp(region, "jp") == 0
+        ? "TQJP02.bin" : "TQUS02.bin";
+    FILE *file;
+    int written;
 
-    if (!us || !jp) {
-        printf("SKIP: authentic US/JP Track 02 BINs not available\n");
-        free(us);
-        free(jp);
-        return;
+    if (override && override[0]) {
+        *path_out = override;
+        return 0;
     }
-    assert(theron_v1_level_descriptor_read_authenticated_track02(
-        us, us_size, "f23601102138f87c33025877767ebf76",
-        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
-    assert(receipt.valid && !receipt.zero_fill && receipt.records_available);
-    assert(receipt.source_fnv1a == 0x7aa82bc7u);
-    assert(parsed[16].data_size == 0xE000);
-    assert(parsed[52].cumulative_sector_offset == 2);
-    assert(!theron_v1_level_descriptor_read_authenticated_track02(
-        jp, jp_size, "f23601102138f87c33025877767ebf76",
-        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
-
-    memset(parsed, 0xA5, sizeof(parsed));
-    memset(&receipt, 0, sizeof(receipt));
-    assert(theron_v1_level_descriptor_read_authenticated_track02(
-        jp, jp_size, "b7afb338ad31be1025b53f9aff12d73a",
-        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
-    assert(receipt.valid && receipt.zero_fill && !receipt.records_available);
-    assert(receipt.source_fnv1a == 0x63d8ddfdu);
-    for (size_t i = 0u; i < THERON_LEVEL_DESCRIPTOR_COUNT; ++i) {
-        assert(parsed[i].flags == 0u);
-        assert(parsed[i].data_size == 0u);
+    if (!home || !home[0]) return 77;
+    written = snprintf(fallback, fallback_size,
+                       "%s/.firestaff/data/theron/%s", home, filename);
+    if (written < 0 || (size_t)written >= fallback_size) {
+        fputs("FAIL: HOME path for Track 02 media is too long\n", stderr);
+        return 1;
     }
-    assert(!theron_v1_level_descriptor_read_authenticated_track02(
-        us, us_size, "b7afb338ad31be1025b53f9aff12d73a",
-        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
-    free(us);
-    free(jp);
+    errno = 0;
+    file = fopen(fallback, "rb");
+    if (!file) {
+        if (errno == ENOENT || errno == ENOTDIR) return 77;
+        fprintf(stderr, "FAIL: cannot open default %s Track 02 media: %s\n",
+                strcmp(region, "jp") == 0 ? "JP" : "US",
+                strerror(errno));
+        return 1;
+    }
+    if (fclose(file) != 0) {
+        fputs("FAIL: could not close default Track 02 media\n", stderr);
+        return 1;
+    }
+    *path_out = fallback;
+    return 0;
 }
 
-int main(void) {
+static int test_authentic_regional_receipt(const char *region,
+                                           const uint8_t *track02,
+                                           size_t track02_size) {
+    Theron_LevelDescriptor parsed[THERON_LEVEL_DESCRIPTOR_COUNT];
+    Theron_LevelDescriptorCorpusReceipt receipt;
+    if (strcmp(region, "us") == 0) {
+        if (!theron_v1_level_descriptor_read_authenticated_track02(
+                track02, track02_size,
+                "f23601102138f87c33025877767ebf76", parsed,
+                THERON_LEVEL_DESCRIPTOR_COUNT, &receipt)) {
+            fputs("FAIL: selected media is not the authentic US Track 02 image\n",
+                  stderr);
+            return 1;
+        }
+        assert(receipt.valid && !receipt.zero_fill && receipt.records_available);
+        assert(receipt.source_fnv1a == 0x7aa82bc7u);
+        assert(parsed[16].data_size == 0xE000);
+        assert(parsed[52].cumulative_sector_offset == 2);
+        assert(!theron_v1_level_descriptor_read_authenticated_track02(
+            track02, track02_size, "b7afb338ad31be1025b53f9aff12d73a",
+            parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
+    } else {
+        memset(parsed, 0xA5, sizeof(parsed));
+        memset(&receipt, 0, sizeof(receipt));
+        if (!theron_v1_level_descriptor_read_authenticated_track02(
+                track02, track02_size,
+                "b7afb338ad31be1025b53f9aff12d73a", parsed,
+                THERON_LEVEL_DESCRIPTOR_COUNT, &receipt)) {
+            fputs("FAIL: selected media is not the authentic JP Track 02 image\n",
+                  stderr);
+            return 1;
+        }
+        assert(receipt.valid && receipt.zero_fill && !receipt.records_available);
+        assert(receipt.source_fnv1a == 0x63d8ddfdu);
+        for (size_t i = 0u; i < THERON_LEVEL_DESCRIPTOR_COUNT; ++i) {
+            assert(parsed[i].flags == 0u);
+            assert(parsed[i].data_size == 0u);
+        }
+        assert(!theron_v1_level_descriptor_read_authenticated_track02(
+            track02, track02_size, "f23601102138f87c33025877767ebf76",
+            parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
+    }
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    char fallback[4096];
+    const char *track02_path = NULL;
+    uint8_t *track02;
+    size_t track02_size = 0u;
+    int resolve_result;
+
+    if (argc != 2 || (strcmp(argv[1], "static") != 0 &&
+                      strcmp(argv[1], "us") != 0 &&
+                      strcmp(argv[1], "jp") != 0)) {
+        fputs("usage: test_theron_v1_level_descriptor static|us|jp\n", stderr);
+        return 2;
+    }
+
     assert(theron_v1_level_descriptor_count() == 53);
 
     const Theron_LevelDescriptor *d0 = theron_v1_level_descriptor(0);
@@ -122,8 +198,32 @@ int main(void) {
         assert(d->data_size > 0);
     }
 
-    test_authentic_regional_receipts();
+    if (strcmp(argv[1], "static") == 0) {
+        printf("PASS: theron_v1_level_descriptor_static\n");
+        return 0;
+    }
+    resolve_result = resolve_track02_path(argv[1], &track02_path, fallback,
+                                          sizeof(fallback));
+    if (resolve_result != 0) {
+        if (resolve_result == 77) {
+            printf("SKIP: default %s Track 02 media unavailable\n",
+                   strcmp(argv[1], "jp") == 0 ? "JP" : "US");
+        }
+        return resolve_result;
+    }
+    track02 = read_normalized(track02_path, &track02_size);
+    if (!track02) {
+        fputs("FAIL: could not read selected Track 02 media\n", stderr);
+        return 1;
+    }
 
-    printf("PASS: theron_v1_level_descriptor\n");
+    if (test_authentic_regional_receipt(argv[1], track02,
+                                        track02_size) != 0) {
+        free(track02);
+        return 1;
+    }
+    free(track02);
+
+    printf("PASS: theron_v1_level_descriptor_%s_real_media\n", argv[1]);
     return 0;
 }

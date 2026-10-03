@@ -6592,3 +6592,20 @@ an isolated HOME; cross-region and missing explicit paths failed; missing
 default paths independently returned CTest skip code 77. The Release test
 binary references `__assert_fail`. These receipt and numeric roster checks do
 not establish complete Theron champion gameplay parity.
+
+# ✅ 2026-10-03 Regional authentic Track 02 level-descriptor coverage
+
+Split the authentic level-descriptor receipt into independent US and JP
+CTest cases. Each selected raw BIN is normalized and authenticated against its
+own expected digest; wrong-edition and explicitly unreadable overrides fail,
+and only a genuinely absent default path skips that region. Permission and
+other I/O failures fail. Media-independent descriptor-table assertions run as
+a separate static CTest. Input seeking, allocation, read, and close failures
+are checked directly. Assertions remain enabled in Release builds.
+
+Verification on `trv2`: the US and JP tests each passed three repeated runs
+against installed authentic media. Explicit authentic overrides passed with
+default discovery isolated; wrong-region and missing explicit paths failed;
+missing defaults independently returned CTest skip code 77. The Release
+binary references `__assert_fail`. This validates descriptor receipts only,
+not dungeon loading or gameplay transitions.
