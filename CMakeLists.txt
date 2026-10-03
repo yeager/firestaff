@@ -53821,12 +53821,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_door.c"
         target_compile_options(test_theron_v1_track02_door PRIVATE /UNDEBUG)
     endif()
     add_test(
-        NAME theron_v1_track02_door
-        COMMAND test_theron_v1_track02_door
+        NAME theron_v1_track02_door_us_real_media
+        COMMAND test_theron_v1_track02_door us
     )
-    set_tests_properties(theron_v1_track02_door PROPERTIES
+    add_test(
+        NAME theron_v1_track02_door_jp_real_media
+        COMMAND test_theron_v1_track02_door jp
+    )
+    set_tests_properties(
+        theron_v1_track02_door_us_real_media
+        theron_v1_track02_door_jp_real_media
+        PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;doors;teleporters"
+        LABELS "theron;real-media;regional;doors;teleporters"
     )
 endif()
 

@@ -357,6 +357,18 @@ Reviewed 2026-10-03. Only open work is listed here.
   files in its configured save directory or Firestaff work trees. The SSH
   session had no display, and `:0` was unavailable; this does not authorize
   starting a capture against a shared display.
+  On 2026-10-03 a later isolated trv2 `pce_fast` session used the authentic JP
+  Rev. 1 CUE and System Card. Holding RUN for four seconds reached the title;
+  the route continued to a visible Akutuba dungeon view. A screenshot taken
+  after an autosave restart shows the first-person dungeon corridor, and the
+  private profile now contains the 229,390-byte emulator state
+  `theron-jp-akutuba-dungeon-capture.mca`. This is emulator-state evidence,
+  not a native game save. A manual F5-save/input/F7-restore round trip for
+  that state is still unverified. The existing profile has autosave enabled;
+  repeat verification only in a new isolated profile with autosave disabled.
+  The current trv2 graphical session is locked, so do not send input to it or
+  claim manual state-load verification until an authorized display is
+  available.
 
 ## 2026-09-30 — explicit US menu target still does not reach the title route
 

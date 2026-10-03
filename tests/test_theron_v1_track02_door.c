@@ -74,22 +74,23 @@ static const char *find_track02(const char *environment,
                                 const char *filename) {
     const char *explicit_path = getenv(environment);
     const char *home = getenv("HOME");
-    static char paths[2][512];
-    static unsigned int path_index;
-    char *path = paths[path_index++ % 2u];
-    const char *candidates[3] = { explicit_path, NULL, NULL };
-    if (home && home[0]) {
-        snprintf(path, sizeof(paths[0]), "%s/.firestaff/data/theron/%s",
-                 home, filename);
-        candidates[1] = path;
+    static char path[512];
+    FILE *fp;
+
+    if (explicit_path && explicit_path[0]) return explicit_path;
+    if (!home || !home[0]) return NULL;
+    int path_length = snprintf(path, sizeof(path),
+                               "%s/.firestaff/data/theron/%s",
+                               home, filename);
+    if (path_length < 0 || (size_t)path_length >= sizeof(path)) {
+        fprintf(stderr, "FAIL: HOME-derived Track 02 path is too long\n");
+        path[0] = '\0';
+        return path;
     }
-    for (unsigned int i = 0; i < 2u; ++i) {
-        FILE *fp;
-        if (!candidates[i] || !candidates[i][0]) continue;
-        fp = fopen(candidates[i], "rb");
-        if (fp) { fclose(fp); return candidates[i]; }
-    }
-    return NULL;
+    fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    fclose(fp);
+    return path;
 }
 
 static int test_all_dungeons(const uint8_t *ud, size_t ud_size,
@@ -190,28 +191,31 @@ static int test_real_variant(const char *label, const char *path,
     return ok ? 0 : 1;
 }
 
-int main(void) {
-    printf("test_theron_v1_track02_door\n");
+int main(int argc, char **argv) {
+    if (argc != 2 ||
+        (strcmp(argv[1], "us") != 0 && strcmp(argv[1], "jp") != 0)) {
+        fprintf(stderr, "usage: %s us|jp\n", argv[0]);
+        return 2;
+    }
+
+    const int is_us = strcmp(argv[1], "us") == 0;
+    const char *label = is_us ? "US" : "JP";
+    const char *environment = is_us ? "FIRESTAFF_THERON_TRACK02_RAW" :
+                                      "FIRESTAFF_THERON_TRACK02_JP_RAW";
+    const char *filename = is_us ? "TQUS02.bin" : "TQJP02.bin";
+    const char *expected_md5 = is_us ? THERON_TRACK02_MD5_US_BIN :
+                                       THERON_TRACK02_MD5_JP_BIN;
+    const Theron_Track02Variant variant = is_us ?
+        THERON_TRACK02_VARIANT_US_BIN : THERON_TRACK02_VARIANT_JP_BIN;
+
+    printf("test_theron_v1_track02_door_%s\n", argv[1]);
     test_door_decode_basic();
     test_teleporter_decode_basic();
     test_teleporter_level_destination_uses_six_bits();
 
-    const char *us_path = find_track02("FIRESTAFF_THERON_TRACK02_RAW",
-                                       "TQUS02.bin");
-    const char *jp_path = find_track02("FIRESTAFF_THERON_TRACK02_JP_RAW",
-                                       "TQJP02.bin");
-    int us_result = test_real_variant("US", us_path,
-                                      THERON_TRACK02_MD5_US_BIN,
-                                      THERON_TRACK02_VARIANT_US_BIN);
-    if (us_result != 0) return us_result;
-    if (jp_path) {
-        int jp_result = test_real_variant("JP", jp_path,
-                                          THERON_TRACK02_MD5_JP_BIN,
-                                          THERON_TRACK02_VARIANT_JP_BIN);
-        if (jp_result != 0) return jp_result;
-    } else {
-        printf("  SKIP: Japanese Track 02 BIN not found\n");
-    }
-    printf("PASS\n");
-    return 0;
+    const char *path = find_track02(environment, filename);
+    int result = test_real_variant(label, path, expected_md5, variant);
+    if (result != 0) return result;
+    printf("PASS: %s real media\n", label);
+    return result;
 }

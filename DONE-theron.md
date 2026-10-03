@@ -6539,5 +6539,20 @@ Verification on trv2: authentic `theron_v1_us_7z_direct_boot` and
 `theron_v1_track01_cdda_authentic_archive` queued US and JP original sectors
 through both file- and memory-backed stream paths; and
 `theron_v1_m11_launcher_handoff_boundary` passed. These checks prove title
-Track 01 availability/startup only. Gameplay CDDA selection and original
-emulator dungeon-save capture remain open in `TODO-theron.md`.
+Track 01 availability/startup only. Gameplay CDDA selection and a verified
+manual emulator save/load round trip remain open in `TODO-theron.md`.
+
+# ✅ 2026-10-03 Regional authentic Track 02 door and teleporter coverage
+
+Split the Track 02 door/teleporter real-media test into independent US and JP
+CTest cases. Each case verifies its selected Track 02 BIN hash before loading
+all seven dungeon maps. Missing default media now skips only that region; a
+provided but missing or wrong-edition override fails instead of silently
+falling back to another path. This test change does not establish original
+door-opening or teleporter runtime behavior.
+
+Verification on `trv2`: both regional CTests passed three repeated runs using
+the installed original US and JP BINs. Valid explicit overrides passed in
+three loops without default media; cross-region media and a missing explicit
+JP override failed admission; absent default media independently returned
+CTest skip code 77 for each region.
