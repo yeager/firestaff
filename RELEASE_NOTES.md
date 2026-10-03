@@ -1,10 +1,23 @@
-## Unreleased changes
+# Firestaff v3.0.360
 
+## Developer changes
+
+- `DM1, CSB and DM2 direct startup`: a configured collection root now scans
+  only the selected game's leaf for bare `--game`, while the persisted menu
+  root still exposes all installed games. Original-media scans select the
+  authenticated FM Towns edition for each game. A native macOS capture shows
+  the DM2 FM Towns New, Resume and Quit signpost after its title sequence;
+  physical M5 input, sound and dungeon presentation remain unverified.
 - `CSB FM Towns sound queue`: source-timed events now retain one maximum
   volume per sound and flush every requested sound index in a tick. Audible
   corridor and wall sensors use the edition's distance calculation. An
   original-media test passes for English and Japanese F31 with two distinct
   sounds in one tick; audible output on the reported M5 remains unverified.
+
+## Known limitations
+
+- Physical MacBook Pro M5 HiDPI input and speaker output remain unverified.
+  DM1, CSB and DM2 dungeon viewport, movement and audio parity remain open.
 
 # Firestaff v3.0.359
 

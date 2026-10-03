@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-03: Bare `--game dm1` with a persisted collection root now scans
+  its DM1 leaf directly while retaining the root for the game menu. The
+  original-media scan selects the authenticated FM Towns edition by default.
+  This check covers selection and startup scanning, not physical audio or
+  dungeon presentation.
+
 - 2026-10-03: DM1 Atari ST sound events now use authenticated GRAPHICS.DAT
   retained after startup. ReDMCSB SOUND.C F0060 consumes resident graphics;
   reopening nested ZIP/STX media on every effect diverged from that route.

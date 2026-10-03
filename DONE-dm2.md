@@ -1,5 +1,11 @@
 # Firestaff DONE — DM2
 
+- 2026-10-03: Bare `--game dm2` with a persisted collection root now scans
+  its DM2 leaf directly and still retains the collection root for reopening
+  the game menu. An original-media test verifies the authenticated FM Towns
+  edition, and a native macOS capture shows New, Resume and Quit after the
+  title sequence. The local capture is not a physical MacBook Pro M5 test.
+
 - 2026-10-03: The opt-in FM Towns native CLI test now captures the presented
   320x200 menu after bare `--game dm2` and compares every RGB channel with
   TITLE/0/4 and its palette from the authenticated retail ZIP. The full

@@ -2,11 +2,12 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
-- Verify bare `--game dm2` in a real macOS Retina window with the mixed
-  original-media collection: capture the visible New Game menu after the
-  source title, log logical and drawable dimensions, then click New Game and
-  the first mirror with native mouse input. The headless source-pixel and
-  scripted runtime checks do not cover the reported M5 window/input failure.
+- Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
+  the mixed original-media collection: log logical and drawable dimensions,
+  then click New Game and the first mirror with native mouse input. A local
+  Mac mini Cocoa capture now shows the New, Resume and Quit menu after the
+  source title, and the headless source-pixel and scripted runtime checks
+  pass. These checks do not cover the reported M5 window/input failure.
 
 - Complete Macintosh dungeon visual comparison and normal gameplay routes
   against the corrected retail map base at byte 26,806. The earlier loader

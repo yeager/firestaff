@@ -7116,6 +7116,20 @@ void M12_AssetStatus_ScanGameWithOptions(
     rootCount = m12_build_search_roots(roots,
                                        effectiveRequestedDataDir,
                                        status->legacyFallbackDir);
+    if (rootCount == 1U &&
+        effectiveRequestedDataDir && effectiveRequestedDataDir[0] != '\0' &&
+        (strcmp(gameId, "dm1") == 0 || strcmp(gameId, "csb") == 0 ||
+         strcmp(gameId, "dm2") == 0)) {
+        char gameLeaf[M12_ASSET_DATA_DIR_CAPACITY];
+        /* An unqualified CLI launch needs only the selected game's editions.
+         * Keep status->dataDir on the persisted collection root so reopening
+         * the start menu still exposes every game. The matched runtime path
+         * continues to resolve from the selected game's authentic media. */
+        if (FSP_JoinPath(gameLeaf, sizeof(gameLeaf), roots[0], gameId) &&
+            FSP_DirExists(gameLeaf)) {
+            m12_copy_string(roots[0], sizeof(roots[0]), gameLeaf);
+        }
+    }
     if (effectiveRequestedDataDir && effectiveRequestedDataDir[0] != '\0') {
         m12_copy_string(status->dataDir,
                         sizeof(status->dataDir),

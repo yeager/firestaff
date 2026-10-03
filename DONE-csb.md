@@ -1,5 +1,11 @@
 # Firestaff DONE — CSB
 
+- 2026-10-03: Bare `--game csb` with a persisted collection root now scans
+  its CSB leaf directly while retaining the root for the game menu. The
+  original-media scan selects the authenticated FM Towns edition by default.
+  This check covers selection and startup scanning, not physical audio or
+  dungeon presentation.
+
 - 2026-10-03: FM Towns F31 now retains the loudest pending request for each
   sound index and flushes all requested indices in source order on the next
   tick, following ReDMCSB SOUND.C F0064/F0065. Audible corridor generators
