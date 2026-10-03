@@ -165,6 +165,19 @@ jobs:
             cmake --build build --parallel
           fi
 
+      # Temporary CI transport for a local authentic-media menu check. The
+      # user's licensed archive never leaves their machine.
+      - name: Upload macOS DM2 menu test binaries
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dm2-fmtowns-menu-source-test
+          path: |
+            build/firestaff
+            build/test_dm2_v1_fmtowns_menu_source_rgb
+          if-no-files-found: error
+          retention-days: 2
+
       - name: Build launcher settings regressions
         run: |
           cmake --build build --parallel 2 --target \
