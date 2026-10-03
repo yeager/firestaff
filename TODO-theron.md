@@ -75,6 +75,18 @@ Reviewed 2026-10-03. Only open work is listed here.
   route displayed Ak-Tu-Ba, its Japanese narrative, and the in-dungeon
   first-person wall view. Captures remain outside Git. This proves a retail
   JP gameplay session can reach Akutuba, not complete gameplay parity.
+- A second clean, task-private trv2 profile repeated that route with RUN held
+  for four seconds and reached the same authentic JP Akutuba view. In that
+  profile, the PCE left/up inputs (host A/W) produced a cleared first-person
+  viewport followed by an indistinguishable wall view; the screenshots expose
+  no party coordinates or item state. The attempt therefore does not prove
+  that the `(0,0)` teleporter was entered or establish any teleporter field
+  semantics. Its screenshots remain outside Git under
+  `/home/trv2/firestaff-theron-evidence/emulator-created-20261003/teleporter-capture-01/`.
+  No native BRAM progress or usable Mednafen state was created. Keep the
+  teleporter resolver and preview unchanged until an ordinary-input capture
+  yields game-owned before/after state or authenticated source binds the
+  behavior.
 - The JP native 2 KiB BRAM written by that run has SHA-256
   `de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa`, equal
   to the fresh menu-only BRAM produced earlier; it remains an empty save, not
