@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — parser fallback pose cannot satisfy exact-level readiness
+
+`theron_v1_startup_runtime_capture_all_dungeon_routes()` still records a
+validated candidate route when party placement agrees with the parsed
+first-floor candidate, but it increments `semantic_level_count` only when
+`start_pose_provenance` is `THERON_START_POSE_PROVENANCE_RUNTIME_CAPTURE`.
+The regression keeps the sparse route receipt valid while asserting one
+captured route, zero exact semantic levels, and no exact-level readiness.
+This closes a false readiness path; it does not establish a retail spawn or
+active-map join. The `theron_v1_startup_save_resume_pc34` CTest passed four
+consecutive runs on `trv2`.
+
 ## 2026-10-03 — preserve the authentic Akutuba pose/map ambiguity
 
 The JP Rev. 1 real-media map regression now locks the source bytes at

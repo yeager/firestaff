@@ -154,6 +154,8 @@ typedef struct {
     int real_data_capture_ready;
     int capture_count;
     unsigned int dungeon_mask;
+    /* Counts only levels whose party pose has runtime-capture provenance;
+     * parser-selected candidate poses remain capture evidence, not semantics. */
     int semantic_level_count;
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;

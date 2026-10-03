@@ -1374,7 +1374,7 @@ static void theron_v1_startup_copy_level_anchor_receipt_u64(
            sizeof(uint16_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
 }
 
-static int theron_v1_startup_runtime_level_semantics_exact(
+static int theron_v1_startup_runtime_level_matches_candidate(
     const Theron_V1_World *world,
     Theron_DungeonID dungeon_id) {
 
@@ -1404,6 +1404,21 @@ static int theron_v1_startup_runtime_level_semantics_exact(
            world->party.leader_x == level->start_x &&
            world->party.leader_y == level->start_y &&
            world->party.leader_dir == level->start_dir;
+}
+
+static int theron_v1_startup_runtime_level_pose_is_source_bound(
+    const Theron_V1_World *world,
+    Theron_DungeonID dungeon_id) {
+
+    int dungeon_index;
+
+    if (!world || dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
+        dungeon_id > THERON_DUNGEON_COUNT) {
+        return 0;
+    }
+    dungeon_index = (int)dungeon_id - 1;
+    return world->levels[dungeon_index][0].start_pose_provenance ==
+        THERON_START_POSE_PROVENANCE_RUNTIME_CAPTURE;
 }
 
 static int theron_v1_startup_runtime_object_semantics_exact(
@@ -1563,7 +1578,8 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
          dungeon_id = (Theron_DungeonID)((int)dungeon_id + 1)) {
         Theron_V1_World world;
         char receipt[320];
-        int level_ok;
+        int level_candidate_ok;
+        int level_pose_source_bound;
         int object_ok;
 
         theron_v1_world_init_runtime(&world);
@@ -1585,16 +1601,19 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
                 0)) {
             return 0;
         }
-        level_ok =
-            theron_v1_startup_runtime_level_semantics_exact(&world,
-                                                            dungeon_id);
+        level_candidate_ok =
+            theron_v1_startup_runtime_level_matches_candidate(&world,
+                                                              dungeon_id);
+        level_pose_source_bound =
+            theron_v1_startup_runtime_level_pose_is_source_bound(&world,
+                                                                 dungeon_id);
         /* The initial loader record proves a level envelope only.  A zero
          * projected object count is not proof that the opaque tail contains
          * no objects, so never promote it to an object route. */
         object_ok = object_table_route.object_table_decode_ready &&
             theron_v1_startup_runtime_object_semantics_exact(&world,
                                                              dungeon_id);
-        if (!level_ok) {
+        if (!level_candidate_ok) {
             return 0;
         }
         out_receipt->level_banks[(int)dungeon_id - 1] =
@@ -1608,7 +1627,9 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         }
         out_receipt->dungeon_mask |= 1u << ((unsigned)dungeon_id - 1u);
         ++out_receipt->capture_count;
-        ++out_receipt->semantic_level_count;
+        if (level_pose_source_bound) {
+            ++out_receipt->semantic_level_count;
+        }
         hash ^= (uint32_t)dungeon_id;
         hash *= 16777619u;
         hash ^= world.runtime_media.level_bank.surface_checksum;

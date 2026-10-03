@@ -4930,7 +4930,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.valid &&
                     !receipt.real_data_capture_ready &&
                     receipt.capture_count == 1 &&
-                    receipt.semantic_level_count == 1 &&
+                    receipt.semantic_level_count == 0 &&
                     receipt.dungeon_mask == 0x01u &&
                     !receipt.exact_level_semantics_ready &&
                     !receipt.exact_object_semantics_ready &&

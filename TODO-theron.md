@@ -2,6 +2,18 @@
 
 Reviewed 2026-10-03. Only open work is listed here.
 
+## 2026-10-03 — keep parser fallback poses out of exact-level readiness
+
+- ✅ The startup route's candidate match still validates that the parsed
+  first-floor coordinate is passable and matches the placed party, but that
+  check no longer increments `semantic_level_count` unless the pose has
+  runtime-capture provenance. The sparse regression route remains available
+  as capture evidence while reporting zero exact levels.
+- 🔒 No current authentic new-game capture is joined to the active map and
+  level consumer, so no production level receives runtime-capture pose
+  provenance. Exact level semantics correctly remain unavailable until that
+  source join is implemented and verified.
+
 ## 2026-10-03 — bind the initial party pose to an original runtime capture
 
 - 🔒 The authenticated candidate parser and full-dungeon decoder expose a
