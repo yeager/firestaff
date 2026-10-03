@@ -1,3 +1,18 @@
+# Firestaff v3.0.357
+
+## User-facing changes
+
+- `Startup menu data folder`: reopening the menu preserves a selected,
+  authenticated DM1 game folder instead of replacing it with a parent folder
+  merely because the parent contains more recognized games. This was checked
+  with original DM1 media on macOS.
+
+## Known limitations
+
+- The selected-folder check verifies persistence and scanning, not launch from
+  that menu selection. DM1, CSB and DM2 dungeon viewport, movement and audio
+  parity remain unverified on the reported MacBook Pro M5 HiDPI hardware.
+
 # Firestaff v3.0.356
 
 ## Developer changes
