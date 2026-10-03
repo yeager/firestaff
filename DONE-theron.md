@@ -6663,3 +6663,17 @@ Ak-Tu-Ba dungeon-selection map, confirming the new in-game save survived a
 restart and reloaded. No BIOS, disc image, SRAM, state file, or screenshot was
 added to the repository. Mednafen's separate F5/F7 save-state round trip
 remains unverified; this one save does not establish broad gameplay parity.
+
+# ✅ 2026-10-03 Theron regional and original-media regression loops
+
+After syncing to `main` at `501ccdb`, the focused 21-case regional Theron CTest
+selection passed three consecutive runs: 18 tests executed against authentic
+installed media and passed; optional CloneCD raw and JP Track 19 ISO cases
+skipped because those files were not configured. The static cases also passed.
+Eleven original-media startup, archive, scanner, and CLI checks then passed
+three loops, with only the converted ISO boot and authenticated-capture CLI
+cases skipped for unavailable inputs. A preceding first broad-label attempt
+was incomplete because the isolated build had omitted auxiliary probe targets;
+its missing-binary failures were not counted as code/test passes. The selected
+tests do not establish full Theron gameplay parity or close the remaining
+retail-mechanics gaps.
