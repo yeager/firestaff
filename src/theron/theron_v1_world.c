@@ -920,9 +920,11 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
     level->height = h;
     level->dungeon_seed = seed;
     level->source_header_level_index = source_header_level_index;
-    /* Track 02's bounded level envelope does not carry a start direction;
-     * the verified runtime receipt admits its documented North pose. */
+    /* The bounded level envelope has no source-bound party direction.
+     * Preserve the parser's North default as provisional metadata only. */
     level->start_dir = 0;
+    level->start_pose_provenance =
+        THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK;
 
     /* Guard: minimum size for header + at least one row */
     size_t grid_bytes = (size_t)w * h;
@@ -956,7 +958,7 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
     }
     level->thing_count = 0;
 
-    printf("TQR level load: dungeon=%d level=%d size=%dx%d status=%s entrance=(%d,%d)\n",
+    printf("TQR level load: dungeon=%d level=%d size=%dx%d status=%s first-floor-candidate=(%d,%d)\n",
            dungeon_id, sub_level_index, w, h,
            has_entrance ? "OK" : "NO_ENTRANCE",
            level->start_x, level->start_y);
@@ -1171,6 +1173,8 @@ int theron_v1_world_load_track02_dungeon(
         lv->source_creature_gfx_bank = dd->creature_gfx_bank[m];
         lv->source_cumulative_column_items = dd->cumulative_column_items[m];
         lv->start_dir = 0;
+        lv->start_pose_provenance =
+            THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK;
 
         int has_entrance = 0;
         for (unsigned int x = 0; x < w && x < THERON_MAX_MAP_SIZE; x++) {
@@ -1292,8 +1296,8 @@ uint8_t theron_v1_world_get_square(const Theron_V1_World *world, int x, int y) {
 }
 
 /* ── Party placement ───────────────────────────────────────────────── */
-/* THQUEST.ASM T520: party placed at start_x/start_y facing start_dir
- * (default: facing north = 0).  start_x/y are set during level_load. */
+/* Apply a caller-provided pose. This helper does not establish that the
+ * pose came from the retail party-start consumer; callers own that evidence. */
 void theron_v1_party_place(Theron_V1_World *world, int x, int y, int dir) {
     if (!world) return;
     world->party.leader_x = (int16_t)x;
@@ -5164,6 +5168,8 @@ size_t theron_v1_first_room_synthesize(uint8_t *out_buf,
      * Inlined here so this module stays free of the mechanics
      * header dependency. */
     out_level->start_dir   = 1;
+    out_level->start_pose_provenance =
+        THERON_START_POSE_PROVENANCE_SYNTHETIC_FIXTURE;
     out_level->thing_count = 0;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -5228,8 +5234,8 @@ size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
                     : THERON_SQUARE_FLOOR;
         }
     }
-    /* Keep the northern edge entrance that theron_v1_level_load() finds
-     * first, matching the observed (4,0) entrance in real-data logs. */
+    /* Keep the northern edge floor that theron_v1_level_load() finds first.
+     * The parser's choice is fixture-compatible, not a retail spawn claim. */
     grid[0 * width + 4] = THERON_SQUARE_FLOOR;
     /* A distant exit gives no-media tests a reachable transition target. */
     grid[exit_y * width + exit_x] = THERON_SQUARE_EXIT;
@@ -5243,6 +5249,8 @@ size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
     out_level->start_x = (int16_t)start_x;
     out_level->start_y = (int16_t)start_y;
     out_level->start_dir = (int8_t)start_dir;
+    out_level->start_pose_provenance =
+        THERON_START_POSE_PROVENANCE_SYNTHETIC_FIXTURE;
     for (y = 0; y < height; ++y) {
         for (x = 0; x < width; ++x) {
             out_level->squares[y][x] = grid[y * width + x];

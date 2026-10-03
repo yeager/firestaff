@@ -119,7 +119,9 @@ typedef enum {
  *                                        candidate receipt when raw Track 02
  *                                        exposes the bounded 32x27 payload,
  *                                        including both raw and logical
- *                                        MODE1/2048 user-data offsets
+ *                                        MODE1/2048 user-data offsets; any
+ *                                        start pose here is generic-parser
+ *                                        output, not proven retail spawn data
  *   - startup_mirror_*                 : public Soul Room mirror contract
  *                                        from theron_v1_startup_flow.c, so
  *                                        receipt/probe consumers can verify

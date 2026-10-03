@@ -356,6 +356,9 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     check_int("synthetic initial candidate start x", level.start_x, 1);
     check_int("synthetic initial candidate start y", level.start_y, 1);
     check_int("synthetic initial candidate start dir", level.start_dir, 0);
+    check_int("synthetic candidate parser pose provenance",
+              level.start_pose_provenance,
+              THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK);
 
     candidate[4] = 0x11u; /* corrupt the source-locked seed gate */
     status = theron_v1_track02_load_initial_level_candidate(
@@ -1389,9 +1392,12 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate source header level",
               level.source_header_level_index,
               0x0026);
-    check_int("real initial candidate start x", level.start_x, 4);
-    check_int("real initial candidate start y", level.start_y, 0);
-    check_int("real initial candidate start dir", level.start_dir, 0);
+    check_int("real candidate parser first-floor x", level.start_x, 4);
+    check_int("real candidate parser first-floor y", level.start_y, 0);
+    check_int("real candidate parser default direction", level.start_dir, 0);
+    check_int("real candidate pose remains explicitly provisional",
+              level.start_pose_provenance,
+              THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK);
     check_size("real initial candidate scan/loader offset",
                catalog.candidates[0].absolute_offset,
                handoff.absolute_offset);

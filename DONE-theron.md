@@ -1,5 +1,24 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-03 — retain provenance for provisional level-start poses
+
+`Theron_V1_Level` now labels generic-parser first-floor/default-North values
+with `THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK`; explicit synthetic
+room builders use a separate fixture value. The level-header API comment and
+runtime helper comments no longer describe the inferred candidate as a proven
+retail spawn. Corrected the stale Track 02 source-lock claim that the removed
+interior-floor/East selector proved `(2,1,EAST)`. The runtime pose is unchanged
+and remains provisional until an original capture binds coordinates and
+direction to the authenticated map.
+
+On trv2, the Release build completed with `-j1`. The mechanics-playability,
+Track 02 level-handoff, and startup-real-asset-receipt CTests each passed three
+consecutive repetitions against the installed authentic US/JP media. The
+capture route can retain `$203F-$2041`, but available instrumented Mednafen
+builds expose only `pce`; the visible JP gameplay state uses `pce_fast` and is
+not loadable by those builds. Initial-pose runtime parity therefore remains
+open in `TODO-theron.md`.
+
 ## 2026-10-03 — all captured movement commands across authentic campaign maps
 
 Expanded `test_real_campaign_movement()` in the authentic US/JP mechanics

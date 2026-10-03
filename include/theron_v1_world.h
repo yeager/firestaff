@@ -232,6 +232,16 @@ typedef struct {
      (t) != THERON_SQUARE_STAIRS_UNRESOLVED)
 #define THERON_SQUARE_IS_SPECIAL(t)  ((t) >= 2 && (t) != 4)
 
+/* Provenance of Theron_V1_Level.start_*.  Authenticated Track 02 level
+ * bytes do not currently bind a party-start coordinate/direction consumer,
+ * so parser defaults must remain distinguishable from a runtime capture. */
+typedef enum {
+    THERON_START_POSE_PROVENANCE_UNSPECIFIED = 0,
+    THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK = 1,
+    THERON_START_POSE_PROVENANCE_SYNTHETIC_FIXTURE = 2,
+    THERON_START_POSE_PROVENANCE_RUNTIME_CAPTURE = 3
+} Theron_StartPoseProvenance;
+
 /* ── Level struct ──────────────────────────────────────────────────── */
 typedef struct {
     int   level_index;          /* 0..7 map index within this dungeon */
@@ -257,8 +267,12 @@ typedef struct {
      * thing-list semantics are inferred from them. */
     uint16_t source_creature_gfx_bank;
     uint16_t source_cumulative_column_items;
-    int   start_x, start_y;    /* party spawn position (THQUEST.ASM T520) */
+    /* Candidate pose only. FIRST_FLOOR_FALLBACK means these coordinates
+     * came from the generic parser and direction defaulted north; it does
+     * not prove the retail party spawn. */
+    int   start_x, start_y;
     int   start_dir;            /* 0=N 1=E 2=S 3=W */
+    Theron_StartPoseProvenance start_pose_provenance;
     /* Exact Track 02 map bytes, including the source-owned low-nibble
      * runtime attributes (for example teleporter OPEN = 0x08). */
     uint8_t source_tiles[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
@@ -751,6 +765,10 @@ void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
  *   bytes 8-9:  level_index (uint16_t LE)
  *   bytes 10-11: reserved
  *   byte 12+:  W×H grid of uint8_t tile values
+ *
+ * start_x/start_y are the first row-major floor candidate and start_dir
+ * defaults north. This is a parser fallback, not a source-bound party pose;
+ * inspect start_pose_provenance before treating it as runtime evidence.
  */
 Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
                                            const uint8_t *data,

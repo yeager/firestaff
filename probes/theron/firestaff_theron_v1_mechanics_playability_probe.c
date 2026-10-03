@@ -463,6 +463,9 @@ static void test_real_level_loaded(const Theron_V1_Level *level) {
               level->start_y >= 0 && level->start_y < level->height, 1);
     CHECK_INT("real level start dir is cardinal",
               level->start_dir >= 0 && level->start_dir < THERON_DIR_COUNT, 1);
+    CHECK_INT("real candidate pose provenance remains parser fallback",
+              level->start_pose_provenance,
+              THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK);
 }
 
 static void test_turning_on_real_grid(Theron_V1_World *world) {
@@ -972,6 +975,9 @@ static void test_real_campaign_movement(
             }
             verified_levels++;
             dungeon_levels++;
+            CHECK_INT("real campaign level pose provenance remains parser fallback",
+                      level->start_pose_provenance,
+                      THERON_START_POSE_PROVENANCE_FIRST_FLOOR_FALLBACK);
             for (int y = 1; y < level->height - 1; ++y) {
                 for (int x = 1; x < level->width - 1; ++x) {
                     if (level->squares[y][x] != THERON_SQUARE_FLOOR) continue;

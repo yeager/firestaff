@@ -2,6 +2,23 @@
 
 Reviewed 2026-10-03. Only open work is listed here.
 
+## 2026-10-03 — bind the initial party pose to an original runtime capture
+
+- 🔒 The authenticated candidate parser and full-dungeon decoder expose a
+  `start_x/start_y` chosen by a first-floor scan and default `start_dir` to
+  north. A new provenance field labels that value as a fallback, and the
+  source lock/test labels no longer present it as a proven retail spawn.
+- 🔒 Production still consumes the provisional pose. No original cold-start
+  capture currently joins Akutuba's `$203F-$2041` direction/position bytes to
+  the exact hash-authenticated level. Existing instrumented Mednafen builds
+  expose only the `pce` module, while the visible JP gameplay state was made
+  by `pce_fast` and is not loadable by those builds. The supported trace hook
+  can capture the bytes once an instrumented `pce_fast` path is available.
+- Capture from a fresh authentic JP or US run with RUN held for four seconds,
+  then follow the ordinary New Game route. Bind the in-dungeon RAM snapshot,
+  bank/level provenance, and original Track 02 source cell in that same
+  session. Do not promote the provisional pose or a screenshot-only estimate.
+
 ## 2026-10-03 — exercise every captured movement command on authentic campaign maps
 
 - ✅ The US/JP hash-gated mechanics probe now runs all four original command
