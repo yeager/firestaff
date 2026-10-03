@@ -1,5 +1,9 @@
 ## Unreleased changes
 
+# Firestaff v3.0.358
+
+## Developer changes
+
 - `DM1, CSB and DM2 start menu`: an opt-in original-media test now verifies
   that a saved collection root survives menu reopen and opens DM1 PC 3.4,
   CSB FM Towns and DM2 DOS through the selected-entry runtime handoff. The
@@ -13,6 +17,12 @@
   path unavailable. Three short
   source records remain rejected; audible M5 playback and PSG parity remain
   unverified.
+
+## Known limitations
+
+- DM1, CSB and DM2 dungeon viewport, movement and audio parity remain
+  unverified on the reported MacBook Pro M5 HiDPI hardware. The original-media
+  checks cover specific startup and audio queue paths, not full gameplay.
 
 # Firestaff v3.0.357
 

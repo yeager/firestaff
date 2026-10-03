@@ -14162,13 +14162,12 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
          * override that explicit platform choice at the launch boundary. */
         version = NULL;
     }
-    /* AUTO is a platform policy, not a persisted catalogue row.  A prior
-     * scan/configuration may legitimately leave a matched FM Towns row in
-     * versionIndex; once a PC corpus is also present, allowing that stale
-     * match through here would bypass the PC-first decision made by the
-     * scanner and launch gate.  The version-row handler promotes an explicit
-     * release choice to its source architecture, so this branch applies only
-     * to a true AUTO selection. */
+    /* AUTO is a platform policy, not a persisted catalogue row. A prior
+     * scan/configuration may leave a matched but lower-priority release in
+     * versionIndex; honoring that stale row would bypass the game-specific
+     * FM Towns-first decision made by the scanner and launch gate. The
+     * version-row handler promotes an explicit release choice to its source
+     * architecture, so this branch applies only to a true AUTO selection. */
     if (state->gameOptions[gi].architectureIndex == M12_ARCH_AUTO) {
         int autoVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &state->assetStatus, intent.gameId, M12_ARCH_AUTO);
