@@ -1,5 +1,10 @@
 ## Unreleased changes
 
+- `DM2 FM Towns startup menu`: an opt-in original-media test now captures the
+  presented menu after bare `--game dm2` and compares its RGB pixels with the
+  authenticated TITLE/0/4 GDAT image and palette. It also verifies New Game
+  and the first champion in the normal runtime loop. This headless macOS
+  check does not establish physical M5 HiDPI window or mouse behavior.
 - `DM1, CSB and DM2 AUTO startup`: an opt-in original-media regression now
   reopens a persisted collection root, leaves a stale matched edition in the
   menu, and verifies that AUTO launches the authenticated FM Towns release

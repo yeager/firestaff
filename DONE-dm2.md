@@ -1,5 +1,15 @@
 # Firestaff DONE — DM2
 
+- 2026-10-03: The opt-in FM Towns native CLI test now captures the presented
+  320x200 menu after bare `--game dm2` and compares every RGB channel with
+  TITLE/0/4 and its palette from the authenticated retail ZIP. The full
+  original-media script passes on the macOS Actions-built binary, including
+  New Game, the first champion and normal-loop runtime. An isolated default
+  config makes the source-pixel check independent of saved brightness. The
+  published v3.0.358 binary also presents the menu with no platform or data
+  directory CLI arguments under SDL dummy video. Physical M5 HiDPI window
+  output and native mouse input remain unverified.
+
 - 2026-10-03: The original-media FM Towns CLI regression now checks the
   unqualified `--menu --game dm2` route as well as direct `--game dm2`.
   The published macOS arm64 v3.0.355 binary selected `fmtowns-ja`, completed
