@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-04: Replaced the launcher's 41,498-line rail RGB initializer with
+  the same 746,880 bytes stored as a project-owned binary and a deterministic
+  build-time C generator. The original initializer and binary compare byte for
+  byte (SHA-256 `f9e5da21319ef238f523938fa5dbcf58c95d888708cade4eb89635067776b5a3`);
+  the generated C compiles and local CMake configuration succeeds. This reduces
+  tracked text by 41,439 net lines and tracked bytes by about 2.38 MB without
+  changing startup artwork. Hosted build verification is pending this commit.
+
 - 2026-10-04: The persisted-root original-media M12 regression now follows
   the authenticated DM2 FM Towns AUTO selection through its full SWOOSH/TITLE
   sequence, the source New Game target, and the first mirror action into a

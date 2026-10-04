@@ -3,6 +3,21 @@ project(Firestaff VERSION 3.0.361 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
+# Keep the project-owned RGB artwork compact in Git while preserving the
+# existing compiled symbol and exact pixel bytes on every supported host.
+set(FIRESTAFF_RAIL_GENERATED_C
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/branding_firestaff_rail_m12.c")
+add_custom_command(
+    OUTPUT "${FIRESTAFF_RAIL_GENERATED_C}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_firestaff_rail_c.py"
+        --input "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/branding_firestaff_rail_m12.rgb"
+        --output "${FIRESTAFF_RAIL_GENERATED_C}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_firestaff_rail_c.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/branding_firestaff_rail_m12.rgb"
+    VERBATIM)
+
 file(GLOB FIRESTAFF_STUDIO_PO_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/po/studio/*.po")
 
@@ -8139,7 +8154,7 @@ set(M12_SOURCES
     src/shared/firestaff_mapfile.c
     src/shared/card_art_m12.c
     src/shared/card_art_generated_m12.c
-    src/ui/branding_firestaff_rail_m12.c
+    "${FIRESTAFF_RAIL_GENERATED_C}"
     src/ui/branding_logo_m12.c
     src/ui/branding_logo_readme_m12.c
     src/shared/bestiary_m12.c
