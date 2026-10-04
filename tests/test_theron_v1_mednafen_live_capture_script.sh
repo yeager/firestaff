@@ -970,8 +970,11 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'count >= 65536 || per_offset[offset] >= 16' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'physical_address < 0x1F0000 || physical_address >= 0x1F8000' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'offset = physical_address & 0x1FFF' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'reader_physical_pc=%06x' "$party_ram_consumer_read_patch"; then
-    printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must sample the full 8 KiB with bounded source-positioned reads' >&2
+   ! grep -Fq 'reader_physical_pc=%06x reader_code_bytes=%s' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'HuCPU.FastPageR[' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'char reader_code_bytes[17] = "unavailable"' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'for(unsigned i = 0; i < 8; i++)' "$party_ram_consumer_read_patch"; then
+    printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must sample bounded reads with source-positioned instruction bytes' >&2
     exit 1
 fi
 if ! grep -Fq 'if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)' "$party_ram_trace_patch" ||

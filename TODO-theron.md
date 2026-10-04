@@ -21,6 +21,17 @@ Reviewed 2026-10-05. Only open work is listed here.
   keep the production first-floor/North pose provisional and exact startup
   level readiness closed until the same-session map join is captured.
 
+- 🔒 2026-10-05 PCE Fast reader instruction follow-up: the bounded consumer
+  trace now retains eight same-session instruction bytes from Mednafen's
+  mapped fast-read page for each logged BaseRAM access (only after the existing
+  bank, global-count, and per-byte limits pass). Patch-only and full `-j1`
+  builds succeeded on `trv2`; the authentic Ak-Tu-Ba state restore again passed
+  the PCE Fast snapshot checks and stopped at the expected missing dynamic
+  CD/IRQ receipts. `da65` decoded high-frequency captured reader windows as
+  HuC6280 block transfers (`TIA`, `TII`, and `TDD`). This identifies how those
+  observed reads execute, not which transfer supplies the active map or level;
+  no runtime map join or gameplay behavior is promoted from these bytes.
+
 ## 2026-10-04 — join the original startup pose to its active dungeon map
 
 - ✅ A fresh authentic JP Rev. 1 `pce_fast` run again reaches the title after

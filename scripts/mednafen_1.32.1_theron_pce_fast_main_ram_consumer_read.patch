@@ -26,7 +26,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,9 +111,38 @@
+@@ -111,9 +111,46 @@
  void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
  {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
@@ -44,6 +44,14 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + offset = physical_address & 0x1FFF;
 + if(count >= 65536 || per_offset[offset] >= 16)
 +  return;
++ char reader_code_bytes[17] = "unavailable";
++ if((TheronTraceInstructionPC & 0x1FFF) <= 0x1FF8)
++ {
++  const uint8 *reader_code = (const uint8 *)(HuCPU.FastPageR[
++   TheronTraceInstructionPC >> 13] + TheronTraceInstructionPC);
++  for(unsigned i = 0; i < 8; i++)
++   snprintf(reader_code_bytes + i * 2, 3, "%02x", reader_code[i]);
++ }
 + if(!trace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE");
@@ -54,10 +62,10 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   return;
 +  fputs("source=mednafen-pce-fast-main-ram-consumer-read\n", trace);
 + }
-+ fprintf(trace, "main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
++ fprintf(trace, "main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x reader_code_bytes=%s a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
 +         count++, logical_address & 0xFFFF, physical_address, value,
 +         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
-+         HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P);
++         reader_code_bytes, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P);
 + fflush(trace);
 + per_offset[offset]++;
 +}
