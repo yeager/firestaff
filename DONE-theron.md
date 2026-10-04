@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-04 — repeat authentic regional dungeon-source checks on trv2
+
+Built `test_theron_v1_track02_dungeon_map`, `test_theron_v1_track02_door`,
+and `test_theron_v1_track02_dungeon_loader` from the pushed source revision in
+an isolated `/dev/shm` build on `trv2`. Against the installed original US and
+JP Track 02 media, the US/JP map and door/teleporter CTests and the full
+dungeon-loader CTest all passed three consecutive repetitions (15 test
+instances total). The raw game media remained in the user's data directory
+and was not copied into Git or the repository worktree.
+
+This re-verifies bounded source-data decoding and loader stability for these
+regions. It does not establish the original startup map/pose consumer, runtime
+door or teleporter behavior, visuals, or complete Theron parity.
+
 ## 2026-10-04 — trace direct PCE Fast startup-state writes without synthetic data
 
 The opt-in Mednafen 1.32.1 reference build now records changes to the six
