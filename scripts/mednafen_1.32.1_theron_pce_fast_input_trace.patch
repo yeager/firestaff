@@ -1,0 +1,71 @@
+--- a/src/pce_fast/input.cpp
++++ b/src/pce_fast/input.cpp
+@@ -18,4 +18,6 @@
+ #include "pce.h"
+ #include "input.h"
+ #include "huc.h"
++#include <stdio.h>
++#include <stdlib.h>
+
+@@ -40,4 +42,44 @@ static uint8 mouse_index[5];
+ static uint8 sel;
+ static uint8 read_index = 0;
+
++extern uint16 TheronTraceInstructionPC;
++extern uint32 TheronTraceInstructionPhysicalPC;
++static FILE *TheronPCEFastInputTrace;
++static unsigned TheronPCEFastInputTraceCount;
++static unsigned TheronPCEFastInputTraceLimit = 1048576;
++static bool TheronPCEFastInputTraceInitialized;
++
++static void TheronPCEFastInputTraceInit(void)
++{
++ if(TheronPCEFastInputTraceInitialized)
++  return;
++ TheronPCEFastInputTraceInitialized = true;
++ const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
++ if(!path || !*path)
++  return;
++ TheronPCEFastInputTrace = fopen(path, "a");
++ if(!TheronPCEFastInputTrace)
++  return;
++ fputs("source=mednafen-pce-fast-instrumented-input\n", TheronPCEFastInputTrace);
++ const char *limit = getenv("FIRESTAFF_THERON_INPUT_TRACE_LIMIT");
++ if(limit && *limit)
++ {
++  const unsigned parsed_limit = (unsigned)strtoul(limit, NULL, 10);
++  if(parsed_limit)
++   TheronPCEFastInputTraceLimit = parsed_limit;
++ }
++ fflush(TheronPCEFastInputTrace);
++}
++
++static void TheronPCEFastInputTraceRead(unsigned int address, uint8 value, int index)
++{
++ TheronPCEFastInputTraceInit();
++ if(TheronPCEFastInputTrace && TheronPCEFastInputTraceCount < TheronPCEFastInputTraceLimit)
++ {
++  fprintf(TheronPCEFastInputTrace, "pce_input_read cpu_pc=%04x physical_pc=%08x register=%04x raw=%04x sel=%u clr=%u index=%u value=%02x\n", TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, address, index >= 0 ? pce_jp_data[index] : 0, sel & 1, (sel >> 1) & 1, read_index, value);
++  fflush(TheronPCEFastInputTrace);
++  TheronPCEFastInputTraceCount++;
++ }
++}
++
+ static bool DisableSR;
+@@ -196,4 +238,6 @@ uint8 INPUT_Read(unsigned int A)
+  ret |= 0x30; // Always-set?
+
++ TheronPCEFastInputTraceRead(A, ret, tmp_ri <= 4 ? tmp_ri : -1);
++
+  return(ret);
+ }
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -680,4 +680,7 @@
+	  HU_PI = HU_P;
+	  HuCPU.IRQMaskDelay = HuCPU.IRQMask;
+
++  TheronTraceInstructionPC = GetRealPC();
++  TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
++
+	  b1 = RdAtPC();

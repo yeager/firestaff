@@ -1061,6 +1061,7 @@ if [[ -n "$configured_home" ]]; then
     fi
 fi
 mkdir -p "$home_dir/sav"
+mkdir -p "$home_dir/mcs"
 link_capture_cue_members() {
     local source_cue=$1
     local destination_dir=$2
@@ -1234,6 +1235,7 @@ launch=(
     -sound "$capture_sound" \
     -video.driver softfb \
     -filesys.path_sav "$home_dir/sav" \
+    -filesys.path_state "$home_dir/mcs" \
     -pce.input.multitap 0 \
     -pce.input.port1 gamepad \
     -"$capture_arcadecard_setting" 0 \
@@ -1314,9 +1316,13 @@ if [[ "$host_input_requested" == 1 ]]; then
     # The CPU trace is stdio-buffered until shutdown. The input producer is
     # flushed per capture event and is the safe readiness boundary for
     # scheduling real host input while the process is still running.
+    input_trace_source_marker=source=mednafen-pce-instrumented-input
+    if [[ "$capture_mednafen_module" == pce_fast ]]; then
+        input_trace_source_marker=source=mednafen-pce-fast-instrumented-input
+    fi
     if ! wait_for_trace_producer "$input_trace" \
         "$((capture_startup_grace * 4))" \
-        'source=mednafen-pce-instrumented-input'; then
+        "$input_trace_source_marker"; then
         kill "$mednafen_pid" 2>/dev/null || true
         wait "$mednafen_pid" 2>/dev/null || true
         printf '%s\n' 'FAIL: Mednafen did not produce an instrumented trace before host-input scheduling' >&2
@@ -1548,11 +1554,19 @@ if [[ -s "$rng_state_trace" ]] && ! awk '
     printf '%s\n' 'FAIL: RNG state trace is not a contiguous entry/return sequence' >&2
     exit 1
 fi
-require_snapshot_size "$vram_snapshot" 65536 'VDC VRAM' || exit 1
-require_snapshot_size "$vce_snapshot" 1024 'VCE palette RAM' || exit 1
-require_snapshot_size "$vdc_sat_snapshot" 512 'VDC sprite attribute table' || exit 1
-require_snapshot_size "$main_ram_snapshot" 8192 'PCE main RAM' || exit 1
-require_snapshot_size "$bram_snapshot" 2048 'PCE backup RAM' || exit 1
+if [[ "$capture_mednafen_module" == pce ]]; then
+    require_snapshot_size "$vram_snapshot" 65536 'VDC VRAM' || exit 1
+    require_snapshot_size "$vce_snapshot" 1024 'VCE palette RAM' || exit 1
+    require_snapshot_size "$vdc_sat_snapshot" 512 'VDC sprite attribute table' || exit 1
+    require_snapshot_size "$main_ram_snapshot" 8192 'PCE main RAM' || exit 1
+    require_snapshot_size "$bram_snapshot" 2048 'PCE backup RAM' || exit 1
+else
+    require_snapshot_size "$pce_fast_main_ram_snapshot" 8192 'PCE Fast main RAM' || exit 1
+    if [[ -e "$main_ram_snapshot" || -e "$bram_snapshot" ]]; then
+        printf '%s\n' 'FAIL: PCE Fast capture must not mislabel PCE-only RAM snapshots' >&2
+        exit 1
+    fi
+fi
 if [[ -s "$command_ram_trace" ]]; then
     if ! awk '
         NR == 1 { if ($0 != "FIRESTAFF_THERON_COMMAND_RAM_TRACE_V1") exit 1; next }
@@ -1806,10 +1820,14 @@ fi
     printf 'party_x_2040=%s\n' "$transition_party_x_2040"
     printf 'party_y_2041=%s\n' "$transition_party_y_2041"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
-    printf 'vdc_vram_snapshot_bytes=65536\n'
-    printf 'main_ram_snapshot_bytes=8192\n'
-    printf 'bram_snapshot_bytes=2048\n'
-    printf 'vce_palette_snapshot_bytes=1024\n'
+    if [[ "$capture_mednafen_module" == pce ]]; then
+        printf 'vdc_vram_snapshot_bytes=65536\n'
+        printf 'main_ram_snapshot_bytes=8192\n'
+        printf 'bram_snapshot_bytes=2048\n'
+        printf 'vce_palette_snapshot_bytes=1024\n'
+    else
+        printf 'pce_fast_main_ram_snapshot_bytes=8192\n'
+    fi
     printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"
     printf 'vdc_io_trace_limit=%s\n' "$vdc_io_trace_limit"
     printf 'command_ram_writes=%s\n' "$transition_command_ram_write_count"

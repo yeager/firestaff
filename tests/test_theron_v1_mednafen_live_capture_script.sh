@@ -156,8 +156,10 @@ if [[ "$route_output" != *'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_
     exit 1
 fi
 if ! grep -Fq 'mkdir -p "$home_dir/sav"' "$script" ||
-   ! grep -Fq -- '-filesys.path_sav "$home_dir/sav"' "$script"; then
-    printf '%s\n' 'FAIL: isolated captures must bind Mednafen backup RAM to the private capture home' >&2
+   ! grep -Fq -- '-filesys.path_sav "$home_dir/sav"' "$script" ||
+   ! grep -Fq 'mkdir -p "$home_dir/mcs"' "$script" ||
+   ! grep -Fq -- '-filesys.path_state "$home_dir/mcs"' "$script"; then
+    printf '%s\n' 'FAIL: isolated captures must bind backup RAM and state files to the private capture home' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_TITLE_WAIT_INPUT="$title_wait_input"' "$script" ||
@@ -700,6 +702,18 @@ if ! grep -Fq 'MODE1/2048' "$script" ||
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     printf 'FAIL: capture script must retain a raw controller input receipt\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
+   ! grep -Fq 'scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
+   ! grep -Fq 'static void TheronPCEFastInputTraceRead' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
+    printf '%s\n' 'FAIL: pce_fast capture must retain source- and bus-bound input traces' >&2
+    exit 1
+fi
+if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||
+   ! grep -Fq 'require_snapshot_size "$pce_fast_main_ram_snapshot" 8192' "$script" ||
+   ! grep -Fq 'pce_fast_main_ram_snapshot_bytes=8192' "$script"; then
+    printf '%s\n' 'FAIL: capture snapshots must match the selected Mednafen core' >&2
     exit 1
 fi
 if ! grep -Fq 'theron_input_read_count < theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
