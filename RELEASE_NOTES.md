@@ -1,5 +1,13 @@
-## Unreleased changes
+# Firestaff v3.0.361
 
+## Developer changes
+
+- `CSB FM Towns delayed gameplay sound`: F31's mode-2 sound request now
+  enters the source C20 timeline for the following tick. The due handler
+  reads the sound index from C.SoundIndex rather than confusing it with
+  A.Priority; English and Japanese original-media tests cover that live
+  event and the subsequent PCM queue flush. Natural closed-door melee and
+  physical M5 speaker output remain unverified.
 - `DM2 FM Towns remote creature transfer`: a source 0x3c timer may move an
   authenticated DB4 creature to another map without changing the party's
   map, outdoor state or viewport light-map identity. An original-media
@@ -19,6 +27,13 @@
   and resolved melee attacks, including misses. An EN/JA original-media test
   checks F20 PCM with constructed C04-positioned receipts; a naturally
   scheduled live attack and physical M5 speaker output remain unverified.
+
+## Known limitations
+
+- Physical MacBook Pro M5 HiDPI input and speaker output remain unverified.
+  DM1, CSB and DM2 dungeon viewport, movement and audio parity remain open.
+  The original-media checks cover specific engine paths, not complete game
+  sessions on every platform.
 
 # Firestaff v3.0.360
 

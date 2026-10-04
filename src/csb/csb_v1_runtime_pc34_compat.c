@@ -4684,6 +4684,21 @@ static int csb_v1_runtime_request_source_sound(
 
     if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
         profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        if (request->mode == CSB_V1_MODE_PLAY_ONE_TICK_LATER) {
+            struct DM1_Event_V1 event;
+            /* ReDMCSB SOUND.C F0064:1535-1544 queues C20 before computing
+             * distance. The due tick reads C.SoundIndex (not Priority), so
+             * a moving party hears the sound at its later position. */
+            memset(&event, 0, sizeof(event));
+            event.map_time = DM1_MAP_TIME_MAKE(
+                (uint32_t)profile->current_level, profile->game_time + 1u);
+            event.type = DM1_EVENT_PLAY_SOUND;
+            event.priority = spec->priority;
+            event.b_mapX = (uint8_t)request->mapX;
+            event.b_mapY = (uint8_t)request->mapY;
+            event.c_cell = (uint8_t)request->soundIndex;
+            return csb_v1_runtime_add_timeline_event(profile, &event) >= 0;
+        }
         if (distance > (int)spec->softDistance) return 0;
         if (distance < (int)spec->loudDistance) {
             volume = 127;
@@ -20885,7 +20900,14 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             {
                 CsbV1AudioRequest snd;
                 memset(&snd, 0, sizeof(snd));
-                snd.soundIndex = (int16_t)record->aux0;
+                /* ReDMCSB SOUND.C F0064:1537-1544 puts sound priority in
+                 * EVENT.A.Priority and sound index in EVENT.C.SoundIndex.
+                 * The F31 C.SoundIndex is record->cell here. */
+                snd.soundIndex = (profile->variant_id ==
+                                      CSB_V1_VARIANT_FMTOWNS_EN ||
+                                  profile->variant_id ==
+                                      CSB_V1_VARIANT_FMTOWNS_JA)
+                    ? (int16_t)record->cell : (int16_t)record->aux0;
                 snd.mapX = (int16_t)record->mapX;
                 snd.mapY = (int16_t)record->mapY;
                 snd.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;

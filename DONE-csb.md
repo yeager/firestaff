@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+- 2026-10-04: F31 mode-2 gameplay sound requests now create the original
+  C20 timeline event for the following game tick, before distance is tested.
+  The due event reads C.SoundIndex separately from A.Priority and joins the
+  existing per-index PCM queue; modes 0/1 and other editions retain their
+  paths. English and Japanese original-media tests pass after the Entrance
+  handoff and verify due-tick selection and following-tick playback with
+  distinct sound priority and sample index. This test injects a C20 event
+  into the authentic live runtime; natural closed-door melee and M5 speaker
+  output remain unverified.
+
 - 2026-10-04: The active F31 dungeon viewport now binds the original
   current-level floor-ornament selectors and dungeon seed before F0108/F0128
   rendering. English and Japanese original-media tests pass from the packed

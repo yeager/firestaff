@@ -2,6 +2,12 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Verify the natural F31 closed-door melee path on the reported M5. Its
+  C04 sound now schedules ReDMCSB's C20 event one tick later, and EN/JA
+  original-media tests prove that an injected C20 event selects its sample
+  at the due tick. The test does not exercise a naturally triggered melee
+  action or audible device output.
+
 - Capture a post-Entrance FM Towns dungeon frame on the reported M5 and
   compare an authentic ornament-bearing pose with its source material. The
   live F0128 path now binds MINI.DAT floor-ornament selectors and seed, and

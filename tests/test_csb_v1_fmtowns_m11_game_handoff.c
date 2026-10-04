@@ -3079,6 +3079,51 @@ int main(void)
     if (!user_save_path || !user_save_path[0]) CHECK(game_music_started,
           "F31 live map music waits 100 F0743 updates then selects its retail CUE track");
 
+    /* The F31 C20 event carries sound priority in A.Priority and the PCM
+     * selector in C.SoundIndex. Exercise the due-tick decoder against the
+     * authenticated post-Entrance runtime instead of a generated dungeon. */
+    if (!user_save_path || !user_save_path[0]) {
+        CSB_V1_RuntimeProfile *runtime =
+            &((CSB_V1_BootProfile *)view.csbBootProfile)->runtime;
+        struct DM1_Event_V1 sound_event = {0};
+        CSB_V1_F0261_ProcessTickReceipt tick_receipt;
+        const CsbV1Pc34SoundSpec *sound_spec =
+            csb_v1_audio_runtime_pc34_sound_spec(17);
+        uint32_t plays_before = runtime->audio_runtime.totalCompletedPlays;
+        int16_t heard_index = -1;
+        sound_event.map_time = DM1_MAP_TIME_MAKE(
+            (uint32_t)runtime->current_level, runtime->game_time + 1u);
+        sound_event.type = DM1_EVENT_PLAY_SOUND;
+        sound_event.priority = sound_spec ? sound_spec->priority : 0u;
+        sound_event.b_mapX = (uint8_t)runtime->party_x;
+        sound_event.b_mapY = (uint8_t)runtime->party_y;
+        sound_event.c_cell = 17u;
+        CHECK(sound_spec && sound_event.priority != sound_event.c_cell &&
+                  csb_v1_runtime_add_timeline_event(runtime, &sound_event) >= 0,
+              "F31 real runtime queues source C20 with distinct priority and PCM index");
+        memset(&tick_receipt, 0, sizeof(tick_receipt));
+        CHECK(csb_v1_runtime_f0261_process_tick(runtime, &tick_receipt) &&
+                  runtime->audio_runtime.fmtownsPendingVolume[17] == 0,
+              "F31 C20 waits for its due tick before selecting PCM");
+        memset(&tick_receipt, 0, sizeof(tick_receipt));
+        CHECK(csb_v1_runtime_f0261_process_tick(runtime, &tick_receipt) &&
+                  runtime->audio_runtime.fmtownsPendingVolume[17] ==
+                      (sound_spec
+                           ? (127 / (sound_spec->softDistance + 2 -
+                                     sound_spec->loudDistance)) *
+                                 (sound_spec->softDistance + 1)
+                           : 0),
+              "F31 C20 selects C.SoundIndex at its due tick, not A.Priority");
+        memset(&tick_receipt, 0, sizeof(tick_receipt));
+        CHECK(csb_v1_runtime_f0261_process_tick(runtime, &tick_receipt) &&
+                  runtime->audio_runtime.totalCompletedPlays > plays_before &&
+                  csb_v1_audio_runtime_completed_play_at(
+                      &runtime->audio_runtime,
+                      runtime->audio_runtime.totalCompletedPlays,
+                      &heard_index) && heard_index == 17,
+              "F31 C20 flushes its authenticated PCM selector after dispatch");
+    }
+
     M11_GameView_Shutdown(&view);
     free(materialized_mini);
     if (failures) return 1;
