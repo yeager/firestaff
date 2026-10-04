@@ -23,7 +23,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  static INLINE uint16 RdMem16(unsigned int A)
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,6 +111,37 @@ void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
+@@ -111,7 +111,38 @@ void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
    TheronTracePartyRAMWrite(offset, value);
  }
