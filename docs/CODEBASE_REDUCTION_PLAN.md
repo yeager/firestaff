@@ -35,6 +35,22 @@ figures describe different problems: packed presentation data, accumulated
 build/test declarations, retained experiments, and large runtime owners.
 Splitting a file without removing duplication is not counted as a size win.
 
+## Progress (2026-10-04)
+
+The rail and readme-logo initializers have been replaced by exact
+project-owned RGB bytes and one deterministic build-time C generator. Their
+original arrays contained 58,569 text lines; the two commits remove 58,467
+net tracked text lines and about 3.37 MB of tracked bytes after replacement
+assets and generator code. Each binary was checked byte for byte against its
+original C initializer. Both commits passed hosted Linux, macOS and Windows
+CI. These checks establish asset equivalence and build compatibility, not
+physical HiDPI presentation.
+
+`src/shared/card_art_generated_m12.c` contains DM1, CSB and DM2 cards together
+with Nexus and Theron cards and a public lookup rule. Treat its 36,039 lines
+as a separate, coordinated migration; do not modify the other agents' card
+owners as an automatic extension of the two-image pilot.
+
 ## Work sequence
 
 ### 1. Record a behavior and size baseline
@@ -52,10 +68,11 @@ Pilot one launcher image. Store its exact bytes as a compact, versioned
 project-owned asset and generate the C array in the build directory with a
 deterministic, cross-platform tool. Compare every decoded byte and the public
 array size with the current representation, then build and package on macOS,
-Windows, and Linux. If the pilot passes, migrate the other two files. Keep the
-bytes bundled with the executable; do not add a runtime search path or disk
-cache for game media. Expected checkout reduction: about 94,600 lines, with
-no intended pixel or behavior change.
+Windows, and Linux. If the pilot passes, migrate the other two files within
+their ownership boundaries. Keep the bytes bundled with the executable; do
+not add a runtime search path or disk cache for game media. The original
+three-file opportunity was about 94,600 lines; further reduction beyond the
+two completed assets requires coordinated ownership of the mixed card file.
 
 ### 3. Audit and retire historical probes and evidence
 
@@ -63,13 +80,16 @@ Build a manifest for every `probes/` and `parity-evidence/` file: producer,
 consumer, source-media provenance, last successful run, and whether an active
 test or document requires it. A literal-path search found 177 probe files
 (about 184,000 lines) and 2,353 evidence files (about 174,000 lines) without
-references from CMake, tests, scripts, docs, or tools. This is an audit queue,
-not a deletion list: globs, basename lookups, manual investigations, and
-historical proof can still depend on these files. Retire only items whose
-current role is disproven or replaced by a stronger gate; preserve provenance
-and checksums in a manifest and Git history. Do not rewrite Git history in
-this phase. The candidate upper bound is about 358,000 lines, not a promised
-saving.
+literal references from CMake, tests, scripts, docs, or tools. The subsequent
+CI audit found that `.github/workflows/verify.yml` compiles every matching
+`probes/firestaff_*_probe.c` and nested game probe via a glob. Therefore
+the unreferenced `.c` count is not a deletion candidate and the earlier
+358,000-line upper bound is invalid. Historical logs may also be unique
+ReDMCSB receipts even without executable consumers. Map globs, basename
+lookups and evidence-retention policy before proposing any deletion. Retire
+only items whose current role is disproven or replaced by a stronger gate;
+preserve provenance and checksums in a manifest and Git history. Do not
+rewrite Git history in this phase.
 
 ### 4. Simplify the build and test graph
 
