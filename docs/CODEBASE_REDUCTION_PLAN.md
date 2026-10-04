@@ -35,7 +35,7 @@ figures describe different problems: packed presentation data, accumulated
 build/test declarations, retained experiments, and large runtime owners.
 Splitting a file without removing duplication is not counted as a size win.
 
-## Progress (2026-10-04)
+## Progress (2026-10-05)
 
 The rail and readme-logo initializers have been replaced by exact
 project-owned RGB bytes and one deterministic build-time C generator. Their
@@ -46,10 +46,14 @@ original C initializer. Both commits passed hosted Linux, macOS and Windows
 CI. These checks establish asset equivalence and build compatibility, not
 physical HiDPI presentation.
 
-`src/shared/card_art_generated_m12.c` contains DM1, CSB and DM2 cards together
-with Nexus and Theron cards and a public lookup rule. Treat its 36,039 lines
-as a separate, coordinated migration; do not modify the other agents' card
-owners as an automatic extension of the two-image pilot.
+The mixed card file's DM1, CSB and DM2 arrays have also moved to exact binary
+sources. Their 21,600 numeric lines are replaced by binary inputs and a small
+generator, reducing tracked text by about 21,500 lines and tracked bytes by
+about 1.17 MB. The untouched Nexus/Theron arrays and public lookup tail
+compare byte for byte with the previous file. Hosted platform builds for this
+third batch are pending. Cumulative net reduction across the three asset
+batches is about 80,000 tracked text lines. The remaining
+14,400 card-art numeric lines have other game owners.
 
 ## Work sequence
 

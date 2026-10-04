@@ -4,3 +4,6 @@ scripts/mednafen_1.32.1_nexus_sh2_cached_ram_read_trace.patch whitespace=-space-
 assets/cards/platforms/*.ppm binary
 src/ui/branding_firestaff_rail_m12.rgb binary
 src/ui/branding_logo_readme_m12.rgb binary
+src/shared/card_art_dm1_m12.rgb binary
+src/shared/card_art_csb_m12.rgb binary
+src/shared/card_art_dm2_m12.rgb binary

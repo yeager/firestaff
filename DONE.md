@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-05: Moved only the DM1, CSB and DM2 launcher card RGB arrays from
+  the mixed generated-card C source to three exact 129,600-byte project-owned
+  binaries and deterministic build-time C generation. Each array compares
+  byte for byte with its previous initializer; the Nexus/Theron arrays and
+  lookup logic remain byte-identical. The full batch removes about 21,500
+  tracked text lines and 1.17 MB of tracked bytes. Generated C compilation and
+  local CMake configuration pass; hosted platform builds await this commit.
+
 - 2026-10-04: The 17,071-line launcher readme-logo RGB initializer is now an
   exact 307,200-byte project-owned binary. The shared build generator preserves
   the compiled logo symbol and rail symbol; both generated C files pass syntax

@@ -9,6 +9,20 @@ set(FIRESTAFF_RAIL_GENERATED_C
     "${CMAKE_CURRENT_BINARY_DIR}/generated/branding_firestaff_rail_m12.c")
 set(FIRESTAFF_LOGO_GENERATED_C
     "${CMAKE_CURRENT_BINARY_DIR}/generated/branding_logo_readme_m12.c")
+set(FIRESTAFF_CARD_ART_GENERATED_C
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/card_art_rgb_m12.c")
+add_custom_command(
+    OUTPUT "${FIRESTAFF_CARD_ART_GENERATED_C}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_m12_card_art_c.py"
+        --input-dir "${CMAKE_CURRENT_SOURCE_DIR}/src/shared"
+        --output "${FIRESTAFF_CARD_ART_GENERATED_C}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_m12_card_art_c.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/card_art_dm1_m12.rgb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/card_art_csb_m12.rgb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/card_art_dm2_m12.rgb"
+    VERBATIM)
 add_custom_command(
     OUTPUT "${FIRESTAFF_RAIL_GENERATED_C}"
     COMMAND "${Python3_EXECUTABLE}"
@@ -8168,6 +8182,7 @@ set(M12_SOURCES
     src/shared/firestaff_mapfile.c
     src/shared/card_art_m12.c
     src/shared/card_art_generated_m12.c
+    "${FIRESTAFF_CARD_ART_GENERATED_C}"
     "${FIRESTAFF_RAIL_GENERATED_C}"
     src/ui/branding_logo_m12.c
     "${FIRESTAFF_LOGO_GENERATED_C}"
