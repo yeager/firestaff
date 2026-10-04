@@ -1,0 +1,63 @@
+--- a/src/pce_fast/huc6280.h
++++ b/src/pce_fast/huc6280.h
+@@ -12,6 +12,8 @@ MDFN_HIDE extern uint16 TheronTraceInstructionPC;
+ MDFN_HIDE extern uint32 TheronTraceInstructionPhysicalPC;
+ MDFN_HIDE void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value);
++MDFN_HIDE void TheronTraceMainRAMConsumerRead(uint32 logical_address,
++                                              uint32 physical_address, uint8 value);
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ struct HuC6280
+ {
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -148,8 +148,12 @@ static INLINE uint8 RdMem(unsigned int A)
+ {
+  uint8 wmpr = HuCPU.MPR[A >> 13];
+- return(HuCPU.PCERead[wmpr]((wmpr << 13) | (A & 0x1FFF)));
++ uint32 physical_address = (wmpr << 13) | (A & 0x1FFF);
++ uint8 value = HuCPU.PCERead[wmpr](physical_address);
++ TheronTraceMainRAMConsumerRead(A, physical_address, value);
++ return value;
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ static INLINE uint16 RdMem16(unsigned int A)
+--- a/src/pce_fast/pce.cpp
++++ b/src/pce_fast/pce.cpp
+@@ -111,6 +111,37 @@ void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
+  if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
+   TheronTracePartyRAMWrite(offset, value);
+ }
++void TheronTraceMainRAMConsumerRead(uint32 logical_address, uint32 physical_address,
++                                    uint8 value)
++{
++ static FILE *trace = NULL;
++ static unsigned count = 0;
++ static unsigned per_offset[256] = {};
++ unsigned offset;
++ if(physical_address < 0x1F0000 || physical_address >= 0x1F8000)
++  return;
++ offset = physical_address & 0x1FFF;
++ if((offset != 0x0031 && offset != 0x003F && offset != 0x0040 &&
++      offset != 0x0041 && offset != 0x00DA && offset != 0x00DB) ||
++    count >= 24576 || per_offset[offset] >= 4096)
++  return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-fast-main-ram-consumer-read\n", trace);
++ }
++ fprintf(trace, "main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
++         count++, logical_address & 0xFFFF, physical_address, value,
++         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
++         HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P);
++ fflush(trace);
++ per_offset[offset]++;
++}
+ static DECLFW(BaseRAMWrite)
+ {
+  TheronTracePartyRAMWrite(A, V);

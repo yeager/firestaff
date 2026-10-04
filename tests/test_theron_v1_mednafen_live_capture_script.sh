@@ -936,12 +936,22 @@ if ! grep -Fq 'TheronTraceInstructionPhysicalPC' "$party_ram_trace_patch" ||
    [[ $(grep -Fc '+ TheronTracePartyRAMWrite(A, V);' "$party_ram_trace_patch") -ne 2 ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace"' "$script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch' "$build_script"; then
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch' "$build_script"; then
     printf '%s\n' 'FAIL: Theron party-RAM writer tracing must cover mirrored BaseRAM writes with current HuC6280 PC' >&2
     exit 1
 fi
 instruction_pc_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
 party_ram_budget_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch"
+party_ram_consumer_read_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch"
+if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
+   ! grep -Fq 'TheronTraceMainRAMConsumerRead(A, physical_address, value)' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'per_offset[offset] >= 4096' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'reader_physical_pc=%06x' "$party_ram_consumer_read_patch"; then
+    printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must be bounded, opt-in, and source-positioned' >&2
+    exit 1
+fi
 if ! grep -Fq 'if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)' "$party_ram_trace_patch" ||
    ! grep -Fq 'IsSGX || BaseRAM[offset] == value' "$party_ram_trace_patch" ||
    ! grep -Fq 'per_offset[offset] >= 4096' "$party_ram_budget_patch" ||

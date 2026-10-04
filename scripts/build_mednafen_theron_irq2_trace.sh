@@ -192,6 +192,14 @@ patch -d "$build_root/source" -p1 --batch --forward --fuzz=3 \
     < "$pce_fast_snapshot_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch"
+pce_fast_consumer_read_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch"
+pce_fast_consumer_read_rendered="$build_root/theron-pce-fast-main-ram-consumer-read.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$pce_fast_consumer_read_patch" \
+    > "$pce_fast_consumer_read_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$pce_fast_consumer_read_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
