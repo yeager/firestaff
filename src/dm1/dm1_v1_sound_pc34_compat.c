@@ -313,6 +313,11 @@ const DM1_SoundData* DM1_Sound_GetSoundData(const DM1_SoundSystem* sys, int16_t 
     return &sys->soundData[soundIndex];
 }
 
+const DM1_SoundData* DM1_Sound_GetDefaultSoundData(int16_t soundIndex) {
+    if (soundIndex < 0 || soundIndex >= DM1_SND_COUNT) return NULL;
+    return &kDefaultSoundData[soundIndex];
+}
+
 const char* DM1_Sound_Name(int16_t soundIndex) {
     switch (soundIndex) {
         case DM1_SND_METALLIC_THUD:       return "Metallic Thud";

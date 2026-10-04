@@ -14248,7 +14248,7 @@ cmd_attack_legacy_marker:
         uint32_t spellRngRaw;
 
         emit(result, EMIT_SOUND_REQUEST, tableIdx,
-             world->party.mapX, world->party.mapY, 0);
+             world->party.mapX, world->party.mapY, world->party.mapIndex);
 
         if (powerOrd < 1 || powerOrd > 6) powerOrd = 1;
 
@@ -14586,9 +14586,7 @@ cmd_attack_legacy_marker:
     case CMD_EAT:
     case CMD_DRINK:
     case CMD_THROW_ITEM: {
-        /* Deterministic no-op emission (RNG unchanged). */
-        emit(result, EMIT_SOUND_REQUEST, input->command,
-             input->commandArg1, input->commandArg2, 0);
+        /* These unimplemented commands have no source sound receipt. */
         return 1;
     }
     case CMD_REST_TOGGLE:

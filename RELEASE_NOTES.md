@@ -6,10 +6,11 @@
   the source metadata handoff. A presented M5 dungeon comparison remains
   open.
 - `DM1 FM Towns gameplay sound`: M10 tick sound requests now reach the
-  authenticated F20 PCM bank instead of the absent PC SND3 bank. An
-  original-media regression exercises the live emission path in English and
-  Japanese. Distance volume, same-tick arbitration and physical speaker
-  output remain unverified.
+  authenticated F20 PCM bank instead of the absent PC SND3 bank. Their
+  original-map coordinates drive the F0064 distance volume, and F0065 keeps
+  the loudest request per native sample index before playback. English and
+  Japanese original-media regressions cover both routes. Direct creature
+  sounds and physical M5 speaker output remain unverified.
 
 # Firestaff v3.0.360
 

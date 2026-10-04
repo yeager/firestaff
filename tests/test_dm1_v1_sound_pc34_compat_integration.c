@@ -287,6 +287,23 @@ static void test_tick_emission_audio_plan(void) {
           "null plan is rejected");
 }
 
+static void test_unimplemented_commands_are_source_silent(void) {
+    struct GameWorld_Compat* world = calloc(1, sizeof(*world));
+    struct TickInput_Compat input = {0};
+    struct TickResult_Compat result = {0};
+    const int commands[] = {CMD_USE_ITEM, CMD_EAT, CMD_DRINK, CMD_THROW_ITEM};
+    CHECK(world != NULL, "allocate command world");
+    if (!world) return;
+    for (size_t i = 0; i < sizeof(commands) / sizeof(commands[0]); ++i) {
+        input.command = (uint8_t)commands[i];
+        memset(&result, 0, sizeof(result));
+        CHECK(F0888_ORCH_ApplyPlayerInput_Compat(world, &input, &result) == 1 &&
+              result.emissionCount == 0,
+              "unimplemented command cannot fabricate a sound request");
+    }
+    free(world);
+}
+
 int main(void) {
     test_init();
     test_sound_constants();
@@ -304,6 +321,7 @@ int main(void) {
     test_sound_names();
     test_music_map_parity();
     test_tick_emission_audio_plan();
+    test_unimplemented_commands_are_source_silent();
 
     printf("dm1_v1_sound_pc34_compat: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

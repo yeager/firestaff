@@ -15633,20 +15633,34 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
         return;
     }
     if (plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND) {
-        if (state->dm1FmtownsStartupReceiptValid) {
-            /* M10's F0064 sound request is an original DM1 event. F20 has
-             * no SND3 bank; pass it to its retained PCM transport. Distance
-             * and per-index tick arbitration remain a separate F0064/F0065
-             * boundary because some host emissions lack source coordinates. */
-            m11_audio_emit_source_sound_with_volume(state,
-                plan.sourceSoundIndex, 127,
-                M11_Audio_FallbackMarkerForSoundIndex(plan.sourceSoundIndex));
-        } else {
-            (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
-                plan.sourceSoundIndex);
-        }
+        (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
+            plan.sourceSoundIndex);
         state->audioEventCount += 1;
     }
+}
+
+static int m11_dm1_fmtowns_tick_sound_volume(
+    const M11_GameViewState* state, const struct TickEmission_Compat* emission,
+    int soundIndex) {
+    const DM1_SoundData* sound;
+    int64_t deltaX, deltaY, distance;
+    if (!state || !emission) return 0;
+    if (emission->kind != EMIT_SOUND_REQUEST) return 127;
+    sound = DM1_Sound_GetDefaultSoundData((int16_t)soundIndex);
+    if (!sound || emission->payload[3] != state->world.party.mapIndex) return 0;
+    deltaX = (int64_t)emission->payload[1] - state->world.party.mapX;
+    deltaY = (int64_t)emission->payload[2] - state->world.party.mapY;
+    if (deltaX < 0) deltaX = -deltaX;
+    if (deltaY < 0) deltaY = -deltaY;
+    distance = deltaX + deltaY;
+    /* ReDMCSB SOUND.C F0064:1561-1575 and DATA.C:1203-1226: F20
+     * suppresses effects past SoftDistance and attenuates the rest in
+     * integer steps. The PC event IDs share these fields with F20's 22
+     * retained sample rows. */
+    if (distance > sound->softDistance) return 0;
+    if (distance < sound->loudDistance) return 127;
+    return (127 / (sound->softDistance + 2 - sound->loudDistance)) *
+           (sound->softDistance + 1 - distance);
 }
 
 /* m11_join_path replaced by FSP_JoinPath from fs_portable_compat. */
@@ -24217,12 +24231,32 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
 
 void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     int i;
+    int fmtownsPendingSound[22];
+    unsigned char fmtownsPendingVolume[22] = {0};
     if (!state) {
         return;
     }
+    for (i = 0; i < 22; ++i) fmtownsPendingSound[i] = DM1_SND_NONE;
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         const struct TickEmission_Compat* e = &state->lastTickResult.emissions[i];
-        m11_audio_emit_for_emission(state, e);
+        if (state->dm1FmtownsStartupReceiptValid) {
+            DM1_V1_AudioEmissionPlanPc34 plan;
+            if (DM1_V1_BuildAudioEmissionPlanPc34(e, &plan) &&
+                plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND) {
+                int nativeIndex = M11_Audio_Dm1AtariSoundIndex(
+                    plan.sourceSoundIndex);
+                int volume = m11_dm1_fmtowns_tick_sound_volume(
+                    state, e, plan.sourceSoundIndex);
+                if (nativeIndex >= 0 && nativeIndex < 22 &&
+                    volume > fmtownsPendingVolume[nativeIndex]) {
+                    fmtownsPendingVolume[nativeIndex] = (unsigned char)volume;
+                    fmtownsPendingSound[nativeIndex] = plan.sourceSoundIndex;
+                }
+                state->audioEventCount += 1;
+            }
+        } else {
+            m11_audio_emit_for_emission(state, e);
+        }
         switch (e->kind) {
             case EMIT_DAMAGE_DEALT: {
                 DM1_MeleeDamageEmissionInputPc34 meleeEmissionIn;
@@ -24485,6 +24519,19 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
             }
             default:
                 break;
+        }
+    }
+
+    /* ReDMCSB SOUND.C F0064:1625-1630 and F0065:1756-1790 retain the
+     * loudest request per F20 sample index, then flush in source order. */
+    if (state->dm1FmtownsStartupReceiptValid) {
+        for (i = 0; i < 22; ++i) {
+            if (fmtownsPendingVolume[i]) {
+                m11_audio_emit_source_sound_with_volume(state,
+                    fmtownsPendingSound[i], fmtownsPendingVolume[i],
+                    M11_Audio_FallbackMarkerForSoundIndex(
+                        fmtownsPendingSound[i]));
+            }
         }
     }
 

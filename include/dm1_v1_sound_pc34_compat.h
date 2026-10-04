@@ -157,6 +157,7 @@ void DM1_Music_Update(DM1_SoundSystem* sys);
 void DM1_Music_Stop(DM1_SoundSystem* sys);
 int  DM1_Sound_GetLastPlayedIndex(const DM1_SoundSystem* sys);
 const DM1_SoundData* DM1_Sound_GetSoundData(const DM1_SoundSystem* sys, int16_t soundIndex);
+const DM1_SoundData* DM1_Sound_GetDefaultSoundData(int16_t soundIndex);
 const char* DM1_Sound_Name(int16_t soundIndex);
 int DM1_V1_BuildAudioEmissionPlanPc34(const struct TickEmission_Compat* emission,
                                       DM1_V1_AudioEmissionPlanPc34* outPlan);

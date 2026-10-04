@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-10-04: FM Towns F20 M10 sound emissions now use the authenticated
+  source coordinates and DATA.C loud/soft distances. SOUND.C F0064/F0065's
+  integer volume steps and loudest request per native sample index are
+  applied at each tick flush. Original English/Japanese media passes the
+  local, distant, cross-map and duplicate-sample regressions. Physical M5
+  output and non-emission sound callers remain to be checked.
+
 - 2026-10-04: M10 gameplay tick sound requests now use retained FM Towns F20
   PCM instead of PC SND3 when the authenticated FM Towns runtime is active.
   An original-media test passes for English and Japanese F20 with an

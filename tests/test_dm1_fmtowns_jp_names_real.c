@@ -176,9 +176,39 @@ int main(void) {
                   language ? "EN" : "JP");
           goto done;
       }
+      /* SOUND.C F0064/F0065: the original F20 door rattle has loud=3,
+       * soft=6. Distance four is 75/127; distance seven and another map
+       * are silent. Duplicate native index 2 keeps its loudest request. */
+      state->lastTickResult.emissions[0].payload[1] = state->world.party.mapX + 4;
+      state->audioState.csbFmtownsRuntimeSoundSourceVolume = 0;
+      M11_GameView_ProcessTickEmissions(state);
+      if (state->audioState.csbFmtownsRuntimeSoundSourceVolume != 75)
+          goto done;
+      state->lastTickResult.emissions[0].payload[1] = state->world.party.mapX + 7;
+      state->audioState.csbFmtownsRuntimeSoundAccepted = 0;
+      state->audioState.lastSoundIndex = DM1_SND_NONE;
+      M11_GameView_ProcessTickEmissions(state);
+      if (state->audioState.csbFmtownsRuntimeSoundAccepted ||
+          state->audioState.lastSoundIndex != DM1_SND_NONE) goto done;
+      state->lastTickResult.emissions[0].payload[1] = state->world.party.mapX;
+      state->lastTickResult.emissions[0].payload[3] = state->world.party.mapIndex + 1;
+      M11_GameView_ProcessTickEmissions(state);
+      if (state->audioState.csbFmtownsRuntimeSoundAccepted) goto done;
+      state->lastTickResult.emissions[0].payload[1] = state->world.party.mapX + 4;
+      state->lastTickResult.emissions[0].payload[3] = state->world.party.mapIndex;
+      state->lastTickResult.emissionCount = 2;
+      state->lastTickResult.emissions[1] = state->lastTickResult.emissions[0];
+      state->lastTickResult.emissions[1].payload[0] = DM1_SND_DOOR_RATTLE_ENTRANCE;
+      state->lastTickResult.emissions[1].payload[1] = state->world.party.mapX;
+      M11_GameView_ProcessTickEmissions(state);
+      if (!state->audioState.csbFmtownsRuntimeSoundAccepted ||
+          state->audioState.csbFmtownsRuntimeSoundSourceVolume != 127 ||
+          state->audioState.lastSoundIndex != DM1_SND_DOOR_RATTLE_ENTRANCE)
+          goto done;
       }
     puts("PASS: original F20 EN/JP unsigned PCM matches every resampled output sample at 5500 Hz");
     puts("PASS: original F20 EN/JP M10 tick sound uses native PCM without SND3");
+    puts("PASS: original F20 EN/JP tick sound attenuates and arbitrates by native sample index");
     for (int japanese = 0; japanese < 2; ++japanese) {
         M11_GameViewState *spellState = calloc(1, sizeof(*spellState));
         int spellOk;
