@@ -712,7 +712,12 @@ if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
 fi
 if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||
    ! grep -Fq 'require_snapshot_size "$pce_fast_main_ram_snapshot" 8192' "$script" ||
-   ! grep -Fq 'pce_fast_main_ram_snapshot_bytes=8192' "$script"; then
+   ! grep -Fq 'pce_fast_main_ram_snapshot_bytes=8192' "$script" ||
+   ! grep -Fq 'PCE Fast capture must not emit PCE-only VDC snapshots or traces' "$script" ||
+   ! grep -Fq 'vdc_io_writes=unavailable' "$script" ||
+   ! grep -Fq 'vdc_io_trace_limit=unavailable' "$script" ||
+   ! grep -Fq 'transition_ram_snapshot=$pce_fast_main_ram_snapshot' "$script" ||
+   ! grep -Fq 'party_y_2041=$(od -An -tx1 -j 65 -N 1 "$transition_ram_snapshot"' "$script"; then
     printf '%s\n' 'FAIL: capture snapshots must match the selected Mednafen core' >&2
     exit 1
 fi
@@ -930,8 +935,8 @@ if ! grep -Fq 'replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_
 fi
 if ! grep -Fq 'dungeon_bank_20da=%s' "$script" ||
    ! grep -Fq 'dungeon_bank_20db=%s' "$script" ||
-   ! grep -Fq 'od -An -tx1 -j 218 -N 1 "$main_ram_snapshot"' "$script" ||
-   ! grep -Fq 'od -An -tx1 -j 219 -N 1 "$main_ram_snapshot"' "$script"; then
+   ! grep -Fq 'od -An -tx1 -j 218 -N 1 "$transition_ram_snapshot"' "$script" ||
+   ! grep -Fq 'od -An -tx1 -j 219 -N 1 "$transition_ram_snapshot"' "$script"; then
     printf 'FAIL: capture receipt must retain original dungeon-bank selector bytes\n' >&2
     exit 1
 fi

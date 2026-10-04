@@ -1611,16 +1611,23 @@ if [[ -s "$command_ram_trace" ]]; then
         exit 1
     fi
 fi
-if [[ ! -s "$vdc_state_snapshot" ]] ||
-   ! grep -Fqx 'FIRESTAFF_THERON_VDC_STATE_V1' "$vdc_state_snapshot" ||
-   ! grep -Eq '^vdc=0 bxr=[0-9a-f]{4} byr=[0-9a-f]{4} mwr=[0-9a-f]{4} hsr=[0-9a-f]{4} hdr=[0-9a-f]{4} vsr=[0-9a-f]{4} vdr=[0-9a-f]{4} vcr=[0-9a-f]{4} cr=[0-9a-f]{4}$' "$vdc_state_snapshot"; then
-    printf 'BLOCKED: capture lacks the same-instant HuC6270 register snapshot (exit=%s)\n' "$status"
-    exit 1
-fi
-if [[ ! -s "$vdc_io_trace" ]] ||
-   ! grep -Fqx 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$vdc_io_trace" ||
-   ! grep -Eq "^vdc_snapshot_boundary sequence=${vdc_io_trace_limit} timestamp=[0-9]+$" "$vdc_io_trace"; then
-    printf '%s\n' 'FAIL: Mednafen did not produce an atomically bounded VDC I/O/snapshot trace' >&2
+if [[ "$capture_mednafen_module" == pce ]]; then
+    if [[ ! -s "$vdc_state_snapshot" ]] ||
+       ! grep -Fqx 'FIRESTAFF_THERON_VDC_STATE_V1' "$vdc_state_snapshot" ||
+       ! grep -Eq '^vdc=0 bxr=[0-9a-f]{4} byr=[0-9a-f]{4} mwr=[0-9a-f]{4} hsr=[0-9a-f]{4} hdr=[0-9a-f]{4} vsr=[0-9a-f]{4} vdr=[0-9a-f]{4} vcr=[0-9a-f]{4} cr=[0-9a-f]{4}$' "$vdc_state_snapshot"; then
+        printf 'BLOCKED: PCE capture lacks the same-instant HuC6270 register snapshot (exit=%s)\n' "$status"
+        exit 1
+    fi
+    if [[ ! -s "$vdc_io_trace" ]] ||
+       ! grep -Fqx 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$vdc_io_trace" ||
+       ! grep -Eq "^vdc_snapshot_boundary sequence=${vdc_io_trace_limit} timestamp=[0-9]+$" "$vdc_io_trace"; then
+        printf '%s\n' 'FAIL: PCE capture did not produce an atomically bounded VDC I/O/snapshot trace' >&2
+        exit 1
+    fi
+elif [[ -e "$vram_snapshot" || -e "$vce_snapshot" ||
+        -e "$vdc_state_snapshot" || -e "$vdc_sat_snapshot" ||
+        -e "$vdc_io_trace" ]]; then
+    printf '%s\n' 'FAIL: PCE Fast capture must not emit PCE-only VDC snapshots or traces' >&2
     exit 1
 fi
 # The loader receipt is separate from the later dynamic game-data handoff.
@@ -1731,19 +1738,23 @@ transition_current_level_2031=unavailable
 transition_party_direction_203f=unavailable
 transition_party_x_2040=unavailable
 transition_party_y_2041=unavailable
-if [[ -f "$main_ram_snapshot" ]] &&
-   [[ $(wc -c < "$main_ram_snapshot") -eq 8192 ]]; then
+transition_ram_snapshot=$main_ram_snapshot
+if [[ "$capture_mednafen_module" == pce_fast ]]; then
+    transition_ram_snapshot=$pce_fast_main_ram_snapshot
+fi
+if [[ -f "$transition_ram_snapshot" ]] &&
+   [[ $(wc -c < "$transition_ram_snapshot") -eq 8192 ]]; then
     # BaseRAM is mapped at logical $2000, so snapshot offsets $DA/$DB are
     # the original engine's $20DA/$20DB dungeon-bank selectors. Reporting
     # the raw bytes is provenance only; dungeon identity is source-locked
     # separately.
-    transition_dungeon_bank_da=$(od -An -tx1 -j 218 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
-    transition_dungeon_bank_db=$(od -An -tx1 -j 219 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
-    transition_runtime_2038=$(od -An -tx1 -j 56 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
-    transition_current_level_2031=$(od -An -tx1 -j 49 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
-    transition_party_direction_203f=$(od -An -tx1 -j 63 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
-    transition_party_x_2040=$(od -An -tx1 -j 64 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
-    transition_party_y_2041=$(od -An -tx1 -j 65 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+    transition_dungeon_bank_da=$(od -An -tx1 -j 218 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_dungeon_bank_db=$(od -An -tx1 -j 219 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_runtime_2038=$(od -An -tx1 -j 56 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_current_level_2031=$(od -An -tx1 -j 49 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_party_direction_203f=$(od -An -tx1 -j 63 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_party_x_2040=$(od -An -tx1 -j 64 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_party_y_2041=$(od -An -tx1 -j 65 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
 fi
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
@@ -1828,8 +1839,13 @@ fi
     else
         printf 'pce_fast_main_ram_snapshot_bytes=8192\n'
     fi
-    printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"
-    printf 'vdc_io_trace_limit=%s\n' "$vdc_io_trace_limit"
+    if [[ "$capture_mednafen_module" == pce ]]; then
+        printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"
+        printf 'vdc_io_trace_limit=%s\n' "$vdc_io_trace_limit"
+    else
+        printf 'vdc_io_writes=unavailable\n'
+        printf 'vdc_io_trace_limit=unavailable\n'
+    fi
     printf 'command_ram_writes=%s\n' "$transition_command_ram_write_count"
     printf 'command_input_buffer_writes=%s\n' "$transition_command_input_write_count"
     printf 'command_consumer_reads=%s\n' "$transition_command_consumer_read_count"

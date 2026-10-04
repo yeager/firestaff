@@ -1,6 +1,25 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-10-04. Only open work is listed here.
+Reviewed 2026-10-05. Only open work is listed here.
+
+## 2026-10-05 — keep PCE Fast transition evidence module-correct
+
+- ✅ The live-capture validator now requires same-instant HuC6270/VDC
+  snapshots only for Mednafen's `pce` module. `pce_fast` rejects accidental
+  PCE-only VDC sidecars and reports those artifacts as unavailable rather
+  than failing on a snapshot that core does not produce. Transition bytes
+  are read from the selected core's bounded 8 KiB RAM snapshot.
+- ✅ On `trv2`, an isolated `pce_fast` restore of the existing authentic JP
+  Ak-Tu-Ba state passed the module-specific snapshot gates. Its receipt reads
+  `$2031=02`, `$203F-$2041 = 01 02 03`, and `$20DA/$20DB = 01/00` from the
+  captured PCE Fast snapshot, and marks VDC data unavailable. The short
+  no-input state restore has no CD IRQ or authenticated CD-to-RAM receipt,
+  so the overall capture correctly remains blocked at the later dynamic-data
+  gate. The focused capture-script test passed three consecutive loops.
+- 🔒 This fixes evidence collection only. Neither the restored pose nor the
+  level/bank bytes identify the active Akutuba map or prove an input consumer;
+  keep the production first-floor/North pose provisional and exact startup
+  level readiness closed until the same-session map join is captured.
 
 ## 2026-10-04 — join the original startup pose to its active dungeon map
 
