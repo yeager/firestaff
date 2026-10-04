@@ -28,9 +28,11 @@ Reviewed 2026-10-05. Only open work is listed here.
   builds succeeded on `trv2`; the authentic Ak-Tu-Ba state restore again passed
   the PCE Fast snapshot checks and stopped at the expected missing dynamic
   CD/IRQ receipts. `da65` decoded high-frequency captured reader windows as
-  HuC6280 block transfers (`TIA`, `TII`, and `TDD`). This identifies how those
-  observed reads execute, not which transfer supplies the active map or level;
-  no runtime map join or gameplay behavior is promoted from these bytes.
+  HuC6280 block transfers (`TIA`, `TII`, and `TDD`), including `$B9FC`
+  (`TIA $2062,$02,$0020`) and `$A1B7` (`TII $287F,$2883,$0014`). This
+  identifies how those observed reads execute, not which transfer supplies
+  the active map or level; no runtime map join or gameplay behavior is
+  promoted from these bytes.
 
 ## 2026-10-04 — join the original startup pose to its active dungeon map
 
