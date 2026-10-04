@@ -1,6 +1,7 @@
 --- a/src/pce_fast/huc6280.h
 +++ b/src/pce_fast/huc6280.h
-@@ -12,6 +12,8 @@ MDFN_HIDE extern uint16 TheronTraceInstructionPC;
+@@ -12,6 +12,8 @@
+ MDFN_HIDE extern uint16 TheronTraceInstructionPC;
  MDFN_HIDE extern uint32 TheronTraceInstructionPhysicalPC;
  MDFN_HIDE void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value);
 +MDFN_HIDE void TheronTraceMainRAMConsumerRead(uint32 logical_address,
@@ -10,7 +11,8 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -148,6 +148,10 @@ static INLINE uint8 RdMem(unsigned int A)
+@@ -148,8 +148,11 @@
+ static INLINE uint8 RdMem(unsigned int A)
  {
   uint8 wmpr = HuCPU.MPR[A >> 13];
 - return(HuCPU.PCERead[wmpr]((wmpr << 13) | (A & 0x1FFF)));
@@ -21,9 +23,12 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  }
 FIRESTAFF_PATCH_BLANK_CONTEXT
  static INLINE uint16 RdMem16(unsigned int A)
+ {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,7 +111,38 @@ void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
+@@ -111,9 +111,40 @@
+ void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
+ {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
    TheronTracePartyRAMWrite(offset, value);
  }
