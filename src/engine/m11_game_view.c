@@ -24499,9 +24499,13 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 }
                 break;
             case EMIT_CREATURE_MOVED:
-                m11_audio_emit_creature_movement_sound(
-                    state, (int)e->payload[1],
-                    (int)e->payload[2], (int)e->payload[3]);
+                /* F20 plays only movement requests issued by source logic
+                 * such as F0179. A second generic cue here would bypass
+                 * F0064's distance gate and F0065's per-sample queue. */
+                if (!state->dm1FmtownsStartupReceiptValid)
+                    m11_audio_emit_creature_movement_sound(
+                        state, (int)e->payload[1],
+                        (int)e->payload[2], (int)e->payload[3]);
                 break;
             case EMIT_SENSOR_EFFECT: {
                 /* ReDMCSB TIMELINE.C F0245:972-986 handles sensor

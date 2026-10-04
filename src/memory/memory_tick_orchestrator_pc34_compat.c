@@ -77,6 +77,7 @@ int F0884_WORLD_AwardSkillExperience_Compat(
 #include "dm1_v1_torch_drain_f0338_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_creature_sound_pc34_compat.h"
 #include "dm1_v1_group_active_state_pc34_compat.h"
 #include "dm1_v1_group_state_bundle_pc34_compat.h"
 #include "dm1_v1_group_los_direction_admission_pc34_compat.h"
@@ -12870,6 +12871,23 @@ static int orch_f0209_begin_attack_compat(
     return 1;
 }
 
+static void orch_emit_f0207_attack_sound_compat(
+    const struct DungeonGroup_Compat* group,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int soundIndex;
+    if (!group || !ev || !result) return;
+    /* GROUP.C F0207:1802-1815 requests the attack ordinal after melee or
+     * projectile work, including a resolved miss. The event owns the
+     * coordinates before a later C04 move can change the group square.
+     * F20 has no spell-sound fallback for a missing attack ordinal. */
+    soundIndex = DM1_CreatureSound_AttackIndexForType(group->creatureType, 0);
+    if (soundIndex != DM1_SND_NONE)
+        emit(result, EMIT_SOUND_REQUEST, soundIndex,
+             ev->mapX, ev->mapY, ev->mapIndex);
+}
+
 static int orch_apply_f0207_creature_attack_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -12951,6 +12969,7 @@ static int orch_apply_f0207_creature_attack_compat(
             return 0;
         }
         emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex, slot, 1);
+        orch_emit_f0207_attack_sound_compat(group, ev, result);
         return 1;
     }
 
@@ -13048,6 +13067,7 @@ static int orch_apply_f0207_creature_attack_compat(
         }
         emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex,
              combat.damageApplied, 0);
+        orch_emit_f0207_attack_sound_compat(group, ev, result);
     }
     return 1;
 }

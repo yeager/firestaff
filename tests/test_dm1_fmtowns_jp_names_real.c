@@ -5,12 +5,46 @@
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_fmtowns_dyna_buttons_ja.h"
 #include "dm1_v1_sound_pc34_compat.h"
+#include "dm1_v1_creature_sound_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "dm1_late_spell_panel_real_check.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static int find_original_attack_group(const M11_GameViewState *state,
+    int *outMap, int *outX, int *outY, int *outGroup, int *outSound)
+{
+    const struct GameWorld_Compat *world = &state->world;
+    if (!world->dungeon || !world->things) return 0;
+    for (int map = 0; map < world->dungeon->header.mapCount; ++map) {
+        const struct DungeonMapDesc_Compat *desc = &world->dungeon->maps[map];
+        for (int x = 0; x < desc->width; ++x) {
+            for (int y = 0; y < desc->height; ++y) {
+                unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    world->dungeon, world->things, map, x, y);
+                for (int depth = 0; depth < 64 &&
+                     thing != THING_NONE && thing != THING_ENDOFLIST; ++depth) {
+                    if (THING_GET_TYPE(thing) == THING_TYPE_GROUP &&
+                        THING_GET_INDEX(thing) < world->things->groupCount) {
+                        int group = (int)THING_GET_INDEX(thing);
+                        int sound = DM1_CreatureSound_AttackIndexForType(
+                            world->things->groups[group].creatureType, 0);
+                        if (sound != DM1_SND_NONE &&
+                            M11_Audio_Dm1AtariSoundIndex(sound) >= 0) {
+                            *outMap = map; *outX = x; *outY = y;
+                            *outGroup = group; *outSound = sound;
+                            return 1;
+                        }
+                    }
+                    thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
+                }
+            }
+        }
+    }
+    return 0;
+}
 
 int main(void) {
     const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
@@ -205,10 +239,86 @@ int main(void) {
           state->audioState.csbFmtownsRuntimeSoundSourceVolume != 127 ||
           state->audioState.lastSoundIndex != DM1_SND_DOOR_RATTLE_ENTRANCE)
           goto done;
+      {
+          int map, x, y, group, sound, farX, farY;
+          int priorMap = state->world.party.mapIndex;
+          int priorX = state->world.party.mapX;
+          int priorY = state->world.party.mapY;
+          const DM1_SoundData *soundData;
+          const struct DungeonMapDesc_Compat *desc;
+          if (!find_original_attack_group(state, &map, &x, &y,
+                                          &group, &sound)) {
+              fprintf(stderr, "FAIL: F20 %s original C04 attack group missing\n",
+                      language ? "EN" : "JP");
+              goto done;
+          }
+          soundData = DM1_Sound_GetDefaultSoundData((int16_t)sound);
+          desc = &state->world.dungeon->maps[map];
+          if (!soundData) goto done;
+          farX = x < desc->width / 2 ? desc->width - 1 : 0;
+          farY = y < desc->height / 2 ? desc->height - 1 : 0;
+          if (abs(farX - x) + abs(farY - y) <= soundData->softDistance)
+              goto done;
+          state->world.party.mapIndex = map;
+          state->world.party.mapX = x;
+          state->world.party.mapY = y;
+          memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+          state->lastTickResult.emissionCount = 1;
+          /* This constructed F0064 receipt uses the authentic C04 type,
+           * square and PCM from original media. It checks M11's audio
+           * consumer, not a live F0207 dispatch from this start state. */
+          state->lastTickResult.emissions[0].kind = EMIT_SOUND_REQUEST;
+          state->lastTickResult.emissions[0].payload[0] = sound;
+          state->lastTickResult.emissions[0].payload[1] = x;
+          state->lastTickResult.emissions[0].payload[2] = y;
+          state->lastTickResult.emissions[0].payload[3] = map;
+          state->audioState.csbFmtownsRuntimeSoundAccepted = 0;
+          state->audioState.lastSoundIndex = DM1_SND_NONE;
+          M11_GameView_ProcessTickEmissions(state);
+          if (state->audioState.csbFmtownsRuntimeSoundAccepted != 1 ||
+              state->audioState.csbFmtownsRuntimeSoundSourceVolume != 127 ||
+              state->audioState.lastSoundIndex != sound) {
+              fprintf(stderr, "FAIL: F20 %s original C04 sound receipt silent\n",
+                      language ? "EN" : "JP");
+              goto done;
+          }
+          state->world.party.mapX = farX;
+          state->world.party.mapY = farY;
+          state->audioState.csbFmtownsRuntimeSoundAccepted = 0;
+          state->audioState.lastSoundIndex = DM1_SND_NONE;
+          M11_GameView_ProcessTickEmissions(state);
+          if (state->audioState.csbFmtownsRuntimeSoundAccepted ||
+              state->audioState.lastSoundIndex != DM1_SND_NONE) {
+              fprintf(stderr, "FAIL: F20 %s distant C04 sound receipt audible\n",
+                      language ? "EN" : "JP");
+              goto done;
+          }
+          state->world.party.mapX = x;
+          state->world.party.mapY = y;
+          state->lastTickResult.emissionCount = 2;
+          state->lastTickResult.emissions[1] = state->lastTickResult.emissions[0];
+          state->lastTickResult.emissions[1].payload[0] = sound;
+          state->lastTickResult.emissions[1].payload[1] = farX;
+          state->lastTickResult.emissions[1].payload[2] = farY;
+          state->lastTickResult.emissions[1].payload[3] = map;
+          state->audioState.csbFmtownsRuntimeSoundAccepted = 0;
+          M11_GameView_ProcessTickEmissions(state);
+          if (state->audioState.csbFmtownsRuntimeSoundAccepted != 1 ||
+              state->audioState.csbFmtownsRuntimeSoundSourceVolume != 127 ||
+              state->audioState.lastSoundIndex != sound) {
+              fprintf(stderr, "FAIL: F20 %s C04 source per-tick PCM queue\n",
+                      language ? "EN" : "JP");
+              goto done;
+          }
+          state->world.party.mapIndex = priorMap;
+          state->world.party.mapX = priorX;
+          state->world.party.mapY = priorY;
+      }
       }
     puts("PASS: original F20 EN/JP unsigned PCM matches every resampled output sample at 5500 Hz");
     puts("PASS: original F20 EN/JP M10 tick sound uses native PCM without SND3");
     puts("PASS: original F20 EN/JP tick sound attenuates and arbitrates by native sample index");
+    puts("PASS: original F20 EN/JP C04 PCM with constructed source-position receipts uses distance and tick queue");
     for (int japanese = 0; japanese < 2; ++japanese) {
         M11_GameViewState *spellState = calloc(1, sizeof(*spellState));
         int spellOk;

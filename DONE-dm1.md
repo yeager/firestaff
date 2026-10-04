@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-10-04: M10 F0207 now emits a source-positioned attack sound request
+  after a committed melee or projectile attack, including melee misses.
+  This retains the event's map/coordinates at dispatch instead of looking
+  up a possibly moved C04 group after the tick. F20 M11 folds the request
+  into F0065's existing per-sample PCM queue and applies F0064's distance
+  volume. English/Japanese original media checks PCM for a real C04 type
+  and square using constructed F0064 emission receipts; a live F0207 attack
+  through the full original-dungeon tick remains unverified. The generic
+  F20 movement cue no longer bypasses source-issued sound requests.
+
 - 2026-10-04: FM Towns F20 M10 sound emissions now use the authenticated
   source coordinates and DATA.C loud/soft distances. SOUND.C F0064/F0065's
   integer volume steps and loudest request per native sample index are

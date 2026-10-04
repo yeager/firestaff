@@ -471,8 +471,18 @@ Reviewed 2026-08-29. Only open work is listed here.
   queue-drain timing, arbitration under overlapping events or PSG waveform
   parity. FM Towns local and M10 tick events now read F20 unsigned PCM from
   retained media; M10 emission distance attenuation and per-index same-tick
-  arbitration pass against English/Japanese original media. Verify direct
-  creature-sound distance, channel scheduling and original-driver output.
+  arbitration pass against English/Japanese original media. Source-owned
+  F20 creature attack sound requests now carry F0207's event coordinates
+  through the same per-sample tick queue, including the miss branch. The
+  EN/JA audio test uses original C04 groups and PCM but constructs F0064
+  receipts and moves the party pose in memory; it does not prove a naturally
+  scheduled live F0207 attack. Drive a real original-dungeon attack through
+  M10/M11, then verify original F20 driver channel scheduling, event ordering
+  across separate M11 calls in one game tick and physical M5 speaker output.
+  F0207 also requests an attack sound in the Atari, Amiga and PC source
+  branches; the newly forwarded M10 receipt follows that call, but its
+  overlap/priority behavior on those transports still needs original-media
+  verification.
   Amiga local
   effects now read original signed PCM with the native period; verify
   PAL/NTSC selection, stereo distance volumes and two-pair channel arbitration.

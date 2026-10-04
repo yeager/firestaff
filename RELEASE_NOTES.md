@@ -14,8 +14,11 @@
   authenticated F20 PCM bank instead of the absent PC SND3 bank. Their
   original-map coordinates drive the F0064 distance volume, and F0065 keeps
   the loudest request per native sample index before playback. English and
-  Japanese original-media regressions cover both routes. Direct creature
-  sounds and physical M5 speaker output remain unverified.
+  Japanese original-media regressions cover both routes. M10 now issues C04
+  attack sound requests with the event's source square for both projectile
+  and resolved melee attacks, including misses. An EN/JA original-media test
+  checks F20 PCM with constructed C04-positioned receipts; a naturally
+  scheduled live attack and physical M5 speaker output remain unverified.
 
 # Firestaff v3.0.360
 
