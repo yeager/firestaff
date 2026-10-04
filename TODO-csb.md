@@ -2,6 +2,12 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Capture a post-Entrance FM Towns dungeon frame on the reported M5 and
+  compare an authentic ornament-bearing pose with its source material. The
+  live F0128 path now binds MINI.DAT floor-ornament selectors and seed, and
+  English/Japanese F31 tests verify that metadata transaction. Those checks
+  do not establish pixel-level dungeon correctness or native input behavior.
+
 - Reconcile the Atari ST SND1 decoder with ReDMCSB SOUND.C F0060/F0061 before
   claiming complete audio coverage. Against the supplied
   `Game,Chaos_Strikes_Back,Atari_ST,Software.7z` hard-disk GRAPHICS.DAT, table

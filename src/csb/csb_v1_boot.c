@@ -2188,6 +2188,20 @@ int csb_v1_boot_render_viewport_frame_pc34(
     }
     cfg.wall_set_index = profile->runtime.dungeon_handle->map_wall_set[
         profile->runtime.current_level];
+    /* ReDMCSB DUNVIEW.C F0108/F0128 reads the active MAP.C floor-ornament
+     * selector table and dungeon seed. Bind the same authenticated level
+     * metadata as the live wall set before drawing the aperture. */
+    cfg.floor_ornament_random_count =
+        profile->runtime.dungeon_handle->map_random_floor_ornament_count[
+            profile->runtime.current_level];
+    cfg.floor_ornament_index_table =
+        profile->runtime.dungeon_handle->map_floor_ornament_indices[
+            profile->runtime.current_level];
+    cfg.floor_ornament_index_table_count =
+        profile->runtime.dungeon_handle->map_floor_ornament_count[
+            profile->runtime.current_level];
+    cfg.ornament_random_seed =
+        profile->runtime.dungeon_handle->ornament_random_seed;
     cfg.runtime_profile = &profile->runtime;
     /* F0172 owns a different C01 ordinal for each visible wall face.  The
      * view-wall-aware callback admits the real C02 inscription as M615 in

@@ -1,5 +1,10 @@
 ## Unreleased changes
 
+- `CSB FM Towns dungeon viewport`: the live F0128 render path now receives
+  floor-ornament selectors and the random seed from the authenticated
+  current level. English and Japanese F31 original-media regressions verify
+  the source metadata handoff. A presented M5 dungeon comparison remains
+  open.
 - `DM1 FM Towns gameplay sound`: M10 tick sound requests now reach the
   authenticated F20 PCM bank instead of the absent PC SND3 bank. An
   original-media regression exercises the live emission path in English and

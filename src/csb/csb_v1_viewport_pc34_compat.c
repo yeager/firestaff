@@ -4286,6 +4286,7 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
     const CSB_V1_ViewportConfig *cfg,
     CSB_V1_ViewportRuntimeDrawCounts *counts)
 {
+    int index;
     if (!counts) {
         return;
     }
@@ -4293,6 +4294,22 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
     if (!cfg) {
         return;
     }
+    counts->floor_ornament_random_count =
+        cfg->floor_ornament_random_count;
+    counts->floor_ornament_index_table_count =
+        cfg->floor_ornament_index_table_count;
+    if (cfg->floor_ornament_index_table &&
+        cfg->floor_ornament_index_table_count > 0 &&
+        cfg->floor_ornament_index_table_count <= 16) {
+        uint32_t hash = UINT32_C(2166136261);
+        for (index = 0; index < cfg->floor_ornament_index_table_count;
+             ++index) {
+            hash ^= cfg->floor_ornament_index_table[index];
+            hash *= UINT32_C(16777619);
+        }
+        counts->floor_ornament_index_hash = hash;
+    }
+    counts->ornament_random_seed = cfg->ornament_random_seed;
     counts->object_sprite_drawn_count =
         cfg->runtime_object_sprite_drawn_count;
     counts->object_icon_drawn_count =

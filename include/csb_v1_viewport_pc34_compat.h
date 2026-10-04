@@ -691,6 +691,11 @@ typedef struct {
 } CSB_V1_ViewportRuntimeDrawerBinding;
 
 typedef struct {
+    /* Source MAP.C inputs captured from the active F0128 transaction. */
+    int floor_ornament_random_count;
+    int floor_ornament_index_table_count;
+    uint32_t floor_ornament_index_hash;
+    uint16_t ornament_random_seed;
     int object_sprite_drawn_count;
     int object_icon_drawn_count;
     int object_marker_drawn_count;

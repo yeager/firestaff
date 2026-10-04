@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-10-04: The active F31 dungeon viewport now binds the original
+  current-level floor-ornament selectors and dungeon seed before F0108/F0128
+  rendering. English and Japanese original-media tests pass from the packed
+  ZIP and compare the live render transaction's bound metadata with the
+  authenticated MINI.DAT level. This checks source handoff, not full
+  presented-frame or physical M5 viewport parity.
+
 - 2026-10-03: Bare `--game csb` with a persisted collection root now scans
   its CSB leaf directly while retaining the root for the game menu. The
   original-media scan selects the authenticated FM Towns edition by default.

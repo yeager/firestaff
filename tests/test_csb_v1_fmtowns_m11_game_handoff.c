@@ -2288,6 +2288,28 @@ int main(void)
         const CSB_V1_BootProfile *live_profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
         int prior_direction = live_profile ? live_profile->runtime.party_dir : -1;
+        if (live_profile && live_profile->runtime.dungeon_handle) {
+            const CSB_V1_DungeonData *d = live_profile->runtime.dungeon_handle;
+            const int level = live_profile->runtime.current_level;
+            CSB_V1_ViewportRuntimeDrawCounts floor_counts = {0};
+            CHECK(d->map_random_floor_ornament_count[level] > 0 &&
+                      d->map_floor_ornament_count[level] > 0,
+                  "F31 retail Prison level has original floor-ornament selectors");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            CHECK(csb_v1_boot_render_viewport_frame_pc34(
+                      (void *)live_profile, framebuffer, 320, 200, NULL,
+                      &floor_counts) &&
+                      floor_counts.floor_ornament_random_count ==
+                          d->map_random_floor_ornament_count[level] &&
+                      floor_counts.floor_ornament_index_table_count ==
+                          d->map_floor_ornament_count[level] &&
+                      floor_counts.floor_ornament_index_hash ==
+                          fnv1a(d->map_floor_ornament_indices[level],
+                                 (size_t)d->map_floor_ornament_count[level]) &&
+                      floor_counts.ornament_random_seed ==
+                          d->ornament_random_seed,
+                  "F31 F0128 binds original MAP.C floor ornaments and seed");
+        }
 
         /* CHTWE/CHTWJ has now returned through STARTUP1.C into the ordinary
          * live command loop.  Require that its real MINI.DAT party drives
