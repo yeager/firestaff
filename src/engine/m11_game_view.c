@@ -15448,11 +15448,12 @@ static void m11_audio_emit_source_sound_with_volume(
             return;
         }
         if (state->dm1FmtownsStartupReceiptValid && state->assetLoader.legacyData) {
-            /* DM1 callers here are local events; SOUND.C MEDIA551 uses 127.
-             * Read retained F20 media, not its diagnostic display path. */
+            /* ReDMCSB SOUND.C F0060/F0064 MEDIA551 consumes the retained
+             * F20 sample at the caller's source volume. */
             (void)M11_Audio_EmitDm1FmtownsSound(&state->audioState,
                 state->assetLoader.legacyData,
-                (size_t)state->assetLoader.legacyDataSize, soundIndex, 127);
+                (size_t)state->assetLoader.legacyDataSize, soundIndex,
+                sourceVolume);
             return;
         }
         if (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian) {
@@ -15544,8 +15545,9 @@ static void m11_audio_emit_source_sound(M11_GameViewState* state,
         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT
         ? (const CSB_V1_BootProfile*)state->csbBootProfile : NULL;
     /* SOUND.C MEDIA551 uses 127 for a local full-volume Towns event. */
-    int volume = profile && (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
-                            profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA)
+    int volume = state->dm1FmtownsStartupReceiptValid ||
+                 (profile && (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+                              profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA))
         ? 127 : 3;
     m11_audio_emit_source_sound_with_volume(state, soundIndex, volume,
                                             fallbackMarker);
@@ -15631,8 +15633,18 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
         return;
     }
     if (plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND) {
-        (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
-                                               plan.sourceSoundIndex);
+        if (state->dm1FmtownsStartupReceiptValid) {
+            /* M10's F0064 sound request is an original DM1 event. F20 has
+             * no SND3 bank; pass it to its retained PCM transport. Distance
+             * and per-index tick arbitration remain a separate F0064/F0065
+             * boundary because some host emissions lack source coordinates. */
+            m11_audio_emit_source_sound_with_volume(state,
+                plan.sourceSoundIndex, 127,
+                M11_Audio_FallbackMarkerForSoundIndex(plan.sourceSoundIndex));
+        } else {
+            (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
+                plan.sourceSoundIndex);
+        }
         state->audioEventCount += 1;
     }
 }

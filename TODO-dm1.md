@@ -469,9 +469,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   unchanged. A live food-swallow event also requires one queue increment in
   each tested edition. This proves bounded source-to-queue transport, not audible output,
   queue-drain timing, arbitration under overlapping events or PSG waveform
-  parity. FM Towns local
-  events now read F20 unsigned PCM from retained media; verify distance
-  attenuation, channel scheduling and original-driver output. Amiga local
+  parity. FM Towns local and M10 tick events now read F20 unsigned PCM from
+  retained media; verify distance attenuation, per-index same-tick
+  arbitration, channel scheduling and original-driver output. Amiga local
   effects now read original signed PCM with the native period; verify
   PAL/NTSC selection, stereo distance volumes and two-pair channel arbitration.
   Consult SOUND.C MEDIA007/MEDIA413/MEDIA488 and each

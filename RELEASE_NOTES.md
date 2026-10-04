@@ -1,3 +1,11 @@
+## Unreleased changes
+
+- `DM1 FM Towns gameplay sound`: M10 tick sound requests now reach the
+  authenticated F20 PCM bank instead of the absent PC SND3 bank. An
+  original-media regression exercises the live emission path in English and
+  Japanese. Distance volume, same-tick arbitration and physical speaker
+  output remain unverified.
+
 # Firestaff v3.0.360
 
 ## Developer changes

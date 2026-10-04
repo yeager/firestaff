@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-04: M10 gameplay tick sound requests now use retained FM Towns F20
+  PCM instead of PC SND3 when the authenticated FM Towns runtime is active.
+  An original-media test passes for English and Japanese F20 with an
+  EMIT_SOUND_REQUEST through M11 and no loaded SND3 bank. It verifies the
+  source PCM handoff, not distance arbitration or audible M5 output.
+
 - 2026-10-03: Bare `--game dm1` with a persisted collection root now scans
   its DM1 leaf directly while retaining the root for the game menu. The
   original-media scan selects the authenticated FM Towns edition by default.

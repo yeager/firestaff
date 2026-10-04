@@ -4,6 +4,8 @@
 #include "firestaff_cp932.h"
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_fmtowns_dyna_buttons_ja.h"
+#include "dm1_v1_sound_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "dm1_late_spell_panel_real_check.h"
 #include <stdio.h>
@@ -153,8 +155,30 @@ int main(void) {
             if (state->audioState.csbFmtownsRuntimePcm.samples[p] != expected) goto done;
         }
     }
+      /* The ordinary M10 tick path must reach F20 PCM, not the absent PC
+       * SND3 bank. Direct decoder calls above alone cannot catch this. */
+      state->audioState.csbFmtownsRuntimeSoundAccepted = 0;
+      state->audioState.csbFmtownsRuntimeSoundSourceVolume = 0;
+      state->audioState.lastSoundIndex = DM1_SND_NONE;
+      memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+      state->lastTickResult.emissionCount = 1;
+      state->lastTickResult.emissions[0].kind = EMIT_SOUND_REQUEST;
+      state->lastTickResult.emissions[0].payload[0] = DM1_SND_DOOR_RATTLE;
+      state->lastTickResult.emissions[0].payload[1] = state->world.party.mapX;
+      state->lastTickResult.emissions[0].payload[2] = state->world.party.mapY;
+      state->lastTickResult.emissions[0].payload[3] = state->world.party.mapIndex;
+      M11_GameView_ProcessTickEmissions(state);
+      if (state->audioState.originalSnd3Available ||
+          !state->audioState.csbFmtownsRuntimeSoundAccepted ||
+          state->audioState.csbFmtownsRuntimeSoundSourceVolume != 127 ||
+          state->audioState.lastSoundIndex != DM1_SND_DOOR_RATTLE) {
+          fprintf(stderr, "FAIL: F20 %s M10 sound emission missed native PCM\n",
+                  language ? "EN" : "JP");
+          goto done;
+      }
       }
     puts("PASS: original F20 EN/JP unsigned PCM matches every resampled output sample at 5500 Hz");
+    puts("PASS: original F20 EN/JP M10 tick sound uses native PCM without SND3");
     for (int japanese = 0; japanese < 2; ++japanese) {
         M11_GameViewState *spellState = calloc(1, sizeof(*spellState));
         int spellOk;
