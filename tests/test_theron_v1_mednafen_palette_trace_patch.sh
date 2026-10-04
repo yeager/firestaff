@@ -21,6 +21,10 @@ if ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=3
     printf 'FAIL: patch no longer records the bounded dynamic CD_READ RAM receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'if(!CurGame || !CurGame->Debugger)' "$patch_file"; then
+    printf 'FAIL: trace hook setup must tolerate modules without a debugger interface\n' >&2
+    exit 1
+fi
 
 if [[ -z "$source_tree" || ! -d "$source_tree" ]]; then
     printf 'SKIP: MEDNAFEN_SOURCE is required for patch dry-run\n'

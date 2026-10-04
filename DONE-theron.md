@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — keep the instrumented PCE Fast startup path safe
+
+The optional Mednafen trace-hook patch now returns from `UpdateCoreHooks()`
+when the selected core has no debugger interface, as is the case for the
+PCE Fast core. It also avoids calling the same PCE Fast consumer-read patch
+twice in the serialized patch sequence. On `trv2`, the complete Theron
+Mednafen patch set applied successfully to a fresh isolated source copy with
+the patch-only gate; the focused patch dry-run, live-capture script contract
+test, shell syntax checks, and `git diff --check` passed. The corrected
+instrumented binary was previously rebuilt incrementally and reached SDL
+video initialization without the prior startup crash.
+
+This repairs research instrumentation only. It does not prove PCE Fast
+gameplay input delivery or the unresolved join between authentic startup RAM
+and the active dungeon map; see `TODO-theron.md`.
+
 ## 2026-10-04 — repeat authentic regional dungeon-source checks on trv2
 
 Built `test_theron_v1_track02_dungeon_map`, `test_theron_v1_track02_door`,

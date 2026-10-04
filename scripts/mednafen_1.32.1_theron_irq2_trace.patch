@@ -921,6 +921,8 @@ index 347482c4..61d4758e 100644
  static bool IsActive;
 @@ -162,10 +823,10 @@ static void UpdateCoreHooks(void)
  {
++ if(!CurGame || !CurGame->Debugger)
++  return;
   bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
 - bool CPUCBNeeded = BPInUse || TraceLog || InSteppingMode || (NeedStep == 2);
@@ -1021,7 +1023,6 @@ index 347482c4..61d4758e 100644
 +	   * capture that never reaches the spawn path produces no false receipt. */
 +	  TheronIrq2Trace->print_format("variant=%s\n", getenv("FIRESTAFF_THERON_IRQ2_VARIANT") ? getenv("FIRESTAFF_THERON_IRQ2_VARIANT") : "unknown");
 +	  TheronIrq2Trace->print_format("stage3_track02_record=%s\n", getenv("FIRESTAFF_THERON_IRQ2_RECORD") ? getenv("FIRESTAFF_THERON_IRQ2_RECORD") : "unknown");
-+	  UpdateCoreHooks();
 +	 }
 -
 +
