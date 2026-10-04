@@ -7,7 +7,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   then click New Game and the first mirror with native mouse input. A local
   Mac mini Cocoa capture now shows the New, Resume and Quit menu after the
   source title, and the headless source-pixel and scripted runtime checks
-  pass. These checks do not cover the reported M5 window/input failure.
+  pass. The persisted-root M12 original-media regression also follows AUTO
+  FM Towns through the complete title, New Game and first mirror into a loaded
+  one-champion session. These checks do not cover the reported M5 window/input
+  failure.
 
 - Complete Macintosh dungeon visual comparison and normal gameplay routes
   against the corrected retail map base at byte 26,806. The earlier loader

@@ -483,6 +483,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   branches; the newly forwarded M10 receipt follows that call, but its
   overlap/priority behavior on those transports still needs original-media
   verification.
+  The existing PC 3.4 first-monster test has an authentic input-only route
+  from the initial Hall through recruitment and the first door to original
+  group 169. It currently attacks the group rather than waiting for its
+  naturally queued C38-C41 event. That route is a candidate for a PC source
+  sound trace, but its coordinates and recruitment sequence have not been
+  verified for the FM Towns dungeon. The FM Towns EN/JA sound test instead
+  relocates the party in memory and constructs F0064 receipts from an
+  original C04 and PCM; it cannot establish a scheduled F0207 attack.
   Amiga local
   effects now read original signed PCM with the native period; verify
   PAL/NTSC selection, stereo distance volumes and two-pair channel arbitration.

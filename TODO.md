@@ -3,8 +3,10 @@
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
   physical desktop interaction. The opt-in test covers those three source-owned
-  startup states after reopening the persisted collection root; it does not
-  establish full playability or every platform's menu route.
+  startup states after reopening the persisted collection root. Its AUTO
+  DM2 FM Towns leg now finishes the source title and uses the retail New Game
+  and mirror targets to enter a loaded one-champion session. Other editions,
+  physical M5 input and full playability remain open.
 
 - Verify iOS release packaging after the LZMA software-CRC selection fix
   using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and

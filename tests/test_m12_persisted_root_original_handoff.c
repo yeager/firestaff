@@ -234,9 +234,58 @@ int main(void)
         if (game == 2) {
             const DM2_V1_BootProfile* profile =
                 (const DM2_V1_BootProfile*)view->dm2BootProfile;
+            DM2_V1_StartupMenuPointerLayout layout = {0};
+            int tick;
             CHECK(profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
                   profile->fmtowns_disc_image_size > 0u,
                   "DM2 M11 handoff owns the authenticated FM Towns disc");
+            /* Keep the persisted M12 selection as the owner through the
+             * complete source title and the first retail GAME_LOAD action.
+             * The direct-M11 original-media test covers this sequence too,
+             * but cannot detect a broken M12-selected runtime handoff. */
+            for (tick = 0; tick < 20000 && view->dm2FmtownsSwooshActive;
+                 ++tick) {
+                (void)M11_GameView_AdvanceIdleTick(view);
+            }
+            for (tick = 0; tick < 20000 &&
+                           !view->dm2FmtownsTitleFinished; ++tick) {
+                (void)M11_GameView_AdvanceIdleTick(view);
+            }
+            CHECK(view->dm2FmtownsTitleFinished &&
+                  view->dm2State.startup_menu_active &&
+                  !view->dm2State.level_loaded,
+                  "M12-selected FM Towns title reaches its source New Game menu");
+            if (view->dm2FmtownsTitleFinished &&
+                view->dm2State.startup_menu_active) {
+                CHECK(profile &&
+                      dm2_v1_boot_startup_menu_pointer_layout(
+                          (DM2_V1_BootProfile*)view->dm2BootProfile,
+                          &layout) && layout.valid &&
+                      layout.new_game.w > 0 && layout.new_game.h > 0,
+                      "M12-selected FM Towns menu owns its original New Game target");
+                if (layout.valid && layout.new_game.w > 0 &&
+                    layout.new_game.h > 0) {
+                    CHECK(M11_GameView_HandlePointerButton(
+                              view,
+                              layout.new_game.x + layout.new_game.w / 2,
+                              layout.new_game.y + layout.new_game.h / 2,
+                              DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                              M11_GAME_INPUT_REDRAW,
+                          "M12-selected FM Towns New Game enters source preselection");
+                    CHECK(view->dm2State.startup_menu_active &&
+                          !view->dm2State.level_loaded,
+                          "FM Towns keeps preselection separate from GAME_LOAD");
+                    CHECK(M11_GameView_HandlePointerButton(
+                              view, 100, 60,
+                              DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                              M11_GAME_INPUT_REDRAW,
+                          "M12-selected FM Towns mirror commits the first champion");
+                    CHECK(!view->dm2State.startup_menu_active &&
+                          view->dm2State.level_loaded &&
+                          view->world.party.championCount == 1,
+                          "M12-selected FM Towns New Game reaches live dungeon state");
+                }
+            }
         }
         M11_GameView_Shutdown(view);
         SDL_free(view);

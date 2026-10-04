@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-04: The persisted-root original-media M12 regression now follows
+  the authenticated DM2 FM Towns AUTO selection through its full SWOOSH/TITLE
+  sequence, the source New Game target, and the first mirror action into a
+  loaded one-champion dungeon session. It passes with the local mixed DM1,
+  CSB and DM2 collection under SDL dummy drivers. This is a menu-to-game
+  functional check; it does not establish physical M5 input or visual parity.
+
 - 2026-10-03: The opt-in persisted-root original-media handoff test now also
   checks AUTO after a stale matched version row for DM1, CSB and DM2. Each
   launch intent selects authenticated FM Towns media, and M11 owns the DM1
