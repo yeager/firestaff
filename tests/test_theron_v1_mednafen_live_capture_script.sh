@@ -966,9 +966,12 @@ party_ram_consumer_read_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_mai
 if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'TheronTraceMainRAMConsumerRead(A, physical_address, value)' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'per_offset[offset] >= 4096' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'static unsigned per_offset[8192] = {};' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'count >= 65536 || per_offset[offset] >= 16' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'physical_address < 0x1F0000 || physical_address >= 0x1F8000' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'offset = physical_address & 0x1FFF' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'reader_physical_pc=%06x' "$party_ram_consumer_read_patch"; then
-    printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must be bounded, opt-in, and source-positioned' >&2
+    printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must sample the full 8 KiB with bounded source-positioned reads' >&2
     exit 1
 fi
 if ! grep -Fq 'if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)' "$party_ram_trace_patch" ||

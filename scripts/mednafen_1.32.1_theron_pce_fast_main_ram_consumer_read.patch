@@ -26,7 +26,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,9 +111,40 @@
+@@ -111,9 +111,38 @@
  void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
  {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
@@ -37,14 +37,12 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +{
 + static FILE *trace = NULL;
 + static unsigned count = 0;
-+ static unsigned per_offset[256] = {};
++ static unsigned per_offset[8192] = {};
 + unsigned offset;
 + if(physical_address < 0x1F0000 || physical_address >= 0x1F8000)
 +  return;
 + offset = physical_address & 0x1FFF;
-+ if((offset != 0x0031 && offset != 0x003F && offset != 0x0040 &&
-+      offset != 0x0041 && offset != 0x00DA && offset != 0x00DB) ||
-+    count >= 24576 || per_offset[offset] >= 4096)
++ if(count >= 65536 || per_offset[offset] >= 16)
 +  return;
 + if(!trace)
 + {

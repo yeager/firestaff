@@ -5083,6 +5083,26 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   authoritative and only absent defaults returning skip 77. Four available
   tests passed three loops against authentic US/JP BIN and US ISO data; the
   CloneCD and JP ISO tests skipped because those inputs were unavailable.
+
+- 🔒 2026-10-04 PCE Fast BaseRAM consumer-read follow-up: broadened the
+  instrumented Mednafen 1.32.1 `pce_fast` read trace from six selected bytes to
+  the full physical `$1F0000-$1F7FFF` BaseRAM window, retaining a global cap of
+  65,536 rows and at most 16 rows per byte. The patch applied and the full
+  instrumented emulator built on `trv2` with `-j1`. Replaying the authentic JP
+  Ak-Tu-Ba Mednafen state produced 3,354 bounded BaseRAM read rows, with actual
+  logical/physical addresses, values, and reader PCs; this confirms the former
+  zero-row result was an artifact of the narrow address filter. In these rows,
+  neither logical `$2031` nor physical BaseRAM offset `$31` was read, so they do
+  not reveal the level/map selector or join any consumer to a verified active
+  map identity. An initial attempt used a stale staged script and failed on its
+  unconditional PCE VRAM requirement; an isolated rerun with the worktree
+  script passed the PCE Fast RAM/snapshot checks, recorded an 8 KiB snapshot,
+  and marked VDC data unavailable. That run then correctly stopped at the
+  dynamic-receipt gate (`input=1432`, `irq=0`, `authenticated_cd_ram=0`): a
+  restored save state does not provide a fresh CD-to-RAM transition. No
+  production map or spawn behavior is changed or claimed by this observation.
+  The emulator, authentic state, and traces remain in the task-private TRV2
+  evidence area.
   Missing-default, explicit-missing, and wrong-region checks behaved as
   expected. This proves the seven level-block receipts and metadata only, not
   decompressed level contents or original-game use.
