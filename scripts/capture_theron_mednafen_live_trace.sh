@@ -982,6 +982,8 @@ vdc_sat_snapshot="${trace}.sat"
 vdc_io_trace="${trace}.vdc-io"
 main_ram_snapshot="${trace}.ram"
 bram_snapshot="${trace}.bram"
+pce_fast_main_ram_snapshot="${trace}.pce-fast.ram"
+pce_fast_party_ram_trace="${trace}.pce-fast-party-ram"
 save_manager_code_dump="${trace}.save-manager-code"
 command_ram_trace="${trace}.command-ram"
 command_consumer_trace="${trace}.command-consumer"
@@ -1002,7 +1004,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ "$capture_clonecd_track02" == 1 ]]; then
@@ -1215,6 +1217,8 @@ launch=(
     FIRESTAFF_THERON_VDC_IO_TRACE="$vdc_io_trace" \
     FIRESTAFF_THERON_MAIN_RAM_SNAPSHOT="$main_ram_snapshot" \
     FIRESTAFF_THERON_BRAM_SNAPSHOT="$bram_snapshot" \
+    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT="$pce_fast_main_ram_snapshot" \
+    FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
     FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
     FIRESTAFF_THERON_COMMAND_RAM_TRACE="$command_ram_trace" \
     FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE="$command_consumer_trace" \

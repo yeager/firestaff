@@ -1,5 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-04 — trace direct PCE Fast startup-state writes without synthetic data
+
+The opt-in Mednafen 1.32.1 reference build now records changes to the six
+startup RAM offsets already under investigation, including direct HuC6280
+zero-page stores when MPR1 maps BaseRAM; previously those stores bypassed the
+BaseRAM write callbacks. Records include old/new bytes and the instruction's
+logical and physical PC. No-op stores are omitted, and a per-offset sample
+budget prevents the frequently changing `$2031` field from crowding out other
+offsets. A private authentic JP Rev. 1 New Game run verified the direct-store
+instrumentation against an 8 KiB final RAM snapshot. The complete patch-only
+gate, full serialized Mednafen build, binary module check, and focused capture
+script regression passed on `trv2`.
+
+This completes only the emulator research hook, not Theron startup parity.
+`$2031`'s final writer and its active-level meaning remain unresolved; see the
+matching open item in `TODO-theron.md`. The instrumentation is opt-in and does
+not add an emulator or BIOS dependency to Firestaff runtime.
+
 ## 2026-10-03 — parser fallback pose cannot satisfy exact-level readiness
 
 `theron_v1_startup_runtime_capture_all_dungeon_routes()` still records a

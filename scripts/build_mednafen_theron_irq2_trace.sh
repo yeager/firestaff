@@ -182,8 +182,16 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_selected_record_consumer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cdda_command_trace.patch"
+pce_fast_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch"
+pce_fast_snapshot_rendered="$build_root/theron-pce-fast-main-ram-snapshot.rendered.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch"
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
+sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$pce_fast_snapshot_patch" \
+    > "$pce_fast_snapshot_rendered"
+patch -d "$build_root/source" -p1 --batch --forward --fuzz=3 \
+    < "$pce_fast_snapshot_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.

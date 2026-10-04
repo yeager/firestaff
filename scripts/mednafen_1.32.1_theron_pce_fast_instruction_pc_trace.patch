@@ -1,0 +1,35 @@
+--- a/src/pce_fast/huc6280.h
++++ b/src/pce_fast/huc6280.h
+@@ -12,1 +12,5 @@
++MDFN_HIDE extern uint16 TheronTraceInstructionPC;
++MDFN_HIDE extern uint32 TheronTraceInstructionPhysicalPC;
++MDFN_HIDE void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value);
++
+ struct HuC6280
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -24,2 +24,5 @@
++uint16 TheronTraceInstructionPC;
++uint32 TheronTraceInstructionPhysicalPC;
++
+ static uint8 dummy_bank[8192 + 8192];  // + 8192 for PC-as-ptr safety padding
+ HuC6280 HuCPU;
+@@ -445,1 +456,1 @@
+-#define RMW_ZP(op)  { uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; op; HU_Page1[EA] = x; break; }
++#define RMW_ZP(op)  { uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; break; }
+@@ -446,1 +458,1 @@
+-#define RMW_ZPX(op) { uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; op; HU_Page1[EA] = x; break;}
++#define RMW_ZPX(op) { uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; break;}
+@@ -473,1 +486,1 @@
+-#define ST_ZP(r)	{uint8 EA; GetZP(EA); HU_Page1[EA] = r; break;}
++#define ST_ZP(r)	{uint8 EA; GetZP(EA); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; break;}
+@@ -474,1 +488,1 @@
+-#define ST_ZPX(r)	{uint8 EA; GetZPI(EA,HU_X); HU_Page1[EA] = r; break;}
++#define ST_ZPX(r)	{uint8 EA; GetZPI(EA,HU_X); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; break;}
+@@ -475,1 +490,1 @@
+-#define ST_ZPY(r)	{uint8 EA; GetZPI(EA,HU_Y); HU_Page1[EA] = r; break;}
++#define ST_ZPY(r)	{uint8 EA; GetZPI(EA,HU_Y); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; break;}
+@@ -679,0 +696,3 @@
++	  TheronTraceInstructionPC = GetRealPC();
++	  TheronTraceInstructionPhysicalPC =
++	   (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);

@@ -929,6 +929,27 @@ if ! grep -Fq 'party_direction_203f=%s' "$script" ||
     printf '%s\n' 'FAIL: live transition receipt must preserve raw party-position provenance' >&2
     exit 1
 fi
+party_ram_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch"
+if ! grep -Fq 'TheronTraceInstructionPhysicalPC' "$party_ram_trace_patch" ||
+   ! grep -Fq 'const unsigned offset = address & 0x1FFF' "$party_ram_trace_patch" ||
+   ! grep -Fq 'static DECLFW(BaseRAMWrite_Mirrored)' "$party_ram_trace_patch" ||
+   [[ $(grep -Fc '+ TheronTracePartyRAMWrite(A, V);' "$party_ram_trace_patch") -ne 2 ]] ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace"' "$script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch' "$build_script"; then
+    printf '%s\n' 'FAIL: Theron party-RAM writer tracing must cover mirrored BaseRAM writes with current HuC6280 PC' >&2
+    exit 1
+fi
+instruction_pc_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
+party_ram_budget_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch"
+if ! grep -Fq 'if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)' "$party_ram_trace_patch" ||
+   ! grep -Fq 'IsSGX || BaseRAM[offset] == value' "$party_ram_trace_patch" ||
+   ! grep -Fq 'per_offset[offset] >= 4096' "$party_ram_budget_patch" ||
+   ! grep -Fq 'TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r)' "$instruction_pc_patch" ||
+   ! grep -Fq 'TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)' "$party_ram_trace_patch"; then
+    printf '%s\n' 'FAIL: direct zero-page BaseRAM stores must retain old/new values and instruction-PC provenance' >&2
+    exit 1
+fi
 if ! grep -Fq 'dynamic CPU receipts lack a complete authentic raw-sector receipt' "$script" ||
    ! grep -Fq 'sector_fnv1a=' "$script" ||
    ! grep -Fq 'span_offset=0 span_bytes=32 span_fnv1a=' "$script"; then

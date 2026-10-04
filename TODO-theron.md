@@ -1,6 +1,26 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-10-03. Only open work is listed here.
+Reviewed 2026-10-04. Only open work is listed here.
+
+## 2026-10-04 — join the original startup pose to its active dungeon map
+
+- ✅ A fresh authentic JP Rev. 1 `pce_fast` run again reaches the title after
+  holding RUN for four seconds, then enters New Game → Ak-Tu-Ba using ordinary
+  Space/Button I input. A private raw 8 KiB BaseRAM snapshot records
+  `$2031=02`, `$203F-$2041 = 01 02 03`, and `$20DA/$20DB = 01/00`.
+- ✅ The opt-in Mednafen reference instrumentation now traces both PCE BaseRAM
+  bus callbacks and direct HuC6280 zero-page stores when MPR1 maps BaseRAM. The
+  capture logged `$2040=02` and `$2041=03` at the same instruction (`PC=$C2AF`,
+  physical `$0DC2AF`), and `$20DA=01` at `PC=$CC00`, physical `$0D4C00`.
+  `$203F` runtime updates ended at `01` (`PC=$5800`, physical `$0D1800`) in the
+  recorded trace, matching the final byte. `$20DB` remained zero with no
+  nonzero write observed. The `$2031` trace reached its per-offset sample cap;
+  its final byte is `02`, but its final writer is not proven.
+- 🔒 This is emulator-side writer evidence only. It does not bind `$2031` to
+  the active level/map or join the captured coordinate/direction to the exact
+  Track 02 map consumer. Keep the production first-floor/North pose provisional
+  and exact startup-level readiness closed until that same-session source join
+  is captured and verified.
 
 ## 2026-10-03 — keep parser fallback poses out of exact-level readiness
 

@@ -1,6 +1,54 @@
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -501,5 +501,21 @@
+@@ -78,14 +78,47 @@
+ static DECLFR(BaseRAMRead_Mirrored)
+ {
+  return(BaseRAM[A & 0x1FFF]);
+ }
+ FIRESTAFF_PATCH_BLANK_CONTEXT
++static void TheronTracePartyRAMWrite(uint32 address, uint8 value)
++{
++ static FILE *trace = NULL;
++ static unsigned count = 0;
++ const unsigned offset = address & 0x1FFF;
++ if(IsSGX || BaseRAM[offset] == value ||
++    (offset != 0x0031 && offset != 0x003F && offset != 0x0040 &&
++     offset != 0x0041 && offset != 0x00DA && offset != 0x00DB) ||
++    count >= 4096)
++  return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-fast-party-ram-write\n", trace);
++ }
++ fprintf(trace, "party_ram_write sequence=%u offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
++         count++, offset, BaseRAM[offset], value, TheronTraceInstructionPC,
++         TheronTraceInstructionPhysicalPC);
++ fflush(trace);
++}
++void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
++{
++ (void)old_value;
++ if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
++  TheronTracePartyRAMWrite(offset, value);
++}
+ static DECLFW(BaseRAMWrite)
+ {
++ TheronTracePartyRAMWrite(A, V);
+  BaseRAM[(size_t)A - (0xF8 * 8192)] = V;
+ }
+ FIRESTAFF_PATCH_BLANK_CONTEXT
+ static DECLFW(BaseRAMWrite_Mirrored)
+ {
++ TheronTracePartyRAMWrite(A, V);
+  BaseRAM[A & 0x1FFF] = V;
+ }
+@@ -502,5 +530,21 @@
  static MDFN_COLD void CloseGame(void)
  {
 + const char *snapshot_path = getenv("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT");

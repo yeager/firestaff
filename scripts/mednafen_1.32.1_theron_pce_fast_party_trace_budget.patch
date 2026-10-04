@@ -1,0 +1,18 @@
+--- a/src/pce_fast/pce.cpp
++++ b/src/pce_fast/pce.cpp
+@@ -85,3 +85,4 @@
+ static FILE *trace = NULL;
+ static unsigned count = 0;
++ static unsigned per_offset[256] = {};
+ const unsigned offset = address & 0x1FFF;
+@@ -88,5 +89,5 @@
+ if(IsSGX || BaseRAM[offset] == value ||
+     (offset != 0x0031 && offset != 0x003F && offset != 0x0040 &&
+      offset != 0x0041 && offset != 0x00DA && offset != 0x00DB) ||
+-    count >= 4096)
++    count >= 16384 || per_offset[offset] >= 4096)
+   return;
+@@ -106,2 +107,3 @@
+  fflush(trace);
++ per_offset[offset]++;
+ }
