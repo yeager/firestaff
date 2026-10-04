@@ -1,5 +1,13 @@
 # Firestaff DONE — DM2
 
+- 2026-10-04: A source 0x3c timer now relocates an authenticated FM Towns DB4
+  between maps without changing the player's GAME_LOAD map, outdoor state or
+  viewport light-map identity. The original-media regression moves the live
+  CAII-bound creature from map 1 (2,6) to map 3 (8,4) while the party stays
+  on map 0 (2,8). With the prior runtime map write restored temporarily, the
+  same test fails after the record move because the party map becomes 3.
+  This verifies the timer/record transaction, not creature path selection.
+
 - 2026-10-03: Bare `--game dm2` with a persisted collection root now scans
   its DM2 leaf directly and still retains the collection root for reopening
   the game menu. An original-media test verifies the authenticated FM Towns

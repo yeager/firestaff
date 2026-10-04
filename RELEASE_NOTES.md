@@ -1,5 +1,10 @@
 ## Unreleased changes
 
+- `DM2 FM Towns remote creature transfer`: a source 0x3c timer may move an
+  authenticated DB4 creature to another map without changing the party's
+  map, outdoor state or viewport light-map identity. An original-media
+  regression covers the map 1 to map 3 record transfer. Natural creature
+  path selection through map transitions remains open.
 - `CSB FM Towns dungeon viewport`: the live F0128 render path now receives
   floor-ornament selectors and the random seed from the authenticated
   current level. English and Japanese F31 original-media regressions verify

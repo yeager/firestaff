@@ -213,6 +213,62 @@ static int exercise_authentic_active_creature(
     return 0;
 }
 
+/* A remote DB4 timer may relocate a creature between original maps.  Its
+ * destination map belongs to the record, not to the player's viewport. */
+static int exercise_remote_creature_moverec(
+    DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon)
+{
+    DM2_V1_GameState *game;
+    DM2_V1_RuntimeCreatureRecordReceipt creature_record;
+    DM2_V1_LightSourceIdentity before_light, after_light;
+    DM2_V1_SourceTimer timer;
+    int16_t creature, occupant;
+    int before;
+
+    if (!profile || !dungeon || dungeon->level_count <= 3 ||
+        !dungeon->record_graph_complete || !profile->dm2_state)
+        return 0;
+    game = (DM2_V1_GameState *)profile->dm2_state;
+    /* HME-242 DUNGEON.DAT: the live DB4 at map 1 (2,6) has an allocated
+     * CAII row, and map 3 (8,4) is a creature-free floor with a DB item
+     * chain.  Use the source 0x3c timer, rather than editing either map. */
+    if (!dm2_v1_runtime_query_creature_at(1, 2, 6, &creature) ||
+        creature == DM2_V1_RECORD_HANDLE_NULL ||
+        !dm2_v1_runtime_creature_record_receipt(
+            creature, &creature_record) ||
+        !creature_record.valid || creature_record.caii_slot == 0xffu ||
+        dm2_v1_dungeon_get_square_type(dungeon, 3, 8, 4) != 1 ||
+        dm2_v1_dungeon_get_first_thing(dungeon, 3, 8, 4) < 0 ||
+        !dm2_v1_runtime_query_creature_at(3, 8, 4, &occupant) ||
+        occupant != DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    dm2_v1_runtime_set_position(0, 2, 8, 1);
+    memset(&before_light, 0, sizeof(before_light));
+    if (!dm2_v1_runtime_light_source_identity(&before_light) ||
+        !before_light.valid)
+        return 0;
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = (UINT32_C(3) << 24) |
+        (((uint32_t)dm2_v1_runtime_get_tick_count() + 1u) &
+         DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = 0x3cu;
+    timer.value_a = (int16_t)(8 | (4 << 8));
+    timer.value_b = creature;
+    before = dm2_v1_runtime_dynamic_move_successes();
+    if (dm2_v1_runtime_enqueue_source_timer(&timer, 0u) !=
+        DM2_V1_SOURCE_TIMER_OK)
+        return 0;
+    dm2_v1_runtime_tick();
+    memset(&after_light, 0, sizeof(after_light));
+    return dm2_v1_runtime_dynamic_move_successes() == before + 1 &&
+        dm2_v1_runtime_query_creature_at(3, 8, 4, &occupant) &&
+        occupant == creature && game->current_level == 0 &&
+        game->party_x == 2 && game->party_y == 8 && game->party_dir == 1 &&
+        game->outdoor == dm2_v1_dungeon_is_outdoor(dungeon, 0) &&
+        dm2_v1_runtime_light_source_identity(&after_light) &&
+        after_light.valid && after_light.map == before_light.map;
+}
+
 static int exercise_authentic_db1(
     DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon,
     int source_map, int source_x, int source_y, int expected_map)
@@ -1278,6 +1334,11 @@ int main(void)
             }
         }
     }
+    check(exercise_remote_creature_moverec(
+              (DM2_V1_BootProfile *)view.dm2BootProfile,
+              (const DM2_V1_DungeonData *)
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data),
+          "FM Towns remote DB4 moverec leaves the party on its own map");
     check(exercise_authentic_active_creature(
               (DM2_V1_BootProfile *)view.dm2BootProfile,
               (const DM2_V1_DungeonData *)

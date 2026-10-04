@@ -272,6 +272,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   entry remains fail-closed, while the live creature route uses a same-map
   BFS toward the party. The source DB1 map-edge decoder proves the original
   FM Towns map 3 → 38 → 3 edge, but that BFS cannot traverse it. Keep the
+  remote DB4 0x3c moverec regression separate: it proves a successful record
+  transfer leaves the party map alone, but does not schedule a map-edge path
+  or prove a creature naturally takes either DB1 teleporter. Keep the
   creature path receipt separate from the dynamic-light action 0x1b/mode-8
   visibility walk and its mode-7 successor. In the source, mode 8 evaluates
   candidate cells through `DM2_19f0_05e8`; it does not select a CAII action

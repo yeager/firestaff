@@ -7571,8 +7571,6 @@ static int dm2_runtime_process_moverec_timer(
     int old_party_x = -1;
     int old_party_y = -1;
     int old_party_dir = -1;
-    int old_runtime_map = -1;
-    int runtime_map_changed = 0;
     DM2_V1_Party party_backup;
 
     (void)source_index;
@@ -7629,7 +7627,6 @@ static int dm2_runtime_process_moverec_timer(
      * complete rollback boundary before entering either party or creature
      * movement; otherwise a later sound/owner rejection could leave the
      * party pose and tile graph half-committed. */
-    old_runtime_map = rt->dungeon_level;
     queue_backup = rt->timer_queue;
     queue_backup_ready = 1;
     caii_bytes = (size_t)rt->caii.capacity * DM2_V1_CAII_SLOT_SIZE;
@@ -7710,17 +7707,12 @@ static int dm2_runtime_process_moverec_timer(
             source_y = candidate_source_y;
             found = 1;
             cross_map_move = 1;
-            if (map != rt->dungeon_level) {
-                DM2_V1_GameState *game =
-                    (DM2_V1_GameState *)rt->boot->dm2_state;
-                if (!game) goto moverec_rollback;
-                game->current_level = map;
-                game->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, map);
-                rt->dungeon_level = map;
-                rt->outdoor = game->outdoor;
-                dm2_runtime_refresh_map_transition_context(rt);
-                runtime_map_changed = 1;
-            }
+            /* SKProject/SKULLWIN/c_tim_proc.cpp:900-915 dispatches timer
+             * 0x3c to MOVE_RECORD_TO.  c_moverec.cpp:519-610 uses
+             * DM2_CHANGE_CURRENT_MAP_TO while resolving the record's
+             * destination and restores the source map for a non-party
+             * record.  Do not persist that temporary context as the
+             * player's GAME_LOAD map or viewport owner. */
         }
     }
 
@@ -7899,15 +7891,6 @@ moverec_rollback:
         memset(&pool_backup, 0, sizeof(pool_backup));
     }
     if (sound_backup_ready) rt->sound_queue = sound_backup;
-    if (runtime_map_changed && rt->boot && rt->boot->dm2_state &&
-        old_runtime_map >= 0) {
-        DM2_V1_GameState *game = (DM2_V1_GameState *)rt->boot->dm2_state;
-        game->current_level = old_runtime_map;
-        game->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, old_runtime_map);
-        rt->dungeon_level = old_runtime_map;
-        rt->outdoor = game->outdoor;
-        dm2_runtime_refresh_map_transition_context(rt);
-    }
     if (party_backup_ready && rt->boot && rt->boot->dm2_state) {
         DM2_V1_GameState *game = (DM2_V1_GameState *)rt->boot->dm2_state;
         rt->source_party = party_backup;
