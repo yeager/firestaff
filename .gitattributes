@@ -3,3 +3,4 @@ scripts/dosbox-x-2026.01.02-linux-screenshot-heap-fix.patch whitespace=-space-be
 scripts/mednafen_1.32.1_nexus_sh2_cached_ram_read_trace.patch whitespace=-space-before-tab,-blank-at-eol
 assets/cards/platforms/*.ppm binary
 src/ui/branding_firestaff_rail_m12.rgb binary
+src/ui/branding_logo_readme_m12.rgb binary

@@ -3,19 +3,33 @@ project(Firestaff VERSION 3.0.361 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
-# Keep the project-owned RGB artwork compact in Git while preserving the
-# existing compiled symbol and exact pixel bytes on every supported host.
+# Keep project-owned RGB artwork compact in Git while preserving the
+# existing compiled symbols and exact pixel bytes on every supported host.
 set(FIRESTAFF_RAIL_GENERATED_C
     "${CMAKE_CURRENT_BINARY_DIR}/generated/branding_firestaff_rail_m12.c")
+set(FIRESTAFF_LOGO_GENERATED_C
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/branding_logo_readme_m12.c")
 add_custom_command(
     OUTPUT "${FIRESTAFF_RAIL_GENERATED_C}"
     COMMAND "${Python3_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_firestaff_rail_c.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_m12_rgb_c.py"
+        --asset rail
         --input "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/branding_firestaff_rail_m12.rgb"
         --output "${FIRESTAFF_RAIL_GENERATED_C}"
     DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_firestaff_rail_c.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_m12_rgb_c.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/branding_firestaff_rail_m12.rgb"
+    VERBATIM)
+add_custom_command(
+    OUTPUT "${FIRESTAFF_LOGO_GENERATED_C}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_m12_rgb_c.py"
+        --asset logo
+        --input "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/branding_logo_readme_m12.rgb"
+        --output "${FIRESTAFF_LOGO_GENERATED_C}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_m12_rgb_c.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/branding_logo_readme_m12.rgb"
     VERBATIM)
 
 file(GLOB FIRESTAFF_STUDIO_PO_SOURCES CONFIGURE_DEPENDS
@@ -8156,7 +8170,7 @@ set(M12_SOURCES
     src/shared/card_art_generated_m12.c
     "${FIRESTAFF_RAIL_GENERATED_C}"
     src/ui/branding_logo_m12.c
-    src/ui/branding_logo_readme_m12.c
+    "${FIRESTAFF_LOGO_GENERATED_C}"
     src/shared/bestiary_m12.c
     src/shared/creature_art_m12.c
     src/shared/data_validator_m12.c

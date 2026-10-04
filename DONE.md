@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-04: The 17,071-line launcher readme-logo RGB initializer is now an
+  exact 307,200-byte project-owned binary. The shared build generator preserves
+  the compiled logo symbol and rail symbol; both generated C files pass syntax
+  compilation and local CMake configuration succeeds. The logo bytes match the
+  original initializer (SHA-256 `d8b16134f3917dee186ef726e0e13062491cd88eb4bf6edd342be28cbbc7ad34`).
+  Hosted build verification is pending this commit.
+
 - 2026-10-04: Replaced the launcher's 41,498-line rail RGB initializer with
   the same 746,880 bytes stored as a project-owned binary and a deterministic
   build-time C generator. The original initializer and binary compare byte for
