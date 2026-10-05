@@ -2,6 +2,25 @@
 
 Reviewed 2026-10-05. Only open work is listed here.
 
+## 2026-10-05 — add scripted input to PCE Fast reference captures
+
+- ✅ The opt-in Mednafen reference build can now replay bounded, frame-indexed
+  PCE Fast controller inputs on port 0 and emit separate event/apply receipts.
+  The live-capture regression passed three consecutive loops. A fresh
+  instrumented build on `trv2` with PCE Fast and the bounded RAM snapshot
+  enabled completed with `-j1` and advertised both `pce` and `pce_fast`.
+- ✅ Three isolated restores of the authentic Japanese Rev. 1 Ak-Tu-Ba
+  emulator state each replayed four scheduled directional inputs. The
+  independent input verifier reported 4/4 events applied, 4/4 event frames
+  followed by original controller-port reads, and four non-System-Card poll
+  reads. Inputs were supplied to the reference emulator only; no game or
+  campaign data was changed.
+- 🔒 The capture transition remains `missing`: these polls do not prove that
+  Theron's original gameplay loop consumed the inputs, moved the party, or
+  selected an active map. No CD IRQ/raw-sector/authenticated CD-to-RAM
+  receipts were present in the replay. Continue with the open Track 02
+  runtime-consumer join below; do not promote gameplay or map semantics.
+
 ## 2026-10-05 — route authentic host keys to the selected PCE core
 
 - ✅ The Mednafen capture harness now selects `pce_fast.input.port1` when

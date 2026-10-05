@@ -718,6 +718,13 @@ if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
     printf '%s\n' 'FAIL: pce_fast capture must retain source- and bus-bound input traces' >&2
     exit 1
 fi
+if ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_fast_input.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
+   ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'if(x == 0) new_data |= scripted_port0' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"; then
+    printf '%s\n' 'FAIL: pce_fast replay input must be bounded, traced, and applied only to controller port 0' >&2
+    exit 1
+fi
 if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||
    ! grep -Fq 'require_snapshot_size "$pce_fast_main_ram_snapshot" 8192' "$script" ||
    ! grep -Fq 'pce_fast_main_ram_snapshot_bytes=8192' "$script" ||

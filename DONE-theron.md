@@ -6807,6 +6807,27 @@ failed. The Release test binary references `__assert_fail`. This validates
 prologue, metadata, and resource-receipt boundaries, not decompressed level
 contents or original-game semantics.
 
+# ✅ 2026-10-05 PCE Fast scripted-input reference capture
+
+Added an opt-in bounded replay-input producer to the Mednafen PCE Fast
+reference build. It parses at most 32 frame-indexed key events, applies them
+only to controller port 0, and writes event/apply receipts to the isolated
+capture trace. The live-capture shell regression passed three consecutive
+loops. A fresh `-j1` instrumented build on `trv2`, with PCE Fast and the
+bounded main-RAM snapshot enabled, completed and advertised both `pce` and
+`pce_fast` modules.
+
+Three isolated runs restored the authentic Japanese Rev. 1 Ak-Tu-Ba emulator
+state and replayed four directional inputs. The independent receipt verifier
+confirmed all four event frames were applied and followed by original
+controller-port reads, including four polls outside the System Card wait
+addresses. Each overall capture correctly remained blocked at
+`transition=missing` because no dynamic CD-to-RAM receipts were present. This
+is reference-input instrumentation evidence only; it does not prove that the
+gameplay loop consumed the inputs or establish movement, map identity, or
+complete Theron support. The original media, System Card, state, and traces
+remain outside the repository.
+
 # ✅ 2026-10-03 Theron Japanese gameplay boot and load-menu observation
 
 Using stock Mednafen 1.32.1 with the authentic Japanese Rev. 1 disc and
