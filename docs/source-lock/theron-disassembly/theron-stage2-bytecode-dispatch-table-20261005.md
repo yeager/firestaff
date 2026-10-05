@@ -592,7 +592,11 @@ whose handler is `RTS`. Thus a recursive `$42be` invocation has a statically
 visible return path if it enters this nested stream. Selector execution is
 still unobserved. The source listing marks the overlap window `$73b1..$73b9`
 as bytes because these candidate stream roots overlap linear code decoding;
-the actual roots are `$73b2` US and `$73b4` JP.
+the actual roots are `$73b2` US and `$73b4` JP. The
+`stage2_selector_00_03_pointer_roots` assertion currently checks the embedded
+pointer words and recursive stream bytes, while
+`stage2_id09_id0a_id10_nested_cursor` checks `$4253` and `$4497`; together
+these checks preserve the byte-level return-path evidence for both regions.
 
 If that nested `$09` returns, `$42be` resumes the outer stream at `$6eaa`.
 The rooted cursor steps continue through `$20,$3e,$08,$25,$26,$08,$25`, then
