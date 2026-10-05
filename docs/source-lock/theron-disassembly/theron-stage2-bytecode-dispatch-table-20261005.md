@@ -225,6 +225,11 @@ both authentic editions. The handler calls `$4403` before and conditionally
 after its `$e03c` call, then takes the `$40f5` (`+2`) cursor path. This is
 bounded byte/control-flow evidence only: neither helper meaning nor stream
 selection is established.
+The `stage2_id23_regional_handoff` assertion locks the `$4153` table word and
+complete `$42fb..$4318` root in both authentic editions, including the
+regional call operand at `$4314/$4315` (`$56af` US, `$5729` JP). The selected
+helper body is byte-locked separately by `stage2_id2b_regional_handoff`; this
+does not establish selector execution, helper effects, or gameplay meaning.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

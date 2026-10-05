@@ -106,7 +106,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   establish stream structure or helper effects. Dispatch ID `$24` at table
   index `$29`, its `$43dd` bounded root, and `$4403` polling helper are now
   byte-locked in both authentic editions; helper meaning and runtime
-  selection remain unknown.
+  selection remain unknown. ID `$23` at `$42fb` and its US/JP `$56af/$5729`
+  call operand are also locked separately in both authentic editions; the
+  selected helper's effects and actual stream use remain unknown.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

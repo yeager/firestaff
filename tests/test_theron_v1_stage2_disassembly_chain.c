@@ -635,6 +635,36 @@ static void test_stage2_id24_bounded_wait_root(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the ID $23 caller and its regional $56af/$5729 call operand. The
+ * selected helper is byte-locked by the ID $2b test; gameplay meaning and
+ * runtime selector use remain unknown. */
+static void test_stage2_id23_regional_handoff(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    uint8_t handler[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x48u, 0x20u, 0x00u, 0x4bu, 0x20u,
+        0x48u, 0x4fu, 0xadu, 0x79u, 0x4du, 0x8du, 0xdbu, 0x4fu,
+        0xadu, 0x7au, 0x4du, 0x8du, 0xdcu, 0x4fu, 0x68u, 0x82u,
+        0x20u, 0xafu, 0x56u, 0x4cu, 0xf5u, 0x40u
+    };
+    uint16_t helper = jp ? 0x5729u : 0x56afu;
+
+    handler[25] = (uint8_t)helper;
+    handler[26] = (uint8_t)(helper >> 8);
+    assert(stage2_word_at(raw, raw_size, jp, 0x4153u) == 0x42fbu);
+    for (unsigned int i = 0; i < sizeof(handler); ++i) {
+        uint8_t actual = stage2_byte_at(raw, raw_size, jp,
+                                        (uint16_t)(0x42fbu + i));
+        if (actual != handler[i]) {
+            fprintf(stderr, "ID $23 mismatch at +$%02x: expected $%02x got $%02x (%s)\n",
+                    i, handler[i], actual, jp ? "JP" : "US");
+            assert(actual == handler[i]);
+        }
+    }
+    printf("  PASS: stage2_id23_regional_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2086,6 +2116,7 @@ int main(void)
     test_stage2_id1e_id1f_bounded_handlers(g_us_data, g_us_size, 0);
     test_stage2_id1c_id1d_cursor_roots(g_us_data, g_us_size, 0);
     test_stage2_id24_bounded_wait_root(g_us_data, g_us_size, 0);
+    test_stage2_id23_regional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2113,6 +2144,7 @@ int main(void)
         test_stage2_id1e_id1f_bounded_handlers(g_jp_data, g_jp_size, 1);
         test_stage2_id1c_id1d_cursor_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id24_bounded_wait_root(g_jp_data, g_jp_size, 1);
+        test_stage2_id23_regional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
