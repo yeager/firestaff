@@ -55,12 +55,14 @@ Reviewed 2026-10-05. Only open work is listed here.
   Selector `$0b` also reaches the poll. Runtime selector choice, counter update
   path, wait completion, indirect-call targets, and gameplay meaning remain
   unproven.
-  Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
+  Regional call operands at indices `$2b`, `$23`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
   overlapping TII descriptor and two relative callees are source-locked, and
   the bounded callees do not directly access `$3b33`. This does not prove the
-  candidate reaches ID `$11` or close the counter-poll producer gap. See
+  candidate reaches ID `$11` or close the counter-poll producer gap. ID `$2c`
+  is also source-locked through its `$3ab7` call and fixed five-byte cursor
+  step, but the external callee remains outside this image. See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 
 ## 2026-10-05 — prove replayed PCE masks at the controller data port

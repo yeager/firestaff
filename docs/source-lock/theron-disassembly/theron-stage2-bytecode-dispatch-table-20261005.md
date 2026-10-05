@@ -236,6 +236,27 @@ The bounded caller/callee bytes contain no direct `$3b33` access. This does
 not rule out effects through other code or runtime state and does not establish
 that a candidate stream reaches ID `$11`.
 
+### Rooted `$2b` handler: regional helper handoff
+
+Dispatch table entry `$2b` targets `$4653` in both editions. The rooted
+continuation reads stream offsets `+1/+2`, pushes the first value, places the
+second in X, and calls `$4b00` then `$4f48`. It copies `$4d79/$4d7a` to
+`$4fdb/$4fdc`, restores the pushed value to A, calls `$56af` (US) or `$5729`
+(JP), and jumps to `$40f9` for the shared three-byte cursor advance. The
+regional call operand at `$466f` is now asserted against both raw editions.
+The callees' runtime effects and the candidate stream's execution remain
+unproven.
+
+### Rooted `$2c` handler: external helper handoff
+
+Dispatch table entry `$2c` targets `$4674` in both editions. This root calls
+`$4483`, sets Y to `$02`, reads stream offsets `+2`, `+3`, and `+4` into zero
+page `$02`, `$03`, and `$0e`, loads A with `$0f`, calls `$3ab7`, then jumps to
+`$4101`, the shared five-byte cursor advance. The earlier `$4483` call and the
+`$3ab7` implementation are not decoded by this bounded root; `$3ab7` is below
+the stage-two `$4000..$7fff` image. The handoff establishes the static input
+registers and cursor step only, not the callee's effect or a gameplay meaning.
+
 ### Rooted `$2d` handler: counter poll
 
 Although the linear listing at `$4691` decodes a different overlapping

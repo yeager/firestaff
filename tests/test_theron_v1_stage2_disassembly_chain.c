@@ -270,6 +270,54 @@ static void test_stage2_id11_overlapping_root(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* ID $2b has a regional helper operand at $466f but a shared caller body. */
+static void test_stage2_id2b_regional_handoff(const uint8_t *raw,
+                                              size_t raw_size, int jp)
+{
+    uint8_t handler[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x48u, 0xc8u, 0xb1u, 0x1cu, 0xaau,
+        0x20u, 0x00u, 0x4bu, 0x20u, 0x48u, 0x4fu, 0xadu, 0x79u,
+        0x4du, 0x8du, 0xdbu, 0x4fu, 0xadu, 0x7au, 0x4du, 0x8du,
+        0xdcu, 0x4fu, 0x68u, 0x20u, 0xafu, 0x56u, 0x4cu, 0xf9u,
+        0x40u
+    };
+    uint16_t helper = jp ? 0x5729u : 0x56afu;
+
+    handler[28] = jp ? 0x29u : 0xafu;
+    handler[29] = jp ? 0x57u : 0x56u;
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 0x2bu * 2u)) == 0x4653u);
+    for (unsigned int i = 0; i < sizeof(handler); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4653u + i)) == handler[i]);
+    }
+    assert(stage2_word_at(raw, raw_size, jp, 0x466fu) == helper);
+    printf("  PASS: stage2_id2b_regional_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* ID $2c reads four stream operands, calls below the stage-two window, then
+ * takes the fixed +5 cursor path. The external callee's behavior is unknown. */
+static void test_stage2_id2c_external_handoff(const uint8_t *raw,
+                                              size_t raw_size, int jp)
+{
+    static const uint8_t handler[] = {
+        0x20u, 0x83u, 0x44u, 0xa0u, 0x02u, 0xb1u, 0x1cu, 0x85u, 0x02u,
+        0xc8u, 0xb1u, 0x1cu, 0x85u, 0x03u, 0xc8u, 0xb1u, 0x1cu, 0x85u,
+        0x0eu, 0xa9u, 0x0fu, 0x20u, 0xb7u, 0x3au, 0x4cu, 0x01u, 0x41u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 0x2cu * 2u)) == 0x4674u);
+    for (unsigned int i = 0; i < sizeof(handler); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4674u + i)) == handler[i]);
+    }
+    printf("  PASS: stage2_id2c_external_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Selector pointer operands are read at cursor+1/+2 by the rooted $41/$12
  * handlers. This locks the earlier selector roots to authentic regional
  * bytes; it does not prove that any selector is executed. */
@@ -1250,12 +1298,16 @@ int main(void)
     test_stage2_selector_candidate_continuations(
         g_us_data, g_us_size, 0);
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
+    test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id2c_external_handoff(g_us_data, g_us_size, 0);
     test_stage2_selector_00_03_pointer_roots(g_us_data, g_us_size, 0);
     test_stage2_counter_wait_sites(g_us_data, g_us_size, 0);
     if (g_jp_data) {
         test_stage2_selector_candidate_continuations(
             g_jp_data, g_jp_size, 1);
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
+        test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id2c_external_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_selector_00_03_pointer_roots(
             g_jp_data, g_jp_size, 1);
         test_stage2_counter_wait_sites(g_jp_data, g_jp_size, 1);

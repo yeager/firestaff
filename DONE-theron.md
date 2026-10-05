@@ -14,6 +14,24 @@ An authentic US/JP raw-sector test locks the caller and both callees. These
 bounded paths contain no direct `$3b33` access, but candidate execution and
 indirect effects remain unproven; see `TODO-theron.md`.
 
+## 2026-10-05 — source-lock dispatch ID `$2b` regional caller
+
+Locked the shared `$4653` handler body for table entry `$2b` in US and JP.
+It reads stream offsets `+1/+2`, calls `$4b00` and `$4f48`, copies `$4d79/$4d7a`
+to `$4fdb/$4fdc`, restores the first stream operand to A, calls `$56af` (US)
+or `$5729` (JP), then takes the `$40f9` three-byte cursor step. A raw-media
+test locks the complete caller window and the regional target words. This
+does not establish either callee's effect or candidate execution.
+
+## 2026-10-05 — trace dispatch ID `$2c` to its external call boundary
+
+Locked the authentic `$4674` target for table index `$2c` in both editions.
+Its bounded root calls `$4483`, reads stream offsets `+2/+3/+4` into zero-page
+`$02/$03/$0e`, calls `$3ab7` with A=`$0f`, then jumps to `$4101` for the fixed
+five-byte cursor advance. The target `$3ab7` is outside the stage-two image;
+its implementation, effects, and gameplay meaning remain open in
+`TODO-theron.md`.
+
 ## 2026-10-05 — trace candidate continuations for selectors `$04..$0c`
 
 Extended the authentic US/JP Rev. 1 Track 02 candidate walks beyond their
