@@ -133,6 +133,33 @@ through `$201c`, restores the saved cursor on return, and advances through
 `$40f9` (`+3`). The call target and the behavior of `$3ab7` are outside this
 step summary.
 
+### Selectors `$04..$0c`: common static prefix
+
+The nine pointers for selectors `$04..$0c` each begin with the same
+eight-byte candidate prefix in both editions: `$08,$00,$25,$26,$16,$21,$45`
+followed by one byte. Applying the rooted cursor steps maps those bytes as
+`$08` (`+2`), `$25` (`+1`), `$26` (`+1`), `$16` (`+1`), `$21` (`+1`), then
+`$45` (reads its offset-1 byte and advances `+2`). The final byte of each
+prefix is therefore read by `$45` at offset 1; it is `$b2` for selectors
+`$04..$0a`, `$cf` for `$0b`, and `$d3` for `$0c`.
+
+| Selector | Target | Eight-byte prefix |
+|---:|---:|---|
+| `$04` | `$694d` | `$08,$00,$25,$26,$16,$21,$45,$b2` |
+| `$05` | `$69a1` | `$08,$00,$25,$26,$16,$21,$45,$b2` |
+| `$06` | `$6a16` | `$08,$00,$25,$26,$16,$21,$45,$b2` |
+| `$07` | `$6a7c` | `$08,$00,$25,$26,$16,$21,$45,$b2` |
+| `$08` | `$6ae2` | `$08,$00,$25,$26,$16,$21,$45,$b2` |
+| `$09` | `$6b48` | `$08,$00,$25,$26,$16,$21,$45,$b2` |
+| `$0a` | `$6bbd` | `$08,$00,$25,$26,$16,$21,$45,$b2` |
+| `$0b` | `$6c13` | `$08,$00,$25,$26,$16,$21,$45,$cf` |
+| `$0c` | `$681c` | `$08,$00,$25,$26,$16,$21,$45,$d3` |
+
+`theron-stage2-da65.info` marks only these eight-byte spans as `BYTETABLE`;
+the rooted `$45` handler advances to target `+$08`, but no subsequent handler
+walk is claimed. The repeated prefix and byte parameters are identical across
+US and JP, while selector-to-pointer runtime use is still unobserved.
+
 ### Selector `$01` target: conditional static cursor walk
 
 At `$6c4e`, the candidate stream begins with `$21`. If selector `$01` is

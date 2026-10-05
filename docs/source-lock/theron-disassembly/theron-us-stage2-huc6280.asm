@@ -5774,10 +5774,7 @@ Stage2NestedBytecodePointerPrefix:
         .addr   L6C13
         .addr   L681C
         .addr   L0000
-L681C:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $D3
+L681C:  .byte   $08,$00,$25,$26,$16,$21,$45,$D3
         eor     $D4
         eor     $D5
         bvc     L67FE
@@ -5944,10 +5941,7 @@ L690D:  inc     a
         and     $1203
         sbc     ($74)
         .byte   $09
-L694D:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $B2
+L694D:  .byte   $08,$00,$25,$26,$16,$21,$45,$B2
         eor     $B3
         eor     $B4
         bvc     L690D
@@ -5994,10 +5988,7 @@ L698D:  ora     ($15,x)
         bit     $0134,x
         asl     $21,x
         .byte   $09
-L69A1:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $B2
+L69A1:  .byte   $08,$00,$25,$26,$16,$21,$45,$B2
         eor     $BB
         eor     $BC
         bvc     L6961
@@ -6065,10 +6056,7 @@ L6A07:  rmb1    $81
         bit     $01,x
         asl     $21,x
         .byte   $09
-L6A16:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $B2
+L6A16:  .byte   $08,$00,$25,$26,$16,$21,$45,$B2
         eor     $B7
         eor     $B8
         bvc     L69D6
@@ -6126,10 +6114,7 @@ L6A3C:  nop
         .byte   $34
 L6A78:  ora     ($16,x)
         and     ($09,x)
-L6A7C:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $B2
+L6A7C:  .byte   $08,$00,$25,$26,$16,$21,$45,$B2
         eor     $BF
         eor     $C0
         bvc     L6A3C
@@ -6184,10 +6169,7 @@ L6AA2:  nop
         .byte   $34
 L6ADE:  ora     ($16,x)
         and     ($09,x)
-L6AE2:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $B2
+L6AE2:  .byte   $08,$00,$25,$26,$16,$21,$45,$B2
         eor     $C3
         eor     $C4
         bvc     L6AA2
@@ -6243,10 +6225,7 @@ L6B3A:  sta     ($17,x)
         .byte   $34
 L6B44:  ora     ($16,x)
         and     ($09,x)
-L6B48:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $B2
+L6B48:  .byte   $08,$00,$25,$26,$16,$21,$45,$B2
         eor     $C7
         eor     $C8
         bvc     L6B08
@@ -6315,10 +6294,7 @@ L6BAE:  eor     ($75)
         bit     $01,x
         asl     $21,x
         .byte   $09
-L6BBD:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $B2
+L6BBD:  .byte   $08,$00,$25,$26,$16,$21,$45,$B2
         eor     $CB
         eor     $CC
         bvc     L6B7D
@@ -6363,10 +6339,7 @@ L6BEE:  rts
         bit     $01,x
         asl     $21,x
         .byte   $09
-L6C13:  .byte   $08,$00
-        and     $26
-        asl     $21,x
-        eor     $CF
+L6C13:  .byte   $08,$00,$25,$26,$16,$21,$45,$CF
         eor     $D0
         bvc     L6BEE
 L6C1F:  brk
