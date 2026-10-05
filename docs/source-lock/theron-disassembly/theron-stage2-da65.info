@@ -22,7 +22,9 @@ RANGE {
 };
 
 # Bytecode IDs and the known selector-08 operand at authentic nested-stream roots.
-RANGE { START $6e98; END $6ea9; TYPE BYTETABLE; };
+RANGE { START $6e98; END $6f28; TYPE BYTETABLE; };
+RANGE { START $73b1; END $73b9; TYPE BYTETABLE; };
+RANGE { START $7470; END $7478; TYPE BYTETABLE; };
 RANGE { START $6c4e; END $6c6d; TYPE BYTETABLE; };
 RANGE { START $6c6e; END $6c70; TYPE BYTETABLE; };
 RANGE { START $6c92; END $6c92; TYPE BYTETABLE; };
@@ -36,6 +38,10 @@ RANGE { START $6b48; END $6b4f; TYPE BYTETABLE; };
 RANGE { START $6bbd; END $6bc4; TYPE BYTETABLE; };
 RANGE { START $6c13; END $6c1a; TYPE BYTETABLE; };
 RANGE { START $681c; END $6823; TYPE BYTETABLE; };
+
+# Static targets loaded into the indirect routine vector by nested handlers.
+RANGE { START $74f2; END $74f2; TYPE CODE; };
+RANGE { START $78ea; END $78ea; TYPE CODE; };
 
 # Each pointer value is also a one-byte code root; decode from every dispatch target.
 RANGE { START $41c5; END $41c5; TYPE CODE; };

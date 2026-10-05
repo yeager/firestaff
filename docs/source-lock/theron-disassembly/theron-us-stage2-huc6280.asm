@@ -6674,91 +6674,41 @@ L6E90:  sta     $0E
 
 L6E98:  .byte   $08,$00,$25,$26,$21,$1F,$D8,$00
         .byte   $10,$3E,$00,$00,$00,$1E,$D9,$41
-        .byte   $B2,$73
-        jsr     L013E
-        bbs7    L0000,L6EB8
+        .byte   $B2,$73,$20,$3E,$01,$FF,$00,$08
+        .byte   $00,$25,$26,$08,$01,$25,$4C,$6C
+        .byte   $4C,$6D,$4C,$6E,$4C,$70,$4C,$71
+        .byte   $4C,$73,$4C,$74,$4C,$75,$08,$02
+        .byte   $25,$4C,$6F,$4C,$77,$4C,$78,$4C
+        .byte   $7A,$4C,$7B,$4C,$7D,$4C,$7E,$4C
+        .byte   $80,$4C,$81,$08,$03,$25,$4C,$72
+        .byte   $4C,$76,$08,$04,$25,$4C,$79,$4C
+        .byte   $7C,$4C,$83,$4C,$84,$4C,$85,$4C
+        .byte   $87,$4C,$88,$4C,$89,$4C,$8C,$4C
+        .byte   $8D,$26,$45,$7F,$45,$82,$45,$86
+        .byte   $45,$8A,$45,$8B,$45,$8E,$45,$8F
+        .byte   $45,$90,$45,$91,$45,$92,$45,$93
+        .byte   $08,$00,$25,$4C,$00,$34,$01,$34
+        .byte   $00,$16,$21,$1F,$69,$00,$10,$1E
+        .byte   $6A,$27,$6B,$41,$B2,$73,$41,$70
+        .byte   $74
+        rol     a
         brk
-        and     $26
-        php
-        ora     ($25,x)
-        .byte   $4C
-        .byte   $6C
-L6EB8:  jmp     L4C6D
-
-        ror     L704C
-        jmp     L4C71
-
-        tii     $744C,$754C,$0208
-        and     L004C
-        bbr6    L004C,L6F44
-        jmp     L4C78
-
-        ply
-        jmp     L4C7B
-
-        adc     L7E4C,x
-        jmp     L4C80
-
-        sta     ($08,x)
-        st0     #$25
-        .byte   $4C
-        .byte   $72
-L6EE0:  jmp     L0876
-
-        tsb     $25
-        jmp     L4C79
-
-        jmp     (L834C,x)
-
-        jmp     L4C84
-
-        sta     L004C
-        smb0    L004C
-        dey
-        jmp     L4C89
-
-        sty     L8D4C
-        rol     $45
-        bbr7    $45,L6E80
-        eor     $86
-        eor     $8A
-        eor     $8B
-        eor     $8E
-        eor     $8F
-        eor     $90
-        eor     $91
-        eor     $92
-        eor     $93
-        php
-        brk
-        and     L004C
-        brk
-        bit     $01,x
-        bit     L0000,x
-        asl     $21,x
-        bbr1    $69,L6F1E
-L6F1E:  bpl     L6F3E
-        ror     a
-        rmb2    $6B
-        eor     ($B2,x)
-        tii     $7041,$2A74,$2000
-        asl     $2D,x
+        jsr     L2D16
         bit     L3C2D,x
         and     $2D3C
         bit     L3C2D,x
         and     $2D3C
         bit     L3C2D,x
-        .byte   $2D
-L6F3E:  bit     L3C2D,x
-        and     $2D3C
-L6F44:  bit     L3C2D,x
         and     $2D3C
         bit     L3C2D,x
         and     $2D3C
         bit     L3C2D,x
         and     $2D3C
         bit     L3C2D,x
-        ora     ($F2)
+        and     $2D3C
+        bit     L3C2D,x
+        and     $2D3C
+        bit     $F212,x
         stz     $39,x
         brk
         php
@@ -7392,14 +7342,11 @@ L7389:  asl     $52,x
 L73AA:  bit     $0234,x
         asl     $21,x
         bit     $01,x
-        ora     #$1D
-        brk
-        brk
+        .byte   $09,$1D,$00,$00,$20,$20,$00,$00
+        .byte   $09
+        ora     a:L0020,x
         jsr     L0020
         brk
-        ora     #$1D
-        jsr     L2000
-        jsr     L0000
         ora     #$1D
         rti
 
@@ -7511,12 +7458,8 @@ L73D5:  jsr     L0020
         trb     $01
         ora     ($15,x)
         ora     ($01,x)
-        trb     L0000
-        brk
-        ora     L0000,x
-        brk
-        ora     #$08
-        brk
+        .byte   $14,$00,$00,$15,$00,$00,$09,$08
+        .byte   $00
         and     $08
         ora     ($25,x)
         php

@@ -10,10 +10,20 @@ disassembly. US/JP pointer targets are `$73b2/$73b4` for selector `$00`,
 `$78ea/$78ec` for selector `$01`'s `$12` handler, `$73b2/$73b4` for its
 `$41` handler, and `$74f2/$74f4` for each of selectors `$02` and `$03`.
 
+The recursive `$73b2/$73b4` bytes form a bounded eight-byte stream: handler
+`$1d` reads six operands and advances to `$09`, whose `$4253` target is
+`RTS`. The selector `$00` candidate continues through `$41` roots at `$6f23`
+and `$6f26`; the latter targets `$7470` US / `$7472` JP. Both streams reach
+`$09`/`RTS`. The outer continuation stops at untraced `$2a` at `$6f29`. The
+US/JP `$78ea/$78ec` targets and `$74f2/$74f4` targets also decode
+from their embedded pointers as matching HuC6280 routine bodies ending in
+`RTS`. Since `$4319` reaches an indirect jump through runtime vector `$201c`,
+the latter address matches are not proof that those routines execute.
+
 Three consecutive sector-by-sector payload regeneration, dispatch/pointer
-table, bounded-byte, and `da65` listing checks passed. The target RAM contents,
-selector execution, and recursive returns remain unverified; this is static
-address evidence only. The earlier `$126c` claim was withdrawn.
+table, bounded-byte, and `da65` listing checks passed. Dynamic selector choice,
+runtime memory mapping, and `$201c` dispatch remain unverified; this is static
+address/control-flow evidence only. The earlier `$126c` claim was withdrawn.
 
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 

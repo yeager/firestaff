@@ -183,10 +183,31 @@ valid retail stream.
 
 The embedded pointer bytes at `$6ea8/$6ea9` are `$b2,$73` in US and
 `$b4,$73` in JP, forming static targets `$73b2` and `$73b4` respectively.
-Both lie outside the loaded `$4000..$7fff` stage-two window analyzed here,
-so their runtime contents and recursive returns are unknown. The listing
-marks only `$6e98..$6ea9` as candidate bytes; the span does not assign operand
-names or claim a decoded continuation.
+Both lie inside the loaded stage-two payload. At either target, authentic
+bytes are `$1d,$00,$00,$20,$20,$00,$00,$09`. Root `$4497` reads six operand
+bytes and advances by seven through `$4105`; the next `$09` maps to `$4253`,
+whose handler is `RTS`. Thus a recursive `$42be` invocation has a statically
+visible return path if it enters this nested stream. Selector execution is
+still unobserved. The source listing marks the overlap window `$73b1..$73b9`
+as bytes because these candidate stream roots overlap linear code decoding;
+the actual roots are `$73b2` US and `$73b4` JP.
+
+If that nested `$09` returns, `$42be` resumes the outer stream at `$6eaa`.
+The rooted cursor steps continue through `$20,$3e,$08,$25,$26,$08,$25`, then
+bounded `$4c`/operand pairs and `$45`/operand pairs. The final known sequence
+is `$34,$34,$16,$21,$1f,$1e,$27,$41` at cursors `$6f15..$6f23`; this `$41`
+embeds `$73b2` US / `$73b4` JP. If it returns, the outer cursor reaches a
+third `$41` at `$6f26`, embedding `$7470` in US and `$7472` in JP.
+
+Both target-relative byte sequences are `$14,$00,$00,$15,$00,$00,$09`.
+Root `$45f8` reads one zero byte and advances by three to `$15`; `$45fe` does
+the same and reaches `$09`, whose `$4253` handler is `RTS`. This gives both
+regional recursive paths a statically visible return when entered. The
+source listing marks the shared overlap window `$7470..$7478` as bytes; the
+JP target begins two bytes into this window. If the nested invocation
+returns, the outer cursor reaches `$6f29`, whose `$2a` handler has not been
+traced. The listing marks `$6e98..$6f28` as candidate bytes and stops before
+that unknown outer `$2a` handler.
 
 ### Selector `$01` target: conditional static cursor walk
 
@@ -233,25 +254,30 @@ saves the outer cursor, loads another pointer through `$41b9`, invokes the
 `$40cc` interpreter recursively, restores the outer cursor, and advances by
 three after the nested interpreter returns. At `$6c6e`, `$41b9` reads the
 embedded bytes at `$6c6f/$6c70`, forming static target `$73b2` in US and
-`$73b4` in JP. Both targets lie outside the loaded `$4000..$7fff` stage-two
-window, so this payload does not establish its runtime contents or the
-recursive return. At the earlier `$12` cursor `$6c6b`, `$4319` reads
-`$ea,$78` in US or `$ec,$78` in JP at `$6c6c/$6c6d`, forming `$78ea` or
-`$78ec` respectively; both targets are likewise outside the loaded window.
-The listing marks the bounded three-byte `$41` span
-`$6c6e..$6c70`; neither recursive path is verified dynamically.
+`$73b4` in JP. Both targets are inside the loaded payload and contain the
+same bounded `$1d`-plus-six-operands-then-`$09` stream described above, so the
+recursive handler path has a static return through `$4253` if entered. At the
+earlier `$12` cursor `$6c6b`, `$4319` reads `$ea,$78` in US or `$ec,$78` in JP
+at `$6c6c/$6c6d`, forming `$78ea` or `$78ec` respectively. Those addresses
+point at byte-identical 22-byte HuC6280 routine bodies in the respective
+regions (`LDA $2780; STA $4ec2; JSR $4ec9; ...; RTS`), but `$4319` jumps
+through RAM vector `$201c`; this static listing does not establish that the
+vector selects or executes those bytes. The listing marks the bounded
+three-byte `$41` span `$6c6e..$6c70`.
 
 Selectors `$02` and `$03` each begin with `$12` at `$6c92` and `$6cfa`.
 Their embedded pointer bytes are `$f2,$74` in US and `$f4,$74` in JP at
 `$6c93/$6c94` and `$6cfb/$6cfc`, forming `$74f2` in US and `$74f4` in JP.
-As with the other out-of-window targets, static source bytes do not establish
-runtime contents or execution.
+Both regions contain the same 21-byte HuC6280 routine at their respective
+targets (`STZ $27d9; TMA #$04; PHA; CLC; ...; RTS`). As above, the dynamic
+value of `$201c` is not established, so pointer consumption does not prove
+that this routine is selected or executed.
 
 The regenerated listing marks the pointer words and only the identified root
 bytes (plus the `$08` handler's one-byte operand where its two-byte step is
-static) as data. The bounded `$6c4e..$6c6d`, `$6c6e..$6c70`, and
-`$6e98..$6ea9` candidate walks are also emitted as bytes, without assigning
-operand names. They do not mark
+static) as data. The bounded `$6c4e..$6c6d`, `$6c6e..$6c70`,
+`$6e98..$6f28`, `$73b1..$73b9`, and `$7470..$7478` candidate spans are also
+emitted as bytes, without assigning operand names. They do not mark
 the remainder of these streams as decoded bytecode: their extents and operand
 boundaries have not been established.
 

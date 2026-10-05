@@ -16,14 +16,20 @@ Reviewed 2026-10-05. Only open work is listed here.
   traces. Index `$28`'s Y-offset 1 test and Y-offset 2 fetch are also mapped,
   but none of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
-  dispatch IDs. Selector `$00`'s target has a bounded static cursor walk
-  through `$6ea9`, ending in embedded pointer `$73b2` in US and `$73b4` in JP;
-  selector `$01`'s target has a bounded walk through `$6c70`, with embedded
-  pointers `$78ea/$73b2` in US and `$78ec/$73b4` in JP; selectors `$02/$03`
-  embed `$74f2` in US and `$74f4` in JP. These targets lie outside the loaded
-  stage-two window, so their runtime contents, execution, and recursive
-  returns remain unproven. Runtime selector choice and complete continuations
-  remain unproven. Selectors `$04..$0c` share a statically mapped eight-byte
+  dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through
+  `$6f28`, with recursive targets `$73b2` US / `$73b4` JP. That target begins
+  with ID `$1d`, six operands, and ID `$09` (`RTS`), giving a static return
+  path if entered. After returning, the outer cursor reaches `$41` roots at
+  `$6f23` and `$6f26`; the latter targets `$7470` US / `$7472` JP. Both nested
+  streams reach `$09`/`RTS`; the outer `$2a` at `$6f29` remains untraced.
+  Selector `$01`'s target has a bounded walk through `$6c70`, with embedded
+  pointers `$78ea/$73b2` in US and `$78ec/$73b4` in JP. The
+  `$73b2/$73b4` recursion has the same bounded static return path;
+  `$78ea/$78ec` point to matching HuC6280 routine bytes. Selectors `$02/$03`
+  embed `$74f2` in US and `$74f4` in JP, also matching routine bytes. The
+  runtime `$201c` vector and whether those latter routines execute remain
+  unknown. Runtime selector choice and complete continuations remain
+  unproven. Selectors `$04..$0c` share a statically mapped eight-byte
   prefix, but their continuation and runtime selection are also unproven.
   Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
