@@ -211,6 +211,13 @@ value and regional `$12` pointers changing. This is conditional on the
 returning. The stream does not establish the runtime value of `$2781` or
 prove this selector executes.
 
+Each of these seven blocks has `$2b,$02,<row>` at offsets `+$10..+$12`,
+where `<row>` is `$00..$06`. The rooted `$4653` handler for ID `$2b` consumes
+those two operands, preserves the first across two local calls, invokes the
+regional `$56af/$5729` helper, and reaches the shared `+3` cursor step. Its
+next dispatch ID is therefore the `$1a` at `+$13` in this static walk. The
+regional helper's behavior and actual execution remain unresolved.
+
 The rooted IDs in each block occur at target-relative cursors
 `+$00,$02,$03,$05,$06,$0a,$0c,$10,$13,$15,$18,$1a,$1c,$1f`:
 `$1a,$13,$2d,$20,$3e,$2d,$11,$2b,$1a,$12,$17,$2d,$12,$09`. Their fixed
