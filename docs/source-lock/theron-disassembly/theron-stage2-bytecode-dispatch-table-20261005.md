@@ -230,6 +230,25 @@ share a producer. The visible setup at `$895d` pushes a byte loaded from
 `$0000`, not processor status, before this epilogue. `$88a6`'s clear/nonzero
 wait helper is called directly by BSRs at `$8862,$8877,$88b1,$88d9` in both
 editions.
+
+Conservative decompilation of the `$89e2` epilogue only:
+
+```text
+stack_byte = pop()
+if (stack_byte & 0x20) {
+    ++memory[$3b33]
+    ++memory[$2249]
+}
+restore_mpr(0x40, pop())
+restore_mpr(0x20, pop())
+restore_mpr(0x10, pop())
+restore_mpr(0x08, pop())
+return
+```
+
+The earlier `$8975` gate and this popped-byte condition are separate static
+tests. Naming either bit as an interrupt flag or as the producer of `$3b33`
+would go beyond these instruction roots.
 Other paths in the US listing also clear or poll `$3b33`: `$503d/$5048` clear
 and wait for nonzero before calling `$51ae`; `$7539/$753c` clear and wait for
 a value of at least three; `$7549/$754c` clear and wait for nonzero; and
