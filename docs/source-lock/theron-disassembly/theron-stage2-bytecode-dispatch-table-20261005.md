@@ -105,8 +105,8 @@ is `$0000`:
 |---:|---:|---:|---:|---|
 | `$00` | `$6e98` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
 | `$01` | `$6c4e` | `$21` | `$464f` | Fixed call argument `$03`; cursor `+1` |
-| `$02` | `$6c92` | `$12` | `$4319` | Restores saved cursor; cursor `+3` after indirect call |
-| `$03` | `$6cfa` | `$12` | `$4319` | Restores saved cursor; cursor `+3` after indirect call |
+| `$02` | `$6c92` | `$12` | `$4319` | Loads inner cursor from offsets `$4b/$4c`, then restores saved cursor; `+3` after indirect call |
+| `$03` | `$6cfa` | `$12` | `$4319` | Loads inner cursor from offsets `$4b/$4c`, then restores saved cursor; `+3` after indirect call |
 | `$04` | `$694d` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
 | `$05` | `$69a1` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
 | `$06` | `$6a16` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
@@ -138,10 +138,10 @@ step summary.
 At `$6c4e`, the candidate stream begins with `$21`. If selector `$01` is
 selected, each listed handler's rooted code advances the cursor to the next
 row below. Handler `$3e` has internal branches, but both paths reach the same
-fixed `+4` cursor step. The final `$12` row reaches its next cursor only if
-the indirect callee returns. This is a static walk over authenticated bytes,
-not a capture that selector `$01` was chosen or that the whole stream is
-valid/executed.
+fixed `+4` cursor step. The `$12` row reaches its next cursor only if the
+indirect callee returns; the `$41` row does so only if the nested interpreter
+returns. This is a static walk over authenticated bytes, not a capture that
+selector `$01` was chosen or that the whole stream is valid/executed.
 
 | Cursor | ID | Root | Static read/step | Next cursor |
 |---:|---:|---:|---|---:|
@@ -158,21 +158,36 @@ valid/executed.
 | `$6c62` | `$27` | `$45ca` | Reads `$ac` at offset 1; `+2` | `$6c64` |
 | `$6c64` | `$3e` | `$48ac` | Reads offsets 1–3; both branches `+4` | `$6c68` |
 | `$6c68` | `$0b` | `$4259` | Reads `$00,$ad` at offsets 1–2; `+3` | `$6c6b` |
-| `$6c6b` | `$12` | `$4319` | Pointer swap and indirect call; `+3` on return | `$6c6e` |
+| `$6c6b` | `$12` | `$4319` | Loads inner cursor from offsets `$4b/$4c`, then restores saved cursor; `+3` on return | `$6c6e` |
+| `$6c6e` | `$41` | `$42be` | Loads inner cursor from offsets `$4b/$4c`, calls `$40cc` recursively, then `+3` on nested return | `$6c71` |
 
-The source-lock listing marks `$6c4e..$6c6d` as bytes for this bounded
-candidate walk. This range records IDs and cursor-span bytes; it does not
-label the trailing bytes of `$12` as operands or claim a decoded stream past
-`$6c6d`. The US and JP bytes in this span match except at `$6c6c` (`$ea` US,
-`$ec` JP); the rooted `$4319` handler does not directly read that byte, so its
-role remains unknown.
+The source-lock listing marks `$6c4e..$6c6d` and `$6c6e..$6c70` as bytes for
+these bounded candidate cursor spans. The ranges record IDs and span bytes;
+they do not assign operand boundaries to the trailing bytes of `$12` or
+`$41`, nor claim a decoded stream past `$6c70`. In the first span the US and
+JP bytes match except at `$6c6c` (`$ea` US, `$ec` JP); in the second span they
+match except at `$6c6f` (`$b2` US, `$b4` JP). Neither byte is directly read by
+the corresponding rooted handler, so both regional differences remain
+uninterpreted.
+
+If the `$4319` indirect callee returns, the cursor next reaches `$6c6e`,
+whose authentic byte is `$41` in both regions. This maps to `$42be`, which
+saves the outer cursor, loads another pointer through `$41b9`, invokes the
+`$40cc` interpreter recursively, restores the outer cursor, and advances by
+three after the nested interpreter returns. At this cursor, `$41b9` reads
+offsets `$4b/$4c` (`$6cb9/$6cba`); those bytes form `$126c` in both regions.
+That address is outside the `$4000..$7fff` stage-two code/handler span used
+here, so the current Track 02 source mapping does not provide the nested RAM
+stream or establish its runtime contents. The listing marks its bounded
+three-byte cursor span `$6c6e..$6c70`; this recursive target and its return
+remain unverified dynamically.
 
 The regenerated listing marks the pointer words and only the identified root
 bytes (plus the `$08` handler's one-byte operand where its two-byte step is
-static) as data. The bounded `$6c4e..$6c6d` candidate walk is also emitted as
-bytes, without assigning operand names. It does not mark the remainder of
-these streams as decoded bytecode: their extents and operand boundaries have
-not been established.
+static) as data. The bounded `$6c4e..$6c6d` and `$6c6e..$6c70` candidate walks
+are also emitted as bytes, without assigning operand names. They do not mark
+the remainder of these streams as decoded bytecode: their extents and operand
+boundaries have not been established.
 
 ## Target-rooted disassembly and regional comparison
 

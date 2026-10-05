@@ -6402,9 +6402,7 @@ L6C4E:  .byte   $21,$16,$08,$00,$25,$26,$4C,$00
         .byte   $1F,$AA,$00,$10,$3E,$00,$00,$00
         .byte   $4C,$AD,$1E,$AB,$27,$AC,$3E,$00
         .byte   $00,$00,$0B,$00,$AD,$12
-L6C6C:  .byte   $EA,$78
-        eor     ($B2,x)
-        .byte   $73
+L6C6C:  .byte   $EA,$78,$41,$B2,$73
         .byte   $41
 L6C72:  ror     a
         stz     $13,x

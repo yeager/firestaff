@@ -17,8 +17,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   but none of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$01`'s target has a bounded static cursor walk
-  through `$6c6d`, but runtime selector choice and the continuation remain
-  unproven.
+  through `$6c70`; it then references a nested RAM cursor at `$126c`, whose
+  runtime contents and return are unproven. Runtime selector choice and the
+  complete continuation remain unproven.
   Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. See
