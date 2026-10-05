@@ -21,7 +21,11 @@ Reviewed 2026-10-05. Only open work is listed here.
   with ID `$1d`, six operands, and ID `$09` (`RTS`), giving a static return
   path if entered. After returning, the outer cursor reaches `$41` roots at
   `$6f23` and `$6f26`; the latter targets `$7470` US / `$7472` JP. Both nested
-  streams reach `$09`/`RTS`; the outer `$2a` at `$6f29` remains untraced.
+  streams reach `$09`/`RTS`. The outer `$2a` at `$6f29` maps to `$4409`, whose
+  rooted handler reads `$1c+1`, configures local state from a table lookup,
+  calls `$e012`, and jumps to `$40f5` (which adds two to `$1c`). Since the
+  external calls' effects on `$1c` remain unknown, the eventual outer-stream
+  continuation, command meaning, and external effects are not bound.
   Selector `$01`'s target has a bounded walk through `$6c70`, with embedded
   pointers `$78ea/$73b2` in US and `$78ec/$73b4` in JP. The
   `$73b2/$73b4` recursion has the same bounded static return path;

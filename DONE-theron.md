@@ -14,7 +14,11 @@ The recursive `$73b2/$73b4` bytes form a bounded eight-byte stream: handler
 `$1d` reads six operands and advances to `$09`, whose `$4253` target is
 `RTS`. The selector `$00` candidate continues through `$41` roots at `$6f23`
 and `$6f26`; the latter targets `$7470` US / `$7472` JP. Both streams reach
-`$09`/`RTS`. The outer continuation stops at untraced `$2a` at `$6f29`. The
+`$09`/`RTS`. The outer `$2a` at `$6f29` maps to `$4409`; its rooted handler
+reads `$1c+1`, configures local state from a table lookup, calls `$e012`, and
+jumps to `$40f5` (which adds two to `$1c`). Since external calls' effects on
+`$1c` remain unknown, the eventual outer-stream continuation, external
+effects, and command meaning remain unbound. The
 US/JP `$78ea/$78ec` targets and `$74f2/$74f4` targets also decode
 from their embedded pointers as matching HuC6280 routine bodies ending in
 `RTS`. Since `$4319` reaches an indirect jump through runtime vector `$201c`,

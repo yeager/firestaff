@@ -205,9 +205,15 @@ the same and reaches `$09`, whose `$4253` handler is `RTS`. This gives both
 regional recursive paths a statically visible return when entered. The
 source listing marks the shared overlap window `$7470..$7478` as bytes; the
 JP target begins two bytes into this window. If the nested invocation
-returns, the outer cursor reaches `$6f29`, whose `$2a` handler has not been
-traced. The listing marks `$6e98..$6f28` as candidate bytes and stops before
-that unknown outer `$2a` handler.
+returns, the outer cursor reaches `$6f29`, whose `$2a` dispatch target is
+`$4409`. That handler clears A, calls `$e02d`, then its local `$4415` routine
+reads the byte at `$1c+1`, indexes `$4b3c`, and configures local state from
+that lookup. It then calls `$e012` and jumps to `$40f5`, whose code adds two
+to `$1c`. Since the external calls' effects on `$1c` are not yet known, this
+does not establish the eventual outer-stream continuation. The handler's
+static operations are bounded, but external routine effects and command
+meaning remain unknown. The listing marks `$6e98..$6f28` as candidate bytes; the following
+`$2a` has a rooted static handler trace, not a gameplay or execution proof.
 
 ### Selector `$01` target: conditional static cursor walk
 
