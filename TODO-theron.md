@@ -12,8 +12,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   operands and advancement, gameplay meanings, and the real-resource caller
   remain unbound. The disassembly now decodes from all 85 table roots without
   assigning command semantics; regional call operands at indices `$11`, `$23`,
-  `$2b`, and `$35`, plus one immediate operand at `$43b5`, are recorded without
-  assigning semantics. See
+  `$2b`, and `$35`, plus index `$28`'s regional pointer immediate in helper
+  `$43b5`, are recorded without assigning semantics. See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 
 ## 2026-10-05 — prove replayed PCE masks at the controller data port
