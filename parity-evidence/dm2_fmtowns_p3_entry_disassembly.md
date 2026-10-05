@@ -63,11 +63,35 @@ not reach or identify the New Game/Resume menu code in the captured range.
 
 ## Startup handoff trace
 
-The boot stub continues through `0x5787d`, prepares runtime state, then reaches
-the startup exit at `0x57900`, which jumps back to `0x57423`. The bytes there
-call `0x1dfd4`, push its return value, call `0x5903c`, then invoke DOS `int 21h`
-with `AH=0` to terminate. This locates a post-runtime program routine at
-`0x1dfd4`; the surrounding entry/exit sequence alone does not name it.
+The boot stub continues through `0x5787d` and prepares runtime state. Its later
+validation has two distinct outcomes. Error-reporting paths call DOS `int 21h`
+with `AH=9` and then reach `0x57900`, which jumps to `0x57423` and terminates
+through DOS `int 21h` with `AH=0`. The ordinary continuation reaches `0x57939`,
+which jumps to `0x5741e`. That address calls `0x1dfd4`, pushes its return value,
+calls `0x5903c`, and finally terminates through the same `AH=0` sequence.
+Consequently `0x1dfd4` is the post-runtime routine on the ordinary path;
+`0x57900` is an error exit, not the normal handoff.
+
+The route split is directly visible in the selected original at `0x57905`:
+
+```text
+0x57905: cmp byte [0x143af], 1
+         je  0x57939
+0x5790e: cmp word [0x143d6], 0xabcd
+         jne 0x57939
+         ... print diagnostic with DOS AH=9 ...
+         jmp 0x578fc
+0x578fc: int 21h                 ; AH=9, diagnostic string
+0x57900: jmp 0x57423             ; termination path
+0x57939: jmp 0x5741e             ; ordinary continuation
+```
+
+The bytes at `0x5792f..0x57934` are the DOS `$`-terminated text `80387$`; the
+dword at `0x57935..0x57938` points back to that string. Starting a linear x86
+decode at `0x57938` crosses the pointer and produces a false instruction. The
+continuation must be decoded at its actual branch target, `0x57939`. The
+listing in the prior subsection is therefore address-level control-flow
+evidence, not a contiguous instruction stream.
 
 At `0x1dfd4`, the routine first calls `0x57350` with `0x684` and branches away
 if it returns zero. The nonzero branch calls `0x4adbc`, `0x4534c`, then loops:
@@ -76,9 +100,14 @@ returns to `0x1dd24`. These are address-level call-graph facts, not recovered
 source names. In particular, the loop must not be labeled as the title/menu
 loop without an address-to-symbol or runtime trace.
 
-The core control flow is:
+The ordinary route's core control flow is:
 
 ```text
+0x57939: jmp 0x5741e
+0x5741e: call 0x1dfd4
+         push eax
+         call 0x5903c
+         terminate (DOS int 21h, AH=0)
 0x1dfd4: call 0x57350(0x684)
          if return == 0: return
          call 0x4adbc
@@ -113,6 +142,7 @@ python3 tools/disassemble_fmtowns_p3.py \
 ```
 
 The next useful evidence is an address bridge from a symbolized matching build
-or a trace from the original FM Towns runtime. Until then, the no-menu-after-40
-seconds report is not explained by this static trace, and this evidence does
-not justify changing the menu/input route.
+or a trace from the original FM Towns runtime. This trace corrects the normal
+versus error continuation but does not identify the title/menu loop. The
+no-menu-after-40-seconds report is still not explained by the static trace,
+and this evidence does not justify changing the menu/input route.
