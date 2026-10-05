@@ -226,9 +226,10 @@ contains an increment at `$89e7`, reached from `$89e2` only when the stacked
 value has bit `$20` set (`PLA; AND #$20; BEQ $89ed; INC $3b33; INC $2249`).
 The preceding `$8975` gate independently tests `#$20` and jumps to `$49e2`
 when clear; static adjacency does not prove that the gate and popped byte
-share a producer. The visible path pushes a byte loaded from `$0000`, not
-processor status, before this epilogue. `$88a6`'s clear/nonzero wait helper is
-called directly by BSRs at `$8862,$8877,$88b1,$88d9` in both editions.
+share a producer. The visible setup at `$895d` pushes a byte loaded from
+`$0000`, not processor status, before this epilogue. `$88a6`'s clear/nonzero
+wait helper is called directly by BSRs at `$8862,$8877,$88b1,$88d9` in both
+editions.
 Other paths in the US listing also clear or poll `$3b33`: `$503d/$5048` clear
 and wait for nonzero before calling `$51ae`; `$7539/$753c` clear and wait for
 a value of at least three; `$7549/$754c` clear and wait for nonzero; and
