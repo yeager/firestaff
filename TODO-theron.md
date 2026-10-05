@@ -125,7 +125,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   at `$47c5..$47d2` is byte-locked separately in both editions; `$e0d8`
   effects and actual stream selection remain unknown. ID `$32` at
   `$47d3..$47f2` is also locked in both regions, with its condition meaning,
-  BIOS effects, and retail stream selection still unresolved.
+  BIOS effects, and retail stream selection still unresolved. ID `$33` at
+  `$469d..$46b7` is byte-locked in both editions through its `$4101` tail;
+  store destinations' roles and stream execution remain unproven.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

@@ -275,6 +275,11 @@ word and complete `$47d3..$47f2` path in both editions. Its two branches load
 different fixed `$f8/$ff` values, call `$e0d8`, and converge on `$40f5` (`+2`).
 The branch condition's meaning, BIOS effects, and retail stream selection
 remain unknown.
+The `stage2_id33_four_byte_handoff` assertion locks index `$33` at `$4173`
+and the complete `$469d..$46b7` path in both editions. It reads four bytes
+from the current `$1c` cursor, stores them at `$0402..$0405`, and jumps to
+`$4101` (`+5`). These static stores do not establish the hardware/data roles
+or prove retail stream execution.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
