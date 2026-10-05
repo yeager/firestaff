@@ -33,6 +33,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   the authentic stage-two image. Raw-media assertions lock both entry paths
   and the `$4d0e..$4d78` helper bodies for US and JP; field meanings and
   called-helper effects remain unknown.
+- ✅ Traced dispatch ID `$4d`'s two operand reads, `$4c30` call, and shared
+  four-byte cursor tail at `$49e8`; the exact 19-byte path is locked to US and
+  JP Track 02. Operand meaning and called-helper effects remain unknown.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;

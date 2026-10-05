@@ -217,6 +217,25 @@ static void test_stage2_id51_helper_chain(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the index-$4d operand handoff and cursor tail against each edition. */
+static void test_stage2_id4d_operand_handoff(const uint8_t *raw,
+                                              size_t raw_size, int jp)
+{
+    static const uint8_t body[] = {
+        0x44u, 0xf7u, 0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc5u, 0x4eu,
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc6u, 0x4eu, 0x20u, 0x30u,
+        0x4cu, 0x80u, 0xe0u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp, 0x41a7u) == 0x49e8u);
+    for (unsigned int i = 0; i < sizeof(body); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x49e8u + i)) == body[i]);
+    }
+    printf("  PASS: stage2_id4d_operand_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Authentic selector continuations and overlapping nested-stream roots.
  * These byte assertions are source evidence, not proof that a selector runs.
  * See docs/source-lock/theron-disassembly/
@@ -1560,6 +1579,7 @@ int main(void)
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
+    test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
@@ -1574,6 +1594,7 @@ int main(void)
         test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
+        test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);

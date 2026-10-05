@@ -118,6 +118,18 @@ reuses `$4d15`, sets bit `$80` in `$4ec1`, then calls `$4d4a`. Dispatch ID
 These byte-level paths do not assign meanings to the fields, calls, carry
 conditions, or a retail stream.
 
+## ID `$4d`: two-operand helper handoff
+
+Dispatch entry `$4d` points to `$49e8` in both authentic editions. The
+byte-locked `$49e8..$49fa` body in
+`tests/test_theron_v1_stage2_disassembly_chain.c` reads stream offsets `+2`
+and `+3` into `$4ec5` and `$4ec6`, respectively, then calls `$4c30`. On
+return, the inline `$49f9` branch reaches `$49db`, which jumps to `$40fd` for
+the shared four-byte cursor advance. The preceding `$49e1` helper reads
+offset `+1` into `$4ec2`. This records the visible handoff and cursor path
+only; `$4c30` effects, operand meanings, and a valid retail stream using this
+dispatch index remain unproven.
+
 ## Indexed-byte handlers and nested cursor path
 
 The next table roots expose another byte-level group. Index `$0b` at `$4259`
