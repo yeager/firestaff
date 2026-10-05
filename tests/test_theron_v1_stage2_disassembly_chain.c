@@ -315,6 +315,28 @@ static void test_stage2_counter_wait_sites(const uint8_t *raw,
         { 0x89e2u, { 0x68u, 0x29u, 0x20u, 0xf0u, 0x06u, 0xeeu,
                       0x33u, 0x3bu, 0xeeu, 0x49u, 0x22u, 0x68u }, 12u }
     };
+    static const struct CallerByteWindow {
+        uint16_t address;
+        uint8_t bytes[24];
+        uint8_t length;
+    } common_callers[] = {
+        { 0x8860u, { 0xc6u, 0x5au, 0x44u, 0x42u, 0x03u, 0x05u,
+                      0xa5u, 0xf3u, 0x09u, 0x88u, 0x0du, 0xd9u,
+                      0x27u, 0x85u, 0xf3u, 0x8du, 0x02u, 0x00u,
+                      0x64u, 0x5au, 0x60u }, 21u },
+        { 0x8875u, { 0xc6u, 0x5au, 0x44u, 0x2du, 0x03u, 0x05u,
+                      0xa5u, 0xf3u, 0x29u, 0x3bu, 0x85u, 0xf3u,
+                      0x8du, 0x02u, 0x00u, 0x9cu, 0x78u, 0x3bu,
+                      0xa9u, 0xffu, 0x8du, 0x70u, 0x3bu, 0x8du }, 24u },
+        { 0x88afu, { 0xc6u, 0x5au, 0x44u, 0xf3u, 0x03u, 0x00u,
+                      0x13u, 0x00u, 0x23u, 0x00u, 0x03u, 0x02u,
+                      0xa2u, 0x02u, 0xc2u, 0x13u, 0x00u, 0x23u,
+                      0x01u, 0x13u, 0x00u, 0x23u, 0x01u, 0x13u }, 24u },
+        { 0x88d7u, { 0xc6u, 0x5au, 0x44u, 0xcbu, 0x03u, 0x00u,
+                      0xadu, 0xdau, 0x27u, 0x8du, 0x02u, 0x00u,
+                      0xadu, 0xdbu, 0x27u, 0x8du, 0x03u, 0x00u,
+                      0x03u, 0x02u, 0x82u, 0x13u, 0x00u, 0x23u }, 24u }
+    };
     const struct Stage2ByteSite *sites = jp ? jp_sites : us_sites;
     size_t site_count = jp ? sizeof(jp_sites) / sizeof(jp_sites[0]) :
                              sizeof(us_sites) / sizeof(us_sites[0]);
@@ -325,6 +347,14 @@ static void test_stage2_counter_wait_sites(const uint8_t *raw,
             assert(stage2_byte_at(raw, raw_size, jp,
                                   (uint16_t)(sites[site].address + i)) ==
                    sites[site].bytes[i]);
+        }
+    }
+    for (size_t site = 0;
+         site < sizeof(common_callers) / sizeof(common_callers[0]); ++site) {
+        for (unsigned int i = 0; i < common_callers[site].length; ++i) {
+            uint16_t address = (uint16_t)(common_callers[site].address + i);
+            assert(stage2_byte_at(raw, raw_size, jp, address) ==
+                   common_callers[site].bytes[i]);
         }
     }
     printf("  PASS: stage2_counter_wait_sites (%s)\n", jp ? "JP" : "US");

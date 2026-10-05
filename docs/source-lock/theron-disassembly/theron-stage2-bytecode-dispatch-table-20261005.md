@@ -243,6 +243,24 @@ during a candidate `$2d` poll. The US listing and regional raw bytes do not
 prove the `$89e7` path runs during a candidate interpreter call or that any
 polling condition is satisfied.
 
+### `$88a6` counter-wait callers
+
+The clear/nonzero wait at `$88a6` has four direct relative `BSR` callers in
+both editions. Their rooted post-wait instructions differ:
+
+| BSR site | Static continuation after `$88a6` returns |
+|---:|---|
+| `$8862` | Selects VDC register `$05`, masks/updates `$f3`, writes it to `$0002`, clears `$5a`, returns |
+| `$8877` | Selects VDC register `$05`, masks `$f3`, writes `$0002`, then initializes `$3b78` and `$3b70..$3b77` |
+| `$88b1` | Clears VDC registers through `$00/$01/$02`, then loops over `$01/$02` writes |
+| `$88d9` | Loads `$27da/$27db` into `$0002/$0003`, then loops over `$01/$02` writes |
+
+These byte-rooted continuations establish that the helper gates separate
+register-write paths, but do not assign names to those operations or show
+that any caller advances the `$468f` poll. The pointer scan also found no
+absolute-word root for `$8975` or `$89e2`; indirect/runtime entry remains
+possible and unresolved.
+
 ### Selector `$00` target: conditional static cursor walk
 
 At `$6e98`, the candidate begins with `$08`. Applying the rooted handler
