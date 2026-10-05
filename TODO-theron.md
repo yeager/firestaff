@@ -6,7 +6,7 @@ Reviewed 2026-10-05. Only open work is listed here.
 
 - ✅ Recovered the 85-entry `$410d..$41b6` indirect-jump table from authentic
   US and JP Rev. 1 raw Track 02 BINs. All entries match across regions and
-  target the loaded `$4000..$7fff` stage-two window. The source-lock assembly
+  target the `$4000..$7fff` stage-two address span. The source-lock assembly
   now represents them as words, and the raw-BIN receipt checks every target.
 - 🔒 The map provides addresses only. Valid stream indices, per-handler
   operands and advancement, gameplay meanings, and the real-resource caller

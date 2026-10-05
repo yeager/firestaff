@@ -1,6 +1,6 @@
 ; da65 V2.18 - N/A
 ; Created:    2026-07-12 09:13:48
-; Input file: /tmp/theron-disasm/theron-us-stage2.bin
+; Input file: authenticated US Track 02 BIN stage-two payload
 ; Page:       1
 
 

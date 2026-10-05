@@ -11,9 +11,9 @@ table at HuC6280 address `$410d`:
 | JP Rev. 1 | `b7afb338ad31be1025b53f9aff12d73a` | `0x2be460` | `0x2be56d` | `0x7f6a7f04` |
 
 The stage-two user-data starts are raw sectors 1224 (US) and 1223 (JP), plus
-the 16-byte MODE1/2352 sector header. They load at `$4000`; therefore CPU
-`$410d` is file offset `$10d` from those starts. These offsets and the
-17-sector load/entry are recorded in
+the 16-byte MODE1/2352 sector header. The loader enters the stage-two payload
+at `$4000`; therefore CPU `$410d` is file offset `$10d` from those starts.
+These offsets and the 17-sector load/entry are recorded in
 `docs/source-lock/tqr_v1_track02_ipl_loader_2026-07-11.md`.
 
 At `$40dc`, the interpreter reads one byte through `($1c)`, doubles it, and
@@ -46,9 +46,10 @@ static HuC6280 jump target reached by the corresponding table index.
 
 `theron_v1_huc6280_disassembly_read_file()` now verifies the complete table
 against both raw BIN identities, checks all 85 decoded little-endian targets
-against the listing, and confirms each target lies in the loaded `$4000..$7fff`
-window. The receipt is static-source evidence only. The table alone does not
-prove which indices occur in valid stream data, the meaning of any handler,
+against the listing, and confirms each target lies in the `$4000..$7fff`
+stage-two address span. It does not independently establish a runtime memory
+mapping for that span. The receipt is static-source evidence only. The table
+alone does not prove which indices occur in valid stream data, the meaning of any handler,
 operand/stream advancement for every entry, or which real level/resource uses
 the interpreter. It does not authorize a host bytecode interpreter or gameplay
 semantics.
