@@ -30,6 +30,14 @@
 #define THERON_STAGE2_RESOURCE_HANDLER_ADDRESS 0x4c3fu
 #define THERON_STAGE2_RESOURCE_HANDLER_BYTES 162u
 #define THERON_STAGE2_RESOURCE_HANDLER_FNV1A 0x46360d97u
+#define THERON_STAGE2_DISPATCH_ADDRESS 0x410du
+#define THERON_STAGE2_DISPATCH_ENTRIES 85u
+#define THERON_STAGE2_DISPATCH_BYTES (THERON_STAGE2_DISPATCH_ENTRIES * 2u)
+#define THERON_US_BIN_STAGE2_FILE_OFFSET 0x2bed90u
+#define THERON_JP_BIN_STAGE2_FILE_OFFSET 0x2be460u
+#define THERON_STAGE2_DISPATCH_US_FILE_OFFSET 0x2bee9du
+#define THERON_STAGE2_DISPATCH_JP_FILE_OFFSET 0x2be56du
+#define THERON_STAGE2_DISPATCH_FNV1A 0x7f6a7f04u
 #define THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET 0x9e15u
 #define THERON_VCE_PALETTE_CONSUMER_ADDRESS 0x96a5u
 #define THERON_VCE_PALETTE_CONSUMER_BYTES 37u
@@ -124,6 +132,22 @@ static const uint8_t g_spawn_runtime_c3a0[THERON_SPAWN_C3A0_BYTES] = {
     0xb3, 0x29, 0xe0, 0xc9, 0x80, 0xd0,
 };
 
+static const uint16_t g_stage2_dispatch_targets[THERON_STAGE2_DISPATCH_ENTRIES] = {
+    0x41c5u, 0x41cbu, 0x41d8u, 0x41deu, 0x41e6u, 0x41ecu, 0x41f0u,
+    0x41f4u, 0x4214u, 0x4253u, 0x4254u, 0x4259u, 0x4263u, 0x4271u,
+    0x4280u, 0x4288u, 0x4291u, 0x42d3u, 0x4319u, 0x45f0u, 0x45f8u,
+    0x45feu, 0x4615u, 0x461du, 0x4623u, 0x4635u, 0x4629u, 0x462fu,
+    0x4345u, 0x4497u, 0x4433u, 0x445fu, 0x4647u, 0x464fu, 0x4234u,
+    0x42fbu, 0x4334u, 0x4916u, 0x4910u, 0x45cau, 0x4375u, 0x43ddu,
+    0x4409u, 0x4653u, 0x4674u, 0x468fu, 0x46cau, 0x4794u, 0x47a6u,
+    0x47c5u, 0x47d3u, 0x469du, 0x44bdu, 0x46b8u, 0x4361u, 0x480au,
+    0x47f3u, 0x4842u, 0x485fu, 0x447fu, 0x4862u, 0x489fu, 0x48acu,
+    0x4901u, 0x491bu, 0x42beu, 0x4973u, 0x4995u, 0x45ebu, 0x49abu,
+    0x49b4u, 0x49bbu, 0x4a5eu, 0x44ebu, 0x4a81u, 0x4acau, 0x49d3u,
+    0x49e8u, 0x4a3bu, 0x4a14u, 0x4a1bu, 0x4a42u, 0x4a50u, 0x49fbu,
+    0x484eu
+};
+
 static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
     uint32_t hash = 2166136261u;
     for (size_t i = 0u; i < count; ++i) {
@@ -131,6 +155,19 @@ static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
         hash *= 16777619u;
     }
     return hash;
+}
+
+/* Source: docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm,
+ * interpreter L40DC-L40E4 and dispatch table L410D (lines 206-250). */
+static int stage2_dispatch_table_matches(const uint8_t *bytes) {
+    size_t i;
+    for (i = 0u; i < THERON_STAGE2_DISPATCH_ENTRIES; ++i) {
+        uint16_t target = (uint16_t)(bytes[i * 2u] |
+            ((uint16_t)bytes[i * 2u + 1u] << 8u));
+        if (target != g_stage2_dispatch_targets[i] ||
+            target < 0x4000u || target >= 0x8000u) return 0;
+    }
+    return 1;
 }
 
 static int expected_source(int variant,
@@ -181,6 +218,7 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t decompressor[THERON_LEVEL_DECOMPRESSOR_BYTES];
     uint8_t decompressor_caller[THERON_LEVEL_DECOMPRESSOR_CALLER_BYTES];
     uint8_t stage2_resource_handler[THERON_STAGE2_RESOURCE_HANDLER_BYTES];
+    uint8_t stage2_dispatch_table[THERON_STAGE2_DISPATCH_BYTES];
     uint8_t vce_palette_consumer[THERON_VCE_PALETTE_CONSUMER_BYTES];
     uint8_t spawn_rng_helper[THERON_SPAWN_RNG_HELPER_BYTES];
     uint8_t spawn_rng_preconsumer[THERON_SPAWN_RNG_PRECONSUMER_BYTES];
@@ -234,6 +272,13 @@ int theron_v1_huc6280_disassembly_read_file(
               SEEK_SET) != 0 ||
         fread(stage2_resource_handler, 1u, sizeof(stage2_resource_handler),
               file) != sizeof(stage2_resource_handler) ||
+        (raw_bin_variant &&
+         (fseek(file, (long)(track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+                             THERON_STAGE2_DISPATCH_US_FILE_OFFSET :
+                             THERON_STAGE2_DISPATCH_JP_FILE_OFFSET),
+                 SEEK_SET) != 0 ||
+          fread(stage2_dispatch_table, 1u, sizeof(stage2_dispatch_table),
+                file) != sizeof(stage2_dispatch_table))) ||
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          (fseek(file, THERON_US_SPAWN_RNG_HELPER_FILE_OFFSET, SEEK_SET) != 0 ||
           fread(spawn_rng_helper, 1u, sizeof(spawn_rng_helper), file) !=
@@ -273,6 +318,11 @@ int theron_v1_huc6280_disassembly_read_file(
         fnv1a(stage2_resource_handler, sizeof(stage2_resource_handler)) !=
             expected_stage2_fnv1a ||
         (raw_bin_variant &&
+         fnv1a(stage2_dispatch_table, sizeof(stage2_dispatch_table)) !=
+             THERON_STAGE2_DISPATCH_FNV1A) ||
+        (raw_bin_variant &&
+         !stage2_dispatch_table_matches(stage2_dispatch_table)) ||
+        (raw_bin_variant &&
          memcmp(vce_palette_consumer, g_vce_palette_consumer,
                 sizeof(vce_palette_consumer)) != 0) ||
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
@@ -308,6 +358,7 @@ int theron_v1_huc6280_disassembly_read_file(
     receipt.stage2_resource_handler_verified = 1;
     receipt.stage2_resource_bank_table_population_verified = 1;
     receipt.stage2_resource_destination_registers_verified = 1;
+    receipt.stage2_dispatch_table_verified = raw_bin_variant;
     receipt.spawn_rng_helper_verified =
         track02_variant == THERON_TRACK02_VARIANT_US_BIN;
     if (receipt.spawn_rng_helper_verified) {
@@ -365,6 +416,19 @@ int theron_v1_huc6280_disassembly_read_file(
         THERON_STAGE2_RESOURCE_HANDLER_BYTES;
     receipt.stage2_resource_handler_fnv1a = fnv1a(
         stage2_resource_handler, sizeof(stage2_resource_handler));
+    if (raw_bin_variant) {
+        receipt.stage2_dispatch_table_address =
+            THERON_STAGE2_DISPATCH_ADDRESS;
+        receipt.stage2_dispatch_table_bytes = THERON_STAGE2_DISPATCH_BYTES;
+        receipt.stage2_dispatch_table_entries =
+            THERON_STAGE2_DISPATCH_ENTRIES;
+        receipt.stage2_dispatch_table_file_offset =
+            track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+                THERON_STAGE2_DISPATCH_US_FILE_OFFSET :
+                THERON_STAGE2_DISPATCH_JP_FILE_OFFSET;
+        receipt.stage2_dispatch_table_fnv1a = fnv1a(
+            stage2_dispatch_table, sizeof(stage2_dispatch_table));
+    }
     receipt.vce_palette_consumer_verified = raw_bin_variant;
     if (raw_bin_variant) {
         receipt.vce_palette_consumer_address =

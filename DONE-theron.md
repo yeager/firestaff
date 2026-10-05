@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — source-lock the stage-two bytecode dispatch table
+
+- ✅ Replaced the linear instruction rendering over `$410d..$41b6` with the
+  authentic 85-word indirect-jump table. US and JP Rev. 1 Track 02 BINs have
+  identical entries (FNV-1a `7f6a7f04`).
+- ✅ The source-disassembly receipt now checks all 85 little-endian targets
+  against the listing for both raw BIN editions and requires every target to
+  remain within the loaded stage-two window.
+- 🔒 This is static address evidence, not bytecode or gameplay semantics.
+  Valid stream indices, handler operand contracts, and the authentic
+  resource-to-interpreter join remain open in `TODO-theron.md`.
+
 ## 2026-10-05 — verify scripted PCE button masks at readback
 
 - ✅ The bounded Mednafen replay verifier now checks port 0's raw PCE input

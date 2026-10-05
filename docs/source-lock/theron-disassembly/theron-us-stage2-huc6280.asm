@@ -233,104 +233,21 @@ L4105:  lda     #$07
         bra     L40E4
 L4109:  lda     #$09
         bra     L40E4
-L410D:  cmp     $41
-        .byte   $CB
-        eor     ($D8,x)
-        eor     ($DE,x)
-        eor     ($E6,x)
-        eor     ($EC,x)
-        eor     ($F0,x)
-        eor     ($F4,x)
-        eor     ($14,x)
-        say
-        .byte   $53
-L4120:  say
-        csl
-        say
-L4123:  eor     L6342,y
-        say
-        adc     ($42),y
-        bra     L416D
-        dey
-        say
-        sta     ($42),y
-        tin     $1942,$F043,$F845
-L4136:  eor     $FE
-        eor     $15
-        lsr     $1D
-        lsr     $23
-        lsr     $35
-        lsr     $29
-        lsr     $2F
-        lsr     $45
-        tma     #$97
-        bsr     L417D
-        bsr     L41AB
-        bsr     L4195
-        lsr     $4F
-        lsr     $34
-        say
-        .byte   $FB
-        say
-        bit     $43,x
-        asl     $49,x
-        bpl     L41A4
-        dex
-        eor     $75
-        tma     #$DD
-        tma     #$09
-        bsr     L41B7
-        lsr     $74
-        lsr     $8F
-        lsr     $CA
-        lsr     $94
-        .byte   $47
-L416D:  ldx     $47
-        cmp     $47
-        .byte   $D3
-        rmb4    $9D
-        .byte   $46
-L4175:  lda     $B844,x
-        lsr     $61
-        tma     #$0A
-        pha
-L417D:  tai     $4247,$5F48,$7F48
-        bsr     L41E8
-        pha
-        bbs1    $48,L4136
-        pha
-        ora     ($49,x)
-        .byte   $1B
-        eor     #$BE
-        say
-        .byte   $73
-        eor     #$95
-        .byte   $49
-L4195:  .byte   $EB
-        eor     $AB
-        .byte   $49
-L4199:  ldy     $49,x
-        .byte   $BB
-        eor     #$5E
-        lsr     a
-        .byte   $EB
-        bsr     L4123
-        lsr     a
-        dex
-L41A4:  lsr     a
-        .byte   $D3
-        eor     #$E8
-        eor     #$3B
-        lsr     a
-L41AB:  trb     $4A
-        .byte   $1B
-        lsr     a
-        say
-        lsr     a
-        bvc     L41FD
-        .byte   $FB
-        eor     #$4E
-L41B6:  pha
+; The indirect jump at $40dc indexes this little-endian table by the
+; doubled byte read from ($1c). These are dispatch targets, not instructions.
+; Exact 85-entry table verified against authentic US and JP Track 02 BINs;
+; see theron-stage2-bytecode-dispatch-table-20261005.md.
+L410D:  .word   $41C5,$41CB,$41D8,$41DE,$41E6,$41EC,$41F0,$41F4
+        .word   $4214,$4253,$4254,$4259,$4263,$4271,$4280,$4288
+        .word   $4291,$42D3,$4319,$45F0,$45F8,$45FE,$4615,$461D
+        .word   $4623,$4635,$4629,$462F,$4345,$4497,$4433,$445F
+        .word   $4647,$464F,$4234,$42FB,$4334,$4916,$4910,$45CA
+        .word   $4375,$43DD,$4409,$4653,$4674,$468F,$46CA,$4794
+        .word   $47A6,$47C5,$47D3,$469D,$44BD,$46B8,$4361,$480A
+        .word   $47F3,$4842,$485F,$447F,$4862,$489F,$48AC,$4901
+        .word   $491B,$42BE,$4973,$4995,$45EB,$49AB,$49B4,$49BB
+        .word   $4A5E,$44EB,$4A81,$4ACA,$49D3,$49E8,$4A3B,$4A14
+        .word   $4A1B,$4A42,$4A50,$49FB,$484E
 L41B7:  ldy     #$4A
 L41B9:  iny
         lda     ($1C),y

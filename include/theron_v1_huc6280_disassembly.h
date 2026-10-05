@@ -28,6 +28,14 @@ typedef struct {
     int stage2_resource_handler_verified;
     int stage2_resource_bank_table_population_verified;
     int stage2_resource_destination_registers_verified;
+    /* Stage-two interpreter jump table at $410d. This proves exact static
+     * dispatch addresses in each raw retail BIN, not opcode/game semantics. */
+    int stage2_dispatch_table_verified;
+    uint16_t stage2_dispatch_table_address;
+    uint16_t stage2_dispatch_table_bytes;
+    uint16_t stage2_dispatch_table_entries;
+    uint32_t stage2_dispatch_table_file_offset;
+    uint32_t stage2_dispatch_table_fnv1a;
     /* US raw-BIN regular-spawn helper at HuC6280 $4667.  This is a static
      * call-contract receipt only; its RAM-loaded $5d64/$5d6a callees and
      * runtime RNG state remain unresolved. */

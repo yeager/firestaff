@@ -44,6 +44,19 @@ static void verify(const char *env_name, const char *name, int variant,
     assert(receipt.stage2_resource_destination_registers_verified);
     if (variant == THERON_TRACK02_VARIANT_US_BIN ||
         variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        assert(receipt.stage2_dispatch_table_verified);
+        assert(receipt.stage2_dispatch_table_address == 0x410du);
+        assert(receipt.stage2_dispatch_table_bytes == 170u);
+        assert(receipt.stage2_dispatch_table_entries == 85u);
+        assert(receipt.stage2_dispatch_table_file_offset ==
+               (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x2bee9du :
+                                                           0x2be56du));
+        assert(receipt.stage2_dispatch_table_fnv1a == 0x7f6a7f04u);
+    } else {
+        assert(!receipt.stage2_dispatch_table_verified);
+    }
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_JP_BIN) {
         assert(receipt.vce_palette_consumer_verified);
         assert(receipt.vce_palette_consumer_address == 0x96a5u);
         assert(receipt.vce_palette_consumer_bytes == 37u);
@@ -101,8 +114,14 @@ static void verify(const char *env_name, const char *name, int variant,
            (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x58cd4b73u :
             variant == THERON_TRACK02_VARIANT_JP_BIN ? 0x788df8e7u :
             0x46360d97u));
-    printf("PASS: authentic %s bank-$1f HuC6280 fragment md5=%s fnv=%08x\n",
+    printf("PASS: authentic %s HuC6280 disassembly source md5=%s fragment=%08x",
            label, receipt.source_md5, (unsigned)receipt.fragment_fnv1a);
+    if (receipt.stage2_dispatch_table_verified) {
+        printf(" dispatch=$410d/%u/%08x",
+               (unsigned)receipt.stage2_dispatch_table_entries,
+               (unsigned)receipt.stage2_dispatch_table_fnv1a);
+    }
+    putchar('\n');
 }
 
 int main(void) {
