@@ -52,6 +52,23 @@ python3 tools/disassemble_fmtowns_p3.py \
 At the declared entry address, the first instruction is `0005741c: eb 56
 jmp 0x57474`.
 
+To follow reachable direct branches without linearly decoding the intervening
+copyright/data bytes, run the bounded control-flow walker:
+
+```sh
+python3 tools/disassemble_fmtowns_p3.py \
+  ~/.firestaff/data/dm2/fmtowns_iso/SKULL.EXP \
+  --sha256 068218bb31a7ed3700974394cbf11cb51c9a9da694511e748114b5dd7ee07671 \
+  --address 0x5741c --length 0x700 --flow --max-instructions 512
+```
+
+This hash-pinned walk shows `0x5741c -> 0x57474`, the distinct error route
+`0x57900 -> 0x57423`, and the ordinary route `0x57939 -> 0x5741e ->
+0x1dfd4`. Direct calls or branches outside the selected address window and
+indirect targets are reported but not followed. The walk is navigation
+evidence; it does not emulate Phar Lap relocation, resolve indirect calls, or
+assign source-level names.
+
 The entry jumps into a startup stub. The stub branches on the `0xcdab` /
 `0xabcdabcd` register signature, writes a mode byte, aligns the stack, and
 builds two address bounds using the load-image base/size constants. The data

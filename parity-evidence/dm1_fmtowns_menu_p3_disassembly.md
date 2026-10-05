@@ -66,6 +66,21 @@ label indices. The sentinel checks at `+2` and `+3` select destination
 region 11, 77, or 79 for graphic C010. They do not select a colour or a
 different source graphic (see the correction above).
 
+The hash-pinned control-flow walk for the complete 240-byte
+`DRAW_DMENU` symbol can be reproduced with:
+
+```sh
+python3 tools/disassemble_fmtowns_p3.py \
+  ~/.firestaff/data/dm1/fmtowns_iso/EDM.EXP \
+  --sha256 c888470d39aa449eac85438b598158492d2c981008cc6b427c52f2c73001ecb6 \
+  --symbol DRAW_DMENU --length 0xf0 --flow --max-instructions 512
+```
+
+The flow walk resolves `DRAW_DMENU` from the executable's SYM1 table, follows
+direct branches inside that symbol span, and reports callees outside the
+selected span without traversing them. It emits disassembly to stdout and
+does not extract or modify the original executable.
+
 ## DYNA_BUTTONS content (first 96 bytes)
 
 Verified NUL-separated label pool starting at `0x24194`:

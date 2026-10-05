@@ -4,6 +4,9 @@
 This is a local development aid. It reads the selected original executable
 in place and emits text only; it never extracts or writes game media.
 P3 field offsets match dm2_v1_boot_parse_fmtowns_p3 in dm2_v1_boot.c.
+Linear mode decodes the requested span as-is. Control-flow mode follows only
+direct calls and branches within that same bounded virtual-address window;
+indirect targets and edges outside the window are reported, not followed.
 """
 
 from __future__ import annotations
@@ -22,6 +25,86 @@ def u32(data: bytes, offset: int) -> int:
     return struct.unpack_from("<I", data, offset)[0]
 
 
+def format_instruction(insn) -> str:
+    raw = " ".join(f"{byte:02x}" for byte in insn.bytes)
+    return f"{insn.address:08x}: {raw:<29} {insn.mnemonic:<9} {insn.op_str}"
+
+
+def disassemble_control_flow(disassembler, code: bytes, base: int,
+                             start: int, instruction_limit: int) -> None:
+    from capstone import CS_GRP_CALL, CS_GRP_IRET, CS_GRP_JUMP, CS_GRP_RET
+    from capstone.x86_const import X86_OP_IMM
+
+    end = base + len(code)
+    pending = [start]
+    queued = {start}
+    block_starts = set()
+    decoded_addresses = set()
+    decoded_count = 0
+
+    def enqueue(address: int) -> None:
+        if base <= address < end and address not in queued:
+            queued.add(address)
+            pending.append(address)
+
+    def follow_edge(kind: str, address: int) -> None:
+        if base <= address < end:
+            print(f"                  ; follow {kind} -> 0x{address:x}")
+            enqueue(address)
+        else:
+            print(f"                  ; {kind} -> 0x{address:x} outside bounded range")
+
+    while pending and decoded_count < instruction_limit:
+        block = pending.pop()
+        if block in block_starts:
+            continue
+        block_starts.add(block)
+        cursor = block
+
+        while base <= cursor < end and decoded_count < instruction_limit:
+            if cursor in decoded_addresses and cursor != block:
+                break
+            offset = cursor - base
+            insn = next(disassembler.disasm(code[offset:], cursor, count=1), None)
+            if insn is None:
+                print(f"{cursor:08x}: <undecodable byte; block stopped>")
+                break
+
+            if insn.address not in decoded_addresses:
+                print(format_instruction(insn))
+                decoded_addresses.add(insn.address)
+            decoded_count += 1
+            next_address = insn.address + insn.size
+            groups = set(insn.groups)
+
+            if CS_GRP_CALL in groups:
+                if (insn.mnemonic == "call" and insn.operands and
+                        insn.operands[0].type == X86_OP_IMM):
+                    follow_edge("call", int(insn.operands[0].imm))
+                else:
+                    print("                  ; indirect or far call target not followed")
+                cursor = next_address
+                continue
+
+            if CS_GRP_JUMP in groups:
+                if (insn.mnemonic != "ljmp" and insn.operands and
+                        insn.operands[0].type == X86_OP_IMM):
+                    follow_edge("branch", int(insn.operands[0].imm))
+                else:
+                    print("                  ; indirect or far branch target not followed")
+                if insn.mnemonic not in {"jmp", "ljmp"}:
+                    print(f"                  ; conditional fallthrough -> 0x{next_address:x}")
+                    enqueue(next_address)
+                break
+
+            if CS_GRP_RET in groups or CS_GRP_IRET in groups:
+                break
+            cursor = next_address
+
+    if pending:
+        print(f"<control-flow traversal stopped at {instruction_limit} instructions>")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("program", type=Path, help="P3 executable path")
@@ -30,6 +113,10 @@ def main() -> int:
     target.add_argument("--symbol", help="Resolve an exact name from the embedded SYM1 table")
     parser.add_argument("--length", type=lambda value: int(value, 0), default=0x80)
     parser.add_argument("--sha256", help="Require this exact executable SHA-256")
+    parser.add_argument("--flow", action="store_true",
+                        help="Follow direct control-flow edges inside the bounded address range")
+    parser.add_argument("--max-instructions", type=int, default=4096,
+                        help="Maximum decoded instructions in --flow mode (default: 4096)")
     args = parser.parse_args()
 
     try:
@@ -106,19 +193,26 @@ def main() -> int:
     if (args.length <= 0 or address < 0 or address > image_size or
             args.length > image_size - address):
         parser.error("requested address range is outside the P3 load image")
+    if args.max_instructions <= 0:
+        parser.error("--max-instructions must be greater than zero")
 
     code = data[image_offset + address:image_offset + address + args.length]
     disassembler = Cs(CS_ARCH_X86, CS_MODE_32)
+    disassembler.detail = True
     print(f"file={args.program}")
     print(f"sha256={digest}")
     print(f"level={level} header_size=0x{header_size:x} declared_file_size=0x{file_size:x} image_offset=0x{image_offset:x} image_size=0x{image_size:x}")
     print(f"entry=0x{entry:x} symbols=0x{symbol_offset:x}+0x{symbol_size:x}")
     if args.symbol is not None:
         print(f"symbol={args.symbol} address=0x{address:x}")
-    print(f"disassembly=0x{address:x}..0x{address + args.length:x} (P3 virtual addresses)")
-    for insn in disassembler.disasm(code, address):
-        raw = " ".join(f"{byte:02x}" for byte in insn.bytes)
-        print(f"{insn.address:08x}: {raw:<29} {insn.mnemonic:<9} {insn.op_str}")
+    mode = "control-flow" if args.flow else "linear"
+    print(f"disassembly={mode} 0x{address:x}..0x{address + args.length:x} (P3 virtual addresses)")
+    if args.flow:
+        disassemble_control_flow(disassembler, code, address, address,
+                                 args.max_instructions)
+    else:
+        for insn in disassembler.disasm(code, address):
+            print(format_instruction(insn))
     return 0
 
 
