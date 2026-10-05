@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — accept authentic PCE Fast RAM-consumer traces
+
+The bounded Mednafen main-RAM consumer parser now accepts both its original
+PCE source header and the PCE Fast consumer-read source header. Its optional
+instrumentation suffix accepts underscore-separated keys such as
+`reader_code_bytes`, matching the fields emitted by the PCE Fast capture patch;
+that field also accepts its explicit `unavailable` sentinel at a bank edge. A
+parser fixture covers the PCE Fast header, both code-byte forms, and the
+register snapshot without relaxing the existing address or provenance checks.
+
+Verification on `trv2`: the parser target built in an isolated Release build
+with `-j1`. Its CTest passed three consecutive runs while parsing the retained
+authentic 3,354-read PCE Fast capture (MD5
+`93351874cac5dea14bcf80192bbda6c1`). The receipt contained 548 reads in
+`$2600-$27FF`, but semantic publication remained blocked. This capture still
+does not establish active gameplay, map identity, or retail consumer semantics.
+
 ## 2026-10-05 — keep the instrumented PCE Fast startup path safe
 
 The optional Mednafen trace-hook patch now returns from `UpdateCoreHooks()`

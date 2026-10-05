@@ -36,12 +36,24 @@ static int optional_register_suffix(const char *suffix) {
     const unsigned char *cursor = (const unsigned char *)suffix;
     if (!cursor) return 0;
     while (*cursor) {
+        const unsigned char *key_start;
+        size_t key_length;
         if (!isspace(*cursor)) return 0;
         while (isspace(*cursor)) ++cursor;
         if (!*cursor) break;
         if (!isalpha(*cursor)) return 0;
-        while (isalpha(*cursor)) ++cursor;
+        key_start = cursor;
+        while (isalpha(*cursor) || *cursor == '_') ++cursor;
+        key_length = (size_t)(cursor - key_start);
         if (*cursor++ != '=') return 0;
+        if (key_length == sizeof("reader_code_bytes") - 1u &&
+            !memcmp(key_start, "reader_code_bytes", key_length) &&
+            !strncmp((const char *)cursor, "unavailable", sizeof("unavailable") - 1u) &&
+            (!cursor[sizeof("unavailable") - 1u] ||
+             isspace(cursor[sizeof("unavailable") - 1u]))) {
+            cursor += sizeof("unavailable") - 1u;
+            continue;
+        }
         if (!isxdigit(*cursor)) return 0;
         while (isxdigit(*cursor)) ++cursor;
     }
@@ -157,7 +169,8 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
 
         if (first_line) {
             first_line = 0;
-            if (strcmp(line, "source=mednafen-pce-instrumented-main-ram-consumer")) {
+            if (strcmp(line, "source=mednafen-pce-instrumented-main-ram-consumer") &&
+                strcmp(line, "source=mednafen-pce-fast-main-ram-consumer-read")) {
                 fclose(file);
                 return reject(&receipt);
             }

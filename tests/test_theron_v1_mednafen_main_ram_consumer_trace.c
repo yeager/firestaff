@@ -94,6 +94,52 @@ static int test_code_bank_reader_trace(void) {
 #endif
 }
 
+static int test_pce_fast_code_bytes_trace(void) {
+#if defined(_WIN32)
+    return 1;
+#else
+    char path[512];
+    const char *tmpdir = getenv("TMPDIR");
+    const char *trace =
+        "source=mednafen-pce-fast-main-ram-consumer-read\n"
+        "main_ram_consumer_read sequence=0 logical_address=2600 physical_address=1f0600 value=ad reader_pc=cb22 reader_physical_pc=002b22 reader_code_bytes=7300200120ff009c a=01 x=ff y=00 sp=fa p=04\n"
+        "main_ram_consumer_read sequence=1 logical_address=27ff physical_address=1f07ff value=00 reader_pc=cbff reader_physical_pc=002bff reader_code_bytes=unavailable a=01 x=ff y=00 sp=fa p=04\n";
+    Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
+    if (!tmpdir || !tmpdir[0]) {
+        fprintf(stderr, "TMPDIR must name a task-specific test directory\n");
+        return 0;
+    }
+    if (snprintf(path, sizeof(path), "%s/firestaff-theron-consumer-pce-fast-XXXXXX",
+                 tmpdir) <= 0) return 0;
+    int fd = mkstemp(path);
+    FILE *file;
+    int result;
+
+    if (fd < 0) return 0;
+    file = fdopen(fd, "wb");
+    if (!file) {
+        close(fd);
+        unlink(path);
+        return 0;
+    }
+    result = fputs(trace, file) != EOF;
+    if (fclose(file) != 0) result = 0;
+    if (!result) {
+        unlink(path);
+        return 0;
+    }
+    result = theron_v1_mednafen_main_ram_consumer_trace_parse_file(path, &receipt) &&
+             receipt.status == THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY &&
+             receipt.source_header_verified && receipt.read_count == 2u &&
+             receipt.first_reader_pc == 0xcb22u &&
+             receipt.first_reader_physical_pc == 0x002b22u &&
+             receipt.target_2600_read_count == 2u &&
+             !receipt.semantic_publication_allowed;
+    unlink(path);
+    return result;
+#endif
+}
+
 static int test_target_window_provenance(void) {
 #if defined(_WIN32)
     return 1;
@@ -166,6 +212,10 @@ int main(void) {
     }
     if (!test_code_bank_reader_trace()) {
         fprintf(stderr, "FAIL: HuC6280 code-bank reader address\n");
+        return 1;
+    }
+    if (!test_pce_fast_code_bytes_trace()) {
+        fprintf(stderr, "FAIL: PCE Fast reader code-byte trace\n");
         return 1;
     }
     if (!test_target_window_provenance()) {
