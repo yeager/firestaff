@@ -26,27 +26,26 @@ extern "C" {
 /* Vaddr and value of every CHAR_* / ICON_* / SCR_X_SIZE field the
  * FM Towns menu draw chain reads. */
 
-#define DM1_V1_FMTOWNS_CHAR_X_SIZE      5   /* glyph body width  (px)   */
+#define DM1_V1_FMTOWNS_CHAR_X_SIZE      5   /* glyph body width (px)    */
 #define DM1_V1_FMTOWNS_CHAR_Y_SIZE      6   /* glyph body height (px)   */
-#define DM1_V1_FMTOWNS_CHAR_X_SPC       1   /* horizontal spacing (px)  */
-#define DM1_V1_FMTOWNS_CHAR_Y_SPC       1   /* vertical spacing   (px)  */
-#define DM1_V1_FMTOWNS_CHAR_DESCENDER   1   /* baseline descender (px)  */
-#define DM1_V1_FMTOWNS_CHAR_X_WID       6   /* per-char advance   (px)  */
-#define DM1_V1_FMTOWNS_CHAR_Y_HYT       7   /* per-line height    (px)  */
+#define DM1_V1_FMTOWNS_CHAR_X_SPC       1   /* horizontal trailing gap  */
+#define DM1_V1_FMTOWNS_CHAR_Y_SPC       1   /* vertical trailing gap    */
+#define DM1_V1_FMTOWNS_CHAR_DESCENDER   1   /* baseline offset (px)     */
+#define DM1_V1_FMTOWNS_CHAR_X_WID       6   /* horizontal glyph pitch   */
+#define DM1_V1_FMTOWNS_CHAR_Y_HYT       7   /* vertical glyph pitch     */
 
 #define DM1_V1_FMTOWNS_SCR_X_SIZE       320 /* screen stride            */
 #define DM1_V1_FMTOWNS_ICON_SIZE        256 /* icon bitmap byte size    */
 #define DM1_V1_FMTOWNS_ICON_X_SIZE      16  /* icon width  (px)         */
 #define DM1_V1_FMTOWNS_ICON_Y_SIZE      16  /* icon height (px)         */
 
-/* Total horizontal pixel run of `char_count` characters, including
- * the CHAR_X_WID advance (which already folds in CHAR_X_SIZE +
- * CHAR_X_SPC). Matches text_measure (EDM.EXP 0x1a710) under a
- * static CHAR_X_WID load. */
+/* Total horizontal pixel extent of `char_count` glyphs. Mirrors the
+ * original TEXT_SIZE routine at EDM.EXP 0x1a710: count * CHAR_X_WID -
+ * CHAR_X_SPC, excluding the final trailing gap. */
 int dm1_v1_fmtowns_text_pixel_width_pc34(int char_count);
 
-/* Total vertical pixel run of `line_count` lines using CHAR_Y_HYT
- * (which folds in CHAR_Y_SIZE + CHAR_Y_SPC). */
+/* Total vertical pixel extent of `line_count` glyph rows, excluding
+ * the final trailing gap, using CHAR_Y_HYT - CHAR_Y_SPC per row. */
 int dm1_v1_fmtowns_text_pixel_height_pc34(int line_count);
 
 /* Return the SYM1-declared vaddr of the given constant, for

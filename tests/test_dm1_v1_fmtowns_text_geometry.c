@@ -32,21 +32,23 @@ static void test_screen_and_icon_constants(void) {
 static void test_pixel_width(void) {
     assert(dm1_v1_fmtowns_text_pixel_width_pc34(0)  == 0);
     assert(dm1_v1_fmtowns_text_pixel_width_pc34(-3) == 0);
-    assert(dm1_v1_fmtowns_text_pixel_width_pc34(1)  == 6);
-    /* "BLOCK" = 5 chars => 30 px. */
-    assert(dm1_v1_fmtowns_text_pixel_width_pc34(5)  == 30);
-    /* "SPELLSHIELD" = 11 chars => 66 px. Fits in 87px panel. */
-    assert(dm1_v1_fmtowns_text_pixel_width_pc34(11) == 66);
+    assert(dm1_v1_fmtowns_text_pixel_width_pc34(1)  == 5);
+    /* "BLOCK" = five 5px glyphs with 1px between glyphs: 29px. */
+    assert(dm1_v1_fmtowns_text_pixel_width_pc34(5)  == 29);
+    /* "SPELLSHIELD" = 11 glyphs with no trailing gap: 65px. */
+    assert(dm1_v1_fmtowns_text_pixel_width_pc34(11) == 65);
+    assert(dm1_v1_fmtowns_text_pixel_width_pc34(2147483647) == 0);
 }
 
 static void test_pixel_height(void) {
     assert(dm1_v1_fmtowns_text_pixel_height_pc34(0)  == 0);
     assert(dm1_v1_fmtowns_text_pixel_height_pc34(-1) == 0);
-    assert(dm1_v1_fmtowns_text_pixel_height_pc34(1)  == 7);
-    /* Three-button DYNAMENU panel: 3 rows @ 7px = 21 px vertical. */
-    assert(dm1_v1_fmtowns_text_pixel_height_pc34(3)  == 21);
-    /* Full 45px panel holds floor(45/7) = 6 rows. */
-    assert(dm1_v1_fmtowns_text_pixel_height_pc34(6)  == 42);
+    assert(dm1_v1_fmtowns_text_pixel_height_pc34(1)  == 6);
+    /* Three 6px rows on a 7px pitch have two internal 1px gaps. */
+    assert(dm1_v1_fmtowns_text_pixel_height_pc34(3)  == 20);
+    /* Six 6px rows on a 7px pitch have five internal 1px gaps. */
+    assert(dm1_v1_fmtowns_text_pixel_height_pc34(6)  == 41);
+    assert(dm1_v1_fmtowns_text_pixel_height_pc34(2147483647) == 0);
 }
 
 static void test_vaddr_lookup(void) {

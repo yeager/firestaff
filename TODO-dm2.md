@@ -515,6 +515,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   authenticated physical-palette binding; the local gameplay CTest passes its
   active palette, frame-admission and HUD-plan checks. Do not use Firestaff's
   own decoder output as the expected original framebuffer.
+  The authenticated `SKULL.EXP` P3 entry at `0x5741c` now has a reproducible
+  static disassembly. The entry stub returns to `0x57423`, which calls the
+  `0x1dfd4` dispatcher and then the DOS exit wrapper. The dispatcher loops
+  through `0x1dd24` and `0x19cdc`, but these addresses remain unnamed and are
+  not proven to own title/menu dispatch. Bind symbols or capture an original
+  runtime trace before assigning menu/input semantics. See
+  `parity-evidence/dm2_fmtowns_p3_entry_disassembly.md`.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
   valid encounter, weapon choice, command arguments and RNG timing, then
   bind the remaining WIELD fallback/luck and creature-drop route to that

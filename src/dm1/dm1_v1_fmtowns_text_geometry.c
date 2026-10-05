@@ -1,4 +1,5 @@
 #include "dm1_v1_fmtowns_text_geometry.h"
+#include <limits.h>
 #include <string.h>
 
 /* Source-locked FM Towns DM1 text/screen geometry constants.
@@ -7,13 +8,19 @@
  * matching evidence. */
 
 int dm1_v1_fmtowns_text_pixel_width_pc34(int char_count) {
+    int64_t width;
     if (char_count <= 0) return 0;
-    return char_count * DM1_V1_FMTOWNS_CHAR_X_WID;
+    width = (int64_t)char_count * DM1_V1_FMTOWNS_CHAR_X_WID -
+            DM1_V1_FMTOWNS_CHAR_X_SPC;
+    return width > INT_MAX ? 0 : (int)width;
 }
 
 int dm1_v1_fmtowns_text_pixel_height_pc34(int line_count) {
+    int64_t height;
     if (line_count <= 0) return 0;
-    return line_count * DM1_V1_FMTOWNS_CHAR_Y_HYT;
+    height = (int64_t)line_count * DM1_V1_FMTOWNS_CHAR_Y_HYT -
+             DM1_V1_FMTOWNS_CHAR_Y_SPC;
+    return height > INT_MAX ? 0 : (int)height;
 }
 
 uint32_t dm1_v1_fmtowns_text_geometry_vaddr_pc34(const char *name) {

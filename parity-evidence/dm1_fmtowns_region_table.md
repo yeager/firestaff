@@ -2,9 +2,9 @@
 
 ## Correction (2026-09-06)
 
-The historical consumption plan below misidentifies SPC_BLOT argument10
-as a region and11/77/79 as colours. It actually draws graphic C010 into
-C011/C077/C079 (FMTOWNS.H:315; ACTIDRAW.C:333–355). The registry bytes
+An earlier consumption plan misidentified SPC_BLOT argument 10 as a region
+and 11/77/79 as colours. It actually draws graphic C010 into destination
+regions 11/77/79 (FMTOWNS.H:315; ACTIDRAW.C:333–355). The registry bytes
 remain useful, but a flat coloured rectangle is not an authentic menu.
 See [corrected argument semantics](dm1_fmtowns_menu_p3_disassembly.md).
 
@@ -163,6 +163,23 @@ Region IDs 0..9 not present in the table are outside the domain and
 return `NULL` from the lookup — the linked list has no id 0 (rejected
 by the zero-check at 0x18dc2).
 
+## Alternate DYNAMENU destinations 77 and 79
+
+The full decoded registry (`parity-evidence/dm1_fmtowns_region_table_full.md`)
+contains the destination records selected by `DRAW_DMENU`:
+
+| ID | Record address | Type | Parent | a | b | Parent size |
+|---:|---:|---:|---:|---:|---:|---:|
+| 77 | `0x26fe8` | 2 | 76 | 86 | 0 | 87×33 (region 76) |
+| 79 | `0x26ff8` | 2 | 78 | 86 | 0 | 87×21 (region 78) |
+
+These byte-exact records match the 33- and 21-pixel English C010 crops used
+when the corresponding DYNAMENU sentinel is set. They establish each
+destination's record and parent extent; they do not, by themselves, prove
+the final on-screen origin chosen through the complete SPC_BLOT/GET_COORD
+call chain. The Japanese executable and original captures need a separate
+comparison before claiming full placement parity.
+
 ## GET_SCL_COORD math (locked)
 
 Signature: `GET_SCL_COORD(id, out_ptr, scale_x_10k, scale_y_10k)`.
@@ -264,16 +281,14 @@ observed position types in the menu block.
 
 ## Consumption plan
 
-The FM Towns menu shim can now stop guessing region geometry:
-
-- SPC_BLOT panel (region 10) = 87x45 pixels. Position anchored via
-  region 2 (screen origin). GET_COORD walks (2 -> 1) with anchor type
-  1 twice, giving origin (0, 0) — panel therefore sits at screen top.
-  The panel colour (0x0B, 0x4D, or 0x4F) selected by DRAW_DMENU is
-  drawn as a filled 87x45 rectangle at the resolved origin.
-- FILL_CSCREEN menu clear (region 11) = 87x45 pixels. Anchor type 2
-  with (319, 77) relative to region 10; GET_COORD's final rect is the
-  clear region for the menu backdrop.
-
-Both are the correct, byte-exact geometry pulled from the ROM —
-nothing else in this document may be substituted for those bytes.
+The registry bytes and lookup geometry are recovered. DRAW_DMENU's use
+must be read together with
+`parity-evidence/dm1_fmtowns_menu_p3_disassembly.md`: it asks SPC_BLOT to draw
+source graphic C010 into destination region 11, 77, or 79. These IDs are not
+colour values, and the operation is not a solid rectangle fill. FILL_CSCREEN
+separately uses destination region 11. The executable selects destination 77
+when DYNAMENU byte +3 equals `0xFF`, then destination 79 when byte +2 equals
+`0xFF` (the latter check takes precedence). The active Firestaff M11 path
+loads authentic asset 10 and uses the matching source crops. Full pixel parity
+still requires comparison against original captures, including text and
+Japanese/icon states; registry geometry alone does not establish it.

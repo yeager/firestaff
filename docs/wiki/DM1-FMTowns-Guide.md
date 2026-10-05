@@ -215,13 +215,15 @@ Highlights so agents don't need to re-lift them:
 
 - `DRAW_DMENU` (0x4620, 240 B) — mode-gates on MENU_ICONS-vs-MENU_OWNER.
   Icon mode loops `PARTY_SIZE` times through `DRAW_ICN_BUTTON` (0x44f0).
-  Dynamic mode draws a coloured panel via `SPC_BLOT` (0x1ccec), a main
+  Dynamic mode blits graphic C010 through `SPC_BLOT` (0x1ccec) to a
+  destination region selected from DYNAMENU's sentinels, then draws a main
   label from a stride-319 table at `0x26019 + MENU_OWNER * 319`, and
   three button labels looked up through `GET_LABEL` (0x43e4).
 - `GET_LABEL` walks `DYNA_BUTTONS` (0x24194) as a NUL-separated
   string table; `0xFF` sentinel returns `0x21d9c` (blank label).
-- `DYNAMENU[+2]` / `DYNAMENU[+3]` are `0xFF`-flagged colour overrides
-  for the panel colour (default `0x0B`, alternates `0x4D` / `0x4F`).
+- `DYNAMENU[+3] == 0xFF` selects destination region 77; then
+  `DYNAMENU[+2] == 0xFF` selects region 79 and overrides it. Otherwise the
+  destination is region 11. These are not colour values.
 - `MOUSE_OFF` (0xdd38) / `MOUSE_ON` (0xdd18) are `cli`-guarded
   reference-counted wrappers around `MOS_DISP` (0x21a40) using
   `MSE_STATE` (0x25848) as the hide depth.
@@ -576,8 +578,7 @@ when the file is absent — no game bytes are bundled.
   `SWSH → TITLE → ENTRANCE` transaction — no PC34 presentation
   fallback.
 
-**Decoded and shipping as source-locked C** (available today —
-just call the API, no re-lifting from the executable required):
+**Recovered source structures and production path:**
 
 | Layer                       | Module                                  |
 |-----------------------------|-----------------------------------------|
@@ -586,60 +587,25 @@ just call the API, no re-lifting from the executable required):
 | English 44-label pool       | `dm1_v1_fmtowns_dyna_buttons`           |
 | Japanese 44-label pool      | `dm1_v1_fmtowns_dyna_buttons_ja`        |
 | Text/screen/icon geometry   | `dm1_v1_fmtowns_text_geometry`          |
-| Software EGB shim           | `dm1_v1_fmtowns_egb_shim` (fill / put)  |
+| Legacy software EGB test shim| `dm1_v1_fmtowns_egb_shim` (synthetic)   |
 | JDM code + EGB trampolines  | `dm1_v1_fmtowns_jdm_symbols` (19 syms)  |
 | JDM BSS scalars             | `dm1_v1_fmtowns_jdm_bss` (18 scalars)   |
 | Font asset identity         | `dm1_v1_fmtowns_font_asset`             |
 | Picture library container   | `dm1_v1_fmtowns_pic_library` (575 ids)  |
 | DECODEGRAPHIC RLE decoder   | `dm1_v1_fmtowns_pic_library` (347/347)  |
 
-**What remains for the visible menu**: bind the ten modules above
-into the M11 main loop. The bounded consumer skeleton is:
+The active M11 menu loop calls `m11_draw_dm1_fmtowns_dmenu_backdrop` in
+`src/engine/m11_game_view.c`. It loads authentic `GRAPHICS.DAT` asset 10
+(C010) through the asset loader, selects the source crop from the DYNAMENU
+sentinels, and draws English action labels. Region IDs 11/77/79 are
+destinations, not colours. The standalone menu-render adapter and EGB shim
+remain synthetic test-era code; they are not called by this active loop and
+must not be used to infer production pixels.
 
-```c
-/* Look up the region rectangle */
-DM1_V1_FmtownsRegionRecord panel, anchor;
-dm1_v1_fmtowns_region_menu_panel_pc34(&panel);
-dm1_v1_fmtowns_region_menu_clear_area_pc34(&anchor);
-
-/* Compose the panel-colour and slot indices from live state */
-uint8_t rec[DM1_V1_FMTOWNS_DYNAMENU_BYTES] = {...};
-uint8_t col = dm1_v1_fmtowns_dynamenu_panel_colour_pc34(rec);
-
-/* Fill the panel via the software EGB shim */
-dm1_v1_fmtowns_egb_fill_rect_pc34(fb, W, H, W,
-    anchor.a - panel.a, anchor.b,
-    anchor.a - 1,       anchor.b + panel.b - 1, col);
-
-/* Draw three labels */
-for (int i = 0; i < 3; ++i) {
-    uint8_t ix = dm1_v1_fmtowns_dynamenu_slot_label_pc34(rec, i);
-    const char *s = language == JP
-        ? dm1_v1_fmtowns_dyna_button_label_ja_pc34(ix)
-        : dm1_v1_fmtowns_dyna_button_label_pc34(ix);
-    /* rasterise s at (anchor.a - panel.a + PAD, anchor.b + 20*i)
-     * using the font raster loaded from GRAPHICS.DAT index 557 */
-}
-```
-
-**Remaining bounded next steps** (all non-synthetic):
-
-- Bind the picture-library decoder into the M11 asset pipeline so
-  it opens `~/.firestaff/data/dm1/...` (materialised cache) rather
-  than requiring the caller to supply the GRAPHICS.DAT bytes.
-- Load font index 557 at boot into a persistent M11 slot; wire
-  the text rasteriser subtree (section 4a) to sample from it.
-- Compose live `DYNAMENU` records from the current champion's
-  action-hand state and drive the shim.
-- `TMENU` (TownsOS shell) interactive icon/layout rendering and
-  mouse routes — separate scope, above the game executable.
-
-**Genuinely blocked (require external evidence):**
-
-- No item in the menu-draw chain remains genuinely blocked. Every
-  constant and format reachable via disassembly of the
-  hash-verified `EDM.EXP` / `JDM.EXP` / `DATA/GRAPHICS.DAT` is
-  now shipping source-locked C with tests.
+Remaining parity work is to compare the full menu against original captures,
+especially Japanese text and the icon-mode route. Loading the C010 background
+alone does not establish complete pixel parity. `TMENU` (TownsOS shell)
+interactive icon/layout rendering and mouse routes remain separate scope.
 
 ## 8. Extracting data during development
 
@@ -688,8 +654,9 @@ for i in md.disasm(p[load_off+start_v : load_off+end_v], start_v):
 
 ## 9. Rules that apply to all FM Towns DM1 work
 
-- **Never synthesise pixels** when real data exists. The menu is
-  blocked on decoded EGB shim work, not on a placeholder.
+- **Never synthesise pixels** when real data exists. The active M11 menu
+  path blits authenticated asset 10 (C010); the standalone software EGB
+  shim remains synthetic legacy test code and is not used by that path.
 - **Never extract data at runtime** — Firestaff must open the
   materialized cache only. All extraction is a development-time step.
 - **Never bypass the startup receipt.** Every playback and rendering

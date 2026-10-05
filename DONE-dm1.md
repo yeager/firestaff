@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-10-05: Corrected the FM Towns text-rasteriser evidence against the
+  executable's SYM1 names and opcodes: `TEXT_SIZE` is the measurement routine,
+  `TEXT_PIC` at `0x29344` owns the raw font pointer, and the `CHAR_*` fields had
+  been mislabeled in the prior report. The standalone text-geometry helpers
+  now exclude the final horizontal/vertical spacing pixel, matching the
+  source metric pitches; overflow returns zero. This is a source-bound helper
+  correction and does not by itself claim a new menu-rendering or visual-parity
+  result.
+
 - 2026-10-04: M10 F0207 now emits a source-positioned attack sound request
   after a committed melee or projectile attack, including melee misses.
   This retains the event's map/coordinates at dispatch instead of looking

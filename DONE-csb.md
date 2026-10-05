@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-10-05: Bound the local Atari ST v2.1 `csb.s` textual disassembly to
+  the PP hard-disk `CMAIN` image with three byte-for-byte code anchors at
+  labels `u0000`, `u0006` and `u0624`; the exact `CMAIN` SHA-256 is recorded in
+  `parity-evidence/csb_atari_v21_cmain_disassembly_binding.md`. The report
+  limits this result to the PP hard-disk binary: retail STX-to-source binding
+  and ReDMCSB F-number mapping remain open.
+
 - 2026-10-04: F31 mode-2 gameplay sound requests now create the original
   C20 timeline event for the following game tick, before distance is tested.
   The due event reads C.SoundIndex separately from A.Priority and joins the
