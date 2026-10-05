@@ -139,6 +139,30 @@ static void test_stage2_l48fc_countdown(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the index-$4b comparison handler and its local pair checker against
+ * each authentic edition. This proves byte-level branches/cursor arithmetic
+ * only; it does not establish that a retail stream selects this root. */
+static void test_stage2_id4b_indexed_comparison(const uint8_t *raw,
+                                                 size_t raw_size, int jp)
+{
+    static const uint8_t body[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x64u, 0x00u, 0x48u, 0x44u, 0x12u,
+        0x68u, 0x3au, 0xd0u, 0xf9u, 0xa5u, 0x00u, 0xd0u, 0x03u,
+        0x4cu, 0xc5u, 0x41u, 0xc8u, 0xc8u, 0xc8u, 0x98u, 0x4cu,
+        0xe4u, 0x40u, 0xc8u, 0xb1u, 0x1cu, 0xaau, 0xc8u, 0xb1u,
+        0x1cu, 0xc9u, 0xffu, 0xf0u, 0x07u, 0xddu, 0x80u, 0x27u,
+        0xf0u, 0x02u, 0xc6u, 0x00u, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp, 0x41a3u) == 0x4acau);
+    for (unsigned int i = 0; i < sizeof(body); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4acau + i)) == body[i]);
+    }
+    printf("  PASS: stage2_id4b_indexed_comparison (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Authentic selector continuations and overlapping nested-stream roots.
  * These byte assertions are source evidence, not proof that a selector runs.
  * See docs/source-lock/theron-disassembly/
@@ -1481,6 +1505,7 @@ int main(void)
         g_us_data, g_us_size, 0);
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
+    test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id2c_external_handoff(g_us_data, g_us_size, 0);
@@ -1493,6 +1518,7 @@ int main(void)
             g_jp_data, g_jp_size, 1);
         test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
+        test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id2c_external_handoff(g_jp_data, g_jp_size, 1);

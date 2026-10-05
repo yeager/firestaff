@@ -24,6 +24,11 @@ Reviewed 2026-10-05. Only open work is listed here.
   against authentic US and JP Track 02. The code clears two VDC registers and
   decrements the `$01:$00` pair to zero; the source value's meaning and purpose
   remain unproven.
+- ✅ Decompiled dispatch ID `$4b` at `$4aca` through its local `$4ae4` pair
+  checker. A new raw-media assertion locks the 45-byte path, including the
+  conditional cursor replacement/skip, against authentic US and JP Track 02.
+  The stream structure and comparison purpose remain unassigned; see the
+  source-lock dispatch-table entry.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;
@@ -42,6 +47,15 @@ Reviewed 2026-10-05. Only open work is listed here.
   logical `$3a2e`; the earlier caller-side `$4ec9` byte peek was not execution
   evidence. An isolated trv2 build compiled, but neither a cold run nor the
   hash-verified gameplay-state run executed `$3a2e` before capture stopped.
+  Two further authentic JP F5-state recaptures accepted 14 and 11 scripted
+  controller events, with active-low masks read back on the selected pad banks
+  and input-receipt poll witness PC `$44d2`; the
+  11-event run included a four-second Run hold. Neither executed `$3a2e` or
+  yielded a dynamic media/RAM handoff. The readback proves controller-port
+  delivery for these attempts, not that the game acted on them. Capture traces
+  are retained under
+  `/home/trv2/firestaff-theron-evidence/emulator-created-20261005/pcefast-mpr1-gameplay-route-loop1-20261005/`
+  and `.../pcefast-mpr1-gameplay-route-loop2-20261005/` on trv2.
   The authentic JP F5 state independently records PC `$c692`, MPR1 `$f8`, and
   MPR6 `$69`; at that later gameplay point `$3a2e` maps to BaseRAM offset
   `$1a2e`, whose saved byte is zero. This does not establish MPR1 or contents

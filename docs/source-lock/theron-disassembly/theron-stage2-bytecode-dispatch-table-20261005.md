@@ -76,6 +76,30 @@ that amount to `$1c/$1d` and resume at `$40cc`. This establishes instruction
 and cursor-update paths for this cluster, but does not prove that any of its
 indices occur in a valid retail stream or assign names to them.
 
+## ID `$4b`: counted indexed-byte comparison
+
+Dispatch entry `$4b` points to `$4aca` in both authentic editions. The
+byte-locked `$4aca..$4af6` body in
+`tests/test_theron_v1_stage2_disassembly_chain.c` proves this bounded flow:
+the handler reads an 8-bit count from stream offset `+1`, clears zero-page
+`$00`, and calls its local pair checker once per count iteration. Each pair
+loads an X index from the stream and compares the next byte against
+`$2780,X`; operand `$ff` bypasses the comparison, while a non-matching value
+decrements `$00`. This describes the visible operations only: the candidate
+stream, contents of `$2780`, and purpose of the comparison are not
+established.
+
+If `$00` is zero after the loop, control jumps to `$41c5`; `$41b9` loads a
+little-endian replacement cursor from byte-sized Y offsets `(2+2*count) mod
+256` and `(3+2*count) mod 256`, then `$41c5` installs it and resumes dispatch
+without adding to the old cursor. If `$00` is nonzero, the handler adds three
+to Y and passes that byte to `$40e4`, advancing the old cursor by
+`(4 + 2*count) mod 256` and skipping the two replacement-cursor bytes. The
+count is not range-checked; the decrement-and-branch loop treats an encoded
+zero as 256 iterations, and the one-byte mismatch accumulator can wrap. Do
+not infer an all-match predicate or gameplay/resource-selection name from
+this static path.
+
 ## Indexed-byte handlers and nested cursor path
 
 The next table roots expose another byte-level group. Index `$0b` at `$4259`
