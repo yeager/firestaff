@@ -290,6 +290,12 @@ static void test_stage2_id2b_regional_handoff(const uint8_t *raw,
         0xc2u, 0xb2u, 0x0cu, 0xc8u, 0x11u, 0x0cu, 0xd0u, 0x01u,
         0x60u, 0x44u, 0x17u, 0x60u
     };
+    static const uint8_t relative_pointer_add[] = {
+        0xc2u, 0x18u, 0xb1u, 0x0cu, 0x6du, 0xd9u, 0x4fu, 0x85u,
+        0x0au, 0xc8u, 0xb1u, 0x0cu, 0x6du, 0xdau, 0x4fu, 0x85u,
+        0x0bu, 0x18u, 0xa5u, 0x0cu, 0x69u, 0x02u, 0x85u, 0x0cu,
+        0x90u, 0x02u, 0xe6u, 0x0du, 0x60u
+    };
     uint8_t handler[] = {
         0xc8u, 0xb1u, 0x1cu, 0x48u, 0xc8u, 0xb1u, 0x1cu, 0xaau,
         0x20u, 0x00u, 0x4bu, 0x20u, 0x48u, 0x4fu, 0xadu, 0x79u,
@@ -330,6 +336,11 @@ static void test_stage2_id2b_regional_handoff(const uint8_t *raw,
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)((jp ? 0x57b9u : 0x573fu) + i)) ==
                pointer_empty_test[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(relative_pointer_add); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)((jp ? 0x57dbu : 0x5761u) + i)) ==
+               relative_pointer_add[i]);
     }
     printf("  PASS: stage2_id2b_regional_handoff (%s)\n",
            jp ? "JP" : "US");

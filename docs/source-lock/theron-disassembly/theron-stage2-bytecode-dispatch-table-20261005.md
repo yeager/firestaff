@@ -258,9 +258,10 @@ uses it as an index multiplied by two into the pointer table reached through
 calls `$5e40/$5e70`, then tests whether the selected pointer is zero. The
 `$572c/$57a6` helper swaps the `$0a/$0b` and `$0c/$0d` pointer pairs. The
 `$573f/$57b9` check ORs the two bytes at `($0c)` and calls `$5761/$57db` when
-nonzero. The candidate row supplies X=`<row>` before two local calls, but
-their effects on X are not established. Later helper effects and runtime
-execution remain unproven.
+nonzero. That helper adds the word at `($0c)` to `$4fd9/$4fda`, stores the
+result in `$0a/$0b`, and advances `$0c/$0d` by two. The candidate row supplies
+X=`<row>` before two local calls, but their effects on X are not established.
+Later helper effects and runtime execution remain unproven.
 
 ### Rooted `$2c` handler: external helper handoff
 

@@ -26,9 +26,10 @@ index a 16-bit offset table through `$4fd9/$4fda`, adds the base, writes the
 result pointer to `$0c/$0d`, and calls `$5e40/$5e70` followed by
 `$573f/$57b9`. The rooted `$572c/$57a6` helper swaps the two pointer pairs;
 `$573f/$57b9` tests whether `($0c)` is zero and conditionally calls
-`$5761/$57db`. The seven selector `$0c` candidates supply A=`$02` at this
-handoff, so the visible table offset is `$04`; later helper effects and
-candidate execution remain unproven.
+`$5761/$57db`, which adds the 16-bit value at `($0c)` to `$4fd9/$4fda`, stores
+the result at `$0a/$0b`, and advances `$0c/$0d` by two. The seven selector
+`$0c` candidates supply A=`$02` at this handoff, so the visible table offset
+is `$04`; later helper effects and candidate execution remain unproven.
 
 ## 2026-10-05 — trace dispatch ID `$2c` to its external call boundary
 
