@@ -202,6 +202,10 @@ conditional branch after `$4f5e` remains only statically observed.
 The `stage2_id13_id16_fixed_arguments` assertion binds table entries `$13` and
 `$16`, their fixed-argument roots `$45f0/$4615`, and the shared `$40f1` `+1`
 step. The `$3ab7` callee effects and retail stream execution remain unknown.
+The `stage2_id17_id1b_fixed_argument_roots` assertion locks IDs `$17..$1b`,
+their converging `$463b` operand reader, and `$4641` continuation in both
+authentic editions. It does not assign meanings to the immediate values or
+callee effects.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
