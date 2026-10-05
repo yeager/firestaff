@@ -13,6 +13,29 @@ RANGE {
 # Common fixed-step exits from the initial handler comparison cluster.
 RANGE { START $4101; END $410c; TYPE CODE; };
 
+# Authentic pointer prefix read by the indirect-dispatch path at $4291.
+RANGE {
+    START $6800;
+    END $681b;
+    TYPE ADDRTABLE;
+    NAME "Stage2NestedBytecodePointerPrefix";
+};
+
+# Bytecode IDs and the known selector-08 operand at authentic nested-stream roots.
+RANGE { START $6e98; END $6e99; TYPE BYTETABLE; };
+RANGE { START $6c4e; END $6c4e; TYPE BYTETABLE; };
+RANGE { START $6c92; END $6c92; TYPE BYTETABLE; };
+RANGE { START $6cfa; END $6cfa; TYPE BYTETABLE; };
+RANGE { START $694d; END $694e; TYPE BYTETABLE; };
+RANGE { START $69a1; END $69a2; TYPE BYTETABLE; };
+RANGE { START $6a16; END $6a17; TYPE BYTETABLE; };
+RANGE { START $6a7c; END $6a7d; TYPE BYTETABLE; };
+RANGE { START $6ae2; END $6ae3; TYPE BYTETABLE; };
+RANGE { START $6b48; END $6b49; TYPE BYTETABLE; };
+RANGE { START $6bbd; END $6bbe; TYPE BYTETABLE; };
+RANGE { START $6c13; END $6c14; TYPE BYTETABLE; };
+RANGE { START $681c; END $681d; TYPE BYTETABLE; };
+
 # Each pointer value is also a one-byte code root; decode from every dispatch target.
 RANGE { START $41c5; END $41c5; TYPE CODE; };
 RANGE { START $41cb; END $41cb; TYPE CODE; };

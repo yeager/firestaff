@@ -14,9 +14,11 @@ Reviewed 2026-10-05. Only open work is listed here.
   without assigning command semantics. Indices `$00..$07` have a static
   comparison/cursor-transfer trace; `$0b..$10` have indexed-byte/nested-cursor
   traces. Index `$28`'s Y-offset 1 test and Y-offset 2 fetch are also mapped,
-  but none of these paths is bound to a valid stream. Regional
-  call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s regional
-  pointer immediate in helper `$43b5`, are recorded without assigning
+  but none of these paths is bound to an executed stream. The authentic
+  `$6800` data has a 13-pointer prefix whose targets all begin with mapped
+  dispatch IDs; the selected pointer and stream boundary remain unproven.
+  Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
+  regional pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 

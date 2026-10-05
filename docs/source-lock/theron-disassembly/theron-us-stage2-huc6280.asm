@@ -100,7 +100,6 @@ LE099           := $E099
 LE09C           := $E09C
 LE0D8           := $E0D8
 LE0DE           := $E0DE
-LE26A           := $E26A
 LFC00           := $FC00
 LFE00           := $FE00
 LFF00           := $FF00
@@ -234,10 +233,6 @@ L4105:  lda     #$07
         bra     L40E4
 L4109:  lda     #$09
         bra     L40E4
-; The indirect jump at $40dc indexes these little-endian targets by the
-; doubled byte read from ($1c). Each value is an independent code root, not
-; a command name. Targets match both authentic regional Track 02 BINs; see
-; theron-stage2-bytecode-dispatch-table-20261005.md and its da65 info file.
 Stage2Dispatch:
         .addr   L41C5
         .addr   L41CB
@@ -5727,9 +5722,7 @@ L678B:  bbs7    $FF,$678D
 L678E:  bbs7    $FF,$6790
 L6791:  bbs7    $FF,$6793
 L6794:  bbs7    $FF,$6796
-L6797:  .byte   $FF
-        .byte   $FF
-L6799:  .byte   $FF
+L6797:  bbs7    $FF,$6799
 L679A:  bbs7    $FF,$679C
 L679D:  bbs7    $FF,$679F
 L67A0:  bbs7    $FF,$67A2
@@ -5764,26 +5757,24 @@ L67F4:  bbs7    $FF,$67F6
 L67F7:  bbs7    $FF,$67F9
 L67FA:  bbs7    $FF,$67FC
 L67FD:  .byte   $FF
-L67FE:  bbs7    $FF,L6799
-        ror     L6C4E
-        sta     ($6C)
-        plx
-        jmp     (L694D)
-
-        lda     ($69,x)
-        asl     $6A,x
-        jmp     (LE26A,x)
-
-        ror     a
-        pha
-        .byte   $6B
-        lda     $136B,x
-        jmp     (L681C)
-
-        brk
-        brk
-L681C:  php
-        brk
+L67FE:  .byte   $FF
+        .byte   $FF
+Stage2NestedBytecodePointerPrefix:
+        .addr   L6E98
+        .addr   L6C4E
+        .addr   L6C92
+        .addr   L6CFA
+        .addr   L694D
+        .addr   L69A1
+        .addr   L6A16
+        .addr   L6A7C
+        .addr   L6AE2
+        .addr   L6B48
+        .addr   L6BBD
+        .addr   L6C13
+        .addr   L681C
+        .addr   L0000
+L681C:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $D3
@@ -5953,8 +5944,7 @@ L690D:  inc     a
         and     $1203
         sbc     ($74)
         .byte   $09
-L694D:  php
-        brk
+L694D:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $B2
@@ -6003,8 +5993,8 @@ L698D:  ora     ($15,x)
         brk
         bit     $0134,x
         asl     $21,x
-        ora     #$08
-        brk
+        .byte   $09
+L69A1:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $B2
@@ -6074,8 +6064,8 @@ L6A07:  rmb1    $81
         ora     ($3C,x)
         bit     $01,x
         asl     $21,x
-        ora     #$08
-        brk
+        .byte   $09
+L6A16:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $B2
@@ -6136,8 +6126,7 @@ L6A3C:  nop
         .byte   $34
 L6A78:  ora     ($16,x)
         and     ($09,x)
-L6A7C:  php
-        brk
+L6A7C:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $B2
@@ -6195,8 +6184,7 @@ L6AA2:  nop
         .byte   $34
 L6ADE:  ora     ($16,x)
         and     ($09,x)
-L6AE2:  php
-        brk
+L6AE2:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $B2
@@ -6255,8 +6243,7 @@ L6B3A:  sta     ($17,x)
         .byte   $34
 L6B44:  ora     ($16,x)
         and     ($09,x)
-        php
-        brk
+L6B48:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $B2
@@ -6327,8 +6314,8 @@ L6BAE:  eor     ($75)
         ora     $3C
         bit     $01,x
         asl     $21,x
-        ora     #$08
-        brk
+        .byte   $09
+L6BBD:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $B2
@@ -6375,8 +6362,8 @@ L6BEE:  rts
         asl     $3C
         bit     $01,x
         asl     $21,x
-        ora     #$08
-        brk
+        .byte   $09
+L6C13:  .byte   $08,$00
         and     $26
         asl     $21,x
         eor     $CF
@@ -6411,8 +6398,8 @@ L6C3C:  sxy
         adc     $12,x
         bit     #$6D
 L6C4C:  asl     $09,x
-L6C4E:  and     ($16,x)
-        php
+L6C4E:  .byte   $21
+        asl     $08,x
         brk
         and     $26
         jmp     L1F00
@@ -6457,8 +6444,8 @@ L6C72:  ror     a
         sta     ($6C)
         .byte   $0B
         ora     #$00
-        ora     ($F2)
-        .byte   $74
+L6C92:  .byte   $12
+        sbc     ($74)
 L6C95:  say
         bbs7    L0000,L6C99
 L6C99:  asl     $08,x
@@ -6516,7 +6503,9 @@ L6CEC:  jmp     ($0C00)
         brk
         brk
         lsr     a:$6C
-        tsb     $126D
+        .byte   $0C
+        .byte   $6D
+L6CFA:  .byte   $12
         sbc     ($74)
         ora     ($0D)
         ror     $0D0B,x
@@ -6731,8 +6720,7 @@ L6E90:  sta     $0E
         jsr     L3AB7
         rts
 
-        php
-        brk
+L6E98:  .byte   $08,$00
         and     $26
         and     ($1F,x)
         cld

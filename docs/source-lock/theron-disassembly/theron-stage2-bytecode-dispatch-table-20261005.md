@@ -96,6 +96,39 @@ authentic stream binds the selector, table entry, and return instruction as a
 pair. The nested execution path is therefore a static call-graph observation,
 not proof of a valid retail stream structure.
 
+The same authentic 17-sector payload contains the bytes addressed as `$6800`
+when loaded at `$4000` (payload offset `$2800`). Its first 13 little-endian
+words are the following same-region pointers in both US and JP; the next word
+is `$0000`:
+
+| Selector | Pointer | First byte at target | Dispatch entry |
+|---:|---:|---:|---:|
+| `$00` | `$6e98` | `$08` | `$4214` |
+| `$01` | `$6c4e` | `$21` | `$464f` |
+| `$02` | `$6c92` | `$12` | `$4319` |
+| `$03` | `$6cfa` | `$12` | `$4319` |
+| `$04` | `$694d` | `$08` | `$4214` |
+| `$05` | `$69a1` | `$08` | `$4214` |
+| `$06` | `$6a16` | `$08` | `$4214` |
+| `$07` | `$6a7c` | `$08` | `$4214` |
+| `$08` | `$6ae2` | `$08` | `$4214` |
+| `$09` | `$6b48` | `$08` | `$4214` |
+| `$0a` | `$6bbd` | `$08` | `$4214` |
+| `$0b` | `$6c13` | `$08` | `$4214` |
+| `$0c` | `$681c` | `$08` | `$4214` |
+
+Every target begins with an ID in the recovered 85-entry dispatch map. This
+byte-backed pointer prefix connects the `$4291` lookup code to retail
+payload addresses at the static-source level. The zero word after these 13
+entries is only observed data: the code shown above performs no selector
+bounds check, so it is not established as a runtime limit or sentinel. No
+capture yet proves which selector is actually read or executed.
+
+The regenerated listing marks the pointer words and only the identified root
+bytes (plus the `$08` handler's one-byte operand where its two-byte step is
+static) as data. It does not mark the remainder of these streams as decoded
+bytecode: their extents and operand boundaries have not been established.
+
 ## Target-rooted disassembly and regional comparison
 
 `theron-stage2-da65.info` marks `$410d..$41b6` as an address table and gives
