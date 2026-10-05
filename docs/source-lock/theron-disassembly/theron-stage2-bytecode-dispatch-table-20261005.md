@@ -270,6 +270,11 @@ The `stage2_id31_fixed_argument_handoff` assertion locks index `$31` at
 in both editions. It loads fixed values into `$f8/$ff`, calls `$e0d8`, and
 jumps to the shared cursor helper. BIOS effects and retail stream selection
 remain unknown.
+The `stage2_id32_conditional_handoff` assertion locks the `$4171` dispatch
+word and complete `$47d3..$47f2` path in both editions. Its two branches load
+different fixed `$f8/$ff` values, call `$e0d8`, and converge on `$40f5` (`+2`).
+The branch condition's meaning, BIOS effects, and retail stream selection
+remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

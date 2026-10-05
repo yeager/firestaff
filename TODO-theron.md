@@ -123,7 +123,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   ID `$30`'s overlap window `$47a6..$47c4` is also byte-locked in both
   regions; BIOS effects and retail stream selection remain unknown. ID `$31`
   at `$47c5..$47d2` is byte-locked separately in both editions; `$e0d8`
-  effects and actual stream selection remain unknown.
+  effects and actual stream selection remain unknown. ID `$32` at
+  `$47d3..$47f2` is also locked in both regions, with its condition meaning,
+  BIOS effects, and retail stream selection still unresolved.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

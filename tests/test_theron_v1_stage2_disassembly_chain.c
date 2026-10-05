@@ -856,6 +856,27 @@ static void test_stage2_id31_fixed_argument_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $32's two-way BIOS parameter bytes and shared +2 cursor exit. */
+static void test_stage2_id32_conditional_handoff(const uint8_t *raw,
+                                                  size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x0eu, 0xa9u, 0xbfu, 0x85u,
+        0xf8u, 0xa9u, 0x0eu, 0x85u, 0xffu, 0x20u, 0xd8u, 0xe0u,
+        0x4cu, 0xf5u, 0x40u, 0xa9u, 0x02u, 0x85u, 0xf8u, 0xa9u,
+        0x12u, 0x85u, 0xffu, 0x20u, 0xd8u, 0xe0u, 0x80u, 0xf0u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x32u)) == 0x47d3u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x47d3u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id32_conditional_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2315,6 +2336,7 @@ int main(void)
     test_stage2_id2f_parameter_handoff(g_us_data, g_us_size, 0);
     test_stage2_id30_overlapping_branch_root(g_us_data, g_us_size, 0);
     test_stage2_id31_fixed_argument_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id32_conditional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2350,6 +2372,7 @@ int main(void)
         test_stage2_id2f_parameter_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id30_overlapping_branch_root(g_jp_data, g_jp_size, 1);
         test_stage2_id31_fixed_argument_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id32_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
