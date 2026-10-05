@@ -120,6 +120,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   BIOS/callee effects, bank mapping, table contents, and retail selection
   remain open. ID `$2f` at `$4794` is now byte-locked through its `$40f5`
   cursor tail; both callee effects and actual stream selection remain unknown.
+  ID `$30`'s overlap window `$47a6..$47c4` is also byte-locked in both
+  regions; BIOS effects and retail stream selection remain unknown.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

@@ -258,6 +258,13 @@ through `$40f5` (`+2`) in both editions. It loads the following stream byte
 into `$f8`, sets `$ff` to `$0b`, then calls `$e0d8` and `$4b2d`. This is only
 bounded byte/control-flow evidence; both callees' effects and retail stream
 selection remain unknown.
+The `stage2_id30_overlapping_branch_root` assertion locks dispatch index
+`$30` at `$47a6` and the complete `$47a6..$47c4` byte window in both editions.
+The conditional target `$47b9` enters the middle of a linear decode; from the
+root, the zero branch calls `$e0d8` with fixed bytes and the nonzero branch
+uses the stream byte at `$f8` before another `$e0d8` call. Both visible paths
+jump to `$40f5`. This is root-relative byte/control-flow evidence only; BIOS
+effects and runtime stream selection remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
