@@ -118,7 +118,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   `$2e` now has partial US/JP byte locks for its branch prefix, alternate BIOS
   path, local pair loop, and operand reader. Its main initialization path,
   BIOS/callee effects, bank mapping, table contents, and retail selection
-  remain open.
+  remain open. ID `$2f` at `$4794` is now byte-locked through its `$40f5`
+  cursor tail; both callee effects and actual stream selection remain unknown.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

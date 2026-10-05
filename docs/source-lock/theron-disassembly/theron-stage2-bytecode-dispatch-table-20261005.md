@@ -253,6 +253,11 @@ and selected authentic windows: the `$46ca` branch/MPR prefix, alternate
 `$4789..$4793` operand reader. It does not lock the entire `$46ca` branch or
 its long BIOS setup path. BIOS/callee effects, bank mapping, `$0060` table
 contents, and runtime selection remain unresolved.
+The `stage2_id2f_parameter_handoff` assertion locks index `$2f` at `$4794`
+through `$40f5` (`+2`) in both editions. It loads the following stream byte
+into `$f8`, sets `$ff` to `$0b`, then calls `$e0d8` and `$4b2d`. This is only
+bounded byte/control-flow evidence; both callees' effects and retail stream
+selection remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
