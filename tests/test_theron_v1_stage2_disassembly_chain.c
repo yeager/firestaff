@@ -927,6 +927,54 @@ static void test_stage2_id34_fixed_argument_select(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $35's branch and region-specific $5e4d/$5e7d call target. */
+static void test_stage2_id35_regional_call_handoff(const uint8_t *raw,
+                                                    size_t raw_size, int jp)
+{
+    uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x07u, 0xa9u, 0x13u,
+        0x20u, 0xb7u, 0x3au, 0x80u, 0x03u, 0x20u, 0x4du,
+        0x5eu, 0x4cu, 0xf5u, 0x40u
+    };
+    uint16_t target = jp ? 0x5e7du : 0x5e4du;
+
+    root[13] = (uint8_t)target;
+    root[14] = (uint8_t)(target >> 8);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x35u)) == 0x46b8u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        uint8_t actual = stage2_byte_at(raw, raw_size, jp,
+                                        (uint16_t)(0x46b8u + i));
+        if (actual != root[i]) {
+            fprintf(stderr, "ID $35 mismatch at +$%02x: expected $%02x got $%02x (%s)\n",
+                    i, root[i], actual, jp ? "JP" : "US");
+            assert(actual == root[i]);
+        }
+    }
+    printf("  PASS: stage2_id35_regional_call_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $36's two-byte stream handoff and fixed helper selector. */
+static void test_stage2_id36_stream_handoff(const uint8_t *raw,
+                                             size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x85u, 0x15u, 0xc8u, 0xb1u, 0x1cu,
+        0x85u, 0x14u, 0xa9u, 0x14u, 0x20u, 0xb7u, 0x3au, 0x4cu,
+        0xf9u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x36u)) == 0x4361u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4361u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id36_stream_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2389,6 +2437,8 @@ int main(void)
     test_stage2_id32_conditional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id33_four_byte_handoff(g_us_data, g_us_size, 0);
     test_stage2_id34_fixed_argument_select(g_us_data, g_us_size, 0);
+    test_stage2_id35_regional_call_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id36_stream_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2427,6 +2477,8 @@ int main(void)
         test_stage2_id32_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id33_four_byte_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id34_fixed_argument_select(g_jp_data, g_jp_size, 1);
+        test_stage2_id35_regional_call_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id36_stream_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

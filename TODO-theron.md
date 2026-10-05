@@ -172,7 +172,11 @@ Reviewed 2026-10-05. Only open work is listed here.
   path, wait completion, indirect-call targets, and gameplay meaning remain
   unproven.
   Regional call behavior at indices `$2b`, `$23`, `$35`, plus `$28`'s regional
-  pointer immediate in helper `$43b5`, remains unassigned. ID `$2b`'s caller
+  pointer immediate in helper `$43b5`, remains unassigned. ID `$35`'s
+  `$46b8..$46c9` handler and `$5e4d/$5e7d` regional call operand are now
+  source-locked against authentic US and JP data. ID `$36`'s two-byte
+  stream handoff at `$4361..$4372`, fixed `$14` helper selector, and `$40f9`
+  tail are also source-locked. ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
   overlapping TII descriptor and two relative callees are source-locked, and

@@ -819,6 +819,10 @@ instruction flow and regional operands, not what any dispatch index means.
 US $46c4: JSR $5e4d   JP $46c4: JSR $5e7d
 ```
 
+The ID `$35` source-lock test binds the table entry at `$4177` to `$46b8` and
+the 18-byte handler window `$46b8..$46c9` in both authentic editions, including
+the regional call operand at `$46c4`.
+
 The surrounding control flow is byte-identical: `INY; LDA ($1c),Y; BNE $46c4;
 LDA #$13; JSR $3ab7; BRA $46c7; JSR [regional target]; JMP $40f5`. The two
 regional callees have the same instruction sequence, shifted by `$30`: set
@@ -827,6 +831,13 @@ then return. Their source spans (`$5e5f..$5e9e` US and `$5e8f..$5ece` JP) are
 byte-identical with FNV-1a `591d332b`. These observations establish static
 control flow and data identity only; they do not assign a gameplay command
 meaning or prove the index occurs in a valid stream.
+
+ID `$36` points to `$4361` in both editions. Its 18-byte handler window
+`$4361..$4372` is `INY; LDA ($1c),Y; STA $15; INY; LDA ($1c),Y; STA $14;
+LDA #$14; JSR $3ab7; JMP $40f9`. The source-lock test binds that table entry
+and byte window against authentic US and JP data. This records static stream
+reads and control flow only; the `$3ab7` effects and runtime selection remain
+unproven.
 
 ## Verification boundary
 
