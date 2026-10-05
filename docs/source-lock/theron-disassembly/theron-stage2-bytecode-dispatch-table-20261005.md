@@ -292,11 +292,69 @@ established by the entry-byte check. The separate authenticated `MPR1=$f8`
 receipt from the `$de21` backup-RAM writer cannot be transferred to this call.
 A valid disassembly source must join the `$3a2e` execution with MPR1 and its
 physical PC/bank, or prove the loader span that sets that mapping.
-The Mednafen trace build now has a bounded `stage2_mpr1_probe` at `$4ec9` and
-`$3a2e`, emitting the live MPR1 value, active physical PC, candidate target
-physical address, and 64 physical bytes. Its initial real-US-media run did not
-reach either address, so this instrumentation has not supplied the required
-mapping evidence yet.
+The original `pce` trace build has a bounded probe at `$4ec9` and `$3a2e`, but
+its `$4ec9` row reads candidate bytes rather than proving that `$3a2e` executes.
+An equivalent `pce_fast` instruction-loop probe now emits MPR1, executing
+physical PC, and 64 mapped bytes only when the actual instruction PC is
+`$3a2e`. The isolated trv2 build compiled; a cold authentic-media run and a
+run loading the authentic JP gameplay state did not execute that target before
+their strict capture gates stopped the runs.
+
+The JP F5 state (SHA-256
+`2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) provides
+a separate, later gameplay snapshot from the authenticated JP Rev. 1 CUE
+(MD5 `85706e7c2f658bc2792511d618dfc7a5`), raw Track 02
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`), and System Card 3.0
+(MD5 `ff1a674273fe3540ccef576376407d1d`). Its `CPU` section records PC `$c692` and
+MPRs `$ff,$f8,$68,$78,$79,$72,$69,$00`, so that saved instruction maps to
+physical `$0d2692`. The `HuC` section's `ROMSpace + $68 * 8192` bank image
+provides the code window below; da65 V2.18 decodes the captured bytes, but no
+function/gameplay semantics are assigned. At that saved frame MPR1 is `$f8`,
+and logical `$3a2e` addresses BaseRAM offset `$1a2e`; the corresponding saved
+BaseRAM byte is zero. This later-state observation cannot be transferred to
+the earlier `$4ec9` call and does not establish the `$3a2e` mapping or bytes
+when the helper is invoked.
+
+```asm
+; Authentic JP gameplay-state byte window, logical $c662..$c6e1
+; Captured PC: $c692, MPR6=$69, physical PC=$0d2692
+LC679:  bbr1    $9d,LC68c
+        jsr     LC5e1
+        stx     LC686
+        sta     LC687
+        .byte   $73
+LC68c:  bbr2    $9d,LC69f
+        jsr     LC5e1
+        stx     LC699             ; captured PC $c692
+        sta     LC69a
+        .byte   $73
+LC69f:  bbr3    $9d,LC6b2
+        jsr     LC5e1
+        stx     LC6ac
+        sta     LC6ad
+        .byte   $73
+LC6b2:  pla
+        beq     LC6c1
+        lda     $9f
+        jsr     L44e7
+        pla
+        sta     $a1
+        pla
+        sta     $a0
+        ply
+LC6c1:  sty     $20
+        lda     #$01
+        bbr0    $27,LC6ca
+        lda     #$09
+LC6ca:  jsr     L44fb
+        ldx     $24
+        beq     LC6ec
+```
+
+The listing is a byte decode rooted at the saved PC, not a complete routine
+boundary or a substitute for the pending same-execution `$3a2e` receipt. Keep
+the helper locked until an authentic run captures its actual MPR1/physical PC
+and mapped bytes.
 
 ## Bounded `$8000` entry-callee dataflow
 

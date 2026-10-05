@@ -422,6 +422,17 @@ if ! grep -Fq 'mednafen_1.32.1_theron_stage2_mpr1_probe.patch' "$build_script" |
     printf '%s\n' 'FAIL: stage-two MPR1 probe must be bounded and record the target mapping evidence'
     exit 1
 fi
+pce_fast_stage2_mpr1_probe_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch
+if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_script" ||
+   ! grep -Fq 'GetRealPC()' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'if(stage2_probe_pc == 0x3a2e)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   grep -Fq 'stage2_probe_pc == 0x4ec9' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'HuCPU.MPR[1]' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'HuCPU.FastPageR[1] + target_logical_pc' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x bytes=%s' "$pce_fast_stage2_mpr1_probe_patch_file"; then
+    printf '%s\n' 'FAIL: pce_fast MPR1 probe must capture mapped bytes only when the target instruction executes'
+    exit 1
+fi
 
 if [[ -z ${MEDNAFEN_SOURCE:-} ]]; then
     printf 'SKIP: MEDNAFEN_SOURCE is required for patch dry-run\n'

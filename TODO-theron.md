@@ -37,12 +37,17 @@ Reviewed 2026-10-05. Only open work is listed here.
   so it cannot identify the code bank at a `$4ec9` call. Require MPR1 plus its
   physical PC/bank at the actual `$3a2e` call, or an authenticated loader span
   that establishes the same mapping, before disassembling those bytes.
-- 🔒 Added a Mednafen `stage2_mpr1_probe` at caller `$4ec9` and target `$3a2e`;
-  it records active PC, MPR1-derived physical target, MPR1, and 64 physical
-  bytes. Its first trv2 run against the real US CUE/System Card delivered the
-  scripted 240-frame RUN hold but emitted no target rows. It provides no bank
-  proof yet; reach the call in an authentic run and retain a simultaneous
-  MPR1/physical-PC receipt before decoding.
+- 🔒 The bounded Mednafen `pce_fast` probe now records MPR1, executing
+  physical PC, and 64 mapped bytes only when the CPU is actually executing
+  logical `$3a2e`; the earlier caller-side `$4ec9` byte peek was not execution
+  evidence. An isolated trv2 build compiled, but neither a cold run nor the
+  hash-verified gameplay-state run executed `$3a2e` before capture stopped.
+  The authentic JP F5 state independently records PC `$c692`, MPR1 `$f8`, and
+  MPR6 `$69`; at that later gameplay point `$3a2e` maps to BaseRAM offset
+  `$1a2e`, whose saved byte is zero. This does not establish MPR1 or contents
+  at the earlier `$4ec9` call. Keep `$3a2e` undecoded until same-execution
+  mapping and bytes are captured. See
+  `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 

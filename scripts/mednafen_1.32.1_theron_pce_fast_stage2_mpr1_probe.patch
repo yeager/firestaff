@@ -1,0 +1,45 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -19,1 +19,3 @@
+ #include "vdc.h"
++#include <stdio.h>
++#include <stdlib.h>
+@@ -692,1 +694,37 @@
+-	  b1 = RdAtPC();
++	  {
++	   const uint16 stage2_probe_pc = GetRealPC();
++	  if(stage2_probe_pc == 0x3a2e)
++	  {
++	   static FILE *stage2_mpr1_trace;
++	   static unsigned stage2_mpr1_sequence;
++	   const char *trace_path = getenv("FIRESTAFF_THERON_IRQ2_TRACE");
++	   if(!stage2_mpr1_trace && trace_path && *trace_path)
++	   {
++	    stage2_mpr1_trace = fopen(trace_path, "a");
++	    if(stage2_mpr1_trace)
++	     fputs("source=mednafen-pce-fast-stage2-mpr1-probe\n", stage2_mpr1_trace);
++	   }
++	   if(stage2_mpr1_trace && stage2_mpr1_sequence < 32)
++	   {
++	    const uint32 target_logical_pc = stage2_probe_pc;
++	    const uint32 mpr1 = HuCPU.MPR[1];
++	    const uint8 *mapped_target = (const uint8 *)(HuCPU.FastPageR[1] + target_logical_pc);
++	    char target_bytes[129];
++	    static const char hex[] = "0123456789abcdef";
++	    for(unsigned int i = 0; i < 64; i++)
++	    {
++	     const uint8 byte = mapped_target[i];
++	     target_bytes[i * 2] = hex[byte >> 4];
++	     target_bytes[i * 2 + 1] = hex[byte & 0x0f];
++	    }
++	    target_bytes[128] = 0;
++	    fprintf(stage2_mpr1_trace,
++	      "stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x bytes=%s\n",
++	      stage2_mpr1_sequence++, stage2_probe_pc,
++	      (HuCPU.MPR[stage2_probe_pc >> 13] << 13) | (stage2_probe_pc & 0x1fff),
++	      mpr1, target_bytes);
++	    fflush(stage2_mpr1_trace);
++	   }
++	  }
++	  }
++	  b1 = RdAtPC();
