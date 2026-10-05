@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — decompile the internal ID `$2c` helper path
+
+Extended the ID `$2c` chain from `$4483` through `$4ec9` and `$4f31` using
+authentic US and JP Rev. 1 stage-two bytes. `$4ec9` decrements `$5b`, writes
+`$4ec2` to `$37cc`, calls `$4f31` and the below-image `$3a2e`, then on the
+no-carry path copies `$37ce/$37cf` and `$37d0/$37d1` into the `$4ec3..$4ec8`
+fields. Both visible outcomes clear `$5b` and return. `$4f31` indexes the
+little-endian table at `$4d7c` by twice `$4d7b` and writes the selected word to
+zero-page `$00/$01`. The raw-media test locks both routines in US and JP.
+`$3a2e`'s implementation and the carry/result contract remain unresolved;
+this is bounded static decompilation, not a gameplay claim.
+
 ## 2026-10-05 — root dispatch ID `$11` across overlapping code/data
 
 Followed the authentic ID `$11` dispatch call to `$5e27` (US) / `$5e57`

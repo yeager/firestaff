@@ -377,6 +377,40 @@ static void test_stage2_id2c_external_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* ID $2c's $4483 helper reaches $4ec9. Lock the internal table helper and
+ * the bounded $4ec9 caller, while leaving its below-window $3a2e callee
+ * unresolved. */
+static void test_stage2_id2c_internal_helpers(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    static const uint8_t bounded_caller[] = {
+        0xc6u, 0x5bu, 0xadu, 0xc2u, 0x4eu, 0x8du, 0xccu, 0x37u,
+        0x20u, 0x31u, 0x4fu, 0x20u, 0x2eu, 0x3au, 0xb0u, 0x18u,
+        0xadu, 0xceu, 0x37u, 0x8du, 0xc3u, 0x4eu, 0xadu, 0xcfu,
+        0x37u, 0x8du, 0xc4u, 0x4eu, 0xadu, 0xd0u, 0x37u, 0x8du,
+        0xc7u, 0x4eu, 0xadu, 0xd1u, 0x37u, 0x8du, 0xc8u, 0x4eu,
+        0x64u, 0x5bu, 0x60u
+    };
+    static const uint8_t table_pointer_helper[] = {
+        0xa9u, 0x7cu, 0x85u, 0x02u, 0xa9u, 0x4du, 0x85u, 0x03u,
+        0xadu, 0x7bu, 0x4du, 0x0au, 0xa8u, 0xb1u, 0x02u, 0x85u,
+        0x00u, 0xc8u, 0xb1u, 0x02u, 0x85u, 0x01u, 0x60u
+    };
+
+    for (unsigned int i = 0; i < sizeof(bounded_caller); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4ec9u + i)) ==
+               bounded_caller[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(table_pointer_helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4f31u + i)) ==
+               table_pointer_helper[i]);
+    }
+    printf("  PASS: stage2_id2c_internal_helpers (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Selector pointer operands are read at cursor+1/+2 by the rooted $41/$12
  * handlers. This locks the earlier selector roots to authentic regional
  * bytes; it does not prove that any selector is executed. */
@@ -1359,6 +1393,7 @@ int main(void)
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id2c_external_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id2c_internal_helpers(g_us_data, g_us_size, 0);
     test_stage2_selector_00_03_pointer_roots(g_us_data, g_us_size, 0);
     test_stage2_counter_wait_sites(g_us_data, g_us_size, 0);
     if (g_jp_data) {
@@ -1367,6 +1402,7 @@ int main(void)
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id2c_external_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id2c_internal_helpers(g_jp_data, g_jp_size, 1);
         test_stage2_selector_00_03_pointer_roots(
             g_jp_data, g_jp_size, 1);
         test_stage2_counter_wait_sites(g_jp_data, g_jp_size, 1);

@@ -2,6 +2,17 @@
 
 Reviewed 2026-10-05. Only open work is listed here.
 
+## 2026-10-05 — continue the ID `$2c` helper decompilation
+
+- ✅ Rooted `$4ec9` and `$4f31` in the authentic US and JP Rev. 1 stage-two
+  image. `$4ec9`'s bounded path and `$4f31`'s indexed pointer-table read are
+  byte-locked by `test_theron_v1_stage2_disassembly_chain`; the tracked da65
+  listing already decodes both roots.
+- 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
+  carry/result contract, and the semantic roles of `$37cc..$37d1` are still
+  unknown. Continue from an authenticated code/data mapping for that address;
+  do not infer its implementation from its stage-two call site.
+
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 
 - ✅ Recovered the 85-entry `$410d..$41b6` indirect-jump table from authentic
@@ -62,8 +73,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   overlapping TII descriptor and two relative callees are source-locked, and
   the bounded callees do not directly access `$3b33`. This does not prove the
   candidate reaches ID `$11` or close the counter-poll producer gap. ID `$2c`
-  is also source-locked through its `$3ab7` call and fixed five-byte cursor
-  step, but the external callee remains outside this image. See
+  is source-locked through its `$3ab7` call and fixed five-byte cursor step;
+  `$4ec9` and `$4f31` are now bounded and byte-locked. `$3a2e` and `$3ab7`
+  remain below this stage-two image, with their implementations unresolved.
+  See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 
 ## 2026-10-05 — prove replayed PCE masks at the controller data port

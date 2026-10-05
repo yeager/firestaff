@@ -275,6 +275,16 @@ bounded decompilation; `$3ab7` is below the stage-two `$4000..$7fff` image.
 This establishes static setup and cursor movement only, not runtime effects or
 a gameplay meaning.
 
+The rooted `$4ec9` entry decrements `$5b`, copies `$4ec2` to `$37cc`, then
+calls `$4f31` and `$3a2e`. On the no-carry path it copies `$37ce/$37cf` to
+`$4ec3/$4ec4` and `$37d0/$37d1` to `$4ec7/$4ec8`; both visible outcomes clear
+`$5b` and return. `$4f31` forms a pointer at `$02/$03 = $4d7c`, doubles the
+byte at `$4d7b` into Y, loads the indexed word through `($02),Y` into
+`$00/$01`, and returns. These bytes are locked in both editions by the raw
+Track 02 test. `$3a2e` is below the stage-two image, so its implementation and
+the carry/result contract at this call remain unresolved; no gameplay meaning
+is assigned to the copied fields.
+
 ### Rooted `$2d` handler: counter poll
 
 Although the linear listing at `$4691` decodes a different overlapping
