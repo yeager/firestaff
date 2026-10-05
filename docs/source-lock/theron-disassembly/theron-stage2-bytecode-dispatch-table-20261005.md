@@ -285,12 +285,50 @@ Track 02 test. `$3a2e` is below the stage-two image, so its implementation and
 the carry/result contract at this call remain unresolved; no gameplay meaning
 is assigned to the copied fields.
 
-The logical target `$3a2e` lies in the `$2000..$3fff` MPR1 window. Stage-two
-entry at `$4000` initializes MPR3..MPR6 but does not establish MPR1. The
-separate authenticated `MPR1=$f8` receipt from the `$de21` backup-RAM writer
-cannot be transferred to this call. A valid disassembly source must join the
-`$3a2e` execution with MPR1 and its physical PC/bank, or prove the loader span
-that sets that mapping.
+The logical target `$3a2e` lies in the `$2000..$3fff` MPR1 window. The direct
+stage-two entry instructions at `$4000` write MPR3..MPR6, then call `$8000`
+before continuing; the MPR1 state across `$8000` and its helpers is not
+established by the entry-byte check. The separate authenticated `MPR1=$f8`
+receipt from the `$de21` backup-RAM writer cannot be transferred to this call.
+A valid disassembly source must join the `$3a2e` execution with MPR1 and its
+physical PC/bank, or prove the loader span that sets that mapping.
+
+## Bounded `$8000` entry-callee dataflow
+
+The authenticated US Rev. 1 bytes bind `$8000` to the first `$4000` entry
+call. Its body clears VDC registers, calls `$45a6`, saves the returned
+zero-page pair `$00/$01` into `$4c/$4d`, and derives the `$47cb..$47ce` and
+`$47d1/$47d2` pointer fields from that pair and bytes read through `($4c),Y`.
+The bytes at `($4c),Y + 4/+5` are staged in `$47bf/$47be` and `$0e/$10` before
+the call to `$4696`; `$0e/$0f` are then published at `$47c9/$47ca`. The byte at
+`($4c),Y + 6` is copied to `$3b6f`, shifted left four times, and used as the
+X value after clearing `$02/$03`. When `$3b68` is zero, control calls `$48fc`
+before returning.
+
+The called body at CPU `$8696` (loaded-image offset `$4696`; see
+`theron-us-stage2-huc6280.asm:10049-10085`) is independently byte-bound by
+`theron_v1_track02_verify_stage2_l4696_l3114()` for authentic US Rev. 1 media.
+The corresponding regression is `test_stage2_l4696_l3114()` in
+`tests/test_theron_v1_stage2_disassembly_chain.c`. It computes an unsigned
+8-by-8 product: `$0e` is the multiplier,
+`$10` is the multiplicand, and the routine clears `$0f` and `$11` before
+starting, so `$11:$10` is initially the zero-extended multiplicand. It moves
+the multiplier into scratch `$12`, clears `$0e`, selects the number of
+shift-add iterations from the multiplier's highest set bit, then shifts `$12`
+right one bit per iteration. A shifted-out set bit adds `$11:$10` into the
+`$0f:$0e` accumulator; the multiplicand shifts left between iterations. The
+returned 16-bit product is therefore in `$0f:$0e`, matching `$8000`'s stores
+to `$47ca:$47c9`. A zero multiplier returns zero. This establishes arithmetic
+behavior only; no meaning is assigned to the two input bytes or result field.
+
+The paired US raw-media regression binds `$8000` and `$45a6`, including the
+call sites at `$45a6`, `$4696`, and `$48fc`. It also records several da65
+decode-artifact overlaps; the raw media bytes, not the rendered labels, are
+authoritative for those spans. The `$48fc` callee effect and the pointed-to
+structure's field meanings remain unresolved. Both `$8000` and `$4696` receipts
+are US-only here; this source-lock does not prove that these spans are
+identical in JP. In particular, neither receipt establishes the MPR1 mapping
+needed to identify the below-window `$3a2e` call.
 
 The adjacent `$4ef4` helper uses the same `$4ec2 -> $37cc` handoff, additionally
 copies `$4ec7/$4ec8` to `$37d0/$37d1`, calls `$4f31` and `$3879`, then clears

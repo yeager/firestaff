@@ -8956,7 +8956,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696_l3114(
      * head byte $33 is no HuC6280 opcode (the flagged head-byte decode
      * artifact, emitted as `.byte $33`); the authenticated body at
      * image offset 0x4696 matches da65's own L8696 decode
-     * (theron-us-stage2-huc6280.asm:10212-10248) instruction by
+     * (theron-us-stage2-huc6280.asm:10049-10085) instruction by
      * instruction.  The disassembly renders the $11 zero-page accesses
      * as the absolute label L0011, so the media bytes are
      * authoritative. */

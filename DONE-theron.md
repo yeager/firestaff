@@ -3,12 +3,27 @@
 ## 2026-10-05 — source-lock the stage-two MPR entry window
 
 The authentic US and JP stage-two entry bytes at `$4000` now have a direct
-raw-sector regression. The prologue writes MPR3, MPR4, MPR5 and MPR6, but does
-not set MPR1. Since the unresolved `$3a2e` call is in the `$2000..$3fff`
-logical window, its code cannot be selected from the payload alone. The
-existing `$de21` backup-RAM MPR1 receipt is from a different call path and is
-not reused. A same-call MPR1/physical-PC capture or authenticated loader span
-is still required to disassemble `$3a2e` safely.
+raw-sector regression. The direct prologue writes MPR3, MPR4, MPR5 and MPR6,
+then calls `$8000` before continuing. The MPR1 state across `$8000` and its
+called helpers is not established by this byte check. Since the unresolved
+`$3a2e` call is in the `$2000..$3fff` logical window, its code cannot be
+selected from the payload alone. The existing `$de21` backup-RAM MPR1 receipt
+is from a different call path and is not reused. A same-call MPR1/physical-PC
+capture or authenticated loader span is still required to disassemble `$3a2e`
+safely.
+
+## 2026-10-05 — bound the `$8000` entry-callee dataflow
+
+Documented the authenticated US Rev. 1 `$8000` pointer/dataflow through
+`$45a6`, `$4696`, and `$48fc`, based on the existing paired raw-media receipt.
+The routine saves the `$45a6` zero-page pair at `$4c/$4d`, derives pointer
+fields, stages bytes read through that pointer, and conditionally calls
+`$48fc`. The separately byte-bound `$4696` helper is an unsigned 8-by-8
+shift-add multiply returning `$0f:$0e`; no structure-field meanings are
+assigned. The receipts are US-only and do not establish JP parity or MPR1 at
+`$3a2e`; da65 overlap spans remain byte-authoritative. Verification on trv2:
+`test_theron_v1_stage2_disassembly_chain` passed against authentic US and JP
+Track 02 files; its `$8000` and `$4696` byte receipts are explicitly US-only.
 
 ## 2026-10-05 — source-lock shared stage-two slot helpers
 

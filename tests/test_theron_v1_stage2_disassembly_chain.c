@@ -99,8 +99,8 @@ static void assert_stage2_pointer(const uint8_t *raw, size_t raw_size,
                           (uint16_t)(stream + 1u)) == expected_target);
 }
 
-/* The stage-two entry initializes MPR3..MPR6, leaving MPR1 inherited from
- * the preceding System Card handoff. This bounds the $3a2e bank question. */
+/* The direct $4000 prologue writes MPR3..MPR6. This byte check alone does
+ * not establish the MPR1 value after the intervening $8000 call. */
 static void test_stage2_entry_mpr_window(const uint8_t *raw,
                                          size_t raw_size, int jp)
 {

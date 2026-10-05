@@ -10,13 +10,23 @@ Reviewed 2026-10-05. Only open work is listed here.
   listing already decodes both roots. The adjacent `$4ef4` helper, its direct
   `$4be2` caller and conditional `$4c17` caller are also locked. `$4f11`'s
   three-byte table-entry writer is included in the same raw-media test.
+- ✅ Bounded the authenticated US `$8000` entry callee's pointer/dataflow
+  through `$45a6`, `$4696`, and `$48fc`. The raw-media receipt binds the
+  `$8000/$45a6` pair and its call sites; structure fields and callee effects
+  remain unnamed, JP parity is not established by this US-only receipt, and
+  this does not resolve the MPR1 mapping at `$3a2e`.
+- ✅ Traced the separately bound `$4696` helper as unsigned 8-by-8 shift-add
+  multiplication, with inputs `$0e` and `$10`, and 16-bit result `$0f:$0e`.
+  The evidence is the authentic US Rev. 1 `$4696` byte receipt and its
+  `$8000` call path; the input/result fields have no assigned game meaning.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;
   do not infer its implementation from its stage-two call site. `$3879` is
   likewise below this stage-two window and remains undecoded.
 - 🔒 `$3a2e` is in the logical `$2000..$3fff` window selected by HuC6280 MPR1.
-  The stage-two `$4000` prologue sets MPR3..MPR6, not MPR1. The existing
+  The direct `$4000` prologue writes MPR3..MPR6, then calls `$8000`; MPR1
+  across that call and its helpers remains unproven. The existing
   authenticated `MPR1=$f8` receipt is from the separate 2026-09-23 backup-RAM
   writer at `$de21` (`docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`),
   so it cannot identify the code bank at a `$4ec9` call. Require MPR1 plus its
