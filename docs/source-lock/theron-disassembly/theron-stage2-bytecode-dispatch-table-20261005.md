@@ -101,21 +101,21 @@ when loaded at `$4000` (payload offset `$2800`). Its first 13 little-endian
 words are the following same-region pointers in both US and JP; the next word
 is `$0000`:
 
-| Selector | Pointer | First byte at target | Dispatch entry |
-|---:|---:|---:|---:|
-| `$00` | `$6e98` | `$08` | `$4214` |
-| `$01` | `$6c4e` | `$21` | `$464f` |
-| `$02` | `$6c92` | `$12` | `$4319` |
-| `$03` | `$6cfa` | `$12` | `$4319` |
-| `$04` | `$694d` | `$08` | `$4214` |
-| `$05` | `$69a1` | `$08` | `$4214` |
-| `$06` | `$6a16` | `$08` | `$4214` |
-| `$07` | `$6a7c` | `$08` | `$4214` |
-| `$08` | `$6ae2` | `$08` | `$4214` |
-| `$09` | `$6b48` | `$08` | `$4214` |
-| `$0a` | `$6bbd` | `$08` | `$4214` |
-| `$0b` | `$6c13` | `$08` | `$4214` |
-| `$0c` | `$681c` | `$08` | `$4214` |
+| Selector | Pointer | First byte at target | Dispatch entry | Statically visible step |
+|---:|---:|---:|---:|---|
+| `$00` | `$6e98` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$01` | `$6c4e` | `$21` | `$464f` | Fixed call argument `$03`; cursor `+1` |
+| `$02` | `$6c92` | `$12` | `$4319` | Restores saved cursor; cursor `+3` after indirect call |
+| `$03` | `$6cfa` | `$12` | `$4319` | Restores saved cursor; cursor `+3` after indirect call |
+| `$04` | `$694d` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$05` | `$69a1` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$06` | `$6a16` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$07` | `$6a7c` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$08` | `$6ae2` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$09` | `$6b48` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$0a` | `$6bbd` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$0b` | `$6c13` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
+| `$0c` | `$681c` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
 
 Every target begins with an ID in the recovered 85-entry dispatch map. This
 byte-backed pointer prefix connects the `$4291` lookup code to retail
@@ -123,6 +123,15 @@ payload addresses at the static-source level. The zero word after these 13
 entries is only observed data: the code shown above performs no selector
 bounds check, so it is not established as a runtime limit or sentinel. No
 capture yet proves which selector is actually read or executed.
+
+The step notes follow the rooted handler bytes, not a claim that any pointer
+was selected. `$4214` reads the following stream byte into A before calling
+`$421c`, then advances through `$40f5` (`+2`). `$464f` supplies constant
+`$03` to `$3ab7` and advances through `$40f1` (`+1`). `$4319` replaces the
+current cursor from its embedded `$4b/$4c` pointer, performs an indirect call
+through `$201c`, restores the saved cursor on return, and advances through
+`$40f9` (`+3`). The call target and the behavior of `$3ab7` are outside this
+step summary.
 
 The regenerated listing marks the pointer words and only the identified root
 bytes (plus the `$08` handler's one-byte operand where its two-byte step is
@@ -149,9 +158,10 @@ To reproduce the payload, deinterleave the 17 raw MODE1/2352 sectors: keep
 bytes 16 through 2063 from each sector, for US raw sectors 1224–1240 or JP
 raw sectors 1223–1239, then concatenate those 2048-byte user-data portions.
 A contiguous 34,816-byte copy from the first user-data offset is wrong because
-it includes the next sector's 16-byte header at each boundary. The first
-sector offsets and table bytes above remain within that first user-data
-portion.
+it includes the next sector's 16-byte header at each boundary. The `$410d`
+dispatch table is at payload offset `$010d` in the first user-data portion;
+the nested pointer prefix at `$6800` is at payload offset `$2800` in the sixth
+user-data portion.
 
 The 170 table bytes are identical in both editions. In the deinterleaved
 payload interval corresponding to `$4000..$4acf`, the editions differ at only
