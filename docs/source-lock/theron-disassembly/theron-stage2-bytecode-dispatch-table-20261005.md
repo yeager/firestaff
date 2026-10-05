@@ -141,8 +141,8 @@ These three paths reach `$40f9`, the shared `+3` cursor step. Index `$0e` at
 reach `$40f5` (`+2`). Their call to `$41f8` also reads the byte at offset 2,
 but the shared cursor step leaves that byte at the next dispatch position.
 These are exact memory operations only; `$2780` entry meanings are unknown.
-The new `stage2_id0b_0d_indexed_mutation` assertion byte-locks the shared
-`$41f8` operand reader, all three roots, and their `$40f9` tail independently
+The `stage2_id0b_0f_indexed_mutation` assertion byte-locks the shared `$41f8`
+operand reader, all five roots, and their `$40f9`/`$40f5` tails independently
 against authentic US and JP Track 02.
 
 Index `$10` at `$4291` reads the offset-1 byte, uses it as an index into a
