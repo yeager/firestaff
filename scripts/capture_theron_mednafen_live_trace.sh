@@ -22,10 +22,13 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
 capture_arcadecard_setting=pce.arcadecard
 capture_cdbios_setting=pce.cdbios
+capture_input_port_setting=pce.input.port1
 if [[ "$capture_mednafen_module" == pce_fast ]]; then
     capture_arcadecard_setting=pce_fast.arcadecard
     capture_cdbios_setting=pce_fast.cdbios
+    capture_input_port_setting=pce_fast.input.port1
 fi
+capture_input_args=("-$capture_input_port_setting" gamepad)
 # An empty value is intentional on macOS: it lets native SDL2 select Cocoa.
 # Use `-` rather than `:-` so the caller can distinguish that from the
 # headless dummy default.
@@ -54,10 +57,11 @@ rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 input_trace_limit_default=65536
-if [[ -n "$replay_input_script" ]]; then
+if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
-    # scheduled input is polled by the original CPU. Keep enough post-event
-    # reads to prove post-event controller polling instead of treating the
+    # scheduled input is polled by the original CPU. Host-driven input also
+    # waits through startup grace before its first event. Keep enough
+    # post-event reads to prove controller polling rather than treating the
     # event log itself as proof of input delivery.
     input_trace_limit_default=1048576
 fi
@@ -279,6 +283,24 @@ require_capture_profile_mappings() {
         printf -v "capture_${key}_host_code" '%s' "$host_code"
         printf -v "capture_${key}_x11_key" '%s' "$x11_key"
     done
+    if [[ "$capture_mednafen_module" == pce_fast ]]; then
+        # PCE Fast owns a separate Mednafen input profile. Mirror the
+        # operator's authenticated PCE scancodes into that profile as
+        # command-line overrides so host key delivery reaches its pad.
+        local pce_scancode
+        for key in run select i ii up down left right; do
+            pce_scancode=$(capture_profile_scancode "pce.input.port1.gamepad.$key")
+            if [[ ! "$pce_scancode" =~ ^[0-9]+$ ]]; then
+                printf 'FAIL: THERON_MEDNAFEN_HOME has no numeric PCE %s mapping\n' \
+                    "$key" >&2
+                exit 1
+            fi
+            capture_input_args+=(
+                "-pce_fast.input.port1.gamepad.$key"
+                "keyboard 0x0 $pce_scancode"
+            )
+        done
+    fi
     if [[ "$host_input_backend" == xdotool_x11 ]]; then
         local grab_binding
         grab_binding=$(capture_profile_binding command.toggle_grab)
@@ -1237,7 +1259,7 @@ launch=(
     -filesys.path_sav "$home_dir/sav" \
     -filesys.path_state "$home_dir/mcs" \
     -pce.input.multitap 0 \
-    -pce.input.port1 gamepad \
+    "${capture_input_args[@]}" \
     -"$capture_arcadecard_setting" 0 \
     -"$capture_cdbios_setting" "$capture_system_card" \
     "$capture_cue"

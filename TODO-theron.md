@@ -2,6 +2,32 @@
 
 Reviewed 2026-10-05. Only open work is listed here.
 
+## 2026-10-05 — route authentic host keys to the selected PCE core
+
+- ✅ The Mednafen capture harness now selects `pce_fast.input.port1` when
+  `pce_fast` is selected instead of configuring only the regular PCE port.
+  For host-driven input, it mirrors the already configured PCE scancodes into
+  PCE Fast's per-button settings as temporary command-line overrides; it does
+  not edit the operator's profile. Replay and host-input captures also default
+  to the larger bounded controller-read trace so startup polling cannot fill
+  the old 65,536-read limit before later scheduled keys. The focused script
+  regression passed three loops.
+- ✅ A full instrumented Mednafen build completed on `trv2` with `-j1`, and the
+  complete patch set applied in three isolated patch-only loops. A private
+  authentic Japanese Rev. 1 cold-start capture then recorded 296 PCE reads of
+  RUN (`raw=0008`) and 21,210 reads of Button I (`raw=0001`) after 30 host SDL
+  key events, confirming that this controller profile reached PCE Fast's
+  controller-port reader. The bounded trace also recorded 11,949 BaseRAM
+  reads and captured the executing instruction bytes for each sampled reader.
+- 🔒 This capture still has zero CD IRQs, non-System-Card CD reads, raw-sector
+  spans, SCSI reads, or authenticated CD-to-RAM receipts; its transition is
+  `missing`. `$2031` was read only as part of two block copies, including a
+  later `TII $2000,$2700,$0080` at `$4009`; this does not identify an active
+  map or level consumer. The final `$2031=73` and zero party coordinates remain
+  System Card state, not dungeon state. Keep gameplay and startup-level
+  readiness closed until a same-session authentic map/level consumer join is
+  captured.
+
 ## 2026-10-05 — keep PCE Fast transition evidence module-correct
 
 - ✅ The live-capture validator now requires same-instant HuC6270/VDC

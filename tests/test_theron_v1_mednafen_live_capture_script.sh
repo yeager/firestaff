@@ -527,6 +527,7 @@ if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit"' "$script" ||
    ! grep -Fq 'input_trace_limit_default=65536' "$script" ||
    ! grep -Fq 'input_trace_limit_default=1048576' "$script" ||
+   ! grep -Fq '|| -n "$host_key" || -n "$host_key_sequence"' "$script" ||
    ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 1048576' "$script" ||
    ! grep -Fq 'verify_theron_scripted_input_consumption.sh' "$script" ||
    ! grep -Fq 'event_frames_followed_by_controller_read' "$scripted_input_consumption_verifier" ||
@@ -668,7 +669,14 @@ if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
    ! grep -Fq -- 'mednafen_module=%s' "$script" ||
    ! grep -Fq -- 'capture_arcadecard_setting=pce.arcadecard' "$script" ||
    ! grep -Fq -- 'capture_arcadecard_setting=pce_fast.arcadecard' "$script" ||
-   ! grep -Fq -- 'capture_cdbios_setting=pce_fast.cdbios' "$script"; then
+   ! grep -Fq -- 'capture_cdbios_setting=pce_fast.cdbios' "$script" ||
+   ! grep -Fq -- 'capture_input_port_setting=pce.input.port1' "$script" ||
+   ! grep -Fq -- 'capture_input_port_setting=pce_fast.input.port1' "$script" ||
+   ! grep -Fq -- 'capture_input_args=("-$capture_input_port_setting" gamepad)' "$script" ||
+   ! grep -Fq -- 'capture_input_args+=(' "$script" ||
+   ! grep -Fq -- '"-pce_fast.input.port1.gamepad.$key"' "$script" ||
+   ! grep -Fq -- '"keyboard 0x0 $pce_scancode"' "$script" ||
+   ! grep -Fq -- '"${capture_input_args[@]}"' "$script"; then
     printf 'FAIL: capture script must force the PCE module and disable unrelated Arcade Card emulation\n' >&2
     exit 1
 fi
