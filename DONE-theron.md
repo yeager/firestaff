@@ -22,11 +22,15 @@ matching `$1a` operand then `$13,$2d`, and has a 32-byte cursor path ending
 at `$09`/`RTS` if its nested calls and three counter polls return. The rooted
 `$2d` handler at `$468f` clears `$3b33`, compares it with the stream operand,
 and loops until the counter exceeds that operand; an increment at `$89e7` is
-guarded by bit `$20` from the stacked value at `$89e2`. Separate `$3b33`
+guarded by bit `$20` from the byte popped at `$89e2`. The distinct `$8975`
+gate also tests bit `$20`, but static proximity does not prove a shared
+producer; the visible epilogue pops a byte previously loaded from `$0000`, not
+processor status. Separate `$3b33`
 US clear/wait sites at `$503d/$5048`, `$7539/$753c`, `$7549/$754c`,
 `$7733/$7736`, and helper `$88a6` show that the byte has other uses. JP's
 `$753x/$773x` roots are two bytes later and its `$50xx` path differs. None is
-proven to advance selector `$2d`'s poll. Selector `$0b` also reaches it.
+proven to advance selector `$2d`'s poll; `$88a6` has direct callers at
+`$8862,$8877,$88b1,$88d9` in both editions. Selector `$0b` also reaches it.
 This is static candidate control flow only: selector execution, poll
 completion, the counter's runtime update path, indirect-call targets, and
 gameplay meaning remain unproven.

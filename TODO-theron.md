@@ -42,11 +42,14 @@ Reviewed 2026-10-05. Only open work is listed here.
   `$686d..$692d`; all seven 32-byte candidate blocks reach `$09` if their
   calls and counter polls return. Root `$468f` for `$2d` clears `$3b33` and
   polls until it exceeds the stream operand; `$89e7` increments `$3b33` only
-  when the stacked value has bit `$20` set at `$89e2`. Other clear/wait sites
+  when the byte popped at `$89e2` has bit `$20` set. The `$8975` gate tests
+  that bit separately; the visible stack setup loads from `$0000`, not the
+  processor status, and a shared producer is unproven. Other clear/wait sites
   use this byte in the US image at `$503d/$5048`, `$7539/$753c`,
   `$7549/$754c`, `$7733/$7736`, and helper `$88a6`. JP's `$753x/$773x` roots
   are two bytes later and its `$50xx` path differs; no causal path from these
-  sites to this poll is proven.
+  sites to this poll is proven; helper `$88a6` has direct callers at
+  `$8862,$8877,$88b1,$88d9` in both editions.
   Selector `$0b` also reaches the poll. Runtime selector choice, counter update
   path, wait completion, indirect-call targets, and gameplay meaning remain
   unproven.
