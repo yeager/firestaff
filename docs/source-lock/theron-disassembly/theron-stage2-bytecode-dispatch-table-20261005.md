@@ -839,6 +839,77 @@ and byte window against authentic US and JP data. This records static stream
 reads and control flow only; the `$3ab7` effects and runtime selection remain
 unproven.
 
+ID `$37` points to `$480a` in both editions. Its root `$480a..$4813` reads one
+stream byte to `$02`, calls the local helper at `$4814`, and jumps to `$40f5`.
+The helper window `$4814..$4841` is byte-identical in the authentic US and JP
+images; it constructs operands from the byte in `$02`, calls `$383e`, and
+returns. The source-lock test binds the table pointer and both byte windows.
+No semantic meaning is assigned to the written zero-page values or to `$383e`,
+whose effects and relation to a valid retail stream remain unproven. At `$4820`
+the listing's alternate overlapping decode lands inside the preceding `LDA`
+operand, so the bounded raw bytes, not a linear disassembly interpretation,
+are the asserted evidence.
+
+ID `$38` points to `$47f3` in both editions. Its 23-byte root
+`$47f3..$4809` reads three successive stream bytes into `$0e`, `$10`, and
+`$12`, loads `#$15`, calls `$3ab7`, and jumps to `$40fd` for the static `+4`
+cursor advance. The source-lock test binds the table word and entire byte
+window against authentic US and JP data. The values' meanings, `$3ab7`'s
+effects, and runtime stream selection remain unresolved.
+
+ID `$39` points to `$4842` in both editions. Its root `$4842..$484d` reads
+one stream byte into `$4ec2`, calls the local helper `$4be7`, and jumps to
+`$40f5`. The 25-byte helper `$4be7..$4bff` calls `$4f31`, copies the current
+`$00/$01` pair into `$02/$03`, copies `$4ec2` into `$37cc`, calls `$37a0`,
+clears `$5b`, and returns. The ID-specific root and helper windows are
+byte-locked against authentic US and JP media. This establishes bounded static
+data flow only; the roles of these fields, called-helper effects, and actual
+retail stream selection remain unproven.
+
+ID `$3a` points to `$485f` in both editions. Its complete three-byte root is
+`JMP $40f1`; `$40f1..$40f4` loads `#$01` and branches into the shared `$40e4`
+cursor-update path. The source-lock test binds the table word and stub only,
+without extending into the neighboring ID `$3c` root. This statically proves
+the `+1` dispatch adjustment, not what item that adjustment consumes or
+whether the ID occurs in an authentic executed stream.
+
+ID `$3b` points to `$447f` in both editions. Its four-byte root is `BSR $4483;
+BRA $443f`: it calls the shared `$4483` helper already locked by the ID `$2c`
+test, then enters `$443f`. A separate assertion binds this table word and root
+against authentic US and JP data. This records static branch structure only;
+the `$443f` continuation and runtime selection are not implied by the byte
+lock.
+
+ID `$3c` points to `$4862` in both editions. The 51-byte window
+`$4862..$4894` contains a conditional BIOS branch, a poll of `$4895`, a
+20-iteration call loop at `$4885`, and a shared exit through `$40f1` to the
+`+1` cursor path. The source-lock test binds the dispatch word and complete
+window against authentic US and JP data. `$4895..$489e` is adjacent data read
+by the handler, not included in the code window; ID `$3d` begins at `$489f`.
+The meaning of `$2228`/`$4895`, external BIOS call effects, branch execution,
+and retail stream selection are not established by this static lock.
+
+ID `$3d` points to `$489f`; its 13-byte source window `$489f..$48ab` is
+`JSR $e063; LDA $2228; BEQ $4892; STA $2780; BRA $4892`. The test binds this
+window up to, but not including, the adjacent ID `$3e` root at `$48ac`. Its
+branch returns into `$4892`, within ID `$3c`'s bounded window, so this is an
+overlapping control-flow slice rather than an independent complete handler.
+No BIOS behavior or runtime execution is inferred.
+
+ID `$3e` points to `$48ac` in both editions. The complete `$48ac..$4900`
+window (85 bytes) contains the bounded handler, its `$48de..$4900` polling
+helper, and an exit through `$40fd` to the fixed `+4` cursor path. It is
+byte-identical in authentic US and JP Track 02. The next dispatch root, ID
+`$3f`, begins at `$4901`. This establishes only static branches, stores, and
+loop structure; it does not prove condition outcomes, field meanings, runtime
+selection, or gameplay behavior.
+
+ID `$3f` points to `$4901` in both editions. Its 15-byte window
+`$4901..$490f` clears X, reads eight successive stream bytes into `$3b70,X`,
+then jumps to `$4109`. The source-lock assertion stops at `$490f`; the distinct
+ID `$26` table target begins at `$4910`. This records static indexed transfer
+and control flow only, not the stored bytes' meaning or runtime selection.
+
 ## Verification boundary
 
 `theron_v1_huc6280_disassembly_read_file()` now verifies the complete table

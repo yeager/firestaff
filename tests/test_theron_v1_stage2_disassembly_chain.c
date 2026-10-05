@@ -975,6 +975,209 @@ static void test_stage2_id36_stream_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $37's root and local helper; $383e's effects remain unresolved. */
+static void test_stage2_id37_local_helper(const uint8_t *raw,
+                                          size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x85u, 0x02u, 0x44u, 0x03u, 0x4cu,
+        0xf5u, 0x40u
+    };
+    static const uint8_t helper[] = {
+        0xa9u, 0xd3u, 0x85u, 0x00u, 0xa9u, 0x37u, 0x85u, 0x01u,
+        0x18u, 0xa0u, 0x01u, 0xa5u, 0x02u, 0x71u, 0x00u, 0x85u,
+        0x24u, 0xc8u, 0x62u, 0x71u, 0x00u, 0x85u, 0x23u, 0x62u,
+        0x72u, 0x00u, 0x85u, 0x22u, 0xa9u, 0x00u, 0x85u, 0x20u,
+        0xa9u, 0x28u, 0x85u, 0x21u, 0xa9u, 0x01u, 0x85u, 0x1eu,
+        0x85u, 0x25u, 0x20u, 0x3eu, 0x38u, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x37u)) == 0x480au);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x480au + i)) == root[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4814u + i)) == helper[i]);
+    }
+    printf("  PASS: stage2_id37_local_helper (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $38's three stream-byte stores and fixed helper selector. */
+static void test_stage2_id38_three_byte_handoff(const uint8_t *raw,
+                                                size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x85u, 0x0eu, 0xc8u, 0xb1u, 0x1cu,
+        0x85u, 0x10u, 0xc8u, 0xb1u, 0x1cu, 0x85u, 0x12u, 0xa9u,
+        0x15u, 0x20u, 0xb7u, 0x3au, 0x4cu, 0xfdu, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x38u)) == 0x47f3u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x47f3u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id38_three_byte_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $39 and its bounded helper chain against both authentic editions. */
+static void test_stage2_id39_helper_chain(const uint8_t *raw,
+                                          size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc2u, 0x4eu,
+        0x20u, 0xe7u, 0x4bu, 0x4cu, 0xf5u, 0x40u
+    };
+    static const uint8_t helper[] = {
+        0xc6u, 0x5bu, 0x20u, 0x31u, 0x4fu, 0xa5u, 0x00u, 0x85u,
+        0x02u, 0xa5u, 0x01u, 0x85u, 0x03u, 0xadu, 0xc2u, 0x4eu,
+        0x8du, 0xccu, 0x37u, 0x20u, 0xa0u, 0x37u, 0x64u, 0x5bu,
+        0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x39u)) == 0x4842u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4842u + i)) == root[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4be7u + i)) == helper[i]);
+    }
+    printf("  PASS: stage2_id39_helper_chain (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $3a's three-byte jump to the shared +1 cursor path. */
+static void test_stage2_id3a_cursor_stub(const uint8_t *raw,
+                                         size_t raw_size, int jp)
+{
+    static const uint8_t root[] = { 0x4cu, 0xf1u, 0x40u };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x3au)) == 0x485fu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x485fu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id3a_cursor_stub (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $3b's root and reuse the independently locked $4483 helper. */
+static void test_stage2_id3b_overlapping_helper_root(const uint8_t *raw,
+                                                      size_t raw_size, int jp)
+{
+    static const uint8_t root[] = { 0x44u, 0x02u, 0x80u, 0xbcu };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x3bu)) == 0x447fu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x447fu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id3b_overlapping_helper_root (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $3c's bounded BIOS branches, wait loop, and +1 cursor tail. */
+static void test_stage2_id3c_bios_control_flow(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x63u, 0xe0u, 0xadu, 0x28u, 0x22u, 0xeau, 0xeau,
+        0xd0u, 0x12u, 0xa9u, 0x95u, 0x85u, 0xfau, 0xa9u, 0x48u,
+        0x85u, 0xfbu, 0x20u, 0x1eu, 0xe0u, 0xadu, 0x95u, 0x48u,
+        0xf0u, 0xe6u, 0x80u, 0x0du, 0xa9u, 0x0cu, 0x20u, 0x2du,
+        0xe0u, 0xa2u, 0x14u, 0x20u, 0x2du, 0x4bu, 0xcau, 0xd0u,
+        0xfau, 0x20u, 0x18u, 0xe0u, 0x62u, 0x20u, 0x2du, 0xe0u,
+        0x4cu, 0xf1u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x3cu)) == 0x4862u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4862u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id3c_bios_control_flow (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $3d's short window, whose branch returns into the ID $3c tail. */
+static void test_stage2_id3d_overlapping_bios_window(const uint8_t *raw,
+                                                      size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x63u, 0xe0u, 0xadu, 0x28u, 0x22u, 0xf0u,
+        0xebu, 0x8du, 0x80u, 0x27u, 0x80u, 0xe6u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x3du)) == 0x489fu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x489fu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id3d_overlapping_bios_window (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $3e and its local polling helper up to the next dispatch root. */
+static void test_stage2_id3e_polling_helper(const uint8_t *raw,
+                                             size_t raw_size, int jp)
+{
+    static const uint8_t root_and_helper[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x0du, 0x3au, 0x8du, 0x68u,
+        0x3bu, 0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x21u, 0x44u, 0x22u,
+        0x80u, 0x1du, 0xc8u, 0xb1u, 0x1cu, 0xc9u, 0xffu, 0xf0u,
+        0x09u, 0x8du, 0x6eu, 0x3bu, 0xc8u, 0xb1u, 0x1cu, 0x8du,
+        0x6fu, 0x3bu, 0xa9u, 0xffu, 0x8du, 0x69u, 0x3bu, 0xadu,
+        0x69u, 0x3bu, 0xd0u, 0xfbu, 0x9cu, 0x68u, 0x3bu, 0x4cu,
+        0xfdu, 0x40u, 0x9cu, 0x02u, 0x04u, 0x9cu, 0x03u, 0x04u,
+        0xa9u, 0x00u, 0x85u, 0x00u, 0xa9u, 0x04u, 0x85u, 0x01u,
+        0x9cu, 0x04u, 0x04u, 0x9cu, 0x05u, 0x04u, 0xa5u, 0x00u,
+        0xd0u, 0x02u, 0xc6u, 0x01u, 0xc6u, 0x00u, 0xa5u, 0x00u,
+        0x05u, 0x01u, 0xd0u, 0xecu, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x3eu)) == 0x48acu);
+    for (unsigned int i = 0; i < sizeof(root_and_helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x48acu + i)) ==
+               root_and_helper[i]);
+    }
+    printf("  PASS: stage2_id3e_polling_helper (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $3f's bounded eight-byte indexed transfer and tail jump. */
+static void test_stage2_id3f_indexed_transfer(const uint8_t *raw,
+                                              size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x82u, 0xc8u, 0xb1u, 0x1cu, 0x9du, 0x70u, 0x3bu, 0xe8u,
+        0xe0u, 0x08u, 0xd0u, 0xf5u, 0x4cu, 0x09u, 0x41u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x3fu)) == 0x4901u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4901u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id3f_indexed_transfer (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2439,6 +2642,15 @@ int main(void)
     test_stage2_id34_fixed_argument_select(g_us_data, g_us_size, 0);
     test_stage2_id35_regional_call_handoff(g_us_data, g_us_size, 0);
     test_stage2_id36_stream_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id37_local_helper(g_us_data, g_us_size, 0);
+    test_stage2_id38_three_byte_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id39_helper_chain(g_us_data, g_us_size, 0);
+    test_stage2_id3a_cursor_stub(g_us_data, g_us_size, 0);
+    test_stage2_id3b_overlapping_helper_root(g_us_data, g_us_size, 0);
+    test_stage2_id3c_bios_control_flow(g_us_data, g_us_size, 0);
+    test_stage2_id3d_overlapping_bios_window(g_us_data, g_us_size, 0);
+    test_stage2_id3e_polling_helper(g_us_data, g_us_size, 0);
+    test_stage2_id3f_indexed_transfer(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2479,6 +2691,15 @@ int main(void)
         test_stage2_id34_fixed_argument_select(g_jp_data, g_jp_size, 1);
         test_stage2_id35_regional_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id36_stream_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id37_local_helper(g_jp_data, g_jp_size, 1);
+        test_stage2_id38_three_byte_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id39_helper_chain(g_jp_data, g_jp_size, 1);
+        test_stage2_id3a_cursor_stub(g_jp_data, g_jp_size, 1);
+        test_stage2_id3b_overlapping_helper_root(g_jp_data, g_jp_size, 1);
+        test_stage2_id3c_bios_control_flow(g_jp_data, g_jp_size, 1);
+        test_stage2_id3d_overlapping_bios_window(g_jp_data, g_jp_size, 1);
+        test_stage2_id3e_polling_helper(g_jp_data, g_jp_size, 1);
+        test_stage2_id3f_indexed_transfer(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

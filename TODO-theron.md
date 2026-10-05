@@ -176,7 +176,26 @@ Reviewed 2026-10-05. Only open work is listed here.
   `$46b8..$46c9` handler and `$5e4d/$5e7d` regional call operand are now
   source-locked against authentic US and JP data. ID `$36`'s two-byte
   stream handoff at `$4361..$4372`, fixed `$14` helper selector, and `$40f9`
-  tail are also source-locked. ID `$2b`'s caller
+  tail are also source-locked. ID `$37`'s root at `$480a` and local helper
+  `$4814..$4841` are now byte-locked; `$383e` effects and runtime selection
+  remain unresolved. ID `$38`'s three-byte handoff at `$47f3..$4809`, fixed
+  `$15` selector, and `$40fd` tail are also locked; callee effects and runtime
+  selection remain unresolved. ID `$39`'s `$4842` entry and local helper
+  `$4be7..$4bff` are now locked, including their visible `$4f31/$37a0` call
+  chain; field meanings and runtime selection remain unknown. ID `$3a`'s
+  `$485f` `JMP $40f1` stub is locked as the `+1` cursor path; executed-stream
+  selection remains unproven. ID `$3b`'s `$447f` branch root is locked and
+  reuses the independently locked `$4483` helper; continuation and stream
+  selection remain unresolved. ID `$3c`'s `$4862..$4894` conditional BIOS
+  window and shared `+1` exit are now locked; BIOS effects and stream execution
+  remain unproven. ID `$3d`'s `$489f..$48ab` branch window is also locked;
+  it loops into the ID `$3c` tail, so its full behavior remains unresolved.
+  ID `$3e`'s `$48ac..$4900` handler/helper window is now locked through its
+  `$40fd` cursor tail; condition outcomes and field meanings remain unproven.
+  ID `$3f`'s `$4901..$490f` indexed transfer is also locked up to the next
+  distinct ID `$26` table target `$4910`; the transferred data's meaning and
+  execution remain unproven.
+  ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
   overlapping TII descriptor and two relative callees are source-locked, and
