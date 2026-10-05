@@ -103,7 +103,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   assigning operand semantics. IDs `$1c/$1d`, complete roots `$4345/$4497`,
   and their neighboring `+5`/`+7` cursor-step stubs are also byte-locked in
   both authentic editions. Their repeated `$1c` reads and `$3ab7` calls do not
-  establish stream structure or helper effects.
+  establish stream structure or helper effects. Dispatch ID `$24` at table
+  index `$29`, its `$43dd` bounded root, and `$4403` polling helper are now
+  byte-locked in both authentic editions; helper meaning and runtime
+  selection remain unknown.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

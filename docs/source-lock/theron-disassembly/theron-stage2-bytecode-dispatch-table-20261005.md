@@ -219,6 +219,12 @@ The `stage2_id1c_id1d_cursor_roots` assertion locks the complete roots at
 bytes via `$1c` and call `$3ab7`; those bytes establish fixed read/cursor
 patterns only. Stream structure, called-helper effects, and runtime selection
 remain unknown.
+The `stage2_id24_bounded_wait_root` assertion locks dispatch index `$29`
+(`$24`), its complete `$43dd..$4402` path, and the `$4403` polling helper in
+both authentic editions. The handler calls `$4403` before and conditionally
+after its `$e03c` call, then takes the `$40f5` (`+2`) cursor path. This is
+bounded byte/control-flow evidence only: neither helper meaning nor stream
+selection is established.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
