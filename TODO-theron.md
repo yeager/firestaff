@@ -7,11 +7,14 @@ Reviewed 2026-10-05. Only open work is listed here.
 - ✅ Rooted `$4ec9` and `$4f31` in the authentic US and JP Rev. 1 stage-two
   image. `$4ec9`'s bounded path and `$4f31`'s indexed pointer-table read are
   byte-locked by `test_theron_v1_stage2_disassembly_chain`; the tracked da65
-  listing already decodes both roots.
+  listing already decodes both roots. The adjacent `$4ef4` helper, its direct
+  `$4be2` caller and conditional `$4c17` caller are also locked. `$4f11`'s
+  three-byte table-entry writer is included in the same raw-media test.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;
-  do not infer its implementation from its stage-two call site.
+  do not infer its implementation from its stage-two call site. `$3879` is
+  likewise below this stage-two window and remains undecoded.
 
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 

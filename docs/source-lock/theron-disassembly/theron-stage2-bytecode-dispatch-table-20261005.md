@@ -285,6 +285,15 @@ Track 02 test. `$3a2e` is below the stage-two image, so its implementation and
 the carry/result contract at this call remain unresolved; no gameplay meaning
 is assigned to the copied fields.
 
+The adjacent `$4ef4` helper uses the same `$4ec2 -> $37cc` handoff, additionally
+copies `$4ec7/$4ec8` to `$37d0/$37d1`, calls `$4f31` and `$3879`, then clears
+`$5b` and returns. `$4be2` calls it directly; `$4c17` reaches it only when the
+preceding `$4f5e` call clears carry. `$4f11` is a separate table-entry writer:
+after `$4f31` selects a pointer, it writes `$00,$00,$60` through `($00)`.
+The caller roots and helpers are now byte-locked against both editions. The
+`$3879` routine remains below the loaded stage-two window, so its effects and
+the runtime conditions for either caller remain unknown.
+
 ### Rooted `$2d` handler: counter poll
 
 Although the linear listing at `$4691` decodes a different overlapping

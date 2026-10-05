@@ -2272,6 +2272,8 @@ L4EF0:  .byte   $4E
 L4EF1:  stz     $5B
         rts
 
+; Shared slot-restoration entry from $4BE2 and the conditional $4C17 path.
+; The $3879 callee is below the loaded stage-two address window.
 L4EF4:  dec     $5B
         lda     L4EC2
         sta     $37CC
@@ -2284,6 +2286,7 @@ L4EF4:  dec     $5B
         stz     $5B
         rts
 
+; Write the selected three-byte $00,$00,$60 entry through the $4F31 pointer.
 L4F11:  jsr     L4F31
         cly
         cla

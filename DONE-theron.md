@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — source-lock shared stage-two slot helpers
+
+Extended the ID `$2c` helper family with authentic US and JP raw-sector checks
+for `$4ef4`, `$4f11`, and their `$4be2` / `$4c17` caller paths. `$4ef4` stages
+`$4ec2` into `$37cc`, copies `$4ec7/$4ec8` to `$37d0/$37d1`, calls `$4f31` and
+`$3879`, then clears `$5b` and returns. `$4be2` calls it directly; `$4c17`
+reaches it after a carry-clear result from `$4f5e`. `$4f11` selects a pointer
+through `$4f31` and writes `$00,$00,$60` through it. `$3879` remains below the
+loaded stage-two window, so its behavior and live call conditions remain
+unverified.
+
 ## 2026-10-05 — decompile the internal ID `$2c` helper path
 
 Extended the ID `$2c` chain from `$4483` through `$4ec9` and `$4f31` using

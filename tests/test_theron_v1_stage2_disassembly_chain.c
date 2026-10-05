@@ -411,6 +411,54 @@ static void test_stage2_id2c_internal_helpers(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* The adjacent slot helper shares $4ec2/$37cc with $4ec9 but calls the
+ * below-window $3879 routine, whose behavior remains outside this lock. */
+static void test_stage2_shared_slot_helpers(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t restore_helper[] = {
+        0xc6u, 0x5bu, 0xadu, 0xc2u, 0x4eu, 0x8du, 0xccu, 0x37u,
+        0xadu, 0xc7u, 0x4eu, 0x8du, 0xd0u, 0x37u, 0xadu, 0xc8u,
+        0x4eu, 0x8du, 0xd1u, 0x37u, 0x20u, 0x31u, 0x4fu, 0x20u,
+        0x79u, 0x38u, 0x64u, 0x5bu, 0x60u
+    };
+    static const uint8_t pointer_entry_writer[] = {
+        0x20u, 0x31u, 0x4fu, 0xc2u, 0x62u, 0x92u, 0x00u, 0xc8u,
+        0xa9u, 0x00u, 0x91u, 0x00u, 0xc8u, 0xa9u, 0x60u, 0x91u,
+        0x00u
+    };
+    static const uint8_t direct_caller[] = {
+        0x20u, 0xf4u, 0x4eu, 0x60u
+    };
+    static const uint8_t conditional_caller[] = {
+        0xadu, 0x7bu, 0x4du, 0x8du, 0xc1u, 0x4eu, 0xa9u, 0x01u,
+        0x8du, 0xc5u, 0x4eu, 0x20u, 0x48u, 0x4fu, 0xa9u, 0x05u,
+        0x20u, 0x5eu, 0x4fu, 0xb0u, 0x03u, 0x20u, 0xf4u, 0x4eu,
+        0x60u
+    };
+
+    for (unsigned int i = 0; i < sizeof(restore_helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4ef4u + i)) == restore_helper[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(pointer_entry_writer); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4f11u + i)) ==
+               pointer_entry_writer[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(direct_caller); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4be2u + i)) == direct_caller[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(conditional_caller); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4c17u + i)) ==
+               conditional_caller[i]);
+    }
+    printf("  PASS: stage2_shared_slot_helpers (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Selector pointer operands are read at cursor+1/+2 by the rooted $41/$12
  * handlers. This locks the earlier selector roots to authentic regional
  * bytes; it does not prove that any selector is executed. */
@@ -1394,6 +1442,7 @@ int main(void)
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id2c_external_handoff(g_us_data, g_us_size, 0);
     test_stage2_id2c_internal_helpers(g_us_data, g_us_size, 0);
+    test_stage2_shared_slot_helpers(g_us_data, g_us_size, 0);
     test_stage2_selector_00_03_pointer_roots(g_us_data, g_us_size, 0);
     test_stage2_counter_wait_sites(g_us_data, g_us_size, 0);
     if (g_jp_data) {
@@ -1403,6 +1452,7 @@ int main(void)
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id2c_external_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id2c_internal_helpers(g_jp_data, g_jp_size, 1);
+        test_stage2_shared_slot_helpers(g_jp_data, g_jp_size, 1);
         test_stage2_selector_00_03_pointer_roots(
             g_jp_data, g_jp_size, 1);
         test_stage2_counter_wait_sites(g_jp_data, g_jp_size, 1);
