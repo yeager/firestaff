@@ -1,5 +1,30 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — verify scripted PCE button masks at readback
+
+- ✅ The bounded Mednafen replay verifier now checks port 0's raw PCE input
+  mask and the active-low value returned by the selected direction/button
+  bank. Same-frame masks are unioned; mixed-bank inputs require a matching
+  return value from both banks. Positive and negative fixtures cover exact
+  readback, absent bits, wrong SELECT banks, and incomplete simultaneous
+  masks.
+- ✅ The corrected instrumented PCE Fast build replayed four directions from
+  an authentic JP Rev. 1 in-game state. Four event frames were applied and
+  read back through SELECT=1 with the expected active-low direction values on
+  a non-System-Card poll path. The trace and user media remain private on
+  `trv2`.
+- 🔒 The capture still produced no command-buffer writes, CD IRQs, or
+  authenticated CD-to-RAM receipts and did not identify the active map. This
+  verifies input delivery only, not party movement, door use, or Theron parity.
+- 🔒 A separate eight-second no-input replay of the same authentic state
+  recorded 600 `$203F` writes cycling through four values, versus 2,240 in the
+  30-second directional replay. The similar rate is not a movement witness;
+  the tuple remains provisional until its original consumer is bound.
+- 🔒 A separate authentic JP replay returned the scheduled I/II masks through
+  port 0's button bank (`SELECT=0`) but recorded no command-buffer writes,
+  CD IRQ, or authenticated CD-to-RAM receipt. It does not identify the active
+  map or establish a retail button, door, or T900 result.
+
 ## 2026-10-05 — preserve unresolved Track 02 tile family 7
 
 - ✅ Production map loading now preserves authentic Track 02 tile family 7

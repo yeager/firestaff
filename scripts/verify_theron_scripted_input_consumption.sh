@@ -31,26 +31,94 @@ if (( expected_events == 0 )); then
 fi
 
 awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
+    function hex_to_dec(text,    i, digit, value) {
+        text = tolower(text)
+        sub(/^0x/, "", text)
+        value = 0
+        for (i = 1; i <= length(text); i++) {
+            digit = index("0123456789abcdef", substr(text, i, 1)) - 1
+            if (digit < 0 || digit > 15)
+                return -1
+            value = value * 16 + digit
+        }
+        return value
+    }
+    function mask_union(left, right,    bit, result) {
+        result = 0
+        for (bit = 1; bit <= 32768; bit *= 2)
+            if (int(left / bit) % 2 || int(right / bit) % 2)
+                result += bit
+        return result
+    }
+    function contains_mask(value, mask,    bit) {
+        for (bit = 1; bit <= 32768; bit *= 2)
+            if (int(mask / bit) % 2 && int(value / bit) % 2 == 0)
+                return 0
+        return mask != 0
+    }
+    # Mednafen 1.32.1 PCE Fast INPUT_Read selects the direction nibble with
+    # SEL=1 and the button nibble with SEL=0; its visible value is active-low.
+    # The raw pad word alone therefore cannot establish what the guest read.
+    function selected_bank_matches(raw, value, sel, mask,    nibble) {
+        if (raw < 0 || value < 0 || sel < 0 || !contains_mask(raw, mask))
+            return 0
+        if (sel == 1) {
+            if (pending_direction_mask == 0)
+                return 0
+            nibble = int(raw / 16) % 16
+        } else {
+            if (pending_button_mask == 0)
+                return 0
+            nibble = raw % 16
+        }
+        return value % 16 == 15 - nibble
+    }
     /^pce_input_read / {
         input_reads++
         if (input_reads > read_limit) {
             failure = "trace exceeds its declared controller-read limit"
             next
         }
-        if (pending_frame != "" && pending_apply && !pending_read &&
+        if (pending_frame != "" && pending_apply &&
             $0 ~ / register=1000([[:space:]]|$)/) {
-            pending_read = 1
-            controller_read_witness_sequence = input_reads
-            for (i = 1; i <= NF; i++)
+            raw_value = -1
+            returned_value = -1
+            read_sel = -1
+            read_index = -1
+            read_pc = ""
+            for (i = 1; i <= NF; i++) {
+                if ($i ~ /^raw=[0-9a-fA-F]+$/)
+                    raw_value = hex_to_dec(substr($i, 5))
+                if ($i ~ /^value=[0-9a-fA-F]+$/)
+                    returned_value = hex_to_dec(substr($i, 7))
+                if ($i ~ /^sel=[01]$/)
+                    read_sel = substr($i, 5)
+                if ($i ~ /^index=[0-9]+$/)
+                    read_index = substr($i, 7)
                 if ($i ~ /^cpu_pc=[0-9a-fA-F]+$/)
-                    controller_read_witness_pc = substr($i, 8)
-            if (controller_read_witness_pc ~ /^[0-9a-fA-F]+$/) {
-                pc = tolower(controller_read_witness_pc)
+                    read_pc = substr($i, 8)
+            }
+            if (read_index == 0 && !pending_poll_classified &&
+                read_pc ~ /^[0-9a-fA-F]+$/) {
+                pc = tolower(read_pc)
                 if (pc == "e4b7" || pc == "e4c8" ||
                     pc == "e4b4" || pc == "e4c5")
                     system_card_poll_reads++
                 else
                     non_system_card_poll_reads++
+                pending_poll_classified = 1
+            }
+            if (read_index == 0 && selected_bank_matches(raw_value, returned_value, read_sel, pending_mask)) {
+                if (read_sel == 1)
+                    pending_direction_read = 1
+                else
+                    pending_button_read = 1
+            }
+            if ((!pending_direction_mask || pending_direction_read) &&
+                (!pending_button_mask || pending_button_read)) {
+                pending_read = 1
+                controller_read_witness_sequence = input_reads
+                controller_read_witness_pc = read_pc
             }
         }
         next
@@ -71,31 +139,55 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     }
     /^scripted_pce_input_event / {
         event_frame = ""
+        event_mask = ""
         for (i = 1; i <= NF; i++)
             if ($i ~ /^frame=[0-9]+$/)
                 event_frame = substr($i, 7)
+            else if ($i ~ /^mask=[0-9a-fA-F]+$/)
+                event_mask = substr($i, 6)
         if (event_frame == "") {
             failure = "a scripted event has no numeric frame"
+            next
+        }
+        mask_value = hex_to_dec(event_mask)
+        if (mask_value <= 0) {
+            failure = "a scripted event has no valid nonzero controller mask"
+            next
+        }
+        if (mask_value > 255) {
+            failure = "a scripted event uses controller bits outside the supported two input banks"
             next
         }
         if (pending_frame != "" && event_frame != pending_frame) {
             if (!pending_apply)
                 failure = "a scripted event frame has no nonzero apply receipt before the next frame"
             else if (!pending_read)
-                failure = "a scripted event frame was not followed by a controller-port read before the next frame"
+                failure = "a scripted event frame had no controller-port read exposing its scripted mask before the next frame"
             else {
                 frames_with_apply++
                 frames_with_controller_read++
+                frames_with_mask_match++
             }
             pending_frame = ""
         }
-        if (pending_frame == "")
+        if (pending_frame == "") {
             pending_frame = event_frame
+            pending_mask = mask_value
+            pending_direction_mask = int(mask_value / 16) % 16
+            pending_button_mask = mask_value % 16
+        } else {
+            pending_mask = mask_union(pending_mask, mask_value)
+            pending_direction_mask = mask_union(pending_direction_mask, int(mask_value / 16) % 16)
+            pending_button_mask = mask_union(pending_button_mask, mask_value % 16)
+        }
         events++
         # Events scheduled on one frame combine before the CPU can poll them.
         # Require a controller read after the last event in that frame group.
         pending_apply = 0
         pending_read = 0
+        pending_poll_classified = 0
+        pending_direction_read = 0
+        pending_button_read = 0
         next
     }
     END {
@@ -104,10 +196,11 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         else if (pending_frame != "" && !pending_apply)
             failure = "the final scripted event frame has no nonzero apply receipt"
         else if (pending_frame != "" && !pending_read)
-            failure = "the final scripted event frame has no subsequent controller-port read"
+            failure = "the final scripted event frame had no controller-port read exposing its scripted mask"
         else if (pending_frame != "") {
             frames_with_apply++
             frames_with_controller_read++
+            frames_with_mask_match++
         }
         if (failure != "") {
             printf "BLOCKED: %s (events=%d/%d input_reads=%d read_limit=%d)\n", \
@@ -118,6 +211,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         printf "scripted_input_events=%d\n", events
         printf "event_frames_with_apply=%d\n", frames_with_apply
         printf "event_frames_followed_by_controller_read=%d\n", frames_with_controller_read
+        printf "event_frames_with_scripted_mask_read=%d\n", frames_with_mask_match
         printf "controller_read_witness_sequence=%d\n", controller_read_witness_sequence
         printf "controller_read_witness_pc=%s\n", controller_read_witness_pc
         printf "system_card_poll_reads=%d\n", system_card_poll_reads

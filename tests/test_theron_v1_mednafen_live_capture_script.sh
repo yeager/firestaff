@@ -34,17 +34,29 @@ if [[ ! -x "$scripted_input_consumption_verifier" ]]; then
 fi
 mkdir -p "$repo/build"
 input_test_dir=$(mktemp -d "$repo/build/theron-input-consumption.XXXXXX")
-trap 'rm -rf -- "$input_test_dir"' EXIT
+swift_module_cache=
+window_retry_harness=
+cleanup_capture_test_temporaries() {
+    local temporary_directory
+    for temporary_directory in \
+        "$input_test_dir" "$swift_module_cache" "$window_retry_harness"; do
+        if [[ -n "$temporary_directory" ]]; then
+            rm -rf -- "$temporary_directory"
+        fi
+    done
+}
+trap cleanup_capture_test_temporaries EXIT
 cat >"$input_test_dir/consumed.trace" <<'THERON_CONSUMED_INPUT'
 source=mednafen-pce-scripted-input
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
-pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
 THERON_CONSUMED_INPUT
 consumption_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/consumed.trace" run@9600:90 131072)
 if [[ "$consumption_receipt" != *'event_frames_with_apply=1'* ||
       "$consumption_receipt" != *'event_frames_followed_by_controller_read=1'* ||
+      "$consumption_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
       "$consumption_receipt" != *'controller_poll_boundary=verified'* ||
       "$consumption_receipt" != *'game_or_non_system_card_poll_boundary=observed'* ]]; then
     printf 'FAIL: post-event controller read was not verified:\n%s\n' \
@@ -54,7 +66,7 @@ fi
 cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
-pce_input_read cpu_pc=e4c8 register=1000 raw=0008 sel=0 clr=0 index=0
+pce_input_read cpu_pc=e4c8 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
 THERON_SYSTEM_CARD_INPUT
 system_card_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/system-card-only.trace" run@9600:90 131072)
@@ -68,10 +80,10 @@ fi
 cat >"$input_test_dir/multiple-events.trace" <<'THERON_MULTI_EVENT_INPUT'
 scripted_pce_input_event frame=10 key=run mask=0008 hold=1
 scripted_pce_input_apply frame=10 physical=0000 scripted=0008 combined=0008
-pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
 scripted_pce_input_event frame=12 key=ii mask=0002 hold=1
 scripted_pce_input_apply frame=12 physical=0008 scripted=0002 combined=000a
-pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0
+pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0 value=05
 THERON_MULTI_EVENT_INPUT
 "$scripted_input_consumption_verifier" \
     "$input_test_dir/multiple-events.trace" run@10,ii@12 4 >/dev/null
@@ -79,7 +91,7 @@ cat >"$input_test_dir/same-frame-events.trace" <<'THERON_SAME_FRAME_INPUT'
 scripted_pce_input_event frame=20 key=run mask=0008 hold=1
 scripted_pce_input_event frame=20 key=ii mask=0002 hold=1
 scripted_pce_input_apply frame=20 physical=0000 scripted=000a combined=000a
-pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0
+pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0 value=05
 THERON_SAME_FRAME_INPUT
 "$scripted_input_consumption_verifier" \
     "$input_test_dir/same-frame-events.trace" run@20,ii@20 2 >/dev/null
@@ -95,7 +107,7 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: scripted input at the read-trace cap was accepted without a later CPU read' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame has no subsequent controller-port read' \
+if ! grep -Fq 'final scripted event frame had no controller-port read exposing its scripted mask' \
     "$input_test_dir/capped.stderr"; then
     printf '%s\n' 'FAIL: capped scripted input rejection lacked a precise diagnostic' >&2
     exit 1
@@ -111,9 +123,96 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: scripted input without a controller-port read was accepted' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame has no subsequent controller-port read' \
+if ! grep -Fq 'final scripted event frame had no controller-port read exposing its scripted mask' \
     "$input_test_dir/unconsumed.stderr"; then
     printf '%s\n' 'FAIL: unconsumed scripted input rejection lacked a precise diagnostic' >&2
+    exit 1
+fi
+cat >"$input_test_dir/wrong-mask.trace" <<'THERON_WRONG_MASK_INPUT'
+scripted_pce_input_event frame=40 key=up mask=0010 hold=1
+scripted_pce_input_apply frame=40 physical=0000 scripted=0010 combined=0010
+pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=1 clr=0 index=0 value=0f
+THERON_WRONG_MASK_INPUT
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/wrong-mask.trace" up@40 2 \
+    >"$input_test_dir/wrong-mask.stdout" 2>"$input_test_dir/wrong-mask.stderr"; then
+    printf '%s\n' 'FAIL: controller polling without the requested direction bit was accepted' >&2
+    exit 1
+fi
+cat >"$input_test_dir/direction-readback.trace" <<'THERON_DIRECTION_READBACK'
+scripted_pce_input_event frame=45 key=up mask=0010 hold=1
+scripted_pce_input_apply frame=45 physical=0000 scripted=0010 combined=0010
+pce_input_read cpu_pc=8123 register=1000 raw=0010 sel=1 clr=0 index=0 value=0e
+THERON_DIRECTION_READBACK
+direction_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/direction-readback.trace" up@45 1)
+if [[ "$direction_receipt" != *'event_frames_with_scripted_mask_read=1'* ]]; then
+    printf 'FAIL: direction input was not verified in the selected direction bank:\n%s\n' \
+        "$direction_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/wrong-direction-bank.trace" <<'THERON_WRONG_DIRECTION_BANK'
+scripted_pce_input_event frame=46 key=up mask=0010 hold=1
+scripted_pce_input_apply frame=46 physical=0000 scripted=0010 combined=0010
+pce_input_read cpu_pc=8123 register=1000 raw=0010 sel=0 clr=0 index=0 value=0f
+THERON_WRONG_DIRECTION_BANK
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/wrong-direction-bank.trace" up@46 1 \
+    >"$input_test_dir/wrong-direction-bank.stdout" 2>"$input_test_dir/wrong-direction-bank.stderr"; then
+    printf '%s\n' 'FAIL: raw direction mask without a selected direction-bank value was accepted' >&2
+    exit 1
+fi
+cat >"$input_test_dir/wrong-button-bank.trace" <<'THERON_WRONG_BUTTON_BANK'
+scripted_pce_input_event frame=47 key=run mask=0008 hold=1
+scripted_pce_input_apply frame=47 physical=0000 scripted=0008 combined=0008
+pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=1 clr=0 index=0 value=0f
+THERON_WRONG_BUTTON_BANK
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/wrong-button-bank.trace" run@47 1 \
+    >"$input_test_dir/wrong-button-bank.stdout" 2>"$input_test_dir/wrong-button-bank.stderr"; then
+    printf '%s\n' 'FAIL: raw button mask without a selected button-bank value was accepted' >&2
+    exit 1
+fi
+cat >"$input_test_dir/wrong-input-index.trace" <<'THERON_WRONG_INPUT_INDEX'
+scripted_pce_input_event frame=47 key=up mask=0010 hold=1
+scripted_pce_input_apply frame=47 physical=0000 scripted=0010 combined=0010
+pce_input_read cpu_pc=8123 register=1000 raw=0010 sel=1 clr=0 index=1 value=0e
+THERON_WRONG_INPUT_INDEX
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/wrong-input-index.trace" up@47 1 \
+    >"$input_test_dir/wrong-input-index.stdout" 2>"$input_test_dir/wrong-input-index.stderr"; then
+    printf '%s\n' 'FAIL: a matching input read from the wrong controller index was accepted' >&2
+    exit 1
+fi
+cat >"$input_test_dir/combined-bank-readback.trace" <<'THERON_COMBINED_BANK_READBACK'
+scripted_pce_input_event frame=48 key=up mask=0010 hold=1
+scripted_pce_input_event frame=48 key=run mask=0008 hold=1
+scripted_pce_input_apply frame=48 physical=0000 scripted=0018 combined=0018
+pce_input_read cpu_pc=8123 register=1000 raw=0018 sel=1 clr=0 index=0 value=0e
+pce_input_read cpu_pc=8123 register=1000 raw=0018 sel=0 clr=0 index=0 value=07
+THERON_COMBINED_BANK_READBACK
+combined_bank_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/combined-bank-readback.trace" up@48,run@48 2)
+if [[ "$combined_bank_receipt" != *'event_frames_with_scripted_mask_read=1'* ]]; then
+    printf 'FAIL: simultaneous direction/button input was not verified in both banks:\n%s\n' \
+        "$combined_bank_receipt" >&2
+    exit 1
+fi
+if ! grep -Fq 'controller-port read exposing its scripted mask' \
+    "$input_test_dir/wrong-mask.stderr"; then
+    printf '%s\n' 'FAIL: wrong-mask input rejection lacked a precise diagnostic' >&2
+    exit 1
+fi
+cat >"$input_test_dir/partial-combined-mask.trace" <<'THERON_PARTIAL_COMBINED_MASK_INPUT'
+scripted_pce_input_event frame=50 key=run mask=0008 hold=1
+scripted_pce_input_event frame=50 key=ii mask=0002 hold=1
+scripted_pce_input_apply frame=50 physical=0000 scripted=000a combined=000a
+pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+THERON_PARTIAL_COMBINED_MASK_INPUT
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/partial-combined-mask.trace" run@50,ii@50 2 \
+    >"$input_test_dir/partial-combined-mask.stdout" 2>"$input_test_dir/partial-combined-mask.stderr"; then
+    printf '%s\n' 'FAIL: a partial simultaneous controller mask was accepted' >&2
     exit 1
 fi
 cat >"$input_test_dir/no-apply.trace" <<'THERON_NO_APPLY_INPUT'
@@ -531,6 +630,7 @@ if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 1048576' "$script" ||
    ! grep -Fq 'verify_theron_scripted_input_consumption.sh' "$script" ||
    ! grep -Fq 'event_frames_followed_by_controller_read' "$scripted_input_consumption_verifier" ||
+   ! grep -Fq 'event_frames_with_scripted_mask_read' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'game_or_non_system_card_poll_boundary=not_observed' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'input_trace_limit=%s' "$script"; then
     printf 'FAIL: live capture must bound the controller trace and require post-event CPU polling\n' >&2
@@ -648,9 +748,7 @@ if grep -Fq 'activationAccepted' "$quartz_helper"; then
     exit 1
 fi
 if command -v swiftc >/dev/null 2>&1; then
-    swift_tmp_root=${TMPDIR:-${RUNNER_TEMP:-/private/tmp}}
-    swift_module_cache=$(mktemp -d "$swift_tmp_root/firestaff-theron-swift-module-cache.XXXXXX")
-    trap 'rm -rf -- "$swift_module_cache"' EXIT
+    swift_module_cache=$(mktemp -d "$repo/build/firestaff-theron-swift-module-cache.XXXXXX")
     if ! swiftc -module-cache-path "$swift_module_cache" -typecheck "$quartz_helper" >/dev/null 2>&1; then
         printf 'FAIL: Quartz helper does not type-check\n' >&2
         exit 1
@@ -1092,8 +1190,7 @@ if ! grep -Fq 'resolve_mednafen_window_id_with_retry "$mednafen_ui_pid"' "$scrip
     printf '%s\n' 'FAIL: X11 capture must retry SDL window discovery after the Mednafen process starts' >&2
     exit 1
 fi
-window_retry_harness=$(mktemp -d "${TMPDIR:-/dev/shm}/theron-x11-window-retry.XXXXXX")
-trap 'rm -rf "$window_retry_harness"' EXIT
+window_retry_harness=$(mktemp -d "$repo/build/theron-x11-window-retry.XXXXXX")
 sed -n '/^resolve_mednafen_window_id_with_retry()/,/^}/p' "$script" >"$window_retry_harness/resolver.sh"
 cat >"$window_retry_harness/xdotool" <<'MOCK_XDOTOOL'
 #!/usr/bin/env bash

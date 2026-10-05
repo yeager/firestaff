@@ -2,6 +2,32 @@
 
 Reviewed 2026-10-05. Only open work is listed here.
 
+## 2026-10-05 — prove replayed PCE masks at the controller data port
+
+- ✅ The scripted-input verifier now requires each event frame's requested
+  mask to appear in port 0's controller-register read and to match the
+  active-low value returned by the selected direction/button bank. Same-frame
+  mixed-bank inputs require successful readback from both banks.
+- ✅ A fresh authentic JP Rev. 1 PCE Fast replay delivered four scheduled
+  directions to port 0's selected direction bank, with matching raw masks and
+  active-low return values. The capture used the instrumented Mednafen build
+  and hash-checked retail disc and System Card; its private trace remains
+  outside Git.
+- 🔒 This only proves controller delivery and a non-System-Card polling path.
+  It recorded no command-buffer writes, CD IRQs, or authenticated CD-to-RAM
+  receipts, and it did not bind the active map. Door, movement, and T900
+  behavior remain gated on a same-session original consumer capture.
+- 🔒 A no-input replay of the same authentic Ak-Tu-Ba state recorded `$203F`
+  cycling `01 -> 02 -> 03 -> 04 -> 01` at approximately the same write rate
+  as the replay with directional input. Do not interpret the snapshot tuple
+  `$203F-$2041` as a stable heading/pose until its game-owned consumer is
+  identified; see the source-lock capture note.
+- 🔒 A separate authentic JP replay read button I and button II on the
+  selected port-0 button bank, but recorded no command-buffer writes or
+  CD-to-RAM handoff. With active map and front tile still unresolved, this
+  does not prove that either button is a retail no-op or bind door/T900
+  behavior.
+
 ## 2026-10-05 — preserve unresolved Track 02 tile family 7
 
 - ✅ Authentic US and JP map-loader regressions retain every family-7 raw tile

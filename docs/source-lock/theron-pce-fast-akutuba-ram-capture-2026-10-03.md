@@ -39,6 +39,29 @@ coordinate-only guess cannot silently become a start-pose claim. Akutuba map
 0 is plausible, not proven, until the active map/level consumer or loaded-map
 pointer is captured in the same session.
 
+A later bounded replay of the authentic JP Ak-Tu-Ba Mednafen state adds a
+second caution about `$203F`. In an eight-second run with no scripted or host
+input, the instrumented PCE Fast core recorded 600 writes to BaseRAM offset
+`$003F`, repeatedly cycling `01 -> 02 -> 03 -> 04 -> 01` from writer PCs
+`$57D7`, `$57E3`, `$57EF`, and `$5800`. A separate 30-second replay of that
+same state with four scheduled directional inputs recorded 2,240 writes with
+the same cycle. The replay's post-input trace recorded all four raw direction
+masks and matching active-low values from port 0's SELECT=1 data reads, but
+neither run joined these writes to a party-movement command, active map, or
+source coordinate. The cycle therefore
+does not prove that `$203F` is a stable party heading; keep the captured
+`$203F-$2041` tuple provisional until the game-owned consumer is identified.
+Both bounded runs ended with `transition=missing`; their RAM-writer traces are
+not evidence of successful movement or full gameplay.
+
+A further 15-second replay from the same authentic state scheduled button I
+and button II separately. The selected-bank verifier matched both raw masks
+and their active-low port-0 values (`0x3E` and `0x3D`) at read PC `$44D2`.
+The bounded trace recorded no command-buffer writes, CD IRQs, or authenticated
+CD-to-RAM receipts. Because the active map and front tile remain unidentified,
+this does not show that either button is a retail no-op or establish a door or
+T900 transition.
+
 The fresh run's native BRAM image is 2048 bytes and matches the known empty
 menu-only image (MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`). It contains no proven
 campaign progress. A separate `.mca` autosave round-trip was tested from an
