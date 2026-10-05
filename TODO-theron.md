@@ -85,7 +85,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   caller remain unbound. The disassembly now decodes from all 85 table roots
   without assigning command semantics. Indices `$00..$07` have a static
   comparison/cursor-transfer trace; `$0b..$10` have indexed-byte/nested-cursor
-  traces. Index `$28`'s Y-offset 1 test and Y-offset 2 fetch are also mapped,
+  traces, now byte-locked for `$09/$0a` in both authentic editions.
+  Index `$28`'s Y-offset 1 test and Y-offset 2 fetch are also mapped,
   but none of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

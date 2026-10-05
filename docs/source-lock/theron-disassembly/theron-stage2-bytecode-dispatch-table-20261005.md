@@ -152,7 +152,10 @@ the original cursor and takes the `$40f5` (`+2`) path. Index `$09` at `$4253`
 is a one-instruction `RTS`, compatible with ending such a nested call, but no
 authentic stream binds the selector, table entry, and return instruction as a
 pair. The nested execution path is therefore a static call-graph observation,
-not proof of a valid retail stream structure.
+not proof of a valid retail stream structure. The
+`stage2_id09_0a_nested_cursor` source-lock assertion checks both dispatch
+words, the `$0a` return byte, the `$10` cursor-save/restore root, and the
+`$6800` pointer-reader helper against both authentic Track 02 editions.
 
 The same authentic 17-sector payload contains the bytes addressed as `$6800`
 when loaded at `$4000` (payload offset `$2800`). Its first 13 little-endian
