@@ -55,6 +55,12 @@ third batch are pending. Cumulative net reduction across the three asset
 batches is about 80,000 tracked text lines. The remaining
 14,400 card-art numeric lines have other game owners.
 
+The first CMake batch consolidates 51 optional DM1/CSB test registrations.
+It removes 680 lines from the root build file while retaining each target,
+CTest name, source, include path, compile command and link rule. Local
+before/after CTest JSON and target build metadata match exactly. Hosted
+platform builds for this batch are pending.
+
 ## Work sequence
 
 ### 1. Record a behavior and size baseline

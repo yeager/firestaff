@@ -1815,26 +1815,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_utility_import_confirma
     )
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dungeon_get_group_cells_pc34.c")
-    add_executable(test_csb_v1_dungeon_get_group_cells_pc34
-        tests/test_csb_v1_dungeon_get_group_cells_pc34.c
-    )
-    target_include_directories(test_csb_v1_dungeon_get_group_cells_pc34 PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_csb_v1_dungeon_get_group_cells_pc34 PRIVATE
-        firestaff_m10
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_dungeon_get_group_cells_pc34 PRIVATE
-            -Wall -Wextra -Werror
-        )
+# Keep optional legacy test targets and CTest names stable while sharing
+# their identical registration rules. Each test retains its own source file.
+function(firestaff_add_optional_dm_test target ctest_name)
+    cmake_parse_arguments(DM_TEST "LINK_M10" "" "SOURCES;NON_MSVC_OPTIONS" ${ARGN})
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/${target}.c")
+        add_executable(${target} tests/${target}.c ${DM_TEST_SOURCES})
+        target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(DM_TEST_LINK_M10)
+            target_link_libraries(${target} PRIVATE firestaff_m10)
+        endif()
+        if(NOT MSVC AND DM_TEST_NON_MSVC_OPTIONS)
+            target_compile_options(${target} PRIVATE ${DM_TEST_NON_MSVC_OPTIONS})
+        endif()
+        add_test(NAME ${ctest_name} COMMAND ${target})
     endif()
-    add_test(
-        NAME csb_v1_dungeon_get_group_cells_pc34
-        COMMAND test_csb_v1_dungeon_get_group_cells_pc34
-    )
-endif()
+endfunction()
+
+firestaff_add_optional_dm_test(test_csb_v1_dungeon_get_group_cells_pc34 csb_v1_dungeon_get_group_cells_pc34
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror
+)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_start_bitmap_size_pc34_compat.c")
     add_executable(test_redmcsb_start_bitmap_size_pc34_compat
@@ -1855,735 +1856,202 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_start_bitmap_size_pc34
     )
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_damage_render_plan_pc34_compat.c")
-    add_executable(test_dm1_v1_action_damage_render_plan_pc34_compat
-        tests/test_dm1_v1_action_damage_render_plan_pc34_compat.c
-        src/dm1/dm1_v1_action_damage_render_plan_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_action_damage_render_plan_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_action_damage_render_plan_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_action_damage_render_plan_pc34_compat
-        COMMAND test_dm1_v1_action_damage_render_plan_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_action_damage_render_plan_pc34_compat dm1_v1_action_damage_render_plan_pc34_compat
+    SOURCES src/dm1/dm1_v1_action_damage_render_plan_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dungeon_get_group_directions_pc34.c")
-    add_executable(test_csb_v1_dungeon_get_group_directions_pc34
-        tests/test_csb_v1_dungeon_get_group_directions_pc34.c
-    )
-    target_include_directories(test_csb_v1_dungeon_get_group_directions_pc34 PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_csb_v1_dungeon_get_group_directions_pc34 PRIVATE
-        firestaff_m10
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_dungeon_get_group_directions_pc34 PRIVATE
-            -Wall -Wextra -Werror
-        )
-    endif()
-    add_test(
-        NAME csb_v1_dungeon_get_group_directions_pc34
-        COMMAND test_csb_v1_dungeon_get_group_directions_pc34
-    )
-endif()
+firestaff_add_optional_dm_test(test_csb_v1_dungeon_get_group_directions_pc34 csb_v1_dungeon_get_group_directions_pc34
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_count_pc34_compat.c")
-    add_executable(test_dm1_v1_projectile_impact_count_pc34_compat
-        tests/test_dm1_v1_projectile_impact_count_pc34_compat.c
-        src/dm1/dm1_v1_projectile_impact_count_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
-        firestaff_m10
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
-            -Wall -Wextra
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_projectile_impact_count_pc34_compat
-        COMMAND test_dm1_v1_projectile_impact_count_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_projectile_impact_count_pc34_compat dm1_v1_projectile_impact_count_pc34_compat
+    SOURCES src/dm1/dm1_v1_projectile_impact_count_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_c14_layout_pc34_compat.c")
-    add_executable(test_dm1_v1_c14_layout_pc34_compat tests/test_dm1_v1_c14_layout_pc34_compat.c)
-    target_link_libraries(test_dm1_v1_c14_layout_pc34_compat PRIVATE firestaff_m10)
-    target_include_directories(test_dm1_v1_c14_layout_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    add_test(NAME dm1_v1_c14_layout_pc34_compat COMMAND test_dm1_v1_c14_layout_pc34_compat)
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_c14_layout_pc34_compat dm1_v1_c14_layout_pc34_compat
+    LINK_M10
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_attack_f0216_pc34_compat.c")
-    add_executable(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat
-        tests/test_dm1_v1_projectile_impact_attack_f0216_pc34_compat.c
-        src/dm1/dm1_v1_projectile_impact_attack_f0216_pc34_compat.c
-    )
-    target_link_libraries(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat
-        PRIVATE firestaff_m10)
-    target_include_directories(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat PRIVATE
-            -Wall -Wextra
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_projectile_impact_attack_f0216_pc34_compat
-        COMMAND test_dm1_v1_projectile_impact_attack_f0216_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat dm1_v1_projectile_impact_attack_f0216_pc34_compat
+    SOURCES src/dm1/dm1_v1_projectile_impact_attack_f0216_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_c15_layout_pc34_compat.c")
-    add_executable(test_dm1_v1_c15_layout_pc34_compat
-        tests/test_dm1_v1_c15_layout_pc34_compat.c
-    )
-    target_link_libraries(test_dm1_v1_c15_layout_pc34_compat PRIVATE firestaff_m10)
-    target_include_directories(test_dm1_v1_c15_layout_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_c15_layout_pc34_compat PRIVATE
-            -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_c15_layout_pc34_compat
-        COMMAND test_dm1_v1_c15_layout_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_c15_layout_pc34_compat dm1_v1_c15_layout_pc34_compat
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -O2
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_unpoison_pc34_compat.c")
-    add_executable(test_dm1_v1_champion_unpoison_pc34_compat
-        tests/test_dm1_v1_champion_unpoison_pc34_compat.c
-        src/dm1/dm1_v1_champion_unpoison_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_champion_unpoison_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_champion_unpoison_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_champion_unpoison_pc34_compat
-        COMMAND test_dm1_v1_champion_unpoison_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_champion_unpoison_pc34_compat dm1_v1_champion_unpoison_pc34_compat
+    SOURCES src/dm1/dm1_v1_champion_unpoison_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat.c")
-    add_executable(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat
-        tests/test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat.c
-        src/dm1/dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat PRIVATE
-            -Wall -Wextra
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat
-        COMMAND test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat
+    SOURCES src/dm1/dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0182_group_stop_attacking_pc34_compat.c")
-    add_executable(test_csb_v1_f0182_group_stop_attacking_pc34_compat
-        tests/test_csb_v1_f0182_group_stop_attacking_pc34_compat.c
-        src/csb/csb_v1_f0182_group_stop_attacking_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_f0182_group_stop_attacking_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_f0182_group_stop_attacking_pc34_compat PRIVATE
-            -Wall -Wextra -Werror
-        )
-    endif()
-    add_test(
-        NAME csb_v1_f0182_group_stop_attacking_pc34_compat
-        COMMAND test_csb_v1_f0182_group_stop_attacking_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_csb_v1_f0182_group_stop_attacking_pc34_compat csb_v1_f0182_group_stop_attacking_pc34_compat
+    SOURCES src/csb/csb_v1_f0182_group_stop_attacking_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_command_highlight_box_enable_pc34_compat.c")
-    add_executable(test_dm1_v1_command_highlight_box_enable_pc34_compat
-        tests/test_dm1_v1_command_highlight_box_enable_pc34_compat.c
-        src/dm1/dm1_v1_command_highlight_box_enable_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_command_highlight_box_enable_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_command_highlight_box_enable_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_command_highlight_box_enable_pc34_compat
-        COMMAND test_dm1_v1_command_highlight_box_enable_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_command_highlight_box_enable_pc34_compat dm1_v1_command_highlight_box_enable_pc34_compat
+    SOURCES src/dm1/dm1_v1_command_highlight_box_enable_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_command_highlight_box_disable_pc34_compat.c")
-    add_executable(test_dm1_v1_command_highlight_box_disable_pc34_compat
-        tests/test_dm1_v1_command_highlight_box_disable_pc34_compat.c
-        src/dm1/dm1_v1_command_highlight_box_disable_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_command_highlight_box_disable_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_command_highlight_box_disable_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_command_highlight_box_disable_pc34_compat
-        COMMAND test_dm1_v1_command_highlight_box_disable_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_command_highlight_box_disable_pc34_compat dm1_v1_command_highlight_box_disable_pc34_compat
+    SOURCES src/dm1/dm1_v1_command_highlight_box_disable_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0369_spell_zone_admission_pc34_compat.c")
-    add_executable(test_dm1_v1_f0369_spell_zone_admission_pc34_compat
-        tests/test_dm1_v1_f0369_spell_zone_admission_pc34_compat.c
-        src/dm1/dm1_v1_f0369_spell_zone_admission_pc34_compat.c
-        src/shared/touch_click_zone_matrix_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0369_spell_zone_admission_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0369_spell_zone_admission_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0369_spell_zone_admission_pc34_compat
-        COMMAND test_dm1_v1_f0369_spell_zone_admission_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0369_spell_zone_admission_pc34_compat dm1_v1_f0369_spell_zone_admission_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0369_spell_zone_admission_pc34_compat.c src/shared/touch_click_zone_matrix_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat.c")
-    add_executable(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat
-        tests/test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat.c
-        src/dm1/dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat
-        COMMAND test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat.c")
-    add_executable(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat
-        tests/test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat.c
-        src/dm1/dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat
-        COMMAND test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c")
-    add_executable(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
-        tests/test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c
-        src/dm1/dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
-        COMMAND test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat.c")
-    add_executable(test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat
-        tests/test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat.c
-        src/dm1/dm1_v1_f0413_cpsc_checksum_eor_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0413_cpsc_checksum_eor_pc34_compat
-        COMMAND test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat dm1_v1_f0413_cpsc_checksum_eor_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0413_cpsc_checksum_eor_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0431_f0436_palette_step_pc34_compat.c")
-    add_executable(test_dm1_v1_f0431_f0436_palette_step_pc34_compat
-        tests/test_dm1_v1_f0431_f0436_palette_step_pc34_compat.c
-        src/dm1/dm1_v1_f0431_f0436_palette_step_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0431_f0436_palette_step_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0431_f0436_palette_step_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0431_f0436_palette_step_pc34_compat
-        COMMAND test_dm1_v1_f0431_f0436_palette_step_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0431_f0436_palette_step_pc34_compat dm1_v1_f0431_f0436_palette_step_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0431_f0436_palette_step_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat.c")
-    add_executable(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat
-        tests/test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat.c
-        src/dm1/dm1_v1_f0424_f0427_dialog_admission_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0424_f0427_dialog_admission_pc34_compat
-        COMMAND test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat dm1_v1_f0424_f0427_dialog_admission_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0424_f0427_dialog_admission_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0432_format_disk_menu_pc34_compat.c")
-    add_executable(test_dm1_v1_f0432_format_disk_menu_pc34_compat
-        tests/test_dm1_v1_f0432_format_disk_menu_pc34_compat.c
-        src/dm1/dm1_v1_f0432_format_disk_menu_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0432_format_disk_menu_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_f0432_format_disk_menu_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0432_format_disk_menu_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0432_format_disk_menu_pc34_compat
-        COMMAND test_dm1_v1_f0432_format_disk_menu_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0432_format_disk_menu_pc34_compat dm1_v1_f0432_format_disk_menu_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0432_format_disk_menu_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0433_save_command_pc34_compat.c")
-    add_executable(test_dm1_v1_f0433_save_command_pc34_compat
-        tests/test_dm1_v1_f0433_save_command_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0433_save_command_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_f0433_save_command_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0433_save_command_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0433_save_command_pc34_compat
-        COMMAND test_dm1_v1_f0433_save_command_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0433_save_command_pc34_compat dm1_v1_f0433_save_command_pc34_compat
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_main_lowlevel_boundary_pc34_compat.c")
-    add_executable(test_dm1_v1_main_lowlevel_boundary_pc34_compat
-        tests/test_dm1_v1_main_lowlevel_boundary_pc34_compat.c
-        src/dm1/dm1_v1_main_lowlevel_boundary_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_main_lowlevel_boundary_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_main_lowlevel_boundary_pc34_compat PRIVATE
-        firestaff_m10
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_main_lowlevel_boundary_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_main_lowlevel_boundary_pc34_compat
-        COMMAND test_dm1_v1_main_lowlevel_boundary_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_main_lowlevel_boundary_pc34_compat dm1_v1_main_lowlevel_boundary_pc34_compat
+    SOURCES src/dm1/dm1_v1_main_lowlevel_boundary_pc34_compat.c
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_early_viewport_family_audit_pc34_compat.c")
-    add_executable(test_dm1_v1_early_viewport_family_audit_pc34_compat
-        tests/test_dm1_v1_early_viewport_family_audit_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_early_viewport_family_audit_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_dm1_v1_early_viewport_family_audit_pc34_compat PRIVATE
-        firestaff_m10
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_early_viewport_family_audit_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_early_viewport_family_audit_pc34_compat
-        COMMAND test_dm1_v1_early_viewport_family_audit_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_early_viewport_family_audit_pc34_compat dm1_v1_early_viewport_family_audit_pc34_compat
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c")
-    add_executable(test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat
-        tests/test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c
-        src/dm1/dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat
-        COMMAND test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c")
-    add_executable(test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat
-        tests/test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c
-        src/dm1/dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat
-        COMMAND test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0442_f0443_credits_text_material_pc34_compat.c")
-    add_executable(test_dm1_v1_f0442_f0443_credits_text_material_pc34_compat
-        tests/test_dm1_v1_f0442_f0443_credits_text_material_pc34_compat.c
-        src/dm1/dm1_v1_f0442_f0443_credits_text_material_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0442_f0443_credits_text_material_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0442_f0443_credits_text_material_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0442_f0443_credits_text_material_pc34_compat
-        COMMAND test_dm1_v1_f0442_f0443_credits_text_material_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0442_f0443_credits_text_material_pc34_compat dm1_v1_f0442_f0443_credits_text_material_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0442_f0443_credits_text_material_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c")
-    add_executable(test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat
-        tests/test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c
-        src/dm1/dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat
-        COMMAND test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat.c")
-    add_executable(test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat
-        tests/test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat.c
-        src/dm1/dm1_v1_f0447_f0448_platform_boundary_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0447_f0448_platform_boundary_pc34_compat
-        COMMAND test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat dm1_v1_f0447_f0448_platform_boundary_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0447_f0448_platform_boundary_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c")
-    add_executable(test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat
-        tests/test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c
-        src/dm1/dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat
-        COMMAND test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_early_runtime_f0019_f0028_pc34_compat.c")
-    add_executable(test_dm1_v1_early_runtime_f0019_f0028_pc34_compat
-        tests/test_dm1_v1_early_runtime_f0019_f0028_pc34_compat.c
-        src/dm1/dm1_v1_early_runtime_f0019_f0028_pc34_compat.c
-        src/dm1/dm1_v1_main_math_f0024_f0026_f0030_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_early_runtime_f0019_f0028_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_early_runtime_f0019_f0028_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_early_runtime_f0019_f0028_pc34_compat
-        COMMAND test_dm1_v1_early_runtime_f0019_f0028_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_early_runtime_f0019_f0028_pc34_compat dm1_v1_early_runtime_f0019_f0028_pc34_compat
+    SOURCES src/dm1/dm1_v1_early_runtime_f0019_f0028_pc34_compat.c src/dm1/dm1_v1_main_math_f0024_f0026_f0030_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_early_object_text_f0029_f0047_pc34_compat.c")
-    add_executable(test_dm1_v1_early_object_text_f0029_f0047_pc34_compat
-        tests/test_dm1_v1_early_object_text_f0029_f0047_pc34_compat.c
-        src/dm1/dm1_v1_early_object_text_f0029_f0047_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_early_object_text_f0029_f0047_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_early_object_text_f0029_f0047_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_early_object_text_f0029_f0047_pc34_compat
-        COMMAND test_dm1_v1_early_object_text_f0029_f0047_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_early_object_text_f0029_f0047_pc34_compat dm1_v1_early_object_text_f0029_f0047_pc34_compat
+    SOURCES src/dm1/dm1_v1_early_object_text_f0029_f0047_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c")
-    add_executable(test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat
-        tests/test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c
-        src/dm1/dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0181_f0200_group_source_audit_pc34_compat
-        COMMAND test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat dm1_v1_f0181_f0200_group_source_audit_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0082_f0091_runtime_pc34_compat.c")
-    add_executable(test_dm1_v1_f0082_f0091_runtime_pc34_compat
-        tests/test_dm1_v1_f0082_f0091_runtime_pc34_compat.c
-        src/dm1/dm1_v1_f0082_f0091_runtime_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0082_f0091_runtime_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0082_f0091_runtime_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0082_f0091_runtime_pc34_compat
-        COMMAND test_dm1_v1_f0082_f0091_runtime_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0082_f0091_runtime_pc34_compat dm1_v1_f0082_f0091_runtime_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0082_f0091_runtime_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat.c")
-    add_executable(test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat
-        tests/test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat.c
-        src/dm1/dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat
-        COMMAND test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat.c")
-    add_executable(test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat
-        tests/test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat.c
-        src/dm1/dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat
-        COMMAND test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat
+    SOURCES src/dm1/dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c")
-    add_executable(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat
-        tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat PRIVATE
-        firestaff_m10
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat PRIVATE
-            -Wall -Wextra -Werror
-        )
-    endif()
-    add_test(
-        NAME csb_v1_f0195_group_add_all_active_groups_pc34_compat
-        COMMAND test_csb_v1_f0195_group_add_all_active_groups_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat csb_v1_f0195_group_add_all_active_groups_pc34_compat
+    LINK_M10
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0243_timeline_door_destruction_pc34_compat.c")
-    add_executable(test_csb_v1_f0243_timeline_door_destruction_pc34_compat
-        tests/test_csb_v1_f0243_timeline_door_destruction_pc34_compat.c
-        src/csb/csb_v1_f0243_timeline_door_destruction_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_f0243_timeline_door_destruction_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_f0243_timeline_door_destruction_pc34_compat PRIVATE
-            -Wall -Wextra -Werror
-        )
-    endif()
-    add_test(
-        NAME csb_v1_f0243_timeline_door_destruction_pc34_compat
-        COMMAND test_csb_v1_f0243_timeline_door_destruction_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_csb_v1_f0243_timeline_door_destruction_pc34_compat csb_v1_f0243_timeline_door_destruction_pc34_compat
+    SOURCES src/csb/csb_v1_f0243_timeline_door_destruction_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_hud_material_admission_dm2_010.c")
-    add_executable(test_dm2_v1_gdat_hud_material_admission_dm2_010
-        tests/test_dm2_v1_gdat_hud_material_admission_dm2_010.c
-        src/dm2/dm2_v1_gdat_hud_material_admission_dm2_010.c
-    )
-    target_include_directories(test_dm2_v1_gdat_hud_material_admission_dm2_010 PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm2_v1_gdat_hud_material_admission_dm2_010 PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm2_v1_gdat_hud_material_admission_dm2_010
-        COMMAND test_dm2_v1_gdat_hud_material_admission_dm2_010
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm2_v1_gdat_hud_material_admission_dm2_010 dm2_v1_gdat_hud_material_admission_dm2_010
+    SOURCES src/dm2/dm2_v1_gdat_hud_material_admission_dm2_010.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat.c")
-    add_executable(test_dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat
-        tests/test_dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat.c
-        src/dm1/dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat
-        COMMAND test_dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0461_start_allocate_flipped_wall_bitmaps_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0931_f0932_prim_checksums_pc34_compat.c")
     add_executable(test_f0931_f0932_prim_checksums_pc34_compat
@@ -2604,216 +2072,68 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0931_f0932_prim_checksums_pc3
     )
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c")
-    add_executable(test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat
-        tests/test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c
-        src/dm1/dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c
-        src/frontend/swsh_frontend_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat
-        COMMAND test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c src/frontend/swsh_frontend_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c")
-    add_executable(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
-        tests/test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c
-        src/dm1/dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c
-        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
-        COMMAND test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat.c")
-    add_executable(test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat
-        tests/test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat.c
-        src/dm1/dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat.c
-        src/dm1/dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c
-        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat
-        COMMAND test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat.c src/dm1/dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_host_input_bridge_pc34_compat.c")
-    # DM1 host-device admission.  Controller aliases and scaled touch/pointer
-    # events must land on the original C001..C006 / F0358 command path, and a
-    # host modal must consume gameplay input before that queue is mutated.
-    add_executable(test_dm1_v1_host_input_bridge_pc34_compat
-        tests/test_dm1_v1_host_input_bridge_pc34_compat.c
-        src/dm1/dm1_v1_host_input_bridge_pc34_compat.c
-        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
-        src/shared/touch_pointer_input_pc34_compat.c
-        src/shared/touch_click_zone_matrix_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_host_input_bridge_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_host_input_bridge_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_host_input_bridge_pc34_compat
-        COMMAND test_dm1_v1_host_input_bridge_pc34_compat
-    )
-endif()
+# DM1 host-device admission.  Controller aliases and scaled touch/pointer
+# events must land on the original C001..C006 / F0358 command path, and a
+# host modal must consume gameplay input before that queue is mutated.
+firestaff_add_optional_dm_test(test_dm1_v1_host_input_bridge_pc34_compat dm1_v1_host_input_bridge_pc34_compat
+    SOURCES src/dm1/dm1_v1_host_input_bridge_pc34_compat.c src/dm1/dm1_v1_input_command_queue_pc34_compat.c src/shared/touch_pointer_input_pc34_compat.c src/shared/touch_click_zone_matrix_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c")
-    add_executable(test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat
-        tests/test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c
-        src/dm1/dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat
-        COMMAND test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat.c")
-    add_executable(test_dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat
-        tests/test_dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat.c
-        src/dm1/dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat
-        COMMAND test_dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat.c")
-    add_executable(test_dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat
-        tests/test_dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat.c
-        src/dm1/dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat PRIVATE -Wall -Wextra -Werror -pedantic)
-    endif()
-    add_test(NAME dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat COMMAND test_dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat)
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat.c")
-    add_executable(test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat
-        tests/test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat.c
-        src/dm1/dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat
-        COMMAND test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c")
-    add_executable(test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat tests/test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c src/dm1/dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c)
-    target_include_directories(test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat PRIVATE -Wall -Wextra -Werror -pedantic)
-    endif()
-    add_test(NAME dm1_v1_f0201_f0220_action_source_receipt_pc34_compat COMMAND test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat)
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat dm1_v1_f0201_f0220_action_source_receipt_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat.c")
-    add_executable(test_dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat tests/test_dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat.c src/dm1/dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat.c)
-    target_include_directories(test_dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat PRIVATE -Wall -Wextra -Werror -pedantic)
-    endif()
-    add_test(NAME dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat COMMAND test_dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat)
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat.c")
-    add_executable(test_dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat
-        tests/test_dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat.c
-        src/dm1/dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat
-        COMMAND test_dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat.c")
-    add_executable(test_dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat
-        tests/test_dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat.c
-        src/dm1/dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat.c
-    )
-    target_include_directories(test_dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
-        )
-    endif()
-    add_test(
-        NAME dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat
-        COMMAND test_dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat
-    )
-endif()
+firestaff_add_optional_dm_test(test_dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
 
 foreach(dm1_csb_inventory_test
     dm1_v1_f0281_f0300_champion_source_receipt_pc34_compat

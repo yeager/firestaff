@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-05: Consolidated 51 optional DM1/CSB CMake test registrations into
+  one helper, removing 680 lines from the root build file. Every target and
+  CTest name remains separate. A before/after local CMake configuration has
+  byte-identical CTest JSON and identical compile commands and Ninja link
+  rules for all 51 targets; hosted platform builds await this commit.
+
 - 2026-10-05: Moved only the DM1, CSB and DM2 launcher card RGB arrays from
   the mixed generated-card C source to three exact 129,600-byte project-owned
   binaries and deterministic build-time C generation. Each array compares
