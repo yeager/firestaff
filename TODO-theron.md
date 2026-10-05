@@ -19,6 +19,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   multiplication, with inputs `$0e` and `$10`, and 16-bit result `$0f:$0e`.
   The evidence is the authentic US Rev. 1 `$4696` byte receipt and its
   `$8000` call path; the input/result fields have no assigned game meaning.
+- ✅ Bound the loop bytes from `$48ec` through the RTS at `$4900` independently
+  against authentic US and JP Track 02. The code clears two VDC registers and decrements the
+  `$01:$00` pair to zero; the source value's meaning and purpose remain
+  unproven.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;

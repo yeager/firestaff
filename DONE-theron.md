@@ -25,6 +25,16 @@ assigned. The receipts are US-only and do not establish JP parity or MPR1 at
 `test_theron_v1_stage2_disassembly_chain` passed against authentic US and JP
 Track 02 files; its `$8000` and `$4696` byte receipts are explicitly US-only.
 
+## 2026-10-05 — source-lock the `$48fc` loop in both editions
+
+Added a raw-sector regression for the bytes from `$48ec` through the RTS at
+`$4900` in authentic US and JP Track 02. The byte sequence clears
+`$0404/$0405`, performs a borrow-aware decrement of `$01:$00`, loops while
+either byte is nonzero, and returns at zero. The
+caller-derived pair is left semantically unnamed. The focused stage-two test
+passed for both editions on trv2, including the new `stage2_l48fc_countdown`
+check.
+
 ## 2026-10-05 — source-lock shared stage-two slot helpers
 
 Extended the ID `$2c` helper family with authentic US and JP raw-sector checks

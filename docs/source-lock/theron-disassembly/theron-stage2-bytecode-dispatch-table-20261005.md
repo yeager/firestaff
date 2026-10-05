@@ -321,14 +321,24 @@ returned 16-bit product is therefore in `$0f:$0e`, matching `$8000`'s stores
 to `$47ca:$47c9`. A zero multiplier returns zero. This establishes arithmetic
 behavior only; no meaning is assigned to the two input bytes or result field.
 
+The `$48fc` entry is the second half of a loop rooted at `$48ec`. Each
+iteration clears `$0404/$0405`, checks `$00`, decrements `$01` when `$00` is
+zero, decrements `$00`, then returns when the OR of the two bytes is zero;
+otherwise it branches back to `$48ec`. Thus the bytes implement a 16-bit
+decrement-to-zero loop, including low-byte borrow. A new raw-sector regression
+binds the bytes from `$48ec` through the RTS at `$4900` independently in
+authentic US and JP Track 02. This is
+only the observable byte-level loop behavior: the caller-derived value in
+`$00/$01` and its purpose remain unnamed.
+
 The paired US raw-media regression binds `$8000` and `$45a6`, including the
 call sites at `$45a6`, `$4696`, and `$48fc`. It also records several da65
 decode-artifact overlaps; the raw media bytes, not the rendered labels, are
-authoritative for those spans. The `$48fc` callee effect and the pointed-to
-structure's field meanings remain unresolved. Both `$8000` and `$4696` receipts
-are US-only here; this source-lock does not prove that these spans are
-identical in JP. In particular, neither receipt establishes the MPR1 mapping
-needed to identify the below-window `$3a2e` call.
+authoritative for those spans. The pointed-to structure's field meanings
+remain unresolved. Both `$8000` and `$4696` receipts are US-only here; this
+source-lock does not prove that these spans are identical in JP. In
+particular, neither receipt establishes the MPR1 mapping needed to identify
+the below-window `$3a2e` call.
 
 The adjacent `$4ef4` helper uses the same `$4ec2 -> $37cc` handoff, additionally
 copies `$4ec7/$4ec8` to `$37d0/$37d1`, calls `$4f31` and `$3879`, then clears
