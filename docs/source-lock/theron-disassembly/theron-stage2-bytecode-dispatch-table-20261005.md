@@ -280,6 +280,11 @@ and the complete `$469d..$46b7` path in both editions. It reads four bytes
 from the current `$1c` cursor, stores them at `$0402..$0405`, and jumps to
 `$4101` (`+5`). These static stores do not establish the hardware/data roles
 or prove retail stream execution.
+The `stage2_id34_fixed_argument_select` assertion locks the `$4175` dispatch
+word and complete `$44bd..$44e6` branch tree in both editions. It reads one
+cursor byte, selects one of the fixed `$3ab7` arguments `$10,$11,$12,$16`,
+and converges on `$40f5` (`+2`). The selector and argument meanings, callee
+effects, and runtime stream selection remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

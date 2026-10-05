@@ -899,6 +899,34 @@ static void test_stage2_id33_four_byte_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $34's bounded four-way fixed-argument dispatch path. */
+static void test_stage2_id34_fixed_argument_select(const uint8_t *raw,
+                                                    size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x07u, 0xa9u, 0x10u,
+        0x20u, 0xb7u, 0x3au, 0x80u, 0x1bu, 0xc9u, 0x01u,
+        0xd0u, 0x07u, 0xa9u, 0x11u, 0x20u, 0xb7u, 0x3au,
+        0x80u, 0x10u, 0xc9u, 0x02u, 0xd0u, 0x07u, 0xa9u,
+        0x12u, 0x20u, 0xb7u, 0x3au, 0x80u, 0x05u, 0xa9u,
+        0x16u, 0x20u, 0xb7u, 0x3au, 0x4cu, 0xf5u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x34u)) == 0x44bdu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        uint8_t actual = stage2_byte_at(raw, raw_size, jp,
+                                        (uint16_t)(0x44bdu + i));
+        if (actual != root[i]) {
+            fprintf(stderr, "ID $34 mismatch at +$%02x: expected $%02x got $%02x (%s)\n",
+                    i, root[i], actual, jp ? "JP" : "US");
+            assert(actual == root[i]);
+        }
+    }
+    printf("  PASS: stage2_id34_fixed_argument_select (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2360,6 +2388,7 @@ int main(void)
     test_stage2_id31_fixed_argument_handoff(g_us_data, g_us_size, 0);
     test_stage2_id32_conditional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id33_four_byte_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id34_fixed_argument_select(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2397,6 +2426,7 @@ int main(void)
         test_stage2_id31_fixed_argument_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id32_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id33_four_byte_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id34_fixed_argument_select(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
