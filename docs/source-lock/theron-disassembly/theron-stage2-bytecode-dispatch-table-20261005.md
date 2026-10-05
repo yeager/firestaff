@@ -236,6 +236,11 @@ bytes at `$442f/$4430` to zero page, derives `$300a` from `$4d7b` and `$3008`,
 calls `$3ab7` with immediate `$05`, then takes `$40f5` (`+2`). These are
 static byte/control-flow observations; the pointer's role, callee effects,
 and runtime selection remain unknown.
+The `stage2_id2a_entry_helper` assertion locks the `$4161` dispatch word,
+`$4409..$4414` entry, and `$4415..$442e` local helper in both editions. The
+entry calls expansion-ROM routines before and after a local helper call; the
+local code reads through `$1c`, indexes `$4b3c`, and writes fixed scratch
+bytes. External effects, table meaning, and runtime selection remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

@@ -687,6 +687,40 @@ static void test_stage2_id27_bounded_pointer_setup(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Byte-lock the ID $2a entry/helper path without assigning table semantics. */
+static void test_stage2_id2a_entry_helper(const uint8_t *raw,
+                                          size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x62u, 0x20u, 0x2du, 0xe0u, 0x44u, 0x06u, 0x20u, 0x12u,
+        0xe0u, 0x4cu, 0xf5u, 0x40u
+    };
+    static const uint8_t helper[] = {
+        0xa0u, 0x01u, 0xb1u, 0x1cu, 0xaau, 0xbdu, 0x3cu, 0x4bu,
+        0x85u, 0xf8u, 0x18u, 0xf8u, 0x69u, 0x01u, 0x85u, 0xfcu,
+        0xd8u, 0xa9u, 0x80u, 0x85u, 0xfbu, 0xa9u, 0x83u, 0x85u,
+        0xffu, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x2au)) == 0x4409u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        uint8_t actual = stage2_byte_at(raw, raw_size, jp,
+                                        (uint16_t)(0x4409u + i));
+        if (actual != root[i]) {
+            fprintf(stderr, "ID $2a mismatch at +$%02x: expected $%02x got $%02x (%s)\n",
+                    i, root[i], actual, jp ? "JP" : "US");
+            assert(actual == root[i]);
+        }
+    }
+    for (unsigned int i = 0; i < sizeof(helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4415u + i)) == helper[i]);
+    }
+    printf("  PASS: stage2_id2a_entry_helper (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2140,6 +2174,7 @@ int main(void)
     test_stage2_id24_bounded_wait_root(g_us_data, g_us_size, 0);
     test_stage2_id23_regional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id27_bounded_pointer_setup(g_us_data, g_us_size, 0);
+    test_stage2_id2a_entry_helper(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2169,6 +2204,7 @@ int main(void)
         test_stage2_id24_bounded_wait_root(g_jp_data, g_jp_size, 1);
         test_stage2_id23_regional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id27_bounded_pointer_setup(g_jp_data, g_jp_size, 1);
+        test_stage2_id2a_entry_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
