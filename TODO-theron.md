@@ -41,10 +41,15 @@ Reviewed 2026-10-05. Only open work is listed here.
   static `$01` comparison chain over `$2781`, with pointer branches to
   `$686d..$692d`; all seven 32-byte candidate blocks reach `$09` if their
   calls and counter polls return. Root `$468f` for `$2d` clears `$3b33` and
-  polls until it exceeds the stream operand; a conditional increment at
-  `$89e2` is present, but its runtime relationship is unproven. Selector
-  `$0b` also reaches this poll. Runtime selector choice, wait completion,
-  indirect-call targets, and gameplay meaning remain unproven.
+  polls until it exceeds the stream operand; `$89e7` increments `$3b33` only
+  when the stacked value has bit `$20` set at `$89e2`. Other clear/wait sites
+  use this byte in the US image at `$503d/$5048`, `$7539/$753c`,
+  `$7549/$754c`, `$7733/$7736`, and helper `$88a6`. JP's `$753x/$773x` roots
+  are two bytes later and its `$50xx` path differs; no causal path from these
+  sites to this poll is proven.
+  Selector `$0b` also reaches the poll. Runtime selector choice, counter update
+  path, wait completion, indirect-call targets, and gameplay meaning remain
+  unproven.
   Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. See

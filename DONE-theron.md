@@ -21,11 +21,15 @@ mutable `$2781`, with seven inline values `$00..$06` and pointer targets
 matching `$1a` operand then `$13,$2d`, and has a 32-byte cursor path ending
 at `$09`/`RTS` if its nested calls and three counter polls return. The rooted
 `$2d` handler at `$468f` clears `$3b33`, compares it with the stream operand,
-and loops until the counter exceeds that operand; a conditional increment at
-`$89e2` exists in the same image, but its scheduling relation to this stream
-is not proven. Selector `$0b` also reaches the poll. This is static candidate
-control flow only: selector execution, poll completion, indirect-call targets,
-and gameplay meaning remain unproven.
+and loops until the counter exceeds that operand; an increment at `$89e7` is
+guarded by bit `$20` from the stacked value at `$89e2`. Separate `$3b33`
+US clear/wait sites at `$503d/$5048`, `$7539/$753c`, `$7549/$754c`,
+`$7733/$7736`, and helper `$88a6` show that the byte has other uses. JP's
+`$753x/$773x` roots are two bytes later and its `$50xx` path differs. None is
+proven to advance selector `$2d`'s poll. Selector `$0b` also reaches it.
+This is static candidate control flow only: selector execution, poll
+completion, the counter's runtime update path, indirect-call targets, and
+gameplay meaning remain unproven.
 
 ## 2026-10-05 — bound candidate stage-two streams to authentic pointers
 

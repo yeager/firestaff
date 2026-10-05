@@ -222,9 +222,20 @@ are `INY; LDA ($1c),Y; STZ $3b33; CMP $3b33; BCS $4695; JMP $40f5`. The
 handler loads its offset-1 operand into A, clears `$3b33`, and loops at
 `$4695` while A is greater than or equal to the counter. It reaches `$40f5`
 (`$1c += 2`) only when `$3b33` becomes greater than the operand. The listing
-contains a conditional `$3b33` increment at `$89e2` (`PLA; AND #$20; BEQ;
-INC $3b33`), but this static evidence does not prove that path runs during a
-candidate interpreter call or that the polling condition is satisfied.
+contains an increment at `$89e7`, reached from `$89e2` only when the stacked
+value has bit `$20` set (`PLA; AND #$20; BEQ $89ed; INC $3b33; INC $2249`).
+Other paths in the US listing also clear or poll `$3b33`: `$503d/$5048` clear
+and wait for nonzero before calling `$51ae`; `$7539/$753c` clear and wait for
+a value of at least three; `$7549/$754c` clear and wait for nonzero; and
+`$7733/$7736` clear after `$4f7a` returns and wait for nonzero. `$88a6` is
+another clear/nonzero wait helper. The JP payload's `$753x`/`$773x` sites
+have corresponding roots two bytes later; at `$5044` its `$3b33` clear is
+followed by `JSR $e063`, and its later `$50xx` control flow differs from the
+US `$5048` wait.
+These distinct uses do not identify which path, if any, advances the counter
+during a candidate `$2d` poll. The US listing and regional raw bytes do not
+prove the `$89e7` path runs during a candidate interpreter call or that any
+polling condition is satisfied.
 
 ### Selector `$00` target: conditional static cursor walk
 

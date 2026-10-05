@@ -221,6 +221,101 @@ static void test_stage2_selector_candidate_continuations(
            jp ? "JP" : "US");
 }
 
+/* Selector pointer operands are read at cursor+1/+2 by the rooted $41/$12
+ * handlers. This locks the earlier selector roots to authentic regional
+ * bytes; it does not prove that any selector is executed. */
+static void test_stage2_selector_00_03_pointer_roots(
+    const uint8_t *raw, size_t raw_size, int jp)
+{
+    uint16_t recursive_target = jp ? 0x73b4u : 0x73b2u;
+    uint16_t selector01_target = jp ? 0x78ecu : 0x78eau;
+    uint16_t selector23_target = jp ? 0x74f4u : 0x74f2u;
+    static const uint16_t pointer_roots[] = {
+        0x6ea7u, 0x6c6bu, 0x6c6eu, 0x6c92u, 0x6cfau
+    };
+    static const uint8_t pointer_ids[] = {
+        0x41u, 0x12u, 0x41u, 0x12u, 0x12u
+    };
+    static const uint8_t recursive_stream[] = {
+        0x1du, 0x00u, 0x00u, 0x20u, 0x20u, 0x00u, 0x00u, 0x09u
+    };
+    uint16_t targets[] = {
+        recursive_target, selector01_target, recursive_target,
+        selector23_target, selector23_target
+    };
+
+    for (unsigned int i = 0; i < sizeof(pointer_roots) /
+                                sizeof(pointer_roots[0]); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp, pointer_roots[i]) ==
+               pointer_ids[i]);
+        assert(stage2_word_at(raw, raw_size, jp,
+                              (uint16_t)(pointer_roots[i] + 1u)) ==
+               targets[i]);
+        assert(targets[i] >= THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS);
+        assert(targets[i] < THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS +
+                            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT * 2048u);
+    }
+    for (unsigned int i = 0; i < sizeof(recursive_stream); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(recursive_target + i)) ==
+               recursive_stream[i]);
+    }
+    printf("  PASS: stage2_selector_00_03_pointer_roots (%s)\n",
+           jp ? "JP" : "US");
+}
+
+static void test_stage2_counter_wait_sites(const uint8_t *raw,
+                                          size_t raw_size, int jp)
+{
+    static const struct Stage2ByteSite {
+        uint16_t address;
+        uint8_t bytes[12];
+        uint8_t length;
+    } us_sites[] = {
+        { 0x503du, { 0x9cu, 0x33u, 0x3bu }, 3u },
+        { 0x5048u, { 0xadu, 0x33u, 0x3bu, 0xf0u, 0xfbu,
+                      0x20u, 0xaeu, 0x51u }, 8u },
+        { 0x7539u, { 0x9cu, 0x33u, 0x3bu }, 3u },
+        { 0x753cu, { 0xadu, 0x33u, 0x3bu, 0xc9u, 0x03u,
+                      0x90u, 0xf9u }, 7u },
+        { 0x7549u, { 0x9cu, 0x33u, 0x3bu, 0xadu, 0x33u, 0x3bu,
+                      0xf0u, 0xfbu, 0x60u }, 9u },
+        { 0x7733u, { 0x9cu, 0x33u, 0x3bu }, 3u },
+        { 0x7736u, { 0xadu, 0x33u, 0x3bu, 0xf0u, 0xfbu }, 5u },
+        { 0x88a6u, { 0x9cu, 0x33u, 0x3bu, 0xadu, 0x33u, 0x3bu,
+                      0xf0u, 0xfbu, 0x60u }, 9u },
+        { 0x89e2u, { 0x68u, 0x29u, 0x20u, 0xf0u, 0x06u, 0xeeu,
+                      0x33u, 0x3bu, 0xeeu, 0x49u, 0x22u, 0x68u }, 12u }
+    };
+    static const struct Stage2ByteSite jp_sites[] = {
+        { 0x5044u, { 0x9cu, 0x33u, 0x3bu, 0x20u, 0x63u, 0xe0u }, 6u },
+        { 0x753bu, { 0x9cu, 0x33u, 0x3bu }, 3u },
+        { 0x753eu, { 0xadu, 0x33u, 0x3bu, 0xc9u, 0x03u,
+                      0x90u, 0xf9u }, 7u },
+        { 0x754bu, { 0x9cu, 0x33u, 0x3bu, 0xadu, 0x33u, 0x3bu,
+                      0xf0u, 0xfbu, 0x60u }, 9u },
+        { 0x7735u, { 0x9cu, 0x33u, 0x3bu }, 3u },
+        { 0x7738u, { 0xadu, 0x33u, 0x3bu, 0xf0u, 0xfbu }, 5u },
+        { 0x88a6u, { 0x9cu, 0x33u, 0x3bu, 0xadu, 0x33u, 0x3bu,
+                      0xf0u, 0xfbu, 0x60u }, 9u },
+        { 0x89e2u, { 0x68u, 0x29u, 0x20u, 0xf0u, 0x06u, 0xeeu,
+                      0x33u, 0x3bu, 0xeeu, 0x49u, 0x22u, 0x68u }, 12u }
+    };
+    const struct Stage2ByteSite *sites = jp ? jp_sites : us_sites;
+    size_t site_count = jp ? sizeof(jp_sites) / sizeof(jp_sites[0]) :
+                             sizeof(us_sites) / sizeof(us_sites[0]);
+
+    for (size_t site = 0; site < site_count;
+         ++site) {
+        for (unsigned int i = 0; i < sites[site].length; ++i) {
+            assert(stage2_byte_at(raw, raw_size, jp,
+                                  (uint16_t)(sites[site].address + i)) ==
+                   sites[site].bytes[i]);
+        }
+    }
+    printf("  PASS: stage2_counter_wait_sites (%s)\n", jp ? "JP" : "US");
+}
+
 static void test_ipl_loader(void)
 {
     Theron_Track02IplLoaderReceipt receipt;
@@ -1051,9 +1146,14 @@ int main(void)
     if (g_jp_data) test_ipl_loader_jp();
     test_stage2_selector_candidate_continuations(
         g_us_data, g_us_size, 0);
+    test_stage2_selector_00_03_pointer_roots(g_us_data, g_us_size, 0);
+    test_stage2_counter_wait_sites(g_us_data, g_us_size, 0);
     if (g_jp_data) {
         test_stage2_selector_candidate_continuations(
             g_jp_data, g_jp_size, 1);
+        test_stage2_selector_00_03_pointer_roots(
+            g_jp_data, g_jp_size, 1);
+        test_stage2_counter_wait_sites(g_jp_data, g_jp_size, 1);
     }
     test_stage2_dynamic_payload();
     if (g_jp_data) test_stage2_dynamic_payload_jp();
