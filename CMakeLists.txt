@@ -46526,8 +46526,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
         target_compile_options(test_theron_v1_hw_config PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME theron_v1_hw_config_cd_play
-        COMMAND test_theron_v1_hw_config cd_play_track
+        NAME theron_v1_hw_config_cd_play_candidates
+        COMMAND test_theron_v1_hw_config cd_play_candidate_scan
     )
     add_test(
         NAME theron_v1_hw_config_vdc

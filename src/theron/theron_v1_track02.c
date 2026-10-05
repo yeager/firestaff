@@ -12595,27 +12595,27 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_syscard_calls(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
-Theron_Track02SignalStatus theron_v1_track02_extract_cd_play_tracks(
+Theron_Track02SignalStatus theron_v1_track02_scan_cd_play_candidates(
     const uint8_t *track02_data,
     size_t track02_size,
     const char *md5_hex,
-    Theron_Track02CdPlayTrackMapReceipt *out_receipt) {
+    Theron_Track02CdPlayCandidateCatalog *out_catalog) {
     Theron_Track02IplLoaderReceipt loader;
     Theron_Track02SignalStatus status;
     size_t i;
 
-    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!track02_data || !md5_hex || !out_receipt)
+    if (out_catalog) memset(out_catalog, 0, sizeof(*out_catalog));
+    if (!track02_data || !md5_hex || !out_catalog)
         return THERON_TRACK02_SIGNAL_BAD_INPUT;
 
     status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
                                                 md5_hex, &loader);
     if (status != THERON_TRACK02_SIGNAL_OK) return status;
-    out_receipt->variant = loader.variant;
+    out_catalog->variant = loader.variant;
 
     for (i = 0u; i + 2u < track02_size; ++i) {
         size_t sector, sector_off;
-        Theron_Track02CdPlaySite *site;
+        Theron_Track02CdPlayCandidate *site;
         int in_code;
 
         if (track02_data[i] != 0x20u) continue;
@@ -12639,18 +12639,23 @@ Theron_Track02SignalStatus theron_v1_track02_extract_cd_play_tracks(
             in_code = 0;
         }
 
-        if (out_receipt->total_sites >= THERON_TRACK02_MAX_CD_PLAY_SITES)
+        if (out_catalog->total_sites >=
+            THERON_TRACK02_MAX_CD_PLAY_CANDIDATES)
             continue;
 
-        site = &out_receipt->sites[out_receipt->total_sites++];
+        site = &out_catalog->sites[out_catalog->total_sites++];
         site->raw_offset = i;
         site->sector = sector;
         site->user_data_offset = sector_off - 16u;
         site->in_code_region = in_code;
 
         if (in_code) {
-            ++out_receipt->code_sites;
-            /* Scan backward for LDA #xx (A9 xx) → STA $FF (85 FF) */
+            ++out_catalog->code_sites;
+            /* Record a nearby byte pattern only; it is not a decoded
+             * System Card argument or a proven track number. In the
+             * source-locked US caller L4339, $0E is stored to $FF before
+             * JSR $E03F (theron-us-stage2-huc6280.asm:593-596); the meaning
+             * of that register value remains unresolved. */
             if (i >= 4u) {
                 size_t scan_start = (i >= 32u) ? i - 32u : 0u;
                 size_t j;
@@ -12658,9 +12663,9 @@ Theron_Track02SignalStatus theron_v1_track02_extract_cd_play_tracks(
                     if (track02_data[j] == 0x85u &&
                         track02_data[j + 1u] == 0xFFu &&
                         track02_data[j - 2u] == 0xA9u) {
-                        site->track_param = track02_data[j - 1u];
-                        site->track_param_found = 1;
-                        ++out_receipt->sites_with_track;
+                        site->prior_ff_immediate = track02_data[j - 1u];
+                        site->prior_ff_immediate_found = 1;
+                        ++out_catalog->sites_with_ff_immediate;
                         break;
                     }
                     if (j == 0) break;
@@ -12669,7 +12674,7 @@ Theron_Track02SignalStatus theron_v1_track02_extract_cd_play_tracks(
         }
     }
 
-    out_receipt->valid = (out_receipt->total_sites > 0u);
+    out_catalog->valid = (out_catalog->total_sites > 0u);
     return THERON_TRACK02_SIGNAL_OK;
 }
 

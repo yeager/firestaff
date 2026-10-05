@@ -6994,3 +6994,18 @@ the authentic US and JP Track 02 BINs. Each region reported 215 passes, zero
 failures, and zero skips; its 39 US and 42 JP approachable stair cells remained
 transactionally blocked. This verifies the documented fail-closed boundary,
 not retail stair traversal semantics.
+
+# ✅ 2026-10-05 Keep static `$E03F` candidates separate from CDDA track semantics
+
+Renamed the Track 02 `$E03F` byte-pattern census API and its receipt so they no
+longer claim to extract a CDDA track map. The nearby `LDA #$0E` / `STA $FF`
+pattern remains available as raw candidate evidence only. The source-locked US
+stage-2 disassembly shows that byte sequence in a caller, but does not establish
+the meaning of `$FF`, gameplay-event ownership, or a runtime audio selection.
+Gameplay audio dispatch remains disabled pending same-session caller, playback,
+and source-byte evidence.
+
+Verification: `test_theron_v1_hw_config` passed three loops on `trv2` against
+the authentic US and JP Track 02 BINs; the test still counts source candidates
+and false positives without assigning track semantics. No synthetic media was
+used.

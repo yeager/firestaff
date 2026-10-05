@@ -4384,36 +4384,34 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_syscard_calls(
     const char *md5_hex,
     Theron_Track02SyscardCatalogReceipt *out_receipt);
 
-/* CD_PLAY track parameter extraction.  For each CD_PLAY call site that
- * resides in code (user data region), scans the preceding bytes for
- * LDA #imm → STA $FF (the System Card track-number register) and
- * reports the track parameter.  Data-region false positives (surrounded
- * by non-code byte patterns) are filtered out. */
-#define THERON_TRACK02_MAX_CD_PLAY_SITES 16u
+/* Static $E03F call-site candidates. This byte-pattern census does not
+ * decode callers or establish the meaning of values stored in $FF. */
+#define THERON_TRACK02_MAX_CD_PLAY_CANDIDATES 16u
 
 typedef struct {
     size_t raw_offset;
     size_t sector;
     size_t user_data_offset;
-    uint8_t track_param;     /* value loaded into $FF before JSR */
-    int track_param_found;   /* 1 if LDA #xx → STA $FF pattern found */
-    int in_code_region;      /* 1 if site is likely code, not data */
-} Theron_Track02CdPlaySite;
+    uint8_t prior_ff_immediate; /* nearby LDA #xx → STA $FF byte pattern */
+    int prior_ff_immediate_found;
+    int in_code_region; /* heuristic: likely code, not data */
+} Theron_Track02CdPlayCandidate;
 
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
     size_t total_sites;
     size_t code_sites;       /* sites in code regions only */
-    size_t sites_with_track; /* code sites where track param found */
-    Theron_Track02CdPlaySite sites[THERON_TRACK02_MAX_CD_PLAY_SITES];
-} Theron_Track02CdPlayTrackMapReceipt;
+    size_t sites_with_ff_immediate;
+    Theron_Track02CdPlayCandidate
+        sites[THERON_TRACK02_MAX_CD_PLAY_CANDIDATES];
+} Theron_Track02CdPlayCandidateCatalog;
 
-Theron_Track02SignalStatus theron_v1_track02_extract_cd_play_tracks(
+Theron_Track02SignalStatus theron_v1_track02_scan_cd_play_candidates(
     const uint8_t *track02_data,
     size_t track02_size,
     const char *md5_hex,
-    Theron_Track02CdPlayTrackMapReceipt *out_receipt);
+    Theron_Track02CdPlayCandidateCatalog *out_catalog);
 
 /* VDC display configuration extraction.  Scans for st0/st1/st2 triplets
  * that configure VDC registers and extracts proven display settings:

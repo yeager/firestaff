@@ -35,7 +35,7 @@ static uint8_t *load_track02(size_t *out_size) {
     return load_track02_named("TQUS02.bin", out_size);
 }
 
-static int test_cd_play_track_extraction(void) {
+static int test_cd_play_candidate_scan(void) {
     static const struct {
         const char *basename;
         const char *md5;
@@ -52,48 +52,48 @@ static int test_cd_play_track_extraction(void) {
         size_t size;
         size_t code_sites = 0u;
         uint8_t *data = load_track02_named(media[region_index].basename, &size);
-        Theron_Track02CdPlayTrackMapReceipt receipt;
+        Theron_Track02CdPlayCandidateCatalog catalog;
         Theron_Track02SignalStatus status;
         size_t i;
 
         if (!data) {
-            printf("SKIP cd_play_tracks %s (authentic data unavailable)\n",
+            printf("SKIP cd_play_candidates %s (authentic data unavailable)\n",
                    media[region_index].region);
             continue;
         }
         ++available_regions;
-        status = theron_v1_track02_extract_cd_play_tracks(
-            data, size, media[region_index].md5, &receipt);
+        status = theron_v1_track02_scan_cd_play_candidates(
+            data, size, media[region_index].md5, &catalog);
         assert(status == THERON_TRACK02_SIGNAL_OK);
-        assert(receipt.valid);
-        assert(receipt.code_sites > 0u);
-        for (i = 0u; i < receipt.total_sites; ++i) {
-            if (!receipt.sites[i].in_code_region) continue;
+        assert(catalog.valid);
+        assert(catalog.code_sites > 0u);
+        for (i = 0u; i < catalog.total_sites; ++i) {
+            if (!catalog.sites[i].in_code_region) continue;
             ++code_sites;
-            assert(receipt.sites[i].track_param_found);
-            printf("  %s CD_PLAY candidate: sector %zu, track $%02X\n",
-                   media[region_index].region, receipt.sites[i].sector,
-                   receipt.sites[i].track_param);
+            assert(catalog.sites[i].prior_ff_immediate_found);
+            printf("  %s $E03F call-site candidate: sector %zu, nearby $FF immediate $%02X (not a track mapping)\n",
+                   media[region_index].region, catalog.sites[i].sector,
+                   catalog.sites[i].prior_ff_immediate);
         }
-        printf("  %s static candidates: total=%zu code=%zu with_track=%zu\n",
-               media[region_index].region, receipt.total_sites,
-               receipt.code_sites, receipt.sites_with_track);
-        assert(code_sites == receipt.code_sites);
-        assert(receipt.sites_with_track == receipt.code_sites);
+        printf("  %s static candidates: total=%zu code=%zu with_nearby_ff_immediate=%zu\n",
+               media[region_index].region, catalog.total_sites,
+               catalog.code_sites, catalog.sites_with_ff_immediate);
+        assert(code_sites == catalog.code_sites);
+        assert(catalog.sites_with_ff_immediate == catalog.code_sites);
         if (strcmp(media[region_index].region, "US") == 0) {
-            assert(receipt.code_sites >= 2u);
-            for (i = 0u; i < receipt.total_sites; ++i) {
-                if (receipt.sites[i].in_code_region)
-                    assert(receipt.sites[i].track_param == 0x0Eu);
+            assert(catalog.code_sites >= 2u);
+            for (i = 0u; i < catalog.total_sites; ++i) {
+                if (catalog.sites[i].in_code_region)
+                    assert(catalog.sites[i].prior_ff_immediate == 0x0Eu);
             }
         }
         free(data);
     }
     if (available_regions == 0u) {
-        printf("SKIP cd_play_tracks (no authentic regional data)\n");
+        printf("SKIP cd_play_candidates (no authentic regional data)\n");
         return 0;
     }
-    printf("PASS cd_play_track_extraction\n");
+    printf("PASS cd_play_candidate_scan\n");
     return 0;
 }
 
@@ -163,17 +163,17 @@ static int test_joypad_action_map(void) {
 static int test_cd_play_data_false_positive_filter(void) {
     size_t size;
     uint8_t *data = load_track02(&size);
-    Theron_Track02CdPlayTrackMapReceipt receipt;
+    Theron_Track02CdPlayCandidateCatalog catalog;
 
     if (!data) { printf("SKIP cd_play_filter (no data)\n"); return 0; }
 
-    theron_v1_track02_extract_cd_play_tracks(
-        data, size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    theron_v1_track02_scan_cd_play_candidates(
+        data, size, THERON_TRACK02_MD5_US_BIN, &catalog);
 
     /* Total sites > code sites means data false positives were detected */
-    assert(receipt.total_sites > receipt.code_sites);
+    assert(catalog.total_sites > catalog.code_sites);
     printf("  Filtered %zu data false positives\n",
-           receipt.total_sites - receipt.code_sites);
+           catalog.total_sites - catalog.code_sites);
 
     free(data);
     printf("PASS cd_play_data_false_positive_filter\n");
@@ -207,7 +207,7 @@ static int test_vdc_config_sites_populated(void) {
 
 static int test_hw_config_summary(void) {
     printf("\n=== Theron V1 Hardware Configuration Summary ===\n");
-    printf("  CD_PLAY: static track-$0E candidates; runtime selection unverified\n");
+    printf("  $E03F: static call-site candidates only; register semantics and runtime selection unverified\n");
     printf("  VDC: MWR/CR/SATB/HSR/HDR/VDW proven from st0/st1/st2 triplets\n");
     printf("  Joypad: all 5 button groups (I/II/Select/Run/D-pad) proven\n");
     printf("PASS hw_config_summary\n");
@@ -216,7 +216,7 @@ static int test_hw_config_summary(void) {
 
 typedef int (*test_fn)(void);
 static const struct { const char *name; test_fn fn; } tests[] = {
-    {"cd_play_track_extraction", test_cd_play_track_extraction},
+    {"cd_play_candidate_scan", test_cd_play_candidate_scan},
     {"vdc_display_config", test_vdc_display_config},
     {"joypad_action_map", test_joypad_action_map},
     {"cd_play_data_false_positive_filter", test_cd_play_data_false_positive_filter},
