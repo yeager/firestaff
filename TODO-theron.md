@@ -22,7 +22,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   path if entered. After returning, the outer cursor reaches `$41` roots at
   `$6f23` and `$6f26`; the latter targets `$7470` US / `$7472` JP. Both nested
   streams reach `$09`/`RTS`. The outer `$2a` at `$6f29` maps to `$4409`, whose
-  rooted handler reads `$1c+1`, configures local state from a table lookup,
+  rooted handler reads `$1c+1` (`$00` in both regions), indexes `$4b3c` to set
+  `$f8=$03`, BCD-increments that value to `$fc=$04`, sets `$fb=$80/$ff=$83`,
   calls `$e012`, and jumps to `$40f5` (which adds two to `$1c`). Since the
   external calls' effects on `$1c` remain unknown, the eventual outer-stream
   continuation, command meaning, and external effects are not bound.

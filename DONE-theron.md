@@ -15,7 +15,8 @@ The recursive `$73b2/$73b4` bytes form a bounded eight-byte stream: handler
 `RTS`. The selector `$00` candidate continues through `$41` roots at `$6f23`
 and `$6f26`; the latter targets `$7470` US / `$7472` JP. Both streams reach
 `$09`/`RTS`. The outer `$2a` at `$6f29` maps to `$4409`; its rooted handler
-reads `$1c+1`, configures local state from a table lookup, calls `$e012`, and
+reads `$1c+1` (`$00` in both regions), indexes `$4b3c` to set `$f8=$03`,
+BCD-increments it to `$fc=$04`, sets `$fb=$80/$ff=$83`, calls `$e012`, and
 jumps to `$40f5` (which adds two to `$1c`). Since external calls' effects on
 `$1c` remain unknown, the eventual outer-stream continuation, external
 effects, and command meaning remain unbound. The
