@@ -112,7 +112,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   `$45ca` is now byte-locked through its `$40f5` cursor tail; pointer purpose,
   `$3ab7` effects, and stream selection remain unbound. ID `$2a`'s `$4409`
   entry and `$4415` helper are byte-locked in both editions; the expansion-ROM
-  effects, `$4b3c` table meaning, and runtime selection remain unknown.
+  effects, `$4b3c` table meaning, and runtime selection remain unknown. ID
+  `$2d`'s overlapping `$468f` poll/cursor path is also byte-locked in both
+  regions; counter meaning and retail stream execution remain unbound.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

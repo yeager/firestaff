@@ -241,6 +241,12 @@ The `stage2_id2a_entry_helper` assertion locks the `$4161` dispatch word,
 entry calls expansion-ROM routines before and after a local helper call; the
 local code reads through `$1c`, indexes `$4b3c`, and writes fixed scratch
 bytes. External effects, table meaning, and runtime selection remain unknown.
+The `stage2_id2d_overlapping_poll_root` assertion locks index `$2d` at
+`$468f` through its `$40f5` cursor tail in both editions. Starting at that
+root, the bytes read the next `$1c` byte, clear and compare `$3b33`, loop on
+the carry branch, then advance by two. Because `$468f` overlaps a different
+linear decode, this is root-specific byte/control-flow evidence only; the
+counter's role and stream execution remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
