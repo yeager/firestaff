@@ -28,6 +28,24 @@ Reviewed 2026-10-05. Only open work is listed here.
   readiness closed until a same-session authentic map/level consumer join is
   captured.
 
+## 2026-10-05 — read BaseRAM from the authentic Akutuba state
+
+- ✅ Replayed the previously captured, authentic JP Akutuba gameplay state
+  (`.mca` SHA-256
+  `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`)
+  through the instrumented PCE Fast core. Its bounded 8 KiB RAM snapshot
+  retained `$2031=02`, `$203F-$2041 = 01 02 03`, and `$20DA/$20DB = 01/00`.
+  The 20-second replay produced 3,440 BaseRAM consumer reads; instruction-byte
+  sidecars decoded frequent readers at `$B9FC` (`TIA $2062,$02,$0020`) and
+  `$A1B7` (`TII $287F,$2883,$0014`).
+- 🔒 None of the sampled consumer reads accessed `$2031`, `$203F-$2041`, or
+  `$20DA/$20DB`; the instruction windows therefore do not bind those state
+  fields to an active map identity. The restored state also produced no CD IRQ,
+  raw-sector read, or authenticated CD-to-RAM receipt, so the strict transition
+  gate remained blocked. This is emulator-state and reader-code evidence only;
+  the `.mca` is not a native campaign save, and no map, pose, or gameplay
+  semantics are promoted.
+
 ## 2026-10-05 — keep PCE Fast transition evidence module-correct
 
 - ✅ The live-capture validator now requires same-instant HuC6270/VDC
