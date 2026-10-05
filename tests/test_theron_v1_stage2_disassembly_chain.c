@@ -139,6 +139,56 @@ static void test_stage2_l48fc_countdown(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the indexed-byte store/add/subtract cluster against authentic media.
+ * This asserts instruction paths, not stream execution or field meanings. */
+static void test_stage2_id0b_0d_indexed_mutation(const uint8_t *raw,
+                                                  size_t raw_size, int jp)
+{
+    static const uint8_t pair_reader[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xaau, 0xbdu, 0x80u,
+        0x27u, 0xc8u, 0xd1u, 0x1cu, 0x60u
+    };
+    static const uint8_t id0b[] = {
+        0x20u, 0xf8u, 0x41u, 0xb1u, 0x1cu, 0x9du,
+        0x80u, 0x27u, 0x80u, 0x1au
+    };
+    static const uint8_t id0c[] = {
+        0x20u, 0xf8u, 0x41u, 0xb1u, 0x1cu, 0x18u, 0x7du,
+        0x80u, 0x27u, 0x9du, 0x80u, 0x27u, 0x80u, 0x0cu
+    };
+    static const uint8_t id0d[] = {
+        0x20u, 0xf8u, 0x41u, 0xb1u, 0x1cu, 0x38u,
+        0xfdu, 0x80u, 0x27u, 0x9du, 0x80u, 0x27u
+    };
+    static const uint8_t cursor_tail[] = {0x4cu, 0xf9u, 0x40u};
+
+    assert(stage2_word_at(raw, raw_size, jp, 0x4123u) == 0x4259u);
+    assert(stage2_word_at(raw, raw_size, jp, 0x4125u) == 0x4263u);
+    assert(stage2_word_at(raw, raw_size, jp, 0x4127u) == 0x4271u);
+    for (unsigned int i = 0; i < sizeof(pair_reader); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x41f8u + i)) == pair_reader[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id0b); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4259u + i)) == id0b[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id0c); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4263u + i)) == id0c[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id0d); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4271u + i)) == id0d[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(cursor_tail); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x427du + i)) == cursor_tail[i]);
+    }
+    printf("  PASS: stage2_id0b_0d_indexed_mutation (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -1578,6 +1628,7 @@ int main(void)
         g_us_data, g_us_size, 0);
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
+    test_stage2_id0b_0d_indexed_mutation(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -1593,6 +1644,7 @@ int main(void)
             g_jp_data, g_jp_size, 1);
         test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
+        test_stage2_id0b_0d_indexed_mutation(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

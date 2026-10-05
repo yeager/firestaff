@@ -36,6 +36,10 @@ Reviewed 2026-10-05. Only open work is listed here.
 - ✅ Traced dispatch ID `$4d`'s two operand reads, `$4c30` call, and shared
   four-byte cursor tail at `$49e8`; the exact 19-byte path is locked to US and
   JP Track 02. Operand meaning and called-helper effects remain unknown.
+- ✅ Added independent US/JP raw-media locks for dispatch IDs `$0b..$0d`,
+  their shared `$41f8` operand reader, indexed store/add/subtract instructions,
+  and the shared `$40f9` cursor tail. `$2780` entry meanings and retail stream
+  execution remain unassigned.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;
