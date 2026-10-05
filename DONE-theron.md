@@ -35,6 +35,18 @@ caller-derived pair is left semantically unnamed. The focused stage-two test
 passed for both editions on trv2, including the new `stage2_l48fc_countdown`
 check.
 
+## 2026-10-05 — add a bounded MPR1 probe for `$3a2e`
+
+Extended the isolated Mednafen trace build with `stage2_mpr1_probe` rows at the
+`$4ec9` call site and `$3a2e` target. Each row captures active physical PC,
+MPR1, the candidate target physical address, and 64 bytes read from that
+physical window. The patch applied and compiled on trv2 from a private copy of
+the existing instrumented Mednafen source. An authentic US CUE/System Card
+run with a scripted four-second RUN hold produced no probe rows; the input
+trace confirms the hold was delivered. This tool addition does not establish
+MPR1, a bank identity, or `$3a2e` behavior. The remaining requirement is a run
+that actually reaches `$4ec9/$3a2e` and emits the same-call mapping receipt.
+
 ## 2026-10-05 — source-lock shared stage-two slot helpers
 
 Extended the ID `$2c` helper family with authentic US and JP raw-sector checks

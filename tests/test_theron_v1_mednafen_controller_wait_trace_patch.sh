@@ -414,6 +414,14 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT' "$build_scri
     printf '%s\n' 'FAIL: pce_fast snapshot must capture only bounded non-SGX raw main RAM' >&2
     exit 1
 fi
+stage2_mpr1_probe_patch_file=$repo/scripts/mednafen_1.32.1_theron_stage2_mpr1_probe.patch
+if ! grep -Fq 'mednafen_1.32.1_theron_stage2_mpr1_probe.patch' "$build_script" ||
+   ! grep -Fq 'logical_pc == 0x4ec9 || logical_pc == 0x3a2e' "$stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'trace_regs->Regs[7].id' "$stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_probe sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x bytes=%s' "$stage2_mpr1_probe_patch_file"; then
+    printf '%s\n' 'FAIL: stage-two MPR1 probe must be bounded and record the target mapping evidence'
+    exit 1
+fi
 
 if [[ -z ${MEDNAFEN_SOURCE:-} ]]; then
     printf 'SKIP: MEDNAFEN_SOURCE is required for patch dry-run\n'

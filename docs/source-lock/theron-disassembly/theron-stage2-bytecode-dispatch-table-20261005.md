@@ -292,6 +292,11 @@ established by the entry-byte check. The separate authenticated `MPR1=$f8`
 receipt from the `$de21` backup-RAM writer cannot be transferred to this call.
 A valid disassembly source must join the `$3a2e` execution with MPR1 and its
 physical PC/bank, or prove the loader span that sets that mapping.
+The Mednafen trace build now has a bounded `stage2_mpr1_probe` at `$4ec9` and
+`$3a2e`, emitting the live MPR1 value, active physical PC, candidate target
+physical address, and 64 physical bytes. Its initial real-US-media run did not
+reach either address, so this instrumentation has not supplied the required
+mapping evidence yet.
 
 ## Bounded `$8000` entry-callee dataflow
 
@@ -327,9 +332,8 @@ zero, decrements `$00`, then returns when the OR of the two bytes is zero;
 otherwise it branches back to `$48ec`. Thus the bytes implement a 16-bit
 decrement-to-zero loop, including low-byte borrow. A new raw-sector regression
 binds the bytes from `$48ec` through the RTS at `$4900` independently in
-authentic US and JP Track 02. This is
-only the observable byte-level loop behavior: the caller-derived value in
-`$00/$01` and its purpose remain unnamed.
+authentic US and JP Track 02. This proves only the byte-level loop behavior;
+the caller-derived value in `$00/$01` and its purpose remain unnamed.
 
 The paired US raw-media regression binds `$8000` and `$45a6`, including the
 call sites at `$45a6`, `$4696`, and `$48fc`. It also records several da65

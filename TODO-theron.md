@@ -12,17 +12,18 @@ Reviewed 2026-10-05. Only open work is listed here.
   three-byte table-entry writer is included in the same raw-media test.
 - ✅ Bounded the authenticated US `$8000` entry callee's pointer/dataflow
   through `$45a6`, `$4696`, and `$48fc`. The raw-media receipt binds the
-  `$8000/$45a6` pair and its call sites; structure fields and callee effects
-  remain unnamed, JP parity is not established by this US-only receipt, and
-  this does not resolve the MPR1 mapping at `$3a2e`.
+  `$8000/$45a6` pair and its call sites; `$4696` is traced as multiplication
+  and `$48fc` is independently bound in both editions. Structure-field
+  meanings and the dynamic `$3ab7` lane remain unresolved; the US-only
+  `$8000/$4696` receipts do not resolve MPR1 at `$3a2e`.
 - ✅ Traced the separately bound `$4696` helper as unsigned 8-by-8 shift-add
   multiplication, with inputs `$0e` and `$10`, and 16-bit result `$0f:$0e`.
   The evidence is the authentic US Rev. 1 `$4696` byte receipt and its
   `$8000` call path; the input/result fields have no assigned game meaning.
 - ✅ Bound the loop bytes from `$48ec` through the RTS at `$4900` independently
-  against authentic US and JP Track 02. The code clears two VDC registers and decrements the
-  `$01:$00` pair to zero; the source value's meaning and purpose remain
-  unproven.
+  against authentic US and JP Track 02. The code clears two VDC registers and
+  decrements the `$01:$00` pair to zero; the source value's meaning and purpose
+  remain unproven.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;
@@ -36,6 +37,12 @@ Reviewed 2026-10-05. Only open work is listed here.
   so it cannot identify the code bank at a `$4ec9` call. Require MPR1 plus its
   physical PC/bank at the actual `$3a2e` call, or an authenticated loader span
   that establishes the same mapping, before disassembling those bytes.
+- 🔒 Added a Mednafen `stage2_mpr1_probe` at caller `$4ec9` and target `$3a2e`;
+  it records active PC, MPR1-derived physical target, MPR1, and 64 physical
+  bytes. Its first trv2 run against the real US CUE/System Card delivered the
+  scripted 240-frame RUN hold but emitted no target rows. It provides no bank
+  proof yet; reach the call in an authentic run and retain a simultaneous
+  MPR1/physical-PC receipt before decoding.
 
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 

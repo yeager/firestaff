@@ -1,0 +1,35 @@
+diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
+--- a/src/drivers/debugger.cpp
++++ b/src/drivers/debugger.cpp
+@@ -994,6 +994,28 @@ static void DoTheronIrq2Trace(const uint32 PC)
+     FlushTheronIrq2Trace();
+    }
++   if(logical_pc == 0x4ec9 || logical_pc == 0x3a2e)
++   {
++    static unsigned stage2_target_probe_count;
++    if(stage2_target_probe_count < 32)
++    {
++     const uint32 mpr1 = trace_regs->GetRegister(
++       trace_regs->Regs[7].id, NULL, 0) & 0xff;
++     const uint32 target_logical_pc =
++       logical_pc == 0x4ec9 ? 0x3a2e : logical_pc;
++     const uint32 target_physical_pc =
++       (mpr1 << 13) | (target_logical_pc & 0x1fff);
++     char target_bytes[129];
++     static const char hex[] = "0123456789abcdef";
++     for(unsigned int i = 0; i < 64; i++)
++     {
++      const uint32 byte = CurGame->Debugger->MemPeek(
++        target_physical_pc + i, 1, true, false) & 0xff;
++      target_bytes[i * 2] = hex[byte >> 4];
++      target_bytes[i * 2 + 1] = hex[byte & 0x0f];
++     }
++     target_bytes[128] = 0;
++     TheronIrq2Trace->print_format(
++       "stage2_mpr1_probe sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x bytes=%s\n",
++       stage2_target_probe_count++, logical_pc, trace_physical_pc, mpr1,
++       target_physical_pc, target_bytes);
++     FlushTheronIrq2Trace();
++    }
++   }
+    if(logical_pc < 0x4100)
