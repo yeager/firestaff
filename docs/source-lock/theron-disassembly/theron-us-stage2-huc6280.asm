@@ -10370,7 +10370,7 @@ L87B2:  rts
         brk
         brk
         brk
-        dec     $5A
+L8860:  dec     $5A
         bsr     L88A6
         st0     #$05
         lda     $F3
@@ -10381,7 +10381,7 @@ L87B2:  rts
         stz     $5A
         rts
 
-        dec     $5A
+L8875:  dec     $5A
         bsr     L88A6
         st0     #$05
         lda     $F3
@@ -10407,7 +10407,7 @@ L88A9:  lda     $3B33
         beq     L88A9
         rts
 
-        dec     $5A
+L88AF:  dec     $5A
         bsr     L88A6
         st0     #$00
         st1     #$00
@@ -10430,7 +10430,7 @@ L88BE:  st1     #$00
         stz     $5A
         rts
 
-        dec     $5A
+L88D7:  dec     $5A
         bsr     L88A6
         st0     #$00
         lda     $27DA

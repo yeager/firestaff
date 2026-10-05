@@ -30,7 +30,10 @@ US clear/wait sites at `$503d/$5048`, `$7539/$753c`, `$7549/$754c`,
 `$7733/$7736`, and helper `$88a6` show that the byte has other uses. JP's
 `$753x/$773x` roots are two bytes later and its `$50xx` path differs. None is
 proven to advance selector `$2d`'s poll; `$88a6` has direct callers at
-`$8862,$8877,$88b1,$88d9` in both editions. Selector `$0b` also reaches it.
+`$8862,$8877,$88b1,$88d9` in both editions. Their complete rooted routines,
+from `$8860,$8875,$88af,$88d7` through their respective `RTS` instructions,
+are now source-locked and checked against both raw editions. Selector `$0b`
+also reaches the poll.
 This is static candidate control flow only: selector execution, poll
 completion, the counter's runtime update path, indirect-call targets, and
 gameplay meaning remain unproven.
