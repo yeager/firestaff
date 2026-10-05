@@ -195,6 +195,9 @@ through `$201c`, restores the saved cursor on return, and advances through
 step summary. The `stage2_id12_indirect_call` assertion byte-locks the `$4131`
 dispatch word and `$4319` handler against authentic US and JP Track 02; it
 does not identify the selected target or bind a retail stream to this path.
+The `stage2_id08_local_helper` assertion byte-locks the `$411d` dispatch word,
+the `$4214` root, and the `$421c` helper against both authentic editions; the
+conditional branch after `$4f5e` remains only statically observed.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

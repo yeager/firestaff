@@ -326,6 +326,34 @@ static void test_stage2_id12_indirect_call(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock dispatch ID $08 and its local helper. The code bytes show a static
+ * cursor step and helper call only; they do not prove selector execution. */
+static void test_stage2_id08_local_helper(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x44u, 0x03u, 0x4cu, 0xf5u, 0x40u
+    };
+    static const uint8_t helper[] = {
+        0x8du, 0xc1u, 0x4eu, 0x8du, 0x7bu, 0x4du, 0x0au, 0x0au,
+        0x18u, 0x6du, 0x08u, 0x30u, 0x8du, 0x09u, 0x30u, 0xa9u,
+        0x02u, 0x20u, 0x5eu, 0x4fu, 0xb0u, 0x01u, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x08u)) == 0x4214u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4214u + i)) == root[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x421cu + i)) == helper[i]);
+    }
+    printf("  PASS: stage2_id08_local_helper (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -1769,6 +1797,7 @@ int main(void)
     test_stage2_id09_0a_nested_cursor(g_us_data, g_us_size, 0);
     test_stage2_id28_conditional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id12_indirect_call(g_us_data, g_us_size, 0);
+    test_stage2_id08_local_helper(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -1788,6 +1817,7 @@ int main(void)
         test_stage2_id09_0a_nested_cursor(g_jp_data, g_jp_size, 1);
         test_stage2_id28_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id12_indirect_call(g_jp_data, g_jp_size, 1);
+        test_stage2_id08_local_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
