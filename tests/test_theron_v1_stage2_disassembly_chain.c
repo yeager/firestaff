@@ -60,6 +60,152 @@ static int load_track02(void)
     return 1;
 }
 
+static uint8_t stage2_byte_at(const uint8_t *raw, size_t raw_size,
+                              int jp, uint16_t cpu_address)
+{
+    size_t payload_offset;
+    size_t stage2_sector =
+        (jp ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR
+            : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR) +
+        THERON_TRACK02_IPL_STAGE2_RECORD;
+    size_t sector;
+    size_t raw_offset;
+
+    assert(cpu_address >= THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS);
+    payload_offset = (size_t)(cpu_address -
+                              THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS);
+    sector = stage2_sector + payload_offset / 2048u;
+    raw_offset = sector * 2352u + 16u + payload_offset % 2048u;
+    assert(raw_offset < raw_size);
+    return raw[raw_offset];
+}
+
+static uint16_t stage2_word_at(const uint8_t *raw, size_t raw_size,
+                               int jp, uint16_t cpu_address)
+{
+    uint8_t lo = stage2_byte_at(raw, raw_size, jp, cpu_address);
+    uint8_t hi = stage2_byte_at(raw, raw_size, jp,
+                                (uint16_t)(cpu_address + 1u));
+    return (uint16_t)lo | ((uint16_t)hi << 8);
+}
+
+static void assert_stage2_pointer(const uint8_t *raw, size_t raw_size,
+                                  int jp, uint16_t stream,
+                                  uint16_t expected_target)
+{
+    assert(stage2_byte_at(raw, raw_size, jp, stream) == 0x41u);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(stream + 1u)) == expected_target);
+}
+
+/* Authentic selector continuations and overlapping nested-stream roots.
+ * These byte assertions are source evidence, not proof that a selector runs.
+ * See docs/source-lock/theron-disassembly/
+ * theron-stage2-bytecode-dispatch-table-20261005.md. */
+static void test_stage2_selector_candidate_continuations(
+    const uint8_t *raw, size_t raw_size, int jp)
+{
+    static const uint16_t selector_targets[] = {
+        0x694du, 0x69a1u, 0x6a16u, 0x6a7cu, 0x6ae2u,
+        0x6b48u, 0x6bbdu, 0x6c13u, 0x681cu
+    };
+    uint16_t long_root = jp ? 0x7448u : 0x7446u;
+    uint16_t middle_root = jp ? 0x7466u : 0x7464u;
+    uint16_t final_root = jp ? 0x7472u : 0x7470u;
+
+    for (unsigned int i = 0; i < sizeof(selector_targets) /
+                                sizeof(selector_targets[0]); ++i) {
+        uint16_t table_address = (uint16_t)(0x6800u + (4u + i) * 2u);
+        assert(stage2_word_at(raw, raw_size, jp, table_address) ==
+               selector_targets[i]);
+    }
+
+    for (unsigned int pair = 0; pair < 8u; ++pair) {
+        uint8_t value = (uint8_t)(7u - pair);
+        uint16_t at = (uint16_t)(long_root + pair * 6u);
+        assert(stage2_byte_at(raw, raw_size, jp, at) == 0x14u);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 1u)) == value);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 2u)) == value);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 3u)) == 0x15u);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 4u)) == value);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 5u)) == value);
+    }
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(long_root + 48u)) == 0x09u);
+
+    for (unsigned int pair = 0; pair < 3u; ++pair) {
+        uint8_t value = (uint8_t)(2u - pair);
+        uint16_t at = (uint16_t)(middle_root + pair * 6u);
+        assert(stage2_byte_at(raw, raw_size, jp, at) == 0x14u);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 1u)) == value);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 2u)) == value);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 3u)) == 0x15u);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 4u)) == value);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(at + 5u)) == value);
+    }
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(middle_root + 18u)) == 0x09u);
+    assert_stage2_pointer(raw, raw_size, jp, 0x69a1u + 43u, middle_root);
+    assert_stage2_pointer(raw, raw_size, jp, 0x6ae2u + 43u, middle_root);
+    assert(stage2_byte_at(raw, raw_size, jp, final_root) == 0x14u);
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(final_root + 1u)) == 0x00u);
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(final_root + 2u)) == 0x00u);
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(final_root + 3u)) == 0x15u);
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(final_root + 4u)) == 0x00u);
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(final_root + 5u)) == 0x00u);
+    assert(stage2_byte_at(raw, raw_size, jp,
+                          (uint16_t)(final_root + 6u)) == 0x09u);
+
+    assert_stage2_pointer(raw, raw_size, jp, 0x694du + 40u,
+                          (uint16_t)(jp ? 0x73b4u : 0x73b2u));
+    assert_stage2_pointer(raw, raw_size, jp, 0x694du + 43u, final_root);
+    assert_stage2_pointer(raw, raw_size, jp, 0x6a16u + 43u, final_root);
+    assert_stage2_pointer(raw, raw_size, jp, 0x6a7cu + 43u, final_root);
+    assert_stage2_pointer(raw, raw_size, jp, 0x6bbdu + 40u,
+                          (uint16_t)(jp ? 0x73b4u : 0x73b2u));
+    assert_stage2_pointer(raw, raw_size, jp, 0x6bbdu + 43u, final_root);
+    assert_stage2_pointer(raw, raw_size, jp, 0x6c13u + 33u,
+                          (uint16_t)(jp ? 0x73b4u : 0x73b2u));
+    assert_stage2_pointer(raw, raw_size, jp, 0x6c13u + 36u, final_root);
+    assert_stage2_pointer(raw, raw_size, jp, 0x681cu + 43u,
+                          (uint16_t)(jp ? 0x7448u : 0x7446u));
+    for (unsigned int row = 0; row < 7u; ++row) {
+        uint16_t row_address = (uint16_t)(0x681cu + 46u + row * 5u);
+        uint16_t target = (uint16_t)(0x686du + row * 0x20u);
+        assert(stage2_byte_at(raw, raw_size, jp, row_address) == 0x01u);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(row_address + 1u)) == 0x01u);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(row_address + 2u)) == row);
+        assert(stage2_word_at(raw, raw_size, jp,
+                              (uint16_t)(row_address + 3u)) == target);
+        assert(stage2_byte_at(raw, raw_size, jp, target) == 0x1au);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(target + 1u)) == row);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(target + 2u)) == 0x13u);
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(target + 3u)) == 0x2du);
+    }
+    printf("  PASS: stage2_selector_candidate_continuations (%s)\n",
+           jp ? "JP" : "US");
+}
+
 static void test_ipl_loader(void)
 {
     Theron_Track02IplLoaderReceipt receipt;
@@ -888,6 +1034,12 @@ int main(void)
 
     test_ipl_loader();
     if (g_jp_data) test_ipl_loader_jp();
+    test_stage2_selector_candidate_continuations(
+        g_us_data, g_us_size, 0);
+    if (g_jp_data) {
+        test_stage2_selector_candidate_continuations(
+            g_jp_data, g_jp_size, 1);
+    }
     test_stage2_dynamic_payload();
     if (g_jp_data) test_stage2_dynamic_payload_jp();
     test_stage2_entry_path();

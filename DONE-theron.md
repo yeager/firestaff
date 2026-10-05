@@ -1,5 +1,28 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — trace candidate continuations for selectors `$04..$0c`
+
+Extended the authentic US/JP Rev. 1 Track 02 candidate walks beyond their
+shared prefix, conditional on each rooted handler and the `$201c` call
+returning. Selectors `$04..$0a` and `$0c` reach `$12` at target `+$37`; `$0b`
+reaches it at `+$30`. The rooted suffixes expose `$36`, `$11`, `$14/$15`, and
+recursive `$41` entries without assigning gameplay meanings.
+
+Resolved the `$41` pointer roots `$7446` US / `$7448` JP: both point into the
+same relative stream of eight `$14/$15` pairs, operand values descending
+`$07..$00`, followed by `$09`/`RTS`. The `$7464/$7466` roots are its
+`$02..$00` suffix, while `$7470/$7472` are its final `$00` pair. Expanded the
+da65 byte-table overlap window to `$7445..$7478` and regenerated its tracked
+US listing bytes from the authentic payload.
+
+Selector `$0c`'s continuation reaches a rooted `$01` comparison chain over
+mutable `$2781`, with seven inline values `$00..$06` and pointer targets
+`$686d,$688d,$68ad,$68cd,$68ed,$690d,$692d`. Each target begins with the
+matching `$1a` operand then `$13,$2d`; the trace stops at unresolved handler
+`$2d` (`$468f`). Selector `$0b` also reaches `$2d`. This is static candidate
+control flow only: selection, call returns, runtime meaning, and the
+continuation at `$2d` remain unproven.
+
 ## 2026-10-05 — bound candidate stage-two streams to authentic pointers
 
 Corrected the rooted `$41b9` pointer read to its actual cursor offsets `+1/+2`

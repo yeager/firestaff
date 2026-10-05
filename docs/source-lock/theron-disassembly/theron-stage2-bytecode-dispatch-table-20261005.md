@@ -156,10 +156,53 @@ prefix is therefore read by `$45` at offset 1; it is `$b2` for selectors
 | `$0b` | `$6c13` | `$08,$00,$25,$26,$16,$21,$45,$cf` |
 | `$0c` | `$681c` | `$08,$00,$25,$26,$16,$21,$45,$d3` |
 
-`theron-stage2-da65.info` marks only these eight-byte spans as `BYTETABLE`;
-the rooted `$45` handler advances to target `+$08`, but no subsequent handler
-walk is claimed. The repeated prefix and byte parameters are identical across
-US and JP, while selector-to-pointer runtime use is still unobserved.
+The source-lock listing continues each rooted prefix below. These target
+streams overlap linear instruction decoding, so the byte-table range includes
+overlap context; the actual selector roots remain the addresses in the table.
+Selector-to-pointer runtime use is still unobserved.
+
+### Selectors `$04..$0c`: conditional continuations
+
+The common prefix reaches `$12` at target `+$37` for selectors `$04..$0a`
+and `$0c`; selector `$0b` reaches `$12` at `+$30`. Every suffix below is
+conditional on `$4319`'s indirect call through `$201c` returning. Cursor
+offsets are relative to that selector's table target.
+
+| Selector | Rooted suffix after `$12` returns | Conditional boundary |
+|---:|---|---|
+| `$04` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
+| `$05` | `+$40: $36,$00,$02`; `+$43: $41->$7464/$7466`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
+| `$06` | `+$40: $36,$01,$00`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
+| `$07` | `+$40: $36,$00,$00`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
+| `$08` | `+$40: $36,$00,$00`; `+$43: $41->$7464/$7466`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
+| `$09` | `+$40: $36,$00,$00`; `+$43: ($14,$00,$00),($15,$00,$00),($14,$02,$02),($15,$02,$02)`; `+$55: $11`; then `+$59: $13` | `$11`'s regional callee must return |
+| `$0a` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
+| `$0b` | `+$33: $41->$73b2/$73b4`; `+$36: $41->$7470/$7472`; `+$39: $13`; its `+1` step reaches `$2d` | `$2d` handler at `$468f` remains unresolved |
+| `$0c` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7446/$7448`; `+$46: $01` | `$01` compares mutable `$2781`; details below |
+
+The byte pairs above follow rooted handlers: `$36` reads two bytes and steps
+`+3`; `$11` reaches `$40fd` (`+4`) after its regional call; `$14/$15` each
+read one operand and step `+3`. The `$41` targets `$73b2/$73b4` and
+`$7470/$7472` have the static return paths described in selector `$00`.
+Targets `$7464` US / `$7466` JP are suffixes of a longer matching byte stream:
+each reads three `$14/$15` pairs with operands `$02,$01,$00` and reaches
+`$09`/`RTS`. The containing roots `$7446` US / `$7448` JP begin the same
+eight-pair sequence with operands descending `$07..$00`, then `$09`/`RTS`.
+`theron-stage2-da65.info` marks `$7445..$7478` as bytes to preserve this
+overlap; `$7445` is context before the US root, and `$7445..$7447` is
+context before the JP root. These are static return paths only if the nested
+interpreter is entered and returns.
+
+For selector `$0c`, after the `$7446/$7448` nested call returns, `$01` at
+target `+$46` reads index `$01`, compares `$2781` with the byte at `+$48`,
+and either advances by five when unequal or loads the little-endian pointer
+at `+$49/+50` when equal. The seven consecutive comparison entries test
+values `$00..$06` and point to `$686d,$688d,$68ad,$68cd,$68ed,$690d,$692d`;
+each target begins `$1a,<matching value>,$13,$2d`. A mismatch after the
+seventh row reaches `$686d` as fall-through. The static trace stops at `$2d`
+(`$468f`), whose overlapping decode and continuation are not yet resolved;
+the contents do not establish the runtime value of `$2781` or prove this
+selector executes.
 
 ### Selector `$00` target: conditional static cursor walk
 
@@ -203,8 +246,8 @@ Both target-relative byte sequences are `$14,$00,$00,$15,$00,$00,$09`.
 Root `$45f8` reads one zero byte and advances by three to `$15`; `$45fe` does
 the same and reaches `$09`, whose `$4253` handler is `RTS`. This gives both
 regional recursive paths a statically visible return when entered. The
-source listing marks the shared overlap window `$7470..$7478` as bytes; the
-JP target begins two bytes into this window. If the nested invocation
+source listing marks the containing overlap window `$7445..$7478` as bytes;
+the `$7470/$7472` roots begin two bytes apart. If the nested invocation
 returns, the outer cursor reaches `$6f29`, whose `$2a` dispatch target is
 `$4409`. That handler clears A, calls `$e02d`, then its local `$4415` routine
 reads the byte at `$1c+1` (`$00` in both regions), indexes `$4b3c`, and loads
@@ -284,7 +327,7 @@ that this routine is selected or executed.
 The regenerated listing marks the pointer words and only the identified root
 bytes (plus the `$08` handler's one-byte operand where its two-byte step is
 static) as data. The bounded `$6c4e..$6c6d`, `$6c6e..$6c70`,
-`$6e98..$6f28`, `$73b1..$73b9`, and `$7470..$7478` candidate spans are also
+`$6e98..$6f28`, `$73b1..$73b9`, and `$7445..$7478` candidate spans are also
 emitted as bytes, without assigning operand names. They do not mark
 the remainder of these streams as decoded bytecode: their extents and operand
 boundaries have not been established.

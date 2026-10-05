@@ -34,8 +34,14 @@ Reviewed 2026-10-05. Only open work is listed here.
   embed `$74f2` in US and `$74f4` in JP, also matching routine bytes. The
   runtime `$201c` vector and whether those latter routines execute remain
   unknown. Runtime selector choice and complete continuations remain
-  unproven. Selectors `$04..$0c` share a statically mapped eight-byte
-  prefix, but their continuation and runtime selection are also unproven.
+  unproven. Selectors `$04..$0c` now have conditional cursor walks through
+  their rooted `$12` calls. The newly rooted `$7446/$7448` stream contains
+  eight `$14/$15` operand pairs and reaches `$09`/`RTS`; suffixes at
+  `$7464/$7466` and `$7470/$7472` do likewise. Selector `$0c` reaches a
+  static `$01` comparison chain over `$2781`, with pointer branches to
+  `$686d..$692d`; their common prefix reaches unresolved `$2d` at `$468f`.
+  Selector `$0b` also reaches `$2d`. Runtime calls, selector choice, and the
+  continuation beyond `$2d` remain unproven.
   Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. See
