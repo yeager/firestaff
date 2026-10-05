@@ -163,6 +163,60 @@ static void test_stage2_id4b_indexed_comparison(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock dispatch ID $51 and its in-window helper chain against authentic
+ * media. The field meanings and helper effects remain unassigned. */
+static void test_stage2_id51_helper_chain(const uint8_t *raw,
+                                          size_t raw_size, int jp)
+{
+    static const uint8_t handler[] = {
+        0x44u, 0x9du, 0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc1u, 0x4eu,
+        0x20u, 0x0eu, 0x4du, 0x4cu, 0xf9u, 0x40u
+    };
+    static const uint8_t mode_handler[] = {
+        0x44u, 0x8fu, 0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc1u, 0x4eu,
+        0x20u, 0x6au, 0x4du, 0x4cu, 0xf9u, 0x40u
+    };
+    static const uint8_t helpers[] = {
+        0x44u, 0x05u, 0xb0u, 0x55u, 0x44u, 0x36u, 0x60u, 0xadu,
+        0x7bu, 0x4du, 0x48u, 0xadu, 0xc1u, 0x4eu, 0x8du, 0x68u,
+        0x4du, 0x8du, 0x7bu, 0x4du, 0x20u, 0x48u, 0x4fu, 0xadu,
+        0xc3u, 0x4eu, 0x8du, 0xc5u, 0x4eu, 0xadu, 0xc4u, 0x4eu,
+        0x8du, 0xc6u, 0x4eu, 0x68u, 0x8du, 0x7bu, 0x4du, 0x8du,
+        0xc1u, 0x4eu, 0x20u, 0xc9u, 0x4eu, 0xb0u, 0x2au, 0xadu,
+        0xc2u, 0x4eu, 0x8du, 0x69u, 0x4du, 0xadu, 0x68u, 0x4du,
+        0x8du, 0xc2u, 0x4eu, 0x60u, 0xa9u, 0x04u, 0x20u, 0x5eu,
+        0x4fu, 0xb0u, 0x16u, 0xadu, 0x68u, 0x4du, 0x8du, 0x7bu,
+        0x4du, 0xadu, 0x69u, 0x4du, 0x8du, 0xc2u, 0x4eu, 0x20u,
+        0xf4u, 0x4eu, 0xadu, 0xc1u, 0x4eu, 0x8du, 0x7bu, 0x4du,
+        0x60u
+    };
+    static const uint8_t mode_variant[] = {
+        0x44u, 0xa9u, 0xb0u, 0xf9u, 0xadu, 0xc1u, 0x4eu, 0x09u,
+        0x80u, 0x8du, 0xc1u, 0x4eu, 0x44u, 0xd2u, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp, 0x41afu) == 0x4a42u);
+    assert(stage2_word_at(raw, raw_size, jp, 0x41b1u) == 0x4a50u);
+    for (unsigned int i = 0; i < sizeof(handler); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4a42u + i)) == handler[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(mode_handler); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4a50u + i)) == mode_handler[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(helpers); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4d0eu + i)) == helpers[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(mode_variant); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4d6au + i)) == mode_variant[i]);
+    }
+    printf("  PASS: stage2_id51_helper_chain (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Authentic selector continuations and overlapping nested-stream roots.
  * These byte assertions are source evidence, not proof that a selector runs.
  * See docs/source-lock/theron-disassembly/
@@ -1506,6 +1560,7 @@ int main(void)
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
+    test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id2c_external_handoff(g_us_data, g_us_size, 0);
@@ -1519,6 +1574,7 @@ int main(void)
         test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
+        test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id2c_external_handoff(g_jp_data, g_jp_size, 1);

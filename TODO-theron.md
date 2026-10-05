@@ -29,6 +29,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   conditional cursor replacement/skip, against authentic US and JP Track 02.
   The stream structure and comparison purpose remain unassigned; see the
   source-lock dispatch-table entry.
+- ✅ Bounded dispatch ID `$51` and the adjacent ID `$52` helper variant within
+  the authentic stage-two image. Raw-media assertions lock both entry paths
+  and the `$4d0e..$4d78` helper bodies for US and JP; field meanings and
+  called-helper effects remain unknown.
 - 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
   carry/result contract, and the semantic roles of `$37cc..$37d1` are still
   unknown. Continue from an authenticated code/data mapping for that address;

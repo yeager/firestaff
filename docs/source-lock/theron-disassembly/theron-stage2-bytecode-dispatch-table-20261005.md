@@ -100,6 +100,24 @@ zero as 256 iterations, and the one-byte mismatch accumulator can wrap. Do
 not infer an all-match predicate or gameplay/resource-selection name from
 this static path.
 
+## ID `$51`: staged helper chain
+
+Dispatch entry `$51` points to `$4a42` in both authentic editions. The
+byte-locked handler reads stream offset `+1` into `$4ec2` through `$49e1`,
+reads offset `+2` into `$4ec1`, calls `$4d0e`, then reaches `$40f9` for the
+shared three-byte cursor step. The bounded `$4d0e..$4d66` helper path first
+calls `$4d15`; a carry result branches to `$4d67` (`BRK`), otherwise it calls
+`$4d4a`. `$4d15` saves and restores `$4d7b`, copies `$4ec3/$4ec4` to
+`$4ec5/$4ec6`, calls `$4f48` and `$4ec9`, then stages `$4ec2` through
+`$4d68/$4d69`. `$4d4a` sets A to `$04` for `$4f5e`, branches to the same
+`BRK` on carry, stages `$4d68/$4d69` through `$4d7b/$4ec2`, calls `$4ef4`,
+and restores `$4d7b` from `$4ec1`. The adjacent `$4d6a..$4d78` variant
+reuses `$4d15`, sets bit `$80` in `$4ec1`, then calls `$4d4a`. Dispatch ID
+`$52` at `$4a50` reads offset `+1` into `$4ec2` and offset `+2` into
+`$4ec1`, calls `$4d6a`, then takes the shared `+3` cursor step at `$40f9`.
+These byte-level paths do not assign meanings to the fields, calls, carry
+conditions, or a retail stream.
+
 ## Indexed-byte handlers and nested cursor path
 
 The next table roots expose another byte-level group. Index `$0b` at `$4259`
