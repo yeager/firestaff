@@ -12,8 +12,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   per-handler operands/advancement, gameplay meanings, and the real-resource
   caller remain unbound. The disassembly now decodes from all 85 table roots
   without assigning command semantics. Indices `$00..$07` have a static
-  comparison/cursor-transfer trace; index `$28`'s Y-offset 1 test and Y-offset
-  2 fetch are also mapped, but none is bound to a valid stream. Regional
+  comparison/cursor-transfer trace; `$0b..$10` have indexed-byte/nested-cursor
+  traces. Index `$28`'s Y-offset 1 test and Y-offset 2 fetch are also mapped,
+  but none of these paths is bound to a valid stream. Regional
   call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s regional
   pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. See

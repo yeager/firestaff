@@ -75,6 +75,27 @@ that amount to `$1c/$1d` and resume at `$40cc`. This establishes instruction
 and cursor-update paths for this cluster, but does not prove that any of its
 indices occur in a valid retail stream or assign names to them.
 
+## Indexed-byte handlers and nested cursor path
+
+The next table roots expose another byte-level group. Index `$0b` at `$4259`
+uses `$41f8` to place the offset-1 byte in X, then stores the offset-2 byte
+into `$2780,X`; index `$0c` at `$4263` adds that offset-2 byte to `$2780,X`
+with carry clear, and index `$0d` at `$4271` subtracts it with carry set.
+These three paths reach `$40f9`, the shared `+3` cursor step. Index `$0e` at
+`$4280` increments `$2780,X` and index `$0f` at `$4288` decrements it; both
+reach `$40f5` (`+2`). Their call to `$41f8` also reads the byte at offset 2,
+but the shared cursor step leaves that byte at the next dispatch position.
+These are exact memory operations only; `$2780` entry meanings are unknown.
+
+Index `$10` at `$4291` reads the offset-1 byte, uses it as an index into a
+little-endian pointer table based at `$6800`, saves the original `$1c/$1d`
+cursor, and calls `$40cc` using the selected pointer. On return it restores
+the original cursor and takes the `$40f5` (`+2`) path. Index `$09` at `$4253`
+is a one-instruction `RTS`, compatible with ending such a nested call, but no
+authentic stream binds the selector, table entry, and return instruction as a
+pair. The nested execution path is therefore a static call-graph observation,
+not proof of a valid retail stream structure.
+
 ## Target-rooted disassembly and regional comparison
 
 `theron-stage2-da65.info` marks `$410d..$41b6` as an address table and gives
