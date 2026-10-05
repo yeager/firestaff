@@ -265,6 +265,11 @@ root, the zero branch calls `$e0d8` with fixed bytes and the nonzero branch
 uses the stream byte at `$f8` before another `$e0d8` call. Both visible paths
 jump to `$40f5`. This is root-relative byte/control-flow evidence only; BIOS
 effects and runtime stream selection remain unknown.
+The `stage2_id31_fixed_argument_handoff` assertion locks index `$31` at
+`$416f`, its exact `$47c5..$47d2` 14-byte root, and the `$40f1` (`+1`) tail
+in both editions. It loads fixed values into `$f8/$ff`, calls `$e0d8`, and
+jumps to the shared cursor helper. BIOS effects and retail stream selection
+remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
