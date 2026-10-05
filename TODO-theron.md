@@ -16,12 +16,15 @@ Reviewed 2026-10-05. Only open work is listed here.
   traces. Index `$28`'s Y-offset 1 test and Y-offset 2 fetch are also mapped,
   but none of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
-  dispatch IDs. Selector `$01`'s target has a bounded static cursor walk
-  through `$6c70`; it then references a nested RAM cursor at `$126c`, whose
-  runtime contents and return are unproven. Runtime selector choice and the
-  complete continuation remain unproven. Selectors `$04..$0c` share a
-  statically mapped eight-byte prefix, but their continuation and runtime
-  selection are also unproven.
+  dispatch IDs. Selector `$00`'s target has a bounded static cursor walk
+  through `$6ea9`, ending in embedded pointer `$73b2` in US and `$73b4` in JP;
+  selector `$01`'s target has a bounded walk through `$6c70`, with embedded
+  pointers `$78ea/$73b2` in US and `$78ec/$73b4` in JP; selectors `$02/$03`
+  embed `$74f2` in US and `$74f4` in JP. These targets lie outside the loaded
+  stage-two window, so their runtime contents, execution, and recursive
+  returns remain unproven. Runtime selector choice and complete continuations
+  remain unproven. Selectors `$04..$0c` share a statically mapped eight-byte
+  prefix, but their continuation and runtime selection are also unproven.
   Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. See

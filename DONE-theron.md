@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — bound candidate stage-two streams to authentic pointers
+
+Corrected the rooted `$41b9` pointer read to its actual cursor offsets `+1/+2`
+after confirming the dispatcher's `CLY`. Re-traced selectors `$00..$03` in
+the deinterleaved authentic US and JP Rev. 1 Track 02 payloads and marked the
+selector `$00` candidate through its embedded pointer in the source-lock
+disassembly. US/JP pointer targets are `$73b2/$73b4` for selector `$00`,
+`$78ea/$78ec` for selector `$01`'s `$12` handler, `$73b2/$73b4` for its
+`$41` handler, and `$74f2/$74f4` for each of selectors `$02` and `$03`.
+
+Three consecutive sector-by-sector payload regeneration, dispatch/pointer
+table, bounded-byte, and `da65` listing checks passed. The target RAM contents,
+selector execution, and recursive returns remain unverified; this is static
+address evidence only. The earlier `$126c` claim was withdrawn.
+
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 
 - ✅ Replaced the linear instruction rendering over `$410d..$41b6` with the

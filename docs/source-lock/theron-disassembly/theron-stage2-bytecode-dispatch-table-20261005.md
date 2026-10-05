@@ -47,8 +47,9 @@ static HuC6280 jump target reached by the corresponding table index.
 
 The first eight roots form a common control-flow cluster. Index `$00` at
 `$41c5` calls `$41b9`, which loads a 16-bit pointer from the current `$1c`
-window at offsets `$4b/$4c` into `$1c/$1d`, then returns through `$40e4` with
-`A=0` to the `$40cc` loop. Indices `$01..$04` call `$41f8`: from dispatcher
+window at offsets `+1/+2` into `$1c/$1d`, then returns through `$40e4` with
+`A=0` to the `$40cc` loop. The dispatcher clears Y before each handler and
+`$41b9` increments Y before each pointer-byte read. Indices `$01..$04` call `$41f8`: from dispatcher
 entry (`Y=0`), it reads offsets 1 and 2, uses the offset-1 byte as X for the
 lookup at `$2780,X`, and compares that lookup result with the raw offset-2
 byte. Indices `$05..$07` call `$4203`, which reads offsets 1 and 2 as two X
@@ -105,8 +106,8 @@ is `$0000`:
 |---:|---:|---:|---:|---|
 | `$00` | `$6e98` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
 | `$01` | `$6c4e` | `$21` | `$464f` | Fixed call argument `$03`; cursor `+1` |
-| `$02` | `$6c92` | `$12` | `$4319` | Loads inner cursor from offsets `$4b/$4c`, then restores saved cursor; `+3` after indirect call |
-| `$03` | `$6cfa` | `$12` | `$4319` | Loads inner cursor from offsets `$4b/$4c`, then restores saved cursor; `+3` after indirect call |
+| `$02` | `$6c92` | `$12` | `$4319` | Loads inner cursor from offsets `+1/+2`, then restores saved cursor; `+3` after indirect call |
+| `$03` | `$6cfa` | `$12` | `$4319` | Loads inner cursor from offsets `+1/+2`, then restores saved cursor; `+3` after indirect call |
 | `$04` | `$694d` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
 | `$05` | `$69a1` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
 | `$06` | `$6a16` | `$08` | `$4214` | Reads offset 1; cursor `+2` |
@@ -128,7 +129,7 @@ The step notes follow the rooted handler bytes, not a claim that any pointer
 was selected. `$4214` reads the following stream byte into A before calling
 `$421c`, then advances through `$40f5` (`+2`). `$464f` supplies constant
 `$03` to `$3ab7` and advances through `$40f1` (`+1`). `$4319` replaces the
-current cursor from its embedded `$4b/$4c` pointer, performs an indirect call
+current cursor from its embedded `+1/+2` pointer, performs an indirect call
 through `$201c`, restores the saved cursor on return, and advances through
 `$40f9` (`+3`). The call target and the behavior of `$3ab7` are outside this
 step summary.
@@ -160,6 +161,33 @@ the rooted `$45` handler advances to target `+$08`, but no subsequent handler
 walk is claimed. The repeated prefix and byte parameters are identical across
 US and JP, while selector-to-pointer runtime use is still unobserved.
 
+### Selector `$00` target: conditional static cursor walk
+
+At `$6e98`, the candidate begins with `$08`. Applying the rooted handler
+steps yields `$25,$26,$21,$1f,$3e,$1e,$41` at the cursors below. The `$1f`
+handler reads bytes at offsets 1–3; `$3e` reads offsets 1–3 and both rooted
+branches advance by four; `$1e` reads offset 1. This is a static walk only,
+not evidence that selector `$00` executes or that the entire candidate is a
+valid retail stream.
+
+| Cursor | ID | Root | Static read/step | Next cursor |
+|---:|---:|---:|---|---:|
+| `$6e98` | `$08` | `$4214` | Reads `$00` at offset 1; `+2` | `$6e9a` |
+| `$6e9a` | `$25` | `$4916` | No stream read; `+1` | `$6e9b` |
+| `$6e9b` | `$26` | `$4910` | No stream read; `+1` | `$6e9c` |
+| `$6e9c` | `$21` | `$464f` | Fixed argument `$03`; `+1` | `$6e9d` |
+| `$6e9d` | `$1f` | `$445f` | Reads `$d8/$05,$00,$10` at offsets 1–3; `+4` | `$6ea1` |
+| `$6ea1` | `$3e` | `$48ac` | Reads offsets 1–3; both branches `+4` | `$6ea5` |
+| `$6ea5` | `$1e` | `$4433` | Reads `$d9/$06` at offset 1; `+2` | `$6ea7` |
+| `$6ea7` | `$41` | `$42be` | Loads embedded pointer at offsets `+1/+2`, invokes `$40cc` recursively, then `+3` on return | `$6eaa` |
+
+The embedded pointer bytes at `$6ea8/$6ea9` are `$b2,$73` in US and
+`$b4,$73` in JP, forming static targets `$73b2` and `$73b4` respectively.
+Both lie outside the loaded `$4000..$7fff` stage-two window analyzed here,
+so their runtime contents and recursive returns are unknown. The listing
+marks only `$6e98..$6ea9` as candidate bytes; the span does not assign operand
+names or claim a decoded continuation.
+
 ### Selector `$01` target: conditional static cursor walk
 
 At `$6c4e`, the candidate stream begins with `$21`. If selector `$01` is
@@ -185,34 +213,45 @@ selector `$01` was chosen or that the whole stream is valid/executed.
 | `$6c62` | `$27` | `$45ca` | Reads `$ac` at offset 1; `+2` | `$6c64` |
 | `$6c64` | `$3e` | `$48ac` | Reads offsets 1–3; both branches `+4` | `$6c68` |
 | `$6c68` | `$0b` | `$4259` | Reads `$00,$ad` at offsets 1–2; `+3` | `$6c6b` |
-| `$6c6b` | `$12` | `$4319` | Loads inner cursor from offsets `$4b/$4c`, then restores saved cursor; `+3` on return | `$6c6e` |
-| `$6c6e` | `$41` | `$42be` | Loads inner cursor from offsets `$4b/$4c`, calls `$40cc` recursively, then `+3` on nested return | `$6c71` |
+| `$6c6b` | `$12` | `$4319` | Loads inner cursor from offsets `+1/+2`, then restores saved cursor; `+3` on return | `$6c6e` |
+| `$6c6e` | `$41` | `$42be` | Loads inner cursor from offsets `+1/+2`, calls `$40cc` recursively, then `+3` on nested return | `$6c71` |
 
 The source-lock listing marks `$6c4e..$6c6d` and `$6c6e..$6c70` as bytes for
 these bounded candidate cursor spans. The ranges record IDs and span bytes;
 they do not assign operand boundaries to the trailing bytes of `$12` or
 `$41`, nor claim a decoded stream past `$6c70`. In the first span the US and
-JP bytes match except at `$6c6c` (`$ea` US, `$ec` JP); in the second span they
-match except at `$6c6f` (`$b2` US, `$b4` JP). Neither byte is directly read by
-the corresponding rooted handler, so both regional differences remain
-uninterpreted.
+JP bytes match except at `$6c6c` (`$ea` US, `$ec` JP); `$4319` reads this as
+the low pointer byte at `$6c6b`, yielding `$78ea` US and `$78ec` JP. In the
+second span they match except at `$6c6f` (`$b2` US, `$b4` JP); `$42be` reads
+this as the low pointer byte at `$6c6e`, yielding `$73b2` US and `$73b4` JP.
+These are static address derivations; the targets' runtime contents and
+execution remain unverified.
 
 If the `$4319` indirect callee returns, the cursor next reaches `$6c6e`,
 whose authentic byte is `$41` in both regions. This maps to `$42be`, which
 saves the outer cursor, loads another pointer through `$41b9`, invokes the
 `$40cc` interpreter recursively, restores the outer cursor, and advances by
-three after the nested interpreter returns. At this cursor, `$41b9` reads
-offsets `$4b/$4c` (`$6cb9/$6cba`); those bytes form `$126c` in both regions.
-That address is outside the `$4000..$7fff` stage-two code/handler span used
-here, so the current Track 02 source mapping does not provide the nested RAM
-stream or establish its runtime contents. The listing marks its bounded
-three-byte cursor span `$6c6e..$6c70`; this recursive target and its return
-remain unverified dynamically.
+three after the nested interpreter returns. At `$6c6e`, `$41b9` reads the
+embedded bytes at `$6c6f/$6c70`, forming static target `$73b2` in US and
+`$73b4` in JP. Both targets lie outside the loaded `$4000..$7fff` stage-two
+window, so this payload does not establish its runtime contents or the
+recursive return. At the earlier `$12` cursor `$6c6b`, `$4319` reads
+`$ea,$78` in US or `$ec,$78` in JP at `$6c6c/$6c6d`, forming `$78ea` or
+`$78ec` respectively; both targets are likewise outside the loaded window.
+The listing marks the bounded three-byte `$41` span
+`$6c6e..$6c70`; neither recursive path is verified dynamically.
+
+Selectors `$02` and `$03` each begin with `$12` at `$6c92` and `$6cfa`.
+Their embedded pointer bytes are `$f2,$74` in US and `$f4,$74` in JP at
+`$6c93/$6c94` and `$6cfb/$6cfc`, forming `$74f2` in US and `$74f4` in JP.
+As with the other out-of-window targets, static source bytes do not establish
+runtime contents or execution.
 
 The regenerated listing marks the pointer words and only the identified root
 bytes (plus the `$08` handler's one-byte operand where its two-byte step is
-static) as data. The bounded `$6c4e..$6c6d` and `$6c6e..$6c70` candidate walks
-are also emitted as bytes, without assigning operand names. They do not mark
+static) as data. The bounded `$6c4e..$6c6d`, `$6c6e..$6c70`, and
+`$6e98..$6ea9` candidate walks are also emitted as bytes, without assigning
+operand names. They do not mark
 the remainder of these streams as decoded bytecode: their extents and operand
 boundaries have not been established.
 

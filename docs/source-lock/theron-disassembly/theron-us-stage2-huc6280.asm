@@ -6672,17 +6672,9 @@ L6E90:  sta     $0E
         jsr     L3AB7
         rts
 
-L6E98:  .byte   $08,$00
-        and     $26
-        and     ($1F,x)
-        cld
-        brk
-        bpl     L6EE0
-        brk
-        brk
-        brk
-        asl     L41D9,x
-        lda     ($73)
+L6E98:  .byte   $08,$00,$25,$26,$21,$1F,$D8,$00
+        .byte   $10,$3E,$00,$00,$00,$1E,$D9,$41
+        .byte   $B2,$73
         jsr     L013E
         bbs7    L0000,L6EB8
         brk
