@@ -100,7 +100,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   `$20/$21`'s fixed-argument roots and shared continuation are also locked;
   callee semantics remain unknown. The naturally bounded `$1e` root/helper
   and adjacent `$1f` root are now byte-locked in both editions, without
-  assigning operand semantics.
+  assigning operand semantics. IDs `$1c/$1d`, complete roots `$4345/$4497`,
+  and their neighboring `+5`/`+7` cursor-step stubs are also byte-locked in
+  both authentic editions. Their repeated `$1c` reads and `$3ab7` calls do not
+  establish stream structure or helper effects.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

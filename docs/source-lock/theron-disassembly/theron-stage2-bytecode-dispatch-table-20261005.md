@@ -213,6 +213,12 @@ The `stage2_id1e_id1f_bounded_handlers` assertion locks the complete `$1e`
 root/helper pair (`$4433..$445e`) and adjacent `$1f` root (`$445f..$447e`),
 including both dispatch words, in both authentic editions. The bytes establish
 bounded instruction paths only, not operand meanings or runtime selection.
+The `stage2_id1c_id1d_cursor_roots` assertion locks the complete roots at
+`$4345` and `$4497`, their dispatch words, and the adjacent `$4101` `+5` and
+`$4105` `+7` cursor-step stubs in both authentic editions. The roots read
+bytes via `$1c` and call `$3ab7`; those bytes establish fixed read/cursor
+patterns only. Stream structure, called-helper effects, and runtime selection
+remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

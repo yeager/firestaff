@@ -556,6 +556,55 @@ static void test_stage2_id1e_id1f_bounded_handlers(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock complete bounded roots for IDs $1c/$1d and their shared-step stubs.
+ * The bytes establish cursor increments, not stream or operand semantics. */
+static void test_stage2_id1c_id1d_cursor_roots(const uint8_t *raw,
+                                                size_t raw_size, int jp)
+{
+    static const uint8_t id1c[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xc8u, 0x85u, 0x0eu, 0xb1u, 0x1cu,
+        0xc8u, 0x85u, 0x10u, 0xb1u, 0x1cu, 0x85u, 0x11u, 0xc8u,
+        0xb1u, 0x1cu, 0x85u, 0x12u, 0xa9u, 0x04u, 0x20u, 0xb7u,
+        0x3au, 0x4cu, 0x01u, 0x41u
+    };
+    static const uint8_t id1d[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x85u, 0x11u, 0xc8u, 0xb1u, 0x1cu,
+        0x85u, 0x10u, 0xc8u, 0xb1u, 0x1cu, 0x85u, 0x13u, 0xc8u,
+        0xb1u, 0x1cu, 0x85u, 0x12u, 0xc8u, 0xb1u, 0x1cu, 0x85u,
+        0x15u, 0xc8u, 0xb1u, 0x1cu, 0x85u, 0x14u, 0xa9u, 0x01u,
+        0x20u, 0xb7u, 0x3au, 0x4cu, 0x05u, 0x41u
+    };
+    static const uint8_t step_plus_five[] = {
+        0xa9u, 0x05u, 0x80u, 0xdfu
+    };
+    static const uint8_t step_plus_seven[] = {
+        0xa9u, 0x07u, 0x80u, 0xdbu
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x1cu)) == 0x4345u);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x1du)) == 0x4497u);
+    for (unsigned int i = 0; i < sizeof(id1c); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4345u + i)) == id1c[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id1d); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4497u + i)) == id1d[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(step_plus_five); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4101u + i)) == step_plus_five[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(step_plus_seven); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4105u + i)) == step_plus_seven[i]);
+    }
+    printf("  PASS: stage2_id1c_id1d_cursor_roots (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2005,6 +2054,7 @@ int main(void)
     test_stage2_id17_id1b_fixed_argument_roots(g_us_data, g_us_size, 0);
     test_stage2_id20_id21_fixed_arguments(g_us_data, g_us_size, 0);
     test_stage2_id1e_id1f_bounded_handlers(g_us_data, g_us_size, 0);
+    test_stage2_id1c_id1d_cursor_roots(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2030,6 +2080,7 @@ int main(void)
         test_stage2_id17_id1b_fixed_argument_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id20_id21_fixed_arguments(g_jp_data, g_jp_size, 1);
         test_stage2_id1e_id1f_bounded_handlers(g_jp_data, g_jp_size, 1);
+        test_stage2_id1c_id1d_cursor_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
