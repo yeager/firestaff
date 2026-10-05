@@ -15,6 +15,13 @@ Reviewed 2026-10-05. Only open work is listed here.
   unknown. Continue from an authenticated code/data mapping for that address;
   do not infer its implementation from its stage-two call site. `$3879` is
   likewise below this stage-two window and remains undecoded.
+- 🔒 `$3a2e` is in the logical `$2000..$3fff` window selected by HuC6280 MPR1.
+  The stage-two `$4000` prologue sets MPR3..MPR6, not MPR1. The existing
+  authenticated `MPR1=$f8` receipt is from the separate 2026-09-23 backup-RAM
+  writer at `$de21` (`docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`),
+  so it cannot identify the code bank at a `$4ec9` call. Require MPR1 plus its
+  physical PC/bank at the actual `$3a2e` call, or an authenticated loader span
+  that establishes the same mapping, before disassembling those bytes.
 
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 

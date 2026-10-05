@@ -1,6 +1,7 @@
 /*
  * test_theron_v1_stage2_disassembly_chain.c — verify the full stage-2
- * disassembly chain against the real US Track 02 binary.
+ * disassembly chain against the real US Track 02 binary and, when present,
+ * the JP Rev. 1 binary.
  *
  * This test exercises every verify_stage2_* function in sequence,
  * proving that the entire disassembly chain from IPL loader through
@@ -8,7 +9,7 @@
  * extracts VDC register writes from the proven byte streams,
  * providing viewport initialization evidence.
  *
- * Requires: ~/.firestaff/data/theron/TQUS02.bin
+ * Requires: ~/.firestaff/data/theron/TQUS02.bin; JP is verified optionally.
  */
 
 #include <assert.h>
@@ -96,6 +97,26 @@ static void assert_stage2_pointer(const uint8_t *raw, size_t raw_size,
     assert(stage2_byte_at(raw, raw_size, jp, stream) == 0x41u);
     assert(stage2_word_at(raw, raw_size, jp,
                           (uint16_t)(stream + 1u)) == expected_target);
+}
+
+/* The stage-two entry initializes MPR3..MPR6, leaving MPR1 inherited from
+ * the preceding System Card handoff. This bounds the $3a2e bank question. */
+static void test_stage2_entry_mpr_window(const uint8_t *raw,
+                                         size_t raw_size, int jp)
+{
+    static const uint8_t entry[] = {
+        0x78u, 0xa2u, 0xffu, 0x9au, 0xadu, 0xf5u, 0xffu, 0x1au,
+        0x53u, 0x08u, 0x1au, 0x1au, 0x1au, 0x53u, 0x10u, 0x48u,
+        0x58u, 0x20u, 0x00u, 0x80u, 0x68u, 0x1au, 0x53u, 0x20u,
+        0x1au, 0x53u, 0x40u
+    };
+
+    for (unsigned int i = 0; i < sizeof(entry); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4000u + i)) == entry[i]);
+    }
+    printf("  PASS: stage2_entry_mpr_window (%s)\n",
+           jp ? "JP" : "US");
 }
 
 /* Authentic selector continuations and overlapping nested-stream roots.
@@ -1438,6 +1459,7 @@ int main(void)
     if (g_jp_data) test_ipl_loader_jp();
     test_stage2_selector_candidate_continuations(
         g_us_data, g_us_size, 0);
+    test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id2c_external_handoff(g_us_data, g_us_size, 0);
@@ -1448,6 +1470,7 @@ int main(void)
     if (g_jp_data) {
         test_stage2_selector_candidate_continuations(
             g_jp_data, g_jp_size, 1);
+        test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id2c_external_handoff(g_jp_data, g_jp_size, 1);

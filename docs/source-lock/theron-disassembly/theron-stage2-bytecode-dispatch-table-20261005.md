@@ -285,6 +285,13 @@ Track 02 test. `$3a2e` is below the stage-two image, so its implementation and
 the carry/result contract at this call remain unresolved; no gameplay meaning
 is assigned to the copied fields.
 
+The logical target `$3a2e` lies in the `$2000..$3fff` MPR1 window. Stage-two
+entry at `$4000` initializes MPR3..MPR6 but does not establish MPR1. The
+separate authenticated `MPR1=$f8` receipt from the `$de21` backup-RAM writer
+cannot be transferred to this call. A valid disassembly source must join the
+`$3a2e` execution with MPR1 and its physical PC/bank, or prove the loader span
+that sets that mapping.
+
 The adjacent `$4ef4` helper uses the same `$4ec2 -> $37cc` handoff, additionally
 copies `$4ec7/$4ec8` to `$37d0/$37d1`, calls `$4f31` and `$3879`, then clears
 `$5b` and returns. `$4be2` calls it directly; `$4c17` reaches it only when the

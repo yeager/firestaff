@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — source-lock the stage-two MPR entry window
+
+The authentic US and JP stage-two entry bytes at `$4000` now have a direct
+raw-sector regression. The prologue writes MPR3, MPR4, MPR5 and MPR6, but does
+not set MPR1. Since the unresolved `$3a2e` call is in the `$2000..$3fff`
+logical window, its code cannot be selected from the payload alone. The
+existing `$de21` backup-RAM MPR1 receipt is from a different call path and is
+not reused. A same-call MPR1/physical-PC capture or authenticated loader span
+is still required to disassemble `$3a2e` safely.
+
 ## 2026-10-05 — source-lock shared stage-two slot helpers
 
 Extended the ID `$2c` helper family with authentic US and JP raw-sector checks
