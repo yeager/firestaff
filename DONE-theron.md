@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — clear warning-only ambiguity in Theron sources
+
+Separated the null-output guard from subsequent receipt initialization in the
+trace-bundle selector, and made both arms of the runtime-object-word
+conditional explicitly `uint16_t`. These preserve the existing branches and
+values while removing misleading-indentation and signedness warnings from a
+fresh Release build; no game behavior or source-evidence gate changed.
+
+On `trv2`, a clean Release configuration built the Theron dungeon loader,
+combat-mechanics test, and authentic-map playability probe with `-j1`. The
+focused CTest selection passed three consecutive loops; the authentic US/JP
+loader and playability checks retained their source-backed coverage and
+fail-closed behavior. This verifies those bounded routes only, not complete
+Theron parity.
+
 ## 2026-10-05 — accept authentic PCE Fast RAM-consumer traces
 
 The bounded Mednafen main-RAM consumer parser now accepts both its original

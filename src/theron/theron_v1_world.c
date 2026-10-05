@@ -3433,7 +3433,8 @@ static int theron_v1_world_set_track02_runtime_object_word(
     unsigned int index;
     uint16_t current;
     const uint16_t source_word = source && source->raw_size >= 4u ?
-        ((uint16_t)source->raw[2] | ((uint16_t)source->raw[3] << 8)) : 0u;
+        (uint16_t)((uint16_t)source->raw[2] |
+                   ((uint16_t)source->raw[3] << 8)) : (uint16_t)0;
     if (!theron_v1_world_track02_runtime_object_word(
             world, source, &current))
         return 0;
