@@ -198,6 +198,9 @@ does not identify the selected target or bind a retail stream to this path.
 The `stage2_id08_local_helper` assertion byte-locks the `$411d` dispatch word,
 the `$4214` root, and the `$421c` helper against both authentic editions; the
 conditional branch after `$4f5e` remains only statically observed.
+The `stage2_id13_id16_fixed_arguments` assertion binds table entries `$13` and
+`$16`, their fixed-argument roots `$45f0/$4615`, and the shared `$40f1` `+1`
+step. The `$3ab7` callee effects and retail stream execution remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

@@ -91,7 +91,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   Index `$12`'s saved-cursor indirect-call path is also source-locked for both
   editions; its selected target remains unobserved. Index `$08`'s local helper
   and cursor tail are also byte-locked for both editions; helper branch effects
-  remain unresolved.
+  remain unresolved. Indices `$13/$16` and their shared `+1` tail are now
+  byte-locked; `$3ab7` effects remain unresolved.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

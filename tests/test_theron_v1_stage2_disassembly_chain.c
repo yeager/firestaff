@@ -354,6 +354,41 @@ static void test_stage2_id08_local_helper(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the paired fixed-argument roots and shared +1 cursor-step stub. The
+ * callee effects and any retail stream occurrence remain unproven. */
+static void test_stage2_id13_id16_fixed_arguments(const uint8_t *raw,
+                                                   size_t raw_size, int jp)
+{
+    static const uint8_t id13[] = {
+        0xa9u, 0x06u, 0x20u, 0xb7u, 0x3au, 0x4cu, 0xf1u, 0x40u
+    };
+    static const uint8_t id16[] = {
+        0xa9u, 0x07u, 0x20u, 0xb7u, 0x3au, 0x4cu, 0xf1u, 0x40u
+    };
+    static const uint8_t step_plus_one[] = {
+        0xa9u, 0x01u, 0x80u, 0xefu, 0xa9u, 0x02u, 0x80u, 0xebu
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x13u)) == 0x45f0u);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x16u)) == 0x4615u);
+    for (unsigned int i = 0; i < sizeof(id13); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x45f0u + i)) == id13[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id16); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4615u + i)) == id16[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(step_plus_one); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x40f1u + i)) == step_plus_one[i]);
+    }
+    printf("  PASS: stage2_id13_id16_fixed_arguments (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -1798,6 +1833,7 @@ int main(void)
     test_stage2_id28_conditional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id12_indirect_call(g_us_data, g_us_size, 0);
     test_stage2_id08_local_helper(g_us_data, g_us_size, 0);
+    test_stage2_id13_id16_fixed_arguments(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -1818,6 +1854,7 @@ int main(void)
         test_stage2_id28_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id12_indirect_call(g_jp_data, g_jp_size, 1);
         test_stage2_id08_local_helper(g_jp_data, g_jp_size, 1);
+        test_stage2_id13_id16_fixed_arguments(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
