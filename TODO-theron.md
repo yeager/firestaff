@@ -108,7 +108,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   byte-locked in both authentic editions; helper meaning and runtime
   selection remain unknown. ID `$23` at `$42fb` and its US/JP `$56af/$5729`
   call operand are also locked separately in both authentic editions; the
-  selected helper's effects and actual stream use remain unknown.
+  selected helper's effects and actual stream use remain unknown. ID `$27` at
+  `$45ca` is now byte-locked through its `$40f5` cursor tail; pointer purpose,
+  `$3ab7` effects, and stream selection remain unbound.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

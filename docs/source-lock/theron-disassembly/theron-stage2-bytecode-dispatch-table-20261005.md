@@ -230,6 +230,12 @@ complete `$42fb..$4318` root in both authentic editions, including the
 regional call operand at `$4314/$4315` (`$56af` US, `$5729` JP). The selected
 helper body is byte-locked separately by `stage2_id2b_regional_handoff`; this
 does not establish selector execution, helper effects, or gameplay meaning.
+The `stage2_id27_bounded_pointer_setup` assertion locks the `$415b` dispatch
+word and complete `$45ca..$45ea` handler path in both editions. It copies the
+bytes at `$442f/$4430` to zero page, derives `$300a` from `$4d7b` and `$3008`,
+calls `$3ab7` with immediate `$05`, then takes `$40f5` (`+2`). These are
+static byte/control-flow observations; the pointer's role, callee effects,
+and runtime selection remain unknown.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

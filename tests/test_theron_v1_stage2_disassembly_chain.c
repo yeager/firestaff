@@ -665,6 +665,28 @@ static void test_stage2_id23_regional_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $27's bounded pointer setup and fixed $3ab7 argument path. */
+static void test_stage2_id27_bounded_pointer_setup(const uint8_t *raw,
+                                                   size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x46u, 0x44u, 0xadu, 0x2fu, 0x44u, 0x85u, 0x00u,
+        0xadu, 0x30u, 0x44u, 0x85u, 0x01u, 0xadu, 0x7bu, 0x4du,
+        0x0au, 0x0au, 0x18u, 0x6du, 0x08u, 0x30u, 0x8du, 0x0au,
+        0x30u, 0xa9u, 0x05u, 0x20u, 0xb7u, 0x3au, 0x4cu, 0xf5u,
+        0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x27u)) == 0x45cau);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x45cau + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id27_bounded_pointer_setup (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2117,6 +2139,7 @@ int main(void)
     test_stage2_id1c_id1d_cursor_roots(g_us_data, g_us_size, 0);
     test_stage2_id24_bounded_wait_root(g_us_data, g_us_size, 0);
     test_stage2_id23_regional_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id27_bounded_pointer_setup(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2145,6 +2168,7 @@ int main(void)
         test_stage2_id1c_id1d_cursor_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id24_bounded_wait_root(g_jp_data, g_jp_size, 1);
         test_stage2_id23_regional_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id27_bounded_pointer_setup(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
