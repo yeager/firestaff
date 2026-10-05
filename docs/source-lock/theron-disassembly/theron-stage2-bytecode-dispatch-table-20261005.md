@@ -134,6 +134,11 @@ through `$201c`, restores the saved cursor on return, and advances through
 `$40f9` (`+3`). The call target and the behavior of `$3ab7` are outside this
 step summary.
 
+The 17 authenticated stage-two user-data sectors contain no direct absolute
+`STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
+does not rule out indexed/indirect writes, DMA copies, or initialization
+outside this payload, so the indirect-call vector remains unresolved.
+
 ### Selectors `$04..$0c`: common static prefix
 
 The nine pointers for selectors `$04..$0c` each begin with the same

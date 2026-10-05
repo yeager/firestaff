@@ -33,7 +33,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   `$78ea/$78ec` point to matching HuC6280 routine bytes. Selectors `$02/$03`
   embed `$74f2` in US and `$74f4` in JP, also matching routine bytes. The
   runtime `$201c` vector and whether those latter routines execute remain
-  unknown. Runtime selector choice and complete continuations remain
+  unknown; the authenticated stage-two payloads contain no direct absolute
+  store encoding to `$201c`, but indirect writes, DMA, and external setup are
+  not excluded. Runtime selector choice and complete continuations remain
   unproven. Selectors `$04..$0c` now have conditional cursor walks through
   their rooted `$12` calls. The newly rooted `$7446/$7448` stream contains
   eight `$14/$15` operand pairs and reaches `$09`/`RTS`; suffixes at
