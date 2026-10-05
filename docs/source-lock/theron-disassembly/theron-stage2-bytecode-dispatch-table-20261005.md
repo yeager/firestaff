@@ -256,9 +256,11 @@ uses it as an index multiplied by two into the pointer table reached through
 `$4fd9/$4fda`; the selected word is added to that base and written to
 `$0c/$0d`. Its `$56af/$5729` prefix saves X at `$4f91`, computes that pointer,
 calls `$5e40/$5e70`, then tests whether the selected pointer is zero. The
-candidate row supplies X=`<row>` before two local calls, but their effects on
-X are not established. The later helper effects and runtime execution remain
-unproven.
+`$572c/$57a6` helper swaps the `$0a/$0b` and `$0c/$0d` pointer pairs. The
+`$573f/$57b9` check ORs the two bytes at `($0c)` and calls `$5761/$57db` when
+nonzero. The candidate row supplies X=`<row>` before two local calls, but
+their effects on X are not established. Later helper effects and runtime
+execution remain unproven.
 
 ### Rooted `$2c` handler: external helper handoff
 
