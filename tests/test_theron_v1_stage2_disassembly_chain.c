@@ -389,6 +389,49 @@ static void test_stage2_id13_id16_fixed_arguments(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the adjacent IDs $14/$15, their shared two-byte operand reader and
+ * three-byte cursor tail; this is not evidence of stream execution. */
+static void test_stage2_id14_id15_operand_reader(const uint8_t *raw,
+                                                  size_t raw_size, int jp)
+{
+    static const uint8_t id14[] = {
+        0x44u, 0x0au, 0xa9u, 0x08u, 0x80u, 0x11u
+    };
+    static const uint8_t id15[] = {
+        0x44u, 0x04u, 0xa9u, 0x0au, 0x80u, 0x0bu
+    };
+    static const uint8_t operand_reader[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x85u, 0x0eu, 0xc8u,
+        0xb1u, 0x1cu, 0x85u, 0x10u, 0x60u
+    };
+    static const uint8_t cursor_tail[] = {
+        0x20u, 0xb7u, 0x3au, 0x4cu, 0xf9u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x14u)) == 0x45f8u);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x15u)) == 0x45feu);
+    for (unsigned int i = 0; i < sizeof(id14); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x45f8u + i)) == id14[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id15); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x45feu + i)) == id15[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(operand_reader); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4604u + i)) == operand_reader[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(cursor_tail); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x460fu + i)) == cursor_tail[i]);
+    }
+    printf("  PASS: stage2_id14_id15_operand_reader (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -1834,6 +1877,7 @@ int main(void)
     test_stage2_id12_indirect_call(g_us_data, g_us_size, 0);
     test_stage2_id08_local_helper(g_us_data, g_us_size, 0);
     test_stage2_id13_id16_fixed_arguments(g_us_data, g_us_size, 0);
+    test_stage2_id14_id15_operand_reader(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -1855,6 +1899,7 @@ int main(void)
         test_stage2_id12_indirect_call(g_jp_data, g_jp_size, 1);
         test_stage2_id08_local_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id13_id16_fixed_arguments(g_jp_data, g_jp_size, 1);
+        test_stage2_id14_id15_operand_reader(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

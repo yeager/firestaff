@@ -588,7 +588,10 @@ Root `$45f8` reads one zero byte and advances by three to `$15`; `$45fe` does
 the same and reaches `$09`, whose `$4253` handler is `RTS`. This gives both
 regional recursive paths a statically visible return when entered. The
 source listing marks the containing overlap window `$7445..$7478` as bytes;
-the `$7470/$7472` roots begin two bytes apart. If the nested invocation
+the `$7470/$7472` roots begin two bytes apart. The
+`stage2_id14_id15_operand_reader` assertion separately byte-locks the
+dispatch words `$4135/$4137`, the `$45f8/$45fe` roots, shared `$4604` reader,
+and `$460f` cursor tail in authentic US and JP. If the nested invocation
 returns, the outer cursor reaches `$6f29`, whose `$2a` dispatch target is
 `$4409`. That handler clears A, calls `$e02d`, then its local `$4415` routine
 reads the byte at `$1c+1` (`$00` in both regions), indexes `$4b3c`, and loads
