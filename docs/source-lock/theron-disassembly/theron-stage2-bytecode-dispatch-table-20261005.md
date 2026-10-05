@@ -206,6 +206,9 @@ The `stage2_id17_id1b_fixed_argument_roots` assertion locks IDs `$17..$1b`,
 their converging `$463b` operand reader, and `$4641` continuation in both
 authentic editions. It does not assign meanings to the immediate values or
 callee effects.
+The `stage2_id20_id21_fixed_arguments` assertion also locks their `$4647/$464f`
+roots and convergence path against authentic US and JP bytes; the `$3ab7`
+effects remain unassigned.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

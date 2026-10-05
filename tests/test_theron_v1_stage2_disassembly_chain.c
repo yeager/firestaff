@@ -485,6 +485,34 @@ static void test_stage2_id17_id1b_fixed_argument_roots(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock adjacent dispatch roots that select fixed arguments and converge on
+ * the same local continuation; argument/callee semantics remain unknown. */
+static void test_stage2_id20_id21_fixed_arguments(const uint8_t *raw,
+                                                    size_t raw_size, int jp)
+{
+    static const uint8_t id20[] = {
+        0xa9u, 0x02u, 0x20u, 0xb7u, 0x3au, 0x4cu, 0xf1u, 0x40u
+    };
+    static const uint8_t id21[] = {
+        0xa9u, 0x03u, 0x80u, 0xf6u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x20u)) == 0x4647u);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x21u)) == 0x464fu);
+    for (unsigned int i = 0; i < sizeof(id20); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4647u + i)) == id20[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id21); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x464fu + i)) == id21[i]);
+    }
+    printf("  PASS: stage2_id20_id21_fixed_arguments (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -1932,6 +1960,7 @@ int main(void)
     test_stage2_id13_id16_fixed_arguments(g_us_data, g_us_size, 0);
     test_stage2_id14_id15_operand_reader(g_us_data, g_us_size, 0);
     test_stage2_id17_id1b_fixed_argument_roots(g_us_data, g_us_size, 0);
+    test_stage2_id20_id21_fixed_arguments(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -1955,6 +1984,7 @@ int main(void)
         test_stage2_id13_id16_fixed_arguments(g_jp_data, g_jp_size, 1);
         test_stage2_id14_id15_operand_reader(g_jp_data, g_jp_size, 1);
         test_stage2_id17_id1b_fixed_argument_roots(g_jp_data, g_jp_size, 1);
+        test_stage2_id20_id21_fixed_arguments(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
