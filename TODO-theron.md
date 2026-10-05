@@ -85,7 +85,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   caller remain unbound. The disassembly now decodes from all 85 table roots
   without assigning command semantics. Indices `$00..$07` have a static
   comparison/cursor-transfer trace; `$0b..$10` have indexed-byte/nested-cursor
-  traces, now byte-locked for `$09/$0a` in both authentic editions.
+  traces; the `$09` return byte, `$0a` root, and `$10` nested cursor handler
+  are now byte-locked in both authentic editions.
   Index `$28`'s conditional path, Y-offset 1 test, Y-offset 2 fetch, regional
   helper operand, and cursor tail are now byte-locked for both editions.
   Index `$12`'s saved-cursor indirect-call path is also source-locked for both

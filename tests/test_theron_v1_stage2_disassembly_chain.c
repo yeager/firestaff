@@ -212,11 +212,15 @@ static void test_stage2_id0b_0f_indexed_mutation(const uint8_t *raw,
 /* Lock the nested-cursor dispatch root and pointer-table reader against each
  * authentic edition. This establishes the static call/restore path only; it
  * does not bind a retail stream selector or assign gameplay meaning. */
-static void test_stage2_id09_0a_nested_cursor(const uint8_t *raw,
-                                               size_t raw_size, int jp)
+static void test_stage2_id09_id0a_id10_nested_cursor(const uint8_t *raw,
+                                                       size_t raw_size,
+                                                       int jp)
 {
-    static const uint8_t id0a[] = {0x60u};
+    static const uint8_t id09_return[] = {0x60u};
     static const uint8_t id0a_root[] = {
+        0x20u, 0x4eu, 0x4bu, 0x80u, 0x24u
+    };
+    static const uint8_t id10_root[] = {
         0xc8u, 0xb1u, 0x1cu, 0xa8u, 0xa5u, 0x1cu, 0x48u,
         0xa5u, 0x1du, 0x48u, 0x44u, 0x09u, 0x68u, 0x85u,
         0x1du, 0x68u, 0x85u, 0x1cu, 0x4cu, 0xf5u, 0x40u
@@ -232,19 +236,23 @@ static void test_stage2_id09_0a_nested_cursor(const uint8_t *raw,
     assert(stage2_word_at(raw, raw_size, jp, 0x4123u) == 0x4259u);
     assert(stage2_word_at(raw, raw_size, jp, 0x412du) == 0x4291u);
     assert(stage2_byte_at(raw, raw_size, jp, 0x4253u) == 0x60u);
-    for (unsigned int i = 0; i < sizeof(id0a); ++i) {
+    for (unsigned int i = 0; i < sizeof(id09_return); ++i) {
         assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x4253u + i)) == id0a[i]);
+                              (uint16_t)(0x4253u + i)) == id09_return[i]);
     }
     for (unsigned int i = 0; i < sizeof(id0a_root); ++i) {
         assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x4291u + i)) == id0a_root[i]);
+                              (uint16_t)(0x4254u + i)) == id0a_root[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(id10_root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4291u + i)) == id10_root[i]);
     }
     for (unsigned int i = 0; i < sizeof(pointer_reader); ++i) {
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(0x42a6u + i)) == pointer_reader[i]);
     }
-    printf("  PASS: stage2_id09_0a_nested_cursor (%s)\n",
+    printf("  PASS: stage2_id09_id0a_id10_nested_cursor (%s)\n",
            jp ? "JP" : "US");
 }
 
@@ -1872,7 +1880,7 @@ int main(void)
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
     test_stage2_id0b_0f_indexed_mutation(g_us_data, g_us_size, 0);
-    test_stage2_id09_0a_nested_cursor(g_us_data, g_us_size, 0);
+    test_stage2_id09_id0a_id10_nested_cursor(g_us_data, g_us_size, 0);
     test_stage2_id28_conditional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id12_indirect_call(g_us_data, g_us_size, 0);
     test_stage2_id08_local_helper(g_us_data, g_us_size, 0);
@@ -1894,7 +1902,7 @@ int main(void)
         test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
         test_stage2_id0b_0f_indexed_mutation(g_jp_data, g_jp_size, 1);
-        test_stage2_id09_0a_nested_cursor(g_jp_data, g_jp_size, 1);
+        test_stage2_id09_id0a_id10_nested_cursor(g_jp_data, g_jp_size, 1);
         test_stage2_id28_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id12_indirect_call(g_jp_data, g_jp_size, 1);
         test_stage2_id08_local_helper(g_jp_data, g_jp_size, 1);
