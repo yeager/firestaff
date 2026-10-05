@@ -23,7 +23,7 @@ RANGE {
 
 # Bytecode IDs and the known selector-08 operand at authentic nested-stream roots.
 RANGE { START $6e98; END $6e99; TYPE BYTETABLE; };
-RANGE { START $6c4e; END $6c4e; TYPE BYTETABLE; };
+RANGE { START $6c4e; END $6c6d; TYPE BYTETABLE; };
 RANGE { START $6c92; END $6c92; TYPE BYTETABLE; };
 RANGE { START $6cfa; END $6cfa; TYPE BYTETABLE; };
 RANGE { START $694d; END $694e; TYPE BYTETABLE; };

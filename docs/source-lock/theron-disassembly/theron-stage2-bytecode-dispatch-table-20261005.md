@@ -133,10 +133,46 @@ through `$201c`, restores the saved cursor on return, and advances through
 `$40f9` (`+3`). The call target and the behavior of `$3ab7` are outside this
 step summary.
 
+### Selector `$01` target: conditional static cursor walk
+
+At `$6c4e`, the candidate stream begins with `$21`. If selector `$01` is
+selected, each listed handler's rooted code advances the cursor to the next
+row below. Handler `$3e` has internal branches, but both paths reach the same
+fixed `+4` cursor step. The final `$12` row reaches its next cursor only if
+the indirect callee returns. This is a static walk over authenticated bytes,
+not a capture that selector `$01` was chosen or that the whole stream is
+valid/executed.
+
+| Cursor | ID | Root | Static read/step | Next cursor |
+|---:|---:|---:|---|---:|
+| `$6c4e` | `$21` | `$464f` | Fixed argument `$03`; `+1` | `$6c4f` |
+| `$6c4f` | `$16` | `$4615` | Fixed argument `$07`; `+1` | `$6c50` |
+| `$6c50` | `$08` | `$4214` | Reads `$00` at offset 1; `+2` | `$6c52` |
+| `$6c52` | `$25` | `$4916` | No stream read; `+1` | `$6c53` |
+| `$6c53` | `$26` | `$4910` | No stream read; `+1` | `$6c54` |
+| `$6c54` | `$4c` | `$49d3` | Reads `$00` at offset 1; `+2` | `$6c56` |
+| `$6c56` | `$1f` | `$445f` | Reads `$aa,$00,$10` at offsets 1–3; `+4` | `$6c5a` |
+| `$6c5a` | `$3e` | `$48ac` | Reads offsets 1–3; both branches `+4` | `$6c5e` |
+| `$6c5e` | `$4c` | `$49d3` | Reads `$ad` at offset 1; `+2` | `$6c60` |
+| `$6c60` | `$1e` | `$4433` | Reads `$ab` at offset 1; `+2` | `$6c62` |
+| `$6c62` | `$27` | `$45ca` | Reads `$ac` at offset 1; `+2` | `$6c64` |
+| `$6c64` | `$3e` | `$48ac` | Reads offsets 1–3; both branches `+4` | `$6c68` |
+| `$6c68` | `$0b` | `$4259` | Reads `$00,$ad` at offsets 1–2; `+3` | `$6c6b` |
+| `$6c6b` | `$12` | `$4319` | Pointer swap and indirect call; `+3` on return | `$6c6e` |
+
+The source-lock listing marks `$6c4e..$6c6d` as bytes for this bounded
+candidate walk. This range records IDs and cursor-span bytes; it does not
+label the trailing bytes of `$12` as operands or claim a decoded stream past
+`$6c6d`. The US and JP bytes in this span match except at `$6c6c` (`$ea` US,
+`$ec` JP); the rooted `$4319` handler does not directly read that byte, so its
+role remains unknown.
+
 The regenerated listing marks the pointer words and only the identified root
 bytes (plus the `$08` handler's one-byte operand where its two-byte step is
-static) as data. It does not mark the remainder of these streams as decoded
-bytecode: their extents and operand boundaries have not been established.
+static) as data. The bounded `$6c4e..$6c6d` candidate walk is also emitted as
+bytes, without assigning operand names. It does not mark the remainder of
+these streams as decoded bytecode: their extents and operand boundaries have
+not been established.
 
 ## Target-rooted disassembly and regional comparison
 

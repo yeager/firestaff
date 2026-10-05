@@ -6398,30 +6398,11 @@ L6C3C:  sxy
         adc     $12,x
         bit     #$6D
 L6C4C:  asl     $09,x
-L6C4E:  .byte   $21
-        asl     $08,x
-        brk
-        and     $26
-        jmp     L1F00
-
-        tax
-        brk
-        bpl     L6C99
-        brk
-        brk
-        brk
-        jmp     L1EAD
-
-        .byte   $AB
-        rmb2    $AC
-        rol     a:L0000,x
-        brk
-        .byte   $0B
-        brk
-        .byte   $AD
-        .byte   $12
-L6C6C:  nop
-        sei
+L6C4E:  .byte   $21,$16,$08,$00,$25,$26,$4C,$00
+        .byte   $1F,$AA,$00,$10,$3E,$00,$00,$00
+        .byte   $4C,$AD,$1E,$AB,$27,$AC,$3E,$00
+        .byte   $00,$00,$0B,$00,$AD,$12
+L6C6C:  .byte   $EA,$78
         eor     ($B2,x)
         .byte   $73
         .byte   $41
