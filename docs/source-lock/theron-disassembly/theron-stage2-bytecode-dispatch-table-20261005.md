@@ -219,6 +219,23 @@ The first two `$2d` operands are `$02`; the third is `$03`. The `$12` words
 are `$7552/$7554` and `$74f2/$74f4` for US/JP respectively; both remain
 conditional on the runtime `$201c` vector selecting returning callees.
 
+### Dispatch ID `$11`: overlapping code root
+
+The `$11` dispatch path calls `$5e27` in US and `$5e57` in JP. Rooting the
+US entry exposes `STZ $4f9c`; the following bytes overlap the linear `$5e2b`
+decode and are the seven-byte HuC6280 `TII` descriptor `$4f9c -> $4f9d`,
+length `$0037`. The two relative calls then target `$5e4d` and `$5e40` (JP:
+`$5e7d` and `$5e70`). The continuation loads `$0c/$0d`, stores them at
+`$4fd9/$4fda`, and returns. The first callee sets VDC registers `$02/$03`,
+transfers 64 bytes from `$5e5f` to `$0404`, then returns; the second copies
+`$4fdb/$4fdc` to `$4fd5/$4fd6` and returns. The TII opcode and its operand
+bytes are marked as a rooted descriptor in the info file so the overlapping
+linear decode is not mistaken for the ID `$11` path.
+
+The bounded caller/callee bytes contain no direct `$3b33` access. This does
+not rule out effects through other code or runtime state and does not establish
+that a candidate stream reaches ID `$11`.
+
 ### Rooted `$2d` handler: counter poll
 
 Although the linear listing at `$4691` decodes a different overlapping

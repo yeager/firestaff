@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — root dispatch ID `$11` across overlapping code/data
+
+Followed the authentic ID `$11` dispatch call to `$5e27` (US) / `$5e57`
+(JP). The alternate root decodes as `STZ $4f9c`, followed by a seven-byte
+HuC6280 TII descriptor, then relative calls to `$5e4d/$5e40` (JP:
+`$5e7d/$5e70`) and stores to `$4fd9/$4fda` before returning. The two callees
+are locked through their RTS instructions: one writes VDC registers `$02/$03`
+and performs a 64-byte TIA; the other copies `$4fdb/$4fdc` to `$4fd5/$4fd6`.
+The da65 info map now preserves this alternate root and marks the overlapping
+TII descriptor as bytes instead of misreading it as the linear `$5e2b` code.
+An authentic US/JP raw-sector test locks the caller and both callees. These
+bounded paths contain no direct `$3b33` access, but candidate execution and
+indirect effects remain unproven; see `TODO-theron.md`.
+
 ## 2026-10-05 — trace candidate continuations for selectors `$04..$0c`
 
 Extended the authentic US/JP Rev. 1 Track 02 candidate walks beyond their

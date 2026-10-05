@@ -221,6 +221,55 @@ static void test_stage2_selector_candidate_continuations(
            jp ? "JP" : "US");
 }
 
+/* Dispatch ID $11 calls an overlapping code root whose first bytes are not
+ * instruction-aligned in the linear listing. Lock its TII descriptor and
+ * both regional entry addresses against authentic Track 02 sectors. */
+static void test_stage2_id11_overlapping_root(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    static const uint8_t handler[] = {
+        0x9cu, 0x9cu, 0x4fu, 0x73u, 0x9cu, 0x4fu, 0x9du, 0x4fu,
+        0x37u, 0x00u, 0x44u, 0x1au, 0x44u, 0x0bu, 0xa5u, 0x0cu,
+        0x8du, 0xd9u, 0x4fu, 0xa5u, 0x0du, 0x8du, 0xdau, 0x4fu,
+        0x60u
+    };
+    uint8_t tia_callee[] = {
+        0xa9u, 0xe0u, 0x8du, 0x02u, 0x04u, 0xa9u, 0x00u, 0x8du,
+        0x03u, 0x04u, 0xe3u, 0x5fu, 0x5eu, 0x04u, 0x04u, 0x40u,
+        0x00u, 0x60u
+    };
+    static const uint8_t copy_callee[] = {
+        0xadu, 0xdbu, 0x4fu, 0x8du, 0xd5u, 0x4fu, 0xadu, 0xdcu,
+        0x4fu, 0x8du, 0xd6u, 0x4fu, 0x60u
+    };
+    uint16_t root = jp ? 0x5e57u : 0x5e27u;
+    uint16_t first_bsr_target = (uint16_t)(root + 0x26u);
+    uint16_t second_bsr_target = (uint16_t)(root + 0x19u);
+
+    tia_callee[11] = jp ? 0x8fu : 0x5fu;
+
+    assert(stage2_byte_at(raw, raw_size, jp, 0x42f5u) == 0x20u);
+    assert(stage2_word_at(raw, raw_size, jp, 0x42f6u) == root);
+    for (unsigned int i = 0; i < sizeof(handler); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(root + i)) == handler[i]);
+    }
+    assert(first_bsr_target == (jp ? 0x5e7du : 0x5e4du));
+    assert(second_bsr_target == (jp ? 0x5e70u : 0x5e40u));
+    for (unsigned int i = 0; i < sizeof(tia_callee); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(first_bsr_target + i)) ==
+               tia_callee[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(copy_callee); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(second_bsr_target + i)) ==
+               copy_callee[i]);
+    }
+    printf("  PASS: stage2_id11_overlapping_root (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Selector pointer operands are read at cursor+1/+2 by the rooted $41/$12
  * handlers. This locks the earlier selector roots to authentic regional
  * bytes; it does not prove that any selector is executed. */
@@ -1200,11 +1249,13 @@ int main(void)
     if (g_jp_data) test_ipl_loader_jp();
     test_stage2_selector_candidate_continuations(
         g_us_data, g_us_size, 0);
+    test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_selector_00_03_pointer_roots(g_us_data, g_us_size, 0);
     test_stage2_counter_wait_sites(g_us_data, g_us_size, 0);
     if (g_jp_data) {
         test_stage2_selector_candidate_continuations(
             g_jp_data, g_jp_size, 1);
+        test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_selector_00_03_pointer_roots(
             g_jp_data, g_jp_size, 1);
         test_stage2_counter_wait_sites(g_jp_data, g_jp_size, 1);

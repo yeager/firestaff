@@ -57,7 +57,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   unproven.
   Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
-  semantics. See
+  semantics. ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
+  overlapping TII descriptor and two relative callees are source-locked, and
+  the bounded callees do not directly access `$3b33`. This does not prove the
+  candidate reaches ID `$11` or close the counter-poll producer gap. See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 
 ## 2026-10-05 — prove replayed PCE masks at the controller data port

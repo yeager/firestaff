@@ -4507,12 +4507,13 @@ L5E1F:  brk
         brk
         brk
 L5E26:  brk
-L5E27:  .byte   $9C
-L5E28:  .byte   $9C
-L5E29:  .byte   $4F
-L5E2A:  .byte   $73
-L5E2B:  stz     L9D4F
-        bbr4    $37,$5E31
+L5E27:
+L5E28           := * + 1
+L5E29           := * + 2
+        stz     L4F9C
+Stage2TiiDescriptor5E2A:
+        .byte   $73
+L5E2B:  .byte   $9C,$4F,$9D,$4F,$37,$00
         bsr     L5E4D
         bsr     L5E40
         lda     $0C
@@ -14020,9 +14021,9 @@ L9D51:  pha
         lda     L5E29
         cmp     $3B6E
         bcc     L9D68
-        lda     L5E2A
+        lda     Stage2TiiDescriptor5E2A
         beq     L9D68
-        dec     L5E2A
+        dec     Stage2TiiDescriptor5E2A
         jsr     L5D93
         jsr     L5DF5
 L9D68:  inc     L5E29
