@@ -86,8 +86,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   without assigning command semantics. Indices `$00..$07` have a static
   comparison/cursor-transfer trace; `$0b..$10` have indexed-byte/nested-cursor
   traces, now byte-locked for `$09/$0a` in both authentic editions.
-  Index `$28`'s Y-offset 1 test and Y-offset 2 fetch are also mapped,
-  but none of these paths is bound to an executed stream. The authentic
+  Index `$28`'s conditional path, Y-offset 1 test, Y-offset 2 fetch, regional
+  helper operand, and cursor tail are now byte-locked for both editions.
+  None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through
   `$6f28`, with recursive targets `$73b2` US / `$73b4` JP. That target begins

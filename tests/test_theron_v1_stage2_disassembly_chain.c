@@ -248,6 +248,62 @@ static void test_stage2_id09_0a_nested_cursor(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock dispatch ID $28 and its two bounded helpers against the authentic
+ * regional binaries. These bytes show control flow and one regional pointer
+ * operand only; they do not establish stream selection or gameplay meaning. */
+static void test_stage2_id28_conditional_handoff(const uint8_t *raw,
+                                                  size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x03u, 0x44u, 0xc6u, 0x5bu, 0xa0u, 0x01u, 0xb1u,
+        0x1cu, 0xf0u, 0x13u, 0x44u, 0x54u, 0x44u, 0x31u, 0x64u,
+        0xf9u, 0x64u, 0xfau, 0xa9u, 0x0eu, 0x85u, 0xffu, 0xc6u,
+        0xf8u, 0x20u, 0x3fu, 0xe0u, 0x80u, 0x1du, 0x44u, 0x41u,
+        0x44u, 0x1eu, 0x64u, 0xfau, 0x64u, 0xfbu, 0x64u, 0xffu,
+        0x20u, 0x33u, 0xe0u, 0xc9u, 0x00u, 0xd0u, 0xf1u, 0xadu,
+        0xd0u, 0x37u, 0x8du, 0x73u, 0x43u, 0xadu, 0xd1u, 0x37u,
+        0x8du, 0x74u, 0x43u, 0x64u, 0x5bu, 0x4cu, 0xf9u, 0x40u
+    };
+    static const uint8_t helper_43b5_prefix[] = {
+        0xadu, 0xd6u, 0x37u, 0x48u, 0xadu, 0xd7u, 0x37u,
+        0x48u, 0xa9u
+    };
+    static const uint8_t helper_43b5_suffix[] = {
+        0x8du, 0xd6u, 0x37u, 0xa9u, 0x5eu, 0x8du, 0xd7u,
+        0x37u, 0x20u, 0xd8u, 0x37u, 0x68u, 0x8du, 0xd7u,
+        0x37u, 0x68u, 0x8du, 0xd6u, 0x37u, 0x20u, 0x48u,
+        0x38u, 0x60u
+    };
+    static const uint8_t helper_43d6[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xccu, 0x37u, 0x60u
+    };
+    uint8_t regional_pointer = jp ? 0xcfu : 0x9fu;
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x28u)) == 0x4375u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4375u + i)) == root[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(helper_43b5_prefix); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x43b5u + i)) ==
+               helper_43b5_prefix[i]);
+    }
+    assert(stage2_byte_at(raw, raw_size, jp, 0x43beu) == regional_pointer);
+    for (unsigned int i = 0; i < sizeof(helper_43b5_suffix); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x43bfu + i)) ==
+               helper_43b5_suffix[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(helper_43d6); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x43d6u + i)) == helper_43d6[i]);
+    }
+    printf("  PASS: stage2_id28_conditional_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -1689,6 +1745,7 @@ int main(void)
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
     test_stage2_id0b_0f_indexed_mutation(g_us_data, g_us_size, 0);
     test_stage2_id09_0a_nested_cursor(g_us_data, g_us_size, 0);
+    test_stage2_id28_conditional_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -1706,6 +1763,7 @@ int main(void)
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
         test_stage2_id0b_0f_indexed_mutation(g_jp_data, g_jp_size, 1);
         test_stage2_id09_0a_nested_cursor(g_jp_data, g_jp_size, 1);
+        test_stage2_id28_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

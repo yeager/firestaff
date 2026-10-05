@@ -706,12 +706,15 @@ and branches on that byte. Both branches then call `$43d6`, which increments Y
 and loads the byte at `($1c),Y` into `$37cc`; along this path that is the byte
 at offset 2. Both branches also call `$43b5`, which saves the pointer pair
 `$37d6/$37d7`, loads `$5e9f` (US) or `$5ecf` (JP) into it, calls `$37d8`,
-restores the pair, and calls `$3848`. The immediate at `$43bd` differs (`#$9f`
-US / `#$cf` JP); each resulting pointer is one byte past that edition's
-64-byte TIA source span above. This alignment is established statically; the
-role of the byte loaded to `$37cc` and the pointer passed to `$37d8` remain
-unknown. These snippets establish instruction flow and regional operands, not
-what any dispatch index means.
+restores the pair, and calls `$3848`. The `$43bd` byte is the `LDA #` opcode;
+its immediate at `$43be` differs (`#$9f` US / `#$cf` JP). Each resulting
+pointer is one byte past that edition's 64-byte TIA source span above. This
+alignment is established statically; the role of the byte loaded to `$37cc`
+and the pointer passed to `$37d8` remain unknown. The
+`stage2_id28_conditional_handoff` source-lock assertion binds the `$415d`
+dispatch word, `$4375` handler, both helpers, and the `$43be` regional
+operand against authentic US and JP Track 02. These snippets establish
+instruction flow and regional operands, not what any dispatch index means.
 
 ```text
 US $46c4: JSR $5e4d   JP $46c4: JSR $5e7d
