@@ -93,12 +93,45 @@ continuation must be decoded at its actual branch target, `0x57939`. The
 listing in the prior subsection is therefore address-level control-flow
 evidence, not a contiguous instruction stream.
 
-At `0x1dfd4`, the routine first calls `0x57350` with `0x684` and branches away
-if it returns zero. The nonzero branch calls `0x4adbc`, `0x4534c`, then loops:
+At `0x1dfd4`, the routine first calls `0x57350` with `0x684` and returns when
+the result is nonzero. If it returns zero, the routine calls `0x4adbc`,
+`0x4534c`, then loops:
 `0x1dd24` -> load word `[0x614]` -> call `0x19cdc` with that word. The loop
 returns to `0x1dd24`. These are address-level call-graph facts, not recovered
 source names. In particular, the loop must not be labeled as the title/menu
 loop without an address-to-symbol or runtime trace.
+
+The adjacent routine boundaries sharpen that description. In `0x1dd24`,
+`0x1de87` tests dword `[0x614]`; a nonzero value branches to `0x1dfcd`, the
+epilogue that returns at `0x1dfd0`. The caller at `0x1dfd4` then reads the low
+word of `[0x614]` and passes it as the argument to `0x19cdc`. At `0x19cdc`, the
+first argument is copied to `DI` and tested for zero before the two main
+paths diverge. This is evidence for a frame routine that yields to an
+argument-dispatch routine when `[0x614]` is nonzero. It does not identify the
+event values, their producers, or the visible menu action they select.
+
+```text
+0x1de87: cmp dword [0x614], 0
+         jne 0x1dfcd
+...
+0x1dfcd: pop edi
+         pop esi
+         leave
+0x1dfd0: ret
+0x1dfd4: call 0x57350(0x684)
+         if eax != 0: return
+         call 0x4adbc
+         call 0x4534c
+loop:    call 0x1dd24
+         mov ax, word [0x614]
+         push eax
+         call 0x19cdc
+         goto loop
+0x19cdc: mov di, word [ebp + 8]
+         call 0x4b394
+         test di, di
+         je zero-argument branch
+```
 
 The ordinary route's core control flow is:
 
@@ -109,7 +142,7 @@ The ordinary route's core control flow is:
          call 0x5903c
          terminate (DOS int 21h, AH=0)
 0x1dfd4: call 0x57350(0x684)
-         if return == 0: return
+         if return != 0: return
          call 0x4adbc
          call 0x4534c
 loop:    call 0x1dd24
