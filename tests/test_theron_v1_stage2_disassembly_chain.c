@@ -740,6 +740,57 @@ static void test_stage2_id2d_overlapping_poll_root(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock selected branch/helper windows of the large ID $2e path. */
+static void test_stage2_id2e_bounded_windows(const uint8_t *raw,
+                                             size_t raw_size, int jp)
+{
+    static const uint8_t root_prefix[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x7bu, 0x43u, 0x08u, 0x48u,
+        0x43u, 0x10u, 0x48u, 0x18u, 0xadu, 0xf5u, 0xffu, 0x69u,
+        0x06u, 0x53u, 0x08u, 0x1au, 0x53u, 0x10u, 0xc6u, 0x5bu,
+        0x20u, 0xd6u, 0x43u, 0x20u, 0xd8u, 0x37u, 0xa9u, 0x00u,
+        0x85u, 0x20u, 0xa9u, 0x60u, 0x85u, 0x21u, 0x20u, 0x3eu,
+        0x38u, 0x64u, 0x5bu
+    };
+    static const uint8_t alternate_path[] = {
+        0xa9u, 0x3fu, 0x85u, 0xf8u, 0xa9u, 0x0fu, 0x85u, 0xffu,
+        0x20u, 0xd8u, 0xe0u, 0xa9u, 0x3fu, 0x85u, 0xf8u, 0xa9u,
+        0x0eu, 0x85u, 0xffu, 0x20u, 0xd8u, 0xe0u, 0xa9u, 0x01u,
+        0x85u, 0xffu, 0x20u, 0xd8u, 0xe0u, 0x4cu, 0xf9u, 0x40u
+    };
+    static const uint8_t pair_loop[] = {
+        0xa2u, 0x05u, 0xa0u, 0xffu, 0x44u, 0x19u, 0xa5u, 0xf8u,
+        0xd0u, 0x06u, 0xa5u, 0xf9u, 0xd0u, 0x02u, 0x80u, 0x09u,
+        0xdau, 0x5au, 0x86u, 0xffu, 0x20u, 0xd8u, 0xe0u, 0x7au,
+        0xfau, 0xe8u, 0xe0u, 0x0au, 0xd0u, 0xe6u, 0x60u
+    };
+    static const uint8_t pair_reader[] = {
+        0xc8u, 0xb1u, 0x00u, 0x85u, 0xf8u, 0xc8u,
+        0xb1u, 0x00u, 0x85u, 0xf9u, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x2eu)) == 0x46cau);
+    for (unsigned int i = 0; i < sizeof(root_prefix); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x46cau + i)) == root_prefix[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(alternate_path); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x474au + i)) == alternate_path[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(pair_loop); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x476au + i)) == pair_loop[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(pair_reader); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4789u + i)) == pair_reader[i]);
+    }
+    printf("  PASS: stage2_id2e_bounded_windows (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2195,6 +2246,7 @@ int main(void)
     test_stage2_id27_bounded_pointer_setup(g_us_data, g_us_size, 0);
     test_stage2_id2a_entry_helper(g_us_data, g_us_size, 0);
     test_stage2_id2d_overlapping_poll_root(g_us_data, g_us_size, 0);
+    test_stage2_id2e_bounded_windows(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2226,6 +2278,7 @@ int main(void)
         test_stage2_id27_bounded_pointer_setup(g_jp_data, g_jp_size, 1);
         test_stage2_id2a_entry_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id2d_overlapping_poll_root(g_jp_data, g_jp_size, 1);
+        test_stage2_id2e_bounded_windows(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
