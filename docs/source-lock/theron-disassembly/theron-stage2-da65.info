@@ -1,0 +1,18 @@
+GLOBAL {
+    CPU "huc6280";
+    STARTADDR $4000;
+};
+
+RANGE {
+    START $410d;
+    END $41b6;
+    TYPE ADDRTABLE;
+    NAME "Stage2Dispatch";
+};
+
+RANGE {
+    START $5e5f;
+    END $5e9e;
+    TYPE BYTETABLE;
+    NAME "Stage2TiaPayload5E5F";
+};

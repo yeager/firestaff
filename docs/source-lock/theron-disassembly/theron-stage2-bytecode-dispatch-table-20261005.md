@@ -21,7 +21,8 @@ uses it as the X offset of `JMP ($410d,x)`. `$410d..$41b6` is consequently an
 85-entry little-endian pointer table, ending immediately before the helper at
 `$41b7`. The listing in
 `docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm` now emits
-this range as `.word` data instead of misleading linear instructions.
+this range as 85 `.addr` entries, labels each table target, and marks the
+dispatch explicitly instead of treating the table as linear instructions.
 
 ## Index-to-target map
 
@@ -42,6 +43,41 @@ static HuC6280 jump target reached by the corresponding table index.
 50:4a1b 51:4a42 52:4a50 53:49fb 54:484e
 ```
 
+## Target-rooted disassembly and regional comparison
+
+`theron-us-stage2-da65.info` marks `$410d..$41b6` as an address table so da65
+starts a labeled sweep at each of the 85 targets. It also marks the 64-byte
+source of the US `TIA` at `$5e57` as data (`$5e5f..$5e9e`), rather than letting
+a linear sweep misread it as instructions. The resulting US source-lock
+listing is `theron-us-stage2-huc6280.asm`.
+
+To reproduce the payload, deinterleave the 17 raw MODE1/2352 sectors: keep
+bytes 16 through 2063 from each sector, for US raw sectors 1224–1240 or JP
+raw sectors 1223–1239, then concatenate those 2048-byte user-data portions.
+A contiguous 34,816-byte copy from the first user-data offset is wrong because
+it includes the next sector's 16-byte header at each boundary. The first
+sector offsets and table bytes above remain within that first user-data
+portion.
+
+The 170 table bytes are identical in both editions. In the deinterleaved
+payload interval corresponding to `$4000..$4acf`, the editions differ at only
+seven bytes, in five spans: `$42f6`, `$4314..$4315`, `$43be`, `$466f..$4670`,
+and `$46c5`. All 85 target first bytes match. Their first 16 bytes also match
+at 84 targets; the sole differing prefix is index `$35` at `$46b8`:
+
+```text
+US $46c4: JSR $5e4d   JP $46c4: JSR $5e7d
+```
+
+The surrounding control flow is byte-identical: `INY; LDA ($1c),Y; BNE $46c4;
+LDA #$13; JSR $3ab7; BRA $46c7; JSR [regional target]; JMP $40f5`. The two
+regional callees have the same instruction sequence, shifted by `$30`: set
+`$0402` to `$e0`, set `$0403` to zero, transfer 64 bytes with `TIA` to `$0404`,
+then return. Their source spans (`$5e5f..$5e9e` US and `$5e8f..$5ece` JP) are
+byte-identical with FNV-1a `591d332b`. These observations establish static
+control flow and data identity only; they do not assign a gameplay command
+meaning or prove the index occurs in a valid stream.
+
 ## Verification boundary
 
 `theron_v1_huc6280_disassembly_read_file()` now verifies the complete table
@@ -49,7 +85,7 @@ against both raw BIN identities, checks all 85 decoded little-endian targets
 against the listing, and confirms each target lies in the `$4000..$7fff`
 stage-two address span. It does not independently establish a runtime memory
 mapping for that span. The receipt is static-source evidence only. The table
-alone does not prove which indices occur in valid stream data, the meaning of any handler,
-operand/stream advancement for every entry, or which real level/resource uses
-the interpreter. It does not authorize a host bytecode interpreter or gameplay
-semantics.
+alone does not prove which indices occur in valid stream data, the meaning of
+any handler, operand/stream advancement for every entry, or which real
+level/resource uses the interpreter. It does not authorize a host bytecode
+interpreter or gameplay semantics.

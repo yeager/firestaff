@@ -1,6 +1,6 @@
 ; da65 V2.18 - N/A
-; Created:    2026-07-12 09:13:48
-; Input file: authenticated US Track 02 BIN stage-two payload
+; Created:    2026-10-05
+; Input file: authenticated US Track 02 stage-two user-data payload
 ; Page:       1
 
 
@@ -207,7 +207,7 @@ L40DC:  cly
         lda     ($1C)
         asl     a
         tax
-        jmp     (L410D,x)
+        jmp     (Stage2Dispatch,x)
 
 L40E4:  clc
         adc     $1C
@@ -233,22 +233,98 @@ L4105:  lda     #$07
         bra     L40E4
 L4109:  lda     #$09
         bra     L40E4
-; The indirect jump at $40dc indexes this little-endian table by the
-; doubled byte read from ($1c). These are dispatch targets, not instructions.
-; Exact 85-entry table verified against authentic US and JP Track 02 BINs;
-; see theron-stage2-bytecode-dispatch-table-20261005.md.
-L410D:  .word   $41C5,$41CB,$41D8,$41DE,$41E6,$41EC,$41F0,$41F4
-        .word   $4214,$4253,$4254,$4259,$4263,$4271,$4280,$4288
-        .word   $4291,$42D3,$4319,$45F0,$45F8,$45FE,$4615,$461D
-        .word   $4623,$4635,$4629,$462F,$4345,$4497,$4433,$445F
-        .word   $4647,$464F,$4234,$42FB,$4334,$4916,$4910,$45CA
-        .word   $4375,$43DD,$4409,$4653,$4674,$468F,$46CA,$4794
-        .word   $47A6,$47C5,$47D3,$469D,$44BD,$46B8,$4361,$480A
-        .word   $47F3,$4842,$485F,$447F,$4862,$489F,$48AC,$4901
-        .word   $491B,$42BE,$4973,$4995,$45EB,$49AB,$49B4,$49BB
-        .word   $4A5E,$44EB,$4A81,$4ACA,$49D3,$49E8,$4A3B,$4A14
-        .word   $4A1B,$4A42,$4A50,$49FB,$484E
-L41B7:  ldy     #$4A
+; The indirect jump at $40dc indexes these little-endian targets by the
+; doubled byte read from ($1c). Targets are address roots, not command names.
+; The 85 entries match authentic US and JP Track 02 BINs; see the source-lock
+; dispatch-table evidence document. Reproduce this rooted sweep with
+; theron-stage2-da65.info and the authentic, deinterleaved US payload.
+Stage2Dispatch:
+        .addr   L41C5
+        .addr   L41CB
+        .addr   L41D8
+        .addr   L41DE
+        .addr   L41E6
+        .addr   L41EC
+        .addr   L41F0
+        .addr   L41F4
+        .addr   L4214
+        .addr   L4253
+        .addr   L4254
+        .addr   L4259
+        .addr   L4263
+        .addr   L4271
+        .addr   L4280
+        .addr   L4288
+        .addr   L4291
+        .addr   L42D3
+        .addr   L4319
+        .addr   L45F0
+        .addr   L45F8
+        .addr   L45FE
+        .addr   L4615
+        .addr   L461D
+        .addr   L4623
+        .addr   L4635
+        .addr   L4629
+        .addr   L462F
+        .addr   L4345
+        .addr   L4497
+        .addr   L4433
+        .addr   L445F
+        .addr   L4647
+        .addr   L464F
+        .addr   L4234
+        .addr   L42FB
+        .addr   L4334
+        .addr   L4916
+        .addr   L4910
+        .addr   L45CA
+        .addr   L4375
+        .addr   L43DD
+        .addr   L4409
+        .addr   L4653
+        .addr   L4674
+        .addr   L468F
+        .addr   L46CA
+        .addr   L4794
+        .addr   L47A6
+        .addr   L47C5
+        .addr   L47D3
+        .addr   L469D
+        .addr   L44BD
+        .addr   L46B8
+        .addr   L4361
+        .addr   L480A
+        .addr   L47F3
+        .addr   L4842
+        .addr   L485F
+        .addr   L447F
+        .addr   L4862
+        .addr   L489F
+        .addr   L48AC
+        .addr   L4901
+        .addr   L491B
+        .addr   L42BE
+        .addr   L4973
+        .addr   L4995
+        .addr   L45EB
+        .addr   L49AB
+        .addr   L49B4
+        .addr   L49BB
+        .addr   L4A5E
+        .addr   L44EB
+        .addr   L4A81
+        .addr   L4ACA
+        .addr   L49D3
+        .addr   L49E8
+        .addr   L4A3B
+        .addr   L4A14
+        .addr   L4A1B
+        .addr   L4A42
+        .addr   L4A50
+        .addr   L49FB
+        .addr   L484E
+        ldy     #$4A
 L41B9:  iny
         lda     ($1C),y
         tax
@@ -262,7 +338,7 @@ L41C5:  bsr     L41B9
         cla
         jmp     L40E4
 
-        bsr     L41F8
+L41CB:  bsr     L41F8
 L41CD:  bne     L41D5
 L41CF:  bsr     L41B9
         cla
@@ -270,28 +346,27 @@ L41CF:  bsr     L41B9
 
 L41D5:  jmp     L4101
 
-        .byte   $44
+L41D8:  .byte   $44
 L41D9:  .byte   $1E
 L41DA:  bne     L41CF
         bra     L41D5
-        bsr     L41F8
+L41DE:  bsr     L41F8
         bcc     L41D5
         beq     L41D5
         bra     L41CF
-        bsr     L41F8
+L41E6:  bsr     L41F8
 L41E8:  bcs     L41D5
         bra     L41CF
-        bsr     L4203
+L41EC:  bsr     L4203
         bra     L41CD
-        bsr     L4203
+L41F0:  bsr     L4203
         bra     L41DA
-        bsr     L4203
+L41F4:  bsr     L4203
         bra     L41E8
 L41F8:  iny
         lda     ($1C),y
         tax
-        .byte   $BD
-L41FD:  bra     L4226
+        lda     $2780,x
         iny
         cmp     ($1C),y
         rts
@@ -308,7 +383,7 @@ L4203:  iny
         cmp     $2780,x
         rts
 
-        iny
+L4214:  iny
 L4215:  lda     ($1C),y
         bsr     L421C
         jmp     L40F5
@@ -318,17 +393,15 @@ L421C:  sta     L4EC1
         asl     a
         asl     a
         clc
-        .byte   $6D
-L4226:  php
-        bmi     L41B6
-        ora     #$30
+        adc     $3008
+        sta     $3009
         lda     #$02
         jsr     L4F5E
         bcs     L4233
         rts
 
 L4233:  brk
-        dec     $5B
+L4234:  dec     $5B
         jsr     L43D6
         bsr     L4240
         stz     $5B
@@ -344,35 +417,35 @@ L424B:  lda     #$03
         jsr     L383E
         rts
 
-        rts
+L4253:  rts
 
-        jsr     L4B4E
+L4254:  jsr     L4B4E
         bra     L427D
-        jsr     L41F8
+L4259:  jsr     L41F8
         lda     ($1C),y
         sta     $2780,x
         bra     L427D
-        jsr     L41F8
+L4263:  jsr     L41F8
         lda     ($1C),y
         clc
         adc     $2780,x
         sta     $2780,x
         bra     L427D
-        jsr     L41F8
+L4271:  jsr     L41F8
         lda     ($1C),y
         sec
         sbc     $2780,x
         sta     $2780,x
 L427D:  jmp     L40F9
 
-        jsr     L41F8
+L4280:  jsr     L41F8
         inc     $2780,x
         bra     L428E
-        jsr     L41F8
+L4288:  jsr     L41F8
         dec     $2780,x
 L428E:  jmp     L40F5
 
-        iny
+L4291:  iny
         lda     ($1C),y
         tay
         lda     $1C
@@ -401,7 +474,7 @@ L42A6:  lda     #$00
         jsr     L40CC
         rts
 
-        .byte   $A5
+L42BE:  .byte   $A5
 L42BF:  trb     $A548
         ora     $2048,x
         lda     $2041,y
@@ -411,7 +484,7 @@ L42BF:  trb     $A548
         sta     $1C
         jmp     L40F9
 
-        iny
+L42D3:  iny
         lda     ($1C),y
         sta     L4EC2
         iny
@@ -428,7 +501,7 @@ L42DB:  trb     $D78D
         jsr     L5E27
         jmp     L40FD
 
-        iny
+L42FB:  iny
         lda     ($1C),y
         pha
         jsr     L4B00
@@ -442,7 +515,7 @@ L42DB:  trb     $D78D
         jsr     L56AF
         jmp     L40F5
 
-        lda     $1C
+L4319:  lda     $1C
         pha
         lda     $1D
         pha
@@ -459,7 +532,7 @@ L42DB:  trb     $D78D
         sta     $1C
         jmp     L40F9
 
-        bsr     L4339
+L4334:  bsr     L4339
         jmp     L40F5
 
 L4339:  iny
@@ -469,7 +542,7 @@ L4339:  iny
         jsr     L4F5E
         rts
 
-        iny
+L4345:  iny
         lda     ($1C),y
         iny
         sta     $0E
@@ -486,7 +559,7 @@ L4358:  ora     ($A9)
         smb3    L003A
         jmp     L4101
 
-        iny
+L4361:  iny
         lda     ($1C),y
         sta     $15
         iny
@@ -498,7 +571,7 @@ L4358:  ora     ($A9)
 
 L4373:  brk
 L4374:  brk
-        jsr     L4403
+L4375:  jsr     L4403
         dec     $5B
         ldy     #$01
         lda     ($1C),y
@@ -549,7 +622,7 @@ L43D6:  iny
         sta     $37CC
         rts
 
-        jsr     L4403
+L43DD:  jsr     L4403
         stz     $FA
         stz     $FB
         lda     L4373
@@ -570,7 +643,7 @@ L4403:  jsr     LE045
         bne     L4403
         rts
 
-        cla
+L4409:  cla
         jsr     LE02D
         bsr     L4415
         jsr     LE012
@@ -596,7 +669,7 @@ L442F:  brk
 L4430:  brk
 L4431:  brk
 L4432:  brk
-        bsr     L4446
+L4433:  bsr     L4446
         lda     L442F
         sta     L0000
         lda     L4430
@@ -616,7 +689,7 @@ L4446:  iny
         jsr     L4BD2
         rts
 
-        iny
+L445F:  iny
         lda     ($1C),y
         sta     L4EC2
         iny
@@ -631,7 +704,7 @@ L4446:  iny
         jsr     L4F5E
         jmp     L40FD
 
-        bsr     L4483
+L447F:  bsr     L4483
         bra     L443F
 L4483:  iny
         lda     ($1C),y
@@ -644,7 +717,7 @@ L448B:  lsr     $C3AD
         sta     $01
         rts
 
-        iny
+L4497:  iny
         lda     ($1C),y
         sta     L0011
         iny
@@ -666,7 +739,7 @@ L44A2:  lda     ($1C),y
         jsr     L3AB7
         jmp     L4105
 
-        iny
+L44BD:  iny
         lda     ($1C),y
         bne     L44C9
         lda     #$10
@@ -690,7 +763,7 @@ L44E7:  brk
 L44E8:  brk
 L44E9:  brk
 L44EA:  brk
-        iny
+L44EB:  iny
         lda     ($1C),y
         pha
         beq     L4511
@@ -795,7 +868,7 @@ L45A6:  lda     ($1C),y
         jsr     L3AB7
 L45C7:  jmp     L4105
 
-        jsr     L4446
+L45CA:  jsr     L4446
         lda     L442F
         sta     L0000
         lda     L4430
@@ -810,16 +883,16 @@ L45D7:  lda     L4D7B
         jsr     L3AB7
         jmp     L40F5
 
-        jsr     L4483
+L45EB:  jsr     L4483
         bra     L45D7
-        lda     #$06
+L45F0:  lda     #$06
         jsr     L3AB7
         jmp     L40F1
 
-        bsr     L4604
+L45F8:  bsr     L4604
         lda     #$08
         bra     L460F
-        bsr     L4604
+L45FE:  bsr     L4604
         lda     #$0A
         bra     L460F
 L4604:  iny
@@ -833,23 +906,23 @@ L4604:  iny
 L460F:  jsr     L3AB7
         jmp     L40F9
 
-        lda     #$07
+L4615:  lda     #$07
         jsr     L3AB7
         jmp     L40F1
 
-        bsr     L463B
+L461D:  bsr     L463B
         lda     #$09
         bra     L4641
-        bsr     L463B
+L4623:  bsr     L463B
         lda     #$0B
         bra     L4641
-        bsr     L463B
+L4629:  bsr     L463B
         lda     #$0C
         bra     L4641
-        bsr     L463B
+L462F:  bsr     L463B
         lda     #$0D
         bra     L4641
-        bsr     L463B
+L4635:  bsr     L463B
         lda     #$0E
         bra     L4641
 L463B:  iny
@@ -860,13 +933,13 @@ L463B:  iny
 L4641:  jsr     L3AB7
         jmp     L40F5
 
-        lda     #$02
+L4647:  lda     #$02
 L4649:  jsr     L3AB7
         jmp     L40F1
 
-        lda     #$03
+L464F:  lda     #$03
         bra     L4649
-        iny
+L4653:  iny
         lda     ($1C),y
         pha
         iny
@@ -879,11 +952,13 @@ L4649:  jsr     L3AB7
         lda     L4D7A
 L466A:  .byte   $8D
 L466B:  .byte   $DC
-        bbr4    $68,$468F
+        bbr4    $68,L468F
         bbs2    $56,$46BE
-        sbc     L2040,y
-        tst     #$44,$A0
-        sxy
+        .byte   $F9
+        rti
+
+L4674:  jsr     L4483
+        ldy     #$02
         lda     ($1C),y
         sta     $02
         iny
@@ -896,7 +971,8 @@ L466B:  .byte   $DC
         jsr     L3AB7
         .byte   $4C
 L468D:  .byte   $01
-L468E:  eor     ($C8,x)
+L468E:  .byte   $41
+L468F:  iny
         .byte   $B1
 L4691:  trb     $339C
         .byte   $3B
@@ -906,7 +982,7 @@ L4696:  .byte   $33
         bcs     L4695
         jmp     L40F5
 
-        iny
+L469D:  iny
         lda     ($1C),y
         sta     $0402
         iny
@@ -920,7 +996,7 @@ L4696:  .byte   $33
         sta     $0405
         jmp     L4101
 
-        iny
+L46B8:  iny
         lda     ($1C),y
         bne     L46C4
         lda     #$13
@@ -929,7 +1005,7 @@ L4696:  .byte   $33
 L46C4:  jsr     L5E4D
 L46C7:  jmp     L40F5
 
-        iny
+L46CA:  iny
         lda     ($1C),y
         bne     L474A
         tma     #$08
@@ -1035,7 +1111,7 @@ L4789:  iny
         sta     $F9
         rts
 
-        iny
+L4794:  iny
         lda     ($1C),y
         sta     $F8
         lda     #$0B
@@ -1044,7 +1120,7 @@ L4789:  iny
         jsr     L4B2D
         jmp     L40F5
 
-        iny
+L47A6:  iny
         lda     ($1C),y
         bne     L47B9
         lda     #$3F
@@ -1069,7 +1145,7 @@ L47C2:  .byte   $4C
 L47C3:  .byte   $F5
 L47C4:  rti
 
-        lda     #$3F
+L47C5:  lda     #$3F
 L47C7:  .byte   $85
 L47C8:  sed
 L47C9:  .byte   $A9
@@ -1102,7 +1178,7 @@ L47E6:  lda     #$02
         sta     $FF
         jsr     LE0D8
         bra     L47E3
-        iny
+L47F3:  iny
         lda     ($1C),y
         sta     $0E
         iny
@@ -1115,7 +1191,7 @@ L47E6:  lda     #$02
         jsr     L3AB7
         jmp     L40FD
 
-        iny
+L480A:  iny
         lda     ($1C),y
         sta     $02
         bsr     L4814
@@ -1148,13 +1224,13 @@ L4820:  sxy
         jsr     L383E
         rts
 
-        iny
+L4842:  iny
         lda     ($1C),y
         sta     L4EC2
         jsr     L4BE7
         jmp     L40F5
 
-        iny
+L484E:  iny
         lda     ($1C),y
         sta     L4EC2
         stz     L4EC1
@@ -1162,7 +1238,7 @@ L4820:  sxy
         jsr     L4F5E
         jmp     L40F5
 
-        jmp     L40F1
+L485F:  jmp     L40F1
 
 L4862:  jsr     LE063
         lda     $2228
@@ -1198,13 +1274,13 @@ L4895:  brk
         brk
         brk
         brk
-        jsr     LE063
+L489F:  jsr     LE063
         lda     $2228
         .byte   $F0
 L48A6:  .byte   $EB
         sta     $2780
         bra     L4892
-        iny
+L48AC:  iny
         lda     ($1C),y
         bne     L48BE
         dec     a
@@ -1246,7 +1322,7 @@ L48FC:  ora     $01
         bne     L48EC
         rts
 
-        clx
+L4901:  clx
 L4902:  iny
         lda     ($1C),y
         sta     $3B70,x
@@ -1255,12 +1331,12 @@ L4902:  iny
         bne     L4902
         jmp     L4109
 
-        jsr     L3177
+L4910:  jsr     L3177
 L4913:  jmp     L40F1
 
-        jsr     L4F11
+L4916:  jsr     L4F11
         bra     L4913
-        dec     $5B
+L491B:  dec     $5B
         .byte   $20
         .byte   $D6
 L491F:  tma     #$C8
@@ -1301,7 +1377,7 @@ L4968:  lda     $37CC
         jsr     L4419
         jsr     LE015
         bra     L4960
-        iny
+L4973:  iny
         .byte   $B1
 L4975:  trb     $16D0
         iny
@@ -1319,7 +1395,7 @@ L4991:  jmp     L40FD
 
         rts
 
-        jsr     L4446
+L4995:  jsr     L4446
         lda     L442F
         sta     $27C0
         sta     $62
@@ -1328,14 +1404,14 @@ L4991:  jmp     L40FD
         sta     $63
         jmp     L40F5
 
-        bsr     L49E1
+L49AB:  bsr     L49E1
         lda     #$08
         jsr     L4F5E
         bra     L49D8
-        bsr     L49E1
+L49B4:  bsr     L49E1
         jsr     L4C00
         bra     L49D8
-        bsr     L49E1
+L49BB:  bsr     L49E1
         iny
         lda     ($1C),y
         sta     L4EC3
@@ -1346,7 +1422,7 @@ L4991:  jmp     L40FD
         lda     #$07
         jsr     L4F5E
         bra     L49DB
-        bsr     L49E1
+L49D3:  bsr     L49E1
         jsr     L4BD2
 L49D8:  jmp     L40F5
 
@@ -1359,7 +1435,7 @@ L49E2:  lda     ($1C),y
         sta     L4EC2
         rts
 
-        bsr     L49E1
+L49E8:  bsr     L49E1
         iny
         lda     ($1C),y
         sta     L4EC5
@@ -1368,8 +1444,9 @@ L49E2:  lda     ($1C),y
         sta     L4EC6
         jsr     L4C30
         .byte   $80
-L49FA:  cpx     #$44
-        cpx     $C8
+L49FA:  .byte   $E0
+L49FB:  bsr     L49E1
+        iny
         lda     ($1C),y
         sta     L4EC1
         iny
@@ -1380,10 +1457,10 @@ L4A09:  iny
         sta     L4EC6
         jsr     L4C3F
         bra     L49DE
-        bsr     L49E1
+L4A14:  bsr     L49E1
         jsr     L4C17
         bra     L49D8
-        bsr     L49E1
+L4A1B:  bsr     L49E1
         iny
         lda     ($1C),y
         sta     L4EC1
@@ -1398,24 +1475,24 @@ L4A09:  iny
         lda     #$07
         jsr     L4F5E
         bra     L49DE
-        bsr     L49E1
+L4A3B:  bsr     L49E1
         jsr     L4CE1
         bra     L49D8
-        bsr     L49E1
+L4A42:  bsr     L49E1
         iny
         lda     ($1C),y
         sta     L4EC1
         jsr     L4D0E
         jmp     L40F9
 
-        bsr     L49E1
+L4A50:  bsr     L49E1
         iny
         lda     ($1C),y
         sta     L4EC1
         jsr     L4D6A
         jmp     L40F9
 
-        jsr     L463B
+L4A5E:  jsr     L463B
         iny
         lda     ($1C),y
         tax
@@ -1436,7 +1513,7 @@ L4A67:  phx
         bne     L4A67
         jmp     L40F9
 
-        jsr     L463B
+L4A81:  jsr     L463B
 L4A84:  lda     $0E
         pha
         lda     #$0C
@@ -1474,7 +1551,7 @@ L4AB8:  lda     #$04
         jsr     L4F5E
         jmp     L40F9
 
-        iny
+L4ACA:  iny
         lda     ($1C),y
         stz     L0000
 L4ACF:  pha
@@ -4454,42 +4531,17 @@ L5E4D:  lda     #$E0
         tia     $5E5F,$0404,$0040
         rts
 
-        bbs0    L0000,L5E8A
-        ora     ($B6,x)
-        ora     ($80,x)
-        ora     ($EB,x)
-        brk
-        cpx     #$00
-L5E6B:  bbs7    L0000,L5E6E
-L5E6E:  ora     ($D9,x)
-        brk
-        rmb7    $01
-        cpx     #$00
-        .byte   $AB
-        ora     ($0A,x)
-        brk
-        bbs1    L0000,L5EE9
-        ora     ($21,x)
-        ora     ($8F,x)
-L5E80:  brk
-L5E81:  sax
-        ora     ($B6,x)
-        ora     ($01,x)
-        brk
-        tst     #$00,$22
-L5E8A:  brk
-        .byte   $DC
-        ora     ($02,x)
-        brk
-        sta     (L0000),y
-        bbs7    $01,L5E9C
-        brk
-        bbs7    $01,L5E6B
-        brk
-        eor     (L0000,x)
-        .byte   $6D
-L5E9C:  ora     (L0000,x)
-        brk
+Stage2TiaPayload5E5F:
+        .byte   $8F,$00,$28,$01,$B6,$01,$80,$01
+        .byte   $EB,$00,$E0,$00,$FF,$00,$00,$01
+        .byte   $D9,$00,$77,$01,$E0,$00,$AB,$01
+        .byte   $0A,$00,$9F,$00,$6D,$01,$21,$01
+        .byte   $8F
+L5E80:  .byte   $00
+L5E81:  .byte   $22,$01,$B6,$01,$01,$00,$83,$00
+        .byte   $22,$00,$DC,$01,$02,$00,$91,$00
+        .byte   $FF,$01,$08,$00,$FF,$01,$D3,$00
+        .byte   $41,$00,$6D,$01,$00,$00
         brk
         brk
         brk
@@ -4524,103 +4576,101 @@ L5EDD:  bbs7    $FF,$5EDF
 L5EE0:  bbs7    $FF,$5EE2
 L5EE3:  bbs7    $FF,$5EE5
 L5EE6:  bbs7    $FF,$5EE8
-L5EE9:  .byte   $FF
-        .byte   $FF
-L5EEB:  bbs7    $FF,$5EED
-L5EEE:  bbs7    $FF,$5EF0
-L5EF1:  bbs7    $FF,$5EF3
-L5EF4:  bbs7    $FF,$5EF6
-L5EF7:  bbs7    $FF,$5EF9
-L5EFA:  bbs7    $FF,$5EFC
-L5EFD:  bbs7    $FF,$5EFF
-L5F00:  bbs7    $FF,$5F02
-L5F03:  bbs7    $FF,$5F05
-L5F06:  bbs7    $FF,$5F08
-L5F09:  bbs7    $FF,$5F0B
-L5F0C:  bbs7    $FF,$5F0E
-L5F0F:  bbs7    $FF,$5F11
-L5F12:  bbs7    $FF,$5F14
-L5F15:  bbs7    $FF,$5F17
-L5F18:  bbs7    $FF,$5F1A
-L5F1B:  bbs7    $FF,$5F1D
-L5F1E:  bbs7    $FF,$5F20
-L5F21:  bbs7    $FF,$5F23
-L5F24:  bbs7    $FF,$5F26
-L5F27:  bbs7    $FF,$5F29
-L5F2A:  bbs7    $FF,$5F2C
-L5F2D:  bbs7    $FF,$5F2F
-L5F30:  bbs7    $FF,$5F32
-L5F33:  bbs7    $FF,$5F35
-L5F36:  bbs7    $FF,$5F38
-L5F39:  bbs7    $FF,$5F3B
-L5F3C:  bbs7    $FF,$5F3E
-L5F3F:  bbs7    $FF,$5F41
-L5F42:  bbs7    $FF,$5F44
-L5F45:  bbs7    $FF,$5F47
-L5F48:  bbs7    $FF,$5F4A
-L5F4B:  bbs7    $FF,$5F4D
-L5F4E:  bbs7    $FF,$5F50
-L5F51:  bbs7    $FF,$5F53
-L5F54:  bbs7    $FF,$5F56
-L5F57:  bbs7    $FF,$5F59
-L5F5A:  bbs7    $FF,$5F5C
-L5F5D:  bbs7    $FF,$5F5F
-L5F60:  bbs7    $FF,$5F62
-L5F63:  bbs7    $FF,$5F65
-L5F66:  bbs7    $FF,$5F68
-L5F69:  bbs7    $FF,$5F6B
-L5F6C:  bbs7    $FF,$5F6E
-L5F6F:  bbs7    $FF,$5F71
-L5F72:  bbs7    $FF,$5F74
-L5F75:  bbs7    $FF,$5F77
-L5F78:  bbs7    $FF,$5F7A
-L5F7B:  bbs7    $FF,$5F7D
-L5F7E:  bbs7    $FF,$5F80
-L5F81:  bbs7    $FF,$5F83
-L5F84:  bbs7    $FF,$5F86
-L5F87:  bbs7    $FF,$5F89
-L5F8A:  bbs7    $FF,$5F8C
-L5F8D:  bbs7    $FF,$5F8F
-L5F90:  bbs7    $FF,$5F92
-L5F93:  bbs7    $FF,$5F95
-L5F96:  bbs7    $FF,$5F98
-L5F99:  bbs7    $FF,$5F9B
-L5F9C:  bbs7    $FF,$5F9E
-L5F9F:  bbs7    $FF,$5FA1
-L5FA2:  bbs7    $FF,$5FA4
-L5FA5:  bbs7    $FF,$5FA7
-L5FA8:  bbs7    $FF,$5FAA
-L5FAB:  bbs7    $FF,$5FAD
-L5FAE:  bbs7    $FF,$5FB0
-L5FB1:  bbs7    $FF,$5FB3
-L5FB4:  bbs7    $FF,$5FB6
-L5FB7:  bbs7    $FF,$5FB9
-L5FBA:  bbs7    $FF,$5FBC
-L5FBD:  bbs7    $FF,$5FBF
-L5FC0:  bbs7    $FF,$5FC2
-L5FC3:  bbs7    $FF,$5FC5
-L5FC6:  bbs7    $FF,$5FC8
-L5FC9:  bbs7    $FF,$5FCB
-L5FCC:  bbs7    $FF,$5FCE
-L5FCF:  bbs7    $FF,$5FD1
-L5FD2:  bbs7    $FF,$5FD4
-L5FD5:  bbs7    $FF,$5FD7
-L5FD8:  bbs7    $FF,$5FDA
-L5FDB:  bbs7    $FF,$5FDD
-L5FDE:  bbs7    $FF,$5FE0
-L5FE1:  bbs7    $FF,$5FE3
-L5FE4:  bbs7    $FF,$5FE6
-L5FE7:  bbs7    $FF,$5FE9
-L5FEA:  bbs7    $FF,$5FEC
-L5FED:  bbs7    $FF,$5FEF
-L5FF0:  bbs7    $FF,$5FF2
-L5FF3:  bbs7    $FF,$5FF5
-L5FF6:  bbs7    $FF,$5FF8
-L5FF9:  bbs7    $FF,$5FFB
-L5FFC:  bbs7    $FF,$5FFE
-L5FFF:  .byte   $FF
+L5EE9:  bbs7    $FF,$5EEB
+L5EEC:  bbs7    $FF,$5EEE
+L5EEF:  bbs7    $FF,$5EF1
+L5EF2:  bbs7    $FF,$5EF4
+L5EF5:  bbs7    $FF,$5EF7
+L5EF8:  bbs7    $FF,$5EFA
+L5EFB:  bbs7    $FF,$5EFD
+L5EFE:  bbs7    $FF,$5F00
+L5F01:  bbs7    $FF,$5F03
+L5F04:  bbs7    $FF,$5F06
+L5F07:  bbs7    $FF,$5F09
+L5F0A:  bbs7    $FF,$5F0C
+L5F0D:  bbs7    $FF,$5F0F
+L5F10:  bbs7    $FF,$5F12
+L5F13:  bbs7    $FF,$5F15
+L5F16:  bbs7    $FF,$5F18
+L5F19:  bbs7    $FF,$5F1B
+L5F1C:  bbs7    $FF,$5F1E
+L5F1F:  bbs7    $FF,$5F21
+L5F22:  bbs7    $FF,$5F24
+L5F25:  bbs7    $FF,$5F27
+L5F28:  bbs7    $FF,$5F2A
+L5F2B:  bbs7    $FF,$5F2D
+L5F2E:  bbs7    $FF,$5F30
+L5F31:  bbs7    $FF,$5F33
+L5F34:  bbs7    $FF,$5F36
+L5F37:  bbs7    $FF,$5F39
+L5F3A:  bbs7    $FF,$5F3C
+L5F3D:  bbs7    $FF,$5F3F
+L5F40:  bbs7    $FF,$5F42
+L5F43:  bbs7    $FF,$5F45
+L5F46:  bbs7    $FF,$5F48
+L5F49:  bbs7    $FF,$5F4B
+L5F4C:  bbs7    $FF,$5F4E
+L5F4F:  bbs7    $FF,$5F51
+L5F52:  bbs7    $FF,$5F54
+L5F55:  bbs7    $FF,$5F57
+L5F58:  bbs7    $FF,$5F5A
+L5F5B:  bbs7    $FF,$5F5D
+L5F5E:  bbs7    $FF,$5F60
+L5F61:  bbs7    $FF,$5F63
+L5F64:  bbs7    $FF,$5F66
+L5F67:  bbs7    $FF,$5F69
+L5F6A:  bbs7    $FF,$5F6C
+L5F6D:  bbs7    $FF,$5F6F
+L5F70:  bbs7    $FF,$5F72
+L5F73:  bbs7    $FF,$5F75
+L5F76:  bbs7    $FF,$5F78
+L5F79:  bbs7    $FF,$5F7B
+L5F7C:  bbs7    $FF,$5F7E
+L5F7F:  bbs7    $FF,$5F81
+L5F82:  bbs7    $FF,$5F84
+L5F85:  bbs7    $FF,$5F87
+L5F88:  bbs7    $FF,$5F8A
+L5F8B:  bbs7    $FF,$5F8D
+L5F8E:  bbs7    $FF,$5F90
+L5F91:  bbs7    $FF,$5F93
+L5F94:  bbs7    $FF,$5F96
+L5F97:  bbs7    $FF,$5F99
+L5F9A:  bbs7    $FF,$5F9C
+L5F9D:  bbs7    $FF,$5F9F
+L5FA0:  bbs7    $FF,$5FA2
+L5FA3:  bbs7    $FF,$5FA5
+L5FA6:  bbs7    $FF,$5FA8
+L5FA9:  bbs7    $FF,$5FAB
+L5FAC:  bbs7    $FF,$5FAE
+L5FAF:  bbs7    $FF,$5FB1
+L5FB2:  bbs7    $FF,$5FB4
+L5FB5:  bbs7    $FF,$5FB7
+L5FB8:  bbs7    $FF,$5FBA
+L5FBB:  bbs7    $FF,$5FBD
+L5FBE:  bbs7    $FF,$5FC0
+L5FC1:  bbs7    $FF,$5FC3
+L5FC4:  bbs7    $FF,$5FC6
+L5FC7:  bbs7    $FF,$5FC9
+L5FCA:  bbs7    $FF,$5FCC
+L5FCD:  bbs7    $FF,$5FCF
+L5FD0:  bbs7    $FF,$5FD2
+L5FD3:  bbs7    $FF,$5FD5
+L5FD6:  bbs7    $FF,$5FD8
+L5FD9:  bbs7    $FF,$5FDB
+L5FDC:  bbs7    $FF,$5FDE
+L5FDF:  bbs7    $FF,$5FE1
+L5FE2:  bbs7    $FF,$5FE4
+L5FE5:  bbs7    $FF,$5FE7
+L5FE8:  bbs7    $FF,$5FEA
+L5FEB:  bbs7    $FF,$5FED
+L5FEE:  bbs7    $FF,$5FF0
+L5FF1:  bbs7    $FF,$5FF3
+L5FF4:  bbs7    $FF,$5FF6
+L5FF7:  bbs7    $FF,$5FF9
+L5FFA:  bbs7    $FF,$5FFC
+L5FFD:  bbs7    $FF,$5FFF
 L6000:  brk
-        rmb2    $60
+L6001:  rmb2    $60
 L6003:  .byte   $0B
         brk
         brk
@@ -9351,7 +9401,7 @@ L80BB:  rts
 
         stz     $0E
         stz     $0F
-        jsr     L41AB
+        jsr     Stage2Dispatch+158
         rts
 
         lda     $52
@@ -9427,7 +9477,7 @@ L814A:  dec     $5A
         lda     L47C2
         ora     #$80
         sta     L47C3
-        jsr     L4175
+        jsr     Stage2Dispatch+104
 L8162:  stz     $5A
         bsr     L81A2
         lda     L47BC
@@ -9448,7 +9498,7 @@ L8162:  stz     $5A
         lda     $50
         bpl     L818C
         ldy     #$E9
-L818C:  sty     L4199
+L818C:  sty     Stage2Dispatch+104+36
         clc
         adc     $220C
         sta     $220C
@@ -9491,7 +9541,7 @@ L81E0:  phy
 L81E3:  phx
         lda     #$01
         sta     $50
-        jsr     L4175
+        jsr     Stage2Dispatch+104
         jsr     L49FA
         plx
         dex
@@ -9505,7 +9555,7 @@ L81F8:  phy
 L81FB:  phx
         lda     #$FF
         sta     $50
-        jsr     L4175
+        jsr     Stage2Dispatch+104
         jsr     L49FA
         plx
         dex
@@ -17606,7 +17656,7 @@ LC340:  php
         brk
         sxy
         jsr     L2020
-LC34B:  jsr     L4120
+LC34B:  jsr     Stage2Dispatch+19
         csl
         csl
         eor     $4E
