@@ -55,9 +55,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   Selector `$0b` also reaches the poll. Runtime selector choice, counter update
   path, wait completion, indirect-call targets, and gameplay meaning remain
   unproven.
-  Regional call operands at indices `$2b`, `$23`, `$35`, plus `$28`'s
-  regional pointer immediate in helper `$43b5`, are recorded without assigning
-  semantics. ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
+  Regional call behavior at indices `$2b`, `$23`, `$35`, plus `$28`'s regional
+  pointer immediate in helper `$43b5`, remains unassigned. ID `$2b`'s caller
+  and shared helper prefix are rooted; the later helper effects remain open.
+  ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
   overlapping TII descriptor and two relative callees are source-locked, and
   the bounded callees do not directly access `$3b33`. This does not prove the
   candidate reaches ID `$11` or close the counter-poll producer gap. ID `$2c`

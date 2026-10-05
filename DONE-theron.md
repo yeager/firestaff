@@ -21,7 +21,12 @@ It reads stream offsets `+1/+2`, calls `$4b00` and `$4f48`, copies `$4d79/$4d7a`
 to `$4fdb/$4fdc`, restores the first stream operand to A, calls `$56af` (US)
 or `$5729` (JP), then takes the `$40f9` three-byte cursor step. A raw-media
 test locks the complete caller window and the regional target words. This
-does not establish either callee's effect or candidate execution.
+also roots the shared `$56af/$5729` helper prefix: it multiplies A by two to
+index a 16-bit offset table through `$4fd9/$4fda`, adds the base, writes the
+result pointer to `$0c/$0d`, and calls `$5e40/$5e70` followed by
+`$573f/$57b9`. The seven selector `$0c` candidates supply A=`$02` at this
+handoff, so the visible table offset is `$04`; downstream helper effects and
+candidate execution remain unproven.
 
 ## 2026-10-05 — trace dispatch ID `$2c` to its external call boundary
 

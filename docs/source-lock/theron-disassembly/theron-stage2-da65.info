@@ -98,6 +98,13 @@ RANGE { START $4409; END $4409; TYPE CODE; };
 RANGE { START $4653; END $4653; TYPE CODE; };
 RANGE { START $4674; END $4674; TYPE CODE; };
 RANGE { START $468f; END $468f; TYPE CODE; };
+# First-level helper roots reached by dispatch ID $2b's regional call path.
+RANGE { START $56af; END $56af; TYPE CODE; };
+RANGE { START $572c; END $572c; TYPE CODE; };
+RANGE { START $573f; END $573f; TYPE CODE; };
+RANGE { START $577e; END $577e; TYPE CODE; };
+RANGE { START $591c; END $591c; TYPE CODE; };
+RANGE { START $5e40; END $5e40; TYPE CODE; };
 # Direct callers of the counter-wait helper at $88A6.
 RANGE { START $8860; END $8860; TYPE CODE; };
 RANGE { START $8875; END $8875; TYPE CODE; };

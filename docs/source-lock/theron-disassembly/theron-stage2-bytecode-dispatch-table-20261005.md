@@ -251,7 +251,13 @@ second in X, and calls `$4b00` then `$4f48`. It copies `$4d79/$4d7a` to
 `$4fdb/$4fdc`, restores the pushed value to A, calls `$56af` (US) or `$5729`
 (JP), and jumps to `$40f9` for the shared three-byte cursor advance. The
 regional call operand at `$466f` is now asserted against both raw editions.
-The callees' runtime effects and the candidate stream's execution remain
+For selector `$0c`'s seven candidate blocks, the handler receives A=`$02` and
+uses it as an index multiplied by two into the pointer table reached through
+`$4fd9/$4fda`; the selected word is added to that base and written to
+`$0c/$0d`. Its `$56af/$5729` prefix saves X at `$4f91`, computes that pointer,
+calls `$5e40/$5e70`, then tests whether the selected pointer is zero. The
+candidate row supplies X=`<row>` before two local calls, but their effects on
+X are not established. The later helper effects and runtime execution remain
 unproven.
 
 ### Rooted `$2c` handler: external helper handoff
