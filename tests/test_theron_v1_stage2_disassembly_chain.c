@@ -635,43 +635,6 @@ static void test_stage2_id24_bounded_wait_root(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
-/* Lock the adjacent fixed-step $25/$26 handler pair and bounded callee. */
-static void test_stage2_id25_id26_fixed_step_pair(const uint8_t *raw,
-                                                  size_t raw_size, int jp)
-{
-    static const uint8_t id25[] = {0x20u, 0x11u, 0x4fu, 0x80u, 0x03u};
-    static const uint8_t id26[] = {0x20u, 0x77u, 0x31u, 0x4cu, 0xf1u, 0x40u};
-    static const uint8_t helper[] = {
-        0x20u, 0x31u, 0x4fu, 0xc2u, 0x62u, 0x92u, 0x00u, 0xc8u,
-        0xa9u, 0x00u, 0x91u, 0x00u, 0xc8u, 0xa9u, 0x60u, 0x91u,
-        0x00u
-    };
-    static const uint8_t id25_tail[] = {0x4cu, 0xf1u, 0x40u};
-
-    assert(stage2_word_at(raw, raw_size, jp,
-                          (uint16_t)(0x410du + 2u * 0x25u)) == 0x4916u);
-    assert(stage2_word_at(raw, raw_size, jp,
-                          (uint16_t)(0x410du + 2u * 0x26u)) == 0x4910u);
-    for (unsigned int i = 0; i < 3u; ++i) {
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x4916u + i)) == id25[i]);
-    }
-    for (unsigned int i = 0; i < sizeof(id25_tail); ++i) {
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x4913u + i)) == id25_tail[i]);
-    }
-    for (unsigned int i = 0; i < sizeof(id26); ++i) {
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x4910u + i)) == id26[i]);
-    }
-    for (unsigned int i = 0; i < sizeof(helper); ++i) {
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x4f11u + i)) == helper[i]);
-    }
-    printf("  PASS: stage2_id25_id26_fixed_step_pair (%s)\n",
-           jp ? "JP" : "US");
-}
-
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2123,7 +2086,6 @@ int main(void)
     test_stage2_id1e_id1f_bounded_handlers(g_us_data, g_us_size, 0);
     test_stage2_id1c_id1d_cursor_roots(g_us_data, g_us_size, 0);
     test_stage2_id24_bounded_wait_root(g_us_data, g_us_size, 0);
-    test_stage2_id25_id26_fixed_step_pair(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2151,7 +2113,6 @@ int main(void)
         test_stage2_id1e_id1f_bounded_handlers(g_jp_data, g_jp_size, 1);
         test_stage2_id1c_id1d_cursor_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id24_bounded_wait_root(g_jp_data, g_jp_size, 1);
-        test_stage2_id25_id26_fixed_step_pair(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

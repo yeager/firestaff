@@ -225,12 +225,6 @@ both authentic editions. The handler calls `$4403` before and conditionally
 after its `$e03c` call, then takes the `$40f5` (`+2`) cursor path. This is
 bounded byte/control-flow evidence only: neither helper meaning nor stream
 selection is established.
-The `stage2_id25_id26_fixed_step_pair` assertion locks the `$4916/$4910`
-dispatch roots and `$4f11` writer helper in both editions. ID `$25` calls
-`$4f11`, then branches to the separate `$4913` `+1` tail; ID `$26` calls
-`$3177` and jumps to that same tail. The writer helper's bytes and those
-cursor edges are static source evidence, not proof either ID is selected or
-of the routines' gameplay purpose.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
