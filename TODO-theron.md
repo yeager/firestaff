@@ -88,6 +88,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   traces, now byte-locked for `$09/$0a` in both authentic editions.
   Index `$28`'s conditional path, Y-offset 1 test, Y-offset 2 fetch, regional
   helper operand, and cursor tail are now byte-locked for both editions.
+  Index `$12`'s saved-cursor indirect-call path is also source-locked for both
+  editions; its selected target remains unobserved.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through

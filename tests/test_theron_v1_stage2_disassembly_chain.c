@@ -304,6 +304,28 @@ static void test_stage2_id28_conditional_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock dispatch ID $12's cursor-save, indirect-call and restore sequence.
+ * The selected target and any retail stream use remain unproven. */
+static void test_stage2_id12_indirect_call(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t handler[] = {
+        0xa5u, 0x1cu, 0x48u, 0xa5u, 0x1du, 0x48u, 0x20u,
+        0xb9u, 0x41u, 0xa9u, 0x43u, 0x48u, 0xa9u, 0x2au,
+        0x48u, 0x6cu, 0x1cu, 0x20u, 0x68u, 0x85u, 0x1du,
+        0x68u, 0x85u, 0x1cu, 0x4cu, 0xf9u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x12u)) == 0x4319u);
+    for (unsigned int i = 0; i < sizeof(handler); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4319u + i)) == handler[i]);
+    }
+    printf("  PASS: stage2_id12_indirect_call (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -1746,6 +1768,7 @@ int main(void)
     test_stage2_id0b_0f_indexed_mutation(g_us_data, g_us_size, 0);
     test_stage2_id09_0a_nested_cursor(g_us_data, g_us_size, 0);
     test_stage2_id28_conditional_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id12_indirect_call(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -1764,6 +1787,7 @@ int main(void)
         test_stage2_id0b_0f_indexed_mutation(g_jp_data, g_jp_size, 1);
         test_stage2_id09_0a_nested_cursor(g_jp_data, g_jp_size, 1);
         test_stage2_id28_conditional_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id12_indirect_call(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

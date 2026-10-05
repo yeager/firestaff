@@ -192,7 +192,9 @@ was selected. `$4214` reads the following stream byte into A before calling
 current cursor from its embedded `+1/+2` pointer, performs an indirect call
 through `$201c`, restores the saved cursor on return, and advances through
 `$40f9` (`+3`). The call target and the behavior of `$3ab7` are outside this
-step summary.
+step summary. The `stage2_id12_indirect_call` assertion byte-locks the `$4131`
+dispatch word and `$4319` handler against authentic US and JP Track 02; it
+does not identify the selected target or bind a retail stream to this path.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This
