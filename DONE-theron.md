@@ -34,11 +34,12 @@ is `$04`; later helper effects and candidate execution remain unproven.
 ## 2026-10-05 — trace dispatch ID `$2c` to its external call boundary
 
 Locked the authentic `$4674` target for table index `$2c` in both editions.
-Its bounded root calls `$4483`, reads stream offsets `+2/+3/+4` into zero-page
-`$02/$03/$0e`, calls `$3ab7` with A=`$0f`, then jumps to `$4101` for the fixed
-five-byte cursor advance. The target `$3ab7` is outside the stage-two image;
-its implementation, effects, and gameplay meaning remain open in
-`TODO-theron.md`.
+Its root calls `$4483`, which stores stream offset `+1` at `$4ec2`, calls
+`$4ec9`, copies `$4ec3/$4ec4` into zero-page `$00/$01`, and returns. The caller
+then reads offsets `+2/+3/+4` into `$02/$03/$0e`, calls `$3ab7` with A=`$0f`,
+and jumps to `$4101` for the fixed five-byte cursor advance. A raw-sector test
+locks the `$4483` helper and full `$4674` caller in both editions. The work at
+`$4ec9` and `$3ab7` effects remain open in `TODO-theron.md`.
 
 ## 2026-10-05 — trace candidate continuations for selectors `$04..$0c`
 

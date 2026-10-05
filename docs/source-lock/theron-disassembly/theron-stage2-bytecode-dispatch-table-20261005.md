@@ -265,13 +265,15 @@ Later helper effects and runtime execution remain unproven.
 
 ### Rooted `$2c` handler: external helper handoff
 
-Dispatch table entry `$2c` targets `$4674` in both editions. This root calls
-`$4483`, sets Y to `$02`, reads stream offsets `+2`, `+3`, and `+4` into zero
-page `$02`, `$03`, and `$0e`, loads A with `$0f`, calls `$3ab7`, then jumps to
-`$4101`, the shared five-byte cursor advance. The earlier `$4483` call and the
-`$3ab7` implementation are not decoded by this bounded root; `$3ab7` is below
-the stage-two `$4000..$7fff` image. The handoff establishes the static input
-registers and cursor step only, not the callee's effect or a gameplay meaning.
+Dispatch table entry `$2c` targets `$4674` in both editions. Its `$4483`
+helper increments Y, stores stream offset `+1` at `$4ec2`, calls `$4ec9`,
+copies `$4ec3/$4ec4` to zero-page `$00/$01`, and returns. The caller then sets
+Y to `$02`, reads stream offsets `+2/+3/+4` into `$02/$03/$0e`, loads A with
+`$0f`, calls `$3ab7`, and jumps to `$4101`, the shared five-byte cursor
+advance. `$4ec9`'s work and the `$3ab7` implementation are outside this
+bounded decompilation; `$3ab7` is below the stage-two `$4000..$7fff` image.
+This establishes static setup and cursor movement only, not runtime effects or
+a gameplay meaning.
 
 ### Rooted `$2d` handler: counter poll
 

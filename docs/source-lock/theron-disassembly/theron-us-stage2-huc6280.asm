@@ -709,10 +709,11 @@ L447F:  bsr     L4483
 L4483:  iny
         lda     ($1C),y
         sta     L4EC2
-        .byte   $20
-        .byte   $C9
-L448B:  lsr     $C3AD
-        lsr     a:$85
+; Alternate root $448B overlaps the JSR operand: LSR $C3AD; LSR $0085.
+L448B           := * + 2
+        jsr     L4EC9
+        lda     L4EC3
+        sta     L0000
         lda     L4EC4
         sta     $01
         rts

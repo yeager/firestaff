@@ -351,6 +351,11 @@ static void test_stage2_id2b_regional_handoff(const uint8_t *raw,
 static void test_stage2_id2c_external_handoff(const uint8_t *raw,
                                               size_t raw_size, int jp)
 {
+    static const uint8_t offset_one_helper[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc2u, 0x4eu, 0x20u, 0xc9u,
+        0x4eu, 0xadu, 0xc3u, 0x4eu, 0x85u, 0x00u, 0xadu, 0xc4u,
+        0x4eu, 0x85u, 0x01u, 0x60u
+    };
     static const uint8_t handler[] = {
         0x20u, 0x83u, 0x44u, 0xa0u, 0x02u, 0xb1u, 0x1cu, 0x85u, 0x02u,
         0xc8u, 0xb1u, 0x1cu, 0x85u, 0x03u, 0xc8u, 0xb1u, 0x1cu, 0x85u,
@@ -359,6 +364,11 @@ static void test_stage2_id2c_external_handoff(const uint8_t *raw,
 
     assert(stage2_word_at(raw, raw_size, jp,
                           (uint16_t)(0x410du + 0x2cu * 2u)) == 0x4674u);
+    for (unsigned int i = 0; i < sizeof(offset_one_helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4483u + i)) ==
+               offset_one_helper[i]);
+    }
     for (unsigned int i = 0; i < sizeof(handler); ++i) {
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(0x4674u + i)) == handler[i]);
