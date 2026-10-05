@@ -170,14 +170,14 @@ offsets are relative to that selector's table target.
 
 | Selector | Rooted suffix after `$12` returns | Conditional boundary |
 |---:|---|---|
-| `$04` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
-| `$05` | `+$40: $36,$00,$02`; `+$43: $41->$7464/$7466`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
-| `$06` | `+$40: $36,$01,$00`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
-| `$07` | `+$40: $36,$00,$00`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
-| `$08` | `+$40: $36,$00,$00`; `+$43: $41->$7464/$7466`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
-| `$09` | `+$40: $36,$00,$00`; `+$43: ($14,$00,$00),($15,$00,$00),($14,$02,$02),($15,$02,$02)`; `+$55: $11`; then `+$59: $13` | `$11`'s regional callee must return |
-| `$0a` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13` | `$11`'s regional callee must return |
-| `$0b` | `+$33: $41->$73b2/$73b4`; `+$36: $41->$7470/$7472`; `+$39: $13`; its `+1` step reaches `$2d` | `$2d` handler at `$468f` remains unresolved |
+| `$04` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13`, `+$51: $2d` | `$11`'s regional callee and `$3b33` poll must return |
+| `$05` | `+$40: $36,$00,$02`; `+$43: $41->$7464/$7466`; `+$46: $11`; then `+$50: $13`, `+$51: $2d` | `$11`'s regional callee and `$3b33` poll must return |
+| `$06` | `+$40: $36,$01,$00`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13`, `+$51: $2d` | `$11`'s regional callee and `$3b33` poll must return |
+| `$07` | `+$40: $36,$00,$00`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13`, `+$51: $2d` | `$11`'s regional callee and `$3b33` poll must return |
+| `$08` | `+$40: $36,$00,$00`; `+$43: $41->$7464/$7466`; `+$46: $11`; then `+$50: $13`, `+$51: $2d` | `$11`'s regional callee and `$3b33` poll must return |
+| `$09` | `+$40: $36,$00,$00`; `+$43: ($14,$00,$00),($15,$00,$00),($14,$02,$02),($15,$02,$02)`; `+$55: $11`; then `+$59: $13`, `+$60: $2d` | `$11`'s regional callee and `$3b33` poll must return |
+| `$0a` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7470/$7472`; `+$46: $11`; then `+$50: $13`, `+$51: $2d` | `$11`'s regional callee and `$3b33` poll must return |
+| `$0b` | `+$33: $41->$73b2/$73b4`; `+$36: $41->$7470/$7472`; `+$39: $13`; its `+1` step reaches `$2d` | `$3b33` poll must exit |
 | `$0c` | `+$40: $41->$73b2/$73b4`; `+$43: $41->$7446/$7448`; `+$46: $01` | `$01` compares mutable `$2781`; details below |
 
 The byte pairs above follow rooted handlers: `$36` reads two bytes and steps
@@ -199,10 +199,32 @@ and either advances by five when unequal or loads the little-endian pointer
 at `+$49/+50` when equal. The seven consecutive comparison entries test
 values `$00..$06` and point to `$686d,$688d,$68ad,$68cd,$68ed,$690d,$692d`;
 each target begins `$1a,<matching value>,$13,$2d`. A mismatch after the
-seventh row reaches `$686d` as fall-through. The static trace stops at `$2d`
-(`$468f`), whose overlapping decode and continuation are not yet resolved;
-the contents do not establish the runtime value of `$2781` or prove this
-selector executes.
+seventh row reaches `$686d` as fall-through. Each 32-byte target has the same
+remaining cursor pattern through a final `$09`/`RTS`, with only the compared
+value and regional `$12` pointers changing. This is conditional on the
+`$3b33` polls, the `$11/$2b` calls, and the `$201c` indirect targets
+returning. The stream does not establish the runtime value of `$2781` or
+prove this selector executes.
+
+The rooted IDs in each block occur at target-relative cursors
+`+$00,$02,$03,$05,$06,$0a,$0c,$10,$13,$15,$18,$1a,$1c,$1f`:
+`$1a,$13,$2d,$20,$3e,$2d,$11,$2b,$1a,$12,$17,$2d,$12,$09`. Their fixed
+steps account for all 32 bytes when each conditional handler path returns.
+The first two `$2d` operands are `$02`; the third is `$03`. The `$12` words
+are `$7552/$7554` and `$74f2/$74f4` for US/JP respectively; both remain
+conditional on the runtime `$201c` vector selecting returning callees.
+
+### Rooted `$2d` handler: counter poll
+
+Although the linear listing at `$4691` decodes a different overlapping
+instruction, dispatch index `$2d` enters at `$468f`. From that root, the bytes
+are `INY; LDA ($1c),Y; STZ $3b33; CMP $3b33; BCS $4695; JMP $40f5`. The
+handler loads its offset-1 operand into A, clears `$3b33`, and loops at
+`$4695` while A is greater than or equal to the counter. It reaches `$40f5`
+(`$1c += 2`) only when `$3b33` becomes greater than the operand. The listing
+contains a conditional `$3b33` increment at `$89e2` (`PLA; AND #$20; BEQ;
+INC $3b33`), but this static evidence does not prove that path runs during a
+candidate interpreter call or that the polling condition is satisfied.
 
 ### Selector `$00` target: conditional static cursor walk
 

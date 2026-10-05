@@ -18,10 +18,14 @@ US listing bytes from the authentic payload.
 Selector `$0c`'s continuation reaches a rooted `$01` comparison chain over
 mutable `$2781`, with seven inline values `$00..$06` and pointer targets
 `$686d,$688d,$68ad,$68cd,$68ed,$690d,$692d`. Each target begins with the
-matching `$1a` operand then `$13,$2d`; the trace stops at unresolved handler
-`$2d` (`$468f`). Selector `$0b` also reaches `$2d`. This is static candidate
-control flow only: selection, call returns, runtime meaning, and the
-continuation at `$2d` remain unproven.
+matching `$1a` operand then `$13,$2d`, and has a 32-byte cursor path ending
+at `$09`/`RTS` if its nested calls and three counter polls return. The rooted
+`$2d` handler at `$468f` clears `$3b33`, compares it with the stream operand,
+and loops until the counter exceeds that operand; a conditional increment at
+`$89e2` exists in the same image, but its scheduling relation to this stream
+is not proven. Selector `$0b` also reaches the poll. This is static candidate
+control flow only: selector execution, poll completion, indirect-call targets,
+and gameplay meaning remain unproven.
 
 ## 2026-10-05 — bound candidate stage-two streams to authentic pointers
 

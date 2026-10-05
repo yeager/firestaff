@@ -109,6 +109,10 @@ static void test_stage2_selector_candidate_continuations(
         0x694du, 0x69a1u, 0x6a16u, 0x6a7cu, 0x6ae2u,
         0x6b48u, 0x6bbdu, 0x6c13u, 0x681cu
     };
+    static const uint8_t poll_handler[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x9cu, 0x33u, 0x3bu, 0xcdu,
+        0x33u, 0x3bu, 0xb0u, 0xfbu, 0x4cu, 0xf5u, 0x40u
+    };
     uint16_t long_root = jp ? 0x7448u : 0x7446u;
     uint16_t middle_root = jp ? 0x7466u : 0x7464u;
     uint16_t final_root = jp ? 0x7472u : 0x7470u;
@@ -118,6 +122,10 @@ static void test_stage2_selector_candidate_continuations(
         uint16_t table_address = (uint16_t)(0x6800u + (4u + i) * 2u);
         assert(stage2_word_at(raw, raw_size, jp, table_address) ==
                selector_targets[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(poll_handler); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x468fu + i)) == poll_handler[i]);
     }
 
     for (unsigned int pair = 0; pair < 8u; ++pair) {
@@ -187,6 +195,12 @@ static void test_stage2_selector_candidate_continuations(
     for (unsigned int row = 0; row < 7u; ++row) {
         uint16_t row_address = (uint16_t)(0x681cu + 46u + row * 5u);
         uint16_t target = (uint16_t)(0x686du + row * 0x20u);
+        uint8_t body[32] = {
+            0x1au, 0x00u, 0x13u, 0x2du, 0x02u, 0x20u, 0x3eu, 0x01u,
+            0x00u, 0x17u, 0x2du, 0x02u, 0x11u, 0x03u, 0x00u, 0x60u,
+            0x2bu, 0x02u, 0x00u, 0x1au, 0x07u, 0x12u, 0x52u, 0x75u,
+            0x17u, 0x87u, 0x2du, 0x03u, 0x12u, 0xf2u, 0x74u, 0x09u
+        };
         assert(stage2_byte_at(raw, raw_size, jp, row_address) == 0x01u);
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(row_address + 1u)) == 0x01u);
@@ -194,13 +208,14 @@ static void test_stage2_selector_candidate_continuations(
                               (uint16_t)(row_address + 2u)) == row);
         assert(stage2_word_at(raw, raw_size, jp,
                               (uint16_t)(row_address + 3u)) == target);
-        assert(stage2_byte_at(raw, raw_size, jp, target) == 0x1au);
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(target + 1u)) == row);
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(target + 2u)) == 0x13u);
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(target + 3u)) == 0x2du);
+        body[1] = (uint8_t)row;
+        body[18] = (uint8_t)row;
+        body[22] = jp ? 0x54u : 0x52u;
+        body[29] = jp ? 0xf4u : 0xf2u;
+        for (unsigned int i = 0; i < sizeof(body); ++i) {
+            assert(stage2_byte_at(raw, raw_size, jp,
+                                  (uint16_t)(target + i)) == body[i]);
+        }
     }
     printf("  PASS: stage2_selector_candidate_continuations (%s)\n",
            jp ? "JP" : "US");

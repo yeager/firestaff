@@ -39,9 +39,12 @@ Reviewed 2026-10-05. Only open work is listed here.
   eight `$14/$15` operand pairs and reaches `$09`/`RTS`; suffixes at
   `$7464/$7466` and `$7470/$7472` do likewise. Selector `$0c` reaches a
   static `$01` comparison chain over `$2781`, with pointer branches to
-  `$686d..$692d`; their common prefix reaches unresolved `$2d` at `$468f`.
-  Selector `$0b` also reaches `$2d`. Runtime calls, selector choice, and the
-  continuation beyond `$2d` remain unproven.
+  `$686d..$692d`; all seven 32-byte candidate blocks reach `$09` if their
+  calls and counter polls return. Root `$468f` for `$2d` clears `$3b33` and
+  polls until it exceeds the stream operand; a conditional increment at
+  `$89e2` is present, but its runtime relationship is unproven. Selector
+  `$0b` also reaches this poll. Runtime selector choice, wait completion,
+  indirect-call targets, and gameplay meaning remain unproven.
   Regional call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s
   regional pointer immediate in helper `$43b5`, are recorded without assigning
   semantics. See

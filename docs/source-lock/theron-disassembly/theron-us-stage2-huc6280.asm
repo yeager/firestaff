@@ -972,6 +972,9 @@ L4674:  jsr     L4483
         .byte   $4C
 L468D:  .byte   $01
 L468E:  .byte   $41
+; Dispatch root $468F (ID $2D) overlaps the linear decode at $4691. From
+; $468F the bytes decode as INY; LDA ($1C),Y; STZ $3B33; CMP $3B33;
+; BCS $4695; JMP $40F5. Thus this root polls until the counter exceeds A.
 L468F:  iny
         .byte   $B1
 L4691:  trb     $339C
