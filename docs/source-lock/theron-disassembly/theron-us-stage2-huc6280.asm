@@ -226,9 +226,10 @@ L40F9:  lda     #$03
         bra     L40E4
 L40FD:  lda     #$04
         bra     L40E4
-L4101:  .byte   $A9
-L4102:  ora     $80
-        .byte   $DF
+L4101:
+L4102           := * + 1
+        lda     #$05
+        bra     L40E4
 L4105:  lda     #$07
         bra     L40E4
 L4109:  lda     #$09

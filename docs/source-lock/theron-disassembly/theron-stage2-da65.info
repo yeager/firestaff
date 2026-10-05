@@ -10,6 +10,9 @@ RANGE {
     NAME "Stage2Dispatch";
 };
 
+# Common fixed-step exits from the initial handler comparison cluster.
+RANGE { START $4101; END $410c; TYPE CODE; };
+
 # Each pointer value is also a one-byte code root; decode from every dispatch target.
 RANGE { START $41c5; END $41c5; TYPE CODE; };
 RANGE { START $41cb; END $41cb; TYPE CODE; };

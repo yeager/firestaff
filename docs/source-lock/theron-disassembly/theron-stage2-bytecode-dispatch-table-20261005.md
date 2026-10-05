@@ -43,6 +43,38 @@ static HuC6280 jump target reached by the corresponding table index.
 50:4a1b 51:4a42 52:4a50 53:49fb 54:484e
 ```
 
+## Initial comparison and cursor-transfer handlers
+
+The first eight roots form a common control-flow cluster. Index `$00` at
+`$41c5` calls `$41b9`, which loads a 16-bit pointer from the current `$1c`
+window at offsets `$4b/$4c` into `$1c/$1d`, then returns through `$40e4` with
+`A=0` to the `$40cc` loop. Indices `$01..$04` call `$41f8`: from dispatcher
+entry (`Y=0`), it reads offsets 1 and 2, uses the offset-1 byte as X for the
+lookup at `$2780,X`, and compares that lookup result with the raw offset-2
+byte. Indices `$05..$07` call `$4203`, which reads offsets 1 and 2 as two X
+indices and compares their respective `$2780,X` lookup results. The
+`$40f0..$421f` interval containing this code is byte-identical in the US and
+JP deinterleaved payloads.
+
+| Index | Static comparison path | Pointer replacement via `$41cf` |
+|---:|---|---|
+| `$01` | `$41f8`, then branch on Z | when Z is set |
+| `$02` | `$41f8`, then branch on Z | when Z is clear |
+| `$03` | `$41f8`, branch on C then Z | only when C=1 and Z=0 |
+| `$04` | `$41f8`, branch on C | when C is clear |
+| `$05` | `$4203`, then branch on Z | when Z is set |
+| `$06` | `$4203`, then branch on Z | when Z is clear |
+| `$07` | `$4203`, then branch on C | when C is clear |
+
+Those compare flags route each handler either through `$41cf` (the same
+`$41b9` pointer replacement) or through `$41d5` to `$4101`. The new code range
+in the da65 info file roots `$4101..$410c` separately from the adjacent
+dispatch table, so the three shared-step stubs decode correctly: `$4101`
+loads 5, `$4105` loads 7, and `$4109` loads 9; each reaches `$40e4` to add
+that amount to `$1c/$1d` and resume at `$40cc`. This establishes instruction
+and cursor-update paths for this cluster, but does not prove that any of its
+indices occur in a valid retail stream or assign names to them.
+
 ## Target-rooted disassembly and regional comparison
 
 `theron-stage2-da65.info` marks `$410d..$41b6` as an address table and gives

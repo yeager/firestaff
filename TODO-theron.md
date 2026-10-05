@@ -8,14 +8,15 @@ Reviewed 2026-10-05. Only open work is listed here.
   US and JP Rev. 1 raw Track 02 BINs. All entries match across regions and
   target the `$4000..$7fff` stage-two address span. The source-lock assembly
   now represents them as words, and the raw-BIN receipt checks every target.
-- 🔒 The map provides addresses only. Valid stream indices, per-handler
-  operands and advancement, gameplay meanings, and the real-resource caller
-  remain unbound. The disassembly now decodes from all 85 table roots without
-  assigning command semantics. Index `$28`'s Y-offset 1 test and Y-offset 2
-  fetch are mapped statically, but are not bound to a valid stream. Regional
-  Regional call operands at indices `$11`, `$23`, `$2b`, and `$35`, plus index
-  `$28`'s regional pointer immediate in helper `$43b5`, are recorded without
-  assigning semantics. See
+- 🔒 The map provides addresses only. Valid stream indices, remaining
+  per-handler operands/advancement, gameplay meanings, and the real-resource
+  caller remain unbound. The disassembly now decodes from all 85 table roots
+  without assigning command semantics. Indices `$00..$07` have a static
+  comparison/cursor-transfer trace; index `$28`'s Y-offset 1 test and Y-offset
+  2 fetch are also mapped, but none is bound to a valid stream. Regional
+  call operands at indices `$11`, `$23`, `$2b`, `$35`, plus `$28`'s regional
+  pointer immediate in helper `$43b5`, are recorded without assigning
+  semantics. See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 
 ## 2026-10-05 — prove replayed PCE masks at the controller data port
