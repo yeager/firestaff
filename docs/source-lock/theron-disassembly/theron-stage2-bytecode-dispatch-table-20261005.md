@@ -209,6 +209,10 @@ callee effects.
 The `stage2_id20_id21_fixed_arguments` assertion also locks their `$4647/$464f`
 roots and convergence path against authentic US and JP bytes; the `$3ab7`
 effects remain unassigned.
+The `stage2_id1e_id1f_bounded_handlers` assertion locks the complete `$1e`
+root/helper pair (`$4433..$445e`) and adjacent `$1f` root (`$445f..$447e`),
+including both dispatch words, in both authentic editions. The bytes establish
+bounded instruction paths only, not operand meanings or runtime selection.
 
 The 17 authenticated stage-two user-data sectors contain no direct absolute
 `STA`, `STX`, `STY`, or `STZ` encoding to `$201c` in either US or JP. This

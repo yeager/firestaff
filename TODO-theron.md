@@ -98,7 +98,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   `$17..$1b` fixed-argument roots and their common reader/tail are byte-locked
   in both authentic editions; their callee effects remain unbound. Indices
   `$20/$21`'s fixed-argument roots and shared continuation are also locked;
-  callee semantics remain unknown.
+  callee semantics remain unknown. The naturally bounded `$1e` root/helper
+  and adjacent `$1f` root are now byte-locked in both editions, without
+  assigning operand semantics.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through
