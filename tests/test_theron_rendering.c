@@ -145,6 +145,8 @@ static int test_compile_square_constants(void) {
     ASSERT(THERON_SQUARE_IS_PASSABLE(11) == 0, "SECRET should not be passable");
     ASSERT(THERON_SQUARE_IS_PASSABLE(THERON_SQUARE_STAIRS_UNRESOLVED) == 0,
            "unresolved authentic stairs should not be passable");
+    ASSERT(THERON_SQUARE_IS_PASSABLE(THERON_SQUARE_TYPE7_UNRESOLVED) == 0,
+           "unresolved Track 02 type-7 tile should fail closed");
     for (int depth = 0; depth < TQR_VP_DEPTH; ++depth) {
         ASSERT(theron_vp_tile_for_square(
                    THERON_SQUARE_STAIRS_UP, depth, 0) == -1,

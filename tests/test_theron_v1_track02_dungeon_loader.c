@@ -2600,6 +2600,50 @@ static unsigned int print_real_stair_party_actuator_census(
     return count;
 }
 
+static int assert_authentic_type7_approach_fails_closed(
+    Theron_V1_World *world, int level_index, int tile_x, int tile_y) {
+    const Theron_V1_Level *level;
+    int saved_level;
+    int saved_x;
+    int saved_y;
+    int saved_direction;
+
+    assert(world != NULL);
+    level = &world->levels[world->current_dungeon - 1][level_index];
+    for (int direction = 0; direction < THERON_DIR_COUNT; ++direction) {
+        const int approach_x = tile_x - g_theron_dir_dx[direction];
+        const int approach_y = tile_y - g_theron_dir_dy[direction];
+        uint64_t before_hash;
+        if (approach_x < 0 || approach_x >= level->width || approach_y < 0 ||
+            approach_y >= level->height ||
+            level->squares[approach_y][approach_x] != THERON_SQUARE_FLOOR)
+            continue;
+
+        saved_level = world->current_level;
+        saved_x = world->party.leader_x;
+        saved_y = world->party.leader_y;
+        saved_direction = world->party.leader_dir;
+        world->current_level = level_index;
+        world->party.leader_x = approach_x;
+        world->party.leader_y = approach_y;
+        world->party.leader_dir = (int8_t)direction;
+        before_hash = theron_v1_world_hash(world);
+        assert(theron_v1_get_move_result(world, direction) ==
+               THERON_MOVE_BLOCKED);
+        assert(theron_v1_world_hash(world) == before_hash);
+        assert(theron_v1_move_party_original_command(
+                   world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+               THERON_MOVE_BLOCKED);
+        assert(theron_v1_world_hash(world) == before_hash);
+        world->current_level = saved_level;
+        world->party.leader_x = saved_x;
+        world->party.leader_y = saved_y;
+        world->party.leader_dir = (int8_t)saved_direction;
+        return 1;
+    }
+    return 0;
+}
+
 static void test_all_dungeons(
     const uint8_t *ud, size_t ud_size,
     const uint8_t *track02, size_t track02_size) {
@@ -2622,6 +2666,8 @@ static void test_all_dungeons(
     unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
     unsigned int active_to_inactive_movement = 0u;
+    unsigned int type7_tiles = 0u;
+    unsigned int type7_movement_routes = 0u;
     Theron_TeleporterMetadataCensus teleporter_metadata = {0};
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
@@ -2713,6 +2759,17 @@ static void test_all_dungeons(
                 for (unsigned int y = 0u; y <= src->y_dim; ++y) {
                     assert(dst->source_tiles[y][x] ==
                            source_maps.maps[m].tiles[x][y]);
+                    if ((source_maps.maps[m].tiles[x][y] >> 5) ==
+                        THERON_TILE_TYPE7) {
+                        assert(dst->squares[y][x] ==
+                               THERON_SQUARE_TYPE7_UNRESOLVED);
+                        ++type7_tiles;
+                        if (type7_movement_routes == 0u)
+                            type7_movement_routes +=
+                                (unsigned int)
+                                assert_authentic_type7_approach_fails_closed(
+                                    world, (int)m, (int)x, (int)y);
+                    }
                     if ((source_maps.maps[m].tiles[x][y] >> 5) ==
                         THERON_TILE_STAIRS) {
                         assert(dst->squares[y][x] ==
@@ -3042,6 +3099,10 @@ static void test_all_dungeons(
            stair_party_actuator_count);
     assert(stair_party_actuator_count ==
            THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT);
+    assert(type7_tiles == 82u);
+    assert(type7_movement_routes == 1u);
+    printf("  authentic US type-7 tiles retained opaque and block movement: %u\n",
+           type7_tiles);
     g_us_stair_party_actuator_count = stair_party_actuator_count;
     g_us_stair_party_actuator_census_valid = 1;
     assert(nonfirst_take_roundtrips > 0u);
@@ -3064,6 +3125,8 @@ static void test_all_jp_dungeons(
     unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
     unsigned int active_to_inactive_movement = 0u;
+    unsigned int type7_tiles = 0u;
+    unsigned int type7_movement_routes = 0u;
     Theron_TeleporterMetadataCensus teleporter_metadata = {0};
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
@@ -3148,9 +3211,20 @@ static void test_all_jp_dungeons(
             assert(published->width == (int)width);
             assert(published->height == (int)height);
             for (unsigned int x = 0u; x < width; ++x)
-                for (unsigned int y = 0u; y < height; ++y)
+                for (unsigned int y = 0u; y < height; ++y) {
                     assert(published->source_tiles[y][x] ==
                            raw_map->tiles[x][y]);
+                    if ((raw_map->tiles[x][y] >> 5) == THERON_TILE_TYPE7) {
+                        assert(published->squares[y][x] ==
+                               THERON_SQUARE_TYPE7_UNRESOLVED);
+                        ++type7_tiles;
+                        if (type7_movement_routes == 0u)
+                            type7_movement_routes +=
+                                (unsigned int)
+                                assert_authentic_type7_approach_fails_closed(
+                                    world, (int)map_index, (int)x, (int)y);
+                    }
+                }
         }
         for (int oi = 0; oi < world->object_count; ++oi) {
             const Theron_V1_Object *object = &world->objects[oi];
@@ -3261,6 +3335,10 @@ static void test_all_jp_dungeons(
            stair_party_actuator_count);
     assert(stair_party_actuator_count ==
            THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT);
+    assert(type7_tiles == 78u);
+    assert(type7_movement_routes == 1u);
+    printf("  authentic JP type-7 tiles retained opaque and block movement: %u\n",
+           type7_tiles);
     g_jp_stair_party_actuator_count = stair_party_actuator_count;
     g_jp_stair_party_actuator_census_valid = 1;
     assert(nonfirst_take_roundtrips > 0u);

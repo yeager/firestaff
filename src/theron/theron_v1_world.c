@@ -981,7 +981,10 @@ static uint8_t track02_tile_to_square(uint8_t tile_byte) {
         case THERON_TILE_DOOR:       return THERON_SQUARE_DOOR;
         case THERON_TILE_TELEPORTER: return THERON_SQUARE_TELEPORTER;
         case THERON_TILE_FAKEWALL:   return THERON_SQUARE_SECRET;
-        case THERON_TILE_TYPE7:      return THERON_SQUARE_WALL;
+        /* The authenticated map format identifies family 7 but does not
+         * establish its collision or rendering semantics. Preserve the
+         * distinction and let movement fail closed. */
+        case THERON_TILE_TYPE7:      return THERON_SQUARE_TYPE7_UNRESOLVED;
     }
     return THERON_SQUARE_WALL;
 }

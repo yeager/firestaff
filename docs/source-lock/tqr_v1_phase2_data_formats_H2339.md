@@ -136,6 +136,13 @@ fields. DM1's `MASK0x0004_STAIRS_UP` and
 `F0154_DUNGEON_GetLocationAfterLevelChange` are research leads, not proof that
 Theron uses the same packed attribute or transition contract.
 
+Tile family 7 is also retained as an unresolved square class, rather than
+being projected to a wall. Authentic US and JP maps contain these bytes, but
+the current source inventory does not establish their collision, rendering,
+or interaction behavior. Firestaff blocks movement into this class as a
+fail-closed host policy; this is not evidence that the retail game treats it
+as impassable.
+
 A separate hash-authenticated all-dungeon source census finds all 16 low-nibble
 values in both editions: US counts for `0x0..0xF` are
 `22,10,5,1,21,8,7,4,25,10,3,6,21,10,9,9` (171 stair-class tiles); JP counts

@@ -226,10 +226,12 @@ typedef struct {
 #define THERON_SQUARE_TRIGGER        9   /* event trigger */
 #define THERON_SQUARE_POOL           10  /* water/food recovery */
 #define THERON_SQUARE_SECRET        11  /* hidden door wall */
+#define THERON_SQUARE_TYPE7_UNRESOLVED 12 /* source tile family; semantics unknown */
 
 #define THERON_SQUARE_IS_PASSABLE(t) \
     ((t) != THERON_SQUARE_WALL && (t) != THERON_SQUARE_SECRET && \
-     (t) != THERON_SQUARE_STAIRS_UNRESOLVED)
+     (t) != THERON_SQUARE_STAIRS_UNRESOLVED && \
+     (t) != THERON_SQUARE_TYPE7_UNRESOLVED)
 #define THERON_SQUARE_IS_SPECIAL(t)  ((t) >= 2 && (t) != 4)
 
 /* Provenance of Theron_V1_Level.start_*.  Authenticated Track 02 level

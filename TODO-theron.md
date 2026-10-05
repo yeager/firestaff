@@ -2,6 +2,18 @@
 
 Reviewed 2026-10-05. Only open work is listed here.
 
+## 2026-10-05 — preserve unresolved Track 02 tile family 7
+
+- ✅ Authentic US and JP map-loader regressions retain every family-7 raw tile
+  byte while publishing a distinct unresolved square value. The authentic
+  census is 82 US and 78 JP tiles; one real floor-approachable occurrence per
+  region verifies both movement preview and the original-command host path
+  fail closed without changing world state.
+- 🔒 The source-format inventory identifies the packed family value but does
+  not establish retail collision, rendering, or interaction behavior. The
+  host's no-entry policy is defensive only; do not label these tiles as retail
+  walls or claim parity until an original consumer is captured.
+
 ## 2026-10-05 — add scripted input to PCE Fast reference captures
 
 - ✅ The opt-in Mednafen reference build can now replay bounded, frame-indexed

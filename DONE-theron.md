@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-05 — preserve unresolved Track 02 tile family 7
+
+- ✅ Production map loading now preserves authentic Track 02 tile family 7
+  as a distinct unresolved square instead of projecting it to a wall. Both
+  the read-only movement preview and original-command host route block entry
+  without mutating world state until a Theron runtime consumer establishes
+  its behavior. `THERON_SQUARE_IS_PASSABLE` likewise keeps it closed.
+- ✅ On trv2, `theron_v1_track02_dungeon_loader` verified every authentic US
+  and JP source tile byte against the loaded maps, counted 82 US and 78 JP
+  family-7 occurrences, and checked one real floor-approachable tile per
+  region through both movement routes. The loader, playability, and rendering
+  CTests each passed three consecutive runs. These checks establish exact
+  source preservation and Firestaff fail-closed consistency, not retail
+  collision or visual semantics.
+
 ## 2026-10-05 — clear warning-only ambiguity in Theron sources
 
 Separated the null-output guard from subsequent receipt initialization in the

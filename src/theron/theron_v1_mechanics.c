@@ -631,6 +631,12 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
     if (tile == THERON_SQUARE_WALL || tile == THERON_SQUARE_SECRET) {
         return THERON_MOVE_BLOCKED;
     }
+    /* The authenticated Track 02 format inventory identifies tile family 7
+     * but leaves its gameplay attributes unresolved; see
+     * docs/source-lock/tqr_v1_phase2_data_formats_H2339.md:115-136. */
+    if (tile == THERON_SQUARE_TYPE7_UNRESOLVED) {
+        return THERON_MOVE_BLOCKED;
+    }
     if (tile == THERON_SQUARE_DOOR) {
         /* ReDMCSB THQUEST.ASM T560/T600 keeps door state with the level
          * object.  Read the actual object here; the party-level override is
@@ -755,6 +761,11 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Walls / solid barriers ── */
     if (tile == THERON_SQUARE_WALL || tile == THERON_SQUARE_SECRET) {
+        return THERON_MOVE_BLOCKED;
+    }
+    /* Match the read-only route above: unresolved authentic map families
+     * cannot be entered until a Theron consumer establishes their behavior. */
+    if (tile == THERON_SQUARE_TYPE7_UNRESOLVED) {
         return THERON_MOVE_BLOCKED;
     }
 
