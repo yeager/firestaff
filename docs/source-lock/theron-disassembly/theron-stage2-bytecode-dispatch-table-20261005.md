@@ -45,11 +45,19 @@ static HuC6280 jump target reached by the corresponding table index.
 
 ## Target-rooted disassembly and regional comparison
 
-`theron-us-stage2-da65.info` marks `$410d..$41b6` as an address table so da65
-starts a labeled sweep at each of the 85 targets. It also marks the 64-byte
-source of the US `TIA` at `$5e57` as data (`$5e5f..$5e9e`), rather than letting
-a linear sweep misread it as instructions. The resulting US source-lock
-listing is `theron-us-stage2-huc6280.asm`.
+`theron-stage2-da65.info` marks `$410d..$41b6` as an address table and gives
+each of its 85 target addresses a one-byte `CODE` root. This makes da65
+decode from every indirect-jump destination, even where a linear sweep had
+rendered the bytes as data. Two corrected examples are index `$02` at `$41d8`
+(`BSR $41f8`) and index `$41` at `$42be` (`LDA $1c; PHA; LDA $1d; PHA`).
+All 85 roots now have a decoded HuC6280 instruction at their entry under da65
+V2.18; this confirms opcode decoding only, not that every index occurs in a
+valid bytecode stream. Subsequent bytes on some paths can still be ambiguous
+or remain `.byte` data because the listing is a static linear output; the root
+markers do not prove complete handler control flow.
+The info file also marks the 64-byte source of the US `TIA` at `$5e57` as data
+(`$5e5f..$5e9e`). The resulting US source-lock listing is
+`theron-us-stage2-huc6280.asm`.
 
 To reproduce the payload, deinterleave the 17 raw MODE1/2352 sectors: keep
 bytes 16 through 2063 from each sector, for US raw sectors 1224–1240 or JP
@@ -64,6 +72,17 @@ payload interval corresponding to `$4000..$4acf`, the editions differ at only
 seven bytes, in five spans: `$42f6`, `$4314..$4315`, `$43be`, `$466f..$4670`,
 and `$46c5`. All 85 target first bytes match. Their first 16 bytes also match
 at 84 targets; the sole differing prefix is index `$35` at `$46b8`:
+
+The other regional deltas also fall on three additional call sites and one
+immediate operand in separately rooted listings. Index `$11` at `$42d3` calls `$5e27`
+(US) / `$5e57` (JP) at `$42f5` (the changed low operand byte is `$42f6`);
+index `$23` at `$42fb` and index `$2b` at `$4653` call `$56af` (US) / `$5729`
+(JP) at `$4313` and `$466e`, respectively (changed operands `$4314..$4315`
+and `$466f..$4670`).
+At `$43b5`, the routines are byte-identical except for the immediate loaded at
+`$43bd` (`#$9f` US / `#$cf` JP). The snippets establish the differing operands
+and their surrounding static instructions, not why the editions use these
+values or what any dispatch index means.
 
 ```text
 US $46c4: JSR $5e4d   JP $46c4: JSR $5e7d

@@ -234,10 +234,9 @@ L4105:  lda     #$07
 L4109:  lda     #$09
         bra     L40E4
 ; The indirect jump at $40dc indexes these little-endian targets by the
-; doubled byte read from ($1c). Targets are address roots, not command names.
-; The 85 entries match authentic US and JP Track 02 BINs; see the source-lock
-; dispatch-table evidence document. Reproduce this rooted sweep with
-; theron-stage2-da65.info and the authentic, deinterleaved US payload.
+; doubled byte read from ($1c). Each value is an independent code root, not
+; a command name. Targets match both authentic regional Track 02 BINs; see
+; theron-stage2-bytecode-dispatch-table-20261005.md and its da65 info file.
 Stage2Dispatch:
         .addr   L41C5
         .addr   L41CB
@@ -346,8 +345,9 @@ L41CF:  bsr     L41B9
 
 L41D5:  jmp     L4101
 
-L41D8:  .byte   $44
-L41D9:  .byte   $1E
+L41D8:
+L41D9           := * + 1
+        bsr     L41F8
 L41DA:  bne     L41CF
         bra     L41D5
 L41DE:  bsr     L41F8
@@ -474,11 +474,15 @@ L42A6:  lda     #$00
         jsr     L40CC
         rts
 
-L42BE:  .byte   $A5
-L42BF:  trb     $A548
-        ora     $2048,x
-        lda     $2041,y
-        cpy     $6840
+L42BE:
+L42BF           := * + 1
+        lda     $1C
+        pha
+        lda     $1D
+        pha
+        jsr     L41B9
+        jsr     L40CC
+        pla
         sta     $1D
         pla
         sta     $1C
