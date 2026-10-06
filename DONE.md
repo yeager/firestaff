@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-06: The legacy palette menu now renders the active platform and
+  presentation card flow instead of showing detailed game options while its
+  input handler changes cards. Platform readiness follows the selected
+  architecture; the V2.1 card and detailed-options action have explicit
+  labels. The compact layout is covered at 320x200 and 320x100, and the new
+  V2.1 label has reviewed translations. GitHub Actions run 37502261102 passed
+  on Linux, macOS and Windows; the M12 flow regression passed on all three,
+  while the separate M12 menu-selection regression passed on Linux and macOS
+  and was skipped by its Windows workflow condition.
+
 - 2026-10-06: DM1 Amiga ADF startup now keeps the authenticated dungeon's
   little-endian F0434 fields separate from the big-endian IMG2 graphics flag.
   The installed `[HD]` disk enters through its direct runtime route, while the
