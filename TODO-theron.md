@@ -220,6 +220,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   operands and runtime selection remain unassigned.
   ID `$4c`'s `$49d3..$49da` NOP/call/terminal-jump handoff is also locked to
   both editions; `$4bd2` effects and runtime selection remain unknown.
+  ID `$4e`'s `$4a3b..$4a41` NOP/call/relative-branch prefix is locked to both
+  editions, ending before ID `$51` at `$4a42`; the shared destination's
+  continuation and runtime selection remain open.
   ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its

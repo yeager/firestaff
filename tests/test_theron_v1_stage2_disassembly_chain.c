@@ -1417,6 +1417,24 @@ static void test_stage2_id4c_call_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $4e's bounded NOP/call/relative-branch handoff. */
+static void test_stage2_id4e_relative_handoff(const uint8_t *raw,
+                                              size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x44u, 0xa4u, 0x20u, 0xe1u, 0x4cu, 0x80u, 0x96u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x4eu)) == 0x4a3bu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4a3bu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id4e_relative_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2901,6 +2919,7 @@ int main(void)
     test_stage2_id49_selector_join(g_us_data, g_us_size, 0);
     test_stage2_id4a_paired_call_loop(g_us_data, g_us_size, 0);
     test_stage2_id4c_call_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id4e_relative_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2961,6 +2980,7 @@ int main(void)
         test_stage2_id49_selector_join(g_jp_data, g_jp_size, 1);
         test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

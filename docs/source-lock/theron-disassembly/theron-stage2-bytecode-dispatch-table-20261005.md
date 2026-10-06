@@ -921,6 +921,13 @@ and ends at `$49da` with `JMP $40f5`. The assertion stops at this terminal
 jump; it does not extend into another routine or assign meaning to the called
 helper or stream selection.
 
+ID `$4e` points to `$4a3b` in both editions. Its conservative seven-byte
+window `$4a3b..$4a41` contains the zero-page NOP `$44 $a4`, `JSR $4ce1`, and a
+relative branch from `$4a40` back to `$49d8`. It ends immediately before the
+distinct ID `$51` target at `$4a42`; the branch destination is nearby shared
+code, but this byte lock does not claim the larger routine boundary, helper
+effects, or runtime selection.
+
 ID `$37` points to `$480a` in both editions. Its root `$480a..$4813` reads one
 stream byte to `$02`, calls the local helper at `$4814`, and jumps to `$40f5`.
 The helper window `$4814..$4841` is byte-identical in the authentic US and JP
