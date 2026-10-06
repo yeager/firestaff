@@ -508,21 +508,70 @@ stage-two entry instructions at `$4000` write MPR3..MPR6, then call `$8000`
 before continuing; the MPR1 state across `$8000` and its helpers is not
 established by the entry-byte check. The separate authenticated `MPR1=$f8`
 receipt from the `$de21` backup-RAM writer cannot be transferred to this call.
-A valid disassembly source must join the `$3a2e` execution with MPR1 and its
-physical PC/bank, or prove the loader span that sets that mapping.
+
+The `pce_fast` runtime probe is placed at the interpreter fetch at `$40dc`,
+before `RdAtPC()` consumes the opcode. It reads zero-page stream cursor
+`$1c/$1d` and the little-endian handler word selected from the currently mapped
+`$410d` table. The handler ID is `$1c`; `$1d` is recorded only as the adjacent
+cursor byte, not interpreted as another ID. It emits at most 32 distinct
+`(ID,target)` transitions while observing at most 1,048,576 dispatches, so a
+repeated idle dispatch cannot use the whole output budget. A row proves the
+target word read at the dispatch point, not handler completion or gameplay
+effect.
+
+Four authenticated JP cold-start captures used the original Track 02 CUE, the
+headered original System Card, and the documented `run@9600:90,i@11000:8,
+ii@13000:8` input replay. The first, non-deduplicating probe filled its 32-row
+budget with repeated ID `$00` / target `$41c5` rows under `MPR2=$80`, before
+later events. The second, transition-filtered build kept the output bounded
+and recorded ID `$00` with target `$41c5` under `MPR2=$80`, alternating with
+target `$ba9c` under `MPR2=$82`. The capture logged all three requested input
+events, but its strict receipt blocked because the final event had no later
+controller-port read exposing its mask. This is dispatch-path evidence only;
+it does not prove the input changed game state, the handler completed, or that
+the alternate target has a gameplay meaning.
+
+The third capture used the corrected physical-bank calculation and repeated
+the alternating targets: `$41c5` resolved through MPR `$80` to physical
+`$001001c5`; `$ba9c` resolved through MPR `$6a` to physical `$000d5a9c`.
+Both rows include the actual table physical address and raw little-endian
+bytes (`c5 41` and `9c ba`). The fourth capture, after moving the helper probe
+to `$4ed2`, repeated the same corrected dispatch mappings. It recorded no
+`$4ed2` candidate, `$3a2e` call, or linked target row on that route. This is a
+route-limited negative observation, not evidence that the call is unreachable.
+All four captures applied the three replay events, but each strict receipt
+remained blocked because no later controller
+read exposed the final event's mask. None proves a handler was entered or that
+the inputs changed game state.
+
+Reviewing those rows exposed a physical-bank calculation bug: the earlier
+probe derived every target physical PC from `MPR2`, even when the target's
+logical address was in another segment (for example `$ba9c`). The corrected
+patch derives the target bank from `MPR[target >> 13]` and adds the table's
+physical address and raw entry bytes. It passed static regression loops, the
+complete patch-only chain, PCE Fast object compilation/relinking on `trv2`,
+and the third authentic cold-start capture. No target physical address from
+the second capture's `$ba9c` rows is admitted as evidence.
+A runtime receipt should join a fetch at `$4ed2` to the next instruction at
+`$3a2e`, recording MPR1 and physical PCs, or independently prove the loader
+span that sets that mapping.
 The original `pce` trace build has a bounded probe at `$4ec9` and `$3a2e`, but
 its `$4ec9` row reads candidate bytes rather than proving that `$3a2e` executes.
-The `pce_fast` instruction-loop probe now recognizes the authentic
-`JSR $3a2e` bytes at `$4ec9`, records the caller's MPR1 and physical PC, and
-marks a `$3a2e` row as linked only when that is the immediately following
-instruction PC. The target row also captures its actual MPR1, physical PC,
+The `pce_fast` instruction-loop probe previously inspected bytes at `$4ec9`,
+which is the function entry, not the call site. The authentic listing shows
+`JSR $3a2e` at `$4ed2` (after `DEC $5b`, `LDA $4ec2`, `STA $37cc`, and
+`JSR $4f31`). The previous capture's repeated `$4ec9` rows (`c6 5b ad`) were
+function-entry bytes and did not establish a candidate call; their `linked=0`
+value was expected. The probe now checks the three call-site bytes at `$4ed2`,
+records that PC's MPR1 and physical address, and marks a `$3a2e` row linked
+only when it is the immediately following instruction PC. The target row also captures its actual MPR1, physical PC,
 and 64 mapped bytes; its predicted physical target is retained separately so
 the mapping can be compared at execution. Only signature-linked target rows
 are emitted, with separate bounded budgets for caller and target records.
-An independent 32-row `$4ec9` candidate budget records observed caller bytes
-even when they do not match the expected JSR signature, so an absent call row
-can be distinguished from an unvisited candidate PC.
-On candidate and call rows, `linked=1` means only that the three bytes match
+An independent 32-row `$4ed2` candidate budget records observed call-site
+bytes even when they do not match the expected JSR signature, so an absent
+call row can be distinguished from an unvisited call-site PC. On candidate
+and call rows, `linked=1` means only that the three bytes match
 `JSR $3a2e`; it does not prove the branch executed. Only a linked
 `stage2_mpr1_exec` row proves entry at the target.
 Trace-file discovery is initialized once to avoid repeated environment

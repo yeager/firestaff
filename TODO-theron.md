@@ -29,6 +29,35 @@ Reviewed 2026-10-06. Only open work is listed here.
 - 🔒 No authentic same-session `$4ec9 → $3a2e` runtime receipt has yet been
   recorded, so the helper's physical bank, bytes, and behavior remain
   unverified. Capture a real execution before drawing conclusions.
+- ✅ Three authentic JP cold-starts with original Track 02 and System Card
+  reached `$40dc`. The first 32-row logger saturated on repeated ID `$00` /
+  target `$41c5` at `MPR2=$80`; a transition-filtered probe then preserved the
+  bounded output and showed repeated ID `$00` transitions between target
+  `$41c5` at `MPR2=$80` and `$ba9c` at `MPR2=$82`. Both captures applied all
+  three requested replay events, but the strict input receipt blocked because
+  the final event had no later controller read with its scripted mask. These
+  rows establish dispatch-point observations, not handler completion or
+  gameplay effects.
+- 🔒 The transition trace exposed an incorrect earlier target-physical-address
+  calculation: it used `MPR2` for targets outside that logical segment. The
+  current patch derives the target bank from `MPR[target >> 13]` and records
+  table physical address plus entry bytes. The complete patch-only chain and
+  PCE Fast object compile/relink now pass on `trv2`; a fresh authentic capture
+  with the corrected bank calculation confirmed `$41c5` through MPR `$80` at
+  `$001001c5`, and `$ba9c` through MPR `$6a` at `$000d5a9c`; raw table bytes
+  were `c5 41` and `9c ba`. Earlier `$ba9c` physical fields from the second
+  capture remain invalid. All three input receipts still block because the
+  final scripted event lacked a later controller read exposing its mask.
+- ✅ Source review corrected the `$3a2e` call-site probe: `$4ec9` is the
+  function entry, while the authentic listing places `JSR $3a2e` at `$4ed2`.
+  The observed `$4ec9` bytes (`c6 5b ad`) were function-entry bytes, not call
+  evidence. Instrumentation and regression checks now inspect `$4ed2`; the
+  corrected object compiled and the PCE Fast emulator was relinked on `trv2`.
+  One 360-second cold-start replay applied all three scripted events and
+  confirmed the corrected dispatch-bank rows, but recorded no `$4ed2`
+  candidate, `$3a2e` call, or target row. The strict receipt still blocked on
+  the final controller-mask read. This negative observation is limited to the
+  tested route; an authentic same-session call receipt is still required.
 
 ## 2026-10-05 — continue the ID `$2c` helper decompilation
 

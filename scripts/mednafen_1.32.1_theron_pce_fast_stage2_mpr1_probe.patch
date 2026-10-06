@@ -4,7 +4,7 @@
  #include "vdc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -29,1 +31,93 @@
+@@ -29,1 +31,129 @@
  HuC6280 HuCPU;
 +
 +static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc)
@@ -12,6 +12,11 @@
 + static FILE *stage2_mpr1_trace;
 + static int stage2_mpr1_trace_initialized;
 + static unsigned stage2_mpr1_candidate_sequence;
++ static unsigned stage2_mpr1_dispatch_sequence;
++ static unsigned stage2_mpr1_dispatch_observation_sequence;
++ static int stage2_mpr1_dispatch_last_valid;
++ static uint8 stage2_mpr1_dispatch_last_id;
++ static uint16 stage2_mpr1_dispatch_last_target;
 + static unsigned stage2_mpr1_sequence;
 + static unsigned stage2_mpr1_call_sequence;
 + static int stage2_mpr1_call_pending;
@@ -32,7 +37,7 @@
 + }
 + if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
 +  stage2_mpr1_call_pending = 0;
-+ if(stage2_probe_pc == 0x4ec9)
++ if(stage2_probe_pc == 0x4ed2)
 + {
 +  const uint8 *caller = (const uint8 *)(HuCPU.FastPageR[2] + stage2_probe_pc);
 +  const uint32 caller_mpr2 = HuCPU.MPR[2];
@@ -50,7 +55,7 @@
 +  if(stage2_mpr1_trace && stage2_mpr1_candidate_sequence < 32)
 +  {
 +   fprintf(stage2_mpr1_trace,
-+     "stage2_mpr1_candidate sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_bytes=%02x%02x%02x linked=%u\n",
++     "stage2_mpr1_candidate sequence=%u pc=%04x physical_pc=%08x mpr1=%02x callsite_bytes=%02x%02x%02x linked=%u\n",
 +     stage2_mpr1_candidate_sequence++, stage2_probe_pc,
 +     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
 +     stage2_mpr1_caller_bytes[0], stage2_mpr1_caller_bytes[1],
@@ -61,7 +66,7 @@
 +     stage2_mpr1_call_sequence < 32)
 +  {
 +   fprintf(stage2_mpr1_trace,
-+     "stage2_mpr1_call sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x caller_bytes=%02x%02x%02x linked=%u\n",
++     "stage2_mpr1_call sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x callsite_bytes=%02x%02x%02x linked=%u\n",
 +     stage2_mpr1_call_sequence++, stage2_probe_pc,
 +     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
 +     stage2_mpr1_call_target_physical_pc, stage2_mpr1_caller_bytes[0],
@@ -86,7 +91,7 @@
 +   }
 +   target_bytes[128] = 0;
 +   fprintf(stage2_mpr1_trace,
-+     "stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ec9 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u caller_bytes=%02x%02x%02x bytes=%s\n",
++     "stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed2 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s\n",
 +     stage2_mpr1_sequence++, stage2_probe_pc,
 +     (target_mpr1 << 13) | (stage2_probe_pc & 0x1fff), target_mpr1,
 +     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
@@ -97,8 +102,39 @@
 +  }
 +  stage2_mpr1_call_pending = 0;
 + }
++ if(stage2_probe_pc == 0x40dc && stage2_mpr1_trace &&
++    stage2_mpr1_dispatch_observation_sequence < 1048576)
++ {
++  const uint8 *stream = (const uint8 *)(HuCPU.FastPageR[0] + 0x1c);
++  const uint8 *table = (const uint8 *)(HuCPU.FastPageR[2] + 0x410d);
++  const uint8 stream_id = stream[0];
++  const uint8 stream_id_high = stream[1];
++  const uint16 table_offset = stream_id * 2;
++  const uint8 target_low = table[table_offset];
++  const uint8 target_high = table[table_offset + 1];
++  const uint16 target = target_low | (target_high << 8);
++  if(stage2_mpr1_dispatch_sequence < 32 &&
++     (!stage2_mpr1_dispatch_last_valid ||
++      stream_id != stage2_mpr1_dispatch_last_id ||
++      target != stage2_mpr1_dispatch_last_target))
++  {
++   fprintf(stage2_mpr1_trace,
++     "stage2_mpr1_dispatch sequence=%u observation=%u pc=40dc physical_pc=%08x mpr2=%02x stream_id=%02x stream_id_high=%02x target=%04x target_mpr=%02x target_physical_pc=%08x table_physical_address=%08x table_bytes=%02x%02x\n",
++     stage2_mpr1_dispatch_sequence++, stage2_mpr1_dispatch_observation_sequence,
++     (HuCPU.MPR[2] << 13) | (0x40dc & 0x1fff), HuCPU.MPR[2],
++     stream_id, stream_id_high, target,
++     HuCPU.MPR[target >> 13],
++     (HuCPU.MPR[target >> 13] << 13) | (target & 0x1fff),
++     (HuCPU.MPR[2] << 13) | (0x010d + table_offset), target_low, target_high);
++   fflush(stage2_mpr1_trace);
++  }
++  stage2_mpr1_dispatch_last_valid = 1;
++  stage2_mpr1_dispatch_last_id = stream_id;
++  stage2_mpr1_dispatch_last_target = target;
++  stage2_mpr1_dispatch_observation_sequence++;
++ }
 +}
-@@ -692,1 +694,2 @@
+@@ -692,1 +710,2 @@
 -	  b1 = RdAtPC();
 +	  TheronTraceStage2MPR1(GetRealPC());
 +	  b1 = RdAtPC();
