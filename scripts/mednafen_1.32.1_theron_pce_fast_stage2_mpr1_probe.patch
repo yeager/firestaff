@@ -4,12 +4,13 @@
  #include "vdc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -29,1 +31,77 @@
+@@ -29,1 +31,82 @@
  HuC6280 HuCPU;
 +
 +static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc)
 +{
 + static FILE *stage2_mpr1_trace;
++ static int stage2_mpr1_trace_initialized;
 + static unsigned stage2_mpr1_sequence;
 + static unsigned stage2_mpr1_call_sequence;
 + static int stage2_mpr1_call_pending;
@@ -17,12 +18,16 @@
 + static uint32 stage2_mpr1_caller_physical_pc;
 + static uint32 stage2_mpr1_call_target_physical_pc;
 + static uint8 stage2_mpr1_caller_bytes[3];
-+ const char *trace_path = getenv("FIRESTAFF_THERON_IRQ2_TRACE");
-+ if(!stage2_mpr1_trace && trace_path && *trace_path)
++ if(!stage2_mpr1_trace_initialized)
 + {
-+  stage2_mpr1_trace = fopen(trace_path, "a");
-+  if(stage2_mpr1_trace)
-+   fputs("source=mednafen-pce-fast-stage2-mpr1-probe\n", stage2_mpr1_trace);
++  const char *trace_path = getenv("FIRESTAFF_THERON_IRQ2_TRACE");
++  stage2_mpr1_trace_initialized = 1;
++  if(trace_path && *trace_path)
++  {
++   stage2_mpr1_trace = fopen(trace_path, "a");
++   if(stage2_mpr1_trace)
++    fputs("source=mednafen-pce-fast-stage2-mpr1-probe\n", stage2_mpr1_trace);
++  }
 + }
 + if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
 +  stage2_mpr1_call_pending = 0;

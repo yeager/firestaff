@@ -426,6 +426,8 @@ pce_fast_stage2_mpr1_probe_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_f
 if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_script" ||
    ! grep -Fq 'GetRealPC()' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'static int stage2_mpr1_trace_initialized;' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'if(!stage2_mpr1_trace_initialized)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC());' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_probe_pc == 0x3a2e && stage2_mpr1_call_pending)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_mpr1_trace && stage2_mpr1_call_pending &&' "$pce_fast_stage2_mpr1_probe_patch_file" ||

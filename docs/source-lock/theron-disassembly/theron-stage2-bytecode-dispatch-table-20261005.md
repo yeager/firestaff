@@ -518,13 +518,16 @@ marks a `$3a2e` row as linked only when that is the immediately following
 instruction PC. The target row also captures its actual MPR1, physical PC,
 and 64 mapped bytes; its predicted physical target is retained separately so
 the mapping can be compared at execution. Only signature-linked target rows
-are emitted, with separate bounded budgets for caller and target records. On
-`trv2`, the corrected probe patch applied to the isolated full research source,
-its `huc6280.o` target compiled, and the full PCE Fast-enabled Mednafen build
-succeeded. The local static regression passed three loops; its source-tree
-patch dry-run was skipped because the original Mednafen source is on `trv2`.
-No authentic runtime call receipt has yet been captured, so the target
-implementation and mapping remain unresolved.
+are emitted, with separate bounded budgets for caller and target records.
+Trace-file discovery is initialized once to avoid repeated environment
+lookups in the opcode loop; the environment and writable trace path must be
+ready before emulator startup. On `trv2`, the updated probe patch applied to the
+isolated full research source and its `huc6280.o` target compiled; the
+previous version passed the full PCE Fast-enabled Mednafen build. The local
+static regression passed three loops; its source-tree patch dry-run was
+skipped because the original Mednafen source is on `trv2`. No authentic
+runtime call receipt has yet been captured, so the target implementation
+and mapping remain unresolved.
 
 The JP F5 state (SHA-256
 `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) provides

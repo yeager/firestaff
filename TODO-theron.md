@@ -9,11 +9,14 @@ Reviewed 2026-10-06. Only open work is listed here.
   `$3a2e` execution with caller/target physical PCs and MPR1. Both call and
   linked-target rows have bounded budgets, so unrelated target hits cannot
   consume the linked-evidence budget. The helper now lives outside the opcode
-  loop to avoid C++ goto-over-initialization errors. The corrected patch
-  applied to the isolated full research source on `trv2`, its `huc6280.o`
-  target compiled, and the full PCE Fast-enabled `-j1` build succeeded. The
-  local static regression passed three loops; its source-tree patch dry-run
-  was skipped because the original Mednafen source is on `trv2`.
+  loop to avoid C++ goto-over-initialization errors. Trace-file discovery is
+  initialized once, avoiding repeated environment lookups in the opcode loop;
+  the environment and writable path must be ready before emulator startup.
+  The patch applied to the isolated full research source on `trv2`; the
+  updated `huc6280.o` target compiled, and the prior version passed the full
+  PCE Fast-enabled `-j1` build. The local static regression passed three
+  loops; its source-tree patch dry-run was skipped because the original
+  Mednafen source is on `trv2`.
 - 🔒 No authentic same-session `$4ec9 → $3a2e` runtime receipt has yet been
   recorded, so the helper's physical bank, bytes, and behavior remain
   unverified. Capture a real execution before drawing conclusions.
