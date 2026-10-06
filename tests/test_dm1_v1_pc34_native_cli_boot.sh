@@ -21,6 +21,63 @@ test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_probe_json="$test_scratch/dm1-menu-runtime-$$.json"
 
+# The PC34 launch plan requires the original SWSH prelude. Keep all other
+# files from the authentic archive, remove only this source asset in a private
+# test copy, and verify the CLI does not claim a completed launch without it.
+missing_swsh_root="$test_scratch/dm1-missing-swsh-$$"
+missing_swsh_home="$missing_swsh_root/home"
+mkdir -p "$missing_swsh_root/data" "$missing_swsh_home"
+unzip_log="$missing_swsh_root/unzip.log"
+unzip_status=0
+unzip -q "$archive" -d "$missing_swsh_root/data" 2>"$unzip_log" || unzip_status=$?
+if (( unzip_status > 1 )); then
+    cat "$unzip_log" >&2
+    echo "FAIL: could not extract the authentic DM1 test archive (unzip status $unzip_status)" >&2
+    exit 1
+fi
+if [[ ! -s "$missing_swsh_root/data/DATA/GRAPHICS.DAT" ||
+      ! -s "$missing_swsh_root/data/DATA/DUNGEON.DAT" ]]; then
+    echo "FAIL: extracted DM1 test copy is missing original runtime data" >&2
+    exit 1
+fi
+python3 - "$missing_swsh_root/data" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+matches = [path for path in root.rglob("*")
+           if path.is_file() and path.name.casefold() in {"swoosh", "swoosh.dat"}]
+if len(matches) != 1:
+    raise SystemExit(f"FAIL: expected one authentic SWSH file in test copy; found {matches}")
+matches[0].unlink()
+print("PASS: prepared an isolated missing-SWSH test copy from the original archive")
+PY
+missing_swsh_output_file="$missing_swsh_root/output.txt"
+if HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+   APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+   --game dm1 --platform pc --data-dir "$missing_swsh_root/data" \
+   --boot-probe --boot-probe-frames 120 --duration 0 \
+   >"$missing_swsh_output_file" 2>&1; then
+    cat "$missing_swsh_output_file" >&2
+    echo "FAIL: DM1 reported a successful runtime handoff without the required SWSH asset" >&2
+    exit 1
+fi
+if grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' "$missing_swsh_output_file" ||
+   ! grep -Fq 'direct launch failed for --game dm1' "$missing_swsh_output_file"; then
+    cat "$missing_swsh_output_file" >&2
+    echo "FAIL: missing SWSH did not stop DM1 before its runtime receipt" >&2
+    exit 1
+fi
+echo "PASS: DM1 rejects the PC34 launch when its source SWSH prelude is missing"
+python3 - "$missing_swsh_root" <<'PY'
+from pathlib import Path
+import shutil
+import sys
+
+shutil.rmtree(Path(sys.argv[1]))
+PY
+
 probe() {
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {

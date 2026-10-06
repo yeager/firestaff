@@ -3009,7 +3009,7 @@ int M11_ApplyIntroAudioPreferences(M11_AudioState* audio,
     return M11_Audio_SetVolumes(audio, master, sfx, music, sfx);
 }
 
-static void m11_play_ftl_swoosh_for_game_if_available(
+static int m11_play_ftl_swoosh_for_game_if_available(
                                               const M12_StartupMenuState* menuState,
                                               const char* dataDir,
                                               const char* gameId,
@@ -3029,10 +3029,11 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     unsigned int dosoundProgramBytes = 0U;
     int swshAudioInitialized = 0;
     int csbSwshAudioInitialized = 0;
+    int completed = 0;
     CSB_V1_BootProfile csbBoot;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
-    if (skipSwoosh) return;
+    if (skipSwoosh) return 1;
     /* SWSH is a source-owned prelude, not a V2 post-process input.  A prior
      * Modern session can otherwise leave its target/palette state latched
      * until the first ordinary game frame, causing this 320x200 RGBA logo to
@@ -3058,11 +3059,11 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                                             dataDir,
                                             gameId,
                                             logoPath,
-                                            sizeof(logoPath))) return;
+                                            sizeof(logoPath))) return 0;
     if (!asset_read_path_alloc(logoPath, &logoImg, &logoImgSize) ||
         !logoImg || logoImgSize == 0U || logoImgSize > (size_t)UINT_MAX) {
         free(logoImg);
-        return;
+        return 0;
     }
     g_m11_intro_local_audio = &swshAudio;
     /* Atari ST low-res FTL logo: 4bpp packed, 160 bytes/row, 32000 bytes total.
@@ -3161,13 +3162,16 @@ static void m11_play_ftl_swoosh_for_game_if_available(
       }
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
           SWSH_CompatSourceAnimationStep step;
-          if (M11_Render_PumpEvents()) break;
-          if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
+          if (M11_Render_PumpEvents()) goto cleanup;
+          if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) goto cleanup;
           if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
               SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
                                                        swshPalette[step.colorIndex & 0x0FU]);
               m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
-              M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+              if (M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH,
+                                         M11_FB_HEIGHT) != M11_RENDER_OK) {
+                  goto cleanup;
+              }
               ++sourceFrames;
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
               /* ReDMCSB SWSH.C:33-37: each Vsync wait is one 50 Hz vertical
@@ -3183,16 +3187,19 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                           m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
                           SWSH_Compat_GetRuntimeDelayMsForVblankCount(
                               step.vblankCount))) {
-                  break;
+                  goto cleanup;
               }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
               /* No palette was queued between the previous SET_PALETTE_COLOR
                * and now (the dead paletteDirty=1 path was never reachable). */
           }
       }
-      (void)m11_delay_ms_with_intro_event_pump(
-          hasDm1Media ? dm1Media.swsh_final_hold_ms :
-                        SWSH_Compat_GetRuntimeFinalHoldMs());
+      if (m11_delay_ms_with_intro_event_pump(
+              hasDm1Media ? dm1Media.swsh_final_hold_ms :
+                            SWSH_Compat_GetRuntimeFinalHoldMs())) {
+          goto cleanup;
+      }
+      completed = 1;
       if (g_m11_debug_startup_detail) {
           fprintf(stderr,
                   "firestaff: startup-source-complete game=%s phase=swsh-intro frames=%u source-vblanks=%u elapsed-ms=%llu\n",
@@ -3213,18 +3220,19 @@ cleanup:
     if (screenFbPacked) free(screenFbPacked);
     if (screenFbIndexed) free(screenFbIndexed);
     if (screenRgba) free(screenRgba);
+    return completed;
 }
 
-static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
+static int m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
                                               const char* dataDir,
                                               int skipSwoosh,
                                               const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
                                                   dm1MediaReceipt) {
-    m11_play_ftl_swoosh_for_game_if_available(menuState,
-                                              dataDir,
-                                              "dm1",
-                                              skipSwoosh,
-                                              dm1MediaReceipt);
+    return m11_play_ftl_swoosh_for_game_if_available(menuState,
+                                                      dataDir,
+                                                      "dm1",
+                                                      skipSwoosh,
+                                                      dm1MediaReceipt);
 }
 
 static int m11_play_redmcsb_title_graphic_intro_if_available(
@@ -3599,11 +3607,10 @@ static int m11_dm1_handoff_play_swsh(void* user,
         ctx->activePreludePlan.media_receipt.handled) {
         media = &ctx->activePreludePlan.media_receipt;
     }
-    m11_play_ftl_swoosh_if_available(ctx ? ctx->menuState : NULL,
-                                     ctx ? ctx->dataDir : NULL,
-                                     preserve_audio,
-                                     media);
-    return 1;
+    return m11_play_ftl_swoosh_if_available(ctx ? ctx->menuState : NULL,
+                                            ctx ? ctx->dataDir : NULL,
+                                            preserve_audio,
+                                            media);
 }
 
 static int m11_dm1_handoff_discard_presentation_texture(void* user) {

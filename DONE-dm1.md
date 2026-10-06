@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-10-06: DM1's PC34 startup handoff now requires the original SWSH logo
+  asset to load and its source-timed presentation to finish. Missing/unreadable
+  media, failed frame presentation, or an interrupted event wait now fails the
+  selected launch instead of publishing a successful intro receipt and
+  continuing into the runtime. The authentic PC34 CLI startup test passes and
+  includes a negative case made from a private copy of the retail archive with
+  only `SWOOSH` omitted; it verifies no runtime-ready receipt is emitted. This
+  tests launch admission, not physical M5 timing or visual parity.
+
 - 2026-10-06: Re-ran the authenticated FM Towns English/Japanese startup and
   launcher matrix against the local bilingual ZIP. Direct launch, default
   `--game dm1` platform selection, version selection, normal M12 title/Entrance
