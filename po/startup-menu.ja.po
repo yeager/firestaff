@@ -345,7 +345,7 @@ msgid "OFF"
 msgstr "オフ"
 
 #: src/ui/menu_startup_m12.c:487 src/ui/menu_startup_m12.c:503
-#: src/ui/menu_startup_render_modern_m12.c:2406
+#: src/ui/menu_startup_render_modern_m12.c:2411
 msgid "ON"
 msgstr "オン"
 
@@ -397,7 +397,7 @@ msgstr "Vulkan"
 msgid "AVAILABLE"
 msgstr "利用可能"
 
-#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2000
+#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2005
 msgid "UNAVAILABLE"
 msgstr "利用不可"
 
@@ -512,14 +512,14 @@ msgstr "リマスター版"
 #: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:813
 #: src/ui/menu_startup_m12.c:10280 src/ui/menu_startup_m12.c:10723
 #: src/ui/menu_startup_render_modern_m12.c:1474
-#: src/ui/menu_startup_render_modern_m12.c:2670
+#: src/ui/menu_startup_render_modern_m12.c:2675
 msgid "DUNGEON MASTER"
 msgstr "Dungeon Master"
 
 #: src/ui/menu_startup_m12.c:793 src/ui/menu_startup_m12.c:823
 #: src/ui/menu_startup_m12.c:10282 src/ui/menu_startup_m12.c:10737
 #: src/ui/menu_startup_render_modern_m12.c:1475
-#: src/ui/menu_startup_render_modern_m12.c:2673
+#: src/ui/menu_startup_render_modern_m12.c:2678
 msgid "CHAOS STRIKES BACK"
 msgstr "Chaos Strikes Back"
 
@@ -545,8 +545,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB ユーティリティ ディスク — ヒント オラクル"
 
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:11808
-#: src/ui/menu_startup_m12.c:11811 src/ui/menu_startup_render_modern_m12.c:1775
-#: src/ui/menu_startup_render_modern_m12.c:2048
+#: src/ui/menu_startup_m12.c:11811 src/ui/menu_startup_render_modern_m12.c:1780
+#: src/ui/menu_startup_render_modern_m12.c:2053
 msgid "MUSEUM OF LORE"
 msgstr "伝承の博物館"
 
@@ -1595,7 +1595,7 @@ msgstr "オリジナル"
 msgid "MISSING OR MISMATCHED"
 msgstr "不足または不一致"
 
-#: src/ui/menu_startup_m12.c:9204 src/ui/menu_startup_render_modern_m12.c:1976
+#: src/ui/menu_startup_m12.c:9204 src/ui/menu_startup_render_modern_m12.c:1981
 msgid "EXTRAS"
 msgstr "エクストラ"
 
@@ -1745,7 +1745,7 @@ msgstr "Escape 戻る  |  上下 移動  |  Enter 開く"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > タブ切替   上下 移動   Enter 変更"
 
-#: src/ui/menu_startup_m12.c:11124 src/ui/menu_startup_render_modern_m12.c:2212
+#: src/ui/menu_startup_m12.c:11124 src/ui/menu_startup_render_modern_m12.c:2217
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "サポートされているネイティブ プラットフォームはありません"
 
@@ -1870,7 +1870,7 @@ msgid "COMING SOON"
 msgstr "近日公開"
 
 #: src/ui/menu_startup_render_modern_m12.c:1431
-#: src/ui/menu_startup_render_modern_m12.c:2515
+#: src/ui/menu_startup_render_modern_m12.c:2520
 msgid "FIRESTAFF"
 msgstr "Firestaff プロジェクト"
 
@@ -1910,45 +1910,45 @@ msgstr "Enter を押して伝承博物館を開きます"
 msgid "< BACK"
 msgstr "< 戻る"
 
-#: src/ui/menu_startup_render_modern_m12.c:1897
+#: src/ui/menu_startup_render_modern_m12.c:1902
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:1978
+#: src/ui/menu_startup_render_modern_m12.c:1983
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2052
+#: src/ui/menu_startup_render_modern_m12.c:2057
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "保存メモ、シリーズの伝承、およびプロジェクトのクレジット"
 
-#: src/ui/menu_startup_render_modern_m12.c:2065
+#: src/ui/menu_startup_render_modern_m12.c:2070
 msgid "ARCHIVE SECTIONS"
 msgstr "アーカイブ状況"
 
-#: src/ui/menu_startup_render_modern_m12.c:2088
+#: src/ui/menu_startup_render_modern_m12.c:2093
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "ページ %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2196
+#: src/ui/menu_startup_render_modern_m12.c:2201
 msgid "CHOOSE PLATFORM"
 msgstr "ゲームデータが見つかりません"
 
-#: src/ui/menu_startup_render_modern_m12.c:2221
+#: src/ui/menu_startup_render_modern_m12.c:2226
 msgid "CHOOSE PRESENTATION"
 msgstr "ランチャーの行き先"
 
-#: src/ui/menu_startup_render_modern_m12.c:2463
+#: src/ui/menu_startup_render_modern_m12.c:2468
 msgid "LAUNCH >"
 msgstr "起動"
 
-#: src/ui/menu_startup_render_modern_m12.c:2532
-#: src/ui/menu_startup_render_modern_m12.c:2656
+#: src/ui/menu_startup_render_modern_m12.c:2537
+#: src/ui/menu_startup_render_modern_m12.c:2661
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2596
+#: src/ui/menu_startup_render_modern_m12.c:2601
 msgid "CANCEL"
 msgstr "キャンセル"
 

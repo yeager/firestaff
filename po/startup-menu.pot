@@ -345,7 +345,7 @@ msgid "OFF"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:487 src/ui/menu_startup_m12.c:503
-#: src/ui/menu_startup_render_modern_m12.c:2406
+#: src/ui/menu_startup_render_modern_m12.c:2411
 msgid "ON"
 msgstr ""
 
@@ -397,7 +397,7 @@ msgstr ""
 msgid "AVAILABLE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2000
+#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2005
 msgid "UNAVAILABLE"
 msgstr ""
 
@@ -512,14 +512,14 @@ msgstr ""
 #: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:813
 #: src/ui/menu_startup_m12.c:10280 src/ui/menu_startup_m12.c:10723
 #: src/ui/menu_startup_render_modern_m12.c:1474
-#: src/ui/menu_startup_render_modern_m12.c:2670
+#: src/ui/menu_startup_render_modern_m12.c:2675
 msgid "DUNGEON MASTER"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:793 src/ui/menu_startup_m12.c:823
 #: src/ui/menu_startup_m12.c:10282 src/ui/menu_startup_m12.c:10737
 #: src/ui/menu_startup_render_modern_m12.c:1475
-#: src/ui/menu_startup_render_modern_m12.c:2673
+#: src/ui/menu_startup_render_modern_m12.c:2678
 msgid "CHAOS STRIKES BACK"
 msgstr ""
 
@@ -545,8 +545,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:11808
-#: src/ui/menu_startup_m12.c:11811 src/ui/menu_startup_render_modern_m12.c:1775
-#: src/ui/menu_startup_render_modern_m12.c:2048
+#: src/ui/menu_startup_m12.c:11811 src/ui/menu_startup_render_modern_m12.c:1780
+#: src/ui/menu_startup_render_modern_m12.c:2053
 msgid "MUSEUM OF LORE"
 msgstr ""
 
@@ -1595,7 +1595,7 @@ msgstr ""
 msgid "MISSING OR MISMATCHED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9204 src/ui/menu_startup_render_modern_m12.c:1976
+#: src/ui/menu_startup_m12.c:9204 src/ui/menu_startup_render_modern_m12.c:1981
 msgid "EXTRAS"
 msgstr ""
 
@@ -1745,7 +1745,7 @@ msgstr ""
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:11124 src/ui/menu_startup_render_modern_m12.c:2212
+#: src/ui/menu_startup_m12.c:11124 src/ui/menu_startup_render_modern_m12.c:2217
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr ""
 
@@ -1869,7 +1869,7 @@ msgid "COMING SOON"
 msgstr ""
 
 #: src/ui/menu_startup_render_modern_m12.c:1431
-#: src/ui/menu_startup_render_modern_m12.c:2515
+#: src/ui/menu_startup_render_modern_m12.c:2520
 msgid "FIRESTAFF"
 msgstr ""
 
@@ -1909,44 +1909,44 @@ msgstr ""
 msgid "< BACK"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1897
+#: src/ui/menu_startup_render_modern_m12.c:1902
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1978
+#: src/ui/menu_startup_render_modern_m12.c:1983
 msgid "EXPLORE FIRESTAFF"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2052
+#: src/ui/menu_startup_render_modern_m12.c:2057
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2065
+#: src/ui/menu_startup_render_modern_m12.c:2070
 msgid "ARCHIVE SECTIONS"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2088
+#: src/ui/menu_startup_render_modern_m12.c:2093
 #, c-format
 msgid "PAGE %d/%d"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2196
+#: src/ui/menu_startup_render_modern_m12.c:2201
 msgid "CHOOSE PLATFORM"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2221
+#: src/ui/menu_startup_render_modern_m12.c:2226
 msgid "CHOOSE PRESENTATION"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2463
+#: src/ui/menu_startup_render_modern_m12.c:2468
 msgid "LAUNCH >"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2532
-#: src/ui/menu_startup_render_modern_m12.c:2656
+#: src/ui/menu_startup_render_modern_m12.c:2537
+#: src/ui/menu_startup_render_modern_m12.c:2661
 msgid "OK"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2596
+#: src/ui/menu_startup_render_modern_m12.c:2601
 msgid "CANCEL"
 msgstr ""
