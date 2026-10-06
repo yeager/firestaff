@@ -231,6 +231,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   ID `$53`'s `$49fb..$4a13` three-byte staging and `$4c3f` handoff is also
   locked to both editions, ending before ID `$4f` at `$4a14`; field meanings
   and helper effects remain unknown.
+  ID `$54`'s `$484e..$485e` short staging path through `$40f5` and ID `$55`'s
+  `$4aa0..$4ac9` split operand paths through `$40f9` are now also locked to
+  both editions; values' meanings and `$4f5e` effects remain open.
   ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its

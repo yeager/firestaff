@@ -1592,6 +1592,49 @@ static void test_stage2_id53_three_byte_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $54's bounded three-byte staging and +2 cursor transfer. */
+static void test_stage2_id54_short_staging(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc2u, 0x4eu, 0x9cu, 0xc1u,
+        0x4eu, 0xa9u, 0x0cu, 0x20u, 0x5eu, 0x4fu, 0x4cu, 0xf5u,
+        0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x54u)) == 0x484eu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x484eu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id54_short_staging (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $55's split operand paths through both terminal cursor jumps. */
+static void test_stage2_id55_operand_split(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x13u, 0xc8u, 0xb1u, 0x1cu,
+        0x8du, 0xc1u, 0x4eu, 0xa9u, 0x04u, 0x8du, 0xc2u, 0x4eu,
+        0xa9u, 0x01u, 0x20u, 0x5eu, 0x4fu, 0x4cu, 0xf9u, 0x40u,
+        0xa9u, 0x04u, 0x8du, 0xc1u, 0x4eu, 0xa9u, 0x7fu, 0x8du,
+        0xc2u, 0x4eu, 0xa9u, 0x00u, 0x20u, 0x5eu, 0x4fu, 0x4cu,
+        0xf9u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x55u)) == 0x4aa0u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4aa0u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id55_operand_split (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Authentic selector continuations and overlapping nested-stream roots.
  * These byte assertions are source evidence, not proof that a selector runs.
  * See docs/source-lock/theron-disassembly/
@@ -2985,6 +3028,8 @@ int main(void)
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id53_three_byte_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id54_short_staging(g_us_data, g_us_size, 0);
+    test_stage2_id55_operand_split(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
@@ -3049,6 +3094,8 @@ int main(void)
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id53_three_byte_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id54_short_staging(g_jp_data, g_jp_size, 1);
+        test_stage2_id55_operand_split(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);

@@ -139,6 +139,20 @@ stream bytes into `$4ec1`, `$4ec5`, and `$4ec6`, calls `$4c3f`, then branches to
 ID `$4f` at `$4a14`; it records static data/control flow only, without assigning
 field meaning, helper effects, or runtime selection.
 
+## IDs `$54` and `$55`: bounded staging paths
+
+ID `$54` points to `$484e` in both authentic editions. Its 17-byte window
+`$484e..$485e` reads a stream byte into `$4ec2`, clears `$4ec1`, loads `#$0c`,
+calls `$4f5e`, and ends with `JMP $40f5` (`+2`). The assertion stops at that
+terminal transfer and does not assert the adjacent code.
+
+ID `$55` points to `$4aa0` in both editions. Its 42-byte root `$4aa0..$4ac9`
+branches on the first stream byte: the zero path reads two additional bytes,
+writes `#$04` and `#$01` into `$4ec1/$4ec2`, then calls `$4f5e`; the nonzero
+path writes `#$04` and `#$7f` instead, then calls the same helper. Both paths
+end with `JMP $40f9` (`+3`). The lock stops before ID `$4b` at `$4aca`; values'
+meaning, helper effects, and runtime selection remain unproven.
+
 ## Indexed-byte handlers and nested cursor path
 
 The next table roots expose another byte-level group. Index `$0b` at `$4259`
