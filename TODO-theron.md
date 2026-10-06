@@ -290,8 +290,10 @@ Reviewed 2026-10-06. Only open work is listed here.
   are now locked; field roles and stream execution are still unknown.
   ID `$48`'s `$4a5e..$4a80` paired-selector loop and `$40f9` (`+3`) tail are
   now source-locked; loop-count meaning and runtime selection remain unknown.
-  ID `$49`'s `$44eb..$4517` selector split and `$4514` join are also locked;
-  the alternate `$459f` path and selector meaning remain unresolved.
+  ID `$49`'s `$44eb..$4517` selector split and `$4514` join are locked, and
+  its alternate `$459f..$45c9` continuation now has a US/JP byte lock through
+  the shared `$4105` (`+7`) cursor tail. Selector/helper meaning and runtime
+  selection remain unresolved.
   ID `$4a`'s `$4a81..$4a9f` paired-call loop is now independently locked to the
   authentic US and JP images, stopping before ID `$4b` at `$4aca`; immediate
   operands and runtime selection remain unassigned.

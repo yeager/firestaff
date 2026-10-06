@@ -1547,6 +1547,38 @@ static void test_stage2_id49_selector_join(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the alternate ID $49 selector continuation through its +7 cursor tail. */
+static void test_stage2_id49_alternate_selector_handoff(
+    const uint8_t *raw, size_t raw_size, int jp)
+{
+    static const uint8_t continuation[] = {
+        0xa0u, 0x03u, 0xb1u, 0x1cu, 0x85u, 0x00u, 0xc8u, 0xb1u,
+        0x1cu, 0x85u, 0x01u, 0xadu, 0xe7u, 0x44u, 0x85u, 0x02u,
+        0xadu, 0xe8u, 0x44u, 0x85u, 0x03u, 0xadu, 0xe9u, 0x44u,
+        0x85u, 0x04u, 0xadu, 0xeau, 0x44u, 0x85u, 0x05u, 0x68u,
+        0x4au, 0xb0u, 0x05u, 0xa9u, 0x17u, 0x20u, 0xb7u, 0x3au,
+        0x4cu, 0x05u, 0x41u
+    };
+    static const uint8_t step_plus_seven[] = {
+        0xa9u, 0x07u, 0x80u, 0xdbu
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x49u)) == 0x44ebu);
+    assert(stage2_byte_at(raw, raw_size, jp, 0x44f7u) == 0x4cu);
+    assert(stage2_word_at(raw, raw_size, jp, 0x44f8u) == 0x459fu);
+    for (unsigned int i = 0; i < sizeof(continuation); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x459fu + i)) == continuation[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(step_plus_seven); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4105u + i)) == step_plus_seven[i]);
+    }
+    printf("  PASS: stage2_id49_alternate_selector_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock ID $4a's paired calls and bounded loop against authentic editions. */
 static void test_stage2_id4a_paired_call_loop(const uint8_t *raw,
                                                size_t raw_size, int jp)
@@ -3279,6 +3311,7 @@ int main(void)
     test_stage2_id47_three_byte_handoff(g_us_data, g_us_size, 0);
     test_stage2_id48_paired_selector_loop(g_us_data, g_us_size, 0);
     test_stage2_id49_selector_join(g_us_data, g_us_size, 0);
+    test_stage2_id49_alternate_selector_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4a_paired_call_loop(g_us_data, g_us_size, 0);
     test_stage2_id4c_call_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4e_relative_handoff(g_us_data, g_us_size, 0);
@@ -3348,6 +3381,7 @@ int main(void)
         test_stage2_id47_three_byte_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id48_paired_selector_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id49_selector_join(g_jp_data, g_jp_size, 1);
+        test_stage2_id49_alternate_selector_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);

@@ -1236,8 +1236,13 @@ status and `$c0` mask. The zero path calls `$4446`; the `$40`-masked path
 reads another byte, calls `$4c17`, and copies `$4d79/$4d7a` to `$442f/$4430`.
 Those two paths join at `$4514`, call `$4f31`, and reach the trailing `SEC` at
 `$4517`. The other selector values jump to `$459f`, which is outside this
-assertion. The raw window is identical in authentic US and JP data; the
-selector's meaning and runtime use remain unproven.
+assertion. The new `stage2_id49_alternate_selector_handoff` assertion binds
+the 43-byte `$459f..$45c9` continuation in both authentic editions. It reads
+stream bytes at offsets 3 and 4 into `$00/$01`, copies `$44e7..$44ea` into
+`$02..$05`, then restores the saved selector with `PLA` and branches on its
+low bit. The clear path calls `$3ab7` with `#$17`; both paths reach `$4105`,
+whose shared stub advances `$1c` by seven. This byte/control-flow lock does
+not establish the selector's meaning, the helper's effects, or runtime use.
 
 ID `$4a` points to `$4a81` in both authentic editions. The 31-byte root
 `$4a81..$4a9f` calls `$463b`, saves `$0e`, invokes `$3ab7` with immediate
