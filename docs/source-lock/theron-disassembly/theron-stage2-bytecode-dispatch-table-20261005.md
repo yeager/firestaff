@@ -1232,11 +1232,14 @@ selection remain open.
 
 ID `$49` points to `$44eb` in both editions. The 45-byte window
 `$44eb..$4517` reads and saves a selector byte, then branches on its zero
-status and `$c0` mask. The zero path calls `$4446`; the `$40`-masked path
-reads another byte, calls `$4c17`, and copies `$4d79/$4d7a` to `$442f/$4430`.
-Those two paths join at `$4514`, call `$4f31`, and reach the trailing `SEC` at
-`$4517`. The other selector values jump to `$459f`, which is outside this
-assertion. The new `stage2_id49_alternate_selector_handoff` assertion binds
+status and `$c0` mask. The zero path calls `$4446`; its 25-byte body is now
+bound by `stage2_l4446_selector_helper` against both authentic editions. It
+increments Y, copies the next `($1c),Y` byte to `$4ec2`, calls `$4f48`, copies
+`$4d79/$4d7a` to `$442f/$4430`, calls `$4bd2`, and returns to the join. The
+`$40`-masked path reads another byte, calls `$4c17`, and copies
+`$4d79/$4d7a` to `$442f/$4430`. Those two paths join at `$4514`, call `$4f31`,
+and reach the trailing `SEC` at `$4517`. The other selector values jump to
+`$459f`. The new `stage2_id49_alternate_selector_handoff` assertion binds
 the 43-byte `$459f..$45c9` continuation in both authentic editions. It reads
 stream bytes at offsets 3 and 4 into `$00/$01`, copies `$44e7..$44ea` into
 `$02..$05`, then restores the saved selector with `PLA` and branches on its

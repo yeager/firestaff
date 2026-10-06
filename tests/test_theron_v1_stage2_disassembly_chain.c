@@ -1579,6 +1579,25 @@ static void test_stage2_id49_alternate_selector_handoff(
            jp ? "JP" : "US");
 }
 
+/* Lock the ID $49 zero-selector helper's visible reads, copies and calls. */
+static void test_stage2_l4446_selector_helper(const uint8_t *raw,
+                                              size_t raw_size, int jp)
+{
+    static const uint8_t helper[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc2u, 0x4eu, 0x20u, 0x48u,
+        0x4fu, 0xadu, 0x79u, 0x4du, 0x8du, 0x2fu, 0x44u, 0xadu,
+        0x7au, 0x4du, 0x8du, 0x30u, 0x44u, 0x20u, 0xd2u, 0x4bu,
+        0x60u
+    };
+
+    for (unsigned int i = 0; i < sizeof(helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4446u + i)) == helper[i]);
+    }
+    printf("  PASS: stage2_l4446_selector_helper (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock ID $4a's paired calls and bounded loop against authentic editions. */
 static void test_stage2_id4a_paired_call_loop(const uint8_t *raw,
                                                size_t raw_size, int jp)
@@ -3312,6 +3331,7 @@ int main(void)
     test_stage2_id48_paired_selector_loop(g_us_data, g_us_size, 0);
     test_stage2_id49_selector_join(g_us_data, g_us_size, 0);
     test_stage2_id49_alternate_selector_handoff(g_us_data, g_us_size, 0);
+    test_stage2_l4446_selector_helper(g_us_data, g_us_size, 0);
     test_stage2_id4a_paired_call_loop(g_us_data, g_us_size, 0);
     test_stage2_id4c_call_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4e_relative_handoff(g_us_data, g_us_size, 0);
@@ -3382,6 +3402,7 @@ int main(void)
         test_stage2_id48_paired_selector_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id49_selector_join(g_jp_data, g_jp_size, 1);
         test_stage2_id49_alternate_selector_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_l4446_selector_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);
