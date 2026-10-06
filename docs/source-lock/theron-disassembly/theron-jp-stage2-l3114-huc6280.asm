@@ -81,7 +81,9 @@
 ; $53d8 [0x13d8..0x13e8), 16 bytes, SHA-256
 ;   03d93ad866c1696fe36e3307b7e59d3986558b9dcc9ac89fb92d01acb3759eed
 ;   authentic US same-offset SHA-256 5e91916caa8057aa9be78a77048948968cf4955a8d29d267d99630240d4b2356
-; Three continuations reached after the conditional branch from $53e8:
+; The conditional branch from $53e8 reaches $543e. Nested BSR edges then
+; reach $547d from $543e and $5498 from $547d; all three contiguous spans
+; are byte-bound:
 ; $543e [0x143e..0x147d), 63 bytes, SHA-256
 ;   4a813b0f9cf183c2632874870bfa94ca160a5a94960f06746453646c36d85361
 ;   authentic US same-offset SHA-256 593b23c5b19bae7a7ed2c2e8d00dca95ea57b5331ab15f63735a496799f3c46b
@@ -110,7 +112,8 @@
 ; either entry. The four spans and authentic US same-offset windows differ.
 ; No routine or game semantics, regional behavioral equivalence, or unlisted
 ; nested helper behavior are claimed. The `$53e8` window branches past its
-; first RTS into `$543e`; all three contiguous continuations are byte-bound.
+; first RTS into `$543e`; its conditional branch and nested BSR edges reach
+; the three byte-bound contiguous spans documented above.
 ; The `$54b3` BSRs reach the separately bound `$54a7` and `$54fc` windows;
 ; `$54fc` calls the separately bound `$53d8` window.
 ;

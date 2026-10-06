@@ -7304,3 +7304,19 @@ Verification: `test_theron_v1_hw_config` passed three loops on `trv2` against
 the authentic US and JP Track 02 BINs; the test still counts source candidates
 and false positives without assigning track semantics. No synthetic media was
 used.
+
+# ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
+
+An independent read-only audit re-extracted all 16 newly bound JP helper
+spans from authentic `TQJP02.bin`, checked the corresponding US same-offset
+hashes, and independently disassembled the JP windows with MAME HuC6280.
+Listed instruction bytes and static branch/BSR targets matched the source.
+The non-BIOS static call graph rooted at `$31b3` is covered by those spans
+and the three earlier bound targets `$5237`, `$5251`, and `$551a`; `$5ceb` is
+inside the bound `$5ca7` window, and `$e063` remains the BIOS boundary.
+
+Corrected the listing to state that `$53e8` branches directly to `$543e`,
+while nested BSR edges reach `$547d` and `$5498`. This establishes static
+byte and edge coverage only, not dynamic indirect calls, helper semantics,
+runtime behavior, or Theron's Quest gameplay parity. No synthetic media was
+used.
