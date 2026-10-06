@@ -13781,59 +13781,62 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     } else {
         line2[0] = '\0';
     }
-    cardW = framebufferWidth * 86 / 100;
-    if (cardW > 416) cardW = 416;
+    /* Keep the progress card in the lower middle of the launcher. The
+     * narrower silhouette leaves room around it while staying readable at
+     * the launcher's 480x270 working resolution. */
+    cardW = framebufferWidth * 78 / 100;
+    if (cardW > 560) cardW = 560;
     if (cardW > framebufferWidth - 12) cardW = framebufferWidth - 12;
-    cardH = 96;
+    cardH = 84;
     if (cardH > framebufferHeight - 12) cardH = framebufferHeight - 12;
     if (cardW < 1 || cardH < 1) return;
     cardX = (framebufferWidth - cardW) / 2;
-    cardY = framebufferHeight * 3 / 5;
+    cardY = framebufferHeight * 64 / 100;
     if (cardY + cardH > framebufferHeight - 6) {
         cardY = framebufferHeight - cardH - 6;
     }
     if (cardY < 6) cardY = 6;
     m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
                    cardX, cardY, cardW, cardH,
-                   M12_COLOR_LIGHT_CYAN, M12_COLOR_NAVY);
+                   M12_COLOR_LIGHT_BLUE, M12_COLOR_NAVY);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  cardX + 2, cardY + 2, cardW - 4, 2,
+                  cardX + 2, cardY + 2, cardW - 4, 3,
                   M12_COLOR_LIGHT_CYAN);
     {
         int textWidth;
-        int haveTtfLine1 = m11_ttf_measure_string(line1, 17, &textWidth);
-        if (!haveTtfLine1) textWidth = m12_measure_text(line1, 1, 1);
+        int haveTtfLine1 = m11_ttf_measure_string(line1, 19, &textWidth);
+        if (!haveTtfLine1) textWidth = m12_measure_text(line1, 2, 1);
         int textX = (framebufferWidth - textWidth) / 2;
         if (!haveTtfLine1 ||
             m11_ttf_render_string(framebuffer, framebufferWidth,
-                                  framebufferHeight, textX, cardY + 14,
-                                  line1, 17, M12_COLOR_WHITE) == 0) {
+                                  framebufferHeight, textX, cardY + 12,
+                                  line1, 19, M12_COLOR_WHITE) == 0) {
             m12_draw_centered_text(framebuffer, framebufferWidth,
-                                   framebufferHeight, cardY + 18, line1,
+                                   framebufferHeight, cardY + 15, line1,
                                    &g_textMediumShadow);
         }
         if (line2[0] != '\0') {
-            int haveTtfLine2 = m11_ttf_measure_string(line2, 11, &textWidth);
+            int haveTtfLine2 = m11_ttf_measure_string(line2, 12, &textWidth);
             if (!haveTtfLine2) textWidth = m12_measure_text(line2, 1, 1);
             textX = (framebufferWidth - textWidth) / 2;
             if (!haveTtfLine2 ||
                 m11_ttf_render_string(framebuffer, framebufferWidth,
-                                      framebufferHeight, textX, cardY + 43,
-                                      line2, 11, M12_COLOR_LIGHT_CYAN) == 0) {
+                                      framebufferHeight, textX, cardY + 40,
+                                      line2, 12, M12_COLOR_LIGHT_CYAN) == 0) {
                 m12_draw_centered_text(framebuffer, framebufferWidth,
-                                       framebufferHeight, cardY + 43, line2,
+                                       framebufferHeight, cardY + 41, line2,
                                        &g_textSmallAccent);
             }
         }
     }
-    barX = cardX + 18;
-    barY = cardY + cardH - 25;
-    barW = cardW - 36;
-    barH = 10;
+    barX = cardX + 22;
+    barY = cardY + cardH - 21;
+    barW = cardW - 44;
+    barH = 8;
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   barX, barY, barW, barH, M12_COLOR_DARK_GRAY);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  barX, barY, barW, 1, M12_COLOR_LIGHT_BLUE);
+                  barX, barY, barW, 1, M12_COLOR_LIGHT_CYAN);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   barX, barY + barH - 1, barW, 1, M12_COLOR_LIGHT_BLUE);
     fillW = (int)((size_t)(barW - 2) * pct / 100U);
