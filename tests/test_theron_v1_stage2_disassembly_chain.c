@@ -203,6 +203,73 @@ static void test_stage2_id00_07_comparison_roots(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the ID $22 local helper and ID $24 cursor/call roots. */
+static void test_stage2_index22_24_helper_handoffs(const uint8_t *raw,
+                                                    size_t raw_size, int jp)
+{
+    static const uint8_t index22[] = {
+        0xc6u, 0x5bu, 0x20u, 0xd6u, 0x43u, 0x44u, 0x05u, 0x64u,
+        0x5bu, 0x4cu, 0xf5u, 0x40u
+    };
+    static const uint8_t index22_helper[] = {
+        0x20u, 0xd8u, 0x37u, 0xa9u, 0x00u, 0x85u, 0x20u, 0xa9u,
+        0x68u, 0x85u, 0x21u, 0xa9u, 0x03u, 0x85u, 0x1eu, 0x20u,
+        0x3eu, 0x38u, 0x60u
+    };
+    static const uint8_t index24_root[] = {
+        0x44u, 0x03u, 0x4cu, 0xf5u, 0x40u
+    };
+    static const uint8_t index24_helper[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc2u, 0x4eu, 0xa9u, 0x0du,
+        0x20u, 0x5eu, 0x4fu, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x22u)) == 0x4234u);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x24u)) == 0x4334u);
+    for (size_t i = 0; i < sizeof(index22); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4234u + i)) == index22[i]);
+    }
+    for (size_t i = 0; i < sizeof(index22_helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4240u + i)) ==
+               index22_helper[i]);
+    }
+    for (size_t i = 0; i < sizeof(index24_root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4334u + i)) == index24_root[i]);
+    }
+    for (size_t i = 0; i < sizeof(index24_helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4339u + i)) == index24_helper[i]);
+    }
+    printf("  PASS: stage2_index22_24_helper_handoffs (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock the adjacent ID $26/$25 entries and their shared cursor tail. */
+static void test_stage2_index25_26_shared_tail(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    static const uint8_t shared_window[] = {
+        0x20u, 0x77u, 0x31u, 0x4cu, 0xf1u, 0x40u, 0x20u, 0x11u,
+        0x4fu, 0x80u, 0xf8u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x25u)) == 0x4916u);
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x26u)) == 0x4910u);
+    for (size_t i = 0; i < sizeof(shared_window); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4910u + i)) == shared_window[i]);
+    }
+    printf("  PASS: stage2_index25_26_shared_tail (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the indexed-byte store/add/subtract/increment/decrement cluster
  * against authentic media.
  * This asserts instruction paths, not stream execution or field meanings. */
@@ -3047,6 +3114,8 @@ int main(void)
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
     test_stage2_id00_07_comparison_roots(g_us_data, g_us_size, 0);
+    test_stage2_index22_24_helper_handoffs(g_us_data, g_us_size, 0);
+    test_stage2_index25_26_shared_tail(g_us_data, g_us_size, 0);
     test_stage2_id0b_0f_indexed_mutation(g_us_data, g_us_size, 0);
     test_stage2_id09_id0a_id10_nested_cursor(g_us_data, g_us_size, 0);
     test_stage2_id28_conditional_handoff(g_us_data, g_us_size, 0);
@@ -3114,6 +3183,8 @@ int main(void)
         test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
         test_stage2_id00_07_comparison_roots(g_jp_data, g_jp_size, 1);
+        test_stage2_index22_24_helper_handoffs(g_jp_data, g_jp_size, 1);
+        test_stage2_index25_26_shared_tail(g_jp_data, g_jp_size, 1);
         test_stage2_id0b_0f_indexed_mutation(g_jp_data, g_jp_size, 1);
         test_stage2_id09_id0a_id10_nested_cursor(g_jp_data, g_jp_size, 1);
         test_stage2_id28_conditional_handoff(g_jp_data, g_jp_size, 1);

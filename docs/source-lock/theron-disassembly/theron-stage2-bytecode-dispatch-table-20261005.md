@@ -84,6 +84,26 @@ that amount to `$1c/$1d` and resume at `$40cc`. This establishes instruction
 and cursor-update paths for this cluster, but does not prove that any of its
 indices occur in a valid retail stream or assign names to them.
 
+## Additional small roots and cursor tails
+
+Dispatch index `$22` points to `$4234` in both editions. Its 12-byte root
+`$4234..$423f` decrements `$5b`, calls `$43d6` and `$4240`, clears `$5b`, then
+jumps to `$40f5` (`+2`). The local `$4240..$4252` helper calls `$37d8`, writes
+`$6800` to zero-page pointer `$20/$21`, sets `$1e` to `$03`, calls `$383e`,
+and returns. The source lock asserts the complete helper up to, but not
+including, ID `$09` at `$4253`; the callees' effects and data role of `$6800`
+remain unassigned. Index `$24` points to `$4334`; its five-byte root
+`$4334..$4338` BSR-calls the 12-byte `$4339..$4344` helper, which reads one
+stream byte into `$4ec2`, loads `#$0d`, calls `$4f5e`, and returns. Both root
+and helper are byte-locked to authentic US and JP media; helper effects and
+runtime selection remain unproven.
+
+Adjacent indices `$26/$25` point to `$4910/$4916` respectively. Their shared
+11-byte `$4910..$491a` window calls `$3177`, jumps to `$40f1` (`+1`), then the
+ID `$25` entry calls `$4f11` and branches back to that shared tail. The test
+binds both table words and the full shared window, ending before ID `$40` at
+`$491b`; called-routine effects and runtime selection remain unknown.
+
 ## ID `$4b`: counted indexed-byte comparison
 
 Dispatch entry `$4b` points to `$4aca` in both authentic editions. The
@@ -249,6 +269,18 @@ both authentic editions. The handler calls `$4403` before and conditionally
 after its `$e03c` call, then takes the `$40f5` (`+2`) cursor path. This is
 bounded byte/control-flow evidence only: neither helper meaning nor stream
 selection is established.
+The `stage2_index22_24_helper_handoffs` assertion additionally locks index
+`$22` at `$4234`, index `$24` at `$4334`, and the `$4339..$4344` BSR-called
+helper in both editions. At `$4234`, the bytes clear `$5b`, call `$43d6`, then
+conditionally set `$5b` before taking `$40f5`; `$43d6` effects are not inferred.
+The `$4339` helper reads the byte at `($1c),Y` with `Y=0`, stores it at `$4ec2`,
+loads `#$0d`, calls `$4f5e`, and returns. The call relationship and exact bytes
+are static observations, not proof that a retail stream selects either root.
+The `stage2_index25_26_shared_tail` assertion locks index `$26` at `$4910`,
+index `$25` at `$4916`, and their shared `$4910..$491a` bytes in both editions.
+The `$4910` path calls `$3177`, then jumps to `$40f1` (`+1`); the following
+`$4916` root calls `$4f11` and branches to `$4980`. This is a bounded overlap
+lock, not evidence of either helper's effect or runtime selector use.
 The `stage2_id23_regional_handoff` assertion locks the `$4153` table word and
 complete `$42fb..$4318` root in both authentic editions, including the
 regional call operand at `$4314/$4315` (`$56af` US, `$5729` JP). The selected

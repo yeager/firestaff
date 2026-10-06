@@ -86,6 +86,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   without assigning command semantics. Indices `$00..$07` now have table-word
   and bounded-root source locks, including shared comparator `$4203`; their
   static comparison/cursor-transfer trace is not a valid-stream proof.
+  Indices `$22/$24` and adjacent `$25/$26` roots and bounded helper/cursor
+  windows are also byte-locked to both editions. ID `$22`'s `$4240..$4252`
+  helper is now included through its `$37d8` and `$383e` call sites; those
+  callees, helper effects, and runtime selection remain unknown.
   Indices `$0b..$10` have indexed-byte/nested-cursor traces; the `$09` return
   byte, `$0a` root, and `$10` nested cursor handler are now byte-locked in both
   authentic editions.
