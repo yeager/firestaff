@@ -889,6 +889,39 @@ static void check_active_scan_renders_progress_bar(void) {
     free(rgba);
 }
 
+static void check_modern_scan_progress_standalone_render(void) {
+    const int width = M12_ModernMenu_NativeWidth();
+    const int height = M12_ModernMenu_NativeHeight();
+    const size_t bytes = (size_t)width * (size_t)height * 4U;
+    unsigned char* rgba = (unsigned char*)calloc(1U, bytes);
+    M12_AssetScanProgress progress;
+    size_t filledPixel;
+    size_t emptyPixel;
+
+    CHECK(rgba != NULL);
+    if (!rgba) return;
+    memset(&progress, 0, sizeof(progress));
+    progress.active = 1;
+    progress.totalSteps = 100U;
+    progress.completedSteps = 50U;
+    snprintf(progress.currentGameId, sizeof(progress.currentGameId), "dm1");
+    snprintf(progress.currentTask, sizeof(progress.currentTask),
+             "matching game versions");
+    M12_ModernMenu_RenderScanProgressLocalized(&progress, 0, rgba,
+                                                width, height);
+
+    /* The standalone scan panel sits at y=892 on the native 1080p canvas;
+     * compare the first and second halves of its 50% progress bar. */
+    filledPixel = ((size_t)959U * (size_t)width + 760U) * 4U;
+    emptyPixel = ((size_t)959U * (size_t)width + 1100U) * 4U;
+    CHECK(rgba[filledPixel + 0U] > rgba[emptyPixel + 0U]);
+    CHECK(rgba[filledPixel + 1U] > rgba[emptyPixel + 1U]);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     0, "matching game versions"),
+                 "MATCHING GAME VERSIONS") == 0);
+    free(rgba);
+}
+
 static void check_scan_progress_uses_display_names(void) {
     int languageIndex;
     const char* dm1 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm1");
@@ -957,6 +990,7 @@ int main(void) {
     check_fresh_config_repairs_dot_in_memory();
     check_dot_asset_status_does_not_replace_saved_directory();
     check_active_scan_renders_progress_bar();
+    check_modern_scan_progress_standalone_render();
     check_scan_progress_uses_display_names();
     SDL_Quit();
 

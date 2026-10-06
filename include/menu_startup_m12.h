@@ -792,6 +792,8 @@ const char* M12_StartupMenu_GameDisplayTitleForLocale(int languageIndex,
                                                        const char* gameId);
 const char* M12_StartupMenu_TranslateForLocale(int languageIndex,
                                                 const char* english);
+const char* M12_StartupMenu_ScanTaskDisplayForLocale(int languageIndex,
+                                                      const char* task);
 
 int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,

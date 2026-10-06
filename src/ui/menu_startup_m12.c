@@ -1974,6 +1974,11 @@ static const char* m12_scan_task_for_locale(int localeIndex,
     return task;
 }
 
+const char* M12_StartupMenu_ScanTaskDisplayForLocale(int languageIndex,
+                                                      const char* task) {
+    return m12_scan_task_for_locale(languageIndex, task);
+}
+
 /* The scan status line is the one launcher surface that must identify the
  * full retail title. Keep this normalization local to scanning: card/menu
  * labels may retain their established catalogue wording. */

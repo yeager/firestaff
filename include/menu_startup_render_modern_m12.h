@@ -48,6 +48,15 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
                            int width,
                            int height);
 
+/* Render the same modern startup-shell progress treatment during synchronous
+ * startup and post-game rescans, before or outside a regular menu frame. */
+void M12_ModernMenu_RenderScanProgressLocalized(
+    const M12_AssetScanProgress* progress,
+    int languageIndex,
+    unsigned char* rgba,
+    int width,
+    int height);
+
 /* Count how many distinct 24-bit RGB values appear in the first
  * `sampleBytes` bytes of the given RGBA32 buffer. Used by the modern
  * menu probe to prove true-color output (>> 16 distinct colours,

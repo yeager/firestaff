@@ -486,17 +486,19 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
 
 typedef struct {
     unsigned char* framebuffer;
+    unsigned char* modernRgba;
     int width;
     int height;
     int languageIndex;
     int debug;
+    int useModern;
     Uint64 startedMs;
 } M11_ScanProgressContext;
 
 static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                       void* userData) {
     M11_ScanProgressContext* ctx = (M11_ScanProgressContext*)userData;
-    if (!ctx || !ctx->framebuffer) return 1;
+    if (!ctx || (!ctx->framebuffer && !ctx->modernRgba)) return 1;
     if (ctx->debug && progress &&
         (!progress->currentGameId[0] ||
          strcmp(progress->currentGameId, "dm1") == 0 ||
@@ -509,14 +511,23 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                 progress->currentTask,
                 progress->currentPath[0] ? progress->currentPath : "(none)");
     }
-    M12_StartupMenu_DrawScanProgressLocalized(progress, ctx->languageIndex,
-                                              ctx->framebuffer,
-                                              ctx->width, ctx->height);
     /* A game frame leaves presentation constrained to its viewport. The scan
      * panel is launcher UI and must use the full window, including after a
      * game returns to the menu. */
     (void)M11_Render_SetPresentationFillWindow(1);
-    M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
+    if (ctx->useModern && ctx->modernRgba) {
+        M12_ModernMenu_RenderScanProgressLocalized(
+            progress, ctx->languageIndex, ctx->modernRgba,
+            M11_LAUNCHER_MODERN_WIDTH, M11_LAUNCHER_MODERN_HEIGHT);
+        M11_Render_PresentRGBA(ctx->modernRgba,
+                               M11_LAUNCHER_MODERN_WIDTH,
+                               M11_LAUNCHER_MODERN_HEIGHT);
+    } else if (ctx->framebuffer) {
+        M12_StartupMenu_DrawScanProgressLocalized(progress, ctx->languageIndex,
+                                                  ctx->framebuffer,
+                                                  ctx->width, ctx->height);
+        M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
+    }
     if (M11_Render_PumpEvents()) return 0;
     return 1;
 }
@@ -524,14 +535,18 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
 static void m11_rescan_launcher_asset_status(
     M12_StartupMenuState* menuState,
     unsigned char* launcherFramebuffer,
+    unsigned char* modernRgba,
+    int useModern,
     int debug) {
     M11_ScanProgressContext scanCtx;
     if (!menuState || !launcherFramebuffer) return;
     scanCtx.framebuffer = launcherFramebuffer;
+    scanCtx.modernRgba = modernRgba;
     scanCtx.width = M11_LAUNCHER_FB_WIDTH;
     scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
     scanCtx.languageIndex = menuState->settings.languageIndex;
     scanCtx.debug = debug;
+    scanCtx.useModern = useModern;
     scanCtx.startedMs = SDL_GetTicks();
     M12_StartupMenu_RescanAllGames(menuState,
                                    m11_scan_progress_callback,
@@ -8174,6 +8189,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_Render_Shutdown();
         return M11_RENDER_ERR_TEXTURE;
     }
+    /* The startup renderer is always modern. Allocate its surface before the
+     * synchronous first scan so startup and return-to-menu progress use the
+     * same true-color launcher presentation. */
+    modernRgba = (unsigned char*)calloc(
+        (size_t)M11_LAUNCHER_MODERN_WIDTH *
+            (size_t)M11_LAUNCHER_MODERN_HEIGHT,
+        4U);
+    if (!modernRgba) {
+        free(launcherFramebuffer);
+        M11_Render_Shutdown();
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    useModern = 1;
     /* Present a black frame and pump events before the potentially slow
      * asset scan so macOS does not flag the window as unresponsive. */
     {
@@ -8216,10 +8244,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * members in place; it does not unpack game data to disk. */
         menuInitOptions.skipAssetScan = 0;
         scanCtx.framebuffer = launcherFramebuffer;
+        scanCtx.modernRgba = modernRgba;
         scanCtx.width = M11_LAUNCHER_FB_WIDTH;
         scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
         scanCtx.languageIndex = scanConfig.languageIndex;
         scanCtx.debug = o->debug;
+        scanCtx.useModern = 1;
         scanCtx.startedMs = SDL_GetTicks();
         menuInitOptions.scanProgressFn = m11_scan_progress_callback;
         menuInitOptions.scanProgressUserData = &scanCtx;
@@ -8259,6 +8289,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     "firestaff: requested platform auto has no matched version for %s\n",
                     o->gameId ? o->gameId : "(null)");
             free(launcherFramebuffer);
+            free(modernRgba);
             M11_Render_Shutdown();
             return 2;
         }
@@ -8282,6 +8313,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         M12_Architecture_Label(o->architectureOverride));
             }
             free(launcherFramebuffer);
+            free(modernRgba);
             M11_Render_Shutdown();
             return 2;
         }
@@ -8309,6 +8341,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             fprintf(stderr,
                     "firestaff: --csb-fmtowns-ja requires matched CSB FM Towns Japanese media\n");
             free(launcherFramebuffer);
+            free(modernRgba);
             M11_Render_Shutdown();
             return 2;
         }
@@ -8319,6 +8352,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             fprintf(stderr,
                     "firestaff: --dm1-fmtowns-ja requires matched DM1 FM Towns Japanese media\n");
             free(launcherFramebuffer);
+            free(modernRgba);
             M11_Render_Shutdown();
             return 2;
         }
@@ -8367,9 +8401,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     useModern = m11_should_use_modern_launcher(&menuState);
     if (useModern) {
-        modernRgba = (unsigned char*)calloc((size_t)M11_LAUNCHER_MODERN_WIDTH *
-                                                (size_t)M11_LAUNCHER_MODERN_HEIGHT,
-                                            4U);
+        if (!modernRgba) {
+            modernRgba = (unsigned char*)calloc(
+                (size_t)M11_LAUNCHER_MODERN_WIDTH *
+                    (size_t)M11_LAUNCHER_MODERN_HEIGHT,
+                4U);
+        }
         if (!modernRgba) {
             /* Do not fall back to the legacy indexed launcher: it has no
              * mouse hit routing, which leaves the application visibly alive
@@ -8443,10 +8480,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     if (menuState.deferredScanPending) {
         M11_ScanProgressContext fallbackCtx;
         fallbackCtx.framebuffer = launcherFramebuffer;
+        fallbackCtx.modernRgba = modernRgba;
         fallbackCtx.width = M11_LAUNCHER_FB_WIDTH;
         fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
         fallbackCtx.languageIndex = menuState.settings.languageIndex;
         fallbackCtx.debug = o->debug;
+        fallbackCtx.useModern = useModern;
         fallbackCtx.startedMs = SDL_GetTicks();
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,
@@ -9135,6 +9174,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 idleAccumulatorMs = 0;
                 m11_rescan_launcher_asset_status(&menuState,
                                                  launcherFramebuffer,
+                                                 modernRgba,
+                                                 useModern,
                                                  o->debug);
                 M11_ApplyStartupMenuRuntime(&menuState);
                 m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
@@ -9222,6 +9263,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     idleAccumulatorMs = 0;
                     m11_rescan_launcher_asset_status(&menuState,
                                                      launcherFramebuffer,
+                                                     modernRgba,
+                                                     useModern,
                                                      o->debug);
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);

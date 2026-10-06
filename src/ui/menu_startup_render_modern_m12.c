@@ -1639,8 +1639,9 @@ static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state
  * every menu view.  The only user-facing label is routed through the M12
  * locale catalogue, rather than leaking the scanner's internal task ids. */
 static void draw_data_scan_overlay(M12_ModernCanvas* c,
-                                   const M12_StartupMenuState* state) {
-    const M12_AssetScanProgress* progress;
+                                   const M12_AssetScanProgress* progress,
+                                   int languageIndex,
+                                   int cancelRequested) {
     const char* label;
     const char* gameTitle;
     int panelW;
@@ -1656,10 +1657,9 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 1);
     ModernTextStyle detail = text_style_make(2, COLOR_TEXT_DIM(), 1);
 
-    if (!c || !state || !state->dataDirScanActive) {
+    if (!c || !progress) {
         return;
     }
-    progress = &state->dataDirScanProgress;
     if (progress->totalSteps > 0U) {
         percent = (int)((progress->completedSteps * 100U) /
                         progress->totalSteps);
@@ -1674,13 +1674,13 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     panelY = c->h - 188;
     if (panelY < 12) panelY = 12;
     label = M12_StartupMenu_TranslateForLocale(
-        state->settings.languageIndex,
-        state->dataDirScanCancelRequested
+        languageIndex,
+        cancelRequested
             ? "CANCELLING DATA SCAN"
             : "SCANNING GAME DATA");
     gameTitle = progress->currentGameId[0]
         ? M12_StartupMenu_GameDisplayTitleForLocale(
-              state->settings.languageIndex, progress->currentGameId)
+              languageIndex, progress->currentGameId)
         : "";
     snprintf(text, sizeof(text), "%s  %d%%", label, percent);
 
@@ -1690,7 +1690,8 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
                            &title, panelW - 28);
     if (gameTitle[0]) {
         char detailText[160];
-        const char* task = progress->currentTask;
+        const char* task = M12_StartupMenu_ScanTaskDisplayForLocale(
+            languageIndex, progress->currentTask);
         snprintf(detailText, sizeof(detailText), "%s%s%s", gameTitle,
                  task[0] ? "  ·  " : "", task);
         draw_text_centered_fit(c, panelX + panelW / 2, panelY + 39,
@@ -1703,10 +1704,26 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     fill_rounded_rect(c, barX, barY, barW, 12, 5, rgb(37, 35, 54));
     if (fillW > 0) {
         fill_rounded_rect(c, barX, barY, fillW, 12, 5,
-                          state->dataDirScanCancelRequested
+                          cancelRequested
                               ? COLOR_WARN() : COLOR_ACCENT());
     }
     stroke_rounded_rect(c, barX, barY, barW, 12, 5, COLOR_PANEL_EDGE());
+}
+
+void M12_ModernMenu_RenderScanProgressLocalized(
+    const M12_AssetScanProgress* progress,
+    int languageIndex,
+    unsigned char* rgba,
+    int width,
+    int height) {
+    M12_ModernCanvas c;
+    if (!progress || !rgba || width < 16 || height < 16) return;
+    c.rgba = rgba;
+    c.w = width;
+    c.h = height;
+    draw_background(&c, NULL);
+    draw_data_scan_overlay(&c, progress, languageIndex,
+                           progress->cancelRequested);
 }
 
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
@@ -2784,7 +2801,11 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
     }
 
     draw_data_dir(&c, state);
-    draw_data_scan_overlay(&c, state);
+    draw_data_scan_overlay(&c,
+                           state->dataDirScanActive
+                               ? &state->dataDirScanProgress : NULL,
+                           state->settings.languageIndex,
+                           state->dataDirScanCancelRequested);
 
     const char* langStr = language_short(state);
     char modeHint[80];

@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-06: The initial full game-data scan and subsequent launcher rescans
+  now share the modern true-color progress presentation instead of switching
+  back to the indexed legacy screen. The progress panel retains localized game
+  and scan-step labels. A renderer regression checks the 50% fill and task
+  label; the current-source CLI build and data-directory regression pass, and
+  a headless startup-menu scan over the installed five-game corpus returns to
+  the menu without a renderer error. The return-after-game interaction itself
+  still needs a physical desktop check.
+
 - 2026-10-06: The 480x270 legacy launcher now routes mouse clicks to its
   visible platform and presentation cards. The route is limited to those two
   card stages, and clicks outside the card are ignored. The focused M12
