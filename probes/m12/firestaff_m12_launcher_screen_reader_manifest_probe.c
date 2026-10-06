@@ -384,6 +384,10 @@ static void subtest_main_view_cards(void)
 static void subtest_quick_resume_entry(void)
 {
     char buf[16384];
+    unsigned char framebuffer[480 * 270];
+    int x;
+    int y;
+    int selectedMarkerPixels = 0;
     int n;
     M12_StartupMenuState state;
 
@@ -423,6 +427,22 @@ static void subtest_quick_resume_entry(void)
                      strstr(buf, "\"bounds\":{\"x\":186,\"y\":118,\"w\":128,\"h\":10}") != NULL &&
                      strstr(buf, "\"id\":\"GAME_CARD_CSB\"") == NULL,
                  "original: accessibility exposes only the two rendered opening rows");
+
+    /* The selected third row must be pulled into the sparse opening view,
+     * with the on-screen marker visible where the accessibility bounds say
+     * that row is. The first two opening rows are intentionally unchanged. */
+    state.selectedIndex = 1;
+    M12_StartupMenu_Draw(&state, framebuffer, 480, 270);
+    for (y = 128; y < 138; ++y) {
+        for (x = 186; x < 196; ++x) {
+            if (framebuffer[y * 480 + x] == 15U) {
+                ++selectedMarkerPixels;
+            }
+        }
+    }
+    probe_record("INV_LAX_28_sparse_selected_third_row_is_rendered",
+                 selectedMarkerPixels > 0,
+                 "original: keyboard focus on the third row reveals its visible selection marker");
 
     fs_ax_shutdown();
     portable_remove(g_json_path);
