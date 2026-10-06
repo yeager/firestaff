@@ -456,6 +456,11 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_
    ! grep -Fq 'stage2_mpr1_caller_bytes[2] == 0x3a' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'HuCPU.MPR[1]' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'HuCPU.FastPageR[1] + stage2_probe_pc' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_lookup_sequence < 64' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_lookup sequence=%u pc=4ec9 mpr2=%02x selector=%02x key=%02x slot=%04x slot_bytes=%02x%02x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_root sequence=%u pc=4ed4 selector=%02x key=%02x root=%04x count=%02x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'const uint8 *zero_page = (const uint8 *)(HuCPU.Page1);' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_result sequence=%u pc=4ed7 selector=%02x key=%02x carry=%u field_37ce=%02x field_37cf=%02x field_37d0=%02x field_37d1=%02x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_call sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x callsite_bytes=%02x%02x%02x linked=%u' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed4 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s' "$pce_fast_stage2_mpr1_probe_patch_file"; then
     printf '%s\n' 'FAIL: pce_fast MPR1 probe must link target execution to the authenticated caller instruction'

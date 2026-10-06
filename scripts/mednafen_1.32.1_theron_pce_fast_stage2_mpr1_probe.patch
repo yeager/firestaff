@@ -4,7 +4,7 @@
  #include "vdc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -29,1 +31,129 @@
+@@ -29,1 +31,172 @@
  HuC6280 HuCPU;
 +
 +static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc)
@@ -20,6 +20,8 @@
 + static unsigned stage2_mpr1_sequence;
 + static unsigned stage2_mpr1_call_sequence;
 + static int stage2_mpr1_call_pending;
++ static unsigned stage2_mpr1_lookup_sequence;
++ static int stage2_mpr1_lookup_pending;
 + static uint8 stage2_mpr1_caller_mpr1;
 + static uint32 stage2_mpr1_caller_physical_pc;
 + static uint32 stage2_mpr1_call_target_physical_pc;
@@ -34,6 +36,47 @@
 +   if(stage2_mpr1_trace)
 +    fputs("source=mednafen-pce-fast-stage2-mpr1-probe\n", stage2_mpr1_trace);
 +  }
++ }
++ if(stage2_probe_pc == 0x4ec9 && stage2_mpr1_trace &&
++    stage2_mpr1_lookup_sequence < 64)
++ {
++  const uint8 *stage2 = (const uint8 *)(HuCPU.FastPageR[2]);
++  const uint8 selector = stage2[0x4d7b];
++  const uint16 slot = (uint16)(0x4d7c + (uint16)selector * 2);
++  fprintf(stage2_mpr1_trace,
++    "stage2_mpr1_lookup sequence=%u pc=4ec9 mpr2=%02x selector=%02x key=%02x slot=%04x slot_bytes=%02x%02x a=%02x x=%02x y=%02x p=%02x\n",
++    stage2_mpr1_lookup_sequence++, HuCPU.MPR[2], selector,
++    stage2[0x4ec2], slot, stage2[slot], stage2[slot + 1],
++    HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.P);
++  stage2_mpr1_lookup_pending = 1;
++  fflush(stage2_mpr1_trace);
++ }
++ if(stage2_probe_pc == 0x4ed4 && stage2_mpr1_lookup_pending &&
++    stage2_mpr1_trace)
++ {
++  const uint8 *stage2 = (const uint8 *)(HuCPU.FastPageR[2]);
++  const uint8 *zero_page = (const uint8 *)(HuCPU.Page1);
++  const uint16 root = (uint16)zero_page[0] |
++                      ((uint16)zero_page[1] << 8);
++  const uint8 count = *(const uint8 *)(HuCPU.FastPageR[root >> 13] + root);
++  fprintf(stage2_mpr1_trace,
++    "stage2_mpr1_root sequence=%u pc=4ed4 selector=%02x key=%02x root=%04x count=%02x a=%02x x=%02x y=%02x p=%02x\n",
++    stage2_mpr1_lookup_sequence - 1, stage2[0x4d7b], stage2[0x4ec2],
++    root, count, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.P);
++  fflush(stage2_mpr1_trace);
++ }
++ if(stage2_probe_pc == 0x4ed7 && stage2_mpr1_lookup_pending &&
++    stage2_mpr1_trace)
++ {
++  const uint8 *stage2 = (const uint8 *)(HuCPU.FastPageR[2]);
++  const uint8 *ram = (const uint8 *)(HuCPU.FastPageR[1] + 0x37ce);
++  fprintf(stage2_mpr1_trace,
++    "stage2_mpr1_result sequence=%u pc=4ed7 selector=%02x key=%02x carry=%u field_37ce=%02x field_37cf=%02x field_37d0=%02x field_37d1=%02x a=%02x x=%02x y=%02x p=%02x\n",
++    stage2_mpr1_lookup_sequence - 1, stage2[0x4d7b], stage2[0x4ec2],
++    HuCPU.P & 0x01, ram[0], ram[1], ram[2], ram[3],
++    HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.P);
++  stage2_mpr1_lookup_pending = 0;
++  fflush(stage2_mpr1_trace);
 + }
 + if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
 +  stage2_mpr1_call_pending = 0;
@@ -134,7 +177,7 @@
 +  stage2_mpr1_dispatch_observation_sequence++;
 + }
 +}
-@@ -692,1 +710,2 @@
+@@ -692,1 +753,2 @@
 -	  b1 = RdAtPC();
 +	  TheronTraceStage2MPR1(GetRealPC());
 +	  b1 = RdAtPC();
