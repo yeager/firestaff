@@ -215,6 +215,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   now source-locked; loop-count meaning and runtime selection remain unknown.
   ID `$49`'s `$44eb..$4517` selector split and `$4514` join are also locked;
   the alternate `$459f` path and selector meaning remain unresolved.
+  ID `$4a`'s `$4a81..$4a9f` paired-call loop is now independently locked to the
+  authentic US and JP images, stopping before ID `$4b` at `$4aca`; immediate
+  operands and runtime selection remain unassigned.
   ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its

@@ -1378,6 +1378,27 @@ static void test_stage2_id49_selector_join(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $4a's paired calls and bounded loop against authentic editions. */
+static void test_stage2_id4a_paired_call_loop(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x3bu, 0x46u, 0xa5u, 0x0eu, 0x48u, 0xa9u, 0x0cu,
+        0x20u, 0xb7u, 0x3au, 0x68u, 0x85u, 0x0eu, 0x48u, 0xa9u,
+        0x0eu, 0x20u, 0xb7u, 0x3au, 0x68u, 0x85u, 0x0eu, 0x20u,
+        0x45u, 0xe0u, 0xd0u, 0xe7u, 0x4cu, 0xf5u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x4au)) == 0x4a81u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4a81u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id4a_paired_call_loop (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2860,6 +2881,7 @@ int main(void)
     test_stage2_id47_three_byte_handoff(g_us_data, g_us_size, 0);
     test_stage2_id48_paired_selector_loop(g_us_data, g_us_size, 0);
     test_stage2_id49_selector_join(g_us_data, g_us_size, 0);
+    test_stage2_id4a_paired_call_loop(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2918,6 +2940,7 @@ int main(void)
         test_stage2_id47_three_byte_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id48_paired_selector_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id49_selector_join(g_jp_data, g_jp_size, 1);
+        test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);

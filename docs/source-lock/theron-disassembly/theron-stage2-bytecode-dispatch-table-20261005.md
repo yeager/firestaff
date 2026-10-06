@@ -907,6 +907,14 @@ Those two paths join at `$4514`, call `$4f31`, and reach the trailing `SEC` at
 assertion. The raw window is identical in authentic US and JP data; the
 selector's meaning and runtime use remain unproven.
 
+ID `$4a` points to `$4a81` in both authentic editions. The 31-byte root
+`$4a81..$4a9f` calls `$463b`, saves `$0e`, invokes `$3ab7` with immediate
+`#$0c`, restores `$0e`, repeats with `#$0e`, calls `$e045`, branches back to
+the first immediate call when nonzero, and ends with `JMP $40f5`. The assertion
+stops at `$4a9f`, before the next ID `$4b` target `$4aca`; it establishes only
+static byte/control-flow evidence, not stream-field meaning or runtime
+selection.
+
 ID `$37` points to `$480a` in both editions. Its root `$480a..$4813` reads one
 stream byte to `$02`, calls the local helper at `$4814`, and jumps to `$40f5`.
 The helper window `$4814..$4841` is byte-identical in the authentic US and JP
