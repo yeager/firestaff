@@ -24,7 +24,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   pass. The persisted-root M12 original-media regression also follows AUTO
   FM Towns through the complete title, New Game and first mirror into a loaded
   one-champion session. These checks do not cover the reported M5 window/input
-  failure.
+  failure. The 2026-10-06 retest also reports a broken DM2 dungeon viewport;
+  the attached screenshot shows DM1, so the affected DM2 platform, asset
+  identity and presented frame still need a platform-specific capture.
 
 - Complete Macintosh dungeon visual comparison and normal gameplay routes
   against the corrected retail map base at byte 26,806. The earlier loader
