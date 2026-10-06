@@ -23,9 +23,9 @@ the immediate callees reached by the four `$31b3` targets. Added exact-byte
 receipts and first/last-byte mutation rejection. All five authentic US
 same-offset windows differ. The source lock records the HuC6280 disassembly,
 exact hashes, and each span's bounds. Also bound the nested `$4f7a` (15 bytes),
-`$54a7` (12), and `$54fc` (16) windows. `$4f7a` matches authentic US bytes;
-the other seven newly bound windows differ at the same US offsets. `$53d8`
-remains an unbound nested callee. Three independent authentic-media
+`$54a7` (12), `$54fc` (16), and `$53d8` (16) windows. `$4f7a` matches authentic
+US bytes; the other eight newly bound windows differ at the same US offsets.
+Three independent authentic-media
 extraction/disassembly loops confirmed the new windows. The updated
 `test_theron_v1_stage2_disassembly_chain` compiled on `trv2` and passed three
 loops against authentic US/JP Track 02 data, including the endpoint mutation

@@ -2692,6 +2692,8 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_JP_L54A7_BYTES 0x0cu
 #define THERON_TRACK02_IPL_STAGE2_JP_L54FC_USER_OFFSET 0x14fcu
 #define THERON_TRACK02_IPL_STAGE2_JP_L54FC_BYTES 0x10u
+#define THERON_TRACK02_IPL_STAGE2_JP_L53D8_USER_OFFSET 0x13d8u
+#define THERON_TRACK02_IPL_STAGE2_JP_L53D8_BYTES 0x10u
 
 /* L3114 near callees.  L3172 and the $117D far-helper trampoline sit
  * directly after the bound L3114 body in the low-image region (below
@@ -3565,6 +3567,7 @@ typedef struct {
     int l4f7a_target_proven;
     int l54a7_target_proven;
     int l54fc_target_proven;
+    int l53d8_target_proven;
 } Theron_Track02Stage2JpL3114FlowReceipt;
 
 /* Receipt for the stage-two L3114-callees proof.  It binds only

@@ -78,6 +78,9 @@
 ; $54fc [0x14fc..0x150c), 16 bytes, SHA-256
 ;   cdd8875db9542719b1d117a8ae3786de3e30c967155fa6528093e8ad018faf56
 ;   authentic US same-offset SHA-256 7dcc7b98ab1dcf690fcb6e9d1be238e341bf35e4778f92cc93e0e9d9f54e93a3
+; $53d8 [0x13d8..0x13e8), 16 bytes, SHA-256
+;   03d93ad866c1696fe36e3307b7e59d3986558b9dcc9ac89fb92d01acb3759eed
+;   authentic US same-offset SHA-256 5e91916caa8057aa9be78a77048948968cf4955a8d29d267d99630240d4b2356
 ;
 ; The regional dispatch-machine receipt authenticates the JP $4f5e selector
 ; window. Its JSR $3114 at selector offset +4 is the caller for this target.
@@ -98,7 +101,7 @@
 ; No routine or game semantics, regional behavioral equivalence, or unlisted
 ; nested helper behavior are claimed. The `$54b3` BSR at `$54ed` reaches the
 ; separately bound `$54a7` window; its BSR at `$54f4` reaches the separately
-; bound `$54fc` window. `$54fc` calls `$53d8`, which remains unbound here.
+; bound `$54fc` window. `$54fc` calls the separately bound `$53d8` window.
 ;
 ; HuC6280 $44 is BSR, not the 65C02 TSB interpretation. The MAME reference
 ; implementation is h6280_device::bsr() in src/devices/cpu/h6280/h6280.cpp,
@@ -549,4 +552,14 @@ $54fc:  phx
         stz  $5a
         pla
         bsr  $550c
+        rts
+
+$53d8:  lda  ($04),y
+        iny
+        sta  $0002
+        lda  ($04),y
+        iny
+        sta  $0003
+        dex
+        bne  $53d8
         rts
