@@ -6,8 +6,14 @@
   and scan-step labels. A renderer regression checks the 50% fill and task
   label; the current-source CLI build and data-directory regression pass, and
   a headless startup-menu scan over the installed five-game corpus returns to
-  the menu without a renderer error. The return-after-game interaction itself
-  still needs a physical desktop check.
+  the menu without a renderer error. An opt-in regression starts with the
+  installed DM1 leaf and verifies that the return rescan discovers all five
+  installed games. Physical desktop interaction still needs a separate check.
+  Direct CLI probes without `--platform` also pass against installed original
+  media: DM1 reaches a loaded runtime; CSB reaches map 4 with its authenticated
+  party; DM2 defaults to FM Towns and reaches map 0 with real graphics and no
+  fallback draws. The CSB and DM2 probes include source menu inputs to enter
+  new games.
 
 - 2026-10-06: The 480x270 legacy launcher now routes mouse clicks to its
   visible platform and presentation cards. The route is limited to those two

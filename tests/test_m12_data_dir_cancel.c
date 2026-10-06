@@ -757,6 +757,64 @@ static void check_start_menu_keeps_saved_game_leaf_scoped(void) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
 
+typedef struct RealGameRescanCoverage {
+    unsigned int gameMask;
+} RealGameRescanCoverage;
+
+static int record_real_game_rescan_progress(
+    const M12_AssetScanProgress* progress, void* userData) {
+    RealGameRescanCoverage* coverage = (RealGameRescanCoverage*)userData;
+    static const char* const ids[] = {"dm1", "csb", "dm2", "nexus", "theron"};
+    size_t i;
+    if (!coverage || !progress) return 1;
+    for (i = 0U; i < sizeof(ids) / sizeof(ids[0]); ++i) {
+        if (strcmp(progress->currentGameId, ids[i]) == 0) {
+            coverage->gameMask |= 1U << i;
+            break;
+        }
+    }
+    return 1;
+}
+
+static void check_return_rescan_uses_real_five_game_corpus(void) {
+    static const char* const ids[] = {"dm1", "csb", "dm2", "nexus", "theron"};
+    M12_StartupMenuState state;
+    RealGameRescanCoverage coverage = {0U};
+    M12_StartupMenuInitOptions options;
+    char scratchRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char dm1Leaf[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* corpus = getenv("FIRESTAFF_TEST_REAL_DATA_ROOT");
+    size_t i;
+
+    /* This opt-in integration check deliberately uses the installed original
+     * corpus. It does not construct or substitute game-data fixtures. */
+    if (!corpus || !corpus[0] || !FSP_DirExists(corpus)) {
+        puts("  SKIP: FIRESTAFF_TEST_REAL_DATA_ROOT is not an installed corpus");
+        return;
+    }
+    CHECK(create_build_scratch_and_data_root(scratchRoot));
+    if (failures) return;
+    CHECK(FSP_JoinPath(dm1Leaf, sizeof(dm1Leaf), corpus, "dm1"));
+    CHECK(FSP_DirExists(dm1Leaf));
+    if (failures) return;
+
+    memset(&options, 0, sizeof(options));
+    options.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(&state, dm1Leaf, "dm1", &options);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 1);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "csb") == 0);
+
+    /* Returning from a game must promote the selected game leaf back to its
+     * collection root and refresh all five game statuses. */
+    M12_StartupMenu_RescanAllGames(&state, record_real_game_rescan_progress,
+                                   &coverage);
+    CHECK((coverage.gameMask & 0x1fU) == 0x1fU);
+    for (i = 0U; i < sizeof(ids) / sizeof(ids[0]); ++i) {
+        CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, ids[i]) == 1);
+    }
+    M12_StartupMenu_Destroy(&state);
+}
+
 static void check_dot_config_migrates_to_default_data_directory(void) {
     M12_Config config;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -985,6 +1043,7 @@ int main(void) {
     check_parent_dialog_result_is_not_a_placeholder();
     check_default_data_dir_scans_asynchronously();
     check_start_menu_keeps_saved_game_leaf_scoped();
+    check_return_rescan_uses_real_five_game_corpus();
     check_dot_config_migrates_to_default_data_directory();
     check_dot_environment_never_persists_as_data_directory();
     check_fresh_config_repairs_dot_in_memory();

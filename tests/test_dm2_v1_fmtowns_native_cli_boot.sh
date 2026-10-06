@@ -46,7 +46,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # the original 320x200 coordinates and require the first real map-0 party.
 probe_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 320 --height 200 --game dm2 --platform fm-towns \
+    --width 320 --height 200 --game dm2 \
     --data-dir "$archive" --boot-probe --boot-probe-frames 0 \
     --script 'wait:8000,click:115:65,click:100:60' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
