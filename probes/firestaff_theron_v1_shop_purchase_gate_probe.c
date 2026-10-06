@@ -352,7 +352,8 @@ int main(void) {
             CHECK(ev[0] != '\0');
             CHECK(strstr(ev, "THQUEST") != NULL);
             CHECK(strstr(ev, "T560") != NULL);
-            CHECK(strstr(ev, "T800") != NULL);
+            CHECK(strstr(ev, "T800") == NULL);
+            CHECK(strstr(ev, "no retail gold-persistence claim") != NULL);
             CHECK(strstr(ev, "ReDMCSB") != NULL);
         }
     }

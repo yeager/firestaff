@@ -33,6 +33,18 @@ hashes and checks those exact windows in either image. This regional identity
 is limited to the listed spans; it does not establish parity for other
 stage-two helpers or gameplay semantics.
 
+The bounded entry-path proof now also accepts both authenticated editions.
+Direct raw-byte comparison found the contiguous entry/seed stream window
+`0x00..0xb4` (stage-two user offsets) and its seed tail `0xb5..0xb6`
+identical in US and JP. Its composed call-graph proof checks the dispatcher
+`0xb7..0xf0`, delay `0xb2d..0xb3b`, port-clear `0xb73..0xb95`, and
+pointer-setup `0x814..0x841` windows; these also match byte-for-byte. The
+`test_theron_v1_stage2_disassembly_chain` test verifies each receipt against
+authentic regional media and flips bytes within every newly admitted JP
+window to confirm rejection. This is static byte evidence only: it does not
+establish that the JP game executes this route, nor does it generalize to
+unlisted helpers or gameplay behavior.
+
 ## Index-to-target map
 
 No gameplay or command names are assigned. Each right-hand value is only the

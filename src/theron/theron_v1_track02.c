@@ -8361,10 +8361,11 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_entry_path(
     status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
                                                 md5_hex, &loader);
     if (status != THERON_TRACK02_SIGNAL_OK) return status;
-    /* The entry-stream byte identity is attested only for the
-     * authenticated US stage-two body; the JP body rejects here until
-     * staged JP media can verify the same stream. */
-    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+    /* The bounded executed-entry windows have now been compared against
+     * both authenticated regional stage-two images. Keep this receipt
+     * limited to those exact spans and their already-bound seed sites. */
+    if ((loader.variant != THERON_TRACK02_VARIANT_US_BIN &&
+         loader.variant != THERON_TRACK02_VARIANT_JP_BIN) ||
         !loader.stage2_seed_call_sites_proven) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
@@ -8468,10 +8469,10 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_call_graph(
     status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
                                                 md5_hex, &loader);
     if (status != THERON_TRACK02_SIGNAL_OK) return status;
-    /* The callee-stream byte identity is attested only for the
-     * authenticated US stage-two body; the JP body rejects here until
-     * staged JP media can verify the same streams. */
-    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+    /* These bounded callee windows match in both authenticated regional
+     * images. Do not generalize this receipt to other stage-two spans. */
+    if ((loader.variant != THERON_TRACK02_VARIANT_US_BIN &&
+         loader.variant != THERON_TRACK02_VARIANT_JP_BIN) ||
         !loader.stage2_seed_call_sites_proven) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }

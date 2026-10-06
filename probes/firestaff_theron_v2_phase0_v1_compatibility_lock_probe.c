@@ -52,7 +52,7 @@
  *   SDL_VIDEODRIVER=dummy ./firestaff_theron_v2_phase0_v1_compatibility_lock_probe
  *
  * Source references:
- *   THQUEST.ASM T080  between-dungeon save/load
+ *   DMS-SG.001 authenticated Backup RAM evidence  between-dungeon boundary
  *   THQUEST.ASM T400  dungeon bank loading
  *   THQUEST.ASM T520  party placement / start position
  *   THQUEST.ASM T560  dungeon loading (header parsing, dungeon_seed)
@@ -377,8 +377,8 @@ static void check_source_evidence(void)
           "evidence references theron_v1_palette");
     check(e && strstr(e, "theron_v1_ui_chrome") != 0,
           "evidence references theron_v1_ui_chrome");
-    check(e && strstr(e, "T080") != 0,
-          "evidence references THQUEST.ASM T080");
+    check(e && strstr(e, "DMS-SG.001") != 0,
+          "evidence references authenticated Backup RAM boundary");
     check(e && strstr(e, "T400") != 0,
           "evidence references THQUEST.ASM T400");
     check(e && strstr(e, "T520") != 0,

@@ -3233,13 +3233,14 @@ distinguishes right and left after `$28B8` returns to zero.
 - 🔧 2026-08-06 JP Stage-2 disassembly follow-up: the authentic JP Track 02
   BIN is now materialised as `~/.firestaff/data/theron/TQJP02.bin` and its
   IPL loader plus dynamic `$3800` payload receipt pass against record `0x4df`.
-  The main executed entry path and several first-level helper receipts still
-  remain US-only because the JP image has region-specific bytes. The bounded
-  dispatch-machine receipt is a limited exception: the seed tail, dispatch
-  stubs, initial jump-table entries, MPR-page helper, and `$4f5e` selector
-  match in both authentic images. The receipt's other spans remain explicitly
-  scoped, and mutation checks now require each listed window to reject a
-  changed byte; no general JP entry-path or `$3114`-body parity follows.
+  The exact bounded entry stream and four call-graph windows are now
+  byte-verified in both authentic editions, along with the bounded
+  dispatch-machine windows documented in
+  `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
+  JP mutation checks require every newly admitted window to reject a changed
+  byte. This is static source-byte parity only, not evidence that the JP game
+  executes the route; other first-level helpers remain US-only, including the
+  `$3114` body, and gameplay semantics remain open.
 
 - 🔧 2026-07-11 IPL-loader provenance update: original CUE sheets prove Track
   01 is CD-DA narration, while Track 02 is the MODE1 code track. The

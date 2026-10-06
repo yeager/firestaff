@@ -2134,21 +2134,9 @@ int main(void) {
               "JP IPL fixture accepted");
         check_receipt(&receipt, THERON_TRACK02_VARIANT_JP_BIN, 224u, 3u,
                       "JP IPL fixture identity");
-        check(theron_v1_track02_verify_stage2_entry_path(
-                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
-                  &entry_path) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
-                  !entry_path.valid,
-              "JP entry path stays out of the US-proven scope");
-        check(theron_v1_track02_verify_stage2_call_graph(
-                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
-                  &call_graph) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
-                  !call_graph.valid,
-              "JP call graph stays out of the US-proven scope");
-        check(theron_v1_track02_verify_stage2_dispatch_machine(
-                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
-                  &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
-                  !dispatch_machine.valid,
-              "JP dispatch machine stays out of the US-proven scope");
+        /* This synthetic JP-shaped fixture cannot establish regional byte
+         * parity. Authenticated JP acceptance is covered by the real-media
+         * stage-two disassembly-chain test. */
         check(theron_v1_track02_verify_stage2_l8000_pair(
                   data, data_size, THERON_TRACK02_MD5_JP_BIN,
                   &l8000_pair) == THERON_TRACK02_SIGNAL_NOT_FOUND &&

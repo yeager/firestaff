@@ -53319,8 +53319,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_main_ram_co
     endif()
     add_test(NAME theron_v1_mednafen_main_ram_consumer_trace
         COMMAND test_theron_v1_mednafen_main_ram_consumer_trace)
+    file(MAKE_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/theron-mednafen-consumer-scratch")
     set_tests_properties(theron_v1_mednafen_main_ram_consumer_trace PROPERTIES
-        SKIP_RETURN_CODE 77)
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/theron-mednafen-consumer-scratch")
 endif()
 
 # Theron same-session transition receipt. This admits only authenticated

@@ -2648,6 +2648,47 @@ static void test_stage2_entry_path(void)
     assert(receipt.entry_path_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES);
     printf("  PASS: stage2_entry_path\n");
+
+    if (g_jp_data) {
+        status = theron_v1_track02_verify_stage2_entry_path(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid == 1);
+        assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+        assert(receipt.entry_prologue_proven == 1);
+        assert(receipt.main_path_proven == 1);
+        assert(receipt.entry_path_contiguous_proven == 1);
+        assert(receipt.entry_path_bound_bytes ==
+               THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES);
+        printf("  PASS: stage2_entry_path (JP)\n");
+
+        {
+            static const size_t user_offsets[] = {
+                THERON_TRACK02_IPL_STAGE2_ENTRY_PROLOGUE_USER_OFFSET,
+                THERON_TRACK02_IPL_STAGE2_MAIN_PATH_USER_OFFSET
+            };
+            uint8_t *mutated = malloc(g_jp_size);
+            size_t stage2_sector =
+                THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                THERON_TRACK02_IPL_STAGE2_RECORD;
+            assert(mutated != NULL);
+            for (size_t window = 0;
+                 window < sizeof(user_offsets) / sizeof(user_offsets[0]);
+                 ++window) {
+                size_t user_offset = user_offsets[window];
+                size_t raw_offset = (stage2_sector + user_offset / 2048u) *
+                    2352u + 16u + user_offset % 2048u;
+                assert(raw_offset < g_jp_size);
+                memcpy(mutated, g_jp_data, g_jp_size);
+                mutated[raw_offset] ^= 1u;
+                status = theron_v1_track02_verify_stage2_entry_path(
+                    mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN,
+                    &receipt);
+                assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+            }
+            free(mutated);
+        }
+    }
 }
 
 static void test_stage2_call_graph(void)
@@ -2666,6 +2707,50 @@ static void test_stage2_call_graph(void)
     assert(receipt.call_graph_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES);
     printf("  PASS: stage2_call_graph\n");
+
+    if (g_jp_data) {
+        status = theron_v1_track02_verify_stage2_call_graph(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid == 1);
+        assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+        assert(receipt.dispatcher_proven == 1);
+        assert(receipt.delay_proven == 1);
+        assert(receipt.port_clear_proven == 1);
+        assert(receipt.pointer_setup_proven == 1);
+        assert(receipt.call_graph_bound_bytes ==
+               THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES);
+        printf("  PASS: stage2_call_graph (JP)\n");
+
+        {
+            static const size_t user_offsets[] = {
+                THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET,
+                THERON_TRACK02_IPL_STAGE2_DELAY_USER_OFFSET,
+                THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_USER_OFFSET,
+                THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_USER_OFFSET
+            };
+            uint8_t *mutated = malloc(g_jp_size);
+            size_t stage2_sector =
+                THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                THERON_TRACK02_IPL_STAGE2_RECORD;
+            assert(mutated != NULL);
+            for (size_t window = 0;
+                 window < sizeof(user_offsets) / sizeof(user_offsets[0]);
+                 ++window) {
+                size_t user_offset = user_offsets[window];
+                size_t raw_offset = (stage2_sector + user_offset / 2048u) *
+                    2352u + 16u + user_offset % 2048u;
+                assert(raw_offset < g_jp_size);
+                memcpy(mutated, g_jp_data, g_jp_size);
+                mutated[raw_offset] ^= 1u;
+                status = theron_v1_track02_verify_stage2_call_graph(
+                    mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN,
+                    &receipt);
+                assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+            }
+            free(mutated);
+        }
+    }
 }
 
 static void test_stage2_dispatch_machine(void)
