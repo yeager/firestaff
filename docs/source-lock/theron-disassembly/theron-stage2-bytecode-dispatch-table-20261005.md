@@ -63,6 +63,13 @@ so the existing combined L4696/L3114 and downstream L3114 receipts remain
 US-only. Hash divergence alone does not explain the regional code difference
 or establish JP helper semantics.
 
+The authenticated JP selector window at `$4f5e` is nevertheless accepted by
+the regional dispatch-machine receipt, while the combined far-callee receipt
+rejects JP. This isolates the unresolved evidence to the target side rather
+than the selector bytes. The US assembly listing must not be projected onto
+the differing JP span: a JP-specific HuC6280 listing and bounded target map
+are required before admitting more JP code or assigning routine semantics.
+
 ## Index-to-target map
 
 No gameplay or command names are assigned. Each right-hand value is only the

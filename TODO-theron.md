@@ -15,6 +15,13 @@ Reviewed 2026-10-06. Only open work is listed here.
   selection had zero failures: 285 passed and 22 media/capture-dependent tests
   skipped on `trv2`.
 
+- 🔒 The authentic 94-byte JP `$3114` target window differs from US, while
+  the exact `$4f5e` selector window is verified in both editions. The current
+  combined receipt therefore remains US-only; do not reuse US routine labels
+  for JP. Next: produce a HuC6280-correct JP listing, establish bounded branch
+  and call targets from original bytes, then add only independently proven
+  JP windows. No JP routine semantics are established yet.
+
 ## 2026-10-06 — mutation-check the regional dispatch-machine receipt
 
 - ✅ Added negative raw-media checks for the five windows accepted by the
