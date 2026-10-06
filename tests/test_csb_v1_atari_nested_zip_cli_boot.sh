@@ -38,9 +38,9 @@ runtime_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$runtime_output" in
-    *phase=inactive*startupActive=0*levelLoaded=1*runtimeTick=*csbViewportHash=*) ;;
+    *phase=inactive*startupActive=0*levelLoaded=1*map=0*party=9,0,2*runtimeTick=*csbViewportHash=*) ;;
     *)
-        echo "FAIL: nested CSB Atari title Enter did not reach runtime"
+        echo "FAIL: nested CSB Atari title Enter did not reach its original map-0 start pose"
         printf '%s\n' "$runtime_output" >&2
         exit 1
         ;;

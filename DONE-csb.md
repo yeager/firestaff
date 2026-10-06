@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-10-06: Repacked the authentic Atari ST v2.1 game-disk STX from the
+  local preservation archive into ZIP for the native archive route. The direct
+  CLI test now waits through the source ANIMATE.SCR sequence before Enter and
+  asserts the original map-0 spawn at (9,0), facing south, with a nonzero
+  viewport receipt; its first UP command reaches (9,1). Native STX and ZIP
+  startup/input/menu routes pass against that original disk. These headless
+  checks do not prove physical Mac M5 HiDPI display quality.
+
 - 2026-10-06: Re-ran the authentic Atari ST archive startup/input route and
   FM Towns English start-menu route against the local original media. The
   Towns test confirms the MINI.DAT party at map 4, position (22,18), direction

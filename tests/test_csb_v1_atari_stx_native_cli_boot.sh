@@ -46,13 +46,13 @@ esac
 
 runtime_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 2 --script enter \
+    --boot-probe --boot-probe-frames 180 --script enter \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 2>&1)" || {
     printf '%s\n' "$runtime_output" >&2
     exit 1
 }
 case "$runtime_output" in
-    *phase=inactive*startupActive=0*levelLoaded=1*runtimeTick=*)
+    *phase=inactive*startupActive=0*levelLoaded=1*map=0*party=9,0,2*runtimeTick=*)
         if ! printf '%s\n' "$runtime_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
             echo "FAIL: native CSB Atari ST runtime did not publish its source viewport receipt"
             printf '%s\n' "$runtime_output" >&2
@@ -60,7 +60,7 @@ case "$runtime_output" in
         fi
         ;;
     *)
-        echo "FAIL: native CSB Atari ST title Enter did not reach runtime"
+        echo "FAIL: native CSB Atari ST title Enter did not reach its original map-0 start pose"
         printf '%s\n' "$runtime_output" >&2
         exit 1
         ;;
@@ -68,13 +68,13 @@ esac
 
 movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 2 --script 'enter,up' \
+    --boot-probe --boot-probe-frames 180 --script 'enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
     printf '%s\n' "$movement_output" >&2
     exit 1
 }
 case "$movement_output" in
-    *phase=inactive*startupActive=0*levelLoaded=1*party=9,1,2*runtimeTick=*)
+    *phase=inactive*startupActive=0*levelLoaded=1*map=0*party=9,1,2*runtimeTick=*)
         if ! printf '%s\n' "$movement_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
             echo "FAIL: native CSB Atari ST movement did not retain its source viewport receipt"
             printf '%s\n' "$movement_output" >&2
@@ -96,7 +96,7 @@ probe_runtime_input() {
     expected_party=$2
     input_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game csb --platform atari-st --data-dir "$media_path" \
-        --boot-probe --boot-probe-frames 2 --script "enter,$input" \
+        --boot-probe --boot-probe-frames 180 --script "enter,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1)" || {
         printf '%s\n' "$input_output" >&2
@@ -217,7 +217,7 @@ for mode in v1 v21; do
     case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
     mode_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game csb --platform atari-st --data-dir "$media_path" --script enter \
-        --presentation-mode "$mode" --boot-probe --boot-probe-frames 2 \
+        --presentation-mode "$mode" --boot-probe --boot-probe-frames 180 \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1)" || {
         printf '%s\n' "$mode_output" >&2; exit 1;
