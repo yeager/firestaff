@@ -3870,6 +3870,24 @@ static int m11_selected_dm1_is_atari(const M12_StartupMenuState* menuState,
            M12_ARCH_ATARI_ST;
 }
 
+static int m11_selected_dm1_is_amiga_hd(const M12_StartupMenuState* menuState,
+                                        const M12_MenuEntry* entry) {
+    int versionIndex =
+        m11_selected_dm1_launch_version_index(menuState, entry);
+    const M12_AssetVersionStatus* version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                     (size_t)versionIndex)
+        : NULL;
+    /* The preserved [HD] image is installed-disk media and enters directly
+     * through its authenticated IMG2 runtime. The v2.0 floppy set has the
+     * source-visible SWSH/TITLE/ENTRANCE handoff and retains that transaction. */
+    return versionIndex >= 0 &&
+           M12_AssetStatus_GetVersionArchitecture(
+               "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA &&
+           version && version->matchedPath[0] != '\0' &&
+           strstr(version->matchedPath, "[HD]") != NULL;
+}
+
 static int m11_play_dm1_fmtowns_title_if_available(
     M11_GameViewState *gameView, int *outPlayedAnyFrame) {
     const DM1_V1_FmtownsStartupReceipt *plan;
@@ -4132,6 +4150,10 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
         dm1RouteReceipt.use_generic_launch = 1;
     }
     if (m11_selected_dm1_is_atari(menuState, launchEntry)) {
+        dm1RouteReceipt.use_dm1_transaction = 0;
+        dm1RouteReceipt.use_generic_launch = 1;
+    }
+    if (m11_selected_dm1_is_amiga_hd(menuState, launchEntry)) {
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
     }

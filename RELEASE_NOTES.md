@@ -1,3 +1,12 @@
+# Unreleased
+
+## Developer changes
+
+- `DM1 Amiga startup`: parse the authentic ADF dungeon's little-endian fields
+  independently from its big-endian legacy graphics layout. The installed
+  `[HD]` image keeps its direct runtime route, while the v2.0 floppy set
+  preserves the SWSH/TITLE/ENTRANCE startup transaction.
+
 # Firestaff v3.0.362
 
 ## User-facing changes

@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-06: DM1 Amiga ADF startup now keeps the authenticated dungeon's
+  little-endian F0434 fields separate from the big-endian IMG2 graphics flag.
+  The installed `[HD]` disk enters through its direct runtime route, while the
+  v2.0 floppy preservation set completes SWSH/TITLE/ENTRANCE and the first
+  Hall runtime frame. Original-media tests pass for Amiga HD, Amiga v2.0,
+  English DOS, Atari ST v1.2, FM Towns JA/EN and CSB Amiga; DM2 startup
+  diagnostics and six focused DM1/CSB/DM2 launcher CTests also pass. This
+  proves these routes only, not full platform/gameplay or visual parity.
+
 - 2026-10-06: `--debug` now reports scan roots with elapsed time, presented
   startup phase/frame changes with elapsed host time, selected
   game/platform/edition and source path, DM1's source-phase handoff, DM2 FM

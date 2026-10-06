@@ -26161,8 +26161,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * sibling dungeon file from the verified graphics member so the
          * native loader reads the original disk image directly. */
         if (!spec->dm1Fmtowns && spec->verifiedAssetPath &&
-            strstr(spec->verifiedAssetPath, "::") != NULL &&
-            spec->dataDir && strstr(spec->dataDir, "::") != NULL) {
+            strstr(spec->verifiedAssetPath, "::") != NULL) {
             const char *last = NULL;
             const char *sep = strstr(spec->verifiedAssetPath, "::");
             size_t prefix;
@@ -26379,6 +26378,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->assetsAvailable = 1;
     }
     if (dm1VirtualDungeonBytes) {
+        /* Amiga GRAPHICS.DAT uses a big-endian legacy layout, but the
+         * authenticated DUNGEON.DAT's F0434 checksum trailer and scalar
+         * fields are little-endian. Keep dungeon parsing independent of the
+         * graphics loader's legacyBigEndian flag. */
         dm1FmtownsBufferLoaded =
             F0882_WORLD_InitFromDungeonDatBuffer_Compat(
                 dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,

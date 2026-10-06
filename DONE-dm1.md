@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-10-06: Fixed DM1 Amiga ADF admission by keeping the Amiga graphics
+  decoder's big-endian legacy-layout flag separate from the little-endian F0434
+  `DUNGEON.DAT` fields and checksum. The installed `[HD]` image uses the
+  direct IMG2 runtime route; the v2.0 floppy preservation package retains the
+  complete SWSH/TITLE/ENTRANCE transaction and reaches its first Hall runtime
+  frame through M12. `test_dm1_v1_amiga_hd_archive_cli_boot.sh` and
+  `test_dm1_v1_amiga_v20_archive_cli_boot.sh` pass against the supplied
+  ZIP→ZIP→ADF data without extraction. DOS English, Atari ST v1.2, and FM
+  Towns JA/EN original-media startup/input tests also pass. SDL dummy-driver
+  evidence does not establish physical M5 rendering or visual parity.
+
 - 2026-10-06: DM1's PC34 startup handoff now requires the original SWSH logo
   asset to load and its source-timed presentation to finish. Missing/unreadable
   media, failed frame presentation, or an interrupted event wait now fails the

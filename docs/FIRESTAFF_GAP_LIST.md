@@ -173,7 +173,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 
 | Gap | Doc reference | Status |
 |---|---|---|
-| DM1 Amiga media/input/protection coverage | DMWeb DM Amiga edition page | PARTIAL / BLOCKED-DATA — DMWeb now pins the Amiga release/media boundary: 2.0 EN/FR/DE, 2.1 EN, 2.2 EN/DE, 3.6 EN/FR/DE, demo media, official SPS IPF 3.6, unofficial IPFs, protected original ADFs, cracked ADFs, hard-disk patches, and Meynaf's Atari ST-to-Amiga port. Future work needs original-vs-crack-vs-patch hash classification, real `GRAPHICS.DAT`/`DUNGEON.DAT` extraction, Amiga 2.x vs 3.6 keyboard gates, Kickstart/RAM assumptions, and copy-protection provenance without committing patched executables. |
+| DM1 Amiga media/input/protection coverage | DMWeb DM Amiga edition page | PARTIAL / BLOCKED-DATA — The supplied HD and v2.0 ZIP→ZIP→ADF packages now load original `GRAPHICS.DAT`/`DUNGEON.DAT` in bounded memory; the v2.0 route reaches the first Hall runtime frame, and the installed HD route reaches native movement. DMWeb also pins Amiga 2.0 EN/FR/DE, 2.1 EN, 2.2 EN/DE, 3.6 EN/FR/DE, demo media, official SPS IPF 3.6, unofficial IPFs, protected original ADFs, cracked ADFs, hard-disk patches, and Meynaf's Atari ST-to-Amiga port. Remaining work includes original-vs-crack-vs-patch hash classification, additional edition/input coverage, Amiga 2.x vs 3.6 keyboard gates, Kickstart/RAM assumptions, and copy-protection provenance without committing patched executables. |
 | Champion stats F0308, F0202, F0229 | FINAL_GAPS §Group 1 | FIXED |
 | Magic-map C80-83 | FINAL_GAPS | FIXED |
 | Teleporter rotation | FINAL_GAPS | FIXED |
