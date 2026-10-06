@@ -30,11 +30,12 @@ Reviewed 2026-10-06. Only open work is listed here.
   `test_theron_v1_stage2_disassembly_chain` binary was compiled from the current
   source on `trv2` and passed three loops against authentic US and JP media;
   `unidasm -arch h6280` confirmed all four new target windows and branch edges.
-  Nine immediate/nested callees (`$5c88`, `$5d21`, `$53e8`, `$54b3`, `$550c`,
-  `$4f7a`, `$54a7`, `$54fc`, `$53d8`) are also now byte-bound through their
-  first RTS, with first/last-byte mutation tests. `$4f7a` is byte-identical to
-  US while the other eight differ. No game effects are inferred, and JP
-  gameplay remains unproven.
+  Twelve immediate/nested callees or branch continuations (`$5c88`, `$5d21`,
+  `$53e8`, `$54b3`, `$550c`, `$4f7a`, `$54a7`, `$54fc`, `$53d8`, `$543e`,
+  `$547d`, `$5498`) are also byte-bound through their RTS edges, with
+  first/last-byte mutation tests. `$4f7a` is byte-identical to US while the
+  other eleven differ. No game effects are inferred, and JP gameplay remains
+  unproven.
 
 ## 2026-10-06 — mutation-check the regional dispatch-machine receipt
 

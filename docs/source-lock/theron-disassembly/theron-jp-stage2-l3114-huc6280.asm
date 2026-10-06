@@ -81,6 +81,16 @@
 ; $53d8 [0x13d8..0x13e8), 16 bytes, SHA-256
 ;   03d93ad866c1696fe36e3307b7e59d3986558b9dcc9ac89fb92d01acb3759eed
 ;   authentic US same-offset SHA-256 5e91916caa8057aa9be78a77048948968cf4955a8d29d267d99630240d4b2356
+; Three continuations reached after the conditional branch from $53e8:
+; $543e [0x143e..0x147d), 63 bytes, SHA-256
+;   4a813b0f9cf183c2632874870bfa94ca160a5a94960f06746453646c36d85361
+;   authentic US same-offset SHA-256 593b23c5b19bae7a7ed2c2e8d00dca95ea57b5331ab15f63735a496799f3c46b
+; $547d [0x147d..0x1498), 27 bytes, SHA-256
+;   621e46baa2ef4884df89b5937bec1510c9bb0679e98abeb09a954e9eb90e13a1
+;   authentic US same-offset SHA-256 9bf9f7775cffe61d08b435572df4a069ecf6df8e623a64557c924e464cc301e1
+; $5498 [0x1498..0x14a7), 15 bytes, SHA-256
+;   4274df61a0bb3fc45332e62bc4f35cd0221cbfa77e87d7c40c64a3e4f7415dfb
+;   authentic US same-offset SHA-256 66054cd241ae5864861907f452234736ccf6f4366a17aa964fc03e9f81fa94c0
 ;
 ; The regional dispatch-machine receipt authenticates the JP $4f5e selector
 ; window. Its JSR $3114 at selector offset +4 is the caller for this target.
@@ -99,9 +109,10 @@
 ; complete $5ca7-to-first-RTS byte window without assigning semantics to
 ; either entry. The four spans and authentic US same-offset windows differ.
 ; No routine or game semantics, regional behavioral equivalence, or unlisted
-; nested helper behavior are claimed. The `$54b3` BSR at `$54ed` reaches the
-; separately bound `$54a7` window; its BSR at `$54f4` reaches the separately
-; bound `$54fc` window. `$54fc` calls the separately bound `$53d8` window.
+; nested helper behavior are claimed. The `$53e8` window branches past its
+; first RTS into `$543e`; all three contiguous continuations are byte-bound.
+; The `$54b3` BSRs reach the separately bound `$54a7` and `$54fc` windows;
+; `$54fc` calls the separately bound `$53d8` window.
 ;
 ; HuC6280 $44 is BSR, not the 65C02 TSB interpretation. The MAME reference
 ; implementation is h6280_device::bsr() in src/devices/cpu/h6280/h6280.cpp,
@@ -562,4 +573,64 @@ $53d8:  lda  ($04),y
         sta  $0003
         dex
         bne  $53d8
+        rts
+
+; The BCC at $5434 in the $53e8 window enters this continuation after its RTS.
+$543e:  jsr  $5237
+        lda  $4fd5
+        sta  $04
+        lda  $4fd6
+        sta  $05
+        ldx  #$04
+$544d:  cly
+$544e:  lda  $4f8b,y
+        sta  ($04),y
+        iny
+        dex
+        bne  $544e
+        lda  $0e
+        sta  ($04),y
+        iny
+        lda  $0f
+        sta  ($04),y
+        bsr  $54a7
+        ldy  $4f8e
+        ldx  $4f8d
+        phy
+        phx
+        bsr  $547d
+        plx
+        ply
+        dey
+        bne  $5468
+        lda  $04
+        sta  $4fd5
+        lda  $05
+        sta  $4fd6
+        clc
+        rts
+
+$547d:  phx
+        cly
+        dec  $5a
+        bsr  $5498
+        lda  $0002
+        sta  ($04),y
+        iny
+        lda  $0003
+        sta  ($04),y
+        iny
+        dex
+        bne  $5483
+        stz  $5a
+        pla
+        bsr  $550c
+        rts
+
+$5498:  st0  #$01
+        lda  $0e
+        sta  $0002
+        lda  $0f
+        sta  $0003
+        st0  #$02
         rts
