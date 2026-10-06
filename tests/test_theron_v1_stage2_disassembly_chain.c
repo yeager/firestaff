@@ -1634,6 +1634,22 @@ static void test_stage2_l4bd2_conditional_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the shared selector wrapper's register setup and external call. */
+static void test_stage2_l4f5e_register_handoff(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    static const uint8_t helper[] = {
+        0xa2u, 0xc1u, 0xa0u, 0x4eu, 0x20u, 0x14u, 0x31u, 0x60u
+    };
+
+    for (unsigned int i = 0; i < sizeof(helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4f5eu + i)) == helper[i]);
+    }
+    printf("  PASS: stage2_l4f5e_register_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock ID $4a's paired calls and bounded loop against authentic editions. */
 static void test_stage2_id4a_paired_call_loop(const uint8_t *raw,
                                                size_t raw_size, int jp)
@@ -3370,6 +3386,7 @@ int main(void)
     test_stage2_l4446_selector_helper(g_us_data, g_us_size, 0);
     test_stage2_l4f48_selector_pointer_reader(g_us_data, g_us_size, 0);
     test_stage2_l4bd2_conditional_handoff(g_us_data, g_us_size, 0);
+    test_stage2_l4f5e_register_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4a_paired_call_loop(g_us_data, g_us_size, 0);
     test_stage2_id4c_call_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4e_relative_handoff(g_us_data, g_us_size, 0);
@@ -3443,6 +3460,7 @@ int main(void)
         test_stage2_l4446_selector_helper(g_jp_data, g_jp_size, 1);
         test_stage2_l4f48_selector_pointer_reader(g_jp_data, g_jp_size, 1);
         test_stage2_l4bd2_conditional_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_l4f5e_register_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);

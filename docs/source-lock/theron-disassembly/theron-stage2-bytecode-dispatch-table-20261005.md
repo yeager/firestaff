@@ -1257,6 +1257,13 @@ low bit. The clear path calls `$3ab7` with `#$17`; both paths reach `$4105`,
 whose shared stub advances `$1c` by seven. This byte/control-flow lock does
 not establish the selector's meaning, the helper's effects, or runtime use.
 
+The shared `$4f5e` wrapper is an eight-byte window (`$4f5e..$4f65`): it loads
+`#$c1` into X and `#$4e` into Y, calls `$3114`, and returns. The
+`stage2_l4f5e_register_handoff` raw-media assertion binds this exact window
+against US and JP Track 02. This proves the register setup and external call
+site only; `$3114`'s effects and the meaning of the register values remain
+unresolved.
+
 ID `$4a` points to `$4a81` in both authentic editions. The 31-byte root
 `$4a81..$4a9f` calls `$463b`, saves `$0e`, invokes `$3ab7` with immediate
 `#$0c`, restores `$0e`, repeats with `#$0e`, calls `$e045`, branches back to
