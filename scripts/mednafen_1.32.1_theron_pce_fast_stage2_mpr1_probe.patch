@@ -4,7 +4,7 @@
  #include "vdc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -29,1 +31,193 @@
+@@ -29,1 +31,194 @@
  HuC6280 HuCPU;
 +
 +static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc,
@@ -119,9 +119,10 @@
 +  if(stage2_mpr1_trace && stage2_mpr1_candidate_sequence < 32)
 +  {
 +   fprintf(stage2_mpr1_trace,
-+     "stage2_mpr1_candidate sequence=%u pc=%04x physical_pc=%08x mpr1=%02x callsite_bytes=%02x%02x%02x linked=%u\n",
++     "stage2_mpr1_candidate sequence=%u pc=%04x physical_pc=%08x mpr2=%02x mpr1=%02x callsite_bytes=%02x%02x%02x linked=%u\n",
 +     stage2_mpr1_candidate_sequence++, stage2_probe_pc,
-+     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
++     stage2_mpr1_caller_physical_pc, caller_mpr2,
++     stage2_mpr1_caller_mpr1,
 +     stage2_mpr1_caller_bytes[0], stage2_mpr1_caller_bytes[1],
 +     stage2_mpr1_caller_bytes[2], stage2_mpr1_call_pending);
 +   fflush(stage2_mpr1_trace);
@@ -198,7 +199,7 @@
 +  stage2_mpr1_dispatch_observation_sequence++;
 + }
 +}
-@@ -692,1 +757,3 @@
+@@ -692,1 +758,3 @@
 -	  b1 = RdAtPC();
 +	  TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,
 +	                        HU_ZNFlags);

@@ -13,7 +13,10 @@ Reviewed 2026-10-06. Only open work is listed here.
   recorded. This state therefore does not cover the desired helper path; do
   not treat a logical-PC-only hook hit as stage-two execution. Repeat with a
   contemporaneous screen/state receipt and require the physical mapping plus
-  source-byte signature before interpreting any helper trace.
+  source-byte signature before interpreting any helper trace. The candidate
+  probe now records MPR2 as well as MPR1; the rebuilt object and emulator
+  reproduced the same four nonmatching JP observations in a second bounded
+  run, with the added bank field visible in the trace.
 
 ## 2026-10-06 — characterize the stage-two helper's behavior
 
