@@ -157,6 +157,18 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
         hash = dm2_v1_gdat_hud_hash_bytes(hash,
             (const uint8_t *)&command->destination_table_hash,
             sizeof(command->destination_table_hash));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            (const uint8_t *)&command->gdat_category,
+            sizeof(command->gdat_category));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            (const uint8_t *)&command->gdat_index,
+            sizeof(command->gdat_index));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            (const uint8_t *)&command->gdat_field,
+            sizeof(command->gdat_field));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            &command->source_state_flags,
+            sizeof(command->source_state_flags));
     }
     return hash ? hash : 1u;
 }
@@ -619,6 +631,117 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
         return 0;
     }
     out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
+    return 1;
+}
+
+int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_GdatHudTownsSquadSlot slots[DM2_V1_HUD_CHAMPION_SLOT_COUNT],
+    DM2_V1_GdatHudM11CommandPlan *out_plan)
+{
+    int slot;
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!loader || loader->gdat_version != 4u || !party ||
+        !party->towns_squad_default_route_valid || !slots ||
+        party->champion_count <= 0 ||
+        party->champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT) return 0;
+
+    for (slot = 0; slot < party->champion_count; ++slot) {
+        const DM2_V1_GdatHudTownsSquadSlot *source = &slots[slot];
+        DM2_V1_GdatHudM11Command *command;
+        if (!source->valid || !party->champions[slot].occupied ||
+            source->hero_index != slot || source->relative_position < 0 ||
+            source->relative_position > 3 || !source->raw4_hash ||
+            source->formation_rect_id !=
+                (uint16_t)(0x4fu + source->relative_position) ||
+            source->formation_rect.w <= 0 || source->formation_rect.h <= 0) {
+            continue;
+        }
+        if (out_plan->command_count >= DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        command = &out_plan->commands[out_plan->command_count++];
+        memset(command, 0, sizeof(*command));
+        command->kind = DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL;
+        command->viewport_gdat_index = 0x6200 + slot;
+        command->destination = source->formation_rect;
+        command->destination_rect_id = source->formation_rect_id;
+        command->destination_table_hash = source->raw4_hash;
+        command->gdat_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+        command->gdat_index = 0;
+        command->gdat_field = 0;
+        command->source_state_flags =
+            DM2_V1_GDAT_HUD_M11_TOWNS_FORMATION_FILL;
+        if (party->champions[slot].towns_current_hp_source_bound &&
+            party->champions[slot].towns_current_hp == 0) continue;
+        if (source->draw_spell_icon) {
+            if ((source->spell_icon_field != 6 &&
+                 source->spell_icon_field != 8) ||
+                !source->spell_icon_rect_id ||
+                source->spell_icon_rect.w <= 0 ||
+                source->spell_icon_rect.h <= 0 ||
+                !dm2_v1_gdat_hud_add_command(loader, out_plan,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON,
+                    0x6000 + slot, &source->spell_icon_rect,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 4,
+                    source->spell_icon_field)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            command = &out_plan->commands[out_plan->command_count - 1];
+            command->destination_rect_id = source->spell_icon_rect_id;
+            command->destination_table_hash = source->raw4_hash;
+            command->source_state_flags =
+                (uint8_t)(DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4 |
+                    (source->mirror_flip
+                    ? DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR : 0u) |
+                    ((party->towns_sleeping ||
+                      party->champions[slot].towns_spell_cooldown != 0u)
+                    ? DM2_V1_GDAT_HUD_M11_TOWNS_GRAY_OVERLAY : 0u));
+        }
+        if (source->draw_status_icon) {
+            if ((source->status_icon_field != 10 &&
+                 source->status_icon_field != 11 &&
+                 source->status_icon_field != 12 &&
+                 source->status_icon_field != 13) ||
+                !source->status_icon_rect_id ||
+                source->status_icon_rect.w <= 0 ||
+                source->status_icon_rect.h <= 0 ||
+                !dm2_v1_gdat_hud_add_command(loader, out_plan,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON,
+                    0x6100 + slot, &source->status_icon_rect,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 4,
+                    source->status_icon_field)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            command = &out_plan->commands[out_plan->command_count - 1];
+            command->destination_rect_id = source->status_icon_rect_id;
+            command->destination_table_hash = source->raw4_hash;
+            command->source_state_flags = (uint8_t)(
+                DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4 |
+                (source->mirror_flip
+                    ? DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR : 0u) |
+                (party->towns_sleeping
+                    ? DM2_V1_GDAT_HUD_M11_TOWNS_GRAY_OVERLAY : 0u) |
+                (party->champions[slot].leader
+                    ? DM2_V1_GDAT_HUD_M11_TOWNS_LEADER_ICON : 0u));
+        }
+    }
+    if (out_plan->command_count == 0) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
+    out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
+    out_plan->valid = out_plan->command_hash != 0u;
+    if (!out_plan->valid) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
     return 1;
 }
 

@@ -12185,7 +12185,8 @@ static int16_t dm2_runtime_read_i16_le(const uint8_t *src)
 }
 
 static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
-                                           DM2_V1_ViewportState *viewport)
+                                           DM2_V1_ViewportState *viewport,
+                                           int party_direction)
 {
     DM2_V1_HudPartyState hud;
 
@@ -12204,6 +12205,18 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     if (hud.leader_index < 0 || hud.leader_index >= hud.champion_count) {
         hud.leader_index = 0;
     }
+    hud.towns_squad_default_route_valid =
+        rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        !rt->outdoor && rt->source_party_valid &&
+        rt->source_curacthero == 0 &&
+        rt->source_party.heros_in_party == hud.champion_count &&
+        rt->source_party.heros_in_party > 0 &&
+        rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
+        rt->session_snapshot.leader_index >= 0 &&
+        rt->session_snapshot.leader_index < hud.champion_count &&
+        party_direction >= 0 && party_direction <= 3;
+    hud.towns_party_direction = (uint8_t)(party_direction & 3);
+    hud.towns_sleeping = rt->source_sleeping != 0;
 
     {
         DM2_V1_ChampionStatInput stat_inputs[DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES];
@@ -12262,6 +12275,22 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
          * mirror actuator and DRAW_CHAMPION_PICTURE uses that exact GDAT
          * index.  The local portrait_index tail is not a substitute. */
         dst->portrait_type_source_bound = 0;
+        if (hud.towns_squad_default_route_valid &&
+            slot < rt->source_party.heros_in_party) {
+            const DM2_V1_Hero *source_hero = &rt->source_party.hero[slot];
+            /* SKProject iterates every live c_party slot, including a hero
+             * at zero HP (whose panel contribution is formation fill only). */
+            dst->occupied = 1;
+            if (source_hero->partypos >= 0 && source_hero->partypos <= 3) {
+                dst->towns_party_position = (uint8_t)source_hero->partypos;
+                dst->towns_party_position_source_bound = 1;
+            }
+            dst->towns_current_hp = source_hero->curHP;
+            dst->towns_current_hp_source_bound = 1;
+            dst->towns_spell_cooldown =
+                (uint8_t)source_hero->handcooldown[2];
+            dst->towns_spell_cooldown_source_bound = 1;
+        }
         if (dst->occupied && stat_inputs_valid) {
             const uint8_t *raw = rt->session_snapshot
                 .original_champion_records[slot];
@@ -12722,7 +12751,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_carried_item(rt, &viewport);
-    dm2_runtime_populate_hud_party(rt, &viewport);
+    dm2_runtime_populate_hud_party(rt, &viewport, party_dir);
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
@@ -13017,11 +13046,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (viewport.hud_party_valid && !rt->outdoor) {
         if (!dm2_v1_boot_gdat_hud_m11_command_plan(
                 rt->boot, &viewport.hud_party, &hud_material_plan)) {
-            /* A missing per-champion GDAT record must not replace the
-             * complete source HUD chrome. Keep the static plan and let the
-             * individual portrait remain no-draw in the viewport. */
-            (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
-                rt->boot, rt->outdoor, &hud_material_plan);
+            /* Towns has legitimate no-draw states for this squad route.
+             * Do not replace them with the generic PC HUD plan. */
+            if (!viewport.hud_party.towns_squad_default_route_valid) {
+                (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
+                    rt->boot, rt->outdoor, &hud_material_plan);
+            }
         }
     } else if (rt->boot && rt->boot->graphics_dat) {
         /* The static chrome omits the right-side portrait panel in outdoor
@@ -13123,11 +13153,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             hud_material_plan.command_count;
     if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
         !hud_material_plan_consumed) {
-        /* Admit the source dungeon frame without claiming a complete HUD.
-         * SKProject c_gui_draw.cpp:390-411 dynamically crops
-         * INTERFACE_GENERAL/6/heroIndex for RECT 0x5e, while lines
-         * 1732-1768 use /2/0 for dialogue. Until those draws are bound,
-         * no static Towns HUD plan is consumed or published. */
+        /* Do not claim a HUD command transaction when the source-selected
+         * squad state emitted no GDAT icon (awake, zero hand cooldown). */
         hud_material_plan_required = 0;
     }
     hud_material_plan_hash = hud_material_plan_consumed

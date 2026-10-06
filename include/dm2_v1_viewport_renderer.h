@@ -961,12 +961,21 @@ typedef struct {
      * Firestaff color choice. */
     uint8_t stat_bar_color;
     int stat_bar_color_source_bound;
+    int towns_party_position_source_bound;
+    uint8_t towns_party_position;
+    int towns_current_hp_source_bound;
+    int16_t towns_current_hp;
+    int towns_spell_cooldown_source_bound;
+    uint8_t towns_spell_cooldown;
     char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
 } DM2_V1_HudChampionState;
 
 typedef struct DM2_V1_HudPartyState {
     int champion_count;
     int leader_index;
+    int towns_squad_default_route_valid;
+    uint8_t towns_party_direction;
+    int towns_sleeping;
     DM2_V1_HudChampionState champions[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
 } DM2_V1_HudPartyState;
 

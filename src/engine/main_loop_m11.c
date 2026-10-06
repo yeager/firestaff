@@ -551,6 +551,22 @@ static void m11_rescan_launcher_asset_status(
     M12_StartupMenu_RescanAllGames(menuState,
                                    m11_scan_progress_callback,
                                    &scanCtx);
+    if (debug) {
+        static const char* const gameIds[] = {"dm1", "csb", "dm2"};
+        const char* dataDir = M12_AssetStatus_GetDataDir(
+            &menuState->assetStatus);
+        size_t i;
+        fprintf(stderr,
+                "firestaff: return-menu rescan-complete data=%s\n",
+                dataDir && dataDir[0] ? dataDir : "(unknown)");
+        for (i = 0U; i < sizeof(gameIds) / sizeof(gameIds[0]); ++i) {
+            fprintf(stderr,
+                    "firestaff: return-menu rescan game=%s available=%d\n",
+                    gameIds[i],
+                    M12_AssetStatus_GameAvailable(&menuState->assetStatus,
+                                                  gameIds[i]));
+        }
+    }
 }
 
 static void m11_verbose_original_media(const M12_AssetStatus* status,

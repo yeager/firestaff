@@ -552,6 +552,16 @@ Reviewed 2026-08-29. Only open work is listed here.
   not proven to own title/menu dispatch. Bind symbols or capture an original
   runtime trace before assigning menu/input semantics. See
   `parity-evidence/dm2_fmtowns_p3_entry_disassembly.md`.
+  The live unselected-party squad route (`curacthero == 0`) now binds source
+  hero position, HP, hand cooldown and sleeping state to
+  `INTERFACE_GENERAL/4` fields 6/8 and leader-dependent 10–13. Icon destinations
+  use the Towns RAW4 `QUERY_BLIT_RECT` entries `0x57`–`0x5a` and `0x53`–`0x56`;
+  formation wells use expanded RAW4 rects `0x4f`–`0x52` and source black from
+  `COLOR_BLACK`. The icon blits preserve source color key 4, mirroring, and
+  gray-overlay states. This supports only the live `curacthero == 0` squad
+  route. The selected-hero panel and remaining Towns HUD chrome still need
+  separate source evidence and implementation; this route does not establish full HUD
+  parity.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
   valid encounter, weapon choice, command arguments and RNG timing, then
   bind the remaining WIELD fallback/luck and creature-drop route to that

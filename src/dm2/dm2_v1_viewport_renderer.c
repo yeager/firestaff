@@ -8639,6 +8639,173 @@ static int dm2_v1_viewport_scene_control_command(
     return out_command->valid;
 }
 
+static int dm2_v1_render_fmtowns_squad_plan(
+    DM2_V1_ViewportState *s,
+    uint8_t *target,
+    int stride,
+    const DM2_V1_GdatHudM11CommandPlan *plan)
+{
+    int expected_count = 0;
+    int fills = 0;
+    int icons = 0;
+
+    if (!s || !target || stride <= 0 || !s->hud_party_valid ||
+        !s->hud_party.towns_squad_default_route_valid ||
+        !s->gdat_interface_palette_ready || !plan || !plan->valid ||
+        plan->command_count <= 0 ||
+        plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+        !plan->command_hash ||
+        plan->command_hash != dm2_v1_gdat_hud_m11_command_plan_hash(plan)) {
+        return 0;
+    }
+    for (int slot = 0; slot < s->hud_party.champion_count; ++slot) {
+        const DM2_V1_HudChampionState *hero = &s->hud_party.champions[slot];
+        if (!hero->occupied || !hero->towns_party_position_source_bound ||
+            !hero->towns_current_hp_source_bound ||
+            !hero->towns_spell_cooldown_source_bound ||
+            hero->towns_party_position > 3u) return 0;
+        expected_count += hero->towns_current_hp == 0 ? 1 : 3;
+    }
+    if (plan->command_count != expected_count) {
+        return 0;
+    }
+
+    for (int i = 0; i < plan->command_count; ++i) {
+        const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
+        int hero_slot;
+        int relative;
+        int fill_command = command->kind ==
+            DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL;
+        int spell_command = command->kind ==
+            DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON;
+        int status_command = command->kind ==
+            DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON;
+        uint8_t expected_flags;
+        int expected_field;
+        int expected_rect;
+
+        if (fill_command) hero_slot = command->viewport_gdat_index - 0x6200;
+        else if (status_command) hero_slot = command->viewport_gdat_index - 0x6100;
+        else if (spell_command) hero_slot = command->viewport_gdat_index - 0x6000;
+        else return 0;
+        if (hero_slot < 0 || hero_slot >= s->hud_party.champion_count) return 0;
+        const DM2_V1_HudChampionState *hero =
+            &s->hud_party.champions[hero_slot];
+        relative = (hero->towns_party_position + 4 -
+                    s->hud_party.towns_party_direction) & 3;
+        if (command->destination.x < 0 || command->destination.y < 0 ||
+            command->destination.w <= 0 || command->destination.h <= 0 ||
+            command->destination.x + command->destination.w > DM2_VP_WIDTH ||
+            command->destination.y + command->destination.h > DM2_VP_HEIGHT ||
+            !command->destination_table_hash) {
+            return 0;
+        }
+
+        if (fill_command) {
+            expected_flags = DM2_V1_GDAT_HUD_M11_TOWNS_FORMATION_FILL;
+            expected_rect = 0x4f + relative;
+            if (command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 0 || command->gdat_field != 0 ||
+                command->source_state_flags != expected_flags ||
+                command->destination_rect_id != (uint16_t)expected_rect ||
+                command->pixels || command->width || command->height) {
+                return 0;
+            }
+            dm2_v1_fill_rect(s, &command->destination,
+                             dm2_v1_hud_palette_color(s, 0u));
+            ++s->gdat_hud_material_plan_consumed_count;
+            ++s->asset_hud_core_drawn_count;
+            ++fills;
+            s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+                s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+                command->destination.w, command->destination.h);
+            s->last_hud_core_pixel_count +=
+                (uint32_t)(command->destination.w * command->destination.h);
+            continue;
+        }
+
+        if (hero->towns_current_hp == 0) return 0;
+        expected_flags = (relative == 1 || relative == 2)
+            ? (DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR |
+               DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4)
+            : DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4;
+        if ((s->hud_party.towns_sleeping ||
+             (spell_command && hero->towns_spell_cooldown != 0u)) &&
+            (spell_command || status_command)) {
+            expected_flags |= DM2_V1_GDAT_HUD_M11_TOWNS_GRAY_OVERLAY;
+        }
+        if (status_command && hero->leader) {
+            expected_flags |= DM2_V1_GDAT_HUD_M11_TOWNS_LEADER_ICON;
+        }
+        expected_field = spell_command
+            ? (relative <= 1 ? 6 : 8)
+            : (relative <= 1 ? 10 : 12) + (hero->leader ? 1 : 0);
+        expected_rect = spell_command
+            ? 0x57 + relative : 0x53 + relative;
+        if ((!spell_command && !status_command) ||
+            command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+            command->gdat_index != 4 || command->gdat_field != expected_field ||
+            command->destination_rect_id != (uint16_t)expected_rect ||
+            command->source_state_flags != expected_flags || !command->pixels ||
+            command->width <= 0 || command->height <= 0 ||
+            command->palette_hash == 0u ||
+            command->palette_hash != dm2_v1_weather_pixels_hash(
+                command->palette16, 16, 1, 16) ||
+            command->decoded_hash !=
+                dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
+            !command->material_source_bytes ||
+            !command->material_source_byte_count ||
+            !command->material_receipt_hash) {
+            return 0;
+        }
+
+        memcpy(s->active_asset_palette16, command->palette16,
+               sizeof(s->active_asset_palette16));
+        s->active_asset_palette_hash = command->palette_hash;
+        s->active_asset_palette_ready = 1;
+        for (int y = 0; y < command->destination.h; ++y) {
+            int fy = command->destination.y + y;
+            int sy = (y * command->height) / command->destination.h;
+            if ((unsigned)fy >= (unsigned)dm2_v1_viewport_draw_height(s)) continue;
+            for (int x = 0; x < command->destination.w; ++x) {
+                int fx = command->destination.x + x;
+                int sx = (x * command->width) / command->destination.w;
+                uint8_t pixel;
+                if ((command->source_state_flags &
+                     DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR) != 0u) {
+                    sx = command->width - 1 - sx;
+                }
+                if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s)) continue;
+                pixel = command->pixels[sy * command->width + sx];
+                /* SKProject DRAW_SQUAD_SPELL_AND_LEADER_ICON passes 4 to
+                 * _0b36_11c0 for both INTERFACE_GENERAL/4 blits; its 4->8
+                 * FIRE_BLIT path treats that U4 palette index as the
+                 * transparent color key. source_state_flags carries this
+                 * material rule inside the hashed Towns command receipt. */
+                if (pixel == 4u) continue;
+                target[fy * stride + fx] =
+                    dm2_v1_material_palette_color(
+                        s, pixel, &s->gdat_interface_palette_consumed_count);
+            }
+        }
+        if (command->source_state_flags &
+            DM2_V1_GDAT_HUD_M11_TOWNS_GRAY_OVERLAY) {
+            dm2_v1_apply_source_gray_overlay(s, &command->destination);
+        }
+        ++s->gdat_hud_material_plan_consumed_count;
+        ++s->asset_hud_portrait_drawn_count;
+        ++icons;
+        s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+            s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+            command->width, command->height);
+        s->last_hud_core_pixel_count +=
+            (uint32_t)(command->destination.w * command->destination.h);
+    }
+    return fills == s->hud_party.champion_count &&
+        icons == (expected_count - fills) &&
+        s->gdat_hud_material_plan_consumed_count >= expected_count;
+}
+
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
 {
     DM2_V1_HudChromeRenderPlan plan;
@@ -8660,6 +8827,15 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
     int stride = s->fb_stride;
     fmtowns_unmapped_chrome = s->source_materials_required &&
         s->asset_loader && s->asset_loader->gdat_version == 4u;
+    if (fmtowns_unmapped_chrome && s->hud_party_valid &&
+        s->hud_party.towns_squad_default_route_valid) {
+        if (!dm2_v1_render_fmtowns_squad_plan(
+                s, vp, stride, s->gdat_hud_material_plan)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        }
+        return;
+    }
 
     /* DM2 UI chrome:
      *   Top status bar: 28px (champion health/magic/conditions)

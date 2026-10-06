@@ -8383,6 +8383,90 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             &gfx->loader, arrow_destinations, party,
             portrait_destinations, table_hash, out_plan);
     }
+    if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        party->towns_squad_default_route_valid) {
+        DM2_V1_GdatHudTownsSquadSlot towns_slots[4];
+        memset(towns_slots, 0, sizeof(towns_slots));
+        if (party->champion_count <= 0 || party->champion_count > 4 ||
+            party->towns_party_direction > 3u) return 0;
+        for (slot = 0; slot < party->champion_count; ++slot) {
+            const DM2_V1_HudChampionState *hero = &party->champions[slot];
+            DM2_V1_GdatHudTownsSquadSlot *destination = &towns_slots[slot];
+            DM2_V1_BootExpandedRectReceipt formation;
+            int relative;
+            int spell_field;
+            int status_field;
+            int icon_width = 0;
+            int icon_height = 0;
+            DM2_ImageFormat icon_format = DM2_IMG_FMT_UNKNOWN;
+            uint8_t *icon_pixels;
+            DM2_V1_InterfaceRect queried_rect;
+            if (!hero->occupied || !hero->towns_party_position_source_bound ||
+                !hero->towns_current_hp_source_bound ||
+                !hero->towns_spell_cooldown_source_bound ||
+                hero->towns_party_position > 3u)
+                continue;
+            relative = (hero->towns_party_position + 4 -
+                        party->towns_party_direction) & 3;
+            if (!dm2_v1_boot_query_expanded_rect_receipt(
+                    profile, (uint16_t)(0x4fu + relative), &formation) ||
+                !formation.raw4_hash || !formation.raw4_byte_count ||
+                formation.rect.x < 0 || formation.rect.y < 0 ||
+                formation.rect.w <= 0 || formation.rect.h <= 0) return 0;
+            destination->valid = 1;
+            destination->hero_index = slot;
+            destination->relative_position = relative;
+            destination->raw4_hash = formation.raw4_hash;
+            destination->formation_rect_id = formation.rect_id;
+            destination->formation_rect = (DM2_V1_ViewportRect){
+                formation.rect.x / 2, formation.rect.y / 2,
+                formation.rect.w / 2, formation.rect.h / 2 };
+            destination->mirror_flip = relative == 1 || relative == 2;
+            if (hero->towns_current_hp == 0) continue;
+
+            spell_field = relative <= 1 ? 6 : 8;
+            status_field = relative <= 1 ? 10 : 12;
+            if (party->champions[slot].leader) ++status_field;
+            destination->draw_spell_icon = 1;
+            destination->spell_icon_field = spell_field;
+            destination->spell_icon_rect_id = (uint16_t)(0x57u + relative);
+            icon_pixels = dm2_v1_asset_load_image_field(
+                &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 4,
+                spell_field, &icon_width, &icon_height, &icon_format);
+            if (!icon_pixels || icon_width <= 0 || icon_height <= 0 ||
+                icon_format == DM2_IMG_FMT_UNKNOWN ||
+                !dm2_v1_boot_query_blit_rect_for_dimensions(
+                    profile, destination->spell_icon_rect_id,
+                    icon_width, icon_height, &queried_rect)) {
+                dm2_v1_asset_free_pixels(icon_pixels);
+                return 0;
+            }
+            dm2_v1_asset_free_pixels(icon_pixels);
+            destination->spell_icon_rect = (DM2_V1_ViewportRect){
+                queried_rect.x, queried_rect.y,
+                queried_rect.w, queried_rect.h };
+            destination->draw_status_icon = 1;
+            destination->status_icon_field = status_field;
+            destination->status_icon_rect_id = (uint16_t)(0x53u + relative);
+            icon_pixels = dm2_v1_asset_load_image_field(
+                &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 4,
+                status_field, &icon_width, &icon_height, &icon_format);
+            if (!icon_pixels || icon_width <= 0 || icon_height <= 0 ||
+                icon_format == DM2_IMG_FMT_UNKNOWN ||
+                !dm2_v1_boot_query_blit_rect_for_dimensions(
+                    profile, destination->status_icon_rect_id,
+                    icon_width, icon_height, &queried_rect)) {
+                dm2_v1_asset_free_pixels(icon_pixels);
+                return 0;
+            }
+            dm2_v1_asset_free_pixels(icon_pixels);
+            destination->status_icon_rect = (DM2_V1_ViewportRect){
+                queried_rect.x, queried_rect.y,
+                queried_rect.w, queried_rect.h };
+        }
+        return dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
+            &gfx->loader, party, towns_slots, out_plan);
+    }
     if (!dm2_v1_gdat_hud_m11_command_plan_build_for_party(
             &gfx->loader, party, out_plan) ||
         !dm2_v1_boot_interface_hud_portrait_destinations(

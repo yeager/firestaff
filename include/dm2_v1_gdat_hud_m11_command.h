@@ -16,7 +16,18 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
     DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
-    DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW
+    DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW,
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL,
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON,
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON
+};
+
+enum {
+    DM2_V1_GDAT_HUD_M11_TOWNS_GRAY_OVERLAY = 0x01,
+    DM2_V1_GDAT_HUD_M11_TOWNS_LEADER_ICON = 0x02,
+    DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR = 0x04,
+    DM2_V1_GDAT_HUD_M11_TOWNS_FORMATION_FILL = 0x08,
+    DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4 = 0x10
 };
 
 #define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 20
@@ -50,6 +61,7 @@ typedef struct DM2_V1_GdatHudM11Command {
     const uint8_t *material_source_bytes;
     size_t material_source_byte_count;
     uint32_t material_receipt_hash;
+    uint8_t source_state_flags;
 } DM2_V1_GdatHudM11Command;
 
 typedef struct DM2_V1_GdatHudM11CommandPlan {
@@ -59,6 +71,24 @@ typedef struct DM2_V1_GdatHudM11CommandPlan {
     uint32_t command_hash;
     DM2_V1_GdatHudM11Command commands[DM2_V1_GDAT_HUD_M11_COMMAND_MAX];
 } DM2_V1_GdatHudM11CommandPlan;
+
+typedef struct {
+    int valid;
+    int hero_index;
+    int relative_position;
+    int draw_spell_icon;
+    int spell_icon_field;
+    int draw_status_icon;
+    int status_icon_field;
+    int mirror_flip;
+    uint32_t raw4_hash;
+    DM2_V1_ViewportRect formation_rect;
+    uint16_t formation_rect_id;
+    DM2_V1_ViewportRect spell_icon_rect;
+    uint16_t spell_icon_rect_id;
+    DM2_V1_ViewportRect status_icon_rect;
+    uint16_t status_icon_rect_id;
+} DM2_V1_GdatHudTownsSquadSlot;
 
 typedef struct {
     int valid;
@@ -115,6 +145,11 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
 int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_GdatHudTownsSquadSlot slots[DM2_V1_HUD_CHAMPION_SLOT_COUNT],
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
     const DM2_V1_AssetLoader *loader,

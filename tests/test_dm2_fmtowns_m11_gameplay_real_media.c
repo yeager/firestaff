@@ -7,6 +7,7 @@
 #include "asset_status_m12.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_dungeon_input_owner.h"
@@ -37,6 +38,43 @@ static int is_loose_fmtowns_root(const char *root)
         fclose(file);
     }
     return 1;
+}
+
+static int find_towns_keyed_pixel_outside(
+    const DM2_V1_GdatHudM11Command *command,
+    const DM2_V1_ViewportRect *other_icon,
+    const DM2_V1_ViewportRect *formation,
+    int *out_x,
+    int *out_y)
+{
+    if (!command || !command->pixels || !other_icon || !formation ||
+        !out_x || !out_y || command->destination.w <= 0 ||
+        command->destination.h <= 0 || command->width <= 0 ||
+        command->height <= 0) return 0;
+    for (int y = 0; y < command->destination.h; ++y) {
+        int source_y = (y * command->height) / command->destination.h;
+        int target_y = command->destination.y + y;
+        for (int x = 0; x < command->destination.w; ++x) {
+            int source_x = (x * command->width) / command->destination.w;
+            int target_x = command->destination.x + x;
+            uint8_t pixel = command->pixels[
+                source_y * command->width + source_x];
+            int overlaps_other = target_x >= other_icon->x &&
+                target_x < other_icon->x + other_icon->w &&
+                target_y >= other_icon->y &&
+                target_y < other_icon->y + other_icon->h;
+            int overlaps_formation = target_x >= formation->x &&
+                target_x < formation->x + formation->w &&
+                target_y >= formation->y &&
+                target_y < formation->y + formation->h;
+            if (pixel == 4u && !overlaps_other && !overlaps_formation) {
+                *out_x = target_x;
+                *out_y = target_y;
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 static int failures;
@@ -618,6 +656,30 @@ int main(void)
                   memcmp(presented_palette, expected_palette.rgb6,
                          sizeof(expected_palette.rgb6)) == 0,
               "FM Towns M11 presents the active GRAPHICSSET physical palette");
+        {
+            DM2_V1_ViewportM11FrameReceipt live_receipt;
+            size_t right_panel_pixels = 0u;
+            size_t squad_icon_pixels = 0u;
+            memset(&live_receipt, 0, sizeof(live_receipt));
+            int live_ok = dm2_v1_runtime_last_m11_frame_receipt(&live_receipt);
+            for (int py = 0; py < M11_FB_HEIGHT; ++py) {
+                for (int px = 224; px < M11_FB_WIDTH; ++px) {
+                    if (framebuffer[py * M11_FB_WIDTH + px] != 0u)
+                        ++right_panel_pixels;
+                    if (px >= 229 && px < 253 && py >= 62 && py < 81 &&
+                        framebuffer[py * M11_FB_WIDTH + px] != 0u)
+                        ++squad_icon_pixels;
+                }
+            }
+            check(live_ok && live_receipt.valid &&
+                      dm2_v1_runtime_get_active_champion_index() == -1 &&
+                      live_receipt.hud_material_plan_required &&
+                      live_receipt.hud_material_plan_command_count == 3 &&
+                      live_receipt.hud_material_plan_consumed &&
+                      live_receipt.hud_material_plan_hash != 0u &&
+                      right_panel_pixels > 0u && squad_icon_pixels > 0u,
+                  "FM Towns post-confirm M11 frame consumes the source squad panel with visible pixels");
+        }
     }
     check(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
               M11_GAME_INPUT_REDRAW &&
@@ -1140,15 +1202,125 @@ int main(void)
             check(high_physical_indices == 0u,
                   "FM Towns IMG2/IMG6 frame keeps every physical pixel in 0..15");
         }
-        /* SKProject c_gui_draw.cpp:390-411 uses /6/heroIndex as a cropped
-         * squad icon, and lines 1732-1768 use /2/0 for dialogue. Their
-         * former static chrome destinations must not count as a completed
-         * source HUD while the real dungeon frame remains presentable. */
-        check(!render.runtime_m11_frame_hud_material_plan_required &&
-                  !render.runtime_m11_frame_hud_material_plan_consumed &&
-                  render.runtime_m11_frame_hud_material_plan_hash == 0u &&
-                  render.runtime_m11_frame_hud_material_plan_command_count == 0,
-              "FM Towns runtime does not claim the incomplete static HUD plan");
+        {
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)view.dm2BootProfile;
+            DM2_V1_HudPartyState squad;
+            memset(&squad, 0, sizeof(squad));
+            squad.champion_count = 1;
+            squad.leader_index = 0;
+            squad.towns_squad_default_route_valid = 1;
+            squad.towns_party_direction = 0;
+            squad.champions[0].occupied = 1;
+            squad.champions[0].leader = 1;
+            squad.champions[0].towns_party_position_source_bound = 1;
+            squad.champions[0].towns_current_hp_source_bound = 1;
+            squad.champions[0].towns_current_hp = 10;
+            squad.champions[0].towns_spell_cooldown_source_bound = 1;
+            for (int relative = 0; relative < 4; ++relative) {
+                DM2_V1_GdatHudM11CommandPlan plan;
+                DM2_V1_InterfaceRect spell_rect;
+                DM2_V1_InterfaceRect status_rect;
+                int status_field = relative <= 1 ? 11 : 13;
+                check(dm2_v1_boot_query_blit_rect_for_dimensions(
+                          profile, (uint16_t)(0x57 + relative),
+                          18, 13, &spell_rect) &&
+                      dm2_v1_boot_query_blit_rect_for_dimensions(
+                          profile, (uint16_t)(0x53 + relative), 19, 19,
+                          &status_rect),
+                      "FM Towns source icon crop queries cover each relative party position");
+                squad.champions[0].towns_party_position = (uint8_t)relative;
+                memset(&plan, 0, sizeof(plan));
+                check(dm2_v1_boot_gdat_hud_m11_command_plan(
+                          (DM2_V1_BootProfile *)profile, &squad, &plan) &&
+                      plan.command_count == 3 &&
+                      plan.commands[0].kind ==
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL &&
+                      plan.commands[0].destination_rect_id ==
+                          (uint16_t)(0x4f + relative) &&
+                      plan.commands[0].destination.x ==
+                          ((relative == 0 || relative == 3) ? 229 : 296) &&
+                      plan.commands[0].destination.y ==
+                          (relative < 2 ? 62 : 86) &&
+                      plan.commands[1].gdat_field ==
+                          (relative < 2 ? 6 : 8) &&
+                      plan.commands[1].destination_rect_id ==
+                          (uint16_t)(0x57 + relative) &&
+                      plan.commands[1].destination.x == spell_rect.x &&
+                      plan.commands[1].destination.y == spell_rect.y &&
+                      plan.commands[1].destination.w == spell_rect.w &&
+                      plan.commands[1].destination.h == spell_rect.h &&
+                      plan.commands[2].gdat_field == status_field &&
+                      plan.commands[2].destination_rect_id ==
+                          (uint16_t)(0x53 + relative) &&
+                      plan.commands[2].destination.x == status_rect.x &&
+                      plan.commands[2].destination.y == status_rect.y &&
+                      plan.commands[2].destination.w == status_rect.w &&
+                      plan.commands[2].destination.h == status_rect.h &&
+                      (plan.commands[1].source_state_flags &
+                       DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4) != 0u &&
+                      (plan.commands[2].source_state_flags &
+                       DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4) != 0u &&
+                      ((plan.commands[1].source_state_flags &
+                        DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR) != 0u) ==
+                          (relative == 1 || relative == 2) &&
+                      ((plan.commands[2].source_state_flags &
+                        DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR) != 0u) ==
+                          (relative == 1 || relative == 2),
+                      "FM Towns squad plan preserves fill, image fields, RAW4 destinations, and mirror state for each relative position");
+                if (relative == 0) {
+                    DM2_V1_InterfacePalette interface_palette;
+                    DM2_V1_ViewportState chrome;
+                    int main_key_x = -1;
+                    int main_key_y = -1;
+                    int status_key_x = -1;
+                    int status_key_y = -1;
+                    int main_key_sample = find_towns_keyed_pixel_outside(
+                        &plan.commands[1], &plan.commands[2].destination,
+                        &plan.commands[0].destination,
+                        &main_key_x, &main_key_y);
+                    int status_key_sample = find_towns_keyed_pixel_outside(
+                        &plan.commands[2], &plan.commands[1].destination,
+                        &plan.commands[0].destination,
+                        &status_key_x, &status_key_y);
+                    memset(&interface_palette, 0, sizeof(interface_palette));
+                    memset(framebuffer, 0xfe, sizeof(framebuffer));
+                    dm2_v1_viewport_init(&chrome, framebuffer, M11_FB_WIDTH);
+                    dm2_v1_viewport_set_asset_loader(&chrome,
+                        dm2_v1_boot_asset_loader(profile));
+                    dm2_v1_viewport_set_source_materials_required(&chrome, 1);
+                    dm2_v1_viewport_set_hud_party(&chrome, &squad);
+                    int palette_ready = dm2_v1_boot_interface_palette(
+                        (DM2_V1_BootProfile *)profile, &interface_palette);
+                    dm2_v1_viewport_set_gdat_interface_palette(
+                        &chrome, palette_ready, interface_palette.hash,
+                        interface_palette.palette16);
+                    dm2_v1_viewport_set_gdat_hud_material_plan(&chrome, &plan);
+                    dm2_v1_render_ui_chrome(&chrome);
+                    check(palette_ready && main_key_sample &&
+                              status_key_sample &&
+                              chrome.gdat_hud_material_plan_consumed_count == 3 &&
+                              framebuffer[main_key_y * M11_FB_WIDTH + main_key_x] ==
+                                  0xfeu &&
+                              framebuffer[status_key_y * M11_FB_WIDTH + status_key_x] ==
+                                  0xfeu,
+                          "FM Towns squad renderer preserves source index-4 pixels as transparent");
+                }
+                dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+            }
+            squad.champions[0].towns_current_hp = 0;
+            {
+                DM2_V1_GdatHudM11CommandPlan dead_plan;
+                memset(&dead_plan, 0, sizeof(dead_plan));
+                check(dm2_v1_boot_gdat_hud_m11_command_plan(
+                          (DM2_V1_BootProfile *)profile, &squad, &dead_plan) &&
+                      dead_plan.command_count == 1 &&
+                      dead_plan.commands[0].kind ==
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL,
+                      "FM Towns zero-HP hero retains source formation fill without icons");
+                dm2_v1_gdat_hud_m11_command_plan_free(&dead_plan);
+            }
+        }
         {
             const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(
                 (const DM2_V1_BootProfile *)view.dm2BootProfile);
