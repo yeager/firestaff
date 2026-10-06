@@ -3531,9 +3531,9 @@ typedef struct {
 /* Receipt for the JP-only static $3114 flow. It binds the shared $4f5e
  * selector plus the exact JP bytes [0x1114..0x11ce), including its
  * internal BSR targets, direct targets and immediate helper windows from
- * $52c6/$565a, and RTS-bounded or entry-to-RTS windows for all four $31b3
- * JSR targets and five immediate JSR targets reached from them. These byte
- * receipts do not establish routine semantics or gameplay behavior. */
+ * $52c6/$565a, all four $31b3 JSR targets, and eight source-identified
+ * downstream JSR/BSR targets through $53d8. These byte receipts do not
+ * establish routine semantics or gameplay behavior. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
