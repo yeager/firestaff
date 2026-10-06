@@ -45,6 +45,24 @@ window to confirm rejection. This is static byte evidence only: it does not
 establish that the JP game executes this route, nor does it generalize to
 unlisted helpers or gameplay behavior.
 
+The exact L8000 body (`0x4000..0x40bc`, 188 bytes) and L45A6 body
+(`0x5a6..0x5ca`, 36 bytes) were also compared directly in the authenticated
+US and JP raw Track 02 BIN files and match byte-for-byte. The pair receipt
+therefore accepts both regional hashes and retains mutation rejection checks
+for each JP span. This attests only these instruction-byte windows and their
+bounded call-site relationship; it does not establish that JP executes the
+route, nor semantics for L4696, L48FC, or the dynamic `$3AB7` target.
+
+The L4696 body (`0x4696..0x46db`, 69 bytes) also matches byte-for-byte in
+the authenticated US and JP images (SHA-256 `b7f3a0648e5763345a3760638c060779667ac77af8c5f8087b3a85b0c9e2cd92`).
+It is now verified as a regional standalone window with a call-site bound to
+L8000. The adjacent L3114 span (`0x1114..0x1172`, 94 bytes) differs between
+editions (US SHA-256 `0e3680615e17e1aed6cba28efe2b88b0704a699d353657646d374895ddd280ed`;
+JP SHA-256 `f2b62d8db3bd6a1815a0aa7496d1e9013241c011e9f0d94f76d5cd99bb4ef70c`),
+so the existing combined L4696/L3114 and downstream L3114 receipts remain
+US-only. Hash divergence alone does not explain the regional code difference
+or establish JP helper semantics.
+
 ## Index-to-target map
 
 No gameplay or command names are assigned. Each right-hand value is only the

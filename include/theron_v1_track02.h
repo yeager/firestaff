@@ -3381,14 +3381,14 @@ typedef struct {
 } Theron_Track02Stage2DispatchMachineReceipt;
 
 /* Receipt for the stage-two L8000/L45A6 callee-pair proof.  It binds
- * only instruction bytes of the authenticated US stage-two body: the
+ * only instruction bytes of the authenticated US or JP stage-two body: the
  * L8000 body [0x4000..0x40bc) at the head of image sector 8 (the
  * entry path's first call, at user offset 0x11 inside the bound
  * prologue; its three da65 decode-artifact spans bound to the
  * authenticated media bytes) and the L45A6 body [0x5a6..0x5ca) (whose
  * only call site is the JSR at L8000+0x1c inside the bound L8000
- * window).  Proven for the US body only (the source-locked JP/US
- * identity attestation covers the $4090 window, not these streams);
+ * window).  Both spans have direct authenticated JP/US byte identity;
+ * this does not attest execution or downstream callee semantics;
  * no semantics for the L4696/L48FC callees or the dynamic-lane $3AB7
  * target, no System Card base arithmetic, no record semantics, and no
  * graphics role follows. */
@@ -3464,6 +3464,21 @@ typedef struct {
     int l4696_call_site_proven;
     int l3114_call_site_proven;
 } Theron_Track02Stage2L4696L3114Receipt;
+
+/* Receipt for the independently bounded L4696 body. The exact
+ * [0x4696..0x46db) instruction bytes match in authenticated US and JP
+ * media, and its call site is inside the admitted L8000 window. This
+ * proves no L3114 body, multiplier semantics, or gameplay role. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t l4696_bytes;
+    uint16_t l4696_cpu_address;
+    int l4696_proven;
+    int l4696_call_site_proven;
+} Theron_Track02Stage2L4696Receipt;
 
 /* Receipt for the stage-two L3114-callees proof.  It binds only
  * instruction bytes of the authenticated US stage-two body: the six
@@ -4037,15 +4052,15 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_dispatch_machine(
     Theron_Track02Stage2DispatchMachineReceipt *out_receipt);
 
 /* Verifies the stage-two L8000/L45A6 callee pair against the
- * authenticated US Track 02 body.  Chains the fail-closed IPL loader
+ * authenticated US or JP Track 02 body.  Chains the fail-closed IPL loader
  * proof, then requires the exact L8000 body bytes [0x4000..0x40bc) at
  * the head of image sector 8 and the exact L45A6 body bytes
  * [0x5a6..0x5ca) at their original user offsets inside the proven
  * stage-two image, and checks that the L8000 call site (0x11) sits
  * inside the bound entry path and that the L45A6 call site
  * (L8000+0x1c) and the L4696/L48FC tail call sites sit inside the
- * bound L8000 window.  The JP variant rejects (these streams are not
- * attested byte-identical); any changed byte fails closed. */
+ * bound L8000 window.  Both exact streams are byte-identical in
+ * authenticated US and JP raw media; any changed byte fails closed. */
 Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l8000_pair(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -4082,6 +4097,16 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696_l3114(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2L4696L3114Receipt *out_receipt);
+
+/* Verifies only the exact L4696 body against authenticated US or JP
+ * Track 02 media. Its bytes [0x4696..0x46db) match between both
+ * editions and its caller is within the admitted L8000 window; no
+ * L3114 parity or runtime semantics follow. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2L4696Receipt *out_receipt);
 
 /* Verifies the stage-two L3114 callee bodies against the authenticated
  * US Track 02 body.  Chains the fail-closed IPL loader proof, then

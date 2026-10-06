@@ -2,6 +2,16 @@
 
 Reviewed 2026-10-06. Only open work is listed here.
 
+## 2026-10-06 — admit the shared JP L4696 disassembly window
+
+- ✅ Direct comparison of the authenticated US and JP Track 02 BINs found
+  identical 69-byte L4696 windows but different 94-byte L3114 windows. Added
+  a standalone regional L4696 receipt, chained to the authenticated IPL and
+  bounded L8000 call site, with an authentic JP mutation rejection test. The
+  existing combined L4696/L3114 and later L3114 proofs remain US-only until
+  the JP-specific L3114 body is decoded. This proves static bytes only, not
+  helper semantics or JP execution.
+
 ## 2026-10-06 — mutation-check the regional dispatch-machine receipt
 
 - ✅ Added negative raw-media checks for the five windows accepted by the
@@ -3237,6 +3247,8 @@ distinguishes right and left after `$28B8` returns to zero.
   byte-verified in both authentic editions, along with the bounded
   dispatch-machine windows documented in
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
+  The exact L8000/L45A6 pair is now also admitted for JP after direct
+  authenticated US/JP byte comparison.
   JP mutation checks require every newly admitted window to reject a changed
   byte. This is static source-byte parity only, not evidence that the JP game
   executes the route; other first-level helpers remain US-only, including the

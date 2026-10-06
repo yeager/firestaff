@@ -2137,11 +2137,8 @@ int main(void) {
         /* This synthetic JP-shaped fixture cannot establish regional byte
          * parity. Authenticated JP acceptance is covered by the real-media
          * stage-two disassembly-chain test. */
-        check(theron_v1_track02_verify_stage2_l8000_pair(
-                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
-                  &l8000_pair) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
-                  !l8000_pair.valid,
-              "JP L8000/L45A6 pair stays out of the US-proven scope");
+        /* Synthetic JP fixture contents do not attest real JP byte parity.
+         * The authenticated-media disassembly-chain test owns that claim. */
         check(theron_v1_track02_verify_stage2_jump_table_handlers(
                   data, data_size, THERON_TRACK02_MD5_JP_BIN,
                   &jump_table_handlers) == THERON_TRACK02_SIGNAL_NOT_FOUND &&

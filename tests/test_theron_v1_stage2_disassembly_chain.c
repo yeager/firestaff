@@ -2856,6 +2856,41 @@ static void test_stage2_l8000_pair(void)
     assert(receipt.l45a6_single_caller_proven == 1);
     assert(receipt.pair_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_L8000_PAIR_BOUND_BYTES);
+    if (g_jp_data) {
+        uint8_t *mutated = malloc(g_jp_size);
+        size_t stage2_sector = THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                               THERON_TRACK02_IPL_STAGE2_RECORD;
+        assert(mutated != NULL);
+        status = theron_v1_track02_verify_stage2_l8000_pair(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid == 1);
+        assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+        assert(receipt.l8000_proven == 1);
+        assert(receipt.l45a6_proven == 1);
+        assert(receipt.l8000_call_site_proven == 1);
+        assert(receipt.l45a6_single_caller_proven == 1);
+        assert(receipt.pair_bound_bytes ==
+               THERON_TRACK02_IPL_STAGE2_L8000_PAIR_BOUND_BYTES);
+
+        memcpy(mutated, g_jp_data, g_jp_size);
+        mutated[(stage2_sector +
+                 THERON_TRACK02_IPL_STAGE2_L8000_USER_OFFSET / 2048u) *
+                    2352u + 16u +
+                THERON_TRACK02_IPL_STAGE2_L8000_USER_OFFSET % 2048u] ^= 1u;
+        status = theron_v1_track02_verify_stage2_l8000_pair(
+            mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+        memcpy(mutated, g_jp_data, g_jp_size);
+        mutated[(stage2_sector +
+                 THERON_TRACK02_IPL_STAGE2_L45A6_USER_OFFSET / 2048u) *
+                    2352u + 16u +
+                THERON_TRACK02_IPL_STAGE2_L45A6_USER_OFFSET % 2048u] ^= 1u;
+        status = theron_v1_track02_verify_stage2_l8000_pair(
+            mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+        free(mutated);
+    }
     printf("  PASS: stage2_l8000_pair\n");
 }
 
@@ -2891,7 +2926,55 @@ static void test_stage2_l4696_l3114(void)
     assert(receipt.l3114_call_site_proven == 1);
     assert(receipt.l4696_l3114_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_L4696_L3114_BOUND_BYTES);
+    if (g_jp_data) {
+        status = theron_v1_track02_verify_stage2_l4696_l3114(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+        assert(receipt.valid == 0);
+    }
     printf("  PASS: stage2_l4696_l3114\n");
+}
+
+static void test_stage2_l4696(void)
+{
+    Theron_Track02Stage2L4696Receipt receipt;
+    Theron_Track02SignalStatus status;
+
+    status = theron_v1_track02_verify_stage2_l4696(
+        g_us_data, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(receipt.valid == 1);
+    assert(receipt.variant == THERON_TRACK02_VARIANT_US_BIN);
+    assert(receipt.l4696_proven == 1);
+    assert(receipt.l4696_call_site_proven == 1);
+    assert(receipt.l4696_bytes == THERON_TRACK02_IPL_STAGE2_L4696_BYTES);
+    if (g_jp_data) {
+        uint8_t *mutated = malloc(g_jp_size);
+        size_t stage2_sector = THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                               THERON_TRACK02_IPL_STAGE2_RECORD;
+        size_t raw_offset =
+            (stage2_sector +
+             THERON_TRACK02_IPL_STAGE2_L4696_USER_OFFSET / 2048u) *
+                2352u + 16u +
+            THERON_TRACK02_IPL_STAGE2_L4696_USER_OFFSET % 2048u;
+        assert(mutated != NULL);
+        status = theron_v1_track02_verify_stage2_l4696(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid == 1);
+        assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+        assert(receipt.l4696_proven == 1);
+        assert(receipt.l4696_call_site_proven == 1);
+        assert(receipt.l4696_bytes == THERON_TRACK02_IPL_STAGE2_L4696_BYTES);
+        assert(raw_offset < g_jp_size);
+        memcpy(mutated, g_jp_data, g_jp_size);
+        mutated[raw_offset] ^= 1u;
+        status = theron_v1_track02_verify_stage2_l4696(
+            mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+        free(mutated);
+    }
+    printf("  PASS: stage2_l4696\n");
 }
 
 static void test_stage2_l3114_callees(void)
@@ -3692,6 +3775,7 @@ int main(void)
     test_stage2_l8000_pair();
     test_stage2_jump_table_handlers();
     test_stage2_l4696_l3114();
+    test_stage2_l4696();
     test_stage2_l3114_callees();
     test_stage2_l3114_tier2_callees();
     test_stage2_l3114_tier3_callees();
