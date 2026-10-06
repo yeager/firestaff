@@ -16,15 +16,18 @@ Reviewed 2026-08-29. Only open work is listed here.
   to the local FM Towns normal-loop frame at map 0, (1,8), facing north; the
   aperture framing matches RECT_7 at (0,40), scaled 10x in the capture. This
   makes Towns the likely route, but the screenshot itself has no runtime
-  metadata. SKProject `c_gui_draw.cpp:390-411` draws
-  `INTERFACE_GENERAL/6/<heroIndex>` through RECT `0x5e` only from
-  `DRAW_DIALOGUE_PROGRESS`; its call sites are data/map loading progress, so
-  this is not a persistent gameplay HUD route and must not be rendered as one.
-  The Towns gameplay right panel still lacks a verified source-image and
-  placement mapping. Trace its source-owned draw path and asset records before
-  implementing it. The comparison does not prove dungeon-scene parity against
-  the original game or MacBook Pro M5 HiDPI behavior. Do not change dungeon
-  projection or assets without a same-pose original-game comparison.
+  metadata. `party.curacthero == 0` means no active action selection, but
+  SKProject `c_gui_draw.cpp:5182-5520` still iterates the party and draws
+  squad/status icons through `INTERFACE_GENERAL/4` and RAW4 rectangles
+  `0x4f+relative`, `0x57+relative`, and `0x53+relative`. The Towns gameplay
+  right panel lacks those source-owned draws. `INTERFACE_GENERAL/6` through
+  RECT `0x5e` is a separate selected-hero/action widget with both progress and
+  gameplay call sites; it does not establish the squad panel. Trace the
+  Towns-specific material, local palettes and RAW4 destinations before
+  implementing either route. The comparison does not prove dungeon-scene
+  parity against the original game or MacBook Pro M5 HiDPI behavior. Do not
+  change dungeon projection or assets without a same-pose original-game
+  comparison.
 
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,
