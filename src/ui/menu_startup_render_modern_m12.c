@@ -1644,7 +1644,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 64;
+    int panelH = 82;
     int panelX;
     int panelY;
     int percent = 0;
@@ -1653,7 +1653,8 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     int barW;
     int fillW;
     char text[256];
-    ModernTextStyle title = text_style_make(2, COLOR_TEXT(), 1);
+    ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 1);
+    ModernTextStyle detail = text_style_make(2, COLOR_TEXT_DIM(), 1);
 
     if (!c || !state || !state->dataDirScanActive) {
         return;
@@ -1670,7 +1671,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     if (panelW > 520) panelW = 520;
     if (panelW < 240) panelW = c->w - 24;
     panelX = (c->w - panelW) / 2;
-    panelY = c->h - 170;
+    panelY = c->h - 188;
     if (panelY < 12) panelY = 12;
     label = M12_StartupMenu_TranslateForLocale(
         state->settings.languageIndex,
@@ -1681,27 +1682,31 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
         ? M12_StartupMenu_GameDisplayTitleForLocale(
               state->settings.languageIndex, progress->currentGameId)
         : "";
-    if (gameTitle[0]) {
-        snprintf(text, sizeof(text), "%s - %s %d%%", label, gameTitle, percent);
-    } else {
-        snprintf(text, sizeof(text), "%s %d%%", label, percent);
-    }
+    snprintf(text, sizeof(text), "%s  %d%%", label, percent);
 
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(16, 14, 30), COLOR_PANEL_EDGE(), 12);
     draw_text_centered_fit(c, panelX + panelW / 2, panelY + 10, text,
                            &title, panelW - 28);
+    if (gameTitle[0]) {
+        char detailText[160];
+        const char* task = progress->currentTask;
+        snprintf(detailText, sizeof(detailText), "%s%s%s", gameTitle,
+                 task[0] ? "  ·  " : "", task);
+        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 39,
+                               detailText, &detail, panelW - 28);
+    }
     barX = panelX + 18;
-    barY = panelY + 40;
+    barY = panelY + 61;
     barW = panelW - 36;
     fillW = (barW * percent) / 100;
-    fill_rounded_rect(c, barX, barY, barW, 10, 4, rgb(37, 35, 54));
+    fill_rounded_rect(c, barX, barY, barW, 12, 5, rgb(37, 35, 54));
     if (fillW > 0) {
-        fill_rounded_rect(c, barX, barY, fillW, 10, 4,
+        fill_rounded_rect(c, barX, barY, fillW, 12, 5,
                           state->dataDirScanCancelRequested
                               ? COLOR_WARN() : COLOR_ACCENT());
     }
-    stroke_rounded_rect(c, barX, barY, barW, 10, 4, COLOR_PANEL_EDGE());
+    stroke_rounded_rect(c, barX, barY, barW, 12, 5, COLOR_PANEL_EDGE());
 }
 
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {

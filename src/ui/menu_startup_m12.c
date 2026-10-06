@@ -13787,11 +13787,11 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     cardW = framebufferWidth * 78 / 100;
     if (cardW > 560) cardW = 560;
     if (cardW > framebufferWidth - 12) cardW = framebufferWidth - 12;
-    cardH = 84;
+    cardH = 96;
     if (cardH > framebufferHeight - 12) cardH = framebufferHeight - 12;
     if (cardW < 1 || cardH < 1) return;
     cardX = (framebufferWidth - cardW) / 2;
-    cardY = framebufferHeight * 64 / 100;
+    cardY = framebufferHeight * 61 / 100;
     if (cardY + cardH > framebufferHeight - 6) {
         cardY = framebufferHeight - cardH - 6;
     }
@@ -13804,13 +13804,13 @@ void M12_StartupMenu_DrawScanProgressLocalized(
                   M12_COLOR_LIGHT_CYAN);
     {
         int textWidth;
-        int haveTtfLine1 = m11_ttf_measure_string(line1, 19, &textWidth);
+        int haveTtfLine1 = m11_ttf_measure_string(line1, 21, &textWidth);
         if (!haveTtfLine1) textWidth = m12_measure_text(line1, 2, 1);
         int textX = (framebufferWidth - textWidth) / 2;
         if (!haveTtfLine1 ||
             m11_ttf_render_string(framebuffer, framebufferWidth,
                                   framebufferHeight, textX, cardY + 12,
-                                  line1, 19, M12_COLOR_WHITE) == 0) {
+                                  line1, 21, M12_COLOR_WHITE) == 0) {
             m12_draw_centered_text(framebuffer, framebufferWidth,
                                    framebufferHeight, cardY + 15, line1,
                                    &g_textMediumShadow);
@@ -13821,7 +13821,7 @@ void M12_StartupMenu_DrawScanProgressLocalized(
             textX = (framebufferWidth - textWidth) / 2;
             if (!haveTtfLine2 ||
                 m11_ttf_render_string(framebuffer, framebufferWidth,
-                                      framebufferHeight, textX, cardY + 40,
+                                  framebufferHeight, textX, cardY + 45,
                                       line2, 12, M12_COLOR_LIGHT_CYAN) == 0) {
                 m12_draw_centered_text(framebuffer, framebufferWidth,
                                        framebufferHeight, cardY + 41, line2,
@@ -13830,9 +13830,9 @@ void M12_StartupMenu_DrawScanProgressLocalized(
         }
     }
     barX = cardX + 22;
-    barY = cardY + cardH - 21;
+    barY = cardY + cardH - 23;
     barW = cardW - 44;
-    barH = 8;
+    barH = 10;
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   barX, barY, barW, barH, M12_COLOR_DARK_GRAY);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
