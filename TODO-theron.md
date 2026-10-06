@@ -2,6 +2,19 @@
 
 Reviewed 2026-10-06. Only open work is listed here.
 
+## 2026-10-06 — qualify the JP saved-state probe
+
+- 🔒 A bounded replay on `trv2` loaded the previously captured JP Akutuba
+  dungeon state under the original JP Rev. 1 CUE and SysCard 3.0, using the
+  corrected PCE Fast instrumented binary. The autoload receipt confirmed the
+  state load. Four logical `$4ed4` observations had physical PC `$000d0ed4`
+  and bytes `0d 8a 2d`, not the authenticated `$20 $2e $3a` call at the
+  `$00100ed4` stage-two mapping. No `$4ec9` lookup or `$3ab7` execution was
+  recorded. This state therefore does not cover the desired helper path; do
+  not treat a logical-PC-only hook hit as stage-two execution. Repeat with a
+  contemporaneous screen/state receipt and require the physical mapping plus
+  source-byte signature before interpreting any helper trace.
+
 ## 2026-10-06 — characterize the stage-two helper's behavior
 
 - 🔒 Authentic US and JP cold-start traces agree on selector roots `$00..$04`
