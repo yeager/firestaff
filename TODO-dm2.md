@@ -12,20 +12,19 @@ Reviewed 2026-08-29. Only open work is listed here.
   y=40..175) contains 25,746 nonblack pixels, but the 96x200 right-side HUD
   area contains only 9. This confirms the normal Towns route reaches gameplay
   while almost all source HUD content remains missing; it does not identify
-  the user's untagged MacBook Pro screenshot. SKProject
-  `c_gui_draw.cpp:390-411` crops the live champion portrait from
-  `INTERFACE_GENERAL/6/<heroIndex>` into RECT `0x5e`; its live dialogue path
-  uses `/2/0` at lines 1732-1768. Bind those draws to authenticated session,
-  hero and destination state, then require consumed source-material commands
-  in the real-media runtime test. Do not treat static Towns chrome or a
-  nonblank viewport as evidence that the runtime HUD is complete. The
-  2026-10-06 user screenshot has no attached runtime metadata. Its artwork
-  resembles the local DM2 FM Towns capture, and the conversation points to
-  DM2, but neither establishes the selected platform. It shows the expected
-  224x136 RECT_7 aperture at y=40 and mostly black surrounding UI. This
-  supports the known HUD gap but does not prove dungeon-scene visual parity or
-  MacBook Pro M5 HiDPI presentation. Capture the same pose from the original
-  game before changing dungeon projection or assets.
+  the user's screenshot. A visual comparison strongly matches the screenshot
+  to the local FM Towns normal-loop frame at map 0, (1,8), facing north; the
+  aperture framing matches RECT_7 at (0,40), scaled 10x in the capture. This
+  makes Towns the likely route, but the screenshot itself has no runtime
+  metadata. SKProject `c_gui_draw.cpp:390-411` draws
+  `INTERFACE_GENERAL/6/<heroIndex>` through RECT `0x5e` only from
+  `DRAW_DIALOGUE_PROGRESS`; its call sites are data/map loading progress, so
+  this is not a persistent gameplay HUD route and must not be rendered as one.
+  The Towns gameplay right panel still lacks a verified source-image and
+  placement mapping. Trace its source-owned draw path and asset records before
+  implementing it. The comparison does not prove dungeon-scene parity against
+  the original game or MacBook Pro M5 HiDPI behavior. Do not change dungeon
+  projection or assets without a same-pose original-game comparison.
 
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,

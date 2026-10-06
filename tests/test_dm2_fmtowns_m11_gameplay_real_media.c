@@ -554,38 +554,6 @@ int main(void)
               startup_hud.hud_static_plan_ready &&
               startup_hud.hud_static_command_count == 4,
           "FM Towns binds the native INTERFACE_GENERAL HUD chrome plan");
-    {
-        DM2_V1_BootProfile *profile =
-            (DM2_V1_BootProfile *)view.dm2BootProfile;
-        const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(profile);
-        DM2_V1_BootExpandedRectReceipt active_icon_rect;
-        DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
-        int icon_strip_width = 0;
-        int icon_strip_height = 0;
-        uint8_t *icon_strip = NULL;
-
-        memset(&active_icon_rect, 0, sizeof(active_icon_rect));
-        check(loader && loader->gdat_version == 4u &&
-                  dm2_v1_boot_query_expanded_rect_receipt(
-                      profile, 0x005eu, &active_icon_rect) &&
-                  active_icon_rect.rect.x == 0 &&
-                  active_icon_rect.rect.y == 92 &&
-                  active_icon_rect.rect.w == 46 &&
-                  active_icon_rect.rect.h == 67,
-              "FM Towns selected-hero icon uses authentic RECT 0x5e");
-        if (loader) {
-            icon_strip = dm2_v1_asset_load_image_field(
-                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, 0,
-                &icon_strip_width, &icon_strip_height, &format);
-        }
-        /* SKProject c_gui_draw.cpp::390-411 crops a 17x17 facing/invisibility
-         * cell from this eight-cell INTERFACE_GENERAL/6 hero strip and draws
-         * it through RECT 0x5e. Keep the raw dimensions source-locked while
-         * the live crop and destination remain an open Towns HUD gap. */
-        check(icon_strip && icon_strip_width == 136 && icon_strip_height == 17,
-              "FM Towns active-hero strip contains eight source 17x17 icons");
-        dm2_v1_asset_free_pixels(icon_strip);
-    }
     check(dm2_v1_boot_startup_menu_pointer_layout(
               (DM2_V1_BootProfile *)view.dm2BootProfile, &layout) &&
               layout.valid && layout.new_game.w > 0 && layout.new_game.h > 0,
