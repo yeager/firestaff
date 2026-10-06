@@ -915,6 +915,12 @@ stops at `$4a9f`, before the next ID `$4b` target `$4aca`; it establishes only
 static byte/control-flow evidence, not stream-field meaning or runtime
 selection.
 
+ID `$4c` points to `$49d3` in both authentic editions. Its eight-byte root
+`$49d3..$49da` begins with the HuC6280 zero-page NOP `$44 $0c`, calls `$4bd2`,
+and ends at `$49da` with `JMP $40f5`. The assertion stops at this terminal
+jump; it does not extend into another routine or assign meaning to the called
+helper or stream selection.
+
 ID `$37` points to `$480a` in both editions. Its root `$480a..$4813` reads one
 stream byte to `$02`, calls the local helper at `$4814`, and jumps to `$40f5`.
 The helper window `$4814..$4841` is byte-identical in the authentic US and JP

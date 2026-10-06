@@ -218,6 +218,8 @@ Reviewed 2026-10-05. Only open work is listed here.
   ID `$4a`'s `$4a81..$4a9f` paired-call loop is now independently locked to the
   authentic US and JP images, stopping before ID `$4b` at `$4aca`; immediate
   operands and runtime selection remain unassigned.
+  ID `$4c`'s `$49d3..$49da` NOP/call/terminal-jump handoff is also locked to
+  both editions; `$4bd2` effects and runtime selection remain unknown.
   ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
