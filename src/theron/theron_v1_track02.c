@@ -9063,6 +9063,21 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
         0xbdu, 0xa0u, 0x4fu, 0x8du, 0xd7u, 0x4fu, 0xe8u, 0xbdu,
         0xa0u, 0x4fu, 0x8du, 0xd8u, 0x4fu, 0x60u
     };
+    /* The remaining three external JSR entry windows in this flow also
+     * differ from US at these offsets. Their own call/branch edges are not
+     * covered by this receipt. */
+    static const uint8_t stage2_jp_l5251[] = {
+        0x18u, 0xa5u, 0x0eu, 0x69u, 0x40u, 0x85u, 0x0eu, 0x90u,
+        0x02u, 0xe6u, 0x0fu, 0x60u
+    };
+    static const uint8_t stage2_jp_l52c6[] = {
+        0x20u, 0x37u, 0x52u, 0xa2u, 0x04u, 0x46u, 0x07u, 0x66u,
+        0x06u, 0xcau, 0xd0u, 0xf9u, 0xa5u, 0x07u, 0x09u, 0xf0u,
+        0x85u, 0x07u, 0x60u
+    };
+    static const uint8_t stage2_jp_l565a[] = {
+        0x44u, 0x14u, 0x44u, 0x04u, 0xcau, 0xd0u, 0xf9u, 0x60u
+    };
     Theron_Track02Stage2DispatchMachineReceipt dispatch;
     Theron_Track02SignalStatus status;
 
@@ -9106,7 +9121,28 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
             track02_data, track02_size, dispatch.stage2_raw_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_JP_L553F_USER_OFFSET,
-            stage2_jp_l553f, sizeof(stage2_jp_l553f))) {
+            stage2_jp_l553f, sizeof(stage2_jp_l553f)) ||
+        sizeof(stage2_jp_l5251) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L5251_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L5251_USER_OFFSET,
+            stage2_jp_l5251, sizeof(stage2_jp_l5251)) ||
+        sizeof(stage2_jp_l52c6) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L52C6_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L52C6_USER_OFFSET,
+            stage2_jp_l52c6, sizeof(stage2_jp_l52c6)) ||
+        sizeof(stage2_jp_l565a) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L565A_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L565A_USER_OFFSET,
+            stage2_jp_l565a, sizeof(stage2_jp_l565a))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     out_receipt->valid = 1;
@@ -9122,6 +9158,9 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
     out_receipt->l4f66_target_proven = 1;
     out_receipt->l5529_target_proven = 1;
     out_receipt->l553f_target_proven = 1;
+    out_receipt->l5251_target_proven = 1;
+    out_receipt->l52c6_target_proven = 1;
+    out_receipt->l565a_target_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
 

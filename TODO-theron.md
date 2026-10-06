@@ -18,13 +18,14 @@ Reviewed 2026-10-06. Only open work is listed here.
 - ✅ Added a JP-specific HuC6280 listing for the selector-called `$3114` flow
   at stage-two user offset `0x1114`. It binds 186 authentic JP bytes, all five
   internal BSR edges, the shared `$4f5e` caller, the exact 20-byte `$4f66`
-  target and two JP-specific 22-byte `$5529`/`$553f` targets. `$4f66` matches
-  the authentic US window; the `$55xx` windows differ from US. Mutation tests
-  cover the internal entries, selector and both ends of each external window.
-  The HuC6280 disassembler correctly decodes `$44` as BSR (unlike generic
-  65C02 mode). The US combined L4696/L3114 receipt remains US-only because its
-  94-byte L3114 span differs. Three other external JSR callees remain unbound,
-  and no JP helper semantics or gameplay behavior is established.
+  target and JP-specific windows at `$5529`, `$553f`, `$5251`, `$52c6` and
+  `$565a`. `$4f66` matches authentic US bytes; the other five windows differ.
+  Mutation tests cover the internal entries, selector and both ends of each
+  direct target. The HuC6280 disassembler correctly decodes `$44` as BSR
+  (unlike generic 65C02 mode). The US combined L4696/L3114 receipt remains
+  US-only because its 94-byte L3114 span differs. Edges from the six target
+  windows remain open; no JP helper semantics or gameplay behavior is
+  established.
 
 ## 2026-10-06 — mutation-check the regional dispatch-machine receipt
 

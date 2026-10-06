@@ -13,20 +13,31 @@
 ; $553f [0x153f..0x1555), 22 bytes;
 ;   SHA-256 dd38ee373966ae4f4ca66fd4d7242ae14118fc5ac23ba7226cd62421ca6d8adf
 ;   authentic US same-offset SHA-256 3b97a780c9748af2a009e92486ebf1828079fbc7ca2f0f351908908500328652
+; $5251 [0x1251..0x125d), 12 bytes;
+;   SHA-256 bff0a691c153ac1c6d26f79e84ea917bae19fbcb3753e42b1041bdf1d540d92f
+;   authentic US same-offset SHA-256 a0b5a3bb9c864f1b22e45ed1e2a398cb1203a6d641006ad7a034f7a75fe9e4ba
+; $52c6 [0x12c6..0x12d9), 19 bytes;
+;   SHA-256 21f72a9097785cc0ab0a6244ccc5c76e3269ff2036f0f045baff72ab208cd67f
+;   authentic US same-offset SHA-256 cfe21c65461d32ba8307b3253062191bd1a6bab8bc509b686bbcb273b030bb46
+; $565a [0x165a..0x1662), 8 bytes;
+;   SHA-256 9e1156b9b79aedeb71655115f0c2c4d637e868bcbaf0b6f7add77def9193d937
+;   authentic US same-offset SHA-256 0175c18df52499b6036191c9b88701c5e5a0f7396f3296429820537db9bab4d5
 ;
 ; The regional dispatch-machine receipt authenticates the JP $4f5e selector
 ; window. Its JSR $3114 at selector offset +4 is the caller for this target.
 ; The exact target bytes and the internal HuC6280 BSR targets below are bound
 ; by theron_v1_track02_verify_stage2_jp_l3114_flow(). The $3158 JSR $4f66
-; targets $4f66, $5529 and $553f are also exact-bound. The 20-byte $4f66
-; target matches authentic US bytes; the two 22-byte $55xx targets differ.
+; targets $4f66, $5529, $553f, $5251, $52c6 and $565a are also exact-bound.
+; The 20-byte $4f66 target matches authentic US bytes; the other five windows
+; differ from their authentic US same-offset bytes.
 ;
 ; RTS-bounded spans within this window:
 ;   $3114..$312a, $312a..$3141, $3141..$31a8,
 ;   $31a8..$31b3, $31b3..$31c0, $31c0..$31ce.
 ; All internal BSR destinations are contained in these spans. Other external
-; JSR destinations $52c6, $565a and $5251 remain unbound.
-; No routine or game semantics are assigned.
+; Bytes at the six direct JP JSR destinations above are exact-bound. Edges
+; from those targets, including $52c6's JSR $5237 and $565a's BSR $5670/$5662,
+; remain outside this receipt. No routine or game semantics are assigned.
 ;
 ; HuC6280 $44 is BSR, not the 65C02 TSB interpretation. The MAME reference
 ; implementation is h6280_device::bsr() in src/devices/cpu/h6280/h6280.cpp,
@@ -168,3 +179,31 @@ $554d:  inx
 $554e:  lda  $4fa0,x
 $5551:  sta  $4fd8
 $5554:  rts
+
+; JP Rev. 1 target called at $31a0. This target differs from US at this offset.
+$5251:  clc
+$5252:  lda  $0e
+$5254:  adc  #$40
+$5256:  sta  $0e
+$5258:  bcc  $525c
+$525a:  inc  $0f
+$525c:  rts
+
+; JP Rev. 1 target called at $317c. This target differs from US at this offset.
+$52c6:  jsr  $5237
+$52c9:  ldx  #$04
+$52cb:  lsr  $07
+$52cd:  ror  $06
+$52cf:  dex
+$52d0:  bne  $52cb
+$52d2:  lda  $07
+$52d4:  ora  #$f0
+$52d6:  sta  $07
+$52d8:  rts
+
+; JP Rev. 1 target called at $3197. Its internal BSR targets are unbound.
+$565a:  bsr  $5670
+$565c:  bsr  $5662
+$565e:  dex
+$565f:  bne  $565a
+$5661:  rts
