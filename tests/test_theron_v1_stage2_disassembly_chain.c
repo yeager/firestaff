@@ -2074,6 +2074,9 @@ static void test_stage2_id2c_external_handoff(const uint8_t *raw,
 static void test_stage2_id2c_internal_helpers(const uint8_t *raw,
                                                size_t raw_size, int jp)
 {
+    static const uint16_t selector_roots[] = {
+        0x4d86u, 0x4dc5u, 0x4e04u, 0x4e43u, 0x4e82u
+    };
     static const uint8_t bounded_caller[] = {
         0xc6u, 0x5bu, 0xadu, 0xc2u, 0x4eu, 0x8du, 0xccu, 0x37u,
         0x20u, 0x31u, 0x4fu, 0x20u, 0x2eu, 0x3au, 0xb0u, 0x18u,
@@ -2100,6 +2103,15 @@ static void test_stage2_id2c_internal_helpers(const uint8_t *raw,
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(0x4f31u + i)) ==
                table_pointer_helper[i]);
+    }
+    /* Authentic US and JP emulator traces reached selectors 0..4 and read
+     * this same runtime root-pointer table from the original stage-two image.
+     * Counts are deliberately not locked here: they vary by lookup key/state. */
+    for (unsigned int i = 0;
+         i < sizeof(selector_roots) / sizeof(selector_roots[0]); ++i) {
+        assert(stage2_word_at(raw, raw_size, jp,
+                              (uint16_t)(0x4d7cu + i * 2u)) ==
+               selector_roots[i]);
     }
     printf("  PASS: stage2_id2c_internal_helpers (%s)\n",
            jp ? "JP" : "US");

@@ -34,6 +34,22 @@ input-consumption verification blocked because the final event had no later
 controller-port read exposing its mask. Raw media, states, and traces remain
 outside Git; see `TODO-theron.md` for remaining semantic and input-evidence gaps.
 
+## 2026-10-06 — source-lock the selector root table
+
+Extended the bounded `pce_fast` probe to record the helper's selector, key,
+indexed stage-two pointer-table entry, zero-page root pointer, root count, and
+result carry/fields for at most 64 lookups. The corrected PCE Fast binary
+compiled on `trv2`; the complete Mednafen patch chain applied in three
+isolated dry-run loops. Authentic US and JP cold-start runs each yielded 60
+lookup/root/result triplets. Both exposed the same selector roots for
+selectors `$00..$04`: `$4d86`, `$4dc5`, `$4e04`, `$4e43`, and `$4e82`.
+`test_theron_v1_stage2_disassembly_chain` now locks those pointers against the
+original Track 02 bytes and passed three CTest loops on `trv2` with authentic
+US and JP media. Counts vary by key/runtime and remain intentionally
+unlocked. Both captures still fail the strict final controller-event receipt;
+this CPU trace does not prove the replay changed game state or assign game
+semantics to the lookup results. Raw media and traces remain outside Git.
+
 ## 2026-10-05 — source-lock the stage-two MPR entry window
 
 The authentic US and JP stage-two entry bytes at `$4000` now have a direct

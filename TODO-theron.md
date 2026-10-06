@@ -4,6 +4,14 @@ Reviewed 2026-10-06. Only open work is listed here.
 
 ## 2026-10-06 — characterize the stage-two helper's behavior
 
+- 🔒 Authentic US and JP cold-start traces agree on selector roots `$00..$04`
+  (`$4d86`, `$4dc5`, `$4e04`, `$4e43`, `$4e82`), now byte-locked against both
+  original Track 02 images. Root counts vary with key/runtime. The remaining
+  work is to identify the key/count/result data semantics from the original
+  caller and to obtain a strict receipt showing a scripted event mask consumed
+  after the final replay event; current traces do not establish a gameplay
+  state change.
+
 - 🔒 `$4ec9` is the function entry; authentic stage-two bytes place the
   `JSR $3a2e` call-site at `$4ed4`. The opt-in `pce_fast` probe now targets
   `$4ed4`, links only the immediately following `$3a2e` instruction, and
