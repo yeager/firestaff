@@ -2996,7 +2996,10 @@ static void test_stage2_jp_l3114_flow(void)
     static const size_t mutation_offsets[] = {
         THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_USER_OFFSET,
         0x112au, 0x1141u, 0x11a8u, 0x11b3u, 0x11c0u,
-        THERON_TRACK02_IPL_STAGE2_SELECTOR_USER_OFFSET
+        THERON_TRACK02_IPL_STAGE2_SELECTOR_USER_OFFSET,
+        THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_USER_OFFSET,
+        THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_BYTES - 1u
     };
     Theron_Track02Stage2JpL3114FlowReceipt receipt;
     Theron_Track02SignalStatus status;
@@ -3012,6 +3015,10 @@ static void test_stage2_jp_l3114_flow(void)
     assert(status == THERON_TRACK02_SIGNAL_OK);
     assert(receipt.valid == 1);
     assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+    assert(receipt.stage2_record == THERON_TRACK02_IPL_STAGE2_RECORD);
+    assert(receipt.stage2_raw_sector ==
+           THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+               THERON_TRACK02_IPL_STAGE2_RECORD);
     assert(receipt.flow_bytes ==
            THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_BYTES);
     assert(receipt.entry_cpu_address ==
@@ -3019,6 +3026,7 @@ static void test_stage2_jp_l3114_flow(void)
     assert(receipt.selector_caller_proven == 1);
     assert(receipt.jp_flow_bytes_proven == 1);
     assert(receipt.internal_bsr_targets_proven == 1);
+    assert(receipt.l4f66_target_proven == 1);
 
     {
         uint8_t *mutated = malloc(g_jp_size);

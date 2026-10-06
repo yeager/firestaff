@@ -68,10 +68,11 @@ the regional dispatch-machine receipt, while the combined far-callee receipt
 rejects JP. This isolates the unresolved evidence to the target side rather
 than the selector bytes. The US assembly listing must not be projected onto
 the differing JP span. A JP-specific HuC6280 listing now binds the 186-byte
-target flow and its five internal BSR edges; see
-`theron-jp-stage2-l3114-huc6280.asm`. Six external JSR destinations remain
-unbound. The standalone receipt admits only the listed static bytes and the
-selector caller; it assigns no routine or gameplay semantics.
+target flow, its five internal BSR edges and the exact 20-byte `$4f66` target
+called from that flow; see `theron-jp-stage2-l3114-huc6280.asm`. The JP
+`$4f66` bytes match the authentic US target window. Five other external JSR
+destinations remain unbound. The receipt admits only these static bytes and
+the selector caller; it assigns no routine or gameplay semantics.
 
 ## Index-to-target map
 

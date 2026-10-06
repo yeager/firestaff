@@ -4,18 +4,22 @@
 ; Stage-two raw sector: 1223 (JP INDEX 01 sector 224 + record $03e7)
 ; User-data window: [$1114..$11ce), 186 bytes
 ; Window SHA-256: 2cded4d956ef6abba964d4befd8c56e20e10680863510f8bfecb9ca0573b36e0
+; Additional exact call target: $4f66 -> user window [$0f66..$0f7a), 20 bytes
+; Target SHA-256: 089bf8150d6cf62b4610c30b1df7d7f973de7da1281a1ca6a1973fd983f0e79c
+; Authentic US comparison media TQUS02.bin MD5: f23601102138f87c33025877767ebf76
 ;
 ; The regional dispatch-machine receipt authenticates the JP $4f5e selector
 ; window. Its JSR $3114 at selector offset +4 is the caller for this target.
 ; The exact target bytes and the internal HuC6280 BSR targets below are bound
-; by theron_v1_track02_verify_stage2_jp_l3114_flow().
+; by theron_v1_track02_verify_stage2_jp_l3114_flow(). The $3158 JSR $4f66
+; target is also exact-bound; its 20 bytes match the authentic US target.
 ;
 ; RTS-bounded spans within this window:
 ;   $3114..$312a, $312a..$3141, $3141..$31a8,
 ;   $31a8..$31b3, $31b3..$31c0, $31c0..$31ce.
-; All internal BSR destinations are contained in these spans. The external
-; JSR destinations $553f, $5529, $4f66, $52c6, $565a and $5251 are outside
-; this receipt and remain unbound. No routine or game semantics are assigned.
+; All internal BSR destinations are contained in these spans. Other external
+; JSR destinations $553f, $5529, $52c6, $565a and $5251 remain unbound.
+; No routine or game semantics are assigned.
 ;
 ; HuC6280 $44 is BSR, not the 65C02 TSB interpretation. The MAME reference
 ; implementation is h6280_device::bsr() in src/devices/cpu/h6280/h6280.cpp,
@@ -111,3 +115,23 @@ $31c4:  sta  $5ca2
 $31c7:  lda  $4f8c
 $31ca:  sta  $5ca3
 $31cd:  rts
+
+; JP Rev. 1 exact external target called at $3158. The 20-byte window is
+; independently hash-checked against authentic US TQUS02.bin and is bound by
+; theron_v1_track02_verify_stage2_jp_l3114_flow(). It establishes bytes only.
+$4f66:  pha
+$4f67:  phx
+$4f68:  phy
+$4f69:  lda  #$03
+$4f6b:  clx
+$4f6c:  cly
+$4f6d:  dey
+$4f6e:  bne  $4f6d
+$4f70:  dex
+$4f71:  bne  $4f6c
+$4f73:  dea
+$4f74:  bne  $4f6b
+$4f76:  ply
+$4f77:  plx
+$4f78:  pla
+$4f79:  rts

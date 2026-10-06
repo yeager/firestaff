@@ -3482,10 +3482,11 @@ typedef struct {
     int l4696_call_site_proven;
 } Theron_Track02Stage2L4696Receipt;
 
-/* Receipt for the JP-only static $3114 flow window. It binds the
- * shared $4f5e selector plus the exact JP bytes [0x1114..0x11ce),
- * including its internal BSR targets; external JSR targets remain
- * unbound and no routine semantics are asserted. */
+/* Receipt for the JP-only static $3114 flow. It binds the shared $4f5e
+ * selector plus the exact JP bytes [0x1114..0x11ce), including its
+ * internal BSR targets, and the exact $4f66 target called from that
+ * window. Other external JSR targets and all routine semantics remain
+ * unbound. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -3496,6 +3497,7 @@ typedef struct {
     int selector_caller_proven;
     int jp_flow_bytes_proven;
     int internal_bsr_targets_proven;
+    int l4f66_target_proven;
 } Theron_Track02Stage2JpL3114FlowReceipt;
 
 /* Receipt for the stage-two L3114-callees proof.  It binds only
@@ -4127,10 +4129,11 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
     Theron_Track02Stage2L4696Receipt *out_receipt);
 
 /* Verifies the authenticated JP-only $3114 control-flow byte window
- * [0x1114..0x11ce), chained to the regional dispatch-machine receipt
- * for its $4f5e selector caller. The listing is in
+ * [0x1114..0x11ce), its exact $4f66 JSR target window [0x0f66..0x0f7a),
+ * and the regional dispatch-machine receipt for its $4f5e selector
+ * caller. Other external JSR targets remain uncovered. The listing is in
  * docs/source-lock/theron-disassembly/theron-jp-stage2-l3114-huc6280.asm;
- * external JSR targets are explicitly not covered. */
+ * no routine or game semantics are asserted. */
 Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
     const uint8_t *track02_data,
     size_t track02_size,

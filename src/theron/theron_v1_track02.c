@@ -9040,6 +9040,16 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
         0x8du, 0xa2u, 0x5cu, 0xadu, 0x8cu, 0x4fu, 0x8du, 0xa3u,
         0x5cu, 0x60u
     };
+    /* The JP flow calls $4f66 at $3158. Its exact 20-byte target
+     * [0x0f66..0x0f7a) is byte-identical to the already source-locked US
+     * delay-loop window; the JP bytes were separately checked against
+     * authentic TQJP02.bin and are listed in the accompanying JP source
+     * lock. This proves only the target bytes, not timing semantics. */
+    static const uint8_t stage2_jp_l4f66[] = {
+        0x48u, 0xdau, 0x5au, 0xa9u, 0x03u, 0x82u, 0xc2u, 0x88u,
+        0xd0u, 0xfdu, 0xcau, 0xd0u, 0xf9u, 0x3au, 0xd0u, 0xf5u,
+        0x7au, 0xfau, 0x68u, 0x60u
+    };
     Theron_Track02Stage2DispatchMachineReceipt dispatch;
     Theron_Track02SignalStatus status;
 
@@ -9062,7 +9072,14 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
             track02_data, track02_size, dispatch.stage2_raw_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_USER_OFFSET,
-            stage2_jp_l3114_flow, sizeof(stage2_jp_l3114_flow))) {
+            stage2_jp_l3114_flow, sizeof(stage2_jp_l3114_flow)) ||
+        sizeof(stage2_jp_l4f66) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_USER_OFFSET,
+            stage2_jp_l4f66, sizeof(stage2_jp_l4f66))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     out_receipt->valid = 1;
@@ -9075,6 +9092,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
     out_receipt->selector_caller_proven = 1;
     out_receipt->jp_flow_bytes_proven = 1;
     out_receipt->internal_bsr_targets_proven = 1;
+    out_receipt->l4f66_target_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
 
