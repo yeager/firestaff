@@ -76,6 +76,29 @@ Reviewed 2026-10-06. Only open work is listed here.
   reproduced the same four nonmatching JP observations in a second bounded
   run, with the added bank field visible in the trace.
 
+## 2026-10-06 — keep US Tier-5 callees unpaired until JP roots are proven
+
+- 🔒 A source audit scanned the complete 6,144-byte JP stage-two payload from
+  authenticated `TQJP02.bin` (image SHA-256
+  `d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb`,
+  stage-two payload SHA-256
+  `e955531cc2c7bab6c910302ba4966ff12308c856fc37874529866ee2fbc92e0c`).
+  It found no encoded direct JSR or HuC6280 BSR target for the seven US-only
+  Tier-5 entries `$5403`, `$541e`, `$52a2`, `$52c8`, `$5657`, `$54c5`, and
+  `$5667`. Same-address byte ranges are not sufficient to claim JP callees:
+  `$5403/$541e` lie within the already-bound JP `$53e8..$543e` span, `$52c8`
+  lies within JP `$52c6..$52d9`, `$54c5` lies within JP `$54b3..$54fc`, and
+  `$5667` lies within the already-bound JP `$5662..$5669` window. JP reaches
+  `$565a`, not the US `$5657` entry. The distinct JP `$52c6` path reaches
+  `$5237`; no direct root for the same-address `$52a2` slice is identified.
+  Raw same-address SHA-256 values differ for `$52a2..$52c8`: JP
+  `c79031c1387780aa28cc3e7e3d61c4d97ae1873080901b3e8e9ad3c86a695f28`, US
+  `8ebc8e59a64dae2136dd563a076b076e9720b32de96ba76b72c51df95f814a6a`.
+  Investigate JP dispatch-table/indirect roots for `$52a2` before adding a JP
+  receipt; do not mirror the US verifier by address assumption. This static
+  scan does not exclude indirect control flow or establish runtime execution,
+  helper semantics, or regional gameplay parity.
+
 ## 2026-10-06 — characterize the stage-two helper's behavior
 
 - 🔒 Authentic US and JP cold-start traces agree on selector roots `$00..$04`

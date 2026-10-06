@@ -7305,6 +7305,22 @@ the authentic US and JP Track 02 BINs; the test still counts source candidates
 and false positives without assigning track semantics. No synthetic media was
 used.
 
+# ✅ 2026-10-06 Audit US-only stage-two Tier-5 entries against JP media
+
+Verified the authentic US and JP Track 02 image hashes and independently
+extracted the complete three-sector JP stage-two user payload, confirming its
+6,144-byte SHA-256. Static call-target analysis found no encoded direct JSR or
+HuC6280 BSR target for any of the seven US Tier-5 entries in that JP payload.
+The JP L3114 path instead reaches its separately byte-bound `$565a`, `$52c6`,
+and nested helper windows; selected US same-address entries fall inside these
+other JP spans or are not present as JP callee roots. The JP `$52a2..$52c8`
+bytes differ from the US window and no direct caller has been identified.
+
+Recorded the evidence and the remaining indirect/dispatch-root question in
+`TODO-theron.md`. This avoids claiming false regional parity; absence of an
+encoded direct edge does not exclude indirect flow or establish runtime
+behavior. No synthetic media was used.
+
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 
 An independent read-only audit re-extracted all 16 newly bound JP helper
