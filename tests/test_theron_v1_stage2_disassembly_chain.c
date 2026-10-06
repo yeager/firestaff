@@ -1586,6 +1586,32 @@ static void test_stage2_id4c_call_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+static void assert_stage2_relative_branch_target(const uint8_t *raw,
+                                                  size_t raw_size, int jp,
+                                                  uint16_t opcode_address,
+                                                  uint16_t expected_target)
+{
+    int8_t displacement;
+    int32_t next_pc;
+
+    assert(stage2_byte_at(raw, raw_size, jp, opcode_address) == 0x80u);
+    displacement = (int8_t)stage2_byte_at(
+        raw, raw_size, jp, (uint16_t)(opcode_address + 1u));
+    next_pc = (int32_t)opcode_address + 2;
+    assert(next_pc + displacement == (int32_t)expected_target);
+}
+
+static void assert_stage2_id4c_plus_two_tail(const uint8_t *raw,
+                                             size_t raw_size, int jp)
+{
+    static const uint8_t tail[] = { 0x4cu, 0xf5u, 0x40u };
+
+    for (unsigned int i = 0; i < sizeof(tail); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x49d8u + i)) == tail[i]);
+    }
+}
+
 /* Lock ID $4e's bounded shared-reader/call/relative-branch handoff. */
 static void test_stage2_id4e_relative_handoff(const uint8_t *raw,
                                               size_t raw_size, int jp)
@@ -1600,6 +1626,9 @@ static void test_stage2_id4e_relative_handoff(const uint8_t *raw,
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(0x4a3bu + i)) == root[i]);
     }
+    assert_stage2_relative_branch_target(raw, raw_size, jp, 0x4a40u,
+                                         0x49d8u);
+    assert_stage2_id4c_plus_two_tail(raw, raw_size, jp);
     printf("  PASS: stage2_id4e_relative_handoff (%s)\n",
            jp ? "JP" : "US");
 }
@@ -1618,6 +1647,9 @@ static void test_stage2_id4f_relative_handoff(const uint8_t *raw,
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(0x4a14u + i)) == root[i]);
     }
+    assert_stage2_relative_branch_target(raw, raw_size, jp, 0x4a19u,
+                                         0x49d8u);
+    assert_stage2_id4c_plus_two_tail(raw, raw_size, jp);
     printf("  PASS: stage2_id4f_relative_handoff (%s)\n",
            jp ? "JP" : "US");
 }

@@ -86,6 +86,16 @@ indices occur in a valid retail stream or assign names to them.
 
 ## Additional small roots and cursor tails
 
+Dispatch index `$42` targets `$4973`. The bounded path increments Y and tests
+the byte at `($1c),Y`; when it is zero, the handler reads the next two bytes
+into `$27c2/$27c3`, clears `$27c6`, and writes `$ff` to `$27c7`. The nonzero
+branch instead clears `$27c7`. Both paths converge at `$4991` and jump to
+`$40fd`, whose shared stub advances `$1c` by four before returning to the
+dispatcher. `test_stage2_id42_conditional_stores` locks the table word and
+`$4973..$4993` bytes against authentic US and JP Track 02 data. This establishes
+the memory/control-flow sequence only; the tested data does not establish
+field meanings or show that a retail stream executes this handler.
+
 Dispatch index `$22` points to `$4234` in both editions. Its 12-byte root
 `$4234..$423f` decrements `$5b`, calls `$43d6` and `$4240`, clears `$5b`, then
 jumps to `$40f5` (`+2`). The local `$4240..$4252` helper calls `$37d8`, writes
@@ -1246,15 +1256,18 @@ selection.
 ID `$4e` points to `$4a3b` in both editions. Its conservative seven-byte
 window `$4a3b..$4a41` contains `BSR $49e1`, `JSR $4ce1`, and a relative branch
 from `$4a40` back to `$49d8`. It ends immediately before the distinct ID `$51`
-target at `$4a42`; the branch destination is nearby shared code, but this byte
-lock does not claim the larger routine boundary, helper effects, or runtime
-selection.
+target at `$4a42`. The signed branch target is the `JMP $40f5` instruction at
+`$49d8`, which is also the terminal cursor tail of ID `$4c`'s independently
+locked `$49d3..$49da` window. The test computes this relative target and checks
+the shared tail against both editions; it does not claim the larger routine
+boundary, helper effects, or runtime selection.
 
 ID `$4f` points to `$4a14` in both authentic editions. Its seven-byte prefix
 `$4a14..$4a1a` contains `BSR $49e1`, `JSR $4c17`, and a relative branch from
-`$4a19` back to `$49d8`. It stops immediately before ID `$50` at `$4a1b`. This
-bounded source lock does not establish the shared destination's continuation,
-helper effects, or runtime selection.
+`$4a19` back to `$49d8`, the same `JMP $40f5` instruction reached by ID `$4e`.
+It stops immediately before ID `$50` at `$4a1b`. Its assertion also calculates
+the signed branch target and checks the shared tail against both editions;
+this does not establish helper effects or runtime selection.
 
 ID `$50` points to `$4a1b` in both authentic editions. The 32-byte root
 `$4a1b..$4a3a` starts with `BSR $49e1`, copies three successive stream bytes

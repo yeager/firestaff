@@ -199,7 +199,11 @@ Reviewed 2026-10-06. Only open work is listed here.
   `$469d..$46b7` is byte-locked in both editions through its `$4101` tail;
   store destinations' roles and stream execution remain unproven. ID `$34`
   at `$44bd..$44e6` is also locked in both editions; selector/argument meaning,
-  `$3ab7` effects, and retail selection remain open.
+  `$3ab7` effects, and retail selection remain open. IDs `$4e/$4f`'s signed
+  branches are now explicitly calculated to converge at `$49d8`, the ID `$4c`
+  terminal `JMP $40f5` (`+2`) tail. Authentic US and JP test loops pass; the
+  `$49e1`, `$4ce1`, and `$4c17` callee effects and actual stream selection
+  remain unknown.
   None of these paths is bound to an executed stream. The authentic
   `$6800` data has a 13-pointer prefix whose targets all begin with mapped
   dispatch IDs. Selector `$00`'s candidate has a bounded cursor walk through
