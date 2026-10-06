@@ -70,6 +70,8 @@ esac
 title_probe="$app_dir/test-dm2-fmtowns-bare-title.json"
 title_capture="$app_dir/test-dm2-fmtowns-bare-menu-capture"
 title_config="$app_dir/test-dm2-fmtowns-bare-menu-isolated.toml"
+runtime_probe="$app_dir/test-dm2-fmtowns-normal-loop.json"
+runtime_capture="$app_dir/test-dm2-fmtowns-normal-loop-capture"
 source_digest=$("$source_rgb" "$archive")
 rm -f "$title_probe" "$title_config"
 mkdir -p "$title_capture"
@@ -131,15 +133,19 @@ if nonblack < 10000 or f"{digest:016x}" != sys.argv[2]:
         f"(nonblack={nonblack}, expected={sys.argv[2]}, actual={digest:016x})")
 print(f"PASS: original DM2 FM Towns menu RGB matches TITLE/0/4 digest={digest:016x}")
 PY
-runtime_probe="$app_dir/test-dm2-fmtowns-normal-loop.json"
 rm -f "$runtime_probe"
+mkdir -p "$runtime_capture"
+rm -f "$runtime_capture"/*.bmp
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --game dm2 --data-dir "$archive" \
     --script 'wait:8000,click:115:65,click:100:60' \
     --duration 210000 >/dev/null 2>&1
-python3 - "$runtime_probe" <<'PY'
+python3 - "$runtime_probe" "$runtime_capture" <<'PY'
 import json
+from pathlib import Path
+import struct
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as probe_file:
@@ -149,6 +155,7 @@ party = probe["party"]
 towns = probe["dm2FmtownsStartup"]
 script = probe["script"]
 runtime_frame = probe["dm2RuntimeFrame"]
+captures = list(Path(sys.argv[2]).glob("*.bmp"))
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm2" or startup["phase"] != "dm2-runtime" or
         startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
@@ -157,9 +164,31 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 8, 0, 1) or
         runtime_frame != {"accepted": 1, "realAssets": 1,
-                          "noCoreFallbacks": 1, "fallbackDraws": 0}):
+                          "noCoreFallbacks": 1, "fallbackDraws": 0} or
+        len(captures) != 1):
     raise SystemExit(f"FAIL: DM2 FM Towns M12 normal loop did not reach a real runtime frame: {probe}")
+
+blob = captures[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: DM2 FM Towns runtime screenshot is not a BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+bits = struct.unpack_from("<H", blob, 28)[0]
+height = abs(signed_height)
+stride = ((width * bits + 31) // 32) * 4
+if ((width, height, bits) != (320, 200, 24) or
+        offset + stride * height > len(blob)):
+    raise SystemExit("FAIL: DM2 FM Towns runtime screenshot has invalid geometry")
+nonblack = 0
+for y in range(height):
+    row = offset + y * stride
+    for x in range(width):
+        if any(blob[row + x * 3:row + x * 3 + 3]):
+            nonblack += 1
+if nonblack < 1000:
+    raise SystemExit(f"FAIL: DM2 FM Towns runtime screenshot is mostly black ({nonblack} lit pixels)")
 print("PASS: bare DM2 CLI AUTO, authentic FM Towns TWANIM, New Game and first champion reach the normal-loop runtime")
+print(f"PASS: runtime screenshot captured at 320x200 with {nonblack} nonblack pixels")
 PY
 
 if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then

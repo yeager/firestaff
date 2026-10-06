@@ -345,7 +345,7 @@ msgid "OFF"
 msgstr "OFF"
 
 #: src/ui/menu_startup_m12.c:487 src/ui/menu_startup_m12.c:503
-#: src/ui/menu_startup_render_modern_m12.c:2411
+#: src/ui/menu_startup_render_modern_m12.c:2412
 msgid "ON"
 msgstr "ON"
 
@@ -397,7 +397,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2005
+#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2006
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -512,14 +512,14 @@ msgstr "REMASTERIZADO"
 #: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:813
 #: src/ui/menu_startup_m12.c:10280 src/ui/menu_startup_m12.c:10723
 #: src/ui/menu_startup_render_modern_m12.c:1474
-#: src/ui/menu_startup_render_modern_m12.c:2675
+#: src/ui/menu_startup_render_modern_m12.c:2676
 msgid "DUNGEON MASTER"
 msgstr "Dungeon Master"
 
 #: src/ui/menu_startup_m12.c:793 src/ui/menu_startup_m12.c:823
 #: src/ui/menu_startup_m12.c:10282 src/ui/menu_startup_m12.c:10737
 #: src/ui/menu_startup_render_modern_m12.c:1475
-#: src/ui/menu_startup_render_modern_m12.c:2678
+#: src/ui/menu_startup_render_modern_m12.c:2679
 msgid "CHAOS STRIKES BACK"
 msgstr "Chaos Strikes Back"
 
@@ -545,8 +545,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "DISCO UTILITÁRIO CSB - DICA ORACLE"
 
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:11808
-#: src/ui/menu_startup_m12.c:11811 src/ui/menu_startup_render_modern_m12.c:1780
-#: src/ui/menu_startup_render_modern_m12.c:2053
+#: src/ui/menu_startup_m12.c:11811 src/ui/menu_startup_render_modern_m12.c:1781
+#: src/ui/menu_startup_render_modern_m12.c:2054
 msgid "MUSEUM OF LORE"
 msgstr "MUSEU DA HISTÓRIA"
 
@@ -1595,7 +1595,7 @@ msgstr "ORIGINAL"
 msgid "MISSING OR MISMATCHED"
 msgstr "EM FALTA OU NÃO CORRESPONDENTE"
 
-#: src/ui/menu_startup_m12.c:9204 src/ui/menu_startup_render_modern_m12.c:1981
+#: src/ui/menu_startup_m12.c:9204 src/ui/menu_startup_render_modern_m12.c:1982
 msgid "EXTRAS"
 msgstr "EXTRAS"
 
@@ -1745,7 +1745,7 @@ msgstr "Fugir de volta |  Navegar para cima/para baixo |  Entrar em aberto"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > Alternar guia Para cima/para baixo Navegar Entrar Alterar"
 
-#: src/ui/menu_startup_m12.c:11124 src/ui/menu_startup_render_modern_m12.c:2217
+#: src/ui/menu_startup_m12.c:11124 src/ui/menu_startup_render_modern_m12.c:2218
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "NENHUMA PLATAFORMA NATIVA SUPORTADA"
 
@@ -1870,7 +1870,7 @@ msgid "COMING SOON"
 msgstr "COMING SOON"
 
 #: src/ui/menu_startup_render_modern_m12.c:1431
-#: src/ui/menu_startup_render_modern_m12.c:2520
+#: src/ui/menu_startup_render_modern_m12.c:2521
 msgid "FIRESTAFF"
 msgstr "PROJETO FIRESTAFF"
 
@@ -1910,45 +1910,45 @@ msgstr "PRESSIONE ENTER PARA ABRIR O MUSEU LORE"
 msgid "< BACK"
 msgstr "< VOLTAR"
 
-#: src/ui/menu_startup_render_modern_m12.c:1902
+#: src/ui/menu_startup_render_modern_m12.c:1903
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:1983
+#: src/ui/menu_startup_render_modern_m12.c:1984
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2057
+#: src/ui/menu_startup_render_modern_m12.c:2058
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "NOTAS DE PRESERVAÇÃO, CONHECIMENTO DA SÉRIE E CRÉDITOS DO PROJETO"
 
-#: src/ui/menu_startup_render_modern_m12.c:2070
+#: src/ui/menu_startup_render_modern_m12.c:2071
 msgid "ARCHIVE SECTIONS"
 msgstr "ESTADO DO ARQUIVO"
 
-#: src/ui/menu_startup_render_modern_m12.c:2093
+#: src/ui/menu_startup_render_modern_m12.c:2094
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "PÁGINA %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2201
+#: src/ui/menu_startup_render_modern_m12.c:2202
 msgid "CHOOSE PLATFORM"
 msgstr "DADOS DO JOGO NÃO ENCONTRADOS"
 
-#: src/ui/menu_startup_render_modern_m12.c:2226
+#: src/ui/menu_startup_render_modern_m12.c:2227
 msgid "CHOOSE PRESENTATION"
 msgstr "DESTINOS DO LAUNCHER"
 
-#: src/ui/menu_startup_render_modern_m12.c:2468
+#: src/ui/menu_startup_render_modern_m12.c:2469
 msgid "LAUNCH >"
 msgstr "PRONTO PARA INICIAR"
 
-#: src/ui/menu_startup_render_modern_m12.c:2537
-#: src/ui/menu_startup_render_modern_m12.c:2661
+#: src/ui/menu_startup_render_modern_m12.c:2538
+#: src/ui/menu_startup_render_modern_m12.c:2662
 msgid "OK"
 msgstr "PEDRA"
 
-#: src/ui/menu_startup_render_modern_m12.c:2601
+#: src/ui/menu_startup_render_modern_m12.c:2602
 msgid "CANCEL"
 msgstr "CANCELAR"
 

@@ -3,8 +3,10 @@
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
   shared SDL presentation path. The attached screenshot's dungeon pixels are
   closer to the local DM2 FM Towns runtime capture than to the separate DM1
-  capture, so it is not sufficient evidence for a DM1 regression. A different
-  DM1 screenshot or an identified DM1 launch is needed. Pixel-run inspection
+  capture, but the screenshot has no runtime metadata and is not sufficient
+  to identify the game, platform or edition. The surrounding conversation
+  points to DM2, so it is weak evidence for a DM1 regression. A separate
+  identified DM1 launch is needed. Pixel-run inspection
   finds an approximately 10-device-pixel nearest-neighbour grid in the
   attached viewport, which does not by itself establish a Retina scaling
   defect. Capture the selected platform, asset identity, party/map pose and
