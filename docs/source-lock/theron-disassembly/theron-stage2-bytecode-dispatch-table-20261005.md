@@ -208,6 +208,18 @@ reuses `$4d15`, sets bit `$80` in `$4ec1`, then calls `$4d4a`. Dispatch ID
 These byte-level paths do not assign meanings to the fields, calls, carry
 conditions, or a retail stream.
 
+The exact JP Rev. 1 disassembly was independently regenerated from authentic
+`TQJP02.bin` (MD5 `b7afb338ad31be1025b53f9aff12d73a`) with MAME `unidasm
+-arch h6280`. The 14-byte root at `$4a50` is `BSR $49e1; INY; LDA ($1c),Y;
+STA $4ec1; JSR $4d6a; JMP $40f9`; the 15-byte helper at `$4d6a` is `BSR
+$4d15; BCS $4d67; LDA $4ec1; ORA #$80; STA $4ec1; BSR $4d4a; RTS`. Both
+windows are byte-identical at the same CPU addresses in authentic US
+`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`). The existing
+`test_stage2_id51_helper_chain` source-lock assertion checks the table pointer
+and both windows against each authentic edition; this disassembly check adds no
+claim about the values' meaning, helper effects, carry-path execution, or
+retail stream selection.
+
 ## ID `$4d`: two-operand helper handoff
 
 Dispatch entry `$4d` points to `$49e8` in both authentic editions. The
