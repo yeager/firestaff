@@ -1571,6 +1571,27 @@ static void test_stage2_id4d_operand_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $53's independent three-byte staging path. */
+static void test_stage2_id53_three_byte_handoff(const uint8_t *raw,
+                                                size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x44u, 0xe4u, 0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc1u, 0x4eu,
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc5u, 0x4eu, 0xc8u, 0xb1u,
+        0x1cu, 0x8du, 0xc6u, 0x4eu, 0x20u, 0x3fu, 0x4cu, 0x80u,
+        0xcau
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x53u)) == 0x49fbu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x49fbu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id53_three_byte_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Authentic selector continuations and overlapping nested-stream roots.
  * These byte assertions are source evidence, not proof that a selector runs.
  * See docs/source-lock/theron-disassembly/
@@ -2963,6 +2984,7 @@ int main(void)
     test_stage2_id50_staged_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id53_three_byte_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
     test_stage2_id11_overlapping_root(g_us_data, g_us_size, 0);
     test_stage2_id2b_regional_handoff(g_us_data, g_us_size, 0);
@@ -3026,6 +3048,7 @@ int main(void)
         test_stage2_id50_staged_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id53_three_byte_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
         test_stage2_id11_overlapping_root(g_jp_data, g_jp_size, 1);
         test_stage2_id2b_regional_handoff(g_jp_data, g_jp_size, 1);

@@ -130,6 +130,15 @@ offset `+1` into `$4ec2`. This records the visible handoff and cursor path
 only; `$4c30` effects, operand meanings, and a valid retail stream using this
 dispatch index remain unproven.
 
+## ID `$53`: three-byte staging handoff
+
+Dispatch entry `$53` points to `$49fb` in both authentic editions. Its
+25-byte root `$49fb..$4a13` begins with `BSR $49e1`, reads three successive
+stream bytes into `$4ec1`, `$4ec5`, and `$4ec6`, calls `$4c3f`, then branches to
+`$49de`. The source-lock test ends at the branch operand, immediately before
+ID `$4f` at `$4a14`; it records static data/control flow only, without assigning
+field meaning, helper effects, or runtime selection.
+
 ## Indexed-byte handlers and nested cursor path
 
 The next table roots expose another byte-level group. Index `$0b` at `$4259`

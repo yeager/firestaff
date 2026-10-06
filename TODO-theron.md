@@ -228,6 +228,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   runtime selection remain unknown. ID `$50`'s `$4a1b..$4a3a` staged operand
   and helper handoff is now locked to both editions, ending before ID `$4e` at
   `$4a3b`; field meanings and helper effects remain open.
+  ID `$53`'s `$49fb..$4a13` three-byte staging and `$4c3f` handoff is also
+  locked to both editions, ending before ID `$4f` at `$4a14`; field meanings
+  and helper effects remain unknown.
   ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
