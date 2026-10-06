@@ -2563,6 +2563,41 @@ static void test_ipl_loader_jp(void)
            receipt.stage2_cd_read_record);
 }
 
+/* The information record's executable-sector count must stay region-bound:
+ * JP loads three sectors, US four. Keep the accepted variant identity while
+ * mutating one byte, then require the IPL structure verifier to reject. */
+static void test_ipl_loader_executable_count_mutation(void)
+{
+    uint8_t *mutated;
+    Theron_Track02IplLoaderReceipt receipt;
+    Theron_Track02SignalStatus status;
+
+    if (!g_jp_data) return;
+    mutated = malloc(g_us_size);
+    assert(mutated != NULL);
+
+    for (size_t variant = 0; variant < 2u; ++variant) {
+        const uint8_t *source = variant ? g_jp_data : g_us_data;
+        size_t source_size = variant ? g_jp_size : g_us_size;
+        const char *source_md5 = variant ? THERON_TRACK02_MD5_JP_BIN
+                                         : THERON_TRACK02_MD5_US_BIN;
+        size_t info_sector = (variant
+            ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR
+            : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR) + 1u;
+        size_t raw_offset = info_sector * 2352u + 16u + 3u;
+
+        assert(source_size <= g_us_size);
+        assert(raw_offset < source_size);
+        memcpy(mutated, source, source_size);
+        mutated[raw_offset] = (uint8_t)(mutated[raw_offset] + 1u);
+        status = theron_v1_track02_find_ipl_loader(
+            mutated, source_size, source_md5, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    }
+    free(mutated);
+    printf("  PASS: ipl_loader_executable_count_mutation (US/JP)\n");
+}
+
 static void test_stage2_dynamic_payload(void)
 {
     Theron_Track02Stage2DynamicPayloadReceipt receipt;
@@ -3412,6 +3447,7 @@ int main(void)
     test_stage2_runtime_helper_media_source(g_us_data, g_us_size, 0);
     if (g_jp_data) {
         test_ipl_loader_jp();
+        test_ipl_loader_executable_count_mutation();
         test_stage2_runtime_helper_media_source(g_jp_data, g_jp_size, 1);
     }
     test_stage2_selector_candidate_continuations(

@@ -14,6 +14,17 @@ Reviewed 2026-10-06. Only open work is listed here.
   exact positive-evidence scope; JP `$3114` bank mapping and broader stage-two
   parity remain open.
 
+## 2026-10-06 — guard the regional IPL executable count
+
+- ✅ Raw-media comparison confirms the authentic IPL information block
+  declares three executable sectors in JP and four in US, both loaded at
+  `$4000` with entry `$4000`. Added a negative test that mutates only this
+  region-bound count byte while retaining the authenticated variant selector;
+  `find_ipl_loader` must reject both editions. Three focused trv2 test loops
+  pass on the SHA-256-attested original BINs. This guards the existing
+  region-specific receipt and does not prove JP stage-two entry-body parity
+  beyond the separately listed byte windows.
+
 ## 2026-10-06 — qualify the JP saved-state probe
 
 - 🔒 A bounded replay on `trv2` loaded the previously captured JP Akutuba
@@ -3224,8 +3235,11 @@ distinguishes right and left after `$28B8` returns to zero.
   IPL loader plus dynamic `$3800` payload receipt pass against record `0x4df`.
   The main executed entry path and several first-level helper receipts still
   remain US-only because the JP image has region-specific bytes. The bounded
-  dispatch-machine receipt is a limited exception: six exact windows now have
-  direct US/JP raw-media identity evidence, without widening other gates.
+  dispatch-machine receipt is a limited exception: the seed tail, dispatch
+  stubs, initial jump-table entries, MPR-page helper, and `$4f5e` selector
+  match in both authentic images. The receipt's other spans remain explicitly
+  scoped, and mutation checks now require each listed window to reject a
+  changed byte; no general JP entry-path or `$3114`-body parity follows.
 
 - 🔧 2026-07-11 IPL-loader provenance update: original CUE sheets prove Track
   01 is CD-DA narration, while Track 02 is the MODE1 code track. The
