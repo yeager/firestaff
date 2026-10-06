@@ -7315,6 +7315,8 @@ The JP L3114 path instead reaches its separately byte-bound `$565a`, `$52c6`,
 and nested helper windows; selected US same-address entries fall inside these
 other JP spans or are not present as JP callee roots. The JP `$52a2..$52c8`
 bytes differ from the US window and no direct caller has been identified.
+The full JP stage-two payload contains no literal little-endian `$52a2` CPU
+address bytes (`a2 52`), though encoded or computed pointers remain possible.
 
 Recorded the evidence and the remaining indirect/dispatch-root question in
 `TODO-theron.md`. This avoids claiming false regional parity; absence of an

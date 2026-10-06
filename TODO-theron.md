@@ -94,10 +94,12 @@ Reviewed 2026-10-06. Only open work is listed here.
   Raw same-address SHA-256 values differ for `$52a2..$52c8`: JP
   `c79031c1387780aa28cc3e7e3d61c4d97ae1873080901b3e8e9ad3c86a695f28`, US
   `8ebc8e59a64dae2136dd563a076b076e9720b32de96ba76b72c51df95f814a6a`.
-  Investigate JP dispatch-table/indirect roots for `$52a2` before adding a JP
-  receipt; do not mirror the US verifier by address assumption. This static
-  scan does not exclude indirect control flow or establish runtime execution,
-  helper semantics, or regional gameplay parity.
+  A raw-payload search also found no little-endian absolute address bytes
+  `a2 52`; this does not rule out encoded/computed pointers. Investigate JP
+  dispatch-table/indirect roots for `$52a2` before adding a JP receipt; do not
+  mirror the US verifier by address assumption. This static scan does not
+  exclude indirect control flow or establish runtime execution, helper
+  semantics, or regional gameplay parity.
 
 ## 2026-10-06 — characterize the stage-two helper's behavior
 
