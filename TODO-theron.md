@@ -6,10 +6,14 @@ Reviewed 2026-10-06. Only open work is listed here.
 
 - ✅ The opt-in `pce_fast` probe now captures the authentic instruction bytes
   at `$4ec9`, recognizes only `JSR $3a2e`, and links the immediately following
-  `$3a2e` execution with caller/target physical PCs and MPR1. The complete
-  Mednafen 1.32.1 research patch chain applied to an isolated source copy on
-  `trv2`; a full `-j1` build with PCE Fast enabled succeeded, and the focused
-  patch-chain test passed three consecutive loops.
+  `$3a2e` execution with caller/target physical PCs and MPR1. Both call and
+  linked-target rows have bounded budgets, so unrelated target hits cannot
+  consume the linked-evidence budget. The helper now lives outside the opcode
+  loop to avoid C++ goto-over-initialization errors. The corrected patch
+  applied to the isolated full research source on `trv2`, its `huc6280.o`
+  target compiled, and the full PCE Fast-enabled `-j1` build succeeded. The
+  local static regression passed three loops; its source-tree patch dry-run
+  was skipped because the original Mednafen source is on `trv2`.
 - 🔒 No authentic same-session `$4ec9 → $3a2e` runtime receipt has yet been
   recorded, so the helper's physical bank, bytes, and behavior remain
   unverified. Capture a real execution before drawing conclusions.

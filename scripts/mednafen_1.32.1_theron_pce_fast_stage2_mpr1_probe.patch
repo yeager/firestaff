@@ -4,78 +4,85 @@
  #include "vdc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -692,1 +694,73 @@
+@@ -29,1 +31,77 @@
+ HuC6280 HuCPU;
++
++static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc)
++{
++ static FILE *stage2_mpr1_trace;
++ static unsigned stage2_mpr1_sequence;
++ static unsigned stage2_mpr1_call_sequence;
++ static int stage2_mpr1_call_pending;
++ static uint8 stage2_mpr1_caller_mpr1;
++ static uint32 stage2_mpr1_caller_physical_pc;
++ static uint32 stage2_mpr1_call_target_physical_pc;
++ static uint8 stage2_mpr1_caller_bytes[3];
++ const char *trace_path = getenv("FIRESTAFF_THERON_IRQ2_TRACE");
++ if(!stage2_mpr1_trace && trace_path && *trace_path)
++ {
++  stage2_mpr1_trace = fopen(trace_path, "a");
++  if(stage2_mpr1_trace)
++   fputs("source=mednafen-pce-fast-stage2-mpr1-probe\n", stage2_mpr1_trace);
++ }
++ if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
++  stage2_mpr1_call_pending = 0;
++ if(stage2_probe_pc == 0x4ec9)
++ {
++  const uint8 *caller = (const uint8 *)(HuCPU.FastPageR[2] + stage2_probe_pc);
++  const uint32 caller_mpr2 = HuCPU.MPR[2];
++  for(unsigned int i = 0; i < 3; i++)
++   stage2_mpr1_caller_bytes[i] = caller[i];
++  stage2_mpr1_call_pending =
++    stage2_mpr1_caller_bytes[0] == 0x20 &&
++    stage2_mpr1_caller_bytes[1] == 0x2e &&
++    stage2_mpr1_caller_bytes[2] == 0x3a;
++  stage2_mpr1_caller_mpr1 = HuCPU.MPR[1];
++  stage2_mpr1_caller_physical_pc =
++    (caller_mpr2 << 13) | (stage2_probe_pc & 0x1fff);
++  stage2_mpr1_call_target_physical_pc =
++    (stage2_mpr1_caller_mpr1 << 13) | (0x3a2e & 0x1fff);
++  if(stage2_mpr1_trace && stage2_mpr1_call_pending &&
++     stage2_mpr1_call_sequence < 32)
++  {
++   fprintf(stage2_mpr1_trace,
++     "stage2_mpr1_call sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x caller_bytes=%02x%02x%02x linked=%u\n",
++     stage2_mpr1_call_sequence++, stage2_probe_pc,
++     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
++     stage2_mpr1_call_target_physical_pc, stage2_mpr1_caller_bytes[0],
++     stage2_mpr1_caller_bytes[1], stage2_mpr1_caller_bytes[2],
++     stage2_mpr1_call_pending);
++   fflush(stage2_mpr1_trace);
++  }
++ }
++ if(stage2_probe_pc == 0x3a2e && stage2_mpr1_call_pending)
++ {
++  if(stage2_mpr1_trace && stage2_mpr1_sequence < 32)
++  {
++   const uint32 target_mpr1 = HuCPU.MPR[1];
++   const uint8 *mapped_target = (const uint8 *)(HuCPU.FastPageR[1] + stage2_probe_pc);
++   char target_bytes[129];
++   static const char hex[] = "0123456789abcdef";
++   for(unsigned int i = 0; i < 64; i++)
++   {
++    const uint8 byte = mapped_target[i];
++    target_bytes[i * 2] = hex[byte >> 4];
++    target_bytes[i * 2 + 1] = hex[byte & 0x0f];
++   }
++   target_bytes[128] = 0;
++   fprintf(stage2_mpr1_trace,
++     "stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ec9 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u caller_bytes=%02x%02x%02x bytes=%s\n",
++     stage2_mpr1_sequence++, stage2_probe_pc,
++     (target_mpr1 << 13) | (stage2_probe_pc & 0x1fff), target_mpr1,
++     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
++     stage2_mpr1_call_target_physical_pc, stage2_mpr1_call_pending,
++     stage2_mpr1_caller_bytes[0], stage2_mpr1_caller_bytes[1],
++     stage2_mpr1_caller_bytes[2], target_bytes);
++   fflush(stage2_mpr1_trace);
++  }
++  stage2_mpr1_call_pending = 0;
++ }
++}
+@@ -692,1 +694,2 @@
 -	  b1 = RdAtPC();
-+	  {
-+	   const uint16 stage2_probe_pc = GetRealPC();
-+	   static FILE *stage2_mpr1_trace;
-+	   static unsigned stage2_mpr1_sequence;
-+	   static int stage2_mpr1_call_pending;
-+	   static uint8 stage2_mpr1_caller_mpr1;
-+	   static uint32 stage2_mpr1_caller_physical_pc;
-+	   static uint32 stage2_mpr1_call_target_physical_pc;
-+	   static uint8 stage2_mpr1_caller_bytes[3];
-+	   const char *trace_path = getenv("FIRESTAFF_THERON_IRQ2_TRACE");
-+	   if(!stage2_mpr1_trace && trace_path && *trace_path)
-+	   {
-+	    stage2_mpr1_trace = fopen(trace_path, "a");
-+	    if(stage2_mpr1_trace)
-+	     fputs("source=mednafen-pce-fast-stage2-mpr1-probe\n", stage2_mpr1_trace);
-+	   }
-+	   if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
-+	    stage2_mpr1_call_pending = 0;
-+	   if(stage2_probe_pc == 0x4ec9)
-+	   {
-+	    const uint8 *caller = (const uint8 *)(HuCPU.FastPageR[2] + stage2_probe_pc);
-+	    const uint32 caller_mpr2 = HuCPU.MPR[2];
-+	    for(unsigned int i = 0; i < 3; i++)
-+	     stage2_mpr1_caller_bytes[i] = caller[i];
-+	    stage2_mpr1_call_pending =
-+	      stage2_mpr1_caller_bytes[0] == 0x20 &&
-+	      stage2_mpr1_caller_bytes[1] == 0x2e &&
-+	      stage2_mpr1_caller_bytes[2] == 0x3a;
-+	    stage2_mpr1_caller_mpr1 = HuCPU.MPR[1];
-+	    stage2_mpr1_caller_physical_pc =
-+	      (caller_mpr2 << 13) | (stage2_probe_pc & 0x1fff);
-+	    stage2_mpr1_call_target_physical_pc =
-+	      (stage2_mpr1_caller_mpr1 << 13) | (0x3a2e & 0x1fff);
-+	    if(stage2_mpr1_trace)
-+	    {
-+	     fprintf(stage2_mpr1_trace,
-+	       "stage2_mpr1_call pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x caller_bytes=%02x%02x%02x linked=%u\n",
-+	       stage2_probe_pc, stage2_mpr1_caller_physical_pc,
-+	       stage2_mpr1_caller_mpr1, stage2_mpr1_call_target_physical_pc,
-+	       stage2_mpr1_caller_bytes[0], stage2_mpr1_caller_bytes[1],
-+	       stage2_mpr1_caller_bytes[2], stage2_mpr1_call_pending);
-+	     fflush(stage2_mpr1_trace);
-+	    }
-+	   }
-+	   if(stage2_probe_pc == 0x3a2e)
-+	   {
-+	    if(stage2_mpr1_trace && stage2_mpr1_sequence < 32)
-+	    {
-+	     const uint32 target_mpr1 = HuCPU.MPR[1];
-+	     const uint8 *mapped_target = (const uint8 *)(HuCPU.FastPageR[1] + stage2_probe_pc);
-+	     char target_bytes[129];
-+	     static const char hex[] = "0123456789abcdef";
-+	     for(unsigned int i = 0; i < 64; i++)
-+	     {
-+	      const uint8 byte = mapped_target[i];
-+	      target_bytes[i * 2] = hex[byte >> 4];
-+	      target_bytes[i * 2 + 1] = hex[byte & 0x0f];
-+	     }
-+	     target_bytes[128] = 0;
-+	     fprintf(stage2_mpr1_trace,
-+	       "stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ec9 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u caller_bytes=%02x%02x%02x bytes=%s\n",
-+	       stage2_mpr1_sequence++, stage2_probe_pc,
-+	       (target_mpr1 << 13) | (stage2_probe_pc & 0x1fff), target_mpr1,
-+	       stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
-+	       stage2_mpr1_call_target_physical_pc, stage2_mpr1_call_pending,
-+	       stage2_mpr1_caller_bytes[0], stage2_mpr1_caller_bytes[1],
-+	       stage2_mpr1_caller_bytes[2], target_bytes);
-+	     fflush(stage2_mpr1_trace);
-+	    }
-+	    stage2_mpr1_call_pending = 0;
-+	   }
-+	   b1 = RdAtPC();
-+	  }
++	  TheronTraceStage2MPR1(GetRealPC());
++	  b1 = RdAtPC();

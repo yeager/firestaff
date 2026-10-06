@@ -517,10 +517,14 @@ The `pce_fast` instruction-loop probe now recognizes the authentic
 marks a `$3a2e` row as linked only when that is the immediately following
 instruction PC. The target row also captures its actual MPR1, physical PC,
 and 64 mapped bytes; its predicted physical target is retained separately so
-the mapping can be compared at execution. On `trv2`, the full PCE Fast-enabled
-Mednafen build succeeded and the complete patch-chain regression passed three
-consecutive loops. No authentic runtime call receipt has yet been captured, so
-the target implementation and mapping remain unresolved.
+the mapping can be compared at execution. Only signature-linked target rows
+are emitted, with separate bounded budgets for caller and target records. On
+`trv2`, the corrected probe patch applied to the isolated full research source,
+its `huc6280.o` target compiled, and the full PCE Fast-enabled Mednafen build
+succeeded. The local static regression passed three loops; its source-tree
+patch dry-run was skipped because the original Mednafen source is on `trv2`.
+No authentic runtime call receipt has yet been captured, so the target
+implementation and mapping remain unresolved.
 
 The JP F5 state (SHA-256
 `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) provides
