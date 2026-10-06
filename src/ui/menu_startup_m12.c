@@ -419,6 +419,11 @@ static void m12_import_save_manifest_json(M12_StartupMenuState* state);
 static int m12_collect_card_platforms(const M12_StartupMenuState* state,
                                       const char* gameId,
                                       int out[M12_ARCH_COUNT]);
+static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         const M12_MenuEntry* entry);
 int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
                                           const char* exportPath);
 const char *m12_localized_main_label(int index);
@@ -10844,8 +10849,14 @@ static void m12_draw_sparse_game_options_view(const M12_StartupMenuState* state,
                                               unsigned char* framebuffer,
                                               int framebufferWidth,
                                               int framebufferHeight) {
-    const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
+    const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
     char line2[64];
+    if (entry && entry->kind == M12_MENU_ENTRY_GAME &&
+        state->gameCardFlowStage < 2) {
+        m12_draw_game_card_flow_view(state, framebuffer, framebufferWidth,
+                                     framebufferHeight, entry);
+        return;
+    }
     snprintf(line2, sizeof(line2), "PATCH  %s", state->gameOptions[m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT)].usePatch ? "PATCHED" : "ORIGINAL");
     m12_draw_sparse_center_box(framebuffer,
                                framebufferWidth,
@@ -11068,6 +11079,126 @@ static int m12_use_modern_layout(int framebufferWidth,
                                  int framebufferHeight) {
     return framebufferWidth >= M12_MODERN_MIN_WIDTH &&
            framebufferHeight >= M12_MODERN_MIN_HEIGHT;
+}
+
+static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         const M12_MenuEntry* entry) {
+    int cardCount = 0;
+    int selected;
+    int cards[M12_ARCH_COUNT];
+    int boxW;
+    int boxH;
+    int boxX;
+    int boxY;
+    int ready = 0;
+    int version = -1;
+    char position[32];
+    const char* heading;
+    const char* label;
+
+    if (!entry || !entry->gameId || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0) {
+        return;
+    }
+    if (state->gameCardFlowStage == 0) {
+        heading = "CHOOSE PLATFORM";
+        cardCount = m12_collect_card_platforms(state, entry->gameId, cards);
+        selected = m12_clamp_index(state->gameCardSelected, cardCount);
+    } else {
+        heading = "CHOOSE PRESENTATION";
+        cardCount = 3;
+        selected = m12_clamp_index(state->gameCardSelected, cardCount);
+    }
+    if (cardCount <= 0) {
+        m12_draw_sparse_center_box(framebuffer, framebufferWidth,
+                                   framebufferHeight, 188, 56,
+                                   entry->title,
+                                   m12_tr(state, "NO SUPPORTED NATIVE PLATFORM"),
+                                   m12_tr(state, "ESC BACK"), M12_COLOR_WHITE);
+        return;
+    }
+    if (state->gameCardFlowStage == 0) {
+        ready = M12_AssetStatus_GameAvailable(&state->assetStatus,
+                                               entry->gameId) &&
+                M12_AssetStatus_GameHasMatchedArchitecture(
+                    &state->assetStatus, entry->gameId, cards[selected]);
+        if (ready) {
+            version = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &state->assetStatus, entry->gameId, cards[selected]);
+        }
+        label = M12_Architecture_Label(cards[selected]);
+    } else if (selected == 0) {
+        ready = 1;
+        label = "ORIGINAL";
+    } else if (selected == 1) {
+        ready = 1;
+        label = _("V2.1 UPSCALED");
+    } else {
+        ready = 1;
+        label = "GAME OPTIONS";
+    }
+    if (framebufferHeight < 128 || framebufferWidth < 200) {
+        char selectedLabel[96];
+        snprintf(selectedLabel, sizeof(selectedLabel), "%s: %s",
+                 m12_tr(state, heading), m12_tr(state, label));
+        m12_draw_sparse_center_box(framebuffer, framebufferWidth,
+                                   framebufferHeight, framebufferWidth - 16, 56,
+                                   entry->title, selectedLabel,
+                                   ready ? m12_tr(state, "READY")
+                                         : m12_tr(state, "DATA FILES NOT FOUND"),
+                                   M12_COLOR_WHITE);
+        if (framebufferHeight >= 80 && framebufferWidth >= 240) {
+            m12_draw_centered_text(
+                framebuffer, framebufferWidth, framebufferHeight,
+                framebufferHeight - 12,
+                m12_tr(state,
+                       "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"),
+                &g_textSmallMuted);
+        }
+        return;
+    }
+    boxW = framebufferWidth - 24;
+    if (boxW > 296) boxW = 296;
+    boxH = framebufferHeight - 44;
+    if (boxH > 140) boxH = 140;
+    if (boxH < 56) boxH = framebufferHeight - 8;
+    boxX = (framebufferWidth - boxW) / 2;
+    boxY = (framebufferHeight - boxH) / 2;
+    snprintf(position, sizeof(position), "%d / %d", selected + 1, cardCount);
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   boxX, boxY, boxW, boxH,
+                   ready ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED,
+                   ready ? m12_game_card_fill(entry->gameId) : M12_COLOR_BLACK);
+    m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
+                           boxY + 10, entry->title, &g_textMediumShadow);
+    m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
+                           boxY + 26, m12_tr(state, heading), &g_textSmallAccent);
+    m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
+                           boxY + 42, position, &g_textSmallMuted);
+    m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
+                           boxY + 56, m12_tr(state, label), &g_textMediumShadow);
+    if (state->gameCardFlowStage == 0 && version >= 0) {
+        const M12_AssetVersionStatus* status = M12_AssetStatus_GetVersion(
+            &state->assetStatus, entry->gameId, (size_t)version);
+        if (status && status->shortLabel) {
+            m12_draw_centered_text(framebuffer, framebufferWidth,
+                                   framebufferHeight, boxY + 76,
+                                   m12_tr(state, status->shortLabel),
+                                   &g_textSmallMuted);
+        }
+    }
+    m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
+                           boxY + boxH - 20,
+                           ready ? m12_tr(state, "READY")
+                                 : m12_tr(state, "DATA FILES NOT FOUND"),
+                           ready ? &g_textSmallAccent : &g_textSmallMuted);
+    m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
+                           framebufferHeight - 12,
+                           m12_tr(state, "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"),
+                           &g_textSmallMuted);
 }
 
 static void m12_draw_branding_logo(unsigned char* framebuffer,
@@ -12726,6 +12857,12 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     int resLocked;
     const M12_AssetVersionStatus* version;
     unsigned char gameFill;
+    if (entry && entry->kind == M12_MENU_ENTRY_GAME &&
+        state->gameCardFlowStage < 2) {
+        m12_draw_game_card_flow_view(state, framebuffer, framebufferWidth,
+                                     framebufferHeight, entry);
+        return;
+    }
     if (gi < 0) {
         gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
     }

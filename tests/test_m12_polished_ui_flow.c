@@ -8,6 +8,7 @@
 #include "menu_startup_m12.h"
 #include "config_m12.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,35 @@ static int expect(int cond, const char *msg) {
         return 0;
     }
     return 1;
+}
+
+static int rendered_rows_differ(const unsigned char *left,
+                                const unsigned char *right,
+                                int width,
+                                int firstRow,
+                                int afterLastRow) {
+    int row;
+    if (!left || !right || width <= 0 || firstRow < 0 ||
+        afterLastRow <= firstRow) {
+        return 0;
+    }
+    for (row = firstRow; row < afterLastRow; ++row) {
+        size_t offset = (size_t)row * (size_t)width;
+        if (memcmp(left + offset, right + offset, (size_t)width) != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int rendered_has_content(const unsigned char *framebuffer,
+                                size_t pixelCount) {
+    size_t i;
+    if (!framebuffer) return 0;
+    for (i = 0; i < pixelCount; ++i) {
+        if (framebuffer[i] != 0) return 1;
+    }
+    return 0;
 }
 
 static int find_entry_kind(const M12_StartupMenuState *state,
@@ -95,6 +125,10 @@ static int setup_home(void) {
 int main(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
+    unsigned char platformCardView[320 * 200];
+    unsigned char presentationCardView[320 * 200];
+    unsigned char selectedPresentationView[320 * 200];
+    unsigned char compactPresentationView[320 * 100];
     int originalSetting;
 
     if (!setup_home()) {
@@ -178,9 +212,24 @@ int main(void) {
                 "available DM1 accept should enter platform cards")) return 1;
     if (!expect(state.gameCardFlowStage == 0 && state.launchRequested == 0,
                 "game card should wait for a verified platform choice")) return 1;
+    M12_StartupMenu_Draw(&state, platformCardView, 320, 200);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.gameCardFlowStage == 1 && state.launchRequested == 0,
                 "verified platform card should advance to presentation cards")) return 1;
+    M12_StartupMenu_Draw(&state, presentationCardView, 320, 200);
+    if (!expect(rendered_rows_differ(platformCardView, presentationCardView,
+                                    320, 68, 110),
+                "legacy renderer should draw the active card and its value")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_Draw(&state, selectedPresentationView, 320, 200);
+    if (!expect(rendered_rows_differ(presentationCardView,
+                                    selectedPresentationView, 320, 68, 110),
+                "legacy renderer should draw the newly selected card value")) return 1;
+    M12_StartupMenu_Draw(&state, compactPresentationView, 320, 100);
+    if (!expect(rendered_has_content(compactPresentationView + 22 * 320,
+                                     56 * 320),
+                "compact card details should render inside a short window")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Original card should request launch and show ready message")) return 1;
