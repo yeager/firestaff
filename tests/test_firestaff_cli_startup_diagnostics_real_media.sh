@@ -111,10 +111,10 @@ swsh = re.search(
 )
 if ([step for step, _, _ in frames] != list(range(20)) or
         sum(vblanks for _, _, vblanks in frames) != 18 or
-        complete is None or int(complete.group(1)) < 300 or
+        complete is None or int(complete.group(1)) < 350 or
         (swsh is not None and
          (int(swsh.group(1)) != 17 or int(swsh.group(2)) != 30 or
-          int(swsh.group(3)) < 1500))):
+          int(swsh.group(3)) < 3000))):
     raise SystemExit("FAIL: DM1 debug trace did not preserve FM Towns title cadence")
 print("PASS: DM1 debug trace records the FM Towns title source cadence")
 if swsh is not None:
@@ -141,7 +141,7 @@ swsh = re.search(
     r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",
     trace,
 )
-if swsh is None or int(swsh.group(1)) != 17 or int(swsh.group(2)) != 30 or int(swsh.group(3)) < 1500:
+if swsh is None or int(swsh.group(1)) != 17 or int(swsh.group(2)) != 30 or int(swsh.group(3)) < 3000:
     raise SystemExit("FAIL: DM1 PC original-media debug trace did not preserve SWSH intro source cadence")
 print("PASS: DM1 PC original-media debug trace records SWSH intro source cadence")
 ' || {
