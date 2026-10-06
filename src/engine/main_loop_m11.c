@@ -512,6 +512,10 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
     M12_StartupMenu_DrawScanProgressLocalized(progress, ctx->languageIndex,
                                               ctx->framebuffer,
                                               ctx->width, ctx->height);
+    /* A game frame leaves presentation constrained to its viewport. The scan
+     * panel is launcher UI and must use the full window, including after a
+     * game returns to the menu. */
+    (void)M11_Render_SetPresentationFillWindow(1);
     M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
     if (M11_Render_PumpEvents()) return 0;
     return 1;

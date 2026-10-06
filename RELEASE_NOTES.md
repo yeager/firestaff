@@ -5,7 +5,8 @@
 - The launcher now scans sibling game-data folders when opening the full menu
   from a selected game's data folder, and refreshes game availability when
   returning from a running game. The progress panel is centered lower on the
-  screen and uses measured font widths with an outlined progress bar.
+  screen, uses measured font widths with an outlined progress bar, and fills
+  the launcher window after returning from a game.
 
 ## Developer changes
 
