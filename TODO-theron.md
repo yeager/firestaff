@@ -15,11 +15,15 @@ Reviewed 2026-10-06. Only open work is listed here.
   the environment and writable path must be ready before emulator startup.
   The updated patch applied to the isolated full research source on `trv2`,
   `huc6280.o` compiled, and the full PCE Fast-enabled `-j1` build succeeded.
-  Two captures replaying the authentic JP Akutuba F5 state consumed eleven
-  controller events each, including a combined up/left and up/right route,
-  but emitted no `$4ec9` candidate, matching call, or `$3a2e` target row. The
-  result only shows that these two routes did not reach the candidate PC; it
-  does not establish behavior on other dungeon routes. The local static
+  Three captures replaying the authentic JP Akutuba F5 state each recorded
+  eleven controller events followed by controller reads at `$44c1`, zero
+  System-Card poll reads, `controller_poll_boundary=verified`, and
+  `game_or_non_system_card_poll_boundary=observed`. Across two input plans,
+  including combined up/left and
+  up/right holds, they emitted no `$4ec9` candidate, matching call, or
+  `$3a2e` target row. These results only show that the tested routes did not
+  reach the candidate PC; they do not establish behavior on other dungeon
+  routes. The local static
   regression passed three loops; its source-tree patch dry-run was skipped
   because the original Mednafen source is on `trv2`.
 - 🔒 No authentic same-session `$4ec9 → $3a2e` runtime receipt has yet been
