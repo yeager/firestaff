@@ -5,6 +5,7 @@ firestaff_cli=${1:?Firestaff executable is required}
 mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"}
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 dm1_towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
+dm1_pc_archive=${FIRESTAFF_DM1_PC_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN.zip"}
 csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
 csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
 
@@ -80,6 +81,73 @@ if [ -f "$dm1_towns_archive" ]; then
         *"startup game=dm1 mode=direct platform=auto"*"selected game=dm1 platform=FM Towns edition="*) ;;
         *) echo "FAIL: bare DM1 did not select original FM Towns media" >&2; exit 1 ;;
     esac
+    dm1_natural_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm1 --data-dir "$dm1_towns_archive" --debug --duration 0 2>&1) || {
+        printf '%s\n' "$dm1_natural_debug" >&2
+        exit 1
+    }
+    printf '%s\n' "$dm1_natural_debug" | python3 -c '
+import re
+import sys
+
+trace = sys.stdin.read()
+frames = [
+    (int(step), int(elapsed), int(vblanks))
+    for step, elapsed, vblanks in re.findall(
+        r"startup-source-frame game=dm1 platform=fm-towns phase=title "
+        r"frame=(\d+)/20 elapsed-ms=(\d+) source-wait-vblanks=(\d+)",
+        trace,
+    )
+]
+complete = re.search(
+    r"startup-source-complete game=dm1 platform=fm-towns phase=title "
+    r"frames=20 source-vblanks=21 elapsed-ms=(\d+)",
+    trace,
+)
+swsh = re.search(
+    r"startup-source-complete game=dm1 phase=swsh-intro "
+    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",
+    trace,
+)
+if ([step for step, _, _ in frames] != list(range(20)) or
+        sum(vblanks for _, _, vblanks in frames) != 18 or
+        complete is None or int(complete.group(1)) < 300 or
+        (swsh is not None and
+         (int(swsh.group(1)) != 17 or int(swsh.group(2)) != 30 or
+          int(swsh.group(3)) < 1500))):
+    raise SystemExit("FAIL: DM1 debug trace did not preserve FM Towns title cadence")
+print("PASS: DM1 debug trace records the FM Towns title source cadence")
+if swsh is not None:
+    print("PASS: DM1 debug trace records the SWSH source intro cadence")
+' || {
+        printf '%s\n' "$dm1_natural_debug" >&2
+        exit 1
+    }
+fi
+if [ -f "$dm1_pc_archive" ]; then
+    dm1_pc_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm1 --platform pc --data-dir "$dm1_pc_archive" \
+        --debug --duration 0 2>&1) || {
+        printf '%s\n' "$dm1_pc_debug" >&2
+        exit 1
+    }
+    printf '%s\n' "$dm1_pc_debug" | python3 -c '
+import re
+import sys
+
+trace = sys.stdin.read()
+swsh = re.search(
+    r"startup-source-complete game=dm1 phase=swsh-intro "
+    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",
+    trace,
+)
+if swsh is None or int(swsh.group(1)) != 17 or int(swsh.group(2)) != 30 or int(swsh.group(3)) < 1500:
+    raise SystemExit("FAIL: DM1 PC original-media debug trace did not preserve SWSH intro source cadence")
+print("PASS: DM1 PC original-media debug trace records SWSH intro source cadence")
+' || {
+        printf '%s\n' "$dm1_pc_debug" >&2
+        exit 1
+    }
 fi
 if [ -f "$csb_towns_archive" ]; then
     csb_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \

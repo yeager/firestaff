@@ -3,9 +3,13 @@
 - 2026-10-06: Re-ran the authenticated FM Towns English/Japanese startup and
   launcher matrix against the local bilingual ZIP. Direct launch, default
   `--game dm1` platform selection, version selection, normal M12 title/Entrance
-  handoff, first runtime frame and initial party are verified. The test uses
-  SDL dummy video/audio for repeatability and does not verify physical Mac M5
-  HiDPI output or source-timed intro cadence.
+  handoff, first runtime frame and initial party are verified. A natural
+  original-media `--debug` run now logs all 20 FM Towns title frames, the 21
+  source VBlanks and total elapsed time (about 480 ms on this local host).
+  A second natural launch against the original PC34 DOS archive logs all 17
+  SWSH palette frames, 30 source VBlanks and its elapsed time (about 3.6 s).
+  These SDL dummy video/audio checks do not verify physical Mac M5 HiDPI
+  output, window/compositor timing or visual parity.
 
 - 2026-10-05: Corrected the FM Towns text-rasteriser evidence against the
   executable's SYM1 names and opcodes: `TEXT_SIZE` is the measurement routine,

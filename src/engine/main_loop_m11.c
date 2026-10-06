@@ -2043,6 +2043,7 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
 
 static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
+static int g_m11_debug_startup_detail = 0;
 /* Scope is installed from the current launch menu and removed on every launch
  * return. These host focus waits do not change ReDMCSB's VBlank counts. */
 static const M12_StartupMenuState* g_m11_intro_menu;
@@ -3091,6 +3092,9 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     memset(swshPalette, 0, sizeof(swshPalette));
     {
       unsigned int sourceStep;
+      unsigned int sourceFrames = 0U;
+      unsigned int sourceVblanks = 0U;
+      Uint64 sourceStartedMs = m11_intro_active_ticks();
       /* SWSH.C:10-14 starts the immutable V0901005 Dosound program before
        * it mutates a single palette register.  It is deliberately scoped to
        * DM1: CSB owns a different F0908 DMA source path.  A media receipt
@@ -3164,6 +3168,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                                                        swshPalette[step.colorIndex & 0x0FU]);
               m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
               M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+              ++sourceFrames;
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
               /* ReDMCSB SWSH.C:33-37: each Vsync wait is one 50 Hz vertical
                * blank (~20 ms).  Use wall-clock timing so high-refresh displays
@@ -3172,6 +3177,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                * The previous dead-code `paletteDirty` flag was removed:
                * the WAIT_VBLANKS branch never had a palette to "re-render"
                * because every SET_PALETTE_COLOR step renders its own frame. */
+              sourceVblanks += step.vblankCount;
               if (m11_delay_ms_with_intro_event_pump(
                       hasDm1Media ?
                           m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
@@ -3186,7 +3192,17 @@ static void m11_play_ftl_swoosh_for_game_if_available(
       }
       (void)m11_delay_ms_with_intro_event_pump(
           hasDm1Media ? dm1Media.swsh_final_hold_ms :
-                        SWSH_Compat_GetRuntimeFinalHoldMs()); }
+                        SWSH_Compat_GetRuntimeFinalHoldMs());
+      if (g_m11_debug_startup_detail) {
+          fprintf(stderr,
+                  "firestaff: startup-source-complete game=%s phase=swsh-intro frames=%u source-vblanks=%u elapsed-ms=%llu\n",
+                  gameId ? gameId : "unknown",
+                  sourceFrames,
+                  sourceVblanks,
+                  (unsigned long long)(m11_intro_active_ticks() -
+                                       sourceStartedMs));
+      }
+    }
 cleanup:
     g_m11_intro_local_audio = NULL;
     if (swshAudioInitialized || csbSwshAudioInitialized) {
@@ -3855,6 +3871,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
     uint8_t titlePaletteRgb6[256][3];
     unsigned int frame;
     unsigned int waitedVblanks = 0u;
+    Uint64 titleStartedMs;
     if (outPlayedAnyFrame) *outPlayedAnyFrame = 0;
     if (!gameView || !gameView->dm1FmtownsStartupReceiptValid ||
         !gameView->assetLoader.legacyDm1 ||
@@ -3878,6 +3895,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
      * launcher as well would make the second dispatch stop and recreate the
      * original CDDA stream immediately before frame zero. */
     (void)M11_GameView_PlayDm1FmtownsCddaTrack(gameView, plan->title_track);
+    titleStartedMs = m11_intro_active_ticks();
     /* EDM.EXP DO_TITLE_ANIMATION presents the prepared zoom bitmaps in
      * reverse order: 48x12 first, then 16x4 larger per frame.  Use the
      * receipt-bound compositor for M11 as well, so the PRESENTS strip and
@@ -3910,11 +3928,24 @@ static int m11_play_dm1_fmtowns_title_if_available(
         if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                       M11_FB_HEIGHT) != M11_RENDER_OK) return 0;
         if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
-        if (dm1_v1_fmtowns_title_frame_wait_vblanks(frame)) {
-            ++waitedVblanks;
-            if (m11_delay_ms_with_intro_event_pump(
-                    dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks))) {
-                return 1;
+        {
+            const unsigned int frameWaitVblanks =
+                dm1_v1_fmtowns_title_frame_wait_vblanks(frame);
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr,
+                        "firestaff: startup-source-frame game=dm1 platform=fm-towns phase=title frame=%u/%u elapsed-ms=%llu source-wait-vblanks=%u\n",
+                        frame,
+                        DM1_FMTOWNS_TITLE_FINAL_FRAME + 1u,
+                        (unsigned long long)(m11_intro_active_ticks() -
+                                             titleStartedMs),
+                        frameWaitVblanks);
+            }
+            if (frameWaitVblanks) {
+                ++waitedVblanks;
+                if (m11_delay_ms_with_intro_event_pump(
+                        dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks))) {
+                    return 1;
+                }
             }
         }
     }
@@ -3944,10 +3975,26 @@ static int m11_play_dm1_fmtowns_title_if_available(
         return 0;
     }
     if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: startup-source-frame game=dm1 platform=fm-towns phase=title frame=%u/%u elapsed-ms=%llu source-wait-vblanks=0\n",
+                DM1_FMTOWNS_TITLE_FINAL_FRAME,
+                DM1_FMTOWNS_TITLE_FINAL_FRAME + 1u,
+                (unsigned long long)(m11_intro_active_ticks() -
+                                     titleStartedMs));
+    }
     /* The source's final M526_WaitVerticalBlank follows the master blit. */
     ++waitedVblanks;
     (void)m11_delay_ms_with_intro_event_pump(
         dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks));
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: startup-source-complete game=dm1 platform=fm-towns phase=title frames=%u source-vblanks=%u elapsed-ms=%llu\n",
+                DM1_FMTOWNS_TITLE_FINAL_FRAME + 1u,
+                waitedVblanks,
+                (unsigned long long)(m11_intro_active_ticks() -
+                                     titleStartedMs));
+    }
     return 1;
 }
 
@@ -7925,6 +7972,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const M11_PhaseA_Options* o;
     M11_DebugStartupTrace debugStartupTrace = {0};
     runtimeOptions = opts ? *opts : defaults;
+    g_m11_debug_startup_detail = 0;
     /* Keep the public options boundary consistent with the CLI parser:
      * requesting the interactive launcher always disables direct launch. */
     if (runtimeOptions.menuRequested) {
@@ -7988,6 +8036,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         runtimeOptions.architectureOverride < M12_ARCH_AUTO)
         runtimeOptions.architectureOverride = M12_ARCH_AUTO;
     o = &runtimeOptions;
+    g_m11_debug_startup_detail = o->debug ? 1 : 0;
     if (o->verbose && o->gameId &&
         (strcmp(o->gameId, "dm1") == 0 ||
          strcmp(o->gameId, "csb") == 0 ||
