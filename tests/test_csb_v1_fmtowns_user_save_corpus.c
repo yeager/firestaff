@@ -125,7 +125,6 @@ static void check_launcher_quick_resume(const char *data_dir,
 {
     char home_template[1024];
     char cwd[512];
-    const char* cwd_leaf;
     char config_dir[1024];
     char save_path[1024];
     M12_Config config;
@@ -136,11 +135,8 @@ static void check_launcher_quick_resume(const char *data_dir,
         CHECK(0, "test working directory is readable");
         return;
     }
-    cwd_leaf = strrchr(cwd, '/');
-    cwd_leaf = cwd_leaf ? cwd_leaf + 1 : cwd;
     if (snprintf(home_template, sizeof(home_template),
-                 "%s%s/firestaff-fmtowns-quick-resume-%ld-%u", cwd,
-                 strcmp(cwd_leaf, "build") == 0 ? "" : "/build",
+                 "%s/firestaff-fmtowns-quick-resume-%ld-%u", cwd,
                  (long)getpid(), (unsigned int)rand()) <= 0 ||
         mkdir(home_template, 0700) != 0) {
         CHECK(0, "isolated launcher HOME is created in the build directory");
