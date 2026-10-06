@@ -218,14 +218,16 @@ Reviewed 2026-10-05. Only open work is listed here.
   ID `$4a`'s `$4a81..$4a9f` paired-call loop is now independently locked to the
   authentic US and JP images, stopping before ID `$4b` at `$4aca`; immediate
   operands and runtime selection remain unassigned.
-  ID `$4c`'s `$49d3..$49da` opcode/call/terminal-jump handoff is also locked to
-  both editions; `$4bd2` effects and runtime selection remain unknown.
-  ID `$4e`'s `$4a3b..$4a41` opcode/call/relative-branch prefix is locked to both
-  editions, ending before ID `$51` at `$4a42`; the shared destination's
-  continuation and runtime selection remain open.
-  ID `$4f`'s `$4a14..$4a1a` opcode/call/relative-branch prefix is also locked to
+  ID `$4c`'s `$49d3..$49da` shared-reader/call/terminal-jump handoff is also
+  locked to both editions; `$4bd2` effects and runtime selection remain
+  unknown. ID `$4e`'s `$4a3b..$4a41` shared-reader/call/relative-branch prefix
+  is locked to both editions, ending before ID `$51` at `$4a42`; the shared
+  destination's continuation and runtime selection remain open. ID `$4f`'s
+  `$4a14..$4a1a` shared-reader/call/relative-branch prefix is also locked to
   both editions, ending before ID `$50` at `$4a1b`; its helper effects and
-  runtime selection remain unknown.
+  runtime selection remain unknown. ID `$50`'s `$4a1b..$4a3a` staged operand
+  and helper handoff is now locked to both editions, ending before ID `$4e` at
+  `$4a3b`; field meanings and helper effects remain open.
   ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its

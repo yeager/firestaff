@@ -916,23 +916,30 @@ static byte/control-flow evidence, not stream-field meaning or runtime
 selection.
 
 ID `$4c` points to `$49d3` in both authentic editions. Its eight-byte root
-`$49d3..$49da` begins with opcode/operand bytes `$44 $0c`, calls `$4bd2`, and
-ends at `$49da` with `JMP $40f5`. The assertion stops at this terminal jump; it
-does not extend into another routine or assign meaning to the called helper
-or stream selection.
+`$49d3..$49da` begins with `BSR $49e1`, calls `$4bd2`, and ends at `$49da` with
+`JMP $40f5`. The assertion stops at this terminal jump; it does not extend
+into another routine or assign meaning to the called helper or stream
+selection.
 
 ID `$4e` points to `$4a3b` in both editions. Its conservative seven-byte
-window `$4a3b..$4a41` contains opcode/operand bytes `$44 $a4`, `JSR $4ce1`, and
-a relative branch from `$4a40` back to `$49d8`. It ends immediately before the
-distinct ID `$51` target at `$4a42`; the branch destination is nearby shared
-code, but this byte lock does not claim the larger routine boundary, helper
-effects, or runtime selection.
+window `$4a3b..$4a41` contains `BSR $49e1`, `JSR $4ce1`, and a relative branch
+from `$4a40` back to `$49d8`. It ends immediately before the distinct ID `$51`
+target at `$4a42`; the branch destination is nearby shared code, but this byte
+lock does not claim the larger routine boundary, helper effects, or runtime
+selection.
 
 ID `$4f` points to `$4a14` in both authentic editions. Its seven-byte prefix
-`$4a14..$4a1a` contains opcode/operand bytes `$44 $cb`, `JSR $4c17`, and a
-relative branch from `$4a19` back to `$49d8`. It stops immediately before ID
-`$50` at `$4a1b`. This bounded source lock does not establish the shared
-destination's continuation, helper effects, or runtime selection.
+`$4a14..$4a1a` contains `BSR $49e1`, `JSR $4c17`, and a relative branch from
+`$4a19` back to `$49d8`. It stops immediately before ID `$50` at `$4a1b`. This
+bounded source lock does not establish the shared destination's continuation,
+helper effects, or runtime selection.
+
+ID `$50` points to `$4a1b` in both authentic editions. The 32-byte root
+`$4a1b..$4a3a` starts with `BSR $49e1`, copies three successive stream bytes
+into `$4ec1`, `$4ec3`, and `$4ec4`, writes `#$01` to `$4ec5`, loads `#$07`,
+calls `$4f5e`, and branches to `$49de`. Its source lock stops before ID `$4e`
+at `$4a3b`; this establishes byte-level data flow and control flow only, not
+field meanings, helper effects, or runtime selection.
 
 ID `$37` points to `$480a` in both editions. Its root `$480a..$4813` reads one
 stream byte to `$02`, calls the local helper at `$4814`, and jumps to `$40f5`.

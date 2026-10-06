@@ -1417,7 +1417,7 @@ static void test_stage2_id4c_call_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
-/* Lock ID $4e's bounded opcode/call/relative-branch handoff. */
+/* Lock ID $4e's bounded shared-reader/call/relative-branch handoff. */
 static void test_stage2_id4e_relative_handoff(const uint8_t *raw,
                                               size_t raw_size, int jp)
 {
@@ -1435,7 +1435,7 @@ static void test_stage2_id4e_relative_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
-/* Lock ID $4f's bounded opcode/call/relative-branch prefix. */
+/* Lock ID $4f's bounded shared-reader/call/relative-branch prefix. */
 static void test_stage2_id4f_relative_handoff(const uint8_t *raw,
                                               size_t raw_size, int jp)
 {
@@ -1450,6 +1450,27 @@ static void test_stage2_id4f_relative_handoff(const uint8_t *raw,
                               (uint16_t)(0x4a14u + i)) == root[i]);
     }
     printf("  PASS: stage2_id4f_relative_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $50's three-byte operand setup and bounded helper handoff. */
+static void test_stage2_id50_staged_handoff(const uint8_t *raw,
+                                             size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x44u, 0xc4u, 0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc1u, 0x4eu,
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc3u, 0x4eu, 0xc8u, 0xb1u,
+        0x1cu, 0x8du, 0xc4u, 0x4eu, 0xa9u, 0x01u, 0x8du, 0xc5u,
+        0x4eu, 0xa9u, 0x07u, 0x20u, 0x5eu, 0x4fu, 0x80u, 0xa3u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x50u)) == 0x4a1bu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4a1bu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id50_staged_handoff (%s)\n",
            jp ? "JP" : "US");
 }
 
@@ -2939,6 +2960,7 @@ int main(void)
     test_stage2_id4c_call_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4e_relative_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4f_relative_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id50_staged_handoff(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -3001,6 +3023,7 @@ int main(void)
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4f_relative_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id50_staged_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
