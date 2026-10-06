@@ -51,6 +51,33 @@
 ; $5ca7 [0x1ca7..0x1d0e), 103 bytes, SHA-256
 ;   71751098a364bed00311fd6b48634c2c2e1bf0c6055f50f5df537a5cdd525427
 ;   authentic US same-offset SHA-256 bef223bab5a90b37d4b9a5951da55008b78196d40437270c975023a8ec9e5512
+; Five immediate JP callees:
+; $5c88 [0x1c88..0x1ca2), 26 bytes, SHA-256
+;   5ae108a2e299475e33a6c72a56be7a0f419d703c57929fbe9df4bebfd6311c63
+;   authentic US same-offset SHA-256 eb5afb54414fef78cf7cbc2aa7407c434ae8a0997cde1305cadc127a18b70f49
+; $5d21 [0x1d21..0x1d32), 17 bytes, SHA-256
+;   02f3d49fa9cf11a06a6f220372022670cc98e0db853772ecd496ef51bc47c21f
+;   authentic US same-offset SHA-256 4659b425a00faa57bfe481482fa48cd4a2916e07d084334c3cc9fd50c5e5c083
+; $53e8 [0x13e8..0x143e), 86 bytes, SHA-256
+;   81acc36c484fb9f2ce4c943b51e14c0b53b6b34d8d9d824a8ec57cc225b7d11f
+;   authentic US same-offset SHA-256 bc682a356496c569da81ae079ea8890a67b7af2046bf3877e92d167aca57ee00
+; $54b3 [0x14b3..0x14fc), 73 bytes, SHA-256
+;   ce41b642ed6c3c7aa8ab082a55dfffa614f63abdc8c3c3f14b9c6caefa621cb9
+;   authentic US same-offset SHA-256 8970dda73a50340d52c762e299633b0f9eff02f4f36499d04dd3b53481e8ee62
+; $550c [0x150c..0x151a), 14 bytes, SHA-256
+;   339f772c6f8dcbb7c9f9fc79a4f874d478fd5fde518e45dcac8db863fe07bc80
+;   authentic US same-offset SHA-256 388bb1a1c7ce107b7c949479cbe2d030cbc34d9462a9ce02fdcae8835b81e993
+;
+; Three nested targets:
+; $4f7a [0x0f7a..0x0f89), 15 bytes, SHA-256
+;   11db88714da9951c34d85008c6ec0d74ae37b72ec2a2be840dd950b71f352b44
+;   authentic US same-offset SHA-256 11db88714da9951c34d85008c6ec0d74ae37b72ec2a2be840dd950b71f352b44
+; $54a7 [0x14a7..0x14b3), 12 bytes, SHA-256
+;   54b2d6ade9153429f3e4f76d7362b214ccd657f13a5d3b019c984b216db612d1
+;   authentic US same-offset SHA-256 ae2a70c2c36f290699f71d48d2e667e06ebd60d38f235916b0cc125cb0a10a92
+; $54fc [0x14fc..0x150c), 16 bytes, SHA-256
+;   cdd8875db9542719b1d117a8ae3786de3e30c967155fa6528093e8ad018faf56
+;   authentic US same-offset SHA-256 7dcc7b98ab1dcf690fcb6e9d1be238e341bf35e4778f92cc93e0e9d9f54e93a3
 ;
 ; The regional dispatch-machine receipt authenticates the JP $4f5e selector
 ; window. Its JSR $3114 at selector offset +4 is the caller for this target.
@@ -69,7 +96,9 @@
 ; complete $5ca7-to-first-RTS byte window without assigning semantics to
 ; either entry. The four spans and authentic US same-offset windows differ.
 ; No routine or game semantics, regional behavioral equivalence, or unlisted
-; nested helper behavior are claimed.
+; nested helper behavior are claimed. The `$54b3` BSR at `$54ed` reaches the
+; separately bound `$54a7` window; its BSR at `$54f4` reaches the separately
+; bound `$54fc` window. `$54fc` calls `$53d8`, which remains unbound here.
 ;
 ; HuC6280 $44 is BSR, not the 65C02 TSB interpretation. The MAME reference
 ; implementation is h6280_device::bsr() in src/devices/cpu/h6280/h6280.cpp,
@@ -371,4 +400,153 @@ $5d35:  jsr  $e063
         ply
         plx
         pla
+        rts
+
+; Immediate JSR callees from the four $31b3 target windows. Each is bounded
+; at its first RTS. Nested targets are operands, not additional evidence.
+$5c88:  dec  $4fd1
+        beq  $5c8e
+        rts
+$5c8e:  lda  $4fd2
+        eor  #$01
+        sta  $4fd2
+        beq  $5c9d
+        jsr  $5ca7
+        cla
+        rts
+$5c9d:  jsr  $5cae
+        cla
+        rts
+
+$5d21:  lda  $4fd4
+        pha
+        lda  #$07
+        sta  $4fd4
+        jsr  $4f7a
+        pla
+        sta  $4fd4
+        rts
+
+$53e8:  lda  $4fb8
+        asl  a
+        tax
+        lda  $4fd5
+        sta  $4fb9,x
+        inx
+        lda  $4fd6
+        sta  $4fb9,x
+        inc  $4fb8
+        phx
+        stz  $0e
+        stz  $0f
+        ldx  $4f8e
+$5405:  clc
+        lda  $0e
+        adc  $4f8d
+        sta  $0e
+        bcc  $5411
+        inc  $0f
+$5411:  dex
+        bne  $5405
+        asl  $0e
+        rol  $0f
+        plx
+        clc
+        lda  $0e
+        adc  $4fd5
+        sta  $0e
+        lda  $0f
+        adc  $4fd6
+        sta  $0f
+        lda  $0f
+        cmp  #$df
+        bcc  $5434
+        bne  $5434
+        lda  $0e
+        cmp  #$f0
+$5434:  bcc  $543e
+        stz  $4fb9,x
+        dex
+        stz  $4fb9,x
+        rts
+
+$54b3:  dec  $4fb8
+        lda  $4fb8
+        asl  a
+        tax
+        lda  $4fb9,x
+        sta  $04
+        inx
+        lda  $4fb9,x
+        sta  $05
+        lda  $04
+        bne  $54cf
+        lda  $05
+        bne  $54cf
+        rts
+$54cf:  lda  $04
+        sta  $4fd5
+        lda  $05
+        sta  $4fd6
+        ldy  #$04
+        lda  ($04),y
+        sta  $0e
+        iny
+        lda  ($04),y
+        sta  $0f
+        ldy  #$02
+        lda  ($04),y
+        tax
+        iny
+        lda  ($04),y
+        tay
+        bsr  $54a7
+        phy
+        phx
+        jsr  $4f7a
+        bsr  $54fc
+        plx
+        ply
+        dey
+        bne  $54ef
+        rts
+
+$550c:  asl  a
+        clc
+        adc  $04
+        sta  $04
+        bcc  $5516
+        inc  $05
+$5516:  jsr  $5251
+        rts
+
+; Nested HuC6280 targets reached by $54b3/$54fc and $5d21.
+$4f7a:  phx
+        phy
+        ldx  $4fd4
+        cly
+$4f80:  dey
+        bne  $4f80
+        dex
+        bne  $4f7f
+        ply
+        plx
+        rts
+
+$54a7:  clc
+        lda  $04
+        adc  #$06
+        sta  $04
+        bcc  $54b2
+        inc  $05
+$54b2:  rts
+
+$54fc:  phx
+        cly
+        dec  $5a
+        jsr  $551a
+        jsr  $53d8
+        stz  $5a
+        pla
+        bsr  $550c
         rts

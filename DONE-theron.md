@@ -15,6 +15,22 @@ confirmed the instruction and branch boundaries. The updated
 loops against authentic US and JP Track 02 data. JP helper semantics and
 gameplay behavior remain unproven.
 
+## 2026-10-06 — bind immediate JP callees of `$31b3` targets
+
+Extended the authenticated JP receipt to cover first-RTS byte spans for
+`$5c88` (26 bytes), `$5d21` (17), `$53e8` (86), `$54b3` (73), and `$550c` (14),
+the immediate callees reached by the four `$31b3` targets. Added exact-byte
+receipts and first/last-byte mutation rejection. All five authentic US
+same-offset windows differ. The source lock records the HuC6280 disassembly,
+exact hashes, and each span's bounds. Also bound the nested `$4f7a` (15 bytes),
+`$54a7` (12), and `$54fc` (16) windows. `$4f7a` matches authentic US bytes;
+the other seven newly bound windows differ at the same US offsets. `$53d8`
+remains an unbound nested callee. Three independent authentic-media
+extraction/disassembly loops confirmed the new windows. The updated
+`test_theron_v1_stage2_disassembly_chain` compiled on `trv2` and passed three
+loops against authentic US/JP Track 02 data, including the endpoint mutation
+checks. These byte receipts are not semantic or gameplay proof.
+
 ## 2026-10-06 — source-bind and capture the stage-two helper call
 
 Corrected the bounded `pce_fast` MPR1 probe to inspect the authentic

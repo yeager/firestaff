@@ -2676,6 +2676,22 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_JP_L5D32_BYTES 0x0fu
 #define THERON_TRACK02_IPL_STAGE2_JP_L5CA7_USER_OFFSET 0x1ca7u
 #define THERON_TRACK02_IPL_STAGE2_JP_L5CA7_BYTES 0x67u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5C88_USER_OFFSET 0x1c88u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5C88_BYTES 0x1au
+#define THERON_TRACK02_IPL_STAGE2_JP_L5D21_USER_OFFSET 0x1d21u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5D21_BYTES 0x11u
+#define THERON_TRACK02_IPL_STAGE2_JP_L53E8_USER_OFFSET 0x13e8u
+#define THERON_TRACK02_IPL_STAGE2_JP_L53E8_BYTES 0x56u
+#define THERON_TRACK02_IPL_STAGE2_JP_L54B3_USER_OFFSET 0x14b3u
+#define THERON_TRACK02_IPL_STAGE2_JP_L54B3_BYTES 0x49u
+#define THERON_TRACK02_IPL_STAGE2_JP_L550C_USER_OFFSET 0x150cu
+#define THERON_TRACK02_IPL_STAGE2_JP_L550C_BYTES 0x0eu
+#define THERON_TRACK02_IPL_STAGE2_JP_L4F7A_USER_OFFSET 0x0f7au
+#define THERON_TRACK02_IPL_STAGE2_JP_L4F7A_BYTES 0x0fu
+#define THERON_TRACK02_IPL_STAGE2_JP_L54A7_USER_OFFSET 0x14a7u
+#define THERON_TRACK02_IPL_STAGE2_JP_L54A7_BYTES 0x0cu
+#define THERON_TRACK02_IPL_STAGE2_JP_L54FC_USER_OFFSET 0x14fcu
+#define THERON_TRACK02_IPL_STAGE2_JP_L54FC_BYTES 0x10u
 
 /* L3114 near callees.  L3172 and the $117D far-helper trampoline sit
  * directly after the bound L3114 body in the low-image region (below
@@ -3514,8 +3530,8 @@ typedef struct {
  * selector plus the exact JP bytes [0x1114..0x11ce), including its
  * internal BSR targets, direct targets and immediate helper windows from
  * $52c6/$565a, and RTS-bounded or entry-to-RTS windows for all four $31b3
- * JSR targets. These byte receipts do not establish routine semantics or
- * gameplay behavior. */
+ * JSR targets and five immediate JSR targets reached from them. These byte
+ * receipts do not establish routine semantics or gameplay behavior. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -3541,6 +3557,14 @@ typedef struct {
     int l5d0e_target_proven;
     int l5d32_target_proven;
     int l5ca7_target_proven;
+    int l5c88_target_proven;
+    int l5d21_target_proven;
+    int l53e8_target_proven;
+    int l54b3_target_proven;
+    int l550c_target_proven;
+    int l4f7a_target_proven;
+    int l54a7_target_proven;
+    int l54fc_target_proven;
 } Theron_Track02Stage2JpL3114FlowReceipt;
 
 /* Receipt for the stage-two L3114-callees proof.  It binds only
