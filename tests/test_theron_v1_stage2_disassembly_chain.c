@@ -2105,6 +2105,56 @@ static void test_stage2_id2c_internal_helpers(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* The same low-memory helper window reached by the linked runtime capture
+ * exists verbatim in authentic Track 02. The CUE index and raw-sector offsets
+ * below locate bytes in the original 2352-byte BIN, not a synthetic fixture. */
+static void test_stage2_runtime_helper_media_source(const uint8_t *raw,
+                                                     size_t raw_size, int jp)
+{
+    static const uint8_t pointer_advance[] = {
+        0x18u, 0xa5u, 0x00u, 0x69u, 0x06u, 0x85u,
+        0x00u, 0x90u, 0x02u, 0xe6u, 0x01u, 0x60u
+    };
+    static const uint8_t runtime_window[] = {
+        0x44u, 0x05u, 0xb0u, 0x02u, 0x44u, 0x2bu, 0x60u, 0x9cu,
+        0xd2u, 0x37u, 0xb2u, 0x00u, 0xf0u, 0x1fu, 0xaau, 0x18u,
+        0xa5u, 0x00u, 0x69u, 0x03u, 0x85u, 0x00u, 0x90u, 0x02u,
+        0xe6u, 0x01u, 0xeeu, 0xd2u, 0x37u, 0xb2u, 0x00u, 0xcdu,
+        0xccu, 0x37u, 0xf0u, 0x0bu, 0x20u, 0x65u, 0x39u, 0xeeu,
+        0xd2u, 0x37u, 0xcau, 0xd0u, 0xf0u, 0x38u, 0x60u, 0x18u,
+        0x60u, 0xa0u, 0x02u, 0xb1u, 0x00u, 0x8du, 0xceu, 0x37u,
+        0xc8u, 0xb1u, 0x00u, 0x8du, 0xcfu, 0x37u, 0xc8u, 0xb1u,
+        0x00u, 0x8du, 0xd0u, 0x37u, 0xc8u, 0xb1u, 0x00u, 0x8du,
+        0xd1u, 0x37u, 0x60u, 0x18u, 0xadu, 0x0cu, 0x30u, 0x6du,
+        0xd0u, 0x37u, 0xadu, 0x0du, 0x30u, 0x6du, 0xd1u, 0x37u,
+        0x60u, 0x64u, 0x01u, 0xa5u, 0x1eu, 0xa2u, 0x05u, 0x4au,
+        0x66u, 0x01u, 0xcau, 0xd0u, 0xfau, 0xc9u, 0x00u, 0xd0u,
+        0x07u, 0x18u, 0xadu, 0x0du, 0x30u, 0x65u, 0x01u, 0x60u,
+        0x38u, 0x60u
+    };
+    const size_t index01_raw_sector =
+        jp ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR
+           : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR;
+    const size_t source_block_offset =
+        (index01_raw_sector + 996u) * THERON_TRACK02_RAW_SECTOR_BYTES + 373u;
+    const size_t advance_offset = source_block_offset;
+    const size_t helper_offset = source_block_offset + 0xc9u;
+
+    assert(sizeof(runtime_window) == 0x72u);
+    assert(advance_offset <= raw_size);
+    assert(sizeof(pointer_advance) <= raw_size - advance_offset);
+    assert(helper_offset <= raw_size);
+    assert(sizeof(runtime_window) <= raw_size - helper_offset);
+    for (size_t i = 0; i < sizeof(pointer_advance); ++i) {
+        assert(raw[advance_offset + i] == pointer_advance[i]);
+    }
+    for (size_t i = 0; i < sizeof(runtime_window); ++i) {
+        assert(raw[helper_offset + i] == runtime_window[i]);
+    }
+    printf("  PASS: stage2_runtime_helper_media_source (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* The adjacent slot helper shares $4ec2/$37cc with $4ec9 but calls the
  * below-window $3879 routine, whose behavior remains outside this lock. */
 static void test_stage2_shared_slot_helpers(const uint8_t *raw,
@@ -3129,7 +3179,11 @@ int main(void)
     }
 
     test_ipl_loader();
-    if (g_jp_data) test_ipl_loader_jp();
+    test_stage2_runtime_helper_media_source(g_us_data, g_us_size, 0);
+    if (g_jp_data) {
+        test_ipl_loader_jp();
+        test_stage2_runtime_helper_media_source(g_jp_data, g_jp_size, 1);
+    }
     test_stage2_selector_candidate_continuations(
         g_us_data, g_us_size, 0);
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);

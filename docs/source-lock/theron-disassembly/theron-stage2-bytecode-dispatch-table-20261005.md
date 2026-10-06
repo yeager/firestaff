@@ -566,11 +566,19 @@ bounded HuC6280 byte decode of authentic JP and US runtime snapshots at logical
 `$3a2e..$3a9f` (MPR1 `$f8`, physical `$1f1a2e`, BaseRAM offset `$1a2e`). The
 entire 114-byte window is byte-identical in both regional snapshots
 (SHA-256 `849e8e9780242358f48aaa51ce3695fc18a2687988e68e61430b5da727872fa0`).
-It is not a static retail Track 02 listing and does not label the data
-structures.
+The same window occurs verbatim in the authentic raw Track 02 BINs: US byte
+offset `2872366`, JP byte offset `2870014`. The 12-byte `$3965` pointer helper
+begins at raw offsets `2872165` (US) and `2869813` (JP). The regression
+`test_stage2_runtime_helper_media_source` derives these locations from the
+authentic CUE `INDEX 01` sector plus the measured sector/in-sector offsets and
+checks both regions directly; it passed three CTest loops on `trv2` against
+the hash-verified original US/JP media. This locks the decoded bytes to the
+original media as well as the runtime snapshots, but does not establish the
+loader's copy/provenance path or label the record fields.
 
 ```asm
-; Authentic JP/US cold-start PCE Fast BaseRAM snapshots, logical $3a2e..
+; Authentic JP/US raw Track 02 bytes and cold-start BaseRAM snapshots
+; Logical $3a2e..; raw BIN offsets: US $2bd42e, JP $2bcafe
 ; Linked execution receipt: caller $4ed4, MPR1=$f8, physical $1f1a2e
 L3a2e:  bsr     L3a35
         bcs     L3a34

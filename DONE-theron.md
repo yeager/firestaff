@@ -19,12 +19,15 @@ at offset `$1a2e`. The US and JP target windows are byte-identical
 (SHA-256 `4fa8ce8e5012aa6eab9fa2e8b07c60ee60ce21aa2933fcddec3ef61943ace3f2`);
 the entire 114-byte `$3a2e..$3a9f` decode window is also byte-identical
 (SHA-256 `849e8e9780242358f48aaa51ce3695fc18a2687988e68e61430b5da727872fa0`),
-as is the 12-byte `$3965` helper. A bounded byte/dataflow
-disassembly of the captured `$3a2e..$3a9f` runtime window and its `$3965`
+as is the 12-byte `$3965` helper. `test_stage2_runtime_helper_media_source`
+now locks the helper and window directly against authentic Track 02 raw BIN
+offsets for both regions; it passed three CTest loops on `trv2`. A bounded
+byte/dataflow disassembly of the runtime/source window and its `$3965`
 pointer-advance helper is recorded in
 `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
-This is runtime-RAM evidence, not a static ROM source lock; it proves US/JP
-parity only for the tested cold-start route, not all platforms or paths.
+The matching raw bytes and runtime snapshots establish US/JP parity only for
+the tested cold-start route, not all platforms or paths. The loader's copy
+provenance is not inferred.
 Record meanings and the caller's game-level interpretation remain open. Both
 replays applied all three scripted controller events, but strict
 input-consumption verification blocked because the final event had no later

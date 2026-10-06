@@ -87,20 +87,22 @@ Reviewed 2026-10-06. Only open work is listed here.
   their shared `$41f8` operand reader, indexed store/add/subtract/increment/
   decrement instructions, and the `$40f9`/`$40f5` cursor tails. `$2780` entry
   meanings and retail stream execution remain unassigned.
-- 🔒 The linked authentic JP cold-start receipt and same-instant BaseRAM
-  snapshot now provide a bounded byte decode of `$3a2e..$3a9f`; the listing is
-  in `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
-  It is runtime RAM evidence, not a static ROM source lock, and does not
-  establish US/JP parity, full caller conditions, or game-level meanings.
-  The matched/empty/exhausted carry paths and `$37ce..$37d1` copy are decoded
-  at instruction/dataflow level. `$4ec9` uses carry-set to branch around the
-  copy; whether that represents failure, absence, or another game-level
-  condition, and what the fields represent, remain open. `$3879` is still
-  below the loaded stage-two
-  window and undecoded.
-- 🔒 The three replay events were applied during the linked capture, but strict
+- ✅ The linked authentic JP and US cold-start receipts and same-session
+  BaseRAM snapshots provide a bounded byte decode of `$3a2e..$3a9f`. The 114
+  bytes match verbatim in the raw Track 02 BINs at US offset `2872366` and JP
+  offset `2870014`; the `$3965` helper also matches raw media in both regions.
+  `test_stage2_runtime_helper_media_source` source-locks these slices and
+  passed three authentic-media CTest loops on `trv2`. This proves parity only
+  for the tested cold-start route, not full caller conditions or game-level
+  meanings. See
+  `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
+- 🔒 `$4ec9` branches around the four-byte copy when carry is set and copies
+  on carry-clear. Whether that control result represents failure, absence, or
+  another game-level condition, and what the fields represent, remain open.
+- 🔒 `$3879` is still below the loaded stage-two window and undecoded.
+- 🔒 Both US and JP linked captures applied all three replay events, but strict
   input verification blocked because the final event had no subsequent
-  controller-port read exposing its mask. Do not treat that capture as proof
+  controller-port read exposing its mask. Do not treat those captures as proof
   the input changed game state. Earlier F5-state recaptures and their
   controller-port evidence remain separate, route-limited observations; see
   the source-lock document for capture distinctions.
@@ -286,9 +288,9 @@ Reviewed 2026-10-06. Only open work is listed here.
   candidate reaches ID `$11` or close the counter-poll producer gap. ID `$2c`
   is source-locked through its `$3ab7` call and fixed five-byte cursor step;
   `$4ec9` and `$4f31` are now bounded and byte-locked. `$3a2e` and `$3ab7`
-  remain below this stage-two image; `$3a2e` has a separate bounded JP
-  runtime-RAM decode, but not a static retail-image source lock or semantic
-  contract. `$3ab7` remains undecoded.
+  remain below this stage-two image; `$3a2e` has a US/JP raw-Track-02 source
+  lock and bounded runtime decode, but no game-level semantic contract.
+  `$3ab7` remains undecoded.
   See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 
