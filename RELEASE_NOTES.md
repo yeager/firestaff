@@ -1,3 +1,31 @@
+# Firestaff v3.0.362
+
+## User-facing changes
+
+- `--debug startup diagnostics`: adds startup roots, selected platform and
+  edition, source animation frames, and source timing to command-line output.
+- `M12 Continue`: restores Quick Resume visibility and selection in the
+  original compact launcher layout when a compatible save is available.
+
+## Developer changes
+
+- `DM1 PC 3.4 startup`: rejects the launch when the required source SWSH
+  prelude is missing or fails, instead of reporting a successful runtime
+  handoff after an incomplete title sequence.
+- `DM1 FM Towns title`: corrects source text geometry and records source-timed
+  title frame diagnostics for original-media checks.
+- `M12 launcher artwork`: replaces generated C arrays with exact RGB source
+  assets for the DM1, CSB and DM2 cards, logo and rail, reducing generated
+  source size without changing the shipped pixels.
+
+## Known limitations
+
+- Physical MacBook Pro M5 Retina viewport and HUD behavior remains unverified.
+  DM2 FM Towns still lacks the source-owned live champion GUI/HUD path.
+- DM1, CSB and DM2 visual parity against same-state original captures remains
+  open. CSB FM Towns startup retains the authenticated `MINI.DAT` start state,
+  including its adjacent groups.
+
 # Firestaff v3.0.361
 
 ## Developer changes
