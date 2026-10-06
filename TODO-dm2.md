@@ -2,6 +2,20 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Implement the source-owned live HUD for DM2 FM Towns. The authenticated
+  runtime currently accepts a dungeon frame without a consumed HUD plan:
+  `dm2_v1_runtime.c` explicitly clears the requirement when the Towns plan is
+  incomplete, while M11 renders only the leader-hand name and save dialogue.
+  The real-media test asserts that this HUD plan is absent. SKProject
+  `c_gui_draw.cpp:390-411` crops the live champion portrait from
+  `INTERFACE_GENERAL/6/<heroIndex>` into RECT `0x5e`; its live dialogue path
+  uses `/2/0` at lines 1732-1768. Bind those draws to authenticated session,
+  hero and destination state, then require consumed source-material commands
+  in the real-media runtime test. Do not treat static Towns chrome or a
+  nonblank viewport as evidence that the runtime HUD is complete. This is a
+  known explanation for the reported broken Towns HUD; it does not establish
+  whether the separate M5 Retina viewport appearance is correct.
+
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,
   then click New Game and the first mirror with native mouse input. A local
