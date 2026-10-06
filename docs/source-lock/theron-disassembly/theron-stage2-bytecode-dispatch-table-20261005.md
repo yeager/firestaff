@@ -303,12 +303,16 @@ root, the bytes read the next `$1c` byte, clear and compare `$3b33`, loop on
 the carry branch, then advance by two. Because `$468f` overlaps a different
 linear decode, this is root-specific byte/control-flow evidence only; the
 counter's role and stream execution remain unknown.
-The `stage2_id2e_bounded_windows` assertion locks the `$4169` dispatch word
-and selected authentic windows: the `$46ca` branch/MPR prefix, alternate
-`$474a..$4769` BIOS-call path, `$476a..$4788` local pair loop, and
-`$4789..$4793` operand reader. It does not lock the entire `$46ca` branch or
-its long BIOS setup path. BIOS/callee effects, bank mapping, `$0060` table
-contents, and runtime selection remain unresolved.
+The `stage2_id2e_bounded_windows` assertion locks the `$4169` dispatch word,
+the complete main branch `$46ca..$4749`, alternate `$474a..$4769` BIOS-call
+path, `$476a..$4788` local pair loop, and `$4789..$4793` operand reader against
+both editions. On the main branch, the handler saves MPRs selected by masks
+`$08/$10`, derives replacement values from `$fff5 + 6`, calls `$43d6` and
+`$37d8`, passes pointer `$6000` to `$383e`, then stages BIOS-call bytes in
+`$f8/$f9/$ff` before the local pair loop and a final BIOS call. It restores the
+saved MPRs before jumping to `$40f9`. This describes only the source-level
+register, memory, call, and cursor sequence: BIOS/callee effects, bank mapping,
+`$0060` table contents, and runtime selection remain unresolved.
 The `stage2_id2f_parameter_handoff` assertion locks index `$2f` at `$4794`
 through `$40f5` (`+2`) in both editions. It loads the following stream byte
 into `$f8`, sets `$ff` to `$0b`, then calls `$e0d8` and `$4b2d`. This is only
@@ -1012,13 +1016,16 @@ field meanings, helper effects, or runtime selection.
 ID `$37` points to `$480a` in both editions. Its root `$480a..$4813` reads one
 stream byte to `$02`, calls the local helper at `$4814`, and jumps to `$40f5`.
 The helper window `$4814..$4841` is byte-identical in the authentic US and JP
-images; it constructs operands from the byte in `$02`, calls `$383e`, and
-returns. The source-lock test binds the table pointer and both byte windows.
-No semantic meaning is assigned to the written zero-page values or to `$383e`,
-whose effects and relation to a valid retail stream remain unproven. At `$4820`
-the listing's alternate overlapping decode lands inside the preceding `LDA`
-operand, so the bounded raw bytes, not a linear disassembly interpretation,
-are the asserted evidence.
+images. It adds the byte in `$02` to the three bytes beginning at `$37d4`, with
+carry propagation across the next two bytes, and stores the resulting low-to-
+high bytes at `$24,$23,$22`. It then writes `$2800` to `$20/$21`, sets `$1e`
+and `$25` to one, calls `$383e`, and returns. The source-lock test binds the
+table pointer and both byte windows. This is only the visible arithmetic and
+argument staging: it does not reveal the contents or role of `$37d4..$37d6`,
+the meaning of the zero-page values, `$383e`'s effects, or relation to a valid
+retail stream. At `$4820` the listing's alternate overlapping decode lands
+inside the preceding `LDA` operand, so the bounded raw bytes, not a linear
+disassembly interpretation, are the asserted evidence.
 
 ID `$38` points to `$47f3` in both editions. Its 23-byte root
 `$47f3..$4809` reads three successive stream bytes into `$0e`, `$10`, and

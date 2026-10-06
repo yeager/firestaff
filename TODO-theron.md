@@ -89,7 +89,11 @@ Reviewed 2026-10-05. Only open work is listed here.
   Indices `$22/$24` and adjacent `$25/$26` roots and bounded helper/cursor
   windows are also byte-locked to both editions. ID `$22`'s `$4240..$4252`
   helper is now included through its `$37d8` and `$383e` call sites; those
-  callees, helper effects, and runtime selection remain unknown.
+  callees, helper effects, and runtime selection remain unknown. ID `$37`'s
+  `$4814` helper now has a bounded carry-propagation trace for its `$37d4`
+  three-byte source plus stream offset `$02`, before staging `$2800` and
+  selectors `$1e/$25` for `$383e`; source bytes `$37d4..$37d6` are still
+  unbound.
   Indices `$0b..$10` have indexed-byte/nested-cursor traces; the `$09` return
   byte, `$0a` root, and `$10` nested cursor handler are now byte-locked in both
   authentic editions.
@@ -121,10 +125,10 @@ Reviewed 2026-10-05. Only open work is listed here.
   effects, `$4b3c` table meaning, and runtime selection remain unknown. ID
   `$2d`'s overlapping `$468f` poll/cursor path is also byte-locked in both
   regions; counter meaning and retail stream execution remain unbound. ID
-  `$2e` now has partial US/JP byte locks for its branch prefix, alternate BIOS
-  path, local pair loop, and operand reader. Its main initialization path,
-  BIOS/callee effects, bank mapping, table contents, and retail selection
-  remain open. ID `$2f` at `$4794` is now byte-locked through its `$40f5`
+  `$2e` now has US/JP byte locks for its complete `$46ca..$4749` main branch,
+  alternate BIOS path, local pair loop, and operand reader. BIOS/callee
+  effects, bank mapping, table contents, and retail selection remain open.
+  ID `$2f` at `$4794` is now byte-locked through its `$40f5`
   cursor tail; both callee effects and actual stream selection remain unknown.
   ID `$30`'s overlap window `$47a6..$47c4` is also byte-locked in both
   regions; BIOS effects and retail stream selection remain unknown. ID `$31`
