@@ -1645,7 +1645,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 104;
+    int panelH = 132;
     int panelX;
     int panelY;
     int percent = 0;
@@ -1654,7 +1654,8 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     int barW;
     int fillW;
     char text[256];
-    ModernTextStyle title = text_style_make(4, COLOR_TEXT(), 1);
+    ModernTextStyle title = text_style_make(
+        c && c->w >= 960 ? 5 : 4, COLOR_TEXT(), 2);
     ModernTextStyle detail = text_style_make(2, COLOR_TEXT_DIM(), 1);
 
     if (!c || !progress) {
@@ -1668,14 +1669,14 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     if (percent > 100) percent = 100;
 
     panelW = c->w - 48;
-    if (panelW > 600) panelW = 600;
+    if (panelW > 760) panelW = 760;
     if (panelW < 240) panelW = c->w - 24;
     panelX = (c->w - panelW) / 2;
     /* Keep the scan card in the lower-middle across both the normal 1080p
      * launcher and compact test/window sizes. A fixed bottom offset pushed
      * it almost to the footer on large screens and into the upper half on
      * short screens. */
-    panelY = (c->h * 66) / 100;
+    panelY = (c->h * 70) / 100;
     if (panelY + panelH > c->h - 18) panelY = c->h - panelH - 18;
     if (panelY < 12) panelY = 12;
     label = M12_StartupMenu_TranslateForLocale(
@@ -1690,29 +1691,29 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     snprintf(text, sizeof(text), "%s  %d%%", label, percent);
 
     draw_panel(c, panelX, panelY, panelW, panelH,
-               rgb(16, 14, 30), COLOR_PANEL_EDGE(), 12);
-    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 12, text,
-                           &title, panelW - 28);
+               rgb(16, 14, 30), COLOR_PANEL_EDGE(), 16);
+    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 16, text,
+                           &title, panelW - 32);
     if (gameTitle[0]) {
         char detailText[160];
         const char* task = M12_StartupMenu_ScanTaskDisplayForLocale(
             languageIndex, progress->currentTask);
         snprintf(detailText, sizeof(detailText), "%s%s%s", gameTitle,
                  task[0] ? "  ·  " : "", task);
-        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 48,
+        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 63,
                                detailText, &detail, panelW - 28);
     }
     barX = panelX + 18;
-    barY = panelY + 78;
+    barY = panelY + 96;
     barW = panelW - 36;
     fillW = (barW * percent) / 100;
-    fill_rounded_rect(c, barX, barY, barW, 14, 6, rgb(37, 35, 54));
+    fill_rounded_rect(c, barX, barY, barW, 18, 8, rgb(37, 35, 54));
     if (fillW > 0) {
-        fill_rounded_rect(c, barX, barY, fillW, 14, 6,
+        fill_rounded_rect(c, barX, barY, fillW, 18, 8,
                           cancelRequested
                               ? COLOR_WARN() : COLOR_ACCENT());
     }
-    stroke_rounded_rect(c, barX, barY, barW, 14, 6, COLOR_PANEL_EDGE());
+    stroke_rounded_rect(c, barX, barY, barW, 18, 8, COLOR_PANEL_EDGE());
 }
 
 void M12_ModernMenu_RenderScanProgressLocalized(
