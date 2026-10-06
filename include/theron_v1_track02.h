@@ -2658,6 +2658,16 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_JP_L52C6_BYTES 0x13u
 #define THERON_TRACK02_IPL_STAGE2_JP_L565A_USER_OFFSET 0x165au
 #define THERON_TRACK02_IPL_STAGE2_JP_L565A_BYTES 0x08u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5237_USER_OFFSET 0x1237u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5237_BYTES 0x1au
+#define THERON_TRACK02_IPL_STAGE2_JP_L551A_USER_OFFSET 0x151au
+#define THERON_TRACK02_IPL_STAGE2_JP_L551A_BYTES 0x0fu
+#define THERON_TRACK02_IPL_STAGE2_JP_L5662_USER_OFFSET 0x1662u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5662_BYTES 0x07u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5670_USER_OFFSET 0x1670u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5670_BYTES 0x0au
+#define THERON_TRACK02_IPL_STAGE2_JP_L567A_USER_OFFSET 0x167au
+#define THERON_TRACK02_IPL_STAGE2_JP_L567A_BYTES 0x0bu
 
 /* L3114 near callees.  L3172 and the $117D far-helper trampoline sit
  * directly after the bound L3114 body in the low-image region (below
@@ -3494,9 +3504,9 @@ typedef struct {
 
 /* Receipt for the JP-only static $3114 flow. It binds the shared $4f5e
  * selector plus the exact JP bytes [0x1114..0x11ce), including its
- * internal BSR targets, and exact $4f66, $5529, $553f, $5251, $52c6 and
- * $565a target windows called from it. Edges from these targets and all
- * routine semantics remain unbound. */
+ * internal BSR targets, direct targets and immediate helper windows from
+ * $52c6/$565a. The four $31b3 JSR targets and all routine semantics remain
+ * unbound. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -3513,6 +3523,11 @@ typedef struct {
     int l5251_target_proven;
     int l52c6_target_proven;
     int l565a_target_proven;
+    int l5237_target_proven;
+    int l551a_target_proven;
+    int l5662_target_proven;
+    int l5670_target_proven;
+    int l567a_target_proven;
 } Theron_Track02Stage2JpL3114FlowReceipt;
 
 /* Receipt for the stage-two L3114-callees proof.  It binds only
@@ -4144,9 +4159,9 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
     Theron_Track02Stage2L4696Receipt *out_receipt);
 
 /* Verifies the authenticated JP-only $3114 control-flow byte window
- * [0x1114..0x11ce), its exact $4f66, $5529, $553f, $5251, $52c6 and $565a
- * JSR target windows, and the regional dispatch-machine receipt for its
- * $4f5e selector caller. Edges beyond these target windows remain
+ * [0x1114..0x11ce), exact JSR target windows, immediate helper windows
+ * reached from $52c6/$565a and the regional dispatch-machine receipt for
+ * its $4f5e selector caller. Edges beyond these target windows remain
  * uncovered. The listing is in
  * docs/source-lock/theron-disassembly/theron-jp-stage2-l3114-huc6280.asm;
  * no routine or game semantics are asserted. */
