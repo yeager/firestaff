@@ -125,7 +125,11 @@ static void check_launcher_quick_resume(const char *data_dir,
 {
     char home_template[1024];
     char cwd[512];
-    char config_dir[1024];
+    char config_path[1024];
+    char config_tmp_path[1024];
+    char cache_dir[1024];
+    char cache_path[1024];
+    char firestaff_dir[1024];
     char save_path[1024];
     M12_Config config;
     M12_StartupMenuState menu;
@@ -142,16 +146,23 @@ static void check_launcher_quick_resume(const char *data_dir,
         CHECK(0, "isolated launcher HOME is created in the build directory");
         return;
     }
-    CHECK(setenv("HOME", home_template, 1) == 0,
-          "launcher test redirects configuration to its private HOME");
-    if (snprintf(config_dir, sizeof(config_dir), "%s/.firestaff",
+    if (snprintf(config_path, sizeof(config_path), "%s/startup-menu.toml",
                  home_template) <= 0 ||
-        mkdir(config_dir, 0700) != 0 ||
+        snprintf(config_tmp_path, sizeof(config_tmp_path), "%s.tmp",
+                 config_path) <= 0 ||
+        snprintf(firestaff_dir, sizeof(firestaff_dir), "%s/.firestaff",
+                 home_template) <= 0 ||
+        snprintf(cache_dir, sizeof(cache_dir), "%s/cache", firestaff_dir) <= 0 ||
+        snprintf(cache_path, sizeof(cache_path), "%s/asset_scan_cache.dat",
+                 cache_dir) <= 0 ||
         snprintf(save_path, sizeof(save_path), "%s/CSBGAME-JP.DAT",
                  corpus_dir) <= 0) {
-        CHECK(0, "private launcher config and save paths are prepared");
+        CHECK(0, "private launcher config, cache and save paths are prepared");
         return;
     }
+    CHECK(setenv("HOME", home_template, 1) == 0 &&
+              setenv("FIRESTAFF_CONFIG_PATH", config_path, 1) == 0,
+          "launcher test redirects configuration to its private HOME");
     M12_Config_Load(&config, data_dir);
     snprintf(config.dataDir, sizeof(config.dataDir), "%s", data_dir);
     snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", save_path);
@@ -180,6 +191,21 @@ static void check_launcher_quick_resume(const char *data_dir,
     M12_StartupMenu_InitWithDataDir(&menu, data_dir, "csb");
     CHECK(!menu.quickResumeAvailable,
           "M12 continues to reject the incoherent F31E candidate");
+
+    CHECK(remove(config_path) == 0 || access(config_path, F_OK) != 0,
+          "private launcher config is removed");
+    CHECK(remove(config_tmp_path) == 0 || access(config_tmp_path, F_OK) != 0,
+          "private launcher temporary config is removed");
+    CHECK(remove(cache_path) == 0 || access(cache_path, F_OK) != 0,
+          "private launcher asset cache is removed");
+    CHECK(rmdir(cache_dir) == 0 || access(cache_dir, F_OK) != 0,
+          "private launcher cache directory is removed");
+    CHECK(rmdir(firestaff_dir) == 0 || access(firestaff_dir, F_OK) != 0,
+          "private launcher data directory is removed");
+    CHECK(rmdir(home_template) == 0 || access(home_template, F_OK) != 0,
+          "isolated launcher HOME is removed");
+    CHECK(unsetenv("FIRESTAFF_CONFIG_PATH") == 0,
+          "launcher test clears its private config override");
 }
 
 int main(void)
