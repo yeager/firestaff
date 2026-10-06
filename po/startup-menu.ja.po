@@ -65,7 +65,7 @@ msgid "GAME"
 msgstr "ゲーム"
 
 #: src/ui/menu_startup_m12.c:263 src/ui/menu_startup_m12.c:5597
-#: src/ui/menu_startup_m12.c:10638
+#: src/ui/menu_startup_m12.c:10663
 msgid "GRAPHICS"
 msgstr "グラフィック"
 
@@ -544,16 +544,16 @@ msgstr "CSB ユーティリティディスク (FM TOWNS)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB ユーティリティ ディスク — ヒント オラクル"
 
-#: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:11480
-#: src/ui/menu_startup_m12.c:11483 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:11505
+#: src/ui/menu_startup_m12.c:11508 src/ui/menu_startup_render_modern_m12.c:1753
 #: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "伝承の博物館"
 
 #: src/ui/menu_startup_m12.c:793 src/ui/menu_startup_m12.c:8458
 #: src/ui/menu_startup_m12.c:9027 src/ui/menu_startup_m12.c:10299
-#: src/ui/menu_startup_m12.c:11515 src/ui/menu_startup_m12.c:11518
-#: src/ui/menu_startup_m12.c:11663
+#: src/ui/menu_startup_m12.c:11540 src/ui/menu_startup_m12.c:11543
+#: src/ui/menu_startup_m12.c:11688
 msgid "SETTINGS"
 msgstr "設定"
 
@@ -773,8 +773,8 @@ msgstr "V1 は基準となる挙動を保持する"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "クリストフ・フォンタネルが貴重な歴史を記録した"
 
-#: src/ui/menu_startup_m12.c:839 src/ui/menu_startup_m12.c:11497
-#: src/ui/menu_startup_m12.c:11500
+#: src/ui/menu_startup_m12.c:839 src/ui/menu_startup_m12.c:11522
+#: src/ui/menu_startup_m12.c:11525
 msgid "CREDITS"
 msgstr "クレジット"
 
@@ -918,8 +918,8 @@ msgstr "上下で移動   ENTERで開く   ESCで終了"
 msgid "PERSISTED OPTIONS"
 msgstr "保存されたオプション"
 
-#: src/ui/menu_startup_m12.c:1063 src/ui/menu_startup_m12.c:10636
-#: src/ui/menu_startup_m12.c:12707
+#: src/ui/menu_startup_m12.c:1063 src/ui/menu_startup_m12.c:10661
+#: src/ui/menu_startup_m12.c:12732
 msgid "LANGUAGE"
 msgstr "言語"
 
@@ -1122,7 +1122,7 @@ msgstr "データディレクトリは変更されていません"
 
 #: src/ui/menu_startup_m12.c:2289 src/ui/menu_startup_m12.c:2387
 #: src/ui/menu_startup_m12.c:2553 src/ui/menu_startup_m12.c:2604
-#: src/ui/menu_startup_m12.c:13439
+#: src/ui/menu_startup_m12.c:13464
 msgid "SCANNING GAME DATA"
 msgstr "ゲームデータをスキャン中"
 
@@ -1139,19 +1139,19 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr "ゲームデータが見つかりません"
 
 #: src/ui/menu_startup_m12.c:2519 src/ui/menu_startup_m12.c:2589
-#: src/ui/menu_startup_m12.c:2635 src/ui/menu_startup_m12.c:13408
+#: src/ui/menu_startup_m12.c:2635 src/ui/menu_startup_m12.c:13433
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "既存のフォルダーを選択してください"
 
-#: src/ui/menu_startup_m12.c:2631 src/ui/menu_startup_m12.c:13404
+#: src/ui/menu_startup_m12.c:2631 src/ui/menu_startup_m12.c:13429
 msgid "DATA SCAN CANCELLED"
 msgstr "データスキャンがキャンセルされました"
 
-#: src/ui/menu_startup_m12.c:2632 src/ui/menu_startup_m12.c:13405
+#: src/ui/menu_startup_m12.c:2632 src/ui/menu_startup_m12.c:13430
 msgid "DATA SCAN FAILED"
 msgstr "データスキャンに失敗しました"
 
-#: src/ui/menu_startup_m12.c:2634 src/ui/menu_startup_m12.c:13407
+#: src/ui/menu_startup_m12.c:2634 src/ui/menu_startup_m12.c:13432
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "ゲームの可用性は更新されませんでした"
 
@@ -1183,7 +1183,7 @@ msgstr "PC34 エクスポートに失敗しました"
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "クイックレジュームを確認 保存"
 
-#: src/ui/menu_startup_m12.c:2812 src/ui/menu_startup_m12.c:12996
+#: src/ui/menu_startup_m12.c:2812 src/ui/menu_startup_m12.c:13021
 msgid "NO SAVES FOUND"
 msgstr "ゲームデータが見つかりません"
 
@@ -1224,7 +1224,7 @@ msgid "CUSTOM MUSIC"
 msgstr "カスタム"
 
 #: src/ui/menu_startup_m12.c:3175 src/ui/menu_startup_m12.c:3184
-#: src/ui/menu_startup_m12.c:13231 src/ui/menu_startup_m12.c:13236
+#: src/ui/menu_startup_m12.c:13256 src/ui/menu_startup_m12.c:13261
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
 msgstr "CUSTOM MUSIC FOLDER UNCHANGED"
 
@@ -1247,7 +1247,7 @@ msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "幅広い TTF または OTF フォントを選択してください"
 
 #: src/ui/menu_startup_m12.c:3212 src/ui/menu_startup_m12.c:3220
-#: src/ui/menu_startup_m12.c:13268
+#: src/ui/menu_startup_m12.c:13293
 msgid "UNICODE FONT UNCHANGED"
 msgstr "Unicode フォントは変更されません"
 
@@ -1260,7 +1260,7 @@ msgid "SELECT A .FSART FILE"
 msgstr "行き先を選択"
 
 #: src/ui/menu_startup_m12.c:3270 src/ui/menu_startup_m12.c:3278
-#: src/ui/menu_startup_m12.c:13309
+#: src/ui/menu_startup_m12.c:13334
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 アートパックは変更されていません"
 
@@ -1288,7 +1288,7 @@ msgstr "設定"
 msgid "SCALE"
 msgstr "スケール"
 
-#: src/ui/menu_startup_m12.c:5442 src/ui/menu_startup_m12.c:12755
+#: src/ui/menu_startup_m12.c:5442 src/ui/menu_startup_m12.c:12780
 msgid "ASPECT RATIO"
 msgstr "アスペクト比"
 
@@ -1424,7 +1424,7 @@ msgstr "レトロアチーブメント API トークン"
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "レトロアチーブメントサーバー"
 
-#: src/ui/menu_startup_m12.c:5477 src/ui/menu_startup_m12.c:12951
+#: src/ui/menu_startup_m12.c:5477 src/ui/menu_startup_m12.c:12976
 msgid "SAVE BROWSER"
 msgstr "ブラウザを保存"
 
@@ -1512,7 +1512,7 @@ msgstr "読む..."
 msgid "GENERAL"
 msgstr "全般"
 
-#: src/ui/menu_startup_m12.c:5600 src/ui/menu_startup_m12.c:12646
+#: src/ui/menu_startup_m12.c:5600 src/ui/menu_startup_m12.c:12671
 msgid "RENDERER"
 msgstr "レンダラー"
 
@@ -1742,91 +1742,91 @@ msgstr "Escape 戻る  |  上下 移動  |  Enter 開く"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > タブ切替   上下 移動   Enter 変更"
 
-#: src/ui/menu_startup_m12.c:12623
+#: src/ui/menu_startup_m12.c:12648
 msgid "GAME OPTIONS"
 msgstr "ゲームオプション"
 
-#: src/ui/menu_startup_m12.c:12660
+#: src/ui/menu_startup_m12.c:12685
 msgid "ARCHITECTURE"
 msgstr "アーカイブ状況"
 
-#: src/ui/menu_startup_m12.c:12673
+#: src/ui/menu_startup_m12.c:12698
 msgid "VERSION"
 msgstr "バージョン"
 
-#: src/ui/menu_startup_m12.c:12694
+#: src/ui/menu_startup_m12.c:12719
 msgid "PATCH"
 msgstr "パッチ"
 
-#: src/ui/menu_startup_m12.c:12720
+#: src/ui/menu_startup_m12.c:12745
 msgid "CHEATS"
 msgstr "チート"
 
-#: src/ui/menu_startup_m12.c:12733
+#: src/ui/menu_startup_m12.c:12758
 msgid "SPEED"
 msgstr "速度"
 
-#: src/ui/menu_startup_m12.c:12745
+#: src/ui/menu_startup_m12.c:12770
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "チートを有効にすると速度／ホットキーが解放されます"
 
-#: src/ui/menu_startup_m12.c:12767
+#: src/ui/menu_startup_m12.c:12792
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "V1 オリジナルモードによりロック中"
 
-#: src/ui/menu_startup_m12.c:12777
+#: src/ui/menu_startup_m12.c:12802
 msgid "RESOLUTION"
 msgstr "解像度"
 
-#: src/ui/menu_startup_m12.c:12791
+#: src/ui/menu_startup_m12.c:12816
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "V1 オリジナルモードによりロック中"
 
-#: src/ui/menu_startup_m12.c:12812
+#: src/ui/menu_startup_m12.c:12837
 msgid "> DATA FILES NOT FOUND"
 msgstr "オリジナルファイルが見つかりません"
 
-#: src/ui/menu_startup_m12.c:12814
+#: src/ui/menu_startup_m12.c:12839
 msgid "> RENDERER UNAVAILABLE"
 msgstr "レンダラーバックエンドが利用できません"
 
-#: src/ui/menu_startup_m12.c:12815
+#: src/ui/menu_startup_m12.c:12840
 msgid "> LAUNCH"
 msgstr "> 起動"
 
-#: src/ui/menu_startup_m12.c:12828
+#: src/ui/menu_startup_m12.c:12853
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: 戻る  矢印キー: 移動  ENTER: 選択"
 
-#: src/ui/menu_startup_m12.c:13226
+#: src/ui/menu_startup_m12.c:13251
 msgid "CUSTOM MUSIC FOLDER SELECTED"
 msgstr "CUSTOM MUSIC FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13232
+#: src/ui/menu_startup_m12.c:13257
 msgid "NO FOLDER SELECTED"
 msgstr "NO FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13237
+#: src/ui/menu_startup_m12.c:13262
 msgid "FOLDER MISSING OR PATH TOO LONG"
 msgstr "FOLDER MISSING OR PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13262
+#: src/ui/menu_startup_m12.c:13287
 msgid "UNICODE FONT SELECTED"
 msgstr "UNICODEフォントが選択されました"
 
-#: src/ui/menu_startup_m12.c:13270 src/ui/menu_startup_m12.c:13311
+#: src/ui/menu_startup_m12.c:13295 src/ui/menu_startup_m12.c:13336
 msgid "NO FILE SELECTED"
 msgstr "ファイルが選択されていません"
 
-#: src/ui/menu_startup_m12.c:13271 src/ui/menu_startup_m12.c:13312
+#: src/ui/menu_startup_m12.c:13296 src/ui/menu_startup_m12.c:13337
 msgid "FILE PATH TOO LONG"
 msgstr "FILE PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13296
+#: src/ui/menu_startup_m12.c:13321
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 アートパックが選択されました"
 
-#: src/ui/menu_startup_m12.c:13302
+#: src/ui/menu_startup_m12.c:13327
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 アートパックが拒否されました"
 
