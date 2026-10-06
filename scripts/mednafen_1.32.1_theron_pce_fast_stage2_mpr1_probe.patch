@@ -37,7 +37,7 @@
 + }
 + if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
 +  stage2_mpr1_call_pending = 0;
-+ if(stage2_probe_pc == 0x4ed2)
++ if(stage2_probe_pc == 0x4ed4)
 + {
 +  const uint8 *caller = (const uint8 *)(HuCPU.FastPageR[2] + stage2_probe_pc);
 +  const uint32 caller_mpr2 = HuCPU.MPR[2];
@@ -91,7 +91,7 @@
 +   }
 +   target_bytes[128] = 0;
 +   fprintf(stage2_mpr1_trace,
-+     "stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed2 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s\n",
++     "stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed4 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s\n",
 +     stage2_mpr1_sequence++, stage2_probe_pc,
 +     (target_mpr1 << 13) | (stage2_probe_pc & 0x1fff), target_mpr1,
 +     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,

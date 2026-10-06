@@ -2069,8 +2069,8 @@ static void test_stage2_id2c_external_handoff(const uint8_t *raw,
 }
 
 /* ID $2c's $4483 helper reaches $4ec9. Lock the internal table helper and
- * the bounded $4ec9 caller, while leaving its below-window $3a2e callee
- * unresolved. */
+ * bounded caller bytes, including JSR $3a2e at $4ed4; do not treat the
+ * below-window runtime callee as bytes from the stage-two Track 02 image. */
 static void test_stage2_id2c_internal_helpers(const uint8_t *raw,
                                                size_t raw_size, int jp)
 {
@@ -2093,6 +2093,9 @@ static void test_stage2_id2c_internal_helpers(const uint8_t *raw,
                               (uint16_t)(0x4ec9u + i)) ==
                bounded_caller[i]);
     }
+    assert(stage2_byte_at(raw, raw_size, jp, 0x4ed4u) == 0x20u);
+    assert(stage2_byte_at(raw, raw_size, jp, 0x4ed5u) == 0x2eu);
+    assert(stage2_byte_at(raw, raw_size, jp, 0x4ed6u) == 0x3au);
     for (unsigned int i = 0; i < sizeof(table_pointer_helper); ++i) {
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(0x4f31u + i)) ==

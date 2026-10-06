@@ -2,34 +2,35 @@
 
 Reviewed 2026-10-06. Only open work is listed here.
 
-## 2026-10-06 — prove the stage-two helper's physical mapping
+## 2026-10-06 — characterize the stage-two helper's behavior
 
-- ✅ The opt-in `pce_fast` probe now captures the authentic instruction bytes
-  at `$4ec9`, recognizes only `JSR $3a2e`, and links the immediately following
-  `$3a2e` execution with caller/target physical PCs and MPR1. Both call and
-  linked-target rows have bounded budgets, so unrelated target hits cannot
-  consume the linked-evidence budget. A separate 32-row candidate budget now
-  records every observed `$4ec9` PC and its actual three bytes, even when they
-  are not `JSR $3a2e`. The helper lives outside the opcode loop to avoid C++
-  goto-over-initialization errors. Trace-file discovery is initialized once;
-  the environment and writable path must be ready before emulator startup.
-  The updated patch applied to the isolated full research source on `trv2`,
-  `huc6280.o` compiled, and the full PCE Fast-enabled `-j1` build succeeded.
-  Three captures replaying the authentic JP Akutuba F5 state each recorded
-  eleven controller events followed by controller reads at `$44c1`, zero
-  System-Card poll reads, `controller_poll_boundary=verified`, and
-  `game_or_non_system_card_poll_boundary=observed`. Across two input plans,
-  including combined up/left and
-  up/right holds, they emitted no `$4ec9` candidate, matching call, or
-  `$3a2e` target row. These results only show that the tested routes did not
-  reach the candidate PC; they do not establish behavior on other dungeon
-  routes. The local static
-  regression passed three loops; its source-tree patch dry-run was skipped
-  because the original Mednafen source is on `trv2`.
-- 🔒 No authentic same-session `$4ec9 → $3a2e` runtime receipt has yet been
-  recorded, so the helper's physical bank, bytes, and behavior remain
-  unverified. Capture a real execution before drawing conclusions.
-- ✅ Three authentic JP cold-starts with original Track 02 and System Card
+- 🔒 `$4ec9` is the function entry; authentic stage-two bytes place the
+  `JSR $3a2e` call-site at `$4ed4`. The opt-in `pce_fast` probe now targets
+  `$4ed4`, links only the immediately following `$3a2e` instruction, and
+  records caller/target physical PCs and MPR1. Both call and linked-target
+  rows have bounded budgets. The helper lives outside the opcode loop to
+  avoid C++ goto-over-initialization errors; trace-file discovery is
+  initialized once. The corrected PCE Fast object and executable compiled and
+  relinked on `trv2`; the complete updated patch chain passed three loops.
+  Three earlier captures replaying the authentic JP Akutuba F5 state each
+  recorded eleven controller events followed by controller reads at `$44c1`,
+  zero System-Card poll reads, `controller_poll_boundary=verified`, and
+  `game_or_non_system_card_poll_boundary=observed`. Those runs probed the
+  function entry and did not identify the actual call-site execution.
+- ✅ Authentic JP and US cold-start traces each recorded 32 linked
+  `$4ed4 → $3a2e` executions. Both mapped the target through MPR1 `$f8` to
+  `$1f1a2e`; caller PC `$4ed4` mapped to `$00100ed4`, and the call bytes were
+  `20 2e 3a`. Each target's first 64 bytes matched its same-session 8 KiB
+  BaseRAM snapshot at offset `$1a2e`; the US and JP target windows also match
+  each other byte-for-byte. These prove regional parity only for the tested
+  cold-start route. The authentic-media Track 02 byte test passed three CTest
+  loops on `trv2`.
+- 🔒 The linked captures and bounded `$3a2e..$3a9f` byte/dataflow decode do
+  not assign game meanings to the records or copied fields, nor prove how
+  every caller uses the result. The strict scripted-input receipts for both
+  captures blocked because the final event had no later controller read
+  exposing its mask; do not claim these replays changed game state.
+- ✅ Four authentic JP cold-starts with original Track 02 and System Card
   reached `$40dc`. The first 32-row logger saturated on repeated ID `$00` /
   target `$41c5` at `MPR2=$80`; a transition-filtered probe then preserved the
   bounded output and showed repeated ID `$00` transitions between target
@@ -38,27 +39,16 @@ Reviewed 2026-10-06. Only open work is listed here.
   the final event had no later controller read with its scripted mask. These
   rows establish dispatch-point observations, not handler completion or
   gameplay effects.
-- 🔒 The transition trace exposed an incorrect earlier target-physical-address
+- ✅ The transition trace exposed and corrected an earlier target-physical-address
   calculation: it used `MPR2` for targets outside that logical segment. The
   current patch derives the target bank from `MPR[target >> 13]` and records
   table physical address plus entry bytes. The complete patch-only chain and
-  PCE Fast object compile/relink now pass on `trv2`; a fresh authentic capture
-  with the corrected bank calculation confirmed `$41c5` through MPR `$80` at
+  PCE Fast object compile/relink pass on `trv2`; the authentic capture with
+  the corrected bank calculation confirmed `$41c5` through MPR `$80` at
   `$001001c5`, and `$ba9c` through MPR `$6a` at `$000d5a9c`; raw table bytes
   were `c5 41` and `9c ba`. Earlier `$ba9c` physical fields from the second
-  capture remain invalid. All three input receipts still block because the
+  capture remain invalid. All six input receipts still block because the
   final scripted event lacked a later controller read exposing its mask.
-- ✅ Source review corrected the `$3a2e` call-site probe: `$4ec9` is the
-  function entry, while the authentic listing places `JSR $3a2e` at `$4ed2`.
-  The observed `$4ec9` bytes (`c6 5b ad`) were function-entry bytes, not call
-  evidence. Instrumentation and regression checks now inspect `$4ed2`; the
-  corrected object compiled and the PCE Fast emulator was relinked on `trv2`.
-  One 360-second cold-start replay applied all three scripted events and
-  confirmed the corrected dispatch-bank rows, but recorded no `$4ed2`
-  candidate, `$3a2e` call, or target row. The strict receipt still blocked on
-  the final controller-mask read. This negative observation is limited to the
-  tested route; an authentic same-session call receipt is still required.
-
 ## 2026-10-05 — continue the ID `$2c` helper decompilation
 
 - ✅ Rooted `$4ec9` and `$4f31` in the authentic US and JP Rev. 1 stage-two
@@ -97,44 +87,23 @@ Reviewed 2026-10-06. Only open work is listed here.
   their shared `$41f8` operand reader, indexed store/add/subtract/increment/
   decrement instructions, and the `$40f9`/`$40f5` cursor tails. `$2780` entry
   meanings and retail stream execution remain unassigned.
-- 🔒 `$3a2e` is below the loaded `$4000..$7fff` stage-two window. Its source,
-  carry/result contract, and the semantic roles of `$37cc..$37d1` are still
-  unknown. Continue from an authenticated code/data mapping for that address;
-  do not infer its implementation from its stage-two call site. `$3879` is
-  likewise below this stage-two window and remains undecoded.
-- 🔒 `$3a2e` is in the logical `$2000..$3fff` window selected by HuC6280 MPR1.
-  The direct `$4000` prologue writes MPR3..MPR6, then calls `$8000`; MPR1
-  across that call and its helpers remains unproven. The existing
-  authenticated `MPR1=$f8` receipt is from the separate 2026-09-23 backup-RAM
-  writer at `$de21` (`docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`),
-  so it cannot identify the code bank at a `$4ec9` call. Require MPR1 plus its
-  physical PC/bank at the actual `$3a2e` call, or an authenticated loader span
-  that establishes the same mapping, before disassembling those bytes.
-- 🔒 The bounded Mednafen `pce_fast` probe now records MPR1, executing
-  physical PC, and 64 mapped bytes only when the CPU is actually executing
-  logical `$3a2e`; the earlier caller-side `$4ec9` byte peek was not execution
-  evidence. An isolated trv2 build compiled, but neither a cold run nor the
-  hash-verified gameplay-state run executed `$3a2e` before capture stopped.
-  Two further authentic JP F5-state recaptures accepted 14 and 11 scripted
-  controller events, with active-low masks read back on the selected pad banks
-  and input-receipt poll witness PC `$44d2`; the
-  11-event run included a four-second Run hold. Neither executed `$3a2e` or
-  yielded a dynamic media/RAM handoff. The readback proves controller-port
-  delivery for these attempts, not that the game acted on them. Capture traces
-  are retained under
-  `/home/trv2/firestaff-theron-evidence/emulator-created-20261005/pcefast-mpr1-gameplay-route-loop1-20261005/`
-  and `.../pcefast-mpr1-gameplay-route-loop2-20261005/` on trv2.
-  Reinspection of both retained `capture/live.trace` receipts found only the
-  four-line header (`variant=unknown`, `stage3_track02_record=unknown`) and no
-  instruction or `stage2_mpr1_probe` records. These attempts therefore do not
-  establish even the `$4ec9` call-site mapping; keep their controller-port
-  receipts separate from CPU execution evidence.
-  The authentic JP F5 state independently records PC `$c692`, MPR1 `$f8`, and
-  MPR6 `$69`; at that later gameplay point `$3a2e` maps to BaseRAM offset
-  `$1a2e`, whose saved byte is zero. This does not establish MPR1 or contents
-  at the earlier `$4ec9` call. Keep `$3a2e` undecoded until same-execution
-  mapping and bytes are captured. See
-  `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
+- 🔒 The linked authentic JP cold-start receipt and same-instant BaseRAM
+  snapshot now provide a bounded byte decode of `$3a2e..$3a9f`; the listing is
+  in `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
+  It is runtime RAM evidence, not a static ROM source lock, and does not
+  establish US/JP parity, full caller conditions, or game-level meanings.
+  The matched/empty/exhausted carry paths and `$37ce..$37d1` copy are decoded
+  at instruction/dataflow level. `$4ec9` uses carry-set to branch around the
+  copy; whether that represents failure, absence, or another game-level
+  condition, and what the fields represent, remain open. `$3879` is still
+  below the loaded stage-two
+  window and undecoded.
+- 🔒 The three replay events were applied during the linked capture, but strict
+  input verification blocked because the final event had no subsequent
+  controller-port read exposing its mask. Do not treat that capture as proof
+  the input changed game state. Earlier F5-state recaptures and their
+  controller-port evidence remain separate, route-limited observations; see
+  the source-lock document for capture distinctions.
 
 ## 2026-10-05 — source-lock the stage-two bytecode dispatch table
 
@@ -317,7 +286,9 @@ Reviewed 2026-10-06. Only open work is listed here.
   candidate reaches ID `$11` or close the counter-poll producer gap. ID `$2c`
   is source-locked through its `$3ab7` call and fixed five-byte cursor step;
   `$4ec9` and `$4f31` are now bounded and byte-locked. `$3a2e` and `$3ab7`
-  remain below this stage-two image, with their implementations unresolved.
+  remain below this stage-two image; `$3a2e` has a separate bounded JP
+  runtime-RAM decode, but not a static retail-image source lock or semantic
+  contract. `$3ab7` remains undecoded.
   See
   `docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
 

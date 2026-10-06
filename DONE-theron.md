@@ -1,29 +1,44 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-06 — link stage-two caller and helper in PCE Fast probe
+## 2026-10-06 — source-bind and capture the stage-two helper call
 
-Extended the opt-in Mednafen PCE Fast probe to recognize the authentic
-`JSR $3a2e` opcode at `$4ec9`, retain caller MPR/physical-PC evidence, and mark
-the immediately following `$3a2e` execution as linked only when that call
-signature was observed. The focused shell regression checks these conditions.
+Corrected the bounded `pce_fast` MPR1 probe to inspect the authentic
+`JSR $3a2e` at `$4ed4` (the earlier `$4ec9` location is the function entry;
+`$4ed2` lies inside `JSR $4f31`). Added raw-byte assertions for `$4ed4..$4ed6`
+to `test_theron_v1_stage2_disassembly_chain`; on `trv2`, this test passed three
+loops with authentic US Track 02 MD5 `f23601102138f87c33025877767ebf76` and
+JP Track 02 MD5 `b7afb338ad31be1025b53f9aff12d73a`. The complete Mednafen
+1.32.1 patch chain also applied to a clean source extraction in three loops;
+the PCE Fast HuC6280 object compiled and the emulator relinked.
 
-On trv2, the complete Mednafen 1.32.1 patch sequence applied to an isolated
-copy of the upstream source; a full `-j1` build with PCE Fast enabled
-succeeded, and the focused patch-chain test passed three consecutive loops.
-No authentic runtime call receipt was captured, so the helper's actual mapping
-and behavior remain open in `TODO-theron.md`.
+Authentic JP and US cold-start traces each recorded 32 signature-matched
+`$4ed4 → $3a2e` call/target pairs with `MPR1=$f8`, mapping to physical
+`$1f1a2e`. The call-site bytes were `20 2e 3a`; each target's first 64 bytes
+in the trace exactly matched its same-session 8-KiB PCE Fast BaseRAM snapshot
+at offset `$1a2e`. The US and JP target windows are byte-identical
+(SHA-256 `4fa8ce8e5012aa6eab9fa2e8b07c60ee60ce21aa2933fcddec3ef61943ace3f2`);
+the entire 114-byte `$3a2e..$3a9f` decode window is also byte-identical
+(SHA-256 `849e8e9780242358f48aaa51ce3695fc18a2687988e68e61430b5da727872fa0`),
+as is the 12-byte `$3965` helper. A bounded byte/dataflow
+disassembly of the captured `$3a2e..$3a9f` runtime window and its `$3965`
+pointer-advance helper is recorded in
+`docs/source-lock/theron-disassembly/theron-stage2-bytecode-dispatch-table-20261005.md`.
+This is runtime-RAM evidence, not a static ROM source lock; it proves US/JP
+parity only for the tested cold-start route, not all platforms or paths.
+Record meanings and the caller's game-level interpretation remain open. Both
+replays applied all three scripted controller events, but strict
+input-consumption verification blocked because the final event had no later
+controller-port read exposing its mask. Raw media, states, and traces remain
+outside Git; see `TODO-theron.md` for remaining semantic and input-evidence gaps.
 
 ## 2026-10-05 — source-lock the stage-two MPR entry window
 
 The authentic US and JP stage-two entry bytes at `$4000` now have a direct
 raw-sector regression. The direct prologue writes MPR3, MPR4, MPR5 and MPR6,
-then calls `$8000` before continuing. The MPR1 state across `$8000` and its
-called helpers is not established by this byte check. Since the unresolved
-`$3a2e` call is in the `$2000..$3fff` logical window, its code cannot be
-selected from the payload alone. The existing `$de21` backup-RAM MPR1 receipt
-is from a different call path and is not reused. A same-call MPR1/physical-PC
-capture or authenticated loader span is still required to disassemble `$3a2e`
-safely.
+then calls `$8000` before continuing. That static byte check alone does not
+establish MPR1. The later linked `$4ed4 → $3a2e` runtime receipt supplies MPR1
+and the target physical PC for its tested JP cold-start route; see the
+2026-10-06 entry above. No universal mapping is inferred.
 
 ## 2026-10-05 — bound the `$8000` entry-callee dataflow
 
@@ -80,8 +95,11 @@ no-carry path copies `$37ce/$37cf` and `$37d0/$37d1` into the `$4ec3..$4ec8`
 fields. Both visible outcomes clear `$5b` and return. `$4f31` indexes the
 little-endian table at `$4d7c` by twice `$4d7b` and writes the selected word to
 zero-page `$00/$01`. The raw-media test locks both routines in US and JP.
-`$3a2e`'s implementation and the carry/result contract remain unresolved;
-this is bounded static decompilation, not a gameplay claim.
+At the time of this static pass, `$3a2e`'s body was unresolved; the
+2026-10-06 linked runtime capture now supplies a bounded JP byte/dataflow
+decode, while source-image identity, US/JP parity, carry interpretation, and
+gameplay meaning remain open. This remains reverse-engineering evidence, not
+a gameplay claim.
 
 ## 2026-10-05 — root dispatch ID `$11` across overlapping code/data
 

@@ -499,15 +499,18 @@ calls `$4f31` and `$3a2e`. On the no-carry path it copies `$37ce/$37cf` to
 `$5b` and return. `$4f31` forms a pointer at `$02/$03 = $4d7c`, doubles the
 byte at `$4d7b` into Y, loads the indexed word through `($02),Y` into
 `$00/$01`, and returns. These bytes are locked in both editions by the raw
-Track 02 test. `$3a2e` is below the stage-two image, so its implementation and
-the carry/result contract at this call remain unresolved; no gameplay meaning
-is assigned to the copied fields.
+Track 02 test. `$3a2e` is below the stage-two image, but the authentic JP
+cold-start capture below supplies a bounded runtime RAM window for byte-level
+disassembly. Its carry/result contract and the gameplay meaning of the copied
+fields remain unresolved.
 
 The logical target `$3a2e` lies in the `$2000..$3fff` MPR1 window. The direct
 stage-two entry instructions at `$4000` write MPR3..MPR6, then call `$8000`
-before continuing; the MPR1 state across `$8000` and its helpers is not
-established by the entry-byte check. The separate authenticated `MPR1=$f8`
-receipt from the `$de21` backup-RAM writer cannot be transferred to this call.
+before continuing; that static entry-byte check alone does not establish
+MPR1 across `$8000` and its helpers. The linked `$4ed4 → $3a2e` receipt below
+does establish MPR1 for the captured JP cold-start route. The separate
+authenticated `MPR1=$f8` receipt from the `$de21` backup-RAM writer is not
+used as evidence for this call.
 
 The `pce_fast` runtime probe is placed at the interpreter fetch at `$40dc`,
 before `RdAtPC()` consumes the opcode. It reads zero-page stream cursor
@@ -519,30 +522,176 @@ repeated idle dispatch cannot use the whole output budget. A row proves the
 target word read at the dispatch point, not handler completion or gameplay
 effect.
 
-Four authenticated JP cold-start captures used the original Track 02 CUE, the
-headered original System Card, and the documented `run@9600:90,i@11000:8,
-ii@13000:8` input replay. The first, non-deduplicating probe filled its 32-row
-budget with repeated ID `$00` / target `$41c5` rows under `MPR2=$80`, before
-later events. The second, transition-filtered build kept the output bounded
-and recorded ID `$00` with target `$41c5` under `MPR2=$80`, alternating with
-target `$ba9c` under `MPR2=$82`. The capture logged all three requested input
-events, but its strict receipt blocked because the final event had no later
-controller-port read exposing its mask. This is dispatch-path evidence only;
-it does not prove the input changed game state, the handler completed, or that
-the alternate target has a gameplay meaning.
+Five authenticated JP cold-start captures and one authenticated US cold-start
+capture used the original Track 02 CUE and headered original System Card. The
+JP captures used the documented `run@9600:90,i@11000:8,ii@13000:8` input
+replay; the US comparison used the same replay and a complete CUE/track set
+from the authentic USA archive. The first, non-deduplicating probe filled its
+32-row budget with repeated ID `$00` / target `$41c5` rows under `MPR2=$80`,
+before later events. The second, transition-filtered build kept the output
+bounded and recorded ID `$00` with target `$41c5` under `MPR2=$80`, alternating
+with target `$ba9c` under `MPR2=$82`. The capture logged all three requested
+input events, but its strict receipt blocked because the final event had no
+later controller-port read exposing its mask. This is dispatch-path evidence
+only; it does not prove the input changed game state, the handler completed,
+or that the alternate target has a gameplay meaning.
 
 The third capture used the corrected physical-bank calculation and repeated
 the alternating targets: `$41c5` resolved through MPR `$80` to physical
 `$001001c5`; `$ba9c` resolved through MPR `$6a` to physical `$000d5a9c`.
 Both rows include the actual table physical address and raw little-endian
-bytes (`c5 41` and `9c ba`). The fourth capture, after moving the helper probe
-to `$4ed2`, repeated the same corrected dispatch mappings. It recorded no
-`$4ed2` candidate, `$3a2e` call, or linked target row on that route. This is a
-route-limited negative observation, not evidence that the call is unreachable.
-All four captures applied the three replay events, but each strict receipt
-remained blocked because no later controller
-read exposed the final event's mask. None proves a handler was entered or that
-the inputs changed game state.
+bytes (`c5 41` and `9c ba`). The fourth capture used an intermediate probe
+address `$4ed2`; later byte-offset review showed that this address falls inside
+the preceding `JSR $4f31`, so its lack of a candidate is not evidence about the
+actual `$3a2e` call-site.
+
+The fifth capture used the corrected `$4ed4` call-site probe. It recorded 32
+signature-matched call/target pairs; each `$4ed4` fetch was followed by
+`$3a2e` with `linked=1`, caller physical PC `$00100ed4`, MPR1 `$f8`, and target
+physical PC `$001f1a2e`. The bytes at `$4ed4..$4ed6` were `20 2e 3a`. Each
+target row contained the same 64-byte entry window; those bytes exactly match
+the same capture's raw 8-KiB BaseRAM snapshot at offset `$1a2e`, independently
+confirming the HuC6280 MPR-derived address. The authenticated replay applied
+all three planned events, but the strict input-consumption verifier blocked
+because the final event had no later controller-port read exposing its mask.
+This proves that the tested cold-start route reached the helper and its
+captured runtime mapping; it does not prove the scripted buttons changed game
+state or assign gameplay meaning to the helper.
+
+## Runtime `$3a2e` byte window
+
+The linked trace's 64-byte entry window is backed by the same-instant 8-KiB
+BaseRAM snapshot, rather than by a guessed ROM bank. The following is a
+bounded HuC6280 byte decode of authentic JP and US runtime snapshots at logical
+`$3a2e..$3a9f` (MPR1 `$f8`, physical `$1f1a2e`, BaseRAM offset `$1a2e`). The
+entire 114-byte window is byte-identical in both regional snapshots
+(SHA-256 `849e8e9780242358f48aaa51ce3695fc18a2687988e68e61430b5da727872fa0`).
+It is not a static retail Track 02 listing and does not label the data
+structures.
+
+```asm
+; Authentic JP/US cold-start PCE Fast BaseRAM snapshots, logical $3a2e..
+; Linked execution receipt: caller $4ed4, MPR1=$f8, physical $1f1a2e
+L3a2e:  bsr     L3a35
+        bcs     L3a34
+        bsr     L3a5f
+L3a34:  rts
+L3a35:  stz     $37d2
+        lda     ($00)
+        beq     L3a5b
+L3a3c:  tax
+        clc
+        lda     $00
+        adc     #$03
+        sta     $00
+        bcc     L3a48
+        inc     $01
+L3a48:  inc     $37d2
+L3a4b:  lda     ($00)
+        cmp     $37cc
+        beq     L3a5d
+        jsr     L3965
+        inc     $37d2
+        dex
+        bne     L3a4b
+L3a5b:  sec
+        rts
+L3a5d:  clc
+        rts
+L3a5f:  ldy     #$02
+L3a61:  lda     ($00),y
+        sta     $37ce
+        iny
+        lda     ($00),y
+        sta     $37cf
+        iny
+        lda     ($00),y
+        sta     $37d0
+        iny
+        lda     ($00),y
+        sta     $37d1
+        rts
+L3a79:  clc
+        lda     $300c
+        adc     $37d0
+        lda     $300d
+        adc     $37d1
+        rts
+L3a87:  stz     $01
+        lda     $1e
+        ldx     #$05
+L3a8d:  lsr     a
+        ror     $01
+        dex
+        bne     L3a8d
+        cmp     #$00
+        bne     L3a9e
+        clc
+        lda     $300d
+        adc     $01
+        rts
+L3a9e:  sec
+        rts
+```
+
+The called pointer-advance helper is separately visible in both captures'
+BaseRAM at offset `$1965` (logical `$3965` under MPR1 `$f8`); its 12 bytes are
+byte-identical between regions:
+
+```asm
+; Authentic JP/US cold-start BaseRAM snapshots, logical $3965..$3970
+L3965:  clc
+        lda     $00
+        adc     #$06
+        sta     $00
+        bcc     L3970
+        inc     $01
+L3970:  rts
+```
+
+The `$3a35` path reads a count byte through `($00)`, advances the pointer by
+three with carry into `$01`, then makes a count-bounded sequence of comparisons
+between the byte at that pointer and `$37cc`. On a mismatch it calls `$3965`,
+increments `$37d2`, decrements the count in X, and repeats at `$3a4b`; the
+captured `$3965` bytes add six to the zero-page pointer. Thus the comparison
+positions advance in a six-byte stride after the initial three-byte prefix.
+A match returns carry clear; an empty count or exhausted search returns carry
+set. On the matched path `$3a5f` copies four bytes at pointer offsets `+2..+5`
+to `$37ce..$37d1`. `$4ec9` obtains the root pointer from the indexed table
+helper `$4f31`, supplies `$4ec2` as `$37cc`, and copies those outputs into
+`$4ec3/$4ec4` and `$4ec7/$4ec8` only when carry is clear. This supports a
+bounded fixed-stride lookup description without assigning meanings to the
+records or their fields. The adjacent `$3a79` helper returns
+the 16-bit sum `$300c:$300d + $37d0:$37d1` in A and carry. `$3a87` shifts
+`$1e` right five places, retaining its low five bits in `$01`; it returns
+carry set if the quotient is nonzero, otherwise adds the remainder to
+`$300d`. These are instruction/dataflow observations only: record layout,
+byte meanings, and caller interpretation of carry are not established. The
+cold-start's final scripted input mask was not read back, so this capture is
+not evidence that input changed gameplay state. The statically locked `$4ec9`
+caller branches around the field copy when carry is set; mapping that control
+choice to a game-level result remains unresolved.
+
+All six cold-start receipts ended with that final-input-mask limitation.
+Dispatch-table rows alone do not prove handler completion; the fifth capture
+among the five JP runs separately establishes entry at `$3a2e`.
+
+The sixth capture used authentic US Rev. 1 media (Track 02 MD5
+`f23601102138f87c33025877767ebf76`; headered System Card MD5
+`ff1a674273fe3540ccef576376407d1d`). It recorded 32 signature-matched
+`$4ed4 → $3a2e` call/target pairs, all linked, with caller physical PC
+`$00100ed4`, MPR1 `$f8`, and target physical PC `$001f1a2e`. Its `20 2e 3a`
+call bytes and first 64 target bytes matched the authentic US Track 02 call
+site and same-session BaseRAM snapshot at offset `$1a2e`. The US and JP
+same-session 64-byte target windows are byte-identical (SHA-256
+`4fa8ce8e5012aa6eab9fa2e8b07c60ee60ce21aa2933fcddec3ef61943ace3f2`); the
+entire `$3a2e..$3a9f` decode window also matches byte-for-byte (SHA-256
+`849e8e9780242358f48aaa51ce3695fc18a2687988e68e61430b5da727872fa0`), as
+does the `$3965` helper. This is direct US/JP runtime parity evidence for the
+tested cold-start route only;
+it does not prove parity for every route or platform. As in all five JP
+captures, the strict input-consumption verifier blocked because the last
+scripted event had no later controller-port read exposing its mask.
 
 Reviewing those rows exposed a physical-bank calculation bug: the earlier
 probe derived every target physical PC from `MPR2`, even when the target's
@@ -552,23 +701,30 @@ physical address and raw entry bytes. It passed static regression loops, the
 complete patch-only chain, PCE Fast object compilation/relinking on `trv2`,
 and the third authentic cold-start capture. No target physical address from
 the second capture's `$ba9c` rows is admitted as evidence.
-A runtime receipt should join a fetch at `$4ed2` to the next instruction at
-`$3a2e`, recording MPR1 and physical PCs, or independently prove the loader
-span that sets that mapping.
+The fifth same-session receipt now joins the `$4ed4` fetch to the immediately
+following `$3a2e` instruction and records both physical PCs and MPR1. It proves
+the mapping for this authentic JP cold-start route only; no universal
+platform/edition mapping is inferred.
 The original `pce` trace build has a bounded probe at `$4ec9` and `$3a2e`, but
 its `$4ec9` row reads candidate bytes rather than proving that `$3a2e` executes.
 The `pce_fast` instruction-loop probe previously inspected bytes at `$4ec9`,
-which is the function entry, not the call site. The authentic listing shows
-`JSR $3a2e` at `$4ed2` (after `DEC $5b`, `LDA $4ec2`, `STA $37cc`, and
-`JSR $4f31`). The previous capture's repeated `$4ec9` rows (`c6 5b ad`) were
-function-entry bytes and did not establish a candidate call; their `linked=0`
-value was expected. The probe now checks the three call-site bytes at `$4ed2`,
-records that PC's MPR1 and physical address, and marks a `$3a2e` row linked
-only when it is the immediately following instruction PC. The target row also captures its actual MPR1, physical PC,
-and 64 mapped bytes; its predicted physical target is retained separately so
-the mapping can be compared at execution. Only signature-linked target rows
-are emitted, with separate bounded budgets for caller and target records.
-An independent 32-row `$4ed2` candidate budget records observed call-site
+which is the function entry, not the call site. The authentic listing bytes
+show `DEC $5b` at `$4ec9`, `LDA $4ec2` at `$4ecb`, `STA $37cc` at `$4ece`,
+`JSR $4f31` at `$4ed1`, and `JSR $3a2e` at `$4ed4`. The previous capture's
+repeated `$4ec9` rows (`c6 5b ad`) were function-entry bytes and did not
+establish a candidate call; their `linked=0` value was expected. An
+intermediate revision probed `$4ed2`, inside the operand bytes of `JSR $4f31`;
+that probe was compiled and captured but is not valid call-site evidence. The
+current probe checks the three call-site bytes at `$4ed4`, records that PC's
+MPR1 and physical address, and marks a `$3a2e` row linked only when it is the
+immediately following instruction PC. The target row also captures its
+actual MPR1, physical PC, and 64 mapped bytes; its predicted physical target
+is retained separately so the mapping can be compared at execution. Only
+signature-linked target rows are emitted, with separate bounded budgets for
+caller and target records. In the fifth authentic cold-start capture, all 32
+call and execution rows were linked and had the same `$f8` to `$1f1a2e`
+mapping.
+An independent 32-row `$4ed4` candidate budget records observed call-site
 bytes even when they do not match the expected JSR signature, so an absent
 call row can be distinguished from an unvisited call-site PC. On candidate
 and call rows, `linked=1` means only that the three bytes match
@@ -579,9 +735,11 @@ lookups in the opcode loop; the environment and writable trace path must be
 ready before emulator startup. On `trv2`, the updated probe patch applied to
 the isolated full research source, its `huc6280.o` target compiled, and the
 full PCE Fast-enabled Mednafen build succeeded. The local static regression
-passed three loops; its source-tree patch dry-run was skipped because the
-original Mednafen source is on `trv2`. No authentic runtime call receipt has
-yet been captured, so the target implementation and mapping remain unresolved.
+passed three loops; the complete patch-chain dry-run also passed three loops
+against a clean Mednafen 1.32.1 extraction on `trv2`. The remaining open work
+is to characterize helper behavior from source-backed state and authentic
+execution, without treating the final scripted input event as game-state
+evidence.
 
 Three 2026-10-06 recaptures replayed the authenticated JP Akutuba F5 gameplay
 state through the updated `pce_fast` build using two input plans. Each receipt
@@ -607,9 +765,9 @@ physical `$0d2692`. The `HuC` section's `ROMSpace + $68 * 8192` bank image
 provides the code window below; da65 V2.18 decodes the captured bytes, but no
 function/gameplay semantics are assigned. At that saved frame MPR1 is `$f8`,
 and logical `$3a2e` addresses BaseRAM offset `$1a2e`; the corresponding saved
-BaseRAM byte is zero. This later-state observation cannot be transferred to
-the earlier `$4ec9` call and does not establish the `$3a2e` mapping or bytes
-when the helper is invoked.
+BaseRAM byte is zero. This later gameplay-state snapshot is distinct from the
+cold-start call capture above: its zero byte must not be substituted for the
+code bytes observed during the linked `$4ed4 → $3a2e` execution.
 
 ```asm
 ; Authentic JP gameplay-state byte window, logical $c662..$c6e1
@@ -648,9 +806,7 @@ LC6ca:  jsr     L44fb
 ```
 
 The listing is a byte decode rooted at the saved PC, not a complete routine
-boundary or a substitute for the pending same-execution `$3a2e` receipt. Keep
-the helper locked until an authentic run captures its actual MPR1/physical PC
-and mapped bytes.
+boundary or a substitute for the call-linked runtime bytes recorded above.
 
 ## Bounded `$8000` entry-callee dataflow
 

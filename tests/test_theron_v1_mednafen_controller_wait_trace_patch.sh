@@ -448,7 +448,8 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_
    ! grep -Fq 'stage2_mpr1_call_sequence < 32)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_mpr1_trace && stage2_mpr1_sequence < 32)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_call_sequence < 32' "$pce_fast_stage2_mpr1_probe_patch_file" ||
-   ! grep -Fq 'if(stage2_probe_pc == 0x4ed2)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'if(stage2_probe_pc == 0x4ed4)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   grep -Fq 'if(stage2_probe_pc == 0x4ed2)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_call_pending' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_caller_bytes[0] == 0x20' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_caller_bytes[1] == 0x2e' "$pce_fast_stage2_mpr1_probe_patch_file" ||
@@ -456,7 +457,7 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_
    ! grep -Fq 'HuCPU.MPR[1]' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'HuCPU.FastPageR[1] + stage2_probe_pc' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_call sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x callsite_bytes=%02x%02x%02x linked=%u' "$pce_fast_stage2_mpr1_probe_patch_file" ||
-   ! grep -Fq 'stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed2 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s' "$pce_fast_stage2_mpr1_probe_patch_file"; then
+   ! grep -Fq 'stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed4 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s' "$pce_fast_stage2_mpr1_probe_patch_file"; then
     printf '%s\n' 'FAIL: pce_fast MPR1 probe must link target execution to the authenticated caller instruction'
     exit 1
 fi
