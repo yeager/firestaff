@@ -9102,6 +9102,38 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
         0xa5u, 0x06u, 0x8du, 0x02u, 0x00u, 0xa5u, 0x07u, 0x8du,
         0x03u, 0x00u, 0x60u
     };
+    /* Exact JP targets of the four calls in the bound $31b3 subroutine.
+     * $5c77, $5d0e and $5d32 end at their first RTS; $5ca7 is a shared
+     * entry-to-RTS window that overlaps the alternate entry at $5cae. */
+    static const uint8_t stage2_jp_l5c77[] = {
+        0xa0u, 0x04u, 0x82u, 0xbdu, 0xa2u, 0x5cu, 0x9du, 0x8bu,
+        0x4fu, 0xe8u, 0x88u, 0xd0u, 0xf6u, 0x9cu, 0xd1u, 0x4fu,
+        0x60u
+    };
+    static const uint8_t stage2_jp_l5d0e[] = {
+        0x20u, 0x88u, 0x5cu, 0xf0u, 0x03u, 0x20u, 0x21u, 0x5du,
+        0x20u, 0x63u, 0xe0u, 0xadu, 0x2du, 0x22u, 0xf0u, 0xf0u,
+        0x85u, 0x08u, 0x60u
+    };
+    static const uint8_t stage2_jp_l5d32[] = {
+        0x48u, 0xdau, 0x5au, 0x20u, 0x63u, 0xe0u, 0xadu, 0x28u,
+        0x22u, 0xd0u, 0xf8u, 0x7au, 0xfau, 0x68u, 0x60u
+    };
+    static const uint8_t stage2_jp_l5ca7[] = {
+        0xa9u, 0xf0u, 0x8du, 0xa6u, 0x5cu, 0x80u, 0x05u, 0xa9u,
+        0xefu, 0x8du, 0xa6u, 0x5cu, 0x20u, 0xe8u, 0x53u, 0xadu,
+        0xb8u, 0x4fu, 0x3au, 0x0au, 0xaau, 0xbdu, 0xb9u, 0x4fu,
+        0x18u, 0x69u, 0x06u, 0x85u, 0x04u, 0xe8u, 0x62u, 0x7du,
+        0xb9u, 0x4fu, 0x85u, 0x05u, 0xacu, 0x8eu, 0x4fu, 0xaeu,
+        0x8du, 0x4fu, 0x5au, 0xdau, 0x44u, 0x16u, 0xfau, 0x7au,
+        0x88u, 0xd0u, 0xf7u, 0xadu, 0xd4u, 0x4fu, 0x48u, 0xa9u,
+        0x01u, 0x8du, 0xd4u, 0x4fu, 0x20u, 0xb3u, 0x54u, 0x68u,
+        0x8du, 0xd4u, 0x4fu, 0x60u, 0xadu, 0xa6u, 0x5cu, 0xc9u,
+        0xefu, 0xf0u, 0x04u, 0xa9u, 0x0du, 0x80u, 0x02u, 0xa9u,
+        0x2du, 0x8du, 0x00u, 0x5du, 0xdau, 0xc2u, 0xc8u, 0xb1u,
+        0x04u, 0x0du, 0xa6u, 0x5cu, 0x91u, 0x04u, 0xc8u, 0xcau,
+        0xd0u, 0xf4u, 0x68u, 0x20u, 0x0cu, 0x55u, 0x60u
+    };
     Theron_Track02Stage2DispatchMachineReceipt dispatch;
     Theron_Track02SignalStatus status;
 
@@ -9201,7 +9233,35 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
             track02_data, track02_size, dispatch.stage2_raw_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_JP_L567A_USER_OFFSET,
-            stage2_jp_l567a, sizeof(stage2_jp_l567a))) {
+            stage2_jp_l567a, sizeof(stage2_jp_l567a)) ||
+        sizeof(stage2_jp_l5c77) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L5C77_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L5C77_USER_OFFSET,
+            stage2_jp_l5c77, sizeof(stage2_jp_l5c77)) ||
+        sizeof(stage2_jp_l5d0e) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L5D0E_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L5D0E_USER_OFFSET,
+            stage2_jp_l5d0e, sizeof(stage2_jp_l5d0e)) ||
+        sizeof(stage2_jp_l5d32) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L5D32_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L5D32_USER_OFFSET,
+            stage2_jp_l5d32, sizeof(stage2_jp_l5d32)) ||
+        sizeof(stage2_jp_l5ca7) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L5CA7_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L5CA7_USER_OFFSET,
+            stage2_jp_l5ca7, sizeof(stage2_jp_l5ca7))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     out_receipt->valid = 1;
@@ -9225,6 +9285,10 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
     out_receipt->l5662_target_proven = 1;
     out_receipt->l5670_target_proven = 1;
     out_receipt->l567a_target_proven = 1;
+    out_receipt->l5c77_target_proven = 1;
+    out_receipt->l5d0e_target_proven = 1;
+    out_receipt->l5d32_target_proven = 1;
+    out_receipt->l5ca7_target_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
 

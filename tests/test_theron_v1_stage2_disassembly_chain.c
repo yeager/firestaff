@@ -3029,7 +3029,19 @@ static void test_stage2_jp_l3114_flow(void)
             THERON_TRACK02_IPL_STAGE2_JP_L5670_BYTES - 1u,
         THERON_TRACK02_IPL_STAGE2_JP_L567A_USER_OFFSET,
         THERON_TRACK02_IPL_STAGE2_JP_L567A_USER_OFFSET +
-            THERON_TRACK02_IPL_STAGE2_JP_L567A_BYTES - 1u
+            THERON_TRACK02_IPL_STAGE2_JP_L567A_BYTES - 1u,
+        THERON_TRACK02_IPL_STAGE2_JP_L5C77_USER_OFFSET,
+        THERON_TRACK02_IPL_STAGE2_JP_L5C77_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_JP_L5C77_BYTES - 1u,
+        THERON_TRACK02_IPL_STAGE2_JP_L5D0E_USER_OFFSET,
+        THERON_TRACK02_IPL_STAGE2_JP_L5D0E_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_JP_L5D0E_BYTES - 1u,
+        THERON_TRACK02_IPL_STAGE2_JP_L5D32_USER_OFFSET,
+        THERON_TRACK02_IPL_STAGE2_JP_L5D32_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_JP_L5D32_BYTES - 1u,
+        THERON_TRACK02_IPL_STAGE2_JP_L5CA7_USER_OFFSET,
+        THERON_TRACK02_IPL_STAGE2_JP_L5CA7_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_JP_L5CA7_BYTES - 1u
     };
     Theron_Track02Stage2JpL3114FlowReceipt receipt;
     Theron_Track02SignalStatus status;
@@ -3067,6 +3079,10 @@ static void test_stage2_jp_l3114_flow(void)
     assert(receipt.l5662_target_proven == 1);
     assert(receipt.l5670_target_proven == 1);
     assert(receipt.l567a_target_proven == 1);
+    assert(receipt.l5c77_target_proven == 1);
+    assert(receipt.l5d0e_target_proven == 1);
+    assert(receipt.l5d32_target_proven == 1);
+    assert(receipt.l5ca7_target_proven == 1);
 
     {
         uint8_t *mutated = malloc(g_jp_size);

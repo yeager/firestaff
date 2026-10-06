@@ -8,8 +8,9 @@ Reviewed 2026-10-06. Only open work is listed here.
   identical 69-byte L4696 windows but different 94-byte L3114 windows. Added
   a standalone regional L4696 receipt, chained to the authenticated IPL and
   bounded L8000 call site, with an authentic JP mutation rejection test. The
-  existing combined L4696/L3114 and later L3114 proofs remain US-only until
-  the JP-specific L3114 body is decoded. This proves static bytes only, not
+  existing combined L4696/L3114 and later L3114 execution receipts remain
+  US-only because the regional L3114 span differs. The JP-specific L3114 body
+  is now decoded and byte-bound below, but this static evidence does not prove
   helper semantics or JP execution. The focused disassembly test passed three
   loops against authentic regional media, then the full 307-test Theron CTest
   selection had zero failures: 285 passed and 22 media/capture-dependent tests
@@ -17,15 +18,18 @@ Reviewed 2026-10-06. Only open work is listed here.
 
 - ✅ Added a JP-specific HuC6280 listing for the selector-called `$3114` flow
   at stage-two user offset `0x1114`. It binds 186 authentic JP bytes, all five
-  internal BSR edges, the shared `$4f5e` caller, six of ten external JSR
-  entry windows and immediate helpers reached from `$52c6`/`$565a`. `$4f66`
-  matches authentic US bytes; the other five entry windows differ. Mutation
-  tests flip the flow's internal entries and both ends of each bound target
-  window. The HuC6280 disassembler decodes `$44` as BSR; generic 65C02 mode
-  mislabels it as TSB. The US combined
-  L4696/L3114 receipt remains US-only because its 94-byte L3114 span differs.
-  Four JSR targets from `$31b3` remain open; no JP helper semantics or
-  gameplay behavior is established.
+  internal BSR edges, the shared `$4f5e` caller, all ten external JSR target
+  windows and immediate helpers reached from `$52c6`/`$565a`. `$4f66` matches
+  authentic US bytes; the other nine external target windows differ. Mutation
+  tests flip the flow's internal entries and both ends of each target window.
+  The HuC6280 disassembler decodes `$44` as BSR; generic 65C02 mode mislabels
+  it as TSB. The US combined L4696/L3114 receipt remains US-only because its
+  94-byte L3114 span differs. Four targets from `$31b3` are now byte-bound,
+  including the alternate entry at `$5cae` inside the `$5ca7` span. All nested
+  helper semantics and JP gameplay behavior remain unproven. The updated
+  `test_theron_v1_stage2_disassembly_chain` binary was compiled from the current
+  source on `trv2` and passed three loops against authentic US and JP media;
+  `unidasm -arch h6280` confirmed all four new target windows and branch edges.
 
 ## 2026-10-06 — mutation-check the regional dispatch-machine receipt
 

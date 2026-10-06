@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-06 — bind all direct targets of JP stage-two `$3114`
+
+Bound the four remaining authentic JP direct-call windows from `$31b3`:
+`$5c77` (17 bytes), `$5ca7` (103 bytes, including the alternate entry at
+`$5cae`), `$5d0e` (19 bytes), and `$5d32` (15 bytes). Added exact-byte receipts
+and mutation rejection at the first and last byte of each span. All four spans
+and the authentic US same-offset windows differ; this does not claim regional
+behavioral equivalence or semantics for nested calls. Updated the source-locked
+HuC6280 listing with all four windows and their SHA-256 values from authentic
+TQJP02.bin/TQUS02.bin media. Three independent `unidasm -arch h6280` runs
+confirmed the instruction and branch boundaries. The updated
+`test_theron_v1_stage2_disassembly_chain` compiled on `trv2` and passed three
+loops against authentic US and JP Track 02 data. JP helper semantics and
+gameplay behavior remain unproven.
+
 ## 2026-10-06 — source-bind and capture the stage-two helper call
 
 Corrected the bounded `pce_fast` MPR1 probe to inspect the authentic

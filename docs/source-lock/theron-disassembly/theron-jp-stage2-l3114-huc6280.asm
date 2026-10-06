@@ -38,21 +38,38 @@
 ; $567a [0x167a..0x1685), 11 bytes;
 ;   JP SHA-256 bfb427188835645f17b55c209b6359ffb38c01e3413536fde0fc74aee4e11c29
 ;   US same-offset SHA-256 0bc9844af559f7b6c8e24bde0a6bb75806d46f51a23414184c5a792a57e39fe1
+; Four exact JP direct-call targets from $31b3:
+; $5c77 [0x1c77..0x1c88), 17 bytes, SHA-256
+;   8b7e4711423d5cc7eb3788515c41ca9dbfffe235c6687a4273e8d5e42254f715
+;   authentic US same-offset SHA-256 de61410b690cf780b1cf4149d027bc900cfb9dcbbb59f20f77525a79bef54119
+; $5d0e [0x1d0e..0x1d21), 19 bytes, SHA-256
+;   5e77cc3e830a3b92a97c9bf4eb772191aecd67032360bd8921e06f5efeb40074
+;   authentic US same-offset SHA-256 de1e77eea0ae2a062de7f5d77b4a1842041530ec4ecfbb93d02fa7c6049239da
+; $5d32 [0x1d32..0x1d41), 15 bytes, SHA-256
+;   86d2d610ca48dc568e45055e78337460edd933c66582e7f6f95d6e191f69d54c
+;   authentic US same-offset SHA-256 6727602aa0add66b2027c24da8751c418c8b1d5ef509dead4b1eb71327b8c290
+; $5ca7 [0x1ca7..0x1d0e), 103 bytes, SHA-256
+;   71751098a364bed00311fd6b48634c2c2e1bf0c6055f50f5df537a5cdd525427
+;   authentic US same-offset SHA-256 bef223bab5a90b37d4b9a5951da55008b78196d40437270c975023a8ec9e5512
 ;
 ; The regional dispatch-machine receipt authenticates the JP $4f5e selector
 ; window. Its JSR $3114 at selector offset +4 is the caller for this target.
-; The exact flow bytes, internal HuC6280 BSR targets and the six listed direct
-; JSR targets are bound by theron_v1_track02_verify_stage2_jp_l3114_flow().
-; The 20-byte $4f66 target matches authentic US bytes; the other five direct
+; The exact flow bytes, internal HuC6280 BSR targets and all ten direct JSR
+; target windows are bound by theron_v1_track02_verify_stage2_jp_l3114_flow().
+; The 20-byte $4f66 target matches authentic US bytes; the other nine direct
 ; target windows differ from their authentic US same-offset bytes.
 ;
 ; RTS-bounded spans within the $3114 flow window:
 ;   $3114..$312a, $312a..$3141, $3141..$31a8,
 ;   $31a8..$31b3, $31b3..$31c0, $31c0..$31ce.
-; All five internal BSR destinations are contained in these spans. Six of
-; the ten external JSR target windows, plus immediate helpers reachable from
-; $52c6/$565a, are exact-bound below. The four JSRs from $31b3 ($5c77, $5d0e,
-; $5d32 and $5ca7) remain unbound. No routine or game semantics are assigned.
+; All five internal BSR destinations are contained in these spans, as are
+; all ten external JSR target windows and immediate helpers reachable from
+; $52c6/$565a. The $5ca7 span ends immediately before $5d0e and
+; contains the alternate callable entry at $5cae; this listing records the
+; complete $5ca7-to-first-RTS byte window without assigning semantics to
+; either entry. The four spans and authentic US same-offset windows differ.
+; No routine or game semantics, regional behavioral equivalence, or unlisted
+; nested helper behavior are claimed.
 ;
 ; HuC6280 $44 is BSR, not the 65C02 TSB interpretation. The MAME reference
 ; implementation is h6280_device::bsr() in src/devices/cpu/h6280/h6280.cpp,
@@ -268,3 +285,90 @@ $567c:  sta  $0002
 $567f:  lda  $07
 $5681:  sta  $0003
 $5684:  rts
+
+; Exact direct-call target windows from $31b3. Nested calls are shown as
+; operands only; their targets are not thereby proven or semantically decoded.
+$5c77:  ldy  #$04
+        clx
+$5c7a:  lda  $5ca2,x
+        sta  $4f8b,x
+        inx
+        dey
+        bne  $5c7a
+        stz  $4fd1
+        rts
+
+$5ca7:  lda  #$f0
+        sta  $5ca6
+        bra  $5cb3
+$5cae:  lda  #$ef
+        sta  $5ca6
+$5cb3:  jsr  $53e8
+        lda  $4fb8
+        dec  a
+        asl  a
+        tax
+        lda  $4fb9,x
+        clc
+        adc  #$06
+        sta  $04
+        inx
+        cla
+        adc  $4fb9,x
+        sta  $05
+        ldy  $4f8e
+        ldx  $4f8d
+        phy
+        phx
+        bsr  $5ceb
+        plx
+        ply
+        dey
+        bne  $5cd1
+        lda  $4fd4
+        pha
+        lda  #$01
+        sta  $4fd4
+        jsr  $54b3
+        pla
+        sta  $4fd4
+        rts
+$5ceb:  lda  $5ca6
+        cmp  #$ef
+        beq  $5cf6
+        lda  #$0d
+        bra  $5cf8
+$5cf6:  lda  #$2d
+$5cf8:  sta  $5d00
+        phx
+        cly
+        iny
+        lda  ($04),y
+        ora  $5ca6
+        sta  ($04),y
+        iny
+        dex
+        bne  $5cfd
+        plx
+        jsr  $550c
+        rts
+
+$5d0e:  jsr  $5c88
+        beq  $5d16
+        jsr  $5d21
+        jsr  $e063
+        lda  $222d
+        beq  $5d0e
+        sta  $08
+        rts
+
+$5d32:  pha
+        phx
+        phy
+$5d35:  jsr  $e063
+        lda  $2228
+        bne  $5d35
+        ply
+        plx
+        pla
+        rts

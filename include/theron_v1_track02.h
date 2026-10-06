@@ -2668,6 +2668,14 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_JP_L5670_BYTES 0x0au
 #define THERON_TRACK02_IPL_STAGE2_JP_L567A_USER_OFFSET 0x167au
 #define THERON_TRACK02_IPL_STAGE2_JP_L567A_BYTES 0x0bu
+#define THERON_TRACK02_IPL_STAGE2_JP_L5C77_USER_OFFSET 0x1c77u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5C77_BYTES 0x11u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5D0E_USER_OFFSET 0x1d0eu
+#define THERON_TRACK02_IPL_STAGE2_JP_L5D0E_BYTES 0x13u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5D32_USER_OFFSET 0x1d32u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5D32_BYTES 0x0fu
+#define THERON_TRACK02_IPL_STAGE2_JP_L5CA7_USER_OFFSET 0x1ca7u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5CA7_BYTES 0x67u
 
 /* L3114 near callees.  L3172 and the $117D far-helper trampoline sit
  * directly after the bound L3114 body in the low-image region (below
@@ -3505,8 +3513,9 @@ typedef struct {
 /* Receipt for the JP-only static $3114 flow. It binds the shared $4f5e
  * selector plus the exact JP bytes [0x1114..0x11ce), including its
  * internal BSR targets, direct targets and immediate helper windows from
- * $52c6/$565a. The four $31b3 JSR targets and all routine semantics remain
- * unbound. */
+ * $52c6/$565a, and RTS-bounded or entry-to-RTS windows for all four $31b3
+ * JSR targets. These byte receipts do not establish routine semantics or
+ * gameplay behavior. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -3528,6 +3537,10 @@ typedef struct {
     int l5662_target_proven;
     int l5670_target_proven;
     int l567a_target_proven;
+    int l5c77_target_proven;
+    int l5d0e_target_proven;
+    int l5d32_target_proven;
+    int l5ca7_target_proven;
 } Theron_Track02Stage2JpL3114FlowReceipt;
 
 /* Receipt for the stage-two L3114-callees proof.  It binds only
