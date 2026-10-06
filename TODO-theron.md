@@ -293,9 +293,10 @@ Reviewed 2026-10-06. Only open work is listed here.
   ID `$49`'s `$44eb..$4517` selector split and `$4514` join are locked, and
   its alternate `$459f..$45c9` continuation now has a US/JP byte lock through
   the shared `$4105` (`+7`) cursor tail. Its zero-selector helper `$4446` is
-  also byte-locked in both editions, including the `$4f48/$4bd2` calls and
-  the `$4d79/$4d7a` copies. Selector meaning, callee effects, and runtime
-  selection remain unresolved.
+  also byte-locked in both editions. The `$4f48` subhelper now has a separate
+  US/JP lock proving its `$4f31` table-pointer call and two-byte copies to
+  `$4ec3/$4ec4` and `$4d79/$4d7a`. Selector meaning, `$4bd2/$4c17` effects,
+  and runtime selection remain unresolved.
   ID `$4a`'s `$4a81..$4a9f` paired-call loop is now independently locked to the
   authentic US and JP images, stopping before ID `$4b` at `$4aca`; immediate
   operands and runtime selection remain unassigned.

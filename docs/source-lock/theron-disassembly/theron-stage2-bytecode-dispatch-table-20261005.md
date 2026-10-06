@@ -1236,6 +1236,12 @@ status and `$c0` mask. The zero path calls `$4446`; its 25-byte body is now
 bound by `stage2_l4446_selector_helper` against both authentic editions. It
 increments Y, copies the next `($1c),Y` byte to `$4ec2`, calls `$4f48`, copies
 `$4d79/$4d7a` to `$442f/$4430`, calls `$4bd2`, and returns to the join. The
+`stage2_l4f48_selector_pointer_reader` assertion independently locks `$4f48`
+through its RTS. This helper calls `$4f31` to obtain the pointer selected by
+`$4d7b`, then copies bytes 1 and 2 of that pointed-to record to both
+`$4ec3/$4ec4` and `$4d79/$4d7a` before returning. This identifies only the
+visible pointer and copy operations; it does not assign meaning to the record
+or selector. The
 `$40`-masked path reads another byte, calls `$4c17`, and copies
 `$4d79/$4d7a` to `$442f/$4430`. Those two paths join at `$4514`, call `$4f31`,
 and reach the trailing `SEC` at `$4517`. The other selector values jump to
