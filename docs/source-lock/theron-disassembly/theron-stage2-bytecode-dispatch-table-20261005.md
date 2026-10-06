@@ -386,6 +386,12 @@ regional `$56af/$5729` helper, and reaches the shared `+3` cursor step. Its
 next dispatch ID is therefore the `$1a` at `+$13` in this static walk. The
 regional helper's behavior and actual execution remain unresolved.
 
+The ID `$2b` caller at `$4653` also reaches `$4b00`, whose US/JP-identical
+15-byte body `$4b00..$4b0e` loads `$3009`, writes A to MPR3, increments A, then
+writes the next values to MPR4, MPR5, and MPR6 before returning. The source
+lock proves only this register-write sequence and the caller edge; the value's
+banking purpose and runtime execution remain unknown.
+
 The rooted IDs in each block occur at target-relative cursors
 `+$00,$02,$03,$05,$06,$0a,$0c,$10,$13,$15,$18,$1a,$1c,$1f`:
 `$1a,$13,$2d,$20,$3e,$2d,$11,$2b,$1a,$12,$17,$2d,$12,$09`. Their fixed

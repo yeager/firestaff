@@ -236,8 +236,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   and helper effects remain unknown.
   ID `$54`'s `$484e..$485e` short staging path through `$40f5` is now also
   locked to both editions; value meaning and `$4f5e` effects remain open.
-  ID `$2b`'s caller
-  and shared helper prefix are rooted; the later helper effects remain open.
+  ID `$2b`'s `$4b00..$4b0e` MPR-write helper is now locked identically in US
+  and JP, alongside its caller and shared helper prefix; banking purpose and
+  the regional helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its
   overlapping TII descriptor and two relative callees are source-locked, and
   the bounded callees do not directly access `$3b33`. This does not prove the

@@ -1830,6 +1830,10 @@ static void test_stage2_id2b_regional_handoff(const uint8_t *raw,
         0x0bu, 0x18u, 0xa5u, 0x0cu, 0x69u, 0x02u, 0x85u, 0x0cu,
         0x90u, 0x02u, 0xe6u, 0x0du, 0x60u
     };
+    static const uint8_t mpr_mapper[] = {
+        0xadu, 0x09u, 0x30u, 0x53u, 0x08u, 0x1au, 0x53u, 0x10u,
+        0x1au, 0x53u, 0x20u, 0x1au, 0x53u, 0x40u, 0x60u
+    };
     uint8_t handler[] = {
         0xc8u, 0xb1u, 0x1cu, 0x48u, 0xc8u, 0xb1u, 0x1cu, 0xaau,
         0x20u, 0x00u, 0x4bu, 0x20u, 0x48u, 0x4fu, 0xadu, 0x79u,
@@ -1847,6 +1851,10 @@ static void test_stage2_id2b_regional_handoff(const uint8_t *raw,
     for (unsigned int i = 0; i < sizeof(handler); ++i) {
         assert(stage2_byte_at(raw, raw_size, jp,
                               (uint16_t)(0x4653u + i)) == handler[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(mpr_mapper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4b00u + i)) == mpr_mapper[i]);
     }
     assert(stage2_word_at(raw, raw_size, jp, 0x466fu) == helper);
     helper_prefix[32] = jp ? 0x70u : 0x40u;
