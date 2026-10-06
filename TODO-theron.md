@@ -1,6 +1,6 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-10-05. Only open work is listed here.
+Reviewed 2026-10-06. Only open work is listed here.
 
 ## 2026-10-05 — continue the ID `$2c` helper decompilation
 
