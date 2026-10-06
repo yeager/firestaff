@@ -2,6 +2,18 @@
 
 Reviewed 2026-10-06. Only open work is listed here.
 
+## 2026-10-06 — prove the stage-two helper's physical mapping
+
+- ✅ The opt-in `pce_fast` probe now captures the authentic instruction bytes
+  at `$4ec9`, recognizes only `JSR $3a2e`, and links the immediately following
+  `$3a2e` execution with caller/target physical PCs and MPR1. The complete
+  Mednafen 1.32.1 research patch chain applied to an isolated source copy on
+  `trv2`; a full `-j1` build with PCE Fast enabled succeeded, and the focused
+  patch-chain test passed three consecutive loops.
+- 🔒 No authentic same-session `$4ec9 → $3a2e` runtime receipt has yet been
+  recorded, so the helper's physical bank, bytes, and behavior remain
+  unverified. Capture a real execution before drawing conclusions.
+
 ## 2026-10-05 — continue the ID `$2c` helper decompilation
 
 - ✅ Rooted `$4ec9` and `$4f31` in the authentic US and JP Rev. 1 stage-two

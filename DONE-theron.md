@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-06 — link stage-two caller and helper in PCE Fast probe
+
+Extended the opt-in Mednafen PCE Fast probe to recognize the authentic
+`JSR $3a2e` opcode at `$4ec9`, retain caller MPR/physical-PC evidence, and mark
+the immediately following `$3a2e` execution as linked only when that call
+signature was observed. The focused shell regression checks these conditions.
+
+On trv2, the complete Mednafen 1.32.1 patch sequence applied to an isolated
+copy of the upstream source; a full `-j1` build with PCE Fast enabled
+succeeded, and the focused patch-chain test passed three consecutive loops.
+No authentic runtime call receipt was captured, so the helper's actual mapping
+and behavior remain open in `TODO-theron.md`.
+
 ## 2026-10-05 — source-lock the stage-two MPR entry window
 
 The authentic US and JP stage-two entry bytes at `$4000` now have a direct

@@ -512,11 +512,15 @@ A valid disassembly source must join the `$3a2e` execution with MPR1 and its
 physical PC/bank, or prove the loader span that sets that mapping.
 The original `pce` trace build has a bounded probe at `$4ec9` and `$3a2e`, but
 its `$4ec9` row reads candidate bytes rather than proving that `$3a2e` executes.
-An equivalent `pce_fast` instruction-loop probe now emits MPR1, executing
-physical PC, and 64 mapped bytes only when the actual instruction PC is
-`$3a2e`. The isolated trv2 build compiled; a cold authentic-media run and a
-run loading the authentic JP gameplay state did not execute that target before
-their strict capture gates stopped the runs.
+The `pce_fast` instruction-loop probe now recognizes the authentic
+`JSR $3a2e` bytes at `$4ec9`, records the caller's MPR1 and physical PC, and
+marks a `$3a2e` row as linked only when that is the immediately following
+instruction PC. The target row also captures its actual MPR1, physical PC,
+and 64 mapped bytes; its predicted physical target is retained separately so
+the mapping can be compared at execution. On `trv2`, the full PCE Fast-enabled
+Mednafen build succeeded and the complete patch-chain regression passed three
+consecutive loops. No authentic runtime call receipt has yet been captured, so
+the target implementation and mapping remain unresolved.
 
 The JP F5 state (SHA-256
 `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) provides
