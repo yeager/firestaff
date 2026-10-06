@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-06: The direct `--debug` regression now checks the normal bare
+  `--game dm2` FM Towns route against all 225 source title records: it traces
+  every timed frame, rejects any title-media failure, and records completion
+  at about 26 seconds. The independent M11 original-media test confirms TITLE
+  frame 0 has zero Timer-A ticks. This uses SDL dummy output and does not prove
+  physical Mac M5 HiDPI presentation.
+
 - 2026-10-06: Re-ran the original FM Towns startup matrix against the
   authenticated Japanese ZIP. The bare direct `--game dm2` route reaches the
   225-frame New Game menu within 40 seconds, validates its presented source

@@ -41,6 +41,50 @@ case "$towns_verbose" in
     *) echo "FAIL: verbose omitted catalogued candidate filenames" >&2; exit 1 ;;
 esac
 
+# --debug must expose every original FM Towns TWANIM frame on the ordinary
+# no-platform direct CLI route, including source completion time. Boot probes
+# fast-forward source waits and cannot verify this timing contract.
+towns_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    --game dm2 --data-dir "$towns_archive" --debug --duration 40000 2>&1) || {
+    printf '%s\n' "$towns_debug" >&2
+    exit 1
+}
+printf '%s\n' "$towns_debug" | python3 -c '
+import re
+import sys
+
+trace = sys.stdin.read()
+frames = set()
+finished = []
+rejected = False
+pattern = re.compile(
+    r"startup-frame game=dm2 elapsed-ms=(\d+).*?"
+    r"dm2-fmtowns-title=\{bound:(\d+) finished:(\d+) "
+    r"rejected:(\d+) swoosh:(\d+) frame:(\d+)/(\d+) ticks-remaining:\d+\}"
+)
+for match in pattern.finditer(trace):
+    elapsed, bound, done, reject, swoosh, frame, maximum = map(int, match.groups())
+    rejected |= reject != 0
+    if bound and not done and not swoosh and maximum == 225 and 0 < frame < 225:
+        frames.add(frame)
+    if done and not reject:
+        finished.append((int(elapsed), int(frame), int(maximum)))
+if (frames != set(range(1, 225)) or not finished or
+        finished[-1][1:] != (225, 0) or
+        not 24000 <= finished[-1][0] < 40000 or rejected or
+        "phase=dm2-startup-menu" not in trace):
+    raise SystemExit(
+        "FAIL: DM2 --debug did not record every timed TWANIM frame and source completion timing"
+    )
+print(
+    f"PASS: DM2 --debug recorded all timed TWANIM frames and finished in "
+    f"{finished[-1][0]} ms"
+)
+' || {
+    printf '%s\n' "$towns_debug" >&2
+    exit 1
+}
+
 combined_root=$(mktemp -d "${PWD}/.firestaff-cli-diagnostics.XXXXXX")
 csb_mixed_root=
 trap 'rm -rf "$combined_root" "$csb_mixed_root"' EXIT

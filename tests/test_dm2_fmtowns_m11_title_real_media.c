@@ -185,8 +185,9 @@ int main(void)
     }
     expect(view.dm2FmtownsTitleBound && !view.dm2FmtownsSwooshActive &&
                view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u &&
+               view.dm2FmtownsTitleFrameReceipt.display_duration == 0u &&
                view.dm2FmtownsFrameCount == 225u,
-           "M11 advances real SWOOSH before binding TITLE's source EN/DL count through Timer-A units");
+           "M11 advances real SWOOSH before binding TITLE; frame zero has zero source Timer-A ticks");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     expect_presented_stream_palette(
