@@ -295,8 +295,9 @@ Reviewed 2026-10-06. Only open work is listed here.
   the shared `$4105` (`+7`) cursor tail. Its zero-selector helper `$4446` is
   also byte-locked in both editions. The `$4f48` subhelper now has a separate
   US/JP lock proving its `$4f31` table-pointer call and two-byte copies to
-  `$4ec3/$4ec4` and `$4d79/$4d7a`. Selector meaning, `$4bd2/$4c17` effects,
-  and runtime selection remain unresolved.
+  `$4ec3/$4ec4` and `$4d79/$4d7a`; caller `$4bd2` is now byte-locked through
+  its conditional `$4ef4`/`BRK` handoff. Selector meaning, `$4f5e/$4ef4`
+  effects, `$4c17` effects, and runtime selection remain unresolved.
   ID `$4a`'s `$4a81..$4a9f` paired-call loop is now independently locked to the
   authentic US and JP images, stopping before ID `$4b` at `$4aca`; immediate
   operands and runtime selection remain unassigned.

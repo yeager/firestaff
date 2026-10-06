@@ -1241,7 +1241,11 @@ through its RTS. This helper calls `$4f31` to obtain the pointer selected by
 `$4d7b`, then copies bytes 1 and 2 of that pointed-to record to both
 `$4ec3/$4ec4` and `$4d79/$4d7a` before returning. This identifies only the
 visible pointer and copy operations; it does not assign meaning to the record
-or selector. The
+or selector. The 21-byte `$4bd2..$4be6` caller is separately locked by
+`stage2_l4bd2_conditional_handoff`: it calls `$4f48`, copies `$4d7b` to
+`$4ec1`, passes `#$03` to `$4f5e`, then branches on carry. Carry reaches the
+`BRK` at `$4be6`; clear carry calls `$4ef4` and returns. This lock does not
+assign meaning to the `$4f5e` result or interpret the `BRK` path. The
 `$40`-masked path reads another byte, calls `$4c17`, and copies
 `$4d79/$4d7a` to `$442f/$4430`. Those two paths join at `$4514`, call `$4f31`,
 and reach the trailing `SEC` at `$4517`. The other selector values jump to
