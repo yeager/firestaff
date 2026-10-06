@@ -57,6 +57,14 @@ indices and compares their respective `$2780,X` lookup results. The
 `$40f0..$421f` interval containing this code is byte-identical in the US and
 JP deinterleaved payloads.
 
+The source-lock test binds all eight table words and their bounded root
+windows `$41c5..$41ca`, `$41cb..$41d7`, `$41d8..$41dd`, `$41de..$41e5`,
+`$41e6..$41eb`, `$41ec..$41ef`, `$41f0..$41f3`, and `$41f4..$41f7` against
+both editions. It also locks the shared two-operand comparator `$4203..$4213`;
+the offset-1 comparator `$41f8..$4202` is bound with the indexed-byte group
+below. These assertions establish source bytes and branches, not valid-stream
+selection or gameplay meaning.
+
 | Index | Static comparison path | Pointer replacement via `$41cf` |
 |---:|---|---|
 | `$01` | `$41f8`, then branch on Z | when Z is set |

@@ -83,10 +83,12 @@ Reviewed 2026-10-05. Only open work is listed here.
 - 🔒 The map provides addresses only. Valid stream indices, remaining
   per-handler operands/advancement, gameplay meanings, and the real-resource
   caller remain unbound. The disassembly now decodes from all 85 table roots
-  without assigning command semantics. Indices `$00..$07` have a static
-  comparison/cursor-transfer trace; `$0b..$10` have indexed-byte/nested-cursor
-  traces; the `$09` return byte, `$0a` root, and `$10` nested cursor handler
-  are now byte-locked in both authentic editions.
+  without assigning command semantics. Indices `$00..$07` now have table-word
+  and bounded-root source locks, including shared comparator `$4203`; their
+  static comparison/cursor-transfer trace is not a valid-stream proof.
+  Indices `$0b..$10` have indexed-byte/nested-cursor traces; the `$09` return
+  byte, `$0a` root, and `$10` nested cursor handler are now byte-locked in both
+  authentic editions.
   Index `$28`'s conditional path, Y-offset 1 test, Y-offset 2 fetch, regional
   helper operand, and cursor tail are now byte-locked for both editions.
   Index `$12`'s saved-cursor indirect-call path is also source-locked for both

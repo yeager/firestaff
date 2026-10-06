@@ -139,6 +139,70 @@ static void test_stage2_l48fc_countdown(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the first eight comparison/cursor roots to both retail editions. */
+static void test_stage2_id00_07_comparison_roots(const uint8_t *raw,
+                                                  size_t raw_size, int jp)
+{
+    static const uint16_t targets[] = {
+        0x41c5u, 0x41cbu, 0x41d8u, 0x41deu,
+        0x41e6u, 0x41ecu, 0x41f0u, 0x41f4u
+    };
+    static const uint8_t id00[] = { 0x44u, 0xf2u, 0x62u, 0x4cu, 0xe4u, 0x40u };
+    static const uint8_t id01[] = {
+        0x44u, 0x2bu, 0xd0u, 0x06u, 0x44u, 0xe8u, 0x62u, 0x4cu,
+        0xe4u, 0x40u, 0x4cu, 0x01u, 0x41u
+    };
+    static const uint8_t id02[] = { 0x44u, 0x1eu, 0xd0u, 0xf3u, 0x80u, 0xf7u };
+    static const uint8_t id03[] = {
+        0x44u, 0x18u, 0x90u, 0xf3u, 0xf0u, 0xf1u, 0x80u, 0xe9u
+    };
+    static const uint8_t id04[] = { 0x44u, 0x10u, 0xb0u, 0xebu, 0x80u, 0xe3u };
+    static const uint8_t id05[] = { 0x44u, 0x15u, 0x80u, 0xddu };
+    static const uint8_t id06[] = { 0x44u, 0x11u, 0x80u, 0xe6u };
+    static const uint8_t id07[] = { 0x44u, 0x0du, 0x80u, 0xf0u };
+    static const uint8_t pair_comparison[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xaau, 0xbdu, 0x80u, 0x27u, 0x48u,
+        0xc8u, 0xb1u, 0x1cu, 0xaau, 0x68u, 0xddu, 0x80u, 0x27u,
+        0x60u
+    };
+    static const struct {
+        uint16_t address;
+        const uint8_t *bytes;
+        size_t length;
+    } windows[] = {
+        { 0x41c5u, id00, sizeof(id00) },
+        { 0x41cbu, id01, sizeof(id01) },
+        { 0x41d8u, id02, sizeof(id02) },
+        { 0x41deu, id03, sizeof(id03) },
+        { 0x41e6u, id04, sizeof(id04) },
+        { 0x41ecu, id05, sizeof(id05) },
+        { 0x41f0u, id06, sizeof(id06) },
+        { 0x41f4u, id07, sizeof(id07) }
+    };
+
+    for (unsigned int id = 0; id < sizeof(targets) / sizeof(targets[0]);
+         ++id) {
+        assert(stage2_word_at(raw, raw_size, jp,
+                              (uint16_t)(0x410du + 2u * id)) == targets[id]);
+    }
+    for (size_t window = 0; window < sizeof(windows) / sizeof(windows[0]);
+         ++window) {
+        for (size_t i = 0; i < windows[window].length; ++i) {
+            assert(stage2_byte_at(
+                       raw, raw_size, jp,
+                       (uint16_t)(windows[window].address + i)) ==
+                   windows[window].bytes[i]);
+        }
+    }
+    for (size_t i = 0; i < sizeof(pair_comparison); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4203u + i)) ==
+               pair_comparison[i]);
+    }
+    printf("  PASS: stage2_id00_07_comparison_roots (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the indexed-byte store/add/subtract/increment/decrement cluster
  * against authentic media.
  * This asserts instruction paths, not stream execution or field meanings. */
@@ -2982,6 +3046,7 @@ int main(void)
         g_us_data, g_us_size, 0);
     test_stage2_entry_mpr_window(g_us_data, g_us_size, 0);
     test_stage2_l48fc_countdown(g_us_data, g_us_size, 0);
+    test_stage2_id00_07_comparison_roots(g_us_data, g_us_size, 0);
     test_stage2_id0b_0f_indexed_mutation(g_us_data, g_us_size, 0);
     test_stage2_id09_id0a_id10_nested_cursor(g_us_data, g_us_size, 0);
     test_stage2_id28_conditional_handoff(g_us_data, g_us_size, 0);
@@ -3048,6 +3113,7 @@ int main(void)
             g_jp_data, g_jp_size, 1);
         test_stage2_entry_mpr_window(g_jp_data, g_jp_size, 1);
         test_stage2_l48fc_countdown(g_jp_data, g_jp_size, 1);
+        test_stage2_id00_07_comparison_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id0b_0f_indexed_mutation(g_jp_data, g_jp_size, 1);
         test_stage2_id09_id0a_id10_nested_cursor(g_jp_data, g_jp_size, 1);
         test_stage2_id28_conditional_handoff(g_jp_data, g_jp_size, 1);
