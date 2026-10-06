@@ -1868,31 +1868,6 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     }
 }
 
-/* Both pointer and keyboard/game actions return through the same refresh:
- * the launcher must rebuild availability for every installed game before
- * showing its main menu again. */
-static void m11_return_to_launcher_after_game(
-    M11_GameViewState* gameView,
-    M12_StartupMenuState* menuState,
-    struct Dm1V1PendingMotionQueuePc34Compat* pendingMotionQueue,
-    uint32_t* idleAccumulatorMs,
-    unsigned char* launcherFramebuffer,
-    unsigned char* modernRgba,
-    int useModern,
-    int debug) {
-    if (!gameView || !menuState || !pendingMotionQueue ||
-        !idleAccumulatorMs || !launcherFramebuffer) {
-        return;
-    }
-    M11_GameView_Shutdown(gameView);
-    M11_GameView_Init(gameView);
-    DM1_V1_PendingMotionQueue_ClearPc34Compat(pendingMotionQueue);
-    *idleAccumulatorMs = 0;
-    m11_rescan_launcher_asset_status(menuState, launcherFramebuffer, debug);
-    M11_ApplyStartupMenuRuntime(menuState);
-    m11_draw_launcher(menuState, launcherFramebuffer, modernRgba, useModern);
-}
-
 static void m11_sync_runtime_graphics_popup_to_menu(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState)
@@ -9153,10 +9128,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         if (pointerResult != M11_GAME_INPUT_IGNORED) {
             if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
-                m11_return_to_launcher_after_game(
-                    &gameView, &menuState, &pendingDm1V1MotionQueue,
-                    &idleAccumulatorMs, launcherFramebuffer, modernRgba,
-                    useModern, o->debug);
+                M11_GameView_Shutdown(&gameView);
+                M11_GameView_Init(&gameView);
+                DM1_V1_PendingMotionQueue_ClearPc34Compat(
+                    &pendingDm1V1MotionQueue);
+                idleAccumulatorMs = 0;
+                m11_rescan_launcher_asset_status(&menuState,
+                                                 launcherFramebuffer,
+                                                 o->debug);
+                M11_ApplyStartupMenuRuntime(&menuState);
+                m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             } else if (pointerResult == M11_GAME_INPUT_RESTART_GAME) {
                 DM1_V1_PendingMotionQueue_ClearPc34Compat(
                     &pendingDm1V1MotionQueue);
@@ -9234,10 +9215,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     result = M11_GameView_HandleInput(&gameView, input);
                 }
                 if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
-                    m11_return_to_launcher_after_game(
-                        &gameView, &menuState, &pendingDm1V1MotionQueue,
-                        &idleAccumulatorMs, launcherFramebuffer, modernRgba,
-                        useModern, o->debug);
+                    M11_GameView_Shutdown(&gameView);
+                    M11_GameView_Init(&gameView);
+                    DM1_V1_PendingMotionQueue_ClearPc34Compat(
+                        &pendingDm1V1MotionQueue);
+                    idleAccumulatorMs = 0;
+                    m11_rescan_launcher_asset_status(&menuState,
+                                                     launcherFramebuffer,
+                                                     o->debug);
+                    M11_ApplyStartupMenuRuntime(&menuState);
+                    m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 } else if (result == M11_GAME_INPUT_RESTART_GAME) {
                     DM1_V1_PendingMotionQueue_ClearPc34Compat(
                         &pendingDm1V1MotionQueue);
