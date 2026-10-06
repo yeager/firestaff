@@ -839,6 +839,74 @@ and byte window against authentic US and JP data. This records static stream
 reads and control flow only; the `$3ab7` effects and runtime selection remain
 unproven.
 
+ID `$40` points to `$491b` in both editions. The complete `$491b..$4972`
+window decrements `$5b`, calls `$43d6`, reads a selector byte, branches through
+`$37d8` or `$43b5`, and converges on a shared initialization/polling sequence.
+The `$02` branch enters an in-window `$4968` side path before the shared exit
+at `$4960`; both paths end at `$40f9`. The 88-byte window is identical in
+authentic US and JP data and stops immediately before the separate ID `$42`
+root at `$4973`. This establishes static branch and call structure, not
+selector meaning, helper effects, or stream execution.
+
+ID `$42` points to `$4973` in both editions. Its bounded path reads a stream
+byte and branches to `$498e` when nonzero; the other path reads two more bytes,
+stores them at `$27c2/$27c3`, clears `$27c6`, and sets `$27c7` to `$ff`. Both
+paths converge at `$4991` and jump to `$40fd` (`+4`). The assertion locks the
+33 bytes `$4973..$4993` through that terminal jump, stopping before the
+following `$4994` byte and ID `$43` root at `$4995`. The stored values' meaning
+and runtime branch choice remain unknown.
+
+ID `$43` points to `$4995` in both editions. The 22-byte window
+`$4995..$49aa` calls `$4446`, copies `$442f/$4430` into `$27c0/$27c1` and
+`$62/$63`, then jumps to `$40f5` for the static `+2` cursor advance. The
+source-lock test binds the dispatch pointer and full window against authentic
+US and JP media. These copies do not establish field roles or a gameplay
+meaning, and the byte lock does not prove retail execution.
+
+ID `$44` points to `$45eb` in both editions. Its five-byte root calls the
+already byte-locked `$4483` helper, then branches back to `$45d7`. The test
+binds the table word and this root only; the continuation is independently
+locked as part of ID `$27`'s window. This establishes a shared static re-entry
+path, not a gameplay meaning or proof of execution from a retail stream.
+
+ID `$45` points to `$49ab` in both editions. Its nine-byte root is
+`BSR $49e1; LDA #$08; JSR $4f5e; BRA $49d8`. The assertion binds the table
+word and `$49ab..$49b3` only, stopping before the next target ID `$46` at
+`$49b4`; it does not assert the out-of-window subroutine/callee bytes. This is
+static handoff evidence only, with no assigned gameplay meaning or runtime
+stream selection.
+
+ID `$46` points to `$49b4` in both editions. Its seven-byte root is
+`BSR $49e1; JSR $4c00; BRA $49d8`. The source-lock assertion ends at `$49ba`,
+before ID `$47` begins at `$49bb`. It records only the call/branch handoff;
+the callee effects and runtime selection remain unknown.
+
+ID `$47` points to `$49bb` in both editions. Its 24-byte root calls the shared
+`$49e1` helper, stores two more stream bytes into `$4ec3/$4ec4`, clears
+`$4ec5`, loads `#$07`, calls `$4f5e`, and branches to `$49db`. The separate
+seven-byte `$49e1..$49e7` helper reads one stream byte to `$4ec2` and returns;
+the same helper is also called by IDs `$45/$46` and other locked dispatch
+paths. Assertions stop the ID `$47` root at `$49d2`, before the next target
+`$49d3`. These bytes establish data flow/control flow only, not field meaning
+or stream execution.
+
+ID `$48` points to `$4a5e` in both editions. Its 35-byte root
+`$4a5e..$4a80` calls `$463b`, obtains a loop count from the stream, alternates
+the `$0c` and `$0e` immediate calls to `$3ab7` while decrementing X, then
+jumps to `$40f9` (`+3`). The source-lock test binds the table pointer and full
+window, ending immediately before the next target ID `$4a` at `$4a81`. This
+proves a static loop and call sequence only; stream-field meaning and runtime
+selection remain open.
+
+ID `$49` points to `$44eb` in both editions. The 45-byte window
+`$44eb..$4517` reads and saves a selector byte, then branches on its zero
+status and `$c0` mask. The zero path calls `$4446`; the `$40`-masked path
+reads another byte, calls `$4c17`, and copies `$4d79/$4d7a` to `$442f/$4430`.
+Those two paths join at `$4514`, call `$4f31`, and reach the trailing `SEC` at
+`$4517`. The other selector values jump to `$459f`, which is outside this
+assertion. The raw window is identical in authentic US and JP data; the
+selector's meaning and runtime use remain unproven.
+
 ID `$37` points to `$480a` in both editions. Its root `$480a..$4813` reads one
 stream byte to `$02`, calls the local helper at `$4814`, and jumps to `$40f5`.
 The helper window `$4814..$4841` is byte-identical in the authentic US and JP

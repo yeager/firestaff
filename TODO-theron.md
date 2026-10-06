@@ -195,6 +195,26 @@ Reviewed 2026-10-05. Only open work is listed here.
   ID `$3f`'s `$4901..$490f` indexed transfer is also locked up to the next
   distinct ID `$26` table target `$4910`; the transferred data's meaning and
   execution remain unproven.
+  ID `$40`'s 88-byte branch/polling window `$491b..$4972` is source-locked up
+  to ID `$42` at `$4973`; selector meaning and helper effects remain unknown.
+  ID `$42`'s `$4973..$4993` conditional stores and `$40fd` (`+4`) tail are
+  now locked against both editions; field meanings and branch execution remain
+  unknown.
+  ID `$43`'s `$4995..$49aa` source-copy path and `$40f5` (`+2`) tail are also
+  locked against US and JP data; field roles and stream execution remain open.
+  ID `$44`'s `$45eb..$45ef` call/branch root re-entering the locked `$45d7`
+  continuation is now source-locked; runtime selection remains unproven.
+  ID `$45`'s `$49ab..$49b3` subroutine/BIOS handoff is now source-locked to
+  the next dispatch target `$49b4`; callee effects and stream selection remain
+  unknown.
+  ID `$46`'s `$49b4..$49ba` relative-helper/callee handoff is also locked up
+  to ID `$47` at `$49bb`; called-routine effects remain open.
+  ID `$47`'s `$49bb..$49d2` three-byte setup and shared `$49e1..$49e7` reader
+  are now locked; field roles and stream execution are still unknown.
+  ID `$48`'s `$4a5e..$4a80` paired-selector loop and `$40f9` (`+3`) tail are
+  now source-locked; loop-count meaning and runtime selection remain unknown.
+  ID `$49`'s `$44eb..$4517` selector split and `$4514` join are also locked;
+  the alternate `$459f` path and selector meaning remain unresolved.
   ID `$2b`'s caller
   and shared helper prefix are rooted; the later helper effects remain open.
   ID `$11`'s US/JP target is now rooted at `$5e27/$5e57`: its

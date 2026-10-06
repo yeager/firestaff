@@ -1178,6 +1178,206 @@ static void test_stage2_id3f_indexed_transfer(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock the complete bounded ID $40 branch path, stopping before ID $42. */
+static void test_stage2_id40_bounded_selector_path(const uint8_t *raw,
+                                                   size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc6u, 0x5bu, 0x20u, 0xd6u, 0x43u, 0xc8u, 0xb1u, 0x1cu,
+        0xc9u, 0x01u, 0xf0u, 0x09u, 0xc9u, 0x02u, 0xf0u, 0x3du,
+        0x20u, 0xd8u, 0x37u, 0x80u, 0x03u, 0x20u, 0xb5u, 0x43u,
+        0xa9u, 0x01u, 0x85u, 0x1eu, 0x85u, 0x25u, 0x20u, 0x48u,
+        0x4fu, 0xadu, 0x79u, 0x4du, 0x85u, 0x20u, 0xadu, 0x7au,
+        0x4du, 0x85u, 0x21u, 0x20u, 0x00u, 0x4bu, 0x20u, 0xd2u,
+        0x43u, 0x20u, 0x09u, 0xe0u, 0xc9u, 0x00u, 0xd0u, 0xf6u,
+        0xa9u, 0xffu, 0x20u, 0x1bu, 0xe0u, 0xc9u, 0x00u, 0xf0u,
+        0x04u, 0xc9u, 0x0eu, 0x90u, 0xf3u, 0x64u, 0x5bu, 0x20u,
+        0xf7u, 0x4au, 0x4cu, 0xf9u, 0x40u, 0xadu, 0xccu, 0x37u,
+        0x20u, 0x19u, 0x44u, 0x20u, 0x15u, 0xe0u, 0x80u, 0xedu
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x40u)) == 0x491bu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x491bu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id40_bounded_selector_path (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $42's conditional field stores and shared +4 cursor exit. */
+static void test_stage2_id42_conditional_stores(const uint8_t *raw,
+                                                 size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x16u, 0xc8u, 0xb1u, 0x1cu,
+        0x8du, 0xc2u, 0x27u, 0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc3u,
+        0x27u, 0x9cu, 0xc6u, 0x27u, 0xa9u, 0xffu, 0x8du, 0xc7u,
+        0x27u, 0x80u, 0x03u, 0x9cu, 0xc7u, 0x27u, 0x4cu, 0xfdu,
+        0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x42u)) == 0x4973u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4973u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id42_conditional_stores (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $43's source copies and fixed +2 cursor tail. */
+static void test_stage2_id43_source_copies(const uint8_t *raw,
+                                           size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x46u, 0x44u, 0xadu, 0x2fu, 0x44u, 0x8du, 0xc0u,
+        0x27u, 0x85u, 0x62u, 0xadu, 0x30u, 0x44u, 0x8du, 0xc1u,
+        0x27u, 0x85u, 0x63u, 0x4cu, 0xf5u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x43u)) == 0x4995u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4995u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id43_source_copies (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $44's short call/branch root; $4483 is independently source-locked. */
+static void test_stage2_id44_helper_reentry(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x83u, 0x44u, 0x80u, 0xe7u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x44u)) == 0x45ebu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x45ebu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id44_helper_reentry (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $45's bounded subroutine/BIOS handoff and branch tail. */
+static void test_stage2_id45_bounded_handoff(const uint8_t *raw,
+                                              size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x44u, 0x34u, 0xa9u, 0x08u, 0x20u, 0x5eu, 0x4fu, 0x80u,
+        0x24u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x45u)) == 0x49abu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x49abu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id45_bounded_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $46's bounded relative-helper/callee handoff and branch tail. */
+static void test_stage2_id46_helper_handoff(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x44u, 0x2bu, 0x20u, 0x00u, 0x4cu, 0x80u, 0x1du
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x46u)) == 0x49b4u);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x49b4u + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id46_helper_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $47's three-byte setup and the shared $49e1 stream-byte helper. */
+static void test_stage2_id47_three_byte_handoff(const uint8_t *raw,
+                                                 size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x44u, 0x24u, 0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc3u, 0x4eu,
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc4u, 0x4eu, 0x9cu, 0xc5u,
+        0x4eu, 0xa9u, 0x07u, 0x20u, 0x5eu, 0x4fu, 0x80u, 0x08u
+    };
+    static const uint8_t stream_byte_helper[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x8du, 0xc2u, 0x4eu, 0x60u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x47u)) == 0x49bbu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x49bbu + i)) == root[i]);
+    }
+    for (unsigned int i = 0; i < sizeof(stream_byte_helper); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x49e1u + i)) ==
+               stream_byte_helper[i]);
+    }
+    printf("  PASS: stage2_id47_three_byte_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $48's bounded paired-selector loop and +3 cursor tail. */
+static void test_stage2_id48_paired_selector_loop(const uint8_t *raw,
+                                                   size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0x20u, 0x3bu, 0x46u, 0xc8u, 0xb1u, 0x1cu, 0xaau, 0xa5u,
+        0x0eu, 0xdau, 0x48u, 0xa9u, 0x0cu, 0x20u, 0xb7u, 0x3au,
+        0x68u,
+        0x85u, 0x0eu, 0x48u, 0xa9u, 0x0eu, 0x20u, 0xb7u, 0x3au,
+        0x68u, 0x85u, 0x0eu, 0xfau, 0xcau, 0xd0u, 0xe9u, 0x4cu,
+        0xf9u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x48u)) == 0x4a5eu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x4a5eu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id48_paired_selector_loop (%s)\n",
+           jp ? "JP" : "US");
+}
+
+/* Lock ID $49's selector split and the two paths joining at $4514. */
+static void test_stage2_id49_selector_join(const uint8_t *raw,
+                                            size_t raw_size, int jp)
+{
+    static const uint8_t root_and_join[] = {
+        0xc8u, 0xb1u, 0x1cu, 0x48u, 0xf0u, 0x20u, 0x29u, 0xc0u,
+        0xc9u, 0x40u, 0xf0u, 0x03u, 0x4cu, 0x9fu, 0x45u, 0xc8u,
+        0xb1u, 0x1cu, 0x8du, 0xc2u, 0x4eu, 0x20u, 0x17u, 0x4cu,
+        0xadu, 0x79u, 0x4du, 0x8du, 0x2fu, 0x44u, 0xadu, 0x7au,
+        0x4du, 0x8du, 0x30u, 0x44u, 0x80u, 0x03u, 0x20u, 0x46u,
+        0x44u, 0x20u, 0x31u, 0x4fu, 0x38u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x49u)) == 0x44ebu);
+    for (unsigned int i = 0; i < sizeof(root_and_join); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x44ebu + i)) ==
+               root_and_join[i]);
+    }
+    printf("  PASS: stage2_id49_selector_join (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock the index-$4b comparison handler and its local pair checker against
  * each authentic edition. This proves byte-level branches/cursor arithmetic
  * only; it does not establish that a retail stream selects this root. */
@@ -2651,6 +2851,15 @@ int main(void)
     test_stage2_id3d_overlapping_bios_window(g_us_data, g_us_size, 0);
     test_stage2_id3e_polling_helper(g_us_data, g_us_size, 0);
     test_stage2_id3f_indexed_transfer(g_us_data, g_us_size, 0);
+    test_stage2_id40_bounded_selector_path(g_us_data, g_us_size, 0);
+    test_stage2_id42_conditional_stores(g_us_data, g_us_size, 0);
+    test_stage2_id43_source_copies(g_us_data, g_us_size, 0);
+    test_stage2_id44_helper_reentry(g_us_data, g_us_size, 0);
+    test_stage2_id45_bounded_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id46_helper_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id47_three_byte_handoff(g_us_data, g_us_size, 0);
+    test_stage2_id48_paired_selector_loop(g_us_data, g_us_size, 0);
+    test_stage2_id49_selector_join(g_us_data, g_us_size, 0);
     test_stage2_id4b_indexed_comparison(g_us_data, g_us_size, 0);
     test_stage2_id4d_operand_handoff(g_us_data, g_us_size, 0);
     test_stage2_id51_helper_chain(g_us_data, g_us_size, 0);
@@ -2700,6 +2909,15 @@ int main(void)
         test_stage2_id3d_overlapping_bios_window(g_jp_data, g_jp_size, 1);
         test_stage2_id3e_polling_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id3f_indexed_transfer(g_jp_data, g_jp_size, 1);
+        test_stage2_id40_bounded_selector_path(g_jp_data, g_jp_size, 1);
+        test_stage2_id42_conditional_stores(g_jp_data, g_jp_size, 1);
+        test_stage2_id43_source_copies(g_jp_data, g_jp_size, 1);
+        test_stage2_id44_helper_reentry(g_jp_data, g_jp_size, 1);
+        test_stage2_id45_bounded_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id46_helper_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id47_three_byte_handoff(g_jp_data, g_jp_size, 1);
+        test_stage2_id48_paired_selector_loop(g_jp_data, g_jp_size, 1);
+        test_stage2_id49_selector_join(g_jp_data, g_jp_size, 1);
         test_stage2_id4b_indexed_comparison(g_jp_data, g_jp_size, 1);
         test_stage2_id4d_operand_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id51_helper_chain(g_jp_data, g_jp_size, 1);
