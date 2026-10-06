@@ -2972,6 +2972,20 @@ static void test_stage2_l4696(void)
         status = theron_v1_track02_verify_stage2_l4696(
             mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
         assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+        raw_offset =
+            (stage2_sector +
+             (THERON_TRACK02_IPL_STAGE2_L8000_USER_OFFSET +
+              THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_L8000_OFFSET) /
+                 2048u) *
+                2352u + 16u +
+            (THERON_TRACK02_IPL_STAGE2_L8000_USER_OFFSET +
+             THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_L8000_OFFSET) %
+                2048u;
+        memcpy(mutated, g_jp_data, g_jp_size);
+        mutated[raw_offset] ^= 1u;
+        status = theron_v1_track02_verify_stage2_l4696(
+            mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
         free(mutated);
     }
     printf("  PASS: stage2_l4696\n");

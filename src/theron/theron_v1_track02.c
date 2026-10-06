@@ -8964,19 +8964,19 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
         0x11u, 0x65u, 0x0fu, 0x85u, 0x0fu, 0x06u, 0x10u, 0x26u,
         0x11u, 0xcau, 0xd0u, 0xe8u, 0x60u
     };
-    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02Stage2L8000PairReceipt l8000_pair;
     Theron_Track02SignalStatus status;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!track02_data || !md5_hex || !out_receipt) {
         return THERON_TRACK02_SIGNAL_BAD_INPUT;
     }
-    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
-                                                md5_hex, &loader);
+    status = theron_v1_track02_verify_stage2_l8000_pair(
+        track02_data, track02_size, md5_hex, &l8000_pair);
     if (status != THERON_TRACK02_SIGNAL_OK) return status;
-    if ((loader.variant != THERON_TRACK02_VARIANT_US_BIN &&
-         loader.variant != THERON_TRACK02_VARIANT_JP_BIN) ||
-        !loader.stage2_seed_call_sites_proven ||
+    if (!l8000_pair.valid || !l8000_pair.l8000_proven ||
+        (l8000_pair.variant != THERON_TRACK02_VARIANT_US_BIN &&
+         l8000_pair.variant != THERON_TRACK02_VARIANT_JP_BIN) ||
         sizeof(stage2_l4696) != THERON_TRACK02_IPL_STAGE2_L4696_BYTES ||
         THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_L8000_OFFSET + 3u >
             THERON_TRACK02_IPL_STAGE2_L8000_BYTES ||
@@ -8985,16 +8985,16 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
                 TQR_RAW_SECTOR_USER_DATA_BYTES ||
         !tqr_ipl_user_match(
-            track02_data, track02_size, loader.stage2_raw_sector,
+            track02_data, track02_size, l8000_pair.stage2_raw_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_L4696_USER_OFFSET,
             stage2_l4696, sizeof(stage2_l4696))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     out_receipt->valid = 1;
-    out_receipt->variant = loader.variant;
-    out_receipt->stage2_record = loader.stage2_record;
-    out_receipt->stage2_raw_sector = loader.stage2_raw_sector;
+    out_receipt->variant = l8000_pair.variant;
+    out_receipt->stage2_record = l8000_pair.stage2_record;
+    out_receipt->stage2_raw_sector = l8000_pair.stage2_raw_sector;
     out_receipt->l4696_bytes = sizeof(stage2_l4696);
     out_receipt->l4696_cpu_address =
         THERON_TRACK02_IPL_STAGE2_L4696_CPU_ADDRESS;
