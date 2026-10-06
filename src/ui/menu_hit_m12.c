@@ -852,3 +852,22 @@ int M12_ModernMenu_HandlePointer(M12_StartupMenuState* state,
     }
     return changed;
 }
+
+int M12_LegacyMenu_HandleCompactCardPointer(M12_StartupMenuState* state,
+                                            int x, int y,
+                                            int clicked) {
+    const int cardX = (480 - 296) / 2;
+    const int cardY = (270 - 140) / 2;
+    if (!state || state->view != M12_MENU_VIEW_GAME_OPTIONS ||
+        (state->gameCardFlowStage != 0 && state->gameCardFlowStage != 1) ||
+        !rect_contains(cardX, cardY, 296, 140, x, y)) {
+        return 0;
+    }
+    state->hoverX = x;
+    state->hoverY = y;
+    if (!clicked) {
+        return 0;
+    }
+    M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    return 1;
+}

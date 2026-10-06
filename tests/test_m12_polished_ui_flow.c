@@ -6,6 +6,7 @@
 #endif
 
 #include "menu_startup_m12.h"
+#include "menu_hit_m12.h"
 #include "config_m12.h"
 
 #include <stddef.h>
@@ -212,6 +213,26 @@ int main(void) {
                 "available DM1 accept should enter platform cards")) return 1;
     if (!expect(state.gameCardFlowStage == 0 && state.launchRequested == 0,
                 "game card should wait for a verified platform choice")) return 1;
+    if (!expect(M12_LegacyMenu_HandleCompactCardPointer(&state, 20, 20, 1) == 0 &&
+                state.gameCardFlowStage == 0,
+                "compact legacy pointer should ignore clicks outside the visible card")) return 1;
+    if (!expect(M12_LegacyMenu_HandleCompactCardPointer(&state, 240, 135, 1) == 1 &&
+                state.gameCardFlowStage == 1 && state.launchRequested == 0,
+                "compact legacy platform card click should advance without launching")) return 1;
+    if (!expect(M12_LegacyMenu_HandleCompactCardPointer(&state, 240, 135, 1) == 1 &&
+                state.view == M12_MENU_VIEW_MESSAGE && state.launchRequested == 1,
+                "compact legacy presentation card click should activate the visible choice")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS,
+                "compact pointer ready message should return to game options")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                "compact pointer smoke flow should return to the main menu")) return 1;
+    state.selectedIndex = 0;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                state.gameCardFlowStage == 0,
+                "keyboard regression should restart from the platform card")) return 1;
     M12_StartupMenu_Draw(&state, platformCardView, 320, 200);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.gameCardFlowStage == 1 && state.launchRequested == 0,

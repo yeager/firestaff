@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-06: The 480x270 legacy launcher now routes mouse clicks to its
+  visible platform and presentation cards. The route is limited to those two
+  card stages, and clicks outside the card are ignored. The focused M12
+  polished UI flow passes with the updated menu and hit-test code; the touched
+  engine and UI translation units pass syntax checks. Full hosted CI is pending.
+
 - 2026-10-06: The legacy palette menu now renders the active platform and
   presentation card flow instead of showing detailed game options while its
   input handler changes cards. Platform readiness follows the selected

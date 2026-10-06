@@ -6641,13 +6641,28 @@ static int m11_map_window_to_launcher(int wx, int wy,
         return 0;
     }
     /* MapWindowToFramebuffer already maps into the current presented
-     * content dimensions (1920x1080 for modern, 480x270 for legacy).
-     * For the modern path we return the coords unchanged; for legacy
-     * there is no mouse UI so we skip. */
+     * content dimensions (1920x1080 for modern, 480x270 for legacy). */
     (void)useModern;
     if (outX) *outX = fbX;
     if (outY) *outY = fbY;
     return 1;
+}
+
+static int m11_legacy_card_pointer_active(
+    const M12_StartupMenuState* menuState, int useModernLauncher) {
+    return !useModernLauncher && menuState &&
+           menuState->view == M12_MENU_VIEW_GAME_OPTIONS &&
+           (menuState->gameCardFlowStage == 0 ||
+            menuState->gameCardFlowStage == 1);
+}
+
+static int m11_handle_launcher_pointer(M12_StartupMenuState* menuState,
+                                       int useModernLauncher,
+                                       int x, int y, int clicked) {
+    if (useModernLauncher) {
+        return M12_ModernMenu_HandlePointer(menuState, x, y, clicked, NULL);
+    }
+    return M12_LegacyMenu_HandleCompactCardPointer(menuState, x, y, clicked);
 }
 
 static int m11_route_launcher_touch(M12_StartupMenuState* menuState,
@@ -7026,12 +7041,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_EVENT_MOUSE_MOTION &&
-            menuState && useModernLauncher &&
+            menuState && (useModernLauncher ||
+                          m11_legacy_card_pointer_active(menuState,
+                                                         useModernLauncher)) &&
             (!gameView || !gameView->active)) {
             int lx, ly;
             if (m11_map_window_to_launcher((int)ev.motion.x, (int)ev.motion.y,
-                                           1, &lx, &ly)) {
-                M12_ModernMenu_HandlePointer(menuState, lx, ly, 0, NULL);
+                                           useModernLauncher, &lx, &ly)) {
+                m11_handle_launcher_pointer(menuState, useModernLauncher,
+                                            lx, ly, 0);
             }
             continue;
         }
@@ -7114,14 +7132,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
-            menuState && useModernLauncher &&
+            menuState && (useModernLauncher ||
+                          m11_legacy_card_pointer_active(menuState,
+                                                         useModernLauncher)) &&
             (!gameView || !gameView->active) &&
             ev.button.button == SDL_BUTTON_LEFT) {
             int lx, ly;
             if (m11_map_window_to_launcher((int)ev.button.x, (int)ev.button.y,
-                                           1, &lx, &ly)) {
-                int changed = M12_ModernMenu_HandlePointer(menuState,
-                                                           lx, ly, 1, NULL);
+                                           useModernLauncher, &lx, &ly)) {
+                int changed = m11_handle_launcher_pointer(
+                    menuState, useModernLauncher, lx, ly, 1);
                 if (changed && menuPointerChanged) {
                     *menuPointerChanged = 1;
                 }
@@ -7585,12 +7605,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_MOUSEMOTION &&
-            menuState && useModernLauncher &&
+            menuState && (useModernLauncher ||
+                          m11_legacy_card_pointer_active(menuState,
+                                                         useModernLauncher)) &&
             (!gameView || !gameView->active)) {
             int lx, ly;
             if (m11_map_window_to_launcher(ev.motion.x, ev.motion.y,
-                                           1, &lx, &ly)) {
-                M12_ModernMenu_HandlePointer(menuState, lx, ly, 0, NULL);
+                                           useModernLauncher, &lx, &ly)) {
+                m11_handle_launcher_pointer(menuState, useModernLauncher,
+                                            lx, ly, 0);
             }
             continue;
         }
@@ -7672,14 +7695,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_MOUSEBUTTONDOWN &&
-            menuState && useModernLauncher &&
+            menuState && (useModernLauncher ||
+                          m11_legacy_card_pointer_active(menuState,
+                                                         useModernLauncher)) &&
             (!gameView || !gameView->active) &&
             ev.button.button == SDL_BUTTON_LEFT) {
             int lx, ly;
             if (m11_map_window_to_launcher(ev.button.x, ev.button.y,
-                                           1, &lx, &ly)) {
-                int changed = M12_ModernMenu_HandlePointer(menuState,
-                                                           lx, ly, 1, NULL);
+                                           useModernLauncher, &lx, &ly)) {
+                int changed = m11_handle_launcher_pointer(
+                    menuState, useModernLauncher, lx, ly, 1);
                 if (changed && menuPointerChanged) {
                     *menuPointerChanged = 1;
                 }

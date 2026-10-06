@@ -83,6 +83,12 @@ int M12_ModernMenu_HandlePointer(M12_StartupMenuState* state,
                                  int clicked,
                                  int* shouldExit);
 
+/* Compact legacy launcher exposes only the currently focused platform or
+ * presentation card. A click on that card accepts the visible choice. */
+int M12_LegacyMenu_HandleCompactCardPointer(M12_StartupMenuState* state,
+                                            int x, int y,
+                                            int clicked);
+
 #ifdef __cplusplus
 }
 #endif
