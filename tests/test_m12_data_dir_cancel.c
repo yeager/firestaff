@@ -968,10 +968,10 @@ static void check_modern_scan_progress_standalone_render(void) {
     M12_ModernMenu_RenderScanProgressLocalized(&progress, 0, rgba,
                                                 width, height);
 
-    /* The standalone scan panel sits at y=892 on the native 1080p canvas;
+    /* The lower-middle scan panel sits at y=712 on the native 1080p canvas;
      * compare the first and second halves of its 50% progress bar. */
-    filledPixel = ((size_t)959U * (size_t)width + 760U) * 4U;
-    emptyPixel = ((size_t)959U * (size_t)width + 1100U) * 4U;
+    filledPixel = ((size_t)796U * (size_t)width + 760U) * 4U;
+    emptyPixel = ((size_t)796U * (size_t)width + 1100U) * 4U;
     CHECK(rgba[filledPixel + 0U] > rgba[emptyPixel + 0U]);
     CHECK(rgba[filledPixel + 1U] > rgba[emptyPixel + 1U]);
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(

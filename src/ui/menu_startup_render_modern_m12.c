@@ -1645,7 +1645,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 82;
+    int panelH = 104;
     int panelX;
     int panelY;
     int percent = 0;
@@ -1654,7 +1654,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     int barW;
     int fillW;
     char text[256];
-    ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 1);
+    ModernTextStyle title = text_style_make(4, COLOR_TEXT(), 1);
     ModernTextStyle detail = text_style_make(2, COLOR_TEXT_DIM(), 1);
 
     if (!c || !progress) {
@@ -1668,10 +1668,15 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     if (percent > 100) percent = 100;
 
     panelW = c->w - 48;
-    if (panelW > 520) panelW = 520;
+    if (panelW > 600) panelW = 600;
     if (panelW < 240) panelW = c->w - 24;
     panelX = (c->w - panelW) / 2;
-    panelY = c->h - 188;
+    /* Keep the scan card in the lower-middle across both the normal 1080p
+     * launcher and compact test/window sizes. A fixed bottom offset pushed
+     * it almost to the footer on large screens and into the upper half on
+     * short screens. */
+    panelY = (c->h * 66) / 100;
+    if (panelY + panelH > c->h - 18) panelY = c->h - panelH - 18;
     if (panelY < 12) panelY = 12;
     label = M12_StartupMenu_TranslateForLocale(
         languageIndex,
@@ -1686,7 +1691,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
 
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(16, 14, 30), COLOR_PANEL_EDGE(), 12);
-    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 10, text,
+    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 12, text,
                            &title, panelW - 28);
     if (gameTitle[0]) {
         char detailText[160];
@@ -1694,20 +1699,20 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
             languageIndex, progress->currentTask);
         snprintf(detailText, sizeof(detailText), "%s%s%s", gameTitle,
                  task[0] ? "  ·  " : "", task);
-        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 39,
+        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 48,
                                detailText, &detail, panelW - 28);
     }
     barX = panelX + 18;
-    barY = panelY + 61;
+    barY = panelY + 78;
     barW = panelW - 36;
     fillW = (barW * percent) / 100;
-    fill_rounded_rect(c, barX, barY, barW, 12, 5, rgb(37, 35, 54));
+    fill_rounded_rect(c, barX, barY, barW, 14, 6, rgb(37, 35, 54));
     if (fillW > 0) {
-        fill_rounded_rect(c, barX, barY, fillW, 12, 5,
+        fill_rounded_rect(c, barX, barY, fillW, 14, 6,
                           cancelRequested
                               ? COLOR_WARN() : COLOR_ACCENT());
     }
-    stroke_rounded_rect(c, barX, barY, barW, 12, 5, COLOR_PANEL_EDGE());
+    stroke_rounded_rect(c, barX, barY, barW, 14, 6, COLOR_PANEL_EDGE());
 }
 
 void M12_ModernMenu_RenderScanProgressLocalized(
