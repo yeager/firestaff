@@ -76,30 +76,27 @@ Reviewed 2026-10-06. Only open work is listed here.
   reproduced the same four nonmatching JP observations in a second bounded
   run, with the added bank field visible in the trace.
 
-## 2026-10-06 — keep US Tier-5 callees unpaired until JP roots are proven
+## 2026-10-06 — trace the JP stage-two selector at runtime
 
-- 🔒 A source audit scanned the complete 6,144-byte JP stage-two payload from
-  authenticated `TQJP02.bin` (image SHA-256
-  `d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb`,
-  stage-two payload SHA-256
-  `e955531cc2c7bab6c910302ba4966ff12308c856fc37874529866ee2fbc92e0c`).
-  It found no encoded direct JSR or HuC6280 BSR target for the seven US-only
-  Tier-5 entries `$5403`, `$541e`, `$52a2`, `$52c8`, `$5657`, `$54c5`, and
-  `$5667`. Same-address byte ranges are not sufficient to claim JP callees:
-  `$5403/$541e` lie within the already-bound JP `$53e8..$543e` span, `$52c8`
-  lies within JP `$52c6..$52d9`, `$54c5` lies within JP `$54b3..$54fc`, and
-  `$5667` lies within the already-bound JP `$5662..$5669` window. JP reaches
-  `$565a`, not the US `$5657` entry. The distinct JP `$52c6` path reaches
-  `$5237`; no direct root for the same-address `$52a2` slice is identified.
-  Raw same-address SHA-256 values differ for `$52a2..$52c8`: JP
-  `c79031c1387780aa28cc3e7e3d61c4d97ae1873080901b3e8e9ad3c86a695f28`, US
-  `8ebc8e59a64dae2136dd563a076b076e9720b32de96ba76b72c51df95f814a6a`.
-  A raw-payload search also found no little-endian absolute address bytes
-  `a2 52`; this does not rule out encoded/computed pointers. Investigate JP
-  dispatch-table/indirect roots for `$52a2` before adding a JP receipt; do not
-  mirror the US verifier by address assumption. This static scan does not
-  exclude indirect control flow or establish runtime execution, helper
-  semantics, or regional gameplay parity.
+- 🔒 An initial regional audit covered only the first three of 17 stage-two
+  sectors. It did not establish a whole-payload absence of indirect roots;
+  that earlier scope has been corrected in `DONE-theron.md`.
+- 🔒 A follow-up extracted all 17 authentic JP sectors (34,816 user bytes) in
+  three repeated passes. All produced payload SHA-256
+  `bc9ff3922dad71f2cd24afeaaf09747c64db15245eb7f9c454dbb76bd4e12d67`.
+  The MAME HuC6280 listing and `stage2_jp_record_selector_52xx_flow` test
+  bind the conditional static path `$5800` indexed dispatch -> `$5895` (for
+  selector 2) -> `$58d2` -> `$4fea` -> `$50f5` -> `$525e`. The actual runtime
+  selector value has not been observed.
+- At `$525e`, the conditional BSR paths target `$529b` and `$52af`. Important
+  correction: `$52a2` is the high operand byte of `JSR $567a` beginning at
+  `$52a0`, not an instruction entry. Execution then reaches `$52a3: JSR
+  $5669`. Comparing the US code at the same address therefore cannot
+  establish a JP routine or regional parity.
+- Next, capture a source-byte-identified JP runtime trace that records the
+  selector at `$5800`, the branch decision at `$528c`, and reached BIOS/helper
+  calls. Until then, do not assign semantics to the record fields, infer that
+  the selector-2 handler executes during gameplay, or claim regional parity.
 
 ## 2026-10-06 — characterize the stage-two helper's behavior
 

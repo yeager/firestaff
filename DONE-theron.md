@@ -7305,23 +7305,51 @@ the authentic US and JP Track 02 BINs; the test still counts source candidates
 and false positives without assigning track semantics. No synthetic media was
 used.
 
-# ✅ 2026-10-06 Audit US-only stage-two Tier-5 entries against JP media
+# ✅ 2026-10-06 Initial three-sector JP Tier-5 prefix audit (superseded scope)
 
-Verified the authentic US and JP Track 02 image hashes and independently
-extracted the complete three-sector JP stage-two user payload, confirming its
-6,144-byte SHA-256. Static call-target analysis found no encoded direct JSR or
-HuC6280 BSR target for any of the seven US Tier-5 entries in that JP payload.
-The JP L3114 path instead reaches its separately byte-bound `$565a`, `$52c6`,
-and nested helper windows; selected US same-address entries fall inside these
-other JP spans or are not present as JP callee roots. The JP `$52a2..$52c8`
-bytes differ from the US window and no direct caller has been identified.
-The full JP stage-two payload contains no literal little-endian `$52a2` CPU
-address bytes (`a2 52`), though encoded or computed pointers remain possible.
+Verified authentic US and JP Track 02 image hashes and extracted the first
+three JP stage-two sectors (6,144 user bytes; SHA-256
+`e955531cc2c7bab6c910302ba4966ff12308c856fc37874529866ee2fbc92e0c`). This
+prefix scan found no encoded direct JSR or HuC6280 BSR target for the seven
+US Tier-5 addresses. It was not the complete stage-two payload and did not
+exclude dispatch-table/indirect roots elsewhere. The same-address JP and US
+`$52a2..$52c8` bytes differ, but that comparison alone does not establish
+routine boundaries or regional parity. The scope and conclusions were
+corrected by the complete 17-sector audit below. No synthetic media was used.
 
-Recorded the evidence and the remaining indirect/dispatch-root question in
-`TODO-theron.md`. This avoids claiming false regional parity; absence of an
-encoded direct edge does not exclude indirect flow or establish runtime
-behavior. No synthetic media was used.
+# ✅ 2026-10-06 Bind the JP 17-sector record-selector static path
+
+Extracted all 17 JP stage-two sectors (34,816 user bytes) from authenticated
+`TQJP02.bin` in three repeated passes. Every pass produced SHA-256
+`bc9ff3922dad71f2cd24afeaaf09747c64db15245eb7f9c454dbb76bd4e12d67`; the
+source image SHA-256 is
+`d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb`. An
+independent audit confirmed the payload hash and all expected bytes against
+the authentic image.
+
+Added source-locked MAME HuC6280 disassembly and the optional-authentic-JP
+test `stage2_jp_record_selector_52xx_flow`. It binds eight windows from
+`$4fea..$506c`, `$50f5..$5111`, `$525e..$52d9`, `$52d9..$53d8`,
+`$5669..$5670`, and the `$5800..$58dc` selector/handler area, then checks
+their static JSR/BSR targets. The pointer at `$5814` is `$5895`, selected by
+the indexed dispatch when the runtime selector is 2. Static flow then reaches
+`$58d2: JSR $4fea`, `$505a: JSR $50f5`, and `$5101: JSR $525e`.
+
+Corrected the address interpretation: `$52a2` is the high operand byte of
+`JSR $567a` at `$52a0`, not a JP instruction entry; execution continues at
+`$52a3: JSR $5669`. The test and disassembly establish source bytes and a
+possible static call path only. Runtime selector/branch values, helper
+semantics, gameplay behavior, and regional parity remain unproven. No
+synthetic media was used.
+
+Verification: compiled the changed test translation unit with
+`-std=gnu11 -Wall -Wextra -O2` on `trv2`, linked it against the existing
+Theron test libraries without changing their build tree, and ran the focused
+`FIRESTAFF_THERON_TEST_JP_STAGE2_SELECTOR_ONLY` check three times against the
+authentic JP Track 02. All three runs passed. A separate attempt to run the
+entire test executable stopped earlier in the JP L3114 verifier against that
+existing library snapshot; the new focused check does not invoke that
+verifier, so full-suite verification remains open.
 
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 
