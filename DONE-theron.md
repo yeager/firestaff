@@ -7328,9 +7328,10 @@ independent audit confirmed the payload hash and all expected bytes against
 the authentic image.
 
 Added source-locked MAME HuC6280 disassembly and the optional-authentic-JP
-test `stage2_jp_record_selector_52xx_flow`. It binds thirteen windows spanning
-`$4fea..$506c`, `$50f5..$5111`, `$525e..$53d8`, `$5555..$559d`,
-`$5669..$5670`, `$5800..$5960`, `$5966..$5984`, `$5984..$5989`, and
+test `stage2_jp_record_selector_52xx_flow`. It binds eighteen windows spanning
+`$4fea..$506c`, `$508b..$5097`, `$50f5..$5111`, `$5141..$51c0`,
+`$5208..$5237`, `$525e..$53d8`, `$5555..$5609`, `$5669..$5670`,
+`$5685..$56e1`, `$5800..$5960`, `$5966..$5984`, `$5984..$5989`, and
 `$5989..$599e`. The test locks all 14 pointers in `$5810..$582c` and checks
 the table-selected entry bodies' static JSR/BSR targets. The pointer at
 `$5814` is `$5895`, selected by the indexed dispatch when the runtime
@@ -7340,10 +7341,10 @@ $50f5`, and `$5101: JSR $525e`.
 Corrected the address interpretation: `$52a2` is the high operand byte of
 `JSR $567a` at `$52a0`, not a JP instruction entry; execution continues at
 `$52a3: JSR $5669`. The test and disassembly establish source bytes and a
-possible static call paths only. Outbound targets `$559d`, `$5685`, `$5208`,
-`$5141`, and `$508b` remain unbound. Runtime selector/branch values, helper
-semantics, gameplay behavior, and regional parity remain unproven. No
-synthetic media was used.
+possible static call paths only. Outbound targets `$51c0`, `$5609`, and
+`$56d1` remain unbound. Runtime selector/branch values, helper semantics,
+gameplay behavior, and regional parity remain unproven. No synthetic media
+was used.
 
 Verification: compiled the changed test translation unit with
 `-std=gnu11 -Wall -Wextra -O2` on `trv2`, linked it against the existing

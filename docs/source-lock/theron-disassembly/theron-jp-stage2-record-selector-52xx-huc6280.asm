@@ -27,6 +27,11 @@
 ;   $5555..$559d  e5e2b548e880d3547db3bb7cf0ba6adc0993eba3107d960c0375cc5f28d43a63
 ;   $5966..$5984  1e7bf26c601ff09366c1a2e30cad225e075032d95b8ae3081e46cf36d8e06a6d
 ;   $5989..$599e  b7d0505079dbe30e91175174a9dabfcbc485e141b811a7f237550145cb32f760
+;   $508b..$5097  6d1bad383bfdaebfb93150d11f9403c969ba98e4029189c252eeca76a6d5b816
+;   $5208..$5237  a0a0351b77b161c034c0660777da7393e298fde3a41b01e24f15c7e29c287462
+;   $5141..$51c0  dac66baa11f1d0c1c30a6629617699f730e90c9f5d440a99547f3f91bc75067d
+;   $559d..$5609  6143acf9a4670d8060ee6cdc59dd1d0f2835f7d98f34bf96343790b555b6eb16
+;   $5685..$56e1  b2821ac6d9077fce7f0f4ac1380382e621880d42522a86eb5a8a480aa7b5ec95
 ;
 ; Authentic US same-address $5800..$582c SHA-256:
 ;   e1ada389530e8bab95341aa062b795a0c72631c34147d55408e0edbe4ee2268c
@@ -36,6 +41,11 @@
 ;   $5555..$559d  c5c4b53b2ff2b89b3e98571d3322f6d0e8717aeab3fd2075ffc2a13d5ef8e105
 ;   $5966..$5984  a429462b6f9ea2d9e9fe05f7f639b39a2886f0620d72476f48a75e9cd4327754
 ;   $5989..$599e  511af50fd0b1654546b7aac5e6cdbb7153bf00edccf2fa49c5f4a688c70aeae6
+;   $508b..$5097  277b2302e06213fb3f444fa968699a71f9a21432ce45c6e918442dba8c8c29f5
+;   $5208..$5237  03f14276c0198f1233b387cfc185d2ef332c1c9615d2bc1e77da4f9bf1677e06
+;   $5141..$51c0  f8800953de5967ed6432e7ed01aa9fd18c81110eb3baa9b44d3ec901276d59d4
+;   $559d..$5609  c1095750f11f830a1bd7cbc28604c55a356cc8cef89bb526b2360a7f70649718
+;   $5685..$56e1  2eeb82631d4b341f270e5a5986b2855a7657ead53ceb3d6fbe142dd2f7f59ed5
 ; Static dispatch interpretation: $5800 reads a selector through ($18),
 ; doubles it, and jumps through $5810,X. The 14 pointer entries cover indices
 ; 0..13; selector value 2 uses the pointer at $5814 ($5895). The observed
@@ -518,3 +528,204 @@ $5669:  inc  $06
         bne  $566f
         inc  $07
 $566f:  rts
+
+; Additional callees discovered from the selector handler family. These
+; windows are byte-bound by test_stage2_jp_record_selector_52xx_flow().
+$508b:  clc
+        lda  $00
+        adc  #$02
+        sta  $00
+        bcc  $5096
+        inc  $01
+$5096:  rts
+
+$5208:  clc
+        lda  $4f9a
+        adc  $4fd9
+        sta  $00
+        lda  $4f9b
+        adc  $4fda
+        sta  $01
+        ldx  $4f91
+        bne  $521f
+        rts
+$521f:  ldy  #$01
+$5221:  jsr  $508b
+$5224:  lda  ($00)
+        cmp  #$81
+        bne  $5221
+        lda  ($00),y
+        cmp  #$97
+        bne  $5221
+        dex
+        bne  $5221
+        jsr  $508b
+        rts
+
+$5141:  bsr  $51c0
+        lda  $4f8d
+        pha
+        lda  $4f8e
+        pha
+        bsr  $51a8
+        lda  $4fde
+        bne  $5156
+        bsr  $51b3
+        bra  $515e
+$5156:  lda  #$14
+        jsr  $4f66
+        dea
+        bne  $5158
+$515e:  pla
+        sta  $4f8e
+        pla
+        sta  $4f8d
+        lda  $4f9d
+        sta  $06
+        lda  $4f9e
+        sta  $07
+        lda  $4f93
+        sta  $4f8b
+        lda  $4f94
+        sta  $4f8c
+        jsr  $52c6
+        clc
+        lda  $06
+        adc  #$04
+        sta  $06
+        bcc  $518a
+        inc  $07
+$518a:  ldx  $4f8d
+        ldy  $4f8e
+$5190:  phx
+        lda  $0e
+        pha
+        lda  $0f
+        pha
+        jsr  $565a
+        pla
+        sta  $0f
+        pla
+        sta  $0e
+        jsr  $5251
+        plx
+        dey
+        bne  $5190
+        rts
+$51a8:  lda  #$01
+        sta  $5ca4
+        lda  #$02
+        sta  $5ca5
+        rts
+$51b3:  jsr  $5c77
+        jsr  $5d0e
+        jsr  $5d32
+        jsr  $5ca7
+        rts
+
+; $559d..$5609 contains two embedded bytes at $5607/$5608 that the routine
+; writes and compares as its loop limits. $5609 is its next BSR target.
+$559d:  inc  $4f9c
+        lda  $4f9d
+        sta  $06
+        lda  $4f9e
+        sta  $07
+        jsr  $52c6
+        lda  $4f8d
+        sta  $5607
+        lda  $4f8e
+        sta  $5608
+        ldx  #$04
+        stx  $4f8d
+        stx  $4f8e
+$55c1:  lda  $0e
+        lda  $0e
+        pha
+        lda  $0f
+        pha
+        lda  $06
+        pha
+        lda  $07
+        pha
+        jsr  $4f7a
+        bsr  $5609
+        pla
+        sta  $07
+        pla
+        sta  $06
+        pla
+        sta  $0f
+        pla
+        sta  $0e
+        lda  $4f8d
+        cmp  $5607
+        beq  $55e9
+        inc  $4f8d
+$55e9:  lda  $4f8e
+        cmp  $5608
+        beq  $55f4
+        inc  $4f8e
+$55f4:  lda  $4f8d
+        cmp  $5607
+        bne  $55c1
+        lda  $4f8e
+        cmp  $5608
+        bne  $55c1
+        bsr  $5609
+        rts
+$5607:  .byte $00
+$5608:  .byte $00
+
+$5685:  clc
+        lda  $4fd5
+        adc  #$11
+        sta  $02
+        cla
+        adc  $4fd6
+        sta  $03
+        lda  #$e1
+        sta  $00
+        lda  #$56
+        sta  $01
+        ldx  #$09
+$569d:  phx
+        lda  $00
+        pha
+        lda  $01
+        pha
+        bsr  $56d1
+        jsr  $5318
+        clx
+        jsr  $533e
+        clc
+        lda  $4fd7
+        adc  #$10
+        sta  $4fd7
+        bcc  $56bb
+        inc  $4fd8
+$56bb:  pla
+        sta  $01
+        pla
+        sta  $00
+        plx
+        clc
+        lda  $00
+        adc  #$08
+        sta  $00
+        bcc  $56cd
+        inc  $01
+$56cd:  dex
+        bne  $569d
+        rts
+$56d1:  clx
+        cly
+$56d3:  lda  ($00),y
+        sxy
+        sta  ($02),y
+        iny
+        iny
+        inx
+        sxy
+        cpy  #$08
+        bne  $56d3
+        rts
