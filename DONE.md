@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-06: `--debug` now reports scan roots with elapsed time, presented
+  startup phase/frame changes with elapsed host time, selected
+  game/platform/edition and source path, DM1's source-phase handoff, DM2 FM
+  Towns TWANIM/Timer-A progress, and Macintosh Title.MooV frame progress.
+  Verbose renderer output includes logical-window and drawable dimensions for
+  HiDPI diagnosis. Authenticated DM1, CSB and DM2
+  direct launches, DM1 M12 menu launch, DM2 Macintosh movie playback and the
+  persisted-root original-media handoff passed locally. SDL dummy-driver runs
+  do not establish physical M5 presentation or visual/audio parity.
+
 - 2026-10-05: Consolidated 51 optional DM1/CSB CMake test registrations into
   one helper, removing 680 lines from the root build file. Every target and
   CTest name remains separate. A before/after local CMake configuration has

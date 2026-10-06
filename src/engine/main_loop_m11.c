@@ -490,6 +490,7 @@ typedef struct {
     int height;
     int languageIndex;
     int debug;
+    Uint64 startedMs;
 } M11_ScanProgressContext;
 
 static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
@@ -501,7 +502,9 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
          strcmp(progress->currentGameId, "dm1") == 0 ||
          strcmp(progress->currentGameId, "csb") == 0 ||
          strcmp(progress->currentGameId, "dm2") == 0)) {
-        fprintf(stderr, "firestaff: scan game=%s task=%s path=%s\n",
+        fprintf(stderr,
+                "firestaff: scan elapsed-ms=%llu game=%s task=%s path=%s\n",
+                (unsigned long long)(SDL_GetTicks() - ctx->startedMs),
                 progress->currentGameId[0] ? progress->currentGameId : "all",
                 progress->currentTask,
                 progress->currentPath[0] ? progress->currentPath : "(none)");
@@ -558,6 +561,162 @@ static void m11_verbose_original_media(const M12_AssetStatus* status,
                     ? " source=" : "",
                 file->sourcePath[0] ? file->sourcePath : file->matchedPath);
     }
+}
+
+typedef struct {
+    int valid;
+    Uint64 startedMs;
+    M11_BootProbeReceipt previous;
+    int dm2TitleBound;
+    int dm2TitleFinished;
+    int dm2SwooshActive;
+    uint32_t dm2TitleFrameIndex;
+    uint32_t dm2FrameTimerARemaining;
+    int dm2MacMovieActive;
+    int dm2MacMovieComplete;
+    int dm2MacMovieRejected;
+    uint32_t dm2MacMovieFrameIndex;
+} M11_DebugStartupTrace;
+
+static int m11_game_option_slot(const char *gameId);
+
+static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
+                                          const M11_GameViewState* gameView,
+                                          const char* gameId) {
+    M11_BootProbeReceipt current;
+    const char* tracedGameId = gameId && gameId[0]
+        ? gameId : (gameView ? gameView->sourceId : NULL);
+    int changed;
+    if (!trace || !gameView || !tracedGameId || !gameView->active ||
+        (strcmp(tracedGameId, "dm1") != 0 &&
+         strcmp(tracedGameId, "csb") != 0 &&
+         strcmp(tracedGameId, "dm2") != 0) ||
+        !M11_GameView_GetBootProbeReceipt(gameView, &current)) {
+        return;
+    }
+    changed = !trace->valid ||
+        strcmp(current.sourceId, trace->previous.sourceId) != 0 ||
+        strcmp(current.startupPhase, trace->previous.startupPhase) != 0 ||
+        current.startupActive != trace->previous.startupActive ||
+        current.startupFrame != trace->previous.startupFrame ||
+        strcmp(current.startupAnimation,
+               trace->previous.startupAnimation) != 0 ||
+        current.startupAnimationActive != trace->previous.startupAnimationActive ||
+        current.startupTitleFrame != trace->previous.startupTitleFrame ||
+        current.startupTitleFrameMax != trace->previous.startupTitleFrameMax ||
+        current.startupTitleReady != trace->previous.startupTitleReady ||
+        current.dm1StartupSwshConsumed !=
+            trace->previous.dm1StartupSwshConsumed ||
+        current.dm1StartupTitleConsumed !=
+            trace->previous.dm1StartupTitleConsumed ||
+        current.dm1StartupEntranceConsumed !=
+            trace->previous.dm1StartupEntranceConsumed ||
+        current.dm1StartupFullGraphicsConsumed !=
+            trace->previous.dm1StartupFullGraphicsConsumed ||
+        current.levelLoaded != trace->previous.levelLoaded ||
+        current.mapIndex != trace->previous.mapIndex ||
+        current.partyX != trace->previous.partyX ||
+        current.partyY != trace->previous.partyY ||
+        current.partyDir != trace->previous.partyDir ||
+        current.championCount != trace->previous.championCount ||
+        (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+         (gameView->dm2FmtownsTitleBound !=
+              trace->dm2TitleBound ||
+          gameView->dm2FmtownsTitleFinished !=
+              trace->dm2TitleFinished ||
+          gameView->dm2FmtownsSwooshActive !=
+              trace->dm2SwooshActive ||
+          gameView->dm2FmtownsTitleFrameIndex !=
+              trace->dm2TitleFrameIndex ||
+          gameView->dm2FmtownsFrameTimerARemaining !=
+              trace->dm2FrameTimerARemaining ||
+          gameView->dm2MacMovieActive != trace->dm2MacMovieActive ||
+          gameView->dm2MacMovieComplete != trace->dm2MacMovieComplete ||
+          gameView->dm2MacMovieRejected != trace->dm2MacMovieRejected ||
+          gameView->dm2MacMovieDecoder.frame_index !=
+              trace->dm2MacMovieFrameIndex));
+    if (!changed) return;
+    if (!trace->valid) trace->startedMs = SDL_GetTicks();
+    fprintf(stderr,
+            "firestaff: startup-frame game=%s elapsed-ms=%llu source=%s phase=%s active=%d frame=%d animation=%s animation-active=%d title-frame=%d/%d title-ready=%d dm1-phases=%d%d%d%d dm2-fmtowns-title={bound:%d finished:%d rejected:%d swoosh:%d frame:%u/%u ticks-remaining:%u} dm2-mac-movie={active:%d complete:%d rejected:%d frame:%u} level-loaded=%d map=%d party=%d,%d dir=%d champions=%d\n",
+            tracedGameId,
+            (unsigned long long)(SDL_GetTicks() - trace->startedMs),
+            current.sourceId[0] ? current.sourceId : "unknown",
+            current.startupPhase[0] ? current.startupPhase : "unknown",
+            current.startupActive,
+            current.startupFrame,
+            current.startupAnimation[0] ? current.startupAnimation : "none",
+            current.startupAnimationActive,
+            current.startupTitleFrame,
+            current.startupTitleFrameMax,
+            current.startupTitleReady,
+            current.dm1StartupSwshConsumed,
+            current.dm1StartupTitleConsumed,
+            current.dm1StartupEntranceConsumed,
+            current.dm1StartupFullGraphicsConsumed,
+            gameView->dm2FmtownsTitleBound,
+            gameView->dm2FmtownsTitleFinished,
+            gameView->dm2FmtownsTitleRejected,
+            gameView->dm2FmtownsSwooshActive,
+            gameView->dm2FmtownsTitleFrameIndex,
+            gameView->dm2FmtownsFrameCount,
+            gameView->dm2FmtownsFrameTimerARemaining,
+            gameView->dm2MacMovieActive,
+            gameView->dm2MacMovieComplete,
+            gameView->dm2MacMovieRejected,
+            gameView->dm2MacMovieDecoder.frame_index,
+            current.levelLoaded,
+            current.mapIndex,
+            current.partyX,
+            current.partyY,
+            current.partyDir,
+            current.championCount);
+    trace->previous = current;
+    if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        trace->dm2TitleBound = gameView->dm2FmtownsTitleBound;
+        trace->dm2TitleFinished = gameView->dm2FmtownsTitleFinished;
+        trace->dm2SwooshActive = gameView->dm2FmtownsSwooshActive;
+        trace->dm2TitleFrameIndex = gameView->dm2FmtownsTitleFrameIndex;
+        trace->dm2FrameTimerARemaining =
+            gameView->dm2FmtownsFrameTimerARemaining;
+        trace->dm2MacMovieActive = gameView->dm2MacMovieActive;
+        trace->dm2MacMovieComplete = gameView->dm2MacMovieComplete;
+        trace->dm2MacMovieRejected = gameView->dm2MacMovieRejected;
+        trace->dm2MacMovieFrameIndex =
+            gameView->dm2MacMovieDecoder.frame_index;
+    }
+    trace->valid = 1;
+}
+
+static void m11_debug_log_launch_selection(
+    const M12_StartupMenuState* menuState,
+    const M11_GameViewState* gameView,
+    const char* launchMode) {
+    int slot;
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    const char* gameId;
+    if (!menuState || !gameView || !launchMode) return;
+    gameId = gameView->sourceId;
+    if (!gameId[0] ||
+        (strcmp(gameId, "dm1") != 0 && strcmp(gameId, "csb") != 0 &&
+         strcmp(gameId, "dm2") != 0)) return;
+    slot = m11_game_option_slot(gameId);
+    versionIndex = menuState->gameOptions[slot].versionIndex;
+    version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&menuState->assetStatus, gameId,
+                                     (size_t)versionIndex)
+        : NULL;
+    fprintf(stderr,
+            "firestaff: launch phase=game-handoff mode=%s game=%s platform=%s edition=%s source=%s\n",
+            launchMode,
+            gameId,
+            version ? M12_Architecture_Label(
+                M12_AssetStatus_GetVersionArchitecture(
+                    gameId, (size_t)versionIndex)) : "unknown",
+            version && version->versionId ? version->versionId : "unknown",
+            version && version->matchedPath[0]
+                ? version->matchedPath : "unknown");
 }
 
 typedef struct {
@@ -7764,6 +7923,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_PhaseA_SetDefaultOptions(&defaults);
     M11_PhaseA_Options runtimeOptions;
     const M11_PhaseA_Options* o;
+    M11_DebugStartupTrace debugStartupTrace = {0};
     runtimeOptions = opts ? *opts : defaults;
     /* Keep the public options boundary consistent with the CLI parser:
      * requesting the interactive launcher always disables direct launch. */
@@ -7863,10 +8023,18 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         return rc;
     }
     if (o->verbose) {
-        fprintf(stderr, "firestaff: renderer ready video-driver=%s window=%dx%d\n",
+        int windowWidth = 0;
+        int windowHeight = 0;
+        int drawableWidth = 0;
+        int drawableHeight = 0;
+        (void)M11_Render_GetWindowAndDrawableSize(
+            &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
+        fprintf(stderr,
+                "firestaff: renderer ready video-driver=%s window=%dx%d drawable=%dx%d\n",
                 SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
-                M11_Render_GetWindowWidth(), M11_Render_GetWindowHeight());
+                windowWidth, windowHeight, drawableWidth, drawableHeight);
     }
+    if (o->debug) debugStartupTrace.startedMs = SDL_GetTicks();
     /* SDL's dummy driver can retain its default 1024x768 logical window even
      * when a test requested another size.  Scripted mouse events use the
      * requested host-window coordinates, so keep the renderer mapper on that
@@ -7928,6 +8096,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
         scanCtx.languageIndex = scanConfig.languageIndex;
         scanCtx.debug = o->debug;
+        scanCtx.startedMs = SDL_GetTicks();
         menuInitOptions.scanProgressFn = m11_scan_progress_callback;
         menuInitOptions.scanProgressUserData = &scanCtx;
         M12_StartupMenu_InitWithOptions(&menuState,
@@ -7993,7 +8162,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 2;
         }
     }
-    if (o->verbose && o->gameId &&
+    if (o->verbose && !o->debug && o->gameId &&
         (strcmp(o->gameId, "dm1") == 0 ||
          strcmp(o->gameId, "csb") == 0 ||
          strcmp(o->gameId, "dm2") == 0)) {
@@ -8154,6 +8323,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
         fallbackCtx.languageIndex = menuState.settings.languageIndex;
         fallbackCtx.debug = o->debug;
+        fallbackCtx.startedMs = SDL_GetTicks();
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,
                                         &fallbackCtx);
@@ -8347,6 +8517,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         o->gameId, startupReceipt.startupPhase,
                         startupReceipt.startupAnimation,
                         startupReceipt.startupActive);
+        }
+        if (o->debug) {
+            m11_debug_log_launch_selection(
+                &menuState, &gameView,
+                o->directLaunch ? "direct" : "menu");
+            m11_debug_trace_startup_frame(&debugStartupTrace, &gameView,
+                                          o->gameId);
         }
         if (o->bootProbe) {
             int frames = o->bootProbeFrames < 0 ? 0 : o->bootProbeFrames;
@@ -8991,6 +9168,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                   o->dataDir,
                                                   0)) {
                         launchedEver = 1;
+                        if (o->debug) {
+                            m11_debug_log_launch_selection(
+                                &menuState, &gameView, "menu");
+                            m11_debug_trace_startup_frame(
+                                &debugStartupTrace, &gameView, o->gameId);
+                        }
                         if (gameView.active) {
                             gameFrameNeedsPresent = 1;
                         }
@@ -9061,6 +9244,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameView_DrawFpsOverlay(&gameView,
                                              M11_Render_GetFramebuffer(),
                                              M11_FB_WIDTH, M11_FB_HEIGHT);
+                if (o->debug) {
+                    m11_debug_trace_startup_frame(&debugStartupTrace,
+                                                  &gameView, o->gameId);
+                }
                 {
                     const uint64_t foodFrameSerial = gameView.v1FoodPresentationSerial;
                     const int presented = m11_present_game_frame_and_publish_startup_capture(
