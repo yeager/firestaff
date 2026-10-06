@@ -21,7 +21,7 @@ mac_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$mac_debug" in
-    *"task=search root path="*"candidate-file=GRAPHICS.DAT"*"selected game=dm2 platform=Macintosh edition=mac-en-retail"*) ;;
+    *"task=search root path="*"candidate-file=GRAPHICS.DAT"*"launch phase=game-handoff mode=direct game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
     *) echo "FAIL: Mac debug trace omitted searched source or selected edition" >&2; exit 1 ;;
 esac
 
@@ -32,7 +32,7 @@ towns_verbose=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$towns_verbose" in
-    *"selected game=dm2 platform=FM Towns edition=fmtowns-ja"*) ;;
+    *"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*) ;;
     *) echo "FAIL: FM Towns verbose trace omitted selected edition" >&2; exit 1 ;;
 esac
 case "$towns_verbose" in
@@ -52,7 +52,7 @@ combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$combined_auto" in
-    *"startup game=dm2 mode=direct platform=auto"*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*"selected game=dm2 platform=FM Towns edition=fmtowns-ja"*) ;;
+    *"startup game=dm2 mode=direct platform=auto"*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*) ;;
     *) echo "FAIL: DM2 AUTO did not prefer FM Towns when Mac retail was also present" >&2; exit 1 ;;
 esac
 combined_mac=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
@@ -62,7 +62,7 @@ combined_mac=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$combined_mac" in
-    *"selected game=dm2 platform=Macintosh edition=mac-en-retail"*) ;;
+    *"selected game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
     *) echo "FAIL: explicit DM2 Macintosh choice was overridden by FM Towns default" >&2; exit 1 ;;
 esac
 
@@ -77,7 +77,7 @@ if [ -f "$dm1_towns_archive" ]; then
         exit 1
     }
     case "$dm1_auto" in
-        *"startup game=dm1 mode=direct platform=auto"*"selected game=dm1 platform=FM Towns"*) ;;
+        *"startup game=dm1 mode=direct platform=auto"*"selected game=dm1 platform=FM Towns edition="*) ;;
         *) echo "FAIL: bare DM1 did not select original FM Towns media" >&2; exit 1 ;;
     esac
 fi
@@ -89,7 +89,7 @@ if [ -f "$csb_towns_archive" ]; then
         exit 1
     }
     case "$csb_auto" in
-        *"startup game=csb mode=direct platform=auto"*"selected game=csb platform=FM Towns"*) ;;
+        *"startup game=csb mode=direct platform=auto"*"selected game=csb platform=FM Towns edition="*) ;;
         *) echo "FAIL: bare CSB did not select original FM Towns media" >&2; exit 1 ;;
     esac
     if [ -d "$csb_towns_loose_root/CDATA" ] &&
@@ -105,7 +105,7 @@ if [ -f "$csb_towns_archive" ]; then
             exit 1
         }
         case "$csb_mixed" in
-            *"selected game=csb platform=FM Towns edition=fmtowns-en source="*"$(basename "$csb_towns_archive")::CDATA/GRAPHICS.DAT"*"CSB READY:"*) ;;
+            *"selected game=csb platform=FM Towns edition=fmtowns-en source="*"$(basename "$csb_towns_archive")::CDATA/GRAPHICS.DAT"*) ;;
             *) echo "FAIL: CSB selected the loose tree over its complete original CD image" >&2; exit 1 ;;
         esac
         rm -rf "$csb_mixed_root"

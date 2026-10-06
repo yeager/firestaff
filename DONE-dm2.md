@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-06: Re-ran the original FM Towns startup matrix against the
+  authenticated Japanese ZIP. The bare direct `--game dm2` route reaches the
+  225-frame New Game menu within 40 seconds, validates its presented source
+  pixels, and reaches the original first party on map 0 at (8,0); the M12
+  route and 1920x1080 launcher input path also pass. SDL dummy video/audio
+  does not verify physical Mac M5 HiDPI viewport/HUD output or audible playback.
+
 - 2026-10-04: A source 0x3c timer now relocates an authenticated FM Towns DB4
   between maps without changing the player's GAME_LOAD map, outdoor state or
   viewport light-map identity. The original-media regression moves the live

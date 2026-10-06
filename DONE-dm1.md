@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-10-06: Re-ran the authenticated FM Towns English/Japanese startup and
+  launcher matrix against the local bilingual ZIP. Direct launch, default
+  `--game dm1` platform selection, version selection, normal M12 title/Entrance
+  handoff, first runtime frame and initial party are verified. The test uses
+  SDL dummy video/audio for repeatability and does not verify physical Mac M5
+  HiDPI output or source-timed intro cadence.
+
 - 2026-10-05: Corrected the FM Towns text-rasteriser evidence against the
   executable's SYM1 names and opcodes: `TEXT_SIZE` is the measurement routine,
   `TEXT_PIC` at `0x29344` owns the raw font pointer, and the `CHAR_*` fields had

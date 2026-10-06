@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-10-06: Re-ran the authentic Atari ST archive startup/input route and
+  FM Towns English start-menu route against the local original media. The
+  Towns test confirms the MINI.DAT party at map 4, position (22,18), direction
+  2, one champion, and a nonzero source viewport receipt; default bare
+  `--game csb` selects the authenticated FM Towns edition in the current data
+  collection. These SDL dummy-video tests do not verify physical Mac M5 HiDPI
+  output, displayed viewport quality or audible device output.
+
 - 2026-10-05: Bound the local Atari ST v2.1 `csb.s` textual disassembly to
   the PP hard-disk `CMAIN` image with three byte-for-byte code anchors at
   labels `u0000`, `u0006` and `u0624`; the exact `CMAIN` SHA-256 is recorded in
