@@ -2991,6 +2991,60 @@ static void test_stage2_l4696(void)
     printf("  PASS: stage2_l4696\n");
 }
 
+static void test_stage2_jp_l3114_flow(void)
+{
+    static const size_t mutation_offsets[] = {
+        THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_USER_OFFSET,
+        0x112au, 0x1141u, 0x11a8u, 0x11b3u, 0x11c0u,
+        THERON_TRACK02_IPL_STAGE2_SELECTOR_USER_OFFSET
+    };
+    Theron_Track02Stage2JpL3114FlowReceipt receipt;
+    Theron_Track02SignalStatus status;
+
+    status = theron_v1_track02_verify_stage2_jp_l3114_flow(
+        g_us_data, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    assert(receipt.valid == 0);
+    if (!g_jp_data) return;
+
+    status = theron_v1_track02_verify_stage2_jp_l3114_flow(
+        g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(receipt.valid == 1);
+    assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+    assert(receipt.flow_bytes ==
+           THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_BYTES);
+    assert(receipt.entry_cpu_address ==
+           THERON_TRACK02_IPL_STAGE2_L3114_CPU_ADDRESS);
+    assert(receipt.selector_caller_proven == 1);
+    assert(receipt.jp_flow_bytes_proven == 1);
+    assert(receipt.internal_bsr_targets_proven == 1);
+
+    {
+        uint8_t *mutated = malloc(g_jp_size);
+        size_t stage2_sector = THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                               THERON_TRACK02_IPL_STAGE2_RECORD;
+        assert(mutated != NULL);
+        for (size_t i = 0;
+             i < sizeof(mutation_offsets) / sizeof(mutation_offsets[0]);
+             ++i) {
+            size_t user_offset = mutation_offsets[i];
+            size_t raw_offset =
+                (stage2_sector + user_offset / 2048u) * 2352u + 16u +
+                user_offset % 2048u;
+            assert(raw_offset < g_jp_size);
+            memcpy(mutated, g_jp_data, g_jp_size);
+            mutated[raw_offset] ^= 1u;
+            status = theron_v1_track02_verify_stage2_jp_l3114_flow(
+                mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+            assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+            assert(receipt.valid == 0);
+        }
+        free(mutated);
+    }
+    printf("  PASS: stage2_jp_l3114_flow\n");
+}
+
 static void test_stage2_l3114_callees(void)
 {
     Theron_Track02Stage2L3114CalleesReceipt receipt;
@@ -3790,6 +3844,7 @@ int main(void)
     test_stage2_jump_table_handlers();
     test_stage2_l4696_l3114();
     test_stage2_l4696();
+    test_stage2_jp_l3114_flow();
     test_stage2_l3114_callees();
     test_stage2_l3114_tier2_callees();
     test_stage2_l3114_tier3_callees();

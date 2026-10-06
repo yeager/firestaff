@@ -15,12 +15,14 @@ Reviewed 2026-10-06. Only open work is listed here.
   selection had zero failures: 285 passed and 22 media/capture-dependent tests
   skipped on `trv2`.
 
-- 🔒 The authentic 94-byte JP `$3114` target window differs from US, while
-  the exact `$4f5e` selector window is verified in both editions. The current
-  combined receipt therefore remains US-only; do not reuse US routine labels
-  for JP. Next: produce a HuC6280-correct JP listing, establish bounded branch
-  and call targets from original bytes, then add only independently proven
-  JP windows. No JP routine semantics are established yet.
+- ✅ Added a JP-specific HuC6280 listing for the selector-called `$3114` flow
+  at stage-two user offset `0x1114`. It binds 186 authentic JP bytes, all five
+  internal BSR edges and the shared `$4f5e` caller; tests mutate each internal
+  entry and the selector to require rejection. The HuC6280 disassembler
+  correctly decodes `$44` as BSR (unlike generic 65C02 mode). The US combined
+  L4696/L3114 receipt remains US-only because its 94-byte L3114 span differs.
+  Six external JSR callees remain unbound, and no JP helper semantics or
+  gameplay behavior is established.
 
 ## 2026-10-06 — mutation-check the regional dispatch-machine receipt
 

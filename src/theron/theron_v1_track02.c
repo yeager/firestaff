@@ -9003,6 +9003,81 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2JpL3114FlowReceipt *out_receipt) {
+    /* Exact JP Rev. 1 bytes from the authentic stage-two user window
+     * [0x1114..0x11ce). The HuC6280 listing and all five internal BSR
+     * targets are source-locked in
+     * theron-jp-stage2-l3114-huc6280.asm. Opcode $44 is HuC6280 BSR
+     * (MAME h6280.cpp, h6280_device::bsr, lines 3813-3829); its relative
+     * targets must not be decoded as 65C02 TSB instructions. */
+    static const uint8_t stage2_jp_l3114_flow[] = {
+        0xd0u, 0x02u, 0x44u, 0x12u, 0xadu, 0x95u, 0x4fu, 0x85u,
+        0x04u, 0xeeu, 0x8cu, 0x4fu, 0xeeu, 0x8cu, 0x4fu, 0xadu,
+        0x93u, 0x4fu, 0x8du, 0x8bu, 0x4fu, 0x60u, 0x20u, 0x3fu,
+        0x55u, 0x20u, 0x29u, 0x55u, 0x44u, 0x0fu, 0xadu, 0x96u,
+        0x4fu, 0x8du, 0x97u, 0x4fu, 0xadu, 0x94u, 0x4fu, 0x3au,
+        0x3au, 0x8du, 0x8cu, 0x4fu, 0x60u, 0x44u, 0x7du, 0xadu,
+        0x8du, 0x4fu, 0x48u, 0xadu, 0x8eu, 0x4fu, 0x48u, 0x44u,
+        0x5bu, 0xadu, 0xdeu, 0x4fu, 0xd0u, 0x04u, 0x44u, 0x5fu,
+        0x80u, 0x08u, 0xa9u, 0x14u, 0x20u, 0x66u, 0x4fu, 0x3au,
+        0xd0u, 0xfau, 0x68u, 0x8du, 0x8eu, 0x4fu, 0x68u, 0x8du,
+        0x8du, 0x4fu, 0xadu, 0x9du, 0x4fu, 0x85u, 0x06u, 0xadu,
+        0x9eu, 0x4fu, 0x85u, 0x07u, 0xadu, 0x93u, 0x4fu, 0x8du,
+        0x8bu, 0x4fu, 0xadu, 0x94u, 0x4fu, 0x8du, 0x8cu, 0x4fu,
+        0x20u, 0xc6u, 0x52u, 0x18u, 0xa5u, 0x06u, 0x69u, 0x04u,
+        0x85u, 0x06u, 0x90u, 0x02u, 0xe6u, 0x07u, 0xaeu, 0x8du,
+        0x4fu, 0xacu, 0x8eu, 0x4fu, 0xdau, 0xa5u, 0x0eu, 0x48u,
+        0xa5u, 0x0fu, 0x48u, 0x20u, 0x5au, 0x56u, 0x68u, 0x85u,
+        0x0fu, 0x68u, 0x85u, 0x0eu, 0x20u, 0x51u, 0x52u, 0xfau,
+        0x88u, 0xd0u, 0xe9u, 0x60u, 0xa9u, 0x01u, 0x8du, 0xa4u,
+        0x5cu, 0xa9u, 0x02u, 0x8du, 0xa5u, 0x5cu, 0x60u, 0x20u,
+        0x77u, 0x5cu, 0x20u, 0x0eu, 0x5du, 0x20u, 0x32u, 0x5du,
+        0x20u, 0xa7u, 0x5cu, 0x60u, 0xadu, 0x8bu, 0x4fu, 0x3au,
+        0x8du, 0xa2u, 0x5cu, 0xadu, 0x8cu, 0x4fu, 0x8du, 0xa3u,
+        0x5cu, 0x60u
+    };
+    Theron_Track02Stage2DispatchMachineReceipt dispatch;
+    Theron_Track02SignalStatus status;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_verify_stage2_dispatch_machine(
+        track02_data, track02_size, md5_hex, &dispatch);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    if (dispatch.variant != THERON_TRACK02_VARIANT_JP_BIN ||
+        !dispatch.valid || !dispatch.selector_proven ||
+        sizeof(stage2_jp_l3114_flow) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_USER_OFFSET +
+                sizeof(stage2_jp_l3114_flow) >
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_USER_OFFSET,
+            stage2_jp_l3114_flow, sizeof(stage2_jp_l3114_flow))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = dispatch.variant;
+    out_receipt->stage2_record = dispatch.stage2_record;
+    out_receipt->stage2_raw_sector = dispatch.stage2_raw_sector;
+    out_receipt->flow_bytes = sizeof(stage2_jp_l3114_flow);
+    out_receipt->entry_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_CPU_ADDRESS;
+    out_receipt->selector_caller_proven = 1;
+    out_receipt->jp_flow_bytes_proven = 1;
+    out_receipt->internal_bsr_targets_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696_l3114(
     const uint8_t *track02_data,
     size_t track02_size,

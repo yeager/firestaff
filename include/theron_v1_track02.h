@@ -2646,6 +2646,8 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_L3114_CPU_ADDRESS 0x3114u
 #define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_SELECTOR_OFFSET 0x04u
 #define THERON_TRACK02_IPL_STAGE2_L4696_L3114_BOUND_BYTES 0xa3u
+#define THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_USER_OFFSET 0x1114u
+#define THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_BYTES 0xbau
 
 /* L3114 near callees.  L3172 and the $117D far-helper trampoline sit
  * directly after the bound L3114 body in the low-image region (below
@@ -3480,6 +3482,22 @@ typedef struct {
     int l4696_call_site_proven;
 } Theron_Track02Stage2L4696Receipt;
 
+/* Receipt for the JP-only static $3114 flow window. It binds the
+ * shared $4f5e selector plus the exact JP bytes [0x1114..0x11ce),
+ * including its internal BSR targets; external JSR targets remain
+ * unbound and no routine semantics are asserted. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t flow_bytes;
+    uint16_t entry_cpu_address;
+    int selector_caller_proven;
+    int jp_flow_bytes_proven;
+    int internal_bsr_targets_proven;
+} Theron_Track02Stage2JpL3114FlowReceipt;
+
 /* Receipt for the stage-two L3114-callees proof.  It binds only
  * instruction bytes of the authenticated US stage-two body: the six
  * L3114 callee bodies (L3172 [0x1172..0x117d) and the $117D trampoline
@@ -4107,6 +4125,17 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2L4696Receipt *out_receipt);
+
+/* Verifies the authenticated JP-only $3114 control-flow byte window
+ * [0x1114..0x11ce), chained to the regional dispatch-machine receipt
+ * for its $4f5e selector caller. The listing is in
+ * docs/source-lock/theron-disassembly/theron-jp-stage2-l3114-huc6280.asm;
+ * external JSR targets are explicitly not covered. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2JpL3114FlowReceipt *out_receipt);
 
 /* Verifies the stage-two L3114 callee bodies against the authenticated
  * US Track 02 body.  Chains the fail-closed IPL loader proof, then
