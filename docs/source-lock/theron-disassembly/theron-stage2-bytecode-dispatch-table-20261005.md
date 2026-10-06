@@ -674,9 +674,17 @@ the 16-bit sum `$300c:$300d + $37d0:$37d1` in A and carry. `$3a87` shifts
 `$1e` right five places, retaining its low five bits in `$01`; it returns
 carry set if the quotient is nonzero, otherwise adds the remainder to
 `$300d`. These are instruction/dataflow observations only: record layout,
-byte meanings, and caller interpretation of carry are not established. The
-cold-start's final scripted input mask was not read back, so this capture is
-not evidence that input changed gameplay state. The statically locked `$4ec9`
+byte meanings, and caller interpretation of carry are not established. A
+corrected authentic US cold-start probe passed the active PCE Fast interpreter
+locals into its trace hook (`X_local`, `Y_local`, `P_local`, and lazy
+`ZNFlags`); earlier `HuCPU.X/Y/P` hook fields were stale and are invalid.
+Across 60 lookup results, 229 candidate comparisons were recorded. Each final
+candidate byte matched its lookup key, `$37d2` matched the one-based number of
+comparisons, and the helper returned carry clear. This confirms only the
+successful lookup path in that bounded US cold-start sample; no miss/exhaustion
+case or game-level key/record meaning was observed. The cold-start's final
+scripted input mask was not read back, so this capture is not evidence that
+input changed gameplay state. The statically locked `$4ec9`
 caller branches around the field copy when carry is set; mapping that control
 choice to a game-level result remains unresolved.
 

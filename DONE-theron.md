@@ -50,6 +50,26 @@ unlocked. Both captures still fail the strict final controller-event receipt;
 this CPU trace does not prove the replay changed game state or assign game
 semantics to the lookup results. Raw media and traces remain outside Git.
 
+## 2026-10-06 — capture live helper registers and lookup comparisons
+
+The first search trace exposed a probe bug: PCE Fast keeps X/Y/P in the active
+interpreter locals during `RunSub`, so reading `HuCPU.X/Y/P` from the hook
+captured stale register copies. Discard those earlier X/Y/P/carry fields; their
+direct memory observations (selector roots, candidate bytes, and result
+memory) remain usable. The probe now receives `X_local`, `Y_local`, `P_local`,
+and lazy `ZNFlags` at the fetch hook. The updated patch chain passed three
+isolated application loops; the corrected PCE Fast object and emulator built
+on `trv2`.
+
+An authentic US cold-start trace recorded 60 lookup results and 229 candidate
+comparisons. In all 60 cases the final candidate byte matched the requested
+key, the result carry was clear, and `$37d2` matched the number of candidate
+comparisons (one-based). This confirms the successful lookup path for this
+bounded cold-start sample only; no miss/exhaustion result or game-level field
+meaning is established. All three scripted input events were recorded, but
+the strict receipt still blocked because the final event mask was not read by
+the controller port. Do not claim that replay changed gameplay state.
+
 ## 2026-10-05 — source-lock the stage-two MPR entry window
 
 The authentic US and JP stage-two entry bytes at `$4000` now have a direct

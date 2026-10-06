@@ -425,10 +425,10 @@ fi
 pce_fast_stage2_mpr1_probe_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch
 if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_script" ||
    ! grep -Fq 'GetRealPC()' "$pce_fast_stage2_mpr1_probe_patch_file" ||
-   ! grep -Fq 'static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc,' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'static int stage2_mpr1_trace_initialized;' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(!stage2_mpr1_trace_initialized)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
-   ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC());' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_probe_pc == 0x3a2e && stage2_mpr1_call_pending)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_candidate sequence=%u pc=%04x physical_pc=%08x mpr1=%02x callsite_bytes=%02x%02x%02x linked=%u' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_candidate_sequence < 32' "$pce_fast_stage2_mpr1_probe_patch_file" ||
@@ -443,7 +443,7 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_
    ! grep -Fq 'const uint8 *table = (const uint8 *)(HuCPU.FastPageR[2] + 0x410d);' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'const uint16 table_offset = stream_id * 2;' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'table[table_offset + 1]' "$pce_fast_stage2_mpr1_probe_patch_file" ||
-   ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC());' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_mpr1_trace && stage2_mpr1_call_pending &&' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_call_sequence < 32)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_mpr1_trace && stage2_mpr1_sequence < 32)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
@@ -460,7 +460,9 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_
    ! grep -Fq 'stage2_mpr1_lookup sequence=%u pc=4ec9 mpr2=%02x selector=%02x key=%02x slot=%04x slot_bytes=%02x%02x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_root sequence=%u pc=4ed4 selector=%02x key=%02x root=%04x count=%02x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'const uint8 *zero_page = (const uint8 *)(HuCPU.Page1);' "$pce_fast_stage2_mpr1_probe_patch_file" ||
-   ! grep -Fq 'stage2_mpr1_result sequence=%u pc=4ed7 selector=%02x key=%02x carry=%u field_37ce=%02x field_37cf=%02x field_37d0=%02x field_37d1=%02x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_search sequence=%u iteration=%u pointer=%04x candidate=%02x key=%02x search_steps=%02x field_37cc=%02x x=%02x p=%02x znflags=%08x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_result sequence=%u pc=4ed7 selector=%02x key=%02x search_steps=%02x carry=%u field_37ce=%02x field_37cf=%02x field_37d0=%02x field_37d1=%02x a=%02x x=%02x y=%02x p=%02x znflags=%08x' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_call sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x callsite_bytes=%02x%02x%02x linked=%u' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed4 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s' "$pce_fast_stage2_mpr1_probe_patch_file"; then
     printf '%s\n' 'FAIL: pce_fast MPR1 probe must link target execution to the authenticated caller instruction'
