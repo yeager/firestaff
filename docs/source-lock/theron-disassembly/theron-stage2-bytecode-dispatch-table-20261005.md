@@ -147,7 +147,7 @@ calls `$4f5e`, and ends with `JMP $40f5` (`+2`). The assertion stops at that
 terminal transfer and does not assert the adjacent code.
 
 ID `$55` points to `$4aa0` in both editions. Its 42-byte root `$4aa0..$4ac9`
-branches on the first stream byte: the zero path reads two additional bytes,
+branches on the first stream byte: the zero path reads one additional byte,
 writes `#$04` and `#$01` into `$4ec1/$4ec2`, then calls `$4f5e`; the nonzero
 path writes `#$04` and `#$7f` instead, then calls the same helper. Both paths
 end with `JMP $40f9` (`+3`). The lock stops before ID `$4b` at `$4aca`; values'
@@ -870,6 +870,12 @@ at `$4960`; both paths end at `$40f9`. The 88-byte window is identical in
 authentic US and JP data and stops immediately before the separate ID `$42`
 root at `$4973`. This establishes static branch and call structure, not
 selector meaning, helper effects, or stream execution.
+
+ID `$41` points to `$42be` in both authentic editions. Its 21-byte root
+`$42be..$42d2` saves `$1c/$1d`, calls `$41b9` and `$40cc`, restores the saved
+cursor, and ends with `JMP $40f9`. The test stops at that terminal transfer;
+it establishes static cursor preservation and call structure only, not the
+called routines' effects or runtime selection.
 
 ID `$42` points to `$4973` in both editions. Its bounded path reads a stream
 byte and branches to `$498e` when nonzero; the other path reads two more bytes,

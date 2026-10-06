@@ -1206,6 +1206,26 @@ static void test_stage2_id40_bounded_selector_path(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Lock ID $41's cursor-preserving nested-call path through its +3 tail. */
+static void test_stage2_id41_nested_cursor_handoff(const uint8_t *raw,
+                                                    size_t raw_size, int jp)
+{
+    static const uint8_t root[] = {
+        0xa5u, 0x1cu, 0x48u, 0xa5u, 0x1du, 0x48u, 0x20u, 0xb9u,
+        0x41u, 0x20u, 0xccu, 0x40u, 0x68u, 0x85u, 0x1du, 0x68u,
+        0x85u, 0x1cu, 0x4cu, 0xf9u, 0x40u
+    };
+
+    assert(stage2_word_at(raw, raw_size, jp,
+                          (uint16_t)(0x410du + 2u * 0x41u)) == 0x42beu);
+    for (unsigned int i = 0; i < sizeof(root); ++i) {
+        assert(stage2_byte_at(raw, raw_size, jp,
+                              (uint16_t)(0x42beu + i)) == root[i]);
+    }
+    printf("  PASS: stage2_id41_nested_cursor_handoff (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock ID $42's conditional field stores and shared +4 cursor exit. */
 static void test_stage2_id42_conditional_stores(const uint8_t *raw,
                                                  size_t raw_size, int jp)
@@ -1592,7 +1612,7 @@ static void test_stage2_id53_three_byte_handoff(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
-/* Lock ID $54's bounded three-byte staging and +2 cursor transfer. */
+/* Lock ID $54's bounded one-byte staging and +2 cursor transfer. */
 static void test_stage2_id54_short_staging(const uint8_t *raw,
                                             size_t raw_size, int jp)
 {
@@ -3012,6 +3032,7 @@ int main(void)
     test_stage2_id3e_polling_helper(g_us_data, g_us_size, 0);
     test_stage2_id3f_indexed_transfer(g_us_data, g_us_size, 0);
     test_stage2_id40_bounded_selector_path(g_us_data, g_us_size, 0);
+    test_stage2_id41_nested_cursor_handoff(g_us_data, g_us_size, 0);
     test_stage2_id42_conditional_stores(g_us_data, g_us_size, 0);
     test_stage2_id43_source_copies(g_us_data, g_us_size, 0);
     test_stage2_id44_helper_reentry(g_us_data, g_us_size, 0);
@@ -3078,6 +3099,7 @@ int main(void)
         test_stage2_id3e_polling_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id3f_indexed_transfer(g_jp_data, g_jp_size, 1);
         test_stage2_id40_bounded_selector_path(g_jp_data, g_jp_size, 1);
+        test_stage2_id41_nested_cursor_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id42_conditional_stores(g_jp_data, g_jp_size, 1);
         test_stage2_id43_source_copies(g_jp_data, g_jp_size, 1);
         test_stage2_id44_helper_reentry(g_jp_data, g_jp_size, 1);

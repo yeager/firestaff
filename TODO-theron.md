@@ -197,6 +197,9 @@ Reviewed 2026-10-05. Only open work is listed here.
   execution remain unproven.
   ID `$40`'s 88-byte branch/polling window `$491b..$4972` is source-locked up
   to ID `$42` at `$4973`; selector meaning and helper effects remain unknown.
+  The uncovered ID `$41` root `$42be..$42d2` is now byte-locked to both
+  editions through its cursor save/call/restore and `$40f9` tail; helper
+  effects and runtime selection remain open.
   ID `$42`'s `$4973..$4993` conditional stores and `$40fd` (`+4`) tail are
   now locked against both editions; field meanings and branch execution remain
   unknown.
