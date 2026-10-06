@@ -312,7 +312,7 @@ both editions. On the main branch, the handler saves MPRs selected by masks
 `$f8/$f9/$ff` before the local pair loop and a final BIOS call. It restores the
 saved MPRs before jumping to `$40f9`. This describes only the source-level
 register, memory, call, and cursor sequence: BIOS/callee effects, bank mapping,
-`$0060` table contents, and runtime selection remain unresolved.
+`$6000` table contents, and runtime selection remain unresolved.
 The `stage2_id2f_parameter_handoff` assertion locks index `$2f` at `$4794`
 through `$40f5` (`+2`) in both editions. It loads the following stream byte
 into `$f8`, sets `$ff` to `$0b`, then calls `$e0d8` and `$4b2d`. This is only
