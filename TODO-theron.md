@@ -10,7 +10,10 @@ Reviewed 2026-10-06. Only open work is listed here.
   bounded L8000 call site, with an authentic JP mutation rejection test. The
   existing combined L4696/L3114 and later L3114 proofs remain US-only until
   the JP-specific L3114 body is decoded. This proves static bytes only, not
-  helper semantics or JP execution.
+  helper semantics or JP execution. The focused disassembly test passed three
+  loops against authentic regional media, then the full 307-test Theron CTest
+  selection had zero failures: 285 passed and 22 media/capture-dependent tests
+  skipped on `trv2`.
 
 ## 2026-10-06 — mutation-check the regional dispatch-machine receipt
 
