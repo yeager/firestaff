@@ -2648,6 +2648,10 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_L4696_L3114_BOUND_BYTES 0xa3u
 #define THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_USER_OFFSET 0x1114u
 #define THERON_TRACK02_IPL_STAGE2_JP_L3114_FLOW_BYTES 0xbau
+#define THERON_TRACK02_IPL_STAGE2_JP_L5529_USER_OFFSET 0x1529u
+#define THERON_TRACK02_IPL_STAGE2_JP_L5529_BYTES 0x16u
+#define THERON_TRACK02_IPL_STAGE2_JP_L553F_USER_OFFSET 0x153fu
+#define THERON_TRACK02_IPL_STAGE2_JP_L553F_BYTES 0x16u
 
 /* L3114 near callees.  L3172 and the $117D far-helper trampoline sit
  * directly after the bound L3114 body in the low-image region (below
@@ -3484,9 +3488,9 @@ typedef struct {
 
 /* Receipt for the JP-only static $3114 flow. It binds the shared $4f5e
  * selector plus the exact JP bytes [0x1114..0x11ce), including its
- * internal BSR targets, and the exact $4f66 target called from that
- * window. Other external JSR targets and all routine semantics remain
- * unbound. */
+ * internal BSR targets, and exact $4f66, $5529 and $553f target windows
+ * called from it. Other external JSR targets and all routine semantics
+ * remain unbound. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -3498,6 +3502,8 @@ typedef struct {
     int jp_flow_bytes_proven;
     int internal_bsr_targets_proven;
     int l4f66_target_proven;
+    int l5529_target_proven;
+    int l553f_target_proven;
 } Theron_Track02Stage2JpL3114FlowReceipt;
 
 /* Receipt for the stage-two L3114-callees proof.  It binds only
@@ -4129,7 +4135,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696(
     Theron_Track02Stage2L4696Receipt *out_receipt);
 
 /* Verifies the authenticated JP-only $3114 control-flow byte window
- * [0x1114..0x11ce), its exact $4f66 JSR target window [0x0f66..0x0f7a),
+ * [0x1114..0x11ce), its exact $4f66, $5529 and $553f JSR target windows,
  * and the regional dispatch-machine receipt for its $4f5e selector
  * caller. Other external JSR targets remain uncovered. The listing is in
  * docs/source-lock/theron-disassembly/theron-jp-stage2-l3114-huc6280.asm;

@@ -7,18 +7,25 @@
 ; Additional exact call target: $4f66 -> user window [$0f66..$0f7a), 20 bytes
 ; Target SHA-256: 089bf8150d6cf62b4610c30b1df7d7f973de7da1281a1ca6a1973fd983f0e79c
 ; Authentic US comparison media TQUS02.bin MD5: f23601102138f87c33025877767ebf76
+; Additional exact JP targets: $5529 [0x1529..0x153f), 22 bytes;
+;   SHA-256 faae1918763a25d12f16f550576aefe630a48cea1ac375c19336c867b1fb55a4
+;   authentic US same-offset SHA-256 f6adbe9162136c610936ad8b8bef04f822edbecb77434cd0002c0adf975579c9
+; $553f [0x153f..0x1555), 22 bytes;
+;   SHA-256 dd38ee373966ae4f4ca66fd4d7242ae14118fc5ac23ba7226cd62421ca6d8adf
+;   authentic US same-offset SHA-256 3b97a780c9748af2a009e92486ebf1828079fbc7ca2f0f351908908500328652
 ;
 ; The regional dispatch-machine receipt authenticates the JP $4f5e selector
 ; window. Its JSR $3114 at selector offset +4 is the caller for this target.
 ; The exact target bytes and the internal HuC6280 BSR targets below are bound
 ; by theron_v1_track02_verify_stage2_jp_l3114_flow(). The $3158 JSR $4f66
-; target is also exact-bound; its 20 bytes match the authentic US target.
+; targets $4f66, $5529 and $553f are also exact-bound. The 20-byte $4f66
+; target matches authentic US bytes; the two 22-byte $55xx targets differ.
 ;
 ; RTS-bounded spans within this window:
 ;   $3114..$312a, $312a..$3141, $3141..$31a8,
 ;   $31a8..$31b3, $31b3..$31c0, $31c0..$31ce.
 ; All internal BSR destinations are contained in these spans. Other external
-; JSR destinations $553f, $5529, $52c6, $565a and $5251 remain unbound.
+; JSR destinations $52c6, $565a and $5251 remain unbound.
 ; No routine or game semantics are assigned.
 ;
 ; HuC6280 $44 is BSR, not the 65C02 TSB interpretation. The MAME reference
@@ -135,3 +142,29 @@ $4f76:  ply
 $4f77:  plx
 $4f78:  pla
 $4f79:  rts
+
+; JP Rev. 1 target called at $312d. The target differs from US at this
+; offset, so this is a separately source-locked JP window.
+$5529:  lda  $4f9f
+$552c:  asl  a
+$552d:  tax
+$552e:  lda  $4fd7
+$5531:  sta  $4fa0,x
+$5534:  inx
+$5535:  lda  $4fd8
+$5538:  sta  $4fa0,x
+$553b:  inc  $4f9f
+$553e:  rts
+
+; JP Rev. 1 target called at $312a. The target differs from US at this
+; offset, so this is a separately source-locked JP window.
+$553f:  dec  $4f9f
+$5542:  lda  $4f9f
+$5545:  asl  a
+$5546:  tax
+$5547:  lda  $4fa0,x
+$554a:  sta  $4fd7
+$554d:  inx
+$554e:  lda  $4fa0,x
+$5551:  sta  $4fd8
+$5554:  rts

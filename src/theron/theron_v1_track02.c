@@ -9050,6 +9050,19 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
         0xd0u, 0xfdu, 0xcau, 0xd0u, 0xf9u, 0x3au, 0xd0u, 0xf5u,
         0x7au, 0xfau, 0x68u, 0x60u
     };
+    /* These adjacent JP windows are separate call targets and differ
+     * from the US bytes at the same offsets. Each ends at its own RTS;
+     * keep the regional constants independent of US callee receipts. */
+    static const uint8_t stage2_jp_l5529[] = {
+        0xadu, 0x9fu, 0x4fu, 0x0au, 0xaau, 0xadu, 0xd7u, 0x4fu,
+        0x9du, 0xa0u, 0x4fu, 0xe8u, 0xadu, 0xd8u, 0x4fu, 0x9du,
+        0xa0u, 0x4fu, 0xeeu, 0x9fu, 0x4fu, 0x60u
+    };
+    static const uint8_t stage2_jp_l553f[] = {
+        0xceu, 0x9fu, 0x4fu, 0xadu, 0x9fu, 0x4fu, 0x0au, 0xaau,
+        0xbdu, 0xa0u, 0x4fu, 0x8du, 0xd7u, 0x4fu, 0xe8u, 0xbdu,
+        0xa0u, 0x4fu, 0x8du, 0xd8u, 0x4fu, 0x60u
+    };
     Theron_Track02Stage2DispatchMachineReceipt dispatch;
     Theron_Track02SignalStatus status;
 
@@ -9079,7 +9092,21 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
             track02_data, track02_size, dispatch.stage2_raw_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_USER_OFFSET,
-            stage2_jp_l4f66, sizeof(stage2_jp_l4f66))) {
+            stage2_jp_l4f66, sizeof(stage2_jp_l4f66)) ||
+        sizeof(stage2_jp_l5529) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L5529_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L5529_USER_OFFSET,
+            stage2_jp_l5529, sizeof(stage2_jp_l5529)) ||
+        sizeof(stage2_jp_l553f) !=
+            THERON_TRACK02_IPL_STAGE2_JP_L553F_BYTES ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, dispatch.stage2_raw_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JP_L553F_USER_OFFSET,
+            stage2_jp_l553f, sizeof(stage2_jp_l553f))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     out_receipt->valid = 1;
@@ -9093,6 +9120,8 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jp_l3114_flow(
     out_receipt->jp_flow_bytes_proven = 1;
     out_receipt->internal_bsr_targets_proven = 1;
     out_receipt->l4f66_target_proven = 1;
+    out_receipt->l5529_target_proven = 1;
+    out_receipt->l553f_target_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
 
