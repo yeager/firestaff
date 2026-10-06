@@ -519,6 +519,9 @@ instruction PC. The target row also captures its actual MPR1, physical PC,
 and 64 mapped bytes; its predicted physical target is retained separately so
 the mapping can be compared at execution. Only signature-linked target rows
 are emitted, with separate bounded budgets for caller and target records.
+An independent 32-row `$4ec9` candidate budget records observed caller bytes
+even when they do not match the expected JSR signature, so an absent call row
+can be distinguished from an unvisited candidate PC.
 Trace-file discovery is initialized once to avoid repeated environment
 lookups in the opcode loop; the environment and writable trace path must be
 ready before emulator startup. On `trv2`, the updated probe patch applied to the
@@ -528,6 +531,16 @@ static regression passed three loops; its source-tree patch dry-run was
 skipped because the original Mednafen source is on `trv2`. No authentic
 runtime call receipt has yet been captured, so the target implementation
 and mapping remain unresolved.
+
+Two 2026-10-06 recaptures replayed the authenticated JP Akutuba F5 gameplay
+state through the updated `pce_fast` build. Both consumed eleven controller
+events at the original game's poll site; one replay overlapped directional
+inputs to exercise diagonal controls. Neither produced a `$4ec9` candidate,
+signature-matching call, or linked `$3a2e` execution row. These are negative
+results for the tested routes only, not a general claim that the address is
+unreachable. Raw receipts remain outside the repository under
+`/home/trv2/firestaff-theron-evidence/capture/stage2-mpr1-probe-authentic-jp-f5-candidate-recheck-20261006/`
+and `.../stage2-mpr1-probe-authentic-jp-f5-diagonal-route-20261006/`.
 
 The JP F5 state (SHA-256
 `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) provides

@@ -4,13 +4,14 @@
  #include "vdc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -29,1 +31,82 @@
+@@ -29,1 +31,93 @@
  HuC6280 HuCPU;
 +
 +static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc)
 +{
 + static FILE *stage2_mpr1_trace;
 + static int stage2_mpr1_trace_initialized;
++ static unsigned stage2_mpr1_candidate_sequence;
 + static unsigned stage2_mpr1_sequence;
 + static unsigned stage2_mpr1_call_sequence;
 + static int stage2_mpr1_call_pending;
@@ -46,6 +47,16 @@
 +    (caller_mpr2 << 13) | (stage2_probe_pc & 0x1fff);
 +  stage2_mpr1_call_target_physical_pc =
 +    (stage2_mpr1_caller_mpr1 << 13) | (0x3a2e & 0x1fff);
++  if(stage2_mpr1_trace && stage2_mpr1_candidate_sequence < 32)
++  {
++   fprintf(stage2_mpr1_trace,
++     "stage2_mpr1_candidate sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_bytes=%02x%02x%02x linked=%u\n",
++     stage2_mpr1_candidate_sequence++, stage2_probe_pc,
++     stage2_mpr1_caller_physical_pc, stage2_mpr1_caller_mpr1,
++     stage2_mpr1_caller_bytes[0], stage2_mpr1_caller_bytes[1],
++     stage2_mpr1_caller_bytes[2], stage2_mpr1_call_pending);
++   fflush(stage2_mpr1_trace);
++  }
 +  if(stage2_mpr1_trace && stage2_mpr1_call_pending &&
 +     stage2_mpr1_call_sequence < 32)
 +  {

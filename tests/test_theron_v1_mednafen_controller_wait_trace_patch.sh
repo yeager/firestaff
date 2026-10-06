@@ -430,6 +430,8 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_
    ! grep -Fq 'if(!stage2_mpr1_trace_initialized)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC());' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_probe_pc == 0x3a2e && stage2_mpr1_call_pending)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_candidate sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_bytes=%02x%02x%02x linked=%u' "$pce_fast_stage2_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_candidate_sequence < 32' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_mpr1_trace && stage2_mpr1_call_pending &&' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_call_sequence < 32)' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'if(stage2_mpr1_trace && stage2_mpr1_sequence < 32)' "$pce_fast_stage2_mpr1_probe_patch_file" ||

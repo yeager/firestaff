@@ -8,15 +8,20 @@ Reviewed 2026-10-06. Only open work is listed here.
   at `$4ec9`, recognizes only `JSR $3a2e`, and links the immediately following
   `$3a2e` execution with caller/target physical PCs and MPR1. Both call and
   linked-target rows have bounded budgets, so unrelated target hits cannot
-  consume the linked-evidence budget. The helper now lives outside the opcode
-  loop to avoid C++ goto-over-initialization errors. Trace-file discovery is
-  initialized once, avoiding repeated environment lookups in the opcode loop;
+  consume the linked-evidence budget. A separate 32-row candidate budget now
+  records every observed `$4ec9` PC and its actual three bytes, even when they
+  are not `JSR $3a2e`. The helper lives outside the opcode loop to avoid C++
+  goto-over-initialization errors. Trace-file discovery is initialized once;
   the environment and writable path must be ready before emulator startup.
-  The patch applied to the isolated full research source on `trv2`; the
-  updated `huc6280.o` target compiled, and the prior version passed the full
-  PCE Fast-enabled `-j1` build. The local static regression passed three
-  loops; its source-tree patch dry-run was skipped because the original
-  Mednafen source is on `trv2`.
+  The updated patch applied to the isolated full research source on `trv2`,
+  `huc6280.o` compiled, and the full PCE Fast-enabled `-j1` build succeeded.
+  Two captures replaying the authentic JP Akutuba F5 state consumed eleven
+  controller events each, including a combined up/left and up/right route,
+  but emitted no `$4ec9` candidate, matching call, or `$3a2e` target row. The
+  result only shows that these two routes did not reach the candidate PC; it
+  does not establish behavior on other dungeon routes. The local static
+  regression passed three loops; its source-tree patch dry-run was skipped
+  because the original Mednafen source is on `trv2`.
 - 🔒 No authentic same-session `$4ec9 → $3a2e` runtime receipt has yet been
   recorded, so the helper's physical bank, bytes, and behavior remain
   unverified. Capture a real execution before drawing conclusions.
