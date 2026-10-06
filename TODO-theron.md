@@ -67,6 +67,11 @@ Reviewed 2026-10-06. Only open work is listed here.
   are retained under
   `/home/trv2/firestaff-theron-evidence/emulator-created-20261005/pcefast-mpr1-gameplay-route-loop1-20261005/`
   and `.../pcefast-mpr1-gameplay-route-loop2-20261005/` on trv2.
+  Reinspection of both retained `capture/live.trace` receipts found only the
+  four-line header (`variant=unknown`, `stage3_track02_record=unknown`) and no
+  instruction or `stage2_mpr1_probe` records. These attempts therefore do not
+  establish even the `$4ec9` call-site mapping; keep their controller-port
+  receipts separate from CPU execution evidence.
   The authentic JP F5 state independently records PC `$c692`, MPR1 `$f8`, and
   MPR6 `$69`; at that later gameplay point `$3a2e` maps to BaseRAM offset
   `$1a2e`, whose saved byte is zero. This does not establish MPR1 or contents
