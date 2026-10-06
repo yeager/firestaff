@@ -300,6 +300,11 @@ Reviewed 2026-10-06. Only open work is listed here.
   byte-locked through its X/Y setup, `$3114` call, and RTS. Selector meaning,
   `$3114/$4ef4` effects, `$4c17` effects, and runtime selection remain
   unresolved.
+  The six bounded dispatch-machine spans `$b5..$b6`, `$b7..$f0`,
+  `$f1..$10c`, `$10d..$120`, `$af7..$aff`, and `$f5e..$f65` also match
+  byte-for-byte between authentic US and JP Track 02; the aggregate verifier
+  now accepts both editions for these spans only. Entry-path, delay, port-clear,
+  and other helper bodies retain their separate regional evidence gates.
   ID `$4a`'s `$4a81..$4a9f` paired-call loop is now independently locked to the
   authentic US and JP images, stopping before ID `$4b` at `$4aca`; immediate
   operands and runtime selection remain unassigned.
@@ -3205,9 +3210,10 @@ distinguishes right and left after `$28B8` returns to zero.
 - 🔧 2026-08-06 JP Stage-2 disassembly follow-up: the authentic JP Track 02
   BIN is now materialised as `~/.firestaff/data/theron/TQJP02.bin` and its
   IPL loader plus dynamic `$3800` payload receipt pass against record `0x4df`.
-  The later static Stage-2 byte windows remain US-only because the JP image
-  has region-specific bytes; do not widen those verifier gates until a JP
-  disassembly identifies equivalent instruction/data spans and their callers.
+  The main executed entry path and several first-level helper receipts still
+  remain US-only because the JP image has region-specific bytes. The bounded
+  dispatch-machine receipt is a limited exception: six exact windows now have
+  direct US/JP raw-media identity evidence, without widening other gates.
 
 - 🔧 2026-07-11 IPL-loader provenance update: original CUE sheets prove Track
   01 is CD-DA narration, while Track 02 is the MODE1 code track. The

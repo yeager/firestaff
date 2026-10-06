@@ -2490,7 +2490,7 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES 0x9au
 
 /* Stage-two dispatch-machine closure: the remaining bounded bytes of
- * the L40B7 dispatch machine, verified against the hash-gated US media
+ * the L40B7 dispatch machine, verified against hash-gated US and JP media
  * and matched against the source-locked disassembly
  * (theron-us-stage2-huc6280.asm:183-235, 1590-1594, 2334-2337).  The
  * register-seed tail [0xb5..0xb7) closes the gap between the executed
@@ -2504,11 +2504,9 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * [0xf5e..0xf66) are the dispatcher loop head's two direct callees
  * (call sites 0xcc and 0xc1 inside the bound dispatcher window).  With
  * the entry path and the round-12 callee bodies, the executed dispatch
- * machine [0x00..0x121) is contiguously bound.  The source-locked
- * documentation attests JP/US byte identity only for the $4090 CD_READ
- * window, so this is proven for the authenticated US stage-two body
- * only; the JP body remains covered by the variant-neutral windows
- * until staged JP media can verify the same streams.  None of this
+ * machine [0x00..0x121) is contiguously bound.  The listed bounded
+ * windows match byte-for-byte in authenticated US and JP media; no other
+ * stage-two spans are implied.  None of this
  * assigns handler semantics to the ten jump-table targets, a System
  * Card base arithmetic, a record semantics, or any graphics role. */
 #define THERON_TRACK02_IPL_STAGE2_SEED_TAIL_USER_OFFSET 0xb5u
@@ -3351,17 +3349,16 @@ typedef struct {
 } Theron_Track02Stage2CallGraphReceipt;
 
 /* Receipt for the stage-two dispatch-machine closure proof.  It binds
- * only instruction and table bytes of the authenticated US stage-two
- * body: the register-seed tail [0xb5..0xb7), the seven dispatch stubs
+ * only instruction and table bytes shared by authenticated US and JP
+ * bodies: the register-seed tail [0xb5..0xb7), the seven dispatch stubs
  * [0xf1..0x10d), the ten-entry jump table [0x10d..0x121) (each entry
  * verified to point inside the loaded image), the L4AF7 MPR-page body
  * [0xaf7..0xb00), and the L4F5E selector body [0xf5e..0xf66).  With
  * the already-bound windows the executed dispatch machine [0x00..0x121)
- * is contiguously bound.  Proven for the US body only (the
- * source-locked JP/US identity attestation covers the $4090 window,
- * not these streams); no handler semantics for the ten jump-table
- * targets, no System Card base arithmetic, no record semantics, and no
- * graphics role follows. */
+ * is contiguously bound.  Each listed span is byte-identical in the
+ * authenticated US and JP bodies; no handler semantics for the ten
+ * jump-table targets, no System Card base arithmetic, no record semantics,
+ * and no graphics role follows. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -4027,13 +4024,13 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_call_graph(
     Theron_Track02Stage2CallGraphReceipt *out_receipt);
 
 /* Verifies the stage-two dispatch-machine closure against the
- * authenticated US Track 02 body.  Chains the fail-closed IPL loader
+ * authenticated US or JP Track 02 body.  Chains the fail-closed IPL loader
  * proof, then requires the exact register-seed tail, dispatch stubs,
  * jump table, L4AF7 MPR-page, and L4F5E selector bytes at their
  * original user offsets inside the proven stage-two image, and checks
  * that each of the ten little-endian jump-table entries points inside
- * the loaded image.  The JP variant rejects (these streams are not
- * attested byte-identical); any changed byte fails closed. */
+ * the loaded image.  Every bounded span is byte-identical in authentic
+ * US and JP media; any changed byte fails closed. */
 Theron_Track02SignalStatus theron_v1_track02_verify_stage2_dispatch_machine(
     const uint8_t *track02_data,
     size_t track02_size,

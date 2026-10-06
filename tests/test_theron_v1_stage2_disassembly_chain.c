@@ -2636,6 +2636,25 @@ static void test_stage2_dispatch_machine(void)
     assert(receipt.dispatch_machine_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_DISPATCH_MACHINE_BOUND_BYTES);
     printf("  PASS: stage2_dispatch_machine\n");
+
+    if (g_jp_data) {
+        status = theron_v1_track02_verify_stage2_dispatch_machine(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid == 1);
+        assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+        assert(receipt.seed_tail_proven == 1);
+        assert(receipt.dispatch_stubs_proven == 1);
+        assert(receipt.jump_table_proven == 1);
+        assert(receipt.mpr_page_proven == 1);
+        assert(receipt.selector_proven == 1);
+        assert(receipt.dispatch_machine_contiguous_proven == 1);
+        assert(receipt.jump_table_entries ==
+               THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_ENTRIES);
+        assert(receipt.dispatch_machine_bound_bytes ==
+               THERON_TRACK02_IPL_STAGE2_DISPATCH_MACHINE_BOUND_BYTES);
+        printf("  PASS: stage2_dispatch_machine (JP)\n");
+    }
 }
 
 static void test_stage2_l8000_pair(void)

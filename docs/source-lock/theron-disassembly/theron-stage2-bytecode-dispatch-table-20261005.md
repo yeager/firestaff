@@ -24,6 +24,15 @@ uses it as the X offset of `JMP ($410d,x)`. `$410d..$41b6` is consequently an
 this range as 85 `.addr` entries, labels each table target, and marks the
 dispatch explicitly instead of treating the table as linear instructions.
 
+The dispatch-machine verifier's six bounded spans were compared directly in
+the authenticated US and JP Rev. 1 Track 02 payloads: seed tail `$b5..$b6`,
+dispatcher `$b7..$f0`, stubs `$f1..$10c`, ten-entry jump table `$10d..$120`,
+MPR-page helper `$af7..$aff`, and selector `$f5e..$f65`. Each span matches
+byte-for-byte, so `verify_stage2_dispatch_machine` accepts both regional
+hashes and checks those exact windows in either image. This regional identity
+is limited to the listed spans; it does not establish parity for other
+stage-two helpers or gameplay semantics.
+
 ## Index-to-target map
 
 No gameplay or command names are assigned. Each right-hand value is only the

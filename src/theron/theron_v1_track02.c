@@ -8588,11 +8588,9 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_dispatch_machine(
     status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
                                                 md5_hex, &loader);
     if (status != THERON_TRACK02_SIGNAL_OK) return status;
-    /* The dispatch-machine byte identity is attested only for the
-     * authenticated US stage-two body; the JP body rejects here until
-     * staged JP media can verify the same streams. */
-    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
-        !loader.stage2_seed_call_sites_proven) {
+    /* These six bounded dispatch-machine spans match both authenticated
+     * regional images. Keep this receipt limited to those exact windows. */
+    if (!loader.stage2_seed_call_sites_proven) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     stage2_sector = loader.stage2_raw_sector;
