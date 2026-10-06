@@ -3228,6 +3228,28 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
     static const uint8_t selector_followup_helper[] = {
         0x20u, 0x55u, 0x55u, 0x80u, 0xddu
     };
+    static const uint8_t selector_update_helpers[] = {
+        0x20u, 0xe8u, 0x53u, 0xb0u, 0x02u, 0x44u, 0x0du, 0x60u,
+        0xceu, 0x9cu, 0x4fu, 0xd0u, 0x03u, 0x20u, 0x3fu, 0x55u,
+        0x20u, 0xb3u, 0x54u, 0x60u, 0xadu, 0xd8u, 0x4fu, 0xc9u,
+        0x7fu, 0x90u, 0x07u, 0xd0u, 0x05u, 0xadu, 0xd7u, 0x4fu,
+        0xc9u, 0x31u, 0xb0u, 0x23u, 0xadu, 0x9cu, 0x4fu, 0xd0u,
+        0x1bu, 0xadu, 0xd7u, 0x4fu, 0x8du, 0x9du, 0x4fu, 0xadu,
+        0xd8u, 0x4fu, 0x8du, 0x9eu, 0x4fu, 0x44u, 0x9du, 0xadu,
+        0x92u, 0x4fu, 0x85u, 0x10u, 0xadu, 0x8au, 0x4fu, 0x85u,
+        0x11u, 0x20u, 0x85u, 0x56u, 0x44u, 0x02u, 0x18u, 0x60u
+    };
+    static const uint8_t selector_record_loop[] = {
+        0x20u, 0x08u, 0x52u, 0x20u, 0x89u, 0x59u, 0x20u, 0x29u,
+        0x55u, 0x20u, 0xfbu, 0x4fu, 0xadu, 0xdeu, 0x4fu, 0xd0u,
+        0x03u, 0x20u, 0x41u, 0x51u, 0x9cu, 0xdeu, 0x4fu, 0x20u,
+        0x3fu, 0x55u, 0x20u, 0x5du, 0x55u, 0x60u
+    };
+    static const uint8_t selector_lookup_helper[] = {
+        0xc2u, 0xb1u, 0x00u, 0xc9u, 0x81u, 0xd0u, 0x0du,
+        0xc8u, 0xb1u, 0x00u, 0xc9u, 0x96u, 0xd0u, 0x06u,
+        0x8du, 0xdeu, 0x4fu, 0x20u, 0x8bu, 0x50u, 0x60u
+    };
     static const uint8_t selector_loop_and_handlers[] = {
         0x68u, 0x85u, 0x19u, 0x68u, 0x85u, 0x18u, 0x18u,
         0xa5u, 0x18u, 0x65u, 0x0au, 0x85u, 0x18u, 0x90u,
@@ -3371,6 +3393,12 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
                    "JP remaining selector-handler span size changed");
     _Static_assert(sizeof(selector_followup_helper) == 0x05u,
                    "JP selector follow-up span size changed");
+    _Static_assert(sizeof(selector_update_helpers) == 0x48u,
+                   "JP selector update helper span size changed");
+    _Static_assert(sizeof(selector_record_loop) == 0x1eu,
+                   "JP selector record-loop span size changed");
+    _Static_assert(sizeof(selector_lookup_helper) == 0x15u,
+                   "JP selector lookup helper span size changed");
 
     if (!g_jp_data) {
         printf("  SKIP: stage2_jp_record_selector_52xx_flow (JP media unavailable)\n");
@@ -3397,6 +3425,12 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
                            sizeof(remaining_selector_handlers));
     assert_jp_stage2_bytes(0x5984u, selector_followup_helper,
                            sizeof(selector_followup_helper));
+    assert_jp_stage2_bytes(0x5555u, selector_update_helpers,
+                           sizeof(selector_update_helpers));
+    assert_jp_stage2_bytes(0x5966u, selector_record_loop,
+                           sizeof(selector_record_loop));
+    assert_jp_stage2_bytes(0x5989u, selector_lookup_helper,
+                           sizeof(selector_lookup_helper));
 
     for (size_t i = 0;
          i < sizeof(selector_targets) / sizeof(selector_targets[0]); ++i) {
@@ -3415,10 +3449,24 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
     assert_jp_stage2_jsr_target(0x5906u, 0x54b3u);
     assert_jp_stage2_jsr_target(0x590bu, 0x555du);
     assert_jp_stage2_jsr_target(0x5984u, 0x5555u);
+    assert_jp_stage2_jsr_target(0x5555u, 0x53e8u);
+    assert_jp_stage2_jsr_target(0x5562u, 0x553fu);
+    assert_jp_stage2_jsr_target(0x5565u, 0x54b3u);
+    assert_jp_stage2_jsr_target(0x5596u, 0x5685u);
+    assert_jp_stage2_jsr_target(0x5966u, 0x5208u);
+    assert_jp_stage2_jsr_target(0x5969u, 0x5989u);
+    assert_jp_stage2_jsr_target(0x596cu, 0x5529u);
+    assert_jp_stage2_jsr_target(0x596fu, 0x4ffbu);
+    assert_jp_stage2_jsr_target(0x5977u, 0x5141u);
+    assert_jp_stage2_jsr_target(0x597du, 0x553fu);
+    assert_jp_stage2_jsr_target(0x5980u, 0x555du);
+    assert_jp_stage2_jsr_target(0x599au, 0x508bu);
     assert_jp_stage2_bsr_target(0x5915u, 0x5921u);
     assert_jp_stage2_bsr_target(0x5917u, 0x594eu);
     assert_jp_stage2_bsr_target(0x5946u, 0x5921u);
     assert_jp_stage2_bsr_target(0x5948u, 0x5984u);
+    assert_jp_stage2_bsr_target(0x555au, 0x5569u);
+    assert_jp_stage2_bsr_target(0x5599u, 0x559du);
     assert_jp_stage2_bsr_target(0x528eu, 0x529bu);
     assert_jp_stage2_bsr_target(0x5292u, 0x52afu);
     assert(stage2_byte_at(g_jp_data, g_jp_size, 1, 0x52a0u) == 0x20u);

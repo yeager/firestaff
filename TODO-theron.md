@@ -96,9 +96,11 @@ Reviewed 2026-10-06. Only open work is listed here.
   $5669`. Comparing the US code at the same address therefore cannot
   establish a JP routine or regional parity.
 - The complete table's selector-entry bodies are now byte-bound, including
-  shared `$58dc` and the `$5915/$5946` pair. Static closure still needs the
-  external `$5555` and `$555d` callees and the `$5966` continuation reached
-  from `$5984`; do not claim complete coverage of this handler family yet.
+  shared `$58dc` and the `$5915/$5946` pair. Initial callee/continuation
+  windows `$5555..$559d`, `$5966..$5984`, and `$5989..$599e` are also locked.
+  Static closure still needs outbound targets including `$559d`, `$5685`,
+  `$5208`, `$5141`, and `$508b`; do not claim complete coverage of this
+  handler family yet.
 - Next, capture a source-byte-identified JP runtime trace that records the
   selector at `$5800`, the branch decision at `$528c`, and reached BIOS/helper
   calls. Bind the outstanding call/continuation targets and determine the

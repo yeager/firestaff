@@ -24,12 +24,18 @@
 ;   $5669..$5670  2ffc33a966b77db91fcca71812ac1fc7548eca3c00b6ecab571cc32c5c2816b7
 ;   $58dc..$5960  64c8cb6720887093e13d5961ee72485234b8785a116f57765b9c63ae2a0ef2d0
 ;   $5984..$5989  efd1f17c1409a7c73007486060fc81e2ce6fbf9ffe2832f4973b52db9eb87558
+;   $5555..$559d  e5e2b548e880d3547db3bb7cf0ba6adc0993eba3107d960c0375cc5f28d43a63
+;   $5966..$5984  1e7bf26c601ff09366c1a2e30cad225e075032d95b8ae3081e46cf36d8e06a6d
+;   $5989..$599e  b7d0505079dbe30e91175174a9dabfcbc485e141b811a7f237550145cb32f760
 ;
 ; Authentic US same-address $5800..$582c SHA-256:
 ;   e1ada389530e8bab95341aa062b795a0c72631c34147d55408e0edbe4ee2268c
 ; Authentic US same-address comparison hashes:
 ;   $58dc..$5960  51850e3599f323999000202fc37916e93a654289d702e3f0d2ded9f63fd7abf9
 ;   $5984..$5989  84602c58f8c26368f82a98548e7a55969dd916399d0bb4c1add959b835b721da
+;   $5555..$559d  c5c4b53b2ff2b89b3e98571d3322f6d0e8717aeab3fd2075ffc2a13d5ef8e105
+;   $5966..$5984  a429462b6f9ea2d9e9fe05f7f639b39a2886f0620d72476f48a75e9cd4327754
+;   $5989..$599e  511af50fd0b1654546b7aac5e6cdbb7153bf00edccf2fa49c5f4a688c70aeae6
 ; Static dispatch interpretation: $5800 reads a selector through ($18),
 ; doubles it, and jumps through $5810,X. The 14 pointer entries cover indices
 ; 0..13; selector value 2 uses the pointer at $5814 ($5895). The observed
@@ -162,6 +168,65 @@ $594e:  jsr  $5555
 ; current locked callee set.
 $5984:  jsr  $5555
         bra  $5966
+
+; First selector callees reached through $5555/$555d. The $559d BSR target
+; and $5685 JSR target are outside these locked bytes.
+$5555:  jsr  $53e8
+        bcs  $555c
+        bsr  $5569
+        rts
+$555d:  dec  $4f9c
+        bne  $5565
+        jsr  $553f
+$5565:  jsr  $54b3
+        rts
+$5569:  lda  $4fd8
+        cmp  #$7f
+        bcc  $5577
+        bne  $5577
+        lda  $4fd7
+        cmp  #$31
+$5577:  bcs  $559c
+        lda  $4f9c
+        bne  $5599
+        lda  $4fd7
+        sta  $4f9d
+        lda  $4fd8
+        sta  $4f9e
+        bsr  $5529
+        lda  $4f92
+        sta  $10
+        lda  $4f8a
+        sta  $11
+        jsr  $5685
+$5599:  bsr  $559d
+        clc
+$559c:  rts
+
+; $5966 is the continuation reached by $5984; $5989 is its next helper.
+; These bounded roots still contain outbound callees requiring closure.
+$5966:  jsr  $5208
+        jsr  $5989
+        jsr  $5529
+        jsr  $4ffb
+        lda  $4fde
+        bne  $597a
+        jsr  $5141
+$597a:  stz  $4fde
+        jsr  $553f
+        jsr  $555d
+        rts
+$5989:  cly
+        lda  ($00),y
+        cmp  #$81
+        bne  $599d
+        iny
+        lda  ($00),y
+        cmp  #$96
+        bne  $599d
+        sta  $4fde
+        jsr  $508b
+$599d:  rts
 
 ; $4fea sets up the transfer and reaches $50f5 at $505a.
 $4fea:  clc
