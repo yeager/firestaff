@@ -1271,7 +1271,15 @@ The shared `$4f5e` wrapper is an eight-byte window (`$4f5e..$4f65`): it loads
 `stage2_l4f5e_register_handoff` raw-media assertion binds this exact window
 against US and JP Track 02. This proves the register setup and external call
 site only; `$3114`'s effects and the meaning of the register values remain
-unresolved.
+unresolved. The enclosing dispatch-machine receipt also checks its seed tail,
+dispatch stubs, initial jump-table entries, MPR-page helper, and selector
+bytes as one bounded evidence unit. A mutation regression flips one user-data
+byte in each verifier span independently for both authentic images and
+requires rejection while retaining the authenticated region identity. Three
+direct test-binary loops on `trv2` passed against the SHA-256-attested US and
+JP BINs. This guards the receipt's exact byte scope; it does not establish
+JP's MPR1 mapping at the `$3114` call or extend the shared-byte claim to other
+stage-two spans.
 
 ID `$4a` points to `$4a81` in both authentic editions. The 31-byte root
 `$4a81..$4a9f` calls `$463b`, saves `$0e`, invokes `$3ab7` with immediate

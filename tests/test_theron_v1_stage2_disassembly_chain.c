@@ -9,7 +9,9 @@
  * extracts VDC register writes from the proven byte streams,
  * providing viewport initialization evidence.
  *
- * Requires: ~/.firestaff/data/theron/TQUS02.bin; JP is verified optionally.
+ * Requires: authentic US Track 02; JP is verified optionally. Explicit
+ * FIRESTAFF_THERON_TEST_US_TRACK02 and _JP_TRACK02 paths may select the
+ * operator's original media without changing the standard data-dir default.
  */
 
 #include <assert.h>
@@ -50,14 +52,29 @@ static int load_track02_file(const char *path, uint8_t **out_data,
 static int load_track02(void)
 {
     const char *home = getenv("HOME");
+    const char *us_override = getenv("FIRESTAFF_THERON_TEST_US_TRACK02");
+    const char *jp_override = getenv("FIRESTAFF_THERON_TEST_JP_TRACK02");
     char us_path[512];
     char jp_path[512];
 
-    if (!home) return 0;
-    snprintf(us_path, sizeof(us_path), "%s/.firestaff/data/theron/TQUS02.bin", home);
-    snprintf(jp_path, sizeof(jp_path), "%s/.firestaff/data/theron/TQJP02.bin", home);
+    if (us_override && *us_override) {
+        snprintf(us_path, sizeof(us_path), "%s", us_override);
+    } else {
+        if (!home) return 0;
+        snprintf(us_path, sizeof(us_path),
+                 "%s/.firestaff/data/theron/TQUS02.bin", home);
+    }
+    if (jp_override && *jp_override) {
+        snprintf(jp_path, sizeof(jp_path), "%s", jp_override);
+    } else if (home) {
+        snprintf(jp_path, sizeof(jp_path),
+                 "%s/.firestaff/data/theron/TQJP02.bin", home);
+    } else {
+        jp_path[0] = '\0';
+    }
     if (!load_track02_file(us_path, &g_us_data, &g_us_size)) return 0;
-    (void)load_track02_file(jp_path, &g_jp_data, &g_jp_size);
+    if (jp_path[0] != '\0')
+        (void)load_track02_file(jp_path, &g_jp_data, &g_jp_size);
     return 1;
 }
 
@@ -2655,6 +2672,53 @@ static void test_stage2_dispatch_machine(void)
                THERON_TRACK02_IPL_STAGE2_DISPATCH_MACHINE_BOUND_BYTES);
         printf("  PASS: stage2_dispatch_machine (JP)\n");
     }
+
+    /* Each verifier span contributes to the receipt's positive result. Keep
+     * the authentic variant identity while flipping one raw user-data byte,
+     * so rejection exercises content matching rather than the variant gate. */
+    {
+        static const size_t user_offsets[] = {
+            THERON_TRACK02_IPL_STAGE2_SEED_TAIL_USER_OFFSET,
+            THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_USER_OFFSET,
+            THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_USER_OFFSET,
+            THERON_TRACK02_IPL_STAGE2_MPR_PAGE_USER_OFFSET,
+            THERON_TRACK02_IPL_STAGE2_SELECTOR_USER_OFFSET
+        };
+        uint8_t *mutated = malloc(g_us_size);
+        assert(mutated != NULL);
+
+        for (size_t variant = 0; variant < (g_jp_data ? 2u : 1u);
+             ++variant) {
+            const uint8_t *source = variant ? g_jp_data : g_us_data;
+            size_t source_size = variant ? g_jp_size : g_us_size;
+            const char *source_md5 = variant ? THERON_TRACK02_MD5_JP_BIN
+                                             : THERON_TRACK02_MD5_US_BIN;
+            size_t stage2_sector = variant
+                ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                      THERON_TRACK02_IPL_STAGE2_RECORD
+                : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+                      THERON_TRACK02_IPL_STAGE2_RECORD;
+
+            assert(source_size <= g_us_size);
+            for (size_t window = 0;
+                 window < sizeof(user_offsets) / sizeof(user_offsets[0]);
+                 ++window) {
+                size_t user_offset = user_offsets[window];
+                size_t raw_offset =
+                    (stage2_sector + user_offset / 2048u) * 2352u + 16u +
+                    user_offset % 2048u;
+
+                assert(raw_offset < source_size);
+                memcpy(mutated, source, source_size);
+                mutated[raw_offset] ^= 1u;
+                status = theron_v1_track02_verify_stage2_dispatch_machine(
+                    mutated, source_size, source_md5, &receipt);
+                assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+            }
+        }
+        free(mutated);
+    }
+    printf("  PASS: stage2_dispatch_machine_mutation_rejection\n");
 }
 
 static void test_stage2_l8000_pair(void)

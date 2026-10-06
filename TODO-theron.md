@@ -2,6 +2,18 @@
 
 Reviewed 2026-10-06. Only open work is listed here.
 
+## 2026-10-06 — mutation-check the regional dispatch-machine receipt
+
+- ✅ Added negative raw-media checks for the five windows accepted by the
+  bounded dispatch-machine receipt: seed tail, shared return stubs, initial
+  jump-table entries, MPR-page helper, and `$4f5e` selector. Each authentic US
+  and JP user-data byte window is flipped independently and must be rejected.
+  The focused test rebuilt on `trv2` and passed three direct loops using the
+  SHA-256-attested original US/JP Track 02 BINs via explicit test-only paths.
+  This protects only the receipt's
+  exact positive-evidence scope; JP `$3114` bank mapping and broader stage-two
+  parity remain open.
+
 ## 2026-10-06 — qualify the JP saved-state probe
 
 - 🔒 A bounded replay on `trv2` loaded the previously captured JP Akutuba
