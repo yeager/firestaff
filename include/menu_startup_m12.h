@@ -723,6 +723,10 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
 void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
                                      M12_AssetStatusScanProgressFn progressFn,
                                      void* progressUserData);
+void M12_StartupMenu_RescanAllGames(
+    M12_StartupMenuState* state,
+    M12_AssetStatusScanProgressFn progressFn,
+    void* progressUserData);
 /* Mac DM2 save parsing currently stops before the complete SKProject
  * DM2_GAME_LOAD record/possession stream, so Resume is unavailable there. */
 int M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(

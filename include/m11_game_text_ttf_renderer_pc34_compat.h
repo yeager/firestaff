@@ -38,6 +38,10 @@ int m11_ttf_render_string(
     int fontSizePixels,
     unsigned char colorIndex);
 
+int m11_ttf_measure_string(const char* utf8_text,
+                           int fontSizePixels,
+                           int* widthPixels);
+
 const char* m11_ttf_renderer_active_font_path(void);
 int m11_ttf_renderer_is_active(void);
 

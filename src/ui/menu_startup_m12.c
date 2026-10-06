@@ -71,6 +71,9 @@ static int m12_data_directory_dialog_token_is_placeholder(const char* path);
 static const char* m12_translate_for_locale(int localeIndex, const char* english);
 static int m12_ascii_equal_ci(const char* a, const char* b);
 static int m12_asset_ready_game_count(const M12_AssetStatus* status);
+static void m12_parent_game_data_root(const char* dataDir,
+                                      char* outPath,
+                                      size_t outPathSize);
 static void SDLCALL m12_unicode_font_dialog_callback(
     void* userdata, const char* const* filelist, int filter);
 static void SDLCALL m12_artpack_dialog_callback(
@@ -4313,17 +4316,27 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             const char* leafGameId =
                 m12_startup_game_id_for_data_dir(config->dataDir);
             if (leafGameId) {
-                /* An explicit game leaf is already a scoped selection.  The
-                 * full scanner would promote it to the parent and inspect
-                 * every archive beside the selected game, which can make a
-                 * real DM1 HoC launch spend minutes inflating unrelated
-                 * FM Towns/other-edition media before M11 opens the dungeon.
-                 * Use the same selected-game production route as --game;
-                 * global roots retain the full cross-game scan below. */
-                M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
-                                                    config->dataDir,
-                                                    leafGameId,
-                                                    gameScan);
+                if (scanAllGames) {
+                    char allGamesRoot[M12_ASSET_DATA_DIR_CAPACITY];
+                    M12_AssetStatusScanOptions scanOptions;
+                    m12_parent_game_data_root(config->dataDir,
+                                              allGamesRoot,
+                                              sizeof(allGamesRoot));
+                    memset(&scanOptions, 0, sizeof(scanOptions));
+                    scanOptions.honorRequestedDataDir = 1;
+                    scanOptions.progressFn = progressFn;
+                    scanOptions.progressUserData = progressUserData;
+                    (void)M12_AssetStatus_ScanWithOptions(
+                        &state->assetStatus, allGamesRoot, &scanOptions);
+                } else {
+                    /* A direct game launch remains scoped to the selected
+                     * edition so unrelated archives beside its game folder
+                     * do not delay opening its dungeon. */
+                    M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
+                                                        config->dataDir,
+                                                        leafGameId,
+                                                        gameScan);
+                }
             }
         } else {
             M12_AssetStatusScanOptions scanOptions;
@@ -4799,6 +4812,160 @@ void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
                          (unsigned int)time(NULL));
     m12_probe_quick_resume(state);
     m12_save_config(state);
+}
+
+static void m12_parent_game_data_root(const char* dataDir,
+                                      char* outPath,
+                                      size_t outPathSize) {
+    const char* slash;
+    const char* backslash;
+    char* separator;
+
+    if (!outPath || outPathSize == 0U) return;
+    outPath[0] = '\0';
+    if (!dataDir || !dataDir[0]) return;
+    snprintf(outPath, outPathSize, "%s", dataDir);
+    while (outPath[1] != '\0' &&
+           (outPath[strlen(outPath) - 1U] == '/' ||
+            outPath[strlen(outPath) - 1U] == '\\')) {
+        outPath[strlen(outPath) - 1U] = '\0';
+    }
+    if (!m12_startup_data_dir_is_game_leaf(outPath)) return;
+    slash = strrchr(outPath, '/');
+    backslash = strrchr(outPath, '\\');
+    separator = (char*)(slash && backslash
+        ? (slash > backslash ? slash : backslash)
+        : (slash ? slash : backslash));
+    if (!separator) {
+        snprintf(outPath, outPathSize, ".");
+    } else if (separator == outPath ||
+               (separator == outPath + 2 && outPath[1] == ':')) {
+        separator[1] = '\0';
+    } else {
+        *separator = '\0';
+    }
+    if (!FSP_DirExists(outPath)) {
+        snprintf(outPath, outPathSize, "%s", dataDir);
+    }
+}
+
+static void m12_common_game_data_root(const char* dataDir,
+                                      char* outPath,
+                                      size_t outPathSize) {
+    const char* slash;
+    const char* backslash;
+    const char* separator;
+    size_t prefixLength;
+    static const char* const gameIds[] = {
+        "dm1", "dm1-multilingual", "csb", "dm2", "nexus", "theron"
+    };
+    size_t gameIndex;
+
+    if (!outPath || outPathSize == 0U) return;
+    outPath[0] = '\0';
+    if (!dataDir || !dataDir[0]) return;
+    snprintf(outPath, outPathSize, "%s", dataDir);
+    while (outPath[1] != '\0' &&
+           (outPath[strlen(outPath) - 1U] == '/' ||
+            outPath[strlen(outPath) - 1U] == '\\')) {
+        outPath[strlen(outPath) - 1U] = '\0';
+    }
+    slash = strrchr(outPath, '/');
+    backslash = strrchr(outPath, '\\');
+    separator = slash && backslash
+        ? (slash > backslash ? slash : backslash)
+        : (slash ? slash : backslash);
+    if (!separator) return;
+    prefixLength = (size_t)(separator - outPath) + 1U;
+    for (gameIndex = 0U;
+         gameIndex < sizeof(gameIds) / sizeof(gameIds[0]);
+         ++gameIndex) {
+        size_t gameIdLength = strlen(gameIds[gameIndex]);
+        if (strncmp(separator + 1, gameIds[gameIndex], gameIdLength) == 0 &&
+            (separator[1U + gameIdLength] == '\0' ||
+             separator[1U + gameIdLength] == '/' ||
+             separator[1U + gameIdLength] == '\\')) {
+            /* Keep media roots such as ~/.firestaff/data/<game> together so
+             * returning to the launcher refreshes every installed title. */
+            if (prefixLength < outPathSize) {
+                outPath[prefixLength - 1U] = '\0';
+            }
+            return;
+        }
+    }
+}
+
+void M12_StartupMenu_RescanAllGames(
+    M12_StartupMenuState* state,
+    M12_AssetStatusScanProgressFn progressFn,
+    void* progressUserData) {
+    M12_Config savedConfig;
+    char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char scanDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char deferredDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char deferredGameId[sizeof(state->deferredGameId)];
+    int deferredLooseFilesOnly;
+    int deferredHasExplicitDataDir;
+    int deferredScanAllGames;
+    const char* currentDataDir;
+    int preserveSelectedDataDir = 0;
+
+    if (!state) return;
+    selectedDataDir[0] = '\0';
+    scanDataDir[0] = '\0';
+    snprintf(deferredDataDir, sizeof(deferredDataDir), "%s",
+             state->deferredDataDir);
+    snprintf(deferredGameId, sizeof(deferredGameId), "%s",
+             state->deferredGameId);
+    deferredLooseFilesOnly = state->deferredLooseFilesOnly;
+    deferredHasExplicitDataDir = state->deferredHasExplicitDataDir;
+    deferredScanAllGames = state->deferredScanAllGames;
+    M12_Config_Load(&savedConfig, NULL);
+    currentDataDir = M12_StartupMenu_AssetDataDir(state);
+    if (currentDataDir && currentDataDir[0]) {
+        snprintf(selectedDataDir, sizeof(selectedDataDir), "%s", currentDataDir);
+        m12_parent_game_data_root(currentDataDir, scanDataDir,
+                                  sizeof(scanDataDir));
+        if (strcmp(scanDataDir, currentDataDir) != 0) {
+            preserveSelectedDataDir = 1;
+        } else {
+            m12_common_game_data_root(currentDataDir, scanDataDir,
+                                      sizeof(scanDataDir));
+            if (scanDataDir[0] && strcmp(scanDataDir, currentDataDir) != 0) {
+                preserveSelectedDataDir = 1;
+            }
+        }
+    }
+    if (!scanDataDir[0]) {
+        snprintf(scanDataDir, sizeof(scanDataDir), "%s", savedConfig.dataDir);
+    }
+    if (selectedDataDir[0] && FSP_DirExists(selectedDataDir)) {
+        snprintf(savedConfig.dataDir, sizeof(savedConfig.dataDir), "%s",
+                 selectedDataDir);
+    }
+    snprintf(state->deferredDataDir, sizeof(state->deferredDataDir), "%s",
+             scanDataDir);
+    state->deferredGameId[0] = '\0';
+    state->deferredLooseFilesOnly = 0;
+    state->deferredHasExplicitDataDir = 1;
+    state->deferredScanAllGames = 1;
+    state->deferredScanPending = 1;
+    M12_StartupMenu_RunDeferredScan(state, progressFn, progressUserData);
+    savedConfig.v22_modern_assets_installed =
+        M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
+    (void)M12_Config_Save(&savedConfig);
+    snprintf(state->deferredDataDir, sizeof(state->deferredDataDir), "%s",
+             deferredDataDir);
+    snprintf(state->deferredGameId, sizeof(state->deferredGameId), "%s",
+             deferredGameId);
+    state->deferredLooseFilesOnly = deferredLooseFilesOnly;
+    state->deferredHasExplicitDataDir = deferredHasExplicitDataDir;
+    state->deferredScanAllGames = deferredScanAllGames;
+    if (preserveSelectedDataDir && selectedDataDir[0] &&
+        FSP_DirExists(selectedDataDir)) {
+        snprintf(state->selectedDataDir, sizeof(state->selectedDataDir), "%s",
+                 selectedDataDir);
+    }
 }
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
@@ -13446,6 +13613,7 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     int framebufferWidth,
     int framebufferHeight) {
     size_t pct = 0U;
+    int cardX, cardY, cardW, cardH;
     int barX, barY, barW, barH, fillW;
     char line1[64];
     char line2[128];
@@ -13476,33 +13644,66 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     } else {
         line2[0] = '\0';
     }
-    if (m11_ttf_renderer_is_active()) {
-        m11_ttf_render_string(framebuffer, framebufferWidth, framebufferHeight,
-                              10, framebufferHeight / 2 - 24, line1, 14, 15);
-        if (line2[0] != '\0') {
-            m11_ttf_render_string(framebuffer, framebufferWidth, framebufferHeight,
-                                  10, framebufferHeight / 2 - 4, line2, 11, 7);
+    cardW = framebufferWidth * 86 / 100;
+    if (cardW > 416) cardW = 416;
+    if (cardW > framebufferWidth - 12) cardW = framebufferWidth - 12;
+    cardH = 96;
+    if (cardH > framebufferHeight - 12) cardH = framebufferHeight - 12;
+    if (cardW < 1 || cardH < 1) return;
+    cardX = (framebufferWidth - cardW) / 2;
+    cardY = framebufferHeight * 3 / 5;
+    if (cardY + cardH > framebufferHeight - 6) {
+        cardY = framebufferHeight - cardH - 6;
+    }
+    if (cardY < 6) cardY = 6;
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   cardX, cardY, cardW, cardH,
+                   M12_COLOR_LIGHT_CYAN, M12_COLOR_NAVY);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  cardX + 2, cardY + 2, cardW - 4, 2,
+                  M12_COLOR_LIGHT_CYAN);
+    {
+        int textWidth;
+        int haveTtfLine1 = m11_ttf_measure_string(line1, 17, &textWidth);
+        if (!haveTtfLine1) textWidth = m12_measure_text(line1, 1, 1);
+        int textX = (framebufferWidth - textWidth) / 2;
+        if (!haveTtfLine1 ||
+            m11_ttf_render_string(framebuffer, framebufferWidth,
+                                  framebufferHeight, textX, cardY + 14,
+                                  line1, 17, M12_COLOR_WHITE) == 0) {
+            m12_draw_centered_text(framebuffer, framebufferWidth,
+                                   framebufferHeight, cardY + 18, line1,
+                                   &g_textMediumShadow);
         }
-    } else {
-        m12_draw_text_raw(framebuffer, framebufferWidth, framebufferHeight,
-                          10, framebufferHeight / 2 - 20, line1,
-                          1, 1, 15);
         if (line2[0] != '\0') {
-            m12_draw_text_raw(framebuffer, framebufferWidth, framebufferHeight,
-                              10, framebufferHeight / 2 - 6, line2,
-                              1, 1, 7);
+            int haveTtfLine2 = m11_ttf_measure_string(line2, 11, &textWidth);
+            if (!haveTtfLine2) textWidth = m12_measure_text(line2, 1, 1);
+            textX = (framebufferWidth - textWidth) / 2;
+            if (!haveTtfLine2 ||
+                m11_ttf_render_string(framebuffer, framebufferWidth,
+                                      framebufferHeight, textX, cardY + 43,
+                                      line2, 11, M12_COLOR_LIGHT_CYAN) == 0) {
+                m12_draw_centered_text(framebuffer, framebufferWidth,
+                                       framebufferHeight, cardY + 43, line2,
+                                       &g_textSmallAccent);
+            }
         }
     }
-    barX = 10;
-    barY = framebufferHeight / 2 + 8;
-    barW = framebufferWidth - 20;
-    barH = 6;
+    barX = cardX + 18;
+    barY = cardY + cardH - 25;
+    barW = cardW - 36;
+    barH = 10;
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  barX, barY, barW, barH, 3);
-    fillW = (int)((size_t)barW * pct / 100U);
+                  barX, barY, barW, barH, M12_COLOR_DARK_GRAY);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  barX, barY, barW, 1, M12_COLOR_LIGHT_BLUE);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  barX, barY + barH - 1, barW, 1, M12_COLOR_LIGHT_BLUE);
+    fillW = (int)((size_t)(barW - 2) * pct / 100U);
     if (fillW > 0) {
         m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      barX, barY, fillW, barH, 15);
+                      barX + 1, barY + 1, fillW, barH - 2,
+                      M12_COLOR_LIGHT_CYAN);
     }
 }
 

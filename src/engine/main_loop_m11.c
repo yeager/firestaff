@@ -517,6 +517,23 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
     return 1;
 }
 
+static void m11_rescan_launcher_asset_status(
+    M12_StartupMenuState* menuState,
+    unsigned char* launcherFramebuffer,
+    int debug) {
+    M11_ScanProgressContext scanCtx;
+    if (!menuState || !launcherFramebuffer) return;
+    scanCtx.framebuffer = launcherFramebuffer;
+    scanCtx.width = M11_LAUNCHER_FB_WIDTH;
+    scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
+    scanCtx.languageIndex = menuState->settings.languageIndex;
+    scanCtx.debug = debug;
+    scanCtx.startedMs = SDL_GetTicks();
+    M12_StartupMenu_RescanAllGames(menuState,
+                                   m11_scan_progress_callback,
+                                   &scanCtx);
+}
+
 static void m11_verbose_original_media(const M12_AssetStatus* status,
                                        const char* gameId) {
     size_t i;
@@ -9087,6 +9104,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 DM1_V1_PendingMotionQueue_ClearPc34Compat(
                     &pendingDm1V1MotionQueue);
                 idleAccumulatorMs = 0;
+                m11_rescan_launcher_asset_status(&menuState,
+                                                 launcherFramebuffer,
+                                                 o->debug);
                 M11_ApplyStartupMenuRuntime(&menuState);
                 m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             } else if (pointerResult == M11_GAME_INPUT_RESTART_GAME) {
@@ -9171,6 +9191,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     DM1_V1_PendingMotionQueue_ClearPc34Compat(
                         &pendingDm1V1MotionQueue);
                     idleAccumulatorMs = 0;
+                    m11_rescan_launcher_asset_status(&menuState,
+                                                     launcherFramebuffer,
+                                                     o->debug);
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 } else if (result == M11_GAME_INPUT_RESTART_GAME) {

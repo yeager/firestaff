@@ -159,6 +159,26 @@ int m11_ttf_render_string(
     return 1;
 }
 
+int m11_ttf_measure_string(const char* utf8_text,
+                           int fontSizePixels,
+                           int* widthPixels) {
+    TTF_Font* font;
+    int heightPixels;
+    if (widthPixels) *widthPixels = 0;
+    if (!utf8_text || !*utf8_text || !widthPixels || fontSizePixels <= 0 ||
+        !g_sdl3_ttf_initialized) {
+        return 0;
+    }
+    font = (TTF_Font*)load_ttf_for_language(fs_l10n_get_language(),
+                                            fontSizePixels);
+    if (!font ||
+        !TTF_GetStringSize(font, utf8_text, 0U, widthPixels, &heightPixels)) {
+        *widthPixels = 0;
+        return 0;
+    }
+    return 1;
+}
+
 const char* m11_ttf_renderer_active_font_path(void) {
     return g_active_ttf_font_path[0] ? g_active_ttf_font_path : NULL;
 }
@@ -183,6 +203,13 @@ int m11_ttf_render_string(
     (void)framebuffer; (void)framebufferWidth; (void)framebufferHeight;
     (void)x; (void)y; (void)utf8_text; (void)fontSizePixels; (void)colorIndex;
     return 0; /* SDL3_ttf not available; use bitmap fallback */
+}
+int m11_ttf_measure_string(const char* utf8_text,
+                           int fontSizePixels,
+                           int* widthPixels) {
+    (void)utf8_text; (void)fontSizePixels;
+    if (widthPixels) *widthPixels = 0;
+    return 0;
 }
 const char* m11_ttf_renderer_active_font_path(void) { return NULL; }
 int m11_ttf_renderer_is_active(void) { return 0; }
