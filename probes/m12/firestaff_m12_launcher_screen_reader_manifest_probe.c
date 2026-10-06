@@ -258,6 +258,8 @@ static void subtest_envelope_present(void)
     M12_StartupMenu_Init(&state);
     state.view = M12_MENU_VIEW_MAIN;
     state.selectedIndex = 0;
+    state.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+    state.frameTick = 64;
 
     fs_ax_begin_frame(480, 270, "launcher_main");
     m12_launcher_a11y_emit(&state, 480, 270, 0);
@@ -301,6 +303,8 @@ static void subtest_main_view_cards(void)
     M12_StartupMenu_Init(&state);
     state.view = M12_MENU_VIEW_MAIN;
     state.selectedIndex = 2; /* focus DM2 */
+    state.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+    state.frameTick = 64;
 
     fs_ax_begin_frame(480, 270, "launcher_main");
     m12_launcher_a11y_emit(&state, 480, 270, 0);
@@ -372,6 +376,119 @@ static void subtest_main_view_cards(void)
                  find_element_value_for_id(buf, "MENU_SETTINGS", "null") != NULL
                      && find_element_value_for_id(buf, "MENU_MUSEUM", "null") != NULL,
                  "main: non-game unfocused entries do not leak a data-availability value");
+}
+
+/* Quick resume is a virtual launcher entry, not part of state->entries.
+ * Its public manifest item must stay selectable without exposing the
+ * save path, and catalog cards move down by one row while it is present. */
+static void subtest_quick_resume_entry(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_MAIN;
+    state.quickResumeAvailable = 1;
+    state.quickResumeGameId[0] = 'd';
+    state.quickResumeGameId[1] = 'm';
+    state.quickResumeGameId[2] = '1';
+    state.quickResumeGameId[3] = '\0';
+    strcpy(state.quickResumeSavePath, "/private/save-slot/secret.dat");
+    state.selectedIndex = -1;
+    state.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    state.frameTick = 32;
+
+    fs_ax_begin_frame(480, 270, "launcher_main");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+
+    probe_record("INV_LAX_24_quick_resume_path_is_private",
+                 strstr(buf, "/private/save-slot/secret.dat") == NULL,
+                 "main: quick-resume manifest does not expose save paths");
+
+    probe_record("INV_LAX_26_sparse_quick_resume_uses_rendered_bounds",
+                 strstr(buf, "\"id\":\"QUICK_RESUME_CONTINUE\"") != NULL &&
+                     strstr(buf, "\"bounds\":{\"x\":186,\"y\":108,\"w\":128,\"h\":10}") != NULL,
+                 "original: quick resume bounds match the sparse menu row");
+    probe_record("INV_LAX_27_sparse_first_phase_exposes_two_rows",
+                 strstr(buf, "\"id\":\"GAME_CARD_DM1\"") != NULL &&
+                     strstr(buf, "\"bounds\":{\"x\":186,\"y\":118,\"w\":128,\"h\":10}") != NULL &&
+                     strstr(buf, "\"id\":\"GAME_CARD_CSB\"") == NULL,
+                 "original: accessibility exposes only the two rendered opening rows");
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_MAIN;
+    state.quickResumeAvailable = 1;
+    state.quickResumeGameId[0] = 'd';
+    state.quickResumeGameId[1] = 'm';
+    state.quickResumeGameId[2] = '1';
+    state.quickResumeGameId[3] = '\0';
+    state.selectedIndex = 0;
+    state.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+    state.frameTick = 64;
+    fs_ax_begin_frame(480, 270, "launcher_main");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+    probe_record("INV_LAX_22_quick_resume_present_and_selected",
+                 strstr(buf, "\"id\":\"QUICK_RESUME_CONTINUE\",\"type\":\"launcher_card\",\"label\":\"Continue saved game\",\"bounds\":{\"x\":130,\"y\":76,\"w\":168,\"h\":24},\"enabled\":true, \"value\":\"continue\"") != NULL,
+                 "main: quick resume is an enabled virtual entry with focus state");
+    probe_record("INV_LAX_23_quick_resume_shifts_catalog_cards",
+                 strstr(buf, "\"id\":\"GAME_CARD_DM1\",\"type\":\"launcher_card\",\"label\":\"DUNGEON MASTER\",\"bounds\":{\"x\":130,\"y\":100,\"w\":168,\"h\":24}") != NULL,
+                 "main: game cards follow the quick-resume row");
+    probe_record("INV_LAX_25_quick_resume_unselected_value",
+                 strstr(buf, "\"id\":\"QUICK_RESUME_CONTINUE\"") != NULL &&
+                     strstr(buf, "\"value\":\"continue\"") != NULL &&
+                     strstr(buf, "\"value\":\"selected | continue\"") == NULL,
+                 "main: quick-resume value reflects focus state");
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_MAIN;
+    state.quickResumeAvailable = 1;
+    state.selectedIndex = 1;
+    state.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    state.frameTick = 32;
+    fs_ax_begin_frame(480, 270, "launcher_main");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+    probe_record("INV_LAX_28_sparse_focused_row_stays_visible",
+                 strstr(buf, "\"id\":\"GAME_CARD_CSB\"") != NULL &&
+                     strstr(buf, "\"bounds\":{\"x\":186,\"y\":128,\"w\":128,\"h\":10}") != NULL,
+                 "original: the focused row remains visible before full-list reveal");
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+    state.frameTick = 16;
+    fs_ax_begin_frame(480, 270, "launcher_main");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+    probe_record("INV_LAX_29_sparse_hides_rows_before_reveal_phase",
+                 strstr(buf, "\"id\":\"QUICK_RESUME_CONTINUE\"") == NULL &&
+                     strstr(buf, "\"id\":\"GAME_CARD_DM1\"") == NULL,
+                 "original: no menu rows are exposed before the renderer reveals them");
 }
 
 /* Subtest C: settings view emits launcher_tab and the visible
@@ -607,7 +724,10 @@ static void subtest_deterministic_order(void)
     /* Main view: cards in stable order */
     M12_StartupMenu_Init(&state);
     state.view = M12_MENU_VIEW_MAIN;
-    state.selectedIndex = -1;
+    state.quickResumeAvailable = 0;
+    state.selectedIndex = 0;
+    state.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+    state.frameTick = 64;
 
     fs_ax_begin_frame(480, 270, "launcher_main");
     m12_launcher_a11y_emit(&state, 480, 270, 0);
@@ -673,7 +793,10 @@ static void subtest_bounds_and_scaling(void)
     /* Legacy: GAME_CARD_DM1 base rect (130, 76, 168, 24) at 480x270 */
     M12_StartupMenu_Init(&state);
     state.view = M12_MENU_VIEW_MAIN;
-    state.selectedIndex = -1;
+    state.quickResumeAvailable = 0;
+    state.selectedIndex = 0;
+    state.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+    state.frameTick = 64;
     fs_ax_begin_frame(480, 270, "launcher_main");
     m12_launcher_a11y_emit(&state, 480, 270, 0);
     fs_ax_flush();
@@ -704,6 +827,9 @@ static void subtest_bounds_and_scaling(void)
     portable_remove(g_tmp_path);
     fs_ax_set_enabled(1);
 
+    state.view = M12_MENU_VIEW_MAIN;
+    state.settings.graphicsIndex = M12_PRESENTATION_V22_MODERN;
+    state.frameTick = 64;
     fs_ax_begin_frame(1920, 1080, "launcher_main_modern");
     m12_launcher_a11y_emit(&state, 1920, 1080, 0);
     fs_ax_flush();
@@ -1373,6 +1499,9 @@ int main(void)
 
     printf("\n[B] main view: game cards\n");
     subtest_main_view_cards();
+
+    printf("\n[B2] main view: quick-resume virtual entry\n");
+    subtest_quick_resume_entry();
 
     printf("\n[C] settings view: tabs + rows\n");
     subtest_settings_view();

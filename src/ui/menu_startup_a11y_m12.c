@@ -25,9 +25,11 @@
  *   - Manual / Docs view                 → FS_AX_LAUNCHER_ROW per public docs entry
  *   - Changelog view                     → FS_AX_LAUNCHER_ROW per visible changelog line
  *
+ * Quick-resume "CONTINUE" is emitted as a virtual entry before the
+ * catalogued destinations whenever a recent save is available. Its
+ * value contains only the public game ID; the save path is never exposed.
+ *
  * Out of scope (kept for follow-up passes):
- *   - Quick-resume "CONTINUE" virtual entry on the main view
- *     (rendered inline in m12_draw_main_view, not in state->entries).
  *   - Data-validator / theme / save-browser / input-remap /
  *     custom-dungeon / campaign / spell-reference / map-viewer /
  *     touch-layout / presentation-preview views.
@@ -610,6 +612,53 @@ static void emit_main_view(const M12_StartupMenuState* state,
 {
     int i;
     int count = M12_StartupMenu_GetEntryCount();
+    int visibleRows = count + (state->quickResumeAvailable ? 1 : 0);
+    int originalSparse = state->view == M12_MENU_VIEW_MAIN &&
+        M12_StartupMenu_GetPresentationMode(state) == M12_PRESENTATION_V1_ORIGINAL;
+    if (originalSparse) {
+        int phase = (int)(state->frameTick / 16U);
+        if (phase < 2) {
+            visibleRows = 0;
+        } else if (phase < 3 && visibleRows > 2) {
+            visibleRows = 2;
+        }
+        if (phase >= 2) {
+            int selectedRow = state->selectedIndex +
+                (state->quickResumeAvailable ? 1 : 0);
+            int totalRows = count + (state->quickResumeAvailable ? 1 : 0);
+            if (selectedRow >= visibleRows && selectedRow < totalRows) {
+                visibleRows = selectedRow + 1;
+            }
+        }
+    }
+    if (state->quickResumeAvailable) {
+        AxRect base = { 130, 76, 168, 24 };
+        const char* value = (state->selectedIndex == -1)
+            ? "selected | continue"
+            : "continue";
+        if (!originalSparse || visibleRows > 0) {
+            if (originalSparse) {
+                int rowY = 108;
+                add_element_bounds("QUICK_RESUME_CONTINUE",
+                                   "Continue saved game",
+                                   FS_AX_LAUNCHER_CARD,
+                                   (fbW / 2) - 54,
+                                   rowY,
+                                   128,
+                                   10,
+                                   1,
+                                   value);
+            } else {
+                add_element_rect(fbW, fbH,
+                                 "QUICK_RESUME_CONTINUE",
+                                 "Continue saved game",
+                                 FS_AX_LAUNCHER_CARD,
+                                 base,
+                                 1,
+                                 value);
+            }
+        }
+    }
     for (i = 0; i < count; ++i) {
         const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, i);
         const char* id;
@@ -619,9 +668,10 @@ static void emit_main_view(const M12_StartupMenuState* state,
         const char* value;
         int selected;
         /* Card row Y at 76, +24 per row. See m12_draw_main_view. */
-        AxRect base = { 130, 76 + (i * 24), 168, 24 };
+        int rowIndex = i + (state->quickResumeAvailable ? 1 : 0);
+        AxRect base = { 130, 76 + (rowIndex * 24), 168, 24 };
 
-        if (!entry) {
+        if (!entry || rowIndex >= visibleRows) {
             continue;
         }
         gameId = entry->gameId;
@@ -645,9 +695,21 @@ static void emit_main_view(const M12_StartupMenuState* state,
 
         selected = (state->selectedIndex == i);
         value = main_view_game_value(entry, selected);
-        add_element_rect(fbW, fbH, id, label,
-                         FS_AX_LAUNCHER_CARD, base, enabled,
-                         value);
+        if (originalSparse) {
+            add_element_bounds(id,
+                               label,
+                               FS_AX_LAUNCHER_CARD,
+                               (fbW / 2) - 54,
+                               108 + (rowIndex * 10),
+                               128,
+                               10,
+                               enabled,
+                               value);
+        } else {
+            add_element_rect(fbW, fbH, id, label,
+                             FS_AX_LAUNCHER_CARD, base, enabled,
+                             value);
+        }
     }
 }
 

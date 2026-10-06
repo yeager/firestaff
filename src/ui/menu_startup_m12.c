@@ -10561,16 +10561,41 @@ static void m12_draw_sparse_main_view(const M12_StartupMenuState* state,
                                &g_textSmallMuted);
     }
     if (phase >= 2) {
-        int maxRows = phase >= 3 ? m12_entry_count() : 2;
+        int entryCount = m12_entry_count();
+        int totalRows = entryCount + (state->quickResumeAvailable ? 1 : 0);
+        int maxRows = phase >= 3 ? totalRows : 2;
         int i;
+        {
+            int selectedRow = state->selectedIndex +
+                (state->quickResumeAvailable ? 1 : 0);
+            if (phase >= 2 && selectedRow >= maxRows && selectedRow < totalRows) {
+                maxRows = selectedRow + 1;
+            }
+        }
+        if (maxRows > totalRows) {
+            maxRows = totalRows;
+        }
         for (i = 0; i < maxRows; ++i) {
-            m12_draw_sparse_menu_row(framebuffer,
-                                     framebufferWidth,
-                                     framebufferHeight,
-                                     menuX,
-                                     menuY + i * 10,
-                                     state->entries[i].title,
-                                     i == state->selectedIndex);
+            if (state->quickResumeAvailable && i == 0) {
+                m12_draw_sparse_menu_row(framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight,
+                                         menuX,
+                                         menuY + i * 10,
+                                         "CONTINUE",
+                                         state->selectedIndex == -1);
+                continue;
+            }
+            {
+                int entryIndex = i - (state->quickResumeAvailable ? 1 : 0);
+                m12_draw_sparse_menu_row(framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight,
+                                         menuX,
+                                         menuY + i * 10,
+                                         state->entries[entryIndex].title,
+                                         entryIndex == state->selectedIndex);
+            }
         }
         m12_draw_centered_text(framebuffer,
                                framebufferWidth,
