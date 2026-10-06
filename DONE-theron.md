@@ -7328,28 +7328,32 @@ independent audit confirmed the payload hash and all expected bytes against
 the authentic image.
 
 Added source-locked MAME HuC6280 disassembly and the optional-authentic-JP
-test `stage2_jp_record_selector_52xx_flow`. It binds eight windows from
-`$4fea..$506c`, `$50f5..$5111`, `$525e..$52d9`, `$52d9..$53d8`,
-`$5669..$5670`, and the `$5800..$58dc` selector/handler area, then checks
-their static JSR/BSR targets. The pointer at `$5814` is `$5895`, selected by
-the indexed dispatch when the runtime selector is 2. Static flow then reaches
-`$58d2: JSR $4fea`, `$505a: JSR $50f5`, and `$5101: JSR $525e`.
+test `stage2_jp_record_selector_52xx_flow`. It binds ten windows spanning
+`$4fea..$506c`, `$50f5..$5111`, `$525e..$53d8`, `$5669..$5670`, and
+`$5800..$5960` plus `$5984..$5989`. The test locks all 14 pointers in
+`$5810..$582c` and checks the table-selected entry bodies' static JSR/BSR
+targets. The pointer at `$5814` is `$5895`, selected by the indexed dispatch
+when the runtime selector is 2. Static flow then reaches `$58d2: JSR $4fea`,
+`$505a: JSR $50f5`, and `$5101: JSR $525e`.
 
 Corrected the address interpretation: `$52a2` is the high operand byte of
 `JSR $567a` at `$52a0`, not a JP instruction entry; execution continues at
 `$52a3: JSR $5669`. The test and disassembly establish source bytes and a
-possible static call path only. Runtime selector/branch values, helper
-semantics, gameplay behavior, and regional parity remain unproven. No
-synthetic media was used.
+possible static call paths only. The external `$5555`/`$555d` callees and
+`$5966` continuation remain outside the locked set. Runtime selector/branch
+values, helper semantics, gameplay behavior, and regional parity remain
+unproven. No synthetic media was used.
 
 Verification: compiled the changed test translation unit with
 `-std=gnu11 -Wall -Wextra -O2` on `trv2`, linked it against the existing
 Theron test libraries without changing their build tree, and ran the focused
 `FIRESTAFF_THERON_TEST_JP_STAGE2_SELECTOR_ONLY` check three times against the
-authentic JP Track 02. All three runs passed. A separate attempt to run the
-entire test executable stopped earlier in the JP L3114 verifier against that
-existing library snapshot; the new focused check does not invoke that
-verifier, so full-suite verification remains open.
+authentic JP Track 02 after locking the full pointer table and all table-entry
+windows. All three runs passed. A separate attempt to run the entire test executable stopped earlier
+in the JP L3114 verifier against a cached library snapshot whose Track 02
+header hash differs from this working tree. That run is not valid full-source
+verification; the new focused check does not invoke that verifier, and a
+matching full build/test remains open.
 
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 

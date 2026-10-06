@@ -14,7 +14,7 @@
 ; test_stage2_jp_record_selector_52xx_flow(). They are not a runtime trace.
 ;
 ; Key span SHA-256 values (half-open CPU address ranges):
-;   $5800..$5816  6855102db743a30a09bebf074a46e03c3de4b210039ab3ac211a89945e2f75a1
+;   $5800..$582c  9ce2ad3086b435b53f0ca75b12bece1c53db395cbcd65694dd34da4b9930b607
 ;   $582c..$5895  693f27dc1371ba8df0636bf7c41e5d1233e739c7fb81d67f8642e1af452d46a3
 ;   $5895..$58dc  a661d83f872690dc844f7a53e3e1e035f08631bb7514507008268916baa8cd9b
 ;   $4fea..$506c  2e4e1c78d1a8eddde3885a4341582b089314c7d44ef6faa1b025b5805c230743
@@ -22,10 +22,18 @@
 ;   $525e..$52d9  861aef44aaae08750d3004196f66c72a932aae7159d60aa76e600dcaf8ff294c
 ;   $52d9..$53d8  6a192f3192797e4843ef4cc0e141ed0d96f2901f61eaa4d5ddbe34bd8e15c461
 ;   $5669..$5670  2ffc33a966b77db91fcca71812ac1fc7548eca3c00b6ecab571cc32c5c2816b7
+;   $58dc..$5960  64c8cb6720887093e13d5961ee72485234b8785a116f57765b9c63ae2a0ef2d0
+;   $5984..$5989  efd1f17c1409a7c73007486060fc81e2ce6fbf9ffe2832f4973b52db9eb87558
 ;
+; Authentic US same-address $5800..$582c SHA-256:
+;   e1ada389530e8bab95341aa062b795a0c72631c34147d55408e0edbe4ee2268c
+; Authentic US same-address comparison hashes:
+;   $58dc..$5960  51850e3599f323999000202fc37916e93a654289d702e3f0d2ded9f63fd7abf9
+;   $5984..$5989  84602c58f8c26368f82a98548e7a55969dd916399d0bb4c1add959b835b721da
 ; Static dispatch interpretation: $5800 reads a selector through ($18),
-; doubles it, and jumps through $5810,X. Selector value 2 would use the
-; pointer at $5814 ($5895). The observed runtime selector value is unknown.
+; doubles it, and jumps through $5810,X. The 14 pointer entries cover indices
+; 0..13; selector value 2 uses the pointer at $5814 ($5895). The observed
+; runtime selector value is unknown.
 ; $52a2 is the high operand byte of the instruction at $52a0, not an
 ; instruction entry: $52a0 is JSR $567a, followed at $52a3 by JSR $5669.
 
@@ -39,9 +47,20 @@ $5800:  lda  ($18)
         lda  $19
         pha
         jmp  ($5810,x)
-$5810:  .byte $00,$00                 ; selector 0 -> null table entry
+$5810:  .word $0000                    ; selector 0 -> null table entry
         .word $58eb                    ; selector 1
         .word $5895                    ; selector 2
+        .word $58f9                    ; selector 3
+        .word $5906                    ; selector 4
+        .word $58e6                    ; selector 5
+        .word $58dc                    ; selector 6
+        .word $58dc                    ; selector 7
+        .word $590b                    ; selector 8
+        .word $594c                    ; selector 9
+        .word $5915                    ; selector 10
+        .word $5946                    ; selector 11
+        .word $583f                    ; selector 12
+        .word $586b                    ; selector 13
 
 ; Selector 2 handler; the exact window continues through $58dc.
 $5895:  ldy  #$01
@@ -77,6 +96,72 @@ $58d2:  jsr  $4fea
         lda  #$0a
         sta  $0a
         jmp  $582c
+
+; Remaining selector-entry bodies; external helpers are targets, not included
+; in these windows. $58dc is shared by selector indices 6 and 7.
+$58dc:  jsr  $553f
+        lda  #$01
+        sta  $0a
+        jmp  $582c
+$58e6:  jsr  $5529
+        bra  $58df
+$58eb:  bsr  $586e
+        bsr  $5888
+        jsr  $5555
+        lda  #$07
+        sta  $0a
+        jmp  $582c
+$58f9:  jsr  $586e
+        jsr  $53e8
+        lda  #$05
+        sta  $0a
+        jmp  $582c
+$5906:  jsr  $54b3
+        bra  $58df
+$590b:  jsr  $555d
+        lda  #$01
+        sta  $0a
+        jmp  $582c
+$5915:  bsr  $5921
+        bsr  $594e
+        lda  #$0c
+        sta  $0a
+        jmp  $582c
+$5921:  jsr  $586e
+        jsr  $5888
+        iny
+        lda  ($18),y
+        sta  $4f89
+        iny
+        lda  ($18),y
+        sta  $4f8f
+        iny
+        lda  ($18),y
+        sta  $4f96
+        iny
+        lda  ($18),y
+        sta  $4f9a
+        iny
+        lda  ($18),y
+        sta  $4f9b
+        rts
+$5946:  bsr  $5921
+        bsr  $5984
+        bra  $5919
+$594c:  bra  $58df
+$594e:  jsr  $5555
+        inc  $4f8b
+        inc  $4f8c
+        sec
+        lda  $4f8d
+        sbc  #$02
+        sta  $4f8d
+
+; Selector 11's follow-up helper begins with this bounded entry window; its
+; branch target at $5966 and the external JSR $5555 remain outside this file's
+; current locked callee set.
+$5984:  jsr  $5555
+        bra  $5966
 
 ; $4fea sets up the transfer and reaches $50f5 at $505a.
 $4fea:  clc

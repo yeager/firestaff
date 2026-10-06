@@ -85,18 +85,25 @@ Reviewed 2026-10-06. Only open work is listed here.
   three repeated passes. All produced payload SHA-256
   `bc9ff3922dad71f2cd24afeaaf09747c64db15245eb7f9c454dbb76bd4e12d67`.
   The MAME HuC6280 listing and `stage2_jp_record_selector_52xx_flow` test
-  bind the conditional static path `$5800` indexed dispatch -> `$5895` (for
-  selector 2) -> `$58d2` -> `$4fea` -> `$50f5` -> `$525e`. The actual runtime
-  selector value has not been observed.
+  bind the full 14-entry table at `$5810..$582c` and its static path `$5800`
+  indexed dispatch -> `$5895` (for selector 2) -> `$58d2` -> `$4fea` ->
+  `$50f5` -> `$525e`. Its same-address US prefix differs (SHA-256
+  `e1ada389530e8bab95341aa062b795a0c72631c34147d55408e0edbe4ee2268c`).
+  The actual runtime selector value has not been observed.
 - At `$525e`, the conditional BSR paths target `$529b` and `$52af`. Important
   correction: `$52a2` is the high operand byte of `JSR $567a` beginning at
   `$52a0`, not an instruction entry. Execution then reaches `$52a3: JSR
   $5669`. Comparing the US code at the same address therefore cannot
   establish a JP routine or regional parity.
+- The complete table's selector-entry bodies are now byte-bound, including
+  shared `$58dc` and the `$5915/$5946` pair. Static closure still needs the
+  external `$5555` and `$555d` callees and the `$5966` continuation reached
+  from `$5984`; do not claim complete coverage of this handler family yet.
 - Next, capture a source-byte-identified JP runtime trace that records the
   selector at `$5800`, the branch decision at `$528c`, and reached BIOS/helper
-  calls. Until then, do not assign semantics to the record fields, infer that
-  the selector-2 handler executes during gameplay, or claim regional parity.
+  calls. Bind the outstanding call/continuation targets and determine the
+  record-field meanings from source evidence. Until then, do not infer that any
+  table handler executes during gameplay or claim regional parity.
 
 ## 2026-10-06 — characterize the stage-two helper's behavior
 
