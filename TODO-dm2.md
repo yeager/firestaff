@@ -12,9 +12,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   uses `/2/0` at lines 1732-1768. Bind those draws to authenticated session,
   hero and destination state, then require consumed source-material commands
   in the real-media runtime test. Do not treat static Towns chrome or a
-  nonblank viewport as evidence that the runtime HUD is complete. This is a
-  known explanation for the reported broken Towns HUD; it does not establish
-  whether the separate M5 Retina viewport appearance is correct.
+  nonblank viewport as evidence that the runtime HUD is complete. The
+  2026-10-06 user screenshot's dungeon pixels appear to match the local DM2
+  FM Towns runtime capture; it shows the expected 224x136 RECT_7 aperture at
+  y=40, while most surrounding source UI is black. This supports the known
+  HUD gap but does not prove dungeon-scene visual parity or MacBook Pro M5
+  HiDPI presentation. Capture the same pose from the original game before
+  changing dungeon projection or assets.
 
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,

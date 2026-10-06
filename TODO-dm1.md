@@ -1,15 +1,15 @@
 # Firestaff TODO — DM1
 
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
-  shared SDL presentation path. The attached runtime screenshot identifies
-  DM1 by the visible Vita champion and shows the dungeon view/artwork in a
-  visibly broken state. Pixel-run inspection finds an approximately 10-device-
-  pixel nearest-neighbour grid in the viewport, so the screenshot does not by
-  itself establish a Retina scaling defect. It does not identify the selected
-  DM1 edition or provide a same-state original-runtime comparison. Capture the
-  selected platform, asset identity, party/map pose and presented 320x200 frame
-  from the reported launch route, then trace the source-owned scene materials
-  and projection for that exact edition.
+  shared SDL presentation path. The attached screenshot's dungeon pixels are
+  closer to the local DM2 FM Towns runtime capture than to the separate DM1
+  capture, so it is not sufficient evidence for a DM1 regression. A different
+  DM1 screenshot or an identified DM1 launch is needed. Pixel-run inspection
+  finds an approximately 10-device-pixel nearest-neighbour grid in the
+  attached viewport, which does not by itself establish a Retina scaling
+  defect. Capture the selected platform, asset identity, party/map pose and
+  presented 320x200 frame from a DM1 launch, then trace the source-owned scene
+  materials and projection for that exact edition.
 
 - Verify full PC/F20 title playback from authentic GRAPHICS.DAT C001 media
   across each supported desktop target, including HiDPI presentation and
