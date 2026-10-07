@@ -13,7 +13,7 @@ RAW_SECTOR_BYTES = 2352
 MODE1_USER_BYTES = 2048
 MODE1_USER_DATA_OFFSET = 16
 TARGET_ENTRY_DELTA = 0x44FB - 0x489F
-TARGET_ENTRY_SPAN_BYTES = 33
+TARGET_ENTRY_SPAN_BYTES = 256
 RUNTIME_CONTEXT_PREFIX_BYTES = 64
 RUNTIME_CONTEXT_SUFFIX_BYTES = 64
 RUNTIME_CONTEXT_BYTES = (
@@ -33,7 +33,7 @@ MAME_LISTING_PATH = (
     "theron-jp-3879-runtime-window-candidate-20261007.asm"
 )
 TARGET_LISTING_SHA256 = (
-    "d05c8c2848469977cbfa23f87de74b916dcda10514d4b9f6d61dae41256eac01"
+    "7c92199784a4a0e35f1b231ed9b8db041742d56ab1d03dabddfb3a8956cf8965"
 )
 TARGET_LISTING_PATH = (
     pathlib.Path(__file__).resolve().parents[1] / "docs" / "source-lock" /
@@ -109,6 +109,8 @@ def verify_recorded_target_listing() -> None:
         raise ValueError("recorded $44fb MAME listing digest differs")
     if not lines[start].startswith("0044fb: 08"):
         raise ValueError("recorded $44fb MAME listing lost its entry")
+    if not lines[end - 1].startswith("0045f9: c8"):
+        raise ValueError("recorded $44fb MAME listing lost its bounded end")
     print("PASS: recorded MAME 0.285 $44fb candidate listing hash and entry")
 
 
@@ -193,9 +195,9 @@ def verify_edition(edition: str, path: pathlib.Path) -> bool:
                 if len(target_span) != TARGET_ENTRY_SPAN_BYTES:
                     raise ValueError(f"{edition} target span has wrong length")
                 if hashlib.sha256(target_span).hexdigest() != (
-                    "30c4e29752ff4fc5363876072d67f7b1f8e68f96af208064f0ee0e58fc62463d"
+                    "533fbdf66380e79795e31433d96a71bbf391cdb142368ac860bd7b43f9fd012b"
                 ):
-                    raise ValueError(f"{edition} target span digest differs")
+                    raise ValueError(f"{edition} 256-byte target span digest differs")
                 target_spans.append(target_span)
         if contexts and len(set(contexts)) != 1:
             raise ValueError(f"{edition} candidate contexts are not identical")

@@ -7577,12 +7577,14 @@ open. Snapshot and game data stay outside Git; no synthetic media was used.
 
 Extended `theron_3879_runtime_window_candidates` to convert the six authentic
 JP `$489f` runtime-window candidates through MODE1 user-data coordinates and
-inspect the candidate-relative `$44fb` target span. All six 33-byte spans are
+inspect the candidate-relative `$44fb` target span. All six 256-byte spans are
 identical and hash to
-`30c4e29752ff4fc5363876072d67f7b1f8e68f96af208064f0ee0e58fc62463d`. Added
-the recorded MAME 0.285 HuC6280 listing
+`533fbdf66380e79795e31433d96a71bbf391cdb142368ac860bd7b43f9fd012b`. Added
+the recorded MAME 0.285 HuC6280 listing of its first 255 bytes
 `theron-jp-44fb-runtime-target-candidate-20261007.asm`; both listing hashes
 and the bounded authentic US/JP scans passed three repeated trv2 test loops.
+The listing ends at instruction boundary `$45f9` and leaves the next byte
+undecoded.
 This remains a static candidate-relative overlay: there is no loader receipt
 binding the bytes to CD RAM, no proof this body executed, and no established
 routine or gameplay semantics. No synthetic media was used.

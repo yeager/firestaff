@@ -92,13 +92,14 @@ span at that address without assuming raw-file bytes map one-to-one to CPU
 addresses, the test converts the `$489f` candidate location to MODE1 user-data
 coordinates, subtracts `$3a4` user bytes, and converts back to a 2352-byte
 raw-sector offset. This yields offsets `610459`, `911515`, `1212571`,
-`1513627`, `1814683`, and `2115739`. All six 33-byte spans are identical in
+`1513627`, `1814683`, and `2115739`. All six 256-byte spans are identical in
 the authenticated JP image (span SHA-256
-`30c4e29752ff4fc5363876072d67f7b1f8e68f96af208064f0ee0e58fc62463d`). Their
-MAME 0.285 `unidasm -arch h6280 -basepc 0x44fb -skip 610459 -count 33`
-listing is recorded in
-`theron-jp-44fb-runtime-target-candidate-20261007.asm` (listing SHA-256
-`d05c8c2848469977cbfa23f87de74b916dcda10514d4b9f6d61dae41256eac01`).
+`533fbdf66380e79795e31433d96a71bbf391cdb142368ac860bd7b43f9fd012b`). Their
+first 255 bytes are instruction-aligned in the MAME 0.285
+`unidasm -arch h6280 -basepc 0x44fb -skip 610459 -count 255` listing, recorded
+in `theron-jp-44fb-runtime-target-candidate-20261007.asm` (listing SHA-256
+`7c92199784a4a0e35f1b231ed9b8db041742d56ab1d03dabddfb3a8956cf8965`). The
+last decoded instruction is at `$45f9`; the following byte is not decoded.
 
 This is a static candidate-relative overlay only. No loader receipt binds any
 of these bytes to CD RAM, and the listing does not prove that this target was
