@@ -28,6 +28,12 @@
   evidence, not runtime entry or rendering parity. A complete MAME HuC6280
   linear listing now matches both editions in three repeated loops. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l4a84-window-20261008.md`.
+- ✅ Disassembled the direct `$4AE1` BSR target `$4B24..$4B3B` from authentic
+  JP and US Track 02. The 24 bytes and complete MAME listing match across both
+  editions in three loops; the focused source-lock test already checks the
+  BSR, helper branch, and RTS. This establishes static arithmetic only, not
+  runtime selection or VDC semantics. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l4b24-window-20261008.md`.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 

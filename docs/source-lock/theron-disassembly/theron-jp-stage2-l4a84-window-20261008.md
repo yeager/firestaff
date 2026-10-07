@@ -24,6 +24,10 @@ The routine is also reached by the caller's JSR at `$4a05`. These edges and
 bytes establish a static source window only; they do not prove runtime entry,
 hardware effects, or rendering semantics.
 
+The BSR target at `$4b24` is decoded and source-locked separately, including
+its carry branch and return boundary; see
+`theron-jp-stage2-l4b24-window-20261008.md`.
+
 ## Linear HuC6280 disassembly
 
 MAME 0.285 `unidasm -arch h6280 -basepc 0x4a84 -skip 2898324 -count 160`

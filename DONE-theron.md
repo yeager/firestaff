@@ -7649,3 +7649,13 @@ T900/original inventory semantics. No synthetic media was used.
   source provenance and disassembly only; runtime entry and rendering
   semantics remain unproven. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l4a84-window-20261008.md`.
+
+## 2026-10-08 — JP Stage-2 `$4B24` helper disassembly
+
+- Compared the direct `$4AE1` BSR target `$4B24..$4B3B` against authentic JP
+  and US Track 02, and recorded its full MAME HuC6280 listing. The bytes and
+  listings match in three repeated comparisons; the focused test covers the
+  BSR, carry branch, and RTS boundary. The decode establishes an exact
+  16-bit shift/add operation, but not runtime selection or rendering
+  semantics. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l4b24-window-20261008.md`.
