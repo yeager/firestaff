@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-07 — add bounded Stage-2 callee runtime observer
+
+Added a separate opt-in Mednafen sidecar for bounded observations at the
+authentic `$5ce4/$5d1c/$5d93/$5ddb/$5df5` chain. The existing IRQ2 trace
+format remains unchanged. Set `FIRESTAFF_THERON_STAGE2_CALLEE_TRACE` to a
+sidecar path to enable the observer. Records include logical
+and MPR-derived physical PCs, registers, stack return address at helper entry,
+`$3b69`, `$5c/$5d`, and `$5e16..$5e29`; one FNV-1a-64 snapshot is captured at
+each of four `$58e0..$5cdf` buffer boundaries. The observer is diagnostic and
+does not alter emulator execution or infer gameplay semantics. The complete
+Theron patch set passed its patch-only application check, and the instrumented
+Mednafen 1.32.1 build completed on trv2. This is instrumentation/build
+evidence only: no authentic runtime receipt has yet joined these PCs or buffer
+snapshots to the game-driven VDC writes.
+
 ## 2026-10-07 — disassemble JP Stage-2 `$4943` direct callees
 
 Extended the authenticated `$4943..$49f9` caller source lock to its direct

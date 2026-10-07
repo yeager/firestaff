@@ -4054,7 +4054,7 @@ static void test_stage2_jp_l4943_window(void)
     assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cfau) ==
            0x03u);
 
-    printf("  PASS: stage2_jp_l4943_window (183-byte caller; 261-byte callee "
+    printf("  PASS: stage2_jp_l4943_window (183-byte caller; 392-byte callee "
            "and continuation windows match US)\n");
 }
 

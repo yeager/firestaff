@@ -1,18 +1,41 @@
 diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -170,2 +170,6 @@
+@@ -23,1 +23,3 @@
+ #include <mednafen/FileStream.h>
++#include <stdio.h>
++#include <stdlib.h>
+@@ -170,2 +170,10 @@
  static bool TheronIrq2TraceLaterE009PostReturnStepPending;
 +static bool TheronIrq2TracePostStage2ExecutionActive;
 +static bool TheronIrq2TracePostStage2PhysicalPageSeen[8192];
 +static unsigned TheronIrq2TracePostStage2PhysicalPageCount;
 +static unsigned TheronIrq2TraceRuntimeRecordSamples;
++static unsigned TheronIrq2TraceStage2CalleeSamples;
++static unsigned TheronIrq2TraceStage2BufferSnapshotMask;
++static FILE *TheronIrq2TraceStage2CalleeTrace;
++static bool TheronIrq2TraceStage2CalleeTraceInitialized;
  /* A copied game loader can execute from physical PCE main RAM. Retain only
-@@ -206,2 +206,43 @@ static void DoTheronIrq2Trace(const uint32 PC)
+@@ -206,2 +206,115 @@ static void DoTheronIrq2Trace(const uint32 PC)
   const uint32 trace_physical_pc = (trace_mpr << 13) | (logical_pc & 0x1fff);
++ if(!TheronIrq2TraceStage2CalleeTraceInitialized)
++ {
++  const char *trace_path = getenv("FIRESTAFF_THERON_STAGE2_CALLEE_TRACE");
++  TheronIrq2TraceStage2CalleeTraceInitialized = true;
++  if(trace_path && *trace_path)
++  {
++   TheronIrq2TraceStage2CalleeTrace = fopen(trace_path, "w");
++   if(TheronIrq2TraceStage2CalleeTrace)
++    fputs("source=mednafen-pce-instrumented-stage2-callee-v1\n",
++          TheronIrq2TraceStage2CalleeTrace);
++  if(TheronIrq2TraceStage2CalleeTrace)
++   fflush(TheronIrq2TraceStage2CalleeTrace);
++  }
++ }
 + if(logical_pc == 0x40d0 || logical_pc == 0x40a7)
 +  TheronIrq2TracePostStage2ExecutionActive = true;
-+ if(TheronIrq2TracePostStage2ExecutionActive)
++ if(TheronIrq2TraceStage2CalleeTrace &&
++    TheronIrq2TracePostStage2ExecutionActive)
 + {
 +  const uint32 physical_page = (PC >> 8) & 0x1fff;
 +  if(TheronIrq2TracePostStage2PhysicalPageCount < 128 &&
@@ -20,14 +43,71 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +  {
 +   TheronIrq2TracePostStage2PhysicalPageSeen[physical_page] = true;
 +   TheronIrq2TracePostStage2PhysicalPageCount++;
-+   TheronIrq2Trace->print_format("post_stage2_execution_page logical_pc=%04x physical_pc=%08x physical_page=%04x\n", logical_pc, PC, physical_page);
-+   FlushTheronIrq2Trace();
++   fprintf(TheronIrq2TraceStage2CalleeTrace, "post_stage2_execution_page logical_pc=%04x physical_pc=%08x physical_page=%04x\n", logical_pc, PC, physical_page);
++   fflush(TheronIrq2TraceStage2CalleeTrace);
 +  }
++ }
++ /* Record execution context for authentic Stage-2 callee source windows.
++  * This is diagnostic only; it does not promote bytes to game semantics. */
++ if(TheronIrq2TraceStage2CalleeTrace &&
++    TheronIrq2TracePostStage2ExecutionActive &&
++    (logical_pc == 0x5ce4 || logical_pc == 0x5cfb ||
++     logical_pc == 0x5d1c || logical_pc == 0x5d46 ||
++     logical_pc == 0x5d62 || logical_pc == 0x5d65 ||
++     logical_pc == 0x5d93 || logical_pc == 0x5ddb ||
++     logical_pc == 0x5df5 || logical_pc == 0x5e15 ||
++     logical_pc == 0x5e16) &&
++    TheronIrq2TraceStage2CalleeSamples < 4096)
++ {
++  const uint32 reg_a = trace_regs->GetRegister(trace_regs->Regs[1].id, NULL, 0) & 0xff;
++  const uint32 reg_x = trace_regs->GetRegister(trace_regs->Regs[2].id, NULL, 0) & 0xff;
++  const uint32 reg_y = trace_regs->GetRegister(trace_regs->Regs[3].id, NULL, 0) & 0xff;
++  const uint32 reg_sp = trace_regs->GetRegister(trace_regs->Regs[4].id, NULL, 0) & 0xff;
++  const uint32 reg_p = trace_regs->GetRegister(trace_regs->Regs[5].id, NULL, 0) & 0xff;
++  uint32 return_pc = 0xffff;
++  if(logical_pc == 0x5d93 || logical_pc == 0x5ddb || logical_pc == 0x5df5)
++  {
++   const uint32 low = CurGame->Debugger->MemPeek(
++    0x2100u + ((reg_sp + 1u) & 0xffu), 1, true, true) & 0xff;
++   const uint32 high = CurGame->Debugger->MemPeek(
++    0x2100u + ((reg_sp + 2u) & 0xffu), 1, true, true) & 0xff;
++   return_pc = (((high << 8) | low) + 1u) & 0xffffu;
++  }
++  unsigned snapshot_bit = logical_pc == 0x5ce4 ? 1u :
++   logical_pc == 0x5cfb ? 2u : logical_pc == 0x5d1c ? 4u :
++   logical_pc == 0x5e15 ? 8u : 0u;
++  uint64 buffer_fnv64 = 0;
++  bool buffer_snapshot = false;
++  if(snapshot_bit && !(TheronIrq2TraceStage2BufferSnapshotMask & snapshot_bit))
++  {
++   buffer_fnv64 = 0xcbf29ce484222325ULL;
++   for(unsigned buffer_offset = 0; buffer_offset < 0x400u; ++buffer_offset)
++    buffer_fnv64 = (buffer_fnv64 ^
++     (CurGame->Debugger->MemPeek(0x58e0u + buffer_offset, 1, true, true) & 0xff)) *
++     0x100000001b3ULL;
++   TheronIrq2TraceStage2BufferSnapshotMask |= snapshot_bit;
++   buffer_snapshot = true;
++  }
++  fprintf(TheronIrq2TraceStage2CalleeTrace,
++   "stage2_callee_sample sequence=%u pc=%04x physical_pc=%08x mpr=%02x a=%02x x=%02x y=%02x p=%02x sp=%02x return_pc=%04x status_3b69=%02x ptr_5c_5d=%02x%02x buffer_snapshot=%u buffer_fnv64=%016llx ram_5e16_5e29=",
++   TheronIrq2TraceStage2CalleeSamples++, logical_pc, trace_physical_pc,
++   trace_mpr, reg_a, reg_x, reg_y, reg_p, reg_sp, return_pc,
++   CurGame->Debugger->MemPeek(0x3b69, 1, true, true) & 0xff,
++   CurGame->Debugger->MemPeek(0x005d, 1, true, true) & 0xff,
++   CurGame->Debugger->MemPeek(0x005c, 1, true, true) & 0xff,
++   (unsigned)buffer_snapshot,
++   (unsigned long long)buffer_fnv64);
++  for(unsigned state_offset = 0; state_offset < 0x14u; ++state_offset)
++   fprintf(TheronIrq2TraceStage2CalleeTrace, "%02x",
++    CurGame->Debugger->MemPeek(0x5e16u + state_offset, 1, true, true) & 0xff);
++  fprintf(TheronIrq2TraceStage2CalleeTrace, "\n");
++  fflush(TheronIrq2TraceStage2CalleeTrace);
 + }
 + /* Raw runtime-table receipt. These addresses are execution observations
 +  * only: do not assign level, object, creature, inventory or timer meaning
 +  * to the ten-byte records without a same-session Track 02 source join. */
-+ if(TheronIrq2TracePostStage2ExecutionActive &&
++ if(TheronIrq2TraceStage2CalleeTrace &&
++    TheronIrq2TracePostStage2ExecutionActive &&
 +    (logical_pc == 0xc9c2 || logical_pc == 0xca2a ||
 +     logical_pc == 0xcb94 || logical_pc == 0xcbcc ||
 +     logical_pc == 0xcc0e || logical_pc == 0xcc27) &&
@@ -40,15 +120,15 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +  const uint32 table_index = CurGame->Debugger->MemPeek(
 +   0x6000 + reg_x, 1, true, true) & 0xff;
 +  const uint32 record_address = 0x611d;
-+  TheronIrq2Trace->print_format(
++  fprintf(TheronIrq2TraceStage2CalleeTrace,
 +   "theron_runtime_record_table sequence=%u logical_pc=%04x physical_pc=%08x x=%02x y=%02x table_index=%02x record_address=%04x record_bytes=",
 +   TheronIrq2TraceRuntimeRecordSamples++, logical_pc, trace_physical_pc,
 +   reg_x, reg_y, table_index, record_address);
 +  for(unsigned record_offset = 0; record_offset < 10; ++record_offset)
-+   TheronIrq2Trace->print_format(
++   fprintf(TheronIrq2TraceStage2CalleeTrace,
 +    "%02x", CurGame->Debugger->MemPeek(record_address + record_offset,
 +                                        1, true, true) & 0xff);
-+  TheronIrq2Trace->print_format("\n");
-+  FlushTheronIrq2Trace();
++  fprintf(TheronIrq2TraceStage2CalleeTrace, "\n");
++  fflush(TheronIrq2TraceStage2CalleeTrace);
 + }
   if((logical_pc == 0x4644 || logical_pc == 0x4667 ||

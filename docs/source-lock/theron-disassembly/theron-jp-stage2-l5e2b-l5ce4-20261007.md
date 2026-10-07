@@ -1,4 +1,4 @@
-# Theron JP Stage-2 `$5e2b` through `$5e15` callee windows
+# Theron JP Stage-2 `$5e2b` and `$5ce4..$5e15` callee windows
 
 This source lock extends the authenticated JP `$4943..$49f9` caller window to
 its direct callees at `$5e2b` and `$5ce4`, plus the exact `$5ce7` BVC target

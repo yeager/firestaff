@@ -189,6 +189,19 @@ if ! grep -Fq 'post_stage2_execution_page logical_pc=%04x physical_pc=%08x physi
     printf 'FAIL: Mednafen execution patch no longer retains bounded post-stage2 physical-page evidence\n' >&2
     exit 1
 fi
+if ! grep -Fq 'stage2_callee_sample sequence=%u pc=%04x physical_pc=%08x mpr=%02x' "$execution_patch_file" ||
+   ! grep -Fq 'TheronIrq2TraceStage2CalleeSamples < 4096' "$execution_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_STAGE2_CALLEE_TRACE' "$execution_patch_file" ||
+   ! grep -Fq 'source=mednafen-pce-instrumented-stage2-callee-v1' "$execution_patch_file" ||
+   ! grep -Fq 'fprintf(TheronIrq2TraceStage2CalleeTrace' "$execution_patch_file" ||
+   ! grep -Fq 'if(TheronIrq2TraceStage2CalleeTrace &&' "$execution_patch_file" ||
+   grep -Fq 'TheronIrq2Trace->print_format("stage2_callee_sample' "$execution_patch_file" ||
+   ! grep -Fq 'MemPeek(0x58e0u + buffer_offset' "$execution_patch_file" ||
+   ! grep -Fq 'ram_5e16_5e29=' "$execution_patch_file" ||
+   ! grep -Fq 'return_pc=%04x status_3b69=%02x' "$execution_patch_file"; then
+    printf 'FAIL: Mednafen execution patch must retain bounded Stage-2 callee RAM/buffer provenance\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'post_stage2_non_system_card_e009_call caller_pc=%04x physical_pc=%08x record=%06x destination=%04x destination_mode=%02x' "$e009_patch_file" ||
    ! grep -Fq 'TheronIrq2TracePostStage2NonSystemCardE009Count < 16' "$e009_patch_file"; then
     printf 'FAIL: Mednafen e009 patch no longer retains bounded non-System-Card caller evidence\n' >&2

@@ -69,6 +69,14 @@
   SHA-256 before checking the source spans. This does not
   prove runtime selection, broader hardware effects, or gameplay behavior; see
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l5e2b-l5ce4-20261007.md`.
+- 🔧 The opt-in Mednafen sidecar (`FIRESTAFF_THERON_STAGE2_CALLEE_TRACE`) now
+  samples the authentic Stage-2 PCs
+  `$5ce4`, `$5d1c`, `$5d93`, `$5ddb`, and `$5df5`, with bounded `$58e0`/status
+  snapshots without changing the strict IRQ2 trace stream. The patch set
+  applies and the instrumented 1.32.1 build succeeds on trv2, but no runtime
+  receipt yet joins these PCs to the actual VDC writes. Run it against an
+  authentic gameplay session, verify the MPR/return-PC/source-byte joins, and
+  only then promote any buffer or renderer semantics.
 - 🔧 Bind the genuine game-code caller/route that transfers control into the
   `$4f06 -> $48a8` runtime path to its authentic physical-bank source. Trace
   the MPR2=`$68` mapping's writes/load origin and bind the observed candidate
