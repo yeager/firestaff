@@ -10,14 +10,16 @@
   establish that the path executes. The Theron capture launcher now passes the
   trace destination and checks the optional sidecar's line boundaries, while
   the existing Mednafen build and capture scripts apply and expose the patch.
-  Static wiring checks passed, then three repeated complete patch-only passes
-  applied every instrumented patch against a clean Mednafen 1.32.1 source copy
+  Static wiring checks passed, then repeated complete patch-only passes
+  applied every instrumented patch against clean Mednafen 1.32.1 source copies
   on trv2. The instrumented HuC6280 object also compiled successfully on trv2
   after forcing recompilation, and three follow-up incremental checks confirmed
   the object remained up to date. The equivalent PCE Fast object compiled and
-  linked on trv2. A genuine JP Akutuba-state run loaded successfully and
-  produced the new sidecar; its target window and input limits are recorded in
-  `TODO-theron.md`, with no claim that the indirect destination executed.
+  linked on trv2, and the hook was corrected to sample physical PC only after
+  the current instruction's MPR mapping was refreshed. Genuine JP Akutuba-state
+  runs loaded successfully and produced the new sidecar; their target-window
+  and input limits are recorded in `TODO-theron.md`, with no claim that the
+  indirect destination executed.
 
 ## 2026-10-07 — decompile the JP `$31B3` helper dataflow
 

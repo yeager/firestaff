@@ -264,14 +264,17 @@ Reviewed 2026-10-07. Only open work is listed here.
   `scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch` is prepared
   to record the `$2003/$2004` target, physical MPR mapping, opcode, and up to
   128 subsequent CPU steps in both standard PCE and PCE Fast. Three complete
-  patch-only passes, including both hooks, passed against clean Mednafen 1.32.1
-  source copies on trv2. Both HuC6280 variants compiled; the PCE Fast
-  binary was relinked. A genuine JP Akutuba `.mca` autoload was confirmed by
-  Mednafen, but a no-input capture observed only logical `$4ef6` at physical
-  `$0d0ef3`. A four-second PCE RUN replay was applied and followed by a
-  controller read at `$44d2`; all 72 target-window rows still remained at
-  `$4ef6`, with no `$3879..$3a0f` execution, `$e009` dispatch, or CD-sector
-  reads. The state therefore does not resolve the candidate path. Keep the
+  patch-only passes passed against clean Mednafen 1.32.1 source copies on trv2;
+  a final pass also verified that the PCE Fast hook follows its physical-PC
+  update. Both HuC6280 variants compiled; the PCE Fast binary was relinked. A
+  genuine JP Akutuba `.mca` autoload was confirmed by
+  Mednafen (state MD5 `14dec90b96ec3e14622ec0fab535a92f`). Two separate
+  four-second input replays, RUN and UP, were each followed by a non-System-Card
+  controller read at `$44d2`. The corrected PCE Fast hook recorded 68 and 66
+  rows respectively; every target-window observation was logical `$4ef6` at
+  physical `$0d0ef6`. Neither replay reached `$3879..$3a0f`; both had zero
+  `$e009` dispatches and zero CD-sector reads. This state does not resolve the
+  candidate path. Keep the
   private traces under
   `/home/trv2/work/theron-3879-runtime-capture-20261007/out/`; do not claim
   that the indirect destination executed. The source join does not prove the

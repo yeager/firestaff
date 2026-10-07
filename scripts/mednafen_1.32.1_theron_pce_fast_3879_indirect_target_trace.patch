@@ -11,7 +11,7 @@
 +static unsigned Theron3879FastIndirectTarget;
 +static unsigned Theron3879FastTargetPhysical;
 +static unsigned Theron3879FastTargetOpcode;
-@@ -888,0 +898,43 @@
+@@ -898,0 +899,43 @@
 +  if(Theron3879FastTargetStepsRemaining ||
 +     (TheronTraceInstructionPC >= 0x4ef4 && TheronTraceInstructionPC <= 0x4ef6) ||
 +     (TheronTraceInstructionPC >= 0x3879 && TheronTraceInstructionPC <= 0x3918) ||

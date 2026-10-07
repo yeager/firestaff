@@ -208,6 +208,17 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_stage2_mpr1_probe.patch"
 git -C "$build_root/source" apply --unidiff-zero --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch"
+if ! awk '
+    /if\(Theron3879FastTargetStepsRemaining \|\|/ {
+        if(previous !~ /TheronTraceInstructionPhysicalPC =/) exit 1
+        found = 1
+    }
+    { previous = $0 }
+    END { if(!found) exit 1 }
+' "$build_root/source/src/pce_fast/huc6280.cpp"; then
+    printf '%s\n' 'FAIL: PCE Fast $3879 hook must follow the current instruction physical-PC update' >&2
+    exit 1
+fi
 theron_3879_trace_patch="$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch"
 theron_3879_trace_rendered="$build_root/theron-3879-indirect-target-trace.rendered.patch"
 sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$theron_3879_trace_patch" \

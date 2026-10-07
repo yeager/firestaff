@@ -394,6 +394,7 @@ indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_3879_indirect_ta
 pce_fast_indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'theron_pce_fast_3879_indirect_target_trace.patch' "$build_script" ||
+   ! grep -Fq 'previous !~ /TheronTraceInstructionPhysicalPC =/' "$build_script" ||
    ! grep -Fq 'indirect_target_trace="${trace}.3879-indirect-target"' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace"' "$capture_script" ||
    ! grep -Fq 'RdMem(0x2003)' "$indirect_target_patch_file" ||
