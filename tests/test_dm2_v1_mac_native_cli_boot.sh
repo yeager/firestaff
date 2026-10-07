@@ -3,6 +3,7 @@ set -eu
 
 app=${1:?usage: test_dm2_v1_mac_native_cli_boot.sh <firestaff>}
 data_root=${FIRESTAFF_DM2_DATA_ROOT:-"$HOME/.firestaff/data"}
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"${TMPDIR:-$PWD/.codex-scratch}"}
 
 # The CUE/BIN archive is a production-native reader path, never an external
 # extractor wrapper.
@@ -53,7 +54,8 @@ fi
 # scans of unrelated DM1/CSB/DM2 archives in the user's shared data root. The
 # bytes remain the same authenticated retail ZIP; the temporary install uses
 # only a symlink under the normal .firestaff/data/<game> layout.
-menu_data_root=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-dm2-mac-menu.XXXXXX")
+mkdir -p "$test_scratch"
+menu_data_root=$(mktemp -d "$test_scratch/firestaff-dm2-mac-menu.XXXXXX")
 mkdir -p "$menu_data_root/dm2"
 archive_dir=$(cd "$(dirname "$archive")" && pwd)
 archive_name=${archive##*/}
@@ -118,8 +120,8 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # Exercise the ordinary game loop rather than the deterministic boot probe:
 # Title.MooV must keep requesting presents until its authentic QuickTime
 # duration expires, then accept New Game and enter the selected mirror.
-runtime_probe="${app}.mac-normal-start-$$.json"
-runtime_capture="${app}.mac-normal-start-capture-$$"
+runtime_probe="$test_scratch/dm2-mac-normal-start-$$.json"
+runtime_capture="$test_scratch/dm2-mac-normal-start-capture-$$"
 mkdir -p "$runtime_capture"
 cleanup_runtime_probe() {
     rm -f "$runtime_probe"

@@ -237,6 +237,58 @@ int main(void)
         SDL_free(view);
     }
 
+    /* The persisted collection route must retain CSB's authenticated Amiga
+     * edition too. The standalone Amiga test proves its full title-to-runtime
+     * path; this route specifically proves that reopening the root and
+     * selecting the edition in M12 preserves the native M11 boot profile. */
+    if (!failures) {
+        const char* versionId = "amiga31-en";
+        int versionIndex = M12_AssetStatus_FindVersionIndex("csb", versionId);
+        const M12_AssetVersionStatus* version = versionIndex < 0 ? NULL :
+            M12_AssetStatus_GetVersion(&menu->assetStatus, "csb",
+                                       (size_t)versionIndex);
+        M12_LaunchIntent intent;
+        M11_GameViewState* view;
+        const CSB_V1_BootProfile* profile;
+
+        if (!version || !version->matched) {
+            fprintf(stderr,
+                    "FAIL: selected root lacks authenticated csb %s media\n",
+                    versionId);
+            ++failures;
+        } else {
+            menu->selectedIndex = 1;
+            menu->activatedIndex = 1;
+            menu->launchRequested = 1;
+            menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+            menu->gameOptions[1].presentationModeIndex =
+                M12_PRESENTATION_V1_ORIGINAL;
+            menu->gameOptions[1].versionIndex = versionIndex;
+            menu->gameOptions[1].architectureIndex = M12_ARCH_AMIGA;
+            intent = M12_StartupMenu_GetLaunchIntent(menu);
+            CHECK(intent.valid && intent.gameId && intent.versionId &&
+                  strcmp(intent.gameId, "csb") == 0 &&
+                  strcmp(intent.versionId, versionId) == 0 &&
+                  intent.options.architectureIndex == M12_ARCH_AMIGA,
+                  "persisted collection root preserves explicit CSB Amiga 3.1");
+            view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
+            CHECK(view != NULL, "allocate CSB Amiga game view");
+            if (view) {
+                M11_GameView_Init(view);
+                CHECK(M11_GameView_OpenSelectedMenuEntry(view, menu) == 1,
+                      "CSB Amiga opens through persisted-root M12 handoff");
+                profile = (const CSB_V1_BootProfile*)view->csbBootProfile;
+                CHECK(view->active && view->startedFromLauncher &&
+                      view->sourceKind == kinds[1] &&
+                      strcmp(view->sourceId, "csb") == 0 && profile &&
+                      profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN,
+                      "CSB Amiga handoff retains its native A31E boot profile");
+                M11_GameView_Shutdown(view);
+                SDL_free(view);
+            }
+        }
+    }
+
     /* The authentic v1.2 preservation ZIP contains its STX disk directly,
      * unlike the ZIP -> ZIP -> STX v1.1 archive exercised by the nested
      * archive boot test. Reopening the collection root must discover it and

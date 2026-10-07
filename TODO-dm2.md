@@ -30,7 +30,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   pass. The persisted-root M12 original-media regression also follows AUTO
   FM Towns through the complete title, New Game and first mirror into a loaded
   one-champion session. These checks do not cover the reported M5 window/input
-  failure. The 2026-10-06 retest also reports a broken DM2 dungeon viewport.
+  failure. The authentic Macintosh M12/startup CTest now passes its normal
+  title, New Game, mirror and movement route on the M4 host; it uses SDL's
+  dummy video driver and therefore does not verify native Retina display or
+  input behavior. The 2026-10-06 retest also reports a broken DM2 dungeon viewport.
   The accompanying screenshot is consistent with that report but has no
   runtime metadata; record the exact platform, asset identity and presented
   frame on the reported M5 before attributing it to Mac, Towns or HiDPI.

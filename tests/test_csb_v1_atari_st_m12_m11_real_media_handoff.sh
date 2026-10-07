@@ -4,6 +4,7 @@ set -eu
 handoff_test="${1:?CSB M12/M11 handoff test executable is required}"
 source_archive="${FIRESTAFF_CSB_ATARI_ST_ARCHIVE:-$HOME/.firestaff/data/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z}"
 source_root="${FIRESTAFF_CSB_ATARI_ST_ROOT:-}"
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"${TMPDIR:-$PWD/.codex-scratch}"}
 staging_dir=""
 
 cleanup() {
@@ -17,7 +18,8 @@ if [ -e "$source_archive" ]; then
         echo "SKIP: authentic CSB Atari source is archived and 7zz/7z is unavailable"
         exit 77
     fi
-    staging_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-handoff.XXXXXX") || exit 1
+    mkdir -p "$test_scratch"
+    staging_dir=$(mktemp -d "$test_scratch/firestaff-csb-atari-handoff.XXXXXX") || exit 1
     source_root="$staging_dir"
     game_member='Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx'
     utility_member='Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk v2.1 (English).stx'

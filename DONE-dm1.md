@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-10-08: The authentic Atari ST 1.1 `.7z` startup test passed in 63.42
+  seconds. It verified direct CLI media selection, M12 handoff, the first
+  runtime state and the C127 Champion Hall route using the original archive.
+
 - 2026-10-07: All 14 installed authentic DM1 CLI-start CTests passed in the
   multi-edition startup matrix, including DOS English/French, Atari ST
   English 1.0a/1.0b/1.1/1.2, German 1.2, French 1.3, Amiga HD/v2.0 and

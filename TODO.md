@@ -3,7 +3,11 @@
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
   physical desktop interaction. The opt-in test covers those three source-owned
-  startup states after reopening the persisted collection root. Its AUTO
+  startup states after reopening the persisted collection root. It now also
+  checks DM1 Amiga 2.0 and Atari ST 1.2, CSB FM Towns Japanese and Amiga 3.1
+  English, and DM2 Macintosh retail through the reopened-root handoff. The
+  CSB Amiga leg verifies the native A31E M11 profile; a dedicated original-media
+  test separately advances Amiga startup to runtime. Its AUTO
   DM2 FM Towns leg now finishes the source title and uses the retail New Game
   and mirror targets to enter a loaded one-champion session. The same
   authenticated Towns corpus now passes the full M12 game/platform/custom/

@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-08: The persisted-root M12-to-M11 regression now covers authenticated
+  CSB Amiga 3.1 English and verifies that the reopened root retains its native
+  A31E boot profile. Against installed original data, the expanded persisted
+  root test passed in 43.04 seconds, the dedicated A31E startup handoff passed
+  in 1.84 seconds, the mixed CSB FM Towns AUTO route passed in 53.35 seconds,
+  and the DM1/CSB/DM2 return-to-menu rescan passed in 217.65 seconds.
+  DM1 Atari ST 1.1 also passed its authentic CLI/M12/Hall route in 63.42
+  seconds. These checks verify startup and menu flow, not visual parity or
+  physical M5 HiDPI behavior.
+
 - 2026-10-07: The authentic all-games launcher regression now asserts that
   AUTO selects the matched FM Towns edition for DM1, CSB and DM2 whenever it
   is installed. The test passes against the external original-media

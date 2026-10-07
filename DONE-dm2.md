@@ -1,5 +1,13 @@
 # Firestaff DONE — DM2
 
+- 2026-10-08: `dm2_v1_mac_native_cli_boot` passed against the authentic
+  Macintosh retail ZIP in 132.98 seconds with no `TMPDIR` set. The script now
+  keeps its temporary menu root, runtime probe and capture under an isolated
+  `.codex-scratch` directory instead of `/tmp` or beside the executable. The
+  test verifies the normal Macintosh title, New Game, mirror and movement
+  routes under SDL's dummy video driver; it does not verify physical M5 Retina
+  display or input behavior.
+
 - 2026-10-07: All five installed authentic DM2 CLI-start CTests passed in the
   multi-edition startup matrix, covering DOS English/French, Macintosh, Amiga
   and FM Towns.
