@@ -434,13 +434,13 @@ static void check_missing_archive_tool_popup(void) {
     CHECK(launcher_has_clean_main_view(&state));
 }
 
-/* Use authentic CSB Atari ST software media to verify the actionable opt-in
- * message. A hard link exposes the same bytes inside an isolated data root
- * without copying or rewriting licensed media. The scanner intentionally
- * does not follow symbolic links, so a symlink would not exercise discovery. */
-static int check_external_archive_opt_in_popup(void) {
+/* The authentic CSB Atari preservation package is a 7z archive that the
+ * bundled reader can scan. Verify M12 accepts its source-owned Atari data
+ * without incorrectly telling the player to enable an external tool. A hard
+ * link exposes the unchanged media inside an isolated data root. */
+static int check_native_7z_archive_scan(void) {
 #ifdef _WIN32
-    puts("SKIP: authentic archive opt-in popup test requires POSIX hard links");
+    puts("SKIP: authentic archive scan test requires POSIX hard links");
     return 77;
 #else
     const char* archive = getenv("FIRESTAFF_CSB_ATARI_ARCHIVE");
@@ -448,9 +448,8 @@ static int check_external_archive_opt_in_popup(void) {
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char linkedArchive[M12_ASSET_DATA_DIR_CAPACITY];
 
-    if (!archive || !archive[0] || access(archive, R_OK) != 0 ||
-        !asset_external_archive_tool_available(archive)) {
-        puts("SKIP: authentic CSB Atari archive or host 7z reader unavailable");
+    if (!archive || !archive[0] || access(archive, R_OK) != 0) {
+        puts("SKIP: authentic CSB Atari archive is unavailable");
         return 77;
     }
     reset_dialog_stub();
@@ -471,25 +470,12 @@ static int check_external_archive_opt_in_popup(void) {
     asset_scan_clear_missing_extractor_diagnostics();
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
 
-    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
     CHECK(state.launchRequested == 0);
-    CHECK(state.messageLine1 &&
-          strcmp(state.messageLine1,
-                 M12_StartupMenu_TranslateForLocale(
-                     state.settings.languageIndex,
-                     "ARCHIVE SCANNING IS DISABLED")) == 0);
-    CHECK(state.messageLine2 &&
-          strstr(state.messageLine2,
-                 "Chaos Strikes Back Atari ST original.7z") != NULL &&
-          strstr(state.messageLine2, "--enable-external-archive-tools") != NULL);
-    CHECK(state.messageLine3 &&
-          strcmp(state.messageLine3,
-                 M12_StartupMenu_TranslateForLocale(
-                     state.settings.languageIndex,
-                     "RESTART WITH THE OPTION, THEN RESCAN GAME DATA")) == 0);
-    CHECK(asset_scan_missing_extractor_count() == 1);
-    dismiss_message(&state);
-    CHECK(launcher_has_clean_main_view(&state));
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "csb") == 1);
+    CHECK(M12_AssetStatus_GameHasMatchedArchitecture(
+              &state.assetStatus, "csb", M12_ARCH_ATARI_ST) == 1);
+    CHECK(asset_scan_missing_extractor_count() == 0);
 
     unlink(linkedArchive);
     asset_scan_clear_missing_extractor_diagnostics();
@@ -845,8 +831,12 @@ static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
                                  dm2DungeonMd5));
     if (failures) return;
 
-    M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(dm1GraphicsMd5,
-                                                           dm1DungeonMd5);
+    /* The multilingual PC 3.4 release has a separate authentic SWSH
+     * companion gate. This fixture is only testing recursive discovery of
+     * the required graphics/dungeon pair, so identify it as the English
+     * PC 3.4 edition instead of bypassing that startup-media requirement. */
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(dm1GraphicsMd5,
+                                                         dm1DungeonMd5);
     M12_AssetStatus_TestSetDm2SyntheticHashes(dm2GraphicsMd5, dm2DungeonMd5);
 
     M12_StartupMenu_InitWithDataDir(&state, fullRoot, NULL);
@@ -903,21 +893,21 @@ static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(launcher_has_clean_main_view(&state));
 
-    M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
 }
 
 int main(int argc, char** argv) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
 
-    if (argc == 2 && strcmp(argv[1], "--csb-authentic-archive-opt-in") == 0) {
-        int result = check_external_archive_opt_in_popup();
+    if (argc == 2 && strcmp(argv[1], "--csb-native-7z-archive-scan") == 0) {
+        int result = check_native_7z_archive_scan();
         if (result != 0) return result;
         if (failures) {
             fprintf(stderr, "%d failure(s)\n", failures);
             return 1;
         }
-        puts("PASS: authentic CSB archive displays the external-tool opt-in popup");
+        puts("PASS: M12 scans authentic CSB Atari 7z media natively without an external-tool prompt");
         return 0;
     }
 

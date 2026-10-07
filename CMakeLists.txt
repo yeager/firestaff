@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.366 LANGUAGES C)
+project(Firestaff VERSION 3.0.367 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -54505,10 +54505,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_no_data_popup_once_gate.c"
         LABELS "m12;startup;regression"
     )
     add_test(
-        NAME m12_csb_authentic_archive_opt_in_popup
-        COMMAND test_m12_no_data_popup_once_gate --csb-authentic-archive-opt-in
+        NAME m12_csb_native_7z_archive_scan
+        COMMAND test_m12_no_data_popup_once_gate --csb-native-7z-archive-scan
     )
-    set_tests_properties(m12_csb_authentic_archive_opt_in_popup PROPERTIES
+    set_tests_properties(m12_csb_native_7z_archive_scan PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "m12;csb;startup;real_media;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"

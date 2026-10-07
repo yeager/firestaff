@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-07: Corrected the M12 no-data regression fixture to use the English
+  PC 3.4 identity, whose required startup pair matches the files the fixture
+  provides. Its authentic CSB Atari companion test now verifies native bundled
+  7z discovery instead of expecting an external-tool prompt. Both focused M12
+  CTests pass, including the authentic CSB preservation archive.
+
 - 2026-10-07: Added an authentic multi-platform M12 AUTO regression with the
   PC 3.4 and FM Towns archives together in one installed data root. The test
   confirms that both editions are discovered, AUTO chooses the documented FM

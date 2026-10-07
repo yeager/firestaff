@@ -1,10 +1,19 @@
-# Unreleased
+# Firestaff v3.0.367
+
+## User-facing changes
+
+- `DM1 AUTO platform selection`: documents and verifies that FM Towns remains
+  the default when an installed data root also contains PC 3.4, and that the
+  selection reaches the authentic initial runtime frame.
 
 ## Developer changes
 
-- `DM1 M12 AUTO routing`: verifies that the start menu discovers authentic
-  PC 3.4 and FM Towns editions together, selects FM Towns by default, and
-  reaches its first runtime frame from the original media.
+- `M12 startup regressions`: corrects a synthetic DM1 test identity to retain
+  its authentic startup-media requirements and verifies that the bundled 7z
+  reader scans authentic CSB Atari media without an unnecessary external-tool
+  prompt.
+
+# Unreleased
 
 # Firestaff v3.0.366
 
