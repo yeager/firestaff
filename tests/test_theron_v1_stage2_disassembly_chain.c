@@ -3958,6 +3958,19 @@ static void test_stage2_jp_l4943_window(void)
         assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
                stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
     }
+    /* $49FA is also a direct entry from the authenticated JSR at $49C9.
+     * Decode it independently from the preceding linear stream, where the
+     * same bytes are not reached on that instruction path. */
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x49fau, 0x4a09u) ==
+           UINT64_C(0x1d56ad35f7cb2eb3));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x49fau, 0x4a09u) ==
+           UINT64_C(0x1d56ad35f7cb2eb3));
+    for (address = 0x49fau; address < 0x4a09u; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
     for (address = 0x5e2bu; address < 0x5e81u; ++address) {
         assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
                stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
@@ -3996,6 +4009,12 @@ static void test_stage2_jp_l4943_window(void)
     assert_jp_stage2_record_jsr_target(0x49c9u, 0x49fau);
     assert_jp_stage2_record_jsr_target(0x49ccu, 0x5111u);
     assert_jp_stage2_record_jsr_target(0x49cfu, 0x570au);
+    assert_jp_stage2_record_branch_target(0x49fcu, 0xf0u, 0x4a01u);
+    assert_jp_stage2_record_jsr_target(0x49feu, 0x4a09u);
+    assert_jp_stage2_record_branch_target(0x4a03u, 0xf0u, 0x4a08u);
+    assert_jp_stage2_record_jsr_target(0x4a05u, 0x4a84u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x4a08u) ==
+           0x60u);
     assert_jp_stage2_record_branch_target(0x4963u, 0xf0u, 0x4968u);
     assert_jp_stage2_record_branch_target(0x496au, 0xd0u, 0x496fu);
     assert_jp_stage2_record_branch_target(0x4977u, 0xd0u, 0x497cu);

@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc.cpp
 +++ b/src/pce_fast/huc.cpp
-@@ -73,11 +73,36 @@
+@@ -73,11 +73,41 @@
  static DECLFR(HuCRead)
  {
   return ROMSpace[A];
@@ -24,9 +24,14 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   return;
 +  fputs("source=mednafen-pce-fast-cd-ram-target-write\n", trace);
 + }
-+ fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x\n",
++ fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x block_move=%u bmt_src=%04x bmt_source_physical=%06x bmt_dest=%04x bmt_length=%04x a=%02x x=%02x y=%02x s=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
 +         count++, address, address - 0x68 * 8192, ROMSpace[address], value,
-+         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, HuCPU.MPR[2]);
++         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, HuCPU.MPR[2],
++         HuCPU.in_block_move, HuCPU.bmt_src,
++         ((uint32)HuCPU.MPR[(HuCPU.bmt_src >> 13) & 7] << 13) | (HuCPU.bmt_src & 0x1fff),
++         HuCPU.bmt_dest, HuCPU.bmt_length, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P,
++         HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
 + fflush(trace);
 +}
 +
@@ -37,3 +42,130 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  }
 FIRESTAFF_PATCH_BLANK_CONTEXT
  static DECLFW(HuCRAMWriteCDSpecial) // Hyper Dyne Special hack
+--- a/src/pce_fast/pcecd.cpp
++++ b/src/pce_fast/pcecd.cpp
+@@ -261,17 +261,63 @@
++static void TheronTraceCDDataPortRead(uint32 source_lba, uint16 user_data_offset,
++                                      uint16 raw_sector_offset, uint32 track02_start_lba,
++                                      uint32 track02_end_lba, uint32 track02_index1_file_offset,
++                                      uint16 track02_sector_bytes, uint8 value, bool source_valid)
++{
++ static FILE *trace = NULL;
++ static unsigned count = 0;
++ if(count >= 4096)
++  return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-fast-cd-data-port-read\n", trace);
++ }
++ fprintf(trace, "cd_data_port_read sequence=%u address=1808 value=%02x source_valid=%u source_lba=%u source_user_offset=%u source_raw_offset=%u track02_start_lba=%u track02_end_lba=%u track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu\n",
++         count++, value, source_valid, source_lba, user_data_offset,
++         raw_sector_offset, track02_start_lba, track02_end_lba, track02_index1_file_offset,
++         track02_sector_bytes,
++         source_valid && source_lba >= track02_start_lba && source_lba < track02_end_lba ?
++          (unsigned long long)track02_index1_file_offset +
++           (unsigned long long)(source_lba - track02_start_lba) * track02_sector_bytes +
++           (track02_sector_bytes == 2352 ? raw_sector_offset : user_data_offset) : 0ULL);
++ fflush(trace);
++}
+ static INLINE uint8 read_1808(int32 timestamp)
+ {
+  uint8 ret = PCECD_Drive_GetDB();
++ if(PCECD_Drive_GetREQ() && !PCECD_Drive_GetACK() && !PCECD_Drive_GetCD() && PCECD_Drive_GetIO())
++ {
++  uint32 source_lba = 0;
++  uint16 user_data_offset = 0, raw_sector_offset = 0;
++  bool source_valid = PCECD_Drive_GetLastRawSectorDataOrigin(&source_lba, &user_data_offset, &raw_sector_offset);
++  uint32 track02_index1_file_offset = 0;
++  const char *track02_index1_file_offset_text = getenv("FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET");
++  if(track02_index1_file_offset_text && *track02_index1_file_offset_text)
++   track02_index1_file_offset = strtoul(track02_index1_file_offset_text, NULL, 10);
++  uint16 track02_sector_bytes = 0;
++  const char *track02_sector_bytes_text = getenv("FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES");
++  if(track02_sector_bytes_text && *track02_sector_bytes_text)
++   track02_sector_bytes = strtoul(track02_sector_bytes_text, NULL, 10);
++  TheronTraceCDDataPortRead(source_lba, user_data_offset, raw_sector_offset,
++                            PCECD_Drive_GetTrack02StartLBA(), PCECD_Drive_GetTrack02EndLBA(),
++                            track02_index1_file_offset, track02_sector_bytes, ret, source_valid);
++ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+  if(PCECD_Drive_GetREQ() && !PCECD_Drive_GetACK() && !PCECD_Drive_GetCD())
+  {
+   if(PCECD_Drive_GetIO())
+   {
+    PCECD_Drive_SetACK(true);
+    ACKStatus = true;
+    pcecd_drive_ne = PCECD_Drive_Run(timestamp);
+    ClearACKDelay = 15 * 3;
+   }
+  }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+  return(ret);
+ }
+--- a/src/pce_fast/pcecd_drive.h
++++ b/src/pce_fast/pcecd_drive.h
+@@ -81,3 +81,7 @@
+ void PCECD_Drive_SetDisc(bool tray_open, CDInterface* cdif, bool no_emu_side_effects = false) MDFN_COLD;
++bool PCECD_Drive_GetLastRawSectorDataOrigin(uint32 *source_lba, uint16 *user_data_offset,
++                                            uint16 *raw_sector_offset);
++uint32 PCECD_Drive_GetTrack02StartLBA(void);
++uint32 PCECD_Drive_GetTrack02EndLBA(void);
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ }
+--- a/src/pce_fast/pcecd_drive.cpp
++++ b/src/pce_fast/pcecd_drive.cpp
+@@ -166,0 +167,27 @@
++static bool TheronRawSectorDataFifoOriginValid;
++static uint32 TheronRawSectorDataFifoLBA;
++static uint16 TheronRawSectorDataFifoReadOffset;
++static uint16 TheronRawSectorDataFifoRawStartOffset;
++static bool TheronLastRawSectorDataOriginValid;
++static uint32 TheronLastRawSectorDataLBA;
++static uint16 TheronLastRawSectorDataUserOffset, TheronLastRawSectorDataOffset;
++bool PCECD_Drive_GetLastRawSectorDataOrigin(uint32 *source_lba, uint16 *user_data_offset,
++                                            uint16 *raw_sector_offset)
++{
++ bool valid = TheronLastRawSectorDataOriginValid;
++ if(source_lba) *source_lba = TheronLastRawSectorDataLBA;
++ if(user_data_offset) *user_data_offset = TheronLastRawSectorDataUserOffset;
++ if(raw_sector_offset) *raw_sector_offset = TheronLastRawSectorDataOffset;
++ TheronLastRawSectorDataOriginValid = false;
++ return valid;
++}
++
++uint32 PCECD_Drive_GetTrack02StartLBA(void)
++{
++ return toc.tracks[2].lba;
++}
++
++uint32 PCECD_Drive_GetTrack02EndLBA(void)
++{
++ return toc.tracks[3].lba;
++}
+@@ -183,0 +211,2 @@
++ TheronRawSectorDataFifoOriginValid = false;
++ TheronLastRawSectorDataOriginValid = false;
+@@ -373,0 +403,1 @@
++  TheronRawSectorDataFifoOriginValid = false;
+@@ -393,0 +424,1 @@
++ TheronRawSectorDataFifoOriginValid = false;
+@@ -1014,0 +1046,4 @@
++    TheronRawSectorDataFifoLBA = SectorAddr;
++    TheronRawSectorDataFifoReadOffset = 0;
++    TheronRawSectorDataFifoRawStartOffset = (tmp_read_buf[12 + 3] == 0x2) ? 24 : 16;
++    TheronRawSectorDataFifoOriginValid = true;
+@@ -1167,0 +1203,8 @@
++     TheronLastRawSectorDataOriginValid = TheronRawSectorDataFifoOriginValid;
++     if(TheronLastRawSectorDataOriginValid)
++     {
++      TheronLastRawSectorDataLBA = TheronRawSectorDataFifoLBA;
++      TheronLastRawSectorDataUserOffset = TheronRawSectorDataFifoReadOffset;
++      TheronLastRawSectorDataOffset = TheronRawSectorDataFifoRawStartOffset + TheronRawSectorDataFifoReadOffset;
++      TheronRawSectorDataFifoReadOffset++;
++     }

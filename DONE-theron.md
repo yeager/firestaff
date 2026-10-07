@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
+
+Extended the authentic JP/US `$4943` caller test to lock the directly called
+`$49FA..$4A08` entry as its own instruction stream. The 15 bytes match across
+the hash-verified original Track 02 images; the test checks the bounded span
+hash, byte equality, both branch destinations, both JSR targets, and terminal
+RTS. The focused `theron_v1_stage2_disassembly_chain` CTest passed three
+repeated loops on trv2 with authentic JP and US media. This is static
+disassembly evidence only, not runtime graphics parity.
+
 ## 2026-10-07 — exercise the authentic Track 19 carried-name route
 
 Extended the real-media dungeon-loader regression to bind the authentic US

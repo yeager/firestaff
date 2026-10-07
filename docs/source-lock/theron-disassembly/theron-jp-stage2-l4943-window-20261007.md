@@ -57,3 +57,18 @@ editions through the IPL loader, checks the JP and US span hashes, compares all
 183 bytes, and locks the direct JSR and relative-branch destinations. This
 establishes shared static bytes and decode only. It does not prove JP runtime
 entry, VDC output, or graphics/gameplay parity.
+
+## Direct `$49FA` entry
+
+The caller's direct JSR at user offset `$49c9` targets `$49fa`, which is also
+the end of the `$4943` bounded window above. Treat `$49fa` as a separate entry
+rather than continuing the prior instruction stream: its 15-byte body ends at
+`$4a09` with RTS at `$4a08`. For JP, the span begins at raw BIN offset
+`2,898,186` (sector 1232, in-sector offset 522) and has SHA-256
+`4aafed85e7bf93018d4a6a34d453f435031377eb90a60ce55dab828a8cb6c1b9` and
+FNV-1a-64 `1d56ad35f7cb2eb3`. US has the same bytes and digest.
+
+The focused test checks both media hashes, byte equality, the branches at
+`$49fc` and `$4a03`, JSR targets `$4a09` and `$4a84`, and the terminal RTS.
+This binds the direct-entry bytes and control-flow edges only; it assigns no
+rendering semantics and proves no runtime selection or graphics parity.

@@ -323,6 +323,25 @@ if [[ "$track02_mode" != 'MODE1/2352' && "$track02_mode" != 'MODE1/2048' ]]; the
     printf '%s\n' 'FAIL: CUE has no safe TRACK 02 MODE1/2352 or MODE1/2048 member' >&2
     exit 1
 fi
+track02_index1_sector=$(awk '
+    BEGIN { track02 = 0 }
+    /^[[:space:]]*TRACK[[:space:]]+02[[:space:]]+MODE1\/(2352|2048)[[:space:]]*$/ { track02 = 1; next }
+    /^[[:space:]]*TRACK[[:space:]]+/ { track02 = 0 }
+    track02 && /^[[:space:]]*INDEX[[:space:]]+01[[:space:]]+[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/ {
+        split($3, time, ":")
+        print (time[1] * 60 + time[2]) * 75 + time[3]
+        exit
+    }
+' "$cue")
+if [[ ! "$track02_index1_sector" =~ ^[0-9]+$ ]]; then
+    printf '%s\n' 'FAIL: CUE has no valid Track 02 INDEX 01 file offset' >&2
+    exit 1
+fi
+track02_sector_bytes=2352
+if [[ "$track02_mode" == 'MODE1/2048' ]]; then
+    track02_sector_bytes=2048
+fi
+track02_index1_file_offset=$((track02_index1_sector * track02_sector_bytes))
 track02_member=$(awk '
     BEGIN { quote = sprintf("%c", 34) }
     /^[[:space:]]*FILE[[:space:]]+/ {
@@ -988,6 +1007,8 @@ input_trace="${trace}.input"
 main_ram_loader_trace="${trace}.main-ram-loader"
 indirect_target_trace="${trace}.3879-indirect-target"
 cd_ram_target_write_trace="${trace}.cd-ram-target-write"
+cd_data_port_read_trace="${trace}.cd-data-port-read"
+profile_sram_manifest="${trace}.profile-sram"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
 selected_record_trace="${trace}.selected-record"
 main_ram_target_trace="${trace}.main-ram-target"
@@ -1028,7 +1049,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ "$capture_clonecd_track02" == 1 ]]; then
@@ -1086,6 +1107,16 @@ if [[ -n "$configured_home" ]]; then
 fi
 mkdir -p "$home_dir/sav"
 mkdir -p "$home_dir/mcs"
+profile_sram_count=0
+: >"$profile_sram_manifest"
+while IFS= read -r -d '' profile_sram_path; do
+    profile_sram_md5=$(md5_file "$profile_sram_path") || {
+        printf '%s\n' 'FAIL: could not hash a valid copied Mednafen SRAM file' >&2
+        exit 1
+    }
+    printf '%s %s\n' "${profile_sram_path#"$home_dir/sav/"}" "$profile_sram_md5" >>"$profile_sram_manifest"
+    profile_sram_count=$((profile_sram_count + 1))
+done < <(find "$home_dir/sav" -type f -name '*.sav' -size 2048c -print0)
 link_capture_cue_members() {
     local source_cue=$1
     local destination_dir=$2
@@ -1221,6 +1252,9 @@ launch=(
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
+    FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
+    FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
+    FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
     FIRESTAFF_THERON_SELECTED_RECORD_TRACE="$selected_record_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
@@ -1518,7 +1552,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -1713,6 +1747,10 @@ transition_adpcm_ram_read_prepare_count=$(trace_count '^pce_cd_adpcm_ram_read_pr
 transition_adpcm_cpu_read_count=$(trace_count '^pce_cd_adpcm_cpu_read ' "$cd_trace")
 transition_origin_ram_receipt_count=$(trace_count '^pce_cd_origin_ram_receipt ' "$cd_trace")
 transition_authenticated_cd_ram_count=$(trace_count '^pce_cd_(origin_ram_receipt|fifo_origin_ram_receipt|origin_main_ram_receipt|fifo_origin_main_ram_receipt) ' "$cd_trace")
+transition_cd_ram_target_write_count=$(trace_count '^cd_ram_target_write ' "$cd_ram_target_write_trace")
+transition_cd_data_port_read_count=$(trace_count '^cd_data_port_read ' "$cd_data_port_read_trace")
+transition_cd_data_port_source_bound_count=$(trace_count '^cd_data_port_read .* source_valid=1 ' "$cd_data_port_read_trace")
+transition_cd_data_port_source_unbound_count=$(trace_count '^cd_data_port_read .* source_valid=0 ' "$cd_data_port_read_trace")
 transition_game_main_ram_e009_count=$(trace_count '^game_main_ram_e009_dispatch ' "$trace")
 transition_main_ram_loader_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii ' "$main_ram_loader_trace")
 transition_continuation_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii source=3c80 ' "$main_ram_loader_trace")
@@ -1813,8 +1851,14 @@ fi
     printf 'mednafen_binary_md5=%s\n' "$mednafen_binary_md5"
     printf 'track02_mode=%s\n' "$track02_mode"
     printf 'track02_md5=%s\n' "$track02_md5"
+    printf 'track02_index1_file_offset=%s\n' "$track02_index1_file_offset"
+    printf 'track02_sector_bytes=%s\n' "$track02_sector_bytes"
     printf 'system_card_md5=%s\n' "$system_card_md5"
     printf 'system_card_runtime_md5=%s\n' "$system_card_runtime_md5"
+    printf 'configured_profile_sram_files=%s\n' "$profile_sram_count"
+    if [[ -s "$profile_sram_manifest" ]]; then
+        sed 's/^/configured_profile_sram=/' "$profile_sram_manifest"
+    fi
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
@@ -1838,6 +1882,10 @@ fi
     printf 'adpcm_cpu_reads=%s\n' "$transition_adpcm_cpu_read_count"
     printf 'byte_exact_origin_ram_receipts=%s\n' "$transition_origin_ram_receipt_count"
     printf 'authenticated_cd_ram_receipts=%s\n' "$transition_authenticated_cd_ram_count"
+    printf 'cd_ram_target_writes=%s\n' "$transition_cd_ram_target_write_count"
+    printf 'cd_data_port_reads=%s\n' "$transition_cd_data_port_read_count"
+    printf 'source_bound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_bound_count"
+    printf 'source_unbound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_unbound_count"
     printf 'game_main_ram_e009_dispatches=%s\n' "$transition_game_main_ram_e009_count"
     printf 'main_ram_loader_tii_transfers=%s\n' "$transition_main_ram_loader_tii_count"
     printf 'continuation_tii_source_3c80=%s\n' "$transition_continuation_tii_count"

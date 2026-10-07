@@ -112,15 +112,57 @@ Mednafen PCE Fast source maps CD banks `$68..$87` to `ROMSpace` and
 `HuCRAMWrite` (`src/pce_fast/huc.cpp`, `HuCRead`/`HuCRAMWrite`, lines 73–80;
 CD mapping lines 315–322). The instrumented cold boot therefore traced CPU
 writes to physical `$0d089f..$0d08ab` while using the authentic JP CUE and
-System Card, without loading a save state. The only 13 writes in that window
-were zero-initialization by System Card PC `$ea9c` (physical `$000a9c`) with
-MPR2=`$80`; there were no CD read commands, no non-System-Card polls, and no
-transition. The separate save-state capture had no writes in the window
-because RAM contents were restored before tracing began.
+System Card, without loading a save state. That cold-boot run saw only
+zero-initialization by System Card PC `$ea9c` (physical `$000a9c`) with
+MPR2=`$80`. The then-attached transition counters were zero, but those raw
+sector/SCSI hooks instrument the standard PCE path, not PCE Fast; they do not
+establish that the PCE Fast drive performed no reads. The separate save-state
+capture had no writes in the window because RAM contents were restored before
+tracing began.
 
-The source route that places the nonzero runtime bytes in CD RAM remains
-unknown. The next positive capture must show a non-System-Card loader or
-writer, bind its bytes to one of the six authentic JP offsets, and then
-reproduce the `$4f06 → $48a8` execution before any alternate-route semantics
-are assigned. Do not infer self-modifying code, a direct CD transfer, or
-gameplay behavior from the current evidence.
+### Configured-profile replay and CD-port source-byte validation
+
+A fresh Mednafen 1.32.1 `pce_fast` process used the configured operator
+profile (not a Mednafen savestate) together with the authenticated JP Rev. 1
+CUE and Japanese System Card 3.0. The retained `run13` receipt does not
+identify or hash a profile SRAM file, so it does not prove that authentic SRAM
+was present or loaded. Future captures now record the relative names and MD5
+hashes of valid 2 KiB `.sav` files copied into the isolated startup profile;
+that receipt establishes profile input bytes, not successful SRAM loading.
+The Track 02 BIN
+identity was SHA-256
+`d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb` and
+MD5 `b7afb338ad31be1025b53f9aff12d73a`; the normalized System Card runtime
+image matched MD5 `38179df8f4ac870017db21ebcbf53114`.
+
+The 240-second scripted-input replay (`run13`) did **not** reach a game poll
+or dungeon transition: its receipt reports 246,066 System Card input reads,
+zero non-System-Card polls, zero CD IRQ callbacks, and zero authenticated
+CD-to-RAM receipts. Its 65 target writes were System Card zero-initialization
+at physical `$0d089f..$0d08ab` with MPR2=`$80`; they are not the nonzero runtime
+window and do not prove gameplay.
+
+The PCE Fast drive hook recorded 4,096 data-port bytes, all with valid sector
+provenance. An independent byte-by-byte check against the authentic JP Rev. 1
+Track 02 BIN confirmed every value at its calculated raw-file offset. The
+first record reads LBA 3590 at raw sector offset 16 and file offset 526,864;
+its 4,096-byte run is source-bound to the authenticated BIN. Track 02 has a
+224-sector prefix before `INDEX 01` (526,848 bytes), because `INDEX 00` is at
+sector 0 and `INDEX 01` is at `00:02:74`. The image reader's file offset is
+relative to its `FileOffset` (`CDAccess_Image.cpp`, `Read_Raw_Sector`, lines
+1036–1097; CUE track layout, lines 865–901).
+
+This validates source-byte calculation for PCE Fast CD data-port reads during
+the observed boot path. It does not identify the source of the 13-byte runtime
+window, bind any of the six candidate copies, or prove gameplay. The data-port
+trace intentionally has no CPU PC/MPR fields because the hook is in the CD
+module, where those registers are unavailable; do not infer a PC-level join
+from trace order. The earlier real gameplay screenshot is a separate runtime
+artifact, not part of `run13`.
+
+The full instrumented Mednafen 1.32.1 build succeeded on trv2, and the
+complete Firestaff patch chain passed its focused apply test. The next capture
+must reach non-System-Card code, then join the observed runtime bytes to raw
+LBA/file offsets and reproduce `$4f06 → $48a8` before assigning routine or
+alternate-route semantics. Do not infer self-modifying code, direct DMA, or
+gameplay meaning from boot-path byte reads alone.

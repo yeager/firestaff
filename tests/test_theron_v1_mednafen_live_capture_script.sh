@@ -1023,6 +1023,13 @@ if ! grep -Fq 'autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}' "$script" ||
     printf 'FAIL: capture script and Mednafen patch must retain authentic movie-replay provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'profile_sram_manifest="${trace}.profile-sram"' "$script" ||
+   ! grep -Fq "find \"\$home_dir/sav\" -type f -name '*.sav' -size 2048c -print0" "$script" ||
+   ! grep -Fq 'configured_profile_sram_files=%s' "$script" ||
+   ! grep -Fq 'sed '\''s/^/configured_profile_sram=/'\'' "$profile_sram_manifest"' "$script"; then
+    printf '%s\n' 'FAIL: transition receipt must hash valid SRAM files copied into the isolated profile without claiming they were loaded' >&2
+    exit 1
+fi
 if ! grep -Fq 'post_dungeon_ordinal=${THERON_CAPTURE_POST_DUNGEON_ORDINAL:-}' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_POST_DUNGEON_ORDINAL must be 0..6' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_POST_DUNGEON_ORDINAL="$post_dungeon_ordinal"' "$script"; then

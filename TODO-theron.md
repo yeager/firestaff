@@ -14,6 +14,35 @@
   work before claiming original item-selection, naming, or inventory-screen
   behavior.
 
+## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
+
+- ✅ Extended the authentic JP/US `$4943` Stage-2 source lock to the direct
+  `$49FA..$4A08` entry, including its branch/JSR edges and RTS boundary. The
+  focused test binds its 15 bytes to both original Track 02 images and passed
+  three repeated loops on trv2. This is static source evidence, not runtime
+  rendering parity. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l4943-window-20261007.md`.
+
+## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
+
+- 🔧 Added opt-in Mednafen PCE Fast tracing for authentic CD data-port reads
+  and target writes, including a raw LBA/sector-offset receipt. A clean full
+  1.32.1 instrumented build succeeds on trv2 and the complete patch chain
+  applies in the focused patch test. The 240-second configured-profile replay
+  (`run13`) did not reach a non-System-Card input poll or dungeon transition;
+  its receipt did not identify or hash copied SRAM. The capture helper now
+  records hashes of valid 2 KiB SRAM files in its isolated startup profile,
+  without claiming that the emulator loaded them.
+- 🔒 The replay recorded 4,096 source-bound CD data-port bytes. An independent
+  byte-by-byte comparison confirmed every value against the authentic JP
+  Rev. 1 Track 02 BIN using the CUE `INDEX 01` prefix (224 sectors / 526,848
+  bytes). This verifies the PCE Fast boot-path source-offset calculation, not
+  the source of the nonzero runtime window. The 65 target writes were System
+  Card zero-initialization with MPR2=`$80`; they do not prove gameplay. The
+  six authentic JP Track 02 copies of the candidate window therefore remain
+  unresolved until a gameplay capture binds the runtime bytes to one copy. See
+  `docs/source-lock/theron-disassembly/theron-3879-runtime-window-candidates-20261007.md`.
+
 ## 2026-10-07 PCE Fast stage-two caller gap
 
 - 🔒 Rebuilt Mednafen's PCE Fast core with a bounded instruction window after
@@ -48,11 +77,12 @@
   source-lock test. Six matches do not identify which source copy was loaded.
 - 🔒 A cold boot without save-state found that PCE Fast maps CD RAM bank
   `$68` through `ROMSpace` and `HuCRAMWrite` (`huc.cpp`, lines 73–80 and
-  315–322). The bounded target-write trace saw only System Card zeroing of
+  315–322). That cold-boot target-write trace saw only System Card zeroing of
   `$0d089f..$0d08ab` from PC `$ea9c` (physical `$000a9c`, MPR2=`$80`). It
   observed no CD read command, non-System-Card input poll, or transition.
-  This does not explain the nonzero save-state bytes or bind them to any of
-  the six media candidates.
+  The later run13 replay still observed only System Card zero-initialization
+  and did not reach gameplay; its profile SRAM is unverified. See
+  `docs/source-lock/theron-disassembly/theron-3879-runtime-window-candidates-20261007.md`.
 - 🔒 A 240-second authentic JP Rev. 1 cold boot repeated six four-second RUN
   holds from frame 120 through frame 9000. It recorded controller input but
   no CD read command, no non-System-Card poll, and no game transition. The
