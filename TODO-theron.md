@@ -249,7 +249,12 @@ Reviewed 2026-10-07. Only open work is listed here.
 - 🔒 `$4ec9` branches around the four-byte copy when carry is set and copies
   on carry-clear. Whether that control result represents failure, absence, or
   another game-level condition, and what the fields represent, remain open.
-- 🔒 `$3879` is still below the loaded stage-two window and undecoded.
+- 🔒 The authentic captured US Akutuba-complete BaseRAM window at offset
+  `$1879` is now uniquely byte-bound to both US and JP Track 02 images. Its
+  exact 160-byte instruction/data boundaries are not yet independently
+  disassembled here; the source join does not prove the `$4ef4` caller's live
+  MPR mapping, execution, BIOS effects, or game-level meaning. Do not treat
+  logical `$3879` as an image offset or promote these bytes to runtime behavior.
 - 🔒 Both US and JP linked captures applied all three replay events, but strict
   input verification blocked because the final event had no subsequent
   controller-port read exposing its mask. Do not treat those captures as proof

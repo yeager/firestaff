@@ -7475,3 +7475,16 @@ were independently read three times from each authenticated US and JP Track
 02 image and matched the existing body byte-for-byte. The listing does not
 establish runtime bank mapping, call selection, or operand/gameplay meanings;
 no emulator run or synthetic media was used.
+
+# ✅ 2026-10-07 Bind the captured `$3879` window to authentic Track 02
+
+Added `theron_3879_runtime_window_source`, which hashes the authentic 8 KiB
+US Akutuba-complete BaseRAM snapshot and both regional Track 02 BINs, then
+requires the complete 160-byte snapshot window at offset `$1879` to occur
+exactly once in each disc image. Its unique file offsets are `534041` (US)
+and `531689` (JP), both two raw sectors after INDEX 01 at raw byte 137 / MODE1
+user byte 121. The three-pass bounded authentic-media checks passed for both
+regions. This establishes the bytes' source provenance only; the MPR mapping,
+instruction/data boundaries, caller execution, BIOS effects, and game-level
+meaning remain open. Snapshot and game data stay outside Git; no synthetic
+media was used.
