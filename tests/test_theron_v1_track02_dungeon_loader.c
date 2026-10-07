@@ -25,6 +25,8 @@
 #define UD_PER_SECTOR 2048
 #define SYNC_OFFSET 16
 
+static int assert_real_item_roundtrip(Theron_V1_World *world);
+
 static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     FILE *fp;
     long fsize;
@@ -385,7 +387,8 @@ static void test_real_item_name_sources(
 }
 
 static void test_real_sarmon_track19_mapping(
-        const uint8_t *ud, size_t ud_size, int variant) {
+        const uint8_t *ud, size_t ud_size,
+        const uint8_t *raw_track02, size_t raw_track02_size, int variant) {
     const char *home = getenv("HOME");
     char track19_path[1024];
     Theron_Track02ItemNameSource track02;
@@ -413,6 +416,10 @@ static void test_real_sarmon_track19_mapping(
                world, &track02, variant) == 1);
     assert(world->track19_item_names.item_mapping_proven == 1);
     assert(world->track19_item_names.mapped_track02_dungeon_mask == (1u << 3));
+    bind_real_track02_party(
+        world, raw_track02, raw_track02_size,
+        variant == THERON_TRACK02_VARIANT_JP_BIN ?
+            THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN);
     world->current_dungeon = 4;
     assert(theron_v1_track02_load_full_dungeon_for_variant(
                world, 4, ud, ud_size, variant, &result) == 0);
@@ -444,6 +451,7 @@ static void test_real_sarmon_track19_mapping(
         assert(theron_v1_world_object_track19_item_name_raw(
                    world, &wrong_property, &name, &name_size) == 0);
     }
+    assert(assert_real_item_roundtrip(world) == 1);
     track19.raw_properties[0][0] ^= 1u;
     assert(theron_v1_world_bind_track19_item_name_bank(
                world, &track19, variant) == 0);
@@ -1010,6 +1018,9 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
         uint8_t source_raw[16];
         const uint8_t *source_item_name = NULL;
         size_t source_item_name_size = 0u;
+        const uint8_t *status_item_name = NULL;
+        size_t status_item_name_size = 0u;
+        int status_item_name_variant = 0;
         Theron_V1_BootRuntimeInputReceipt input_receipt;
         if (object->level != world->current_level ||
             !object->source_ref || !object->source_property_valid ||
@@ -1019,6 +1030,15 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
              object->source_category != THERON_CAT_POTION &&
              object->source_category != THERON_CAT_MISC)) {
             continue;
+        }
+        if (world->track19_item_names.item_mapping_proven &&
+            object->source_dungeon == 4u) {
+            const uint8_t *track19_name = NULL;
+            size_t track19_name_size = 0u;
+            if (!theron_v1_world_object_track19_item_name_raw(
+                    world, object, &track19_name, &track19_name_size)) {
+                continue;
+            }
         }
         for (int j = 0; j < i; ++j) {
             const Theron_V1_Object *earlier = &world->objects[j];
@@ -1127,6 +1147,17 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
                    inventory_item_name_size == 0u);
             carried->property[0] = saved_property_byte;
         }
+        status_item_name = source_item_name;
+        status_item_name_size = source_item_name_size;
+        status_item_name_variant =
+            world->track02_item_names[source_dungeon - 1u].variant;
+        if (world->track19_item_names.item_mapping_proven &&
+            source_dungeon == 4u) {
+            assert(theron_v1_world_inventory_source_track19_item_name_raw(
+                world, world->party.active_slot, inventory_slot,
+                &status_item_name, &status_item_name_size) == 1);
+            status_item_name_variant = world->track19_item_names.variant;
+        }
         assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
                    world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
                    &input_receipt) == 1);
@@ -1135,15 +1166,16 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
         {
             char expected_name[128] = {0};
             assert(input_receipt.source_item_name_utf8[0] != '\0');
-            if (world->track02_item_names[source_dungeon - 1u].variant == 1) {
+            if (status_item_name_variant ==
+                THERON_TRACK02_VARIANT_JP_BIN) {
                 assert(firestaff_cp932_to_utf8(
-                           (const char *)source_item_name,
-                           source_item_name_size, expected_name,
+                           (const char *)status_item_name,
+                           status_item_name_size, expected_name,
                            sizeof(expected_name)) >= 0);
             } else {
-                assert(source_item_name_size < sizeof(expected_name));
-                memcpy(expected_name, source_item_name,
-                       source_item_name_size);
+                assert(status_item_name_size < sizeof(expected_name));
+                memcpy(expected_name, status_item_name,
+                       status_item_name_size);
             }
             assert(strcmp(input_receipt.source_item_name_utf8,
                           expected_name) == 0);
@@ -6300,7 +6332,9 @@ int main(void) {
                 test_authentic_take_requires_matching_item_record(
                     jp_ud, jp_ud_size, raw, raw_size, 1, dungeon_id);
             }
-            test_real_sarmon_track19_mapping(jp_ud, jp_ud_size, 1);
+            test_real_sarmon_track19_mapping(
+                jp_ud, jp_ud_size, raw, raw_size,
+                THERON_TRACK02_VARIANT_JP_BIN);
             free(raw);
             free(jp_ud);
         }
@@ -6348,7 +6382,8 @@ int main(void) {
         test_authentic_take_requires_matching_item_record(
             ud, ud_size, raw, raw_size, 2, dungeon_id);
     }
-    test_real_sarmon_track19_mapping(ud, ud_size, 2);
+    test_real_sarmon_track19_mapping(
+        ud, ud_size, raw, raw_size, THERON_TRACK02_VARIANT_US_BIN);
     test_authentic_coordinate_teleporter_without_endpoint(
         ud, ud_size, raw, raw_size);
     test_real_bank_reload_clears_stale_levels(ud, ud_size);

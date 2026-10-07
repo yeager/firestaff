@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-07 — exercise the authentic Track 19 carried-name route
+
+Extended the real-media dungeon-loader regression to bind the authentic US
+Track 19 name bank and Track 02 roster/party, then carry and select a real
+Sarmon item through the existing host input receipt. The test checks the
+Track 19-backed inventory lookup and the UTF-8 status name; the shared
+round-trip test still checks source provenance and TAKE/DROP integrity. The
+focused CTest passed three repeated loops on trv2 with authentic US media.
+This proves the host-side data/receipt path only, not original T900 inventory
+presentation or selection behavior. JP Track 19 media was unavailable on
+trv2, so this new end-to-end case is US-only.
+
 ## 2026-10-07 — preserve reproducible runtime-window disassembly
 
 Recorded a MAME 0.285 HuC6280 listing for the 139-byte instruction-aligned
