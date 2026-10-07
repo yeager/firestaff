@@ -2,6 +2,20 @@
 
 Reviewed 2026-10-07. Only open work is listed here.
 
+## 2026-10-07 — bind JP runtime-sampled code to its physical source copy
+
+- 🔒 A scripted-input `pce_fast` trace identifies the authentic JP Rev. 1
+  Track 02 BIN and records 228 reads at 27 unique logical PCs in
+  `$C10E..$C44D`, with current PC, physical PC, and eight code bytes. MAME
+  HuC6280 decoding of each sampled PC was repeated three times. See
+  `docs/source-lock/theron-disassembly/theron-jp-runtime-pc-windows-20261007.md`.
+  This capture does not identify the game variant or a completed transition.
+- 🔒 The 20-byte observed anchor occurs at seven offsets in the authentic JP
+  BIN. Four candidate copies match all 27 windows, so the runtime source copy
+  is still ambiguous. Obtain a same-session source-offset-to-RAM-load receipt
+  and a known transition before naming the routine, assigning semantics, or
+  using it as stage/gameplay evidence.
+
 ## 2026-10-06 — admit the shared JP L4696 disassembly window
 
 - ✅ Direct comparison of the authenticated US and JP Track 02 BINs found

@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-07 — disassemble JP runtime-sampled HuC6280 PCs
+
+Recorded 27 logical PCs and their 8-byte code windows from a scripted-input
+`pce_fast` capture whose transition receipt identifies the authentic JP Rev. 1
+Track 02 BIN. MAME `unidasm -arch h6280` decoded each sampled PC in three
+identical passes. The capture metadata leaves the game variant and transition
+unknown, so the listing assigns no routine or gameplay meaning. Its 20-byte
+anchor matches seven raw Track 02 offsets; four candidate source copies match
+all 27 observed windows. The dynamic source copy therefore remains unbound.
+See `docs/source-lock/theron-disassembly/theron-jp-runtime-pc-windows-20261007.md`.
+
 ## 2026-10-06 — bind all direct targets of JP stage-two `$3114`
 
 Bound the four remaining authentic JP direct-call windows from `$31b3`:
