@@ -23,3 +23,19 @@ The bounded control-flow checks are the JSR at `$4a89` to `$491f`, the BSR at
 The routine is also reached by the caller's JSR at `$4a05`. These edges and
 bytes establish a static source window only; they do not prove runtime entry,
 hardware effects, or rendering semantics.
+
+## Linear HuC6280 disassembly
+
+MAME 0.285 `unidasm -arch h6280 -basepc 0x4a84 -skip 2898324 -count 160`
+decoded the JP image. The corresponding US image uses raw offset 2,900,676.
+Both complete listings had SHA-256
+`62e510911db6017dccdd1c82ed67ce0675c1eab2f2b4a7cc596dadcec1f8ccba` in three
+repeated comparisons. The checked-in listing is
+`theron-jp-stage2-l4a84-huc6280.asm`.
+
+The linear decode shows a conditional path at `$4a87`, a call to `$491f`,
+`ST0` selections followed by writes to `$0002/$0003`, a `$20`-bounded loop,
+and a `BSR` to `$4b24`. The tail updates `$47ba/$47bb` and clears `$47d4`
+before returning. These are instruction-level observations only: they do not
+identify the meaning of RAM fields, establish that the routine executes, or
+prove any rendered output.
