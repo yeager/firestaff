@@ -20,6 +20,14 @@ RUNTIME_CALL_WINDOW = bytes.fromhex("a90820fb444c20b9")
 RUNTIME_CONTEXT_SHA256 = (
     "1f6df3c02976c33d01f8e15cd088ce186e46a7b7405c3bc6ef865c2cd2a94b10"
 )
+MAME_LISTING_SHA256 = (
+    "526a0e4061e81a18786ac3cccb15879b5dfc25ec0f03e697c266e6e0c980e955"
+)
+MAME_LISTING_PATH = (
+    pathlib.Path(__file__).resolve().parents[1] / "docs" / "source-lock" /
+    "theron-disassembly" /
+    "theron-jp-3879-runtime-window-candidate-20261007.asm"
+)
 EXPECTED = {
     "US": {
         "name": "TQUS02.bin",
@@ -45,6 +53,28 @@ def find_offsets(raw: bytes, needle: bytes) -> tuple[int, ...]:
             return tuple(offsets)
         offsets.append(offset)
         offset += 1
+
+
+def verify_recorded_listing() -> None:
+    try:
+        lines = MAME_LISTING_PATH.read_text(encoding="utf-8").splitlines(
+            keepends=True
+        )
+    except OSError as error:
+        raise ValueError(f"cannot read recorded MAME listing: {error}") from error
+
+    try:
+        start = lines.index("; BEGIN MAME OUTPUT\n") + 1
+        end = lines.index("; END MAME OUTPUT\n")
+    except ValueError as error:
+        raise ValueError("recorded MAME listing delimiters are missing") from error
+
+    listing = "".join(lines[start:end]).encode("utf-8")
+    if hashlib.sha256(listing).hexdigest() != MAME_LISTING_SHA256:
+        raise ValueError("recorded MAME listing digest differs")
+    if not any(line.startswith("0048a8: a9 08") for line in lines[start:end]):
+        raise ValueError("recorded MAME listing lost the candidate entry")
+    print("PASS: recorded MAME 0.285 candidate listing hash and entry")
 
 
 def verify_edition(edition: str, path: pathlib.Path) -> bool:
@@ -103,6 +133,7 @@ def verify_edition(edition: str, path: pathlib.Path) -> bool:
 
 
 def main() -> int:
+    verify_recorded_listing()
     data_root = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else (
         pathlib.Path.home() / ".firestaff" / "data"
     )

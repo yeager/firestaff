@@ -59,10 +59,17 @@ which of the six copies participated.
 
 ## Bounded HuC6280 decode at the dynamic entry
 
-MAME `unidasm -arch h6280` decoded each extracted 141-byte context identically
-in three repeated loops (listing SHA-256
-`d0271088d04fd940eca6b0a650deb417f30cb9736334964a6e3bf28c9421c483`). With
-the candidate window provisionally aligned to `$489f`, the dynamic entry
+MAME 0.285 `unidasm -arch h6280 -basepc 0x485f -skip 611631 -count 139`
+decoded the instruction-aligned prefix identically in three repeated loops.
+The listing SHA-256 is
+`526a0e4061e81a18786ac3cccb15879b5dfc25ec0f03e697c266e6e0c980e955`; the
+reproducible output is saved in
+`theron-jp-3879-runtime-window-candidate-20261007.asm`. The two remaining
+context bytes are `$bd $1b`; the following three-byte instruction is left
+undecoded because it crosses the authenticated 141-byte context boundary.
+A prior unversioned listing digest could not be reproduced with MAME 0.285
+and is superseded by this bounded command and recorded output. With the
+13-byte candidate window provisionally aligned to `$489f`, the dynamic entry
 decodes as:
 
 ```text

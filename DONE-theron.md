@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-07 — preserve reproducible runtime-window disassembly
+
+Recorded a MAME 0.285 HuC6280 listing for the 139-byte instruction-aligned
+prefix of one authentic JP Track 02 runtime-window context. Its 141-byte
+context hash is shared by all six JP candidates; the two final context bytes
+remain undecoded because the next instruction would cross the evidence
+boundary. The candidate-relative `$489f` alignment decodes the captured
+`$48a8` entry as `LDA #$08; JSR $44fb; JMP $b920`, without binding that copy to
+CD RAM. The existing candidate CTest now locks the listing digest and entry,
+then independently rechecks both full regional media hashes and all six JP
+contexts in three loops.
+
 ## 2026-10-07 — add bounded Stage-2 callee runtime observer
 
 Added a separate opt-in Mednafen sidecar for bounded observations at the

@@ -48,11 +48,12 @@
 - 🔒 Expanded the six authentic JP runtime-window candidates to 141-byte
   contexts. Three repeated scans found the contexts byte-identical, with
   SHA-256 `1f6df3c02976c33d01f8e15cd088ce186e46a7b7405c3bc6ef865c2cd2a94b10`.
-  MAME `unidasm -arch h6280` decodes the runtime-aligned candidate entry as
-  `LDA #$08; JSR $44fb; JMP $b920`, matching the captured PCs/operands at
-  `$48a8`, `$48aa`, and `$48ad`. The CPU-address overlay remains provisional:
-  no loader receipt binds any of the six raw offsets to CD RAM. This decodes
-  only the immediate entry/call/jump and does not establish callee semantics.
+  The reproducible MAME 0.285 139-byte prefix listing is saved in
+  `theron-jp-3879-runtime-window-candidate-20261007.asm` and its SHA-256 is
+  checked by the existing candidate CTest. The provisional candidate overlay
+  decodes `$48a8` as `LDA #$08; JSR $44fb; JMP $b920`, matching the captured
+  PCs/operands at `$48a8`, `$48aa`, and `$48ad`. No loader receipt binds any
+  of the six raw offsets to CD RAM; the callees' semantics remain open.
 - 🔒 The Stage-2 record user-offset span `$4943..$49f9` is now source-locked
   for authentic JP as well as US Track 02. All 183 bytes match across the
   hash-verified editions; three MAME HuC6280 disassembly loops agree on the
