@@ -39,6 +39,43 @@ EXPECTED_SPANS = (
     (0x489F, bytes.fromhex("2063e0ad2822f0eb8d802780e6")),
 )
 
+EXPECTED_RECORD_USER_SPANS = (
+    (
+        0x5E2B,
+        0x56,
+        "02f993418bd7a54dc2679854de4f98bc61f43b4fbc676978305c37bd9f3e4a9e",
+    ),
+    (
+        0x5CE4,
+        0x38,
+        "f9732c087fd6f61fcc5449282154b83b4f7ac75595375f1a0c5df1a6a886a8cf",
+    ),
+    (
+        0x5D1C,
+        0x77,
+        "08a58b9b934100232bfd381845cead9b11bd88904c76bf3128f9f8467bdfaee0",
+    ),
+    (
+        0x5D93,
+        0x48,
+        "e6bd85ceb98a37737b5d8e0002aeaff2f5029978ff998ded34678e1240413339",
+    ),
+    (
+        0x5DDB,
+        0x1A,
+        "c1becb66780c655428f31f2b1bbd8bf92f62ced603949614cd35b17597b05453",
+    ),
+    (
+        0x5DF5,
+        0x21,
+        "aa37228d4a9401afabc88c37ee57a7b18dc29a7c0cba3b35a9f44d635ef098dd",
+    ),
+)
+
+EXPECTED_RECORD_USER_BYTES = (
+    (0x5E81, bytes.fromhex("395e615e805e")),
+)
+
 
 def stage2_bytes_at(
     raw: bytes, stage2_sector: int, cpu_address: int, length: int
@@ -54,6 +91,27 @@ def stage2_bytes_at(
         raw_offset = sector * RAW_SECTOR_BYTES + 16 + offset % USER_SECTOR_BYTES
         if raw_offset >= len(raw):
             raise ValueError("Stage 2 byte range exceeds the authentic image")
+        result.append(raw[raw_offset])
+    return bytes(result)
+
+
+def stage2_record_user_bytes_at(
+    raw: bytes, stage2_sector: int, user_offset: int, length: int
+) -> bytes:
+    if user_offset < 0 or length < 0:
+        raise ValueError("invalid Stage 2 record user offset or length")
+
+    result = bytearray()
+    for byte_offset in range(length):
+        offset = user_offset + byte_offset
+        sector = stage2_sector + offset // USER_SECTOR_BYTES
+        raw_offset = (
+            sector * RAW_SECTOR_BYTES + 16 + offset % USER_SECTOR_BYTES
+        )
+        if raw_offset >= len(raw):
+            raise ValueError(
+                "Stage 2 record user range exceeds the authentic image"
+            )
         result.append(raw[raw_offset])
     return bytes(result)
 
@@ -91,6 +149,27 @@ def verify_edition(edition: str, path: pathlib.Path) -> bool:
                     f"{actual.hex()}"
                 )
 
+        for user_offset, length, wanted_hash in EXPECTED_RECORD_USER_SPANS:
+            actual = stage2_record_user_bytes_at(
+                raw, stage2_sector, user_offset, length
+            )
+            actual_hash = hashlib.sha256(actual).hexdigest()
+            if actual_hash != wanted_hash:
+                raise ValueError(
+                    f"{edition} Stage 2 record user span mismatch at "
+                    f"${user_offset:04x}: {actual_hash}"
+                )
+
+        for user_offset, wanted in EXPECTED_RECORD_USER_BYTES:
+            actual = stage2_record_user_bytes_at(
+                raw, stage2_sector, user_offset, len(wanted)
+            )
+            if actual != wanted:
+                raise ValueError(
+                    f"{edition} Stage 2 record user bytes mismatch at "
+                    f"${user_offset:04x}: {actual.hex()}"
+                )
+
         observed_hashes.append(media_hash)
         print(f"PASS: {edition} authentic Track 02 source-lock pass {pass_number}")
 
@@ -109,7 +188,7 @@ def main() -> int:
     jp_present = verify_edition("JP", theron_root / "TQJP02.bin")
     if not us_present or not jp_present:
         return 77
-    print("PASS: Theron ID $3b/$3c authentic Track 02 byte locks")
+    print("PASS: Theron authentic Track 02 byte locks")
     return 0
 
 

@@ -1,5 +1,24 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-07 — disassemble JP Stage-2 `$4943` direct callees
+
+Extended the authenticated `$4943..$49f9` caller source lock to its direct
+callee `$5e2b`, the `$5ce4` continuation at `$5d1c`, and the three bounded
+call targets `$5d93`, `$5ddb`, and `$5df5`. The six windows are source-locked
+for original JP and US Track 02, with matching SHA-256/FNV-1a-64 digests and
+three identical MAME HuC6280 disassembly passes. The test checks each window
+hash, every byte across editions, the `$5e81` indirect-dispatch encoding and
+its first three table destinations, caller/continuation branch targets, the
+bounded helper branches/RTS boundaries, and the `$5ce4` TII operands. The
+Python media test also verifies the full authentic Track 02 SHA-256 before
+checking each source span. The bounded listings are recorded in
+`docs/source-lock/theron-disassembly/theron-jp-stage2-l5e2b-huc6280.asm` and
+`theron-jp-stage2-l5ce4-huc6280.asm`, plus
+`theron-jp-stage2-l5d1c-huc6280.asm`, `theron-jp-stage2-l5d93-huc6280.asm`,
+`theron-jp-stage2-l5ddb-huc6280.asm`, and `theron-jp-stage2-l5df5-huc6280.asm`.
+This proves static source bytes only;
+runtime selector ranges and gameplay effects remain open.
+
 ## 2026-10-07 — prepare bounded `$3879` indirect-target trace
 
 - Added standard-PCE and PCE Fast hooks for opt-in tracing of `$4ef4`,

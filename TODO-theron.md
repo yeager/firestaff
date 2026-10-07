@@ -60,6 +60,15 @@
   region hashes and edges. This is static-source evidence only, not JP
   execution or graphics parity; see
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l4943-window-20261007.md`.
+- 🔒 The caller's authentic direct callee `$5e2b`, `$5ce4` continuation at
+  `$5d1c`, and its direct callees `$5d93`, `$5ddb`, and `$5df5` are disassembled
+  and source-locked for JP and US. All six bounded code windows and the first
+  three `$5e81` dispatch-table words match by edition; caller-entry, branch,
+  table, TII operands, helper branches, and RTS boundaries are checked by the
+  focused C test. The three-pass Python media test verifies each full-image
+  SHA-256 before checking the source spans. This does not
+  prove runtime selection, broader hardware effects, or gameplay behavior; see
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l5e2b-l5ce4-20261007.md`.
 - 🔧 Bind the genuine game-code caller/route that transfers control into the
   `$4f06 -> $48a8` runtime path to its authentic physical-bank source. Trace
   the MPR2=`$68` mapping's writes/load origin and bind the observed candidate

@@ -3882,9 +3882,9 @@ static void test_stage2_jp_generation51_draw_chain(void)
     printf("  PASS: stage2_jp_generation51_draw_chain (1080/1103 bytes differ from US)\n");
 }
 
-/* Lock the authentic JP Stage-2 record user-offset window also bound for US.
- * The source offset is not the CPU-relative offset used by stage2_byte_at().
- * This test assigns no runtime or graphics semantics to the JP stream. */
+/* Lock an authentic JP Stage-2 caller and its direct callee user-offset
+ * windows, which are also bound for US. These offsets are not CPU-relative
+ * offsets used by stage2_byte_at(); no runtime or graphics semantics follow. */
 static void test_stage2_jp_l4943_window(void)
 {
     Theron_Track02IplLoaderReceipt jp_receipt;
@@ -3911,8 +3911,68 @@ static void test_stage2_jp_l4943_window(void)
     assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
                                       0x4943u, 0x49fau) ==
            UINT64_C(0xdcdc5b26be9afc17));
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x5e2bu, 0x5e81u) ==
+           UINT64_C(0xeda767645ebeb320));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x5e2bu, 0x5e81u) ==
+           UINT64_C(0xeda767645ebeb320));
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x5ce4u, 0x5d1cu) ==
+           UINT64_C(0xe411d8214ac332a3));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x5ce4u, 0x5d1cu) ==
+           UINT64_C(0xe411d8214ac332a3));
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x5d1cu, 0x5d93u) ==
+           UINT64_C(0x6dd386d0d03bb574));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x5d1cu, 0x5d93u) ==
+           UINT64_C(0x6dd386d0d03bb574));
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x5d93u, 0x5ddbu) ==
+           UINT64_C(0xd3134abbb0e0dfe8));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x5d93u, 0x5ddbu) ==
+           UINT64_C(0xd3134abbb0e0dfe8));
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x5ddbu, 0x5df5u) ==
+           UINT64_C(0x7b7c74e766d09c4d));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x5ddbu, 0x5df5u) ==
+           UINT64_C(0x7b7c74e766d09c4d));
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x5df5u, 0x5e16u) ==
+           UINT64_C(0xf5af46bc925fc89f));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x5df5u, 0x5e16u) ==
+           UINT64_C(0xf5af46bc925fc89f));
 
     for (address = 0x4943u; address < 0x49fau; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+    for (address = 0x5e2bu; address < 0x5e81u; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+    for (address = 0x5ce4u; address < 0x5d1cu; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+    for (address = 0x5d1cu; address < 0x5d93u; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+    for (address = 0x5d93u; address < 0x5ddbu; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+    for (address = 0x5ddbu; address < 0x5df5u; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+    for (address = 0x5df5u; address < 0x5e16u; ++address) {
         assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
                stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
     }
@@ -3936,8 +3996,66 @@ static void test_stage2_jp_l4943_window(void)
     assert_jp_stage2_record_branch_target(0x49b2u, 0x80u, 0x49bau);
     assert_jp_stage2_record_branch_target(0x49c7u, 0x90u, 0x49ccu);
     assert_jp_stage2_record_branch_target(0x49d7u, 0xf0u, 0x49e2u);
+    assert_jp_stage2_record_branch_target(0x5e2eu, 0xd0u, 0x5e31u);
+    assert_jp_stage2_record_branch_target(0x5ce7u, 0x50u, 0x5d1cu);
+    assert_jp_stage2_record_branch_target(0x5d1fu, 0xd0u, 0x5d4fu);
+    assert_jp_stage2_record_branch_target(0x5d24u, 0xd0u, 0x5d4eu);
+    assert_jp_stage2_record_branch_target(0x5d58u, 0x90u, 0x5d68u);
+    assert_jp_stage2_record_branch_target(0x5d5du, 0xf0u, 0x5d68u);
+    assert_jp_stage2_record_branch_target(0x5d72u, 0x90u, 0x5d76u);
+    assert_jp_stage2_record_branch_target(0x5d7du, 0x90u, 0x5d81u);
+    assert_jp_stage2_record_branch_target(0x5d83u, 0xd0u, 0x5d51u);
+    assert_jp_stage2_record_branch_target(0x5d88u, 0xd0u, 0x5d92u);
+    assert_jp_stage2_record_branch_target(0x5d8du, 0xd0u, 0x5d92u);
+    assert_jp_stage2_record_jsr_target(0x5d46u, 0x5ddbu);
+    assert_jp_stage2_record_jsr_target(0x5d62u, 0x5d93u);
+    assert_jp_stage2_record_jsr_target(0x5d65u, 0x5df5u);
+    assert_jp_stage2_record_branch_target(0x5dd8u, 0xd0u, 0x5d96u);
+    assert_jp_stage2_record_branch_target(0x5de7u, 0xf0u, 0x5deeu);
+    assert_jp_stage2_record_branch_target(0x5df2u, 0xd0u, 0x5dddu);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5ddau) ==
+           0x60u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5df4u) ==
+           0x60u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e15u) ==
+           0x60u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e36u) ==
+           0x7cu);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e37u) ==
+           0x81u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e38u) ==
+           0x5eu);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e81u) ==
+           0x39u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e82u) ==
+           0x5eu);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e83u) ==
+           0x61u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e84u) ==
+           0x5eu);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e85u) ==
+           0x80u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e86u) ==
+           0x5eu);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5e80u) ==
+           0x60u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cf4u) ==
+           0x73u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cf5u) ==
+           0xe0u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cf6u) ==
+           0x58u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cf7u) ==
+           0xe1u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cf8u) ==
+           0x58u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cf9u) ==
+           0xffu);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, 0x5cfau) ==
+           0x03u);
 
-    printf("  PASS: stage2_jp_l4943_window (183 bytes; source-identical to US)\n");
+    printf("  PASS: stage2_jp_l4943_window (183-byte caller; 261-byte callee "
+           "and continuation windows match US)\n");
 }
 
 static void test_stage2_l3114_callees(void)
