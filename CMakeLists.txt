@@ -54581,6 +54581,7 @@ if(BUILD_TESTING)
         "dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
         "dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
         "dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
+        "csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
         "csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
         "dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
         "dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
