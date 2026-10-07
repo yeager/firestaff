@@ -39,6 +39,12 @@
   observed no CD read command, non-System-Card input poll, or transition.
   This does not explain the nonzero save-state bytes or bind them to any of
   the six media candidates.
+- 🔒 A 240-second authentic JP Rev. 1 cold boot repeated six four-second RUN
+  holds from frame 120 through frame 9000. It recorded controller input but
+  no CD read command, no non-System-Card poll, and no game transition. The
+  dynamic-receipt gate remained blocked. This confirms that the tested input
+  schedule did not leave the system-card path; it does not establish a game
+  failure or any title behavior.
 - 🔧 Bind the genuine game-code caller/route that transfers control into the
   `$4f06 -> $48a8` runtime path to its authentic physical-bank source. Trace
   the MPR2=`$68` mapping's writes/load origin and bind the observed `$a9`
