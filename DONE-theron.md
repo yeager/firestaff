@@ -7668,3 +7668,12 @@ T900/original inventory semantics. No synthetic media was used.
   decode of the `$F3/$F4` data transformation and ST0/port writes; runtime and
   display semantics remain unproven. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l491f-window-20261008.md`.
+
+## 2026-10-08 — JP Stage-2 `$4BB0` scroll-update callee disassembly
+
+- Added a complete MAME HuC6280 listing for the bounded `$4984` callee
+  `$4BB0..$4C0C`, including its in-place ADC/SBC opcode changes. The authentic
+  JP/US span and listings match in three loops, and the existing focused
+  verifier recognizes the callee and register-write sequence. This does not
+  prove runtime selection or rendered scroll parity. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l4bb0-window-20261008.md`.

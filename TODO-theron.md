@@ -39,6 +39,11 @@
   the focused authentic-media verifier passes. This adds no runtime or display
   parity claim. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l491f-window-20261008.md`.
+- ✅ Added a dedicated MAME listing for the `$4984` callee `$4BB0..$4C0C`,
+  including its self-modified ADC/SBC opcode bytes. Authentic JP/US bytes and
+  listings match in three loops; the focused verifier recognizes the bounded
+  callee and scroll-register writes. Runtime and scroll parity remain open.
+  See `docs/source-lock/theron-disassembly/theron-jp-stage2-l4bb0-window-20261008.md`.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 
