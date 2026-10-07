@@ -6,14 +6,23 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <process.h>
 #define MKDIR(path) _mkdir(path)
+#define RMDIR(path) _rmdir(path)
+#define GETPID() _getpid()
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir((path), 0700)
+#define RMDIR(path) rmdir(path)
+#define GETPID() getpid()
 #endif
 
 static int failures = 0;
+static char testScratch[1024];
+static char testDataDir[1024];
+static char isolatedHome[1024];
+static char testConfigPath[1024];
 
 #define CHECK(expr) do { \
     if (!(expr)) { \
@@ -48,7 +57,7 @@ static void seed_graphics_only_state(M12_StartupMenuState* state,
     M12_AssetRequiredFileStatus* graphics;
     M12_AssetRequiredFileStatus* dungeon;
 
-    M12_StartupMenu_InitWithDataDir(state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(state, testDataDir, NULL);
 
     state->assetStatus.dm1Available = 0;
     state->assetStatus.csbAvailable = 0;
@@ -67,7 +76,7 @@ static void seed_graphics_only_state(M12_StartupMenuState* state,
     version->shortLabel = fixture->versionShortLabel;
     version->matched = 1;
     snprintf(version->matchedPath, sizeof(version->matchedPath),
-             "/tmp/firestaff-test-no-assets/%s/GRAPHICS.DAT", fixture->gameId);
+             "%s/%s/GRAPHICS.DAT", testDataDir, fixture->gameId);
     snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s", fixture->graphicsMd5);
 
     state->assetStatus.requiredFileCounts[fixture->gameIndex] = 2U;
@@ -80,7 +89,7 @@ static void seed_graphics_only_state(M12_StartupMenuState* state,
     graphics->required = 1;
     graphics->matched = 1;
     snprintf(graphics->matchedPath, sizeof(graphics->matchedPath),
-             "/tmp/firestaff-test-no-assets/%s/GRAPHICS.DAT", fixture->gameId);
+             "%s/%s/GRAPHICS.DAT", testDataDir, fixture->gameId);
     snprintf(graphics->matchedHash, sizeof(graphics->matchedHash), "%s", fixture->graphicsMd5);
 
     dungeon = &state->assetStatus.requiredFiles[fixture->gameIndex][1];
@@ -97,6 +106,8 @@ static void seed_graphics_only_state(M12_StartupMenuState* state,
         M12_AssetStatus_GameAvailable(&state->assetStatus, fixture->gameId);
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    state->settings.languageIndex = 0;
+    state->languageExplicit = 1;
     state->gameOptions[fixture->gameIndex].versionIndex = 0;
     state->activatedIndex = fixture->gameIndex;
     state->view = M12_MENU_VIEW_GAME_OPTIONS;
@@ -147,6 +158,7 @@ static void check_graphics_only_blocks_launch(const GraphicsOnlyFixture* fixture
     CHECK(intent.valid == 0);
     CHECK(intent.gameId && strcmp(intent.gameId, fixture->gameId) == 0);
     CHECK(intent.versionId && strcmp(intent.versionId, fixture->versionId) == 0);
+    M12_StartupMenu_Destroy(&state);
 }
 
 static void check_swedish_missing_media_uses_full_title(void) {
@@ -171,20 +183,36 @@ static void check_swedish_missing_media_uses_full_title(void) {
 }
 
 static int isolate_home(void) {
+    const char* scratch = getenv("FIRESTAFF_TEST_SCRATCH");
+    if (!scratch || !scratch[0]) {
+        scratch = ".";
+    }
+    if (snprintf(testScratch, sizeof(testScratch), "%s/m12-missing-dungeon-%lu",
+                 scratch, (unsigned long)GETPID()) >= (int)sizeof(testScratch) ||
+        snprintf(testDataDir, sizeof(testDataDir), "%s/no-assets", testScratch) >=
+            (int)sizeof(testDataDir) ||
+        snprintf(isolatedHome, sizeof(isolatedHome), "%s/home", testScratch) >=
+            (int)sizeof(isolatedHome) ||
+        snprintf(testConfigPath, sizeof(testConfigPath), "%s/config.toml",
+                 testScratch) >= (int)sizeof(testConfigPath)) {
+        return 0;
+    }
+    if (MKDIR(testScratch) != 0) {
+        return 0;
+    }
+    if (MKDIR(isolatedHome) != 0) {
+        RMDIR(testScratch);
+        return 0;
+    }
 #ifdef _WIN32
-    char path[256];
-    snprintf(path, sizeof(path), ".\\firestaff_missing_dungeon_home_%lu", (unsigned long)rand());
-    if (MKDIR(path) != 0) {
-        return 0;
-    }
-    return _putenv_s("HOME", path) == 0 && _putenv_s("USERPROFILE", path) == 0;
+    return _putenv_s("HOME", isolatedHome) == 0 &&
+           _putenv_s("USERPROFILE", isolatedHome) == 0 &&
+           _putenv_s("APPDATA", isolatedHome) == 0 &&
+           _putenv_s("FIRESTAFF_CONFIG_PATH", testConfigPath) == 0;
 #else
-    char path[] = "/tmp/firestaff_missing_dungeon_home_XXXXXX";
-    char* made = mkdtemp(path);
-    if (!made) {
-        return 0;
-    }
-    return setenv("HOME", made, 1) == 0;
+    return setenv("HOME", isolatedHome, 1) == 0 &&
+           setenv("XDG_CONFIG_HOME", isolatedHome, 1) == 0 &&
+           setenv("FIRESTAFF_CONFIG_PATH", testConfigPath, 1) == 0;
 #endif
 }
 
@@ -196,6 +224,18 @@ int main(void) {
     }
     check_swedish_missing_media_uses_full_title();
 
+    if (testConfigPath[0]) {
+        remove(testConfigPath);
+    }
+    if (isolatedHome[0]) {
+        RMDIR(isolatedHome);
+    }
+    if (testDataDir[0]) {
+        RMDIR(testDataDir);
+    }
+    if (testScratch[0]) {
+        RMDIR(testScratch);
+    }
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;

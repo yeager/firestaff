@@ -15184,6 +15184,8 @@ if(BUILD_TESTING)
         NAME m12_missing_dungeon_launch_blocker
         COMMAND test_m12_missing_dungeon_launch_blocker
     )
+    set_tests_properties(m12_missing_dungeon_launch_blocker PROPERTIES
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR};FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po")
 
     add_executable(test_m12_theron_missing_track02_popup_gate
         tests/test_m12_theron_missing_track02_popup_gate.c
