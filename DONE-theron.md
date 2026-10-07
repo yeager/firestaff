@@ -7424,6 +7424,14 @@ BRK bytes, but this does not prove
 whether BIOS `$e01e` or runtime code modifies or consumes them. No synthetic
 media or runtime behavior was used to fill that evidence gap.
 
+Follow-up: expanded the standalone authenticated-media CTest to bind the ID
+`$3c` dispatch pointer at `$4185`, its full `$4862..$4894` handler, and the
+overlapping ID `$3d` slice `$489f..$48ab` that branches back into the `$3c`
+window. Three bounded SHA-256-verified loops against each locally installed
+authentic US and JP Track 02 passed. This closes independent static byte
+coverage only; BIOS effects, runtime branch outcomes, and stream semantics
+remain open. No synthetic media was used.
+
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 
 An independent read-only audit re-extracted all 16 newly bound JP helper

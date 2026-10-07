@@ -28,9 +28,15 @@ EDITIONS = {
 
 EXPECTED_SPANS = (
     (0x4183, bytes.fromhex("7f44")),
+    (0x4185, bytes.fromhex("6248")),
     (0x447F, bytes.fromhex("440280bc")),
     (0x443F, bytes.fromhex("6220b73a4cf540")),
+    (0x4862, bytes.fromhex(
+        "2063e0ad2822eaead012a99585faa94885fb201ee0ad9548f0e680"
+        "0da90c202de0a214202d4bcad0fa2018e062202de04cf140"
+    )),
     (0x4895, bytes(10)),
+    (0x489F, bytes.fromhex("2063e0ad2822f0eb8d802780e6")),
 )
 
 

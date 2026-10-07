@@ -1431,6 +1431,13 @@ whether BIOS `$e01e` or runtime code changes or consumes the region. The
 meaning of `$2228`/`$4895`, external BIOS call effects, branch execution, and
 retail stream selection are not established by this static lock.
 
+The standalone authentic-media source-lock also binds the ID `$3c` table
+pointer at `$4185`, the complete `$4862..$4894` handler, and the 13-byte
+`$489f..$48ab` overlap that returns to `$4892` inside that handler. It checks
+these spans in three bounded, SHA-256-attested reads of each installed US and
+JP Track 02 image. This closes byte coverage for those static windows in the
+independent test; it does not add BIOS-write or execution evidence.
+
 ID `$3d` points to `$489f`; its 13-byte source window `$489f..$48ab` is
 `JSR $e063; LDA $2228; BEQ $4892; STA $2780; BRA $4892`. The test binds this
 window up to, but not including, the adjacent ID `$3e` root at `$48ac`. Its
