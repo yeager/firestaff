@@ -720,32 +720,6 @@ static void test_stage2_id1e_id1f_bounded_handlers(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
-/* ID $3b branches to the continuation already byte-locked from ID $1e's
- * fallthrough. Keep the edge explicit; this proves static structure only. */
-static void test_stage2_id3b_shared_continuation(const uint8_t *raw,
-                                                 size_t raw_size, int jp)
-{
-    static const uint8_t root[] = {
-        0x44u, 0x02u, 0x80u, 0xbcu
-    };
-    static const uint8_t continuation[] = {
-        0x62u, 0x20u, 0xb7u, 0x3au, 0x4cu, 0xf5u, 0x40u
-    };
-
-    assert(stage2_word_at(raw, raw_size, jp,
-                          (uint16_t)(0x410du + 2u * 0x3bu)) == 0x447fu);
-    for (unsigned int i = 0; i < sizeof(root); ++i) {
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x447fu + i)) == root[i]);
-    }
-    for (unsigned int i = 0; i < sizeof(continuation); ++i) {
-        assert(stage2_byte_at(raw, raw_size, jp,
-                              (uint16_t)(0x443fu + i)) == continuation[i]);
-    }
-    printf("  PASS: stage2_id3b_shared_continuation (%s)\n",
-           jp ? "JP" : "US");
-}
-
 /* Lock complete bounded roots for IDs $1c/$1d and their shared-step stubs.
  * The bytes establish cursor increments, not stream or operand semantics. */
 static void test_stage2_id1c_id1d_cursor_roots(const uint8_t *raw,
@@ -1316,19 +1290,6 @@ static void test_stage2_id3c_bios_control_flow(const uint8_t *raw,
                               (uint16_t)(0x4862u + i)) == root[i]);
     }
     printf("  PASS: stage2_id3c_bios_control_flow (%s)\n",
-           jp ? "JP" : "US");
-}
-
-/* Bind the ten zero bytes between the ID $3c code window and ID $3d root.
- * The checked-in US disassembly labels them BRK at L4895-L489e (lines
- * 1271-1280); this is a raw-byte fact, not a claim about BIOS/runtime use. */
-static void test_stage2_id3c_poll_island_bytes(const uint8_t *raw,
-                                               size_t raw_size, int jp)
-{
-    for (uint16_t address = 0x4895u; address <= 0x489eu; ++address) {
-        assert(stage2_byte_at(raw, raw_size, jp, address) == 0x00u);
-    }
-    printf("  PASS: stage2_id3c_poll_island_bytes (%s)\n",
            jp ? "JP" : "US");
 }
 
@@ -4532,7 +4493,6 @@ int main(void)
     test_stage2_id17_id1b_fixed_argument_roots(g_us_data, g_us_size, 0);
     test_stage2_id20_id21_fixed_arguments(g_us_data, g_us_size, 0);
     test_stage2_id1e_id1f_bounded_handlers(g_us_data, g_us_size, 0);
-    test_stage2_id3b_shared_continuation(g_us_data, g_us_size, 0);
     test_stage2_id1c_id1d_cursor_roots(g_us_data, g_us_size, 0);
     test_stage2_id24_bounded_wait_root(g_us_data, g_us_size, 0);
     test_stage2_id23_regional_handoff(g_us_data, g_us_size, 0);
@@ -4554,7 +4514,6 @@ int main(void)
     test_stage2_id3a_cursor_stub(g_us_data, g_us_size, 0);
     test_stage2_id3b_overlapping_helper_root(g_us_data, g_us_size, 0);
     test_stage2_id3c_bios_control_flow(g_us_data, g_us_size, 0);
-    test_stage2_id3c_poll_island_bytes(g_us_data, g_us_size, 0);
     test_stage2_id3d_overlapping_bios_window(g_us_data, g_us_size, 0);
     test_stage2_id3e_polling_helper(g_us_data, g_us_size, 0);
     test_stage2_id3f_indexed_transfer(g_us_data, g_us_size, 0);
@@ -4608,7 +4567,6 @@ int main(void)
         test_stage2_id17_id1b_fixed_argument_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id20_id21_fixed_arguments(g_jp_data, g_jp_size, 1);
         test_stage2_id1e_id1f_bounded_handlers(g_jp_data, g_jp_size, 1);
-        test_stage2_id3b_shared_continuation(g_jp_data, g_jp_size, 1);
         test_stage2_id1c_id1d_cursor_roots(g_jp_data, g_jp_size, 1);
         test_stage2_id24_bounded_wait_root(g_jp_data, g_jp_size, 1);
         test_stage2_id23_regional_handoff(g_jp_data, g_jp_size, 1);
@@ -4630,7 +4588,6 @@ int main(void)
         test_stage2_id3a_cursor_stub(g_jp_data, g_jp_size, 1);
         test_stage2_id3b_overlapping_helper_root(g_jp_data, g_jp_size, 1);
         test_stage2_id3c_bios_control_flow(g_jp_data, g_jp_size, 1);
-        test_stage2_id3c_poll_island_bytes(g_jp_data, g_jp_size, 1);
         test_stage2_id3d_overlapping_bios_window(g_jp_data, g_jp_size, 1);
         test_stage2_id3e_polling_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id3f_indexed_transfer(g_jp_data, g_jp_size, 1);

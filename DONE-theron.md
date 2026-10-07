@@ -7402,33 +7402,27 @@ semantics remain unproven.
 
 # ✅ 2026-10-07 ID `$3b` shared Stage 2 continuation
 
-Added explicit source-lock assertions for the ID `$3b` table entry and root,
-and its shared `$443f..$4445` continuation, against authentic US and JP Track
+Added a standalone CTest source-lock for the ID `$3b` table entry and root,
+and the shared `$443f..$4445` continuation, against authentic US and JP Track
 02 images. The bytes decode as `CLA; JSR $3ab7; JMP $40f5`; ID `$1e` already
-reaches the same bytes by fallthrough. This closes the static byte/edge
-coverage gap only. `$3ab7` effects, runtime selection, stream semantics, and
-gameplay parity remain unproven. No synthetic media was used.
-
-Verification loop: on dedicated `trv2`, extracted the table word, `$447f`
-root, and `$443f` continuation from the SHA-256-attested authentic US and JP
-Track 02 images in three independent passes per edition. All expected bytes
-matched every pass. MAME `unidasm -arch h6280` decoded the continuation as
-`CLA; JSR $3ab7; JMP $40f5`. The target test build was attempted from a clean
-task-specific source snapshot with `--parallel 1`, but CMake pulled in broad
-DM1/DM2 and vendored M10 rebuilds. That isolated build was stopped to avoid
-unnecessary work. The updated test source passed a strict C11 syntax-only
-compile with `-Wall -Wextra -Werror`; the linked C test binary has not yet been
-built or run.
+reaches the same bytes by fallthrough. A direct run of the test on `trv2`
+reloaded each SHA-256-attested original image and passed three extraction
+loops per edition. MAME `unidasm -arch h6280` decoded the continuation as
+`CLA; JSR $3ab7; JMP $40f5`. This closes static byte/edge coverage only;
+`$3ab7` effects, runtime selection, stream semantics, and gameplay parity
+remain unproven. A clean trv2 CMake configure registered the standalone test,
+and CTest passed it 1/1 against the original images. No synthetic media was
+used.
 
 # ✅ 2026-10-07 ID `$3c` poll-region byte boundary
 
-Added a separate source-lock assertion for the ten bytes `$4895..$489e`
-between the ID `$3c` code window and ID `$3d` root. Three direct extractions
-per edition from the authentic US and JP Track 02 images found all ten bytes
-zero on every pass, with matching SHA-256 for the span in both editions.
-Disassembly calls them BRK bytes, but this does not prove whether BIOS
-`$e01e` or runtime code modifies or consumes them. No synthetic media or
-runtime behavior was used to fill that evidence gap.
+The same standalone CTest source-lock also asserts the ten zero bytes
+`$4895..$489e` between the ID `$3c` code window and ID `$3d` root. Direct test
+execution reloaded each authentic US and JP Track 02 in three passes and
+matched every byte as part of the same CTest 1/1 pass. Disassembly calls them
+BRK bytes, but this does not prove
+whether BIOS `$e01e` or runtime code modifies or consumes them. No synthetic
+media or runtime behavior was used to fill that evidence gap.
 
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 

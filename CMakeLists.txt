@@ -108,6 +108,18 @@ unset(_candidate_sha256)
 include(CTest)
 
 if(BUILD_TESTING)
+    add_test(
+        NAME theron_stage2_id3b_id3c_media_bytes
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_stage2_id3b_id3c_media_bytes.py
+            ${FIRESTAFF_WORKSPACE_DATA_DIR}
+    )
+    set_tests_properties(theron_stage2_id3b_id3c_media_bytes PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;track02;real-media;source-lock;no-synthetic")
+endif()
+
+if(BUILD_TESTING)
     add_test(NAME nexus_v1_saturn_bkr_real_data
         COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/scripts/firestaff_savegame_editor.py
