@@ -403,6 +403,8 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'Theron3879TargetStepsRemaining = 128' "$indirect_target_patch_file" ||
    ! grep -Fq 'RdMem(0x2003)' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'RdMem(0x2004)' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq 'mapped_opcode=%02x operand1_mapped=%02x operand2_mapped=%02x' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq 'Theron3879FastTraceMappedOpcode = HuCPU.PCERead' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879FastTargetStepsRemaining = 128' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
     printf '%s\n' 'FAIL: bounded $3879 indirect-target trace is missing or not wired into the live capture'

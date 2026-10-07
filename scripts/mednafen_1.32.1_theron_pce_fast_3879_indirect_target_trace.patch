@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -27,0 +28,10 @@
+@@ -27,0 +28,15 @@
 +static unsigned Theron3879FastTargetStepsRemaining;
 +static FILE *Theron3879FastTrace;
 +static unsigned Theron3879FastTraceCount;
@@ -11,7 +11,12 @@
 +static unsigned Theron3879FastIndirectTarget;
 +static unsigned Theron3879FastTargetPhysical;
 +static unsigned Theron3879FastTargetOpcode;
-@@ -898,0 +899,43 @@
++static unsigned Theron3879FastCallerWindowStarted;
++static unsigned Theron3879FastTracePhysical;
++static unsigned Theron3879FastTraceMappedOpcode;
++static unsigned Theron3879FastTraceMappedOperand1;
++static unsigned Theron3879FastTraceMappedOperand2;
+@@ -898,0 +904,57 @@
 +  if(Theron3879FastTargetStepsRemaining ||
 +     (TheronTraceInstructionPC >= 0x4ef4 && TheronTraceInstructionPC <= 0x4ef6) ||
 +     (TheronTraceInstructionPC >= 0x3879 && TheronTraceInstructionPC <= 0x3918) ||
@@ -28,6 +33,13 @@
 +    }
 +    if(Theron3879FastTrace)
 +    {
++     Theron3879FastTracePhysical = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) |
++         (TheronTraceInstructionPC & 0x1fff);
++     Theron3879FastTraceMappedOpcode = HuCPU.PCERead[HuCPU.MPR[TheronTraceInstructionPC >> 13]](Theron3879FastTracePhysical);
++     Theron3879FastTraceMappedOperand1 = HuCPU.PCERead[HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13]](
++         (HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13] << 13) | ((TheronTraceInstructionPC + 1) & 0x1fff));
++     Theron3879FastTraceMappedOperand2 = HuCPU.PCERead[HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13]](
++         (HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff));
 +     Theron3879FastIsIndirectTarget = TheronTraceInstructionPC == 0x39c7 || TheronTraceInstructionPC == 0x39dd;
 +     Theron3879FastPointerLow = Theron3879FastIsIndirectTarget ? RdMem(0x2003) : 0xff;
 +     Theron3879FastPointerHigh = Theron3879FastIsIndirectTarget ? RdMem(0x2004) : 0xff;
@@ -38,16 +50,23 @@
 +          (Theron3879FastIndirectTarget & 0x1fff)) : 0xffffff;
 +     Theron3879FastTargetOpcode = Theron3879FastIsIndirectTarget ? RdOp(Theron3879FastIndirectTarget) : 0xff;
 +     fprintf(Theron3879FastTrace,
-+         "theron_3879_step sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x ptr2003=%02x ptr2004=%02x indirect_target=%04x target_physical=%06x target_opcode=%02x follow_remaining=%u\n",
++         "theron_3879_step sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x mapped_opcode=%02x operand1_mapped=%02x operand2_mapped=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x ptr2003=%02x ptr2004=%02x indirect_target=%04x target_physical=%06x target_opcode=%02x follow_remaining=%u\n",
 +         Theron3879FastTraceCount++, TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
-+         RdOp(TheronTraceInstructionPC), HU_A, HU_X, HU_Y, HU_P, HU_S,
++         RdOp(TheronTraceInstructionPC), Theron3879FastTraceMappedOpcode,
++         Theron3879FastTraceMappedOperand1, Theron3879FastTraceMappedOperand2,
++         HU_A, HU_X, HU_Y, HU_P, HU_S,
 +         HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
 +         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7],
 +         Theron3879FastPointerLow, Theron3879FastPointerHigh,
 +         Theron3879FastIndirectTarget, Theron3879FastTargetPhysical,
 +         Theron3879FastTargetOpcode, Theron3879FastTargetStepsRemaining);
 +     fflush(Theron3879FastTrace);
-+     if(TheronTraceInstructionPC == 0x39c7 || TheronTraceInstructionPC == 0x39dd)
++     if(TheronTraceInstructionPC == 0x4ef6 && !Theron3879FastCallerWindowStarted)
++     {
++      Theron3879FastCallerWindowStarted = 1;
++      Theron3879FastTargetStepsRemaining = 128;
++     }
++     else if(TheronTraceInstructionPC == 0x39c7 || TheronTraceInstructionPC == 0x39dd)
 +      Theron3879FastTargetStepsRemaining = 128;
 +     else if(Theron3879FastTargetStepsRemaining)
 +      Theron3879FastTargetStepsRemaining--;

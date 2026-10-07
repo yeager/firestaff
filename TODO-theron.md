@@ -1,5 +1,36 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-07 PCE Fast stage-two caller gap
+
+- 🔒 Rebuilt Mednafen's PCE Fast core with a bounded instruction window after
+  the authentic JP Rev. 1 Akutuba state reaches logical `$4ef6` (physical
+  `$0d0ef6`). The authentic state and media were loaded in an isolated
+  profile; this is emulator evidence, not a Firestaff parity claim.
+- 🔒 The 128-instruction window follows `$4ef6` through `$4f06`, then reaches
+  System Card bank code `$b8xx`. In this replay it does not reach the expected
+  `$3879..$3918` or `$39c0..$3a0f` ranges, and the receipt reports no
+  transition, no game `$e009` dispatch, and no authenticated CD-to-RAM
+  receipt. Thus `$4ef6` is not evidence that the `$3879` stage-two loader ran.
+- 🔒 The saved instruction trace records `$4f06` opcode `$20` (`JSR`), then
+  `$48a8` opcode `$a9`, `$48aa` opcode `$20`, `$44fb..$4504`, and `$48ad`
+  opcode `$4c`. At `$48a8`, physical PC is `$0d08a8` with MPR2=`$68`, the
+  same bank mapping recorded at `$4f06`. This conflicts with the static
+  authentic US and JP Track 02 window `$489f..$48ab`, which has opcode `$80`
+  at `$48a8`. The expanded trace records `$4f06` bytes `20 a8 48` and, at
+  `$48a8`, both the PCE Fast instruction view and a separate mapped-memory
+  read as `$a9`. Thus this is not only a `RdOp` observation mismatch; runtime
+  bank `$68` does not currently source-bind to the static stage-two window.
+  The source lock is `test_stage2_id3d_overlapping_bios_window()` in
+  `tests/test_theron_v1_stage2_disassembly_chain.c` (US and JP calls near
+  lines 4517 and 4591). Do not infer self-modifying code or an overlapping
+  handler: the physical-bank load/provenance path remains unknown.
+- 🔧 Bind the genuine game-code caller/route that transfers control into the
+  `$4f06 -> $48a8` runtime path to its authentic physical-bank source. Trace
+  the MPR2=`$68` mapping's writes/load origin and bind the observed `$a9`
+  instruction bytes to US and JP media before decompiling the alternate
+  runtime route. Keep the probe diagnostic; do not treat emulator hooks or
+  scripted input as product behavior.
+
 Reviewed 2026-10-07. Only open work is listed here.
 
 ## 2026-10-07 — bind JP runtime-sampled code to its physical source copy

@@ -1,6 +1,6 @@
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
-@@ -42,0 +43,10 @@
+@@ -42,0 +43,11 @@
 +static unsigned Theron3879TargetStepsRemaining;
 +static FILE *Theron3879Trace;
 +static unsigned Theron3879TraceCount;
@@ -11,7 +11,8 @@
 +static unsigned Theron3879IndirectTarget;
 +static unsigned Theron3879TargetPhysical;
 +static unsigned Theron3879TargetOpcode;
-@@ -1188,1 +1188,44 @@
++static unsigned Theron3879CallerWindowStarted;
+@@ -1188,1 +1188,49 @@
  FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	 if(Theron3879TargetStepsRemaining ||
 +	    (PC >= 0x4ef4 && PC <= 0x4ef6) ||
@@ -49,7 +50,12 @@
 +	            Theron3879TargetPhysical, Theron3879TargetOpcode,
 +	            Theron3879TargetStepsRemaining);
 +	    fflush(Theron3879Trace);
-+	    if(PC == 0x39c7 || PC == 0x39dd)
++	    if(PC == 0x4ef6 && !Theron3879CallerWindowStarted)
++	    {
++	     Theron3879CallerWindowStarted = 1;
++	     Theron3879TargetStepsRemaining = 128;
++	    }
++	    else if(PC == 0x39c7 || PC == 0x39dd)
 +	     Theron3879TargetStepsRemaining = 128;
 +	    else if(Theron3879TargetStepsRemaining)
 +	     Theron3879TargetStepsRemaining--;
