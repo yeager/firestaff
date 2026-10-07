@@ -7420,6 +7420,16 @@ unnecessary work. The updated test source passed a strict C11 syntax-only
 compile with `-Wall -Wextra -Werror`; the linked C test binary has not yet been
 built or run.
 
+# ✅ 2026-10-07 ID `$3c` poll-region byte boundary
+
+Added a separate source-lock assertion for the ten bytes `$4895..$489e`
+between the ID `$3c` code window and ID `$3d` root. Three direct extractions
+per edition from the authentic US and JP Track 02 images found all ten bytes
+zero on every pass, with matching SHA-256 for the span in both editions.
+Disassembly calls them BRK bytes, but this does not prove whether BIOS
+`$e01e` or runtime code modifies or consumes them. No synthetic media or
+runtime behavior was used to fill that evidence gap.
+
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 
 An independent read-only audit re-extracted all 16 newly bound JP helper

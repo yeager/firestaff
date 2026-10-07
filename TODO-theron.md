@@ -376,8 +376,9 @@ Reviewed 2026-10-07. Only open work is listed here.
   reuses the independently locked `$4483` helper. The `$443f` continuation is
   byte-locked through its `$40f5` tail; callee effects and stream selection
   remain unresolved. ID `$3c`'s `$4862..$4894` conditional BIOS
-  window and shared `+1` exit are now locked; BIOS effects and stream execution
-  remain unproven. ID `$3d`'s `$489f..$48ab` branch window is also locked;
+  window and shared `+1` exit are locked, as are the zero bytes at
+  `$4895..$489e`; BIOS effects and stream execution remain unproven. ID `$3d`'s
+  `$489f..$48ab` branch window is also locked;
   it loops into the ID `$3c` tail, so its full behavior remains unresolved.
   ID `$3e`'s `$48ac..$4900` handler/helper window is now locked through its
   `$40fd` cursor tail; condition outcomes and field meanings remain unproven.

@@ -1319,6 +1319,19 @@ static void test_stage2_id3c_bios_control_flow(const uint8_t *raw,
            jp ? "JP" : "US");
 }
 
+/* Bind the ten zero bytes between the ID $3c code window and ID $3d root.
+ * The checked-in US disassembly labels them BRK at L4895-L489e (lines
+ * 1271-1280); this is a raw-byte fact, not a claim about BIOS/runtime use. */
+static void test_stage2_id3c_poll_island_bytes(const uint8_t *raw,
+                                               size_t raw_size, int jp)
+{
+    for (uint16_t address = 0x4895u; address <= 0x489eu; ++address) {
+        assert(stage2_byte_at(raw, raw_size, jp, address) == 0x00u);
+    }
+    printf("  PASS: stage2_id3c_poll_island_bytes (%s)\n",
+           jp ? "JP" : "US");
+}
+
 /* Lock ID $3d's short window, whose branch returns into the ID $3c tail. */
 static void test_stage2_id3d_overlapping_bios_window(const uint8_t *raw,
                                                       size_t raw_size, int jp)
@@ -4541,6 +4554,7 @@ int main(void)
     test_stage2_id3a_cursor_stub(g_us_data, g_us_size, 0);
     test_stage2_id3b_overlapping_helper_root(g_us_data, g_us_size, 0);
     test_stage2_id3c_bios_control_flow(g_us_data, g_us_size, 0);
+    test_stage2_id3c_poll_island_bytes(g_us_data, g_us_size, 0);
     test_stage2_id3d_overlapping_bios_window(g_us_data, g_us_size, 0);
     test_stage2_id3e_polling_helper(g_us_data, g_us_size, 0);
     test_stage2_id3f_indexed_transfer(g_us_data, g_us_size, 0);
@@ -4616,6 +4630,7 @@ int main(void)
         test_stage2_id3a_cursor_stub(g_jp_data, g_jp_size, 1);
         test_stage2_id3b_overlapping_helper_root(g_jp_data, g_jp_size, 1);
         test_stage2_id3c_bios_control_flow(g_jp_data, g_jp_size, 1);
+        test_stage2_id3c_poll_island_bytes(g_jp_data, g_jp_size, 1);
         test_stage2_id3d_overlapping_bios_window(g_jp_data, g_jp_size, 1);
         test_stage2_id3e_polling_helper(g_jp_data, g_jp_size, 1);
         test_stage2_id3f_indexed_transfer(g_jp_data, g_jp_size, 1);

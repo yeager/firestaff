@@ -1423,10 +1423,13 @@ ID `$3c` points to `$4862` in both editions. The 51-byte window
 `$4862..$4894` contains a conditional BIOS branch, a poll of `$4895`, a
 20-iteration call loop at `$4885`, and a shared exit through `$40f1` to the
 `+1` cursor path. The source-lock test binds the dispatch word and complete
-window against authentic US and JP data. `$4895..$489e` is adjacent data read
-by the handler, not included in the code window; ID `$3d` begins at `$489f`.
-The meaning of `$2228`/`$4895`, external BIOS call effects, branch execution,
-and retail stream selection are not established by this static lock.
+window against authentic US and JP data. The separate ten-byte region
+`$4895..$489e` is zero-filled in both authentic images and has its own byte
+assertion; it lies between the code window and ID `$3d` at `$489f`. The
+disassembly labels these bytes as BRK, but the byte lock does not establish
+whether BIOS `$e01e` or runtime code changes or consumes the region. The
+meaning of `$2228`/`$4895`, external BIOS call effects, branch execution, and
+retail stream selection are not established by this static lock.
 
 ID `$3d` points to `$489f`; its 13-byte source window `$489f..$48ab` is
 `JSR $e063; LDA $2228; BEQ $4892; STA $2780; BRA $4892`. The test binds this
