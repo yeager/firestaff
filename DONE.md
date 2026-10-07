@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-07: The authentic multi-edition startup matrix passed all 14
+  installed DM1 and five DM2 CLI-start tests, plus seven CSB CLI-start tests.
+  Two CSB cases skipped because the Atari R1 campaign/Utility Disk and French
+  Atari preservation ZIP are not installed. The DM1/CSB/DM2 mixed-media AUTO,
+  selected-root launcher preparation, menu return/rescan and startup-diagnostic
+  tests also passed. These checks establish startup routing and source-owned
+  runtime receipts, not visual parity or physical M5 HiDPI behavior.
+
 - 2026-10-07: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` with an
   authentic DM1 FM Towns run. The normal M12 route reaches the first HoC frame,
   returns to the launcher, and rediscovers all three original DM1, CSB, and DM2

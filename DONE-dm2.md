@@ -1,5 +1,14 @@
 # Firestaff DONE — DM2
 
+- 2026-10-07: All five installed authentic DM2 CLI-start CTests passed in the
+  multi-edition startup matrix, covering DOS English/French, Macintosh, Amiga
+  and FM Towns.
+  A native Cocoa run of the v3.0.368 binary with bare `--game dm2` selected the
+  original FM Towns ZIP from five installed editions and completed its 225-frame
+  title into `dm2-startup-menu` in 26.2 seconds. This host reported a 1900x998
+  window and equal-sized drawable, so it does not verify Retina behavior or the
+  MacBook Pro M5 report.
+
 - 2026-10-07: Rebuilt and re-ran `dm2_fmtowns_m11_gameplay_real_media` with
   the authenticated FM Towns ZIP; it passed in 2.99 seconds. The assertions
   cover the source squad fill, three-command HUD plan, authentic spell/status

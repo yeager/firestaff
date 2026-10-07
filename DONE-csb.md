@@ -1,5 +1,11 @@
 # Firestaff DONE — CSB
 
+- 2026-10-07: Seven installed authentic CSB CLI-start tests passed in the
+  multi-edition startup matrix, covering Amiga, Atari ST and FM Towns media.
+  The Atari R1 campaign/Utility Disk test and French Atari preservation ZIP
+  test skipped because those specific archives are not installed; no substitute
+  data was used.
+
 - 2026-10-07: Added a mixed-original-media M12 AUTO regression for FM Towns.
   With authentic Amiga, Atari ST, and FM Towns packages installed together
   and no `--platform` option, the menu authenticates all three, selects the

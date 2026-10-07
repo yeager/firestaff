@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-07: All 14 installed authentic DM1 CLI-start CTests passed in the
+  multi-edition startup matrix, including DOS English/French, Atari ST
+  English 1.0a/1.0b/1.1/1.2, German 1.2, French 1.3, Amiga HD/v2.0 and
+  FM Towns. Each available route passed its registered startup/menu assertions;
+  this does not establish physical M5 rendering or visual parity.
+
 - 2026-10-07: Extended the authentic return-to-menu rescan regression with
   DM1 FM Towns. The M12 route reaches the first original HoC runtime frame,
   returns to the launcher, and confirms that installed DM1, CSB, and DM2 media
