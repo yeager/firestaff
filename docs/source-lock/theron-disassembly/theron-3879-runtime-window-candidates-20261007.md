@@ -120,6 +120,27 @@ establish that the PCE Fast drive performed no reads. The separate save-state
 capture had no writes in the window because RAM contents were restored before
 tracing began.
 
+### F5 Akutuba state replay with PCE Fast source hooks (2026-10-08)
+
+Three isolated instrumented `pce_fast` replays loaded the authentic
+emulator-created JP Akutuba state (MD5
+`2ff8e0dcd4c004ac70a7651f43854eb7`; SHA-256
+`2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) with
+the authentic JP Rev. 1 CUE and System Card. Each replay applied and observed
+the scripted Up input. Each recorded one non-System-Card controller poll and
+reached both `$4f06` and `$48a8` with MPR2=`$68`, physical PCs `$0d0f06` and
+`$0d08a8`, and bytes `16 00 04 1c 02 80 65 00 00 a9 08 20 fb`.
+
+All three captures recorded zero CD IRQ callbacks, zero source-bound CD data
+port reads, and zero authenticated CD-RAM target writes. They therefore
+reproduce the runtime mapping and bytes from the loaded emulator state, but do
+not bind any of the six authentic JP Track 02 candidates to that RAM window.
+The captures are private outside Git under
+`/home/trv2/firestaff-theron-evidence/capture/theron-runtime-cd-ram-source-20261008/runs/`.
+They do not establish a fresh CD transfer, a loader route, or routine
+semantics. The zero-read result is specific to these state replays; it does
+not supersede the separate cold-boot `run13` CD data-port evidence below.
+
 ### Configured-profile replay and CD-port source-byte validation
 
 A fresh Mednafen 1.32.1 `pce_fast` process used the configured operator

@@ -134,6 +134,11 @@
   bytes to the transfer source in the same session before extending the
   decompilation to the `$44fb` and `$b920` callees. Keep the probe diagnostic;
   do not treat emulator hooks or scripted input as product behavior.
+  Three replays of the authentic F5 Akutuba state now reproduce the runtime
+  mapping/bytes and a non-System-Card poll, but have zero fresh CD reads or
+  CD-RAM target writes. They do not close the source-copy gap; see the
+  2026-10-08 subsection in
+  `docs/source-lock/theron-disassembly/theron-3879-runtime-window-candidates-20261007.md`.
 
 Reviewed 2026-10-07. Only open work is listed here.
 
