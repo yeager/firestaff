@@ -1,5 +1,11 @@
 # Unreleased
 
+## Developer changes
+
+- `DM1 M12 AUTO routing`: verifies that the start menu discovers authentic
+  PC 3.4 and FM Towns editions together, selects FM Towns by default, and
+  reaches its first runtime frame from the original media.
+
 # Firestaff v3.0.366
 
 ## User-facing changes

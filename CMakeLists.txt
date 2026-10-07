@@ -4194,6 +4194,17 @@ if(BUILD_TESTING)
         # the authentic archive is not staged.
         TIMEOUT 600
     )
+    add_test(
+        NAME dm1_v1_m12_auto_multi_platform_menu
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_m12_auto_multi_platform_menu.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_m12_auto_multi_platform_menu PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;fmtowns;pc;real-media;native;menu;startup;auto;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+        TIMEOUT 120
+    )
     foreach(legacy_platform IN ITEMS atari-st amiga fm-towns)
         if(legacy_platform STREQUAL "atari-st")
             set(legacy_archive "Dungeon-Master_Atari-ST_EN_Version-12.zip")

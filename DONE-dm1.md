@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-10-07: Added an authentic multi-platform M12 AUTO regression with the
+  PC 3.4 and FM Towns archives together in one installed data root. The test
+  confirms that both editions are discovered, AUTO chooses the documented FM
+  Towns default, EDM.EXP and its source hash are selected, and the first
+  runtime frame starts at the authentic initial pose. The focused CTest passes
+  against the supplied original archives; this verifies menu routing, not
+  physical-display parity.
+
 - 2026-10-07: Ran the full authentic English Atari ST v1.2 CLI/M12 startup
   and input matrix against the installed
   `Dungeon-Master_Atari-ST_EN_Version-12.zip`. It contains STX directly, so
