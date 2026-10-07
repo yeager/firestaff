@@ -164,11 +164,20 @@ PY
 rm -f "$runtime_probe"
 mkdir -p "$runtime_capture"
 rm -f "$runtime_capture"/*.bmp
+runtime_data_root=$archive
+runtime_platform_args='--platform fm-towns'
+if [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip" ]; then
+    runtime_data_root=$default_data_root
+    runtime_platform_args=
+fi
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
+FIRESTAFF_DATA="$runtime_data_root" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 320 --height 200 --menu --game dm2 --platform fm-towns \
-    --data-dir "$archive" --verbose \
+    --width 320 --height 200 --menu --game dm2 $runtime_platform_args \
+    --data-dir "$runtime_data_root" --verbose \
     --script 'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60' \
     --duration 120000 >"$runtime_log" 2>&1 || {
         cat "$runtime_log" >&2

@@ -23,6 +23,9 @@
 - `CSB FM Towns AUTO startup`: adds an authentic mixed-platform M12 test that
   omits `--platform`, requires Amiga and Atari ST discovery, and follows the
   selected FM Towns title through SWITCHTW and the original MINI.DAT party.
+- `DM2 FM Towns AUTO startup`: takes the mixed-edition default selection through
+  the authentic title animation, New Game, and first runtime frame without an
+  explicit platform override.
 
 # Firestaff v3.0.366
 
