@@ -10,6 +10,16 @@ import sys
 
 RUNTIME_WINDOW = bytes.fromhex("1600041c0280650000a90820fb")
 RAW_SECTOR_BYTES = 2352
+RUNTIME_CONTEXT_PREFIX_BYTES = 64
+RUNTIME_CONTEXT_SUFFIX_BYTES = 64
+RUNTIME_CONTEXT_BYTES = (
+    RUNTIME_CONTEXT_PREFIX_BYTES + len(RUNTIME_WINDOW) +
+    RUNTIME_CONTEXT_SUFFIX_BYTES
+)
+RUNTIME_CALL_WINDOW = bytes.fromhex("a90820fb444c20b9")
+RUNTIME_CONTEXT_SHA256 = (
+    "1f6df3c02976c33d01f8e15cd088ce186e46a7b7405c3bc6ef865c2cd2a94b10"
+)
 EXPECTED = {
     "US": {
         "name": "TQUS02.bin",
@@ -63,6 +73,27 @@ def verify_edition(edition: str, path: pathlib.Path) -> bool:
         if any(offset % RAW_SECTOR_BYTES != 175 for offset in offsets):
             raise ValueError(f"{edition} runtime-window sector positions differ")
 
+        contexts = []
+        for offset in offsets:
+            context_start = offset - RUNTIME_CONTEXT_PREFIX_BYTES
+            context_end = (
+                offset + len(RUNTIME_WINDOW) + RUNTIME_CONTEXT_SUFFIX_BYTES
+            )
+            if context_start < 0 or context_end > len(raw):
+                raise ValueError(f"{edition} runtime context is out of bounds")
+            context = raw[context_start:context_end]
+            if len(context) != RUNTIME_CONTEXT_BYTES:
+                raise ValueError(f"{edition} runtime context has wrong length")
+            if hashlib.sha256(context).hexdigest() != RUNTIME_CONTEXT_SHA256:
+                raise ValueError(f"{edition} runtime context digest differs")
+            call_start = RUNTIME_CONTEXT_PREFIX_BYTES + 9
+            call_end = call_start + len(RUNTIME_CALL_WINDOW)
+            if context[call_start:call_end] != RUNTIME_CALL_WINDOW:
+                raise ValueError(f"{edition} runtime call window differs")
+            contexts.append(context)
+        if contexts and len(set(contexts)) != 1:
+            raise ValueError(f"{edition} candidate contexts are not identical")
+
         observed_hashes.append(digest)
         print(f"PASS: {edition} authentic runtime-window scan {pass_number}")
 
@@ -82,7 +113,7 @@ def main() -> int:
         return 77
     print(
         "PASS: runtime window is absent from authentic US Track 02 and has "
-        "six JP raw-sector candidates"
+        "six identical JP candidate contexts, including the runtime call window"
     )
     return 0
 

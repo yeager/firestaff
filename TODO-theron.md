@@ -45,12 +45,20 @@
   dynamic-receipt gate remained blocked. This confirms that the tested input
   schedule did not leave the system-card path; it does not establish a game
   failure or any title behavior.
+- 🔒 Expanded the six authentic JP runtime-window candidates to 141-byte
+  contexts. Three repeated scans found the contexts byte-identical, with
+  SHA-256 `1f6df3c02976c33d01f8e15cd088ce186e46a7b7405c3bc6ef865c2cd2a94b10`.
+  MAME `unidasm -arch h6280` decodes the runtime-aligned candidate entry as
+  `LDA #$08; JSR $44fb; JMP $b920`, matching the captured PCs/operands at
+  `$48a8`, `$48aa`, and `$48ad`. The CPU-address overlay remains provisional:
+  no loader receipt binds any of the six raw offsets to CD RAM. This decodes
+  only the immediate entry/call/jump and does not establish callee semantics.
 - 🔧 Bind the genuine game-code caller/route that transfers control into the
   `$4f06 -> $48a8` runtime path to its authentic physical-bank source. Trace
-  the MPR2=`$68` mapping's writes/load origin and bind the observed `$a9`
-  instruction bytes to US and JP media before decompiling the alternate
-  runtime route. Keep the probe diagnostic; do not treat emulator hooks or
-  scripted input as product behavior.
+  the MPR2=`$68` mapping's writes/load origin and bind the observed candidate
+  bytes to the transfer source in the same session before extending the
+  decompilation to the `$44fb` and `$b920` callees. Keep the probe diagnostic;
+  do not treat emulator hooks or scripted input as product behavior.
 
 Reviewed 2026-10-07. Only open work is listed here.
 

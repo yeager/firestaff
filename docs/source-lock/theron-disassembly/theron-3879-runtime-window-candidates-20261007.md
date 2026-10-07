@@ -48,7 +48,35 @@ contains six:
 The repeated copies are candidates only. The scan does not establish which,
 if any, supplied the runtime bytes. The CTest
 `theron_3879_runtime_window_candidates` repeats the bounded scans and locks
-these exact candidate offsets against the authentic media hashes.
+these exact candidate offsets against the authentic media hashes. A follow-up
+three-loop comparison also found that each occurrence has the same 141-byte
+context (64 bytes on either side), SHA-256
+`1f6df3c02976c33d01f8e15cd088ce186e46a7b7405c3bc6ef865c2cd2a94b10`.
+Every context contains the eight bytes `a9 08 20 fb 44 4c 20 b9` at the
+runtime-window-relative offset 9. This is consistent with the dynamic sequence
+observed at `$48a8`, but still does not identify a transfer, destination, or
+which of the six copies participated.
+
+## Bounded HuC6280 decode at the dynamic entry
+
+MAME `unidasm -arch h6280` decoded each extracted 141-byte context identically
+in three repeated loops (listing SHA-256
+`d0271088d04fd940eca6b0a650deb417f30cb9736334964a6e3bf28c9421c483`). With
+the candidate window provisionally aligned to `$489f`, the dynamic entry
+decodes as:
+
+```text
+$48a8  a9 08       lda  #$08
+$48aa  20 fb 44    jsr  $44fb
+$48ad  4c 20 b9    jmp  $b920
+```
+
+The first two instructions and the `$48ad` opcode/operands match the captured
+runtime PCs and mapped bytes at MPR2=`$68`. The alignment shown here is only a
+candidate-relative overlay: the authentic Track 02 raw offset has not been
+bound to that CPU address by a loader receipt. These bytes provide a bounded
+decode of the observed entry and its immediate call/jump, not the callees'
+semantics or a completed gameplay route.
 
 ## CD-RAM write probe and remaining gap
 
