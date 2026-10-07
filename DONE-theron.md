@@ -7340,23 +7340,26 @@ $50f5`, and `$5101: JSR $525e`.
 
 Corrected the address interpretation: `$52a2` is the high operand byte of
 `JSR $567a` at `$52a0`, not a JP instruction entry; execution continues at
-`$52a3: JSR $5669`. The test and disassembly establish source bytes and a
-possible static call paths only. Outbound targets `$51c0`, `$5609`, and
-`$56d1` remain unbound. Runtime selector/branch values, helper semantics,
+`$52a3: JSR $5669`. Runtime selector/branch values, helper semantics,
 gameplay behavior, and regional parity remain unproven. No synthetic media
 was used.
 
-Verification: compiled the changed test translation unit with
-`-std=gnu11 -Wall -Wextra -O2` on `trv2`, linked it against the existing
-Theron test libraries without changing their build tree, and ran the focused
-`FIRESTAFF_THERON_TEST_JP_STAGE2_SELECTOR_ONLY` check three times against the
-authentic JP Track 02 after locking the full pointer table, selector entries,
-and current callee windows. All three runs passed. A separate attempt to run
-the entire test executable stopped earlier in the JP L3114 verifier against a
-cached library snapshot whose Track 02
-header hash differs from this working tree. That run is not valid full-source
-verification; the new focused check does not invoke that verifier, and a
-matching full build/test remains open.
+2026-10-07 follow-up: corrected the earlier `$524e..$527d` range, which came
+from a raw-sector skip that was 512 bytes too far into the authentic image.
+The correctly mapped JP bytes `$524e..$525d` are `E6 0F 60 18 A5 0E 69 40 85
+0E 90 02 E6 0F 60`; HuC6280 decoding confirms the `$5258` BCC target is
+`$525c`. The authentic US same-address bytes differ, so no regional behavior
+is inferred. Two purported BSR edges at `$5260` and `$526a` were removed;
+those addresses are operands/instructions in the separate `$525e` transfer
+decoder, not BSR sites. Corrected JP/US hashes and the listing are recorded
+in `docs/source-lock/theron-disassembly/theron-jp-stage2-record-selector-52xx-huc6280.asm`.
+
+Verification: rebuilt `test_theron_v1_stage2_disassembly_chain` from the
+current full source tree on `trv2` with `--parallel 1`, then ran
+`FIRESTAFF_THERON_TEST_JP_STAGE2_SELECTOR_ONLY` three times against the
+authentic JP Track 02; all passed. This is static source-byte and edge
+coverage only. Runtime selector values, branch outcomes, helper semantics,
+gameplay behavior, and regional parity remain open.
 
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 

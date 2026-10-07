@@ -30,7 +30,13 @@
 ;   $508b..$5097  6d1bad383bfdaebfb93150d11f9403c969ba98e4029189c252eeca76a6d5b816
 ;   $5208..$5237  a0a0351b77b161c034c0660777da7393e298fde3a41b01e24f15c7e29c287462
 ;   $5141..$51c0  dac66baa11f1d0c1c30a6629617699f730e90c9f5d440a99547f3f91bc75067d
+;   $51c0..$51ce  f1f1af4955a61d9833bdd2be9acfa08fb308ebff607f1c9bf0c90953ac9c3ec0
+;   $524e..$525d  0b4eedda9ac98159f30d1d81ec0bff15c7faa6c897e110c8f49f6c5752ee990b
+;   $551a..$5529  f068aa263218b0f4ed2a0787805ee1fa3f38af1531ca50b04f22a87ed9f1fa48
 ;   $559d..$5609  6143acf9a4670d8060ee6cdc59dd1d0f2835f7d98f34bf96343790b555b6eb16
+;   $5609..$5624  36b4ef6da353218b8d1d20baf27cdb699441de3ca78ab0d68c1892a40669114b
+;   $5624..$5669  fc6e0bc9d072ad686d405a3ac753ca02cda36fac8d332469ed90b9df527c221c
+;   $5670..$5685  47d544daa43da0c03cd47bdc7104102e01369250578f7009b7198f57d086c817
 ;   $5685..$56e1  b2821ac6d9077fce7f0f4ac1380382e621880d42522a86eb5a8a480aa7b5ec95
 ;
 ; Authentic US same-address $5800..$582c SHA-256:
@@ -44,7 +50,13 @@
 ;   $508b..$5097  277b2302e06213fb3f444fa968699a71f9a21432ce45c6e918442dba8c8c29f5
 ;   $5208..$5237  03f14276c0198f1233b387cfc185d2ef332c1c9615d2bc1e77da4f9bf1677e06
 ;   $5141..$51c0  f8800953de5967ed6432e7ed01aa9fd18c81110eb3baa9b44d3ec901276d59d4
+;   $51c0..$51ce  b9d0936edbf61f5a2a14789217ad5fe6eaf7c8f4d11abe8136a464546842a31f
+;   $524e..$525d  c9e3402fe5dc01ec1f195050343f194b120f414092c75553e21260bc54746e0b
+;   $551a..$5529  21be865fe16453454e70ccaff6f338e67a781579ef56837e81b4653e952653cc
 ;   $559d..$5609  c1095750f11f830a1bd7cbc28604c55a356cc8cef89bb526b2360a7f70649718
+;   $5609..$5624  83a56a0c68144d0f5161607ae913b1818c9be71728cd80947fff9bc86786cd27
+;   $5624..$5669  0e3a36ebb037260e9cfa82982331b47bdf67a433f1be075c162120aac8971a19
+;   $5670..$5685  ee153436990800783f0585d78314a05d78c66845c5863b9051423c2b76d87214
 ;   $5685..$56e1  2eeb82631d4b341f270e5a5986b2855a7657ead53ceb3d6fbe142dd2f7f59ed5
 ; Static dispatch interpretation: $5800 reads a selector through ($18),
 ; doubles it, and jumps through $5810,X. The 14 pointer entries cover indices
@@ -179,8 +191,8 @@ $594e:  jsr  $5555
 $5984:  jsr  $5555
         bra  $5966
 
-; First selector callees reached through $5555/$555d. The $559d BSR target
-; and $5685 JSR target are outside these locked bytes.
+; First selector callees reached through $5555/$555d. Their $559d BSR and
+; $5685 JSR entries are independently byte-bound below.
 $5555:  jsr  $53e8
         bcs  $555c
         bsr  $5569
@@ -621,6 +633,100 @@ $51b3:  jsr  $5c77
         jsr  $5d0e
         jsr  $5d32
         jsr  $5ca7
+        rts
+$51c0:  lda  $4f8b
+        dea
+        sta  $5ca2
+        lda  $4f8c
+        sta  $5ca3
+        rts
+
+$524e:  inc  $0f
+        rts
+$5251:  clc
+        lda  $0e
+        adc  #$40
+        sta  $0e
+        bcc  $525c
+        inc  $0f
+$525c:  rts
+
+; The $5609 helper and its local cursor/data helpers, bounded through RTS.
+$5609:  bsr  $5630
+        jsr  $5251
+        bsr  $5624
+        ldx  $4f8e
+        dex
+        dex
+        phx
+        bsr  $5630
+        jsr  $5251
+        plx
+        dex
+        bne  $5615
+        bsr  $5624
+        bsr  $5630
+        rts
+$5624:  clc
+        lda  $06
+        adc  #$03
+        sta  $06
+        bcc  $562f
+        inc  $07
+        rts
+$5630:  lda  $06
+        pha
+        lda  $07
+        pha
+        lda  $0e
+        pha
+        lda  $0f
+        pha
+        bsr  $5670
+        ldx  $4f8d
+        dex
+        dex
+        bsr  $5669
+        bsr  $5662
+        bsr  $565a
+        bsr  $5669
+        bsr  $5670
+        pla
+        sta  $0f
+        pla
+        sta  $0e
+        pla
+        sta  $07
+        pla
+        sta  $06
+        rts
+$565a:  bsr  $5670
+        bsr  $5662
+        dex
+        bne  $565a
+        rts
+$5662:  inc  $0e
+        bne  $5668
+        inc  $0f
+        rts
+
+; These adjacent helpers are also reached from the selector's copy path.
+$5670:  dec  $5a
+        jsr  $551a
+        bsr  $567a
+        stz  $5a
+        rts
+$567a:  lda  $06
+        sta  $0002
+        lda  $07
+        sta  $0003
+        rts
+$551a:  st0  #$00
+        lda  $0e
+        sta  $0002
+        lda  $0f
+        sta  $0003
+        st0  #$02
         rts
 
 ; $559d..$5609 contains two embedded bytes at $5607/$5608 that the routine

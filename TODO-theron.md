@@ -1,6 +1,6 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-10-06. Only open work is listed here.
+Reviewed 2026-10-07. Only open work is listed here.
 
 ## 2026-10-06 — admit the shared JP L4696 disassembly window
 
@@ -95,18 +95,20 @@ Reviewed 2026-10-06. Only open work is listed here.
   `$52a0`, not an instruction entry. Execution then reaches `$52a3: JSR
   $5669`. Comparing the US code at the same address therefore cannot
   establish a JP routine or regional parity.
-- The complete table's selector-entry bodies are now byte-bound, including
-  shared `$58dc` and the `$5915/$5946` pair. Initial callee/continuation
-  windows `$5555..$559d`, `$5966..$5984`, and `$5989..$599e` are also locked.
-  Follow-on windows `$508b..$5097`, `$5141..$51c0`, `$5208..$5237`,
-  `$559d..$5609`, and `$5685..$56e1` bind more direct callees. Static closure
-  still needs targets `$51c0`, `$5609`, and `$56d1`; do not claim complete
-  coverage of this handler family yet.
+- The complete table's selector-entry bodies are byte-bound, including shared
+  `$58dc` and the `$5915/$5946` pair. Static callee windows now also cover
+  `$51c0..$51ce`, `$524e..$525d`, `$551a..$5529`, `$559d..$5609`,
+  `$5609..$5624`, `$5624..$5669`, `$5670..$5685`, and `$5685..$56e1`, with
+  their direct JSR/BSR targets asserted against authentic JP Track 02. This
+  closes the currently mapped byte/edge set for these selector paths; it is
+  not proof that a selector executes at runtime, nor a semantic interpretation
+  of the record fields. The runtime selector value, branch decision at `$528c`,
+  reached BIOS/helper calls, and field meanings remain unproven.
 - Next, capture a source-byte-identified JP runtime trace that records the
   selector at `$5800`, the branch decision at `$528c`, and reached BIOS/helper
-  calls. Bind the outstanding call/continuation targets and determine the
-  record-field meanings from source evidence. Until then, do not infer that any
-  table handler executes during gameplay or claim regional parity.
+  calls. Derive any additional dynamically reached indirect edges and determine
+  the record-field meanings from source evidence. Until then, do not infer that
+  any table handler executes during gameplay or claim regional parity.
 
 ## 2026-10-06 — characterize the stage-two helper's behavior
 
