@@ -22,17 +22,18 @@ FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	   }
 +	   if(Theron3879Trace)
 +	   {
-+	    const unsigned pointer_low = (PC == 0x39c7 || PC == 0x39dd) ?
++	    const unsigned is_indirect_target = PC == 0x39c7 || PC == 0x39dd;
++	    const unsigned pointer_low = is_indirect_target ?
 +	        RdMem(0x2003) : 0xff;
-+	    const unsigned pointer_high = (PC == 0x39c7 || PC == 0x39dd) ?
++	    const unsigned pointer_high = is_indirect_target ?
 +	        RdMem(0x2004) : 0xff;
 +	    const unsigned indirect_target =
-+	        (PC == 0x39c7 || PC == 0x39dd) ?
++	        is_indirect_target ?
 +	        (pointer_low | (pointer_high << 8)) : 0xffff;
-+	    const unsigned target_physical = indirect_target < 0x10000 ?
++	    const unsigned target_physical = is_indirect_target ?
 +	        ((MPR[indirect_target >> 13] << 13) | (indirect_target & 0x1fff)) :
 +	        0xffffff;
-+	    const unsigned target_opcode = indirect_target < 0x10000 ?
++	    const unsigned target_opcode = is_indirect_target ?
 +	        RdOp(indirect_target) : 0xff;
 +	    fprintf(Theron3879Trace,
 +	            "theron_3879_step sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x ptr2003=%02x ptr2004=%02x indirect_target=%04x target_physical=%06x target_opcode=%02x follow_remaining=%u\n",
