@@ -15,6 +15,11 @@ Reviewed 2026-10-07. Only open work is listed here.
   is still ambiguous. Obtain a same-session source-offset-to-RAM-load receipt
   and a known transition before naming the routine, assigning semantics, or
   using it as stage/gameplay evidence.
+- 🔒 Separately, the static JP `$31B3` helper chain now has a bounded dataflow
+  note at
+  `docs/source-lock/theron-disassembly/theron-jp-l3114-l31b3-dataflow-20261007.md`.
+  This does not resolve runtime selection, device behavior, or game-level
+  meaning.
 
 ## 2026-10-06 — admit the shared JP L4696 disassembly window
 

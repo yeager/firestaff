@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-07 — decompile the JP `$31B3` helper dataflow
+
+Recorded a conservative dataflow decode for the byte-locked JP `$31B3` call
+chain and its immediate callees. The note covers the four-byte state copy at
+`$5C77`, the `$EF/$F0` path choice, pointer-array append and `$DFF0` bound in
+`$53E8`, its `$543E` continuation, I/O-port accesses through `$547D/$54FC`,
+byte updates through `$5CEB`, and the bounded polling/state paths at
+`$5D0E/$5D32`. Each statement is limited to operations visible in the
+source-locked HuC6280 listing; no subsystem or gameplay meanings were
+assigned. The source bytes were not re-extracted in this checkout, so this
+adds no fresh media verification. Runtime execution, device semantics, and the
+relationship to gameplay remain open. See
+`docs/source-lock/theron-disassembly/theron-jp-l3114-l31b3-dataflow-20261007.md`.
+
 ## 2026-10-07 — disassemble JP runtime-sampled HuC6280 PCs
 
 Recorded 27 logical PCs and their 8-byte code windows from a scripted-input
