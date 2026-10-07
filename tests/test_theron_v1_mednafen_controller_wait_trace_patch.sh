@@ -390,6 +390,18 @@ if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE' "$main_ram_consumer_patc
     printf '%s\n' 'FAIL: atomic command consumer read window is missing or unwired' >&2
     exit 1
 fi
+indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch
+if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
+   ! grep -Fq 'indirect_target_trace="${trace}.3879-indirect-target"' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace"' "$capture_script" ||
+   ! grep -Fq 'RdMem(0x2003)' "$indirect_target_patch_file" ||
+   ! grep -Fq 'RdMem(0x2004)' "$indirect_target_patch_file" ||
+   ! grep -Fq 'target_physical' "$indirect_target_patch_file" ||
+   ! grep -Fq 'Theron3879TargetStepsRemaining = 128' "$indirect_target_patch_file" ||
+   ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
+    printf '%s\n' 'FAIL: bounded $3879 indirect-target trace is missing or not wired into the live capture'
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_MEDNAFEN_BUILD_JOBS' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_MEDNAFEN_PATCH_ONLY' "$build_script" ||

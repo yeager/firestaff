@@ -7,9 +7,12 @@
   `$39dd` it records `$2003/$2004`, the active MPR-derived physical target,
   target opcode, and up to 128 subsequent HuC6280 steps. This is capture
   instrumentation only; it does not change Firestaff runtime behavior or
-  establish that the path executes. `patch --dry-run` succeeded against the
-  trv2 instrumented Mednafen source. The trace binary has not been built or
-  run, and a same-session runtime receipt remains open in `TODO-theron.md`.
+  establish that the path executes. The Theron capture launcher now passes the
+  trace destination and checks the optional sidecar's line boundaries, while
+  the existing Mednafen build script applies the patch. Static wiring checks
+  and `patch --dry-run` against the trv2 instrumented source passed. The trace
+  binary has not been built or run, and a same-session runtime receipt remains
+  open in `TODO-theron.md`.
 
 ## 2026-10-07 — decompile the JP `$31B3` helper dataflow
 
