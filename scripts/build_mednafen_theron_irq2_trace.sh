@@ -206,6 +206,12 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$pce_fast_consumer_read_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_stage2_mpr1_probe.patch"
+theron_3879_trace_patch="$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch"
+theron_3879_trace_rendered="$build_root/theron-3879-indirect-target-trace.rendered.patch"
+sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$theron_3879_trace_patch" \
+    > "$theron_3879_trace_rendered"
+patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
+    < "$theron_3879_trace_rendered"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
