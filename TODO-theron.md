@@ -259,13 +259,14 @@ Reviewed 2026-10-07. Only open work is listed here.
   are now source-bound and linearly disassembled: `$39e0` calls `$e009` then
   BRA-branches to `$39ca`, which restores stack bytes and ends in `JMP
   ($2003)`. The indirect destination is unresolved, so do not claim `$38b0`
-  fallthrough or code/data boundaries without a runtime PC/target receipt. The
-  The opt-in Mednafen patch
+  fallthrough or code/data boundaries without a runtime PC/target receipt. An
+  opt-in Mednafen patch
   `scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch` is prepared
   to record the `$2003/$2004` target, physical MPR mapping, opcode, and up to
-  128 subsequent CPU steps. It passes a patch dry-run against the trv2
-  instrumented Mednafen source, but has not been built or run; the runtime
-  receipt is still required. The source join does not prove the `$4ef4`
+  128 subsequent CPU steps. The complete patch-only sequence passed against a
+  clean Mednafen 1.32.1 source copy on trv2. The emulator binary has not been
+  built or run; the runtime receipt is still required. The source join does
+  not prove the `$4ef4`
   caller's live MPR mapping, execution, BIOS effects, or game-level meaning.
   Do not treat logical `$3879` as an image offset or promote these bytes to
   runtime behavior.
