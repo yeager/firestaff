@@ -15,9 +15,12 @@
 ; which bank owns those callees at runtime.
 ;
 ; $CC4C -> $CD13 inclusive: 200 bytes, raw offset $A4ACC,
-; FNV-1a 0x4AD0801E.  The span ends at the first RTS of this entry and
-; visibly reaches $5B64, $45E3, $20BA, $5A76 and the $4644 call site in its
-; following code/data neighborhood.
+; FNV-1a 0x4AD0801E. The window contains an RTS at $CC6A and continues with
+; a separately decoded region at $CC6B; the final byte at $CD13 is PLY, not
+; an RTS. See theron-us-cc4c-consumer.asm for the linear MAME listing and its
+; strict runtime/semantic limits. The byte span includes calls to $5B64,
+; $4540, $45E3 and $5A76; static address operands do not prove their runtime
+; bank mappings or call effects.
 ;
 ; Firestaff receipt fields:
 ;   Theron_V1Huc6280DisassemblyReceipt.spawn_rng_c96b_*

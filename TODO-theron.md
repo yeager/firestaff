@@ -4495,6 +4495,14 @@ distinguishes right and left after `$28B8` returns to zero.
   pixels. See
   `docs/source-lock/theron-disassembly/theron-bank1f-static-zero-tail-20261007.md`.
 
+- ✅ 2026-10-07 US `$CC4C` static consumer decode: generated a three-loop
+  MAME HuC6280 listing for the existing 200-byte authentic Track 02 window at
+  raw offset `$A4ACC`; its first RTS is `$CC6A`, while the receipt window
+  continues through `PLY` at `$CD13`. The listing records direct branch/call
+  targets but does not assign field or gameplay semantics. It does not prove
+  runtime bank selection or execution; see
+  `docs/source-lock/theron-disassembly/theron-us-cc4c-consumer.asm`.
+
 - 🔧 DM2 HUD follow-up: M11 now leaves the accepted V1 runtime frame as the
   sole production HUD owner. The retired V2 compatibility blit used a static
   GDAT plan without SKProject's live GUI/session inputs, so it cannot return
