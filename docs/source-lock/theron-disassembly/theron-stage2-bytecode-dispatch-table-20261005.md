@@ -944,6 +944,19 @@ source-lock does not prove that these spans are identical in JP. In
 particular, neither receipt establishes the MPR1 mapping needed to identify
 the below-window `$3a2e` call.
 
+An exhaustive scan of the authenticated MODE1 user-data sectors from INDEX 01
+through the end of US and JP Track 02 finds four raw `20 96 46` byte patterns
+in each edition and no `4c 96 46` pattern. Three are inside the 17-sector
+Stage 2 payload at loaded CPU addresses `$806a`, `$85ba`, and `$85cb`; the
+fourth is 68 sectors before the Stage 2 record, at user-data offset `$689`.
+The standalone `theron_track02_4696_raw_candidate_inventory` CTest pins this
+exact inventory to the authenticated image hashes and rechecks it in three
+passes per region. These matches are raw byte candidates only: they may be
+data or operands rather than instruction boundaries, and no runtime mapping
+or execution is established. In particular, the literal logical target
+`$4696` is distinct from loaded-image offset `$4696`, which maps to CPU
+`$8696` when Stage 2 is loaded at `$4000`.
+
 The adjacent `$4ef4` helper uses the same `$4ec2 -> $37cc` handoff, additionally
 copies `$4ec7/$4ec8` to `$37d0/$37d1`, calls `$4f31` and `$3879`, then clears
 `$5b` and returns. `$4be2` calls it directly; `$4c17` reaches it only when the

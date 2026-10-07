@@ -298,7 +298,11 @@ Reviewed 2026-10-07. Only open work is listed here.
   entry and `$4415` helper are byte-locked in both editions; the expansion-ROM
   effects, `$4b3c` table meaning, and runtime selection remain unknown. ID
   `$2d`'s overlapping `$468f` poll/cursor path is also byte-locked in both
-  regions; counter meaning and retail stream execution remain unbound. ID
+  regions; counter meaning and retail stream execution remain unbound. A
+  whole-Track-02 scan now finds four raw `JSR $4696` byte candidates per
+  edition, three in Stage 2 and one before it, with no raw `JMP $4696`
+  candidate. Their instruction boundaries, execution, and target MPR mapping
+  remain unproven. ID
   `$2e` now has US/JP byte locks for its complete `$46ca..$4749` main branch,
   alternate BIOS path, local pair loop, and operand reader. BIOS/callee
   effects, bank mapping, table contents, and retail selection remain open.

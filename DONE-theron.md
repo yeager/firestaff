@@ -7447,3 +7447,19 @@ while nested BSR edges reach `$547d` and `$5498`. This establishes static
 byte and edge coverage only, not dynamic indirect calls, helper semantics,
 runtime behavior, or Theron's Quest gameplay parity. No synthetic media was
 used.
+
+# ✅ 2026-10-07 Track 02 raw `$4696` candidate inventory
+
+Added a standalone CTest that scans authenticated MODE1 user-data sectors from
+INDEX 01 through the end of both original Track 02 BINs. Three raw `20 96 46`
+patterns occur in each 17-sector Stage 2 payload, at loaded CPU addresses
+`$806a`, `$85ba`, and `$85cb`; a fourth occurs 68 sectors before Stage 2, at
+user-data offset `$689`. Neither edition contains a raw `4c 96 46` pattern in
+that Track 02 user-data range. The full exact inventory passed three bounded,
+SHA-256-verified scans per region using the authentic local US and JP images;
+the registered CTest passed 1/1.
+
+These are byte-pattern candidates, not proven instruction boundaries or
+executed calls. The target's runtime MPR mapping and semantics remain unknown.
+The logical `$4696` target is also distinct from loaded-image offset `$4696`
+(CPU `$8696` with the Stage 2 load base `$4000`). No synthetic media was used.
