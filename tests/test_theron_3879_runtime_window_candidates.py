@@ -10,6 +10,10 @@ import sys
 
 RUNTIME_WINDOW = bytes.fromhex("1600041c0280650000a90820fb")
 RAW_SECTOR_BYTES = 2352
+MODE1_USER_BYTES = 2048
+MODE1_USER_DATA_OFFSET = 16
+TARGET_ENTRY_DELTA = 0x44FB - 0x489F
+TARGET_ENTRY_SPAN_BYTES = 33
 RUNTIME_CONTEXT_PREFIX_BYTES = 64
 RUNTIME_CONTEXT_SUFFIX_BYTES = 64
 RUNTIME_CONTEXT_BYTES = (
@@ -28,6 +32,14 @@ MAME_LISTING_PATH = (
     "theron-disassembly" /
     "theron-jp-3879-runtime-window-candidate-20261007.asm"
 )
+TARGET_LISTING_SHA256 = (
+    "d05c8c2848469977cbfa23f87de74b916dcda10514d4b9f6d61dae41256eac01"
+)
+TARGET_LISTING_PATH = (
+    pathlib.Path(__file__).resolve().parents[1] / "docs" / "source-lock" /
+    "theron-disassembly" /
+    "theron-jp-44fb-runtime-target-candidate-20261007.asm"
+)
 EXPECTED = {
     "US": {
         "name": "TQUS02.bin",
@@ -40,6 +52,7 @@ EXPECTED = {
         "size": 8102640,
         "sha256": "d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb",
         "offsets": (611695, 912751, 1213807, 1514863, 1815919, 2116975),
+        "target_offsets": (610459, 911515, 1212571, 1513627, 1814683, 2115739),
     },
 }
 
@@ -77,6 +90,46 @@ def verify_recorded_listing() -> None:
     print("PASS: recorded MAME 0.285 candidate listing hash and entry")
 
 
+def verify_recorded_target_listing() -> None:
+    try:
+        lines = TARGET_LISTING_PATH.read_text(encoding="utf-8").splitlines(
+            keepends=True
+        )
+    except OSError as error:
+        raise ValueError(f"cannot read target MAME listing: {error}") from error
+
+    try:
+        start = lines.index("; BEGIN MAME OUTPUT\n") + 1
+        end = lines.index("; END MAME OUTPUT\n")
+    except ValueError as error:
+        raise ValueError("target MAME listing delimiters are missing") from error
+
+    listing = "".join(lines[start:end]).encode("utf-8")
+    if hashlib.sha256(listing).hexdigest() != TARGET_LISTING_SHA256:
+        raise ValueError("recorded $44fb MAME listing digest differs")
+    if not lines[start].startswith("0044fb: 08"):
+        raise ValueError("recorded $44fb MAME listing lost its entry")
+    print("PASS: recorded MAME 0.285 $44fb candidate listing hash and entry")
+
+
+def raw_offset_for_target(raw_candidate_offset: int) -> int:
+    sector, raw_in_sector = divmod(raw_candidate_offset, RAW_SECTOR_BYTES)
+    user_byte = raw_in_sector - MODE1_USER_DATA_OFFSET
+    if user_byte < 0 or user_byte >= MODE1_USER_BYTES:
+        raise ValueError("candidate offset is outside MODE1 user data")
+    user_position = sector * MODE1_USER_BYTES + user_byte
+    target_user_position = user_position + TARGET_ENTRY_DELTA
+    if target_user_position < 0:
+        raise ValueError("target entry precedes MODE1 user data")
+    target_sector, target_user_byte = divmod(
+        target_user_position, MODE1_USER_BYTES
+    )
+    return (
+        target_sector * RAW_SECTOR_BYTES + MODE1_USER_DATA_OFFSET +
+        target_user_byte
+    )
+
+
 def verify_edition(edition: str, path: pathlib.Path) -> bool:
     expected = EXPECTED[edition]
     if not path.is_file():
@@ -104,6 +157,16 @@ def verify_edition(edition: str, path: pathlib.Path) -> bool:
             raise ValueError(f"{edition} runtime-window sector positions differ")
 
         contexts = []
+        target_spans = []
+        target_offsets = ()
+        if edition == "JP":
+            target_offsets = tuple(
+                raw_offset_for_target(offset) for offset in offsets
+            )
+            if target_offsets != expected["target_offsets"]:
+                raise ValueError(
+                    f"{edition} target offsets differ: {target_offsets}"
+                )
         for offset in offsets:
             context_start = offset - RUNTIME_CONTEXT_PREFIX_BYTES
             context_end = (
@@ -121,8 +184,24 @@ def verify_edition(edition: str, path: pathlib.Path) -> bool:
             if context[call_start:call_end] != RUNTIME_CALL_WINDOW:
                 raise ValueError(f"{edition} runtime call window differs")
             contexts.append(context)
+            if edition == "JP":
+                target_offset = raw_offset_for_target(offset)
+                target_end = target_offset + TARGET_ENTRY_SPAN_BYTES
+                if target_end > len(raw):
+                    raise ValueError(f"{edition} target span is out of bounds")
+                target_span = raw[target_offset:target_end]
+                if len(target_span) != TARGET_ENTRY_SPAN_BYTES:
+                    raise ValueError(f"{edition} target span has wrong length")
+                if hashlib.sha256(target_span).hexdigest() != (
+                    "30c4e29752ff4fc5363876072d67f7b1f8e68f96af208064f0ee0e58fc62463d"
+                ):
+                    raise ValueError(f"{edition} target span digest differs")
+                target_spans.append(target_span)
         if contexts and len(set(contexts)) != 1:
             raise ValueError(f"{edition} candidate contexts are not identical")
+        if edition == "JP":
+            if len(set(target_spans)) != 1:
+                raise ValueError(f"{edition} $44fb target spans are not identical")
 
         observed_hashes.append(digest)
         print(f"PASS: {edition} authentic runtime-window scan {pass_number}")
@@ -134,6 +213,7 @@ def verify_edition(edition: str, path: pathlib.Path) -> bool:
 
 def main() -> int:
     verify_recorded_listing()
+    verify_recorded_target_listing()
     data_root = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else (
         pathlib.Path.home() / ".firestaff" / "data"
     )

@@ -1,5 +1,10 @@
 # Firestaff TODO — Theron's Quest
 
+- `$44fb` target candidate: six identical authentic JP Track 02 spans and a
+  bounded static disassembly are recorded, but no loader receipt binds any
+  candidate to CD RAM and execution/semantics remain unproven. Continue seeking
+  a fresh authentic-media loader trace before assigning runtime meaning.
+
 ## 2026-10-07 PCE Fast stage-two caller gap
 
 - 🔒 Rebuilt Mednafen's PCE Fast core with a bounded instruction window after

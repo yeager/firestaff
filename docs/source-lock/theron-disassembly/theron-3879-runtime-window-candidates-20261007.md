@@ -85,6 +85,26 @@ bound to that CPU address by a loader receipt. These bytes provide a bounded
 decode of the observed entry and its immediate call/jump, not the callees'
 semantics or a completed gameplay route.
 
+## Candidate-relative `$44fb` target bytes
+
+The observed entry calls logical `$44fb`. To inspect a candidate-relative
+span at that address without assuming raw-file bytes map one-to-one to CPU
+addresses, the test converts the `$489f` candidate location to MODE1 user-data
+coordinates, subtracts `$3a4` user bytes, and converts back to a 2352-byte
+raw-sector offset. This yields offsets `610459`, `911515`, `1212571`,
+`1513627`, `1814683`, and `2115739`. All six 33-byte spans are identical in
+the authenticated JP image (span SHA-256
+`30c4e29752ff4fc5363876072d67f7b1f8e68f96af208064f0ee0e58fc62463d`). Their
+MAME 0.285 `unidasm -arch h6280 -basepc 0x44fb -skip 610459 -count 33`
+listing is recorded in
+`theron-jp-44fb-runtime-target-candidate-20261007.asm` (listing SHA-256
+`d05c8c2848469977cbfa23f87de74b916dcda10514d4b9f6d61dae41256eac01`).
+
+This is a static candidate-relative overlay only. No loader receipt binds any
+of these bytes to CD RAM, and the listing does not prove that this target was
+executed or establish its semantics. The source test checks the listing and
+the six authentic spans; it does not promote the candidate to runtime code.
+
 ## CD-RAM write probe and remaining gap
 
 Mednafen PCE Fast source maps CD banks `$68..$87` to `ROMSpace` and

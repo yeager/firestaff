@@ -7572,3 +7572,17 @@ bounded authentic-media checks and registered CTest passed. This establishes
 the bytes' source provenance only; the MPR mapping, instruction/data
 boundaries, caller execution, BIOS effects, and game-level meaning remain
 open. Snapshot and game data stay outside Git; no synthetic media was used.
+
+# ✅ 2026-10-07 JP `$44fb` call-target candidate spans
+
+Extended `theron_3879_runtime_window_candidates` to convert the six authentic
+JP `$489f` runtime-window candidates through MODE1 user-data coordinates and
+inspect the candidate-relative `$44fb` target span. All six 33-byte spans are
+identical and hash to
+`30c4e29752ff4fc5363876072d67f7b1f8e68f96af208064f0ee0e58fc62463d`. Added
+the recorded MAME 0.285 HuC6280 listing
+`theron-jp-44fb-runtime-target-candidate-20261007.asm`; both listing hashes
+and the bounded authentic US/JP scans passed three repeated trv2 test loops.
+This remains a static candidate-relative overlay: there is no loader receipt
+binding the bytes to CD RAM, no proof this body executed, and no established
+routine or gameplay semantics. No synthetic media was used.
