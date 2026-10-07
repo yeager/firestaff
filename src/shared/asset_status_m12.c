@@ -1291,20 +1291,25 @@ static int m12_admit_dm1_atari_st_nested_archive(
     const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
     size_t rootCount, const char* preferredArchive) {
     static const char outerName[] = "Dungeon-Master_Atari-ST_EN.zip";
+    static const char directStxOuterName[] =
+        "Dungeon-Master_Atari-ST_EN_Version-12.zip";
     static const char sevenZipName[] =
         "Game,Dungeon_Master,Atari_ST,Software.7z";
     static const char innerName[] = "Dungeon Master (1987)(FTL)[!].zip";
     static const char stxName[] = "Dungeon Master (1987)(FTL)[!].stx";
+    static const char directStxName[] =
+        "Dungeon Master V1.2 (1987)(FTL)(en)[!].stx";
     static const char sevenZipStxName[] =
         "Floppy Disks STX/Dungeon Master for Atati ST v1.1 (English).stx";
     size_t rootIndex;
+    int admitted = 0;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
     for (rootIndex = 0U; rootIndex < rootCount ||
                               (rootIndex == 0U && preferredArchive &&
                                preferredArchive[0] != '\0');
          ++rootIndex) {
-        char candidates[5][M12_ASSET_DATA_DIR_CAPACITY];
+        char candidates[7][M12_ASSET_DATA_DIR_CAPACITY];
         size_t candidateCount = 0U, candidateIndex;
         if (rootIndex == 0U && preferredArchive && preferredArchive[0] != '\0') {
             m12_copy_string(candidates[candidateCount++], sizeof(candidates[0]),
@@ -1319,6 +1324,10 @@ static int m12_admit_dm1_atari_st_nested_archive(
             snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
                      roots[rootIndex], outerName);
             snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
+                     roots[rootIndex], directStxOuterName);
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
+                     roots[rootIndex], directStxOuterName);
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
                      roots[rootIndex], sevenZipName);
             snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
                      roots[rootIndex], sevenZipName);
@@ -1332,20 +1341,35 @@ static int m12_admit_dm1_atari_st_nested_archive(
             uint8_t* graphics = NULL;
             uint8_t* dungeon = NULL;
             size_t graphicsSize = 0U, dungeonSize = 0U, versionIndex;
+            const char* candidateLeaf = strrchr(candidates[candidateIndex], '/');
+            const char* candidateExtension =
+                strrchr(candidates[candidateIndex], '.');
+            int directStxArchive =
+                strcmp(candidateLeaf ? candidateLeaf + 1 :
+                       candidates[candidateIndex], directStxOuterName) == 0;
+            int pathLength;
             const char* stxMember =
+                directStxArchive ? directStxName :
                 m12_ascii_equals_ignore_case(
-                    strrchr(candidates[candidateIndex], '.'), ".7z")
+                    candidateExtension, ".7z")
                     ? sevenZipStxName : stxName;
-            if (!FSP_FileExists(candidates[candidateIndex]) ||
-                (m12_ascii_equals_ignore_case(
-                     strrchr(candidates[candidateIndex], '.'), ".7z")
-                     ? snprintf(virtualGraphics, sizeof(virtualGraphics),
-                                "%s::%s::GRAPHICS.DAT",
-                                candidates[candidateIndex], stxMember)
-                     : snprintf(virtualGraphics, sizeof(virtualGraphics),
-                                "%s::%s::%s::GRAPHICS.DAT",
-                                candidates[candidateIndex], innerName, stxMember)) >=
-                    (int)sizeof(virtualGraphics) ||
+            if (!FSP_FileExists(candidates[candidateIndex])) continue;
+            if (m12_ascii_equals_ignore_case(candidateExtension, ".7z")) {
+                pathLength = snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                      "%s::%s::GRAPHICS.DAT",
+                                      candidates[candidateIndex], stxMember);
+            } else if (directStxArchive) {
+                pathLength = snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                      "%s::%s::GRAPHICS.DAT",
+                                      candidates[candidateIndex], stxMember);
+            } else {
+                pathLength = snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                      "%s::%s::%s::GRAPHICS.DAT",
+                                      candidates[candidateIndex], innerName,
+                                      stxMember);
+            }
+            if (pathLength < 0 ||
+                pathLength >= (int)sizeof(virtualGraphics) ||
                 !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
                                                &graphicsSize) ||
                 graphicsSize == 0U) {
@@ -1384,7 +1408,9 @@ static int m12_admit_dm1_atari_st_nested_archive(
                 if (g_games[gameIndex].versions[versionIndex].architecture !=
                         M12_ARCH_ATARI_ST ||
                     strcmp(md5, g_games[gameIndex].versions[versionIndex].md5) !=
-                        0) continue;
+                        0) {
+                    continue;
+                }
                 version->matched = 1;
                 m12_copy_string(version->matchedPath,
                                 sizeof(version->matchedPath), virtualGraphics);
@@ -1427,11 +1453,11 @@ static int m12_admit_dm1_atari_st_nested_archive(
                 }
                 status->dm1Available = 1;
                 status->originalFileCandidateFound = 1;
-                return 1;
+                admitted = 1;
             }
         }
     }
-    return 0;
+    return admitted;
 }
 
 static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,

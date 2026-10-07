@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-07: M12 Atari ST discovery now continues through all candidate
+  preservation archives after admitting an edition. A persisted root that
+  contains both the nested v1.1 archive and the authentic v1.2 ZIP-to-STX
+  archive now exposes and launches both; direct v1.2 archive admission and
+  the persisted-root M12-to-M11 handoff pass against the original media.
+
 - 2026-10-06: Fixed DM1 Amiga ADF admission by keeping the Amiga graphics
   decoder's big-endian legacy-layout flag separate from the little-endian F0434
   `DUNGEON.DAT` fields and checksum. The installed `[HD]` image uses the

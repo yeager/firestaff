@@ -1,16 +1,28 @@
 # Unreleased
 
+# Firestaff v3.0.366
+
 ## User-facing changes
 
-- The launcher now scans sibling game-data folders when opening the full menu
-  from a selected game's data folder, and refreshes game availability when
-  returning from a running game. The progress panel is larger, lower and
-  centered, with a more prominent headline and progress bar. It fills the
-  launcher window after returning from a game.
+- `Launcher game-data scan`: loads sibling game-data folders when the full
+  menu opens from a selected game's data folder and reloads availability when
+  returning from a running game.
+- `Launcher scan progress`: moves the status panel lower and centers it, with
+  a larger headline and progress bar.
 
 ## Developer changes
 
-- `DM1 Amiga startup`: parse the authentic ADF dungeon's little-endian fields
+- `DM1 Atari ST asset discovery`: reads all matching original archives in a
+  persisted data root, including the direct ZIP-to-STX v1.2 preservation set,
+  instead of stopping after the first authenticated edition.
+- `Persisted-root launcher coverage`: verifies DM1 Atari ST v1.2 selection and
+  handoff with the original archive alongside the other installed editions.
+- `Launcher full-menu scan`: loads sibling game-data folders when the menu
+  opens from a selected game's data folder.
+- `Launcher return scan`: reloads availability when returning from a game.
+- `Launcher scan progress`: moves a larger panel lower with a prominent headline
+  and progress bar.
+- `DM1 Amiga startup`: reads authentic ADF dungeon fields as little-endian
   independently from its big-endian legacy graphics layout. The installed
   `[HD]` image keeps its direct runtime route, while the v2.0 floppy set
   preserves the SWSH/TITLE/ENTRANCE startup transaction.
