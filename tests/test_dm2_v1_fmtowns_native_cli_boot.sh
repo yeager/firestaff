@@ -15,6 +15,33 @@ fi
 
 archive_hash_before=$(sha256sum "$archive")
 
+# When several authentic DM2 editions are installed together, omitting
+# --platform must still select the requested FM Towns default. The ordinary
+# single-archive check below cannot catch an AUTO-order regression where DOS
+# or Macintosh happens to win the scan.
+archive_dir=$(cd "$(dirname "$archive")" && pwd)
+default_data_root=$(cd "$archive_dir/.." && pwd)
+if [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip" ]; then
+    default_probe_output=$(FIRESTAFF_DATA="$default_data_root" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --debug --boot-probe --boot-probe-frames 1 --duration 0 2>&1) || {
+        printf '%s\n' "$default_probe_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$default_probe_output" | grep -q \
+        'game=dm2 platform=FM Towns edition=fmtowns-ja' || {
+        printf '%s\n' 'FAIL: bare --game dm2 did not prefer FM Towns when multiple original editions were installed' \
+            "$default_probe_output" >&2
+        exit 1
+    }
+    echo 'PASS: bare --game dm2 selects FM Towns with multiple original editions installed'
+else
+    echo 'SKIP: no competing authentic DM2 edition is staged for default-platform priority'
+fi
+
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform fm-towns --data-dir "$archive" \
