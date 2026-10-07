@@ -7463,3 +7463,15 @@ These are byte-pattern candidates, not proven instruction boundaries or
 executed calls. The target's runtime MPR mapping and semantics remain unknown.
 The logical `$4696` target is also distinct from loaded-image offset `$4696`
 (CPU `$8696` with the Stage 2 load base `$4000`). No synthetic media was used.
+
+# ✅ 2026-10-07 JP `$8696` HuC6280 listing
+
+Added `docs/source-lock/theron-disassembly/theron-jp-stage2-l8696-huc6280.asm`
+for the exact 69-byte body at loaded CPU `$8696` / Stage 2 image offset
+`$4696`. The listing preserves the HuC6280 BBS opcodes and labels each
+instruction boundary, and explicitly distinguishes this routine from the
+linear-map `$4696` label that overlaps dispatch ID `$2d`. The source bytes
+were independently read three times from each authenticated US and JP Track
+02 image and matched the existing body byte-for-byte. The listing does not
+establish runtime bank mapping, call selection, or operand/gameplay meanings;
+no emulator run or synthetic media was used.

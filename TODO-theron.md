@@ -15,6 +15,15 @@ Reviewed 2026-10-07. Only open work is listed here.
   is still ambiguous. Obtain a same-session source-offset-to-RAM-load receipt
   and a known transition before naming the routine, assigning semantics, or
   using it as stage/gameplay evidence.
+
+- ✅ The shared L4696 byte window now has a JP HuC6280 listing at the correct
+  loaded CPU address `$8696`, distinct from logical target `$4696`. Its 69
+  bytes were independently re-read from authenticated US and JP Track 02
+  three times per edition; the byte window matches the existing US decode.
+  The linear US listing still contains a conflicting `$4696` label from the
+  overlapping ID `$2d` stream; use the bounded `$8696` listing for this
+  callee. No additional call-site execution, MPR mapping, or operand meaning
+  is established.
 - 🔒 Separately, the static JP `$31B3` helper chain now has a bounded dataflow
   note at
   `docs/source-lock/theron-disassembly/theron-jp-l3114-l31b3-dataflow-20261007.md`.

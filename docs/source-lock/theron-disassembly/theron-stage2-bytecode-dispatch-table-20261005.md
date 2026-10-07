@@ -911,7 +911,8 @@ X value after clearing `$02/$03`. When `$3b68` is zero, control calls `$48fc`
 before returning.
 
 The called body at CPU `$8696` (loaded-image offset `$4696`; see
-`theron-us-stage2-huc6280.asm:10049-10085`) is independently byte-bound by
+`theron-us-stage2-huc6280.asm:10212-10248` and the regional listing
+`theron-jp-stage2-l8696-huc6280.asm`) is independently byte-bound by
 `theron_v1_track02_verify_stage2_l4696_l3114()` for authentic US Rev. 1 media.
 The corresponding regression is `test_stage2_l4696_l3114()` in
 `tests/test_theron_v1_stage2_disassembly_chain.c`. It computes an unsigned
