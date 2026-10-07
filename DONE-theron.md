@@ -7481,10 +7481,15 @@ no emulator run or synthetic media was used.
 Added `theron_3879_runtime_window_source`, which hashes the authentic 8 KiB
 US Akutuba-complete BaseRAM snapshot and both regional Track 02 BINs, then
 requires the complete 160-byte snapshot window at offset `$1879` to occur
-exactly once in each disc image. Its unique file offsets are `534041` (US)
-and `531689` (JP), both two raw sectors after INDEX 01 at raw byte 137 / MODE1
-user byte 121. The three-pass bounded authentic-media checks passed for both
-regions. This establishes the bytes' source provenance only; the MPR mapping,
-instruction/data boundaries, caller execution, BIOS effects, and game-level
-meaning remain open. Snapshot and game data stay outside Git; no synthetic
-media was used.
+exactly once in each disc image. Added a MAME `unidasm -arch h6280` linear
+listing at `theron-us-captured-3879-linear-huc6280.asm`; the source test now
+checks that its raw-byte columns reproduce all 160 captured bytes. The listing
+emits illegal opcodes and implausible flow after `$38ad`, so it is explicitly
+not treated as a routine-boundary or semantic decode. The unique file offsets
+are `534041` (US) and `531689` (JP), both two raw sectors after INDEX 01 at
+raw byte 137 / MODE1 user byte 121. Its 74 rows exactly match a fresh
+`unidasm -arch h6280 -basepc 0x3879 -count 160` run on `trv2`. The three-pass
+bounded authentic-media checks and registered CTest passed. This establishes
+the bytes' source provenance only; the MPR mapping, instruction/data
+boundaries, caller execution, BIOS effects, and game-level meaning remain
+open. Snapshot and game data stay outside Git; no synthetic media was used.

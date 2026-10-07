@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import pathlib
+import re
 import sys
 
 
@@ -14,6 +15,9 @@ SNAPSHOT_OFFSET = 0x1879
 WINDOW_SIZE = 0xA0
 RAW_SECTOR_SIZE = 2352
 USER_DATA_OFFSET = 16
+LISTING = pathlib.Path(__file__).resolve().parents[1] / (
+    "docs/source-lock/theron-disassembly/theron-us-captured-3879-linear-huc6280.asm"
+)
 
 EDITIONS = {
     "US": {
@@ -41,6 +45,28 @@ def read_bounded(path: pathlib.Path, expected_size: int) -> bytes:
     if len(contents) != expected_size:
         raise ValueError(f"bounded read size changed for {path}")
     return contents
+
+
+def read_listing_bytes() -> bytes:
+    expected_pc = 0x3879
+    listing_bytes = bytearray()
+    line_pattern = re.compile(r"^([0-9a-f]{4}): ((?:[0-9a-f]{2} ?)+)")
+    for line in LISTING.read_text(encoding="utf-8").splitlines():
+        match = line_pattern.match(line)
+        if not match:
+            continue
+        address = int(match.group(1), 16)
+        encoded = bytes.fromhex(match.group(2))
+        if address != expected_pc:
+            raise ValueError(
+                f"listing address discontinuity: expected ${expected_pc:04x}, "
+                f"got ${address:04x}"
+            )
+        listing_bytes.extend(encoded)
+        expected_pc += len(encoded)
+    if len(listing_bytes) != WINDOW_SIZE or expected_pc != 0x3919:
+        raise ValueError("linear listing does not cover the exact 160-byte window")
+    return bytes(listing_bytes)
 
 
 def verify_edition(
@@ -106,6 +132,8 @@ def main() -> int:
     if SNAPSHOT_OFFSET + WINDOW_SIZE > len(snapshot):
         raise ValueError("$3879 window exceeds the captured BaseRAM image")
     window = snapshot[SNAPSHOT_OFFSET:SNAPSHOT_OFFSET + WINDOW_SIZE]
+    if read_listing_bytes() != window:
+        raise ValueError("HuC6280 listing byte columns differ from the captured window")
 
     us_present = verify_edition("US", theron_root, window)
     jp_present = verify_edition("JP", theron_root, window)

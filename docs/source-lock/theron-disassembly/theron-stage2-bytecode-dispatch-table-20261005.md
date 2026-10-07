@@ -965,13 +965,23 @@ preceding `$4f5e` call clears carry. `$4f11` is a separate table-entry writer:
 after `$4f31` selects a pointer, it writes `$00,$00,$60` through `($00)`.
 The caller roots and helpers are now byte-locked against both editions. The
 `$3879` routine remains below the loaded stage-two window, so its effects and
-the runtime conditions for either caller remain unknown. A captured authentic
-US Akutuba-complete 8 KiB BaseRAM image contains a 160-byte window at offset
+the runtime conditions for either caller remain unknown. A linear MAME
+HuC6280 decode of the captured 160-byte window is preserved in
+`theron-us-captured-3879-linear-huc6280.asm`; it emits illegal opcodes and
+implausible control flow after `$38ad`, so code/data boundaries are unresolved.
+From `$38b0`, the raw bytes repeat a six-byte record-like prefix followed by
+an eleven-byte code-shaped stub every 17 bytes. Since `$38ad` calls `$39e0`
+and ordinary return would continue at `$38b0`, this pattern alone does not
+prove which bytes are data or executed instructions; `$39e0` control flow or a
+runtime PC trace is still needed.
+A captured authentic US Akutuba-complete 8 KiB BaseRAM image contains a
+160-byte window at offset
 `$1879`; that exact window occurs once in each hash-verified US and JP Track 02
 image, at file offsets `534041` and `531689` respectively (INDEX 01 + 2 raw
 sectors, raw byte 137 / MODE1 user byte 121). The new
 `theron_3879_runtime_window_source` CTest binds this snapshot window to both
-editions in three bounded passes. This is source provenance only: it does not
+editions in three bounded passes and checks the listing's raw-byte columns
+against the window. This is source provenance only: it does not
 prove which MPR mapping supplied logical `$3879`, that either caller executed,
 or the BIOS/runtime effects of the bytes. The snapshot and game media remain
 outside Git.
