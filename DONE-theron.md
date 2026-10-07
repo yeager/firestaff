@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-07 — prepare bounded `$3879` indirect-target trace
+
+- Added `scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch` for
+  opt-in tracing of `$4ef4`, `$3879..$3918`, and `$39c0..$3a0f`. At `$39c7` and
+  `$39dd` it records `$2003/$2004`, the active MPR-derived physical target,
+  target opcode, and up to 128 subsequent HuC6280 steps. This is capture
+  instrumentation only; it does not change Firestaff runtime behavior or
+  establish that the path executes. `patch --dry-run` succeeded against the
+  trv2 instrumented Mednafen source. The trace binary has not been built or
+  run, and a same-session runtime receipt remains open in `TODO-theron.md`.
+
 ## 2026-10-07 — decompile the JP `$31B3` helper dataflow
 
 Recorded a conservative dataflow decode for the byte-locked JP `$31B3` call
