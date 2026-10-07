@@ -4795,15 +4795,25 @@ authenticated raw sector.
 - ✅ 2026-10-07 JP generation-51 disassembly: authentic JP Track 02 was
   independently decoded with MAME `unidasm` for `$5111..$555e`. The JP
   source-lock listing and focused test bind two contiguous spans (`$5111..$533d`
-  and `$533d..$555e`), representative direct call/branch targets, and mutation
-  rejection after checking the JP Track 02 digest. The listing includes the
-  complete terminal instruction through `$555f`, and those two trailing bytes
+  and `$533d..$555e`), representative direct call/branch targets, and span-hash
+  mutation-sensitivity checks after checking the JP Track 02 digest. The
+  listing includes the complete terminal instruction through `$555f`, and
+  those two trailing bytes
   have their own source-lock check. The same-address JP bytes differ from
   authentic US bytes at 1,080 of 1,103 positions; US handler labels
   and behavior must not be applied to JP. This adds no runtime or gameplay
   claim. The open gate remains a same-session caller/phase capture linking the
   generation-51 drawing loop to its next image transition before interpreting
   the VDC payload.
+
+- ✅ 2026-10-07 JP bank-$1f window comparison: MAME `unidasm` decoded the
+  authentic JP Rev. 1 `$2386..$2502` window independently on `trv2`. Its 380
+  bytes match the US listing and all four authentic ISO/raw-BIN projections
+  (US and JP) by direct comparison; the static verifier now checks the
+  contiguous span hash as well as its existing subwindows. Its 3-loop test
+  passed with US ISO and both raw BINs; the JP ISO test skipped because that
+  file was not installed on `trv2`. This does not bind the later `$2600`
+  RAM-loaded consumer or grant level/tile/object semantics.
 
 # 2026-08-13 — fresh System Card replay confirms transport-only boundary
 

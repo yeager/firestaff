@@ -34,6 +34,14 @@ static void verify(const char *env_name, const char *name, int variant,
     assert(receipt.status == THERON_V1_HUC6280_DISASSEMBLY_READY);
     assert(receipt.source_file_identity_verified);
     assert(receipt.bank_window_verified);
+    assert(receipt.bank1f_disassembly_window_verified);
+    assert(receipt.bank1f_disassembly_window_address == 0x2386u);
+    assert(receipt.bank1f_disassembly_window_bytes == 0x17cu);
+    assert(receipt.bank1f_disassembly_window_file_offset ==
+           (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x2bd586u :
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 0x2bcc56u :
+            0x1f2386u));
+    assert(receipt.bank1f_disassembly_window_fnv1a == 0xd5465b33u);
     assert(receipt.forward_byte_step_verified);
     assert(receipt.bank_switch_table_verified);
     assert(receipt.reverse_byte_read_verified);

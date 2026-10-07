@@ -20,6 +20,14 @@ typedef struct {
     Theron_V1Huc6280DisassemblyStatus status;
     int source_file_identity_verified;
     int bank_window_verified;
+    /* Contiguous HuC6280 $2386..$2502 code/data window. Its exact bytes are
+     * shared by the authenticated US and JP images; this is static source
+     * evidence only, not a claim about the post-CD RAM consumer. */
+    int bank1f_disassembly_window_verified;
+    uint16_t bank1f_disassembly_window_address;
+    uint16_t bank1f_disassembly_window_bytes;
+    uint32_t bank1f_disassembly_window_file_offset;
+    uint32_t bank1f_disassembly_window_fnv1a;
     int forward_byte_step_verified;
     int bank_switch_table_verified;
     int reverse_byte_read_verified;

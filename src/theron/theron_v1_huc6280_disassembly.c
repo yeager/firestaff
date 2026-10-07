@@ -18,6 +18,9 @@
 #endif
 
 #define THERON_BANK1F_FILE_OFFSET 0x1f0000u
+#define THERON_BANK1F_DISASSEMBLY_WINDOW_ADDRESS 0x2386u
+#define THERON_BANK1F_DISASSEMBLY_WINDOW_BYTES 0x17cu
+#define THERON_BANK1F_DISASSEMBLY_WINDOW_FNV1A 0xd5465b33u
 #define THERON_FRAGMENT_OFFSET 0x243eu
 #define THERON_FRAGMENT_BYTES 134u
 #define THERON_LEVEL_DECOMPRESSOR_OFFSET 0x23adu
@@ -215,6 +218,8 @@ int theron_v1_huc6280_disassembly_read_file(
     Theron_V1Huc6280DisassemblyReceipt receipt = {0};
     FILE *file = NULL;
     uint8_t bytes[THERON_FRAGMENT_BYTES];
+    uint8_t bank1f_disassembly_window[
+        THERON_BANK1F_DISASSEMBLY_WINDOW_BYTES];
     uint8_t decompressor[THERON_LEVEL_DECOMPRESSOR_BYTES];
     uint8_t decompressor_caller[THERON_LEVEL_DECOMPRESSOR_CALLER_BYTES];
     uint8_t stage2_resource_handler[THERON_STAGE2_RESOURCE_HANDLER_BYTES];
@@ -257,6 +262,11 @@ int theron_v1_huc6280_disassembly_read_file(
     }
     if (!(file = fopen(path, "rb")) || fseek(file, 0L, SEEK_END) != 0 ||
         (file_size = ftell(file)) <= 0 || (uint32_t)file_size != expected_size ||
+        fseek(file, (long)(bank_file_offset +
+                           THERON_BANK1F_DISASSEMBLY_WINDOW_ADDRESS), SEEK_SET) != 0 ||
+        fread(bank1f_disassembly_window, 1u,
+              sizeof(bank1f_disassembly_window), file) !=
+            sizeof(bank1f_disassembly_window) ||
         fseek(file, (long)(bank_file_offset + THERON_FRAGMENT_OFFSET),
               SEEK_SET) != 0 || fread(bytes, 1u, sizeof(bytes), file) != sizeof(bytes) ||
         fseek(file, (long)(bank_file_offset +
@@ -310,6 +320,9 @@ int theron_v1_huc6280_disassembly_read_file(
     fclose(file);
 
     if (strcmp(receipt.source_md5, expected_md5) != 0 ||
+        fnv1a(bank1f_disassembly_window,
+              sizeof(bank1f_disassembly_window)) !=
+            THERON_BANK1F_DISASSEMBLY_WINDOW_FNV1A ||
         memcmp(bytes, g_fragment, sizeof(bytes)) != 0 ||
         fnv1a(decompressor, sizeof(decompressor)) !=
             THERON_LEVEL_DECOMPRESSOR_FNV1A ||
@@ -350,6 +363,16 @@ int theron_v1_huc6280_disassembly_read_file(
     receipt.status = THERON_V1_HUC6280_DISASSEMBLY_READY;
     receipt.source_file_identity_verified = 1;
     receipt.bank_window_verified = 1;
+    receipt.bank1f_disassembly_window_verified = 1;
+    receipt.bank1f_disassembly_window_address =
+        THERON_BANK1F_DISASSEMBLY_WINDOW_ADDRESS;
+    receipt.bank1f_disassembly_window_bytes =
+        THERON_BANK1F_DISASSEMBLY_WINDOW_BYTES;
+    receipt.bank1f_disassembly_window_file_offset =
+        bank_file_offset + THERON_BANK1F_DISASSEMBLY_WINDOW_ADDRESS;
+    receipt.bank1f_disassembly_window_fnv1a =
+        fnv1a(bank1f_disassembly_window,
+              sizeof(bank1f_disassembly_window));
     receipt.forward_byte_step_verified = 1;
     receipt.bank_switch_table_verified = 1;
     receipt.reverse_byte_read_verified = 1;
