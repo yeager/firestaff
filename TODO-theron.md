@@ -255,9 +255,12 @@ Reviewed 2026-10-07. Only open work is listed here.
   `theron-us-captured-3879-linear-huc6280.asm`. That decode emits illegal
   opcodes and implausible control flow after `$38ad`; a repeated 17-byte
   pattern has six-byte record-like prefixes plus eleven-byte code-shaped
-  stubs, but `$38ad`'s `$39e0` call returns into that pattern. Actual
-  code/data boundaries remain unresolved pending `$39e0` control flow or a
-  runtime PC trace. The source join does not prove the `$4ef4`
+  stubs. The authentic `$39e0` target and adjacent `$39c0..$3a0f` continuation
+  are now source-bound and linearly disassembled: `$39e0` calls `$e009` then
+  BRA-branches to `$39ca`, which restores stack bytes and ends in `JMP
+  ($2003)`. The indirect destination is unresolved, so do not claim `$38b0`
+  fallthrough or code/data boundaries without a runtime PC/target receipt. The
+  source join does not prove the `$4ef4`
   caller's live MPR mapping, execution, BIOS effects, or game-level meaning.
   Do not treat logical `$3879` as an image offset or promote these bytes to
   runtime behavior.

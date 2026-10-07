@@ -970,21 +970,24 @@ HuC6280 decode of the captured 160-byte window is preserved in
 `theron-us-captured-3879-linear-huc6280.asm`; it emits illegal opcodes and
 implausible control flow after `$38ad`, so code/data boundaries are unresolved.
 From `$38b0`, the raw bytes repeat a six-byte record-like prefix followed by
-an eleven-byte code-shaped stub every 17 bytes. Since `$38ad` calls `$39e0`
-and ordinary return would continue at `$38b0`, this pattern alone does not
-prove which bytes are data or executed instructions; `$39e0` control flow or a
-runtime PC trace is still needed.
-A captured authentic US Akutuba-complete 8 KiB BaseRAM image contains a
-160-byte window at offset
-`$1879`; that exact window occurs once in each hash-verified US and JP Track 02
-image, at file offsets `534041` and `531689` respectively (INDEX 01 + 2 raw
-sectors, raw byte 137 / MODE1 user byte 121). The new
-`theron_3879_runtime_window_source` CTest binds this snapshot window to both
-editions in three bounded passes and checks the listing's raw-byte columns
-against the window. This is source provenance only: it does not
-prove which MPR mapping supplied logical `$3879`, that either caller executed,
-or the BIOS/runtime effects of the bytes. The snapshot and game media remain
-outside Git.
+an eleven-byte code-shaped stub every 17 bytes. The adjacent captured
+`$39c0..$3a0f` slice includes `$39e0`, whose bounded decode calls BIOS `$e009`
+and BRA-branches to `$39ca`; `$39ca` restores two stack bytes and ends at
+`JMP ($2003)`. No ordinary RTS appears in this bounded continuation, but the
+indirect destination is unknown. Therefore neither a return to `$38b0` nor
+the repeat pattern's code/data boundaries are proven.
+
+The authentic US Akutuba-complete 8 KiB BaseRAM image now has three bounded
+source windows: `$3879..$3918` (160 bytes), `$39c0..$3a0f` (80 bytes), and the
+full `$39e0..$3fff` tail (1,568 bytes). Each occurs exactly once in both
+hash-verified US and JP Track 02 user-data streams at relative user offsets
+`4217`, `4544`, and `4576`; the raw BIN offsets are US `534041`, `534368`,
+`534400` and JP `531689`, `532016`, `532048`. The
+`theron_3879_runtime_window_source` CTest binds all three windows in three
+bounded passes and verifies the two tracked listing byte columns against the
+capture. This is source provenance only: it does not prove MPR mapping, live
+caller execution, the `$2003` destination, BIOS effects, or game semantics.
+Snapshot and game data remain outside Git.
 
 ### Rooted `$2d` handler: counter poll
 

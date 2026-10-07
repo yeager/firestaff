@@ -7478,6 +7478,18 @@ no emulator run or synthetic media was used.
 
 # ✅ 2026-10-07 Bind the captured `$3879` window to authentic Track 02
 
+Extended the capture source check to the `$39c0..$3a0f` continuation and the
+full `$39e0..$3fff` tail. Added a source-locked 80-byte HuC6280 listing at
+`theron-us-captured-39c0-linear-huc6280.asm` and recorded the 47-row MAME
+`unidasm -arch h6280` output; `theron_39c0_disassembly` checks their equality.
+An independent trv2 output comparison passed all rows. The decoded `$39e0`
+path branches to `$39ca`, which ends in `JMP ($2003)`; its indirect target and
+runtime mapping remain unknown, so the `$38ad` caller's return is not proven.
+The three windows are uniquely bound to the authentic US and JP Track 02 user
+data. The media-backed CTest is registered but could not run in this checkout
+because its authentic capture and disc files are unavailable. No synthetic
+media was used.
+
 Added `theron_3879_runtime_window_source`, which hashes the authentic 8 KiB
 US Akutuba-complete BaseRAM snapshot and both regional Track 02 BINs, then
 requires the complete 160-byte snapshot window at offset `$1879` to occur
