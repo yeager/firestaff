@@ -54566,9 +54566,37 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME m12_persisted_root_original_handoff
         COMMAND test_m12_persisted_root_original_handoff)
+    set(_m12_persisted_root_environment
+        "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/persisted-root-scratch"
+        "SDL_VIDEODRIVER=dummy"
+        "SDL_AUDIODRIVER=dummy")
+    # This integration test needs the matching original edition set for each
+    # selected menu route. Enable it automatically only when the complete
+    # DM1/CSB/DM2 corpus is staged; otherwise it remains skip-safe.
+    set(_m12_persisted_root_media_ready TRUE)
+    foreach(_required_archive IN ITEMS
+        "dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        "dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
+        "dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+        "dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
+        "csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
+        "dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        "dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
+        if(NOT EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/${_required_archive}")
+            set(_m12_persisted_root_media_ready FALSE)
+        endif()
+    endforeach()
+    if(NOT EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" AND
+       NOT EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip")
+        set(_m12_persisted_root_media_ready FALSE)
+    endif()
+    if(_m12_persisted_root_media_ready)
+        list(APPEND _m12_persisted_root_environment
+            "FIRESTAFF_M12_ORIGINAL_MENU_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    endif()
     set_tests_properties(m12_persisted_root_original_handoff PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 180
-        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/persisted-root-scratch;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        ENVIRONMENT "${_m12_persisted_root_environment}"
         LABELS "dm1;csb;dm2;real-media;menu;skip-safe")
 endif()
 
