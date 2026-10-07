@@ -1,5 +1,11 @@
 # Firestaff DONE — CSB
 
+- 2026-10-08: `csb_v1_atari_st_m12_m11_real_media_handoff` passed against the
+  authentic Atari ST v2.1 game and utility disks. Its staging directory now
+  uses the test scratch root when `TMPDIR` is unset, rather than defaulting to
+  `/tmp`; the original archive is extracted only into that temporary test
+  directory.
+
 - 2026-10-08: The persisted-root M12 handoff now selects the authenticated
   Amiga 3.1 English package and confirms the native A31E M11 boot profile.
   The expanded original-media CTest passed against the installed collection;
