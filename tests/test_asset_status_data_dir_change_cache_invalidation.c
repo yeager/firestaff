@@ -1067,7 +1067,7 @@ static void check_start_menu_heals_stale_config_data_dir(const char* homeRoot) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
 
-static void check_start_menu_prefers_default_root_with_more_games(
+static void check_start_menu_preserves_authenticated_saved_root(
     const char* homeRoot) {
     char defaultParent[M12_ASSET_DATA_DIR_CAPACITY];
     char defaultDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1128,15 +1128,15 @@ static void check_start_menu_prefers_default_root_with_more_games(
 
     M12_StartupMenu_InitWithDataDir(&menu, NULL, NULL);
     check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
-                     defaultDataRoot) == 0,
-              "start menu must prefer default root when it verifies more games than saved config");
-    check_int(ready_game_count_for_status(&menu.assetStatus) ==
-                  ready_game_count_for_status(&cliStatus),
-              "start menu default-root rescan must match --scan-data ready-game count");
-    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
-              "start menu default-root rescan must expose DM1");
+                     staleDataRoot) == 0,
+              "start menu must preserve a saved root that already verifies a playable game");
+    check_int(ready_game_count_for_status(&menu.assetStatus) == 1 &&
+                  ready_game_count_for_status(&cliStatus) == 2,
+              "a richer default root must not silently replace the authenticated saved root");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 0,
+              "preserving the saved root must not publish DM1 from another root");
     check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,
-              "start menu default-root rescan must expose Nexus");
+              "preserved saved-root scan must expose Nexus");
     M12_StartupMenu_Destroy(&menu);
 
     /* Deliberate narrow-scan contract (ScanGameWithOptions): a --game
@@ -1144,12 +1144,12 @@ static void check_start_menu_prefers_default_root_with_more_games(
      * data is not re-verified, keeping single-game startup fast. */
     M12_StartupMenu_InitWithDataDir(&menu, NULL, "nexus");
     check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
-                     defaultDataRoot) == 0,
-              "start menu --game hint without --data-dir must still use the broad default scan root");
+                     staleDataRoot) == 0,
+              "start menu --game hint must preserve the saved root when it contains that game");
     check_int(ready_game_count_for_status(&menu.assetStatus) == 1,
-              "start menu --game hint without --data-dir narrows the scan to the hinted game");
+              "start menu --game hint narrows the scan to the hinted game");
     check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,
-              "start menu --game hint without --data-dir must keep selected Nexus available");
+              "start menu --game hint must keep selected Nexus available");
     M12_StartupMenu_Destroy(&menu);
 
     M12_StartupMenu_InitWithDataDir(&menu, defaultDataRoot, "nexus");
@@ -1409,7 +1409,7 @@ int main(int argc, char** argv) {
 #endif
     check_direct_nexus_file_request_is_hash_first(home);
     check_start_menu_heals_stale_config_data_dir(home);
-    check_start_menu_prefers_default_root_with_more_games(home);
+    check_start_menu_preserves_authenticated_saved_root(home);
     check_start_menu_env_data_dir_matches_scan_data(home);
     check_start_menu_env_data_dir_uses_scan_data_fallback(home);
     check_game_select_uses_asset_status_not_stale_global(home);

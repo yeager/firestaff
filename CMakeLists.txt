@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.362 LANGUAGES C)
+project(Firestaff VERSION 3.0.363 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -3898,8 +3898,8 @@ if(BUILD_TESTING)
     set_tests_properties(firestaff_cli_startup_diagnostics_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;startup;cli;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
-        TIMEOUT 120
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip;FIRESTAFF_DM1_PC98_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_PC-98_EN.zip"
+        TIMEOUT 180
     )
     add_test(
         NAME return_to_menu_rescans_dm1_csb_dm2_real_media
@@ -3910,7 +3910,7 @@ if(BUILD_TESTING)
     set_tests_properties(return_to_menu_rescans_dm1_csb_dm2_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;csb;dm2;startup;launcher;return-to-menu;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
         TIMEOUT 180
     )
     set_tests_properties(dm2_v1_fmtowns_native_cli_boot PROPERTIES
@@ -4019,7 +4019,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_v1_dos_fr_zip_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;dos;french;real-media;native;cli;menu;startup;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_DOS_FR_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_FR_EUDATA.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_FR_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_FR_EUDATA.zip;FIRESTAFF_DM1_PC34_EN_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
         TIMEOUT 180
     )
     add_test(
@@ -17759,7 +17759,7 @@ endif()
     set_tests_properties(csb_v1_atari_original_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;original-media;native;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MEDIA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MEDIA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/chaos_strikes_back_ftl.zip"
         TIMEOUT 300
     )
     add_test(
@@ -54516,8 +54516,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_data_dir_cancel.c")
         NAME m12_data_dir_cancel
         COMMAND test_m12_data_dir_cancel
     )
+    set(_m12_data_dir_cancel_environment
+        "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dir-cancel-scratch;SDL_VIDEODRIVER=dummy")
+    if(IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1" AND
+       IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb" AND
+       IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2" AND
+       IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus" AND
+       IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron")
+        list(APPEND _m12_data_dir_cancel_environment
+            "FIRESTAFF_TEST_REAL_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    endif()
     set_tests_properties(m12_data_dir_cancel PROPERTIES
-        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dir-cancel-scratch;SDL_VIDEODRIVER=dummy")
+        ENVIRONMENT "${_m12_data_dir_cancel_environment}")
 endif()
 
 # M11 gameplay-side screen reader / accessibility state manifest
@@ -56652,14 +56662,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handof
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_en_m11_real_media_handoff PROPERTIES
         LABELS "csb;fmtowns;english;m11;handoff;packed-archive;in-memory;real-data;skip-safe"
-        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_CSB_FMTOWNS_ARCHIVE_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-en-handoff;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-en-handoff;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-en-handoff"
         TIMEOUT 120
         SKIP_RETURN_CODE 77)
     add_test(NAME csb_v1_fmtowns_ja_m11_real_media_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_ja_m11_real_media_handoff PROPERTIES
         LABELS "csb;fmtowns;japanese;m11;handoff;packed-archive;in-memory;real-data;skip-safe"
-        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_CSB_FMTOWNS_ARCHIVE_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-ja-handoff;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-ja-handoff;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-ja-handoff"
         TIMEOUT 120
         SKIP_RETURN_CODE 77)
 endif()

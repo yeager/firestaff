@@ -44,6 +44,8 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "csb_v1_keyboard_commands_pc34_compat.h"
 #include "input_remap_m11.h"
+#include "colorblind_m11.h"
+#include "ui_scale_m11.h"
 #include "touch_layout_m12.h"
 #include "gamepad_config_m12.h"
 #include "vga_palette_pc34_compat.h"
@@ -490,6 +492,8 @@ typedef struct {
     int width;
     int height;
     int languageIndex;
+    int colorblindMode;
+    int uiScale;
     int debug;
     int useModern;
     Uint64 startedMs;
@@ -516,9 +520,13 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
      * game returns to the menu. */
     (void)M11_Render_SetPresentationFillWindow(1);
     if (ctx->useModern && ctx->modernRgba) {
+        M11_UIScale_SetPercent(ctx->uiScale);
         M12_ModernMenu_RenderScanProgressLocalized(
             progress, ctx->languageIndex, ctx->modernRgba,
             M11_LAUNCHER_MODERN_WIDTH, M11_LAUNCHER_MODERN_HEIGHT);
+        M11_Colorblind_ApplyRGBA(ctx->colorblindMode, ctx->modernRgba,
+                                 M11_LAUNCHER_MODERN_WIDTH,
+                                 M11_LAUNCHER_MODERN_HEIGHT);
         M11_Render_PresentRGBA(ctx->modernRgba,
                                M11_LAUNCHER_MODERN_WIDTH,
                                M11_LAUNCHER_MODERN_HEIGHT);
@@ -545,6 +553,8 @@ static void m11_rescan_launcher_asset_status(
     scanCtx.width = M11_LAUNCHER_FB_WIDTH;
     scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
     scanCtx.languageIndex = menuState->settings.languageIndex;
+    scanCtx.colorblindMode = menuState->settings.colorblindMode;
+    scanCtx.uiScale = menuState->settings.uiScale;
     scanCtx.debug = debug;
     scanCtx.useModern = useModern;
     scanCtx.startedMs = SDL_GetTicks();
@@ -804,6 +814,7 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
                                         const M12_AssetScanProgress* progress,
                                         Uint64 elapsedMs,
                                         int languageIndex) {
+    int panelW, panelH, panelX, panelY;
     int barW, barH, barX, barY, fillW, textY;
     size_t pct = 0;
     char label[96];
@@ -812,10 +823,38 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
         pct = (progress->completedSteps * 100) / progress->totalSteps;
         if (pct > 100) pct = 100;
     }
-    barW = w * 3 / 5;
-    barH = 4;
+    panelW = w < 440 ? w - 32 : 408;
+    panelH = 58;
+    panelX = (w - panelW) / 2;
+    panelY = h - 82;
+    if (panelY < 0) panelY = 0;
+    {
+        int px, py;
+        for (py = panelY; py < panelY + panelH && py < h; ++py) {
+            for (px = panelX; px < panelX + panelW && px < w; ++px) {
+                int idx = (py * w + px) * 4;
+                /* Blend a quiet dark glass panel over the intro artwork. */
+                rgba[idx] = (unsigned char)((rgba[idx] * 3U + 12U) / 4U);
+                rgba[idx+1] = (unsigned char)((rgba[idx+1] * 3U + 14U) / 4U);
+                rgba[idx+2] = (unsigned char)((rgba[idx+2] * 3U + 22U) / 4U);
+                rgba[idx+3] = 255;
+            }
+        }
+        for (px = panelX; px < panelX + panelW && px < w; ++px) {
+            int top = (panelY * w + px) * 4;
+            int bottom = ((panelY + panelH - 1) * w + px) * 4;
+            if (panelY < h) {
+                rgba[top] = 95; rgba[top+1] = 102; rgba[top+2] = 122; rgba[top+3] = 230;
+            }
+            if (panelY + panelH - 1 < h) {
+                rgba[bottom] = 95; rgba[bottom+1] = 102; rgba[bottom+2] = 122; rgba[bottom+3] = 230;
+            }
+        }
+    }
+    barW = panelW - 40;
+    barH = 6;
     barX = (w - barW) / 2;
-    barY = h - 24;
+    barY = panelY + panelH - 18;
     {
         int bx, by;
         for (by = barY; by < barY + barH && by < h; ++by) {
@@ -835,7 +874,7 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
             }
         }
     }
-    textY = barY - 14;
+    textY = panelY + 10;
     if (progress && progress->totalSteps > 0 && progress->completedSteps > 0 &&
         elapsedMs > 500 && pct > 0 && pct < 100) {
         Uint64 etaMs = (elapsedMs * (100 - pct)) / pct;
@@ -860,6 +899,25 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
         snprintf(label, sizeof(label), "%s...",
                  M12_StartupMenu_TranslateForLocale(languageIndex,
                                                     "SCANNING GAME DATA"));
+    }
+    {
+        int labelWidth = 0;
+        int fontSize = M11_UIScale_Apply(14);
+        int labelX;
+        while (fontSize > 8 &&
+               (!m11_ttf_measure_string(label, fontSize, &labelWidth) ||
+                labelWidth > panelW - 24)) {
+            fontSize -= 2;
+            labelWidth = 0;
+        }
+        if (labelWidth == 0)
+            (void)m11_ttf_measure_string(label, fontSize, &labelWidth);
+        labelX = (w - labelWidth) / 2;
+        if (labelX < panelX + 12) labelX = panelX + 12;
+        if (m11_ttf_render_rgba_string(rgba, w, h, labelX, textY,
+                                       label, fontSize, 236, 238, 248)) {
+            return;
+        }
     }
     {
         static const unsigned char font5x8[95][8] = {
@@ -960,20 +1018,38 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
             {0x00,0x09,0x16,0x00,0x00,0x00,0x00,0x00}, /* ~ */
         };
         int ci, cx;
+        int glyphScale = 1 + M11_UIScale_GetFontScale();
         size_t len = strlen(label);
-        cx = (w - (int)len * 6) / 2;
+        while (glyphScale > 1 &&
+               (int)len * 6 * glyphScale > panelW - 24) {
+            --glyphScale;
+        }
+        cx = (w - (int)len * 6 * glyphScale) / 2;
         if (cx < 0) cx = 0;
-        for (ci = 0; label[ci] && cx + 5 < w; ++ci, cx += 6) {
+        for (ci = 0; label[ci] && cx + 5 * glyphScale < w;
+             ++ci, cx += 6 * glyphScale) {
             int gx, gy;
             unsigned char ch = (unsigned char)label[ci];
             if (ch < 32 || ch > 126) continue;
             const unsigned char* glyph = font5x8[ch - 32];
-            for (gy = 0; gy < 8 && textY + gy < h && textY + gy >= 0; ++gy) {
+            for (gy = 0; gy < 8 && textY + gy * glyphScale < h &&
+                        textY + gy * glyphScale >= 0; ++gy) {
                 unsigned char row = glyph[gy];
-                for (gx = 0; gx < 5 && cx + gx < w; ++gx) {
+                for (gx = 0; gx < 5 && cx + gx * glyphScale < w; ++gx) {
                     if (row & (0x10 >> gx)) {
-                        int idx = ((textY + gy) * w + cx + gx) * 4;
-                        rgba[idx] = 180; rgba[idx+1] = 180; rgba[idx+2] = 200; rgba[idx+3] = 220;
+                        int sx, sy;
+                        for (sy = 0; sy < glyphScale; ++sy) {
+                            int py = textY + gy * glyphScale + sy;
+                            if (py < 0 || py >= h) continue;
+                            for (sx = 0; sx < glyphScale; ++sx) {
+                                int px = cx + gx * glyphScale + sx;
+                                int idx;
+                                if (px < 0 || px >= w) continue;
+                                idx = (py * w + px) * 4;
+                                rgba[idx] = 224; rgba[idx+1] = 228;
+                                rgba[idx+2] = 242; rgba[idx+3] = 255;
+                            }
+                        }
                     }
                 }
             }
@@ -993,6 +1069,9 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
     if (!rgba) return 0;
+    if (menuState) {
+        M11_UIScale_SetPercent(menuState->settings.uiScale);
+    }
     (void)M11_Render_SetPresentationFillWindow(1);
     /* The generated dungeon composition is the preferred intro art. Keep
      * the established PPM as a compatible fallback for partial installs. */
@@ -1264,6 +1343,7 @@ static int m11_dm1_v20_presentation_active(const M11_GameViewState* gameView) {
 
 static int m11_present_game_frame(const M11_GameViewState* gameView,
                                   const unsigned char** outPresentedFrame) {
+    static unsigned char dm2_mac_movie_rgba[M11_FB_WIDTH * M11_FB_HEIGHT * 4];
     const uint8_t *csb_fmtowns_japanese_frame = NULL;
     int csb_fmtowns_japanese_width = 0;
     int csb_fmtowns_japanese_height = 0;
@@ -1294,6 +1374,27 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
 
     if (outPresentedFrame) {
         *outPresentedFrame = NULL;
+    }
+    /* QuickTime Cinepak is a 24-bit true-colour source. Keep its decoded
+     * channels intact instead of reducing every movie frame to RGB332 before
+     * sending it through the indexed game palette. */
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        gameView->dm2MacMovieActive) {
+        size_t pixel;
+        for (pixel = 0u; pixel < (size_t)M11_FB_WIDTH * M11_FB_HEIGHT; ++pixel) {
+            dm2_mac_movie_rgba[pixel * 4u + 0u] =
+                gameView->dm2MacMovieDecoder.rgb24[pixel * 3u + 0u];
+            dm2_mac_movie_rgba[pixel * 4u + 1u] =
+                gameView->dm2MacMovieDecoder.rgb24[pixel * 3u + 1u];
+            dm2_mac_movie_rgba[pixel * 4u + 2u] =
+                gameView->dm2MacMovieDecoder.rgb24[pixel * 3u + 2u];
+            dm2_mac_movie_rgba[pixel * 4u + 3u] = 0xffu;
+        }
+        result = M11_Render_PresentRGBA(dm2_mac_movie_rgba,
+                                        M11_FB_WIDTH, M11_FB_HEIGHT);
+        if (result == M11_RENDER_OK && outPresentedFrame)
+            *outPresentedFrame = presented_frame;
+        return result == M11_RENDER_OK;
     }
     /* C06 F31J is a Towns-native 640x400 page, not an M11 320x200 source
      * frame. Present it directly and exclude it from PC3.4 startup receipts. */
@@ -8182,12 +8283,20 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         int windowHeight = 0;
         int drawableWidth = 0;
         int drawableHeight = 0;
+        int presentX = 0;
+        int presentY = 0;
+        int presentWidth = 0;
+        int presentHeight = 0;
         (void)M11_Render_GetWindowAndDrawableSize(
             &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
+        (void)M11_Render_GetPresentRect(&presentX, &presentY,
+                                        &presentWidth, &presentHeight);
         fprintf(stderr,
-                "firestaff: renderer ready video-driver=%s window=%dx%d drawable=%dx%d\n",
+                "firestaff: renderer ready video-driver=%s window=%dx%d drawable=%dx%d present=%d,%d %dx%d scale=%d aspect=%d\n",
                 SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
-                windowWidth, windowHeight, drawableWidth, drawableHeight);
+                windowWidth, windowHeight, drawableWidth, drawableHeight,
+                presentX, presentY, presentWidth, presentHeight,
+                o->scaleMode, M11_Render_GetDisplayAspectMode());
     }
     if (o->debug) debugStartupTrace.startedMs = SDL_GetTicks();
     /* SDL's dummy driver can retain its default 1024x768 logical window even
@@ -8264,6 +8373,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         scanCtx.width = M11_LAUNCHER_FB_WIDTH;
         scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
         scanCtx.languageIndex = scanConfig.languageIndex;
+        scanCtx.colorblindMode = scanConfig.colorblindMode;
+        scanCtx.uiScale = scanConfig.uiScale;
         scanCtx.debug = o->debug;
         scanCtx.useModern = 1;
         scanCtx.startedMs = SDL_GetTicks();
@@ -8301,13 +8412,24 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     if (o->architectureOverride == M12_ARCH_AUTO) {
         if (!m11_apply_auto_architecture_override(&menuState, o->gameId)) {
-            fprintf(stderr,
-                    "firestaff: requested platform auto has no matched version for %s\n",
-                    o->gameId ? o->gameId : "(null)");
-            free(launcherFramebuffer);
-            free(modernRgba);
-            M11_Render_Shutdown();
-            return 2;
+            if (o->directLaunch) {
+                fprintf(stderr,
+                        "firestaff: game unavailable for --game: %s\n",
+                        o->gameId ? o->gameId : "(null)");
+                free(launcherFramebuffer);
+                free(modernRgba);
+                M11_Render_Shutdown();
+                return 2;
+            }
+            /* An interactive menu must still open when its initially
+             * selected game's only files are unsupported.  Keep AUTO
+             * visible with no bound release so its platform card remains
+             * unavailable and cannot fall through to a different edition. */
+            if (o->gameId) {
+                int slot = m11_game_option_slot(o->gameId);
+                menuState.gameOptions[slot].architectureIndex = M12_ARCH_AUTO;
+                menuState.gameOptions[slot].versionIndex = -1;
+            }
         }
     } else if (o->architectureOverride > M12_ARCH_AUTO) {
         if (!m11_apply_architecture_override(&menuState,
@@ -8500,6 +8622,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fallbackCtx.width = M11_LAUNCHER_FB_WIDTH;
         fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
         fallbackCtx.languageIndex = menuState.settings.languageIndex;
+        fallbackCtx.colorblindMode = menuState.settings.colorblindMode;
+        fallbackCtx.uiScale = menuState.settings.uiScale;
         fallbackCtx.debug = o->debug;
         fallbackCtx.useModern = useModern;
         fallbackCtx.startedMs = SDL_GetTicks();

@@ -1,6 +1,8 @@
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
+#include "fs_portable_compat.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -169,6 +171,10 @@ int csb_v1_csbwin_layout_0232_select_light_palette(
 int csb_v1_csbwin_layout_0232_read_graphics_dat(
     const char *graphics_dat_path, CSB_V1_CSBWinLayout0232 *out_layout)
 {
+    static char cached_path[FSP_PATH_MAX];
+    static CSB_V1_CSBWinLayout0232 cached_layout;
+    static int cache_attempted;
+    static int cache_ok;
     CSB_AtariStLoader loader;
     uint8_t *decoded = NULL;
     int ok = 0;
@@ -176,6 +182,21 @@ int csb_v1_csbwin_layout_0232_read_graphics_dat(
     if (!out_layout) return 0;
     memset(out_layout, 0, sizeof(*out_layout));
     if (!graphics_dat_path || !graphics_dat_path[0]) return 0;
+
+    /* GRAPHICS.DAT can live inside a compressed 7z/ZIP chain. Reopening and
+     * decoding that whole chain for C232 on every Atari gameplay frame made
+     * rendering spend its time in LZMA. A runtime session keeps its selected
+     * original media immutable, so cache the decoded layout by its full
+     * virtual path. Rendering and input dispatch share this same record. */
+    if (cache_attempted && strcmp(cached_path, graphics_dat_path) == 0) {
+        if (cache_ok) *out_layout = cached_layout;
+        return cache_ok;
+    }
+    cache_attempted = 1;
+    cache_ok = 0;
+    snprintf(cached_path, sizeof(cached_path), "%s", graphics_dat_path);
+    memset(&cached_layout, 0, sizeof(cached_layout));
+
     csb_atari_st_graphics_loader_init(&loader);
     if (!csb_atari_st_graphics_loader_open(&loader, graphics_dat_path) ||
         loader.item_count != 563u || loader.items[0x232u].decompressed_size !=
@@ -190,10 +211,14 @@ int csb_v1_csbwin_layout_0232_read_graphics_dat(
         goto done;
     }
     ok = csb_v1_csbwin_layout_0232_decode(
-        decoded, CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE, out_layout);
+        decoded, CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE, &cached_layout);
 done:
     free(decoded);
     csb_atari_st_graphics_loader_close(&loader);
+    cache_ok = ok;
+    cache_attempted = ok;
+    if (!ok) cached_path[0] = '\0';
+    if (cache_ok) *out_layout = cached_layout;
     return ok;
 }
 

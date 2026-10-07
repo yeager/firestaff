@@ -8,6 +8,7 @@
 #include "menu_startup_m12.h"
 #include "menu_startup_state_access_m12.h"
 #include "menu_startup_render_modern_m12.h"
+#include "menu_hit_m12.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 
@@ -366,7 +367,7 @@ static void check_cancel_preserves_no_data_state(void) {
           strcmp(intent.versionId, beforeVersionId) == 0);
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.view == M12_MENU_VIEW_SETTINGS);
     CHECK(state.launchRequested == 0);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), beforeDataDir) == 0);
 }
@@ -813,6 +814,18 @@ static void check_return_rescan_uses_real_five_game_corpus(void) {
         CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, ids[i]) == 1);
     }
     M12_StartupMenu_Destroy(&state);
+
+    /* The rescan persists the selected data/dm1 leaf. Reopening the complete
+     * launcher must nevertheless scan its shared parent and expose all five
+     * real game installations before the player chooses a card. */
+    options.scanAllGames = 1;
+    M12_StartupMenu_InitWithOptions(&state, NULL, "dm1", &options);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), corpus) == 0);
+    CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(&state), dm1Leaf) == 0);
+    for (i = 0U; i < sizeof(ids) / sizeof(ids[0]); ++i) {
+        CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, ids[i]) == 1);
+    }
+    M12_StartupMenu_Destroy(&state);
 }
 
 static void check_dot_config_migrates_to_default_data_directory(void) {
@@ -920,15 +933,23 @@ static void check_active_scan_renders_progress_bar(void) {
     const int height = M12_ModernMenu_NativeHeight();
     const size_t bytes = (size_t)width * (size_t)height * 4U;
     unsigned char* rgba = (unsigned char*)calloc(1U, bytes);
+    unsigned char* offRgba = (unsigned char*)malloc(bytes);
+    M12_MouseHit hit100;
+    M12_MouseHit hit200;
     size_t filledPixel;
     size_t emptyPixel;
 
     CHECK(rgba != NULL);
-    if (!rgba) {
+    CHECK(offRgba != NULL);
+    if (!rgba || !offRgba) {
+        free(rgba);
+        free(offRgba);
         return;
     }
     M12_StartupMenu_Init(&state);
     use_english_for_text_assertions(&state);
+    state.settings.colorblindMode = 0;
+    state.settings.uiScale = 100;
     state.view = M12_MENU_VIEW_MESSAGE;
     state.messageLine1 = "SCANNING GAME DATA";
     state.messageLine2 = "csb 50%  checking files";
@@ -938,12 +959,35 @@ static void check_active_scan_renders_progress_bar(void) {
     state.dataDirScanProgress.completedSteps = 50U;
     M12_ModernMenu_Render(&state, rgba, width, height);
 
-    /* The bar begins at x=640, y=558 in the native 1920x1080 message panel.
-     * x=700 lies in the 50% fill; x=1200 lies in its unfilled track. */
-    filledPixel = ((size_t)567U * (size_t)width + 700U) * 4U;
-    emptyPixel = ((size_t)567U * (size_t)width + 1200U) * 4U;
+    /* The lower-middle overlay keeps the 50% fill and empty track distinct. */
+    filledPixel = ((size_t)884U * (size_t)width + 700U) * 4U;
+    emptyPixel = ((size_t)884U * (size_t)width + 1200U) * 4U;
     CHECK(rgba[filledPixel + 0U] > rgba[emptyPixel + 0U]);
     CHECK(rgba[filledPixel + 1U] > rgba[emptyPixel + 1U]);
+    memcpy(offRgba, rgba, bytes);
+
+    state.settings.colorblindMode = 1;
+    M12_ModernMenu_Render(&state, rgba, width, height);
+    CHECK(memcmp(offRgba, rgba, bytes) != 0);
+
+    state.settings.colorblindMode = 0;
+    M12_ModernMenu_Render(&state, rgba, width, height);
+    CHECK(memcmp(offRgba, rgba, bytes) == 0);
+
+    state.settings.uiScale = 200;
+    M12_ModernMenu_Render(&state, rgba, width, height);
+    CHECK(memcmp(offRgba, rgba, bytes) != 0);
+
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
+    state.settings.uiScale = 100;
+    hit100 = M12_ModernMenu_HitTest(&state, 100, 70);
+    state.settings.uiScale = 200;
+    hit200 = M12_ModernMenu_HitTest(&state, 100, 70);
+    CHECK(hit100.kind == M12_HIT_SETTINGS_TAB && hit100.index == 0);
+    CHECK(hit200.kind == hit100.kind && hit200.index == hit100.index &&
+          hit200.delta == hit100.delta);
+    free(offRgba);
     free(rgba);
 }
 
@@ -968,10 +1012,9 @@ static void check_modern_scan_progress_standalone_render(void) {
     M12_ModernMenu_RenderScanProgressLocalized(&progress, 0, rgba,
                                                 width, height);
 
-    /* The lower-middle scan panel sits at y=756 on the native 1080p canvas;
-     * compare the first and second halves of its 50% progress bar. */
-    filledPixel = ((size_t)860U * (size_t)width + 760U) * 4U;
-    emptyPixel = ((size_t)860U * (size_t)width + 1100U) * 4U;
+    /* The panel sits at 72% canvas height, with its bar below the detail row. */
+    filledPixel = ((size_t)884U * (size_t)width + 760U) * 4U;
+    emptyPixel = ((size_t)884U * (size_t)width + 1100U) * 4U;
     CHECK(rgba[filledPixel + 0U] > rgba[emptyPixel + 0U]);
     CHECK(rgba[filledPixel + 1U] > rgba[emptyPixel + 1U]);
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(

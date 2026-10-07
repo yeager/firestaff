@@ -3945,6 +3945,35 @@ static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
     return spec ? spec->md5 : NULL;
 }
 
+/* French PC 3.4 EUDATA carries the shared multilingual game data but omits
+ * the FTL startup logo. ReDMCSB APPA.C loads SWSH before TITLE, so admit this
+ * edition only when the authentic PC 3.4 English companion is discoverable
+ * in the same scanned source tree. */
+static int m12_dm1_pc34_multi_has_startup_media(
+    const char* matchedMediaPath) {
+    static const char* const pc34SwooshMd5s[] = {
+        "a66b607f3850e604b6703e90bbfb5189",
+        NULL
+    };
+    char sourcePath[M12_ASSET_DATA_DIR_CAPACITY];
+    char searchRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char matchedPath[ASSET_PATH_MAX];
+    char* memberSeparator;
+    int matchIndex = -1;
+    if (!matchedMediaPath || !matchedMediaPath[0]) return 0;
+    m12_copy_string(sourcePath, sizeof(sourcePath), matchedMediaPath);
+    memberSeparator = strstr(sourcePath, "::");
+    if (memberSeparator) *memberSeparator = '\0';
+    if (!FSP_FileExists(sourcePath) || FSP_DirExists(sourcePath) ||
+        !FSP_ParentDir(searchRoot, sizeof(searchRoot), sourcePath)) {
+        return 0;
+    }
+    matchedPath[0] = '\0';
+    return asset_find_by_md5_list(searchRoot, pc34SwooshMd5s,
+                                  matchedPath, (int)sizeof(matchedPath),
+                                  &matchIndex, 32);
+}
+
 static const char* m12_effective_required_md5(const M12_RequiredFileSpec* spec) {
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
     if (spec && strcmp(spec->gameId, "dm1") == 0 &&
@@ -4623,6 +4652,13 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         }
         for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
             if (rootMatched[rootIndex][i]) {
+                if (strcmp(gameSpec->gameId, "dm1") == 0 &&
+                    spec->versionId &&
+                    strcmp(spec->versionId, "pc34-multi") == 0 &&
+                    !m12_dm1_pc34_multi_has_startup_media(
+                        rootMatchedPaths[rootIndex][i])) {
+                    continue;
+                }
                 version->matched = 1;
                 matchedAny = 1;
                 m12_copy_string(version->matchedPath,

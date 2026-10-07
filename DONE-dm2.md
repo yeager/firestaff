@@ -1,5 +1,29 @@
 # Firestaff DONE — DM2
 
+- 2026-10-07: Rebuilt and re-ran `dm2_fmtowns_m11_gameplay_real_media` with
+  the authenticated FM Towns ZIP; it passed in 2.99 seconds. The assertions
+  cover the source squad fill, three-command HUD plan, authentic spell/status
+  image fields, transparent index handling, first GAME_LOAD frame and zero
+  core fallback draws. This verifies data-bound gameplay presentation, not
+  exact original-frame parity or physical M5 HiDPI behavior.
+
+- 2026-10-07: `dm2_v1_dos_native_cli_boot` passed in 75.87 seconds against
+  the installed original DOS English ZIP, exercising the native CLI startup
+  route. The test result covers startup behavior and does not establish
+  physical M5 presentation or dungeon visual parity.
+
+- 2026-10-07: Restored the source-owned FM Towns squad backdrop from
+  `GRAPHICSSET/<map style>/0xF5` at expanded RAW4 rectangle 47 and bound each
+  live hero's hand/status materials to the original `INTERFACE_GENERAL/4`
+  images and rectangles. The native CLI regression now captures the normal
+  M12 → New Game → first-champion runtime at 320x200 and requires visible
+  dungeon and right-panel pixels, an accepted authentic-asset frame, and zero
+  core fallbacks. `dm2_v1_fmtowns_native_cli_boot`, the real-media Towns M11
+  gameplay/title checks, and all 12 selected startup, data-directory and
+  viewport tests pass. This proves source-owned runtime content is present;
+  exact original-frame parity and physical MacBook Pro M5 HiDPI/input behavior
+  remain open in `TODO-dm2.md`.
+
 - 2026-10-06: The direct `--debug` regression now checks the normal bare
   `--game dm2` FM Towns route against all 225 source title records: it traces
   every timed frame, rejects any title-media failure, and records completion

@@ -49,6 +49,15 @@ static const char* const g_v1_swsh_known_md5s[] = {
     NULL
 };
 
+/* French PC 3.4 EUDATA disks omit this shared FTL startup asset. ReDMCSB
+ * APPA.C:51-53 loads FTL_SWSH before FTL_TITL; only accept the exact PC 3.4
+ * companion from the selected archive's directory, preserving the French
+ * data profile. */
+static const char* const g_v1_swsh_pc34_md5s[] = {
+    "a66b607f3850e604b6703e90bbfb5189", /* ReDMCSB Reference/Original/I34E/SWOOSH */
+    NULL
+};
+
 int V1_SWSH_Intro_PayloadLooksValid(const char* path) {
     uint8_t* data = NULL;
     size_t data_size = 0U;
@@ -98,6 +107,41 @@ static int v1_swsh_intro_find_known_hash(const char* dir,
     if (!V1_SWSH_Intro_PayloadLooksValid(found)) {
         return 0;
     }
+    snprintf(outPath, outPathBytes, "%s", found);
+    return 1;
+}
+
+static int v1_swsh_intro_find_pc34_companion(const char* matchedPath,
+                                              char* outPath,
+                                              size_t outPathBytes) {
+    char archivePath[FSP_PATH_MAX];
+    char parent[FSP_PATH_MAX];
+    char found[FSP_PATH_MAX];
+    char* member;
+    int matchIndex = -1;
+    size_t pathLength;
+
+    if (!matchedPath || !matchedPath[0] || !outPath || !outPathBytes) return 0;
+    snprintf(archivePath, sizeof(archivePath), "%s", matchedPath);
+    member = strstr(archivePath, "::");
+    if (member) *member = '\0';
+    pathLength = strlen(archivePath);
+    if (pathLength > 0U && archivePath[pathLength - 1U] != '/' &&
+        archivePath[pathLength - 1U] != '\\' &&
+        FSP_ParentDir(parent, sizeof(parent), archivePath)) {
+        snprintf(archivePath, sizeof(archivePath), "%s", parent);
+    }
+    found[0] = '\0';
+    if (!asset_find_by_md5_list(archivePath,
+                                g_v1_swsh_pc34_md5s,
+                                found,
+                                (int)sizeof(found),
+                                &matchIndex,
+                                0)) {
+        return 0;
+    }
+    (void)matchIndex;
+    if (!V1_SWSH_Intro_PayloadLooksValid(found)) return 0;
     snprintf(outPath, outPathBytes, "%s", found);
     return 1;
 }
@@ -270,6 +314,13 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
             if (!version || !version->matched ||
                 version->matchedPath[0] == '\0') {
                 continue;
+            }
+            if (strcmp(gameId, "dm1") == 0 &&
+                strcmp(version->versionId, "pc34-multi") == 0 &&
+                v1_swsh_intro_find_pc34_companion(version->matchedPath,
+                                                   outPath,
+                                                   outPathBytes)) {
+                return 1;
             }
             if (!FSP_ParentDir(parent, sizeof(parent), version->matchedPath)) {
                 continue;

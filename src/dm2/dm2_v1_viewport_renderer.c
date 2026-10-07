@@ -1595,12 +1595,22 @@ void dm2_v1_viewport_set_hud_hand_action_source(
     DM2_V1_ViewportState *s,
     const DM2_V1_HudHandActionSource *source)
 {
+    if (!s) return;
+    memset(&s->hud_hand_action_source, 0, sizeof(s->hud_hand_action_source));
+    memset(s->hud_hand_action_sources, 0, sizeof(s->hud_hand_action_sources));
+    s->hud_hand_action_source_count = 0u;
+    dm2_v1_viewport_add_hud_hand_action_source(s, source);
+}
+
+void dm2_v1_viewport_add_hud_hand_action_source(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_HudHandActionSource *source)
+{
     DM2_V1_HudHandActionSource accepted;
     int expected_entry;
     int expected_rectno;
 
     if (!s) return;
-    memset(&s->hud_hand_action_source, 0, sizeof(s->hud_hand_action_source));
     if (!source || !source->valid ||
         source->player_index >= DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
         source->possession_index > 1u || source->left_or_right > 1u ||
@@ -1632,6 +1642,20 @@ void dm2_v1_viewport_set_hud_hand_action_source(
     }
     accepted = *source;
     s->hud_hand_action_source = accepted;
+    for (uint8_t i = 0u; i < s->hud_hand_action_source_count; ++i) {
+        DM2_V1_HudHandActionSource *existing =
+            &s->hud_hand_action_sources[i];
+        if (existing->player_index == accepted.player_index &&
+            existing->possession_index == accepted.possession_index) {
+            *existing = accepted;
+            s->dirty = 1;
+            return;
+        }
+    }
+    if (s->hud_hand_action_source_count < 8u) {
+        s->hud_hand_action_sources[s->hud_hand_action_source_count++] =
+            accepted;
+    }
     s->dirty = 1;
 }
 
@@ -8406,9 +8430,10 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
 /* ReDMCSB/skproject SKWINSPX/src/v4/skguidrw.cpp DRAW_HAND_ACTION_ICONS
  * selects INTERFACE_GENERAL/4 entry (possession<<1)+side+2 and expands the
  * matching 0x46/0x4a rectangle before DRAW_ICON_PICT_ENTRY. */
-static int dm2_v1_render_hud_hand_action_asset(DM2_V1_ViewportState *s)
+static int dm2_v1_render_hud_hand_action_asset(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_HudHandActionSource *source)
 {
-    const DM2_V1_HudHandActionSource *source;
     DM2_V1_ViewportHudMaterialRequest request;
     DM2_V1_ViewportHudPresentationCommand command;
     const uint8_t *pixels = NULL;
@@ -8418,8 +8443,7 @@ static int dm2_v1_render_hud_hand_action_asset(DM2_V1_ViewportState *s)
     int gdat_index;
 
     if (!s || !s->framebuffer) return 0;
-    source = &s->hud_hand_action_source;
-    if (!source->valid || !s->gdat_interface_palette_ready ||
+    if (!source || !source->valid || !s->gdat_interface_palette_ready ||
         s->gdat_interface_palette_hash == 0u || !s->hud_party_valid ||
         source->player_index >= (uint8_t)s->hud_party.champion_count ||
         !s->hud_party.champions[source->player_index].occupied ||
@@ -8648,6 +8672,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
     int expected_count = 0;
     int fills = 0;
     int icons = 0;
+    int gdat_counter_base;
 
     if (!s || !target || stride <= 0 || !s->hud_party_valid ||
         !s->hud_party.towns_squad_default_route_valid ||
@@ -8669,6 +8694,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
     if (plan->command_count != expected_count) {
         return 0;
     }
+    gdat_counter_base = s->gdat_hud_material_plan_consumed_count;
 
     for (int i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
@@ -8803,7 +8829,84 @@ static int dm2_v1_render_fmtowns_squad_plan(
     }
     return fills == s->hud_party.champion_count &&
         icons == (expected_count - fills) &&
-        s->gdat_hud_material_plan_consumed_count >= expected_count;
+        s->gdat_hud_material_plan_consumed_count - gdat_counter_base ==
+            expected_count;
+}
+
+/* SKProject SKWIN/SkWinCore.cpp::DRAW_SQUAD_POS_INTERFACE draws
+ * GRAPHICSSET/<MapGraphicsStyle>/0xF5 to RECT_47 before it paints the
+ * dynamic party icons into RECT_53..RECT_56.  Towns has no PC static HUD
+ * background, so leaving this pass out produces the large black right side
+ * seen in the reported screenshot. */
+static int dm2_v1_render_fmtowns_squad_backdrop(
+    DM2_V1_ViewportState *s, uint8_t *target, int stride)
+{
+    const DM2_V1_GdatSceneM11CommandPlan *scene;
+    DM2_V1_QueryGdatSummaryImageReceipt summary;
+    DM2_V1_GdatGfxRawMaterialReceipt raw_material;
+    DM2_V1_BootExpandedRectReceipt destination;
+    uint8_t palette16[16];
+    uint8_t *pixels;
+    uint32_t palette_hash = 0u;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+
+    if (!s || !target || stride < DM2_VP_WIDTH || !s->asset_loader ||
+        s->asset_loader->gdat_version != 4u || !s->asset_profile ||
+        !s->gdat_scene_material_plan ||
+        !s->gdat_scene_material_plan->valid ||
+        !s->hud_party_valid || !s->hud_party.towns_squad_default_route_valid ||
+        !s->gdat_interface_palette_ready) return 0;
+    scene = s->gdat_scene_material_plan;
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            s->asset_loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+            scene->graphicsset, 0xf5, &summary) ||
+        !summary.accepted || summary.colors != 16u ||
+        !summary.palette_hash ||
+        !dm2_v1_gdat_image_raw_material_receipt(
+            s->asset_loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+            scene->graphicsset, 0xf5, &raw_material) ||
+        !raw_material.accepted || !raw_material.source_bytes ||
+        !raw_material.source_byte_count || !raw_material.receipt_hash ||
+        !dm2_v1_boot_query_expanded_rect_receipt(
+            (const DM2_V1_BootProfile *)s->asset_profile, 47u,
+            &destination) || !destination.valid || !destination.receipt_hash ||
+        destination.rect.x < 0 || destination.rect.y < 0 ||
+        destination.rect.w <= 0 || destination.rect.h <= 0 ||
+        !dm2_v1_asset_load_image_local_palette(
+            s->asset_loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+            scene->graphicsset, 0xf5, palette16, &palette_hash) ||
+        !palette_hash || palette_hash != summary.palette_hash) return 0;
+
+    pixels = dm2_v1_asset_load_image_field(
+        s->asset_loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+        scene->graphicsset, 0xf5, &width, &height, &format);
+    if (!pixels || width <= 0 || height <= 0 || format != DM2_IMG_FMT_U4 ||
+        width != destination.rect.w || height != destination.rect.h ||
+        width > stride || destination.rect.x / 2 + width > DM2_VP_WIDTH ||
+        destination.rect.y / 2 + height > dm2_v1_viewport_draw_height(s)) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    memcpy(s->active_asset_palette16, palette16, sizeof(palette16));
+    s->active_asset_palette_hash = palette_hash;
+    s->active_asset_palette_ready = 1;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            uint8_t pixel = pixels[y * width + x];
+            /* FM Towns U4 selectors are already physical GRAPHICSSET palette
+             * indices; applying the PC interface palette remaps them twice. */
+            target[(destination.rect.y / 2 + y) * stride +
+                   destination.rect.x / 2 + x] = pixel;
+        }
+    }
+    s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+        s->last_hud_core_gdat_hash, 0x08f5, width, height);
+    s->last_hud_core_pixel_count += (uint32_t)(width * height);
+    ++s->asset_hud_core_drawn_count;
+    dm2_v1_asset_free_pixels(pixels);
+    return 1;
 }
 
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
@@ -8829,6 +8932,31 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         s->asset_loader && s->asset_loader->gdat_version == 4u;
     if (fmtowns_unmapped_chrome && s->hud_party_valid &&
         s->hud_party.towns_squad_default_route_valid) {
+        if (!dm2_v1_render_fmtowns_squad_backdrop(s, vp, stride)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            return;
+        }
+        /* UPDATE_RIGHT_PANEL draws both live hand positions for each hero
+         * before DRAW_SQUAD_SPELL_AND_LEADER_ICON and the formation pass.
+         * Keep this inside the Towns branch: it returns before generic PC
+         * chrome and must not silently skip the source hand materials. */
+        for (uint8_t hand_source_index = 0u;
+             hand_source_index < s->hud_hand_action_source_count;
+             ++hand_source_index) {
+            const DM2_V1_HudHandActionSource *hand_source =
+                &s->hud_hand_action_sources[hand_source_index];
+            if (hand_source->player_index >=
+                    (uint8_t)s->hud_party.champion_count ||
+                !s->hud_party.champions[
+                    hand_source->player_index].occupied) continue;
+            if (!dm2_v1_render_hud_hand_action_asset(s, hand_source) &&
+                s->source_materials_required) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                return;
+            }
+        }
         if (!dm2_v1_render_fmtowns_squad_plan(
                 s, vp, stride, s->gdat_hud_material_plan)) {
             dm2_v1_block_source_material(
@@ -9091,15 +9219,22 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
          * the persisted current-hero selector names an empty squad slot.
          * This is a normal resumed-SKSAVE no-draw state, not evidence that
          * the selected INTERFACE_GENERAL material is missing. */
-        if (s->hud_hand_action_source.valid && s->hud_party_valid &&
-            s->hud_hand_action_source.player_index <
-                (uint8_t)s->hud_party.champion_count &&
-            s->hud_party.champions[
-                s->hud_hand_action_source.player_index].occupied &&
-            !dm2_v1_render_hud_hand_action_asset(s) &&
-            s->source_materials_required) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        if (s->hud_party_valid) {
+            for (uint8_t hand_source_index = 0u;
+                 hand_source_index < s->hud_hand_action_source_count;
+                 ++hand_source_index) {
+                const DM2_V1_HudHandActionSource *hand_source =
+                    &s->hud_hand_action_sources[hand_source_index];
+                if (hand_source->player_index <
+                        (uint8_t)s->hud_party.champion_count &&
+                    s->hud_party.champions[
+                        hand_source->player_index].occupied &&
+                    !dm2_v1_render_hud_hand_action_asset(s, hand_source) &&
+                    s->source_materials_required) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                }
+            }
         }
     }
 }

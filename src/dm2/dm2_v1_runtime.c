@@ -12309,6 +12309,90 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     dm2_v1_viewport_set_hud_party(viewport, &hud);
 }
 
+/* ReDMCSB/skproject SkWinCore.cpp::UPDATE_RIGHT_PANEL redraws both hand
+ * positions for every party member when the squad panel changes. */
+static void dm2_runtime_bind_source_squad_hands(
+    const DM2_V1_RuntimeState *rt, DM2_V1_ViewportState *viewport,
+    int party_dir)
+{
+    const uint8_t *raw4;
+    size_t raw4_size = 0u;
+    uint32_t raw4_hash = 2166136261u;
+
+    if (!rt || !viewport || rt->outdoor || !rt->session_snapshot_valid ||
+        !viewport->asset_fetch || !viewport->asset_loader ||
+        !viewport->gdat_interface_palette_ready ||
+        viewport->gdat_scene_map_load_token == 0u ||
+        viewport->gdat_scene_control_hash == 0u ||
+        viewport->gdat_interface_palette_hash == 0u) return;
+    raw4 = dm2_v1_asset_load_typed_sized(
+        viewport->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw4_size);
+    if (!raw4 || raw4_size == 0u) return;
+    for (size_t i = 0u; i < raw4_size; ++i) {
+        raw4_hash ^= (uint32_t)raw4[i] + 0x9e3779b9u +
+            (raw4_hash << 6) + (raw4_hash >> 2);
+        if (raw4_hash == 0u) raw4_hash = 1u;
+    }
+    if (raw4_hash == 0u) return;
+
+    for (int player = 0; player < rt->session_snapshot.champion_count &&
+         player < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++player) {
+        const uint8_t *raw =
+            rt->session_snapshot.original_champion_records[player];
+        uint8_t party_position = raw[0x1d];
+        if (party_position > 3u ||
+            !viewport->hud_party.champions[player].towns_current_hp_source_bound ||
+            viewport->hud_party.champions[player].towns_current_hp <= 0) {
+            continue;
+        }
+        for (int hand = 0; hand < 2; ++hand) {
+            DM2_V1_HudHandActionSource source;
+            DM2_V1_GdatRaw4BlitPlacement placement;
+            const uint8_t *pixels = NULL;
+            int width = 0, height = 0, stride = 0;
+            int selected = player + 1 == rt->source_curacthero &&
+                hand == rt->source_curactmode;
+            int side = selected ? 1 : 0;
+            int rectno = (hand == 1 ? 0x46 : 0x4a) +
+                (((int)party_position + 4 - (party_dir & 3)) & 3);
+            int gdat_index = dm2_v1_viewport_hud_hand_action_graphic_index(
+                hand, side);
+            if (gdat_index == 0 ||
+                viewport->asset_fetch(viewport->asset_user, gdat_index,
+                    &pixels, &width, &height, &stride) != 0 || !pixels ||
+                width <= 0 || height <= 0 || stride < width ||
+                !dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
+                    viewport->asset_loader, (uint16_t)rectno, width, height,
+                    &placement)) continue;
+            memset(&source, 0, sizeof(source));
+            source.valid = 1;
+            source.player_index = (uint8_t)player;
+            source.possession_index = (uint8_t)hand;
+            source.left_or_right = (uint8_t)side;
+            source.player_position = party_position;
+            source.party_direction = (uint8_t)(party_dir & 3);
+            source.gdat_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+            source.gdat_subcategory = 4u;
+            source.gdat_entry = (uint8_t)(2 + hand * 2 + side);
+            source.rectno = (uint8_t)rectno;
+            source.hand_cooldown = raw[0x2a + hand];
+            source.gray_overlay_required = source.hand_cooldown != 0u ||
+                rt->source_sleeping;
+            source.map_load_token = viewport->gdat_scene_map_load_token;
+            source.scene_control_hash = viewport->gdat_scene_control_hash;
+            source.palette_hash = viewport->gdat_interface_palette_hash;
+            source.raw4_hash = raw4_hash;
+            source.source_rect.x = placement.source_x;
+            source.source_rect.y = placement.source_y;
+            source.source_rect.w = placement.destination.w;
+            source.source_rect.h = placement.destination.h;
+            source.destination_rect = placement.destination;
+            dm2_v1_viewport_add_hud_hand_action_source(viewport, &source);
+        }
+    }
+}
+
 /* ReDMCSB/skproject SkWinCore.cpp::DISPLAY_RIGHT_PANEL_SQUAD_HANDS keeps
  * the selected champion and selected hand in party.curacthero/curactmode,
  * then calls DRAW_HAND_ACTION_ICONS. Without a source-selected champion
@@ -12550,7 +12634,7 @@ static void dm2_runtime_bind_source_hand_action(
             }
         }
     }
-    dm2_v1_viewport_set_hud_hand_action_source(viewport, &source);
+    dm2_v1_viewport_add_hud_hand_action_source(viewport, &source);
 }
 
 /* ── Viewport rendering ────────────────────────────────────────────── */
@@ -13024,6 +13108,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready,
         rt->gdat_interface_palette_hash,
         rt->gdat_interface_palette16);
+    memset(viewport.hud_hand_action_sources, 0,
+           sizeof(viewport.hud_hand_action_sources));
+    viewport.hud_hand_action_source_count = 0u;
+    memset(&viewport.hud_hand_action_source, 0,
+           sizeof(viewport.hud_hand_action_source));
+    dm2_runtime_bind_source_squad_hands(rt, &viewport, party_dir);
     dm2_runtime_bind_source_hand_action(rt, &viewport, party_dir);
     dm2_v1_viewport_set_gdat_interface_text_palette(
         &viewport,
@@ -13060,6 +13150,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
     dm2_v1_viewport_set_gdat_hud_material_plan(
         &viewport, &hud_material_plan);
+    if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        viewport.hud_party_valid &&
+        viewport.hud_party.towns_squad_default_route_valid &&
+        rt->boot->graphics_dat) {
+        dm2_v1_viewport_set_asset_loader(
+            &viewport, dm2_v1_boot_asset_loader(rt->boot));
+        viewport.asset_profile = rt->boot;
+    }
     if (dm2_v1_boot_interface_hud_layout(rt->boot, &hud_layout)) {
         dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &hud_layout);
     }
@@ -13155,6 +13253,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         /* Do not claim a HUD command transaction when the source-selected
          * squad state emitted no GDAT icon (awake, zero hand cooldown). */
         hud_material_plan_required = 0;
+    }
+    if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        viewport.hud_party_valid &&
+        viewport.hud_party.towns_squad_default_route_valid &&
+        viewport.asset_hud_core_drawn_count > 0) {
+        hud_material_plan_required = 1;
+        hud_material_plan_consumed = hud_material_plan.valid &&
+            viewport.gdat_hud_material_plan_consumed_count ==
+                hud_material_plan.command_count;
     }
     hud_material_plan_hash = hud_material_plan_consumed
         ? hud_material_plan.command_hash : 0u;

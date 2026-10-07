@@ -38,6 +38,20 @@ int m11_ttf_render_string(
     int fontSizePixels,
     unsigned char colorIndex);
 
+/* Renders the same language-aware font with alpha blending onto an RGBA
+ * canvas. Returns 0 when SDL_ttf or a suitable font is unavailable so callers
+ * can retain their platform-independent bitmap fallback. */
+int m11_ttf_render_rgba_string(
+    unsigned char* rgba,
+    int canvasWidth,
+    int canvasHeight,
+    int x, int y,
+    const char* utf8_text,
+    int fontSizePixels,
+    unsigned char red,
+    unsigned char green,
+    unsigned char blue);
+
 int m11_ttf_measure_string(const char* utf8_text,
                            int fontSizePixels,
                            int* widthPixels);

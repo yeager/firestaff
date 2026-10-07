@@ -19,14 +19,12 @@
  *     physical points back to source coordinates), so a zone's
  *     presented physical size is source size x presentation scale.
  *
- *  2. The M11 UI scale percent (100/150/200, ui_scale_m11.h) is a
- *     dormant accessibility extra: M11_UIScale_Apply /
- *     M11_UIScale_GetFontScale have no consumer in the hit-test or
- *     HUD-geometry path today, so zone geometry is UI-scale
- *     independent.  The audit pins that finding (identical floor
- *     counts at every percent) and additionally records the
- *     hypothetical M11_UIScale_Apply-adjusted sizes so a future
- *     UI-scale-aware HUD can be re-audited against the same contract.
+ *  2. The M11 UI scale percent (100/150/200, ui_scale_m11.h) scales
+ *     modern launcher text, but is not consumed by the in-game hit-test
+ *     or HUD-geometry path.  Game hit-zone geometry therefore stays
+ *     UI-scale independent.  The audit pins that finding (identical
+ *     floor counts at every percent) and also records the hypothetical
+ *     M11_UIScale_Apply-adjusted sizes for a future UI-scale-aware HUD.
  *
  * Floors mirror fs_gesture_navigation_gate.h
  * (FS_GG_PLATFORM_MIN_TARGET_PX / FS_GG_PLATFORM_RECOMMENDED_PX); the

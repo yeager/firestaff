@@ -2483,13 +2483,26 @@ int M11_Render_PumpEvents(void) {
             if (ev.key.key == SDLK_ESCAPE) {
                 g_state.quitRequested = 1;
             }
-        } else if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
-                   ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+        } else if ((ev.type == SDL_EVENT_WINDOW_RESIZED ||
+                    ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) &&
+                   ev.window.windowID == SDL_GetWindowID(g_state.window)) {
             /* SDL3: WINDOW_RESIZED reports logical size and
              * WINDOW_PIXEL_SIZE_CHANGED reports drawable pixels on high-DPI
              * displays.  HandleResize resolves them back to logical mouse
              * space plus pixel render-output space. */
-            M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            if (ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                int windowW = 0, windowH = 0;
+                int pixelW = 0, pixelH = 0;
+                if (SDL_GetWindowSize(g_state.window, &windowW, &windowH) &&
+                    SDL_GetRenderOutputSize(g_state.renderer, &pixelW, &pixelH) &&
+                    windowW > 0 && windowH > 0 && pixelW > 0 && pixelH > 0) {
+                    M11_Render_HandleResize(windowW, windowH);
+                } else {
+                    M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+                }
+            } else {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
         }
 #else
         if (ev.type == SDL_QUIT) {
@@ -2537,24 +2550,52 @@ int M11_Render_HandleResize(int newWidth, int newHeight) {
         int resolvedWindowH = 0;
         int resolvedRenderW = 0;
         int resolvedRenderH = 0;
+        const char *driver = SDL_GetCurrentVideoDriver();
+
+        /* SDL's dummy backend does not honor maximized window geometry.
+         * Headless callers pass the requested logical/render dimensions
+         * explicitly, so retain that deterministic surface rather than
+         * replacing it with the dummy window's fallback size. */
+        if (driver && strcmp(driver, "dummy") == 0) {
+            g_state.windowW = newWidth;
+            g_state.windowH = newHeight;
+            g_state.renderW = newWidth;
+            g_state.renderH = newHeight;
+            M11_Render_SyncWindowModeFromWindow();
+            return M11_RENDER_OK;
+        }
         SDL_GetWindowSize(g_state.window, &ww, &wh);
         SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh);
-        if (M11_Render_ResolveSdl3ResizeEvent(newWidth,
-                                              newHeight,
-                                              ww,
-                                              wh,
-                                              rw,
-                                              rh,
-                                              &resolvedWindowW,
-                                              &resolvedWindowH,
-                                              &resolvedRenderW,
-                                              &resolvedRenderH) != M11_RENDER_OK) {
-            return M11_RENDER_ERR_INVALID_ARG;
+        /* Always prefer SDL's current logical/drawable pair. Resize events
+         * can be queued across multiple window changes, and their dimensions
+         * may refer to a superseded size or to the other coordinate space. */
+        if (ww > 0 && wh > 0 && rw > 0 && rh > 0 &&
+            M11_Render_ResolveSdl3LiveDimensions(
+                ww, wh, rw, rh,
+                &resolvedWindowW, &resolvedWindowH,
+                &resolvedRenderW, &resolvedRenderH) == M11_RENDER_OK) {
+            g_state.windowW = ww;
+            g_state.windowH = wh;
+            g_state.renderW = rw;
+            g_state.renderH = rh;
+        } else {
+            if (M11_Render_ResolveSdl3ResizeEvent(newWidth,
+                                                  newHeight,
+                                                  ww,
+                                                  wh,
+                                                  rw,
+                                                  rh,
+                                                  &resolvedWindowW,
+                                                  &resolvedWindowH,
+                                                  &resolvedRenderW,
+                                                  &resolvedRenderH) != M11_RENDER_OK) {
+                return M11_RENDER_ERR_INVALID_ARG;
+            }
+            g_state.windowW = resolvedWindowW;
+            g_state.windowH = resolvedWindowH;
+            g_state.renderW = resolvedRenderW;
+            g_state.renderH = resolvedRenderH;
         }
-        g_state.windowW = resolvedWindowW;
-        g_state.windowH = resolvedWindowH;
-        g_state.renderW = resolvedRenderW;
-        g_state.renderH = resolvedRenderH;
     }
 #else
     g_state.windowW = newWidth;

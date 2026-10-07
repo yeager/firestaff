@@ -13,6 +13,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum { CSB_ATARI_ST_GRAPHICS_PATH_CAPACITY = 1024 };
+
+/* Atari rendering opens GRAPHICS.DAT through this loader from several
+ * source-owned layout decoders. When the media is nested in a 7z archive,
+ * reopening it on every frame repeats the full LZMA decode. Retain one
+ * authenticated in-memory source image for the currently selected path;
+ * each short-lived loader still owns its own copy and can close normally. */
+static char g_csb_atari_st_graphics_cached_path[
+    CSB_ATARI_ST_GRAPHICS_PATH_CAPACITY];
+static uint8_t *g_csb_atari_st_graphics_cached_bytes;
+static size_t g_csb_atari_st_graphics_cached_size;
+
 void csb_atari_st_graphics_loader_init(CSB_AtariStLoader* state)
 {
     if (!state) return;
@@ -94,6 +106,12 @@ static bool csb_atari_st_graphics_loader_parse_loaded(CSB_AtariStLoader* state)
 
 bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* path)
 {
+    uint8_t *fresh_bytes = NULL;
+    uint8_t *candidate_cache = NULL;
+    size_t fresh_byte_count = 0u;
+    bool cache_hit;
+    bool parsed;
+
     if (!state || !path) return false;
 
     /* A preserved Atari package can be ZIP -> ZIP -> STX -> GRAPHICS.DAT.
@@ -101,15 +119,44 @@ bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* pat
      * use the native virtual-media reader for the full authenticated chain.
      * Both routes keep source bytes in process memory and never extract a
      * replacement GRAPHICS.DAT to disk. */
-    if (!(strstr(path, "::")
-              ? asset_read_virtual_path_alloc(path, &state->dat_bytes,
-                                               &state->dat_byte_count)
-              : asset_read_path_alloc(path, &state->dat_bytes,
-                                      &state->dat_byte_count))) return false;
+    cache_hit = g_csb_atari_st_graphics_cached_bytes &&
+        strcmp(g_csb_atari_st_graphics_cached_path, path) == 0;
+    if (cache_hit) {
+        state->dat_bytes = (uint8_t *)malloc(g_csb_atari_st_graphics_cached_size);
+        if (!state->dat_bytes) return false;
+        memcpy(state->dat_bytes, g_csb_atari_st_graphics_cached_bytes,
+               g_csb_atari_st_graphics_cached_size);
+        state->dat_byte_count = g_csb_atari_st_graphics_cached_size;
+    } else {
+        if (!(strstr(path, "::")
+                  ? asset_read_virtual_path_alloc(path, &fresh_bytes,
+                                                   &fresh_byte_count)
+                  : asset_read_path_alloc(path, &fresh_bytes,
+                                          &fresh_byte_count))) return false;
+        state->dat_bytes = fresh_bytes;
+        state->dat_byte_count = fresh_byte_count;
+
+        if (strlen(path) < sizeof(g_csb_atari_st_graphics_cached_path)) {
+            candidate_cache = (uint8_t *)malloc(fresh_byte_count);
+            if (candidate_cache) {
+                memcpy(candidate_cache, fresh_bytes, fresh_byte_count);
+            }
+        }
+    }
 
     strncpy(state->dat_path, path, sizeof(state->dat_path) - 1);
     state->dat_path[sizeof(state->dat_path) - 1] = '\0';
-    return csb_atari_st_graphics_loader_parse_loaded(state);
+    parsed = csb_atari_st_graphics_loader_parse_loaded(state);
+    if (!cache_hit && parsed && candidate_cache) {
+        free(g_csb_atari_st_graphics_cached_bytes);
+        g_csb_atari_st_graphics_cached_bytes = candidate_cache;
+        g_csb_atari_st_graphics_cached_size = fresh_byte_count;
+        snprintf(g_csb_atari_st_graphics_cached_path,
+                 sizeof(g_csb_atari_st_graphics_cached_path), "%s", path);
+    } else {
+        free(candidate_cache);
+    }
+    return parsed;
 }
 
 bool csb_atari_st_graphics_loader_open_bytes(CSB_AtariStLoader* state,

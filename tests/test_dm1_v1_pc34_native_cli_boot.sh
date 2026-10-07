@@ -35,11 +35,20 @@ if (( unzip_status > 1 )); then
     echo "FAIL: could not extract the authentic DM1 test archive (unzip status $unzip_status)" >&2
     exit 1
 fi
-if [[ ! -s "$missing_swsh_root/data/DATA/GRAPHICS.DAT" ||
-      ! -s "$missing_swsh_root/data/DATA/DUNGEON.DAT" ]]; then
-    echo "FAIL: extracted DM1 test copy is missing original runtime data" >&2
-    exit 1
-fi
+runtime_data_root=$(python3 - "$missing_swsh_root/data" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+matches = [path.parent for path in root.rglob("GRAPHICS.DAT")
+           if path.is_file() and path.name.casefold() == "graphics.dat" and
+           (path.parent / "DUNGEON.DAT").is_file()]
+if len(matches) != 1:
+    raise SystemExit(
+        f"FAIL: expected one original DM1 GRAPHICS.DAT/DUNGEON.DAT pair; found {matches}")
+print(matches[0])
+PY
+)
 python3 - "$missing_swsh_root/data" <<'PY'
 from pathlib import Path
 import sys
@@ -56,7 +65,7 @@ missing_swsh_output_file="$missing_swsh_root/output.txt"
 if HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-   --game dm1 --platform pc --data-dir "$missing_swsh_root/data" \
+   --game dm1 --platform pc --data-dir "$runtime_data_root" \
    --boot-probe --boot-probe-frames 120 --duration 0 \
    >"$missing_swsh_output_file" 2>&1; then
     cat "$missing_swsh_output_file" >&2

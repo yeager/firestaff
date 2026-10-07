@@ -159,6 +159,67 @@ int m11_ttf_render_string(
     return 1;
 }
 
+int m11_ttf_render_rgba_string(
+    unsigned char* rgba,
+    int canvasWidth,
+    int canvasHeight,
+    int x, int y,
+    const char* utf8_text,
+    int fontSizePixels,
+    unsigned char red,
+    unsigned char green,
+    unsigned char blue)
+{
+    TTF_Font* font;
+    SDL_Surface* surface;
+    int srcX, srcY;
+    if (!rgba || canvasWidth <= 0 || canvasHeight <= 0 ||
+        !utf8_text || !utf8_text[0] || fontSizePixels <= 0) {
+        return 0;
+    }
+    font = (TTF_Font*)load_ttf_for_language(
+        fs_l10n_get_language(), fontSizePixels);
+    if (!font) return 0;
+
+    surface = TTF_RenderUTF8_Blended(font, utf8_text,
+        (SDL_Color){255, 255, 255, 255});
+    if (!surface) return 0;
+
+    for (srcY = 0; srcY < surface->h; ++srcY) {
+        int dstY = y + srcY;
+        if (dstY < 0 || dstY >= canvasHeight) continue;
+        for (srcX = 0; srcX < surface->w; ++srcX) {
+            int dstX = x + srcX;
+            Uint32 pixel;
+            Uint8 srcR, srcG, srcB, alpha;
+            unsigned char* dst;
+            int inverseAlpha;
+            if (dstX < 0 || dstX >= canvasWidth) continue;
+            pixel = *(Uint32*)((unsigned char*)surface->pixels +
+                               srcY * surface->pitch + srcX * 4);
+            SDL_GetRGBA(pixel, SDL_GetPixelFormatDetails(surface->format),
+                        NULL, &srcR, &srcG, &srcB, &alpha);
+            (void)srcR;
+            (void)srcG;
+            (void)srcB;
+            if (alpha == 0U) continue;
+            dst = rgba + ((size_t)dstY * (size_t)canvasWidth +
+                          (size_t)dstX) * 4U;
+            inverseAlpha = 255 - alpha;
+            dst[0] = (unsigned char)(((int)red * alpha +
+                                     (int)dst[0] * inverseAlpha) / 255);
+            dst[1] = (unsigned char)(((int)green * alpha +
+                                     (int)dst[1] * inverseAlpha) / 255);
+            dst[2] = (unsigned char)(((int)blue * alpha +
+                                     (int)dst[2] * inverseAlpha) / 255);
+            dst[3] = (unsigned char)(alpha +
+                         ((int)dst[3] * inverseAlpha) / 255);
+        }
+    }
+    SDL_DestroySurface(surface);
+    return 1;
+}
+
 int m11_ttf_measure_string(const char* utf8_text,
                            int fontSizePixels,
                            int* widthPixels) {
@@ -203,6 +264,22 @@ int m11_ttf_render_string(
     (void)framebuffer; (void)framebufferWidth; (void)framebufferHeight;
     (void)x; (void)y; (void)utf8_text; (void)fontSizePixels; (void)colorIndex;
     return 0; /* SDL3_ttf not available; use bitmap fallback */
+}
+int m11_ttf_render_rgba_string(
+    unsigned char* rgba,
+    int canvasWidth,
+    int canvasHeight,
+    int x, int y,
+    const char* utf8_text,
+    int fontSizePixels,
+    unsigned char red,
+    unsigned char green,
+    unsigned char blue)
+{
+    (void)rgba; (void)canvasWidth; (void)canvasHeight;
+    (void)x; (void)y; (void)utf8_text; (void)fontSizePixels;
+    (void)red; (void)green; (void)blue;
+    return 0;
 }
 int m11_ttf_measure_string(const char* utf8_text,
                            int fontSizePixels,

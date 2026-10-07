@@ -678,6 +678,9 @@ static void check_data_dir_picker_cancel_does_not_re_show_no_data(void) {
      * "DATA DIRECTORY UNCHANGED" popup once — not the original no-data
      * popup — and the picker must be marked inactive. */
     complete_pending_dialog_cancel();
+    /* SDL's folder-dialog callback publishes its result for the main-loop
+     * update to consume; mirror that callback -> Update sequence here. */
+    CHECK(M12_StartupMenu_Update(&state) == 1);
     CHECK(state.dataDirPickerActive == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     line1 = state.messageLine1 ? state.messageLine1 : "";

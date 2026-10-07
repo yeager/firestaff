@@ -1,5 +1,38 @@
 # Firestaff DONE — CSB
 
+- 2026-10-07: The authenticated Amiga 3.1 M12/M11 handoff regression passed
+  with 55 assertions, no failures and no skips. It exercised the source-bound
+  CSB SWSH sample through the temporary intro audio owner, checked the
+  launcher master/music/SFX preferences, and confirmed mute preserves the
+  sample identity, duration and host pause. This covers the original-media
+  audio preference path; it does not verify physical speaker output.
+
+- 2026-10-07: Both authentic CSB Amiga startup paths passed: the ADF archive
+  route in 10.84 seconds and the native Amiga ZIP route in 70.34 seconds.
+  These exercise separate original-media handoffs through the CLI/startup
+  flow; neither claims physical M5 output or visual parity.
+
+- 2026-10-07: Corrected `csb_v1_atari_original_archive_cli_boot` to consume
+  the installed authentic STX-in-ZIP archive instead of its parallel `.7z`
+  copy. The ZIP route passed in 3.28 seconds with external archive tools
+  disabled, verifying the original Atari title hash, map-0 start pose, first
+  UP movement and M12 start-menu launch.
+
+- 2026-10-07: `csb_v1_atari_stx_native_cli_boot` passed in 134.07 seconds
+  against the installed original Atari STX. The normal source-owned startup
+  reached the expected CSB entrance route without a synthetic game-data
+  substitute. This headless check does not establish physical M5 presentation
+  or visual parity.
+
+- 2026-10-07: Corrected the real-media M12/M11 Amiga handoff CTest to match
+  the installed ZIP's verified A31M identity. The prior configuration required
+  A31E and silently skipped, while the archive's authenticated GRAPHICS.DAT
+  hash is A31M (`61fbfd56887c94adc26888a9491c6611`) and its source owner is
+  `TITL.DAT`. The corrected test passes 55 assertions with no failures or
+  skips and reports the `a31m-titl-dat` handoff from the original archive.
+  This verifies the selected-menu handoff into the native title route; it does
+  not replace the separate first-runtime-frame evidence or claim pixel parity.
+
 - 2026-10-06: Repacked the authentic Atari ST v2.1 game-disk STX from the
   local preservation archive into ZIP for the native archive route. The direct
   CLI test now waits through the source ANIMATE.SCR sequence before Enter and

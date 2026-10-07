@@ -72,6 +72,7 @@ title_capture="$app_dir/test-dm2-fmtowns-bare-menu-capture"
 title_config="$app_dir/test-dm2-fmtowns-bare-menu-isolated.toml"
 runtime_probe="$app_dir/test-dm2-fmtowns-normal-loop.json"
 runtime_capture="$app_dir/test-dm2-fmtowns-normal-loop-capture"
+runtime_log="$app_dir/test-dm2-fmtowns-menu-normal-loop.log"
 source_digest=$("$source_rgb" "$archive")
 rm -f "$title_probe" "$title_config"
 mkdir -p "$title_capture"
@@ -139,23 +140,33 @@ rm -f "$runtime_capture"/*.bmp
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 320 --height 200 --game dm2 --data-dir "$archive" \
-    --script 'wait:8000,click:115:65,click:100:60' \
-    --duration 210000 >/dev/null 2>&1
-python3 - "$runtime_probe" "$runtime_capture" <<'PY'
+    --width 320 --height 200 --menu --game dm2 --platform fm-towns \
+    --data-dir "$archive" --verbose \
+    --script 'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60' \
+    --duration 120000 >"$runtime_log" 2>&1 || {
+        cat "$runtime_log" >&2
+        exit 1
+    }
+python3 - "$runtime_probe" "$runtime_capture" "$runtime_log" "$archive" <<'PY'
 import json
 from pathlib import Path
 import struct
 import sys
 
-with open(sys.argv[1], encoding="utf-8") as probe_file:
+probe_path, capture_dir, log_path, archive_path = sys.argv[1:]
+with open(probe_path, encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
 party = probe["party"]
 towns = probe["dm2FmtownsStartup"]
 script = probe["script"]
 runtime_frame = probe["dm2RuntimeFrame"]
-captures = list(Path(sys.argv[2]).glob("*.bmp"))
+captures = list(Path(capture_dir).glob("*.bmp"))
+trace = Path(log_path).read_text(encoding="utf-8")
+selected_edition = (
+    "selected game=dm2 platform=FM Towns edition=fmtowns-ja source=" +
+    archive_path
+)
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm2" or startup["phase"] != "dm2-runtime" or
         startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
@@ -165,7 +176,7 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
          party["direction"], party["championCount"]) != (0, 1, 8, 0, 1) or
         runtime_frame != {"accepted": 1, "realAssets": 1,
                           "noCoreFallbacks": 1, "fallbackDraws": 0} or
-        len(captures) != 1):
+        len(captures) != 1 or selected_edition not in trace):
     raise SystemExit(f"FAIL: DM2 FM Towns M12 normal loop did not reach a real runtime frame: {probe}")
 
 blob = captures[0].read_bytes()
@@ -180,19 +191,28 @@ if ((width, height, bits) != (320, 200, 24) or
         offset + stride * height > len(blob)):
     raise SystemExit("FAIL: DM2 FM Towns runtime screenshot has invalid geometry")
 nonblack = 0
+right_panel = 0
+dungeon_scene = 0
 for y in range(height):
     row = offset + y * stride
     for x in range(width):
         if any(blob[row + x * 3:row + x * 3 + 3]):
             nonblack += 1
-if nonblack < 1000:
-    raise SystemExit(f"FAIL: DM2 FM Towns runtime screenshot is mostly black ({nonblack} lit pixels)")
-print("PASS: bare DM2 CLI AUTO, authentic FM Towns TWANIM, New Game and first champion reach the normal-loop runtime")
-print(f"PASS: runtime screenshot captured at 320x200 with {nonblack} nonblack pixels")
+            if x >= 224 and 40 <= y < 176:
+                right_panel += 1
+            if x < 224 and 40 <= y < 176:
+                dungeon_scene += 1
+if nonblack < 1000 or right_panel < 2000 or dungeon_scene < 20000:
+    raise SystemExit(
+        "FAIL: DM2 FM Towns runtime frame is incomplete "
+        f"(total={nonblack}, right-panel={right_panel}, "
+        f"dungeon={dungeon_scene} lit pixels)")
+print("PASS: M12-selected FM Towns edition, authentic TWANIM, New Game and first champion reach the normal-loop runtime")
+print(f"PASS: runtime screenshot captured at 320x200 with {nonblack} nonblack pixels, {right_panel} right-panel pixels and {dungeon_scene} dungeon pixels")
 PY
 
 if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
     echo 'FAIL: DM2 FM Towns archive changed during native launch' >&2
     exit 1
 fi
-echo 'PASS: native DM2 FM Towns ZIP start menu and platform-card routes'
+echo 'PASS: native DM2 FM Towns ZIP start-menu, platform-card, CLI and M12 runtime routes'

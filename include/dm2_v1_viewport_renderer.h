@@ -1644,6 +1644,8 @@ typedef struct {
     DM2_V1_HudPartyState hud_party;
     int hud_party_valid;
     DM2_V1_HudHandActionSource hud_hand_action_source;
+    DM2_V1_HudHandActionSource hud_hand_action_sources[8];
+    uint8_t hud_hand_action_source_count;
 
     /* Outdoor state */
     int is_outdoor;
@@ -1669,6 +1671,8 @@ typedef struct {
      * Decoded pixel fetches still go through asset_fetch; this pointer is only
      * used when source_materials_required is active. */
     const DM2_V1_AssetLoader *asset_loader;
+    /* Source profile for RAW4 rectangle receipts on edition-specific chrome. */
+    const void *asset_profile;
     /* A boot-owned, hash-verified GDAT provider must never be replaced by
      * aggregate paint.  skproject SKWIN/SkWinCore.cpp (DRAW_MAP_CHIP) resolves
      * GRAPHICSSET/WALL_GFX imagery before its blit; a failed decode is a
@@ -2065,6 +2069,9 @@ void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
 void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
                                    const DM2_V1_HudPartyState *party);
 void dm2_v1_viewport_set_hud_hand_action_source(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_HudHandActionSource *source);
+void dm2_v1_viewport_add_hud_hand_action_source(
     DM2_V1_ViewportState *s,
     const DM2_V1_HudHandActionSource *source);
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,

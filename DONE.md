@@ -1,5 +1,44 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-07: Three original-media DM1 CLI startup routes passed: DOS English
+  in 45.14 seconds, nested PC-34 ZIP in 230.82 seconds, and FM Towns in
+  262.33 seconds. The PC-34 route also rejected an isolated copy missing its
+  required SWSH prelude, consumed the complete 23-step C001 title through
+  M12, and reached the HoC runtime. FM Towns completed its platform-specific
+  boot and movement checks. These are headless startup/input checks, not
+  physical M5 or visual-parity claims.
+
+- 2026-10-07: DM1 Amiga HD and Amiga v2.0 original-media CLI startup tests
+  passed in 13.02 and 59.09 seconds. The HD route reached its authenticated
+  runtime startup; v2.0 completed its source disk/title and Hall of Champions
+  route. These headless checks do not establish physical M5 presentation or
+  visual parity.
+
+- 2026-10-07: `dm1_v1_dos_fr_zip_cli_boot` passed in 14.43 seconds with the
+  original French DOS ZIP and required PC-34 source media. This verifies the
+  localized CLI/title/menu startup path against authentic data.
+
+- 2026-10-07: `dm1_v1_atari_st_11_archive_cli_boot` passed in 63.50 seconds
+  against original DM1 Atari ST 1.1 media, exercising its CLI/start-menu
+  startup path. This verifies that edition's source startup route; it does
+  not claim physical M5 output or visual parity.
+
+- 2026-10-07: CMake now enables the real-corpus M12 rescan integration check
+  when all five installed game directories are present. `m12_data_dir_cancel`
+  passed against `/Volumes/Extern-disk/FirestaffUserData/data`, proving the
+  selected DM1 leaf is promoted to the collection root, all five original
+  game datasets are rediscovered, and reopening the launcher exposes them.
+  The check uses installed media and skips unsupported packed archives rather
+  than extracting them through external tools.
+
+- 2026-10-07: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` to
+  launch DM2 without `--platform`, using the normal FM Towns default and its
+  original Japanese archive. The complete real-media regression passed again
+  on 2026-10-07 in 134.92 seconds: DM1 PC-34, CSB FM Towns and DM2 FM Towns
+  each reached a loaded game, returned to M12, and rediscovered authentic DM1,
+  CSB and DM2 media. This proves the return rescan works for the prioritized
+  three-game set, including DM2's default platform.
+
 - 2026-10-06: The initial full game-data scan and subsequent launcher rescans
   now share the modern true-color progress presentation instead of switching
   back to the indexed legacy screen. The progress panel retains localized game
@@ -14,6 +53,16 @@
   party; DM2 defaults to FM Towns and reaches map 0 with real graphics and no
   fallback draws. The CSB and DM2 probes include source menu inputs to enter
   new games.
+
+- 2026-10-07: `m11_direct_launch_prepare_all_games` passed against a temporary
+  root containing only symlinks to the installed original DM1, CSB and DM2
+  media. It recorded 148 passing assertions, no failures and four explicit
+  skips; Nexus and Theron were not staged. For each available game, the test
+  exercised direct `--game` preparation and the visible M12 game/platform/
+  custom/launch handoff into M11, preserving the hash-verified selected edition.
+  The separate direct boot probes reached each game's source-owned startup
+  checkpoint. This does not claim that every edition reaches its first M11
+  runtime frame through the visible menu.
 
 - 2026-10-06: The 480x270 legacy launcher now routes mouse clicks to its
   visible platform and presentation cards. The route is limited to those two

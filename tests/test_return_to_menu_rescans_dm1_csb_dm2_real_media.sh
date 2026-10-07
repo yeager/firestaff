@@ -5,7 +5,7 @@ app=${1:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff
 data_root=${2:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff> <data-root>}
 dm1_archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 csb_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
-dm2_archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
+dm2_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 
 if [ ! -x "$app" ] || [ ! -f "$dm1_archive" ] ||
    [ ! -f "$csb_archive" ] || [ ! -f "$dm2_archive" ]; then
@@ -31,12 +31,16 @@ run_return_to_menu_case() {
 
     # Keep a clean per-game config so a previous media selection cannot make
     # an explicit platform appear to work by reusing a cached source.
+    set -- --width 320 --height 200 --menu --game "$game"
+    if [ "$platform" != auto ]; then
+        set -- "$@" --platform "$platform"
+    fi
+    set -- "$@" --data-dir "$data_root" --debug \
+        --script "$script" --duration "$duration_ms"
     FIRESTAFF_CONFIG_PATH="$case_root/config.toml" \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        "$app" --width 320 --height 200 --menu --game "$game" \
-        --platform "$platform" --data-dir "$data_root" --debug \
-        --script "$script" --duration "$duration_ms" >"$run_log" 2>&1 || {
+        "$app" "$@" >"$run_log" 2>&1 || {
             cat "$run_log" >&2
             return 1
         }
@@ -89,7 +93,7 @@ run_return_to_menu_case csb fm-towns \
     'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,back,wait:10,enter' \
     30000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
     'CSB READY: gameId=csb dataDir=.*/data/csb/.*variant=csb-fmtowns-en .*handoff=f31-title-anm'
-run_return_to_menu_case dm2 pc \
-    'key:enter,key:enter,key:enter,wait:1000,key:enter,key:enter,wait:10,key:escape,key:enter' \
+run_return_to_menu_case dm2 auto \
+    'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,key:enter' \
     60000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
     'launch phase=game-handoff mode=menu game=dm2 .*source=.*/data/dm2/'

@@ -17,11 +17,13 @@
  *   - V1 / V2 / V3 presentation mode badge drawn prominently.
  *   - Shared footer with keyboard hints.
  *
- * All drawing is pure C99 - no platform code, no SDL dependency.
+ * Base drawing is pure C99. The scan overlay can use the shared TTF adapter
+ * for scalable localized text, then falls back to the built-in bitmap face.
  * The renderer only reads the public M12_StartupMenuState.
  */
 
 #include "menu_startup_render_modern_m12.h"
+#include "colorblind_m11.h"
 
 #include "asset_status_m12.h"
 #include "branding_firestaff_rail_m12.h"
@@ -33,6 +35,8 @@
 #include "firestaff_l10n.h"
 #include "menu_unicode_glyphs_m12.h"
 #include "menu_row_metrics_m12.h"
+#include "m11_game_text_ttf_renderer_pc34_compat.h"
+#include "ui_scale_m11.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -107,7 +111,7 @@ static M12_RGB COLOR_SHADOW(void)      { return rgb(6, 6, 14); }
  * exact source/game string as the fallback. */
 static const char* modern_tr(const M12_StartupMenuState* state,
                              const char* source_text) {
-    return M12_StartupMenu_Translate(state, source_text ? source_text : "");
+    return M12_StartupMenu_Translate(state, source_text);
 }
 
 /* Optional message rows are absent, not translatable empty strings. Keeping
@@ -444,7 +448,8 @@ typedef struct {
 
 static ModernTextStyle text_style_make(int scale, M12_RGB color, int shadow) {
     ModernTextStyle s;
-    s.scale = scale < 1 ? 1 : scale;
+    int baseScale = scale < 1 ? 1 : scale;
+    s.scale = baseScale + M11_UIScale_GetFontScale() - 1;
     s.tracking = 1;
     s.shadow = shadow;
     s.color = color;
@@ -593,6 +598,27 @@ static void draw_text_centered_fit(M12_ModernCanvas* c, int cx, int y,
         --targetLen;
     }
     draw_text_centered(c, cx, y, "...", st);
+}
+
+/* Use the same cached, language-aware Noto/system font as the game text when
+ * it is available. Keep the deterministic bitmap face as the fallback for
+ * builds without SDL_ttf or machines without a suitable font. */
+static int draw_ttf_centered_fit(M12_ModernCanvas* c, int cx, int y,
+                                 const char* text, int maxWidth,
+                                 int fontSize, M12_RGB color) {
+    int measuredWidth = 0;
+    int size = M11_UIScale_Apply(fontSize);
+    if (!c || !text || !text[0] || maxWidth <= 0) return 0;
+    while (size >= 10) {
+        if (m11_ttf_measure_string(text, size, &measuredWidth) &&
+            measuredWidth <= maxWidth) {
+            return m11_ttf_render_rgba_string(
+                c->rgba, c->w, c->h, cx - measuredWidth / 2, y,
+                text, size, color.r, color.g, color.b);
+        }
+        size -= 2;
+    }
+    return 0;
 }
 
 static void draw_text_gradient(M12_ModernCanvas* c, int x, int y, const char* s,
@@ -1645,18 +1671,25 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 132;
+    int panelH = 150;
     int panelX;
     int panelY;
+    int titleAreaW;
     int percent = 0;
     int barX;
     int barY;
     int barW;
     int fillW;
-    char text[256];
+    char percentText[16];
+    /* The scan is a blocking launcher transition, so make its status easy to
+     * read at ordinary window sizes instead of reusing compact menu text. */
     ModernTextStyle title = text_style_make(
-        c && c->w >= 960 ? 5 : 4, COLOR_TEXT(), 2);
-    ModernTextStyle detail = text_style_make(2, COLOR_TEXT_DIM(), 1);
+        c && c->w >= 960 ? 5 : (c && c->w >= 640 ? 4 : 2),
+        COLOR_ACCENT_HI(), 2);
+    ModernTextStyle percentStyle = text_style_make(
+        c && c->w >= 960 ? 4 : 2, COLOR_TEXT(), 1);
+    ModernTextStyle detail = text_style_make(
+        c && c->w >= 960 ? 3 : 2, COLOR_TEXT_DIM(), 1);
 
     if (!c || !progress) {
         return;
@@ -1669,14 +1702,14 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     if (percent > 100) percent = 100;
 
     panelW = c->w - 48;
-    if (panelW > 760) panelW = 760;
+    if (panelW > 860) panelW = 860;
     if (panelW < 240) panelW = c->w - 24;
     panelX = (c->w - panelW) / 2;
+    titleAreaW = panelW - 140;
+    if (titleAreaW < 1) titleAreaW = 1;
     /* Keep the scan card in the lower-middle across both the normal 1080p
-     * launcher and compact test/window sizes. A fixed bottom offset pushed
-     * it almost to the footer on large screens and into the upper half on
-     * short screens. */
-    panelY = (c->h * 70) / 100;
+     * launcher and compact test/window sizes, above the footer surfaces. */
+    panelY = (c->h * 72) / 100;
     if (panelY + panelH > c->h - 18) panelY = c->h - panelH - 18;
     if (panelY < 12) panelY = 12;
     label = M12_StartupMenu_TranslateForLocale(
@@ -1688,32 +1721,58 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
         ? M12_StartupMenu_GameDisplayTitleForLocale(
               languageIndex, progress->currentGameId)
         : "";
-    snprintf(text, sizeof(text), "%s  %d%%", label, percent);
+    snprintf(percentText, sizeof(percentText), "%d%%", percent);
 
     draw_panel(c, panelX, panelY, panelW, panelH,
-               rgb(16, 14, 30), COLOR_PANEL_EDGE(), 16);
-    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 16, text,
-                           &title, panelW - 32);
+               rgb(16, 14, 30), COLOR_ACCENT(), 16);
+    /* Give the localized heading its own line and the percentage a compact
+     * badge. Long translations therefore stay readable instead of squeezing
+     * the number into the same line and getting ellipsized. */
+    if (!draw_ttf_centered_fit(c,
+                               panelX + 18 + titleAreaW / 2,
+                               panelY + 16,
+                               label,
+                               titleAreaW,
+                               c->w >= 960 ? 38 : (c->w >= 640 ? 30 : 18),
+                               COLOR_ACCENT_HI())) {
+        draw_text_centered_fit(c, panelX + 18 + titleAreaW / 2,
+                               panelY + 17, label, &title, titleAreaW);
+    }
+    fill_rounded_rect(c, panelX + panelW - 86, panelY + 10, 70, 32, 10,
+                      rgb(44, 34, 22));
+    stroke_rounded_rect(c, panelX + panelW - 86, panelY + 10, 70, 32, 10,
+                        COLOR_ACCENT());
+    if (!draw_ttf_centered_fit(c, panelX + panelW - 51, panelY + 17,
+                               percentText, 62,
+                               c->w >= 960 ? 23 : 16, COLOR_TEXT())) {
+        draw_text_centered(c, panelX + panelW - 51, panelY + 20,
+                           percentText, &percentStyle);
+    }
     if (gameTitle[0]) {
         char detailText[160];
         const char* task = M12_StartupMenu_ScanTaskDisplayForLocale(
             languageIndex, progress->currentTask);
         snprintf(detailText, sizeof(detailText), "%s%s%s", gameTitle,
                  task[0] ? "  ·  " : "", task);
-        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 63,
-                               detailText, &detail, panelW - 28);
+        if (!draw_ttf_centered_fit(c, panelX + panelW / 2,
+                                   panelY + 68, detailText, panelW - 28,
+                                   c->w >= 960 ? 22 : (c->w >= 640 ? 18 : 12),
+                                   COLOR_TEXT_DIM())) {
+            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 70,
+                                   detailText, &detail, panelW - 28);
+        }
     }
     barX = panelX + 18;
-    barY = panelY + 96;
+    barY = panelY + 100;
     barW = panelW - 36;
     fillW = (barW * percent) / 100;
-    fill_rounded_rect(c, barX, barY, barW, 18, 8, rgb(37, 35, 54));
+    fill_rounded_rect(c, barX, barY, barW, 20, 9, rgb(37, 35, 54));
     if (fillW > 0) {
-        fill_rounded_rect(c, barX, barY, fillW, 18, 8,
+        fill_rounded_rect(c, barX, barY, fillW, 20, 9,
                           cancelRequested
                               ? COLOR_WARN() : COLOR_ACCENT());
     }
-    stroke_rounded_rect(c, barX, barY, barW, 18, 8, COLOR_PANEL_EDGE());
+    stroke_rounded_rect(c, barX, barY, barW, 20, 9, COLOR_PANEL_EDGE());
 }
 
 void M12_ModernMenu_RenderScanProgressLocalized(
@@ -2764,10 +2823,15 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
     if (!state || !rgba || width < 16 || height < 16) {
         return;
     }
+    M11_UIScale_SetPercent(state->settings.uiScale);
     M12_ModernCanvas c = {rgba, width, height};
     if (modern_is_original_sparse_path(state)) {
         draw_sparse_background(&c);
         draw_sparse_view_modern(&c, state);
+        /* The modern launcher is host UI; game frames use a separate render
+         * path and retain their source-owned colours unchanged. */
+        M11_Colorblind_ApplyRGBA(state->settings.colorblindMode,
+                                 rgba, width, height);
         return;
     }
     draw_background(&c, state);
@@ -2812,11 +2876,13 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
                                ? &state->dataDirScanProgress : NULL,
                            state->settings.languageIndex,
                            state->dataDirScanCancelRequested);
-
     const char* langStr = language_short(state);
     char modeHint[80];
     snprintf(modeHint, sizeof(modeHint), "LANG  %s", langStr);
     draw_footer(&c, footerLeft, modeHint);
+    /* Apply accessibility remapping only to the host launcher surface. */
+    M11_Colorblind_ApplyRGBA(state->settings.colorblindMode,
+                             rgba, width, height);
 }
 
 int M12_ModernMenu_CountDistinctColors(const unsigned char* rgba,

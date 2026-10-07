@@ -122,6 +122,22 @@ int main(void)
             const int16_t *audio = NULL;
             int count = 0;
             int rate = 0;
+            size_t pixel;
+            for (pixel = 0u; pixel < 320u * 200u; ++pixel) {
+                const uint8_t indexed = decoder.pixels[pixel];
+                const uint8_t *rgb = decoder.rgb24 + pixel * 3u;
+                if ((rgb[0] >> 5u) != ((indexed >> 5u) & 7u) ||
+                    (rgb[1] >> 5u) != ((indexed >> 2u) & 7u) ||
+                    (rgb[2] >> 6u) != (indexed & 3u)) {
+                    fprintf(stderr,
+                            "authentic Mac %s RGB24/indexed frame mismatch: frame=%d pixel=%zu\n",
+                            movie_names[movie], frame, pixel);
+                    dm2_v1_mac_movie_decoder_close(&decoder);
+                    dm2_v1_mac_movie_view_free(&view);
+                    dm2_v1_mac_media_free(&media);
+                    return 1;
+                }
+            }
             if (dm2_v1_mac_movie_decoder_take_audio(&decoder, &audio,
                                                     &count, &rate) &&
                 audio && count > 0 && rate > 0) {

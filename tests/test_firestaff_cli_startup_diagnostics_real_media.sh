@@ -6,6 +6,7 @@ mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Mast
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 dm1_towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 dm1_pc_archive=${FIRESTAFF_DM1_PC_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN.zip"}
+dm1_pc98_archive=${FIRESTAFF_DM1_PC98_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_PC-98_EN.zip"}
 csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
 csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
 
@@ -87,7 +88,56 @@ print(
 
 combined_root=$(mktemp -d "${PWD}/.firestaff-cli-diagnostics.XXXXXX")
 csb_mixed_root=
-trap 'rm -rf "$combined_root" "$csb_mixed_root"' EXIT
+dm1_combined_root=
+default_home=
+trap 'rm -rf "$combined_root" "$csb_mixed_root" "$dm1_combined_root" "$default_home"' EXIT
+
+# Exercise the real default path layout without --data-dir and without
+# inheriting a developer's saved config. Stage only links to the original
+# archives already selected above; no game data is copied or synthesized.
+default_home=$(mktemp -d "${PWD}/.firestaff-default-data-home.XXXXXX")
+default_data_root="$default_home/.firestaff/data"
+link_default_game_archive() {
+    game_id=$1
+    archive_path=$2
+    if [ -f "$archive_path" ]; then
+        mkdir -p "$default_data_root/$game_id"
+        ln -s "$archive_path" \
+            "$default_data_root/$game_id/$(basename "$archive_path")"
+    fi
+}
+link_default_game_archive dm2 "$mac_archive"
+link_default_game_archive dm2 "$towns_archive"
+link_default_game_archive dm1 "$dm1_towns_archive"
+link_default_game_archive csb "$csb_towns_archive"
+
+for game_id in dm1 csb dm2; do
+    if [ -d "$default_data_root/$game_id" ]; then
+        default_output=$(HOME="$default_home" \
+            XDG_CONFIG_HOME="$default_home/.config" \
+            APPDATA="$default_home/AppData" \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --game "$game_id" --verbose --boot-probe \
+            --boot-probe-frames 0 2>&1) || {
+            printf '%s\n' "$default_output" >&2
+            exit 1
+        }
+        if ! printf '%s\n' "$default_output" | \
+                grep -Fq "startup game=$game_id mode=direct platform=auto data=default search roots" ||
+           ! printf '%s\n' "$default_output" | \
+                grep -Fq "selected game=$game_id platform=FM Towns" ||
+           ! printf '%s\n' "$default_output" | \
+                grep -Fq "$default_data_root/$game_id/"; then
+            printf '%s\n' "$default_output" >&2
+            printf 'FAIL: bare --game %s did not resolve original media from the default per-game data directory\n' \
+                "$game_id" >&2
+            exit 1
+        fi
+        printf 'PASS: bare --game %s resolves original FM Towns media from ~/.firestaff/data/%s\n' \
+            "$game_id" "$game_id"
+    fi
+done
+
 ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
 ln -s "$towns_archive" "$combined_root/$(basename "$towns_archive")"
 combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
@@ -222,6 +272,46 @@ if [ -f "$csb_towns_archive" ]; then
         esac
         rm -rf "$csb_mixed_root"
     fi
+fi
+
+# When both authentic DM1 PC and FM Towns releases are installed, a bare
+# --game request must retain FM Towns as the default. Keep the unsupported
+# PC-98 archive in the same root when available to ensure discovery never
+# promotes it into a selectable or launchable platform.
+if [ -f "$dm1_towns_archive" ] && [ -f "$dm1_pc_archive" ]; then
+    dm1_combined_root=$(mktemp -d "${PWD}/.firestaff-dm1-platforms.XXXXXX")
+    ln -s "$dm1_towns_archive" "$dm1_combined_root/$(basename "$dm1_towns_archive")"
+    ln -s "$dm1_pc_archive" "$dm1_combined_root/$(basename "$dm1_pc_archive")"
+    if [ -f "$dm1_pc98_archive" ]; then
+        ln -s "$dm1_pc98_archive" "$dm1_combined_root/$(basename "$dm1_pc98_archive")"
+    fi
+    dm1_auto_multi=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm1 --data-dir "$dm1_combined_root" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$dm1_auto_multi" >&2
+        exit 1
+    }
+    case "$dm1_auto_multi" in
+        *"selected game=dm1 platform=FM Towns edition="*) ;;
+        *) echo "FAIL: DM1 AUTO did not prefer FM Towns when PC media was also present" >&2; exit 1 ;;
+    esac
+    case "$dm1_auto_multi" in
+        *"platform=PC-98"*|*"PC-98 edition="*)
+            echo "FAIL: unsupported DM1 PC-98 media was surfaced by the launcher" >&2
+            exit 1
+            ;;
+    esac
+    dm1_pc_multi=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm1 --platform pc --data-dir "$dm1_combined_root" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$dm1_pc_multi" >&2
+        exit 1
+    }
+    case "$dm1_pc_multi" in
+        *"selected game=dm1 platform=PC edition="*) ;;
+        *) echo "FAIL: explicit DM1 PC selection was overridden by FM Towns AUTO" >&2; exit 1 ;;
+    esac
+    echo "PASS: DM1 AUTO prefers FM Towns over PC and ignores unsupported PC-98 media"
 fi
 
 echo "PASS: original-media startup diagnostics and FM Towns defaults"

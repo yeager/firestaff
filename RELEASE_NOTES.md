@@ -15,6 +15,38 @@
   `[HD]` image keeps its direct runtime route, while the v2.0 floppy set
   preserves the SWSH/TITLE/ENTRANCE startup transaction.
 
+# Firestaff v3.0.363
+
+## User-facing changes
+
+- `Launcher scan`: replaces one-game lookup with sibling-game discovery when
+  opening the full menu and restores full availability after returning. The scan status now
+  appears in a larger, centered panel with a progress bar and localized
+  scalable text.
+- `DM2 FM Towns squad HUD`: restores the authenticated squad backdrop and
+  per-champion hand/status materials after starting a game. The original-media
+  regression confirms a visible dungeon and squad panel with no fallback
+  draws; exact pixel parity with the original remains unverified.
+- `DM2 Mac title movies`: corrects RGB555 conversion and preserves the source
+  movie's RGB colors through presentation.
+
+## Developer changes
+
+- `DM1 French PC 3.4 startup`: binds the required authentic SWSH prelude to
+  matching PC 3.4 companion media and rejects incomplete startup.
+- `Real-media startup checks`: add CLI coverage for prioritized DM1, CSB and
+  DM2 startup and menu return routes. Unsupported PC-98 media is explicitly
+  excluded from DM1 platform selection.
+- `CSB Atari graphics loading`: uses cached authenticated graphics data to
+  avoid decompressing the packed archive for each frame.
+
+## Known limitations
+
+- Physical MacBook Pro M5 HiDPI interaction and presentation remain
+  unverified. Dungeon viewport parity against same-state original captures is
+  still open for DM1, CSB and DM2; the real-media tests verify specific startup
+  and gameplay checkpoints rather than full playthroughs.
+
 # Firestaff v3.0.362
 
 ## User-facing changes

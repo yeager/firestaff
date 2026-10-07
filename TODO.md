@@ -5,8 +5,11 @@
   physical desktop interaction. The opt-in test covers those three source-owned
   startup states after reopening the persisted collection root. Its AUTO
   DM2 FM Towns leg now finishes the source title and uses the retail New Game
-  and mirror targets to enter a loaded one-champion session. Other editions,
-  physical M5 input and full playability remain open.
+  and mirror targets to enter a loaded one-champion session. The same
+  authenticated Towns corpus now passes the full M12 game/platform/custom/
+  launch route through the original 225-frame HME-242 title, New Game and
+  mirror selection to a presented runtime frame with no core fallback draws.
+  Other editions, physical M5 input and full playability remain open.
 
 - Verify iOS release packaging after the LZMA software-CRC selection fix
   using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and
@@ -18,9 +21,14 @@
   probe passes before resize-event handling at 1x drawable density. Physical
   MacBook Pro M5/Retina delivery remains unverified.
 
-- Run the CSB temporary-intro volume regression with the authenticated PC34
-  package. The source-bound launcher test is present but skips on the current
-  local corpus.
+- Verify physical CSB intro audio output and complete the temporary-intro
+  volume check across another authenticated edition. The Amiga 3.1
+  M12/M11 real-media handoff now passes 55 assertions with no skips, including
+  source-bound SWSH sample identity, launcher master/music/SFX preferences,
+  mute gain and preserved host pause. This checks the audio owner and sample
+  path but does not establish audible device output. CSB has no original DOS
+  release, so the test uses its authenticated Amiga package instead of a
+  PC34 substitute.
 
 - Complete desktop end-to-end verification of Accessibility AUTO PAUSE.
   DM1/CSB/DM2 focus policy, independent timer/focus pause ownership, source
@@ -54,18 +62,22 @@
   callbacks now defer menu changes to Update, with cancellation/late-result
   tests; automated tests do not prove desktop dialog interaction.
 
-- Connect the active COLORBLIND preference to the intended host UI/HUD
-  rendering boundary. The menu cycles and saves it, but no production
-  consumer calls M11_Colorblind_* outside the helper implementation.
-  Existing tests cover only the matrices. Verify the actual UI path and
-  bit-identical OFF behavior without unintentionally filtering original
-  game imagery. Visual parity remains deferred.
+- Extend COLORBLIND beyond the modern launcher and its scan overlay into
+  explicitly host-owned in-game UI/HUD layers. M12 now applies the selected
+  mode to the modern launcher surface; original game frames use a separate
+  render path and remain untouched. The menu-render regression confirms an
+  enabled mode changes launcher pixels and OFF reproduces them bit-for-bit;
+  the matrix tests also pass. Keep source-owned game imagery outside the
+  transform and verify each host-owned HUD layer before claiming full
+  coverage. Visual parity remains deferred.
 
-- Complete the active AMBIENT and UI SCALE controls. Ambient setters retain
-  preferences, but `M11_Ambient_Tick` is a no-op with no caller. UI-scale
-  getters/apply functions have no renderer/hit-test consumers (also noted in
-  `hit_zone_audit_m11.h`). These are functional gaps, not verified features;
-  scaling must keep rendered controls and pointer geometry aligned on HiDPI.
+- Extend UI SCALE to host-owned in-game HUD text and connect AMBIENT to a
+  concrete runtime consumer. The modern M12 launcher and both scan-progress
+  surfaces now scale menu text from the saved 100/150/200 setting; controls
+  and their pointer rectangles remain in the same canvas coordinates. The
+  scan/menu regression verifies changed text pixels and the same tab hit at
+  100% and 200%. Game-HUD scaling remains open. `M11_Ambient_Tick` is still a
+  no-op with no caller, so AMBIENT remains an unimplemented setting.
 
 - Wire the Custom menu PATCH choice to defined, source-backed behavior.
   Audit on 2026-09-29: `usePatch` / `gameUsePatch` are only read by M12
@@ -83,10 +95,14 @@
   Theron's Quest. `m11_direct_launch_prepare_all_games` now drives the game-card,
   verified-platform and custom-options screens with installed original media,
   checks that the launch intent retains the authenticated edition selected on
-  the platform card, and reaches M11 through that intent. It still needs to
-  advance each remaining game from this same menu handoff to its first
-  source-owned runtime frame; the separate boot-probe cases do not prove that
-  menu path. Theron's authentic Japanese edition now reaches a source-owned
+  the platform card, and reaches M11 through that intent. A 2026-10-07 run
+  against a temporary root with only original DM1/CSB/DM2 media passed 148
+  assertions with zero failures and four skips; Nexus and Theron were not
+  staged. This confirms direct `--game` preparation and the M12 handoff into
+  M11 for each staged game, while separate boot probes do not prove that the
+  visible menu path reaches the first runtime frame. It still needs to advance
+  each remaining game from this same menu handoff to its first source-owned
+  runtime frame. Theron's authentic Japanese edition now reaches a source-owned
   runtime receipt through the same M12-selected M11 menu handoff; verify that
   path through its first presented runtime frame.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame

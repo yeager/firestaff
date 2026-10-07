@@ -4313,6 +4313,26 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
     gameScanOptions.progressFn = progressFn;
     gameScanOptions.progressUserData = progressUserData;
     gameScan = (looseFilesOnlyAssetScan || progressFn) ? &gameScanOptions : NULL;
+    /* The interactive launcher needs availability for every game. A saved
+     * data/<game> leaf still points at the shared collection, so promote only
+     * the scan root while keeping the user's selected leaf in the config. */
+    if (scanAllGames && m12_startup_data_dir_is_game_leaf(config->dataDir)) {
+        char allGamesRoot[M12_ASSET_DATA_DIR_CAPACITY];
+        M12_AssetStatusScanOptions scanOptions;
+        m12_parent_game_data_root(config->dataDir, allGamesRoot,
+                                  sizeof(allGamesRoot));
+        if (!allGamesRoot[0]) {
+            snprintf(allGamesRoot, sizeof(allGamesRoot), "%s", config->dataDir);
+        }
+        memset(&scanOptions, 0, sizeof(scanOptions));
+        scanOptions.honorRequestedDataDir = 1;
+        scanOptions.progressFn = progressFn;
+        scanOptions.progressUserData = progressUserData;
+        (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                              allGamesRoot,
+                                              &scanOptions);
+        return;
+    }
     if (hasExplicitDataDirOverride) {
         if (gameId && gameId[0] != '\0' && !scanAllGames) {
             M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
@@ -13667,12 +13687,10 @@ static int m12_update_data_dir_dialog(M12_StartupMenuState* state) {
         (void)m12_begin_async_data_dir_scan(state, job->path);
     } else {
         m12_show_data_dir_result_popup(state, 0);
-        /* A cancelled/invalid folder selection has always returned to the
-         * launcher root after its acknowledgement, including the original
-         * synchronous native-dialog path. Keep that navigation contract
-         * independent of the platform callback thread. */
-        state->messageReturnView = M12_MENU_VIEW_MAIN;
-        state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+        /* m12_begin_data_dir_browse captured the view that opened the
+         * picker. Preserve it so cancelling from Settings returns to
+         * Settings, while a picker opened from the launcher root returns
+         * there naturally. */
     }
     m12_release_folder_dialog_job(job);
     return 1;

@@ -112,6 +112,10 @@ static int mac_movie_convert(MacMovieImpl *impl,
             int sx = x * impl->width / 320;
             const uint8_t *pixel = impl->rgb + (size_t)sy * (size_t)impl->width * 3u +
                                    (size_t)sx * 3u;
+            const size_t out = ((size_t)y * 320u + (size_t)x) * 3u;
+            decoder->rgb24[out + 0u] = pixel[0];
+            decoder->rgb24[out + 1u] = pixel[1];
+            decoder->rgb24[out + 2u] = pixel[2];
             decoder->pixels[(size_t)y * 320u + (size_t)x] =
                 (uint8_t)((pixel[0] >> 5u << 5u) |
                           (pixel[1] >> 5u << 2u) |
@@ -361,8 +365,8 @@ static uint32_t mac_movie_be24(const uint8_t *p)
 
 static uint8_t mac_movie_rgb555_to_rgb332(uint16_t pixel)
 {
-    return (uint8_t)((((pixel >> 10) & 31u) << 3) |
-                     (((pixel >> 5) & 31u) >> 2) |
+    return (uint8_t)(((((pixel >> 10) & 31u) >> 2) << 5) |
+                     ((((pixel >> 5) & 31u) >> 2) << 2) |
                      ((pixel & 31u) >> 3));
 }
 
@@ -707,12 +711,18 @@ int dm2_v1_mac_movie_decoder_next(DM2_V1_MacMovieDecoder *decoder)
         return 0;
     }
     for (i = 0u; i < 320u * 200u; ++i) {
-        if (impl->info.video_codec_fourcc == UINT32_C(0x726c6520))
+        if (impl->info.video_codec_fourcc == UINT32_C(0x726c6520)) {
+            const uint16_t pixel = impl->rgb555[i];
+            decoder->rgb24[i * 3u + 0u] = (uint8_t)((((pixel >> 10) & 31u) * 255u + 15u) / 31u);
+            decoder->rgb24[i * 3u + 1u] = (uint8_t)((((pixel >> 5) & 31u) * 255u + 15u) / 31u);
+            decoder->rgb24[i * 3u + 2u] = (uint8_t)(((pixel & 31u) * 255u + 15u) / 31u);
             decoder->pixels[i] = mac_movie_rgb555_to_rgb332(impl->rgb555[i]);
-        else
+        } else {
+            memcpy(decoder->rgb24 + i * 3u, impl->rgb[i], 3u);
             decoder->pixels[i] = (uint8_t)((impl->rgb[i][0] & 0xe0u) |
                                            ((impl->rgb[i][1] & 0xe0u) >> 3) |
                                            (impl->rgb[i][2] >> 6));
+        }
     }
     decoder->presentation_time_us = (uint64_t)impl->video_index *
         UINT64_C(1000000) * impl->info.video_first_sample_duration /

@@ -2357,20 +2357,14 @@ render_frame:
             &state->audioState, audio_samples, audio_sample_count,
             audio_rate_hz);
     }
-    if (M11_Render_SetIndexedPaletteRgb6(
-            state->dm2MacMovieDecoder.palette_rgb6) != M11_RENDER_OK) {
-        state->dm2MacMovieRejected = 1;
-        (void)M11_Audio_StopDm2MacMovie(&state->audioState);
-        state->dm2MacMovieActive = 0;
-        return 0;
-    }
     for (y = 0; y < framebuffer_height; ++y) {
         const int source_y = y * 200 / framebuffer_height;
         for (x = 0; x < framebuffer_width; ++x) {
             const int source_x = x * 320 / framebuffer_width;
-            framebuffer[(size_t)y * (size_t)framebuffer_width + (size_t)x] =
-                state->dm2MacMovieDecoder.pixels[(size_t)source_y * 320u +
-                                                  (size_t)source_x];
+            const size_t source = (size_t)source_y * 320u + (size_t)source_x;
+            const size_t target = (size_t)y * (size_t)framebuffer_width +
+                                  (size_t)x;
+            framebuffer[target] = state->dm2MacMovieDecoder.pixels[source];
         }
     }
     return 1;

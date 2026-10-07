@@ -7,6 +7,7 @@
 typedef struct {
     void *opaque;
     uint8_t pixels[320u * 200u];
+    uint8_t rgb24[320u * 200u * 3u];
     uint8_t palette_rgb6[256u][3u];
     uint32_t frame_index;
     uint64_t presentation_time_us;
@@ -22,8 +23,8 @@ typedef struct {
 } DM2_V1_MacMovieDecoder;
 
 /* Decode an authentic in-memory QuickTime view. No temporary movie file is
- * created. The output is a source-sized indexed presentation page and a
- * per-frame RGB332 palette suitable for Firestaff's indexed renderer. */
+ * created. The output retains both a source-sized RGB24 frame and an indexed
+ * compatibility page for callers that still use Firestaff's palette path. */
 int dm2_v1_mac_movie_decoder_open(DM2_V1_MacMovieDecoder *decoder,
                                   const uint8_t *movie_bytes,
                                   size_t movie_size);

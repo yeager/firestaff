@@ -677,7 +677,7 @@ int main(void)
                       live_receipt.hud_material_plan_command_count == 3 &&
                       live_receipt.hud_material_plan_consumed &&
                       live_receipt.hud_material_plan_hash != 0u &&
-                      right_panel_pixels > 0u && squad_icon_pixels > 0u,
+                      right_panel_pixels > 1000u && squad_icon_pixels > 0u,
                   "FM Towns post-confirm M11 frame consumes the source squad panel with visible pixels");
         }
     }
@@ -1270,6 +1270,7 @@ int main(void)
                       "FM Towns squad plan preserves fill, image fields, RAW4 destinations, and mirror state for each relative position");
                 if (relative == 0) {
                     DM2_V1_InterfacePalette interface_palette;
+                    DM2_V1_GdatSceneM11CommandPlan scene_plan;
                     DM2_V1_ViewportState chrome;
                     int main_key_x = -1;
                     int main_key_y = -1;
@@ -1284,10 +1285,17 @@ int main(void)
                         &plan.commands[0].destination,
                         &status_key_x, &status_key_y);
                     memset(&interface_palette, 0, sizeof(interface_palette));
+                    memset(&scene_plan, 0, sizeof(scene_plan));
                     memset(framebuffer, 0xfe, sizeof(framebuffer));
                     dm2_v1_viewport_init(&chrome, framebuffer, M11_FB_WIDTH);
                     dm2_v1_viewport_set_asset_loader(&chrome,
                         dm2_v1_boot_asset_loader(profile));
+                    chrome.asset_profile = profile;
+                    check(dm2_v1_boot_gdat_scene_m11_command_plan(
+                              (DM2_V1_BootProfile *)profile, 2,
+                              &scene_plan),
+                          "FM Towns squad renderer binds the active map graphics set");
+                    chrome.gdat_scene_material_plan = &scene_plan;
                     dm2_v1_viewport_set_source_materials_required(&chrome, 1);
                     dm2_v1_viewport_set_hud_party(&chrome, &squad);
                     int palette_ready = dm2_v1_boot_interface_palette(
@@ -1305,6 +1313,7 @@ int main(void)
                               framebuffer[status_key_y * M11_FB_WIDTH + status_key_x] ==
                                   0xfeu,
                           "FM Towns squad renderer preserves source index-4 pixels as transparent");
+                    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
                 }
                 dm2_v1_gdat_hud_m11_command_plan_free(&plan);
             }

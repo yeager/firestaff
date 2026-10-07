@@ -3,7 +3,9 @@ set -euo pipefail
 
 app=${1:?usage: test_dm1_v1_dos_fr_zip_cli_boot.sh <firestaff-binary>}
 data_source=${FIRESTAFF_DM1_DOS_FR_SOURCE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_FR_EUDATA.zip"}
+companion_source=${FIRESTAFF_DM1_PC34_EN_SOURCE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 expected_graphics_md5=f934d97e43e1ba6e5159839acbcd0611
+expected_swsh_md5=a66b607f3850e604b6703e90bbfb5189
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable not found: %s\n' "$app" >&2
@@ -29,12 +31,34 @@ else
     exit 77
 fi
 
+if [[ ! -f "$companion_source" ]]; then
+    printf 'SKIP: authentic DM1 PC 3.4 companion ZIP is not staged: %s\n' "$companion_source"
+    exit 77
+fi
+
 # Exercise the historical filename as well as ZIP contents: launch must be
 # determined by archive members, never by the filename chosen by the user.
-named_archive_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-dm1-fr-zip.XXXXXX")
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$(pwd)/.codex-scratch"}
+mkdir -p "$scratch_root"
+named_archive_dir=$(mktemp -d "$scratch_root/dm1-fr-zip.XXXXXX")
 trap 'rm -rf "$named_archive_dir"' EXIT
-cp "$data_source" "$named_archive_dir/Dungeon-Master_DOS_FR.zip"
-data_source="$named_archive_dir/Dungeon-Master_DOS_FR.zip"
+cp "$data_source" "$named_archive_dir/Dungeon-Master_DOS_FR_EUDATA.zip"
+cp "$companion_source" "$named_archive_dir/Dungeon-Master_DOS_EN_Version-34.zip"
+actual_swsh_md5=$(python3 - "$named_archive_dir/Dungeon-Master_DOS_EN_Version-34.zip" <<'PY'
+import hashlib
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    data = archive.read("SWOOSH")
+print(hashlib.md5(data).hexdigest())
+PY
+)
+if [[ "$actual_swsh_md5" != "$expected_swsh_md5" ]]; then
+    printf 'FAIL: unexpected PC 3.4 companion SWOOSH digest: %s\n' "$actual_swsh_md5" >&2
+    exit 1
+fi
+data_source="$named_archive_dir/Dungeon-Master_DOS_FR_EUDATA.zip"
 
 probe() {
     local output
@@ -47,6 +71,25 @@ probe() {
     grep -Fq 'phase=dm1-runtime' <<<"$output" &&
     grep -Fq 'levelLoaded=1' <<<"$output"
 }
+
+# The French EUDATA ZIP does not own the shared PC 3.4 SWSH startup member.
+# It must not be presented as a launchable PC edition until the authentic
+# English companion archive is present beside it.
+fr_only_dir=$(mktemp -d "$scratch_root/dm1-fr-only.XXXXXX")
+cp "$data_source" "$fr_only_dir/Dungeon-Master_DOS_FR_EUDATA.zip"
+set +e
+fr_only_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$fr_only_dir" --verbose \
+    --boot-probe --boot-probe-frames 0 2>&1)
+fr_only_status=$?
+set -e
+rm -rf "$fr_only_dir"
+if [[ $fr_only_status -eq 0 ]] ||
+   ! grep -Fq 'game unavailable for --game: dm1' <<<"$fr_only_output"; then
+    printf '%s\n' "$fr_only_output" >&2
+    printf '%s\n' 'FAIL: incomplete French DM1 PC media was accepted without its startup companion' >&2
+    exit 1
+fi
 
 probe --game dm1 --platform pc --data-dir "$data_source" \
     --boot-probe --boot-probe-frames 2 --duration 0

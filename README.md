@@ -241,7 +241,7 @@ Useful command-line options:
 ```text
 firestaff --game <dm1|csb|dm2|nexus|theron>
           --data-dir <path>
-          --platform <auto|pc|amiga|atari-st|fm-towns|pce|saturn>
+          --platform <auto|pc|amiga|atari-st|fm-towns|mac|pce|saturn>
           --dm1-fmtowns-ja
           --csb-fmtowns-ja
           --csb-utility-disk

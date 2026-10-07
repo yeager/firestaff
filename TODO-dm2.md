@@ -2,32 +2,25 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
-- Implement the source-owned live HUD for DM2 FM Towns. The authenticated
-  runtime currently accepts a dungeon frame without a consumed HUD plan:
-  `dm2_v1_runtime.c` explicitly clears the requirement when the Towns plan is
-  incomplete, while M11 renders only the leader-hand name and save dialogue.
-  The real-media test asserts that this HUD plan is absent. The native CLI
-  regression now captures a presented 320x200 frame after New Game and the
-  first champion load. Its authenticated M11 map aperture (x=0..223,
-  y=40..175) contains 25,746 nonblack pixels, but the 96x200 right-side HUD
-  area contains only 9. This confirms the normal Towns route reaches gameplay
-  while almost all source HUD content remains missing; it does not identify
-  the user's screenshot. A visual comparison strongly matches the screenshot
-  to the local FM Towns normal-loop frame at map 0, (1,8), facing north; the
-  aperture framing matches RECT_7 at (0,40), scaled 10x in the capture. This
-  makes Towns the likely route, but the screenshot itself has no runtime
-  metadata. `party.curacthero == 0` means no active action selection, but
-  SKProject `c_gui_draw.cpp:5182-5520` still iterates the party and draws
-  squad/status icons through `INTERFACE_GENERAL/4` and RAW4 rectangles
-  `0x4f+relative`, `0x57+relative`, and `0x53+relative`. The Towns gameplay
-  right panel lacks those source-owned draws. `INTERFACE_GENERAL/6` through
-  RECT `0x5e` is a separate selected-hero/action widget with both progress and
-  gameplay call sites; it does not establish the squad panel. Trace the
-  Towns-specific material, local palettes and RAW4 destinations before
-  implementing either route. The comparison does not prove dungeon-scene
-  parity against the original game or MacBook Pro M5 HiDPI behavior. Do not
-  change dungeon projection or assets without a same-pose original-game
-  comparison.
+- Complete the remaining source-owned DM2 FM Towns HUD and compare the
+  reported screenshot on the MacBook Pro M5. The normal M12 → Towns → New Game
+  route now binds the authenticated `GRAPHICSSET/<map style>/0xF5` squad
+  backdrop to expanded RAW4 rectangle 47, then draws the source `INTERFACE_GENERAL/4`
+  hero/hand material and the three-command squad plan. Each source image,
+  physical palette and destination receipt is checked before drawing. The
+  real-media M11 gameplay test and `dm2_v1_fmtowns_native_cli_boot` pass; the
+  latter captures a presented 320x200 first-gameplay frame after the original
+  title, New Game and champion selection, requiring more than 2,000 lit pixels
+  in the right panel, more than 20,000 in the dungeon aperture, an accepted
+  source-asset frame and zero core fallbacks. The image confirms source-owned
+  content is present but is not a pixel-parity comparison. `INTERFACE_GENERAL/6`
+  through RECT `0x5e` remains a separate selected-hero/action widget; selected
+  hero state and remaining HUD chrome still need source-backed coverage. The
+  supplied screenshot has no runtime metadata; the FM Towns route is likely
+  from context and matching frame geometry, not conclusively identified. Its
+  dungeon scene still needs a same-pose original-game comparison, and physical
+  M5 HiDPI/input behavior remains unverified. Do not change dungeon projection
+  or assets without that comparison.
 
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,

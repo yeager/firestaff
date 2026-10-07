@@ -1212,6 +1212,100 @@ static void check_sdl3_pixel_size_event_keeps_logical_mouse_space(void) {
     CHECK(renderH == 800);
 }
 
+static void check_sdl3_stale_pixel_resize_event_preserves_live_retina_pair(void) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_Event event;
+    int beforeWindowW = 0, beforeWindowH = 0;
+    int beforeDrawableW = 0, beforeDrawableH = 0;
+    int resizedWindowW = 0, resizedWindowH = 0;
+    int resizedDrawableW = 0, resizedDrawableH = 0;
+    int afterWindowW = 0, afterWindowH = 0;
+    int afterDrawableW = 0, afterDrawableH = 0;
+    int rectX = -1, rectY = -1, rectW = -1, rectH = -1;
+    int expectedX = -1, expectedY = -1, expectedW = -1, expectedH = -1;
+    SDL_Window *window = NULL;
+    int live = 0;
+
+    if (M11_Render_Init(900, 650, M11_SCALE_FIT) != M11_RENDER_OK) {
+        fprintf(stderr, "SKIP SDL3 resize-event probe: renderer init failed\n");
+        return;
+    }
+    live = M11_Render_HasHostPresentationWindow();
+    window = M11_Render_GetWindow();
+    CHECK(M11_Render_GetWindowAndDrawableSize(
+              &beforeWindowW, &beforeWindowH,
+              &beforeDrawableW, &beforeDrawableH) == 1);
+    if (!live) {
+        int headlessWindowW = 0, headlessWindowH = 0;
+        int headlessDrawableW = 0, headlessDrawableH = 0;
+        CHECK(beforeWindowW == 900);
+        CHECK(beforeWindowH == 650);
+        CHECK(M11_Render_HandleResize(900, 650) == M11_RENDER_OK);
+        CHECK(M11_Render_GetWindowAndDrawableSize(
+                  &headlessWindowW, &headlessWindowH,
+                  &headlessDrawableW, &headlessDrawableH) == 1);
+        CHECK(headlessWindowW == 900);
+        CHECK(headlessWindowH == 650);
+        CHECK(headlessDrawableW == 900);
+        CHECK(headlessDrawableH == 650);
+        printf("PASS SDL3 dummy resize retains explicit 900x650 test surface\n");
+        M11_Render_Shutdown();
+        return;
+    }
+
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+    /* Recreate the native-resize race: the window changes size, then an old
+     * pixel notification arrives after SDL already exposes the new pair. */
+    CHECK(SDL_RestoreWindow(window));
+    CHECK(SDL_SetWindowSize(window, 900, 650));
+    CHECK(SDL_SyncWindow(window));
+    CHECK(SDL_GetWindowSize(window, &resizedWindowW, &resizedWindowH));
+    CHECK(SDL_GetRenderOutputSize(M11_Render_GetRenderer(),
+                                  &resizedDrawableW, &resizedDrawableH));
+    CHECK(resizedWindowW > 0 && resizedWindowH > 0);
+    CHECK(resizedDrawableW > 0 && resizedDrawableH > 0);
+
+    /* Drain native resize notifications first so the injected pixel event is
+     * the stale event under test, not another queued current-size event. */
+    M11_Render_PumpEvents();
+#else
+    resizedWindowW = beforeWindowW;
+    resizedWindowH = beforeWindowH;
+    resizedDrawableW = beforeDrawableW;
+    resizedDrawableH = beforeDrawableH;
+#endif
+
+    /* Deliver a stale pixel-size notification. The queued event must not
+     * replace SDL's current logical window/drawable pair. */
+    SDL_zero(event);
+    event.type = SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED;
+    event.window.windowID = SDL_GetWindowID(window);
+    event.window.data1 = beforeDrawableW;
+    event.window.data2 = beforeDrawableH;
+    CHECK(SDL_PushEvent(&event));
+    M11_Render_PumpEvents();
+    CHECK(M11_Render_GetWindowAndDrawableSize(
+              &afterWindowW, &afterWindowH,
+              &afterDrawableW, &afterDrawableH) == 1);
+    CHECK(afterWindowW == resizedWindowW);
+    CHECK(afterWindowH == resizedWindowH);
+    CHECK(afterDrawableW == resizedDrawableW);
+    CHECK(afterDrawableH == resizedDrawableH);
+    CHECK(M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK);
+    CHECK(M11_Render_ComputeDrawablePresentationRect(
+              afterWindowW, afterWindowH, afterDrawableW, afterDrawableH,
+              320, 200, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT,
+              &expectedX, &expectedY, &expectedW, &expectedH) == M11_RENDER_OK);
+    CHECK(rectX == expectedX);
+    CHECK(rectY == expectedY);
+    CHECK(rectW == expectedW);
+    CHECK(rectH == expectedH);
+    printf("PASS SDL3 stale pixel resize preserves current pair %dx%d -> %dx%d\n",
+           afterWindowW, afterWindowH, afterDrawableW, afterDrawableH);
+    M11_Render_Shutdown();
+#endif
+}
+
 static void check_arg_validation_invariants(void) {
     int rectX = -1;
     int rectY = -1;
@@ -1692,6 +1786,7 @@ int main(void) {
     check_resize_before_event_mapping();
     check_native_resize_before_event_optin();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
+    check_sdl3_stale_pixel_resize_event_preserves_live_retina_pair();
 
     /* Wire the dead-code check_integer_scaled_movement_arrows_at_resolution
      * helper into main() so the M11_SCALE_FIT + integerScaling +
