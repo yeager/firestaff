@@ -4484,9 +4484,16 @@ distinguishes right and left after `$28B8` returns to zero.
 - [ ] THERON-V1-HUC6280-RAM-CONSUMER: the real US/JP bank-$1f static support
   fragment at `$243e` is now byte-verified in both retail ISO projections.
   It proves the bounded bit/byte helper, bank-switch table and forward/reverse
-  byte paths, but it is not the post-CD `$2600` RAM-loaded consumer. Capture a
-  source-owned RAM instruction window around `$2400–$2800` with executing PCs
-  before promoting decompression, tiles, maps, objects or HUD pixels.
+  byte paths, but it is not the post-CD `$2600` RAM-loaded consumer. A new
+  static-tail audit confirms that `$252B..$27FF` is zero-filled in the
+  authenticated US ISO, US Track 02 BIN and JP Track 02 BIN; three repeated
+  MAME decodes produce only linear `BRK` rows, not a routine. This rules out
+  the static bank image as the source of that consumer, but does not locate
+  the dynamically loaded code. Capture a source-owned RAM instruction window
+  around `$2400–$2800` with executing PCs and join it to an authenticated
+  Track 02 source before promoting decompression, tiles, maps, objects or HUD
+  pixels. See
+  `docs/source-lock/theron-disassembly/theron-bank1f-static-zero-tail-20261007.md`.
 
 - 🔧 DM2 HUD follow-up: M11 now leaves the accepted V1 runtime frame as the
   sole production HUD owner. The retired V2 compatibility blit used a static
