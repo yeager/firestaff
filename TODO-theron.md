@@ -53,6 +53,13 @@
   `$48a8`, `$48aa`, and `$48ad`. The CPU-address overlay remains provisional:
   no loader receipt binds any of the six raw offsets to CD RAM. This decodes
   only the immediate entry/call/jump and does not establish callee semantics.
+- 🔒 The Stage-2 record user-offset span `$4943..$49f9` is now source-locked
+  for authentic JP as well as US Track 02. All 183 bytes match across the
+  hash-verified editions; three MAME HuC6280 disassembly loops agree on the
+  call and branch edges. `test_theron_v1_stage2_disassembly_chain` checks both
+  region hashes and edges. This is static-source evidence only, not JP
+  execution or graphics parity; see
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l4943-window-20261007.md`.
 - 🔧 Bind the genuine game-code caller/route that transfers control into the
   `$4f06 -> $48a8` runtime path to its authentic physical-bank source. Trace
   the MPR2=`$68` mapping's writes/load origin and bind the observed candidate

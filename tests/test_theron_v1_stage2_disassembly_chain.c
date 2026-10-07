@@ -114,6 +114,64 @@ static uint64_t stage2_fnv1a64(const uint8_t *raw, size_t raw_size,
     return hash;
 }
 
+/* Source offsets used by tqr_ipl_user_match are offsets within the
+ * authenticated Stage-2 record, not CPU addresses relative to $4000. */
+static uint8_t stage2_record_user_byte_at(const uint8_t *raw,
+                                          size_t raw_size,
+                                          int jp,
+                                          size_t user_offset)
+{
+    size_t stage2_sector =
+        (jp ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR
+            : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR) +
+        THERON_TRACK02_IPL_STAGE2_RECORD;
+    size_t sector = stage2_sector + user_offset / 2048u;
+    size_t raw_offset = sector * 2352u + 16u + user_offset % 2048u;
+
+    assert(raw_offset < raw_size);
+    return raw[raw_offset];
+}
+
+static uint64_t stage2_record_user_fnv1a64(const uint8_t *raw,
+                                           size_t raw_size,
+                                           int jp,
+                                           size_t start,
+                                           size_t end)
+{
+    uint64_t hash = UINT64_C(0xcbf29ce484222325);
+
+    assert(end >= start);
+    for (size_t offset = start; offset < end; ++offset) {
+        hash ^= stage2_record_user_byte_at(raw, raw_size, jp, offset);
+        hash *= UINT64_C(0x100000001b3);
+    }
+    return hash;
+}
+
+static void assert_jp_stage2_record_jsr_target(size_t site,
+                                              uint16_t expected_target)
+{
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, site) ==
+           0x20u);
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, site + 1u) ==
+           (uint8_t)(expected_target & 0xffu));
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, site + 2u) ==
+           (uint8_t)(expected_target >> 8));
+}
+
+static void assert_jp_stage2_record_branch_target(size_t site,
+                                                  uint8_t opcode,
+                                                  size_t expected_target)
+{
+    int8_t displacement;
+
+    assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, site) ==
+           opcode);
+    displacement = (int8_t)stage2_record_user_byte_at(
+        g_jp_data, g_jp_size, 1, site + 1u);
+    assert((size_t)((int64_t)site + 2 + displacement) == expected_target);
+}
+
 static uint16_t stage2_word_at(const uint8_t *raw, size_t raw_size,
                                int jp, uint16_t cpu_address)
 {
@@ -3824,6 +3882,64 @@ static void test_stage2_jp_generation51_draw_chain(void)
     printf("  PASS: stage2_jp_generation51_draw_chain (1080/1103 bytes differ from US)\n");
 }
 
+/* Lock the authentic JP Stage-2 record user-offset window also bound for US.
+ * The source offset is not the CPU-relative offset used by stage2_byte_at().
+ * This test assigns no runtime or graphics semantics to the JP stream. */
+static void test_stage2_jp_l4943_window(void)
+{
+    Theron_Track02IplLoaderReceipt jp_receipt;
+    Theron_Track02IplLoaderReceipt us_receipt;
+    Theron_Track02SignalStatus status;
+    uint32_t address;
+
+    if (!g_jp_data) {
+        printf("  SKIP: stage2_jp_l4943_window (JP media unavailable)\n");
+        return;
+    }
+
+    status = theron_v1_track02_find_ipl_loader(
+        g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &jp_receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(jp_receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+    status = theron_v1_track02_find_ipl_loader(
+        g_us_data, g_us_size, THERON_TRACK02_MD5_US_BIN, &us_receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(us_receipt.variant == THERON_TRACK02_VARIANT_US_BIN);
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x4943u, 0x49fau) ==
+           UINT64_C(0xdcdc5b26be9afc17));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x4943u, 0x49fau) ==
+           UINT64_C(0xdcdc5b26be9afc17));
+
+    for (address = 0x4943u; address < 0x49fau; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+
+    assert_jp_stage2_record_jsr_target(0x496fu, 0x5e2bu);
+    assert_jp_stage2_record_jsr_target(0x4981u, 0x5ce4u);
+    assert_jp_stage2_record_jsr_target(0x4984u, 0x4bb0u);
+    assert_jp_stage2_record_jsr_target(0x49bau, 0x56deu);
+    assert_jp_stage2_record_jsr_target(0x49bdu, 0x563du);
+    assert_jp_stage2_record_jsr_target(0x49c0u, 0x50f1u);
+    assert_jp_stage2_record_jsr_target(0x49c9u, 0x49fau);
+    assert_jp_stage2_record_jsr_target(0x49ccu, 0x5111u);
+    assert_jp_stage2_record_jsr_target(0x49cfu, 0x570au);
+    assert_jp_stage2_record_branch_target(0x4963u, 0xf0u, 0x4968u);
+    assert_jp_stage2_record_branch_target(0x496au, 0xd0u, 0x496fu);
+    assert_jp_stage2_record_branch_target(0x4977u, 0xd0u, 0x497cu);
+    assert_jp_stage2_record_branch_target(0x497fu, 0xf0u, 0x4984u);
+    assert_jp_stage2_record_branch_target(0x4989u, 0xd0u, 0x4991u);
+    assert_jp_stage2_record_branch_target(0x498fu, 0x90u, 0x49bau);
+    assert_jp_stage2_record_branch_target(0x49a2u, 0xd0u, 0x49b4u);
+    assert_jp_stage2_record_branch_target(0x49b2u, 0x80u, 0x49bau);
+    assert_jp_stage2_record_branch_target(0x49c7u, 0x90u, 0x49ccu);
+    assert_jp_stage2_record_branch_target(0x49d7u, 0xf0u, 0x49e2u);
+
+    printf("  PASS: stage2_jp_l4943_window (183 bytes; source-identical to US)\n");
+}
+
 static void test_stage2_l3114_callees(void)
 {
     Theron_Track02Stage2L3114CalleesReceipt receipt;
@@ -4607,6 +4723,7 @@ int main(void)
         test_stage2_l4bd2_conditional_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_l4f5e_register_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
+        test_stage2_jp_l4943_window();
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4f_relative_handoff(g_jp_data, g_jp_size, 1);
