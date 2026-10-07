@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-10-07: Ran the full authentic English Atari ST v1.2 CLI/M12 startup
+  and input matrix against the installed
+  `Dungeon-Master_Atari-ST_EN_Version-12.zip`. It contains STX directly, so
+  its route is ZIP→STX; the historical CTest name incorrectly called it
+  nested. Both direct CLI startup and the M12 path reach the real Hall,
+  confirm C127 ordinal 14, and accept the
+  native input matrix without external archive tools. The CTest case and script
+  now identify it as an Atari ST preservation archive rather than a nested ZIP.
+
 - 2026-10-07: M12 Atari ST discovery now continues through all candidate
   preservation archives after admitting an edition. A persisted root that
   contains both the nested v1.1 archive and the authentic v1.2 ZIP-to-STX
@@ -418,12 +427,12 @@
   nested English archive. Champion selection and Atari pixel parity remain
   open.
 
-- 2026-09-24: The authentic nested English Atari ST v1.2 archive now has a
+- 2026-09-24: The authentic English Atari ST v1.2 preservation archive now has a
   normal M12 start-menu regression that continues through the source-owned
   title/entrance input and asserts the first `dm1-runtime` frame. This closes
   the previous gap where the menu test stopped at the M12→M11 handoff and
   only a separate `--boot-probe` reached runtime. Verification used the
-  supplied ZIP→ZIP→STX original media; broader Atari editions and pixel parity
+  supplied ZIP→STX original media; broader Atari editions and pixel parity
   remain open.
 
 - 2026-09-24: Authentic German Atari ST v1.2 and French Atari ST v1.3 now
@@ -747,8 +756,8 @@
   distinct original program/graphics hashes, pointer-only card selection works,
   and both seven-command input matrices reach expected positions. CDDA track-2
   playback state is asserted, not independently audible playback parity.
-  `test_dm1_v1_atari_nested_archive_cli_boot.sh` also passes original English
-  v1.2 ZIP->ZIP->STX CLI/menu, pointer navigation and the complete initial
+  `test_dm1_v1_atari_st_archive_cli_boot.sh` also passes original English
+  v1.2 ZIP->STX CLI/menu, pointer navigation and the complete initial
   input matrix. Both run natively in memory with external archive tools disabled.
   Headless probes do not establish pixel, timing, audio or all-edition parity.
 

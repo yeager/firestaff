@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Production ingestion is native and in-memory.  Do not let a developer's
+# Production ingestion is native and in-memory. Do not let a developer's
 # diagnostic external-tool opt-in turn this real-media test into a wrapper test.
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 
@@ -11,7 +11,7 @@ if [[ $# -ne 1 ]]; then
 fi
 
 app=$1
-archive=${FIRESTAFF_DM1_ATARI_NESTED_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"}
+archive=${FIRESTAFF_DM1_ATARI_ST_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"}
 # Both authenticated English Atari ST v1.2 media revisions are supported.
 # The nested image distributed as "Dungeon Master V1.2 (1987)(FTL)(en)[!]"
 # has the latter GRAPHICS.DAT identity; do not reject it merely because a
@@ -63,8 +63,8 @@ grep -Fq "dataDir=$archive" <<<"$menu_output" &&
 grep -Fq 'handoff=atari-st-dmcsb1' <<<"$menu_output"
 
 # Unlike --boot-probe, this follows the ordinary M12 → M11 path with the
-# authenticated nested archive. The first three Enter inputs select the game,
-# Atari card and Original options; subsequent source inputs advance the Atari
+# authenticated preservation archive. The first three Enter inputs select the
+# game, Atari card, and Original options; subsequent source inputs advance the Atari
 # title/entrance owner. Keep the receipt tied to the real menu handoff so a
 # direct-launch probe cannot satisfy this first-runtime assertion.
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
@@ -161,4 +161,4 @@ probe_runtime_input strafe-left 1,3,2
 probe_runtime_input strafe-right 1,3,2
 probe_runtime_input action 1,3,2
 
-printf '%s\n' 'PASS: authentic DM1 nested Atari ZIP -> ZIP -> STX reaches CLI, confirms M12 Hall choice, and passes native input matrix'
+printf '%s\n' 'PASS: authentic DM1 Atari ST preservation ZIP reaches CLI, confirms M12 Hall choice, and passes native input matrix'
