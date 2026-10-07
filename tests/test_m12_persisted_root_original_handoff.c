@@ -40,6 +40,12 @@ int main(void)
     static const char* const versions[] = {"pc34-en", "fmtowns-en", "pc-en"};
     static const char* const autoVersions[] = {"fmtowns-en", "fmtowns-en", "fmtowns-ja"};
     static const char* const staleVersions[] = {"pc34-en", "fmtowns-ja", "pc-en"};
+    static const char* const alternateVersions[] = {
+        "amiga20-en", "fmtowns-ja", "mac-en-retail"
+    };
+    static const M12_Architecture alternateArchitectures[] = {
+        M12_ARCH_AMIGA, M12_ARCH_FM_TOWNS, M12_ARCH_MAC
+    };
     static const M11_GameSourceKind kinds[] = {
         M11_GAME_SOURCE_BUILTIN_CATALOG, M11_GAME_SOURCE_CSB_BOOT,
         M11_GAME_SOURCE_DM2_BOOT
@@ -164,6 +170,69 @@ int main(void)
                              "CSB owns a boot profile");
         if (game == 2) CHECK(view->dm2BootProfile != NULL,
                              "DM2 owns a boot profile");
+        M11_GameView_Shutdown(view);
+        SDL_free(view);
+    }
+
+    /* Reopening the collection must preserve explicit non-default platform
+     * choices as well as the common PC/Towns routes above. These editions
+     * are present in the authenticated local collection and exercise three
+     * independent native media owners. */
+    for (game = 0; game < 3 && !failures; ++game) {
+        M12_LaunchIntent intent;
+        M11_GameViewState* view;
+        const M12_AssetVersionStatus* version;
+        int versionIndex = M12_AssetStatus_FindVersionIndex(
+            games[game], alternateVersions[game]);
+        version = versionIndex < 0 ? NULL : M12_AssetStatus_GetVersion(
+            &menu->assetStatus, games[game], (size_t)versionIndex);
+        if (!version || !version->matched) {
+            fprintf(stderr, "FAIL: selected root lacks authenticated %s %s media\n",
+                    games[game], alternateVersions[game]);
+            ++failures;
+            break;
+        }
+        menu->selectedIndex = game;
+        menu->activatedIndex = game;
+        menu->launchRequested = 1;
+        menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        menu->gameOptions[game].presentationModeIndex =
+            M12_PRESENTATION_V1_ORIGINAL;
+        menu->gameOptions[game].versionIndex = versionIndex;
+        menu->gameOptions[game].architectureIndex = alternateArchitectures[game];
+        intent = M12_StartupMenu_GetLaunchIntent(menu);
+        CHECK(intent.valid && intent.versionId &&
+              strcmp(intent.gameId, games[game]) == 0 &&
+              strcmp(intent.versionId, alternateVersions[game]) == 0 &&
+              intent.options.architectureIndex == (int)alternateArchitectures[game],
+              "explicit alternate platform survives the reopened collection root");
+        if (failures) break;
+        view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
+        CHECK(view != NULL, "allocate alternate-platform game view");
+        if (!view) break;
+        M11_GameView_Init(view);
+        CHECK(M11_GameView_OpenSelectedMenuEntry(view, menu) == 1,
+              "alternate platform opens through the M12-selected runtime handoff");
+        CHECK(view->active && view->startedFromLauncher &&
+              view->sourceKind == kinds[game] &&
+              strcmp(view->sourceId, games[game]) == 0,
+              "alternate platform reaches its source-owned M11 state");
+        if (game == 0) {
+            CHECK(view->assetLoader.legacyDm1 &&
+                  view->assetLoader.legacyBigEndian,
+                  "DM1 handoff owns the selected Amiga media loader");
+        } else if (game == 1) {
+            const CSB_V1_BootProfile* profile =
+                (const CSB_V1_BootProfile*)view->csbBootProfile;
+            CHECK(profile &&
+                  profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA,
+                  "CSB handoff owns the selected FM Towns Japanese profile");
+        } else {
+            const DM2_V1_BootProfile* profile =
+                (const DM2_V1_BootProfile*)view->dm2BootProfile;
+            CHECK(profile && profile->platform == DM2_PLATFORM_MAC_EN,
+                  "DM2 handoff owns the selected Macintosh retail profile");
+        }
         M11_GameView_Shutdown(view);
         SDL_free(view);
     }

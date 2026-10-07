@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-07: Extended the persisted-root original-media launcher regression
+  to cover DM1 Amiga 2.0, CSB FM Towns Japanese and DM2 Macintosh retail in
+  addition to the existing DM1 PC 3.4, CSB FM Towns English and DM2 DOS cases.
+  Each selected edition survives menu reopen and reaches its source-owned M11
+  startup state. The focused original-media test passes against the external
+  collection; the full local CTest catalogue remains unavailable because one
+  unrelated test requires the absent ReDMCSB checkout.
+
 - 2026-10-07: Three original-media DM1 CLI startup routes passed: DOS English
   in 45.14 seconds, nested PC-34 ZIP in 230.82 seconds, and FM Towns in
   262.33 seconds. The PC-34 route also rejected an isolated copy missing its

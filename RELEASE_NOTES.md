@@ -15,6 +15,14 @@
   `[HD]` image keeps its direct runtime route, while the v2.0 floppy set
   preserves the SWSH/TITLE/ENTRANCE startup transaction.
 
+# Firestaff v3.0.365
+
+## Developer changes
+
+- `Persisted-root launcher coverage`: adds explicit DM1 Amiga, CSB FM Towns
+  Japanese and DM2 Macintosh selections through the reopened M12 menu and the
+  source-owned M11 startup handoff using authenticated original media.
+
 # Firestaff v3.0.364
 
 ## User-facing changes
