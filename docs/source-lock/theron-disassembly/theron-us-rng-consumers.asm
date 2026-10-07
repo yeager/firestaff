@@ -1,9 +1,10 @@
 ; Theron's Quest US Track 02 — static RNG-consumer body boundaries
 ;
-; These are the two US-BIN routines reached by the authenticated $4644
-; preconsumer.  They are source evidence only: the HuC6280 bank selection,
-; RAM-loaded helper state and semantic return-value ownership still require a
-; live game capture before any host RNG or spawn path may consume them.
+; These are two US-BIN source windows statically associated with the $4644
+; preconsumer. They are source evidence only: runtime execution, HuC6280 bank
+; selection, RAM-loaded helper state and semantic return-value ownership still
+; require a valid live-game capture before any host RNG or spawn path may
+; consume them.
 ;
 ; Source image: raw 2352-byte Track 02 BIN, MD5
 ; f23601102138f87c33025877767ebf76.

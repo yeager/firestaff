@@ -4502,6 +4502,11 @@ distinguishes right and left after `$28B8` returns to zero.
   targets but does not assign field or gameplay semantics. It does not prove
   runtime bank selection or execution; see
   `docs/source-lock/theron-disassembly/theron-us-cc4c-consumer.asm`.
+  The older `akutuba-ordinal0` runtime trace is not a substitute: its own
+  receipt reports both `variant=unknown` and `stage3_track02_record=unknown`,
+  and it records `$CC4D` as `$AD` at physical `$0DAC4D`, while authentic US
+  Track 02 offset `$A4ACD` contains `$A0`. Do not use that trace to claim the
+  static US listing executed from its source mapping.
 
 - 🔧 DM2 HUD follow-up: M11 now leaves the accepted V1 runtime frame as the
   sole production HUD owner. The retired V2 compatibility blit used a static
