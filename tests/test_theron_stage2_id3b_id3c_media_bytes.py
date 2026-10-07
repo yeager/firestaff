@@ -70,6 +70,11 @@ EXPECTED_RECORD_USER_SPANS = (
         0x21,
         "aa37228d4a9401afabc88c37ee57a7b18dc29a7c0cba3b35a9f44d635ef098dd",
     ),
+    (
+        0x5E16,
+        0x15,
+        "3c0d8e66d4c9dfb7ee5c8d3fb385c5e90c0dc527ff02be79041ecc7b2f873c24",
+    ),
 )
 
 EXPECTED_RECORD_USER_BYTES = (

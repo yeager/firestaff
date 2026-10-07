@@ -35684,7 +35684,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     state,
                     &receipt.exit_receipt);
             }
-            m11_set_status(state, receipt.status_scope, receipt.status);
+            m11_set_status(state, receipt.status_scope,
+                receipt.source_item_name_utf8[0] != '\0'
+                    ? receipt.source_item_name_utf8 : receipt.status);
             if (receipt.result ==
                 THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED) {
                 return M11_GAME_INPUT_IGNORED;

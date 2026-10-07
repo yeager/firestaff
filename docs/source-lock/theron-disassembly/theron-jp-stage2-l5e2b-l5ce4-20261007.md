@@ -26,6 +26,7 @@ INDEX 01 sectors 224/225 plus the authenticated Stage-2 record offset
 | `$5d93..$5dda` | 72 | 2,903,811 | 2,906,163 | `e6bd85ceb98a37737b5d8e0002aeaff2f5029978ff998ded34678e1240413339` | `d3134abbb0e0dfe8` |
 | `$5ddb..$5df4` | 26 | 2,903,883 | 2,906,235 | `c1becb66780c655428f31f2b1bbd8bf92f62ced603949614cd35b17597b05453` | `7b7c74e766d09c4d` |
 | `$5df5..$5e15` | 33 | 2,903,909 | 2,906,261 | `aa37228d4a9401afabc88c37ee57a7b18dc29a7c0cba3b35a9f44d635ef098dd` | `f5af46bc925fc89f` |
+| `$5e16..$5e2a` | 21 | 2,903,942 | 2,906,294 | `3c0d8e66d4c9dfb7ee5c8d3fb385c5e90c0dc527ff02be79041ecc7b2f873c24` | `f8b82539384b1ede` |
 
 The two JP windows are byte-identical to the same user-offset windows in US.
 MAME `unidasm -arch h6280 -basepc 0x5e2b -skip <raw-offset> -count 0x56`
@@ -57,11 +58,18 @@ that callee. `$5d93` loops back to `$5d96` and returns at `$5dda`. `$5ddb`'s
 branches target `$5dee` and `$5ddd` within that bounded routine, which returns
 at `$5df4`. `$5df5` stores the `$5c/$5d` pointer and emits
 `TIA $0000,$0404,$0020` before returning at `$5e15`. These opcode-level
-observations do not establish wider routine semantics.
+observations do not establish wider routine semantics. The immediately
+following `$5e16..$5e2a` 21-byte source-linked data span is identical in both
+editions and is checked separately from disassembly; its referenced values
+and runtime meaning remain unassigned. The bounded listings statically show
+accesses to `$5e16,x`, `$5e1e,x`, `$5e26`, and `$5e29` from the `$5ce4`,
+`$5d1c`, `$5d93`, `$5ddb`, and `$5df5` windows. These are source-address
+references only; they do not prove runtime values or semantics.
 
 The registered `test_theron_v1_stage2_disassembly_chain` now locks each JP and
 US span hash, compares every byte across editions, checks the branch and
-indirect-jump encodings, and binds the three table words. The Python media
-test independently verifies both full-image hashes before reading spans.
+indirect-jump encodings, and binds the three table words plus the adjacent
+`$5e16..$5e2a` data span. The Python media test independently verifies both
+full-image hashes before reading spans.
 This is static
 authentic-source evidence, not execution evidence or Theron gameplay parity.

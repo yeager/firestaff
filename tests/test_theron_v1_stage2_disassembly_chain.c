@@ -3947,6 +3947,12 @@ static void test_stage2_jp_l4943_window(void)
     assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
                                       0x5df5u, 0x5e16u) ==
            UINT64_C(0xf5af46bc925fc89f));
+    assert(stage2_record_user_fnv1a64(g_jp_data, g_jp_size, 1,
+                                      0x5e16u, 0x5e2bu) ==
+           UINT64_C(0xf8b82539384b1ede));
+    assert(stage2_record_user_fnv1a64(g_us_data, g_us_size, 0,
+                                      0x5e16u, 0x5e2bu) ==
+           UINT64_C(0xf8b82539384b1ede));
 
     for (address = 0x4943u; address < 0x49fau; ++address) {
         assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
@@ -3973,6 +3979,10 @@ static void test_stage2_jp_l4943_window(void)
                stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
     }
     for (address = 0x5df5u; address < 0x5e16u; ++address) {
+        assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
+               stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
+    }
+    for (address = 0x5e16u; address < 0x5e2bu; ++address) {
         assert(stage2_record_user_byte_at(g_jp_data, g_jp_size, 1, address) ==
                stage2_record_user_byte_at(g_us_data, g_us_size, 0, address));
     }

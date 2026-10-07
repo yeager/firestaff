@@ -5,6 +5,14 @@
   but no loader receipt binds any candidate to CD RAM and execution/semantics
   remain unproven. Continue seeking a fresh authentic-media loader trace
   before assigning runtime meaning.
+- The authentic `$5e16..$5e2a` Stage-2 data bytes are now hash-locked for US
+  and JP, but their consumers' runtime values and semantics have not been
+  observed. Keep this as source provenance only until an authentic execution
+  receipt binds a consumer read to these bytes.
+- M11 can show a provenance-checked carried-item name in its status line, but
+  this is not the Theron inventory UI. Continue authentic reference/runtime
+  work before claiming original item-selection, naming, or inventory-screen
+  behavior.
 
 ## 2026-10-07 PCE Fast stage-two caller gap
 

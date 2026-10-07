@@ -11,6 +11,7 @@
 #include "theron_v1_world.h"
 #include "menu_input_m12.h"
 #include "asset_find_by_hash.h"
+#include "firestaff_cp932.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
@@ -1131,7 +1132,51 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
                    &input_receipt) == 1);
         assert(input_receipt.inventory_selected == 1);
         assert(input_receipt.inventory_slot == inventory_slot);
+        {
+            char expected_name[128] = {0};
+            assert(input_receipt.source_item_name_utf8[0] != '\0');
+            if (world->track02_item_names[source_dungeon - 1u].variant == 1) {
+                assert(firestaff_cp932_to_utf8(
+                           (const char *)source_item_name,
+                           source_item_name_size, expected_name,
+                           sizeof(expected_name)) >= 0);
+            } else {
+                assert(source_item_name_size < sizeof(expected_name));
+                memcpy(expected_name, source_item_name,
+                       source_item_name_size);
+            }
+            assert(strcmp(input_receipt.source_item_name_utf8,
+                          expected_name) == 0);
+        }
         inventory_slot = input_receipt.inventory_slot;
+        {
+            Theron_V1_InventorySourceRecord *carried =
+                &world->inventory_source[world->party.active_slot]
+                                        [inventory_slot];
+            uint8_t saved_origin_valid = carried->source_origin_valid;
+            carried->source_origin_valid = 0u;
+            assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+                       world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
+                       &input_receipt) == 1);
+            assert(input_receipt.inventory_selected == 1 &&
+                   input_receipt.inventory_slot == inventory_slot);
+            assert(input_receipt.source_item_name_utf8[0] == '\0');
+            assert(strcmp(input_receipt.status, "SOURCE ITEM SELECTED") == 0);
+            carried->source_origin_valid = saved_origin_valid;
+            {
+                uint8_t saved_property = carried->property[0];
+                carried->property[0] ^= 0x01u;
+                assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+                           world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
+                           &input_receipt) == 1);
+                assert(input_receipt.inventory_selected == 1 &&
+                       input_receipt.inventory_slot == inventory_slot);
+                assert(input_receipt.source_item_name_utf8[0] == '\0');
+                assert(strcmp(input_receipt.status,
+                              "SOURCE ITEM SELECTED") == 0);
+                carried->property[0] = saved_property;
+            }
+        }
         {
             size_t save_size = theron_v1_world_serialize_size(world);
             uint8_t *save_bytes = malloc(save_size);

@@ -7588,3 +7588,29 @@ undecoded.
 This remains a static candidate-relative overlay: there is no loader receipt
 binding the bytes to CD RAM, no proof this body executed, and no established
 routine or gameplay semantics. No synthetic media was used.
+
+# ✅ 2026-10-07 source-lock adjacent `$5e16` Stage-2 data
+
+Extended the authenticated US/JP Stage-2 chain checks to include the 21-byte
+user-data span `$5e16..$5e2a`, immediately preceding the `$5e2b` routine.
+Both authentic editions match at raw offsets `2903942` (JP) and `2906294`
+(US), SHA-256
+`3c0d8e66d4c9dfb7ee5c8d3fb385c5e90c0dc527ff02be79041ecc7b2f873c24` and
+FNV-1a-64 `f8b82539384b1ede`. The C and Python source-lock tests compare the
+regional bytes and verify the exact bounded span after authentic full-image
+hash checks. This data is not decoded as instructions; referenced values and
+runtime meaning remain unknown. No synthetic media was used.
+
+# ✅ 2026-10-07 provenance-checked carried item name in M11 status
+
+When M11 handles the inventory-cycle input, it now prefers a carried item's
+name over the generic `SOURCE ITEM SELECTED` status only if the exact
+champion/slot occurrence still passes the Track 19 or Track 02 raw-name
+provenance lookup. US ASCII and JP CP932 names are converted with bounded
+output; absent provenance or an invalid name keeps the neutral generic status.
+The authentic-media dungeon-loader test checks US/JP names and the missing-
+and-mismatched-provenance fallback. The M11 and dungeon-loader targets built
+on trv2, and the dungeon-loader, Stage-2 source-lock, and authentic-media
+byte tests each passed three CTest loops. This is a host status presentation
+improvement only: it does not implement an inventory screen or establish
+T900/original inventory semantics. No synthetic media was used.

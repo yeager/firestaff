@@ -45,6 +45,7 @@
 #include "theron_v1_track02_campaign_mask_source.h"
 #include "theron_v1_track02_retrieval_text_source.h"
 #include "theron_v1_track02.h"
+#include "firestaff_cp932.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
 #include "theron_v2_hud_widget_assets_pc34.h"
@@ -53,6 +54,67 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+
+static int theron_v1_inventory_source_item_name_utf8(
+    const Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot,
+    char *output,
+    size_t output_size)
+{
+    const uint8_t *raw_name = NULL;
+    size_t raw_name_size = 0u;
+    int variant;
+
+    if (output && output_size > 0u) output[0] = '\0';
+    if (!world || !output || output_size == 0u) return 0;
+
+    /* Prefer the narrower Track 19 source table when its exact inventory
+     * occurrence is authenticated; otherwise use the Track 02 provenance
+     * lookup. This is host status text, not evidence for T900 UI behavior. */
+    if (theron_v1_world_inventory_source_track19_item_name_raw(
+            world, champion_slot, inventory_slot,
+            &raw_name, &raw_name_size)) {
+        variant = world->track19_item_names.variant;
+    } else if (theron_v1_world_inventory_source_track02_item_name_raw(
+                   world, champion_slot, inventory_slot,
+                   &raw_name, &raw_name_size)) {
+        const Theron_V1_InventorySourceRecord *item =
+            &world->inventory_source[champion_slot][inventory_slot];
+        variant = world->track02_item_names[item->source_dungeon - 1u].variant;
+    } else {
+        return 0;
+    }
+
+    if (raw_name_size == 0u) return 0;
+    if (variant == 2) {
+        if (raw_name_size >= output_size) return 0;
+        for (size_t i = 0u; i < raw_name_size; ++i) {
+            if (raw_name[i] < 0x20u || raw_name[i] > 0x7eu) return 0;
+        }
+        memcpy(output, raw_name, raw_name_size);
+        output[raw_name_size] = '\0';
+        return 1;
+    }
+    if (variant == 1) {
+        for (size_t i = 0u; i < raw_name_size;) {
+            uint8_t lead = raw_name[i++];
+            if ((lead >= 0x20u && lead <= 0x7eu) ||
+                (lead >= 0xa1u && lead <= 0xdfu)) continue;
+            if (!((lead >= 0x81u && lead <= 0x9fu) ||
+                  (lead >= 0xe0u && lead <= 0xfcu)) || i >= raw_name_size)
+                return 0;
+            {
+                uint8_t trail = raw_name[i++];
+                if (trail < 0x40u || trail > 0xfcu || trail == 0x7fu)
+                    return 0;
+            }
+        }
+        return firestaff_cp932_to_utf8((const char *)raw_name, raw_name_size,
+                                       output, output_size) >= 0;
+    }
+    return 0;
+}
 
 static int boot_init_source_theron_party(
     const Theron_V1_BootProfile *profile,
@@ -6008,6 +6070,12 @@ int theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
         out_receipt->status = out_receipt->inventory_selected
             ? "SOURCE ITEM SELECTED"
             : "NO SOURCE ITEM";
+        if (selected >= 0) {
+            (void)theron_v1_inventory_source_item_name_utf8(
+                world, champion_slot, selected,
+                out_receipt->source_item_name_utf8,
+                sizeof(out_receipt->source_item_name_utf8));
+        }
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_DROP_ITEM) {

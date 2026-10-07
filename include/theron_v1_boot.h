@@ -1649,6 +1649,9 @@ typedef struct {
     int tick_count;
     const char *status_scope;
     const char *status;
+    /* Authenticated carried-item text for host status presentation only;
+     * this does not imply T900 or original inventory-screen semantics. */
+    char source_item_name_utf8[128];
     /* Filled only when result == EXIT_DUNGEON.  M11 applies it through
      * m11_theron_apply_startup_action_host_receipt. */
     Theron_StartupActionHostReceipt exit_receipt;
