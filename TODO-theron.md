@@ -22,6 +22,11 @@
   three repeated loops on trv2. This is static source evidence, not runtime
   rendering parity. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l4943-window-20261007.md`.
+- ✅ Extended the JP source lock through its direct `$4A84..$4B23` target.
+  All 160 bytes match both authentic Track 02 images; the caller/callee edges
+  and RTS boundary pass three focused loops on trv2. This remains static source
+  evidence, not runtime entry or rendering parity. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l4a84-window-20261008.md`.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 

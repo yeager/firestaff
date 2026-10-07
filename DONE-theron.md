@@ -7636,3 +7636,13 @@ on trv2, and the dungeon-loader, Stage-2 source-lock, and authentic-media
 byte tests each passed three CTest loops. This is a host status presentation
 improvement only: it does not implement an inventory screen or establish
 T900/original inventory semantics. No synthetic media was used.
+# Firestaff DONE — Theron's Quest
+
+## 2026-10-08 — JP Stage-2 direct-entry source lock
+
+- Locked authentic JP Stage-2 user bytes `$4A84..$4B23` against both original
+  JP and US Track 02 images, including SHA-256/FNV-1a digests and caller,
+  callee, branch, and RTS boundaries. The focused authentic-media test passed
+  three repeated loops on trv2. This establishes static source provenance
+  only; runtime entry and rendering semantics remain unproven. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l4a84-window-20261008.md`.
