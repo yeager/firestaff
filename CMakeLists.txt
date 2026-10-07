@@ -17863,6 +17863,19 @@ endif()
         # wall-clock room for all source-owned Entrance checks on CI hosts.
         TIMEOUT 300
     )
+    add_test(
+        NAME csb_v1_fmtowns_m12_auto_mixed_real_media
+        COMMAND sh
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m12_auto_mixed_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
+    )
+    set_tests_properties(csb_v1_fmtowns_m12_auto_mixed_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;fmtowns;m12;auto;menu;startup;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        TIMEOUT 120
+    )
     # Keep both language-private F31 program chains independently runnable.
     # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
     # original media; these rows add only the selected language and therefore

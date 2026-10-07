@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+- 2026-10-07: Added a mixed-original-media M12 AUTO regression for FM Towns.
+  With authentic Amiga, Atari ST, and FM Towns packages installed together
+  and no `--platform` option, the menu authenticates all three, selects the
+  documented FM Towns default, consumes its source-owned TITLE.ANM and
+  SWITCHTW/C004 input path, and reaches the original MINI.DAT party at map 4,
+  `(22,18)`, facing south. The first presented dungeon frame has a nonzero
+  viewport hash. The focused real-media CTest passes; this verifies routing
+  and startup state, not visual parity.
+
 - 2026-10-07: The authenticated Amiga 3.1 M12/M11 handoff regression passed
   with 55 assertions, no failures and no skips. It exercised the source-bound
   CSB SWSH sample through the temporary intro audio owner, checked the
