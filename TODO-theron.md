@@ -4792,6 +4792,19 @@ be used as byte origins; the binding relies on the destination's already
 hash-verified 2,048-byte block and byte comparison against the same
 authenticated raw sector.
 
+- ✅ 2026-10-07 JP generation-51 disassembly: authentic JP Track 02 was
+  independently decoded with MAME `unidasm` for `$5111..$555e`. The JP
+  source-lock listing and focused test bind two contiguous spans (`$5111..$533d`
+  and `$533d..$555e`), representative direct call/branch targets, and mutation
+  rejection after checking the JP Track 02 digest. The listing includes the
+  complete terminal instruction through `$555f`, and those two trailing bytes
+  have their own source-lock check. The same-address JP bytes differ from
+  authentic US bytes at 1,080 of 1,103 positions; US handler labels
+  and behavior must not be applied to JP. This adds no runtime or gameplay
+  claim. The open gate remains a same-session caller/phase capture linking the
+  generation-51 drawing loop to its next image transition before interpreting
+  the VDC payload.
+
 # 2026-08-13 — fresh System Card replay confirms transport-only boundary
 
 - Completed: a new local replay with hash-verified US Track 02

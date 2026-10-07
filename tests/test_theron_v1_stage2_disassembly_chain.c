@@ -100,6 +100,20 @@ static uint8_t stage2_byte_at(const uint8_t *raw, size_t raw_size,
     return raw[raw_offset];
 }
 
+static uint64_t stage2_fnv1a64(const uint8_t *raw, size_t raw_size,
+                               int jp, uint16_t start, uint16_t end)
+{
+    uint64_t hash = UINT64_C(0xcbf29ce484222325);
+    uint32_t address;
+
+    assert(end >= start);
+    for (address = start; address < end; ++address) {
+        hash ^= stage2_byte_at(raw, raw_size, jp, (uint16_t)address);
+        hash *= UINT64_C(0x100000001b3);
+    }
+    return hash;
+}
+
 static uint16_t stage2_word_at(const uint8_t *raw, size_t raw_size,
                                int jp, uint16_t cpu_address)
 {
@@ -3696,6 +3710,120 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
     printf("  PASS: stage2_jp_record_selector_52xx_flow\n");
 }
 
+/* Lock the JP generation-51 routines independently of their US counterparts.
+ * The full Track 02 digest is checked first; hashes and direct edges below
+ * establish byte/control-flow evidence only, not runtime or gameplay meaning. */
+static void test_stage2_jp_generation51_draw_chain(void)
+{
+    Theron_Track02IplLoaderReceipt receipt;
+    Theron_Track02SignalStatus status;
+    uint8_t *mutated;
+    size_t changed_raw_offset;
+    size_t changed_payload_offset;
+    unsigned int regional_byte_differences = 0;
+    uint32_t address;
+
+    if (!g_jp_data) {
+        printf("  SKIP: stage2_jp_generation51_draw_chain (JP media unavailable)\n");
+        return;
+    }
+
+    status = theron_v1_track02_find_ipl_loader(
+        g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+    assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x5111u, 0x533du) ==
+           UINT64_C(0xe1614388508c44ff));
+    assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x533du, 0x555eu) ==
+           UINT64_C(0xb87f20841bb71df1));
+    assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x555eu, 0x5560u) ==
+           UINT64_C(0x0a293907b6964afc));
+
+    for (address = 0x5111u; address < 0x5560u; ++address) {
+        if (stage2_byte_at(g_jp_data, g_jp_size, 1, (uint16_t)address) !=
+            stage2_byte_at(g_us_data, g_us_size, 0, (uint16_t)address)) {
+            ++regional_byte_differences;
+        }
+    }
+    assert(regional_byte_differences == 1080u);
+
+    assert_jp_stage2_branch_target(0x5114u, 0xd0u, 0x5118u);
+    assert_jp_stage2_bsr_target(0x5116u, 0x512au);
+    assert_jp_stage2_jsr_target(0x512au, 0x553fu);
+    assert_jp_stage2_jsr_target(0x512du, 0x5529u);
+    assert_jp_stage2_bsr_target(0x5130u, 0x5141u);
+    assert_jp_stage2_bsr_target(0x5141u, 0x51c0u);
+    assert_jp_stage2_bsr_target(0x514bu, 0x51a8u);
+    assert_jp_stage2_bsr_target(0x5152u, 0x51b3u);
+    assert_jp_stage2_jsr_target(0x517cu, 0x52c6u);
+    assert_jp_stage2_jsr_target(0x5197u, 0x565au);
+    assert_jp_stage2_jsr_target(0x51a0u, 0x5251u);
+    assert_jp_stage2_jsr_target(0x5221u, 0x508bu);
+    assert_jp_stage2_bsr_target(0x5283u, 0x52c6u);
+    assert_jp_stage2_bsr_target(0x528eu, 0x529bu);
+    assert_jp_stage2_bsr_target(0x5292u, 0x52afu);
+    assert_jp_stage2_jsr_target(0x529bu, 0x551au);
+    assert_jp_stage2_jsr_target(0x52a0u, 0x567au);
+    assert_jp_stage2_jsr_target(0x52a3u, 0x5669u);
+    assert_jp_stage2_bsr_target(0x5303u, 0x5318u);
+    assert_jp_stage2_bsr_target(0x5307u, 0x533eu);
+    assert_jp_stage2_bsr_target(0x534du, 0x5377u);
+    assert_jp_stage2_bsr_target(0x537au, 0x5354u);
+    assert_jp_stage2_bsr_target(0x53c5u, 0x53d8u);
+    assert_jp_stage2_bsr_target(0x5460u, 0x54a7u);
+    assert_jp_stage2_bsr_target(0x546au, 0x547du);
+    assert_jp_stage2_bsr_target(0x5481u, 0x5498u);
+    assert_jp_stage2_bsr_target(0x5495u, 0x550cu);
+    assert_jp_stage2_jsr_target(0x54f1u, 0x4f7au);
+    assert_jp_stage2_jsr_target(0x5500u, 0x551au);
+    assert_jp_stage2_jsr_target(0x5503u, 0x53d8u);
+    assert_jp_stage2_jsr_target(0x5516u, 0x5251u);
+    assert_jp_stage2_jsr_target(0x5555u, 0x53e8u);
+    assert_jp_stage2_branch_target(0x5558u, 0xb0u, 0x555cu);
+    assert_jp_stage2_bsr_target(0x555au, 0x5569u);
+
+    mutated = malloc(g_jp_size);
+    assert(mutated != NULL);
+    memcpy(mutated, g_jp_data, g_jp_size);
+    changed_payload_offset = 0x5111u - THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS;
+    changed_raw_offset =
+        (THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+         THERON_TRACK02_IPL_STAGE2_RECORD + changed_payload_offset / 2048u) *
+            2352u +
+        16u + changed_payload_offset % 2048u;
+    assert(changed_raw_offset < g_jp_size);
+    mutated[changed_raw_offset] ^= 1u;
+    assert(stage2_fnv1a64(mutated, g_jp_size, 1, 0x5111u, 0x533du) !=
+           UINT64_C(0xe1614388508c44ff));
+
+    memcpy(mutated, g_jp_data, g_jp_size);
+    changed_payload_offset = 0x533du - THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS;
+    changed_raw_offset =
+        (THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+         THERON_TRACK02_IPL_STAGE2_RECORD + changed_payload_offset / 2048u) *
+            2352u +
+        16u + changed_payload_offset % 2048u;
+    assert(changed_raw_offset < g_jp_size);
+    mutated[changed_raw_offset] ^= 1u;
+    assert(stage2_fnv1a64(mutated, g_jp_size, 1, 0x533du, 0x555eu) !=
+           UINT64_C(0xb87f20841bb71df1));
+
+    memcpy(mutated, g_jp_data, g_jp_size);
+    changed_payload_offset = 0x555eu - THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS;
+    changed_raw_offset =
+        (THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+         THERON_TRACK02_IPL_STAGE2_RECORD + changed_payload_offset / 2048u) *
+            2352u +
+        16u + changed_payload_offset % 2048u;
+    assert(changed_raw_offset < g_jp_size);
+    mutated[changed_raw_offset] ^= 1u;
+    assert(stage2_fnv1a64(mutated, g_jp_size, 1, 0x555eu, 0x5560u) !=
+           UINT64_C(0x0a293907b6964afc));
+    free(mutated);
+
+    printf("  PASS: stage2_jp_generation51_draw_chain (1080/1103 bytes differ from US)\n");
+}
+
 static void test_stage2_l3114_callees(void)
 {
     Theron_Track02Stage2L3114CalleesReceipt receipt;
@@ -4508,6 +4636,7 @@ int main(void)
     test_stage2_l4696();
     test_stage2_jp_l3114_flow();
     test_stage2_jp_record_selector_52xx_flow();
+    test_stage2_jp_generation51_draw_chain();
     test_stage2_l3114_callees();
     test_stage2_l3114_tier2_callees();
     test_stage2_l3114_tier3_callees();
