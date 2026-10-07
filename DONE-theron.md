@@ -7361,6 +7361,14 @@ authentic JP Track 02; all passed. This is static source-byte and edge
 coverage only. Runtime selector values, branch outcomes, helper semantics,
 gameplay behavior, and regional parity remain open.
 
+2026-10-07 follow-up: added an explicit edge assertion for the JP `BNE` at
+`$528c`, which statically targets `$5292`. MAME `unidasm -arch h6280` decodes
+the authentic JP bytes as `D0 04`; the runtime branch outcome remains
+unobserved. The current full-source test target rebuilt on `trv2` with
+`--parallel 1` and passed three loops against the SHA-256-attested authentic
+JP Track 02. This adds static control-flow evidence only, not gameplay or
+regional parity.
+
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 
 An independent read-only audit re-extracted all 16 newly bound JP helper
