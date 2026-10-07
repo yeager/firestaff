@@ -1,47 +1,53 @@
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
-@@ -1188,1 +1188,42 @@
-FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
-+	 static unsigned Theron3879TargetStepsRemaining;
+@@ -42,0 +43,10 @@
++static unsigned Theron3879TargetStepsRemaining;
++static FILE *Theron3879Trace;
++static unsigned Theron3879TraceCount;
++static const char *Theron3879TracePath;
++static unsigned Theron3879IsIndirectTarget;
++static unsigned Theron3879PointerLow;
++static unsigned Theron3879PointerHigh;
++static unsigned Theron3879IndirectTarget;
++static unsigned Theron3879TargetPhysical;
++static unsigned Theron3879TargetOpcode;
+@@ -1188,1 +1188,44 @@
+ FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	 if(Theron3879TargetStepsRemaining ||
 +	    (PC >= 0x4ef4 && PC <= 0x4ef6) ||
 +	    (PC >= 0x3879 && PC <= 0x3918) ||
 +	    (PC >= 0x39c0 && PC <= 0x3a0f))
 +	 {
-+	  static FILE *Theron3879Trace;
-+	  static unsigned Theron3879TraceCount;
-+	  const char *path = getenv("FIRESTAFF_THERON_3879_TRACE");
-+	  if(path && *path && Theron3879TraceCount < 8192)
++	  Theron3879TracePath = getenv("FIRESTAFF_THERON_3879_TRACE");
++	  if(Theron3879TracePath && *Theron3879TracePath && Theron3879TraceCount < 8192)
 +	  {
 +	   if(!Theron3879Trace)
 +	   {
-+	    Theron3879Trace = fopen(path, "w");
++	    Theron3879Trace = fopen(Theron3879TracePath, "w");
 +	    if(Theron3879Trace)
 +	     fputs("source=mednafen-pce-instrumented-theron-3879-indirect-target\n",
 +	           Theron3879Trace);
 +	   }
 +	   if(Theron3879Trace)
 +	   {
-+	    const unsigned is_indirect_target = PC == 0x39c7 || PC == 0x39dd;
-+	    const unsigned pointer_low = is_indirect_target ?
-+	        RdMem(0x2003) : 0xff;
-+	    const unsigned pointer_high = is_indirect_target ?
-+	        RdMem(0x2004) : 0xff;
-+	    const unsigned indirect_target =
-+	        is_indirect_target ?
-+	        (pointer_low | (pointer_high << 8)) : 0xffff;
-+	    const unsigned target_physical = is_indirect_target ?
-+	        ((MPR[indirect_target >> 13] << 13) | (indirect_target & 0x1fff)) :
-+	        0xffffff;
-+	    const unsigned target_opcode = is_indirect_target ?
-+	        RdOp(indirect_target) : 0xff;
++	    Theron3879IsIndirectTarget = PC == 0x39c7 || PC == 0x39dd;
++	    Theron3879PointerLow = Theron3879IsIndirectTarget ? RdMem(0x2003) : 0xff;
++	    Theron3879PointerHigh = Theron3879IsIndirectTarget ? RdMem(0x2004) : 0xff;
++	    Theron3879IndirectTarget = Theron3879IsIndirectTarget ?
++	        (Theron3879PointerLow | (Theron3879PointerHigh << 8)) : 0xffff;
++	    Theron3879TargetPhysical = Theron3879IsIndirectTarget ?
++	        ((MPR[Theron3879IndirectTarget >> 13] << 13) |
++	         (Theron3879IndirectTarget & 0x1fff)) : 0xffffff;
++	    Theron3879TargetOpcode = Theron3879IsIndirectTarget ?
++	        RdOp(Theron3879IndirectTarget) : 0xff;
 +	    fprintf(Theron3879Trace,
 +	            "theron_3879_step sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x ptr2003=%02x ptr2004=%02x indirect_target=%04x target_physical=%06x target_opcode=%02x follow_remaining=%u\n",
 +	            Theron3879TraceCount++, PC, physical_pc, lastop,
 +	            A, X, Y, P, S, MPR[0], MPR[1], MPR[2], MPR[3],
-+	            MPR[4], MPR[5], MPR[6], MPR[7], pointer_low,
-+	            pointer_high, indirect_target, target_physical,
-+	            target_opcode, Theron3879TargetStepsRemaining);
++	            MPR[4], MPR[5], MPR[6], MPR[7], Theron3879PointerLow,
++	            Theron3879PointerHigh, Theron3879IndirectTarget,
++	            Theron3879TargetPhysical, Theron3879TargetOpcode,
++	            Theron3879TargetStepsRemaining);
 +	    fflush(Theron3879Trace);
 +	    if(PC == 0x39c7 || PC == 0x39dd)
 +	     Theron3879TargetStepsRemaining = 128;

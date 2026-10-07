@@ -264,7 +264,8 @@ Reviewed 2026-10-07. Only open work is listed here.
   `scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch` is prepared
   to record the `$2003/$2004` target, physical MPR mapping, opcode, and up to
   128 subsequent CPU steps. The complete patch-only sequence passed against a
-  clean Mednafen 1.32.1 source copy on trv2. The emulator binary has not been
+  clean Mednafen 1.32.1 source copy on trv2. The instrumented HuC6280 object
+  has now compiled successfully on trv2, but the emulator binary has not been
   built or run; the runtime receipt is still required. The source join does
   not prove the `$4ef4`
   caller's live MPR mapping, execution, BIOS effects, or game-level meaning.

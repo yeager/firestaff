@@ -12,8 +12,10 @@
   the existing Mednafen build and capture scripts apply and expose the patch.
   Static wiring checks passed, then the complete patch-only build sequence
   applied every instrumented patch against a clean Mednafen 1.32.1 source copy
-  on trv2. No emulator binary was built or run, and the same-session runtime
-  receipt remains open in `TODO-theron.md`.
+  on trv2. The instrumented HuC6280 object also compiled successfully on trv2
+  after forcing recompilation, and three follow-up incremental checks confirmed
+  the object remained up to date. No emulator binary was built or run, and the
+  same-session runtime receipt remains open in `TODO-theron.md`.
 
 ## 2026-10-07 — decompile the JP `$31B3` helper dataflow
 
