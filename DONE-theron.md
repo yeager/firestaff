@@ -2,20 +2,22 @@
 
 ## 2026-10-07 — prepare bounded `$3879` indirect-target trace
 
-- Added `scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch` for
-  opt-in tracing of `$4ef4`, `$3879..$3918`, and `$39c0..$3a0f`. At `$39c7` and
-  `$39dd` it records `$2003/$2004`, the active MPR-derived physical target,
-  target opcode, and up to 128 subsequent HuC6280 steps. This is capture
+- Added standard-PCE and PCE Fast hooks for opt-in tracing of `$4ef4`,
+  `$3879..$3918`, and `$39c0..$3a0f`. At `$39c7` and `$39dd` they record
+  `$2003/$2004`, the active MPR-derived physical target, target opcode, and up
+  to 128 subsequent HuC6280 steps. This is capture
   instrumentation only; it does not change Firestaff runtime behavior or
   establish that the path executes. The Theron capture launcher now passes the
   trace destination and checks the optional sidecar's line boundaries, while
   the existing Mednafen build and capture scripts apply and expose the patch.
-  Static wiring checks passed, then the complete patch-only build sequence
+  Static wiring checks passed, then three repeated complete patch-only passes
   applied every instrumented patch against a clean Mednafen 1.32.1 source copy
   on trv2. The instrumented HuC6280 object also compiled successfully on trv2
   after forcing recompilation, and three follow-up incremental checks confirmed
-  the object remained up to date. No emulator binary was built or run, and the
-  same-session runtime receipt remains open in `TODO-theron.md`.
+  the object remained up to date. The equivalent PCE Fast object compiled and
+  linked on trv2. A genuine JP Akutuba-state run loaded successfully and
+  produced the new sidecar; its target window and input limits are recorded in
+  `TODO-theron.md`, with no claim that the indirect destination executed.
 
 ## 2026-10-07 — decompile the JP `$31B3` helper dataflow
 

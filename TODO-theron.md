@@ -263,11 +263,19 @@ Reviewed 2026-10-07. Only open work is listed here.
   opt-in Mednafen patch
   `scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch` is prepared
   to record the `$2003/$2004` target, physical MPR mapping, opcode, and up to
-  128 subsequent CPU steps. The complete patch-only sequence passed against a
-  clean Mednafen 1.32.1 source copy on trv2. The instrumented HuC6280 object
-  has now compiled successfully on trv2, but the emulator binary has not been
-  built or run; the runtime receipt is still required. The source join does
-  not prove the `$4ef4`
+  128 subsequent CPU steps in both standard PCE and PCE Fast. Three complete
+  patch-only passes, including both hooks, passed against clean Mednafen 1.32.1
+  source copies on trv2. Both HuC6280 variants compiled; the PCE Fast
+  binary was relinked. A genuine JP Akutuba `.mca` autoload was confirmed by
+  Mednafen, but a no-input capture observed only logical `$4ef6` at physical
+  `$0d0ef3`. A four-second PCE RUN replay was applied and followed by a
+  controller read at `$44d2`; all 72 target-window rows still remained at
+  `$4ef6`, with no `$3879..$3a0f` execution, `$e009` dispatch, or CD-sector
+  reads. The state therefore does not resolve the candidate path. Keep the
+  private traces under
+  `/home/trv2/work/theron-3879-runtime-capture-20261007/out/`; do not claim
+  that the indirect destination executed. The source join does not prove the
+  `$4ef4`
   caller's live MPR mapping, execution, BIOS effects, or game-level meaning.
   Do not treat logical `$3879` as an image offset or promote these bytes to
   runtime behavior.
