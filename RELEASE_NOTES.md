@@ -17,6 +17,9 @@
 
 ## Developer changes
 
+- `DM1 FM Towns return scan`: extends the authentic launcher round trip through
+  the first Towns runtime frame and verifies that returning to M12 rediscovers
+  installed DM1, CSB, and DM2 originals.
 - `CSB FM Towns AUTO startup`: adds an authentic mixed-platform M12 test that
   omits `--platform`, requires Amiga and Atari ST discovery, and follows the
   selected FM Towns title through SWITCHTW and the original MINI.DAT party.

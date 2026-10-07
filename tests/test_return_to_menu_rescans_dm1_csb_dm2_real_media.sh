@@ -4,10 +4,12 @@ set -eu
 app=${1:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff> <data-root>}
 data_root=${2:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff> <data-root>}
 dm1_archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
+dm1_fmtowns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 csb_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
 dm2_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 
 if [ ! -x "$app" ] || [ ! -f "$dm1_archive" ] ||
+   [ ! -f "$dm1_fmtowns_archive" ] ||
    [ ! -f "$csb_archive" ] || [ ! -f "$dm2_archive" ]; then
     echo 'SKIP: authentic DM1, CSB, and DM2 archives are required'
     exit 77
@@ -39,6 +41,7 @@ run_return_to_menu_case() {
         --script "$script" --duration "$duration_ms"
     FIRESTAFF_CONFIG_PATH="$case_root/config.toml" \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    HOME="$case_root" XDG_CONFIG_HOME="$case_root" APPDATA="$case_root" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" "$@" >"$run_log" 2>&1 || {
             cat "$run_log" >&2
@@ -89,6 +92,10 @@ run_return_to_menu_case dm1 pc \
     'key:enter,key:enter,key:enter,wait:12,key:escape,key:enter' \
     15000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
     'DM1 READY: gameId=dm1 dataDir=.*/data/dm1/.*handoff=pc-img3'
+run_return_to_menu_case dm1 fmtowns \
+    'key:enter,key:enter,key:enter,wait:5,key:escape,wait:10,key:enter' \
+    30000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
+    'launch phase=game-handoff mode=menu game=dm1 platform=FM Towns edition=fmtowns-en source=.*/data/dm1/.*GRAPHICS.DAT'
 run_return_to_menu_case csb fm-towns \
     'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,back,wait:10,enter' \
     30000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \

@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-10-07: Extended the authentic return-to-menu rescan regression with
+  DM1 FM Towns. The M12 route reaches the first original HoC runtime frame,
+  returns to the launcher, and confirms that installed DM1, CSB, and DM2 media
+  are rediscovered. The combined DM1/CSB/DM2 CTest passes against original data.
+
 - 2026-10-07: Corrected the M12 no-data regression fixture to use the English
   PC 3.4 identity, whose required startup pair matches the files the fixture
   provides. Its authentic CSB Atari companion test now verifies native bundled

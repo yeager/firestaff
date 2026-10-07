@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-07: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` with an
+  authentic DM1 FM Towns run. The normal M12 route reaches the first HoC frame,
+  returns to the launcher, and rediscovers all three original DM1, CSB, and DM2
+  collections. The complete regression passes in 210.66 seconds, including
+  the existing DM1 PC, CSB FM Towns, and DM2 AUTO return routes.
+
 - 2026-10-07: Extended the persisted-root original-media launcher regression
   to cover DM1 Amiga 2.0, CSB FM Towns Japanese and DM2 Macintosh retail in
   addition to the existing DM1 PC 3.4, CSB FM Towns English and DM2 DOS cases.
