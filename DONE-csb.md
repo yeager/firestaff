@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-10-08: The persisted-root M12 handoff now selects the authenticated
+  Amiga 3.1 English package and confirms the native A31E M11 boot profile.
+  The expanded original-media CTest passed against the installed collection;
+  the dedicated A31E title-to-runtime handoff also passed. The mixed-platform
+  FM Towns AUTO test passed with original Amiga, Atari ST and FM Towns editions
+  installed, reaching the source MINI.DAT party through M12.
+
 - 2026-10-07: Seven installed authentic CSB CLI-start tests passed in the
   multi-edition startup matrix, covering Amiga, Atari ST and FM Towns media.
   The Atari R1 campaign/Utility Disk test and French Atari preservation ZIP
