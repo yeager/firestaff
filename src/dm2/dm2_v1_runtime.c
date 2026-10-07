@@ -12212,7 +12212,6 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         rt->source_party.heros_in_party == hud.champion_count &&
         rt->source_party.heros_in_party > 0 &&
         rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
-        rt->session_snapshot.leader_index >= 0 &&
         rt->session_snapshot.leader_index < hud.champion_count &&
         party_direction >= 0 && party_direction <= 3;
     hud.towns_party_direction = (uint8_t)(party_direction & 3);
