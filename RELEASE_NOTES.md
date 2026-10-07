@@ -1,3 +1,19 @@
+# Firestaff v3.0.368
+
+## Developer changes
+
+- `DM1 FM Towns return scan`: extends the authentic launcher round trip through
+  the first Towns runtime frame and verifies that returning to M12 rediscovers
+  installed DM1, CSB, and DM2 originals.
+- `CSB FM Towns AUTO startup`: adds an authentic mixed-platform M12 test that
+  omits `--platform`, requires Amiga and Atari ST discovery, and follows the
+  selected FM Towns title through SWITCHTW and the original MINI.DAT party.
+- `DM2 FM Towns AUTO startup`: adds mixed-edition real-media test coverage for
+  bare `--game dm2` through the authentic title animation, New Game, and first
+  runtime frame.
+- `Release packaging`: changes the project version to 3.0.368 and refreshes
+  the deterministic SPDX source inventory.
+
 # Firestaff v3.0.367
 
 ## User-facing changes
@@ -12,20 +28,6 @@
   its authentic startup-media requirements and verifies that the bundled 7z
   reader scans authentic CSB Atari media without an unnecessary external-tool
   prompt.
-
-# Unreleased
-
-## Developer changes
-
-- `DM1 FM Towns return scan`: extends the authentic launcher round trip through
-  the first Towns runtime frame and verifies that returning to M12 rediscovers
-  installed DM1, CSB, and DM2 originals.
-- `CSB FM Towns AUTO startup`: adds an authentic mixed-platform M12 test that
-  omits `--platform`, requires Amiga and Atari ST discovery, and follows the
-  selected FM Towns title through SWITCHTW and the original MINI.DAT party.
-- `DM2 FM Towns AUTO startup`: takes the mixed-edition default selection through
-  the authentic title animation, New Game, and first runtime frame without an
-  explicit platform override.
 
 # Firestaff v3.0.366
 
