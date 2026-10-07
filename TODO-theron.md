@@ -103,8 +103,10 @@ Reviewed 2026-10-07. Only open work is listed here.
   closes the currently mapped byte/edge set for these selector paths; it is
   not proof that a selector executes at runtime, nor a semantic interpretation
   of the record fields. Its `$528c` BNE edge is now asserted to target `$5292`,
-  but the runtime selector value, branch outcome, reached BIOS/helper calls,
-  and field meanings remain unproven.
+  and the `$5263` BCC, `$5265` BNE, and `$526c` BCS edges in the preceding
+  routine are also asserted against authentic JP Track 02. These remain static
+  edge facts: the runtime selector value, branch outcomes, reached BIOS/helper
+  calls, and field meanings remain unproven.
 - Next, capture a source-byte-identified JP runtime trace that records the
   selector at `$5800`, the branch decision at `$528c`, and reached BIOS/helper
   calls. Derive any additional dynamically reached indirect edges and determine

@@ -7369,6 +7369,12 @@ unobserved. The current full-source test target rebuilt on `trv2` with
 JP Track 02. This adds static control-flow evidence only, not gameplay or
 regional parity.
 
+2026-10-07 disassembly follow-up: extended the authentic JP branch-edge test
+to cover `$5263 BCC -> $526c`, `$5265 BNE -> $526c`, and `$526c BCS -> $529a`
+in the same selector continuation. MAME `unidasm -arch h6280` decoded these
+edges directly from original JP Track 02; runtime branch outcomes and gameplay
+semantics remain unproven.
+
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 
 An independent read-only audit re-extracted all 16 newly bound JP helper
