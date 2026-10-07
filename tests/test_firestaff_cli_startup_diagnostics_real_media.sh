@@ -8,6 +8,7 @@ dm1_towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Du
 dm1_pc_archive=${FIRESTAFF_DM1_PC_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN.zip"}
 dm1_pc98_archive=${FIRESTAFF_DM1_PC98_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_PC-98_EN.zip"}
 csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
+csb_amiga_archive=${FIRESTAFF_CSB_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"}
 csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$mac_archive" ] ||
@@ -88,9 +89,10 @@ print(
 
 combined_root=$(mktemp -d "${PWD}/.firestaff-cli-diagnostics.XXXXXX")
 csb_mixed_root=
+csb_combined_root=
 dm1_combined_root=
 default_home=
-trap 'rm -rf "$combined_root" "$csb_mixed_root" "$dm1_combined_root" "$default_home"' EXIT
+trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home"' EXIT
 
 # Exercise the real default path layout without --data-dir and without
 # inheriting a developer's saved config. Stage only links to the original
@@ -272,6 +274,33 @@ if [ -f "$csb_towns_archive" ]; then
         esac
         rm -rf "$csb_mixed_root"
     fi
+fi
+
+# When both original CSB FM Towns and Amiga packages are installed, AUTO must
+# retain the FM Towns default independently of catalogue order. Both archives
+# remain at their authentic filenames because CD admission also validates the
+# documented original package path; the links keep this check read-only.
+if [ -f "$csb_towns_archive" ] && [ -f "$csb_amiga_archive" ]; then
+    csb_combined_root=$(mktemp -d "${PWD}/.firestaff-csb-platforms.XXXXXX")
+    ln -s "$csb_towns_archive" \
+        "$csb_combined_root/$(basename "$csb_towns_archive")"
+    ln -s "$csb_amiga_archive" \
+        "$csb_combined_root/$(basename "$csb_amiga_archive")"
+    csb_auto_multi=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --data-dir "$csb_combined_root" \
+        --debug --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$csb_auto_multi" >&2
+        exit 1
+    }
+    case "$csb_auto_multi" in
+        *"csb platform=FM Towns edition=fmtowns-en matched source=$csb_combined_root/$(basename "$csb_towns_archive")::CDATA/GRAPHICS.DAT"*"csb platform=Amiga edition=amiga31-multi matched source="*"launch phase=game-handoff mode=direct game=csb platform=FM Towns edition=fmtowns-en source=$csb_combined_root/$(basename "$csb_towns_archive")::CDATA/GRAPHICS.DAT"*) ;;
+        *)
+            echo "FAIL: CSB AUTO did not prefer FM Towns with authentic Amiga media also installed" >&2
+            printf '%s\n' "$csb_auto_multi" >&2
+            exit 1
+            ;;
+    esac
+    echo "PASS: CSB AUTO prefers FM Towns when original Amiga media is also installed"
 fi
 
 # When both authentic DM1 PC and FM Towns releases are installed, a bare
