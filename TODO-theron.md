@@ -34,6 +34,11 @@
   BSR, helper branch, and RTS. This establishes static arithmetic only, not
   runtime selection or VDC semantics. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l4b24-window-20261008.md`.
+- ✅ Added a dedicated MAME HuC6280 listing for the already byte-verified
+  `$4A89` callee `$491F..$4931`. JP/US bytes and listings match in three loops;
+  the focused authentic-media verifier passes. This adds no runtime or display
+  parity claim. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l491f-window-20261008.md`.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 
@@ -146,7 +151,7 @@
   2026-10-08 subsection in
   `docs/source-lock/theron-disassembly/theron-3879-runtime-window-candidates-20261007.md`.
 
-Reviewed 2026-10-07. Only open work is listed here.
+Reviewed 2026-10-08. Only open work is listed here.
 
 ## 2026-10-07 — bind JP runtime-sampled code to its physical source copy
 

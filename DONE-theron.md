@@ -7659,3 +7659,12 @@ T900/original inventory semantics. No synthetic media was used.
   16-bit shift/add operation, but not runtime selection or rendering
   semantics. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l4b24-window-20261008.md`.
+
+## 2026-10-08 — JP Stage-2 `$491F` callee disassembly
+
+- Added a standalone MAME HuC6280 listing for the direct `$4A89` callee. Its
+  19 authentic bytes match both JP and US Track 02 images, and the existing
+  focused authentic-media verifier passes. The listing supports only a static
+  decode of the `$F3/$F4` data transformation and ST0/port writes; runtime and
+  display semantics remain unproven. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l491f-window-20261008.md`.
