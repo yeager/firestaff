@@ -1,3 +1,15 @@
+# Firestaff v3.0.369
+
+## User-facing changes
+
+- `DM1, CSB and DM2 AUTO platform`: documents and verifies the existing
+  authenticated FM Towns default when those original editions are installed.
+
+## Developer changes
+
+- `Original-media launcher regression`: adds an assertion for the FM Towns
+  AUTO preference for DM1, CSB and DM2 against installed authentic editions.
+
 # Firestaff v3.0.368
 
 ## Developer changes

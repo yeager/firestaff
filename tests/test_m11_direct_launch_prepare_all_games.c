@@ -374,6 +374,8 @@ static void run_real_data_handoff_if_available(void) {
         const M12_AssetVersionStatus* autoMatchedVersion;
         int autoVersionIndex;
         int autoArchitecture;
+        int matchedFmTownsVersion = 0;
+        size_t versionOrdinal;
         char expectedAssetMd5[33];
         char scoped_dir[512];
         const char* case_data_dir;
@@ -413,8 +415,30 @@ static void run_real_data_handoff_if_available(void) {
             ? M12_AssetStatus_GetVersionArchitecture(kCases[i].gameId,
                                                       (size_t)autoVersionIndex)
             : M12_ARCH_AUTO;
+        for (versionOrdinal = 0U;
+             versionOrdinal < M12_AssetStatus_GetVersionCount(kCases[i].gameId);
+             ++versionOrdinal) {
+            const M12_AssetVersionStatus* candidate =
+                M12_AssetStatus_GetVersion(&menu.assetStatus,
+                                           kCases[i].gameId,
+                                           versionOrdinal);
+            if (candidate && candidate->matched &&
+                M12_AssetStatus_GetVersionArchitecture(kCases[i].gameId,
+                                                       versionOrdinal) ==
+                    M12_ARCH_FM_TOWNS) {
+                matchedFmTownsVersion = 1;
+                break;
+            }
+        }
         expect_true(autoMatchedVersion && autoMatchedVersion->matched,
                     "direct AUTO resolves a verified version");
+        if (matchedFmTownsVersion &&
+            (strcmp(kCases[i].gameId, "dm1") == 0 ||
+             strcmp(kCases[i].gameId, "csb") == 0 ||
+             strcmp(kCases[i].gameId, "dm2") == 0)) {
+            expect_true(autoArchitecture == M12_ARCH_FM_TOWNS,
+                        "direct AUTO prefers authenticated FM Towns media when installed");
+        }
         if (!autoMatchedVersion) {
             M12_StartupMenu_Destroy(&menu);
             continue;

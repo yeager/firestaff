@@ -570,6 +570,7 @@ jobs:
     name: Android arm64
     needs: preflight
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       contents: read
     env:
@@ -589,9 +590,7 @@ jobs:
           echo "ANDROID_NDK_HOME=${ANDROID_SDK_ROOT}/ndk/27.0.12077973" >> "$GITHUB_ENV"
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config
+        run: bash scripts/ci/install_apt_packages.sh cmake ninja-build pkg-config
 
       - name: Build SDL3 for Android
         run: |

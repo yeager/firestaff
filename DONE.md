@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-07: The authentic all-games launcher regression now asserts that
+  AUTO selects the matched FM Towns edition for DM1, CSB and DM2 whenever it
+  is installed. The test passes against the external original-media
+  collection; this verifies startup selection and does not claim visual
+  parity or physical M5 behavior.
+
 - 2026-10-07: The authentic multi-edition startup matrix passed all 14
   installed DM1 and five DM2 CLI-start tests, plus seven CSB CLI-start tests.
   Two CSB cases skipped because the Atari R1 campaign/Utility Disk and French

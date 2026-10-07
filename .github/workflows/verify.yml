@@ -21,10 +21,11 @@ env:
 jobs:
   localization-catalogs:
     runs-on: ubuntu-24.04
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
       - name: Install GNU gettext
-        run: sudo apt-get update && sudo apt-get install -y gettext
+        run: bash scripts/ci/install_apt_packages.sh gettext
       - name: Verify source-generated and canonical POT/PO catalogs
         run: bash po/update.sh --check
       - name: Verify build-tree MO catalog generation
@@ -128,8 +129,8 @@ jobs:
       - name: Install SDL3 (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build git pkg-config \
+          bash scripts/ci/install_apt_packages.sh \
+            build-essential cmake ninja-build git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
           sdl_root="$RUNNER_TEMP/firestaff-sdl3"
@@ -375,12 +376,13 @@ jobs:
 
   warnings-check:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - name: Install SDL3 headers
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build git pkg-config \
+          bash scripts/ci/install_apt_packages.sh \
+            build-essential cmake ninja-build git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
           sdl_root="$RUNNER_TEMP/firestaff-sdl3"

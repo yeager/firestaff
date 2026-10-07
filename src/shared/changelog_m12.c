@@ -17,6 +17,7 @@ static const char* const g_changelogLines[] = {
     "====================",
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-07)",
+    "  - Original-media regression asserts DM1, CSB and DM2 AUTO prefers FM Towns when installed.",
     "  - DM1 Atari discovery admits every authenticated edition in persisted roots.",
     "  - The launcher recognizes the authentic direct ZIP-to-STX Atari v1.2 set.",
     "",
