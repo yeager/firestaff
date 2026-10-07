@@ -392,6 +392,8 @@ if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE' "$main_ram_consumer_patc
 fi
 indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch
 pce_fast_indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch
+cd_ram_runtime_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_runtime_window_trace.patch
+cd_ram_target_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'theron_pce_fast_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'previous !~ /TheronTraceInstructionPhysicalPC =/' "$build_script" ||
@@ -408,6 +410,33 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'Theron3879FastTargetStepsRemaining = 128' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
     printf '%s\n' 'FAIL: bounded $3879 indirect-target trace is missing or not wired into the live capture'
+    exit 1
+fi
+if ! grep -Fq 'theron_pce_fast_cd_ram_runtime_window_trace.patch' "$build_script" ||
+   ! grep -Fq 'theron_3879_runtime_window' "$cd_ram_runtime_window_patch_file" ||
+   ! grep -Fq 'const unsigned logical = 0x489f + i;' "$cd_ram_runtime_window_patch_file" ||
+   ! grep -Fq 'HuCPU.PCERead[mpr](physical)' "$cd_ram_runtime_window_patch_file" ||
+   ! grep -Fq 'Theron3879FastRuntimeCodeWindow' "$cd_ram_runtime_window_patch_file"; then
+    printf '%s\n' 'FAIL: runtime source window for the PCE Fast CD RAM caller is missing or unwired' >&2
+    exit 1
+fi
+if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" ||
+   ! grep -Fq 'cd_ram_target_write sequence=%u physical_address=%06x' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE' "$capture_script" ||
+   ! grep -Fq 'cd_ram_target_write_trace="${trace}.cd-ram-target-write"' "$capture_script" ||
+   ! grep -Fq '"$cd_ram_target_write_trace"' "$capture_script"; then
+    printf '%s\n' 'FAIL: PCE Fast CD RAM target-write provenance trace is missing or not wired into live capture' >&2
+    exit 1
+fi
+if ! grep -Fq 'trace_files_are_line_delimited "$trace" "$cd_trace"' "$capture_script" ||
+   ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
+    printf '%s\n' 'FAIL: PCE Fast runtime window trace is not checked for line-delimited records' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace"' "$capture_script" ||
+   ! grep -Fq 'index($_, chr(92) . chr(92) . "n")' "$capture_script" ||
+   ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
+    printf '%s\n' 'FAIL: PCE Fast runtime window trace is not wired into capture verification' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||

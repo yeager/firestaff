@@ -136,6 +136,15 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "theron;track02;real-media;runtime-capture;source-lock;no-synthetic")
     add_test(
+        NAME theron_3879_runtime_window_candidates
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_3879_runtime_window_candidates.py
+            ${FIRESTAFF_WORKSPACE_DATA_DIR}
+    )
+    set_tests_properties(theron_3879_runtime_window_candidates PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;track02;real-media;runtime-capture;source-lock;no-synthetic")
+    add_test(
         NAME theron_39c0_disassembly
         COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_39c0_disassembly.py

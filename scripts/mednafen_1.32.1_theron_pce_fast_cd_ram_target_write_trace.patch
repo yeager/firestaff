@@ -1,0 +1,39 @@
+--- a/src/pce_fast/huc.cpp
++++ b/src/pce_fast/huc.cpp
+@@ -73,11 +73,36 @@
+ static DECLFR(HuCRead)
+ {
+  return ROMSpace[A];
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
++static void TheronTraceCDRAMTargetWrite(uint32 address, uint8 value)
++{
++ static FILE *trace = NULL;
++ static unsigned count = 0;
++ const uint32 first = 0x68 * 8192 + 0x089f;
++ const uint32 last = 0x68 * 8192 + 0x08ab;
++ if(address < first || address > last || count >= 4096)
++  return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-fast-cd-ram-target-write\n", trace);
++ }
++ fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x\n",
++         count++, address, address - 0x68 * 8192, ROMSpace[address], value,
++         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, HuCPU.MPR[2]);
++ fflush(trace);
++}
++
+ static DECLFW(HuCRAMWrite)
+ {
++ TheronTraceCDRAMTargetWrite(A, V);
+  ROMSpace[A] = V;
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ static DECLFW(HuCRAMWriteCDSpecial) // Hyper Dyne Special hack

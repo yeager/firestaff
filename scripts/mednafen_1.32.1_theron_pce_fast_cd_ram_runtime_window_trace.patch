@@ -1,0 +1,18 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -42,0 +43,1 @@
++static char Theron3879FastRuntimeCodeWindow[27];
+@@ -949,1 +950,13 @@
++     if(TheronTraceInstructionPC == 0x4f06 || TheronTraceInstructionPC == 0x48a8)
++     {
++      for(unsigned i = 0; i < 13; ++i)
++      {
++       const unsigned logical = 0x489f + i;
++       const unsigned mpr = HuCPU.MPR[logical >> 13];
++       const unsigned physical = (mpr << 13) | (logical & 0x1fff);
++       snprintf(Theron3879FastRuntimeCodeWindow + i * 2, 3, "%02x", HuCPU.PCERead[mpr](physical));
++      }
++     }
++     if(TheronTraceInstructionPC == 0x4f06 || TheronTraceInstructionPC == 0x48a8)
++      fprintf(Theron3879FastTrace, "theron_3879_runtime_window logical_pc=%04x physical_pc=%06x mpr2=%02x bytes=%s\n", TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, HuCPU.MPR[2], Theron3879FastRuntimeCodeWindow);
+      fprintf(Theron3879FastTrace,

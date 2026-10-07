@@ -208,6 +208,14 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_stage2_mpr1_probe.patch"
 git -C "$build_root/source" apply --unidiff-zero --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch"
+git -C "$build_root/source" apply --unidiff-zero --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_runtime_window_trace.patch"
+target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch"
+target_write_rendered="$build_root/theron-pce-fast-cd-ram-target-write.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$target_write_patch" \
+    > "$target_write_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$target_write_rendered"
 if ! awk '
     /if\(Theron3879FastTargetStepsRemaining \|\|/ {
         if(previous !~ /TheronTraceInstructionPhysicalPC =/) exit 1
@@ -217,6 +225,23 @@ if ! awk '
     END { if(!found) exit 1 }
 ' "$build_root/source/src/pce_fast/huc6280.cpp"; then
     printf '%s\n' 'FAIL: PCE Fast $3879 hook must follow the current instruction physical-PC update' >&2
+    exit 1
+fi
+if ! awk '
+    /Theron3879FastTargetOpcode =/ { in_target_trace = 1 }
+    in_target_trace && /snprintf\(Theron3879FastRuntimeCodeWindow/ { sampled_runtime_window = NR }
+    in_target_trace && /theron_3879_runtime_window logical_pc=/ {
+        if (!sampled_runtime_window || sampled_runtime_window >= NR) exit 1
+        runtime_window_logged = NR
+    }
+    in_target_trace && /theron_3879_step sequence=/ {
+        if (!runtime_window_logged || runtime_window_logged >= NR) exit 1
+        found = 1
+        exit
+    }
+    END { if (!found) exit 1 }
+' "$build_root/source/src/pce_fast/huc6280.cpp"; then
+    printf '%s\n' 'FAIL: runtime code-window sampling is not inside the instruction trace record path' >&2
     exit 1
 fi
 theron_3879_trace_patch="$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch"

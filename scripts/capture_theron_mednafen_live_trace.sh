@@ -987,6 +987,7 @@ cdda_command_trace="${trace}.cdda-command"
 input_trace="${trace}.input"
 main_ram_loader_trace="${trace}.main-ram-loader"
 indirect_target_trace="${trace}.3879-indirect-target"
+cd_ram_target_write_trace="${trace}.cd-ram-target-write"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
 selected_record_trace="${trace}.selected-record"
 main_ram_target_trace="${trace}.main-ram-target"
@@ -1027,7 +1028,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ "$capture_clonecd_track02" == 1 ]]; then
@@ -1219,6 +1220,7 @@ launch=(
     FIRESTAFF_THERON_MENU_ROUTE="$menu_route" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
+    FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
     FIRESTAFF_THERON_SELECTED_RECORD_TRACE="$selected_record_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
@@ -1516,8 +1518,33 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
+    exit 1
+fi
+if [[ -s "$indirect_target_trace" ]] && ! trace_files_are_line_delimited "$indirect_target_trace"; then
+    printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in the indirect-target trace' >&2
+    exit 1
+fi
+if [[ "$capture_mednafen_module" == pce_fast && -s "$indirect_target_trace" ]] && ! awk '
+    /^theron_3879_step .*logical_pc=(4f06|48a8) / {
+        pc = ""
+        if (match($0, /logical_pc=[0-9a-f]{4}/)) pc = substr($0, RSTART + 11, 4)
+        if (pc == "") exit 1
+        step[pc] = 1
+    }
+    /^theron_3879_runtime_window / {
+        pc = ""
+        if (match($0, /logical_pc=[0-9a-f]{4}/)) pc = substr($0, RSTART + 11, 4)
+        if (pc != "4f06" && pc != "48a8") exit 1
+        if ($0 !~ /physical_pc=[0-9a-f]{6} mpr2=[0-9a-f]{2} bytes=[0-9a-f]{26}$/) exit 1
+        window[pc] = 1
+    }
+    END {
+        for (pc in step) if (!window[pc]) exit 1
+    }
+' "$indirect_target_trace"; then
+    printf '%s\n' 'FAIL: PCE Fast runtime code-window evidence is missing or malformed' >&2
     exit 1
 fi
 if [[ -s "$command_consumer_trace" ]] && ! awk '

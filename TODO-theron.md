@@ -24,6 +24,21 @@
   `tests/test_theron_v1_stage2_disassembly_chain.c` (US and JP calls near
   lines 4517 and 4591). Do not infer self-modifying code or an overlapping
   handler: the physical-bank load/provenance path remains unknown.
+- 🔒 The corrected runtime byte probe now samples inside the `$3879` trace
+  path. Three authentic JP Rev. 1 save-state captures observed the same
+  `$489f..$48ab` bytes `16 00 04 1c 02 80 65 00 00 a9 08 20 fb` at both
+  `$4f06` and `$48a8`, with MPR2=`$68`. Three bounded, hash-verified scans
+  found this exact 13-byte sequence at six JP Track 02 raw offsets and none
+  in US Track 02. `docs/source-lock/theron-disassembly/theron-3879-runtime-window-candidates-20261007.md`
+  records the candidate sectors and the `theron_3879_runtime_window_candidates`
+  source-lock test. Six matches do not identify which source copy was loaded.
+- 🔒 A cold boot without save-state found that PCE Fast maps CD RAM bank
+  `$68` through `ROMSpace` and `HuCRAMWrite` (`huc.cpp`, lines 73–80 and
+  315–322). The bounded target-write trace saw only System Card zeroing of
+  `$0d089f..$0d08ab` from PC `$ea9c` (physical `$000a9c`, MPR2=`$80`). It
+  observed no CD read command, non-System-Card input poll, or transition.
+  This does not explain the nonzero save-state bytes or bind them to any of
+  the six media candidates.
 - 🔧 Bind the genuine game-code caller/route that transfers control into the
   `$4f06 -> $48a8` runtime path to its authentic physical-bank source. Trace
   the MPR2=`$68` mapping's writes/load origin and bind the observed `$a9`
