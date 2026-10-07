@@ -16,52 +16,52 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/engine/main_loop_m11.c:395
+#: src/engine/main_loop_m11.c:397
 msgid "NEXUS LOAD FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:397
+#: src/engine/main_loop_m11.c:399
 msgid "CHECK ISO/BIN OR EXTRACTED FILES"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:404
+#: src/engine/main_loop_m11.c:406
 msgid "THERON STARTUP FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:406
+#: src/engine/main_loop_m11.c:408
 msgid "VERIFY CUE/BIN AND STARTUP DETAILS"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:424
+#: src/engine/main_loop_m11.c:426
 msgid "CSB LOAD FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:426
+#: src/engine/main_loop_m11.c:428
 msgid "CHECK GRAPHICS/DUNGEON DATA"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:429
+#: src/engine/main_loop_m11.c:431
 msgid "DUNGEON LOAD FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:431
+#: src/engine/main_loop_m11.c:433
 msgid "CHECK DUNGEON.DAT"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:434 src/engine/main_loop_m11.c:4603
-#: src/engine/main_loop_m11.c:4626 src/ui/menu_startup_m12.c:1080
+#: src/engine/main_loop_m11.c:436 src/engine/main_loop_m11.c:4704
+#: src/engine/main_loop_m11.c:4727 src/ui/menu_startup_m12.c:1080
 msgid "ESC RETURNS TO MENU"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:4599 src/engine/main_loop_m11.c:4622
+#: src/engine/main_loop_m11.c:4700 src/engine/main_loop_m11.c:4723
 msgid "CSB UTILITY DISK NOT READY"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:4601
+#: src/engine/main_loop_m11.c:4702
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:4624
+#: src/engine/main_loop_m11.c:4725
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr ""
 
@@ -363,7 +363,7 @@ msgid "OFF"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:487 src/ui/menu_startup_m12.c:503
-#: src/ui/menu_startup_render_modern_m12.c:2468
+#: src/ui/menu_startup_render_modern_m12.c:2471
 msgid "ON"
 msgstr ""
 
@@ -415,7 +415,7 @@ msgstr ""
 msgid "AVAILABLE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2062
+#: src/ui/menu_startup_m12.c:506 src/ui/menu_startup_render_modern_m12.c:2065
 msgid "UNAVAILABLE"
 msgstr ""
 
@@ -529,20 +529,20 @@ msgstr ""
 
 #: src/ui/menu_startup_m12.c:792 src/ui/menu_startup_m12.c:813
 #: src/ui/menu_startup_m12.c:10300 src/ui/menu_startup_m12.c:10743
-#: src/ui/menu_startup_render_modern_m12.c:1497
-#: src/ui/menu_startup_render_modern_m12.c:2732
+#: src/ui/menu_startup_render_modern_m12.c:1500
+#: src/ui/menu_startup_render_modern_m12.c:2735
 msgid "DUNGEON MASTER"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:793 src/ui/menu_startup_m12.c:823
 #: src/ui/menu_startup_m12.c:10302 src/ui/menu_startup_m12.c:10757
-#: src/ui/menu_startup_render_modern_m12.c:1498
-#: src/ui/menu_startup_render_modern_m12.c:2735
+#: src/ui/menu_startup_render_modern_m12.c:1501
+#: src/ui/menu_startup_render_modern_m12.c:2738
 msgid "CHAOS STRIKES BACK"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:794 src/ui/menu_startup_m12.c:833
-#: src/ui/menu_startup_render_modern_m12.c:1499
+#: src/ui/menu_startup_render_modern_m12.c:1502
 msgid "DUNGEON MASTER II"
 msgstr ""
 
@@ -563,8 +563,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:11828
-#: src/ui/menu_startup_m12.c:11831 src/ui/menu_startup_render_modern_m12.c:1837
-#: src/ui/menu_startup_render_modern_m12.c:2110
+#: src/ui/menu_startup_m12.c:11831 src/ui/menu_startup_render_modern_m12.c:1840
+#: src/ui/menu_startup_render_modern_m12.c:2113
 msgid "MUSEUM OF LORE"
 msgstr ""
 
@@ -1613,7 +1613,7 @@ msgstr ""
 msgid "MISSING OR MISMATCHED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9224 src/ui/menu_startup_render_modern_m12.c:2038
+#: src/ui/menu_startup_m12.c:9224 src/ui/menu_startup_render_modern_m12.c:2041
 msgid "EXTRAS"
 msgstr ""
 
@@ -1763,7 +1763,7 @@ msgstr ""
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:11144 src/ui/menu_startup_render_modern_m12.c:2274
+#: src/ui/menu_startup_m12.c:11144 src/ui/menu_startup_render_modern_m12.c:2277
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr ""
 
@@ -1863,89 +1863,89 @@ msgstr ""
 msgid "V2.2 ARTPACK REJECTED"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1344
+#: src/ui/menu_startup_render_modern_m12.c:1347
 msgid "COMING SOON"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1454
-#: src/ui/menu_startup_render_modern_m12.c:2577
+#: src/ui/menu_startup_render_modern_m12.c:1457
+#: src/ui/menu_startup_render_modern_m12.c:2580
 msgid "FIRESTAFF"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1469
+#: src/ui/menu_startup_render_modern_m12.c:1472
 msgid "DISPLAY  CONTROLS  AUDIO"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1472
+#: src/ui/menu_startup_render_modern_m12.c:1475
 msgid "THANKS TO CHRISTOPHE FONTANEL"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1474
+#: src/ui/menu_startup_render_modern_m12.c:1477
 msgid "AND THE PRESERVATION PROJECTS"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1476
+#: src/ui/menu_startup_render_modern_m12.c:1479
 msgid "DANIEL NYLANDER"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1490
+#: src/ui/menu_startup_render_modern_m12.c:1493
 msgid "OPEN FIRESTAFF SETTINGS AND CREDITS"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1500
+#: src/ui/menu_startup_render_modern_m12.c:1503
 msgid "CREDITS AND ARCHIVE"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1501
+#: src/ui/menu_startup_render_modern_m12.c:1504
 msgid "5 SECTIONS"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1504
+#: src/ui/menu_startup_render_modern_m12.c:1507
 msgid "PRESS ENTER TO OPEN THE LORE MUSEUM"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1607
+#: src/ui/menu_startup_render_modern_m12.c:1610
 msgid "< BACK"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:1959
+#: src/ui/menu_startup_render_modern_m12.c:1962
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2040
+#: src/ui/menu_startup_render_modern_m12.c:2043
 msgid "EXPLORE FIRESTAFF"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2114
+#: src/ui/menu_startup_render_modern_m12.c:2117
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2127
+#: src/ui/menu_startup_render_modern_m12.c:2130
 msgid "ARCHIVE SECTIONS"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2150
+#: src/ui/menu_startup_render_modern_m12.c:2153
 #, c-format
 msgid "PAGE %d/%d"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2258
+#: src/ui/menu_startup_render_modern_m12.c:2261
 msgid "CHOOSE PLATFORM"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2283
+#: src/ui/menu_startup_render_modern_m12.c:2286
 msgid "CHOOSE PRESENTATION"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2525
+#: src/ui/menu_startup_render_modern_m12.c:2528
 msgid "LAUNCH >"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2594
-#: src/ui/menu_startup_render_modern_m12.c:2718
+#: src/ui/menu_startup_render_modern_m12.c:2597
+#: src/ui/menu_startup_render_modern_m12.c:2721
 msgid "OK"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2658
+#: src/ui/menu_startup_render_modern_m12.c:2661
 msgid "CANCEL"
 msgstr ""
