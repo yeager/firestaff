@@ -22,9 +22,13 @@ FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	   }
 +	   if(Theron3879Trace)
 +	   {
++	    const unsigned pointer_low = (PC == 0x39c7 || PC == 0x39dd) ?
++	        RdMem(0x2003) : 0xff;
++	    const unsigned pointer_high = (PC == 0x39c7 || PC == 0x39dd) ?
++	        RdMem(0x2004) : 0xff;
 +	    const unsigned indirect_target =
 +	        (PC == 0x39c7 || PC == 0x39dd) ?
-+	        (RdMem(0x2003) | (RdMem(0x2004) << 8)) : 0xffff;
++	        (pointer_low | (pointer_high << 8)) : 0xffff;
 +	    const unsigned target_physical = indirect_target < 0x10000 ?
 +	        ((MPR[indirect_target >> 13] << 13) | (indirect_target & 0x1fff)) :
 +	        0xffffff;
@@ -34,8 +38,8 @@ FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	            "theron_3879_step sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x ptr2003=%02x ptr2004=%02x indirect_target=%04x target_physical=%06x target_opcode=%02x follow_remaining=%u\n",
 +	            Theron3879TraceCount++, PC, physical_pc, lastop,
 +	            A, X, Y, P, S, MPR[0], MPR[1], MPR[2], MPR[3],
-+	            MPR[4], MPR[5], MPR[6], MPR[7], RdMem(0x2003),
-+	            RdMem(0x2004), indirect_target, target_physical,
++	            MPR[4], MPR[5], MPR[6], MPR[7], pointer_low,
++	            pointer_high, indirect_target, target_physical,
 +	            target_opcode, Theron3879TargetStepsRemaining);
 +	    fflush(Theron3879Trace);
 +	    if(PC == 0x39c7 || PC == 0x39dd)
