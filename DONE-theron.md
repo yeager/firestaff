@@ -7400,6 +7400,26 @@ in the same selector continuation. MAME `unidasm -arch h6280` decoded these
 edges directly from original JP Track 02; runtime branch outcomes and gameplay
 semantics remain unproven.
 
+# ✅ 2026-10-07 ID `$3b` shared Stage 2 continuation
+
+Added explicit source-lock assertions for the ID `$3b` table entry and root,
+and its shared `$443f..$4445` continuation, against authentic US and JP Track
+02 images. The bytes decode as `CLA; JSR $3ab7; JMP $40f5`; ID `$1e` already
+reaches the same bytes by fallthrough. This closes the static byte/edge
+coverage gap only. `$3ab7` effects, runtime selection, stream semantics, and
+gameplay parity remain unproven. No synthetic media was used.
+
+Verification loop: on dedicated `trv2`, extracted the table word, `$447f`
+root, and `$443f` continuation from the SHA-256-attested authentic US and JP
+Track 02 images in three independent passes per edition. All expected bytes
+matched every pass. MAME `unidasm -arch h6280` decoded the continuation as
+`CLA; JSR $3ab7; JMP $40f5`. The target test build was attempted from a clean
+task-specific source snapshot with `--parallel 1`, but CMake pulled in broad
+DM1/DM2 and vendored M10 rebuilds. That isolated build was stopped to avoid
+unnecessary work. The updated test source passed a strict C11 syntax-only
+compile with `-Wall -Wextra -Werror`; the linked C test binary has not yet been
+built or run.
+
 # ✅ 2026-10-06 Audit JP `$3114` static call-edge coverage wording
 
 An independent read-only audit re-extracted all 16 newly bound JP helper

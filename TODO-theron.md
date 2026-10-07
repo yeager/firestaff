@@ -373,8 +373,9 @@ Reviewed 2026-10-07. Only open work is listed here.
   chain; field meanings and runtime selection remain unknown. ID `$3a`'s
   `$485f` `JMP $40f1` stub is locked as the `+1` cursor path; executed-stream
   selection remains unproven. ID `$3b`'s `$447f` branch root is locked and
-  reuses the independently locked `$4483` helper; continuation and stream
-  selection remain unresolved. ID `$3c`'s `$4862..$4894` conditional BIOS
+  reuses the independently locked `$4483` helper. The `$443f` continuation is
+  byte-locked through its `$40f5` tail; callee effects and stream selection
+  remain unresolved. ID `$3c`'s `$4862..$4894` conditional BIOS
   window and shared `+1` exit are now locked; BIOS effects and stream execution
   remain unproven. ID `$3d`'s `$489f..$48ab` branch window is also locked;
   it loops into the ID `$3c` tail, so its full behavior remains unresolved.

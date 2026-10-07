@@ -1412,10 +1412,12 @@ whether the ID occurs in an authentic executed stream.
 
 ID `$3b` points to `$447f` in both editions. Its four-byte root is `BSR $4483;
 BRA $443f`: it calls the shared `$4483` helper already locked by the ID `$2c`
-test, then enters `$443f`. A separate assertion binds this table word and root
-against authentic US and JP data. This records static branch structure only;
-the `$443f` continuation and runtime selection are not implied by the byte
-lock.
+test, then enters `$443f`. The source-lock test binds this table word, root,
+and the seven-byte `$443f..$4445` continuation against authentic US and JP
+data. `$443f` clears A, calls `$3ab7`, then jumps to `$40f5`; the corresponding
+bytes are also reached by ID `$1e` fallthrough. This records static control
+flow only: `$3ab7` effects, runtime selection, and gameplay behavior are not
+implied by the byte lock.
 
 ID `$3c` points to `$4862` in both editions. The 51-byte window
 `$4862..$4894` contains a conditional BIOS branch, a poll of `$4895`, a
