@@ -446,6 +446,21 @@ static void run_original_music_transport_probe(M11_GameViewState* view, int mode
     int master, sfx, music, ui;
     int effectBytes;
     int songBytes;
+    /* The M12 data root can resolve an edition without the PC SONG.DAT.
+     * FM Towns uses source CDDA; other editions have separate media
+     * contracts, so this PC-only transport probe does not apply to them. */
+    if (!audio->originalSongAvailable) {
+        int separateMediaRoute = view->dm1FmtownsStartupReceiptValid ||
+            view->assetLoader.atariStDm1 || view->assetLoader.legacyDm1;
+        expect_mode_true(separateMediaRoute, mode,
+                         "selected edition without SONG.DAT has a native media route");
+        if (!separateMediaRoute) return;
+        fprintf(stderr,
+                "SKIP: %s selected edition has no PC SONG.DAT; "
+                "PC music transport is not applicable\n", mode_label(mode));
+        ++g_skipped;
+        return;
+    }
     expect_mode_true(audio->originalSongAvailable && audio->titleMusic.sampleCount > 0,
                      mode, "selected original SONG.DAT supplies the music transport test");
     if (!audio->originalSongAvailable || audio->titleMusic.sampleCount <= 0) return;
@@ -617,10 +632,17 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
         strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
             launcher_view.audioState.sdlStream)), menu->settings.audioDeviceName) == 0,
         mode, "M12 audio device name reaches the M11 effects stream");
-    expect_mode_true(launcher_view.audioState.musicStream &&
-        strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
-            launcher_view.audioState.musicStream)), menu->settings.audioDeviceName) == 0,
-        mode, "M12 audio device name reaches the independent song stream");
+    if (launcher_view.dm1FmtownsStartupReceiptValid) {
+        expect_mode_true(launcher_view.audioState.cddaStream &&
+            strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
+                launcher_view.audioState.cddaStream)), menu->settings.audioDeviceName) == 0,
+            mode, "M12 audio device name reaches the FM Towns CDDA stream");
+    } else if (launcher_view.audioState.originalSongAvailable) {
+        expect_mode_true(launcher_view.audioState.musicStream &&
+            strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
+                launcher_view.audioState.musicStream)), menu->settings.audioDeviceName) == 0,
+            mode, "M12 audio device name reaches the independent song stream");
+    }
     expect_mode_true(launcher_view.audioState.cddaStream &&
         strcmp(SDL_GetAudioDeviceName(SDL_GetAudioStreamDevice((SDL_AudioStream*)
             launcher_view.audioState.cddaStream)), menu->settings.audioDeviceName) == 0,
@@ -849,18 +871,22 @@ static void run_real_launcher_handoff_if_available(void) {
     run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V21_UPSCALED);
     run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V22_MODERN);
 
-    direct_version_index = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-        &menu.assetStatus, "dm1", M12_ARCH_AUTO);
+    /* The direct-start receipt is the PC 3.4 intro-bypass contract. AUTO is
+     * intentionally FM Towns when that authentic edition is installed, so
+     * selecting its first match here would construct a PC-only direct start
+     * with Towns media and test the wrong launch path. */
+    direct_version_index = M12_AssetStatus_FindVersionIndex("dm1", "pc34-en");
     direct_version = direct_version_index >= 0
         ? M12_AssetStatus_GetVersion(&menu.assetStatus, "dm1",
                                      (size_t)direct_version_index)
         : NULL;
     if (!direct_version || !direct_version->versionId ||
+        !direct_version->matched ||
         !M12_AssetStatus_PrepareDM1RuntimeVersion(
             &menu.assetStatus, direct_version->versionId, direct_data_dir,
             sizeof(direct_data_dir))) {
         M12_StartupMenu_Destroy(&menu);
-        expect_skip("selected DM1 edition has no direct runtime source path");
+        expect_skip("authentic DM1 PC 3.4 edition is unavailable for direct-start check");
         return;
     }
 
