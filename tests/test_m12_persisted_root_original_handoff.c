@@ -237,6 +237,55 @@ int main(void)
         SDL_free(view);
     }
 
+    /* The authentic v1.2 preservation ZIP contains its STX disk directly,
+     * unlike the ZIP -> ZIP -> STX v1.1 archive exercised by the nested
+     * archive boot test. Reopening the collection root must discover it and
+     * preserve the Atari source through the normal M12 -> M11 handoff. */
+    if (!failures) {
+        const char* versionId = "st12-en";
+        int versionIndex = M12_AssetStatus_FindVersionIndex("dm1", versionId);
+        const M12_AssetVersionStatus* version = versionIndex < 0 ? NULL :
+            M12_AssetStatus_GetVersion(&menu->assetStatus, "dm1",
+                                       (size_t)versionIndex);
+        M12_LaunchIntent intent;
+        M11_GameViewState* view;
+        if (!version || !version->matched) {
+            fprintf(stderr,
+                    "FAIL: selected root lacks authenticated dm1 %s media\n",
+                    versionId);
+            ++failures;
+        } else {
+            menu->selectedIndex = 0;
+            menu->activatedIndex = 0;
+            menu->launchRequested = 1;
+            menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+            menu->gameOptions[0].presentationModeIndex =
+                M12_PRESENTATION_V1_ORIGINAL;
+            menu->gameOptions[0].versionIndex = versionIndex;
+            menu->gameOptions[0].architectureIndex = M12_ARCH_ATARI_ST;
+            intent = M12_StartupMenu_GetLaunchIntent(menu);
+            CHECK(intent.valid && intent.versionId &&
+                  strcmp(intent.gameId, "dm1") == 0 &&
+                  strcmp(intent.versionId, versionId) == 0 &&
+                  intent.options.architectureIndex == M12_ARCH_ATARI_ST,
+                  "persisted collection root preserves explicit DM1 Atari ST 1.2");
+            view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
+            CHECK(view != NULL, "allocate DM1 Atari ST 1.2 game view");
+            if (view) {
+                M11_GameView_Init(view);
+                CHECK(M11_GameView_OpenSelectedMenuEntry(view, menu) == 1,
+                      "DM1 Atari ST 1.2 opens through persisted-root M12 handoff");
+                CHECK(view->active && view->startedFromLauncher &&
+                      view->sourceKind == kinds[0] &&
+                      strcmp(view->sourceId, "dm1") == 0 &&
+                      view->assetLoader.atariStDm1,
+                      "DM1 Atari ST 1.2 reaches its native M11 media owner");
+                M11_GameView_Shutdown(view);
+                SDL_free(view);
+            }
+        }
+    }
+
     /* AUTO must override a stale matched row after reopening the collection.
      * The CSB disc supplies both language editions, so JPN is a real stale
      * row rather than a fallback to the expected English edition. */
