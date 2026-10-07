@@ -15,6 +15,19 @@
   `[HD]` image keeps its direct runtime route, while the v2.0 floppy set
   preserves the SWSH/TITLE/ENTRANCE startup transaction.
 
+# Firestaff v3.0.364
+
+## User-facing changes
+
+- `CSB FM Towns selection`: verifies that the FM Towns edition remains the
+  default when authentic FM Towns and Amiga editions are both installed.
+
+## Developer changes
+
+- `Real-media startup regressions`: add a CSB original-media test for the
+  simultaneous-edition case and label the startup contract for DM1, CSB and
+  DM2 in CTest.
+
 # Firestaff v3.0.363
 
 ## User-facing changes
