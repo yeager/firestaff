@@ -18,6 +18,11 @@
   scroll-state words in memory, not directly to VDC ports. A real execution
   trace is still needed before claiming those state updates execute or
   establish scroll/rendering parity.
+- The authentic JP Akutuba capture still does not close this runtime gap:
+  `transition=missing`, with no `$4BB0` hit. Its only writes to `$220C/$220D`
+  and `$2210/$2211` are four zero-initialization writes from PC `$CB22`
+  (sequences 278, 279, 282, and 283). The next capture must reach a real
+  dungeon route and attribute non-initialization writes to the `$4BB0` body.
 
 ## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
 
