@@ -409,7 +409,9 @@ cd_ram_runtime_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_c
 cd_ram_target_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'theron_pce_fast_3879_indirect_target_trace.patch' "$build_script" ||
-   ! grep -Fq 'previous !~ /TheronTraceInstructionPhysicalPC =/' "$build_script" ||
+   ! grep -Fq 'previous_nonblank !~ /TheronTraceInstructionPhysicalPC =/' "$build_script" ||
+   ! grep -Fq '/TheronTraceStage2MPR1\(GetRealPC/ {' "$build_script" ||
+   ! grep -Fq 'pce_fast_3879_trace_rendered="$build_root/theron-pce-fast-3879-indirect-target.rendered.patch"' "$build_script" ||
    ! grep -Fq 'indirect_target_trace="${trace}.3879-indirect-target"' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace"' "$capture_script" ||
    ! grep -Fq 'RdMem(0x2003)' "$indirect_target_patch_file" ||
@@ -421,6 +423,9 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'mapped_opcode=%02x operand1_mapped=%02x operand2_mapped=%02x' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOpcode = HuCPU.PCERead' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879FastTargetStepsRemaining = 128' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq 'TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13]' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_PATCH_TAB_CONTEXT  TheronTraceStage2MPR1(GetRealPC()' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq '+static char Theron3879FastRuntimeCodeWindow[27];' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
     printf '%s\n' 'FAIL: bounded $3879 indirect-target trace is missing or not wired into the live capture'
     exit 1
@@ -512,6 +517,7 @@ if ! grep -Fq 'mednafen_1.32.1_theron_stage2_mpr1_probe.patch' "$build_script" |
     exit 1
 fi
 pce_fast_stage2_mpr1_probe_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch
+pce_fast_stage2_selector_pc_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_selector_pc_trace.patch
 if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_script" ||
    ! grep -Fq 'GetRealPC()' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc,' "$pce_fast_stage2_mpr1_probe_patch_file" ||
@@ -556,6 +562,15 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_
    ! grep -Fq 'stage2_mpr1_call sequence=%u pc=%04x physical_pc=%08x mpr1=%02x target_physical_pc=%08x callsite_bytes=%02x%02x%02x linked=%u' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'stage2_mpr1_exec sequence=%u pc=%04x physical_pc=%08x mpr1=%02x caller_pc=4ed4 caller_physical_pc=%08x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u callsite_bytes=%02x%02x%02x bytes=%s' "$pce_fast_stage2_mpr1_probe_patch_file"; then
     printf '%s\n' 'FAIL: pce_fast MPR1 probe must link target execution to the authenticated caller instruction'
+    exit 1
+fi
+
+if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_selector_pc_trace.patch' "$build_script" ||
+   ! grep -Fq 'case 0x528c:' "$pce_fast_stage2_selector_pc_patch_file" ||
+   ! grep -Fq 'case 0x5800:' "$pce_fast_stage2_selector_pc_patch_file" ||
+   ! grep -Fq 'stage2_selector_pc sequence=%u pc=%04x physical_pc=%08x mpr1=%02x mpr2=%02x a=%02x x=%02x y=%02x p=%02x bytes=%s' "$pce_fast_stage2_selector_pc_patch_file" ||
+   ! grep -Fq 'HuCPU.FastPageR[bank] + stage2_probe_pc' "$pce_fast_stage2_selector_pc_patch_file"; then
+    printf '%s\n' 'FAIL: source-byte-identified Stage-2 selector PC trace patch is missing or unwired'
     exit 1
 fi
 

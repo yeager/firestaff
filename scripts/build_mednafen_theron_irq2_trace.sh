@@ -206,8 +206,14 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$pce_fast_consumer_read_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_stage2_mpr1_probe.patch"
-git -C "$build_root/source" apply --unidiff-zero --recount --whitespace=nowarn \
-    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_selector_pc_trace.patch"
+pce_fast_3879_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch"
+pce_fast_3879_trace_rendered="$build_root/theron-pce-fast-3879-indirect-target.rendered.patch"
+sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$pce_fast_3879_trace_patch" \
+    > "$pce_fast_3879_trace_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$pce_fast_3879_trace_rendered"
 git -C "$build_root/source" apply --unidiff-zero --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_runtime_window_trace.patch"
 target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch"
@@ -218,10 +224,13 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$target_write_rendered"
 if ! awk '
     /if\(Theron3879FastTargetStepsRemaining \|\|/ {
-        if(previous !~ /TheronTraceInstructionPhysicalPC =/) exit 1
-        found = 1
+        if(previous_nonblank !~ /TheronTraceInstructionPhysicalPC =/) exit 1
+        hook = NR
     }
-    { previous = $0 }
+    /TheronTraceStage2MPR1\(GetRealPC/ {
+        if(hook && NR > hook) found = 1
+    }
+    NF { previous_nonblank = $0 }
     END { if(!found) exit 1 }
 ' "$build_root/source/src/pce_fast/huc6280.cpp"; then
     printf '%s\n' 'FAIL: PCE Fast $3879 hook must follow the current instruction physical-PC update' >&2

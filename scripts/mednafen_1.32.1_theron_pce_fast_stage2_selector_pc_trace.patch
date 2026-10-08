@@ -1,0 +1,47 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -57,2 +57,40 @@
++ if(stage2_mpr1_trace)
++ {
++  int selector_pc_tracked = 0;
++  switch(stage2_probe_pc)
++  {
++   case 0x4fea: case 0x5025: case 0x50b7: case 0x50bb: case 0x50c1:
++   case 0x50c3: case 0x50c6: case 0x50ca: case 0x508b: case 0x51ce:
++   case 0x51d8: case 0x51da: case 0x525e: case 0x526c: case 0x528c:
++   case 0x5292: case 0x5297: case 0x529b: case 0x52a0: case 0x52a3:
++   case 0x551a: case 0x5669: case 0x567a: case 0x5800: case 0x58d2:
++    selector_pc_tracked = 1;
++    break;
++   default:
++    break;
++  }
++  if(selector_pc_tracked)
++  {
++   static unsigned sequence;
++   if(sequence < 2048)
++   {
++    const uint8 bank = (uint8)(stage2_probe_pc >> 13);
++    const uint32 physical_pc =
++      (HuCPU.MPR[bank] << 13) | (stage2_probe_pc & 0x1fff);
++    const uint8 *code =
++      (const uint8 *)(HuCPU.FastPageR[bank] + stage2_probe_pc);
++    char code_bytes[25];
++    static const char hex[] = "0123456789abcdef";
++    for(unsigned int i = 0; i < 12; i++)
++    {
++     code_bytes[i * 2] = hex[code[i] >> 4];
++     code_bytes[i * 2 + 1] = hex[code[i] & 0x0f];
++    }
++    code_bytes[24] = 0;
++    fprintf(stage2_mpr1_trace,
++      "stage2_selector_pc sequence=%u pc=%04x physical_pc=%08x mpr1=%02x mpr2=%02x a=%02x x=%02x y=%02x p=%02x bytes=%s\n",
++      sequence++, stage2_probe_pc, physical_pc, HuCPU.MPR[1],
++      HuCPU.MPR[2], HuCPU.A, stage2_probe_x, stage2_probe_y,
++      stage2_probe_p, code_bytes);
++    fflush(stage2_mpr1_trace);
++   }
++  }
++ }
+  if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
+   stage2_mpr1_call_pending = 0;

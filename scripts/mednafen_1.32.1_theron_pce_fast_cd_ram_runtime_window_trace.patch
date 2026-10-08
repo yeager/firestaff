@@ -1,8 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -42,0 +43,1 @@
-+static char Theron3879FastRuntimeCodeWindow[27];
-@@ -949,1 +950,13 @@
+@@ -756,1 +757,13 @@
 +     if(TheronTraceInstructionPC == 0x4f06 || TheronTraceInstructionPC == 0x48a8)
 +     {
 +      for(unsigned i = 0; i < 13; ++i)

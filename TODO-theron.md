@@ -1,5 +1,31 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-08 — extend authentic PCE Fast selector disassembly evidence
+
+- ✅ Added a bounded PCE Fast trace for source-byte windows at known Stage-2
+  selector PCs and tightened the `$3879` hook placement guard. The focused
+  patch regression and a full instrumented Mednafen build passed on `trv2`.
+- ✅ A private capture from the existing authentic JP Ak-Tu-Ba Mednafen state
+  recorded nine executions at logical `$51CE`, physical `$0D11CE`, with MPR2
+  `$68` and the live 12-byte window `60 a9 04 44 f2 29 20 0a 0a 0a 2a 60`.
+  The bounded `$3879` hook also recorded CPU steps, including the `$4EF6`
+  caller window. At this logical address the live bytes differ from the
+  static JP Stage-2 listing, which begins with a BSR to `$51C0`; MPR2 `$68`
+  must remain part of the runtime interpretation. The live 12-byte sequence
+  also occurs elsewhere in the hash-verified raw JP and US Track 02 files at
+  offsets `0x95FCE` and `0x96903`, respectively. This is a source-byte match,
+  not proof that either raw location was copied to the observed runtime bank;
+  the transfer/source relationship and semantics remain open. A candidate
+  relocated decode, the regional source differences, and the next required
+  loader trace are documented in
+  `docs/source-lock/theron-disassembly/theron-track02-51c2-runtime-overlay-candidate-20261008.md`.
+- 🔒 A four-second scripted RUN replay was applied by the reference emulator,
+  but neither that replay nor the no-input capture produced a gameplay
+  transition, CD IRQ, or authenticated CD-to-RAM receipt. The capture remains
+  blocked for end-to-end runtime provenance. No gameplay or parity claim may
+  be inferred from the selector PC trace. Private traces remain under
+  `/home/trv2/work/firestaff-theron-selector-pc-patchcheck-20261008/`.
+
 - `$44fb` target candidate: six identical 256-byte authentic JP Track 02
   spans and a 255-byte instruction-aligned static disassembly are recorded,
   but no loader receipt binds any candidate to CD RAM and execution/semantics

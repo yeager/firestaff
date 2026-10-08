@@ -1,6 +1,9 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -27,0 +28,15 @@
+@@ -27,4 +27,20 @@
+ uint16 TheronTraceInstructionPC;
+ uint32 TheronTraceInstructionPhysicalPC;
+
 +static unsigned Theron3879FastTargetStepsRemaining;
 +static FILE *Theron3879FastTrace;
 +static unsigned Theron3879FastTraceCount;
@@ -16,7 +19,12 @@
 +static unsigned Theron3879FastTraceMappedOpcode;
 +static unsigned Theron3879FastTraceMappedOperand1;
 +static unsigned Theron3879FastTraceMappedOperand2;
-@@ -898,0 +904,57 @@
++static char Theron3879FastRuntimeCodeWindow[27];
+ static uint8 dummy_bank[8192 + 8192];  // + 8192 for PC-as-ptr safety padding
+@@ -1014,6 +1014,63 @@
+   TheronTraceInstructionPC = GetRealPC();
+   TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
+
 +  if(Theron3879FastTargetStepsRemaining ||
 +     (TheronTraceInstructionPC >= 0x4ef4 && TheronTraceInstructionPC <= 0x4ef6) ||
 +     (TheronTraceInstructionPC >= 0x3879 && TheronTraceInstructionPC <= 0x3918) ||
@@ -74,3 +82,6 @@
 +   }
 +  }
 +
+FIRESTAFF_PATCH_TAB_CONTEXT  TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,
+FIRESTAFF_PATCH_TAB_CONTEXT                        HU_ZNFlags);
+FIRESTAFF_PATCH_TAB_CONTEXT  b1 = RdAtPC();
