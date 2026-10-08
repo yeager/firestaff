@@ -1,5 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-08: `return_to_menu_rescans_dm1_csb_dm2_real_media` passed in
+  221.23 seconds against the installed authentic DM1, CSB and DM2 FM Towns
+  archives. The test launched DM2 from the menu, returned from runtime, and
+  verified that all three game roots were rescanned and rediscovered. This is
+  headless menu-flow evidence, not physical M5 display or input verification.
+
+- 2026-10-08: Removed a 200 ms polling ceiling from the asynchronous M12 data
+  directory scan regression. The test now waits up to five seconds while
+  continuing to pump menu updates; all original result assertions remain. The
+  focused CTest passed four consecutive times with isolated scratch roots and
+  once with the host's default `TMPDIR`, after a transient timeout on the old
+  ceiling.
+
 - 2026-10-08: Re-ran the installed original-media startup matrices on the
   local macOS host: 11 DM1 CLI routes across PC/DOS, Atari ST and FM Towns,
   plus Amiga HD/v2.0 CLI and v2.0 title/entrance checks; six CSB Atari ST,

@@ -213,6 +213,18 @@ static int create_build_scratch_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_C
     return 1;
 }
 
+static void wait_for_data_dir_scan(M12_StartupMenuState* state) {
+    Uint64 startedAt;
+    if (!state) {
+        return;
+    }
+    startedAt = SDL_GetTicks();
+    while (state->dataDirScanJob && SDL_GetTicks() - startedAt < 5000U) {
+        (void)M12_StartupMenu_Update(state);
+        SDL_Delay(1);
+    }
+}
+
 static int write_text_file(const char* path, const char* text) {
     FILE* fp;
     size_t len;
@@ -531,7 +543,6 @@ static void check_selected_folder_scans_asynchronously(void) {
     M12_Config config;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char selectedPhysical[M12_ASSET_DATA_DIR_CAPACITY];
-    int i;
 
     reset_dialog_stub();
     CHECK(create_build_scratch_and_data_root(dataRoot));
@@ -560,10 +571,7 @@ static void check_selected_folder_scans_asynchronously(void) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "SCANNING GAME DATA") == 0);
 
-    for (i = 0; i < 200 && state.dataDirScanJob != NULL; ++i) {
-        (void)M12_StartupMenu_Update(&state);
-        SDL_Delay(1);
-    }
+    wait_for_data_dir_scan(&state);
 
     CHECK(state.dataDirScanActive == 0);
     CHECK(state.dataDirScanJob == NULL);
@@ -640,7 +648,6 @@ static void check_parent_dialog_result_is_not_a_placeholder(void) {
     char expectedParent[M12_ASSET_DATA_DIR_CAPACITY];
     char parentPath[M12_ASSET_DATA_DIR_CAPACITY];
     char originalCwd[FSP_PATH_MAX];
-    int i;
 
     reset_dialog_stub();
     CHECK(create_build_scratch_and_data_root(dataRoot));
@@ -668,10 +675,7 @@ static void check_parent_dialog_result_is_not_a_placeholder(void) {
     CHECK(state.dataDirScanActive == 1);
     CHECK(state.messageLine1 &&
           strcmp(state.messageLine1, "SCANNING GAME DATA") == 0);
-    for (i = 0; i < 200 && state.dataDirScanJob != NULL; ++i) {
-        (void)M12_StartupMenu_Update(&state);
-        SDL_Delay(1);
-    }
+    wait_for_data_dir_scan(&state);
     CHECK(state.dataDirScanActive == 0);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
                  expectedParent) == 0);
@@ -684,7 +688,6 @@ static void check_default_data_dir_scans_asynchronously(void) {
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char defaultRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char defaultPhysical[M12_ASSET_DATA_DIR_CAPACITY];
-    int i;
 
     reset_dialog_stub();
     CHECK(create_build_scratch_and_data_root(dataRoot));
@@ -710,10 +713,7 @@ static void check_default_data_dir_scans_asynchronously(void) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "SCANNING GAME DATA") == 0);
 
-    for (i = 0; i < 200 && state.dataDirScanJob != NULL; ++i) {
-        (void)M12_StartupMenu_Update(&state);
-        SDL_Delay(1);
-    }
+    wait_for_data_dir_scan(&state);
 
     CHECK(state.dataDirScanActive == 0);
     CHECK(state.dataDirScanJob == NULL);
