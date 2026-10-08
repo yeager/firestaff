@@ -1,6 +1,12 @@
 # Firestaff DONE — CSB
 
 - 2026-10-08: With the current launcher freshly linked,
+  `csb_v1_atari_stx_native_cli_boot` passed in 136.02 seconds against the
+  authentic Atari STX. It verified title acceptance, the original map-0 start
+  pose, first UP movement, remaining directional/action input receipts, and
+  the C127 Champion Hall route. Dummy-video runtime evidence only.
+
+- 2026-10-08: With the current launcher freshly linked,
   `csb_v1_fmtowns_native_cli_boot` passed in 111.88 seconds against the
   authentic FM Towns ZIP. The test verified native TITLE.ANM and AUTO
   selection, the first game state, M12 launch, and a captured F31 Entrance
