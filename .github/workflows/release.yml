@@ -46,7 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          # Version validation needs the current commit and release tags only.
+          fetch-depth: 1
+          fetch-tags: true
 
       - id: release
         name: Validate release inputs
