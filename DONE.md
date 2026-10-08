@@ -7,7 +7,11 @@
   separate `csb_v1_hint_oracle_native_7z_cli_boot` passed against the original
   Atari multi-member preservation archive and verified both CLI and M12 menu
   handoffs. This yields 24 passing original-media startup routes and one
-  documented skip; it does not claim complete game or visual parity.
+  documented skip; it does not claim complete game or visual parity. The
+  original-media `m12_persisted_root_original_handoff` also passed in 49.06
+  seconds, and `return_to_menu_rescans_dm1_csb_dm2_real_media` passed in
+  214.75 seconds, verifying that gameplay returns to M12 and rescans DM1, CSB
+  and DM2 with the supplied media still discoverable.
 
 - 2026-10-08: Fixed CSB Amiga 3.3 multiplayer startup handoff. ReDMCSB
   `COMPILE.H:270-272` identifies A33M `KAOS.FTL` as `C03_GAME`, and
