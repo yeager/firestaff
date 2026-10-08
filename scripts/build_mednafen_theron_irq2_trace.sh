@@ -192,6 +192,8 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_l4c46_mpr1_target_probe.patch"
 sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$pce_fast_snapshot_patch" \
     > "$pce_fast_snapshot_rendered"
 patch -d "$build_root/source" -p1 --batch --forward --fuzz=3 \

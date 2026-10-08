@@ -74,11 +74,14 @@ traversal.
   `scripts/mednafen_1.32.1_theron_l4c46_mpr1_target_probe.patch` adds the
   exact `$4C46` JSR `$3221` callsite and immediate-entry byte/MPR capture. It
   passes a zero-fuzz dry run against the instrumented Mednafen 1.32.1 source,
-  and the modified HuC6280 object compiled in an isolated trv2 copy. Runtime
-  capture remains unverified: the configured System Card BIOS path was absent
-  in the private emulator setup. Do not infer the target mapping from this
-  compile or from the unrelated `$4ED4->$3A2E` capture, whose MPR1 `$F8`
-  target is BaseRAM.
+  and the modified HuC6280 object compiled in an isolated trv2 copy. The
+  standard instrumented-build script now applies it after the base PCE Fast
+  MPR1 hook, with a regression check for inclusion and ordering. Runtime
+  capture remains unverified: although authentic JP Rev. 1 media and System
+  Card firmware are available on trv2, a new build was deferred while disk
+  space is critically low and another emulator capture is active. Do not infer
+  the target mapping from this compile or from the unrelated `$4ED4->$3A2E`
+  capture, whose MPR1 `$F8` target is BaseRAM.
 - The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
   US Track 02; when authentic JP media is present, the focused test now checks
   the matching span hash and every US/JP byte. This regional source comparison

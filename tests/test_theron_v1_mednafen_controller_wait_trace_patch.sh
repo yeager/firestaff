@@ -518,6 +518,17 @@ if ! grep -Fq 'mednafen_1.32.1_theron_stage2_mpr1_probe.patch' "$build_script" |
 fi
 pce_fast_stage2_mpr1_probe_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch
 pce_fast_stage2_selector_pc_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_selector_pc_trace.patch
+l4c46_mpr1_probe_patch_file=$repo/scripts/mednafen_1.32.1_theron_l4c46_mpr1_target_probe.patch
+stage2_mpr1_apply_line=$(grep -nF 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_script" | head -n 1 | cut -d: -f1)
+l4c46_mpr1_apply_line=$(grep -nF 'mednafen_1.32.1_theron_l4c46_mpr1_target_probe.patch' "$build_script" | head -n 1 | cut -d: -f1)
+if [[ -z "$stage2_mpr1_apply_line" || -z "$l4c46_mpr1_apply_line" ||
+      "$l4c46_mpr1_apply_line" -le "$stage2_mpr1_apply_line" ]] ||
+   ! grep -Fq 'stage2_probe_pc == 0x4c46' "$l4c46_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_probe_pc == 0x3221 && stage2_mpr1_l4c46_pending' "$l4c46_mpr1_probe_patch_file" ||
+   ! grep -Fq 'stage2_mpr1_l4c46_sequence < 32' "$l4c46_mpr1_probe_patch_file"; then
+    printf '%s\n' 'FAIL: bounded L4C46 MPR1 probe must be included in the instrumented build' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch' "$build_script" ||
    ! grep -Fq 'GetRealPC()' "$pce_fast_stage2_mpr1_probe_patch_file" ||
    ! grep -Fq 'static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc,' "$pce_fast_stage2_mpr1_probe_patch_file" ||
