@@ -103,4 +103,4 @@ run_return_to_menu_case csb fm-towns \
 run_return_to_menu_case dm2 auto \
     'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,key:enter' \
     60000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
-    'launch phase=game-handoff mode=menu game=dm2 .*source=.*/data/dm2/'
+    'launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=.*/data/dm2/'
