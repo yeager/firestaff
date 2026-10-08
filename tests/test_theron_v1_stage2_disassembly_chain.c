@@ -4222,6 +4222,28 @@ static void test_stage2_enclosing_45xx_callees(void)
            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_CPU_ADDRESS);
     assert(receipt.l4b3c_bytes ==
            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES);
+    if (g_jp_data && g_jp_size > 0u) {
+        size_t offset;
+        assert(stage2_record_user_fnv1a64(
+                   g_us_data, g_us_size, 0,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET) ==
+               UINT64_C(0xb089a651068a5ce7));
+        assert(stage2_record_user_fnv1a64(
+                   g_jp_data, g_jp_size, 1,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET) ==
+               UINT64_C(0xb089a651068a5ce7));
+        for (offset =
+                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET;
+             offset < THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET;
+             ++offset) {
+            assert(stage2_record_user_byte_at(
+                       g_jp_data, g_jp_size, 1, offset) ==
+                   stage2_record_user_byte_at(
+                       g_us_data, g_us_size, 0, offset));
+        }
+    }
     assert(receipt.l491f_proven == 1);
     assert(receipt.l4bb0_proven == 1);
     /* These receipts cover authenticated instruction bytes only. No runtime

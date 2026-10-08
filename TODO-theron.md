@@ -23,9 +23,11 @@
   and `$2210/$2211` are four zero-initialization writes from PC `$CB22`
   (sequences 278, 279, 282, and 283). The next capture must reach a real
   dungeon route and attribute non-initialization writes to the `$4BB0` body.
-- The US Stage-2 initializer `$4B3C..$4BAF` is now byte-locked against the
-  authentic US Track 02 image and byte-compared to JP, but no runtime entry
-  has been observed. The trace/runtime scroll gap above remains open.
+- The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
+  US Track 02; when authentic JP media is present, the focused test now checks
+  the matching span hash and every US/JP byte. This regional source comparison
+  does not extend the enclosing-callee verifier beyond US or prove runtime
+  entry. The trace/runtime scroll gap above remains open.
 
 ## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
 

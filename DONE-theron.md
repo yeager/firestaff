@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — persist JP parity check for the `$4B3C` initializer
+
+Extended the focused Stage-2 test so that, when authentic JP Track 02 media is
+available, it checks the 116-byte `$4B3C..$4BAF` span's FNV-1a-64 against the
+authenticated digest for both JP and US, then compares every corresponding
+byte. The existing US production receipt still proves the full span against
+its expected bytes. This closes a test-coverage gap for the regional source
+comparison only; it does not broaden the enclosing-callee verifier or prove
+runtime entry or rendered scroll parity.
+
 ## 2026-10-08 — bind the US `$4B3C` scroll-state initializer
 
 - Added a bounded byte receipt for the 116-byte Stage-2 initializer

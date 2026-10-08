@@ -15,9 +15,12 @@ The source image is the hash-verified original US Track 02 BIN:
 The span SHA-256 is
 `9da2cde29dc484b69b01bd836b3368eb87b4ffa13ef69368c706c640385d25df`; its
 FNV-1a-64 is `b089a651068a5ce7`. The 116 bytes are byte-identical in the
-authenticated JP Track 02 image, whose span raw offset is 2,898,508. The full
-US linear Stage-2 listing is `theron-us-stage2-huc6280.asm`; the extracted
-window is `theron-us-stage2-l4b3c-huc6280.asm`.
+authenticated JP Track 02 image, whose span raw offset is 2,898,508. When JP
+media is available, the focused Stage-2 test compares every byte in both
+editions and checks the span FNV-1a-64 in each; the US production receipt also
+matches the full span against its authenticated bytes. The full US linear
+Stage-2 listing is `theron-us-stage2-huc6280.asm`; the extracted window is
+`theron-us-stage2-l4b3c-huc6280.asm`.
 
 ## Instruction-level observations
 
@@ -25,7 +28,9 @@ The routine saves `$220C/$220D/$2210/$2211` to `$4C12..$4C15`, then branches
 on `$0E` and `$10` to clear, restore, or initialize the `$4C0D/$4C0E` signed
 delta state. It writes `$12` to both `$4C0F` and `$4C10`, restores processor
 flags, and returns. The exact source bytes and selected boundaries are checked
-against the original US image by the focused Stage-2 disassembly test.
+against the original US image by the focused Stage-2 disassembly test. This
+regional byte comparison proves identical source bytes only; the enclosing
+callee verifier remains US-only.
 
 This is static source evidence only. It does not prove the initializer or its
 adjacent `$4BB0` routine executes, nor does it establish rendered scroll
