@@ -811,20 +811,21 @@ int m12_file_md5_matches_spec(const char* path, const char* specMd5) {
     return strcmp(md5Hex, specMd5) == 0;
 }
 
-static void m12_bytes_md5_hex(const uint8_t* bytes,
-                              size_t byteCount,
-                              char outHex[33]) {
+int m12_bytes_md5_hex(const uint8_t* bytes,
+                      size_t byteCount,
+                      char outHex[33]) {
     M12_Md5Context ctx;
     if (!outHex) {
-        return;
+        return 0;
     }
     outHex[0] = '\0';
     if (!bytes || byteCount == 0U) {
-        return;
+        return 0;
     }
     m12_md5_init(&ctx);
     m12_md5_update(&ctx, bytes, byteCount);
     m12_md5_final(&ctx, outHex);
+    return outHex[0] != '\0';
 }
 
 /* Hash a source-owned member without materializing it.  Nested ADF/STX

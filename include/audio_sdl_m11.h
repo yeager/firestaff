@@ -261,6 +261,15 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
     int sourcePeriod,
     unsigned int sourceHash,
     int paulaVolume);
+/* F0908/F0909 SWSH assigns G0744 directly to audio.device ioa_Period.
+ * Unlike SOUND.C F0709, this source value is already a Paula device period. */
+int M11_Audio_PlayAmigaDmaPcmAtPaulaVolume(
+    M11_AudioState* state,
+    const unsigned char* source,
+    int sourceBytes,
+    int devicePeriod,
+    unsigned int sourceHash,
+    int paulaVolume);
 /* F31 TOWNSIO.C F0709/F0060 plays signed GRAPHICS.DAT samples at 5500 Hz
  * with the distance volume already resolved by SOUND.C. */
 int M11_Audio_PlayCsbFmtownsRuntimePcm(

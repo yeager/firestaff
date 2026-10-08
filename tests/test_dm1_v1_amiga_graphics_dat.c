@@ -1,4 +1,5 @@
 #include "dm1_v1_amiga_graphics_dat.h"
+#include "dm1_v1_amiga_swsh.h"
 #include "dm1_v1_original_save_amiga_handoff.h"
 #include "dm1_v1_original_save_atari_handoff.h"
 #include "dm1_v1_original_save_classifier.h"
@@ -127,6 +128,8 @@ typedef struct {
     DM1_V1_AmigaGraphicsReceipt receipt;
     uint8_t *bytes;
     size_t size;
+    uint8_t *swshBytes;
+    size_t swshSize;
 } RealGraphicsReceipt;
 
 typedef struct {
@@ -372,15 +375,21 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
                result->copper_fade_producer_signatures,
                result->copper_fade_builder_calls);
     }
-    if (strcmp(name, "graphics.dat") != 0) return 1;
-    result->found = 1;
-    result->valid = dm1_v1_amiga_graphics_receipt(bytes, size,
-                                                   &result->receipt) == 0;
-    if (result->valid) {
-        result->bytes = malloc(size);
-        if (!result->bytes) return -1;
-        memcpy(result->bytes, bytes, size);
-        result->size = size;
+    if (strcmp(name, "graphics.dat") == 0) {
+        result->found = 1;
+        result->valid = dm1_v1_amiga_graphics_receipt(bytes, size,
+                                                       &result->receipt) == 0;
+        if (result->valid) {
+            result->bytes = malloc(size);
+            if (!result->bytes) return -1;
+            memcpy(result->bytes, bytes, size);
+            result->size = size;
+        }
+    } else if (strcmp(name, "swoosh") == 0) {
+        result->swshBytes = malloc(size);
+        if (!result->swshBytes) return -1;
+        memcpy(result->swshBytes, bytes, size);
+        result->swshSize = size;
     }
     return 0;
 }
@@ -426,6 +435,48 @@ static void test_real_amiga_v20_graphics_receipt(void) {
           "real_adf_visit");
     free(adf);
     CHECK(result.found == 1, "real_graphics_found");
+    CHECK(result.swshBytes != NULL, "real_amiga_swsh_found_in_selected_adf");
+    if (result.swshBytes) {
+        DM1_V1_AmigaSwshAssets swsh;
+        uint8_t indexed[DM1_V1_AMIGA_SWSH_WIDTH * DM1_V1_AMIGA_SWSH_HEIGHT];
+        char sampleMd5[33];
+        unsigned int nonzero = 0u;
+        unsigned int index;
+        memset(&swsh, 0, sizeof(swsh));
+        CHECK(dm1_v1_amiga_swsh_parse(result.swshBytes, result.swshSize,
+                                       &swsh) == 1,
+              "real_amiga_swsh_profile_parse");
+        CHECK(swsh.executableMd5 &&
+              strcmp(swsh.executableMd5,
+                     "a0ffbcc7ae8cecac03128ddb32887ef4") == 0,
+              "real_amiga_swsh_a20e_identity");
+        CHECK(swsh.soundBytes == DM1_V1_AMIGA_SWSH_SOUND_BYTES &&
+              m12_bytes_md5_hex(swsh.sound, swsh.soundBytes, sampleMd5) &&
+              strcmp(sampleMd5, "bb658561be0147212191efdec286b44c") == 0,
+              "real_amiga_swsh_source_sample");
+        CHECK(dm1_v1_amiga_swsh_decode_logo(&swsh, indexed,
+                                             sizeof(indexed)) == 1,
+              "real_amiga_swsh_planar_decode");
+        for (index = 0u; index < sizeof(indexed); ++index)
+            nonzero += indexed[index] != 0u;
+        CHECK(nonzero > 0u, "real_amiga_swsh_logo_has_source_pixels");
+        {
+            unsigned int waits = 0u;
+            unsigned int colors = 0u;
+            for (index = 0u; index < DM1_V1_AMIGA_SWSH_PALETTE_PAIRS;
+                 ++index) {
+                int paletteIndex = -2;
+                unsigned int value = 0u;
+                CHECK(dm1_v1_amiga_swsh_palette_event(
+                          &swsh, index, &paletteIndex, &value) == 1,
+                      "real_amiga_swsh_palette_event");
+                if (paletteIndex == -1) waits += value;
+                else ++colors;
+            }
+            CHECK(waits > 0u && colors > 0u,
+                  "real_amiga_swsh_palette_timeline");
+        }
+    }
     if (getenv("FIRESTAFF_DM1_AMIGA_DISASSEMBLY")) {
         CHECK(result.executable_found == 1, "real_executable_found");
         CHECK(result.immediate_color_writes == 0u,
@@ -467,6 +518,7 @@ static void test_real_amiga_v20_graphics_receipt(void) {
         CHECK(nonzero > 0u, "real_item_000_source_pixels");
     }
     free(result.bytes);
+    free(result.swshBytes);
 }
 
 /* The supplied preservation archive also retains original save-disk ADFs.

@@ -50,6 +50,7 @@
 #include "gamepad_config_m12.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
+#include "dm1_v1_amiga_swsh.h"
 #include "screenshot_m11.h"
 #include "v1_swsh_intro_pathfinder_pc34_compat.h"
 #include "v1_title_intro_pathfinder_pc34_compat.h"
@@ -2538,6 +2539,9 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
                                             M11_GameInputResult* outResult);
 static int m11_boot_probe_expected_source_kind(const char* gameId,
                                                M11_GameSourceKind* outKind);
+static int m11_selected_dm1_launch_version_index(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry);
 
 static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     switch (keyCode) {
@@ -3162,6 +3166,187 @@ int M11_ApplyIntroAudioPreferences(M11_AudioState* audio,
     return M11_Audio_SetVolumes(audio, master, sfx, music, sfx);
 }
 
+static unsigned int m11_dm1_amiga_swsh_fnv1a(const uint8_t* bytes,
+                                             size_t byteCount) {
+    unsigned int hash = 2166136261u;
+    size_t index;
+    if (!bytes) return 0u;
+    for (index = 0u; index < byteCount; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int m11_dm1_amiga_swsh_path(const M12_AssetVersionStatus* version,
+                                   char* outPath,
+                                   size_t outPathBytes) {
+    const char* path;
+    const char* separator = NULL;
+    const char* scan;
+    size_t prefixBytes;
+    size_t memberBytes;
+    size_t i;
+    static const char graphicsMember[] = "GRAPHICS.DAT";
+    static const char swooshMember[] = "::swoosh";
+    if (!version || !outPath || outPathBytes == 0U) return 0;
+    outPath[0] = '\0';
+    path = version->matchedPath;
+    if (!path || !path[0]) return 0;
+    for (scan = path; (scan = strstr(scan, "::")) != NULL; scan += 2) {
+        separator = scan;
+    }
+    if (!separator) return 0;
+    memberBytes = strlen(separator + 2);
+    if (memberBytes != sizeof(graphicsMember) - 1U) return 0;
+    for (i = 0u; i < memberBytes; ++i) {
+        if ((unsigned char)toupper((unsigned char)separator[2u + i]) !=
+            (unsigned char)graphicsMember[i]) {
+            return 0;
+        }
+    }
+    prefixBytes = (size_t)(separator - path);
+    if (prefixBytes + sizeof(swooshMember) > outPathBytes) return 0;
+    memcpy(outPath, path, prefixBytes);
+    memcpy(outPath + prefixBytes, swooshMember, sizeof(swooshMember));
+    return 1;
+}
+
+/* ReDMCSB SWSH.C F0902/F0904 and SWSHSND.C F0908/F0909 use the embedded
+ * Amiga Hunk executable's four bitplanes, 27 source palette rows, and Paula
+ * sample. Accept only the selected A20 executable profile, read directly
+ * from the selected nested ADF, and leave the transaction on its existing
+ * title/entrance path after this prelude. */
+static int m11_play_dm1_amiga_swsh_if_available(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry,
+    int skipSwoosh) {
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    char swooshPath[FSP_PATH_MAX];
+    uint8_t* executable = NULL;
+    size_t executableBytes = 0U;
+    DM1_V1_AmigaSwshAssets assets;
+    uint8_t* indexed = NULL;
+    uint8_t* rgba = NULL;
+    unsigned char palette[16][3];
+    M11_AudioState audio;
+    int audioInitialized = 0;
+    int completed = 0;
+    unsigned int eventIndex;
+    unsigned int sourceFrames = 0u;
+    unsigned int sourceVblanks = 0u;
+    Uint64 audioStartedAt = 0u;
+    const unsigned int vblankMs = 20u;
+    const Uint64 sourceSoundDurationMs =
+        ((Uint64)DM1_V1_AMIGA_SWSH_SOUND_BYTES *
+         DM1_V1_AMIGA_SWSH_PAULA_PERIOD * 1000u + 3579544u) / 3579545u;
+
+    if (!menuState || !entry || !entry->gameId ||
+        strcmp(entry->gameId, "dm1") != 0) return -1;
+    versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
+    if (versionIndex < 0 ||
+        M12_AssetStatus_GetVersionArchitecture("dm1",
+                                                (size_t)versionIndex) !=
+            M12_ARCH_AMIGA) {
+        return -1;
+    }
+    version = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                          (size_t)versionIndex);
+    if (!version || strstr(version->matchedPath, "[HD]") != NULL) return -1;
+    if (skipSwoosh) return 1;
+    if (!m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
+        !asset_read_virtual_path_alloc(swooshPath, &executable,
+                                       &executableBytes) ||
+        !executable ||
+        !dm1_v1_amiga_swsh_parse(executable, executableBytes, &assets)) {
+        goto cleanup;
+    }
+    indexed = (uint8_t*)malloc((size_t)DM1_V1_AMIGA_SWSH_WIDTH *
+                               DM1_V1_AMIGA_SWSH_HEIGHT);
+    rgba = (uint8_t*)malloc((size_t)DM1_V1_AMIGA_SWSH_WIDTH *
+                            DM1_V1_AMIGA_SWSH_HEIGHT * 4u);
+    if (!indexed || !rgba ||
+        !dm1_v1_amiga_swsh_decode_logo(
+            &assets, indexed,
+            (size_t)DM1_V1_AMIGA_SWSH_WIDTH * DM1_V1_AMIGA_SWSH_HEIGHT)) {
+        goto cleanup;
+    }
+    memset(palette, 0, sizeof(palette));
+    m11_swsh_indexed_to_rgba(indexed, rgba, palette);
+    if (M11_Render_PresentRGBA(rgba, DM1_V1_AMIGA_SWSH_WIDTH,
+                               DM1_V1_AMIGA_SWSH_HEIGHT) != M11_RENDER_OK ||
+        !m11_prepare_swsh_source_clock_after_launcher_handoff(
+            rgba, DM1_V1_AMIGA_SWSH_WIDTH, DM1_V1_AMIGA_SWSH_HEIGHT,
+            vblankMs)) {
+        goto cleanup;
+    }
+    memset(&audio, 0, sizeof(audio));
+    g_m11_intro_local_audio = &audio;
+    if (M11_Audio_Init(&audio)) {
+        audioInitialized = 1;
+        (void)M11_ApplyIntroAudioPreferences(&audio, menuState);
+        audioStartedAt = m11_intro_active_ticks();
+        if (!M11_Audio_PlayAmigaDmaPcmAtPaulaVolume(
+                &audio, assets.sound, (int)assets.soundBytes,
+                DM1_V1_AMIGA_SWSH_PAULA_PERIOD,
+                m11_dm1_amiga_swsh_fnv1a(assets.sound, assets.soundBytes),
+                64)) {
+            M11_Audio_Shutdown(&audio);
+            audioInitialized = 0;
+        }
+    }
+    for (eventIndex = 0u;
+         eventIndex < DM1_V1_AMIGA_SWSH_PALETTE_PAIRS; ++eventIndex) {
+        int paletteIndex;
+        unsigned int value;
+        if (M11_Render_PumpEvents() ||
+            !dm1_v1_amiga_swsh_palette_event(&assets, eventIndex,
+                                             &paletteIndex, &value)) {
+            goto cleanup;
+        }
+        if (paletteIndex >= 0) {
+            palette[paletteIndex][0] =
+                (unsigned char)(((value >> 8) & 0x0fu) * 17u);
+            palette[paletteIndex][1] =
+                (unsigned char)(((value >> 4) & 0x0fu) * 17u);
+            palette[paletteIndex][2] =
+                (unsigned char)((value & 0x0fu) * 17u);
+        } else {
+            m11_swsh_indexed_to_rgba(indexed, rgba, palette);
+            if (M11_Render_PresentRGBA(rgba, DM1_V1_AMIGA_SWSH_WIDTH,
+                                       DM1_V1_AMIGA_SWSH_HEIGHT) !=
+                    M11_RENDER_OK ||
+                m11_delay_ms_with_intro_event_pump(value * vblankMs)) {
+                goto cleanup;
+            }
+            sourceVblanks += value;
+            ++sourceFrames;
+        }
+    }
+    if (audioInitialized) {
+        Uint64 elapsed = m11_intro_active_ticks() - audioStartedAt;
+        if (elapsed < sourceSoundDurationMs &&
+            m11_delay_ms_with_intro_event_pump(
+                (unsigned int)(sourceSoundDurationMs - elapsed))) {
+            goto cleanup;
+        }
+    }
+    completed = 1;
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: startup-source-complete game=dm1 phase=amiga-swsh profile=%s frames=%u source-vblanks=%u\n",
+                assets.executableMd5, sourceFrames, sourceVblanks);
+    }
+cleanup:
+    g_m11_intro_local_audio = NULL;
+    if (audioInitialized) M11_Audio_Shutdown(&audio);
+    free(executable);
+    free(indexed);
+    free(rgba);
+    return completed;
+}
+
 static int m11_play_ftl_swoosh_for_game_if_available(
                                               const M12_StartupMenuState* menuState,
                                               const char* dataDir,
@@ -3681,6 +3866,7 @@ static int m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState*
 
 typedef struct M11_DM1StartupHandoffContext {
     M12_StartupMenuState* menuState;
+    const M12_MenuEntry* launchEntry;
     M11_GameViewState* gameView;
     uint32_t* idleAccumulatorMs;
     const char* dataDir;
@@ -3755,11 +3941,17 @@ static int m11_dm1_handoff_play_swsh(void* user,
                                      int preserve_audio) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media = NULL;
+    int amigaResult;
     (void)game_id;
     if (ctx && ctx->activePreludePlanValid &&
         ctx->activePreludePlan.media_receipt.handled) {
         media = &ctx->activePreludePlan.media_receipt;
     }
+    amigaResult = m11_play_dm1_amiga_swsh_if_available(
+        ctx ? ctx->menuState : NULL,
+        ctx ? ctx->launchEntry : NULL,
+        preserve_audio);
+    if (amigaResult >= 0) return amigaResult;
     return m11_play_ftl_swoosh_if_available(ctx ? ctx->menuState : NULL,
                                             ctx ? ctx->dataDir : NULL,
                                             preserve_audio,
@@ -4244,6 +4436,7 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
     memset(&dm1RouteFacts, 0, sizeof(dm1RouteFacts));
     memset(&dm1RouteReceipt, 0, sizeof(dm1RouteReceipt));
     dm1HandoffContext.menuState = menuState;
+    dm1HandoffContext.launchEntry = launchEntry;
     dm1HandoffContext.gameView = gameView;
     dm1HandoffContext.dataDir = dataDir;
     dm1HandoffContext.idleAccumulatorMs = idleAccumulatorMs;

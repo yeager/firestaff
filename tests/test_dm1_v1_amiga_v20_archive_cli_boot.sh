@@ -136,16 +136,26 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 print("PASS: authentic DM1 Amiga M12 Quick Resume restored the saved runtime pose")
 PY
 
-# The New Game pointer route above currently stops at the launch receipt. Keep
-# M12 active through the native IMG2 handoff and require its first source-owned
-# Hall frame before accepting the selected edition as a runtime launch.
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
-FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 1920 --height 1080 --menu --game dm1 --platform amiga \
+# Keep M12 active through the native IMG2 handoff. Require the authenticated
+# Amiga SWSH profile, the complete C001 title, and the source-owned Hall frame;
+# a generic launch-ready line alone must not mask a skipped startup phase.
+menu_startup_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --debug --width 1920 --height 1080 --menu --game dm1 --platform amiga \
     --data-dir "$archive" \
     --script 'wait20,click:700:262,wait20,click:410:679,wait20,click:450:405,wait20' \
-    --duration 8000 >/dev/null 2>&1
+    --duration 8000 2>&1) || {
+    printf '%s\n' "$menu_startup_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=amiga-swsh profile=a0ffbcc7ae8cecac03128ddb32887ef4 frames=10 source-vblanks=30' <<<"$menu_startup_output" ||
+   ! grep -Fq 'title-frame=23/23 title-ready=1 dm1-phases=1111' <<<"$menu_startup_output" ||
+   ! grep -Fq "DM1 READY: gameId=dm1 dataDir=$selected_media handoff=amiga-img2" <<<"$menu_startup_output"; then
+    printf '%s\n' "$menu_startup_output" >&2
+    printf '%s\n' 'FAIL: authentic DM1 Amiga startup did not consume SWSH, C001 title, and selected ADF in order' >&2
+    exit 1
+fi
 python3 - "$menu_probe" <<'PY'
 import json
 import sys

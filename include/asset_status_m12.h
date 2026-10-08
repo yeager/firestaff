@@ -246,6 +246,8 @@ int M12_AssetStatus_V22ModernAssetsInstalled(const M12_AssetStatus* status);
 
 /* MD5 hex of a file — used for asset hash verification (Theron Phase 0). */
 int m12_file_md5_hex(const char* path, char outHex[33]);
+/* MD5 hex of an already bounded in-memory media member. */
+int m12_bytes_md5_hex(const uint8_t* bytes, size_t byteCount, char outHex[33]);
 
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
 typedef struct {

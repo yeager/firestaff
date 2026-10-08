@@ -44,16 +44,25 @@
   archive now exposes and launches both; direct v1.2 archive admission and
   the persisted-root M12-to-M11 handoff pass against the original media.
 
+- 2026-10-08: Restored the isolated DM1 Amiga v2.0 ZIP→ZIP→ADF New Game route.
+  The selected `swoosh` Hunk executable is admitted against four exact A20
+  hashes; its source-owned four-plane logo, 27 palette events, and 9,078-byte
+  PCM sample are read from the selected ADF in memory. A direct `--debug`
+  M12 launch records the A20E profile, all 10 SWSH frames and 30 source
+  VBlanks, the selected ADF path, all 23 C001 title steps, and the complete
+  DM1 startup-phase receipt. The isolated authentic-media script passes the
+  M12 no-save first-Hall handoff, Quick Resume and movement checks. This
+  corrects the earlier failure report: it predated the native SWSH route and
+  is no longer current. SDL dummy-driver evidence verifies startup state, not
+  physical M5 rendering or visual parity.
+
 - 2026-10-06: Fixed DM1 Amiga ADF admission by keeping the Amiga graphics
   decoder's big-endian legacy-layout flag separate from the little-endian F0434
   `DUNGEON.DAT` fields and checksum. The installed `[HD]` image uses the
-  direct IMG2 runtime route; the v2.0 floppy preservation package retains the
-  complete SWSH/TITLE/ENTRANCE transaction and reaches its first Hall runtime
-  frame through M12. `test_dm1_v1_amiga_hd_archive_cli_boot.sh` and
-  `test_dm1_v1_amiga_v20_archive_cli_boot.sh` pass against the supplied
-  ZIP→ZIP→ADF data without extraction. DOS English, Atari ST v1.2, and FM
-  Towns JA/EN original-media startup/input tests also pass. SDL dummy-driver
-  evidence does not establish physical M5 rendering or visual parity.
+  direct IMG2 runtime route. The Amiga HD, DOS English, Atari ST v1.2, and FM
+  Towns JA/EN original-media checks listed at the time remain separate
+  evidence; SDL dummy-driver evidence does not establish physical M5 rendering
+  or visual parity.
 
 - 2026-10-06: DM1's PC34 startup handoff now requires the original SWSH logo
   asset to load and its source-timed presentation to finish. Missing/unreadable

@@ -1943,7 +1943,7 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
 static int m11_play_amiga_runtime_pcm(
     M11_AudioState* state, const unsigned char* source, int sourceBytes,
     int sourcePeriod, unsigned int sourceHash, int sourceVolume,
-    int volumeMinimum, int volumeMaximum)
+    int volumeMinimum, int volumeMaximum, int directDevicePeriod)
 {
     const unsigned int amigaClockHz = 3579545u;
     const unsigned int sourcePeriodNumerator = 72800u;
@@ -1956,7 +1956,9 @@ static int m11_play_amiga_runtime_pcm(
      * bytes to left/right and calculates ioa_Period = 72800 / Period.
      * Paula consumes one signed byte per audio period. */
     if (!state || !state->initialized || !source || sourceBytes <= 0 ||
-        sourcePeriod <= 0 || sourcePeriod > (int)sourcePeriodNumerator ||
+        sourcePeriod <= 0 ||
+        (!directDevicePeriod && sourcePeriod > (int)sourcePeriodNumerator) ||
+        (directDevicePeriod && sourcePeriod > 65535) ||
         sourceHash == 0u || sourceVolume < volumeMinimum || sourceVolume > volumeMaximum ||
         m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
         if (state) {
@@ -1965,7 +1967,9 @@ static int m11_play_amiga_runtime_pcm(
         }
         return 0;
     }
-    devicePeriod = sourcePeriodNumerator / (unsigned int)sourcePeriod;
+    devicePeriod = directDevicePeriod
+        ? (unsigned int)sourcePeriod
+        : sourcePeriodNumerator / (unsigned int)sourcePeriod;
     if (devicePeriod == 0u) {
         m11_sound_clear(&state->csbAmigaRuntimePcm);
         state->csbAmigaRuntimeSoundAccepted = 0;
@@ -2021,7 +2025,7 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
     int sourcePeriod, unsigned int sourceHash, int sourceVolume)
 {
     return m11_play_amiga_runtime_pcm(state, source, sourceBytes,
-        sourcePeriod, sourceHash, sourceVolume, 1, 3);
+        sourcePeriod, sourceHash, sourceVolume, 1, 3, 0);
 }
 
 int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
@@ -2032,7 +2036,15 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
      * channel volumes. Equal left/right values must retain all 65 steps,
      * including silence; asymmetric stereo remains a separate path. */
     return m11_play_amiga_runtime_pcm(state, source, sourceBytes,
-        sourcePeriod, sourceHash, paulaVolume, 0, 64);
+        sourcePeriod, sourceHash, paulaVolume, 0, 64, 0);
+}
+
+int M11_Audio_PlayAmigaDmaPcmAtPaulaVolume(
+    M11_AudioState* state, const unsigned char* source, int sourceBytes,
+    int devicePeriod, unsigned int sourceHash, int paulaVolume)
+{
+    return m11_play_amiga_runtime_pcm(state, source, sourceBytes,
+        devicePeriod, sourceHash, paulaVolume, 0, 64, 1);
 }
 
 int M11_Audio_PlayCsbFmtownsRuntimePcm(
