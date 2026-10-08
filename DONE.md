@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-08: `test_csb_v1_amiga_adf_archive_cli_boot.sh` passed in 10.25
+  seconds against the installed original `Chaos Strikes Back (FTL).zip`.
+  The ZIP-to-ADF route reached the source entrance, launched through M12, and
+  verified native movement. This confirms the archive-backed Amiga media
+  route; it does not establish full Amiga parity.
+
 - 2026-10-08: With the current launcher freshly linked,
   `firestaff_cli_startup_diagnostics_real_media` passed in 124.92 seconds
   against installed original media. It verified that `--debug` reports search
