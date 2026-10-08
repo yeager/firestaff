@@ -1,3 +1,11 @@
+# Firestaff v3.0.373
+
+## Developer changes
+
+- `DM1 Amiga A20 F0437 receipt`: verifies the authentic C001 title regions,
+  RGB4 palette stages, and all 18 source-derived zoom steps against original
+  ZIP→ADF media.
+
 # Firestaff v3.0.372
 
 ## User-facing changes

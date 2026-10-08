@@ -17,7 +17,7 @@ static const char* const g_changelogLines[] = {
     "====================",
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-08)",
-    "  - DM1 Amiga v2.0 plays the authenticated SWSH logo, palette sequence, and audio before the C001 title and first Hall.",
+    "  - DM1 Amiga v2.0 plays authenticated SWSH media before the C001 title and first Hall; its A20 F0437 title regions, RGB4 palette stages and 18 zoom steps are source-verified.",
     "",
     "V3.0.371  (2026-10-08)",
     "  - Theron's Quest Japanese Stage 2 adds source-locked routine and runtime-trace evidence for future startup work.",

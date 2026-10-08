@@ -1,5 +1,6 @@
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_amiga_swsh.h"
+#include "dm1_v1_amiga_title_f0437.h"
 #include "dm1_v1_original_save_amiga_handoff.h"
 #include "dm1_v1_original_save_atari_handoff.h"
 #include "dm1_v1_original_save_classifier.h"
@@ -438,6 +439,7 @@ static void test_real_amiga_v20_graphics_receipt(void) {
     CHECK(result.swshBytes != NULL, "real_amiga_swsh_found_in_selected_adf");
     if (result.swshBytes) {
         DM1_V1_AmigaSwshAssets swsh;
+        DM1_V1_AmigaTitleF0437Receipt titleReceipt;
         uint8_t indexed[DM1_V1_AMIGA_SWSH_WIDTH * DM1_V1_AMIGA_SWSH_HEIGHT];
         char sampleMd5[33];
         unsigned int nonzero = 0u;
@@ -473,8 +475,67 @@ static void test_real_amiga_v20_graphics_receipt(void) {
                 if (paletteIndex == -1) waits += value;
                 else ++colors;
             }
-            CHECK(waits > 0u && colors > 0u,
+        CHECK(waits > 0u && colors > 0u,
                   "real_amiga_swsh_palette_timeline");
+        }
+        memset(&titleReceipt, 0, sizeof(titleReceipt));
+        CHECK(dm1_v1_amiga_title_f0437_receipt(
+                  result.bytes, result.size, result.swshBytes,
+                  result.swshSize, &titleReceipt) == 1,
+              "real_amiga_f0437_title_receipt");
+        if (titleReceipt.valid) {
+            unsigned int stepIndex;
+            DM1_V1_AmigaTitleF0437ZoomStep step;
+            CHECK(strcmp(titleReceipt.graphics_md5,
+                         "6a2f135b53c2220f0251fa103e2a6e7e") == 0,
+                  "real_amiga_f0437_graphics_identity");
+            CHECK(strcmp(titleReceipt.executable_md5,
+                         "a0ffbcc7ae8cecac03128ddb32887ef4") == 0,
+                  "real_amiga_f0437_a20_executable_identity");
+            CHECK(titleReceipt.c001_width == 320u &&
+                      titleReceipt.c001_height == 200u &&
+                      titleReceipt.presents_nonzero_pixels > 0u &&
+                      titleReceipt.dungeon_nonzero_pixels > 0u &&
+                      titleReceipt.master_nonzero_pixels > 0u,
+                  "real_amiga_f0437_c001_source_regions");
+            CHECK(titleReceipt.source_zoom_steps == 18u &&
+                      titleReceipt.source_delay_ticks == 25u &&
+                      titleReceipt.source_beam_wait_line == 152u,
+                  "real_amiga_f0437_source_timing_facts");
+            CHECK(titleReceipt.initial_palette[0] == 0x0004u &&
+                      titleReceipt.presents_palette[15] == 0x0fffu &&
+                      titleReceipt.zoom_palette[3] == 0x0a82u &&
+                      titleReceipt.final_palette[10] == 0x0000u &&
+                      titleReceipt.final_palette[12] == 0x0f00u,
+                  "real_amiga_f0437_a20_rgb4_palette");
+            CHECK(dm1_v1_amiga_title_f0437_zoom_step(
+                      &titleReceipt, 0u, &step) == 1 &&
+                      step.destination_x == 136u &&
+                      step.destination_y == 74u &&
+                      step.destination_width == 48u &&
+                      step.destination_height == 12u &&
+                      step.wait_for_beam_line == 152u,
+                  "real_amiga_f0437_first_zoom_geometry");
+            CHECK(dm1_v1_amiga_title_f0437_zoom_step(
+                      &titleReceipt, 17u, &step) == 1 &&
+                      step.destination_x == 0u &&
+                      step.destination_y == 40u &&
+                      step.destination_width == 320u &&
+                      step.destination_height == 80u,
+                  "real_amiga_f0437_final_zoom_geometry");
+            for (stepIndex = 0u;
+                 stepIndex < DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT;
+                 ++stepIndex) {
+                CHECK(dm1_v1_amiga_title_f0437_zoom_step(
+                          &titleReceipt, stepIndex, &step) == 1 &&
+                          step.index == stepIndex &&
+                          step.destination_width == 48u + stepIndex * 16u &&
+                          step.destination_height == 12u + stepIndex * 4u,
+                      "real_amiga_f0437_zoom_step_schedule");
+            }
+            CHECK(dm1_v1_amiga_title_f0437_zoom_step(
+                      &titleReceipt, 18u, &step) == 0,
+                  "real_amiga_f0437_zoom_bounds");
         }
     }
     if (getenv("FIRESTAFF_DM1_AMIGA_DISASSEMBLY")) {

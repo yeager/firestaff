@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.372 LANGUAGES C)
+project(Firestaff VERSION 3.0.373 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -61723,6 +61723,7 @@ unset(_firestaff_csb_v2_verification_tests)
 
 add_executable(test_dm1_v1_amiga_graphics_dat
     tests/test_dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_amiga_title_f0437.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_original_save_amiga_handoff.c
@@ -61748,6 +61749,25 @@ add_test(NAME test_dm1_v1_amiga_graphics_dat COMMAND test_dm1_v1_amiga_graphics_
 set_tests_properties(test_dm1_v1_amiga_graphics_dat PROPERTIES
     ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip;FIRESTAFF_DM1_AMIGA_DISASSEMBLY=1"
     LABELS "dm1;amiga;graphics;real-data;in-memory;skip-safe")
+
+add_executable(test_dm1_v1_amiga_title_f0437_real_media
+    tests/test_dm1_v1_amiga_title_f0437_real_media.c
+    src/dm1/dm1_v1_amiga_title_f0437.c
+    src/dm1/dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_amiga_swsh.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/shared/firestaff_amiga_adf.c
+)
+target_include_directories(test_dm1_v1_amiga_title_f0437_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_amiga_title_f0437_real_media PRIVATE
+    firestaff_zip_extract firestaff_m12)
+add_test(NAME test_dm1_v1_amiga_title_f0437_real_media
+    COMMAND test_dm1_v1_amiga_title_f0437_real_media)
+set_tests_properties(test_dm1_v1_amiga_title_f0437_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
+    LABELS "dm1;amiga;title;real-media;in-memory;skip-safe")
 
 add_executable(test_csb_v1_amiga_graphics_dat
     tests/test_csb_v1_amiga_graphics_dat.c
