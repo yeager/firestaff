@@ -1,9 +1,10 @@
 # Firestaff DONE — CSB
 
-- 2026-10-08: `csb_v1_amiga_native_cli_boot` passed in 72.18 seconds against
-  the authentic Amiga 3.1 archive. This verifies the native-data CLI startup
-  route and its bounded M12/runtime assertions; it does not establish physical
-  M5 rendering or visual parity.
+- 2026-10-08: Freshly linked the current launcher and reran
+  `csb_v1_amiga_native_cli_boot`; it passed in 71.96 seconds against the
+  authentic Amiga 3.1 archive. This verifies the native-data CLI startup route
+  and its bounded M12/runtime assertions; it does not establish physical M5
+  rendering or visual parity.
 
 - 2026-10-08: `csb_v1_atari_st_m12_m11_real_media_handoff` passed against the
   authentic Atari ST v2.1 game and utility disks. Its staging directory now
