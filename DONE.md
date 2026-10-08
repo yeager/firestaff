@@ -11,7 +11,12 @@
   original-media `m12_persisted_root_original_handoff` also passed in 49.06
   seconds, and `return_to_menu_rescans_dm1_csb_dm2_real_media` passed in
   214.75 seconds, verifying that gameplay returns to M12 and rescans DM1, CSB
-  and DM2 with the supplied media still discoverable.
+  and DM2 with the supplied media still discoverable. Finally,
+  `firestaff_cli_startup_diagnostics_real_media` passed in 124.12 seconds:
+  `--debug` recorded all 225 authentic DM2 FM Towns title frames and its
+  completion time, `--verbose` reported candidate filenames and edition
+  selection, DM1/CSB AUTO preferred FM Towns in mixed original-media roots,
+  and explicit DM1 PC selection remained honored.
 
 - 2026-10-08: Fixed CSB Amiga 3.3 multiplayer startup handoff. ReDMCSB
   `COMPILE.H:270-272` identifies A33M `KAOS.FTL` as `C03_GAME`, and
