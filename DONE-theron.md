@@ -9,7 +9,9 @@ type/property tables happen to match. The real-media dungeon-loader test now
 falls back from split Track 19 ISO files to the authentic regional Track 19
 BINs and rejects both a changed name byte and a changed name length. On trv2,
 the focused test built successfully, printed positive mapping and negative
-control receipts for both US and JP, and passed three repeated CTest loops.
+control receipts for both US and JP. The negative controls cover both the
+first and last entries (indices 0 and 68) in the authenticated 69-name bank;
+the focused real-media CTest passed three repeated loops.
 
 This proves the audited US/JP Sarmon-to-Track-19 banks are name-equivalent;
 it does not bind other dungeon item-name banks or close the Theron inventory
