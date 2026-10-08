@@ -116,7 +116,7 @@ jobs:
           # Use GitHub's published timestamp and the user's Stockholm calendar
           # day. Same-tag retries update one release and remain allowed.
           gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
-            --jq '.[]' \
+            --jq '.[] | {tag_name, published_at, draft}' \
             | python3 scripts/verify_daily_release_limit.py --tag "$tag"
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -725,7 +725,7 @@ jobs:
         run: |
           set -euo pipefail
           gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
-            --jq '.[]' \
+            --jq '.[] | {tag_name, published_at, draft}' \
             | python3 scripts/verify_daily_release_limit.py --tag "$FIRESTAFF_TAG"
 
       - name: Create or update GitHub Release
