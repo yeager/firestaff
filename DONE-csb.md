@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-10-08: With the current launcher freshly linked,
+  `csb_v1_fmtowns_native_cli_boot` passed in 111.88 seconds against the
+  authentic FM Towns ZIP. The test verified native TITLE.ANM and AUTO
+  selection, the first game state, M12 launch, and a captured F31 Entrance
+  frame with the authenticated palette; optional save-resume coverage remains
+  conditional on an installed original save. Dummy-video evidence only.
+
 - 2026-10-08: Freshly linked the current launcher and reran
   `csb_v1_amiga_native_cli_boot`; it passed in 71.96 seconds against the
   authentic Amiga 3.1 archive. This verifies the native-data CLI startup route
