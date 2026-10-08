@@ -19,6 +19,11 @@
   root test passed in 43.04 seconds, the dedicated A31E startup handoff passed
   in 1.84 seconds, the mixed CSB FM Towns AUTO route passed in 53.35 seconds,
   and the DM1/CSB/DM2 return-to-menu rescan passed in 217.65 seconds.
+  A fresh original-media rerun of the cross-game return-to-menu rescan also
+  passed on 2026-10-08 in 218.60 seconds.
+  The M12 scan-progress test passed with the full five-game corpus enabled,
+  checking completion/cancellation callbacks, the visible lower-middle bar,
+  and discovery of all five installed game roots.
   DM1 Atari ST 1.1 also passed its authentic CLI/M12/Hall route in 63.42
   seconds. These checks verify startup and menu flow, not visual parity or
   physical M5 HiDPI behavior.
