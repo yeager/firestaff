@@ -18,6 +18,11 @@
 #define THERON_V1_TRACK02_MODE1_HEADER_BYTES 16u
 #define THERON_V1_TRACK02_MD5_JP_BIN "b7afb338ad31be1025b53f9aff12d73a"
 #define THERON_V1_TRACK02_MD5_US_BIN "f23601102138f87c33025877767ebf76"
+#define THERON_V1_TRACK02_MD5_JP_CUE_ISO "62a39bbf43415c9739c41c2481080a49"
+#define THERON_V1_TRACK02_JP_BIN_BYTES 8102640u
+#define THERON_V1_TRACK02_JP_CUE_ISO_BYTES 6596608u
+#define THERON_V1_TRACK02_JP_CUE_PREGAP_SECTORS 224u
+#define THERON_V1_TRACK02_MODE1_USER_DATA_BYTES 2048u
 
 typedef enum {
     THERON_V1_TRACK02_VARIANT_NONE = 0,
@@ -35,6 +40,12 @@ typedef struct {
 } Theron_V1DungeonHandoffFacts;
 
 typedef struct {
+    const uint8_t *jp_cue_iso_track02;
+    size_t jp_cue_iso_track02_bytes;
+    const char *track02_md5;
+} Theron_V1DungeonHandoffIsoFacts;
+
+typedef struct {
     int selected;
     int runtime_route_consumed;
     uint32_t record;
@@ -49,6 +60,10 @@ typedef struct {
     uint32_t raw_sector_offset;
     int raw_track02_md5_verified;
     Theron_V1Track02Variant raw_track02_variant;
+    int iso_track02_md5_verified;
+    size_t iso_track02_bytes;
+    const char *iso_track02_md5;
+    uint32_t track02_iso_byte_offset;
     int adjacent_boundary_opaque;
     const char *route;
 } Theron_V1DungeonHandoffReceipt;
@@ -102,6 +117,13 @@ int theron_v1_track02_raw_cue_admit(
  * or grammar role to the following boundary. */
 int theron_v1_dungeon_handoff_select_initial_level(
     const Theron_V1DungeonHandoffFacts *facts,
+    Theron_V1DungeonHandoffReceipt *out_receipt);
+
+/* Selects the source-locked initial envelope from only the complete,
+ * hash-verified JP CUE MODE1/2048 projection. This is source evidence only:
+ * it grants no runtime-consumption, raw-sector, or spawn provenance. */
+int theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
+    const Theron_V1DungeonHandoffIsoFacts *facts,
     Theron_V1DungeonHandoffReceipt *out_receipt);
 
 #endif

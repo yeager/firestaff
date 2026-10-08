@@ -53949,6 +53949,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_level_data_b
         LABELS "theron;real-media;iso;level-data-blocks;jp")
 endif()
 
+# Theron Track 02 initial-envelope handoff admission. This focused target
+# verifies the source-locked BIN and JP CUE ISO projection gates without
+# linking the full runtime or granting raw-sector spawn semantics to ISO data.
+if(BUILD_TESTING AND EXISTS
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_dungeon_handoff.c")
+    add_executable(test_theron_v1_dungeon_handoff
+        tests/test_theron_v1_dungeon_handoff.c
+        src/theron/theron_v1_dungeon_handoff.c)
+    target_include_directories(test_theron_v1_dungeon_handoff PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_dungeon_handoff PRIVATE
+            -Wall -Wextra -Werror -Wno-missing-field-initializers -O2)
+    endif()
+    add_test(NAME theron_v1_dungeon_handoff
+        COMMAND test_theron_v1_dungeon_handoff)
+    set_tests_properties(theron_v1_dungeon_handoff PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;track02;handoff;real-data")
+endif()
+
 # Theron Track 02 later-level source receipt runtime handoff. The target
 # copies only authenticated byte-range/hash/meta fields; no decompression,
 # tile, map, or object semantics are admitted here.

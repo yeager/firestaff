@@ -8,6 +8,24 @@ enum {
     TQR_US_CANDIDATE_RAW_OFFSET = 0x7015b4u,
     TQR_JP_DESCRIPTOR_RAW_OFFSET = 0x70ffd4u,
     TQR_US_DESCRIPTOR_RAW_OFFSET = 0x710904u,
+    /* Raw offsets include 2352-byte sectors and 16-byte MODE1 headers.
+     * Convert sector coordinates and user-data positions independently. */
+    TQR_JP_CANDIDATE_ISO_OFFSET =
+        (TQR_JP_CANDIDATE_RAW_OFFSET /
+             THERON_V1_TRACK02_RAW_SECTOR_BYTES -
+         THERON_V1_TRACK02_JP_CUE_PREGAP_SECTORS) *
+            THERON_V1_TRACK02_MODE1_USER_DATA_BYTES +
+        (TQR_JP_CANDIDATE_RAW_OFFSET %
+             THERON_V1_TRACK02_RAW_SECTOR_BYTES -
+         THERON_V1_TRACK02_MODE1_HEADER_BYTES),
+    TQR_JP_DESCRIPTOR_ISO_OFFSET =
+        (TQR_JP_DESCRIPTOR_RAW_OFFSET /
+             THERON_V1_TRACK02_RAW_SECTOR_BYTES -
+         THERON_V1_TRACK02_JP_CUE_PREGAP_SECTORS) *
+            THERON_V1_TRACK02_MODE1_USER_DATA_BYTES +
+        (TQR_JP_DESCRIPTOR_RAW_OFFSET %
+             THERON_V1_TRACK02_RAW_SECTOR_BYTES -
+         THERON_V1_TRACK02_MODE1_HEADER_BYTES),
     TQR_JP_CUE_INDEX01_RAW_SECTOR = 224u,
     TQR_US_CUE_INDEX01_RAW_SECTOR = 225u,
     TQR_INITIAL_ENVELOPE_RAW_SECTOR_OFFSET = 0x124u,
@@ -274,6 +292,67 @@ int theron_v1_dungeon_handoff_select_initial_level(
     receipt.raw_track02_variant = variant;
     receipt.adjacent_boundary_opaque = 1;
     receipt.route = "raw_track02_initial_envelope";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
+    const Theron_V1DungeonHandoffIsoFacts *facts,
+    Theron_V1DungeonHandoffReceipt *out_receipt) {
+    Theron_V1DungeonHandoffReceipt receipt = {0};
+    const uint8_t *iso;
+    uint16_t header_width;
+    uint16_t header_height;
+    uint32_t header_seed;
+    uint16_t header_identifier;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!facts || !out_receipt || !facts->jp_cue_iso_track02 ||
+        facts->jp_cue_iso_track02_bytes !=
+            THERON_V1_TRACK02_JP_CUE_ISO_BYTES ||
+        !facts->track02_md5 ||
+        strcmp(facts->track02_md5, THERON_V1_TRACK02_MD5_JP_CUE_ISO) != 0 ||
+        !theron_v1_track02_raw_bytes_match_md5(
+            facts->jp_cue_iso_track02, facts->jp_cue_iso_track02_bytes,
+            THERON_V1_TRACK02_MD5_JP_CUE_ISO) ||
+        !raw_range_present(facts->jp_cue_iso_track02_bytes,
+                           TQR_JP_CANDIDATE_ISO_OFFSET,
+                           THERON_V1_INITIAL_ENVELOPE_BYTES) ||
+        !raw_range_present(facts->jp_cue_iso_track02_bytes,
+                           TQR_JP_DESCRIPTOR_ISO_OFFSET,
+                           sizeof(g_descriptor))) {
+        return 0;
+    }
+
+    iso = facts->jp_cue_iso_track02;
+    header_width = read_be16(iso + TQR_JP_CANDIDATE_ISO_OFFSET);
+    header_height = read_be16(iso + TQR_JP_CANDIDATE_ISO_OFFSET + 2u);
+    header_seed = read_be32(iso + TQR_JP_CANDIDATE_ISO_OFFSET + 4u);
+    header_identifier = read_be16(iso + TQR_JP_CANDIDATE_ISO_OFFSET + 8u);
+    if (memcmp(iso + TQR_JP_DESCRIPTOR_ISO_OFFSET, g_descriptor,
+               sizeof(g_descriptor)) != 0 ||
+        header_width != THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
+        header_height != THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        header_seed != THERON_V1_INITIAL_ENVELOPE_HEADER_SEED ||
+        header_identifier != THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER) {
+        return 0;
+    }
+
+    receipt.selected = 1;
+    receipt.record = THERON_V1_INITIAL_ENVELOPE_RECORD;
+    receipt.record_user_data_offset =
+        THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET;
+    receipt.envelope_bytes = THERON_V1_INITIAL_ENVELOPE_BYTES;
+    receipt.header_width = header_width;
+    receipt.header_height = header_height;
+    receipt.header_seed = header_seed;
+    receipt.header_identifier = header_identifier;
+    receipt.iso_track02_md5_verified = 1;
+    receipt.iso_track02_bytes = facts->jp_cue_iso_track02_bytes;
+    receipt.iso_track02_md5 = THERON_V1_TRACK02_MD5_JP_CUE_ISO;
+    receipt.track02_iso_byte_offset = TQR_JP_CANDIDATE_ISO_OFFSET;
+    receipt.adjacent_boundary_opaque = 1;
+    receipt.route = "jp_cue_iso_initial_envelope";
     *out_receipt = receipt;
     return 1;
 }

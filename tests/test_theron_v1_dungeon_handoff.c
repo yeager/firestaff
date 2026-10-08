@@ -15,6 +15,7 @@ static int failures;
 
 enum {
     RAW_SECTOR_BYTES = THERON_V1_TRACK02_RAW_SECTOR_BYTES,
+    JP_ZERO_STUB_BYTES = 149u * THERON_V1_TRACK02_MODE1_USER_DATA_BYTES,
     US_CANDIDATE_OFFSET = 0x7015b4u,
     US_DESCRIPTOR_OFFSET = 0x710904u,
     RAW_BYTES = ((US_DESCRIPTOR_OFFSET + 18u + RAW_SECTOR_BYTES - 1u) /
@@ -66,6 +67,90 @@ static unsigned char *read_raw_track02(const char *path, size_t *out_bytes) {
     return bytes;
 }
 
+static unsigned char *project_jp_cue_iso_from_raw_bin(
+    size_t *out_bytes, int *out_invalid_source) {
+    const char *path = getenv("FIRESTAFF_THERON_JP_TRACK02_RAW");
+    const char *root = getenv("FIRESTAFF_THERON_DATA_DIR");
+    const char *home = getenv("HOME");
+    char standard_path[4096];
+    int explicit_override = path && path[0];
+    unsigned char *raw;
+    unsigned char *projection;
+    size_t raw_bytes = 0u;
+    size_t sector_count;
+    size_t output_offset = 0u;
+
+    if (out_bytes) *out_bytes = 0u;
+    if (out_invalid_source) *out_invalid_source = 0;
+    if (!out_bytes || !out_invalid_source) return NULL;
+    if (explicit_override) {
+        raw = read_raw_track02(path, &raw_bytes);
+    } else {
+        if (root && root[0]) {
+            if (snprintf(standard_path, sizeof(standard_path), "%s/TQJP02.bin",
+                         root) >= (int)sizeof(standard_path)) return NULL;
+        } else {
+            if (!home || !home[0] ||
+                snprintf(standard_path, sizeof(standard_path),
+                         "%s/.firestaff/data/theron/TQJP02.bin", home) >=
+                    (int)sizeof(standard_path)) return NULL;
+        }
+        {
+            FILE *probe = fopen(standard_path, "rb");
+            if (!probe) return NULL;
+            fclose(probe);
+        }
+        raw = read_raw_track02(standard_path, &raw_bytes);
+    }
+    if (!raw) {
+        *out_invalid_source = 1;
+        return NULL;
+    }
+    if (raw_bytes != THERON_V1_TRACK02_JP_BIN_BYTES ||
+        raw_bytes % THERON_V1_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        !theron_v1_track02_raw_bytes_match_md5(
+            raw, raw_bytes, THERON_V1_TRACK02_MD5_JP_BIN)) {
+        free(raw);
+        *out_invalid_source = 1;
+        return NULL;
+    }
+
+    sector_count = raw_bytes / THERON_V1_TRACK02_RAW_SECTOR_BYTES;
+    if (sector_count <= THERON_V1_TRACK02_JP_CUE_PREGAP_SECTORS ||
+        (sector_count - THERON_V1_TRACK02_JP_CUE_PREGAP_SECTORS) *
+            THERON_V1_TRACK02_MODE1_USER_DATA_BYTES !=
+                THERON_V1_TRACK02_JP_CUE_ISO_BYTES) {
+        free(raw);
+        *out_invalid_source = 1;
+        return NULL;
+    }
+    projection = malloc(THERON_V1_TRACK02_JP_CUE_ISO_BYTES);
+    if (!projection) {
+        free(raw);
+        *out_invalid_source = 1;
+        return NULL;
+    }
+    for (size_t sector = THERON_V1_TRACK02_JP_CUE_PREGAP_SECTORS;
+         sector < sector_count; ++sector) {
+        const size_t source_offset =
+            sector * THERON_V1_TRACK02_RAW_SECTOR_BYTES +
+            THERON_V1_TRACK02_MODE1_HEADER_BYTES;
+        memcpy(projection + output_offset, raw + source_offset,
+               THERON_V1_TRACK02_MODE1_USER_DATA_BYTES);
+        output_offset += THERON_V1_TRACK02_MODE1_USER_DATA_BYTES;
+    }
+    free(raw);
+    if (output_offset != THERON_V1_TRACK02_JP_CUE_ISO_BYTES ||
+        !theron_v1_track02_raw_bytes_match_md5(
+            projection, output_offset, THERON_V1_TRACK02_MD5_JP_CUE_ISO)) {
+        free(projection);
+        *out_invalid_source = 1;
+        return NULL;
+    }
+    *out_bytes = output_offset;
+    return projection;
+}
+
 int main(void) {
     static const unsigned char md5_vector[] = "abc";
     unsigned char *raw = calloc(1u, RAW_BYTES);
@@ -74,6 +159,7 @@ int main(void) {
     Theron_V1DungeonHandoffReceipt receipt;
     Theron_V1Track02RawCueAdmissionFacts admission_facts;
     Theron_V1Track02RawCueAdmissionReceipt admission_receipt;
+    Theron_V1DungeonHandoffIsoFacts iso_facts;
     const char *real_track02_path;
     unsigned char *real_track02;
     size_t real_track02_bytes;
@@ -154,7 +240,20 @@ int main(void) {
     facts.track02_md5 = "00000000000000000000000000000000";
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
 
-    /* Positive selection is available only for an operator-supplied raw BIN. */
+    /* This exact zero-filled 149-sector span models the known legacy stub
+     * only as a negative control; it is never positive gameplay input. */
+    CHECK(theron_v1_track02_raw_bytes_match_md5(
+        raw, JP_ZERO_STUB_BYTES, "397039af02d50d15c70b74088eb8a1cb"));
+    memset(&iso_facts, 0, sizeof(iso_facts));
+    iso_facts.jp_cue_iso_track02 = raw;
+    iso_facts.jp_cue_iso_track02_bytes = JP_ZERO_STUB_BYTES;
+    iso_facts.track02_md5 = "397039af02d50d15c70b74088eb8a1cb";
+    CHECK(!theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
+        &iso_facts, &receipt));
+    CHECK(!receipt.selected && !receipt.iso_track02_md5_verified &&
+          !receipt.raw_track02_md5_verified);
+
+    /* The existing raw-BIN route remains independent from the ISO projection. */
     real_track02_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     real_track02 = read_raw_track02(real_track02_path, &real_track02_bytes);
     if (real_track02) {
@@ -204,6 +303,70 @@ int main(void) {
                   strcmp(receipt.route, "raw_track02_initial_envelope") == 0);
         }
         free(real_track02);
+    }
+
+    /* Build the positive MODE1/2048 projection in memory from authentic JP
+     * raw media only, then independently hash it again in the selector. */
+    {
+        size_t projection_bytes = 0u;
+        int invalid_jp_source = 0;
+        unsigned char *projection =
+            project_jp_cue_iso_from_raw_bin(
+                &projection_bytes, &invalid_jp_source);
+        if (projection) {
+            unsigned char *tampered = malloc(projection_bytes);
+            iso_facts.jp_cue_iso_track02 = projection;
+            iso_facts.jp_cue_iso_track02_bytes = projection_bytes;
+            iso_facts.track02_md5 = "ceb02343868f80cec899e9b239aff2da";
+            CHECK(!theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
+                &iso_facts, &receipt));
+            CHECK(!receipt.selected && !receipt.iso_track02_md5_verified);
+
+            iso_facts.track02_md5 = THERON_V1_TRACK02_MD5_JP_CUE_ISO;
+            CHECK(theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
+                &iso_facts, &receipt));
+            CHECK(receipt.selected && !receipt.runtime_route_consumed);
+            CHECK(receipt.iso_track02_md5_verified);
+            CHECK(receipt.iso_track02_bytes == projection_bytes);
+            CHECK(receipt.iso_track02_md5 != NULL &&
+                  strcmp(receipt.iso_track02_md5,
+                         THERON_V1_TRACK02_MD5_JP_CUE_ISO) == 0);
+            CHECK(!receipt.raw_track02_md5_verified);
+            CHECK(receipt.raw_track02_variant ==
+                  THERON_V1_TRACK02_VARIANT_NONE);
+            CHECK(receipt.cue_track02_index01_raw_sector == 0u &&
+                  receipt.track02_raw_sector == 0u &&
+                  receipt.raw_sector_offset == 0u);
+            CHECK(receipt.track02_iso_byte_offset ==
+                  (0x700c84u / RAW_SECTOR_BYTES -
+                   THERON_V1_TRACK02_JP_CUE_PREGAP_SECTORS) *
+                      THERON_V1_TRACK02_MODE1_USER_DATA_BYTES +
+                  (0x700c84u % RAW_SECTOR_BYTES -
+                   THERON_V1_TRACK02_MODE1_HEADER_BYTES));
+            CHECK(receipt.route != NULL && strcmp(receipt.route,
+                  "jp_cue_iso_initial_envelope") == 0);
+
+            if (tampered) {
+                memcpy(tampered, projection, projection_bytes);
+                tampered[0] ^= 1u;
+                iso_facts.jp_cue_iso_track02 = tampered;
+                CHECK(!theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
+                    &iso_facts, &receipt));
+                CHECK(!receipt.selected && !receipt.iso_track02_md5_verified);
+                free(tampered);
+            } else {
+                CHECK(0 && "allocate ISO hash-mutation rejection copy");
+            }
+            free(projection);
+        } else {
+            if (invalid_jp_source) {
+                CHECK(0 && "explicit or present JP Track 02 source failed identity/projection checks");
+            } else {
+                puts("SKIP: authentic JP raw BIN unavailable for ISO projection");
+                free(raw);
+                return 77;
+            }
+        }
     }
 
     free(raw);

@@ -3570,6 +3570,15 @@ distinguishes right and left after `$28B8` returns to zero.
   its dungeon/object/tile/bitmap/palette grammar and a positive level
   transition still need original execution evidence.
 
+  - Update 2026-10-10: added a separate source-only JP CUE MODE1/2048 initial
+    envelope selector. Its test derives the projection in memory only from
+    the exact 8,102,640-byte JP BIN identity, skips 224 sectors, strips each
+    16-byte MODE1 header, and requires the resulting 6,596,608-byte projection
+    to match MD5 `62a39bbf43415c9739c41c2481080a49`. ISO receipts retain ISO
+    identity/offset but leave runtime-consumption and raw-sector/spawn
+    provenance unset. The focused source check passes against authentic JP
+    data; this does not prove the original loader or payload semantics.
+
 - 🔧 2026-07-15 Track 02 level/object boundary: the authenticated original
   evidence is a game-owned post-`$3800` consumer that reads a separately
   hash-bound level/object record and proves its grammar.
