@@ -23,16 +23,24 @@ complete linear listing is `theron-jp-stage2-l4bb0-huc6280.asm`.
 ## Instruction-level observations
 
 The routine first checks `$4C11`, then decrements `$4C10`; a nonzero result
-returns at `$4C0C`, while zero reloads `$4C10` from `$4C0F` and proceeds. It
-transforms the values at `$4C0D` and `$4C0E` in place, selects opcode `$69`
-(`ADC`) or `$E9` (`SBC`) by writing to the opcode bytes at `$4BE2` and `$4C05`,
-and updates the two low/high scroll-state word pairs at
-`$220C/$220D` and `$2210/$2211` in memory. These are not direct VDC-port
-writes.
-The successful update path loads `$01` into A before returning. The source
-verifier recognizes the static scroll-state store instruction bytes. This
-proves that the authenticated image contains those instructions, not that
-execution reached them or that a runtime state update occurred.
+returns at `$4C0C`, while zero reloads `$4C10` from `$4C0F` and proceeds. On
+this continuing path, it tests `$4C0D`. A zero value branches directly to
+`$4BE7`, bypassing the entire `$4C0D` block, including its transform, opcode
+patch, and `$220C/$220D` update. A nonzero value is two's-complement-negated
+in place; the resulting sign selects the self-modified low-byte opcode
+(`ADC` `$69` or `SBC` `$E9`) at `$4BE2`, after which the low/high bytes at
+`$220C/$220D` are updated. Both branches then reach the `$4C0E` path. That
+path two's-complement-negates `$4C0E` in place and selects the corresponding
+opcode at `$4C05`; a zero input remains zero, selects ADC, and leaves the
+`$2210/$2211` word pair unchanged. These are stores to memory, not direct
+VDC-port writes.
+
+The continuing path loads `$01` into A at `$4C0A` before the RTS at `$4C0C`.
+The two early-return paths branch straight to that RTS and bypass both the
+`$4C0E` path and `LDA #$01`. The source verifier recognizes the static
+word-store instruction bytes. This proves that the authenticated image
+contains those instructions, not that execution reached them or that a
+runtime state update occurred.
 
 The code stream is self-modifying at `$4BE2` and `$4C05`; the checked-in
 listing records the authentic loaded bytes, not a post-execution state. This

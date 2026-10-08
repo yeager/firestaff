@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — clarify the `$4BB0` static dataflow
+
+Refined the source-lock note for the authenticated `$4BB0` listing: when
+the entry guards pass and `$4C0D` is zero, it bypasses the complete `$4C0D`
+block and reaches the `$4C0E` path without updating `$220C/$220D`. The note
+now distinguishes this continuing path from the two early RTS paths, which
+bypass `$4C0E` and `LDA #$01`. Also corrected the assembly header: these are
+scroll-state memory stores, not direct VDC-port writes. The statements remain
+limited to byte-locked control flow; they make no runtime-execution or
+rendered-scroll claim.
+
 ## 2026-10-08 — persist JP parity check for the `$4B3C` initializer
 
 Extended the focused Stage-2 test so that, when authentic JP Track 02 media is

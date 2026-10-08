@@ -3,7 +3,7 @@
 ; JP and US listings matched in three independent runs; listing SHA-256:
 ; beca5347eeeb875f64293ce010eef58bd1f967b909f7fe436027bc6c9f0b9640
 ; The existing authentic-media verifier binds this 93-byte callee and its
-; VDC scroll-register write pattern; this file is a linear decode.
+; scroll-state memory stores; this file is a linear decode, not runtime evidence.
 
 004bb0: ad 11 4c  lda  $4C11
 004bb3: f0 57     beq  $4C0C
