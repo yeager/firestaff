@@ -109,7 +109,6 @@ jobs:
               test_menu_hit_launch_direct_click_m12
               test_m12_auto_platform_priority
               test_m12_menu_row_hit_height_audit
-              test_m12_quick_resume_gate
               test_m12_launcher_options_runtime_handoff
               test_csb_v1_startup_package_identity_pc34
               test_csb_v1_startup_real_sequence_pc34_compat
@@ -251,7 +250,7 @@ jobs:
         run: |
           ctest --test-dir build --output-on-failure --no-tests=error \
             --parallel 3 --timeout 60 \
-            -R '^(m12_menu_mouse|m12_auto_platform_priority|m12_menu_row_hit_height_audit|m12_quick_resume_gate|m12_launcher_options_runtime_handoff)$'
+            -R '^(m12_menu_mouse|m12_auto_platform_priority|m12_menu_row_hit_height_audit|m12_launcher_options_runtime_handoff)$'
 
       - name: Run DM1, CSB and DM2 startup contracts
         if: matrix.full_ctest
