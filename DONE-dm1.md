@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-10-08: Rebuilt the local launcher binary, then
+  `dm1_v1_amiga_v20_archive_cli_boot` passed in 50.49 seconds against the
+  authentic Amiga v2.0 ZIP -> ZIP -> ADF archive. It verified direct CLI,
+  M12 New Game, authenticated SWSH/title/F0441 entrance, native save resume,
+  and movement. An initial run against a stale local binary lacked the current
+  entrance receipt; the rebuilt-binary run passed.
+
 - 2026-10-08: `dm1_v1_pc34_native_cli_boot` passed in 247.34 seconds against
   the authentic PC 3.4 ZIP. It covered the real title sequence, M12 AUTO menu
   discovery, the first runtime frame, and rejection of a private archive copy
