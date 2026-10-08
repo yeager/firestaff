@@ -1,14 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -72,0 +73,7 @@
-+ static unsigned stage2_mpr1_l4c46_sequence;
-+ static int stage2_mpr1_l4c46_pending;
-+ static uint8 stage2_mpr1_l4c46_mpr1;
-+ static uint8 stage2_mpr1_l4c46_mpr2;
-+ static uint32 stage2_mpr1_l4c46_physical_pc;
-+ static uint32 stage2_mpr1_l4c46_target_physical_pc;
-+ static uint8 stage2_mpr1_l4c46_caller_bytes[3];
-@@ -183,4 +190,74 @@
+@@ -183,4 +183,74 @@
   if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
    stage2_mpr1_call_pending = 0;
 + if(stage2_mpr1_l4c46_pending && stage2_probe_pc != 0x3221)

@@ -73,15 +73,23 @@ traversal.
   callee or region. The versioned Mednafen diagnostic patch
   `scripts/mednafen_1.32.1_theron_l4c46_mpr1_target_probe.patch` adds the
   exact `$4C46` JSR `$3221` callsite and immediate-entry byte/MPR capture. It
-  passes a zero-fuzz dry run against the instrumented Mednafen 1.32.1 source,
-  and the modified HuC6280 object compiled in an isolated trv2 copy. The
-  standard instrumented-build script now applies it after the base PCE Fast
-  MPR1 hook, with a regression check for inclusion and ordering. Runtime
-  capture remains unverified: although authentic JP Rev. 1 media and System
-  Card firmware are available on trv2, a new build was deferred while disk
-  space is critically low and another emulator capture is active. Do not infer
-  the target mapping from this compile or from the unrelated `$4ED4->$3A2E`
-  capture, whose MPR1 `$F8` target is BaseRAM.
+  applies after the base PCE Fast MPR1 hook. Its declarations now live in the
+  function's static block, and its unified-diff hunk count is corrected. The
+  complete patch set passed three isolated patch-only applications and the
+  Theron controller/patch regression test against the authentic Mednafen
+  source; the full Mednafen 1.32.1 PCE Fast build then completed on trv2 with
+  one job. Runtime evidence is still missing. Three runs attempted to autoload
+  the US `.mc0` state and failed because it is incompatible with this Mednafen
+  build. A cold start with authentic US media/System Card and `run@9600:240`
+  input reached `$4ED4->$3A2E` and the `$50xx` selector loop, but produced no
+  `$4C46` or `$3221` hit and no authenticated CD/IRQ receipt. Replaying the
+  recorded 14-event route from the authentic JP Rev. 1 `.mca` state loaded and
+  consumed all events, but also did not reach `$4C46`. These are negative
+  results for the attempted routes only; do not infer target mapping or
+  unreachability. The next capture must first prove interpreter dispatch
+  index `$53` / PC `$49FB`, then bind the `$4C46` call, MPR1 and target bytes in
+  that same run. Private traces remain on trv2 under
+  `/home/trv2/.cache/firestaff-theron-l4c46-20261009/`.
 - The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
   US Track 02; when authentic JP media is present, the focused test now checks
   the matching span hash and every US/JP byte. This regional source comparison

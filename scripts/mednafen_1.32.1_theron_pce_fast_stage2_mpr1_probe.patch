@@ -4,7 +4,7 @@
  #include "vdc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -29,1 +31,194 @@
+@@ -29,1 +31,201 @@
  HuC6280 HuCPU;
 +
 +static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc,
@@ -31,6 +31,13 @@
 + static uint32 stage2_mpr1_caller_physical_pc;
 + static uint32 stage2_mpr1_call_target_physical_pc;
 + static uint8 stage2_mpr1_caller_bytes[3];
++ static unsigned stage2_mpr1_l4c46_sequence;
++ static int stage2_mpr1_l4c46_pending;
++ static uint8 stage2_mpr1_l4c46_mpr1;
++ static uint8 stage2_mpr1_l4c46_mpr2;
++ static uint32 stage2_mpr1_l4c46_physical_pc;
++ static uint32 stage2_mpr1_l4c46_target_physical_pc;
++ static uint8 stage2_mpr1_l4c46_caller_bytes[3];
 + if(!stage2_mpr1_trace_initialized)
 + {
 +  const char *trace_path = getenv("FIRESTAFF_THERON_IRQ2_TRACE");
