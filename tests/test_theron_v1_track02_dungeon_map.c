@@ -9,6 +9,158 @@
 #define SECTOR_SIZE 2352
 #define UD_PER_SECTOR 2048
 #define SYNC_OFFSET 16
+#define TRACK02_PREGAP_UD_SIZE (225u * UD_PER_SECTOR)
+
+static const Theron_QuestBlockOffsets expected_us_offsets[] = {
+    { 0x0002A0F1, 0x0002A2D7, 0x0002A831, 0x0002AD0F, 0x0002B800, 0x0002C9D8 },
+    { 0x0006A333, 0x0006A5E9, 0x0006ABA5, 0x0006B031, 0x0006B800, 0x0006CECC },
+    { 0x000AA9BC, 0x000AAB7D, 0x000AB035, 0x000AB4C9, 0x000AB800, 0x000ACCC8 },
+    { 0x000EA31B, 0x000EA4A8, 0x000EA95C, 0x000EADCE, 0x000EB800, 0x000ED22C },
+    { 0x0012AB3C, 0x0012ACB5, 0x0012B22F, 0x0012B6DD, 0x0012B800, 0x0012D106 },
+    { 0x0016A034, 0x0016A220, 0x0016A8EC, 0x0016ADEC, 0x0016B800, 0x0016C884 },
+    { 0x001AA831, 0x001AA9EC, 0x001AB045, 0x001AB4BD, 0x001AB800, 0x001ACC0E },
+};
+
+static const Theron_QuestBlockOffsets expected_jp_offsets[] = {
+    { 0x0002991D, 0x00029B03, 0x0002A05D, 0x0002A53B, 0x0002B000, 0 },
+    { 0x00069D50, 0x0006A006, 0x0006A5C2, 0x0006AA4E, 0x0006B000, 0 },
+    { 0x000AA261, 0x000AA422, 0x000AA8DA, 0x000AAD6E, 0x000AB000, 0 },
+    { 0x000E9B47, 0x000E9CD4, 0x000EA188, 0x000EA5FA, 0x000EB000, 0 },
+    { 0x0012A3CB, 0x0012A544, 0x0012AABE, 0x0012AF6C, 0x0012B000, 0 },
+    { 0x00169860, 0x00169A4C, 0x0016A118, 0x0016A618, 0x0016B000, 0 },
+    { 0x001AA043, 0x001AA1FE, 0x001AA857, 0x001AACCF, 0x001AB000, 0 },
+};
+
+static int raw_range_fits(size_t offset, size_t length, size_t size) {
+    return offset <= size && length <= size - offset;
+}
+
+static uint16_t read_u16le(const uint8_t *bytes) {
+    return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+static int quest_offsets_equal(const Theron_QuestBlockOffsets *left,
+                               const Theron_QuestBlockOffsets *right);
+
+/* Compare every parsed map header, descriptor list, column count and tile
+ * byte with its independently addressed bytes in the authenticated BIN's
+ * 2048-byte user-data stream. This checks the complete source-data projection
+ * without asserting what any tile or field means during gameplay. */
+static void assert_dungeon_matches_raw_source(
+        const uint8_t *ud, size_t ud_size, Theron_Track02Variant variant,
+        unsigned int dungeon, const Theron_DungeonData *data) {
+    const Theron_QuestBlockOffsets *expected =
+        variant == THERON_TRACK02_VARIANT_JP_BIN
+            ? expected_jp_offsets : expected_us_offsets;
+    const int expected_map_count =
+        theron_v1_track02_dungeon_map_count(dungeon);
+    const size_t user_data_base =
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+            ? 0u : TRACK02_PREGAP_UD_SIZE;
+    Theron_QuestBlockOffsets offsets;
+    const unsigned int map_count = data->map_count;
+    size_t header_size;
+    size_t dims_abs;
+    size_t map_abs;
+    const uint8_t *p;
+    const uint8_t *xdims;
+    const uint8_t *ydims;
+    const uint8_t *xoffs;
+    const uint8_t *yoffs;
+    const uint8_t *mapids;
+    const uint8_t *unk1;
+    const uint8_t *unk2;
+    const uint8_t *creatures;
+    const uint8_t *xp_mod;
+    const uint8_t *object_counts;
+    const uint8_t *doors;
+    const uint8_t *gfx_banks;
+    const uint8_t *cumulative_items;
+    const uint8_t *column_counts;
+    const uint8_t *descriptor_sizes;
+    unsigned int total_columns = 0u;
+
+    assert(dungeon < 7u);
+    assert(theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+        variant, dungeon, &offsets));
+    assert(quest_offsets_equal(&offsets, &expected[dungeon]));
+    assert(expected_map_count > 0);
+    assert(map_count == (unsigned int)expected_map_count);
+    header_size = 9u * map_count + 32u;
+    dims_abs = user_data_base + expected[dungeon].dims_offset;
+    assert(raw_range_fits(dims_abs, header_size, ud_size));
+
+    p = ud + dims_abs;
+    xdims = p; p += map_count;
+    ydims = p; p += map_count;
+    xoffs = p; p += map_count;
+    yoffs = p; p += map_count;
+    mapids = p; p += map_count;
+    unk1 = p; p += map_count;
+    unk2 = p; p += map_count;
+    creatures = p; p += map_count;
+    xp_mod = p; p += map_count;
+    object_counts = p;
+
+    for (unsigned int map = 0u; map < map_count; ++map) {
+        const Theron_MapHeader *h = &data->maps[map].header;
+        assert(h->x_dim == xdims[map]);
+        assert(h->y_dim == ydims[map]);
+        assert(h->x_offset == xoffs[map]);
+        assert(h->y_offset == yoffs[map]);
+        assert(h->map_id == mapids[map]);
+        assert(h->unk1 == unk1[map]);
+        assert(h->unk2 == unk2[map]);
+        assert(h->creature_count == creatures[map]);
+        assert(h->xp_modifier == xp_mod[map]);
+        total_columns += xdims[map];
+    }
+    for (unsigned int i = 0u; i < 16u; ++i)
+        assert(data->object_counts[i] == read_u16le(object_counts + 2u * i));
+
+    doors = ud + dims_abs + header_size;
+    assert(raw_range_fits(dims_abs + header_size, 6u * map_count, ud_size));
+    gfx_banks = doors + 2u * map_count;
+    cumulative_items = gfx_banks + 2u * map_count;
+    column_counts = cumulative_items + 2u * map_count;
+    assert(data->column_thing_count_total == total_columns);
+    assert(raw_range_fits((size_t)(column_counts - ud) +
+                          2u * total_columns + 4u +
+                          THERON_TRACK02_THING_TYPE_COUNT,
+                          0u, ud_size));
+    for (unsigned int map = 0u; map < map_count; ++map) {
+        const Theron_MapHeader *h = &data->maps[map].header;
+        assert(h->door_type1 == doors[2u * map]);
+        assert(h->door_type2 == doors[2u * map + 1u]);
+        assert(data->creature_gfx_bank[map] ==
+               read_u16le(gfx_banks + 2u * map));
+        assert(data->cumulative_column_items[map] ==
+               read_u16le(cumulative_items + 2u * map));
+    }
+    for (unsigned int column = 0u; column < total_columns; ++column)
+        assert(data->column_thing_counts[column] ==
+               read_u16le(column_counts + 2u * column));
+    descriptor_sizes = column_counts + 2u * total_columns + 4u;
+    assert(memcmp(data->thing_descriptor_sizes, descriptor_sizes,
+                  THERON_TRACK02_THING_TYPE_COUNT) == 0);
+    assert(data->thing_list_offset ==
+           (size_t)(descriptor_sizes + THERON_TRACK02_THING_TYPE_COUNT - ud));
+    map_abs = user_data_base + expected[dungeon].map_data_offset;
+    assert(raw_range_fits(map_abs, 0u, ud_size));
+    assert(map_abs >= data->thing_list_offset);
+    assert(data->thing_list_size == map_abs - data->thing_list_offset);
+    p = ud + map_abs;
+    for (unsigned int map = 0u; map < map_count; ++map) {
+        const unsigned int width = (unsigned int)xdims[map] + 1u;
+        const unsigned int height = (unsigned int)ydims[map] + 1u;
+        assert(raw_range_fits((size_t)(p - ud), width * height, ud_size));
+        for (unsigned int x = 0u; x < width; ++x) {
+            for (unsigned int y = 0u; y < height; ++y)
+                assert(data->maps[map].tiles[x][y] == p[x * height + y]);
+        }
+        p += width * height;
+    }
+}
 
 static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     FILE *fp = fopen(path, "rb");
@@ -217,6 +369,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
             ud, ud_size, variant, d, &dd);
         assert(ok);
         assert(dd.map_count == expected_maps[d]);
+        assert_dungeon_matches_raw_source(ud, ud_size, variant, d, &dd);
 
         /* All hubs are 6x8 (stored 5x7). */
         assert(dd.maps[0].header.x_dim == 5);
@@ -358,6 +511,8 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
             exit(1);
         }
         assert(dd.map_count == expected_maps[d]);
+        assert_dungeon_matches_raw_source(
+            ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN, d, &dd);
         assert(dd.maps[0].header.x_dim == 5);
         assert(dd.maps[0].header.y_dim == 7);
         if (d == 0u) {

@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — compare all regional dungeon-map source bytes
+
+The real-media US and JP dungeon-map tests now compare every loaded map header
+field, all 16 object counts, door and graphics metadata, cumulative item and
+column counts, descriptor sizes, thing-list boundaries, and every tile byte
+against independently addressed bytes in the authenticated Track 02
+user-data stream for all seven dungeons. The focused US and JP CTests each
+passed three consecutive loops on trv2 using the original hash-verified BINs.
+This verifies the static source-data projection only; it does not assign
+gameplay semantics to map fields or prove runtime use.
+
 ## 2026-10-08 — require exact source names for Track 19 item mapping
 
 The Track 19/Sarmon mapping proof now compares every raw name's length and
