@@ -1,6 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
 - 2026-10-08: With the current launcher freshly linked,
+  `firestaff_cli_startup_diagnostics_real_media` passed in 124.92 seconds
+  against installed original media. It verified that `--debug` reports search
+  roots, candidates and selected editions, `--verbose` lists candidate files,
+  DM2 FM Towns logs all 225 timed title frames, and DM1/CSB/DM2 AUTO select
+  FM Towns when it is available. It also checked unsupported DM1 PC-98 media
+  stays unselectable. SDL dummy-video diagnostics do not verify a physical
+  desktop display.
+
+- 2026-10-08: With the current launcher freshly linked,
   `return_to_menu_rescans_dm1_csb_dm2_real_media` passed in 222.06 seconds
   against the installed authentic DM1, CSB and DM2 FM Towns archives. It
   launched DM2 from the menu, returned from runtime, and verified that all
