@@ -22,6 +22,93 @@ typedef struct GameLeafScanReceipt {
     char searchRoot[FSP_PATH_MAX];
 } GameLeafScanReceipt;
 
+static void run_dm2_amiga_m12_handoff(M12_StartupMenuState* menu)
+{
+    const char* version_id = "amiga-en";
+    int version_index = M12_AssetStatus_FindVersionIndex("dm2", version_id);
+    const M12_AssetVersionStatus* version = version_index < 0 ? NULL :
+        M12_AssetStatus_GetVersion(&menu->assetStatus, "dm2",
+                                   (size_t)version_index);
+    M12_LaunchIntent intent;
+    M11_GameViewState* view;
+    DM2_V1_BootProfile* profile;
+    int tick;
+
+    if (!version || !version->matched) {
+        fprintf(stderr,
+                "FAIL: selected root lacks authenticated dm2 %s media\n",
+                version_id);
+        ++failures;
+        return;
+    }
+
+    /* Exercise the same explicit edition choice made in M12's platform and
+     * version picker. AUTO prefers FM Towns when a mixed collection is
+     * installed, so this route must carry the Amiga identity to M11. */
+    menu->selectedIndex = 2;
+    menu->activatedIndex = 2;
+    menu->launchRequested = 1;
+    menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu->gameOptions[2].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu->gameOptions[2].versionIndex = version_index;
+    menu->gameOptions[2].architectureIndex = M12_ARCH_AMIGA;
+    intent = M12_StartupMenu_GetLaunchIntent(menu);
+    CHECK(intent.valid && intent.gameId && intent.versionId &&
+          strcmp(intent.gameId, "dm2") == 0 &&
+          strcmp(intent.versionId, version_id) == 0 &&
+          intent.options.architectureIndex == M12_ARCH_AMIGA,
+          "M12 explicit DM2 Amiga selection produces an authenticated launch intent");
+    if (failures) return;
+
+    view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
+    CHECK(view != NULL, "allocate DM2 Amiga game view");
+    if (!view) return;
+    M11_GameView_Init(view);
+    CHECK(M11_GameView_OpenSelectedMenuEntry(view, menu) == 1,
+          "DM2 Amiga opens through the M12-selected M11 handoff");
+    profile = (DM2_V1_BootProfile*)view->dm2BootProfile;
+    CHECK(view->active && view->startedFromLauncher && profile &&
+          profile->platform == DM2_PLATFORM_AMIGA_EN &&
+          view->dm2FmtownsSwooshActive &&
+          view->dm2FmtownsTitleFrameReceipt.valid,
+          "M12 DM2 Amiga launch binds its original SWSH/TITL profile");
+    if (view->active && profile && profile->platform == DM2_PLATFORM_AMIGA_EN) {
+        for (tick = 0; tick < 10000 && view->dm2FmtownsSwooshActive; ++tick) {
+            (void)M11_GameView_AdvanceIdleTick(view);
+        }
+        CHECK(!view->dm2FmtownsSwooshActive &&
+              view->dm2FmtownsFrameCount == 225u,
+              "M12 DM2 Amiga completes the original SWSH transition");
+        for (tick = 0; tick < 20000 && !view->dm2FmtownsTitleFinished; ++tick) {
+            (void)M11_GameView_AdvanceIdleTick(view);
+        }
+        CHECK(view->dm2FmtownsTitleFinished &&
+              view->dm2State.startup_menu_active &&
+              !view->dm2State.level_loaded,
+              "M12 DM2 Amiga title reaches its original New Game menu");
+        {
+            DM2_V1_StartupMenuPointerLayout layout = {0};
+            CHECK(dm2_v1_boot_startup_menu_pointer_layout(
+                      profile, &layout) && layout.valid &&
+                  layout.new_game.w > 0 && layout.new_game.h > 0,
+                  "M12 DM2 Amiga menu exposes its original New Game target");
+            if (layout.valid && layout.new_game.w > 0 &&
+                layout.new_game.h > 0) {
+                CHECK(M11_GameView_HandlePointer(
+                          view, layout.new_game.x + layout.new_game.w / 2,
+                          layout.new_game.y + layout.new_game.h / 2, 1) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      !view->dm2State.startup_menu_active &&
+                      view->dm2State.level_loaded &&
+                      view->world.party.championCount > 0,
+                      "M12 DM2 Amiga New Game enters its original runtime");
+            }
+        }
+    }
+    M11_GameView_Shutdown(view);
+    SDL_free(view);
+}
+
 static int record_game_leaf_search_root(const M12_AssetScanProgress* progress,
                                         void* userData)
 {
@@ -288,6 +375,8 @@ int main(void)
             }
         }
     }
+
+    if (!failures) run_dm2_amiga_m12_handoff(menu);
 
     /* The authentic v1.2 preservation ZIP contains its STX disk directly,
      * unlike the ZIP -> ZIP -> STX v1.1 archive exercised by the nested

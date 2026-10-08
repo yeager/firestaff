@@ -10,7 +10,10 @@
   tests advance A31M and A33M through Amiga startup to runtime. A33M tests
   cover CLI ZIP -> ADF, an installed AmigaDOS folder built from the original
   Amiga 3.3 ADF, and the M12-to-M11 menu handoff; its separate `KAOS.FTL`
-  C03_GAME digest is locked. Its AUTO
+  C03_GAME digest is locked. The DM2 Amiga English route now also reopens the
+  original collection root, selects the Amiga edition in M12, plays the
+  source SWSH/TITL sequence, and enters the original New Game runtime through
+  its GDAT pointer. Its AUTO
   DM2 FM Towns leg now finishes the source title and uses the retail New Game
   and mirror targets to enter a loaded one-champion session. The same
   authenticated Towns corpus now passes the full M12 game/platform/custom/

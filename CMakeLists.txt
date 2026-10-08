@@ -54639,6 +54639,7 @@ if(BUILD_TESTING)
         "csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
         "csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
         "dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        "dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
         "dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
         if(NOT EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/${_required_archive}")
             set(_m12_persisted_root_media_ready FALSE)

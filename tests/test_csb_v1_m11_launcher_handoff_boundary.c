@@ -3290,6 +3290,12 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     menu.activatedIndex = 1;
     menu.launchRequested = 1;
     menu.gameOptions[1].versionIndex = version_index;
+    /* Setting the version through the menu also selects its architecture.
+     * Keep this direct test setup independent of a user's persisted platform
+     * preference, which may otherwise reject the authenticated A31M row. */
+    menu.gameOptions[1].architectureIndex =
+        M12_AssetStatus_GetVersionArchitecture("csb",
+                                               (size_t)version_index);
     /* The selected A31M path is archive.7z -> ADF -> graphics.dat.  Its
      * launch receipt must retain that original owner; M11 reads it through
      * the native container reader rather than creating a copied package. */
