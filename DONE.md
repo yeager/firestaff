@@ -1,5 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-08: Re-ran the installed original-media startup matrices on the
+  local macOS host: 11 DM1 CLI routes across PC/DOS, Atari ST and FM Towns,
+  plus Amiga HD/v2.0 CLI and v2.0 title/entrance checks; six CSB Atari ST,
+  Amiga and FM Towns routes; and five DM2 DOS English/French, Macintosh,
+  Amiga and FM Towns routes all passed. The shared startup
+  diagnostics test also passed, including the 225-frame DM2 FM Towns title
+  trace, default data-root/AUTO selection, and rejection of PC-98 as a
+  selectable DM1 platform. CSB's French Atari preservation ZIP case was not
+  run because its expected archive is not installed. SDL dummy-driver checks
+  establish startup/runtime receipts, not physical display, audio, or HiDPI
+  behavior. Separately, GitHub Actions run 37766018435 passed on Windows,
+  macOS and Ubuntu, including the focused Windows DM1/CSB/DM2 startup contracts.
+
 - 2026-10-08: The persisted-root M12-to-M11 regression now covers authenticated
   CSB Amiga 3.1 English and verifies that the reopened root retains its native
   A31E boot profile. Against installed original data, the expanded persisted
