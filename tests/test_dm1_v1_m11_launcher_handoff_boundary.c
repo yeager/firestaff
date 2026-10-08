@@ -103,18 +103,29 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
 
 static int message_area_is_black(const unsigned char* framebuffer,
                                  int framebuffer_width,
-                                 int framebuffer_height) {
+                                 int framebuffer_height,
+                                 const M11_GameViewState* state) {
+    int message_x = 0;
+    int message_y = 173;
+    int message_width = 320;
+    int message_height = 27;
     int x;
     int y;
 
     if (!framebuffer || framebuffer_width < 320 || framebuffer_height < 200) {
         return 0;
     }
-    /* ReDMCSB TEXT.C's PC message surface is C015 at y=173..199.  Until
-     * a decoded TEXT.C producer is wired, generic M11 telemetry must not
-     * become visible game text in that source-owned rectangle. */
-    for (y = 173; y < 200; ++y) {
-        for (x = 0; x < 320; ++x) {
+    /* Japanese FM Towns uses its JDM C014/C015 parent at (0,167,224,33);
+     * other selected editions use ReDMCSB TEXT.C's PC message surface at
+     * (0,173,320,27). Check only the selected source-owned surface. */
+    if (state && state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+        message_y = 167;
+        message_width = 224;
+        message_height = 33;
+    }
+    for (y = message_y; y < message_y + message_height; ++y) {
+        for (x = message_x; x < message_x + message_width; ++x) {
             if (framebuffer[y * framebuffer_width + x] != 0u) {
                 return 0;
             }
@@ -768,7 +779,8 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_MessageLog_Push(&launcher_view.messageLog,
                         "READY: CLICK CENTER TO ADVANCE", 0);
     M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
-    expect_mode_true(message_area_is_black(framebuffer, 320, 200), mode,
+    expect_mode_true(message_area_is_black(framebuffer, 320, 200,
+                                          &launcher_view), mode,
                      "M11 host telemetry cannot draw into source-owned C015");
     /* C015 (y=173..199) belongs to the DOS/Atari/Amiga PC34 TEXT.C path.
      * FM Towns uses its independently verified PIC-library menu font and
