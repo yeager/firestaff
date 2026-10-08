@@ -1,8 +1,5 @@
 # Firestaff TODO — Theron's Quest
 
-- The JP `$50B7` comparison helper statically calls `$51CE`, exactly one byte
-  beyond the existing `$51C0..$51CD` source lock. Bind the authentic JP target
-  body and its region-specific bytes before assigning it any runtime meaning.
 - `$44fb` target candidate: six identical 256-byte authentic JP Track 02
   spans and a 255-byte instruction-aligned static disassembly are recorded,
   but no loader receipt binds any candidate to CD RAM and execution/semantics

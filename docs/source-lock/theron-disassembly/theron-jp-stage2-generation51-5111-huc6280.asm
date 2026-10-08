@@ -12,6 +12,8 @@
 ; byte positions. SHA-256 (JP / US):
 ;   $5111..$533d JP ec58a01ce222eb75f0771bfff4c0744c54d20296bb2eca5e8812ae1de0dfcdff
 ;             US 5c9382e271c04023890b8345f0b297fa025631f6d763eea43820ad7af9675656
+;   $51ce..$51e4 JP 37a071abdf16837066ecf83353d9b05e45fc9c638465db2eaa911a4323d78074
+;             US 4cb454a49c0a67c99645e306cc22751eafb9c217d0032fc04b790c133d31d6f7
 ;   $533d..$555e JP c57649e4756380dea77e62c250cb6193d3840648ae3796ae9832309d78b33cef
 ;             US 6f50c41fb739a46edbd51fd88a58616fbc5d09e849d21f2737f1a410455329a4
 ;   $555e..$5560 JP 9c4f
@@ -108,6 +110,9 @@
 51c7: ad 8c 4f  lda  $4F8C
 51ca: 8d a3 5c  sta  $5CA3
 51cd: 60        rts
+; The bounded $51ce..$51e4 subspan has distinct authentic JP/US hashes.
+; Its bytes and three JP BSR edges are asserted by
+; test_stage2_jp_generation51_draw_chain(); this is static source evidence.
 51ce: 44 f0     bsr  $51C0
 51d0: ad 8d 4f  lda  $4F8D
 51d3: 48        pha

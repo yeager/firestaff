@@ -3815,6 +3815,10 @@ static void test_stage2_jp_generation51_draw_chain(void)
     assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
     assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x5111u, 0x533du) ==
            UINT64_C(0xe1614388508c44ff));
+    assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x51ceu, 0x51e4u) ==
+           UINT64_C(0xbca9954f92b63164));
+    assert(stage2_fnv1a64(g_us_data, g_us_size, 0, 0x51ceu, 0x51e4u) ==
+           UINT64_C(0x8c6eb2dc6856b101));
     assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x533du, 0x555eu) ==
            UINT64_C(0xb87f20841bb71df1));
     assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x555eu, 0x5560u) ==
@@ -3836,6 +3840,9 @@ static void test_stage2_jp_generation51_draw_chain(void)
     assert_jp_stage2_bsr_target(0x5141u, 0x51c0u);
     assert_jp_stage2_bsr_target(0x514bu, 0x51a8u);
     assert_jp_stage2_bsr_target(0x5152u, 0x51b3u);
+    assert_jp_stage2_bsr_target(0x51ceu, 0x51c0u);
+    assert_jp_stage2_bsr_target(0x51d8u, 0x51a8u);
+    assert_jp_stage2_bsr_target(0x51dau, 0x51b3u);
     assert_jp_stage2_jsr_target(0x517cu, 0x52c6u);
     assert_jp_stage2_jsr_target(0x5197u, 0x565au);
     assert_jp_stage2_jsr_target(0x51a0u, 0x5251u);

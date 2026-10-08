@@ -7711,8 +7711,11 @@ T900/original inventory semantics. No synthetic media was used.
 - Bound the JP `$5025 → $50B7` JSR edge and the 21-byte JP window
   `$50B7..$50CC` against authentic JP Track 02. The test also asserts the
   `$50C3 → $51CE` edge and records distinct same-offset US bytes/hashes.
-  This is static source/disassembly evidence only; the `$51CE` callee body,
-  runtime execution, and meanings of the compared values remain unproven.
+  Follow-up assertions bind `$51CE..$51E4` within the existing JP generation-51
+  window, attest its distinct same-offset US hash, and assert all three JP BSR
+  targets. The focused test passed three runs on trv2 with authentic JP and US
+  Track 02 media. This remains static source evidence only; runtime execution
+  and the meanings of compared values are unproven.
   See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-record-selector-52xx-huc6280.asm`.
 
