@@ -7706,6 +7706,16 @@ T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — JP Stage-2 `$50B7` comparison-helper source lock
+
+- Bound the JP `$5025 → $50B7` JSR edge and the 21-byte JP window
+  `$50B7..$50CC` against authentic JP Track 02. The test also asserts the
+  `$50C3 → $51CE` edge and records distinct same-offset US bytes/hashes.
+  This is static source/disassembly evidence only; the `$51CE` callee body,
+  runtime execution, and meanings of the compared values remain unproven.
+  See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-record-selector-52xx-huc6280.asm`.
+
 ## 2026-10-08 — JP Stage-2 direct-entry source lock
 
 - Locked authentic JP Stage-2 user bytes `$4A84..$4B23` against both original

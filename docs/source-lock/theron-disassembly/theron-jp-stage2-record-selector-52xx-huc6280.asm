@@ -18,6 +18,7 @@
 ;   $582c..$5895  693f27dc1371ba8df0636bf7c41e5d1233e739c7fb81d67f8642e1af452d46a3
 ;   $5895..$58dc  a661d83f872690dc844f7a53e3e1e035f08631bb7514507008268916baa8cd9b
 ;   $4fea..$506c  2e4e1c78d1a8eddde3885a4341582b089314c7d44ef6faa1b025b5805c230743
+;   $50b7..$50cc  459b62d7e542da9f76b8c85489e8678e740e9cb4a519b97616cb7184d6ae6b62
 ;   $50f5..$5111  3018374912361e8a6bac67f252b565a21153ad1e2b0e1e0ae1f1384fcf8ef9f1
 ;   $525e..$52d9  861aef44aaae08750d3004196f66c72a932aae7159d60aa76e600dcaf8ff294c
 ;   $52d9..$53d8  6a192f3192797e4843ef4cc0e141ed0d96f2901f61eaa4d5ddbe34bd8e15c461
@@ -42,6 +43,7 @@
 ; Authentic US same-address $5800..$582c SHA-256:
 ;   e1ada389530e8bab95341aa062b795a0c72631c34147d55408e0edbe4ee2268c
 ; Authentic US same-address comparison hashes:
+;   $50b7..$50cc  a27373c33cdc57ab13ee485d3a8f558ffc101edc1baeb89397a35730deef33e3
 ;   $58dc..$5960  51850e3599f323999000202fc37916e93a654289d702e3f0d2ded9f63fd7abf9
 ;   $5984..$5989  84602c58f8c26368f82a98548e7a55969dd916399d0bb4c1add959b835b721da
 ;   $5555..$559d  c5c4b53b2ff2b89b3e98571d3322f6d0e8717aeab3fd2075ffc2a13d5ef8e105
@@ -302,6 +304,21 @@ $505a:  jsr  $50f5
         dec  $04
         beq  $506c
         jmp  $5023
+
+; JP-only comparison helper reached by $5025. The nested $51ce helper is
+; outside the currently byte-locked window.
+$50b7:  lda  $f8
+        cmp  #$4f
+        bne  $50ca
+        lda  $f9
+        cmp  #$81
+        bne  $50ca
+        jsr  $51ce
+        bsr  $508b
+        clc
+        rts
+$50ca:  sec
+        rts
 
 $50f5:  lda  $00
         pha

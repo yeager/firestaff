@@ -3495,6 +3495,11 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
         0x4fu, 0xeeu, 0x8bu, 0x4fu, 0xc6u, 0x04u, 0xf0u,
         0x03u, 0x4cu, 0x23u, 0x50u
     };
+    static const uint8_t jp_comparison_helper[] = {
+        0xa5u, 0xf8u, 0xc9u, 0x4fu, 0xd0u, 0x0du, 0xa5u,
+        0xf9u, 0xc9u, 0x81u, 0xd0u, 0x07u, 0x20u, 0xceu,
+        0x51u, 0x44u, 0xc3u, 0x18u, 0x60u, 0x38u, 0x60u
+    };
     static const uint8_t transfer_wrapper[] = {
         0xa5u, 0x00u, 0x48u, 0xa5u, 0x01u, 0x48u, 0xa5u,
         0x04u, 0x48u, 0xa5u, 0x05u, 0x48u, 0x20u, 0x5eu,
@@ -3575,6 +3580,8 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
                    "JP selector-two span size changed");
     _Static_assert(sizeof(record_transfer_setup) == 0x82u,
                    "JP record-transfer setup span size changed");
+    _Static_assert(sizeof(jp_comparison_helper) == 0x15u,
+                   "JP comparison-helper span size changed");
     _Static_assert(sizeof(transfer_wrapper) == 0x1cu,
                    "JP transfer wrapper span size changed");
     _Static_assert(sizeof(transfer_decoder) == 0x7bu,
@@ -3630,6 +3637,20 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
                            sizeof(selector_two_handler));
     assert_jp_stage2_bytes(0x4feau, record_transfer_setup,
                            sizeof(record_transfer_setup));
+    assert_jp_stage2_bytes(0x50b7u, jp_comparison_helper,
+                           sizeof(jp_comparison_helper));
+    assert(stage2_record_user_fnv1a64(
+               g_jp_data, g_jp_size, 1,
+               THERON_TRACK02_IPL_STAGE2_JP_L50B7_USER_OFFSET,
+               THERON_TRACK02_IPL_STAGE2_JP_L50B7_USER_OFFSET +
+                   THERON_TRACK02_IPL_STAGE2_JP_L50B7_BYTES) ==
+           UINT64_C(0xcd42664839930e3a));
+    assert(stage2_record_user_fnv1a64(
+               g_us_data, g_us_size, 0,
+               THERON_TRACK02_IPL_STAGE2_JP_L50B7_USER_OFFSET,
+               THERON_TRACK02_IPL_STAGE2_JP_L50B7_USER_OFFSET +
+                   THERON_TRACK02_IPL_STAGE2_JP_L50B7_BYTES) ==
+           UINT64_C(0xb4df202ebff0e55d));
     assert_jp_stage2_bytes(0x50f5u, transfer_wrapper,
                            sizeof(transfer_wrapper));
     assert_jp_stage2_bytes(0x525eu, transfer_decoder,
@@ -3678,6 +3699,8 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
                selector_targets[i]);
     }
     assert_jp_stage2_jsr_target(0x58d2u, 0x4feau);
+    assert_jp_stage2_jsr_target(0x5025u, 0x50b7u);
+    assert_jp_stage2_jsr_target(0x50c3u, 0x51ceu);
     assert_jp_stage2_jsr_target(0x505au, 0x50f5u);
     assert_jp_stage2_jsr_target(0x5101u, 0x525eu);
     assert_jp_stage2_jsr_target(0x58dcu, 0x553fu);
