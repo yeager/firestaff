@@ -2,6 +2,12 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Restore the original French Atari ST preservation ZIP before revalidating
+  `csb_v1_atari_french_preservation_zip_cli_boot`. The test currently skips:
+  `/Users/bosse/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip` is absent
+  from the configured data directory. Do not treat the earlier French ZIP
+  evidence as a current local-media run until the authentic archive is present.
+
 - Verify the natural F31 closed-door melee path on the reported M5. Its
   C04 sound now schedules ReDMCSB's C20 event one tick later, and EN/JA
   original-media tests prove that an injected C20 event selects its sample
