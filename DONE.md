@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-08: Re-ran the authentic-media CLI/startup matrix for DM1, CSB and
+  DM2 across the locally supplied DOS, Macintosh, Atari ST, Amiga and FM Towns
+  editions. Of the 24 matrix tests, 23 passed and the loose-file Atari R1 Hint
+  Oracle test skipped because its two standalone STX paths are absent. The
+  separate `csb_v1_hint_oracle_native_7z_cli_boot` passed against the original
+  Atari multi-member preservation archive and verified both CLI and M12 menu
+  handoffs. This yields 24 passing original-media startup routes and one
+  documented skip; it does not claim complete game or visual parity.
+
 - 2026-10-08: Fixed CSB Amiga 3.3 multiplayer startup handoff. ReDMCSB
   `COMPILE.H:270-272` identifies A33M `KAOS.FTL` as `C03_GAME`, and
   `APPA.C:71-81` routes its EN/FR/GE choices through that program. Firestaff
