@@ -27,9 +27,10 @@ returns at `$4C0C`, while zero reloads `$4C10` from `$4C0F` and proceeds. It
 transforms the values at `$4C0D` and `$4C0E` in place, selects opcode `$69`
 (`ADC`) or `$E9` (`SBC`) by writing to the opcode bytes at `$4BE2` and `$4C05`,
 and updates the two low/high register pairs `$220C/$220D` and `$2210/$2211`.
-The successful update path loads `$01` into A before returning. The bounds and
-the writes are also recognized by the existing verifier receipt fields
-`l4bb0_proven` and `l4bb0_vdc_scroll_writes_proven`.
+The successful update path loads `$01` into A before returning. The source
+verifier recognizes the static register-store instruction bytes. This proves
+that the authenticated image contains those instructions, not that execution
+reached them or that a runtime VDC write occurred.
 
 The code stream is self-modifying at `$4BE2` and `$4C05`; the checked-in
 listing records the authentic loaded bytes, not a post-execution state. This

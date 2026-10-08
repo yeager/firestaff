@@ -13,6 +13,10 @@
   this is not the Theron inventory UI. Continue authentic reference/runtime
   work before claiming original item-selection, naming, or inventory-screen
   behavior.
+- Stage-2 `$4BB0` and adjacent `$4A09/$4A84` receipt fields now distinguish
+  authenticated static instruction bytes from runtime VDC writes. A real
+  execution trace is still needed before claiming that these stores execute
+  or establish scroll/rendering parity.
 
 ## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
 
@@ -41,9 +45,15 @@
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l491f-window-20261008.md`.
 - ✅ Added a dedicated MAME listing for the `$4984` callee `$4BB0..$4C0C`,
   including its self-modified ADC/SBC opcode bytes. Authentic JP/US bytes and
-  listings match in three loops; the focused verifier recognizes the bounded
-  callee and scroll-register writes. Runtime and scroll parity remain open.
+  listings match in three loops; the focused verifier recognizes the static
+  store instruction bytes. Runtime execution of those stores and scroll
+  parity remain open.
   See `docs/source-lock/theron-disassembly/theron-jp-stage2-l4bb0-window-20261008.md`.
+- ✅ Corrected the Stage-2 source receipt so `$4A09`, `$4A84`, and `$4BB0`
+  report static store opcodes separately from runtime VDC writes. Added exact
+  `$4BB0` instruction/operand checks against the authentic JP and US Track 02
+  images; the focused real-media test passed three loops on trv2. Runtime
+  execution and rendered scroll parity remain open.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 

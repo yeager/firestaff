@@ -7674,6 +7674,15 @@ T900/original inventory semantics. No synthetic media was used.
 - Added a complete MAME HuC6280 listing for the bounded `$4984` callee
   `$4BB0..$4C0C`, including its in-place ADC/SBC opcode changes. The authentic
   JP/US span and listings match in three loops, and the existing focused
-  verifier recognizes the callee and register-write sequence. This does not
-  prove runtime selection or rendered scroll parity. See
+  verifier recognizes the static store instruction bytes. This does not prove
+  that those instructions execute or establish rendered scroll parity. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l4bb0-window-20261008.md`.
+
+## 2026-10-08 — Stage-2 static VDC-store receipt accuracy
+
+- Split static opcode evidence from runtime-write evidence for the `$4A09`,
+  `$4A84`, and `$4BB0` Stage-2 paths. Added bounds-checked `$4BB0` ADC/store
+  opcode and operand invariants against its authenticated 93-byte window. The
+  JP and US source spans match; the focused `theron_v1_stage2_disassembly_chain`
+  test passed three consecutive runs on trv2 with authentic media. Runtime
+  execution and rendered-scroll parity remain unproven.

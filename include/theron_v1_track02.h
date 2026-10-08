@@ -3832,10 +3832,13 @@ typedef struct {
  * L4943 [0x4943..0x49fa), which brackets its banked graphics/VDC
  * dispatch with MPR3..MPR6 save/restore, L49FA [0x49fa..0x4a09),
  * which selects the L4A09/L4A84 paths, and L4A09 [0x4a09..0x4a84),
- * L4A84 [0x4a84..0x4b24), and shared L4B24 [0x4b24..0x4b3c), which
- * perform the paired VDC updates and address calculation.  L491F
+ * L4A84 [0x4a84..0x4b24), and shared L4B24 [0x4b24..0x4b3c), whose
+ * static instruction bytes include VDC stores and address arithmetic.
+ * This source verifier does not establish that those stores execute. L491F
  * [0x491f..0x4932) provides L4A84's adjacent CR-enable path; L4BB0
- * [0x4bb0..0x4c0d) updates the four scroll registers; L56DE/L570A
+ * [0x4bb0..0x4c0d) contains instructions that can update the four scroll
+ * registers; this verifier proves their static bytes only, not runtime
+ * stores; L56DE/L570A
  * [0x56de..0x571a) select and transfer the dynamic 1 KiB block; L50F1
  * [0x50f1..0x5111) performs the 512-byte VDC transfer; L5111
  * [0x5111..0x533d) prepares eight object slots, includes its local
@@ -3922,13 +3925,20 @@ typedef struct {
     int l49fa_proven;
     int l49fa_targets_proven;
     int l4a09_proven;
+    int l4a09_static_vdc_store_opcodes_proven;
+    /* Reserved for a runtime execution receipt. */
     int l4a09_vdc_writes_proven;
     int l4a09_targets_proven;
     int l4a84_proven;
+    int l4a84_static_vdc_store_opcodes_proven;
+    /* Reserved for a runtime execution receipt. */
     int l4a84_vdc_writes_proven;
     int l4a84_targets_proven;
     int l4b24_proven;
     int l4bb0_proven;
+    int l4bb0_static_vdc_scroll_store_opcodes_proven;
+    /* Reserved for a runtime execution receipt; static source matching does
+     * not prove that either store executed. */
     int l4bb0_vdc_scroll_writes_proven;
     int l56de_proven;
     int l56de_vram_transfer_proven;
