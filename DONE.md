@@ -1,10 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
-- 2026-10-08: `return_to_menu_rescans_dm1_csb_dm2_real_media` passed in
-  221.23 seconds against the installed authentic DM1, CSB and DM2 FM Towns
-  archives. The test launched DM2 from the menu, returned from runtime, and
-  verified that all three game roots were rescanned and rediscovered. This is
-  headless menu-flow evidence, not physical M5 display or input verification.
+- 2026-10-08: With the current launcher freshly linked,
+  `return_to_menu_rescans_dm1_csb_dm2_real_media` passed in 222.06 seconds
+  against the installed authentic DM1, CSB and DM2 FM Towns archives. It
+  launched DM2 from the menu, returned from runtime, and verified that all
+  three game roots were rescanned and rediscovered. This is headless menu-flow
+  evidence, not physical M5 display or input verification.
 
 - 2026-10-08: Removed a 200 ms polling ceiling from the asynchronous M12 data
   directory scan regression. The test now waits up to five seconds while
