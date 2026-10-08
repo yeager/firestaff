@@ -131,7 +131,6 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           bash scripts/ci/install_apt_packages.sh \
-            build-essential cmake ninja-build git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
           sdl_root="$RUNNER_TEMP/firestaff-sdl3"
@@ -383,7 +382,6 @@ jobs:
       - name: Install SDL3 headers
         run: |
           bash scripts/ci/install_apt_packages.sh \
-            build-essential cmake ninja-build git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
           sdl_root="$RUNNER_TEMP/firestaff-sdl3"
