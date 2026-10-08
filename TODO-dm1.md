@@ -1,5 +1,21 @@
 # Firestaff TODO — DM1
 
+- Repair the authentic Amiga v2.0 M12 New Game startup when its archive is the
+  only installed DM1 edition. The 2026-10-08 local SDL dummy-driver run failed
+  before launch when `Dungeon-Master_Amiga_EN_Version-20.zip` was the only
+  archive in the data root; the previous broad-root pass had a sibling PC DOS
+  `SWOOSH`, so it did not isolate Amiga's own startup dependency. ReDMCSB
+  `SWSH.C` F0902/F0904/F0909 and `STARTUP2.C` show that Amiga runs an embedded
+  FTL logo/palette/audio prelude before `F0437_STARTEND_DrawTitle()` and the
+  entrance. The authentic ADF's `swoosh` Hunk binary contains the 32,000-byte
+  logo at data-hunk offset 360 and its 27-entry palette sequence at offset 200;
+  these are observations for this admitted executable, not safe universal
+  offsets. Bind and validate the selected executable identity, consume its
+  source assets in bounded memory, and preserve the Amiga title/entrance
+  handoff. Do not route the whole Amiga architecture through generic launch or
+  borrow the PC/Atari `SWOOSH` stream. Retest the isolated archive and require
+  source-owned startup receipts plus the first Hall frame.
+
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
   shared SDL presentation path. The attached screenshot's dungeon pixels are
   closer to the local DM2 FM Towns runtime capture than to the separate DM1
