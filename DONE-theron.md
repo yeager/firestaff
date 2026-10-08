@@ -7786,3 +7786,12 @@ T900/original inventory semantics. No synthetic media was used.
   test passed three consecutive runs on trv2 with authentic media. `$4BB0`
   stores scroll-state words in memory, not directly to VDC ports. Runtime
   execution and rendered-scroll parity remain unproven.
+
+## 2026-10-08 — Dungeon-local item-name bank isolation
+
+- Extended the authentic US/JP Track 02 and Track 19 real-media test to bind
+  Dungeon 2's 65-name source beside Sarmon's Dungeon 4 source. The test verifies
+  that Dungeon 2 remains in its own slot and cannot broaden the exact
+  Dungeon 4-to-Track 19 mapping. The focused CTest passed three consecutive
+  runs on trv2 with authentic media. This verifies source-bank isolation only;
+  it does not establish additional item-name gameplay behavior.

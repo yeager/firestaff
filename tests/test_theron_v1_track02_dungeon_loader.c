@@ -427,6 +427,26 @@ static void test_real_sarmon_track19_mapping(
     assert(world->track19_item_names.mapped_track02_dungeon_mask == (1u << 3));
     printf("  authentic %s Sarmon/Track19 bank and item-name mapping verified\n",
            variant == THERON_TRACK02_VARIANT_JP_BIN ? "JP" : "US");
+    {
+        Theron_Track02ItemNameSource dungeon2_names;
+        Theron_V1_World *dungeon2_world =
+            (Theron_V1_World *)malloc(sizeof(*dungeon2_world));
+        assert(dungeon2_world != NULL);
+        assert(theron_v1_track02_decode_item_name_source(
+                   ud, ud_size, variant, 2u, &dungeon2_names) == 1);
+        *dungeon2_world = *world;
+        assert(theron_v1_world_bind_track02_item_name_source(
+                   dungeon2_world, &dungeon2_names, variant) == 1);
+        assert(dungeon2_world->track02_item_names[1].valid == 1);
+        assert(dungeon2_world->track02_item_names[1].dungeon_id == 2u);
+        assert(dungeon2_world->track02_item_names[1].count == 65u);
+        assert(dungeon2_world->track19_item_names.item_mapping_proven == 1);
+        assert(dungeon2_world->track19_item_names
+                   .mapped_track02_dungeon_mask == (1u << 3));
+        printf("  authentic %s dungeon-2 names remain in their own bank; Sarmon mapping stays isolated\n",
+               variant == THERON_TRACK02_VARIANT_JP_BIN ? "JP" : "US");
+        free(dungeon2_world);
+    }
     bind_real_track02_party(
         world, raw_track02, raw_track02_size,
         variant == THERON_TRACK02_VARIANT_JP_BIN ?
