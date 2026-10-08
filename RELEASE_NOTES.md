@@ -1,3 +1,9 @@
+# Firestaff v3.0.371
+
+## Developer changes
+
+- `Theron's Quest Japanese Stage 2 source maps`: adds source-locked routine boundaries and runtime-trace evidence to guide future startup work.
+
 # Firestaff v3.0.370
 
 ## User-facing changes
