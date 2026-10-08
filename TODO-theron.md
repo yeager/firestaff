@@ -80,6 +80,11 @@
   and the static branch destination only; runtime execution remains unproven.
   See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l5879-window-20261008.md`.
+- ✅ Bound the 20-byte JP fallthrough at `$58C8` after the `$58C5` `BBR4`. The
+  focused test passed three consecutive trv2 runs using authentic JP and US
+  Track 02 media. The static JP window is distinct from US and ends at a jump
+  to `$582C`; this proves source bytes only, not runtime execution. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l58c8-window-20261008.md`.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 

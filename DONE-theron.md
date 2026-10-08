@@ -3,11 +3,19 @@
 ## 2026-10-08 — bind JP-only Stage-2 branch target `$5879`
 
 Locked the authentic JP `$58C5` `BBR4` branch target at `$5879`, including a
-bounded 15-byte HuC6280 listing through `RTS` and regional source digests. The target is an
-overlapping entry (`STY $C84F`) into a sequence whose preceding entry starts
-at `$5878`; the US window differs. The focused real-media test passed three
-consecutive runs on trv2. This proves static source provenance, not runtime
-execution or gameplay behavior.
+bounded 15-byte HuC6280 listing through `RTS` and regional source digests. The
+target is an overlapping entry (`STY $C84F`) into a sequence whose preceding
+entry starts at `$5878`; the US window differs. The focused real-media test
+passed three consecutive runs on trv2. This proves static source provenance,
+not runtime execution or gameplay behavior.
+
+## 2026-10-08 — bind JP Stage-2 conditional fallthrough `$58C8`
+
+Added a bounded authentic JP `$58C8` listing for the fallthrough after the
+conditional `$58C5` branch. The JP and US windows have distinct source
+digests, and the real-media test passed three consecutive runs on trv2. This
+proves static bytes only; runtime branch selection and gameplay behavior
+remain unproven.
 
 ## 2026-10-08 — bind the `$571A` Stage-2 target
 

@@ -4174,6 +4174,44 @@ static void test_stage2_jp_l5879_branch_target(void)
     printf("  PASS: stage2_jp_l5879_branch_target (JP-specific 15-byte target)\n");
 }
 
+static void test_stage2_jp_l58c8_fallthrough(void)
+{
+    static const uint8_t jp_fallthrough[] = {
+        0x18u, 0x8du, 0x9bu, 0x4fu, 0x9cu, 0x96u, 0x4fu, 0x20u,
+        0x29u, 0x55u, 0x20u, 0xeau, 0x4fu, 0xa9u, 0x0au, 0x85u,
+        0x0au, 0x4cu, 0x2cu, 0x58u
+    };
+    size_t i;
+
+    if (!g_jp_data) {
+        printf("  SKIP: stage2_jp_l58c8_fallthrough (JP media unavailable)\n");
+        return;
+    }
+    assert(stage2_record_user_fnv1a64(
+               g_jp_data, g_jp_size, 1,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C8_USER_OFFSET,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C8_USER_OFFSET +
+                   THERON_TRACK02_IPL_STAGE2_JP_L58C8_BYTES) ==
+           UINT64_C(0xf79d1ef941e94432));
+    assert(stage2_record_user_fnv1a64(
+               g_us_data, g_us_size, 0,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C8_USER_OFFSET,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C8_USER_OFFSET +
+                   THERON_TRACK02_IPL_STAGE2_JP_L58C8_BYTES) ==
+           UINT64_C(0xa9ab5d9c0cc6250c));
+    for (i = 0u; i < sizeof(jp_fallthrough); ++i) {
+        assert(stage2_record_user_byte_at(
+                   g_jp_data, g_jp_size, 1,
+                   THERON_TRACK02_IPL_STAGE2_JP_L58C8_USER_OFFSET + i) ==
+               jp_fallthrough[i]);
+    }
+    assert(stage2_record_user_byte_at(
+               g_us_data, g_us_size, 0,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C8_USER_OFFSET) !=
+           jp_fallthrough[0]);
+    printf("  PASS: stage2_jp_l58c8_fallthrough (JP-specific 20-byte window)\n");
+}
+
 static void test_stage2_l3114_callees(void)
 {
     Theron_Track02Stage2L3114CalleesReceipt receipt;
@@ -5053,6 +5091,7 @@ int main(void)
         test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
         test_stage2_jp_l4943_window();
         test_stage2_jp_l5879_branch_target();
+        test_stage2_jp_l58c8_fallthrough();
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4f_relative_handoff(g_jp_data, g_jp_size, 1);
