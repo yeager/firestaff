@@ -15,6 +15,17 @@ that every menu, save format or visual parity gate is complete.
 | **Preservation** | The edition is documented or retained as reference only. It cannot select a normal game route. |
 | **Unsupported** | The platform is outside the game's Firestaff support matrix. |
 
+On 2026-10-08, the current `main` commit `5126347d` passed a focused local
+startup/menu revalidation against supplied original media: DM1 Amiga v2.0
+(`dm1_v1_amiga_v20_archive_cli_boot`), CSB Atari ST
+(`csb_v1_atari_original_archive_cli_boot`), and DM2 FM Towns
+(`dm2_v1_fmtowns_native_cli_boot`). The real-media return-to-menu regression
+(`return_to_menu_rescans_dm1_csb_dm2_real_media`) passed all four configured
+routes and rediscovered DM1, CSB and DM2 after each return. The empty-data menu
+flow (`m12_startup_menu`) also passed its DM1/CSB/DM2 missing-media checks.
+These tests ran on Mac16,10 with headless SDL; they do not verify native M5
+HiDPI presentation or input.
+
 ## Latest real-media revalidation
 
 Recent reports of DM1/CSB input and presentation faults and DM2/FM Towns

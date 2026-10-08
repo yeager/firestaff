@@ -10,9 +10,17 @@
   before the first runtime frame. Amiga 2.0 French, 2.x German/English, 3.6,
   and demo title receipts remain unverified; generic PC title-step receipts
   are not Amiga evidence.
-- Implement and verify the separate Amiga F0441 entrance timing and input
-  handoff. The shared post-title entrance callback still uses the PC34
-  transaction; A20 title completion does not establish Amiga entrance parity.
+- Extend the authenticated Amiga A20 English F0441 entrance route to the
+  remaining Amiga editions after establishing each edition's original
+  GRAPHICS.DAT / SWSH identity pair. The production route now authenticates
+  the selected A20 pair and presents original C002/C003 door frames plus the
+  C004 entrance using the source RGB4 palette, eight frames, 31 opening steps,
+  a 20-tick switch delay and mouse-only input, based on ReDMCSB ENTRANCE.C and
+  DATA.C MEDIA424. The real-media CLI/start-menu regression verifies the
+  F0437 title and F0441 entrance complete before the ADF gameplay handoff.
+  Remaining: A20 French, other Amiga 2.x editions, 3.6, demo media, and native
+  renderer/input timing on each supported desktop; the A20 English test does
+  not establish pixel parity or HiDPI behavior.
 
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
   shared SDL presentation path. The attached screenshot's dungeon pixels are
