@@ -2964,6 +2964,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   whether `$2998/$299C` are creature, generator, T700, or T900 records. No
   game semantics may be enabled without same-session runtime evidence.
 
+- ✅ 2026-10-08 JP counterpart: the authentic JP BIN contains a 150-byte
+  source-aligned `$C3A0` candidate at raw offset `$9BB20` (US: `$9C450`). Its
+  MAME HuC6280 listing preserves the same instruction structure while using
+  region-specific helper and table addresses. The candidate is hash-locked in
+  the real-media disassembly receipt; this does not prove its runtime bank
+  mapping or identify the table. Keep creature/spawn behavior fail-closed.
+
 ## 2026-08-11 — live source creatures no longer receive synthetic PASSIVE AI
 
 - ✅ Category-4 creatures admitted from authentic US/JP Track 02 records now

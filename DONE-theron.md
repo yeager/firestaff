@@ -7795,3 +7795,17 @@ T900/original inventory semantics. No synthetic media was used.
   Dungeon 4-to-Track 19 mapping. The focused CTest passed three consecutive
   runs on trv2 with authentic media. This verifies source-bank isolation only;
   it does not establish additional item-name gameplay behavior.
+
+## 2026-10-08 — JP `$C3A0` static counterpart source lock
+
+- Bound the authentic JP Track 02 150-byte window at raw offset `$9BB20` to
+  the full JP BIN identity and FNV-1a `$E292E892`. Its MAME 0.285 HuC6280
+  listing matches across three runs and is recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-c3a0-record-consumer.asm`.
+  The JP instructions retain the US `$C3A0` control-flow shape, with six
+  region-specific address bytes: helper calls target `$4661`, `$C95D`, and
+  `$CC3E`, and the indexed record reads use `$2997/$299B`.
+- The focused `theron_v1_huc6280_disassembly` CTest passed three consecutive
+  runs on trv2 and directly reported both authentic regional BIN identities.
+  This is static source correspondence only; it does not prove runtime bank
+  mapping, table ownership, creature spawning, or gameplay semantics.

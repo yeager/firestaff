@@ -99,12 +99,29 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.spawn_runtime_c3a0_bytes == 150u);
         assert(receipt.spawn_runtime_c3a0_file_offset == 0x9c450u);
         assert(receipt.spawn_runtime_c3a0_fnv1a == 0x666ded61u);
+        assert(!receipt.spawn_runtime_c3a0_jp_verified);
+    } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        assert(!receipt.spawn_rng_helper_verified);
+        assert(!receipt.spawn_rng_preconsumer_verified);
+        assert(!receipt.spawn_rng_c96b_verified);
+        assert(!receipt.spawn_rng_cc4c_verified);
+        assert(!receipt.spawn_runtime_c3a0_verified);
+        assert(receipt.spawn_runtime_c3a0_jp_verified);
+        assert(receipt.spawn_runtime_c3a0_jp_address == 0xc3a0u);
+        assert(receipt.spawn_runtime_c3a0_jp_bytes == 150u);
+        assert(receipt.spawn_runtime_c3a0_jp_file_offset == 0x9bb20u);
+        assert(receipt.spawn_runtime_c3a0_jp_fnv1a == 0xe292e892u);
+        printf("PASS: authentic JP static $C3A0 counterpart at $%x/%u/%08x\n",
+               (unsigned)receipt.spawn_runtime_c3a0_jp_address,
+               (unsigned)receipt.spawn_runtime_c3a0_jp_bytes,
+               (unsigned)receipt.spawn_runtime_c3a0_jp_fnv1a);
     } else {
         assert(!receipt.spawn_rng_helper_verified);
         assert(!receipt.spawn_rng_preconsumer_verified);
         assert(!receipt.spawn_rng_c96b_verified);
         assert(!receipt.spawn_rng_cc4c_verified);
         assert(!receipt.spawn_runtime_c3a0_verified);
+        assert(!receipt.spawn_runtime_c3a0_jp_verified);
     }
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);

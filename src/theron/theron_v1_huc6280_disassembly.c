@@ -70,6 +70,10 @@
 #define THERON_SPAWN_C3A0_ADDRESS 0xc3a0u
 #define THERON_SPAWN_C3A0_BYTES 150u
 #define THERON_SPAWN_C3A0_FNV1A 0x666ded61u
+/* Static JP counterpart aligned to the US source window; runtime bank
+ * selection and execution remain unproven. */
+#define THERON_JP_SPAWN_C3A0_FILE_OFFSET 0x9bb20u
+#define THERON_JP_SPAWN_C3A0_FNV1A 0xe292e892u
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -230,6 +234,7 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t spawn_rng_c96b[THERON_SPAWN_C96B_BYTES];
     uint8_t spawn_rng_cc4c[THERON_SPAWN_CC4C_BYTES];
     uint8_t spawn_runtime_c3a0[THERON_SPAWN_C3A0_BYTES];
+    uint8_t spawn_runtime_c3a0_jp[THERON_SPAWN_C3A0_BYTES];
     int raw_bin_variant;
     uint32_t expected_size;
     uint32_t bank_file_offset;
@@ -305,6 +310,10 @@ int theron_v1_huc6280_disassembly_read_file(
           fseek(file, THERON_US_SPAWN_C3A0_FILE_OFFSET, SEEK_SET) != 0 ||
           fread(spawn_runtime_c3a0, 1u, sizeof(spawn_runtime_c3a0), file) !=
               sizeof(spawn_runtime_c3a0))) ||
+        (track02_variant == THERON_TRACK02_VARIANT_JP_BIN &&
+         (fseek(file, THERON_JP_SPAWN_C3A0_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_runtime_c3a0_jp, 1u, sizeof(spawn_runtime_c3a0_jp),
+                file) != sizeof(spawn_runtime_c3a0_jp))) ||
         (raw_bin_variant &&
          (fseek(file, (long)(bank_file_offset +
                              THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET),
@@ -353,6 +362,9 @@ int theron_v1_huc6280_disassembly_read_file(
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          memcmp(spawn_runtime_c3a0, g_spawn_runtime_c3a0,
                 sizeof(spawn_runtime_c3a0)) != 0) ||
+        (track02_variant == THERON_TRACK02_VARIANT_JP_BIN &&
+         fnv1a(spawn_runtime_c3a0_jp, sizeof(spawn_runtime_c3a0_jp)) !=
+             THERON_JP_SPAWN_C3A0_FNV1A) ||
         decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
         decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
         decompressor[sizeof(decompressor) - 1u] != 0x60u) {
@@ -419,6 +431,15 @@ int theron_v1_huc6280_disassembly_read_file(
             THERON_US_SPAWN_C3A0_FILE_OFFSET;
         receipt.spawn_runtime_c3a0_fnv1a = fnv1a(
             spawn_runtime_c3a0, sizeof(spawn_runtime_c3a0));
+    }
+    if (track02_variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        receipt.spawn_runtime_c3a0_jp_verified = 1;
+        receipt.spawn_runtime_c3a0_jp_address = THERON_SPAWN_C3A0_ADDRESS;
+        receipt.spawn_runtime_c3a0_jp_bytes = THERON_SPAWN_C3A0_BYTES;
+        receipt.spawn_runtime_c3a0_jp_file_offset =
+            THERON_JP_SPAWN_C3A0_FILE_OFFSET;
+        receipt.spawn_runtime_c3a0_jp_fnv1a = fnv1a(
+            spawn_runtime_c3a0_jp, sizeof(spawn_runtime_c3a0_jp));
     }
     receipt.semantic_publication_allowed = 0;
     receipt.source_file_size = expected_size;

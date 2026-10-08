@@ -78,6 +78,13 @@ typedef struct {
     uint16_t spawn_runtime_c3a0_bytes;
     uint32_t spawn_runtime_c3a0_file_offset;
     uint32_t spawn_runtime_c3a0_fnv1a;
+    /* Static JP Track 02 counterpart candidate at the region-shifted source
+     * offset. The corresponding runtime bank mapping remains unproven. */
+    int spawn_runtime_c3a0_jp_verified;
+    uint16_t spawn_runtime_c3a0_jp_address;
+    uint16_t spawn_runtime_c3a0_jp_bytes;
+    uint32_t spawn_runtime_c3a0_jp_file_offset;
+    uint32_t spawn_runtime_c3a0_jp_fnv1a;
     /* Static palette consumer from the retail HuC6280 bank. The routine
      * proves the VCE write contract only; its dynamic $27c4/$27c5 source
      * pointer is not a Track 02 palette binding by itself. */
