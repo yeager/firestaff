@@ -52,6 +52,7 @@
 #include "swsh_frontend_pc34_compat.h"
 #include "dm1_v1_amiga_swsh.h"
 #include "dm1_v1_amiga_title_f0437.h"
+#include "dm1_v1_amiga_entrance_f0441.h"
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_amiga_palette_fade.h"
 #include "screenshot_m11.h"
@@ -2530,6 +2531,10 @@ static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
     int autoEnterAfterMs,
     int mouseOnly);
+static int m11_dm1_amiga_present_entrance_palette(
+    const M11_GameViewState* gameView,
+    const uint16_t colors[DM1_V1_AMIGA_ENTRANCE_F0441_PALETTE_ENTRIES],
+    const uint8_t* framebuffer);
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs);
 static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames);
@@ -2584,13 +2589,20 @@ static int m11_play_redmcsb_entrance_transition_impl(
     M11_GameViewState* gameView,
     int autoEnterAfterMs,
     const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt) {
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt,
+    const DM1_V1_AmigaEntranceF0441Receipt* amigaReceipt) {
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
     int entrancePalette;
+    const int amigaA20 = amigaReceipt && amigaReceipt->valid;
     if (!gameView || !gameView->active || !mediaReceipt ||
-        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(mediaReceipt)) {
+        (!amigaA20 &&
+         !dm1_v1_startup_entrance_timing_receipt_valid_pc34(mediaReceipt)) ||
+        (amigaA20 &&
+         (amigaReceipt->opening_steps !=
+              DM1_V1_AMIGA_ENTRANCE_F0441_OPENING_STEPS ||
+          !amigaReceipt->mouse_input_only))) {
         return 0;
     }
     /* Startup presentation runs before the ordinary frame loop selects the
@@ -2598,7 +2610,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
     M11_Render_SetV2PresentationActive(
         m11_dm1_v20_presentation_active(gameView));
     entrancePalette = mediaReceipt->entrance_palette;
-    if (entrancePalette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+    if (!amigaA20 && entrancePalette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
         !(mediaReceipt->platform ==
               DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST &&
           entrancePalette == -1)) {
@@ -2643,13 +2655,54 @@ static int m11_play_redmcsb_entrance_transition_impl(
         Uint64 presentationStartedMs = 0U;
         if (!ENTRANCE_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
         memset(&command, 0, sizeof(command));
-        if (!dm1_v1_startup_entrance_render_audio_command_pc34(
-                mediaReceipt,
-                sourceStep,
-                (int)step.kind,
-                step.delayTicks,
-                step.vblankLoopCount,
-                &command)) {
+        if (amigaA20) {
+            command.handled = 1;
+            command.render_kind =
+                step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_FADE_TO_BLACK
+                    ? DM1_V1_STARTUP_ENTRANCE_RENDER_FADE_BLACK_PC34
+                    : (step.kind ==
+                           ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP
+                           ? DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34
+                           : (step.kind ==
+                                  ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_MICRO_DUNGEON ||
+                              step.kind ==
+                                  ENTRANCE_COMPAT_SOURCE_EVENT_FINAL_DUNGEON_VIEW
+                                  ? DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34
+                                  : DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34));
+            command.present_entrance_palette = 1;
+            command.source_step = sourceStep;
+            command.delay_ms = step.delayTicks * 20u;
+            if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP) {
+                EntranceCompatDoorStep sourceDoor;
+                if (!ENTRANCE_Compat_GetDoorAnimationStep(
+                        sourceStep - 6u, &sourceDoor)) {
+                    free(dungeonFrame);
+                    return 0;
+                }
+                command.door_geometry_ready = 1;
+                command.door_animation_step = sourceDoor.animationStep;
+                command.door_left_box_x = sourceDoor.leftBoxX;
+                command.door_left_box_y = sourceDoor.leftBoxY;
+                command.door_left_box_w = sourceDoor.leftBoxW;
+                command.door_left_box_h = sourceDoor.leftBoxH;
+                command.door_right_box_x = sourceDoor.rightBoxX;
+                command.door_right_box_y = sourceDoor.rightBoxY;
+                command.door_right_box_w = sourceDoor.rightBoxW;
+                command.door_right_box_h = sourceDoor.rightBoxH;
+                command.door_left_source_x = sourceDoor.leftSourceX;
+                command.door_right_source_x = sourceDoor.rightSourceX;
+                command.play_door_rattle_sound = sourceDoor.soundRattle;
+                command.audio_request_ready = sourceDoor.soundRattle;
+                command.audio_sound_index = 2;
+                command.delay_ms = 40u;
+            } else if (step.kind ==
+                       ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND) {
+                command.audio_request_ready = 1;
+                command.audio_sound_index = 1;
+            }
+        } else if (!dm1_v1_startup_entrance_render_audio_command_pc34(
+                       mediaReceipt, sourceStep, (int)step.kind,
+                       step.delayTicks, step.vblankLoopCount, &command)) {
             free(dungeonFrame);
             return 0;
         }
@@ -2671,7 +2724,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 memset(&door, 0, sizeof(door));
                 door.animationStep = command.door_animation_step;
                 door.soundRattle = (unsigned int)(command.play_door_rattle_sound ? 1 : 0);
-                door.vblankBeforeCopy = 1U;
+                door.vblankBeforeCopy = amigaA20 ? 2U : 1U;
                 door.leftBoxX = command.door_left_box_x;
                 door.leftBoxY = command.door_left_box_y;
                 door.leftBoxW = command.door_left_box_w;
@@ -2682,7 +2735,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 door.rightBoxH = command.door_right_box_h;
                 door.leftSourceX = command.door_left_source_x;
                 door.rightSourceX = command.door_right_source_x;
-                if (command.audio_request_ready) {
+                if (!amigaA20 && command.audio_request_ready) {
                     (void)M11_Audio_EmitSourceSoundIndex(
                         &gameView->audioState, command.audio_sound_index);
                 }
@@ -2700,20 +2753,33 @@ static int m11_play_redmcsb_entrance_transition_impl(
         }
 
         if (command.present_entrance_palette) {
-            if (command.entrance_palette != entrancePalette ||
+            if (amigaA20) {
+                presentationStartedMs = 0U;
+                if (!m11_dm1_amiga_present_entrance_palette(
+                        gameView, amigaReceipt->entrance_palette_rgb4,
+                        framebuffer)) {
+                    free(dungeonFrame);
+                    return 0;
+                }
+            } else if (command.entrance_palette != entrancePalette ||
                 command.entrance_palette_fingerprint !=
                     mediaReceipt->entrance_palette_fingerprint) {
                 free(dungeonFrame);
                 return 0;
+            } else {
+                presentationStartedMs = m11_intro_active_ticks();
+                if (!m11_present_dm1_startup_special_palette(
+                        gameView, framebuffer, command.entrance_palette)) {
+                    free(dungeonFrame);
+                    return 0;
+                }
             }
-            presentationStartedMs = m11_intro_active_ticks();
-            if (!m11_present_dm1_startup_special_palette(
-                    gameView, framebuffer, command.entrance_palette)) {
-                free(dungeonFrame);
-                return 0;
-            }
-        } else if (!m11_present_dm1_startup_base_palette(
-                       gameView, framebuffer)) {
+        } else if (amigaA20
+                       ? !m11_dm1_amiga_present_entrance_palette(
+                             gameView, amigaReceipt->entrance_palette_rgb4,
+                             framebuffer)
+                       : !m11_present_dm1_startup_base_palette(
+                             gameView, framebuffer)) {
             free(dungeonFrame);
             return 0;
         }
@@ -2728,7 +2794,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 g_m11_selector_music->phase = M11_ENTRANCE_PHASE_WAIT;
             M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(
                 autoEnterAfterMs,
-                mediaReceipt->platform ==
+                amigaA20 || mediaReceipt->platform ==
                     DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST);
             if (cmd == M11_ENTRANCE_COMMAND_QUIT) {
                 free(dungeonFrame);
@@ -2739,6 +2805,10 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 return M11_ENTRANCE_COMMAND_RESUME;
             }
             if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
+                if (amigaA20) {
+                    sourceStep = 2U;
+                    continue;
+                }
                 int creditsResult =
                     m11_show_redmcsb_entrance_credits(
                         gameView, framebuffer, mediaReceipt, NULL);
@@ -2759,9 +2829,16 @@ static int m11_play_redmcsb_entrance_transition_impl(
                         g_m11_selector_music->audio, 0);
             }
         }
+        if (amigaA20 && command.audio_request_ready &&
+            step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND) {
+            (void)M11_Audio_EmitSourceSoundIndex(
+                &gameView->audioState, command.audio_sound_index);
+        }
         {
-            unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
-                command.delay_ms, presentationStartedMs);
+            unsigned int delayMs = amigaA20
+                ? command.delay_ms
+                : m11_v20_startup_remaining_delay_ms(
+                      command.delay_ms, presentationStartedMs);
             if (delayMs > 0U && m11_delay_ms_with_intro_event_pump(delayMs)) {
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_QUIT;
@@ -2778,11 +2855,12 @@ static int m11_play_redmcsb_entrance_transition_impl(
     return 1;
 }
 
-int M11_Entrance_RunSourceTransition(
+static int m11_entrance_run_source_transition(
     M11_GameViewState* gameView,
     int autoEnterAfterMs,
     const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt,
+    const DM1_V1_AmigaEntranceF0441Receipt* amigaReceipt,
     M11_EntranceObserver observer,
     void* user) {
     M11_SelectorMusicOwner owner;
@@ -2797,7 +2875,7 @@ int M11_Entrance_RunSourceTransition(
     /* SELECTOR.C F8368:909-913 owns SONG only for PC34 E/M. The common
      * entrance renderer also serves Atari and Towns; those must keep their
      * original audio owners. Authenticate only this selected companion. */
-    if (gameView->active && mediaReceipt && mediaReceipt->handled &&
+    if (!amigaReceipt && gameView->active && mediaReceipt && mediaReceipt->handled &&
         mediaReceipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 &&
         !gameView->dm1FmtownsStartupReceiptValid &&
         strcmp(gameView->sourceId, "dm1") == 0) {
@@ -2807,7 +2885,8 @@ int M11_Entrance_RunSourceTransition(
     g_m11_selector_music = &owner;
     g_m11_intro_game_view = gameView;
     result = m11_play_redmcsb_entrance_transition_impl(
-        gameView, autoEnterAfterMs, entranceReceipt, mediaReceipt);
+        gameView, autoEnterAfterMs, entranceReceipt, mediaReceipt,
+        amigaReceipt);
     /* F8369:1051 releases the selector score on every exit. Also cover
      * missing assets, failed presentation, Resume and host Quit. */
     if (owner.songBound)
@@ -2817,6 +2896,18 @@ int M11_Entrance_RunSourceTransition(
     return result;
 }
 
+int M11_Entrance_RunSourceTransition(
+    M11_GameViewState* gameView,
+    int autoEnterAfterMs,
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt,
+    M11_EntranceObserver observer,
+    void* user) {
+    return m11_entrance_run_source_transition(
+        gameView, autoEnterAfterMs, entranceReceipt, mediaReceipt, NULL,
+        observer, user);
+}
+
 static int m11_play_redmcsb_entrance_transition(
     M11_GameViewState* gameView,
     int autoEnterAfterMs,
@@ -2824,6 +2915,18 @@ static int m11_play_redmcsb_entrance_transition(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt) {
     return M11_Entrance_RunSourceTransition(gameView, autoEnterAfterMs,
         entranceReceipt, mediaReceipt, NULL, NULL);
+}
+
+static int m11_play_dm1_amiga_entrance_f0441(
+    M11_GameViewState* gameView,
+    int autoEnterAfterMs,
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt,
+    const DM1_V1_AmigaEntranceF0441Receipt* amigaReceipt) {
+    if (!amigaReceipt || !amigaReceipt->valid) return 0;
+    return m11_entrance_run_source_transition(
+        gameView, autoEnterAfterMs, entranceReceipt, mediaReceipt,
+        amigaReceipt, NULL, NULL);
 }
 
 static M11_EntranceCommand m11_entrance_route_framebuffer_pointer(int fbX,
@@ -3216,6 +3319,55 @@ static int m11_dm1_amiga_swsh_path(const M12_AssetVersionStatus* version,
     return 1;
 }
 
+static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry,
+    const M11_GameViewState* gameView,
+    DM1_V1_AmigaEntranceF0441Receipt* outReceipt) {
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    char swooshPath[FSP_PATH_MAX];
+    uint8_t* graphics = NULL;
+    size_t graphicsBytes = 0U;
+    uint8_t* executable = NULL;
+    size_t executableBytes = 0U;
+    int authenticated = 0;
+    if (outReceipt) memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!menuState || !entry || !entry->gameId ||
+        strcmp(entry->gameId, "dm1") != 0 || !gameView || !outReceipt) {
+        return 0;
+    }
+    versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
+    if (versionIndex < 0 ||
+        M12_AssetStatus_GetVersionArchitecture(
+            "dm1", (size_t)versionIndex) != M12_ARCH_AMIGA) {
+        return 0;
+    }
+    version = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                          (size_t)versionIndex);
+    if (!version || !version->versionId ||
+        strcmp(version->versionId, "amiga20-en") != 0 ||
+        strstr(version->matchedPath, "[HD]") != NULL ||
+        !gameView->assetLoader.graphicsDatPath[0] ||
+        strcmp(gameView->assetLoader.graphicsDatPath,
+               version->matchedPath) != 0 ||
+        !m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
+        !asset_read_virtual_path_alloc(
+            gameView->assetLoader.graphicsDatPath, &graphics,
+            &graphicsBytes) ||
+        !asset_read_virtual_path_alloc(swooshPath, &executable,
+                                       &executableBytes)) {
+        goto cleanup;
+    }
+    authenticated = dm1_v1_amiga_entrance_f0441_receipt(
+        graphics, graphicsBytes, executable, executableBytes, outReceipt);
+
+cleanup:
+    free(graphics);
+    free(executable);
+    return authenticated;
+}
+
 static void m11_dm1_amiga_rgb4_to_rgb6(
     const uint16_t colors[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES],
     uint8_t outPalette[256][3]) {
@@ -3240,6 +3392,39 @@ static int m11_dm1_amiga_present_title_palette(
     return M11_Render_SetIndexedPaletteRgb6(palette) == M11_RENDER_OK &&
            M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                      M11_FB_HEIGHT) == M11_RENDER_OK;
+}
+
+static int m11_dm1_amiga_present_entrance_palette(
+    const M11_GameViewState* gameView,
+    const uint16_t colors[DM1_V1_AMIGA_ENTRANCE_F0441_PALETTE_ENTRIES],
+    const uint8_t* framebuffer) {
+    uint8_t palette[256][3];
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
+    int result;
+    if (!gameView || !colors || !framebuffer) return 0;
+    m11_dm1_amiga_rgb4_to_rgb6(colors, palette);
+    if (M11_Render_SetIndexedPaletteRgb6(palette) != M11_RENDER_OK) return 0;
+    M11_Render_SetV2PresentationActive(0);
+    M11_Render_SetModernPresentationActive(0);
+    if (gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        (void)M11_GameView_PresentationTarget(
+            gameView->presentationMode, gameView->presentationWidth,
+            gameView->presentationHeight, &targetW, &targetH);
+        result = M11_Render_PresentEpxIndexedToResolution(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, targetW, targetH);
+    } else if (M11_GameView_PresentationTarget(
+                   gameView->presentationMode,
+                   gameView->presentationWidth,
+                   gameView->presentationHeight,
+                   &targetW, &targetH)) {
+        result = M11_Render_PresentIndexedToResolution(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, targetW, targetH);
+    } else {
+        result = M11_Render_PresentIndexed(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    }
+    return result == M11_RENDER_OK;
 }
 
 static int m11_dm1_amiga_fade_title_palette(
@@ -4249,24 +4434,54 @@ static int m11_dm1_handoff_play_entrance(void* user,
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
     const DM1_V1_EntranceFullStartRenderReceiptPc34* entrance = NULL;
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media = NULL;
+    DM1_V1_AmigaEntranceF0441Receipt amigaReceipt;
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    int selectedAmigaA20;
     int command;
     (void)source_id;
     if (!ctx || !ctx->gameView) {
         return 0;
     }
+    versionIndex = m11_selected_dm1_launch_version_index(
+        ctx->menuState, ctx->launchEntry);
+    version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&ctx->menuState->assetStatus, "dm1",
+                                     (size_t)versionIndex)
+        : NULL;
+    selectedAmigaA20 = version && version->versionId &&
+        strcmp(version->versionId, "amiga20-en") == 0 &&
+        M12_AssetStatus_GetVersionArchitecture(
+            "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA;
     if (!ctx->activePostLaunchPlanValid ||
         !ctx->activePostLaunchPlan.entrance_full_start_receipt.valid ||
         ctx->activePostLaunchPlan.entrance_auto_enter_ms != auto_enter_after_ms ||
-        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(
-            &ctx->activePostLaunchPlan.media_receipt)) {
+        (selectedAmigaA20
+             ? !ctx->activePostLaunchPlan.media_receipt.handled
+             : !dm1_v1_startup_entrance_timing_receipt_valid_pc34(
+                   &ctx->activePostLaunchPlan.media_receipt))) {
         return 0;
     }
     entrance = &ctx->activePostLaunchPlan.entrance_full_start_receipt;
     media = &ctx->activePostLaunchPlan.media_receipt;
-    command = m11_play_redmcsb_entrance_transition(ctx->gameView,
-                                                   auto_enter_after_ms,
-                                                   entrance,
-                                                   media);
+    if (selectedAmigaA20) {
+        if (!m11_dm1_amiga_entrance_f0441_receipt_if_selected(
+                ctx->menuState, ctx->launchEntry, ctx->gameView,
+                &amigaReceipt)) {
+            return 0;
+        }
+        command = m11_play_dm1_amiga_entrance_f0441(
+            ctx->gameView, auto_enter_after_ms, entrance, media,
+            &amigaReceipt);
+        if (g_m11_debug_startup_detail && command > 0) {
+            fprintf(stderr,
+                    "firestaff: startup-source-complete game=dm1 platform=amiga-v20 phase=entrance-f0441 steps=%u graphics=%s input=mouse-only palette=rgb4\n",
+                    amigaReceipt.opening_steps, amigaReceipt.graphics_md5);
+        }
+    } else {
+        command = m11_play_redmcsb_entrance_transition(
+            ctx->gameView, auto_enter_after_ms, entrance, media);
+    }
     /* A CLI/start-menu resume is an explicit F0435 request.  The generic
      * auto-enter timing above only drives the visual ENTRANCE.C sequence;
      * it must not reinterpret an already selected original save as a new

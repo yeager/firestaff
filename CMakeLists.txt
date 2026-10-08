@@ -7180,6 +7180,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/shared/firestaff_amiga_adf.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
@@ -61769,6 +61770,29 @@ set_tests_properties(test_dm1_v1_amiga_title_f0437_real_media PROPERTIES
     SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
     LABELS "dm1;amiga;title;real-media;in-memory;skip-safe")
+
+add_executable(test_dm1_v1_amiga_entrance_f0441_real_media
+    tests/test_dm1_v1_amiga_entrance_f0441_real_media.c
+    src/dm1/dm1_v1_amiga_entrance_f0441.c
+    src/dm1/dm1_v1_amiga_title_f0437.c
+    src/dm1/dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_amiga_swsh.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/shared/firestaff_amiga_adf.c
+)
+# The paired CLI/M12 regression uses the app binary; rebuilding only this
+# receipt target must also relink that binary against the current M11 route.
+add_dependencies(test_dm1_v1_amiga_entrance_f0441_real_media firestaff)
+target_include_directories(test_dm1_v1_amiga_entrance_f0441_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_amiga_entrance_f0441_real_media PRIVATE
+    firestaff_zip_extract firestaff_m12)
+add_test(NAME test_dm1_v1_amiga_entrance_f0441_real_media
+    COMMAND test_dm1_v1_amiga_entrance_f0441_real_media)
+set_tests_properties(test_dm1_v1_amiga_entrance_f0441_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
+    LABELS "dm1;amiga;entrance;real-media;in-memory;skip-safe")
 
 add_executable(test_csb_v1_amiga_graphics_dat
     tests/test_csb_v1_amiga_graphics_dat.c
