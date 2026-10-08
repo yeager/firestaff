@@ -3836,9 +3836,9 @@ typedef struct {
  * static instruction bytes include VDC stores and address arithmetic.
  * This source verifier does not establish that those stores execute. L491F
  * [0x491f..0x4932) provides L4A84's adjacent CR-enable path; L4BB0
- * [0x4bb0..0x4c0d) contains instructions that can update the four scroll
- * registers; this verifier proves their static bytes only, not runtime
- * stores; L56DE/L570A
+ * [0x4bb0..0x4c0d) contains instructions that can update the scroll-state
+ * words at $220c/$220d and $2210/$2211; this verifier proves their static
+ * bytes only, not runtime stores; L56DE/L570A
  * [0x56de..0x571a) select and transfer the dynamic 1 KiB block; L50F1
  * [0x50f1..0x5111) performs the 512-byte VDC transfer; L5111
  * [0x5111..0x533d) prepares eight object slots, includes its local
@@ -3936,10 +3936,10 @@ typedef struct {
     int l4a84_targets_proven;
     int l4b24_proven;
     int l4bb0_proven;
-    int l4bb0_static_vdc_scroll_store_opcodes_proven;
+    int l4bb0_static_scroll_state_store_opcodes_proven;
     /* Reserved for a runtime execution receipt; static source matching does
-     * not prove that either store executed. */
-    int l4bb0_vdc_scroll_writes_proven;
+     * not prove that either scroll-state word was updated. */
+    int l4bb0_runtime_scroll_state_writes_proven;
     int l56de_proven;
     int l56de_vram_transfer_proven;
     int l570a_proven;

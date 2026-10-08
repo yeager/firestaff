@@ -12168,7 +12168,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
     out_receipt->l4a84_targets_proven = 1;
     out_receipt->l4b24_proven = 1;
     out_receipt->l4bb0_proven = 1;
-    out_receipt->l4bb0_static_vdc_scroll_store_opcodes_proven = 1;
+    out_receipt->l4bb0_static_scroll_state_store_opcodes_proven = 1;
     out_receipt->l56de_proven = 1;
     out_receipt->l56de_vram_transfer_proven = 1;
     out_receipt->l570a_proven = 1;

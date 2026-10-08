@@ -7684,5 +7684,6 @@ T900/original inventory semantics. No synthetic media was used.
   `$4A84`, and `$4BB0` Stage-2 paths. Added bounds-checked `$4BB0` ADC/store
   opcode and operand invariants against its authenticated 93-byte window. The
   JP and US source spans match; the focused `theron_v1_stage2_disassembly_chain`
-  test passed three consecutive runs on trv2 with authentic media. Runtime
+  test passed three consecutive runs on trv2 with authentic media. `$4BB0`
+  stores scroll-state words in memory, not directly to VDC ports. Runtime
   execution and rendered-scroll parity remain unproven.

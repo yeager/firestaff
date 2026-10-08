@@ -4221,8 +4221,8 @@ static void test_stage2_enclosing_45xx_callees(void)
     assert(receipt.l4bb0_proven == 1);
     /* These receipts cover authenticated instruction bytes only. No runtime
      * execution receipt has yet observed the corresponding VDC port stores. */
-    assert(receipt.l4bb0_static_vdc_scroll_store_opcodes_proven == 1);
-    assert(receipt.l4bb0_vdc_scroll_writes_proven == 0);
+    assert(receipt.l4bb0_static_scroll_state_store_opcodes_proven == 1);
+    assert(receipt.l4bb0_runtime_scroll_state_writes_proven == 0);
     assert(receipt.l56de_proven == 1);
     assert(receipt.l56de_vram_transfer_proven == 1);
     assert(receipt.l570a_proven == 1);
