@@ -1,10 +1,16 @@
-# Unreleased
+# Firestaff v3.0.372
 
 ## User-facing changes
 
 - `DM1 Amiga v2.0 startup`: reads and plays the authentic embedded SWSH logo,
   palette sequence, and audio from the selected ZIP→ZIP→ADF media, then
   verifies the C001 title and first Hall handoff in the launcher regression.
+
+## Developer changes
+
+- `DM1 Amiga startup regression`: verifies the authenticated SWSH executable
+  profile, all title frames, and the selected ADF handoff on the original-media
+  startup route.
 
 # Firestaff v3.0.371
 
