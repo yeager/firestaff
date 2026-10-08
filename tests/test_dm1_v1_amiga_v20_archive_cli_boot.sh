@@ -150,10 +150,10 @@ menu_startup_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     exit 1
 }
 if ! grep -Fq 'phase=amiga-swsh profile=a0ffbcc7ae8cecac03128ddb32887ef4 frames=10 source-vblanks=30' <<<"$menu_startup_output" ||
-   ! grep -Fq 'title-frame=23/23 title-ready=1 dm1-phases=1111' <<<"$menu_startup_output" ||
+   ! grep -Fq 'platform=amiga-v20 phase=title-f0437 frames=18 source=a0ffbcc7ae8cecac03128ddb32887ef4 graphics=6a2f135b53c2220f0251fa103e2a6e7e' <<<"$menu_startup_output" ||
    ! grep -Fq "DM1 READY: gameId=dm1 dataDir=$selected_media handoff=amiga-img2" <<<"$menu_startup_output"; then
     printf '%s\n' "$menu_startup_output" >&2
-    printf '%s\n' 'FAIL: authentic DM1 Amiga startup did not consume SWSH, C001 title, and selected ADF in order' >&2
+    printf '%s\n' 'FAIL: authentic DM1 Amiga startup did not consume the selected SWSH and authenticated A20 F0437 title before the ADF handoff' >&2
     exit 1
 fi
 python3 - "$menu_probe" <<'PY'

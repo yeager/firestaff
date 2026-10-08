@@ -7179,6 +7179,7 @@ set(M11_SOURCES
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
+    src/dm1/dm1_v1_amiga_title_f0437.c
     src/shared/firestaff_amiga_adf.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c

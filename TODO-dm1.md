@@ -1,12 +1,18 @@
 # Firestaff TODO — DM1
 
-- Integrate the authenticated A20 F0437 title receipt into the Amiga M11
-  startup route, then implement the separate F0441 entrance timing and input
-  handoff. The v3.0.373 F0437 test authenticates the original A20
-  GRAPHICS.DAT/SWOOSH pair and records C001 regions, RGB4 palette stages and
-  the 18 authored zoom rectangles; it does not prove that the running game
-  presents those stages. Existing generic PC title-step receipts must not be
-  counted as Amiga title evidence.
+- Extend the authenticated A20 English F0437 runtime path to the remaining
+  Amiga editions after establishing each edition's original GRAPHICS.DAT /
+  SWSH identity pair. The production M11 route now authenticates the selected
+  A20 English pair, reads both files from the selected virtual ADF, and
+  presents the original C001 PRESENTS crop, 18 authored zoom rectangles,
+  palette transitions, and MASTER overlay. The authentic A20 ZIP -> ZIP ->
+  ADF CLI/start-menu regression verifies that this title phase completes
+  before the first runtime frame. Amiga 2.0 French, 2.x German/English, 3.6,
+  and demo title receipts remain unverified; generic PC title-step receipts
+  are not Amiga evidence.
+- Implement and verify the separate Amiga F0441 entrance timing and input
+  handoff. The shared post-title entrance callback still uses the PC34
+  transaction; A20 title completion does not establish Amiga entrance parity.
 
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
   shared SDL presentation path. The attached screenshot's dungeon pixels are

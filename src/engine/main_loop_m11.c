@@ -51,6 +51,9 @@
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "dm1_v1_amiga_swsh.h"
+#include "dm1_v1_amiga_title_f0437.h"
+#include "dm1_v1_amiga_graphics_dat.h"
+#include "dm1_v1_amiga_palette_fade.h"
 #include "screenshot_m11.h"
 #include "v1_swsh_intro_pathfinder_pc34_compat.h"
 #include "v1_title_intro_pathfinder_pc34_compat.h"
@@ -3213,6 +3216,241 @@ static int m11_dm1_amiga_swsh_path(const M12_AssetVersionStatus* version,
     return 1;
 }
 
+static void m11_dm1_amiga_rgb4_to_rgb6(
+    const uint16_t colors[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES],
+    uint8_t outPalette[256][3]) {
+    unsigned int color;
+    memset(outPalette, 0, 256u * 3u);
+    for (color = 0u; color < DM1_V1_AMIGA_TITLE_RGB4_ENTRIES; ++color) {
+        const unsigned int rgb4 = colors[color];
+        const unsigned int red = (rgb4 >> 8u) & 0x0fu;
+        const unsigned int green = (rgb4 >> 4u) & 0x0fu;
+        const unsigned int blue = rgb4 & 0x0fu;
+        outPalette[color][0] = (uint8_t)((red << 2u) | (red >> 2u));
+        outPalette[color][1] = (uint8_t)((green << 2u) | (green >> 2u));
+        outPalette[color][2] = (uint8_t)((blue << 2u) | (blue >> 2u));
+    }
+}
+
+static int m11_dm1_amiga_present_title_palette(
+    const uint16_t colors[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES],
+    const uint8_t* framebuffer) {
+    uint8_t palette[256][3];
+    m11_dm1_amiga_rgb4_to_rgb6(colors, palette);
+    return M11_Render_SetIndexedPaletteRgb6(palette) == M11_RENDER_OK &&
+           M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                     M11_FB_HEIGHT) == M11_RENDER_OK;
+}
+
+static int m11_dm1_amiga_fade_title_palette(
+    const uint16_t source[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES],
+    const uint16_t target[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES],
+    uint8_t* framebuffer) {
+    DM1_V1_AmigaRgb4Palette sourcePalette = {
+        source, DM1_V1_AMIGA_TITLE_RGB4_ENTRIES, 1, 1, 1
+    };
+    DM1_V1_AmigaRgb4Palette targetPalette = {
+        target, DM1_V1_AMIGA_TITLE_RGB4_ENTRIES, 1, 1, 1
+    };
+    DM1_V1_AmigaPaletteFade fade;
+    DM1_V1_AmigaPaletteFadeReceipt step;
+    unsigned int frame;
+    if (!dm1_v1_amiga_palette_fade_begin(&fade, &sourcePalette,
+                                         &targetPalette)) {
+        return 0;
+    }
+    for (frame = 0u; frame < DM1_V1_AMIGA_RGB4_FADE_FRAMES; ++frame) {
+        if (M11_Render_PumpEvents() ||
+            !dm1_v1_amiga_palette_fade_step(&fade, &step) ||
+            !m11_dm1_amiga_present_title_palette(step.rgb4, framebuffer) ||
+            m11_delay_ms_with_intro_event_pump(20u)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int m11_play_dm1_amiga_title_f0437_if_available(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry,
+    M11_GameViewState* gameView) {
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    char swooshPath[FSP_PATH_MAX];
+    uint8_t* graphics = NULL;
+    size_t graphicsBytes = 0u;
+    uint8_t* executable = NULL;
+    size_t executableBytes = 0u;
+    uint8_t* c001 = NULL;
+    uint8_t* dungeon = NULL;
+    uint8_t* master = NULL;
+    uint8_t* framebuffer;
+    uint16_t width = 0u;
+    uint16_t height = 0u;
+    DM1_V1_AmigaTitleF0437Receipt receipt;
+    uint16_t activePalette[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES];
+    unsigned int stepIndex;
+    int completed = 0;
+
+    if (!menuState || !entry || !entry->gameId ||
+        strcmp(entry->gameId, "dm1") != 0 || !gameView ||
+        !gameView->assetsAvailable) {
+        return 0;
+    }
+    versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
+    if (versionIndex < 0 ||
+        M12_AssetStatus_GetVersionArchitecture(
+            "dm1", (size_t)versionIndex) != M12_ARCH_AMIGA) {
+        return 0;
+    }
+    version = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                          (size_t)versionIndex);
+    if (!version || strstr(version->matchedPath, "[HD]") != NULL ||
+        !gameView->assetLoader.graphicsDatPath[0] ||
+        strcmp(gameView->assetLoader.graphicsDatPath,
+               version->matchedPath) != 0 ||
+        !m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
+        !asset_read_virtual_path_alloc(
+            gameView->assetLoader.graphicsDatPath, &graphics,
+            &graphicsBytes) ||
+        !asset_read_virtual_path_alloc(swooshPath, &executable,
+                                       &executableBytes) ||
+        !dm1_v1_amiga_title_f0437_receipt(
+            graphics, graphicsBytes, executable, executableBytes, &receipt)) {
+        goto cleanup;
+    }
+    c001 = (uint8_t*)malloc((size_t)DM1_V1_AMIGA_TITLE_WIDTH *
+                            DM1_V1_AMIGA_TITLE_HEIGHT);
+    dungeon = (uint8_t*)malloc((size_t)DM1_V1_AMIGA_TITLE_WIDTH * 80u);
+    master = (uint8_t*)malloc((size_t)DM1_V1_AMIGA_TITLE_WIDTH * 57u);
+    framebuffer = M11_Render_GetFramebuffer();
+    if (!c001 || !dungeon || !master || !framebuffer ||
+        !dm1_v1_amiga_graphics_decode(
+            graphics, graphicsBytes, DM1_V1_AMIGA_TITLE_GRAPHIC_C001,
+            c001, (size_t)DM1_V1_AMIGA_TITLE_WIDTH *
+                      DM1_V1_AMIGA_TITLE_HEIGHT,
+            &width, &height) ||
+        width != DM1_V1_AMIGA_TITLE_WIDTH ||
+        height != DM1_V1_AMIGA_TITLE_HEIGHT) {
+        goto cleanup;
+    }
+
+    /* TITLE.C F0437 A20 uses destination boxes G0003-G0005/G1075 with
+     * source offsets passed separately to F0132_VIDEO_Blit.  Keep the two
+     * meanings distinct: PRESENTS is C001 y=137 -> screen y=90, MASTER is
+     * C001 y=80 -> its 320x57 temporary, and the zoom source is C001 y=0
+     * through y=79. */
+    memcpy(dungeon, c001,
+           (size_t)DM1_V1_AMIGA_TITLE_WIDTH * 80u);
+    memcpy(master,
+           c001 + (size_t)receipt.master_source_y *
+                      DM1_V1_AMIGA_TITLE_WIDTH,
+           (size_t)DM1_V1_AMIGA_TITLE_WIDTH * 57u);
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    M11_Render_SetV2PresentationActive(0);
+    M11_Render_SetModernPresentationActive(0);
+    memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
+    if (!m11_dm1_amiga_present_title_palette(activePalette, framebuffer)) {
+        goto cleanup;
+    }
+    memcpy(framebuffer + (size_t)receipt.presents_destination_y *
+                              M11_FB_WIDTH,
+           c001 + (size_t)receipt.presents_source_y * M11_FB_WIDTH,
+           (size_t)M11_FB_WIDTH * receipt.presents_source_height);
+    if (!m11_dm1_amiga_fade_title_palette(
+            activePalette, receipt.presents_palette, framebuffer)) {
+        goto cleanup;
+    }
+    memcpy(activePalette, receipt.presents_palette, sizeof(activePalette));
+    if (!m11_dm1_amiga_fade_title_palette(
+            activePalette, receipt.initial_palette, framebuffer)) {
+        goto cleanup;
+    }
+    memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
+        goto cleanup;
+    }
+    if (!m11_dm1_amiga_fade_title_palette(
+            activePalette, receipt.zoom_palette, framebuffer)) {
+        goto cleanup;
+    }
+    memcpy(activePalette, receipt.zoom_palette, sizeof(activePalette));
+
+    for (stepIndex = 0u;
+         stepIndex < DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT; ++stepIndex) {
+        DM1_V1_AmigaTitleF0437ZoomStep step;
+        unsigned int y;
+        if (!dm1_v1_amiga_title_f0437_zoom_step(
+                &receipt, stepIndex, &step)) {
+            goto cleanup;
+        }
+        if (M11_Render_PumpEvents() ||
+            m11_delay_ms_with_intro_event_pump(20u)) {
+            goto cleanup;
+        }
+        for (y = 0u; y < step.destination_height; ++y) {
+            unsigned int x;
+            const unsigned int sourceY =
+                y * step.source_height / step.destination_height;
+            for (x = 0u; x < step.destination_width; ++x) {
+                const unsigned int sourceX =
+                    x * step.source_width / step.destination_width;
+                framebuffer[(size_t)(step.destination_y + y) * M11_FB_WIDTH +
+                            step.destination_x + x] =
+                    dungeon[(size_t)sourceY * DM1_V1_AMIGA_TITLE_WIDTH +
+                            sourceX];
+            }
+        }
+        if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                      M11_FB_HEIGHT) != M11_RENDER_OK) {
+            goto cleanup;
+        }
+    }
+    if (m11_delay_ms_with_intro_event_pump(
+            receipt.source_delay_ticks * 20u)) {
+        goto cleanup;
+    }
+    {
+        unsigned int y;
+        for (y = 0u; y < receipt.master_source_height; ++y) {
+            unsigned int x;
+            for (x = 0u; x < M11_FB_WIDTH; ++x) {
+                const uint8_t pixel = master[(size_t)y * M11_FB_WIDTH + x];
+                if (pixel != 0u) {
+                    framebuffer[(size_t)(receipt.master_destination_y + y) *
+                                    M11_FB_WIDTH + x] = pixel;
+                }
+            }
+        }
+    }
+    if (!m11_dm1_amiga_fade_title_palette(
+            activePalette, receipt.final_palette, framebuffer)) {
+        goto cleanup;
+    }
+    memcpy(activePalette, receipt.final_palette, sizeof(activePalette));
+    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
+        goto cleanup;
+    }
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: startup-source-complete game=dm1 platform=amiga-v20 phase=title-f0437 frames=%u source=%s graphics=%s\n",
+                DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT,
+                receipt.executable_md5, receipt.graphics_md5);
+    }
+    completed = 1;
+
+cleanup:
+    free(graphics);
+    free(executable);
+    free(c001);
+    free(dungeon);
+    free(master);
+    return completed;
+}
+
 /* ReDMCSB SWSH.C F0902/F0904 and SWSHSND.C F0908/F0909 use the embedded
  * Amiga Hunk executable's four bitplanes, 27 source palette rows, and Paula
  * sample. Accept only the selected A20 executable profile, read directly
@@ -3970,9 +4208,28 @@ static int m11_dm1_handoff_play_title(void* user,
                                       int* out_played_any_frame) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media = NULL;
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
     if (!ctx ||
         !dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
         return 0;
+    }
+    versionIndex = m11_selected_dm1_launch_version_index(
+        ctx->menuState, ctx->launchEntry);
+    version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&ctx->menuState->assetStatus, "dm1",
+                                     (size_t)versionIndex)
+        : NULL;
+    if (versionIndex >= 0 &&
+        M12_AssetStatus_GetVersionArchitecture(
+            "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA &&
+        version && version->versionId &&
+        strcmp(version->versionId, "amiga20-en") == 0 &&
+        strstr(version->matchedPath, "[HD]") == NULL) {
+        const int played = m11_play_dm1_amiga_title_f0437_if_available(
+            ctx->menuState, ctx->launchEntry, ctx->gameView);
+        if (out_played_any_frame) *out_played_any_frame = played;
+        return played;
     }
     if (ctx->activePostLaunchPlanValid &&
         ctx->activePostLaunchPlan.media_receipt.handled) {
