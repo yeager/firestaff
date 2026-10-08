@@ -67,6 +67,12 @@ verification changes.
 
 The GitHub Actions release workflow triggers automatically on `v*` tags.
 
+GitHub Actions limits publication to one Firestaff release per calendar day
+in the `Europe/Stockholm` time zone. The workflow serializes release runs and
+checks the limit both before platform builds and immediately before publishing.
+Updating an already-published release with the same tag does not count as a
+second release; a draft must still pass the limit when it is published.
+
 Ordinary documentation and code work is pushed to `main` without creating a
 tag or GitHub Release.
 

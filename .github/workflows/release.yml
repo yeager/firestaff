@@ -25,7 +25,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref_name || inputs.version }}
+  # Serialize all release versions so two distinct tags cannot both pass the
+  # daily quota check before either one is published.
+  group: firestaff-release-daily-limit
   cancel-in-progress: false
 
 env:
@@ -37,6 +39,8 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
     outputs:
       version: ${{ steps.release.outputs.version }}
       tag: ${{ steps.release.outputs.tag }}
@@ -108,6 +112,12 @@ jobs:
             --notes "$release_notes" \
             --version "$version" \
             --require-audience-sections
+
+          # Use GitHub's published timestamp and the user's Stockholm calendar
+          # day. Same-tag retries update one release and remain allowed.
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[]' \
+            | python3 scripts/verify_daily_release_limit.py --tag "$tag"
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
@@ -709,6 +719,14 @@ jobs:
           find release-files -type f ! -name '*.sha256' -print0 \
             | sort -z \
             | xargs -0 sha256sum > "release-files/Firestaff-${FIRESTAFF_VERSION}-all-assets.sha256"
+
+      - name: Recheck daily release limit before publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[]' \
+            | python3 scripts/verify_daily_release_limit.py --tag "$FIRESTAFF_TAG"
 
       - name: Create or update GitHub Release
         shell: bash
