@@ -15,7 +15,10 @@ The source images are the hash-verified original Track 02 BINs:
 
 The 93-byte span `[0x4bb0, 0x4c0d)` is identical in both editions. Its
 SHA-256 is `2cc2462ea866e130b0aede80ac40d29aa769a6649ff6244cc9d228b3390e21a9`
-and FNV-1a-64 is `9e75a8a513fb0994`. Three MAME 0.285 HuC6280 disassembly
+and FNV-1a-64 is `9e75a8a513fb0994`. When authentic JP media is available,
+the focused test checks this FNV digest in both regions and compares each of
+the 93 bytes against US. The production enclosing-callee receipt remains
+US-only. Three MAME 0.285 HuC6280 disassembly
 loops matched JP and US listings with SHA-256
 `beca5347eeeb875f64293ce010eef58bd1f967b909f7fe436027bc6c9f0b9640`. The
 complete linear listing is `theron-jp-stage2-l4bb0-huc6280.asm`.

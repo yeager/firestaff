@@ -17,7 +17,9 @@
   authenticated static instruction bytes from runtime writes. `$4BB0` writes
   scroll-state words in memory, not directly to VDC ports. A real execution
   trace is still needed before claiming those state updates execute or
-  establish scroll/rendering parity.
+  establish scroll/rendering parity. When authentic JP media is available, the
+  focused test also compares the complete `$4BB0` source span and digest across
+  JP and US; the enclosing-callee receipt remains US-only.
 - The authentic JP Akutuba capture still does not close this runtime gap:
   `transition=missing`, with no `$4BB0` hit. Its only writes to `$220C/$220D`
   and `$2210/$2211` are four zero-initialization writes from PC `$CB22`

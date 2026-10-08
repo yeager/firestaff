@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — persist JP parity check for the `$4BB0` callee
+
+Extended the authentic-media Stage-2 test to validate the 93-byte `$4BB0`
+callee's FNV-1a-64 in US and JP and compare every byte when both original
+Track 02 images are available. The US production receipt remains the direct
+byte verifier. This persists regional source equivalence without claiming
+runtime execution, VDC writes, or rendered-scroll parity.
+
 ## 2026-10-08 — clarify the `$4BB0` static dataflow
 
 Refined the source-lock note for the authenticated `$4BB0` listing: when

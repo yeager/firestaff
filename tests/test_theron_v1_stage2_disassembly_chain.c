@@ -4243,6 +4243,28 @@ static void test_stage2_enclosing_45xx_callees(void)
                    stage2_record_user_byte_at(
                        g_us_data, g_us_size, 0, offset));
         }
+        assert(stage2_record_user_fnv1a64(
+                   g_us_data, g_us_size, 0,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET +
+                       THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES) ==
+               UINT64_C(0x9e75a8a513fb0994));
+        assert(stage2_record_user_fnv1a64(
+                   g_jp_data, g_jp_size, 1,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET +
+                       THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES) ==
+               UINT64_C(0x9e75a8a513fb0994));
+        for (offset =
+                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET;
+             offset < THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET +
+                          THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES;
+             ++offset) {
+            assert(stage2_record_user_byte_at(
+                       g_jp_data, g_jp_size, 1, offset) ==
+                   stage2_record_user_byte_at(
+                       g_us_data, g_us_size, 0, offset));
+        }
     }
     assert(receipt.l491f_proven == 1);
     assert(receipt.l4bb0_proven == 1);
