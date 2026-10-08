@@ -66,6 +66,13 @@ traversal.
   and `$2210/$2211` are four zero-initialization writes from PC `$CB22`
   (sequences 278, 279, 282, and 283). The next capture must reach a real
   dungeon route and attribute non-initialization writes to the `$4BB0` body.
+- The Stage-2 `$4C3F` handler calls logical `$3221`, but no receipt binds that
+  target's MPR1 or physical bytes. `$3221` is in the `$2000..$3fff` MPR1
+  window; disassembling the same numeric offset from Track 02 is not evidence
+  that those bytes execute there. Capture the actual `$4C3F` call with MPR1,
+  target bytes, and same-session RAM/source provenance before assigning a
+  callee or region. Do not infer its source from the unrelated `$4ED4->$3A2E`
+  capture, whose MPR1 `$F8` target is BaseRAM.
 - The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
   US Track 02; when authentic JP media is present, the focused test now checks
   the matching span hash and every US/JP byte. This regional source comparison
