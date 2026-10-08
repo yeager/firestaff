@@ -11415,6 +11415,11 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         0xadu, 0xdbu, 0x58u, 0xf0u, 0x0au, 0x3au, 0x3au, 0xf0u,
         0x43u, 0x3au, 0xd0u, 0x03u, 0x4cu, 0xc2u, 0x57u, 0x60u
     };
+    static const uint8_t stage2_l571a[] = {
+        0x20u, 0xc5u, 0x58u, 0xa9u, 0x09u, 0x8du, 0xdcu, 0x58u,
+        0xa9u, 0x10u, 0x8du, 0xddu, 0x58u, 0xa9u, 0xe0u, 0x8du,
+        0xdeu, 0x58u, 0xa9u, 0x58u, 0x8du, 0xdfu, 0x58u, 0x60u
+    };
     static const uint8_t stage2_l50f1[] = {
         0xadu, 0xd9u, 0x27u, 0xf0u, 0x1au, 0x20u, 0x32u, 0x49u,
         0x03u, 0x00u, 0xadu, 0xdau, 0x27u, 0x8du, 0x02u, 0x00u,
@@ -11745,6 +11750,11 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         !tqr_ipl_user_match(
             track02_data, track02_size, stage2_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET,
+            stage2_l571a, sizeof(stage2_l571a)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_USER_OFFSET,
             stage2_l50f1, sizeof(stage2_l50f1)) ||
         !tqr_ipl_user_match(
@@ -11926,6 +11936,8 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES ||
         sizeof(stage2_l570a) !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES ||
+        sizeof(stage2_l571a) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES ||
         sizeof(stage2_l50f1) !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES ||
         sizeof(stage2_l5111) !=
@@ -11997,6 +12009,22 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         stage2_l570a[0x0cu] != 0x4cu ||
         stage2_l570a[0x0du] != 0xc2u ||
         stage2_l570a[0x0eu] != 0x57u ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET ||
+        stage2_l56de[THERON_TRACK02_IPL_STAGE2_L56DE_JUMP_L571A_OFF] !=
+            0x4cu ||
+        stage2_l56de[THERON_TRACK02_IPL_STAGE2_L56DE_JUMP_L571A_OFF + 1u] !=
+            0x1au ||
+        stage2_l56de[THERON_TRACK02_IPL_STAGE2_L56DE_JUMP_L571A_OFF + 2u] !=
+            0x57u ||
+        stage2_l571a[0x00u] != 0x20u ||
+        stage2_l571a[0x01u] != 0xc5u ||
+        stage2_l571a[0x02u] != 0x58u ||
+        stage2_l571a[0x14u] != 0x8du ||
+        stage2_l571a[0x15u] != 0xdfu ||
+        stage2_l571a[0x16u] != 0x58u ||
+        stage2_l571a[0x17u] != 0x60u ||
         stage2_l4bb0[0x32u] != 0x69u ||
         stage2_l4bb0[0x33u] != 0x00u ||
         stage2_l4bb0[0x55u] != 0x69u ||
@@ -12095,6 +12123,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_BYTES +
@@ -12141,6 +12170,8 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES;
     out_receipt->l570a_bytes =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES;
+    out_receipt->l571a_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES;
     out_receipt->l50f1_bytes =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES;
     out_receipt->l5111_bytes =
@@ -12189,6 +12220,8 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_CPU_ADDRESS;
     out_receipt->l570a_cpu_address =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_CPU_ADDRESS;
+    out_receipt->l571a_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_CPU_ADDRESS;
     out_receipt->l50f1_cpu_address =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_CPU_ADDRESS;
     out_receipt->l5111_cpu_address =
@@ -12228,6 +12261,8 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
     out_receipt->l56de_proven = 1;
     out_receipt->l56de_vram_transfer_proven = 1;
     out_receipt->l570a_proven = 1;
+    out_receipt->l571a_proven = 1;
+    out_receipt->l571a_direct_target_proven = 1;
     out_receipt->l50f1_proven = 1;
     out_receipt->l50f1_vdc_transfer_proven = 1;
     out_receipt->l5111_proven = 1;

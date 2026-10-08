@@ -3070,6 +3070,10 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_USER_OFFSET 0x570au
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_CPU_ADDRESS 0x570au
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES 0x10u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET 0x571au
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_CPU_ADDRESS 0x571au
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES 0x18u
+#define THERON_TRACK02_IPL_STAGE2_L56DE_JUMP_L571A_OFF 0x0au
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_USER_OFFSET 0x50f1u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_CPU_ADDRESS 0x50f1u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES 0x20u
@@ -3121,7 +3125,7 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 
 /* Same-image bytes bound by the stage-two enclosing-$45xx-callees
  * verifier. */
-#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES 0x99fu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES 0x9b7u
 
 /* L3114 tier-5 callees: the remaining callees of the bound tier-4
  * bodies (L53C4's BSR L5403; L560B's BSR L5657 / JSR L52A2 / JSR
@@ -3888,6 +3892,7 @@ typedef struct {
     size_t l4bb0_bytes;
     size_t l56de_bytes;
     size_t l570a_bytes;
+    size_t l571a_bytes;
     size_t l50f1_bytes;
     size_t l5111_bytes;
     size_t l533d_bytes;
@@ -3912,6 +3917,7 @@ typedef struct {
     uint16_t l4bb0_cpu_address;
     uint16_t l56de_cpu_address;
     uint16_t l570a_cpu_address;
+    uint16_t l571a_cpu_address;
     uint16_t l50f1_cpu_address;
     uint16_t l5111_cpu_address;
     uint16_t l533d_cpu_address;
@@ -3951,6 +3957,8 @@ typedef struct {
     int l56de_proven;
     int l56de_vram_transfer_proven;
     int l570a_proven;
+    int l571a_proven;
+    int l571a_direct_target_proven;
     int l50f1_proven;
     int l50f1_vdc_transfer_proven;
     int l5111_proven;

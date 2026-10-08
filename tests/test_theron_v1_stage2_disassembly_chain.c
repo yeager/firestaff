@@ -4265,6 +4265,28 @@ static void test_stage2_enclosing_45xx_callees(void)
                    stage2_record_user_byte_at(
                        g_us_data, g_us_size, 0, offset));
         }
+        assert(stage2_record_user_fnv1a64(
+                   g_us_data, g_us_size, 0,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET +
+                       THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES) ==
+               UINT64_C(0x0c210360aebbf9f7));
+        assert(stage2_record_user_fnv1a64(
+                   g_jp_data, g_jp_size, 1,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET,
+                   THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET +
+                       THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES) ==
+               UINT64_C(0x0c210360aebbf9f7));
+        for (offset =
+                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET;
+             offset < THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_USER_OFFSET +
+                          THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES;
+             ++offset) {
+            assert(stage2_record_user_byte_at(
+                       g_jp_data, g_jp_size, 1, offset) ==
+                   stage2_record_user_byte_at(
+                       g_us_data, g_us_size, 0, offset));
+        }
     }
     assert(receipt.l491f_proven == 1);
     assert(receipt.l4bb0_proven == 1);
@@ -4274,10 +4296,16 @@ static void test_stage2_enclosing_45xx_callees(void)
     assert(receipt.l4bb0_runtime_scroll_state_writes_proven == 0);
     assert(receipt.callees_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES);
-    assert(receipt.callees_bound_bytes == 0x99fu);
+    assert(receipt.callees_bound_bytes == 0x9b7u);
     assert(receipt.l56de_proven == 1);
     assert(receipt.l56de_vram_transfer_proven == 1);
     assert(receipt.l570a_proven == 1);
+    assert(receipt.l571a_bytes ==
+           THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_BYTES);
+    assert(receipt.l571a_cpu_address ==
+           THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L571A_CPU_ADDRESS);
+    assert(receipt.l571a_proven == 1);
+    assert(receipt.l571a_direct_target_proven == 1);
     assert(receipt.l50f1_proven == 1);
     assert(receipt.l50f1_vdc_transfer_proven == 1);
     assert(receipt.l5111_proven == 1);

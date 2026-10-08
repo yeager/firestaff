@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — bind the `$571A` Stage-2 target
+
+Added an authentic-media byte receipt for the 24-byte `$571A` window and
+verified the static `$56DE` `JMP $571A` edge. JP and US source spans match
+byte-for-byte and by FNV-1a-64; their bounded HuC6280 decode is recorded in
+the source-lock directory. The focused test passed three repeated loops on
+trv2 with authentic JP and US Track 02 media. This establishes static source
+provenance only, not runtime execution or gameplay behavior.
+
 ## 2026-10-08 — persist JP parity check for the `$4BB0` callee
 
 Extended the authentic-media Stage-2 test to validate the 93-byte `$4BB0`

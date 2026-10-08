@@ -68,6 +68,12 @@
   images; the focused real-media test passed three loops on trv2. `$4BB0`
   stores scroll-state words in memory; runtime execution and rendered scroll
   parity remain open.
+- ✅ Bound the 24-byte Stage-2 `$571A` direct target to authentic JP and US
+  Track 02. The verifier checks `$56DE`'s `JMP $571A`, both editions' span
+  digest, and byte parity; three focused real-media loops passed on trv2.
+  This is a static source edge and does not prove runtime execution or
+  gameplay behavior. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l571a-window-20261008.md`.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 
