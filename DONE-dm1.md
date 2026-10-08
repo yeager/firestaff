@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-10-08: `dm1_v1_pc34_native_cli_boot` passed in 247.34 seconds against
+  the authentic PC 3.4 ZIP. It covered the real title sequence, M12 AUTO menu
+  discovery, the first runtime frame, and rejection of a private archive copy
+  with its required SWSH prelude removed. This is headless startup evidence;
+  it does not establish physical M5 rendering or visual parity.
+
 - 2026-10-08: The authentic Atari ST 1.1 `.7z` startup test passed in 63.42
   seconds. It verified direct CLI media selection, M12 handoff, the first
   runtime state and the C127 Champion Hall route using the original archive.
