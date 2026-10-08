@@ -2219,6 +2219,7 @@ static void theron_v1_world_refresh_track19_item_mapping(
         Theron_V1_World *world) {
     Theron_V1Track19ItemNameBank *track19;
     const Theron_Track02ItemNameSource *sarmon;
+    unsigned int item_index;
     if (!world) return;
     track19 = &world->track19_item_names;
     track19->item_mapping_proven = 0;
@@ -2231,6 +2232,16 @@ static void theron_v1_world_refresh_track19_item_mapping(
                THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT) != 0 ||
         memcmp(sarmon->raw_properties, track19->raw_properties,
                THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES) != 0) return;
+    /* Type and property bytes are not a unique bank identity: authentic
+     * dungeon-2 records share those fields with Track 19 while carrying
+     * different names. Only the exact 69-entry Sarmon bank match is proven. */
+    for (item_index = 0u; item_index < track19->count; ++item_index) {
+        const size_t name_size = sarmon->raw_name_sizes[item_index];
+        if (name_size != track19->raw_name_sizes[item_index] ||
+            memcmp(sarmon->raw_names[item_index],
+                   track19->raw_names[item_index], name_size) != 0)
+            return;
+    }
     track19->mapped_track02_dungeon_mask = 1u << 3;
     track19->item_mapping_proven = 1;
 }

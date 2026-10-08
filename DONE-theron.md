@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — require exact source names for Track 19 item mapping
+
+The Track 19/Sarmon mapping proof now compares every raw name's length and
+bytes in addition to edition, type codes, and properties. This prevents
+authentic but non-equivalent dungeon banks from being accepted when their
+type/property tables happen to match. The real-media dungeon-loader test now
+falls back from split Track 19 ISO files to the authentic regional Track 19
+BINs and rejects both a changed name byte and a changed name length. On trv2,
+the focused test built successfully, printed positive mapping and negative
+control receipts for both US and JP, and passed three repeated CTest loops.
+
+This proves the audited US/JP Sarmon-to-Track-19 banks are name-equivalent;
+it does not bind other dungeon item-name banks or close the Theron inventory
+UI/runtime parity gap.
+
 ## 2026-10-08 — bind JP-only Stage-2 branch target `$5879`
 
 Locked the authentic JP `$58C5` `BBR4` branch target at `$5879`, including a

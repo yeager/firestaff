@@ -403,7 +403,15 @@ static void test_real_sarmon_track19_mapping(
     snprintf(track19_path, sizeof(track19_path),
              "%s/.firestaff/data/theron/%s", home,
              variant == 1 ? "TQJP19.iso" : "TQUS19.iso");
-    if (!theron_v1_track19_item_name_bank_file(track19_path, &track19)) return;
+    if (!theron_v1_track19_item_name_bank_file(track19_path, &track19)) {
+        snprintf(track19_path, sizeof(track19_path),
+                 "%s/.firestaff/data/theron/%s", home,
+                 variant == THERON_TRACK02_VARIANT_JP_BIN
+                     ? "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin"
+                     : "Dungeon Master - Theron's Quest (USA) (Track 19).bin");
+        if (!theron_v1_track19_item_name_bank_file(track19_path, &track19))
+            return;
+    }
     assert(theron_v1_track02_decode_item_name_source(
                ud, ud_size, variant, 4u, &track02) == 1);
     world = (Theron_V1_World *)calloc(1u, sizeof(*world));
@@ -416,6 +424,8 @@ static void test_real_sarmon_track19_mapping(
                world, &track02, variant) == 1);
     assert(world->track19_item_names.item_mapping_proven == 1);
     assert(world->track19_item_names.mapped_track02_dungeon_mask == (1u << 3));
+    printf("  authentic %s Sarmon/Track19 bank and item-name mapping verified\n",
+           variant == THERON_TRACK02_VARIANT_JP_BIN ? "JP" : "US");
     bind_real_track02_party(
         world, raw_track02, raw_track02_size,
         variant == THERON_TRACK02_VARIANT_JP_BIN ?
@@ -440,6 +450,34 @@ static void test_real_sarmon_track19_mapping(
         wrong_dungeon.source_dungeon = 3u;
     assert(theron_v1_world_object_track19_item_name_raw(
                world, &wrong_dungeon, &name, &name_size) == 0);
+    }
+    for (unsigned int mismatch_kind = 0u; mismatch_kind < 2u;
+         ++mismatch_kind) {
+        Theron_Track02ItemNameSource mismatched_track02 = track02;
+        Theron_V1_World *mismatch_world =
+            (Theron_V1_World *)malloc(sizeof(*mismatch_world));
+        Theron_V1_Object authentic_object = *object;
+        assert(mismatch_world != NULL);
+        *mismatch_world = *world;
+        if (mismatch_kind == 0u) {
+            assert(mismatched_track02.raw_name_sizes[0] > 0u);
+            mismatched_track02.raw_names[0][0] ^= 1u;
+        } else {
+            assert(mismatched_track02.raw_name_sizes[0] > 1u);
+            --mismatched_track02.raw_name_sizes[0];
+        }
+        assert(theron_v1_world_bind_track02_item_name_source(
+                   mismatch_world, &mismatched_track02, variant) == 1);
+        assert(mismatch_world->track19_item_names.item_mapping_proven == 0);
+        assert(mismatch_world->track19_item_names
+                   .mapped_track02_dungeon_mask == 0u);
+        assert(theron_v1_world_object_track19_item_name_raw(
+                   mismatch_world, &authentic_object,
+                   &name, &name_size) == 0);
+        printf("  authentic %s Sarmon name-%s control rejected\n",
+               variant == THERON_TRACK02_VARIANT_JP_BIN ? "JP" : "US",
+               mismatch_kind == 0u ? "byte" : "length");
+        free(mismatch_world);
     }
     {
         Theron_V1_Object wrong_property = *object;
