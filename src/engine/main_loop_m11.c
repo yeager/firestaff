@@ -72,6 +72,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <limits.h>
+#include <ctype.h>
 
 #include <SDL3/SDL.h>
 
