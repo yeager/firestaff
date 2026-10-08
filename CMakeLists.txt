@@ -7700,10 +7700,10 @@ if(NOT MSVC)
 endif()
 if(MINGW)
     # The main startup loop keeps the 1.3 MiB M11 view state alongside the
-    # M12 menu state. Match the 8 MiB stack available to Unix processes.
-    target_link_options(firestaff PRIVATE -Wl,--stack,8388608)
+    # M12 menu state. Reserve enough for nested render and startup frames too.
+    target_link_options(firestaff PRIVATE -Wl,--stack,16777216)
 elseif(MSVC)
-    target_link_options(firestaff PRIVATE /STACK:8388608)
+    target_link_options(firestaff PRIVATE /STACK:16777216)
 endif()
 
 if(BUILD_TESTING AND NOT WIN32)
@@ -17284,10 +17284,10 @@ if(BUILD_TESTING)
     endif()
     if(MINGW)
         target_link_options(test_dm2_v1_startup_menu_action_contract
-            PRIVATE -Wl,--stack,8388608)
+            PRIVATE -Wl,--stack,16777216)
     elseif(MSVC)
         target_link_options(test_dm2_v1_startup_menu_action_contract
-            PRIVATE /STACK:8388608)
+            PRIVATE /STACK:16777216)
     endif()
     add_test(
         NAME dm2_v1_startup_menu_action_contract
@@ -17543,10 +17543,10 @@ endif()
     endif()
     if(MINGW)
         target_link_options(test_dm2_v1_m11_startup_profile_gate
-            PRIVATE -Wl,--stack,8388608)
+            PRIVATE -Wl,--stack,16777216)
     elseif(MSVC)
         target_link_options(test_dm2_v1_m11_startup_profile_gate
-            PRIVATE /STACK:8388608)
+            PRIVATE /STACK:16777216)
     endif()
     add_test(
         NAME dm2_v1_m11_startup_profile_gate
