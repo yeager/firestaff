@@ -661,7 +661,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          # The publisher only needs the current source and tag refs for
+          # release validation/changelog links; avoid fetching every branch
+          # and the full repository history on this final job.
+          fetch-depth: 1
+          fetch-tags: true
 
       - uses: actions/download-artifact@v7
         with:
