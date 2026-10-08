@@ -7698,6 +7698,13 @@ target_compile_definitions(firestaff PRIVATE
 if(NOT MSVC)
     target_compile_options(firestaff PRIVATE -Wall -Wextra -O2)
 endif()
+if(MINGW)
+    # The main startup loop keeps the 1.3 MiB M11 view state alongside the
+    # M12 menu state. Match the 8 MiB stack available to Unix processes.
+    target_link_options(firestaff PRIVATE -Wl,--stack,8388608)
+elseif(MSVC)
+    target_link_options(firestaff PRIVATE /STACK:8388608)
+endif()
 
 if(BUILD_TESTING AND NOT WIN32)
     add_test(
@@ -17275,6 +17282,13 @@ if(BUILD_TESTING)
         target_compile_options(test_dm2_v1_startup_menu_action_contract
             PRIVATE -Wall -Wextra -O2)
     endif()
+    if(MINGW)
+        target_link_options(test_dm2_v1_startup_menu_action_contract
+            PRIVATE -Wl,--stack,8388608)
+    elseif(MSVC)
+        target_link_options(test_dm2_v1_startup_menu_action_contract
+            PRIVATE /STACK:8388608)
+    endif()
     add_test(
         NAME dm2_v1_startup_menu_action_contract
         COMMAND test_dm2_v1_startup_menu_action_contract
@@ -17526,6 +17540,13 @@ endif()
         PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_m11_startup_profile_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    if(MINGW)
+        target_link_options(test_dm2_v1_m11_startup_profile_gate
+            PRIVATE -Wl,--stack,8388608)
+    elseif(MSVC)
+        target_link_options(test_dm2_v1_m11_startup_profile_gate
+            PRIVATE /STACK:8388608)
     endif()
     add_test(
         NAME dm2_v1_m11_startup_profile_gate
