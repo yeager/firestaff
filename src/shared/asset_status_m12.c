@@ -383,11 +383,11 @@ static const M12_VersionSpec g_csbVersions[] = {
      * media family.  Its GRAPHICS.DAT identity is also recorded by the
      * Amiga decoder and data validator; scanner and M11 must admit it. */
     {"csb", "amiga31-en", "Amiga 3.1 English", "Amiga 3.1 EN", g_csbGraphicsNames, "21197b1d4994fd835c403d5a33dcac2b", M12_ARCH_AMIGA},
-    /* Greatstone's original EN/FR/GE ADF and ReDMCSB COMPILE.H:246-269
-     * identify this as A31M: APPB.FTL is the language selector and KAOS.FTL
-     * is the game program.  It shares the PC34 graphics payload, so TITL.DAT
-     * is the package discriminator in m12_admit_csb_amiga31_title_package(). */
-    {"csb", "amiga31-multi", "Amiga 3.1 Multilanguage", "Amiga 3.1 ML", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_AMIGA},
+    /* Greatstone's original EN/FR/GE ADF and ReDMCSB COMPILE.H:246-272
+     * identify the A31M/A33M family: APPB.FTL is the language selector and
+     * the version-specific KAOS.FTL is the game program. It shares the PC34
+     * graphics payload, so TITL.DAT remains the package discriminator. */
+    {"csb", "amiga31-multi", "Amiga 3.1/3.3 Multilanguage", "Amiga 3.1/3.3 ML", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_AMIGA},
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e", M12_ARCH_ATARI_ST},
     {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49", M12_ARCH_ATARI_ST},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68", M12_ARCH_AMIGA},
@@ -3333,9 +3333,9 @@ static const char* m12_csb_amiga_sidecar_expected_md5(const char* versionId,
     if (strcmp(label, "ENDA.DAT") == 0) return "9f2b73ff73ad0032810d79021c900ca9";
     if (strcmp(label, "KAOS.FTL") == 0) return "dbb79832c9cc3db82886ba8d3f72748a";
     if (strcmp(label, "SWSH.FTL") == 0) return "ff3872baaed8ee4e83ee3c0684b2eeec";
-    /* Original A31M program receipt, read from the same ADF as TITL.DAT.
-     * ReDMCSB COMPILE.H:246-269 maps APPB to C08_LANG and KAOS to C03_GAME;
-     * APPA.C:51-68 owns the APPA -> ANIM -> APPB handoff. */
+    /* Original A31M/A33M program receipt, read from the same ADF as TITL.DAT.
+     * ReDMCSB COMPILE.H:246-272 maps APPB to C08_LANG and each version's
+     * KAOS to C03_GAME; APPA.C:51-81 owns the APPA -> ANIM -> APPB handoff. */
     if (strcmp(label, "ANIM.FTL") == 0) return "60ffbbe31830f2fe262cb8dee862b7fc";
     if (strcmp(label, "APPA.FTL") == 0) return "8d68df400f71672df4d0339c806c6a25";
     if (strcmp(label, "APPB.FTL") == 0) return "35987d3f0278c6036fcc24786d4a75d7";
@@ -3346,6 +3346,23 @@ static const char* m12_csb_amiga_sidecar_expected_md5(const char* versionId,
     if (strcmp(label, "USIO.FTL") == 0) return "65a18a7d553186df1206241abbd1560e";
     if (strcmp(label, "VDEO.FTL") == 0) return "a237ff4ba7523f9a02cb992d60056fc8";
     return NULL;
+}
+
+static int m12_csb_amiga_sidecar_md5_matches(const char* versionId,
+                                              const char* label,
+                                              const char* actualMd5) {
+    const char* expectedMd5 = m12_csb_amiga_sidecar_expected_md5(versionId,
+                                                                  label);
+    if (expectedMd5 && actualMd5 && strcmp(actualMd5, expectedMd5) == 0) {
+        return 1;
+    }
+    /* The authenticated A33M ADF shares A31M's graphics/title identity but
+     * carries its own original C03_GAME binary. Keep this alternate digest
+     * constrained to KAOS.FTL in that same admitted package family. */
+    return versionId && label && actualMd5 &&
+           strcmp(versionId, "amiga31-multi") == 0 &&
+           strcmp(label, "KAOS.FTL") == 0 &&
+           strcmp(actualMd5, "dc2f97e177843046a969ebc2d7b74778") == 0;
 }
 
 #if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
@@ -3381,7 +3398,8 @@ static int m12_materialize_authenticated_csb_amiga_sidecar(
         !m12_materialize_optional_for_cache_seed(seedPath, label, outPath)) {
         return 0;
     }
-    if (!m12_file_md5_hex(outPath, md5) || strcmp(md5, expectedMd5) != 0) {
+    if (!m12_file_md5_hex(outPath, md5) ||
+        !m12_csb_amiga_sidecar_md5_matches(versionId, label, md5)) {
         (void)remove(outPath);
         return 0;
     }
@@ -4910,11 +4928,11 @@ static int m12_admit_explicit_dm1_atari_image(M12_AssetStatus* status,
     return 0;
 }
 
-/* CSB Amiga 3.1 shares PC34's GRAPHICS.DAT bytes.  Greatstone's original
+/* CSB Amiga 3.1/3.3 shares PC34's GRAPHICS.DAT bytes. Greatstone's original
  * A31E disk catalogue instead identifies the executable presentation package
- * through TITL.DAT.  Require both source files from the same outer/inner
- * container; a nearby PC GRAPHICS.DAT or an unpaired title file is not an
- * Amiga launch profile. */
+ * through TITL.DAT. Require both source files from the same outer/inner
+ * container or AmigaDOS folder; an unrelated PC GRAPHICS.DAT or unpaired
+ * title file is not an Amiga launch profile. */
 static void m12_admit_csb_amiga31_title_package(
     M12_AssetStatus* status, int gameIndex,
     const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -5080,7 +5098,7 @@ static void m12_require_csb_amiga31_package_identity(
     }
     /* This digest also appears in development/reference corpora.  CSB had
      * no DOS/Windows release, so graphics bytes alone must never create a
-     * playable catalogue row.  Same-package TITL.DAT is the A31M identity. */
+     * playable catalogue row. Same-package TITL.DAT is the A31M/A33M identity. */
     amiga->matched = 0;
     amiga->matchedPath[0] = '\0';
     amiga->matchedMd5[0] = '\0';

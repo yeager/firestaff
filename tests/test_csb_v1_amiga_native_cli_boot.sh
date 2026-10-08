@@ -3,12 +3,12 @@ set -eu
 
 firestaff_cli="${1:?Firestaff executable is required}"
 
-# This is an opt-in real-media check.  The generic per-game data directory
+# This is an opt-in real-media check. The generic per-game data directory
 # may contain FM Towns, DOS, or unrelated Amiga archives, none of which is
-# sufficient evidence for the A31 native startup route.  Do not infer an
-# A31 root merely because ~/.firestaff/data/csb exists; the caller must name
-# the curated original A31 directory explicitly.
-data_dir="${FIRESTAFF_CSB_AMIGA31_DATA_DIR:-$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip}"
+# sufficient evidence for the native Amiga multi-language startup route.
+# Do not infer a source package merely because ~/.firestaff/data/csb exists;
+# the caller must name the curated original archive explicitly.
+data_dir="${FIRESTAFF_CSB_AMIGA_DATA_DIR:-${FIRESTAFF_CSB_AMIGA31_DATA_DIR:-$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip}}"
 
 if [ ! -x "$firestaff_cli" ]; then
     echo "SKIP: Firestaff executable is unavailable"
@@ -19,11 +19,11 @@ if [ ! -e "$data_dir" ]; then
     exit 77
 fi
 
-# This is an opt-in real-media check.  The scanner remains the only authority
-# on the selected A31 package; the test supplies neither fixture bytes nor a
-# substitute PC34 asset.  A31M takes APPA.C -> ANIM.C's TITL.DAT phase before
-# KAOS.FTL / F0441 enters Prison; A31E instead uses APPB/BJELoad_R's direct
-# C03_GAME -> F0441 handoff.  ReDMCSB COMPILE.H:199-213, 246-269.
+# The scanner remains the only authority on the selected original package;
+# this test supplies neither fixture bytes nor a substitute PC34 asset.
+# A31M/A33M takes APPA.C -> ANIM.C's TITL.DAT phase before APPB selects the
+# source KAOS.FTL C03_GAME; A31E instead uses APPB/BJELoad_R's direct
+# C03_GAME -> F0441 handoff. ReDMCSB COMPILE.H:199-213, 246-272; APPA.C:51-81.
 probe_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --game csb --data-dir "$data_dir" --platform amiga --boot-probe 2>&1)" || {
     printf '%s\n' "$probe_output" >&2

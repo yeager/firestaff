@@ -1,5 +1,22 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-08: Fixed CSB Amiga 3.3 multiplayer startup handoff. ReDMCSB
+  `COMPILE.H:270-272` identifies A33M `KAOS.FTL` as `C03_GAME`, and
+  `APPA.C:71-81` routes its EN/FR/GE choices through that program. Firestaff
+  previously accepted only A31M's `KAOS.FTL` hash, so authentic A33M remained
+  at the completed `TITL.DAT` title. The handoff and sidecar admission now
+  accept the exact A33M digest `dc2f97e177843046a969ebc2d7b74778` from the
+  selected ADF; fingerprint lookup recognizes it as original CSB Amiga
+  `KAOS.FTL`, and M12 labels the shared media family 3.1/3.3. The registered
+  `csb_v1_amiga33_original_adf_cli_boot` passed in 70.05 seconds using the
+  original ADF repackaged into ZIP. The new
+  `csb_v1_amiga33_loose_folder_cli_boot` passed in 71.01 seconds against the
+  same original ADF installed as AmigaDOS files. Both cover CLI title,
+  original/modern presentation modes, the input matrix, M12 start-menu runtime
+  and AUTO Amiga route. The existing A31 test passed in 70.96 seconds, the
+  fingerprint test passed, and the M11 handoff regression passed in 1.46
+  seconds. This verifies startup and input, not full campaign parity.
+
 - 2026-10-08: `test_csb_v1_amiga_adf_archive_cli_boot.sh` passed in 10.25
   seconds against the installed original `Chaos Strikes Back (FTL).zip`.
   The ZIP-to-ADF route reached the source entrance, launched through M12, and

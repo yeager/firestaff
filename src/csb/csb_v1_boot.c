@@ -135,18 +135,22 @@ static int csb_v1_boot_root_is_selected_amiga31_cache(const char *root)
     return strcmp(leaf, "csb-amiga31-multi") == 0;
 }
 
-/* A direct original ZIP -> ADF launch does not pass through M12's selected
- * cache leaf. Its GRAPHICS.DAT path nevertheless carries the complete nested
- * ADF identity (outer.zip::disk.adf::graphics.dat). Derive TITL.DAT only by
- * replacing that final member name, keeping both receipts in the same ADF;
- * never search the outer archive or a neighbouring host directory. */
-static int csb_v1_boot_selected_virtual_amiga31_title_path(
+/* Bind the A31M/A33M title discriminator to the selected graphics package.
+ * A nested original ZIP -> ADF receipt keeps its full virtual path, while an
+ * installed AmigaDOS folder uses TITL.DAT beside Graphics.DAT. Never search
+ * the outer archive or an unrelated neighbouring host directory. */
+static int csb_v1_boot_selected_amiga31_title_path(
     const char *graphics_path, char *out, size_t out_size)
 {
     const char *component;
     const char *next;
+    char parent[ASSET_PATH_MAX];
 
     if (!graphics_path || !out || out_size == 0u) return 0;
+    if (!strstr(graphics_path, "::")) {
+        return FSP_ParentDir(parent, sizeof(parent), graphics_path) &&
+               FSP_JoinPath(out, out_size, parent, "TITL.DAT");
+    }
     component = graphics_path;
     while ((next = strstr(component, "::")) != NULL) component = next + 2;
     if (component == graphics_path || !component[0]) return 0;
@@ -9638,7 +9642,7 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
                 csb_v1_boot_root_is_selected_amiga31_cache(root)
                     ? FSP_JoinPath(amigaTitlePath, sizeof(amigaTitlePath), root,
                                    "TITL.DAT")
-                    : csb_v1_boot_selected_virtual_amiga31_title_path(
+                    : csb_v1_boot_selected_amiga31_title_path(
                         graphics_path, amigaTitlePath, sizeof(amigaTitlePath));
             if (!samePackageTitle ||
                 !asset_file_matches_md5(amigaTitlePath,

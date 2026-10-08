@@ -84,6 +84,14 @@ int main(void)
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_KAOS_FTL);
 
+    /* ReDMCSB COMPILE.H:270-272 identifies original 3.3 A33M KAOS.FTL as
+     * the native C03_GAME executable. */
+    test_classify_hex("KAOS.FTL (3.3)",
+                      "dc2f97e177843046a969ebc2d7b74778",
+                      FIRESTAFF_GAME_CSB,
+                      FIRESTAFF_PLATFORM_AMIGA,
+                      FIRESTAFF_FILE_KAOS_FTL);
+
     /* CSB Amiga 3.1 original / v3.3 SWSH.FTL */
     test_classify_hex("SWSH.FTL",
                       "ff3872baaed8ee4e83ee3c0684b2eeec",

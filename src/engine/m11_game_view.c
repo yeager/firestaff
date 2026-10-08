@@ -7548,7 +7548,7 @@ static void m11_csb_advance_amiga_titl(M11_GameViewState *state,
 
 /* ReDMCSB APPA.C:63-90 enters APPB after ANIM returns. APPB owns only its
  * selection page until a mouse release returns FNCH/ENGL/GRMN, so preserve
- * M11's verified A31M package boundary and decode the page from APPB.FTL.
+ * M11's verified A31M/A33M package boundary and decode the page from APPB.FTL.
  * No PC34 title, font, or reconstructed menu may appear in this interval. */
 static int m11_csb_prepare_amiga_appb_selection(M11_GameViewState *state)
 {
@@ -7637,25 +7637,37 @@ static int m11_csb_complete_amiga_appb_language_handoff(M11_GameViewState *state
     CSB_V1_BootProfile *profile;
     char path[FSP_PATH_MAX];
     char md5[33];
+    int is_a35m;
 
     if (!state || !state->csbBootProfile || !state->csbAmigaAppbSelectionActive ||
         language_index > 2u) {
         return 0;
     }
     profile = (CSB_V1_BootProfile *)state->csbBootProfile;
-    if ((!m11_csb_is_amiga_a31_profile(profile) &&
-         !m11_csb_is_amiga_a35m_profile(profile)) || !profile->asset_root[0] ||
+    is_a35m = m11_csb_is_amiga_a35m_profile(profile);
+    if ((!m11_csb_is_amiga_a31_profile(profile) && !is_a35m) ||
+        !profile->asset_root[0] ||
         !profile->runtime.dungeon_handle ||
         !m11_csb_amiga_program_locator(profile, "KAOS.FTL", path, sizeof(path)) ||
-        !asset_file_md5_hex(path, md5) ||
-        strcmp(md5, m11_csb_is_amiga_a35m_profile(profile)
-                    ? "229d3253968d6e616f8b5171efdf04a5"
-                    : "dbb79832c9cc3db82886ba8d3f72748a") != 0) {
+        !asset_file_md5_hex(path, md5)) {
+        return 0;
+    }
+    /* ReDMCSB COMPILE.H:258-272 identifies the distinct A31M and A33M
+     * KAOS.FTL executables as C03_GAME; APPA.C:71-81 routes ENGL/FNCH/GRMN
+     * to that executable with language parameter 0/1/2. The authenticated
+     * A33M original has its own KAOS digest, while APPB.FTL, TITL.DAT and
+     * graphics/dungeon media share the A31M/A33M source route. The locator binds
+     * this exact program to the selected ADF, so accept only its known native
+     * version digest here. */
+    if (is_a35m) {
+        if (strcmp(md5, "229d3253968d6e616f8b5171efdf04a5") != 0) return 0;
+    } else if (strcmp(md5, "dbb79832c9cc3db82886ba8d3f72748a") != 0 &&
+               strcmp(md5, "dc2f97e177843046a969ebc2d7b74778") != 0) {
         return 0;
     }
     /* ReDMCSB APPA.C:71-80 maps ENGL/FNCH/GRMN to the same KAOS executable
      * with parameter 0/1/2.  KAOS.FTL is therefore the authenticated native
-     * continuation for all three A31M/A35M selector results, not an English
+     * continuation for all three A31M/A33M/A35M selector results, not an English
      * substitute.  Cross that C03_GAME boundary without a PC34 session. */
     profile->amiga_language_index = language_index;
     profile->runtime.state = CSB_STATE_GAME;
@@ -25943,7 +25955,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                         !state->csbAmigaTitlBytes ||
                         !state->csbAmigaTitlFrameBound) {
                         fprintf(stderr,
-                                "firestaff: CSB Amiga A31M TITL.DAT handoff rejected\n");
+                                "firestaff: CSB Amiga A31M/A33M TITL.DAT handoff rejected\n");
                         return 0;
                     }
                     handoff = "a31m-titl-dat";

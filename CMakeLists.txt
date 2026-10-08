@@ -17874,6 +17874,28 @@ endif()
         TIMEOUT 120
     )
     add_test(
+        NAME csb_v1_amiga33_original_adf_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_amiga33_original_adf_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;v33;startup;cli;menu;real-data;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga version 3.3 English, French, German.zip"
+        TIMEOUT 180
+    )
+    add_test(
+        NAME csb_v1_amiga33_loose_folder_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_amiga33_loose_folder_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;v33;startup;cli;menu;real-data;real-media;skip-safe;loose-files"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/amiga33-original"
+        TIMEOUT 180
+    )
+    add_test(
         NAME csb_v1_amiga_adf_archive_cli_boot
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_adf_archive_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"

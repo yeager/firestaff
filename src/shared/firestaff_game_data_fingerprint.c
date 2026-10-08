@@ -78,9 +78,11 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     {MD5(9F,2B,73,FF,73,AD,00,32,81,0D,79,02,1C,90,0C,A9), G_CSB, P_AMI, L_ML, F_ENDA, "3.1/3.3", "CSB Amiga 3.1 original and 3.3 ENDA.DAT"},
     /* Greatstone's original CSB Amiga 3.1 EN/FR/GE catalogue identifies
      * KAOS.FTL as the title, credits and entrance palette/code container.
-     * This MD5 was read directly from the corresponding original ADF, not
-     * from the separately available hacked Amiga 3.3 disk set. */
+     * This MD5 was read directly from its original ADF. */
     {MD5(DB,B7,98,32,C9,CC,3D,B8,28,86,BA,8D,3F,72,74,8A), G_CSB, P_AMI, L_ML, F_KAOS, "3.1", "CSB Amiga 3.1 original KAOS.FTL"},
+    /* ReDMCSB COMPILE.H:270-272 identifies A33M's KAOS.FTL as C03_GAME.
+     * This exact digest is from the supplied original 3.3 ADF. */
+    {MD5(DC,2F,97,E1,77,84,30,46,A9,69,EB,C2,D7,B7,47,78), G_CSB, P_AMI, L_ML, F_KAOS, "3.3", "CSB Amiga 3.3 original KAOS.FTL"},
     {MD5(FF,38,72,BA,AE,D8,EE,4E,83,EE,3C,06,84,B2,EE,EC), G_CSB, P_AMI, L_ML, F_SWSH, "3.1/3.3", "CSB Amiga 3.1 original and 3.3 SWSH.FTL"},
     /* CSB Atari ST */
     {MD5(EB,F6,A5,7A,F3,F2,77,82,E3,58,C0,49,0B,FD,2F,2E), G_CSB, P_ST, L_EN, F_GFX, "2.0/2.1", "CSB Atari ST 2.0 and 2.1 English GRAPHICS.DAT"},
