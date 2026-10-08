@@ -3253,7 +3253,10 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
  * expose TITL.DAT, never a PC3.4 TITLE.C/ENTRANCE.C replacement.  ReDMCSB
  * APPA.C:51-68, ANIM.C F1205 and COMPILE.H:246-269. */
 static void run_real_amiga31_selected_package_handoff_if_available(void) {
-    const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
+    const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA_DATA_DIR");
+    if (!data_dir || !data_dir[0]) {
+        data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
+    }
     char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
     M12_StartupMenuState menu;
     M11_GameViewState view;
@@ -3790,6 +3793,7 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
 int main(void) {
     const char *atari_only = getenv("FIRESTAFF_CSB_ATARI_ST_ONLY");
     const char *amiga31_only = getenv("FIRESTAFF_CSB_AMIGA31_ONLY");
+    const char *amiga_only = getenv("FIRESTAFF_CSB_AMIGA_ONLY");
     const char *amiga35_only = getenv("FIRESTAFF_CSB_AMIGA35_ONLY");
     const char *amiga35_english_only =
         getenv("FIRESTAFF_CSB_AMIGA35_EN_ONLY");
@@ -3814,7 +3818,8 @@ int main(void) {
         run_real_amiga35_english_direct_handoff_if_available();
     } else if (amiga35_only && amiga35_only[0]) {
         run_real_amiga35_selected_package_handoff_if_available();
-    } else if (amiga31_only && amiga31_only[0]) {
+    } else if ((amiga_only && amiga_only[0]) ||
+               (amiga31_only && amiga31_only[0])) {
         run_real_amiga31_selected_package_handoff_if_available();
     } else if (!atari_only || !atari_only[0]) {
         run_empty_launcher_boundary();

@@ -21209,6 +21209,15 @@ endif()
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_ONLY=1;FIRESTAFF_CSB_AMIGA31_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_CSB_SV_PO=${CMAKE_CURRENT_SOURCE_DIR}/po/csb.sv.po"
         TIMEOUT 120
     )
+    add_test(
+        NAME csb_v1_amiga33_m12_m11_real_media_handoff
+        COMMAND test_csb_v1_m11_launcher_handoff_boundary
+    )
+    set_tests_properties(csb_v1_amiga33_m12_m11_real_media_handoff PROPERTIES
+        LABELS "tier2;csb;amiga;m12;m11;launcher;startup;real_data;skip_safe;v33"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ONLY=1;FIRESTAFF_CSB_AMIGA_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga version 3.3 English, French, German.zip;FIRESTAFF_CSB_SV_PO=${CMAKE_CURRENT_SOURCE_DIR}/po/csb.sv.po"
+        TIMEOUT 120
+    )
     # The Atari ST title is a separate ANIMATE.SCR/DAT owner.  Keep its
     # original-media M12 selection, 50 Hz VBlank handoff, and first native
     # runtime frame independently runnable from the paired game/utility disks

@@ -7,9 +7,10 @@
   checks DM1 Amiga 2.0 and Atari ST 1.2, CSB FM Towns Japanese and Amiga 3.1
   English, and DM2 Macintosh retail through the reopened-root handoff. The
   CSB Amiga leg verifies the native A31E M11 profile; dedicated original-media
-  tests advance A31M and A33M through Amiga startup to runtime. The A33M test
-  covers both ZIP -> ADF and a loose AmigaDOS install built from the original
-  Amiga 3.3 ADF, and locks its separate `KAOS.FTL` C03_GAME digest. Its AUTO
+  tests advance A31M and A33M through Amiga startup to runtime. A33M tests
+  cover CLI ZIP -> ADF, an installed AmigaDOS folder built from the original
+  Amiga 3.3 ADF, and the M12-to-M11 menu handoff; its separate `KAOS.FTL`
+  C03_GAME digest is locked. Its AUTO
   DM2 FM Towns leg now finishes the source title and uses the retail New Game
   and mirror targets to enter a loaded one-champion session. The same
   authenticated Towns corpus now passes the full M12 game/platform/custom/

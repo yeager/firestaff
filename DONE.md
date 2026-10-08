@@ -11,7 +11,11 @@
   `csb_v1_amiga33_original_adf_cli_boot` passed in 70.05 seconds using the
   original ADF repackaged into ZIP. The new
   `csb_v1_amiga33_loose_folder_cli_boot` passed in 71.01 seconds against the
-  same original ADF installed as AmigaDOS files. Both cover CLI title,
+  same original ADF installed as AmigaDOS files. The new
+  `csb_v1_amiga33_m12_m11_real_media_handoff` passed against the original ZIP,
+  covering real M12 selection, package ownership, native title, language
+  handoff, entrance, and live runtime (55 assertions, 2.78 seconds). The three
+  original-media routes cover CLI title,
   original/modern presentation modes, the input matrix, M12 start-menu runtime
   and AUTO Amiga route. The existing A31 test passed in 70.96 seconds, the
   fingerprint test passed, and the M11 handoff regression passed in 1.46
