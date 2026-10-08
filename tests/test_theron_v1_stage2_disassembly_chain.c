@@ -3701,6 +3701,9 @@ static void test_stage2_jp_record_selector_52xx_flow(void)
     assert_jp_stage2_jsr_target(0x58d2u, 0x4feau);
     assert_jp_stage2_jsr_target(0x5025u, 0x50b7u);
     assert_jp_stage2_jsr_target(0x50c3u, 0x51ceu);
+    assert_jp_stage2_bsr_target(0x50c6u, 0x508bu);
+    assert_jp_stage2_branch_target(0x50bbu, 0xd0u, 0x50cau);
+    assert_jp_stage2_branch_target(0x50c1u, 0xd0u, 0x50cau);
     assert_jp_stage2_jsr_target(0x505au, 0x50f5u);
     assert_jp_stage2_jsr_target(0x5101u, 0x525eu);
     assert_jp_stage2_jsr_target(0x58dcu, 0x553fu);

@@ -7710,7 +7710,9 @@ T900/original inventory semantics. No synthetic media was used.
 
 - Bound the JP `$5025 → $50B7` JSR edge and the 21-byte JP window
   `$50B7..$50CC` against authentic JP Track 02. The test also asserts the
-  `$50C3 → $51CE` edge and records distinct same-offset US bytes/hashes.
+  `$50C3 → $51CE` edge, the JP-only `$50C6 → $508B` BSR, both JP-only BNE
+  exits at `$50BB` and `$50C1` to `$50CA`, and records distinct same-offset
+  US bytes/hashes.
   Follow-up assertions bind `$51CE..$51E4` within the existing JP generation-51
   window, attest its distinct same-offset US hash, and assert all three JP BSR
   targets. The focused test passed three runs on trv2 with authentic JP and US
