@@ -3058,6 +3058,9 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_USER_OFFSET 0x4b24u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_CPU_ADDRESS 0x4b24u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES 0x18u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET 0x4b3cu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_CPU_ADDRESS 0x4b3cu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES 0x74u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET 0x4bb0u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_CPU_ADDRESS 0x4bb0u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES 0x5du
@@ -3118,7 +3121,7 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 
 /* Same-image bytes bound by the stage-two enclosing-$45xx-callees
  * verifier. */
-#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES 0x92bu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES 0x99fu
 
 /* L3114 tier-5 callees: the remaining callees of the bound tier-4
  * bodies (L53C4's BSR L5403; L560B's BSR L5657 / JSR L52A2 / JSR
@@ -3835,7 +3838,9 @@ typedef struct {
  * L4A84 [0x4a84..0x4b24), and shared L4B24 [0x4b24..0x4b3c), whose
  * static instruction bytes include VDC stores and address arithmetic.
  * This source verifier does not establish that those stores execute. L491F
- * [0x491f..0x4932) provides L4A84's adjacent CR-enable path; L4BB0
+ * [0x491f..0x4932) provides L4A84's adjacent CR-enable path; L4B3C
+ * [0x4b3c..0x4bb0) saves scroll-state words and initializes update fields;
+ * L4BB0
  * [0x4bb0..0x4c0d) contains instructions that can update the scroll-state
  * words at $220c/$220d and $2210/$2211; this verifier proves their static
  * bytes only, not runtime stores; L56DE/L570A
@@ -3879,6 +3884,7 @@ typedef struct {
     size_t l4a09_bytes;
     size_t l4a84_bytes;
     size_t l4b24_bytes;
+    size_t l4b3c_bytes;
     size_t l4bb0_bytes;
     size_t l56de_bytes;
     size_t l570a_bytes;
@@ -3902,6 +3908,7 @@ typedef struct {
     uint16_t l4a09_cpu_address;
     uint16_t l4a84_cpu_address;
     uint16_t l4b24_cpu_address;
+    uint16_t l4b3c_cpu_address;
     uint16_t l4bb0_cpu_address;
     uint16_t l56de_cpu_address;
     uint16_t l570a_cpu_address;
@@ -3935,6 +3942,7 @@ typedef struct {
     int l4a84_vdc_writes_proven;
     int l4a84_targets_proven;
     int l4b24_proven;
+    int l4b3c_proven;
     int l4bb0_proven;
     int l4bb0_static_scroll_state_store_opcodes_proven;
     /* Reserved for a runtime execution receipt; static source matching does

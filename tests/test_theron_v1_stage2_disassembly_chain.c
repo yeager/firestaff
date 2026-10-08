@@ -4217,12 +4217,20 @@ static void test_stage2_enclosing_45xx_callees(void)
     assert(receipt.l4a84_vdc_writes_proven == 0);
     assert(receipt.l4a84_targets_proven == 1);
     assert(receipt.l4b24_proven == 1);
+    assert(receipt.l4b3c_proven == 1);
+    assert(receipt.l4b3c_cpu_address ==
+           THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_CPU_ADDRESS);
+    assert(receipt.l4b3c_bytes ==
+           THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES);
     assert(receipt.l491f_proven == 1);
     assert(receipt.l4bb0_proven == 1);
     /* These receipts cover authenticated instruction bytes only. No runtime
      * execution receipt has yet observed the corresponding VDC port stores. */
     assert(receipt.l4bb0_static_scroll_state_store_opcodes_proven == 1);
     assert(receipt.l4bb0_runtime_scroll_state_writes_proven == 0);
+    assert(receipt.callees_bound_bytes ==
+           THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES);
+    assert(receipt.callees_bound_bytes == 0x99fu);
     assert(receipt.l56de_proven == 1);
     assert(receipt.l56de_vram_transfer_proven == 1);
     assert(receipt.l570a_proven == 1);
@@ -4357,6 +4365,15 @@ static void test_stage2_enclosing_45xx_callees(void)
     assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
     memcpy(mutated, g_us_data, g_us_size);
     user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET;
     raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
                  16u + user_offset % 2048u;
     assert(raw_offset < g_us_size);

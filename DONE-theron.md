@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — bind the US `$4B3C` scroll-state initializer
+
+- Added a bounded byte receipt for the 116-byte Stage-2 initializer
+  `$4B3C..$4BAF`, immediately before the existing `$4BB0` scroll-state
+  update routine. The bytes match the authenticated original US Track 02
+  image and are identical to the JP span. Added a MAME HuC6280 listing,
+  source note, bounds/selected-byte checks and mutation rejection coverage.
+- This remains static source provenance only; runtime entry and rendered
+  scroll parity are unproven. The enclosing-callee verifier remains US-only.
+- `theron_v1_stage2_disassembly_chain` passed three repeated CTest loops on
+  trv2 with the authentic JP and US Track 02 images.
+
 ## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
 
 Extended the authentic JP/US `$4943` caller test to lock the directly called

@@ -11367,6 +11367,28 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         0x66u, 0x3cu, 0x85u, 0x3du, 0xa5u, 0x3au, 0x18u, 0x65u,
         0x3cu, 0x85u, 0x3cu, 0x90u, 0x02u, 0xe6u, 0x3du, 0x60u
     };
+    /* Authenticated US Stage-2 initializer [0x4b3c..0x4bb0), adjacent to
+     * the L4BB0 update routine. It saves the four current scroll-state
+     * bytes, then initializes the two signed deltas and update cadence.
+     * This byte lock establishes source provenance only, not runtime entry. */
+    static const uint8_t stage2_l4b3c[] = {
+        0x08u, 0x78u, 0xadu, 0x0cu, 0x22u, 0x8du, 0x12u, 0x4cu,
+        0xadu, 0x0du, 0x22u, 0x8du, 0x13u, 0x4cu, 0xadu, 0x10u,
+        0x22u, 0x8du, 0x14u, 0x4cu, 0xadu, 0x11u, 0x22u, 0x8du,
+        0x15u, 0x4cu, 0xa5u, 0x0eu, 0xd0u, 0x27u, 0x9cu, 0x0eu,
+        0x4cu, 0x9cu, 0x0du, 0x4cu, 0x9cu, 0x11u, 0x4cu, 0xa5u,
+        0x10u, 0xf0u, 0x3fu, 0xadu, 0x12u, 0x4cu, 0x8du, 0x0cu,
+        0x22u, 0xadu, 0x13u, 0x4cu, 0x8du, 0x0du, 0x22u, 0xadu,
+        0x14u, 0x4cu, 0x8du, 0x10u, 0x22u, 0xadu, 0x15u, 0x4cu,
+        0x8du, 0x11u, 0x22u, 0x80u, 0x25u, 0xa2u, 0x01u, 0x8eu,
+        0x11u, 0x4cu, 0x3au, 0xf0u, 0x12u, 0xa5u, 0x10u, 0x49u,
+        0xffu, 0x1au, 0x8du, 0x0eu, 0x4cu, 0x9cu, 0x0du, 0x4cu,
+        0xa9u, 0x01u, 0x8du, 0x11u, 0x4cu, 0x80u, 0x0bu, 0xa5u,
+        0x10u, 0x49u, 0xffu, 0x1au, 0x8du, 0x0du, 0x4cu, 0x9cu,
+        0x0eu, 0x4cu, 0xa5u, 0x12u, 0x8du, 0x0fu, 0x4cu, 0x8du,
+        0x10u, 0x4cu,
+        0x28u, 0x60u
+    };
     static const uint8_t stage2_l4bb0[] = {
         0xadu, 0x11u, 0x4cu, 0xf0u, 0x57u, 0xadu, 0x10u, 0x4cu,
         0x3au, 0x8du, 0x10u, 0x4cu, 0xd0u, 0x4eu, 0xadu, 0x0fu,
@@ -11703,6 +11725,11 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         !tqr_ipl_user_match(
             track02_data, track02_size, stage2_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET,
+            stage2_l4b3c, sizeof(stage2_l4b3c)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET,
             stage2_l4bb0, sizeof(stage2_l4bb0)) ||
         !tqr_ipl_user_match(
@@ -11816,6 +11843,18 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_USER_OFFSET +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_CPU_ADDRESS +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_CPU_ADDRESS ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_CPU_ADDRESS +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_CPU_ADDRESS ||
         THERON_TRACK02_IPL_STAGE2_45XX_CALL_SITE_L4552_OFF +
                 THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_BYTES >
             THERON_TRACK02_IPL_STAGE2_45XX_ROUTINE_BYTES ||
@@ -11870,6 +11909,17 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES ||
         sizeof(stage2_l4b24) !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES ||
+        sizeof(stage2_l4b3c) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES ||
+        stage2_l4b3c[0] != 0x08u || stage2_l4b3c[1] != 0x78u ||
+        stage2_l4b3c[0x1au] != 0xa5u ||
+        stage2_l4b3c[0x1bu] != 0x0eu ||
+        stage2_l4b3c[0x1cu] != 0xd0u ||
+        stage2_l4b3c[0x1du] != 0x27u ||
+        stage2_l4b3c[0x43u] != 0x80u ||
+        stage2_l4b3c[0x44u] != 0x25u ||
+        stage2_l4b3c[0x72u] != 0x28u ||
+        stage2_l4b3c[0x73u] != 0x60u ||
         sizeof(stage2_l4bb0) !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES ||
         sizeof(stage2_l56de) !=
@@ -12041,6 +12091,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES +
@@ -12082,6 +12133,8 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES;
     out_receipt->l4b24_bytes =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES;
+    out_receipt->l4b3c_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_BYTES;
     out_receipt->l4bb0_bytes =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES;
     out_receipt->l56de_bytes =
@@ -12128,6 +12181,8 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_CPU_ADDRESS;
     out_receipt->l4b24_cpu_address =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_CPU_ADDRESS;
+    out_receipt->l4b3c_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B3C_CPU_ADDRESS;
     out_receipt->l4bb0_cpu_address =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_CPU_ADDRESS;
     out_receipt->l56de_cpu_address =
@@ -12167,6 +12222,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
     out_receipt->l4a84_static_vdc_store_opcodes_proven = 1;
     out_receipt->l4a84_targets_proven = 1;
     out_receipt->l4b24_proven = 1;
+    out_receipt->l4b3c_proven = 1;
     out_receipt->l4bb0_proven = 1;
     out_receipt->l4bb0_static_scroll_state_store_opcodes_proven = 1;
     out_receipt->l56de_proven = 1;
