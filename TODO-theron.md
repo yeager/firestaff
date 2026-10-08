@@ -71,8 +71,15 @@ traversal.
   window; disassembling the same numeric offset from Track 02 is not evidence
   that those bytes execute there. Capture the actual `$4C3F` call with MPR1,
   target bytes, and same-session RAM/source provenance before assigning a
-  callee or region. Do not infer its source from the unrelated `$4ED4->$3A2E`
-  capture, whose MPR1 `$F8` target is BaseRAM.
+  callee or region. The versioned Mednafen diagnostic patch
+  `scripts/mednafen_1.32.1_theron_l4c46_mpr1_target_probe.patch` adds the
+  exact `$4C46` JSR `$3221` callsite and immediate-entry byte/MPR capture. It
+  passes a zero-fuzz dry run against the instrumented Mednafen 1.32.1 source,
+  and the modified HuC6280 object compiled in an isolated trv2 copy. Runtime
+  capture remains unverified: the configured System Card BIOS path was absent
+  in the private emulator setup. Do not infer the target mapping from this
+  compile or from the unrelated `$4ED4->$3A2E` capture, whose MPR1 `$F8`
+  target is BaseRAM.
 - The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
   US Track 02; when authentic JP media is present, the focused test now checks
   the matching span hash and every US/JP byte. This regional source comparison

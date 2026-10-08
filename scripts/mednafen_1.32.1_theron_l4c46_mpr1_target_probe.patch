@@ -1,0 +1,85 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -72,0 +73,7 @@
++ static unsigned stage2_mpr1_l4c46_sequence;
++ static int stage2_mpr1_l4c46_pending;
++ static uint8 stage2_mpr1_l4c46_mpr1;
++ static uint8 stage2_mpr1_l4c46_mpr2;
++ static uint32 stage2_mpr1_l4c46_physical_pc;
++ static uint32 stage2_mpr1_l4c46_target_physical_pc;
++ static uint8 stage2_mpr1_l4c46_caller_bytes[3];
+@@ -183,4 +190,74 @@
+  if(stage2_mpr1_call_pending && stage2_probe_pc != 0x3a2e)
+   stage2_mpr1_call_pending = 0;
++ if(stage2_mpr1_l4c46_pending && stage2_probe_pc != 0x3221)
++  stage2_mpr1_l4c46_pending = 0;
++ if(stage2_probe_pc == 0x4c46)
++ {
++  const uint8 *caller = (const uint8 *)(HuCPU.FastPageR[2] + stage2_probe_pc);
++  const uint32 caller_mpr2 = HuCPU.MPR[2];
++  for(unsigned int i = 0; i < 3; i++)
++   stage2_mpr1_l4c46_caller_bytes[i] = caller[i];
++  stage2_mpr1_l4c46_pending =
++    stage2_mpr1_l4c46_caller_bytes[0] == 0x20 &&
++    stage2_mpr1_l4c46_caller_bytes[1] == 0x21 &&
++    stage2_mpr1_l4c46_caller_bytes[2] == 0x32;
++  stage2_mpr1_l4c46_mpr1 = HuCPU.MPR[1];
++  stage2_mpr1_l4c46_mpr2 = caller_mpr2;
++  stage2_mpr1_l4c46_physical_pc =
++    (caller_mpr2 << 13) | (stage2_probe_pc & 0x1fff);
++  stage2_mpr1_l4c46_target_physical_pc =
++    (stage2_mpr1_l4c46_mpr1 << 13) | (0x3221 & 0x1fff);
++  if(stage2_mpr1_trace && stage2_mpr1_l4c46_sequence < 32)
++  {
++   const uint8 *mapped_target =
++     (const uint8 *)(HuCPU.FastPageR[1] + 0x3221);
++   char target_bytes[129];
++   static const char hex[] = "0123456789abcdef";
++   for(unsigned int i = 0; i < 64; i++)
++   {
++    const uint8 byte = mapped_target[i];
++    target_bytes[i * 2] = hex[byte >> 4];
++    target_bytes[i * 2 + 1] = hex[byte & 0x0f];
++   }
++   target_bytes[128] = 0;
++   fprintf(stage2_mpr1_trace,
++     "stage2_mpr1_l4c46 sequence=%u pc=4c46 physical_pc=%08x mpr2=%02x mpr1=%02x target_physical_pc=%08x callsite_bytes=%02x%02x%02x linked=%u mapped_target_bytes=%s\n",
++     stage2_mpr1_l4c46_sequence, stage2_mpr1_l4c46_physical_pc,
++     stage2_mpr1_l4c46_mpr2, stage2_mpr1_l4c46_mpr1,
++     stage2_mpr1_l4c46_target_physical_pc,
++     stage2_mpr1_l4c46_caller_bytes[0],
++     stage2_mpr1_l4c46_caller_bytes[1],
++     stage2_mpr1_l4c46_caller_bytes[2],
++     stage2_mpr1_l4c46_pending, target_bytes);
++   fflush(stage2_mpr1_trace);
++  }
++ }
++ if(stage2_probe_pc == 0x3221 && stage2_mpr1_l4c46_pending)
++ {
++  if(stage2_mpr1_trace && stage2_mpr1_l4c46_sequence < 32)
++  {
++   const uint8 target_mpr1 = HuCPU.MPR[1];
++   const uint8 *mapped_target = (const uint8 *)(HuCPU.FastPageR[1] + 0x3221);
++   char target_bytes[129];
++   static const char hex[] = "0123456789abcdef";
++   for(unsigned int i = 0; i < 64; i++)
++   {
++    const uint8 byte = mapped_target[i];
++    target_bytes[i * 2] = hex[byte >> 4];
++    target_bytes[i * 2 + 1] = hex[byte & 0x0f];
++   }
++   target_bytes[128] = 0;
++   fprintf(stage2_mpr1_trace,
++     "stage2_mpr1_l4c46_exec sequence=%u pc=3221 physical_pc=%08x mpr1=%02x caller_pc=4c46 caller_physical_pc=%08x caller_mpr2=%02x caller_mpr1=%02x call_target_physical_pc=%08x linked=%u bytes=%s\n",
++     stage2_mpr1_l4c46_sequence++,
++     (target_mpr1 << 13) | (0x3221 & 0x1fff), target_mpr1,
++     stage2_mpr1_l4c46_physical_pc, stage2_mpr1_l4c46_mpr2,
++     stage2_mpr1_l4c46_mpr1,
++     stage2_mpr1_l4c46_target_physical_pc,
++     stage2_mpr1_l4c46_pending, target_bytes);
++   fflush(stage2_mpr1_trace);
++  }
++  stage2_mpr1_l4c46_pending = 0;
++ }
+  if(stage2_probe_pc == 0x4ed4)
+  {
