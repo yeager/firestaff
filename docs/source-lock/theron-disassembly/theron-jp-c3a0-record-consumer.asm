@@ -8,9 +8,11 @@
 ; MAME 0.285 unidasm listing SHA-256: 410b3a1aa407d087eac5e613591801042bac58320aca238471c4832453d13407
 ;
 ; This 150-byte JP window has the same instruction structure as the US
-; $C3A0 window but differs in six address operand bytes: calls target $4661,
-; $C95D, and $CC3E, and the indexed record reads use $2997/$299B. The JP raw
-; offset is $930 bytes earlier than its US counterpart. This is static source
+; $C3A0 window but differs in six encoded byte positions across five distinct
+; address operand substitutions: calls target $4661, $C95D, and $CC3E, and
+; the indexed record reads use $2997/$299B (the $2997 operand appears twice).
+; The JP raw offset is $930 bytes earlier than its US counterpart. This is
+; static source
 ; correspondence only; no runtime CD-to-RAM mapping, semantic table identity,
 ; or gameplay behavior is established. Bytes after the RTS continue into the
 ; following routine.

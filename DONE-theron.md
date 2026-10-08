@@ -7803,8 +7803,9 @@ T900/original inventory semantics. No synthetic media was used.
   listing matches across three runs and is recorded in
   `docs/source-lock/theron-disassembly/theron-jp-c3a0-record-consumer.asm`.
   The JP instructions retain the US `$C3A0` control-flow shape, with six
-  region-specific address bytes: helper calls target `$4661`, `$C95D`, and
-  `$CC3E`, and the indexed record reads use `$2997/$299B`.
+  encoded byte positions across five distinct address operand substitutions:
+  helper calls target `$4661`, `$C95D`, and `$CC3E`, and the indexed record
+  reads use `$2997/$299B` (the `$2997` operand appears twice).
 - The focused `theron_v1_huc6280_disassembly` CTest passed three consecutive
   runs on trv2 and directly reported both authentic regional BIN identities.
   This is static source correspondence only; it does not prove runtime bank
