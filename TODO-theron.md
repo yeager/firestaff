@@ -74,6 +74,12 @@
   This is a static source edge and does not prove runtime execution or
   gameplay behavior. See
   `docs/source-lock/theron-disassembly/theron-jp-stage2-l571a-window-20261008.md`.
+- ✅ Bound the JP-specific `$58C5` conditional branch to its 15-byte `$5879`
+  overlapping entry. The focused test passed three consecutive runs on trv2
+  with authentic JP and US Track 02 media. This proves source-byte provenance
+  and the static branch destination only; runtime execution remains unproven.
+  See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-l5879-window-20261008.md`.
 
 ## 2026-10-07 PCE Fast CD-port-to-CD-RAM provenance
 

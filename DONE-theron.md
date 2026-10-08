@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-08 — bind JP-only Stage-2 branch target `$5879`
+
+Locked the authentic JP `$58C5` `BBR4` branch target at `$5879`, including a
+bounded 15-byte HuC6280 listing through `RTS` and regional source digests. The target is an
+overlapping entry (`STY $C84F`) into a sequence whose preceding entry starts
+at `$5878`; the US window differs. The focused real-media test passed three
+consecutive runs on trv2. This proves static source provenance, not runtime
+execution or gameplay behavior.
+
 ## 2026-10-08 — bind the `$571A` Stage-2 target
 
 Added an authentic-media byte receipt for the 24-byte `$571A` window and

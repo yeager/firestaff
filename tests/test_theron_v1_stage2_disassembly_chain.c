@@ -4114,6 +4114,66 @@ static void test_stage2_jp_l4943_window(void)
            "and continuation windows match US)\n");
 }
 
+static void test_stage2_jp_l5879_branch_target(void)
+{
+    static const uint8_t jp_target[] = {
+        0x8cu, 0x4fu, 0xc8u, 0xb1u, 0x18u, 0x8du, 0x8du, 0x4fu,
+        0xc8u, 0xb1u, 0x18u, 0x8du, 0x8eu, 0x4fu, 0x60u
+    };
+    int8_t displacement;
+    uint16_t branch_target;
+    size_t i;
+
+    /* HuC6280 BBR consumes its zero-page operand before BRA reads the signed
+     * displacement: MAME h6280.cpp, ea_zpg (2935-2945), bra (2886-2904), and
+     * bbr (3627-3632). The relative base is therefore opcode + 3. */
+    if (!g_jp_data) {
+        printf("  SKIP: stage2_jp_l5879_branch_target (JP media unavailable)\n");
+        return;
+    }
+    assert(stage2_record_user_byte_at(
+               g_jp_data, g_jp_size, 1,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C5_BRANCH_SITE) == 0x4fu);
+    assert(stage2_record_user_byte_at(
+               g_jp_data, g_jp_size, 1,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C5_BRANCH_SITE + 1u) == 0xc8u);
+    assert(stage2_record_user_byte_at(
+               g_jp_data, g_jp_size, 1,
+               THERON_TRACK02_IPL_STAGE2_JP_L58C5_BRANCH_SITE +
+                   THERON_TRACK02_IPL_STAGE2_JP_L58C5_BBR4_DISPLACEMENT_OFF) ==
+           0xb1u);
+    displacement = (int8_t)stage2_record_user_byte_at(
+        g_jp_data, g_jp_size, 1,
+        THERON_TRACK02_IPL_STAGE2_JP_L58C5_BRANCH_SITE +
+            THERON_TRACK02_IPL_STAGE2_JP_L58C5_BBR4_DISPLACEMENT_OFF);
+    branch_target = (uint16_t)(THERON_TRACK02_IPL_STAGE2_JP_L58C5_BRANCH_SITE +
+                               3u + displacement);
+    assert(branch_target == THERON_TRACK02_IPL_STAGE2_JP_L5879_USER_OFFSET);
+    assert(stage2_record_user_fnv1a64(
+               g_jp_data, g_jp_size, 1,
+               THERON_TRACK02_IPL_STAGE2_JP_L5879_USER_OFFSET,
+               THERON_TRACK02_IPL_STAGE2_JP_L5879_USER_OFFSET +
+                   THERON_TRACK02_IPL_STAGE2_JP_L5879_BYTES) ==
+           UINT64_C(0x2647c26e2d10c559));
+    assert(stage2_record_user_fnv1a64(
+               g_us_data, g_us_size, 0,
+               THERON_TRACK02_IPL_STAGE2_JP_L5879_USER_OFFSET,
+               THERON_TRACK02_IPL_STAGE2_JP_L5879_USER_OFFSET +
+                   THERON_TRACK02_IPL_STAGE2_JP_L5879_BYTES) ==
+           UINT64_C(0xfa454293b9aaadb1));
+    for (i = 0u; i < sizeof(jp_target); ++i) {
+        assert(stage2_record_user_byte_at(
+                   g_jp_data, g_jp_size, 1,
+                   THERON_TRACK02_IPL_STAGE2_JP_L5879_USER_OFFSET + i) ==
+               jp_target[i]);
+    }
+    assert(stage2_record_user_byte_at(
+               g_us_data, g_us_size, 0,
+               THERON_TRACK02_IPL_STAGE2_JP_L5879_USER_OFFSET) !=
+           jp_target[0]);
+    printf("  PASS: stage2_jp_l5879_branch_target (JP-specific 15-byte target)\n");
+}
+
 static void test_stage2_l3114_callees(void)
 {
     Theron_Track02Stage2L3114CalleesReceipt receipt;
@@ -4992,6 +5052,7 @@ int main(void)
         test_stage2_l4f5e_register_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4a_paired_call_loop(g_jp_data, g_jp_size, 1);
         test_stage2_jp_l4943_window();
+        test_stage2_jp_l5879_branch_target();
         test_stage2_id4c_call_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4e_relative_handoff(g_jp_data, g_jp_size, 1);
         test_stage2_id4f_relative_handoff(g_jp_data, g_jp_size, 1);
