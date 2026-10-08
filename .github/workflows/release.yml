@@ -601,8 +601,11 @@ jobs:
             "platforms;android-34" || true
           echo "ANDROID_NDK_HOME=${ANDROID_SDK_ROOT}/ndk/27.0.12077973" >> "$GITHUB_ENV"
 
-      - name: Install dependencies
-        run: bash scripts/ci/install_apt_packages.sh cmake ninja-build pkg-config
+      - name: Verify Android build tools
+        run: |
+          cmake --version
+          ninja --version
+          pkg-config --version
 
       - name: Build SDL3 for Android
         run: |
