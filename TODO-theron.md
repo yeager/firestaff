@@ -6,10 +6,9 @@ The focused real-media guard now proves exact raw-name length and byte
 equality, in addition to edition, type-code and property equality, before
 publishing the audited Sarmon-to-Track-19 mapping. Both authentic US and JP
 Sarmon/Track 19 pairs passed; changed-name-byte and changed-name-length
-controls were rejected in three repeated trv2 CTest loops. Other dungeons'
-Track 19 mappings and the original inventory-screen/runtime behavior remain
-unproven. Mutation controls cover both ends of the 69-name bank (indices 0
-and 68), not an exhaustive per-entry matrix. The larger campaign blocker
+controls were rejected for every one of the 69 names in three repeated trv2
+CTest loops. Other dungeons' Track 19 mappings and the original
+inventory-screen/runtime behavior remain unproven. The larger campaign blocker
 remains authentic stair-transition semantics: stair census and adjacent floor
 approaches do not establish direction, destination level, or arrival pose.
 Capture them from an original-game transition before enabling stair

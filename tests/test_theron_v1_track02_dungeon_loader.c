@@ -472,37 +472,41 @@ static void test_real_sarmon_track19_mapping(
     assert(theron_v1_world_object_track19_item_name_raw(
                world, &wrong_dungeon, &name, &name_size) == 0);
     }
-    for (unsigned int edge = 0u; edge < 2u; ++edge) {
-        const unsigned int item_index =
-            edge == 0u ? 0u : track19.count - 1u;
-        for (unsigned int mismatch_kind = 0u; mismatch_kind < 2u;
-             ++mismatch_kind) {
-            Theron_Track02ItemNameSource mismatched_track02 = track02;
-            Theron_V1_World *mismatch_world =
-                (Theron_V1_World *)malloc(sizeof(*mismatch_world));
-            Theron_V1_Object authentic_object = *object;
-            assert(mismatch_world != NULL);
-            *mismatch_world = *world;
-            if (mismatch_kind == 0u) {
-                assert(mismatched_track02.raw_name_sizes[item_index] > 0u);
-                mismatched_track02.raw_names[item_index][0] ^= 1u;
-            } else {
-                assert(mismatched_track02.raw_name_sizes[item_index] > 1u);
-                --mismatched_track02.raw_name_sizes[item_index];
+    {
+        unsigned int rejected_mutations = 0u;
+        for (unsigned int item_index = 0u; item_index < track19.count;
+             ++item_index) {
+            for (unsigned int mismatch_kind = 0u; mismatch_kind < 2u;
+                 ++mismatch_kind) {
+                Theron_Track02ItemNameSource mismatched_track02 = track02;
+                Theron_V1_World *mismatch_world =
+                    (Theron_V1_World *)malloc(sizeof(*mismatch_world));
+                Theron_V1_Object authentic_object = *object;
+                assert(mismatch_world != NULL);
+                *mismatch_world = *world;
+                if (mismatch_kind == 0u) {
+                    assert(mismatched_track02.raw_name_sizes[item_index] > 0u);
+                    mismatched_track02.raw_names[item_index][0] ^= 1u;
+                } else {
+                    assert(mismatched_track02.raw_name_sizes[item_index] > 1u);
+                    --mismatched_track02.raw_name_sizes[item_index];
+                }
+                assert(theron_v1_world_bind_track02_item_name_source(
+                           mismatch_world, &mismatched_track02, variant) == 1);
+                assert(mismatch_world->track19_item_names.item_mapping_proven == 0);
+                assert(mismatch_world->track19_item_names
+                           .mapped_track02_dungeon_mask == 0u);
+                assert(theron_v1_world_object_track19_item_name_raw(
+                           mismatch_world, &authentic_object,
+                           &name, &name_size) == 0);
+                ++rejected_mutations;
+                free(mismatch_world);
             }
-            assert(theron_v1_world_bind_track02_item_name_source(
-                       mismatch_world, &mismatched_track02, variant) == 1);
-            assert(mismatch_world->track19_item_names.item_mapping_proven == 0);
-            assert(mismatch_world->track19_item_names
-                       .mapped_track02_dungeon_mask == 0u);
-            assert(theron_v1_world_object_track19_item_name_raw(
-                       mismatch_world, &authentic_object,
-                       &name, &name_size) == 0);
-            printf("  authentic %s Sarmon name-%s control rejected at item %u\n",
-                   variant == THERON_TRACK02_VARIANT_JP_BIN ? "JP" : "US",
-                   mismatch_kind == 0u ? "byte" : "length", item_index);
-            free(mismatch_world);
         }
+        assert(rejected_mutations == track19.count * 2u);
+        printf("  authentic %s Sarmon byte/length mutation controls rejected for all %zu names\n",
+               variant == THERON_TRACK02_VARIANT_JP_BIN ? "JP" : "US",
+               track19.count);
     }
     {
         Theron_V1_Object wrong_property = *object;
