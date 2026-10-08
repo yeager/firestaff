@@ -1,15 +1,16 @@
 # Firestaff DONE — DM2
 
-- 2026-10-08: `dm2_v1_fmtowns_native_cli_boot` passed against the authentic
-  FM Towns ZIP in 189.19 seconds. With DOS English/French, Macintosh and Amiga
-  editions also installed, bare `--game dm2` selected FM Towns through AUTO;
-  the test completed the 225-frame title, M12 New Game and first-champion
-  route, then captured one accepted real-asset runtime frame with no core
-  fallbacks. The presented source frame is 320x200 under SDL's dummy video
-  driver, so this does not verify the reported M5 Retina viewport or input.
-  The shared `m11_display_aspect_present_rect` HiDPI transform test also
-  passed; it verifies geometry and mouse mapping helpers, not native SDL
-  presentation on the M5.
+- 2026-10-08: Rebuilt the current launcher and reran
+  `dm2_v1_fmtowns_native_cli_boot`; it passed in 189.50 seconds against the
+  authentic FM Towns ZIP. With DOS English/French, Macintosh and Amiga editions
+  also installed, bare `--game dm2` selected FM Towns through AUTO; the test
+  completed the 225-frame title, M12 New Game and first-champion route, then
+  captured one accepted real-asset runtime frame with no core fallbacks. The
+  presented source frame is 320x200 under SDL's dummy video driver, so this
+  does not verify the reported M5 Retina viewport or input. The shared
+  `m11_display_aspect_present_rect` HiDPI transform test also passed; it
+  verifies geometry and mouse mapping helpers, not native SDL presentation on
+  the M5.
 
 - 2026-10-08: `dm2_v1_mac_native_cli_boot` passed against the authentic
   Macintosh retail ZIP in 132.98 seconds with no `TMPDIR` set. The script now
