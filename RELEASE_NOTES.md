@@ -1,3 +1,15 @@
+# Firestaff v3.0.370
+
+## User-facing changes
+
+- `DM1, CSB and DM2 launcher scan`: loads installed sibling game folders when opening the full menu and refreshes availability after returning from a game.
+- `DM1, CSB and DM2 AUTO platform selection`: uses FM Towns as the default when no platform is selected and resolves it against the installed original edition.
+
+## Developer changes
+
+- `DM2 Mac native startup probe`: writes temporary menu roots, probes, and captures under the project scratch directory when `TMPDIR` is unset.
+- `CSB Atari ST startup probe`: uses the project scratch directory to stage authenticated media when `TMPDIR` is unset.
+
 # Firestaff v3.0.369
 
 ## User-facing changes
