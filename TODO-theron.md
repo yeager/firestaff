@@ -99,7 +99,8 @@ traversal.
   CD-to-RAM receipt, VDC I/O trace, `$49FB`, `$4C46` or `$3221`; its transition
   remains missing. This proves controller-mask delivery to that poll only. It
   supplies no screenshot or render-state comparison, so RUN's inventory or
-  dungeon effect remains unknown. The private trace is under
+  dungeon effect remains unknown. The exact input-consumption receipt was
+  reproduced identically in three verifier loops. The private trace is under
   `/home/trv2/.cache/firestaff-theron-l4c46-20261009/run-isolated-theron-input-20261009/`.
 - The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
   US Track 02; when authentic JP media is present, the focused test now checks
