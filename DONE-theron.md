@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — repeat authentic disassembly receipt tests locally
+
+- Ran `theron_v1_huc6280_disassembly` and
+  `theron_v1_stage2_disassembly_chain` in three loops with explicit paths to
+  the installed authentic US and JP Track 02 BINs. All six test executions
+  passed with no skips. This revalidates static source receipts only; it does
+  not establish runtime bank mapping, execution, or gameplay parity.
+
 ## 2026-10-09 — retain JP spawn-target candidate disassemblies
 
 - Added full MAME HuC6280 listings for the authenticated JP `$C95D` and

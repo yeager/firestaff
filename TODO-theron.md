@@ -2,6 +2,10 @@
 
 ## 2026-10-09 — extend JP static spawn source evidence
 
+- ✅ On 2026-10-09, the focused HuC6280 source-receipt and Stage-2 disassembly
+  chain tests each passed in three local loops against explicit authentic US
+  and JP Track 02 BIN paths. This confirms the available static receipts, not
+  their runtime selection or execution.
 - 🔒 The authenticated JP Track 02 disassembly receipt now checks the
   `$C414` caller/preconsumer, the overlapped `$4661` helper entry, and
   raw-window candidates for the caller's `$C95D/$CC3E` targets. This adds
