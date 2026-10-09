@@ -1,3 +1,28 @@
+## 2026-10-09 -- held-input replay does not distinguish idle game-loop writes
+
+Two 12-second emulator replays used the same authentic JP Rev. 1 CUE/Track 02,
+System Card 3.0, instrumented PCE Fast binary (MD5
+`8a43dfb6ae6155d5562d1aa04a5bd761`), and emulator-created Ak-Tu-Ba save state
+(MD5 `14dec90b96ec3e14622ec0fab535a92f`). One applied `up@1:300`; the matched
+control applied no input. The held-input trace verified 600 active-low UP
+controller reads (`raw=0010`), while the control had only neutral reads.
+Despite that difference, both runs ended at level 2, direction 1, and
+coordinates `(2,3)`. The emulator's party-RAM trace recorded 1,980 versus
+1,978 writes at offset `$31` and exactly 900 writes at `$3F` in each run.
+The small `$31` count difference is not sufficient to attribute any behavior
+to UP; the repeated writes are already present in the no-input control.
+
+Both captures still report `transition=missing`, with zero CD IRQs and zero
+authenticated CD-to-RAM receipts. This paired result strengthens the boundary:
+the controller event reaches the retail poll, but the observed level/direction
+writes do not establish an accepted movement or stair transition. The traces
+and snapshots remain private emulator evidence at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-up-hold300-20261010/`
+and
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-no-input-control-20261010/`.
+Continue pursuing a fresh cold-start media receipt and a consumer-level
+movement/transition trace; do not infer semantics from these repeated writes.
+
 # Firestaff TODO — Theron's Quest
 
 ## 2026-10-09 — JP CUE initial-level gameplay meaning remains unproven
