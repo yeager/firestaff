@@ -73,6 +73,34 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         }
         return value % 16 == 15 - nibble
     }
+    function accept_controller_read(raw_value, returned_value, read_sel,
+                                    read_index, read_pc) {
+        if (pending_frame == "" || !pending_apply ||
+            read_index != 0 || read_pc !~ /^[0-9a-fA-F]+$/)
+            return
+        if (!pending_poll_classified) {
+            pc = tolower(read_pc)
+            if (pc == "e4b7" || pc == "e4c8" ||
+                pc == "e4b4" || pc == "e4c5")
+                system_card_poll_reads++
+            else
+                non_system_card_poll_reads++
+            pending_poll_classified = 1
+        }
+        if (selected_bank_matches(raw_value, returned_value,
+                                  read_sel, pending_mask)) {
+            if (read_sel == 1)
+                pending_direction_read = 1
+            else
+                pending_button_read = 1
+        }
+        if ((!pending_direction_mask || pending_direction_read) &&
+            (!pending_button_mask || pending_button_read)) {
+            pending_read = 1
+            controller_read_witness_sequence = input_reads
+            controller_read_witness_pc = read_pc
+        }
+    }
     /^pce_input_read / {
         input_reads++
         if (input_reads > read_limit) {
@@ -98,28 +126,51 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 if ($i ~ /^cpu_pc=[0-9a-fA-F]+$/)
                     read_pc = substr($i, 8)
             }
-            if (read_index == 0 && !pending_poll_classified &&
-                read_pc ~ /^[0-9a-fA-F]+$/) {
-                pc = tolower(read_pc)
-                if (pc == "e4b7" || pc == "e4c8" ||
-                    pc == "e4b4" || pc == "e4c5")
-                    system_card_poll_reads++
-                else
-                    non_system_card_poll_reads++
-                pending_poll_classified = 1
+            if (returned_value >= 0) {
+                accept_controller_read(raw_value, returned_value, read_sel,
+                                       read_index, read_pc)
+                pending_result = 0
+            } else {
+                # The original PCE core emits the raw port sample and the
+                # returned active-low byte as adjacent trace records. Pair
+                # them without counting one CPU poll twice; PCE Fast emits
+                # both values on its single pce_input_read row.
+                pending_result = 1
+                pending_result_pc = read_pc
+                pending_result_register = "1000"
+                pending_result_raw = raw_value
+                pending_result_sel = read_sel
+                pending_result_index = read_index
             }
-            if (read_index == 0 && selected_bank_matches(raw_value, returned_value, read_sel, pending_mask)) {
-                if (read_sel == 1)
-                    pending_direction_read = 1
-                else
-                    pending_button_read = 1
+        }
+        next
+    }
+    /^pce_input_result / {
+        if (pending_result) {
+            result_raw = result_value = result_sel = result_index = -1
+            result_pc = result_register = ""
+            for (i = 1; i <= NF; i++) {
+                if ($i ~ /^raw=[0-9a-fA-F]+$/)
+                    result_raw = hex_to_dec(substr($i, 5))
+                if ($i ~ /^value=[0-9a-fA-F]+$/)
+                    result_value = hex_to_dec(substr($i, 7))
+                if ($i ~ /^sel=[01]$/)
+                    result_sel = substr($i, 5)
+                if ($i ~ /^index=[0-9]+$/)
+                    result_index = substr($i, 7)
+                if ($i ~ /^register=[0-9a-fA-F]+$/)
+                    result_register = tolower(substr($i, 10))
+                if ($i ~ /^cpu_pc=[0-9a-fA-F]+$/)
+                    result_pc = substr($i, 8)
             }
-            if ((!pending_direction_mask || pending_direction_read) &&
-                (!pending_button_mask || pending_button_read)) {
-                pending_read = 1
-                controller_read_witness_sequence = input_reads
-                controller_read_witness_pc = read_pc
-            }
+            if (result_register == pending_result_register &&
+                result_pc == pending_result_pc &&
+                result_raw == pending_result_raw &&
+                result_sel == pending_result_sel &&
+                result_index == pending_result_index)
+                accept_controller_read(result_raw, result_value,
+                                       result_sel, result_index, result_pc)
+            pending_result = 0
         }
         next
     }

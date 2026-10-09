@@ -95,6 +95,34 @@ pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0 value=05
 THERON_SAME_FRAME_INPUT
 "$scripted_input_consumption_verifier" \
     "$input_test_dir/same-frame-events.trace" run@20,ii@20 2 >/dev/null
+cat >"$input_test_dir/legacy-pce-result.trace" <<'THERON_LEGACY_PCE_INPUT'
+scripted_pce_input_event frame=60 key=up mask=0010 hold=60
+scripted_pce_input_apply frame=60 physical=0000 scripted=0010 combined=0010
+pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_result cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
+THERON_LEGACY_PCE_INPUT
+legacy_pce_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/legacy-pce-result.trace" up@60:60 1)
+if [[ "$legacy_pce_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$legacy_pce_receipt" != *'observed_input_reads=1'* ||
+      "$legacy_pce_receipt" != *'controller_read_witness_pc=44ca'* ]]; then
+    printf 'FAIL: the PCE raw-read/result pair was not verified as one consumed poll:\n%s\n' \
+        "$legacy_pce_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/legacy-pce-result-mismatch.trace" <<'THERON_LEGACY_PCE_MISMATCH'
+scripted_pce_input_event frame=61 key=up mask=0010 hold=1
+scripted_pce_input_apply frame=61 physical=0000 scripted=0010 combined=0010
+pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_result cpu_pc=44cb register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
+THERON_LEGACY_PCE_MISMATCH
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/legacy-pce-result-mismatch.trace" up@61 1 \
+    >"$input_test_dir/legacy-pce-result-mismatch.stdout" \
+    2>"$input_test_dir/legacy-pce-result-mismatch.stderr"; then
+    printf '%s\n' 'FAIL: a mismatched PCE read/result pair was accepted as input consumption' >&2
+    exit 1
+fi
 cat >"$input_test_dir/event-at-read-cap.trace" <<'THERON_CAPPED_INPUT'
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
@@ -1012,7 +1040,7 @@ if ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT cannot be combined with host-k
     exit 1
 fi
 if ! grep -Fq 'autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}' "$script" ||
-   ! grep -Fq 'autoload_state_magic=$(dd if="$autoload_state" bs=1 count=4' "$script" ||
+   ! grep -Fq 'autoload_state_magic=$(od -An -tx1 -N4 "$autoload_state"' "$script" ||
    ! grep -Fq 'autoload_state_md5=$(md5_file "$autoload_state")' "$script" ||
    ! grep -Fq 'autoload_state_md5=%s' "$script" ||
    ! grep -Fq 'points to HUBM SRAM, not a Mednafen savestate' "$script" ||
