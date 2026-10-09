@@ -1,3 +1,17 @@
+# Firestaff v3.0.374
+
+## User-facing changes
+
+- `DM1 Amiga v2.0 startup`: loads the authentic title sequence and completes the first dungeon handoff from original Amiga media.
+- `CSB Amiga startup`: enables the original Amiga 3.3 edition through its authentic startup and dungeon handoff.
+- `Windows game startup`: fixes nested startup state transitions that could exhaust the runtime stack.
+
+## Developer changes
+
+- `GitHub Actions release workflow`: prevents publishing more than one release per Stockholm calendar day, including when separate release runs start together.
+- `Theron Japanese dungeon transitions`: rejects unbound stair transitions and aligns runtime handoffs with source-backed decoder boundaries.
+- `Original-media startup matrix`: verifies DM1, CSB and DM2 startup routes against platform-specific original media.
+
 # Firestaff v3.0.373
 
 ## Developer changes
