@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — verify the JP Stage-2 `$E03F` caller window
+
+- The focused hardware-config real-media test now asserts the exact 28-byte
+  `$4375..$4390` caller, stage-two sector mapping, and unique `$438E` JSR site
+  for both authentic US and JP Rev. 1 BINs. The focused test built directly
+  against the Track 02 source and passed three loops on TRV2 with original
+  media. This establishes static caller provenance only; it does not bind
+  `$FF` to a track number, prove runtime selection/execution, or establish
+  audible output. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-e03f-caller-20261009.md`.
+
 ## 2026-10-09 — verify Track 19 host text projection against retail names
 
 - The authentic US and JP Track 19 name banks each decode all 69 source names

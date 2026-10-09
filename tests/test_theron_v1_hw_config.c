@@ -36,13 +36,24 @@ static uint8_t *load_track02(size_t *out_size) {
 }
 
 static int test_cd_play_candidate_scan(void) {
+    static const uint8_t stage2_cd_play_caller[] = {
+        0x20u, 0x03u, 0x44u, 0xc6u, 0x5bu, 0xa0u, 0x01u, 0xb1u,
+        0x1cu, 0xf0u, 0x13u, 0x44u, 0x54u, 0x44u, 0x31u, 0x64u,
+        0xf9u, 0x64u, 0xfau, 0xa9u, 0x0eu, 0x85u, 0xffu, 0xc6u,
+        0xf8u, 0x20u, 0x3fu, 0xe0u
+    };
     static const struct {
         const char *basename;
         const char *md5;
         const char *region;
+        size_t stage2_sector;
     } media[] = {
-        { "TQUS02.bin", THERON_TRACK02_MD5_US_BIN, "US" },
-        { "TQJP02.bin", THERON_TRACK02_MD5_JP_BIN, "JP" }
+        { "TQUS02.bin", THERON_TRACK02_MD5_US_BIN, "US",
+          THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+              THERON_TRACK02_IPL_STAGE2_RECORD },
+        { "TQJP02.bin", THERON_TRACK02_MD5_JP_BIN, "JP",
+          THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+              THERON_TRACK02_IPL_STAGE2_RECORD }
     };
     size_t available_regions = 0u;
     size_t region_index;
@@ -51,6 +62,7 @@ static int test_cd_play_candidate_scan(void) {
          region_index < sizeof(media) / sizeof(media[0]); ++region_index) {
         size_t size;
         size_t code_sites = 0u;
+        size_t stage2_cd_play_sites = 0u;
         uint8_t *data = load_track02_named(media[region_index].basename, &size);
         Theron_Track02CdPlayCandidateCatalog catalog;
         Theron_Track02SignalStatus status;
@@ -67,10 +79,30 @@ static int test_cd_play_candidate_scan(void) {
         assert(status == THERON_TRACK02_SIGNAL_OK);
         assert(catalog.valid);
         assert(catalog.code_sites > 0u);
+        {
+            const size_t caller_user_offset = 0x375u;
+            const size_t caller_raw_offset =
+                media[region_index].stage2_sector *
+                    THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET + caller_user_offset;
+            assert(caller_raw_offset <= size &&
+                   sizeof(stage2_cd_play_caller) <= size - caller_raw_offset);
+            assert(memcmp(data + caller_raw_offset, stage2_cd_play_caller,
+                          sizeof(stage2_cd_play_caller)) == 0);
+        }
         for (i = 0u; i < catalog.total_sites; ++i) {
             if (!catalog.sites[i].in_code_region) continue;
             ++code_sites;
             assert(catalog.sites[i].prior_ff_immediate_found);
+            if (catalog.sites[i].sector == media[region_index].stage2_sector &&
+                catalog.sites[i].user_data_offset == 0x38eu) {
+                const size_t expected_raw_offset =
+                    media[region_index].stage2_sector *
+                        THERON_TRACK02_RAW_SECTOR_BYTES +
+                    THERON_TRACK02_RAW_USER_DATA_OFFSET + 0x38eu;
+                assert(catalog.sites[i].raw_offset == expected_raw_offset);
+                ++stage2_cd_play_sites;
+            }
             printf("  %s $E03F call-site candidate: sector %zu, nearby $FF immediate $%02X (not a track mapping)\n",
                    media[region_index].region, catalog.sites[i].sector,
                    catalog.sites[i].prior_ff_immediate);
@@ -80,6 +112,7 @@ static int test_cd_play_candidate_scan(void) {
                catalog.code_sites, catalog.sites_with_ff_immediate);
         assert(code_sites == catalog.code_sites);
         assert(catalog.sites_with_ff_immediate == catalog.code_sites);
+        assert(stage2_cd_play_sites == 1u);
         if (strcmp(media[region_index].region, "US") == 0) {
             assert(catalog.code_sites >= 2u);
             for (i = 0u; i < catalog.total_sites; ++i) {
