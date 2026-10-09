@@ -123,6 +123,12 @@
   preserves the seven-copy ambiguity and does not claim that one copy loaded
   into the runtime bank. The regression passed against the authentic user
   media on TRV2; no gameplay behavior changed.
+  A 107-byte static disassembly continuation beginning at `$D32F` now locks
+  the full direction-dispatch prefix in all seven JP and all seven US source
+  copies. It records regional jump/call target deltas at `$D343`, `$D36F`, and
+  `$D394`; the observed UP replay ends earlier at `$D35E`, so later path
+  semantics remain static-only. This narrows the regional caller map without
+  assigning meanings to `$28B8/$290D/$290E` or claiming an accepted move.
 - Next: use a cold-start or otherwise source-reading authentic JP session to
   bind `$44D2` to a unique Track 02 source receipt, then follow the poll's
   caller through dispatch index `$53` / PC `$49FB` to a visible action or

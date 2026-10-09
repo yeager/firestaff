@@ -27,6 +27,15 @@ MEDIA = {
                 "ad b8 28 29 f0 cd 12 29 d0 0d",
                 (0x9CF6F, 0xE676F, 0x12FF6F, 0x17976F, 0x1C2F6F, 0x20C76F, 0x255F6F),
             ),
+            "consumer_direction_path": (
+                "ad b8 28 29 f0 cd 12 29 d0 0d ee 20 29 ae 20 29 e0 0c b0 03 "
+                "4c bc d3 9c 20 29 8d 12 29 73 0d 29 0f 29 02 00 ad b8 28 29 "
+                "40 f0 04 a5 ca 80 09 ad b8 28 29 10 f0 0d a5 c9 c9 ff f0 51 "
+                "c9 00 d0 3c 4c 1a d4 ad b8 28 29 80 f0 05 ce 0e 29 80 0a ad "
+                "b8 28 29 20 f0 37 ee 0e 29 ad 0e 29 85 cb ad 0d 29 c9 00 f0 "
+                "0d 20 ec d4 30 d9 d0",
+                (0x9CF6F, 0xE676F, 0x12FF6F, 0x17976F, 0x1C2F6F, 0x20C76F, 0x255F6F),
+            ),
             "consumer_store": (
                 "9c 20 29 8d 12 29",
                 (0x9CF6F + 0x17, 0xE676F + 0x17, 0x12FF6F + 0x17,
@@ -53,6 +62,15 @@ MEDIA = {
             ),
             "consumer": (
                 "ad b8 28 29 f0 cd 12 29 d0 0d",
+                (0x9D8AD, 0xE70AD, 0x1308AD, 0x17A0AD, 0x1C38AD, 0x20D0AD, 0x2568AD),
+            ),
+            "consumer_direction_path": (
+                "ad b8 28 29 f0 cd 12 29 d0 0d ee 20 29 ae 20 29 e0 0c b0 03 "
+                "4c ca d3 9c 20 29 8d 12 29 73 0d 29 0f 29 02 00 ad b8 28 29 "
+                "40 f0 04 a5 ca 80 09 ad b8 28 29 10 f0 0d a5 c9 c9 ff f0 51 "
+                "c9 00 d0 3c 4c 28 d4 ad b8 28 29 80 f0 05 ce 0e 29 80 0a ad "
+                "b8 28 29 20 f0 37 ee 0e 29 ad 0e 29 85 cb ad 0d 29 c9 00 f0 "
+                "0d 20 fa d4 30 d9 d0",
                 (0x9D8AD, 0xE70AD, 0x1308AD, 0x17A0AD, 0x1C38AD, 0x20D0AD, 0x2568AD),
             ),
             "consumer_store": (
@@ -123,7 +141,7 @@ def main() -> int:
             require_candidates(data, f"{region} {label}", hex_bytes, offsets)
         print(f"PASS: authentic {region.upper()} Track 02 caller candidates ({expected_md5})")
 
-    print("PASS: poll, consumer, caller-branch, and indexed-table signatures with per-candidate negative mutations")
+    print("PASS: poll, consumer, consumer-direction path, caller-branch, and indexed-table signatures with per-candidate negative mutations")
     return 0
 
 

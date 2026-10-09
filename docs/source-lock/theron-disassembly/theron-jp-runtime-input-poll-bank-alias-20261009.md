@@ -276,6 +276,43 @@ session read only LBAs 3590-3591. This extends the static/runtime code match
 through the observed RAM consumer, but still does not show that any candidate
 sector was loaded in either runtime session.
 
+### Static disassembly of the direction-dispatch continuation
+
+An authentic-media disassembly of the 107 bytes beginning at `$D32F` extends
+the candidate check beyond the six prefetched rows. All seven JP copies are
+byte-identical, as are all seven US copies. The JP and US versions differ at
+three absolute control-flow operands: the `$D343` jump targets `$D3BC` (JP)
+versus `$D3CA` (US), the `$D36F` jump targets `$D41A` (JP) versus `$D428`
+(US), and the `$D394` subroutine call targets `$D4EC` (JP) versus `$D4FA`
+(US). Their differing low/high operand byte offsets within this 107-byte
+window are `+0x15/+0x16`, `+0x41/+0x42`, and `+0x66/+0x67`. The full regional
+windows have SHA-256 `68a1ae520550c31cc1fd94a9cf53514bf54f7242b9711687581b2886aa718dbb`
+(JP) and `b0667035b2dcfd7967eca2898364e43fdaa1b5224481d9cdc65143906349f9bd`
+(US).
+
+Selected disassembly from the authentic JP and US images:
+
+```text
+$D32F LDA $28B8        $D337 BNE $D346
+$D339 INC $2920        $D33C LDX $2920
+$D33F CPX #$0C         $D341 BCS $D346
+$D343 JMP $D3BC (JP) / $D3CA (US)
+$D346 STZ $2920        $D349 STA $2912
+$D34C TII $290D,$290F,$0002
+$D36F JMP $D41A (JP) / $D428 (US)
+$D394 JSR $D4EC (JP) / $D4FA (US)
+```
+
+The static decode shows the routine branching on `$28B8` masks, touching
+`$2920`, copying a byte range with `TII`, and consulting `$290D/$290E` before
+calling the region-specific `$D4EC/$D4FA` helper. These are instruction-level
+observations, not verified field names or proof of a party-coordinate change.
+The authentic UP replay follows only through `$D35E`; it does not reach the
+later branches in this continuation. The seven source copies remain
+ambiguous, and no runtime source-LBA receipt is added. The authentic-media
+regression locks this full 107-byte window for both regions and independently
+mutates each candidate to verify rejection.
+
 ### Static source candidates for the caller's indexed-table path
 
 The same 128-step UP trace exposes `$D4EC` through `$D4F3` and the indexed
