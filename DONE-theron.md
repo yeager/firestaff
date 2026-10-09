@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — verify legacy PCE scripted-input results
+
+Updated the scripted-input verifier to pair the original PCE core's adjacent
+raw controller-read and returned-value records as one poll, while preserving
+the PCE Fast single-record path. Added matching and mismatched-pair regression
+fixtures, and refreshed a stale capture-script source guard. The focused test
+passed. Rechecking an authentic US gameplay-state replay found 1,400 input
+reads and confirmed the scripted direction mask in a post-event poll at
+`$44db`. The replay still had no authenticated CD-to-RAM receipt or gameplay
+transition, so this verifies input delivery only and does not establish
+gameplay or rendering parity.
+
 ## 2026-10-09 — rerun regional source gates against local original media
 
 Resolved the configured `~/.firestaff/data` link to its mounted data directory
