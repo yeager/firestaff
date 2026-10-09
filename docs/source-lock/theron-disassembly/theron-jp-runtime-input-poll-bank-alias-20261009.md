@@ -34,6 +34,25 @@ first raw byte is `$46`, not the direct absolute-load encoding for `$1000`
 (`ad 00 10`). This is a raw static-window comparison; it does not establish
 that `$44D2` is an instruction boundary in the Stage-2 image.
 
+## JP duplicate-candidate continuation
+
+A source-bound loop searched the authentic JP Rev. 1 Track 02 BIN for the
+21-byte runtime-poll sequence observed at `$44D2` and found exactly seven
+offsets: `0x95072`, `0xde872`, `0x128072`, `0x171872`, `0x1bb072`,
+`0x204872`, and `0x24e075`. It checked the 64-byte window at every offset and
+ran MAME `unidasm -arch h6280 -basepc 0x44d2` over each one. All seven windows
+have SHA-256
+`5eb40a9bf8ec8761aa55177acafbbf375bfc730e9519cd14f181ab28e8e3542b` and the
+same decoded continuation through `$4510`.
+
+After the poll's `RTS` at `$44E6`, the common bytes decode as four short
+`PHP; PHA; CLC; ADC $00; TAM #mask; PLA; PLP; RTS` sequences, using masks
+`$08`, `$10`, `$20`, and `$40`. This static comparison adds no
+candidate-specific continuation or regional discriminator. The helper
+sequences' caller, runtime source LBA, mapped-bank ownership, and gameplay
+meaning remain unbound; identical candidates cannot select which copy was
+loaded.
+
 ## Runtime capture
 
 Two isolated PCE Fast captures used authentic JP Rev. 1 media and distinct
