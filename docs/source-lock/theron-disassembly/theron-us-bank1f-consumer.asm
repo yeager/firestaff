@@ -12,11 +12,13 @@
 ; represented here: its bytes are loaded after a CD read and are absent from
 ; the static bank image.
 ;
-; Cross-check: the 0x17c-byte `$2386` window is identical in authentic US
-; `TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`, file offset `$2bd586`)
-; and JP Rev. 1 `TQJP02.bin` (MD5 `b7afb338ad31be1025b53f9aff12d73a`, file
-; offset `$2bcc56`). Three `unidasm -arch h6280` runs per edition produced
-; the same listing SHA-256 `4a67f8d5a4156cfba76160f5b2307566154cd041f73855e9609bea19cb6a82db`.
+; Cross-check: the full 382-byte `$23ad-$252a` decompressor is identical in
+; authentic US `TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`, file
+; offset `$2bd5ad`) and JP Rev. 1 `TQJP02.bin` (MD5
+; `b7afb338ad31be1025b53f9aff12d73a`, file offset `$2bcc7d`). Both byte
+; windows have FNV-1a `$3056f96c`. Three `unidasm -arch h6280` runs per
+; edition produced the same full-listing SHA-256
+; `4a33470ca7b8d88d3da8d3576838c37bd2b362702914b51a07558ae9622c26e7`.
 ; This is static regional-byte equivalence, not runtime bank-mapping evidence.
 
         .setcpu  "huc6280"

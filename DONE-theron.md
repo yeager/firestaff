@@ -135,12 +135,12 @@
   the mapping based on these tuple fields alone; alternate retail mappings
   and inventory-screen behavior remain unproven.
 
-- Re-disassembled the authentic `$2386-$2501` bank-$1f source window directly
-  from US and JP Rev. 1 Track 02 BINs with `unidasm -arch h6280`. The windows
-  have the already-locked FNV-1a `$d5465b33`; three listing loops per edition
-  produced the same SHA-256. The listing now records both authentic media
-  identities and offsets. This establishes static regional-byte equivalence,
-  not runtime bank selection or decoded-level parity.
+- Re-disassembled the full 382-byte `$23ad-$252a` bank-$1f decompressor
+  directly from US and JP Rev. 1 Track 02 BINs with `unidasm -arch h6280`.
+  Both windows match the already-locked FNV-1a `$3056f96c`; three full-listing
+  loops per edition produced the same SHA-256. The listing records both
+  authentic media identities and offsets. This establishes static regional
+  byte equivalence, not runtime bank selection or decoded-level parity.
 
 ## 2026-10-10 — correct the VCE caller's logical address
 
