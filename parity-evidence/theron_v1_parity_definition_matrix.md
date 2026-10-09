@@ -130,15 +130,26 @@ No reference source code exists. Parity is established through:
 
 ### 9. Dungeon/Game Systems
 
+Host-model and data-routing tests below are scoped to Firestaff behavior or
+source transport. They do not establish that the original game executes the
+same rules; those retail consumers are listed separately.
+
 | Gate | Status | Evidence |
 |------|--------|----------|
-| Dungeon progression determinism | PROVEN | `theron_v1_dungeon_progression` |
-| Combat mechanics | PARTIAL | Fixture/compatibility mechanics and fail-closed production gates; original T500/T600 attack, damage, AI, loot and sound consumers are not authenticated |
-| Champion system | PARTIAL | Authenticated numeric roster records and party-state plumbing; portrait consumer, full T900 equipment/inventory semantics and runtime persistence ownership remain open |
-| Shop price table | PROVEN | `theron_v1_shop_price_table` |
-| World serialize purchase state | PROVEN | `theron_v1_world_serialize_purchase_state` |
-| Object table route | PROVEN | Track 02 object table route receipt |
-| Level route/handoff | PROVEN | Track 02 level transition routing |
+| Firestaff host progression API determinism | PROVEN | `theron_v1_dungeon_progression`; host state-machine contract only |
+| Retail campaign progression, relic collection and between-dungeon transition semantics | PARTIAL | Six campaign bits and ordinal transport have bounded source evidence; original pickup/T900, stairs, exits and arrival semantics remain open |
+| Firestaff fixture/compatibility combat model | PROVEN | Host mechanics tests and fail-closed production gates; not original-game combat parity |
+| Original T500/T600 attack, damage, AI, loot and sound consumers | OPEN | Original runtime consumers are not authenticated |
+| Authenticated champion roster data and Firestaff party-state plumbing | PROVEN | Regional numeric roster records and host initialization only |
+| Original portrait consumer, T900 equipment/inventory rules and runtime persistence ownership | OPEN | Original consumers and state ownership remain unproven |
+| Firestaff fixture shop parser and purchase guards | PROVEN | `theron_v1_shop_price_table`; its price rows are synthetic test-only inputs and never production game data |
+| Authentic retail shop prices and purchase transaction | OPEN | No original price table or shop consumer is authenticated; `theron_v1_shop.c` explicitly makes no source-parity claim |
+| Firestaff host-world purchase-state serialization round-trip | PROVEN | `theron_v1_world_serialize_purchase_state`; host serialization only |
+| Original purchase, gold and inventory persistence | OPEN | Host round-trip does not establish retail purchase or save semantics |
+| Track 02 object-table route/transport receipt | PROVEN | Source route only; it does not establish the original T900 object consumer |
+| Original T900 object/inventory consumer semantics | OPEN | The runtime consumer remains unproven; see `docs/source-lock/theron_t900_proof_2026-08-08.md` |
+| Track 02 level-route/Firestaff handoff gate | PROVEN | Receipt-gated source-data handoff only |
+| Original stair/exit transition, destination and arrival semantics | OPEN | Authentic traversal consumers and transaction remain unbound |
 
 ### 10. Original Overlay Regression
 

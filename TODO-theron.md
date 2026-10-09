@@ -9,6 +9,9 @@
   The authentic US encoder's unchanged-artifact round-trip is not evidence of
   a gameplay mutation being persisted; JP progressed Continue also remains
   unverified. See `parity-evidence/theron_v1_parity_definition_matrix.md`.
+- Section 9 now separates host-only fixture and serialization behavior from
+  retail progression, shop, combat, champion and T900 consumers. Fixture shop
+  price rows are explicitly test-only; no prices are admitted as game data.
 
 ## 2026-10-09 — keep bounded decoder status honest
 
