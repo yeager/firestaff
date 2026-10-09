@@ -94,13 +94,28 @@
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-autoload-20261009-0840/`.
-- Next: trace the `$28B8` writer's consumer and bind the `$44D2` bank-`$68` code
-  window to authentic Track 02 source sectors using same-session CD read and
-  target-write receipts. Then follow the poll's caller through game dispatch
-  index `$53` / PC `$49FB` to a visible action or party-position change. Bind
-  the decoder's source bytes, MPRs, destination and `$3b7e-$3b85` pointer table
-  in one authentic runtime session before treating any decoded output as level
-  data.
+- A static cross-bind now matches the runtime `$44D2` instruction path byte for
+  byte against the authentic JP Rev. 1 Track 02 BIN. The 21-byte routine occurs
+  at seven identical track-relative raw offsets; the runtime trace matches the
+  corresponding instruction bytes through its `$44E6` return. This narrows the
+  source candidates but does not identify which sector populated bank `$68`:
+  the seven track-relative candidates map to LBAs 3849, 3977, 4105, 4233,
+  4361, 4489, and 4617. The source-binding session currently available reads
+  only LBAs 3590-3591 and does not include the `$44D2` code-window receipt; the
+  save-state runtime capture has zero CD data-port reads and zero CD-to-RAM
+  target writes. The same trace statically matches six `$28B8` consumer
+  instructions to seven additional Track 02 candidates at LBAs 3863, 3991,
+  4119, 4247, 4375, 4503, and 4631, but those are also not runtime-load
+  receipts. US Track 02 has seven byte-identical static copies of each path,
+  but no US runtime match. Full hashes, offsets, row-by-row match and
+  limitations are in
+  `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
+- Next: use a cold-start or otherwise source-reading authentic JP session to
+  bind `$44D2` to a unique Track 02 source receipt, then follow the poll's
+  caller through dispatch index `$53` / PC `$49FB` to a visible action or
+  party-position change. Bind the decoder's source bytes, MPRs, destination
+  and `$3b7e-$3b85` pointer table in one authentic runtime session before
+  treating any decoded output as level data.
 
 ## 2026-10-09 — separate Firestaff save features from retail-save parity
 

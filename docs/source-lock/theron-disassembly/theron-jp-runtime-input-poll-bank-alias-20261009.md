@@ -3,8 +3,10 @@
 ## Scope
 
 This note separates an authentic JP runtime controller-poll address from the
-static Stage-2 bytes at the same HuC6280 logical address. It does not identify
-the runtime instruction bytes' source, input consumer, or gameplay effect.
+static Stage-2 bytes at the same HuC6280 logical address. It records a static
+byte-for-byte match between runtime instructions and repeated Track 02 source
+sequences, but does not identify which duplicate sector was loaded by the
+emulator, the runtime source LBA, or a gameplay effect.
 
 ## Static Track 02 bytes
 
@@ -146,6 +148,77 @@ authenticated CD-to-RAM receipts. Therefore they prove controller input
 delivery and a logical/physical bank alias only. They do not prove gameplay
 input handling, movement rejection, or a game transition.
 
+## Static authentic-source match for the runtime poll routine
+
+The authenticated JP Rev. 1 Track 02 BIN (`TQJP02.bin`, MD5
+`b7afb338ad31be1025b53f9aff12d73a`, 8,102,640 bytes) contains the exact
+21-byte sequence beginning at the runtime poll PC `$44D2`:
+
+```text
+ad 00 10 29 0f 0d b8 28 49 ff 8d b8 28 c9 0f d0 03 4c 00 e0 60
+```
+
+The sequence occurs seven times in the Track 02 raw BIN, at track-relative
+raw offsets `0x95072`, `0xde872`, `0x128072`, `0x171872`, `0x1bb072`,
+`0x204872`, and `0x24e075` (zero-based raw sector indices 259, 387, 515,
+643, 771, 899, and 1027; raw-sector offsets `0x4e2` for the first six and
+`0x4e5` for the last). In the authentic UP-at-frame-1 runtime trace, the
+prefetch rows from `$44D5` through the returned `$44E6` expose matching opcode
+and operand bytes for `AND #$0f`, `ORA $28b8`, `EOR #$ff`, `STA $28b8`,
+`CMP #$0f`, `BNE +3`, and `RTS`. Each row matches the corresponding bytes at
+the first listed Track 02 candidate when mapped by the PC delta from `$44D2`.
+The initial `$44D2` bytes are independently logged as `ad 00 10` in the
+runtime code-window record. The code trace SHA-256 is
+`6bd8222e1b1f378397772d71a5490c0e92893bad43ace7e285bf7f765d5f88ad`; the
+capture is
+`/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-runtime-code-follow-input-20261009-1255/`.
+
+The retained source-binding capture `theron-cd-ram-source-bind-20261007`,
+run 13, records Track 02 start LBA 3590. Under that media identity, the seven
+static candidates correspond to LBAs 3849, 3977, 4105, 4233, 4361, 4489, and
+4617. However, run 13's 4,096 CD data-port reads cover only LBAs 3590 and
+3591; its 65 target writes are at physical `$0D089F..$0D08AB`. It does not
+read any candidate LBA, and its trace does not contain the `$44D2` runtime
+code-window receipt. This older provenance session therefore cannot be joined
+to the later input replay to identify which candidate populated the poll
+routine.
+
+The same UP-at-frame-1 runtime trace also source-matches the observed
+`$28B8` consumer path. Its six prefetch rows at `$D32F`, `$D332`, `$D334`,
+`$D337`, `$D346`, and `$D349` match the corresponding bytes at seven JP
+Track 02 raw offsets: `0x9cf6f`, `0xe676f`, `0x12ff6f`, `0x17976f`,
+`0x1c2f6f`, `0x20c76f`, and `0x255f6f`. The candidates are anchored by
+`ad b8 28 29 f0 cd 12 29 d0 0d`; at offset `+0x17`, each has
+`9c 20 29 8d 12 29`, matching the observed branch target stores. Their
+track-relative sector indices are 273, 401, 529, 657, 785, 913, and 1041,
+which map using the same LBA origin to candidate LBAs 3863, 3991, 4119, 4247,
+4375, 4503, and 4631. These seven byte-identical copies remain ambiguous.
+The UP replay itself had zero CD reads and writes; the prior source-binding
+session read only LBAs 3590-3591. This extends the static/runtime code match
+through the observed RAM consumer, but still does not show that any candidate
+sector was loaded in either runtime session.
+
+## US Track 02 static regional candidates
+
+The same poll and consumer signatures were also searched in the authentic US
+Track 02 BIN (`TQUS02.bin`, MD5 `f23601102138f87c33025877767ebf76`,
+8,104,992 bytes). Each signature has seven occurrences. The poll routine
+offsets are `0x959a8`, `0xdf1a8`, `0x1289a8`, `0x1721a8`, `0x1bb9a8`,
+`0x2051a8`, and `0x24e9a8` (raw sector indices 260, 388, 516, 644, 772,
+900, and 1028; within-sector offset `0x4e8`). The `$28B8` consumer anchors
+are at `0x9d8ad`, `0xe70ad`, `0x1308ad`, `0x17a0ad`, `0x1c38ad`,
+`0x20d0ad`, and `0x2568ad` (raw sector indices 274, 402, 530, 658, 786,
+914, and 1042; within-sector offset `0x34d`). These are static source
+candidates only; no US runtime capture has been matched to these bytes or
+sectors.
+
+This is a strong static/runtime instruction-byte identity, not a same-session
+load receipt. That capture's transition summary reports zero CD data-port
+reads, zero source-bound CD reads, and zero CD-to-RAM target writes. The seven
+identical candidates therefore remain indistinguishable as the specific
+runtime source. Do not claim a unique source LBA, bank-population event, or
+that the save-state replay loaded any of these sectors during the capture.
+
 Private captures remain on TRV2:
 
 - `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-input-sweep-20261009-1250/`
@@ -153,8 +226,10 @@ Private captures remain on TRV2:
 
 ## Next evidence needed
 
-Trace the `$28B8` writer's consumer and bind the runtime bank-`$68` window at
-`$44D2` to authentic Track 02 source sectors using same-session CD read and
-target-write receipts. Follow the poll's caller to an observable
-party-position or screen change before assigning movement semantics or
-treating these controller polls as completed gameplay actions.
+Use a cold-start or otherwise source-reading authentic JP session to join the
+runtime bank-`$68` window at `$44D2` to a same-session CD read and target-write
+receipt. The static byte match narrows the candidate set to seven identical
+Track 02 sequences but does not identify which was loaded. Then follow the
+poll's caller to an observable party-position or screen change before
+assigning movement semantics or treating these controller polls as completed
+gameplay actions.
