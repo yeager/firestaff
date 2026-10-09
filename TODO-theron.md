@@ -1,5 +1,15 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-10 — Track 19 selector-label consumer remains unidentified
+
+- The native runtime now retains and authenticates the 15 raw US/JP Track 19
+  selector labels, but source analysis has not established their relationship
+  to Track 02 dungeon identities or found a verified consumer that selects a
+  playable level from them. Do not use these labels as a Track 02 mapping or
+  claim selector parity until authentic retail code/data and runtime evidence
+  establish that relationship. Continue tracing the original regional
+  selector data flow and validate any proposed join against installed media.
+
 ## 2026-10-09 — validate emulator-created JP dungeon-state loading
 
 - A four-second PCE Fast capture loaded the emulator-created JP Akutuba state

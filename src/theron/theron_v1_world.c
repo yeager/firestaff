@@ -2269,8 +2269,11 @@ int theron_v1_world_bind_track19_item_name_bank(
     const char *expected_raw_md5 = NULL;
     uint32_t expected_span;
     uint32_t expected_type_codes;
+    uint32_t expected_level_label_hash;
     size_t expected_type_offset;
+    size_t expected_level_label_offset;
     uint32_t type_hash = 2166136261u;
+    uint32_t level_label_hash = 2166136261u;
     uint32_t property_hash = 2166136261u;
     unsigned int i;
     if (!world) return 0;
@@ -2284,12 +2287,18 @@ int theron_v1_world_bind_track19_item_name_bank(
         expected_span = 0x1020ac88u;
         expected_type_codes = THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A;
         expected_type_offset = THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET;
+        expected_level_label_hash = THERON_V1_TRACK19_LEVEL_LABEL_JP_FNV1A;
+        expected_level_label_offset =
+            THERON_V1_TRACK19_LEVEL_LABEL_JP_OFFSET;
     } else if (variant == THERON_V1_TRACK02_VARIANT_US_BIN) {
         expected_md5 = "51b40a17b92a30339957ba564aa0015c";
         expected_raw_md5 = THERON_V1_TRACK19_US_RAW_MD5;
         expected_span = 0x5be5602du;
         expected_type_codes = THERON_V1_TRACK19_ITEM_TYPE_CODE_US_FNV1A;
         expected_type_offset = THERON_V1_TRACK19_ITEM_TYPE_CODE_US_OFFSET;
+        expected_level_label_hash = THERON_V1_TRACK19_LEVEL_LABEL_US_FNV1A;
+        expected_level_label_offset =
+            THERON_V1_TRACK19_LEVEL_LABEL_US_OFFSET;
     } else {
         return 0;
     }
@@ -2298,6 +2307,9 @@ int theron_v1_world_bind_track19_item_name_bank(
         bank->source_span_fnv1a != expected_span ||
         bank->type_code_source_offset != expected_type_offset ||
         bank->type_code_source_fnv1a != expected_type_codes ||
+        bank->level_label_count != THERON_V1_TRACK19_LEVEL_LABEL_COUNT ||
+        bank->level_label_source_offset != expected_level_label_offset ||
+        bank->level_label_source_fnv1a != expected_level_label_hash ||
         bank->property_source_fnv1a !=
             THERON_TRACK19_ITEM_PROPERTY_TABLE_FNV1A ||
         (strcmp(bank->source_md5, expected_md5) != 0 &&
@@ -2315,6 +2327,28 @@ int theron_v1_world_bind_track19_item_name_bank(
         type_hash *= 16777619u;
     }
     if (type_hash != expected_type_codes) return 0;
+    for (i = 0u; i < bank->level_label_count; ++i) {
+        const size_t label_size = bank->raw_level_label_sizes[i];
+        const size_t expected_size = bank->variant ==
+            THERON_V1_TRACK02_VARIANT_JP_BIN
+                ? THERON_V1_TRACK19_LEVEL_LABEL_RAW_CAPACITY : 8u;
+        size_t byte_index;
+        if (label_size != expected_size) return 0;
+        for (byte_index = 0u; byte_index < label_size; ++byte_index) {
+            level_label_hash ^= bank->raw_level_labels[i][byte_index];
+            level_label_hash *= 16777619u;
+        }
+        if (bank->variant == THERON_V1_TRACK02_VARIANT_JP_BIN) {
+            level_label_hash ^= 0x81u;
+            level_label_hash *= 16777619u;
+            level_label_hash ^= 0x97u;
+            level_label_hash *= 16777619u;
+        } else {
+            level_label_hash ^= 0u;
+            level_label_hash *= 16777619u;
+        }
+    }
+    if (level_label_hash != expected_level_label_hash) return 0;
     for (i = 0u; i < THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES; ++i) {
         property_hash ^= ((const uint8_t *)bank->raw_properties)[i];
         property_hash *= 16777619u;
@@ -2751,6 +2785,28 @@ int theron_v1_world_track19_item_name_raw(
         return 0;
     *out_bytes = world->track19_item_names.raw_names[track19_index];
     *out_size = world->track19_item_names.raw_name_sizes[track19_index];
+    return 1;
+}
+
+int theron_v1_world_track19_level_label_raw(
+    const Theron_V1_World *world,
+    unsigned int track19_index,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size ||
+        !world->track19_item_names.valid ||
+        world->track19_item_names.level_label_count >
+            THERON_V1_TRACK19_LEVEL_LABEL_COUNT ||
+        track19_index >= world->track19_item_names.level_label_count)
+        return 0;
+    if (world->track19_item_names.raw_level_label_sizes[track19_index] == 0u ||
+        world->track19_item_names.raw_level_label_sizes[track19_index] >
+            THERON_V1_TRACK19_LEVEL_LABEL_RAW_CAPACITY)
+        return 0;
+    *out_bytes = world->track19_item_names.raw_level_labels[track19_index];
+    *out_size = world->track19_item_names.raw_level_label_sizes[track19_index];
     return 1;
 }
 

@@ -48,6 +48,12 @@ typedef struct {
 #define THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET 0x0E9266u
 #define THERON_V1_TRACK19_ITEM_TYPE_CODE_US_FNV1A 0x21533BB5u
 #define THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A 0xF9C3EABBu
+#define THERON_V1_TRACK19_LEVEL_LABEL_COUNT 15u
+#define THERON_V1_TRACK19_LEVEL_LABEL_RAW_CAPACITY 16u
+#define THERON_V1_TRACK19_LEVEL_LABEL_US_OFFSET 0x203A3Bu
+#define THERON_V1_TRACK19_LEVEL_LABEL_US_FNV1A 0x7F7D9F67u
+#define THERON_V1_TRACK19_LEVEL_LABEL_JP_OFFSET 0x203A7Eu
+#define THERON_V1_TRACK19_LEVEL_LABEL_JP_FNV1A 0xFA2F5B6Fu
 #define THERON_V1_TRACK19_JP_REV1_RAW_MD5 \
     "27d54f58154662885bb67d5967e5111e"
 #define THERON_V1_TRACK19_JP_REV1_RAW_BYTES 7752192u
@@ -73,6 +79,15 @@ typedef struct {
                      [THERON_V1_TRACK19_ITEM_NAME_RAW_CAPACITY];
     uint8_t raw_name_sizes[THERON_V1_TRACK19_ITEM_NAME_COUNT];
     uint8_t raw_type_codes[THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT];
+    /* Raw source-owned selector labels by Track 19 record index. US entries
+     * are ASCII without their NUL terminators; JP entries retain all 16
+     * Shift-JIS bytes. These indices do not identify Track 02 levels. */
+    size_t level_label_count;
+    size_t level_label_source_offset;
+    uint32_t level_label_source_fnv1a;
+    uint8_t raw_level_labels[THERON_V1_TRACK19_LEVEL_LABEL_COUNT]
+                            [THERON_V1_TRACK19_LEVEL_LABEL_RAW_CAPACITY];
+    uint8_t raw_level_label_sizes[THERON_V1_TRACK19_LEVEL_LABEL_COUNT];
     uint32_t property_source_fnv1a;
     uint8_t raw_properties[66u][6u];
     int item_mapping_proven;

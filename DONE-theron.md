@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — expose authenticated Track 19 selector labels
+
+- Native Track 19 inventory loading now retains all 15 raw selector labels
+  from the authentic US and JP Track 19 media. World binding checks the
+  region-specific ISO/raw-image identity, source offset, record count, and
+  complete label-span FNV-1a, including the original terminator/delimiter
+  bytes. A bounded accessor exposes labels only by explicit Track 19 index.
+- The focused authentic-media dungeon-loader test passed three consecutive
+  runs on TRV2 for the installed US and JP source files, including mutation,
+  wrong-region, length, and out-of-range rejection checks. This establishes
+  authenticated raw label access only; it does not identify these labels as
+  Track 02 dungeon names or prove retail selector/UI behavior.
+
 ## 2026-10-09 — source-lock the VCE descriptor-dispatch predecessor
 
 - The authentic US and JP Stage-2 BINs have the same 43-byte HuC6280 window

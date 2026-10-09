@@ -654,9 +654,10 @@ struct Theron_V1_World {
      * valid for JP. */
     Theron_Track02SpawnSource track02_spawn_source;
     int track02_spawn_source_variant;
-    /* Complete authentic Track 19 name table for the selected region.
-     * Names are addressable only by their explicit Track 19 table index;
-     * no Track 02 object/type mapping or JP host-font rendering is implied. */
+    /* Complete authentic Track 19 name and raw selector-label tables for the
+     * selected region. Records are addressable only by their explicit Track
+     * 19 table indices; no Track 02 level mapping or JP host-font rendering
+     * is implied. */
     Theron_V1Track19ItemNameBank track19_item_names;
     Theron_Track02ItemNameSource
         track02_item_names[THERON_DUNGEON_COUNT];
@@ -952,6 +953,11 @@ int theron_v1_world_object_item_property_raw(
     const uint8_t **out_bytes,
     size_t *out_size);
 int theron_v1_world_track19_item_name_raw(
+    const Theron_V1_World *world,
+    unsigned int track19_index,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_track19_level_label_raw(
     const Theron_V1_World *world,
     unsigned int track19_index,
     const uint8_t **out_bytes,

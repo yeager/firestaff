@@ -536,12 +536,91 @@ static void test_real_sarmon_track19_mapping(
     assert(theron_v1_world_bind_track19_item_name_bank(
                world, &track19, variant) == 1);
     assert(world->track19_item_names.item_mapping_proven == 0);
+    assert(world->track19_item_names.level_label_count ==
+           THERON_V1_TRACK19_LEVEL_LABEL_COUNT);
+    assert(world->track19_item_names.level_label_source_offset ==
+           (variant == THERON_V1_TRACK02_VARIANT_JP_BIN
+                ? THERON_V1_TRACK19_LEVEL_LABEL_JP_OFFSET
+                : THERON_V1_TRACK19_LEVEL_LABEL_US_OFFSET));
+    assert(world->track19_item_names.level_label_source_fnv1a ==
+           (variant == THERON_V1_TRACK02_VARIANT_JP_BIN
+                ? THERON_V1_TRACK19_LEVEL_LABEL_JP_FNV1A
+                : THERON_V1_TRACK19_LEVEL_LABEL_US_FNV1A));
+    for (unsigned int label_index = 0u;
+         label_index < THERON_V1_TRACK19_LEVEL_LABEL_COUNT; ++label_index) {
+        const uint8_t *label = NULL;
+        size_t label_size = 0u;
+        assert(theron_v1_world_track19_level_label_raw(
+                   world, label_index, &label, &label_size) == 1);
+        assert(label ==
+               world->track19_item_names.raw_level_labels[label_index]);
+        assert(label_size == (variant == THERON_V1_TRACK02_VARIANT_JP_BIN
+                                  ? THERON_V1_TRACK19_LEVEL_LABEL_RAW_CAPACITY
+                                  : 8u));
+        if (variant == THERON_V1_TRACK02_VARIANT_US_BIN) {
+            static const char *const expected_us_labels[] = {
+                "LEVEL  1", "LEVEL  2", "LEVEL  3", "LEVEL  4", "LEVEL  5",
+                "LEVEL  6", "LEVEL  7", "LEVEL  8", "LEVEL  9", "LEVEL 10",
+                "LEVEL 11", "LEVEL 12", "LEVEL 13", "LEVEL 14", "LEVEL 15"
+            };
+            assert(memcmp(label, expected_us_labels[label_index],
+                          label_size) == 0);
+        }
+    }
+    {
+        const uint8_t *label = (const uint8_t *)"stale";
+        size_t label_size = 99u;
+        assert(theron_v1_world_track19_level_label_raw(
+                   world, THERON_V1_TRACK19_LEVEL_LABEL_COUNT,
+                   &label, &label_size) == 0);
+        assert(label == NULL && label_size == 0u);
+    }
+    {
+        const uint8_t *label = (const uint8_t *)"stale";
+        size_t label_size = 99u;
+        const size_t valid_count = world->track19_item_names.level_label_count;
+        const uint8_t valid_size =
+            world->track19_item_names.raw_level_label_sizes[0];
+        world->track19_item_names.level_label_count =
+            THERON_V1_TRACK19_LEVEL_LABEL_COUNT + 1u;
+        assert(theron_v1_world_track19_level_label_raw(
+                   world, THERON_V1_TRACK19_LEVEL_LABEL_COUNT,
+                   &label, &label_size) == 0);
+        assert(label == NULL && label_size == 0u);
+        world->track19_item_names.level_label_count = valid_count;
+        world->track19_item_names.raw_level_label_sizes[0] =
+            THERON_V1_TRACK19_LEVEL_LABEL_RAW_CAPACITY + 1u;
+        assert(theron_v1_world_track19_level_label_raw(
+                   world, 0u, &label, &label_size) == 0);
+        assert(label == NULL && label_size == 0u);
+        world->track19_item_names.raw_level_label_sizes[0] = valid_size;
+    }
     assert(theron_v1_world_bind_track02_item_name_source(
                world, &track02, variant) == 1);
     assert(world->track19_item_names.item_mapping_proven == 1);
     assert(world->track19_item_names.mapped_track02_dungeon_mask == (1u << 3));
     printf("  authentic %s Sarmon/Track19 bank and item-name mapping verified\n",
            variant == THERON_TRACK02_VARIANT_JP_BIN ? "JP" : "US");
+    {
+        Theron_V1Track19ItemNameBank mutated = track19;
+        Theron_V1_World *rejected_world =
+            (Theron_V1_World *)calloc(1u, sizeof(*rejected_world));
+        assert(rejected_world != NULL);
+        mutated.raw_level_labels[0][0] ^= 1u;
+        theron_v1_world_init(rejected_world);
+        assert(theron_v1_world_bind_track19_item_name_bank(
+                   rejected_world, &mutated, variant) == 0);
+        mutated = track19;
+        theron_v1_world_init(rejected_world);
+        assert(theron_v1_world_bind_track19_item_name_bank(
+                   rejected_world, &mutated,
+                   variant == THERON_V1_TRACK02_VARIANT_JP_BIN
+                       ? THERON_V1_TRACK02_VARIANT_US_BIN
+                       : THERON_V1_TRACK02_VARIANT_JP_BIN) == 0);
+        printf("  authentic %s Track 19 raw labels retained; mutation and wrong-region controls rejected\n",
+               variant == THERON_V1_TRACK02_VARIANT_JP_BIN ? "JP" : "US");
+        free(rejected_world);
+    }
     {
         Theron_Track02ItemNameSource dungeon2_names;
         Theron_V1_World *dungeon2_world =
