@@ -9,6 +9,7 @@
 ## Developer changes
 
 - `GitHub Actions release workflow`: prevents publishing more than one release per Stockholm calendar day, including when separate release runs start together.
+- `SPDX source inventory`: changes the reproducible SBOM to include the release version and current source tree.
 - `Theron Japanese dungeon transitions`: rejects unbound stair transitions and aligns runtime handoffs with source-backed decoder boundaries.
 - `Original-media startup matrix`: verifies DM1, CSB and DM2 startup routes against platform-specific original media.
 
