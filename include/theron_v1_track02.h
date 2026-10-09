@@ -4380,12 +4380,13 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier2_callees(
     const char *md5_hex,
     Theron_Track02Stage245xxTier2CalleesReceipt *out_receipt);
 
-/* Binds the exact US bank-2 L4215 frame-dispatch body and its
+/* Binds the exact US/JP bank-2 L4215 frame-dispatch body and its
  * L42DB/L4417/L44A2/L4519 coordinate-update callees, including L42DB's local
  * L4358/L4386 routines.  The verifier pins their encoded JSR/JMP/BSR targets
  * to the local entries and the already-bound L424B/L43A1/L43D6/L4552/L458E
- * bodies, and requires each linear span to meet its adjacent bound body.  JP
- * and any changed byte fail closed. */
+ * bodies, and requires each linear span to meet its adjacent bound body. Both
+ * authentic regional Track 02 images currently contain the same exact byte
+ * spans; any changed byte or unsupported edition fails closed. */
 Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier3_callees(
     const uint8_t *track02_data,
     size_t track02_size,

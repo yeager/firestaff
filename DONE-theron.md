@@ -12,6 +12,19 @@
   does not establish the original T900 name consumer, retail glyph rendering,
   or pixel parity.
 
+## 2026-10-09 — verify JP Stage-2 `$45xx` tier-3 source bytes
+
+- The authentic JP Rev. 1 Track 02 BIN matches all five previously bounded US
+  tier-3 source windows byte-for-byte; its adjacent `$8190` caller also encodes
+  `JSR $4215` and matches the US caller bytes. The verifier now accepts both
+  authenticated editions, and a focused TRV2 harness exercised the production
+  verifier against both authentic images in three loops, including the caller
+  bytes and fingerprint. A regional CTest was registered and CMake configure
+  succeeded. This proves static source bytes only, not runtime MPR selection,
+  execution, rendering, movement, or gameplay semantics. Full media hashes,
+  window fingerprints, and provenance boundaries are in
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-45xx-tier3-20261009.md`.
+
 ## 2026-10-09 — repeat authentic HuC6280 disassembly receipts locally
 
 - The focused disassembly receipt executable was built with the Xcode Clang

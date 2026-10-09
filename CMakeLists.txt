@@ -46620,6 +46620,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_stage2_disassembly_chain
         COMMAND test_theron_v1_stage2_disassembly_chain
     )
+    add_test(
+        NAME theron_v1_stage2_45xx_tier3_regional
+        COMMAND test_theron_v1_stage2_disassembly_chain
+    )
+    set_tests_properties(theron_v1_stage2_45xx_tier3_regional PROPERTIES
+        ENVIRONMENT "FIRESTAFF_THERON_TEST_STAGE2_45XX_TIER3_ONLY=1"
+        SKIP_RETURN_CODE 77
+    )
 
     add_executable(test_theron_v1_bank1f_consumer_receipt
         tests/test_theron_v1_bank1f_consumer_receipt.c)

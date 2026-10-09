@@ -13,7 +13,9 @@
  * FIRESTAFF_THERON_TEST_US_TRACK02 and _JP_TRACK02 paths may select the
  * operator's original media without changing the standard data-dir default.
  * FIRESTAFF_THERON_TEST_JP_STAGE2_SELECTOR_ONLY runs just the JP selector
- * byte/edge check for focused source-lock verification.
+ * byte/edge check for focused source-lock verification. The
+ * FIRESTAFF_THERON_TEST_STAGE2_45XX_TIER3_ONLY mode runs the authentic US/JP
+ * regional-byte check for the bounded $45xx tier-3 chain.
  */
 
 #include <assert.h>
@@ -4723,6 +4725,10 @@ static void test_stage2_45xx_tier3_callees(void)
     assert(receipt.adjacency_proven == 1);
     assert(receipt.tier3_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_BOUND_BYTES);
+    assert(stage2_word_at(g_us_data, g_us_size, 0, 0x819fu) == 0x4215u);
+    assert(stage2_byte_at(g_us_data, g_us_size, 0, 0x819eu) == 0x20u);
+    assert(stage2_fnv1a64(g_us_data, g_us_size, 0, 0x8190u, 0x81a2u) ==
+           UINT64_C(0xec63ab69de7642e5));
 
     mutated = malloc(g_us_size);
     assert(mutated != NULL && raw_offset < g_us_size);
@@ -4754,7 +4760,42 @@ static void test_stage2_45xx_tier3_callees(void)
     if (g_jp_data) {
         status = theron_v1_track02_verify_stage2_45xx_tier3_callees(
             g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
-        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid == 1);
+        assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+        assert(receipt.stage2_raw_sector ==
+               THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                   THERON_TRACK02_IPL_STAGE2_RECORD);
+        assert(receipt.l4215_proven == 1 && receipt.l4417_proven == 1 &&
+               receipt.l44a2_proven == 1 && receipt.l42db_proven == 1 &&
+               receipt.l4519_proven == 1);
+        assert(receipt.caller_targets_proven == 1 &&
+               receipt.existing_callee_targets_proven == 1 &&
+               receipt.adjacency_proven == 1);
+        assert(stage2_word_at(g_jp_data, g_jp_size, 1, 0x819fu) == 0x4215u);
+        assert(stage2_byte_at(g_jp_data, g_jp_size, 1, 0x819eu) == 0x20u);
+        assert(stage2_fnv1a64(g_jp_data, g_jp_size, 1, 0x8190u, 0x81a2u) ==
+               UINT64_C(0xec63ab69de7642e5));
+
+        /* The authentic JP caller and each selected source window match the
+         * US bytes, but this receipt remains static provenance only. */
+        for (size_t address = 0x8190u; address < 0x81a2u; ++address)
+            assert(stage2_byte_at(g_jp_data, g_jp_size, 1,
+                                  (uint16_t)address) ==
+                   stage2_byte_at(g_us_data, g_us_size, 0,
+                                  (uint16_t)address));
+        for (size_t address =
+                 THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS +
+                                 THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_USER_OFFSET;
+             address < THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS +
+                           THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_USER_OFFSET +
+                               THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_BYTES;
+             ++address) {
+            assert(stage2_byte_at(g_jp_data, g_jp_size, 1,
+                                  (uint16_t)address) ==
+                   stage2_byte_at(g_us_data, g_us_size, 0,
+                                  (uint16_t)address));
+        }
     }
     printf("  PASS: stage2_45xx_tier3_callees\n");
 }
@@ -5018,6 +5059,18 @@ int main(void)
         } else {
             printf("  SKIP: JP Track 02 unavailable for selector check\n");
         }
+        free(g_us_data);
+        free(g_jp_data);
+        return 0;
+    }
+
+    if (getenv("FIRESTAFF_THERON_TEST_STAGE2_45XX_TIER3_ONLY")) {
+        if (!g_jp_data) {
+            printf("  SKIP: JP Track 02 unavailable for regional 45xx test\n");
+            free(g_us_data);
+            return 77;
+        }
+        test_stage2_45xx_tier3_callees();
         free(g_us_data);
         free(g_jp_data);
         return 0;

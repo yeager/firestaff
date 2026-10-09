@@ -25,6 +25,16 @@
   compressed output. The normal CMake target remains unverified because its
   dependency chain starts a full shared-library build.
 
+## 2026-10-09 — admit JP bytes for the bounded Stage-2 `$45xx` tier-3 chain
+
+- The authentic JP Rev. 1 BIN matches all five exact-byte US tier-3 windows
+  and the adjacent `$8190` caller span. The source verifier now admits both
+  editions, and a focused real-media regression checks the JP receipt and
+  caller target. See
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-45xx-tier3-20261009.md`.
+  This is static byte provenance only; runtime mapping/execution and gameplay
+  semantics remain unproven.
+
 ## 2026-10-09 — keep JP state replay separate from source loading
 
 - On trv2, a read-only PCE Fast replay loaded the operator-created JP Rev. 1
