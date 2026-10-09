@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — retain the JP `$4661` helper disassembly
+
+- Added the complete 25-byte MAME HuC6280 listing for JP `$4661` from the
+  authenticated JP Rev. 1 Track 02 BIN (raw offset `0x9bbb7`, FNV-1a
+  `1a732d61`). Its listing hash reproduced in three TRV2 runs. The authentic
+  US `$4667` helper has the same instruction shape with relocated `$5D6A/$5D64`
+  calls versus JP `$5D68/$5D62`; the existing source receipt locks both exact
+  byte spans. This is static disassembly only and proves neither runtime
+  selection nor RNG/spawn semantics.
+
 ## 2026-10-09 — lock JP static spawn caller/helper bytes
 
 - Extended the hash-authenticated JP raw-BIN disassembly receipt with the

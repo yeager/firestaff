@@ -13,6 +13,11 @@
   three loops from the authenticated `TQJP02.bin`. This reconfirms the static
   candidates only; neither listing proves runtime bank ownership, execution,
   return values, or gameplay semantics.
+- A standalone MAME HuC6280 listing now preserves the authenticated 25-byte JP
+  `$4661` helper entry. It has the same instruction shape as US `$4667`, with
+  the JP `$5D68/$5D62` call operands replacing US `$5D6A/$5D64`. These remain
+  static regional bytes; runtime helper mapping, caller selection, return
+  values, and spawn/RNG semantics are still unresolved.
 
 ## 2026-10-10 — correct the VCE caller address
 

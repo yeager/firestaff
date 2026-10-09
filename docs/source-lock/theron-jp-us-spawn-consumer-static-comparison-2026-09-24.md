@@ -51,7 +51,12 @@ The first span is a subrange of the already-locked 150-byte `$C3A0` window
 at raw offset `0x9bb20`. Raw byte `0x19` at `0x9bbb6` is the preceding
 overlapping instruction's opcode; the `$4661` entry begins at the next byte,
 `0x9bbb7`. MAME `unidasm -arch h6280` decoded this overlapping helper entry
-identically in three runs.
+identically in three runs. Its listing is retained in
+`theron-disassembly/theron-jp-4661-rng-helper.asm`. The matching US `$4667`
+entry has the same 25-byte instruction shape, with relocated branch and
+`$5D6A/$5D64` call operands in place of JP `$467A` and `$5D68/$5D62`. This
+static correspondence does not establish either region's runtime bank mapping,
+caller selection, or helper return values.
 
 The JP caller bytes at `$C414` target `$C95D` and `$CC3E`. Two raw windows
 0x930 bytes before the already-locked US `$C96B/$CC4C` spans are retained as
