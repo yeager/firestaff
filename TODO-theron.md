@@ -127,6 +127,9 @@
   all seven JP and all seven US source copies by hash. It maps the regional
   jump, table, and helper-call address deltas through `$D417`; the observed UP
   replay ends earlier at `$D35E`, so these later branches remain static-only.
+  The `$D3D7` indexed-helper slice is independently fixed to seven raw
+  candidates per edition, with the regional operands and `BNE $D419` decoded
+  from authentic bytes.
   This narrows the regional caller map without assigning meanings to
   `$28B8/$290D/$290E` or claiming an accepted move.
 - Next: use a cold-start or otherwise source-reading authentic JP session to

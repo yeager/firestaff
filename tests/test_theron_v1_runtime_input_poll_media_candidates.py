@@ -36,6 +36,13 @@ MEDIA = {
                 "0d 20 ec d4 30 d9 d0",
                 (0x9CF6F, 0xE676F, 0x12FF6F, 0x17976F, 0x1C2F6F, 0x20C76F, 0x255F6F),
             ),
+            "consumer_helper": (
+                "bc 16 d6 30 07 be 71 d4 44 18 d0 36 a2 03 73 0f 29 0d 29 02 00 "
+                "20 ec d4 44 08 d0 26 ca 10 ef 4c 1a d4 bc 6d d4 b9 c7 20 c9 ff "
+                "f0 14 c9 00 f0 10 da 8d 0d 29 20 79 d4 d0 03 fa 80 e6 fa a9 01 "
+                "60 a9 00 60 a5 db f0 22 ad ba 2e 29 01 d0",
+                (0x9D017, 0xE6817, 0x130017, 0x179817, 0x1C3017, 0x20C817, 0x256017),
+            ),
             "consumer_store": (
                 "9c 20 29 8d 12 29",
                 (0x9CF6F + 0x17, 0xE676F + 0x17, 0x12FF6F + 0x17,
@@ -72,6 +79,13 @@ MEDIA = {
                 "b8 28 29 20 f0 37 ee 0e 29 ad 0e 29 85 cb ad 0d 29 c9 00 f0 "
                 "0d 20 fa d4 30 d9 d0",
                 (0x9D8AD, 0xE70AD, 0x1308AD, 0x17A0AD, 0x1C38AD, 0x20D0AD, 0x2568AD),
+            ),
+            "consumer_helper": (
+                "bc 24 d6 30 07 be 7f d4 44 18 d0 36 a2 03 73 0f 29 0d 29 02 00 "
+                "20 fa d4 44 08 d0 26 ca 10 ef 4c 28 d4 bc 7b d4 b9 c7 20 c9 ff "
+                "f0 14 c9 00 f0 10 da 8d 0d 29 20 87 d4 d0 03 fa 80 e6 fa a9 01 "
+                "60 a9 00 60 a5 db f0 22 ad bb 2e 29 01 d0",
+                (0x9D955, 0xE7155, 0x130955, 0x17A155, 0x1C3955, 0x20D155, 0x256955),
             ),
             "consumer_store": (
                 "9c 20 29 8d 12 29",
@@ -170,7 +184,7 @@ def main() -> int:
         require_poll_consumer_windows(data, region)
         print(f"PASS: authentic {region.upper()} Track 02 caller candidates ({expected_md5})")
 
-    print("PASS: poll, consumer, 256-byte poll-consumer window hashes, caller-branch, and indexed-table signatures with per-candidate negative mutations")
+    print("PASS: poll, consumer/helper code, 256-byte window hashes, caller-branch, and indexed-table signatures with per-candidate negative mutations")
     return 0
 
 

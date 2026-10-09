@@ -298,9 +298,10 @@ $D394 JSR $D4EC (JP) / $D4FA (US)
 $D3CF LDA $28B8         LSR x4 ; TAX
 $D3D7 LDY $D616,X (JP) / $D624,X (US)
 $D3DC LDX $D471,Y (JP) / $D47F,Y (US)
+$D3DF BSR $D3F9         $D3E1 BNE $D419
 $D3EC JSR $D4EC (JP) / $D4FA (US)
 $D3F9 LDY $D46D,X (JP) / $D47B,X (US)
-$D3FC LDA $20C7,Y
+$D3FC LDA $20C7,Y      $D3FF CMP #$FF
 $D408 STA $290D         $D40B JSR $D479 (JP) / $D487 (US)
 $D414 LDA #$01 / RTS; $D417 LDA #$00 / RTS
 ```
@@ -315,6 +316,19 @@ reach this later code. The seven source copies per edition remain ambiguous,
 and no runtime source-LBA receipt is added. The authentic-media regression
 locks the full 256-byte window for both regions and independently mutates
 each candidate to verify rejection.
+
+The 77-byte helper slice at `$D3D7` is also locked as an exact signature. It
+occurs seven times in JP at raw offsets `0x9d017`, `0xe6817`, `0x130017`,
+`0x179817`, `0x1c3017`, `0x20c817`, and `0x256017`; the US copies are at
+`0x9d955`, `0xe7155`, `0x130955`, `0x17a155`, `0x1c3955`, `0x20d155`, and
+`0x256955`. The corresponding SHA-256 values are
+`bcb0572f9c87ff15ddf0367863505de51fb2a7f6d463ac43afaf593a81e6436a` (JP) and
+`a589cfe87ebcd89c0dded16d6dba2ad4e1095c83e66f48e18a1d45352aae3be9` (US).
+This confirms the regional indexed-load/call targets in the media bytes, not
+the runtime index or the meaning of any selected table entry. The
+authentic-media decode at `$D3E1` is `BNE $D419`; no CLC/BCC path is claimed.
+The helper signature regression independently mutates each of its seven
+copies per region.
 
 ### Static source candidates for the caller's indexed-table path
 
