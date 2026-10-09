@@ -80,3 +80,46 @@ The listings preserve the exact instruction boundaries—including the initial
 `ill $BB` at `$CC3E` and RTS boundary at `$CC5C`—without claiming runtime
 reachability. `semantic_publication_allowed` remains false, and no JP RNG,
 spawn, or combat behavior is enabled by this receipt.
+
+## Bounded JP/US target-candidate decode comparison (2026-10-09)
+
+On `trv2`, MAME 0.285 `unidasm -arch h6280` was run three times over each of
+the four authenticated 255-byte/200-byte candidate windows. Each listing was
+identical across its three runs. The JP listing SHA-256 values matched the
+receipts above; the corresponding US listings hash to
+`0efb0a80f5efe80b896590d2d1676d2918aab2797b42ac1217833437a93687b8` for
+`$C96B` and
+`7674bf8f304d44163d39c367765795641bb9243242f55422d15d062eeb5b8696` for
+`$CC4C`.
+
+The linear `$C95D/$C96B` decodes contain 114/113 instructions. Their first
+two instruction mnemonics agree (`PHA`, `JSR`), but the third differs:
+JP decodes `CPX #$6D`, while US decodes `INC $686D`. Their first linear RTS
+bytes are at relative offsets `$BE` and `$FE`, respectively. Since each
+window continues beyond its first RTS, these counts and boundaries describe
+the bounded byte windows, not complete routine lengths.
+
+The `$CC3E/$CC4C` decodes each reach their first RTS at relative offset `$1E`.
+The 31-byte prefixes through that RTS have 17 identical decoded instruction
+mnemonics; only relative byte offsets `$05` and `$14` differ. Those are
+operands in the indexed table read and helper call. Both starts decode as
+`ill $BB`, so this matching linear decode does not establish executable
+semantics. After the RTS, the windows diverge: at relative offset `$45`, JP
+decodes `SMB3 $52` and US decodes `DEX`; subsequent instruction boundaries
+also differ. The windows are therefore not interchangeable as whole spans.
+
+This narrows the static comparison: the early `$CC3E` prefix has a bounded
+operand-relocated shape in common with `$CC4C`, while `$C95D` differs from
+`$C96B` almost immediately. Neither finding binds a JP bank, proves runtime
+reachability, or identifies spawn/RNG meaning. Keep JP behavior closed until
+a same-session capture binds the caller and both mapped return edges.
+
+An exact byte search of each authenticated BIN also found six copies of the
+191-byte JP `$C95D` prefix through its first RTS and six copies of the
+255-byte US `$C96B` prefix through its first RTS. In each region those copies
+are spaced by `$49800` raw bytes (128 2352-byte sectors). The 31-byte
+`$CC3E/$CC4C` prefixes through RTS occur five times in JP and six times in
+US; their first copies after the source-locked windows are `$93000` bytes
+(256 sectors) later, followed by `$49800`-byte spacing. These are source-file
+occurrence positions only. Repetition and sector spacing do not identify the
+runtime bank, caller choice, or a gameplay role.

@@ -5273,6 +5273,23 @@ required before semantic promotion.
   four-member source bound in its counting and materialization passes.
 - Remaining: authenticate dynamic RNG, AI, T700 and T900 consumers.
 
+## 2026-10-09 — JP target-candidate decode divergence remains static-only
+
+- Compared the authentic JP `$C95D/$CC3E` windows with US `$C96B/$CC4C`
+  using three identical MAME HuC6280 disassembly loops on `trv2`. The bounded
+  `$CC3E` prefix through its first RTS shares the decoded mnemonic sequence
+  with US, with two operand-byte differences; it begins with `ill $BB`, and
+  the post-RTS tail diverges. `$C95D` differs from `$C96B` at the third
+  decoded instruction and reaches its first linear RTS earlier. These are
+  static bytes only; do not transfer US behavior or promote JP spawn/RNG
+  semantics from this comparison. Exact-byte scans found repeated copies of
+  the prefixes in each authentic BIN at regular raw-sector intervals; this
+  does not prove runtime bank mapping. Details, occurrence bounds and listing
+  hashes are in
+  `docs/source-lock/theron-jp-us-spawn-consumer-static-comparison-2026-09-24.md`.
+- Remaining: bind the JP caller and mapped callee bytes/return edges in one
+  authenticated runtime capture before extending these static interpretations.
+
 ## 2026-10-09 — JP `$C414` helper-call contract remains static-only
 
 - Recorded the bounded caller sequence from `$C41E` through `$C42E`: arguments
