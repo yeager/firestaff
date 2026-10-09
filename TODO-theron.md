@@ -40,6 +40,14 @@
   `$3b7e-$3b85` pointer table, or the `$2600` consumer; obtain a fresh
   same-session source-read/decode trace instead. Private trace:
   `/home/trv2/work/firestaff-theron-decoder-receipt-20261009-0450/capture/jp-user-state-run-start.trace`.
+- A separate cold-start JP replay used the same authentic CUE/System Card and
+  held RUN for 180 frames after 480 frames of boot (`run@480:180`), followed by
+  five short I/II/direction events. The input verifier saw all six masks only
+  at System Card polls; there were no non-System-Card polls, CD IRQs, raw
+  sectors, or Track 02 handoff, and the capture ended `transition=missing`.
+  Thus the three-second RUN hold did not prove that the retail game started;
+  the next capture needs an authenticated route past the System Card. Private
+  trace: `/home/trv2/work/firestaff-theron-decoder-receipt-20261009-0450/capture/jp-cold-run-hold.trace`.
 
 ## 2026-10-09 — transition and decompressor evidence caveats
 
