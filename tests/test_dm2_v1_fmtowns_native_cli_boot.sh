@@ -52,6 +52,39 @@ auto_menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 printf '%s\n' "$auto_menu_output" | grep -q \
     'selected game=dm2 platform=FM Towns edition=fmtowns-ja'
 
+# Exercise AUTO selection from the documented per-user data directory. This
+# has no FIRESTAFF_DATA or --data-dir override, so the selected source must be
+# discovered under ~/.firestaff/data/dm2 itself.
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$test_scratch"
+default_home=$(mktemp -d "$test_scratch/dm2-default-data.XXXXXX")
+default_data_root="$default_home/.firestaff/data"
+default_archive="$default_data_root/dm2/$(basename "$archive")"
+default_log="$default_home/menu.log"
+mkdir -p "$(dirname "$default_archive")"
+ln -s "$archive" "$default_archive"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+    APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm2 --verbose --script \
+        'key:enter,key:enter,key:enter' --duration 1000
+) >"$default_log" 2>&1 || {
+    cat "$default_log" >&2
+    exit 1
+}
+if ! grep -Fq \
+    "selected game=dm2 platform=FM Towns edition=fmtowns-ja source=$default_archive" \
+    "$default_log"; then
+    printf '%s\n' 'FAIL: DM2 AUTO menu did not discover FM Towns media from ~/.firestaff/data/dm2 without --data-dir' >&2
+    cat "$default_log" >&2
+    exit 1
+fi
+echo 'PASS: DM2 AUTO start menu discovers FM Towns media from ~/.firestaff/data/dm2 without --data-dir'
+find "$default_home" -depth -delete
+
 # FM Towns is the first DM2 platform card.  This asserts that the launcher
 # admits the authentic disc solely through mouse selection before the source
 # title and New Game input path below takes over.
