@@ -49,7 +49,10 @@ at logical `$9643..$966e` (exclusive end), immediately before the caller at
 SHA-256 is
 `dfd4bbc8fbf9c026f1bb63646abf6c4bd30dfec095bed8c96b19c0ca1d30d3dd` in both.
 The focused real-media Stage-2 test checks every byte and the relative branch
-targets for both regions.
+targets for both regions. Three direct byte-comparison loops on TRV2 passed
+with both whole-file BIN MD5s verified. MAME 0.285 `unidasm -arch h6280`
+decoded the bounded US span into the listing below; the JP 43-byte span was
+identical.
 
 The bounded HuC6280 decode is:
 
