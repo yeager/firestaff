@@ -117,8 +117,9 @@
   limitations are in
   `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
   A new authentic-media regression now locks the seven JP/US poll, consumer,
-  and `$D4EC` caller-branch candidates plus the JP-only `$D515` indexed-table
-  prefix, including exact raw offsets and independent negative mutations. It
+  and `$D4EC` caller-branch candidates plus the region-specific `$D515`
+  indexed-table prefixes (`$77CE/$77CF` JP and `$77DC/$77DD` US), including
+  exact raw offsets and independent negative mutations. It
   preserves the seven-copy ambiguity and does not claim that one copy loaded
   into the runtime bank. The regression passed against the authentic user
   media on TRV2; no gameplay behavior changed.

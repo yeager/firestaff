@@ -65,7 +65,10 @@ MEDIA = {
                 "ad 0d 29 f0 0d c9 0d 90 20",
                 (0x9DA6A, 0xE726A, 0x130A6A, 0x17A26A, 0x1C3A6A, 0x20D26A, 0x256A6A),
             ),
-            "indexed_table_prefix": ("0a aa bd ce 77 85 c5 bd cf 77 85 c6 a0 01 b1 c5 85 c7 c8 b1 c5 c9 fe d0 06", ()),
+            "indexed_table_prefix": (
+                "0a aa bd dc 77 85 c5 bd dd 77 85 c6 a0 01 b1 c5 85 c7 c8 b1 c5 c9 fe d0 06",
+                (0x9DA93, 0xE7293, 0x130A93, 0x17A293, 0x1C3A93, 0x20D293, 0x256A93),
+            ),
         },
     ),
 }

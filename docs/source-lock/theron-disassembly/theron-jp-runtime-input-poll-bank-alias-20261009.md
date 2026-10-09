@@ -298,13 +298,19 @@ The US `$D4EC` branch signature also occurs seven times, at
 `0x9da6a`, `0xe726a`, `0x130a6a`, `0x17a26a`, `0x1c3a6a`, `0x20d26a`, and
 `0x256a6a` (sector indices 274, 402, 530, 658, 786, 914, and 1042; within-
 sector offset `0x50a`). The longer 25-byte `$D515` JP prefix has no exact US
-match. This establishes a static regional byte difference for this exact
-prefix, not the reason for it or a runtime US path.
+match because the US code uses table-base operands `$77DC/$77DD` instead of
+JP `$77CE/$77CF`. The corresponding US 25-byte prefix is
+`0a aa bd dc 77 85 c5 bd dd 77 85 c6 a0 01 b1 c5 85 c7 c8 b1 c5 c9 fe d0 06`.
+It occurs at `0x9da93`, `0xe7293`, `0x130a93`, `0x17a293`, `0x1c3a93`,
+`0x20d293`, and `0x256a93` (the same sector indices, within-sector offset
+`0x533`). Across this 25-byte prefix, the editions differ only in the two
+low-byte operands: JP `CE/CF`, US `DC/DD`. This establishes a static regional
+address difference, not the reason for it or a runtime US path.
 
 `tests/test_theron_v1_runtime_input_poll_media_candidates.py` checks both
 regional hashes, exact occurrence counts/offsets for the poll, consumer,
-caller-branch, and indexed-table signatures, and rejects each candidate under
-an independent in-memory byte mutation. The test passed against the authentic
+caller-branch, and regional indexed-table signatures, and rejects each
+candidate under an independent in-memory byte mutation. The test passed against the authentic
 `TQJP02.bin` and `TQUS02.bin` in `/home/trv2/.firestaff/data/theron/`. Those
 mutated copies exist only inside the negative test; they are not substitute
 game data. Static duplicates remain unresolved, and no same-session CD-load
