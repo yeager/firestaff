@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — repeat authentic HuC6280 disassembly receipts locally
+
+- The focused disassembly receipt executable was built with the Xcode Clang
+  toolchain and run in three loops against the installed authentic US/JP
+  Track 02 BINs and source disassembly projections. Each run verified the
+  expected file identities, shared bank-$1f source window, regional Stage-2
+  dispatch spans, and JP `$C3A0` static counterpart. The direct build linked
+  the repository asset reader and ZIP reader; unrelated unused-function
+  warnings were emitted by the selected source files. This is static byte
+  evidence only and does not prove runtime bank mapping, execution, or gameplay
+  semantics.
+
 ## 2026-10-09 — distinguish decoder source-boundary termination
 
 - The bounded HuC6280 lift now reports
