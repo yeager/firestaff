@@ -136,6 +136,23 @@ successfully. This is a bounded startup handoff. It does not claim a complete
 Track 02 dungeon-record format, object table, text table, palette table, or
 all-level parser.
 
+### Authenticated JP CUE INDEX 01 Candidate
+
+The exact JP CUE-projected ISO (`62a39bbf43415c9739c41c2481080a49`) is the
+JP raw Track 02 user-data stream beginning at raw sector 224. The JP raw
+candidate at physical offset `0x700c84` maps to user-data offset `0x619114`;
+subtracting the 224-sector INDEX 01 prefix (`0x70000` user-data bytes) places
+the same candidate at CUE offset `0x5a9114`. The first authenticated CUE
+descriptor is at `0x5b2406`, so the candidate-to-descriptor delta in INDEX 01
+coordinates is `0x92f2`. The CUE regression verifies the full `0x36c`-byte
+candidate against the corresponding range in the projected JP raw user-data
+stream.
+
+This exposes only the same bounded, loader-compatible level-like candidate
+from the exact CUE projection. It does not identify the payload as the retail
+party's starting level, establish its initial pose, or prove dungeon,
+object-table, or gameplay semantics.
+
 The authenticated raw JP/US candidate is passed through the generic
 `theron_v1_level_load()` parser. That parser reports the first cell it
 classifies as floor and defaults direction to north; on the current retail

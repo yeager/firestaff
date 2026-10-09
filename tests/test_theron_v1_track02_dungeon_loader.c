@@ -1052,6 +1052,7 @@ static void test_jp_cue_iso_map_source(void) {
     Theron_Track02UserDataWindowCatalog windows;
     Theron_Track02BankSignal bank_signal;
     Theron_Track02UserDataWindow window;
+    Theron_Track02InitialCandidateBinding candidate_binding;
     Theron_Track02StartupTextMarkerCatalog text;
     Theron_Track02StartupTextMarker text_marker;
     Theron_Track02StartupRosterNameCatalog roster;
@@ -1060,7 +1061,7 @@ static void test_jp_cue_iso_map_source(void) {
     Theron_Track02PaletteWindowEvidence palette;
     char text_bytes[768];
     size_t text_byte_count = 0u;
-    uint8_t window_bytes[64];
+    uint8_t window_bytes[12u + 32u * 27u];
     size_t window_byte_count = 0u;
     if (!path || !path[0] || !(iso = load_raw_bytes(path, &iso_size))) {
         puts("  SKIP: authentic JP CUE-projected ISO unavailable");
@@ -1077,6 +1078,8 @@ static void test_jp_cue_iso_map_source(void) {
     assert(theron_v1_track02_find_bank_signal(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &bank_signal) ==
         THERON_TRACK02_SIGNAL_OK);
+    assert(bank_signal.anchor_count == 3u);
+    assert(bank_signal.descriptor_offsets[0] == 0x5b2406u);
     normalized = (uint8_t *)calloc(raw_user_data_size, 1u);
     assert(normalized != NULL);
     memcpy(normalized + 224u * UD_PER_SECTOR, iso, iso_size);
@@ -1086,7 +1089,7 @@ static void test_jp_cue_iso_map_source(void) {
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &windows) ==
         THERON_TRACK02_SIGNAL_OK);
     assert(windows.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
-    assert(windows.entry_count == 6u);
+    assert(windows.entry_count == 7u);
     assert(windows.overflow_count == 0u);
     for (size_t anchor = 0u; anchor < bank_signal.anchor_count; ++anchor) {
         const Theron_Track02UserDataWindowRole roles[2] = {
@@ -1124,11 +1127,39 @@ static void test_jp_cue_iso_map_source(void) {
                    0);
         }
     }
+    assert(theron_v1_track02_bind_initial_level_candidate(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO,
+        bank_signal.descriptor_offsets[0], &candidate_binding) ==
+        THERON_TRACK02_LEVEL_HANDOFF_OK);
+    assert(candidate_binding.candidate_count == 1u);
+    assert(candidate_binding.expected_offset_valid);
+    assert(candidate_binding.expected_offset == 0x5a9114u);
+    assert(candidate_binding.matches_initial_anchor);
+    assert(candidate_binding.candidate.absolute_offset == 0x5a9114u);
+    assert(candidate_binding.candidate.descriptor_delta == 0x92f2u);
+    assert(candidate_binding.candidate.user_data_offset_valid);
+    assert(candidate_binding.candidate.user_data_offset == 0x5a9114u);
+    assert(candidate_binding.candidate.byte_count == 0x36cu);
+    assert(memcmp(iso + 0x5a9114u,
+                  raw_user_data + 224u * UD_PER_SECTOR + 0x5a9114u,
+                  0x36cu) == 0);
     assert(theron_v1_track02_copy_user_data_window_by_role(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO,
         THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE, 0u,
         window_bytes, sizeof(window_bytes), &window_byte_count, &window) ==
-        THERON_TRACK02_SIGNAL_NOT_FOUND);
+        THERON_TRACK02_SIGNAL_OK);
+    assert(window.source_offset_kind ==
+           THERON_TRACK02_SOURCE_OFFSET_JP_CUE_INDEX01);
+    assert(window.raw_offset == 0x5a9114u);
+    assert(window.user_data_offset == 0x5a9114u);
+    assert(window.byte_count == 0x36cu);
+    assert(window.anchor_index == 0u);
+    assert(window.candidate_index == 0u);
+    assert(window_byte_count == 0x36cu);
+    assert(memcmp(window_bytes, iso + 0x5a9114u, 0x36cu) == 0);
+    assert(memcmp(window_bytes,
+                  raw_user_data + 224u * UD_PER_SECTOR + 0x5a9114u,
+                  0x36cu) == 0);
     assert(theron_v1_track02_catalog_user_data_windows(
         iso, iso_size, "397039af02d50d15c70b74088eb8a1cb", &windows) ==
         THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
@@ -1216,7 +1247,7 @@ static void test_jp_cue_iso_map_source(void) {
     free(normalized);
     free(raw_user_data);
     free(iso);
-    puts("  authentic JP CUE ISO matches raw Track 02 after INDEX 01 and loads all seven source dungeon banks through the JP decoder");
+    puts("  authentic JP CUE ISO matches raw Track 02 after INDEX 01, catalogs its bounded startup candidate, and loads all seven source dungeon banks through the JP decoder");
 }
 
 static void assert_source_category_census(

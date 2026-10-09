@@ -34,6 +34,8 @@
 #define TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_2 0x5b6584u
 #define TQR_US_ISO_RETAIL_INITIAL_LEVEL_OFFSET 0x5a9114u
 #define TQR_US_ISO_RETAIL_INITIAL_LEVEL_DELTA 0x92f2u
+#define TQR_JP_CUE_INITIAL_LEVEL_OFFSET 0x5a9114u
+#define TQR_JP_CUE_INITIAL_LEVEL_DELTA 0x92f2u
 #define TQR_US_ISO_RETAIL_SPAN_OFFSET_0 0x207000u
 #define TQR_US_ISO_RETAIL_SPAN_OFFSET_1 0x378000u
 #define TQR_US_ISO_RETAIL_SPAN_OFFSET_2 0x5b8000u
@@ -343,6 +345,25 @@ static int tqr_retail_us_iso_initial_candidate_expected_offset(
     return 1;
 }
 
+/* The authenticated JP CUE projection is contiguous INDEX 01 user data. Its
+ * first descriptor and startup candidate share the documented US retail ISO
+ * coordinates, but this relation is admitted only for the exact JP CUE hash. */
+static int tqr_jp_cue_iso_initial_candidate_expected_offset(
+    size_t descriptor_offset,
+    const char *md5_hex,
+    size_t *out_candidate_offset) {
+    if (out_candidate_offset) *out_candidate_offset = 0u;
+    if (!md5_is_jp_cue_iso(md5_hex) ||
+        descriptor_offset != TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_0) {
+        return 0;
+    }
+    if (out_candidate_offset) {
+        *out_candidate_offset = TQR_JP_CUE_INITIAL_LEVEL_OFFSET;
+    }
+    return descriptor_offset - TQR_JP_CUE_INITIAL_LEVEL_OFFSET ==
+        TQR_JP_CUE_INITIAL_LEVEL_DELTA;
+}
+
 static int tqr_initial_candidate_expected_offset_for_media(
     size_t descriptor_offset,
     const char *md5_hex,
@@ -350,6 +371,10 @@ static int tqr_initial_candidate_expected_offset_for_media(
     if (md5_hex && strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO) == 0 &&
         tqr_retail_us_iso_initial_candidate_expected_offset(
             descriptor_offset, out_candidate_offset)) {
+        return 1;
+    }
+    if (tqr_jp_cue_iso_initial_candidate_expected_offset(
+            descriptor_offset, md5_hex, out_candidate_offset)) {
         return 1;
     }
     return theron_v1_track02_initial_candidate_expected_offset(
@@ -1609,7 +1634,9 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
             (size_t)-1);
     }
 
-    if (variant_is_raw_bin(variant) && signal.anchor_count > 0u) {
+    if ((variant_is_raw_bin(variant) ||
+         variant_is_jp_cue_iso(variant, md5_hex)) &&
+        signal.anchor_count > 0u) {
         Theron_Track02InitialCandidateBinding binding;
         Theron_Track02LevelHandoffStatus binding_status =
             theron_v1_track02_bind_initial_level_candidate(
@@ -4539,11 +4566,10 @@ int theron_v1_track02_initial_candidate_expected_offset(
     return 1;
 }
 
-/* Recover the one source-locked startup payload when its bytes span two raw
- * MODE1 sectors.  The ordinary raw-image scan deliberately remains useful
- * evidence for contiguous candidates; this path is only reached when that
- * scan finds none.  JP/US layouts differ in absolute anchors but share the
- * descriptor-relative startup relation. */
+/* Reconstruct the one source-locked startup payload from its verified
+ * descriptor-relative location. Raw MODE1 images are copied through their
+ * logical user-data stream; plain ISO and exact JP CUE INDEX 01 coordinates
+ * are already contiguous. */
 static int tqr_bind_split_initial_level_candidate(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -4571,6 +4597,7 @@ static int tqr_bind_split_initial_level_candidate(
         if (!tqr_initial_candidate_expected_offset_for_media(
             descriptor_offset, md5_hex, &candidate_offset) ||
             (!variant_is_raw_bin(variant) &&
+             !variant_is_jp_cue_iso(variant, md5_hex) &&
              !(variant == THERON_TRACK02_VARIANT_US_ISO &&
                candidate_offset == TQR_US_ISO_RETAIL_INITIAL_LEVEL_OFFSET)) ||
             candidate_offset >= track02_size ||
@@ -4580,7 +4607,9 @@ static int tqr_bind_split_initial_level_candidate(
     }
 
     if (theron_v1_track02_variant_for_md5(md5_hex) ==
-        THERON_TRACK02_VARIANT_US_ISO) {
+            THERON_TRACK02_VARIANT_US_ISO ||
+        variant_is_jp_cue_iso(
+            theron_v1_track02_variant_for_md5(md5_hex), md5_hex)) {
         memcpy(payload, track02_data + candidate_offset, payload_size);
         user_data_offset = candidate_offset;
         signal_status = THERON_TRACK02_SIGNAL_OK;
@@ -4696,14 +4725,31 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
         return out_binding->status;
     }
 
-    theron_v1_track02_bind_level_candidate_anchor(descriptor_offset, &catalog);
-    (void)theron_v1_track02_bind_level_candidate_user_offsets(track02_size,
-                                                              md5_hex,
-                                                              &catalog);
     expected_ok = tqr_initial_candidate_expected_offset_for_media(
         descriptor_offset,
         md5_hex,
         &expected_candidate_offset);
+    if (variant_is_jp_cue_iso(
+            theron_v1_track02_variant_for_md5(md5_hex), md5_hex)) {
+        for (size_t i = 0u; i < catalog.candidate_count; ++i) {
+            Theron_Track02LevelCandidate *candidate =
+                &catalog.candidates[i];
+            candidate->descriptor_delta =
+                descriptor_offset >= candidate->absolute_offset
+                    ? descriptor_offset - candidate->absolute_offset
+                    : 0u;
+            candidate->matches_initial_anchor =
+                expected_ok &&
+                candidate->absolute_offset == expected_candidate_offset;
+            candidate->user_data_offset = candidate->absolute_offset;
+            candidate->user_data_offset_valid = 1;
+        }
+    } else {
+        theron_v1_track02_bind_level_candidate_anchor(
+            descriptor_offset, &catalog);
+        (void)theron_v1_track02_bind_level_candidate_user_offsets(
+            track02_size, md5_hex, &catalog);
+    }
     out_binding->expected_offset_valid = expected_ok ? 1 : 0;
     out_binding->expected_offset = expected_candidate_offset;
     out_binding->candidate_index = 0u;
@@ -4722,6 +4768,8 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
      * when the raw scanner could see its header.  That makes the semantic
      * handoff insensitive to JP/US sector framing at the payload tail. */
     if ((variant_is_raw_bin(theron_v1_track02_variant_for_md5(md5_hex)) ||
+         variant_is_jp_cue_iso(
+             theron_v1_track02_variant_for_md5(md5_hex), md5_hex) ||
          (theron_v1_track02_variant_for_md5(md5_hex) ==
               THERON_TRACK02_VARIANT_US_ISO &&
           tqr_retail_us_iso_initial_candidate_expected_offset(
@@ -5284,6 +5332,12 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_
                track02_data + binding.candidate.absolute_offset,
                binding.candidate.byte_count);
         user_data_offset = binding.candidate.absolute_offset;
+    } else if (variant_is_jp_cue_iso(
+                   theron_v1_track02_variant_for_md5(md5_hex), md5_hex)) {
+        memcpy(out_bytes,
+               track02_data + binding.candidate.absolute_offset,
+               binding.candidate.byte_count);
+        user_data_offset = binding.candidate.absolute_offset;
     } else if (theron_v1_track02_copy_raw_user_data_range(
                    track02_data,
                    track02_size,
@@ -5460,11 +5514,11 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     out_handoff->header_seed = rd32be(level_bytes + 4);
     out_handoff->header_level_index = rd16be(level_bytes + 8);
 
-    /* Real raw JP/US Track 02 candidate gate.  These four header fields
-     * are identical in the hash-verified JP and US raw BINs at
-     * descriptor_base - 0x92ce.  They deliberately keep this handoff
-     * narrower than a broad scan, avoiding tiny false-positive headers
-     * that also exist near the same bank. */
+    /* The source-locked JP/US raw and JP CUE candidate gate. These four
+     * header fields are identical in the authenticated media at their
+     * variant-specific descriptor-relative offsets. They deliberately keep
+     * this handoff narrower than a broad scan, avoiding tiny false-positive
+     * headers that also exist near the same bank. */
     if (out_handoff->header_width != TQR_RAW_INITIAL_LEVEL_WIDTH ||
         out_handoff->header_height != TQR_RAW_INITIAL_LEVEL_HEIGHT ||
         out_handoff->header_seed != TQR_RAW_INITIAL_LEVEL_SEED ||

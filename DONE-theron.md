@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — bind the JP CUE startup candidate in INDEX 01 coordinates
+
+- The exact JP CUE projection now binds the same bounded startup-level
+  candidate as the authentic raw BIN. Its verified INDEX 01 coordinate is
+  `0x5a9114`, its first descriptor is `0x5b2406`, and their difference is
+  `0x92f2`. The role catalog and bounded copy accessor expose those offsets in
+  the explicit JP CUE coordinate domain.
+- The authentic-media regression checks the 876-byte payload against the
+  corresponding raw user-data projection and validates the descriptor anchor,
+  exact image identity, and copy result. This promotes only a loader-compatible
+  candidate; it does not establish retail startup pose, dungeon selection,
+  object semantics, or gameplay parity.
+
 ## 2026-10-09 — catalog JP CUE bank windows with explicit offset domains
 
 - The exact authenticated JP CUE-projected ISO now catalogs all three bank
@@ -11,8 +24,8 @@
   identity remains rejected.
 - On TRV2, the authentic CUE-projected ISO dungeon-loader test passed three
   direct runs with the real-media environment variable set, and the font-tile
-  regression passed. Initial-level candidate binding remains raw-BIN-only;
-  this verifies catalog and byte-copy behavior, not JP CUE gameplay loading.
+  regression passed. This verifies catalog and byte-copy behavior, not JP CUE
+  gameplay loading.
 
 ## 2026-10-09 — catalog JP startup roster markers from the CUE ISO
 
