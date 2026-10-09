@@ -14,17 +14,21 @@
   snapshot gate because this older binary emitted no required VRAM snapshot;
   no transition receipt or gameplay-state change is claimed. Private capture
   summary: `/home/trv2/firestaff-theron-evidence/capture/jp-akutuba-autoload-poll-pcefast-20261009-1028/`.
-- A follow-up eight-second capture used the newer PCE Fast binary with the
-  L4C46/MPR1 probe and close-time VRAM support (binary MD5
+- Follow-up eight- and twelve-second captures used the newer PCE Fast binary
+  with the L4C46/MPR1 probe and close-time VRAM support (binary MD5
   `8a43dfb6ae6155d5562d1aa04a5bd761`) with the same authentic JP state, Track
-  02, and System Card. The state loaded and the runner wrote close-time VRAM,
-  VCE, SAT, and VDC-state snapshots, but it returned `BLOCKED`: all 952
-  controller reads had raw mask `0000`, with no host-key events, IRQs, or
-  authenticated CD-to-RAM receipts. The receipt still reports level 2, bank
-  1, pose `(2,3)`, and `transition=missing`; the stage-2 selector hook ran
-  1,439 times while the L4C46/MPR1 caller hook ran zero times. This is a
-  bounded negative runtime observation, not evidence that the caller is
-  unreachable during gameplay. Capture:
+  02, and System Card. Both loaded the state and wrote close-time VRAM, VCE,
+  SAT, and VDC-state snapshots. The first, with no input, had 952 zero-mask
+  controller reads. In the second, the scheduled `up@60:60` event was applied
+  and verified at the controller poll; 120 reads carried raw mask `0010`.
+  Neither run changed party coordinates `(2,3)` or direction `1`, and both
+  report level 2, bank 1, and `transition=missing`. The stage-2 selector
+  hook ran 1,439 times in the first and reached its 2,048-sample limit in the
+  second, while the L4C46/MPR1 caller hook ran zero times in both. Both
+  runners returned `BLOCKED` without IRQ or authenticated CD-to-RAM receipts.
+  These bounded captures prove input reaches controller polling, not that the
+  game accepts movement or that the caller is unreachable during gameplay.
+  Capture:
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-autoload-20261009-0840/`.
 - Next: use a PCE Fast binary with the required close-time snapshot support and
   first establish accepted controller input from the authentic state; then
