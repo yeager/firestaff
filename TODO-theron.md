@@ -102,6 +102,14 @@
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-runtime-code-follow-input-20261009-1255/`.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
+  A read-only cross-check of the 1255 capture matched its autoload-save MD5
+  (`d5c0daa227c04d55bdf20244803c00bd`) to the authentic user-created JP save
+  and found the final 8 KiB RAM snapshot values at `$2031/$203f/$2040/$2041`
+  consistent with the receipt. The UP mask (`0010`) is present at all 60
+  `$44c1/$44d2` polls as active-low `3e/3f`; the snapshot and receipt still
+  show `(2,3)`, zero party-position/command writes, and no transition. This
+  validates the capture's internal state/input consistency, not gameplay
+  movement or visual output.
   The UP trace's 128-step continuation now records the caller spine
   `$4349 → $4701 → $471D → $D26B → $D4EC → $D328 → $D32F`, including the
   indexed-pointer reads at `$77CE/$77CF` and the branch to `$D346`. It ends at

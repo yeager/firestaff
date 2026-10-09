@@ -13,6 +13,17 @@
   authenticated raw label access only; it does not identify these labels as
   Track 02 dungeon names or prove retail selector/UI behavior.
 
+## 2026-10-09 — cross-check JP input capture against authentic save RAM
+
+- A read-only audit matched the 1255 JP input capture's autoload-save MD5
+  (`d5c0daa227c04d55bdf20244803c00bd`) to the original user-created save and
+  confirmed the same 8 KiB final RAM snapshot values at `$2031/$203f/$2040/$2041`
+  as the capture receipt. The planned UP mask (`0010`) also appears at all 60
+  `$44c1/$44d2` controller polls with active-low samples `3e/3f`.
+- This cross-check supports save identity, state reporting, and controller
+  delivery only. It does not show an accepted move: final coordinates remain
+  `(2,3)`, with zero position/command writes and no transition.
+
 ## 2026-10-09 — source-lock the VCE descriptor-dispatch predecessor
 
 - The authentic US and JP Stage-2 BINs have the same 43-byte HuC6280 window
