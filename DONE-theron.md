@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — retain JP spawn-target candidate disassemblies
+
+- Added full MAME HuC6280 listings for the authenticated JP `$C95D` and
+  `$CC3E` raw-window candidates, with the previously reproduced listing hashes
+  and strict source/runtime caveats. The listings expose the `$CA1B` RTS in
+  the first window and `$CC5C` RTS plus following bytes in the second; the
+  initial `$CC3E` byte decodes as `ill $BB`. They do not prove runtime bank
+  mapping, execution, or gameplay semantics. The focused authentic US/JP
+  source test already locks these exact raw spans.
+
 ## 2026-10-09 — retain the JP `$4661` helper disassembly
 
 - Added the complete 25-byte MAME HuC6280 listing for JP `$4661` from the

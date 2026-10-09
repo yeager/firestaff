@@ -18,6 +18,11 @@
   the JP `$5D68/$5D62` call operands replacing US `$5D6A/$5D64`. These remain
   static regional bytes; runtime helper mapping, caller selection, return
   values, and spawn/RNG semantics are still unresolved.
+- Complete JP HuC6280 listings for the `$C95D`/`$CC3E` raw-window candidates
+  are now checked in beside their existing US source-window references. The focused
+  receipt test still validates the authentic candidate bytes, but neither raw
+  offset is yet bound to a runtime bank or execution; the initial `$CC3E`
+  decode is `ill $BB`, so its caller and entry context need runtime proof.
 
 ## 2026-10-10 — correct the VCE caller address
 

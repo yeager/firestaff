@@ -73,5 +73,10 @@ static regional candidates only; identical offset shift and caller target
 operands do not prove runtime bank ownership, mapping, execution, or return
 semantics. The `$4661` helper has six identical source copies; another prefix
 match at `0x254bb7` uses different JSR operands and is not admitted as the
-same helper. `semantic_publication_allowed` remains false, and no JP RNG,
+same helper. Complete MAME HuC6280 listings for both JP candidate windows are
+retained in `theron-disassembly/theron-jp-c95d-spawn-target-candidate-20261009.asm`
+and `theron-disassembly/theron-jp-cc3e-spawn-target-candidate-20261009.asm`.
+The listings preserve the exact instruction boundaries—including the initial
+`ill $BB` at `$CC3E` and RTS boundary at `$CC5C`—without claiming runtime
+reachability. `semantic_publication_allowed` remains false, and no JP RNG,
 spawn, or combat behavior is enabled by this receipt.
