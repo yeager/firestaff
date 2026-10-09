@@ -70,6 +70,30 @@ typedef struct {
     uint16_t spawn_rng_cc4c_bytes;
     uint32_t spawn_rng_cc4c_file_offset;
     uint32_t spawn_rng_cc4c_fnv1a;
+    /* JP static $4661 helper entry and $C414 preconsumer bytes; this does not
+     * establish runtime mapping, execution, or helper return semantics. */
+    int spawn_rng_helper_jp_verified;
+    uint16_t spawn_rng_helper_jp_address;
+    uint16_t spawn_rng_helper_jp_bytes;
+    uint32_t spawn_rng_helper_jp_file_offset;
+    uint32_t spawn_rng_helper_jp_fnv1a;
+    int spawn_rng_preconsumer_jp_verified;
+    uint16_t spawn_rng_preconsumer_jp_address;
+    uint16_t spawn_rng_preconsumer_jp_bytes;
+    uint32_t spawn_rng_preconsumer_jp_file_offset;
+    uint32_t spawn_rng_preconsumer_jp_fnv1a;
+    /* JP raw-window candidates for the caller's static $C95D/$CC3E targets;
+     * byte identity does not establish runtime bank mapping or execution. */
+    int spawn_rng_c95d_jp_candidate_verified;
+    uint16_t spawn_rng_c95d_jp_candidate_address;
+    uint16_t spawn_rng_c95d_jp_candidate_bytes;
+    uint32_t spawn_rng_c95d_jp_candidate_file_offset;
+    uint32_t spawn_rng_c95d_jp_candidate_fnv1a;
+    int spawn_rng_cc3e_jp_candidate_verified;
+    uint16_t spawn_rng_cc3e_jp_candidate_address;
+    uint16_t spawn_rng_cc3e_jp_candidate_bytes;
+    uint32_t spawn_rng_cc3e_jp_candidate_file_offset;
+    uint32_t spawn_rng_cc3e_jp_candidate_fnv1a;
     /* Additional US Track 02 caller window at $c3a0.  It is a byte-backed
      * source-consumer reference only; the pointed RAM tables remain
      * semantically unidentified. */

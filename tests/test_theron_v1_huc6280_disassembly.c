@@ -136,6 +136,26 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.spawn_runtime_c3a0_jp_bytes == 150u);
         assert(receipt.spawn_runtime_c3a0_jp_file_offset == 0x9bb20u);
         assert(receipt.spawn_runtime_c3a0_jp_fnv1a == 0xe292e892u);
+        assert(receipt.spawn_rng_preconsumer_jp_verified);
+        assert(receipt.spawn_rng_preconsumer_jp_address == 0xc414u);
+        assert(receipt.spawn_rng_preconsumer_jp_bytes == 27u);
+        assert(receipt.spawn_rng_preconsumer_jp_file_offset == 0x9bb94u);
+        assert(receipt.spawn_rng_preconsumer_jp_fnv1a == 0x3d11a727u);
+        assert(receipt.spawn_rng_helper_jp_verified);
+        assert(receipt.spawn_rng_helper_jp_address == 0x4661u);
+        assert(receipt.spawn_rng_helper_jp_bytes == 25u);
+        assert(receipt.spawn_rng_helper_jp_file_offset == 0x9bbb7u);
+        assert(receipt.spawn_rng_helper_jp_fnv1a == 0x1a732d61u);
+        assert(receipt.spawn_rng_c95d_jp_candidate_verified);
+        assert(receipt.spawn_rng_c95d_jp_candidate_address == 0xc95du);
+        assert(receipt.spawn_rng_c95d_jp_candidate_bytes == 255u);
+        assert(receipt.spawn_rng_c95d_jp_candidate_file_offset == 0x0a3ebbu);
+        assert(receipt.spawn_rng_c95d_jp_candidate_fnv1a == 0x063b99e9u);
+        assert(receipt.spawn_rng_cc3e_jp_candidate_verified);
+        assert(receipt.spawn_rng_cc3e_jp_candidate_address == 0xcc3eu);
+        assert(receipt.spawn_rng_cc3e_jp_candidate_bytes == 200u);
+        assert(receipt.spawn_rng_cc3e_jp_candidate_file_offset == 0x0a419cu);
+        assert(receipt.spawn_rng_cc3e_jp_candidate_fnv1a == 0x13a65ea6u);
         printf("PASS: authentic JP static $C3A0 counterpart at $%x/%u/%08x\n",
                (unsigned)receipt.spawn_runtime_c3a0_jp_address,
                (unsigned)receipt.spawn_runtime_c3a0_jp_bytes,
@@ -147,6 +167,10 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(!receipt.spawn_rng_cc4c_verified);
         assert(!receipt.spawn_runtime_c3a0_verified);
         assert(!receipt.spawn_runtime_c3a0_jp_verified);
+        assert(!receipt.spawn_rng_preconsumer_jp_verified);
+        assert(!receipt.spawn_rng_helper_jp_verified);
+        assert(!receipt.spawn_rng_c95d_jp_candidate_verified);
+        assert(!receipt.spawn_rng_cc3e_jp_candidate_verified);
     }
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);

@@ -80,6 +80,24 @@
  * selection and execution remain unproven. */
 #define THERON_JP_SPAWN_C3A0_FILE_OFFSET 0x9bb20u
 #define THERON_JP_SPAWN_C3A0_FNV1A 0xe292e892u
+/* JP static counterparts adjacent to / inside the authenticated C3A0 window.
+ * These are source-byte identities only; no runtime bank mapping is claimed. */
+#define THERON_JP_SPAWN_RNG_PRECONSUMER_FILE_OFFSET 0x9bb94u
+#define THERON_JP_SPAWN_RNG_PRECONSUMER_ADDRESS 0xc414u
+#define THERON_JP_SPAWN_RNG_PRECONSUMER_BYTES 27u
+#define THERON_JP_SPAWN_RNG_PRECONSUMER_FNV1A 0x3d11a727u
+#define THERON_JP_SPAWN_RNG_HELPER_ADDRESS 0x4661u
+#define THERON_JP_SPAWN_RNG_HELPER_BYTES 25u
+#define THERON_JP_SPAWN_RNG_HELPER_FILE_OFFSET 0x9bbb7u
+#define THERON_JP_SPAWN_RNG_HELPER_FNV1A 0x1a732d61u
+#define THERON_JP_SPAWN_C95D_FILE_OFFSET 0x0a3ebbu
+#define THERON_JP_SPAWN_C95D_ADDRESS 0xc95du
+#define THERON_JP_SPAWN_C95D_BYTES 255u
+#define THERON_JP_SPAWN_C95D_FNV1A 0x063b99e9u
+#define THERON_JP_SPAWN_CC3E_FILE_OFFSET 0x0a419cu
+#define THERON_JP_SPAWN_CC3E_ADDRESS 0xcc3eu
+#define THERON_JP_SPAWN_CC3E_BYTES 200u
+#define THERON_JP_SPAWN_CC3E_FNV1A 0x13a65ea6u
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -155,6 +173,24 @@ static const uint8_t g_spawn_runtime_c3a0[THERON_SPAWN_C3A0_BYTES] = {
     0x85, 0x8a, 0xa5, 0xad, 0x85, 0x8b, 0xa5, 0xab, 0xa4, 0xac, 0x20, 0x6b,
     0xc9, 0xd0, 0x02, 0x46, 0xb4, 0xa6, 0xbb, 0x20, 0x4c, 0xcc, 0x60, 0xa5,
     0xb3, 0x29, 0xe0, 0xc9, 0x80, 0xd0,
+};
+
+/* JP Track 02's C3A0 caller window contains the regional preconsumer at
+ * source PC $C414. The $4661 entry overlaps the second byte of the preceding
+ * instruction at raw offset $9bbb6; start its source span at $9bbb7. Both
+ * spans remain static evidence, not proof of runtime execution. */
+static const uint8_t g_spawn_rng_preconsumer_jp[
+    THERON_JP_SPAWN_RNG_PRECONSUMER_BYTES] = {
+    0x85, 0xad, 0xa5, 0xa9, 0x85, 0x8a, 0xa5, 0xad, 0x85,
+    0x8b, 0xa5, 0xab, 0xa4, 0xac, 0x20, 0x5d, 0xc9, 0xd0,
+    0x02, 0x46, 0xb4, 0xa6, 0xbb, 0x20, 0x3e, 0xcc, 0x60
+};
+static const uint8_t g_spawn_rng_helper_jp[
+    THERON_JP_SPAWN_RNG_HELPER_BYTES] = {
+    0xa5, 0xb3, 0x29, 0x07, 0xc9, 0x04, 0xd0, 0x11,
+    0x20, 0x68, 0x5d, 0xa9, 0x02, 0x85, 0x8a, 0xa9,
+    0x04, 0xa6, 0x40, 0xa4, 0x41, 0x20, 0x62, 0x5d,
+    0x60
 };
 
 static const uint16_t g_stage2_dispatch_targets[THERON_STAGE2_DISPATCH_ENTRIES] = {
@@ -254,6 +290,11 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t spawn_rng_cc4c[THERON_SPAWN_CC4C_BYTES];
     uint8_t spawn_runtime_c3a0[THERON_SPAWN_C3A0_BYTES];
     uint8_t spawn_runtime_c3a0_jp[THERON_SPAWN_C3A0_BYTES];
+    uint8_t spawn_rng_preconsumer_jp[
+        THERON_JP_SPAWN_RNG_PRECONSUMER_BYTES];
+    uint8_t spawn_rng_helper_jp[THERON_JP_SPAWN_RNG_HELPER_BYTES];
+    uint8_t spawn_rng_c95d_jp[THERON_JP_SPAWN_C95D_BYTES];
+    uint8_t spawn_rng_cc3e_jp[THERON_JP_SPAWN_CC3E_BYTES];
     int raw_bin_variant;
     int retail_track02_variant;
     uint32_t expected_size;
@@ -336,7 +377,21 @@ int theron_v1_huc6280_disassembly_read_file(
         (track02_variant == THERON_TRACK02_VARIANT_JP_BIN &&
          (fseek(file, THERON_JP_SPAWN_C3A0_FILE_OFFSET, SEEK_SET) != 0 ||
           fread(spawn_runtime_c3a0_jp, 1u, sizeof(spawn_runtime_c3a0_jp),
-                file) != sizeof(spawn_runtime_c3a0_jp))) ||
+                file) != sizeof(spawn_runtime_c3a0_jp) ||
+          fseek(file, THERON_JP_SPAWN_RNG_PRECONSUMER_FILE_OFFSET,
+                SEEK_SET) != 0 ||
+          fread(spawn_rng_preconsumer_jp, 1u,
+                sizeof(spawn_rng_preconsumer_jp), file) !=
+              sizeof(spawn_rng_preconsumer_jp) ||
+          fseek(file, THERON_JP_SPAWN_RNG_HELPER_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_rng_helper_jp, 1u, sizeof(spawn_rng_helper_jp), file) !=
+              sizeof(spawn_rng_helper_jp) ||
+          fseek(file, THERON_JP_SPAWN_C95D_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_rng_c95d_jp, 1u, sizeof(spawn_rng_c95d_jp), file) !=
+              sizeof(spawn_rng_c95d_jp) ||
+          fseek(file, THERON_JP_SPAWN_CC3E_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_rng_cc3e_jp, 1u, sizeof(spawn_rng_cc3e_jp), file) !=
+              sizeof(spawn_rng_cc3e_jp))) ||
         (raw_bin_variant &&
          (fseek(file, (long)(bank_file_offset +
                              THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET),
@@ -400,6 +455,20 @@ int theron_v1_huc6280_disassembly_read_file(
         (track02_variant == THERON_TRACK02_VARIANT_JP_BIN &&
          fnv1a(spawn_runtime_c3a0_jp, sizeof(spawn_runtime_c3a0_jp)) !=
              THERON_JP_SPAWN_C3A0_FNV1A) ||
+        (track02_variant == THERON_TRACK02_VARIANT_JP_BIN &&
+         (memcmp(spawn_rng_preconsumer_jp, g_spawn_rng_preconsumer_jp,
+                 sizeof(spawn_rng_preconsumer_jp)) != 0 ||
+          fnv1a(spawn_rng_preconsumer_jp,
+                sizeof(spawn_rng_preconsumer_jp)) !=
+              THERON_JP_SPAWN_RNG_PRECONSUMER_FNV1A ||
+          memcmp(spawn_rng_helper_jp, g_spawn_rng_helper_jp,
+                 sizeof(spawn_rng_helper_jp)) != 0 ||
+          fnv1a(spawn_rng_helper_jp, sizeof(spawn_rng_helper_jp)) !=
+              THERON_JP_SPAWN_RNG_HELPER_FNV1A ||
+          fnv1a(spawn_rng_c95d_jp, sizeof(spawn_rng_c95d_jp)) !=
+              THERON_JP_SPAWN_C95D_FNV1A ||
+          fnv1a(spawn_rng_cc3e_jp, sizeof(spawn_rng_cc3e_jp)) !=
+              THERON_JP_SPAWN_CC3E_FNV1A)) ||
         decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
         decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
         decompressor[sizeof(decompressor) - 1u] != 0x60u) {
@@ -468,6 +537,38 @@ int theron_v1_huc6280_disassembly_read_file(
             spawn_runtime_c3a0, sizeof(spawn_runtime_c3a0));
     }
     if (track02_variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        receipt.spawn_rng_preconsumer_jp_verified = 1;
+        receipt.spawn_rng_preconsumer_jp_address =
+            THERON_JP_SPAWN_RNG_PRECONSUMER_ADDRESS;
+        receipt.spawn_rng_preconsumer_jp_bytes =
+            THERON_JP_SPAWN_RNG_PRECONSUMER_BYTES;
+        receipt.spawn_rng_preconsumer_jp_file_offset =
+            THERON_JP_SPAWN_RNG_PRECONSUMER_FILE_OFFSET;
+        receipt.spawn_rng_preconsumer_jp_fnv1a = fnv1a(
+            spawn_rng_preconsumer_jp, sizeof(spawn_rng_preconsumer_jp));
+        receipt.spawn_rng_helper_jp_verified = 1;
+        receipt.spawn_rng_helper_jp_address = THERON_JP_SPAWN_RNG_HELPER_ADDRESS;
+        receipt.spawn_rng_helper_jp_bytes = THERON_JP_SPAWN_RNG_HELPER_BYTES;
+        receipt.spawn_rng_helper_jp_file_offset =
+            THERON_JP_SPAWN_RNG_HELPER_FILE_OFFSET;
+        receipt.spawn_rng_helper_jp_fnv1a = fnv1a(
+            spawn_rng_helper_jp, sizeof(spawn_rng_helper_jp));
+        receipt.spawn_rng_c95d_jp_candidate_verified = 1;
+        receipt.spawn_rng_c95d_jp_candidate_address =
+            THERON_JP_SPAWN_C95D_ADDRESS;
+        receipt.spawn_rng_c95d_jp_candidate_bytes = THERON_JP_SPAWN_C95D_BYTES;
+        receipt.spawn_rng_c95d_jp_candidate_file_offset =
+            THERON_JP_SPAWN_C95D_FILE_OFFSET;
+        receipt.spawn_rng_c95d_jp_candidate_fnv1a = fnv1a(
+            spawn_rng_c95d_jp, sizeof(spawn_rng_c95d_jp));
+        receipt.spawn_rng_cc3e_jp_candidate_verified = 1;
+        receipt.spawn_rng_cc3e_jp_candidate_address =
+            THERON_JP_SPAWN_CC3E_ADDRESS;
+        receipt.spawn_rng_cc3e_jp_candidate_bytes = THERON_JP_SPAWN_CC3E_BYTES;
+        receipt.spawn_rng_cc3e_jp_candidate_file_offset =
+            THERON_JP_SPAWN_CC3E_FILE_OFFSET;
+        receipt.spawn_rng_cc3e_jp_candidate_fnv1a = fnv1a(
+            spawn_rng_cc3e_jp, sizeof(spawn_rng_cc3e_jp));
         receipt.spawn_runtime_c3a0_jp_verified = 1;
         receipt.spawn_runtime_c3a0_jp_address = THERON_SPAWN_C3A0_ADDRESS;
         receipt.spawn_runtime_c3a0_jp_bytes = THERON_SPAWN_C3A0_BYTES;

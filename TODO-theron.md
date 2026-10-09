@@ -1,5 +1,14 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — extend JP static spawn source evidence
+
+- 🔒 The authenticated JP Track 02 disassembly receipt now checks the
+  `$C414` caller/preconsumer, the overlapped `$4661` helper entry, and
+  raw-window candidates for the caller's `$C95D/$CC3E` targets. This adds
+  regional byte coverage only. Runtime bank mapping, helper/callee returns,
+  caller selection, and JP spawn/RNG/combat behavior remain unproven and must
+  stay closed.
+
 ## 2026-10-10 — correct the VCE caller address
 
 - The 23-byte caller at raw BIN offsets `0x2c4fde`/`0x2c46ae` begins at

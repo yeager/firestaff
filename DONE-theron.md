@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — lock JP static spawn caller/helper bytes
+
+- Extended the hash-authenticated JP raw-BIN disassembly receipt with the
+  27-byte `$C414` caller/preconsumer (`0x9bb94`, FNV-1a `3d11a727`) and the
+  `$4661` helper entry (`0x9bbb7`, 25 bytes, FNV-1a `1a732d61`), correcting an
+  initially included preceding byte from an overlapping instruction. Added
+  byte-locked JP static candidates for the `$C95D/$CC3E` caller targets.
+  MAME HuC6280 listings matched in three loops and the focused authentic-media
+  test passed three loops over US/JP BIN and ISO images. The adjacent
+  source-binder real-media tests also passed three US/JP loops, confirming the
+  regional 269-byte `$B0E5` source spans without runtime publication. This is
+  static source evidence only; runtime mapping, execution, returns, and JP
+  spawn/RNG/combat semantics remain closed.
+
 ## 2026-10-10 — correct the VCE caller's logical address
 
 - Corrected the caller entry from `$9682` to `$966e`. The authenticated raw
