@@ -25,6 +25,7 @@ BUFFER_PHYSICAL_BASE = 0x1F0800
 BOOT_SIGNATURE_PC = 0x2B39
 BOOT_ENTRY_PC = 0x2B44
 STAGE_ENTRY_PC = 0x4002
+STAGE_CONTINUATION_SIGNATURE = bytes.fromhex("7300200027800062")
 STAGE_ENTRY_SIGNATURE = bytes.fromhex("73002001200f0073")
 TRACK02_INDEX1_FILE_OFFSET = 526_848
 TRACK02_RAW_SECTOR_BYTES = 2_352
@@ -159,6 +160,27 @@ def verify_bootstrap(
     source_user_offset = relative_offset % TRACK02_RAW_SECTOR_BYTES - TRACK02_USER_DATA_OFFSET
     if (source_lba, source_user_offset) != (4_521, 2):
         raise ValueError("the static second-stage source candidate moved in authentic Track 02")
+    continuation_pc = 0x4009
+    continuation = next(
+        (row for row in rows if row["reader_pc"] == continuation_pc),
+        None,
+    )
+    if (
+        continuation is None
+        or continuation["reader_physical_pc"] != 0x100009
+        or continuation["reader_code_bytes"] != STAGE_CONTINUATION_SIGNATURE
+    ):
+        raise ValueError("the sampled $4009 second-stage continuation is missing")
+    continuation_occurrences = []
+    search_from = 0
+    while True:
+        source_offset = track_bytes.find(STAGE_CONTINUATION_SIGNATURE, search_from)
+        if source_offset < 0:
+            break
+        continuation_occurrences.append(source_offset)
+        search_from = source_offset + 1
+    if continuation_occurrences != [source_occurrences[0] + 7]:
+        raise ValueError("the sampled $4009 continuation does not follow the static source candidate")
 
 
 def main() -> int:
@@ -176,7 +198,7 @@ def main() -> int:
 
     print("PASS: authentic Track 02 signature accepted by executed first-stage code")
     print("handoff=$4000 physical_pc=0x100002")
-    print("static_stage2_candidate=lba4521 user_offset=2 occurrence_count=1; dynamic source binding remains open")
+    print("static_stage2_candidate=lba4521 user_offset=2 runtime_windows=4002,4009; dynamic source binding remains open")
     return 0
 
 

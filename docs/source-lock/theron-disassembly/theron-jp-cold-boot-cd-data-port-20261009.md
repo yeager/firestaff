@@ -59,3 +59,7 @@ raw Track 02 file offset 2,716,578: LBA 4521, raw-sector offset 18, user offset
 2. H6280 disassembly there starts with TII $2000,$2001,$000F and
 TII $2000,$2700,$0080. This is a static source candidate, not a dynamic
 CD-to-RAM receipt.
+
+The same runtime trace samples PC $4009 with bytes 7300200027800062. This
+window occurs uniquely at file offset 2,716,585, seven bytes after the first
+window, extending the static source candidate to 15 consecutive bytes. It

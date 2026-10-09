@@ -6648,3 +6648,6 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   from the still-open dynamic source-binding requirement.
   Here, missing source binding means no dynamic receipt for transferring this
   static candidate into the $4000 runtime region.
+  A second runtime sample at PC $4009 matches the next unique eight-byte
+  window, giving a 15-byte static code candidate. It remains distinct from a
+  source-transfer receipt.
