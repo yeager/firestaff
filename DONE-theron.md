@@ -13,6 +13,11 @@ maps and confirmed regional names and same-index item counts. This is static
 source/data verification only; it does not establish runtime execution,
 inventory behavior, or gameplay parity.
 
+The authentic US file-select text-source receipt also passed three runs
+against the same hash-verified BIN, including corruption and wrong-identity
+rejection controls. The prompt bytes are source-bound, but the screen consumer
+and actual presentation remain unproven.
+
 ## 2026-10-09 — capture PCE Fast close-time VDC state
 
 Added opt-in capture of PCE Fast VRAM, VCE palette RAM, sprite attributes,
