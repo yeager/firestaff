@@ -149,6 +149,16 @@ md5_file() {
     fi
 }
 
+sha256_file() {
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$1" | awk '{print $1}'
+    elif command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{print $1}'
+    else
+        return 1
+    fi
+}
+
 capture_profile_scancode() {
     local key=$1
     awk -v key="$key" '
@@ -546,8 +556,11 @@ if [[ -n "$autoload_state" && ! -f "$autoload_state" ]]; then
     exit 1
 fi
 if [[ -n "$autoload_state" ]]; then
-    autoload_state_magic=$(dd if="$autoload_state" bs=1 count=4 2>/dev/null || true)
-    if [[ "$autoload_state_magic" == 'HUBM' ]]; then
+    # Savestates are gzip-compressed binary files and may contain NUL bytes;
+    # decode their prefix as hexadecimal instead of placing raw bytes in a
+    # shell variable (which otherwise emits a shell warning on NUL bytes).
+    autoload_state_magic=$(od -An -tx1 -N4 "$autoload_state" | tr -d '[:space:]')
+    if [[ "$autoload_state_magic" == '4855424d' ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_STATE points to HUBM SRAM, not a Mednafen savestate' >&2
         exit 1
     fi
@@ -1028,6 +1041,10 @@ vdc_io_trace="${trace}.vdc-io"
 main_ram_snapshot="${trace}.ram"
 bram_snapshot="${trace}.bram"
 pce_fast_main_ram_snapshot="${trace}.pce-fast.ram"
+pce_fast_vram_snapshot="${trace}.pce-fast.vram"
+pce_fast_vce_snapshot="${trace}.pce-fast.vce"
+pce_fast_vdc_sat_snapshot="${trace}.pce-fast.sat"
+pce_fast_vdc_state_snapshot="${trace}.pce-fast.vdc-state"
 pce_fast_party_ram_trace="${trace}.pce-fast-party-ram"
 save_manager_code_dump="${trace}.save-manager-code"
 command_ram_trace="${trace}.command-ram"
@@ -1049,7 +1066,27 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
+for pce_fast_snapshot in "$pce_fast_vram_snapshot" "$pce_fast_vce_snapshot" \
+    "$pce_fast_vdc_sat_snapshot" "$pce_fast_vdc_state_snapshot"; do
+    if [[ -e "$pce_fast_snapshot" || -L "$pce_fast_snapshot" ]]; then
+        printf 'FAIL: refusing to overwrite existing PCE Fast snapshot: %s\n' \
+            "$pce_fast_snapshot" >&2
+        exit 1
+    fi
+done
+rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" \
+    "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" \
+    "$cd_ram_target_write_trace" "$cd_data_port_read_trace" \
+    "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
+    "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
+    "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" \
+    "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" \
+    "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" \
+    "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" \
+    "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" \
+    "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
+    "$command_ram_after_snapshot" "$transition_receipt" \
+    "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ "$capture_clonecd_track02" == 1 ]]; then
@@ -1279,6 +1316,10 @@ launch=(
     FIRESTAFF_THERON_MAIN_RAM_SNAPSHOT="$main_ram_snapshot" \
     FIRESTAFF_THERON_BRAM_SNAPSHOT="$bram_snapshot" \
     FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT="$pce_fast_main_ram_snapshot" \
+    FIRESTAFF_THERON_PCE_FAST_VRAM_SNAPSHOT="$pce_fast_vram_snapshot" \
+    FIRESTAFF_THERON_PCE_FAST_VCE_SNAPSHOT="$pce_fast_vce_snapshot" \
+    FIRESTAFF_THERON_PCE_FAST_SAT_SNAPSHOT="$pce_fast_vdc_sat_snapshot" \
+    FIRESTAFF_THERON_PCE_FAST_VDC_STATE_SNAPSHOT="$pce_fast_vdc_state_snapshot" \
     FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
     FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
     FIRESTAFF_THERON_COMMAND_RAM_TRACE="$command_ram_trace" \
@@ -1647,6 +1688,34 @@ if [[ "$capture_mednafen_module" == pce ]]; then
     require_snapshot_size "$bram_snapshot" 2048 'PCE backup RAM' || exit 1
 else
     require_snapshot_size "$pce_fast_main_ram_snapshot" 8192 'PCE Fast main RAM' || exit 1
+    require_snapshot_size "$pce_fast_vram_snapshot" 65536 'PCE Fast VDC VRAM' || exit 1
+    require_snapshot_size "$pce_fast_vce_snapshot" 1024 'PCE Fast VCE palette RAM' || exit 1
+    require_snapshot_size "$pce_fast_vdc_sat_snapshot" 512 'PCE Fast VDC sprite attribute table' || exit 1
+    if [[ ! -s "$pce_fast_vdc_state_snapshot" ]] ||
+       ! grep -Fqx 'FIRESTAFF_THERON_PCE_FAST_VDC_STATE_V1' "$pce_fast_vdc_state_snapshot" ||
+       ! grep -Fqx 'boundary=CloseGame-before-Cleanup' "$pce_fast_vdc_state_snapshot" ||
+       ! grep -Fqx 'chips=1' "$pce_fast_vdc_state_snapshot" ||
+       ! grep -Eq '^vce_cr=[0-9a-f]{2} dot_clock=[0-9a-f]{2} ctaddress=[0-9a-f]{3}$' "$pce_fast_vdc_state_snapshot" ||
+       ! grep -Eq '^vdc=0 bxr=[0-9a-f]{4} byr=[0-9a-f]{4} mwr=[0-9a-f]{4} hsr=[0-9a-f]{4} hdr=[0-9a-f]{4} vsr=[0-9a-f]{4} vdr=[0-9a-f]{4} vcr=[0-9a-f]{4} cr=[0-9a-f]{4}$' "$pce_fast_vdc_state_snapshot"; then
+        printf 'BLOCKED: PCE Fast capture lacks the close-time HuC6270 register snapshot (exit=%s)\n' "$status"
+        exit 1
+    fi
+    pce_fast_vram_sha256=$(sha256_file "$pce_fast_vram_snapshot") || {
+        printf '%s\n' 'FAIL: could not hash the PCE Fast VDC VRAM snapshot' >&2
+        exit 1
+    }
+    pce_fast_vce_sha256=$(sha256_file "$pce_fast_vce_snapshot") || {
+        printf '%s\n' 'FAIL: could not hash the PCE Fast VCE snapshot' >&2
+        exit 1
+    }
+    pce_fast_sat_sha256=$(sha256_file "$pce_fast_vdc_sat_snapshot") || {
+        printf '%s\n' 'FAIL: could not hash the PCE Fast VDC SAT snapshot' >&2
+        exit 1
+    }
+    pce_fast_vdc_state_sha256=$(sha256_file "$pce_fast_vdc_state_snapshot") || {
+        printf '%s\n' 'FAIL: could not hash the PCE Fast VDC state snapshot' >&2
+        exit 1
+    }
     if [[ -e "$main_ram_snapshot" || -e "$bram_snapshot" ]]; then
         printf '%s\n' 'FAIL: PCE Fast capture must not mislabel PCE-only RAM snapshots' >&2
         exit 1
@@ -1937,6 +2006,14 @@ fi
         printf 'vce_palette_snapshot_bytes=1024\n'
     else
         printf 'pce_fast_main_ram_snapshot_bytes=8192\n'
+        printf 'pce_fast_vdc_vram_snapshot_bytes=65536\n'
+        printf 'pce_fast_vce_palette_snapshot_bytes=1024\n'
+        printf 'pce_fast_vdc_sat_snapshot_bytes=512\n'
+        printf 'pce_fast_vdc_snapshot_boundary=CloseGame-before-Cleanup\n'
+        printf 'pce_fast_vdc_vram_sha256=%s\n' "$pce_fast_vram_sha256"
+        printf 'pce_fast_vce_sha256=%s\n' "$pce_fast_vce_sha256"
+        printf 'pce_fast_vdc_sat_sha256=%s\n' "$pce_fast_sat_sha256"
+        printf 'pce_fast_vdc_state_sha256=%s\n' "$pce_fast_vdc_state_sha256"
     fi
     if [[ "$capture_mednafen_module" == pce ]]; then
         printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"

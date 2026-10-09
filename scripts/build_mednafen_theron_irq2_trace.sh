@@ -224,6 +224,12 @@ sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$target_write_patch" \
     > "$target_write_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$target_write_rendered"
+fast_vdc_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch"
+fast_vdc_snapshot_rendered="$build_root/theron-pce-fast-vdc-snapshot.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$fast_vdc_snapshot_patch" \
+    > "$fast_vdc_snapshot_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$fast_vdc_snapshot_rendered"
 if ! awk '
     /if\(Theron3879FastTargetStepsRemaining \|\|/ {
         if(previous_nonblank !~ /TheronTraceInstructionPhysicalPC =/) exit 1

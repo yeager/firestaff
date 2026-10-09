@@ -1,5 +1,29 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — capture PCE Fast close-time VDC state
+
+Added opt-in capture of PCE Fast VRAM, VCE palette RAM, sprite attributes,
+and HuC6270 registers immediately before emulator cleanup. The raw 16-bit
+dumps use explicit little-endian serialization, fixed bounds, and exclusive
+file creation; the harness validates output sizes and records SHA-256 hashes.
+The focused regression and complete Mednafen 1.32.1 patch-only test passed on
+trv2, and the full PCE Fast build advertised both `pce` and `pce_fast`.
+The capture harness checks the compressed save-state prefix as hexadecimal so
+binary NUL bytes are not inserted into a shell variable; its regression also
+rejects a raw-byte header read.
+
+Two isolated captures used the authentic Japanese Rev. 1 CUE and System Card:
+a cold start and an emulator-created Japanese Mednafen state
+(`d5c0daa227c04d55bdf20244803c00bd`). Both yielded correctly sized VDC/VCE
+snapshots; the state-loaded VRAM and VCE hashes and HuC6270 registers differed
+from cold start. The autoload log explicitly confirmed the Japanese state was
+loaded, and the rerun emitted no binary-header warning. A repeated run
+targeting existing output was rejected before overwriting it. The state-loaded
+capture still reported `transition=missing`, zero CD IRQs, and zero
+authenticated CD-to-RAM receipts. This verifies bounded reference-state
+capture only, not dungeon entry, original rendering parity, or gameplay
+semantics.
+
 ## 2026-10-08 — compare all regional dungeon-map source bytes
 
 The real-media US and JP dungeon-map tests now compare every loaded map header

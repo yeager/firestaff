@@ -46,6 +46,7 @@ origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generatio
 game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 fast_ram_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch
+fast_vdc_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch
 capture_script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 rng_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch
 vdc_io_patch_file=$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch
@@ -495,6 +496,39 @@ if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'SCSICD_GetLastDataOrigin' "$fifo_origin_v2_patch_file" ||
    ! grep -Fq 'pce_cd_origin_ram_receipt source_lba=%u source_offset=%u' "$fifo_origin_v2_patch_file"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'autoload_state_magic=$(od -An -tx1 -N4' "$capture_script" ||
+   ! grep -Fq "== '4855424d'" "$capture_script" ||
+   grep -Fq 'dd if="$autoload_state" bs=1 count=4' "$capture_script"; then
+    printf '%s\n' 'FAIL: binary savestate magic must be checked without storing raw NUL bytes in a shell variable' >&2
+    exit 1
+fi
+if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch' "$build_script" ||
+   ! grep -Fq 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_PATCH_BLANK_CONTEXT' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq 'TheronWritePCEFastLE16Snapshot(vram_path, vdc->VRAM, VRAM_Size)' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq 'TheronWritePCEFastLE16Snapshot(sat_path, vdc->SAT, 0x100)' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq 'TheronWritePCEFastLE16Snapshot(vce_path, vce.color_table, 0x200)' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq 'const uint8 bytes[2] = { (uint8)(values[i] & 0xFF)' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq '(uint8)(values[i] >> 8)' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq 'boundary=CloseGame-before-Cleanup' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_SNAPSHOT' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VCE_SNAPSHOT' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_SAT_SNAPSHOT' "$capture_script" ||
+   ! grep -Fq 'require_snapshot_size "$pce_fast_vram_snapshot" 65536' "$capture_script" ||
+   ! grep -Fq 'require_snapshot_size "$pce_fast_vce_snapshot" 1024' "$capture_script" ||
+   ! grep -Fq 'require_snapshot_size "$pce_fast_vdc_sat_snapshot" 512' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VDC_STATE_V1' "$capture_script" ||
+   ! grep -Fq "refusing to overwrite existing PCE Fast snapshot" "$capture_script" ||
+   ! grep -Fq "! grep -Fqx 'chips=1'" "$capture_script" ||
+   ! grep -Fq 'pce_fast_vdc_vram_sha256=%s' "$capture_script" ||
+   ! grep -Fq 'pce_fast_vce_sha256=%s' "$capture_script" ||
+   ! grep -Fq 'pce_fast_vdc_sat_sha256=%s' "$capture_script" ||
+   ! grep -Fq 'pce_fast_vdc_state_sha256=%s' "$capture_script" ||
+   ! grep -Fq '(unsigned)current->BXR' "$fast_vdc_snapshot_patch_file" ||
+   ! grep -Fq 'VDC_TotalChips != 1' "$fast_vdc_snapshot_patch_file"; then
+    printf '%s\n' 'FAIL: PCE Fast snapshots must retain bounded raw VDC/VCE data and identify their terminal capture boundary' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT' "$build_script" ||

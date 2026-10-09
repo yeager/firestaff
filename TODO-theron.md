@@ -1,5 +1,14 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — close the dungeon-rendering evidence gap
+
+- 🔒 The PCE Fast close-time snapshots now work on both authentic cold-start
+  and emulator-created Japanese state captures, but the state-loaded run still
+  ends with `transition=missing`, zero CD IRQs, and zero authenticated
+  CD-to-RAM receipts. It shows distinct renderer state, not a verified dungeon
+  frame. Capture a same-session authentic route into a dungeon before claiming
+  render parity or using the snapshots as gameplay evidence.
+
 ## 2026-10-08 — Track 19 item-name mapping boundary
 
 The focused real-media guard now proves exact raw-name length and byte

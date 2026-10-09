@@ -1,0 +1,100 @@
+--- a/src/pce_fast/pce.cpp
++++ b/src/pce_fast/pce.cpp
+@@ -18,5 +18,7 @@
+ #include "pce.h"
+ #include "vdc.h"
++#include <stdio.h>
++#include <stdlib.h>
+ #include "psg.h"
+ #include "input.h"
+ #include "huc.h"
+@@ -41,5 +43,83 @@
+ static bool IsSGX;
+ static bool IsHES;
+ int pce_overclocked;
++
++static bool TheronWritePCEFastLE16Snapshot(const char *path,
++                                            const uint16 *values,
++                                            const size_t count)
++{
++ if(!path || !*path || !values)
++  return false;
++ FILE *snapshot = fopen(path, "wbx");
++ if(!snapshot)
++  return false;
++ bool complete = true;
++ for(size_t i = 0; i < count; i++)
++ {
++  const uint8 bytes[2] = { (uint8)(values[i] & 0xFF),
++                           (uint8)(values[i] >> 8) };
++  if(fwrite(bytes, 1, sizeof(bytes), snapshot) != sizeof(bytes))
++  {
++   complete = false;
++   break;
++  }
++ }
++ const bool closed = fclose(snapshot) == 0;
++ return complete && closed;
++}
++
++static void TheronWritePCEFastVDCSnapshots(void)
++{
++ if(IsSGX || VDC_TotalChips != 1)
++  return;
++ const vdc_t *vdc = &vdc_chips[0];
++ const char *vram_path = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_SNAPSHOT");
++ const char *sat_path = getenv("FIRESTAFF_THERON_PCE_FAST_SAT_SNAPSHOT");
++ const char *vce_path = getenv("FIRESTAFF_THERON_PCE_FAST_VCE_SNAPSHOT");
++ const char *state_path = getenv("FIRESTAFF_THERON_PCE_FAST_VDC_STATE_SNAPSHOT");
++ if(vram_path && *vram_path)
++  MDFN_printf("Theron PCE Fast close-time VRAM snapshot %s (%s)\n",
++               TheronWritePCEFastLE16Snapshot(vram_path, vdc->VRAM, VRAM_Size) ? "written" : "incomplete",
++               vram_path);
++ if(sat_path && *sat_path)
++  MDFN_printf("Theron PCE Fast close-time SAT snapshot %s (%s)\n",
++               TheronWritePCEFastLE16Snapshot(sat_path, vdc->SAT, 0x100) ? "written" : "incomplete",
++               sat_path);
++ if(vce_path && *vce_path)
++  MDFN_printf("Theron PCE Fast close-time VCE snapshot %s (%s)\n",
++               TheronWritePCEFastLE16Snapshot(vce_path, vce.color_table, 0x200) ? "written" : "incomplete",
++               vce_path);
++ if(state_path && *state_path)
++ {
++  FILE *state = fopen(state_path, "wx");
++  if(state)
++  {
++   bool complete = fprintf(state,
++       "FIRESTAFF_THERON_PCE_FAST_VDC_STATE_V1\n"
++       "boundary=CloseGame-before-Cleanup\n"
++       "chips=%d\n"
++       "vce_cr=%02x dot_clock=%02x ctaddress=%03x\n",
++       VDC_TotalChips,
++       (unsigned)vce.CR, (unsigned)vce.dot_clock,
++       (unsigned)vce.ctaddress) > 0;
++   for(int chip = 0; chip < VDC_TotalChips && complete; chip++)
++   {
++    const vdc_t *current = &vdc_chips[chip];
++    complete = fprintf(state,
++        "vdc=%d bxr=%04x byr=%04x mwr=%04x hsr=%04x hdr=%04x vsr=%04x vdr=%04x vcr=%04x cr=%04x\n",
++        chip, (unsigned)current->BXR, (unsigned)current->BYR,
++        (unsigned)current->MWR, (unsigned)current->HSR,
++        (unsigned)current->HDR, (unsigned)current->VSR,
++        (unsigned)current->VDR, (unsigned)current->VCR,
++        (unsigned)current->CR) > 0;
++   }
++   const bool closed = fclose(state) == 0;
++   if(!complete || !closed)
++    MDFN_printf("Theron PCE Fast close-time VDC state snapshot incomplete: %s\n", state_path);
++  }
++  else
++   MDFN_printf("Theron PCE Fast close-time VDC state snapshot open failed: %s\n", state_path);
++ }
++}
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ // Statically allocated for speed...or something.
+@@ -502,4 +582,5 @@ static MDFN_COLD void CloseGame(void)
+ {
+  HuC_SaveNV();
++ TheronWritePCEFastVDCSnapshots();
+  Cleanup();
+ }
