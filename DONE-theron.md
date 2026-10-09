@@ -7,7 +7,8 @@
   existing movement gate. The authentic US and JP dungeon-loader test verifies
   that a directly queued stair transition cannot change level or party position.
   The real dungeon-loader, fixture progression, and startup/Continue tests
-  each passed three local loops. This is a fail-closed safety boundary, not
+  each passed three local loops. The teleporter-chain and US/JP real-media door
+  tests also passed three loops. This is a fail-closed safety boundary, not
   stair gameplay support.
 
 ## 2026-10-09 — repeat authentic dungeon-loader test locally
