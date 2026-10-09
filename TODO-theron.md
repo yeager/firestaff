@@ -145,12 +145,24 @@
   cold-start/System Card observations, not a Track 02 level payload or runtime
   decoder receipt. The private capture is
   `/home/trv2/firestaff-theron-evidence/capture/theron-coldstart-source-receipt-followup-20261009-1350/`.
+- A follow-up used the same authenticated JP disc and System Card with an
+  actual X11 `RUN` key-down held for four seconds after input-grab confirmation.
+  The host trace records the Return/SDL key events, and PCE input reads include
+  raw controller mask `$0008`, confirming that the hold reached the PCE pad.
+  However, the 45-second capture still observed no non-System-Card CD read, CD
+  IRQ, authenticated CD-to-RAM receipt, game `$E009` dispatch, or transition.
+  Its 4,096 source-bound data-port reads were again limited to LBAs 3590–3591;
+  no gameplay poll was observed. Thus the button path is verified, but this
+  run does not prove that Theron's Quest started. Private capture:
+  `/home/trv2/firestaff-theron-evidence/capture/theron-host-run-hold-20261009-1430/`.
 - Next: use a cold-start or otherwise source-reading authentic JP session to
-  bind `$44D2` to a unique Track 02 source receipt, then follow the poll's
-  caller through dispatch index `$53` / PC `$49FB` to a visible action or
-  party-position change. Bind the decoder's source bytes, MPRs, destination
-  and `$3b7e-$3b85` pointer table in one authentic runtime session before
-  treating any decoded output as level data.
+  continue the interactive System Card/title route beyond the verified `$0008`
+  RUN input and observe a non-System-Card poll. Then bind `$44D2` to a unique
+  Track 02 source receipt and follow the poll's caller through dispatch index
+  `$53` / PC `$49FB` to a visible action or party-position change. Bind the
+  decoder's source bytes, MPRs, destination and `$3b7e-$3b85` pointer table in
+  one authentic runtime session before treating any decoded output as level
+  data.
 
 ## 2026-10-09 — separate Firestaff save features from retail-save parity
 
