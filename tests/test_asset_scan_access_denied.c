@@ -277,8 +277,59 @@ int main(void) {
                 rmdir(root);
                 return 1;
             }
+
+            /* Simulate the user granting the denied folder after the
+             * diagnostic is shown. Retrying the same selected root in the
+             * open launcher must clear the old denial and keep authentic
+             * DM1 available. */
+            if (chmod(denied, 0700) != 0 ||
+                !M12_StartupMenu_SetDataDirectory(&menu, root) ||
+                asset_scan_access_denied_directory_count() != 0 ||
+                (archiveReady &&
+                 !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1"))) {
+                fprintf(stderr,
+                        "FAIL: rescan after granting folder access did not refresh the authentic DM1 scan\n");
+                M12_StartupMenu_Destroy(&menu);
+                chmod(denied, 0700);
+                chmod(blockedParent, 0700);
+                rmdir(blockedRoot);
+                rmdir(blockedParent);
+                if (archiveLink[0] != '\0') unlink(archiveLink);
+                if (dm1Dir[0] != '\0') rmdir(dm1Dir);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
+            M12_StartupMenu_Destroy(&menu);
+
+            /* Also cover the user's common recovery path when macOS asks
+             * them to restart Firestaff after changing Files & Folders
+             * privacy settings. A new launcher scan must see the same real
+             * archive without retaining the previous denial receipt. */
+            asset_scan_clear_access_denied_directories();
+            memset(&partialOptions, 0, sizeof(partialOptions));
+            partialOptions.skipScreenshotGalleryScan = 1;
+            M12_StartupMenu_InitWithOptions(&menu, root, NULL,
+                                            &partialOptions);
+            if (asset_scan_access_denied_directory_count() != 0 ||
+                (archiveReady &&
+                 !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1"))) {
+                fprintf(stderr,
+                        "FAIL: fresh startup after granting folder access did not discover authentic DM1 data\n");
+                M12_StartupMenu_Destroy(&menu);
+                chmod(denied, 0700);
+                chmod(blockedParent, 0700);
+                rmdir(blockedRoot);
+                rmdir(blockedParent);
+                if (archiveLink[0] != '\0') unlink(archiveLink);
+                if (dm1Dir[0] != '\0') rmdir(dm1Dir);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
             M12_StartupMenu_Destroy(&menu);
             puts("PASS: startup and rescan report denied folders beside authentic DM1 media");
+            puts("PASS: same-process rescan and fresh startup recover after folder access is granted");
         }
     }
 
