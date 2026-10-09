@@ -90,6 +90,17 @@ traversal.
   index `$53` / PC `$49FB`, then bind the `$4C46` call, MPR1 and target bytes in
   that same run. Private traces remain on trv2 under
   `/home/trv2/.cache/firestaff-theron-l4c46-20261009/`.
+  A 2026-10-09 isolated one-frame RUN probe loaded the authentic JP gameplay state
+  (state MD5 `2ff8e0dcd4c004ac70a7651f43854eb7`) with the hash-verified JP
+  Rev. 1 CUE, Track 02 and System Card. The scripted `run@1:1` mask was applied
+  on frame 1 and read by the game-or-non-System-Card poll at `$44C1/$44D2`
+  (`raw=0008`), followed by cleared-mask reads. The bounded run recorded
+  2,386 input transactions and one consumed event, but no CD IRQ, authenticated
+  CD-to-RAM receipt, VDC I/O trace, `$49FB`, `$4C46` or `$3221`; its transition
+  remains missing. This proves controller-mask delivery to that poll only. It
+  supplies no screenshot or render-state comparison, so RUN's inventory or
+  dungeon effect remains unknown. The private trace is under
+  `/home/trv2/.cache/firestaff-theron-l4c46-20261009/run-isolated-theron-input-20261009/`.
 - The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
   US Track 02; when authentic JP media is present, the focused test now checks
   the matching span hash and every US/JP byte. This regional source comparison
