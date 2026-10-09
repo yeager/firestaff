@@ -1651,7 +1651,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
 
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
-    if (!variant_is_raw_bin(variant)) {
+    if (!variant_is_raw_bin(variant) &&
+        !variant_is_jp_cue_iso(variant, md5_hex)) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
@@ -1679,7 +1680,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
             found = cursor + local_offset;
             marker_byte_count = sizeof(us_prompt) - 1u;
             kind = THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT;
-        } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        } else if (variant == THERON_TRACK02_VARIANT_JP_BIN ||
+                   variant_is_jp_cue_iso(variant, md5_hex)) {
             size_t local_offset = 0u;
             size_t cluster_span = 0u;
             int complete_cluster = 1;
@@ -1723,9 +1725,19 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
         }
 
         marker_raw_offset = (size_t)(found - track02_data);
-        if (theron_v1_track02_raw_offset_to_user_offset(
-                marker_raw_offset, track02_size, md5_hex,
-                &marker_user_offset) == THERON_TRACK02_SIGNAL_OK) {
+        if (variant_is_jp_cue_iso(variant, md5_hex)) {
+            /* The authenticated CUE ISO is already contiguous INDEX 01 user
+             * data; unlike BIN offsets, its byte offsets are user offsets. */
+            marker_user_offset = marker_raw_offset;
+            catalog_add_startup_text_marker(out_catalog,
+                                            kind,
+                                            marker_raw_offset,
+                                            marker_user_offset,
+                                            marker_byte_count,
+                                            occurrence++);
+        } else if (theron_v1_track02_raw_offset_to_user_offset(
+                       marker_raw_offset, track02_size, md5_hex,
+                       &marker_user_offset) == THERON_TRACK02_SIGNAL_OK) {
             catalog_add_startup_text_marker(out_catalog,
                                             kind,
                                             marker_raw_offset,
@@ -1791,10 +1803,21 @@ Theron_Track02SignalStatus theron_v1_track02_copy_startup_text_marker(
         if (out_text_capacity <= marker->byte_count) {
             return THERON_TRACK02_SIGNAL_BAD_INPUT;
         }
-        status = theron_v1_track02_copy_raw_user_data_range(
-            track02_data, track02_size, md5_hex, marker->raw_offset,
-            marker->byte_count, (uint8_t *)out_text,
-            out_text_capacity - 1u, &user_data_offset);
+        if (variant_is_jp_cue_iso(catalog.variant, md5_hex)) {
+            if (marker->raw_offset > track02_size ||
+                marker->byte_count > track02_size - marker->raw_offset) {
+                return THERON_TRACK02_SIGNAL_BAD_INPUT;
+            }
+            memcpy(out_text, track02_data + marker->raw_offset,
+                   marker->byte_count);
+            user_data_offset = marker->raw_offset;
+            status = THERON_TRACK02_SIGNAL_OK;
+        } else {
+            status = theron_v1_track02_copy_raw_user_data_range(
+                track02_data, track02_size, md5_hex, marker->raw_offset,
+                marker->byte_count, (uint8_t *)out_text,
+                out_text_capacity - 1u, &user_data_offset);
+        }
         if (status != THERON_TRACK02_SIGNAL_OK) {
             out_text[0] = '\0';
             return status;

@@ -97,6 +97,22 @@ static uint8_t *load_raw_bytes(const char *path, size_t *out_size) {
     return raw;
 }
 
+static int test_bytes_contain(const uint8_t *haystack, size_t haystack_size,
+                              const char *needle) {
+    size_t needle_size;
+    if (!haystack || !needle) {
+        return 0;
+    }
+    needle_size = strlen(needle);
+    if (needle_size == 0u || needle_size > haystack_size) return 0;
+    for (size_t i = 0u; i <= haystack_size - needle_size; ++i) {
+        if (memcmp(haystack + i, needle, needle_size) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void bind_real_track02_party(
     Theron_V1_World *world,
     const uint8_t *track02,
@@ -1035,10 +1051,13 @@ static void test_jp_cue_iso_map_source(void) {
     Theron_DungeonData maps;
     Theron_Track02UserDataWindowCatalog windows;
     Theron_Track02StartupTextMarkerCatalog text;
+    Theron_Track02StartupTextMarker text_marker;
     Theron_Track02StartupRosterNameCatalog roster;
     Theron_Track02StartupBitmapCatalog bitmaps;
     Theron_Track02FontTileReceipt font;
     Theron_Track02PaletteWindowEvidence palette;
+    char text_bytes[768];
+    size_t text_byte_count = 0u;
     if (!path || !path[0] || !(iso = load_raw_bytes(path, &iso_size))) {
         puts("  SKIP: authentic JP CUE-projected ISO unavailable");
         return;
@@ -1062,7 +1081,25 @@ static void test_jp_cue_iso_map_source(void) {
         THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
     assert(theron_v1_track02_catalog_startup_text_markers(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &text) ==
-        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+        THERON_TRACK02_SIGNAL_OK);
+    assert(text.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+    assert(text.marker_count > 0u);
+    assert(text.markers[0].kind ==
+           THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER);
+    assert(text.markers[0].raw_offset == text.markers[0].user_data_offset);
+    assert(theron_v1_track02_copy_startup_text_marker(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO,
+        THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER, 0u,
+        text_bytes, sizeof(text_bytes), &text_byte_count,
+        &text_marker) == THERON_TRACK02_SIGNAL_OK);
+    assert(text_byte_count == text_marker.byte_count);
+    assert(text_marker.raw_offset == text_marker.user_data_offset);
+    assert(memcmp(text_bytes, "THERON", 6u) == 0);
+    for (size_t i = 0u; i < 7u; ++i) {
+        assert(test_bytes_contain((const uint8_t *)text_bytes,
+                                  text_byte_count,
+                                  expected_roster_names[i]));
+    }
     assert(theron_v1_track02_catalog_startup_roster_names(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &roster) ==
         THERON_TRACK02_SIGNAL_OK);

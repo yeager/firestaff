@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — catalog JP startup roster markers from the CUE ISO
+
+- Startup text-marker discovery and bounded copying now accept the exact
+  authenticated JP CUE-projected ISO. The ISO's offsets are already contiguous
+  INDEX 01 user-data offsets; raw BIN sector coordinates remain unchanged, and
+  the legacy zero-filled JP ISO identity is still rejected.
+- The authentic-media regression verifies the JP roster marker is found and
+  copied with matching source/user offsets and the expected retail names. This
+  adds source catalog coverage only; it does not establish a startup text
+  consumer or Japanese UI/rendering parity.
+
 ## 2026-10-09 — extract the JP font bank from the authenticated CUE ISO
 
 - `theron_v1_track02_extract_font_tiles()` now accepts only the exact

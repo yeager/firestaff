@@ -1,5 +1,13 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — JP startup text consumer remains unbound
+
+- The exact authentic JP CUE ISO can now catalog and copy the same roster-name
+  cluster bytes as the source-backed JP BIN path. Continue tracing the original
+  text lookup, font/kana selection, and VDC rendering before connecting this
+  marker to runtime UI or claiming title/roster parity. The zero-filled JP ISO
+  identity remains inadmissible.
+
 ## 2026-10-09 — JP font consumer and rendering remain unbound
 
 - The exact authentic JP CUE ISO identity now exposes the 96-tile Latin font
