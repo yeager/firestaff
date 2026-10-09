@@ -31,15 +31,23 @@ python3 scripts/verify_theron_jp_cd_data_port_trace.py \
 
 ## Boundary and next proof
 
-This proves that those bytes were observed at the instrumented CD data port
-and match the authentic media span. It does not bind them to a game-code
-consumer or a RAM destination. The same capture reports zero CD IRQ callbacks,
-zero SCSI read commands, zero authenticated CD-to-RAM receipts, and no
-non-System-Card controller poll. The scripted input was observed only at the
-System Card poll. Therefore this run does not prove game launch, dungeon
-loading, or any Track 02 gameplay semantics. Continue by binding the data-port
-reads to a retail transfer/consumer and an observed game-owned state change.
+This proves that these bytes were observed at the instrumented CD data port
+and match the authentic media span. The separate CPU-write trace binds the
+same 4,096 bytes to the System Card's mapped buffer. In that capture, the
+executed first-stage routine at $2B39 reads and accepts the authentic System
+Card signature at $3020, then sampled first-stage metadata and header reads
+lead to a $4000 handoff and an observed instruction-byte window at second-
+stage PC $4002 (physical PC $100002). See [the buffer-write evidence](theron-jp-system-card-cd-buffer-write-20261009.md)
+and rerun all real-media checks with
+scripts/verify_theron_jp_syscard_bootstrap_trace.py.
 
-A separate instrumented follow-up proves the intermediate CPU copy into the
-System Card's mapped buffer, but not a game consumer or launch. See
-[the buffer-write evidence](theron-jp-system-card-cd-buffer-write-20261009.md).
+The data-port and CPU-write traces stop at 4,096 rows, their instrumentation
+cap; they cannot establish that no later reads or writes occurred. The
+consumer trace only samples reads, so it does not bind the $4002 code window
+to a later authentic Track 02 span. The transition report still has
+transition=missing, no game-owned state change, and no observed
+non-System-Card controller poll. Thus this is evidence of first-stage
+signature acceptance and a sampled second-stage handoff, not proof of a
+complete game launch, dungeon loading, or gameplay. Continue by source-binding
+the second-stage code and proving a game-owned state transition against
+authentic media.

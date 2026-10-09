@@ -38,6 +38,13 @@ The buffer verifier reruns the authentic-media comparison, then independently
 checks sequence, logical/physical mapping, MPR, instruction PCs, accumulator,
 and byte-for-byte equality across the CD-port and RAM-write traces.
 
+The bootstrap verifier joins the copied authentic bytes to executed first-stage
+code: PC $2B39 accepts the System Card signature and sampled metadata leads to
+a $4000 handoff. It also records a sampled second-stage window at PC $4002.
+Run scripts/verify_theron_jp_syscard_bootstrap_trace.py with the buffer-write,
+CD-port, and main-RAM-consumer traces plus the authentic JP Rev. 1 Track 02 BIN.
+The sampled $4002 instruction bytes are not source-bound by this capture.
+
 ## Boundary
 
 This is a System Card CPU copy into its mapped address space, not a CD DMA
@@ -45,6 +52,6 @@ receipt or proof of a game-owned load. The transition report has zero CD IRQ
 callbacks, SCSI reads, authenticated CD-to-RAM receipts, non-System-Card input
 polls, and game-main-RAM loader dispatches. The scripted RUN reached only one
 System Card poll; `transition=missing`. Therefore the capture proves neither
-game launch nor dungeon loading or gameplay. The next proof still needs a
-retail consumer of this buffer, a game-owned state transition, and an
-authenticated gameplay state.
+game launch nor dungeon loading or gameplay. The first-stage signature
+consumer is now proven. Next, source-bind the second-stage code and prove a
+game-owned state transition against an authentic gameplay state.

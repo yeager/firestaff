@@ -6627,3 +6627,18 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   This closes the System Card buffer receipt only. The run still lacks a
   non-System-Card poll, game loader dispatch, game-owned state change, and
   dungeon/gameplay proof.
+
+## 2026-10-09 — JP first-stage signature acceptance and sampled handoff
+
+- The authentic-media verifier joins copied JP Track 02 bytes to executed
+  System Card code: first-stage PC $2B39 reads the complete PC Engine CD-ROM
+  SYSTEM / Hudson-NEC signature from mapped buffer $3020 and reaches its
+  success continuation. Sampled metadata/header reads and the indirect pointer
+  establish a $4000 handoff; execution is observed at second-stage PC $4002 /
+  physical PC $100002. The real-media check is
+  scripts/verify_theron_jp_syscard_bootstrap_trace.py.
+- This closes the first-stage signature-consumer gap, not game launch or
+  gameplay. The second-stage instruction window is not bound to authentic media,
+  the CD-port and buffer-write traces stop at their 4,096-row cap, and the run
+  still has transition=missing with no game-owned state change. Continue with
+  source-bound second-stage tracing and an authentic game-state transition.
