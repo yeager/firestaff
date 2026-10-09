@@ -178,6 +178,14 @@ direction, destination level, or arrival pose.
 Capture them from an original-game transition before enabling stair
 traversal.
 
+- A follow-up authentic cross-index audit compared each of the first 66
+  property-backed Track 02 entries against all 66 Track 19 property entries,
+  requiring exact name bytes/length, type code, and six-byte property tuple.
+  US and JP each produced only 66 diagonal Sarmon matches and zero matches in
+  the other six dungeons; no off-index mapping was found. The loader test
+  passed three TRV2 loops. This does not prove a different retail non-tuple
+  mapping or the original inventory consumer.
+
 ## 2026-10-08 — extend authentic PCE Fast selector disassembly evidence
 
 - ✅ Added a bounded PCE Fast trace for source-byte windows at known Stage-2

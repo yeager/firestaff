@@ -126,6 +126,15 @@
   caller-to-candidate relationship only; it does not prove runtime mapping,
   helper execution, or spawn/RNG semantics.
 
+- Added an authentic cross-index audit to the Track 02 loader test. For both
+  US and JP, all 66 property-backed entries in each dungeon-local table were
+  compared with all 66 property-backed Track 19 entries by exact raw name,
+  type code, and six-byte property tuple. Only Sarmon had matches (66 unique
+  diagonal pairs); the other six dungeons had none, and no off-index pair
+  matched. The real-media test passed three TRV2 loops. This rejects extending
+  the mapping based on these tuple fields alone; alternate retail mappings
+  and inventory-screen behavior remain unproven.
+
 ## 2026-10-10 — correct the VCE caller's logical address
 
 - Corrected the caller entry from `$9682` to `$966e`. The authenticated raw

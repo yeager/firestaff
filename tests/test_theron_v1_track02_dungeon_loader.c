@@ -413,6 +413,82 @@ static void test_real_sarmon_track19_mapping(
             return;
     }
     assert(track19.count == THERON_V1_TRACK19_ITEM_NAME_COUNT);
+    /* The authentic property table has 66 slots; do not infer properties for
+     * name/type-only entries beyond that source-backed boundary. */
+    for (unsigned int dungeon = 1u; dungeon <= THERON_DUNGEON_COUNT;
+         ++dungeon) {
+        Theron_Track02ItemNameSource dungeon_names;
+        unsigned int source_matches[
+            THERON_TRACK02_ITEM_NAME_SOURCE_MAX_COUNT] = {0};
+        unsigned int target_matches[
+            THERON_V1_TRACK19_ITEM_NAME_COUNT] = {0};
+        unsigned int exact_pairs = 0u;
+        unsigned int off_index_pairs = 0u;
+        unsigned int mutually_unique_pairs = 0u;
+
+        assert(theron_v1_track02_decode_item_name_source(
+                   ud, ud_size, variant, dungeon, &dungeon_names) == 1);
+        for (unsigned int source_index = 0u;
+             source_index < dungeon_names.count &&
+                 source_index < THERON_TRACK02_ITEM_SLOT_COUNT;
+             ++source_index) {
+            if (dungeon_names.raw_name_sizes[source_index] == 0u) continue;
+            for (unsigned int target_index = 0u;
+                 target_index < track19.count &&
+                     target_index < THERON_TRACK02_ITEM_SLOT_COUNT;
+                 ++target_index) {
+                if (dungeon_names.raw_type_codes[source_index] !=
+                        track19.raw_type_codes[target_index] ||
+                    dungeon_names.raw_name_sizes[source_index] !=
+                        track19.raw_name_sizes[target_index] ||
+                    memcmp(dungeon_names.raw_names[source_index],
+                           track19.raw_names[target_index],
+                           dungeon_names.raw_name_sizes[source_index]) != 0 ||
+                    memcmp(dungeon_names.raw_properties[source_index],
+                           track19.raw_properties[target_index],
+                           THERON_TRACK02_ITEM_PROPERTY_SOURCE_SIZE) != 0)
+                    continue;
+                ++source_matches[source_index];
+                ++target_matches[target_index];
+                ++exact_pairs;
+                if (source_index != target_index) ++off_index_pairs;
+            }
+        }
+        for (unsigned int source_index = 0u;
+             source_index < dungeon_names.count &&
+                 source_index < THERON_TRACK02_ITEM_SLOT_COUNT;
+             ++source_index) {
+            if (source_matches[source_index] != 1u) continue;
+            for (unsigned int target_index = 0u;
+                 target_index < track19.count &&
+                     target_index < THERON_TRACK02_ITEM_SLOT_COUNT;
+                 ++target_index) {
+                if (target_matches[target_index] == 1u &&
+                    dungeon_names.raw_type_codes[source_index] ==
+                        track19.raw_type_codes[target_index] &&
+                    dungeon_names.raw_name_sizes[source_index] ==
+                        track19.raw_name_sizes[target_index] &&
+                    memcmp(dungeon_names.raw_names[source_index],
+                           track19.raw_names[target_index],
+                           dungeon_names.raw_name_sizes[source_index]) == 0 &&
+                    memcmp(dungeon_names.raw_properties[source_index],
+                           track19.raw_properties[target_index],
+                           THERON_TRACK02_ITEM_PROPERTY_SOURCE_SIZE) == 0)
+                    ++mutually_unique_pairs;
+            }
+        }
+        printf("  authentic %s Track 02 dungeon %u vs Track 19: %u exact ",
+               variant == 1 ? "JP" : "US", dungeon, exact_pairs);
+        printf("name/type/property pairs (%u off-index, %u mutually unique)\n",
+               off_index_pairs, mutually_unique_pairs);
+        if (dungeon == 4u) {
+            assert(exact_pairs == 66u && off_index_pairs == 0u &&
+                   mutually_unique_pairs == 66u);
+        } else {
+            assert(exact_pairs == 0u && off_index_pairs == 0u &&
+                   mutually_unique_pairs == 0u);
+        }
+    }
     assert(theron_v1_track02_decode_item_name_source(
                ud, ud_size, variant, 4u, &track02) == 1);
     world = (Theron_V1_World *)calloc(1u, sizeof(*world));

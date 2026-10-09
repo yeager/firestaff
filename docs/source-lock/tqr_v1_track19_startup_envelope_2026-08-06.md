@@ -88,6 +88,16 @@ JP banks; JP dungeon 2 has its separately authenticated property hash
 `6c4d1386` rather than Track 19's `b97787ef`. Thus partial field matches or
 isolated shared labels cannot support another positional map.
 
+On 2026-10-09, the real-media loader test also compared each Track 02 dungeon
+entry in property-backed indices `0..65` against each Track 19 entry in
+indices `0..65`, requiring exact raw name length and bytes, type code, and the
+six-byte per-entry property tuple. In both US and JP, Sarmon had 66 mutually
+unique diagonal matches and zero off-index matches; each of the other six
+dungeons had zero exact tuples. The focused authentic loader test passed
+three TRV2 loops for both regions. This rejects a cross-index mapping under
+the complete tuple criterion for these records; it does not prove a different
+non-tuple retail mapping or the original inventory-screen/runtime consumer.
+
 | Track 02 dungeon | Same-index names US/JP | Same-index type bytes US/JP | Properties US/JP | Full tuples US/JP |
 | --- | ---: | ---: | --- | ---: |
 | 1 | 1/80, 1/80 | 0/69, 0/69 | exact, exact | 0/69, 0/69 |
