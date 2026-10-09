@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — rerun regional source gates against local original media
+
+Resolved the configured `~/.firestaff/data` link to its mounted data directory
+and confirmed the US/JP Track 02 hashes (`f23601102138f87c33025877767ebf76`
+and `b7afb338ad31be1025b53f9aff12d73a`). Built the focused Stage-2 source
+verifier and the quest-artifact/map decoder test directly from their test and
+Theron source files, then ran each three times against those original BINs.
+All loops passed: the Stage-2 chain bound 5,039 bytes (14.5% of the image)
+across both regions, and the quest-artifact test decoded all seven dungeon
+maps and confirmed regional names and same-index item counts. This is static
+source/data verification only; it does not establish runtime execution,
+inventory behavior, or gameplay parity.
+
 ## 2026-10-09 — capture PCE Fast close-time VDC state
 
 Added opt-in capture of PCE Fast VRAM, VCE palette RAM, sprite attributes,
