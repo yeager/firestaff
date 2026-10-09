@@ -123,8 +123,10 @@ No reference source code exists. Parity is established through:
 |------|--------|----------|
 | SRM header classification | PROVEN | `theron_v1_srm_classifier` |
 | SRM body decode | PROVEN | `theron_v1_srm_body_decode` |
-| Save progress round-trip | PROVEN | PC34 compat receipt |
-| Save browser export/import | PROVEN | M12 quick resume gate |
+| Firestaff TQSV compatibility-state round-trip | PROVEN | PC34 compatibility receipt; this is Firestaff-owned state, not an original Theron save format |
+| Original retail progressed-save round-trip after gameplay mutation | OPEN | Only an unchanged authentic Akutuba-complete BRAM artifact is round-tripped; changed gameplay progress and JP progressed Continue remain unverified |
+| Firestaff save-browser export/import | PROVEN | M12 quick-resume gate; host/browser behavior only, not evidence of original Theron save semantics |
+| Original in-game between-dungeon save transaction | OPEN | No authenticated save event is joined to a changed BRAM image and a subsequent original-runtime load |
 
 ### 9. Dungeon/Game Systems
 

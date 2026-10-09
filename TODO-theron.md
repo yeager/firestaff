@@ -1,5 +1,15 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — separate Firestaff save features from retail-save parity
+
+- The parity matrix no longer treats the PC34 TQSV compatibility round-trip or
+  M12 quick-resume export/import as proof of original Theron save parity. It
+  now tracks those Firestaff features separately from the still-open retail
+  progressed-save round-trip and original between-dungeon save transaction.
+  The authentic US encoder's unchanged-artifact round-trip is not evidence of
+  a gameplay mutation being persisted; JP progressed Continue also remains
+  unverified. See `parity-evidence/theron_v1_parity_definition_matrix.md`.
+
 ## 2026-10-09 — keep bounded decoder status honest
 
 - The source-backed C lift now reports `THERON_HUC6280_DECODE_SOURCE_BOUNDARY`
