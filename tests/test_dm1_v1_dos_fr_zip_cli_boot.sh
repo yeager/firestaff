@@ -110,6 +110,39 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
+# Require the authentic French M12 -> DOS route to reach the first playable
+# frame; the launch receipt above alone cannot prove that the selected source
+# initialized its native level and party position.
+menu_runtime_probe_json="$named_archive_dir/menu-runtime.json"
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe_json" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform pc --data-dir "$data_source" \
+    --script enter,enter,enter --duration 10000 >/dev/null 2>&1
+python3 - "$menu_runtime_probe_json" "$expected_graphics_md5" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or
+        probe["bootAssetMd5"] != sys.argv[2] or
+        startup["receiptReady"] != 1 or startup["phase"] != "dm1-runtime" or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(
+        f"FAIL: authentic French DOS M12 route did not reach the first "
+        f"runtime frame: {probe}")
+print("PASS: authentic DM1 French DOS start menu reached the first runtime frame")
+PY
+
 # The hash-verified French payload starts at (map=0,x=1,y=3,dir=2). Its first
 # native forward input lands at y=4. Check that source-owned movement after the
 # launcher handoff rather than only accepting a title/runtime receipt.
