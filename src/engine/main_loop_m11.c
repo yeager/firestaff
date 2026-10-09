@@ -9122,23 +9122,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 2;
         }
     }
-    if (o->verbose && !o->debug && o->gameId &&
-        (strcmp(o->gameId, "dm1") == 0 ||
-         strcmp(o->gameId, "csb") == 0 ||
-         strcmp(o->gameId, "dm2") == 0)) {
-        int slot = m11_game_option_slot(o->gameId);
-        int selected = menuState.gameOptions[slot].versionIndex;
-        const M12_AssetVersionStatus* version = selected >= 0
-            ? M12_AssetStatus_GetVersion(&menuState.assetStatus, o->gameId,
-                                         (size_t)selected) : NULL;
-        fprintf(stderr, "firestaff: selected game=%s platform=%s edition=%s source=%s\n",
-                o->gameId,
-                selected >= 0 ? M12_Architecture_Label(
-                    M12_AssetStatus_GetVersionArchitecture(o->gameId,
-                                                            (size_t)selected)) : "unknown",
-                version && version->versionId ? version->versionId : "none",
-                version && version->matchedPath[0] ? version->matchedPath : "none");
-    }
     if (o->csbFmtownsJapanese) {
         if (!o->gameId || strcmp(o->gameId, "csb") != 0 ||
             !m11_apply_csb_fmtowns_japanese_override(&menuState)) {
@@ -9160,6 +9143,23 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             M11_Render_Shutdown();
             return 2;
         }
+    }
+    if (o->verbose && !o->debug && o->gameId &&
+        (strcmp(o->gameId, "dm1") == 0 ||
+         strcmp(o->gameId, "csb") == 0 ||
+         strcmp(o->gameId, "dm2") == 0)) {
+        int slot = m11_game_option_slot(o->gameId);
+        int selected = menuState.gameOptions[slot].versionIndex;
+        const M12_AssetVersionStatus* version = selected >= 0
+            ? M12_AssetStatus_GetVersion(&menuState.assetStatus, o->gameId,
+                                         (size_t)selected) : NULL;
+        fprintf(stderr, "firestaff: selected game=%s platform=%s edition=%s source=%s\n",
+                o->gameId,
+                selected >= 0 ? M12_Architecture_Label(
+                    M12_AssetStatus_GetVersionArchitecture(o->gameId,
+                                                            (size_t)selected)) : "unknown",
+                version && version->versionId ? version->versionId : "none",
+                version && version->matchedPath[0] ? version->matchedPath : "none");
     }
     if (o->dm2EnglishCompanionPath && o->dm2EnglishCompanionPath[0] != '\0') {
         snprintf(menuState.dm2EnglishCompanionPath,

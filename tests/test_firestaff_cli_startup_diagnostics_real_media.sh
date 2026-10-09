@@ -177,6 +177,17 @@ if [ -f "$dm1_towns_archive" ]; then
         *"startup game=dm1 mode=direct platform=auto"*"selected game=dm1 platform=FM Towns edition="*) ;;
         *) echo "FAIL: bare DM1 did not select original FM Towns media" >&2; exit 1 ;;
     esac
+    dm1_japanese_verbose=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm1 --platform fm-towns --dm1-fmtowns-ja \
+        --data-dir "$dm1_towns_archive" --verbose \
+        --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$dm1_japanese_verbose" >&2
+        exit 1
+    }
+    case "$dm1_japanese_verbose" in
+        *"selected game=dm1 platform=FM Towns edition=fmtowns-ja source="*) ;;
+        *) echo "FAIL: DM1 Japanese verbose diagnostics did not report the overridden edition" >&2; exit 1 ;;
+    esac
     dm1_natural_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game dm1 --data-dir "$dm1_towns_archive" --debug --duration 0 2>&1) || {
         printf '%s\n' "$dm1_natural_debug" >&2
@@ -255,6 +266,17 @@ if [ -f "$csb_towns_archive" ]; then
     case "$csb_auto" in
         *"startup game=csb mode=direct platform=auto"*"selected game=csb platform=FM Towns edition="*) ;;
         *) echo "FAIL: bare CSB did not select original FM Towns media" >&2; exit 1 ;;
+    esac
+    csb_japanese_verbose=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --platform fm-towns --csb-fmtowns-ja \
+        --data-dir "$csb_towns_archive" --verbose \
+        --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$csb_japanese_verbose" >&2
+        exit 1
+    }
+    case "$csb_japanese_verbose" in
+        *"selected game=csb platform=FM Towns edition=fmtowns-ja source="*) ;;
+        *) echo "FAIL: CSB Japanese verbose diagnostics did not report the overridden edition" >&2; exit 1 ;;
     esac
     if [ -d "$csb_towns_loose_root/CDATA" ] &&
        [ -d "$csb_towns_loose_root/CJDATA" ]; then
