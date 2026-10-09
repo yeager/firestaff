@@ -1,5 +1,14 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — JP font consumer and rendering remain unbound
+
+- The exact authentic JP CUE ISO identity now exposes the 96-tile Latin font
+  bank at its INDEX 01-normalized source offset, byte-equivalent to the
+  hash-verified raw BIN bank. Continue tracing the original regional font
+  consumer and runtime tile/palette/VDC writes before connecting these tiles to
+  production text, JP kana, or claiming UI/rendering parity. Keep the legacy
+  zero-filled JP ISO identity inadmissible.
+
 ## 2026-10-10 — Track 19 selector-label consumer remains unidentified
 
 - The native runtime now retains and authenticates the 15 raw US/JP Track 19

@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — extract the JP font bank from the authenticated CUE ISO
+
+- `theron_v1_track02_extract_font_tiles()` now accepts only the exact
+  hash-verified JP Rev. 1 CUE projection and translates the raw-BIN font
+  coordinate by the proven 224-sector INDEX 01 boundary. The legacy zero-filled
+  JP ISO identity remains rejected. On TRV2, an in-memory INDEX 01 projection
+  derived from authentic `TQJP02.bin` matched the known JP ISO MD5; all 96
+  decoded tile pixel arrays and the checksum then matched the raw-BIN receipt.
+- The focused font and dungeon-loader tests each passed three CTest loops on
+  TRV2. This verifies regional font-byte admission only; it does not prove the
+  original Japanese text consumer, kana glyphs, UI layout, or rendering.
+
 ## 2026-10-10 — expose authenticated Track 19 selector labels
 
 - Native Track 19 inventory loading now retains all 15 raw selector labels

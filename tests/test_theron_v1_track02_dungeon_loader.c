@@ -1095,7 +1095,11 @@ static void test_jp_cue_iso_map_source(void) {
             THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD));
     assert(theron_v1_track02_extract_font_tiles(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &font) ==
-        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+        THERON_TRACK02_SIGNAL_OK);
+    assert(font.valid == 1);
+    assert(font.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+    assert(font.tile_count == THERON_TRACK02_FONT_TILE_COUNT);
+    assert(font.user_data_offset == 0x1F2A00u);
     assert(theron_v1_track02_inspect_4bpp_palette_window(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, 0u, &palette) ==
         THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);

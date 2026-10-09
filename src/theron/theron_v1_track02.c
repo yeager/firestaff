@@ -2874,6 +2874,7 @@ Theron_Track02SignalStatus theron_v1_track02_extract_font_tiles(
 {
     Theron_Track02Variant variant;
     size_t ud_offset;
+    int direct_user_data = 0;
     uint8_t raw_tiles[THERON_TRACK02_FONT_TILE_COUNT *
                       THERON_TRACK02_FONT_TILE_BYTES];
 
@@ -2891,6 +2892,18 @@ Theron_Track02SignalStatus theron_v1_track02_extract_font_tiles(
 
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
         ud_offset = TQR_JP_FONT_TILE_USER_DATA_OFFSET;
+    } else if (variant_is_jp_cue_iso(variant, md5_hex)) {
+        const size_t index01_user_data_bytes =
+            (size_t)THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR *
+            THERON_TRACK02_RAW_USER_DATA_BYTES;
+        if (TQR_JP_FONT_TILE_USER_DATA_OFFSET < index01_user_data_bytes) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        /* The authenticated JP CUE projection starts at INDEX 01, so its
+         * source offset excludes the 224-sector pregap retained by the BIN. */
+        ud_offset = TQR_JP_FONT_TILE_USER_DATA_OFFSET -
+                    index01_user_data_bytes;
+        direct_user_data = 1;
     } else if (variant == THERON_TRACK02_VARIANT_US_BIN ||
                variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
                variant == THERON_TRACK02_VARIANT_US_ISO) {
@@ -2899,10 +2912,18 @@ Theron_Track02SignalStatus theron_v1_track02_extract_font_tiles(
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
-    if (!tqr_read_user_data_contiguous(track02_data, track02_size,
-                                       ud_offset, raw_tiles,
-                                       sizeof(raw_tiles))) {
-        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    if (direct_user_data) {
+        if (ud_offset > track02_size ||
+            sizeof(raw_tiles) > track02_size - ud_offset) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        memcpy(raw_tiles, track02_data + ud_offset, sizeof(raw_tiles));
+    } else {
+        if (!tqr_read_user_data_contiguous(track02_data, track02_size,
+                                           ud_offset, raw_tiles,
+                                           sizeof(raw_tiles))) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
     }
 
     out_receipt->variant = variant;
