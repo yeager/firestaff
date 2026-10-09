@@ -13,7 +13,26 @@ if [ ! -x "$app" ] || [ ! -x "$source_rgb" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
-archive_hash_before=$(sha256sum "$archive")
+file_sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{print $1}'
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$1" | awk '{print $1}'
+    else
+        python3 -c '
+import hashlib
+import sys
+
+digest = hashlib.sha256()
+with open(sys.argv[1], "rb") as source:
+    for block in iter(lambda: source.read(1024 * 1024), b""):
+        digest.update(block)
+print(digest.hexdigest())
+' "$1"
+    fi
+}
+
+archive_hash_before=$(file_sha256 "$archive")
 
 # Use the complete DM2 data directory for every unqualified launch. This
 # keeps AUTO selection under test when competing editions are installed and
@@ -313,7 +332,7 @@ print("PASS: M12-selected FM Towns edition, authentic TWANIM, New Game and first
 print(f"PASS: runtime screenshot captured at 320x200 with {nonblack} nonblack pixels, {right_panel} right-panel pixels and {dungeon_scene} dungeon pixels")
 PY
 
-if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
+if [ "$archive_hash_before" != "$(file_sha256 "$archive")" ]; then
     echo 'FAIL: DM2 FM Towns archive changed during native launch' >&2
     exit 1
 fi
