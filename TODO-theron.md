@@ -21,6 +21,9 @@
   were skipped because those optional paths were not configured. Source-backed
   dungeon loading is verified; stair traversal and complete gameplay parity
   remain unproven.
+- ✅ The production archive source-boundary test passed three loops and
+  continues to reject synthetic Theron fixture/save-envelope code from the
+  production archive. This verifies build composition, not gameplay parity.
 
 - 🔒 A numeric overlap hypothesis between the JP `$4661` helper's `$5D68/$5D62`
   call operands and same-numbered Stage-2 record offsets was rejected. The

@@ -24,6 +24,9 @@
   skipped because their paths were not configured. This verifies the tested
   source-backed dungeon-loader route, not stair traversal or complete gameplay
   parity.
+- The production archive source-boundary test passed three additional loops;
+  its checks reject the synthetic Theron save-envelope signatures and fixture
+  sources from the production archive.
 
 ## 2026-10-09 — repeat authentic disassembly receipt tests locally
 
