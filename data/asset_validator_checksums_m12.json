@@ -10,7 +10,7 @@
     "This is a seed/reference list for future asset validator work.",
     "Entries keep the original human description from the mail and normalize MD5 to lowercase."
   ],
-  "entryCount": 68,
+  "entryCount": 65,
   "entries": [
     {
       "gameId": "csb",

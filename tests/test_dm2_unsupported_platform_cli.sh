@@ -13,7 +13,10 @@ import json
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as stream:
-    records = json.load(stream)["entries"]
+    catalog = json.load(stream)
+records = catalog["entries"]
+if catalog.get("entryCount") != len(records):
+    raise SystemExit("FAIL: validator catalog entryCount does not match its entries")
 if any(record.get("gameId") == "dm2" and
        "PC-9821" in record.get("description", "")
        for record in records):
