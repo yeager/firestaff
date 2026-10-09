@@ -2515,8 +2515,10 @@ open. No substitute game data has been generated.
 - 🔒 Track 02 objects use their own dungeon-local namespace. There is no
   simple index mapping to the differently sized 69-entry Track 19 table.
   The Track 19 bank can therefore only be read using an explicit Track 19
-  index. JP bytes are not sent to the host text renderer; the original T900
-  consumer and a verified Shift-JIS glyph path remain open.
+  index. The selected, provenance-verified Sarmon inventory name has a
+  fail-closed UTF-8 host status-text projection, tested across the 69 authentic
+  regional names. Full in-game object-name presentation, the original T900
+  consumer, and retail Shift-JIS glyph rendering remain open.
 
 ### Authentic VDC geometry for capture replay
 

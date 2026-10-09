@@ -413,6 +413,45 @@ static void test_real_sarmon_track19_mapping(
             return;
     }
     assert(track19.count == THERON_V1_TRACK19_ITEM_NAME_COUNT);
+    {
+        /* Verify host UTF-8 projection of the complete authentic regional
+         * name banks; this does not establish the original T900 font path. */
+        unsigned int decoded_names = 0u;
+        unsigned int multibyte_projections = 0u;
+        for (unsigned int item_index = 0u; item_index < track19.count;
+             ++item_index) {
+            const size_t raw_size = track19.raw_name_sizes[item_index];
+            char utf8[THERON_V1_TRACK19_ITEM_NAME_RAW_CAPACITY * 3u +
+                      1u] = {0};
+            const int utf8_size = firestaff_cp932_to_utf8(
+                (const char *)track19.raw_names[item_index], raw_size,
+                utf8, sizeof(utf8));
+            assert(raw_size > 0u);
+            assert(utf8_size > 0);
+            assert((size_t)utf8_size < sizeof(utf8));
+            assert(utf8[utf8_size] == '\0');
+            if (variant == THERON_TRACK02_VARIANT_JP_BIN &&
+                (size_t)utf8_size != raw_size)
+                ++multibyte_projections;
+            if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+                assert((size_t)utf8_size == raw_size);
+                assert(memcmp(utf8, track19.raw_names[item_index], raw_size) ==
+                       0);
+            }
+            ++decoded_names;
+        }
+        assert(decoded_names == THERON_V1_TRACK19_ITEM_NAME_COUNT);
+        if (variant == THERON_TRACK02_VARIANT_JP_BIN)
+            assert(multibyte_projections > 0u);
+        {
+            const char truncated_sjis[] = {'A', (char)0x81};
+            char rejected[8] = "stale";
+            assert(firestaff_cp932_to_utf8(
+                       truncated_sjis, sizeof(truncated_sjis),
+                       rejected, sizeof(rejected)) == -1);
+            assert(rejected[0] == '\0');
+        }
+    }
     /* The authentic property table has 66 slots; do not infer properties for
      * name/type-only entries beyond that source-backed boundary. */
     for (unsigned int dungeon = 1u; dungeon <= THERON_DUNGEON_COUNT;

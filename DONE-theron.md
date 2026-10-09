@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — verify Track 19 host text projection against retail names
+
+- The authentic US and JP Track 19 name banks each decode all 69 source names
+  through the existing CP932-to-UTF-8 host projection. US output remains byte-
+  identical ASCII; JP includes multibyte projections. A truncated Shift-JIS
+  sequence fails closed and clears the output buffer. The test target built on
+  TRV2 and passed three CTest loops, then a direct run confirmed both regional
+  Track 19 banks and the 66-property Sarmon match against the authentic media.
+- This verifies name-byte conversion and the host status-text path only. It
+  does not establish the original T900 name consumer, retail glyph rendering,
+  or pixel parity.
+
 ## 2026-10-09 — repeat authentic HuC6280 disassembly receipts locally
 
 - The focused disassembly receipt executable was built with the Xcode Clang
