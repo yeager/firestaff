@@ -6611,3 +6611,10 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   mapping disagrees with its logical PC; the authentic-shape fixture still
   passes. This validates evidence coordinates only and does not promote the
   `$611D` record table to level, object, creature, or gameplay semantics.
+## 2026-10-09 - cold-start Track 02 read has no game consumer receipt
+
+- A fresh JP cold-start with authentic Track 02 and System Card media produced
+  4,096 source-bound CD data-port bytes matching LBAs 3590-3591. It did not
+  produce CD IRQ, SCSI read, authenticated CD-to-RAM, or non-System-Card input
+  receipts. Do not treat this as a game launch or gameplay proof. Evidence and
+  a three-loop real-media verifier are in
