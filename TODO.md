@@ -162,6 +162,11 @@
   presentation/palette remains open.
   Headless receipts do not claim host capture, and visual parity remains
   deferred.
+  The shared authentic-media M12 regression now covers one session through
+  DM1 runtime -> return/full rescan -> CSB runtime -> return/full rescan. It
+  passed locally on 2026-10-09 with the published v3.0.374 binary and original
+  Towns media; these test edits still need an Actions run, and hosted CI may
+  skip this route when licensed archives are unavailable.
   Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.

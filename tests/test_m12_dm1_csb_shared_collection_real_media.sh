@@ -37,8 +37,8 @@ HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" APPDATA="$scratch/home" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$app" --width 320 --height 200 --menu --game dm1 \
     --data-dir "$data_root" --debug \
-    --script 'enter,enter,enter,wait:12,key:escape,key:enter,wait:60,key:escape,key:escape,key:down,key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240' \
-    --duration 40000 >"$log" 2>&1 || {
+    --script 'enter,enter,enter,wait:12,key:escape,key:enter,wait:60,key:escape,key:escape,key:down,key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:1000,back,wait:10,enter,wait:60' \
+    --duration 60000 >"$log" 2>&1 || {
         cat "$log" >&2
         exit 1
     }
@@ -75,23 +75,24 @@ dm1_runtime = re.search(
 csb_runtime = re.search(
     r"startup-frame game=dm1 .*source=csb phase=inactive active=0 .*"
     r"level-loaded=1 map=4 party=22,18 dir=2 champions=1", trace)
-rescan = re.search(r"return-menu rescan-complete data=" + re.escape(data_root), trace)
+rescans = list(re.finditer(
+    r"return-menu rescan-complete data=" + re.escape(data_root), trace))
 if (dm1_launch not in trace or csb_launch not in trace or
-        dm1_runtime is None or csb_runtime is None or rescan is None or
-        not (trace.index(dm1_launch) < dm1_runtime.start() < rescan.start() <
-             trace.index(csb_launch) < csb_runtime.start())):
-    raise SystemExit("FAIL: M12 did not switch DM1 -> return/rescan -> CSB in order")
+        dm1_runtime is None or csb_runtime is None or len(rescans) != 2 or
+        not (trace.index(dm1_launch) < dm1_runtime.start() < rescans[0].start() <
+             trace.index(csb_launch) < csb_runtime.start() < rescans[1].start())):
+    raise SystemExit(
+        "FAIL: M12 did not launch DM1, rescan, launch CSB, return and rescan again in order")
 for game in ("dm1", "csb"):
-    if re.search(rf"return-menu rescan game={game} available=1", trace) is None:
-        raise SystemExit(f"FAIL: return-to-menu rescan lost {game} from the shared collection")
+    matches = re.findall(rf"return-menu rescan game={game} available=1", trace)
+    if len(matches) != 2:
+        raise SystemExit(
+            f"FAIL: both return-to-menu scans must rediscover {game} in the shared collection")
 
-startup, party = probe["startup"], probe["party"]
-if (probe.get("sourceId") != "csb" or startup.get("levelLoaded") != 1 or
-        probe.get("csbViewportHash", 0) == 0 or
-        (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
-         party.get("direction"), party.get("championCount")) != (4, 22, 18, 2, 1)):
-    raise SystemExit(f"FAIL: final CSB session did not reach authentic MINI.DAT runtime: {probe}")
+if (probe.get("launchedEver") != 1 or probe.get("active") != 0 or
+        probe.get("script") != {"waitFramesRemaining": 0, "pending": 0}):
+    raise SystemExit(f"FAIL: shared session did not finish back at the launcher: {probe}")
 
-print("PASS: same M12 session launched DM1, returned and rediscovered both games, then launched CSB")
-print("PASS: both game handoffs reached their authentic first runtime states from one shared collection")
+print("PASS: same M12 session launched DM1, rescanned, launched CSB, returned, and rescanned again")
+print("PASS: both game handoffs reached authentic first runtime states from one shared collection")
 PY
