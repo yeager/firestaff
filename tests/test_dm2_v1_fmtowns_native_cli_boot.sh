@@ -59,6 +59,12 @@ printf '%s\n' "$auto_menu_output" | grep -q \
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 default_home=$(mktemp -d "$test_scratch/dm2-default-data.XXXXXX")
+cleanup_default_home() {
+    if [ -d "$default_home" ]; then
+        find "$default_home" -depth -delete
+    fi
+}
+trap cleanup_default_home EXIT HUP INT TERM
 default_data_root="$default_home/.firestaff/data"
 default_archive="$default_data_root/dm2/$(basename "$archive")"
 default_log="$default_home/menu.log"
@@ -88,7 +94,6 @@ if ! grep -Fq \
     exit 1
 fi
 echo 'PASS: DM2 AUTO start menu discovers FM Towns media from ~/.firestaff/data/dm2 without --data-dir'
-find "$default_home" -depth -delete
 
 # FM Towns is the first DM2 platform card.  This asserts that the launcher
 # admits the authentic disc solely through mouse selection before the source
@@ -250,7 +255,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         cat "$runtime_log" >&2
         exit 1
     }
-python3 - "$runtime_probe" "$runtime_capture" "$runtime_log" "$archive" <<'PY'
+python3 - "$runtime_probe" "$runtime_capture" "$runtime_log" "$default_archive" <<'PY'
 import json
 from pathlib import Path
 import struct

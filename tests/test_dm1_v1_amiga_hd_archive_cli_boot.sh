@@ -36,9 +36,10 @@ grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" &&
 grep -Fq "dataDir=$archive" <<<"$menu_output" &&
 grep -Fq 'handoff=amiga-img2' <<<"$menu_output"
 
-# Verify the actual M12 -> Amiga HD route through the first source-owned
-# runtime frame. A ready receipt by itself does not prove the HD ADF loaded
-# its native dungeon and initial party position.
+# Verify the actual M12 -> Amiga HD route through a first runtime frame.
+# Unlike Amiga v2.0 floppy media, the installed HD image has no source-owned
+# title/Entrance transaction; require its authenticated image and native
+# dungeon pose instead of borrowing the v2.0 handoff receipt.
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_runtime_probe_json="$test_scratch/dm1-amiga-hd-menu-runtime-$$.json"
@@ -61,14 +62,12 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["receiptReady"] != 1 or startup["phase"] != "dm1-runtime" or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["levelLoaded"] != 1 or
-        startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(
         f"FAIL: authentic DM1 Amiga HD M12 route did not reach the first "
         f"runtime frame: {probe}")
-print("PASS: authentic DM1 Amiga HD start menu reached the first runtime frame")
+print("PASS: authentic DM1 Amiga HD start menu reached its native runtime frame")
 PY
 rm -f "$menu_runtime_probe_json"
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
