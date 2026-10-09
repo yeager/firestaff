@@ -406,6 +406,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE' "$main_ram_consumer_patc
 fi
 indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch
 pce_fast_indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch
+runtime_code_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch
 cd_ram_runtime_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_runtime_window_trace.patch
 cd_ram_target_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
@@ -427,8 +428,21 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13]' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'FIRESTAFF_PATCH_TAB_CONTEXT  TheronTraceStage2MPR1(GetRealPC()' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq '+static char Theron3879FastRuntimeCodeWindow[27];' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch' "$build_script" ||
+   ! grep -Fq 'TheronTraceInstructionPC == 0x44d2' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastCodeWindowCount < 64' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowStepsRemaining = 128' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowCount < 128' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'theron_44d2_follow step=%u logical_pc=%04x physical_pc=%06x opcode=%02x' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'theron_runtime_code_window pc=%04x physical_pc=%06x byte0=%02x byte0_mpr=%02x byte0_physical=%06x byte1=%02x byte1_mpr=%02x byte1_physical=%06x byte2=%02x byte2_mpr=%02x byte2_physical=%06x' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron3879FastTraceMappedOpcode, HuCPU.MPR[TheronTraceInstructionPC >> 13]' "$runtime_code_window_patch_file" ||
+   ! grep -Fq '(HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1fff)' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron3879FastTraceMappedOperand1, HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13]' "$runtime_code_window_patch_file" ||
+   ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13] << 13) | ((TheronTraceInstructionPC + 1) & 0x1fff)' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron3879FastTraceMappedOperand2, HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13]' "$runtime_code_window_patch_file" ||
+   ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff)' "$runtime_code_window_patch_file" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
-    printf '%s\n' 'FAIL: bounded $3879 indirect-target trace is missing or not wired into the live capture'
+    printf '%s\n' 'FAIL: bounded PCE Fast code trace is missing or not wired into the live capture'
     exit 1
 fi
 if ! grep -Fq 'theron_pce_fast_cd_ram_runtime_window_trace.patch' "$build_script" ||
@@ -437,6 +451,21 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_runtime_window_trace.patch' "$build_script
    ! grep -Fq 'HuCPU.PCERead[mpr](physical)' "$cd_ram_runtime_window_patch_file" ||
    ! grep -Fq 'Theron3879FastRuntimeCodeWindow' "$cd_ram_runtime_window_patch_file"; then
     printf '%s\n' 'FAIL: runtime source window for the PCE Fast CD RAM caller is missing or unwired' >&2
+    exit 1
+fi
+if grep -Fq '\\n' "$runtime_code_window_patch_file"; then
+    printf '%s\n' 'FAIL: runtime code-window patch emits a literal backslash-n sequence'
+    exit 1
+fi
+if ! awk '
+    /pce_fast_3879_trace_rendered"/ { indirect_patch = NR }
+    /theron_pce_fast_44d2_runtime_code_window\.patch/ {
+        if (!indirect_patch || indirect_patch >= NR) exit 1
+        found = 1
+    }
+    END { if (!found) exit 1 }
+' "$build_script"; then
+    printf '%s\n' 'FAIL: runtime code-window patch must follow the PCE Fast instruction-PC trace patch'
     exit 1
 fi
 if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" ||

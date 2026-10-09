@@ -216,6 +216,8 @@ sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$pce_fast_3879_trace_patch" \
     > "$pce_fast_3879_trace_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$pce_fast_3879_trace_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch"
 git -C "$build_root/source" apply --unidiff-zero --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_runtime_window_trace.patch"
 target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch"

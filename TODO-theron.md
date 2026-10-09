@@ -63,15 +63,44 @@
   initial Stage-2 bytes; its bank-`$68` code bytes and source-sector provenance
   remain unbound. The exact raw-window hashes, trace evidence and limits are in
   `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
+  A capture-only prefetch patch now records three mapped bytes at `$44D2`.
+  An eight-second authentic JP replay produced 64 identical rows: `AD 00 10`
+  at physical `$0D04D2`, with each byte mapped through MPR `$68`. The matching
+  instruction trace confirms opcode `LDA $1000`, and the input trace records
+  the same PC reading register `$1000`. A scripted `up@60:60` event was seen
+  at the controller poll, including 60 reads carrying raw mask `0010` at
+  `$44D2`. The runner still ended `BLOCKED`: zero CD IRQs and authenticated
+  CD-to-RAM receipts, `transition=missing`. This identifies the runtime poll
+  instruction, not its Track 02 source or a gameplay effect. Full evidence and
+  hashes are in `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`;
+  private capture:
+  `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-runtime-code-window-20261009-1249/`.
+  A bounded 128-prefetch follow trace decoded the poll path through
+  `$44E6`/RTS. Matched first-frame runs showed `$44C1` returning `3f` with no
+  UP and `3e` with `up@1:60`; the following `$28B8` store value changed from
+  `00` to `10`. At `$D32F`, the UP run compares `10` with the prior `$2912=00`
+  and branches to `$D346`, where `STA $2912` writes `10`; later consumers read
+  `$2912=10`. The control compares `00` with `00`, does not branch, and keeps
+  `$2912=00`. This proves the scripted UP bit reaches a game-RAM state update,
+  not that movement or a visible action occurs. Both runs still lack CD IRQs,
+  authenticated CD-to-RAM receipts, and a transition; both end at level 2,
+  direction 1, position `(2,3)`. The decoded sequence and hashes are in
+  `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`;
+  control capture:
+  `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-runtime-code-follow-20261009-1252/`;
+  UP-at-frame-1 capture:
+  `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-runtime-code-follow-input-20261009-1255/`.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-autoload-20261009-0840/`.
-- Next: from the authentic state, trace game dispatch index `$53` / PC `$49FB`
-  and a visible action or party-position change beyond the verified controller
-  poll. Then bind the decoder's source bytes, MPRs, destination and
-  `$3b7e-$3b85` pointer table in one authentic runtime session before treating
-  any decoded output as level data.
+- Next: trace the `$28B8` writer's consumer and bind the `$44D2` bank-`$68` code
+  window to authentic Track 02 source sectors using same-session CD read and
+  target-write receipts. Then follow the poll's caller through game dispatch
+  index `$53` / PC `$49FB` to a visible action or party-position change. Bind
+  the decoder's source bytes, MPRs, destination and `$3b7e-$3b85` pointer table
+  in one authentic runtime session before treating any decoded output as level
+  data.
 
 ## 2026-10-09 — separate Firestaff save features from retail-save parity
 

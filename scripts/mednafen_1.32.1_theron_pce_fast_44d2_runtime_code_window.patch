@@ -1,0 +1,59 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -35,6 +35,7 @@
+ static unsigned Theron3879FastTraceMappedOpcode;
+ static unsigned Theron3879FastTraceMappedOperand1;
+ static unsigned Theron3879FastTraceMappedOperand2;
++static unsigned Theron44D2FastCodeWindowCount;
++static unsigned Theron44D2FastFollowStepsRemaining;
++static unsigned Theron44D2FastFollowStarted;
++static unsigned Theron44D2FastFollowCount;
+ static char Theron3879FastRuntimeCodeWindow[27];
+ static uint8 dummy_bank[8192 + 8192];  // + 8192 for PC-as-ptr safety padding
+@@ -1025,7 +1026,8 @@
+   if(Theron3879FastTargetStepsRemaining ||
+      (TheronTraceInstructionPC >= 0x4ef4 && TheronTraceInstructionPC <= 0x4ef6) ||
+      (TheronTraceInstructionPC >= 0x3879 && TheronTraceInstructionPC <= 0x3918) ||
+-     (TheronTraceInstructionPC >= 0x39c0 && TheronTraceInstructionPC <= 0x3a0f))
++     (TheronTraceInstructionPC >= 0x39c0 && TheronTraceInstructionPC <= 0x3a0f) ||
++     TheronTraceInstructionPC == 0x44d2 ||
++     Theron44D2FastFollowStepsRemaining)
+   {
+    Theron3879FastTracePath = getenv("FIRESTAFF_THERON_3879_TRACE");
+    if(Theron3879FastTracePath && *Theron3879FastTracePath && Theron3879FastTraceCount < 8192)
+@@ -1077,6 +1079,20 @@
+          Theron3879FastIndirectTarget, Theron3879FastTargetPhysical,
+          Theron3879FastTargetOpcode, Theron3879FastTargetStepsRemaining);
++     if(TheronTraceInstructionPC == 0x44d2 && Theron44D2FastCodeWindowCount < 64)
++     {
++      fprintf(Theron3879FastTrace,
++          "theron_runtime_code_window pc=%04x physical_pc=%06x byte0=%02x byte0_mpr=%02x byte0_physical=%06x byte1=%02x byte1_mpr=%02x byte1_physical=%06x byte2=%02x byte2_mpr=%02x byte2_physical=%06x\n",
++          TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
++          Theron3879FastTraceMappedOpcode, HuCPU.MPR[TheronTraceInstructionPC >> 13],
++          (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1fff),
++          Theron3879FastTraceMappedOperand1, HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13],
++          (HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13] << 13) | ((TheronTraceInstructionPC + 1) & 0x1fff),
++          Theron3879FastTraceMappedOperand2, HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13],
++          (HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff));
++      fflush(Theron3879FastTrace);
++      Theron44D2FastCodeWindowCount++;
++     }
++     if(TheronTraceInstructionPC == 0x44d2 && !Theron44D2FastFollowStarted)
++     {
++      Theron44D2FastFollowStarted = 1;
++      Theron44D2FastFollowStepsRemaining = 128;
++     }
++     else if(Theron44D2FastFollowStepsRemaining && Theron44D2FastFollowCount < 128)
++     {
++      fprintf(Theron3879FastTrace,
++          "theron_44d2_follow step=%u logical_pc=%04x physical_pc=%06x opcode=%02x byte1=%02x byte2=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++          Theron44D2FastFollowCount++, TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
++          Theron3879FastTraceMappedOpcode, Theron3879FastTraceMappedOperand1,
++          Theron3879FastTraceMappedOperand2, HU_A, HU_X, HU_Y, HU_P, HU_S,
++          HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++          HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++      Theron44D2FastFollowStepsRemaining--;
++     }
+      fflush(Theron3879FastTrace);
+      if(TheronTraceInstructionPC == 0x4ef6 && !Theron3879FastCallerWindowStarted)
+      {
