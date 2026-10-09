@@ -37,6 +37,17 @@
   the control's VRAM also differed. With VDC I/O writes unavailable, these
   snapshots are not reproducible enough to attribute the VRAM delta to input
   or call it a visible movement effect.
+  A separate 30-second follow-up replay held each cardinal direction for 180
+  frames against the same authentic state and JP Rev. 1 disc: `right@60:180`,
+  `down@360:180`, `left@660:180`, and `up@960:180`. The scripted-input
+  verifier recorded all four events applied and read back at non-System-Card
+  controller polling (`$44D2`). The final party state remained level 2, bank 1,
+  direction 1, at `(2,3)`; the only dispatch record was still ID `$00` to
+  `$FCCD`, with no `$49FB`/ID `$53`. The capture ended `BLOCKED` because it
+  had no IRQ or authenticated CD-to-RAM receipts, so this is evidence that
+  input reached the retail polling routine, not evidence that every direction
+  was processed by gameplay or that movement is universally rejected. Private
+  capture: `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-input-sweep-20261009-1250/`.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
