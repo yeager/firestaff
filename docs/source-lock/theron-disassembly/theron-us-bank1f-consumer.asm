@@ -11,6 +11,13 @@
 ; The `$2600` RAM consumer seen in the live capture is intentionally not
 ; represented here: its bytes are loaded after a CD read and are absent from
 ; the static bank image.
+;
+; Cross-check: the 0x17c-byte `$2386` window is identical in authentic US
+; `TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`, file offset `$2bd586`)
+; and JP Rev. 1 `TQJP02.bin` (MD5 `b7afb338ad31be1025b53f9aff12d73a`, file
+; offset `$2bcc56`). Three `unidasm -arch h6280` runs per edition produced
+; the same listing SHA-256 `4a67f8d5a4156cfba76160f5b2307566154cd041f73855e9609bea19cb6a82db`.
+; This is static regional-byte equivalence, not runtime bank-mapping evidence.
 
         .setcpu  "huc6280"
 
