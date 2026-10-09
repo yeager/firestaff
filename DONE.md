@@ -1,5 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-09: Re-ran `return_to_menu_rescans_dm1_csb_dm2_real_media` on the
+  current `main` base. DM1, CSB, and DM2 started with original media in one
+  M12 session, returned to the launcher, and were rediscovered by its scan;
+  the test passed in 221.46 seconds. This verifies the headless launcher flow,
+  not physical M5 display, audio, or input behavior.
+
+- 2026-10-09: M12 distinguishes an inaccessible selected game-data directory
+  from a path that does not exist. The regression runs against an original
+  DM1 FM Towns archive beside both an unreadable child and a selected folder
+  beneath an unreadable parent; the focused `asset_scan_access_denied` CTest
+  passed and verified the access-specific launcher message. This validates
+  POSIX permission diagnostics, not macOS TCC prompts or other-platform ACLs.
+
 - 2026-10-09: M12 now reports operating-system-denied folders during startup
   and data-directory rescans even when another supported game is available.
   The `asset_scan_access_denied` CTest passed on macOS with the authentic DM1

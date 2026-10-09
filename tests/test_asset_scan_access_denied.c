@@ -12,6 +12,8 @@
 int main(void) {
     char root[] = "asset-scan-access-denied.XXXXXX";
     char denied[ASSET_PATH_MAX];
+    char blockedParent[ASSET_PATH_MAX] = {0};
+    char blockedRoot[ASSET_PATH_MAX] = {0};
     char home[ASSET_PATH_MAX];
     char configPath[ASSET_PATH_MAX];
     char cachePath[ASSET_PATH_MAX];
@@ -40,6 +42,19 @@ int main(void) {
         rmdir(root);
         return 1;
     }
+    if (snprintf(blockedParent, sizeof(blockedParent), "%s/blocked-parent",
+                 root) >= (int)sizeof(blockedParent) ||
+        mkdir(blockedParent, 0700) != 0 ||
+        snprintf(blockedRoot, sizeof(blockedRoot), "%s/selected",
+                 blockedParent) >= (int)sizeof(blockedRoot) ||
+        mkdir(blockedRoot, 0700) != 0) {
+        perror("prepare inaccessible selected root");
+        rmdir(blockedRoot);
+        rmdir(blockedParent);
+        rmdir(denied);
+        rmdir(root);
+        return 1;
+    }
     if (snprintf(home, sizeof(home), "%s/home", root) >= (int)sizeof(home) ||
         mkdir(home, 0700) != 0 ||
         snprintf(configPath, sizeof(configPath), "%s/config.toml", home) >=
@@ -64,13 +79,45 @@ int main(void) {
         rmdir(root);
         return 1;
     }
-    if (chmod(denied, 0000) != 0) {
+    if (chmod(denied, 0000) != 0 || chmod(blockedParent, 0000) != 0) {
         perror("chmod unreadable");
+        chmod(blockedParent, 0700);
+        rmdir(blockedRoot);
+        rmdir(blockedParent);
         chmod(denied, 0700);
         rmdir(denied);
         rmdir(root);
         return 1;
     }
+
+    memset(&menuOptions, 0, sizeof(menuOptions));
+    menuOptions.skipAssetScan = 1;
+    menuOptions.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(&menu, NULL, NULL, &menuOptions);
+    menu.languageExplicit = 1;
+    menu.settings.languageIndex = 0;
+    if (M12_StartupMenu_SetDataDirectory(&menu, blockedRoot) != 0 ||
+        menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine1 ||
+        strcmp(menu.messageLine1, "1 FOLDER REQUIRES ACCESS") != 0 ||
+        !menu.messageLine2 || !strstr(menu.messageLine2, blockedRoot) ||
+        !menu.messageLine3 ||
+        strcmp(menu.messageLine3,
+               "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN") != 0) {
+        fprintf(stderr,
+                "FAIL: inaccessible selected root was not reported as denied\n");
+        M12_StartupMenu_Destroy(&menu);
+        chmod(blockedParent, 0700);
+        rmdir(blockedRoot);
+        rmdir(blockedParent);
+        chmod(denied, 0700);
+        rmdir(denied);
+        rmdir(root);
+        return 1;
+    }
+    M12_StartupMenu_Destroy(&menu);
+    chmod(blockedParent, 0700);
+    rmdir(blockedRoot);
+    rmdir(blockedParent);
 
     asset_scan_clear_access_denied_directories();
     (void)asset_find_all_by_md5_list(root, hashes, matchedPaths, matched, 1, 4);
@@ -79,6 +126,9 @@ int main(void) {
         strcmp(asset_scan_access_denied_directory_path(0), denied) != 0) {
         fprintf(stderr, "FAIL: denied directory was not recorded (count=%d)\n", count);
         chmod(denied, 0700);
+        chmod(blockedParent, 0700);
+        rmdir(blockedRoot);
+        rmdir(blockedParent);
         rmdir(denied);
         rmdir(root);
         return 1;
@@ -88,6 +138,9 @@ int main(void) {
     if (asset_scan_access_denied_directory_count() != 0) {
         fprintf(stderr, "FAIL: clear did not reset denied directory diagnostics\n");
         chmod(denied, 0700);
+        chmod(blockedParent, 0700);
+        rmdir(blockedRoot);
+        rmdir(blockedParent);
         rmdir(denied);
         rmdir(root);
         return 1;
@@ -167,6 +220,9 @@ int main(void) {
                     rmdir(dm1Dir);
                 }
                 chmod(denied, 0700);
+                chmod(blockedParent, 0700);
+                rmdir(blockedRoot);
+                rmdir(blockedParent);
                 rmdir(denied);
                 rmdir(root);
                 return 1;
@@ -184,6 +240,9 @@ int main(void) {
                         "FAIL: startup hid an unreadable folder beside authentic DM1 media\n");
                 M12_StartupMenu_Destroy(&menu);
                 chmod(denied, 0700);
+                chmod(blockedParent, 0700);
+                rmdir(blockedRoot);
+                rmdir(blockedParent);
                 unlink(archiveLink);
                 rmdir(dm1Dir);
                 rmdir(denied);
@@ -209,6 +268,9 @@ int main(void) {
                         "FAIL: rescan hid an unreadable folder beside authentic DM1 media\n");
                 M12_StartupMenu_Destroy(&menu);
                 chmod(denied, 0700);
+                chmod(blockedParent, 0700);
+                rmdir(blockedRoot);
+                rmdir(blockedParent);
                 unlink(archiveLink);
                 rmdir(dm1Dir);
                 rmdir(denied);

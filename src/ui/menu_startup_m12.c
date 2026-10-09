@@ -55,12 +55,19 @@
 #include <SDL3/SDL_mutex.h>
 #include <SDL3/SDL_thread.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#else
+#include <io.h>
+#endif
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
@@ -2480,6 +2487,49 @@ static int m12_data_directory_dialog_token_is_placeholder(const char* path) {
     return sawDot;
 }
 
+/* stat-based directory checks collapse EACCES into "not found". Probe path
+ * visibility separately so a denied parent (including macOS folder access)
+ * is not reported as a missing game-data directory. */
+static int m12_data_directory_access_denied(const char* path) {
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    errno = 0;
+    if (FSP_DirExists(path)) {
+#if defined(_WIN32)
+        if (_access(path, 4) == 0) {
+#else
+        if (access(path, R_OK | X_OK) == 0) {
+#endif
+            return 0;
+        }
+#if defined(_WIN32)
+    } else if (_access(path, 0) == 0) {
+#else
+    } else if (access(path, F_OK) == 0) {
+#endif
+        /* The path exists but is not a directory. */
+        return 0;
+    }
+    return errno == EACCES || errno == EPERM;
+}
+
+static void m12_show_selected_directory_access_denied(
+    M12_StartupMenuState* state, const char* path) {
+    char line1[128];
+    if (!state || !path || path[0] == '\0') {
+        return;
+    }
+    snprintf(line1, sizeof(line1), m12_tr(state, "%d FOLDER REQUIRES ACCESS"),
+             1);
+    m12_enter_message_view(state);
+    state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    m12_set_buffered_message(
+        state, line1, path,
+        m12_tr(state, "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"));
+}
+
 /* SDL's native folder dialog may return a relative path (notably "." on
  * some macOS dialog backends). Store the resolved directory, never that
  * display token, so the next launcher run scans the folder the user chose
@@ -2548,6 +2598,10 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
     }
     if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
                                          sizeof(canonicalDataDir))) {
+        if (m12_data_directory_access_denied(dataDir)) {
+            m12_show_selected_directory_access_denied(state, dataDir);
+            return 0;
+        }
         char line3[160];
         m12_format_data_dir_line(state, line3, sizeof(line3));
         m12_enter_message_view(state);
@@ -2620,6 +2674,10 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     }
     if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
                                          sizeof(canonicalDataDir))) {
+        if (m12_data_directory_access_denied(dataDir)) {
+            m12_show_selected_directory_access_denied(state, dataDir);
+            return 0;
+        }
         char line3[160];
         m12_format_data_dir_line(state, line3, sizeof(line3));
         m12_enter_message_view(state);

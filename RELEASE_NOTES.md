@@ -1,3 +1,10 @@
+# Unreleased
+
+## User-facing changes
+
+- `Game-data folder selection`: reports when the selected directory cannot be
+  accessed separately from a directory that does not exist.
+
 # Firestaff v3.0.374
 
 ## User-facing changes
