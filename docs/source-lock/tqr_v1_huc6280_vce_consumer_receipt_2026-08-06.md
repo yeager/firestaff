@@ -41,6 +41,51 @@ stage-two listing has distinct setup routes: `L4995` copies the resolved
 startup/runtime path copies `$37ce/$37cf` into those pairs. The listing does
 not establish which route supplies the caller's `$62/$63` at the VCE call.
 
+## Bounded predecessor dispatch window
+
+The authentic US and JP Stage-2 records also contain the same 43-byte window
+at logical `$9643..$966e` (exclusive end), immediately before the caller at
+`$966e`. Its raw BIN offsets are `0x2c4fb3` (US) and `0x2c4683` (JP); the
+SHA-256 is
+`dfd4bbc8fbf9c026f1bb63646abf6c4bd30dfec095bed8c96b19c0ca1d30d3dd` in both.
+The focused real-media Stage-2 test checks every byte and the relative branch
+targets for both regions.
+
+The bounded HuC6280 decode is:
+
+```text
+L9643:  lda     $27c6
+        bne     L9665
+        lda     ($62)
+        asl     a
+        tax
+        lda     #$56
+        pha
+        lda     #$5b
+        pha
+        cly
+        jmp     ($5656,x)
+        lda     ($56,x)       ; continuation if the indirect target RTSes
+        sta     $56
+        ror     $1856
+        adc     $62
+        sta     $62
+        bcc     L9665
+        inc     $63
+L9665:  lda     $27c6
+        beq     L966d
+        dec     $27c6
+L966d:  rts
+```
+
+This locks an indirect indexed jump and the static continuation after it; it
+does not identify the selected target. The target bytes at `$5656 + X` are not
+shown to be a runtime table, and the value read through `$62` is not assigned
+a descriptor class. The following `$966e` caller and VCE consumer remain
+static source evidence only. This does not resolve which runtime route
+initializes `$62/$63` or connect that pointer to authentic palette source
+bytes.
+
 This is a static consumer-contract receipt only. `$27c4/$27c5` is populated by
 a descriptor-relative read through `$62/$63`, so the receipt does not join the
 consumer to the known `0x2a06a0` US or `0x29fd70` JP palette-shaped Track 02
@@ -49,6 +94,6 @@ or dungeon rendering. Those routes remain blocked until an authenticated executi
 provides the source-LBA/FIFO and VCE/VDC destination join.
 
 References: `docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm`
-(`L966D..L96A5`, lines 12633-12666, and `L96c2`), HuC6260/HuC6270 hardware
+(`L9643..L96A5`, lines 12611-12666, and `L96c2`), HuC6260/HuC6270 hardware
 format notes, DMWeb Theron's Quest edition provenance, and the Greatstone
 extraction methodology recorded in `docs/DMWEB_REFERENCE.md`.

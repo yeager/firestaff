@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — source-lock the VCE descriptor-dispatch predecessor
+
+- The authentic US and JP Stage-2 BINs have the same 43-byte HuC6280 window
+  at `$9643..$966e` (exclusive end), immediately before the `$966e` VCE
+  caller. The Stage-2 disassembly test now checks every byte and relative
+  branch targets in both regions. Three direct comparison loops on TRV2
+  passed; both retail BINs matched their whole-file MD5s. The bounded decode
+  is recorded in `docs/source-lock/tqr_v1_huc6280_vce_consumer_receipt_2026-08-06.md`.
+- This establishes static dispatch/control-flow bytes only. The indirect
+  `$5656 + X` target, the descriptor meaning, runtime `$62/$63` provenance,
+  and the palette-source-to-VCE write join remain unverified.
+
 ## 2026-10-09 — verify the JP Stage-2 `$E03F` caller window
 
 - The focused hardware-config real-media test now asserts the exact 28-byte

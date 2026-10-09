@@ -148,7 +148,9 @@
 - The 23-byte caller at raw BIN offsets `0x2c4fde`/`0x2c46ae` begins at
   `$966e`; `$9682` is its trailing `LDA #$04; RTS`. The focused source test
   now asserts the correct entry and its raw-offset delta to consumer `$96a5`.
-  This correction does not resolve the indirect `$5656` vector selection,
+  The 43-byte predecessor `$9643..$966d` is now also byte-locked in authentic
+  US/JP Stage-2 and its relative branches are checked; see the VCE consumer
+  source-lock note. Neither window resolves the indirect `$5656` target,
   runtime `$62/$63` provenance, or palette-to-VCE source binding.
 
 ## 2026-10-09 — close the dungeon-rendering evidence gap
