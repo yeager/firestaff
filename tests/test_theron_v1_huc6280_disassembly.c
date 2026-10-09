@@ -32,6 +32,29 @@ static void verify_bank1f_initializer_call(const char *path,
     assert(target == 0x23a4);
 }
 
+/* JP $C414 preconsumer calls $C95D at $C422 and $CC3E at $C42B; see
+ * theron-jp-c3a0-record-consumer.asm lines 87 and 91. Verify that the
+ * authentic caller operands agree with the separately locked target windows. */
+static void verify_jp_spawn_caller_targets(const char *path,
+                                          uint16_t c95d_target,
+                                          uint16_t cc3e_target) {
+    static const long file_offset = 0x9bb94L;
+    unsigned char caller[27];
+    FILE *file = fopen(path, "rb");
+
+    assert(file != NULL);
+    assert(fseek(file, file_offset, SEEK_SET) == 0);
+    assert(fread(caller, 1u, sizeof(caller), file) == sizeof(caller));
+    assert(fclose(file) == 0);
+    assert(caller[0x0eu] == 0x20u);
+    assert(caller[0x0fu] == (unsigned char)(c95d_target & 0xffu));
+    assert(caller[0x10u] == (unsigned char)(c95d_target >> 8u));
+    assert(caller[0x17u] == 0x20u);
+    assert(caller[0x18u] == (unsigned char)(cc3e_target & 0xffu));
+    assert(caller[0x19u] == (unsigned char)(cc3e_target >> 8u));
+    assert(caller[0x1au] == 0x60u);
+}
+
 static void verify(const char *env_name, const char *name, int variant,
                    const char *label) {
     char fallback[512];
@@ -144,6 +167,9 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.spawn_runtime_c3a0_fnv1a == 0x666ded61u);
         assert(!receipt.spawn_runtime_c3a0_jp_verified);
     } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        verify_jp_spawn_caller_targets(
+            path, receipt.spawn_rng_c95d_jp_candidate_address,
+            receipt.spawn_rng_cc3e_jp_candidate_address);
         assert(!receipt.spawn_rng_helper_verified);
         assert(!receipt.spawn_rng_preconsumer_verified);
         assert(!receipt.spawn_rng_c96b_verified);

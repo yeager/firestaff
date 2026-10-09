@@ -5287,6 +5287,10 @@ required before semantic promotion.
   does not prove runtime bank mapping. Details, occurrence bounds and listing
   hashes are in
   `docs/source-lock/theron-jp-us-spawn-consumer-static-comparison-2026-09-24.md`.
+- The focused source-receipt test now cross-checks the authentic JP caller's
+  `$C422/$C42B` JSR operands against the separately admitted `$C95D/$CC3E`
+  candidate addresses. This locks the static caller-to-candidate relationship
+  only; it does not prove runtime mapping or execution.
 - Remaining: bind the JP caller and mapped callee bytes/return edges in one
   authenticated runtime capture before extending these static interpretations.
 
