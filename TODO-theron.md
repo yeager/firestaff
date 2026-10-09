@@ -9,9 +9,11 @@
   queues; the loader test passed three local loops. Fixture progression and
   startup/Continue regression tests also passed three loops. This guard does
   not enable stair traversal.
-- ✅ The authentic US stair test also seeds a stale teleporter queue and
-  verifies that the rejected source-backed stair clears it without moving the
-  party. Check and execute paths passed three local loader-test loops.
+- ✅ The authentic US stair test confirms the tile decodes as
+  `STAIRS_UNRESOLVED`; `check_transition` returns no transition and clears a
+  stale queue without moving the party. This is the unresolved-tile route, not
+  evidence for stair direction or traversal. The loader test passed three
+  loops.
 
 - ✅ The local `test_theron_v1_track02_dungeon_loader` executable passed three
   consecutive loops using the installed authentic US and JP `TQUS02.bin` and

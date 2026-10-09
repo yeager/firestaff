@@ -1922,7 +1922,6 @@ Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world,
                            [world->current_level] &&
         world->levels[world->current_dungeon - 1]
                      [world->current_level].source_header_verified) {
-        world->transition_pending = 0;
         return 0;
     }
 

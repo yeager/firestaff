@@ -11,9 +11,10 @@
   each passed three local loops. The teleporter-chain and US/JP real-media door
   tests also passed three loops. This is a fail-closed safety boundary, not
   stair gameplay support.
-- The matching source-backed check path now also clears a stale pending
-  transition when an authentic stair is rejected. The US original-data loader
-  regression verified both check and execute entry points in three loops.
+- The US original-data loader test confirms its authentic stair tile remains
+  `STAIRS_UNRESOLVED`; `check_transition` returns no transition and clears a
+  stale queue without moving the party. The test passed in three loops. This
+  confirms the current fail-closed boundary, not stair semantics.
 
 ## 2026-10-09 — repeat authentic dungeon-loader test locally
 
