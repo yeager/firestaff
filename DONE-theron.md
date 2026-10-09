@@ -10,7 +10,9 @@ passed. Rechecking an authentic US gameplay-state replay found 1,400 input
 reads and confirmed the scripted direction mask in a post-event poll at
 `$44db`. The replay still had no authenticated CD-to-RAM receipt or gameplay
 transition, so this verifies input delivery only and does not establish
-gameplay or rendering parity.
+gameplay or rendering parity. A review then tightened the legacy PCE verifier
+to require the raw-read and returned-value records to be adjacent; an
+interleaved-record negative control and the focused test pass.
 
 ## 2026-10-09 — rerun regional source gates against local original media
 

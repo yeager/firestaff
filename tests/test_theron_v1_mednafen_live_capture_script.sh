@@ -123,6 +123,25 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: a mismatched PCE read/result pair was accepted as input consumption' >&2
     exit 1
 fi
+cat >"$input_test_dir/legacy-pce-result-interleaved.trace" <<'THERON_LEGACY_PCE_INTERLEAVED'
+scripted_pce_input_event frame=62 key=up mask=0010 hold=1
+scripted_pce_input_apply frame=62 physical=0000 scripted=0010 combined=0010
+pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+trace_marker unrelated=1
+pce_input_result cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
+THERON_LEGACY_PCE_INTERLEAVED
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/legacy-pce-result-interleaved.trace" up@62 1 \
+    >"$input_test_dir/legacy-pce-result-interleaved.stdout" \
+    2>"$input_test_dir/legacy-pce-result-interleaved.stderr"; then
+    printf '%s\n' 'FAIL: a non-adjacent PCE result was accepted as input consumption' >&2
+    exit 1
+fi
+if ! grep -Fq 'legacy PCE input result did not immediately follow its raw read' \
+    "$input_test_dir/legacy-pce-result-interleaved.stderr"; then
+    printf '%s\n' 'FAIL: non-adjacent PCE read/result rejection lacked a precise diagnostic' >&2
+    exit 1
+fi
 cat >"$input_test_dir/event-at-read-cap.trace" <<'THERON_CAPPED_INPUT'
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0

@@ -101,6 +101,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             controller_read_witness_pc = read_pc
         }
     }
+    pending_result && $0 !~ /^pce_input_result / {
+        failure = "legacy PCE input result did not immediately follow its raw read"
+        pending_result = 0
+    }
     /^pce_input_read / {
         input_reads++
         if (input_reads > read_limit) {
@@ -242,16 +246,20 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         next
     }
     END {
-        if (events != expected_events)
-            failure = "observed scripted-event count does not match the requested plan"
-        else if (pending_frame != "" && !pending_apply)
-            failure = "the final scripted event frame has no nonzero apply receipt"
-        else if (pending_frame != "" && !pending_read)
-            failure = "the final scripted event frame had no controller-port read exposing its scripted mask"
-        else if (pending_frame != "") {
-            frames_with_apply++
-            frames_with_controller_read++
-            frames_with_mask_match++
+        if (failure == "") {
+            if (events != expected_events)
+                failure = "observed scripted-event count does not match the requested plan"
+            else if (pending_result)
+                failure = "final legacy PCE raw input read has no adjacent result record"
+            else if (pending_frame != "" && !pending_apply)
+                failure = "the final scripted event frame has no nonzero apply receipt"
+            else if (pending_frame != "" && !pending_read)
+                failure = "the final scripted event frame had no controller-port read exposing its scripted mask"
+            else if (pending_frame != "") {
+                frames_with_apply++
+                frames_with_controller_read++
+                frames_with_mask_match++
+            }
         }
         if (failure != "") {
             printf "BLOCKED: %s (events=%d/%d input_reads=%d read_limit=%d)\n", \
