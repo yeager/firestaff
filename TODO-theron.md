@@ -30,6 +30,13 @@
   `$FCCD`; the `$4ED4` candidate bytes were `0d 8a 2d` (`linked=0`), not the
   `JSR $3A2E` signature. Neither trace reached `$49FB` or established dispatch
   index `$53`.
+  A matched 12-second no-input control and a second identical `up@60:60`
+  replay both recorded 1,430 controller reads and the same level/pose. The
+  repeated input replay changed 85 BaseRAM bytes and 127 VRAM bytes relative
+  to the first replay, while VCE, SAT and VDC state stayed byte-identical;
+  the control's VRAM also differed. With VDC I/O writes unavailable, these
+  snapshots are not reproducible enough to attribute the VRAM delta to input
+  or call it a visible movement effect.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
