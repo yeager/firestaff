@@ -92,6 +92,12 @@
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-runtime-code-follow-input-20261009-1255/`.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
+  The UP trace's 128-step continuation now records the caller spine
+  `$4349 → $4701 → $471D → $D26B → $D4EC → $D328 → $D32F`, including the
+  indexed-pointer reads at `$77CE/$77CF` and the branch to `$D346`. It ends at
+  step 127 before the routine completes and supplies no source-LBA receipt,
+  field semantics, coordinate write, or visible action; see the source-lock
+  note for exact PCs and branch outcomes.
   Capture:
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-autoload-20261009-0840/`.
 - A static cross-bind now matches the runtime `$44D2` instruction path byte for

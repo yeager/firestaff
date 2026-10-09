@@ -148,6 +148,84 @@ authenticated CD-to-RAM receipts. Therefore they prove controller input
 delivery and a logical/physical bank alias only. They do not prove gameplay
 input handling, movement rejection, or a game transition.
 
+## Bounded caller continuation from the UP replay
+
+The UP-at-frame-1 trace contains 128 consecutive instruction-prefetch records
+after its first `$44D2` hit. This extends the dynamic disassembly through the
+poll caller and into the state consumer, using the same authentic JP Rev. 1
+media and operator-created dungeon state as the preceding section. The trace
+SHA-256 is
+`6bd8222e1b1f378397772d71a5490c0e92893bad43ace7e285bf7f765d5f88ad`.
+
+The observed control-flow spine is:
+
+```text
+$44E6 RTS
+$4349 INC $28b7
+$434C JSR $4701
+$4701 LDA $2922
+$4704 BEQ +4
+$470A LDA $290d
+$470D CMP #$00
+$470F BNE +7
+$4718 LDA #$03
+$471A JSR $4505
+$471D JSR $D26B
+$D26B LDA #$00
+$D26D STA $2911
+$D270 LDA #$03
+$D272 JSR $44E7
+$D275 LDX $290d
+$D278 CPX #$00
+$D27A BEQ +4
+$D27C BSR $D2F9
+...
+$D312 LDA $2e02
+$D315 ORA $2e04
+$D318 ORA $2925
+$D31B BNE -$0c             ; not taken in this replay
+$D31D LDA $2dfa
+$D320 BEQ +3               ; taken in this replay
+$D325 JSR $D4EC
+$D4EC LDA $290d
+$D4EF BEQ +$0d              ; not taken
+$D4F1 CMP #$0d
+$D4F3 BCC +$20              ; taken to $D515 with A=$0c
+$D515 ASL A
+$D516 TAX
+$D517 LDA $77ce,X
+$D51A STA $c5
+$D51C LDA $77cf,X
+$D51F STA $c6
+...
+$D580 RTS
+$D328 LDA $28b8
+$D32B AND #$0f
+$D32D BNE +$14              ; not taken
+$D32F LDA $28b8
+$D332 AND #$f0
+$D334 CMP $2912
+$D337 BNE +$0d              ; taken to $D346 with A=$10
+$D346 STZ $2920
+$D349 STA $2912
+```
+
+Ellipses mark instructions in the captured path that are not needed to show
+these branch and call boundaries; the trace ends at step 127 (`$D35E`), so it
+does not represent a complete caller or frame routine. The `$D4EC` path reads
+an indexed pointer from `$77CE/$77CF`, follows it through zero-page `$C5/$C6`,
+and returns before the `$28B8` comparison. Those bytes and pointer contents
+are runtime observations only: this capture provides neither their original
+Track 02 source receipt nor enough evidence to name the pointed-to record.
+
+The continued trace shows the input latch reaching a branch and writes to
+`$2920/$2912`. It still does not identify the semantics of those fields, show
+a party-coordinate write, or establish visible movement. The transition
+summary remains `transition=missing`, with zero CD data-port reads and zero
+CD-RAM target writes. The source file contains seven identical JP candidates
+for the initial poll routine, so the disassembly cannot choose which one
+populated the running bank.
+
 ## Static authentic-source match for the runtime poll routine
 
 The authenticated JP Rev. 1 Track 02 BIN (`TQJP02.bin`, MD5
