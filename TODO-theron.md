@@ -48,6 +48,14 @@
   input reached the retail polling routine, not evidence that every direction
   was processed by gameplay or that movement is universally rejected. Private
   capture: `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-input-sweep-20261009-1250/`.
+  The same four-event sweep was repeated from the distinct operator-created
+  JP state with MD5 `d5c0daa227c04d55bdf20244803c00bd`; the state was loaded
+  unchanged. All four events again passed the scripted-input verifier at
+  `$44D2`, and the final raw report remained level 2/bank 1, direction 1,
+  `(2,3)`, `transition=missing`, with only dispatch ID `$00` to `$FCCD`.
+  This independent save-state replay reproduces the negative result but still
+  does not prove gameplay-level input handling. Private capture:
+  `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-userstate-input-sweep-20261009-1238/`.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
