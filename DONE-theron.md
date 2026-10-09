@@ -24,6 +24,11 @@ against each original image and confirmed the complete source blocks are
 byte-identical across regions. This binds the source table, not its in-game
 consumer or progression effects.
 
+All seven compiled US dungeon-story strings also matched their exact
+authenticated Track 02 source spans in three repeated runs. This proves the
+US text literals are byte-faithful; it does not establish original text
+windowing, timing, or the unverified JP text presentation path.
+
 ## 2026-10-09 — capture PCE Fast close-time VDC state
 
 Added opt-in capture of PCE Fast VRAM, VCE palette RAM, sprite attributes,
