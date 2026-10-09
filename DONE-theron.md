@@ -18,6 +18,12 @@ against the same hash-verified BIN, including corruption and wrong-identity
 rejection controls. The prompt bytes are source-bound, but the screen consumer
 and actual presentation remain unproven.
 
+The focused experience-table verifier passed three loops for US, JP, and
+regional identity. It checked all 64 words and the preceding 16-word context
+against each original image and confirmed the complete source blocks are
+byte-identical across regions. This binds the source table, not its in-game
+consumer or progression effects.
+
 ## 2026-10-09 — capture PCE Fast close-time VDC state
 
 Added opt-in capture of PCE Fast VRAM, VCE palette RAM, sprite attributes,
