@@ -26,6 +26,10 @@
   hook ran 1,439 times in the first and reached its 2,048-sample limit in the
   second, while the L4C46/MPR1 caller hook ran zero times in both. Both
   runners returned `BLOCKED` without IRQ or authenticated CD-to-RAM receipts.
+  Each run also observed the `$40DC` dispatch with stream ID `$00` targeting
+  `$FCCD`; the `$4ED4` candidate bytes were `0d 8a 2d` (`linked=0`), not the
+  `JSR $3A2E` signature. Neither trace reached `$49FB` or established dispatch
+  index `$53`.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
