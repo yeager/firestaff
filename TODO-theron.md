@@ -116,6 +116,12 @@
   but no US runtime match. Full hashes, offsets, row-by-row match and
   limitations are in
   `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
+  A new authentic-media regression now locks the seven JP/US poll, consumer,
+  and `$D4EC` caller-branch candidates plus the JP-only `$D515` indexed-table
+  prefix, including exact raw offsets and independent negative mutations. It
+  preserves the seven-copy ambiguity and does not claim that one copy loaded
+  into the runtime bank. The regression passed against the authentic user
+  media on TRV2; no gameplay behavior changed.
 - Next: use a cold-start or otherwise source-reading authentic JP session to
   bind `$44D2` to a unique Track 02 source receipt, then follow the poll's
   caller through dispatch index `$53` / PC `$49FB` to a visible action or

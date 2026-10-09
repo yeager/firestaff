@@ -276,6 +276,40 @@ session read only LBAs 3590-3591. This extends the static/runtime code match
 through the observed RAM consumer, but still does not show that any candidate
 sector was loaded in either runtime session.
 
+### Static source candidates for the caller's indexed-table path
+
+The same 128-step UP trace exposes `$D4EC` through `$D4F3` and the indexed
+reader at `$D515`. The runtime bytes at `$D4EC` are
+`ad 0d 29 f0 0d c9 0d 90 20`; the taken `$D4F3` branch enters `$D515` with
+`A=$0c`. The JP bytes at `$D515` begin
+`0a aa bd ce 77 85 c5 bd cf 77 85 c6 a0 01 b1 c5 85 c7 c8 b1 c5 c9 fe d0 06`,
+including indexed reads based on `$77CE/$77CF` and pointer setup in `$C5/$C6`.
+
+Both JP sequences occur at seven identical copies. The `$D4EC` signature is
+at raw offsets `0x9d12c`, `0xe692c`, `0x13012c`, `0x17992c`, `0x1c312c`,
+`0x20c92c`, and `0x25612c` (sector indices 273, 401, 529, 657, 785, 913,
+and 1041; within-sector offset `0x4fc`). The longer `$D515` prefix occurs
+29 bytes later in each copy, at `0x9d155`, `0xe6955`, `0x130155`,
+`0x179955`, `0x1c3155`, `0x20c955`, and `0x256155` (within-sector offset
+`0x525`). These are the same seven raw sectors that contain the `$D32F`
+consumer candidates listed above.
+
+The US `$D4EC` branch signature also occurs seven times, at
+`0x9da6a`, `0xe726a`, `0x130a6a`, `0x17a26a`, `0x1c3a6a`, `0x20d26a`, and
+`0x256a6a` (sector indices 274, 402, 530, 658, 786, 914, and 1042; within-
+sector offset `0x50a`). The longer 25-byte `$D515` JP prefix has no exact US
+match. This establishes a static regional byte difference for this exact
+prefix, not the reason for it or a runtime US path.
+
+`tests/test_theron_v1_runtime_input_poll_media_candidates.py` checks both
+regional hashes, exact occurrence counts/offsets for the poll, consumer,
+caller-branch, and indexed-table signatures, and rejects each candidate under
+an independent in-memory byte mutation. The test passed against the authentic
+`TQJP02.bin` and `TQUS02.bin` in `/home/trv2/.firestaff/data/theron/`. Those
+mutated copies exist only inside the negative test; they are not substitute
+game data. Static duplicates remain unresolved, and no same-session CD-load
+receipt is added.
+
 ## US Track 02 static regional candidates
 
 The same poll and consumer signatures were also searched in the authentic US

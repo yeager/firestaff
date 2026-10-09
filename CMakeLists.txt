@@ -46648,6 +46648,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND test_theron_v1_stage2_disassembly_chain
     )
     add_test(
+        NAME theron_v1_runtime_input_poll_media_candidates
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_runtime_input_poll_media_candidates.py
+    )
+    set_tests_properties(theron_v1_runtime_input_poll_media_candidates PROPERTIES
+        SKIP_RETURN_CODE 77
+    )
+    add_test(
         NAME theron_v1_stage2_45xx_regional
         COMMAND test_theron_v1_stage2_disassembly_chain
     )
