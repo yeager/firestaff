@@ -5273,6 +5273,22 @@ required before semantic promotion.
   four-member source bound in its counting and materialization passes.
 - Remaining: authenticate dynamic RNG, AI, T700 and T900 consumers.
 
+## 2026-10-09 — authentic creature collision-preview route remains unproven
+
+- A Track 02 loader audit against authentic US and JP BINs attempted to bind
+  each currently materialized level-0 category-4 creature to its decoded map
+  cell and an adjacent floor approach. The sampled source-backed creature
+  cells were not `THERON_SQUARE_FLOOR` (observed cell values included wall and
+  another non-floor tile), and no authentic floor-approach collision route
+  was found in those loader states. This does not prove the original spawn
+  coordinates or map tile semantics are wrong: the source consumer that joins
+  category-4 group coordinates to runtime squares is still unbound.
+- Do not use relocated creatures, edited maps, or fabricated party poses as
+  evidence of Theron movement/combat parity. First bind the original
+  category-4 placement consumer to authenticated Track 02 bytes and an
+  executing runtime capture; then obtain a real active-creature collision
+  route before changing or asserting the movement-preview contract.
+
 # 2026-08-20 — Atomic VDC bundle exists; source join remains open
 
 - Completed: an authentic US disc, System Card 3.0, dungeon save state, and a
