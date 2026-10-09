@@ -6642,3 +6642,9 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   the CD-port and buffer-write traces stop at their 4,096-row cap, and the run
   still has transition=missing with no game-owned state change. Continue with
   source-bound second-stage tracing and an authentic game-state transition.
+  Static H6280 disassembly places the unique byte-window candidate at Track 02
+  LBA 4521, user offset 2; this narrows a future source-read/transfer trace but
+  is not a dynamic source receipt. The verifier reports the candidate separately
+  from the still-open dynamic source-binding requirement.
+  Here, missing source binding means no dynamic receipt for transferring this
+  static candidate into the $4000 runtime region.

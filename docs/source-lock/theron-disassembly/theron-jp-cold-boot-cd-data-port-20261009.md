@@ -51,3 +51,9 @@ signature acceptance and a sampled second-stage handoff, not proof of a
 complete game launch, dungeon loading, or gameplay. Continue by source-binding
 the second-stage code and proving a game-owned state transition against
 authentic media.
+
+Static source correlation finds the sampled eight-byte window uniquely at
+raw Track 02 file offset 2,716,578: LBA 4521, raw-sector offset 18, user offset
+2. H6280 disassembly there starts with TII $2000,$2001,$000F and
+TII $2000,$2700,$0080. This is a static source candidate, not a dynamic
+CD-to-RAM receipt.

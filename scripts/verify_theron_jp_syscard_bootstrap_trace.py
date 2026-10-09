@@ -25,6 +25,11 @@ BUFFER_PHYSICAL_BASE = 0x1F0800
 BOOT_SIGNATURE_PC = 0x2B39
 BOOT_ENTRY_PC = 0x2B44
 STAGE_ENTRY_PC = 0x4002
+STAGE_ENTRY_SIGNATURE = bytes.fromhex("73002001200f0073")
+TRACK02_INDEX1_FILE_OFFSET = 526_848
+TRACK02_RAW_SECTOR_BYTES = 2_352
+TRACK02_START_LBA = 3_590
+TRACK02_USER_DATA_OFFSET = 16
 CONSUMER_ROW = re.compile(
     r"main_ram_consumer_read sequence=(\d+) logical_address=([0-9a-f]{4}) "
     r"physical_address=([0-9a-f]{6}) value=([0-9a-f]{2}) "
@@ -132,9 +137,28 @@ def verify_bootstrap(
     if (
         stage_entry is None
         or stage_entry["reader_physical_pc"] != 0x100002
-        or stage_entry["reader_code_bytes"] != bytes.fromhex("73002001200f0073")
+        or stage_entry["reader_code_bytes"] != STAGE_ENTRY_SIGNATURE
     ):
         raise ValueError("the sampled execution at the $4000 second-stage entry is missing")
+    track_bytes = track02.read_bytes()
+    source_occurrences = []
+    search_from = 0
+    while True:
+        source_offset = track_bytes.find(STAGE_ENTRY_SIGNATURE, search_from)
+        if source_offset < 0:
+            break
+        source_occurrences.append(source_offset)
+        search_from = source_offset + 1
+    if len(source_occurrences) != 1:
+        raise ValueError(
+            "expected one static Track 02 occurrence of the sampled second-stage bytes, "
+            f"found {len(source_occurrences)}"
+        )
+    relative_offset = source_occurrences[0] - TRACK02_INDEX1_FILE_OFFSET
+    source_lba = TRACK02_START_LBA + relative_offset // TRACK02_RAW_SECTOR_BYTES
+    source_user_offset = relative_offset % TRACK02_RAW_SECTOR_BYTES - TRACK02_USER_DATA_OFFSET
+    if (source_lba, source_user_offset) != (4_521, 2):
+        raise ValueError("the static second-stage source candidate moved in authentic Track 02")
 
 
 def main() -> int:
@@ -151,7 +175,8 @@ def main() -> int:
         return 1
 
     print("PASS: authentic Track 02 signature accepted by executed first-stage code")
-    print("handoff=$4000 physical_pc=0x100002; second-stage source binding remains open")
+    print("handoff=$4000 physical_pc=0x100002")
+    print("static_stage2_candidate=lba4521 user_offset=2 occurrence_count=1; dynamic source binding remains open")
     return 0
 
 
