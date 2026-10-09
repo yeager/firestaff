@@ -25,6 +25,22 @@
   compressed output. The normal CMake target remains unverified because its
   dependency chain starts a full shared-library build.
 
+## 2026-10-09 — keep JP state replay separate from source loading
+
+- On trv2, a read-only PCE Fast replay loaded the operator-created JP Rev. 1
+  Mednafen state (`d5c0daa227c04d55bdf20244803c00bd`) alongside authentic
+  Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) and System Card
+  (`ff1a674273fe3540ccef576376407d1d`). A `run@1:180,i@300:30` plan was
+  observed by the non-System-Card controller poll at `$44d2`, but the session
+  produced zero CD IRQs, zero authenticated CD-to-RAM receipts, and
+  `transition=missing`. The trace recorded `current_level_2031=02`,
+  `party_x_2040=02`, and `party_y_2041=03`; those raw values do not identify a
+  retail level or a successful gameplay action. The original state hash was
+  unchanged. This replay cannot bind Track 02 bytes to `$23ad`, the
+  `$3b7e-$3b85` pointer table, or the `$2600` consumer; obtain a fresh
+  same-session source-read/decode trace instead. Private trace:
+  `/home/trv2/work/firestaff-theron-decoder-receipt-20261009-0450/capture/jp-user-state-run-start.trace`.
+
 ## 2026-10-09 — transition and decompressor evidence caveats
 
 - Locked-exit checks now clear stale transition queues. The regression proves
