@@ -18,7 +18,8 @@ fi
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/return-rescan.XXXXXX")
-trap 'rm -rf "$scratch"' EXIT HUP INT TERM
+mutation_scratch=
+trap 'rm -rf "$scratch"; if [ -n "$mutation_scratch" ]; then rm -rf "$mutation_scratch"; fi' EXIT HUP INT TERM
 run_return_to_menu_case() {
     game=$1
     platform=$2
@@ -104,3 +105,90 @@ run_return_to_menu_case dm2 auto \
     'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,key:enter' \
     60000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
     'launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=.*/data/dm2/'
+
+# Prove the return scan refreshes availability after the player changes the
+# installed media while gameplay is active. Stage only genuine archives using
+# hard links where possible (symlinks on other volumes); removing a staged
+# link never alters the original archive.
+mutation_scratch=$(mktemp -d "$(dirname "$data_root")/return-rescan-mutation.XXXXXX")
+mutation_data_root="$mutation_scratch/data"
+mutation_home="$mutation_scratch/home"
+mutation_log="$mutation_scratch/firestaff.log"
+mutation_probe="$mutation_scratch/runtime.json"
+mkdir -p "$mutation_data_root/dm1" "$mutation_data_root/csb" \
+    "$mutation_data_root/dm2" "$mutation_home"
+for media_pair in \
+    "$dm1_archive|$mutation_data_root/dm1/$(basename "$dm1_archive")" \
+    "$csb_archive|$mutation_data_root/csb/$(basename "$csb_archive")" \
+    "$dm2_archive|$mutation_data_root/dm2/$(basename "$dm2_archive")"; do
+    source_archive=${media_pair%%|*}
+    staged_archive=${media_pair#*|}
+    if ! ln "$source_archive" "$staged_archive" 2>/dev/null; then
+        ln -s "$source_archive" "$staged_archive"
+    fi
+done
+
+mutation_script='key:enter,key:enter,key:enter,wait:900,key:escape,key:enter'
+mutation_runtime_pattern='startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2'
+FIRESTAFF_CONFIG_PATH="$mutation_home/config.toml" \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$mutation_probe" \
+HOME="$mutation_home" XDG_CONFIG_HOME="$mutation_home" \
+APPDATA="$mutation_home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --width 320 --height 200 --menu --game dm1 --platform pc \
+    --data-dir "$mutation_data_root" --debug --script "$mutation_script" \
+    --duration 30000 >"$mutation_log" 2>&1 &
+mutation_pid=$!
+poll=0
+while ! grep -Eq "$mutation_runtime_pattern" "$mutation_log" 2>/dev/null; do
+    if ! kill -0 "$mutation_pid" 2>/dev/null; then
+        wait "$mutation_pid" || true
+        echo 'FAIL: authentic DM1 did not reach gameplay before the media mutation' >&2
+        cat "$mutation_log" >&2
+        exit 1
+    fi
+    poll=$((poll + 1))
+    if [ "$poll" -ge 600 ]; then
+        kill "$mutation_pid" 2>/dev/null || true
+        wait "$mutation_pid" || true
+        echo 'FAIL: timed out waiting for authentic DM1 gameplay before the media mutation' >&2
+        cat "$mutation_log" >&2
+        exit 1
+    fi
+    sleep 0.05
+done
+rm "$mutation_data_root/csb/$(basename "$csb_archive")"
+if ! wait "$mutation_pid"; then
+    cat "$mutation_log" >&2
+    exit 1
+fi
+python3 - "$mutation_log" "$mutation_probe" "$mutation_runtime_pattern" <<'PY'
+import json
+import re
+import sys
+
+log_path, probe_path, runtime_pattern = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+launch = re.search(
+    r"DM1 READY: gameId=dm1 dataDir=.*/data/dm1/.*handoff=pc-img3", trace)
+runtime = re.search(runtime_pattern, trace)
+complete = re.search(r"return-menu rescan-complete data=", trace)
+if launch is None or runtime is None or complete is None or not (
+        launch.start() < runtime.start() < complete.start()):
+    raise SystemExit("FAIL: authentic DM1 did not return to the launcher after gameplay")
+
+for game, expected in (("dm1", "1"), ("csb", "0"), ("dm2", "1")):
+    match = re.search(rf"return-menu rescan game={game} available=(\d+)", trace)
+    if match is None or match.group(1) != expected:
+        raise SystemExit(
+            f"FAIL: return scan did not refresh {game} availability to {expected}")
+
+if probe.get("launchedEver") != 1 or probe.get("active") != 0:
+    raise SystemExit(f"FAIL: DM1 did not finish back at the launcher: {probe}")
+print("PASS: authentic DM1 return scan reflects removed CSB media and retains DM1/DM2")
+PY
+rm -rf "$mutation_scratch"
+mutation_scratch=

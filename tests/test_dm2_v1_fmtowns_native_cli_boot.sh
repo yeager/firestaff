@@ -13,7 +13,26 @@ if [ ! -x "$app" ] || [ ! -x "$source_rgb" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
-archive_hash_before=$(sha256sum "$archive")
+file_sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{print $1}'
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$1" | awk '{print $1}'
+    else
+        python3 -c '
+import hashlib
+import sys
+
+digest = hashlib.sha256()
+with open(sys.argv[1], "rb") as source:
+    for block in iter(lambda: source.read(1024 * 1024), b""):
+        digest.update(block)
+print(digest.hexdigest())
+' "$1"
+    fi
+}
+
+archive_hash_before=$(file_sha256 "$archive")
 
 # Use the complete DM2 data directory for every unqualified launch. This
 # keeps AUTO selection under test when competing editions are installed and
@@ -51,6 +70,43 @@ auto_menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 }
 printf '%s\n' "$auto_menu_output" | grep -q \
     'selected game=dm2 platform=FM Towns edition=fmtowns-ja'
+
+# Exercise AUTO selection from the documented per-user data directory. This
+# has no FIRESTAFF_DATA or --data-dir override, so the selected source must be
+# discovered under ~/.firestaff/data/dm2 itself.
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$test_scratch"
+default_home=$(mktemp -d "$test_scratch/dm2-default-data.XXXXXX")
+default_data_root="$default_home/.firestaff/data"
+default_archive="$default_data_root/dm2/$(basename "$archive")"
+default_log="$default_home/menu.log"
+mkdir -p "$(dirname "$default_archive")"
+if ! ln -s "$archive" "$default_archive" 2>/dev/null; then
+    # Fall back to a same-volume hard link on Windows hosts without symlink
+    # privileges; this keeps the original game archive in place.
+    ln "$archive" "$default_archive"
+fi
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+    APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm2 --verbose --script \
+        'key:enter,key:enter,key:enter' --duration 1000
+) >"$default_log" 2>&1 || {
+    cat "$default_log" >&2
+    exit 1
+}
+if ! grep -Fq \
+    "selected game=dm2 platform=FM Towns edition=fmtowns-ja source=$default_archive" \
+    "$default_log"; then
+    printf '%s\n' 'FAIL: DM2 AUTO menu did not discover FM Towns media from ~/.firestaff/data/dm2 without --data-dir' >&2
+    cat "$default_log" >&2
+    exit 1
+fi
+echo 'PASS: DM2 AUTO start menu discovers FM Towns media from ~/.firestaff/data/dm2 without --data-dir'
+find "$default_home" -depth -delete
 
 # FM Towns is the first DM2 platform card.  This asserts that the launcher
 # admits the authentic disc solely through mouse selection before the source
@@ -276,7 +332,7 @@ print("PASS: M12-selected FM Towns edition, authentic TWANIM, New Game and first
 print(f"PASS: runtime screenshot captured at 320x200 with {nonblack} nonblack pixels, {right_panel} right-panel pixels and {dungeon_scene} dungeon pixels")
 PY
 
-if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
+if [ "$archive_hash_before" != "$(file_sha256 "$archive")" ]; then
     echo 'FAIL: DM2 FM Towns archive changed during native launch' >&2
     exit 1
 fi

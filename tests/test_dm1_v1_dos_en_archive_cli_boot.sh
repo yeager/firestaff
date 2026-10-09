@@ -71,11 +71,46 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
+# Verify the normal per-user installation layout with no --data-dir,
+# FIRESTAFF_DATA, or explicit platform. Keep the original DOS ZIP in place and
+# expose it through an isolated HOME so the scanner must discover it there.
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$test_scratch"
+default_home=$(mktemp -d "$test_scratch/dm1-default-data.XXXXXX")
+default_data_root="$default_home/.firestaff/data"
+default_archive="$default_data_root/dm1/$(basename "$archive")"
+default_log="$default_home/menu.log"
+mkdir -p "$(dirname "$default_archive")"
+if ! ln -s "$archive" "$default_archive" 2>/dev/null; then
+    # Fall back to a same-volume hard link on Windows hosts without symlink
+    # privileges; this keeps the original game archive in place.
+    ln "$archive" "$default_archive"
+fi
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+    APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm1 --debug --script enter,enter,enter --duration 1000
+) >"$default_log" 2>&1 || {
+    cat "$default_log" >&2
+    exit 1
+}
+if ! grep -Fq "DM1 READY: gameId=dm1" "$default_log" ||
+   { ! grep -Fq "dataDir=$default_archive::DATA/GRAPHICS.DAT" "$default_log" &&
+     ! grep -Fq "dataDir=$default_archive::dungeon-master/dmaster/DATA/GRAPHICS.DAT" "$default_log"; } ||
+   ! grep -Fq 'handoff=pc-img3' "$default_log"; then
+    printf '%s\n' 'FAIL: DM1 AUTO menu did not discover authentic DOS media from ~/.firestaff/data/dm1 without --data-dir' >&2
+    cat "$default_log" >&2
+    exit 1
+fi
+echo 'PASS: DM1 AUTO start menu discovers authentic DOS media from ~/.firestaff/data/dm1 without --data-dir'
+find "$default_home" -depth -delete
+
 # Keep the actual M12 -> DOS menu handoff running through the first playable
 # frame. The launch receipt above alone cannot prove that the selected source
 # reached its native level and party state.
-test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
-mkdir -p "$test_scratch"
 menu_runtime_probe_json="$test_scratch/dm1-dos-menu-runtime-$$.json"
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe_json" \
