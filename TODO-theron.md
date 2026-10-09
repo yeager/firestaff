@@ -2,6 +2,20 @@
 
 ## 2026-10-09 — extend JP static spawn source evidence
 
+- ✅ The public transition executor now independently rejects queued stairs
+  for authenticated source-backed levels, closing a bypass around the movement
+  gate while original target-level and arrival-pose semantics remain unbound.
+  The authentic US dungeon-loader test covers a directly injected queue and
+  passed three local loops; the fixture progression regression also passed
+  three loops. This guard does not enable stair traversal.
+
+- ✅ The local `test_theron_v1_track02_dungeon_loader` executable passed three
+  consecutive loops using the installed authentic US and JP `TQUS02.bin` and
+  `TQJP02.bin` files. The legacy JP Rev. 1 stub and JP CUE-projected ISO checks
+  were skipped because those optional paths were not configured. Source-backed
+  dungeon loading is verified; stair traversal and complete gameplay parity
+  remain unproven.
+
 - 🔒 A numeric overlap hypothesis between the JP `$4661` helper's `$5D68/$5D62`
   call operands and same-numbered Stage-2 record offsets was rejected. The
   Stage-2 listing base PC and authenticated-record user offsets are distinct

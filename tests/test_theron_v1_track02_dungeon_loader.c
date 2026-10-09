@@ -4042,6 +4042,16 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                world.party.leader_y == approach_y &&
                world.transition_pending == 0u);
         assert(world.source_actuator_event_count == 0u);
+        world.transition_pending = 1u;
+        world.transition_type = THERON_TRANSITION_STAIRS;
+        world.transition_target_level = stair_source->level;
+        world.transition_spawn_x = stair_source->x;
+        world.transition_spawn_y = stair_source->y;
+        assert(theron_v1_transition_execute(&world) == -1);
+        assert(world.current_level == stair_source->level &&
+               world.party.leader_x == approach_x &&
+               world.party.leader_y == approach_y &&
+               world.transition_pending == 0u);
         for (unsigned int i = 0; i < world.source_object_count; ++i) {
             const Theron_V1_SourceObjectRecord *target =
                 &world.source_objects[i];

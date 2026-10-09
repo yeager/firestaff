@@ -1963,6 +1963,20 @@ int theron_v1_transition_execute(Theron_V1_World *world) {
 
     switch (world->transition_type) {
     case THERON_TRANSITION_STAIRS:
+        /* The source-backed movement gate is not sufficient protection for
+         * this public executor: a stale or externally queued transition can
+         * reach it directly. Until the original consumer binds the target
+         * level and arrival pose, reject stairs for authenticated levels. */
+        if (world->current_dungeon >= 1 &&
+            world->current_dungeon <= (int)THERON_DUNGEON_COUNT &&
+            world->current_level >= 0 &&
+            world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+            world->level_loaded[dungeon_slot][world->current_level] &&
+            world->levels[dungeon_slot][world->current_level]
+                .source_header_verified) {
+            world->transition_pending = 0;
+            return -1;
+        }
         if (world->transition_target_level < 0 ||
             world->transition_target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
             dungeon_slot < 0 || dungeon_slot >= THERON_DUNGEON_COUNT ||

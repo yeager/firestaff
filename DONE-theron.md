@@ -1,5 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — close the queued-stair executor bypass
+
+- The public transition executor now rejects a queued stair transition when
+  the current level is authenticated source-backed, in addition to the
+  existing movement gate. The authentic US dungeon-loader test verifies that
+  a directly injected queue cannot change level or party position. The real
+  dungeon-loader and fixture progression binaries each passed three local
+  loops. This is a fail-closed safety boundary, not stair gameplay support.
+
+## 2026-10-09 — repeat authentic dungeon-loader test locally
+
+- Ran `test_theron_v1_track02_dungeon_loader` in three consecutive loops. It
+  loaded the installed authentic US and JP `TQUS02.bin` and `TQJP02.bin`
+  sources. Optional legacy JP Rev. 1 stub and CUE-projected ISO checks were
+  skipped because their paths were not configured. This verifies the tested
+  source-backed dungeon-loader route, not stair traversal or complete gameplay
+  parity.
+
 ## 2026-10-09 — repeat authentic disassembly receipt tests locally
 
 - Ran `theron_v1_huc6280_disassembly` and
