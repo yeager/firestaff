@@ -3998,6 +3998,7 @@ if(BUILD_TESTING)
         NAME dm2_unsupported_platform_cli
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_unsupported_platform_cli.sh"
             "$<TARGET_FILE:firestaff>"
+            "${Python3_EXECUTABLE}"
     )
     set_tests_properties(dm2_unsupported_platform_cli PROPERTIES
         LABELS "dm2;cli;platform-policy"

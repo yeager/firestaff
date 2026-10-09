@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 set -eu
-app=${1:?usage: test_dm2_unsupported_platform_cli.sh <firestaff>}
+app=${1:?usage: test_dm2_unsupported_platform_cli.sh <firestaff> [python]}
+python=${2:-python3}
 archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-unused.zip}
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/build"}
@@ -8,7 +9,7 @@ mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/removed-platform.XXXXXX")
 trap 'find "$scratch" -depth -delete' EXIT HUP INT TERM
 
-python3 - "$repo_root/data/asset_validator_checksums_m12.json" <<'PY'
+"$python" - "$repo_root/data/asset_validator_checksums_m12.json" <<'PY'
 import json
 import sys
 
