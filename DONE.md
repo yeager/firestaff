@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-09: M12 now reports operating-system-denied folders during startup
+  and data-directory rescans even when another supported game is available.
+  The `asset_scan_access_denied` CTest passed on macOS with the authentic DM1
+  FM Towns ZIP staged beside an unreadable directory, verifying both startup
+  and rescan behavior. This verifies launcher diagnostics, not macOS TCC
+  permission prompts or full game startup parity.
+
 - 2026-10-08: Re-ran the authentic-media CLI/startup matrix for DM1, CSB and
   DM2 across the locally supplied DOS, Macintosh, Atari ST, Amiga and FM Towns
   editions. Of the 24 matrix tests, 23 passed and the loose-file Atari R1 Hint

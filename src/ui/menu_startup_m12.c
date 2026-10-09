@@ -2678,8 +2678,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     state->assetStatus = scannedAssetStatus;
     m12_preserve_selected_data_directory(state, selectedDataDir);
     m12_apply_completed_asset_scan(state);
-    if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
-        m12_show_access_denied_popup(state)) {
+    if (m12_show_access_denied_popup(state)) {
         return 1;
     }
     if (!m12_show_missing_archive_tool_popup(state)) {
@@ -5138,8 +5137,8 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
          * particular, a CSB STX can be launched natively while a separately
          * staged .7z utility image remains unavailable.  Surface that
          * archive warning only when no supported game media was found. */
-        if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
-            !m12_show_access_denied_popup(state) &&
+        if (!m12_show_access_denied_popup(state) &&
+            m12_asset_ready_game_count(&state->assetStatus) == 0 &&
             !m12_show_missing_archive_tool_popup(state)) {
             m12_show_no_game_data_popup(state);
         }
@@ -13772,8 +13771,7 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
             m12_preserve_selected_data_directory(state,
                                                  job->selectedDataDir);
             m12_apply_completed_asset_scan(state);
-            if (!(m12_asset_ready_game_count(&state->assetStatus) == 0 &&
-                  m12_show_access_denied_popup(state)) &&
+            if (!m12_show_access_denied_popup(state) &&
                 !m12_show_missing_archive_tool_popup(state)) {
                 m12_show_data_dir_result_popup(state, 1);
             }

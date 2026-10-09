@@ -1,4 +1,5 @@
 #include "asset_find_by_hash.h"
+#include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 
 #include <errno.h>
@@ -16,6 +17,8 @@ int main(void) {
     char cachePath[ASSET_PATH_MAX];
     char cacheDir[ASSET_PATH_MAX];
     char firestaffDir[ASSET_PATH_MAX];
+    char dm1Dir[ASSET_PATH_MAX] = {0};
+    char archiveLink[ASSET_PATH_MAX] = {0};
     char matchedPaths[1][ASSET_PATH_MAX];
     int matched[1] = {0};
     const char *hashes[] = {"00000000000000000000000000000000", NULL};
@@ -137,6 +140,91 @@ int main(void) {
     }
     M12_StartupMenu_Destroy(&menu);
 
+    /* A readable original archive must not hide another unreadable folder.
+     * Use local, hash-authentic media when it is staged; the inaccessible
+     * directory is only a filesystem permission fixture, not game data. */
+    {
+        const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+        const char *archiveLeaf = archive ? strrchr(archive, '/') : NULL;
+        M12_StartupMenuInitOptions partialOptions;
+        int archiveReady = archive && access(archive, R_OK) == 0;
+        if (!archiveReady) {
+            puts("SKIP: authentic DM1 FM Towns archive is not staged for partial-access scan");
+        } else {
+            archiveLeaf = archiveLeaf ? archiveLeaf + 1 : archive;
+            if (snprintf(dm1Dir, sizeof(dm1Dir), "%s/dm1", root) >=
+                    (int)sizeof(dm1Dir) ||
+                mkdir(dm1Dir, 0700) != 0 ||
+                snprintf(archiveLink, sizeof(archiveLink), "%s/%s", dm1Dir,
+                         archiveLeaf) >= (int)sizeof(archiveLink) ||
+                symlink(archive, archiveLink) != 0) {
+                perror("stage authentic DM1 archive for partial-access scan");
+                M12_StartupMenu_Destroy(&menu);
+                if (archiveLink[0] != '\0') {
+                    unlink(archiveLink);
+                }
+                if (dm1Dir[0] != '\0') {
+                    rmdir(dm1Dir);
+                }
+                chmod(denied, 0700);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
+
+            memset(&partialOptions, 0, sizeof(partialOptions));
+            partialOptions.skipScreenshotGalleryScan = 1;
+            asset_scan_clear_access_denied_directories();
+            M12_StartupMenu_InitWithOptions(&menu, root, NULL,
+                                            &partialOptions);
+            if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") ||
+                menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine2 ||
+                !strstr(menu.messageLine2, denied)) {
+                fprintf(stderr,
+                        "FAIL: startup hid an unreadable folder beside authentic DM1 media\n");
+                M12_StartupMenu_Destroy(&menu);
+                chmod(denied, 0700);
+                unlink(archiveLink);
+                rmdir(dm1Dir);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
+            M12_StartupMenu_Destroy(&menu);
+
+            memset(&partialOptions, 0, sizeof(partialOptions));
+            partialOptions.skipAssetScan = 1;
+            partialOptions.skipScreenshotGalleryScan = 1;
+            M12_StartupMenu_InitWithOptions(&menu, NULL, NULL,
+                                            &partialOptions);
+            menu.languageExplicit = 1;
+            menu.settings.languageIndex = 0;
+            if (!M12_StartupMenu_SetDataDirectory(&menu, root) ||
+                !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") ||
+                menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine2 ||
+                !strstr(menu.messageLine2, denied) || !menu.messageLine3 ||
+                strcmp(menu.messageLine3,
+                       "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN") != 0) {
+                fprintf(stderr,
+                        "FAIL: rescan hid an unreadable folder beside authentic DM1 media\n");
+                M12_StartupMenu_Destroy(&menu);
+                chmod(denied, 0700);
+                unlink(archiveLink);
+                rmdir(dm1Dir);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
+            M12_StartupMenu_Destroy(&menu);
+            puts("PASS: startup and rescan report denied folders beside authentic DM1 media");
+        }
+    }
+
+    if (archiveLink[0] != '\0' && unlink(archiveLink) != 0 &&
+        errno != ENOENT) {
+        perror("remove authentic DM1 archive link");
+        return 1;
+    }
     if (unlink(cachePath) != 0 && errno != ENOENT) {
         perror("remove scanner cache");
         return 1;
@@ -144,7 +232,8 @@ int main(void) {
     if ((rmdir(cacheDir) != 0 && errno != ENOENT) ||
         (rmdir(firestaffDir) != 0 && errno != ENOENT) ||
         (unlink(configPath) != 0 && errno != ENOENT) || rmdir(home) != 0 ||
-        chmod(denied, 0700) != 0 || rmdir(denied) != 0 || rmdir(root) != 0) {
+        chmod(denied, 0700) != 0 || rmdir(denied) != 0 ||
+        (dm1Dir[0] != '\0' && rmdir(dm1Dir) != 0) || rmdir(root) != 0) {
         perror("cleanup permission fixture");
         return 1;
     }
