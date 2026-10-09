@@ -409,6 +409,7 @@ pce_fast_indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fas
 runtime_code_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch
 cd_ram_runtime_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_runtime_window_trace.patch
 cd_ram_target_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
+pce_fast_main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'theron_pce_fast_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'previous_nonblank !~ /TheronTraceInstructionPhysicalPC =/' "$build_script" ||
@@ -475,7 +476,7 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'uint8 ret = PCECD_Drive_GetDB();' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'source_lba >= track02_start_lba && source_lba < track02_end_lba' "$cd_ram_target_write_patch_file" ||
-   ! grep -Fq 'static void TheronTraceCDDataPortRead(uint32 source_lba, uint16 user_data_offset,' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'PCECD_Drive_GetLastRawSectorDataOrigin(&source_lba, &user_data_offset, &raw_sector_offset)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'PCECD_Drive_GetTrack02StartLBA()' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu' "$cd_ram_target_write_patch_file" ||
@@ -485,12 +486,17 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'const uint32 stage2_last = stage2_first + 14;' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceCDRAMTargetWrite(A, V);' "$cd_ram_target_write_patch_file" ||
    grep -Fq '\\n' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x source_valid=%u' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'TheronTraceCDDataPortRead(HuCPU.PC, source_lba' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'if(count >= 65536)' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'TheronTraceInstructionPC >= 0xEA80' "$pce_fast_main_ram_consumer_patch_file" ||
+   ! grep -Fq 'per_offset[offset] >= 16 && !target_writer_read' "$pce_fast_main_ram_consumer_patch_file" ||
    ! grep -Fq 'PCECD_Drive_GetREQ() && !PCECD_Drive_GetACK() && !PCECD_Drive_GetCD() && PCECD_Drive_GetIO()' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronRawSectorDataFifoLBA = SectorAddr;' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronLastRawSectorDataOffset = TheronRawSectorDataFifoRawStartOffset + TheronRawSectorDataFifoReadOffset;' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'uint32 PCECD_Drive_GetTrack02StartLBA(void)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'uint32 PCECD_Drive_GetTrack02EndLBA(void)' "$cd_ram_target_write_patch_file" ||
-   ! grep -Fq 'cd_data_port_read sequence=%u address=1808 value=%02x source_valid=%u' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace"' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset"' "$capture_script" ||

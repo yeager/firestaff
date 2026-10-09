@@ -52,15 +52,23 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  }
 --- a/src/pce_fast/pcecd.cpp
 +++ b/src/pce_fast/pcecd.cpp
+@@ -31,6 +31,7 @@
+ using namespace Mednafen;
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ #include "pcecd_drive.h"
+ #include "pcecd.h"
++#include "pce.h"
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ namespace MDFN_IEN_PCE_FAST
 @@ -261,17 +261,63 @@
-+static void TheronTraceCDDataPortRead(uint32 source_lba, uint16 user_data_offset,
++static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 user_data_offset,
 +                                      uint16 raw_sector_offset, uint32 track02_start_lba,
 +                                      uint32 track02_end_lba, uint32 track02_index1_file_offset,
 +                                      uint16 track02_sector_bytes, uint8 value, bool source_valid)
 +{
 + static FILE *trace = NULL;
 + static unsigned count = 0;
-+ if(count >= 4096)
++ if(count >= 65536)
 +  return;
 + if(!trace)
 + {
@@ -72,8 +80,8 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   return;
 +  fputs("source=mednafen-pce-fast-cd-data-port-read\n", trace);
 + }
-+ fprintf(trace, "cd_data_port_read sequence=%u address=1808 value=%02x source_valid=%u source_lba=%u source_user_offset=%u source_raw_offset=%u track02_start_lba=%u track02_end_lba=%u track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu\n",
-+         count++, value, source_valid, source_lba, user_data_offset,
++ fprintf(trace, "cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x source_valid=%u source_lba=%u source_user_offset=%u source_raw_offset=%u track02_start_lba=%u track02_end_lba=%u track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu\n",
++         count++, cpu_pc, value, source_valid, source_lba, user_data_offset,
 +         raw_sector_offset, track02_start_lba, track02_end_lba, track02_index1_file_offset,
 +         track02_sector_bytes,
 +         source_valid && source_lba >= track02_start_lba && source_lba < track02_end_lba ?
@@ -98,7 +106,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  const char *track02_sector_bytes_text = getenv("FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES");
 +  if(track02_sector_bytes_text && *track02_sector_bytes_text)
 +   track02_sector_bytes = strtoul(track02_sector_bytes_text, NULL, 10);
-+  TheronTraceCDDataPortRead(source_lba, user_data_offset, raw_sector_offset,
++  TheronTraceCDDataPortRead(HuCPU.PC, source_lba, user_data_offset, raw_sector_offset,
 +                            PCECD_Drive_GetTrack02StartLBA(), PCECD_Drive_GetTrack02EndLBA(),
 +                            track02_index1_file_offset, track02_sector_bytes, ret, source_valid);
 + }

@@ -6611,6 +6611,23 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   mapping disagrees with its logical PC; the authentic-shape fixture still
   passes. This validates evidence coordinates only and does not promote the
   `$611D` record table to level, object, creature, or gameplay semantics.
+## 2026-10-10 — authentic cold-start bank-$80 candidate correlation
+
+- The private `stage2-source-capture-20261010` capture used the hash-locked JP
+  Rev. 1 Track 02 BIN and System Card. It recorded 63,488 source-bound CD
+  data-port reads and 58 writes to physical bank `$80`; the new verifier
+  authenticates 15-byte windows at Track 02 LBAs 4521 and 4589 and confirms
+  each byte sequence also occurs in a direct `$EA9C` bank-$80 write window
+  from that same capture. Run
+  `scripts/verify_theron_jp_stage2_bank80_candidate_trace.py` against the two
+  capture sidecars and authentic `TQJP02.bin` to reproduce the check.
+- This is same-capture byte correlation, not a causal source-to-destination
+  receipt: the traces do not join an individual CD read to a particular RAM
+  write. The run had zero CD IRQs, SCSI commands, authenticated CD-to-RAM
+  receipts, game `$E009` dispatches, and non-System-Card controller polls.
+  It does not establish a game launch, level payload, or gameplay behavior.
+  Capture files remain private under `.codex-scratch`.
+
 ## 2026-10-09 — cold-start Track 02 source and System Card buffer receipt
 
 - A fresh JP cold-start with authentic Track 02 and System Card media produced
