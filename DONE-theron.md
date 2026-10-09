@@ -11,6 +11,9 @@
   each passed three local loops. The teleporter-chain and US/JP real-media door
   tests also passed three loops. This is a fail-closed safety boundary, not
   stair gameplay support.
+- The matching source-backed check path now also clears a stale pending
+  transition when an authentic stair is rejected. The US original-data loader
+  regression verified both check and execute entry points in three loops.
 
 ## 2026-10-09 — repeat authentic dungeon-loader test locally
 

@@ -4059,6 +4059,14 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                world.transition_pending == 0u);
         assert(world.source_actuator_event_count == 0u);
         world.transition_pending = 1u;
+        world.transition_type = THERON_TRANSITION_TELEPORTER;
+        assert(theron_v1_check_transition(&world, stair_source->x,
+                                          stair_source->y) == 0);
+        assert(world.current_level == stair_source->level &&
+               world.party.leader_x == approach_x &&
+               world.party.leader_y == approach_y &&
+               world.transition_pending == 0u);
+        world.transition_pending = 1u;
         world.transition_type = THERON_TRANSITION_STAIRS;
         world.transition_target_level = stair_source->level;
         world.transition_spawn_x = stair_source->x;
