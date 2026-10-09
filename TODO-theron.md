@@ -8,6 +8,17 @@
   CD-to-RAM receipts. It shows distinct renderer state, not a verified dungeon
   frame. Capture a same-session authentic route into a dungeon before claiming
   render parity or using the snapshots as gameplay evidence.
+- 🔒 An evidence audit found standalone Ak-Tu-Ba first-person and inventory
+  screenshots under the private TRV2 capture tree, but no input log, runtime
+  trace, manifest, or save-state identity joins those images to a specific
+  authentic session. A separate JP stair replay did load a state and deliver
+  two scripted events to the non-System-Card poll at `$44D2`, but its receipt
+  reports `system_card_loaded_syscard=unavailable`, zero CD IRQs, zero
+  non-System-Card CD reads, and zero authenticated CD-to-RAM receipts. These
+  artifacts do not establish that the standalone screenshots came from that
+  replay or bind a dungeon cell to its source tile/palette. Preserve them as
+  visual reference only; obtain a same-session source-to-screen capture before
+  admitting any production tile mapping.
 
 ## 2026-10-08 — Track 19 item-name mapping boundary
 
@@ -62,6 +73,14 @@ traversal.
   this is not the Theron inventory UI. Continue authentic reference/runtime
   work before claiming original item-selection, naming, or inventory-screen
   behavior.
+- 🔒 The standalone inventory screenshot is a useful visual reference for the
+  portrait, equipment/item slots, selected-item pane, food/water meters, and
+  status values. Firestaff currently routes Theron inventory input to the
+  source-backed runtime facade and M11 status text; it has no Theron-specific
+  inventory-panel renderer. The screenshot is not joined to source assets or a
+  T900 input/render trace, so it must not be used to invent slot geometry,
+  item selection semantics, or UI artwork. Bind those original consumers and
+  assets before implementing the panel.
 - Stage-2 `$4BB0` and adjacent `$4A09/$4A84` receipt fields distinguish
   authenticated static instruction bytes from runtime writes. `$4BB0` writes
   scroll-state words in memory, not directly to VDC ports. A real execution
