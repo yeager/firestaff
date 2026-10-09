@@ -30,7 +30,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   pass. The persisted-root M12 original-media regression also follows AUTO
   FM Towns through the complete title, New Game and first mirror into a loaded
   one-champion session. These checks do not cover the reported M5 window/input
-  failure. The authentic Macintosh M12/startup CTest now passes its normal
+  failure. The Towns real-media regression now also drives bare `--game dm2`
+  through the normal loop, TWANIM, New Game and the first champion without
+  M12 or boot-probe fast-forward, and checks FM Towns against installed DOS,
+  PC-98, Amiga or Macintosh editions. This expanded script passed locally
+  against the existing v3.0.373 executable with authentic Towns, Amiga, DOS
+  and Mac archives; the current source's hosted run still cannot establish
+  that media-dependent route when original archives are absent. The authentic
+  Macintosh M12/startup CTest now passes its normal
   title, New Game, mirror and movement route on the M4 host; it uses SDL's
   dummy video driver and therefore does not verify native Retina display or
   input behavior. The 2026-10-06 retest also reports a broken DM2 dungeon viewport.
