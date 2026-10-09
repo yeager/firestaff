@@ -5273,6 +5273,18 @@ required before semantic promotion.
   four-member source bound in its counting and materialization passes.
 - Remaining: authenticate dynamic RNG, AI, T700 and T900 consumers.
 
+## 2026-10-09 — JP `$C414` helper-call contract remains static-only
+
+- Recorded the bounded caller sequence from `$C41E` through `$C42E`: arguments
+  are loaded into A/Y before `$C95D`; its returned A controls the `$B4` shift;
+  X is then loaded from `$BB` before `$CC3E`; the caller returns immediately
+  after that helper. The note cites the authenticated JP listing windows in
+  `docs/source-lock/theron-disassembly/theron-jp-c414-c95d-cc3e-call-contract-20261009.md`.
+- Remaining: no capture binds these call operands, return sites, and register
+  values to an executing JP bank. This does not identify spawn/RNG semantics
+  and does not enable creature or combat behavior. Obtain that same-session
+  runtime mapping before extending the source interpretation.
+
 ## 2026-10-09 — authentic creature collision-preview route remains unproven
 
 - A Track 02 loader audit against authentic US and JP BINs attempted to bind
