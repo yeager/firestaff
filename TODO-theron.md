@@ -2,6 +2,12 @@
 
 ## 2026-10-09 — extend JP static spawn source evidence
 
+- 🔒 A numeric overlap hypothesis between the JP `$4661` helper's `$5D68/$5D62`
+  call operands and same-numbered Stage-2 record offsets was rejected. The
+  Stage-2 listing base PC and authenticated-record user offsets are distinct
+  coordinate spaces; equal hexadecimal values do not prove a shared runtime
+  mapping. A same-session logical/physical PC receipt is still required before
+  asserting this call edge.
 - ✅ On 2026-10-09, the focused HuC6280 source-receipt and Stage-2 disassembly
   chain tests each passed in three local loops against explicit authentic US
   and JP Track 02 BIN paths. This confirms the available static receipts, not
