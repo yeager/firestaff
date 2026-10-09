@@ -43,7 +43,10 @@
   authentic PC3.4 menu test records the selected source and all 23 completed
   steps plus the source-owned SWSH, TITLE, ENTRANCE and full-graphics handoff
   receipts. The public `--game dm1` CLI probe now requires the same phases and
-  first HoC frame. Its opt-in real-media capture stores post-present C001
+  first HoC frame. The mixed original-media AUTO regression also checks bare
+  `--game dm1` against authentic FM Towns and PC 3.4 archives, requiring the
+  FM Towns asset and EDM program identities. The opt-in real-media capture
+  stores post-present C001
   first/mid/full zoom frames, closed C004 Entrance and the first door-opening
   frame, with only nonblank/content-change checks; it does not establish pixel
   parity. Atari ST Escape/window-close during C001/Entrance now exits

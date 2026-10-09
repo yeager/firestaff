@@ -4238,7 +4238,7 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm1_v1_m12_auto_multi_platform_menu PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "dm1;fmtowns;pc;real-media;native;menu;startup;auto;skip-safe"
+        LABELS "dm1;fmtowns;pc;real-media;native;cli;menu;startup;auto;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
         TIMEOUT 120
     )

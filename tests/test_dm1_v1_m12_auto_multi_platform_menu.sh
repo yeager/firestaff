@@ -77,3 +77,47 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 
 print("PASS: DM1 M12 AUTO discovered authentic FM Towns and PC media, selected FM Towns, and reached its first runtime frame")
 PY
+
+# Direct --game startup uses the same mixed library without the launcher
+# choosing an edition first. Lock the requested FM Towns default to its own
+# authenticated program so a platform-order regression cannot hide in CLI.
+cli_probe="$scratch/cli-runtime.json"
+cli_log="$scratch/cli-firestaff.log"
+HOME="$scratch/home" \
+XDG_CONFIG_HOME="$scratch/home" \
+APPDATA="$scratch/home" \
+FIRESTAFF_CONFIG_PATH="$scratch/home/config.toml" \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$cli_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --game dm1 --data-dir "$data_root" --debug \
+    --boot-probe --boot-probe-frames 2 --duration 0 >"$cli_log" 2>&1 || {
+        cat "$cli_log" >&2
+        exit 1
+    }
+
+python3 - "$cli_log" "$cli_probe" <<'PY'
+import json
+import sys
+
+log_path, probe_path = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+startup = probe["startup"]
+if ("platform=FM Towns" not in trace or
+        "edition=fmtowns-en" not in trace or
+        probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or
+        probe["bootAssetMd5"] != "c10c512f63461ebe79b5ac365115b61b" or
+        probe["dm1FmtownsStartup"]["program"] != "EDM.EXP" or
+        probe["dm1FmtownsStartup"]["programMd5"] != "c27e7b984df9753912c3375dc121919f" or
+        startup["phase"] != "dm1-runtime" or
+        startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1):
+    raise SystemExit(f"FAIL: bare DM1 CLI did not select FM Towns from the mixed library: {probe}\n{trace}")
+print("PASS: bare DM1 CLI selected authentic FM Towns over PC 3.4 and reached runtime")
+PY
