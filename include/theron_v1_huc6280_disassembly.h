@@ -93,6 +93,14 @@ typedef struct {
     uint16_t vce_palette_consumer_bytes;
     uint32_t vce_palette_consumer_file_offset;
     uint32_t vce_palette_consumer_fnv1a;
+    /* Immediate source caller which reads $27c4/$27c5/$27c6 through ($62),y
+     * before BSR L96A5. This is a static source contract; it does not
+     * establish which runtime initializer or source data owns $62/$63. */
+    int vce_palette_caller_verified;
+    uint16_t vce_palette_caller_address;
+    uint16_t vce_palette_caller_bytes;
+    uint32_t vce_palette_caller_file_offset;
+    uint32_t vce_palette_caller_fnv1a;
     int semantic_publication_allowed;
     uint32_t source_file_size;
     uint32_t bank_file_offset;

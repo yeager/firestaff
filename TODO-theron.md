@@ -2,6 +2,14 @@
 
 ## 2026-10-09 — close the dungeon-rendering evidence gap
 
+- 🔒 The static VCE consumer's immediate `$9682` caller is now byte-locked in
+  both authentic Track 02 BINs and the two cooked MODE1/2048 regional ISOs,
+  and checked by the focused real-media test.
+  The US listing shows distinct routes that can initialize `$62/$63`, but
+  neither their runtime selection nor the resulting pointer's source bytes
+  are bound to the known palette-shaped spans. Obtain a same-session
+  source-LBA/FIFO-to-VCE/VDC trace before admitting any palette or dungeon
+  rendering; see `docs/source-lock/tqr_v1_huc6280_vce_consumer_receipt_2026-08-06.md`.
 - 🔒 The PCE Fast close-time snapshots now work on both authentic cold-start
   and emulator-created Japanese state captures, but the state-loaded run still
   ends with `transition=missing`, zero CD IRQs, and zero authenticated

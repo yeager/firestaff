@@ -44,6 +44,12 @@
 #define THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET 0x9e15u
 #define THERON_VCE_PALETTE_CONSUMER_ADDRESS 0x96a5u
 #define THERON_VCE_PALETTE_CONSUMER_BYTES 37u
+#define THERON_VCE_PALETTE_CALLER_US_FILE_OFFSET 0x2c4fdeu
+#define THERON_VCE_PALETTE_CALLER_JP_FILE_OFFSET 0x2c46aeu
+#define THERON_VCE_PALETTE_CALLER_ISO_FILE_OFFSET 0x1f8e6eu
+#define THERON_VCE_PALETTE_CALLER_ADDRESS 0x9682u
+#define THERON_VCE_PALETTE_CALLER_BYTES 23u
+#define THERON_VCE_PALETTE_CALLER_FNV1A 0xb3b3ccbbu
 #define THERON_US_BIN_BANK_FILE_OFFSET 0x2bb200u
 #define THERON_JP_BIN_BANK_FILE_OFFSET 0x2ba8d0u
 #define THERON_US_BIN_SIZE 8104992u
@@ -100,6 +106,15 @@ static const uint8_t g_vce_palette_consumer[
     0xc3, 0x56, 0xad, 0xc5, 0x27, 0x8d, 0xc4, 0x56, 0x44,
     0x01, 0x60, 0xe3, 0x00, 0x00, 0x04, 0x04, 0x20, 0x00,
     0x60
+};
+
+/* THQUEST.ASM caller at $9682 reads three bytes from ($62),y before entering
+ * the VCE consumer. It authenticates the immediate call contract only; the
+ * runtime source of $62/$63 remains unknown. */
+static const uint8_t g_vce_palette_caller[
+    THERON_VCE_PALETTE_CALLER_BYTES] = {
+    0xc8, 0xb1, 0x62, 0x8d, 0xc4, 0x27, 0xc8, 0xb1, 0x62, 0x8d, 0xc5, 0x27,
+    0xc8, 0xb1, 0x62, 0x8d, 0xc6, 0x27, 0x44, 0x23, 0xa9, 0x04, 0x60
 };
 
 /* THQUEST.ASM regular-spawn overlay entry L4667.  The helper calls the
@@ -229,6 +244,7 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t stage2_resource_handler[THERON_STAGE2_RESOURCE_HANDLER_BYTES];
     uint8_t stage2_dispatch_table[THERON_STAGE2_DISPATCH_BYTES];
     uint8_t vce_palette_consumer[THERON_VCE_PALETTE_CONSUMER_BYTES];
+    uint8_t vce_palette_caller[THERON_VCE_PALETTE_CALLER_BYTES];
     uint8_t spawn_rng_helper[THERON_SPAWN_RNG_HELPER_BYTES];
     uint8_t spawn_rng_preconsumer[THERON_SPAWN_RNG_PRECONSUMER_BYTES];
     uint8_t spawn_rng_c96b[THERON_SPAWN_C96B_BYTES];
@@ -236,6 +252,7 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t spawn_runtime_c3a0[THERON_SPAWN_C3A0_BYTES];
     uint8_t spawn_runtime_c3a0_jp[THERON_SPAWN_C3A0_BYTES];
     int raw_bin_variant;
+    int retail_track02_variant;
     uint32_t expected_size;
     uint32_t bank_file_offset;
     uint32_t expected_stage2_fnv1a;
@@ -255,6 +272,9 @@ int theron_v1_huc6280_disassembly_read_file(
     }
     raw_bin_variant = track02_variant == THERON_TRACK02_VARIANT_US_BIN ||
         track02_variant == THERON_TRACK02_VARIANT_JP_BIN;
+    retail_track02_variant = raw_bin_variant ||
+        track02_variant == THERON_TRACK02_VARIANT_US_ISO ||
+        track02_variant == THERON_TRACK02_VARIANT_JP_REV1_ISO;
     if (THERON_ACCESS(path, THERON_F_OK) != 0) {
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_UNAVAILABLE;
         *out = receipt;
@@ -320,6 +340,15 @@ int theron_v1_huc6280_disassembly_read_file(
                   SEEK_SET) != 0 ||
           fread(vce_palette_consumer, 1u, sizeof(vce_palette_consumer),
                 file) != sizeof(vce_palette_consumer))) ||
+        (retail_track02_variant &&
+         (fseek(file, (long)(raw_bin_variant ?
+             (track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+              THERON_VCE_PALETTE_CALLER_US_FILE_OFFSET :
+              THERON_VCE_PALETTE_CALLER_JP_FILE_OFFSET) :
+             THERON_VCE_PALETTE_CALLER_ISO_FILE_OFFSET),
+                SEEK_SET) != 0 ||
+          fread(vce_palette_caller, 1u, sizeof(vce_palette_caller), file) !=
+              sizeof(vce_palette_caller))) ||
         !m12_file_md5_hex(path, receipt.source_md5)) {
         if (file) fclose(file);
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
@@ -347,6 +376,9 @@ int theron_v1_huc6280_disassembly_read_file(
         (raw_bin_variant &&
          memcmp(vce_palette_consumer, g_vce_palette_consumer,
                 sizeof(vce_palette_consumer)) != 0) ||
+        (retail_track02_variant &&
+         memcmp(vce_palette_caller, g_vce_palette_caller,
+                sizeof(vce_palette_caller)) != 0) ||
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          memcmp(spawn_rng_helper, g_spawn_rng_helper,
                 sizeof(spawn_rng_helper)) != 0) ||
@@ -482,6 +514,25 @@ int theron_v1_huc6280_disassembly_read_file(
             THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET;
         receipt.vce_palette_consumer_fnv1a = fnv1a(
             vce_palette_consumer, sizeof(vce_palette_consumer));
+    }
+    receipt.vce_palette_caller_verified = retail_track02_variant;
+    if (retail_track02_variant) {
+        receipt.vce_palette_caller_address =
+            THERON_VCE_PALETTE_CALLER_ADDRESS;
+        receipt.vce_palette_caller_bytes = THERON_VCE_PALETTE_CALLER_BYTES;
+        receipt.vce_palette_caller_file_offset = raw_bin_variant ?
+            (track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+             THERON_VCE_PALETTE_CALLER_US_FILE_OFFSET :
+             THERON_VCE_PALETTE_CALLER_JP_FILE_OFFSET) :
+            THERON_VCE_PALETTE_CALLER_ISO_FILE_OFFSET;
+        receipt.vce_palette_caller_fnv1a = fnv1a(
+            vce_palette_caller, sizeof(vce_palette_caller));
+        if (receipt.vce_palette_caller_fnv1a !=
+            THERON_VCE_PALETTE_CALLER_FNV1A) {
+            receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
+            *out = receipt;
+            return 1;
+        }
     }
     *out = receipt;
     return 1;

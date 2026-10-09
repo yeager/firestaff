@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — source-lock the VCE caller contract
+
+- Added the immediate `$9682` caller to the authenticated US/JP Track 02
+  HuC6280 receipt and focused test. The 23-byte sequence at raw offsets
+  `0x2c4fde`/`0x2c46ae` has matching FNV-1a `b3b3ccbb`; the same bytes occur
+  exactly once at cooked MODE1/2048 ISO file offset `0x1f8e6e` in each
+  hash-verified regional image. The test passed against both original BINs and
+  both regional ISO projections. The receipt also records two distinct
+  `$62/$63` setup routes found in the US Stage-2 listing.
+- This closes only a static caller-byte coverage gap. Runtime selection of
+  either setup route, `$62/$63` provenance, and any join to palette-shaped
+  Track 02 bytes remain unproven; no rendering behavior was enabled.
+
 ## 2026-10-09 — compare all authentic Track 02 item banks with Track 19
 
 Compared all seven US and JP Track 02 name/type/property banks with their
