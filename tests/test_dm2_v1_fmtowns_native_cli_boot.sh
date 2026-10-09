@@ -21,13 +21,23 @@ archive_hash_before=$(sha256sum "$archive")
 # PC-98, Amiga or Macintosh happens to win the scan.
 archive_dir=$(cd "$(dirname "$archive")" && pwd)
 default_data_root=$(cd "$archive_dir/.." && pwd)
-if [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_DE.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip" ]; then
+dm2_has_competing_edition() {
+    for edition in \
+        Dungeon-Master-II-Skullkeep_DOS_EN.zip \
+        Dungeon-Master-II-Skullkeep_DOS_FR.zip \
+        Dungeon-Master-II-Skullkeep_DOS_DE.zip \
+        Dungeon-Master-II-Skullkeep_PC-9821_JA.zip \
+        Dungeon-Master-II-Skullkeep_Amiga_EN.zip \
+        Dungeon-Master-II-Skullkeep_Mac_EN.zip \
+        'Dungeon-Master-II-Skullkeep_Mac_EN (1).zip'; do
+        if [ -f "$default_data_root/dm2/$edition" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+if dm2_has_competing_edition; then
     default_probe_output=$(FIRESTAFF_DATA="$default_data_root" \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -170,12 +180,53 @@ mkdir -p "$runtime_capture"
 rm -f "$runtime_capture"/*.bmp
 runtime_data_root=$archive
 runtime_platform_args='--platform fm-towns'
-if [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ] ||
-   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip" ]; then
+if dm2_has_competing_edition; then
     runtime_data_root=$default_data_root
     runtime_platform_args=
 fi
+bare_cli_runtime_probe="$app_dir/test-dm2-fmtowns-bare-cli-runtime.json"
+bare_cli_runtime_log="$app_dir/test-dm2-fmtowns-bare-cli-runtime.log"
+rm -f "$bare_cli_runtime_probe" "$bare_cli_runtime_log"
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$bare_cli_runtime_probe" \
+FIRESTAFF_DATA="$runtime_data_root" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --game dm2 --data-dir "$runtime_data_root" \
+    --debug --script 'wait:2400,click:115:65,click:100:60' \
+    --duration 70000 >"$bare_cli_runtime_log" 2>&1 || {
+        cat "$bare_cli_runtime_log" >&2
+        exit 1
+    }
+python3 - "$bare_cli_runtime_probe" "$bare_cli_runtime_log" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+probe_path, log_path = sys.argv[1:]
+with open(probe_path, encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+towns = probe["dm2FmtownsStartup"]
+trace = Path(log_path).read_text(encoding="utf-8")
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm2" or startup["phase"] != "dm2-runtime" or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        towns["titleFinished"] != 1 or towns["titleRejected"] != 0 or
+        towns["frameIndex"] != 225 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 8, 0, 1) or
+        probe["script"] != {"waitFramesRemaining": 0, "pending": 0} or
+        probe["dm2RuntimeFrame"] != {"accepted": 1, "realAssets": 1,
+                                     "noCoreFallbacks": 1,
+                                     "fallbackDraws": 0} or
+        "game=dm2 platform=FM Towns edition=fmtowns-ja" not in trace):
+    raise SystemExit(
+        "FAIL: bare DM2 CLI did not follow Towns title -> New Game -> first "
+        f"champion through the normal loop: {probe}")
+print("PASS: bare --game dm2 reaches the authentic FM Towns first party "
+      "without M12 or boot-probe fast-forward")
+PY
+rm -f "$bare_cli_runtime_probe" "$bare_cli_runtime_log"
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
 FIRESTAFF_DATA="$runtime_data_root" \
