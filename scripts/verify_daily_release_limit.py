@@ -34,17 +34,6 @@ def main() -> int:
             return 2
         releases.append(release)
 
-    # Rebuilding an already-published release is an update, not a second
-    # release. An existing draft still has to pass the daily publication cap.
-    if any(
-        release.get("tag_name") == args.tag
-        and not release.get("draft")
-        and release.get("published_at")
-        for release in releases
-    ):
-        print(f"Release {args.tag} already exists; daily release limit does not apply to updates.")
-        return 0
-
     published_today = []
     for release in releases:
         published_at = release.get("published_at")
