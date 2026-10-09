@@ -14,10 +14,23 @@
   snapshot gate because this older binary emitted no required VRAM snapshot;
   no transition receipt or gameplay-state change is claimed. Private capture
   summary: `/home/trv2/firestaff-theron-evidence/capture/jp-akutuba-autoload-poll-pcefast-20261009-1028/`.
+- A follow-up eight-second capture used the newer PCE Fast binary with the
+  L4C46/MPR1 probe and close-time VRAM support (binary MD5
+  `8a43dfb6ae6155d5562d1aa04a5bd761`) with the same authentic JP state, Track
+  02, and System Card. The state loaded and the runner wrote close-time VRAM,
+  VCE, SAT, and VDC-state snapshots, but it returned `BLOCKED`: all 952
+  controller reads had raw mask `0000`, with no host-key events, IRQs, or
+  authenticated CD-to-RAM receipts. The receipt still reports level 2, bank
+  1, pose `(2,3)`, and `transition=missing`; the stage-2 selector hook ran
+  1,439 times while the L4C46/MPR1 caller hook ran zero times. This is a
+  bounded negative runtime observation, not evidence that the caller is
+  unreachable during gameplay. Capture:
+  `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-autoload-20261009-0840/`.
 - Next: use a PCE Fast binary with the required close-time snapshot support and
+  first establish accepted controller input from the authentic state; then
   bind the decoder's source bytes, MPRs, destination and `$3b7e-$3b85` pointer
-  table in one authentic runtime session before treating any decoded output as
-  level data.
+  table in one authentic runtime session before treating any decoded output
+  as level data.
 
 ## 2026-10-09 — separate Firestaff save features from retail-save parity
 
