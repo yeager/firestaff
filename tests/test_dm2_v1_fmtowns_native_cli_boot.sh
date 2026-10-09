@@ -62,7 +62,11 @@ default_data_root="$default_home/.firestaff/data"
 default_archive="$default_data_root/dm2/$(basename "$archive")"
 default_log="$default_home/menu.log"
 mkdir -p "$(dirname "$default_archive")"
-ln -s "$archive" "$default_archive"
+if ! ln -s "$archive" "$default_archive" 2>/dev/null; then
+    # Fall back to a same-volume hard link on Windows hosts without symlink
+    # privileges; this keeps the original game archive in place.
+    ln "$archive" "$default_archive"
+fi
 (
     unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
     HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \

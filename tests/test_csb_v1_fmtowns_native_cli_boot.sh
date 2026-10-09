@@ -369,7 +369,11 @@ if [ -f "$data_dir" ]; then
     default_archive="$default_csb_dir/$(basename "$data_dir")"
     default_log="$isolated_home/default-data-menu.log"
     mkdir -p "$default_csb_dir"
-    ln -s "$data_dir" "$default_archive"
+    if ! ln -s "$data_dir" "$default_archive" 2>/dev/null; then
+        # Windows runners may not allow creating symlinks; a same-volume hard
+        # link still exposes the untouched original archive without copying it.
+        ln "$data_dir" "$default_archive"
+    fi
     (
         unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
         HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
