@@ -72,8 +72,34 @@ Track 02 object. `item_mapping_proven` is set only in a world containing both
 matching banks. `host_text_rendering_proven` remains zero.
 
 The six other dungeon banks were checked rather than assumed to share this
-layout. Exact source-name matching finds many unique labels, but their mapped
-type codes and property rows do not preserve the Track 19 positions. No other
-dungeon therefore receives a positional mapping. The selected-inventory
-receipt uses the proven Track 19 accessor for dungeon 4 and retains the
-authenticated dungeon-local Track 02 name path elsewhere.
+layout. On 2026-10-09, the exact same-index tuple comparison was repeated for
+all seven banks in both authentic regions. The inputs were US Track 02
+`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`), JP Track 02
+`TQJP02.bin` (MD5 `b7afb338ad31be1025b53f9aff12d73a`), US Track 19
+`TQUS19.iso` (MD5 `51b40a17b92a30339957ba564aa0015c`), and JP Track 19
+`TQJP19.iso` (MD5 `f9f069a5e489b91207f3156059b756f1`). Each raw Track 02
+MODE1/2352 sector was reduced to its 2048-byte user-data payload after the
+16-byte sector header. The comparison checked entry count, every raw name
+length and byte, all type bytes, and all 396 property bytes. Sarmon (dungeon
+4) is the only bank whose complete positional tuple matches Track 19: 69 of
+69 entries in both regions. The other six banks have zero complete tuple
+matches. The 396-byte property span is equal for all seven US banks and six
+JP banks; JP dungeon 2 has its separately authenticated property hash
+`6c4d1386` rather than Track 19's `b97787ef`. Thus partial field matches or
+isolated shared labels cannot support another positional map.
+
+| Track 02 dungeon | Same-index names US/JP | Same-index type bytes US/JP | Properties US/JP | Full tuples US/JP |
+| --- | ---: | ---: | --- | ---: |
+| 1 | 1/80, 1/80 | 0/69, 0/69 | exact, exact | 0/69, 0/69 |
+| 2 | 1/65, 1/65 | 11/65, 11/65 | exact, different | 0/65, 0/65 |
+| 3 | 5/69, 5/69 | 0/69, 0/69 | exact, exact | 0/69, 0/69 |
+| 4 (Sarmon) | 69/69, 69/69 | 69/69, 69/69 | exact, exact | 69/69, 69/69 |
+| 5 | 20/67, 20/67 | 0/67, 0/67 | exact, exact | 0/67, 0/67 |
+| 6 | 5/63, 5/63 | 0/63, 0/63 | exact, exact | 0/63, 0/63 |
+| 7 | 2/66, 2/66 | 0/66, 0/66 | exact, exact | 0/66, 0/66 |
+
+This is a static authentic-data comparison only. It proves no non-positional
+Track 19 mapping, original inventory-screen behavior, or runtime consumer for
+the other dungeons. The selected-inventory receipt uses the proven Track 19
+accessor for dungeon 4 and retains the authenticated dungeon-local Track 02
+name path elsewhere.

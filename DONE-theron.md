@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — compare all authentic Track 02 item banks with Track 19
+
+Compared all seven US and JP Track 02 name/type/property banks with their
+regional Track 19 bank using hash-verified original media. The comparison
+removed each raw Track 02 sector's 16-byte header, checked every same-index
+name length and byte, type byte, and all 396 property bytes, and revalidated
+the source-span hashes against the repository constants. Sarmon is the only
+complete positional match, with 69 of 69 tuples in both regions; the other six
+banks have no full tuple match. JP Drator also has a distinct property table.
+The evidence and per-bank counts are recorded in
+`docs/source-lock/tqr_v1_track19_startup_envelope_2026-08-06.md`. This is
+static authentic-data evidence only; it establishes no non-positional mapping,
+inventory-screen behavior, or runtime semantics.
+
 ## 2026-10-09 — verify legacy PCE scripted-input results
 
 Updated the scripted-input verifier to pair the original PCE core's adjacent

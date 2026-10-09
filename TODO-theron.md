@@ -27,10 +27,14 @@ equality, in addition to edition, type-code and property equality, before
 publishing the audited Sarmon-to-Track-19 mapping. Both authentic US and JP
 Sarmon/Track 19 pairs passed; changed-name-byte and changed-name-length
 controls were rejected for every one of the 69 names in three repeated trv2
-CTest loops. Other dungeons' Track 19 mappings and the original
-inventory-screen/runtime behavior remain unproven. The larger campaign blocker
-remains authentic stair-transition semantics: stair census and adjacent floor
-approaches do not establish direction, destination level, or arrival pose.
+CTest loops. A follow-up comparison of all seven authentic US/JP Track 02
+banks against Track 19 found Sarmon to be the only exact same-index
+name/type/property tuple; see the source-lock note for media identities and
+method. This rules out additional positional mappings in the compared tables,
+not alternate non-positional mappings or original inventory-screen/runtime
+behavior. The larger campaign blocker remains authentic stair-transition
+semantics: stair census and adjacent floor approaches do not establish
+direction, destination level, or arrival pose.
 Capture them from an original-game transition before enabling stair
 traversal.
 
