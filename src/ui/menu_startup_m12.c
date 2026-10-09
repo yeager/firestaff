@@ -2679,6 +2679,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     m12_preserve_selected_data_directory(state, selectedDataDir);
     m12_apply_completed_asset_scan(state);
     if (m12_show_access_denied_popup(state)) {
+        /* Report inaccessible folders even when another game is available. */
         return 1;
     }
     if (!m12_show_missing_archive_tool_popup(state)) {
@@ -13771,6 +13772,7 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
             m12_preserve_selected_data_directory(state,
                                                  job->selectedDataDir);
             m12_apply_completed_asset_scan(state);
+            /* Report access failures even when another game is available. */
             if (!m12_show_access_denied_popup(state) &&
                 !m12_show_missing_archive_tool_popup(state)) {
                 m12_show_data_dir_result_popup(state, 1);
