@@ -341,9 +341,18 @@ typedef enum {
     THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE
 } Theron_Track02UserDataWindowRole;
 
+typedef enum {
+    THERON_TRACK02_SOURCE_OFFSET_RAW_BIN_PHYSICAL = 0,
+    THERON_TRACK02_SOURCE_OFFSET_JP_CUE_INDEX01
+} Theron_Track02SourceOffsetKind;
+
 typedef struct {
     Theron_Track02UserDataWindowRole role;
+    Theron_Track02SourceOffsetKind source_offset_kind;
+    /* Physical MODE1/2352 byte offset for raw BIN, or contiguous INDEX 01
+     * byte offset for the authenticated JP CUE ISO, as selected above. */
     size_t raw_offset;
+    /* Packed user-data offset in the source's coordinate domain. */
     size_t user_data_offset;
     size_t byte_count;
     size_t anchor_index;

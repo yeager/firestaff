@@ -1212,6 +1212,7 @@ const char *theron_v1_track02_startup_text_marker_kind_name(
 static void catalog_add_user_data_window(
     Theron_Track02UserDataWindowCatalog *catalog,
     Theron_Track02UserDataWindowRole role,
+    Theron_Track02SourceOffsetKind source_offset_kind,
     size_t raw_offset,
     size_t user_data_offset,
     size_t byte_count,
@@ -1228,6 +1229,7 @@ static void catalog_add_user_data_window(
     }
     entry = &catalog->entries[catalog->entry_count++];
     entry->role = role;
+    entry->source_offset_kind = source_offset_kind;
     entry->raw_offset = raw_offset;
     entry->user_data_offset = user_data_offset;
     entry->byte_count = byte_count;
@@ -1540,6 +1542,7 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
     Theron_Track02BankSignal signal;
     Theron_Track02SignalStatus signal_status;
     Theron_Track02Variant variant;
+    Theron_Track02SourceOffsetKind source_offset_kind;
     uint8_t scratch[64];
 
     if (out_catalog) {
@@ -1551,9 +1554,13 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
 
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
-    if (!variant_is_raw_bin(variant)) {
+    if (!variant_is_raw_bin(variant) &&
+        !variant_is_jp_cue_iso(variant, md5_hex)) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
+    source_offset_kind = variant_is_jp_cue_iso(variant, md5_hex)
+        ? THERON_TRACK02_SOURCE_OFFSET_JP_CUE_INDEX01
+        : THERON_TRACK02_SOURCE_OFFSET_RAW_BIN_PHYSICAL;
 
     signal_status =
         theron_v1_track02_find_bank_signal(track02_data,
@@ -1576,6 +1583,7 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
         catalog_add_user_data_window(
             out_catalog,
             THERON_TRACK02_USER_DATA_WINDOW_BANK_DESCRIPTOR_TABLE,
+            source_offset_kind,
             signal.descriptor_offsets[i],
             user_offset,
             TQR_US_ISO_BANK_STRIDE_BYTES,
@@ -1593,6 +1601,7 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
         catalog_add_user_data_window(
             out_catalog,
             THERON_TRACK02_USER_DATA_WINDOW_POST_BOUNDARY_SPAN,
+            source_offset_kind,
             signal.post_boundary_span_offsets[i],
             user_offset,
             TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES,
@@ -1600,7 +1609,7 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
             (size_t)-1);
     }
 
-    if (signal.anchor_count > 0u) {
+    if (variant_is_raw_bin(variant) && signal.anchor_count > 0u) {
         Theron_Track02InitialCandidateBinding binding;
         Theron_Track02LevelHandoffStatus binding_status =
             theron_v1_track02_bind_initial_level_candidate(
@@ -1614,6 +1623,7 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
             catalog_add_user_data_window(
                 out_catalog,
                 THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE,
+                source_offset_kind,
                 binding.candidate.absolute_offset,
                 binding.candidate.user_data_offset,
                 binding.candidate.byte_count,
@@ -3023,7 +3033,21 @@ Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(
             return THERON_TRACK02_SIGNAL_BAD_INPUT;
         }
 
-        status = theron_v1_track02_copy_raw_user_data_range(
+        switch (entry->source_offset_kind) {
+        case THERON_TRACK02_SOURCE_OFFSET_RAW_BIN_PHYSICAL:
+            if (!variant_is_raw_bin(catalog.variant)) {
+                return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+            }
+            break;
+        case THERON_TRACK02_SOURCE_OFFSET_JP_CUE_INDEX01:
+            if (!variant_is_jp_cue_iso(catalog.variant, md5_hex)) {
+                return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+            }
+            break;
+        default:
+            return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+        }
+        status = track02_copy_startup_bitmap_bytes(
             track02_data,
             track02_size,
             md5_hex,

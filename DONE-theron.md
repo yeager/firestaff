@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — catalog JP CUE bank windows with explicit offset domains
+
+- The exact authenticated JP CUE-projected ISO now catalogs all three bank
+  descriptor tables and their three post-boundary spans. Each entry identifies
+  whether its offset is a raw BIN physical byte offset or a contiguous CUE
+  INDEX 01 byte offset, and the public role-copy accessor uses the matching
+  bounded source path. The six authentic ISO windows match the corresponding
+  bytes in the raw BIN's user-data projection; the legacy zero-filled JP ISO
+  identity remains rejected.
+- On TRV2, the authentic CUE-projected ISO dungeon-loader test passed three
+  direct runs with the real-media environment variable set, and the font-tile
+  regression passed. Initial-level candidate binding remains raw-BIN-only;
+  this verifies catalog and byte-copy behavior, not JP CUE gameplay loading.
+
 ## 2026-10-09 — catalog JP startup roster markers from the CUE ISO
 
 - Startup text-marker discovery and bounded copying now accept the exact

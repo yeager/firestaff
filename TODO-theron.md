@@ -1,5 +1,15 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — JP CUE initial-level candidate remains unbound
+
+- The authenticated JP CUE ISO can now catalog and copy the three bank
+  descriptor tables and matching post-boundary spans using contiguous INDEX
+  01 offsets. Its initial-level candidate is deliberately not cataloged:
+  source evidence has not yet established a safe ISO-coordinate binding for
+  that candidate. Keep the raw-BIN path unchanged and trace the candidate's
+  authentic source span and bounds before extending CUE support or claiming
+  initial dungeon loading.
+
 ## 2026-10-09 — JP startup text consumer remains unbound
 
 - The exact authentic JP CUE ISO can now catalog and copy the same roster-name
