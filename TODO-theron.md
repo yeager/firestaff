@@ -56,6 +56,13 @@
   This independent save-state replay reproduces the negative result but still
   does not prove gameplay-level input handling. Private capture:
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-userstate-input-sweep-20261009-1238/`.
+  A source/runtime address check found that the input trace's logical
+  `$44D2` is physically `$0D04D2` (MPR2 `$68`), while the authentic US and JP
+  Stage-2 bytes at logical `$44D2` are the same 64-byte raw window beginning
+  `46 a5 57 85`. The runtime poll therefore cannot be attributed to those
+  initial Stage-2 bytes; its bank-`$68` code bytes and source-sector provenance
+  remain unbound. The exact raw-window hashes, trace evidence and limits are in
+  `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
   These bounded captures prove input reaches controller polling, not that the
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
