@@ -455,7 +455,9 @@ int theron_v1_huc6280_decode_resource(
         }
     }
 
-    out->status = THERON_HUC6280_DECODE_READY;
+    /* The current source-locked lift always stops at the declared byte-count
+     * boundary; this is not evidence that a complete level resource decoded. */
+    out->status = THERON_HUC6280_DECODE_SOURCE_BOUNDARY;
     out->bits_consumed = bit_cursor;
     out->output_bytes = output_offset;
     out->pointer_entries = pointer_entries;

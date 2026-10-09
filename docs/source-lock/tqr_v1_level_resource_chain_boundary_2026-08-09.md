@@ -35,6 +35,8 @@ The byte reader also returns at `$2450` when loading the final byte-counted
 byte, before shifting that byte into the token registers. The C bitstream lift
 therefore excludes the last declared byte from emit-eligible token bits, but
 does not claim parity for width-marker interactions or full resource chains.
+Its receipt reports `THERON_HUC6280_DECODE_SOURCE_BOUNDARY` at that bounded
+termination; `READY` is not used as a synonym for reaching the source boundary.
 
 ## Admission rule
 

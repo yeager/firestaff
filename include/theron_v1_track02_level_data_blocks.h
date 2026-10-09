@@ -67,12 +67,14 @@ typedef struct {
  * It therefore decodes bytes without inventing a level/map/tile meaning. */
 typedef enum {
     THERON_HUC6280_DECODE_UNAVAILABLE = 0,
-    THERON_HUC6280_DECODE_READY = 1,
+    THERON_HUC6280_DECODE_READY = 1, /* Reserved for a proven complete frame. */
     THERON_HUC6280_DECODE_INVALID_ARGUMENT = 2,
     THERON_HUC6280_DECODE_TRUNCATED = 3,
     THERON_HUC6280_DECODE_POINTER_TABLE = 4,
     THERON_HUC6280_DECODE_DESTINATION = 5,
-    THERON_HUC6280_DECODE_UNSUPPORTED = 6
+    THERON_HUC6280_DECODE_UNSUPPORTED = 6,
+    /* The bounded source walk reached the retail byte-count boundary. */
+    THERON_HUC6280_DECODE_SOURCE_BOUNDARY = 7
 } Theron_Huc6280DecodeStatus;
 
 typedef struct {
@@ -89,13 +91,15 @@ typedef struct {
     uint8_t final_bit_width;
 } Theron_Huc6280DecodeReceipt;
 
-/* Decode one authentic $23ad resource frame. `resource` starts at the six
- * bytes read by the retail routine: the little-endian length word is at
- * +2, and the bitstream starts at +6. `destination_address` is the CPU
- * address corresponding to destination[0]. `pointer_table` contains the
- * output-address entries used by the $2496 back-reference path; entries
- * supplied by the caller before the call are preserved until the retail
- * loop overwrites them. */
+/* Interpret one bounded $23ad resource frame. `resource` starts at the six
+ * bytes read by the retail routine: the little-endian length word is at +2,
+ * and the bitstream starts at +6. `destination_address` is the CPU address
+ * corresponding to destination[0]. `pointer_table` contains the output-
+ * address entries used by the $2496 back-reference path; entries supplied by
+ * the caller before the call are preserved until the retail loop overwrites
+ * them. A nonzero return means the bounded walk completed without an argument,
+ * framing, pointer-table, or destination error; inspect `out->status` because
+ * source-count termination is not proof of complete resource decoding. */
 int theron_v1_huc6280_decode_resource(
     const uint8_t *resource, size_t resource_bytes,
     uint8_t *destination, size_t destination_capacity,

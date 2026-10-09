@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — distinguish decoder source-boundary termination
+
+- The bounded HuC6280 lift now reports
+  `THERON_HUC6280_DECODE_SOURCE_BOUNDARY` when its source byte count ends,
+  preserving existing enum values and reserving `READY` for a future proven
+  complete-frame result. Synthetic algorithm-boundary checks assert the new
+  status; they still do not prove authentic level output, frame-chain or
+  marker-interaction parity. The focused test source was compiled with the
+  Xcode 26.6 Clang toolchain and ran in three loops: static, authentic US/JP
+  Track 02 BINs, and authentic US/JP Track 19 ISO projections all passed their
+  existing framing/hash checks. Those media checks do not feed compressed
+  payloads through the output decoder. The regular CMake target was attempted
+  but stopped at 21% when it pulled the full shared M10 library chain; its
+  partial objects were then cleaned.
+
 ## 2026-10-09 — correct the static bank-$1f initializer call target
 
 - The raw bytes at `$23DC` are `BSR $23A4` (`$44,$C6`), not a recursive call
@@ -13,9 +28,9 @@
   Synthetic algorithm-boundary vectors verify a literal is decoded from the
   preceding bytes, its value is independent of the final byte, and a token
   that needs that byte is not emitted. Three loops of the focused static/US/JP
-  media resource checks passed. `READY` here means the bounded lift stopped at
-  this byte boundary; it does not establish that a retail level was decoded
-  or that marker-edge behavior has parity.
+  media resource checks passed. The `SOURCE_BOUNDARY` status means only that
+  the bounded lift stopped at this byte boundary; it does not establish that a
+  retail level was decoded or that marker-edge behavior has parity.
 - A locked exit now clears stale pending transition state before returning
   “no transition.” The progression regression verifies the queue cannot later
   execute and that party position and current level remain unchanged. Its

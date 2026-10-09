@@ -334,7 +334,7 @@ static void verify_huc6280_decoder_lift(void) {
     assert(theron_v1_huc6280_decode_resource(
         resource, sizeof(resource), destination, sizeof(destination),
         0x6000u, pointer_table, 8u, 0u, &receipt));
-    assert(receipt.status == THERON_HUC6280_DECODE_READY);
+    assert(receipt.status == THERON_HUC6280_DECODE_SOURCE_BOUNDARY);
     assert(receipt.resource_length == 8u);
     assert(receipt.resource_bitstream_bytes == 3u);
     assert(receipt.output_bytes == 1u);
@@ -354,7 +354,7 @@ static void verify_huc6280_decoder_lift(void) {
             changed_guard, sizeof(changed_guard), destination,
             sizeof(destination), 0x6000u, pointer_table, 8u, 0u,
             &guard_receipt));
-        assert(guard_receipt.status == THERON_HUC6280_DECODE_READY);
+        assert(guard_receipt.status == THERON_HUC6280_DECODE_SOURCE_BOUNDARY);
         assert(guard_receipt.output_bytes == 1u &&
                guard_receipt.literal_tokens == 1u);
         assert(destination[0] == 0x41u);
@@ -370,7 +370,7 @@ static void verify_huc6280_decoder_lift(void) {
             token_needs_guard, sizeof(token_needs_guard), destination,
             sizeof(destination), 0x6000u, pointer_table, 8u, 0u,
             &boundary));
-        assert(boundary.status == THERON_HUC6280_DECODE_READY);
+        assert(boundary.status == THERON_HUC6280_DECODE_SOURCE_BOUNDARY);
         assert(boundary.output_bytes == 0u && boundary.tokens == 0u);
         assert(boundary.pointer_entries == 1u);
         assert(pointer_table[0] == 0x6000u);
@@ -387,7 +387,7 @@ static void verify_huc6280_decoder_lift(void) {
             0x6000u, pointer_table, 8u, 0u, &rejected));
         assert(rejected.status == THERON_HUC6280_DECODE_TRUNCATED);
     }
-    puts("PASS: HuC6280 $23AD byte-lookahead decoder boundary");
+    puts("PASS: HuC6280 $23AD bounded source-boundary receipt");
 }
 
 int main(int argc, char **argv) {

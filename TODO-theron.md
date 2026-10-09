@@ -1,5 +1,17 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — keep bounded decoder status honest
+
+- The source-backed C lift now reports `THERON_HUC6280_DECODE_SOURCE_BOUNDARY`
+  when its declared byte-count walk ends, rather than labeling that boundary
+  `READY`. The bounded interpretation and synthetic algorithm vectors remain
+  unverified against decoded authentic level output; marker interactions,
+  frame chaining, MPR setup and the runtime consumer remain open. The focused
+  test source passed three direct-executable loops with authentic US/JP BIN and
+  ISO inputs; these validate the existing framing/hash receipts only, not
+  compressed output. The normal CMake target remains unverified because its
+  dependency chain starts a full shared-library build.
+
 ## 2026-10-09 — transition and decompressor evidence caveats
 
 - Locked-exit checks now clear stale transition queues. The regression proves
@@ -13,7 +25,8 @@
   Its synthetic algorithm vectors and authenticated static byte tests do not
   pass real compressed level payloads through the decoder. Marker interactions
   and whether/how authentic level resources exercise the boundary remain
-  open. `READY` means only that the bounded lift stopped at this boundary.
+  open. `SOURCE_BOUNDARY` means only that the bounded lift stopped at this
+  byte-count boundary.
   Obtain a source-bound full-decode/runtime receipt before claiming retail
   level or complete decoder parity.
 
