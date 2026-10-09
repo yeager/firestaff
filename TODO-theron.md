@@ -5,8 +5,8 @@
 - ✅ The public transition executor now independently rejects queued stairs
   for authenticated source-backed levels, closing a bypass around the movement
   gate while original target-level and arrival-pose semantics remain unbound.
-  The authentic US dungeon-loader test covers a directly injected queue and
-  passed three local loops; the fixture progression and startup/Continue
+  The authentic US and JP dungeon-loader test covers directly injected queues
+  and passed three local loops; the fixture progression and startup/Continue
   regression tests also passed three loops. This guard does not enable stair
   traversal.
 

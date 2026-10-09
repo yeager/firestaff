@@ -3320,6 +3320,22 @@ static void test_all_jp_dungeons(
         assert(theron_v1_track02_load_full_dungeon_for_variant(
                    world, d + 1, ud, ud_size,
                    THERON_TRACK02_VARIANT_JP_BIN, &result) == 0);
+        if (d == 0) {
+            const int saved_level = world->current_level;
+            const int saved_x = world->party.leader_x;
+            const int saved_y = world->party.leader_y;
+            assert(world->levels[d][0].source_header_verified);
+            world->transition_pending = 1u;
+            world->transition_type = THERON_TRANSITION_STAIRS;
+            world->transition_target_level = 0;
+            world->transition_spawn_x = 0;
+            world->transition_spawn_y = 0;
+            assert(theron_v1_transition_execute(world) == -1);
+            assert(world->current_level == saved_level &&
+                   world->party.leader_x == saved_x &&
+                   world->party.leader_y == saved_y &&
+                   world->transition_pending == 0u);
+        }
         assert(theron_v1_track02_dungeon_map_load_for_variant(
                    ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN,
                    (unsigned int)d, &source_maps) == 1);

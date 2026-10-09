@@ -4,9 +4,9 @@
 
 - The public transition executor now rejects a queued stair transition when
   the current level is authenticated source-backed, in addition to the
-  existing movement gate. The authentic US dungeon-loader test verifies that
-  a directly injected queue cannot change level or party position. The real
-  dungeon-loader, fixture progression, and startup/Continue regression tests
+  existing movement gate. The authentic US and JP dungeon-loader test verifies
+  that a directly queued stair transition cannot change level or party position.
+  The real dungeon-loader, fixture progression, and startup/Continue tests
   each passed three local loops. This is a fail-closed safety boundary, not
   stair gameplay support.
 
