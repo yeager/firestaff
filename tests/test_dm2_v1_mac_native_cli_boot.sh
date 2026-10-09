@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 set -eu
+. "$(dirname "$0")/lib/portable_sha256.sh"
 
 app=${1:?usage: test_dm2_v1_mac_native_cli_boot.sh <firestaff>}
 data_root=${FIRESTAFF_DM2_DATA_ROOT:-"$HOME/.firestaff/data"}
@@ -72,7 +73,7 @@ cleanup_menu_data() {
 }
 trap cleanup_menu_data EXIT
 
-archive_hash_before=$(sha256sum "$archive")
+archive_hash_before=$(firestaff_sha256_file "$archive")
 
 if [ "$(uname -s)" = Darwin ]; then
     # An explicit Macintosh direct launch must retain its authenticated
@@ -322,7 +323,7 @@ if actual_platform != 4:
 print("PASS: DM2 AUTO selected authenticated Macintosh platform (4)")
 PY
 
-if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
+if [ "$archive_hash_before" != "$(firestaff_sha256_file "$archive")" ]; then
     echo 'FAIL: DM2 Macintosh retail archive changed during native launch' >&2
     exit 1
 fi

@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 set -eu
+. "$(dirname "$0")/lib/portable_sha256.sh"
 
 app=${1:?usage: test_dm2_v1_amiga_native_cli_boot.sh <firestaff>}
 archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
@@ -12,7 +13,7 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
-archive_hash_before=$(sha256sum "$archive")
+archive_hash_before=$(firestaff_sha256_file "$archive")
 
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -113,7 +114,7 @@ for case_item in up:1,7,0 down:1,8,2 left:1,8,3 right:1,8,1 \
                  strafe-left:1,8,3 strafe-right:2,8,1 action:1,8,0; do
     probe_input "${case_item%%:*}" "${case_item#*:}"
 done
-if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
+if [ "$archive_hash_before" != "$(firestaff_sha256_file "$archive")" ]; then
     echo 'FAIL: DM2 Amiga archive changed during native launch' >&2
     exit 1
 fi

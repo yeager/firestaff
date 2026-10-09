@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+. "$(dirname "$0")/lib/portable_sha256.sh"
 
 firestaff_cli="${1:?Firestaff executable is required}"
 data_dir="${FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR:-$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip}"
@@ -50,7 +51,7 @@ trap cleanup_test_artifacts EXIT HUP INT TERM
 if [ -f "$data_dir" ]; then
     # The F31 title/game package is consumed directly from this archive.  Do
     # not let a native start, input, or menu route rewrite supplied media.
-    media_hash_before=$(sha256sum "$data_dir")
+    media_hash_before=$(firestaff_sha256_file "$data_dir")
 else
     media_hash_before=""
 fi
@@ -521,7 +522,7 @@ if [ -n "$user_save" ]; then
     echo "PASS: native CSB FM Towns start menu resumes the selected F0435 save"
 fi
 
-if [ -n "$media_hash_before" ] && [ "$media_hash_before" != "$(sha256sum "$data_dir")" ]; then
+if [ -n "$media_hash_before" ] && [ "$media_hash_before" != "$(firestaff_sha256_file "$data_dir")" ]; then
     echo "FAIL: native FM Towns routes modified supplied game media" >&2
     exit 1
 fi

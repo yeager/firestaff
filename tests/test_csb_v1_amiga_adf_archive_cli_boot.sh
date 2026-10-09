@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+. "$(dirname "$0")/lib/portable_sha256.sh"
 
 if [[ $# -ne 1 ]]; then
     printf 'usage: %s <firestaff-binary>\n' "$0" >&2
@@ -22,7 +23,7 @@ fi
 # The selected original archive is read through the native ZIP/ADF readers.
 # Keep a byte-identity receipt so launch and input probes cannot silently
 # start writing a cache or extracted replacement beside the supplied media.
-archive_hash_before=$(sha256sum "$archive")
+archive_hash_before=$(firestaff_sha256_file "$archive")
 
 run_probe() {
     local output
@@ -124,6 +125,6 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'wait20,click:1173:262,wait20,click:934:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
-[[ "$archive_hash_before" == "$(sha256sum "$archive")" ]]
+[[ "$archive_hash_before" == "$(firestaff_sha256_file "$archive")" ]]
 
 printf '%s\n' 'PASS: authentic CSB Amiga ZIP -> ADF route reaches source entrance, menu launch, and native movement'

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+. "$(dirname "$0")/lib/portable_sha256.sh"
 
 app=${1:?usage: test_dm1_v1_amiga_v20_archive_cli_boot.sh <firestaff-binary>}
 archive=${FIRESTAFF_DM1_AMIGA_V20_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"}
@@ -20,7 +21,7 @@ fi
 
 # Native virtual-media ingestion is read-only.  Retain the supplied outer
 # archive hash across both normal boot and save-resume routes.
-archive_hash_before=$(sha256sum "$archive")
+archive_hash_before=$(firestaff_sha256_file "$archive")
 
 probe() {
     local output
@@ -200,6 +201,6 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
     exit 1
 fi
 
-[[ "$archive_hash_before" == "$(sha256sum "$archive")" ]]
+[[ "$archive_hash_before" == "$(firestaff_sha256_file "$archive")" ]]
 
 printf '%s\n' 'PASS: authentic DM1 Amiga 2.0 ZIP -> ZIP -> ADF reaches CLI, menu, and native movement runtime'
