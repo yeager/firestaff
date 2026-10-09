@@ -22,6 +22,10 @@ and
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-no-input-control-20261010/`.
 Continue pursuing a fresh cold-start media receipt and a consumer-level
 movement/transition trace; do not infer semantics from these repeated writes.
+An extended emulator-only trace captures the writer instruction bytes and
+finds matching code windows in authentic JP and US Track 02 candidates, but no
+dynamic receipt binds any candidate sector to the runtime bank. See
+`docs/source-lock/theron-disassembly/theron-jp-party-ram-writer-runtime-20261009.md`.
 
 # Firestaff TODO — Theron's Quest
 
