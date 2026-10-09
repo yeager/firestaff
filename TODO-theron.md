@@ -1,5 +1,24 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — validate emulator-created JP dungeon-state loading
+
+- A four-second PCE Fast capture loaded the emulator-created JP Akutuba state
+  (MD5 `14dec90b96ec3e14622ec0fab535a92f`) with the authentic JP Rev. 1 CUE,
+  Track 02 (`b7afb338ad31be1025b53f9aff12d73a`), and System Card
+  (`ff1a674273fe3540ccef576376407d1d`). The PCE Fast binary reported the state
+  as loaded. Its single scripted `i@1:1` event was observed at controller
+  polls `$44c1/$44d2` (`raw=0001`); this confirms input delivery only.
+- The capture emitted 3,240 main-RAM reads, including 532 reads in
+  `$2600-$27ff`, but no authenticated source-LBA-to-RAM receipt or decoder
+  input/output join was produced. The runner stopped at its close-time VDC
+  snapshot gate because this older binary emitted no required VRAM snapshot;
+  no transition receipt or gameplay-state change is claimed. Private capture
+  summary: `/home/trv2/firestaff-theron-evidence/capture/jp-akutuba-autoload-poll-pcefast-20261009-1028/`.
+- Next: use a PCE Fast binary with the required close-time snapshot support and
+  bind the decoder's source bytes, MPRs, destination and `$3b7e-$3b85` pointer
+  table in one authentic runtime session before treating any decoded output as
+  level data.
+
 ## 2026-10-09 — separate Firestaff save features from retail-save parity
 
 - The parity matrix no longer treats the PC34 TQSV compatibility round-trip or
