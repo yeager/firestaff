@@ -45,6 +45,8 @@ The data-port and CPU-write traces stop at 4,096 rows, their instrumentation
 cap; they cannot establish that no later reads or writes occurred. The
 consumer trace only samples reads, so it does not bind the $4002 code window
 to a later authentic Track 02 span. The transition report still has
+The unique static match below is only a candidate and does not supply that
+missing runtime transfer receipt.
 transition=missing, no game-owned state change, and no observed
 non-System-Card controller poll. Thus this is evidence of first-stage
 signature acceptance and a sampled second-stage handoff, not proof of a
