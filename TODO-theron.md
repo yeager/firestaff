@@ -5,10 +5,10 @@
 - ✅ The public transition executor now independently rejects queued stairs
   for authenticated source-backed levels, closing a bypass around the movement
   gate while original target-level and arrival-pose semantics remain unbound.
-  The authentic US and JP dungeon-loader test covers directly injected queues
-  and passed three local loops; the fixture progression and startup/Continue
-  regression tests also passed three loops. This guard does not enable stair
-  traversal.
+  The authentic US case and all seven JP dungeons reject directly injected
+  queues; the loader test passed three local loops. Fixture progression and
+  startup/Continue regression tests also passed three loops. This guard does
+  not enable stair traversal.
 
 - ✅ The local `test_theron_v1_track02_dungeon_loader` executable passed three
   consecutive loops using the installed authentic US and JP `TQUS02.bin` and

@@ -3320,7 +3320,7 @@ static void test_all_jp_dungeons(
         assert(theron_v1_track02_load_full_dungeon_for_variant(
                    world, d + 1, ud, ud_size,
                    THERON_TRACK02_VARIANT_JP_BIN, &result) == 0);
-        if (d == 0) {
+        {
             const int saved_level = world->current_level;
             const int saved_x = world->party.leader_x;
             const int saved_y = world->party.leader_y;
