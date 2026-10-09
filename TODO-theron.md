@@ -8,6 +8,11 @@
   regional byte coverage only. Runtime bank mapping, helper/callee returns,
   caller selection, and JP spawn/RNG/combat behavior remain unproven and must
   stay closed.
+- The recorded MAME 0.285 HuC6280 listing hashes for the JP `$C95D` and
+  `$CC3E` raw-window candidates were independently reproduced on `trv2` in
+  three loops from the authenticated `TQJP02.bin`. This reconfirms the static
+  candidates only; neither listing proves runtime bank ownership, execution,
+  return values, or gameplay semantics.
 
 ## 2026-10-10 — correct the VCE caller address
 
