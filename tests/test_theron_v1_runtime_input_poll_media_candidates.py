@@ -27,7 +27,7 @@ MEDIA = {
                 "ad b8 28 29 f0 cd 12 29 d0 0d",
                 (0x9CF6F, 0xE676F, 0x12FF6F, 0x17976F, 0x1C2F6F, 0x20C76F, 0x255F6F),
             ),
-            "consumer_direction_path": (
+            "consumer_controlflow": (
                 "ad b8 28 29 f0 cd 12 29 d0 0d ee 20 29 ae 20 29 e0 0c b0 03 "
                 "4c bc d3 9c 20 29 8d 12 29 73 0d 29 0f 29 02 00 ad b8 28 29 "
                 "40 f0 04 a5 ca 80 09 ad b8 28 29 10 f0 0d a5 c9 c9 ff f0 51 "
@@ -64,7 +64,7 @@ MEDIA = {
                 "ad b8 28 29 f0 cd 12 29 d0 0d",
                 (0x9D8AD, 0xE70AD, 0x1308AD, 0x17A0AD, 0x1C38AD, 0x20D0AD, 0x2568AD),
             ),
-            "consumer_direction_path": (
+            "consumer_controlflow": (
                 "ad b8 28 29 f0 cd 12 29 d0 0d ee 20 29 ae 20 29 e0 0c b0 03 "
                 "4c ca d3 9c 20 29 8d 12 29 73 0d 29 0f 29 02 00 ad b8 28 29 "
                 "40 f0 04 a5 ca 80 09 ad b8 28 29 10 f0 0d a5 c9 c9 ff f0 51 "
@@ -90,6 +90,18 @@ MEDIA = {
         },
     ),
 }
+
+POLL_CONSUMER_WINDOWS = {
+    "jp": (
+        "2d187b0eb974b353c2c384f858d337e04068b952c188d85ba326f98cafa89353",
+        (0x9CF6F, 0xE676F, 0x12FF6F, 0x17976F, 0x1C2F6F, 0x20C76F, 0x255F6F),
+    ),
+    "us": (
+        "8baba7511f4bdb3a12073c925777d84030b82dd65ffbc12df855941079229091",
+        (0x9D8AD, 0xE70AD, 0x1308AD, 0x17A0AD, 0x1C38AD, 0x20D0AD, 0x2568AD),
+    ),
+}
+POLL_CONSUMER_WINDOW_BYTES = 0x100
 
 
 def find_all(data: bytes | bytearray, needle: bytes) -> tuple[int, ...]:
@@ -123,6 +135,22 @@ def require_candidates(data: bytes, label: str, hex_bytes: str, expected: tuple[
             raise AssertionError(f"{label}: mutation at {offset:#x} did not reject only that candidate")
 
 
+def require_poll_consumer_windows(data: bytes, region: str) -> None:
+    expected_sha256, offsets = POLL_CONSUMER_WINDOWS[region]
+    for offset in offsets:
+        window = data[offset : offset + POLL_CONSUMER_WINDOW_BYTES]
+        actual_sha256 = hashlib.sha256(window).hexdigest()
+        if len(window) != POLL_CONSUMER_WINDOW_BYTES or actual_sha256 != expected_sha256:
+            raise AssertionError(
+                f"{region} direction window at {offset:#x}: expected {expected_sha256}, "
+                f"got {actual_sha256}"
+            )
+        mutated = bytearray(window)
+        mutated[0] ^= 0xFF
+        if hashlib.sha256(mutated).hexdigest() == expected_sha256:
+            raise AssertionError(f"{region} direction window at {offset:#x} survived mutation")
+
+
 def main() -> int:
     root = Path(os.environ.get("FIRESTAFF_THERON_TEST_DATA_DIR", Path.home() / ".firestaff/data/theron"))
     paths = {region: root / filename for region, (filename, _, _) in MEDIA.items()}
@@ -139,9 +167,10 @@ def main() -> int:
             raise AssertionError(f"{filename}: expected authentic MD5 {expected_md5}, got {actual_md5}")
         for label, (hex_bytes, offsets) in signatures.items():
             require_candidates(data, f"{region} {label}", hex_bytes, offsets)
+        require_poll_consumer_windows(data, region)
         print(f"PASS: authentic {region.upper()} Track 02 caller candidates ({expected_md5})")
 
-    print("PASS: poll, consumer, consumer-direction path, caller-branch, and indexed-table signatures with per-candidate negative mutations")
+    print("PASS: poll, consumer, 256-byte poll-consumer window hashes, caller-branch, and indexed-table signatures with per-candidate negative mutations")
     return 0
 
 
