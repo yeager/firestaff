@@ -30,11 +30,11 @@
   game accepts movement or that the caller is unreachable during gameplay.
   Capture:
   `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-autoload-20261009-0840/`.
-- Next: use a PCE Fast binary with the required close-time snapshot support and
-  first establish accepted controller input from the authentic state; then
-  bind the decoder's source bytes, MPRs, destination and `$3b7e-$3b85` pointer
-  table in one authentic runtime session before treating any decoded output
-  as level data.
+- Next: from the authentic state, trace game dispatch index `$53` / PC `$49FB`
+  and a visible action or party-position change beyond the verified controller
+  poll. Then bind the decoder's source bytes, MPRs, destination and
+  `$3b7e-$3b85` pointer table in one authentic runtime session before treating
+  any decoded output as level data.
 
 ## 2026-10-09 — separate Firestaff save features from retail-save parity
 
