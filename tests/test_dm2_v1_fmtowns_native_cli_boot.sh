@@ -15,45 +15,25 @@ fi
 
 archive_hash_before=$(sha256sum "$archive")
 
-# When several authentic DM2 editions are installed together, omitting
-# --platform must still select the requested FM Towns default. The ordinary
-# single-archive check below cannot catch an AUTO-order regression where a
-# supported DOS, Amiga or Macintosh edition happens to win the scan.
+# Use the complete DM2 data directory for every unqualified launch. This
+# keeps AUTO selection under test when competing editions are installed and
+# still exercises the bare CLI route when only FM Towns media is available.
 archive_dir=$(cd "$(dirname "$archive")" && pwd)
 default_data_root=$(cd "$archive_dir/.." && pwd)
-dm2_has_competing_edition() {
-    for edition in \
-        Dungeon-Master-II-Skullkeep_DOS_EN.zip \
-        Dungeon-Master-II-Skullkeep_DOS_FR.zip \
-        Dungeon-Master-II-Skullkeep_DOS_DE.zip \
-        Dungeon-Master-II-Skullkeep_Amiga_EN.zip \
-        Dungeon-Master-II-Skullkeep_Mac_EN.zip \
-        'Dungeon-Master-II-Skullkeep_Mac_EN (1).zip'; do
-        if [ -f "$default_data_root/dm2/$edition" ]; then
-            return 0
-        fi
-    done
-    return 1
+default_probe_output=$(FIRESTAFF_DATA="$default_data_root" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --debug --boot-probe --boot-probe-frames 1 --duration 0 2>&1) || {
+    printf '%s\n' "$default_probe_output" >&2
+    exit 1
 }
-
-if dm2_has_competing_edition; then
-    default_probe_output=$(FIRESTAFF_DATA="$default_data_root" \
-        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
-        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --game dm2 --debug --boot-probe --boot-probe-frames 1 --duration 0 2>&1) || {
-        printf '%s\n' "$default_probe_output" >&2
-        exit 1
-    }
-    printf '%s\n' "$default_probe_output" | grep -q \
-        'game=dm2 platform=FM Towns edition=fmtowns-ja' || {
-        printf '%s\n' 'FAIL: bare --game dm2 did not prefer FM Towns when multiple original editions were installed' \
-            "$default_probe_output" >&2
-        exit 1
-    }
-    echo 'PASS: bare --game dm2 selects FM Towns with multiple original editions installed'
-else
-    echo 'SKIP: no competing authentic DM2 edition is staged for default-platform priority'
-fi
+printf '%s\n' "$default_probe_output" | grep -q \
+    'game=dm2 platform=FM Towns edition=fmtowns-ja' || {
+    printf '%s\n' 'FAIL: bare --game dm2 did not select FM Towns from the complete DM2 data directory' \
+        "$default_probe_output" >&2
+    exit 1
+}
+echo 'PASS: bare --game dm2 selects FM Towns from the complete DM2 data directory'
 
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -177,12 +157,7 @@ PY
 rm -f "$runtime_probe"
 mkdir -p "$runtime_capture"
 rm -f "$runtime_capture"/*.bmp
-runtime_data_root=$archive
-runtime_platform_args='--platform fm-towns'
-if dm2_has_competing_edition; then
-    runtime_data_root=$default_data_root
-    runtime_platform_args=
-fi
+runtime_data_root=$default_data_root
 bare_cli_runtime_probe="$app_dir/test-dm2-fmtowns-bare-cli-runtime.json"
 bare_cli_runtime_log="$app_dir/test-dm2-fmtowns-bare-cli-runtime.log"
 rm -f "$bare_cli_runtime_probe" "$bare_cli_runtime_log"
@@ -230,7 +205,7 @@ FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
 FIRESTAFF_DATA="$runtime_data_root" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 320 --height 200 --menu --game dm2 $runtime_platform_args \
+    --width 320 --height 200 --menu --game dm2 \
     --data-dir "$runtime_data_root" --verbose \
     --script 'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60' \
     --duration 120000 >"$runtime_log" 2>&1 || {
