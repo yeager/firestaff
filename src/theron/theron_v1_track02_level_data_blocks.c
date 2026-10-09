@@ -53,11 +53,12 @@ static const uint32_t g_shared_prologue_fnv1a = 0xa6268637u;
  *   - Compressed level data starting at offset 0xF0
  *
  * Compression algorithm: the exact variable-width HuC6280 helper is
- * byte-locked in bank-$1f at $23AD-$252A. The helper recursively advances
- * through framed resources at $23DC -> $23AD before it emits the pointer
- * table used by the back-reference path. This reader records one bounded
- * frame only; stage-2 MPR setup, the complete frame chain and the later
- * level/object consumer remain separate runtime-admission gates. */
+ * byte-locked in bank-$1f at $23AD-$252A. Its $23DC call targets the
+ * $23A4 bit-reader initializer ($44,$C6), not the $23AD header parser; the
+ * call target is checked against authenticated US/JP media by
+ * test_theron_v1_huc6280_disassembly. This reader records one bounded frame
+ * only; stage-2 MPR setup, the complete frame chain and the later level/object
+ * consumer remain separate runtime-admission gates. */
 
 static const Theron_LevelDataBlockDesc g_level_blocks[THERON_TRACK02_LEVEL_COUNT] = {
     /* Level 1 */ { 0x09F000, { 0x07, 0x87, 0x18, 0x10, 0x10, 0x10, 0x10, 0x20 } },
@@ -364,7 +365,12 @@ int theron_v1_huc6280_decode_resource(
         return 0;
     }
     bitstream = resource + 6u;
-    bit_count = bitstream_bytes * 8u;
+    /* The retail $23AD resource routine counts bytes from +6, and its
+     * $243E reader returns at L2450 before shifting the final loaded byte.
+     * Keep that framed lookahead byte out of the token bit budget; see
+     * theron-us-bank1f-consumer.asm, L23AD-L23DC, L2403-L241D, and
+     * L243E-L2450. */
+    bit_count = bitstream_bytes > 0u ? (bitstream_bytes - 1u) * 8u : 0u;
     pointer_table_available = pointer_table_seed_count;
     out->resource_length = resource_length;
     out->resource_bitstream_bytes = bitstream_bytes;
@@ -373,7 +379,7 @@ int theron_v1_huc6280_decode_resource(
      * first pointer entry is written before the first token; two tokens are
      * consumed per L23DE/L240D output group, with marker tokens only widening
      * the reader. */
-    while (bit_cursor < bit_count) {
+    while (bitstream_bytes > 0u) {
         uint16_t token;
 
         if (pointer_entries >= pointer_table_capacity) {
@@ -387,21 +393,28 @@ int theron_v1_huc6280_decode_resource(
             pointer_table_available = pointer_entries;
         }
 
-        do {
-            if (!theron_huc6280_read_bits(bitstream, bit_count, &bit_cursor,
-                                          width, &token)) {
-                out->status = THERON_HUC6280_DECODE_TRUNCATED;
-                return 0;
-            }
-            if (token == 0x0100u) {
-                if (width == 16u) {
-                    out->status = THERON_HUC6280_DECODE_UNSUPPORTED;
-                    return 0;
+        {
+            int first_token_read = 1;
+            do {
+                if (!theron_huc6280_read_bits(bitstream, bit_count,
+                                              &bit_cursor, width, &token)) {
+                    /* The framed byte-count was validated above. A failed
+                     * token read here therefore reaches the retail final
+                     * byte boundary, where the caller returns before emit. */
+                    first_token_read = 0;
+                    break;
                 }
-                ++width;
-                ++out->width_markers;
-            }
-        } while (token == 0x0100u);
+                if (token == 0x0100u) {
+                    if (width == 16u) {
+                        out->status = THERON_HUC6280_DECODE_UNSUPPORTED;
+                        return 0;
+                    }
+                    ++width;
+                    ++out->width_markers;
+                }
+            } while (token == 0x0100u);
+            if (!first_token_read) break;
+        }
         if (!theron_huc6280_emit_token(
                 token, destination, destination_capacity, destination_address,
                 pointer_table, pointer_table_capacity, pointer_table_available,
@@ -430,8 +443,7 @@ int theron_v1_huc6280_decode_resource(
                     ++out->width_markers;
                 }
             } while (token == 0x0100u);
-            if (!second_token_read || bit_cursor >= bit_count ||
-                token == 0x0100u) break;
+            if (!second_token_read || token == 0x0100u) break;
             if (!theron_huc6280_emit_token(
                     token, destination, destination_capacity,
                     destination_address, pointer_table,

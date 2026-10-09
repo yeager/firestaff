@@ -1906,6 +1906,7 @@ Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world,
 
     /* Exit is locked until all quest items in this dungeon are collected */
     if (tt == THERON_TRANSITION_EXIT && !world->dungeon_complete) {
+        world->transition_pending = 0;
         return 0;
     }
 

@@ -34,7 +34,9 @@ L2386:  lda     $30
         sta     $3B7D
         rts
 
-        lda     #$01
+        .org    $23a4
+
+L23A4:  lda     #$01
         sta     $0F
         lda     #$09
         sta     $14
@@ -68,7 +70,7 @@ L23AD:  lda     $2E
         bcc     L23DC
         inc     $2F
 
-L23DC:  bsr     L23AD
+L23DC:  bsr     L23A4
 L23DE:  cly
         lda     $30
         sta     ($34),y

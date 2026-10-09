@@ -18,7 +18,9 @@ not permission to invent a table or to discard the real bytes.
 The byte-backed bank-$1f listing in
 `docs/source-lock/theron-disassembly/theron-us-bank1f-consumer.asm` shows:
 
-- `$23DC` re-enters `$23AD` after advancing the source by six bytes;
+- `$23AD` parses the frame header, advances the source by six bytes, and
+  reaches `$23DC`; `$23DC` calls `$23A4` (`BSR` displacement `$C6`) to
+  initialize the bit reader, not recursively re-enter the header parser;
 - `$23DE` writes destination pointers before token consumption;
 - `$2459` and `$246E` load MPR values from `$3B7E-$3B85`;
 - `$2496-$252A` consumes the pointer table for back-references.
@@ -28,6 +30,11 @@ one destination window and a caller-supplied table, is only a byte-level
 algorithm lift. It cannot authenticate the real output without the same
 runtime's frame-chain termination, destination pointer, MPR state and
 post-CD consumer.
+
+The byte reader also returns at `$2450` when loading the final byte-counted
+byte, before shifting that byte into the token registers. The C bitstream lift
+therefore excludes the last declared byte from emit-eligible token bits, but
+does not claim parity for width-marker interactions or full resource chains.
 
 ## Admission rule
 

@@ -23,9 +23,11 @@ listing. It adds no game-action or post-CD runtime semantics.
 
 The instruction rows and raw bytes are therefore the same as the US source
 listing in [theron-us-bank1f-consumer.asm](theron-us-bank1f-consumer.asm),
-including its caller at `$2386`, helper entry at `$23ad`, and byte reader at
-`$243e`. The shared verifier additionally checks this full contiguous span for
-all four authenticated ISO/BIN variants, beyond its existing focused checks.
+including its caller at `$2386`, initializer at `$23a4`, helper entry at
+`$23ad`, and byte reader at `$243e`. The `$23dc` relative call bytes `$44,$c6`
+target `$23a4` in both regional projections. The shared verifier checks the
+target and the full contiguous span for all four authenticated ISO/BIN
+variants, beyond its existing focused checks.
 The focused executable passed three repeated runs on `trv2` with the US ISO
 and both raw BINs. Its JP-ISO branch skipped there because the full JP ISO was
 not installed on that host; the JP ISO span itself was compared directly

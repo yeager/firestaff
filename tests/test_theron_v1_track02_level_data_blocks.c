@@ -320,12 +320,12 @@ static int verify_real_iso_level_blocks(const char *env_name,
 }
 
 static void verify_huc6280_decoder_lift(void) {
-    /* One authentic $23A4 framing shape with a bounded literal token.  This
-     * is an algorithm-boundary fixture only; no game asset is produced from
-     * it.  The real Track 02 resource receipts are still the only accepted
-     * source for runtime data. */
-    const uint8_t resource[8] = {
-        0x20u, 0x00u, 0x07u, 0x00u, 0x00u, 0x00u, 0x20u, 0x80u
+    /* Algorithm-boundary fixtures only: no game asset is produced from
+     * these bytes. The first two source bytes encode literal $41; retail
+     * treats the final declared byte as lookahead at the source-count end. */
+    const uint8_t resource[9] = {
+        0x20u, 0x00u, 0x08u, 0x00u, 0x00u, 0x00u,
+        0x20u, 0x80u, 0x00u
     };
     uint8_t destination[16] = {0};
     uint16_t pointer_table[8] = {0};
@@ -335,14 +335,48 @@ static void verify_huc6280_decoder_lift(void) {
         resource, sizeof(resource), destination, sizeof(destination),
         0x6000u, pointer_table, 8u, 0u, &receipt));
     assert(receipt.status == THERON_HUC6280_DECODE_READY);
-    assert(receipt.resource_length == 7u);
-    assert(receipt.resource_bitstream_bytes == 2u);
+    assert(receipt.resource_length == 8u);
+    assert(receipt.resource_bitstream_bytes == 3u);
     assert(receipt.output_bytes == 1u);
     assert(receipt.literal_tokens == 1u);
     assert(receipt.backreference_tokens == 0u);
     assert(receipt.pointer_entries == 1u);
     assert(receipt.tokens == 1u);
     assert(destination[0] == 0x41u);
+
+    {
+        uint8_t changed_guard[sizeof(resource)];
+        Theron_Huc6280DecodeReceipt guard_receipt;
+        memcpy(changed_guard, resource, sizeof(resource));
+        changed_guard[sizeof(changed_guard) - 1u] = 0xffu;
+        memset(destination, 0, sizeof(destination));
+        assert(theron_v1_huc6280_decode_resource(
+            changed_guard, sizeof(changed_guard), destination,
+            sizeof(destination), 0x6000u, pointer_table, 8u, 0u,
+            &guard_receipt));
+        assert(guard_receipt.status == THERON_HUC6280_DECODE_READY);
+        assert(guard_receipt.output_bytes == 1u &&
+               guard_receipt.literal_tokens == 1u);
+        assert(destination[0] == 0x41u);
+    }
+
+    {
+        const uint8_t token_needs_guard[8] = {
+            0x20u, 0x00u, 0x07u, 0x00u, 0x00u, 0x00u, 0x20u, 0x80u
+        };
+        Theron_Huc6280DecodeReceipt boundary;
+        memset(destination, 0, sizeof(destination));
+        assert(theron_v1_huc6280_decode_resource(
+            token_needs_guard, sizeof(token_needs_guard), destination,
+            sizeof(destination), 0x6000u, pointer_table, 8u, 0u,
+            &boundary));
+        assert(boundary.status == THERON_HUC6280_DECODE_READY);
+        assert(boundary.output_bytes == 0u && boundary.tokens == 0u);
+        assert(boundary.pointer_entries == 1u);
+        assert(pointer_table[0] == 0x6000u);
+        for (size_t i = 0u; i < sizeof(destination); ++i)
+            assert(destination[i] == 0u);
+    }
 
     {
         Theron_Huc6280DecodeReceipt rejected;
@@ -353,7 +387,7 @@ static void verify_huc6280_decoder_lift(void) {
             0x6000u, pointer_table, 8u, 0u, &rejected));
         assert(rejected.status == THERON_HUC6280_DECODE_TRUNCATED);
     }
-    puts("PASS: HuC6280 $23AD variable-bit decoder boundary");
+    puts("PASS: HuC6280 $23AD byte-lookahead decoder boundary");
 }
 
 int main(int argc, char **argv) {

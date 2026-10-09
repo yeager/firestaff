@@ -1,5 +1,22 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-09 — transition and decompressor evidence caveats
+
+- Locked-exit checks now clear stale transition queues. The regression proves
+  this host API invariant only; original quest-item, exit, and between-dungeon
+  semantics remain unverified.
+- The bank-$1f source listing now records the byte-verified `$23DC -> $23A4`
+  initializer call instead of the incorrect `$23AD` self-call. This static
+  correction does not bind the helper to a level resource, authenticate its
+  runtime pointer table, or establish full level-decoder parity.
+- The C decoder follows the source reader's final-byte lookahead boundary.
+  Its synthetic algorithm vectors and authenticated static byte tests do not
+  pass real compressed level payloads through the decoder. Marker interactions
+  and whether/how authentic level resources exercise the boundary remain
+  open. `READY` means only that the bounded lift stopped at this boundary.
+  Obtain a source-bound full-decode/runtime receipt before claiming retail
+  level or complete decoder parity.
+
 ## 2026-10-09 — extend JP static spawn source evidence
 
 - ✅ The public transition executor now independently rejects queued stairs
@@ -3463,7 +3480,7 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   lift stops at `DECODE_POINTER_TABLE`, even when the shared `$E8` prologue
   is used only as a diagnostic seed. This is negative evidence, not a reason
   to create a table.
-- 🔧 The next capture must bind the `$23DC -> $23AD` recursion, end of the
+- 🔧 The next capture must bind the `$23DC -> $23A4` initializer, end of the
   frame chain, destination pointer, MPR table `$3B7E-$3B85`, and the following
   `$2600` consumer in the same authenticated run. Until then, bitmap/tile
   atlas, square-to-tile, perspective, VCE palette, and object semantics

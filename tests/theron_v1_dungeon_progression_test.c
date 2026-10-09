@@ -238,6 +238,7 @@ static int test_dungeon_exit_transition_gate(void) {
     world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     world.current_level = 0;
     world.level_loaded[0][0] = 1;
+    theron_v1_party_place(&world, 1, 1, THERON_DIR_NORTH);
 
     /* Build a tiny 3x3 room with an exit square on the bottom row. */
     for (int y = 0; y < level->height; y++) {
@@ -247,10 +248,24 @@ static int test_dungeon_exit_transition_gate(void) {
     }
     level->squares[2][1] = THERON_SQUARE_EXIT;
 
-    /* Exit blocked while dungeon is not marked complete. */
+    /* A rejected exit must also invalidate any stale queue. This isolated
+     * queue-invariant fixture does not assert retail exit semantics. */
+    world.transition_pending = 1;
+    world.transition_type = THERON_TRANSITION_TELEPORTER;
+    world.transition_target_level = 7;
+    world.transition_spawn_x = 2;
+    world.transition_spawn_y = 2;
     Theron_TransitionType none = theron_v1_check_transition(&world, 1, 2);
     ASSERT(none == 0, "exit transition should be locked before completion");
-    ASSERT(world.transition_pending == 0, "transition should stay unqueued");
+    ASSERT(world.transition_pending == 0,
+           "locked exit should clear a stale transition queue");
+    ASSERT(theron_v1_transition_execute(&world) == -1,
+           "cleared locked-exit queue should not execute");
+    ASSERT(world.current_dungeon == THERON_DUNGEON_1_AKUTUBA &&
+               world.current_level == 0 && world.party.leader_x == 1 &&
+               world.party.leader_y == 1 &&
+               world.party.leader_dir == THERON_DIR_NORTH,
+           "rejected locked exit should not change world position");
 
     /* The unbound host helper records a provisional bit, not completion. */
     ASSERT(theron_v1_collect_quest_item(&world, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) ==

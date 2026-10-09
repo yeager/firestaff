@@ -1,5 +1,27 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-09 — correct the static bank-$1f initializer call target
+
+- The raw bytes at `$23DC` are `BSR $23A4` (`$44,$C6`), not a recursive call
+  to `$23AD`. The bytes match at the same authenticated address in the US and
+  JP retail projections. The source-lock listing and focused media test now
+  preserve and assert that target. This corrects a disassembly label; it does
+  not prove runtime invocation or full level-decode parity.
+- The C resource decoder now excludes the final declared byte from the
+  emit-eligible token bitstream, matching the byte reader's return at `$2450`
+  before shifting that byte (`theron-us-bank1f-consumer.asm`, L243E-L2450).
+  Synthetic algorithm-boundary vectors verify a literal is decoded from the
+  preceding bytes, its value is independent of the final byte, and a token
+  that needs that byte is not emitted. Three loops of the focused static/US/JP
+  media resource checks passed. `READY` here means the bounded lift stopped at
+  this byte boundary; it does not establish that a retail level was decoded
+  or that marker-edge behavior has parity.
+- A locked exit now clears stale pending transition state before returning
+  “no transition.” The progression regression verifies the queue cannot later
+  execute and that party position and current level remain unchanged. Its
+  isolated queue fixture does not establish original exit behavior. The
+  progression test passed three local loops.
+
 ## 2026-10-09 — close the queued-stair executor bypass
 
 - The public transition executor now rejects a queued stair transition when
@@ -2702,7 +2724,7 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   pointer-table seed. This prevents a false full decompression from becoming
   production data.
 - ✅ The source and new source-lock page bind the next requirement to
-  `$23DC -> $23AD`, `$3B7E-$3B85`, the destination, and the `$2600` consumer.
+  `$23DC -> $23A4`, `$3B7E-$3B85`, the destination, and the `$2600` consumer.
   No synthetic bitmap, tile atlas, palette, map, or object semantics were
   created.
 

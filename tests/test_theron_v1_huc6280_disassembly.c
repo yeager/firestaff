@@ -2,6 +2,7 @@
 #include "theron_v1_track02.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -14,6 +15,21 @@ static const char *path_for(const char *env_name, const char *name,
     if (snprintf(fallback, capacity, "%s/.firestaff/data/theron/%s",
                  home, name) < 0) return NULL;
     return fallback;
+}
+
+static void verify_bank1f_initializer_call(const char *path,
+                                           uint32_t bank_window_file_offset) {
+    FILE *file = fopen(path, "rb");
+    unsigned char call[2];
+    int target;
+    assert(file != NULL);
+    assert(fseek(file, (long)(bank_window_file_offset +
+                              (0x23dcu - 0x2386u)), SEEK_SET) == 0);
+    assert(fread(call, 1u, sizeof(call), file) == sizeof(call));
+    assert(fclose(file) == 0);
+    assert(call[0] == 0x44u); /* HuC6280 BSR relative */
+    target = 0x23de + (int)(int8_t)call[1];
+    assert(target == 0x23a4);
 }
 
 static void verify(const char *env_name, const char *name, int variant,
@@ -42,6 +58,8 @@ static void verify(const char *env_name, const char *name, int variant,
             variant == THERON_TRACK02_VARIANT_JP_BIN ? 0x2bcc56u :
             0x1f2386u));
     assert(receipt.bank1f_disassembly_window_fnv1a == 0xd5465b33u);
+    verify_bank1f_initializer_call(
+        path, receipt.bank1f_disassembly_window_file_offset);
     assert(receipt.forward_byte_step_verified);
     assert(receipt.bank_switch_table_verified);
     assert(receipt.reverse_byte_read_verified);
