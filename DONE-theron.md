@@ -119,6 +119,13 @@
   static source evidence only; runtime mapping, execution, returns, and JP
   spawn/RNG/combat semantics remain closed.
 
+- The focused HuC6280 disassembly test now verifies the JP `$C414` caller's
+  authentic `$C422/$C42B` JSR operands against its independently admitted
+  `$C95D/$CC3E` candidate windows. The test target built on TRV2 and passed
+  three CTest loops using authentic US/JP media. This locks a static
+  caller-to-candidate relationship only; it does not prove runtime mapping,
+  helper execution, or spawn/RNG semantics.
+
 ## 2026-10-10 — correct the VCE caller's logical address
 
 - Corrected the caller entry from `$9682` to `$966e`. The authenticated raw
