@@ -6,8 +6,9 @@
   the current level is authenticated source-backed, in addition to the
   existing movement gate. The authentic US dungeon-loader test verifies that
   a directly injected queue cannot change level or party position. The real
-  dungeon-loader and fixture progression binaries each passed three local
-  loops. This is a fail-closed safety boundary, not stair gameplay support.
+  dungeon-loader, fixture progression, and startup/Continue regression tests
+  each passed three local loops. This is a fail-closed safety boundary, not
+  stair gameplay support.
 
 ## 2026-10-09 — repeat authentic dungeon-loader test locally
 
