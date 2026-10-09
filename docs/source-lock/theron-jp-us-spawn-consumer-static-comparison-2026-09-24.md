@@ -94,10 +94,11 @@ receipts above; the corresponding US listings hash to
 
 The linear `$C95D/$C96B` decodes contain 114/113 instructions. Their first
 two instruction mnemonics agree (`PHA`, `JSR`), but the third differs:
-JP decodes `CPX #$6D`, while US decodes `INC $686D`. Their first linear RTS
-bytes are at relative offsets `$BE` and `$FE`, respectively. Since each
-window continues beyond its first RTS, these counts and boundaries describe
-the bounded byte windows, not complete routine lengths.
+JP decodes `CPX #$6D`, while US decodes `INC $686D`. Their first decoded RTS
+instructions occur at relative offsets `$BE` and `$FE`, respectively. These
+are disassembly boundaries, not positions found by a raw `$60` byte search.
+Since each window continues beyond its first RTS, these counts and boundaries
+describe the bounded byte windows, not complete routine lengths.
 
 The `$CC3E/$CC4C` decodes each reach their first RTS at relative offset `$1E`.
 The 31-byte prefixes through that RTS have 17 identical decoded instruction
