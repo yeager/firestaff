@@ -46664,6 +46664,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_runtime_input_poll_up_ram_update_pair PROPERTIES
         SKIP_RETURN_CODE 77
+        LABELS "theron;real-media"
+    )
+    add_test(
+        NAME theron_v1_jp_us_stage2_4002_static_source_lock
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_us_stage2_4002_static_source_lock.py
+    )
+    set_tests_properties(theron_v1_jp_us_stage2_4002_static_source_lock PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;static;source-lock"
     )
     add_test(
         NAME theron_v1_stage2_45xx_regional

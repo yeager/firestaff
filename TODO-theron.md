@@ -1,3 +1,16 @@
+## 2026-10-10 — lock the cold-boot `$4002` static source candidate
+
+- Added a 127-byte MAME HuC6280 listing for the static code candidate matching
+  the sampled JP cold-boot `$4002` window. The same span is unique and
+  byte-identical in authentic JP and US Track 02 media at raw offsets
+  `0x2973a2` and `0x297cd2`; the 127-byte span SHA-256 is
+  `9e0c7e6926c8ad3c02284e4027f37bcbd6eaa6cb4507f321cce814e4f2eb2aec`.
+- A registered real-media regression checks both complete-media identities,
+  span offsets, uniqueness, exact span hashes, listing addresses, and decoded
+  listing bytes. This remains a static source candidate: the current capture
+  does not bind the Track 02 bytes to the second-stage bytes in RAM. It does not
+  establish a routine name, loader semantics, or gameplay behavior.
+
 ## 2026-10-10 — lock the authentic JP UP-to-RAM control-flow pair
 
 Added `theron_v1_runtime_input_poll_up_ram_update_pair`, which hash-locks the
