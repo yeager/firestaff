@@ -1,8 +1,16 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-10 — correct the VCE caller address
+
+- The 23-byte caller at raw BIN offsets `0x2c4fde`/`0x2c46ae` begins at
+  `$966e`; `$9682` is its trailing `LDA #$04; RTS`. The focused source test
+  now asserts the correct entry and its raw-offset delta to consumer `$96a5`.
+  This correction does not resolve the indirect `$5656` vector selection,
+  runtime `$62/$63` provenance, or palette-to-VCE source binding.
+
 ## 2026-10-09 — close the dungeon-rendering evidence gap
 
-- 🔒 The static VCE consumer's immediate `$9682` caller is now byte-locked in
+- 🔒 The static VCE consumer's immediate `$966e` caller is now byte-locked in
   both authentic Track 02 BINs and the two cooked MODE1/2048 regional ISOs,
   and checked by the focused real-media test.
   The US listing shows distinct routes that can initialize `$62/$63`, but

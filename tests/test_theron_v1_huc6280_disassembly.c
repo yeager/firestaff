@@ -78,13 +78,23 @@ static void verify(const char *env_name, const char *name, int variant,
         variant == THERON_TRACK02_VARIANT_US_ISO ||
         variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
         assert(receipt.vce_palette_caller_verified);
-        assert(receipt.vce_palette_caller_address == 0x9682u);
+        assert(receipt.vce_palette_caller_address == 0x966eu);
         assert(receipt.vce_palette_caller_bytes == 23u);
+        assert(receipt.vce_palette_caller_address + 20u == 0x9682u);
+        assert(receipt.vce_palette_caller_address +
+                   receipt.vce_palette_caller_bytes == 0x9685u);
         assert(receipt.vce_palette_caller_file_offset ==
                (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x2c4fdeu :
                 variant == THERON_TRACK02_VARIANT_JP_BIN ? 0x2c46aeu :
                                                            0x1f8e6eu));
         assert(receipt.vce_palette_caller_fnv1a == 0xb3b3ccbbU);
+        if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+            variant == THERON_TRACK02_VARIANT_JP_BIN) {
+            assert(receipt.vce_palette_consumer_address -
+                       receipt.vce_palette_caller_address ==
+                   receipt.vce_palette_consumer_file_offset -
+                       receipt.vce_palette_caller_file_offset);
+        }
     } else {
         assert(!receipt.vce_palette_caller_verified);
     }

@@ -15,8 +15,9 @@ transfer helper at `L96c2`. The bytes are verified against the authenticated
 whole-file MD5 and the regional bank offsets in
 `theron_v1_huc6280_disassembly.c`.
 
-The immediate caller is also byte-identical in authenticated US and JP Track
-02 media. It occurs at raw BIN offsets `0x2c4fde` (US) and `0x2c46ae` (JP),
+The immediate caller begins at HuC6280 `$966e` and is byte-identical in
+authenticated US and JP Track 02 media. It occurs at raw BIN offsets
+`0x2c4fde` (US) and `0x2c46ae` (JP),
 and exactly once at cooked Track 02 ISO file offset `0x1f8e6e` in each
 hash-verified MODE1/2048 image. The 23-byte sequence is:
 
@@ -29,8 +30,12 @@ Its FNV-1a is `b3b3ccbb` and SHA-256 is
 BINs; the bytes match exactly in both cooked ISO files. The listing decodes it
 as three indexed reads through `($62),y`
 that populate `$27c4`, `$27c5`, and `$27c6`, followed by `BSR L96A5`.
-This binds the consumer's immediate caller and the descriptor-relative source
-of those bytes, but not the runtime provenance or value of `$62/$63`. The
+The bounded listing places this sequence immediately after `L966D: RTS`; its
+last three bytes at `$9682..$9684` are `LDA #$04; RTS`. Thus `$9682` is not
+the caller entry. The caller-to-consumer address delta (`$966e` to `$96a5`)
+matches its raw BIN file-offset delta in both regional images. This binds the
+consumer's immediate caller and the descriptor-relative source of those
+bytes, but not the runtime provenance or value of `$62/$63`. The
 stage-two listing has distinct setup routes: `L4995` copies the resolved
 `$442f/$4430` pointer into `$27c0/$27c1` and `$62/$63`, while a separate
 startup/runtime path copies `$37ce/$37cf` into those pairs. The listing does
@@ -44,6 +49,6 @@ or dungeon rendering. Those routes remain blocked until an authenticated executi
 provides the source-LBA/FIFO and VCE/VDC destination join.
 
 References: `docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm`
-(`L96a5`, `L96c2`), HuC6260/HuC6270 hardware format notes, DMWeb Theron's
-Quest edition provenance, and the Greatstone extraction methodology recorded
-in `docs/DMWEB_REFERENCE.md`.
+(`L966D..L96A5`, lines 12633-12666, and `L96c2`), HuC6260/HuC6270 hardware
+format notes, DMWeb Theron's Quest edition provenance, and the Greatstone
+extraction methodology recorded in `docs/DMWEB_REFERENCE.md`.

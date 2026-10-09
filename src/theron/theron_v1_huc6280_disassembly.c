@@ -47,7 +47,7 @@
 #define THERON_VCE_PALETTE_CALLER_US_FILE_OFFSET 0x2c4fdeu
 #define THERON_VCE_PALETTE_CALLER_JP_FILE_OFFSET 0x2c46aeu
 #define THERON_VCE_PALETTE_CALLER_ISO_FILE_OFFSET 0x1f8e6eu
-#define THERON_VCE_PALETTE_CALLER_ADDRESS 0x9682u
+#define THERON_VCE_PALETTE_CALLER_ADDRESS 0x966eu
 #define THERON_VCE_PALETTE_CALLER_BYTES 23u
 #define THERON_VCE_PALETTE_CALLER_FNV1A 0xb3b3ccbbu
 #define THERON_US_BIN_BANK_FILE_OFFSET 0x2bb200u
@@ -108,9 +108,12 @@ static const uint8_t g_vce_palette_consumer[
     0x60
 };
 
-/* THQUEST.ASM caller at $9682 reads three bytes from ($62),y before entering
- * the VCE consumer. It authenticates the immediate call contract only; the
- * runtime source of $62/$63 remains unknown. */
+/* The retail caller at $966e reads three bytes from ($62),y before entering
+ * the VCE consumer at $96a5. In the bounded source listing, $9682 is the
+ * caller's trailing `LDA #$04; RTS`, not its entry. The caller source is
+ * theron-us-stage2-huc6280.asm, immediately after L966D (lines 12633-12646).
+ * This authenticates only the static call contract; the runtime source of
+ * $62/$63 remains unknown. */
 static const uint8_t g_vce_palette_caller[
     THERON_VCE_PALETTE_CALLER_BYTES] = {
     0xc8, 0xb1, 0x62, 0x8d, 0xc4, 0x27, 0xc8, 0xb1, 0x62, 0x8d, 0xc5, 0x27,
