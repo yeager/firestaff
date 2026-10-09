@@ -2206,6 +2206,25 @@ before generalizing a direction/destination rule. Existing forward/backward
 movement captures from the Akutuba start state do not cross a stair and cannot
 authorize this promotion.
 
+2026-10-09 source-map targeting and active-map join gap: parsing the
+hash-verified regional Track 02 BINs reproduces the locked 171 US / 170 JP
+stair totals and identifies a floor-adjacent geometry candidate on the last
+(index 7) of Drator's eight source maps. US Track 02 MD5
+`f23601102138f87c33025877767ebf76` has stair `(5,5)`, raw tile `0x69`
+(attribute `9`), adjacent floor `(4,5)`. JP Track 02 MD5
+`b7afb338ad31be1025b53f9aff12d73a` has stair `(3,3)`, raw tile `0x6b`
+(attribute `11`), adjacent floor `(3,2)`. These are source-byte geometry facts,
+not a runtime level-8 binding, reachability proof, direction, or destination.
+The authentic Drator entry capture documents runtime `$2031=02` and party
+position `(2,3)`, but does not join that value to a Track 02 source-map ID. If
+`02` selects source map ID 2, `(2,3)` is raw tile `0x03` (wall); if it means
+the second map by ordinal, `(2,3)` is raw tile `0xff` (unresolved type 7).
+Neither interpretation establishes an ordinary-floor path from the captured
+pose to a stair. First bind the active runtime map to its authentic Track 02
+bytes and source read; only then select a naturally reachable stair for the
+ordinary-input trace. Do not set the party pose or infer gameplay semantics
+from the static candidates.
+
 2026-09-27 authentic regional runtime input-state regression: the JP Rev. 1
 and USA raw-BIN startup tests now compare a no-motion baseline with individual
 native commands against the hash-locked regional Track 02 files; JP also
