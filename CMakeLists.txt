@@ -46621,11 +46621,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND test_theron_v1_stage2_disassembly_chain
     )
     add_test(
-        NAME theron_v1_stage2_45xx_tier3_regional
+        NAME theron_v1_stage2_45xx_regional
         COMMAND test_theron_v1_stage2_disassembly_chain
     )
-    set_tests_properties(theron_v1_stage2_45xx_tier3_regional PROPERTIES
-        ENVIRONMENT "FIRESTAFF_THERON_TEST_STAGE2_45XX_TIER3_ONLY=1"
+    set_tests_properties(theron_v1_stage2_45xx_regional PROPERTIES
+        ENVIRONMENT "FIRESTAFF_THERON_TEST_STAGE2_45XX_REGIONAL_ONLY=1"
         SKIP_RETURN_CODE 77
     )
 

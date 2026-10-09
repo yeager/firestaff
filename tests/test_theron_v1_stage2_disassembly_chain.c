@@ -1,7 +1,6 @@
 /*
  * test_theron_v1_stage2_disassembly_chain.c — verify the full stage-2
- * disassembly chain against the real US Track 02 binary and, when present,
- * the JP Rev. 1 binary.
+ * disassembly chain against authentic US and, when present, JP Rev. 1 media.
  *
  * This test exercises every verify_stage2_* function in sequence,
  * proving that the entire disassembly chain from IPL loader through
@@ -14,8 +13,8 @@
  * operator's original media without changing the standard data-dir default.
  * FIRESTAFF_THERON_TEST_JP_STAGE2_SELECTOR_ONLY runs just the JP selector
  * byte/edge check for focused source-lock verification. The
- * FIRESTAFF_THERON_TEST_STAGE2_45XX_TIER3_ONLY mode runs the authentic US/JP
- * regional-byte check for the bounded $45xx tier-3 chain.
+ * FIRESTAFF_THERON_TEST_STAGE2_45XX_REGIONAL_ONLY mode runs the authentic
+ * US/JP regional-byte checks for the bounded $45xx tier-2 and tier-3 chains.
  */
 
 #include <assert.h>
@@ -4695,6 +4694,62 @@ static void test_stage2_45xx_tier2_callees(void)
     assert(receipt.valid == 1);
     assert(receipt.tier2_bound_bytes ==
            THERON_TRACK02_IPL_STAGE2_45XX_TIER2_BOUND_BYTES);
+    assert(receipt.variant == THERON_TRACK02_VARIANT_US_BIN);
+    assert(receipt.l43a1_proven == 1 && receipt.l42bf_proven == 1 &&
+           receipt.gap45a6_proven == 1 &&
+           receipt.l424b_call_sites_proven == 1 &&
+           receipt.adjacency_proven == 1);
+    if (g_jp_data) {
+        static const struct {
+            uint16_t offset;
+            size_t bytes;
+        } windows[] = {
+            { THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_USER_OFFSET,
+              THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_BYTES },
+            { THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L42BF_USER_OFFSET,
+              THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L42BF_BYTES },
+            { THERON_TRACK02_IPL_STAGE2_45XX_TIER2_GAP45A6_USER_OFFSET,
+              THERON_TRACK02_IPL_STAGE2_45XX_TIER2_GAP45A6_BYTES }
+        };
+        size_t stage2_sector = THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                               THERON_TRACK02_IPL_STAGE2_RECORD;
+        size_t raw_offset =
+            (stage2_sector + windows[0].offset / 2048u) * 2352u + 16u +
+            windows[0].offset % 2048u;
+        uint8_t *mutated;
+        status = theron_v1_track02_verify_stage2_45xx_tier2_callees(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_OK);
+        assert(receipt.valid == 1 &&
+               receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+        assert(receipt.stage2_raw_sector ==
+               THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                   THERON_TRACK02_IPL_STAGE2_RECORD);
+        assert(receipt.tier2_bound_bytes ==
+               THERON_TRACK02_IPL_STAGE2_45XX_TIER2_BOUND_BYTES);
+        assert(receipt.l43a1_proven == 1 && receipt.l42bf_proven == 1 &&
+               receipt.gap45a6_proven == 1 &&
+               receipt.l424b_call_sites_proven == 1 &&
+               receipt.adjacency_proven == 1);
+        for (size_t w = 0u; w < sizeof(windows) / sizeof(windows[0]); ++w) {
+            uint16_t start = (uint16_t)(
+                THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS + windows[w].offset);
+            for (size_t i = 0u; i < windows[w].bytes; ++i)
+                assert(stage2_byte_at(g_jp_data, g_jp_size, 1,
+                                      (uint16_t)(start + i)) ==
+                       stage2_byte_at(g_us_data, g_us_size, 0,
+                                      (uint16_t)(start + i)));
+        }
+        assert(raw_offset < g_jp_size);
+        mutated = (uint8_t *)malloc(g_jp_size);
+        assert(mutated != NULL);
+        memcpy(mutated, g_jp_data, g_jp_size);
+        mutated[raw_offset] ^= 1u;
+        status = theron_v1_track02_verify_stage2_45xx_tier2_callees(
+            mutated, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+        free(mutated);
+    }
     printf("  PASS: stage2_45xx_tier2_callees\n");
 }
 
@@ -5064,12 +5119,13 @@ int main(void)
         return 0;
     }
 
-    if (getenv("FIRESTAFF_THERON_TEST_STAGE2_45XX_TIER3_ONLY")) {
+    if (getenv("FIRESTAFF_THERON_TEST_STAGE2_45XX_REGIONAL_ONLY")) {
         if (!g_jp_data) {
             printf("  SKIP: JP Track 02 unavailable for regional 45xx test\n");
             free(g_us_data);
             return 77;
         }
+        test_stage2_45xx_tier2_callees();
         test_stage2_45xx_tier3_callees();
         free(g_us_data);
         free(g_jp_data);

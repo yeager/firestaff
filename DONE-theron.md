@@ -25,6 +25,22 @@
   window fingerprints, and provenance boundaries are in
   `docs/source-lock/theron-disassembly/theron-jp-stage2-45xx-tier3-20261009.md`.
 
+## 2026-10-09 — verify JP Stage-2 `$45xx` tier-2 source bytes
+
+- The authenticated JP Rev. 1 BIN has exact matches for the three bounded US
+  tier-2 windows `$43A1`, `$42BF`, and `$45A6` (SHA-256 values and raw-sector
+  coordinate method are recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-stage2-45xx-tier2-20261009.md`).
+  The production receipt now admits the authenticated JP variant, and the
+  focused regional test asserts successful US/JP receipts and exact byte
+  parity for tier-2 alongside tier-3. A lightweight TRV2 harness compiled the
+  production verifier against the changed source and called tier-2 for both
+  authentic BINs plus tier-3 for JP, then confirmed a one-byte-mutated JP
+  tier-2 window is rejected; all three loops passed. The harness was temporary
+  and removed. The focused CTest target and full CMake build for this commit
+  are not yet run. This remains static provenance; runtime mapping and
+  execution are not established.
+
 ## 2026-10-09 — repeat authentic HuC6280 disassembly receipts locally
 
 - The focused disassembly receipt executable was built with the Xcode Clang

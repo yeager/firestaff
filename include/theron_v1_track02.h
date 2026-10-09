@@ -4061,11 +4061,11 @@ typedef struct {
  * stream, so its entry CPU address is not pinned and the receipt
  * carries 0; ends exactly at the bound $45xx routine) — all listed
  * inline by da65 under its linear map ($83A1/$82BF/$85A6 renderings)
- * and byte-matched against the authenticated US stage-two image.  The
+ * and byte-matched against authenticated US and JP stage-two images. The
  * L424B call-site offsets (+0x19/+0x45 L43A1, +0x2d/+0x55 L42BF), the
  * internal L42BF JSR L43D6 at +0x14, and the L43A1->L43D6 and
- * $45A6->$45xx-routine adjacencies are compile-time asserted.  Proven
- * for the US body only; L42DB and L4943 are bound by later receipts;
+ * $45A6->$45xx-routine adjacencies are compile-time asserted. L42DB and
+ * L4943 are bound by later receipts;
  * no semantics, System Card base or bank-mapping
  * arithmetic, record semantics, or graphics role follows. */
 typedef struct {

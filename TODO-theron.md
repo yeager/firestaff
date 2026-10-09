@@ -35,6 +35,15 @@
   This is static byte provenance only; runtime mapping/execution and gameplay
   semantics remain unproven.
 
+## 2026-10-09 — admit JP bytes for the bounded Stage-2 `$45xx` tier-2 chain
+
+- The authentic JP Rev. 1 Track 02 BIN (MD5
+  `b7afb338ad31be1025b53f9aff12d73a`) contains the exact US tier-2 byte
+  windows at Stage-2 user offsets `$43A1` (0x35 bytes), `$42BF` (0x1C bytes),
+  and `$45A6` (0x0B bytes). The focused regional CTest now checks both tier-2
+  and tier-3 receipts against US and JP. This is static source identity only;
+  runtime bank selection, execution, and gameplay meaning remain unverified.
+
 ## 2026-10-09 — keep JP state replay separate from source loading
 
 - On trv2, a read-only PCE Fast replay loaded the operator-created JP Rev. 1
