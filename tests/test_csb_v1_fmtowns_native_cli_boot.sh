@@ -359,6 +359,42 @@ case "$menu_output" in
         ;;
 esac
 
+# Exercise the documented per-user data layout without --data-dir or a data
+# root environment override. The symlink keeps the licensed archive in place
+# while presenting it at the same path a user installs under ~/.firestaff/data.
+if [ -f "$data_dir" ]; then
+    default_home="$isolated_home/default-data-home"
+    default_data_root="$default_home/.firestaff/data"
+    default_csb_dir="$default_data_root/csb"
+    default_archive="$default_csb_dir/$(basename "$data_dir")"
+    default_log="$isolated_home/default-data-menu.log"
+    mkdir -p "$default_csb_dir"
+    ln -s "$data_dir" "$default_archive"
+    (
+        unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+        HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+        APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --menu --game csb $edition_arg --debug \
+            --script enter,enter,enter --duration 1000
+    ) >"$default_log" 2>&1 || {
+        cat "$default_log" >&2
+        exit 1
+    }
+    if ! grep -Fq "CSB READY: gameId=csb dataDir=$default_archive" "$default_log" ||
+       ! grep -Fq "variant=csb-fmtowns-$language" "$default_log" ||
+       ! grep -Fq 'route=startup handoff=f31-title-anm handoffHash=' "$default_log" ||
+       ! grep -Eq 'handoffHash=[0-9a-f]{8}' "$default_log"; then
+        echo 'FAIL: CSB M12 did not discover and launch authentic FM Towns data from ~/.firestaff/data/csb without --data-dir' >&2
+        cat "$default_log" >&2
+        exit 1
+    fi
+    echo 'PASS: CSB start menu discovers authentic FM Towns data from ~/.firestaff/data/csb without --data-dir'
+else
+    echo 'SKIP: per-user CSB data-root route requires an archive file'
+fi
+
 # Exercise the visible mouse-only card flow as well as the keyboard script.
 # CSB's catalogue lists FM Towns before Amiga and Atari, so the first platform
 # card is the authenticated F31 package.  This proves that an explicit F31J
