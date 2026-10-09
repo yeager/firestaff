@@ -17,11 +17,15 @@ archive_hash_before=$(sha256sum "$archive")
 
 # When several authentic DM2 editions are installed together, omitting
 # --platform must still select the requested FM Towns default. The ordinary
-# single-archive check below cannot catch an AUTO-order regression where DOS
-# or Macintosh happens to win the scan.
+# single-archive check below cannot catch an AUTO-order regression where DOS,
+# PC-98, Amiga or Macintosh happens to win the scan.
 archive_dir=$(cd "$(dirname "$archive")" && pwd)
 default_data_root=$(cd "$archive_dir/.." && pwd)
 if [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_DE.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip" ] ||
+   [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" ] ||
    [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ] ||
    [ -f "$default_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip" ]; then
     default_probe_output=$(FIRESTAFF_DATA="$default_data_root" \
