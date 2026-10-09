@@ -102,6 +102,11 @@ traversal.
   dungeon effect remains unknown. The exact input-consumption receipt was
   reproduced identically in three verifier loops. The private trace is under
   `/home/trv2/.cache/firestaff-theron-l4c46-20261009/run-isolated-theron-input-20261009/`.
+  A 20-second no-input control from the same state also recorded 2,386 input
+  transactions and the same provisional `$2031/$203F/$2040/$2041` report
+  values, while the 8 KiB BaseRAM snapshots differed. With no VDC trace and
+  possible runtime drift, that snapshot difference cannot be attributed to
+  RUN and must not be treated as an action result.
 - The US Stage-2 initializer `$4B3C..$4BAF` is byte-locked against authentic
   US Track 02; when authentic JP media is present, the focused test now checks
   the matching span hash and every US/JP byte. This regional source comparison
