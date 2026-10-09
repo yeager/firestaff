@@ -39,3 +39,7 @@ non-System-Card controller poll. The scripted input was observed only at the
 System Card poll. Therefore this run does not prove game launch, dungeon
 loading, or any Track 02 gameplay semantics. Continue by binding the data-port
 reads to a retail transfer/consumer and an observed game-owned state change.
+
+A separate instrumented follow-up proves the intermediate CPU copy into the
+System Card's mapped buffer, but not a game consumer or launch. See
+[the buffer-write evidence](theron-jp-system-card-cd-buffer-write-20261009.md).

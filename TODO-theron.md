@@ -6611,10 +6611,19 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   mapping disagrees with its logical PC; the authentic-shape fixture still
   passes. This validates evidence coordinates only and does not promote the
   `$611D` record table to level, object, creature, or gameplay semantics.
-## 2026-10-09 - cold-start Track 02 read has no game consumer receipt
+## 2026-10-09 — cold-start Track 02 source and System Card buffer receipt
 
 - A fresh JP cold-start with authentic Track 02 and System Card media produced
   4,096 source-bound CD data-port bytes matching LBAs 3590-3591. It did not
   produce CD IRQ, SCSI read, authenticated CD-to-RAM, or non-System-Card input
   receipts. Do not treat this as a game launch or gameplay proof. Evidence and
-  a three-loop real-media verifier are in
+  the three-loop real-media verifier are in
+  `docs/source-lock/theron-disassembly/theron-jp-cold-boot-cd-data-port-20261009.md`.
+- A separate instrumented capture then bound all 4,096 authentic port bytes
+  read at `$EA99` to identical CPU writes at `$EA9C`, into mapped addresses
+  `$2800-$37FF` / physical `$1F0800-$1F17FF`. The repeatable five-loop
+  verifier is `scripts/verify_theron_jp_syscard_buffer_write_trace.py`; the
+  evidence is `docs/source-lock/theron-disassembly/theron-jp-system-card-cd-buffer-write-20261009.md`.
+  This closes the System Card buffer receipt only. The run still lacks a
+  non-System-Card poll, game loader dispatch, game-owned state change, and
+  dungeon/gameplay proof.

@@ -20,12 +20,15 @@ USER_DATA_OFFSET = 16
 USER_DATA_BYTES = 2_048
 OBSERVED_BYTES = 4_096
 TRACE_HEADER = "source=mednafen-pce-fast-cd-data-port-read"
+TRACE_HEADER_WITH_READER_PC = "source=mednafen-pce-fast-cd-data-port-read-with-reader-pc"
 
 
 def parse_row(line: str, line_number: int) -> dict[str, int]:
     match = re.fullmatch(
         r"cd_data_port_read sequence=(\d+) address=([0-9a-f]{4}) "
-        r"value=([0-9a-f]{2}) source_valid=([01]) source_lba=(\d+) "
+        r"value=([0-9a-f]{2}) "
+        r"(?:reader_pc=([0-9a-f]{4}) reader_physical_pc=([0-9a-f]{6}) )?"
+        r"source_valid=([01]) source_lba=(\d+) "
         r"source_user_offset=(\d+) source_raw_offset=(\d+) "
         r"track02_start_lba=(\d+) track02_end_lba=(\d+) "
         r"track02_index1_file_offset=(\d+) track02_sector_bytes=(\d+) "
@@ -35,20 +38,25 @@ def parse_row(line: str, line_number: int) -> dict[str, int]:
     if not match:
         raise ValueError(f"malformed data-port row at line {line_number}")
     groups = match.groups()
-    return {
+    source_index = 5
+    row = {
         "sequence": int(groups[0]),
         "address": int(groups[1], 16),
         "value": int(groups[2], 16),
-        "source_valid": int(groups[3]),
-        "source_lba": int(groups[4]),
-        "source_user_offset": int(groups[5]),
-        "source_raw_offset": int(groups[6]),
-        "track02_start_lba": int(groups[7]),
-        "track02_end_lba": int(groups[8]),
-        "track02_index1_file_offset": int(groups[9]),
-        "track02_sector_bytes": int(groups[10]),
-        "track02_raw_file_offset": int(groups[11]),
+        "source_valid": int(groups[source_index]),
+        "source_lba": int(groups[source_index + 1]),
+        "source_user_offset": int(groups[source_index + 2]),
+        "source_raw_offset": int(groups[source_index + 3]),
+        "track02_start_lba": int(groups[source_index + 4]),
+        "track02_end_lba": int(groups[source_index + 5]),
+        "track02_index1_file_offset": int(groups[source_index + 6]),
+        "track02_sector_bytes": int(groups[source_index + 7]),
+        "track02_raw_file_offset": int(groups[source_index + 8]),
     }
+    if groups[3] is not None:
+        row["reader_pc"] = int(groups[3], 16)
+        row["reader_physical_pc"] = int(groups[4], 16)
+    return row
 
 
 def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, int]]]:
@@ -59,7 +67,8 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
         raise ValueError("Track 02 is not the authenticated JP Rev. 1 BIN")
 
     lines = trace_path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != TRACE_HEADER:
+    reader_pc_trace = bool(lines and lines[0] == TRACE_HEADER_WITH_READER_PC)
+    if not lines or lines[0] not in (TRACE_HEADER, TRACE_HEADER_WITH_READER_PC):
         raise ValueError("unexpected CD data-port trace header")
     rows = [parse_row(line, index + 2) for index, line in enumerate(lines[1:])]
     if len(rows) != OBSERVED_BYTES:
@@ -71,6 +80,18 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
             raise ValueError(f"unexpected sequence or data-port address at row {sequence}")
         if row["source_valid"] != 1:
             raise ValueError(f"unbound source at row {sequence}")
+
+    # The optional pass checks the traced CPU that performed each data-port read.
+    if reader_pc_trace:
+        for sequence, row in enumerate(rows):
+            if row.get("reader_pc") != 0xEA99 or row.get("reader_physical_pc") != 0x0A99:
+                raise ValueError(f"unexpected CD data-port reader PC at row {sequence}")
+    else:
+        for sequence, row in enumerate(rows):
+            if "reader_pc" in row:
+                raise ValueError(
+                    f"reader-PC fields require the reader-PC trace header at row {sequence}"
+                )
 
     # Pass 2 independently recomputes the two sector and raw-file offsets.
     for sequence, row in enumerate(rows):
@@ -114,11 +135,13 @@ def main() -> int:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
 
-    print("PASS: 3 verification loops; 4096 bytes match authentic JP Track 02")
+    loop_count = 4 if "reader_pc" in rows[0] else 3
+    print(f"PASS: {loop_count} verification loops; 4096 bytes match authentic JP Track 02")
     print(f"source_lbas={rows[0]['source_lba']}-{rows[-1]['source_lba']}")
     print(f"observed_sha256={hashlib.sha256(observed).hexdigest()}")
+    if "reader_pc" in rows[0]:
+        print(f"reader_pc=0x{rows[0]['reader_pc']:04x} physical_pc=0x{rows[0]['reader_physical_pc']:06x}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

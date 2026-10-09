@@ -51,13 +51,22 @@ reproduced these candidate clusters:
 
 | Edition | `$506A` offsets (zero-based raw Track 02 bytes) | Candidate LBAs |
 | --- | --- | --- |
-| JP Rev. 1 | `0x95e6a`, `0xdf66a`, `0x128e6a`, `0x17266a`, `0x1bbe6a`, `0x20566a`, `0x24ee6d` | 3851, 3979, 4107, 4235, 4363, 4491, 4619 |
-| US | `0x9679f`, `0xdff9f`, `0x12979f`, `0x172f9f`, `0x1bc79f`, `0x205f9f`, `0x24f79f` | 3852, 3980, 4108, 4236, 4364, 4492, 4620 |
+| JP Rev. 1 | `0x95e6a`, `0xdf66a`, `0x128e6a`, `0x17266a`, `0x1bbe6a`, `0x20566a`, `0x24ee6d` | 3627, 3755, 3883, 4011, 4139, 4267, 4395 |
+| US | `0x9679f`, `0xdff9f`, `0x12979f`, `0x172f9f`, `0x1bc79f`, `0x205f9f`, `0x24f79f` | 3271, 3399, 3527, 3655, 3783, 3911, 4039 |
+
+The earlier LBA labels omitted each raw member's pre-INDEX 01 sectors and are
+superseded by the corrected values above. The JP Rev. 1 CUE places Track 02
+INDEX 01 at byte offset 526,848 (224 sectors); the authentic source trace binds
+that offset to LBA 3590. The US CloneCD descriptor's Track 02 data entry is
+PLBA 3234. Byte-exact alignment of all seven candidates between authenticated
+`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`) and its original IMG
+member derives a raw-member INDEX 01 offset of 225 sectors. The corrected
+values use these edition-specific anchors.
 
 The other four windows in each edition occur at their corresponding logical-PC
 displacements in those same seven candidate clusters. The `$5800` window has
 six JP occurrences at `0x96730`, `0xdff30`, `0x129730`, `0x172f30`,
-`0x1bc730`, and `0x205f30` (LBAs 3852, 3980, 4108, 4236, 4364, and 4492),
+`0x1bc730`, and `0x205f30` (LBAs 3628, 3756, 3884, 4012, 4140, and 4268),
 and no exact US occurrence. This is static source matching only. The save-state
 replays read no non-System-Card CD sectors, so none of these candidate copies
 can be identified as the bytes loaded into the runtime bank.
