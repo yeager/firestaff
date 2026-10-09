@@ -455,20 +455,6 @@
     },
     {
       "gameId": "dm2",
-      "description": "DMII PC-9821 Japanese Release 1",
-      "filename": "GRAPHICS.DAT",
-      "md5": "a31023db49d5d85e469c9323671812c7",
-      "label": "DMII PC-9821 Japanese Release 1 GRAPHICS.DAT"
-    },
-    {
-      "gameId": "dm2",
-      "description": "DMII PC-9821 Japanese Release 2",
-      "filename": "GRAPHICS.DAT",
-      "md5": "a80c555a858ef7770e1d7f3d2e37fec3",
-      "label": "DMII PC-9821 Japanese Release 2 GRAPHICS.DAT"
-    },
-    {
-      "gameId": "dm2",
       "description": "DMII Sega CD English",
       "filename": "GRAPHICS.DAT",
       "md5": "dbced13a38d3036f42b9797175b7ec88",
