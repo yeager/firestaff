@@ -486,7 +486,9 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'const uint32 stage2_last = stage2_first + 14;' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceCDRAMTargetWrite(A, V);' "$cd_ram_target_write_patch_file" ||
    grep -Fq '\\n' "$cd_ram_target_write_patch_file" ||
-   ! grep -Fq 'cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x source_valid=%u' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x reader_pc=%04x reader_physical_pc=%06x reader_mpr_slot=%u reader_mpr0=%02x' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'reader_mpr7=%02x source_valid=%u' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceCDDataPortRead(HuCPU.PC, source_lba' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'if(count >= 65536)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPC >= 0xEA80' "$pce_fast_main_ram_consumer_patch_file" ||

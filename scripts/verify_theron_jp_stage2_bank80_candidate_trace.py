@@ -39,7 +39,12 @@ def fields(line: str, prefix: str, line_number: int) -> dict[str, str]:
 
 def read_trace(path: Path) -> dict[int, list[dict[str, str]]]:
     lines = path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != "source=mednafen-pce-fast-cd-data-port-read":
+    mpr_context = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
+    if not lines or lines[0] not in (
+        "source=mednafen-pce-fast-cd-data-port-read",
+        "source=mednafen-pce-fast-cd-data-port-read-with-reader-pc",
+        mpr_context,
+    ):
         raise ValueError("unexpected CD data-port trace header")
     rows: dict[int, list[dict[str, str]]] = {lba: [] for lba in CANDIDATE_LBAS}
     expected_sequence = 0
@@ -49,6 +54,24 @@ def read_trace(path: Path) -> dict[int, list[dict[str, str]]]:
         if sequence != expected_sequence:
             raise ValueError(f"non-contiguous CD read sequence at line {line_number}")
         expected_sequence += 1
+        if lines[0] == mpr_context:
+            try:
+                reader_pc = int(row["reader_pc"], 16)
+                cpu_pc = int(row["cpu_pc"], 16)
+                reader_physical_pc = int(row["reader_physical_pc"], 16)
+                reader_mpr_slot = int(row["reader_mpr_slot"])
+                expected_slot = (reader_pc >> 13) & 7
+                reader_mpr = int(row[f"reader_mpr{expected_slot}"], 16)
+            except (KeyError, ValueError) as error:
+                raise ValueError(f"missing reader MPR context at line {line_number}") from error
+            if (
+                cpu_pc != reader_pc
+                or reader_mpr_slot != expected_slot
+                or reader_physical_pc != ((reader_mpr << 13) | (reader_pc & 0x1fff))
+            ):
+                raise ValueError(f"invalid reader PC to physical PC mapping at line {line_number}")
+        elif "reader_mpr_slot" in row:
+            raise ValueError(f"reader MPR fields require the MPR-context trace header at line {line_number}")
         if row.get("address") != "1808" or row.get("source_valid") != "1":
             continue
         lba = int(row["source_lba"])

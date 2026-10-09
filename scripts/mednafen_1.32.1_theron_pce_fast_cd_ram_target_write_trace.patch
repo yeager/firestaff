@@ -60,7 +60,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +#include "pce.h"
 FIRESTAFF_PATCH_BLANK_CONTEXT
  namespace MDFN_IEN_PCE_FAST
-@@ -261,17 +261,63 @@
+@@ -261,17 +261,69 @@
 +static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 user_data_offset,
 +                                      uint16 raw_sector_offset, uint32 track02_start_lba,
 +                                      uint32 track02_end_lba, uint32 track02_index1_file_offset,
@@ -78,10 +78,16 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  trace = fopen(path, "w");
 +  if(!trace)
 +   return;
-+  fputs("source=mednafen-pce-fast-cd-data-port-read\n", trace);
++  fputs("source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context\n", trace);
 + }
-+ fprintf(trace, "cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x source_valid=%u source_lba=%u source_user_offset=%u source_raw_offset=%u track02_start_lba=%u track02_end_lba=%u track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu\n",
-+         count++, cpu_pc, value, source_valid, source_lba, user_data_offset,
++ const unsigned reader_mpr_slot = (cpu_pc >> 13) & 7;
++ const uint8 reader_mpr = HuCPU.MPR[reader_mpr_slot];
++ const uint32 reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff);
++ fprintf(trace, "cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x reader_pc=%04x reader_physical_pc=%06x reader_mpr_slot=%u reader_mpr0=%02x reader_mpr1=%02x reader_mpr2=%02x reader_mpr3=%02x reader_mpr4=%02x reader_mpr5=%02x reader_mpr6=%02x reader_mpr7=%02x source_valid=%u source_lba=%u source_user_offset=%u source_raw_offset=%u track02_start_lba=%u track02_end_lba=%u track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu\n",
++         count++, cpu_pc, value, cpu_pc, reader_physical_pc, reader_mpr_slot,
++         HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7],
++         source_valid, source_lba, user_data_offset,
 +         raw_sector_offset, track02_start_lba, track02_end_lba, track02_index1_file_offset,
 +         track02_sector_bytes,
 +         source_valid && source_lba >= track02_start_lba && source_lba < track02_end_lba ?

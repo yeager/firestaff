@@ -1,3 +1,21 @@
+## 2026-10-10 — capture the CD reader's physical HuC6280 mapping
+
+The opt-in PCE Fast CD data-port trace now records the logical reader PC, its
+physical PC, the active MPR slot, and MPR0–MPR7 for each source-bound read. The
+verifiers check the logical-to-physical mapping formula while retaining support
+for earlier trace formats. This context can identify the executing bank at a
+CD-port read; the independent CD-read and RAM-write traces still do not prove
+read-to-write causality.
+
+The complete Mednafen patch set applies successfully to the authentic 1.32.1
+source in the focused patch-only test. Existing authentic JP Rev. 1 captures
+still verify byte-for-byte against Track 02, and the stage-two verifier confirms
+same-capture candidate-byte correlation only. No emulator was rebuilt and no
+capture with the new MPR fields has been collected, so runtime mapping remains
+unverified. Next, build the instrumented emulator and collect a source-bound
+capture; add a shared event or cycle identifier before making any causal
+read-to-write claim.
+
 ## 2026-10-09 -- held-input replay does not distinguish idle game-loop writes
 
 Two 12-second emulator replays used the same authentic JP Rev. 1 CUE/Track 02,
