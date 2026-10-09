@@ -6698,6 +6698,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
     /* Fresh full scan: drop missing-extractor diagnostics from any previous
      * pass so the launcher only reports archives skipped by this scan. */
     asset_scan_clear_missing_extractor_diagnostics();
+    asset_scan_clear_access_denied_directories();
     progressCtx.status = status;
     progressCtx.options = options;
     m12_scan_progress_init(&status->scanProgress);
@@ -7057,6 +7058,17 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                             archivePath);
                 }
             }
+        }
+    }
+    {
+        int deniedDirectories = asset_scan_access_denied_directory_count();
+        int diagIndex;
+        for (diagIndex = 0; diagIndex < deniedDirectories; ++diagIndex) {
+            const char* directory =
+                asset_scan_access_denied_directory_path(diagIndex);
+            fprintf(stderr,
+                    "asset scan: directory could not be read (check folder access permissions and rescan): %s\n",
+                    directory ? directory : "(unknown path)");
         }
     }
     m12_scan_progress_finish(status, 1, 0);

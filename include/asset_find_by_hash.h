@@ -114,6 +114,11 @@ void asset_scan_clear_missing_extractor_diagnostics(void);
 int asset_scan_missing_extractor_count(void);
 const char *asset_scan_missing_extractor_path(int index);
 const char *asset_scan_missing_extractor_tools(int index);
+/* Directories skipped because the host denied scanner access. This bounded,
+ * process-global list is cleared at the start of each full asset scan. */
+void asset_scan_clear_access_denied_directories(void);
+int asset_scan_access_denied_directory_count(void);
+const char *asset_scan_access_denied_directory_path(int index);
 /* Report whether this external archive type can be read by an installed
  * host extractor. This probes availability only; it does not opt scanning
  * into external tools or read the archive. */

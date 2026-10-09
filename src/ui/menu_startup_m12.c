@@ -70,6 +70,7 @@ void m12_update_game_availability(const FS_GameAvailability *avail);
 static int m12_data_directory_dialog_token_is_placeholder(const char* path);
 static const char* m12_translate_for_locale(int localeIndex, const char* english);
 static int m12_ascii_equal_ci(const char* a, const char* b);
+static int m12_show_access_denied_popup(M12_StartupMenuState* state);
 static int m12_asset_ready_game_count(const M12_AssetStatus* status);
 static void m12_parent_game_data_root(const char* dataDir,
                                       char* outPath,
@@ -2137,6 +2138,9 @@ static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
     if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
         return;
     }
+    if (m12_show_access_denied_popup(state)) {
+        return;
+    }
     dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
     if (dataDir && dataDir[0] != '\0' && !FSP_DirExists(dataDir)) {
         FSP_CreateDirectoryRecursive(dataDir);
@@ -2181,6 +2185,28 @@ static int m12_show_missing_archive_tool_popup(M12_StartupMenuState* state) {
                              m12_text(state, M12_TEXT_ARCHIVE_TOOL_REQUIRED),
                              line2,
                              m12_text(state, M12_TEXT_RESCAN_GAME_DATA));
+    return 1;
+}
+
+static int m12_show_access_denied_popup(M12_StartupMenuState* state) {
+    const char* path;
+    char line1[128];
+    int count;
+    if (!state || asset_scan_access_denied_directory_count() <= 0) {
+        return 0;
+    }
+    count = asset_scan_access_denied_directory_count();
+    path = asset_scan_access_denied_directory_path(0);
+    snprintf(line1, sizeof(line1),
+             m12_tr(state, count == 1 ? "%d FOLDER REQUIRES ACCESS"
+                                      : "%d FOLDERS REQUIRE ACCESS"),
+             count);
+    m12_enter_message_view(state);
+    state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    m12_set_buffered_message(
+        state, line1, path ? path : "(unknown path)",
+        m12_tr(state, "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"));
     return 1;
 }
 
@@ -2652,6 +2678,10 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     state->assetStatus = scannedAssetStatus;
     m12_preserve_selected_data_directory(state, selectedDataDir);
     m12_apply_completed_asset_scan(state);
+    if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
+        m12_show_access_denied_popup(state)) {
+        return 1;
+    }
     if (!m12_show_missing_archive_tool_popup(state)) {
         m12_show_data_dir_result_popup(state, 1);
     }
@@ -5109,6 +5139,7 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
          * staged .7z utility image remains unavailable.  Surface that
          * archive warning only when no supported game media was found. */
         if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
+            !m12_show_access_denied_popup(state) &&
             !m12_show_missing_archive_tool_popup(state)) {
             m12_show_no_game_data_popup(state);
         }
@@ -13741,7 +13772,9 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
             m12_preserve_selected_data_directory(state,
                                                  job->selectedDataDir);
             m12_apply_completed_asset_scan(state);
-            if (!m12_show_missing_archive_tool_popup(state)) {
+            if (!(m12_asset_ready_game_count(&state->assetStatus) == 0 &&
+                  m12_show_access_denied_popup(state)) &&
+                !m12_show_missing_archive_tool_popup(state)) {
                 m12_show_data_dir_result_popup(state, 1);
             }
         } else {

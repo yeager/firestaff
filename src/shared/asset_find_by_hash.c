@@ -19,6 +19,7 @@
 #endif
 #include <stdint.h>
 #include <limits.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -4359,6 +4360,40 @@ static char g_missingExtractorPaths[ASSET_SCAN_MISSING_EXTRACTOR_MAX][ASSET_PATH
 static char g_missingExtractorTools[ASSET_SCAN_MISSING_EXTRACTOR_MAX][24];
 static int g_missingExtractorCount;
 
+#define ASSET_SCAN_ACCESS_DENIED_MAX 16
+
+static char g_accessDeniedDirectoryPaths[ASSET_SCAN_ACCESS_DENIED_MAX][ASSET_PATH_MAX];
+static int g_accessDeniedDirectoryCount;
+
+void asset_scan_clear_access_denied_directories(void) {
+    g_accessDeniedDirectoryCount = 0;
+}
+
+int asset_scan_access_denied_directory_count(void) {
+    return g_accessDeniedDirectoryCount;
+}
+
+const char *asset_scan_access_denied_directory_path(int index) {
+    if (index < 0 || index >= g_accessDeniedDirectoryCount) return NULL;
+    return g_accessDeniedDirectoryPaths[index];
+}
+
+static void record_access_denied_directory(const char *path) {
+    int i;
+    if (!path || path[0] == '\0') return;
+    for (i = 0; i < g_accessDeniedDirectoryCount; ++i) {
+        if (strcmp(g_accessDeniedDirectoryPaths[i], path) == 0) return;
+    }
+    if (g_accessDeniedDirectoryCount >= ASSET_SCAN_ACCESS_DENIED_MAX) return;
+    snprintf(g_accessDeniedDirectoryPaths[g_accessDeniedDirectoryCount],
+             ASSET_PATH_MAX, "%s", path);
+    ++g_accessDeniedDirectoryCount;
+}
+
+static int asset_scan_access_denied_errno(int errorCode) {
+    return errorCode == EACCES || errorCode == EPERM;
+}
+
 void asset_scan_clear_missing_extractor_diagnostics(void) {
     g_missingExtractorCount = 0;
 }
@@ -6000,7 +6035,12 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
 
     if (depth > maxDepth) return 0;
     d = opendir(dir);
-    if (!d) return 0;
+    if (!d) {
+        if (asset_scan_access_denied_errno(errno)) {
+            record_access_denied_directory(dir);
+        }
+        return 0;
+    }
     allowLargeWholeFile = md5_list_contains_large_whole_file_hash(md5List, md5Count);
 
     while ((ent = readdir(d)) != NULL) {
@@ -6008,7 +6048,12 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
         if (snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name) >= (int)sizeof(path)) {
             continue;
         }
-        if (stat(path, &st) != 0) continue;
+        if (stat(path, &st) != 0) {
+            if (asset_scan_access_denied_errno(errno)) {
+                record_access_denied_directory(path);
+            }
+            continue;
+        }
 
         if (S_ISREG(st.st_mode)) {
             int matchIndex;
@@ -6086,14 +6131,24 @@ static int scan_dir(const char *dir, const char *expectedMd5,
 
     if (depth > maxDepth) return 0;
     d = opendir(dir);
-    if (!d) return 0;
+    if (!d) {
+        if (asset_scan_access_denied_errno(errno)) {
+            record_access_denied_directory(dir);
+        }
+        return 0;
+    }
 
     while ((ent = readdir(d)) != NULL) {
         if (ent->d_name[0] == '.') continue;
         if (snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name) >= (int)sizeof(path)) {
             continue;
         }
-        if (stat(path, &st) != 0) continue;
+        if (stat(path, &st) != 0) {
+            if (asset_scan_access_denied_errno(errno)) {
+                record_access_denied_directory(path);
+            }
+            continue;
+        }
 
         if (S_ISREG(st.st_mode)) {
             if (st.st_size > ASSET_SCAN_MAX_FILE_BYTES &&
@@ -6141,7 +6196,12 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     if (depth > maxDepth) return 0;
     if (snprintf(pattern, sizeof(pattern), "%s\\*", dir) >= (int)sizeof(pattern)) return 0;
     h = FindFirstFileA(pattern, &fd);
-    if (h == INVALID_HANDLE_VALUE) return 0;
+    if (h == INVALID_HANDLE_VALUE) {
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            record_access_denied_directory(dir);
+        }
+        return 0;
+    }
     allowLargeWholeFile = md5_list_contains_large_whole_file_hash(md5List, md5Count);
     do {
         if (fd.cFileName[0] == '.') continue;
@@ -6218,7 +6278,12 @@ static int scan_dir(const char *dir, const char *expectedMd5,
     if (depth > maxDepth) return 0;
     if (snprintf(pattern, sizeof(pattern), "%s\\*", dir) >= (int)sizeof(pattern)) return 0;
     h = FindFirstFileA(pattern, &fd);
-    if (h == INVALID_HANDLE_VALUE) return 0;
+    if (h == INVALID_HANDLE_VALUE) {
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            record_access_denied_directory(dir);
+        }
+        return 0;
+    }
     do {
         if (fd.cFileName[0] == '.') continue;
         if (snprintf(path, sizeof(path), "%s\\%s", dir, fd.cFileName) >= (int)sizeof(path)) continue;

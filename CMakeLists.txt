@@ -3788,6 +3788,21 @@ if(BUILD_TESTING)
     set_tests_properties(asset_multi_member_7z_virtual_read_m12 PROPERTIES
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_MULTI_7Z=$ENV{HOME}/.firestaff/data/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
         SKIP_RETURN_CODE 77)
+    if(UNIX)
+        add_executable(test_asset_scan_access_denied
+            tests/test_asset_scan_access_denied.c)
+        target_link_libraries(test_asset_scan_access_denied PRIVATE firestaff_m12)
+        if(NOT MSVC)
+            target_compile_options(test_asset_scan_access_denied PRIVATE
+                -Wall -Wextra -O2)
+        endif()
+        add_test(NAME asset_scan_access_denied
+            COMMAND test_asset_scan_access_denied)
+        set_tests_properties(asset_scan_access_denied PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "filesystem;permissions;scanner;skip-safe"
+            TIMEOUT 20)
+    endif()
     add_executable(test_dm1_v1_atari_st_7z_virtual_start_m12
         tests/test_dm1_v1_atari_st_7z_virtual_start_m12.c)
     target_link_libraries(test_dm1_v1_atari_st_7z_virtual_start_m12 PRIVATE

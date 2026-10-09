@@ -1287,7 +1287,9 @@ STARTUP_MENU_EN = {k: k for k in [
     'SCALE', 'PIXEL SNAP', 'FILTER', 'VSYNC',
     'CUSTOM MUSIC FOLDER SELECTED', 'CUSTOM MUSIC FOLDER UNCHANGED',
     'NO FOLDER SELECTED', 'FOLDER MISSING OR PATH TOO LONG',
-    'NOT ENOUGH MEMORY',
+    'NOT ENOUGH MEMORY', '%d FOLDER REQUIRES ACCESS',
+    '%d FOLDERS REQUIRE ACCESS',
+    'ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN',
 ]}
 
 STARTUP_MENU = {'en': STARTUP_MENU_EN}
@@ -1357,6 +1359,10 @@ STARTUP_MENU['sv'] = {k: v for k, v in {
     'NO FOLDER SELECTED': 'INGEN MAPP VALD',
     'FOLDER MISSING OR PATH TOO LONG': 'MAPP SAKNAS ELLER SÖKVÄG FÖR LÅNG',
     'NOT ENOUGH MEMORY': 'SLUT PÅ MINNE',
+    '%d FOLDER REQUIRES ACCESS': 'ÅTKOMST NEKADES TILL %d MAPP',
+    '%d FOLDERS REQUIRE ACCESS': 'ÅTKOMST NEKADES TILL %d MAPPAR',
+    'ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN':
+        'TILLÅT MAPPÅTKOMST I SYSTEMINSTÄLLNINGAR OCH SKANNA IGEN',
 }.items() if k in STARTUP_MENU_EN}
 
 STARTUP_MENU['fr'] = {k: v for k, v in {
@@ -1405,6 +1411,10 @@ STARTUP_MENU['fr'] = {k: v for k, v in {
     'AVAILABLE': 'DISPONIBLE', 'UNAVAILABLE': 'INDISPONIBLE',
     'SCALE': 'ÉCHELLE', 'PIXEL SNAP': 'SNAP PIXEL',
     'FILTER': 'FILTRE', 'VSYNC': 'VSYNC',
+    '%d FOLDER REQUIRES ACCESS': 'ACCÈS REFUSÉ À %d DOSSIER',
+    '%d FOLDERS REQUIRE ACCESS': 'ACCÈS REFUSÉ À %d DOSSIERS',
+    'ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN':
+        'AUTORISEZ L’ACCÈS DANS LES RÉGLAGES SYSTÈME, PUIS RELANCEZ LE SCAN',
 }.items() if k in STARTUP_MENU_EN}
 
 STARTUP_MENU['de'] = {k: v for k, v in {
@@ -1455,6 +1465,10 @@ STARTUP_MENU['de'] = {k: v for k, v in {
     'VULKAN': 'VULKAN', 'AVAILABLE': 'VERFÜGBAR', 'UNAVAILABLE': 'NICHT VERFÜGBAR',
     'SCALE': 'SKALIERUNG', 'PIXEL SNAP': 'PIXEL-SNAP',
     'FILTER': 'FILTER', 'VSYNC': 'VSYNC',
+    '%d FOLDER REQUIRES ACCESS': 'ZUGRIFF AUF %d ORDNER VERWEIGERT',
+    '%d FOLDERS REQUIRE ACCESS': 'ZUGRIFF AUF %d ORDNER VERWEIGERT',
+    'ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN':
+        'ZUGRIFF IN DEN SYSTEMEINSTELLUNGEN ERLAUBEN UND ERNEUT SCANNEN',
 }.items() if k in STARTUP_MENU_EN}
 
 STARTUP_MENU['ja'] = {k: v for k, v in {
@@ -1511,6 +1525,10 @@ STARTUP_MENU['ja'] = {k: v for k, v in {
     'AVAILABLE': '利用可能', 'UNAVAILABLE': '利用不可',
     'SCALE': 'スケール', 'PIXEL SNAP': 'ピクセルスナップ',
     'FILTER': 'フィルター', 'VSYNC': 'VSYNC',
+    '%d FOLDER REQUIRES ACCESS': '%d 個のフォルダーへのアクセスが拒否されました',
+    '%d FOLDERS REQUIRE ACCESS': '%d 個のフォルダーへのアクセスが拒否されました',
+    'ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN':
+        'システム設定でフォルダーへのアクセスを許可して再スキャンしてください',
 }.items() if k in STARTUP_MENU_EN}
 
 STARTUP_MENU['zh'] = {k: v for k, v in {
@@ -1562,6 +1580,10 @@ STARTUP_MENU['zh'] = {k: v for k, v in {
     'AVAILABLE': '可用', 'UNAVAILABLE': '不可用',
     'SCALE': '缩放', 'PIXEL SNAP': '像素捕捉',
     'FILTER': '过滤器', 'VSYNC': 'VSYNC',
+    '%d FOLDER REQUIRES ACCESS': '无法访问 %d 个文件夹',
+    '%d FOLDERS REQUIRE ACCESS': '无法访问 %d 个文件夹',
+    'ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN':
+        '请在系统设置中允许访问文件夹，然后重新扫描',
 }.items() if k in STARTUP_MENU_EN}
 
 # Other languages: English fallback (msgstr=msgid)
