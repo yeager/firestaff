@@ -6,10 +6,10 @@
   offsets were already correct; the address label was not. The bounded
   Stage-2 listing places the 23-byte sequence immediately after `L966D: RTS`,
   and `$9682..$9684` are its trailing `LDA #$04; RTS` bytes.
-- The focused real-media test now asserts the corrected entry, caller end,
-  and matching caller-to-consumer address/file-offset deltas for both
-  authentic raw BIN regions. Runtime vector selection and palette provenance
-  remain unresolved.
+- The focused real-media tests now assert the corrected entry, caller end,
+  caller-to-consumer address/file-offset deltas, and the exact caller bytes
+  through the existing Stage-2 sector mapper for both authentic raw BIN
+  regions. Runtime vector selection and palette provenance remain unresolved.
 
 ## 2026-10-09 — source-lock the VCE caller contract
 

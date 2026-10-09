@@ -114,6 +114,45 @@ static uint64_t stage2_fnv1a64(const uint8_t *raw, size_t raw_size,
     return hash;
 }
 
+/* Bind the VCE caller's logical entry to the same authenticated Stage-2
+ * address-to-raw-sector mapping used by the rest of this test. */
+static void test_stage2_vce_caller_address_mapping(void)
+{
+    static const uint8_t caller[] = {
+        0xc8u, 0xb1u, 0x62u, 0x8du, 0xc4u, 0x27u,
+        0xc8u, 0xb1u, 0x62u, 0x8du, 0xc5u, 0x27u,
+        0xc8u, 0xb1u, 0x62u, 0x8du, 0xc6u, 0x27u,
+        0x44u, 0x23u, 0xa9u, 0x04u, 0x60u
+    };
+    static const uint8_t consumer_prefix[] = {
+        0xadu, 0xc2u, 0x27u, 0x8du, 0x02u, 0x04u
+    };
+    const uint16_t caller_address = 0x966eu;
+    const uint16_t consumer_address = 0x96a5u;
+    const uint8_t *raws[] = { g_us_data, g_jp_data };
+    const size_t raw_sizes[] = { g_us_size, g_jp_size };
+
+    assert(sizeof(caller) == 23u);
+    assert(caller_address + 20u == 0x9682u);
+    assert(caller_address + sizeof(caller) == 0x9685u);
+    assert(consumer_address - caller_address == 0x37u);
+    for (unsigned int region = 0u; region < 2u; ++region) {
+        const int jp = region == 1u;
+        if (!raws[region]) continue;
+        for (unsigned int i = 0u; i < sizeof(caller); ++i) {
+            assert(stage2_byte_at(raws[region], raw_sizes[region], jp,
+                                  (uint16_t)(caller_address + i)) ==
+                   caller[i]);
+        }
+        for (unsigned int i = 0u; i < sizeof(consumer_prefix); ++i) {
+            assert(stage2_byte_at(raws[region], raw_sizes[region], jp,
+                                  (uint16_t)(consumer_address + i)) ==
+                   consumer_prefix[i]);
+        }
+    }
+    printf("  PASS: VCE caller logical address maps to authentic US/JP raw bytes\n");
+}
+
 /* Source offsets used by tqr_ipl_user_match are offsets within the
  * authenticated Stage-2 record, not CPU addresses relative to $4000. */
 static uint8_t stage2_record_user_byte_at(const uint8_t *raw,
@@ -4984,6 +5023,7 @@ int main(void)
         return 0;
     }
 
+    test_stage2_vce_caller_address_mapping();
     test_ipl_loader();
     test_stage2_runtime_helper_media_source(g_us_data, g_us_size, 0);
     if (g_jp_data) {
