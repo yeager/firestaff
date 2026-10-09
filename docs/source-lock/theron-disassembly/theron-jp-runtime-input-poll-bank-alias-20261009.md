@@ -159,13 +159,17 @@ The respective code-trace SHA-256 values are
 `6bd8222e1b1f378397772d71a5490c0e92893bad43ace7e285bf7f765d5f88ad`;
 the input traces are
 `c385191cc47aa3e165fa57fdffe2647d512909f9b36f8ab87967a9c2e4899240` and
-`759e32789568ce128bb980aafbdeeddf49ae74a6d5c4c74babe7916a7cd400a1`.
+`759e32789568ce128bb980aafbdeeddf49ae74a6d5c4c74babe7916a7cd400a1`;
+the main-RAM consumer read traces have SHA-256
+`39c7c46b91d7aabfde2f755d250b8deb034fed327a201250a2af0377b9fdea65` and
+`f8b4ad931f6be2ca4e28da3dceb6c2489ab22ee742e99b33ef8cd93dc2349dd2`.
 
-Both captures ended with the raw report still at level 2, bank 1, direction 1,
-party position `(2,3)`, `transition=missing`, zero CD IRQs, and zero
-authenticated CD-to-RAM receipts. Therefore they prove controller input
-delivery and a logical/physical bank alias only. They do not prove gameplay
-input handling, movement rejection, or a game transition.
+The paired code paths and later reads establish that UP changes the observed
+execution path and `$2912` value. They do not establish the byte's gameplay
+meaning, movement, a visible action, or a game transition. Both captures ended
+with the raw report still at level 2, bank 1, direction 1, party position
+`(2,3)`, `transition=missing`, zero CD IRQs, and zero authenticated CD-to-RAM
+receipts.
 
 ## Bounded caller continuation from the UP replay
 

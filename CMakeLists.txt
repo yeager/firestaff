@@ -46658,6 +46658,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
         SKIP_RETURN_CODE 77
     )
     add_test(
+        NAME theron_v1_runtime_input_poll_up_ram_update_pair
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_runtime_input_poll_up_ram_update_pair.py
+    )
+    set_tests_properties(theron_v1_runtime_input_poll_up_ram_update_pair PROPERTIES
+        SKIP_RETURN_CODE 77
+    )
+    add_test(
         NAME theron_v1_stage2_45xx_regional
         COMMAND test_theron_v1_stage2_disassembly_chain
     )

@@ -1,3 +1,14 @@
+## 2026-10-10 — lock the authentic JP UP-to-RAM control-flow pair
+
+Added `theron_v1_runtime_input_poll_up_ram_update_pair`, which hash-locks the
+authentic JP control and UP captures and checks their recorded `$D334/$D337`
+branch paths, the UP path through `$D346/$D349`, and later `$2912` reads. The
+test passes against both original capture sidecars and skips only when the
+external evidence root is unavailable; incomplete or altered captures fail.
+This gives a repeatable check for the observed RAM update without assigning
+gameplay meaning to `$2912` or claiming movement, visible action, or a
+transition. The paired trace still ends with no accepted transition.
+
 ## 2026-10-10 — capture the CD reader's physical HuC6280 mapping
 
 The opt-in PCE Fast CD data-port trace now records the logical reader PC, its
