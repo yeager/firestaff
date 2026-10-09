@@ -132,6 +132,19 @@
   from authentic bytes.
   This narrows the regional caller map without assigning meanings to
   `$28B8/$290D/$290E` or claiming an accepted move.
+- A later instrumented cold-start capture (Mednafen binary MD5
+  `8a43dfb6ae6155d5562d1aa04a5bd761`) read 4,096 byte-exact CD data-port
+  values, all reported source-bound to authentic JP Rev. 1 Track 02 LBAs
+  3590–3591 (2,048 user bytes per sector). The trace also records 26 writes
+  to the PCE CD-RAM target window by PC `$EA9C`, plus a stage-2 selector sample
+  at `$58D2` with MPR1 `$F8` and MPR2 `$82`. This does not establish a game-owned
+  CD-to-RAM copy: the same session has zero CD IRQ callbacks, zero
+  non-System-Card PCE-CD reads, zero authenticated CD-to-RAM receipts, zero
+  game `$E009` dispatches, no identified variant, and `transition=missing`.
+  Scripted input was observed only at the System Card poll. Treat these as
+  cold-start/System Card observations, not a Track 02 level payload or runtime
+  decoder receipt. The private capture is
+  `/home/trv2/firestaff-theron-evidence/capture/theron-coldstart-source-receipt-followup-20261009-1350/`.
 - Next: use a cold-start or otherwise source-reading authentic JP session to
   bind `$44D2` to a unique Track 02 source receipt, then follow the poll's
   caller through dispatch index `$53` / PC `$49FB` to a visible action or
