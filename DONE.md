@@ -11,6 +11,13 @@
   This verifies the headless launcher rescan, not macOS TCC prompting or
   physical desktop behavior.
 
+- 2026-10-10: Split the original-media return-to-menu regression into normal
+  return routes and live media-mutation routes. The split prevents the 300 s
+  outer CTest runner limit from cutting off the final assertions, keeps all
+  test scratch under the build directory, and gives each suite a 240 s CTest
+  timeout. Both CTests passed against authentic DM1, CSB and DM2 archives:
+  normal routes in 216.73 s and removal/addition mutation routes in 94.81 s.
+
 - 2026-10-10: `firestaff_cli_startup_diagnostics_real_media` passed against
   the installed authentic DM1, CSB and DM2 collection. It rechecked each
   game's default-platform choice, selected edition and searched media paths

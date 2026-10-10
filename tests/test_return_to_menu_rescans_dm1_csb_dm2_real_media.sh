@@ -3,6 +3,7 @@ set -eu
 
 app=${1:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff> <data-root>}
 data_root=${2:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff> <data-root>}
+test_mode=${3:-all}
 dm1_archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 dm1_fmtowns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 csb_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
@@ -15,7 +16,7 @@ if [ ! -x "$app" ] || [ ! -f "$dm1_archive" ] ||
     exit 77
 fi
 
-scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-${FIRESTAFF_TEST_SCRATCH_ROOT:-"$PWD/.codex-scratch"}}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/return-rescan.XXXXXX")
 mutation_scratch=
@@ -99,28 +100,31 @@ PY
 # used by the DM1 PC-34 and CSB FM Towns startup checks. Their source startup
 # phases differ, so each case proves its own authentic runtime receipt before
 # the shared ESC/Enter return interaction can pass.
-run_return_to_menu_case dm1 pc \
-    'key:enter,key:enter,key:enter,wait:12,key:escape,key:enter' \
-    15000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
-    'DM1 READY: gameId=dm1 dataDir=.*/data/dm1/.*handoff=pc-img3'
-run_return_to_menu_case dm1 fmtowns \
-    'key:enter,key:enter,key:enter,wait:5,key:escape,wait:10,key:enter' \
-    30000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
-    'launch phase=game-handoff mode=menu game=dm1 platform=FM Towns edition=fmtowns-en source=.*/data/dm1/.*GRAPHICS.DAT'
-run_return_to_menu_case csb fm-towns \
-    'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,back,wait:10,enter' \
-    30000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
-    'CSB READY: gameId=csb dataDir=.*/data/csb/.*variant=csb-fmtowns-en .*handoff=f31-title-anm'
-run_return_to_menu_case dm2 auto \
-    'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,key:enter' \
-    60000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
-    'launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=.*/data/dm2/'
+if [ "$test_mode" = all ] || [ "$test_mode" = returns ]; then
+    run_return_to_menu_case dm1 pc \
+        'key:enter,key:enter,key:enter,wait:12,key:escape,key:enter' \
+        15000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
+        'DM1 READY: gameId=dm1 dataDir=.*/data/dm1/.*handoff=pc-img3'
+    run_return_to_menu_case dm1 fmtowns \
+        'key:enter,key:enter,key:enter,wait:5,key:escape,wait:10,key:enter' \
+        30000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
+        'launch phase=game-handoff mode=menu game=dm1 platform=FM Towns edition=fmtowns-en source=.*/data/dm1/.*GRAPHICS.DAT'
+    run_return_to_menu_case csb fm-towns \
+        'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,back,wait:10,enter' \
+        30000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
+        'CSB READY: gameId=csb dataDir=.*/data/csb/.*variant=csb-fmtowns-en .*handoff=f31-title-anm'
+    run_return_to_menu_case dm2 auto \
+        'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,key:enter' \
+        60000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
+        'launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=.*/data/dm2/'
+fi
 
 # Prove the return scan refreshes availability after the player changes the
 # installed media while gameplay is active. Stage only genuine archives using
 # hard links where possible (symlinks on other volumes); removing a staged
 # link never alters the original archive.
-mutation_scratch=$(mktemp -d "$(dirname "$data_root")/return-rescan-mutation.XXXXXX")
+if [ "$test_mode" = all ] || [ "$test_mode" = mutations ]; then
+mutation_scratch=$(mktemp -d "$scratch_root/return-rescan-mutation.XXXXXX")
 mutation_data_root="$mutation_scratch/data"
 mutation_home="$mutation_scratch/home"
 mutation_log="$mutation_scratch/firestaff.log"
@@ -138,7 +142,7 @@ for media_pair in \
     fi
 done
 
-mutation_script='key:enter,key:enter,key:enter,wait:900,key:escape,key:enter'
+mutation_script='key:enter,key:enter,key:enter,wait:12,key:escape,key:enter'
 mutation_runtime_pattern='startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2'
 FIRESTAFF_CONFIG_PATH="$mutation_home/config.toml" \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$mutation_probe" \
@@ -207,8 +211,7 @@ mutation_scratch=
 # while DM1 is running must become available after returning to M12. This
 # models the user granting folder access or installing another title without
 # restarting Firestaff.
-addition_parent=$(dirname "$data_root")
-addition_scratch=$(mktemp -d "$addition_parent/return-rescan-addition.XXXXXX")
+addition_scratch=$(mktemp -d "$scratch_root/return-rescan-addition.XXXXXX")
 addition_data_root="$addition_scratch/data"
 addition_home="$addition_scratch/home"
 addition_log="$addition_scratch/firestaff.log"
@@ -230,7 +233,7 @@ HOME="$addition_home" XDG_CONFIG_HOME="$addition_home" \
 APPDATA="$addition_home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$app" --width 320 --height 200 --menu --game dm1 --platform pc \
     --data-dir "$addition_data_root" --debug \
-    --script 'key:enter,key:enter,key:enter,wait:900,key:escape,key:enter' \
+    --script 'key:enter,key:enter,key:enter,wait:12,key:escape,key:enter' \
     --duration 60000 >"$addition_log" 2>&1 &
 addition_pid=$!
 poll=0
@@ -293,3 +296,4 @@ print("PASS: returning from authentic DM1 discovers newly added authentic CSB me
 PY
 rm -rf "$addition_scratch"
 addition_scratch=
+fi

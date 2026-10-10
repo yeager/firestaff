@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-10-10: The authentic return-to-menu regression now runs normal game
+  returns separately from live media mutations. DM1 PC and FM Towns both
+  passed their return scans alongside the CSB and DM2 routes; the mutation
+  suite passed removal and addition of authentic CSB while DM1 was running.
+  Test scratch now remains in the external build directory instead of the
+  user's game-data parent.
+
 - 2026-10-10: `dm1_v1_dos_fr_zip_cli_boot` and
   `dm1_v1_dos_en_archive_cli_boot` both passed against their installed
   authentic DOS archives. These regressions verify CLI and start-menu launch
