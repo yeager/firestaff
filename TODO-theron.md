@@ -79,6 +79,17 @@
   registration is not yet verified: local CMake configuration fails in the
   installed macOS linker/SDK before project generation.
 
+## 2026-10-10 — lock the compiled US intro-story bytes to retail media
+
+- The seven compiled US intro-story strings now have a real-media source-lock
+  test against authenticated US Track 02. It checks each full byte sequence,
+  source-comment offset and length, and uniqueness in the extracted user-data
+  stream. Three direct loops passed against the installed original media.
+- This verifies text provenance only. It does not prove the game's story
+  selector/caller, the presentation controls' runtime effects, or intro-story
+  rendering. CTest registration remains unverified until CI or a working local
+  CMake toolchain configures the test.
+
 ## 2026-10-10 — run the complete Theron-labeled CTest selection
 
 - On TRV2, built the missing Theron test/probe targets and the `firestaff`

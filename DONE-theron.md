@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — source-lock compiled US dungeon intro stories
+
+- Added a real-media regression that authenticates the installed US Track 02
+  image and compares all seven compiled intro-story byte sequences with their
+  documented user-data offsets and lengths. All seven spans matched uniquely
+  in three direct test loops; no game media was added to the repository.
+- Added the test to the Theron CTest selection. Local CMake generation is not
+  verified because the installed macOS linker/SDK fails before project
+  generation. The test locks source bytes only; runtime selector ownership,
+  presentation controls, and story rendering remain open in `TODO-theron.md`.
+
 ## 2026-10-10 — capture restored-state `$A1B7` destination writes
 
 - Added an opt-in, instruction- and MPR-bound Mednafen PCE Fast hook for the
