@@ -1760,29 +1760,49 @@ else
                function is_hex(value, length_expected) {
                    return length(value) == length_expected && value !~ /[^0-9a-f]/
                }
-               NR == 1 { if ($0 != "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V1") exit 1; next }
-               NR == 2 { if ($0 != "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit") exit 1; next }
+               function hex_value(value, result, position, digit) {
+                   result = 0
+                   for (position = 1; position <= length(value); position++) {
+                       digit = index("0123456789abcdef", substr(value, position, 1)) - 1
+                       result = result * 16 + digit
+                   }
+                   return result
+               }
+               NR == 1 { if ($0 != "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2") exit 1; next }
+               NR == 2 { if ($0 != "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window") exit 1; next }
                NR == 3 { if ($0 != "scope=cpu-port-vwr-commits-only;dma-writes-excluded") exit 1; next }
                /^vram_commit / {
-                   if (NF != 10 || $1 != "vram_commit") exit 1
+                   if (NF != 14 || $1 != "vram_commit") exit 1
                    split($2, sequence_field, "=")
                    split($3, chip_field, "=")
                    split($4, display_counter_field, "=")
                    split($5, logical_pc_field, "=")
                    split($6, physical_pc_field, "=")
-                   split($7, address_field, "=")
-                   split($8, value_field, "=")
-                   split($9, low_field, "=")
-                   split($10, high_field, "=")
+                   split($7, mpr_slot_field, "=")
+                   split($8, mpr_bank_field, "=")
+                   split($9, code_mpr_banks_field, "=")
+                   split($10, code_bytes_field, "=")
+                   split($11, address_field, "=")
+                   split($12, value_field, "=")
+                   split($13, low_field, "=")
+                   split($14, high_field, "=")
                    if (sequence_field[1] != "sequence" || sequence_field[2] != count ||
                        chip_field[1] != "chip" || chip_field[2] != 0 ||
                        display_counter_field[1] != "display_counter" || display_counter_field[2] !~ /^[0-9]+$/ ||
                        logical_pc_field[1] != "logical_pc" || !is_hex(logical_pc_field[2], 4) ||
                        physical_pc_field[1] != "physical_pc" || !is_hex(physical_pc_field[2], 6) ||
+                       mpr_slot_field[1] != "mpr_slot" || mpr_slot_field[2] !~ /^[0-7]$/ ||
+                       mpr_bank_field[1] != "mpr_bank" || !is_hex(mpr_bank_field[2], 2) ||
+                       code_mpr_banks_field[1] != "code_mpr_banks" || !is_hex(code_mpr_banks_field[2], 16) ||
+                       code_bytes_field[1] != "code_bytes" || !is_hex(code_bytes_field[2], 16) ||
                        address_field[1] != "address" || !is_hex(address_field[2], 4) ||
                        value_field[1] != "value" || !is_hex(value_field[2], 4) ||
                        low_field[1] != "low" || low_field[2] != substr(value_field[2], 3, 2) ||
                        high_field[1] != "high" || high_field[2] != substr(value_field[2], 1, 2)) exit 1
+                   logical_pc_value = hex_value(logical_pc_field[2])
+                   mpr_bank_value = hex_value(mpr_bank_field[2])
+                   if (mpr_slot_field[2] != int(logical_pc_value / 8192) ||
+                       physical_pc_field[2] != sprintf("%06x", (mpr_bank_value * 8192) + (logical_pc_value % 8192))) exit 1
                    count++
                    if (count > limit) exit 1
                    next

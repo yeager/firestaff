@@ -9,7 +9,7 @@
  #include "huc.h"
  #include "pcecd.h"
  #include <mednafen/cputest/cputest.h>
-@@ -54,0 +57,61 @@
+@@ -54,0 +57,91 @@
 +/* Optional PCE Fast capture-only trace.  The hook observes committed CPU
 + * VWR words in Mednafen 1.32.1 src/pce_fast/vdc.cpp::VDC_Write(), after
 + * VRAM[MAWR] is assigned and before MAWR advances (upstream line 572).  It
@@ -19,6 +19,21 @@
 +static unsigned TheronPCEFastVRAMCommitLimit = 65536;
 +static bool TheronPCEFastVRAMCommitInitialized;
 +static bool TheronPCEFastVRAMCommitDisabled;
++
++/* HuC6280 opcode fetches use FastPageR in mednafen-1.32.1
++ * src/pce_fast/huc6280.cpp::RdOp() (line 172), populated by SET_MPR()
++ * (lines 118-126). Read that mapping directly, without PCERead handlers. */
++static void TheronPCEFastReadCodeWindow(uint16 logical_pc, uint8 bytes[8],
++                                        uint8 mpr_banks[8])
++{
++ for(unsigned index = 0; index < 8; index++)
++ {
++  const uint16 address = (uint16)(logical_pc + index);
++  const unsigned slot = address >> 13;
++  mpr_banks[index] = HuCPU.MPR[slot];
++  bytes[index] = *(const uint8 *)(HuCPU.FastPageR[slot] + address);
++ }
++}
 +
 +static void TheronTracePCEFastVRAMCommit(int chip, uint32 display_counter,
 +                                         uint16 address, uint16 value)
@@ -49,16 +64,31 @@
 +   TheronPCEFastVRAMCommitDisabled = true;
 +   return;
 +  }
-+  fputs("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V1\n"
-+        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit\n"
++  fputs("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2\n"
++        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\n"
 +        "scope=cpu-port-vwr-commits-only;dma-writes-excluded\n",
 +        TheronPCEFastVRAMCommitTrace);
 + }
++ const uint16 logical_pc = TheronTraceInstructionPC;
++ const unsigned mpr_slot = logical_pc >> 13;
++ const unsigned mpr_bank = HuCPU.MPR[mpr_slot];
++ uint8 code_bytes[8];
++ uint8 code_mpr_banks[8];
++ TheronPCEFastReadCodeWindow(logical_pc, code_bytes, code_mpr_banks);
 + if(fprintf(TheronPCEFastVRAMCommitTrace,
-+            "vram_commit sequence=%u chip=%d display_counter=%u logical_pc=%04x physical_pc=%06x address=%04x value=%04x low=%02x high=%02x",
++            "vram_commit sequence=%u chip=%d display_counter=%u logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x code_mpr_banks=%02x%02x%02x%02x%02x%02x%02x%02x code_bytes=%02x%02x%02x%02x%02x%02x%02x%02x address=%04x value=%04x low=%02x high=%02x",
 +            TheronPCEFastVRAMCommitCount, chip, display_counter,
-+            (unsigned)TheronTraceInstructionPC,
++            (unsigned)logical_pc,
 +            (unsigned)TheronTraceInstructionPhysicalPC,
++            mpr_slot, mpr_bank,
++            (unsigned)code_mpr_banks[0], (unsigned)code_mpr_banks[1],
++            (unsigned)code_mpr_banks[2], (unsigned)code_mpr_banks[3],
++            (unsigned)code_mpr_banks[4], (unsigned)code_mpr_banks[5],
++            (unsigned)code_mpr_banks[6], (unsigned)code_mpr_banks[7],
++            (unsigned)code_bytes[0], (unsigned)code_bytes[1],
++            (unsigned)code_bytes[2], (unsigned)code_bytes[3],
++            (unsigned)code_bytes[4], (unsigned)code_bytes[5],
++            (unsigned)code_bytes[6], (unsigned)code_bytes[7],
 +            (unsigned)address, (unsigned)value,
 +            (unsigned)(value & 0xFF), (unsigned)(value >> 8)) < 0 ||
 +    fputc('\n', TheronPCEFastVRAMCommitTrace) == EOF ||
@@ -71,5 +101,5 @@
 + }
 + TheronPCEFastVRAMCommitCount++;
 +}
-@@ -572,0 +636,1 @@
+@@ -572,0 +665,1 @@
 +                TheronTracePCEFastVRAMCommit(chip, vdc->display_counter, vdc->MAWR, (V << 8) | vdc->write_latch);
