@@ -12,7 +12,7 @@
 + TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);
 + BaseRAM[offset] = V;
  }
- 
+FIRESTAFF_PATCH_BLANK_CONTEXT
  static DECLFW(BaseRAMWrite_Mirrored)
  {
   TheronTracePartyRAMWrite(A, V);
