@@ -7061,6 +7061,18 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         }
     }
     {
+        const char* diagnosticRoots[M12_SEARCH_ROOT_COUNT];
+        size_t diagnosticRootIndex;
+        for (diagnosticRootIndex = 0U;
+             diagnosticRootIndex < rootCount;
+             ++diagnosticRootIndex) {
+            diagnosticRoots[diagnosticRootIndex] =
+                roots[diagnosticRootIndex];
+        }
+        asset_scan_filter_access_denied_directories(diagnosticRoots,
+                                                     rootCount);
+    }
+    {
         int deniedDirectories = asset_scan_access_denied_directory_count();
         int diagIndex;
         for (diagIndex = 0; diagIndex < deniedDirectories; ++diagIndex) {

@@ -4409,6 +4409,82 @@ const char *asset_scan_access_denied_directory_path(int index) {
     return g_accessDeniedDirectoryPaths[index];
 }
 
+static int asset_scan_path_separator(char c) {
+#ifdef _WIN32
+    return c == '/' || c == '\\';
+#else
+    return c == '/';
+#endif
+}
+
+static int asset_scan_path_prefix_equal(const char *left,
+                                        const char *right,
+                                        size_t length) {
+    size_t i;
+    for (i = 0U; i < length; ++i) {
+        unsigned char a = (unsigned char)left[i];
+        unsigned char b = (unsigned char)right[i];
+#ifdef _WIN32
+        if (asset_scan_path_separator((char)a) &&
+            asset_scan_path_separator((char)b)) {
+            continue;
+        }
+        a = (unsigned char)tolower(a);
+        b = (unsigned char)tolower(b);
+#endif
+        if (a != b) return 0;
+    }
+    return 1;
+}
+
+static int asset_scan_path_is_within_root(const char *path,
+                                          const char *root) {
+    size_t rootLength;
+    if (!path || !root || !root[0]) return 0;
+    rootLength = strlen(root);
+    while (rootLength > 1U &&
+           asset_scan_path_separator(root[rootLength - 1U])) {
+        /* Trimming C:\\ to C: still lets the separator boundary below
+         * distinguish the drive root from a sibling such as C:\\datax. */
+        --rootLength;
+    }
+    if (strlen(path) < rootLength ||
+        !asset_scan_path_prefix_equal(path, root, rootLength)) {
+        return 0;
+    }
+    return path[rootLength] == '\0' ||
+           asset_scan_path_separator(path[rootLength]);
+}
+
+void asset_scan_filter_access_denied_directories(
+    const char *const *roots, size_t rootCount) {
+    int kept = 0;
+    int i;
+    if (!roots || rootCount == 0U) {
+        asset_scan_clear_access_denied_directories();
+        return;
+    }
+    for (i = 0; i < g_accessDeniedDirectoryCount; ++i) {
+        size_t rootIndex;
+        int withinRoot = 0;
+        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+            if (asset_scan_path_is_within_root(
+                    g_accessDeniedDirectoryPaths[i], roots[rootIndex])) {
+                withinRoot = 1;
+                break;
+            }
+        }
+        if (withinRoot) {
+            if (kept != i) {
+                memcpy(g_accessDeniedDirectoryPaths[kept],
+                       g_accessDeniedDirectoryPaths[i], ASSET_PATH_MAX);
+            }
+            ++kept;
+        }
+    }
+    g_accessDeniedDirectoryCount = kept;
+}
+
 static void record_access_denied_directory(const char *path) {
     int i;
     if (!path || path[0] == '\0') return;

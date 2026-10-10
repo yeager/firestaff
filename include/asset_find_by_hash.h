@@ -119,6 +119,10 @@ const char *asset_scan_missing_extractor_tools(int index);
 void asset_scan_clear_access_denied_directories(void);
 int asset_scan_access_denied_directory_count(void);
 const char *asset_scan_access_denied_directory_path(int index);
+/* Keep only access-denied paths that are within the roots of the completed
+ * scan. This drops stale or out-of-scope paths collected by nested probes. */
+void asset_scan_filter_access_denied_directories(
+    const char *const *roots, size_t rootCount);
 /* Report whether this external archive type can be read by an installed
  * host extractor. This probes availability only; it does not opt scanning
  * into external tools or read the archive. */
