@@ -54,8 +54,9 @@ printf '%s\n' "$auto_menu_output" | grep -q \
     'selected game=dm2 platform=FM Towns edition=fmtowns-ja'
 
 # Exercise AUTO selection from the documented per-user data directory. This
-# has no FIRESTAFF_DATA or --data-dir override, so the selected source must be
-# discovered under ~/.firestaff/data/dm2 itself.
+# has no FIRESTAFF_DATA or --data-dir override. Stage the original DM2 archive
+# packages under ~/.firestaff/data/dm2 so AUTO also resolves among installed
+# editions without copying or modifying the source media.
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 default_home=$(mktemp -d "$test_scratch/dm2-default-data.XXXXXX")
@@ -106,14 +107,17 @@ done
 echo 'PASS: bare DM2 CLI overrides saved PC preference and reaches authentic FM Towns map 0'
 
 default_data_root="$default_home/.firestaff/data"
+mkdir -p "$default_data_root/dm2"
+for source_archive in "$archive_dir"/Dungeon-Master-II-Skullkeep_*.zip; do
+    [ -f "$source_archive" ] || continue
+    staged_archive="$default_data_root/dm2/$(basename "$source_archive")"
+    if ! ln -s "$source_archive" "$staged_archive" 2>/dev/null &&
+       ! ln "$source_archive" "$staged_archive" 2>/dev/null; then
+        cp -p "$source_archive" "$staged_archive"
+    fi
+done
 default_archive="$default_data_root/dm2/$(basename "$archive")"
 default_log="$default_home/menu.log"
-mkdir -p "$(dirname "$default_archive")"
-if ! ln -s "$archive" "$default_archive" 2>/dev/null; then
-    # Fall back to a same-volume hard link on Windows hosts without symlink
-    # privileges; this keeps the original game archive in place.
-    ln "$archive" "$default_archive"
-fi
 (
     unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
     HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
@@ -173,19 +177,34 @@ esac
 title_probe="$app_dir/test-dm2-fmtowns-bare-title.json"
 title_capture="$app_dir/test-dm2-fmtowns-bare-menu-capture"
 title_config="$app_dir/test-dm2-fmtowns-bare-menu-isolated.toml"
+title_log="$app_dir/test-dm2-fmtowns-bare-menu.log"
 runtime_probe="$app_dir/test-dm2-fmtowns-normal-loop.json"
 runtime_capture="$app_dir/test-dm2-fmtowns-normal-loop-capture"
 runtime_log="$app_dir/test-dm2-fmtowns-menu-normal-loop.log"
 source_digest=$("$source_rgb" "$archive")
-rm -f "$title_probe" "$title_config"
+rm -f "$title_probe" "$title_config" "$title_log"
+: >"$title_config"
 mkdir -p "$title_capture"
 rm -f "$title_capture"/*.bmp
-FIRESTAFF_CONFIG_PATH="$title_config" \
-FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$title_probe" \
-FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$title_capture" \
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 320 --height 200 --game dm2 --data-dir "$archive" \
-    --duration 40000 >/dev/null 2>&1
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+    APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$title_config" \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$title_probe" \
+    FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$title_capture" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --width 320 --height 200 --game dm2 --debug --duration 40000
+) >"$title_log" 2>&1 || {
+    cat "$title_log" >&2
+    exit 1
+}
+if ! grep -Fq \
+    "launch phase=game-handoff mode=direct game=dm2 platform=FM Towns edition=fmtowns-ja source=$default_archive::DATA/GRAPHICS.DAT" \
+    "$title_log"; then
+    printf '%s\n' 'FAIL: bare DM2 title route did not resolve FM Towns from ~/.firestaff/data/dm2' >&2
+    cat "$title_log" >&2
+    exit 1
+fi
 python3 - "$title_probe" <<'PY'
 import json
 import sys
@@ -237,6 +256,14 @@ if nonblack < 10000 or f"{digest:016x}" != sys.argv[2]:
         f"(nonblack={nonblack}, expected={sys.argv[2]}, actual={digest:016x})")
 print(f"PASS: original DM2 FM Towns menu RGB matches TITLE/0/4 digest={digest:016x}")
 PY
+# The reported bare CLI path has now been exercised with the original DM2
+# edition packages. Keep the later M12 interaction matrix on a single authentic
+# archive so repeated multi-edition discovery does not consume its 300-second
+# CTest budget.
+for staged_archive in "$default_data_root"/dm2/Dungeon-Master-II-Skullkeep_*.zip; do
+    [ -f "$staged_archive" ] || continue
+    [ "$staged_archive" = "$default_archive" ] || rm -f "$staged_archive"
+done
 rm -f "$runtime_probe"
 mkdir -p "$runtime_capture"
 rm -f "$runtime_capture"/*.bmp
