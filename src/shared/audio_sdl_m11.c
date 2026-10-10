@@ -24,6 +24,7 @@
 #define M11_AUDIO_VOLUME_MAX 128
 #define M11_AUDIO_SOUND_PACK_PATH_CAPACITY 1024
 #define M11_AUDIO_SOUND_PACK_MAX_SECONDS 10u
+#define M11_AUDIO_TITLE_OVERRIDE_MAX_SECONDS 60u
 #define M11_AUDIO_SOUND_PACK_MAX_BYTES (64u * 1024u * 1024u)
 #define M11_AUDIO_CSB_SWSH_BYTES 9078
 #define M11_AUDIO_CSB_SWSH_PERIOD 334
@@ -506,7 +507,8 @@ static double m11_decode_wav_frame(const unsigned char* data,
     return mixed / (double)channels;
 }
 
-static int m11_load_wav_to_stream(M11_SoundBuffer* dst, const char* path) {
+static int m11_load_wav_to_stream(M11_SoundBuffer* dst, const char* path,
+                                  unsigned int maxSeconds) {
     FILE* f;
     long fileSize;
     unsigned char* bytes;
@@ -591,7 +593,7 @@ static int m11_load_wav_to_stream(M11_SoundBuffer* dst, const char* path) {
         return 0;
     }
     frameCount = dataBytes / blockAlign;
-    if (frameCount == 0u || frameCount > sampleRate * M11_AUDIO_SOUND_PACK_MAX_SECONDS) {
+    if (frameCount == 0u || frameCount > sampleRate * maxSeconds) {
         free(bytes);
         return 0;
     }
@@ -863,6 +865,8 @@ static void m11_clear_original_song(M11_AudioState* state) {
     if (!state) return;
     (void)m11_stop_original_music(state);
     m11_sound_free(&state->titleMusic);
+    m11_sound_free(&state->titleMusicOverride);
+    state->titleMusicOverrideActive = 0;
     state->originalSongAvailable = 0;
     state->originalSongDatPath[0] = '\0';
     state->originalSongPartCount = 0;
@@ -1016,7 +1020,8 @@ int M11_Audio_ApplySoundPackDir(M11_AudioState* state, const char* dir) {
         M11_SoundBuffer replacement;
         if (!entry || !m11_find_sound_pack_file(path, sizeof(path), dir, entry)) continue;
         memset(&replacement, 0, sizeof(replacement));
-        if (m11_load_wav_to_stream(&replacement, path)) {
+        if (m11_load_wav_to_stream(&replacement, path,
+                                  M11_AUDIO_SOUND_PACK_MAX_SECONDS)) {
             m11_sound_free(&state->originalSounds[i]);
             state->originalSounds[i] = replacement;
             state->soundPackLoadedCount += 1;
@@ -1231,6 +1236,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
             m11_sound_free(&state->originalSounds[i]);
         }
         m11_sound_free(&state->titleMusic);
+        m11_sound_free(&state->titleMusicOverride);
         m11_sound_free(&state->dm1SwshProgram);
         m11_sound_free(&state->csbSwshPcm);
         m11_sound_free(&state->csbAtariStPsg);
@@ -1255,6 +1261,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->soundPackAvailable = 0;
     state->soundPackLoadedCount = 0;
     state->originalSongAvailable = 0;
+    state->titleMusicOverrideActive = 0;
     state->originalSongPartCount = 0;
     state->originalSongSequenceWordCount = 0;
     state->originalSongPlayablePartCount = 0;
@@ -2377,6 +2384,10 @@ static int m11_refill_title_music(M11_AudioState* state)
 {
 #if M11_HAVE_SDL_AUDIO
     SDL_AudioStream* stream = (SDL_AudioStream*)state->musicStream;
+    const M11_SoundBuffer* music = state->titleMusicOverrideActive
+        ? &state->titleMusicOverride : &state->titleMusic;
+    int loopStart = state->titleMusicOverrideActive
+        ? 0 : state->originalSongLoopStartSample;
     int queued;
     int remaining;
     if (!stream || !state->titleMusicLoopActive) return 1;
@@ -2385,12 +2396,12 @@ static int m11_refill_title_music(M11_AudioState* state)
     remaining = M11_AUDIO_TITLE_QUEUE_SAMPLES - queued / (int)sizeof(float);
     while (remaining > 0) {
         int count;
-        if (state->titleMusicCursor >= state->titleMusic.sampleCount)
-            state->titleMusicCursor = state->originalSongLoopStartSample;
-        count = state->titleMusic.sampleCount - state->titleMusicCursor;
+        if (state->titleMusicCursor >= music->sampleCount)
+            state->titleMusicCursor = loopStart;
+        count = music->sampleCount - state->titleMusicCursor;
         if (count > remaining) count = remaining;
         if (count <= 0 || !SDL_PutAudioStreamData(stream,
-                state->titleMusic.samples + state->titleMusicCursor,
+                music->samples + state->titleMusicCursor,
                 count * (int)sizeof(float))) return 0;
         state->titleMusicCursor += count;
         remaining -= count;
@@ -2416,9 +2427,12 @@ int M11_Audio_PumpTitleMusic(M11_AudioState* state)
 }
 
 int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
+    const M11_SoundBuffer* music;
     if (!state || !state->initialized) return 0;
     if (!state->titleMusicEnabled) return 0;
-    if (!state->originalSongAvailable || state->titleMusic.sampleCount <= 0) return 0;
+    music = state->titleMusicOverrideActive
+        ? &state->titleMusicOverride : &state->titleMusic;
+    if (!state->originalSongAvailable || music->sampleCount <= 0) return 0;
     state->titleMusicPlayRequestCount += 1;
 
     if (state->backend != M11_AUDIO_BACKEND_SDL3) {
@@ -2431,7 +2445,7 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
         SDL_AudioSpec spec;
         float gain = ((float)state->masterVolume / M11_AUDIO_VOLUME_MAX) *
                      ((float)state->musicVolume / M11_AUDIO_VOLUME_MAX);
-        if (state->titleMusic.sampleCount > INT_MAX / (int)sizeof(float)) return 0;
+        if (music->sampleCount > INT_MAX / (int)sizeof(float)) return 0;
         if (!stream) {
             SDL_zero(spec);
             spec.format = SDL_AUDIO_F32;
@@ -2497,6 +2511,30 @@ int M11_Audio_BindOriginalSongPath(M11_AudioState* state,
     m11_clear_original_song(state);
     if (getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG")) return 0;
     return m11_load_original_song_path(state, songDatPath);
+}
+
+int M11_Audio_SetTitleMusicOverrideWav(M11_AudioState* state,
+                                       const char* wavPath) {
+    M11_SoundBuffer replacement;
+    if (!state || !state->initialized) return 0;
+    if (!wavPath || !wavPath[0]) {
+        m11_sound_free(&state->titleMusicOverride);
+        state->titleMusicOverrideActive = 0;
+        return 1;
+    }
+    /* A corrupt replacement must never leave an older file selected. */
+    m11_sound_free(&state->titleMusicOverride);
+    state->titleMusicOverrideActive = 0;
+    memset(&replacement, 0, sizeof(replacement));
+    if (!m11_load_wav_to_stream(&replacement, wavPath,
+                                M11_AUDIO_TITLE_OVERRIDE_MAX_SECONDS)) {
+        m11_sound_free(&replacement);
+        return 0;
+    }
+    m11_sound_free(&state->titleMusicOverride);
+    state->titleMusicOverride = replacement;
+    state->titleMusicOverrideActive = 1;
+    return 1;
 }
 
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state) {

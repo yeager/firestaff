@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "soundtrack_selector_m11.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
@@ -8145,6 +8146,7 @@ static void m11_dm1_rebind_source_song(M11_GameViewState *state,
                                        const char *graphics_path)
 {
     char song_path[M11_GAME_VIEW_PATH_CAPACITY];
+    char override_path[M11_GAME_VIEW_PATH_CAPACITY];
 
     if (!state) return;
     state->dm1MusicSourceBound = 0;
@@ -8159,6 +8161,19 @@ static void m11_dm1_rebind_source_song(M11_GameViewState *state,
         !state->audioState.originalSongAvailable) return;
     state->dm1MusicSourceBound = dm1_v1_f0740_f0743_bind_song_dat_pc34(
         state->audioState.originalSongDatPath, &state->dm1MusicSource);
+    /* The launcher soundtrack preference owns only an optional selector
+     * replacement. Require the selected edition's admitted PC34 SONG.DAT;
+     * the original score remains resident and is used for every failure. */
+    if (state->dm1MusicSourceBound && state->audioState.originalSongAvailable &&
+        state->launcherOptionsBound &&
+        state->launcherOptions.soundtrackMode != M11_SOUNDTRACK_MODE_ORIGINAL &&
+        M11_Soundtrack_GetTrackPath(state->launcherOptions.soundtrackMode,
+            "title", state->launcherOptions.customMusicPath,
+            override_path, (int)sizeof(override_path)) ==
+                M11_SOUNDTRACK_RESULT_RESOLVED) {
+        (void)M11_Audio_SetTitleMusicOverrideWav(&state->audioState,
+                                                 override_path);
+    }
 }
 
 static int m11_dm1_bind_original_font(M11_GameViewState *state) {

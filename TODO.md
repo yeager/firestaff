@@ -65,17 +65,19 @@
   PIT/Tandy device divisor timing and physical listening remain unverified.
 
 - Connect the active Audio SOUNDTRACK choice to playback. The menu exposes
-  ORIGINAL/REMASTERED/CUSTOM and exports `soundtrackMode`, but no runtime
-  consumer reads it. `M11_Soundtrack_GetTrackPath` has no caller in `src`.
-  Use authenticated or explicitly selected media and retain each edition's
-  original audio behavior; selecting a mode alone does not prove playback.
+  ORIGINAL/REMASTERED/CUSTOM and exports `soundtrackMode`. The DM1 PC34
+  selector now consumes that handoff after its authenticated `SONG.DAT`
+  binds. It accepts a bounded WAV replacement and retains the original score
+  for missing, malformed or unsupported media. Other editions/games and
+  in-game music tracks still have no soundtrack-mode consumer.
   Audit on 2026-09-29: no local remastered/custom music directory is
   installed. Folder selection and absolute-path resolution are implemented;
-  this does not yet connect the selected replacement file to game audio.
-  Define explicit game/track identities and a stable root before wiring
-  replacement playback. A dedicated music owner must share pause/volume/
-  teardown rules and fall back to native music on missing or undecodable
-  files. Do not replace DM2 movie PCM wholesale: it may include non-music.
+  no replacement media is installed, so only fallback has been exercised
+  through M12. Authentic PCM-derived WAV tests exercise full-length decode,
+  malformed-file fallback, selector continuity and native stop ownership.
+  Verify actual replacement listening and device behavior; define explicit
+  game/track identities and stable roots before extending beyond the DM1 PC34
+  selector. Do not replace DM2 movie PCM wholesale: it may include non-music.
 
 - Verify native desktop file/folder selection and persistence for Data
   Directory, Custom Music, Unicode Font and Artpack. Their owned-result

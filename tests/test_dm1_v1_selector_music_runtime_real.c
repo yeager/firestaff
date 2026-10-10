@@ -5,6 +5,7 @@
 #include "main_loop_m11.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "soundtrack_selector_m11.h"
 #include "render_sdl_m11.h"
 #include "dm1_v1_f0740_f0743_music_source_pc34_compat.h"
 
@@ -271,6 +272,12 @@ static int run_scenario(const char* dataDir, enum Scenario scenario,
     menu.gameOptions[0].versionIndex = pc34Index;
     menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    if (scenario == SCENARIO_EARLY_QUIT) {
+        menu.settings.soundtrackMode = M11_SOUNDTRACK_MODE_CUSTOM;
+        snprintf(menu.settings.customMusicPath,
+                 sizeof(menu.settings.customMusicPath),
+                 "%s", "/firestaff-test-missing-music");
+    }
 
     M11_GameView_Init(&view);
     if (!M11_GameView_OpenSelectedMenuEntry(&view, &menu)) {
@@ -289,6 +296,17 @@ static int run_scenario(const char* dataDir, enum Scenario scenario,
         fprintf(stderr,
                 "FAIL: selected PC34 GRAPHICS.DAT did not bind its authenticated SONG.DAT for %s\n",
                 label);
+        M11_GameView_Shutdown(&view);
+        M12_StartupMenu_Destroy(&menu);
+        return 1;
+    }
+    if (scenario == SCENARIO_EARLY_QUIT &&
+        (!view.launcherOptionsBound ||
+         view.launcherOptions.soundtrackMode != M11_SOUNDTRACK_MODE_CUSTOM ||
+         view.audioState.titleMusicOverrideActive ||
+         !view.audioState.originalSongAvailable)) {
+        fprintf(stderr,
+                "FAIL: missing custom selector WAV did not preserve authentic launcher handoff fallback\n");
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
         return 1;

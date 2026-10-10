@@ -67,6 +67,9 @@ typedef struct {
     int originalSongPlayablePartCount;
     int originalSongLoopTargetPart; /* Legacy terminal payload: sequence index. */
     int originalSongLoopStartSample;
+    /* Optional launcher WAV override; authentic SONG.DAT remains fallback. */
+    M11_SoundBuffer titleMusicOverride;
+    int titleMusicOverrideActive;
     int titleMusicCursor;
     int titleMusicLoopActive;
     int titleMusicQueuedCount;
@@ -337,6 +340,10 @@ int M11_Audio_BindOriginalSnd3Path(M11_AudioState* state,
  * installation. */
 int M11_Audio_BindOriginalSongPath(M11_AudioState* state,
                                    const char* songDatPath);
+/* Load a bounded WAV selector-score override. Failure clears any older
+ * override so the authentic SONG.DAT score remains active. NULL also clears. */
+int M11_Audio_SetTitleMusicOverrideWav(M11_AudioState* state,
+                                       const char* wavPath);
 
 /* CDDA playback: accept Red Book 16-bit signed big-endian stereo 44100Hz
  * PCM and convert it for the dedicated little-endian SDL stream. Returns 1

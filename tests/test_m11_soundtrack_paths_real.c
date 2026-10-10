@@ -59,7 +59,7 @@ static int write_original_pcm_wav(const char* path, const M11_SoundBuffer* pcm)
 {
     FILE* file;
     int i;
-    int count = pcm->sampleCount < 256 ? pcm->sampleCount : 256;
+    int count = pcm->sampleCount;
     int ok;
     if (count <= 0 || !(file = fopen(path, "wb"))) return 0;
     fwrite("RIFF", 1, 4, file);
@@ -91,7 +91,7 @@ int main(void)
     DM1_V1_F0740F0743MusicSourcePc34 source;
     M11_AudioState audio;
     char cwd[FSP_PATH_MAX], base[FSP_PATH_MAX], scratch[FSP_PATH_MAX];
-    char resolved[FSP_PATH_MAX], expected[FSP_PATH_MAX], tiny[2];
+    char resolved[FSP_PATH_MAX], expected[FSP_PATH_MAX], badPath[FSP_PATH_MAX], tiny[2];
     char leaf[80];
     char* savedEnable;
     char* savedDisable;
@@ -138,6 +138,26 @@ int main(void)
     CHECK(FSP_JoinPath(expected, sizeof(expected), scratch, "title.wav") &&
           write_original_pcm_wav(expected, &audio.titleMusic), "write WAV from actual decoded original PCM");
     if (failures) goto cleanup;
+    CHECK(audio.titleMusic.sampleCount > M11_AUDIO_SAMPLE_RATE * 10,
+          "authentic selector PCM covers more than the SFX decoder limit");
+    CHECK(M11_Audio_SetTitleMusicOverrideWav(&audio, expected) &&
+          audio.titleMusicOverrideActive &&
+          audio.titleMusicOverride.sampleCount == audio.titleMusic.sampleCount,
+          "music decoder accepts a full-length WAV derived from authentic selector PCM");
+    CHECK(M11_Audio_SetTitleMusicOverrideWav(&audio, NULL) &&
+          !audio.titleMusicOverrideActive,
+          "clearing an override leaves the authentic selector score selected");
+    {
+        FILE* invalid = FSP_JoinPath(badPath, sizeof(badPath), scratch,
+                                     "bad.wav") ? fopen(badPath, "wb") : NULL;
+        if (invalid) {
+            fwrite("not a WAV", 1, 9, invalid);
+            fclose(invalid);
+        }
+        CHECK(invalid && !M11_Audio_SetTitleMusicOverrideWav(&audio, badPath) &&
+              !audio.titleMusicOverrideActive && audio.originalSongAvailable,
+              "malformed custom WAV falls back to the authentic SONG.DAT score");
+    }
     CHECK(M11_Soundtrack_GetTrackPath(M11_SOUNDTRACK_MODE_CUSTOM, "title", leaf,
           resolved, sizeof(resolved)) == M11_SOUNDTRACK_RESULT_RESOLVED &&
           strcmp(resolved, expected) == 0 && FSP_FileExists(resolved),
@@ -146,7 +166,8 @@ int main(void)
         SDL_AudioSpec spec;
         Uint8* bytes = NULL;
         Uint32 length = 0;
-        CHECK(SDL_LoadWAV(expected, &spec, &bytes, &length) && length == 512u &&
+        CHECK(SDL_LoadWAV(expected, &spec, &bytes, &length) &&
+              length == (Uint32)(audio.titleMusic.sampleCount * 2) &&
               spec.freq == M11_AUDIO_SAMPLE_RATE && spec.channels == 1,
               "derived authentic PCM file is a readable WAV");
         SDL_free(bytes);
@@ -171,6 +192,7 @@ int main(void)
 cleanup:
     if (created) {
         if (FSP_JoinPath(expected, sizeof(expected), scratch, "title.wav")) remove(expected);
+        if (FSP_JoinPath(badPath, sizeof(badPath), scratch, "bad.wav")) remove(badPath);
         TEST_RMDIR(scratch);
     }
     if (changed) CHECK(TEST_CHDIR(cwd) == 0, "restore working directory");

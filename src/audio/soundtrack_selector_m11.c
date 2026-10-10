@@ -25,10 +25,7 @@ static const char* const g_labels[M11_SOUNDTRACK_MODE_COUNT] = {
 };
 
 static const char* const g_extensions[] = {
-    ".ogg",
-    ".mp3",
     ".wav",
-    ".flac",
     NULL
 };
 

@@ -10,9 +10,9 @@
  *   0 = Original     : use the original V1 song stream loaded from
  *                      SONG.DAT / GRAPHICS.DAT (no path resolved).
  *   1 = Remastered   : look for a remastered track under the data
- *                      directory (data/music/remastered/<trackName>.ogg)
+ *                      directory (data/music/remastered/<trackName>.wav)
  *                      and fall back to Original when missing.
- *   2 = Custom Folder: look for <customMusicPath>/<trackName>.ogg|.mp3|.wav
+ *   2 = Custom Folder: look for <customMusicPath>/<trackName>.wav
  *                      and fall back to Original when missing.
  *
  * The Original profile never resolves a path (callers keep using the
@@ -54,7 +54,7 @@ int M11_Soundtrack_IsValid(int mode);
  *
  *   mode           : M11_SOUNDTRACK_MODE_*
  *   trackName      : logical name, e.g. "title", "dungeon1" (no
- *                    extension; resolver probes .ogg/.mp3/.wav).
+ *                    extension; resolver probes the supported .wav format).
  *   customMusicPath: directory to probe when mode = CUSTOM; may be
  *                    NULL/empty (then probes the default custom directory).
  *   outPath        : caller-owned buffer for the resolved path. May be
