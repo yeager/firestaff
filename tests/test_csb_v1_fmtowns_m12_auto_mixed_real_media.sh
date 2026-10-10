@@ -79,3 +79,60 @@ if (probe.get("launchedEver") != 1 or probe.get("sourceId") != "csb" or
 print("PASS: mixed authentic CSB M12 AUTO selected FM Towns and reached "
       "the original MINI.DAT party")
 PY
+
+# Select the non-default Atari edition from the same mixed original-media
+# collection through M12. There is deliberately no --platform argument: the
+# visible platform card must override the FM Towns AUTO choice and keep the
+# Atari source owner through its original C200 entrance.
+FIRESTAFF_CONFIG_PATH="$scratch/atari-config.toml" \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$scratch/atari-runtime.json" \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+HOME="$scratch" XDG_CONFIG_HOME="$scratch" APPDATA="$scratch" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --width 960 --height 600 --menu --game csb \
+    --data-dir "$collection_root" --debug \
+    --script 'wait20,click:586:131,wait20,click:729:202,wait20,click:225:202,wait:3600,click:813:156' \
+    --duration 120000 >"$scratch/atari-firestaff.log" 2>&1 || {
+        cat "$scratch/atari-firestaff.log" >&2
+        exit 1
+    }
+
+python3 - "$scratch/atari-firestaff.log" "$scratch/atari-runtime.json" \
+    "$atari_archive" <<'PY'
+import json
+import re
+import sys
+
+log_path, probe_path, atari_archive = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+ready = re.search(
+    r"CSB READY: gameId=csb dataDir=" + re.escape(atari_archive) +
+    r" variant=csb-st20-21-en route=startup "
+    r"handoff=atari-st-animate-ftlcode handoffHash=[0-9a-f]{8}", trace)
+launch = re.search(
+    r"launch phase=game-handoff mode=menu game=csb platform=Atari ST "
+    r"edition=st20-21-en source=" + re.escape(atari_archive), trace)
+if ready is None or launch is None:
+    raise SystemExit(
+        "FAIL: mixed CSB M12 did not hand off to the selected authentic Atari ST edition")
+
+startup = probe["startup"]
+party = probe["party"]
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "csb" or
+        startup.get("receiptReady") != 1 or startup.get("phase") != "inactive" or
+        startup.get("active") != 1 or startup.get("startupActive") != 0 or
+        startup.get("levelLoaded") != 1 or
+        probe.get("csbViewportHash", 0) == 0 or
+        (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+         party.get("direction"), party.get("championCount")) != (0, 9, 0, 2, 0)):
+    raise SystemExit(
+        f"FAIL: CSB M12 Atari selection did not reach the authentic C200 runtime: {probe}")
+
+print("PASS: mixed authentic CSB M12 menu selected Atari ST without --platform "
+      "and reached the original C200 runtime")
+PY
