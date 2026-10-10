@@ -62,6 +62,9 @@
   regional copies. The other twelve copies were hash-compared, not individually
   disassembled. No runtime source-LBA receipt identifies the loaded duplicate,
   and the indexed tables, branch outcomes, and movement meaning remain open.
+  A bounded audit of both retained JP input sweeps found no PC records at
+  `$D515` or any of its three RTS sites; those captures cannot establish helper
+  execution. See the existing-trace audit in the same note.
   See the `$D515` section in
   `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
 - The stale-origin edge is fixed, and normal-PCE dispatch now emits a bounded

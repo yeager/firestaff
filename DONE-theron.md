@@ -8233,6 +8233,21 @@ T900/original inventory semantics. No synthetic media was used.
   Full listings and hashes are in
   `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
 
+## 2026-10-10 — audit existing JP input-sweep traces for helper execution
+
+- Audited only the two retained input-sweep traces for instruction PC/fetch
+  records at `$D515`, `$D580`, `$D587`, and `$D5A6`. Neither trace contains
+  those addresses. Their static disassembly therefore does not establish that
+  these replays executed the helper or reached an RTS site.
+- The retained traces identify variant and Track 02 record as unknown. Their
+  selected selector/dispatch markers are not a continuous PC trace. The
+  existing input sidecars show alternating controller reads at `$44C1` and
+  `$44D2`, plus four applied scripted events, but do not resolve movement or
+  the source duplicate.
+- Recorded exact trace and sidecar hashes and the bounded evidence limits in
+  `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
+  No capture, private media, BIOS image, or game bytes were added to the repo.
+
 ## 2026-10-10 — disassemble the JP System Card input-poll boundary
 
 - Matched the retained authentic JP capture to the System Card with MD5

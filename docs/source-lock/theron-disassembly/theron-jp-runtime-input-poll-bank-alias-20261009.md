@@ -503,6 +503,28 @@ identical candidates therefore remain indistinguishable as the specific
 runtime source. Do not claim a unique source LBA, bank-population event, or
 that the save-state replay loaded any of these sectors during the capture.
 
+## Existing input-sweep trace audit
+
+The two retained JP input-sweep captures were checked specifically for
+instruction-fetch or PC records at `$D515`, `$D580`, `$D587`, and `$D5A6`.
+Neither trace contains any of those four addresses, so the static helper
+listing is not evidence that either replay executed the helper or reached one
+of its RTS sites. The trace headers also identify the game variant and
+Track 02 record as unknown. Existing input sidecars contain 3,582 reads
+alternating between `$44C1` and `$44D2`; the scripted-input receipts record
+four applied events. Main-trace selector/dispatch entries are selected
+markers, not a continuous PC trace through `$D515`.
+
+The `live.trace` SHA-256 values are `5711495b806881ea5860f4e5e42c282bbd0bc376ecd0056b77e331cc82fac11a`
+for the `1250` capture and
+`6de45fde630394729eb6aede7e2f5b37276bdfc5bec681f0f9c518451ccd5cb5` for the
+`1238` capture. Input sidecar hashes match across captures
+(`e151c48723b0f5b95bb0991d8626189716fdde6c60cf515231607997a099dac5`), as do
+scripted-input receipt hashes
+(`17f7c9541c0862c845a8b6d59eaba65d74f294bd20f6602344932ac0db484cfa`). This
+bounded audit adds no execution or movement claim; a same-session trace with
+instruction PCs and source-LBA receipts is still needed.
+
 Private captures remain on TRV2:
 
 - `/home/trv2/firestaff-theron-evidence/capture/l4c46-jp-input-sweep-20261009-1250/`
