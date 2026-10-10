@@ -5,7 +5,8 @@
 - Corrected six treasure-name source offsets and the dungeon-name section's
   inaccurate source description. Added an authentic-media regression for the
   seven fixed-width dungeon-name records, treasure labels, retrieval messages,
-  and the game-speed label.
+  and the game-speed label. Reworded the story-control comments to preserve
+  observed bytes without claiming unverified presentation meanings.
 - Three repeated runs passed against hash-authenticated US Track 02, and the
   test's missing-media path returned the CTest skip code. Gitleaks reported no
   leaks in the changed files. CTest configuration itself awaits CI because

@@ -6,7 +6,8 @@
  * Their trailing bytes are preserved as source data; no delimiter semantics
  * are inferred here.
  * Dungeon intro stories at UD 0x27613E-0x276CCC.
- *   Control bytes: 0x01=newline, 0x02=paragraph break, 0x03=section start.
+ * Story spans contain source bytes 0x01, 0x02, and 0x03; their runtime
+ * presentation semantics are not established by the current evidence.
  * Retrieval messages at UD 0x27713F-0x277288.
  * GAME SPEED label at UD 0x274227. */
 
@@ -30,7 +31,7 @@ static const char *const g_treasure_names[THERON_TRACK02_DUNGEON_COUNT] = {
     "Retaliator",      /* UD 0x277277 */
 };
 
-/* Stories verbatim from binary. 0x01=newline, 0x02=para break, 0x03=section. */
+/* Story bytes are verbatim; 0x01/0x02/0x03 presentation semantics are open. */
 static const char *const g_stories[THERON_TRACK02_DUNGEON_COUNT] = {
     /* 0: AKUTUBA — UD 0x27613E, 388 bytes */
     "Long ago, a great\x01"
