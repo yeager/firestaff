@@ -21,6 +21,16 @@
   mirror selection to a presented runtime frame with no core fallback draws.
   Other editions, physical M5 input and full playability remain open.
 
+  Local verification on 2026-10-10, using a fresh Release build on the Mac
+  mini M4 and original media from the user's data directory, passed the
+  native CLI/start-menu boot suites for DM1 PC 3.4, Amiga 2.0, Atari ST 1.2,
+  and FM Towns English/Japanese; CSB Amiga 3.1, Atari ST, and FM Towns
+  English/Japanese; and DM2 DOS English, Amiga English, Macintosh English,
+  and FM Towns. The DM2 Towns test also confirmed bare `--game dm2` AUTO
+  selection with competing installed editions, a stale saved PC choice, and
+  the first authentic runtime map. These boot and bounded input checks do not
+  establish full gameplay or physical MacBook Pro M5 behavior.
+
 - Verify iOS release packaging after the LZMA software-CRC selection fix
   using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and
   CRC-vector checks pass; complete release publication depends on all jobs.
