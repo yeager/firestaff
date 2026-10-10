@@ -9997,6 +9997,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                           o->dataDir,
                                           0)) {
                 launchedEver = 1;
+                if (o->debug) {
+                    m11_debug_log_launch_selection(
+                        &menuState, &gameView, "menu");
+                    m11_debug_trace_startup_frame(
+                        &debugStartupTrace, &gameView, o->gameId);
+                }
                 if (gameView.active) {
                     gameFrameNeedsPresent = 1;
                 }

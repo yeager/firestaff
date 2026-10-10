@@ -924,3 +924,8 @@ Reviewed 2026-08-29. Completed work only.
   selected dungeon, catalogued without the adjacent encoded champion-stat
   payloads, and translated only at the CSB PO presentation boundary. The
   real ZIP → ADF → M11 test proves the Swedish result and original fallback.
+- Mixed real-media M12 startup coverage now proves that AUTO chooses the
+  installed FM Towns build, while the CSB platform cards launch authentic
+  Atari ST and Amiga A31M media into their original first runtime states.
+  Pointer launches also emit the selected-platform debug handoff and startup
+  frame trace, matching keyboard launches.
