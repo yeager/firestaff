@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — decode bounded JP dungeon-state block transfers
+
+- A private replay of an authentic emulator-created JP Ak-Tu-Ba dungeon state
+  captured 3,452 main-RAM consumer reads. A verifier decoded four HuC6280
+  `TIA`/`TII` sites and confirmed complete source-range coverage in the bounded
+  trace over three passes. Every source byte reached the 16-row capture cap;
+  these are lower bounds, not execution totals.
+- The first `$A1B7` window read `$FF $00 $00 $00` five times across
+  `$287F-$2892`; a post-replay BaseRAM snapshot matches those bytes. No
+  destination writes or pre-transfer snapshot were captured, so the overlapping
+  `TII` is not evidence that it created the pattern or identifies its meaning.
+- Reproduction identity, verifier, snapshot hash, and capture limitations are
+  recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-dungeon-block-transfer-sample-20261010.md`.
+  The ephemeral trace/state remain private on TRV2.
+
 ## 2026-10-10 — preserve only live byte provenance at opcode fetch
 
 - The instrumented normal-PCE core now emits an opcode-fetch receipt only

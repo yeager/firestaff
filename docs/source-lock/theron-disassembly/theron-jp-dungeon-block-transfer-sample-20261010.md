@@ -23,6 +23,15 @@ windows; it does not record these destination writes as source-backed game
 state. In particular, the overlapping `$287f` to `$2883` transfer is listed
 without assigning a higher-level purpose.
 
+At `$a1b7`, the first contiguous 20-read window observed `$ff $00 $00 $00`
+repeated five times across `$287f-$2892`. The post-replay 8 KiB BaseRAM snapshot
+matches those 20 bytes (SHA-256
+`ca64be33c241c1f73d9ee72c1b977b169a19817a03314ebcde348aab2f38c60a`). This
+is consistent with the forward-copy overlap, but the artifacts contain neither
+a pre-transfer snapshot nor destination-write events. They do not establish
+that this instruction created the pattern; the source could already contain
+it.
+
 The capture emits at most 16 rows per physical BaseRAM byte. Every byte in
 each listed interval reached that cap, so the sidecar establishes complete
 range coverage and at least 16 observed reads per byte—not the total number of
