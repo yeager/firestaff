@@ -46676,6 +46676,15 @@ if(BUILD_TESTING AND THERON_SOURCES)
         LABELS "theron;real-media;static;source-lock"
     )
     add_test(
+        NAME theron_stage2_opcode_provenance
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_stage2_opcode_provenance.py
+    )
+    set_tests_properties(theron_stage2_opcode_provenance PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;source-lock"
+    )
+    add_test(
         NAME theron_v1_stage2_45xx_regional
         COMMAND test_theron_v1_stage2_disassembly_chain
     )
