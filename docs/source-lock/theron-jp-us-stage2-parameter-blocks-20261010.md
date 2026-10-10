@@ -10,7 +10,16 @@ code.
 
 Both Track 02 images pass their full-image identities in
 [`theron-jp-us-cold-boot-stage2-4002-candidate-20261010.md`](theron-disassembly/theron-jp-us-cold-boot-stage2-4002-candidate-20261010.md).
-The candidate listing ends at `$40d5`; the alternate entry starts at `$40e3`.
+The candidate listing begins at `$4002` and ends at `$40d5`; the alternate
+entry starts at `$40e3`. Both authentic images have the two preceding bytes
+`64 00` at `$4000`, which decode as `STZ $00`. The System Card `$E00F`
+trampoline uses the `$FA/$FB` pair as an indirect callback address; the first
+indexed block sets it to `$4000`. These bytes are now checked by the same
+real-media test, but this remains static source correspondence, not proof that
+the callback code was loaded or executed. See
+[`theron-syscard-stage2-callback-dispatch-20261010.md`](theron-syscard-stage2-callback-dispatch-20261010.md)
+for the optional, hash-locked System Card reference.
+
 The intervening bytes are:
 
 | Logical address | JP Rev. 1 | US Rev. 1 | Static use established here |
@@ -35,17 +44,23 @@ The listing at `$4080` clears X, then loads four consecutive bytes beginning
 at `$40d5` into `$FC`, `$FE`, `$FD` and `$F8`, respectively. It sets `$FA=0`,
 `$FB=$40` and `$FF=1` before calling `$E00F` at `$40a4`. Thus the indexed
 tuple contributes `$FC=00`, `$FE=e7`, `$FD=03` and `$F8=11` in both editions.
-Neither block assigns `$F9`; its value is therefore inherited from preceding
-execution at these call sites. The code then branches unconditionally back to
-`$4080` after the call.
+Neither caller assigns `$F9`. The shared System Card core at `$EC05` handles
+`$FF=1` by copying `$F8` to `$2280`, shifting `$F8` left three bits into `$F9`
+and clearing `$F8`; for this call, that produces `$F9=$88`. Although the
+instruction after `JSR $E00F` is `BRA $4080`, the BIOS's zero-status path
+resets the stack and jumps through the configured callback at `$4000`, so
+that path does not return to the branch. Other BIOS return/error behavior is
+not inferred here.
 
 At `$40a9`, X is cleared again and four bytes beginning at `$40dc` are loaded
 into the same registers. The routine sets `$FA=0`, `$FB=$30` and `$FF=1`,
 calls `$E009` at `$40cd`, compares A with zero and repeats while nonzero;
 zero returns through `$40d4`. This tuple contributes `$FC=00`, `$FE=e3`,
 `$FD=03` and `$F8=02` in both editions. These are literal register-flow
-facts, not parameter meanings. In particular, the current evidence does not
-identify the purpose of `$E00F`, `$E009`, or the values in the parameter block.
+facts, not parameter meanings. The shared `$EC05` path transforms this second
+call's `$F8=02` to `$F9=$10` and clears `$F8`. The current evidence does not
+identify the broader purpose of `$E00F`, `$E009`, or all values in the
+parameter block.
 
 The `$4002` candidate also begins with `TII $2000,$2001,$000f`, followed by
 `TII $2000,$2700,$0080`. Mednafen 1.32.1's PCE Fast HuC6280 implementation

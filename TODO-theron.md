@@ -220,6 +220,14 @@
   destination increments for the two visible TII transfers. No observed MPR
   mapping or copied runtime byte values are inferred from that static code.
   See `docs/source-lock/theron-jp-us-stage2-parameter-blocks-20261010.md`.
+- The optional authentic System Card 3.0 source lock maps `$E009 -> $EC05` and
+  `$E00F -> $EBEC`. The `$E00F` zero-status path tail-dispatches through
+  `$FA/$FB`; this stage-2 candidate sets that callback to `$4000`, whose two
+  authentic Track 02 prefix bytes are `64 00` (`STZ $00`). JP/US BIOS and
+  callback-prefix regressions preserve these references without adding a
+  runtime BIOS requirement. No callback execution or CD-to-RAM source receipt
+  is established. See
+  `docs/source-lock/theron-syscard-stage2-callback-dispatch-20261010.md`.
 
 ## 2026-10-10 - add an executed-opcode probe for the `$4002` candidate window
 

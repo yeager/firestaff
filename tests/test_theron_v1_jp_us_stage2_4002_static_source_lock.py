@@ -23,6 +23,7 @@ PARAMETER_NOTE_PATH = (
 WINDOW_LENGTH = 211
 PARAMETER_DATA_LENGTH = 14
 LISTING_START_PC = 0x4002
+CALLBACK_ENTRY_PREFIX = bytes.fromhex("6400")
 ALT_ENTRY_PC = 0x40E3
 ALT_ENTRY_DELTA = ALT_ENTRY_PC - LISTING_START_PC
 ALT_ENTRY_LENGTH = 201
@@ -110,6 +111,7 @@ def main() -> int:
         "| `$40d9-$40db` | `00 26 85` | `00 fc 83` |",
         "| `$40dc-$40df` | `00 e3 03 02` | `00 e3 03 02` |",
         "| `$40e0-$40e2` | `00 2b 0d` | `00 2b 0d` |",
+        "`64 00` at `$4000`, which decode as `STZ $00`.",
         "`$FC=00`, `$FE=e7`, `$FD=03` and `$F8=11`",
         "`$FC=00`, `$FE=e3`, `$FD=03` and `$F8=02`",
     ):
@@ -165,6 +167,9 @@ def main() -> int:
             raise AssertionError(f"{region} candidate span hash changed at {offset:#x}")
         if all_offsets(image, span) != (offset,):
             raise AssertionError(f"{region} 211-byte candidate is not unique at {offset:#x}")
+        callback_offset = offset - len(CALLBACK_ENTRY_PREFIX)
+        if callback_offset < 0 or image[callback_offset:offset] != CALLBACK_ENTRY_PREFIX:
+            raise AssertionError(f"{region} callback entry bytes at $4000 changed")
         call_offset = 0x404D - LISTING_START_PC
         if decoded[call_offset : call_offset + len(EXPECTED_CALL_40E3)] != EXPECTED_CALL_40E3:
             raise AssertionError("static candidate no longer calls alternate entry $40e3")
@@ -213,6 +218,7 @@ def main() -> int:
         raise AssertionError("JP/US indexed parameter tuples unexpectedly differ")
 
     print("PASS: unique 211-byte JP/US candidate and MAME HuC6280 listing match exactly")
+    print("PASS: JP/US callback entry prefix at $4000 is byte-identical")
     print("PASS: JP/US $40e3 alternate-entry listings match their distinct authentic spans")
     print("PASS: JP/US $40d5/$40dc indexed parameter tuples are source-locked")
     print(
