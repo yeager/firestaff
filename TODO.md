@@ -117,7 +117,9 @@
   path through its first presented runtime frame.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
-  language choice. Authentic DM1 DOS English (including the nested PC-34
+  language choice; the native Amiga input matrix reaches runtime, and the
+  authentic FTL A31E archive is discovered through AUTO and reaches runtime
+  from the start menu. Authentic DM1 DOS English (including the nested PC-34
   archive), Amiga HD, and FM Towns now also pass their original-media CLI/menu
   startup routes. DM1 Amiga v2.0 now also reaches its first Hall runtime frame
   through the pointer-driven M12 IMG2 route, and the same menu test restores
