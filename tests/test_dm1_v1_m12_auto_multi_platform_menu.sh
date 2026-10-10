@@ -2,6 +2,7 @@
 set -euo pipefail
 
 app=${1:?usage: test_dm1_v1_m12_auto_multi_platform_menu.sh <firestaff>}
+unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
 towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 pc_archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 dm1_data_dir=$(dirname "$towns_archive")
@@ -18,7 +19,9 @@ mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/dm1-auto-menu.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 
-data_root="$scratch/data"
+# Stage authentic archives in the documented per-user install layout.  No
+# --data-dir or FIRESTAFF_DATA override should mask AUTO's platform choice.
+data_root="$scratch/home/.firestaff/data"
 dm1_root="$data_root/dm1"
 mkdir -p "$dm1_root" "$scratch/home"
 # Keep the original archive names so catalogue identity and package checks
@@ -46,7 +49,7 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$app" --width 1920 --height 1080 --menu --game dm1 \
-    --data-dir "$data_root" --debug --verbose --script 'enter,enter,enter' \
+    --debug --verbose --script 'enter,enter,enter' \
     --duration 10000 >"$log" 2>&1 || {
         cat "$log" >&2
         exit 1
@@ -108,9 +111,9 @@ XDG_CONFIG_HOME="$scratch/home" \
 APPDATA="$scratch/home" \
 FIRESTAFF_CONFIG_PATH="$scratch/home/config.toml" \
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
-FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$cli_probe" \
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-    "$app" --game dm1 --data-dir "$data_root" --debug --verbose \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$cli_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --game dm1 --debug --verbose \
     --boot-probe --boot-probe-frames 2 --duration 0 >"$cli_log" 2>&1 || {
         cat "$cli_log" >&2
         exit 1
