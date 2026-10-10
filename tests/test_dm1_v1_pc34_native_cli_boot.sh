@@ -49,6 +49,45 @@ if len(matches) != 1:
 print(matches[0])
 PY
 )
+
+# Issue #13 reported that DM1 PC 3.4 could be marked verified while the
+# extracted DUNGEON.DAT failed to load. Exercise the installed loose-file
+# layout using bytes extracted from the authentic retail ZIP, before the
+# negative missing-SWSH case mutates this private copy.
+loose_runtime_probe="$test_scratch/dm1-pc34-loose-runtime-$$.json"
+loose_runtime_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$loose_runtime_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform pc --data-dir "$runtime_data_root" \
+    --script "$menu_original" --duration 10000 2>&1)" || {
+    printf '%s\n' "$loose_runtime_output" >&2
+    exit 1
+}
+if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$loose_runtime_output" ||
+   ! grep -Fq "dataDir=$runtime_data_root" <<<"$loose_runtime_output" ||
+   ! grep -Fq "graphicsPath=$runtime_data_root/GRAPHICS.DAT" <<<"$loose_runtime_output"; then
+    printf '%s\n' "$loose_runtime_output" >&2
+    printf '%s\n' 'FAIL: DM1 PC-34 loose-file menu did not bind the original GRAPHICS.DAT/DUNGEON.DAT pair' >&2
+    exit 1
+fi
+python3 - "$loose_runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["phase"] != "dm1-runtime" or startup["active"] != 1 or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1):
+    raise SystemExit(
+        f"FAIL: authentic DM1 PC-34 loose-file menu failed to load DUNGEON.DAT: {probe}")
+print("PASS: authentic DM1 PC-34 loose GRAPHICS.DAT/DUNGEON.DAT reach the first menu runtime frame")
+PY
+rm -f "$loose_runtime_probe"
 python3 - "$missing_swsh_root/data" <<'PY'
 from pathlib import Path
 import sys
