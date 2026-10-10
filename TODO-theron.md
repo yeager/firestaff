@@ -12,6 +12,15 @@
   frame before implementing or claiming full dungeon rendering. The existing
   pce_fast capture mode still has only close-time VDC snapshots, not an
   instruction-attributed VDC write trace.
+- The stale-origin edge is fixed, and normal-PCE dispatch now emits a bounded
+  opcode receipt only when the fetched byte has a still-valid, value-matching
+  source entry. Clean patch loops and a full serial emulator build pass. An
+  authentic US cold start with direct provenance enabled produced no
+  CD-to-RAM receipt or opcode-origin event, and ended `transition=missing`.
+  Next obtain a real emulator gameplay state or reach the loader's authentic
+  CD/RAM handoff, then join source-bound opcode PCs to game-owned VDC writes.
+  Do not infer byte origin from equal values or claim rendering parity from
+  the current BIOS-only VDC capture.
 
 ## 2026-10-10 — run the complete Theron-labeled CTest selection
 

@@ -155,6 +155,8 @@ sed \
     > "$ram_provenance_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$ram_provenance_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch"
 git -C "$build_root/source" apply --recount --ignore-space-change \
     --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fix.patch"
@@ -182,8 +184,12 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_drator_menu_route_research.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch"
+instruction_pc_patch="$repo/scripts/mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch"
+instruction_pc_rendered="$build_root/theron-pce-vdc-instruction-pc.rendered.patch"
+sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' "$instruction_pc_patch" \
+    > "$instruction_pc_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch"
+    < "$instruction_pc_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_selected_record_consumer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \

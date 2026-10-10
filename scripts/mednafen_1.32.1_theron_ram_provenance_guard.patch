@@ -1,0 +1,9 @@
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -242,3 +242,5 @@
+ if(read_value != stored_value)
++ {
+  return;
++ }
+  TheronPCECDTraceSeedMainRAMProvenance(physical, stored_value, source_lba,
+                                        source_offset, fifo_sequence);

@@ -25,6 +25,7 @@ main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_
 main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch
 ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
+ram_provenance_guard_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch
 vdc_instruction_pc_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch
 file_select_vdc_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_vdc_snapshot.patch
 file_select_scroll_driver_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch
@@ -549,6 +550,12 @@ fi
 if ! grep -Fq 'mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch' "$build_script" ||
    ! grep -Fq 'TheronPCEVDCInstructionPC = PC' "$vdc_instruction_pc_patch_file" ||
    ! grep -Fq 'TheronPCEVDCInstructionPhysicalPC = physical_pc' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceOpcodeProvenance(PC, physical_pc, lastop)' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'theron_opcode_provenance_fetch sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'else if(!direct_origin_seeded)' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_ram_provenance_guard.patch' "$build_script" ||
+   ! grep -Fq 'if(read_value != stored_value)' "$ram_provenance_guard_patch_file" ||
+   ! grep -Fq '+ {' "$ram_provenance_guard_patch_file" ||
    ! grep -Fq 'writer_pc = TheronPCEVDCInstructionPC' "$vdc_io_patch_file" ||
    ! grep -Fq 'writer_physical_pc = TheronPCEVDCInstructionPhysicalPC' "$vdc_io_patch_file" ||
    ! awk '

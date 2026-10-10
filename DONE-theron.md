@@ -1,5 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — preserve only live byte provenance at opcode fetch
+
+- The instrumented normal-PCE core now emits an opcode-fetch receipt only
+  when the fetched byte still has an exact, value-matching source entry in the
+  bounded RAM provenance map. Unknown writes invalidate prior provenance even
+  when they happen to store the same byte value; a verified direct CD read is
+  not overwritten by a stale pending RAM-copy receipt.
+- The complete Mednafen patch set applied three times against clean 1.32.1
+  source on TRV2. A serial build succeeded, including an incremental rebuild
+  with the explicit source-value guard. The resulting emulator SHA-256 is
+  `b06d4a83bd69b8322c20f8e91fc53468bb36f83b85e023f846d8cc61725967b6`.
+- An authentic US CUE/System Card cold-start capture with direct provenance
+  enabled produced 65,536 VDC writes but zero provenance seeds, copies, direct
+  receipts, or opcode-origin fetches. It also had zero authenticated CD-to-RAM
+  receipts and ended `transition=missing`. This verifies the negative-evidence
+  path only; it does not verify game-owned opcode origins, a dungeon frame, or
+  gameplay. Capture artifacts remained in volatile `/run/user/1000` storage.
+
 ## 2026-10-10 — bind normal-PCE VDC writes to instruction-start PC
 
 - The normal PCE VDC-I/O trace now records the HuC6280 logical and mapped

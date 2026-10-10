@@ -13,9 +13,10 @@
 +uint32 TheronPCEVDCInstructionPhysicalPC;
 +
  static FILE *TheronMainRAMLoaderTrace;
-@@ -1248,3 +1248,5 @@
+@@ -1248,3 +1248,6 @@
 	 lastop = RdOp(PC);
 	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	 TheronPCEVDCInstructionPC = PC;
 +	 TheronPCEVDCInstructionPhysicalPC = physical_pc;
-	 if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)
++	 TheronPCECDTraceOpcodeProvenance(PC, physical_pc, lastop);
+FIRESTAFF_PATCH_TAB_CONTEXT if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)

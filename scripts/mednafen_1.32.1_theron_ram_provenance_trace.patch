@@ -13,6 +13,8 @@ diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
 +void TheronPCECDTraceMainRAMProvenanceWrite(uint16 logical_address,
 +                                            uint32 physical_address, uint8 value,
 +                                            uint16 writer_pc, uint32 writer_physical_pc);
++void TheronPCECDTraceOpcodeProvenance(uint16 logical_pc, uint32 physical_pc,
++                                      uint8 opcode);
 FIRESTAFF_PATCH_BLANK_CONTEXT
 +void TheronPCECDTraceRecordWatchRead(uint16 logical_address,
 +                                     uint32 physical_address, uint8 value,
@@ -125,6 +127,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +                                            uint16 writer_pc, uint32 writer_physical_pc)
 +{
 + static int direct_origin_enabled = -1;
++ bool direct_origin_seeded = false;
 + if(direct_origin_enabled < 0)
 + {
 +  const char *setting = getenv("FIRESTAFF_THERON_RAM_PROVENANCE_DIRECT");
@@ -145,6 +148,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +  {
 +   TheronPCECDTraceSeedMainRAMProvenance(physical_address, value, source_lba,
 +                                         source_offset, fifo_sequence);
++   direct_origin_seeded = true;
 +   FILE *direct_trace = TheronPCECDGetRAMProvenanceTrace();
 +   if(direct_trace)
 +   {
@@ -159,7 +163,8 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 + if(physical_address < 0x0c0000 || physical_address >= 0x200000)
 +  return;
 + TheronPCECDMainRAMProvenance *entry = &TheronPCECDMainRAMProvenanceMap[physical_address];
-+ bool copied = TheronPCECDPendingRAMProvenance.valid &&
++ bool copied = !direct_origin_seeded &&
++               TheronPCECDPendingRAMProvenance.valid &&
 +               TheronPCECDPendingRAMProvenance.value == value;
 + if(copied)
 + {
@@ -175,9 +180,28 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +   fflush(trace);
 +  }
 + }
-+ else if(!entry->valid || entry->value != value)
++ else if(!direct_origin_seeded)
 +  entry->valid = false;
 + TheronPCECDPendingRAMProvenance.valid = false;
++}
++void TheronPCECDTraceOpcodeProvenance(uint16 logical_pc, uint32 physical_pc,
++                                      uint8 opcode)
++{
++ if(physical_pc < 0x0c0000 || physical_pc >= 0x200000)
++  return;
++ const TheronPCECDMainRAMProvenance *entry =
++  &TheronPCECDMainRAMProvenanceMap[physical_pc];
++ if(!entry->valid || entry->value != opcode)
++  return;
++ FILE *trace = TheronPCECDGetRAMProvenanceTrace();
++ if(trace && TheronPCECDRAMProvenanceTraceCount < 4096)
++ {
++  fprintf(trace, "theron_opcode_provenance_fetch sequence=%u source_lba=%u source_offset=%u fifo_sequence=%llu logical_pc=%04x physical_pc=%06x opcode=%02x\n",
++          TheronPCECDRAMProvenanceTraceCount++, entry->source_lba,
++          entry->source_offset, (unsigned long long)entry->fifo_sequence,
++          logical_pc, physical_pc, opcode);
++  fflush(trace);
++ }
 +}
 +static FILE *TheronPCECDRecordWatchTrace;
 +static unsigned TheronPCECDRecordWatchTraceCount;
