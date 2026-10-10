@@ -10,7 +10,9 @@ Reviewed 2026-09-05. Only open work is listed here.
   than the ADF images accepted by the current Amiga file path. Repacking those
   four byte-identical original members into ZIP and retrying the same CLI probe
   produced the same failure; ZIP handles the container but not the disk-image
-  format. ReDMCSB COMPILE.H:274-298 defines distinct A35E/A35M
+  format. The known-good A31 menu launch script, run against the original
+  A35 archive with `FIRESTAFF_FAIL_IF_NO_LAUNCH=1`, also ended with `no launch
+  reached before exit`. ReDMCSB COMPILE.H:274-298 defines distinct A35E/A35M
   executable and language-selection routes, so A31/A33 startup tests do not
   cover this edition. Implement bounded in-process access to the original
   media or another source-preserving intake path, then verify direct CLI,
