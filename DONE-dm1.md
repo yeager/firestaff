@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-10-10: `dm1_v1_dos_fr_zip_cli_boot` and
+  `dm1_v1_dos_en_archive_cli_boot` both passed against their installed
+  authentic DOS archives. These regressions verify CLI and start-menu launch
+  paths; they do not claim cross-desktop rendering parity.
+
 - 2026-10-08: Rebuilt the local launcher binary, then
   `dm1_v1_amiga_v20_archive_cli_boot` passed in 50.49 seconds against the
   authentic Amiga v2.0 ZIP -> ZIP -> ADF archive. It verified direct CLI,
