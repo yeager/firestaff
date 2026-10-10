@@ -156,6 +156,21 @@ static int verify_region(const char *region, const char *path,
                 free(track02);
                 return 1;
             }
+            for (int y = 0; y < source_level->height; ++y) {
+                for (int x = 0; x < source_level->width; ++x) {
+                    uint8_t runtime_tile = 0u;
+                    if (!theron_v1_world_track02_runtime_tile(
+                            &world, (int)dungeon_id, (int)level, x, y,
+                            &runtime_tile) ||
+                        runtime_tile != source_level->source_tiles[y][x]) {
+                        fprintf(stderr,
+                                "FAIL: %s dungeon %d level %u runtime tile (%d,%d) differs from its source map byte\n",
+                                region, (int)dungeon_id, level, x, y);
+                        free(track02);
+                        return 1;
+                    }
+                }
+            }
             ++loaded_maps;
         }
         if (loaded_maps != expected_map_counts[slot]) {

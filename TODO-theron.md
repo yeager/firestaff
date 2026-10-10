@@ -13,7 +13,13 @@
   The end at `$40d4` precedes edition-specific table data; runtime source
   binding and semantics remain unproven.
   The target-write trace now covers the full sampled physical fetch span,
-  but source-byte identity must still propagate to opcode fetches.
+  but source-byte identity must still propagate to opcode fetches. The
+  `theron_stage2_opcode_provenance` Python check validates trace structure and
+  byte consistency against authentic JP media only. Its test rows are
+  synthetic, and the trace header is not authenticated; a pass does not prove
+  emulator execution, FIFO/copy/write provenance, or actual opcode fetches.
+  Implement and run the instrumented runtime producer before making any such
+  claim.
 
 ## 2026-10-10 — lock the authentic JP UP-to-RAM control-flow pair
 
