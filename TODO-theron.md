@@ -24,6 +24,12 @@
   exists, but without those source receipts it does not establish Track 02
   delivery or gameplay. The private traces remain in the TRV2 `/run` tmpfs
   capture directory; no media, BIOS, or trace was added to the repository.
+- A 140-second replay at `run@540:300` ruled out the short-capture window:
+  the trace reached 82,818 input transactions, and the RUN hold was again
+  observed by System Card code, but no non-System-Card poll, CD IRQ, raw
+  sector, sector binding, or authenticated CD-to-RAM receipt appeared. The
+  scripted-input verifier passed three more loops. The loader transition is
+  still missing after the longer post-input interval.
 - Normal-PCE VDC writes now carry the exact HuC6280 instruction-start logical
   and physical PCs, captured before the dispatcher increments PC. A clean
   Mednafen build and authentic cold-start capture verified BIOS VDC attribution
