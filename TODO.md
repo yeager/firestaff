@@ -137,12 +137,13 @@
   pointer selection through films, New Game and mirror selection to an
   accepted original-asset runtime frame with no core fallback draws; its
   separate CLI boot probe also passes the startup boundary. The optional
-  French DOS original-save regression's M12 leg now uses normal Quick Resume
-  and a runtime receipt (not the rejected `--menu --boot-probe` pair), but this
-  local checkout lacks the authentic unpacked French EUDATA needed to execute
-  that route. English Atari ST 1.2, German Atari ST 1.2, French Atari ST 1.3
-  and English ST 1.0a/1.0b/1.1 also reach DM1 runtime from M12 with no selected
-  champions. All six source packages now have verified movement and pointer
+  authentic French DOS EUDATA ZIP now passes the normal M12 new-game route
+  through its first runtime frame and source-owned movement. The separate
+  original-save Quick Resume route remains unverified: the installed French
+  ZIP contains neither DMSAVE.DAT nor DMSAVE.BAK. English Atari ST 1.2,
+  German Atari ST 1.2, French Atari ST 1.3 and English ST 1.0a/1.0b/1.1 also
+  reach DM1 runtime from M12 with no selected champions. All six source
+  packages now have verified movement and pointer
   recruitment of C127 ordinal 14 through the normal M12 route; German v1.2
   also passes the direct CLI route. Repeat on any other admitted Atari profile.
   Atari now uses a distinct STARTUP1.C/F0437/F0441 media receipt, skips PC
