@@ -49,10 +49,10 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  fputs("source=mednafen-pce-instrumented-vdc-io\n", TheronVDCIOTrace);
 + }
 +
-+ writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
-+ writer_physical_pc =
-+  (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (writer_pc >> 13)) << 13) |
-+  (writer_pc & 0x1fff);
++ /* Use HuC6280::RunSub's opcode-dispatch PC, captured before PC++ in
++  * src/pce/huc6280.cpp:680-689; the live register is post-fetch here. */
++ writer_pc = TheronPCEVDCInstructionPC;
++ writer_physical_pc = TheronPCEVDCInstructionPhysicalPC;
 + fprintf(TheronVDCIOTrace,
 +         "vdc_io_write sequence=%u timestamp=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x a=%02x x=%02x y=%02x\n",
 +         TheronVDCIOTraceCount++, HuCPU.Timestamp(), HuCPU.GetLastLogicalWriteAddr(),

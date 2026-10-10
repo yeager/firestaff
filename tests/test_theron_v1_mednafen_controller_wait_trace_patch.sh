@@ -25,6 +25,7 @@ main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_
 main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch
 ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
+vdc_instruction_pc_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch
 file_select_vdc_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_vdc_snapshot.patch
 file_select_scroll_driver_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch
 adpcm_fifo_ram_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch
@@ -545,7 +546,25 @@ if ! grep -Fq 'autoload_state_magic=$(od -An -tx1 -N4' "$capture_script" ||
     printf '%s\n' 'FAIL: binary savestate magic must be checked without storing raw NUL bytes in a shell variable' >&2
     exit 1
 fi
-if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch' "$build_script" ||
+if ! grep -Fq 'mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch' "$build_script" ||
+   ! grep -Fq 'TheronPCEVDCInstructionPC = PC' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'TheronPCEVDCInstructionPhysicalPC = physical_pc' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'writer_pc = TheronPCEVDCInstructionPC' "$vdc_io_patch_file" ||
+   ! grep -Fq 'writer_physical_pc = TheronPCEVDCInstructionPhysicalPC' "$vdc_io_patch_file" ||
+   ! awk '
+       /mednafen_1\.32\.1_theron_save_manager_code_dump\.patch/ { save_manager = NR }
+       /mednafen_1\.32\.1_theron_pce_vdc_instruction_pc\.patch/ { exact_pc = NR }
+       END { if (!(save_manager && exact_pc > save_manager)) exit 1 }
+   ' "$build_script" ||
+   ! awk '
+       /physical_pc = \(MPR\[PC >> 13\]/ { physical = NR }
+       /TheronPCEVDCInstructionPC = PC/ { logical = NR }
+       /TheronPCEVDCInstructionPhysicalPC = physical_pc/ { mapped = NR }
+       /if\(physical_pc >= 0x1f0000/ { following = NR }
+       END { if (!(physical && logical > physical &&
+                   mapped > logical && following > mapped)) exit 1 }
+   ' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch' "$build_script" ||
    ! grep -Fq 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_PATCH_BLANK_CONTEXT' "$fast_vdc_snapshot_patch_file" ||
    ! grep -Fq 'TheronWritePCEFastLE16Snapshot(vram_path, vdc->VRAM, VRAM_Size)' "$fast_vdc_snapshot_patch_file" ||

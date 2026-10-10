@@ -1,3 +1,18 @@
+## 2026-10-10 — game-owned VDC instruction/source join remains open
+
+- Normal-PCE VDC writes now carry the exact HuC6280 instruction-start logical
+  and physical PCs, captured before the dispatcher increments PC. A clean
+  Mednafen build and authentic cold-start capture verified BIOS VDC attribution
+  and exact VWR-to-VRAM snapshot replay. That capture ended with
+  transition=missing and no authenticated CD-to-RAM receipt; it reached only
+  startup BIOS activity.
+- Continue with a controlled emulator-created gameplay state and authentic
+  JP/US Track 02 media. Bind the executing instruction bytes to their mapped
+  source origin, then join game-owned VDC/VCE/BAT writes to the same captured
+  frame before implementing or claiming full dungeon rendering. The existing
+  pce_fast capture mode still has only close-time VDC snapshots, not an
+  instruction-attributed VDC write trace.
+
 ## 2026-10-10 — run the complete Theron-labeled CTest selection
 
 - On TRV2, built the missing Theron test/probe targets and the `firestaff`

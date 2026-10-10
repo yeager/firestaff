@@ -1,0 +1,21 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -38,1 +38,5 @@
++/* HuC6280::RunSub dispatches from PC before PC++ (src/pce/huc6280.cpp,
++ * lines 680-689 in Mednafen 1.32.1). */
++MDFN_HIDE extern uint16 TheronPCEVDCInstructionPC;
++MDFN_HIDE extern uint32 TheronPCEVDCInstructionPhysicalPC;
+ class alignas(128) HuC6280
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -44,1 +44,4 @@
++uint16 TheronPCEVDCInstructionPC;
++uint32 TheronPCEVDCInstructionPhysicalPC;
++
+ static FILE *TheronMainRAMLoaderTrace;
+@@ -1248,3 +1248,5 @@
+	 lastop = RdOp(PC);
+	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
++	 TheronPCEVDCInstructionPC = PC;
++	 TheronPCEVDCInstructionPhysicalPC = physical_pc;
+	 if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)

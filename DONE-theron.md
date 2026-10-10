@@ -1,5 +1,26 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — bind normal-PCE VDC writes to instruction-start PC
+
+- The normal PCE VDC-I/O trace now records the HuC6280 logical and mapped
+  physical instruction PC captured at the opcode dispatch in RunSub, before
+  PC++. The prior hook sampled the live PC inside WrMem, after opcode and
+  operand fetches.
+- The complete instrumented Mednafen patch set applied three consecutive
+  times against the clean 1.32.1 source on TRV2, and the serial full build
+  succeeded. A cold-start run used authenticated JP Rev. 1 Track 02 and the
+  hash-verified System Card 3.0. Its 65,536-write VDC-I/O trace ended at the
+  declared snapshot boundary. The production VDC trace parser accepted that
+  trace three times and replayed 30,453 VWR commits; all 12,544 written words
+  matched the captured VRAM snapshot, with zero mismatches.
+- The first VDC writers also match the authentic System Card instruction
+  bytes at their captured physical PCs and write the corresponding VDC ports.
+  This verifies startup BIOS instruction attribution and snapshot consistency
+  only. The run ended with transition=missing; it does not establish
+  game-driven rendering, Track 02 source-to-VRAM provenance, or gameplay.
+  Capture artifacts remained in volatile /run/user/1000 storage and were
+  not added to Git.
+
 ## 2026-10-09 — bind the JP CUE startup candidate in INDEX 01 coordinates
 
 - The exact JP CUE projection now binds the same bounded startup-level
