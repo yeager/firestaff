@@ -19,17 +19,22 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+FETCH_PCS = (0x4002, 0x4009, 0x4010, 0x4011, 0x4014, 0x4016,
+             0x4018, 0x401B, 0x401C, 0x401E, 0x4010, 0x4002)
+
 def make_trace(raw: bytes) -> str:
-    span = MODULE.raw_source_span(raw, "JP", 4_521, 2, 211)
     rows = [MODULE.TRACE_HEADER]
-    for index, value in enumerate(span):
-        user_offset = 2 + index
+    for index, pc in enumerate(FETCH_PCS):
+        pc_offset = pc - MODULE.STAGE2_PC
+        user_offset = MODULE.STAGE2_USER_OFFSET["JP"] + pc_offset
+        value = MODULE.raw_source_span(raw, "JP", MODULE.STAGE2_LBA["JP"], user_offset, 1)[0]
         lba = 4_521 + user_offset // 2_048
         raw_offset = 16 + user_offset % 2_048
+        physical_pc = MODULE.PHYSICAL_STAGE2_BASE + pc_offset
         rows.append(
             "opcode_origin_fetch "
-            f"fetch_sequence={index} generation=9 logical_pc={0x4002 + index:04x} "
-            f"physical_pc={0x100002 + index:06x} mpr_slot=2 mpr_bank=80 "
+            f"fetch_sequence={index} generation=9 logical_pc={pc:04x} "
+            f"physical_pc={physical_pc:06x} mpr_slot={(pc >> 13) & 7} mpr_bank=80 "
             f"opcode={value:02x} source_lba={lba} "
             f"source_user_offset={user_offset} source_raw_offset={raw_offset} "
             f"source_value={value:02x}"
@@ -62,8 +67,10 @@ def main() -> int:
     valid_trace.write_text(trace, encoding="ascii")
     try:
         accepted = MODULE.verify(valid_trace, track02, "JP")
-        if len(accepted) != 211:
-            raise AssertionError("valid media-derived provenance contract has wrong length")
+        if len(accepted) != len(FETCH_PCS):
+            raise AssertionError("valid branch/repeat provenance contract has wrong length")
+        if accepted[0] != accepted[-1] or accepted[2] != accepted[10]:
+            raise AssertionError("repeated PCs did not preserve their source bytes")
         rows = trace.splitlines()
         mutations = (
             (rows[:1] + rows[2:], "missing-fetch"),
@@ -92,8 +99,8 @@ def main() -> int:
         for path in TEST_ROOT.iterdir():
             path.unlink()
         TEST_ROOT.rmdir()
-    print("PASS: trace consistency checker accepts matching rows and rejects missing, duplicate, and altered fields")
-    print("LIMIT: rows are synthetic; this is not emulator, opcode-origin, or gameplay evidence")
+    print("PASS: checker accepts branch/repeat rows and rejects missing, duplicate, and altered fields")
+    print("LIMIT: rows are synthetic contract-test inputs, not emulator, opcode-origin, or gameplay evidence")
     return 0
 
 

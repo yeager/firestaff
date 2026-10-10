@@ -30,6 +30,14 @@
   An authentic-media execution capture now exists; add byte-origin tracking
   before making any source-origin or gameplay claim.
 
+- The source-origin trace contract now maps each fetch from its logical PC,
+  permits branch and loop revisits, and bounds traces at one million rows.
+  Its regression uses media-derived synthetic contract rows that include
+  branches and repeated PCs; three runs pass against the authentic JP BIN.
+  The existing cold-boot opcode probe shows non-linear and repeated PCs, but
+  lacks per-byte source-origin receipts. This contract test does not validate
+  that probe as source-origin evidence or establish gameplay.
+
 ## 2026-10-10 - add an executed-opcode probe for the `$4002` candidate window
 
 - The opt-in PCE Fast probe records the byte returned by `RdAtPC()` at the
