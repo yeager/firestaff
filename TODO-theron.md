@@ -16,7 +16,8 @@
   frame 450 and frame 540, respectively. The latter starts after the
   documented System Card title delay. For each trace, the scripted-input
   verifier passed three repeated checks: RUN was applied and followed by a
-  controller read, but that read was still in System Card code
+  controller read with the expected active-low button value (`raw=0008`,
+  `sel=0`, `value=37`), but that read was still in System Card code
   (`non_system_card_poll_reads=0`). Both captures ended `transition=missing`,
   with zero CD IRQ callbacks, raw-sector spans, SCSI read bindings, byte-origin
   RAM receipts, or authenticated CD-to-RAM receipts. A CD-RAM write sidecar
