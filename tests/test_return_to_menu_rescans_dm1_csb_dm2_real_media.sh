@@ -222,8 +222,8 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
         atari_data_root="$scratch/csb-atari-data"
         stage_csb_return_data_root "$atari_data_root"
         run_return_to_menu_case csb auto \
-            'wait20,click:586:131,wait20,click:729:202,wait20,click:225:202,wait:3600,click:813:156,wait:100,back,wait:10,enter' \
-            110000 \
+            'wait20,click:586:131,wait20,click:729:202,wait20,click:225:202,wait-game-runtime,back,enter' \
+            45000 \
             'startup-frame game=csb .*phase=(csb-entrance-4|inactive) .*level-loaded=1 map=0 party=9,0 dir=2 champions=0' \
             'CSB READY: gameId=csb dataDir=.*variant=csb-st20-21-en .*handoff=atari-st-animate-ftlcode' \
             "$atari_data_root" 960 600 csb-atari
