@@ -1,0 +1,46 @@
+# Theron JP dungeon-state block-transfer sample
+
+An instrumented Mednafen 1.32.1 `pce_fast` replay of an emulator-created JP
+Ak-Tu-Ba dungeon state recorded 3,452 main-RAM consumer reads. Four frequently
+observed HuC6280 block-transfer instructions have complete source-range
+coverage in the bounded sidecar. This is runtime disassembly of a restored
+state, not a fresh CD-to-RAM capture, a source-origin receipt, or evidence for
+the meaning of any game field.
+
+## Captured transfer windows
+
+| Logical PC | Physical PC | Instruction | Source range | Destination | Length | Complete reads |
+| ---: | ---: | --- | --- | --- | ---: | ---: |
+| `$b9fc` | `$0e19fc` | `TIA` | `$2062-$2081` | alternating `$0002/$0003` | 32 | 16 per source byte |
+| `$b985` | `$0e1985` | `TII` | `$2f2c-$2f40` | `$20a7-$20bb` | 21 | 16 per source byte |
+| `$a1b7` | `$0e01b7` | `TII` | `$287f-$2892` | `$2883-$2896` | 20 | 16 per source byte |
+| `$c1e7` | `$0d21e7` | `TII` | `$2090-$2093` | `$2897-$289a` | 4 | 16 per source byte |
+
+The `TIA` destination alternation and the `TII` forward-copy form follow the
+HuC6280 implementation in Mednafen 1.32.1 `src/pce_fast/huc6280.cpp`
+(`BMT_TIA` and `BMT_TII`). The trace records source reads and instruction
+windows; it does not record these destination writes as source-backed game
+state. In particular, the overlapping `$287f` to `$2883` transfer is listed
+without assigning a higher-level purpose.
+
+## Reproduction identity and limits
+
+- Authentic JP Track 02 `TQJP02.bin`, SHA-256
+  `d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb`.
+- Emulator-created dungeon-state file, SHA-256
+  `1231f1cccfeddaf08f519e3c2a72251139cf5012a5cae327db6a594f3adc8f24`.
+- Instrumented Mednafen executable, SHA-256
+  `e43f7a9d199e1c0d53eb499dbc818bf23984bbfc0fbae7c84a8ecd88f9f8d8de`.
+- Main-RAM consumer sidecar, SHA-256
+  `532e7c928b2200baf318dfc80dfc8f3eb9b7103dc11236dfc0d25651fc0bf5c9`.
+
+A three-pass run of
+`scripts/verify_theron_jp_dungeon_block_transfer_trace.py` confirmed contiguous
+sequence numbers, the four decoded operand sets, and exactly 16 reads for
+every source byte in each listed range. The sidecar remains private and
+ephemeral on TRV2; it is not included in Git.
+The capture process did not pass its separate PCE Fast VDC snapshot gate; this
+partial sidecar must not be reported as a complete capture. No Track 02 byte
+origin was attached to the restored RAM, and no routine names or gameplay
+semantics are established here. Continue with a fresh authentic loader
+transition that binds source bytes through RAM writes to executing consumers.

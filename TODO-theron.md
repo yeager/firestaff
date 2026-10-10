@@ -1,3 +1,16 @@
+## 2026-10-10 — restored-state RAM transfers lack source provenance
+
+- A private replay of the authentic JP Ak-Tu-Ba dungeon state decoded four
+  frequently observed HuC6280 block transfers, with 16 complete source-range
+  reads per byte at each instruction site. The trace identity and bounded
+  disassembly are in
+  `docs/source-lock/theron-disassembly/theron-jp-dungeon-block-transfer-sample-20261010.md`.
+- These observations describe copy operations in restored RAM only. They do
+  not bind any instruction or RAM byte to Track 02, identify the copied fields,
+  or establish gameplay semantics. Obtain a fresh loader transition and trace
+  authentic source bytes through writes to the mapped consumers before
+  implementing behavior or claiming parity.
+
 ## 2026-10-10 — game-owned VDC instruction/source join remains open
 
 - Normal-PCE VDC writes now carry the exact HuC6280 instruction-start logical
