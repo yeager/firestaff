@@ -19,6 +19,15 @@ Reviewed 2026-09-05. Only open work is listed here.
   start-menu selection, A35E/A35M handoff and first runtime input against the
   authentic disks. Do not treat renamed or converted test images as proof of
   native CTRaw support, and keep emulator or BIOS dependencies out of runtime.
+  A local search found no independently decoded A35 sector image or usable
+  CAPS reader, so the filesystem type is not yet established. The third-party
+  `rsn8887/capsimg` source examined for format research carries a
+  non-commercial restriction in its
+  [license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt); do not
+  bundle or adapt it without a separate license review.
+  Any decoder acceptance run must compare reconstructed files against the
+  existing original-media hashes in `data/asset_validator_checksums_m12.json`
+  and `parity-evidence/csb_v1_l10n_source_catalog.md`.
 
 - Restore the original French Atari ST preservation ZIP before revalidating
   `csb_v1_atari_french_preservation_zip_cli_boot`. The test currently skips:
