@@ -4764,6 +4764,16 @@ int dm1_v1_startup_selected_boot_probe_receipt_pc34(
         dm1_v1_startup_selected_entry_receipt_valid_pc34(
             facts->expected_game_id,
             facts->intro_bypassed);
+    /* Amiga 3.6 Multilanguage is admitted as an authentic runtime while its
+     * source-owned F0441 intro handoff remains unimplemented. Accept its
+     * narrowly identified direct path without changing the PC34/A20 gate. */
+    if (facts->expected_game_id && facts->verified_asset_md5 &&
+        strcmp(facts->expected_game_id, "dm1") == 0 &&
+        strcmp(facts->verified_asset_md5,
+               "7f9458e4a3972d06e649a6fa85a7f34b") == 0 &&
+        facts->intro_bypassed && facts->started_from_launcher) {
+        receipt.selected_entry_receipt_valid = 1;
+    }
     /* In boot-probe phase-a, `active` means the selected-entry launcher is
      * still open. A successful DM1 source-visible launch has already consumed
      * that selected entry by the time the receipt reaches dm1-runtime, so the

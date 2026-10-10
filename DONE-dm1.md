@@ -2550,3 +2550,22 @@ Reviewed 2026-08-29. Completed work only.
   Focused real-media CTest `m11_dm1_pc34_first_monster_combat_real` passes.
   This verifies the Firestaff runtime route with retail media, not XP,
   attack-roll parity, or an original-executable capture.
+# 2026-10-10 — Amiga 3.6 DM1 direct runtime route
+
+- ReDMCSB `STARTUP1.C` calls F0437 before the platform startup path, while the
+  available F0437 title and F0441 entrance receipts are A20/PC34-specific.
+  Previously the M12 selected-launch router sent authentic Amiga 3.6 media
+  through the PC34 transaction, which rejected its native virtual ADF.
+- The selected DM1 Amiga 3.6 edition now uses the authenticated generic
+  runtime route. The boot-probe exception is limited to the original
+  `GRAPHICS.DAT` MD5 `7f9458e4a3972d06e649a6fa85a7f34b`; other DM1 editions
+  retain the existing source-visible intro requirement. The receipt reports
+  `dm1-runtime-direct` and marks the intro as bypassed.
+- Repacked only the original ADF from the existing archival 7z into
+  `Dungeon-Master_Amiga_36.zip` under the external user data directory; no game
+  data was added to the repository. `dm1_v1_amiga36_original_media_cli_boot`
+  passes for both `--game dm1 --platform amiga` and the start-menu route with
+  that ZIP. Both reach a loaded runtime and report the authentic asset hash.
+- This does not implement or verify Amiga 3.6 F0437 title playback, F0441
+  entrance playback, viewport parity, or native HiDPI behavior. Those remain
+  open in TODO.

@@ -4201,6 +4201,17 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME dm1_v1_amiga36_original_media_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga36_original_media_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_amiga36_original_media_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;amiga;real-media;native;cli;menu;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA36_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_36.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/.codex-scratch;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga36;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga36;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga36"
+        TIMEOUT 60
+    )
+    add_test(
         NAME dm1_v1_amiga_v20_archive_cli_boot
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga_v20_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>

@@ -9,7 +9,9 @@
   ADF CLI/start-menu regression verifies that this title phase completes
   before the first runtime frame. Amiga 2.0 French, 2.x German/English, 3.6,
   and demo title receipts remain unverified; generic PC title-step receipts
-  are not Amiga evidence.
+  are not Amiga evidence. Amiga 3.6 now reaches its authenticated runtime via
+  the direct route, but its source-owned F0437 title and F0441 entrance remain
+  unimplemented and must not be inferred from that runtime test.
 - Extend the authenticated Amiga A20 English F0441 entrance route to the
   remaining Amiga editions after establishing each edition's original
   GRAPHICS.DAT / SWSH identity pair. The production route now authenticates
@@ -20,7 +22,9 @@
   F0437 title and F0441 entrance complete before the ADF gameplay handoff.
   Remaining: A20 French, other Amiga 2.x editions, 3.6, demo media, and native
   renderer/input timing on each supported desktop; the A20 English test does
-  not establish pixel parity or HiDPI behavior.
+  not establish pixel parity or HiDPI behavior. Authentic Amiga 3.6 now has a
+  direct runtime route because its edition-specific F0441 transaction is not
+  yet implemented; see DONE for exact limits.
 
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
   shared SDL presentation path. The attached screenshot's dungeon pixels are

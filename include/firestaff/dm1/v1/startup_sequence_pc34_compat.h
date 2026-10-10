@@ -1575,6 +1575,7 @@ typedef struct DM1_V1_StartupSelectedBootProbeFacts_PC34 {
     int active;
     int started_from_launcher;
     int intro_bypassed;
+    const char* verified_asset_md5;
 } DM1_V1_StartupSelectedBootProbeFacts_PC34;
 
 typedef struct DM1_V1_StartupSelectedBootProbeReceipt_PC34 {

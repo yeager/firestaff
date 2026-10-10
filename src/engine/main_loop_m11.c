@@ -4706,6 +4706,33 @@ static int m11_selected_dm1_is_amiga_hd(const M12_StartupMenuState* menuState,
            strstr(version->matchedPath, "[HD]") != NULL;
 }
 
+static int m11_selected_dm1_is_amiga36(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry) {
+    int versionIndex =
+        m11_selected_dm1_launch_version_index(menuState, entry);
+    const M12_AssetVersionStatus* version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                     (size_t)versionIndex)
+        : NULL;
+    /* ReDMCSB STARTUP1.C:143 calls F0437 before the Amiga startup path.
+     * TITLE.C's F0437 artwork branches do not include A36M; the present
+     * source-authenticated title/entrance transaction is PC34/A20E-specific.
+     * Admit A36M's authenticated virtual-disk runtime directly until its
+     * ENTRANCE.C F0441 path is bound. */
+    return version && version->versionId &&
+           strcmp(version->versionId, "amiga36-multi") == 0 &&
+           M12_AssetStatus_GetVersionArchitecture(
+               "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA;
+}
+
+static int m11_selected_dm1_uses_direct_amiga_launch(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry) {
+    return m11_selected_dm1_is_amiga_hd(menuState, entry) ||
+           m11_selected_dm1_is_amiga36(menuState, entry);
+}
+
 static int m11_play_dm1_fmtowns_title_if_available(
     M11_GameViewState *gameView, int *outPlayedAnyFrame) {
     const DM1_V1_FmtownsStartupReceipt *plan;
@@ -4972,7 +4999,7 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
     }
-    if (m11_selected_dm1_is_amiga_hd(menuState, launchEntry)) {
+    if (m11_selected_dm1_uses_direct_amiga_launch(menuState, launchEntry)) {
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
     }
@@ -5039,6 +5066,15 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
         /* Theron's Quest has no source -- no intro needed. */
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
+        if (m11_selected_dm1_is_amiga36(menuState, launchEntry) &&
+            launchEntry && launchEntry->gameId &&
+            strcmp(launchEntry->gameId, "dm1") == 0) {
+            /* A36M reaches the authenticated runtime without the source-owned
+             * F0441 entrance. Keep the startup receipt honest about that
+             * bypass while preserving that this came from the launcher. */
+            gameView->dm1StartupIntroBypassed = 1;
+            gameView->startedFromLauncher = 1;
+        }
         if (m11_selected_dm1_is_atari(menuState, launchEntry)) {
             if (!getenv("FIRESTAFF_EXIT_AFTER_LAUNCH")) {
                 DM1_V1_StartupHandoffPostLaunchPlan_PC34 entrancePlan;
@@ -9556,6 +9592,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                      receipt.startedFromLauncher,
                  selectedFacts.intro_bypassed =
                      receipt.dm1StartupIntroBypassed,
+                 selectedFacts.verified_asset_md5 = receipt.bootAssetMd5,
                  !dm1_v1_startup_selected_boot_probe_receipt_pc34(
                      &selectedFacts,
                      &selectedReceipt)) ||
