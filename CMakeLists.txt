@@ -17987,7 +17987,9 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;m12;auto;menu;startup;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        TIMEOUT 120
+        # Three authentic M12 sessions play their source-owned intros before
+        # checking the FM Towns, Atari ST, and Amiga runtime handoffs.
+        TIMEOUT 300
     )
     # Keep both language-private F31 program chains independently runnable.
     # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
