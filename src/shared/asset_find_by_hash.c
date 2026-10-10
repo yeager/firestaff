@@ -63,6 +63,7 @@
 static int external_tool_available_for_path(const char *path);
 static void record_access_denied_file_parent(const char *path);
 static void record_access_denied_file_parent_if_present(const char *path);
+static void record_access_denied_directory_if_unreadable(const char *path);
 static int asset_scan_access_denied_errno(int errorCode);
 
 /* ── Embedded MD5 (same as asset_status_m12.c) ────────────────── */
@@ -4411,29 +4412,6 @@ const char *asset_scan_access_denied_directory_path(int index) {
 static void record_access_denied_directory(const char *path) {
     int i;
     if (!path || path[0] == '\0') return;
-#ifdef _WIN32
-    {
-        DWORD attributes = GetFileAttributesA(path);
-        /* FindFirstFileA can report ACCESS_DENIED for a missing wildcard
-         * candidate on some Windows runner/filesystem combinations.  Only
-         * tell the launcher a folder needs permission when the directory
-         * metadata confirms that the candidate exists. */
-        if (attributes == INVALID_FILE_ATTRIBUTES ||
-            (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-            return;
-        }
-    }
-#else
-    {
-        struct stat st;
-        /* Do not turn an inaccessible/missing file candidate into a folder
-         * permission warning.  stat still succeeds for macOS privacy denial
-         * cases where opening/listing the existing folder is blocked. */
-        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) {
-            return;
-        }
-    }
-#endif
     for (i = 0; i < g_accessDeniedDirectoryCount; ++i) {
         if (strcmp(g_accessDeniedDirectoryPaths[i], path) == 0) return;
     }
@@ -4479,6 +4457,51 @@ static void record_access_denied_file_parent(const char *path) {
 
 static int asset_scan_access_denied_errno(int errorCode) {
     return errorCode == EACCES || errorCode == EPERM;
+}
+
+static void record_access_denied_directory_if_unreadable(const char *path) {
+    if (!path || path[0] == '\0') return;
+#ifdef _WIN32
+    {
+        DWORD attributes = GetFileAttributesA(path);
+        HANDLE directory;
+        DWORD errorCode;
+        if (attributes == INVALID_FILE_ATTRIBUTES ||
+            (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+            return;
+        }
+        /* FindFirstFileA(dir\\*) can report ACCESS_DENIED for a candidate
+         * that the process can still enumerate. Confirm the actual list
+         * right before showing a folder-permission prompt. */
+        directory = CreateFileA(path, FILE_LIST_DIRECTORY,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE |
+                                    FILE_SHARE_DELETE,
+                                NULL, OPEN_EXISTING,
+                                FILE_FLAG_BACKUP_SEMANTICS, NULL);
+        if (directory != INVALID_HANDLE_VALUE) {
+            CloseHandle(directory);
+            return;
+        }
+        errorCode = GetLastError();
+        if (errorCode == ERROR_ACCESS_DENIED) {
+            record_access_denied_directory(path);
+        }
+    }
+#else
+    {
+        struct stat st;
+        DIR *directory;
+        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) return;
+        directory = opendir(path);
+        if (directory) {
+            closedir(directory);
+            return;
+        }
+        if (asset_scan_access_denied_errno(errno)) {
+            record_access_denied_directory(path);
+        }
+    }
+#endif
 }
 
 static void record_access_denied_file_parent_if_present(const char *path) {
@@ -6134,7 +6157,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     d = opendir(dir);
     if (!d) {
         if (asset_scan_access_denied_errno(errno)) {
-            record_access_denied_directory(dir);
+            record_access_denied_directory_if_unreadable(dir);
         }
         return 0;
     }
@@ -6147,7 +6170,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
         }
         if (stat(path, &st) != 0) {
             if (asset_scan_access_denied_errno(errno)) {
-                record_access_denied_directory(path);
+                record_access_denied_directory_if_unreadable(path);
             }
             continue;
         }
@@ -6230,7 +6253,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
     d = opendir(dir);
     if (!d) {
         if (asset_scan_access_denied_errno(errno)) {
-            record_access_denied_directory(dir);
+            record_access_denied_directory_if_unreadable(dir);
         }
         return 0;
     }
@@ -6242,7 +6265,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
         }
         if (stat(path, &st) != 0) {
             if (asset_scan_access_denied_errno(errno)) {
-                record_access_denied_directory(path);
+                record_access_denied_directory_if_unreadable(path);
             }
             continue;
         }
@@ -6295,7 +6318,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     h = FindFirstFileA(pattern, &fd);
     if (h == INVALID_HANDLE_VALUE) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
-            record_access_denied_directory(dir);
+            record_access_denied_directory_if_unreadable(dir);
         }
         return 0;
     }
@@ -6377,7 +6400,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
     h = FindFirstFileA(pattern, &fd);
     if (h == INVALID_HANDLE_VALUE) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
-            record_access_denied_directory(dir);
+            record_access_denied_directory_if_unreadable(dir);
         }
         return 0;
     }
