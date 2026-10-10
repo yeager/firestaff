@@ -1,3 +1,12 @@
+## 2026-10-10 — run the complete Theron-labeled CTest selection
+
+- On TRV2, built the missing Theron test/probe targets and the `firestaff`
+  executable serially, then ran all 110 CTests labeled `theron` with `-j2`.
+  The final run reported 110 tests, zero failures, and 11 skips. Skips require
+  optional combined RAR/CloneCD/ISO media or emulator capture evidence that is
+  not staged in this build environment. This validates the registered suite,
+  not complete retail gameplay or platform parity.
+
 ## 2026-10-10 — lock the cold-boot `$4002` static source candidate
 
 - Added a 211-byte MAME HuC6280 listing through `$40d4` (`RTS`) for the
