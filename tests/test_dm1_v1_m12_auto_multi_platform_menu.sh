@@ -4,6 +4,9 @@ set -euo pipefail
 app=${1:?usage: test_dm1_v1_m12_auto_multi_platform_menu.sh <firestaff>}
 towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 pc_archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
+dm1_data_dir=$(dirname "$towns_archive")
+atari_archive=${FIRESTAFF_DM1_ATARI_ARCHIVE:-"$dm1_data_dir/Dungeon-Master_Atari-ST_EN.zip"}
+amiga_archive=${FIRESTAFF_DM1_AMIGA_ARCHIVE:-"$dm1_data_dir/Dungeon-Master_Amiga_EN_Version-20.zip"}
 
 if [[ ! -x "$app" || ! -f "$towns_archive" || ! -f "$pc_archive" ]]; then
     echo 'SKIP: authentic DM1 FM Towns and PC-3.4 archives are required'
@@ -22,6 +25,16 @@ mkdir -p "$dm1_root" "$scratch/home"
 # see the same media users install; the test never extracts or modifies it.
 ln -s "$towns_archive" "$dm1_root/$(basename "$towns_archive")"
 ln -s "$pc_archive" "$dm1_root/$(basename "$pc_archive")"
+extra_atari_media=""
+extra_amiga_media=""
+if [[ -f "$atari_archive" ]]; then
+    ln -s "$atari_archive" "$dm1_root/$(basename "$atari_archive")"
+    extra_atari_media=1
+fi
+if [[ -f "$amiga_archive" ]]; then
+    ln -s "$amiga_archive" "$dm1_root/$(basename "$amiga_archive")"
+    extra_amiga_media="dm1 platform=Amiga edition=amiga20-en matched"
+fi
 
 probe="$scratch/runtime.json"
 log="$scratch/firestaff.log"
@@ -33,17 +46,18 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$app" --width 1920 --height 1080 --menu --game dm1 \
-    --data-dir "$data_root" --debug --script 'enter,enter,enter' \
+    --data-dir "$data_root" --debug --verbose --script 'enter,enter,enter' \
     --duration 10000 >"$log" 2>&1 || {
         cat "$log" >&2
         exit 1
     }
 
-python3 - "$log" "$probe" "$dm1_root" <<'PY'
+python3 - "$log" "$probe" "$dm1_root" "$extra_atari_media" "$extra_amiga_media" <<'PY'
 import json
+import re
 import sys
 
-log_path, probe_path, dm1_root = sys.argv[1:]
+log_path, probe_path, dm1_root, *extra_media = sys.argv[1:]
 with open(log_path, encoding="utf-8") as stream:
     trace = stream.read()
 with open(probe_path, encoding="utf-8") as stream:
@@ -59,6 +73,12 @@ checks = (
 for needle, label in checks:
     if needle not in trace:
         raise SystemExit(f"FAIL: {label} missing from M12 trace\n{trace}")
+if extra_media[0] and re.search(
+        r"dm1 platform=Atari ST edition=(?:st10a-en|st10b-en|st11-en|st12-en) matched source=",
+        trace) is None:
+    raise SystemExit(f"FAIL: authentic Atari ST media was not discovered\n{trace}")
+if extra_media[1] and "dm1 platform=Amiga edition=amiga20-en matched source=" not in trace:
+    raise SystemExit(f"FAIL: authentic Amiga 2.0 media was not discovered\n{trace}")
 
 startup = probe["startup"]
 party = probe["party"]
@@ -75,7 +95,7 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(f"FAIL: DM1 AUTO M12 did not reach authentic FM Towns runtime: {probe}")
 
-print("PASS: DM1 M12 AUTO discovered authentic FM Towns and PC media, selected FM Towns, and reached its first runtime frame")
+print("PASS: DM1 M12 AUTO discovered the installed authentic platform media, selected FM Towns, and reached its first runtime frame")
 PY
 
 # Direct --game startup uses the same mixed library without the launcher
@@ -90,17 +110,18 @@ FIRESTAFF_CONFIG_PATH="$scratch/home/config.toml" \
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$cli_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-    "$app" --game dm1 --data-dir "$data_root" --debug \
+    "$app" --game dm1 --data-dir "$data_root" --debug --verbose \
     --boot-probe --boot-probe-frames 2 --duration 0 >"$cli_log" 2>&1 || {
         cat "$cli_log" >&2
         exit 1
     }
 
-python3 - "$cli_log" "$cli_probe" <<'PY'
+python3 - "$cli_log" "$cli_probe" "$extra_atari_media" "$extra_amiga_media" <<'PY'
 import json
+import re
 import sys
 
-log_path, probe_path = sys.argv[1:]
+log_path, probe_path, *extra_media = sys.argv[1:]
 with open(log_path, encoding="utf-8") as stream:
     trace = stream.read()
 with open(probe_path, encoding="utf-8") as stream:
@@ -119,5 +140,11 @@ if ("platform=FM Towns" not in trace or
         startup["dm1StartupHandoffExecuted"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1):
     raise SystemExit(f"FAIL: bare DM1 CLI did not select FM Towns from the mixed library: {probe}\n{trace}")
-print("PASS: bare DM1 CLI selected authentic FM Towns over PC 3.4 and reached runtime")
+if extra_media[0] and re.search(
+        r"dm1 platform=Atari ST edition=(?:st10a-en|st10b-en|st11-en|st12-en) matched source=",
+        trace) is None:
+    raise SystemExit(f"FAIL: bare CLI did not discover authentic Atari ST media\n{trace}")
+if extra_media[1] and "dm1 platform=Amiga edition=amiga20-en matched source=" not in trace:
+    raise SystemExit(f"FAIL: bare CLI did not discover authentic Amiga 2.0 media\n{trace}")
+print("PASS: bare DM1 CLI discovered the installed authentic platform media, selected FM Towns and reached runtime")
 PY

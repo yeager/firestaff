@@ -75,13 +75,19 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
-    /* Enter is the DOS title's source 0xd7 action; M11 resolves it through
-     * this verified GDAT rectangle rather than an invented menu row. */
-    if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+    /* Exercise the normal DOS mouse path using the actual 0xD7 rectangle
+     * decoded from retail GDAT. M11 must map this source-space click through
+     * SKULL's pointer event, not an invented menu row or keyboard shortcut. */
+    if (M11_GameView_HandlePointerButton(
+            &view,
+            layout.new_game.x + layout.new_game.w / 2,
+            layout.new_game.y + layout.new_game.h / 2,
+            DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_REDRAW ||
         view.dm2State.startup_menu_active || !view.dm2State.level_loaded ||
         view.world.party.championCount < 1) {
-        fputs("FAIL: DM2 DOS New Game did not commit the source runtime\n", stderr);
+        fputs("FAIL: DM2 DOS mouse New Game did not commit the source runtime\n",
+              stderr);
         M11_GameView_Shutdown(&view);
         return 1;
     }
@@ -112,6 +118,6 @@ int main(void)
         return 1;
     }
     M11_GameView_Shutdown(&view);
-    puts("PASS: DM2 DOS M11 New Game admits real-media map-0 indoor runtime");
+    puts("PASS: DM2 DOS real-GDAT mouse New Game admits map-0 indoor runtime");
     return 0;
 }
