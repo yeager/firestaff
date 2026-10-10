@@ -366,7 +366,8 @@ Both JP sequences occur at seven identical copies. The `$D4EC` signature is
 at raw offsets `0x9d12c`, `0xe692c`, `0x13012c`, `0x17992c`, `0x1c312c`,
 `0x20c92c`, and `0x25612c` (sector indices 273, 401, 529, 657, 785, 913,
 and 1041; within-sector offset `0x4fc`). The longer `$D515` prefix occurs
-29 bytes later in each copy, at `0x9d155`, `0xe6955`, `0x130155`,
+`0x29` raw bytes (41 decimal) later in each copy, at `0x9d155`, `0xe6955`,
+`0x130155`,
 `0x179955`, `0x1c3155`, `0x20c955`, and `0x256155` (within-sector offset
 `0x525`). These are the same seven raw sectors that contain the `$D32F`
 consumer candidates listed above.
