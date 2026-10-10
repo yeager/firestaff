@@ -1,5 +1,11 @@
 # Firestaff DONE — DM2
 
+- 2026-10-10: Built and ran `dm2_v1_four_platform_catalog_real_media` against
+  the shared installed data root. The test passed and confirmed that M12
+  recognizes DOS, Amiga, FM Towns and Mac at once, and resolves each edition
+  to its own original archive instead of the scan's first match. PC-9821 is
+  not included in the supported set.
+
 - 2026-10-10: Re-ran `dm2_v1_amiga_native_cli_boot` against the installed
   authentic Amiga ZIP. It passed the M12 New Game route, required an accepted
   runtime frame with real assets and zero fallbacks, checked the presented
