@@ -11,17 +11,18 @@
 
 ## 2026-10-10 — game-owned VDC instruction/source join remains open
 
-- A fresh 70-second JP Rev. 1 cold-start replay used authentic Track 02
-  (`b7afb338ad31be1025b53f9aff12d73a`) and scheduled `run@450:300`. The
-  scripted-input verifier passed three repeated checks: the event was applied
-  and followed by a controller read, but that read was still in System Card
-  code (`non_system_card_poll_reads=0`). The capture ended
-  `transition=missing`, with zero CD IRQ callbacks, raw-sector spans, SCSI
-  read bindings, byte-origin RAM receipts, or authenticated CD-to-RAM receipts.
-  A CD-RAM write sidecar exists, but without those source receipts it does not
-  establish Track 02 delivery or gameplay. The private trace remains in the
-  TRV2 `/run` tmpfs capture directory; no media, BIOS, or trace was added to
-  the repository.
+- Two separate 70-second JP Rev. 1 cold-start replays used authentic Track 02
+  (`b7afb338ad31be1025b53f9aff12d73a`) and scheduled a five-second RUN hold at
+  frame 450 and frame 540, respectively. The latter starts after the
+  documented System Card title delay. For each trace, the scripted-input
+  verifier passed three repeated checks: RUN was applied and followed by a
+  controller read, but that read was still in System Card code
+  (`non_system_card_poll_reads=0`). Both captures ended `transition=missing`,
+  with zero CD IRQ callbacks, raw-sector spans, SCSI read bindings, byte-origin
+  RAM receipts, or authenticated CD-to-RAM receipts. A CD-RAM write sidecar
+  exists, but without those source receipts it does not establish Track 02
+  delivery or gameplay. The private traces remain in the TRV2 `/run` tmpfs
+  capture directory; no media, BIOS, or trace was added to the repository.
 - Normal-PCE VDC writes now carry the exact HuC6280 instruction-start logical
   and physical PCs, captured before the dispatcher increments PC. A clean
   Mednafen build and authentic cold-start capture verified BIOS VDC attribution
