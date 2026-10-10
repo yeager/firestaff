@@ -30,8 +30,13 @@
   `run@8:60,i@480:30,i@900:30` replay passed three input-verifier loops but
   produced only two CD IRQs, no raw sectors and no `$E009` dispatch. Thus the
   historical transport result has not been reproduced by the current capture
-  build; neither replay establishes gameplay or parity. The private traces
-  remain in TRV2 `/run` tmpfs and are not checked in.
+  build; neither replay establishes gameplay or parity. A forensic join of
+  that capture matched all 25 raw-sector rows uniquely to authentic US
+  Track 02 records using full-sector fingerprints and their leading-span
+  hashes (stable physical-LBA minus source-record delta: 3009). The capture
+  still has no bound CD data-port reads or CD-to-RAM writes, so this proves
+  media identity at the raw-sector interface only. The private traces remain
+  in TRV2 `/run` tmpfs and are not checked in.
 - Normal-PCE VDC writes now carry the exact HuC6280 instruction-start logical
   and physical PCs, captured before the dispatcher increments PC. A clean
   Mednafen build and authentic cold-start capture verified BIOS VDC attribution
@@ -53,6 +58,23 @@
   CD/RAM handoff, then join source-bound opcode PCs to game-owned VDC writes.
   Do not infer byte origin from equal values or claim rendering parity from
   the current BIOS-only VDC capture.
+
+## 2026-10-10 — JP dungeon-story candidates need selector binding
+
+- Authentic JP Rev. 1 Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) contains
+  seven contiguous Shift-JIS story candidates in the extracted user-data
+  stream: Akutuba `[0x27596D,0x275A97)`, Drator `[0x275A97,0x275BBF)`, Formic
+  `[0x275BBF,0x275D2F)`, Sarmon `[0x275D2F,0x275E59)`, Shado
+  `[0x275E59,0x275FCF)`, Thief `[0x275FCF,0x276187)`, and Demon
+  `[0x276187,0x2762A3)`. Each candidate begins with `81 50` and ends with
+  `81 97`; these are observed byte boundaries, not proven game record
+  delimiters or dungeon-index bindings. The prior codon-structure rejection
+  was not evidence that JP text is absent: these candidates decode as
+  Shift-JIS. No JP selector/pointer table or runtime read trace currently
+  binds the candidates to dungeon ordinals, so do not expose them through a
+  production story accessor yet. Next disassemble the JP story selector and
+  parser, or capture authenticated pointer/read evidence proving ordinal,
+  bounds, and control-byte semantics.
 
 ## 2026-10-10 — run the complete Theron-labeled CTest selection
 
