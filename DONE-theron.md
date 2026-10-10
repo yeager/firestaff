@@ -8224,7 +8224,10 @@ T900/original inventory semantics. No synthetic media was used.
 - Extended the existing real-media regression to authenticate all fourteen
   spans, their lengths, and the three RTS opcode offsets. The updated test
   passed three loops against original hash-authenticated US and JP Track 02
-  images. No game data or temporary disassembly windows were committed.
+  images. The existing CTest now carries the `theron;real-media;static;source-lock`
+  labels so it is included in Theron source-lock selections. Local CMake
+  generation remains unverified because of the installed macOS linker/SDK.
+  No game data or temporary disassembly windows were committed.
 - This is static control-flow evidence only; runtime duplicate selection,
   table semantics, and movement behavior remain open in `TODO-theron.md`.
   Full listings and hashes are in

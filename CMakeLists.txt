@@ -46681,6 +46681,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_runtime_input_poll_media_candidates PROPERTIES
         SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;static;source-lock"
     )
     add_test(
         NAME theron_v1_runtime_input_poll_up_ram_update_pair
