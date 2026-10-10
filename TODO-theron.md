@@ -70,11 +70,14 @@
   `81 97`; these are observed byte boundaries, not proven game record
   delimiters or dungeon-index bindings. The prior codon-structure rejection
   was not evidence that JP text is absent: these candidates decode as
-  Shift-JIS. No JP selector/pointer table or runtime read trace currently
-  binds the candidates to dungeon ordinals, so do not expose them through a
-  production story accessor yet. Next disassemble the JP story selector and
-  parser, or capture authenticated pointer/read evidence proving ordinal,
-  bounds, and control-byte semantics.
+  Shift-JIS. A real-media source-lock test preserves the seven byte spans,
+  hashes, framing, and strict CP932 decoding. No JP selector/pointer table or
+  runtime read trace currently binds the candidates to dungeon ordinals, so
+  do not expose them through a production story accessor yet. Next disassemble
+  the JP story selector and parser, or capture authenticated pointer/read
+  evidence proving ordinal, bounds, and control-byte semantics. CTest
+  registration is not yet verified: local CMake configuration fails in the
+  installed macOS linker/SDK before project generation.
 
 ## 2026-10-10 — run the complete Theron-labeled CTest selection
 
