@@ -6,6 +6,16 @@ unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 app=${1:?usage: test_dm1_v1_amiga36_original_media_cli_boot.sh <firestaff-binary>}
 archive=${FIRESTAFF_DM1_AMIGA36_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Amiga_36.zip"}
 expected_md5=7f9458e4a3972d06e649a6fa85a7f34b
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+scan_root=$test_scratch/dm1-amiga36-scan-$$
+menu_runtime_probe=$test_scratch/dm1-amiga36-menu-runtime-$$.json
+
+cleanup() {
+    rm -f "$menu_runtime_probe" "${menu_runtime_probe%.json}.log"
+    rm -f "$scan_root/dm1/Dungeon-Master_Amiga_36.zip"
+    rmdir "$scan_root/dm1" "$scan_root" 2>/dev/null || true
+}
+trap cleanup EXIT HUP INT TERM
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 Amiga 3.6 original-media ZIP is not staged'
@@ -29,10 +39,12 @@ probe() {
 probe --debug --game dm1 --platform amiga --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 
-menu_runtime_probe=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}/dm1-amiga36-menu-runtime-$$.json
+mkdir -p "$scan_root/dm1"
+ln -s "$archive" "$scan_root/dm1/Dungeon-Master_Amiga_36.zip"
+probe --debug --game dm1 --platform amiga --data-dir "$scan_root" \
+    --boot-probe --boot-probe-frames 2 --duration 0
+
 mkdir -p "$(dirname "$menu_runtime_probe")"
-cleanup() { rm -f "$menu_runtime_probe" "${menu_runtime_probe%.json}.log"; }
-trap cleanup EXIT HUP INT TERM
 menu_output=${menu_runtime_probe%.json}.log
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return \

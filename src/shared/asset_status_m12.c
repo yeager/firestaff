@@ -1108,10 +1108,10 @@ static int m12_admit_dm1_fmtowns_archive(
     return 0;
 }
 
-/* Retail-preservation Amiga chain: download ZIP -> preservation ZIP -> ADF.
- * The inner names merely locate the original medium; GRAPHICS.DAT's verified
- * fingerprint remains the sole admission criterion. */
-static int m12_admit_dm1_amiga20_nested_archive(
+/* Retail-preservation Amiga packages: nested or direct ZIP -> ADF.
+ * Member names only locate the original medium; GRAPHICS.DAT and DUNGEON.DAT
+ * hashes remain the admission criteria. */
+static int m12_admit_dm1_amiga_archive_packages(
     M12_AssetStatus* status, int gameIndex,
     const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
     size_t rootCount, const char* preferredArchive) {
@@ -1129,7 +1129,11 @@ static int m12_admit_dm1_amiga20_nested_archive(
          * on GRAPHICS.DAT's retail hash, not on this filename. */
         {"Dungeon-Master_Amiga_EN.zip",
          "Dungeon Master (1988)(FTL)[HD].zip",
-         "Dungeon Master (1988)(FTL)[HD].adf"}
+         "Dungeon Master (1988)(FTL)[HD].adf"},
+        /* The multilingual 3.6 preservation ZIP contains its original ADF
+         * directly, rather than wrapping it in a second ZIP. */
+        {"Dungeon-Master_Amiga_36.zip", "",
+         "Dungeon Master Amiga 3.6.adf"}
     };
     size_t rootIndex;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
@@ -1172,11 +1176,16 @@ static int m12_admit_dm1_amiga20_nested_archive(
                  ++packageIndex) {
                 if (strstr(candidates[candidateIndex],
                            packages[packageIndex].outerName) == NULL ||
-                    snprintf(virtualGraphics, sizeof(virtualGraphics),
-                             "%s::%s::%s::GRAPHICS.DAT",
-                             candidates[candidateIndex],
-                             packages[packageIndex].innerName,
-                             packages[packageIndex].adfName) >=
+                    (packages[packageIndex].innerName[0]
+                         ? snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                    "%s::%s::%s::GRAPHICS.DAT",
+                                    candidates[candidateIndex],
+                                    packages[packageIndex].innerName,
+                                    packages[packageIndex].adfName)
+                         : snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                    "%s::%s::GRAPHICS.DAT",
+                                    candidates[candidateIndex],
+                                    packages[packageIndex].adfName)) >=
                         (int)sizeof(virtualGraphics) ||
                     !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
                                                    &graphicsSize) ||
@@ -1227,7 +1236,7 @@ static int m12_admit_dm1_amiga20_nested_archive(
                                     sizeof(version->matchedPath), virtualGraphics);
                     m12_copy_string(version->matchedMd5,
                                     sizeof(version->matchedMd5), md5);
-                    /* This is a bounded native ZIP -> ZIP -> ADF reader.
+                    /* This is a bounded native ZIP -> ADF reader.
                      * The generic hash scan cannot enumerate a ZIP passed as
                      * its own root, so publish the already hash-verified
                      * GRAPHICS.DAT receipt directly for the launch gate. */
@@ -6867,7 +6876,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
             (void)m12_admit_dm1_fmtowns_archive(
                 status, i, roots, rootCount, requestedDataDir);
-            (void)m12_admit_dm1_amiga20_nested_archive(
+            (void)m12_admit_dm1_amiga_archive_packages(
                 status, i, roots, rootCount, requestedDataDir);
             (void)m12_admit_explicit_dm1_atari_image(status, i,
                                                       requestedDataDir);
@@ -6941,7 +6950,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
              * hash-verified original members before calculating the shared
              * required-file gate; do not let the Atari recovery erase a
              * selected Amiga source owner. */
-            (void)m12_admit_dm1_amiga20_nested_archive(
+            (void)m12_admit_dm1_amiga_archive_packages(
                 status, i, roots, rootCount, requestedDataDir);
             reqMatch = status->requiredFileCounts[i] > 0U;
             for (requiredIndex = 0U;
@@ -7306,7 +7315,7 @@ void M12_AssetStatus_ScanGameWithOptions(
         if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
             dm1FmtownsAdmitted = m12_admit_dm1_fmtowns_archive(
                 status, gameIndex, roots, rootCount, requestedDataDir);
-            (void)m12_admit_dm1_amiga20_nested_archive(
+            (void)m12_admit_dm1_amiga_archive_packages(
                 status, gameIndex, roots, rootCount, requestedDataDir);
             (void)m12_admit_explicit_dm1_atari_image(status, gameIndex,
                                                       requestedDataDir);
@@ -7396,7 +7405,7 @@ void M12_AssetStatus_ScanGameWithOptions(
      * members. Re-publish the same hash-verified source receipts after it
      * has reset the per-role rows. */
     if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
-        (void)m12_admit_dm1_amiga20_nested_archive(
+        (void)m12_admit_dm1_amiga_archive_packages(
             status, gameIndex, roots, rootCount, requestedDataDir);
     }
     if (nexusArchiveAdmitted) {
@@ -7426,7 +7435,7 @@ void M12_AssetStatus_ScanGameWithOptions(
         m12_publish_dm1_fmtowns_required_files(status, gameIndex);
         (void)m12_admit_dm1_atari_st_nested_archive(
             status, gameIndex, roots, rootCount, requestedDataDir);
-        (void)m12_admit_dm1_amiga20_nested_archive(
+        (void)m12_admit_dm1_amiga_archive_packages(
             status, gameIndex, roots, rootCount, requestedDataDir);
         reqMatch = status->requiredFileCounts[gameIndex] > 0U;
         for (requiredIndex = 0U;

@@ -24,7 +24,10 @@
   not establish pixel parity or HiDPI behavior. A36M's exact GRAPHICS.DAT hash
   now selects the source F0466 decoder, and authentic C002/C003/C004/C005/C011
   media passes the real-media receipt test. Its CLI and M12 regressions now
-  verify entrance completion and the first runtime pose. Visual parity remains
+  verify entrance completion and the first runtime pose. The ordinary data
+  directory scan now discovers its ZIP -> ADF package as well as direct archive
+  selection; an isolated original-media root exercises the M12 route. Visual
+  parity remains
   unverified: resolve C430/C431/C432/C427/C435 from authenticated A36 layout
   records and draw C011 at C435. The current generic 38-event compatibility
   sequence and A20/PC door boxes do not implement A36's source zones,
