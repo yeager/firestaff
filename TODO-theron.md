@@ -3,10 +3,10 @@
 - Bounded runtime disassembly of four block transfers in a restored authentic
   JP Ak-Tu-Ba dungeon state is complete; see
   `docs/source-lock/theron-disassembly/theron-jp-dungeon-block-transfer-sample-20261010.md`.
-- The observations still describe restored RAM only. They do not bind any
-  instruction or RAM byte to Track 02, identify the copied fields, or establish
-  gameplay semantics. Obtain a fresh loader transition and trace authentic
-  source bytes through destination writes to mapped consumers before
+- A new `$A1B7` write sidecar binds each observed restored-state TII write to
+  its source/destination iteration. It still does not link the bytes to Track
+  02 or identify field semantics. Obtain a fresh loader transition and trace
+  authentic source bytes through destination writes to mapped consumers before
   implementing behavior or claiming parity.
 
 ## 2026-10-10 — game-owned VDC instruction/source join remains open

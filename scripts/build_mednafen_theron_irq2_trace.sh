@@ -121,6 +121,14 @@ sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$main_ram_consumer_read_patch" \
     > "$main_ram_consumer_read_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$main_ram_consumer_read_rendered"
+bmt_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_a1b7_bmt_write_trace.patch"
+bmt_write_rendered="$build_root/theron-pce-fast-a1b7-bmt-write.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$bmt_write_patch" \
+    > "$bmt_write_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$bmt_write_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_a1b7_bmt_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < <(sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
         "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_write_trace.patch")

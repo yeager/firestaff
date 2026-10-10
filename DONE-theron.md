@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — capture restored-state `$A1B7` destination writes
+
+- Added an opt-in, instruction- and MPR-bound Mednafen PCE Fast hook for the
+  authentic restored-state `TII $287F,$2883,$0014` at `$A1B7`, plus a verifier
+  for all 20 writes in each transfer.
+- Three bounded eight-second replays each recorded 30 complete transfer IDs
+  (600 writes) and produced byte-identical sidecars. All old and written
+  destination bytes matched, so this instruction made no value changes in the
+  observed restored state. The capture is not source-origin evidence.
+- Build identity, sidecar hash, implementation limits, and the remaining
+  Track 02 provenance gap are in
+  `docs/source-lock/theron-disassembly/theron-jp-dungeon-block-transfer-sample-20261010.md`.
+  The emulator state, BIOS, media, and traces remain private on TRV2.
+
 ## 2026-10-10 — decode bounded JP dungeon-state block transfers
 
 - A private replay of an authentic emulator-created JP Ak-Tu-Ba dungeon state

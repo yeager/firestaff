@@ -1,0 +1,88 @@
+--- a/src/pce_fast/pce.cpp
++++ b/src/pce_fast/pce.cpp
+@@ -235,11 +235,83 @@
++static void TheronTraceA1B7BMTWrite(uint32 physical_destination,
++                                    size_t backing_offset,
++                                    uint8 old_value, uint8 written_value);
+ static DECLFW(BaseRAMWrite)
+ {
+  TheronTracePartyRAMWrite(A, V);
+- BaseRAM[(size_t)A - (0xF8 * 8192)] = V;
++ const size_t offset = (size_t)A - (0xF8 * 8192);
++ TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);
++ BaseRAM[offset] = V;
+ }
+ 
+ static DECLFW(BaseRAMWrite_Mirrored)
+ {
+  TheronTracePartyRAMWrite(A, V);
+- BaseRAM[A & 0x1FFF] = V;
++ const size_t offset = A & 0x1FFF;
++ TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);
++ BaseRAM[offset] = V;
+ }
++
++static void TheronTraceA1B7BMTWrite(uint32 physical_destination,
++                                    size_t backing_offset,
++                                    uint8 old_value, uint8 written_value)
++{
++ static FILE *trace = NULL;
++ static unsigned sequence = 0;
++ static unsigned next_transfer_id = 0;
++ static unsigned current_transfer_id = 0;
++ static bool transfer_seen = false;
++ if(sequence >= 4096 || HuCPU.in_block_move != IBM_TII ||
++    TheronTraceInstructionPC != 0xA1B7 || backing_offset >= 8192)
++  return;
++ if((TheronTraceInstructionPC & 0x1FFF) > 0x1FF8)
++  return;
++ const uint8 *code = (const uint8 *)(HuCPU.FastPageR[
++  TheronTraceInstructionPC >> 13] + TheronTraceInstructionPC);
++ const uint16 original_source = code[1] | ((uint16)code[2] << 8);
++ const uint16 original_destination = code[3] | ((uint16)code[4] << 8);
++ const uint16 original_length = code[5] | ((uint16)code[6] << 8);
++ if(code[0] != 0x73 || original_source != 0x287F ||
++    original_destination != 0x2883 || original_length != 0x0014)
++  return;
++ const uint16 iteration = (uint16)(original_length - HuCPU.bmt_length);
++ const uint16 source_logical = HuCPU.bmt_src;
++ const uint16 destination_logical = HuCPU.bmt_dest;
++ if(iteration >= original_length ||
++    source_logical != (uint16)(original_source + iteration) ||
++    destination_logical != (uint16)(original_destination + iteration))
++  return;
++ const uint32 source_physical =
++  ((uint32)HuCPU.MPR[(source_logical >> 13) & 7] << 13) |
++  (source_logical & 0x1FFF);
++ const uint32 mapped_destination =
++  ((uint32)HuCPU.MPR[(destination_logical >> 13) & 7] << 13) |
++  (destination_logical & 0x1FFF);
++ if(mapped_destination != physical_destination ||
++    source_physical < 0x1F0000 || source_physical >= 0x1F8000)
++  return;
++ const bool first_observed = iteration == 0;
++ if(first_observed || !transfer_seen)
++ {
++  current_transfer_id = next_transfer_id++;
++  transfer_seen = true;
++ }
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-fast-a1b7-bmt-main-ram-write-v1\n", trace);
++ }
++ fprintf(trace,
++  "a1b7_bmt_write sequence=%u transfer_id=%u first_observed=%u iteration=%u original_source=%04x original_destination=%04x original_length=%04x source_logical=%04x source_physical=%06x destination_logical=%04x destination_physical=%06x backing_offset=%04zx old_value=%02x written_value=%02x remaining=%04x code_bytes=%02x%02x%02x%02x%02x%02x%02x\n",
++  sequence++, current_transfer_id, first_observed ? 1 : 0, iteration,
++  original_source, original_destination, original_length,
++  source_logical, source_physical, destination_logical,
++  physical_destination, backing_offset, old_value, written_value,
++  HuCPU.bmt_length, code[0], code[1], code[2], code[3], code[4],
++  code[5], code[6]);
++ fflush(trace);
++}
