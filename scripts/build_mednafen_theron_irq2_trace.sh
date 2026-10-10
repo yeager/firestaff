@@ -210,6 +210,13 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_stage2_mpr1_probe.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_selector_pc_trace.patch"
+stage2_opcode_fetch_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_opcode_fetch_trace.patch"
+stage2_opcode_fetch_rendered="$build_root/theron-pce-fast-stage2-opcode-fetch.rendered.patch"
+sed -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$stage2_opcode_fetch_patch" \
+    > "$stage2_opcode_fetch_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$stage2_opcode_fetch_rendered"
 pce_fast_3879_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_3879_indirect_target_trace.patch"
 pce_fast_3879_trace_rendered="$build_root/theron-pce-fast-3879-indirect-target.rendered.patch"
 sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$pce_fast_3879_trace_patch" \

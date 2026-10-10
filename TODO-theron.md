@@ -27,8 +27,35 @@
   byte consistency against authentic JP media only. Its test rows are
   synthetic, and the trace header is not authenticated; a pass does not prove
   emulator execution, FIFO/copy/write provenance, or actual opcode fetches.
-  Implement and run the instrumented runtime producer before making any such
-  claim.
+  An authentic-media execution capture now exists; add byte-origin tracking
+  before making any source-origin or gameplay claim.
+
+## 2026-10-10 - add an executed-opcode probe for the `$4002` candidate window
+
+- The opt-in PCE Fast probe records the byte returned by `RdAtPC()` at the
+  CPU dispatch point for logical PCs `$4002` through `$40d4`, together
+  with sequence, logical and mapped physical PC, MPR slot, and MPR bank. It is
+  an executed-opcode probe only: it does not establish that the byte originated
+  in authentic Track 02 data, that FIFO/RAM copy provenance was preserved, or
+  that any gameplay behavior works. Runtime details are recorded below.
+
+2026-10-10 TRV2 cold-boot capture used authentic JP Rev. 1 Track 02
+(`b7afb338ad31be1025b53f9aff12d73a`), System Card 3.0
+(`ff1a674273fe3540ccef576376407d1d`), and instrumented PCE Fast binary
+(`8fbdbe7f7c0a9256a7c2080df1c1cda1`). A four-second RUN hold reached PCE
+controller polling. The probe recorded 2,365 opcode-fetch rows across MPR
+banks `$80` and `$82`; sequence numbers and logical-to-physical mapping were
+contiguous and consistent. Of 2,280 rows in bank `$80`, 2,135 opcode values
+matched the authentic 211-byte `$4002` Track 02 candidate at the mapped
+address. The first mismatch was sequence 2,134 at `$4003`; 85 rows in bank
+`$82` did not match the candidate. This is runtime fetch-to-static-byte
+correlation only: it does not establish byte origin, explain the later
+divergence, or prove that the candidate was copied from CD into executable
+memory.
+
+The transition receipt reports zero CD IRQs, source-bound CD reads, authenticated
+CD-to-RAM receipts, and game-main `$E009` dispatches; `transition=missing`.
+Close-time PCE Fast VRAM, VCE, SAT, and VDC-state snapshots were written, but
 
 ## 2026-10-10 — lock the authentic JP UP-to-RAM control-flow pair
 

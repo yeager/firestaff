@@ -46685,6 +46685,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
         LABELS "theron;real-media;source-lock"
     )
     add_test(
+        NAME theron_v1_pce_fast_stage2_opcode_fetch_patch
+        COMMAND bash
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_pce_fast_stage2_opcode_fetch_patch.sh
+    )
+    set_tests_properties(theron_v1_pce_fast_stage2_opcode_fetch_patch PROPERTIES
+        LABELS "theron;instrumentation;source-lock"
+    )
+    add_test(
         NAME theron_v1_stage2_45xx_regional
         COMMAND test_theron_v1_stage2_disassembly_chain
     )

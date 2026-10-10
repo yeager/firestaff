@@ -1,0 +1,40 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -978,7 +978,37 @@
+FIRESTAFF_PATCH_TAB_CONTEXT  TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,
+FIRESTAFF_PATCH_TAB_CONTEXT                        HU_ZNFlags);
+FIRESTAFF_PATCH_TAB_CONTEXT  b1 = RdAtPC();
++
++	  if(TheronTraceInstructionPC >= 0x4002 &&
++	     TheronTraceInstructionPC < 0x40d5)
++	  {
++	   static FILE *stage2_opcode_trace;
++	   static unsigned stage2_opcode_sequence;
++	   static bool stage2_opcode_trace_checked;
++	   if(!stage2_opcode_trace_checked)
++	   {
++	    stage2_opcode_trace_checked = true;
++	    const char *path = getenv("FIRESTAFF_THERON_STAGE2_OPCODE_FETCH_TRACE");
++	    if(path && *path)
++	    {
++	     stage2_opcode_trace = fopen(path, "w");
++	     if(stage2_opcode_trace)
++	      fputs("source=mednafen-pce-fast-executed-stage2-opcode-probe-v1\n",
++	            stage2_opcode_trace);
++	    }
++	   }
++	   if(stage2_opcode_trace && stage2_opcode_sequence < 8192)
++	   {
++	    const unsigned mpr_slot = TheronTraceInstructionPC >> 13;
++	    const unsigned mpr_bank = HuCPU.MPR[mpr_slot];
++	    fprintf(stage2_opcode_trace,
++	            "stage2_opcode_fetch sequence=%u logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x opcode=%02x\n",
++	            stage2_opcode_sequence++, TheronTraceInstructionPC,
++	            TheronTraceInstructionPhysicalPC, mpr_slot, mpr_bank, b1);
++	    fflush(stage2_opcode_trace);
++	   }
++	  }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+FIRESTAFF_PATCH_TAB_CONTEXT  ADDCYC(CycTable[b1]);
+FIRESTAFF_PATCH_BLANK_CONTEXT
+FIRESTAFF_PATCH_TAB_CONTEXT  IncPC();
