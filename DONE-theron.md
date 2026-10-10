@@ -8214,6 +8214,17 @@ T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — source-lock the JP/US ID `$53` continuation at `$4C71`
+
+- Added a rooted HuC6280 listing for the 112-byte continuation after the
+  `$4C6D` call to `$4B00`. Authentic JP and US Track 02 spans are byte-identical
+  at raw offsets `$2BF201` and `$2BFB31`, and end at the RTS opcode `$4CE0`.
+- The new real-media CTest verifies both complete media identities, the exact
+  regional window hash, unique occurrence, boundary mutations, and listing
+  correspondence in a bounded loop. It does not bind this Track 02 candidate
+  to runtime MPR1 contents or assign semantics to its callees. See
+  `docs/source-lock/theron-disassembly/theron-jp-us-id53-post-4b00-4c71-20261010.md`.
+
 ## 2026-10-10 — source-lock the indexed `$D515` helper extent
 
 - MAME `unidasm` decoded the first authentic JP and US candidates. Static

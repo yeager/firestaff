@@ -782,6 +782,11 @@ traversal.
   does not extend the enclosing-callee verifier beyond US or prove runtime
   entry. The trace/runtime scroll gap above remains open.
 
+- The rooted `$4C71..$4CE0` listing and exact JP/US Track 02 candidate are now
+  source-locked, but this does not resolve the open runtime MPR1/source question
+  for the `$4C3F`/`$3221` path above. No physical-bank identity or same-session
+  source receipt is claimed for the static candidate.
+
 ## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
 
 - ✅ Extended the authentic JP/US `$4943` Stage-2 source lock to the direct

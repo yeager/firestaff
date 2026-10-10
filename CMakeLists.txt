@@ -46702,6 +46702,15 @@ if(BUILD_TESTING AND THERON_SOURCES)
         LABELS "theron;real-media;static;source-lock"
     )
     add_test(
+        NAME theron_v1_id53_post_4b00_continuation_source_lock
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_id53_post_4b00_continuation_source_lock.py
+    )
+    set_tests_properties(theron_v1_id53_post_4b00_continuation_source_lock PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;static;source-lock"
+    )
+    add_test(
         NAME theron_v1_jp_dungeon_story_candidate_source_lock
         COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_dungeon_story_candidate_source_lock.py
