@@ -17,6 +17,7 @@
 #include "memory_frontend_pc34_compat.h"
 #include "graphics_dat_entry_classify_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
@@ -163,6 +164,13 @@ int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
     loader->ownedBuffer = ownedBuffer;
     loader->graphicCount = runtimeState->graphicCount;
     loader->initialized = 1;
+    {
+        DM1_V1_AmigaGraphicsReceipt amigaReceipt;
+        loader->dm1Amiga36 =
+            dm1_v1_amiga_graphics_receipt(data, (size_t)size,
+                                          &amigaReceipt) == 0 &&
+            amigaReceipt.version == DM1_AMIGA_VER_3_6;
+    }
     return 1;
 }
 
@@ -727,6 +735,35 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
             compressedBuf)) {
         free(compressedBuf);
         return NULL;
+    }
+
+    if (loader->dm1Amiga36) {
+        unsigned char *decodedPixels;
+        uint16_t decodedWidth = 0u;
+        uint16_t decodedHeight = 0u;
+        size_t capacity = (size_t)w * (size_t)h;
+        int decoded;
+        if (h != 0u && capacity / (size_t)h != (size_t)w) {
+            free(compressedBuf);
+            return NULL;
+        }
+        decodedPixels = (unsigned char *)malloc(capacity);
+        if (!decodedPixels) {
+            free(compressedBuf);
+            return NULL;
+        }
+        decoded = dm1_v1_amiga36_graphic_expand(
+            compressedBuf, (size_t)selection.compressedByteCount,
+            decodedPixels, capacity, &decodedWidth, &decodedHeight);
+        free(compressedBuf);
+        if (!decoded || decodedWidth != w || decodedHeight != h ||
+            !M11_AssetLoader_InstallDecodedPixels(loader, graphicIndex,
+                                                  decodedPixels, w, h)) {
+            free(decodedPixels);
+            return NULL;
+        }
+        free(decodedPixels);
+        return m11_find_cached(loader, graphicIndex);
     }
 
     /* Packed bitmap: IMG3 writes one 4-bit pixel per nibble and pads each

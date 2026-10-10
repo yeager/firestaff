@@ -9,6 +9,30 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static int copy_file(const char *source, const char *destination) {
+    unsigned char buffer[16384];
+    FILE *input = fopen(source, "rb");
+    FILE *output;
+    size_t count;
+    int ok = 1;
+    if (!input) return 0;
+    output = fopen(destination, "wb");
+    if (!output) {
+        fclose(input);
+        return 0;
+    }
+    while ((count = fread(buffer, 1, sizeof(buffer), input)) > 0) {
+        if (fwrite(buffer, 1, count, output) != count) {
+            ok = 0;
+            break;
+        }
+    }
+    if (ferror(input)) ok = 0;
+    if (fclose(input) != 0) ok = 0;
+    if (fclose(output) != 0) ok = 0;
+    return ok;
+}
+
 int main(void) {
     char root[] = "asset-scan-access-denied.XXXXXX";
     char denied[ASSET_PATH_MAX];
@@ -21,6 +45,8 @@ int main(void) {
     char firestaffDir[ASSET_PATH_MAX];
     char dm1Dir[ASSET_PATH_MAX] = {0};
     char archiveLink[ASSET_PATH_MAX] = {0};
+    char deniedMediaDir[ASSET_PATH_MAX] = {0};
+    char deniedArchive[ASSET_PATH_MAX] = {0};
     char matchedPaths[1][ASSET_PATH_MAX];
     int matched[1] = {0};
     const char *hashes[] = {"00000000000000000000000000000000", NULL};
@@ -251,6 +277,78 @@ int main(void) {
             }
             M12_StartupMenu_Destroy(&menu);
 
+            /* macOS privacy prompts can deny opening an archive while still
+             * allowing its parent directory to be listed. Keep an exact copy
+             * of authentic media in the fixture and deny only that copy. */
+            if (snprintf(deniedMediaDir, sizeof(deniedMediaDir),
+                         "%s/denied-media", root) >=
+                    (int)sizeof(deniedMediaDir) ||
+                mkdir(deniedMediaDir, 0700) != 0 ||
+                snprintf(deniedArchive, sizeof(deniedArchive), "%s/%s",
+                         deniedMediaDir, archiveLeaf) >=
+                    (int)sizeof(deniedArchive) ||
+                !copy_file(archive, deniedArchive) ||
+                chmod(denied, 0700) != 0) {
+                perror("stage denied authentic archive copy");
+                M12_StartupMenu_Destroy(&menu);
+                chmod(deniedArchive, 0600);
+                if (deniedArchive[0] != '\0') unlink(deniedArchive);
+                if (deniedMediaDir[0] != '\0') rmdir(deniedMediaDir);
+                chmod(denied, 0700);
+                unlink(archiveLink);
+                rmdir(dm1Dir);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
+            asset_scan_clear_access_denied_directories();
+            (void)asset_find_all_by_md5_list(root, hashes, matchedPaths,
+                                             matched, 1, 4);
+            if (asset_scan_access_denied_directory_count() != 0 ||
+                chmod(deniedArchive, 0000) != 0) {
+                fprintf(stderr,
+                        "FAIL: could not cache readable authentic archive before revoking file access\n");
+                M12_StartupMenu_Destroy(&menu);
+                chmod(deniedArchive, 0600);
+                unlink(deniedArchive);
+                rmdir(deniedMediaDir);
+                chmod(denied, 0700);
+                unlink(archiveLink);
+                rmdir(dm1Dir);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
+            asset_scan_clear_access_denied_directories();
+            memset(&partialOptions, 0, sizeof(partialOptions));
+            partialOptions.skipScreenshotGalleryScan = 1;
+            M12_StartupMenu_InitWithOptions(&menu, root, NULL,
+                                            &partialOptions);
+            if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") ||
+                menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine2 ||
+                !strstr(menu.messageLine2, deniedMediaDir) ||
+                asset_scan_access_denied_directory_count() != 1 ||
+                strcmp(asset_scan_access_denied_directory_path(0),
+                       deniedMediaDir) != 0) {
+                fprintf(stderr,
+                        "FAIL: unreadable authentic archive was not reported by its containing folder\n");
+                M12_StartupMenu_Destroy(&menu);
+                chmod(deniedArchive, 0600);
+                unlink(deniedArchive);
+                rmdir(deniedMediaDir);
+                chmod(denied, 0700);
+                unlink(archiveLink);
+                rmdir(dm1Dir);
+                rmdir(denied);
+                rmdir(root);
+                return 1;
+            }
+            M12_StartupMenu_Destroy(&menu);
+            chmod(deniedArchive, 0600);
+            unlink(deniedArchive);
+            rmdir(deniedMediaDir);
+            chmod(denied, 0000);
+
             memset(&partialOptions, 0, sizeof(partialOptions));
             partialOptions.skipAssetScan = 1;
             partialOptions.skipScreenshotGalleryScan = 1;
@@ -295,6 +393,11 @@ int main(void) {
                 rmdir(blockedRoot);
                 rmdir(blockedParent);
                 if (archiveLink[0] != '\0') unlink(archiveLink);
+                if (deniedArchive[0] != '\0') {
+                    chmod(deniedArchive, 0600);
+                    unlink(deniedArchive);
+                }
+                if (deniedMediaDir[0] != '\0') rmdir(deniedMediaDir);
                 if (dm1Dir[0] != '\0') rmdir(dm1Dir);
                 rmdir(denied);
                 rmdir(root);

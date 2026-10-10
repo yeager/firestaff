@@ -736,10 +736,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          release_flags=()
-          if [[ "$FIRESTAFF_DRAFT" == "true" ]]; then
-            release_flags+=(--draft)
-          fi
+          # gh release edit needs --draft=false to publish an existing draft.
+          # Passing the resolved boolean also makes same-tag retries stable.
+          release_flags=(--draft="$FIRESTAFF_DRAFT")
           if [[ "$FIRESTAFF_PRERELEASE" == "true" ]]; then
             release_flags+=(--prerelease)
           fi

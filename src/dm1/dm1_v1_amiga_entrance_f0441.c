@@ -2,8 +2,10 @@
 
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_amiga_title_f0437.h"
+#include "asset_loader_m11.h"
 
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -126,5 +128,106 @@ cleanup:
     free(screen);
     free(left);
     free(right);
+    return valid;
+}
+
+int dm1_v1_amiga36_entrance_f0441_receipt(
+    const uint8_t *graphics_dat,
+    size_t graphics_dat_bytes,
+    DM1_V1_AmigaEntranceF0441Receipt *out_receipt) {
+    static const uint16_t a36_entrance_palette_rgb4[
+        DM1_V1_AMIGA_ENTRANCE_F0441_PALETTE_ENTRIES] = {
+        0x000u, 0x666u, 0x888u, 0x840u, 0xca8u, 0x0c0u, 0x080u, 0x0a0u,
+        0x864u, 0xf00u, 0xa86u, 0x642u, 0x444u, 0xaaau, 0x620u, 0xfffu
+    };
+    DM1_V1_AmigaGraphicsReceipt graphics_receipt;
+    DM1_V1_AmigaEntranceF0441Receipt receipt;
+    M11_AssetLoader loader;
+    const M11_AssetSlot *screen;
+    const M11_AssetSlot *left;
+    const M11_AssetSlot *right;
+    const M11_AssetSlot *credits;
+    const M11_AssetSlot *buttons;
+    int valid = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&loader, 0, sizeof(loader));
+    if (!graphics_dat || graphics_dat_bytes > (size_t)LONG_MAX ||
+        !out_receipt ||
+        dm1_v1_amiga_graphics_receipt(
+            graphics_dat, graphics_dat_bytes, &graphics_receipt) != 0 ||
+        graphics_receipt.version != DM1_AMIGA_VER_3_6 ||
+        !M11_AssetLoader_InitFromBuffer(
+            &loader, graphics_dat, (long)graphics_dat_bytes)) {
+        return 0;
+    }
+
+    /* A36M's 0x8001 bank is IMG3, so use the exact decoder that will back
+     * runtime drawing. This proves the five selected source entries really
+     * decode from the authenticated bytes instead of admitting by pathname. */
+    screen = M11_AssetLoader_Load(
+        &loader, DM1_V1_AMIGA_ENTRANCE_F0441_GRAPHIC_SCREEN);
+    left = M11_AssetLoader_Load(
+        &loader, DM1_V1_AMIGA_ENTRANCE_F0441_GRAPHIC_LEFT_DOOR);
+    right = M11_AssetLoader_Load(
+        &loader, DM1_V1_AMIGA_ENTRANCE_F0441_GRAPHIC_RIGHT_DOOR);
+    credits = M11_AssetLoader_Load(&loader, 5u);
+    buttons = M11_AssetLoader_Load(&loader, 11u);
+    if (!screen || !left || !right || !credits || !buttons ||
+        !screen->pixels || !left->pixels || !right->pixels ||
+        !credits->pixels || !buttons->pixels) {
+        goto cleanup;
+    }
+
+    /* ENTRANCE.C F0441/F0442 loads these five original IMG1s before the
+     * interaction loop. C004 and both door halves have fixed source sizes;
+     * C005/C011 vary with language/layout but must decode to visible pixels. */
+    if (screen->width != 320u || screen->height != 200u ||
+        left->width != 105u || left->height != 161u ||
+        right->width != 128u || right->height != 161u ||
+        credits->width == 0u || credits->height == 0u ||
+        buttons->width == 0u || buttons->height == 0u) {
+        goto cleanup;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    md5_to_hex(graphics_receipt.md5, receipt.graphics_md5);
+    receipt.screen_width = screen->width;
+    receipt.screen_height = screen->height;
+    receipt.left_door_width = left->width;
+    receipt.left_door_height = left->height;
+    receipt.right_door_width = right->width;
+    receipt.right_door_height = right->height;
+    receipt.screen_nonzero_pixels = count_nonzero(
+        screen->pixels, (size_t)screen->width * screen->height);
+    receipt.left_door_nonzero_pixels = count_nonzero(
+        left->pixels, (size_t)left->width * left->height);
+    receipt.right_door_nonzero_pixels = count_nonzero(
+        right->pixels, (size_t)right->width * right->height);
+    receipt.door_frame_count = DM1_V1_AMIGA_ENTRANCE_F0441_DOOR_FRAMES;
+    receipt.opening_steps = DM1_V1_AMIGA_ENTRANCE_F0441_OPENING_STEPS;
+    receipt.switch_delay_ticks = DM1_V1_AMIGA_ENTRANCE_F0441_SWITCH_DELAY_TICKS;
+    receipt.mouse_input_only = 0;
+    receipt.has_credits_graphic = count_nonzero(
+        credits->pixels, (size_t)credits->width * credits->height) > 0u;
+    receipt.has_entrance_buttons_graphic = count_nonzero(
+        buttons->pixels, (size_t)buttons->width * buttons->height) > 0u;
+    memcpy(receipt.entrance_palette_rgb4, a36_entrance_palette_rgb4,
+           sizeof(a36_entrance_palette_rgb4));
+    receipt.source_evidence =
+        "ReDMCSB STARTUP2.C F0441 A36M: STARTUP1.C skips F0437; "
+        "ENTRANCE.C loads C004/C005, C002/C003/C011, waits for C200; "
+        "COMMAND.C G2195 maps C200 to Amiga key 0x4400; DATA.C G0020 RGB4";
+
+    valid = receipt.screen_nonzero_pixels > 0u &&
+            receipt.left_door_nonzero_pixels > 0u &&
+            receipt.right_door_nonzero_pixels > 0u &&
+            receipt.has_credits_graphic &&
+            receipt.has_entrance_buttons_graphic;
+    if (valid) *out_receipt = receipt;
+
+cleanup:
+    M11_AssetLoader_Shutdown(&loader);
     return valid;
 }

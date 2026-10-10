@@ -26493,6 +26493,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (!spec->dm1Fmtowns) {
             const char *handoff = state->assetLoader.atariStDm1
                 ? "atari-st-dmcsb1"
+                : state->assetLoader.dm1Amiga36
+                    ? "amiga-a36-f0466"
                 : (state->assetLoader.legacyDm1 &&
                    state->assetLoader.legacyBigEndian)
                     ? "amiga-img2"

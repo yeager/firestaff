@@ -65,6 +65,7 @@ jobs:
           python3 scripts/test_verify_release_notes.py
           python3 scripts/test_extract_release_notes.py
           python3 scripts/test_verify_daily_release_limit.py
+          python3 scripts/test_release_workflow_policy.py
 
       - name: Verify reproducible SPDX source SBOM
         run: python3 tests/test_generate_spdx_sbom.py

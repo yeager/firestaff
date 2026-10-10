@@ -65,6 +65,46 @@ cleanup_default_home() {
     fi
 }
 trap cleanup_default_home EXIT HUP INT TERM
+# Prove the exact bare `--game dm2` route reads the saved user data root but
+# still overrides a stale per-game PC preference with DM2's FM Towns AUTO
+# policy.  The isolated HOME/config prevents the developer's preferences from
+# affecting the result, and the data root is the complete authentic corpus.
+bare_cli_config="$default_home/dm2-bare-cli.toml"
+bare_cli_log="$default_home/dm2-bare-cli.log"
+cat > "$bare_cli_config" <<EOF
+# Isolated DM2 CLI AUTO regression config.
+data_dir = "$default_data_root"
+game_2_architecture_index = 1
+EOF
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+    APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$bare_cli_config" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --debug --boot-probe --boot-probe-frames 6000 \
+        --width 320 --height 200 \
+        --script 'click:100:60,click:100:60' \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0
+) >"$bare_cli_log" 2>&1 || {
+    cat "$bare_cli_log" >&2
+    exit 1
+}
+for required in \
+    'dm2 platform=FM Towns edition=fmtowns-ja matched source=' \
+    'Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip::DATA/GRAPHICS.DAT' \
+    'assetMd5=027ff3b8ddc2c4c4cdda7ada0b0bc46c' \
+    'phase=dm2-runtime' 'levelLoaded=1' 'map=0' 'party=1,8,0' \
+    'dm2FrameAccepted=1' 'dm2RealAssets=1' \
+    'dm2NoCoreFallbacks=1' 'dm2FallbackDraws=0'; do
+    if ! grep -Fq "$required" "$bare_cli_log"; then
+        printf 'FAIL: bare DM2 CLI output is missing %s\n' "$required" >&2
+        cat "$bare_cli_log" >&2
+        exit 1
+    fi
+done
+echo 'PASS: bare DM2 CLI overrides saved PC preference and reaches authentic FM Towns map 0'
+
 default_data_root="$default_home/.firestaff/data"
 default_archive="$default_data_root/dm2/$(basename "$archive")"
 default_log="$default_home/menu.log"

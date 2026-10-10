@@ -35,6 +35,8 @@ typedef struct DM1_V1_AmigaEntranceF0441Receipt {
     unsigned int opening_steps;
     unsigned int switch_delay_ticks;
     int mouse_input_only;
+    int has_credits_graphic;
+    int has_entrance_buttons_graphic;
     uint16_t entrance_palette_rgb4[DM1_V1_AMIGA_ENTRANCE_F0441_PALETTE_ENTRIES];
     const char *source_evidence;
 } DM1_V1_AmigaEntranceF0441Receipt;
@@ -46,6 +48,15 @@ int dm1_v1_amiga_entrance_f0441_receipt(
     size_t graphics_dat_bytes,
     const uint8_t *swsh_executable,
     size_t swsh_executable_bytes,
+    DM1_V1_AmigaEntranceF0441Receipt *out_receipt);
+
+/* Authenticate the A36M F0441 source path from its original GRAPHICS.DAT.
+ * A36 has no F0437/SWSH title pair: it runs F0441 after F1051_ directly.
+ * This receipt also proves C005 credits and C011 entrance-button assets,
+ * which F0441 loads before waiting for C200. */
+int dm1_v1_amiga36_entrance_f0441_receipt(
+    const uint8_t *graphics_dat,
+    size_t graphics_dat_bytes,
     DM1_V1_AmigaEntranceF0441Receipt *out_receipt);
 
 #ifdef __cplusplus

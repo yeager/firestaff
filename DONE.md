@@ -1,5 +1,41 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-10: Return-to-menu `--debug` no longer filters scan progress by
+  game and reports availability for all five after the rescan. The authentic
+  DM1/CSB/DM2 return matrix passed all 11 routes (927.44 s), including full
+  original-data roots where Nexus/Theron are available and isolated roots
+  where they are not. The final isolated CSB Atari rerun also passed with the
+  portable five-status assertion. This verifies five-game launcher rescanning
+  after a DM1/CSB/DM2 return; it does not test launching Nexus or Theron.
+
+- 2026-10-10: Five focused CTests passed on the startup and return-to-menu
+  changes. After integrating the latest Theron-only updates from `origin/main`,
+  the current checkout and A36 test rebuilt, and CLI diagnostics passed again.
+  All six CTests across those runs passed: filesystem access-denied reporting
+  (5.36 s), DM2 FM
+  Towns native CLI/menu startup (261.57 s), DM1/CSB/DM2 original-media return
+  and rescan across 11 routes (918.66 s), DM1 Amiga 3.6 CLI/menu handoff
+  (12.38 s), the in-memory A36 F0441 media receipt (0.37 s), and mixed-media
+  CLI startup diagnostics for DM1/CSB/DM2 (128.16 s). CSB Atari and Amiga
+  return/rescan cases also passed when run individually. This verifies bounded
+  headless startup/menu behavior, not physical desktop presentation, audio,
+  HiDPI, or visual parity.
+
+- 2026-10-10: File-level EACCES/EPERM during media scans now records the
+  containing folder, including when a cached MD5 would otherwise make the
+  archive look available without opening it. `asset_scan_access_denied` passed
+  on macOS after it cached a byte-for-byte copy of authentic DM1 FM Towns media,
+  revoked read permission, and verified the launcher still reports the folder
+  while the readable original remains available. This tests POSIX mode denial,
+  not TCC prompts or other-platform ACLs.
+
+- 2026-10-10: The release workflow now passes explicit draft state to
+  `gh release edit`, so retrying a draft with `draft=false` can publish it.
+  Actions release runs share one non-cancelling concurrency group and check the
+  Stockholm daily quota before building and again immediately before publish.
+  Daily-limit cases and the workflow policy regression passed locally. The
+  quota covers this serialized workflow, not release publication outside it.
+
 - 2026-10-10: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` to
   verify both directions of a live media change. With authentic DM1 and DM2
   archives present, the test adds the authentic CSB FM Towns archive while
@@ -23,6 +59,14 @@
   game's default-platform choice, selected edition and searched media paths
   through the CLI diagnostics route. This does not establish physical M5
   presentation or visual parity.
+
+- 2026-10-10: Re-ran the complete `dm2_v1_fmtowns_native_cli_boot` script
+  against the installed original FM Towns ZIP. Bare `--game dm2` and the M12
+  menu selected FM Towns; the authentic New Game menu matched its source RGB
+  digest; and New Game reached the first party through the ordinary main loop.
+  The runtime capture contained 28,587 nonblack pixels, including both the
+  dungeon and right panel. This verifies headless startup and first runtime,
+  not physical M5 display parity.
 
 - 2026-10-09: Re-ran `return_to_menu_rescans_dm1_csb_dm2_real_media` on the
   current `main` base. DM1, CSB, and DM2 started with original media in one
@@ -1790,6 +1834,22 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   (Japanese). Both full M11 language routes prove that the first live dungeon
   frame publishes a LIGHT palette rather than retaining C28.
 # CSB Atari source text receipt
+
+- 2026-10-10: The authentic DM2 Amiga return-to-menu regression now waits for
+  the source-owned title and New Game path to report a loaded runtime before
+  sending Back. The reusable `wait-game-runtime` script step checks the same
+  boot-probe runtime receipt as CLI startup verification. Authentic DM2 Amiga
+  passed with its verified 1x presentation geometry. Authentic DM1 Atari ST
+  1.1 passed its original M12/Hall-of-Champions input route; Amiga 3.6 passed
+  its authenticated F0441 entrance route. Both returned to the launcher and
+  rescanned roots containing original DM1, CSB and DM2 archives. The headless
+  real-media return matrix now covers DM1 DOS/Atari ST/Amiga/FM Towns, CSB
+  Atari ST/Amiga/FM Towns, and DM2 DOS/Macintosh/Amiga/FM Towns.
+- 2026-10-10: Release Actions serialize publication and check the one-release
+  daily quota before building and immediately before publishing. Policy tests
+  cover concurrent-run settings, same-tag retries, drafts, UTC-day boundaries,
+  and explicit draft publication. The workflow cannot account for releases
+  published outside the Actions workflow.
 
 - Bound the supplied S21E STX directly to its authentic 563-item DMCSB1
   GRAPHICS.DAT and decoded the 1848-byte item-556 M564 stream in memory. All

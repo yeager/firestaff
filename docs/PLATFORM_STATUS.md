@@ -26,6 +26,20 @@ flow (`m12_startup_menu`) also passed its DM1/CSB/DM2 missing-media checks.
 These tests ran on Mac16,10 with headless SDL; they do not verify native M5
 HiDPI presentation or input.
 
+On 2026-10-10, `dm2_v1_fmtowns_native_cli_boot` was run directly against the
+installed original FM Towns ZIP after CTest's configured archive path skipped
+the case. Bare `--game dm2` and M12 both selected FM Towns; its New Game menu
+matched the source RGB digest, and ordinary main-loop input reached the first
+party. This remains headless startup evidence, not physical M5 parity.
+
+The 2026-10-10 original-media return-to-menu checks also cover DM1 Atari ST
+1.1 and Amiga 3.6. Each route reached its source-owned runtime, returned to
+the launcher, and rediscovered DM1, CSB and DM2 from an isolated collection
+root. Combined with existing checks, this closes headless return/rescan
+coverage for DM1 DOS/Atari ST/Amiga/FM Towns, CSB Atari ST/Amiga/FM Towns, and
+DM2 DOS/Macintosh/Amiga/FM Towns; it does not establish physical desktop
+input or platform visual parity.
+
 ## Latest real-media revalidation
 
 Recent reports of DM1/CSB input and presentation faults and DM2/FM Towns

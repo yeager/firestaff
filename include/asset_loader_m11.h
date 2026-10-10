@@ -5,7 +5,7 @@
  * asset_loader_m11 — M11 GRAPHICS.DAT asset loader and blitter.
  *
  * Opens GRAPHICS.DAT, loads compressed graphics by index, expands them
- * via the M10 IMG3 pipeline into unpacked 1-byte-per-pixel buffers
+ * via the format-specific source decoder into unpacked 1-byte-per-pixel buffers
  * (each byte holds a 4-bit VGA palette index, values 0-15), and
  * provides blit operations onto the M11 framebuffer.
  *
@@ -64,6 +64,10 @@ typedef struct {
     long legacyDataSize;
     int legacyBigEndian;
     int legacyDm1;
+
+    /* DM1 Amiga 3.6 reuses the PC 0x8001 table envelope, but its entries are
+     * expanded by ReDMCSB EXPAND.C F0466 rather than the PC IMG3 decoder. */
+    int dm1Amiga36;
 
     /* DM1 Atari ST DMCSB1 source.  563-record container with Atari-LZW;
      * decoded items share the IMG1 pixel format with the Amiga path. */

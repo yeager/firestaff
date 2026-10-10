@@ -9,9 +9,8 @@
   ADF CLI/start-menu regression verifies that this title phase completes
   before the first runtime frame. Amiga 2.0 French, 2.x German/English, 3.6,
   and demo title receipts remain unverified; generic PC title-step receipts
-  are not Amiga evidence. Amiga 3.6 now reaches its authenticated runtime via
-  the direct route, but its source-owned F0437 title and F0441 entrance remain
-  unimplemented and must not be inferred from that runtime test.
+  are not Amiga evidence. A36M intentionally skips F0437: STARTUP1/STARTUP2
+  enter F0441 without calling the A20 title routine.
 - Extend the authenticated Amiga A20 English F0441 entrance route to the
   remaining Amiga editions after establishing each edition's original
   GRAPHICS.DAT / SWSH identity pair. The production route now authenticates
@@ -20,11 +19,17 @@
   a 20-tick switch delay and mouse-only input, based on ReDMCSB ENTRANCE.C and
   DATA.C MEDIA424. The real-media CLI/start-menu regression verifies the
   F0437 title and F0441 entrance complete before the ADF gameplay handoff.
-  Remaining: A20 French, other Amiga 2.x editions, 3.6, demo media, and native
+  Remaining: A20 French, other Amiga 2.x editions, demo media, and native
   renderer/input timing on each supported desktop; the A20 English test does
-  not establish pixel parity or HiDPI behavior. Authentic Amiga 3.6 now has a
-  direct runtime route because its edition-specific F0441 transaction is not
-  yet implemented; see DONE for exact limits.
+  not establish pixel parity or HiDPI behavior. A36M's exact GRAPHICS.DAT hash
+  now selects the source F0466 decoder, and authentic C002/C003/C004/C005/C011
+  media passes the real-media receipt test. Its CLI and M12 regressions now
+  verify entrance completion and the first runtime pose. Visual parity remains
+  unverified: resolve C430/C431/C432/C427/C435 from authenticated A36 layout
+  records and draw C011 at C435. The current generic 38-event compatibility
+  sequence and A20/PC door boxes do not implement A36's source zones,
+  2-VBlank cadence, or 31-step loop. Do not claim entrance parity until the
+  asymmetric 105x161 / 128x161 door zones and button overlay are rendered.
 
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
   shared SDL presentation path. The attached screenshot's dungeon pixels are

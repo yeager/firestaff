@@ -10,8 +10,10 @@ extern "C" {
 
 /* DM1 Amiga GRAPHICS.DAT classifier and admission gate.
  *
- * The Amiga releases use the legacy format (no 0x8001 new-format marker)
- * with big-endian byte order. The file has 575 graphics, all uncompressed
+ * Amiga 2.x uses the legacy format (no 0x8001 new-format marker) with
+ * big-endian byte order. Amiga 3.6 instead ships a 0x8001 indexed bank whose
+ * entries use ReDMCSB EXPAND.C F0466 command streams.
+ * The legacy file has 575 graphics, all uncompressed
  * (comp == decomp), with width/height embedded at the start of each
  * graphic's data rather than in a header array.
  *
@@ -20,7 +22,7 @@ extern "C" {
  *   dd373954b3fb127db7387946131ea322  DM Amiga 2.0 French       411960
  *   0679e39da9dcc2e855cb33c6c64ddcb5  DM Amiga 2.0/2.2 German   411960
  *   b35931b55db649a1bd2d415b61b29801  DM Amiga 2.1/2.2 English  411960
- *   7f9458e4a3972d06e649a6fa85a7f34b  DM Amiga 3.6 Multilang    411960
+ *   7f9458e4a3972d06e649a6fa85a7f34b  DM Amiga 3.6 Multilang    458108 (F0466)
  *   491ca939f9abb33ceeb26619b841fe91  DM Amiga Demo English
  *
  * Source: extracted from ADF disk images via AmigaOS OFS filesystem. */
@@ -70,6 +72,15 @@ int dm1_v1_amiga_graphics_decode(const uint8_t *data, size_t size,
                                  size_t pixel_capacity,
                                  uint16_t *out_width,
                                  uint16_t *out_height);
+
+/* Decode one A36M GRAPHICS.DAT item after F0474's source byte copy. A36M's
+ * item stream uses EXPAND.C F0466's run/literal/previous-line commands; it
+ * is not the PC IMG3 nibble stream despite the shared 0x8001 table marker. */
+int dm1_v1_amiga36_graphic_expand(const uint8_t *stream, size_t stream_size,
+                                  uint8_t *indexed_pixels,
+                                  size_t pixel_capacity,
+                                  uint16_t *out_width,
+                                  uint16_t *out_height);
 
 #ifdef __cplusplus
 }

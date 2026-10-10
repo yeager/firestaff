@@ -61,6 +61,8 @@
 #define ASSET_ISO_MAX_DIR_DEPTH 8
 
 static int external_tool_available_for_path(const char *path);
+static void record_access_denied_file_parent(const char *path);
+static int asset_scan_access_denied_errno(int errorCode);
 
 /* ── Embedded MD5 (same as asset_status_m12.c) ────────────────── */
 
@@ -410,14 +412,27 @@ static int file_md5_raw(const char *path, char outHex[33]) {
     unsigned char buf[8192];
     AssetMd5Ctx ctx;
     FILE *fp = fopen(path, "rb");
-    if (!fp) return 0;
+    if (!fp) {
+        int errorCode = errno;
+        if (errorCode == EACCES || errorCode == EPERM) {
+            record_access_denied_file_parent(path);
+        }
+        return 0;
+    }
     md5_init(&ctx);
     size_t n;
+    errno = 0;
     while ((n = fread(buf, 1, sizeof(buf), fp)) > 0)
         md5_update(&ctx, buf, (unsigned int)n);
     int ok = !ferror(fp);
+    int errorCode = ok ? 0 : errno;
     fclose(fp);
-    if (!ok) return 0;
+    if (!ok) {
+        if (errorCode == EACCES || errorCode == EPERM) {
+            record_access_denied_file_parent(path);
+        }
+        return 0;
+    }
     md5_final(&ctx, outHex);
     return 1;
 }
@@ -428,8 +443,22 @@ static int file_md5(const char *path, char outHex[33]) {
         if (stat(path, &st) == 0) {
             if (scache_lookup(s_scan_cache, path,
                               (int64_t)st.st_mtime, (int64_t)st.st_size,
-                              outHex))
+                              outHex)) {
+                /* A cached hash must not turn a now-inaccessible file into
+                 * an available game. macOS privacy grants can change while
+                 * stat() still succeeds, so validate open permission even
+                 * when the content hash itself is cached. */
+                FILE *fp = fopen(path, "rb");
+                if (!fp) {
+                    int errorCode = errno;
+                    if (asset_scan_access_denied_errno(errorCode)) {
+                        record_access_denied_file_parent(path);
+                    }
+                    return 0;
+                }
+                fclose(fp);
                 return 1;
+            }
             if (file_md5_raw(path, outHex)) {
                 scache_put(s_scan_cache, path,
                            (int64_t)st.st_mtime, (int64_t)st.st_size,
@@ -4388,6 +4417,40 @@ static void record_access_denied_directory(const char *path) {
     snprintf(g_accessDeniedDirectoryPaths[g_accessDeniedDirectoryCount],
              ASSET_PATH_MAX, "%s", path);
     ++g_accessDeniedDirectoryCount;
+}
+
+static void record_access_denied_file_parent(const char *path) {
+    char parent[ASSET_PATH_MAX];
+    char *separator;
+    size_t length;
+
+    if (!path || path[0] == '\0') return;
+    length = strlen(path);
+    if (length >= sizeof(parent)) return;
+    memcpy(parent, path, length + 1U);
+    separator = strrchr(parent, '/');
+#ifdef _WIN32
+    {
+        char *backslash = strrchr(parent, '\\');
+        if (!separator || (backslash && backslash > separator)) {
+            separator = backslash;
+        }
+    }
+#endif
+    if (!separator) {
+        record_access_denied_directory(".");
+        return;
+    }
+    if (separator == parent) {
+        separator[1] = '\0';
+#ifdef _WIN32
+    } else if (separator == parent + 2 && parent[1] == ':') {
+        separator[1] = '\0';
+#endif
+    } else {
+        *separator = '\0';
+    }
+    record_access_denied_directory(parent);
 }
 
 static int asset_scan_access_denied_errno(int errorCode) {

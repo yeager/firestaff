@@ -509,11 +509,7 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                       void* userData) {
     M11_ScanProgressContext* ctx = (M11_ScanProgressContext*)userData;
     if (!ctx || (!ctx->framebuffer && !ctx->modernRgba)) return 1;
-    if (ctx->debug && progress &&
-        (!progress->currentGameId[0] ||
-         strcmp(progress->currentGameId, "dm1") == 0 ||
-         strcmp(progress->currentGameId, "csb") == 0 ||
-         strcmp(progress->currentGameId, "dm2") == 0)) {
+    if (ctx->debug && progress) {
         fprintf(stderr,
                 "firestaff: scan elapsed-ms=%llu game=%s task=%s path=%s\n",
                 (unsigned long long)(SDL_GetTicks() - ctx->startedMs),
@@ -568,7 +564,9 @@ static void m11_rescan_launcher_asset_status(
                                    m11_scan_progress_callback,
                                    &scanCtx);
     if (debug) {
-        static const char* const gameIds[] = {"dm1", "csb", "dm2"};
+        static const char* const gameIds[] = {
+            "dm1", "csb", "dm2", "nexus", "theron"
+        };
         const char* dataDir = M12_AssetStatus_GetDataDir(
             &menuState->assetStatus);
         size_t i;
@@ -2537,7 +2535,8 @@ static int m11_dm1_amiga_present_entrance_palette(
     const uint8_t* framebuffer);
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs);
 static M12_MenuInput m11_next_script_input(const char** cursor,
-                                          int* outWaitFrames);
+                                          int* outWaitFrames,
+                                          int* outWaitForRuntime);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
@@ -2595,14 +2594,15 @@ static int m11_play_redmcsb_entrance_transition_impl(
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
     int entrancePalette;
-    const int amigaA20 = amigaReceipt && amigaReceipt->valid;
+    const int amigaReceiptValid = amigaReceipt && amigaReceipt->valid;
     if (!gameView || !gameView->active || !mediaReceipt ||
-        (!amigaA20 &&
+        (!amigaReceiptValid &&
          !dm1_v1_startup_entrance_timing_receipt_valid_pc34(mediaReceipt)) ||
-        (amigaA20 &&
+        (amigaReceiptValid &&
          (amigaReceipt->opening_steps !=
               DM1_V1_AMIGA_ENTRANCE_F0441_OPENING_STEPS ||
-          !amigaReceipt->mouse_input_only))) {
+          (amigaReceipt->mouse_input_only &&
+           amigaReceipt->has_entrance_buttons_graphic)))) {
         return 0;
     }
     /* Startup presentation runs before the ordinary frame loop selects the
@@ -2610,13 +2610,14 @@ static int m11_play_redmcsb_entrance_transition_impl(
     M11_Render_SetV2PresentationActive(
         m11_dm1_v20_presentation_active(gameView));
     entrancePalette = mediaReceipt->entrance_palette;
-    if (!amigaA20 && entrancePalette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+    if (!amigaReceiptValid && entrancePalette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
         !(mediaReceipt->platform ==
               DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST &&
           entrancePalette == -1)) {
         return 0;
     }
-    if (!DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
+    if (!amigaReceiptValid &&
+        !DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
             entranceReceipt)) {
         return 0;
     }
@@ -2655,7 +2656,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
         Uint64 presentationStartedMs = 0U;
         if (!ENTRANCE_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
         memset(&command, 0, sizeof(command));
-        if (amigaA20) {
+        if (amigaReceiptValid) {
             command.handled = 1;
             command.render_kind =
                 step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_FADE_TO_BLACK
@@ -2724,7 +2725,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 memset(&door, 0, sizeof(door));
                 door.animationStep = command.door_animation_step;
                 door.soundRattle = (unsigned int)(command.play_door_rattle_sound ? 1 : 0);
-                door.vblankBeforeCopy = amigaA20 ? 2U : 1U;
+                door.vblankBeforeCopy = amigaReceiptValid ? 2U : 1U;
                 door.leftBoxX = command.door_left_box_x;
                 door.leftBoxY = command.door_left_box_y;
                 door.leftBoxW = command.door_left_box_w;
@@ -2735,7 +2736,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 door.rightBoxH = command.door_right_box_h;
                 door.leftSourceX = command.door_left_source_x;
                 door.rightSourceX = command.door_right_source_x;
-                if (!amigaA20 && command.audio_request_ready) {
+                if (!amigaReceiptValid && command.audio_request_ready) {
                     (void)M11_Audio_EmitSourceSoundIndex(
                         &gameView->audioState, command.audio_sound_index);
                 }
@@ -2753,7 +2754,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
         }
 
         if (command.present_entrance_palette) {
-            if (amigaA20) {
+            if (amigaReceiptValid) {
                 presentationStartedMs = 0U;
                 if (!m11_dm1_amiga_present_entrance_palette(
                         gameView, amigaReceipt->entrance_palette_rgb4,
@@ -2774,7 +2775,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                     return 0;
                 }
             }
-        } else if (amigaA20
+        } else if (amigaReceiptValid
                        ? !m11_dm1_amiga_present_entrance_palette(
                              gameView, amigaReceipt->entrance_palette_rgb4,
                              framebuffer)
@@ -2794,8 +2795,9 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 g_m11_selector_music->phase = M11_ENTRANCE_PHASE_WAIT;
             M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(
                 autoEnterAfterMs,
-                amigaA20 || mediaReceipt->platform ==
-                    DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST);
+                (amigaReceiptValid ? amigaReceipt->mouse_input_only :
+                    mediaReceipt->platform ==
+                        DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST));
             if (cmd == M11_ENTRANCE_COMMAND_QUIT) {
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_QUIT;
@@ -2805,7 +2807,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 return M11_ENTRANCE_COMMAND_RESUME;
             }
             if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
-                if (amigaA20) {
+                if (amigaReceiptValid && amigaReceipt->mouse_input_only) {
                     sourceStep = 2U;
                     continue;
                 }
@@ -2829,13 +2831,13 @@ static int m11_play_redmcsb_entrance_transition_impl(
                         g_m11_selector_music->audio, 0);
             }
         }
-        if (amigaA20 && command.audio_request_ready &&
+        if (amigaReceiptValid && command.audio_request_ready &&
             step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND) {
             (void)M11_Audio_EmitSourceSoundIndex(
                 &gameView->audioState, command.audio_sound_index);
         }
         {
-            unsigned int delayMs = amigaA20
+            unsigned int delayMs = amigaReceiptValid
                 ? command.delay_ms
                 : m11_v20_startup_remaining_delay_ms(
                       command.delay_ms, presentationStartedMs);
@@ -3019,6 +3021,14 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
         drained += 1;
     }
     (void)drained;
+    /* Tests can request one fresh entrance input after the launch event has
+     * been drained. This exercises the same SDL event path as a physical
+     * Amiga Return key without making normal startup self-advancing. */
+    if (allowHeadlessTimeout && getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT") &&
+        strcmp(getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT"), "key:return") == 0) {
+        static const char freshReturn[] = "key:return";
+        (void)m11_push_script_event_token(freshReturn, sizeof(freshReturn) - 1u);
+    }
     if (g_m11_intro_delay_fast_forward) {
         return M11_ENTRANCE_COMMAND_ENTER;
     }
@@ -3035,7 +3045,13 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
                         m11_entrance_dispatch_source_locked_key_command((int)ev.key.key));
-                if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
+                if (keyCommand != M11_ENTRANCE_COMMAND_NONE) {
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr, "firestaff: startup-input-source keyboard command=%d\n",
+                                (int)keyCommand);
+                    }
+                    return keyCommand;
+                }
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
@@ -3066,7 +3082,13 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
                         m11_entrance_dispatch_source_locked_key_command((int)ev.key.keysym.sym));
-                if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
+                if (keyCommand != M11_ENTRANCE_COMMAND_NONE) {
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr, "firestaff: startup-input-source keyboard command=%d\n",
+                                (int)keyCommand);
+                    }
+                    return keyCommand;
+                }
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
@@ -3365,6 +3387,58 @@ static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
 cleanup:
     free(graphics);
     free(executable);
+    return authenticated;
+}
+
+static int m11_ascii_path_equal_ignore_case(const char* left,
+                                            const char* right) {
+    if (!left || !right) return 0;
+    while (*left && *right) {
+        if (tolower((unsigned char)*left) !=
+            tolower((unsigned char)*right)) return 0;
+        ++left;
+        ++right;
+    }
+    return *left == '\0' && *right == '\0';
+}
+
+static int m11_dm1_amiga36_entrance_f0441_receipt_if_selected(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry,
+    const M11_GameViewState* gameView,
+    DM1_V1_AmigaEntranceF0441Receipt* outReceipt) {
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    uint8_t* graphics = NULL;
+    size_t graphicsBytes = 0U;
+    int authenticated = 0;
+    if (outReceipt) memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!menuState || !entry || !entry->gameId ||
+        strcmp(entry->gameId, "dm1") != 0 || !gameView || !outReceipt) {
+        return 0;
+    }
+    versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
+    version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                     (size_t)versionIndex)
+        : NULL;
+    if (!version || !version->versionId ||
+        strcmp(version->versionId, "amiga36-multi") != 0 ||
+        M12_AssetStatus_GetVersionArchitecture(
+            "dm1", (size_t)versionIndex) != M12_ARCH_AMIGA ||
+        !gameView->assetLoader.graphicsDatPath[0] ||
+        !m11_ascii_path_equal_ignore_case(
+            gameView->assetLoader.graphicsDatPath, version->matchedPath) ||
+        !asset_read_virtual_path_alloc(
+            gameView->assetLoader.graphicsDatPath, &graphics,
+            &graphicsBytes)) {
+        goto cleanup;
+    }
+    authenticated = dm1_v1_amiga36_entrance_f0441_receipt(
+        graphics, graphicsBytes, outReceipt);
+
+cleanup:
+    free(graphics);
     return authenticated;
 }
 
@@ -5069,10 +5143,49 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
         if (m11_selected_dm1_is_amiga36(menuState, launchEntry) &&
             launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0) {
-            /* A36M reaches the authenticated runtime without the source-owned
-             * F0441 entrance. Keep the startup receipt honest about that
-             * bypass while preserving that this came from the launcher. */
-            gameView->dm1StartupIntroBypassed = 1;
+            /* STARTUP2.C calls F0441 for A36M after STARTUP1 skips F0437.
+             * Authenticate its five source graphics from the selected
+             * virtual ADF, then run the shared C004/C002/C003 source
+             * choreography. F0441 itself supplies C200; do not reuse the
+             * A20-only SWSH/title receipt or synthesize pixels. */
+            if (!getenv("FIRESTAFF_EXIT_AFTER_LAUNCH")) {
+                DM1_V1_AmigaEntranceF0441Receipt amigaReceipt;
+                DM1_V1_StartupFullGraphicsMediaReceipt_PC34 mediaReceipt;
+                M11_EntranceCommand entranceCommand;
+                memset(&amigaReceipt, 0, sizeof(amigaReceipt));
+                memset(&mediaReceipt, 0, sizeof(mediaReceipt));
+                mediaReceipt.handled = 1;
+                /* A36M uses the Amiga renderer below. The non-PC34 marker
+                 * suppresses PC-only startup capture hooks in that renderer. */
+                mediaReceipt.platform = DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST;
+                if (!m11_dm1_amiga36_entrance_f0441_receipt_if_selected(
+                        menuState, launchEntry, gameView, &amigaReceipt)) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
+                entranceCommand = m11_play_dm1_amiga_entrance_f0441(
+                    gameView, -1, NULL, &mediaReceipt, &amigaReceipt);
+                if (entranceCommand != M11_ENTRANCE_COMMAND_ENTER) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    if (entranceCommand == M11_ENTRANCE_COMMAND_QUIT) {
+                        menuState->launchRequested = 0;
+                        menuState->shouldExit = 1;
+                        return 1;
+                    }
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
+                if (g_m11_debug_startup_detail) {
+                    fprintf(stderr,
+                            "firestaff: startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=%s input=keyboard+mouse palette=rgb4 visual-parity=unverified\n",
+                            amigaReceipt.graphics_md5);
+                }
+                gameView->dm1StartupIntroBypassed = 0;
+                gameView->dm1StartupHandoffExecuted = 1;
+            }
             gameView->startedFromLauncher = 1;
         }
         if (m11_selected_dm1_is_atari(menuState, launchEntry)) {
@@ -6632,6 +6745,9 @@ static int m11_script_keycode_from_name(const char* name) {
     if (!name || name[0] == '\0') {
         return 0;
     }
+    if (strncmp(name, "command+", 8) == 0) {
+        name += 8;
+    }
     if (strcmp(name, "up") == 0) return SDLK_UP;
     if (strcmp(name, "down") == 0) return SDLK_DOWN;
     if (strcmp(name, "left") == 0) return SDLK_LEFT;
@@ -6921,14 +7037,19 @@ static int m11_push_script_event_token(const char* token, size_t len) {
     memset(&ev, 0, sizeof(ev));
 
     if (strncmp(buffer, "key:", 4) == 0) {
+        const char *keyName = buffer + 4;
+        int commandModifier = strncmp(keyName, "command+", 8) == 0;
+        if (commandModifier) keyName += 8;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
         ev.type = SDL_EVENT_KEY_DOWN;
-        ev.key.key = (SDL_Keycode)m11_script_keycode_from_name(buffer + 4);
+        ev.key.key = (SDL_Keycode)m11_script_keycode_from_name(keyName);
         ev.key.scancode = SDL_GetScancodeFromKey(ev.key.key, NULL);
+        if (commandModifier) ev.key.mod = SDL_KMOD_GUI;
 #else
         ev.type = SDL_KEYDOWN;
-        ev.key.keysym.sym = (SDL_Keycode)m11_script_keycode_from_name(buffer + 4);
+        ev.key.keysym.sym = (SDL_Keycode)m11_script_keycode_from_name(keyName);
         ev.key.keysym.scancode = SDL_GetScancodeFromKey(ev.key.keysym.sym);
+        if (commandModifier) ev.key.keysym.mod = KMOD_GUI;
 #endif
         SDL_PushEvent(&ev);
         return 1;
@@ -6980,8 +7101,10 @@ static int m11_script_event_token_is_valid(const char* token, size_t len) {
     memcpy(buffer, token, len);
     buffer[len] = '\0';
     if (strncmp(buffer, "key:", 4) == 0) {
-        return buffer[4] != '\0' &&
-               m11_script_keycode_from_name(buffer + 4) != 0x7fffffff;
+        const char *keyName = buffer + 4;
+        if (strncmp(keyName, "command+", 8) == 0) keyName += 8;
+        return keyName[0] != '\0' &&
+               m11_script_keycode_from_name(keyName) != 0x7fffffff;
     }
     if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
         return 1;
@@ -7419,11 +7542,15 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
 }
 
 static M12_MenuInput m11_next_script_input(const char** cursor,
-                                          int* outWaitFrames) {
+                                          int* outWaitFrames,
+                                          int* outWaitForRuntime) {
     const char* start;
     const char* end;
     if (outWaitFrames) {
         *outWaitFrames = 0;
+    }
+    if (outWaitForRuntime) {
+        *outWaitForRuntime = 0;
     }
     if (!cursor || !*cursor) {
         return M12_MENU_INPUT_NONE;
@@ -7441,6 +7568,13 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         ++end;
     }
     *cursor = end;
+    if ((size_t)(end - start) == sizeof("wait-game-runtime") - 1U &&
+        strncmp(start, "wait-game-runtime", sizeof("wait-game-runtime") - 1U) == 0) {
+        if (outWaitForRuntime) {
+            *outWaitForRuntime = 1;
+        }
+        return M12_MENU_INPUT_NONE;
+    }
     {
         int waitFrames = m11_script_wait_frames(start,
                                                 (size_t)(end - start));
@@ -8960,6 +9094,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_GameViewState gameView;
     const char* scriptCursor = o->script;
     int scriptWaitFramesRemaining = 0;
+    int scriptWaitForRuntime = 0;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
     int useModern = 0;
@@ -9960,12 +10095,26 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         lastLoopTick = now;
 
-        if (scriptWaitFramesRemaining > 0) {
+        if (scriptWaitForRuntime) {
+            M11_BootProbeReceipt runtimeReceipt;
+            memset(&runtimeReceipt, 0, sizeof(runtimeReceipt));
+            if (M11_GameView_GetBootProbeReceipt(&gameView, &runtimeReceipt) &&
+                m11_boot_probe_runtime_receipt_ready(&runtimeReceipt)) {
+                scriptWaitForRuntime = 0;
+            }
+        }
+        if (scriptWaitForRuntime) {
+            input = M12_MENU_INPUT_NONE;
+        } else if (scriptWaitFramesRemaining > 0) {
             --scriptWaitFramesRemaining;
         } else if (scriptCursor && *scriptCursor != '\0') {
             int waitFrames = 0;
-            input = m11_next_script_input(&scriptCursor, &waitFrames);
+            int waitForRuntime = 0;
+            input = m11_next_script_input(&scriptCursor,
+                                          &waitFrames,
+                                          &waitForRuntime);
             scriptWaitFramesRemaining = waitFrames;
+            scriptWaitForRuntime = waitForRuntime;
         }
         int menuPointerChanged = 0;
         if (input == M12_MENU_INPUT_NONE) {
@@ -10103,6 +10252,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     input = M12_MENU_INPUT_NONE;
                 } else {
                     result = M11_GameView_HandleInput(&gameView, input);
+                }
+                if (o->debug && input == M12_MENU_INPUT_BACK &&
+                    gameView.sourceId[0] &&
+                    strcmp(gameView.sourceId, "dm2") == 0) {
+                    fprintf(stderr,
+                            "firestaff: input game=dm2 action=back result=%d startup-menu=%d frozen=%d\n",
+                            (int)result,
+                            gameView.dm2State.startup_menu_active,
+                            gameView.dm2GameFrozen);
                 }
                 if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
                     M11_GameView_Shutdown(&gameView);

@@ -5,6 +5,25 @@
 - `Game-data folder selection`: reports when the selected directory cannot be
   accessed separately from a directory that does not exist.
 
+# Firestaff v3.0.375
+
+## User-facing changes
+
+- `DM1 Amiga 3.6 startup`: uses authenticated original entrance media to reach
+  its first dungeon.
+
+## Developer changes
+
+- `Launcher return-scan diagnostics`: update availability for all five games
+  and log scan progress after returning from DM1, CSB, or DM2; authentic return
+  tests cover 11 platform routes.
+- `DM1 Amiga 3.6 entrance receipt`: verify original entrance media and the
+  CLI/start-menu handoff to the first runtime pose.
+- `DM2 FM Towns startup regression`: verify bare CLI selection, original New
+  Game presentation data, and first-party runtime through the normal loop.
+- `GitHub release retry`: update an existing release with an explicit draft
+  value so a successful retry can publish a prior draft.
+
 # Firestaff v3.0.374
 
 ## User-facing changes
