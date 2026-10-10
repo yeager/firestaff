@@ -2,7 +2,9 @@
 #include <stddef.h>
 
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
- * Creature names at UD 0x2741EF, 8-byte fixed-width null-terminated.
+ * Dungeon-name records begin at UD 0x2741EF and occupy seven 8-byte slots.
+ * Their trailing bytes are preserved as source data; no delimiter semantics
+ * are inferred here.
  * Dungeon intro stories at UD 0x27613E-0x276CCC.
  *   Control bytes: 0x01=newline, 0x02=paragraph break, 0x03=section start.
  * Retrieval messages at UD 0x27713F-0x277288.
@@ -20,12 +22,12 @@ static const char *const g_dungeon_names[THERON_TRACK02_DUNGEON_COUNT] = {
 
 static const char *const g_treasure_names[THERON_TRACK02_DUNGEON_COUNT] = {
     "Shield Defiant",  /* UD 0x27715B */
-    "Taza Boots",      /* UD 0x277189 */
-    "Taza Poleyn",     /* UD 0x2771B8 */
-    "Soulcage",        /* UD 0x2771E8 */
-    "Taza Armour",     /* UD 0x277215 */
-    "Tazahelm",        /* UD 0x277245 */
-    "Retaliator",      /* UD 0x277272 */
+    "Taza Boots",      /* UD 0x27718E */
+    "Taza Poleyn",     /* UD 0x2771BD */
+    "Soulcage",        /* UD 0x2771ED */
+    "Taza Armour",     /* UD 0x27721A */
+    "Tazahelm",        /* UD 0x27724A */
+    "Retaliator",      /* UD 0x277277 */
 };
 
 /* Stories verbatim from binary. 0x01=newline, 0x02=para break, 0x03=section. */

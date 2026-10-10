@@ -90,6 +90,19 @@
   rendering. CTest registration remains unverified until CI or a working local
   CMake toolchain configures the test.
 
+## 2026-10-10 — verify US dungeon labels against retail media
+
+- Corrected six treasure-name source comments that pointed five bytes before
+  their authentic strings. The dungeon-name section was also mislabeled as
+  creature names and as null-terminated; its seven observed eight-byte source
+  records are now described without inferring delimiter semantics.
+- A real-media test locks all seven dungeon-name records, treasure labels,
+  retrieval messages, and the game-speed label to hash-authenticated US Track
+  02. Three direct loops and the missing-media skip path pass. This establishes
+  byte provenance only; control meaning and runtime presentation remain open.
+- CTest registration is not verified locally because the macOS linker/SDK
+  fails before project generation. CI must verify the registration.
+
 ## 2026-10-10 — run the complete Theron-labeled CTest selection
 
 - On TRV2, built the missing Theron test/probe targets and the `firestaff`

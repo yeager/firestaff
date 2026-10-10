@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — verify US dungeon labels against retail media
+
+- Corrected six treasure-name source offsets and the dungeon-name section's
+  inaccurate source description. Added an authentic-media regression for the
+  seven fixed-width dungeon-name records, treasure labels, retrieval messages,
+  and the game-speed label.
+- Three repeated runs passed against hash-authenticated US Track 02, and the
+  test's missing-media path returned the CTest skip code. Gitleaks reported no
+  leaks in the changed files. CTest configuration itself awaits CI because
+  local CMake generation fails in the installed macOS linker/SDK.
+- This is data provenance, not proof of control-code meaning or runtime UI
+  parity; those gaps remain in `TODO-theron.md`.
+
 ## 2026-10-10 — source-lock compiled US dungeon intro stories
 
 - Added a real-media regression that authenticates the installed US Track 02
