@@ -18,7 +18,12 @@ LISTING_PATH = (
 )
 WINDOW_LENGTH = 211
 LISTING_START_PC = 0x4002
+ALT_ENTRY_PC = 0x40E3
+ALT_ENTRY_DELTA = ALT_ENTRY_PC - LISTING_START_PC
+ALT_ENTRY_LENGTH = 201
 EXPECTED_WINDOW = bytes.fromhex("73002001200f007300200027800062")
+EXPECTED_CALL_40E3 = bytes.fromhex("20e340")
+EXPECTED_OVERLAPPING_TIA_BYTES = bytes.fromhex("e30302002b0d20")
 REGIONS = {
     "JP": {
         "filename": "TQJP02.bin",
@@ -27,6 +32,8 @@ REGIONS = {
         "size": 8_102_640,
         "offset": 0x2973A2,
         "span_sha256": "3d16abea96bf6ce9610c7b3c9bc827f73e67f922dcda63e1c8681c7e3cd71a96",
+        "alt_entry_sha256": "2c41de75cc88b527a3ed8606c24bfe1cfc4e11f39a781714601890b638e5a573",
+        "alt_entry_listing": "theron-jp-cold-boot-stage2-alt-entry-40e3-20261010.asm",
     },
     "US": {
         "filename": "TQUS02.bin",
@@ -35,6 +42,8 @@ REGIONS = {
         "size": 8_104_992,
         "offset": 0x297CD2,
         "span_sha256": "3d16abea96bf6ce9610c7b3c9bc827f73e67f922dcda63e1c8681c7e3cd71a96",
+        "alt_entry_sha256": "fa686ced729a6563d0f4d00c6d9e6bdf2f9c3f547d8a21afbd51ee6c26c0cd05",
+        "alt_entry_listing": "theron-us-cold-boot-stage2-alt-entry-40e3-20261010.asm",
     },
 }
 LISTING_ROW = re.compile(r"^([0-9a-f]{6}):\s*(.*?)\s{2,}[^\s].*$")
@@ -51,10 +60,10 @@ def all_offsets(data: bytes, needle: bytes) -> tuple[int, ...]:
         cursor += 1
 
 
-def listing_bytes() -> tuple[int, bytes]:
-    lines = LISTING_PATH.read_text(encoding="ascii").splitlines()
+def listing_bytes(path: Path, start_pc: int, expected_length: int) -> tuple[int, bytes]:
+    lines = path.read_text(encoding="ascii").splitlines()
     decoded = bytearray()
-    pc = LISTING_START_PC
+    pc = start_pc
     rows = 0
     for line_number, line in enumerate(lines, start=1):
         if not line or line.startswith(";"):
@@ -74,8 +83,11 @@ def listing_bytes() -> tuple[int, bytes]:
         decoded.extend(bytes.fromhex("".join(byte_tokens)))
         pc += len(byte_tokens)
         rows += 1
-    if not rows or len(decoded) != WINDOW_LENGTH:
-        raise AssertionError(f"expected a {WINDOW_LENGTH}-byte listing, found {len(decoded)} bytes")
+    if not rows or len(decoded) != expected_length:
+        raise AssertionError(
+            f"expected a {expected_length}-byte listing in {path.name}, "
+            f"found {len(decoded)} bytes"
+        )
     return pc, bytes(decoded)
 
 
@@ -91,11 +103,12 @@ def main() -> int:
         print("SKIP: authentic JP and US Theron Track 02 media is unavailable")
         return 77
 
-    end_pc, decoded = listing_bytes()
+    end_pc, decoded = listing_bytes(LISTING_PATH, LISTING_START_PC, WINDOW_LENGTH)
     if end_pc != LISTING_START_PC + WINDOW_LENGTH:
         raise AssertionError("MAME listing does not end at the expected 211-byte boundary")
 
     spans = {}
+    alternate_entries = {}
     for region, metadata in REGIONS.items():
         media_path = media_paths[region]
         actual_size = media_path.stat().st_size
@@ -128,18 +141,42 @@ def main() -> int:
             raise AssertionError(f"{region} candidate span hash changed at {offset:#x}")
         if all_offsets(image, span) != (offset,):
             raise AssertionError(f"{region} 211-byte candidate is not unique at {offset:#x}")
+        call_offset = 0x404D - LISTING_START_PC
+        if decoded[call_offset : call_offset + len(EXPECTED_CALL_40E3)] != EXPECTED_CALL_40E3:
+            raise AssertionError("static candidate no longer calls alternate entry $40e3")
+        overlap_offset = offset + (0x40DD - LISTING_START_PC)
+        overlap_end = overlap_offset + len(EXPECTED_OVERLAPPING_TIA_BYTES)
+        if image[overlap_offset:overlap_end] != EXPECTED_OVERLAPPING_TIA_BYTES:
+            raise AssertionError(f"{region} overlapping $40dd TIA byte sequence changed")
+        alt_offset = offset + ALT_ENTRY_DELTA
+        alternate_entry = image[alt_offset : alt_offset + ALT_ENTRY_LENGTH]
+        if len(alternate_entry) != ALT_ENTRY_LENGTH:
+            raise AssertionError(f"{region} alternate entry is truncated at {alt_offset:#x}")
+        if hashlib.sha256(alternate_entry).hexdigest() != metadata["alt_entry_sha256"]:
+            raise AssertionError(f"{region} alternate-entry hash changed at {alt_offset:#x}")
+        alt_path = ROOT / "docs/source-lock/theron-disassembly" / metadata["alt_entry_listing"]
+        alt_end_pc, alt_decoded = listing_bytes(alt_path, ALT_ENTRY_PC, ALT_ENTRY_LENGTH)
+        if alt_end_pc != ALT_ENTRY_PC + ALT_ENTRY_LENGTH or alt_decoded != alternate_entry:
+            raise AssertionError(f"{region} alternate-entry listing differs from authentic media")
         spans[region] = span
+        alternate_entries[region] = alternate_entry
         print(f"PASS: authentic {region} Track 02 candidate at raw offset {offset:#x}")
+        print(f"PASS: {region} alternate entry and listing at raw offset {alt_offset:#x}")
 
     if spans["JP"] != spans["US"]:
         raise AssertionError("authentic JP and US candidate bytes differ")
     if decoded != spans["JP"]:
         raise AssertionError("MAME listing bytes differ from the authentic candidate span")
+    if alternate_entries["JP"][:20] != alternate_entries["US"][:20]:
+        raise AssertionError("JP/US alternate entries no longer share the initial 20-byte prefix")
+    if alternate_entries["JP"][20:23] == alternate_entries["US"][20:23]:
+        raise AssertionError("JP/US alternate entries unexpectedly share the $40f7 call")
 
     print("PASS: unique 211-byte JP/US candidate and MAME HuC6280 listing match exactly")
+    print("PASS: JP/US $40e3 alternate-entry listings match their distinct authentic spans")
     print(
-        "LIMIT: static media/listing correspondence only; runtime source binding "
-        "and semantics remain unproven"
+        "LIMIT: static media/listing correspondence only; runtime source binding, "
+        "execution, and semantics remain unproven"
     )
     return 0
 

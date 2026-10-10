@@ -38,6 +38,13 @@
   lacks per-byte source-origin receipts. This contract test does not validate
   that probe as source-origin evidence or establish gameplay.
 
+- Added a source-locked alternate-entry disassembly at `$40e3`, the direct
+  target of the candidate's conditional `JSR` at `$404d`. The target overlaps
+  the final byte of a linear `TIA` decode, so each edition now has a separate
+  MAME listing checked against authentic Track 02 bytes. JP and US share the
+  first 20 bytes and diverge at `$40f7`. This remains static-media evidence;
+  runtime source binding, execution, and behavior are unproven.
+
 ## 2026-10-10 - add an executed-opcode probe for the `$4002` candidate window
 
 - The opt-in PCE Fast probe records the byte returned by `RdAtPC()` at the
@@ -64,6 +71,7 @@ memory.
 The transition receipt reports zero CD IRQs, source-bound CD reads, authenticated
 CD-to-RAM receipts, and game-main `$E009` dispatches; `transition=missing`.
 Close-time PCE Fast VRAM, VCE, SAT, and VDC-state snapshots were written, but
+they do not establish source-byte provenance or a game-owned transition.
 
 ## 2026-10-10 — lock the authentic JP UP-to-RAM control-flow pair
 
