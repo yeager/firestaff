@@ -2,6 +2,18 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+2026-10-11 local startup retest: the current source passed authentic FM Towns,
+DOS, Amiga and Macintosh CLI/start-menu regressions
+(`test_dm2_v1_fmtowns_native_cli_boot.sh`,
+`test_dm2_v1_dos_native_cli_boot.sh`,
+`test_dm2_v1_amiga_native_cli_boot.sh` and
+`test_dm2_v1_mac_native_cli_boot.sh`). The Towns test reached the New Game menu
+after the original 225-frame title, matched the `TITLE/0/4` source RGB digest,
+and reached the first champion in the normal loop. DOS, Amiga and Macintosh
+tests also reached their runtime/input routes. The tests use SDL's dummy video
+driver and do not verify native M5 Retina window/input behavior or full visual
+parity.
+
 - Complete the remaining source-owned DM2 FM Towns HUD and compare the
   reported screenshot on the MacBook Pro M5. The normal M12 → Towns → New Game
   route now binds the authenticated `GRAPHICSSET/<map style>/0xF5` squad

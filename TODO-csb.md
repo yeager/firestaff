@@ -2,6 +2,15 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+2026-10-11 local startup retest: the current source passed the authentic
+FM Towns, Atari ST and Amiga ADF CLI/start-menu regressions
+(`test_csb_v1_fmtowns_native_cli_boot.sh`,
+`test_csb_v1_atari_nested_zip_cli_boot.sh` and
+`test_csb_v1_amiga_adf_archive_cli_boot.sh`). The checks reached the Towns
+MINI.DAT party, Atari runtime movement and Amiga source entrance/runtime
+movement. This does not verify native M5 Retina window/input behavior or full
+visual parity.
+
 - Add a source-preserving launch path for the supplied Amiga 3.5 CTRaw media.
   On 2026-10-10, `--game csb --platform amiga --boot-probe` against the
   supplied `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` failed with `game
