@@ -11,25 +11,27 @@
 
 ## 2026-10-10 — game-owned VDC instruction/source join remains open
 
-- Two separate 70-second JP Rev. 1 cold-start replays used authentic Track 02
-  (`b7afb338ad31be1025b53f9aff12d73a`) and scheduled a five-second RUN hold at
-  frame 450 and frame 540, respectively. The latter starts after the
-  documented System Card title delay. For each trace, the scripted-input
-  verifier passed three repeated checks: RUN was applied and followed by a
-  controller read with the expected active-low button value (`raw=0008`,
-  `sel=0`, `value=37`), but that read was still in System Card code
-  (`non_system_card_poll_reads=0`). Both captures ended `transition=missing`,
-  with zero CD IRQ callbacks, raw-sector spans, SCSI read bindings, byte-origin
-  RAM receipts, or authenticated CD-to-RAM receipts. A CD-RAM write sidecar
-  exists, but without those source receipts it does not establish Track 02
-  delivery or gameplay. The private traces remain in the TRV2 `/run` tmpfs
-  capture directory; no media, BIOS, or trace was added to the repository.
-- A 140-second replay at `run@540:300` ruled out the short-capture window:
-  the trace reached 82,818 input transactions, and the RUN hold was again
-  observed by System Card code, but no non-System-Card poll, CD IRQ, raw
-  sector, sector binding, or authenticated CD-to-RAM receipt appeared. The
-  scripted-input verifier passed three more loops. The loader transition is
-  still missing after the longer post-input interval.
+- Three JP Rev. 1 cold-start probes used authentic Track 02
+  (`b7afb338ad31be1025b53f9aff12d73a`) with scripted plans `run@450:300` and
+  `run@540:300`. Correction: the hook's scheduler and hold counters advance
+  with input-read calls; these values are not emulator video frames or wall
+  seconds. They were not five-second holds and do not test title-delay timing.
+  On the 140-second `run@540:300` probe, RUN reached the System Card read at
+  `$E4C5` with the expected active-low value (`raw=0008`, `sel=0`, `value=37`),
+  but no CD IRQ, raw-sector span, SCSI binding, byte-origin RAM receipt, or
+  authenticated CD-to-RAM receipt followed in 82,818 input transactions.
+- A current normal-`pce` replay of the historical
+  `run@1:1,run@480:30,i@900:30` plan against authentic US media
+  (`f23601102138f87c33025877767ebf76`) logged 115 CD IRQs, 25 sector spans,
+  four SCSI commands, 25 sector bindings and one `$E009` dispatch, but zero
+  authenticated CD-to-RAM receipts. Its capture was rejected because the
+  special frame-1 boot injection did not yield the ordinary mask-read witness
+  required by the current strict input gate. The follow-up normal-`pce`
+  `run@8:60,i@480:30,i@900:30` replay passed three input-verifier loops but
+  produced only two CD IRQs, no raw sectors and no `$E009` dispatch. Thus the
+  historical transport result has not been reproduced by the current capture
+  build; neither replay establishes gameplay or parity. The private traces
+  remain in TRV2 `/run` tmpfs and are not checked in.
 - Normal-PCE VDC writes now carry the exact HuC6280 instruction-start logical
   and physical PCs, captured before the dispatcher increments PC. A clean
   Mednafen build and authentic cold-start capture verified BIOS VDC attribution
