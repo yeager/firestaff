@@ -4411,6 +4411,29 @@ const char *asset_scan_access_denied_directory_path(int index) {
 static void record_access_denied_directory(const char *path) {
     int i;
     if (!path || path[0] == '\0') return;
+#ifdef _WIN32
+    {
+        DWORD attributes = GetFileAttributesA(path);
+        /* FindFirstFileA can report ACCESS_DENIED for a missing wildcard
+         * candidate on some Windows runner/filesystem combinations.  Only
+         * tell the launcher a folder needs permission when the directory
+         * metadata confirms that the candidate exists. */
+        if (attributes == INVALID_FILE_ATTRIBUTES ||
+            (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+            return;
+        }
+    }
+#else
+    {
+        struct stat st;
+        /* Do not turn an inaccessible/missing file candidate into a folder
+         * permission warning.  stat still succeeds for macOS privacy denial
+         * cases where opening/listing the existing folder is blocked. */
+        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) {
+            return;
+        }
+    }
+#endif
     for (i = 0; i < g_accessDeniedDirectoryCount; ++i) {
         if (strcmp(g_accessDeniedDirectoryPaths[i], path) == 0) return;
     }
