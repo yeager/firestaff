@@ -2,6 +2,22 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Add a source-preserving launch path for the supplied Amiga 3.5 CTRaw media.
+  On 2026-10-10, `--game csb --platform amiga --boot-probe` against the
+  supplied `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` failed with `game
+  unavailable for --game: csb`. The 7z contains four CAPS/SPS CT Raw disk
+  images (English and English/French/German game and utility disks), rather
+  than the ADF images accepted by the current Amiga file path. Repacking those
+  four byte-identical original members into ZIP and retrying the same CLI probe
+  produced the same failure; ZIP handles the container but not the disk-image
+  format. ReDMCSB COMPILE.H:274-298 defines distinct A35E/A35M
+  executable and language-selection routes, so A31/A33 startup tests do not
+  cover this edition. Implement bounded in-process access to the original
+  media or another source-preserving intake path, then verify direct CLI,
+  start-menu selection, A35E/A35M handoff and first runtime input against the
+  authentic disks. Do not treat renamed or converted test images as proof of
+  native CTRaw support, and keep emulator or BIOS dependencies out of runtime.
+
 - Restore the original French Atari ST preservation ZIP before revalidating
   `csb_v1_atari_french_preservation_zip_cli_boot`. The test currently skips:
   `/Users/bosse/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip` is absent
