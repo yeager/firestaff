@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+- 2026-10-10: Rechecked the authentic CSB startup matrix against the current
+  launcher. Atari STX and its nested/original archive routes, Amiga 3.1 ZIP,
+  Amiga 3.3 ZIP-to-ADF and loose-folder routes, the Amiga ADF archive route,
+  and FM Towns all passed their CLI/start-menu regressions. The mixed M12
+  DM1/CSB collection also passed with the installed PC, Atari, Amiga and FM
+  Towns packages. The French Atari preservation-ZIP test still skips because
+  `/Users/bosse/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip` is
+  absent; no French-media result is claimed. These checks use authentic media
+  and dummy video, so they verify launcher/runtime receipts rather than
+  physical display output or visual parity.
+
 - 2026-10-08: With the current launcher freshly linked,
   `csb_v1_atari_stx_native_cli_boot` passed in 136.02 seconds against the
   authentic Atari STX. It verified title acceptance, the original map-0 start
