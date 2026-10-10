@@ -44,6 +44,7 @@
 #define FIRESTAFF_ASSET_STATUS_TESTING 1
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
+#include "config_m12.h"
 #include "menu_startup_m12.h"
 
 #include <SDL3/SDL_dialog.h>
@@ -78,6 +79,7 @@ static char* test_mkdtemp(char* templ) {
     return NULL;
 }
 #else
+#include <dirent.h>
 #include <limits.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -183,6 +185,59 @@ static int make_child_dir(const char* parent,
     return MKDIR(out) == 0;
 }
 
+static int configure_english_test_language(const char* home) {
+    M12_Config config;
+    char configPath[M12_CONFIG_PATH_CAPACITY];
+    if (!home ||
+        snprintf(configPath, sizeof(configPath), "%s/startup-menu.toml",
+                 home) >= (int)sizeof(configPath) ||
+        !test_setenv("FIRESTAFF_CONFIG_PATH", configPath)) {
+        return 0;
+    }
+    M12_Config_SetDefaults(&config);
+    config.languageIndex = 0;
+    config.languageExplicit = 1;
+    return M12_Config_Save(&config);
+}
+
+#ifndef _WIN32
+static char testHomeFixtures[16][PATH_MAX];
+static size_t testHomeFixtureCount = 0;
+
+static void remove_test_fixture_tree(const char* path) {
+    DIR* dir = opendir(path);
+    struct dirent* entry;
+    if (!dir) {
+        (void)unlink(path);
+        return;
+    }
+    while ((entry = readdir(dir)) != NULL) {
+        char child[PATH_MAX];
+        struct stat st;
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0 ||
+            snprintf(child, sizeof(child), "%s/%s", path, entry->d_name) >=
+                (int)sizeof(child)) {
+            continue;
+        }
+        if (lstat(child, &st) == 0 && S_ISDIR(st.st_mode)) {
+            remove_test_fixture_tree(child);
+        } else {
+            (void)unlink(child);
+        }
+    }
+    closedir(dir);
+    (void)rmdir(path);
+}
+
+static void cleanup_test_home_fixtures(void) {
+    size_t i;
+    for (i = 0; i < testHomeFixtureCount; ++i) {
+        remove_test_fixture_tree(testHomeFixtures[i]);
+    }
+}
+#endif
+
 static int ensure_nested_dir(const char* root, const char* rel) {
     char partial[M12_ASSET_DATA_DIR_CAPACITY];
     const char* cursor;
@@ -253,6 +308,9 @@ static int isolate_home_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_CAPACITY]
     if (!test_setenv("HOME", home) || !test_setenv("USERPROFILE", home)) {
         return 0;
     }
+    if (!configure_english_test_language(home)) {
+        return 0;
+    }
     return make_child_dir(home, "empty-data-root", dataRoot);
 #else
     char cwd[PATH_MAX];
@@ -272,7 +330,15 @@ static int isolate_home_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_CAPACITY]
     if (!home) {
         return 0;
     }
+    if (testHomeFixtureCount < sizeof(testHomeFixtures) / sizeof(testHomeFixtures[0])) {
+        snprintf(testHomeFixtures[testHomeFixtureCount],
+                 sizeof(testHomeFixtures[testHomeFixtureCount]), "%s", home);
+        ++testHomeFixtureCount;
+    }
     if (!test_setenv("HOME", home)) {
+        return 0;
+    }
+    if (!configure_english_test_language(home)) {
         return 0;
     }
     return make_child_dir(home, "empty-data-root", dataRoot);
@@ -898,6 +964,9 @@ static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
 }
 
 int main(int argc, char** argv) {
+#ifndef _WIN32
+    (void)atexit(cleanup_test_home_fixtures);
+#endif
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
 
     if (argc == 2 && strcmp(argv[1], "--csb-native-7z-archive-scan") == 0) {
