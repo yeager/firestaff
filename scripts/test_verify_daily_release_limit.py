@@ -64,9 +64,15 @@ def main() -> int:
             0,
         ),
         (
-            "retrying the same published tag is blocked",
+            "retrying the same published tag updates the existing release",
             "v2.5.4",
             [published("v2.5.4", now)],
+            0,
+        ),
+        (
+            "same-tag retry is blocked after a different release today",
+            "v2.5.4",
+            [published("v2.5.4", now), published("v2.5.3", now)],
             1,
         ),
         (

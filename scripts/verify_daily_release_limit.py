@@ -50,14 +50,22 @@ def main() -> int:
         if timestamp.astimezone(LOCAL_ZONE).date() == today:
             published_today.append(str(release.get("tag_name", "(unknown)")))
 
-    if published_today:
-        tags = ", ".join(published_today)
+    other_published_today = [tag for tag in published_today if tag != args.tag]
+    if other_published_today:
+        tags = ", ".join(other_published_today)
         print(
             f"::error::A Firestaff release was already published in Europe/Stockholm today "
             f"({today}): {tags}. The limit is one release per calendar day.",
             file=sys.stderr,
         )
         return 1
+
+    if args.tag in published_today:
+        print(
+            f"Release {args.tag} was already published today; an idempotent "
+            "same-tag retry may update that release without creating another one."
+        )
+        return 0
 
     print(f"Daily release limit available for {today} (Europe/Stockholm).")
     return 0
