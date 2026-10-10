@@ -6,10 +6,11 @@
 ; US Track 02 raw offset 0x297cd2; authentic full-image MD5
 ; f23601102138f87c33025877767ebf76; full-image SHA-256
 ; f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565.
-; Both unique 127-byte spans SHA-256:
-; 9e0c7e6926c8ad3c02284e4027f37bcbd6eaa6cb4507f321cce814e4f2eb2aec.
+; Both unique 211-byte spans SHA-256:
+; 3d16abea96bf6ce9610c7b3c9bc827f73e67f922dcda63e1c8681c7e3cd71a96.
 ; MAME 0.285: unidasm TQJP02.bin -arch h6280 -basepc 0x4002
-;   -skip 2716578 -count 127
+;   -skip 2716578 -count 211
+; Span ends at RTS $40d4 before edition-specific table bytes.
 ; Span is byte-identical in both authentic editions. Static candidate only.
 
 004002: 73 00 20 01 20 0f 00  tii  $2000 $2001 $000F
@@ -71,3 +72,44 @@
 00407d: 85 22                 sta  $22
 00407f: 60                    rts
 004080: 82                    clx
+004081: bd d5 40              lda  $40D5,x
+004084: 85 fc                 sta  $FC
+004086: e8                    inx
+004087: bd d5 40              lda  $40D5,x
+00408a: 85 fe                 sta  $FE
+00408c: e8                    inx
+00408d: bd d5 40              lda  $40D5,x
+004090: 85 fd                 sta  $FD
+004092: e8                    inx
+004093: bd d5 40              lda  $40D5,x
+004096: 85 f8                 sta  $F8
+004098: a9 00                 lda  #$00
+00409a: 85 fa                 sta  $FA
+00409c: a9 40                 lda  #$40
+00409e: 85 fb                 sta  $FB
+0040a0: a9 01                 lda  #$01
+0040a2: 85 ff                 sta  $FF
+0040a4: 20 0f e0              jsr  $E00F
+0040a7: 80 d7                 bra  $4080
+0040a9: 82                    clx
+0040aa: bd dc 40              lda  $40DC,x
+0040ad: 85 fc                 sta  $FC
+0040af: e8                    inx
+0040b0: bd dc 40              lda  $40DC,x
+0040b3: 85 fe                 sta  $FE
+0040b5: e8                    inx
+0040b6: bd dc 40              lda  $40DC,x
+0040b9: 85 fd                 sta  $FD
+0040bb: e8                    inx
+0040bc: bd dc 40              lda  $40DC,x
+0040bf: 85 f8                 sta  $F8
+0040c1: a9 00                 lda  #$00
+0040c3: 85 fa                 sta  $FA
+0040c5: a9 30                 lda  #$30
+0040c7: 85 fb                 sta  $FB
+0040c9: a9 01                 lda  #$01
+0040cb: 85 ff                 sta  $FF
+0040cd: 20 09 e0              jsr  $E009
+0040d0: c9 00                 cmp  #$00
+0040d2: d0 d5                 bne  $40A9
+0040d4: 60                    rts

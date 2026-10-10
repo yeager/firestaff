@@ -2,10 +2,10 @@
 
 An authentic JP Rev. 1 cold-start capture sampled execution at logical PC
 `$4002` (physical PC `$100002`) and `$4009`. The sampled instruction bytes
-match a contiguous 15-byte candidate in JP Track 02. This note extends the
-static media comparison to 127 bytes and includes a MAME HuC6280 linear
-listing. It does not establish that Track 02 supplied the bytes executed at
-`$4002`, identify a routine, or infer loader/gameplay semantics.
+match a contiguous candidate in JP Track 02. This note extends the static
+media comparison through the `RTS` at `$40d4` (211 bytes) and includes a MAME
+HuC6280 linear listing. It does not establish that Track 02 supplied the bytes
+executed at `$4002`, identify a routine, or infer loader/gameplay semantics.
 
 The runtime evidence and its first-stage boundary are documented in
 [`theron-jp-cold-boot-cd-data-port-20261009.md`](theron-jp-cold-boot-cd-data-port-20261009.md).
@@ -17,10 +17,10 @@ does not extend to these `$4002` bytes.
 
 | Edition | Track 02 | Full-image MD5 | Full-image SHA-256 | Raw file offset | Span length | Span SHA-256 |
 | --- | --- | --- | --- | ---: | ---: | --- |
-| JP Rev. 1 | `TQJP02.bin` | `b7afb338ad31be1025b53f9aff12d73a` | `d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb` | `0x2973a2` | 127 | `9e0c7e6926c8ad3c02284e4027f37bcbd6eaa6cb4507f321cce814e4f2eb2aec` |
-| US Rev. 1 | `TQUS02.bin` | `f23601102138f87c33025877767ebf76` | `f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565` | `0x297cd2` | 127 | `9e0c7e6926c8ad3c02284e4027f37bcbd6eaa6cb4507f321cce814e4f2eb2aec` |
+| JP Rev. 1 | `TQJP02.bin` | `b7afb338ad31be1025b53f9aff12d73a` | `d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb` | `0x2973a2` | 211 | `3d16abea96bf6ce9610c7b3c9bc827f73e67f922dcda63e1c8681c7e3cd71a96` |
+| US Rev. 1 | `TQUS02.bin` | `f23601102138f87c33025877767ebf76` | `f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565` | `0x297cd2` | 211 | `3d16abea96bf6ce9610c7b3c9bc827f73e67f922dcda63e1c8681c7e3cd71a96` |
 
-The 127-byte span is unique in each full Track 02 image and is byte-identical
+The 211-byte span is unique in each full Track 02 image and is byte-identical
 between the editions. The first 8-byte window and the overlapping continuation
 bytes reproduce the two sampled runtime windows; this correlation does not
 prove a dynamic source transfer. For JP, the candidate begins at LBA 4521,
@@ -31,7 +31,7 @@ The listing in
 was generated from JP media with MAME 0.285:
 
 ```sh
-unidasm TQJP02.bin -arch h6280 -basepc 0x4002 -skip 2716578 -count 127
+unidasm TQJP02.bin -arch h6280 -basepc 0x4002 -skip 2716578 -count 211
 ```
 
 It is byte-checked against both authentic spans by

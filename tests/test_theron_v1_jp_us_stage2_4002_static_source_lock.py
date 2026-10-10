@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lock the static JP/US Track 02 candidate for sampled cold-boot PC $4002."""
+"""Lock the static JP/US Track 02 candidate through sampled cold-boot PC $40d4."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ LISTING_PATH = (
     / "docs/source-lock/theron-disassembly/"
     "theron-jp-us-cold-boot-stage2-4002-candidate-20261010.asm"
 )
-WINDOW_LENGTH = 127
+WINDOW_LENGTH = 211
 LISTING_START_PC = 0x4002
 EXPECTED_WINDOW = bytes.fromhex("73002001200f007300200027800062")
 REGIONS = {
@@ -26,7 +26,7 @@ REGIONS = {
         "sha256": "d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb",
         "size": 8_102_640,
         "offset": 0x2973A2,
-        "span_sha256": "9e0c7e6926c8ad3c02284e4027f37bcbd6eaa6cb4507f321cce814e4f2eb2aec",
+        "span_sha256": "3d16abea96bf6ce9610c7b3c9bc827f73e67f922dcda63e1c8681c7e3cd71a96",
     },
     "US": {
         "filename": "TQUS02.bin",
@@ -34,7 +34,7 @@ REGIONS = {
         "sha256": "f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565",
         "size": 8_104_992,
         "offset": 0x297CD2,
-        "span_sha256": "9e0c7e6926c8ad3c02284e4027f37bcbd6eaa6cb4507f321cce814e4f2eb2aec",
+        "span_sha256": "3d16abea96bf6ce9610c7b3c9bc827f73e67f922dcda63e1c8681c7e3cd71a96",
     },
 }
 LISTING_ROW = re.compile(r"^([0-9a-f]{6}):\s*(.*?)\s{2,}[^\s].*$")
@@ -93,7 +93,7 @@ def main() -> int:
 
     end_pc, decoded = listing_bytes()
     if end_pc != LISTING_START_PC + WINDOW_LENGTH:
-        raise AssertionError("MAME listing does not end at the expected 127-byte boundary")
+        raise AssertionError("MAME listing does not end at the expected 211-byte boundary")
 
     spans = {}
     for region, metadata in REGIONS.items():
@@ -127,7 +127,7 @@ def main() -> int:
         if hashlib.sha256(span).hexdigest() != metadata["span_sha256"]:
             raise AssertionError(f"{region} candidate span hash changed at {offset:#x}")
         if all_offsets(image, span) != (offset,):
-            raise AssertionError(f"{region} 127-byte candidate is not unique at {offset:#x}")
+            raise AssertionError(f"{region} 211-byte candidate is not unique at {offset:#x}")
         spans[region] = span
         print(f"PASS: authentic {region} Track 02 candidate at raw offset {offset:#x}")
 
@@ -136,7 +136,7 @@ def main() -> int:
     if decoded != spans["JP"]:
         raise AssertionError("MAME listing bytes differ from the authentic candidate span")
 
-    print("PASS: unique 127-byte JP/US candidate and MAME HuC6280 listing match exactly")
+    print("PASS: unique 211-byte JP/US candidate and MAME HuC6280 listing match exactly")
     print(
         "LIMIT: static media/listing correspondence only; runtime source binding "
         "and semantics remain unproven"
