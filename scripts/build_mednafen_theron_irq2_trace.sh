@@ -13,6 +13,7 @@ source_root=${1:-${FIRESTAFF_MEDNAFEN_SOURCE_ROOT:-}}
 sdl2_prefix=${FIRESTAFF_MEDNAFEN_SDL2_PREFIX:-}
 patch_only=${FIRESTAFF_MEDNAFEN_PATCH_ONLY:-0}
 pce_fast_snapshot=${FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT:-0}
+pce_fast_vram_commit_trace=${FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT:-0}
 # An explicit build root keeps parallel local investigations from reusing an
 # instrumented binary produced from a different patch revision.
 build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-"$repo/.codex-scratch/mednafen-firestaff-irq2-trace"}
@@ -28,6 +29,10 @@ if [[ "$patch_only" != 0 && "$patch_only" != 1 ]]; then
 fi
 if [[ "$pce_fast_snapshot" != 0 && "$pce_fast_snapshot" != 1 ]]; then
     printf 'FAIL: FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT must be 0 or 1\n' >&2
+    exit 2
+fi
+if [[ "$pce_fast_vram_commit_trace" != 0 && "$pce_fast_vram_commit_trace" != 1 ]]; then
+    printf 'FAIL: FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT must be 0 or 1\n' >&2
     exit 2
 fi
 if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
@@ -206,6 +211,10 @@ pce_fast_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_
 pce_fast_snapshot_rendered="$build_root/theron-pce-fast-main-ram-snapshot.rendered.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
+if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
+    patch -d "$build_root/source" -p1 --batch --forward \
+        < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch"
+fi
 patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -325,7 +334,7 @@ if [[ "$(uname -s)" == Darwin && -n "$sdl2_prefix" ]]; then
     export LDFLAGS="${LDFLAGS:-} -Wl,-rpath,$sdl2_prefix/lib"
 fi
 configure_pce_fast=(--disable-pce-fast)
-if [[ "$pce_fast_snapshot" == 1 ]]; then
+if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ]]; then
     configure_pce_fast=(--enable-pce-fast)
 fi
 # The PCE interpreter's unoptimized frame exceeds the default macOS emulator

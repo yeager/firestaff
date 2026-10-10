@@ -56,6 +56,8 @@ rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
+capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
+pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT:-65536}
 input_trace_limit_default=65536
 if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
@@ -131,6 +133,22 @@ fi
 if [[ ! "$vdc_io_trace_limit" =~ ^[0-9]+$ ]] ||
    (( vdc_io_trace_limit < 65536 || vdc_io_trace_limit > 2097152 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_VDC_IO_TRACE_LIMIT must be an integer from 65536 through 2097152' >&2
+    exit 1
+fi
+if [[ "$capture_pce_fast_vram_commit_trace" != 0 &&
+      "$capture_pce_fast_vram_commit_trace" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$capture_pce_fast_vram_commit_trace" == 1 &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: PCE Fast VRAM commit tracing requires THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast' >&2
+    exit 1
+fi
+if [[ ! "$pce_fast_vram_commit_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( pce_fast_vram_commit_trace_limit < 1 ||
+      pce_fast_vram_commit_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
 if [[ ! "$input_trace_limit" =~ ^[0-9]+$ ]] ||
@@ -1046,6 +1064,16 @@ pce_fast_vram_snapshot="${trace}.pce-fast.vram"
 pce_fast_vce_snapshot="${trace}.pce-fast.vce"
 pce_fast_vdc_sat_snapshot="${trace}.pce-fast.sat"
 pce_fast_vdc_state_snapshot="${trace}.pce-fast.vdc-state"
+pce_fast_vram_commit_trace="${trace}.pce-fast.vram-commit"
+pce_fast_vram_commit_trace_env=
+if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
+    pce_fast_vram_commit_trace_env=$pce_fast_vram_commit_trace
+    if [[ -e "$pce_fast_vram_commit_trace" || -L "$pce_fast_vram_commit_trace" ]]; then
+        printf 'FAIL: refusing to overwrite existing PCE Fast VRAM commit trace: %s\n' \
+            "$pce_fast_vram_commit_trace" >&2
+        exit 1
+    fi
+fi
 pce_fast_party_ram_trace="${trace}.pce-fast-party-ram"
 save_manager_code_dump="${trace}.save-manager-code"
 command_ram_trace="${trace}.command-ram"
@@ -1321,6 +1349,8 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_VCE_SNAPSHOT="$pce_fast_vce_snapshot" \
     FIRESTAFF_THERON_PCE_FAST_SAT_SNAPSHOT="$pce_fast_vdc_sat_snapshot" \
     FIRESTAFF_THERON_PCE_FAST_VDC_STATE_SNAPSHOT="$pce_fast_vdc_state_snapshot" \
+    FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE="$pce_fast_vram_commit_trace_env" \
+    FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT="$pce_fast_vram_commit_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE="$pce_fast_a1b7_bmt_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
     FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
@@ -1722,6 +1752,60 @@ else
         printf '%s\n' 'FAIL: PCE Fast capture must not mislabel PCE-only RAM snapshots' >&2
         exit 1
     fi
+    pce_fast_vram_commit_trace_count=unavailable
+    pce_fast_vram_commit_trace_sha256=unavailable
+    if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
+        if [[ ! -s "$pce_fast_vram_commit_trace" ]] ||
+           ! awk -v limit="$pce_fast_vram_commit_trace_limit" '
+               function is_hex(value, length_expected) {
+                   return length(value) == length_expected && value !~ /[^0-9a-f]/
+               }
+               NR == 1 { if ($0 != "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V1") exit 1; next }
+               NR == 2 { if ($0 != "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit") exit 1; next }
+               NR == 3 { if ($0 != "scope=cpu-port-vwr-commits-only;dma-writes-excluded") exit 1; next }
+               /^vram_commit / {
+                   if (NF != 10 || $1 != "vram_commit") exit 1
+                   split($2, sequence_field, "=")
+                   split($3, chip_field, "=")
+                   split($4, display_counter_field, "=")
+                   split($5, logical_pc_field, "=")
+                   split($6, physical_pc_field, "=")
+                   split($7, address_field, "=")
+                   split($8, value_field, "=")
+                   split($9, low_field, "=")
+                   split($10, high_field, "=")
+                   if (sequence_field[1] != "sequence" || sequence_field[2] != count ||
+                       chip_field[1] != "chip" || chip_field[2] != 0 ||
+                       display_counter_field[1] != "display_counter" || display_counter_field[2] !~ /^[0-9]+$/ ||
+                       logical_pc_field[1] != "logical_pc" || !is_hex(logical_pc_field[2], 4) ||
+                       physical_pc_field[1] != "physical_pc" || !is_hex(physical_pc_field[2], 6) ||
+                       address_field[1] != "address" || !is_hex(address_field[2], 4) ||
+                       value_field[1] != "value" || !is_hex(value_field[2], 4) ||
+                       low_field[1] != "low" || low_field[2] != substr(value_field[2], 3, 2) ||
+                       high_field[1] != "high" || high_field[2] != substr(value_field[2], 1, 2)) exit 1
+                   count++
+                   if (count > limit) exit 1
+                   next
+               }
+               { exit 1 }
+               END { if (NR < 4 || count == 0 || count > limit) exit 1 }
+           ' "$pce_fast_vram_commit_trace"; then
+            printf '%s\n' 'BLOCKED: PCE Fast capture lacks a valid bounded VRAM word-commit trace' >&2
+            exit 1
+        else
+            pce_fast_vram_commit_trace_count=$(awk -v limit="$pce_fast_vram_commit_trace_limit" '
+                /^vram_commit / { count++ }
+                END { if (count <= limit) print count; else exit 1 }
+            ' "$pce_fast_vram_commit_trace") || exit 1
+            pce_fast_vram_commit_trace_sha256=$(sha256_file "$pce_fast_vram_commit_trace") || {
+                printf '%s\n' 'FAIL: could not hash the PCE Fast VRAM commit trace' >&2
+                exit 1
+            }
+        fi
+    elif [[ -e "$pce_fast_vram_commit_trace" || -L "$pce_fast_vram_commit_trace" ]]; then
+        printf '%s\n' 'FAIL: PCE Fast capture emitted an unrequested VRAM commit trace' >&2
+        exit 1
+    fi
 fi
 if [[ -s "$command_ram_trace" ]]; then
     if ! awk '
@@ -2016,6 +2100,10 @@ fi
         printf 'pce_fast_vce_sha256=%s\n' "$pce_fast_vce_sha256"
         printf 'pce_fast_vdc_sat_sha256=%s\n' "$pce_fast_sat_sha256"
         printf 'pce_fast_vdc_state_sha256=%s\n' "$pce_fast_vdc_state_sha256"
+        printf 'pce_fast_vram_commit_trace_requested=%s\n' "$capture_pce_fast_vram_commit_trace"
+        printf 'pce_fast_vram_commit_trace_limit=%s\n' "$pce_fast_vram_commit_trace_limit"
+        printf 'pce_fast_vram_commit_trace_count=%s\n' "$pce_fast_vram_commit_trace_count"
+        printf 'pce_fast_vram_commit_trace_sha256=%s\n' "$pce_fast_vram_commit_trace_sha256"
     fi
     if [[ "$capture_mednafen_module" == pce ]]; then
         printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"

@@ -1,3 +1,32 @@
+## 2026-10-10 — instrument PCE Fast CPU VWR commits for source attribution
+
+- Added an opt-in PCE Fast trace at Mednafen 1.32.1
+  `src/pce_fast/vdc.cpp::VDC_Write` (upstream line 572), immediately after
+  `VRAM[MAWR]` is assigned and before `MAWR` advances. The bounded sidecar
+  records the committing HuC6280 instruction's logical/physical PC, VDC word
+  address and value. It covers CPU-port VWR commits only; DMA writes are
+  explicitly excluded. The default emulator build remains unchanged.
+- On TRV2, the patched VDC translation unit and a full serial PCE Fast
+  Mednafen build succeeded. The new patch applies cleanly to the configured
+  1.32.1 source copy. A separate full patch-chain dry run against
+  `/home/trv2/firestaff-theron-evidence/source/mednafen` stopped earlier in
+  the existing PCE Fast input-trace patch; that unrelated source/patch
+  mismatch remains open.
+- Three replays of the authentic JP Ak-Tu-Ba save state (two with the same
+  one-poll UP event and one no-input control) each emitted the capped 65,536
+  CPU VWR records. Both UP runs produced byte-identical commit traces and
+  final VRAM snapshots. The input receipt verifies the scripted UP reached a
+  non-System-Card poll at `$44D2` (`value=3e`). The control's final VRAM hash
+  differs, but party direction/coordinates match and the commit sidecar is
+  capped before shutdown; do not infer movement or attribute the snapshot
+  difference to UP. All three captures ended `transition=missing` with no CD
+  IRQ, raw-sector, or authenticated CD-to-RAM receipt. Private traces remain
+  in TRV2 `/run` tmpfs and are not checked in.
+- Continue by binding the logged PCs and VRAM words to authentic Track 02
+  source bytes and a same-boundary screen/party-state change. This trace
+  validates instrumentation only; it does not establish game rendering or
+  Theron parity.
+
 ## 2026-10-10 — bind restored-state RAM transfers to authentic source bytes
 
 - Bounded runtime disassembly of four block transfers in a restored authentic
@@ -46,9 +75,9 @@
 - Continue with a controlled emulator-created gameplay state and authentic
   JP/US Track 02 media. Bind the executing instruction bytes to their mapped
   source origin, then join game-owned VDC/VCE/BAT writes to the same captured
-  frame before implementing or claiming full dungeon rendering. The existing
-  pce_fast capture mode still has only close-time VDC snapshots, not an
-  instruction-attributed VDC write trace.
+  frame before implementing or claiming full dungeon rendering. PCE Fast now
+  has an optional CPU VWR commit trace; source-byte binding and DMA-write
+  coverage are still absent.
 - The offline disassembly of the retained `run@450:300` capture binds RUN only
   to the authentic System Card poll loop at `$E4B4/$E4C5`; the scan branches
   from `$E4DE` back to `$E4A5`. See

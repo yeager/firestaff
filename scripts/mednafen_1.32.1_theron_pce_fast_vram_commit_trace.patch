@@ -1,0 +1,75 @@
+--- a/src/pce_fast/vdc.cpp
++++ b/src/pce_fast/vdc.cpp
+@@ -20,6 +20,8 @@
+ #include "pce.h"
+ #include <mednafen/video.h>
+ #include "vdc.h"
++#include <stdio.h>
++#include <stdlib.h>
+ #include "huc.h"
+ #include "pcecd.h"
+ #include <mednafen/cputest/cputest.h>
+@@ -54,0 +57,61 @@
++/* Optional PCE Fast capture-only trace.  The hook observes committed CPU
++ * VWR words in Mednafen 1.32.1 src/pce_fast/vdc.cpp::VDC_Write(), after
++ * VRAM[MAWR] is assigned and before MAWR advances (upstream line 572).  It
++ * does not trace DMA writes or change the emulated VDC state. */
++static FILE *TheronPCEFastVRAMCommitTrace;
++static unsigned TheronPCEFastVRAMCommitCount;
++static unsigned TheronPCEFastVRAMCommitLimit = 65536;
++static bool TheronPCEFastVRAMCommitInitialized;
++static bool TheronPCEFastVRAMCommitDisabled;
++
++static void TheronTracePCEFastVRAMCommit(int chip, uint32 display_counter,
++                                         uint16 address, uint16 value)
++{
++ if(TheronPCEFastVRAMCommitDisabled ||
++    TheronPCEFastVRAMCommitCount >= TheronPCEFastVRAMCommitLimit)
++  return;
++ if(!TheronPCEFastVRAMCommitInitialized)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE");
++  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT");
++  TheronPCEFastVRAMCommitInitialized = true;
++  if(limit_text && *limit_text)
++  {
++   char *end = NULL;
++   const unsigned long parsed = strtoul(limit_text, &end, 10);
++   if(end && !*end && parsed >= 1 && parsed <= 1048576)
++    TheronPCEFastVRAMCommitLimit = (unsigned)parsed;
++  }
++  if(!path || !*path)
++  {
++   TheronPCEFastVRAMCommitDisabled = true;
++   return;
++  }
++  TheronPCEFastVRAMCommitTrace = fopen(path, "wx");
++  if(!TheronPCEFastVRAMCommitTrace)
++  {
++   TheronPCEFastVRAMCommitDisabled = true;
++   return;
++  }
++  fputs("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V1\n"
++        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit\n"
++        "scope=cpu-port-vwr-commits-only;dma-writes-excluded\n",
++        TheronPCEFastVRAMCommitTrace);
++ }
++ if(fprintf(TheronPCEFastVRAMCommitTrace,
++            "vram_commit sequence=%u chip=%d display_counter=%u logical_pc=%04x physical_pc=%06x address=%04x value=%04x low=%02x high=%02x",
++            TheronPCEFastVRAMCommitCount, chip, display_counter,
++            (unsigned)TheronTraceInstructionPC,
++            (unsigned)TheronTraceInstructionPhysicalPC,
++            (unsigned)address, (unsigned)value,
++            (unsigned)(value & 0xFF), (unsigned)(value >> 8)) < 0 ||
++    fputc('\n', TheronPCEFastVRAMCommitTrace) == EOF ||
++    fflush(TheronPCEFastVRAMCommitTrace) != 0)
++ {
++  fclose(TheronPCEFastVRAMCommitTrace);
++  TheronPCEFastVRAMCommitTrace = NULL;
++  TheronPCEFastVRAMCommitDisabled = true;
++  return;
++ }
++ TheronPCEFastVRAMCommitCount++;
++}
+@@ -572,0 +636,1 @@
++                TheronTracePCEFastVRAMCommit(chip, vdc->display_counter, vdc->MAWR, (V << 8) | vdc->write_latch);
