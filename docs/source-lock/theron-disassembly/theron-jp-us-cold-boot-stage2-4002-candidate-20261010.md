@@ -44,5 +44,8 @@ uniqueness, span hashes, listing address continuity, and exact decoded bytes.
 This is static disassembly of a unique source candidate, not runtime
 source-binding evidence. It does not prove that the candidate was loaded into
 the `$4002` execution mapping, explain why the second-stage code ran, or show a
-game-owned transition. The candidate has no established function name here;
-instruction mnemonics and targets are presented as MAME's linear decode only.
+game-owned transition. The instrumented PCE Fast target-write window now
+includes physical `$100002-$100010`, covering the observed `$4002-$4010`
+instruction bytes. It records writes but does not propagate source-byte
+identity to opcode fetches. The candidate has no established function name
+here; instruction mnemonics and targets are presented as MAME's linear decode.

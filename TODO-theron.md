@@ -12,6 +12,8 @@
   establish a routine name, loader semantics, or gameplay behavior.
   The end at `$40d4` precedes edition-specific table data; runtime source
   binding and semantics remain unproven.
+  The target-write trace now covers the full sampled physical fetch span,
+  but source-byte identity must still propagate to opcode fetches.
 
 ## 2026-10-10 — lock the authentic JP UP-to-RAM control-flow pair
 

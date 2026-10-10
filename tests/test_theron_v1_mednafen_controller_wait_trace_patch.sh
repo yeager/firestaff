@@ -483,7 +483,7 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'const uint32 stage2_first = 0x80 * 8192;' "$cd_ram_target_write_patch_file" ||
-   ! grep -Fq 'const uint32 stage2_last = stage2_first + 14;' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'const uint32 stage2_last = stage2_first + 0x10;' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceCDRAMTargetWrite(A, V);' "$cd_ram_target_write_patch_file" ||
    grep -Fq '\\n' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x reader_pc=%04x reader_physical_pc=%06x reader_mpr_slot=%u reader_mpr0=%02x' "$cd_ram_target_write_patch_file" ||

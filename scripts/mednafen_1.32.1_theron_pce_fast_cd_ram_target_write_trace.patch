@@ -13,7 +13,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + const uint32 first = 0x68 * 8192 + 0x089f;
 + const uint32 last = 0x68 * 8192 + 0x08ab;
 + const uint32 stage2_first = 0x80 * 8192;
-+ const uint32 stage2_last = stage2_first + 14;
++ const uint32 stage2_last = stage2_first + 0x10;
 + const bool stage2_target = address >= stage2_first && address <= stage2_last;
 + if((!stage2_target && (address < first || address > last)) || count >= 8192)
 +  return;
