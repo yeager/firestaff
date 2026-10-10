@@ -8228,8 +8228,11 @@ T900/original inventory semantics. No synthetic media was used.
   labels so it is included in Theron source-lock selections. Local CMake
   generation remains unverified because of the installed macOS linker/SDK.
   No game data or temporary disassembly windows were committed.
-- This is static control-flow evidence only; runtime duplicate selection,
-  table semantics, and movement behavior remain open in `TODO-theron.md`.
+- The disassembly and media regression are static control-flow evidence. A
+  separate previously recorded UP-at-frame-1 runtime trace enters at `$D515`
+  and returns at `$D580`, but does not bind the executed bytes to one of the
+  identical source copies. Runtime duplicate selection, indexed-table
+  semantics, and movement behavior remain open in `TODO-theron.md`.
   Full listings and hashes are in
   `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
 
