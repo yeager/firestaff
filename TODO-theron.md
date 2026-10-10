@@ -205,6 +205,22 @@
   first 20 bytes and diverge at `$40f7`. This remains static-media evidence;
   runtime source binding, execution, and behavior are unproven.
 
+## 2026-10-10 — source-lock the stage-2 indexed parameter blocks
+
+- Extended the JP/US `$4002` real-media regression through the 14 bytes at
+  `$40d5-$40e2`, immediately after the 211-byte code candidate and before the
+  `$40e3` alternate entry. The test checks exact bytes and hashes from both
+  authentic Track 02 images. The four-byte blocks read at `$40d5` and `$40dc`
+  match across regions; the intervening `$40da-$40db` bytes differ.
+- The new disassembly note maps those indexed bytes into `$F8/$FC/$FD/$FE`
+  and records the `$FA/$FB/$FF` constants set before calls to `$E00F` and
+  `$E009`. These are source-level register-flow facts only; the BIOS API,
+  values' meaning and runtime code origin remain unidentified. Mednafen 1.32.1
+  `src/pce_fast/huc6280.cpp::BMT_TII` line 464 confirms forward source and
+  destination increments for the two visible TII transfers. No observed MPR
+  mapping or copied runtime byte values are inferred from that static code.
+  See `docs/source-lock/theron-jp-us-stage2-parameter-blocks-20261010.md`.
+
 ## 2026-10-10 - add an executed-opcode probe for the `$4002` candidate window
 
 - The opt-in PCE Fast probe records the byte returned by `RdAtPC()` at the
