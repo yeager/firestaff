@@ -387,7 +387,7 @@ address difference, not the reason for it or a runtime US path.
 
 ### Static `$D515` callee extent
 
-MAME `unidasm` was run on the first JP and US candidate windows with
+MAME `/usr/bin/unidasm` was run on the first JP and US candidate windows with
 `-arch h6280 -basepc 0xd515 -norawbytes`. Following the decoded branches and
 the `$D530` BSR gives instruction-aligned return sites at `$D580`, `$D587`,
 and `$D5A6` (the latter in the called `$D588` helper). The contiguous span
