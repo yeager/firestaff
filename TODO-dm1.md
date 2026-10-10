@@ -1,27 +1,15 @@
 # Firestaff TODO — DM1
 
-- Extend the authenticated A20 English F0437 runtime path to the remaining
-  Amiga editions after establishing each edition's original GRAPHICS.DAT /
-  SWSH identity pair. The production M11 route now authenticates the selected
-  A20 English pair, reads both files from the selected virtual ADF, and
-  presents the original C001 PRESENTS crop, 18 authored zoom rectangles,
-  palette transitions, and MASTER overlay. The authentic A20 ZIP -> ZIP ->
-  ADF CLI/start-menu regression verifies that this title phase completes
-  before the first runtime frame. Amiga 2.0 French, 2.x German/English, 3.6,
-  and demo title receipts remain unverified; generic PC title-step receipts
-  are not Amiga evidence. A36M intentionally skips F0437: STARTUP1/STARTUP2
-  enter F0441 without calling the A20 title routine.
-- Extend the authenticated Amiga A20 English F0441 entrance route to the
-  remaining Amiga editions after establishing each edition's original
-  GRAPHICS.DAT / SWSH identity pair. The production route now authenticates
-  the selected A20 pair and presents original C002/C003 door frames plus the
-  C004 entrance using the source RGB4 palette, eight frames, 31 opening steps,
-  a 20-tick switch delay and mouse-only input, based on ReDMCSB ENTRANCE.C and
-  DATA.C MEDIA424. The real-media CLI/start-menu regression verifies the
-  F0437 title and F0441 entrance complete before the ADF gameplay handoff.
-  Remaining: A20 French, other Amiga 2.x editions, demo media, and native
-  renderer/input timing on each supported desktop; the A20 English test does
-  not establish pixel parity or HiDPI behavior. A36M's exact GRAPHICS.DAT hash
+- Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
+  remaining editions after establishing each edition's original
+  GRAPHICS.DAT/SWSH identity pair. A20 English and French now authenticate
+  their own paired media and reach runtime through the original C001 title,
+  RGB4 palette stages, authored zoom steps, C002/C003 doors and C004 entrance.
+  Real-media CLI and M12 tests cover both A20 language editions. Amiga 2.x
+  German/English, demo media, and native renderer/input timing on each
+  supported desktop remain open; the A20 tests do not establish pixel parity
+  or HiDPI behavior. A36M intentionally skips F0437: STARTUP1/STARTUP2 enter
+  F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash
   now selects the source F0466 decoder, and authentic C002/C003/C004/C005/C011
   media passes the real-media receipt test. Its CLI and M12 regressions now
   verify entrance completion and the first runtime pose. The ordinary data

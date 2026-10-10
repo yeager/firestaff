@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-10-10: Added authentic DM1 Amiga 2.0 French launch support. M12 now
+  admits the original A20F dungeon checksum, and the runtime preserves the
+  complete FTL-decoded map body before adding its parser checksum. The French
+  SWSH, F0437 title and F0441 entrance assets are paired by their original
+  hashes. Real-media checks prove the French dungeon initializes a playable
+  world, crossed/modified media are rejected, and direct CLI plus M12 New Game
+  reach the first runtime frame. The English A20 route and Atari ST v1.2 full
+  M12/input matrix also pass after the size fix. This is startup/functionality
+  evidence; physical HiDPI presentation and pixel parity remain unverified.
+
 - 2026-10-10: The authentic return-to-menu regression now runs normal game
   returns separately from live media mutations. DM1 PC and FM Towns both
   passed their return scans alongside the CSB and DM2 routes; the mutation

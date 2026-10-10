@@ -47,12 +47,19 @@ int dm1_v1_amiga_title_f0437_receipt(
     const uint8_t *swsh_executable,
     size_t swsh_executable_bytes,
     DM1_V1_AmigaTitleF0437Receipt *out_receipt) {
-    static const uint8_t expected_graphics_md5[16] = {
+    static const uint8_t a20e_graphics_md5[16] = {
         0x6a, 0x2f, 0x13, 0x5b, 0x53, 0xc2, 0x22, 0x0f,
         0x02, 0x51, 0xfa, 0x10, 0x3e, 0x2a, 0x6e, 0x7e
     };
-    static const char expected_a20_executable_md5[] =
-        "a0ffbcc7ae8cecac03128ddb32887ef4";
+    static const uint8_t a20f_graphics_md5[16] = {
+        0xdd, 0x37, 0x39, 0x54, 0xb3, 0xfb, 0x12, 0x7d,
+        0xb7, 0x38, 0x79, 0x46, 0x13, 0x1e, 0xa3, 0x22
+    };
+    /* ReDMCSB TITLE.C:12,39 and ENTRANCE.C:620 use the same MEDIA413
+     * A20E/A20F branch. Pair each authentic GRAPHICS.DAT with its own
+     * original swoosh; never accept a mixed-language title. */
+    static const char a20e_swsh_md5[] = "a0ffbcc7ae8cecac03128ddb32887ef4";
+    static const char a20f_swsh_md5[] = "1038138978975415571a878bb08f54be";
     DM1_V1_AmigaGraphicsReceipt graphics_receipt;
     DM1_V1_AmigaSwshAssets swsh_assets;
     DM1_V1_AmigaTitleF0437Receipt receipt;
@@ -69,14 +76,18 @@ int dm1_v1_amiga_title_f0437_receipt(
         !dm1_v1_amiga_swsh_parse(swsh_executable, swsh_executable_bytes,
                                  &swsh_assets) ||
         !swsh_assets.executableMd5 ||
-        strcmp(swsh_assets.executableMd5, expected_a20_executable_md5) != 0 ||
         dm1_v1_amiga_graphics_receipt(graphics_dat, graphics_dat_bytes,
                                        &graphics_receipt) != 0 ||
         !graphics_receipt.is_amiga ||
         graphics_receipt.version != DM1_AMIGA_VER_2_0 ||
-        graphics_receipt.lang != DM1_AMIGA_LANG_EN ||
-        memcmp(graphics_receipt.md5, expected_graphics_md5,
-               sizeof(expected_graphics_md5)) != 0) {
+        !((graphics_receipt.lang == DM1_AMIGA_LANG_EN &&
+           memcmp(graphics_receipt.md5, a20e_graphics_md5,
+                  sizeof(a20e_graphics_md5)) == 0 &&
+           strcmp(swsh_assets.executableMd5, a20e_swsh_md5) == 0) ||
+          (graphics_receipt.lang == DM1_AMIGA_LANG_FR &&
+           memcmp(graphics_receipt.md5, a20f_graphics_md5,
+                  sizeof(a20f_graphics_md5)) == 0 &&
+           strcmp(swsh_assets.executableMd5, a20f_swsh_md5) == 0))) {
         return 0;
     }
 

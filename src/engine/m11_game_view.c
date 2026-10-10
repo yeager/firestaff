@@ -16368,8 +16368,8 @@ static int m11_dm1_graphics_is_atari_st(const char *md5) {
     return 0;
 }
 
-static int m11_dm1_normalize_atari_dungeon(uint8_t **bytes,
-                                           size_t *size) {
+int M11_GameView_NormalizeDm1BigEndianDungeon(uint8_t **bytes,
+                                              size_t *size) {
     uint8_t *grown;
     uint16_t checksum = 0u;
     size_t i;
@@ -16464,9 +16464,9 @@ static int m11_dm1_normalize_atari_dungeon(uint8_t **bytes,
         }
         offset += (size_t)thingCounts[i] * thingRecordSizes[i];
     }
-    /* The authenticated Atari file has the same DUNGEON body layout but no
-     * PC34 trailing byte-sum word.  Add that parser-only word in RAM; the
-     * STX/ZIP source remains byte-for-byte untouched. */
+    /* Authenticated Motorola-order files use the same DUNGEON body layout
+     * but omit the PC34 trailing byte-sum word. Add that parser-only word in
+     * RAM; the original archive remains byte-for-byte untouched. */
     grown = (uint8_t *)realloc(*bytes, *size + 2u);
     if (!grown) return 0;
     *bytes = grown;
@@ -26290,7 +26290,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
             free(dm1VirtualDungeonBytes);
             dm1VirtualDungeonBytes = decompressed;
-            dm1VirtualDungeonSize = decompressedSize - 2u;
+            /* The authentic A20F French dungeon's declared decompressed
+             * length covers its whole raw-map section. The English A20E and
+             * Atari packages use the established two-byte trailer rule.
+             * Keep the exception tied to its independently hash-verified
+             * French GRAPHICS.DAT identity. */
+            dm1VirtualDungeonSize =
+                spec->verifiedAssetMd5 &&
+                strcmp(spec->verifiedAssetMd5,
+                       "dd373954b3fb127db7387946131ea322") == 0
+                    ? decompressedSize
+                    : decompressedSize - 2u;
             dm1EndianDungeonFormat = 1;
         }
         if (dm1EndianDungeonFormat) {
@@ -26298,8 +26308,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
              * Motorola word order.  The source file remains untouched; the
              * parser receives a bounded RAM view in the PC-compatible word
              * order used by the shared world decoder. */
-            if (!m11_dm1_normalize_atari_dungeon(&dm1VirtualDungeonBytes,
-                                                 &dm1VirtualDungeonSize)) {
+            if (!M11_GameView_NormalizeDm1BigEndianDungeon(
+                    &dm1VirtualDungeonBytes, &dm1VirtualDungeonSize)) {
                 free(dm1VirtualDungeonBytes);
                 dm1VirtualDungeonBytes = NULL;
                 return 0;

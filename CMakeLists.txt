@@ -4241,6 +4241,18 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME dm1_v1_amiga20_french_archive_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga20_french_archive_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+            $<TARGET_FILE:test_dm1_v1_amiga20_french_startup_real_media>
+    )
+    set_tests_properties(dm1_v1_amiga20_french_archive_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;amiga;french;real-media;native;cli;menu;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_SOFTWARE_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Amiga,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga20-fr;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga20-fr;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga20-fr"
+        TIMEOUT 120
+    )
+    add_test(
         NAME dm1_v1_fmtowns_archive_cli_boot
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_fmtowns_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>
@@ -62035,6 +62047,26 @@ set_tests_properties(test_dm1_v1_amiga_entrance_f0441_real_media PROPERTIES
     SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
     LABELS "dm1;amiga;entrance;real-media;in-memory;skip-safe")
+
+add_executable(test_dm1_v1_amiga20_french_startup_real_media
+    tests/test_dm1_v1_amiga20_french_startup_real_media.c
+    src/dm1/dm1_v1_amiga_entrance_f0441.c
+    src/dm1/dm1_v1_amiga_title_f0437.c
+    src/dm1/dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_amiga_swsh.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/shared/firestaff_amiga_adf.c
+)
+target_include_directories(test_dm1_v1_amiga20_french_startup_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_amiga20_french_startup_real_media PRIVATE
+    firestaff_zip_extract firestaff_m12 firestaff_m10)
+add_test(NAME test_dm1_v1_amiga20_french_startup_real_media
+    COMMAND test_dm1_v1_amiga20_french_startup_real_media)
+set_tests_properties(test_dm1_v1_amiga20_french_startup_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_DM1_AMIGA_SOFTWARE_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,Amiga,Software.7z;FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
+    LABELS "dm1;amiga;french;title;entrance;real-media;in-memory;skip-safe")
 
 add_executable(test_dm1_v1_amiga36_entrance_f0441_real_media
     tests/test_dm1_v1_amiga36_entrance_f0441_real_media.c

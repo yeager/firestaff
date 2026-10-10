@@ -2046,6 +2046,9 @@ void M11_GameView_Init(M11_GameViewState* state);
 void M11_GameView_SetBootProbeMode(M11_GameViewState* state, int enabled);
 void M11_GameView_Shutdown(M11_GameViewState* state);
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec);
+/* Normalize an authenticated Motorola-order DM1 dungeon buffer into the
+ * shared little-endian parser form and append its parser-only checksum. */
+int M11_GameView_NormalizeDm1BigEndianDungeon(uint8_t** bytes, size_t* size);
 int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
                                             char* outPath,
                                             int outPathSize);
