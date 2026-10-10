@@ -25,6 +25,25 @@ Reviewed 2026-09-05. Only open work is listed here.
   non-commercial restriction in its
   [license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt); do not
   bundle or adapt it without a separate license review.
+  A clean-room decoder-source audit on 2026-10-10 confirmed that no
+  independently reusable CTRaw PACK implementation or complete PACK grammar
+  was found. Greaseweazle's permissively licensed CAPS adapter calls
+  `CAPSLockImage`, `CAPSLoadImage` and `CAPSLockTrack`; it does not decode the
+  CT Raw payload itself. The independent disk-utilities frontend also relies
+  on CAPS/SPS, and the published IPF document describes IPF records rather
+  than CTRaw PACK records. The local ReDMCSB tree contains authentic A35E/A35M
+  files (`APPB.FTL`, `VDEO.FTL`, `ANIM.FTL` and `KAOS.FTL`) and documents the
+  distinct edition routes, but supplies no CTRaw decoder or PACK grammar.
+  Preserve those files as future authentic cross-checks; their presence does
+  not prove that a disk stream has been reconstructed. Existing
+  `firestaff_caps_raw_archive_stream` coverage validates four original
+  members' CAPS/DATA/TRCK/PACK framing and packed-payload CRCs only; it does
+  not decode PACK payloads or recover sectors. Continue with a clean-room
+  decoder only after obtaining a documented grammar or a legally usable
+  decoder oracle. References: [Greaseweazle CAPS adapter](https://github.com/keirf/greaseweazle/blob/master/src/greaseweazle/image/caps.py),
+  [Greaseweazle Unlicense](https://github.com/keirf/greaseweazle/blob/master/COPYING),
+  [official SPS Decoder Library listing](https://kryoflux.com/?page=download),
+  and [IPF v1.6 documentation](https://www.kryoflux.com/download/ipf_documentation_v1.6.pdf).
   Any decoder acceptance run must compare reconstructed files against the
   existing original-media hashes in `data/asset_validator_checksums_m12.json`
   and `parity-evidence/csb_v1_l10n_source_catalog.md`.
