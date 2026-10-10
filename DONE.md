@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-10: `firestaff_cli_startup_diagnostics_real_media` passed against
+  the installed authentic DM1, CSB and DM2 collection. It rechecked each
+  game's default-platform choice, selected edition and searched media paths
+  through the CLI diagnostics route. This does not establish physical M5
+  presentation or visual parity.
+
 - 2026-10-09: Re-ran `return_to_menu_rescans_dm1_csb_dm2_real_media` on the
   current `main` base. DM1, CSB, and DM2 started with original media in one
   M12 session, returned to the launcher, and were rediscovered by its scan;
