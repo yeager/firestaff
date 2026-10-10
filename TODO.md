@@ -167,6 +167,10 @@
   passed locally on 2026-10-09 with the published v3.0.374 binary and original
   Towns media; these test edits still need an Actions run, and hosted CI may
   skip this route when licensed archives are unavailable.
+  The dedicated DM1/CSB/DM2 return-to-menu regression now also proves that a
+  newly added original CSB archive becomes selectable after the live rescan;
+  it passed alongside the existing archive-removal case on 2026-10-10. Hosted
+  CI may skip media-dependent assertions when licensed archives are absent.
   Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.

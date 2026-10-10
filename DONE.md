@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-10: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` to
+  verify both directions of a live media change. With authentic DM1 and DM2
+  archives present, the test adds the authentic CSB FM Towns archive while
+  DM1 is running and confirms it appears after returning to M12 without an
+  app restart. Its existing companion case removes CSB during gameplay and
+  confirms it disappears after the same return path. All four normal-return
+  routes (DM1 DOS, DM1 FM Towns, CSB FM Towns and DM2 FM Towns) plus both media
+  mutation cases passed locally against the installed original archives.
+  This verifies the headless launcher rescan, not macOS TCC prompting or
+  physical desktop behavior.
+
 - 2026-10-10: `firestaff_cli_startup_diagnostics_real_media` passed against
   the installed authentic DM1, CSB and DM2 collection. It rechecked each
   game's default-platform choice, selected edition and searched media paths

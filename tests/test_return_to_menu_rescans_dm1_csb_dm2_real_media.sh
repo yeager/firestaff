@@ -19,7 +19,17 @@ scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/return-rescan.XXXXXX")
 mutation_scratch=
-trap 'rm -rf "$scratch"; if [ -n "$mutation_scratch" ]; then rm -rf "$mutation_scratch"; fi' EXIT HUP INT TERM
+addition_scratch=
+cleanup() {
+    rm -rf "$scratch"
+    if [ -n "$mutation_scratch" ]; then
+        rm -rf "$mutation_scratch"
+    fi
+    if [ -n "$addition_scratch" ]; then
+        rm -rf "$addition_scratch"
+    fi
+}
+trap cleanup EXIT HUP INT TERM
 run_return_to_menu_case() {
     game=$1
     platform=$2
@@ -192,3 +202,94 @@ print("PASS: authentic DM1 return scan reflects removed CSB media and retains DM
 PY
 rm -rf "$mutation_scratch"
 mutation_scratch=
+
+# Verify the inverse transition with original media: a game archive added
+# while DM1 is running must become available after returning to M12. This
+# models the user granting folder access or installing another title without
+# restarting Firestaff.
+addition_parent=$(dirname "$data_root")
+addition_scratch=$(mktemp -d "$addition_parent/return-rescan-addition.XXXXXX")
+addition_data_root="$addition_scratch/data"
+addition_home="$addition_scratch/home"
+addition_log="$addition_scratch/firestaff.log"
+addition_probe="$addition_scratch/runtime.json"
+mkdir -p "$addition_data_root/dm1" "$addition_data_root/dm2" "$addition_home"
+for media_pair in \
+    "$dm1_archive|$addition_data_root/dm1/$(basename "$dm1_archive")" \
+    "$dm2_archive|$addition_data_root/dm2/$(basename "$dm2_archive")"; do
+    source_archive=${media_pair%%|*}
+    staged_archive=${media_pair#*|}
+    if ! ln "$source_archive" "$staged_archive" 2>/dev/null; then
+        ln -s "$source_archive" "$staged_archive"
+    fi
+done
+addition_runtime_pattern='startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2'
+FIRESTAFF_CONFIG_PATH="$addition_home/config.toml" \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$addition_probe" \
+HOME="$addition_home" XDG_CONFIG_HOME="$addition_home" \
+APPDATA="$addition_home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --width 320 --height 200 --menu --game dm1 --platform pc \
+    --data-dir "$addition_data_root" --debug \
+    --script 'key:enter,key:enter,key:enter,wait:900,key:escape,key:enter' \
+    --duration 60000 >"$addition_log" 2>&1 &
+addition_pid=$!
+poll=0
+while ! grep -Eq "$addition_runtime_pattern" "$addition_log" 2>/dev/null; do
+    if ! kill -0 "$addition_pid" 2>/dev/null; then
+        wait "$addition_pid" || true
+        echo 'FAIL: authentic DM1 did not reach gameplay before adding CSB media' >&2
+        cat "$addition_log" >&2
+        exit 1
+    fi
+    poll=$((poll + 1))
+    if [ "$poll" -ge 600 ]; then
+        kill "$addition_pid" 2>/dev/null || true
+        wait "$addition_pid" || true
+        echo 'FAIL: timed out waiting for authentic DM1 gameplay before adding CSB media' >&2
+        cat "$addition_log" >&2
+        exit 1
+    fi
+    sleep 0.05
+done
+mkdir -p "$addition_data_root/csb"
+if ! ln "$csb_archive" \
+    "$addition_data_root/csb/$(basename "$csb_archive")" 2>/dev/null; then
+    ln -s "$csb_archive" \
+        "$addition_data_root/csb/$(basename "$csb_archive")"
+fi
+if ! wait "$addition_pid"; then
+    cat "$addition_log" >&2
+    exit 1
+fi
+python3 - "$addition_log" "$addition_probe" "$addition_runtime_pattern" <<'PY'
+import json
+import re
+import sys
+
+log_path, probe_path, runtime_pattern = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+launch = re.search(
+    r"DM1 READY: gameId=dm1 dataDir=.*/data/dm1/.*handoff=pc-img3", trace)
+runtime = re.search(runtime_pattern, trace)
+complete = re.search(r"return-menu rescan-complete data=", trace)
+if launch is None or runtime is None or complete is None or not (
+        launch.start() < runtime.start() < complete.start()):
+    raise SystemExit(
+        "FAIL: authentic DM1 did not return to the launcher after the media addition")
+
+for game in ("dm1", "csb", "dm2"):
+    match = re.search(rf"return-menu rescan game={game} available=(\d+)", trace)
+    if match is None or match.group(1) != "1":
+        raise SystemExit(
+            f"FAIL: return scan did not discover newly added original media for {game}")
+
+if probe.get("launchedEver") != 1 or probe.get("active") != 0:
+    raise SystemExit(f"FAIL: DM1 did not finish back at the launcher: {probe}")
+print("PASS: returning from authentic DM1 discovers newly added authentic CSB media")
+PY
+rm -rf "$addition_scratch"
+addition_scratch=
