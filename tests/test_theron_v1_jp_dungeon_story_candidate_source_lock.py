@@ -16,6 +16,8 @@ MEDIA_SIZE = 8_102_640
 RAW_SECTOR_BYTES = 2352
 USER_DATA_OFFSET = 16
 USER_DATA_BYTES = 2048
+EXPECTED_RECORD_PREFIX = bytes.fromhex("8150")
+EXPECTED_RECORD_SUFFIX = bytes.fromhex("8197")
 CANDIDATES = (
     ("Akutuba", 0x27596D, 0x275A97,
      "b30c9c76ab673802941823ea418be67545b068d9a7f94a9c6a7b106a1b6633aa"),
@@ -43,6 +45,11 @@ def find_all(data: bytes, needle: bytes) -> tuple[int, ...]:
             return tuple(offsets)
         offsets.append(cursor)
         cursor += 1
+
+
+def user_data_offset_to_raw_byte_offset(offset: int) -> int:
+    sector, sector_offset = divmod(offset, USER_DATA_BYTES)
+    return sector * RAW_SECTOR_BYTES + USER_DATA_OFFSET + sector_offset
 
 
 def main() -> int:
@@ -86,14 +93,35 @@ def main() -> int:
         if start < 0 or end <= start or end > len(user_data):
             raise AssertionError(f"{name}: candidate span is out of bounds")
         candidate = user_data[start:end]
-        if candidate[:2] != b"\x81\x50" or candidate[-2:] != b"\x81\x97":
+        raw_start = user_data_offset_to_raw_byte_offset(start)
+        raw_prefix = bytes(
+            image[user_data_offset_to_raw_byte_offset(start + i)]
+            for i in range(len(EXPECTED_RECORD_PREFIX))
+        )
+        raw_suffix = bytes(
+            image[
+                user_data_offset_to_raw_byte_offset(
+                    end - len(EXPECTED_RECORD_SUFFIX) + i
+                )
+            ]
+            for i in range(len(EXPECTED_RECORD_SUFFIX))
+        )
+        if (
+            candidate[:2] != EXPECTED_RECORD_PREFIX
+            or candidate[-2:] != EXPECTED_RECORD_SUFFIX
+            or raw_prefix != EXPECTED_RECORD_PREFIX
+            or raw_suffix != EXPECTED_RECORD_SUFFIX
+        ):
             raise AssertionError(f"{name}: candidate framing bytes changed")
         if hashlib.sha256(candidate).hexdigest() != expected_sha256:
             raise AssertionError(f"{name}: authentic candidate bytes changed")
         if find_all(user_data, candidate) != (start,):
             raise AssertionError(f"{name}: candidate span is not unique in Track 02")
         candidate.decode("cp932", errors="strict")
-        print(f"PASS: authentic JP {name} story-byte candidate at UD {start:#x}")
+        print(
+            f"PASS: authentic JP {name} story-byte candidate at UD {start:#x} "
+            f"and raw BIN {raw_start:#x}"
+        )
         previous_end = end
 
     if CANDIDATES[-1][2] != previous_end:

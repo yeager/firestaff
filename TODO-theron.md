@@ -126,13 +126,18 @@
   delimiters or dungeon-index bindings. The prior codon-structure rejection
   was not evidence that JP text is absent: these candidates decode as
   Shift-JIS. A real-media source-lock test preserves the seven byte spans,
-  hashes, framing, and strict CP932 decoding. No JP selector/pointer table or
-  runtime read trace currently binds the candidates to dungeon ordinals, so
-  do not expose them through a production story accessor yet. Next disassemble
-  the JP story selector and parser, or capture authenticated pointer/read
-  evidence proving ordinal, bounds, and control-byte semantics. CTest
-  registration is not yet verified: local CMake configuration fails in the
-  installed macOS linker/SDK before project generation.
+  hashes, framing, and strict CP932 decoding. Their raw 2352-byte-sector BIN
+  positions are now also checked against the projected user-data spans. A
+  bounded search found no tightly packed 16-bit pointer table for the seven
+  starts plus an end sentinel in either byte order; this does not cover other
+  pointer/table formats or code-based selection. No JP selector or runtime
+  read trace currently binds the candidates to dungeon ordinals, so do not
+  expose them through a production story accessor yet. Next disassemble the JP
+  story selector and parser, or capture authenticated pointer/read evidence
+  proving ordinal, bounds, and control-byte semantics. See
+  `docs/source-lock/theron-jp-dungeon-story-pointer-search-20261010.md`.
+  CTest registration is not yet verified: local CMake configuration fails in
+  the installed macOS linker/SDK before project generation.
 
 ## 2026-10-10 — lock the compiled US intro-story bytes to retail media
 
