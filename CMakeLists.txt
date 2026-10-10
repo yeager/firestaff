@@ -6486,6 +6486,9 @@ add_library(firestaff_m10 STATIC
     src/shared/firestaff_x68k_media_classify.c
     src/shared/fs_portable_compat.c
     src/shared/dungeon_decompressor_ftl.c
+    # The DM1 Amiga DAT reader is shared by the M11 asset loader and scanner
+    # consumers that compile that loader directly in focused regressions.
+    src/dm1/dm1_v1_amiga_graphics_dat.c
     src/shared/asset_find_by_hash.c
     src/shared/firestaff_cmp_decode.c
     src/engine/m11_game_text_latin_extended_glyphs.c
@@ -7231,7 +7234,6 @@ set(M11_SOURCES
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_amiga_titl_dat.c
-    src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_amiga_title_f0437.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c

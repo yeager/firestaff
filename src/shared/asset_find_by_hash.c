@@ -62,6 +62,7 @@
 
 static int external_tool_available_for_path(const char *path);
 static void record_access_denied_file_parent(const char *path);
+static void record_access_denied_file_parent_if_present(const char *path);
 static int asset_scan_access_denied_errno(int errorCode);
 
 /* ── Embedded MD5 (same as asset_status_m12.c) ────────────────── */
@@ -415,7 +416,7 @@ static int file_md5_raw(const char *path, char outHex[33]) {
     if (!fp) {
         int errorCode = errno;
         if (errorCode == EACCES || errorCode == EPERM) {
-            record_access_denied_file_parent(path);
+            record_access_denied_file_parent_if_present(path);
         }
         return 0;
     }
@@ -429,7 +430,7 @@ static int file_md5_raw(const char *path, char outHex[33]) {
     fclose(fp);
     if (!ok) {
         if (errorCode == EACCES || errorCode == EPERM) {
-            record_access_denied_file_parent(path);
+            record_access_denied_file_parent_if_present(path);
         }
         return 0;
     }
@@ -4455,6 +4456,16 @@ static void record_access_denied_file_parent(const char *path) {
 
 static int asset_scan_access_denied_errno(int errorCode) {
     return errorCode == EACCES || errorCode == EPERM;
+}
+
+static void record_access_denied_file_parent_if_present(const char *path) {
+    struct stat st;
+    /* Some CRTs report EACCES for candidate paths whose leaf does not exist.
+     * Only call this an access failure when metadata proves the file exists;
+     * this still catches macOS privacy grants that allow stat but deny open. */
+    if (path && stat(path, &st) == 0) {
+        record_access_denied_file_parent(path);
+    }
 }
 
 void asset_scan_clear_missing_extractor_diagnostics(void) {

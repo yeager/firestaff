@@ -1,16 +1,13 @@
 # Unreleased
 
-## User-facing changes
-
-- `Game-data folder selection`: reports when the selected directory cannot be
-  accessed separately from a directory that does not exist.
-
 # Firestaff v3.0.375
 
 ## User-facing changes
 
 - `DM1 Amiga 3.6 startup`: uses authenticated original entrance media to reach
   its first dungeon.
+- `Game-data folder access`: distinguishes operating-system access denials
+  from missing directories and identifies folders that need user approval.
 
 ## Developer changes
 
