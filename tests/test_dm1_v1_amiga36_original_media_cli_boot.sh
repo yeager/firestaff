@@ -50,7 +50,7 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
-    --menu --game dm1 --platform amiga --data-dir "$archive" \
+    --menu --game dm1 --platform amiga --data-dir "$scan_root" \
     --script enter,enter,enter --duration 10000 >"$menu_output" 2>&1
 grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=$expected_md5 input=keyboard+mouse palette=rgb4 visual-parity=unverified" "$menu_output"
 grep -Fq 'startup-input-source keyboard command=' "$menu_output"
