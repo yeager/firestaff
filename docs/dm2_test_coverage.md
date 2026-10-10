@@ -75,17 +75,17 @@ whereas the Amiga HUD uses its own authenticated 16-colour
 `INTERFACE_GENERAL/0` palette receipt; neither route reuses a PC
 local-palette assumption.
 
-On the current clean local build, the Amiga regression reaches New Game and
-UP movement (`party=1,7,0`) from the authenticated installer ZIP, but the
-initial dungeon frame is rejected: `dm2FrameAccepted=0`,
-`dm2RealAssets=0`, `dm2NoCoreFallbacks=0`, and no GRAPHICSSET scene receipt is
-published. This is an open runtime defect, not passing Amiga frame coverage;
-the strict real-media assertions stay in place until the source-owned G1/GDAT
-scene transaction is fixed. Temporary local diagnostics narrow the first
-failed material to Amiga GRAPHICSSET 2 wall field `0x23` (GDAT version 5),
-before the wall plan commits a command; its RAW4 destination binding remains
-unproven.
-PC coordinates or extracted media.
+On 2026-10-10, the current source passed both the authenticated Amiga scene
+receipt test and `dm2_v1_amiga_native_cli_boot` against the installed original
+installer ZIP. The full CLI/start-menu route completed the source SWSH/TITL
+sequence, selected New Game and a champion, then accepted the first map-0
+runtime frame at `(1,8)`: `dm2FrameAccepted=1`, `dm2RealAssets=1`,
+`dm2NoCoreFallbacks=1`, and `dm2FallbackDraws=0`. The presented 320x200
+frame passed the visible-pixel gate. The earlier report that rejected the
+Amiga GRAPHICSSET 2 wall field `0x23` is stale for this source revision; the
+authenticated GDAT v5 wall plan now commits and the normal M11 route consumes
+it. This is headless SDL evidence, not a native display or pixel-parity
+comparison.
 
 `dm2_v1_dos_sksave_archive_menu_resume` adds the corresponding resume route:
 the DOS menu receives `archive.zip::data/sksave1.dat`, retains it in RAM, and
