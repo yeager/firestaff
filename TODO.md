@@ -23,10 +23,15 @@
 
   Local verification on 2026-10-10, using a fresh Release build on the Mac
   mini M4 and original media from the user's data directory, passed the
-  native CLI/start-menu boot suites for DM1 PC 3.4, Amiga 2.0, Atari ST 1.2,
-  and FM Towns English/Japanese; CSB Amiga 3.1, Atari ST, and FM Towns
-  English/Japanese; and DM2 DOS English, Amiga English, Macintosh English,
-  and FM Towns. The DM2 Towns test also confirmed bare `--game dm2` AUTO
+  native CLI/start-menu boot suites for DM1 PC 3.4, Amiga 2.0, Amiga 3.6,
+  Atari ST 1.2, and FM Towns English/Japanese; CSB Amiga 3.1 and 3.3, Atari
+  ST, and FM Towns English/Japanese; and DM2 DOS English, Amiga English,
+  Macintosh English, and FM Towns. DM1 Amiga 3.6 now has a direct CLI receipt
+  and a pointer-driven M12 launch through the first runtime frame at its
+  authentic Hall position. CSB Amiga 3.3 now passes the original CLI input
+  matrix and M12 launch through its first source-owned runtime frame; the
+  AUTO route also selects the installed A31E package with a clean config.
+  The DM2 Towns test also confirmed bare `--game dm2` AUTO
   selection with competing installed editions, a stale saved PC choice, and
   the first authentic runtime map. These boot and bounded input checks do not
   establish full gameplay or physical MacBook Pro M5 behavior.
