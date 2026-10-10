@@ -786,6 +786,10 @@ traversal.
   source-locked, but this does not resolve the open runtime MPR1/source question
   for the `$4C3F`/`$3221` path above. No physical-bank identity or same-session
   source receipt is claimed for the static candidate.
+- The `$4CE1..$4D0D` ID `$4E` callee and its two BCS edges to `$4D0D BRK` are now
+  source-locked in authentic JP/US media. The external `$4EC9`, `$4F5E` and
+  `$3876` callee behavior, plus runtime ID and physical-bank selection, remain
+  unverified.
 
 ## 2026-10-08 — lock the JP `$49FA` direct Stage-2 entry
 

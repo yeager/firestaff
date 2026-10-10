@@ -8214,6 +8214,18 @@ T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — source-lock the JP/US ID `$4E` callee at `$4CE1`
+
+- Added a rooted HuC6280 listing from the existing `$4A3B` caller's
+  `$4CE1` target through `$4D0C RTS` and its shared `$4D0D BRK` destination.
+  The 45-byte window is identical in authentic JP/US Track 02 at raw offsets
+  `$2BF271`/`$2BFBA1`.
+- The real-media test checks both complete image identities, unique span
+  occurrence, BCS targets, the RTS/BRK boundary, mutation resistance and
+  byte-for-byte listing correspondence in repeated loops. Helper semantics
+  and runtime ID/physical-bank selection remain open. See
+  `docs/source-lock/theron-disassembly/theron-jp-us-id4e-callee-4ce1-20261010.md`.
+
 ## 2026-10-10 — source-lock the JP/US ID `$53` continuation at `$4C71`
 
 - Added a rooted HuC6280 listing for the 112-byte continuation after the
