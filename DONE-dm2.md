@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+- 2026-10-10: Re-ran `dm2_v1_amiga_native_cli_boot` against the installed
+  authentic Amiga ZIP. It passed the M12 New Game route, required an accepted
+  runtime frame with real assets and zero fallbacks, checked the presented
+  320x200 screenshot, and exercised the native input matrix. This supersedes
+  the stale note below that said the initial frame was rejected. Dummy-video
+  evidence does not verify physical M5 rendering or visual parity.
+
 - 2026-10-08: Rebuilt the current launcher and reran
   `dm2_v1_fmtowns_native_cli_boot`; it passed in 189.50 seconds against the
   authentic FM Towns ZIP. With DOS English/French, Macintosh and Amiga editions
@@ -623,10 +630,11 @@ Reviewed 2026-08-29. Completed work only.
   `INTERFACE_GENERAL/0` PalIRGB field 0 rather than PC field `0xfe`/PAL16.
   Its runtime HUD uses the source palette's physical-index receipt, matching
   the original 4-bit Amiga images without a fabricated local palette. The ZIP
-  remains memory-owned through the native installer path. A current clean
-  local probe contradicts the earlier frame-acceptance claim: movement works,
-  but the initial M11 dungeon frame is rejected. See `TODO-dm2.md` for the
-  reproduced receipt and required follow-up.
+  remains memory-owned through the native installer path. The current
+  `dm2_v1_amiga_native_cli_boot` regression verifies the M12 New Game route,
+  an accepted first frame with authentic assets and zero fallbacks, its
+  presented screenshot, and the native input matrix. Physical M5 rendering
+  and exact visual parity remain unverified.
 - The authentic Macintosh retail ZIP now keeps its normal 256-row
   `PalIRGB`/`dtPalette16` pair rather than being mistaken for the Amiga
   16-colour palette layout solely because both formats are big-endian. Its
