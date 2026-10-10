@@ -11,7 +11,7 @@ from pathlib import Path
 
 SOURCE_MARKER = "mednafen-pce-fast-main-ram-consumer-read"
 EXPECTED_ROWS = 3452
-EXPECTED_REPEATS = 16
+MAX_ROWS_PER_SOURCE_BYTE = 16
 
 # logical PC: physical PC, opcode, source, destination, byte count
 TRANSFER_WINDOWS = {
@@ -54,9 +54,10 @@ def verify(lines: list[str]) -> None:
 
     for logical_pc, (physical_pc, opcode, source, destination, length) in TRANSFER_WINDOWS.items():
         window_rows = grouped.get(logical_pc, [])
-        if len(window_rows) != length * EXPECTED_REPEATS:
+        if len(window_rows) != length * MAX_ROWS_PER_SOURCE_BYTE:
             raise ValueError(
-                f"PC ${logical_pc}: expected {length * EXPECTED_REPEATS} reads, "
+                f"PC ${logical_pc}: expected {length * MAX_ROWS_PER_SOURCE_BYTE} "
+                "bounded rows, "
                 f"found {len(window_rows)}"
             )
 
@@ -72,8 +73,8 @@ def verify(lines: list[str]) -> None:
         expected_addresses = set(range(source, source + length))
         if set(source_counts) != expected_addresses:
             raise ValueError(f"PC ${logical_pc}: source interval is incomplete or unexpected")
-        if set(source_counts.values()) != {EXPECTED_REPEATS}:
-            raise ValueError(f"PC ${logical_pc}: source-byte read counts differ")
+        if set(source_counts.values()) != {MAX_ROWS_PER_SOURCE_BYTE}:
+            raise ValueError(f"PC ${logical_pc}: source-byte row counts differ")
         if len(code_windows) != 1:
             raise ValueError(f"PC ${logical_pc}: instruction bytes changed within the trace")
 
@@ -107,8 +108,8 @@ def main() -> int:
         return 1
 
     print(
-        "PASS: rows={} transfer_windows={} reads_per_source_byte={}".format(
-            EXPECTED_ROWS, len(TRANSFER_WINDOWS), EXPECTED_REPEATS
+        "PASS: rows={} transfer_windows={} sampled_rows_per_source_byte={}".format(
+            EXPECTED_ROWS, len(TRANSFER_WINDOWS), MAX_ROWS_PER_SOURCE_BYTE
         )
     )
     return 0

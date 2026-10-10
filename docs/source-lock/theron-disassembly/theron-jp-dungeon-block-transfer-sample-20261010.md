@@ -9,7 +9,7 @@ the meaning of any game field.
 
 ## Captured transfer windows
 
-| Logical PC | Physical PC | Instruction | Source range | Destination | Length | Complete reads |
+| Logical PC | Physical PC | Instruction | Source range | Destination | Length | Bounded rows per source byte |
 | ---: | ---: | --- | --- | --- | ---: | ---: |
 | `$b9fc` | `$0e19fc` | `TIA` | `$2062-$2081` | alternating `$0002/$0003` | 32 | 16 per source byte |
 | `$b985` | `$0e1985` | `TII` | `$2f2c-$2f40` | `$20a7-$20bb` | 21 | 16 per source byte |
@@ -22,6 +22,11 @@ HuC6280 implementation in Mednafen 1.32.1 `src/pce_fast/huc6280.cpp`
 windows; it does not record these destination writes as source-backed game
 state. In particular, the overlapping `$287f` to `$2883` transfer is listed
 without assigning a higher-level purpose.
+
+The capture emits at most 16 rows per physical BaseRAM byte. Every byte in
+each listed interval reached that cap, so the sidecar establishes complete
+range coverage and at least 16 observed reads per byte—not the total number of
+block-transfer executions.
 
 ## Reproduction identity and limits
 
@@ -36,9 +41,9 @@ without assigning a higher-level purpose.
 
 A three-pass run of
 `scripts/verify_theron_jp_dungeon_block_transfer_trace.py` confirmed contiguous
-sequence numbers, the four decoded operand sets, and exactly 16 reads for
-every source byte in each listed range. The sidecar remains private and
-ephemeral on TRV2; it is not included in Git.
+sequence numbers, the four decoded operand sets, and 16 bounded rows for every
+source byte in each listed range. The sidecar remains private and ephemeral on
+TRV2; it is not included in Git.
 The capture process did not pass its separate PCE Fast VDC snapshot gate; this
 partial sidecar must not be reported as a complete capture. No Track 02 byte
 origin was attached to the restored RAM, and no routine names or gameplay
