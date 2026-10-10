@@ -126,6 +126,8 @@ jobs:
               test_dm2_v1_m11_startup_profile_gate
               test_dm2_v1_startup_pointer_hit_contract
               test_dm2_v1_startup_music_queue
+              test_amiga_mfm_scan
+              test_firestaff_caps_raw_reader
             full_ctest: false
             build_parallel: '3'
 
@@ -232,6 +234,11 @@ jobs:
 
       - name: Run DM1/CSB/DM2 launcher click contract (all platforms)
         run: ./build/test_menu_hit_launch_direct_click_m12${{ matrix.exe }}
+
+      - name: Run bounded Amiga MFM and CAPS format checks (all platforms)
+        run: >-
+          ctest --test-dir build --output-on-failure --timeout 60
+          -R '^(amiga_mfm_scan|firestaff_caps_raw_archive_stream)$'
 
       - name: Run Nexus production source boundary
         if: matrix.full_ctest

@@ -164,6 +164,45 @@ if(BUILD_TESTING)
         LABELS "nexus;saturn;save;real_data;skip_safe")
 endif()
 
+if(BUILD_TESTING)
+    add_executable(test_amiga_mfm_scan
+        tests/test_amiga_mfm_scan.c
+        src/shared/firestaff_amiga_mfm.c)
+    target_include_directories(test_amiga_mfm_scan PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_amiga_mfm_scan PRIVATE
+            -UNDEBUG -Wall -Wextra -Werror -O2)
+    else()
+        target_compile_options(test_amiga_mfm_scan PRIVATE /UNDEBUG)
+    endif()
+    add_test(NAME amiga_mfm_scan COMMAND test_amiga_mfm_scan)
+    set_tests_properties(amiga_mfm_scan PROPERTIES
+        LABELS "amiga;mfm;synthetic-codec-roundtrip;no-media-substitution")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_firestaff_caps_raw_reader
+        tests/test_firestaff_caps_raw_reader.c
+        src/shared/firestaff_caps_raw.c)
+    target_include_directories(test_firestaff_caps_raw_reader PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_caps_raw_reader PRIVATE
+            -UNDEBUG -Wall -Wextra -Werror -O2)
+    else()
+        target_compile_options(test_firestaff_caps_raw_reader PRIVATE /UNDEBUG)
+    endif()
+    add_test(NAME firestaff_caps_raw_archive_stream
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_caps_raw_archive_stream.py
+            $<TARGET_FILE:test_firestaff_caps_raw_reader>
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga 3.5 CTRaw.7z")
+    set_tests_properties(firestaff_caps_raw_archive_stream PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;amiga;ctraw;real_data;skip_safe")
+endif()
+
 if(BUILD_TESTING AND
    EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_quest_item_names.c")
     add_executable(test_theron_v1_track02_quest_item_names
