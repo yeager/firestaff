@@ -8214,6 +8214,36 @@ T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-10 — source-lock the indexed `$D515` helper extent
+
+- MAME `unidasm` decoded the first authentic JP and US candidates. Static
+  branch following found RTS sites at `$D580`, `$D587`, and `$D5A6`; the
+  contiguous `$D515..$D5A6` span is 146 bytes. Seven copies per region match
+  the regional SHA-256. Only the first candidate in each region was disassembled
+  individually; the other twelve were checked by hash.
+- Extended the existing real-media regression to authenticate all fourteen
+  spans, their lengths, and the three RTS opcode offsets. The updated test
+  passed three loops against original hash-authenticated US and JP Track 02
+  images. No game data or temporary disassembly windows were committed.
+- This is static control-flow evidence only; runtime duplicate selection,
+  table semantics, and movement behavior remain open in `TODO-theron.md`.
+  Full listings and hashes are in
+  `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
+
+## 2026-10-10 — disassemble the JP System Card input-poll boundary
+
+- Matched the retained authentic JP capture to the System Card with MD5
+  `ff1a674273fe3540ccef576376407d1d` and SHA-256
+  `df4f75feebb95e53dfef72dea0787df743e3474ba046ff5a4cb88e34dda93ff1`.
+  Mednafen 1.32.1 `HuC_Load()` header handling maps logical `$E4B4` to file
+  offset `$06B4`. The decoded scan reads the active-low RUN value at `$E4C5`
+  and branches from `$E4DE` back to `$E4A5`.
+- The held `run@450:300` event is witnessed only at System Card PCs; there are
+  no non-System-Card polls, Drator route PCs, or transition receipt. The
+  disassembly closes the BIOS poll-loop boundary only, not title/menu input or
+  gameplay. See
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-input-poll-loop-20261010.md`.
+
 ## 2026-10-08 — JP Stage-2 `$50B7` comparison-helper source lock
 
 - Bound the JP `$5025 → $50B7` JSR edge and the 21-byte JP window

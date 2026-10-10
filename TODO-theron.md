@@ -49,6 +49,21 @@
   frame before implementing or claiming full dungeon rendering. The existing
   pce_fast capture mode still has only close-time VDC snapshots, not an
   instruction-attributed VDC write trace.
+- The offline disassembly of the retained `run@450:300` capture binds RUN only
+  to the authentic System Card poll loop at `$E4B4/$E4C5`; the scan branches
+  from `$E4DE` back to `$E4A5`. See
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-input-poll-loop-20261010.md`.
+  The trace has no game-owned title/menu poll witness or transition. Continue
+  from an authentic state/capture that reaches the game-owned route; do not
+  infer title input from the BIOS witness.
+- Static HuC6280 disassembly now bounds the JP/US indexed helper entered at
+  `$D515` through its `$D5A6` RTS, including the called `$D588` helper. The
+  authentic-media regression hash-locks the 146-byte window in all seven
+  regional copies. The other twelve copies were hash-compared, not individually
+  disassembled. No runtime source-LBA receipt identifies the loaded duplicate,
+  and the indexed tables, branch outcomes, and movement meaning remain open.
+  See the `$D515` section in
+  `docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md`.
 - The stale-origin edge is fixed, and normal-PCE dispatch now emits a bounded
   opcode receipt only when the fetched byte has a still-valid, value-matching
   source entry. Clean patch loops and a full serial emulator build pass. An

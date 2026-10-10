@@ -385,10 +385,98 @@ It occurs at `0x9da93`, `0xe7293`, `0x130a93`, `0x17a293`, `0x1c3a93`,
 low-byte operands: JP `CE/CF`, US `DC/DD`. This establishes a static regional
 address difference, not the reason for it or a runtime US path.
 
+### Static `$D515` callee extent
+
+MAME `unidasm` was run on the first JP and US candidate windows with
+`-arch h6280 -basepc 0xd515 -norawbytes`. Following the decoded branches and
+the `$D530` BSR gives instruction-aligned return sites at `$D580`, `$D587`,
+and `$D5A6` (the latter in the called `$D588` helper). The contiguous span
+`$D515..$D5A6` is 146 bytes inclusive. Its ending byte at `$D5A6` is an RTS;
+the JP indexed table starts at `$D5A7`, while the US instructions reference
+their regional table at `$D5B5/$D5B6`.
+
+```text
+JP, raw candidate 0x9d155:
+D515 ASL A       | D516 TAX          | D517 LDA $77CE,X
+D51A STA $C5     | D51C LDA $77CF,X | D51F STA $C6
+D521 LDY #$01    | D523 LDA ($C5),Y  | D525 STA $C7
+D527 INY         | D528 LDA ($C5),Y  | D52A CMP #$FE
+D52C BNE $D534   | D52E LDX #$0C     | D530 BSR $D588
+D532 LDY #$02    | D534 STA $C8      | D536 LDX $290E
+D539 INY         | D53A LDA ($C5),Y  | D53C STA $C9
+D53E INY         | D53F LDA ($C5),Y  | D541 STA $CA
+D543 INY         | D544 LDA ($C5),Y  | D546 BEQ $D587
+D548 CMP #$FF    | D54A BEQ $D539  | D54C CPX #$00
+D54E BNE $D581   | D550 INY          | D551 INY
+D552 LDA ($C5),Y | D554 BMI $D587  | D556 PHA
+D557 DEY         | D558 LDA ($C5),Y  | D55A STA $CD
+D55C ASL A       | D55D STA $2E3A   | D560 PHP
+D561 LDA $2EBA   | D564 LSR A        | D565 PLP
+D566 ROL A       | D567 STA $2EBA   | D56A DEY
+D56B LDA ($C5),Y | D56D STA $2911  | D570 PLA
+D571 CMP #$40    | D573 PHP         | D574 ASL A
+D575 PLP         | D576 ROR A        | D577 CLY
+D578 CLC         | D579 ADC ($C5),Y  | D57B STA $2E7A
+D57E LDA #$01    | D580 RTS         | D581 INY
+D582 INY         | D583 INY          | D584 DEX
+D585 BRA $D544   | D587 RTS         | D588 LDA $2E7A
+D58B CMP #$FF    | D58D BEQ $D5A6  | D58F CMP $D5A8,X
+D592 BCC $D598   | D594 DEX         | D595 DEX
+D596 BRA $D58F   | D598 LDA $D5A7,X | D59B BPL $D5A6
+D59D AND #$7F    | D59F LDY $2E1C   | D5A2 BNE $D5A6
+D5A4 LDA #$06    | D5A6 RTS
+
+US, raw candidate 0x9da93:
+D515 ASL A       | D516 TAX          | D517 LDA $77DC,X
+D51A STA $C5     | D51C LDA $77DD,X | D51F STA $C6
+D521 LDY #$01    | D523 LDA ($C5),Y  | D525 STA $C7
+D527 INY         | D528 LDA ($C5),Y  | D52A CMP #$FE
+D52C BNE $D534   | D52E LDX #$0C     | D530 BSR $D588
+D532 LDY #$02    | D534 STA $C8      | D536 LDX $290E
+D539 INY         | D53A LDA ($C5),Y  | D53C STA $C9
+D53E INY         | D53F LDA ($C5),Y  | D541 STA $CA
+D543 INY         | D544 LDA ($C5),Y  | D546 BEQ $D587
+D548 CMP #$FF    | D54A BEQ $D539  | D54C CPX #$00
+D54E BNE $D581   | D550 INY          | D551 INY
+D552 LDA ($C5),Y | D554 BMI $D587  | D556 PHA
+D557 DEY         | D558 LDA ($C5),Y  | D55A STA $CD
+D55C ASL A       | D55D STA $2E3B   | D560 PHP
+D561 LDA $2EBB   | D564 LSR A        | D565 PLP
+D566 ROL A       | D567 STA $2EBB   | D56A DEY
+D56B LDA ($C5),Y | D56D STA $2911  | D570 PLA
+D571 CMP #$40    | D573 PHP         | D574 ASL A
+D575 PLP         | D576 ROR A        | D577 CLY
+D578 CLC         | D579 ADC ($C5),Y  | D57B STA $2E7B
+D57E LDA #$01    | D580 RTS         | D581 INY
+D582 INY         | D583 INY          | D584 DEX
+D585 BRA $D544   | D587 RTS         | D588 LDA $2E7B
+D58B CMP #$FF    | D58D BEQ $D5A6  | D58F CMP $D5B6,X
+D592 BCC $D598   | D594 DEX         | D595 DEX
+D596 BRA $D58F   | D598 LDA $D5B5,X | D59B BPL $D5A6
+D59D AND #$7F    | D59F LDY $2E1D   | D5A2 BNE $D5A6
+D5A4 LDA #$06    | D5A6 RTS
+```
+
+All seven JP 146-byte windows at raw offsets `0x9d155`, `0xe6955`,
+`0x130155`, `0x179955`, `0x1c3155`, `0x20c955`, and `0x256155` have SHA-256
+`e8085c8363f3bc0c13cab134775649bc8f373564455c81fd68c0146338432a35`.
+All seven US windows at `0x9da93`, `0xe7293`, `0x130a93`, `0x17a293`,
+`0x1c3a93`, `0x20d293`, and `0x256a93` have SHA-256
+`a05dfe27bba946964b9bc6d05e6ae5492870f8dda46452e06dc87b950f3cc999`.
+Only the first JP and US window were individually disassembled; the other
+twelve were compared by full-window hash. The real-media regression checks
+all fourteen lengths and hashes and the three RTS opcode offsets in each
+window.
+
+This is static control-flow evidence only. It does not identify which media
+duplicate was loaded, which RTS is taken for any input, or the meaning of the
+indexed table values. No movement semantics or runtime US path is inferred.
+
 `tests/test_theron_v1_runtime_input_poll_media_candidates.py` checks both
 regional hashes, exact occurrence counts/offsets for the poll, consumer,
-caller-branch, and regional indexed-table signatures, and rejects each
-candidate under an independent in-memory byte mutation. The test passed against the authentic
+caller-branch, and regional indexed-table signatures; the `$D515` callee
+windows additionally check their 146-byte extent and RTS positions. The test
+passed against the authentic
 `TQJP02.bin` and `TQUS02.bin` in `/home/trv2/.firestaff/data/theron/`. Those
 mutated copies exist only inside the negative test; they are not substitute
 game data. Static duplicates remain unresolved, and no same-session CD-load

@@ -117,6 +117,19 @@ POLL_CONSUMER_WINDOWS = {
 }
 POLL_CONSUMER_WINDOW_BYTES = 0x100
 
+INDEXED_TABLE_CALLEE_WINDOWS = {
+    "jp": (
+        "e8085c8363f3bc0c13cab134775649bc8f373564455c81fd68c0146338432a35",
+        (0x9D155, 0xE6955, 0x130155, 0x179955, 0x1C3155, 0x20C955, 0x256155),
+    ),
+    "us": (
+        "a05dfe27bba946964b9bc6d05e6ae5492870f8dda46452e06dc87b950f3cc999",
+        (0x9DA93, 0xE7293, 0x130A93, 0x17A293, 0x1C3A93, 0x20D293, 0x256A93),
+    ),
+}
+INDEXED_TABLE_CALLEE_BYTES = 146
+INDEXED_TABLE_CALLEE_RTS_OFFSETS = (0x6B, 0x72, 0x91)
+
 
 def find_all(data: bytes | bytearray, needle: bytes) -> tuple[int, ...]:
     offsets: list[int] = []
@@ -165,6 +178,32 @@ def require_poll_consumer_windows(data: bytes, region: str) -> None:
             raise AssertionError(f"{region} direction window at {offset:#x} survived mutation")
 
 
+def require_indexed_table_callee_windows(data: bytes, region: str) -> None:
+    expected_sha256, offsets = INDEXED_TABLE_CALLEE_WINDOWS[region]
+    for offset in offsets:
+        window = data[offset : offset + INDEXED_TABLE_CALLEE_BYTES]
+        actual_sha256 = hashlib.sha256(window).hexdigest()
+        if len(window) != INDEXED_TABLE_CALLEE_BYTES or actual_sha256 != expected_sha256:
+            raise AssertionError(
+                f"{region} $D515 callee at {offset:#x}: expected "
+                f"{INDEXED_TABLE_CALLEE_BYTES} bytes/{expected_sha256}, got "
+                f"{len(window)} bytes/{actual_sha256}"
+            )
+        for return_offset in INDEXED_TABLE_CALLEE_RTS_OFFSETS:
+            if window[return_offset] != 0x60:
+                raise AssertionError(
+                    f"{region} $D515 callee at {offset:#x}: expected RTS at "
+                    f"$D515+{return_offset:#x}"
+                )
+            mutated = bytearray(window)
+            mutated[return_offset] ^= 0xFF
+            if hashlib.sha256(mutated).hexdigest() == expected_sha256:
+                raise AssertionError(
+                    f"{region} $D515 return at {offset + return_offset:#x} "
+                    "survived mutation"
+                )
+
+
 def main() -> int:
     root = Path(os.environ.get("FIRESTAFF_THERON_TEST_DATA_DIR", Path.home() / ".firestaff/data/theron"))
     paths = {region: root / filename for region, (filename, _, _) in MEDIA.items()}
@@ -182,9 +221,13 @@ def main() -> int:
         for label, (hex_bytes, offsets) in signatures.items():
             require_candidates(data, f"{region} {label}", hex_bytes, offsets)
         require_poll_consumer_windows(data, region)
+        require_indexed_table_callee_windows(data, region)
         print(f"PASS: authentic {region.upper()} Track 02 caller candidates ({expected_md5})")
 
-    print("PASS: poll, consumer/helper code, 256-byte window hashes, caller-branch, and indexed-table signatures with per-candidate negative mutations")
+    print(
+        "PASS: poll, consumer/helper code, 256-byte windows, indexed-table "
+        "signatures, and 146-byte $D515 callee extents with RTS boundaries"
+    )
     return 0
 
 
