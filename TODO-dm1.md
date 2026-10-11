@@ -10,8 +10,11 @@ direction 2, four champions, and tick 292 through direct CLI and M12 Quick
 Resume. This does not verify native M5 Retina window/input behavior or full
 visual parity. A Linux ARM64 run of the published v3.0.376 package reached
 its menu and input checks, but the full regression exited 1 during the
-physical-card mouse route under the local ARM64 runtime; issue #13 remains
-unverified on its reported x86_64 environment.
+physical-card mouse route with x86_64 userspace emulated under the local
+ARM64 runtime. A fresh current-source macOS build then passed that exact
+game -> PC -> Original pointer route against authentic PC 3.4 media with
+SDL dummy input. This narrows the failure to the emulated Linux run, but
+does not verify issue #13 on native Linux x86_64 or native mouse input.
 
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
