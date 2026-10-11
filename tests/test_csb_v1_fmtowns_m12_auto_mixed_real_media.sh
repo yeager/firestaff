@@ -202,3 +202,87 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
 print("PASS: mixed authentic CSB M12 selected Amiga from the platform cards and "
       "reached the original A31M first runtime frame")
 PY
+
+# Exercise explicit CLI platform constraints against the same mixed set of
+# original archives. These are separate from the card-selection checks above:
+# --platform must constrain source selection before the ordinary M12 flow, and
+# that source must remain the owner through its first authentic runtime frame.
+explicit_platform_runtime() {
+    platform=$1
+    display_platform=$2
+    edition=$3
+    variant=$4
+    handoff=$5
+    archive=$6
+    script=$7
+    expected_party=$8
+    width=$9
+    height=${10}
+    duration=${11}
+    key=$(printf '%s' "$platform" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-')
+
+    FIRESTAFF_CONFIG_PATH="$scratch/$key-explicit-config.toml" \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$scratch/$key-explicit-runtime.json" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    HOME="$scratch" XDG_CONFIG_HOME="$scratch" APPDATA="$scratch" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --width "$width" --height "$height" --menu --game csb \
+        --data-dir "$amiga_media_root" --platform "$platform" --debug \
+        --script "$script" --duration "$duration" >"$scratch/$key-explicit.log" 2>&1 || {
+            cat "$scratch/$key-explicit.log" >&2
+            return 1
+        }
+
+    python3 - "$scratch/$key-explicit.log" \
+        "$scratch/$key-explicit-runtime.json" "$archive" \
+        "$display_platform" "$edition" "$variant" "$handoff" \
+        "$expected_party" <<'PY'
+import json
+import re
+import sys
+
+log_path, probe_path, archive, platform, edition, variant, handoff, party_text = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+ready = re.search(
+    r"CSB READY: gameId=csb dataDir=" + re.escape(archive) +
+    r" variant=" + re.escape(variant) + r" route=startup handoff=" +
+    re.escape(handoff) + r" handoffHash=[0-9a-f]{8}", trace)
+launch = re.search(
+    r"launch phase=game-handoff mode=menu game=csb platform=" +
+    re.escape(platform) + r" edition=" + re.escape(edition) +
+    r" source=" + re.escape(archive), trace)
+if ready is None or launch is None:
+    raise SystemExit(
+        f"FAIL: explicit {platform} M12 launch did not retain expected original source")
+
+startup = probe["startup"]
+party = probe["party"]
+actual_party = (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+                party.get("direction"), party.get("championCount"))
+expected_party = tuple(map(int, party_text.split(",")))
+if (probe.get("launchedEver") != 1 or probe.get("sourceId") != "csb" or
+        startup.get("phase") != "inactive" or
+        startup.get("startupActive") != 0 or startup.get("levelLoaded") != 1 or
+        probe.get("csbViewportHash", 0) == 0 or actual_party != expected_party):
+    raise SystemExit(
+        f"FAIL: explicit {platform} M12 did not reach its authentic first runtime: {probe}")
+
+print(f"PASS: mixed authentic CSB M12 --platform {platform} retained {edition} "
+      "and reached its source-owned first runtime")
+PY
+}
+
+explicit_platform_runtime fm-towns "FM Towns" fmtowns-en csb-fmtowns-en \
+    f31-title-anm "$amiga_media_root/$(basename "$towns_archive")" \
+    'enter,enter,enter,wait700,click:52:110,wait10,click:250:50,wait240' \
+    '4,22,18,2,1' 320 200 30000
+explicit_platform_runtime atari-st "Atari ST" st20-21-en csb-st20-21-en \
+    atari-st-animate-ftlcode "$amiga_media_root/$(basename "$atari_archive")" \
+    'enter,enter,enter,wait:3600,click:813:156' '0,9,0,2,0' 960 600 120000
+explicit_platform_runtime amiga "Amiga" amiga31-multi csb-amiga-a31m \
+    a31m-titl-dat "$amiga_media_root/$(basename "$amiga_archive")" \
+    'enter,enter,enter,wait:1000,click:100:100,key:enter,up' '0,9,0,2,0' 320 200 30000

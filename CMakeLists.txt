@@ -18086,11 +18086,11 @@ endif()
     )
     set_tests_properties(csb_v1_fmtowns_m12_auto_mixed_real_media PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "tier2;csb;fmtowns;m12;auto;menu;startup;real-media;skip-safe"
+        LABELS "tier2;csb;fmtowns;atari;amiga;m12;auto;explicit-platform;menu;startup;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        # Three authentic M12 sessions play their source-owned intros before
-        # checking the FM Towns, Atari ST, and Amiga runtime handoffs.
-        TIMEOUT 300
+        # Six authentic M12 sessions cover AUTO, platform cards and explicit
+        # --platform selection before checking each source-owned runtime.
+        TIMEOUT 420
     )
     # Keep both language-private F31 program chains independently runnable.
     # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
