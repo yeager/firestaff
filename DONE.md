@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Built and ran `test_m12_data_dir_dialog_real` against the
+  original media in the user's data root. It passed worker-thread folder
+  result delivery, main-thread asset admission, saving the selected data root,
+  and reopening M12 without replacing that saved path. This test uses the
+  real asynchronous dialog-result callback; it does not open the operating
+  system's native folder picker or verify macOS TCC prompts.
+
 - 2026-10-11: After the user granted access to the external volume, launched
   the current Cocoa build with its configured `~/.firestaff/data` symlink.
   The scan read from `/Volumes/Extern-disk/FirestaffUserData/data` and
