@@ -11,9 +11,10 @@ DOS, Amiga and Macintosh CLI/start-menu regressions
 after the original 225-frame title, matched the `TITLE/0/4` source RGB digest,
 and reached the first champion in the normal loop. DOS, Amiga and Macintosh
 tests also reached their runtime/input routes. The Macintosh test additionally
-confirms that Back from a direct CLI title menu exits Firestaff without
-rescanning into M12. The tests use SDL's dummy video driver and do not verify
-native M5 Retina window/input behavior or full visual parity.
+starts an authenticated one-champion runtime through direct CLI, then confirms
+Back exits Firestaff without rescanning into M12. The tests use SDL's dummy
+video driver and do not verify native M5 Retina window/input behavior or full
+visual parity.
 
 - The selected Towns hero frame now comes from `INTERFACE_GENERAL/6/<hero>` at
   RECT `0x5e` (136x17 eight-frame source, 17x17 placement at `(265,108)`), with

@@ -323,17 +323,19 @@ if actual_platform != 4:
 print("PASS: DM2 AUTO selected authenticated Macintosh platform (4)")
 PY
 
-# A direct --game launch is one game session. Back from the source Macintosh
-# title menu must close Firestaff instead of opening the multi-game M12 menu.
+# A direct --game launch is one game session. Back from active Macintosh
+# gameplay must close Firestaff instead of opening the multi-game M12 menu.
 direct_exit_output=$(FIRESTAFF_DATA="$menu_data_root" \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --platform mac \
-    --script 'wait:1200,back' --duration 44000 --debug 2>&1) || {
+    --game dm2 --platform mac --width 320 --height 200 \
+    --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait-game-runtime,back' \
+    --duration 70000 --debug 2>&1) || {
     printf '%s\n' "$direct_exit_output" >&2
     exit 1
 }
 case "$direct_exit_output" in
-    *'startup game=dm2 mode=direct platform=Macintosh'*'direct game ended; exiting instead of opening the start menu'*) ;;
+    *'startup game=dm2 mode=direct platform=Macintosh'*'input game=dm2 action=back result=2 startup-menu=0 frozen=0'*'direct game ended; exiting instead of opening the start menu'*) ;;
     *)
         printf '%s\n' 'FAIL: direct DM2 launch did not exit after Back' \
             "$direct_exit_output" >&2
@@ -346,7 +348,27 @@ case "$direct_exit_output" in
         exit 1
         ;;
 esac
-echo 'PASS: direct DM2 CLI launch exits instead of returning to the M12 start menu'
+python3 - "$runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+
+startup = probe.get("startup", {})
+party = probe.get("party", {})
+if (
+    probe.get("sourceId") != "dm2"
+    or probe.get("dm2Startup", {}).get("platform") != 4
+    or startup.get("phase") != "dm2-runtime"
+    or startup.get("levelLoaded") != 1
+    or party.get("championCount") != 1
+):
+    raise SystemExit(
+        "FAIL: direct DM2 Macintosh session did not reach gameplay before "
+        f"Back returned to the launcher: {probe}")
+print("PASS: direct DM2 Macintosh runtime Back exits instead of returning to M12")
+PY
 
 if [ "$archive_hash_before" != "$(firestaff_sha256_file "$archive")" ]; then
     echo 'FAIL: DM2 Macintosh retail archive changed during native launch' >&2

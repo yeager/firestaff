@@ -98,10 +98,10 @@
   selection where required, waits for the first runtime receipt, returns from
   the game and verifies that no launcher rescan occurs. All three passed
   against the installed original archives on macOS. The DM2 Macintosh
-  `test_dm2_v1_mac_native_cli_boot` also sends Back from its authentic title
-  menu after direct `--game dm2 --platform mac` startup and confirms Firestaff
-  exits without the M12 rescan. This verifies the headless scripted input
-  paths, not native desktop behavior.
+  `test_dm2_v1_mac_native_cli_boot` also reaches an authenticated one-champion
+  gameplay session after direct `--game dm2 --platform mac`, sends Back and
+  confirms Firestaff exits without the M12 rescan. These checks verify the
+  headless scripted input paths, not native desktop behavior.
 
 - 2026-10-11: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` to
   confirm the return dialog with mouse input for DM1 PC 3.4, CSB FM Towns and
