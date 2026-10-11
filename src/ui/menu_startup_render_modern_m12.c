@@ -1671,7 +1671,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 150;
+    int panelH = 112;
     int panelX;
     int panelY;
     int titleAreaW;
@@ -1705,7 +1705,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     if (panelW > 860) panelW = 860;
     if (panelW < 240) panelW = c->w - 24;
     panelX = (c->w - panelW) / 2;
-    titleAreaW = panelW - 140;
+    titleAreaW = panelW - 100;
     if (titleAreaW < 1) titleAreaW = 1;
     /* Keep the scan card in the lower-middle across both the normal 1080p
      * launcher and compact test/window sizes, above the footer surfaces. */
@@ -1724,55 +1724,47 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     snprintf(percentText, sizeof(percentText), "%d%%", percent);
 
     draw_panel(c, panelX, panelY, panelW, panelH,
-               rgb(16, 14, 30), COLOR_ACCENT(), 16);
-    /* Give the localized heading its own line and the percentage a compact
-     * badge. Long translations therefore stay readable instead of squeezing
-     * the number into the same line and getting ellipsized. */
+               rgb(18, 18, 22), rgb(78, 80, 86), 5);
+    /* Use plain status typography and a tabular progress indicator. */
     if (!draw_ttf_centered_fit(c,
-                               panelX + 18 + titleAreaW / 2,
-                               panelY + 16,
+                               panelX + 12 + titleAreaW / 2,
+                               panelY + 13,
                                label,
                                titleAreaW,
-                               c->w >= 960 ? 38 : (c->w >= 640 ? 30 : 18),
-                               COLOR_ACCENT_HI())) {
-        draw_text_centered_fit(c, panelX + 18 + titleAreaW / 2,
-                               panelY + 17, label, &title, titleAreaW);
+                               c->w >= 960 ? 25 : (c->w >= 640 ? 21 : 14),
+                               COLOR_TEXT())) {
+        draw_text_centered_fit(c, panelX + 12 + titleAreaW / 2,
+                               panelY + 14, label, &title, titleAreaW);
     }
-    fill_rounded_rect(c, panelX + panelW - 86, panelY + 10, 70, 32, 10,
-                      rgb(44, 34, 22));
-    stroke_rounded_rect(c, panelX + panelW - 86, panelY + 10, 70, 32, 10,
-                        COLOR_ACCENT());
-    if (!draw_ttf_centered_fit(c, panelX + panelW - 51, panelY + 17,
-                               percentText, 62,
-                               c->w >= 960 ? 23 : 16, COLOR_TEXT())) {
-        draw_text_centered(c, panelX + panelW - 51, panelY + 20,
+    if (!draw_ttf_centered_fit(c, panelX + panelW - 44, panelY + 16,
+                               percentText, 48,
+                               c->w >= 960 ? 19 : 15, COLOR_TEXT())) {
+        draw_text_centered(c, panelX + panelW - 44, panelY + 18,
                            percentText, &percentStyle);
     }
     if (gameTitle[0]) {
         char detailText[160];
         const char* task = M12_StartupMenu_ScanTaskDisplayForLocale(
             languageIndex, progress->currentTask);
-        snprintf(detailText, sizeof(detailText), "%s%s%s", gameTitle,
-                 task[0] ? "  ·  " : "", task);
+        snprintf(detailText, sizeof(detailText), "%s  %s", gameTitle, task);
         if (!draw_ttf_centered_fit(c, panelX + panelW / 2,
-                                   panelY + 68, detailText, panelW - 28,
-                                   c->w >= 960 ? 22 : (c->w >= 640 ? 18 : 12),
+                                   panelY + 49, detailText, panelW - 28,
+                                   c->w >= 960 ? 16 : (c->w >= 640 ? 14 : 10),
                                    COLOR_TEXT_DIM())) {
-            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 70,
+            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 50,
                                    detailText, &detail, panelW - 28);
         }
     }
     barX = panelX + 18;
-    barY = panelY + 100;
+    barY = panelY + 78;
     barW = panelW - 36;
     fillW = (barW * percent) / 100;
-    fill_rounded_rect(c, barX, barY, barW, 20, 9, rgb(37, 35, 54));
+    fill_rounded_rect(c, barX, barY, barW, 5, 2, rgb(55, 56, 60));
     if (fillW > 0) {
-        fill_rounded_rect(c, barX, barY, fillW, 20, 9,
+        fill_rounded_rect(c, barX, barY, fillW, 5, 2,
                           cancelRequested
-                              ? COLOR_WARN() : COLOR_ACCENT());
+                              ? COLOR_WARN() : rgb(194, 198, 205));
     }
-    stroke_rounded_rect(c, barX, barY, barW, 20, 9, COLOR_PANEL_EDGE());
 }
 
 void M12_ModernMenu_RenderScanProgressLocalized(

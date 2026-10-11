@@ -113,6 +113,7 @@ static void build_asset_path(char* out, size_t cap,
  * as "no fallback available". */
 static const char* system_fallback_path(FS_Language lang) {
     static const char* kMacLatin = "/Library/Fonts/Arial Unicode.ttf";
+    static const char* kMacLatinRegular = "/System/Library/Fonts/Supplemental/Arial.ttf";
     static const char* kMacJapanese = "/System/Library/Fonts/Hiragino Sans GB.ttc";
     static const char* kMacKorean = "/System/Library/Fonts/AppleSDGothicNeo.ttc";
     static const char* kMacCjkFallback = "/System/Library/Fonts/STHeiti Medium.ttc";
@@ -124,6 +125,7 @@ static const char* system_fallback_path(FS_Language lang) {
     if ((lang == FS_LANG_JA || lang == FS_LANG_KO || lang == FS_LANG_ZH)
         && file_exists(kMacCjkFallback)) return kMacCjkFallback;
     if (file_exists(kMacLatin)) return kMacLatin;
+    if (file_exists(kMacLatinRegular)) return kMacLatinRegular;
     if (file_exists(kLinuxLatin)) return kLinuxLatin;
     if (file_exists(kWindowsLatin)) return kWindowsLatin;
     return NULL;

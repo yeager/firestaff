@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Simplified the launcher and intro data-scan indicators to use
+  restrained panels, thin progress tracks, readable TTF status text, and no
+  estimated wait time. Added the standard macOS Arial fallback for systems
+  without the bundled font. The app and `test_m12_data_dir_cancel` rebuilt and
+  passed on macOS; this verifies scan rendering logic, not a visual check on
+  every desktop backend.
+
 - 2026-10-10: Return-to-menu `--debug` no longer filters scan progress by
   game and reports availability for all five after the rescan. The authentic
   DM1/CSB/DM2 return matrix passed all 11 routes (927.44 s), including full

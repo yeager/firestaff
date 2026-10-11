@@ -13868,6 +13868,7 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     int barX, barY, barW, barH, fillW;
     char line1[64];
     char line2[128];
+    char percentText[16];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
@@ -13877,11 +13878,11 @@ void M12_StartupMenu_DrawScanProgressLocalized(
         pct = (progress->completedSteps * 100U) / progress->totalSteps;
         if (pct > 100U) pct = 100U;
     }
-    snprintf(line1, sizeof(line1), "%s  %zu%%",
+    snprintf(line1, sizeof(line1), "%s",
              m12_translate_for_locale(
                  m12_clamp_index(languageIndex, M12_UI_LANGUAGE_COUNT),
-                 "SCANNING GAME DATA"),
-             pct);
+                 "SCANNING GAME DATA"));
+    snprintf(percentText, sizeof(percentText), "%zu%%", pct);
     if (progress && progress->currentGameId[0] != '\0') {
         snprintf(line2, sizeof(line2), "%s  %s",
                  m12_scan_game_display_title_for_locale(
@@ -13901,7 +13902,7 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     cardW = framebufferWidth * 78 / 100;
     if (cardW > 560) cardW = 560;
     if (cardW > framebufferWidth - 12) cardW = framebufferWidth - 12;
-    cardH = 96;
+    cardH = 80;
     if (cardH > framebufferHeight - 12) cardH = framebufferHeight - 12;
     if (cardW < 1 || cardH < 1) return;
     cardX = (framebufferWidth - cardW) / 2;
@@ -13910,53 +13911,57 @@ void M12_StartupMenu_DrawScanProgressLocalized(
         cardY = framebufferHeight - cardH - 6;
     }
     if (cardY < 6) cardY = 6;
-    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
-                   cardX, cardY, cardW, cardH,
-                   M12_COLOR_LIGHT_BLUE, M12_COLOR_NAVY);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  cardX + 2, cardY + 2, cardW - 4, 3,
-                  M12_COLOR_LIGHT_CYAN);
+                  cardX, cardY, cardW, cardH, M12_COLOR_NAVY);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  cardX, cardY, cardW, 1, M12_COLOR_DARK_GRAY);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  cardX, cardY + cardH - 1, cardW, 1,
+                  M12_COLOR_DARK_GRAY);
     {
         int textWidth;
-        int haveTtfLine1 = m11_ttf_measure_string(line1, 21, &textWidth);
+        int haveTtfLine1 = m11_ttf_measure_string(line1, 16, &textWidth);
         if (!haveTtfLine1) textWidth = m12_measure_text(line1, 2, 1);
-        int textX = (framebufferWidth - textWidth) / 2;
+        int textX = cardX + 18;
         if (!haveTtfLine1 ||
             m11_ttf_render_string(framebuffer, framebufferWidth,
                                   framebufferHeight, textX, cardY + 12,
-                                  line1, 21, M12_COLOR_WHITE) == 0) {
+                                  line1, 16, M12_COLOR_WHITE) == 0) {
             m12_draw_centered_text(framebuffer, framebufferWidth,
-                                   framebufferHeight, cardY + 15, line1,
+                                   framebufferHeight, cardY + 12, line1,
                                    &g_textMediumShadow);
         }
+        if (m11_ttf_measure_string(percentText, 16, &textWidth)) {
+            int percentX = cardX + cardW - 18 - textWidth;
+            (void)m11_ttf_render_string(framebuffer, framebufferWidth,
+                                        framebufferHeight, percentX,
+                                        cardY + 12, percentText, 16,
+                                        M12_COLOR_WHITE);
+        }
         if (line2[0] != '\0') {
-            int haveTtfLine2 = m11_ttf_measure_string(line2, 12, &textWidth);
+            int haveTtfLine2 = m11_ttf_measure_string(line2, 11, &textWidth);
             if (!haveTtfLine2) textWidth = m12_measure_text(line2, 1, 1);
             textX = (framebufferWidth - textWidth) / 2;
             if (!haveTtfLine2 ||
                 m11_ttf_render_string(framebuffer, framebufferWidth,
-                                  framebufferHeight, textX, cardY + 45,
-                                      line2, 12, M12_COLOR_LIGHT_CYAN) == 0) {
+                                  framebufferHeight, textX, cardY + 35,
+                                      line2, 11, M12_COLOR_LIGHT_CYAN) == 0) {
                 m12_draw_centered_text(framebuffer, framebufferWidth,
-                                       framebufferHeight, cardY + 41, line2,
+                                       framebufferHeight, cardY + 34, line2,
                                        &g_textSmallAccent);
             }
         }
     }
     barX = cardX + 22;
-    barY = cardY + cardH - 23;
+    barY = cardY + cardH - 14;
     barW = cardW - 44;
-    barH = 10;
+    barH = 4;
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   barX, barY, barW, barH, M12_COLOR_DARK_GRAY);
-    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  barX, barY, barW, 1, M12_COLOR_LIGHT_CYAN);
-    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  barX, barY + barH - 1, barW, 1, M12_COLOR_LIGHT_BLUE);
-    fillW = (int)((size_t)(barW - 2) * pct / 100U);
+    fillW = (int)((size_t)barW * pct / 100U);
     if (fillW > 0) {
         m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      barX + 1, barY + 1, fillW, barH - 2,
+                      barX, barY, fillW, barH,
                       M12_COLOR_LIGHT_CYAN);
     }
 }
