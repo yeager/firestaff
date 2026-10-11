@@ -174,6 +174,46 @@ print("PASS: DM1 --game CLI boot probe confirms SWSH, C001, ENTRANCE and the HoC
 PY
 rm -f "$direct_probe_json"
 
+# Issue #13 used the ordinary `--game dm1` CLI route on Linux. Keep this
+# platform-auto case separate from the explicit PC route above: with only the
+# authentic PC 3.4 archive installed and no saved launcher preference, AUTO
+# must resolve the PC release and load its original DUNGEON.DAT.
+auto_cli_home="$test_scratch/dm1-cli-auto-home-$$"
+mkdir -p "$auto_cli_home"
+auto_cli_probe_json="$auto_cli_home/runtime.json"
+auto_cli_output="$(HOME="$auto_cli_home" XDG_CONFIG_HOME="$auto_cli_home" \
+    APPDATA="$auto_cli_home" FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$auto_cli_probe_json" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --data-dir "$archive" --verbose --boot-probe \
+    --boot-probe-frames 120 --duration 0 2>&1)" || {
+    printf '%s\n' "$auto_cli_output" >&2
+    exit 1
+}
+if ! grep -Fq 'selected game=dm1 platform=PC edition=pc34-en' <<<"$auto_cli_output" ||
+   ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$auto_cli_output" ||
+   ! grep -Fq 'phase=dm1-runtime' <<<"$auto_cli_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$auto_cli_output"; then
+    printf '%s\n' "$auto_cli_output" >&2
+    printf '%s\n' 'FAIL: bare DM1 CLI did not select and load authentic PC 3.4 data' >&2
+    exit 1
+fi
+python3 - "$auto_cli_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["sourceId"] != "dm1" or startup["phase"] != "dm1-runtime" or
+        startup["levelLoaded"] != 1 or startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupSwshConsumed"] != 1 or
+        startup["dm1StartupTitleConsumed"] != 1 or
+        startup["dm1StartupEntranceConsumed"] != 1):
+    raise SystemExit(f"FAIL: bare DM1 CLI missed its PC-34 runtime handoff: {probe}")
+print("PASS: bare --game dm1 CLI selected PC 3.4 and reached runtime with original data")
+PY
+rm -f "$auto_cli_probe_json"
+
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 --platform pc \
