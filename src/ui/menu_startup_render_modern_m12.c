@@ -1671,7 +1671,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 88;
+    int panelH = 96;
     int panelX;
     int panelY;
     int contentX;
@@ -1700,7 +1700,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     if (percent > 100) percent = 100;
 
     panelW = c->w - 48;
-    if (panelW > 640) panelW = 640;
+    if (panelW > 560) panelW = 560;
     if (panelW < 240) panelW = c->w - 24;
     panelX = (c->w - panelW) / 2;
     contentX = panelX + 18;
@@ -1721,9 +1721,11 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
         : "";
     snprintf(percentText, sizeof(percentText), "%d%%", percent);
 
-    fill_rect(c, panelX, panelY, panelW, panelH, rgb(18, 19, 22));
-    fill_rect(c, panelX, panelY, panelW, 1, rgb(92, 94, 98));
-    /* Use a left aligned system font and a fine progress rule. */
+    fill_rect(c, panelX, panelY, panelW, panelH, rgb(20, 21, 23));
+    fill_rect(c, panelX, panelY, panelW, 1, rgb(82, 84, 87));
+    /* Keep the scan status compact and typographic. The measured TTF face is
+     * used whenever the shared font renderer is available; the bitmap face
+     * remains a deterministic fallback for minimal builds. */
     if (!draw_ttf_centered_fit(c,
                                contentX + (contentW - 88) / 2,
                                panelY + 12,
@@ -1778,12 +1780,12 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
         }
     }
     barX = contentX;
-    barY = panelY + 66;
+    barY = panelY + 72;
     barW = contentW;
     fillW = (barW * percent) / 100;
-    fill_rect(c, barX, barY, barW, 2, rgb(61, 63, 67));
+    fill_rect(c, barX, barY, barW, 6, rgb(54, 56, 59));
     if (fillW > 0) {
-        fill_rect(c, barX, barY, fillW, 2,
+        fill_rect(c, barX, barY, fillW, 6,
                   cancelRequested ? COLOR_WARN() : rgb(208, 210, 213));
     }
 }
