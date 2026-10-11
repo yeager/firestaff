@@ -108,6 +108,14 @@
   The focused local original-media run passed all three; this verifies the
   scripted pointer path, not physical M5 pointer behavior.
 
+- 2026-10-11: Re-ran the full authentic-media `returns` CTest on the current
+  source. All direct-game exit and M12 return routes passed for DM1, CSB and
+  DM2, including the installed Atari ST, Amiga, DOS, Macintosh and FM Towns
+  cases. Every return rescan rediscovered DM1, CSB and DM2; the shared
+  DM1/CSB collection test also passed. The 1,104.70-second run used SDL's
+  dummy video driver and verifies scripted startup/input paths, not physical
+  desktop behavior, HiDPI presentation or visual parity.
+
 - 2026-10-11: Re-ran original-media startup and menu coverage after the shared
   scan-progress UI change. DM1 PC 3.4 passed its complete CLI/menu/input
   regression; CSB FM Towns, Amiga ADF and Atari ST passed their launch routes;
