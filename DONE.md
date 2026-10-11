@@ -97,8 +97,11 @@
   routes. The test drives the source-owned CSB SWITCHTW and DM2 New Game/mirror
   selection where required, waits for the first runtime receipt, returns from
   the game and verifies that no launcher rescan occurs. All three passed
-  against the installed original archives on macOS. This verifies the headless
-  scripted input path, not native desktop behavior.
+  against the installed original archives on macOS. The DM2 Macintosh
+  `test_dm2_v1_mac_native_cli_boot` also sends Back from its authentic title
+  menu after direct `--game dm2 --platform mac` startup and confirms Firestaff
+  exits without the M12 rescan. This verifies the headless scripted input
+  paths, not native desktop behavior.
 
 - 2026-10-11: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` to
   confirm the return dialog with mouse input for DM1 PC 3.4, CSB FM Towns and
@@ -115,6 +118,14 @@
   DM1/CSB collection test also passed. The 1,104.70-second run used SDL's
   dummy video driver and verifies scripted startup/input paths, not physical
   desktop behavior, HiDPI presentation or visual parity.
+
+- 2026-10-11: `return_to_menu_rescans_media_mutations_real_media` passed in
+  94.45 seconds using original DM1, CSB and DM2 archives. It removed the CSB
+  archive while DM1 was running and confirmed CSB became unavailable after
+  returning to M12, then added the original archive during another DM1 session
+  and confirmed CSB became available without restarting Firestaff. The test
+  uses SDL's dummy video driver and verifies scripted input, not physical
+  desktop behavior or visual parity.
 
 - 2026-10-11: Re-ran original-media startup and menu coverage after the shared
   scan-progress UI change. DM1 PC 3.4 passed its complete CLI/menu/input
