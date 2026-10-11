@@ -140,6 +140,40 @@ int main(void) {
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
+    {
+        int csbPlatforms[M12_ARCH_COUNT] = {0};
+        int platformCount = M12_StartupMenu_GetPlatformCardArchitectures(
+            "csb", csbPlatforms);
+        if (!expect(platformCount == 3 &&
+                    csbPlatforms[0] == M12_ARCH_FM_TOWNS &&
+                    csbPlatforms[1] == M12_ARCH_AMIGA &&
+                    csbPlatforms[2] == M12_ARCH_ATARI_ST,
+                    "CSB platform cards contain only Towns, Amiga and Atari ST")) return 1;
+        if (!expect(M12_StartupMenu_GetPlatformCardArchitectures("csb", NULL) ==
+                        platformCount,
+                    "renderer and hit testing can query the same CSB card count")) return 1;
+
+        /* Every rendered CSB platform card must map to its matching pointer
+         * index. PC3.4 compatibility catalog entries must not shift Atari or
+         * Amiga hit targets. */
+        state.view = M12_MENU_VIEW_GAME_OPTIONS;
+        state.activatedIndex = 1;
+        state.gameCardFlowStage = 0;
+        for (int platformIndex = 0; platformIndex < platformCount;
+             ++platformIndex) {
+            int col = platformIndex % 3;
+            int row = platformIndex / 3;
+            hit = M12_ModernMenu_HitTest(
+                &state, 160 + col * (500 + 24) + 250,
+                280 + row * (250 + 24) + 125);
+            if (!expect(hit.kind == M12_HIT_GAMEOPT_ROW &&
+                        hit.index == platformIndex,
+                        "CSB rendered platform card and mouse hit index disagree")) return 1;
+        }
+        state.view = M12_MENU_VIEW_MAIN;
+        state.activatedIndex = 0;
+        state.gameCardFlowStage = 0;
+    }
     force_dm1_available(&state);
 
     changed = M12_ModernMenu_HandlePointer(&state, dm1CardCenterX, cardCenterY, 0, NULL);

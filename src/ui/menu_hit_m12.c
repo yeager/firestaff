@@ -147,39 +147,10 @@ static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* r
  * misleading missing-data dialog. */
 static int m12_hit_game_platform_card_count(const M12_StartupMenuState* state) {
     const M12_MenuEntry* entry;
-    size_t i;
-    size_t versionCount;
-    int architectures[M12_ARCH_COUNT];
-    int count = 0;
     if (!state) return 0;
     entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
     if (!entry || entry->kind != M12_MENU_ENTRY_GAME || !entry->gameId) return 0;
-    versionCount = M12_AssetStatus_GetVersionCount(entry->gameId);
-    for (i = 0; i < versionCount; ++i) {
-        int architecture = M12_AssetStatus_GetVersionArchitecture(entry->gameId, i);
-        int seen = 0;
-        int j;
-        /* Keep this list byte-for-byte equivalent to the modern card
-         * renderer's card_platforms_for_game().  CSB's PC3.4 source is a
-         * compatibility reference, not a shipped DOS platform; counting it
-         * here shifted every later rendered CSB platform card by one click.
-         * The result was a visible Atari/Amiga/FM Towns card that keyboard
-         * navigation could select but whose mouse click chose the wrong
-         * platform index. */
-        if (architecture <= M12_ARCH_AUTO ||
-            architecture == M12_ARCH_PC98 ||
-            architecture == M12_ARCH_X68000 ||
-            (strcmp(entry->gameId, "csb") == 0 &&
-             architecture == M12_ARCH_PC)) continue;
-        for (j = 0; j < count; ++j) {
-            if (architectures[j] == architecture) {
-                seen = 1;
-                break;
-            }
-        }
-        if (!seen && count < M12_ARCH_COUNT) architectures[count++] = architecture;
-    }
-    return count;
+    return M12_StartupMenu_GetPlatformCardArchitectures(entry->gameId, NULL);
 }
 
 static int m12_hit_settings_row_rect(int visibleRow,

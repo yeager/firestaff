@@ -2244,25 +2244,6 @@ static void draw_info_tile(M12_ModernCanvas* c,
     }
 }
 
-static int card_platforms_for_game(const char* gameId, int out[M12_ARCH_COUNT]) {
-    size_t i, count = 0, versions = M12_AssetStatus_GetVersionCount(gameId);
-    for (i = 0; i < versions; ++i) {
-        int architecture = M12_AssetStatus_GetVersionArchitecture(gameId, i);
-        size_t j;
-        int seen = 0;
-        if (architecture <= M12_ARCH_AUTO ||
-            architecture == M12_ARCH_PC98 ||
-            architecture == M12_ARCH_X68000 ||
-            /* ReDMCSB's PC3.4 material is a compatibility reference, not
-             * an original CSB DOS release. */
-            (gameId && strcmp(gameId, "csb") == 0 &&
-             architecture == M12_ARCH_PC)) continue;
-        for (j = 0; j < count; ++j) if (out[j] == architecture) seen = 1;
-        if (!seen && count < M12_ARCH_COUNT) out[count++] = architecture;
-    }
-    return (int)count;
-}
-
 static void draw_game_card_flow(M12_ModernCanvas* c,
                                 const M12_StartupMenuState* state,
                                 const M12_MenuEntry* entry) {
@@ -2275,7 +2256,8 @@ static void draw_game_card_flow(M12_ModernCanvas* c,
     draw_text(c, 160, 74, modern_tr(state, entry->title), &title);
     if (stage == 0) {
         int platforms[M12_ARCH_COUNT];
-        int count = card_platforms_for_game(entry->gameId, platforms);
+        int count = M12_StartupMenu_GetPlatformCardArchitectures(
+            entry->gameId, platforms);
         draw_text(c, 160, 140, modern_tr(state, "CHOOSE PLATFORM"), &sub);
         for (int i = 0; i < count; ++i) {
             int col = i % 3, row = i / 3;

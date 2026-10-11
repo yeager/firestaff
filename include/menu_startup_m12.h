@@ -798,6 +798,12 @@ const char* M12_StartupMenu_ScanTaskDisplayForLocale(int languageIndex,
 int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
                                               int index);
+/* Return the distinct native-platform cards shown by the modern game-options
+ * view, in catalog order. `outArchitectures` may be NULL when only the count
+ * is needed; otherwise it must hold M12_ARCH_COUNT integers. */
+int M12_StartupMenu_GetPlatformCardArchitectures(
+    const char* gameId,
+    int outArchitectures[M12_ARCH_COUNT]);
 const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount);
 const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
                                       const char* english);

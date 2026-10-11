@@ -1161,6 +1161,43 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
     return &state->entries[index];
 }
 
+int M12_StartupMenu_GetPlatformCardArchitectures(
+    const char* gameId,
+    int outArchitectures[M12_ARCH_COUNT]) {
+    int seenArchitectures[M12_ARCH_COUNT];
+    size_t versionCount;
+    size_t i;
+    int count = 0;
+
+    if (!gameId || gameId[0] == '\0') return 0;
+    versionCount = M12_AssetStatus_GetVersionCount(gameId);
+    for (i = 0; i < versionCount; ++i) {
+        int architecture = M12_AssetStatus_GetVersionArchitecture(gameId, i);
+        int seen = 0;
+        int j;
+
+        if (architecture <= M12_ARCH_AUTO ||
+            architecture == M12_ARCH_PC98 ||
+            architecture == M12_ARCH_X68000 ||
+            /* CSB's PC3.4 assets are a compatibility reference, not a
+             * shipped DOS edition. Keep them out of the platform picker. */
+            (strcmp(gameId, "csb") == 0 && architecture == M12_ARCH_PC)) {
+            continue;
+        }
+        for (j = 0; j < count; ++j) {
+            if (seenArchitectures[j] == architecture) {
+                seen = 1;
+                break;
+            }
+        }
+        if (seen || count >= M12_ARCH_COUNT) continue;
+        seenArchitectures[count] = architecture;
+        if (outArchitectures) outArchitectures[count] = architecture;
+        ++count;
+    }
+    return count;
+}
+
 const char* M12_StartupMenu_GetUnicodeFontPath(const M12_StartupMenuState* state) {
     return state ? state->settings.unicodeFontPath : "";
 }
