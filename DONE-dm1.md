@@ -1,3 +1,11 @@
+- 2026-10-11: The published v3.0.376 Linux x86_64 AppImage passed direct
+  `--game dm1 --platform pc` and M12 New Game against the authentic PC 3.4 EN
+  ZIP in a Linux/amd64 userspace under QEMU on an ARM64 Linux VM. Both routes
+  loaded the original `GRAPHICS.DAT`/`DUNGEON.DAT` pair and reached runtime; the
+  M12 receipt confirms `levelLoaded=1`, `dm1StartupHandoffExecuted=1`, and
+  `dm1StartupHoCFirstFrameReady=1`. Issue #13 was closed against this evidence.
+  This does not establish native x86_64 hardware or physical mouse behavior.
+
 - 2026-10-11: Rebuilt the current macOS source and passed the full
   `test_dm1_v1_pc34_native_cli_boot.sh` regression against the authentic DOS
   3.4 archive. It covered installed loose files, missing-SWSH rejection, bare

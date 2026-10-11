@@ -8,13 +8,14 @@ ZIP -> ZIP -> ADF game and save media on both the local v3.0.375 build and the
 packaged v3.0.376 app. The original save restored map 0, party `(4,15)`,
 direction 2, four champions, and tick 292 through direct CLI and M12 Quick
 Resume. This does not verify native M5 Retina window/input behavior or full
-visual parity. A Linux ARM64 run of the published v3.0.376 package reached
-its menu and input checks, but the full regression exited 1 during the
-physical-card mouse route with x86_64 userspace emulated under the local
-ARM64 runtime. A fresh current-source macOS build then passed that exact
-game -> PC -> Original pointer route against authentic PC 3.4 media with
-SDL dummy input. This narrows the failure to the emulated Linux run, but
-does not verify issue #13 on native Linux x86_64 or native mouse input.
+visual parity. The published v3.0.376 Linux x86_64 AppImage passed both
+direct `--game dm1 --platform pc` and M12 New Game with authentic PC 3.4
+media in a Linux/amd64 userspace under QEMU on a local ARM64 kernel. The
+runtime receipt reports `levelLoaded=1`, the DM1 startup handoff, and the
+first HoC frame; issue #13 was closed after this reproduction. Native
+x86_64 hardware and physical mouse input remain unverified. The separate
+Linux emulated full-regression physical-card click failed, while a fresh
+current-source macOS build passed that same scripted pointer route.
 
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
