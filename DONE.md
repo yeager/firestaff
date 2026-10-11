@@ -70,6 +70,14 @@
   AUTO route also passed. This verifies mixed-root selection and startup on
   the local SDL dummy driver, not native Retina input or visual parity.
 
+- 2026-10-12: Extended the mixed-root DM1 startup regression to verify direct
+  `--game dm1 --platform` selection for Atari ST 1.2, Amiga 2.0 and PC 3.4
+  through the source-owned first runtime frame. The Atari input is now pinned
+  to its exact v1.2 ZIP instead of a multi-edition nested archive. The local
+  CTest passed in 71.26 seconds against original media: AUTO, explicit CLI and
+  explicit M12 routes for all staged editions. It uses SDL's dummy video
+  driver and does not verify native Retina input or visual parity.
+
 - 2026-10-11: Built and ran `test_m12_data_dir_dialog_real` against the
   original media in the user's data root. It passed worker-thread folder
   result delivery, main-thread asset admission, saving the selected data root,

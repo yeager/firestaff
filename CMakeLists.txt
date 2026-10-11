@@ -4343,8 +4343,8 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm1_v1_m12_auto_multi_platform_menu PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "dm1;fmtowns;pc;amiga;atari-st;real-media;native;cli;menu;startup;auto;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;fmtowns;pc;amiga;atari-st;real-media;native;cli;explicit-cli-platform;menu;startup;auto;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
         TIMEOUT 180
     )
     foreach(legacy_platform IN ITEMS atari-st amiga fm-towns)

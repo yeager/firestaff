@@ -6,7 +6,7 @@ unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
 towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 pc_archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 dm1_data_dir=$(dirname "$towns_archive")
-atari_archive=${FIRESTAFF_DM1_ATARI_ARCHIVE:-"$dm1_data_dir/Dungeon-Master_Atari-ST_EN.zip"}
+atari_archive=${FIRESTAFF_DM1_ATARI_ARCHIVE:-"$dm1_data_dir/Dungeon-Master_Atari-ST_EN_Version-12.zip"}
 amiga_archive=${FIRESTAFF_DM1_AMIGA_ARCHIVE:-"$dm1_data_dir/Dungeon-Master_Amiga_EN_Version-20.zip"}
 
 if [[ ! -x "$app" || ! -f "$towns_archive" || ! -f "$pc_archive" ]]; then
@@ -77,7 +77,7 @@ for needle, label in checks:
     if needle not in trace:
         raise SystemExit(f"FAIL: {label} missing from M12 trace\n{trace}")
 if extra_media[0] and re.search(
-        r"dm1 platform=Atari ST edition=(?:st10a-en|st10b-en|st11-en|st12-en) matched source=",
+        r"dm1 platform=Atari ST edition=st12-en matched source=",
         trace) is None:
     raise SystemExit(f"FAIL: authentic Atari ST media was not discovered\n{trace}")
 if extra_media[1] and "dm1 platform=Amiga edition=amiga20-en matched source=" not in trace:
@@ -144,13 +144,91 @@ if ("platform=FM Towns" not in trace or
         startup["dm1StartupHoCFirstFrameReady"] != 1):
     raise SystemExit(f"FAIL: bare DM1 CLI did not select FM Towns from the mixed library: {probe}\n{trace}")
 if extra_media[0] and re.search(
-        r"dm1 platform=Atari ST edition=(?:st10a-en|st10b-en|st11-en|st12-en) matched source=",
+        r"dm1 platform=Atari ST edition=st12-en matched source=",
         trace) is None:
     raise SystemExit(f"FAIL: bare CLI did not discover authentic Atari ST media\n{trace}")
 if extra_media[1] and "dm1 platform=Amiga edition=amiga20-en matched source=" not in trace:
     raise SystemExit(f"FAIL: bare CLI did not discover authentic Amiga 2.0 media\n{trace}")
 print("PASS: bare DM1 CLI discovered the installed authentic platform media, selected FM Towns and reached runtime")
 PY
+
+# Direct CLI platform overrides must resolve the requested edition from the
+# same mixed user data root. Keep each source isolated to the corresponding
+# original archive identity and its source-owned first HoC frame.
+run_mixed_cli_platform() {
+    local platform=$1
+    local edition=$2
+    local archive=$3
+    local expected_asset_md5=$4
+    local runtime_probe="$scratch/cli-${platform}-runtime.json"
+    local runtime_log="$scratch/cli-${platform}.log"
+    local display_platform=$platform
+
+    case "$platform" in
+        atari-st) display_platform="Atari ST" ;;
+        amiga) display_platform="Amiga" ;;
+        pc) display_platform="PC" ;;
+    esac
+
+    if [[ ! -f "$archive" ]]; then
+        echo "SKIP: authentic DM1 $platform archive unavailable: $archive"
+        return 0
+    fi
+
+    FIRESTAFF_CONFIG_PATH="$scratch/home/cli-${platform}-config.toml" \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" APPDATA="$scratch/home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --game dm1 --platform "$platform" --debug --verbose \
+        --boot-probe --boot-probe-frames 2 --duration 0 >"$runtime_log" 2>&1 || {
+            cat "$runtime_log" >&2
+            return 1
+        }
+
+    python3 - "$runtime_log" "$runtime_probe" "$dm1_root" \
+        "$platform" "$display_platform" "$edition" "$(basename "$archive")" \
+        "$expected_asset_md5" <<'PY'
+import json
+import sys
+
+log_path, probe_path, data_root, platform, display_platform, edition, archive_name, asset_md5 = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+launch = (
+    f"launch phase=game-handoff mode=direct game=dm1 platform={display_platform} "
+    f"edition={edition} source={data_root}/{archive_name}")
+startup = probe["startup"]
+if (launch not in trace or probe.get("launchedEver") != 1 or
+        probe.get("active") != 1 or probe.get("sourceId") != "dm1" or
+        probe.get("bootAssetMd5") != asset_md5 or
+        startup.get("phase") != "dm1-runtime" or
+        startup.get("levelLoaded") != 1 or
+        startup.get("dm1StartupHandoffExecuted") != 1 or
+        startup.get("dm1StartupHoCFirstFrameReady") != 1 or
+        startup.get("startupActive") != 0):
+    raise SystemExit(
+        f"FAIL: mixed-root direct --game dm1 --platform {platform} did not "
+        f"reach its source-owned first runtime: {probe}\n{trace}")
+
+print(f"PASS: mixed-root direct DM1 CLI selected {edition} for {platform} "
+      "and reached its authentic first runtime frame")
+PY
+}
+
+if [[ -n "$extra_atari_media" ]]; then
+    run_mixed_cli_platform atari-st st12-en "$atari_archive" \
+        9ce2eaf7a9e78620e3f17594437caffa
+fi
+if [[ -n "$extra_amiga_media" ]]; then
+    run_mixed_cli_platform amiga amiga20-en "$amiga_archive" \
+        6a2f135b53c2220f0251fa103e2a6e7e
+fi
+run_mixed_cli_platform pc pc34-en "$pc_archive" \
+    fa6b1aa29e191418713bf2cda93d962e
 
 # A mixed library must also honor an explicit platform selected in M12 and
 # carry that exact original edition into the first runtime frame. The shared
@@ -214,8 +292,7 @@ PY
 
 if [[ -n "$extra_atari_media" ]]; then
     run_mixed_menu_platform atari-st 1458:405 ',wait30,enter,wait60,enter' \
-        atari-st-dmcsb1 \
-        b3cfd84e44cdf07ce2eeba47e87f772b,9ce2eaf7a9e78620e3f17594437caffa
+        atari-st-dmcsb1 9ce2eaf7a9e78620e3f17594437caffa
 fi
 if [[ -n "$extra_amiga_media" ]]; then
     run_mixed_menu_platform amiga 410:679 '' \
