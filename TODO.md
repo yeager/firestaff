@@ -42,9 +42,12 @@
 
 - Verify the SDL3 drawable-coordinate input fix with native Retina events.
   Geometry and original-media launcher checks pass. Rendering, input and
-  size getters now share live dimensions; the opt-in native Cocoa grow/shrink
-  probe passes before resize-event handling at 1x drawable density. Physical
-  MacBook Pro M5/Retina delivery remains unverified.
+  size getters now share live dimensions. On 2026-10-11, five focused DM1
+  HiDPI mouse/input gates passed with MacBook logical and 2x drawable
+  dimensions; `m11_display_aspect_present_rect` also passed its Retina input
+  matrix and opt-in native Cocoa grow/shrink probe before resize-event
+  handling. This host's live drawable is 1x. Physical MacBook Pro M5/Retina
+  delivery remains unverified.
 
 - Verify physical CSB intro audio output and complete the temporary-intro
   volume check across another authenticated edition. The Amiga 3.1

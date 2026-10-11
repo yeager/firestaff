@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Five focused DM1 HiDPI input/viewport geometry regressions passed,
+  including 1512x982 logical-window to 3024x1964 drawable mappings. The
+  `m11_display_aspect_present_rect` test also passed its Retina coordinate
+  matrix and the opt-in native Cocoa resize-before-event probe (grow and
+  shrink). This host reports a 1x native drawable, so the probe confirms the
+  live-resize path but does not substitute for an actual 2x MacBook Pro M5.
+
 - 2026-10-11: Re-ran three original-media startup regressions on the current
   tree; all passed in 269.31 seconds of wall time. DM1 PC 3.4 passed mixed
   installation selection, bare `--game dm1`, normal M12 launch through its
