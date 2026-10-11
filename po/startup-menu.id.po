@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "MATI"
 
 #: src/ui/menu_startup_m12.c:495 src/ui/menu_startup_m12.c:511
-#: src/ui/menu_startup_render_modern_m12.c:2470
+#: src/ui/menu_startup_render_modern_m12.c:2484
 msgid "ON"
 msgstr "HIDUP"
 
@@ -416,7 +416,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "TERSEDIA"
 
-#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2064
+#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2078
 msgid "UNAVAILABLE"
 msgstr "TIDAK TERSEDIA"
 
@@ -531,14 +531,14 @@ msgstr "REMASTER"
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:821
 #: src/ui/menu_startup_m12.c:10389 src/ui/menu_startup_m12.c:10832
 #: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2734
+#: src/ui/menu_startup_render_modern_m12.c:2748
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:801 src/ui/menu_startup_m12.c:831
 #: src/ui/menu_startup_m12.c:10391 src/ui/menu_startup_m12.c:10846
 #: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2737
+#: src/ui/menu_startup_render_modern_m12.c:2751
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "DISK UTILITAS CSB — PETUNJUK ORACLE"
 
 #: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:11917
-#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1839
-#: src/ui/menu_startup_render_modern_m12.c:2112
+#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1853
+#: src/ui/menu_startup_render_modern_m12.c:2126
 msgid "MUSEUM OF LORE"
 msgstr "MUSEUM LORE"
 
@@ -1623,7 +1623,7 @@ msgstr "ASLI"
 msgid "MISSING OR MISMATCHED"
 msgstr "HILANG ATAU TIDAK COCOK"
 
-#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2040
+#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2054
 msgid "EXTRAS"
 msgstr "EKSTRA"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape kembali  |  Atas/Bawah navigasi  |  Enter buka"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > ganti tab   Atas/Bawah navigasi   Enter ubah"
 
-#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2276
+#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2290
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "TIDAK ADA PLATFORM ASLI YANG DIDUKUNG"
 
@@ -1878,7 +1878,7 @@ msgid "COMING SOON"
 msgstr "SEGERA HADIR"
 
 #: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2579
+#: src/ui/menu_startup_render_modern_m12.c:2593
 msgid "FIRESTAFF"
 msgstr "PROYEK FIRESTAFF"
 
@@ -1918,45 +1918,45 @@ msgstr "TEKAN ENTER UNTUK MEMBUKA MUSEUM LORE"
 msgid "< BACK"
 msgstr "< KEMBALI"
 
-#: src/ui/menu_startup_render_modern_m12.c:1961
+#: src/ui/menu_startup_render_modern_m12.c:1975
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2042
+#: src/ui/menu_startup_render_modern_m12.c:2056
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2116
+#: src/ui/menu_startup_render_modern_m12.c:2130
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "CATATAN PELESTARIAN, SERI LORE, DAN KREDIT PROYEK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2129
+#: src/ui/menu_startup_render_modern_m12.c:2143
 msgid "ARCHIVE SECTIONS"
 msgstr "STATUS ARSIP"
 
-#: src/ui/menu_startup_render_modern_m12.c:2152
+#: src/ui/menu_startup_render_modern_m12.c:2166
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "HALAMAN %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2260
+#: src/ui/menu_startup_render_modern_m12.c:2274
 msgid "CHOOSE PLATFORM"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_render_modern_m12.c:2285
+#: src/ui/menu_startup_render_modern_m12.c:2299
 msgid "CHOOSE PRESENTATION"
 msgstr "TUJUAN PELUNCUR"
 
-#: src/ui/menu_startup_render_modern_m12.c:2527
+#: src/ui/menu_startup_render_modern_m12.c:2541
 msgid "LAUNCH >"
 msgstr "LUNCURKAN"
 
-#: src/ui/menu_startup_render_modern_m12.c:2596
-#: src/ui/menu_startup_render_modern_m12.c:2720
+#: src/ui/menu_startup_render_modern_m12.c:2610
+#: src/ui/menu_startup_render_modern_m12.c:2734
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2660
+#: src/ui/menu_startup_render_modern_m12.c:2674
 msgid "CANCEL"
 msgstr "BATAL"
 

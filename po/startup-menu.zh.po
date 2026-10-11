@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "关"
 
 #: src/ui/menu_startup_m12.c:495 src/ui/menu_startup_m12.c:511
-#: src/ui/menu_startup_render_modern_m12.c:2470
+#: src/ui/menu_startup_render_modern_m12.c:2484
 msgid "ON"
 msgstr "开"
 
@@ -416,7 +416,7 @@ msgstr "Vulkan"
 msgid "AVAILABLE"
 msgstr "可用"
 
-#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2064
+#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2078
 msgid "UNAVAILABLE"
 msgstr "不可用"
 
@@ -531,14 +531,14 @@ msgstr "重制版"
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:821
 #: src/ui/menu_startup_m12.c:10389 src/ui/menu_startup_m12.c:10832
 #: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2734
+#: src/ui/menu_startup_render_modern_m12.c:2748
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:801 src/ui/menu_startup_m12.c:831
 #: src/ui/menu_startup_m12.c:10391 src/ui/menu_startup_m12.c:10846
 #: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2737
+#: src/ui/menu_startup_render_modern_m12.c:2751
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK — HINT ORACLE"
 
 #: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:11917
-#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1839
-#: src/ui/menu_startup_render_modern_m12.c:2112
+#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1853
+#: src/ui/menu_startup_render_modern_m12.c:2126
 msgid "MUSEUM OF LORE"
 msgstr "传说博物馆"
 
@@ -1623,7 +1623,7 @@ msgstr "原版"
 msgid "MISSING OR MISMATCHED"
 msgstr "缺失或不匹配"
 
-#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2040
+#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2054
 msgid "EXTRAS"
 msgstr "额外内容"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape 返回  |  上/下 导航  |  Enter 打开"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > 切换标签   上/下 导航   Enter 更改"
 
-#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2276
+#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2290
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "NO SUPPORTED NATIVE PLATFORM"
 
@@ -1878,7 +1878,7 @@ msgid "COMING SOON"
 msgstr "即将推出"
 
 #: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2579
+#: src/ui/menu_startup_render_modern_m12.c:2593
 msgid "FIRESTAFF"
 msgstr "FIRESTAFF 项目"
 
@@ -1918,45 +1918,45 @@ msgstr "PRESS ENTER TO OPEN THE LORE MUSEUM"
 msgid "< BACK"
 msgstr "< BACK"
 
-#: src/ui/menu_startup_render_modern_m12.c:1961
+#: src/ui/menu_startup_render_modern_m12.c:1975
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2042
+#: src/ui/menu_startup_render_modern_m12.c:2056
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2116
+#: src/ui/menu_startup_render_modern_m12.c:2130
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 
-#: src/ui/menu_startup_render_modern_m12.c:2129
+#: src/ui/menu_startup_render_modern_m12.c:2143
 msgid "ARCHIVE SECTIONS"
 msgstr "档案状态"
 
-#: src/ui/menu_startup_render_modern_m12.c:2152
+#: src/ui/menu_startup_render_modern_m12.c:2166
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "PAGE %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2260
+#: src/ui/menu_startup_render_modern_m12.c:2274
 msgid "CHOOSE PLATFORM"
 msgstr "未找到游戏数据"
 
-#: src/ui/menu_startup_render_modern_m12.c:2285
+#: src/ui/menu_startup_render_modern_m12.c:2299
 msgid "CHOOSE PRESENTATION"
 msgstr "启动器目的地"
 
-#: src/ui/menu_startup_render_modern_m12.c:2527
+#: src/ui/menu_startup_render_modern_m12.c:2541
 msgid "LAUNCH >"
 msgstr "启动"
 
-#: src/ui/menu_startup_render_modern_m12.c:2596
-#: src/ui/menu_startup_render_modern_m12.c:2720
+#: src/ui/menu_startup_render_modern_m12.c:2610
+#: src/ui/menu_startup_render_modern_m12.c:2734
 msgid "OK"
 msgstr "确定"
 
-#: src/ui/menu_startup_render_modern_m12.c:2660
+#: src/ui/menu_startup_render_modern_m12.c:2674
 msgid "CANCEL"
 msgstr "CANCEL"
 

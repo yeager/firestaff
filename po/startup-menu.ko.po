@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "OFF"
 
 #: src/ui/menu_startup_m12.c:495 src/ui/menu_startup_m12.c:511
-#: src/ui/menu_startup_render_modern_m12.c:2470
+#: src/ui/menu_startup_render_modern_m12.c:2484
 msgid "ON"
 msgstr "ON"
 
@@ -416,7 +416,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2064
+#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2078
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -531,14 +531,14 @@ msgstr "리마스터"
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:821
 #: src/ui/menu_startup_m12.c:10389 src/ui/menu_startup_m12.c:10832
 #: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2734
+#: src/ui/menu_startup_render_modern_m12.c:2748
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:801 src/ui/menu_startup_m12.c:831
 #: src/ui/menu_startup_m12.c:10391 src/ui/menu_startup_m12.c:10846
 #: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2737
+#: src/ui/menu_startup_render_modern_m12.c:2751
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB 유틸리티 디스크 — 힌트 오라클"
 
 #: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:11917
-#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1839
-#: src/ui/menu_startup_render_modern_m12.c:2112
+#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1853
+#: src/ui/menu_startup_render_modern_m12.c:2126
 msgid "MUSEUM OF LORE"
 msgstr "전설의 박물관"
 
@@ -1623,7 +1623,7 @@ msgstr "오리지널"
 msgid "MISSING OR MISMATCHED"
 msgstr "누락 또는 불일치"
 
-#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2040
+#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2054
 msgid "EXTRAS"
 msgstr "부가 기능"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape 뒤로  |  위/아래 이동  |  Enter 열기"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > 탭 전환   위/아래 이동   Enter 변경"
 
-#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2276
+#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2290
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "지원되는 기본 플랫폼이 없습니다."
 
@@ -1878,7 +1878,7 @@ msgid "COMING SOON"
 msgstr "COMING SOON"
 
 #: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2579
+#: src/ui/menu_startup_render_modern_m12.c:2593
 msgid "FIRESTAFF"
 msgstr "Firestaff 프로젝트"
 
@@ -1918,45 +1918,45 @@ msgstr "지식 박물관을 열려면 Enter 키를 누르세요."
 msgid "< BACK"
 msgstr "< 뒤로"
 
-#: src/ui/menu_startup_render_modern_m12.c:1961
+#: src/ui/menu_startup_render_modern_m12.c:1975
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2042
+#: src/ui/menu_startup_render_modern_m12.c:2056
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2116
+#: src/ui/menu_startup_render_modern_m12.c:2130
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "보존 기록, 시리즈 지식, 프로젝트 크레딧"
 
-#: src/ui/menu_startup_render_modern_m12.c:2129
+#: src/ui/menu_startup_render_modern_m12.c:2143
 msgid "ARCHIVE SECTIONS"
 msgstr "아카이브 상태"
 
-#: src/ui/menu_startup_render_modern_m12.c:2152
+#: src/ui/menu_startup_render_modern_m12.c:2166
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "페이지 %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2260
+#: src/ui/menu_startup_render_modern_m12.c:2274
 msgid "CHOOSE PLATFORM"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_render_modern_m12.c:2285
+#: src/ui/menu_startup_render_modern_m12.c:2299
 msgid "CHOOSE PRESENTATION"
 msgstr "런처 목적지"
 
-#: src/ui/menu_startup_render_modern_m12.c:2527
+#: src/ui/menu_startup_render_modern_m12.c:2541
 msgid "LAUNCH >"
 msgstr "실행"
 
-#: src/ui/menu_startup_render_modern_m12.c:2596
-#: src/ui/menu_startup_render_modern_m12.c:2720
+#: src/ui/menu_startup_render_modern_m12.c:2610
+#: src/ui/menu_startup_render_modern_m12.c:2734
 msgid "OK"
 msgstr "확인"
 
-#: src/ui/menu_startup_render_modern_m12.c:2660
+#: src/ui/menu_startup_render_modern_m12.c:2674
 msgid "CANCEL"
 msgstr "취소"
 
