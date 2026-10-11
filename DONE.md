@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: After the user granted access to the external volume, launched
+  the current Cocoa build with its configured `~/.firestaff/data` symlink.
+  The scan read from `/Volumes/Extern-disk/FirestaffUserData/data` and
+  reported all five installed games READY. The original-media CLI startup
+  diagnostics passed for DM1, CSB and DM2: bare `--game` selected FM Towns
+  for each, DM2 completed all 225 timed Towns title frames in 26,221 ms, and
+  DM1's Towns and PC title sources were traced. The existing scan-progress
+  card was also inspected in the native Cocoa window. This does not verify the
+  native Data Directory picker, MacBook Pro M5 Retina behavior, or visual
+  parity.
+
 - 2026-10-11: Re-ran the three priority games' authenticated startup routes
   against the current local build. Bare CLI startup diagnostics selected the
   original FM Towns edition for DM1, CSB and DM2 from their default data roots;

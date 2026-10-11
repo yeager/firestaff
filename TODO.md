@@ -87,12 +87,13 @@
 - Verify native desktop file/folder selection and persistence for Data
   Directory, Custom Music, Unicode Font and Artpack. Their owned-result
   callbacks now defer menu changes to Update, with cancellation/late-result
-  tests; automated tests do not prove desktop dialog interaction. A live
-  macOS menu launch against the configured external-volume data root raised
-  the OS access dialog while scanning continued behind it. No permission
-  choice was made. This confirms that a user decision can be required before
-  menu interaction; the native Data Directory picker, cancellation,
-  persistence and relaunch behavior still need direct verification.
+  tests; automated tests do not prove desktop dialog interaction. The user
+  granted Firestaff access to the external volume. A native Cocoa launch then
+  scanned the configured `~/.firestaff/data` symlink into that volume, and the
+  authentic-media CLI diagnostics resolved DM1, CSB and DM2 there. The
+  Data Directory picker itself, cancellation, selection persistence, and
+  relaunch still need direct native-dialog verification. Custom Music,
+  Unicode Font and Artpack dialogs also remain unverified on desktop.
 
 - Extend COLORBLIND beyond the modern launcher and its scan overlay into
   explicitly host-owned in-game UI/HUD layers. M12 now applies the selected
