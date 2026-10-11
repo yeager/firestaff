@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Re-ran three original-media startup regressions on the current
+  tree; all passed in 269.31 seconds of wall time. DM1 PC 3.4 passed mixed
+  installation selection, bare `--game dm1`, normal M12 launch through its
+  source-owned runtime frame, and the complete startup input matrix. CSB FM
+  Towns discovered its original data from `~/.firestaff/data/csb`, reached
+  its authentic `MINI.DAT` party through M12, and mapped the source C004 Enter
+  button at 1920x1080. DM2 bare `--game dm2` selected FM Towns despite a saved
+  PC preference, completed the original title and New Game route, and reached
+  the first champion through both CLI and M12. These are bounded startup and
+  menu/runtime receipts, not visual-parity claims.
+
 - 2026-10-11: `m11_direct_launch_prepare_all_games` passed against the full
   installed original-media collection through `~/.firestaff/data`: 210
   assertions passed, no failures, and three scoped skips. No game was skipped
