@@ -17977,7 +17977,7 @@ endif()
     set_tests_properties(csb_v1_hint_oracle_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;utility;hint_oracle;startup;cli;real_data;in_memory;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_HINT_ORACLE_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
+        ENVIRONMENT "FIRESTAFF_CSB_HINT_ORACLE_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb;FIRESTAFF_CSB_HINT_ORACLE_CAMPAIGN_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/chaos_strikes_back_ftl.zip;FIRESTAFF_CSB_HINT_ORACLE_UTILITY_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         TIMEOUT 90
     )
     add_test(
