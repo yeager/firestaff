@@ -151,3 +151,74 @@ if extra_media[1] and "dm1 platform=Amiga edition=amiga20-en matched source=" no
     raise SystemExit(f"FAIL: bare CLI did not discover authentic Amiga 2.0 media\n{trace}")
 print("PASS: bare DM1 CLI discovered the installed authentic platform media, selected FM Towns and reached runtime")
 PY
+
+# A mixed library must also honor an explicit platform selected in M12 and
+# carry that exact original edition into the first runtime frame. The shared
+# data root intentionally contains several editions; using --data-dir on an
+# individual archive here would miss cross-edition source-selection errors.
+run_mixed_menu_platform() {
+    local platform=$1
+    local card_click=$2
+    local startup_inputs=$3
+    local expected_handoff=$4
+    local expected_asset_md5=$5
+    local runtime_probe="$scratch/${platform}-runtime.json"
+    local runtime_log="$scratch/${platform}-menu.log"
+    local route="wait20,click:700:262,wait20,click:${card_click},wait20,click:450:405,wait20${startup_inputs}"
+
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" \
+        APPDATA="$scratch/home" FIRESTAFF_CONFIG_PATH="$scratch/home/config.toml" \
+        "$app" --width 1920 --height 1080 --menu --game dm1 \
+        --platform "$platform" --debug --verbose --script "$route" \
+        --duration 15000 >"$runtime_log" 2>&1 || {
+            cat "$runtime_log" >&2
+            return 1
+        }
+
+    python3 - "$runtime_log" "$runtime_probe" "$dm1_root" \
+        "$expected_handoff" "$expected_asset_md5" "$platform" <<'PY'
+import json
+import sys
+
+log_path, probe_path, data_root, handoff, asset_md5s, platform = sys.argv[1:]
+accepted_asset_md5s = set(asset_md5s.split(","))
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+startup = probe["startup"]
+party = probe["party"]
+expected_ready = (
+    f"DM1 READY: gameId=dm1 dataDir={data_root}/"
+)
+if (expected_ready not in trace or f"handoff={handoff}" not in trace or
+        probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or
+        probe["bootAssetMd5"] not in accepted_asset_md5s or
+        startup["receiptReady"] != 1 or startup["active"] != 1 or
+        startup["startupActive"] != 0 or startup["phase"] != "dm1-runtime" or
+        startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(
+        f"FAIL: mixed-library DM1 M12 {platform} selection did not reach its "
+        f"source-owned first runtime frame: {probe}\n{trace}")
+print(f"PASS: mixed-library DM1 M12 {platform} selected {handoff} and reached its authentic first runtime frame")
+PY
+}
+
+if [[ -n "$extra_atari_media" ]]; then
+    run_mixed_menu_platform atari-st 1458:405 ',wait30,enter,wait60,enter' \
+        atari-st-dmcsb1 \
+        b3cfd84e44cdf07ce2eeba47e87f772b,9ce2eaf7a9e78620e3f17594437caffa
+fi
+if [[ -n "$extra_amiga_media" ]]; then
+    run_mixed_menu_platform amiga 410:679 '' \
+        amiga-img2 6a2f135b53c2220f0251fa103e2a6e7e
+fi
+run_mixed_menu_platform pc 934:405 '' pc-img3 fa6b1aa29e191418713bf2cda93d962e

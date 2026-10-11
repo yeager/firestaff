@@ -18,6 +18,15 @@ root. Native x86_64 hardware and physical mouse input remain unverified. The sep
 Linux emulated full-regression physical-card click failed, while a fresh
 current-source macOS build passed that same scripted pointer route.
 
+2026-10-11 mixed-root M12 regression: the same installed DM1 data directory
+contained authentic English FM Towns, PC 3.4, Atari ST v1.2, and Amiga 2.0
+archives. The expanded `dm1_v1_m12_auto_multi_platform_menu` test verified
+AUTO -> FM Towns and explicit M12 -> PC, Atari ST, and Amiga selections
+through their source-owned first runtime frames. Each receipt matched its
+edition's original GRAPHICS.DAT identity and expected startup pose. The test
+uses SDL's dummy video driver and does not verify native Retina input or
+visual parity.
+
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
   GRAPHICS.DAT/SWSH identity pair. A20 English, French and German now authenticate

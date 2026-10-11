@@ -197,6 +197,12 @@
   LOADSAVE.C; its absence from clean retail STX disks does not block built-in
   new-game startup. The Atari receipt covers title/entrance; its F0437
   presentation/palette remains open.
+  The mixed-root DM1 M12 regression now starts the authentic PC 3.4, Atari ST
+  v1.2, and Amiga 2.0 editions explicitly from one data directory that also
+  contains FM Towns; AUTO still selects Towns. Each selected edition reaches
+  its source-owned first runtime frame and matches its original graphics
+  identity. This is SDL dummy-driver evidence and does not verify Retina
+  drawable/input behavior or pixel parity.
   Headless receipts do not claim host capture, and visual parity remains
   deferred.
   The shared authentic-media M12 regression now covers one session through
