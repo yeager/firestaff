@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-12: The real-media direct-CLI diagnostics test now stages original
+  CSB Atari ST 2.1, Amiga and FM Towns editions together. AUTO still selects
+  FM Towns, while explicit Atari ST, Amiga and FM Towns choices retain their
+  authenticated source archive. The complete diagnostics script passed
+  against the installed original-media collection.
+
 - 2026-10-12: The authenticated mixed-root M12 handoff test now drives DM2
   DOS, Amiga, FM Towns and Macintosh selections through each original intro,
   source New Game flow and first dungeon runtime. DOS, FM Towns and Macintosh

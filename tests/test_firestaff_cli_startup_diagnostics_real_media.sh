@@ -9,6 +9,7 @@ dm1_pc_archive=${FIRESTAFF_DM1_PC_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Ma
 dm1_pc98_archive=${FIRESTAFF_DM1_PC98_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_PC-98_EN.zip"}
 csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
 csb_amiga_archive=${FIRESTAFF_CSB_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"}
+csb_atari_archive=${FIRESTAFF_CSB_ATARI_ARCHIVE:-"$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip"}
 csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$mac_archive" ] ||
@@ -308,6 +309,10 @@ if [ -f "$csb_towns_archive" ] && [ -f "$csb_amiga_archive" ]; then
         "$csb_combined_root/$(basename "$csb_towns_archive")"
     ln -s "$csb_amiga_archive" \
         "$csb_combined_root/$(basename "$csb_amiga_archive")"
+    if [ -f "$csb_atari_archive" ]; then
+        ln -s "$csb_atari_archive" \
+            "$csb_combined_root/$(basename "$csb_atari_archive")"
+    fi
     csb_auto_multi=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game csb --data-dir "$csb_combined_root" \
         --debug --boot-probe --boot-probe-frames 0 2>&1) || {
@@ -323,6 +328,41 @@ if [ -f "$csb_towns_archive" ] && [ -f "$csb_amiga_archive" ]; then
             ;;
     esac
     echo "PASS: CSB AUTO prefers FM Towns when original Amiga media is also installed"
+
+    csb_explicit_amiga=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --platform amiga --data-dir "$csb_combined_root" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$csb_explicit_amiga" >&2
+        exit 1
+    }
+    case "$csb_explicit_amiga" in
+        *"selected game=csb platform=Amiga edition=amiga31-multi source=$csb_combined_root/$(basename "$csb_amiga_archive")"*) ;;
+        *) echo "FAIL: explicit CSB Amiga selection was not retained with FM Towns installed" >&2; exit 1 ;;
+    esac
+
+    csb_explicit_towns=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --platform fm-towns --data-dir "$csb_combined_root" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$csb_explicit_towns" >&2
+        exit 1
+    }
+    case "$csb_explicit_towns" in
+        *"selected game=csb platform=FM Towns edition=fmtowns-en source=$csb_combined_root/$(basename "$csb_towns_archive")::CDATA/GRAPHICS.DAT"*) ;;
+        *) echo "FAIL: explicit CSB FM Towns selection was not retained with Amiga installed" >&2; exit 1 ;;
+    esac
+
+    if [ -f "$csb_atari_archive" ]; then
+        csb_explicit_atari=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --game csb --platform atari-st --data-dir "$csb_combined_root" \
+            --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+            printf '%s\n' "$csb_explicit_atari" >&2
+            exit 1
+        }
+        case "$csb_explicit_atari" in
+            *"selected game=csb platform=Atari ST edition=st20-21-en source=$csb_combined_root/$(basename "$csb_atari_archive")::"*) ;;
+            *) echo "FAIL: explicit CSB Atari ST selection was not retained with FM Towns and Amiga installed" >&2; exit 1 ;;
+        esac
+    fi
 fi
 
 # When both authentic DM1 PC and FM Towns releases are installed, a bare
