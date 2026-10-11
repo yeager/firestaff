@@ -20,14 +20,13 @@
   against the installed original archives on macOS. This verifies the headless
   scripted input path, not native desktop behavior.
 
-- 2026-10-11: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` with
-  an isolated `dm2-mouse-return` mode and changed its authentic FM Towns route
-  to click YES in the return-to-menu confirmation. The run against the local
-  original-media catalog reached the first DM2 runtime frame, returned to the
-  launcher through the pointer result, and rediscovered authentic DM1, CSB and
-  DM2 data during the full rescan. The existing `returns` CTest now includes
-  this separate mouse branch. This verifies the headless pointer path, not
-  native M5 pointer behavior or physical launcher presentation.
+- 2026-10-11: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` to
+  confirm the return dialog with mouse input for DM1 PC 3.4, CSB FM Towns and
+  DM2 FM Towns. Each authentic route reached runtime before clicking YES, then
+  returned to M12 and rediscovered DM1, CSB and DM2 media. The existing
+  `returns` CTest runs all three mouse branches alongside its keyboard routes.
+  The focused local original-media run passed all three; this verifies the
+  scripted pointer path, not physical M5 pointer behavior.
 
 - 2026-10-11: Re-ran original-media startup and menu coverage after the shared
   scan-progress UI change. DM1 PC 3.4 passed its complete CLI/menu/input

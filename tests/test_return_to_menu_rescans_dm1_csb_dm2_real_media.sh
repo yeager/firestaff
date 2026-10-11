@@ -20,10 +20,14 @@ if [ ! -x "$app" ] ||
    { [ "$test_mode" != dm2-amiga ] &&
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
      [ "$test_mode" != direct-exit ] &&
+     [ "$test_mode" != mouse-return ] &&
      { [ ! -f "$dm1_archive" ] || [ ! -f "$dm1_fmtowns_archive" ] ||
        [ ! -f "$csb_archive" ] || [ ! -f "$dm2_archive" ]; }; } ||
    { [ "$test_mode" = direct-exit ] &&
      { [ ! -f "$dm1_fmtowns_archive" ] || [ ! -f "$csb_archive" ] ||
+       [ ! -f "$dm2_archive" ]; }; } ||
+   { [ "$test_mode" = mouse-return ] &&
+     { [ ! -f "$dm1_archive" ] || [ ! -f "$csb_archive" ] ||
        [ ! -f "$dm2_archive" ]; }; } ||
    { [ "$test_mode" = dm2-amiga ] && [ ! -f "$dm2_amiga_archive" ]; } ||
    { [ "$test_mode" = dm1-atari ] && [ ! -f "$dm1_atari_archive" ]; } ||
@@ -238,10 +242,10 @@ stage_dm1_return_data_root() {
 # The key sequence is the same ordinary M12 game/platform/original choice
 # used by the DM1 PC-34 and CSB FM Towns startup checks. Their source startup
 # phases differ, so each case proves its own authentic runtime receipt before
-# the return-confirmation interaction can pass. DM2 also covers the separate
-# mouse-driven YES branch through an authentic FM Towns game session.
+# the return-confirmation interaction can pass. Each game also covers the
+# shared mouse-driven YES branch through an authentic game session.
 if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
-   [ "$test_mode" = direct-exit ] ||
+   [ "$test_mode" = direct-exit ] || [ "$test_mode" = mouse-return ] ||
    [ "$test_mode" = csb-atari ] || [ "$test_mode" = csb-amiga ] ||
    [ "$test_mode" = dm2-dos ] || [ "$test_mode" = dm2-mac ] ||
    [ "$test_mode" = dm2-mouse-return ] ||
@@ -264,6 +268,19 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
         'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,back,wait:10,enter' \
         30000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
         'CSB READY: gameId=csb dataDir=.*/data/csb/.*variant=csb-fmtowns-en .*handoff=f31-title-anm'
+    fi
+    if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
+       [ "$test_mode" = mouse-return ]; then
+        run_return_to_menu_case dm1 pc \
+            'key:enter,key:enter,key:enter,wait-game-runtime,key:escape,click:110:109' \
+            30000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
+            'DM1 READY: gameId=dm1 dataDir=.*/data/dm1/.*handoff=pc-img3' \
+            "$data_root" 320 200 dm1-mouse-return
+        run_return_to_menu_case csb fm-towns \
+            'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,wait-game-runtime,back,wait:10,click:110:109' \
+            45000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
+            'CSB READY: gameId=csb dataDir=.*/data/csb/.*variant=csb-fmtowns-en .*handoff=f31-title-anm' \
+            "$data_root" 320 200 csb-mouse-return
     fi
     if { [ "$test_mode" = dm1-atari ] ||
          [ "$test_mode" = all ] || [ "$test_mode" = returns ]; } &&
@@ -365,7 +382,7 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
         echo "SKIP: authentic DM2 Amiga archive unavailable: $dm2_amiga_archive"
     fi
     if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
-       [ "$test_mode" = dm2-mouse-return ]; then
+       [ "$test_mode" = dm2-mouse-return ] || [ "$test_mode" = mouse-return ]; then
     run_return_to_menu_case dm2 auto \
         'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,click:110:109' \
         60000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
