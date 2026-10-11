@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "OFF"
 
 #: src/ui/menu_startup_m12.c:495 src/ui/menu_startup_m12.c:511
-#: src/ui/menu_startup_render_modern_m12.c:2463
+#: src/ui/menu_startup_render_modern_m12.c:2470
 msgid "ON"
 msgstr "ON"
 
@@ -416,7 +416,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2057
+#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2064
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -531,14 +531,14 @@ msgstr "UUDISTETTU"
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:821
 #: src/ui/menu_startup_m12.c:10389 src/ui/menu_startup_m12.c:10832
 #: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2727
+#: src/ui/menu_startup_render_modern_m12.c:2734
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:801 src/ui/menu_startup_m12.c:831
 #: src/ui/menu_startup_m12.c:10391 src/ui/menu_startup_m12.c:10846
 #: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2730
+#: src/ui/menu_startup_render_modern_m12.c:2737
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK — VIHJE ORACLE"
 
 #: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:11917
-#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1832
-#: src/ui/menu_startup_render_modern_m12.c:2105
+#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1839
+#: src/ui/menu_startup_render_modern_m12.c:2112
 msgid "MUSEUM OF LORE"
 msgstr "LEGENDOJEN MUSEO"
 
@@ -1623,7 +1623,7 @@ msgstr "ALKUPERÄINEN"
 msgid "MISSING OR MISMATCHED"
 msgstr "PUUTTUU TAI EI TÄSMÄÄ"
 
-#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2033
+#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2040
 msgid "EXTRAS"
 msgstr "LISÄSISÄLTÖ"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape takaisin  |  Ylös/Alas siirry  |  Enter avaa"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > vaihda välilehteä   Ylös/Alas siirry   Enter muuta"
 
-#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2269
+#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2276
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "EI TUETTUA ALKUALUSTAA"
 
@@ -1878,7 +1878,7 @@ msgid "COMING SOON"
 msgstr "COMING SOON"
 
 #: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2572
+#: src/ui/menu_startup_render_modern_m12.c:2579
 msgid "FIRESTAFF"
 msgstr "FIRESTAFF-PROJEKTI"
 
@@ -1918,45 +1918,45 @@ msgstr "PAINA ENTER AVAAksesi LORE MUSEOIN"
 msgid "< BACK"
 msgstr "< TAKAISIN"
 
-#: src/ui/menu_startup_render_modern_m12.c:1954
+#: src/ui/menu_startup_render_modern_m12.c:1961
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2035
+#: src/ui/menu_startup_render_modern_m12.c:2042
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2109
+#: src/ui/menu_startup_render_modern_m12.c:2116
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "SÄILYTTÄMISHUOMAUTUKSET, SARJAN LORET JA PROJEKTILUOTTEET"
 
-#: src/ui/menu_startup_render_modern_m12.c:2122
+#: src/ui/menu_startup_render_modern_m12.c:2129
 msgid "ARCHIVE SECTIONS"
 msgstr "ARKISTON TILA"
 
-#: src/ui/menu_startup_render_modern_m12.c:2145
+#: src/ui/menu_startup_render_modern_m12.c:2152
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "SIVU %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2253
+#: src/ui/menu_startup_render_modern_m12.c:2260
 msgid "CHOOSE PLATFORM"
 msgstr "PELIDATAA EI LÖYTYNYT"
 
-#: src/ui/menu_startup_render_modern_m12.c:2278
+#: src/ui/menu_startup_render_modern_m12.c:2285
 msgid "CHOOSE PRESENTATION"
 msgstr "KÄYNNISTIMEN KOHTEET"
 
-#: src/ui/menu_startup_render_modern_m12.c:2520
+#: src/ui/menu_startup_render_modern_m12.c:2527
 msgid "LAUNCH >"
 msgstr "KÄYNNISTÄ"
 
-#: src/ui/menu_startup_render_modern_m12.c:2589
-#: src/ui/menu_startup_render_modern_m12.c:2713
+#: src/ui/menu_startup_render_modern_m12.c:2596
+#: src/ui/menu_startup_render_modern_m12.c:2720
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2653
+#: src/ui/menu_startup_render_modern_m12.c:2660
 msgid "CANCEL"
 msgstr "PERUUTA"
 
