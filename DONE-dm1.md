@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-10-11: Re-ran `test_dm1_v1_amiga_v20_archive_cli_boot.sh` against the
+  authentic English A20 game and save archives using both the local v3.0.375
+  build and packaged v3.0.376 app. Both runs passed the complete CLI, M12 New
+  Game, M12 Quick Resume, and movement sequence. Direct and menu resume restore
+  the original F0435 state at map 0, party `(4,15)`, direction 2, four
+  champions, tick 292. The earlier local failure was not reproduced. Headless
+  runtime evidence does not verify native M5 display/input or visual parity.
+
 - 2026-10-10: Added authentic DM1 Amiga 2.0 French launch support. M12 now
   admits the original A20F dungeon checksum, and the runtime preserves the
   complete FTL-decoded map body before adding its parser checksum. The French

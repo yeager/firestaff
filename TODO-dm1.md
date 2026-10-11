@@ -2,14 +2,13 @@
 
 2026-10-11 local startup retest: authentic FM Towns, Atari ST v1.2, English
 DOS, and Amiga v2.0 New Game routes reached their first runtime frame. The
-Atari ST v1.2 full CLI/menu/input regression passed. The Amiga v2.0 CLI/menu
-startup phases also passed independently, including its source SWSH, F0437
-title, F0441 entrance, and first runtime frame. However,
-`test_dm1_v1_amiga_v20_archive_cli_boot.sh` does not pass end-to-end: its
-separate original-save resume probe exits after `DM1 READY` with
-`direct launch failed for --game dm1`. Keep Amiga v2.0 save resume open; do
-not count that regression as passed. This does not verify native M5 Retina
-window/input behavior or full visual parity.
+Atari ST v1.2 full CLI/menu/input regression passed. The full Amiga v2.0
+CLI/menu/save-resume/input regression also passed against the authentic
+ZIP -> ZIP -> ADF game and save media on both the local v3.0.375 build and the
+packaged v3.0.376 app. The original save restored map 0, party `(4,15)`,
+direction 2, four champions, and tick 292 through direct CLI and M12 Quick
+Resume. This does not verify native M5 Retina window/input behavior or full
+visual parity.
 
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
