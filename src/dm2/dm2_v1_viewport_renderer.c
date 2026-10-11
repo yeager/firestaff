@@ -8675,7 +8675,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
     int gdat_counter_base;
 
     if (!s || !target || stride <= 0 || !s->hud_party_valid ||
-        !s->hud_party.towns_squad_default_route_valid ||
+        !s->hud_party.towns_squad_route_valid ||
         !s->gdat_interface_palette_ready || !plan || !plan->valid ||
         plan->command_count <= 0 ||
         plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
@@ -8856,7 +8856,7 @@ static int dm2_v1_render_fmtowns_squad_backdrop(
         s->asset_loader->gdat_version != 4u || !s->asset_profile ||
         !s->gdat_scene_material_plan ||
         !s->gdat_scene_material_plan->valid ||
-        !s->hud_party_valid || !s->hud_party.towns_squad_default_route_valid ||
+        !s->hud_party_valid || !s->hud_party.towns_squad_route_valid ||
         !s->gdat_interface_palette_ready) return 0;
     scene = s->gdat_scene_material_plan;
     if (!dm2_v1_query_gdat_summary_image_receipt(
@@ -8931,7 +8931,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
     fmtowns_unmapped_chrome = s->source_materials_required &&
         s->asset_loader && s->asset_loader->gdat_version == 4u;
     if (fmtowns_unmapped_chrome && s->hud_party_valid &&
-        s->hud_party.towns_squad_default_route_valid) {
+        s->hud_party.towns_squad_route_valid) {
         if (!dm2_v1_render_fmtowns_squad_backdrop(s, vp, stride)) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);

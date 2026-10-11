@@ -14,6 +14,15 @@ tests also reached their runtime/input routes. The tests use SDL's dummy video
 driver and do not verify native M5 Retina window/input behavior or full visual
 parity.
 
+- The Towns squad and active hand-action plan now remains enabled for a valid
+  selected `curacthero`; the real-media M11 test verifies that route consumes
+  its source HUD plan without fallback. Finish the separate selected-hero frame
+  and aura from `INTERFACE_GENERAL/6/<hero>` at RECT `0x5e` (original media:
+  136x17 eight-frame sheet, 17x17 frame placement at `(265,108)`). Keep this
+  distinct from the squad-position status icons. The source panel base,
+  selection-dependent chrome and physical M5 HiDPI/input behavior also remain
+  open.
+
 - Complete the remaining source-owned DM2 FM Towns HUD and compare the
   reported screenshot on the MacBook Pro M5. The normal M12 → Towns → New Game
   route now binds the authenticated `GRAPHICSSET/<map style>/0xF5` squad

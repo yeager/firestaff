@@ -973,7 +973,7 @@ typedef struct {
 typedef struct DM2_V1_HudPartyState {
     int champion_count;
     int leader_index;
-    int towns_squad_default_route_valid;
+    int towns_squad_route_valid;
     uint8_t towns_party_direction;
     int towns_sleeping;
     DM2_V1_HudChampionState champions[DM2_V1_HUD_CHAMPION_SLOT_COUNT];

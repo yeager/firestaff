@@ -490,6 +490,7 @@ int main(void)
     DM2_V1_StartupMenuPointerLayout layout;
     DM2_V1_BootStartupMenuHudGdatReceipt startup_hud;
     DM2_V1_BootRuntimeReceipt runtime_receipt;
+    DM2_V1_BootRuntimeRenderReceipt hud_render_receipt;
     DM2_V1_LightSourceIdentity map38_light_identity;
     unsigned char framebuffer[M11_FB_BYTES];
     char selected_runtime[1024];
@@ -722,6 +723,18 @@ int main(void)
           "FM Towns retains the first champion's second authentic hand");
     check(dm2_v1_runtime_get_active_champion_index() == 0,
           "FM Towns reads the source party.curacthero for inventory ownership");
+    memset(&hud_render_receipt, 0, sizeof(hud_render_receipt));
+    memset(framebuffer, 0, sizeof(framebuffer));
+    check(dm2_v1_boot_runtime_render_frame(
+              (DM2_V1_BootProfile *)view.dm2BootProfile, framebuffer,
+              M11_FB_WIDTH, M11_FB_WIDTH, M11_FB_HEIGHT, NULL, NULL,
+              &hud_render_receipt) &&
+              hud_render_receipt.v1_succeeded &&
+              hud_render_receipt.runtime_m11_frame_hud_material_plan_required &&
+              hud_render_receipt.runtime_m11_frame_hud_material_plan_consumed &&
+              hud_render_receipt.runtime_render_no_core_fallbacks &&
+              hud_render_receipt.runtime_render_blocked_material_draw_count == 0,
+          "FM Towns keeps its source squad HUD rendered after selecting an active champion");
     {
         int source_slot = -1;
         uint32_t source_object = 0u;
@@ -1209,7 +1222,7 @@ int main(void)
             memset(&squad, 0, sizeof(squad));
             squad.champion_count = 1;
             squad.leader_index = 0;
-            squad.towns_squad_default_route_valid = 1;
+            squad.towns_squad_route_valid = 1;
             squad.towns_party_direction = 0;
             squad.champions[0].occupied = 1;
             squad.champions[0].leader = 1;

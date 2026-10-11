@@ -8384,7 +8384,7 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             portrait_destinations, table_hash, out_plan);
     }
     if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
-        party->towns_squad_default_route_valid) {
+        party->towns_squad_route_valid) {
         DM2_V1_GdatHudTownsSquadSlot towns_slots[4];
         memset(towns_slots, 0, sizeof(towns_slots));
         if (party->champion_count <= 0 || party->champion_count > 4 ||

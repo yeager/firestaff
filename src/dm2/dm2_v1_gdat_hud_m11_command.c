@@ -645,7 +645,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
     if (!out_plan) return 0;
     memset(out_plan, 0, sizeof(*out_plan));
     if (!loader || loader->gdat_version != 4u || !party ||
-        !party->towns_squad_default_route_valid || !slots ||
+        !party->towns_squad_route_valid || !slots ||
         party->champion_count <= 0 ||
         party->champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT) return 0;
 

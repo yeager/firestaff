@@ -12205,10 +12205,11 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     if (hud.leader_index < 0 || hud.leader_index >= hud.champion_count) {
         hud.leader_index = 0;
     }
-    hud.towns_squad_default_route_valid =
+    hud.towns_squad_route_valid =
         rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
         !rt->outdoor && rt->source_party_valid &&
-        rt->source_curacthero == 0 &&
+        rt->source_curacthero >= 0 &&
+        rt->source_curacthero <= rt->source_party.heros_in_party &&
         rt->source_party.heros_in_party == hud.champion_count &&
         rt->source_party.heros_in_party > 0 &&
         rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
@@ -12274,7 +12275,7 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
          * mirror actuator and DRAW_CHAMPION_PICTURE uses that exact GDAT
          * index.  The local portrait_index tail is not a substitute. */
         dst->portrait_type_source_bound = 0;
-        if (hud.towns_squad_default_route_valid &&
+        if (hud.towns_squad_route_valid &&
             slot < rt->source_party.heros_in_party) {
             const DM2_V1_Hero *source_hero = &rt->source_party.hero[slot];
             /* SKProject iterates every live c_party slot, including a hero
@@ -13137,7 +13138,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 rt->boot, &viewport.hud_party, &hud_material_plan)) {
             /* Towns has legitimate no-draw states for this squad route.
              * Do not replace them with the generic PC HUD plan. */
-            if (!viewport.hud_party.towns_squad_default_route_valid) {
+            if (!viewport.hud_party.towns_squad_route_valid) {
                 (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
                     rt->boot, rt->outdoor, &hud_material_plan);
             }
@@ -13152,7 +13153,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport, &hud_material_plan);
     if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
         viewport.hud_party_valid &&
-        viewport.hud_party.towns_squad_default_route_valid &&
+        viewport.hud_party.towns_squad_route_valid &&
         rt->boot->graphics_dat) {
         dm2_v1_viewport_set_asset_loader(
             &viewport, dm2_v1_boot_asset_loader(rt->boot));
@@ -13256,7 +13257,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
     if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
         viewport.hud_party_valid &&
-        viewport.hud_party.towns_squad_default_route_valid &&
+        viewport.hud_party.towns_squad_route_valid &&
         viewport.asset_hud_core_drawn_count > 0) {
         hud_material_plan_required = 1;
         hud_material_plan_consumed = hud_material_plan.valid &&
