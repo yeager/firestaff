@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Re-ran original-media startup and menu coverage after the shared
+  scan-progress UI change. DM1 PC 3.4 passed its complete CLI/menu/input
+  regression; CSB FM Towns, Amiga ADF and Atari ST passed their launch routes;
+  DM2 FM Towns, DOS, Amiga and Macintosh passed their normal title/menu and
+  runtime routes. These use SDL's dummy video driver and do not verify native
+  desktop input, HiDPI behavior or visual parity.
+
 - 2026-10-11: Simplified the launcher and intro data-scan indicators to use
   restrained panels, thin progress tracks, readable TTF status text, and no
   estimated wait time. Added the standard macOS Arial fallback for systems
