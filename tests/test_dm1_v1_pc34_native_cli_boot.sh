@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 1 ]]; then
-    printf 'usage: %s <firestaff-binary>\n' "$0" >&2
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+    printf 'usage: %s <firestaff-binary> [atari-stx-extractor-test]\n' "$0" >&2
     exit 2
 fi
 
 app=$1
+atari_stx_test=${2:-}
 archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 # Card startup flow: game card -> verified PC card -> Original card.
 menu_original=enter,enter,enter
@@ -89,11 +90,35 @@ print("PASS: authentic DM1 PC-34 loose GRAPHICS.DAT/DUNGEON.DAT reach the first 
 PY
 rm -f "$loose_runtime_probe"
 
-# When an authentic different-edition dungeon is available, place it beside
+# When authentic Atari STX media is available, decode its original dungeon
+# with the production STX reader, then place it beside
 # the selected PC 3.4 graphics while keeping the matching PC dungeon below
 # the original extraction tree. The selected PC graphics identity must bind
 # the corresponding PC DUNGEON.DAT, even when an Atari dungeon is found first.
 wrong_dungeon=${FIRESTAFF_DM1_WRONG_DUNGEON_PATH:-}
+wrong_dungeon_archive=${FIRESTAFF_DM1_WRONG_DUNGEON_ARCHIVE:-}
+if [[ -z "$wrong_dungeon" && -n "$wrong_dungeon_archive" &&
+      -f "$wrong_dungeon_archive" && -x "$atari_stx_test" ]]; then
+    wrong_dungeon_root="$test_scratch/dm1-wrong-edition-$$"
+    mkdir -p "$wrong_dungeon_root"
+    wrong_dungeon="$wrong_dungeon_root/DUNGEON.DAT"
+    FIRESTAFF_DM1_ATARI_ARCHIVE="$wrong_dungeon_archive" \
+        FIRESTAFF_DM1_ATARI_DUNGEON_OUTPUT="$wrong_dungeon" \
+        "$atari_stx_test"
+    python3 - "$wrong_dungeon" <<'PY'
+from hashlib import md5
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+actual = md5(path.read_bytes()).hexdigest()
+expected = "050fb2cfded1b502ec2c53956b94c5bd"
+if actual != expected:
+    raise SystemExit(
+        f"FAIL: original Atari STX DUNGEON.DAT identity {actual}, expected {expected}")
+print(f"PASS: decoded authentic Atari STX DUNGEON.DAT {actual}")
+PY
+fi
 if [[ -n "$wrong_dungeon" && -f "$wrong_dungeon" ]]; then
     mixed_root="$test_scratch/dm1-pc34-mixed-dungeon-$$"
     mixed_pc_root="$mixed_root/dos_extract/Dungeon-Master_DOS_EN_Version-34"
@@ -133,6 +158,9 @@ PY
     fi
     echo 'PASS: PC 3.4 English graphics selected their matching DUNGEON.DAT from mixed media'
     rm -rf "$mixed_root"
+fi
+if [[ -n "${wrong_dungeon_root:-}" ]]; then
+    rm -rf "$wrong_dungeon_root"
 fi
 
 # Verify the same original loose-file pair from the documented per-user

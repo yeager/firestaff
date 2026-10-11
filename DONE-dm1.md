@@ -1,3 +1,12 @@
+- 2026-10-11: Made the issue #13 mixed-edition case unconditional in the
+  authentic PC 3.4 CTest path when the Atari ST v1.2 archive is staged. The
+  existing STX reader exports the original Atari `DUNGEON.DAT` for the
+  regression, verifies its known hash (`050fb2cfded1b502ec2c53956b94c5bd`),
+  and places it before the matching PC dungeon while the PC graphics are at
+  the mixed root. The full `test_dm1_v1_pc34_native_cli_boot.sh` passed with
+  original PC34 and Atari media, including this selection check and the CLI,
+  start-menu, title, entrance, Hall and input routes.
+
 - 2026-10-11: The published v3.0.376 Linux x86_64 AppImage passed direct
   `--game dm1 --platform pc` and M12 New Game against the authentic PC 3.4 EN
   ZIP in a Linux/amd64 userspace under QEMU on an ARM64 Linux VM. Both routes

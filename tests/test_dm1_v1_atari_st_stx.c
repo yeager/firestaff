@@ -11,6 +11,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static void write_optional_dungeon(const unsigned char *bytes, size_t size)
+{
+    const char *path = getenv("FIRESTAFF_DM1_ATARI_DUNGEON_OUTPUT");
+    FILE *output;
+    if (!path || !path[0]) return;
+    output = fopen(path, "wb");
+    assert(output != NULL);
+    assert(fwrite(bytes, 1u, size, output) == size);
+    assert(fclose(output) == 0);
+    printf("DM1 Atari STX original DUNGEON.DAT extracted to %s (%zu bytes)\n",
+           path, size);
+}
+
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
@@ -43,6 +56,7 @@ int main(void)
             &stx, "DUNGEON.DAT", dungeon_bytes, dungeon_capacity,
             &extracted_size));
         assert(extracted_size > 0u);
+        write_optional_dungeon(dungeon_bytes, extracted_size);
         assert(dm1_v1_atari_st_graphics_open(
             graphics_bytes, graphics_size, &graphics));
         for (i = 0u; i < DM1_V1_ATARI_ST_GRAPHICS_COUNT; ++i) {
