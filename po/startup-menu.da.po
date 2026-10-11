@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "OFF"
 
 #: src/ui/menu_startup_m12.c:495 src/ui/menu_startup_m12.c:511
-#: src/ui/menu_startup_render_modern_m12.c:2486
+#: src/ui/menu_startup_render_modern_m12.c:2489
 msgid "ON"
 msgstr "ON"
 
@@ -416,7 +416,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2080
+#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2083
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -531,14 +531,14 @@ msgstr "REMASTERED"
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:821
 #: src/ui/menu_startup_m12.c:10389 src/ui/menu_startup_m12.c:10832
 #: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2750
+#: src/ui/menu_startup_render_modern_m12.c:2753
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:801 src/ui/menu_startup_m12.c:831
 #: src/ui/menu_startup_m12.c:10391 src/ui/menu_startup_m12.c:10846
 #: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2753
+#: src/ui/menu_startup_render_modern_m12.c:2756
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK — HINT ORACLE"
 
 #: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:11917
-#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1855
-#: src/ui/menu_startup_render_modern_m12.c:2128
+#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1858
+#: src/ui/menu_startup_render_modern_m12.c:2131
 msgid "MUSEUM OF LORE"
 msgstr "LEGENDEMUSEET"
 
@@ -1623,7 +1623,7 @@ msgstr "ORIGINAL"
 msgid "MISSING OR MISMATCHED"
 msgstr "MANGLER ELLER MATCHER IKKE"
 
-#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2056
+#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2059
 msgid "EXTRAS"
 msgstr "EKSTRA"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape tilbage  |  Op/ned navigér  |  Enter åbn"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > skift fane   Op/ned navigér   Enter skift"
 
-#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2292
+#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2295
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "INGEN UNDERSTØTTET NATIVE PLATFORM"
 
@@ -1878,7 +1878,7 @@ msgid "COMING SOON"
 msgstr "COMING SOON"
 
 #: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2595
+#: src/ui/menu_startup_render_modern_m12.c:2598
 msgid "FIRESTAFF"
 msgstr "FIRESTAFF-PROJEKTET"
 
@@ -1918,45 +1918,45 @@ msgstr "TRYK ENTER FOR AT ÅBNE LORE MUSEET"
 msgid "< BACK"
 msgstr "< TILBAGE"
 
-#: src/ui/menu_startup_render_modern_m12.c:1977
+#: src/ui/menu_startup_render_modern_m12.c:1980
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2058
+#: src/ui/menu_startup_render_modern_m12.c:2061
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2132
+#: src/ui/menu_startup_render_modern_m12.c:2135
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "BEVARINGSNOTER, SERIE LORE OG PROJEKTKREDITTER"
 
-#: src/ui/menu_startup_render_modern_m12.c:2145
+#: src/ui/menu_startup_render_modern_m12.c:2148
 msgid "ARCHIVE SECTIONS"
 msgstr "ARKIVSTATUS"
 
-#: src/ui/menu_startup_render_modern_m12.c:2168
+#: src/ui/menu_startup_render_modern_m12.c:2171
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "SIDE %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2276
+#: src/ui/menu_startup_render_modern_m12.c:2279
 msgid "CHOOSE PLATFORM"
 msgstr "INGEN SPILDATA FUNDET"
 
-#: src/ui/menu_startup_render_modern_m12.c:2301
+#: src/ui/menu_startup_render_modern_m12.c:2304
 msgid "CHOOSE PRESENTATION"
 msgstr "LAUNCHER-DESTINATIONER"
 
-#: src/ui/menu_startup_render_modern_m12.c:2543
+#: src/ui/menu_startup_render_modern_m12.c:2546
 msgid "LAUNCH >"
 msgstr "START"
 
-#: src/ui/menu_startup_render_modern_m12.c:2612
-#: src/ui/menu_startup_render_modern_m12.c:2736
+#: src/ui/menu_startup_render_modern_m12.c:2615
+#: src/ui/menu_startup_render_modern_m12.c:2739
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2676
+#: src/ui/menu_startup_render_modern_m12.c:2679
 msgid "CANCEL"
 msgstr "ANNULLER"
 
