@@ -5,6 +5,10 @@
   FM Towns, while explicit Atari ST, Amiga and FM Towns choices retain their
   authenticated source archive. The complete diagnostics script passed
   against the installed original-media collection.
+- 2026-10-12: The same direct-CLI diagnostics test stages DM2 DOS, Amiga,
+  FM Towns and Macintosh editions together and verifies explicit source
+  selection for all four, alongside AUTO's FM Towns preference. The complete
+  test passed against the installed original-media collection.
 
 - 2026-10-12: The authenticated mixed-root M12 handoff test now drives DM2
   DOS, Amiga, FM Towns and Macintosh selections through each original intro,

@@ -4,6 +4,8 @@ set -eu
 firestaff_cli=${1:?Firestaff executable is required}
 mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"}
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
+dos_archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
+amiga_archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
 dm1_towns_archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 dm1_pc_archive=${FIRESTAFF_DM1_PC_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN.zip"}
 dm1_pc98_archive=${FIRESTAFF_DM1_PC98_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_PC-98_EN.zip"}
@@ -143,6 +145,12 @@ done
 
 ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
 ln -s "$towns_archive" "$combined_root/$(basename "$towns_archive")"
+if [ -f "$dos_archive" ]; then
+    ln -s "$dos_archive" "$combined_root/$(basename "$dos_archive")"
+fi
+if [ -f "$amiga_archive" ]; then
+    ln -s "$amiga_archive" "$combined_root/$(basename "$amiga_archive")"
+fi
 combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game dm2 --data-dir "$combined_root" \
     --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
@@ -163,6 +171,37 @@ case "$combined_mac" in
     *"selected game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
     *) echo "FAIL: explicit DM2 Macintosh choice was overridden by FM Towns default" >&2; exit 1 ;;
 esac
+
+verify_mixed_dm2_cli_platform() {
+    platform_arg=$1
+    platform_name=$2
+    edition_id=$3
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm2 --platform "$platform_arg" --data-dir "$combined_root" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$output" >&2
+        exit 1
+    }
+    case "$output" in
+        *"selected game=dm2 platform=$platform_name edition=$edition_id source=$combined_root/"*) ;;
+        *)
+            printf 'FAIL: explicit DM2 %s choice was not retained from mixed media root\n' \
+                "$platform_name" >&2
+            printf '%s\n' "$output" >&2
+            exit 1
+            ;;
+    esac
+    printf 'PASS: mixed-root direct CLI selects DM2 %s %s\n' \
+        "$platform_name" "$edition_id"
+}
+
+if [ -f "$dos_archive" ]; then
+    verify_mixed_dm2_cli_platform pc PC pc-en
+fi
+verify_mixed_dm2_cli_platform fm-towns 'FM Towns' fmtowns-ja
+if [ -f "$amiga_archive" ]; then
+    verify_mixed_dm2_cli_platform amiga Amiga amiga-en
+fi
 
 # A bare game selection must not inherit an obsolete platform from saved
 # launcher settings. Check the other two original FM Towns archives when
