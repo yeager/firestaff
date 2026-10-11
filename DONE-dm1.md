@@ -15,6 +15,15 @@
   reached `DM1 READY`. SDL dummy input verifies the scripted event path, not
   physical mouse behavior or Linux x86_64 issue #13.
 
+- 2026-10-11: Fixed the mixed-installation path behind issue #13. M12 could
+  select PC 3.4 English `GRAPHICS.DAT` while M11 independently chose an Atari
+  ST `DUNGEON.DAT` found earlier in the same root. M11 now restricts dungeon
+  resolution to the PC 3.4 EN hash for that verified graphics edition and
+  binds the verified graphics path even when the matching pair is in separate
+  directories. The regression uses authentic PC34 and Atari files, removes
+  the nested PC34 graphics copy, and confirms both selected paths and a loaded
+  runtime. The full `test_dm1_v1_pc34_native_cli_boot.sh` suite passes.
+
 # Firestaff DONE — DM1
 
 - 2026-10-11: Re-ran `test_dm1_v1_amiga_v20_archive_cli_boot.sh` against the

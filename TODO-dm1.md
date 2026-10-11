@@ -12,8 +12,9 @@ visual parity. The published v3.0.376 Linux x86_64 AppImage passed both
 direct `--game dm1 --platform pc` and M12 New Game with authentic PC 3.4
 media in a Linux/amd64 userspace under QEMU on a local ARM64 kernel. The
 runtime receipt reports `levelLoaded=1`, the DM1 startup handoff, and the
-first HoC frame; issue #13 was closed after this reproduction. Native
-x86_64 hardware and physical mouse input remain unverified. The separate
+first HoC frame. A later mixed-installation regression exposed and fixed an
+edition mismatch between PC34 graphics and an Atari dungeon in the same data
+root. Native x86_64 hardware and physical mouse input remain unverified. The separate
 Linux emulated full-regression physical-card click failed, while a fresh
 current-source macOS build passed that same scripted pointer route.
 

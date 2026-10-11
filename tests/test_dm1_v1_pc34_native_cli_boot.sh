@@ -89,6 +89,52 @@ print("PASS: authentic DM1 PC-34 loose GRAPHICS.DAT/DUNGEON.DAT reach the first 
 PY
 rm -f "$loose_runtime_probe"
 
+# When an authentic different-edition dungeon is available, place it beside
+# the selected PC 3.4 graphics while keeping the matching PC dungeon below
+# the original extraction tree. The selected PC graphics identity must bind
+# the corresponding PC DUNGEON.DAT, even when an Atari dungeon is found first.
+wrong_dungeon=${FIRESTAFF_DM1_WRONG_DUNGEON_PATH:-}
+if [[ -n "$wrong_dungeon" && -f "$wrong_dungeon" ]]; then
+    mixed_root="$test_scratch/dm1-pc34-mixed-dungeon-$$"
+    mixed_pc_root="$mixed_root/dos_extract/Dungeon-Master_DOS_EN_Version-34"
+    mkdir -p "$mixed_pc_root"
+    cp -R "$missing_swsh_root/data/." "$mixed_pc_root/"
+    pc_graphics=$(python3 - "$mixed_pc_root" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+matches = [path for path in root.rglob("GRAPHICS.DAT")
+           if path.is_file() and (path.parent / "DUNGEON.DAT").is_file()]
+if len(matches) != 1:
+    raise SystemExit(f"FAIL: expected one matching PC34 graphics file, found {matches}")
+print(matches[0])
+PY
+)
+    rm "$pc_graphics"
+    cp "$runtime_data_root/GRAPHICS.DAT" "$mixed_root/GRAPHICS.DAT"
+    cp "$wrong_dungeon" "$mixed_root/DUNGEON.DAT"
+    mixed_probe="$mixed_root/runtime.json"
+    mixed_output="$(FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$mixed_probe" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --platform pc --data-dir "$mixed_root" --debug \
+        --boot-probe --boot-probe-frames 120 --duration 0 2>&1)" || {
+        printf '%s\n' "$mixed_output" >&2
+        exit 1
+    }
+    expected_pc_dungeon="$mixed_pc_root/DATA/DUNGEON.DAT"
+    if ! grep -Fq "LOADING DUNGEON: [$expected_pc_dungeon]" <<<"$mixed_output" ||
+       ! grep -Fq "graphicsPath=$mixed_root/GRAPHICS.DAT" <<<"$mixed_output" ||
+       ! grep -Fq 'phase=dm1-runtime' <<<"$mixed_output" ||
+       ! grep -Fq 'levelLoaded=1' <<<"$mixed_output"; then
+        printf '%s\n' "$mixed_output" >&2
+        echo 'FAIL: PC 3.4 English graphics loaded a different edition DUNGEON.DAT' >&2
+        exit 1
+    fi
+    echo 'PASS: PC 3.4 English graphics selected their matching DUNGEON.DAT from mixed media'
+    rm -rf "$mixed_root"
+fi
+
 # Verify the same original loose-file pair from the documented per-user
 # installation root.  This combines the loose DUNGEON.DAT runtime path with
 # M12's default-root discovery; neither --data-dir nor FIRESTAFF_DATA may

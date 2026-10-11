@@ -16640,7 +16640,8 @@ done:
 static int m11_resolve_builtin_dungeon_path(char* out,
                                             size_t outSize,
                                             const char* dataDir,
-                                            const char* gameId) {
+                                            const char* gameId,
+                                            const char* verifiedAssetMd5) {
     if (!out || !dataDir || !gameId) {
         return 0;
     }
@@ -16662,9 +16663,25 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             { NULL, NULL }
         };
         const char *expectedMd5 = NULL;
+        const char *selectedDm1DungeonMd5 = NULL;
         int i;
+        /* M12 can find valid DM1 files from different installations
+         * independently. ReDMCSB LOADSAVE.C F0435_STARTEND_LoadGame
+         * lines 2328-2336 opens the platform-specific DUNGEON.DAT; a PC 3.4
+         * English graphics match must not bind an Atari ST dungeon found
+         * earlier in the same data root. */
+        if (strcmp(gameId, "dm1") == 0 && verifiedAssetMd5 &&
+            strcmp(verifiedAssetMd5,
+                   "fa6b1aa29e191418713bf2cda93d962e") == 0) {
+            selectedDm1DungeonMd5 = "766450c940651fc021c92fe5d0d0b3a6";
+        }
         for (i = 0; kExpectedHashes[i].game != NULL; ++i) {
             if (strcmp(gameId, kExpectedHashes[i].game) == 0) {
+                if (selectedDm1DungeonMd5 &&
+                    strcmp(kExpectedHashes[i].md5,
+                           selectedDm1DungeonMd5) != 0) {
+                    continue;
+                }
                 expectedMd5 = kExpectedHashes[i].md5;
                 if (strcmp(gameId, "dm1") == 0) {
                     char directPath[M11_GAME_VIEW_PATH_CAPACITY];
@@ -26214,7 +26231,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 !m11_resolve_builtin_dungeon_path(dungeonPath,
                                                  sizeof(dungeonPath),
                                                  spec->dataDir,
-                                                 spec->gameId)) {
+                                                 spec->gameId,
+                                                 spec->verifiedAssetMd5)) {
                 return 0;
             }
             dm1_dungeon_path_hash_resolved = 1;
@@ -26230,7 +26248,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                !m11_resolve_builtin_dungeon_path(dungeonPath,
                                                 sizeof(dungeonPath),
                                                 spec->dataDir,
-                                                spec->gameId)) {
+                                                spec->gameId,
+                                                spec->verifiedAssetMd5)) {
         return 0;
     }
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
@@ -26480,6 +26499,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
         DM1_V1_StartupRuntimeReadyFacts_PC34 facts;
         DM1_V1_StartupRuntimeReadyReceipt_PC34 receipt;
+        DM1_V1_StartupGraphicsBindReceipt_PC34 graphicsBindReceipt;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         facts.runtime_start.game_id = spec->gameId;
@@ -26495,13 +26515,32 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         facts.runtime_start.launch_path =
             DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
         facts.load_succeeded = 1;
-        if (!dm1_v1_startup_runtime_ready_receipt_pc34(&facts, &receipt) ||
-            !m11_apply_dm1_startup_runtime_start_receipt(
+        if (!dm1_v1_startup_runtime_ready_receipt_pc34(&facts, &receipt)) {
+            return 0;
+        }
+        graphicsBindReceipt = receipt.graphics_bind_receipt;
+        /* M12's selected graphics file and M11's matching dungeon may live
+         * in separate directories in a mixed installation. Keep the
+         * authenticated PC34 graphics path instead of deriving GRAPHICS.DAT
+         * from the matching dungeon's directory. */
+        if (spec->verifiedAssetPath && spec->verifiedAssetMd5 &&
+            strcmp(spec->verifiedAssetMd5,
+                   "fa6b1aa29e191418713bf2cda93d962e") == 0 &&
+            strstr(spec->verifiedAssetPath, "::") == NULL &&
+            asset_file_matches_md5(spec->verifiedAssetPath,
+                                   spec->verifiedAssetMd5) &&
+            strlen(spec->verifiedAssetPath) <
+                sizeof(graphicsBindReceipt.graphics_dat_path)) {
+            snprintf(graphicsBindReceipt.graphics_dat_path,
+                     sizeof(graphicsBindReceipt.graphics_dat_path),
+                     "%s", spec->verifiedAssetPath);
+        }
+        if (!m11_apply_dm1_startup_runtime_start_receipt(
                 state,
                 &receipt.runtime_start_receipt) ||
             !m11_apply_dm1_startup_graphics_bind_receipt(
                 state,
-                &receipt.graphics_bind_receipt)) {
+                &graphicsBindReceipt)) {
             return 0;
         }
         /* LOADSAVE.C F0434:2040-2074 adds G0236 pools on a new game,
