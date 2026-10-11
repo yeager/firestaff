@@ -1,12 +1,12 @@
-- 2026-10-11: Fixed FM Towns right-panel disappearance after selecting an
-  active champion. The source squad route now admits the valid `curacthero`
-  range instead of accepting only zero, so M11 keeps consuming the original
-  Towns squad and hand-action plan during active play. The real-media M11 test
-  rendered after activating a champion hand and confirmed the HUD material
-  plan was consumed with no core fallback or blocked material. Original-media
-  inspection also confirmed `INTERFACE_GENERAL/6/0` is a 136x17 eight-frame
-  sprite sheet and that source RECT `0x5e` places its 17x17 frame at `(265,108)`.
-  Rendering the selected hero frame and aura remains open in `TODO-dm2.md`.
+- 2026-10-11: Fixed the FM Towns active-hero HUD route. The squad and selected
+  hand-action plan remains active for valid `curacthero` values; M11 also crops
+  the selected hero's exact facing frame from `INTERFACE_GENERAL/6/<hero>` and
+  draws it through authenticated RECT `0x5e` (17x17 at `(265,108)`). The frame
+  selector follows SKProject's facing and `savegames1.b_02` sheet variant. The
+  original-media M11 regression renders after activating a champion hand and
+  confirms the selected-icon command is consumed with no fallback or blocked
+  material. The selected-hero aura and remaining panel state are still open in
+  `TODO-dm2.md`.
 
 - 2026-10-11: Rebuilt the current macOS source and passed the complete
   `test_dm2_v1_fmtowns_native_cli_boot.sh` regression against authentic FM

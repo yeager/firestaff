@@ -8422,6 +8422,30 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
                 formation.rect.x / 2, formation.rect.y / 2,
                 formation.rect.w / 2, formation.rect.h / 2 };
             destination->mirror_flip = relative == 1 || relative == 2;
+            if (party->towns_selected_hero_source_bound &&
+                party->towns_selected_hero_index == slot) {
+                DM2_V1_BootExpandedRectReceipt selected_rect;
+                if (!hero->towns_absdir_source_bound ||
+                    !party->towns_savegames1_b02_source_bound ||
+                    !dm2_v1_boot_query_expanded_rect_receipt(
+                        profile, 0x5eu, &selected_rect) ||
+                    !selected_rect.valid || !selected_rect.raw4_hash ||
+                    !dm2_v1_boot_query_blit_rect_for_dimensions(
+                        profile, 0x5eu, 17, 17, &queried_rect) ||
+                    queried_rect.w != 17 || queried_rect.h != 17) return 0;
+                destination->draw_selected_hero_icon = 1;
+                destination->selected_hero_direction = (uint8_t)(
+                    (hero->towns_absdir + 4u -
+                     party->towns_party_direction) & 3u);
+                destination->selected_hero_variant =
+                    party->towns_savegames1_b02 != 0u;
+                destination->selected_hero_rect_raw4_hash =
+                    selected_rect.raw4_hash;
+                destination->selected_hero_rect = (DM2_V1_ViewportRect){
+                    queried_rect.x, queried_rect.y,
+                    queried_rect.w, queried_rect.h };
+                destination->selected_hero_rect_id = 0x5eu;
+            }
             if (hero->towns_current_hp == 0) continue;
 
             spell_field = relative <= 1 ? 6 : 8;

@@ -963,6 +963,8 @@ typedef struct {
     int stat_bar_color_source_bound;
     int towns_party_position_source_bound;
     uint8_t towns_party_position;
+    int towns_absdir_source_bound;
+    uint8_t towns_absdir;
     int towns_current_hp_source_bound;
     int16_t towns_current_hp;
     int towns_spell_cooldown_source_bound;
@@ -974,6 +976,10 @@ typedef struct DM2_V1_HudPartyState {
     int champion_count;
     int leader_index;
     int towns_squad_route_valid;
+    int towns_selected_hero_source_bound;
+    int towns_selected_hero_index;
+    int towns_savegames1_b02_source_bound;
+    uint8_t towns_savegames1_b02;
     uint8_t towns_party_direction;
     int towns_sleeping;
     DM2_V1_HudChampionState champions[DM2_V1_HUD_CHAMPION_SLOT_COUNT];

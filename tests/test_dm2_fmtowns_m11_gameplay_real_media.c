@@ -593,6 +593,33 @@ int main(void)
               startup_hud.hud_static_plan_ready &&
               startup_hud.hud_static_command_count == 4,
           "FM Towns binds the native INTERFACE_GENERAL HUD chrome plan");
+    {
+        const DM2_V1_BootProfile *profile =
+            (const DM2_V1_BootProfile *)view.dm2BootProfile;
+        const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(profile);
+        DM2_V1_BootExpandedRectReceipt selected_rect;
+        DM2_V1_InterfaceRect selected_blit;
+        DM2_ImageFormat selected_format = DM2_IMG_FMT_UNKNOWN;
+        int selected_width = 0;
+        int selected_height = 0;
+        uint8_t *selected_pixels = dm2_v1_asset_load_image_field(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, 0,
+            &selected_width, &selected_height, &selected_format);
+        check(selected_pixels && selected_width == 136 &&
+                  selected_height == 17 && selected_format == DM2_IMG_FMT_U4,
+              "FM Towns active-hero icon uses the original eight-frame U4 sheet");
+        dm2_v1_asset_free_pixels(selected_pixels);
+        memset(&selected_rect, 0, sizeof(selected_rect));
+        memset(&selected_blit, 0, sizeof(selected_blit));
+        check(dm2_v1_boot_query_expanded_rect_receipt(
+                  profile, 0x5eu, &selected_rect) && selected_rect.valid &&
+                  selected_rect.raw4_hash != 0u &&
+                  dm2_v1_boot_query_blit_rect_for_dimensions(
+                      profile, 0x5eu, 17, 17, &selected_blit) &&
+                  selected_blit.x == 265 && selected_blit.y == 108 &&
+                  selected_blit.w == 17 && selected_blit.h == 17,
+              "FM Towns active-hero icon placement comes from authentic RECT 0x5e");
+    }
     check(dm2_v1_boot_startup_menu_pointer_layout(
               (DM2_V1_BootProfile *)view.dm2BootProfile, &layout) &&
               layout.valid && layout.new_game.w > 0 && layout.new_game.h > 0,
@@ -731,6 +758,7 @@ int main(void)
               &hud_render_receipt) &&
               hud_render_receipt.v1_succeeded &&
               hud_render_receipt.runtime_m11_frame_hud_material_plan_required &&
+              hud_render_receipt.runtime_m11_frame_hud_material_plan_command_count >= 4 &&
               hud_render_receipt.runtime_m11_frame_hud_material_plan_consumed &&
               hud_render_receipt.runtime_render_no_core_fallbacks &&
               hud_render_receipt.runtime_render_blocked_material_draw_count == 0,

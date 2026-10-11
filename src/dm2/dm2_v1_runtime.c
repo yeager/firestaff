@@ -12215,6 +12215,14 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
         rt->session_snapshot.leader_index < hud.champion_count &&
         party_direction >= 0 && party_direction <= 3;
+    hud.towns_selected_hero_source_bound =
+        hud.towns_squad_route_valid && rt->source_curacthero > 0 &&
+        rt->source_curacthero <= rt->source_party.heros_in_party;
+    if (hud.towns_selected_hero_source_bound) {
+        hud.towns_selected_hero_index = rt->source_curacthero - 1;
+    }
+    hud.towns_savegames1_b02_source_bound = hud.towns_squad_route_valid;
+    hud.towns_savegames1_b02 = rt->source_savegames1[2];
     hud.towns_party_direction = (uint8_t)(party_direction & 3);
     hud.towns_sleeping = rt->source_sleeping != 0;
 
@@ -12284,6 +12292,10 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             if (source_hero->partypos >= 0 && source_hero->partypos <= 3) {
                 dst->towns_party_position = (uint8_t)source_hero->partypos;
                 dst->towns_party_position_source_bound = 1;
+            }
+            if (source_hero->absdir >= 0 && source_hero->absdir <= 3) {
+                dst->towns_absdir = (uint8_t)source_hero->absdir;
+                dst->towns_absdir_source_bound = 1;
             }
             dst->towns_current_hp = source_hero->curHP;
             dst->towns_current_hp_source_bound = 1;

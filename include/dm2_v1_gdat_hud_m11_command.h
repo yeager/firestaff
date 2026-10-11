@@ -19,7 +19,8 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON,
-    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON,
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON
 };
 
 enum {
@@ -27,7 +28,10 @@ enum {
     DM2_V1_GDAT_HUD_M11_TOWNS_LEADER_ICON = 0x02,
     DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR = 0x04,
     DM2_V1_GDAT_HUD_M11_TOWNS_FORMATION_FILL = 0x08,
-    DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4 = 0x10
+    DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4 = 0x10,
+    DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_MASK = 0x60,
+    DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT = 5,
+    DM2_V1_GDAT_HUD_M11_TOWNS_SELECTED_ICON_VARIANT = 0x80
 };
 
 #define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 20
@@ -88,6 +92,12 @@ typedef struct {
     uint16_t spell_icon_rect_id;
     DM2_V1_ViewportRect status_icon_rect;
     uint16_t status_icon_rect_id;
+    int draw_selected_hero_icon;
+    uint8_t selected_hero_direction;
+    uint8_t selected_hero_variant;
+    uint32_t selected_hero_rect_raw4_hash;
+    DM2_V1_ViewportRect selected_hero_rect;
+    uint16_t selected_hero_rect_id;
 } DM2_V1_GdatHudTownsSquadSlot;
 
 typedef struct {

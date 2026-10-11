@@ -732,6 +732,73 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
                     ? DM2_V1_GDAT_HUD_M11_TOWNS_LEADER_ICON : 0u));
         }
     }
+    if (party->towns_selected_hero_source_bound) {
+        const int selected = party->towns_selected_hero_index;
+        const DM2_V1_GdatHudTownsSquadSlot *source;
+        if (selected < 0 || selected >= party->champion_count ||
+            !slots[selected].draw_selected_hero_icon ||
+            slots[selected].selected_hero_direction > 3u ||
+            slots[selected].selected_hero_variant > 1u ||
+            slots[selected].selected_hero_rect_id != 0x5eu ||
+            slots[selected].selected_hero_rect.w != 17 ||
+            slots[selected].selected_hero_rect.h != 17 ||
+            !slots[selected].selected_hero_rect_raw4_hash) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        source = &slots[selected];
+        if (!dm2_v1_gdat_hud_add_command(
+                loader, out_plan,
+                DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
+                0x6300 + selected, &source->selected_hero_rect,
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, selected)) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        DM2_V1_GdatHudM11Command *selected_command =
+            &out_plan->commands[out_plan->command_count - 1];
+        const int expected_frame = source->selected_hero_direction +
+            (source->selected_hero_variant ? 4 : 0);
+        uint8_t *cropped_pixels;
+        if (selected_command->format != DM2_IMG_FMT_U4 ||
+            selected_command->width != 136 ||
+            selected_command->height != 17 ||
+            selected_command->destination.w != 17 ||
+            selected_command->destination.h != 17) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        cropped_pixels = (uint8_t *)malloc(17u * 17u);
+        if (!cropped_pixels) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        for (int y = 0; y < 17; ++y) {
+            memcpy(cropped_pixels + y * 17,
+                selected_command->pixels + y * 136 + expected_frame * 17,
+                17u);
+        }
+        dm2_v1_asset_free_pixels(selected_command->pixels);
+        selected_command->pixels = cropped_pixels;
+        selected_command->width = 17;
+        selected_command->height = 17;
+        selected_command->destination_rect_id =
+            source->selected_hero_rect_id;
+        selected_command->destination_table_hash =
+            source->selected_hero_rect_raw4_hash;
+        selected_command->source_state_flags = (uint8_t)(
+            DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4 |
+            (source->selected_hero_direction <<
+             DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+            (source->selected_hero_variant
+                ? DM2_V1_GDAT_HUD_M11_TOWNS_SELECTED_ICON_VARIANT : 0u));
+        selected_command->decoded_hash =
+            dm2_v1_gdat_hud_m11_command_pixel_hash(selected_command);
+        if (!selected_command->decoded_hash) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+    }
     if (out_plan->command_count == 0) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
