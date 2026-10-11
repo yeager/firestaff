@@ -1671,10 +1671,11 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 124;
+    int panelH = 88;
     int panelX;
     int panelY;
-    int titleAreaW;
+    int contentX;
+    int contentW;
     int percent = 0;
     int barX;
     int barY;
@@ -1683,13 +1684,10 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     char percentText[16];
     /* The scan is a blocking launcher transition, so make its status easy to
      * read at ordinary window sizes instead of reusing compact menu text. */
-    ModernTextStyle title = text_style_make(
-        c && c->w >= 960 ? 5 : (c && c->w >= 640 ? 4 : 2),
-        COLOR_ACCENT_HI(), 2);
     ModernTextStyle percentStyle = text_style_make(
-        c && c->w >= 960 ? 4 : 2, COLOR_TEXT(), 1);
+        c && c->w >= 960 ? 3 : 2, COLOR_TEXT(), 1);
     ModernTextStyle detail = text_style_make(
-        c && c->w >= 960 ? 3 : 2, COLOR_TEXT_DIM(), 1);
+        c && c->w >= 960 ? 2 : 1, COLOR_TEXT_DIM(), 1);
 
     if (!c || !progress) {
         return;
@@ -1702,13 +1700,13 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     if (percent > 100) percent = 100;
 
     panelW = c->w - 48;
-    if (panelW > 860) panelW = 860;
+    if (panelW > 640) panelW = 640;
     if (panelW < 240) panelW = c->w - 24;
     panelX = (c->w - panelW) / 2;
-    titleAreaW = panelW - 100;
-    if (titleAreaW < 1) titleAreaW = 1;
-    /* Keep the scan card in the lower-middle across both the normal 1080p
-     * launcher and compact test/window sizes, above the footer surfaces. */
+    contentX = panelX + 18;
+    contentW = panelW - 36;
+    /* Keep a restrained status strip in the lower part of the launcher,
+     * leaving the game artwork visible while the scan runs. */
     panelY = (c->h * 72) / 100;
     if (panelY + panelH > c->h - 18) panelY = c->h - panelH - 18;
     if (panelY < 12) panelY = 12;
@@ -1723,54 +1721,70 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
         : "";
     snprintf(percentText, sizeof(percentText), "%d%%", percent);
 
-    draw_panel(c, panelX, panelY, panelW, panelH,
-               rgb(18, 18, 22), rgb(78, 80, 86), 5);
-    /* Use plain status typography and a tabular progress indicator. */
+    fill_rect(c, panelX, panelY, panelW, panelH, rgb(18, 19, 22));
+    fill_rect(c, panelX, panelY, panelW, 1, rgb(92, 94, 98));
+    /* Use a left aligned system font and a fine progress rule. */
     if (!draw_ttf_centered_fit(c,
-                               panelX + 12 + titleAreaW / 2,
-                               panelY + 13,
+                               contentX + (contentW - 88) / 2,
+                               panelY + 12,
                                label,
-                               titleAreaW,
-                               c->w >= 960 ? 25 : (c->w >= 640 ? 21 : 14),
+                               contentW - 88,
+                               c->w >= 960 ? 17 : 13,
                                COLOR_TEXT())) {
-        draw_text_centered_fit(c, panelX + 12 + titleAreaW / 2,
-                               panelY + 14, label, &title, titleAreaW);
+        ModernTextStyle status = text_style_make(
+            c->w >= 960 ? 2 : 1, COLOR_TEXT(), 1);
+        draw_text_centered_fit(c, contentX + (contentW - 88) / 2,
+                               panelY + 14, label, &status, contentW - 88);
     }
-    if (!draw_ttf_centered_fit(c, panelX + panelW - 44, panelY + 16,
+    if (!draw_ttf_centered_fit(c, panelX + panelW - 18 - 28, panelY + 13,
                                percentText, 48,
-                               c->w >= 960 ? 19 : 15, COLOR_TEXT())) {
-        draw_text_centered(c, panelX + panelW - 44, panelY + 18,
+                               c->w >= 960 ? 15 : 12, COLOR_TEXT())) {
+        draw_text(c, panelX + panelW - 18 - 28, panelY + 15,
                            percentText, &percentStyle);
     }
     if (gameTitle[0]) {
         const char* task = M12_StartupMenu_ScanTaskDisplayForLocale(
             languageIndex, progress->currentTask);
-        if (!draw_ttf_centered_fit(c, panelX + panelW / 2,
-                                   panelY + 47, gameTitle, panelW - 28,
-                                   c->w >= 960 ? 15 : (c->w >= 640 ? 13 : 10),
-                                   COLOR_TEXT_DIM())) {
-            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 48,
-                                   gameTitle, &detail, panelW - 28);
+        int titleWidth = 0;
+        int titleSize = c->w >= 960 ? 13 : 11;
+        int taskX = contentX;
+        int titleDrawn = 0;
+        if (m11_ttf_measure_string(gameTitle, M11_UIScale_Apply(titleSize),
+                                   &titleWidth) && titleWidth > 0 &&
+            titleWidth < contentW / 2) {
+            titleDrawn = m11_ttf_render_rgba_string(
+                c->rgba, c->w, c->h, contentX, panelY + 39, gameTitle,
+                M11_UIScale_Apply(titleSize), COLOR_TEXT_DIM().r,
+                COLOR_TEXT_DIM().g, COLOR_TEXT_DIM().b);
         }
-        if (task && task[0] &&
-            !draw_ttf_centered_fit(c, panelX + panelW / 2,
-                                   panelY + 66, task, panelW - 32,
-                                   c->w >= 960 ? 12 : (c->w >= 640 ? 11 : 9),
-                                   COLOR_TEXT_DIM())) {
-            ModernTextStyle taskStyle = text_style_make(1, COLOR_TEXT_DIM(), 0);
-            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 67,
-                                   task, &taskStyle, panelW - 32);
+        if (titleDrawn) {
+            taskX = contentX + titleWidth + 14;
+        } else {
+            draw_text(c, contentX, panelY + 40, gameTitle, &detail);
+            taskX = contentX + contentW / 2;
+        }
+        if (task && task[0]) {
+            int taskMaxW = panelX + panelW - 18 - taskX;
+            if (!draw_ttf_centered_fit(c, taskX + taskMaxW / 2,
+                                       panelY + 40, task, taskMaxW,
+                                       c->w >= 960 ? 12 : 10,
+                                       COLOR_TEXT_DIM())) {
+                ModernTextStyle taskStyle = text_style_make(
+                    1, COLOR_TEXT_DIM(), 0);
+                draw_text_centered_fit(c, taskX + taskMaxW / 2,
+                                       panelY + 40, task, &taskStyle,
+                                       taskMaxW);
+            }
         }
     }
-    barX = panelX + 18;
-    barY = panelY + 94;
-    barW = panelW - 36;
+    barX = contentX;
+    barY = panelY + 66;
+    barW = contentW;
     fillW = (barW * percent) / 100;
-    fill_rounded_rect(c, barX, barY, barW, 5, 2, rgb(55, 56, 60));
+    fill_rect(c, barX, barY, barW, 2, rgb(61, 63, 67));
     if (fillW > 0) {
-        fill_rounded_rect(c, barX, barY, fillW, 5, 2,
-                          cancelRequested
-                              ? COLOR_WARN() : rgb(194, 198, 205));
+        fill_rect(c, barX, barY, fillW, 2,
+                  cancelRequested ? COLOR_WARN() : rgb(208, 210, 213));
     }
 }
 

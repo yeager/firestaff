@@ -959,9 +959,9 @@ static void check_active_scan_renders_progress_bar(void) {
     state.dataDirScanProgress.completedSteps = 50U;
     M12_ModernMenu_Render(&state, rgba, width, height);
 
-    /* The lower-middle overlay keeps the 50% fill and empty track distinct. */
-    filledPixel = ((size_t)871U * (size_t)width + 760U) * 4U;
-    emptyPixel = ((size_t)871U * (size_t)width + 1100U) * 4U;
+    /* The restrained lower scan strip keeps the fill and empty track distinct. */
+    filledPixel = ((size_t)843U * (size_t)width + 760U) * 4U;
+    emptyPixel = ((size_t)843U * (size_t)width + 1100U) * 4U;
     CHECK(rgba[filledPixel + 0U] > rgba[emptyPixel + 0U]);
     CHECK(rgba[filledPixel + 1U] > rgba[emptyPixel + 1U]);
     memcpy(offRgba, rgba, bytes);
@@ -1012,9 +1012,9 @@ static void check_modern_scan_progress_standalone_render(void) {
     M12_ModernMenu_RenderScanProgressLocalized(&progress, 0, rgba,
                                                 width, height);
 
-    /* The lower-middle panel uses a thin bar below the detail row. */
-    filledPixel = ((size_t)857U * (size_t)width + 760U) * 4U;
-    emptyPixel = ((size_t)857U * (size_t)width + 1100U) * 4U;
+    /* Standalone progress rendering uses the same thin lower scan strip. */
+    filledPixel = ((size_t)843U * (size_t)width + 760U) * 4U;
+    emptyPixel = ((size_t)843U * (size_t)width + 1100U) * 4U;
     CHECK(rgba[filledPixel + 0U] > rgba[emptyPixel + 0U]);
     CHECK(rgba[filledPixel + 1U] > rgba[emptyPixel + 1U]);
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
