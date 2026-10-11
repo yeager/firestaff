@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-12: The authenticated mixed-root M12 handoff test now drives DM2
+  DOS, Amiga, FM Towns and Macintosh selections through each original intro,
+  source New Game flow and first dungeon runtime. DOS, FM Towns and Macintosh
+  also verify that the first runtime frame is admitted with original assets
+  and no core fallbacks; the existing FM Towns AUTO route remains covered.
+  `m12_persisted_root_original_handoff` passed against the staged original
+  collection on this host. This closes a test-coverage gap and makes no claim
+  about CI cross-platform results yet.
+
 - 2026-10-11: Closing the window during the deferred first-run originals scan
   now requests cancellation and waits only for the scanner's next progress
   boundary. A cancelled start-menu scan no longer falls through to an
