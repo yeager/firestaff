@@ -207,11 +207,13 @@ stage_dm1_return_data_root() {
 # The key sequence is the same ordinary M12 game/platform/original choice
 # used by the DM1 PC-34 and CSB FM Towns startup checks. Their source startup
 # phases differ, so each case proves its own authentic runtime receipt before
-# the shared ESC/Enter return interaction can pass.
+# the return-confirmation interaction can pass. DM2 also covers the separate
+# mouse-driven YES branch through an authentic FM Towns game session.
 if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
    [ "$test_mode" = direct-exit ] ||
    [ "$test_mode" = csb-atari ] || [ "$test_mode" = csb-amiga ] ||
    [ "$test_mode" = dm2-dos ] || [ "$test_mode" = dm2-mac ] ||
+   [ "$test_mode" = dm2-mouse-return ] ||
    [ "$test_mode" = dm1-atari ] || [ "$test_mode" = dm1-amiga36 ] ||
    [ "$test_mode" = dm2-amiga ]; then
     if [ "$test_mode" = direct-exit ]; then
@@ -331,11 +333,13 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
          [ "$test_mode" = dm2-amiga ]; then
         echo "SKIP: authentic DM2 Amiga archive unavailable: $dm2_amiga_archive"
     fi
-    if [ "$test_mode" = all ] || [ "$test_mode" = returns ]; then
+    if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
+       [ "$test_mode" = dm2-mouse-return ]; then
     run_return_to_menu_case dm2 auto \
-        'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,key:enter' \
+        'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60,wait:10,key:escape,click:110:109' \
         60000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
-        'launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=.*/data/dm2/'
+        'launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=.*/data/dm2/' \
+        "$data_root" 320 200 dm2-mouse-return
     fi
 fi
 

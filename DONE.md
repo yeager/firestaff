@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` with
+  an isolated `dm2-mouse-return` mode and changed its authentic FM Towns route
+  to click YES in the return-to-menu confirmation. The run against the local
+  original-media catalog reached the first DM2 runtime frame, returned to the
+  launcher through the pointer result, and rediscovered authentic DM1, CSB and
+  DM2 data during the full rescan. The existing `returns` CTest now includes
+  this separate mouse branch. This verifies the headless pointer path, not
+  native M5 pointer behavior or physical launcher presentation.
+
 - 2026-10-11: Re-ran original-media startup and menu coverage after the shared
   scan-progress UI change. DM1 PC 3.4 passed its complete CLI/menu/input
   regression; CSB FM Towns, Amiga ADF and Atari ST passed their launch routes;
