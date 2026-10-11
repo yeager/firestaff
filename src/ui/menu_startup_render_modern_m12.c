@@ -1801,7 +1801,10 @@ void M12_ModernMenu_RenderScanProgressLocalized(
     c.rgba = rgba;
     c.w = width;
     c.h = height;
-    draw_background(&c, NULL);
+    /* Keep first-run scanning quiet and readable. The animated, illustrated
+     * menu background is useful behind navigation, but adds visual noise to
+     * a progress-only screen. */
+    fill_rect(&c, 0, 0, width, height, rgb(28, 30, 33));
     draw_data_scan_overlay(&c, progress, languageIndex,
                            progress->cancelRequested);
 }

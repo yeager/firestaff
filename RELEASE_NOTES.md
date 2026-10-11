@@ -1,5 +1,10 @@
 # Unreleased
 
+## User-facing changes
+
+- `Game-data scan`: use a plain, high-contrast background behind the localized
+  scan status, real system font and progress bar.
+
 # Firestaff v3.0.376
 
 ## Developer changes
