@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Expanded the authentic-media direct-launch exit regression to
+  cover bare `--game dm1`, `--game csb` and `--game dm2` through their FM Towns
+  routes. The test drives the source-owned CSB SWITCHTW and DM2 New Game/mirror
+  selection where required, waits for the first runtime receipt, returns from
+  the game and verifies that no launcher rescan occurs. All three passed
+  against the installed original archives on macOS. This verifies the headless
+  scripted input path, not native desktop behavior.
+
 - 2026-10-11: Extended `return_to_menu_rescans_dm1_csb_dm2_real_media` with
   an isolated `dm2-mouse-return` mode and changed its authentic FM Towns route
   to click YES in the return-to-menu confirmation. The run against the local
