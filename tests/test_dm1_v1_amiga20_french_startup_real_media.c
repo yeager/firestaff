@@ -99,6 +99,8 @@ int main(int argc, char **argv) {
     const char *a20e_archive = getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
     static const char french_adf[] =
         "Floppy Disks ADF/Dungeon Master for Amiga v2.0 (French) Cracked.adf";
+    static const char german_adf[] =
+        "Floppy Disks ADF/Dungeon Master for Amiga v2.0 (German) Cracked.adf";
     uint8_t *adf = NULL, *inner_zip = NULL, *english_adf = NULL;
     uint8_t *mutated = NULL;
     size_t adf_bytes = 0u, inner_zip_bytes = 0u, english_adf_bytes = 0u;
@@ -147,8 +149,65 @@ int main(int argc, char **argv) {
         puts("PASS: nested authentic French ADF virtual read");
         return 0;
     }
+    if (argc == 3 && strcmp(argv[1], "--check-german-adf") == 0) {
+        char graphics_md5[33];
+        char swsh_md5[33] = {0};
+        char dungeon_md5[33];
+        int full_length_ok;
+        int trim_two_ok;
+        DM1_V1_AmigaTitleF0437Receipt german_title;
+        DM1_V1_AmigaEntranceF0441Receipt german_entrance;
+        DM1_V1_AmigaGraphicsReceipt german_graphics;
+        if (!firestaff_7z_read_member(argv[2], german_adf, &adf,
+                                      &adf_bytes) ||
+            firestaff_amiga_adf_visit_ofs_files(
+                adf, adf_bytes, selected_adf_member, &english) < 0 ||
+            !english.graphics || !english.dungeon ||
+            !m12_bytes_md5_hex(english.graphics, english.graphics_bytes,
+                               graphics_md5) ||
+            !english.swsh ||
+            !m12_bytes_md5_hex(english.swsh, english.swsh_bytes, swsh_md5) ||
+            !m12_bytes_md5_hex(english.dungeon, english.dungeon_bytes,
+                               dungeon_md5) ||
+            dm1_v1_amiga_graphics_receipt(
+                english.graphics, english.graphics_bytes,
+                &german_graphics) != 0) {
+            fputs("FAIL: could not read authentic German A20 ADF files\n",
+                  stderr);
+            media_free(&english);
+            free(adf);
+            return 1;
+        }
+        full_length_ok = dungeon_world_from_original(
+            english.dungeon, english.dungeon_bytes, 0u);
+        trim_two_ok = dungeon_world_from_original(
+            english.dungeon, english.dungeon_bytes, 2u);
+        memset(&german_title, 0, sizeof(german_title));
+        memset(&german_entrance, 0, sizeof(german_entrance));
+        (void)dm1_v1_amiga_title_f0437_receipt(
+            english.graphics, english.graphics_bytes,
+            english.swsh, english.swsh_bytes, &german_title);
+        (void)dm1_v1_amiga_entrance_f0441_receipt(
+            english.graphics, english.graphics_bytes,
+            english.swsh, english.swsh_bytes, &german_entrance);
+        printf("German A20 media graphics_md5=%s graphics_lang=%d "
+               "swsh_md5=%s dungeon_md5=%s world_trim_0=%d "
+               "world_trim_2=%d f0437=%d f0441=%d swsh_bytes=%zu\n",
+               graphics_md5, (int)german_graphics.lang, swsh_md5,
+               dungeon_md5, full_length_ok, trim_two_ok,
+               german_title.valid, german_entrance.valid,
+               english.swsh_bytes);
+        media_free(&english);
+        free(adf);
+        return (strcmp(graphics_md5,
+                       "0679e39da9dcc2e855cb33c6c64ddcb5") == 0 &&
+                strcmp(dungeon_md5,
+                       "59e332cf47852d5c7c88a9538f0adcea") == 0 &&
+                full_length_ok && !trim_two_ok && german_title.valid &&
+                german_entrance.valid) ? 0 : 1;
+    }
     if (argc != 1) {
-        fputs("usage: test_dm1_v1_amiga20_french_startup_real_media [--emit-french-adf <archive> | --check-virtual <archive>]\n", stderr);
+        fputs("usage: test_dm1_v1_amiga20_french_startup_real_media [--emit-french-adf <archive> | --check-virtual <archive> | --check-german-adf <archive>]\n", stderr);
         return 2;
     }
 

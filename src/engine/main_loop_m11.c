@@ -3207,7 +3207,8 @@ static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
                                           (size_t)versionIndex);
     if (!version || !version->versionId ||
         (strcmp(version->versionId, "amiga20-en") != 0 &&
-         strcmp(version->versionId, "amiga20-fr") != 0) ||
+         strcmp(version->versionId, "amiga20-fr") != 0 &&
+         strcmp(version->versionId, "amiga20-de") != 0) ||
         strstr(version->matchedPath, "[HD]") != NULL ||
         !gameView->assetLoader.graphicsDatPath[0] ||
         strcmp(gameView->assetLoader.graphicsDatPath,
@@ -4323,7 +4324,8 @@ static int m11_dm1_handoff_play_title(void* user,
             "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA &&
         version && version->versionId &&
         (strcmp(version->versionId, "amiga20-en") == 0 ||
-         strcmp(version->versionId, "amiga20-fr") == 0) &&
+         strcmp(version->versionId, "amiga20-fr") == 0 ||
+         strcmp(version->versionId, "amiga20-de") == 0) &&
         strstr(version->matchedPath, "[HD]") == NULL) {
         const int played = m11_play_dm1_amiga_title_f0437_if_available(
             ctx->menuState, ctx->launchEntry, ctx->gameView);
@@ -4373,7 +4375,8 @@ static int m11_dm1_handoff_play_entrance(void* user,
         : NULL;
     selectedAmigaA20 = version && version->versionId &&
         (strcmp(version->versionId, "amiga20-en") == 0 ||
-         strcmp(version->versionId, "amiga20-fr") == 0) &&
+         strcmp(version->versionId, "amiga20-fr") == 0 ||
+         strcmp(version->versionId, "amiga20-de") == 0) &&
         M12_AssetStatus_GetVersionArchitecture(
             "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA;
     if (!ctx->activePostLaunchPlanValid ||

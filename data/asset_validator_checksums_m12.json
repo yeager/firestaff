@@ -8,9 +8,9 @@
   "notes": [
     "Extracted from Daniel Nylander checksum mail.",
     "This is a seed/reference list for future asset validator work.",
-    "Entries keep the original human description from the mail and normalize MD5 to lowercase."
+    "Entries keep the original human description from the mail or identify an independently verified original-media file. MD5 values are lowercase."
   ],
-  "entryCount": 65,
+  "entryCount": 66,
   "entries": [
     {
       "gameId": "csb",
@@ -200,6 +200,13 @@
       "filename": "GRAPHICS.DAT",
       "md5": "0679e39da9dcc2e855cb33c6c64ddcb5",
       "label": "DM Amiga 2.0 and 2.2 German GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Amiga 2.0 German",
+      "filename": "DUNGEON.DAT",
+      "md5": "59e332cf47852d5c7c88a9538f0adcea",
+      "label": "DM Amiga 2.0 German DUNGEON.DAT"
     },
     {
       "gameId": "dm1",

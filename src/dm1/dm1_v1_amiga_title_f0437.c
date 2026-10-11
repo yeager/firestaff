@@ -55,11 +55,16 @@ int dm1_v1_amiga_title_f0437_receipt(
         0xdd, 0x37, 0x39, 0x54, 0xb3, 0xfb, 0x12, 0x7d,
         0xb7, 0x38, 0x79, 0x46, 0x13, 0x1e, 0xa3, 0x22
     };
-    /* ReDMCSB TITLE.C:12,39 and ENTRANCE.C:620 use the same MEDIA413
-     * A20E/A20F branch. Pair each authentic GRAPHICS.DAT with its own
+    static const uint8_t a20g_graphics_md5[16] = {
+        0x06, 0x79, 0xe3, 0x9d, 0xa9, 0xdc, 0xc2, 0xe8,
+        0x55, 0xcb, 0x33, 0xc6, 0xc6, 0x4d, 0xdc, 0xb5
+    };
+    /* ReDMCSB TITLE.C:12,39 uses the shared MEDIA413 A20E/A20F/A20G
+     * implementation. Pair each authentic GRAPHICS.DAT with its own
      * original swoosh; never accept a mixed-language title. */
     static const char a20e_swsh_md5[] = "a0ffbcc7ae8cecac03128ddb32887ef4";
     static const char a20f_swsh_md5[] = "1038138978975415571a878bb08f54be";
+    static const char a20g_swsh_md5[] = "916cb3cd462e7582d2a39c73e40b3339";
     DM1_V1_AmigaGraphicsReceipt graphics_receipt;
     DM1_V1_AmigaSwshAssets swsh_assets;
     DM1_V1_AmigaTitleF0437Receipt receipt;
@@ -87,7 +92,11 @@ int dm1_v1_amiga_title_f0437_receipt(
           (graphics_receipt.lang == DM1_AMIGA_LANG_FR &&
            memcmp(graphics_receipt.md5, a20f_graphics_md5,
                   sizeof(a20f_graphics_md5)) == 0 &&
-           strcmp(swsh_assets.executableMd5, a20f_swsh_md5) == 0))) {
+           strcmp(swsh_assets.executableMd5, a20f_swsh_md5) == 0) ||
+          (graphics_receipt.lang == DM1_AMIGA_LANG_DE &&
+           memcmp(graphics_receipt.md5, a20g_graphics_md5,
+                  sizeof(a20g_graphics_md5)) == 0 &&
+           strcmp(swsh_assets.executableMd5, a20g_swsh_md5) == 0))) {
         return 0;
     }
 

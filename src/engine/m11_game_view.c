@@ -16652,6 +16652,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
         static const struct { const char *game; const char *md5; } kExpectedHashes[] = {
             { "dm1",  "ebccb5f99c4437adcb34d9228b57eb6a" },
             { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
+            { "dm1",  "59e332cf47852d5c7c88a9538f0adcea" },
             { "dm1",  "050fb2cfded1b502ec2c53956b94c5bd" },
             { "dm1",  "c4a54af4284f40bc3d53fe2c7ef5195b" },
             { "dm1",  "e0333c81c52e957dacd3b45739d077c9" },
@@ -26280,6 +26281,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (!asset_read_virtual_path_alloc(dungeonPath,
                                            &dm1VirtualDungeonBytes,
                                            &dm1VirtualDungeonSize)) {
+            fprintf(stderr,
+                    "firestaff: DM1 startup failed while reading virtual "
+                    "DUNGEON.DAT path=%s\n", dungeonPath);
             return 0;
         }
         dm1VirtualGraphicsRequired = 1;
@@ -26302,6 +26306,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     dm1VirtualDungeonBytes + 8u,
                     dm1VirtualDungeonSize - 8u,
                     decompressed, (long)decompressedSize)) {
+                fprintf(stderr,
+                        "firestaff: DM1 startup failed while decompressing "
+                        "DUNGEON.DAT path=%s source-bytes=%zu "
+                        "declared-bytes=%zu\n",
+                        dungeonPath, dm1VirtualDungeonSize,
+                        decompressedSize);
                 free(decompressed);
                 free(dm1VirtualDungeonBytes);
                 dm1VirtualDungeonBytes = NULL;
@@ -26309,15 +26319,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
             free(dm1VirtualDungeonBytes);
             dm1VirtualDungeonBytes = decompressed;
-            /* The authentic A20F French dungeon's declared decompressed
-             * length covers its whole raw-map section. The English A20E and
-             * Atari packages use the established two-byte trailer rule.
-             * Keep the exception tied to its independently hash-verified
-             * French GRAPHICS.DAT identity. */
+            /* The authentic A20F French and A20D German dungeons declare
+             * the full raw-map size. English A20E and Atari packages retain
+             * the two-byte trailer rule. Bind the exceptions to the
+             * independently hash-verified original GRAPHICS.DAT identity. */
             dm1VirtualDungeonSize =
                 spec->verifiedAssetMd5 &&
-                strcmp(spec->verifiedAssetMd5,
-                       "dd373954b3fb127db7387946131ea322") == 0
+                (strcmp(spec->verifiedAssetMd5,
+                        "dd373954b3fb127db7387946131ea322") == 0 ||
+                 strcmp(spec->verifiedAssetMd5,
+                        "0679e39da9dcc2e855cb33c6c64ddcb5") == 0)
                     ? decompressedSize
                     : decompressedSize - 2u;
             dm1EndianDungeonFormat = 1;
@@ -26329,6 +26340,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
              * order used by the shared world decoder. */
             if (!M11_GameView_NormalizeDm1BigEndianDungeon(
                     &dm1VirtualDungeonBytes, &dm1VirtualDungeonSize)) {
+                fprintf(stderr,
+                        "firestaff: DM1 startup failed normalizing "
+                        "DUNGEON.DAT path=%s bytes=%zu\n",
+                        dungeonPath, dm1VirtualDungeonSize);
                 free(dm1VirtualDungeonBytes);
                 dm1VirtualDungeonBytes = NULL;
                 return 0;
@@ -26414,6 +26429,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                            !M11_AssetLoader_InitDm1LegacyFromBuffer(
                                &state->assetLoader, graphicsBytes,
                                (long)graphicsSize, 0))))) {
+            fprintf(stderr,
+                    "firestaff: DM1 startup failed binding virtual "
+                    "GRAPHICS.DAT path=%s bytes=%zu\n",
+                    graphicsVirtual, graphicsSize);
             free(graphicsBytes);
             free(dm1VirtualDungeonBytes);
             dm1VirtualDungeonBytes = NULL;
@@ -26460,6 +26479,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     dm1VirtualDungeonBytes = NULL;
     if (dm1FmtownsBufferLoaded != 1) {
         if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
+            fprintf(stderr,
+                    "firestaff: DM1 startup failed initializing world "
+                    "dungeon=%s buffered-bytes=%zu\n",
+                    dungeonPath, dm1VirtualDungeonSize);
             DM1_V1_StartupDungeonLoadFacts_PC34 facts;
             DM1_V1_StartupDungeonLoadReceipt_PC34 receipt;
             memset(&facts, 0, sizeof(facts));

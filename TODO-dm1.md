@@ -20,11 +20,11 @@ current-source macOS build passed that same scripted pointer route.
 
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
-  GRAPHICS.DAT/SWSH identity pair. A20 English and French now authenticate
+  GRAPHICS.DAT/SWSH identity pair. A20 English, French and German now authenticate
   their own paired media and reach runtime through the original C001 title,
   RGB4 palette stages, authored zoom steps, C002/C003 doors and C004 entrance.
-  Real-media CLI and M12 tests cover both A20 language editions. Amiga 2.x
-  German/English, demo media, and native renderer/input timing on each
+  Real-media CLI and M12 tests cover all three A20 language editions. Amiga
+  2.1/2.2 English, demo media, and native renderer/input timing on each
   supported desktop remain open; the A20 tests do not establish pixel parity
   or HiDPI behavior. A36M intentionally skips F0437: STARTUP1/STARTUP2 enter
   F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash

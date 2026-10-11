@@ -26,6 +26,17 @@
 
 # Firestaff DONE — DM1
 
+- 2026-10-11: Added authentic DM1 Amiga v2.0 German startup support. The
+  A20G SWSH hash uses the independently verified 5088-byte HUNK_DATA layout;
+  the original German GRAPHICS.DAT/SWSH pair now passes the F0437 title and
+  F0441 entrance receipts. The source route recognizes the German A20 edition
+  alongside English/French. The real-media regression streams the original
+  German ADF from the supplied 7z, verifies GRAPHICS.DAT, SWSH and DUNGEON.DAT
+  identities, and reaches runtime through direct CLI and the M12 start menu.
+  `dm1_v1_amiga20_german_archive_cli_boot` passes. This verifies startup
+  acceptance and source-owned choreography; it does not establish visual
+  parity or native-display/input behavior.
+
 - 2026-10-11: Re-ran `test_dm1_v1_amiga_v20_archive_cli_boot.sh` against the
   authentic English A20 game and save archives using both the local v3.0.375
   build and packaged v3.0.376 app. Both runs passed the complete CLI, M12 New
