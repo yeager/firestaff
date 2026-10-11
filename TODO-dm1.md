@@ -24,13 +24,17 @@ current-source macOS build passed that same scripted pointer route.
   their own paired media and reach runtime through the original C001 title,
   RGB4 palette stages, authored zoom steps, C002/C003 doors and C004 entrance.
   Real-media CLI and M12 tests cover all three A20 language editions. Amiga
-  2.1 English now authenticates the original GRAPHICS.DAT/SWSH pair and its
-  original dungeon data, then completes F0437/F0441 and reaches runtime through
-  both CLI and M12. Its source archive labels the ADF dump "Original (Not
-  working)"; coverage uses its original files in a ZIP transport wrapper and
-  does not claim a bootable ADF. Amiga 2.2 English/German, demo media, and
-  native renderer/input timing on each supported desktop remain open; these
-  tests do not establish pixel parity or HiDPI behavior. A36M intentionally
+  2.1 and 2.2 English now authenticate the same original GRAPHICS.DAT/SWSH
+  pair and dungeon data, then complete F0437/F0441 and reach runtime through
+  both CLI and M12. The source archive labels both ADF dumps "Original (Not
+  working)"; coverage uses their original files in ZIP transport wrappers and
+  does not claim bootable ADFs. Amiga 2.2 German, demo media, and native
+  renderer/input timing on each supported desktop remain open; these tests do
+  not establish pixel parity or HiDPI behavior. The only local A22 German
+  archive member is labeled "Original (Not working)" and is a 910,058-byte
+  `UAE-` stream, not a standard 901,120-byte AmigaDOS ADF; the in-process ODS
+  reader rejects it. Do not infer A22 German support from the A20 German
+  profile. A36M intentionally
   skips F0437: STARTUP1/STARTUP2 enter
   F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash
   now selects the source F0466 decoder, and authentic C002/C003/C004/C005/C011

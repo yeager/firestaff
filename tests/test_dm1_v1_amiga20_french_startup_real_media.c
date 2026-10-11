@@ -103,6 +103,8 @@ int main(int argc, char **argv) {
         "Floppy Disks ADF/Dungeon Master for Amiga v2.0 (German) Cracked.adf";
     static const char a21e_adf[] =
         "Floppy Disks ADF/Dungeon Master for Amiga v2.1 (English) Original (Not working).adf";
+    static const char a22e_adf[] =
+        "Floppy Disks ADF/Dungeon Master for Amiga v2.2 (English) Original (Not working).adf";
     uint8_t *adf = NULL, *inner_zip = NULL, *english_adf = NULL;
     uint8_t *mutated = NULL;
     size_t adf_bytes = 0u, inner_zip_bytes = 0u, english_adf_bytes = 0u;
@@ -112,31 +114,43 @@ int main(int argc, char **argv) {
     char frenchDungeonMd5[33];
     int result = 1;
 
-    /* Preserve the original A21E disk as an exact byte stream for the
-     * product's ZIP/ADF reader tests. The archive labels this dump as not
-     * working; it is tested as original loose media, not as a bootable ADF. */
-    if (argc == 3 && strcmp(argv[1], "--emit-a21-adf") == 0) {
-        if (!firestaff_7z_read_member(argv[2], a21e_adf,
+    /* Preserve the original A21E/A22E disk as an exact byte stream for the
+     * product's ZIP/ADF reader tests. The archive labels these dumps as not
+     * working; they are tested as original media, not as bootable ADFs. */
+    if (argc == 3 &&
+        (strcmp(argv[1], "--emit-a21-adf") == 0 ||
+         strcmp(argv[1], "--emit-a22-adf") == 0)) {
+        const char *adf_path = strcmp(argv[1], "--emit-a22-adf") == 0
+            ? a22e_adf : a21e_adf;
+        const char *version_name = strcmp(argv[1], "--emit-a22-adf") == 0
+            ? "A22E" : "A21E";
+        if (!firestaff_7z_read_member(argv[2], adf_path,
                                       &adf, &adf_bytes) ||
             adf_bytes != 901120u ||
             fwrite(adf, 1u, adf_bytes, stdout) != adf_bytes) {
             free(adf);
-            fputs("FAIL: could not stream the authentic A21E ADF\n", stderr);
+            fprintf(stderr, "FAIL: could not stream the authentic %s ADF\n",
+                    version_name);
             return 1;
         }
         free(adf);
         return 0;
     }
-    if (argc == 3 && strcmp(argv[1], "--check-a21-adf") == 0) {
+    if (argc == 3 &&
+        (strcmp(argv[1], "--check-a21-adf") == 0 ||
+         strcmp(argv[1], "--check-a22-adf") == 0)) {
+        const int is_a22 = strcmp(argv[1], "--check-a22-adf") == 0;
+        const char *adf_path = is_a22 ? a22e_adf : a21e_adf;
+        const char *version_name = is_a22 ? "A22E" : "A21E";
         char graphics_md5[33];
         char swsh_md5[33];
         char dungeon_md5[33];
-        DM1_V1_AmigaGraphicsReceipt a21_graphics;
-        DM1_V1_AmigaTitleF0437Receipt a21_title;
-        DM1_V1_AmigaEntranceF0441Receipt a21_entrance;
+        DM1_V1_AmigaGraphicsReceipt english_graphics;
+        DM1_V1_AmigaTitleF0437Receipt english_title;
+        DM1_V1_AmigaEntranceF0441Receipt english_entrance;
         int full_length_ok;
         int trim_two_ok;
-        if (!firestaff_7z_read_member(argv[2], a21e_adf,
+        if (!firestaff_7z_read_member(argv[2], adf_path,
                                       &adf, &adf_bytes) ||
             adf_bytes != 901120u ||
             firestaff_amiga_adf_visit_ofs_files(
@@ -150,8 +164,9 @@ int main(int argc, char **argv) {
                                dungeon_md5) ||
             dm1_v1_amiga_graphics_receipt(
                 english.graphics, english.graphics_bytes,
-                &a21_graphics) != 0) {
-            fputs("FAIL: could not read authentic A21E ADF files\n", stderr);
+                &english_graphics) != 0) {
+            fprintf(stderr, "FAIL: could not read authentic %s ADF files\n",
+                    version_name);
             media_free(&english);
             free(adf);
             return 1;
@@ -160,31 +175,31 @@ int main(int argc, char **argv) {
             english.dungeon, english.dungeon_bytes, 0u);
         trim_two_ok = dungeon_world_from_original(
             english.dungeon, english.dungeon_bytes, 2u);
-        memset(&a21_title, 0, sizeof(a21_title));
-        memset(&a21_entrance, 0, sizeof(a21_entrance));
+        memset(&english_title, 0, sizeof(english_title));
+        memset(&english_entrance, 0, sizeof(english_entrance));
         (void)dm1_v1_amiga_title_f0437_receipt(
             english.graphics, english.graphics_bytes,
-            english.swsh, english.swsh_bytes, &a21_title);
+            english.swsh, english.swsh_bytes, &english_title);
         (void)dm1_v1_amiga_entrance_f0441_receipt(
             english.graphics, english.graphics_bytes,
-            english.swsh, english.swsh_bytes, &a21_entrance);
-        printf("A21E media graphics_md5=%s graphics_lang=%d "
+            english.swsh, english.swsh_bytes, &english_entrance);
+        printf("%s media graphics_md5=%s graphics_lang=%d "
                "graphics_version=%d swsh_md5=%s dungeon_md5=%s "
                "world_trim_0=%d world_trim_2=%d f0437=%d f0441=%d\n",
-               graphics_md5, (int)a21_graphics.lang,
-               (int)a21_graphics.version, swsh_md5, dungeon_md5,
+               version_name, graphics_md5, (int)english_graphics.lang,
+               (int)english_graphics.version, swsh_md5, dungeon_md5,
                full_length_ok, trim_two_ok,
-               a21_title.valid, a21_entrance.valid);
+               english_title.valid, english_entrance.valid);
         media_free(&english);
         free(adf);
         return (strcmp(graphics_md5,
                        "b35931b55db649a1bd2d415b61b29801") == 0 &&
                 strcmp(swsh_md5,
                        "658db79c6bb87f3ab09eb7005cd91313") == 0 &&
-                a21_graphics.version == DM1_AMIGA_VER_2_1 &&
-                a21_graphics.lang == DM1_AMIGA_LANG_EN &&
-                !full_length_ok && trim_two_ok && a21_title.valid &&
-                a21_entrance.valid) ? 0 : 1;
+                english_graphics.version == DM1_AMIGA_VER_2_1 &&
+                english_graphics.lang == DM1_AMIGA_LANG_EN &&
+                (full_length_ok != trim_two_ok) && english_title.valid &&
+                english_entrance.valid) ? 0 : 1;
     }
 
     /* Test-only transport conversion: stream the selected original ADF to
@@ -284,7 +299,7 @@ int main(int argc, char **argv) {
                 german_entrance.valid) ? 0 : 1;
     }
     if (argc != 1) {
-        fputs("usage: test_dm1_v1_amiga20_french_startup_real_media [--emit-french-adf <archive> | --check-virtual <archive> | --check-german-adf <archive>]\n", stderr);
+        fputs("usage: test_dm1_v1_amiga20_french_startup_real_media [--emit-a21-adf <archive> | --emit-a22-adf <archive> | --check-a21-adf <archive> | --check-a22-adf <archive> | --emit-french-adf <archive> | --check-virtual <archive> | --check-german-adf <archive>]\n", stderr);
         return 2;
     }
 

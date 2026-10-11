@@ -4306,12 +4306,12 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
-        NAME dm1_v1_amiga21_english_archive_cli_boot
-        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga21_english_archive_cli_boot.sh
+        NAME dm1_v1_amiga21_22_english_archive_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga21_22_english_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>
             $<TARGET_FILE:test_dm1_v1_amiga20_french_startup_real_media>
     )
-    set_tests_properties(dm1_v1_amiga21_english_archive_cli_boot PROPERTIES
+    set_tests_properties(dm1_v1_amiga21_22_english_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;amiga;english;real-media;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_AMIGA_SOFTWARE_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Amiga,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga21-en;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga21-en;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga21-en"
