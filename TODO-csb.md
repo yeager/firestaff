@@ -2,6 +2,21 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+2026-10-11 A35 original-ADF startup verification: the DMWeb software archive
+also contains a multilingual Amiga 3.5 original ADF, explicitly labeled
+"Original (Not working)." Its extracted bytes match MD5
+`4d148dea3fdc6d7098b6a1bbfce7b5c9`; a ZIP stored with no compression retains
+the exact bytes. Firestaff identifies its A35M `Graphics.DAT` (MD5
+`cefaddfdf5651df2c91f61b5611a8362`) and `Dungeon.DAT`. The direct CLI and
+production M12 menu routes both selected `amiga35-multi`, passed the APPB
+language selection and entrance, and reached the first runtime movement at
+`(9,1)` with a nonzero viewport receipt. The original DMWeb archive remained
+unchanged. This verifies this ADF source through ZIP transport in Firestaff;
+it does not establish that the disk image works in its original hardware.
+Native CTRaw support remains a separate open item: no CTRaw PACK decoding or
+sector recovery is implemented, and the ADF member is not a decoded CTRaw
+stream.
+
 2026-10-11 local startup retest: the current source passed the authentic
 FM Towns, Atari ST and Amiga ADF CLI/start-menu regressions
 (`test_csb_v1_fmtowns_native_cli_boot.sh`,
@@ -28,8 +43,11 @@ visual parity.
   start-menu selection, A35E/A35M handoff and first runtime input against the
   authentic disks. Do not treat renamed or converted test images as proof of
   native CTRaw support, and keep emulator or BIOS dependencies out of runtime.
-  A local search found no independently decoded A35 sector image or usable
-  CAPS reader, so the filesystem type is not yet established. The third-party
+  The DMWeb software archive has since yielded a separate authentic A35M ADF
+  member (tested through ZIP transport; see the verification note above), but
+  it is not a decoded sector image from the CTRaw archive. A local search found
+  no independently decoded A35 CTRaw sector image or usable CAPS reader, so
+  the filesystem type is not yet established. The third-party
   `rsn8887/capsimg` source examined for format research carries a
   non-commercial restriction in its
   [license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt); do not

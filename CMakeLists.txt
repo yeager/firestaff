@@ -21377,6 +21377,22 @@ endif()
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ONLY=1;FIRESTAFF_CSB_AMIGA_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga version 3.3 English, French, German.zip;FIRESTAFF_CSB_SV_PO=${CMAKE_CURRENT_SOURCE_DIR}/po/csb.sv.po"
         TIMEOUT 120
     )
+    # DMWeb preserves the original A35M disk as ADF inside its software
+    # archive. This end-to-end check stores the extracted bytes unchanged in
+    # ZIP, then exercises both direct CLI startup and the production M12 menu.
+    add_test(
+        NAME csb_v1_amiga35_original_adf_cli_boot
+        COMMAND bash
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_original_adf_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Amiga,Software.7z"
+    )
+    set_tests_properties(csb_v1_amiga35_original_adf_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;m12;m11;launcher;startup;real_data;zip;skip_safe"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 180
+    )
     # The Atari ST title is a separate ANIMATE.SCR/DAT owner.  Keep its
     # original-media M12 selection, 50 Hz VBlank handoff, and first native
     # runtime frame independently runnable from the paired game/utility disks
