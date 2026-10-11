@@ -1,5 +1,17 @@
 # Unreleased
 
+# Firestaff v3.0.376
+
+## Developer changes
+
+- `Amiga MFM sector scanner`: verifies and decodes bounded DD and HD track
+  bitstreams with track identity, odd/even data and checksums.
+- `CSB Amiga 3.5 CTRaw reader`: validates bounded track and PACK framing plus
+  CRCs, and records the remaining PACK decompression gap without claiming a
+  playable route.
+- `Cross-platform format checks`: adds MFM scanner and CTRaw archive checks to
+  the GitHub Actions verification matrix.
+
 # Firestaff v3.0.375
 
 ## User-facing changes
