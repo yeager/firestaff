@@ -1,5 +1,21 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Exercised the native macOS Data Directory picker in an isolated
+  Cocoa app with a separate config. Selected the original-media root on the
+  external volume and granted Firestaff access when macOS asked. The app saved
+  `/Volumes/Extern-disk/FirestaffUserData/data`; after terminating and
+  relaunching it, startup diagnostics loaded that saved path and matched
+  original DM1, CSB and DM2 `GRAPHICS.DAT` and `DUNGEON.DAT` files. This proves
+  the native picker, macOS access and persisted-root scan for these three
+  games, not the visual menu state or the other three file/folder dialogs.
+
+- 2026-10-11: Re-ran `dm1_v1_pc34_native_cli_boot` against the installed
+  authentic PC 3.4 ZIP after the mixed-edition dungeon-selection fix. The
+  complete original-media CLI/start-menu/input regression passed locally in
+  263.61 seconds. GitHub Actions run 38149214046 also passed for current main
+  commit `2cd463195f692f0e42c229434e202a3dab55dc90`. Issue #13 remains fixed on
+  main; released v3.0.376 predates that commit and does not contain this fix.
+
 - 2026-10-11: Built and ran `test_m12_data_dir_dialog_real` against the
   original media in the user's data root. It passed worker-thread folder
   result delivery, main-thread asset admission, saving the selected data root,
