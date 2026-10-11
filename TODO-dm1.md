@@ -1,13 +1,15 @@
 # Firestaff TODO — DM1
 
-2026-10-11 local startup retest: the current source passed the authentic
-FM Towns, Atari ST v1.2, Amiga v2.0 and English DOS CLI/start-menu regressions
-(`test_dm1_v1_fmtowns_archive_cli_boot.sh`,
-`test_dm1_v1_atari_st_archive_cli_boot.sh`,
-`test_dm1_v1_amiga_v20_archive_cli_boot.sh` and
-`test_dm1_v1_dos_en_archive_cli_boot.sh`). Coverage reached the first runtime
-frame and exercised each test's supported native input route. This does not
-verify native M5 Retina window/input behavior or full visual parity.
+2026-10-11 local startup retest: authentic FM Towns, Atari ST v1.2, English
+DOS, and Amiga v2.0 New Game routes reached their first runtime frame. The
+Atari ST v1.2 full CLI/menu/input regression passed. The Amiga v2.0 CLI/menu
+startup phases also passed independently, including its source SWSH, F0437
+title, F0441 entrance, and first runtime frame. However,
+`test_dm1_v1_amiga_v20_archive_cli_boot.sh` does not pass end-to-end: its
+separate original-save resume probe exits after `DM1 READY` with
+`direct launch failed for --game dm1`. Keep Amiga v2.0 save resume open; do
+not count that regression as passed. This does not verify native M5 Retina
+window/input behavior or full visual parity.
 
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
