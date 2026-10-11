@@ -1,10 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
-- 2026-10-12: The modern platform-card renderer and mouse hit-test now use
-  one shared catalog-order list, removing duplicated platform filtering that
-  could shift visible card hit indexes. The direct-click test confirms CSB
-  shows Towns, Amiga and Atari ST without a compatibility-only PC card. The
-  menu hit test and authentic DM1, CSB and DM2 M12 startup regressions passed.
+- 2026-10-12: The keyboard flow, legacy and modern platform-card renderers,
+  and mouse hit-test now use one shared catalog-order list, removing duplicated
+  platform filtering that could shift visible card hit indexes. The direct-click
+  test confirms CSB shows Towns, Amiga and Atari ST without a compatibility-only
+  PC card. The menu hit test and authentic DM1, CSB and DM2 M12 startup
+  regressions passed.
 
 - 2026-10-12: The real-media direct-CLI diagnostics test now stages original
   CSB Atari ST 2.1, Amiga and FM Towns editions together. AUTO still selects

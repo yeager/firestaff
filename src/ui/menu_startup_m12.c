@@ -424,9 +424,6 @@ static void m12_export_save_manifest_json(M12_StartupMenuState* state);
 static void m12_export_save_settings_action(M12_StartupMenuState* state);
 static void m12_export_save_browser_settings_action(M12_StartupMenuState* state);
 static void m12_import_save_manifest_json(M12_StartupMenuState* state);
-static int m12_collect_card_platforms(const M12_StartupMenuState* state,
-                                      const char* gameId,
-                                      int out[M12_ARCH_COUNT]);
 static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -6426,7 +6423,8 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     if (entry->kind == M12_MENU_ENTRY_GAME) {
         int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
         int platforms[M12_ARCH_COUNT];
-        int count = m12_collect_card_platforms(state, entry->gameId, platforms);
+        int count = M12_StartupMenu_GetPlatformCardArchitectures(
+            entry->gameId, platforms);
         int requestedArchitecture = state->gameOptions[gi].architectureIndex;
         int autoArchitecture = M12_ARCH_AUTO;
         int i;
@@ -6475,30 +6473,6 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     } else {
         m12_show_missing_game_data_popup(state, entry->gameId);
     }
-}
-
-static int m12_collect_card_platforms(const M12_StartupMenuState* state,
-                                      const char* gameId,
-                                      int out[M12_ARCH_COUNT]) {
-    size_t i, versionCount;
-    int count = 0;
-    if (!state || !gameId || !out) return 0;
-    versionCount = M12_AssetStatus_GetVersionCount(gameId);
-    for (i = 0; i < versionCount; ++i) {
-        int architecture = M12_AssetStatus_GetVersionArchitecture(gameId, i);
-        int seen = 0;
-        int j;
-        if (architecture <= M12_ARCH_AUTO ||
-            architecture == M12_ARCH_PC98 ||
-            architecture == M12_ARCH_X68000 ||
-            /* CSB shipped for Atari ST, Amiga and FM Towns; its PC3.4
-             * compatibility source is a reference implementation, never a
-             * retail DOS platform.  Do not advertise an unshipped card. */
-            (strcmp(gameId, "csb") == 0 && architecture == M12_ARCH_PC)) continue;
-        for (j = 0; j < count; ++j) if (out[j] == architecture) seen = 1;
-        if (!seen && count < M12_ARCH_COUNT) out[count++] = architecture;
-    }
-    return count;
 }
 
 /* DM2's original GAME_LOAD/RESUME path owns a bitmap dialogue surface
@@ -7201,8 +7175,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     state->gameCardFlowStage = 0;
                     {
                         int platforms[M12_ARCH_COUNT];
-                        int count = m12_collect_card_platforms(
-                            state, cardEntry->gameId, platforms);
+                        int count = M12_StartupMenu_GetPlatformCardArchitectures(
+                            cardEntry->gameId, platforms);
                         int architecture =
                             state->gameOptions[gi].architectureIndex;
                         int i;
@@ -7222,8 +7196,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_LEFT ||
                 input == M12_MENU_INPUT_TURN_LEFT) {
                 int count = state->gameCardFlowStage == 0
-                    ? m12_collect_card_platforms(state, cardEntry->gameId,
-                                                 (int[M12_ARCH_COUNT]){0})
+                    ? M12_StartupMenu_GetPlatformCardArchitectures(
+                          cardEntry->gameId, NULL)
                     : 3;
                 if (count > 0) state->gameCardSelected =
                     m12_cycle_index(state->gameCardSelected, -1, count);
@@ -7232,8 +7206,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             if (input == M12_MENU_INPUT_DOWN || input == M12_MENU_INPUT_RIGHT ||
                 input == M12_MENU_INPUT_TURN_RIGHT) {
                 int count = state->gameCardFlowStage == 0
-                    ? m12_collect_card_platforms(state, cardEntry->gameId,
-                                                 (int[M12_ARCH_COUNT]){0})
+                    ? M12_StartupMenu_GetPlatformCardArchitectures(
+                          cardEntry->gameId, NULL)
                     : 3;
                 if (count > 0) state->gameCardSelected =
                     m12_cycle_index(state->gameCardSelected, 1, count);
@@ -7242,8 +7216,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
                 if (state->gameCardFlowStage == 0) {
                     int platforms[M12_ARCH_COUNT];
-                    int count = m12_collect_card_platforms(state, cardEntry->gameId,
-                                                           platforms);
+                    int count = M12_StartupMenu_GetPlatformCardArchitectures(
+                        cardEntry->gameId, platforms);
                     int index = state->gameCardSelected;
                     int version;
                     const M12_AssetVersionStatus* selectedVersion;
@@ -11263,7 +11237,8 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
     }
     if (state->gameCardFlowStage == 0) {
         heading = "CHOOSE PLATFORM";
-        cardCount = m12_collect_card_platforms(state, entry->gameId, cards);
+        cardCount = M12_StartupMenu_GetPlatformCardArchitectures(
+            entry->gameId, cards);
         selected = m12_clamp_index(state->gameCardSelected, cardCount);
     } else {
         heading = "CHOOSE PRESENTATION";
