@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Re-ran the three priority games' authenticated startup routes
+  against the current local build. Bare CLI startup diagnostics selected the
+  original FM Towns edition for DM1, CSB and DM2 from their default data roots;
+  the DM2 trace recorded all 224 intermediate TWANIM frames and source
+  completion at 26,223 ms. DM1's mixed-platform M12 route reached its first
+  Towns runtime frame. CSB's mixed Towns/Atari/Amiga M12 routes reached the
+  original MINI.DAT, C200 and A31M runtime states. DM2's normal Towns route
+  rendered the New Game menu with the authenticated `TITLE/0/4` digest and
+  reached its first champion through the ordinary loop. These SDL dummy-driver
+  runs verify source and launch paths, not native desktop input, HiDPI display
+  or visual parity.
+
 - 2026-10-11: Expanded the authentic-media direct-launch exit regression to
   cover bare `--game dm1`, `--game csb` and `--game dm2` through their FM Towns
   routes. The test drives the source-owned CSB SWITCHTW and DM2 New Game/mirror
