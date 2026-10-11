@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: `m11_direct_launch_prepare_all_games` passed against the full
+  installed original-media collection through `~/.firestaff/data`: 210
+  assertions passed, no failures, and three scoped skips. No game was skipped
+  for missing media. The run resolved all five game roots, prepared each
+  `--game` launch through M12, and verified the selected-entry handoff and
+  source-specific M11 boot receipt for DM1, CSB, DM2, Nexus and Theron's Quest.
+  It does not drive every visible menu card or prove a first presented runtime
+  frame for all five. Hosted cross-platform Actions run 38152019124 passed for
+  commit `1570da3670fd9fa836d05abc8458a177a071b5cd`.
+
 - 2026-10-11: Exercised the native macOS Data Directory picker in an isolated
   Cocoa app with a separate config. Selected the original-media root on the
   external volume and granted Firestaff access when macOS asked. The app saved

@@ -139,6 +139,13 @@
   runtime frame. Theron's authentic Japanese edition now reaches a source-owned
   runtime receipt through the same M12-selected M11 menu handoff; verify that
   path through its first presented runtime frame.
+  A 2026-10-11 rerun against the complete installed original-media collection
+  passed 210 assertions with no failures and three scoped skips; none of the
+  five games was skipped for missing data. It verified the direct `--game`
+  preparation and source-specific M11 selected-entry boot receipt for DM1,
+  CSB, DM2, Nexus and Theron's Quest. The remaining gap is the visible menu
+  card sequence through a first presented runtime frame for the games without
+  that end-to-end evidence.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
   language choice; the native Amiga input matrix reaches runtime, and the
