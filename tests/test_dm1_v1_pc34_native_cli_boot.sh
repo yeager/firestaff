@@ -88,6 +88,54 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 print("PASS: authentic DM1 PC-34 loose GRAPHICS.DAT/DUNGEON.DAT reach the first menu runtime frame")
 PY
 rm -f "$loose_runtime_probe"
+
+# Verify the same original loose-file pair from the documented per-user
+# installation root.  This combines the loose DUNGEON.DAT runtime path with
+# M12's default-root discovery; neither --data-dir nor FIRESTAFF_DATA may
+# hide a mismatch between the source that the launcher authenticates and the
+# source that M11 opens.
+default_loose_home="$test_scratch/dm1-pc34-default-loose-$$"
+default_loose_data="$default_loose_home/.firestaff/data/dm1"
+default_loose_probe="$default_loose_home/runtime.json"
+mkdir -p "$default_loose_data"
+cp -R "$missing_swsh_root/data/." "$default_loose_data/"
+default_loose_output="$(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$default_loose_home" XDG_CONFIG_HOME="$default_loose_home/.config" \
+    APPDATA="$default_loose_home" \
+    FIRESTAFF_CONFIG_PATH="$default_loose_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$default_loose_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm1 --debug \
+        --script 'wait20,enter,wait20,enter,wait20,enter' --duration 10000 2>&1
+)" || {
+    printf '%s\n' "$default_loose_output" >&2
+    exit 1
+}
+if ! grep -Fq 'handoff=pc-img3' <<<"$default_loose_output"; then
+    printf '%s\n' "$default_loose_output" >&2
+    echo 'FAIL: DM1 AUTO menu did not launch loose PC-34 media from ~/.firestaff/data/dm1 without --data-dir' >&2
+    exit 1
+fi
+python3 - "$default_loose_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or
+        probe["bootAssetMd5"] != "fa6b1aa29e191418713bf2cda93d962e" or
+        startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1):
+    raise SystemExit(
+        f"FAIL: default-root loose PC-34 media did not reach runtime: {probe}")
+print("PASS: authentic DM1 PC-34 loose media in ~/.firestaff/data/dm1 reaches runtime without --data-dir")
+PY
+rm -rf "$default_loose_home"
 python3 - "$missing_swsh_root/data" <<'PY'
 from pathlib import Path
 import sys
