@@ -6,6 +6,7 @@
 #include "fs_portable_compat.h"
 #include "csb_v1_boot.h"
 #include "dm2_v1_boot.h"
+#include "render_sdl_m11.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +18,121 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int failures;
 #define CHECK(c, m) do { if (!(c)) { fprintf(stderr, "FAIL: %s\n", m); ++failures; } } while (0)
+
+static void run_dm2_m12_dos_or_mac_handoff(M12_StartupMenuState* menu,
+                                            const char* version_id,
+                                            M12_Architecture architecture,
+                                            DM2_Platform platform)
+{
+    int version_index = M12_AssetStatus_FindVersionIndex("dm2", version_id);
+    const M12_AssetVersionStatus* version = version_index < 0 ? NULL :
+        M12_AssetStatus_GetVersion(&menu->assetStatus, "dm2",
+                                   (size_t)version_index);
+    M12_LaunchIntent intent;
+    M11_GameViewState* view;
+    DM2_V1_BootProfile* profile;
+    unsigned char framebuffer[320u * 200u];
+    int frame;
+
+    if (!version || !version->matched) {
+        fprintf(stderr,
+                "FAIL: selected root lacks authenticated dm2 %s media\n",
+                version_id);
+        ++failures;
+        return;
+    }
+
+    menu->selectedIndex = 2;
+    menu->activatedIndex = 2;
+    menu->launchRequested = 1;
+    menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu->gameOptions[2].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu->gameOptions[2].versionIndex = version_index;
+    menu->gameOptions[2].architectureIndex = architecture;
+    intent = M12_StartupMenu_GetLaunchIntent(menu);
+    CHECK(intent.valid && intent.gameId && intent.versionId &&
+          strcmp(intent.gameId, "dm2") == 0 &&
+          strcmp(intent.versionId, version_id) == 0 &&
+          intent.options.architectureIndex == (int)architecture,
+          "M12 explicit DM2 platform produces an authenticated launch intent");
+    if (failures) return;
+
+    view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
+    CHECK(view != NULL, "allocate DM2 DOS or Mac game view");
+    if (!view) return;
+    M11_GameView_Init(view);
+    CHECK(M11_GameView_OpenSelectedMenuEntry(view, menu) == 1,
+          "DM2 DOS or Mac opens through the M12-selected M11 handoff");
+    profile = (DM2_V1_BootProfile*)view->dm2BootProfile;
+    CHECK(view->active && view->startedFromLauncher && profile &&
+          profile->platform == platform,
+          "M12 DM2 launch binds the selected original platform profile");
+    if (view->active && profile && profile->platform == platform) {
+        /* The probe accelerates presentation time while preserving each
+         * original DOS MVE or Mac QuickTime frame and normal source inputs. */
+        M11_GameView_SetBootProbeMode(view, 1);
+        for (frame = 0; frame < 4000; ++frame) {
+            int intro_active = platform == DM2_PLATFORM_PC_EN ?
+                view->dm2DosMveIntroActive : view->dm2MacMovieActive;
+            if (!intro_active) break;
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(view, framebuffer, 320, 200);
+        }
+        CHECK(view->dm2State.startup_menu_active &&
+              !view->dm2State.level_loaded,
+              "M12-selected DM2 intro reaches the original New Game menu");
+        if (view->dm2State.startup_menu_active) {
+            DM2_V1_StartupMenuPointerLayout layout = {0};
+            CHECK(dm2_v1_boot_startup_menu_pointer_layout(profile, &layout) &&
+                  layout.valid && layout.new_game.w > 0 &&
+                  layout.new_game.h > 0,
+                  "M12-selected DM2 menu exposes its original New Game target");
+            if (layout.valid && layout.new_game.w > 0 &&
+                layout.new_game.h > 0) {
+                CHECK(M11_GameView_HandlePointerButton(
+                          view, layout.new_game.x + layout.new_game.w / 2,
+                          layout.new_game.y + layout.new_game.h / 2,
+                          DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                          M11_GAME_INPUT_REDRAW,
+                      "M12-selected DM2 New Game follows its source pointer path");
+                if (platform == DM2_PLATFORM_PC_EN) {
+                    CHECK(!view->dm2State.startup_menu_active &&
+                          view->dm2State.level_loaded &&
+                          view->world.party.championCount > 0,
+                          "M12-selected DM2 DOS New Game enters live runtime");
+                } else {
+                    CHECK(view->dm2State.startup_menu_active &&
+                          !view->dm2State.level_loaded,
+                          "M12-selected DM2 Mac New Game opens mirror selection");
+                    CHECK(M11_GameView_HandlePointerButton(
+                              view, 112, 130,
+                              DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                              M11_GAME_INPUT_REDRAW &&
+                          !view->dm2State.startup_menu_active &&
+                          view->dm2State.level_loaded &&
+                          view->world.party.championCount == 1,
+                          "M12-selected DM2 Mac mirror enters live runtime");
+                }
+            }
+        }
+        if (view->dm2State.level_loaded) {
+            DM2_V1_BootRuntimeReceipt runtime;
+            memset(&runtime, 0, sizeof(runtime));
+            CHECK(dm2_v1_boot_runtime_capture(profile, &runtime) &&
+                  runtime.runtime_ready && runtime.current_level == 0,
+                  "M12-selected DM2 platform owns the first authentic runtime");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(view, framebuffer, 320, 200);
+            CHECK(view->dm2LastRuntimeFrameAccepted &&
+                  view->dm2LastRuntimeRealAssetsReady &&
+                  view->dm2LastRuntimeNoCoreFallbacks &&
+                  view->dm2LastRuntimeFallbackDrawCount == 0,
+                  "M12-selected DM2 first runtime frame uses original assets");
+        }
+    }
+    M11_GameView_Shutdown(view);
+    SDL_free(view);
+}
 
 typedef struct GameLeafScanReceipt {
     char searchRoot[FSP_PATH_MAX];
@@ -377,6 +493,10 @@ int main(void)
     }
 
     if (!failures) run_dm2_amiga_m12_handoff(menu);
+    if (!failures) run_dm2_m12_dos_or_mac_handoff(
+        menu, "pc-en", M12_ARCH_PC, DM2_PLATFORM_PC_EN);
+    if (!failures) run_dm2_m12_dos_or_mac_handoff(
+        menu, "mac-en-retail", M12_ARCH_MAC, DM2_PLATFORM_MAC_EN);
 
     /* The authentic v1.2 preservation ZIP contains its STX disk directly,
      * unlike the ZIP -> ZIP -> STX v1.1 archive exercised by the nested
