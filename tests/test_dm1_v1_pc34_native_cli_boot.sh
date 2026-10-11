@@ -136,6 +136,7 @@ if len(matches) != 1:
 print(matches[0])
 PY
 )
+    expected_pc_dungeon="${pc_graphics%/*}/DUNGEON.DAT"
     rm "$pc_graphics"
     cp "$runtime_data_root/GRAPHICS.DAT" "$mixed_root/GRAPHICS.DAT"
     cp "$wrong_dungeon" "$mixed_root/DUNGEON.DAT"
@@ -147,7 +148,6 @@ PY
         printf '%s\n' "$mixed_output" >&2
         exit 1
     }
-    expected_pc_dungeon="$mixed_pc_root/DATA/DUNGEON.DAT"
     if ! grep -Fq "LOADING DUNGEON: [$expected_pc_dungeon]" <<<"$mixed_output" ||
        ! grep -Fq "graphicsPath=$mixed_root/GRAPHICS.DAT" <<<"$mixed_output" ||
        ! grep -Fq 'phase=dm1-runtime' <<<"$mixed_output" ||
