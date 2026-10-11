@@ -8,7 +8,10 @@ ZIP -> ZIP -> ADF game and save media on both the local v3.0.375 build and the
 packaged v3.0.376 app. The original save restored map 0, party `(4,15)`,
 direction 2, four champions, and tick 292 through direct CLI and M12 Quick
 Resume. This does not verify native M5 Retina window/input behavior or full
-visual parity.
+visual parity. A Linux ARM64 run of the published v3.0.376 package reached
+its menu and input checks, but the full regression exited 1 during the
+physical-card mouse route under the local ARM64 runtime; issue #13 remains
+unverified on its reported x86_64 environment.
 
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
