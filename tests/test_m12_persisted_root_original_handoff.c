@@ -225,6 +225,108 @@ static void run_dm2_amiga_m12_handoff(M12_StartupMenuState* menu)
     SDL_free(view);
 }
 
+static void run_dm2_fmtowns_m12_handoff(M12_StartupMenuState* menu)
+{
+    const char* version_id = "fmtowns-ja";
+    int version_index = M12_AssetStatus_FindVersionIndex("dm2", version_id);
+    const M12_AssetVersionStatus* version = version_index < 0 ? NULL :
+        M12_AssetStatus_GetVersion(&menu->assetStatus, "dm2",
+                                   (size_t)version_index);
+    M12_LaunchIntent intent;
+    M11_GameViewState* view;
+    DM2_V1_BootProfile* profile;
+    int tick;
+
+    if (!version || !version->matched) {
+        fprintf(stderr,
+                "FAIL: selected root lacks authenticated dm2 %s media\n",
+                version_id);
+        ++failures;
+        return;
+    }
+    menu->selectedIndex = 2;
+    menu->activatedIndex = 2;
+    menu->launchRequested = 1;
+    menu->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu->gameOptions[2].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu->gameOptions[2].versionIndex = version_index;
+    menu->gameOptions[2].architectureIndex = M12_ARCH_FM_TOWNS;
+    intent = M12_StartupMenu_GetLaunchIntent(menu);
+    CHECK(intent.valid && intent.gameId && intent.versionId &&
+          strcmp(intent.gameId, "dm2") == 0 &&
+          strcmp(intent.versionId, version_id) == 0 &&
+          intent.options.architectureIndex == M12_ARCH_FM_TOWNS,
+          "M12 explicit DM2 FM Towns selection produces an authenticated intent");
+    if (failures) return;
+
+    view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
+    CHECK(view != NULL, "allocate DM2 FM Towns game view");
+    if (!view) return;
+    M11_GameView_Init(view);
+    CHECK(M11_GameView_OpenSelectedMenuEntry(view, menu) == 1,
+          "DM2 FM Towns opens through the M12-selected M11 handoff");
+    profile = (DM2_V1_BootProfile*)view->dm2BootProfile;
+    CHECK(view->active && view->startedFromLauncher && profile &&
+          profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+          view->dm2FmtownsSwooshActive,
+          "M12 DM2 FM Towns launch binds its original SWSH/TITL profile");
+    if (view->active && profile &&
+        profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
+        for (tick = 0; tick < 20000 && view->dm2FmtownsSwooshActive; ++tick)
+            (void)M11_GameView_AdvanceIdleTick(view);
+        for (tick = 0; tick < 20000 && !view->dm2FmtownsTitleFinished; ++tick)
+            (void)M11_GameView_AdvanceIdleTick(view);
+        CHECK(view->dm2FmtownsTitleFinished &&
+              view->dm2State.startup_menu_active &&
+              !view->dm2State.level_loaded,
+              "M12-selected FM Towns title reaches its source New Game menu");
+        if (view->dm2FmtownsTitleFinished &&
+            view->dm2State.startup_menu_active) {
+            DM2_V1_StartupMenuPointerLayout layout = {0};
+            CHECK(dm2_v1_boot_startup_menu_pointer_layout(profile, &layout) &&
+                  layout.valid && layout.new_game.w > 0 &&
+                  layout.new_game.h > 0,
+                  "M12-selected FM Towns menu exposes its original New Game target");
+            if (layout.valid && layout.new_game.w > 0 &&
+                layout.new_game.h > 0) {
+                CHECK(M11_GameView_HandlePointerButton(
+                          view, layout.new_game.x + layout.new_game.w / 2,
+                          layout.new_game.y + layout.new_game.h / 2,
+                          DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      view->dm2State.startup_menu_active &&
+                      !view->dm2State.level_loaded,
+                      "FM Towns New Game opens the source champion selector");
+                CHECK(M11_GameView_HandlePointerButton(
+                          view, 100, 60,
+                          DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      !view->dm2State.startup_menu_active &&
+                      view->dm2State.level_loaded &&
+                      view->world.party.championCount == 1,
+                      "M12-selected FM Towns mirror enters live runtime");
+            }
+        }
+        if (view->dm2State.level_loaded) {
+            unsigned char framebuffer[320u * 200u];
+            DM2_V1_BootRuntimeReceipt runtime;
+            memset(&runtime, 0, sizeof(runtime));
+            CHECK(dm2_v1_boot_runtime_capture(profile, &runtime) &&
+                  runtime.runtime_ready && runtime.current_level == 0,
+                  "M12-selected FM Towns owns the first authentic runtime");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(view, framebuffer, 320, 200);
+            CHECK(view->dm2LastRuntimeFrameAccepted &&
+                  view->dm2LastRuntimeRealAssetsReady &&
+                  view->dm2LastRuntimeNoCoreFallbacks &&
+                  view->dm2LastRuntimeFallbackDrawCount == 0,
+                  "M12-selected FM Towns first frame uses original assets");
+        }
+    }
+    M11_GameView_Shutdown(view);
+    SDL_free(view);
+}
+
 static int record_game_leaf_search_root(const M12_AssetScanProgress* progress,
                                         void* userData)
 {
@@ -493,6 +595,7 @@ int main(void)
     }
 
     if (!failures) run_dm2_amiga_m12_handoff(menu);
+    if (!failures) run_dm2_fmtowns_m12_handoff(menu);
     if (!failures) run_dm2_m12_dos_or_mac_handoff(
         menu, "pc-en", M12_ARCH_PC, DM2_PLATFORM_PC_EN);
     if (!failures) run_dm2_m12_dos_or_mac_handoff(
