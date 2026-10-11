@@ -59,12 +59,17 @@ int dm1_v1_amiga_title_f0437_receipt(
         0x06, 0x79, 0xe3, 0x9d, 0xa9, 0xdc, 0xc2, 0xe8,
         0x55, 0xcb, 0x33, 0xc6, 0xc6, 0x4d, 0xdc, 0xb5
     };
-    /* ReDMCSB TITLE.C:12,39 uses the shared MEDIA413 A20E/A20F/A20G
-     * implementation. Pair each authentic GRAPHICS.DAT with its own
-     * original swoosh; never accept a mixed-language title. */
+    static const uint8_t a21e_graphics_md5[16] = {
+        0xb3, 0x59, 0x31, 0xb5, 0x5d, 0xb6, 0x49, 0xa1,
+        0xbd, 0x2d, 0x41, 0x5b, 0x61, 0xb2, 0x98, 0x01
+    };
+    /* ReDMCSB TITLE.C:12,39 and STARTUP1.C:143 use the shared MEDIA413
+     * implementation for A20E/F/G and A21E. Pair each authentic graphics
+     * file with its original swoosh. */
     static const char a20e_swsh_md5[] = "a0ffbcc7ae8cecac03128ddb32887ef4";
     static const char a20f_swsh_md5[] = "1038138978975415571a878bb08f54be";
     static const char a20g_swsh_md5[] = "916cb3cd462e7582d2a39c73e40b3339";
+    static const char a21e_swsh_md5[] = "658db79c6bb87f3ab09eb7005cd91313";
     DM1_V1_AmigaGraphicsReceipt graphics_receipt;
     DM1_V1_AmigaSwshAssets swsh_assets;
     DM1_V1_AmigaTitleF0437Receipt receipt;
@@ -84,7 +89,8 @@ int dm1_v1_amiga_title_f0437_receipt(
         dm1_v1_amiga_graphics_receipt(graphics_dat, graphics_dat_bytes,
                                        &graphics_receipt) != 0 ||
         !graphics_receipt.is_amiga ||
-        graphics_receipt.version != DM1_AMIGA_VER_2_0 ||
+        (graphics_receipt.version != DM1_AMIGA_VER_2_0 &&
+         graphics_receipt.version != DM1_AMIGA_VER_2_1) ||
         !((graphics_receipt.lang == DM1_AMIGA_LANG_EN &&
            memcmp(graphics_receipt.md5, a20e_graphics_md5,
                   sizeof(a20e_graphics_md5)) == 0 &&
@@ -96,7 +102,12 @@ int dm1_v1_amiga_title_f0437_receipt(
           (graphics_receipt.lang == DM1_AMIGA_LANG_DE &&
            memcmp(graphics_receipt.md5, a20g_graphics_md5,
                   sizeof(a20g_graphics_md5)) == 0 &&
-           strcmp(swsh_assets.executableMd5, a20g_swsh_md5) == 0))) {
+           strcmp(swsh_assets.executableMd5, a20g_swsh_md5) == 0) ||
+          (graphics_receipt.lang == DM1_AMIGA_LANG_EN &&
+           graphics_receipt.version == DM1_AMIGA_VER_2_1 &&
+           memcmp(graphics_receipt.md5, a21e_graphics_md5,
+                  sizeof(a21e_graphics_md5)) == 0 &&
+           strcmp(swsh_assets.executableMd5, a21e_swsh_md5) == 0))) {
         return 0;
     }
 
@@ -162,7 +173,7 @@ int dm1_v1_amiga_title_f0437_receipt(
     receipt.final_palette[12] = 0x0f00u;
     receipt.final_palette[15] = 0x0f00u;
     receipt.source_evidence =
-        "ReDMCSB TITLE.C F0437 A20 branch: C001_GRAPHIC_TITLE; "
+        "ReDMCSB TITLE.C F0437 shared A20/A21 path: C001_GRAPHIC_TITLE; "
         "DATA.C G0003-G0005/G1075; DEFS.H MEDIA425 RGB4 palette; "
         "18 zoom blits, VBeamPos line 152, Delay(25L)";
     result = receipt.presents_nonzero_pixels > 0u &&

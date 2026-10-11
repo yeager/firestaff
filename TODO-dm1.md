@@ -24,9 +24,14 @@ current-source macOS build passed that same scripted pointer route.
   their own paired media and reach runtime through the original C001 title,
   RGB4 palette stages, authored zoom steps, C002/C003 doors and C004 entrance.
   Real-media CLI and M12 tests cover all three A20 language editions. Amiga
-  2.1/2.2 English, demo media, and native renderer/input timing on each
-  supported desktop remain open; the A20 tests do not establish pixel parity
-  or HiDPI behavior. A36M intentionally skips F0437: STARTUP1/STARTUP2 enter
+  2.1 English now authenticates the original GRAPHICS.DAT/SWSH pair and its
+  original dungeon data, then completes F0437/F0441 and reaches runtime through
+  both CLI and M12. Its source archive labels the ADF dump "Original (Not
+  working)"; coverage uses its original files in a ZIP transport wrapper and
+  does not claim a bootable ADF. Amiga 2.2 English/German, demo media, and
+  native renderer/input timing on each supported desktop remain open; these
+  tests do not establish pixel parity or HiDPI behavior. A36M intentionally
+  skips F0437: STARTUP1/STARTUP2 enter
   F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash
   now selects the source F0466 decoder, and authentic C002/C003/C004/C005/C011
   media passes the real-media receipt test. Its CLI and M12 regressions now

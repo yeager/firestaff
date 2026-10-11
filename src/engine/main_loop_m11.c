@@ -3208,7 +3208,8 @@ static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
     if (!version || !version->versionId ||
         (strcmp(version->versionId, "amiga20-en") != 0 &&
          strcmp(version->versionId, "amiga20-fr") != 0 &&
-         strcmp(version->versionId, "amiga20-de") != 0) ||
+         strcmp(version->versionId, "amiga20-de") != 0 &&
+         strcmp(version->versionId, "amiga21-en") != 0) ||
         strstr(version->matchedPath, "[HD]") != NULL ||
         !gameView->assetLoader.graphicsDatPath[0] ||
         strcmp(gameView->assetLoader.graphicsDatPath,
@@ -3535,7 +3536,9 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     }
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
-                "firestaff: startup-source-complete game=dm1 platform=amiga-v20 phase=title-f0437 frames=%u source=%s graphics=%s\n",
+                "firestaff: startup-source-complete game=dm1 platform=%s phase=title-f0437 frames=%u source=%s graphics=%s\n",
+                strcmp(version->versionId, "amiga21-en") == 0
+                    ? "amiga-v21" : "amiga-v20",
                 DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT,
                 receipt.executable_md5, receipt.graphics_md5);
     }
@@ -3552,9 +3555,9 @@ cleanup:
 
 /* ReDMCSB SWSH.C F0902/F0904 and SWSHSND.C F0908/F0909 use the embedded
  * Amiga Hunk executable's four bitplanes, 27 source palette rows, and Paula
- * sample. Accept only the selected A20 executable profile, read directly
- * from the selected nested ADF, and leave the transaction on its existing
- * title/entrance path after this prelude. */
+ * sample. Accept only the selected authenticated Amiga executable profile,
+ * read directly from the selected nested ADF, and leave the transaction on
+ * its existing title/entrance path after this prelude. */
 static int m11_play_dm1_amiga_swsh_if_available(
     const M12_StartupMenuState* menuState,
     const M12_MenuEntry* entry,
@@ -4325,7 +4328,8 @@ static int m11_dm1_handoff_play_title(void* user,
         version && version->versionId &&
         (strcmp(version->versionId, "amiga20-en") == 0 ||
          strcmp(version->versionId, "amiga20-fr") == 0 ||
-         strcmp(version->versionId, "amiga20-de") == 0) &&
+         strcmp(version->versionId, "amiga20-de") == 0 ||
+         strcmp(version->versionId, "amiga21-en") == 0) &&
         strstr(version->matchedPath, "[HD]") == NULL) {
         const int played = m11_play_dm1_amiga_title_f0437_if_available(
             ctx->menuState, ctx->launchEntry, ctx->gameView);
@@ -4361,7 +4365,7 @@ static int m11_dm1_handoff_play_entrance(void* user,
     DM1_V1_AmigaEntranceF0441Receipt amigaReceipt;
     int versionIndex;
     const M12_AssetVersionStatus* version;
-    int selectedAmigaA20;
+    int selectedAmigaV2;
     int command;
     (void)source_id;
     if (!ctx || !ctx->gameView) {
@@ -4373,16 +4377,17 @@ static int m11_dm1_handoff_play_entrance(void* user,
         ? M12_AssetStatus_GetVersion(&ctx->menuState->assetStatus, "dm1",
                                      (size_t)versionIndex)
         : NULL;
-    selectedAmigaA20 = version && version->versionId &&
+    selectedAmigaV2 = version && version->versionId &&
         (strcmp(version->versionId, "amiga20-en") == 0 ||
          strcmp(version->versionId, "amiga20-fr") == 0 ||
-         strcmp(version->versionId, "amiga20-de") == 0) &&
+         strcmp(version->versionId, "amiga20-de") == 0 ||
+         strcmp(version->versionId, "amiga21-en") == 0) &&
         M12_AssetStatus_GetVersionArchitecture(
             "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA;
     if (!ctx->activePostLaunchPlanValid ||
         !ctx->activePostLaunchPlan.entrance_full_start_receipt.valid ||
         ctx->activePostLaunchPlan.entrance_auto_enter_ms != auto_enter_after_ms ||
-        (selectedAmigaA20
+        (selectedAmigaV2
              ? !ctx->activePostLaunchPlan.media_receipt.handled
              : !dm1_v1_startup_entrance_timing_receipt_valid_pc34(
                    &ctx->activePostLaunchPlan.media_receipt))) {
@@ -4390,7 +4395,7 @@ static int m11_dm1_handoff_play_entrance(void* user,
     }
     entrance = &ctx->activePostLaunchPlan.entrance_full_start_receipt;
     media = &ctx->activePostLaunchPlan.media_receipt;
-    if (selectedAmigaA20) {
+    if (selectedAmigaV2) {
         if (!m11_dm1_amiga_entrance_f0441_receipt_if_selected(
                 ctx->menuState, ctx->launchEntry, ctx->gameView,
                 &amigaReceipt)) {
@@ -4401,7 +4406,9 @@ static int m11_dm1_handoff_play_entrance(void* user,
             &amigaReceipt);
         if (g_m11_debug_startup_detail && command > 0) {
             fprintf(stderr,
-                    "firestaff: startup-source-complete game=dm1 platform=amiga-v20 phase=entrance-f0441 steps=%u graphics=%s input=mouse-only palette=rgb4\n",
+                    "firestaff: startup-source-complete game=dm1 platform=%s phase=entrance-f0441 steps=%u graphics=%s input=mouse-only palette=rgb4\n",
+                    strcmp(version->versionId, "amiga21-en") == 0
+                        ? "amiga-v21" : "amiga-v20",
                     amigaReceipt.opening_steps, amigaReceipt.graphics_md5);
         }
     } else {

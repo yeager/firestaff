@@ -101,6 +101,8 @@ int main(int argc, char **argv) {
         "Floppy Disks ADF/Dungeon Master for Amiga v2.0 (French) Cracked.adf";
     static const char german_adf[] =
         "Floppy Disks ADF/Dungeon Master for Amiga v2.0 (German) Cracked.adf";
+    static const char a21e_adf[] =
+        "Floppy Disks ADF/Dungeon Master for Amiga v2.1 (English) Original (Not working).adf";
     uint8_t *adf = NULL, *inner_zip = NULL, *english_adf = NULL;
     uint8_t *mutated = NULL;
     size_t adf_bytes = 0u, inner_zip_bytes = 0u, english_adf_bytes = 0u;
@@ -109,6 +111,81 @@ int main(int argc, char **argv) {
     DM1_V1_AmigaEntranceF0441Receipt entrance;
     char frenchDungeonMd5[33];
     int result = 1;
+
+    /* Preserve the original A21E disk as an exact byte stream for the
+     * product's ZIP/ADF reader tests. The archive labels this dump as not
+     * working; it is tested as original loose media, not as a bootable ADF. */
+    if (argc == 3 && strcmp(argv[1], "--emit-a21-adf") == 0) {
+        if (!firestaff_7z_read_member(argv[2], a21e_adf,
+                                      &adf, &adf_bytes) ||
+            adf_bytes != 901120u ||
+            fwrite(adf, 1u, adf_bytes, stdout) != adf_bytes) {
+            free(adf);
+            fputs("FAIL: could not stream the authentic A21E ADF\n", stderr);
+            return 1;
+        }
+        free(adf);
+        return 0;
+    }
+    if (argc == 3 && strcmp(argv[1], "--check-a21-adf") == 0) {
+        char graphics_md5[33];
+        char swsh_md5[33];
+        char dungeon_md5[33];
+        DM1_V1_AmigaGraphicsReceipt a21_graphics;
+        DM1_V1_AmigaTitleF0437Receipt a21_title;
+        DM1_V1_AmigaEntranceF0441Receipt a21_entrance;
+        int full_length_ok;
+        int trim_two_ok;
+        if (!firestaff_7z_read_member(argv[2], a21e_adf,
+                                      &adf, &adf_bytes) ||
+            adf_bytes != 901120u ||
+            firestaff_amiga_adf_visit_ofs_files(
+                adf, adf_bytes, selected_adf_member, &english) < 0 ||
+            !english.graphics || !english.swsh || !english.dungeon ||
+            !m12_bytes_md5_hex(english.graphics, english.graphics_bytes,
+                               graphics_md5) ||
+            !m12_bytes_md5_hex(english.swsh, english.swsh_bytes,
+                               swsh_md5) ||
+            !m12_bytes_md5_hex(english.dungeon, english.dungeon_bytes,
+                               dungeon_md5) ||
+            dm1_v1_amiga_graphics_receipt(
+                english.graphics, english.graphics_bytes,
+                &a21_graphics) != 0) {
+            fputs("FAIL: could not read authentic A21E ADF files\n", stderr);
+            media_free(&english);
+            free(adf);
+            return 1;
+        }
+        full_length_ok = dungeon_world_from_original(
+            english.dungeon, english.dungeon_bytes, 0u);
+        trim_two_ok = dungeon_world_from_original(
+            english.dungeon, english.dungeon_bytes, 2u);
+        memset(&a21_title, 0, sizeof(a21_title));
+        memset(&a21_entrance, 0, sizeof(a21_entrance));
+        (void)dm1_v1_amiga_title_f0437_receipt(
+            english.graphics, english.graphics_bytes,
+            english.swsh, english.swsh_bytes, &a21_title);
+        (void)dm1_v1_amiga_entrance_f0441_receipt(
+            english.graphics, english.graphics_bytes,
+            english.swsh, english.swsh_bytes, &a21_entrance);
+        printf("A21E media graphics_md5=%s graphics_lang=%d "
+               "graphics_version=%d swsh_md5=%s dungeon_md5=%s "
+               "world_trim_0=%d world_trim_2=%d f0437=%d f0441=%d\n",
+               graphics_md5, (int)a21_graphics.lang,
+               (int)a21_graphics.version, swsh_md5, dungeon_md5,
+               full_length_ok, trim_two_ok,
+               a21_title.valid, a21_entrance.valid);
+        media_free(&english);
+        free(adf);
+        return (strcmp(graphics_md5,
+                       "b35931b55db649a1bd2d415b61b29801") == 0 &&
+                strcmp(swsh_md5,
+                       "658db79c6bb87f3ab09eb7005cd91313") == 0 &&
+                a21_graphics.version == DM1_AMIGA_VER_2_1 &&
+                a21_graphics.lang == DM1_AMIGA_LANG_EN &&
+                !full_length_ok && trim_two_ok && a21_title.valid &&
+                a21_entrance.valid) ? 0 : 1;
+    }
 
     /* Test-only transport conversion: stream the selected original ADF to
      * stdout so the CLI/M12 shell test can wrap those exact bytes in a
