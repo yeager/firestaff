@@ -49,20 +49,20 @@ msgstr "DUNGEON LOAD FAILED"
 msgid "CHECK DUNGEON.DAT"
 msgstr "CHECK DUNGEON.DAT"
 
-#: src/engine/main_loop_m11.c:442 src/engine/main_loop_m11.c:5371
-#: src/engine/main_loop_m11.c:5394 src/ui/menu_startup_m12.c:1088
+#: src/engine/main_loop_m11.c:442 src/engine/main_loop_m11.c:5378
+#: src/engine/main_loop_m11.c:5401 src/ui/menu_startup_m12.c:1088
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC RETURNS TO MENU"
 
-#: src/engine/main_loop_m11.c:5367 src/engine/main_loop_m11.c:5390
+#: src/engine/main_loop_m11.c:5374 src/engine/main_loop_m11.c:5397
 msgid "CSB UTILITY DISK NOT READY"
 msgstr "CSB UTILITY DISK NOT READY"
 
-#: src/engine/main_loop_m11.c:5369
+#: src/engine/main_loop_m11.c:5376
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 
-#: src/engine/main_loop_m11.c:5392
+#: src/engine/main_loop_m11.c:5399
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "OFF"
 
 #: src/ui/menu_startup_m12.c:495 src/ui/menu_startup_m12.c:511
-#: src/ui/menu_startup_render_modern_m12.c:2484
+#: src/ui/menu_startup_render_modern_m12.c:2486
 msgid "ON"
 msgstr "ON"
 
@@ -416,7 +416,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2078
+#: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_render_modern_m12.c:2080
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -531,14 +531,14 @@ msgstr "GEREMASTERD"
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:821
 #: src/ui/menu_startup_m12.c:10389 src/ui/menu_startup_m12.c:10832
 #: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2748
+#: src/ui/menu_startup_render_modern_m12.c:2750
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:801 src/ui/menu_startup_m12.c:831
 #: src/ui/menu_startup_m12.c:10391 src/ui/menu_startup_m12.c:10846
 #: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2751
+#: src/ui/menu_startup_render_modern_m12.c:2753
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK - HINT ORACLE"
 
 #: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:11917
-#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1853
-#: src/ui/menu_startup_render_modern_m12.c:2126
+#: src/ui/menu_startup_m12.c:11920 src/ui/menu_startup_render_modern_m12.c:1855
+#: src/ui/menu_startup_render_modern_m12.c:2128
 msgid "MUSEUM OF LORE"
 msgstr "MUSEUM VAN OVERLEVERING"
 
@@ -1623,7 +1623,7 @@ msgstr "ORIGINEEL"
 msgid "MISSING OR MISMATCHED"
 msgstr "ONTBREEKT OF KOMT NIET OVEREEN"
 
-#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2054
+#: src/ui/menu_startup_m12.c:9313 src/ui/menu_startup_render_modern_m12.c:2056
 msgid "EXTRAS"
 msgstr "EXTRA'S"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape terug  |  Omhoog/omlaag navigeren  |  Enter openen"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > tab wisselen   Omhoog/omlaag navigeren   Enter wijzigen"
 
-#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2290
+#: src/ui/menu_startup_m12.c:11233 src/ui/menu_startup_render_modern_m12.c:2292
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "GEEN ONDERSTEUND NATIEF PLATFORM"
 
@@ -1878,7 +1878,7 @@ msgid "COMING SOON"
 msgstr "COMING SOON"
 
 #: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2593
+#: src/ui/menu_startup_render_modern_m12.c:2595
 msgid "FIRESTAFF"
 msgstr "FIRESTAFF-PROJECT"
 
@@ -1918,45 +1918,45 @@ msgstr "DRUK OP ENTER OM HET LORE MUSEUM TE OPENEN"
 msgid "< BACK"
 msgstr "< TERUG"
 
-#: src/ui/menu_startup_render_modern_m12.c:1975
+#: src/ui/menu_startup_render_modern_m12.c:1977
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2056
+#: src/ui/menu_startup_render_modern_m12.c:2058
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2130
+#: src/ui/menu_startup_render_modern_m12.c:2132
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "BEWARINGNOTA'S, SERIEOVERLEG EN PROJECTCREDITS"
 
-#: src/ui/menu_startup_render_modern_m12.c:2143
+#: src/ui/menu_startup_render_modern_m12.c:2145
 msgid "ARCHIVE SECTIONS"
 msgstr "ARCHIEFSTATUS"
 
-#: src/ui/menu_startup_render_modern_m12.c:2166
+#: src/ui/menu_startup_render_modern_m12.c:2168
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "PAGINA %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2274
+#: src/ui/menu_startup_render_modern_m12.c:2276
 msgid "CHOOSE PLATFORM"
 msgstr "GEEN SPELGEGEVENS GEVONDEN"
 
-#: src/ui/menu_startup_render_modern_m12.c:2299
+#: src/ui/menu_startup_render_modern_m12.c:2301
 msgid "CHOOSE PRESENTATION"
 msgstr "LAUNCHER-BESTEMMINGEN"
 
-#: src/ui/menu_startup_render_modern_m12.c:2541
+#: src/ui/menu_startup_render_modern_m12.c:2543
 msgid "LAUNCH >"
 msgstr "STARTEN"
 
-#: src/ui/menu_startup_render_modern_m12.c:2610
-#: src/ui/menu_startup_render_modern_m12.c:2734
+#: src/ui/menu_startup_render_modern_m12.c:2612
+#: src/ui/menu_startup_render_modern_m12.c:2736
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2674
+#: src/ui/menu_startup_render_modern_m12.c:2676
 msgid "CANCEL"
 msgstr "ANNULEREN"
 
