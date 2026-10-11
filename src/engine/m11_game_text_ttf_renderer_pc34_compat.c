@@ -129,7 +129,7 @@ int m11_ttf_render_string(
         fs_l10n_get_language(), fontSizePixels);
     if (!font) return 0;
 
-    surface = TTF_RenderUTF8_Blended(font, utf8_text,
+    surface = TTF_RenderText_Blended(font, utf8_text, 0U,
         (SDL_Color){255, 255, 255, 255});
     if (!surface) return 0;
 
@@ -181,7 +181,7 @@ int m11_ttf_render_rgba_string(
         fs_l10n_get_language(), fontSizePixels);
     if (!font) return 0;
 
-    surface = TTF_RenderUTF8_Blended(font, utf8_text,
+    surface = TTF_RenderText_Blended(font, utf8_text, 0U,
         (SDL_Color){255, 255, 255, 255});
     if (!surface) return 0;
 

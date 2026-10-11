@@ -17,6 +17,7 @@ concurrency:
 
 env:
   SDL3_TAG: release-3.2.14
+  SDL3_TTF_TAG: release-3.2.2
 
 jobs:
   localization-catalogs:
@@ -150,8 +151,8 @@ jobs:
           HOMEBREW_NO_AUTO_UPDATE: '1'
           HOMEBREW_NO_REQUIRE_TAP_TRUST: '1'
         run: |
-          if ! brew list --formula sdl3 >/dev/null 2>&1; then
-            brew install sdl3
+          if ! brew list --formula sdl3 >/dev/null 2>&1 || ! brew list --formula sdl3_ttf >/dev/null 2>&1; then
+            brew install sdl3 sdl3_ttf
           fi
 
       - name: Install SDL3 (Linux)
@@ -165,6 +166,13 @@ jobs:
           cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
           cmake --build "$sdl_root/build" --parallel
           sudo cmake --install "$sdl_root/build"
+          ttf_root="$RUNNER_TEMP/firestaff-sdl3-ttf"
+          git clone --depth 1 --recurse-submodules --branch "$SDL3_TTF_TAG" https://github.com/libsdl-org/SDL_ttf.git "$ttf_root/source"
+          cmake -S "$ttf_root/source" -B "$ttf_root/build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
+            -DSDLTTF_VENDORED=ON -DSDLTTF_SAMPLES=OFF
+          cmake --build "$ttf_root/build" --parallel
+          sudo cmake --install "$ttf_root/build"
           sudo ldconfig
 
       - name: Setup MSYS2 (Windows)
@@ -178,6 +186,7 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-sdl3
+            mingw-w64-ucrt-x86_64-sdl3-ttf
 
       - name: CMake configure
         run: cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release

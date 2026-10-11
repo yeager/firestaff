@@ -25,6 +25,7 @@ ARTPACK_STUDIO_APP_SRC="${ARTPACK_STUDIO_APP_SRC:-$BUILD_DIR/artpack-studio-bund
 DUNGEON_STUDIO_APP_SRC="${DUNGEON_STUDIO_APP_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/Firestaff Dungeon Studio.app}"
 SAVEGAME_EDITOR_APP_SRC="${SAVEGAME_EDITOR_APP_SRC:-$BUILD_DIR/savegame-editor-bundle/dist/Firestaff Savegame Editor.app}"
 SDL_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3.*dylib/ {print $1; exit}')"
+SDL_TTF_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3_ttf.*dylib/ {print $1; exit}')"
 
 if [[ ! -x "$BIN_SRC" ]]; then
   echo "Missing built binary: $BIN_SRC" >&2
@@ -56,7 +57,34 @@ cp "$BIN_SRC" "$MACOS_DIR/Firestaff"
 cp -R "$ARTPACK_STUDIO_APP_SRC" "$STAGE_DIR/Firestaff Artpack Studio.app"
 cp -R "$DUNGEON_STUDIO_APP_SRC" "$STAGE_DIR/Firestaff Dungeon Studio.app"
 cp -R "$SAVEGAME_EDITOR_APP_SRC" "$STAGE_DIR/Firestaff Savegame Editor.app"
-cp "$SDL_DYLIB" "$FRAMEWORKS_DIR/$(basename "$SDL_DYLIB")"
+RUNTIME_PREFIX="$(brew --prefix 2>/dev/null || true)"
+if [[ -n "${SDL_TTF_DYLIB:-}" && ! -f "$SDL_TTF_DYLIB" ]]; then
+  echo "Could not locate linked SDL3_ttf dylib: $SDL_TTF_DYLIB" >&2
+  exit 1
+fi
+cp -L "$SDL_DYLIB" "$FRAMEWORKS_DIR/$(basename "$SDL_DYLIB")"
+if [[ -n "${SDL_TTF_DYLIB:-}" ]]; then
+  cp -L "$SDL_TTF_DYLIB" "$FRAMEWORKS_DIR/$(basename "$SDL_TTF_DYLIB")"
+fi
+declare -a runtime_queue=("$SDL_DYLIB")
+if [[ -n "${SDL_TTF_DYLIB:-}" ]]; then
+  runtime_queue+=("$SDL_TTF_DYLIB")
+fi
+runtime_seen='|'
+while ((${#runtime_queue[@]})); do
+  runtime_source="${runtime_queue[0]}"
+  runtime_queue=("${runtime_queue[@]:1}")
+  [[ -n "$RUNTIME_PREFIX" && "$runtime_source" == "$RUNTIME_PREFIX"/* ]] || continue
+  runtime_name="$(basename "$runtime_source")"
+  case "$runtime_seen" in *"|$runtime_source|"*) continue ;; esac
+  runtime_seen+="$runtime_source|"
+  if [[ ! -e "$FRAMEWORKS_DIR/$runtime_name" ]]; then
+    cp -L "$runtime_source" "$FRAMEWORKS_DIR/$runtime_name"
+  fi
+  while IFS= read -r runtime_dep; do
+    [[ "$runtime_dep" == "$RUNTIME_PREFIX"/* ]] && runtime_queue+=("$runtime_dep")
+  done < <(otool -L "$runtime_source" | tail -n +2 | awk '{print $1}')
+done
 cp "$README_SRC" "$STAGE_DIR/README.md"
 if [[ -n "$RELEASE_NOTES_VERSION" ]]; then
   python3 "$ROOT/scripts/extract_release_notes.py" \
@@ -107,7 +135,22 @@ cat > "$CONTENTS_DIR/Info.plist" <<EOF
 </plist>
 EOF
 
-install_name_tool -change "$SDL_DYLIB" "@executable_path/../Frameworks/$(basename "$SDL_DYLIB")" "$MACOS_DIR/Firestaff"
+for staged_binary in "$MACOS_DIR/Firestaff" "$FRAMEWORKS_DIR"/*.dylib; do
+  [[ -f "$staged_binary" ]] || continue
+  if [[ "$staged_binary" != "$MACOS_DIR/Firestaff" ]]; then
+    install_name_tool -id "@rpath/$(basename "$staged_binary")" "$staged_binary"
+  fi
+  while IFS= read -r runtime_dep; do
+    [[ -n "${RUNTIME_PREFIX:-}" && "$runtime_dep" == "$RUNTIME_PREFIX"/* ]] || continue
+    runtime_name="$(basename "$runtime_dep")"
+    if [[ -e "$FRAMEWORKS_DIR/$runtime_name" ]]; then
+      install_name_tool -change "$runtime_dep" "@rpath/$runtime_name" "$staged_binary"
+    fi
+  done < <(otool -L "$staged_binary" | tail -n +2 | awk '{print $1}')
+done
+if ! otool -l "$MACOS_DIR/Firestaff" | grep -q 'path @executable_path/../Frameworks'; then
+  install_name_tool -add_rpath '@executable_path/../Frameworks' "$MACOS_DIR/Firestaff"
+fi
 chmod +x "$MACOS_DIR/Firestaff"
 ln -s /Applications "$STAGE_DIR/Applications"
 

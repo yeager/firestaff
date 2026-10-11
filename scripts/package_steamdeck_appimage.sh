@@ -37,8 +37,12 @@ if ! command -v "$APPIMAGETOOL" >/dev/null 2>&1; then
 fi
 
 SDL3_LIB="${SDL3_LIB:-}"
+SDL3_TTF_LIB="${SDL3_TTF_LIB:-}"
 if [[ -z "$SDL3_LIB" ]] && command -v ldd >/dev/null 2>&1; then
   SDL3_LIB="$(ldd "$BIN_SRC" 2>/dev/null | awk '/libSDL3[.]so/ {print $3; exit}')"
+fi
+if [[ -z "$SDL3_TTF_LIB" ]] && command -v ldd >/dev/null 2>&1; then
+  SDL3_TTF_LIB="$(ldd "$BIN_SRC" 2>/dev/null | awk '/libSDL3_ttf[.]so/ {print $3; exit}')"
 fi
 if [[ -z "$SDL3_LIB" || ! -f "$SDL3_LIB" ]]; then
   echo "Missing SDL3 runtime library for Steam Deck AppImage." >&2
@@ -72,6 +76,14 @@ chmod 0755 "$APPDIR/usr/bin/firestaff_dungeon_studio"
 chmod 0755 "$APPDIR/usr/bin/firestaff_savegame_editor"
 cp -L "$SDL3_LIB" "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
 chmod 0755 "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
+if [[ -n "$SDL3_TTF_LIB" ]]; then
+  if [[ ! -f "$SDL3_TTF_LIB" ]]; then
+    echo "Missing SDL3_ttf runtime library: $SDL3_TTF_LIB" >&2
+    exit 1
+  fi
+  cp -L "$SDL3_TTF_LIB" "$APPDIR/usr/lib/firestaff/$(basename "$SDL3_TTF_LIB")"
+  chmod 0755 "$APPDIR/usr/lib/firestaff/$(basename "$SDL3_TTF_LIB")"
+fi
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
   cp "$ROOT/assets/branding/firestaff-logo.png" \
     "$APPDIR/usr/share/icons/hicolor/256x256/apps/firestaff.png"

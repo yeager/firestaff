@@ -32,6 +32,7 @@ concurrency:
 
 env:
   SDL3_TAG: release-3.2.14
+  SDL3_TTF_TAG: release-3.2.2
 
 jobs:
   preflight:
@@ -151,7 +152,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Install dependencies
-        run: brew install cmake pkg-config sdl3 python@3.13 python-tk@3.13 || true
+        run: brew install cmake pkg-config sdl3 sdl3_ttf python@3.13 python-tk@3.13
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -251,6 +252,7 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-sdl3
+            mingw-w64-ucrt-x86_64-sdl3-ttf
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-python-pip
             mingw-w64-ucrt-x86_64-python-pillow
@@ -406,6 +408,13 @@ jobs:
             -DSDL_TESTS=OFF
           cmake --build "$sdl_root/build" --parallel
           sudo cmake --install "$sdl_root/build"
+          ttf_root="$RUNNER_TEMP/firestaff-sdl3-ttf"
+          git clone --depth 1 --recurse-submodules --branch "$SDL3_TTF_TAG" https://github.com/libsdl-org/SDL_ttf.git "$ttf_root/source"
+          cmake -S "$ttf_root/source" -B "$ttf_root/build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
+            -DSDLTTF_VENDORED=ON -DSDLTTF_SAMPLES=OFF
+          cmake --build "$ttf_root/build" --parallel
+          sudo cmake --install "$ttf_root/build"
           sudo ldconfig
 
       - name: Configure

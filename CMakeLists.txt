@@ -4431,6 +4431,24 @@ if(NOT TARGET SDL3::SDL3 AND TARGET PkgConfig::SDL3)
     add_library(SDL3::SDL3 ALIAS PkgConfig::SDL3)
 endif()
 
+# Use a platform font for modern launcher/status text when SDL3_ttf is
+# installed. Keep it optional for cross-build targets (notably iOS/Android),
+# which retain the small deterministic bitmap fallback.
+find_package(SDL3_ttf QUIET CONFIG)
+if(NOT TARGET SDL3_ttf::SDL3_ttf AND PkgConfig_FOUND)
+    pkg_check_modules(SDL3_TTF QUIET IMPORTED_TARGET sdl3-ttf)
+    if(TARGET PkgConfig::SDL3_TTF)
+        add_library(SDL3_ttf::SDL3_ttf ALIAS PkgConfig::SDL3_TTF)
+    endif()
+endif()
+if(TARGET SDL3_ttf::SDL3_ttf)
+    message(STATUS "Found SDL3_ttf; enabling native UI fonts")
+    set(FIRESTAFF_HAVE_SDL3_TTF TRUE)
+else()
+    message(STATUS "SDL3_ttf not found; using bitmap UI font fallback")
+    set(FIRESTAFF_HAVE_SDL3_TTF FALSE)
+endif()
+
 # Host playback-device preference is shared by M11 and independent DM2
 # stream owners. Keep this leaf library free of game/runtime dependencies.
 add_library(firestaff_audio_device STATIC src/shared/firestaff_audio_device.c)
@@ -6679,6 +6697,10 @@ target_compile_definitions(firestaff_m10 PUBLIC
     HUGE=
     huge=
 )
+if(FIRESTAFF_HAVE_SDL3_TTF)
+    target_compile_definitions(firestaff_m10 PUBLIC FIRESTAFF_HAVE_SDL3_TTF=1)
+    target_link_libraries(firestaff_m10 PUBLIC SDL3_ttf::SDL3_ttf)
+endif()
 if(NOT MSVC)
     # M10 code is frozen Turbo-C port — only minimal warnings.
     # -include stddef.h provides NULL for files that skip standard includes.

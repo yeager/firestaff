@@ -1671,7 +1671,7 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
     const char* label;
     const char* gameTitle;
     int panelW;
-    int panelH = 112;
+    int panelH = 124;
     int panelX;
     int panelY;
     int titleAreaW;
@@ -1743,20 +1743,27 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
                            percentText, &percentStyle);
     }
     if (gameTitle[0]) {
-        char detailText[160];
         const char* task = M12_StartupMenu_ScanTaskDisplayForLocale(
             languageIndex, progress->currentTask);
-        snprintf(detailText, sizeof(detailText), "%s  %s", gameTitle, task);
         if (!draw_ttf_centered_fit(c, panelX + panelW / 2,
-                                   panelY + 49, detailText, panelW - 28,
-                                   c->w >= 960 ? 16 : (c->w >= 640 ? 14 : 10),
+                                   panelY + 47, gameTitle, panelW - 28,
+                                   c->w >= 960 ? 15 : (c->w >= 640 ? 13 : 10),
                                    COLOR_TEXT_DIM())) {
-            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 50,
-                                   detailText, &detail, panelW - 28);
+            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 48,
+                                   gameTitle, &detail, panelW - 28);
+        }
+        if (task && task[0] &&
+            !draw_ttf_centered_fit(c, panelX + panelW / 2,
+                                   panelY + 66, task, panelW - 32,
+                                   c->w >= 960 ? 12 : (c->w >= 640 ? 11 : 9),
+                                   COLOR_TEXT_DIM())) {
+            ModernTextStyle taskStyle = text_style_make(1, COLOR_TEXT_DIM(), 0);
+            draw_text_centered_fit(c, panelX + panelW / 2, panelY + 67,
+                                   task, &taskStyle, panelW - 32);
         }
     }
     barX = panelX + 18;
-    barY = panelY + 78;
+    barY = panelY + 94;
     barW = panelW - 36;
     fillW = (barW * percent) / 100;
     fill_rounded_rect(c, barX, barY, barW, 5, 2, rgb(55, 56, 60));
