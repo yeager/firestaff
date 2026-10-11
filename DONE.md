@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: The native Cocoa launcher exercised DM1 keyboard card/platform
+  navigation and DM2 mouse card/platform navigation, plus CSB and DM2
+  platform-to-presentation selection, using the installed original-media
+  root. Escape returned from platform selection to the launcher without
+  starting a game. `--debug` now logs mapped launcher
+  pointer coordinates, hit kind/index, click state, selected-card changes and
+  menu-view transitions. `menu_hit_launch_direct_click_m12` passed against the
+  same tree; it covers the DM1/CSB/DM2 card hit targets and verified-media
+  launch gates. This is an input/flow check, not visual-parity evidence.
+
 - 2026-10-11: Five focused DM1 HiDPI input/viewport geometry regressions passed,
   including 1512x982 logical-window to 3024x1964 drawable mappings. The
   `m11_display_aspect_present_rect` test also passed its Retina coordinate

@@ -7487,7 +7487,19 @@ static int m11_handle_launcher_pointer(M12_StartupMenuState* menuState,
                                        int useModernLauncher,
                                        int x, int y, int clicked) {
     if (useModernLauncher) {
-        return M12_ModernMenu_HandlePointer(menuState, x, y, clicked, NULL);
+        int beforeView = menuState ? (int)menuState->view : -1;
+        int beforeSelected = menuState ? menuState->selectedIndex : -1;
+        M12_MouseHit hit = M12_ModernMenu_HitTest(menuState, x, y);
+        int changed = M12_ModernMenu_HandlePointer(menuState, x, y, clicked, NULL);
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: menu-pointer x=%d y=%d clicked=%d hit=%d index=%d view=%d->%d selected=%d->%d changed=%d\n",
+                    x, y, clicked, (int)hit.kind, hit.index,
+                    beforeView, menuState ? (int)menuState->view : -1,
+                    beforeSelected, menuState ? menuState->selectedIndex : -1,
+                    changed);
+        }
+        return changed;
     }
     return M12_LegacyMenu_HandleCompactCardPointer(menuState, x, y, clicked);
 }
