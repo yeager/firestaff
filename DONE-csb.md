@@ -1,3 +1,12 @@
+- 2026-10-11: Rebuilt the current macOS source and passed
+  `test_csb_v1_fmtowns_native_cli_boot.sh` against the authentic English
+  FM Towns archive. Direct CLI and AUTO both retained the F31 `TITLE.ANM`
+  route; closed C28 Entrance frames passed in V2.0 and V2.1 presentations;
+  the default data root was discovered without `--data-dir`; M12 reached the
+  authentic MINI.DAT party; and the 1920x1080 pointer route hit the original
+  C004 Enter control. The original archive hash remained unchanged. SDL dummy
+  input does not verify physical M5 input or visual parity.
+
 # Firestaff DONE — CSB
 
 - 2026-10-10: Rechecked the authentic CSB startup matrix against the current

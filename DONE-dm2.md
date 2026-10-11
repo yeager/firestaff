@@ -1,3 +1,13 @@
+- 2026-10-11: Rebuilt the current macOS source and passed the complete
+  `test_dm2_v1_fmtowns_native_cli_boot.sh` regression against authentic FM
+  Towns data with the other DM2 editions installed. Bare `--game dm2` selected
+  FM Towns despite the saved PC preference; CLI reached the first original
+  party state; AUTO M12 reached the New Game menu after the original 225-frame
+  title; the source `TITLE/0/4` RGB digest matched; and New Game reached the
+  first champion in the normal loop. The presented 320x200 runtime frame
+  contained authentic Towns assets. SDL dummy video does not establish Retina
+  presentation, physical M5 input, or full visual parity.
+
 # Firestaff DONE — DM2
 
 - 2026-10-10: Built and ran `dm2_v1_four_platform_catalog_real_media` against

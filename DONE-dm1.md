@@ -1,3 +1,12 @@
+- 2026-10-11: Rebuilt the current macOS source and passed the full
+  `test_dm1_v1_pc34_native_cli_boot.sh` regression against the authentic DOS
+  3.4 archive. It covered installed loose files, missing-SWSH rejection, bare
+  CLI AUTO selection, M12 launch, all 23 C001 title steps, distinct C001 zoom
+  frames, C004 Entrance opening, Hall input/C127, C040 and C007 presentation,
+  1920x1080 rendering, and the native input matrix. The physical-card route
+  reached `DM1 READY`. SDL dummy input verifies the scripted event path, not
+  physical mouse behavior or Linux x86_64 issue #13.
+
 # Firestaff DONE — DM1
 
 - 2026-10-11: Re-ran `test_dm1_v1_amiga_v20_archive_cli_boot.sh` against the
