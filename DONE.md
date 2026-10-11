@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-11: Closing the window during the deferred first-run originals scan
+  now requests cancellation and waits only for the scanner's next progress
+  boundary. A cancelled start-menu scan no longer falls through to an
+  unreported default-root scan. The real-corpus cancellation regression and
+  focused launcher hit, DM2 menu-action, font/artpack, startup-menu and AUTO
+  platform-priority tests passed. This fixes shutdown responsiveness; it does
+  not alter data admission or game startup.
+
 - 2026-10-11: The native Cocoa launcher exercised DM1 keyboard card/platform
   navigation and DM2 mouse card/platform navigation, plus CSB and DM2
   platform-to-presentation selection, using the installed original-media

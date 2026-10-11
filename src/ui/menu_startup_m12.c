@@ -4486,6 +4486,13 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                               config->dataDir,
                                               &scanOptions);
     }
+    /* A cancelled progress-aware scan is final. Falling through to the
+     * default-root recovery below would launch another full scan without the
+     * caller's progress/cancel callback, so closing the intro could still
+     * block until every installed archive had been examined. */
+    if (state->assetStatus.scanProgress.cancelled) {
+        return;
+    }
     /* A valid configured root is already an authenticated media choice.  In
      * particular, opening the multi-game menu must not replace a DM1/CSB/DM2
      * collection merely because the default root contains more games. */

@@ -790,6 +790,7 @@ typedef struct {
     SDL_Mutex* mutex;
     M12_AssetScanProgress progress;
     SDL_AtomicInt done;
+    SDL_AtomicInt cancelRequested;
     Uint64 startedMs;
 } M11_IntroScanJob;
 
@@ -800,7 +801,7 @@ static int m11_intro_scan_progress_callback(
     if (job->mutex) SDL_LockMutex(job->mutex);
     job->progress = *progress;
     if (job->mutex) SDL_UnlockMutex(job->mutex);
-    return 1;
+    return SDL_GetAtomicInt(&job->cancelRequested) == 0;
 }
 
 static int SDLCALL m11_intro_scan_thread(void* data) {
@@ -959,6 +960,7 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
         scanJob.menuState = menuState;
         scanJob.mutex = SDL_CreateMutex();
         SDL_SetAtomicInt(&scanJob.done, 0);
+        SDL_SetAtomicInt(&scanJob.cancelRequested, 0);
         scanJob.startedMs = SDL_GetTicks();
         scanThread = SDL_CreateThread(m11_intro_scan_thread, "IntroScan", &scanJob);
         scanActive = scanThread != NULL;
@@ -998,6 +1000,9 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                                      M12_STARTUP_INTRO_HEIGHT);
         if (M11_Render_PumpEvents()) {
             if (scanThread) {
+                /* A window close must not wait for a complete originals scan.
+                 * The scanner checks this at its next progress boundary. */
+                SDL_SetAtomicInt(&scanJob.cancelRequested, 1);
                 SDL_WaitThread(scanThread, NULL);
             }
             if (scanJob.mutex) SDL_DestroyMutex(scanJob.mutex);

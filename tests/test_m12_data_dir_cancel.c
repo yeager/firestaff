@@ -762,6 +762,19 @@ typedef struct RealGameRescanCoverage {
     unsigned int gameMask;
 } RealGameRescanCoverage;
 
+typedef struct StartupScanCancelProbe {
+    unsigned int callbacks;
+} StartupScanCancelProbe;
+
+static int cancel_initial_startup_scan(
+    const M12_AssetScanProgress* progress, void* userData) {
+    StartupScanCancelProbe* probe = (StartupScanCancelProbe*)userData;
+    if (probe && progress) {
+        ++probe->callbacks;
+    }
+    return 0;
+}
+
 static int record_real_game_rescan_progress(
     const M12_AssetScanProgress* progress, void* userData) {
     RealGameRescanCoverage* coverage = (RealGameRescanCoverage*)userData;
@@ -826,6 +839,52 @@ static void check_return_rescan_uses_real_five_game_corpus(void) {
         CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, ids[i]) == 1);
     }
     M12_StartupMenu_Destroy(&state);
+}
+
+static void check_cancelled_startup_scan_does_not_run_default_fallback(void) {
+    static const char* const ids[] = {"dm1", "csb", "dm2", "nexus", "theron"};
+    const char* corpus = getenv("FIRESTAFF_TEST_REAL_DATA_ROOT");
+    const char* previousFirestaffData = getenv("FIRESTAFF_DATA");
+    char savedFirestaffData[M12_ASSET_DATA_DIR_CAPACITY] = {0};
+    int hadFirestaffData = previousFirestaffData && previousFirestaffData[0];
+    char ignoredDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    M12_StartupMenuState state;
+    M12_StartupMenuInitOptions options;
+    StartupScanCancelProbe probe = {0U};
+    size_t i;
+
+    /* Use installed originals to prove cancellation cannot silently recover
+     * by scanning the default collection after the user closes startup. */
+    if (!corpus || !corpus[0] || !FSP_DirExists(corpus)) {
+        puts("  SKIP: FIRESTAFF_TEST_REAL_DATA_ROOT is not an installed corpus");
+        return;
+    }
+    if (hadFirestaffData) {
+        snprintf(savedFirestaffData, sizeof(savedFirestaffData), "%s",
+                 previousFirestaffData);
+    }
+    CHECK(create_build_scratch_and_data_root(ignoredDataRoot));
+    if (failures) return;
+    CHECK(test_setenv("FIRESTAFF_DATA", corpus));
+    memset(&options, 0, sizeof(options));
+    options.scanAllGames = 1;
+    options.scanProgressFn = cancel_initial_startup_scan;
+    options.scanProgressUserData = &probe;
+    M12_StartupMenu_InitWithOptions(&state, corpus, NULL, &options);
+
+    CHECK(probe.callbacks == 1U);
+    CHECK(state.assetStatus.scanProgress.cancelled == 1);
+    CHECK(state.assetStatus.scanProgress.complete == 0);
+    for (i = 0U; i < sizeof(ids) / sizeof(ids[0]); ++i) {
+        CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, ids[i]) == 0);
+    }
+    M12_StartupMenu_Destroy(&state);
+
+    if (hadFirestaffData) {
+        CHECK(test_setenv("FIRESTAFF_DATA", savedFirestaffData));
+    } else {
+        CHECK(test_unsetenv("FIRESTAFF_DATA"));
+    }
 }
 
 static void check_dot_config_migrates_to_default_data_directory(void) {
@@ -1087,6 +1146,7 @@ int main(void) {
     check_default_data_dir_scans_asynchronously();
     check_start_menu_keeps_saved_game_leaf_scoped();
     check_return_rescan_uses_real_five_game_corpus();
+    check_cancelled_startup_scan_does_not_run_default_fallback();
     check_dot_config_migrates_to_default_data_directory();
     check_dot_environment_never_persists_as_data_directory();
     check_fresh_config_repairs_dot_in_memory();
