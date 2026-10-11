@@ -19,8 +19,10 @@ dm2_amiga_archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$data_root/dm2/Dungeon-Master-
 if [ ! -x "$app" ] ||
    { [ "$test_mode" != dm2-amiga ] &&
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
+     [ "$test_mode" != direct-exit ] &&
      { [ ! -f "$dm1_archive" ] || [ ! -f "$dm1_fmtowns_archive" ] ||
        [ ! -f "$csb_archive" ] || [ ! -f "$dm2_archive" ]; }; } ||
+   { [ "$test_mode" = direct-exit ] && [ ! -f "$dm1_archive" ]; } ||
    { [ "$test_mode" = dm2-amiga ] && [ ! -f "$dm2_amiga_archive" ]; } ||
    { [ "$test_mode" = dm1-atari ] && [ ! -f "$dm1_atari_archive" ]; } ||
    { [ "$test_mode" = dm1-amiga36 ] && [ ! -f "$dm1_amiga36_archive" ]; }; then
@@ -130,6 +132,47 @@ print(f"PASS: authentic {game_id} gameplay returned to the launcher and "
 PY
 }
 
+run_direct_game_exit_case() {
+    case_root="$scratch/direct-game-exit"
+    runtime_probe="$case_root/runtime.json"
+    run_log="$case_root/firestaff.log"
+    mkdir -p "$case_root"
+    FIRESTAFF_CONFIG_PATH="$case_root/config.toml" \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    HOME="$case_root" XDG_CONFIG_HOME="$case_root" APPDATA="$case_root" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --width 320 --height 200 --game dm1 --platform pc \
+            --data-dir "$data_root" --debug \
+            --script 'wait-game-runtime,key:escape,key:enter' \
+            --duration 30000 >"$run_log" 2>&1 || {
+                cat "$run_log" >&2
+                return 1
+            }
+
+    python3 - "$run_log" "$runtime_probe" <<'PY'
+import json
+import sys
+
+log_path, probe_path = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+exit_marker = (
+    "direct game ended; exiting instead of opening the start menu")
+if (exit_marker not in trace or
+        "return-menu rescan-complete data=" in trace or
+        probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("script") != {"waitFramesRemaining": 0, "pending": 0}):
+    raise SystemExit(
+        "FAIL: direct --game did not exit after Return to Menu: "
+        f"probe={probe}")
+
+print("PASS: direct --game exits after Return to Menu without reopening the launcher")
+PY
+}
+
 stage_csb_return_data_root() {
     stage_root=$1
     mkdir -p "$stage_root/dm1" "$stage_root/csb" "$stage_root/dm2"
@@ -166,11 +209,16 @@ stage_dm1_return_data_root() {
 # phases differ, so each case proves its own authentic runtime receipt before
 # the shared ESC/Enter return interaction can pass.
 if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
+   [ "$test_mode" = direct-exit ] ||
    [ "$test_mode" = csb-atari ] || [ "$test_mode" = csb-amiga ] ||
    [ "$test_mode" = dm2-dos ] || [ "$test_mode" = dm2-mac ] ||
    [ "$test_mode" = dm1-atari ] || [ "$test_mode" = dm1-amiga36 ] ||
    [ "$test_mode" = dm2-amiga ]; then
+    if [ "$test_mode" = direct-exit ]; then
+        run_direct_game_exit_case
+    fi
     if [ "$test_mode" = all ] || [ "$test_mode" = returns ]; then
+        run_direct_game_exit_case
     run_return_to_menu_case dm1 pc \
         'key:enter,key:enter,key:enter,wait:12,key:escape,key:enter' \
         15000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \

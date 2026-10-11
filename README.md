@@ -252,6 +252,10 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
           --version
 ```
 
+`--game` starts the selected game directly. When you choose Return to Menu
+afterward, Firestaff exits. Add `--menu` to open the launcher first and return
+to it after the game ends.
+
 In the startup menu, **Settings → Audio → Music Volume → Off** disables
 music while preserving sound effects and UI audio. `--no-music` applies the
 same choice for a direct CLI launch; `--music` explicitly re-enables it.

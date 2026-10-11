@@ -10176,6 +10176,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         if (pointerResult != M11_GAME_INPUT_IGNORED) {
             if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
+                /* `--game` is a single-game command-line session. When that
+                 * game asks to return to the launcher, finish the process
+                 * instead of opening the multi-game start menu. */
+                if (o->directLaunch) {
+                    if (o->debug) {
+                        fprintf(stderr,
+                                "firestaff: direct game ended; exiting instead of opening the start menu\n");
+                    }
+                    break;
+                }
                 M11_GameView_Shutdown(&gameView);
                 M11_GameView_Init(&gameView);
                 DM1_V1_PendingMotionQueue_ClearPc34Compat(
@@ -10274,6 +10284,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             gameView.dm2GameFrozen);
                 }
                 if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
+                    /* Match the pointer-driven return path above: a direct
+                     * `--game` launch exits after the game, while a game
+                     * started from the launcher returns to that launcher. */
+                    if (o->directLaunch) {
+                        if (o->debug) {
+                            fprintf(stderr,
+                                    "firestaff: direct game ended; exiting instead of opening the start menu\n");
+                        }
+                        break;
+                    }
                     M11_GameView_Shutdown(&gameView);
                     M11_GameView_Init(&gameView);
                     DM1_V1_PendingMotionQueue_ClearPc34Compat(
