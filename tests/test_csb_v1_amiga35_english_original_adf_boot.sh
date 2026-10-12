@@ -107,6 +107,27 @@ if ! grep -Eq 'csbViewportHash=[1-9][0-9]*' <<< "$runtime_output"; then
 fi
 echo 'PASS: original A35E CLI consumes its first movement and renders the native viewport'
 
+menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    FIRESTAFF_CONFIG_PATH="$scratch/menu-config.toml" \
+    HOME="$scratch/menu-home" XDG_CONFIG_HOME="$scratch/menu-home" \
+    APPDATA="$scratch/menu-home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --menu --game csb --platform amiga \
+    --data-dir "$zip" --debug --verbose \
+    --script 'key:enter,key:enter,key:enter' --duration 1000 2>&1) || {
+        printf '%s\n' "$menu_output" >&2
+        exit 1
+    }
+for required in \
+    "mode=menu game=csb platform=Amiga edition=amiga35-en source=$zip::Chaos Strikes Back Amiga 3.5 English Original.adf::Graphics.DAT" \
+    'phase=csb-entrance-0' \
+    'party=9,0 dir=2'; do
+    if ! grep -Fq "$required" <<< "$menu_output"; then
+        printf 'FAIL: A35E visible M12 menu route is missing %s\n%s\n' "$required" "$menu_output" >&2
+        exit 1
+    fi
+done
+echo 'PASS: authentic A35E is selectable through the visible M12 game menu'
+
 handoff_output=$(FIRESTAFF_CSB_AMIGA35_EN_DATA_DIR="$zip" \
     FIRESTAFF_CSB_AMIGA35_EN_ONLY=1 "$boundary_test" 2>&1) || {
         printf '%s\n' "$handoff_output" >&2
