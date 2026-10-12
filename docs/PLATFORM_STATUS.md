@@ -59,6 +59,13 @@ Hall route through mirror selection and champion resurrection. SDL dummy
 output establishes route and input behavior only; this run did not assess
 visual, audible or native HiDPI parity.
 
+`dm1_v1_m12_auto_multi_platform_menu` also passed against the installed
+English FM Towns, DOS 3.4, Atari ST 1.2 and Amiga 2.0 archives. The mixed-data
+M12 AUTO route selected FM Towns and reached its original Hall-of-Champions
+runtime; the menu and direct CLI routes also selected each explicitly chosen
+edition and reached its authenticated first runtime frame. This is startup
+and route evidence with SDL dummy output, not native-display parity.
+
 The 2026-10-10 original-media return-to-menu checks also cover DM1 Atari ST
 1.1 and Amiga 3.6. Each route reached its source-owned runtime, returned to
 the launcher, and rediscovered DM1, CSB and DM2 from an isolated collection
