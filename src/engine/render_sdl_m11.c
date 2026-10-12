@@ -2538,9 +2538,9 @@ int M11_Render_PumpEvents(void) {
      * A native close can arrive at this boundary while a synchronous asset
      * scan is returning control to the renderer. Keep the injection behind
      * the explicit autotest environment so it cannot affect normal runs. */
-    if (getenv("FIRESTAFF_AUTOTEST") &&
-        getenv("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL") &&
-        strcmp(getenv("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL"), "1") == 0) {
+    if (SDL_getenv_unsafe("FIRESTAFF_AUTOTEST") &&
+        SDL_getenv_unsafe("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL") &&
+        strcmp(SDL_getenv_unsafe("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL"), "1") == 0) {
         SDL_Event closeEvent;
         (void)SDL_setenv_unsafe("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL", "0", 1);
         if (g_state.window) {
@@ -2560,15 +2560,8 @@ int M11_Render_PumpEvents(void) {
     while (SDL_PeepEvents(&ev, 1, SDL_GETEVENT,
                           SDL_EVENT_WINDOW_CLOSE_REQUESTED,
                           SDL_EVENT_WINDOW_CLOSE_REQUESTED) > 0) {
-        Uint32 activeWindowID = g_state.window ? SDL_GetWindowID(g_state.window) : 0;
-        if (getenv("FIRESTAFF_AUTOTEST") &&
-            getenv("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL") &&
-            strcmp(getenv("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL"), "0") == 0 &&
-            ev.window.windowID != activeWindowID) {
-            fprintf(stderr, "autotest close event windowID=%u activeWindowID=%u\n",
-                    (unsigned)ev.window.windowID, (unsigned)activeWindowID);
-        }
-        if (g_state.window && ev.window.windowID == activeWindowID) {
+        if (g_state.window &&
+            ev.window.windowID == SDL_GetWindowID(g_state.window)) {
             g_state.quitRequested = 1;
         }
     }
