@@ -147,7 +147,15 @@ for mixed_archive in "$default_data_root"/dm2/Dungeon-Master-II-Skullkeep_*.zip;
     [ -f "$mixed_archive" ] || continue
     mixed_archive_count=$((mixed_archive_count + 1))
 done
-if [ "$mixed_archive_count" -gt 1 ]; then
+mixed_collection_complete=1
+for required_archive in \
+    "$default_data_root"/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip \
+    "$default_data_root"/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip \
+    "$default_data_root"/dm2/Dungeon-Master-II-Skullkeep_Mac_EN*.zip \
+    "$default_data_root"/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip; do
+    [ -f "$required_archive" ] || mixed_collection_complete=0
+done
+if [ "$mixed_archive_count" -gt 1 ] && [ "$mixed_collection_complete" -eq 1 ]; then
     mixed_runtime_log="$default_home/dm2-mixed-menu-runtime.log"
     (
         unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
@@ -183,11 +191,23 @@ if launch not in trace or runtime is None or trace.index(launch) >= runtime.star
     raise SystemExit(
         "FAIL: mixed-media DM2 M12 did not select authentic FM Towns and "
         f"reach its first party:\n{trace}")
+for platform, edition, archive_name in (
+        ("PC", "pc-en", "Dungeon-Master-II-Skullkeep_DOS_EN.zip"),
+        ("Amiga", "amiga-en", "Dungeon-Master-II-Skullkeep_Amiga_EN.zip"),
+        ("Macintosh", "mac-en-retail", "Dungeon-Master-II-Skullkeep_Mac_EN")):
+    match = re.search(
+        rf"dm2 platform={re.escape(platform)} edition={re.escape(edition)} "
+        rf"matched source=.*{re.escape(archive_name)}",
+        trace)
+    if match is None:
+        raise SystemExit(
+            f"FAIL: mixed-media DM2 scan did not authenticate {platform} "
+            f"{edition} from {archive_name}:\n{trace}")
 print("PASS: mixed-media DM2 M12 selected FM Towns and reached its authentic "
-      "first party with competing editions installed")
+      "first party after authentic DOS, Amiga and Mac editions were recognized")
 PY
 else
-    echo 'SKIP: mixed-media DM2 M12 runtime requires multiple authentic platform archives'
+    echo 'SKIP: mixed-media DM2 M12 runtime requires authentic DOS, Amiga, Mac, and FM Towns archives'
 fi
 
 # FM Towns is the first DM2 platform card.  This asserts that the launcher
