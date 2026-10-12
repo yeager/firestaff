@@ -502,6 +502,7 @@ typedef struct {
     int uiScale;
     int debug;
     int useModern;
+    int* quitRequested;
     Uint64 startedMs;
 } M11_ScanProgressContext;
 
@@ -538,7 +539,10 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                                   ctx->width, ctx->height);
         M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
     }
-    if (M11_Render_PumpEvents()) return 0;
+    if (M11_Render_PumpEvents()) {
+        if (ctx->quitRequested) *ctx->quitRequested = 1;
+        return 0;
+    }
     return 1;
 }
 
@@ -547,7 +551,8 @@ static void m11_rescan_launcher_asset_status(
     unsigned char* launcherFramebuffer,
     unsigned char* modernRgba,
     int useModern,
-    int debug) {
+    int debug,
+    int* quitRequested) {
     M11_ScanProgressContext scanCtx;
     if (!menuState || !launcherFramebuffer) return;
     scanCtx.framebuffer = launcherFramebuffer;
@@ -559,6 +564,7 @@ static void m11_rescan_launcher_asset_status(
     scanCtx.uiScale = menuState->settings.uiScale;
     scanCtx.debug = debug;
     scanCtx.useModern = useModern;
+    scanCtx.quitRequested = quitRequested;
     scanCtx.startedMs = SDL_GetTicks();
     M12_StartupMenu_RescanAllGames(menuState,
                                    m11_scan_progress_callback,
@@ -9047,7 +9053,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                (size_t)M11_LAUNCHER_FB_WIDTH * (size_t)M11_LAUNCHER_FB_HEIGHT);
         M11_Render_PresentIndexed(launcherFramebuffer,
                                   M11_LAUNCHER_FB_WIDTH, M11_LAUNCHER_FB_HEIGHT);
-        M11_Render_PumpEvents();
+        if (M11_Render_PumpEvents()) quitRequested = 1;
     }
     {
         M12_StartupMenuInitOptions menuInitOptions;
@@ -9090,6 +9096,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         scanCtx.uiScale = scanConfig.uiScale;
         scanCtx.debug = o->debug;
         scanCtx.useModern = 1;
+        scanCtx.quitRequested = &quitRequested;
         scanCtx.startedMs = SDL_GetTicks();
         menuInitOptions.scanProgressFn = m11_scan_progress_callback;
         menuInitOptions.scanProgressUserData = &scanCtx;
@@ -9126,7 +9133,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 fs_l10n_language_from_locale(languageCodes[o->languageOverride]));
         }
     }
-    if (o->architectureOverride == M12_ARCH_AUTO) {
+    if (!quitRequested && o->architectureOverride == M12_ARCH_AUTO) {
         if (!m11_apply_auto_architecture_override(&menuState, o->gameId)) {
             if (o->directLaunch) {
                 fprintf(stderr,
@@ -9147,7 +9154,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 menuState.gameOptions[slot].versionIndex = -1;
             }
         }
-    } else if (o->architectureOverride > M12_ARCH_AUTO) {
+    } else if (!quitRequested &&
+               o->architectureOverride > M12_ARCH_AUTO) {
         if (!m11_apply_architecture_override(&menuState,
                                              o->gameId,
                                              o->architectureOverride)) {
@@ -9172,7 +9180,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 2;
         }
     }
-    if (o->csbFmtownsJapanese) {
+    if (!quitRequested && o->csbFmtownsJapanese) {
         if (!o->gameId || strcmp(o->gameId, "csb") != 0 ||
             !m11_apply_csb_fmtowns_japanese_override(&menuState)) {
             fprintf(stderr,
@@ -9183,7 +9191,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 2;
         }
     }
-    if (o->dm1FmtownsJapanese) {
+    if (!quitRequested && o->dm1FmtownsJapanese) {
         if (!o->gameId || strcmp(o->gameId, "dm1") != 0 ||
             !m11_apply_dm1_fmtowns_japanese_override(&menuState)) {
             fprintf(stderr,
@@ -9326,12 +9334,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int failIfNoLaunch = getenv("FIRESTAFF_FAIL_IF_NO_LAUNCH") != NULL;
     int runRc = 0;
     int startupTextInputActive = 0;
-    if (!o->bootProbe && !o->directLaunch && o->durationMs < 0 &&
+    if (!quitRequested && !o->bootProbe && !o->directLaunch &&
+        o->durationMs < 0 &&
         getenv("FIRESTAFF_SKIP_INTRO") == NULL &&
         m11_play_firestaff_startup_intro(&menuState)) {
         goto cleanup;
     }
-    if (menuState.deferredScanPending) {
+    if (menuState.deferredScanPending && !quitRequested) {
         M11_ScanProgressContext fallbackCtx;
         fallbackCtx.framebuffer = launcherFramebuffer;
         fallbackCtx.modernRgba = modernRgba;
@@ -9342,6 +9351,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fallbackCtx.uiScale = menuState.settings.uiScale;
         fallbackCtx.debug = o->debug;
         fallbackCtx.useModern = useModern;
+        fallbackCtx.quitRequested = &quitRequested;
         fallbackCtx.startedMs = SDL_GetTicks();
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,
@@ -9419,7 +9429,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #endif
 
     /* Always present at least once so the window actually has content. */
-    if (o->directLaunch && !o->csbHintOracle) {
+    if (o->directLaunch && !quitRequested && !o->csbHintOracle) {
         /* Direct launch normally delegates platform selection to M12 so a
          * selected original archive remains the only media owner. CSB is a
          * special closed boundary: there was no retail DOS/PC edition, and a
@@ -9503,7 +9513,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             goto cleanup;
         }
         launchedEver = 1;
-    } else if (o->directLaunch) {
+    } else if (o->directLaunch && !quitRequested) {
         /* CLI direct launch bypasses only the M12 menu. The launch still
          * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps
          * the ReDMCSB TITLE/ENTRANCE order (TITLE.C F0437 before
@@ -9881,7 +9891,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     uint32_t foodClockLastMs = (uint32_t)SDL_GetTicks();
     unsigned int observedLaunchSerial = 0;
 
-    while (!menuState.shouldExit &&
+    while (!quitRequested && !menuState.shouldExit &&
            (o->durationMs < 0 || (now - start) < duration)) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
@@ -10063,7 +10073,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                  launcherFramebuffer,
                                                  modernRgba,
                                                  useModern,
-                                                 o->debug);
+                                                 o->debug,
+                                                 &quitRequested);
                 M11_ApplyStartupMenuRuntime(&menuState);
                 m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             } else if (pointerResult == M11_GAME_INPUT_RESTART_GAME) {
@@ -10171,7 +10182,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                      launcherFramebuffer,
                                                      modernRgba,
                                                      useModern,
-                                                     o->debug);
+                                                     o->debug,
+                                                     &quitRequested);
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 } else if (result == M11_GAME_INPUT_RESTART_GAME) {

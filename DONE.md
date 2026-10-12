@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-12: SDL window-close events during the initial originals scan and
+  return-to-menu rescan now propagate to the M11 quit flag. Direct launch,
+  deferred scanning and the main loop stop after cancellation instead of
+  continuing into game startup. The changed M11 translation unit compiled with
+  macOS Clang, and `m12_data_dir_cancel` passed; full-window close integration
+  coverage remains open in `TODO.md`.
+
 - 2026-10-12: `--menu --game <id> --verbose` now reports original-media
   availability, platforms and candidate filenames for every prioritized game
   scanned by the interactive menu, even when `--game` sets an initial card.

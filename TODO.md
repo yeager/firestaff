@@ -1,5 +1,11 @@
 # Firestaff TODO — active cross-game work
 
+- Add an end-to-end SDL window-close regression during the synchronous
+  originals scan for both `--game` and return-to-menu rescans. The scan callback
+  now propagates quit to the main loop and suppresses direct launch; the current
+  `m12_data_dir_cancel` test covers scanner cancellation but does not close the
+  application window through M11.
+
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
   physical desktop interaction. The opt-in test covers those three source-owned
