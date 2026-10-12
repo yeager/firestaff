@@ -66,6 +66,17 @@ runtime; the menu and direct CLI routes also selected each explicitly chosen
 edition and reached its authenticated first runtime frame. This is startup
 and route evidence with SDL dummy output, not native-display parity.
 
+On 2026-10-12, both `dm1_v1_pc34_native_cli_boot` and
+`dm1_v1_m12_auto_multi_platform_menu` passed again from commit `62793e3` against
+the installed original media. The PC 3.4 test reached its first source-owned
+runtime frame from the authentic retail ZIP and loose files extracted from
+that ZIP in the test scratch area. The mixed-platform menu test discovered the
+authentic FM Towns, DOS 3.4, Atari ST 1.2 and Amiga 2.0 editions, selected FM
+Towns through AUTO, and verified bare CLI and explicit platform routes. The
+tests took 255.74 and 88.10 seconds respectively. SDL dummy output verifies
+startup routing and source identities, not native Retina presentation or
+input.
+
 `csb_v1_atari_stx_native_cli_boot` passed the same day against the original
 Atari STX and campaign archive. It covered the retained Atari title, menu
 keyboard and pointer paths, the original map-0 party pose and movement input,
