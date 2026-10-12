@@ -95,7 +95,8 @@ csb_mixed_root=
 csb_combined_root=
 dm1_combined_root=
 default_home=
-trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home"' EXIT
+uppercase_game_root=
+trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root"' EXIT
 
 # Exercise the real default path layout without --data-dir and without
 # inheriting a developer's saved config. Stage only links to the original
@@ -443,5 +444,42 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$dm1_pc_archive" ]; then
     esac
     echo "PASS: DM1 AUTO prefers FM Towns over PC and ignores unsupported PC-98 media"
 fi
+
+# macOS data folders selected in Finder may use an uppercase game name even
+# though Firestaff's installed folders are documented in lowercase. When an
+# interactive menu starts from that selected leaf, it must scan the parent
+# collection so sibling games remain available. Use symlinks to the authentic
+# local game directories; no game data is copied or synthesized.
+workspace_data_root=$(dirname "$(dirname "$dm1_towns_archive")")
+uppercase_game_root=$(mktemp -d "${PWD}/.firestaff-uppercase-game-leaf.XXXXXX")
+uppercase_data_root="$uppercase_game_root/data"
+mkdir "$uppercase_data_root"
+for game_id in dm1 csb dm2 nexus theron; do
+    if [ -d "$workspace_data_root/$game_id" ]; then
+        if [ "$game_id" = dm1 ]; then
+            leaf_name=DM1
+        else
+            leaf_name=$game_id
+        fi
+        ln -s "$workspace_data_root/$game_id" "$uppercase_data_root/$leaf_name"
+    fi
+done
+uppercase_leaf_menu=$(FIRESTAFF_CONFIG_PATH="$uppercase_game_root/menu.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    --menu --data-dir "$uppercase_data_root/DM1" --debug --verbose \
+    --duration 1000 2>&1) || {
+    printf '%s\n' "$uppercase_leaf_menu" >&2
+    exit 1
+}
+for game_id in dm1 csb dm2; do
+    if ! printf '%s\n' "$uppercase_leaf_menu" | \
+        grep -Fq "firestaff: $game_id available=yes"; then
+        printf '%s\n' "$uppercase_leaf_menu" >&2
+        printf 'FAIL: uppercase DM1 data leaf hid sibling %s media from the start menu\n' \
+            "$game_id" >&2
+        exit 1
+    fi
+done
+echo "PASS: uppercase DM1 collection leaf keeps authentic DM1, CSB and DM2 available"
 
 echo "PASS: original-media startup diagnostics and FM Towns defaults"

@@ -4378,12 +4378,12 @@ static int m12_startup_data_dir_is_game_leaf(const char* dataDir) {
     leaf = slash && backslash
         ? (slash > backslash ? slash + 1 : backslash + 1)
         : (slash ? slash + 1 : (backslash ? backslash + 1 : dataDir));
-    return strcmp(leaf, "dm1") == 0 ||
-           strcmp(leaf, "dm1-multilingual") == 0 ||
-           strcmp(leaf, "csb") == 0 ||
-           strcmp(leaf, "dm2") == 0 ||
-           strcmp(leaf, "nexus") == 0 ||
-           strcmp(leaf, "theron") == 0;
+    return m12_ascii_equal_ci(leaf, "dm1") ||
+           m12_ascii_equal_ci(leaf, "dm1-multilingual") ||
+           m12_ascii_equal_ci(leaf, "csb") ||
+           m12_ascii_equal_ci(leaf, "dm2") ||
+           m12_ascii_equal_ci(leaf, "nexus") ||
+           m12_ascii_equal_ci(leaf, "theron");
 }
 
 static const char* m12_startup_game_id_for_data_dir(const char* dataDir) {
@@ -4398,20 +4398,20 @@ static const char* m12_startup_game_id_for_data_dir(const char* dataDir) {
     leaf = slash && backslash
         ? (slash > backslash ? slash + 1 : backslash + 1)
         : (slash ? slash + 1 : (backslash ? backslash + 1 : dataDir));
-    if (strcmp(leaf, "dm1") == 0 ||
-        strcmp(leaf, "dm1-multilingual") == 0) {
+    if (m12_ascii_equal_ci(leaf, "dm1") ||
+        m12_ascii_equal_ci(leaf, "dm1-multilingual")) {
         return "dm1";
     }
-    if (strcmp(leaf, "csb") == 0) {
+    if (m12_ascii_equal_ci(leaf, "csb")) {
         return "csb";
     }
-    if (strcmp(leaf, "dm2") == 0) {
+    if (m12_ascii_equal_ci(leaf, "dm2")) {
         return "dm2";
     }
-    if (strcmp(leaf, "nexus") == 0) {
+    if (m12_ascii_equal_ci(leaf, "nexus")) {
         return "nexus";
     }
-    if (strcmp(leaf, "theron") == 0) {
+    if (m12_ascii_equal_ci(leaf, "theron")) {
         return "theron";
     }
     return NULL;

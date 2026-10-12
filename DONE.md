@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-12: M12 now recognizes selected game-data directory names without
+  case sensitivity, so selecting an uppercase `DM1` folder scans its parent
+  collection and retains sibling game availability. The authentic-media
+  startup diagnostics regression passed for DM1, CSB and DM2 using symlinks to
+  the installed originals.
+
 - 2026-10-12: The keyboard flow, legacy and modern platform-card renderers,
   and mouse hit-test now use one shared catalog-order list, removing duplicated
   platform filtering that could shift visible card hit indexes. The direct-click
