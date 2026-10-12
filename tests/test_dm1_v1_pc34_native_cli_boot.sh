@@ -22,6 +22,42 @@ test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_probe_json="$test_scratch/dm1-menu-runtime-$$.json"
 
+# A host quit after the first authentic PC-34 C001 frame should leave the
+# launched game cleanly instead of reporting corrupt startup media.
+title_quit_home="$test_scratch/dm1-pc34-title-quit-home-$$"
+title_quit_probe="$test_scratch/dm1-pc34-title-quit-$$.json"
+mkdir -p "$title_quit_home"
+title_quit_output=$(HOME="$title_quit_home" XDG_CONFIG_HOME="$title_quit_home" \
+    APPDATA="$title_quit_home" FIRESTAFF_CONFIG_PATH="$title_quit_home/config.toml" \
+    FIRESTAFF_AUTOTEST=1 FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME=1 \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$title_quit_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform pc --data-dir "$archive" \
+    --script "$menu_original" --duration 10000 2>&1) || {
+        printf '%s\n' "$title_quit_output" >&2
+        exit 1
+    }
+if ! grep -Fq 'AUTOTEST: DM1 C001 quit injected after first rendered frame' \
+        <<< "$title_quit_output" ||
+   grep -qi 'launch failed' <<< "$title_quit_output"; then
+    printf '%s\n' "$title_quit_output" >&2
+    printf '%s\n' 'FAIL: PC-34 C001 quit was not handled as a clean game exit' >&2
+    exit 1
+fi
+python3 - "$title_quit_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+if probe.get("launchedEver") != 1 or probe.get("active") != 0:
+    raise SystemExit(f"FAIL: PC-34 C001 quit did not exit the game cleanly: {probe}")
+print("PASS: authentic PC-34 C001 host quit exits cleanly after its first frame")
+PY
+rm -f "$title_quit_probe"
+rm -rf "$title_quit_home"
+
 # The PC34 launch plan requires the original SWSH prelude. Keep all other
 # files from the authentic archive, remove only this source asset in a private
 # test copy, and verify the CLI does not claim a completed launch without it.
@@ -869,6 +905,32 @@ if nonblack < 25000 or colours < 10:
         f"(nonblack={nonblack}, colours={colours})")
 print(f"PASS: authentic PC-34 C007 visible nonblack={nonblack} colours={colours}")
 PY
+
+# Keep debug performance telemetry parseable on a real-media gameplay path.
+# SDL's dummy backend validates instrumentation only; it is not evidence of
+# desktop/GPU frame rate.
+perf_home="$test_scratch/dm1-perf-home-$$"
+mkdir -p "$perf_home"
+perf_output=$(HOME="$perf_home" XDG_CONFIG_HOME="$perf_home" \
+    APPDATA="$perf_home" FIRESTAFF_CONFIG_PATH="$perf_home/config.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$archive" --debug --duration 6000 \
+    2>&1) || {
+        printf '%s\n' "$perf_output" >&2
+        exit 1
+    }
+if ! grep -Eq 'firestaff: perf game=dm1 active=1 .*process-cpu-of-one-core-percent=([0-9]+\.[0-9]+|unavailable)' \
+        <<< "$perf_output" ||
+   ! grep -Fq 'game-frames-rendered-per-sec=' <<< "$perf_output" ||
+   ! grep -Fq 'target-loop-fps=' <<< "$perf_output" ||
+   ! grep -Fq 'frame-compose-present-call-ms-max=' <<< "$perf_output" ||
+   ! grep -Fq 'gpu-utilization=unavailable' <<< "$perf_output"; then
+    printf '%s\n' "$perf_output" >&2
+    printf '%s\n' 'FAIL: --debug did not emit complete DM1 performance telemetry' >&2
+    exit 1
+fi
+rm -rf "$perf_home"
+printf '%s\n' 'PASS: authentic DM1 PC-34 --debug emits FPS, CPU, frame-time, and explicit GPU availability metrics'
 
 trap - EXIT HUP INT TERM
 cleanup_hoc_capture

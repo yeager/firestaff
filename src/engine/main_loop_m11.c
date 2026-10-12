@@ -77,6 +77,14 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#elif defined(__APPLE__) || defined(__linux__)
+#include <sys/resource.h>
+#endif
 
 #include <SDL3/SDL.h>
 
@@ -2085,6 +2093,55 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
 static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
 static int g_m11_debug_startup_detail = 0;
+
+static int m11_process_cpu_seconds(double* seconds) {
+    if (!seconds) return 0;
+#if defined(_WIN32)
+    FILETIME creation, exitTime, kernel, user;
+    ULARGE_INTEGER kernelValue, userValue;
+    if (!GetProcessTimes(GetCurrentProcess(), &creation, &exitTime,
+                         &kernel, &user)) return 0;
+    kernelValue.LowPart = kernel.dwLowDateTime;
+    kernelValue.HighPart = kernel.dwHighDateTime;
+    userValue.LowPart = user.dwLowDateTime;
+    userValue.HighPart = user.dwHighDateTime;
+    *seconds = (double)(kernelValue.QuadPart + userValue.QuadPart) / 10000000.0;
+    return 1;
+#elif defined(__APPLE__) || defined(__linux__)
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) != 0) return 0;
+    *seconds = (double)usage.ru_utime.tv_sec +
+               (double)usage.ru_utime.tv_usec / 1000000.0 +
+               (double)usage.ru_stime.tv_sec +
+               (double)usage.ru_stime.tv_usec / 1000000.0;
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+static double m11_counter_milliseconds(Uint64 ticks) {
+    const Uint64 frequency = SDL_GetPerformanceFrequency();
+    return frequency ? (double)ticks * 1000.0 / (double)frequency : 0.0;
+}
+
+static uint32_t m11_debug_game_tick_count(const M11_GameViewState* gameView) {
+    if (!gameView) return 0U;
+    switch (gameView->sourceKind) {
+        case M11_GAME_SOURCE_CSB_BOOT:
+        case M11_GAME_SOURCE_CSB_HINT_ORACLE:
+            return (uint32_t)gameView->csbState.tick_count;
+        case M11_GAME_SOURCE_DM2_BOOT:
+            return (uint32_t)gameView->dm2State.tick_count;
+        case M11_GAME_SOURCE_NEXUS_DGN:
+            return (uint32_t)gameView->nexusState.tick_count;
+        case M11_GAME_SOURCE_THERON_TRACK02:
+            return (uint32_t)gameView->theronState.tick_count;
+        default:
+            return gameView->world.gameTick;
+    }
+}
+
 /* Scope is installed from the current launch menu and removed on every launch
  * return. These host focus waits do not change ReDMCSB's VBlank counts. */
 static const M12_StartupMenuState* g_m11_intro_menu;
@@ -9373,6 +9430,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     if (o->showFpsOverlay) {
         gameView.fpsOverlayEnabled = 1;
     }
+    if (o->debug) {
+        gameView.fpsOverlayEnabled = 1;
+    }
     DM1_V1_PendingMotionQueue_InitPc34Compat(&pendingDm1V1MotionQueue);
     M12_GamepadMap_SetDefaults(&gamepadMap);
     (void)M12_GamepadMap_Load(&gamepadMap);
@@ -9945,14 +10005,29 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int gameFrameNeedsPresent = 0;
     uint32_t foodClockLastMs = (uint32_t)SDL_GetTicks();
     unsigned int observedLaunchSerial = 0;
+    Uint64 perfWindowStart = SDL_GetPerformanceCounter();
+    Uint64 perfLastLoopEnd = perfWindowStart;
+    Uint64 perfLoopCount = 0;
+    Uint64 perfOverBudgetLoops = 0;
+    Uint64 perfGameTickCount = 0;
+    Uint64 perfPresentedCount = 0;
+    double perfRenderTotalMs = 0.0;
+    double perfRenderMaxMs = 0.0;
+    double perfLoopMaxMs = 0.0;
+    double perfCpuWindowStart = 0.0;
+    int perfCpuAvailable = o->debug &&
+        m11_process_cpu_seconds(&perfCpuWindowStart);
 
     while (!quitRequested && !menuState.shouldExit &&
            (o->durationMs < 0 || (now - start) < duration)) {
+        if (o->debug) ++perfLoopCount;
         M12_MenuInput input = M12_MENU_INPUT_NONE;
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
         uint32_t tickBeforeEvents = gameView.world.gameTick;
         uint32_t tickBeforeInput = gameView.world.gameTick;
         int theronTickBeforeInput = gameView.theronState.tick_count;
+        const uint32_t perfTickBefore = o->debug
+            ? m11_debug_game_tick_count(&gameView) : 0U;
 
         /* Settings may change while the launcher is visible. Apply the
          * persisted input-mode choice before either event or held-state
@@ -10375,6 +10450,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
              * path, so keep CPU bounded by presenting only after input,
              * resize, launch, restart, or a source tick dirties the frame. */
             if (gameFrameNeedsPresent) {
+                const Uint64 perfRenderStart = o->debug
+                    ? SDL_GetPerformanceCounter() : 0;
                 DM1_V1_AutoMap_RecordVisitPc34Compat(&gameView);
                 DM1_V1_Minimap_RenderPc34Compat(&gameView,
                                    M11_Render_GetFramebuffer(),
@@ -10400,6 +10477,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     const uint64_t foodFrameSerial = gameView.v1FoodPresentationSerial;
                     const int presented = m11_present_game_frame_and_publish_startup_capture(
                         &gameView, &menuState);
+                    if (o->debug && presented) ++perfPresentedCount;
                     if (gameView.v1FoodAwaitingPresentation) {
                         const uint32_t presentedAtMs = (uint32_t)SDL_GetTicks();
                         /* Edges during render/present belong to the wait for
@@ -10413,6 +10491,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                 &gameView, foodFrameSerial);
                     }
                     gameFrameNeedsPresent = gameView.v1FoodAwaitingPresentation;
+                }
+                if (o->debug) {
+                    const double renderMs = m11_counter_milliseconds(
+                        SDL_GetPerformanceCounter() - perfRenderStart);
+                    perfRenderTotalMs += renderMs;
+                    if (renderMs > perfRenderMaxMs)
+                        perfRenderMaxMs = renderMs;
                 }
             }
         } else {
@@ -10428,6 +10513,64 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         SDL_Delay((Uint32)interval);
         now = SDL_GetTicks();
+        if (o->debug) {
+            const uint32_t tickDelta = m11_debug_game_tick_count(&gameView) -
+                                       perfTickBefore;
+            perfGameTickCount += tickDelta;
+            const Uint64 perfNow = SDL_GetPerformanceCounter();
+            const double loopMs = m11_counter_milliseconds(
+                perfNow - perfLastLoopEnd);
+            perfLastLoopEnd = perfNow;
+            if (loopMs > perfLoopMaxMs) perfLoopMaxMs = loopMs;
+            if (loopMs > (double)interval + 5.0) ++perfOverBudgetLoops;
+            const double elapsedMs = m11_counter_milliseconds(
+                perfNow - perfWindowStart);
+            if (elapsedMs >= 5000.0) {
+                double cpuNow = 0.0;
+                const int cpuNowAvailable = m11_process_cpu_seconds(&cpuNow);
+                double cpuPercent = -1.0;
+                if (perfCpuAvailable && cpuNowAvailable &&
+                    elapsedMs > 0.0 && cpuNow >= perfCpuWindowStart) {
+                    cpuPercent = (cpuNow - perfCpuWindowStart) *
+                                 100000.0 / elapsedMs;
+                }
+                fprintf(stderr,
+                        "firestaff: perf game=%s active=%d window-ms=%.0f "
+                        "process-cpu-of-one-core-percent=",
+                        o->gameId ? o->gameId : "menu", gameView.active,
+                        elapsedMs);
+                if (cpuPercent >= 0.0) fprintf(stderr, "%.1f", cpuPercent);
+                else fprintf(stderr, "unavailable");
+                fprintf(stderr,
+                        " target-loop-fps=%.2f loops-per-sec=%.1f "
+                        "loop-ms-max=%.2f "
+                        "loop-over-budget-count=%llu game-ticks-per-sec=%.2f "
+                        "game-frames-rendered-per-sec=%.2f "
+                        "frame-compose-present-call-ms-avg=%.2f "
+                        "frame-compose-present-call-ms-max=%.2f "
+                        "gpu-utilization=unavailable\n",
+                        interval ? 1000.0 / (double)interval : 0.0,
+                        (double)perfLoopCount * 1000.0 / elapsedMs,
+                        perfLoopMaxMs,
+                        (unsigned long long)perfOverBudgetLoops,
+                        (double)perfGameTickCount * 1000.0 / elapsedMs,
+                        (double)perfPresentedCount * 1000.0 / elapsedMs,
+                        perfPresentedCount
+                            ? perfRenderTotalMs / (double)perfPresentedCount
+                            : 0.0,
+                        perfRenderMaxMs);
+                perfWindowStart = perfNow;
+                perfLoopCount = 0;
+                perfOverBudgetLoops = 0;
+                perfGameTickCount = 0;
+                perfPresentedCount = 0;
+                perfRenderTotalMs = 0.0;
+                perfRenderMaxMs = 0.0;
+                perfLoopMaxMs = 0.0;
+                perfCpuWindowStart = cpuNow;
+                perfCpuAvailable = cpuNowAvailable;
+            }
+        }
     }
 
     if (failIfNoLaunch && !launchedEver) {

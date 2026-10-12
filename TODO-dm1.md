@@ -1,5 +1,20 @@
 # Firestaff TODO — DM1
 
+2026-10-12 debug performance telemetry: `--debug` now enables the existing
+in-game FPS overlay and emits five-second measurements for process CPU time,
+configured loop target, actual loop cadence/over-budget loops, game-specific
+simulation ticks, and successful game-frame presentations. Frame-composition
+plus SDL present-call duration is reported separately; SDL does not expose
+GPU utilization, so the log explicitly reports it unavailable. Source timing
+and host rendering must be compared separately: ReDMCSB `GAMELOOP.C`
+`F0002_MAIN_GameLoop_CPSDF` and `VBLANK.C`
+`F0577_VerticalBlank_Handler_CPSDF` show the original input/VBlank-driven
+loop. The changed C file compiles and the regression script passes shell
+syntax; a full build and authentic runtime test remain pending because trv2 is
+not resolvable from this host and its macOS linker cannot link against the
+installed 27.0 SDK. A native MacBook M5 performance sample is still needed to
+assess the reported HoC lag; GPU percentage requires platform tooling.
+
 2026-10-12 v3.0.379 startup regression retest: the released macOS arm64
 binary passed authenticated return-to-menu and all-five-game rescan checks
 for DM1 PC, Atari ST v1.2 and Amiga 3.6. Direct `--game dm1` exit behavior
@@ -42,6 +57,14 @@ The complete local FM Towns, PC 3.4, Atari ST 1.2 and Amiga 2.0 matrix passes.
 Issue #13's authentic PC 3.4 CLI/menu/input regression also passes on the
 current main binary. Native M5 Retina and physical-input validation remain
 open.
+
+2026-10-12 PC 3.4 title interruption check: the released v3.0.380 macOS arm64
+binary, with the authentic PC 3.4 ZIP and an isolated launcher config, handled
+a host quit injected after the first rendered C001 frame. The application
+exited with `launchedEver=1`, `active=0`, and no launch-failure diagnostic.
+The PC 3.4 real-media regression now covers the same interruption path already
+tested for Atari ST French v1.3. This SDL dummy-driver check does not validate
+native window-close or physical-input behavior.
 
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
