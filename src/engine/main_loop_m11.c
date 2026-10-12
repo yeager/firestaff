@@ -544,15 +544,21 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
         getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
         strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0) {
         SDL_Event event;
+        SDL_Window* window = M11_Render_GetWindow();
         memset(&event, 0, sizeof(event));
+        if (window) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-        event.type = SDL_EVENT_QUIT;
+            event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+            event.window.windowID = SDL_GetWindowID(window);
 #else
-        event.type = SDL_QUIT;
+            event.type = SDL_WINDOWEVENT;
+            event.window.windowID = SDL_GetWindowID(window);
+            event.window.event = SDL_WINDOWEVENT_CLOSE;
 #endif
-        if (SDL_PushEvent(&event)) {
-            ctx->autotestQuitInjected = 1;
-            (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED", "1", 1);
+            if (SDL_PushEvent(&event)) {
+                ctx->autotestQuitInjected = 1;
+                (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED", "1", 1);
+            }
         }
     }
     if (M11_Render_PumpEvents()) {
@@ -7723,6 +7729,22 @@ static void m11_sync_focus_pause(M11_GameViewState* gameView,
                                     hasFocus, SDL_GetCurrentVideoDriver()));
 }
 
+static int m11_event_requests_window_close(const SDL_Event* event) {
+    SDL_Window* window;
+    if (!event) return 0;
+    window = M11_Render_GetWindow();
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    return event->type == SDL_EVENT_QUIT ||
+           (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && window &&
+            event->window.windowID == SDL_GetWindowID(window));
+#else
+    return event->type == SDL_QUIT ||
+           (event->type == SDL_WINDOWEVENT &&
+            event->window.event == SDL_WINDOWEVENT_CLOSE && window &&
+            event->window.windowID == SDL_GetWindowID(window));
+#endif
+}
+
 M12_MenuInput M11_StartupSettingsHorizontalKeyInput(
     int keycode,
     const M12_StartupMenuState* menuState,
@@ -7758,7 +7780,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
     }
     while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-        if (ev.type == SDL_EVENT_QUIT) {
+        if (m11_event_requests_window_close(&ev)) {
             if (quitRequested) {
                 *quitRequested = 1;
             }
@@ -8392,7 +8414,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
         }
 #else
-        if (ev.type == SDL_QUIT) {
+        if (m11_event_requests_window_close(&ev)) {
             if (quitRequested) {
                 *quitRequested = 1;
             }

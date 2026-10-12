@@ -1,9 +1,9 @@
 # Firestaff TODO — active cross-game work
 
 - Add an end-to-end SDL window-close regression during the return-to-menu
-  originals rescan. The initial direct `--game` scan now injects a real SDL quit
-  event from the progress callback and verifies that DM1, CSB and DM2 never
-  enter game startup when authentic local media is available. The
+  originals rescan. The initial direct `--game` scan now injects a real SDL
+  window-close request from the progress callback and verifies that DM1, CSB
+  and DM2 never enter game startup when authentic local media is available. The
   `m12_data_dir_cancel` test covers scanner cancellation; return-to-menu window
   close still needs an M11 integration test.
 

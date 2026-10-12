@@ -1,7 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
-- 2026-10-12: Added end-to-end SDL window-close injection during the initial
-  originals scan for direct `--game` startup. With authentic installed media,
+- 2026-10-12: The renderer now handles SDL window-close requests, including
+  during the initial originals scan. An end-to-end test injects that event from
+  the progress callback during direct `--game` startup. With authentic media,
   DM1, CSB and DM2 each exit cleanly and the runtime receipt confirms the game
   never became active. `m11_direct_launch_prepare_all_games` passed. The
   separate return-to-menu rescan close path remains open in `TODO.md`.

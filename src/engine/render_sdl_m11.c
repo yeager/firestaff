@@ -2477,7 +2477,10 @@ int M11_Render_PumpEvents(void) {
     SDL_Event ev;
     while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-        if (ev.type == SDL_EVENT_QUIT) {
+        if (ev.type == SDL_EVENT_QUIT ||
+            (ev.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
+             g_state.window &&
+             ev.window.windowID == SDL_GetWindowID(g_state.window))) {
             g_state.quitRequested = 1;
         } else if (ev.type == SDL_EVENT_KEY_DOWN) {
             if (ev.key.key == SDLK_ESCAPE) {
@@ -2506,6 +2509,11 @@ int M11_Render_PumpEvents(void) {
         }
 #else
         if (ev.type == SDL_QUIT) {
+            g_state.quitRequested = 1;
+        } else if (ev.type == SDL_WINDOWEVENT &&
+                   ev.window.event == SDL_WINDOWEVENT_CLOSE &&
+                   g_state.window &&
+                   ev.window.windowID == SDL_GetWindowID(g_state.window)) {
             g_state.quitRequested = 1;
         } else if (ev.type == SDL_KEYDOWN) {
             if (ev.key.keysym.sym == SDLK_ESCAPE) {
