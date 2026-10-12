@@ -80,6 +80,13 @@ menu capture was checked for a populated multicolour source surface; the run
 used SDL dummy video and audio and does not establish native display or audio
 parity.
 
+`dm2_v1_amiga_native_cli_boot` passed in 103 seconds against the original
+Amiga ZIP→ADF data. The M12 keyboard and pointer paths reached the source
+SWSH/TITL New Game screen and loaded the first map-0 party with zero fallback
+draws; the presented runtime frame was nonblank, and the authentic movement
+and action input matrix passed. SDL dummy output does not establish native
+display or audio parity.
+
 The 2026-10-10 original-media return-to-menu checks also cover DM1 Atari ST
 1.1 and Amiga 3.6. Each route reached its source-owned runtime, returned to
 the launcher, and rediscovered DM1, CSB and DM2 from an isolated collection
