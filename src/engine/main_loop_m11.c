@@ -9490,7 +9490,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             M12_StartupMenu_BindCSBSaveCandidateIdentity(&menuState, 1u);
         }
     }
-    if (o->csbHintOracle) {
+    if (!quitRequested && o->csbHintOracle) {
         if (!M11_GameView_StartCsbHintOracle(&gameView, o->dataDir, o->savePath)) {
             fprintf(stderr, "firestaff: CSB Hint Oracle requires verified Atari R1 HCSB media and a native MINI.DAT\n");
             runRc = 3;
@@ -9503,7 +9503,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (exitAfterLaunch && !o->bootProbe) {
             goto cleanup;
         }
-    } else if (o->csbFmtownsUtilityDisk) {
+    } else if (!quitRequested && o->csbFmtownsUtilityDisk) {
         if (!m11_open_requested_launch(&gameView, &menuState,
                                        &idleAccumulatorMs, o->dataDir,
                                        o->bootProbe) ||
