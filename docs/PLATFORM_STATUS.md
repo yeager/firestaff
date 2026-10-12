@@ -32,6 +32,16 @@ the case. Bare `--game dm2` and M12 both selected FM Towns; its New Game menu
 matched the source RGB digest, and ordinary main-loop input reached the first
 party. This remains headless startup evidence, not physical M5 parity.
 
+On 2026-10-12, the complete `dm2_v1_fmtowns_native_cli_boot` test passed
+against the installed original FM Towns package on Mac16,10 in 346 seconds.
+It checked bare CLI and M12 AUTO selection from the full data root, completed
+all 225 TWANIM frames by 40 seconds, compared the presented New Game menu
+pixels with the decoded original `TITLE/0/4` RGB digest, and drove New Game to
+the first champion on map 0 through both direct CLI and M12. The normal-loop
+runtime frame used the original graphics with zero core fallback draws. These
+checks use SDL's dummy video and audio drivers; they do not verify a native
+window, HiDPI input or audible playback.
+
 The 2026-10-10 original-media return-to-menu checks also cover DM1 Atari ST
 1.1 and Amiga 3.6. Each route reached its source-owned runtime, returned to
 the launcher, and rediscovered DM1, CSB and DM2 from an isolated collection
