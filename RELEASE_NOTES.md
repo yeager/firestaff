@@ -1,9 +1,26 @@
-# Unreleased
+# Firestaff v3.0.377
 
 ## User-facing changes
 
-- `Game-data scan`: use a plain, high-contrast background behind the localized
-  scan status, real system font and progress bar.
+- `Game-data scan`: use localized progress text, a high-contrast panel, the
+  system font and a progress bar. Returning from a game refreshes the scan.
+- `Direct game launch`: prevents the launcher from opening the game-selection
+  menu after the selected game ends.
+- `DM2 FM Towns HUD`: restore the selected hero icon and keep the HUD active.
+- `DM1 mixed-edition startup`: uses case-insensitive game-folder matching and
+  accepts selected data roots with a trailing slash.
+- `DM1, CSB and DM2 platform selection`: uses a shared mapping for keyboard
+  and pointer choices and reports all scanned games in verbose output.
+
+## Developer changes
+
+- `DM1, CSB and DM2 startup coverage`: add original-media regressions for
+  direct launch, mixed platform roots, menu selection, return-to-launch and
+  rescan behavior across supported platforms.
+- `DM1 startup coverage`: verify additional authenticated Amiga editions,
+  including Amiga 2.0 German and Amiga 2.1/2.2 English.
+- `Startup diagnostics`: add real-media and HiDPI evidence for launcher input,
+  external-volume access and game startup routes.
 
 # Firestaff v3.0.376
 
