@@ -17,6 +17,7 @@ static const char* const g_changelogLines[] = {
     "====================",
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-12)",
+    "  - DM2 FM Towns renders the selected champion's active enchantment aura from authenticated original graphics, with source-verified facing and animation frames.",
     "  - DM1, CSB and DM2 direct game launches exit to the system when the game ends; menu launches rescan installed game data when returning.",
     "  - The launcher shows localized scan progress with a system font and high-contrast progress bar.",
     "  - DM2 FM Towns restores the selected hero icon and active HUD; startup platform selection and mixed-root detection are consistent.",

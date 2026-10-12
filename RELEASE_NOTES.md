@@ -1,3 +1,13 @@
+# Firestaff v3.0.379
+
+## User-facing changes
+
+- `DM2 FM Towns enchantment aura`: update the HUD to display the authentic active aura around the selected champion during gameplay.
+
+## Developer changes
+
+- `DM2 FM Towns aura verification`: verify all 16 direction and animation frames against original game graphics and the rendered HUD path.
+
 # Firestaff v3.0.378
 
 ## Developer changes
