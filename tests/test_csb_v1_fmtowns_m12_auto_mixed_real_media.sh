@@ -144,6 +144,7 @@ PY
 # unrelated authentic variants elsewhere under the user's data directory
 # cannot change which Amiga release owns the launch. The links leave every
 # source archive in place; no game bytes or saves are generated or copied.
+# The direct CLI checks later reuse the same isolated collection.
 amiga_media_root="$scratch/amiga-platform-selection"
 amiga_home="$scratch/amiga-home"
 mkdir -p "$amiga_media_root" "$amiga_home"
@@ -286,3 +287,90 @@ explicit_platform_runtime atari-st "Atari ST" st20-21-en csb-st20-21-en \
 explicit_platform_runtime amiga "Amiga" amiga31-multi csb-amiga-a31m \
     a31m-titl-dat "$amiga_media_root/$(basename "$amiga_archive")" \
     'enter,enter,enter,wait:1000,click:100:100,key:enter,up' '0,9,0,2,0' 320 200 30000
+
+# Direct CLI selection must keep the requested source edition when other
+# authentic CSB platforms are installed beside it. The platform-specific
+# tests above use --menu; this small boot-probe matrix covers the separate
+# no-launcher `--game csb --platform ...` route without fabricating media or
+# advancing any title with synthetic input.
+mixed_direct_cli_platform() {
+    platform=$1
+    display_platform=$2
+    edition=$3
+    variant=$4
+    handoff=$5
+    handoff_hash=$6
+    animation=$7
+    asset_md5=$8
+    archive=$9
+    source_path=${10}
+    key=$(printf '%s' "$platform" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-')
+    runtime_log="$scratch/$key-direct-cli.log"
+    case "$platform" in
+        fm-towns) startup_phase=csb-fmtowns-title ;;
+        atari-st) startup_phase=csb-atari-st-animation ;;
+        amiga) startup_phase=csb-amiga-a31-titl ;;
+        *) echo "FAIL: unsupported CSB direct CLI platform: $platform" >&2; return 1 ;;
+    esac
+
+    FIRESTAFF_CONFIG_PATH="$scratch/$key-direct-cli-config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    HOME="$scratch" XDG_CONFIG_HOME="$scratch" APPDATA="$scratch" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --width 320 --height 200 --game csb \
+        --data-dir "$amiga_media_root" --platform "$platform" --debug \
+        --boot-probe --boot-probe-frames 2 \
+        --boot-probe-expect-startup-active 1 --duration 0 \
+        >"$runtime_log" 2>&1 || {
+            cat "$runtime_log" >&2
+            return 1
+        }
+
+    python3 - "$runtime_log" "$display_platform" "$edition" "$variant" \
+        "$handoff" "$handoff_hash" "$startup_phase" "$animation" "$asset_md5" \
+        "$archive" "$source_path" <<'PY'
+import sys
+
+(log_path, platform, edition, variant, handoff, handoff_hash, startup_phase,
+ animation, asset_md5, archive, source_path) = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+
+checks = (
+    (f"CSB READY: gameId=csb dataDir={archive} variant={variant} "
+     f"route=startup handoff={handoff} handoffHash={handoff_hash}" in trace,
+     "authenticated source handoff"),
+    (f"launch phase=game-handoff mode=direct game=csb "
+     f"platform={platform} edition={edition} source={source_path}" in trace,
+     "direct CLI source selection"),
+    (f"phase={startup_phase}" in trace, "source-owned startup phase"),
+    (f"startupAnimation={animation} startupAnimationActive=1" in trace,
+     f"{animation} startup animation"),
+    (f"assetMd5={asset_md5}", "authentic asset identity"),
+    ("startupActive=1", "active original startup"),
+    ("levelLoaded=0", "no premature campaign load"),
+)
+for result, label in checks:
+    if not result:
+        raise SystemExit(f"FAIL: CSB {platform} direct CLI lost {label}:\n{trace}")
+
+print(f"PASS: mixed authentic CSB direct CLI selected {edition} on {platform} "
+      "and reached its source-owned startup phase")
+PY
+}
+
+towns_archive_link="$amiga_media_root/$(basename "$towns_archive")"
+atari_archive_link="$amiga_media_root/$(basename "$atari_archive")"
+amiga_archive_link="$amiga_media_root/$(basename "$amiga_archive")"
+towns_source="$towns_archive_link::CDATA/GRAPHICS.DAT"
+atari_source="$atari_archive_link::Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
+amiga_source="$amiga_archive_link::DM Chaos Strikes Back/DM Chaos Strikes Back - Disk 1.adf::graphics.dat"
+mixed_direct_cli_platform fm-towns "FM Towns" fmtowns-en csb-fmtowns-en \
+    f31-title-anm 6fc7d5b9 title-anm 405b757038eea3c263e60f240854d6de \
+    "$towns_archive_link" "$towns_source"
+mixed_direct_cli_platform atari-st "Atari ST" st20-21-en csb-st20-21-en \
+    atari-st-animate-ftlcode d2818858 animate-scr ebf6a57af3f27782e358c0490bfd2f2e \
+    "$atari_archive_link" "$atari_source"
+mixed_direct_cli_platform amiga "Amiga" amiga31-multi csb-amiga-a31m \
+    a31m-titl-dat 2601fbe2 titl-dat 61fbfd56887c94adc26888a9491c6611 \
+    "$amiga_archive_link" "$amiga_source"
