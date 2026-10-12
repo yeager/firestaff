@@ -9098,11 +9098,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         o->gameId,
                                         &menuInitOptions);
         if (o->verbose) {
-            if (!o->gameId || strcmp(o->gameId, "dm1") == 0)
+            /* A requested game only sets the initial M12 selection. The
+             * interactive menu scans the collection, so report every game
+             * it scanned instead of hiding sibling availability. */
+            if (o->menuRequested || !o->gameId || strcmp(o->gameId, "dm1") == 0)
                 m11_verbose_original_media(&menuState.assetStatus, "dm1");
-            if (!o->gameId || strcmp(o->gameId, "csb") == 0)
+            if (o->menuRequested || !o->gameId || strcmp(o->gameId, "csb") == 0)
                 m11_verbose_original_media(&menuState.assetStatus, "csb");
-            if (!o->gameId || strcmp(o->gameId, "dm2") == 0)
+            if (o->menuRequested || !o->gameId || strcmp(o->gameId, "dm2") == 0)
                 m11_verbose_original_media(&menuState.assetStatus, "dm2");
         }
         if (o->languageOverride >= 0 && o->languageOverride < 20) {

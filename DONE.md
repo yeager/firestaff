@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-12: `--menu --game <id> --verbose` now reports original-media
+  availability, platforms and candidate filenames for every prioritized game
+  scanned by the interactive menu, even when `--game` sets an initial card.
+  The authentic-media uppercase-DM1 collection regression passed for DM1,
+  CSB and DM2.
+
 - 2026-10-12: M12 now recognizes selected game-data directory names without
   case sensitivity, so selecting an uppercase `DM1` folder scans its parent
   collection and retains sibling game availability. The authentic-media
