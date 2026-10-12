@@ -12,8 +12,9 @@
   ZIP in a Linux/amd64 userspace under QEMU on an ARM64 Linux VM. Both routes
   loaded the original `GRAPHICS.DAT`/`DUNGEON.DAT` pair and reached runtime; the
   M12 receipt confirms `levelLoaded=1`, `dm1StartupHandoffExecuted=1`, and
-  `dm1StartupHoCFirstFrameReady=1`. Issue #13 was closed against this evidence.
-  This does not establish native x86_64 hardware or physical mouse behavior.
+  `dm1StartupHoCFirstFrameReady=1`. The v3.0.376 tag predates the later mixed-
+  edition fix, so this run does not verify the issue #13 fix. It does not
+  establish native x86_64 hardware or physical mouse behavior.
 
 - 2026-10-11: Rebuilt the current macOS source and passed the full
   `test_dm1_v1_pc34_native_cli_boot.sh` regression against the authentic DOS
@@ -34,6 +35,14 @@
   runtime. The full `test_dm1_v1_pc34_native_cli_boot.sh` suite passes.
 
 # Firestaff DONE — DM1
+
+- 2026-10-12: Rebuilt current `main` and passed
+  `dm1_v1_pc34_native_cli_boot` in 252.18 seconds with original PC 3.4 English
+  and Atari ST 1.2 data. Coverage includes the mixed-root wrong-edition
+  dungeon case, CLI and M12 startup, title/entrance/Hall flow, input, and
+  1920x1080 presentation. Fix `1cf2b7565` is included in v3.0.377. This local
+  macOS SDL-dummy run does not establish behavior on the reporter's Linux host
+  or physical input/display parity.
 
 - 2026-10-12: Extended the authentic mixed-media M12 platform regression to
   start with AUTO and select PC 3.4 using keyboard navigation without a

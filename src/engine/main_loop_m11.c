@@ -503,6 +503,7 @@ typedef struct {
     int debug;
     int useModern;
     int* quitRequested;
+    int autotestQuitInjected;
     Uint64 startedMs;
 } M11_ScanProgressContext;
 
@@ -539,6 +540,21 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                                   ctx->width, ctx->height);
         M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
     }
+    if (!ctx->autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+        getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
+        strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0) {
+        SDL_Event event;
+        memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        event.type = SDL_EVENT_QUIT;
+#else
+        event.type = SDL_QUIT;
+#endif
+        if (SDL_PushEvent(&event)) {
+            ctx->autotestQuitInjected = 1;
+            (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED", "1", 1);
+        }
+    }
     if (M11_Render_PumpEvents()) {
         if (ctx->quitRequested) *ctx->quitRequested = 1;
         return 0;
@@ -565,6 +581,7 @@ static void m11_rescan_launcher_asset_status(
     scanCtx.debug = debug;
     scanCtx.useModern = useModern;
     scanCtx.quitRequested = quitRequested;
+    scanCtx.autotestQuitInjected = 0;
     scanCtx.startedMs = SDL_GetTicks();
     M12_StartupMenu_RescanAllGames(menuState,
                                    m11_scan_progress_callback,
@@ -9097,6 +9114,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         scanCtx.debug = o->debug;
         scanCtx.useModern = 1;
         scanCtx.quitRequested = &quitRequested;
+        scanCtx.autotestQuitInjected = 0;
         scanCtx.startedMs = SDL_GetTicks();
         menuInitOptions.scanProgressFn = m11_scan_progress_callback;
         menuInitOptions.scanProgressUserData = &scanCtx;
@@ -9352,6 +9370,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fallbackCtx.debug = o->debug;
         fallbackCtx.useModern = useModern;
         fallbackCtx.quitRequested = &quitRequested;
+        fallbackCtx.autotestQuitInjected = 0;
         fallbackCtx.startedMs = SDL_GetTicks();
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,

@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-12: Added end-to-end SDL window-close injection during the initial
+  originals scan for direct `--game` startup. With authentic installed media,
+  DM1, CSB and DM2 each exit cleanly and the runtime receipt confirms the game
+  never became active. `m11_direct_launch_prepare_all_games` passed. The
+  separate return-to-menu rescan close path remains open in `TODO.md`.
+
 - 2026-10-12: SDL window-close events during the initial originals scan and
   return-to-menu rescan now propagate to the M11 quit flag. Direct launch,
   deferred scanning and the main loop stop after cancellation instead of

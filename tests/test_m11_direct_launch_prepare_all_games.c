@@ -354,6 +354,61 @@ static void run_boot_probe_empty_data_rejection(void) {
     remove_empty_data_dir(empty_dir);
 }
 
+static int runtime_probe_reports_cancelled_launch(const char* path) {
+    char contents[8192];
+    size_t bytesRead;
+    FILE* file = fopen(path, "rb");
+    if (!file) return 0;
+    bytesRead = fread(contents, 1U, sizeof(contents) - 1U, file);
+    fclose(file);
+    contents[bytesRead] = '\0';
+    return strstr(contents, "\"launchedEver\": 0") != NULL &&
+           strstr(contents, "\"active\": 0") != NULL;
+}
+
+static void run_real_scan_quit_cancellation(const char* gameId,
+                                            const char* dataDir) {
+    M11_PhaseA_Options opts;
+    char probePath[512];
+    int rc;
+    int pathLength = snprintf(probePath, sizeof(probePath),
+                              "firestaff_scan_quit_probe_%ld.json",
+                              (long)TEST_GETPID());
+    if (pathLength <= 0 || pathLength >= (int)sizeof(probePath)) {
+        expect_true(0, "scan-quit runtime probe path fits");
+        return;
+    }
+    (void)remove(probePath);
+    test_setenv("FIRESTAFF_AUTOTEST", "1");
+    test_setenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN", "1");
+    test_setenv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED", NULL);
+    test_setenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON", probePath);
+    test_setenv("SDL_VIDEODRIVER", "dummy");
+
+    M11_PhaseA_SetDefaultOptions(&opts);
+    opts.bootProbe = 1;
+    opts.bootProbeFrames = 0;
+    opts.gameId = gameId;
+    opts.dataDir = dataDir;
+    opts.architectureOverride = M12_ARCH_AUTO;
+    opts.durationMs = 0;
+    rc = M11_PhaseA_Run(&opts);
+    expect_true(rc == 0,
+                "closing during authentic-media scan exits direct CLI cleanly");
+    expect_true(getenv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED") &&
+                    strcmp(getenv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED"),
+                           "1") == 0,
+                "authentic-media progress callback consumed injected close event");
+    expect_true(runtime_probe_reports_cancelled_launch(probePath),
+                "cancelled authentic-media scan never enters game startup");
+
+    test_setenv("FIRESTAFF_AUTOTEST", NULL);
+    test_setenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN", NULL);
+    test_setenv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED", NULL);
+    test_setenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON", NULL);
+    (void)remove(probePath);
+}
+
 static void run_real_data_handoff_if_available(void) {
     size_t i;
     int available_count = 0;
@@ -747,6 +802,12 @@ static void run_real_data_handoff_if_available(void) {
         }
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
+
+        if (strcmp(kCases[i].gameId, "dm1") == 0 ||
+            strcmp(kCases[i].gameId, "csb") == 0 ||
+            strcmp(kCases[i].gameId, "dm2") == 0) {
+            run_real_scan_quit_cancellation(kCases[i].gameId, case_data_dir);
+        }
 
         if (strcmp(kCases[i].gameId, "csb") == 0 &&
             autoArchitecture != M12_ARCH_PC) {
