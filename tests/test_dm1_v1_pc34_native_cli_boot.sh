@@ -914,7 +914,8 @@ mkdir -p "$perf_home"
 perf_output=$(HOME="$perf_home" XDG_CONFIG_HOME="$perf_home" \
     APPDATA="$perf_home" FIRESTAFF_CONFIG_PATH="$perf_home/config.toml" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --platform pc --data-dir "$archive" --debug --duration 6000 \
+    --game dm1 --platform pc --data-dir "$archive" --debug-full-redraw \
+    --duration 6000 \
     2>&1) || {
         printf '%s\n' "$perf_output" >&2
         exit 1
@@ -923,14 +924,23 @@ if ! grep -Eq 'firestaff: perf game=dm1 active=1 .*process-cpu-of-one-core-perce
         <<< "$perf_output" ||
    ! grep -Fq 'game-frames-rendered-per-sec=' <<< "$perf_output" ||
    ! grep -Fq 'target-loop-fps=' <<< "$perf_output" ||
+   ! grep -Fq 'debug-full-redraw=1' <<< "$perf_output" ||
    ! grep -Fq 'frame-compose-present-call-ms-max=' <<< "$perf_output" ||
    ! grep -Fq 'gpu-utilization=unavailable' <<< "$perf_output"; then
     printf '%s\n' "$perf_output" >&2
-    printf '%s\n' 'FAIL: --debug did not emit complete DM1 performance telemetry' >&2
+    printf '%s\n' 'FAIL: --debug-full-redraw did not emit complete DM1 performance telemetry' >&2
+    exit 1
+fi
+render_fps=$(sed -n 's/.*game-frames-rendered-per-sec=\([0-9.]*\).*/\1/p' \
+    <<< "$perf_output" | tail -n 1)
+if [[ -z "$render_fps" ]] || ! awk -v fps="$render_fps" 'BEGIN { exit !(fps >= 50.0) }'; then
+    printf '%s\n' "$perf_output" >&2
+    printf 'FAIL: dummy full-redraw FPS was below 50 (got %s)\n' \
+        "${render_fps:-missing}" >&2
     exit 1
 fi
 rm -rf "$perf_home"
-printf '%s\n' 'PASS: authentic DM1 PC-34 --debug emits FPS, CPU, frame-time, and explicit GPU availability metrics'
+printf '%s\n' 'PASS: authentic DM1 PC-34 --debug-full-redraw measures full-redraw FPS, CPU, frame-time, and explicit GPU availability'
 
 trap - EXIT HUP INT TERM
 cleanup_hoc_capture

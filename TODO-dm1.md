@@ -5,7 +5,9 @@ in-game FPS overlay and emits five-second measurements for process CPU time,
 configured loop target, actual loop cadence/over-budget loops, game-specific
 simulation ticks, and successful game-frame presentations. Frame-composition
 plus SDL present-call duration is reported separately; SDL does not expose
-GPU utilization, so the log explicitly reports it unavailable. Source timing
+GPU utilization, so the log explicitly reports it unavailable. The opt-in
+`--debug-full-redraw` diagnostic renders every loop to measure sustained full
+frame composition and presentation capacity. Source timing
 and host rendering must be compared separately: ReDMCSB `GAMELOOP.C`
 `F0002_MAIN_GameLoop_CPSDF` and `VBLANK.C`
 `F0577_VerticalBlank_Handler_CPSDF` show the original input/VBlank-driven

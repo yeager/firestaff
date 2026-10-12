@@ -5684,6 +5684,9 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->csbFmtownsJapanese = 0;
     opts->dm1FmtownsJapanese = 0;
     opts->directLaunch   = 0;
+    opts->verbose = 0;
+    opts->debug = 0;
+    opts->debugFullRedraw = 0;
     /* --menu is an explicit CLI opt-out from direct launch.  Leaving this
      * field uninitialised made an ordinary `--game dm1` depend on stack
      * contents and intermittently return to M12 instead of starting the
@@ -10449,6 +10452,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
              * Resurrecting a champion enables the full HUD/champion render
              * path, so keep CPU bounded by presenting only after input,
              * resize, launch, restart, or a source tick dirties the frame. */
+            if (o->debugFullRedraw) gameFrameNeedsPresent = 1;
             if (gameFrameNeedsPresent) {
                 const Uint64 perfRenderStart = o->debug
                     ? SDL_GetPerformanceCounter() : 0;
@@ -10535,10 +10539,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                  100000.0 / elapsedMs;
                 }
                 fprintf(stderr,
-                        "firestaff: perf game=%s active=%d window-ms=%.0f "
+                        "firestaff: perf game=%s active=%d debug-full-redraw=%d window-ms=%.0f "
                         "process-cpu-of-one-core-percent=",
                         o->gameId ? o->gameId : "menu", gameView.active,
-                        elapsedMs);
+                        o->debugFullRedraw, elapsedMs);
                 if (cpuPercent >= 0.0) fprintf(stderr, "%.1f", cpuPercent);
                 else fprintf(stderr, "unavailable");
                 fprintf(stderr,

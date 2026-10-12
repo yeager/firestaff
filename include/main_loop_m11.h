@@ -95,6 +95,7 @@ typedef struct {
     int bootProbeExpectDm1HoCReleaseAppCapture; /* Require launcher/release HoC route. */
     int verbose;
     int debug;
+    int debugFullRedraw;
     int retroAchievementsEnabled;
     int showFpsOverlay;
     int retroAchievementsHardcore;

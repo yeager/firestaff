@@ -82,6 +82,7 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-dm1-hoc-release-app-capture Fail unless DM1 HoC release/app capture is ready\n"
             "  --verbose, -v       List startup platforms, catalogue files and media selection\n"
             "  --debug             Trace scan roots, platform choices and startup frames/timing\n"
+            "  --debug-full-redraw Re-render the active game every loop for an FPS stress check\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --no-music          Disable title and in-game music (keeps sound effects)\n"
@@ -686,6 +687,7 @@ int main(int argc, char** argv) {
     int scanData = 0;
     int verbose = 0;
     int debug = 0;
+    int debugFullRedraw = 0;
     int theronAuthenticatedFallback = 0;
     int enableExternalArchiveTools = 0;
     const char* theronVramSnapshot = NULL;
@@ -824,6 +826,12 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--debug") == 0) {
             debug = 1;
             verbose = 1;
+            continue;
+        }
+        if (strcmp(a, "--debug-full-redraw") == 0) {
+            debug = 1;
+            verbose = 1;
+            debugFullRedraw = 1;
             continue;
         }
         if (strcmp(a, "--boot-probe") == 0) {
@@ -1094,6 +1102,7 @@ int main(int argc, char** argv) {
 
     opts.verbose = verbose;
     opts.debug = debug;
+    opts.debugFullRedraw = debugFullRedraw;
     /* A boot probe emits an M11 receipt after a direct selected-game launch;
      * it does not exercise M12 card navigation. Reject the conflicting
      * request instead of silently turning `--menu --boot-probe` into a
