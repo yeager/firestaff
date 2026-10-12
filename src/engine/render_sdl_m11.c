@@ -2547,7 +2547,12 @@ int M11_Render_PumpEvents(void) {
             SDL_zero(closeEvent);
             closeEvent.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
             closeEvent.window.windowID = SDL_GetWindowID(g_state.window);
-            (void)SDL_PushEvent(&closeEvent);
+            /* SDL_PushEvent can filter window lifecycle events on some
+             * platforms. Add directly to the queue so this autotest always
+             * exercises the post-poll SDL_PeepEvents drain. */
+            (void)SDL_PeepEvents(&closeEvent, 1, SDL_ADDEVENT,
+                                SDL_EVENT_WINDOW_CLOSE_REQUESTED,
+                                SDL_EVENT_WINDOW_CLOSE_REQUESTED);
         }
     }
     /* A queued close request may remain after SDL_PollEvent drains the input
