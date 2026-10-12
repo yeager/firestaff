@@ -14,15 +14,20 @@ binary authenticated the English Amiga 3.5 original ADF from the DMWeb
 software archive (MD5 `d1808d54faf36c6ab7f054908ce7ebd5`). A byte-preserving
 ZIP wrapper was accepted by direct `--game csb --platform amiga`: the CLI
 reached the native entrance and then the first runtime movement at `(9,1)`.
-The production M12 menu also selected the authenticated `amiga35-en`
-`Graphics.DAT` (MD5 `291e1bc6803e3dc4b974c60117ca5d68`) and reached the native
-entrance. A follow-up menu run now waits through the original entrance,
-accepts C200, and verifies the first runtime movement at `(9,1)` with a
-nonzero viewport receipt. The regression uses `wait:` in loop frames, not
-milliseconds. These runs used SDL's dummy video/audio drivers. The dedicated
-M12-to-M11 boundary executable was not built in this local check, so its
-handoff assertions remain pending. This ADF route is separate from native
-CTRaw decoding.
+The released v3.0.380 binary also passed bare `--game csb` and M12 AUTO with
+no platform selection: both routes selected authenticated `amiga35-en`
+(`Graphics.DAT` MD5 `291e1bc6803e3dc4b974c60117ca5d68`) and reached the first
+runtime movement at `(9,1)`. The real-media regression now covers both AUTO
+routes so they remain independent of saved platform preferences.
+The explicitly pinned production M12 menu also selected the authenticated
+`amiga35-en` `Graphics.DAT` (MD5
+`291e1bc6803e3dc4b974c60117ca5d68`) and reached the native entrance. A follow-up
+menu run now waits through the original entrance, accepts C200, and verifies the
+first runtime movement at `(9,1)` with a nonzero viewport receipt. The regression
+uses `wait:` in loop frames, not milliseconds. These runs used SDL's dummy
+video/audio drivers. The dedicated M12-to-M11 boundary executable was not built
+in this local check, so its handoff assertions remain pending. This ADF route is
+separate from native CTRaw decoding.
 
 2026-10-11 A35 original-ADF startup verification: the DMWeb software archive
 also contains a multilingual Amiga 3.5 original ADF, explicitly labeled
