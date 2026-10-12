@@ -77,7 +77,9 @@ int firestaff_amiga_mfm_scan_track(
         if (read_u32_be_wrapped(bit_cells, bit_count, start) != AMIGA_MFM_SYNC)
             continue;
 
-        body_start = start + 64u;
+        /* ADFlib ADF FAQ 2.2-2.3 defines two 16-bit $4489 sync words before
+         * the header. See also WinUAE diskutil.cpp:isamigatrack. */
+        body_start = start + 32u;
         /* Each MFM sector occupies 1088 bytes from sync start through its
          * data end. A smaller capture cannot contain the full sector. */
         if (bit_count < (size_t)AMIGA_MFM_SECTOR_BYTES_ON_TRACK * 8u)

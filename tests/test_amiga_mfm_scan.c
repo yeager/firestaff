@@ -90,7 +90,7 @@ static void make_sector(uint8_t *bits, size_t bit_count, size_t start,
     words[6] = data_xor;
 
     put_u32(bits, bit_count, start, 0x44894489u);
-    pos = start + 64u;
+    pos = start + 32u;
     for (i = 0; i < 135u; ++i) {
         /* MFM odd/even lanes are independently clock encoded. Resetting the
          * lane history at each sector keeps this fixture self contained. */
