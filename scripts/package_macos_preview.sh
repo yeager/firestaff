@@ -24,7 +24,7 @@ BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_APP_SRC="${ARTPACK_STUDIO_APP_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/Firestaff Artpack Studio.app}"
 DUNGEON_STUDIO_APP_SRC="${DUNGEON_STUDIO_APP_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/Firestaff Dungeon Studio.app}"
 SAVEGAME_EDITOR_APP_SRC="${SAVEGAME_EDITOR_APP_SRC:-$BUILD_DIR/savegame-editor-bundle/dist/Firestaff Savegame Editor.app}"
-SDL_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3.*dylib/ {print $1; exit}')"
+SDL_DYLIB="$(otool -L "$BIN_SRC" | awk '$1 ~ /(^|\/)libSDL3\.[0-9]+\.dylib$/ {print $1; exit}')"
 SDL_TTF_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3_ttf.*dylib/ {print $1; exit}')"
 
 if [[ ! -x "$BIN_SRC" ]]; then

@@ -152,7 +152,16 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Install dependencies
-        run: brew install cmake pkg-config sdl3 sdl3_ttf python@3.13 python-tk@3.13
+        run: |
+          set -euo pipefail
+          brew install cmake pkg-config sdl3 sdl3_ttf
+          if ! brew install python@3.13 python-tk@3.13; then
+            # GitHub's Intel macOS runner can ship conflicting framework-Python
+            # links. The formulae are still usable from their Homebrew prefix.
+            brew list --versions python@3.13 >/dev/null
+            brew list --versions python-tk@3.13 >/dev/null
+            echo "Using installed Python formulae without linking runner Python paths."
+          fi
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
