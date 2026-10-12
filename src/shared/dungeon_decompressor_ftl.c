@@ -35,23 +35,20 @@ static void ftl_br_init(FTL_BitReader* br, const unsigned char* data, size_t siz
     br->bits = 0;
 }
 
-static unsigned int ftl_get_bits(FTL_BitReader* br, int count) {
+static int ftl_get_bits(FTL_BitReader* br, int count, unsigned int* value) {
     unsigned int result;
     /* Ensure enough bits in buffer (read bytes MSB-first) */
     while (br->bits < count) {
-        if (br->pos < br->size) {
-            br->buffer = (br->buffer << 8) | br->data[br->pos++];
-            br->bits += 8;
-        } else {
-            br->buffer <<= 8;
-            br->bits += 8;
-        }
+        if (br->pos >= br->size) return 0;
+        br->buffer = (br->buffer << 8) | br->data[br->pos++];
+        br->bits += 8;
     }
     /* Extract top 'count' bits */
     br->bits -= count;
     result = (unsigned int)(br->buffer >> br->bits) & ((1u << count) - 1u);
     br->buffer &= (1ul << br->bits) - 1ul;
-    return result;
+    *value = result;
+    return 1;
 }
 
 int ftl_decompress_dungeon(const unsigned char* compressed, size_t compressedSize,
@@ -59,6 +56,7 @@ int ftl_decompress_dungeon(const unsigned char* compressed, size_t compressedSiz
     const unsigned char* table;
     FTL_BitReader br;
     long remaining;
+    unsigned int prefix;
 
     if (!compressed || !output || compressedSize < 20 || decompressedSize <= 0) {
         return 0;
@@ -72,18 +70,23 @@ int ftl_decompress_dungeon(const unsigned char* compressed, size_t compressedSiz
 
     remaining = decompressedSize;
     while (remaining > 0) {
-        if (ftl_get_bits(&br, 1) == 0) {
+        if (!ftl_get_bits(&br, 1, &prefix)) return 0;
+        if (prefix == 0) {
             /* 0 + 2-bit index → most common table */
-            unsigned int idx = ftl_get_bits(&br, 2);
+            unsigned int idx;
+            if (!ftl_get_bits(&br, 2, &idx)) return 0;
             *output++ = table[idx];
         } else {
-            if (ftl_get_bits(&br, 1) == 0) {
+            if (!ftl_get_bits(&br, 1, &prefix)) return 0;
+            if (prefix == 0) {
                 /* 10 + 4-bit index → less common table */
-                unsigned int idx = ftl_get_bits(&br, 4);
+                unsigned int idx;
+                if (!ftl_get_bits(&br, 4, &idx)) return 0;
                 *output++ = table[4 + idx];
             } else {
                 /* 11 + 8-bit literal */
-                unsigned int literal = ftl_get_bits(&br, 8);
+                unsigned int literal;
+                if (!ftl_get_bits(&br, 8, &literal)) return 0;
                 *output++ = (unsigned char)literal;
             }
         }

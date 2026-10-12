@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+2026-10-12 FTL decompression bounds: ReDMCSB `DECOMPDU.C`
+`F0455_FLOPPY_DecompressDungeon` establishes the MSB-first token grammar for
+the shared dungeon stream. The bounded reader now rejects truncated prefixes,
+indices and literals instead of manufacturing zero bits after EOF. The new
+`dungeon_decompressor_ftl_bounds` check passes, and the authentic Amiga 2.0
+French dungeon/world startup regression passes with the change. This validates
+one shared data-decoding boundary; it does not close the remaining gameplay,
+platform or viewport work below.
+
 2026-10-12 debug performance telemetry: `--debug` now enables the existing
 in-game FPS overlay and emits five-second measurements for process CPU time,
 configured loop target, actual loop cadence/over-budget loops, game-specific

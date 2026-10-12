@@ -1,5 +1,11 @@
 # Firestaff TODO — CSB
 
+2026-10-12 shared FTL decoder bounds: the ReDMCSB `DECOMPDU.C` F0455 token
+reader now fails on truncated input instead of synthesizing zero bits after
+EOF. The malformed-stream regression and the authentic Amiga `DUNGEON.DAT`
+probe pass. This hardens normal FTL dungeon intake; it does not decode the
+separate CTRaw `PACK` representation described below.
+
 2026-10-12 v3.0.379 startup regression retest: the released macOS arm64
 binary passed authenticated return-to-menu and all-five-game rescan checks
 for FM Towns, Atari ST and Amiga media. Direct `--game csb` exit behavior

@@ -61665,6 +61665,18 @@ set_tests_properties(csb_v1_amiga_dungeon_probe PROPERTIES
     ENVIRONMENT "FIRESTAFF_CSB_AMIGA_DUNGEON=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip::Chaos Strikes Back (FTL) A.adf::DUNGEON.DAT"
     LABELS "csb;amiga;real_data")
 
+add_executable(test_dungeon_decompressor_ftl_bounds
+    tests/test_dungeon_decompressor_ftl_bounds.c
+    src/shared/dungeon_decompressor_ftl.c)
+target_include_directories(test_dungeon_decompressor_ftl_bounds PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dungeon_decompressor_ftl_bounds
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dungeon_decompressor_ftl_bounds
+    COMMAND test_dungeon_decompressor_ftl_bounds)
+
 add_executable(test_csb_v1_dungeon_world_pc34_compat
     tests/test_csb_v1_dungeon_world_pc34_compat.c
     tests/csb_v1_dungeon_world_legacy_fixture.c)
