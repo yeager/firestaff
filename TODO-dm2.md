@@ -1,5 +1,14 @@
 # Firestaff TODO — DM2
 
+2026-10-12 v3.0.379 startup regression retest: the released macOS arm64
+binary passed authenticated return-to-menu and all-five-game rescan checks
+for FM Towns, DOS, Macintosh and Amiga media. Direct `--game dm2` exit
+behavior passed with original FM Towns media. CLI diagnostics verified all
+225 FM Towns TWANIM frames and completion at 26,214 ms, default per-game
+media discovery and platform selection from a mixed original-media root.
+These runs use SDL's dummy video driver; native M5 Retina input and pixel
+parity remain unverified.
+
 Reviewed 2026-08-29. Only open work is listed here.
 
 2026-10-11 local startup retest: the current source passed authentic FM Towns,

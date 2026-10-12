@@ -1,5 +1,12 @@
 # Firestaff TODO — CSB
 
+2026-10-12 v3.0.379 startup regression retest: the released macOS arm64
+binary passed authenticated return-to-menu and all-five-game rescan checks
+for FM Towns, Atari ST and Amiga media. Direct `--game csb` exit behavior
+passed with original FM Towns media. CLI diagnostics confirmed FM Towns AUTO
+priority when original Amiga media was also installed. These runs use SDL's
+dummy video driver; native M5 Retina input and pixel parity remain unverified.
+
 Reviewed 2026-09-05. Only open work is listed here.
 
 2026-10-11 A35 original-ADF startup verification: the DMWeb software archive

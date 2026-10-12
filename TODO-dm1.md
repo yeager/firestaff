@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-10-12 v3.0.379 startup regression retest: the released macOS arm64
+binary passed authenticated return-to-menu and all-five-game rescan checks
+for DM1 PC, Atari ST v1.2 and Amiga 3.6. Direct `--game dm1` exit behavior
+passed with original FM Towns media. CLI diagnostics passed for default
+per-game data discovery, mixed PC/FM Towns/unsupported PC-98 media priority,
+and the original FM Towns and PC intro cadence. These runs use SDL's dummy
+video driver; native M5 Retina input and pixel parity remain unverified.
+
 2026-10-11 local startup retest: authentic FM Towns, Atari ST v1.2, English
 DOS, and Amiga v2.0 New Game routes reached their first runtime frame. The
 Atari ST v1.2 full CLI/menu/input regression passed. The full Amiga v2.0
