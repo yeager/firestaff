@@ -4366,55 +4366,64 @@ static void m12_save_config(M12_StartupMenuState* state) {
     }
 }
 
-static int m12_startup_data_dir_is_game_leaf(const char* dataDir) {
-    const char* slash;
-    const char* backslash;
+static const char* m12_startup_data_dir_leaf(const char* dataDir,
+                                              size_t* leafLength) {
+    const char* end;
     const char* leaf;
-    if (!dataDir || dataDir[0] == '\0') {
-        return 0;
+    if (leafLength) *leafLength = 0U;
+    if (!dataDir || dataDir[0] == '\0') return NULL;
+    end = dataDir + strlen(dataDir);
+    while (end > dataDir && (end[-1] == '/' || end[-1] == '\\')) {
+        --end;
     }
-    slash = strrchr(dataDir, '/');
-    backslash = strrchr(dataDir, '\\');
-    leaf = slash && backslash
-        ? (slash > backslash ? slash + 1 : backslash + 1)
-        : (slash ? slash + 1 : (backslash ? backslash + 1 : dataDir));
-    return m12_ascii_equal_ci(leaf, "dm1") ||
-           m12_ascii_equal_ci(leaf, "dm1-multilingual") ||
-           m12_ascii_equal_ci(leaf, "csb") ||
-           m12_ascii_equal_ci(leaf, "dm2") ||
-           m12_ascii_equal_ci(leaf, "nexus") ||
-           m12_ascii_equal_ci(leaf, "theron");
+    leaf = end;
+    while (leaf > dataDir && leaf[-1] != '/' && leaf[-1] != '\\') {
+        --leaf;
+    }
+    if (leafLength) *leafLength = (size_t)(end - leaf);
+    return leaf;
+}
+
+static int m12_startup_data_dir_leaf_matches(const char* dataDir,
+                                               const char* expected) {
+    size_t leafLength;
+    size_t expectedLength;
+    size_t i;
+    const char* leaf = m12_startup_data_dir_leaf(dataDir, &leafLength);
+    if (!leaf || !expected) return 0;
+    expectedLength = strlen(expected);
+    if (leafLength != expectedLength) return 0;
+    for (i = 0U; i < leafLength; ++i) {
+        if (m12_ascii_lower((unsigned char)leaf[i]) !=
+            m12_ascii_lower((unsigned char)expected[i])) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static const char* m12_startup_game_id_for_data_dir(const char* dataDir) {
-    const char* slash;
-    const char* backslash;
-    const char* leaf;
-    if (!dataDir || dataDir[0] == '\0') {
-        return NULL;
-    }
-    slash = strrchr(dataDir, '/');
-    backslash = strrchr(dataDir, '\\');
-    leaf = slash && backslash
-        ? (slash > backslash ? slash + 1 : backslash + 1)
-        : (slash ? slash + 1 : (backslash ? backslash + 1 : dataDir));
-    if (m12_ascii_equal_ci(leaf, "dm1") ||
-        m12_ascii_equal_ci(leaf, "dm1-multilingual")) {
+    if (m12_startup_data_dir_leaf_matches(dataDir, "dm1") ||
+        m12_startup_data_dir_leaf_matches(dataDir, "dm1-multilingual")) {
         return "dm1";
     }
-    if (m12_ascii_equal_ci(leaf, "csb")) {
+    if (m12_startup_data_dir_leaf_matches(dataDir, "csb")) {
         return "csb";
     }
-    if (m12_ascii_equal_ci(leaf, "dm2")) {
+    if (m12_startup_data_dir_leaf_matches(dataDir, "dm2")) {
         return "dm2";
     }
-    if (m12_ascii_equal_ci(leaf, "nexus")) {
+    if (m12_startup_data_dir_leaf_matches(dataDir, "nexus")) {
         return "nexus";
     }
-    if (m12_ascii_equal_ci(leaf, "theron")) {
+    if (m12_startup_data_dir_leaf_matches(dataDir, "theron")) {
         return "theron";
     }
     return NULL;
+}
+
+static int m12_startup_data_dir_is_game_leaf(const char* dataDir) {
+    return m12_startup_game_id_for_data_dir(dataDir) != NULL;
 }
 
 static void m12_scan_startup_asset_status(M12_StartupMenuState* state,

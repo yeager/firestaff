@@ -466,7 +466,7 @@ for game_id in dm1 csb dm2 nexus theron; do
 done
 uppercase_leaf_menu=$(FIRESTAFF_CONFIG_PATH="$uppercase_game_root/menu.toml" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --menu --game dm1 --data-dir "$uppercase_data_root/DM1" --debug --verbose \
+    --menu --game dm1 --data-dir "$uppercase_data_root/DM1/" --debug --verbose \
     --duration 1000 2>&1) || {
     printf '%s\n' "$uppercase_leaf_menu" >&2
     exit 1
