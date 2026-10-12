@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Last full review: 2026-09-29; Theron rows updated: 2026-10-03.** This is the
+**Last full review: 2026-10-12; Theron rows updated: 2026-10-03.** This is the
 operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.
@@ -39,6 +39,21 @@ root. Combined with existing checks, this closes headless return/rescan
 coverage for DM1 DOS/Atari ST/Amiga/FM Towns, CSB Atari ST/Amiga/FM Towns, and
 DM2 DOS/Macintosh/Amiga/FM Towns; it does not establish physical desktop
 input or platform visual parity.
+
+On 2026-10-12, commit `0b8f1f347` passed the complete local
+`return_to_menu_rescans_dm1_csb_dm2_real_media` matrix against the installed
+original-media collection in 1,188 seconds. The regression now also verifies
+that SDL3 window-close requests cancel synchronous return scans, without
+redrawing the launcher, for keyboard and mouse return paths. The focused
+`asset_scan_access_denied` test passed with the authentic DM1 FM Towns archive
+staged; it covers reporting an unreadable folder beside valid game data, a
+same-process rescan after access is restored, and discovery on a fresh startup.
+That permission test uses filesystem mode changes, not the native macOS TCC
+privacy dialog. GitHub Actions run `38238388059` passed its full Linux, macOS
+and Windows build/test matrix, including the SDL3 close-request regression on
+all three operating systems. These results establish scan and launcher
+behavior, not physical M5 HiDPI rendering, input, or game-specific visual/audio
+parity.
 
 ## Latest real-media revalidation
 
