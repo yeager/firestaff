@@ -24,12 +24,16 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
 
 - The selected Towns hero frame now comes from `INTERFACE_GENERAL/6/<hero>` at
   RECT `0x5e` (136x17 eight-frame source, 17x17 placement at `(265,108)`), with
-  facing and `savegames1.b_02` variant bound from source state. Implement and
-  verify the separate enchanted-hero aura overlay from `INTERFACE_GENERAL/7`
-  using the source aura id, relative facing, and four-frame tick animation.
-  Keep it distinct from squad-position spell/status icons. The source panel
-  base, remaining selection-dependent chrome and physical M5 HiDPI/input
-  behavior also remain open.
+  facing and `savegames1.b_02` variant bound from source state. The enchanted-
+  hero aura is now bound from live `ench_aura`, `ench_power`, relative facing,
+  and game tick. Its original FM Towns `INTERFACE_GENERAL/7` fields 0–6 are
+  84x84 U4 sheets (four 21x21 directions by four 21x21 tick frames); M11
+  crops the exact source frame and draws it at the selected-hero button origin
+  `(265,108)` with the source palette and color key. The real-media regression
+  checks all 16 facing/tick combinations against the installed Towns archive
+  and verifies command consumption. It remains separate from squad-position
+  spell/status icons. The source panel base, remaining selection-dependent
+  chrome and physical M5 HiDPI/input behavior also remain open.
 
 - Complete the remaining source-owned DM2 FM Towns HUD and compare the
   reported screenshot on the MacBook Pro M5. The normal M12 → Towns → New Game

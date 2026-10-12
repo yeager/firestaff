@@ -169,6 +169,12 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
         hash = dm2_v1_gdat_hud_hash_bytes(hash,
             &command->source_state_flags,
             sizeof(command->source_state_flags));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            &command->animation_direction,
+            sizeof(command->animation_direction));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            &command->animation_frame,
+            sizeof(command->animation_frame));
     }
     return hash ? hash : 1u;
 }
@@ -732,7 +738,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
                     ? DM2_V1_GDAT_HUD_M11_TOWNS_LEADER_ICON : 0u));
         }
     }
-    if (party->towns_selected_hero_source_bound) {
+        if (party->towns_selected_hero_source_bound) {
         const int selected = party->towns_selected_hero_index;
         const DM2_V1_GdatHudTownsSquadSlot *source;
         if (selected < 0 || selected >= party->champion_count ||
@@ -795,6 +801,124 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
         selected_command->decoded_hash =
             dm2_v1_gdat_hud_m11_command_pixel_hash(selected_command);
         if (!selected_command->decoded_hash) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+    }
+    for (slot = 0; slot < party->champion_count; ++slot) {
+        const DM2_V1_GdatHudTownsSquadSlot *source = &slots[slot];
+        DM2_V1_GdatHudM11Command *aura_command;
+        DM2_V1_GdatImageMetadata metadata;
+        uint8_t palette16[16];
+        uint32_t palette_hash = 0u;
+        int width = 0;
+        int height = 0;
+        DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+        uint8_t *pixels;
+        if (!source->draw_enchantment_aura) continue;
+        if (slot != party->towns_selected_hero_index ||
+            !party->champions[slot].towns_ench_aura_source_bound ||
+            party->champions[slot].towns_ench_power == 0 ||
+            source->enchantment_aura_direction > 3u ||
+            source->enchantment_aura_tick_frame > 3u ||
+            source->enchantment_aura_id !=
+                party->champions[slot].towns_ench_aura ||
+            source->enchantment_aura_rect_id != 0x5eu ||
+            source->enchantment_aura_rect.w != 21 ||
+            source->enchantment_aura_rect.h != 21 ||
+            !source->enchantment_aura_rect_raw4_hash ||
+            !dm2_v1_asset_load_image_metadata(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 7,
+                source->enchantment_aura_id, &metadata) ||
+            metadata.bits_per_pixel != 4u || metadata.width != 84u ||
+            metadata.height != 84u ||
+            !dm2_v1_asset_load_image_local_palette(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 7,
+                source->enchantment_aura_id, palette16, &palette_hash) ||
+            !palette_hash) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        pixels = dm2_v1_asset_load_image_field(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 7,
+            source->enchantment_aura_id, &width, &height, &format);
+        if (!pixels || width != 84 || height != 84 ||
+            format != DM2_IMG_FMT_U4) {
+            dm2_v1_asset_free_pixels(pixels);
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        if (out_plan->command_count >= DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+            dm2_v1_asset_free_pixels(pixels);
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        aura_command = &out_plan->commands[out_plan->command_count++];
+        memset(aura_command, 0, sizeof(*aura_command));
+        aura_command->kind =
+            DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA;
+        aura_command->viewport_gdat_index = 0x6400 + slot;
+        aura_command->destination = source->enchantment_aura_rect;
+        aura_command->destination_rect_id = source->enchantment_aura_rect_id;
+        aura_command->destination_table_hash =
+            source->enchantment_aura_rect_raw4_hash;
+        aura_command->gdat_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+        aura_command->gdat_index = 7;
+        aura_command->gdat_field = source->enchantment_aura_id;
+        {
+            size_t raw_size = 0u;
+            const uint8_t *raw = dm2_v1_asset_load_typed_sized(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 7,
+                DM2_GDAT_ENTRY_TYPE_IMAGE, source->enchantment_aura_id,
+                &raw_size);
+            uint16_t raw_index;
+            DM2_V1_GdatGfxRawMaterialReceipt material;
+            if (!raw || raw_size == 0u || raw_size > UINT32_MAX ||
+                !dm2_v1_gdat_hud_source_raw_index(
+                    loader, raw, raw_size, &raw_index) ||
+                !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+                    loader, raw_index, &material) ||
+                material.source_bytes != raw ||
+                material.source_byte_count != raw_size ||
+                !material.receipt_hash) {
+                dm2_v1_asset_free_pixels(pixels);
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            aura_command->raw_hash = material.source_hash;
+            aura_command->raw_byte_count = (uint32_t)raw_size;
+            aura_command->material_raw_index = material.raw_index;
+            aura_command->material_source_bytes = material.source_bytes;
+            aura_command->material_source_byte_count =
+                material.source_byte_count;
+            aura_command->material_receipt_hash = material.receipt_hash;
+        }
+        aura_command->pixels = (uint8_t *)malloc(21u * 21u);
+        if (!aura_command->pixels) {
+            dm2_v1_asset_free_pixels(pixels);
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        for (int y = 0; y < 21; ++y) {
+            memcpy(aura_command->pixels + y * 21,
+                pixels + (source->enchantment_aura_tick_frame * 21 + y) * 84 +
+                    source->enchantment_aura_direction * 21,
+                21u);
+        }
+        dm2_v1_asset_free_pixels(pixels);
+        aura_command->width = 21;
+        aura_command->height = 21;
+        aura_command->format = DM2_IMG_FMT_U4;
+        memcpy(aura_command->palette16, palette16, sizeof(palette16));
+        aura_command->palette_hash = palette_hash;
+        aura_command->source_state_flags =
+            DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4;
+        aura_command->animation_direction =
+            source->enchantment_aura_direction;
+        aura_command->animation_frame = source->enchantment_aura_tick_frame;
+        aura_command->decoded_hash =
+            dm2_v1_gdat_hud_m11_command_pixel_hash(aura_command);
+        if (!aura_command->decoded_hash) {
             dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
             return 0;
         }

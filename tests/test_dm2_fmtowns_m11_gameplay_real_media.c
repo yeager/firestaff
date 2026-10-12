@@ -1358,16 +1358,140 @@ int main(void)
                 }
                 dm2_v1_gdat_hud_m11_command_plan_free(&plan);
             }
+            {
+                DM2_V1_GdatHudM11CommandPlan aura_plan;
+                DM2_V1_InterfaceRect aura_rect;
+                const DM2_V1_AssetLoader *loader =
+                    dm2_v1_boot_asset_loader(profile);
+                DM2_ImageFormat aura_format = DM2_IMG_FMT_UNKNOWN;
+                int aura_width = 0;
+                int aura_height = 0;
+                uint8_t *aura_sheet;
+                squad.towns_selected_hero_source_bound = 1;
+                squad.towns_selected_hero_index = 0;
+                squad.towns_savegames1_b02_source_bound = 1;
+                squad.towns_game_tick_source_bound = 1;
+                squad.towns_game_tick = 6u;
+                squad.champions[0].towns_absdir_source_bound = 1;
+                squad.champions[0].towns_absdir = 2u;
+                squad.champions[0].towns_ench_aura_source_bound = 1;
+                squad.champions[0].towns_ench_aura = 0u;
+                squad.champions[0].towns_ench_power = 12;
+                squad.champions[0].towns_current_hp = 10;
+                aura_sheet = dm2_v1_asset_load_image_field(
+                    loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 7, 0,
+                    &aura_width, &aura_height, &aura_format);
+                check(aura_sheet && aura_width == 84 && aura_height == 84 &&
+                          aura_format == DM2_IMG_FMT_U4 &&
+                          dm2_v1_boot_query_blit_rect_for_dimensions(
+                              profile, 0x5e, 17, 17, &aura_rect),
+                      "FM Towns authentic aura is a 4x4 U4 sheet with source placement");
+                if (aura_sheet) {
+                    for (int direction = 0; direction < 4; ++direction) {
+                        for (int frame = 0; frame < 4; ++frame) {
+                            DM2_V1_GdatHudM11CommandPlan frame_plan;
+                            squad.champions[0].towns_absdir =
+                                (uint8_t)direction;
+                            squad.towns_game_tick = (uint32_t)frame;
+                            memset(&frame_plan, 0, sizeof(frame_plan));
+                            int frame_plan_ok =
+                                dm2_v1_boot_gdat_hud_m11_command_plan(
+                                    (DM2_V1_BootProfile *)profile, &squad,
+                                    &frame_plan) &&
+                                frame_plan.command_count == 5 &&
+                                frame_plan.commands[4].animation_direction ==
+                                    (uint8_t)direction &&
+                                frame_plan.commands[4].animation_frame ==
+                                    (uint8_t)frame;
+                            check(frame_plan_ok,
+                                  "FM Towns aura command binds source facing and game tick");
+                            if (frame_plan_ok) {
+                                for (int y = 0; y < 21; ++y) {
+                                    check(memcmp(
+                                        frame_plan.commands[4].pixels + y * 21,
+                                        aura_sheet + (frame * 21 + y) * 84 +
+                                            direction * 21,
+                                        21u) == 0,
+                                        "FM Towns aura frame is cropped from its authentic sheet");
+                                }
+                            }
+                            dm2_v1_gdat_hud_m11_command_plan_free(&frame_plan);
+                        }
+                    }
+                    squad.champions[0].towns_absdir = 2u;
+                    squad.towns_game_tick = 6u;
+                }
+                memset(&aura_plan, 0, sizeof(aura_plan));
+                check(dm2_v1_boot_gdat_hud_m11_command_plan(
+                          (DM2_V1_BootProfile *)profile, &squad,
+                          &aura_plan) && aura_plan.command_count == 5 &&
+                          aura_plan.commands[4].kind ==
+                              DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA &&
+                          aura_plan.commands[4].gdat_category ==
+                              DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+                          aura_plan.commands[4].gdat_index == 7 &&
+                          aura_plan.commands[4].gdat_field == 0 &&
+                          aura_plan.commands[4].width == 21 &&
+                          aura_plan.commands[4].height == 21 &&
+                          aura_plan.commands[4].destination.x == aura_rect.x &&
+                          aura_plan.commands[4].destination.y == aura_rect.y &&
+                          aura_plan.commands[4].destination.w == 21 &&
+                          aura_plan.commands[4].destination.h == 21,
+                      "FM Towns active enchantment adds original field 7 at selected-hero RECT 0x5e");
+                if (aura_plan.command_count == 5 && aura_sheet) {
+                    for (int y = 0; y < 21; ++y) {
+                        check(memcmp(aura_plan.commands[4].pixels + y * 21,
+                                  aura_sheet + (2 * 21 + y) * 84 + 2 * 21,
+                                  21u) == 0,
+                              "FM Towns aura crop follows relative facing and tick frame");
+                    }
+                }
+                dm2_v1_asset_free_pixels(aura_sheet);
+                if (aura_plan.valid) {
+                    DM2_V1_GdatSceneM11CommandPlan scene_plan;
+                    DM2_V1_InterfacePalette interface_palette;
+                    DM2_V1_ViewportState chrome;
+                    memset(&scene_plan, 0, sizeof(scene_plan));
+                    memset(&interface_palette, 0, sizeof(interface_palette));
+                    memset(framebuffer, 0xa5, sizeof(framebuffer));
+                    dm2_v1_viewport_init(&chrome, framebuffer, M11_FB_WIDTH);
+                    dm2_v1_viewport_set_asset_loader(&chrome, loader);
+                    chrome.asset_profile = profile;
+                    check(dm2_v1_boot_gdat_scene_m11_command_plan(
+                              (DM2_V1_BootProfile *)profile, 2,
+                              &scene_plan),
+                          "FM Towns aura test binds original active map graphics set");
+                    chrome.gdat_scene_material_plan = &scene_plan;
+                    dm2_v1_viewport_set_source_materials_required(&chrome, 1);
+                    dm2_v1_viewport_set_hud_party(&chrome, &squad);
+                    int palette_ready = dm2_v1_boot_interface_palette(
+                        (DM2_V1_BootProfile *)profile, &interface_palette);
+                    dm2_v1_viewport_set_gdat_interface_palette(
+                        &chrome, palette_ready, interface_palette.hash,
+                        interface_palette.palette16);
+                    dm2_v1_viewport_set_gdat_hud_material_plan(
+                        &chrome, &aura_plan);
+                    dm2_v1_render_ui_chrome(&chrome);
+                    check(palette_ready &&
+                              chrome.gdat_hud_material_plan_consumed_count == 5,
+                          "FM Towns renderer consumes aura with authenticated HUD materials");
+                    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+                }
+                dm2_v1_gdat_hud_m11_command_plan_free(&aura_plan);
+            }
             squad.champions[0].towns_current_hp = 0;
+            squad.champions[0].towns_ench_power = 0;
             {
                 DM2_V1_GdatHudM11CommandPlan dead_plan;
                 memset(&dead_plan, 0, sizeof(dead_plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad, &dead_plan) &&
-                      dead_plan.command_count == 1 &&
+                      dead_plan.command_count == 2 &&
                       dead_plan.commands[0].kind ==
-                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL,
-                      "FM Towns zero-HP hero retains source formation fill without icons");
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL &&
+                      dead_plan.commands[1].kind ==
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
+                      "FM Towns zero-HP hero retains formation and selected icon without active aura");
                 dm2_v1_gdat_hud_m11_command_plan_free(&dead_plan);
             }
         }

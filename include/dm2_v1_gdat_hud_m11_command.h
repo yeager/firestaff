@@ -20,7 +20,8 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON,
-    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA
 };
 
 enum {
@@ -66,6 +67,8 @@ typedef struct DM2_V1_GdatHudM11Command {
     size_t material_source_byte_count;
     uint32_t material_receipt_hash;
     uint8_t source_state_flags;
+    uint8_t animation_direction;
+    uint8_t animation_frame;
 } DM2_V1_GdatHudM11Command;
 
 typedef struct DM2_V1_GdatHudM11CommandPlan {
@@ -98,6 +101,13 @@ typedef struct {
     uint32_t selected_hero_rect_raw4_hash;
     DM2_V1_ViewportRect selected_hero_rect;
     uint16_t selected_hero_rect_id;
+    int draw_enchantment_aura;
+    uint8_t enchantment_aura_id;
+    uint8_t enchantment_aura_direction;
+    uint8_t enchantment_aura_tick_frame;
+    DM2_V1_ViewportRect enchantment_aura_rect;
+    uint16_t enchantment_aura_rect_id;
+    uint32_t enchantment_aura_rect_raw4_hash;
 } DM2_V1_GdatHudTownsSquadSlot;
 
 typedef struct {

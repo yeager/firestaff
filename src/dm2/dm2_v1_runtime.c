@@ -12224,6 +12224,8 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     hud.towns_savegames1_b02_source_bound = hud.towns_squad_route_valid;
     hud.towns_savegames1_b02 = rt->source_savegames1[2];
     hud.towns_party_direction = (uint8_t)(party_direction & 3);
+    hud.towns_game_tick_source_bound = hud.towns_squad_route_valid;
+    hud.towns_game_tick = (uint32_t)rt->tick_count;
     hud.towns_sleeping = rt->source_sleeping != 0;
 
     {
@@ -12297,6 +12299,9 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
                 dst->towns_absdir = (uint8_t)source_hero->absdir;
                 dst->towns_absdir_source_bound = 1;
             }
+            dst->towns_ench_aura_source_bound = 1;
+            dst->towns_ench_aura = (uint8_t)source_hero->ench_aura;
+            dst->towns_ench_power = source_hero->ench_power;
             dst->towns_current_hp = source_hero->curHP;
             dst->towns_current_hp_source_bound = 1;
             dst->towns_spell_cooldown =

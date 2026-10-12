@@ -8446,6 +8446,62 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
                     queried_rect.w, queried_rect.h };
                 destination->selected_hero_rect_id = 0x5eu;
             }
+            if (party->towns_selected_hero_source_bound &&
+                party->towns_selected_hero_index == slot &&
+                hero->towns_ench_aura_source_bound &&
+                hero->towns_ench_power != 0) {
+                DM2_V1_BootExpandedRectReceipt aura_rect;
+                DM2_V1_InterfaceRect aura_blit;
+                if (!party->towns_game_tick_source_bound ||
+                    !hero->towns_absdir_source_bound ||
+                    !dm2_v1_boot_query_expanded_rect_receipt(
+                        profile, 0x5eu, &aura_rect) ||
+                    !aura_rect.valid || !aura_rect.raw4_hash ||
+                    !dm2_v1_boot_query_blit_rect_for_dimensions(
+                        profile, 0x5eu, 17, 17, &aura_blit)) return 0;
+                {
+                    DM2_V1_GdatImageMetadata aura_metadata;
+                    uint8_t aura_palette[16];
+                    uint32_t aura_palette_hash = 0u;
+                    int aura_width = 0;
+                    int aura_height = 0;
+                    DM2_ImageFormat aura_format = DM2_IMG_FMT_UNKNOWN;
+                    uint8_t *aura_pixels = dm2_v1_asset_load_image_field(
+                        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                        7, hero->towns_ench_aura, &aura_width, &aura_height,
+                        &aura_format);
+                    if (!aura_pixels || aura_width != 84 ||
+                        aura_height != 84 || aura_format != DM2_IMG_FMT_U4 ||
+                        !dm2_v1_asset_load_image_metadata(
+                            &gfx->loader,
+                            DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 7,
+                            hero->towns_ench_aura, &aura_metadata) ||
+                        aura_metadata.width != 84u ||
+                        aura_metadata.height != 84u ||
+                        aura_metadata.bits_per_pixel != 4u ||
+                        !dm2_v1_asset_load_image_local_palette(
+                            &gfx->loader,
+                            DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 7,
+                            hero->towns_ench_aura, aura_palette,
+                            &aura_palette_hash) || !aura_palette_hash) {
+                        dm2_v1_asset_free_pixels(aura_pixels);
+                        return 0;
+                    }
+                    dm2_v1_asset_free_pixels(aura_pixels);
+                }
+                destination->draw_enchantment_aura = 1;
+                destination->enchantment_aura_id = hero->towns_ench_aura;
+                destination->enchantment_aura_direction = (uint8_t)(
+                    (hero->towns_absdir + 4u -
+                     party->towns_party_direction) & 3u);
+                destination->enchantment_aura_tick_frame = (uint8_t)(
+                    party->towns_game_tick & 3u);
+                destination->enchantment_aura_rect = (DM2_V1_ViewportRect){
+                    aura_blit.x, aura_blit.y, 21, 21 };
+                destination->enchantment_aura_rect_id = 0x5eu;
+                destination->enchantment_aura_rect_raw4_hash =
+                    aura_rect.raw4_hash;
+            }
             if (hero->towns_current_hp == 0) continue;
 
             spell_field = relative <= 1 ? 6 : 8;
