@@ -58,8 +58,20 @@ open.
   not establish pixel parity or HiDPI behavior. The only local A22 German
   archive member is labeled "Original (Not working)" and is a 910,058-byte
   `UAE-` stream, not a standard 901,120-byte AmigaDOS ADF; the in-process ODS
-  reader rejects it. Do not infer A22 German support from the A20 German
-  profile. A36M intentionally
+  reader rejects it. A bounded format inspection found 159 sector-data tracks
+  and one raw MFM track at physical record 1 (12,566 bytes, 100,523 bits),
+  followed by six empty track records. The existing Amiga MFM sector scanner
+  recovered no sectors from that raw track. For inspection only, a temporary
+  sector image omitted that track; the ODS reader then validated 12 files from
+  the remaining authentic sectors. `GRAPHICS.DAT` and `Dungeon.dat` match the
+  known German A20 hashes, and the extracted `dm` executable is byte-identical
+  to the authenticated ReDMCSB A22G `dm` reference. The extracted `SWSH` matches the French A20F
+  hash (`1038138978975415571a878bb08f54be`), not the German A20G hash
+  (`916cb3cd462e7582d2a39c73e40b3339`). This source therefore has an unresolved
+  raw track and a mixed-language media set; the startup executable itself is
+  confirmed as A22G. The inspection image and
+  its zero-filled track are not runtime data. Do not infer A22 German support
+  from the A20 German profile. A36M intentionally
   skips F0437: STARTUP1/STARTUP2 enter
   F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash
   now selects the source F0466 decoder, and authentic C002/C003/C004/C005/C011
