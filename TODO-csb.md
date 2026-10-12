@@ -16,7 +16,10 @@ ZIP wrapper was accepted by direct `--game csb --platform amiga`: the CLI
 reached the native entrance and then the first runtime movement at `(9,1)`.
 The production M12 menu also selected the authenticated `amiga35-en`
 `Graphics.DAT` (MD5 `291e1bc6803e3dc4b974c60117ca5d68`) and reached the native
-entrance. These runs used SDL's dummy video/audio drivers. The dedicated
+entrance. A follow-up menu run now waits through the original entrance,
+accepts C200, and verifies the first runtime movement at `(9,1)` with a
+nonzero viewport receipt. The regression uses `wait:` in loop frames, not
+milliseconds. These runs used SDL's dummy video/audio drivers. The dedicated
 M12-to-M11 boundary executable was not built in this local check, so its
 handoff assertions remain pending. This ADF route is separate from native
 CTRaw decoding.

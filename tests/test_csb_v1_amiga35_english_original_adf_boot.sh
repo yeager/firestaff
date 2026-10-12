@@ -107,13 +107,18 @@ if ! grep -Eq 'csbViewportHash=[1-9][0-9]*' <<< "$runtime_output"; then
 fi
 echo 'PASS: original A35E CLI consumes its first movement and renders the native viewport'
 
-menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+menu_probe="$scratch/menu-runtime.json"
+menu_home="$scratch/menu-home"
+mkdir -p "$menu_home"
+menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
     FIRESTAFF_CONFIG_PATH="$scratch/menu-config.toml" \
-    HOME="$scratch/menu-home" XDG_CONFIG_HOME="$scratch/menu-home" \
-    APPDATA="$scratch/menu-home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    HOME="$menu_home" XDG_CONFIG_HOME="$menu_home" \
+    APPDATA="$menu_home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game csb --platform amiga \
     --data-dir "$zip" --debug --verbose \
-    --script 'key:enter,key:enter,key:enter' --duration 1000 2>&1) || {
+    --script 'enter,enter,enter,wait:1200,enter,wait:100,up' \
+    --duration 35000 2>&1) || {
         printf '%s\n' "$menu_output" >&2
         exit 1
     }
@@ -126,7 +131,27 @@ for required in \
         exit 1
     fi
 done
-echo 'PASS: authentic A35E is selectable through the visible M12 game menu'
+python3 - "$menu_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    probe = json.load(stream)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "csb" or
+        probe["bootAssetMd5"] != "291e1bc6803e3dc4b974c60117ca5d68" or
+        not probe["csbViewportHash"] or startup["receiptReady"] != 1 or
+        startup["phase"] != "inactive" or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 9, 1, 2, 0) or
+        probe["script"] != {"waitFramesRemaining": 0, "pending": 0} or
+        probe["lastOutcome"] != "MOVE QUEUED"):
+    raise SystemExit(f"FAIL: authentic A35E M12 route did not reach runtime movement: {probe}")
+print("PASS: authentic A35E M12 menu reaches the first runtime movement")
+PY
 
 handoff_output=$(FIRESTAFF_CSB_AMIGA35_EN_DATA_DIR="$zip" \
     FIRESTAFF_CSB_AMIGA35_EN_ONLY=1 "$boundary_test" 2>&1) || {
