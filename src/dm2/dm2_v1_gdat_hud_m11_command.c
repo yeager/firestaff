@@ -805,6 +805,10 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
             return 0;
         }
     }
+    /* Skproject/SKULLWIN/c_gui_draw.cpp::DM2_DRAW_PLAYER_ATTACK_DIR (785-795)
+     * gates on ench_power, reads INTERFACE_GENERAL/7/ench_aura, selects the
+     * relative-facing column and gametick row from its 4x4 sheet, then draws
+     * at button-group offset (94,12). */
     for (slot = 0; slot < party->champion_count; ++slot) {
         const DM2_V1_GdatHudTownsSquadSlot *source = &slots[slot];
         DM2_V1_GdatHudM11Command *aura_command;
