@@ -16,52 +16,52 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/engine/main_loop_m11.c:403
+#: src/engine/main_loop_m11.c:411
 msgid "NEXUS LOAD FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:405
+#: src/engine/main_loop_m11.c:413
 msgid "CHECK ISO/BIN OR EXTRACTED FILES"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:412
+#: src/engine/main_loop_m11.c:420
 msgid "THERON STARTUP FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:414
+#: src/engine/main_loop_m11.c:422
 msgid "VERIFY CUE/BIN AND STARTUP DETAILS"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:432
+#: src/engine/main_loop_m11.c:440
 msgid "CSB LOAD FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:434
+#: src/engine/main_loop_m11.c:442
 msgid "CHECK GRAPHICS/DUNGEON DATA"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:437
+#: src/engine/main_loop_m11.c:445
 msgid "DUNGEON LOAD FAILED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:439
+#: src/engine/main_loop_m11.c:447
 msgid "CHECK DUNGEON.DAT"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:442 src/engine/main_loop_m11.c:5424
-#: src/engine/main_loop_m11.c:5447 src/ui/menu_startup_m12.c:1085
+#: src/engine/main_loop_m11.c:450 src/engine/main_loop_m11.c:5481
+#: src/engine/main_loop_m11.c:5504 src/ui/menu_startup_m12.c:1085
 msgid "ESC RETURNS TO MENU"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:5420 src/engine/main_loop_m11.c:5443
+#: src/engine/main_loop_m11.c:5477 src/engine/main_loop_m11.c:5500
 msgid "CSB UTILITY DISK NOT READY"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:5422
+#: src/engine/main_loop_m11.c:5479
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:5445
+#: src/engine/main_loop_m11.c:5502
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr ""
 
