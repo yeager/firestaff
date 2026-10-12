@@ -2534,6 +2534,22 @@ int M11_Render_PumpEvents(void) {
 #endif
     }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
+    /* Deterministically exercise the close-request fallback after polling.
+     * A native close can arrive at this boundary while a synchronous asset
+     * scan is returning control to the renderer. Keep the injection behind
+     * the explicit autotest environment so it cannot affect normal runs. */
+    if (getenv("FIRESTAFF_AUTOTEST") &&
+        getenv("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL") &&
+        strcmp(getenv("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL"), "1") == 0) {
+        SDL_Event closeEvent;
+        (void)SDL_setenv_unsafe("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL", "0", 1);
+        if (g_state.window) {
+            SDL_zero(closeEvent);
+            closeEvent.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+            closeEvent.window.windowID = SDL_GetWindowID(g_state.window);
+            (void)SDL_PushEvent(&closeEvent);
+        }
+    }
     /* A queued close request may remain after SDL_PollEvent drains the input
      * queue. Consume it here so synchronous asset scans can stop too. */
     while (SDL_PeepEvents(&ev, 1, SDL_GETEVENT,

@@ -1332,6 +1332,40 @@ static void check_sdl3_window_close_request_quits_renderer(void) {
 #endif
 }
 
+static void check_sdl3_close_request_after_poll_uses_queue_drain(void) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_Event pending;
+    SDL_Window* window;
+    int initResult = M11_Render_Init(320, 200, M11_SCALE_FIT);
+    CHECK(initResult == M11_RENDER_OK);
+    if (initResult != M11_RENDER_OK) {
+        return;
+    }
+    window = M11_Render_GetWindow();
+    CHECK(window != NULL);
+    if (!window) {
+        M11_Render_Shutdown();
+        return;
+    }
+
+    SDL_FlushEvent(SDL_EVENT_QUIT);
+    SDL_FlushEvent(SDL_EVENT_KEY_DOWN);
+    SDL_FlushEvent(SDL_EVENT_WINDOW_CLOSE_REQUESTED);
+    CHECK(SDL_setenv_unsafe("FIRESTAFF_AUTOTEST", "1", 1) == 0);
+    CHECK(SDL_setenv_unsafe("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL", "1", 1) == 0);
+    /* The renderer injects the close request only after SDL_PollEvent has
+     * returned empty. M11_Render_PumpEvents must then consume it through the
+     * SDL_PeepEvents fallback and leave no close request queued. */
+    CHECK(M11_Render_PumpEvents() == 1);
+    CHECK(SDL_PeepEvents(&pending, 1, SDL_PEEKEVENT,
+                         SDL_EVENT_WINDOW_CLOSE_REQUESTED,
+                         SDL_EVENT_WINDOW_CLOSE_REQUESTED) == 0);
+    CHECK(SDL_setenv_unsafe("FIRESTAFF_AUTOTEST_CLOSE_AFTER_POLL", "0", 1) == 0);
+    puts("PASS SDL3 window-close request queued after poll is drained");
+    M11_Render_Shutdown();
+#endif
+}
+
 static void check_arg_validation_invariants(void) {
     int rectX = -1;
     int rectY = -1;
@@ -1814,6 +1848,7 @@ int main(void) {
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
     check_sdl3_stale_pixel_resize_event_preserves_live_retina_pair();
     check_sdl3_window_close_request_quits_renderer();
+    check_sdl3_close_request_after_poll_uses_queue_drain();
 
     /* Wire the dead-code check_integer_scaled_movement_arrows_at_resolution
      * helper into main() so the M11_SCALE_FIT + integerScaling +
