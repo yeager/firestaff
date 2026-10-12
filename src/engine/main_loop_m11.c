@@ -2534,6 +2534,8 @@ static int m11_play_redmcsb_entrance_transition_impl(
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
+    unsigned int fmtownsDoorFrameOrdinal = 0U;
+    Uint64 previousFmtownsDoorPresentationMs = 0U;
     int entrancePalette;
     const int amigaReceiptValid = amigaReceipt && amigaReceipt->valid;
     if (!gameView || !gameView->active || !mediaReceipt ||
@@ -2665,6 +2667,9 @@ static int m11_play_redmcsb_entrance_transition_impl(
             if (command.door_geometry_ready) {
                 memset(&door, 0, sizeof(door));
                 door.animationStep = command.door_animation_step;
+                if (gameView->dm1FmtownsStartupReceiptValid) {
+                    fmtownsDoorFrameOrdinal = door.animationStep;
+                }
                 door.soundRattle = (unsigned int)(command.play_door_rattle_sound ? 1 : 0);
                 door.vblankBeforeCopy = amigaReceiptValid ? 2U : 1U;
                 door.leftBoxX = command.door_left_box_x;
@@ -2778,10 +2783,40 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 &gameView->audioState, command.audio_sound_index);
         }
         {
-            unsigned int delayMs = amigaReceiptValid
-                ? command.delay_ms
-                : m11_v20_startup_remaining_delay_ms(
-                      command.delay_ms, presentationStartedMs);
+            unsigned int delayMs;
+            if (fmtownsDoorFrameOrdinal != 0U &&
+                presentationStartedMs != 0U) {
+                /* FM Towns presents at 60 Hz. Measure each door step from
+                 * the start of its palette/present transaction, so SDL's
+                 * vsynced Present counts as the VBlank instead of adding a
+                 * second 20 ms PAL wait after it. The old 20 ms delay landed
+                 * between 60 Hz retraces and made the 4 px door steps judder. */
+                const unsigned int frameIntervalMs =
+                    dm1_v1_fmtowns_title_vblank_delay_ms(
+                        fmtownsDoorFrameOrdinal);
+                const Uint64 elapsedMs = m11_intro_active_ticks() -
+                                          presentationStartedMs;
+                delayMs = elapsedMs >= (Uint64)frameIntervalMs
+                    ? 0U : frameIntervalMs - (unsigned int)elapsedMs;
+                if (g_m11_debug_startup_detail) {
+                    const Uint64 frameInterval =
+                        previousFmtownsDoorPresentationMs == 0U
+                            ? 0U
+                            : presentationStartedMs -
+                                  previousFmtownsDoorPresentationMs;
+                    fprintf(stderr,
+                            "firestaff: startup-source-frame game=dm1 platform=fm-towns phase=entrance-door frame=%u/31 interval-ms=%llu wait-ms=%u\n",
+                            fmtownsDoorFrameOrdinal,
+                            (unsigned long long)frameInterval, delayMs);
+                }
+                previousFmtownsDoorPresentationMs = presentationStartedMs;
+                fmtownsDoorFrameOrdinal = 0U;
+            } else {
+                delayMs = amigaReceiptValid
+                    ? command.delay_ms
+                    : m11_v20_startup_remaining_delay_ms(
+                          command.delay_ms, presentationStartedMs);
+            }
             if (delayMs > 0U && m11_delay_ms_with_intro_event_pump(delayMs)) {
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_QUIT;
@@ -4818,6 +4853,9 @@ static int m11_play_dm1_fmtowns_title_if_available(
      * the loop used to reverse that boundary (and omit the final hold),
      * making the transition visibly premature on a real-time host. */
     for (frame = 0u; frame < DM1_FMTOWNS_TITLE_FINAL_FRAME; ++frame) {
+        const char *titlePaletteName =
+            frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME
+                ? "PRESENTS" : "DUNGEON";
         const uint8_t (*titlePalette)[3] =
             frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME
                 ? plan->game_title_presents_palette_rgb6
@@ -4839,9 +4877,10 @@ static int m11_play_dm1_fmtowns_title_if_available(
                 dm1_v1_fmtowns_title_frame_wait_vblanks(frame);
             if (g_m11_debug_startup_detail) {
                 fprintf(stderr,
-                        "firestaff: startup-source-frame game=dm1 platform=fm-towns phase=title frame=%u/%u elapsed-ms=%llu source-wait-vblanks=%u\n",
+                        "firestaff: startup-source-frame game=dm1 platform=fm-towns phase=title frame=%u/%u palette=%s elapsed-ms=%llu source-wait-vblanks=%u\n",
                         frame,
                         DM1_FMTOWNS_TITLE_FINAL_FRAME + 1u,
+                        titlePaletteName,
                         (unsigned long long)(m11_intro_active_ticks() -
                                              titleStartedMs),
                         frameWaitVblanks);
@@ -4873,7 +4912,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
         return 0;
     }
     memset(titlePaletteRgb6, 0, sizeof(titlePaletteRgb6));
-    memcpy(titlePaletteRgb6, plan->game_title_zoom_palette_rgb6,
+    memcpy(titlePaletteRgb6, plan->game_title_master_palette_rgb6,
            16u * 3u);
     if (M11_Render_SetIndexedPaletteRgb6(titlePaletteRgb6) != M11_RENDER_OK ||
         M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
@@ -4883,7 +4922,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
     if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
-                "firestaff: startup-source-frame game=dm1 platform=fm-towns phase=title frame=%u/%u elapsed-ms=%llu source-wait-vblanks=0\n",
+                "firestaff: startup-source-frame game=dm1 platform=fm-towns phase=title frame=%u/%u palette=MASTER elapsed-ms=%llu source-wait-vblanks=0\n",
                 DM1_FMTOWNS_TITLE_FINAL_FRAME,
                 DM1_FMTOWNS_TITLE_FINAL_FRAME + 1u,
                 (unsigned long long)(m11_intro_active_ticks() -
@@ -4893,11 +4932,18 @@ static int m11_play_dm1_fmtowns_title_if_available(
     ++waitedVblanks;
     (void)m11_delay_ms_with_intro_event_pump(
         dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks));
+    /* TITLE_MASTER is the only full-size, legible Dungeon Master screen.
+     * The original blit leaves that page resident until another screen is
+     * drawn; the host handoff immediately starts Entrance, so retain it for
+     * a readable interval instead of replacing it on the next host call. */
+    (void)m11_delay_ms_with_intro_event_pump(
+        DM1_FMTOWNS_TITLE_MASTER_HOLD_MS);
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
-                "firestaff: startup-source-complete game=dm1 platform=fm-towns phase=title frames=%u source-vblanks=%u elapsed-ms=%llu\n",
+                "firestaff: startup-source-complete game=dm1 platform=fm-towns phase=title frames=%u source-vblanks=%u master-hold-ms=%u elapsed-ms=%llu\n",
                 DM1_FMTOWNS_TITLE_FINAL_FRAME + 1u,
                 waitedVblanks,
+                DM1_FMTOWNS_TITLE_MASTER_HOLD_MS,
                 (unsigned long long)(m11_intro_active_ticks() -
                                      titleStartedMs));
     }

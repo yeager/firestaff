@@ -92,8 +92,11 @@ int main(void)
     assert(receipt.game_title_zoom_palette_rgb6[3][1] == 39u);
     assert(receipt.game_title_zoom_palette_rgb6[3][2] == 15u);
     assert(receipt.game_title_zoom_palette_rgb6[15][0] == 63u);
-    assert(receipt.game_title_zoom_palette_rgb6[15][1] == 0u);
-    assert(receipt.game_title_zoom_palette_rgb6[15][2] == 0u);
+    assert(receipt.game_title_zoom_palette_rgb6[15][1] == 63u);
+    assert(receipt.game_title_zoom_palette_rgb6[15][2] == 63u);
+    assert(receipt.game_title_master_palette_rgb6[15][0] == 63u);
+    assert(receipt.game_title_master_palette_rgb6[15][1] == 0u);
+    assert(receipt.game_title_master_palette_rgb6[15][2] == 0u);
     assert(dungeon_size == 33931u);
     memset(&dungeon_state, 0, sizeof(dungeon_state));
     memset(&dungeon_things, 0, sizeof(dungeon_things));

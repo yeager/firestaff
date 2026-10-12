@@ -34,6 +34,8 @@ int main(void)
     DM1_V1_FmtownsStartupReceipt startup = receipt();
     size_t i;
 
+    CHECK(DM1_FMTOWNS_TITLE_MASTER_HOLD_MS == 1200u);
+
     for (i = 0u; i < sizeof(source); ++i)
         source[i] = (unsigned char)((i % 15u) + 1u);
     CHECK(!dm1_v1_fmtowns_title_compose_frame(NULL, source, 320u, 200u,
@@ -89,6 +91,10 @@ int main(void)
         elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 2u);
         elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 3u);
         CHECK(elapsed == 350u);
+        elapsed = 0u;
+        for (titleFrame = 1u; titleFrame <= 31u; ++titleFrame)
+            elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(titleFrame);
+        CHECK(elapsed == 517u);
     }
     puts("PASS: dm1_v1_fmtowns_title");
     return 0;

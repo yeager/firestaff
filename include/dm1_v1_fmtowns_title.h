@@ -22,6 +22,9 @@ extern "C" {
 #define DM1_FMTOWNS_TITLE_ZOOM_FRAME_COUNT 18u
 #define DM1_FMTOWNS_TITLE_FINAL_FRAME \
     (DM1_FMTOWNS_TITLE_ZOOM_FIRST_FRAME + DM1_FMTOWNS_TITLE_ZOOM_FRAME_COUNT)
+/* Keep the final, fully legible Dungeon Master title on screen before the
+ * shared Entrance presentation replaces it. */
+#define DM1_FMTOWNS_TITLE_MASTER_HOLD_MS 1200u
 
 /* Compose one native FM Towns title frame from already-decoded original
  * GRAPHICS.DAT item 1.  `frame` is 0..19.  The caller supplies a 320x200

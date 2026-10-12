@@ -57,13 +57,13 @@ typedef struct {
     uint16_t game_title_swoosh_rect[4];
     uint16_t game_title_presents_rect[4];
     uint16_t game_title_master_rect[4];
-    /* TITLE.C installs C12 PRESENTS while the first strip is visible, then
-     * applies C13 DUNGEON followed by C14 MASTER before the zoom frames.
-     * These RGB6 values are decoded from the selected hash-verified EDM/JDM
-     * load image; they are never a host/default palette. */
+    /* TITLE.C installs C12 PRESENTS, then C13 DUNGEON for the zoom, and
+     * finally C14 MASTER for the settled title. These RGB6 values are
+     * decoded from the selected hash-verified EDM/JDM load image. */
     int game_title_palettes_verified;
     uint8_t game_title_presents_palette_rgb6[16][3];
     uint8_t game_title_zoom_palette_rgb6[16][3];
+    uint8_t game_title_master_palette_rgb6[16][3];
     /* ANIMTOWN.C's C00_LIGHT0..C05_LIGHT5 records are the live dungeon
      * DAC owners.  They are admitted from the selected retail EDM/JDM load
      * image, not inferred from the title palette or a PC/Atari table. */
