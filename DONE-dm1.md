@@ -35,6 +35,15 @@
 
 # Firestaff DONE — DM1
 
+- 2026-10-12: Extended the authentic mixed-media M12 platform regression to
+  start with AUTO and select PC 3.4 using keyboard navigation without a
+  `--platform` override. The test confirms the PC34 graphics identity and
+  reaches the source-owned first runtime frame. The full authentic mixed-root
+  matrix passes with FM Towns, PC 3.4, Atari ST 1.2 and Amiga 2.0 archives.
+  Re-ran the issue #13 PC 3.4 regression on the current main binary; loose-file,
+  archive, CLI, M12 and native-input startup checks all pass. These are local
+  SDL-dummy startup checks, not native M5 Retina or physical-input validation.
+
 - 2026-10-11: Added authentic DM1 Amiga v2.0 German startup support. The
   A20G SWSH hash uses the independently verified 5088-byte HUNK_DATA layout;
   the original German GRAPHICS.DAT/SWSH pair now passes the F0437 title and

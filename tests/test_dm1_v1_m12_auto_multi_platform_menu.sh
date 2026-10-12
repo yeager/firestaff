@@ -236,13 +236,18 @@ run_mixed_cli_platform pc pc34-en "$pc_archive" \
 # individual archive here would miss cross-edition source-selection errors.
 run_mixed_menu_platform() {
     local platform=$1
-    local card_click=$2
+    local platform_action=$2
     local startup_inputs=$3
     local expected_handoff=$4
     local expected_asset_md5=$5
+    local omit_platform_option=${6:-0}
     local runtime_probe="$scratch/${platform}-runtime.json"
     local runtime_log="$scratch/${platform}-menu.log"
-    local route="wait20,click:700:262,wait20,click:${card_click},wait20,click:450:405,wait20${startup_inputs}"
+    local route="wait20,click:700:262,wait20,${platform_action},wait20,click:450:405,wait20${startup_inputs}"
+    local platform_option="--platform $platform"
+    if [[ "$omit_platform_option" == 1 ]]; then
+        platform_option=""
+    fi
 
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
@@ -250,7 +255,7 @@ run_mixed_menu_platform() {
         HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" \
         APPDATA="$scratch/home" FIRESTAFF_CONFIG_PATH="$scratch/home/config.toml" \
         "$app" --width 1920 --height 1080 --menu --game dm1 \
-        --platform "$platform" --debug --verbose --script "$route" \
+        $platform_option --debug --verbose --script "$route" \
         --duration 15000 >"$runtime_log" 2>&1 || {
             cat "$runtime_log" >&2
             return 1
@@ -291,11 +296,18 @@ PY
 }
 
 if [[ -n "$extra_atari_media" ]]; then
-    run_mixed_menu_platform atari-st 1458:405 ',wait30,enter,wait60,enter' \
+    run_mixed_menu_platform atari-st 'click:1458:405' ',wait30,enter,wait60,enter' \
         atari-st-dmcsb1 9ce2eaf7a9e78620e3f17594437caffa
 fi
 if [[ -n "$extra_amiga_media" ]]; then
-    run_mixed_menu_platform amiga 410:679 '' \
+    run_mixed_menu_platform amiga 'click:410:679' '' \
         amiga-img2 6a2f135b53c2220f0251fa103e2a6e7e
 fi
-run_mixed_menu_platform pc 934:405 '' pc-img3 fa6b1aa29e191418713bf2cda93d962e
+run_mixed_menu_platform pc 'click:934:405' '' pc-img3 \
+    fa6b1aa29e191418713bf2cda93d962e
+
+# Start from AUTO (FM Towns is the first authenticated card) and use only the
+# keyboard to select the second card, authentic PC 3.4. Omitting --platform is
+# essential: otherwise M12 preselects PC before the user navigates the cards.
+run_mixed_menu_platform pc 'key:down,key:enter' '' pc-img3 \
+    fa6b1aa29e191418713bf2cda93d962e 1

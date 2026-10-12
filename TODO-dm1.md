@@ -27,6 +27,14 @@ edition's original GRAPHICS.DAT identity and expected startup pose. The test
 uses SDL's dummy video driver and does not verify native Retina input or
 visual parity.
 
+2026-10-12 follow-up: the mixed-root M12 test now also starts with AUTO and
+uses keyboard navigation to select the authentic PC 3.4 platform card without
+`--platform`; the PC graphics identity and first runtime frame are asserted.
+The complete local FM Towns, PC 3.4, Atari ST 1.2 and Amiga 2.0 matrix passes.
+Issue #13's authentic PC 3.4 CLI/menu/input regression also passes on the
+current main binary. Native M5 Retina and physical-input validation remain
+open.
+
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
   GRAPHICS.DAT/SWSH identity pair. A20 English, French and German now authenticate
