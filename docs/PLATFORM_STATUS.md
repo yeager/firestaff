@@ -73,6 +73,13 @@ the authentic two-champion recruitment route, and the normal M12-to-entrance
 handoff. The runtime probes retained a nonzero source viewport receipt. SDL
 dummy output does not establish native display or audio parity.
 
+`csb_v1_amiga_native_cli_boot` passed against the original A31 ZIP in 67
+seconds. It exercised both the A31M title/program route and A31E C03_GAME
+handoff, Original and Modern startup/input paths, the full first-movement
+input matrix, M12 launch and AUTO discovery of the original FTL Amiga package.
+The runtime receipt retained a nonzero viewport hash. SDL dummy output does
+not establish native display or audio parity.
+
 `dm2_v1_dos_native_cli_boot` passed against the installed English DOS retail
 ZIP in 73 seconds. It reached the source New Game menu through the normal M12
 route and loaded the first party at map 0, (1,8), facing north. A presented
