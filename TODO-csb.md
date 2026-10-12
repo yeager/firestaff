@@ -9,6 +9,18 @@ dummy video driver; native M5 Retina input and pixel parity remain unverified.
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+2026-10-12 A35E original-ADF retest: the published v3.0.379 macOS arm64
+binary authenticated the English Amiga 3.5 original ADF from the DMWeb
+software archive (MD5 `d1808d54faf36c6ab7f054908ce7ebd5`). A byte-preserving
+ZIP wrapper was accepted by direct `--game csb --platform amiga`: the CLI
+reached the native entrance and then the first runtime movement at `(9,1)`.
+The production M12 menu also selected the authenticated `amiga35-en`
+`Graphics.DAT` (MD5 `291e1bc6803e3dc4b974c60117ca5d68`) and reached the native
+entrance. These runs used SDL's dummy video/audio drivers. The dedicated
+M12-to-M11 boundary executable was not built in this local check, so its
+handoff assertions remain pending. This ADF route is separate from native
+CTRaw decoding.
+
 2026-10-11 A35 original-ADF startup verification: the DMWeb software archive
 also contains a multilingual Amiga 3.5 original ADF, explicitly labeled
 "Original (Not working)." Its extracted bytes match MD5
