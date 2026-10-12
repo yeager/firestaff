@@ -9,6 +9,13 @@
 
 # Firestaff DONE — CSB
 
+- 2026-10-12: Extended the authentic A35M ADF-over-ZIP regression to cover
+  bare `--game csb` in direct CLI and the production M12 menu with no platform
+  override. Both AUTO routes selected the original Amiga 3.5 multilingual
+  edition, passed its English language handoff, and reached the first movement
+  on map 0 at `(9,1)`. The source ADF hash remained unchanged. This verifies
+  the archived ADF source; native CTRaw PACK decoding remains open.
+
 - 2026-10-10: Rechecked the authentic CSB startup matrix against the current
   launcher. Atari STX and its nested/original archive routes, Amiga 3.1 ZIP,
   Amiga 3.3 ZIP-to-ADF and loose-folder routes, the Amiga ADF archive route,

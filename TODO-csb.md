@@ -26,6 +26,13 @@ MINI.DAT party, Atari runtime movement and Amiga source entrance/runtime
 movement. This does not verify native M5 Retina window/input behavior or full
 visual parity.
 
+2026-10-12 follow-up: the authentic Amiga 3.5 multilingual ADF, preserved
+byte-for-byte in ZIP transport, now also passes bare `--game csb` direct CLI
+and M12 AUTO routes without `--platform`. Both routes select A35M, pass the
+English language selector and reach first movement. This closes the A35M AUTO
+coverage gap for that ADF source; the separate original CTRaw archive still
+has no legal/documented PACK decoder and remains unsupported.
+
 - Add a source-preserving launch path for the supplied Amiga 3.5 CTRaw media.
   On 2026-10-10, `--game csb --platform amiga --boot-probe` against the
   supplied `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` failed with `game

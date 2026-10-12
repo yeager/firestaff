@@ -139,6 +139,57 @@ if ! grep -Fq \
 fi
 echo 'PASS: DM2 AUTO start menu discovers FM Towns media from ~/.firestaff/data/dm2 without --data-dir'
 
+# Keep all authentic DM2 platform archives installed while a normal M12 route
+# starts FM Towns through the first champion. This covers real menu input and
+# runtime admission with competing DOS, Amiga and Mac editions still present.
+mixed_archive_count=0
+for mixed_archive in "$default_data_root"/dm2/Dungeon-Master-II-Skullkeep_*.zip; do
+    [ -f "$mixed_archive" ] || continue
+    mixed_archive_count=$((mixed_archive_count + 1))
+done
+if [ "$mixed_archive_count" -gt 1 ]; then
+    mixed_runtime_log="$default_home/dm2-mixed-menu-runtime.log"
+    (
+        unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+        HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+        APPDATA="$default_home" \
+        FIRESTAFF_CONFIG_PATH="$default_home/mixed-menu-config.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+            --width 320 --height 200 --menu --game dm2 \
+            --data-dir "$default_data_root" --debug --verbose \
+            --script 'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60' \
+            --duration 70000
+    ) >"$mixed_runtime_log" 2>&1 || {
+        cat "$mixed_runtime_log" >&2
+        exit 1
+    }
+    python3 - "$mixed_runtime_log" "$default_archive" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+log_path, archive_path = sys.argv[1:]
+trace = Path(log_path).read_text(encoding="utf-8")
+launch = (
+    "launch phase=game-handoff mode=menu game=dm2 platform=FM Towns "
+    "edition=fmtowns-ja source=" + archive_path + "::DATA/GRAPHICS.DAT"
+)
+runtime = re.search(
+    r"startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1 "
+    r"map=0 party=1,8 dir=0 champions=1",
+    trace)
+if launch not in trace or runtime is None or trace.index(launch) >= runtime.start():
+    raise SystemExit(
+        "FAIL: mixed-media DM2 M12 did not select authentic FM Towns and "
+        f"reach its first party:\n{trace}")
+print("PASS: mixed-media DM2 M12 selected FM Towns and reached its authentic "
+      "first party with competing editions installed")
+PY
+else
+    echo 'SKIP: mixed-media DM2 M12 runtime requires multiple authentic platform archives'
+fi
+
 # FM Towns is the first DM2 platform card.  This asserts that the launcher
 # admits the authentic disc solely through mouse selection before the source
 # title and New Game input path below takes over.

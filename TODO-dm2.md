@@ -16,6 +16,12 @@ Back exits Firestaff without rescanning into M12. The tests use SDL's dummy
 video driver and do not verify native M5 Retina window/input behavior or full
 visual parity.
 
+2026-10-12 follow-up: the Towns regression now also keeps authentic DOS,
+Amiga, Mac and FM Towns archives in the same installed root while production
+M12 input selects FM Towns, completes the original title and reaches the first
+champion. Its first-party source receipt passes. This closes the mixed-library
+M12 startup coverage gap; native M5 Retina/input verification remains open.
+
 - The selected Towns hero frame now comes from `INTERFACE_GENERAL/6/<hero>` at
   RECT `0x5e` (136x17 eight-frame source, 17x17 placement at `(265,108)`), with
   facing and `savegames1.b_02` variant bound from source state. Implement and

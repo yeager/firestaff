@@ -20,6 +20,14 @@
 
 # Firestaff DONE — DM2
 
+- 2026-10-12: Extended the authentic FM Towns startup regression to keep
+  original DOS, Amiga, Mac and FM Towns archives together while a normal M12
+  route selected Towns, played the full title, started New Game and reached
+  the first champion. The test asserted the selected original `GRAPHICS.DAT`
+  source and first-party runtime receipt; the complete Towns CLI/menu startup
+  script passed against local authentic media. This is SDL dummy-video evidence,
+  not native M5 Retina or physical-input validation.
+
 - 2026-10-10: Built and ran `dm2_v1_four_platform_catalog_real_media` against
   the shared installed data root. The test passed and confirmed that M12
   recognizes DOS, Amiga, FM Towns and Mac at once, and resolves each edition

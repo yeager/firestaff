@@ -83,6 +83,36 @@ if ! grep -Eq 'csbViewportHash=[1-9][0-9]*' <<< "$direct_output"; then
 fi
 echo 'PASS: original A35 CLI selects English and reaches the first native movement'
 
+# With only the authenticated A35M archive installed, an unqualified
+# --game csb CLI launch must resolve the original Amiga edition through AUTO.
+auto_direct_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --game csb --data-dir "$zip" \
+    --debug --boot-probe --boot-probe-frames 800 \
+    --script 'click:138:70,click:250:50,up' \
+    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+    --boot-probe-expect-party 9,1,2 --duration 0 2>&1) || {
+        printf '%s\n' "$auto_direct_output" >&2
+        exit 1
+    }
+for required in \
+    'platform=Amiga edition=amiga35-multi' \
+    "source=$zip::Chaos Strikes Back Amiga 3.5 Original.adf::Graphics.DAT" \
+    "assetMd5=$expected_graphics_md5" \
+    'levelLoaded=1 map=0 party=9,1,2 champions=0' \
+    'csbViewportHash='; do
+    if ! grep -Fq "$required" <<< "$auto_direct_output"; then
+        printf 'FAIL: A35 AUTO CLI probe is missing %s\n%s\n' \
+            "$required" "$auto_direct_output" >&2
+        exit 1
+    fi
+done
+if ! grep -Eq 'csbViewportHash=[1-9][0-9]*' <<< "$auto_direct_output"; then
+    printf '%s\n' 'FAIL: A35 AUTO CLI did not render a nonzero viewport hash' \
+        "$auto_direct_output" >&2
+    exit 1
+fi
+echo 'PASS: bare --game csb selects authentic A35M and reaches first movement'
+
 probe="$scratch/menu-runtime.json"
 home="$scratch/home"
 mkdir -p "$home"
@@ -126,6 +156,51 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["lastOutcome"] != "MOVE QUEUED"):
     raise SystemExit(f"FAIL: A35 M12 route did not reach authentic movement: {probe}")
 print("PASS: original A35 M12 menu reaches runtime and first movement")
+PY
+
+# Repeat the production M12 route without an explicit platform override. The
+# clean config and isolated A35M archive make AUTO select this authentic Amiga
+# release, then exercise its language selector and first runtime movement.
+auto_probe="$scratch/auto-menu-runtime.json"
+auto_home="$scratch/auto-home"
+mkdir -p "$auto_home"
+auto_menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$auto_probe" \
+    FIRESTAFF_CONFIG_PATH="$auto_home/config.toml" HOME="$auto_home" \
+    XDG_CONFIG_HOME="$auto_home" APPDATA="$auto_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --menu --game csb --data-dir "$zip" --debug \
+    --script 'enter,enter,enter,wait:1000,click:138:70,click:250:50,wait:100,up' \
+    --duration 30000 2>&1) || {
+        printf '%s\n' "$auto_menu_output" >&2
+        exit 1
+    }
+if ! grep -Fq 'platform=Amiga edition=amiga35-multi' <<< "$auto_menu_output" ||
+   ! grep -Fq \
+       "source=$zip::Chaos Strikes Back Amiga 3.5 Original.adf::Graphics.DAT" \
+       <<< "$auto_menu_output"; then
+    printf '%s\n' 'FAIL: A35 AUTO M12 did not select the authenticated Amiga 3.5 package' \
+        "$auto_menu_output" >&2
+    exit 1
+fi
+python3 - "$auto_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    probe = json.load(stream)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "csb" or
+        probe["bootAssetMd5"] != "cefaddfdf5651df2c91f61b5611a8362" or
+        startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 9, 1, 2, 0) or
+        probe["script"] != {"waitFramesRemaining": 0, "pending": 0} or
+        probe["lastOutcome"] != "MOVE QUEUED"):
+    raise SystemExit(f"FAIL: A35 AUTO M12 did not reach authentic movement: {probe}")
+print("PASS: bare --game csb AUTO M12 selects A35M and reaches first movement")
 PY
 
 source_sha_after=$(shasum -a 256 "$source_archive" | awk '{print $1}')
