@@ -21393,6 +21393,23 @@ endif()
         ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         TIMEOUT 180
     )
+    # A35E uses a direct APPB.FTL -> C03_GAME path and must not be treated as
+    # A35M's language-selector route. Verify the original English ADF through
+    # both production CLI startup and the M12 -> M11 source handoff.
+    add_test(
+        NAME csb_v1_amiga35_english_original_adf_boot
+        COMMAND bash
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_english_original_adf_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+            "$<TARGET_FILE:test_csb_v1_m11_launcher_handoff_boundary>"
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Amiga,Software.7z"
+    )
+    set_tests_properties(csb_v1_amiga35_english_original_adf_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;m12;m11;launcher;startup;real_data;zip;skip_safe"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 120
+    )
     # The Atari ST title is a separate ANIMATE.SCR/DAT owner.  Keep its
     # original-media M12 selection, 50 Hz VBlank handoff, and first native
     # runtime frame independently runnable from the paired game/utility disks
