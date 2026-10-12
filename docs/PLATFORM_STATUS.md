@@ -46,7 +46,7 @@ The same day, `csb_v1_fmtowns_native_cli_boot` passed against the original
 CSB FM Towns package in 110 seconds. It covered automatic and explicit F31
 selection, keyboard and mouse start-menu routes, the original
 `TITLE.ANM → SWITCHTW → CHTWE/CHTWJ → C004 Prison → MINI.DAT` chain, and the
-authentic first party at map 4, (22,18), facing west. Captures checked the
+authentic first party at map 4, (22,18), direction 2. Captures checked the
 closed-door C28 palette composition in Original, Modern and Custom modes; the
 1920×1080 FIT route also reached the same party. This uses SDL dummy output
 and does not prove native HiDPI or audio parity.
@@ -93,6 +93,13 @@ SWSH/TITL New Game screen and loaded the first map-0 party with zero fallback
 draws; the presented runtime frame was nonblank, and the authentic movement
 and action input matrix passed. SDL dummy output does not establish native
 display or audio parity.
+
+`dm2_v1_mac_native_cli_boot` passed in 168 seconds against the authentic
+Macintosh retail ZIP. The normal loop completed the original `Title.MooV`,
+opened New Game and mirror selection, reached runtime and accepted two moves;
+the M12 route checked a scaled 1920×1080 host surface, and direct `--game`
+Back exited the process instead of reopening the start menu. Its screenshot
+checks are headless smoke checks, not native HiDPI or pixel-parity evidence.
 
 The 2026-10-10 original-media return-to-menu checks also cover DM1 Atari ST
 1.1 and Amiga 3.6. Each route reached its source-owned runtime, returned to
