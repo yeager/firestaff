@@ -828,12 +828,14 @@ match a canonical hash and which are reference material only.
 
 ### L4. CSB Amiga 3.5 launch barrier
 
-The extracted `csb-extras/amiga-3.5-ctraw-en` contains CTraw
-(`.st`/`.raw`/`.err`/`.out`) which the scanner does not map to a canonical hash
-(CTRaw is not the CTraw file itself; it is only the Amiga emulator format).
-Write a small helper, `tools/ctraw_to_amiga_dat.py`, to repackage `.raw` into a
-`.DAT`/`.DATA` format Firestaff can read. Alternatively, accept that 3.5 is
-unavailable without more work and remove it from the "extracted" list.
+The extracted `csb-extras/amiga-3.5-ctraw-en` contains CTraw track and PACK
+records (`.st`/`.raw`/`.err`/`.out`). Firestaff currently validates the
+container framing and packed-payload CRCs, but does not decode PACK data or
+reconstruct game sectors. Renaming or repackaging `.raw` as `.DAT`/`.DATA`
+cannot produce playable assets. Keep this edition unavailable until a
+documented, bounded PACK decoder can recover and verify the required source
+data; then add an authentic startup test. Do not list Amiga 3.5 as launchable
+based on extraction alone.
 
 ### L5. DM2 extras launch-test
 

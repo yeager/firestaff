@@ -1,11 +1,16 @@
 # Firestaff TODO — active cross-game work
 
-- Add an end-to-end SDL window-close regression during the return-to-menu
-  originals rescan. The initial direct `--game` scan now injects a real SDL
-  window-close request from the progress callback and verifies that DM1, CSB
-  and DM2 never enter game startup when authentic local media is available. The
-  `m12_data_dir_cancel` test covers scanner cancellation; return-to-menu window
-  close still needs an M11 integration test.
+- Verify the data-free SDL3 close-event test in Actions on Windows, macOS and
+  Linux, and run the end-to-end originals-rescan test with authentic media on
+  the other supported hosts. On macOS, the latter passes against authentic
+  DM1 PC 3.4 for keyboard and mouse return paths; each close cancels scanning
+  without redrawing the launcher. `M11_Render_PumpEvents` also drains queued
+  SDL3 window-close requests left pending during a synchronous scan. The
+  initial direct `--game` scan separately verifies that DM1, CSB and DM2 never
+  enter game startup when authentic local media is available.
+  `m12_data_dir_cancel` covers scanner cancellation at the M12 boundary. The
+  full local return/rescan matrix passed against installed originals in 1,178
+  seconds; its CTest timeout is now 1,800 seconds to leave runner headroom.
 
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
@@ -42,6 +47,11 @@
   selection with competing installed editions, a stale saved PC choice, and
   the first authentic runtime map. These boot and bounded input checks do not
   establish full gameplay or physical MacBook Pro M5 behavior.
+  On 2026-10-12, `dm2_v1_fmtowns_native_cli_boot` passed against the complete
+  original-media directory in 344 seconds. It revalidated stale-PC preference
+  override, mixed-edition M12 selection, the original 225-frame Towns title,
+  and the first champion through the normal CLI and menu loops without
+  boot-probe fast-forward.
 
 - Verify iOS release packaging after the LZMA software-CRC selection fix
   using the hosted Apple Clang 15 compiler. Local iPhoneOS compilation and
@@ -156,6 +166,11 @@
   CSB, DM2, Nexus and Theron's Quest. The remaining gap is the visible menu
   card sequence through a first presented runtime frame for the games without
   that end-to-end evidence.
+  A 2026-10-12 rerun from the external-disk original-media collection passed
+  219 assertions with no failures and three scoped skips; all five game data
+  sets were present and admitted. This revalidates the M12 card/platform/custom
+  selection and M11 handoff contracts, but still does not prove first presented
+  runtime frames for every title.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
   language choice; the native Amiga input matrix reaches runtime, and the
@@ -221,6 +236,12 @@
   newly added original CSB archive becomes selectable after the live rescan;
   it passed alongside the existing archive-removal case on 2026-10-10. Hosted
   CI may skip media-dependent assertions when licensed archives are absent.
+  On 2026-10-12, the six-session CSB mixed-original-media M12 matrix passed:
+  AUTO selected FM Towns; the platform cards reached Atari ST and Amiga
+  A31M; and explicit FM Towns, Atari ST and Amiga selections retained the
+  authenticated edition through startup. Direct CLI selection also reached
+  the source-owned startup phase for all three native platforms. This does not
+  establish CSB visual parity or a populated playable party for every edition.
   Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.

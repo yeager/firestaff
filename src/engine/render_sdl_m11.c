@@ -2533,6 +2533,18 @@ int M11_Render_PumpEvents(void) {
         }
 #endif
     }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    /* A queued close request may remain after SDL_PollEvent drains the input
+     * queue. Consume it here so synchronous asset scans can stop too. */
+    while (SDL_PeepEvents(&ev, 1, SDL_GETEVENT,
+                          SDL_EVENT_WINDOW_CLOSE_REQUESTED,
+                          SDL_EVENT_WINDOW_CLOSE_REQUESTED) > 0) {
+        if (g_state.window &&
+            ev.window.windowID == SDL_GetWindowID(g_state.window)) {
+            g_state.quitRequested = 1;
+        }
+    }
+#endif
     return g_state.quitRequested;
 }
 

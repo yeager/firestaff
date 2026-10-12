@@ -1306,6 +1306,32 @@ static void check_sdl3_stale_pixel_resize_event_preserves_live_retina_pair(void)
 #endif
 }
 
+static void check_sdl3_window_close_request_quits_renderer(void) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_Event event;
+    SDL_Window* window;
+    int initResult = M11_Render_Init(320, 200, M11_SCALE_FIT);
+    CHECK(initResult == M11_RENDER_OK);
+    if (initResult != M11_RENDER_OK) {
+        return;
+    }
+    window = M11_Render_GetWindow();
+    CHECK(window != NULL);
+    if (!window) {
+        M11_Render_Shutdown();
+        return;
+    }
+    SDL_FlushEvent(SDL_EVENT_WINDOW_CLOSE_REQUESTED);
+    SDL_zero(event);
+    event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+    event.window.windowID = SDL_GetWindowID(window);
+    CHECK(SDL_PushEvent(&event));
+    CHECK(M11_Render_PumpEvents() == 1);
+    puts("PASS SDL3 window-close request quits the renderer");
+    M11_Render_Shutdown();
+#endif
+}
+
 static void check_arg_validation_invariants(void) {
     int rectX = -1;
     int rectY = -1;
@@ -1787,6 +1813,7 @@ int main(void) {
     check_native_resize_before_event_optin();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
     check_sdl3_stale_pixel_resize_event_preserves_live_retina_pair();
+    check_sdl3_window_close_request_quits_renderer();
 
     /* Wire the dead-code check_integer_scaled_movement_arrows_at_resolution
      * helper into main() so the M11_SCALE_FIT + integerScaling +

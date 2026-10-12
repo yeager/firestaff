@@ -21,6 +21,7 @@ if [ ! -x "$app" ] ||
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
      [ "$test_mode" != direct-exit ] &&
      [ "$test_mode" != mouse-return ] &&
+     [ "$test_mode" != return-window-close ] &&
      { [ ! -f "$dm1_archive" ] || [ ! -f "$dm1_fmtowns_archive" ] ||
        [ ! -f "$csb_archive" ] || [ ! -f "$dm2_archive" ]; }; } ||
    { [ "$test_mode" = direct-exit ] &&
@@ -29,6 +30,8 @@ if [ ! -x "$app" ] ||
    { [ "$test_mode" = mouse-return ] &&
      { [ ! -f "$dm1_archive" ] || [ ! -f "$csb_archive" ] ||
        [ ! -f "$dm2_archive" ]; }; } ||
+   { [ "$test_mode" = return-window-close ] &&
+     [ ! -f "$dm1_archive" ]; } ||
    { [ "$test_mode" = dm2-amiga ] && [ ! -f "$dm2_amiga_archive" ]; } ||
    { [ "$test_mode" = dm1-atari ] && [ ! -f "$dm1_atari_archive" ]; } ||
    { [ "$test_mode" = dm1-amiga36 ] && [ ! -f "$dm1_amiga36_archive" ]; }; then
@@ -208,6 +211,70 @@ run_direct_game_exit_matrix() {
     run_direct_game_exit_case dm2
 }
 
+run_return_menu_window_close_case() {
+    return_method=$1
+    case_root="$scratch/return-menu-window-close-$return_method"
+    runtime_probe="$case_root/runtime.json"
+    run_log="$case_root/firestaff.log"
+    runtime_pattern='startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2'
+    case "$return_method" in
+        keyboard)
+            return_script='key:enter,key:enter,key:enter,wait:12,key:escape,key:enter'
+            ;;
+        mouse)
+            return_script='key:enter,key:enter,key:enter,wait-game-runtime,key:escape,click:110:109'
+            ;;
+        *) echo "FAIL: unsupported return method: $return_method" >&2; return 1 ;;
+    esac
+    mkdir -p "$case_root"
+    FIRESTAFF_CONFIG_PATH="$case_root/config.toml" \
+    FIRESTAFF_AUTOTEST=1 \
+    FIRESTAFF_AUTOTEST_QUIT_DURING_RESCAN=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+    HOME="$case_root" XDG_CONFIG_HOME="$case_root" APPDATA="$case_root" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --width 320 --height 200 --menu --game dm1 --platform pc \
+            --data-dir "$data_root" --debug \
+            --script "$return_script" \
+            --duration 60000 >"$run_log" 2>&1 || {
+                cat "$run_log" >&2
+                return 1
+            }
+    python3 - "$return_method" "$run_log" "$runtime_probe" \
+        "$runtime_pattern" <<'PY'
+import json
+import re
+import sys
+
+return_method, log_path, probe_path, runtime_pattern = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+
+launch = re.search(
+    r"DM1 READY: gameId=dm1 dataDir=.*/data/dm1/.*handoff=pc-img3", trace)
+runtime = re.search(runtime_pattern, trace)
+injected = "autotest injected window-close during return-menu rescan" in trace
+cancelled = "return-menu rescan-cancelled by window close" in trace
+if (launch is None or runtime is None or not launch.start() < runtime.start() or
+        not injected or not cancelled or
+        "return-menu rescan-complete data=" in trace or
+        probe.get("launchedEver") != 1 or probe.get("active") != 0):
+    raise SystemExit(
+        f"FAIL: authentic DM1 {return_method} return-menu scan did not stop "
+        f"on window close: "
+        f"probe={probe}, injected={injected}, cancelled={cancelled}")
+print(f"PASS: authentic DM1 {return_method} return closes during the "
+      "originals rescan")
+PY
+}
+
+run_return_menu_window_close_matrix() {
+    run_return_menu_window_close_case keyboard
+    run_return_menu_window_close_case mouse
+}
+
 stage_csb_return_data_root() {
     stage_root=$1
     mkdir -p "$stage_root/dm1" "$stage_root/csb" "$stage_root/dm2"
@@ -246,11 +313,18 @@ stage_dm1_return_data_root() {
 # shared mouse-driven YES branch through an authentic game session.
 if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
    [ "$test_mode" = direct-exit ] || [ "$test_mode" = mouse-return ] ||
+   [ "$test_mode" = return-window-close ] ||
    [ "$test_mode" = csb-atari ] || [ "$test_mode" = csb-amiga ] ||
    [ "$test_mode" = dm2-dos ] || [ "$test_mode" = dm2-mac ] ||
    [ "$test_mode" = dm2-mouse-return ] ||
    [ "$test_mode" = dm1-atari ] || [ "$test_mode" = dm1-amiga36 ] ||
    [ "$test_mode" = dm2-amiga ]; then
+    if [ "$test_mode" = return-window-close ]; then
+        run_return_menu_window_close_matrix
+    fi
+    if [ "$test_mode" = all ] || [ "$test_mode" = returns ]; then
+        run_return_menu_window_close_matrix
+    fi
     if [ "$test_mode" = direct-exit ]; then
         run_direct_game_exit_matrix
     fi

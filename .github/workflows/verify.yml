@@ -109,6 +109,7 @@ jobs:
               firestaff_m12_startup_flow_probe
               firestaff_m12_menu_mouse_probe
               test_menu_hit_launch_direct_click_m12
+              test_m11_display_aspect_present_rect
               test_m12_auto_platform_priority
               test_m12_menu_row_hit_height_audit
               test_m12_launcher_options_runtime_handoff
@@ -263,6 +264,11 @@ jobs:
 
       - name: Run portable M12 startup menu test
         run: ctest --test-dir build --output-on-failure -R '^m12_startup_menu$'
+
+      - name: Run SDL3 presentation and window-close regression
+        env:
+          SDL_VIDEODRIVER: dummy
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R "^m11_display_aspect_present_rect$"
 
       - name: Run M12 menu selection and launch regressions
         if: matrix.full_ctest

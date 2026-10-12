@@ -504,6 +504,7 @@ typedef struct {
     int useModern;
     int* quitRequested;
     int autotestQuitInjected;
+    int returnMenuRescan;
     Uint64 startedMs;
 } M11_ScanProgressContext;
 
@@ -541,8 +542,12 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
         M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
     }
     if (!ctx->autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
-        getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
-        strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0) {
+        ((ctx->returnMenuRescan &&
+          getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_RESCAN") &&
+          strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_RESCAN"), "1") == 0) ||
+         (!ctx->returnMenuRescan &&
+          getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
+          strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0))) {
         SDL_Event event;
         SDL_Window* window = M11_Render_GetWindow();
         memset(&event, 0, sizeof(event));
@@ -558,6 +563,10 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
             if (SDL_PushEvent(&event)) {
                 ctx->autotestQuitInjected = 1;
                 (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED", "1", 1);
+                if (ctx->debug && ctx->returnMenuRescan) {
+                    fprintf(stderr,
+                            "firestaff: autotest injected window-close during return-menu rescan\n");
+                }
             }
         }
     }
@@ -588,11 +597,14 @@ static void m11_rescan_launcher_asset_status(
     scanCtx.useModern = useModern;
     scanCtx.quitRequested = quitRequested;
     scanCtx.autotestQuitInjected = 0;
+    scanCtx.returnMenuRescan = 1;
     scanCtx.startedMs = SDL_GetTicks();
     M12_StartupMenu_RescanAllGames(menuState,
                                    m11_scan_progress_callback,
                                    &scanCtx);
-    if (debug) {
+    if (debug && quitRequested && *quitRequested) {
+        fprintf(stderr, "firestaff: return-menu rescan-cancelled by window close\n");
+    } else if (debug) {
         static const char* const gameIds[] = {
             "dm1", "csb", "dm2", "nexus", "theron"
         };
@@ -9137,6 +9149,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         scanCtx.useModern = 1;
         scanCtx.quitRequested = &quitRequested;
         scanCtx.autotestQuitInjected = 0;
+        scanCtx.returnMenuRescan = 0;
         scanCtx.startedMs = SDL_GetTicks();
         menuInitOptions.scanProgressFn = m11_scan_progress_callback;
         menuInitOptions.scanProgressUserData = &scanCtx;
@@ -9393,6 +9406,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fallbackCtx.useModern = useModern;
         fallbackCtx.quitRequested = &quitRequested;
         fallbackCtx.autotestQuitInjected = 0;
+        fallbackCtx.returnMenuRescan = 0;
         fallbackCtx.startedMs = SDL_GetTicks();
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,
@@ -10116,6 +10130,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                  useModern,
                                                  o->debug,
                                                  &quitRequested);
+                if (quitRequested) break;
                 M11_ApplyStartupMenuRuntime(&menuState);
                 m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             } else if (pointerResult == M11_GAME_INPUT_RESTART_GAME) {
@@ -10225,6 +10240,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                      useModern,
                                                      o->debug,
                                                      &quitRequested);
+                    if (quitRequested) break;
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 } else if (result == M11_GAME_INPUT_RESTART_GAME) {

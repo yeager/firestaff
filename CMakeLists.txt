@@ -4013,7 +4013,10 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;csb;dm2;fmtowns;startup;launcher;return-to-menu;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip;FIRESTAFF_DM1_AMIGA36_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_36.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip;FIRESTAFF_DM2_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
-        TIMEOUT 1200
+        # This authentic-media matrix replays several platform-specific
+        # intros and input routes; the complete local corpus takes about
+        # 1,178 seconds on the Mac mini, leaving too little room at 1,200.
+        TIMEOUT 1800
     )
     add_test(
         NAME return_to_menu_rescans_media_mutations_real_media
