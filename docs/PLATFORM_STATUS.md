@@ -66,6 +66,20 @@ runtime; the menu and direct CLI routes also selected each explicitly chosen
 edition and reached its authenticated first runtime frame. This is startup
 and route evidence with SDL dummy output, not native-display parity.
 
+`csb_v1_atari_stx_native_cli_boot` passed the same day against the original
+Atari STX and campaign archive. It covered the retained Atari title, menu
+keyboard and pointer paths, the original map-0 party pose and movement input,
+the authentic two-champion recruitment route, and the normal M12-to-entrance
+handoff. The runtime probes retained a nonzero source viewport receipt. SDL
+dummy output does not establish native display or audio parity.
+
+`dm2_v1_dos_native_cli_boot` passed against the installed English DOS retail
+ZIP in 73 seconds. It reached the source New Game menu through the normal M12
+route and loaded the first party at map 0, (1,8), facing north. A presented
+menu capture was checked for a populated multicolour source surface; the run
+used SDL dummy video and audio and does not establish native display or audio
+parity.
+
 The 2026-10-10 original-media return-to-menu checks also cover DM1 Atari ST
 1.1 and Amiga 3.6. Each route reached its source-owned runtime, returned to
 the launcher, and rediscovered DM1, CSB and DM2 from an isolated collection
