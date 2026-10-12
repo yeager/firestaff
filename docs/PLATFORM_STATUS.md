@@ -42,6 +42,23 @@ runtime frame used the original graphics with zero core fallback draws. These
 checks use SDL's dummy video and audio drivers; they do not verify a native
 window, HiDPI input or audible playback.
 
+The same day, `csb_v1_fmtowns_native_cli_boot` passed against the original
+CSB FM Towns package in 110 seconds. It covered automatic and explicit F31
+selection, keyboard and mouse start-menu routes, the original
+`TITLE.ANM → SWITCHTW → CHTWE/CHTWJ → C004 Prison → MINI.DAT` chain, and the
+authentic first party at map 4, (22,18), facing west. Captures checked the
+closed-door C28 palette composition in Original, Modern and Custom modes; the
+1920×1080 FIT route also reached the same party. This uses SDL dummy output
+and does not prove native HiDPI or audio parity.
+
+Also on 2026-10-12, `dm1_v1_fmtowns_archive_cli_boot` passed against the
+original DM1 FM Towns ZIP in 264 seconds. It exercised bare and explicit CLI
+launch, English EDM and Japanese JDM selection through the start menu,
+language-specific runtime admission and movement inputs, and the source-owned
+Hall route through mirror selection and champion resurrection. SDL dummy
+output establishes route and input behavior only; this run did not assess
+visual, audible or native HiDPI parity.
+
 The 2026-10-10 original-media return-to-menu checks also cover DM1 Atari ST
 1.1 and Amiga 3.6. Each route reached its source-owned runtime, returned to
 the launcher, and rediscovered DM1, CSB and DM2 from an isolated collection
