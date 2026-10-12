@@ -1,3 +1,10 @@
+# Firestaff v3.0.378
+
+## Developer changes
+
+- `SDL3 close-event regression`: reads autotest flags through SDL's process environment and queues the after-poll close event consistently across Windows, macOS, and Linux.
+- `Daily release limit`: adds an explicit workflow-dispatch override for an authorized same-day release while preserving the one-release-per-day default.
+
 # Firestaff v3.0.377
 
 ## User-facing changes

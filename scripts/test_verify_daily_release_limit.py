@@ -15,10 +15,18 @@ SCRIPT = Path(__file__).with_name("verify_daily_release_limit.py")
 LOCAL_ZONE = ZoneInfo("Europe/Stockholm")
 
 
-def run_policy(tag: str, releases: list[dict[str, object]]) -> subprocess.CompletedProcess[str]:
+def run_policy(
+    tag: str,
+    releases: list[dict[str, object]],
+    *,
+    override: bool = False,
+) -> subprocess.CompletedProcess[str]:
     payload = "".join(json.dumps(release) + "\n" for release in releases)
+    command = [sys.executable, str(SCRIPT), "--tag", tag]
+    if override:
+        command.append("--override-daily-limit")
     return subprocess.run(
-        [sys.executable, str(SCRIPT), "--tag", tag],
+        command,
         input=payload,
         text=True,
         capture_output=True,
@@ -93,6 +101,16 @@ def main() -> int:
                 print(result.stderr, end="", file=sys.stderr)
             return 1
         print(f"PASS: {description}")
+
+    override = run_policy("v2.5.4", [published("v2.5.3", now)], override=True)
+    if override.returncode != 0 or "Explicit daily-limit override" not in override.stdout:
+        print("FAIL: explicit daily-limit override must allow a second same-day release")
+        if override.stdout:
+            print(override.stdout, end="")
+        if override.stderr:
+            print(override.stderr, end="", file=sys.stderr)
+        return 1
+    print("PASS: explicit daily-limit override allows a second same-day release")
 
     invalid = run_policy("v2.5.4", [{"tag_name": "v2.5.3", "published_at": "invalid", "draft": False}])
     if invalid.returncode != 2:

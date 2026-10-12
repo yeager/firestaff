@@ -16,6 +16,11 @@ LOCAL_ZONE = ZoneInfo("Europe/Stockholm")
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag", required=True, help="Release tag this workflow will publish")
+    parser.add_argument(
+        "--override-daily-limit",
+        action="store_true",
+        help="allow this explicitly requested workflow_dispatch to exceed today's limit",
+    )
     args = parser.parse_args()
 
     today = datetime.now(LOCAL_ZONE).date()
@@ -53,6 +58,12 @@ def main() -> int:
     other_published_today = [tag for tag in published_today if tag != args.tag]
     if other_published_today:
         tags = ", ".join(other_published_today)
+        if args.override_daily_limit:
+            print(
+                f"::warning::Explicit daily-limit override for {args.tag}; already-published "
+                f"releases today: {tags}."
+            )
+            return 0
         print(
             f"::error::A Firestaff release was already published in Europe/Stockholm today "
             f"({today}): {tags}. The limit is one release per calendar day.",
