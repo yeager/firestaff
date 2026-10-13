@@ -242,18 +242,19 @@ trace = sys.stdin.read()
 frames = [
     (int(step), int(elapsed), int(vblanks))
     for step, elapsed, vblanks in re.findall(
-        r"startup-source-frame game=dm1 platform=fm-towns phase=title "
-        r"frame=(\d+)/20 elapsed-ms=(\d+) source-wait-vblanks=(\d+)",
+        r"startup-source-frame game=dm1 (?:platform=fm-towns )?phase=title "
+        r"frame=(\d+)/20 (?:palette=[^ ]+ )?elapsed-ms=(\d+) "
+        r"source-wait-vblanks=(\d+)",
         trace,
     )
 ]
 complete = re.search(
-    r"startup-source-complete game=dm1 platform=fm-towns phase=title "
-    r"frames=20 source-vblanks=21 elapsed-ms=(\d+)",
+    r"startup-source-complete game=dm1 (?:platform=fm-towns )?phase=title "
+    r"frames=20 source-vblanks=21 .*?elapsed-ms=(\d+)",
     trace,
 )
 swsh = re.search(
-    r"startup-source-complete game=dm1 phase=swsh-intro "
+    r"startup-source-complete game=dm1 (?:platform=[^ ]+ )?phase=swsh-intro "
     r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",
     trace,
 )
