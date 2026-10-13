@@ -209,6 +209,9 @@ default_loose_data="$default_loose_home/.firestaff/data/dm1"
 default_loose_probe="$default_loose_home/runtime.json"
 mkdir -p "$default_loose_data"
 cp -R "$missing_swsh_root/data/." "$default_loose_data/"
+# Default-root discovery scans the installed tree before it can play the
+# source-owned SWSH and PC-34 title. Give the complete authentic startup route
+# enough run budget even on hosts with slower storage.
 default_loose_output="$(
     unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
     HOME="$default_loose_home" XDG_CONFIG_HOME="$default_loose_home/.config" \
@@ -218,7 +221,7 @@ default_loose_output="$(
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$default_loose_probe" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --menu --game dm1 --debug \
-        --script 'wait20,enter,wait20,enter,wait20,enter' --duration 10000 2>&1
+        --script 'wait20,enter,wait20,enter,wait20,enter' --duration 30000 2>&1
 )" || {
     printf '%s\n' "$default_loose_output" >&2
     exit 1
@@ -380,7 +383,7 @@ rm -f "$auto_cli_probe_json"
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 --platform pc \
-    --data-dir "$archive" --script "$menu_original" --duration 1000 2>&1)" || {
+    --data-dir "$archive" --script "$menu_original" --duration 10000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }

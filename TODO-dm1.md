@@ -31,6 +31,18 @@ passed the authenticated PC and FM Towns CLI boot probes on the locally built
 binary. It uses SDL dummy video, so this proves the source/runtime handoff, not
 native window presentation, input or audio.
 
+2026-10-14 Mac mini M4 PC-34 full regression:
+`test_dm1_v1_pc34_native_cli_boot.sh`
+passed with the original DOS English archive. The suite exercised default-root
+discovery, `--game dm1`, M12 launch, the full Hall of Champions input route and
+the complete keyboard/mouse input matrix. Authentic C001 first/mid/full zoom
+frames and C004 closed/first-door frames were all captured and differed as
+expected; Original and Modern presentation checks and the full-redraw debug
+probe also passed. The test's default-root launch budget is now 30 seconds so
+media scanning and the source-owned SWSH/title sequence can finish before its
+runtime receipt is checked; a separate first-frame menu probe now allows 10
+seconds for that same synchronous startup.
+
 2026-10-13 current `c880f066a` M4 retest: the authentic Amiga v2.0 English
 ZIP -> ZIP -> ADF CLI/menu route passed, including save resume, all 18 ordered
 F0437 zoom presents, five palette fades, the 50 Hz source deadlines, all 31
