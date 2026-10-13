@@ -9,11 +9,12 @@ dm1_pc=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$source_root/dm1/Dungeon-Master_DOS_EN_Ver
 csb_towns=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$source_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
 csb_amiga=${FIRESTAFF_CSB_AMIGA_ARCHIVE:-"$source_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"}
 csb_atari=${FIRESTAFF_CSB_ATARI_ARCHIVE:-"$source_root/csb/chaos_strikes_back_ftl.zip"}
+dm2_towns=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$source_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 
 if [ ! -x "$app" ] || [ ! -f "$dm1_towns" ] || [ ! -f "$dm1_pc" ] ||
    [ ! -f "$csb_towns" ] || [ ! -f "$csb_amiga" ] ||
-   [ ! -f "$csb_atari" ]; then
-    echo 'SKIP: authentic DM1 and CSB multi-platform archives are required'
+   [ ! -f "$csb_atari" ] || [ ! -f "$dm2_towns" ]; then
+    echo 'SKIP: authentic DM1, CSB and DM2 archives are required'
     exit 77
 fi
 
@@ -22,12 +23,13 @@ mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/m12-shared-dm1-csb.XXXXXX")
 trap 'find "$scratch" -depth -delete' EXIT HUP INT TERM
 data_root="$scratch/data"
-mkdir -p "$data_root/dm1" "$data_root/csb" "$scratch/home"
+mkdir -p "$data_root/dm1" "$data_root/csb" "$data_root/dm2" "$scratch/home"
 ln -s "$dm1_towns" "$data_root/dm1/$(basename "$dm1_towns")"
 ln -s "$dm1_pc" "$data_root/dm1/$(basename "$dm1_pc")"
 ln -s "$csb_towns" "$data_root/csb/$(basename "$csb_towns")"
 ln -s "$csb_amiga" "$data_root/csb/$(basename "$csb_amiga")"
 ln -s "$csb_atari" "$data_root/csb/$(basename "$csb_atari")"
+ln -s "$dm2_towns" "$data_root/dm2/$(basename "$dm2_towns")"
 
 probe="$scratch/runtime.json"
 log="$scratch/firestaff.log"
@@ -36,7 +38,7 @@ FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
 HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" APPDATA="$scratch/home" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$app" --width 320 --height 200 --menu --game dm1 \
-    --data-dir "$data_root" --debug \
+    --data-dir "$data_root/dm1" --debug \
     --script 'enter,enter,enter,wait:12,key:escape,key:enter,wait:60,key:escape,key:escape,key:down,key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:1000,back,wait:10,enter,wait:60' \
     --duration 60000 >"$log" 2>&1 || {
         cat "$log" >&2
@@ -68,6 +70,8 @@ if "dm1 platform=FM Towns edition=fmtowns-en matched" not in trace or \
     raise SystemExit("FAIL: shared collection did not authenticate both DM1 editions")
 if "variant=csb-fmtowns-en" not in trace:
     raise SystemExit("FAIL: CSB handoff did not retain its authenticated FM Towns edition")
+if "dm2 platform=FM Towns edition=fmtowns-ja matched" not in trace:
+    raise SystemExit("FAIL: DM1-leaf menu scan did not discover authentic DM2 FM Towns media")
 
 dm1_runtime = re.search(
     r"startup-frame game=dm1 elapsed-ms=0 source=dm1 phase=dm1-runtime "
@@ -83,7 +87,7 @@ if (dm1_launch not in trace or csb_launch not in trace or
              trace.index(csb_launch) < csb_runtime.start() < rescans[1].start())):
     raise SystemExit(
         "FAIL: M12 did not launch DM1, rescan, launch CSB, return and rescan again in order")
-for game in ("dm1", "csb"):
+for game in ("dm1", "csb", "dm2"):
     matches = re.findall(rf"return-menu rescan game={game} available=1", trace)
     if len(matches) != 2:
         raise SystemExit(
