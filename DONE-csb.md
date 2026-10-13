@@ -15,6 +15,14 @@
 
 # Firestaff DONE — CSB
 
+- 2026-10-13: On the Mac mini M4, the authentic A35E English ADF passed byte-
+  preserving ZIP, explicit and AUTO CLI startup, and explicit and AUTO
+  production M12 menu routes. Each M12 route reached its first movement with
+  a nonzero viewport receipt; the A35E M12/M11 boundary test passed 45 checks.
+  The DMWeb archive hash remained unchanged. Headless checks do not establish
+  native display output or audible playback; native CTRaw PACK decoding stays
+  unsupported.
+
 - 2026-10-12: Extended the authentic A35M ADF-over-ZIP regression to cover
   bare `--game csb` in direct CLI and the production M12 menu with no platform
   override. Both AUTO routes selected the original Amiga 3.5 multilingual

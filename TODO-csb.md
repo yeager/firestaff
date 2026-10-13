@@ -15,6 +15,15 @@ dummy video driver; native M5 Retina input and pixel parity remain unverified.
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+2026-10-13 A35E source verification: on the Mac mini M4, the current local
+build passed the authentic Amiga 3.5 English ADF path after byte-preserving ZIP
+transport. Explicit Amiga and automatic platform detection passed direct CLI
+and production M12 startup; both M12 routes reached first movement at `(9,1)`
+with a nonzero viewport receipt. The dedicated A35E M12-to-M11 boundary test
+reported 45 passed, 0 failed, 0 skipped. The original DMWeb archive SHA-256
+remained unchanged. These headless checks do not verify native display output
+or audible playback. Native CTRaw PACK decoding remains unsupported.
+
 2026-10-12 A35E original-ADF retest: the published v3.0.379 macOS arm64
 binary authenticated the English Amiga 3.5 original ADF from the DMWeb
 software archive (MD5 `d1808d54faf36c6ab7f054908ce7ebd5`). A byte-preserving
@@ -31,9 +40,9 @@ The explicitly pinned production M12 menu also selected the authenticated
 menu run now waits through the original entrance, accepts C200, and verifies the
 first runtime movement at `(9,1)` with a nonzero viewport receipt. The regression
 uses `wait:` in loop frames, not milliseconds. These runs used SDL's dummy
-video/audio drivers. The dedicated M12-to-M11 boundary executable was not built
-in this local check, so its handoff assertions remain pending. This ADF route is
-separate from native CTRaw decoding.
+video/audio drivers. The dedicated A35E M12-to-M11 boundary check subsequently
+passed 45 assertions on the Mac mini M4. This ADF route is separate from native
+CTRaw decoding.
 
 2026-10-11 A35 original-ADF startup verification: the DMWeb software archive
 also contains a multilingual Amiga 3.5 original ADF, explicitly labeled
