@@ -7,6 +7,14 @@ authentic Atari STx, Amiga and FM Towns CLI/start-menu regressions all passed
 they establish the tested startup/handoff routes, not native-window parity,
 physical input or audible output.
 
+2026-10-13 current-source M4 regression: the authentic Amiga 3.1/3.3 CLI
+suite, Amiga 3.3 loose-folder route and A31E archive route all passed against
+installed original media (three CTests; 72.63 seconds wall time). The A33M
+negative case with `KAOS.FTL` removed was rejected by both scanning and direct
+launch; complete A33M/A31M packages and A31E reached their source-owned startup
+receipts. This verifies the edition-specific media gate and headless launch
+routes, not native-window presentation or audible output.
+
 2026-10-13 local startup matrix on the Mac mini M4 host, source commit
 `22bc77676`: the locally built binary passed authentic Atari STx, Amiga and FM
 Towns CLI/start-menu regressions (`csb_v1_atari_stx_native_cli_boot`,
