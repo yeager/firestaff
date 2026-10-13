@@ -11,6 +11,22 @@ parity remain unverified.
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Source-backed New Game weather initialization remains missing. SKProject's
+  `sksvgame.cpp` calls `DM2_weather_3df7_0037(0)` when starting a fresh game
+  (`v1d652d != 0`), which seeds the weather fields and queues the first
+  weather timer (`SKWINSPX/src/v5/sksvgame.cpp:544-546`,
+  `SKWINSPX/src/v5/skweathr.cpp:509-557`). Firestaff currently clears the
+  fresh session's weather chain and leaves it stopped in
+  `dm2_v1_runtime_commit_source_game_load`
+  (`src/dm2/dm2_v1_runtime.c:4381-4387`); only the save-resume path restores
+  a running chain. SKProject starts its global LCG at zero
+  (`SKWINSPX/src/v5/skrandom.cpp:9-29`), but the exact RNG state at the
+  New Game load boundary must include the authentic startup draws. Trace that
+  state, the active map's weather zone and day offset through original-data
+  startup before enabling the chain. Do not substitute a fixed or host-chosen
+  seed. Verify New Game and Resume on each supported DM2 edition with original
+  media and source timer receipts.
+
 2026-10-11 local startup retest: the current source passed authentic FM Towns,
 DOS, Amiga and Macintosh CLI/start-menu regressions
 (`test_dm2_v1_fmtowns_native_cli_boot.sh`,
