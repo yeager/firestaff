@@ -76,6 +76,33 @@ Reviewed 2026-08-29. Only open work is listed here.
   and FM Towns editions. This verifies the authored map-0 zone value, not that
   the source loader has assigned its active-map selector before the bootstrap.
 
+  2026-10-13 bootstrap boundary follow-up: the RNG state is now source-locked
+  at the fresh weather call. `SKW5_STARTUP_THREAD_MAIN_LOOP_01` invokes
+  `randdat.init()` before `SKW5_INIT` (`sk5start.cpp:82-110`), and a full
+  source search finds no writes to `randdat.random` except the LCG routines,
+  save-resume restore, and save serialization (`skrandom.cpp:9-47`,
+  `sksvgame.cpp:1486,2207`). The fresh load enters
+  `DM2_READ_DUNGEON_STRUCTURE(1)` and calls the weather bootstrap before
+  `DM2_ARRANGE_DUNGEON()` (`sksvgame.cpp:540-573`), so dungeon generation has
+  no opportunity to advance it first. Therefore the initial weather-bootstrap
+  LCG state is zero. Its storm-forced branch consumes four draws in source
+  order: `RAND16(500)`, `RANDDIR()`, `RANDDIR()`, and `RAND16(4)`
+  (`skweathr.cpp:541-566`). The earlier uncertainty about pre-menu draws is
+  closed.
+
+  Keep the fresh weather chain disabled for now. The bootstrap runs before
+  `DM2_LOAD_NEW_DUNGEON` returns, before `DM2_LOAD_NEWMAP` binds the active map
+  graphicsset, and before `LOAD_LOCALLEVEL_DYN` derives `v1e1472` from
+  `(8, v1d6c02, 11, 0x66)`. The map-0 zone 2 is therefore not the bootstrap
+  selector. Although the fresh bootstrap's random delay and weather fields
+  are reconstructible, Firestaff's fresh-session candidate currently has no
+  source-owned timer-G1 queue at that boundary. Enabling the chain would invent
+  where the first source 0x54 timer is stored or when it becomes active. Next
+  bind the fresh source timer/G1 initialization through the first normal-loop
+  map load, then verify the original-media timer receipt before starting
+  weather in runtime. Resume remains separately restored from its serialized
+  clock, RNG, weather fields and live-map selector.
+
 2026-10-11 local startup retest: the current source passed authentic FM Towns,
 DOS, Amiga and Macintosh CLI/start-menu regressions
 (`test_dm2_v1_fmtowns_native_cli_boot.sh`,
