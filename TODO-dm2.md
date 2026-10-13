@@ -90,18 +90,33 @@ Reviewed 2026-08-29. Only open work is listed here.
   (`skweathr.cpp:541-566`). The earlier uncertainty about pre-menu draws is
   closed.
 
-  Keep the fresh weather chain disabled for now. The bootstrap runs before
-  `DM2_LOAD_NEW_DUNGEON` returns, before `DM2_LOAD_NEWMAP` binds the active map
-  graphicsset, and before `LOAD_LOCALLEVEL_DYN` derives `v1e1472` from
-  `(8, v1d6c02, 11, 0x66)`. The map-0 zone 2 is therefore not the bootstrap
-  selector. Although the fresh bootstrap's random delay and weather fields
-  are reconstructible, Firestaff's fresh-session candidate currently has no
-  source-owned timer-G1 queue at that boundary. Enabling the chain would invent
-  where the first source 0x54 timer is stored or when it becomes active. Next
-  bind the fresh source timer/G1 initialization through the first normal-loop
-  map load, then verify the original-media timer receipt before starting
-  weather in runtime. Resume remains separately restored from its serialized
-  clock, RNG, weather fields and live-map selector.
+  Keep the fresh weather chain disabled pending the shared session-LCG owner.
+  The source timer table is in fact initialized empty before the bootstrap:
+  `c_timerdata::init` sets `gametick=0` and no timer array, then
+  `DM2_savegame_3a15_0002` allocates the 50-entry base table, clears each entry,
+  and links the free list before `DM2_weather_3df7_0037` queues its first
+  `0x54` timer (`sktimer.cpp:10-20`, `sksvgame.cpp:72-125, 540-546`). The
+  Firestaff new-game world owner already allocates this empty base capacity
+  from the same source count before map/CAII materialization
+  (`dm2_v1_game_load_world_owner.c:234-272`); the first weather timer's
+  placement is therefore not itself the blocker.
+
+  The remaining gap is that SKProject's one `randdat.random` LCG advances
+  through the weather bootstrap and later source initialization. Firestaff's
+  game-load owner currently uses a separately initialized `caii_rng` for
+  selected CAII/setup paths (`dm2_v1_game_load_world_owner.c:583-596`), while
+  the runtime has an independent `weather_rng`; neither is yet proven to be
+  the single source-ordered session LCG across weather, dungeon arrangement,
+  new-game setup, and gameplay. A local four-draw weather receipt would thus
+  leave subsequent source draws divergent. Bind one transactional session RNG
+  owner across those calls, preserving the verified source order (weather
+  bootstrap before `DM2_ARRANGE_DUNGEON`), then queue the map-0 timer from its
+  receipt. At the later `0x54` dispatch, bind the then-active map's weather
+  selector from `(8, v1d6c02, 11, 0x66)`; map 0's authored zone 2 is not the
+  pre-map bootstrap selector. Verify the timer, shared RNG state and zone at
+  first original-media weather dispatch before enabling runtime updates.
+  Resume remains separately restored from its serialized clock, RNG, weather
+  fields and live-map selector.
 
 2026-10-11 local startup retest: the current source passed authentic FM Towns,
 DOS, Amiga and Macintosh CLI/start-menu regressions
