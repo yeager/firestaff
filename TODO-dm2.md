@@ -27,6 +27,21 @@ Reviewed 2026-08-29. Only open work is listed here.
   seed. Verify New Game and Resume on each supported DM2 edition with original
   media and source timer receipts.
 
+  2026-10-13 source follow-up: current SKProject `SKWINSPX/src/v5/sk5start.cpp`
+  calls `randdat.init()` before game startup; `skrandom.cpp` sets that value to
+  zero. Fresh `DM2_GAME_LOAD` calls `DM2_LOAD_NEW_DUNGEON`, whose
+  `DM2_READ_DUNGEON_STRUCTURE(1)` path calls `DM2_weather_3df7_0037(0)` before
+  returning. That bootstrap schedules the first 0x54 timer, uses
+  `v1d7188`'s storm-forcing branch, and sets the day offset from authenticated
+  GDAT index `(3,0,11,0)` (`sksvgame.cpp:540-546`, `skweathr.cpp:509-575`,
+  `dm2data.cpp:1402`). This narrows the missing trace but does not yet prove
+  the global RNG value at the weather call because the preceding title/menu
+  event path has not been traced end to end. Firestaff also declares
+  `dm2_level_t.weather_zone_index` but currently has no assignment or consumer
+  for it; the live level's source weather zone is therefore not bound yet.
+  Keep New Game weather disabled until both facts are source-locked and the
+  first timer is verified against original-media startup.
+
 2026-10-11 local startup retest: the current source passed authentic FM Towns,
 DOS, Amiga and Macintosh CLI/start-menu regressions
 (`test_dm2_v1_fmtowns_native_cli_boot.sh`,
