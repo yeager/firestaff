@@ -246,6 +246,15 @@ native window-close or physical-input behavior.
   performance measurement. The extra 1,200 ms MASTER hold remains a host
   readability choice beyond the source's 350 ms of waits.
 
+  2026-10-13 current-source M4 regression: after rebuilding commit `65f564ae7`
+  with Xcode 26.5, `dm1_v1_fmtowns_archive_cli_boot` passed against the
+  installed original English/Japanese FM Towns archive (240 seconds). The
+  test checked all 20 title and 31 entrance-door frames, source wait counts,
+  stable 60 Hz intervals, the two-VBlank MASTER transition and 1,200 ms hold,
+  both language/program routes, and the first runtime frame from M12. This
+  confirms the corrected source cadence on M4 under SDL's dummy driver; it
+  does not validate native-window frame delivery, HiDPI or pixel parity.
+
 - Continue reducing M12 idle CPU cost if it can be done without losing frame
   rate, animation or input response. The shared loop now counts the whole
   16 ms frame period, including VSync present, and the 1920x1080 backdrop is
