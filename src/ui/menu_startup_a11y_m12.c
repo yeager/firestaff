@@ -816,6 +816,7 @@ static void emit_game_options_view(int fbW, int fbH)
 {
     static const char* rowIds[] = {
         "GAME_OPT_PRESENTATION",
+        "GAME_OPT_ARCHITECTURE",
         "GAME_OPT_VERSION",
         "GAME_OPT_PATCH",
         "GAME_OPT_LANGUAGE",
@@ -825,7 +826,7 @@ static void emit_game_options_view(int fbW, int fbH)
         "GAME_OPT_RESOLUTION"
     };
     static const char* rowLabels[] = {
-        "Presentation", "Version", "Patch (unavailable)", "Language",
+        "Presentation", "Architecture", "Version", "Patch (unavailable)", "Language",
         "Cheats", "Speed", "Aspect Ratio", "Resolution"
     };
     int i;

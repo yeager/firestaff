@@ -566,6 +566,50 @@ static void subtest_settings_view(void)
                  "settings: view does not fall through to main game cards");
 }
 
+/* PATCH has no source-backed runtime implementation yet. Keep the a11y
+ * manifest aligned with the visible disabled row so screen-reader users do
+ * not get an actionable control that claims to toggle a no-op. */
+static void subtest_game_options_patch_unavailable(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+    const char* patch;
+    const char* language;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_GAME_OPTIONS;
+    state.selectedIndex = 0;
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_PATCH;
+
+    fs_ax_begin_frame(480, 270, "launcher_game_options");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+    patch = strstr(buf, "\"id\":\"GAME_OPT_PATCH\"");
+    language = strstr(buf, "\"id\":\"GAME_OPT_LANGUAGE\"");
+    probe_record("INV_LAX_200_patch_row_present",
+                 patch != NULL,
+                 "game options: PATCH row appears in the accessibility manifest");
+    probe_record("INV_LAX_201_patch_row_disabled",
+                 patch && strstr(patch, "\"enabled\":false") != NULL,
+                 "game options: unsupported PATCH row is not actionable");
+    probe_record("INV_LAX_202_patch_row_unavailable_value",
+                 find_element_value_for_id(buf, "GAME_OPT_PATCH",
+                                           "\"UNAVAILABLE\"") != NULL,
+                 "game options: PATCH row announces UNAVAILABLE");
+    probe_record("INV_LAX_203_language_row_stays_enabled",
+                 language && strstr(language, "\"enabled\":true") != NULL,
+                 "game options: neighboring Language row remains actionable");
+}
+
 /* Subtest C2: RetroAchievements settings are first-class start-menu rows.
  * They must expose status, hardcore mode, username, and a redacted token
  * in the same settings view that pointer/keyboard users operate. */
@@ -1525,6 +1569,9 @@ int main(void)
 
     printf("\n[C] settings view: tabs + rows\n");
     subtest_settings_view();
+
+    printf("\n[C1] game options: unsupported Patch row\n");
+    subtest_game_options_patch_unavailable();
 
     printf("\n[C2] settings view: RetroAchievements rows\n");
     subtest_settings_retroachievements_rows();
