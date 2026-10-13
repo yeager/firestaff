@@ -2,6 +2,8 @@
 
 ## Developer changes
 
+- `DM1 Amiga A20 title timing`: paces original 50 Hz palette and zoom events
+  against absolute deadlines, counting renderer VSync within each interval.
 - `Amiga MFM scanner`: corrects the sector-header offset to follow the standard 32-bit sync pair and corrects the matching standard-format unit fixture.
 - `CSB Amiga 3.5 startup regression`: verifies the original-media M12 menu route through the first runtime movement.
 - `DM1 Amiga 2.2 German media audit`: changes the support record to include verified mixed-language media and the unresolved raw track; the profile remains unsupported.

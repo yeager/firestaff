@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-10-13 Amiga A20 title pacing on the Mac mini M4: ReDMCSB
+`PALETTE.C F0436` (`MEDIA433`) waits for VBlank between its eight palette
+steps, and `TITLE.C F0437` gates each zoom blit on the source frame. Firestaff
+previously waited 20 ms after presenting each fade or zoom frame, which added
+the host renderer's VSync wait to the source interval. These events now use
+absolute 20 ms deadlines, so a completed host presentation counts toward the
+50 Hz interval. The authentic nested ZIP → ADF Amiga v2.0 startup test passes
+on the M4 and now requires all five palette fades, a 150 ms final fade and at
+least 1,600 ms for the complete title. Its M4 SDL dummy-video run measured
+367 ms for the zoom, 501 ms for the hold, 168 ms for the final fade, and
+1,721 ms total; all 30 Amiga entrance-door frame intervals measured 40–44 ms.
+These timings do not prove native 50 Hz display cadence, beam-line 152 timing,
+or HiDPI behavior; those M4 presentation checks remain open.
+
 2026-10-13 Amiga A20 F0437 source audit: ReDMCSB `TITLE.C` compiles the
 `MEDIA009`, `MEDIA137` and `MEDIA413` branches for A20. The source performs five
 palette fades (lines 114, 132, 173, 199 and 249), including a dark-blue fade

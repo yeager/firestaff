@@ -166,7 +166,7 @@ values = {key: int(value) for key, value in re.findall(
     r"(palette-fades|zoom-elapsed-ms|hold-elapsed-ms|final-fade-elapsed-ms|total-elapsed-ms)=(\d+)",
     line)}
 required = {"palette-fades": 5, "zoom-elapsed-ms": 340, "hold-elapsed-ms": 500,
-            "final-fade-elapsed-ms": 140, "total-elapsed-ms": 1320}
+            "final-fade-elapsed-ms": 150, "total-elapsed-ms": 1600}
 if (set(values) != set(required) or values["palette-fades"] != 5 or
         any(values[key] < minimum for key, minimum in required.items()
             if key != "palette-fades")):
