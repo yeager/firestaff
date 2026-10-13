@@ -16,6 +16,7 @@ static DM1_V1_FmtownsStartupReceipt receipt(void)
     memset(&value, 0, sizeof(value));
     value.valid = 1;
     value.game_title_animation_plan_verified = 1;
+    value.game_title_palettes_verified = 1;
     value.game_title_graphic_index = 1u;
     value.game_title_presents_source_y = 137u;
     value.game_title_master_source_y = 80u;
@@ -32,6 +33,7 @@ int main(void)
     static unsigned char source[320u * 200u];
     static unsigned char frame[320u * 200u];
     DM1_V1_FmtownsStartupReceipt startup = receipt();
+    uint8_t palette[16][3];
     size_t i;
 
     CHECK(DM1_FMTOWNS_TITLE_MASTER_HOLD_MS == 1200u);
@@ -69,6 +71,29 @@ int main(void)
                                              19u, frame, sizeof(frame)));
     CHECK(frame[118u * 320u] == source[80u * 320u]);
     CHECK(frame[90u * 320u] == source[137u * 320u]);
+    memset(startup.game_title_presents_palette_rgb6, 0,
+           sizeof(startup.game_title_presents_palette_rgb6));
+    memset(startup.game_title_master_palette_rgb6, 0,
+           sizeof(startup.game_title_master_palette_rgb6));
+    startup.game_title_presents_palette_rgb6[15][0] = 63u;
+    startup.game_title_presents_palette_rgb6[15][1] = 63u;
+    startup.game_title_presents_palette_rgb6[15][2] = 63u;
+    startup.game_title_master_palette_rgb6[3][0] = 47u;
+    startup.game_title_master_palette_rgb6[15][0] = 63u;
+    CHECK(!dm1_v1_fmtowns_title_palette_for_frame(NULL, 0u, palette));
+    CHECK(!dm1_v1_fmtowns_title_palette_for_frame(&startup, 20u, palette));
+    CHECK(dm1_v1_fmtowns_title_palette_for_frame(&startup, 0u, palette));
+    CHECK(palette[15][0] == 63u && palette[15][1] == 63u &&
+          palette[15][2] == 63u);
+    startup.game_title_zoom_palette_rgb6[3][0] = 47u;
+    startup.game_title_zoom_palette_rgb6[15][0] = 63u;
+    CHECK(dm1_v1_fmtowns_title_palette_for_frame(&startup, 1u, palette));
+    CHECK(palette[3][0] == 47u && palette[15][0] == 63u &&
+          palette[15][1] == 0u && palette[15][2] == 0u);
+    CHECK(dm1_v1_fmtowns_title_palette_for_frame(&startup, 18u, palette));
+    CHECK(palette[15][1] == 0u && palette[15][2] == 0u);
+    CHECK(dm1_v1_fmtowns_title_palette_for_frame(&startup, 19u, palette));
+    CHECK(palette[15][1] == 0u && palette[15][2] == 0u);
     {
         unsigned int titleFrame;
         unsigned int waits = 0u;

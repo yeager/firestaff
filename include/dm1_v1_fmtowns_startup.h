@@ -57,9 +57,9 @@ typedef struct {
     uint16_t game_title_swoosh_rect[4];
     uint16_t game_title_presents_rect[4];
     uint16_t game_title_master_rect[4];
-    /* TITLE.C installs C12 PRESENTS, then C13 DUNGEON for the zoom, and
-     * finally C14 MASTER for the settled title. These RGB6 values are
-     * decoded from the selected hash-verified EDM/JDM load image. */
+    /* TITLE.C installs C12 PRESENTS, then both C13 DUNGEON and C14 MASTER
+     * before zoom; the settled title keeps that combined palette. These
+     * RGB6 values are decoded from the selected hash-verified EDM/JDM image. */
     int game_title_palettes_verified;
     uint8_t game_title_presents_palette_rgb6[16][3];
     uint8_t game_title_zoom_palette_rgb6[16][3];

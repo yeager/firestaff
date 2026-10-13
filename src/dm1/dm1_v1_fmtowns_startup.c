@@ -376,11 +376,11 @@ static int parse_title_palettes(const uint8_t *program, size_t size,
            sizeof(out->game_title_zoom_palette_rgb6));
     if (!apply_rgb6_records(program + dungeon_offset, 9u,
                             out->game_title_zoom_palette_rgb6)) return 0;
+    if (!apply_rgb6_records(program + master_offset, 2u,
+                            out->game_title_zoom_palette_rgb6)) return 0;
     memcpy(out->game_title_master_palette_rgb6,
            out->game_title_zoom_palette_rgb6,
            sizeof(out->game_title_master_palette_rgb6));
-    if (!apply_rgb6_records(program + master_offset, 2u,
-                            out->game_title_master_palette_rgb6)) return 0;
     out->game_title_palettes_verified = 1;
     return 1;
 }

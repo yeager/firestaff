@@ -89,6 +89,28 @@ unsigned int dm1_v1_fmtowns_title_frame_wait_vblanks(unsigned int frame)
            frame < DM1_FMTOWNS_TITLE_FINAL_FRAME ? 1u : 0u;
 }
 
+int dm1_v1_fmtowns_title_palette_for_frame(
+    const DM1_V1_FmtownsStartupReceipt *startup, unsigned int frame,
+    uint8_t out_rgb6[16][3])
+{
+    const uint8_t (*palette)[3];
+    if (!startup || !startup->valid ||
+        !startup->game_title_palettes_verified || !out_rgb6 ||
+        frame > DM1_FMTOWNS_TITLE_FINAL_FRAME) return 0;
+
+    /* ReDMCSB TITLE.C:362-367 applies C13_DUNGEON and C14_MASTER together
+     * before TITLE.C:385-387 draws any zoom frame. */
+    if (frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME) {
+        palette = startup->game_title_presents_palette_rgb6;
+    } else if (frame == DM1_FMTOWNS_TITLE_FINAL_FRAME) {
+        palette = startup->game_title_master_palette_rgb6;
+    } else {
+        palette = startup->game_title_zoom_palette_rgb6;
+    }
+    memcpy(out_rgb6, palette, 16u * 3u);
+    return 1;
+}
+
 unsigned int dm1_v1_fmtowns_title_vblank_delay_ms(unsigned int ordinal)
 {
     unsigned int previous;

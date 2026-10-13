@@ -4855,18 +4855,15 @@ static int m11_play_dm1_fmtowns_title_if_available(
     for (frame = 0u; frame < DM1_FMTOWNS_TITLE_FINAL_FRAME; ++frame) {
         const char *titlePaletteName =
             frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME
-                ? "PRESENTS" : "DUNGEON";
-        const uint8_t (*titlePalette)[3] =
-            frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME
-                ? plan->game_title_presents_palette_rgb6
-                : plan->game_title_zoom_palette_rgb6;
+                ? "PRESENTS" : "DUNGEON+MASTER";
         if (!dm1_v1_fmtowns_title_compose_frame(
                 plan, title->pixels, title->width, title->height, frame,
                 framebuffer, (size_t)M11_FB_BYTES)) {
             return 0;
         }
         memset(titlePaletteRgb6, 0, sizeof(titlePaletteRgb6));
-        memcpy(titlePaletteRgb6, titlePalette, 16u * 3u);
+        if (!dm1_v1_fmtowns_title_palette_for_frame(
+                plan, frame, titlePaletteRgb6)) return 0;
         if (M11_Render_SetIndexedPaletteRgb6(titlePaletteRgb6) != M11_RENDER_OK)
             return 0;
         if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
@@ -4912,8 +4909,8 @@ static int m11_play_dm1_fmtowns_title_if_available(
         return 0;
     }
     memset(titlePaletteRgb6, 0, sizeof(titlePaletteRgb6));
-    memcpy(titlePaletteRgb6, plan->game_title_master_palette_rgb6,
-           16u * 3u);
+    if (!dm1_v1_fmtowns_title_palette_for_frame(
+            plan, DM1_FMTOWNS_TITLE_FINAL_FRAME, titlePaletteRgb6)) return 0;
     if (M11_Render_SetIndexedPaletteRgb6(titlePaletteRgb6) != M11_RENDER_OK ||
         M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                   M11_FB_HEIGHT) != M11_RENDER_OK) {

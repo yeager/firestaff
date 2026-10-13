@@ -55,6 +55,15 @@
 
 # Firestaff DONE — DM1
 
+- 2026-10-13: Corrected the English/Japanese FM Towns title zoom palette from
+  ReDMCSB `TITLE.C:362-367`: the original installs both C13_DUNGEON and
+  C14_MASTER before drawing any zoom frame. Firestaff had left color index 15
+  at C12's white value during zoom; the source-combined zoom/master palette
+  now makes it red from the first zoom frame. The authenticated English and
+  Japanese FM Towns startup/palette tests and the title-frame selection test
+  pass with original media. Native M4 capture of a zoom frame after this fix
+  remains open in `TODO-dm1.md`.
+
 - 2026-10-13: On a Mac mini M4, a native Cocoa run of the current main build
   with bare `--game dm1 --debug` selected the hash-matched English FM Towns
   `GRAPHICS.DAT` by default. The trace presented all 20 original title frames,

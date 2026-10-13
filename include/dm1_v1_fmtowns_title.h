@@ -40,6 +40,13 @@ int dm1_v1_fmtowns_title_compose_frame(
  * is followed by its separate two-VBlank return guard. */
 unsigned int dm1_v1_fmtowns_title_frame_wait_vblanks(unsigned int frame);
 
+/* Return the palette active for one title frame.  FM Towns installs both
+ * C13_DUNGEON and C14_MASTER before the zoom loop; only the initial PRESENTS
+ * frame uses the separate C12 palette. */
+int dm1_v1_fmtowns_title_palette_for_frame(
+    const DM1_V1_FmtownsStartupReceipt *startup, unsigned int frame,
+    uint8_t out_rgb6[16][3]);
+
 /* Convert a cumulative 60 Hz VBlank ordinal to an integer host delay without
  * accumulating the +2% drift produced by rounding every blank to 17 ms. */
 unsigned int dm1_v1_fmtowns_title_vblank_delay_ms(unsigned int ordinal);

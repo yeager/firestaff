@@ -111,11 +111,14 @@ int main(void)
         receipt.game_title_zoom_palette_rgb6[3][2] != 0x0fu ||
         receipt.game_title_zoom_palette_rgb6[12][0] != 0x3fu ||
         receipt.game_title_zoom_palette_rgb6[15][0] != 0x3fu ||
-        receipt.game_title_zoom_palette_rgb6[15][1] != 0x3fu ||
-        receipt.game_title_zoom_palette_rgb6[15][2] != 0x3fu ||
+        receipt.game_title_zoom_palette_rgb6[15][1] != 0u ||
+        receipt.game_title_zoom_palette_rgb6[15][2] != 0u ||
         receipt.game_title_master_palette_rgb6[15][0] != 0x3fu ||
         receipt.game_title_master_palette_rgb6[15][1] != 0u ||
         receipt.game_title_master_palette_rgb6[15][2] != 0u ||
+        memcmp(receipt.game_title_zoom_palette_rgb6,
+               receipt.game_title_master_palette_rgb6,
+               sizeof(receipt.game_title_zoom_palette_rgb6)) != 0 ||
         !receipt.game_dungeon_palettes_verified ||
         receipt.game_dungeon_palettes_rgb6[0][4][1] != 0x36u ||
         receipt.game_dungeon_palettes_rgb6[0][8][0] != 0x3fu ||
