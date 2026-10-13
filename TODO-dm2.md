@@ -1,5 +1,16 @@
 # Firestaff TODO — DM2
 
+2026-10-13 local startup matrix on the Mac mini M4 host, source commit
+`22bc77676`: the locally built binary passed authentic DOS English, DOS French,
+Macintosh, Amiga and FM Towns CLI/start-menu regressions
+(`dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
+`dm2_v1_mac_native_cli_boot`, `dm2_v1_amiga_native_cli_boot`,
+`dm2_v1_fmtowns_native_cli_boot`). Four focused weather regressions also
+passed: seed, timer producer, source weather transition and GDAT receipt.
+GitHub Actions run `38352901234` passed all jobs on Ubuntu, macOS and Windows.
+These local routes used SDL's dummy video/audio drivers; they do not verify the
+M4's native Retina window, physical input, audio output or visual parity.
+
 2026-10-12 v3.0.379 startup regression retest: the released macOS arm64
 binary passed authenticated return-to-menu and all-five-game rescan checks
 for FM Towns, DOS, Macintosh and Amiga media. Direct `--game dm2` exit

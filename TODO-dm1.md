@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-13 local startup matrix on the Mac mini M4 host, source commit
+`22bc77676`: the locally built binary passed authentic DOS English, Atari ST
+v1.2, Amiga HD and FM Towns CLI/start-menu regressions
+(`dm1_v1_dos_en_archive_cli_boot`, `dm1_v1_atari_st_archive_cli_boot`,
+`dm1_v1_amiga_hd_archive_cli_boot`, `dm1_v1_fmtowns_archive_cli_boot`). The
+FM Towns test also exercised its 720-frame intro/input route. GitHub Actions
+run `38352901234` passed all jobs on Ubuntu, macOS and Windows. These local
+routes used SDL's dummy video/audio drivers; they do not verify the M4's native
+Retina window, physical input, audio output or visual parity.
+
 2026-10-12 FTL decompression bounds: ReDMCSB `DECOMPDU.C`
 `F0455_FLOPPY_DecompressDungeon` establishes the MSB-first token grammar for
 the shared dungeon stream. The bounded reader now rejects truncated prefixes,

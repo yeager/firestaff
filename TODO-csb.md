@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-13 local startup matrix on the Mac mini M4 host, source commit
+`22bc77676`: the locally built binary passed authentic Atari STx, Amiga and FM
+Towns CLI/start-menu regressions (`csb_v1_atari_stx_native_cli_boot`,
+`csb_v1_amiga_native_cli_boot`, `csb_v1_fmtowns_native_cli_boot`). GitHub
+Actions run `38352901234` passed all jobs on Ubuntu, macOS and Windows. These
+local routes used SDL's dummy video/audio drivers; they do not verify the M4's
+native Retina window, physical input, audio output or visual parity.
+
 2026-10-12 shared FTL decoder bounds: the ReDMCSB `DECOMPDU.C` F0455 token
 reader now fails on truncated input instead of synthesizing zero bits after
 EOF. The malformed-stream regression and the authentic Amiga `DUNGEON.DAT`
