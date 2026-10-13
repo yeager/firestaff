@@ -10069,6 +10069,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 
     while (!quitRequested && !menuState.shouldExit &&
            (o->durationMs < 0 || (now - start) < duration)) {
+        const Uint32 loopStartMs = (Uint32)SDL_GetTicks();
         if (o->debug) ++perfLoopCount;
         M12_MenuInput input = M12_MENU_INPUT_NONE;
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
@@ -10561,7 +10562,18 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
         }
-        SDL_Delay((Uint32)interval);
+        /* `Present` may already wait for the next VBlank when VSync is on.
+         * Sleeping a full interval after that wait doubles the frame period
+         * (for example, 30 Hz on a 60 Hz display). Pace the whole loop instead:
+         * wait only for the portion of the target interval spent outside
+         * rendering and event handling. */
+        {
+            const Uint32 elapsedMs =
+                (Uint32)SDL_GetTicks() - loopStartMs;
+            if ((Uint64)elapsedMs < interval) {
+                SDL_Delay((Uint32)(interval - (Uint64)elapsedMs));
+            }
+        }
         now = SDL_GetTicks();
         if (o->debug) {
             const uint32_t tickDelta = m11_debug_game_tick_count(&gameView) -

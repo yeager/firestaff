@@ -1,6 +1,7 @@
-- 2026-10-13: On the Mac mini M4, the authentic FM Towns startup test
-  `dm2_v1_fmtowns_native_cli_boot` passed in 350.66 seconds with multiple DM2
-  editions installed. Bare `--game dm2` selected the FM Towns default, the
+- 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
+  startup test `dm2_v1_fmtowns_native_cli_boot` passed on the Mac mini M4 in
+  347.39 seconds with multiple DM2 editions installed. Bare `--game dm2`
+  selected the FM Towns default, the
   original title flow reached New Game, and a presented frame matched the
   original disc's `TITLE/0/4` RGB source. This headless check does not verify
   physical display output.

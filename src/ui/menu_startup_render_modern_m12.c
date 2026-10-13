@@ -324,6 +324,49 @@ static void draw_background(M12_ModernCanvas* c, const M12_StartupMenuState* sta
     }
 }
 
+/* The full host backdrop is a soft animated texture behind the controls. Its
+ * source animation is deliberately slower than the menu's input and card
+ * highlight updates. Keep one rendered backdrop for two menu frames so the
+ * 1920x1080 gradient, hall and veil do not consume a full CPU pass every
+ * 16 ms. The foreground still redraws and presents at the normal menu rate. */
+static void draw_background_cached(M12_ModernCanvas* c,
+                                   const M12_StartupMenuState* state) {
+    enum { BACKGROUND_REFRESH_FRAMES = 2 };
+    static unsigned char* cachedRgba;
+    static size_t cachedBytes;
+    static int cachedWidth;
+    static int cachedHeight;
+    static unsigned int cachedFrameBucket;
+    static int cacheValid;
+    const unsigned int frameTick = state ? state->frameTick : 0U;
+    const unsigned int frameBucket = frameTick / BACKGROUND_REFRESH_FRAMES;
+    const size_t byteCount = (size_t)c->w * (size_t)c->h * 4U;
+
+    if (byteCount == 0U) return;
+    if (!cachedRgba || cachedBytes != byteCount ||
+        cachedWidth != c->w || cachedHeight != c->h) {
+        unsigned char* replacement = (unsigned char*)realloc(cachedRgba,
+                                                              byteCount);
+        if (!replacement) {
+            cacheValid = 0;
+            draw_background(c, state);
+            return;
+        }
+        cachedRgba = replacement;
+        cachedBytes = byteCount;
+        cachedWidth = c->w;
+        cachedHeight = c->h;
+        cacheValid = 0;
+    }
+    if (!cacheValid || cachedFrameBucket != frameBucket) {
+        M12_ModernCanvas background = {cachedRgba, c->w, c->h};
+        draw_background(&background, state);
+        cachedFrameBucket = frameBucket;
+        cacheValid = 1;
+    }
+    memcpy(c->rgba, cachedRgba, cachedBytes);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Font: compact, high-contrast 5x7 UI face (A-Z, 0-9, punctuation).  A small */
 /* antialiased edge pass gives every start-menu view one calmer, less harsh    */
@@ -2834,7 +2877,7 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
                                  rgba, width, height);
         return;
     }
-    draw_background(&c, state);
+    draw_background_cached(&c, state);
 
     const char* footerLeft  = "UP DOWN MOVE    ENTER SELECT    ESC BACK";
 

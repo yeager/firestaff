@@ -1,6 +1,7 @@
-- 2026-10-13: On the Mac mini M4, the authentic FM Towns archive startup test
-  `dm1_v1_fmtowns_archive_cli_boot` passed in 240.89 seconds. It exercises
-  original-media CLI startup, title and entrance flow, menu selection, and
+- 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
+  test `dm1_v1_fmtowns_archive_cli_boot` passed on the Mac mini M4 in 240.77
+  seconds. It exercises original-media CLI startup, title and entrance flow,
+  menu selection, and
   movement assertions; this headless CTest result does not verify physical
   display output.
 

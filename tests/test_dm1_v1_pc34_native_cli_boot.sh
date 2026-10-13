@@ -911,11 +911,14 @@ PY
 # desktop/GPU frame rate.
 perf_home="$test_scratch/dm1-perf-home-$$"
 mkdir -p "$perf_home"
+# The debug test build can spend several seconds opening the original archive
+# and materializing the first runtime state before the profiling window starts.
+# Keep a full sample window after that setup so telemetry remains deterministic.
 perf_output=$(HOME="$perf_home" XDG_CONFIG_HOME="$perf_home" \
     APPDATA="$perf_home" FIRESTAFF_CONFIG_PATH="$perf_home/config.toml" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform pc --data-dir "$archive" --debug-full-redraw \
-    --duration 6000 \
+    --duration 30000 \
     2>&1) || {
         printf '%s\n' "$perf_output" >&2
         exit 1

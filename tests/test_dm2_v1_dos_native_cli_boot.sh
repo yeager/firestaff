@@ -157,8 +157,8 @@ FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game dm2 --platform pc \
     --data-dir "$archive" \
-    --script 'key:enter,key:enter,key:enter,wait:1000,key:enter,key:enter' \
-    --duration 30000 >/dev/null 2>&1
+    --script 'key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter' \
+    --duration 50000 >/dev/null 2>&1
 python3 - "$runtime_probe" "$runtime_capture" <<'PY'
 import json
 from pathlib import Path
@@ -212,8 +212,8 @@ HOME="$auto_home" XDG_CONFIG_HOME="$auto_home" APPDATA="$auto_home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game dm2 \
     --data-dir "$auto_home/data" \
-    --script 'key:enter,key:enter,key:enter,wait:1000,key:enter,key:enter' \
-    --duration 30000 >/dev/null 2>&1
+    --script 'key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter' \
+    --duration 50000 >/dev/null 2>&1
 python3 - "$auto_runtime_probe" "$auto_runtime_capture" <<'PY'
 import json
 from pathlib import Path

@@ -1,6 +1,7 @@
-- 2026-10-13: On the Mac mini M4, `csb_v1_fmtowns_native_cli_boot` passed in
-  114.79 seconds against the authentic FM Towns archive. This headless test
-  covers original-media startup, menu, audio routing, and game-start
+- 2026-10-13: After the shared M11 frame-pacing change, the Mac mini M4 passed
+  `csb_v1_fmtowns_native_cli_boot` in 114.55 seconds against authentic FM
+  Towns media. This headless test covers original-media startup, menu, audio
+  routing, and game-start
   assertions; it does not verify physical display output or audible speakers.
 
 - 2026-10-11: Rebuilt the current macOS source and passed

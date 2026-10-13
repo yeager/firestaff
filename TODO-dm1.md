@@ -167,13 +167,16 @@ native window-close or physical-input behavior.
   The M4 trace proves frame timing and source selection only; do not treat it
   as palette or HiDPI proof.
 
-- Profile the M12 menu's idle CPU cost on M4 and improve it without losing its
-  animation or input response. A two-second native process sample of the
-  v3.0.380 menu measured 44.8–47.1% of one CPU core; 71% of sampled call stacks
-  were inside `M12_ModernMenu_Render`. The menu renderer source is unchanged
-  between v3.0.380 and current `main`. The runtime debug report still cannot
-  provide GPU utilization, so record host CPU and rendered menu cadence
-  separately from GPU load.
+- Continue reducing M12 idle CPU cost if it can be done without losing frame
+  rate, animation or input response. The shared loop now counts the whole
+  16 ms frame period, including VSync present, and the 1920x1080 backdrop is
+  cached for alternating frames while controls continue to animate. On 2026-10-13
+  the Mac mini M4 native Cocoa run measured 59.5–59.7 frames/sec at a 62.5
+  target and 72.6% of one core in the debug process; its window/drawable were
+  1900x998. HiDPI behavior still needs a Retina display. The same build on SDL's
+  dummy driver measured 58.2–58.3 frames/sec at 65% of one core. A prior native
+  v3.0.380 sample measured 44.8–47.1% of one core but did not measure cadence.
+  GPU utilization is not available through this report.
 
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
   set as one source-locked pass: presented-frame evidence for object-bearing

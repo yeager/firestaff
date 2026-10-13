@@ -1,5 +1,29 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-13: Fixed the shared M11 loop pacing so VSync presentation counts
+  toward the 16 ms frame period instead of being followed by a second full
+  delay. Cached the M12 1920x1080 decorative backdrop for alternating menu
+  frames while redrawing controls and selection animation each frame. On the
+  Mac mini M4 with SDL's dummy video driver and original media installed, the
+  debug run increased from 29.8 to 58.2–58.3 menu frames per second against a
+  62.5 target; reported process CPU rose from 43% to 65% of one core as the
+  renderer produced nearly twice as many frames. A native Cocoa run on the
+  M4 then held 59.5–59.7 frames per second at the same target, with 72.6% of
+  one core reported for the debug process and a 1900x998 window/drawable. The
+  native result verifies VSync pacing on that display; it does not establish
+  HiDPI behavior. GPU load is unavailable in this report. Authentic FM Towns
+  CLI/menu tests passed for DM1, CSB and DM2 after the change.
+
+- 2026-10-13: Revalidated normal original-media startup after the frame-pacing
+  change: DM1 PC 3.4 and FM Towns; CSB Amiga 3.1 and FM Towns; DM2 DOS, Mac,
+  Amiga and FM Towns. The DM2 DOS menu test now waits 1,800 host frames and
+  allows 50 seconds for its MVE intro before sending New Game input; the old
+  1,000-frame wait sent keys before the menu appeared at the corrected loop
+  rate. The DM1 PC-34 full-redraw telemetry check now leaves enough time for
+  the runtime handoff and a complete five-second performance sample. Direct
+  `--game` exit passed for DM1, CSB and DM2. Mouse-driven return to M12 passed
+  for all three, and each rescan reported availability for all five games.
+
 - 2026-10-13: Replaced the M12 bitmap-font placeholders for Swedish Ä, Å and Ö
   with distinct uppercase and lowercase glyphs. The Unicode regression checks
   the glyph shapes and translated startup labels; it passes, and a fresh M12
