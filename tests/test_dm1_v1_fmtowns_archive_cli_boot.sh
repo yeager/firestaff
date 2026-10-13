@@ -96,7 +96,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # unreachable. The dummy display's bounded headless Entrance input is the
 # test-only path used after the authentic title sequence.
 expect_menu_runtime() {
-    local language=$1 probe_root probe_file
+    local language=$1 probe_root probe_file trace_file
     local -a edition_args=(--width 1920 --height 1080 --menu --game dm1
                           --platform fm-towns)
     if [[ $language == ja ]]; then
@@ -105,18 +105,25 @@ expect_menu_runtime() {
     probe_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
     mkdir -p "$probe_root"
     probe_file="$probe_root/dm1-fmtowns-menu-runtime-$language-$$.json"
+    trace_file="$probe_root/dm1-fmtowns-menu-runtime-$language-$$.log"
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe_file" \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
         "${edition_args[@]}" --data-dir "$archive" \
         --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
-        --duration 10000 >/dev/null 2>&1
-    python3 - "$probe_file" <<'PY'
+        --duration 10000 >"$trace_file" 2>&1 || {
+            cat "$trace_file" >&2
+            return 1
+        }
+    python3 - "$probe_file" "$trace_file" <<'PY'
 import json
+import re
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
+with open(sys.argv[2], encoding="utf-8") as trace_file:
+    trace = trace_file.read().splitlines()
 startup = probe["startup"]
 party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
@@ -128,9 +135,37 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(f"FAIL: authentic DM1 FM Towns M12 {sys.argv[1]} did not reach its first runtime frame: {probe}")
+
+title_frames = [line for line in trace if
+                "startup-source-frame game=dm1 platform=fm-towns phase=title " in line]
+door_frames = [line for line in trace if
+               "startup-source-frame game=dm1 platform=fm-towns phase=entrance-door " in line]
+if len(title_frames) != 20 or len(door_frames) != 31:
+    raise SystemExit(f"FAIL: expected all source title/door frames; got {len(title_frames)} title and {len(door_frames)} door frames")
+if ("frame=0/20 palette=PRESENTS" not in title_frames[0] or
+        "frame=19/20 palette=MASTER" not in title_frames[-1] or
+        any("palette=DUNGEON+MASTER" not in line for line in title_frames[1:-1])):
+    raise SystemExit("FAIL: FM Towns DM1 title palette phases are missing or reordered")
+complete = next((line for line in trace if
+                 "startup-source-complete game=dm1 platform=fm-towns phase=title " in line), None)
+if complete is None:
+    raise SystemExit("FAIL: FM Towns DM1 title did not emit its completion timing")
+timing = re.search(r"frames=(\d+) source-vblanks=(\d+) master-hold-ms=(\d+) elapsed-ms=(\d+)$", complete)
+if not timing or tuple(map(int, timing.groups()))[:3] != (20, 21, 1200) or not 1300 <= int(timing.group(4)) <= 5000:
+    raise SystemExit(f"FAIL: FM Towns DM1 title pacing/hold is out of bounds: {complete}")
+door_intervals = []
+for line in door_frames[1:]:
+    match = re.search(r"frame=\d+/31 interval-ms=(\d+) wait-ms=\d+$", line)
+    if not match:
+        raise SystemExit(f"FAIL: missing FM Towns entrance frame timing: {line}")
+    door_intervals.append(int(match.group(1)))
+if any(interval < 5 or interval > 100 for interval in door_intervals):
+    raise SystemExit(f"FAIL: FM Towns entrance frame cadence is outside 5-100 ms: {door_intervals}")
 print("PASS: authentic DM1 FM Towns M12 reached the first runtime frame")
+print("PASS: authentic DM1 FM Towns title palette, 60 Hz pacing, master hold, and entrance cadence")
 PY
     rm -f "$probe_file"
+    rm -f "$trace_file"
 }
 expect_menu_runtime en
 expect_menu_runtime ja
