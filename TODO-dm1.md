@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-10-14 Mac mini M4 HiDPI input regression: the current build passed
+`m11_display_aspect_present_rect` and
+`dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat`. These checks exercise
+Retina 2x and mixed logical/drawable dimensions, scaled presentation edges,
+and the DM1 Entrance command hit regions against drawable-space input. They
+verify the coordinate transform and source hit gate with controlled geometry;
+the Mac mini's live drawable is not 2x, so physical Retina input remains open.
+
 2026-10-14 native Apple M4 profiling with the authenticated Amiga v2.0
 `DMGAMEG.DAT` save measured two ordinary gameplay windows and two forced
 full-redraw windows. Without `--debug-full-redraw`, the main loop ran at
