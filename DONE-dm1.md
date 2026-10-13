@@ -1,3 +1,16 @@
+- 2026-10-13: Closed a PC 3.4 startup-media mismatch in the M12 catalogue.
+  The launcher previously admitted original GRAPHICS.DAT and DUNGEON.DAT as
+  a playable PC release even when its required SWSH intro file was absent;
+  M11 then rejected the launch later. ReDMCSB `APPA.C:51-68` loads SWOOSH
+  before TITLE. The scanner now exposes PC 3.4 English and Multilanguage only
+  when the authentic SWOOSH hash is found in the same media tree. A negative
+  case derived from the retail ZIP removes only SWOOSH and confirms that PC
+  3.4 is not matched and direct launch is refused before runtime. The complete
+  original-media `dm1_v1_pc34_native_cli_boot` regression passes, including
+  loose/default-root startup, M12 launch, all 23 C001 title steps, Entrance,
+  Hall recruitment and the native input matrix. No altered or synthetic media
+  was used as positive startup evidence.
+
 - 2026-10-13: Re-ran the authentic French Atari ST 1.3
   `dm1_v1_atari_st_fr_archive_cli_boot` CTest four times (65.26, 65.23,
   65.18 and 65.19 seconds). All four passed through direct CLI boot, explicit

@@ -263,19 +263,24 @@ if HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
    --game dm1 --platform pc --data-dir "$runtime_data_root" \
-   --boot-probe --boot-probe-frames 120 --duration 0 \
+   --debug --verbose --boot-probe --boot-probe-frames 120 --duration 0 \
    >"$missing_swsh_output_file" 2>&1; then
     cat "$missing_swsh_output_file" >&2
     echo "FAIL: DM1 reported a successful runtime handoff without the required SWSH asset" >&2
     exit 1
 fi
 if grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' "$missing_swsh_output_file" ||
-   ! grep -Fq 'direct launch failed for --game dm1' "$missing_swsh_output_file"; then
+   { ! grep -Fq 'game unavailable for --game: dm1' "$missing_swsh_output_file" &&
+     ! grep -Fq 'direct launch failed for --game dm1' "$missing_swsh_output_file"; } ||
+   ! grep -Fq 'dm1 platform=PC edition=pc34-en not matched' \
+       "$missing_swsh_output_file" ||
+   grep -Fq 'dm1 platform=PC edition=pc34-en matched source=' \
+       "$missing_swsh_output_file"; then
     cat "$missing_swsh_output_file" >&2
-    echo "FAIL: missing SWSH did not stop DM1 before its runtime receipt" >&2
+    echo "FAIL: missing SWSH did not remove PC 3.4 from startup matching before runtime" >&2
     exit 1
 fi
-echo "PASS: DM1 rejects the PC34 launch when its source SWSH prelude is missing"
+echo "PASS: DM1 hides PC 3.4 and rejects the launch when its source SWSH prelude is missing"
 python3 - "$missing_swsh_root" <<'PY'
 from pathlib import Path
 import shutil
