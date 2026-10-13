@@ -2148,6 +2148,30 @@ static double m11_counter_milliseconds(Uint64 ticks) {
     return frequency ? (double)ticks * 1000.0 / (double)frequency : 0.0;
 }
 
+static void m11_reset_debug_perf_window(Uint64* windowStart,
+                                        Uint64* lastLoopEnd,
+                                        Uint64* loopCount,
+                                        Uint64* overBudgetLoops,
+                                        Uint64* gameTickCount,
+                                        Uint64* presentedCount,
+                                        double* renderTotalMs,
+                                        double* renderMaxMs,
+                                        double* loopMaxMs,
+                                        double* cpuWindowStart,
+                                        int* cpuAvailable) {
+    const Uint64 now = SDL_GetPerformanceCounter();
+    *windowStart = now;
+    *lastLoopEnd = now;
+    *loopCount = 0;
+    *overBudgetLoops = 0;
+    *gameTickCount = 0;
+    *presentedCount = 0;
+    *renderTotalMs = 0.0;
+    *renderMaxMs = 0.0;
+    *loopMaxMs = 0.0;
+    *cpuAvailable = m11_process_cpu_seconds(cpuWindowStart);
+}
+
 static uint32_t m11_debug_game_tick_count(const M11_GameViewState* gameView) {
     if (!gameView) return 0U;
     switch (gameView->sourceKind) {
@@ -10437,6 +10461,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         &menuState, &gameView, "menu");
                     m11_debug_trace_startup_frame(
                         &debugStartupTrace, &gameView, o->gameId);
+                    /* Startup and Entrance can run synchronously inside the
+                     * menu loop. Exclude that time from active-loop metrics. */
+                    m11_reset_debug_perf_window(
+                        &perfWindowStart, &perfLastLoopEnd,
+                        &perfLoopCount, &perfOverBudgetLoops,
+                        &perfGameTickCount, &perfPresentedCount,
+                        &perfRenderTotalMs, &perfRenderMaxMs,
+                        &perfLoopMaxMs, &perfCpuWindowStart,
+                        &perfCpuAvailable);
                 }
                 if (gameView.active) {
                     gameFrameNeedsPresent = 1;
@@ -10663,6 +10696,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                 &menuState, &gameView, "menu");
                             m11_debug_trace_startup_frame(
                                 &debugStartupTrace, &gameView, o->gameId);
+                            /* Startup and Entrance can run synchronously
+                             * inside the menu loop. Exclude that time from
+                             * active-loop metrics. */
+                            m11_reset_debug_perf_window(
+                                &perfWindowStart, &perfLastLoopEnd,
+                                &perfLoopCount, &perfOverBudgetLoops,
+                                &perfGameTickCount, &perfPresentedCount,
+                                &perfRenderTotalMs, &perfRenderMaxMs,
+                                &perfLoopMaxMs, &perfCpuWindowStart,
+                                &perfCpuAvailable);
                         }
                         if (gameView.active) {
                             gameFrameNeedsPresent = 1;

@@ -1,5 +1,23 @@
 # Firestaff TODO — DM1
 
+2026-10-14 native Apple M4 profiling with the authenticated Amiga v2.0
+`DMGAMEG.DAT` save measured two ordinary gameplay windows and two forced
+full-redraw windows. Without `--debug-full-redraw`, the main loop ran at
+56.5–57.2 loops/s against its 62.5 target, while source-tick gameplay
+rendering was 4.99–5.00 frames/s at about five game ticks/s. Process CPU was
+12.4–13.6% of one core; frame compose/present averaged 21.12–23.57 ms and
+peaked at 28.41–28.74 ms. With `--debug-full-redraw`, the renderer sustained
+61.03–61.11 presented frames/s, 61.0–61.1 loops/s, zero over-budget loops,
+and 16.28 ms average compose/present at 102% of one core. GPU utilization is
+unavailable from the current SDL diagnostics. The Cocoa window and drawable
+were both 1900x998, so this run does not verify a Retina 2x drawable. The
+authentic Hall of Champions startup route then produced three stable full-
+redraw windows at 60.23–60.29 frames/s and 64.9–65.2% of one core. Its first
+window included synchronous startup and Entrance time, falsely reporting a
+multi-second main-loop stall. Debug performance windows now reset after a
+successful menu launch so active-game timings exclude that synchronous work.
+The native mouse-driven Hall interaction remains unverified.
+
 2026-10-13 current `c880f066a` M4 retest: the authentic Amiga v2.0 English
 ZIP -> ZIP -> ADF CLI/menu route passed, including save resume, all 18 ordered
 F0437 zoom presents, five palette fades, the 50 Hz source deadlines, all 31
@@ -138,11 +156,9 @@ frame composition and presentation capacity. Source timing
 and host rendering must be compared separately: ReDMCSB `GAMELOOP.C`
 `F0002_MAIN_GameLoop_CPSDF` and `VBLANK.C`
 `F0577_VerticalBlank_Handler_CPSDF` show the original input/VBlank-driven
-loop. The changed C file compiles and the regression script passes shell
-syntax; a full build and authentic runtime test remain pending because trv2 is
-not resolvable from this host and its macOS linker cannot link against the
-installed 27.0 SDK. A native MacBook M5 performance sample is still needed to
-assess the reported HoC lag; GPU percentage requires platform tooling.
+loop. GPU percentage requires platform tooling. A full build remains pending
+because trv2 is not resolvable from this host and its macOS linker cannot link
+against the installed 27.0 SDK.
 
 2026-10-12 v3.0.379 startup regression retest: the released macOS arm64
 binary passed authenticated return-to-menu and all-five-game rescan checks
