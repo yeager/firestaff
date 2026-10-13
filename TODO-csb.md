@@ -111,6 +111,13 @@ has no legal/documented PACK decoder and remains unsupported.
   [Greaseweazle Unlicense](https://github.com/keirf/greaseweazle/blob/master/COPYING),
   [official SPS Decoder Library listing](https://kryoflux.com/?page=download),
   and [IPF v1.6 documentation](https://www.kryoflux.com/download/ipf_documentation_v1.6.pdf).
+  A 2026-10-13 review of the public-domain `disk-utilities` README confirmed
+  that its `disk-analyse` CTRaw reader must be built with `caps=y` and CAPS v5.
+  This confirms a possible development-time oracle exists only when that
+  external library is available; it does not provide a standalone PACK codec
+  for Firestaff. Neither `disk-analyse` nor a CAPS image library was found in
+  the current development environment. Do not add that dependency to the
+  Firestaff runtime. See the [disk-utilities build requirements](https://github.com/keirf/disk-utilities#ipf--ct-raw-support-the-capssps-ipf-support-library).
   Any decoder acceptance run must compare reconstructed files against the
   existing original-media hashes in `data/asset_validator_checksums_m12.json`
   and `parity-evidence/csb_v1_l10n_source_catalog.md`.
