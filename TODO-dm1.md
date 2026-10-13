@@ -10,6 +10,13 @@ run `38352901234` passed all jobs on Ubuntu, macOS and Windows. These local
 routes used SDL's dummy video/audio drivers; they do not verify the M4's native
 Retina window, physical input, audio output or visual parity.
 
+2026-10-13 extended original-media archive matrix on the Mac mini M4, source
+commit `458bf820e`: six CTest routes passed: PC 3.4 direct and nested ZIP
+layouts, Atari ST 1.1/1.0b/1.0a preservation archives, and Amiga v2.0. Both
+PC 3.4 routes exercised the long native-menu/input and presentation contract;
+the Atari and Amiga routes reached their first runtime handoffs. All used SDL
+dummy video/audio and do not establish native-window parity or audible output.
+
 2026-10-12 FTL decompression bounds: ReDMCSB `DECOMPDU.C`
 `F0455_FLOPPY_DecompressDungeon` establishes the MSB-first token grammar for
 the shared dungeon stream. The bounded reader now rejects truncated prefixes,

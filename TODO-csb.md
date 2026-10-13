@@ -8,6 +8,14 @@ Actions run `38352901234` passed all jobs on Ubuntu, macOS and Windows. These
 local routes used SDL's dummy video/audio drivers; they do not verify the M4's
 native Retina window, physical input, audio output or visual parity.
 
+2026-10-13 extended original-media archive matrix on the Mac mini M4, source
+commit `458bf820e`: the Atari nested ZIP, original Atari archive, and Amiga ADF
+CLI/start-menu tests passed. The French Atari preservation ZIP test was skipped
+because `chaos_strikes_back_ftl_france.zip` is not present in the CSB data
+directory; the available original Atari archive contains English v2.0/v2.1
+game and utility disks only. Do not replace the missing French source with
+synthetic media. These headless runs do not verify native display or audio.
+
 2026-10-12 shared FTL decoder bounds: the ReDMCSB `DECOMPDU.C` F0455 token
 reader now fails on truncated input instead of synthesizing zero bits after
 EOF. The malformed-stream regression and the authentic Amiga `DUNGEON.DAT`
