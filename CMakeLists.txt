@@ -18133,10 +18133,18 @@ endif()
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
     )
+    set(_csb_v1_fmtowns_ja_test_environment
+        "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0")
+    set(_csb_v1_fmtowns_ja_user_save
+        "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/fmtowns-save-corpus/CSBGAME-JP.DAT")
+    if(EXISTS "${_csb_v1_fmtowns_ja_user_save}")
+        list(APPEND _csb_v1_fmtowns_ja_test_environment
+            "FIRESTAFF_CSB_FMTOWNS_USER_SAVE=${_csb_v1_fmtowns_ja_user_save}")
+    endif()
     set_tests_properties(csb_v1_fmtowns_ja_native_cli_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;japanese;startup;cli;menu;real_data;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        ENVIRONMENT "${_csb_v1_fmtowns_ja_test_environment}"
         TIMEOUT 300
     )
     add_test(

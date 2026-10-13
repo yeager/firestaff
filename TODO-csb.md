@@ -361,7 +361,10 @@ Amiga and FM Towns media paths continue to be improved from the supplied
 original packages. The external FM Towns corpus contains an authenticated,
 language-matched F31J `CSBGAME-JP.DAT`, which passes the full native reader and
 now restores into M11 through both direct CLI launch and M12 Quick Resume.
-The authentic-media FM Towns regression passes with that corpus supplied.
+The authentic-media FM Towns regression passes with that corpus supplied and
+asserts the restored map, party pose, direction and champion count in both
+direct launch and the live M12-to-M11 runtime route. The local CTest registers
+the corpus automatically when the authenticated save is present.
 Its English `CSBGAME.DAT` candidate is incoherent and remains rejected. The
 Atari ST preservation archive does include
 `Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa`, but that

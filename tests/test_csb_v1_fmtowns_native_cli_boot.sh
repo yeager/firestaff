@@ -318,7 +318,9 @@ if [ -n "$user_save" ]; then
         --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
         --save "$user_save" --boot-probe --boot-probe-expect-phase inactive \
         --boot-probe-expect-runtime --boot-probe-expect-startup-active 0 \
-        --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
+        --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 0 \
+        --boot-probe-expect-party 13,13,1 --boot-probe-expect-champions 4 \
+        --duration 0 2>&1)" || {
         printf '%s\n' "$resume_output" >&2
         exit 1
     }
@@ -498,10 +500,12 @@ PY
 echo "PASS: CSB FM Towns $language M12 FIT route maps the original C004 Enter button in a 1920x1080 window"
 
 if [ -n "$user_save" ]; then
-    menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    menu_resume_probe="$isolated_home/menu-resume-runtime.json"
+    menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_resume_probe" \
         SDL_VIDEODRIVER=dummy run_firestaff \
         --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
-        --save "$user_save" --script enter,enter,enter --duration 1000 2>&1)" || {
+        --save "$user_save" --script enter,enter,enter --duration 3000 2>&1)" || {
         printf '%s\n' "$menu_resume_output" >&2
         exit 1
     }
@@ -519,7 +523,29 @@ if [ -n "$user_save" ]; then
             exit 1
             ;;
     esac
-    echo "PASS: native CSB FM Towns start menu resumes the selected F0435 save"
+    python3 - "$menu_resume_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    probe = json.load(stream)
+startup = probe.get("startup", {})
+party = probe.get("party", {})
+actual = (
+    probe.get("launchedEver"), probe.get("sourceId"),
+    startup.get("phase"), startup.get("startupActive"),
+    startup.get("levelLoaded"), party.get("mapIndex"),
+    party.get("mapX"), party.get("mapY"), party.get("direction"),
+    party.get("championCount"),
+)
+expected = (1, "csb", "inactive", 0, 1, 0, 13, 13, 1, 4)
+if actual != expected:
+    raise SystemExit(
+        f"FAIL: CSB FM Towns start-menu resume runtime state {actual!r}; "
+        f"expected {expected!r}"
+    )
+PY
+    echo "PASS: CSB FM Towns start menu resumes the selected F0435 save into its authenticated party state"
 fi
 
 if [ -n "$media_hash_before" ] && [ "$media_hash_before" != "$(firestaff_sha256_file "$data_dir")" ]; then
