@@ -61,6 +61,16 @@ Reviewed 2026-08-29. Only open work is listed here.
   bootstrap. Keep the chain disabled pending the transitive RNG trace, exact
   bootstrap selector state, and an original-data timer receipt.
 
+  2026-10-13 New Game event trace: `SKW5_STARTUP_THREAD_MAIN_LOOP_01` calls
+  `randdat.init()` before `SKW5_INIT`; the title-menu loop then returns from
+  `DM2_SHOW_MENU_SCREEN` to `DM2_GAME_LOAD` (`sk5start.cpp:106, 235-241`). The
+  New Game and New Game-with-option UI events (215/216) only set
+  `glbSpecialScreen` (and, for 216, `savegamew1`) in `DM2_HANDLE_UI_EVENT`
+  (`uiinput.cpp:504-513`); these branches do not draw RNG. This closes the
+  event action itself, but not every transitive helper reached during startup
+  before the menu. Do not infer a zero RNG state at weather bootstrap from the
+  initial `randdat.init()` alone.
+
   The real-media GDAT/dungeon reader also confirms that map 0 uses GRAPHICSSET
   2 and GDAT `(8,2,11,0x66)` resolves weather zone 2 in both the installed DOS
   and FM Towns editions. This verifies the authored map-0 zone value, not that
