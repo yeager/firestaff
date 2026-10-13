@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-13 current `c880f066a` real-media retest on the Mac mini M4:
+`test_csb_v1_fmtowns_native_cli_boot.sh` passed the authentic FM Towns ZIP
+CLI/title route, English M12 launch, and original MINI.DAT party handoff. The
+closed Entrance checks passed for C28 and V20/V21; the 1920x1080 FIT route
+also mapped the original C004 Enter button. The scripted tests use SDL dummy
+video/audio, so they do not verify native display parity, physical input or
+audible playback.
+
 2026-10-13 current-main retest on the Mac mini M4, source commit `e7119f2ed`:
 authentic Atari STx, Amiga and FM Towns CLI/start-menu regressions all passed
 (`csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_native_cli_boot`,

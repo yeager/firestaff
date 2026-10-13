@@ -1,5 +1,15 @@
 # Firestaff TODO — DM2
 
+2026-10-13 current `c880f066a` real-media retest on the Mac mini M4:
+`test_dm2_v1_fmtowns_native_cli_boot.sh` passed the bare CLI default, saved-PC
+preference override, automatic `~/.firestaff/data/dm2` discovery, mixed DOS /
+Amiga / Macintosh / FM Towns M12 selection, New Game and first-champion
+normal-loop handoff. The original FM Towns menu title matched its
+`TITLE/0/4` source RGB digest `367b54aa92b46d6e`. Its 320x200 runtime capture
+contained 28,587 non-black pixels, including 2,841 right-panel and 25,746
+dungeon pixels. The scripted routes use SDL dummy video/audio; they do not
+verify native display parity, physical input or audible playback.
+
 2026-10-13 current-main retest on the Mac mini M4, source commit `e7119f2ed`:
 authentic DOS English, DOS French, Macintosh, Amiga and FM Towns
 CLI/start-menu regressions all passed (`dm2_v1_dos_native_cli_boot`,
