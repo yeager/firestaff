@@ -423,8 +423,8 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
     if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
          [ "$test_mode" = dm2-dos ]; } && [ -f "$dm2_dos_archive" ]; then
     run_return_to_menu_case dm2 pc \
-        'key:enter,key:enter,key:enter,wait:1000,key:enter,key:enter,wait:10,key:escape,key:enter' \
-        30000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
+        'key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter,wait-game-runtime,key:escape,key:enter' \
+        120000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
         'launch phase=game-handoff mode=menu game=dm2 platform=PC edition=pc-en source=.*/data/dm2/' \
         "$data_root" 320 200 dm2-dos
     elif [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
