@@ -11,6 +11,14 @@ peaked at 28.41–28.74 ms. With `--debug-full-redraw`, the renderer sustained
 and 16.28 ms average compose/present at 102% of one core. GPU utilization is
 unavailable from the current SDL diagnostics. The Cocoa window and drawable
 were both 1900x998, so this run does not verify a Retina 2x drawable. The
+ordinary-mode cadence matches ReDMCSB `GAMELOOP.C`
+`F0002_MAIN_GameLoop_CPSDF`, which draws the dungeon once per game-loop turn
+and waits for input across up to 10 VBlanks; `VBLANK.C`
+`F0577_VerticalBlank_Handler_CPSDF` advances that counter at display refresh.
+Thus the five rendered frames per second follow the original Amiga loop's
+cadence, while `--debug-full-redraw` measures host presentation capacity rather
+than the game's intended update cadence. This does not by itself rule out
+delayed input or animation regressions. The
 authentic Hall of Champions startup route then produced three stable full-
 redraw windows at 60.23–60.29 frames/s and 64.9–65.2% of one core. Its first
 window included synchronous startup and Entrance time, falsely reporting a
