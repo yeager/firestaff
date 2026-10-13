@@ -51,9 +51,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   inspected `DM2_SHOW_MENU_SCREEN`, `DM2_DRAW_TITLE_MENU_SCREEN`, and
   `DM2_EVENT_LOOP` bodies also contain no direct `DM2_RAND*` calls. This does
   not prove the transitive pre-menu initialization/event-dispatch path has no
-  draws, nor that the fresh active map's `v1d6c02` has been loaded before the
-  weather call. Keep the chain disabled pending those two source bindings and
-  an original-data timer receipt.
+  draws. Source order now proves that the fresh active map's `v1d6c02` has not
+  been assigned by `DM2_LOAD_LOCALLEVEL_DYN` at the weather call: the
+  `DM2_READ_DUNGEON_STRUCTURE` weather bootstrap precedes
+  `DM2_LOAD_NEW_DUNGEON` returning, while `DM2_LOAD_NEWMAP` and its local-level
+  graphics/dynamic load occur later in the normal-loop route
+  (`sksvgame.cpp:543-546, 616-634`; `startend.cpp:856-857, 1272`). The original
+  map-0 GDAT weather zone is therefore not evidence for the selector value at
+  bootstrap. Keep the chain disabled pending the transitive RNG trace, exact
+  bootstrap selector state, and an original-data timer receipt.
 
   The real-media GDAT/dungeon reader also confirms that map 0 uses GRAPHICSSET
   2 and GDAT `(8,2,11,0x66)` resolves weather zone 2 in both the installed DOS
