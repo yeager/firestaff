@@ -1,5 +1,12 @@
 # Firestaff TODO — CSB
 
+2026-10-13 current-main retest on the Mac mini M4, source commit `e7119f2ed`:
+authentic Atari STx, Amiga and FM Towns CLI/start-menu regressions all passed
+(`csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_native_cli_boot`,
+`csb_v1_fmtowns_native_cli_boot`). The tests use SDL dummy video/audio drivers;
+they establish the tested startup/handoff routes, not native-window parity,
+physical input or audible output.
+
 2026-10-13 local startup matrix on the Mac mini M4 host, source commit
 `22bc77676`: the locally built binary passed authentic Atari STx, Amiga and FM
 Towns CLI/start-menu regressions (`csb_v1_atari_stx_native_cli_boot`,

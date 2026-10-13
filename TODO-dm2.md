@@ -1,5 +1,13 @@
 # Firestaff TODO — DM2
 
+2026-10-13 current-main retest on the Mac mini M4, source commit `e7119f2ed`:
+authentic DOS English, DOS French, Macintosh, Amiga and FM Towns
+CLI/start-menu regressions all passed (`dm2_v1_dos_native_cli_boot`,
+`dm2_v1_dos_fr_native_cli_boot`, `dm2_v1_mac_native_cli_boot`,
+`dm2_v1_amiga_native_cli_boot`, `dm2_v1_fmtowns_native_cli_boot`). These use
+SDL dummy video/audio drivers and do not verify native-window parity,
+physical input or audible output.
+
 2026-10-13 local startup matrix on the Mac mini M4 host, source commit
 `22bc77676`: the locally built binary passed authentic DOS English, DOS French,
 Macintosh, Amiga and FM Towns CLI/start-menu regressions

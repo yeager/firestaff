@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+2026-10-13 current-main retest on the Mac mini M4, source commit `e7119f2ed`:
+the authentic PC 3.4 CLI/start-menu regression passed. In addition, a native
+Cocoa run using the original English FM Towns archive presented the title
+zoom through frame 10/20 with the corrected `DUNGEON+MASTER` palette; the
+native window/drawable were 1900x998. This single captured frame confirms the
+current palette presentation, not HiDPI scaling or complete physical-display
+parity. SDL-dummy startup routes do not verify physical input or audible
+output.
+
 2026-10-13 local startup matrix on the Mac mini M4 host, source commit
 `22bc77676`: the locally built binary passed authentic DOS English, Atari ST
 v1.2, Amiga HD and FM Towns CLI/start-menu regressions
