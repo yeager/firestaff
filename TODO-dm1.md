@@ -1,5 +1,25 @@
 # Firestaff TODO — DM1
 
+2026-10-13 native Mac mini M4 Amiga title correction: ReDMCSB `TITLE.C`
+`F0437` fades the base palette to PRESENTS, then transitions directly to the
+zoom palette while retaining the existing screen pixels. Firestaff had faded
+back to the base palette and cleared PRESENTS before zooming; both extra steps
+are removed. The authenticated Amiga v2.0 M12 CLI/menu CTest passes and now
+requires exactly three source-phase palette fades. A Cocoa direct launch with
+the same original archive reported the 18-frame title at 484 ms zoom, 500 ms
+hold, 218 ms final fade and 1,632 ms total, with `palette-fades=3`, then reached
+runtime. The renderer reported a native 1920x1018 drawable at 4x game scale.
+This verifies the M4 Cocoa startup timing and handoff; it does not establish
+frame-by-frame visual parity.
+
+2026-10-13 pre-correction Amiga A20 F0437 timing baseline on the Mac mini M4,
+source commit `678a2d1e8`: `--debug` reported elapsed time for the 18-step
+zoom, source `Delay(25L)` hold, final palette fade and complete title phase.
+With the authentic Amiga v2.0 archive, the headless M12-to-runtime test
+measured 552 ms, 500 ms, 237 ms and 1,943 ms respectively. Those waits were
+present, but the native M4 run later exposed the extra palette transition and
+screen clear corrected above.
+
 2026-10-13 current-main retest on the Mac mini M4, source commit `e7119f2ed`:
 the authentic PC 3.4 CLI/start-menu regression passed. In addition, a native
 Cocoa run using the original English FM Towns archive presented the title

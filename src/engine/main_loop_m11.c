@@ -3535,6 +3535,7 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     Uint64 holdElapsedMs = 0u;
     Uint64 finalFadeStartedMs = 0u;
     Uint64 finalFadeElapsedMs = 0u;
+    unsigned int paletteFadeCount = 0u;
     int completed = 0;
 
     if (!menuState || !entry || !entry->gameId ||
@@ -3607,21 +3608,17 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
             activePalette, receipt.presents_palette, framebuffer)) {
         goto cleanup;
     }
+    ++paletteFadeCount;
     memcpy(activePalette, receipt.presents_palette, sizeof(activePalette));
-    if (!m11_dm1_amiga_fade_title_palette(
-            activePalette, receipt.initial_palette, framebuffer)) {
-        goto cleanup;
-    }
-    memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
-    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
-                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
-        goto cleanup;
-    }
+    /* ReDMCSB TITLE.C F0437:131-132 fades the base palette to the white
+     * PRESENTS palette, then lines 190-199 sets the zoom palette directly.
+     * Lines 128-129 leave PRESENTS on screen for the zoom blits at 220-226;
+     * keep those pixels and do not fade back to the base palette. */
     if (!m11_dm1_amiga_fade_title_palette(
             activePalette, receipt.zoom_palette, framebuffer)) {
         goto cleanup;
     }
+    ++paletteFadeCount;
     memcpy(activePalette, receipt.zoom_palette, sizeof(activePalette));
 
     zoomStartedMs = m11_intro_active_ticks();
@@ -3680,6 +3677,7 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
             activePalette, receipt.final_palette, framebuffer)) {
         goto cleanup;
     }
+    ++paletteFadeCount;
     finalFadeElapsedMs = m11_intro_active_ticks() - finalFadeStartedMs;
     memcpy(activePalette, receipt.final_palette, sizeof(activePalette));
     if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
@@ -3688,10 +3686,11 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     }
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
-                "firestaff: startup-source-complete game=dm1 platform=%s phase=title-f0437 frames=%u source=%s graphics=%s zoom-elapsed-ms=%llu hold-elapsed-ms=%llu final-fade-elapsed-ms=%llu total-elapsed-ms=%llu\n",
+                "firestaff: startup-source-complete game=dm1 platform=%s phase=title-f0437 frames=%u palette-fades=%u source=%s graphics=%s zoom-elapsed-ms=%llu hold-elapsed-ms=%llu final-fade-elapsed-ms=%llu total-elapsed-ms=%llu\n",
                 strcmp(version->versionId, "amiga21-en") == 0
                     ? "amiga-v21" : "amiga-v20",
                 DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT,
+                paletteFadeCount,
                 receipt.executable_md5, receipt.graphics_md5,
                 (unsigned long long)zoomElapsedMs,
                 (unsigned long long)holdElapsedMs,
