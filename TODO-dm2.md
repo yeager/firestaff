@@ -1,5 +1,26 @@
 # Firestaff TODO — DM2
 
+2026-10-14 authentic-media viewport audit on the Mac mini M4: the DOS
+English, FM Towns Japanese, Macintosh English and Amiga English
+`*_native_cli_boot` routes all completed from their original archives. The
+DOS and Macintosh 320x200 runtime captures show populated HUD and dungeon
+regions; Macintosh also passed its explicit top-HUD, RECT_7 viewport and
+lower-floor pixel checks. FM Towns reached its first champion with 25,746
+non-black pixels in the 224x136 dungeon aperture and 2,841 in its right-side
+panel. The Amiga route reached runtime and its source movement receipt changed
+the party from `(1,8)` to `(1,7)`, but two runtime captures still leave the
+expected `(0,40,224,136)` viewport almost entirely black: only 892 pixels are
+lit. Its HUD regions are drawn, but this is not a complete HUD/viewport pass.
+The existing Amiga native CLI test checks only total-frame visibility, while
+the Amiga real-media boot test validates GDAT metadata and plans without
+checking the rendered aperture. Add an Amiga-specific runtime aperture gate
+and trace the authenticated GDAT v5 floor/ceiling and wall palette/blit path
+through the final M11 frame before treating that test as viewport coverage.
+Evidence captures are under `.codex-scratch/dm2-verify/visual/` and the
+authenticated Amiga movement capture is under
+`.codex-scratch/dm2-verify/visual/amiga-after-move/`. All captures used SDL's
+dummy video/audio drivers; they do not establish physical M5 HiDPI output.
+
 2026-10-14 M4 real-media startup retest: `test_dm2_v1_mac_native_cli_boot.sh`
 passed using the authenticated Macintosh retail ZIP. The direct launch and
 AUTO selection retained Macintosh assets; the scripted M12 route completed
