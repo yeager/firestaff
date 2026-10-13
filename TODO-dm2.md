@@ -30,7 +30,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   fresh session's weather chain and leaves it stopped in
   `dm2_v1_runtime_commit_source_game_load`
   (`src/dm2/dm2_v1_runtime.c:4381-4387`); only the save-resume path restores
-  a running chain. SKProject starts its global LCG at zero
+  a running chain. SKProject initializes its global LCG to zero before the
+  startup/menu path
   (`SKWINSPX/src/v5/skrandom.cpp:9-29`), but the exact RNG state at the
   New Game load boundary must include the authentic startup draws. Trace that
   state, the active map's weather zone and day offset through original-data
@@ -42,7 +43,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   calls `randdat.init()` before game startup; `skrandom.cpp` sets that value to
   zero. Fresh `DM2_GAME_LOAD` calls `DM2_LOAD_NEW_DUNGEON`, whose
   `DM2_READ_DUNGEON_STRUCTURE(1)` path calls `DM2_weather_3df7_0037(0)` before
-  returning. That bootstrap schedules the first 0x54 timer, uses
+  returning. That bootstrap queues the first weather timer (type `0x54`, with
+  a random delay), uses
   `v1d7188`'s storm-forcing branch, and sets the day offset from authenticated
   GDAT index `(3,0,11,0)` (`sksvgame.cpp:540-546`, `skweathr.cpp:509-575`,
   `dm2data.cpp:1402`). This narrows the missing trace but does not yet prove
@@ -50,8 +52,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   event path has not been traced end to end. Firestaff also declares
   `dm2_level_t.weather_zone_index` but currently has no assignment or consumer
   for it; the live level's source weather zone is therefore not bound yet.
-  Keep New Game weather disabled until both facts are source-locked and the
-  first timer is verified against original-media startup.
+  Keep New Game weather disabled until the weather-call RNG state and first
+  timer are source-locked and verified against original-media startup.
 
   2026-10-13 source-order follow-up: `DM2_READ_DUNGEON_STRUCTURE` has no direct
   `DM2_RAND*` calls. In the fresh branch it calls
@@ -70,7 +72,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   (`sksvgame.cpp:543-546, 616-634`; `startend.cpp:856-857, 1272`). The original
   map-0 GDAT weather zone is therefore not evidence for the selector value at
   bootstrap. Keep the chain disabled pending the transitive RNG trace, exact
-  bootstrap selector state, and an original-data timer receipt.
+  New Game weather-selector state for the later active-map dispatch, and an
+  original-data timer receipt.
 
   2026-10-13 New Game event trace: `SKW5_STARTUP_THREAD_MAIN_LOOP_01` calls
   `randdat.init()` before `SKW5_INIT`; the title-menu loop then returns from
@@ -87,26 +90,31 @@ Reviewed 2026-08-29. Only open work is listed here.
   and FM Towns editions. This verifies the authored map-0 zone value, not that
   the source loader has assigned its active-map selector before the bootstrap.
 
-  2026-10-13 bootstrap boundary follow-up: the RNG state is now source-locked
-  at the fresh weather call. `SKW5_STARTUP_THREAD_MAIN_LOOP_01` invokes
-  `randdat.init()` before `SKW5_INIT` (`sk5start.cpp:82-110`), and a full
-  source search finds no writes to `randdat.random` except the LCG routines,
-  save-resume restore, and save serialization (`skrandom.cpp:9-47`,
-  `sksvgame.cpp:1486,2207`). The fresh load enters
-  `DM2_READ_DUNGEON_STRUCTURE(1)` and calls the weather bootstrap before
-  `DM2_ARRANGE_DUNGEON()` (`sksvgame.cpp:540-573`), so dungeon generation has
-  no opportunity to advance it first. Therefore the initial weather-bootstrap
-  LCG state is zero. Its storm-forced branch consumes four draws in source
-  order: `RAND16(500)`, `RANDDIR()`, `RANDDIR()`, and `RAND16(4)`
-  (`skweathr.cpp:541-566`). The earlier uncertainty about pre-menu draws is
-  closed.
+  2026-10-13 bootstrap-boundary correction (supersedes the preceding claim
+  that the weather-call seed was proven zero): inspecting SKProject commit
+  `2c59a2c5a7978923ff5c822c15c3479e4d448493` confirms that
+  `SKW5_STARTUP_THREAD_MAIN_LOOP_01` calls `randdat.init()` before `ddat.init()`
+  (`SKWINSPX/src/v5/sk5start.cpp:104-112`), and `randdat.init()` sets the LCG
+  to zero (`skrandom.cpp:9-16`). `ddat.init()` sets the fresh-weather
+  bootstrap selector `v1d7188` to 1 (`dm2data.cpp:1032,1402`); the weather
+  routine later clears it (`skweathr.cpp:574`). The fresh dungeon reader calls
+  `DM2_weather_3df7_0037(0)` before `DM2_ARRANGE_DUNGEON()`
+  (`sksvgame.cpp:540-573`). With selector 1, bootstrap consumes four LCG
+  draws in this exact order: `RAND16(500)` for the first timer,
+  `RANDDIR()` for wind, `RAND16(4)` for the thunder interval, and `RANDDIR()`
+  for direction (`skweathr.cpp:541-566`). However, the intervening startup,
+  title/menu, and New Game paths can call the LCG after `randdat.init()` and
+  before this reader. The seed at the weather call and resulting first timer
+  are therefore not yet established; the earlier zero-seed and fixed-`0x54`
+  conclusions were unsupported and must not be used as runtime expectations.
 
   Keep the fresh weather chain disabled pending the shared session-LCG owner.
   The source timer table is in fact initialized empty before the bootstrap:
   `c_timerdata::init` sets `gametick=0` and no timer array, then
   `DM2_savegame_3a15_0002` allocates the 50-entry base table, clears each entry,
   and links the free list before `DM2_weather_3df7_0037` queues its first
-  `0x54` timer (`sktimer.cpp:10-20`, `sksvgame.cpp:72-125, 540-546`). The
+  weather timer (`0x54` is the timer type, not its random delay;
+  `sktimer.cpp:10-20`, `sksvgame.cpp:72-125, 540-546`). The
   Firestaff new-game world owner already allocates this empty base capacity
   from the same source count before map/CAII materialization
   (`dm2_v1_game_load_world_owner.c:234-272`); the first weather timer's
