@@ -42,6 +42,24 @@ Reviewed 2026-08-29. Only open work is listed here.
   Keep New Game weather disabled until both facts are source-locked and the
   first timer is verified against original-media startup.
 
+  2026-10-13 source-order follow-up: `DM2_READ_DUNGEON_STRUCTURE` has no direct
+  `DM2_RAND*` calls. In the fresh branch it calls
+  `DM2_weather_3df7_0037(0)` at `sksvgame.cpp:543-546`, then calls
+  `DM2_ARRANGE_DUNGEON()` only later at line 573. The arrange routine's
+  data-dependent `DM2_RANDDIR()` draws are at `skmap.cpp:1138,1152`, after the
+  weather bootstrap; they cannot contribute to that first weather timer. The
+  inspected `DM2_SHOW_MENU_SCREEN`, `DM2_DRAW_TITLE_MENU_SCREEN`, and
+  `DM2_EVENT_LOOP` bodies also contain no direct `DM2_RAND*` calls. This does
+  not prove the transitive pre-menu initialization/event-dispatch path has no
+  draws, nor that the fresh active map's `v1d6c02` has been loaded before the
+  weather call. Keep the chain disabled pending those two source bindings and
+  an original-data timer receipt.
+
+  The real-media GDAT/dungeon reader also confirms that map 0 uses GRAPHICSSET
+  2 and GDAT `(8,2,11,0x66)` resolves weather zone 2 in both the installed DOS
+  and FM Towns editions. This verifies the authored map-0 zone value, not that
+  the source loader has assigned its active-map selector before the bootstrap.
+
 2026-10-11 local startup retest: the current source passed authentic FM Towns,
 DOS, Amiga and Macintosh CLI/start-menu regressions
 (`test_dm2_v1_fmtowns_native_cli_boot.sh`,
