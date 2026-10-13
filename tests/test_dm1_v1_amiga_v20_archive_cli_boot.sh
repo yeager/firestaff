@@ -158,6 +158,20 @@ if ! grep -Fq 'phase=amiga-swsh profile=a0ffbcc7ae8cecac03128ddb32887ef4 frames=
     printf '%s\n' 'FAIL: authentic DM1 Amiga startup did not complete authenticated A20 SWSH, F0437 title, and mouse-only F0441 entrance before the ADF handoff' >&2
     exit 1
 fi
+python3 -c 'import re, sys
+output = sys.stdin.read()
+line = next((line for line in output.splitlines()
+             if "phase=title-f0437" in line), "")
+values = {key: int(value) for key, value in re.findall(
+    r"(zoom-elapsed-ms|hold-elapsed-ms|final-fade-elapsed-ms|total-elapsed-ms)=(\d+)",
+    line)}
+required = {"zoom-elapsed-ms": 340, "hold-elapsed-ms": 500,
+            "final-fade-elapsed-ms": 140, "total-elapsed-ms": 1000}
+if set(values) != set(required) or any(values[key] < minimum
+                                       for key, minimum in required.items()):
+    raise SystemExit(f"FAIL: Amiga F0437 cadence below its source delays: {line}")
+print("PASS: authentic DM1 Amiga F0437 elapsed timing: " +
+      ", ".join(f"{key}={value}ms" for key, value in values.items()))' <<<"$menu_startup_output"
 python3 - "$menu_probe" <<'PY'
 import json
 import sys

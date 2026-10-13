@@ -3528,6 +3528,13 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     DM1_V1_AmigaTitleF0437Receipt receipt;
     uint16_t activePalette[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES];
     unsigned int stepIndex;
+    Uint64 titleStartedMs = 0u;
+    Uint64 zoomStartedMs = 0u;
+    Uint64 zoomElapsedMs = 0u;
+    Uint64 holdStartedMs = 0u;
+    Uint64 holdElapsedMs = 0u;
+    Uint64 finalFadeStartedMs = 0u;
+    Uint64 finalFadeElapsedMs = 0u;
     int completed = 0;
 
     if (!menuState || !entry || !entry->gameId ||
@@ -3587,6 +3594,7 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     M11_Render_SetV2PresentationActive(0);
     M11_Render_SetModernPresentationActive(0);
+    titleStartedMs = m11_intro_active_ticks();
     memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
     if (!m11_dm1_amiga_present_title_palette(activePalette, framebuffer)) {
         goto cleanup;
@@ -3616,6 +3624,7 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     }
     memcpy(activePalette, receipt.zoom_palette, sizeof(activePalette));
 
+    zoomStartedMs = m11_intro_active_ticks();
     for (stepIndex = 0u;
          stepIndex < DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT; ++stepIndex) {
         DM1_V1_AmigaTitleF0437ZoomStep step;
@@ -3646,10 +3655,13 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
             goto cleanup;
         }
     }
+    zoomElapsedMs = m11_intro_active_ticks() - zoomStartedMs;
+    holdStartedMs = m11_intro_active_ticks();
     if (m11_delay_ms_with_intro_event_pump(
             receipt.source_delay_ticks * 20u)) {
         goto cleanup;
     }
+    holdElapsedMs = m11_intro_active_ticks() - holdStartedMs;
     {
         unsigned int y;
         for (y = 0u; y < receipt.master_source_height; ++y) {
@@ -3663,10 +3675,12 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
             }
         }
     }
+    finalFadeStartedMs = m11_intro_active_ticks();
     if (!m11_dm1_amiga_fade_title_palette(
             activePalette, receipt.final_palette, framebuffer)) {
         goto cleanup;
     }
+    finalFadeElapsedMs = m11_intro_active_ticks() - finalFadeStartedMs;
     memcpy(activePalette, receipt.final_palette, sizeof(activePalette));
     if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                   M11_FB_HEIGHT) != M11_RENDER_OK) {
@@ -3674,11 +3688,16 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     }
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
-                "firestaff: startup-source-complete game=dm1 platform=%s phase=title-f0437 frames=%u source=%s graphics=%s\n",
+                "firestaff: startup-source-complete game=dm1 platform=%s phase=title-f0437 frames=%u source=%s graphics=%s zoom-elapsed-ms=%llu hold-elapsed-ms=%llu final-fade-elapsed-ms=%llu total-elapsed-ms=%llu\n",
                 strcmp(version->versionId, "amiga21-en") == 0
                     ? "amiga-v21" : "amiga-v20",
                 DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT,
-                receipt.executable_md5, receipt.graphics_md5);
+                receipt.executable_md5, receipt.graphics_md5,
+                (unsigned long long)zoomElapsedMs,
+                (unsigned long long)holdElapsedMs,
+                (unsigned long long)finalFadeElapsedMs,
+                (unsigned long long)(m11_intro_active_ticks() -
+                                     titleStartedMs));
     }
     completed = 1;
 
