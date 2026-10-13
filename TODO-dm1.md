@@ -244,6 +244,17 @@ The PC 3.4 real-media regression now covers the same interruption path already
 tested for Atari ST French v1.3. This SDL dummy-driver check does not validate
 native window-close or physical-input behavior.
 
+2026-10-14 issue #13 retest: the complete `dm1_v1_pc34_native_cli_boot` route
+passed on the Mac mini M4 with the original PC 3.4 EN ZIP and Atari ST v1.2
+STX media. The production STX decoder supplied the authentic Atari
+`DUNGEON.DAT`; when that file was placed ahead of the PC 3.4 installation, the
+PC startup still selected its matching dungeon and reached the first runtime
+frame. Direct CLI, M12 New Game, and the default `~/.firestaff/data/dm1`
+installation also reached runtime. The menu scripts now leave space for the
+source-owned intro before checking the runtime receipt. These SDL dummy-driver
+checks verify data binding and startup flow, not native M5 input or visual
+parity.
+
 - Extend the authenticated Amiga F0437/F0441 title and entrance routes to the
   remaining editions after establishing each edition's original
   GRAPHICS.DAT/SWSH identity pair. A20 English, French and German now authenticate

@@ -59,7 +59,7 @@ fi
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform pc --data-dir "$archive" \
-    --script enter,enter,enter --duration 1000 2>&1) || {
+    --script 'wait20,enter,wait20,enter,wait20,enter' --duration 10000 2>&1) || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
@@ -92,7 +92,8 @@ fi
     APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --menu --game dm1 --debug --script enter,enter,enter --duration 1000
+        --menu --game dm1 --debug \
+        --script 'wait20,enter,wait20,enter,wait20,enter' --duration 30000
 ) >"$default_log" 2>&1 || {
     cat "$default_log" >&2
     exit 1
@@ -116,7 +117,8 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform pc --data-dir "$archive" \
-    --script enter,enter,enter --duration 10000 >/dev/null 2>&1
+    --script 'wait20,enter,wait20,enter,wait20,enter' \
+    --duration 30000 >/dev/null 2>&1
 python3 - "$menu_runtime_probe_json" <<'PY'
 import json
 import sys
@@ -161,8 +163,8 @@ for mode in v1 v20 v21; do
             mode_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
                 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
                 --menu --game dm1 --platform pc --data-dir "$archive" \
-                --script enter,enter,enter --presentation-mode "$mode" \
-                --duration 1000 2>&1) || {
+                --script 'wait20,enter,wait20,enter,wait20,enter' \
+                --presentation-mode "$mode" --duration 30000 2>&1) || {
                 printf '%s\n' "$mode_output" >&2; exit 1;
             }
             if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$mode_output" ||
