@@ -160,6 +160,21 @@ native window-close or physical-input behavior.
   the ordinary M12-to-runtime route. Cross-desktop HiDPI and live
   renderer/event-fault coverage remain open.
 
+- Verify the actual FM Towns title RGB presentation on M4. The 2026-10-13
+  native Cocoa `--game dm1 --debug` run selected the original English FM Towns
+  media and logged the PRESENTS, DUNGEON and MASTER palette stages, but a
+  reliable post-present capture of the final title colors was not obtained.
+  The M4 trace proves frame timing and source selection only; do not treat it
+  as palette or HiDPI proof.
+
+- Profile the M12 menu's idle CPU cost on M4 and improve it without losing its
+  animation or input response. A two-second native process sample of the
+  v3.0.380 menu measured 44.8–47.1% of one CPU core; 71% of sampled call stacks
+  were inside `M12_ModernMenu_Render`. The menu renderer source is unchanged
+  between v3.0.380 and current `main`. The runtime debug report still cannot
+  provide GPU utilization, so record host CPU and rendered menu cadence
+  separately from GPU load.
+
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
   set as one source-locked pass: presented-frame evidence for object-bearing
   Eye scroll reads, Vi altar wall material, stairs occlusion, complete door

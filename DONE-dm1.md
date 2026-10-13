@@ -36,6 +36,16 @@
 
 # Firestaff DONE — DM1
 
+- 2026-10-13: On a Mac mini M4, a native Cocoa run of the current main build
+  with bare `--game dm1 --debug` selected the hash-matched English FM Towns
+  `GRAPHICS.DAT` by default. The trace presented all 20 original title frames,
+  held the final title for 1,200 ms, and completed the title phase in 1,616 ms.
+  After a fresh Return input, all 31 entrance-door frames were presented at
+  16–18 ms intervals and startup reached `dm1-runtime`. This verifies the
+  title and door pacing change in `907363f93` on M4 and the default FM Towns
+  CLI route. The trace records palette stages but does not prove the displayed
+  RGB colors or physical HiDPI behavior.
+
 - 2026-10-12: Rebuilt current `main` and passed
   `dm1_v1_pc34_native_cli_boot` in 252.18 seconds with original PC 3.4 English
   and Atari ST 1.2 data. Coverage includes the mixed-root wrong-edition
