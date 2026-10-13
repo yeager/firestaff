@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "OFF"
 
 #: src/ui/menu_startup_m12.c:492 src/ui/menu_startup_m12.c:508
-#: src/ui/menu_startup_render_modern_m12.c:2471
+#: src/ui/menu_startup_render_modern_m12.c:2514
 msgid "ON"
 msgstr "ON"
 
@@ -416,7 +416,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:511 src/ui/menu_startup_render_modern_m12.c:2083
+#: src/ui/menu_startup_m12.c:511 src/ui/menu_startup_render_modern_m12.c:2126
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -530,20 +530,20 @@ msgstr "리마스터"
 
 #: src/ui/menu_startup_m12.c:797 src/ui/menu_startup_m12.c:818
 #: src/ui/menu_startup_m12.c:10416 src/ui/menu_startup_m12.c:10859
-#: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2735
+#: src/ui/menu_startup_render_modern_m12.c:1543
+#: src/ui/menu_startup_render_modern_m12.c:2778
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:798 src/ui/menu_startup_m12.c:828
 #: src/ui/menu_startup_m12.c:10418 src/ui/menu_startup_m12.c:10873
-#: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2738
+#: src/ui/menu_startup_render_modern_m12.c:1544
+#: src/ui/menu_startup_render_modern_m12.c:2781
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
 #: src/ui/menu_startup_m12.c:799 src/ui/menu_startup_m12.c:838
-#: src/ui/menu_startup_render_modern_m12.c:1502
+#: src/ui/menu_startup_render_modern_m12.c:1545
 msgid "DUNGEON MASTER II"
 msgstr "DUNGEON MASTER II"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB 유틸리티 디스크 — 힌트 오라클"
 
 #: src/ui/menu_startup_m12.c:805 src/ui/menu_startup_m12.c:11945
-#: src/ui/menu_startup_m12.c:11948 src/ui/menu_startup_render_modern_m12.c:1858
-#: src/ui/menu_startup_render_modern_m12.c:2131
+#: src/ui/menu_startup_m12.c:11948 src/ui/menu_startup_render_modern_m12.c:1901
+#: src/ui/menu_startup_render_modern_m12.c:2174
 msgid "MUSEUM OF LORE"
 msgstr "전설의 박물관"
 
@@ -1623,7 +1623,7 @@ msgstr "오리지널"
 msgid "MISSING OR MISMATCHED"
 msgstr "누락 또는 불일치"
 
-#: src/ui/menu_startup_m12.c:9340 src/ui/menu_startup_render_modern_m12.c:2059
+#: src/ui/menu_startup_m12.c:9340 src/ui/menu_startup_render_modern_m12.c:2102
 msgid "EXTRAS"
 msgstr "부가 기능"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape 뒤로  |  위/아래 이동  |  Enter 열기"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > 탭 전환   위/아래 이동   Enter 변경"
 
-#: src/ui/menu_startup_m12.c:11261 src/ui/menu_startup_render_modern_m12.c:2277
+#: src/ui/menu_startup_m12.c:11261 src/ui/menu_startup_render_modern_m12.c:2320
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "지원되는 기본 플랫폼이 없습니다."
 
@@ -1873,90 +1873,90 @@ msgstr "V2.2 아트팩 선택"
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 아트팩이 거부됨"
 
-#: src/ui/menu_startup_render_modern_m12.c:1347
+#: src/ui/menu_startup_render_modern_m12.c:1390
 msgid "COMING SOON"
 msgstr "COMING SOON"
 
-#: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2580
+#: src/ui/menu_startup_render_modern_m12.c:1500
+#: src/ui/menu_startup_render_modern_m12.c:2623
 msgid "FIRESTAFF"
 msgstr "Firestaff 프로젝트"
 
-#: src/ui/menu_startup_render_modern_m12.c:1472
+#: src/ui/menu_startup_render_modern_m12.c:1515
 msgid "DISPLAY  CONTROLS  AUDIO"
 msgstr "디스플레이 제어 오디오"
 
-#: src/ui/menu_startup_render_modern_m12.c:1475
+#: src/ui/menu_startup_render_modern_m12.c:1518
 msgid "THANKS TO CHRISTOPHE FONTANEL"
 msgstr "크리스토프 폰타넬에게 감사드립니다"
 
-#: src/ui/menu_startup_render_modern_m12.c:1477
+#: src/ui/menu_startup_render_modern_m12.c:1520
 msgid "AND THE PRESERVATION PROJECTS"
 msgstr "보존 기록"
 
-#: src/ui/menu_startup_render_modern_m12.c:1479
+#: src/ui/menu_startup_render_modern_m12.c:1522
 msgid "DANIEL NYLANDER"
 msgstr "다니엘 나이랜더"
 
-#: src/ui/menu_startup_render_modern_m12.c:1493
+#: src/ui/menu_startup_render_modern_m12.c:1536
 msgid "OPEN FIRESTAFF SETTINGS AND CREDITS"
 msgstr "FIRESTAFF 설정 및 크레딧 열기"
 
-#: src/ui/menu_startup_render_modern_m12.c:1503
+#: src/ui/menu_startup_render_modern_m12.c:1546
 msgid "CREDITS AND ARCHIVE"
 msgstr "카드 아트 사용 중"
 
-#: src/ui/menu_startup_render_modern_m12.c:1504
+#: src/ui/menu_startup_render_modern_m12.c:1547
 msgid "5 SECTIONS"
 msgstr "5개 섹션"
 
-#: src/ui/menu_startup_render_modern_m12.c:1507
+#: src/ui/menu_startup_render_modern_m12.c:1550
 msgid "PRESS ENTER TO OPEN THE LORE MUSEUM"
 msgstr "지식 박물관을 열려면 Enter 키를 누르세요."
 
-#: src/ui/menu_startup_render_modern_m12.c:1610
+#: src/ui/menu_startup_render_modern_m12.c:1653
 msgid "< BACK"
 msgstr "< 뒤로"
 
-#: src/ui/menu_startup_render_modern_m12.c:1980
+#: src/ui/menu_startup_render_modern_m12.c:2023
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2061
+#: src/ui/menu_startup_render_modern_m12.c:2104
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2135
+#: src/ui/menu_startup_render_modern_m12.c:2178
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "보존 기록, 시리즈 지식, 프로젝트 크레딧"
 
-#: src/ui/menu_startup_render_modern_m12.c:2148
+#: src/ui/menu_startup_render_modern_m12.c:2191
 msgid "ARCHIVE SECTIONS"
 msgstr "아카이브 상태"
 
-#: src/ui/menu_startup_render_modern_m12.c:2171
+#: src/ui/menu_startup_render_modern_m12.c:2214
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "페이지 %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2261
+#: src/ui/menu_startup_render_modern_m12.c:2304
 msgid "CHOOSE PLATFORM"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_render_modern_m12.c:2286
+#: src/ui/menu_startup_render_modern_m12.c:2329
 msgid "CHOOSE PRESENTATION"
 msgstr "런처 목적지"
 
-#: src/ui/menu_startup_render_modern_m12.c:2528
+#: src/ui/menu_startup_render_modern_m12.c:2571
 msgid "LAUNCH >"
 msgstr "실행"
 
-#: src/ui/menu_startup_render_modern_m12.c:2597
-#: src/ui/menu_startup_render_modern_m12.c:2721
+#: src/ui/menu_startup_render_modern_m12.c:2640
+#: src/ui/menu_startup_render_modern_m12.c:2764
 msgid "OK"
 msgstr "확인"
 
-#: src/ui/menu_startup_render_modern_m12.c:2661
+#: src/ui/menu_startup_render_modern_m12.c:2704
 msgid "CANCEL"
 msgstr "취소"
 

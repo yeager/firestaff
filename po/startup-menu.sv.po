@@ -364,7 +364,7 @@ msgid "OFF"
 msgstr "AV"
 
 #: src/ui/menu_startup_m12.c:492 src/ui/menu_startup_m12.c:508
-#: src/ui/menu_startup_render_modern_m12.c:2471
+#: src/ui/menu_startup_render_modern_m12.c:2514
 msgid "ON"
 msgstr "PÅ"
 
@@ -416,7 +416,7 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "TILLGÄNGLIG"
 
-#: src/ui/menu_startup_m12.c:511 src/ui/menu_startup_render_modern_m12.c:2083
+#: src/ui/menu_startup_m12.c:511 src/ui/menu_startup_render_modern_m12.c:2126
 msgid "UNAVAILABLE"
 msgstr "OTILLGÄNGLIG"
 
@@ -530,20 +530,20 @@ msgstr "REMASTRAD"
 
 #: src/ui/menu_startup_m12.c:797 src/ui/menu_startup_m12.c:818
 #: src/ui/menu_startup_m12.c:10416 src/ui/menu_startup_m12.c:10859
-#: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2735
+#: src/ui/menu_startup_render_modern_m12.c:1543
+#: src/ui/menu_startup_render_modern_m12.c:2778
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:798 src/ui/menu_startup_m12.c:828
 #: src/ui/menu_startup_m12.c:10418 src/ui/menu_startup_m12.c:10873
-#: src/ui/menu_startup_render_modern_m12.c:1501
-#: src/ui/menu_startup_render_modern_m12.c:2738
+#: src/ui/menu_startup_render_modern_m12.c:1544
+#: src/ui/menu_startup_render_modern_m12.c:2781
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
 #: src/ui/menu_startup_m12.c:799 src/ui/menu_startup_m12.c:838
-#: src/ui/menu_startup_render_modern_m12.c:1502
+#: src/ui/menu_startup_render_modern_m12.c:1545
 msgid "DUNGEON MASTER II"
 msgstr "DUNGEON MASTER II"
 
@@ -564,8 +564,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB-VERKTYGSDISK — LEDTRÅDSORAKEL"
 
 #: src/ui/menu_startup_m12.c:805 src/ui/menu_startup_m12.c:11945
-#: src/ui/menu_startup_m12.c:11948 src/ui/menu_startup_render_modern_m12.c:1858
-#: src/ui/menu_startup_render_modern_m12.c:2131
+#: src/ui/menu_startup_m12.c:11948 src/ui/menu_startup_render_modern_m12.c:1901
+#: src/ui/menu_startup_render_modern_m12.c:2174
 msgid "MUSEUM OF LORE"
 msgstr "HISTORIEMUSEUM"
 
@@ -1623,7 +1623,7 @@ msgstr "VÄLJ FÖR ATT VERIFIERA ORIGINALDATA"
 msgid "MISSING OR MISMATCHED"
 msgstr "SAKNAS ELLER STÄMMER INTE"
 
-#: src/ui/menu_startup_m12.c:9340 src/ui/menu_startup_render_modern_m12.c:2059
+#: src/ui/menu_startup_m12.c:9340 src/ui/menu_startup_render_modern_m12.c:2102
 msgid "EXTRAS"
 msgstr "EXTRA"
 
@@ -1773,7 +1773,7 @@ msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter öppnar"
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > byter flik   Upp/ned navigerar   Enter ändrar"
 
-#: src/ui/menu_startup_m12.c:11261 src/ui/menu_startup_render_modern_m12.c:2277
+#: src/ui/menu_startup_m12.c:11261 src/ui/menu_startup_render_modern_m12.c:2320
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "INGEN NATIV PLATTFORM SOM STÖDS"
 
@@ -1873,90 +1873,90 @@ msgstr "V2.2-GRAFIKPAKET VALT"
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2-GRAFIKPAKET AVVISAT"
 
-#: src/ui/menu_startup_render_modern_m12.c:1347
+#: src/ui/menu_startup_render_modern_m12.c:1390
 msgid "COMING SOON"
 msgstr "KOMMER SNART"
 
-#: src/ui/menu_startup_render_modern_m12.c:1457
-#: src/ui/menu_startup_render_modern_m12.c:2580
+#: src/ui/menu_startup_render_modern_m12.c:1500
+#: src/ui/menu_startup_render_modern_m12.c:2623
 msgid "FIRESTAFF"
 msgstr "FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:1472
+#: src/ui/menu_startup_render_modern_m12.c:1515
 msgid "DISPLAY  CONTROLS  AUDIO"
 msgstr "BILD  KONTROLLER  LJUD"
 
-#: src/ui/menu_startup_render_modern_m12.c:1475
+#: src/ui/menu_startup_render_modern_m12.c:1518
 msgid "THANKS TO CHRISTOPHE FONTANEL"
 msgstr "TACK TILL CHRISTOPHE FONTANEL"
 
-#: src/ui/menu_startup_render_modern_m12.c:1477
+#: src/ui/menu_startup_render_modern_m12.c:1520
 msgid "AND THE PRESERVATION PROJECTS"
 msgstr "OCH BEVARANDEPROJEKTEN"
 
-#: src/ui/menu_startup_render_modern_m12.c:1479
+#: src/ui/menu_startup_render_modern_m12.c:1522
 msgid "DANIEL NYLANDER"
 msgstr "DANIEL NYLANDER"
 
-#: src/ui/menu_startup_render_modern_m12.c:1493
+#: src/ui/menu_startup_render_modern_m12.c:1536
 msgid "OPEN FIRESTAFF SETTINGS AND CREDITS"
 msgstr "ÖPPNA FIRESTAFFS INSTÄLLNINGAR OCH MEDVERKANDE"
 
-#: src/ui/menu_startup_render_modern_m12.c:1503
+#: src/ui/menu_startup_render_modern_m12.c:1546
 msgid "CREDITS AND ARCHIVE"
 msgstr "MEDVERKANDE OCH ARKIV"
 
-#: src/ui/menu_startup_render_modern_m12.c:1504
+#: src/ui/menu_startup_render_modern_m12.c:1547
 msgid "5 SECTIONS"
 msgstr "5 AVSNITT"
 
-#: src/ui/menu_startup_render_modern_m12.c:1507
+#: src/ui/menu_startup_render_modern_m12.c:1550
 msgid "PRESS ENTER TO OPEN THE LORE MUSEUM"
 msgstr "TRYCK ENTER FÖR ATT ÖPPNA LORE-MUSEET"
 
-#: src/ui/menu_startup_render_modern_m12.c:1610
+#: src/ui/menu_startup_render_modern_m12.c:1653
 msgid "< BACK"
 msgstr "< TILLBAKA"
 
-#: src/ui/menu_startup_render_modern_m12.c:1980
+#: src/ui/menu_startup_render_modern_m12.c:2023
 msgid "CHANGES ARE PERSISTED IMMEDIATELY"
 msgstr "CHANGES ARE PERSISTED IMMEDIATELY"
 
-#: src/ui/menu_startup_render_modern_m12.c:2061
+#: src/ui/menu_startup_render_modern_m12.c:2104
 msgid "EXPLORE FIRESTAFF"
 msgstr "EXPLORE FIRESTAFF"
 
-#: src/ui/menu_startup_render_modern_m12.c:2135
+#: src/ui/menu_startup_render_modern_m12.c:2178
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr "BEVARANDEANTECKNINGAR, SERIENS HISTORIA OCH PROJEKTETS MEDVERKANDE"
 
-#: src/ui/menu_startup_render_modern_m12.c:2148
+#: src/ui/menu_startup_render_modern_m12.c:2191
 msgid "ARCHIVE SECTIONS"
 msgstr "ARKIVAVSNITT"
 
-#: src/ui/menu_startup_render_modern_m12.c:2171
+#: src/ui/menu_startup_render_modern_m12.c:2214
 #, c-format
 msgid "PAGE %d/%d"
 msgstr "SIDA %d/%d"
 
-#: src/ui/menu_startup_render_modern_m12.c:2261
+#: src/ui/menu_startup_render_modern_m12.c:2304
 msgid "CHOOSE PLATFORM"
 msgstr "VÄLJ PLATTFORM"
 
-#: src/ui/menu_startup_render_modern_m12.c:2286
+#: src/ui/menu_startup_render_modern_m12.c:2329
 msgid "CHOOSE PRESENTATION"
 msgstr "VÄLJ PRESENTATION"
 
-#: src/ui/menu_startup_render_modern_m12.c:2528
+#: src/ui/menu_startup_render_modern_m12.c:2571
 msgid "LAUNCH >"
 msgstr "STARTA >"
 
-#: src/ui/menu_startup_render_modern_m12.c:2597
-#: src/ui/menu_startup_render_modern_m12.c:2721
+#: src/ui/menu_startup_render_modern_m12.c:2640
+#: src/ui/menu_startup_render_modern_m12.c:2764
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2661
+#: src/ui/menu_startup_render_modern_m12.c:2704
 msgid "CANCEL"
 msgstr "AVBRYT"
 
