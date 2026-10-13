@@ -151,7 +151,7 @@ menu_startup_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     exit 1
 }
 if ! grep -Fq 'phase=amiga-swsh profile=a0ffbcc7ae8cecac03128ddb32887ef4 frames=10 source-vblanks=30' <<<"$menu_startup_output" ||
-   ! grep -Fq 'platform=amiga-v20 phase=title-f0437 frames=18 palette-fades=3 source=a0ffbcc7ae8cecac03128ddb32887ef4 graphics=6a2f135b53c2220f0251fa103e2a6e7e' <<<"$menu_startup_output" ||
+   ! grep -Fq 'platform=amiga-v20 phase=title-f0437 frames=18 palette-fades=5 source=a0ffbcc7ae8cecac03128ddb32887ef4 graphics=6a2f135b53c2220f0251fa103e2a6e7e' <<<"$menu_startup_output" ||
    ! grep -Fq 'platform=amiga-v20 phase=entrance-f0441 steps=31 graphics=6a2f135b53c2220f0251fa103e2a6e7e input=mouse-only palette=rgb4' <<<"$menu_startup_output" ||
    ! grep -Fq "DM1 READY: gameId=dm1 dataDir=$selected_media handoff=amiga-img2" <<<"$menu_startup_output"; then
     printf '%s\n' "$menu_startup_output" >&2
@@ -165,9 +165,9 @@ line = next((line for line in output.splitlines()
 values = {key: int(value) for key, value in re.findall(
     r"(palette-fades|zoom-elapsed-ms|hold-elapsed-ms|final-fade-elapsed-ms|total-elapsed-ms)=(\d+)",
     line)}
-required = {"palette-fades": 3, "zoom-elapsed-ms": 340, "hold-elapsed-ms": 500,
-            "final-fade-elapsed-ms": 140, "total-elapsed-ms": 1000}
-if (set(values) != set(required) or values["palette-fades"] != 3 or
+required = {"palette-fades": 5, "zoom-elapsed-ms": 340, "hold-elapsed-ms": 500,
+            "final-fade-elapsed-ms": 140, "total-elapsed-ms": 1320}
+if (set(values) != set(required) or values["palette-fades"] != 5 or
         any(values[key] < minimum for key, minimum in required.items()
             if key != "palette-fades")):
     raise SystemExit(f"FAIL: Amiga F0437 fade count or cadence mismatch: {line}")

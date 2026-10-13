@@ -48,7 +48,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 for expected in \
     "assetMd5=$expected_graphics" \
     "phase=amiga-swsh profile=$expected_swsh" \
-    "phase=title-f0437 frames=18 source=$expected_swsh graphics=$expected_graphics" \
+    "phase=title-f0437 frames=18 palette-fades=5 source=$expected_swsh graphics=$expected_graphics" \
     "phase=entrance-f0441 steps=31 graphics=$expected_graphics input=mouse-only palette=rgb4" \
     'phase=dm1-runtime' 'levelLoaded=1'; do
     if ! grep -Fq "$expected" "$cli_log"; then
@@ -71,7 +71,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 for expected in \
     "DM1 READY: gameId=dm1 dataDir=$selected_media handoff=amiga-img2" \
     "phase=amiga-swsh profile=$expected_swsh" \
-    "phase=title-f0437 frames=18 source=$expected_swsh graphics=$expected_graphics" \
+    "phase=title-f0437 frames=18 palette-fades=5 source=$expected_swsh graphics=$expected_graphics" \
     "phase=entrance-f0441 steps=31 graphics=$expected_graphics input=mouse-only palette=rgb4"; do
     if ! grep -Fq "$expected" "$menu_log"; then
         cat "$menu_log" >&2

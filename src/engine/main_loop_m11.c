@@ -2093,6 +2093,8 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
 static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
 static int g_m11_debug_startup_detail = 0;
+static uint16_t g_m11_dm1_amiga_swsh_palette[16];
+static int g_m11_dm1_amiga_swsh_palette_valid = 0;
 
 static int m11_process_cpu_seconds(double* seconds) {
     if (!seconds) return 0;
@@ -3619,12 +3621,33 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
            c001 + (size_t)receipt.master_source_y *
                       DM1_V1_AMIGA_TITLE_WIDTH,
            (size_t)DM1_V1_AMIGA_TITLE_WIDTH * 57u);
-    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     M11_Render_SetV2PresentationActive(0);
     M11_Render_SetModernPresentationActive(0);
     titleStartedMs = m11_intro_active_ticks();
-    memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
+    if (g_m11_dm1_amiga_swsh_palette_valid) {
+        memcpy(activePalette, g_m11_dm1_amiga_swsh_palette,
+               sizeof(activePalette));
+    } else {
+        memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
+        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    }
     if (!m11_dm1_amiga_present_title_palette(activePalette, framebuffer)) {
+        goto cleanup;
+    }
+    if (g_m11_dm1_amiga_swsh_palette_valid) {
+        /* ReDMCSB TITLE.C F0437 A20 lines 113-124 first fades the preceding
+         * SWSH image to the dark-blue palette, then fills the screen. */
+        if (!m11_dm1_amiga_fade_title_palette(
+                activePalette, receipt.initial_palette, framebuffer)) {
+            goto cleanup;
+        }
+        ++paletteFadeCount;
+        memcpy(activePalette, receipt.initial_palette,
+               sizeof(activePalette));
+    }
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
         goto cleanup;
     }
     memcpy(framebuffer + (size_t)receipt.presents_destination_y *
@@ -3637,10 +3660,19 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     }
     ++paletteFadeCount;
     memcpy(activePalette, receipt.presents_palette, sizeof(activePalette));
-    /* ReDMCSB TITLE.C F0437:131-132 fades the base palette to the white
-     * PRESENTS palette, then lines 190-199 sets the zoom palette directly.
-     * Lines 128-129 leave PRESENTS on screen for the zoom blits at 220-226;
-     * keep those pixels and do not fade back to the base palette. */
+    /* ReDMCSB TITLE.C F0437 A20 lines 171-184 fades PRESENTS back to
+     * dark blue and clears it before the zoom palette is installed. */
+    if (!m11_dm1_amiga_fade_title_palette(
+            activePalette, receipt.initial_palette, framebuffer)) {
+        goto cleanup;
+    }
+    ++paletteFadeCount;
+    memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
+        goto cleanup;
+    }
     if (!m11_dm1_amiga_fade_title_palette(
             activePalette, receipt.zoom_palette, framebuffer)) {
         goto cleanup;
@@ -3766,6 +3798,7 @@ static int m11_play_dm1_amiga_swsh_if_available(
         ((Uint64)DM1_V1_AMIGA_SWSH_SOUND_BYTES *
          DM1_V1_AMIGA_SWSH_PAULA_PERIOD * 1000u + 3579544u) / 3579545u;
 
+    g_m11_dm1_amiga_swsh_palette_valid = 0;
     if (!menuState || !entry || !entry->gameId ||
         strcmp(entry->gameId, "dm1") != 0) return -1;
     versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
@@ -3855,6 +3888,43 @@ static int m11_play_dm1_amiga_swsh_if_available(
                 (unsigned int)(sourceSoundDurationMs - elapsed))) {
             goto cleanup;
         }
+    }
+    {
+        uint8_t indexedPalette[256][3] = {{0}};
+        unsigned char* framebuffer = M11_Render_GetFramebuffer();
+        unsigned int color;
+        if (!framebuffer ||
+            DM1_V1_AMIGA_SWSH_WIDTH != M11_FB_WIDTH ||
+            DM1_V1_AMIGA_SWSH_HEIGHT != M11_FB_HEIGHT) {
+            goto cleanup;
+        }
+        for (color = 0u; color < 16u; ++color) {
+            const unsigned int red = palette[color][0] / 17u;
+            const unsigned int green = palette[color][1] / 17u;
+            const unsigned int blue = palette[color][2] / 17u;
+            if (palette[color][0] != red * 17u ||
+                palette[color][1] != green * 17u ||
+                palette[color][2] != blue * 17u) {
+                goto cleanup;
+            }
+            indexedPalette[color][0] = (uint8_t)red;
+            indexedPalette[color][1] = (uint8_t)green;
+            indexedPalette[color][2] = (uint8_t)blue;
+            g_m11_dm1_amiga_swsh_palette[color] =
+                (uint16_t)((red << 8) | (green << 4) | blue);
+        }
+        if (M11_Render_SetIndexedPaletteRgb4(indexedPalette) !=
+                M11_RENDER_OK) {
+            goto cleanup;
+        }
+        memcpy(framebuffer, indexed,
+               (size_t)DM1_V1_AMIGA_SWSH_WIDTH *
+                   DM1_V1_AMIGA_SWSH_HEIGHT);
+        if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                      M11_FB_HEIGHT) != M11_RENDER_OK) {
+            goto cleanup;
+        }
+        g_m11_dm1_amiga_swsh_palette_valid = 1;
     }
     completed = 1;
     if (g_m11_debug_startup_detail) {

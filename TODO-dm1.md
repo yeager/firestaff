@@ -1,24 +1,22 @@
 # Firestaff TODO — DM1
 
-2026-10-13 native Mac mini M4 Amiga title correction: ReDMCSB `TITLE.C`
-`F0437` fades the base palette to PRESENTS, then transitions directly to the
-zoom palette while retaining the existing screen pixels. Firestaff had faded
-back to the base palette and cleared PRESENTS before zooming; both extra steps
-are removed. The authenticated Amiga v2.0 M12 CLI/menu CTest passes and now
-requires exactly three source-phase palette fades. A Cocoa direct launch with
-the same original archive reported the 18-frame title at 484 ms zoom, 500 ms
-hold, 218 ms final fade and 1,632 ms total, with `palette-fades=3`, then reached
-runtime. The renderer reported a native 1920x1018 drawable at 4x game scale.
-This verifies the M4 Cocoa startup timing and handoff; it does not establish
-frame-by-frame visual parity.
+2026-10-13 Amiga A20 F0437 source audit: ReDMCSB `TITLE.C` compiles the
+`MEDIA009`, `MEDIA137` and `MEDIA413` branches for A20. The source performs five
+palette fades (lines 114, 132, 173, 199 and 249), including a dark-blue fade
+and screen clear after PRESENTS before the title zoom. The prior three-fade
+implementation incorrectly skipped that source transition and retained
+PRESENTS under the zoom. Firestaff now carries the authentic final SWSH palette
+and indexed image into F0437, then restores the five-fade order and clears.
+The authentic Mac mini M4 M12 CLI regressions pass for Amiga v2.0 English,
+French and German media, plus English v2.1 and v2.2 media. The v2.0 English
+regression requires five fades and at least 1,320 ms of title timing. Native
+frame-by-frame visual parity remains open.
 
-2026-10-13 pre-correction Amiga A20 F0437 timing baseline on the Mac mini M4,
-source commit `678a2d1e8`: `--debug` reported elapsed time for the 18-step
-zoom, source `Delay(25L)` hold, final palette fade and complete title phase.
-With the authentic Amiga v2.0 archive, the headless M12-to-runtime test
-measured 552 ms, 500 ms, 237 ms and 1,943 ms respectively. Those waits were
-present, but the native M4 run later exposed the extra palette transition and
-screen clear corrected above.
+The earlier three-fade timing baseline (source commit `678a2d1e8`, then
+`4db596e1e`) measured 552 ms for the 18-step zoom, 500 ms for `Delay(25L)`,
+237 ms for the final fade and 1,943 ms overall. Those measurements confirm the
+implemented waits only; the source audit above shows that the 3-fade sequence
+was incomplete and those measurements do not verify A20 fidelity.
 
 2026-10-13 Amiga F0441 door cadence correction on the Mac mini M4: ReDMCSB
 `ENTRANCE.C F0441:233-236` waits two VBlanks after each door blit. Firestaff's
