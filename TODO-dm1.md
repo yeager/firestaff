@@ -128,7 +128,19 @@ native window-close or physical-input behavior.
   confirmed as A22G. The inspection image and its zero-filled track are not
   runtime data. Do not infer A22 German support from the A20 German profile;
   authenticate the complete startup media before adding a profile or claiming
-  A22G support. A36M intentionally
+  A22G support. A read-only UAE-1ADF follow-up records the archive member's
+  CRC-32 `4ccde643` and SHA-256
+  `5abc4f549941eed4e6af48bd52d348212b38b0a17fd3e83609c8aaabc2e4cd73`, and
+  confirms 166 track records beginning at table end offset 2,004. Track record
+  1 is raw MFM with 12,566 bytes and 100,523 valid bits; it contains headers
+  for sectors 1–10, with one of the 11 sectors absent. Any UAE-1ADF intake must
+  retain sector-presence metadata and fail closed when a requested OFS block
+  is missing; zero-filling the absent sector is not acceptable. WinUAE's
+  documented container layout can guide a clean-room bounded parser, but its
+  implementation is GPL-licensed and must not be copied into Firestaff. The
+  remaining admission gate is an exact same-volume A22G pair with independently
+  authenticated `GRAPHICS.DAT`, `Dungeon.dat`, `SWSH` and executable identities.
+  A36M intentionally
   skips F0437: STARTUP1/STARTUP2 enter
   F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash
   now selects the source F0466 decoder, and authentic C002/C003/C004/C005/C011
