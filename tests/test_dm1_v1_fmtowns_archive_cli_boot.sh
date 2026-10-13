@@ -146,21 +146,43 @@ if ("frame=0/20 palette=PRESENTS" not in title_frames[0] or
         "frame=19/20 palette=MASTER" not in title_frames[-1] or
         any("palette=DUNGEON+MASTER" not in line for line in title_frames[1:-1])):
     raise SystemExit("FAIL: FM Towns DM1 title palette phases are missing or reordered")
+title_timing = []
+for line in title_frames:
+    match = re.search(
+        r"frame=(\d+)/20 .*elapsed-ms=(\d+) source-wait-vblanks=(\d+)$",
+        line)
+    if not match:
+        raise SystemExit(f"FAIL: missing FM Towns title frame timing: {line}")
+    title_timing.append(tuple(map(int, match.groups())))
+if ([frame for frame, _, _ in title_timing] != list(range(20)) or
+        [waits for _, _, waits in title_timing] != [1] * 18 + [0, 0]):
+    raise SystemExit(f"FAIL: FM Towns title did not preserve source VBlank cadence: {title_timing}")
+zoom_intervals = [title_timing[i][1] - title_timing[i - 1][1]
+                  for i in range(1, 19)]
+if (any(interval < 12 or interval > 30 for interval in zoom_intervals) or
+        max(zoom_intervals) - min(zoom_intervals) > 12):
+    raise SystemExit(f"FAIL: FM Towns zoom cadence is not stable at 60 Hz: {zoom_intervals}")
+master_transition_ms = title_timing[-1][1] - title_timing[-2][1]
+if not 25 <= master_transition_ms <= 50:
+    raise SystemExit(f"FAIL: FM Towns title skipped its two-VBlank MASTER transition: {master_transition_ms} ms")
 complete = next((line for line in trace if
                  "startup-source-complete game=dm1 platform=fm-towns phase=title " in line), None)
 if complete is None:
     raise SystemExit("FAIL: FM Towns DM1 title did not emit its completion timing")
 timing = re.search(r"frames=(\d+) source-vblanks=(\d+) master-hold-ms=(\d+) elapsed-ms=(\d+)$", complete)
-if not timing or tuple(map(int, timing.groups()))[:3] != (20, 21, 1200) or not 1300 <= int(timing.group(4)) <= 5000:
+if not timing or tuple(map(int, timing.groups()))[:3] != (20, 21, 1200) or not 1500 <= int(timing.group(4)) <= 5000:
     raise SystemExit(f"FAIL: FM Towns DM1 title pacing/hold is out of bounds: {complete}")
+if int(timing.group(4)) - title_timing[-1][1] < 1200:
+    raise SystemExit(f"FAIL: FM Towns MASTER title was replaced before its 1200 ms hold completed: {complete}")
 door_intervals = []
 for line in door_frames[1:]:
     match = re.search(r"frame=\d+/31 interval-ms=(\d+) wait-ms=\d+$", line)
     if not match:
         raise SystemExit(f"FAIL: missing FM Towns entrance frame timing: {line}")
     door_intervals.append(int(match.group(1)))
-if any(interval < 5 or interval > 100 for interval in door_intervals):
-    raise SystemExit(f"FAIL: FM Towns entrance frame cadence is outside 5-100 ms: {door_intervals}")
+if (any(interval < 10 or interval > 30 for interval in door_intervals) or
+        max(door_intervals) - min(door_intervals) > 12):
+    raise SystemExit(f"FAIL: FM Towns entrance frame cadence is not stable at 60 Hz: {door_intervals}")
 print("PASS: authentic DM1 FM Towns M12 reached the first runtime frame")
 print("PASS: authentic DM1 FM Towns title palette, 60 Hz pacing, master hold, and entrance cadence")
 PY

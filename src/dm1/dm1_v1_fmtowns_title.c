@@ -85,8 +85,11 @@ int dm1_v1_fmtowns_title_compose_frame(
 
 unsigned int dm1_v1_fmtowns_title_frame_wait_vblanks(unsigned int frame)
 {
-    return frame >= DM1_FMTOWNS_TITLE_ZOOM_FIRST_FRAME &&
-           frame < DM1_FMTOWNS_TITLE_FINAL_FRAME ? 1u : 0u;
+    /* ReDMCSB TITLE.C:385-400 waits before each zoom blit. Since the
+     * PRESENTS page is already on screen, those 18 waits fall after frame
+     * 0 and after zoom frames 1..17; the last zoom is followed by the two
+     * separate pre-MASTER waits in the host loop. */
+    return frame < DM1_FMTOWNS_TITLE_FINAL_FRAME - 1u ? 1u : 0u;
 }
 
 int dm1_v1_fmtowns_title_palette_for_frame(

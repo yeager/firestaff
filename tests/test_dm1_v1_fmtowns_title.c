@@ -98,7 +98,9 @@ int main(void)
         unsigned int titleFrame;
         unsigned int waits = 0u;
         unsigned int elapsed = 0u;
-        CHECK(dm1_v1_fmtowns_title_frame_wait_vblanks(0u) == 0u);
+        CHECK(dm1_v1_fmtowns_title_frame_wait_vblanks(0u) == 1u);
+        CHECK(dm1_v1_fmtowns_title_frame_wait_vblanks(17u) == 1u);
+        CHECK(dm1_v1_fmtowns_title_frame_wait_vblanks(18u) == 0u);
         CHECK(dm1_v1_fmtowns_title_frame_wait_vblanks(19u) == 0u);
         for (titleFrame = 0u; titleFrame <= 19u; ++titleFrame)
             waits += dm1_v1_fmtowns_title_frame_wait_vblanks(titleFrame);
@@ -110,8 +112,8 @@ int main(void)
             elapsed += delay;
         }
         CHECK(elapsed == 300u);
-        /* TITLE.C's F20 path waits twice before TITLE_MASTER and once after
-         * it.  The presentation loop must retain all three VBlanks. */
+        /* TITLE.C waits twice after the zoom sequence, before TITLE_MASTER,
+         * and once after it. */
         elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 1u);
         elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 2u);
         elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 3u);

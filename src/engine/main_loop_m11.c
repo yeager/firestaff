@@ -4842,13 +4842,15 @@ static int m11_play_dm1_fmtowns_title_if_available(
      * receipt-bound compositor for M11 as well, so the PRESENTS strip and
      * final TITLE_MASTER cannot diverge from the exact P3 plan verified in
      * dm1_v1_fmtowns_title.c.  EDM.EXP +0xc3f0 first flips PRESENTS by
-     * itself; +0xc563 then waits once per prepared zoom bitmap. PRESENTS
-     * and TITLE_MASTER do not add another per-frame wait. Cumulative 60 Hz
-     * deadlines avoid the drift from rounding every blank to 17 ms.
+     * itself; +0xc563 waits once before each prepared zoom bitmap. The host
+     * records each blank after the preceding presentation, including the
+     * PRESENTS-to-zoom boundary. Cumulative 60 Hz deadlines avoid the drift
+     * from rounding every blank to 17 ms.
      */
-    /* STARTEND/TITLE.C's F20 branch displays PRESENTS, then the eighteen
-     * reverse-order zoom bitmaps.  It does not put TITLE_MASTER on screen
-     * immediately after the final zoom: it waits two VBlanks first, blits
+    /* STARTEND/TITLE.C's F20 branch displays PRESENTS, then waits before
+     * each of the eighteen reverse-order zoom bitmaps. It does not put
+     * TITLE_MASTER on screen immediately after the final zoom: it waits two
+     * VBlanks first, blits
      * MASTER, then holds that page for one final VBlank.  Keeping MASTER in
      * the loop used to reverse that boundary (and omit the final hold),
      * making the transition visibly premature on a real-time host. */

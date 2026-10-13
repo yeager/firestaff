@@ -35,9 +35,8 @@ int dm1_v1_fmtowns_title_compose_frame(
     const uint8_t *title_pixels, uint16_t title_width, uint16_t title_height,
     unsigned int frame, uint8_t *out_pixels, size_t out_capacity);
 
-/* EDM.EXP waits one 60 Hz VBlank after each of the 18 zoom frames only.
- * PRESENTS is flipped immediately before DO_TITLE_ANIMATION and TITLE_MASTER
- * is followed by its separate two-VBlank return guard. */
+/* TITLE.C waits one 60 Hz VBlank between PRESENTS and each of the 18 zoom
+ * blits, then two more before TITLE_MASTER and one after it. */
 unsigned int dm1_v1_fmtowns_title_frame_wait_vblanks(unsigned int frame);
 
 /* Return the palette active for one title frame.  FM Towns installs both

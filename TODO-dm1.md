@@ -218,6 +218,18 @@ native window-close or physical-input behavior.
   reported pacing concern open until a native M4 run is reviewed against the
   original sequence rather than extending the title with an unverified delay.
 
+  2026-10-13 source-order correction: ReDMCSB `TITLE.C:385-400` waits before
+  each of the 18 zoom blits, then twice before `TITLE_MASTER` and once after
+  it. Firestaff had placed the loop waits after zoom frames 1-18, which skipped
+  the VBlank between `PRESENTS` and the first zoom and added an extra VBlank
+  after the final zoom. The wait helper now places 18 waits after frame 0-17,
+  preserving the source's 18 zoom intervals and two-VBlank MASTER transition;
+  the final MASTER VBlank remains separate. The focused title unit test passes
+  with Xcode 26.5's SDK, and the real-media test script passes shell syntax.
+  A native M4 run of this exact revision is still required to verify the
+  reported on-screen pacing; the additional 1,200 ms MASTER hold remains a
+  host readability choice beyond the source's 350 ms of waits.
+
 - Continue reducing M12 idle CPU cost if it can be done without losing frame
   rate, animation or input response. The shared loop now counts the whole
   16 ms frame period, including VSync present, and the 1920x1080 backdrop is
