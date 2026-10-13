@@ -157,7 +157,14 @@ has no legal/documented PACK decoder and remains unsupported.
   external library is available; it does not provide a standalone PACK codec
   for Firestaff. Neither `disk-analyse` nor a CAPS image library was found in
   the current development environment. Do not add that dependency to the
-  Firestaff runtime. See the [disk-utilities build requirements](https://github.com/keirf/disk-utilities#ipf--ct-raw-support-the-capssps-ipf-support-library).
+  Firestaff runtime. A follow-up check on 2026-10-13 also found no local
+  `disk-analyse`, `capsimage` or `capsimg` executable. The SPS Decoder Library
+  v5.1 source distribution describes itself as non-free and points to its
+  license, so do not use it as a development oracle unless its terms have been
+  confirmed for that use; pursue an independently licensed decoder or
+  documented PACK specification otherwise. See the [disk-utilities build
+  requirements](https://github.com/keirf/disk-utilities#ipf--ct-raw-support-the-capssps-ipf-support-library)
+  and [SPS Decoder Library source notice](https://github.com/simonowen/capsimage#readme).
   Any decoder acceptance run must compare reconstructed files against the
   existing original-media hashes in `data/asset_validator_checksums_m12.json`
   and `parity-evidence/csb_v1_l10n_source_catalog.md`.
