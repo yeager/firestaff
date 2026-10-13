@@ -8,6 +8,16 @@ CLI/start-menu regressions all passed (`dm2_v1_dos_native_cli_boot`,
 SDL dummy video/audio drivers and do not verify native-window parity,
 physical input or audible output.
 
+2026-10-13 current-source M4 regression: after rebuilding commit `8095a2f00`,
+`dm2_v1_fmtowns_native_cli_boot` passed against the complete original mixed-
+edition DM2 collection in 346.77 seconds. The bare `--game dm2` route again
+selected the authenticated FM Towns package despite competing DOS, Amiga and
+Macintosh editions and saved PC preference, completed the original 225-frame
+title, reached New Game and a loaded one-champion runtime. The normal
+pointer-driven M12 path passed in the same test. SDL dummy video/audio were
+used, so this does not verify native M4 window presentation, physical input,
+or audible output.
+
 2026-10-13 local startup matrix on the Mac mini M4 host, source commit
 `22bc77676`: the locally built binary passed authentic DOS English, DOS French,
 Macintosh, Amiga and FM Towns CLI/start-menu regressions
