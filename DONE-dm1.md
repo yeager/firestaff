@@ -61,8 +61,11 @@
   at C12's white value during zoom; the source-combined zoom/master palette
   now makes it red from the first zoom frame. The authenticated English and
   Japanese FM Towns startup/palette tests and the title-frame selection test
-  pass with original media. Native M4 capture of a zoom frame after this fix
-  remains open in `TODO-dm1.md`.
+  pass with original media. A native Cocoa capture on the Mac mini M4 froze
+  original-media zoom frame 10/20 after its debug receipt; the corrected red
+  title details are visible. The connected display reports 1920x1080, so this
+  does not verify Retina/HiDPI output. See
+  `parity-evidence/dm1_fmtowns_title_zoom_m4_20261013.md` and its capture.
 
 - 2026-10-13: On a Mac mini M4, a native Cocoa run of the current main build
   with bare `--game dm1 --debug` selected the hash-matched English FM Towns

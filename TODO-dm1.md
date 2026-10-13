@@ -160,16 +160,13 @@ native window-close or physical-input behavior.
   the ordinary M12-to-runtime route. Cross-desktop HiDPI and live
   renderer/event-fault coverage remain open.
 
-- Re-capture the FM Towns title zoom on M4 after the source-locked palette fix.
-  ReDMCSB `TITLE.C:362-367` installs C13_DUNGEON and C14_MASTER together before
-  zoom presentation; Firestaff previously used the C13-only palette and left
-  index 15 white. The combined original-media palette path now passes English
-  and Japanese startup tests plus frame-stage selection checks. The existing
-  M4 screen grab has no frame receipt and only shows the settled red MASTER
-  palette, so it cannot verify the corrected zoom colors or HiDPI output. The
-  same M4 trace measured 1,617 ms for title including a 1,200 ms host hold;
-  original F20 source waits total 350 ms through the MASTER frame. Keep user-
-  reported pacing concerns open until a native M4 run is reviewed against the
+- The FM Towns title zoom palette correction has been visually checked on a
+  Mac mini M4: native Cocoa capture at source frame 10/20 shows the red title
+  details with the combined C13_DUNGEON/C14_MASTER palette. The connected
+  display reports 1920x1080, so Retina/HiDPI scaling remains unverified. The
+  native trace measures 1,622 ms for the title including a 1,200 ms host hold;
+  original F20 source waits total 350 ms through the MASTER frame. Keep the
+  reported pacing concern open until a native M4 run is reviewed against the
   original sequence rather than extending the title with an unverified delay.
 
 - Continue reducing M12 idle CPU cost if it can be done without losing frame
