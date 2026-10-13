@@ -139,6 +139,11 @@
   field, but `M11_GameView_StartFromMenu` does not consume it. No patch-set
   semantics were found in the current documentation. Define the supported
   changes per original edition before implementing or advertising PATCHED.
+  2026-10-13 correction: the menu now marks PATCH as UNAVAILABLE, ignores
+  pointer/keyboard cycling, and clears stale legacy `use_patch` values from
+  the launch intent. The TOML/JSON field remains readable for compatibility.
+  Source-backed patch definitions and runtime application are still open;
+  this prevents a false PATCHED claim but does not implement patch support.
 
 - Publish the verified Windows DLL bundle in the next explicitly requested
   release. The isolated Windows runtime test passed in hosted CI run

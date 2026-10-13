@@ -2397,7 +2397,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     const char* verLabel = ver ? (ver->shortLabel ? ver->shortLabel
                                                    : (ver->label ? ver->label : "-"))
                                 : "-";
-    const char* patchLabel = opts->usePatch ? "PATCHED" : "ORIGINAL";
+    const char* patchLabel = "UNAVAILABLE";
     const char* langLabel  = M12_StartupMenu_GetLanguageName(opts->languageIndex);
     if (!langLabel) langLabel = "ENGLISH";
     const char* cheatsLabel = opts->cheatsEnabled ? "ON" : "OFF";
@@ -2471,7 +2471,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
                        M12_Architecture_Label(opts->architectureIndex),
                        sel == M12_GAME_OPT_ROW_ARCHITECTURE, 0);
         draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "PATCH", patchLabel,
-                       sel == M12_GAME_OPT_ROW_PATCH, 0);
+                       sel == M12_GAME_OPT_ROW_PATCH, 1);
         draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "LANGUAGE", langLabel,
                        sel == M12_GAME_OPT_ROW_LANGUAGE, 0);
 
@@ -2820,7 +2820,7 @@ static void draw_sparse_view_modern(M12_ModernCanvas* c, const M12_StartupMenuSt
                                           520,
                                           110,
                                           entry->title,
-                                          state->gameOptions[state->selectedIndex < 3 ? state->selectedIndex : 0].usePatch ? "PATCH  PATCHED" : "PATCH  ORIGINAL",
+                                          "PATCH  UNAVAILABLE",
                                           "ENTER LAUNCH   ESC BACK",
                                           rgb(240, 240, 240));
             break;

@@ -812,8 +812,7 @@ static void emit_settings_view(const M12_StartupMenuState* state,
 
 /* Game-options view: just expose the row labels so a screen reader
  * can announce them as the user tabs. */
-static void emit_game_options_view(const M12_StartupMenuState* state,
-                                   int fbW, int fbH)
+static void emit_game_options_view(int fbW, int fbH)
 {
     static const char* rowIds[] = {
         "GAME_OPT_PRESENTATION",
@@ -826,17 +825,22 @@ static void emit_game_options_view(const M12_StartupMenuState* state,
         "GAME_OPT_RESOLUTION"
     };
     static const char* rowLabels[] = {
-        "Presentation", "Version", "Patch", "Language",
+        "Presentation", "Version", "Patch (unavailable)", "Language",
         "Cheats", "Speed", "Aspect Ratio", "Resolution"
     };
     int i;
     int rowY = 76;
     int count = (int)(sizeof(rowIds) / sizeof(rowIds[0]));
-    (void)state;
     for (i = 0; i < count; ++i) {
         AxRect base = { 122, rowY, 180, 24 };
+        const int patchUnavailable = i == M12_GAME_OPT_ROW_PATCH;
+        const char* value = NULL;
+        if (patchUnavailable) {
+            value = "UNAVAILABLE";
+        }
         add_element_rect(fbW, fbH, rowIds[i], rowLabels[i],
-                         FS_AX_LAUNCHER_ROW, base, 1, NULL);
+                         FS_AX_LAUNCHER_ROW, base,
+                         patchUnavailable ? 0 : 1, value);
         rowY += 24;
     }
 }
@@ -1305,7 +1309,7 @@ void m12_launcher_a11y_emit(const M12_StartupMenuState* state,
         emit_settings_view(state, framebufferWidth, framebufferHeight, includePaths);
         break;
     case M12_MENU_VIEW_GAME_OPTIONS:
-        emit_game_options_view(state, framebufferWidth, framebufferHeight);
+        emit_game_options_view(framebufferWidth, framebufferHeight);
         break;
     case M12_MENU_VIEW_BESTIARY:
         emit_bestiary_view(state, framebufferWidth, framebufferHeight);

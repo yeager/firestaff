@@ -623,7 +623,7 @@ int main(void) {
     state.gameOptSelectedRow = M12_GAME_OPT_ROW_VERSION;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);  /* version: 0 -> 1 */
     state.gameOptSelectedRow = M12_GAME_OPT_ROW_PATCH;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* patch: ORIGINAL -> PATCHED */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* unavailable without source semantics */
     state.gameOptSelectedRow = M12_GAME_OPT_ROW_LANGUAGE;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* EN -> SV */
     state.gameOptSelectedRow = M12_GAME_OPT_ROW_CHEATS;
@@ -683,7 +683,7 @@ int main(void) {
                      strcmp(reloaded.settings.customDungeonPath, "/tmp/firestaff-dungeons") == 0 &&
                      strcmp(reloaded.settings.screenshotPath, "/tmp/firestaff-shots") == 0 &&
                      reloaded.gameOptions[0].versionIndex == 1 &&
-                     reloaded.gameOptions[0].usePatch == 1 &&
+                     reloaded.gameOptions[0].usePatch == 0 &&
                      reloaded.gameOptions[0].languageIndex == 1 &&
                      reloaded.gameOptions[0].cheatsEnabled == 1 &&
                      reloaded.gameOptions[0].gameSpeed == 2 &&
@@ -724,9 +724,10 @@ int main(void) {
                      file_contains(configPath, "custom_music_path = \"/tmp/firestaff-music\"") &&
                      file_contains(configPath, "custom_dungeon_path = \"/tmp/firestaff-dungeons\"") &&
                      file_contains(configPath, "screenshot_path = \"/tmp/firestaff-shots\"") &&
+                     file_contains(configPath, "game_0_use_patch = 0") &&
                      file_contains(configPath, "game_4_language_index = 2") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, smooth turn-pan, per-game language, session timer, and QoL/start-menu extras");
+                 "settings persist without cross-game bleed, and unavailable Patch is not saved as active");
 
     reloaded.view = M12_MENU_VIEW_SETTINGS;
     reloaded.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_EXPORT;

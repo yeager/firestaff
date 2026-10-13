@@ -251,9 +251,9 @@ int main(void) {
                 state.launchRequested == 0,
                 "Custom card should open detailed options without launching")) return 1;
 
-    /* The rendered game-options grid has independent tiles.  These checks
-     * prevent a broad row hit target from silently routing Patch/Language
-     * clicks into Version, which made visible DM1 controls appear dead. */
+    /* The rendered game-options grid has independent tiles. Patch remains a
+     * visible, disabled row until an original-edition patch set has verified
+     * semantics; Language remains an active independent control. */
     hit = M12_ModernMenu_HitTest(&state, gameTileX + 2 * (gameTileW + 16) + gameTileW / 2,
                                  gameTileY + 32);
     if (!expect(hit.kind == M12_HIT_GAMEOPT_CYCLE &&
@@ -263,8 +263,11 @@ int main(void) {
     changed = M12_ModernMenu_HandlePointer(
         &state, gameTileX + 2 * (gameTileW + 16) + gameTileW / 2,
         gameTileY + 32, 1, NULL);
-    if (!expect(changed == 1 && state.gameOptions[0].usePatch == 1,
-                "Patch tile click should change the selected game option")) return 1;
+    if (!expect(changed == 1 && state.gameOptions[0].usePatch == 0,
+                "unavailable Patch tile must not claim a runtime change")) return 1;
+    /* Simulate a legacy config containing use_patch=1. It must not leak into
+     * a new launch receipt as if a patch had actually been applied. */
+    state.gameOptions[0].usePatch = 1;
     hit = M12_ModernMenu_HitTest(&state, gameTileX + 3 * (gameTileW + 16) + gameTileW / 2,
                                  gameTileY + 32);
     if (!expect(hit.kind == M12_HIT_GAMEOPT_CYCLE &&
@@ -288,6 +291,11 @@ int main(void) {
     if (!expect(changed == 1, "Launch direct click should be applied")) return 1;
     if (!expect(state.launchRequested == 1, "Launch direct click should request launch")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "Launch direct click should show ready-to-launch message")) return 1;
+    {
+        const M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid && intent.options.usePatch == 0,
+                    "legacy Patch setting must not reach the launch intent")) return 1;
+    }
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     while (state.view == M12_MENU_VIEW_MESSAGE) {

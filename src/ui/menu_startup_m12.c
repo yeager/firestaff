@@ -464,7 +464,6 @@ static const M12_ResolutionSize g_resolutionSizes[M12_RES_COUNT] = {
     {3200, 2000},
     {3840, 2160}
 };
-static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 /* UI language cycle.  Order = display order in the LANGUAGE row.
  * Codes are also used to resolve `po/startup-menu.<code>.po` at runtime.
  * Codes match the second column of the dm1.<lang>.po locale list.
@@ -726,7 +725,10 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
         case M12_GAME_OPT_ROW_VERSION:
             break;
         case M12_GAME_OPT_ROW_PATCH:
-            opts->usePatch = m12_cycle_index(opts->usePatch, delta, 2);
+            /* No source-backed patch set is defined for the supported game
+             * editions yet. Keep legacy config readable, but do not let the
+             * menu claim that runtime behavior changed when it did not. */
+            (void)delta;
             break;
         case M12_GAME_OPT_ROW_LANGUAGE:
             opts->languageIndex = m12_cycle_index(opts->languageIndex,
@@ -10998,7 +11000,7 @@ static void m12_draw_sparse_game_options_view(const M12_StartupMenuState* state,
                                      framebufferHeight, entry);
         return;
     }
-    snprintf(line2, sizeof(line2), "PATCH  %s", state->gameOptions[m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT)].usePatch ? "PATCHED" : "ORIGINAL");
+    snprintf(line2, sizeof(line2), "PATCH  %s", m12_tr(state, "UNAVAILABLE"));
     m12_draw_sparse_center_box(framebuffer,
                                framebufferWidth,
                                framebufferHeight,
@@ -13163,9 +13165,9 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           rowY,
                           panelW - 20,
                           m12_tr(state, "PATCH"),
-                          m12_tr(state, g_patchModes[opts->usePatch]),
+                          m12_tr(state, "UNAVAILABLE"),
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_PATCH,
-                          0,
+                          1,
                           0,
                           0);
     rowY += 32;
@@ -14716,6 +14718,10 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         state->settings.artpackPath : NULL;
     intent.options.versionIndex = selectedVersionIndex;
     intent.options.presentationModeIndex = pmode;
+    /* Older config files may contain use_patch=1 from the placeholder menu
+     * toggle. No original-edition patch set is implemented, so a launch
+     * receipt must not propagate that stale value as if it were active. */
+    intent.options.usePatch = 0;
     if (state->quickResumeAvailable &&
         state->quickResumeLaunchRequested &&
         state->quickResumeSavePath[0] != '\0' &&
