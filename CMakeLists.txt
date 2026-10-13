@@ -179,6 +179,21 @@ if(BUILD_TESTING)
     add_test(NAME amiga_mfm_scan COMMAND test_amiga_mfm_scan)
     set_tests_properties(amiga_mfm_scan PROPERTIES
         LABELS "amiga;mfm;synthetic-codec-roundtrip;no-media-substitution")
+
+    add_executable(test_firestaff_amiga_uae1adf_real_media
+        tests/test_firestaff_amiga_uae1adf_real_media.c
+        src/shared/firestaff_amiga_adf.c
+        src/shared/firestaff_amiga_mfm.c)
+    target_include_directories(test_firestaff_amiga_uae1adf_real_media PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_firestaff_amiga_uae1adf_real_media PRIVATE
+        firestaff_m12)
+    add_test(NAME test_firestaff_amiga_uae1adf_real_media
+        COMMAND test_firestaff_amiga_uae1adf_real_media)
+    set_tests_properties(test_firestaff_amiga_uae1adf_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_SOFTWARE_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,Amiga,Software.7z"
+        LABELS "dm1;amiga;uae1adf;real-media;in-memory;skip-safe")
 endif()
 
 if(BUILD_TESTING)
@@ -6913,7 +6928,8 @@ if(DM2_SOURCES)
         # archive as the LZX admission code rather than relying on M11's
         # unrelated ADF consumer to satisfy a link by accident.
         src/dm2/dm2_v1_amiga_lzx.c
-        src/shared/firestaff_amiga_adf.c)
+        src/shared/firestaff_amiga_adf.c
+        src/shared/firestaff_amiga_mfm.c)
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     # dm2_v1_sound_sdl_backend.c (DM2-008 cycle 16) is the concrete SDL3
     # playback backend; propagate SDL3 headers/symbols to every consumer.
@@ -7342,6 +7358,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_amiga_title_f0437.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
     src/csb/csb_v1_fmtowns_switch.c
@@ -56035,6 +56052,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_new_game.c
         src/shared/fs_portable_compat.c
         src/shared/firestaff_amiga_adf.c
+        src/shared/firestaff_amiga_mfm.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_glob_var.c
@@ -60632,6 +60650,7 @@ add_executable(test_dm2_v1_amiga_lzx_real_media
     src/dm2/dm2_v1_amiga_cd_dat.c
     src/dm2/dm2_v1_fmtowns_anim_stream.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
 )
 target_include_directories(test_dm2_v1_amiga_lzx_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm2_v1_amiga_lzx_real_media PRIVATE firestaff_zip_extract)
@@ -62134,6 +62153,7 @@ add_executable(test_dm1_v1_amiga_graphics_dat
     src/dm1/dm1_v1_fmtowns_dungeon_dat.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
 )
 target_include_directories(test_dm1_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_amiga_graphics_dat PRIVATE
@@ -62150,6 +62170,7 @@ add_executable(test_dm1_v1_amiga_title_f0437_real_media
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
 )
 target_include_directories(test_dm1_v1_amiga_title_f0437_real_media PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -62170,6 +62191,7 @@ add_executable(test_dm1_v1_amiga_entrance_f0441_real_media
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
 )
 # The paired CLI/M12 regression uses the app binary; rebuilding only this
 # receipt target must also relink that binary against the current M11 route.
@@ -62193,6 +62215,7 @@ add_executable(test_dm1_v1_amiga20_french_startup_real_media
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
 )
 target_include_directories(test_dm1_v1_amiga20_french_startup_real_media PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -62224,6 +62247,7 @@ add_executable(test_csb_v1_amiga_graphics_dat
     src/csb/csb_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
 )
 target_include_directories(test_csb_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_amiga_graphics_dat PRIVATE firestaff_zip_extract)
@@ -62237,6 +62261,7 @@ add_executable(test_csb_v1_amiga_runtime_graphics_archive
     src/csb/csb_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
 )
 target_include_directories(test_csb_v1_amiga_runtime_graphics_archive PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -62504,7 +62529,8 @@ foreach(_firestaff_target IN LISTS _firestaff_build_targets)
         if(_firestaff_has_dm2_boot GREATER -1 AND _firestaff_has_dm2_lzx EQUAL -1)
             target_sources("${_firestaff_target}" PRIVATE
                 src/dm2/dm2_v1_amiga_lzx.c
-                src/shared/firestaff_amiga_adf.c)
+                src/shared/firestaff_amiga_adf.c
+                src/shared/firestaff_amiga_mfm.c)
         endif()
     endif()
 endforeach()

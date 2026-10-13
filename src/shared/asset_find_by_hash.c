@@ -5154,8 +5154,7 @@ static int scan_atari_stx_by_md5_list(const char *stx_path,
 }
 
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
-/* The admitted 7z profile contains one LZMA2-compressed Atari disk image.
- * Keep both archive and disk traversal in process: the returned virtual path
+/* Keep supported nested disk traversal in process: the returned virtual path
  * names the original archive/member/file triple and no game-data file is
  * materialized on disk. */
 static int native_7z_copy_nested_virtual_match_path(
@@ -5228,6 +5227,20 @@ static int native_7z_member_md5_visitor(const char *name,
                                 (int)sizeof(candidate))) {
         native_7z_record_candidate(match, candidate);
     }
+    if (is_adf_path(name)) {
+        AdfSingleMatch nested;
+        int visit_result;
+        memset(&nested, 0, sizeof(nested));
+        nested.expected_md5 = match->expected_md5;
+        visit_result = firestaff_amiga_adf_visit_ofs_files(
+            bytes, byte_count, adf_find_single_visitor, &nested);
+        if (visit_result >= 0 && nested.found &&
+            native_7z_copy_nested_virtual_match_path(
+                match->archive_path, name, nested.name, candidate,
+                (int)sizeof(candidate))) {
+            native_7z_record_candidate(match, candidate);
+        }
+    }
     if (is_atari_stx_path(name) || is_atari_st_path(name) ||
         is_atari_msa_path(name)) {
         AdfSingleMatch nested;
@@ -5293,6 +5306,24 @@ static int native_7z_member_list_visitor(const char *name,
             matches->matched[index] = 1;
             ++matches->found_count;
         }
+    }
+    if (matches->found_count < matches->md5_count && is_adf_path(name)) {
+        AdfListMatch nested;
+        char disk_path[ASSET_PATH_MAX];
+        int visit_result;
+        if (!copy_virtual_match_path(matches->archive_path, name, disk_path,
+                                     (int)sizeof(disk_path))) {
+            return -1;
+        }
+        memset(&nested, 0, sizeof(nested));
+        nested.container = disk_path;
+        nested.md5_list = matches->md5_list;
+        nested.md5_count = matches->md5_count;
+        nested.out_paths = matches->out_paths;
+        nested.matched = matches->matched;
+        visit_result = firestaff_amiga_adf_visit_ofs_files(
+            bytes, byte_count, adf_find_list_visitor, &nested);
+        if (visit_result >= 0) matches->found_count += nested.found_count;
     }
     if (matches->found_count < matches->md5_count &&
         (is_atari_stx_path(name) || is_atari_st_path(name) ||

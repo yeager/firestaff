@@ -4,8 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Read-only AmigaDOS OFS ADF intake.  This is shared media infrastructure:
- * it deliberately has no CSB-specific filename or hash policy. */
+/* Read-only AmigaDOS OFS disk-image intake. This is shared media
+ * infrastructure: it deliberately has no game-specific filename or hash
+ * policy. */
 typedef int (*FirestaffAmigaAdfFileVisitor)(const char *name,
                                             const uint8_t *bytes,
                                             size_t byte_count,
@@ -19,9 +20,10 @@ typedef int (*FirestaffAmigaAdfFileVisitor)(const char *name,
 #endif
 
 /* Visit every validated root-volume file in a 512-byte-sector AmigaDOS OFS
- * image. Returns the number of delivered files, or -1 for malformed media.
- * DOS\0 (OFS) disks are accepted; FFS payloads are rejected until their
- * raw-block layout has its own audited implementation. */
+ * image. Accepts ordinary DOS\0 sector images and UAE-1ADF containers whose
+ * decoded OFS sectors are present. Missing raw-track sectors remain absent:
+ * any file that references one is rejected. FFS payloads are not supported.
+ * Returns the number of delivered files, or -1 for malformed media. */
 FIRESTAFF_AMIGA_ADF_API int firestaff_amiga_adf_visit_ofs_files(
     const uint8_t *image, size_t image_size,
     FirestaffAmigaAdfFileVisitor visitor, void *user_data);

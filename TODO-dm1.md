@@ -17,6 +17,26 @@ PC 3.4 routes exercised the long native-menu/input and presentation contract;
 the Atari and Amiga routes reached their first runtime handoffs. All used SDL
 dummy video/audio and do not establish native-window parity or audible output.
 
+2026-10-13 UAE-1ADF intake: `firestaff_amiga_adf_visit_ofs_files` now reads
+bounded UAE-1ADF tables, standard 11-sector OFS tracks and raw MFM tracks via
+the shared MFM scanner. Its sector-presence map rejects duplicate sectors and
+never turns the absent A22G sector into a zero-filled filesystem block; file
+headers, extensions and data pointers must resolve to present sectors. The new
+`test_firestaff_amiga_uae1adf_real_media` CTest reads the original A22G member
+directly from the supplied solid 7z and verifies all 12 root files plus the
+original hashes and sizes for `GRAPHICS.DAT`, `Dungeon.dat`, `dm` and `swoosh`.
+It passes on the Mac mini M4. A byte-preserving ZIP transport probe recognizes
+the shared German graphics/dungeon files as `amiga20-de`, then fails its
+runtime handoff because the disk's `swoosh` is the French A20F hash rather than
+the German A20G hash. The disk is still marked “Original (Not working)”; this
+reader does not admit or claim playable A22G support. It establishes safe
+source-file recovery and keeps the edition-authentication gate intact. The
+in-process 7z scanner now examines nested Amiga ADF members and retains
+`archive::disk::file` provenance. A direct scan of the complete preservation
+archive finds its original Amiga graphics and dungeon files but cannot launch
+from the mixed disk set; no runtime-support claim follows from archive
+discovery alone.
+
 2026-10-12 FTL decompression bounds: ReDMCSB `DECOMPDU.C`
 `F0455_FLOPPY_DecompressDungeon` establishes the MSB-first token grammar for
 the shared dungeon stream. The bounded reader now rejects truncated prefixes,
