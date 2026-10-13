@@ -163,6 +163,18 @@ Reviewed 2026-08-29. Only open work is listed here.
   Resume remains separately restored from its serialized clock, RNG, weather
   fields and live-map selector.
 
+  2026-10-14 M4 gate review: the authentic DOS
+  `dm2_v1_m11_startup_profile_gate` passes, but its current assertions still
+  require `caii_rng.random == 0` before and after static CAII materialization
+  (`tests/test_dm2_v1_m11_startup_profile_gate.c`,
+  `dm2_test_caii_storage_is_source_reset_ready` and
+  `dm2_test_static_caii_materialization`). Dynamic CAII scheduling and
+  rollback snapshot that same isolated field. This covers the current handoff,
+  not the source-shared session LCG. The implementation must move these
+  zero-state checks to the source RESET_CAII boundary and include the shared
+  RNG in the weather, arrangement, CAII and timer transaction before fresh
+  weather can be enabled.
+
 2026-10-11 local startup retest: the current source passed authentic FM Towns,
 DOS, Amiga and Macintosh CLI/start-menu regressions
 (`test_dm2_v1_fmtowns_native_cli_boot.sh`,
