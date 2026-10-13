@@ -164,7 +164,7 @@ native window-close or physical-input behavior.
   Mac mini M4: native Cocoa capture at source frame 10/20 shows the red title
   details with the combined C13_DUNGEON/C14_MASTER palette. The connected
   display reports 1920x1080, so Retina/HiDPI scaling remains unverified. The
-  native trace measures 1,622 ms for the title including a 1,200 ms host hold;
+  previous full native trace measured 1,616 ms including a 1,200 ms host hold;
   original F20 source waits total 350 ms through the MASTER frame. Keep the
   reported pacing concern open until a native M4 run is reviewed against the
   original sequence rather than extending the title with an unverified delay.
