@@ -1,3 +1,15 @@
+- 2026-10-13: Re-ran the authentic French Atari ST 1.3
+  `dm1_v1_atari_st_fr_archive_cli_boot` CTest four times (65.26, 65.23,
+  65.18 and 65.19 seconds). All four passed through direct CLI boot, explicit
+  M12 selection, C001 quit, Hall recruitment and first gameplay movement.
+  Current source initializes `menuRequested` to zero and documents the
+  fallback caused by an uninitialized value, a plausible explanation for an
+  earlier no-output incident. The first repository commit is an imported
+  source snapshot, so the historical corrective change cannot be verified;
+  the incident remains open in `TODO-dm1.md`. SDL dummy drivers do not verify
+  physical Atari input or pixel parity. The separate French Atari SND1
+  source-index-1 audio rejection also remains open there.
+
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
   test `dm1_v1_fmtowns_archive_cli_boot` passed on the Mac mini M4 in 240.77
   seconds. It exercises original-media CLI startup, title and entrance flow,

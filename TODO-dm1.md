@@ -383,9 +383,17 @@ native window-close or physical-input behavior.
   Original emulator/input captures and complete all-platform HUD parity
   remain unproven. V2.2 retains its explicitly permitted alternative art.
 
-- Investigate the intermittent no-output early exit of the French Atari
-  original-media test observed on September 6; it did not recur in three
-  isolated repetitions or the full rerun. Do not treat retries as a fix.
+- Confirm the cause of the intermittent no-output early exit in the French
+  Atari original-media test observed on September 6. The current M11 runtime
+  options initializer sets `menuRequested` to zero, and its nearby
+  comment says leaving it uninitialized previously let bare `--game dm1`
+  fall back to M12. This is a plausible match for the old incident, not a
+  verified historical fix: `c61f5aa62` is the repository's imported root
+  snapshot, so Git contains no prior version or corrective diff. Against the
+  authentic French Atari ST 1.3 archive, the current direct CLI/M12/runtime
+  CTest passed four consecutive times on 2026-10-13. Do not conflate this
+  startup issue with the separate French Atari SND1 source-index-1 rejection.
+
 - Verify all VI wound/power combinations; ten-retry exhaustion, individual
   wound bits on alternate UseItem and combined wounds on mouth are covered.
 - Investigate intermittent French Atari SND1 source-index-1 rejection in
