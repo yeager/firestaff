@@ -15,6 +15,17 @@
 
 # Firestaff DONE — CSB
 
+- 2026-10-13: M12 now requires the authenticated A31M/A33M same-package
+  `APPA.FTL` → `ANIM.FTL` → `APPB.FTL` → `KAOS.FTL` startup chain and original
+  `SWSH.FTL` before listing the Amiga 3.1/3.3 edition as playable. Previously,
+  matching `GRAPHICS.DAT` plus `TITL.DAT` let an incomplete package appear
+  available; removing `KAOS.FTL` then left direct startup stalled in the
+  title phase. The real-media `csb_v1_amiga33_loose_folder_cli_boot` passes
+  with the complete original installation and now builds an isolated
+  missing-KAOS copy to assert both M12 discovery and direct CLI reject it.
+  The supplied game data is unchanged. Dummy SDL evidence; no physical-display
+  or audible-output claim.
+
 - 2026-10-13: On the Mac mini M4, the authentic A35E English ADF passed byte-
   preserving ZIP, explicit and AUTO CLI startup, and explicit and AUTO
   production M12 menu routes. Each M12 route reached its first movement with

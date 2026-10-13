@@ -4956,6 +4956,8 @@ static int m12_admit_explicit_dm1_atari_image(M12_AssetStatus* status,
     return 0;
 }
 
+static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath);
+
 /* CSB Amiga 3.1/3.3 shares PC34's GRAPHICS.DAT bytes. Greatstone's original
  * A31E disk catalogue instead identifies the executable presentation package
  * through TITL.DAT. Require both source files from the same outer/inner
@@ -5033,7 +5035,8 @@ static void m12_admit_csb_amiga31_title_package(
                                       graphicsNames[nameIndex])) continue;
                 }
                 if (!m12_path_md5_hex(graphicsPath, md5) ||
-                    strcmp(md5, graphicsMd5) != 0) {
+                    strcmp(md5, graphicsMd5) != 0 ||
+                    !m12_csb_amiga31_startup_media_ready(graphicsPath)) {
                     continue;
                 }
                 status->versions[gameIndex][versionIndex].matched = 1;
@@ -5106,6 +5109,59 @@ static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
     return 0;
 }
 
+/* ReDMCSB COMPILE.H:246-269 binds the A31M/A33M language selector and game
+ * executable to APPB.FTL and the version-specific KAOS.FTL. APPA.C:51-81
+ * reaches APPB through APPA.FTL and ANIM.FTL; APPA also starts the original
+ * SWSH.FTL presentation. A graphics/title match without this complete
+ * same-package handoff can be displayed as installed by M12, then stall in
+ * TITL.DAT before the player can start CSB. */
+static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath) {
+    static const char* const startupLabels[] = {
+        "APPA.FTL", "ANIM.FTL", "APPB.FTL", "KAOS.FTL", "SWSH.FTL", NULL
+    };
+    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* separator;
+    const char* nextSeparator;
+    size_t prefixLength = 0U;
+    size_t index;
+
+    if (!graphicsPath || graphicsPath[0] == '\0') return 0;
+    if (m12_path_is_virtual_asset(graphicsPath)) {
+        separator = strstr(graphicsPath, "::");
+        while (separator &&
+               (nextSeparator = strstr(separator + 2, "::")) != NULL) {
+            separator = nextSeparator;
+        }
+        if (!separator || separator == graphicsPath || separator[2] == '\0') {
+            return 0;
+        }
+        prefixLength = (size_t)(separator - graphicsPath) + 2U;
+    } else if (!FSP_ParentDir(parent, sizeof(parent), graphicsPath)) {
+        return 0;
+    }
+
+    for (index = 0U; startupLabels[index] != NULL; ++index) {
+        char startupPath[ASSET_PATH_MAX];
+        char md5[M12_ASSET_MD5_CAPACITY];
+        if (prefixLength > 0U) {
+            if (snprintf(startupPath, sizeof(startupPath), "%.*s%s",
+                         (int)prefixLength, graphicsPath,
+                         startupLabels[index]) >= (int)sizeof(startupPath)) {
+                return 0;
+            }
+        } else if (!FSP_JoinPath(startupPath, sizeof(startupPath), parent,
+                                 startupLabels[index])) {
+            return 0;
+        }
+        if (!m12_path_md5_hex(startupPath, md5) ||
+            !m12_csb_amiga_sidecar_md5_matches("amiga31-multi",
+                                                startupLabels[index], md5)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void m12_require_csb_amiga31_package_identity(
     M12_AssetStatus* status, int gameIndex) {
     int amigaIndex;
@@ -5120,13 +5176,17 @@ static void m12_require_csb_amiga31_package_identity(
         return;
     }
     amiga = &status->versions[gameIndex][amigaIndex];
-    if (!amiga->matched ||
-        m12_csb_graphics_has_amiga31_title(amiga->matchedPath)) {
+    if (!amiga->matched) {
         return;
     }
-    /* This digest also appears in development/reference corpora.  CSB had
-     * no DOS/Windows release, so graphics bytes alone must never create a
-     * playable catalogue row. Same-package TITL.DAT is the A31M/A33M identity. */
+    if (m12_csb_graphics_has_amiga31_title(amiga->matchedPath) &&
+        m12_csb_amiga31_startup_media_ready(amiga->matchedPath)) {
+        return;
+    }
+    /* These graphics bytes also appear in development/reference corpora.
+     * CSB had no DOS/Windows release, so only a same-package TITL.DAT plus
+     * authenticated APPA/ANIM/APPB/KAOS/SWSH chain is a playable A31M/A33M
+     * catalogue row. */
     amiga->matched = 0;
     amiga->matchedPath[0] = '\0';
     amiga->matchedMd5[0] = '\0';

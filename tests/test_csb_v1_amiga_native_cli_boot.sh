@@ -19,6 +19,53 @@ if [ ! -e "$data_dir" ]; then
     exit 77
 fi
 
+# A31M/A33M availability requires the source-owned APPA -> ANIM -> APPB ->
+# KAOS program chain as well as the title and dungeon data. Rebuild an isolated
+# negative package from real loose original files with KAOS removed; it may not
+# remain a selectable edition or produce a direct-launch receipt. This does
+# not alter or replace the supplied original media.
+if [ -d "$data_dir" ]; then
+    test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+    mkdir -p "$test_scratch"
+    python3 - "$data_dir" "$firestaff_cli" "$test_scratch" <<'PY'
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+source = Path(sys.argv[1])
+app = sys.argv[2]
+scratch = sys.argv[3]
+with tempfile.TemporaryDirectory(prefix="csb-amiga-missing-kaos-",
+                                 dir=scratch) as temp_dir:
+    incomplete = Path(temp_dir) / "amiga33-original"
+    shutil.copytree(source, incomplete,
+                    ignore=shutil.ignore_patterns("KAOS.FTL"))
+    scan = subprocess.run(
+        [app, "--scan-data", "--game", "csb", "--data-dir",
+         str(incomplete), "--debug"],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        check=False)
+    if scan.returncode != 0:
+        raise SystemExit(f"FAIL: CSB missing-KAOS scan exited {scan.returncode}:\n"
+                         f"{scan.stdout}")
+    if "Amiga 3.1/3.3 Multilanguage FOUND" in scan.stdout:
+        raise SystemExit("FAIL: M12 still lists A31M/A33M without original KAOS.FTL")
+    launch = subprocess.run(
+        [app, "--game", "csb", "--platform", "amiga", "--data-dir",
+         str(incomplete), "--boot-probe", "--duration", "0"],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        check=False)
+    if (launch.returncode == 0 or "CSB READY:" in launch.stdout or
+            "FIRESTAFF BOOT PROBE READY:" in launch.stdout):
+        raise SystemExit("FAIL: direct CSB CLI accepted Amiga media without "
+                         f"original KAOS.FTL:\n{launch.stdout}")
+    print("PASS: M12 and direct CSB launch reject original A31M/A33M "
+          "media missing KAOS.FTL")
+PY
+fi
+
 # The scanner remains the only authority on the selected original package;
 # this test supplies neither fixture bytes nor a substitute PC34 asset.
 # A31M/A33M takes APPA.C -> ANIM.C's TITL.DAT phase before APPB selects the
