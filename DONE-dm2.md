@@ -1,3 +1,10 @@
+- 2026-10-13: On the Mac mini M4, the authentic FM Towns startup test
+  `dm2_v1_fmtowns_native_cli_boot` passed in 350.66 seconds with multiple DM2
+  editions installed. Bare `--game dm2` selected the FM Towns default, the
+  original title flow reached New Game, and a presented frame matched the
+  original disc's `TITLE/0/4` RGB source. This headless check does not verify
+  physical display output.
+
 - 2026-10-11: Fixed the FM Towns active-hero HUD route. The squad and selected
   hand-action plan remains active for valid `curacthero` values; M11 also crops
   the selected hero's exact facing frame from `INTERFACE_GENERAL/6/<hero>` and

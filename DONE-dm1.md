@@ -1,3 +1,9 @@
+- 2026-10-13: On the Mac mini M4, the authentic FM Towns archive startup test
+  `dm1_v1_fmtowns_archive_cli_boot` passed in 240.89 seconds. It exercises
+  original-media CLI startup, title and entrance flow, menu selection, and
+  movement assertions; this headless CTest result does not verify physical
+  display output.
+
 - 2026-10-11: Made the issue #13 mixed-edition case unconditional in the
   authentic PC 3.4 CTest path when the Atari ST v1.2 archive is staged. The
   existing STX reader exports the original Atari `DUNGEON.DAT` for the

@@ -1,3 +1,8 @@
+- 2026-10-13: On the Mac mini M4, `csb_v1_fmtowns_native_cli_boot` passed in
+  114.79 seconds against the authentic FM Towns archive. This headless test
+  covers original-media startup, menu, audio routing, and game-start
+  assertions; it does not verify physical display output or audible speakers.
+
 - 2026-10-11: Rebuilt the current macOS source and passed
   `test_csb_v1_fmtowns_native_cli_boot.sh` against the authentic English
   FM Towns archive. Direct CLI and AUTO both retained the F31 `TITLE.ANM`
