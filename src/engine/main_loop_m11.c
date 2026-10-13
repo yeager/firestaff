@@ -2093,8 +2093,29 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
 static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
 static int g_m11_debug_startup_detail = 0;
+static Uint32 g_m11_phase_duration_started_ms;
+static int g_m11_phase_duration_ms = -1;
+static int g_m11_phase_duration_expired;
 static uint16_t g_m11_dm1_amiga_swsh_palette[16];
 static int g_m11_dm1_amiga_swsh_palette_valid = 0;
+
+int M11_RunDurationHasElapsed(int durationMs,
+                              uint32_t startedAtMs,
+                              uint32_t nowMs) {
+    if (durationMs < 0) return 0;
+    return (uint32_t)(nowMs - startedAtMs) >= (uint32_t)durationMs;
+}
+
+static int m11_phase_duration_expired(void) {
+    if (g_m11_phase_duration_expired) return 1;
+    if (M11_RunDurationHasElapsed(g_m11_phase_duration_ms,
+                                  g_m11_phase_duration_started_ms,
+                                  (Uint32)SDL_GetTicks())) {
+        g_m11_phase_duration_expired = 1;
+        return 1;
+    }
+    return 0;
+}
 
 static int m11_process_cpu_seconds(double* seconds) {
     if (!seconds) return 0;
@@ -2190,6 +2211,7 @@ static int m11_intro_wait_for_focus_impl(void) {
                                     M11_GAME_PAUSE_REASON_FOCUS, 1);
     while (!(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS)) {
         /* Pump quit/resize while suspended; no source animation advances. */
+        if (m11_phase_duration_expired()) { quit = 1; break; }
         if (M11_Render_PumpEvents()) { quit = 1; break; }
         SDL_Delay(10U);
         SDL_PumpEvents();
@@ -3040,6 +3062,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
     started = m11_intro_active_ticks();
 
     for (;;) {
+        if (m11_phase_duration_expired()) return M11_ENTRANCE_COMMAND_QUIT;
         if (m11_intro_wait_for_focus()) return M11_ENTRANCE_COMMAND_QUIT;
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -3188,6 +3211,7 @@ static void m11_swsh_unpack_4bpp_to_indexed(const unsigned char* packed,
 
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     Uint64 start;
+    if (m11_phase_duration_expired()) return 1;
     if (m11_intro_wait_for_focus()) return 1;
     if (g_m11_intro_delay_fast_forward) {
         return M11_Render_PumpEvents();
@@ -3199,7 +3223,7 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     while ((m11_intro_active_ticks() - start) < (Uint64)delayMs) {
         Uint64 elapsed;
         unsigned int remaining;
-        if (m11_intro_wait_for_focus()) return 1;
+        if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) return 1;
         if (M11_Render_PumpEvents()) {
             return 1;
         }
@@ -3222,7 +3246,7 @@ static int m11_wait_for_intro_active_tick(Uint64 deadlineMs) {
     for (;;) {
         Uint64 nowMs;
         unsigned int remainingMs;
-        if (m11_intro_wait_for_focus()) return 1;
+        if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) return 1;
         if (M11_Render_PumpEvents()) return 1;
         nowMs = m11_intro_active_ticks();
         if (nowMs >= deadlineMs) return 0;
@@ -5650,6 +5674,16 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     g_m11_intro_paused_ms = 0U;
     result = m11_open_requested_launch_impl(gameView, menuState,
                                             idleAccumulatorMs, dataDir, bootProbe);
+    /* Source-faithful title and entrance helpers may run synchronously before
+     * the main frame loop. A finite CLI duration still owns that run budget;
+     * turn its expiry into a clean process exit rather than a launch error. */
+    if (g_m11_phase_duration_expired) {
+        if (menuState) {
+            menuState->launchRequested = 0;
+            menuState->shouldExit = 1;
+        }
+        result = 1;
+    }
     g_m11_intro_menu = previousMenu;
     g_m11_intro_game_view = previousView;
     g_m11_intro_local_audio = previousAudio;
@@ -9228,6 +9262,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_PhaseA_Options runtimeOptions;
     const M11_PhaseA_Options* o;
     M11_DebugStartupTrace debugStartupTrace = {0};
+    g_m11_phase_duration_ms = -1;
+    g_m11_phase_duration_started_ms = 0U;
+    g_m11_phase_duration_expired = 0;
     runtimeOptions = opts ? *opts : defaults;
     g_m11_debug_startup_detail = 0;
     /* Keep the public options boundary consistent with the CLI parser:
@@ -9751,7 +9788,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     Uint64 start = SDL_GetTicks();
     Uint64 now = start;
     Uint64 lastLoopTick = start;
-    const Uint64 duration = (Uint64)(o->durationMs < 0 ? 0 : o->durationMs);
     const Uint64 interval = (Uint64)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
@@ -9760,12 +9796,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     Uint32 start = SDL_GetTicks();
     Uint32 now = start;
     Uint32 lastLoopTick = start;
-    const Uint32 duration = (Uint32)(o->durationMs < 0 ? 0 : o->durationMs);
     const Uint32 interval = (Uint32)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
     Uint32 gameTickInterval = 200; /* DM1 V1 authentic PAL: 10 VBlanks * 20ms = 200ms (VBLANK.C:F0577, GAMELOOP.C:F0002) */
 #endif
+    /* --boot-probe has its own frame-bounded terminal contract and commonly
+     * uses --duration 0 to avoid the interactive loop. Keep that probe budget
+     * independent from the normal presentation deadline. */
+    g_m11_phase_duration_ms = o->bootProbe ? -1 : o->durationMs;
+    g_m11_phase_duration_started_ms = (Uint32)start;
+    g_m11_phase_duration_expired = 0;
 
     /* Always present at least once so the window actually has content. */
     if (o->directLaunch && !quitRequested && !o->csbHintOracle) {
@@ -10243,7 +10284,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         m11_process_cpu_seconds(&perfCpuWindowStart);
 
     while (!quitRequested && !menuState.shouldExit &&
-           (o->durationMs < 0 || (now - start) < duration)) {
+           !M11_RunDurationHasElapsed(o->durationMs, (Uint32)start,
+                                     (Uint32)now)) {
         const Uint32 loopStartMs = (Uint32)SDL_GetTicks();
         if (o->debug) ++perfLoopCount;
         M12_MenuInput input = M12_MENU_INPUT_NONE;
@@ -10835,6 +10877,8 @@ cleanup:
         free(modernRgba);
     }
     M11_Render_Shutdown();
+    g_m11_phase_duration_ms = -1;
+    g_m11_phase_duration_expired = 0;
     return runRc;
 
 boot_probe_terminal_exit:
@@ -10867,5 +10911,7 @@ boot_probe_terminal_exit:
     if (modernRgba) {
         free(modernRgba);
     }
+    g_m11_phase_duration_ms = -1;
+    g_m11_phase_duration_expired = 0;
     return runRc;
 }

@@ -20,6 +20,18 @@ static int expect_eq(const char* name, int got, int want) {
 int main(void) {
     int ok = 1;
 
+    ok &= expect_eq("unbounded_run_duration_never_expires",
+                    M11_RunDurationHasElapsed(-1, 10U, 0U), 0);
+    ok &= expect_eq("zero_run_duration_expires_immediately",
+                    M11_RunDurationHasElapsed(0, 10U, 10U), 1);
+    ok &= expect_eq("finite_run_duration_before_deadline",
+                    M11_RunDurationHasElapsed(10, 100U, 109U), 0);
+    ok &= expect_eq("finite_run_duration_at_deadline",
+                    M11_RunDurationHasElapsed(10, 100U, 110U), 1);
+    ok &= expect_eq("finite_run_duration_handles_tick_wrap",
+                    M11_RunDurationHasElapsed(32, UINT32_C(0xfffffff0),
+                                              UINT32_C(0x00000010)), 1);
+
     /* ReDMCSB ENTRANCE.C:850-883 drains prior input and waits in
      * C099_MODE_WAITING_ON_ENTRANCE until a fresh entrance command is
      * processed.  The launcher Launch key/click must not be reused as C200. */

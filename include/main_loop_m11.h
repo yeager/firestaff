@@ -259,6 +259,12 @@ int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
                                            int autoEnterAfterMs,
                                            uint64_t elapsedMs);
 
+/* Wrap-safe deadline check shared by the frame loop and synchronous startup
+   event pumps. A negative duration means the run is unbounded. */
+int M11_RunDurationHasElapsed(int durationMs,
+                              uint32_t startedAtMs,
+                              uint32_t nowMs);
+
 enum M11_EntranceRuntimeCommandId {
     M11_ENTRANCE_RUNTIME_COMMAND_NONE = 0,
     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON = 200,
