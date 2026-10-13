@@ -89,9 +89,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   graphics/dynamic load occur later in the normal-loop route
   (`sksvgame.cpp:543-546, 616-634`; `startend.cpp:856-857, 1272`). The original
   map-0 GDAT weather zone is therefore not evidence for the selector value at
-  bootstrap. Keep the chain disabled pending the transitive RNG trace, exact
-  New Game weather-selector state for the later active-map dispatch, and an
-  original-data timer receipt.
+  bootstrap. A later source-order trace below establishes the fresh bootstrap
+  seed and draws; the active-map selector at first dispatch and original-data
+  timer receipt remain open.
 
   2026-10-13 New Game event trace: `SKW5_STARTUP_THREAD_MAIN_LOOP_01` calls
   `randdat.init()` before `SKW5_INIT`; the title-menu loop then returns from
@@ -99,17 +99,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   New Game and New Game-with-option UI events (215/216) only set
   `glbSpecialScreen` (and, for 216, `savegamew1`) in `DM2_HANDLE_UI_EVENT`
   (`uiinput.cpp:504-513`); these branches do not draw RNG. This closes the
-  event action itself, but not every transitive helper reached during startup
-  before the menu. Do not infer a zero RNG state at weather bootstrap from the
-  initial `randdat.init()` alone.
+  event action itself. A later source-order trace below closes the remaining
+  pre-weather RNG path and establishes its zero seed.
 
   The real-media GDAT/dungeon reader also confirms that map 0 uses GRAPHICSSET
   2 and GDAT `(8,2,11,0x66)` resolves weather zone 2 in both the installed DOS
   and FM Towns editions. This verifies the authored map-0 zone value, not that
   the source loader has assigned its active-map selector before the bootstrap.
 
-  2026-10-13 bootstrap-boundary correction (supersedes the preceding claim
-  that the weather-call seed was proven zero): inspecting SKProject commit
+  2026-10-13 source-order correction: inspecting SKProject commit
   `2c59a2c5a7978923ff5c822c15c3479e4d448493` confirms that
   `SKW5_STARTUP_THREAD_MAIN_LOOP_01` calls `randdat.init()` before `ddat.init()`
   (`SKWINSPX/src/v5/sk5start.cpp:104-112`), and `randdat.init()` sets the LCG
@@ -117,14 +115,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   bootstrap selector `v1d7188` to 1 (`dm2data.cpp:1032,1402`); the weather
   routine later clears it (`skweathr.cpp:574`). The fresh dungeon reader calls
   `DM2_weather_3df7_0037(0)` before `DM2_ARRANGE_DUNGEON()`
-  (`sksvgame.cpp:540-573`). With selector 1, bootstrap consumes four LCG
-  draws in this exact order: `RAND16(500)` for the first timer,
-  `RANDDIR()` for wind, `RAND16(4)` for the thunder interval, and `RANDDIR()`
-  for direction (`skweathr.cpp:541-566`). However, the intervening startup,
-  title/menu, and New Game paths can call the LCG after `randdat.init()` and
-  before this reader. The seed at the weather call and resulting first timer
-  are therefore not yet established; the earlier zero-seed and fixed-`0x54`
-  conclusions were unsupported and must not be used as runtime expectations.
+  (`sksvgame.cpp:540-573`). The startup/menu/New Game path has no intervening
+  LCG draws, so the fresh weather call's seed is statically established as 0.
+  With selector 1, the fresh branch consumes three draws: `RAND16(500)` gives
+  the first timer delay 0; the common `RANDDIR()` gives field `v1e1483=3`; and
+  the common `RAND16(4)+4` gives field `v1e1470=4`. The branch sets
+  `v1e1478=3` and `v1e1484=1` without additional random draws. The shared LCG
+  state after the weather bootstrap is `0x46f91084`
+  (`skweathr.cpp:541-566`).
 
   Keep the fresh weather chain disabled pending the shared session-LCG owner.
   The source timer table is in fact initialized empty before the bootstrap:
@@ -144,7 +142,7 @@ Reviewed 2026-08-29. Only open work is listed here.
   selected CAII/setup paths (`dm2_v1_game_load_world_owner.c:583-596`), while
   the runtime has an independent `weather_rng`; neither is yet proven to be
   the single source-ordered session LCG across weather, dungeon arrangement,
-  new-game setup, and gameplay. A local four-draw weather receipt would thus
+  new-game setup, and gameplay. A weather-only receipt would thus
   leave subsequent source draws divergent. Bind one transactional session RNG
   owner across those calls, preserving the verified source order (weather
   bootstrap before `DM2_ARRANGE_DUNGEON`), then queue the map-0 timer from its
