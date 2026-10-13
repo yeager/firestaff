@@ -20,6 +20,15 @@ measured 552 ms, 500 ms, 237 ms and 1,943 ms respectively. Those waits were
 present, but the native M4 run later exposed the extra palette transition and
 screen clear corrected above.
 
+2026-10-13 Amiga F0441 door cadence correction on the Mac mini M4: ReDMCSB
+`ENTRANCE.C F0441:233-236` waits two VBlanks after each door blit. Firestaff's
+Amiga route had a zero-millisecond delay for those 31 door steps. It now targets
+the source's 40 ms interval, accounts for time spent presenting the frame, and
+reports each interval under `--debug`. The authentic Amiga v2.0 CLI/menu test
+passes with all 31 ordered frames at 40-43 ms and reaches the first runtime
+frame. This test uses SDL's dummy video driver, so native M4 door-frame delivery
+and visual parity remain unverified.
+
 2026-10-13 current-main retest on the Mac mini M4, source commit `e7119f2ed`:
 the authentic PC 3.4 CLI/start-menu regression passed. In addition, a native
 Cocoa run using the original English FM Towns archive presented the title

@@ -2534,7 +2534,9 @@ static int m11_play_redmcsb_entrance_transition_impl(
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
+    unsigned int amigaDoorFrameOrdinal = 0U;
     unsigned int fmtownsDoorFrameOrdinal = 0U;
+    Uint64 previousAmigaDoorPresentationMs = 0U;
     Uint64 previousFmtownsDoorPresentationMs = 0U;
     int entrancePalette;
     const int amigaReceiptValid = amigaReceipt && amigaReceipt->valid;
@@ -2667,7 +2669,9 @@ static int m11_play_redmcsb_entrance_transition_impl(
             if (command.door_geometry_ready) {
                 memset(&door, 0, sizeof(door));
                 door.animationStep = command.door_animation_step;
-                if (gameView->dm1FmtownsStartupReceiptValid) {
+                if (amigaReceiptValid) {
+                    amigaDoorFrameOrdinal = door.animationStep;
+                } else if (gameView->dm1FmtownsStartupReceiptValid) {
                     fmtownsDoorFrameOrdinal = door.animationStep;
                 }
                 door.soundRattle = (unsigned int)(command.play_door_rattle_sound ? 1 : 0);
@@ -2701,7 +2705,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
 
         if (command.present_entrance_palette) {
             if (amigaReceiptValid) {
-                presentationStartedMs = 0U;
+                presentationStartedMs = m11_intro_active_ticks();
                 if (!m11_dm1_amiga_present_entrance_palette(
                         gameView, amigaReceipt->entrance_palette_rgb4,
                         framebuffer)) {
@@ -2784,7 +2788,30 @@ static int m11_play_redmcsb_entrance_transition_impl(
         }
         {
             unsigned int delayMs;
-            if (fmtownsDoorFrameOrdinal != 0U &&
+            if (amigaDoorFrameOrdinal != 0U && presentationStartedMs != 0U) {
+                /* ReDMCSB ENTRANCE.C F0441:233-236 waits two Amiga VBlanks
+                 * after each door blit (20 ms each). Account for the native
+                 * display present in that interval instead of sleeping another
+                 * 40 ms after the display server has already presented it. */
+                const unsigned int frameIntervalMs = 40u;
+                const Uint64 elapsedMs = m11_intro_active_ticks() -
+                                          presentationStartedMs;
+                delayMs = elapsedMs >= (Uint64)frameIntervalMs
+                    ? 0U : frameIntervalMs - (unsigned int)elapsedMs;
+                if (g_m11_debug_startup_detail) {
+                    const Uint64 frameInterval =
+                        previousAmigaDoorPresentationMs == 0U
+                            ? 0U
+                            : presentationStartedMs -
+                                  previousAmigaDoorPresentationMs;
+                    fprintf(stderr,
+                            "firestaff: startup-source-frame game=dm1 platform=amiga phase=entrance-door frame=%u/31 interval-ms=%llu wait-ms=%u\n",
+                            amigaDoorFrameOrdinal,
+                            (unsigned long long)frameInterval, delayMs);
+                }
+                previousAmigaDoorPresentationMs = presentationStartedMs;
+                amigaDoorFrameOrdinal = 0U;
+            } else if (fmtownsDoorFrameOrdinal != 0U &&
                 presentationStartedMs != 0U) {
                 /* FM Towns presents at 60 Hz. Measure each door step from
                  * the start of its palette/present transaction, so SDL's

@@ -170,9 +170,22 @@ required = {"palette-fades": 3, "zoom-elapsed-ms": 340, "hold-elapsed-ms": 500,
 if (set(values) != set(required) or values["palette-fades"] != 3 or
         any(values[key] < minimum for key, minimum in required.items()
             if key != "palette-fades")):
-    raise SystemExit(f"FAIL: Amiga F0437 cadence below its source delays: {line}")
+    raise SystemExit(f"FAIL: Amiga F0437 fade count or cadence mismatch: {line}")
 print("PASS: authentic DM1 Amiga F0437 elapsed timing: " +
-      ", ".join(f"{key}={value}ms" for key, value in values.items()))' <<<"$menu_startup_output"
+      ", ".join(f"{key}={value}ms" if key.endswith("-ms") else
+                 f"{key}={value}" for key, value in values.items()))' <<<"$menu_startup_output"
+python3 -c 'import re, sys
+output = sys.stdin.read()
+frames = [tuple(map(int, match)) for match in re.findall(
+    r"platform=amiga phase=entrance-door frame=(\d+)/31 interval-ms=(\d+) wait-ms=(\d+)",
+    output)]
+if [frame for frame, _, _ in frames] != list(range(1, 32)):
+    raise SystemExit(f"FAIL: Amiga F0441 did not present all ordered door frames: {frames}")
+intervals = [interval for _, interval, _ in frames[1:]]
+if any(interval < 35 or interval > 250 for interval in intervals):
+    raise SystemExit(f"FAIL: Amiga F0441 two-VBlank cadence is outside tolerance: {intervals}")
+print("PASS: authentic DM1 Amiga F0441 door cadence: " +
+      ", ".join(f"{interval}ms" for interval in intervals))' <<<"$menu_startup_output"
 python3 - "$menu_probe" <<'PY'
 import json
 import sys
