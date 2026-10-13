@@ -1,5 +1,18 @@
 # Firestaff TODO — DM1
 
+2026-10-13 Amiga A20 F0437 source-wait follow-up on the Mac mini M4:
+ReDMCSB `TITLE.C F0437` waits one VBlank and then PAL beam line 152 before its
+first zoom blit; after the 25-VBlank title hold it waits at viewport bottom
+before the MASTER blit and again before the final palette fade. Firestaff now
+models those source waits, schedules the first zoom at the PAL line-152 phase,
+and keeps each subsequent zoom deadline 20 ms apart. `--debug` records all 18
+source deadlines and host-present intervals. The authentic-media Amiga v2.0
+English CLI/menu regression asserts all 18 ordered presents and their cadence;
+Amiga v2.0 English, French and German plus English v2.1/v2.2 archive startup
+regressions pass on the M4. These use SDL dummy video and model the source beam
+phase; physical beam timing, native 60 Hz frame delivery, HiDPI and pixel
+parity remain unverified.
+
 2026-10-13 Amiga A20 title pacing on the Mac mini M4: ReDMCSB
 `PALETTE.C F0436` (`MEDIA433`) waits for VBlank between its eight palette
 steps, and `TITLE.C F0437` gates each zoom blit on the source frame. Firestaff

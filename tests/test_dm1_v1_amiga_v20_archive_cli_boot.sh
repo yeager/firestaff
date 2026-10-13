@@ -160,6 +160,21 @@ if ! grep -Fq 'phase=amiga-swsh profile=a0ffbcc7ae8cecac03128ddb32887ef4 frames=
 fi
 python3 -c 'import re, sys
 output = sys.stdin.read()
+frames = [tuple(map(int, match)) for match in re.findall(
+    r"startup-source-vsync game=dm1 platform=amiga phase=title-zoom-vsync "
+    r"step=(\d+)/18 source-deadline-ms=(\d+) present-start-ms=(\d+) "
+    r"present-return-ms=(\d+) present-ms=(\d+)", output)]
+if [step for step, *_ in frames] != list(range(1, 19)):
+    raise SystemExit(f"FAIL: Amiga F0437 debug trace omitted/reordered zoom presents: {frames}")
+deadlines = [deadline for _, deadline, *_ in frames]
+if (any(right - left != 20 for left, right in zip(deadlines, deadlines[1:])) or
+        any(returned < started or duration != returned - started
+            for _, _, started, returned, duration in frames) or
+        any(started < deadline for _, deadline, started, _, _ in frames)):
+    raise SystemExit(f"FAIL: Amiga F0437 source/display timing trace is inconsistent: {frames}")
+print("PASS: authentic DM1 Amiga F0437 logs all 18 50 Hz zoom deadlines and presents")' <<<"$menu_startup_output"
+python3 -c 'import re, sys
+output = sys.stdin.read()
 line = next((line for line in output.splitlines()
              if "phase=title-f0437" in line), "")
 values = {key: int(value) for key, value in re.findall(

@@ -3718,11 +3718,13 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
 
     zoomStartedMs = m11_intro_active_ticks();
     nextSourceVblankMs = zoomStartedMs;
-    /* TITLE.C F0437 first waits for VBlank, then waits for beam line 152.
-     * Model the first visible zoom at the next 50 Hz source boundary;
-     * subsequent frames retain that absolute cadence across host Present. */
+    /* TITLE.C F0437 first waits for VBlank, then VBeamPos() line 152. PAL
+     * has 312 lines per 20 ms frame, so schedule that first beam event after
+     * both source waits; later blits retain the source 50 Hz cadence across
+     * host Present. This models the source phase without polling a host beam. */
     nextZoomFrameMs = zoomStartedMs +
-        (Uint64)receipt.pre_zoom_vblanks * 20u;
+        (Uint64)receipt.pre_zoom_vblanks * 20u +
+        ((Uint64)receipt.source_beam_wait_line * 20u + 311u) / 312u;
     for (stepIndex = 0u;
          stepIndex < DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT; ++stepIndex) {
         DM1_V1_AmigaTitleF0437ZoomStep step;
