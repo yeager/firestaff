@@ -3231,6 +3231,17 @@ static int m11_wait_for_intro_active_tick(Uint64 deadlineMs) {
     }
 }
 
+/* ReDMCSB's A20 title waits for the Amiga viewport bottom (BOVP) before
+ * clearing and before the final master/title palette transition. The host
+ * renderer is not beam-synchronised, so represent that source event on the
+ * original PAL 50 Hz clock. Keep a single absolute deadline to avoid adding
+ * the host Present interval to every source frame. */
+static int m11_dm1_amiga_wait_bovp(Uint64* nextVblankMs) {
+    if (!nextVblankMs) return 0;
+    *nextVblankMs += 20u;
+    return m11_wait_for_intro_active_tick(*nextVblankMs) == 0;
+}
+
 /* ReDMCSB NECIO.C F0022 lines 3592-3609 and TITLE.C F0437 lines 319-409:
  * DM1 startup presents SWSH palette waits and TITLE C001 palette/timing in
  * source order.  Keep production rendering on the DM1 receipt so M11 does
@@ -3584,6 +3595,7 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     Uint64 finalFadeStartedMs = 0u;
     Uint64 finalFadeElapsedMs = 0u;
     Uint64 nextZoomFrameMs = 0u;
+    Uint64 nextSourceVblankMs = 0u;
     unsigned int paletteFadeCount = 0u;
     int completed = 0;
 
@@ -3665,6 +3677,8 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
         memcpy(activePalette, receipt.initial_palette,
                sizeof(activePalette));
     }
+    nextSourceVblankMs = m11_intro_active_ticks();
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                   M11_FB_HEIGHT) != M11_RENDER_OK) {
@@ -3688,6 +3702,8 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     }
     ++paletteFadeCount;
     memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
+    nextSourceVblankMs = m11_intro_active_ticks();
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                   M11_FB_HEIGHT) != M11_RENDER_OK) {
@@ -3701,14 +3717,18 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     memcpy(activePalette, receipt.zoom_palette, sizeof(activePalette));
 
     zoomStartedMs = m11_intro_active_ticks();
+    nextSourceVblankMs = zoomStartedMs;
     /* TITLE.C F0437 first waits for VBlank, then waits for beam line 152.
      * Model the first visible zoom at the next 50 Hz source boundary;
      * subsequent frames retain that absolute cadence across host Present. */
-    nextZoomFrameMs = zoomStartedMs + 20u;
+    nextZoomFrameMs = zoomStartedMs +
+        (Uint64)receipt.pre_zoom_vblanks * 20u;
     for (stepIndex = 0u;
          stepIndex < DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT; ++stepIndex) {
         DM1_V1_AmigaTitleF0437ZoomStep step;
         unsigned int y;
+        Uint64 presentStartedMs;
+        Uint64 presentReturnedMs;
         if (!dm1_v1_amiga_title_f0437_zoom_step(
                 &receipt, stepIndex, &step)) {
             goto cleanup;
@@ -3716,6 +3736,7 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
         if (m11_wait_for_intro_active_tick(nextZoomFrameMs)) {
             goto cleanup;
         }
+        presentStartedMs = m11_intro_active_ticks();
         for (y = 0u; y < step.destination_height; ++y) {
             unsigned int x;
             const unsigned int sourceY =
@@ -3733,15 +3754,27 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
                                       M11_FB_HEIGHT) != M11_RENDER_OK) {
             goto cleanup;
         }
+        presentReturnedMs = m11_intro_active_ticks();
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-source-vsync game=dm1 platform=amiga phase=title-zoom-vsync step=%u/%u source-deadline-ms=%llu present-start-ms=%llu present-return-ms=%llu present-ms=%llu\n",
+                    stepIndex + 1u, DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT,
+                    (unsigned long long)nextZoomFrameMs,
+                    (unsigned long long)presentStartedMs,
+                    (unsigned long long)presentReturnedMs,
+                    (unsigned long long)(presentReturnedMs - presentStartedMs));
+        }
         nextZoomFrameMs += 20u;
     }
     zoomElapsedMs = m11_intro_active_ticks() - zoomStartedMs;
     holdStartedMs = m11_intro_active_ticks();
+    nextSourceVblankMs = holdStartedMs;
     if (m11_delay_ms_with_intro_event_pump(
             receipt.source_delay_ticks * 20u)) {
         goto cleanup;
     }
     holdElapsedMs = m11_intro_active_ticks() - holdStartedMs;
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
     {
         unsigned int y;
         for (y = 0u; y < receipt.master_source_height; ++y) {
@@ -3755,6 +3788,8 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
             }
         }
     }
+    nextSourceVblankMs = m11_intro_active_ticks();
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
     finalFadeStartedMs = m11_intro_active_ticks();
     if (!m11_dm1_amiga_fade_title_palette(
             activePalette, receipt.final_palette, framebuffer)) {
