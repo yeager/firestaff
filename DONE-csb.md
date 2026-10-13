@@ -15,16 +15,20 @@
 
 # Firestaff DONE — CSB
 
-- 2026-10-13: M12 now requires the authenticated A31M/A33M same-package
-  `APPA.FTL` → `ANIM.FTL` → `APPB.FTL` → `KAOS.FTL` startup chain and original
-  `SWSH.FTL` before listing the Amiga 3.1/3.3 edition as playable. Previously,
-  matching `GRAPHICS.DAT` plus `TITL.DAT` let an incomplete package appear
-  available; removing `KAOS.FTL` then left direct startup stalled in the
-  title phase. The real-media `csb_v1_amiga33_loose_folder_cli_boot` passes
-  with the complete original installation and now builds an isolated
-  missing-KAOS copy to assert both M12 discovery and direct CLI reject it.
-  The supplied game data is unchanged. Dummy SDL evidence; no physical-display
-  or audible-output claim.
+- 2026-10-13: M12 now verifies edition-specific, same-package Amiga startup
+  media before enabling A31E or A31M/A33M. A31M/A33M requires the original
+  `TITL.DAT`, `APPA.FTL` → `ANIM.FTL` → `APPB.FTL` → versioned `KAOS.FTL`
+  chain, `SWSH.FTL`, and the matched dungeon. A31E requires its distinct
+  `APPB.FTL`/`BJELoad_R` program pair, `SWSH.FTL`, and the matched dungeon.
+  Previously, matching graphics (plus `TITL.DAT` for A31M/A33M) let incomplete
+  packages appear available; removing `KAOS.FTL` left A31M startup stalled in
+  the title phase. The real-media `csb_v1_amiga33_loose_folder_cli_boot` now
+  checks an isolated missing-KAOS copy is rejected by M12 and direct CLI.
+  Complete original-media startup passes for A31E, A33M loose folder, and A33M
+  ZIP-to-ADF (`csb_v1_amiga_adf_archive_cli_boot`,
+  `csb_v1_amiga33_loose_folder_cli_boot`,
+  `csb_v1_amiga33_original_adf_cli_boot`). The supplied game data is unchanged.
+  Dummy SDL evidence; no physical-display or audible-output claim.
 
 - 2026-10-13: On the Mac mini M4, the authentic A35E English ADF passed byte-
   preserving ZIP, explicit and AUTO CLI startup, and explicit and AUTO

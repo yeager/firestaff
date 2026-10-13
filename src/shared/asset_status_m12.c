@@ -4956,7 +4956,57 @@ static int m12_admit_explicit_dm1_atari_image(M12_AssetStatus* status,
     return 0;
 }
 
-static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath);
+static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath,
+                                                const char* versionId);
+
+static void m12_admit_csb_amiga31_english_program_package(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    const char* const graphicsMd5 = "21197b1d4994fd835c403d5a33dcac2b";
+    const char* graphicsHashes[9];
+    char graphicsPaths[8][ASSET_PATH_MAX];
+    int graphicsMatched[8];
+    int versionIndex;
+    size_t rootIndex;
+
+    if (!status || gameIndex < 0 ||
+        strcmp(g_games[gameIndex].gameId, "csb") != 0) return;
+    versionIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    if (versionIndex < 0) return;
+    for (rootIndex = 0U; rootIndex < 8U; ++rootIndex) {
+        graphicsHashes[rootIndex] = graphicsMd5;
+    }
+    graphicsHashes[8] = NULL;
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        int graphicsIndex;
+        memset(graphicsPaths, 0, sizeof(graphicsPaths));
+        memset(graphicsMatched, 0, sizeof(graphicsMatched));
+        (void)asset_find_all_by_md5_list(
+            roots[rootIndex], graphicsHashes, graphicsPaths, graphicsMatched,
+            8U, 32);
+        for (graphicsIndex = 0; graphicsIndex < 8; ++graphicsIndex) {
+            M12_AssetVersionStatus* version;
+            if (!graphicsMatched[graphicsIndex] ||
+                graphicsPaths[graphicsIndex][0] == '\0' ||
+                !m12_csb_amiga31_startup_media_ready(
+                    graphicsPaths[graphicsIndex], "amiga31-en")) {
+                continue;
+            }
+            version = &status->versions[gameIndex][versionIndex];
+            version->matched = 1;
+            m12_copy_string(version->matchedPath,
+                            sizeof(version->matchedPath),
+                            graphicsPaths[graphicsIndex]);
+            m12_copy_string(version->matchedMd5,
+                            sizeof(version->matchedMd5), graphicsMd5);
+            return;
+        }
+    }
+    status->versions[gameIndex][versionIndex].matched = 0;
+    status->versions[gameIndex][versionIndex].matchedPath[0] = '\0';
+    status->versions[gameIndex][versionIndex].matchedMd5[0] = '\0';
+}
 
 /* CSB Amiga 3.1/3.3 shares PC34's GRAPHICS.DAT bytes. Greatstone's original
  * A31E disk catalogue instead identifies the executable presentation package
@@ -5036,7 +5086,8 @@ static void m12_admit_csb_amiga31_title_package(
                 }
                 if (!m12_path_md5_hex(graphicsPath, md5) ||
                     strcmp(md5, graphicsMd5) != 0 ||
-                    !m12_csb_amiga31_startup_media_ready(graphicsPath)) {
+                    !m12_csb_amiga31_startup_media_ready(graphicsPath,
+                                                         "amiga31-multi")) {
                     continue;
                 }
                 status->versions[gameIndex][versionIndex].matched = 1;
@@ -5109,23 +5160,38 @@ static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
     return 0;
 }
 
-/* ReDMCSB COMPILE.H:246-269 binds the A31M/A33M language selector and game
- * executable to APPB.FTL and the version-specific KAOS.FTL. APPA.C:51-81
- * reaches APPB through APPA.FTL and ANIM.FTL; APPA also starts the original
- * SWSH.FTL presentation. A graphics/title match without this complete
- * same-package handoff can be displayed as installed by M12, then stall in
- * TITL.DAT before the player can start CSB. */
-static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath) {
-    static const char* const startupLabels[] = {
+/* ReDMCSB COMPILE.H:199-243 gives A31E its APPB.FTL/BJELoad_R route; lines
+ * 246-269 bind the A31M/A33M language selector and versioned KAOS.FTL.
+ * APPA.C:51-81 reaches APPB through APPA.FTL and ANIM.FTL; APPA also starts
+ * the original SWSH.FTL presentation. A graphics/title match without the
+ * selected edition's complete same-package handoff can be displayed as
+ * installed by M12, then stall before the player can start CSB. */
+static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath,
+                                               const char* versionId) {
+    static const char* const multiStartupLabels[] = {
         "APPA.FTL", "ANIM.FTL", "APPB.FTL", "KAOS.FTL", "SWSH.FTL", NULL
     };
+    static const char* const englishStartupLabels[] = {
+        "APPB.FTL", "BJELoad_R", "SWSH.FTL", NULL
+    };
+    static const char* const dungeonNames[] = {
+        "Dungeon.DAT", "DUNGEON.DAT", "dungeon.dat", NULL
+    };
+    const char* const* startupLabels;
     char parent[M12_ASSET_DATA_DIR_CAPACITY];
     const char* separator;
     const char* nextSeparator;
     size_t prefixLength = 0U;
     size_t index;
 
-    if (!graphicsPath || graphicsPath[0] == '\0') return 0;
+    if (!graphicsPath || graphicsPath[0] == '\0' || !versionId) return 0;
+    if (strcmp(versionId, "amiga31-multi") == 0) {
+        startupLabels = multiStartupLabels;
+    } else if (strcmp(versionId, "amiga31-en") == 0) {
+        startupLabels = englishStartupLabels;
+    } else {
+        return 0;
+    }
     if (m12_path_is_virtual_asset(graphicsPath)) {
         separator = strstr(graphicsPath, "::");
         while (separator &&
@@ -5140,6 +5206,22 @@ static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath) {
         return 0;
     }
 
+    for (index = 0U; dungeonNames[index] != NULL; ++index) {
+        char startupPath[ASSET_PATH_MAX];
+        char md5[M12_ASSET_MD5_CAPACITY];
+        if (prefixLength > 0U) {
+            if (snprintf(startupPath, sizeof(startupPath), "%.*s%s",
+                         (int)prefixLength, graphicsPath,
+                         dungeonNames[index]) >= (int)sizeof(startupPath)) continue;
+        } else if (!FSP_JoinPath(startupPath, sizeof(startupPath), parent,
+                                 dungeonNames[index])) continue;
+        if (m12_path_md5_hex(startupPath, md5) &&
+            strcmp(md5, "6695d2acebce49f95db1d8f3a5c733de") == 0) {
+            break;
+        }
+    }
+    if (dungeonNames[index] == NULL) return 0;
+
     for (index = 0U; startupLabels[index] != NULL; ++index) {
         char startupPath[ASSET_PATH_MAX];
         char md5[M12_ASSET_MD5_CAPACITY];
@@ -5150,11 +5232,9 @@ static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath) {
                 return 0;
             }
         } else if (!FSP_JoinPath(startupPath, sizeof(startupPath), parent,
-                                 startupLabels[index])) {
-            return 0;
-        }
+                                 startupLabels[index])) return 0;
         if (!m12_path_md5_hex(startupPath, md5) ||
-            !m12_csb_amiga_sidecar_md5_matches("amiga31-multi",
+            !m12_csb_amiga_sidecar_md5_matches(versionId,
                                                 startupLabels[index], md5)) {
             return 0;
         }
@@ -5180,7 +5260,8 @@ static void m12_require_csb_amiga31_package_identity(
         return;
     }
     if (m12_csb_graphics_has_amiga31_title(amiga->matchedPath) &&
-        m12_csb_amiga31_startup_media_ready(amiga->matchedPath)) {
+        m12_csb_amiga31_startup_media_ready(amiga->matchedPath,
+                                            "amiga31-multi")) {
         return;
     }
     /* These graphics bytes also appear in development/reference corpora.
@@ -6963,6 +7044,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                 status, i, roots, rootCount, requestedDataDir);
         }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
+            m12_admit_csb_amiga31_english_program_package(
+                status, i, roots, rootCount);
             m12_admit_csb_amiga31_title_package(status, i, roots, rootCount);
             m12_require_csb_amiga31_package_identity(status, i);
         }
@@ -7402,6 +7485,8 @@ void M12_AssetStatus_ScanGameWithOptions(
                 status, gameIndex, roots, rootCount, requestedDataDir);
         }
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
+            m12_admit_csb_amiga31_english_program_package(
+                status, gameIndex, roots, rootCount);
             m12_admit_csb_amiga31_title_package(status, gameIndex, roots,
                                                  rootCount);
             /* Keep direct --game scans on the same package-selection path
