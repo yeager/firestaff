@@ -1,5 +1,12 @@
 # Firestaff TODO — CSB
 
+2026-10-14 M4 real-media startup retest: `test_csb_v1_amiga_native_cli_boot.sh`
+passed against the authenticated Amiga archives. CLI startup, the Original and
+Modern title handoffs, the full CLI input matrix, the M12 start-menu route and
+the clean-config AUTO route all reached their expected runtime state; AUTO
+selected the verified A31E package. These scripted checks use SDL dummy video
+and do not establish native display, physical input or audio parity.
+
 2026-10-13 current `c880f066a` real-media retest on the Mac mini M4:
 `test_csb_v1_fmtowns_native_cli_boot.sh` passed the authentic FM Towns ZIP
 CLI/title route, English M12 launch, and original MINI.DAT party handoff. The

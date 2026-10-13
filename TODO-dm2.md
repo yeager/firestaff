@@ -1,5 +1,12 @@
 # Firestaff TODO — DM2
 
+2026-10-14 M4 real-media startup retest: `test_dm2_v1_mac_native_cli_boot.sh`
+passed using the authenticated Macintosh retail ZIP. The direct launch and
+AUTO selection retained Macintosh assets; the scripted M12 route completed
+the title, selected a mirror, and moved twice in the normal game loop. Return
+to the shell from `--game dm2` also passed. The test uses SDL dummy video and
+audio, so it does not establish native display, physical input or audio parity.
+
 2026-10-13 current `c880f066a` real-media retest on the Mac mini M4:
 `test_dm2_v1_fmtowns_native_cli_boot.sh` passed the bare CLI default, saved-PC
 preference override, automatic `~/.firestaff/data/dm2` discovery, mixed DOS /

@@ -26,6 +26,11 @@ multi-second main-loop stall. Debug performance windows now reset after a
 successful menu launch so active-game timings exclude that synchronous work.
 The native mouse-driven Hall interaction remains unverified.
 
+2026-10-14 M4 real-media startup retest: `scripts/test_dm1_macos_real_data_boot.sh`
+passed the authenticated PC and FM Towns CLI boot probes on the locally built
+binary. It uses SDL dummy video, so this proves the source/runtime handoff, not
+native window presentation, input or audio.
+
 2026-10-13 current `c880f066a` M4 retest: the authentic Amiga v2.0 English
 ZIP -> ZIP -> ADF CLI/menu route passed, including save resume, all 18 ordered
 F0437 zoom presents, five palette fades, the 50 Hz source deadlines, all 31
