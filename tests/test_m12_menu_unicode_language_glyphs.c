@@ -15,6 +15,18 @@ static void expect_glyph(uint32_t codepoint, const char* label) {
     }
 }
 
+static void expect_glyph_top_row(uint32_t codepoint,
+                                 uint16_t expected,
+                                 const char* label) {
+    const M12_UnicodeGlyph* glyph = M12_FindUnicodeGlyph(codepoint);
+    if (!glyph || glyph->rows[0] != expected || glyph->rows[2] == 0x8100u) {
+        fprintf(stderr, "incorrect bitmap for U+%04X (%s)\n",
+                (unsigned int)codepoint,
+                label);
+        ++g_failures;
+    }
+}
+
 static void expect_text_covered(const char* text) {
     int missing = M12_UnicodeTextMissingGlyphCount(text);
     if (missing != 0) {
@@ -30,8 +42,14 @@ int main(void) {
         uint32_t codepoint;
         const char* label;
     } required[] = {
+        {0x00C4u, "SWEDISH capital A-diaeresis"},
+        {0x00C5u, "SWEDISH capital A-ring"},
         {0x00C7u, "FRANCAIS cedilla"},
         {0x00D1u, "ESPANOL enye"},
+        {0x00D6u, "SWEDISH capital O-diaeresis"},
+        {0x00E4u, "SWEDISH small A-diaeresis"},
+        {0x00E5u, "SWEDISH small A-ring"},
+        {0x00F6u, "SWEDISH small O-diaeresis"},
         {0x00C5u, "NORSK BOKMAL ring"},
         {0x00CAu, "PORTUGUES circumflex"},
         {0x00DCu, "TURKCE diaeresis"},
@@ -57,6 +75,13 @@ int main(void) {
     for (i = 0; i < (unsigned int)(sizeof(required) / sizeof(required[0])); ++i) {
         expect_glyph(required[i].codepoint, required[i].label);
     }
+    expect_glyph_top_row(0x00C4u, 0x2200u, "A-diaeresis dots");
+    expect_glyph_top_row(0x00C5u, 0x1C00u, "A-ring");
+    expect_glyph_top_row(0x00D6u, 0x2200u, "O-diaeresis dots");
+    expect_glyph_top_row(0x00E4u, 0x2200u, "small A-diaeresis dots");
+    expect_glyph_top_row(0x00E5u, 0x1C00u, "small A-ring");
+    expect_glyph_top_row(0x00F6u, 0x2200u, "small O-diaeresis dots");
+    expect_text_covered("INSTÄLLNINGAR SPRÅK TILLÅT MAPPÅTKOMST ÖPPNA");
     {
         const char* languageNames[] = {
             "ENGLISH",

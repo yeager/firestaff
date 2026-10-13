@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-13: Replaced the M12 bitmap-font placeholders for Swedish Ä, Å and Ö
+  with distinct uppercase and lowercase glyphs. The Unicode regression checks
+  the glyph shapes and translated startup labels; it passes, and a fresh M12
+  capture confirms the corrected Settings, Language and folder-access text.
+
 - 2026-10-12: The renderer now handles SDL window-close requests, including
   during the initial originals scan. An end-to-end test injects that event from
   the progress callback during direct `--game` startup. With authentic media,
