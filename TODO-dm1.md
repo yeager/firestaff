@@ -11,8 +11,12 @@ on the M4 and now requires all five palette fades, a 150 ms final fade and at
 least 1,600 ms for the complete title. Its M4 SDL dummy-video run measured
 367 ms for the zoom, 501 ms for the hold, 168 ms for the final fade, and
 1,721 ms total; all 30 Amiga entrance-door frame intervals measured 40–44 ms.
-These timings do not prove native 50 Hz display cadence, beam-line 152 timing,
-or HiDPI behavior; those M4 presentation checks remain open.
+An authentic-media native Cocoa run on the Mac mini M4 then completed all five
+fades in 1,698 ms: 366 ms zoom, 500 ms hold and 166 ms final fade. Cocoa
+reported a 1,900x998 window and drawable on a 1,920x1,080 desktop capture, so
+this run does not verify HiDPI scaling or pixel parity. The dummy-video timing
+and native run also do not prove beam-line 152 timing; those M4 presentation
+checks remain open.
 
 2026-10-13 Amiga A20 F0437 source audit: ReDMCSB `TITLE.C` compiles the
 `MEDIA009`, `MEDIA137` and `MEDIA413` branches for A20. The source performs five
