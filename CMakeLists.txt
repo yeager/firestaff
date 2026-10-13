@@ -7075,7 +7075,8 @@ set(NEXUS_M11_RUNTIME_SOURCES
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}
-        src/shared/asset_find_by_hash.c)
+        src/shared/asset_find_by_hash.c
+        src/shared/firestaff_amiga_mfm.c)
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_definitions(firestaff_nexus PRIVATE FIRESTAFF_NEXUS_PRODUCTION=1)
     # Keep one ZIP implementation: the shared target carries zlib support
@@ -42445,6 +42446,8 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_firestaff_theron_media_classify.c
         src/shared/firestaff_theron_media_classify.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_amiga_adf.c
+        src/shared/firestaff_amiga_mfm.c
         src/shared/firestaff_zip_extract.c
         src/shared/fs_portable_compat.c
     )
@@ -62653,3 +62656,25 @@ if(BUILD_TESTING)
         endif()
     endforeach()
 endif()
+
+# The shared archive scanner can inspect UAE-1ADF media. Attach the bounded
+# OFS/MFM readers to every target that compiles the scanner directly, including
+# focused tests which do not otherwise link the production M11/M12 libraries.
+get_property(_firestaff_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+foreach(_firestaff_target IN LISTS _firestaff_all_targets)
+    get_target_property(_firestaff_target_sources ${_firestaff_target} SOURCES)
+    string(FIND "${_firestaff_target_sources}" "asset_find_by_hash.c"
+        _firestaff_has_asset_scanner)
+    if(_firestaff_has_asset_scanner GREATER -1)
+        foreach(_firestaff_amiga_source
+                src/shared/firestaff_amiga_adf.c
+                src/shared/firestaff_amiga_mfm.c)
+            list(FIND _firestaff_target_sources "${_firestaff_amiga_source}"
+                _firestaff_has_amiga_source)
+            if(_firestaff_has_amiga_source EQUAL -1)
+                target_sources(${_firestaff_target} PRIVATE
+                    "${_firestaff_amiga_source}")
+            endif()
+        endforeach()
+    endif()
+endforeach()
