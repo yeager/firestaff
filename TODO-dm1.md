@@ -212,11 +212,9 @@ native window-close or physical-input behavior.
 - The FM Towns title zoom palette correction has been visually checked on a
   Mac mini M4: native Cocoa capture at source frame 10/20 shows the red title
   details with the combined C13_DUNGEON/C14_MASTER palette. The connected
-  display reports 1920x1080, so Retina/HiDPI scaling remains unverified. The
-  previous full native trace measured 1,616 ms including a 1,200 ms host hold;
-  original F20 source waits total 350 ms through the MASTER frame. Keep the
-  reported pacing concern open until a native M4 run is reviewed against the
-  original sequence rather than extending the title with an unverified delay.
+  display reports 1920x1080 and the game drawable 1900x998, so Retina/HiDPI
+  scaling remains unverified. The native frame timing and entrance cadence
+  were measured again against the corrected source order below.
 
   2026-10-13 source-order correction: ReDMCSB `TITLE.C:385-400` waits before
   each of the 18 zoom blits, then twice before `TITLE_MASTER` and once after
@@ -226,9 +224,18 @@ native window-close or physical-input behavior.
   preserving the source's 18 zoom intervals and two-VBlank MASTER transition;
   the final MASTER VBlank remains separate. The focused title unit test passes
   with Xcode 26.5's SDK, and the real-media test script passes shell syntax.
-  A native M4 run of this exact revision is still required to verify the
-  reported on-screen pacing; the additional 1,200 ms MASTER hold remains a
-  host readability choice beyond the source's 350 ms of waits.
+  A 2026-10-13 native Cocoa run of source commit `c023857b0` on the Mac mini M4
+  used the authentic English FM Towns archive. The 20 title frames reached
+  frame 19 at 396 ms; the complete sequence took 1,615 ms including the
+  configured 1,200 ms MASTER hold. Zoom-frame intervals were 19-20 ms and the
+  two-VBlank MASTER transition was 37 ms. After native Return at the closed
+  entrance, all 31 door frames were presented 16-18 ms apart and the source
+  handoff reached map 0 at `(1,3)`, direction 2, with zero champions. The
+  native drawable measured 1900x998, so this is not HiDPI or pixel-parity
+  evidence. A debug FPS sample accumulated about 104 seconds while the app was
+  backgrounded waiting for Return; its 0.6 loops/sec is not an active-game
+  performance measurement. The extra 1,200 ms MASTER hold remains a host
+  readability choice beyond the source's 350 ms of waits.
 
 - Continue reducing M12 idle CPU cost if it can be done without losing frame
   rate, animation or input response. The shared loop now counts the whole

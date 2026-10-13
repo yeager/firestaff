@@ -171,6 +171,16 @@
   sets were present and admitted. This revalidates the M12 card/platform/custom
   selection and M11 handoff contracts, but still does not prove first presented
   runtime frames for every title.
+  A 2026-10-13 rerun on the Mac mini M4 against the configured original-media
+  directory again passed 219 assertions with zero failures and three scoped
+  skips. The authenticated Theron's Quest US Track 02 route reached a
+  source-owned runtime frame with level 0 loaded and one champion. Nexus reached
+  its authentic title from the installed English Saturn CUE, but its receipt
+  remained blocked at
+  `menu-bpk-prs3-capture-required`; no original Saturn presentation capture is
+  installed in that data directory, so the interactive Nexus start-menu path
+  remains incomplete. This gate checks the direct-launch/M12 handoff contracts,
+  not visible physical-menu interaction or all five first runtime frames.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
   language choice; the native Amiga input matrix reaches runtime, and the
