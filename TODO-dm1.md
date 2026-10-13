@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-10-13 current `c880f066a` M4 retest: the authentic Amiga v2.0 English
+ZIP -> ZIP -> ADF CLI/menu route passed, including save resume, all 18 ordered
+F0437 zoom presents, five palette fades, the 50 Hz source deadlines, all 31
+F0441 door frames and first runtime movement. The title took 1,780 ms; door
+intervals were 40-42 ms. The authentic FM Towns ZIP CLI/menu test also passed
+for English and Japanese, including platform default selection without
+`--platform`, 20 ordered title frames, the 1,200 ms MASTER hold, the entrance
+cadence, JDM menu selection and the movement matrix. A separate native Cocoa
+`--game dm1` run without `--platform` selected FM Towns and presented all 20
+source title frames with PRESENTS, DUNGEON+MASTER and MASTER palette phases;
+the source title completed in 1,661 ms with the 1,200 ms hold. Cocoa reported
+a 1,920x1,018 window and drawable. The native run stopped at the interactive
+entrance and does not verify native input, full Retina scaling or pixel parity.
+
 2026-10-13 Amiga A20 F0437 source-wait follow-up on the Mac mini M4:
 ReDMCSB `TITLE.C F0437` waits one VBlank and then PAL beam line 152 before its
 first zoom blit; after the 25-VBlank title hold it waits at viewport bottom
