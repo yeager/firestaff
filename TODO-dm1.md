@@ -1,5 +1,23 @@
 # Firestaff TODO — DM1
 
+2026-10-14 parity investigation using authentic DM1 media and ReDMCSB source:
+the FM Towns F20 title scaler is now ported from `BLTSHRNK.C` F0129/F0720
+(6-bit fixed-point steps, centre-sampled source pixels). The expanded 18-size
+pixel recurrence test passes on the Mac mini M4. Installed original
+`DATA/GRAPHICS.DAT` records 75/76 were manually verified as 224x70 floor and
+224x29 ceiling; M11 had mirrored the Towns floor using PC34's 97-row rectangle
+beginning at row 39. The viewport now queries the loaded Towns graphic
+dimensions, checks the selected bitmap against its flip-buffer capacity, and
+copies back only the flipped source height. The native Xcode-configured
+`firestaff` target build and the targeted viewport source-lock test pass. An
+original FM Towns runtime frame comparison is still required before visual
+parity can be marked complete. The I34E
+startup audit also confirms its DOS parent runs ANIM/TITLE and SELECTOR before
+FIRES; Firestaff's current in-process PC34 C001/F0441 route does not match that
+chain. Port the authentic I34E animation and selector path before claiming PC
+startup parity. Neither investigation has established full cross-platform
+visual parity yet.
+
 2026-10-14 startup interruption: closing the host window during the source
 SWSH prelude previously looked like a corrupt launch, although the same event
 after the title was already handled as a clean exit. M11 now carries the

@@ -1610,6 +1610,33 @@ void dm1_viewport_3d_copy_and_flip_h(const uint8_t *src, uint8_t *dst,
     }
 }
 
+/* ReDMCSB DUNVIEW.C F0128:8370-71/8433-34 selects which source floor or
+ * ceiling is mirrored; F0099:3018-45 reverses each row independently. */
+int dm1_viewport_3d_flip_floor_ceiling_for_parity(
+    uint8_t *viewport, uint8_t *scratch, size_t scratch_bytes,
+    int floor_y, int floor_height, int ceiling_height, int flip_floor)
+{
+    int flip_height = flip_floor ? floor_height : ceiling_height;
+    int flip_y = flip_floor ? floor_y : 0;
+    size_t bytes;
+
+    if (!viewport || !scratch || floor_y < 0 || floor_height <= 0 ||
+        floor_height > DM1_VIEWPORT_HEIGHT ||
+        floor_y > DM1_VIEWPORT_HEIGHT - floor_height ||
+        ceiling_height <= 0 ||
+        ceiling_height > DM1_VIEWPORT_HEIGHT || flip_height <= 0 ||
+        (size_t)flip_height > scratch_bytes / DM1_VIEWPORT_WIDTH) {
+        return 0;
+    }
+
+    dm1_viewport_3d_copy_and_flip_h(
+        viewport + (size_t)flip_y * DM1_VIEWPORT_WIDTH, scratch,
+        DM1_VIEWPORT_WIDTH, flip_height);
+    bytes = (size_t)DM1_VIEWPORT_WIDTH * (size_t)flip_height;
+    memcpy(viewport + (size_t)flip_y * DM1_VIEWPORT_WIDTH, scratch, bytes);
+    return 1;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_draw_wall
  *

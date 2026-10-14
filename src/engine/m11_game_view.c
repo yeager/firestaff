@@ -43819,6 +43819,9 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
     DM1_Viewport3DState f0098;
     M11_DM1F0098GraphicProvider provider;
     int floor_set;
+    int floor_y = DM1_PC34_VIEWPORT_FLOOR_Y;
+    int floor_height = DM1_PC34_VIEWPORT_FLOOR_H;
+    int ceiling_height = DM1_PC34_VIEWPORT_CEILING_H;
 
     if (!state || !state->assetsAvailable || !framebuffer ||
         vpW != DM1_VIEWPORT_WIDTH || vpH != DM1_VIEWPORT_HEIGHT ||
@@ -43853,23 +43856,51 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
     f0098.graphic_provider_callback = m11_dm1_f0098_graphic_provider;
     f0098.graphic_provider_user_data = &provider;
     dm1_viewport_3d_draw_floor_ceiling(&f0098);
-    /* F0128 alternates the base texture orientation after F0098. The odd
-     * parity branch flips floor; the even branch flips ceiling. F0099 keeps
-     * the copy/flip operation DM1-owned and prevents M11 from inventing a
-     * differently oriented replacement bitmap. */
-    if ((state->world.party.mapX + state->world.party.mapY +
-         state->world.party.direction) & 1) {
-        dm1_viewport_3d_copy_and_flip_h(
-            viewport + DM1_PC34_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH,
-            flipped, DM1_VIEWPORT_WIDTH, DM1_PC34_VIEWPORT_FLOOR_H);
-        memcpy(viewport + DM1_PC34_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH,
-               flipped, sizeof(flipped));
-    } else {
-        dm1_viewport_3d_copy_and_flip_h(viewport, flipped,
-                                        DM1_VIEWPORT_WIDTH,
-                                        DM1_PC34_VIEWPORT_CEILING_H);
-        memcpy(viewport, flipped,
-               (size_t)DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_CEILING_H);
+    /* ReDMCSB DEFS.H MEDIA020:2286-2288 maps Towns floor/ceiling to 75/76;
+     * DUNVIEW.C F0098:2962-3000 and F0128:8333-8434 (MEDIA544) use their
+     * native 224x70 floor and 224x29 ceiling.
+     * The Towns black band is 37 rows, so floor begins at row 66. PC34
+     * instead uses a 39-row ceiling / 97-row floor split at row 39. Read the
+     * loaded Towns records for F0130's dimensions; reusing the PC34 rectangle flips
+     * 27 rows of unrelated viewport material into the floor. */
+    if (state->assetLoader.legacyDm1 &&
+        !state->assetLoader.legacyBigEndian) {
+        const uint8_t *ceiling_pixels = NULL;
+        const uint8_t *floor_pixels = NULL;
+        int ceiling_width = 0;
+        int native_ceiling_height = 0;
+        int floor_width = 0;
+        int native_floor_height = 0;
+        if (!m11_dm1_f0098_graphic_provider(
+                &provider, -2, &ceiling_pixels, &ceiling_width,
+                &native_ceiling_height) ||
+            !m11_dm1_f0098_graphic_provider(
+                &provider, -1, &floor_pixels, &floor_width,
+                &native_floor_height) ||
+            !ceiling_pixels || !floor_pixels ||
+            ceiling_width != DM1_VIEWPORT_WIDTH ||
+            floor_width != DM1_VIEWPORT_WIDTH ||
+            native_ceiling_height <= 0 || native_floor_height <= 0 ||
+            native_ceiling_height >
+                (int)(sizeof(flipped) / DM1_VIEWPORT_WIDTH) ||
+            native_floor_height >
+                (int)(sizeof(flipped) / DM1_VIEWPORT_WIDTH) ||
+            native_ceiling_height + native_floor_height >
+                DM1_VIEWPORT_HEIGHT) {
+            return;
+        }
+        ceiling_height = native_ceiling_height;
+        floor_height = native_floor_height;
+        floor_y = DM1_VIEWPORT_HEIGHT - floor_height;
+    }
+    /* F0128 alternates base texture orientation after F0098. F0099's
+     * source copy/flip operates on the actual source bitmap dimensions. */
+    if (!dm1_viewport_3d_flip_floor_ceiling_for_parity(
+            viewport, flipped, sizeof(flipped), floor_y, floor_height,
+            ceiling_height,
+            (state->world.party.mapX + state->world.party.mapY +
+             state->world.party.direction) & 1)) {
+        return;
     }
     for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
         memcpy(framebuffer + (vpY + y) * fbW + vpX,

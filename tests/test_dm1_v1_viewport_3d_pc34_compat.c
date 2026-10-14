@@ -2279,6 +2279,74 @@ static void test_f0099_copy_and_flip_h_preserves_row_boundaries(void)
     check_int("F0099.copy_flip.source_preserved", memcmp(src, src_before, sizeof(src)) == 0, 1);
 }
 
+static void test_f0128_flips_native_towns_floor_and_ceiling_bounds(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t before[sizeof(viewport)];
+    uint8_t scratch[DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_FLOOR_H];
+    const int floor_y = 66;
+    const int floor_height = 70;
+    const int ceiling_height = 29;
+
+    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+        for (int x = 0; x < DM1_VIEWPORT_WIDTH; ++x) {
+            viewport[y * DM1_VIEWPORT_WIDTH + x] =
+                (uint8_t)(y ^ (x & 0xff));
+        }
+    }
+    memcpy(before, viewport, sizeof(viewport));
+
+    check_int("F0128.towns.floor_flip.accepted",
+              dm1_viewport_3d_flip_floor_ceiling_for_parity(
+                  viewport, scratch, sizeof(scratch), floor_y, floor_height,
+                  ceiling_height, 1),
+              1);
+    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+        for (int x = 0; x < DM1_VIEWPORT_WIDTH; ++x) {
+            const uint8_t expected =
+                y >= floor_y && y < floor_y + floor_height
+                    ? before[y * DM1_VIEWPORT_WIDTH +
+                             (DM1_VIEWPORT_WIDTH - 1 - x)]
+                    : before[y * DM1_VIEWPORT_WIDTH + x];
+            if (viewport[y * DM1_VIEWPORT_WIDTH + x] != expected) {
+                check_int("F0128.towns.floor_flip.pixel",
+                          viewport[y * DM1_VIEWPORT_WIDTH + x], expected);
+                return;
+            }
+        }
+    }
+
+    memcpy(viewport, before, sizeof(viewport));
+    check_int("F0128.towns.ceiling_flip.accepted",
+              dm1_viewport_3d_flip_floor_ceiling_for_parity(
+                  viewport, scratch, sizeof(scratch), floor_y, floor_height,
+                  ceiling_height, 0),
+              1);
+    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+        for (int x = 0; x < DM1_VIEWPORT_WIDTH; ++x) {
+            const uint8_t expected =
+                y < ceiling_height
+                    ? before[y * DM1_VIEWPORT_WIDTH +
+                             (DM1_VIEWPORT_WIDTH - 1 - x)]
+                    : before[y * DM1_VIEWPORT_WIDTH + x];
+            if (viewport[y * DM1_VIEWPORT_WIDTH + x] != expected) {
+                check_int("F0128.towns.ceiling_flip.pixel",
+                          viewport[y * DM1_VIEWPORT_WIDTH + x], expected);
+                return;
+            }
+        }
+    }
+
+    memcpy(viewport, before, sizeof(viewport));
+    check_int("F0128.towns.flip.rejects_oversized_floor",
+              dm1_viewport_3d_flip_floor_ceiling_for_parity(
+                  viewport, scratch, sizeof(scratch), 1,
+                  DM1_PC34_VIEWPORT_FLOOR_H + 1, ceiling_height, 1),
+              0);
+    check_int("F0128.towns.flip.reject_preserves_viewport",
+              memcmp(viewport, before, sizeof(viewport)) == 0, 1);
+}
+
 static void test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -5141,6 +5209,7 @@ int main(void)
     test_wall_source_row_clip_occlusion_gate();
     test_wall_draw_uses_clip_gate_source_offsets();
     test_f0099_copy_and_flip_h_preserves_row_boundaries();
+    test_f0128_flips_native_towns_floor_and_ceiling_bounds();
     test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();

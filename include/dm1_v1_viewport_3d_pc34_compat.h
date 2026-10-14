@@ -1265,6 +1265,12 @@ void dm1_viewport_3d_present(DM1_Viewport3DState *state,
 void dm1_viewport_3d_copy_and_flip_h(const uint8_t *src, uint8_t *dst,
                                      int width, int height);
 
+/* F0128/F0099 flip only the active floor or ceiling bitmap for each map
+ * parity. scratch_bytes bounds the temporary before any pixels are changed. */
+int dm1_viewport_3d_flip_floor_ceiling_for_parity(
+    uint8_t *viewport, uint8_t *scratch, size_t scratch_bytes,
+    int floor_y, int floor_height, int ceiling_height, int flip_floor);
+
 /*
  * Get viewport wall frame data for a given view square.
  * Returns a pointer to the frame descriptor, or NULL if invalid.
