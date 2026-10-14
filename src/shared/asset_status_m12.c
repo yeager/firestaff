@@ -473,7 +473,7 @@ static const M12_RequiredFileSpec g_requiredFiles[] = {
      * platform's DUNGEON.DAT. The Amiga v2.0 German GRAPHICS.DAT identity
      * 0679e39da9dcc2e855cb33c6c64ddcb5 pairs with the original ADF dungeon
      * hash 59e332cf47852d5c7c88a9538f0adcea. */
-    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;e0333c81c52e957dacd3b45739d077c9;30028fb6a301ecb20127ef0b3af32b05;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899;ebccb5f99c4437adcb34d9228b57eb6a;c4a54af4284f40bc3d53fe2c7ef5195b;c0e1bf1b9c5578681879d624bb28e663;59e332cf47852d5c7c88a9538f0adcea", 0},
+    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;e0333c81c52e957dacd3b45739d077c9;30028fb6a301ecb20127ef0b3af32b05;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899;ebccb5f99c4437adcb34d9228b57eb6a;c4a54af4284f40bc3d53fe2c7ef5195b;c0e1bf1b9c5578681879d624bb28e663;59e332cf47852d5c7c88a9538f0adcea;78848e1a2d3d5a11e5954deb8c7b772b", 0},
     {"csb", "graphics", "GRAPHICS.DAT", NULL, 1},
     /* The three hashes are PC/Atari/Amiga, FM Towns CDATA and FM Towns
      * CJDATA respectively.  A required-file MD5 can be a semicolon-separated
@@ -1123,21 +1123,29 @@ static int m12_admit_dm1_amiga_archive_packages(
         const char* outerName;
         const char* innerName;
         const char* adfName;
+        const char* graphicsName;
+        const char* dungeonName;
     } M12_Dm1AmigaNestedPackage;
     static const M12_Dm1AmigaNestedPackage packages[] = {
         {"Dungeon-Master_Amiga_EN_Version-20.zip",
          "Dungeon Master v2.0 (1988)(FTL).zip",
-         "Dungeon Master v2.0 (1988)(FTL).adf"},
+         "Dungeon Master v2.0 (1988)(FTL).adf",
+         "GRAPHICS.DAT", "DUNGEON.DAT"},
         /* The supplied HD preservation route is independently packaged but
          * carries an original AmigaDOS ADF.  Admission remains based solely
          * on GRAPHICS.DAT's retail hash, not on this filename. */
         {"Dungeon-Master_Amiga_EN.zip",
          "Dungeon Master (1988)(FTL)[HD].zip",
-         "Dungeon Master (1988)(FTL)[HD].adf"},
+         "Dungeon Master (1988)(FTL)[HD].adf",
+         "GRAPHICS.DAT", "DUNGEON.DAT"},
         /* The multilingual 3.6 preservation ZIP contains its original ADF
          * directly, rather than wrapping it in a second ZIP. */
         {"Dungeon-Master_Amiga_36.zip", "",
-         "Dungeon Master Amiga 3.6.adf"}
+         "Dungeon Master Amiga 3.6.adf", "GRAPHICS.DAT", "DUNGEON.DAT"},
+        /* ScummVM distributes the original English Amiga demo as a flat ZIP.
+         * Its authentic dungeon member is named DemoDun.dat rather than the
+         * retail DUNGEON.DAT; both media members are authenticated below. */
+        {"dm-amiga-demo-en.zip", "", "", "graphics.dat", "DemoDun.dat"}
     };
     size_t rootIndex;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
@@ -1174,6 +1182,7 @@ static int m12_admit_dm1_amiga_archive_packages(
             size_t graphicsSize = 0U;
             size_t dungeonSize = 0U;
             size_t versionIndex;
+            size_t matchedPackageIndex = 0U;
             int packageMatched = 0;
             for (size_t packageIndex = 0U;
                  packageIndex < sizeof(packages) / sizeof(packages[0]);
@@ -1182,14 +1191,21 @@ static int m12_admit_dm1_amiga_archive_packages(
                            packages[packageIndex].outerName) == NULL ||
                     (packages[packageIndex].innerName[0]
                          ? snprintf(virtualGraphics, sizeof(virtualGraphics),
-                                    "%s::%s::%s::GRAPHICS.DAT",
+                                    "%s::%s::%s::%s",
                                     candidates[candidateIndex],
                                     packages[packageIndex].innerName,
-                                    packages[packageIndex].adfName)
-                         : snprintf(virtualGraphics, sizeof(virtualGraphics),
-                                    "%s::%s::GRAPHICS.DAT",
-                                    candidates[candidateIndex],
-                                    packages[packageIndex].adfName)) >=
+                                    packages[packageIndex].adfName,
+                                    packages[packageIndex].graphicsName)
+                         : packages[packageIndex].adfName[0]
+                               ? snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                          "%s::%s::%s",
+                                          candidates[candidateIndex],
+                                          packages[packageIndex].adfName,
+                                          packages[packageIndex].graphicsName)
+                               : snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                          "%s::%s",
+                                          candidates[candidateIndex],
+                                          packages[packageIndex].graphicsName)) >=
                         (int)sizeof(virtualGraphics) ||
                     !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
                                                    &graphicsSize) ||
@@ -1200,14 +1216,16 @@ static int m12_admit_dm1_amiga_archive_packages(
                     continue;
                 }
                 packageMatched = 1;
+                matchedPackageIndex = packageIndex;
                 break;
             }
             if (!packageMatched) continue;
             m12_bytes_md5_hex(graphics, graphicsSize, md5);
             free(graphics);
-            m12_copy_string(virtualDungeon, sizeof(virtualDungeon),
-                            virtualGraphics);
-            {
+            if (strcmp(packages[matchedPackageIndex].dungeonName,
+                       "DUNGEON.DAT") == 0) {
+                m12_copy_string(virtualDungeon, sizeof(virtualDungeon),
+                                virtualGraphics);
                 char* leaf = NULL;
                 char* cursor = virtualDungeon;
                 while ((cursor = strstr(cursor, "GRAPHICS.DAT")) != NULL) {
@@ -1216,6 +1234,12 @@ static int m12_admit_dm1_amiga_archive_packages(
                 }
                 if (!leaf) continue;
                 memcpy(leaf, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
+            } else {
+                int written = snprintf(virtualDungeon, sizeof(virtualDungeon),
+                                       "%s::%s", candidates[candidateIndex],
+                                       packages[matchedPackageIndex].dungeonName);
+                if (written < 0 || (size_t)written >= sizeof(virtualDungeon))
+                    continue;
             }
             if (!asset_read_virtual_path_alloc(virtualDungeon, &dungeon,
                                                &dungeonSize) ||

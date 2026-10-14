@@ -75,6 +75,10 @@ if("${FIRESTAFF_WORKSPACE_DATA_DIR}" STREQUAL "")
     message(FATAL_ERROR "FIRESTAFF_WORKSPACE_DATA_DIR must not be empty")
 endif()
 
+set(FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE
+    "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dm-amiga-demo-en.zip"
+    CACHE FILEPATH "Authentic ScummVM-hosted DM1 Amiga demo archive for real-media tests")
+
 # The DM2 Macintosh retail archive and First Chapter demo are often saved
 # with the same basename; file managers append " (1)" to the duplicate.
 # Bind real-media tests by their published SHA-256 identity instead of
@@ -4285,6 +4289,17 @@ if(BUILD_TESTING)
         LABELS "dm1;amiga;real-media;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_AMIGA36_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_36.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/.codex-scratch;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga36;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga36;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga36"
         TIMEOUT 60
+    )
+    add_test(
+        NAME dm1_v1_amiga_demo_archive_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga_demo_archive_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_amiga_demo_archive_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;amiga;demo;real-media;native;cli;menu;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE=${FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE};HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga-demo;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga-demo;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga-demo"
+        TIMEOUT 90
     )
     add_test(
         NAME dm1_v1_amiga_v20_archive_cli_boot
@@ -62217,6 +62232,27 @@ set_tests_properties(test_dm1_v1_amiga_entrance_f0441_real_media PROPERTIES
     SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
     LABELS "dm1;amiga;entrance;real-media;in-memory;skip-safe")
+
+add_executable(test_dm1_v1_amiga_demo_startup_real_media
+    tests/test_dm1_v1_amiga_demo_startup_real_media.c
+    src/dm1/dm1_v1_amiga_entrance_f0441.c
+    src/dm1/dm1_v1_amiga_title_f0437.c
+    src/dm1/dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_amiga_swsh.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/shared/firestaff_amiga_adf.c
+    src/shared/firestaff_amiga_mfm.c
+)
+target_include_directories(test_dm1_v1_amiga_demo_startup_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_amiga_demo_startup_real_media PRIVATE
+    firestaff_zip_extract firestaff_m12)
+add_test(NAME test_dm1_v1_amiga_demo_startup_real_media
+    COMMAND test_dm1_v1_amiga_demo_startup_real_media)
+set_tests_properties(test_dm1_v1_amiga_demo_startup_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE=${FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE}"
+    LABELS "dm1;amiga;demo;title;entrance;real-media;in-memory;skip-safe")
 
 add_executable(test_dm1_v1_amiga20_french_startup_real_media
     tests/test_dm1_v1_amiga20_french_startup_real_media.c

@@ -3453,7 +3453,8 @@ static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
         (strcmp(version->versionId, "amiga20-en") != 0 &&
          strcmp(version->versionId, "amiga20-fr") != 0 &&
          strcmp(version->versionId, "amiga20-de") != 0 &&
-         strcmp(version->versionId, "amiga21-en") != 0) ||
+         strcmp(version->versionId, "amiga21-en") != 0 &&
+         strcmp(version->versionId, "amiga-demo-en") != 0) ||
         strstr(version->matchedPath, "[HD]") != NULL ||
         !gameView->assetLoader.graphicsDatPath[0] ||
         strcmp(gameView->assetLoader.graphicsDatPath,
@@ -3855,8 +3856,10 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
                 "firestaff: startup-source-complete game=dm1 platform=%s phase=title-f0437 frames=%u palette-fades=%u source=%s graphics=%s zoom-elapsed-ms=%llu hold-elapsed-ms=%llu final-fade-elapsed-ms=%llu total-elapsed-ms=%llu\n",
-                strcmp(version->versionId, "amiga21-en") == 0
-                    ? "amiga-v21" : "amiga-v20",
+                strcmp(version->versionId, "amiga-demo-en") == 0
+                    ? "amiga-demo"
+                    : (strcmp(version->versionId, "amiga21-en") == 0
+                           ? "amiga-v21" : "amiga-v20"),
                 DM1_V1_AMIGA_TITLE_ZOOM_STEP_COUNT,
                 paletteFadeCount,
                 receipt.executable_md5, receipt.graphics_md5,
@@ -4761,7 +4764,8 @@ static int m11_dm1_handoff_play_title(void* user,
         (strcmp(version->versionId, "amiga20-en") == 0 ||
          strcmp(version->versionId, "amiga20-fr") == 0 ||
          strcmp(version->versionId, "amiga20-de") == 0 ||
-         strcmp(version->versionId, "amiga21-en") == 0) &&
+         strcmp(version->versionId, "amiga21-en") == 0 ||
+         strcmp(version->versionId, "amiga-demo-en") == 0) &&
         strstr(version->matchedPath, "[HD]") == NULL) {
         const int played = m11_play_dm1_amiga_title_f0437_if_available(
             ctx->menuState, ctx->launchEntry, ctx->gameView);
@@ -4813,7 +4817,8 @@ static int m11_dm1_handoff_play_entrance(void* user,
         (strcmp(version->versionId, "amiga20-en") == 0 ||
          strcmp(version->versionId, "amiga20-fr") == 0 ||
          strcmp(version->versionId, "amiga20-de") == 0 ||
-         strcmp(version->versionId, "amiga21-en") == 0) &&
+         strcmp(version->versionId, "amiga21-en") == 0 ||
+         strcmp(version->versionId, "amiga-demo-en") == 0) &&
         M12_AssetStatus_GetVersionArchitecture(
             "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA;
     if (!ctx->activePostLaunchPlanValid ||
@@ -4839,8 +4844,10 @@ static int m11_dm1_handoff_play_entrance(void* user,
         if (g_m11_debug_startup_detail && command > 0) {
             fprintf(stderr,
                     "firestaff: startup-source-complete game=dm1 platform=%s phase=entrance-f0441 steps=%u graphics=%s input=mouse-only palette=rgb4\n",
-                    strcmp(version->versionId, "amiga21-en") == 0
-                        ? "amiga-v21" : "amiga-v20",
+                    strcmp(version->versionId, "amiga-demo-en") == 0
+                        ? "amiga-demo"
+                        : (strcmp(version->versionId, "amiga21-en") == 0
+                               ? "amiga-v21" : "amiga-v20"),
                     amigaReceipt.opening_steps, amigaReceipt.graphics_md5);
         }
     } else {

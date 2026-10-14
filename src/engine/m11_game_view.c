@@ -16391,7 +16391,7 @@ int M11_GameView_NormalizeDm1BigEndianDungeon(uint8_t **bytes,
     static const uint8_t thingRecordSizes[16] = {
         4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
     };
-    if (!bytes || !*bytes || !size || *size == 0u || (*size & 1u) != 0u) {
+    if (!bytes || !*bytes || !size || *size == 0u) {
         return 0;
     }
     if (*size < DUNGEON_HEADER_SIZE || (*bytes)[4] == 0u ||
@@ -16441,6 +16441,11 @@ int M11_GameView_NormalizeDm1BigEndianDungeon(uint8_t **bytes,
     offset += (size_t)totalColumns * 2u;
     offset += (size_t)squareFirstThingCount * 2u;
     offset += (size_t)textDataWordCount * 2u;
+    if (offset > *size ||
+        ((offset - (DUNGEON_HEADER_SIZE +
+                    (size_t)mapCount * DUNGEON_MAP_DESC_SIZE)) & 1u) != 0u) {
+        return 0;
+    }
     for (i = DUNGEON_HEADER_SIZE + (size_t)mapCount * DUNGEON_MAP_DESC_SIZE;
          i < offset; i += 2u) {
         uint8_t value = (*bytes)[i];
@@ -16642,6 +16647,10 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                                             const char* dataDir,
                                             const char* gameId,
                                             const char* verifiedAssetMd5) {
+    const char* dm1DungeonFilename =
+        verifiedAssetMd5 &&
+        strcmp(verifiedAssetMd5, "491ca939f9abb33ceeb26619b841fe91") == 0
+            ? "DemoDun.dat" : "DUNGEON.DAT";
     if (!out || !dataDir || !gameId) {
         return 0;
     }
@@ -16653,6 +16662,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             { "dm1",  "ebccb5f99c4437adcb34d9228b57eb6a" },
             { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
             { "dm1",  "59e332cf47852d5c7c88a9538f0adcea" },
+            { "dm1",  "78848e1a2d3d5a11e5954deb8c7b772b" },
             { "dm1",  "050fb2cfded1b502ec2c53956b94c5bd" },
             { "dm1",  "c4a54af4284f40bc3d53fe2c7ef5195b" },
             { "dm1",  "e0333c81c52e957dacd3b45739d077c9" },
@@ -16675,6 +16685,10 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             strcmp(verifiedAssetMd5,
                    "fa6b1aa29e191418713bf2cda93d962e") == 0) {
             selectedDm1DungeonMd5 = "766450c940651fc021c92fe5d0d0b3a6";
+        } else if (strcmp(gameId, "dm1") == 0 && verifiedAssetMd5 &&
+                   strcmp(verifiedAssetMd5,
+                          "491ca939f9abb33ceeb26619b841fe91") == 0) {
+            selectedDm1DungeonMd5 = "78848e1a2d3d5a11e5954deb8c7b772b";
         }
         for (i = 0; kExpectedHashes[i].game != NULL; ++i) {
             if (strcmp(gameId, kExpectedHashes[i].game) == 0) {
@@ -16689,7 +16703,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                     if (FSP_JoinPath(directPath,
                                      sizeof(directPath),
                                      dataDir,
-                                     "DUNGEON.DAT") &&
+                                     dm1DungeonFilename) &&
                         asset_file_matches_md5(directPath, expectedMd5)) {
                         strncpy(out, directPath, outSize - 1);
                         out[outSize - 1] = '\0';
@@ -16713,7 +16727,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                             FSP_JoinPath(directPath,
                                          sizeof(directPath),
                                          subdirPath,
-                                         "DUNGEON.DAT") &&
+                                         dm1DungeonFilename) &&
                             asset_file_matches_md5(directPath, expectedMd5)) {
                             strncpy(out, directPath, outSize - 1);
                             out[outSize - 1] = '\0';
@@ -26210,9 +26224,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
             if (!last) return 0;
             prefix = (size_t)(last - spec->verifiedAssetPath) + 2u;
-            if (prefix + sizeof("DUNGEON.DAT") > sizeof(dungeonPath)) return 0;
+            const char* dungeonMember =
+                spec->verifiedAssetMd5 &&
+                strcmp(spec->verifiedAssetMd5,
+                       "491ca939f9abb33ceeb26619b841fe91") == 0
+                    ? "DemoDun.dat" : "DUNGEON.DAT";
+            if (prefix + strlen(dungeonMember) + 1u > sizeof(dungeonPath)) return 0;
             memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
-            memcpy(dungeonPath + prefix, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
+            memcpy(dungeonPath + prefix, dungeonMember,
+                   strlen(dungeonMember) + 1u);
             dm1_dungeon_path_hash_resolved = 1;
             dm1VirtualDiskPath = 1;
         }
@@ -26266,10 +26286,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             const char *slash = strrchr(entry, '/');
             prefix = (size_t)(last - spec->verifiedAssetPath) + 2u;
             if (slash) prefix += (size_t)(slash - entry) + 1u;
-            if (prefix + sizeof("DUNGEON.DAT") < sizeof(dungeonPath)) {
+            const char* dungeonMember =
+                spec->verifiedAssetMd5 &&
+                strcmp(spec->verifiedAssetMd5,
+                       "491ca939f9abb33ceeb26619b841fe91") == 0
+                    ? "DemoDun.dat" : "DUNGEON.DAT";
+            if (prefix + strlen(dungeonMember) + 1u < sizeof(dungeonPath)) {
                 memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
-                memcpy(dungeonPath + prefix, "DUNGEON.DAT",
-                       sizeof("DUNGEON.DAT"));
+                memcpy(dungeonPath + prefix, dungeonMember,
+                       strlen(dungeonMember) + 1u);
                 dm1_dungeon_path_hash_resolved = 1;
             }
         }

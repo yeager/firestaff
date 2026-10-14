@@ -63,9 +63,13 @@ int dm1_v1_amiga_title_f0437_receipt(
         0xb3, 0x59, 0x31, 0xb5, 0x5d, 0xb6, 0x49, 0xa1,
         0xbd, 0x2d, 0x41, 0x5b, 0x61, 0xb2, 0x98, 0x01
     };
+    static const uint8_t a20ed_graphics_md5[16] = {
+        0x49, 0x1c, 0xa9, 0x39, 0xf9, 0xab, 0xb3, 0x3c,
+        0xee, 0xb2, 0x66, 0x19, 0xb8, 0x41, 0xfe, 0x91
+    };
     /* ReDMCSB TITLE.C:12,39 and STARTUP1.C:143 use the shared MEDIA413
-     * implementation for A20E/F/G and A21E. Pair each authentic graphics
-     * file with its original swoosh. */
+     * implementation for A20ED, A20E/F/G and A21E. Pair each authentic
+     * graphics file with its original swoosh. */
     static const char a20e_swsh_md5[] = "a0ffbcc7ae8cecac03128ddb32887ef4";
     static const char a20f_swsh_md5[] = "1038138978975415571a878bb08f54be";
     static const char a20g_swsh_md5[] = "916cb3cd462e7582d2a39c73e40b3339";
@@ -90,16 +94,26 @@ int dm1_v1_amiga_title_f0437_receipt(
                                        &graphics_receipt) != 0 ||
         !graphics_receipt.is_amiga ||
         (graphics_receipt.version != DM1_AMIGA_VER_2_0 &&
-         graphics_receipt.version != DM1_AMIGA_VER_2_1) ||
+         graphics_receipt.version != DM1_AMIGA_VER_2_1 &&
+         graphics_receipt.version != DM1_AMIGA_VER_DEMO) ||
         !((graphics_receipt.lang == DM1_AMIGA_LANG_EN &&
+           graphics_receipt.version == DM1_AMIGA_VER_DEMO &&
+           memcmp(graphics_receipt.md5, a20ed_graphics_md5,
+                  sizeof(a20ed_graphics_md5)) == 0 &&
+           strcmp(swsh_assets.executableMd5,
+                  "28d406007e99b0ae8da0c6f7fc7f183b") == 0) ||
+          (graphics_receipt.lang == DM1_AMIGA_LANG_EN &&
+           graphics_receipt.version == DM1_AMIGA_VER_2_0 &&
            memcmp(graphics_receipt.md5, a20e_graphics_md5,
                   sizeof(a20e_graphics_md5)) == 0 &&
            strcmp(swsh_assets.executableMd5, a20e_swsh_md5) == 0) ||
           (graphics_receipt.lang == DM1_AMIGA_LANG_FR &&
+           graphics_receipt.version == DM1_AMIGA_VER_2_0 &&
            memcmp(graphics_receipt.md5, a20f_graphics_md5,
                   sizeof(a20f_graphics_md5)) == 0 &&
            strcmp(swsh_assets.executableMd5, a20f_swsh_md5) == 0) ||
           (graphics_receipt.lang == DM1_AMIGA_LANG_DE &&
+           graphics_receipt.version == DM1_AMIGA_VER_2_0 &&
            memcmp(graphics_receipt.md5, a20g_graphics_md5,
                   sizeof(a20g_graphics_md5)) == 0 &&
            strcmp(swsh_assets.executableMd5, a20g_swsh_md5) == 0) ||

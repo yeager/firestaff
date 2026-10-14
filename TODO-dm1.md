@@ -361,7 +361,10 @@ parity.
   pair and dungeon data, then complete F0437/F0441 and reach runtime through
   both CLI and M12. The source archive labels both ADF dumps "Original (Not
   working)"; coverage uses their original files in ZIP transport wrappers and
-  does not claim bootable ADFs. Amiga 2.2 German, demo media, and native
+  does not claim bootable ADFs. The authentic Amiga demo ZIP now authenticates
+  its A20ED SWSH and graphics pair, renders the original C001 title, validates
+  C002/C003/C004 entrance assets, and reaches the first runtime frame in CLI
+  and M12 flows. Amiga 2.2 German and native
   renderer/input timing on each supported desktop remain open; these tests do
   not establish pixel parity or HiDPI behavior. The only local A22 German
   archive member is labeled "Original (Not working)" and is a 910,058-byte

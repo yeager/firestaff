@@ -1,5 +1,6 @@
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_graphics_loader_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,14 +17,18 @@ int dm1_v1_amiga_graphics_probe(const uint8_t *data, size_t size) {
     if (!data || size < 6) return 0;
 
     uint16_t count_be = rd16be(data);
+    size_t header_min = 2u + (size_t)count_be * 4u;
     if (count_be != DM1_AMIGA_GRAPHICS_EXPECTED_COUNT) return 0;
-    if (size < DM1_AMIGA_GRAPHICS_MIN_SIZE ||
-        size > DM1_AMIGA_GRAPHICS_MAX_SIZE) return 0;
+    if (size > DM1_AMIGA_GRAPHICS_MAX_SIZE) return 0;
+    if (size < DM1_AMIGA_GRAPHICS_MIN_SIZE) {
+        /* The official Amiga demo uses the same 575-entry big-endian table,
+         * but stores individual entries in ReDMCSB's compressed LZW form. */
+        if (size < header_min) return 0;
+    }
 
     /* Reject PC 3.4 new-format: 0x8001 marker (LE: 0x01 0x80) */
     if (data[0] == 0x01 && data[1] == 0x80) return 0;
 
-    size_t header_min = 2 + (size_t)count_be * 4;
     if (size < header_min) return 0;
 
     size_t comp_base = 2;
@@ -32,12 +37,11 @@ int dm1_v1_amiga_graphics_probe(const uint8_t *data, size_t size) {
     for (uint16_t i = 0; i < count_be; i++) {
         uint16_t cs = rd16be(data + comp_base + (size_t)i * 2);
         uint16_t ds = rd16be(data + decomp_base + (size_t)i * 2);
-        if (cs != ds) return 0;
         comp_sum += cs;
     }
 
     size_t data_area = size - header_min;
-    if (comp_sum != data_area) return 0;
+    if (comp_sum == 0u || comp_sum != data_area) return 0;
 
     return 1;
 }
@@ -199,10 +203,38 @@ int dm1_v1_amiga_graphics_decode(const uint8_t *data, size_t size,
                                  uint16_t *out_height) {
     if (out_width) *out_width = 0u;
     if (out_height) *out_height = 0u;
-    if (!dm1_v1_amiga_graphics_probe(data, size)) return 0;
-    return dm1_v1_legacy_graphics_decode(data, size, 1, graphic_index,
-                                         indexed_pixels, pixel_capacity,
-                                         out_width, out_height);
+    const size_t header = 2u + (size_t)DM1_AMIGA_GRAPHICS_EXPECTED_COUNT * 4u;
+    size_t offset = header;
+    uint16_t compressed_size, expanded_size;
+    DM1_V1_GFX_LZWStatePc34 lzw;
+    uint8_t *expanded;
+    int decoded, result;
+    if (!dm1_v1_amiga_graphics_probe(data, size) ||
+        graphic_index >= DM1_AMIGA_GRAPHICS_EXPECTED_COUNT) return 0;
+    for (uint16_t i = 0; i < graphic_index; ++i)
+        offset += rd16be(data + 2u + (size_t)i * 2u);
+    compressed_size = rd16be(data + 2u + (size_t)graphic_index * 2u);
+    expanded_size = rd16be(data + 2u +
+        (size_t)DM1_AMIGA_GRAPHICS_EXPECTED_COUNT * 2u +
+        (size_t)graphic_index * 2u);
+    if ((size_t)compressed_size > size - offset || expanded_size < 4u)
+        return 0;
+    expanded = (uint8_t *)malloc(expanded_size);
+    if (!expanded) return 0;
+    if (compressed_size == expanded_size) {
+        memcpy(expanded, data + offset, expanded_size);
+        decoded = expanded_size;
+    } else {
+        memset(&lzw, 0, sizeof(lzw));
+        decoded = DM1_V1_GFX_LzwDecompressPc34Compat(
+            &lzw, data + offset, compressed_size, expanded, expanded_size);
+    }
+    result = decoded == (int)expanded_size
+        ? dm1_v1_legacy_graphics_decode_item(expanded, expanded_size, 1,
+              indexed_pixels, pixel_capacity, out_width, out_height)
+        : 0;
+    free(expanded);
+    return result;
 }
 
 static uint16_t read_be16(const uint8_t *bytes) {
