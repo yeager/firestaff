@@ -226,14 +226,13 @@
   evidence; SDL dummy-driver evidence does not establish physical M5 rendering
   or visual parity.
 
-- 2026-10-06: DM1's PC34 startup handoff now requires the original SWSH logo
-  asset to load and its source-timed presentation to finish. Missing/unreadable
-  media, failed frame presentation, or an interrupted event wait now fails the
-  selected launch instead of publishing a successful intro receipt and
-  continuing into the runtime. The authentic PC34 CLI startup test passes and
-  includes a negative case made from a private copy of the retail archive with
-  only `SWOOSH` omitted; it verifies no runtime-ready receipt is emitted. This
-  tests launch admission, not physical M5 timing or visual parity.
+- 2026-10-06 (corrected 2026-10-14): The earlier rule that blocked PC 3.4
+  English when `SWOOSH` was missing was incorrect. ReDMCSB `APPA.C:51-68`
+  ignores the `FTL_SWSH` load result and continues to `FTL_ANIM`; Firestaff now
+  follows that behavior, logs the skipped optional prelude under `--debug`,
+  and loads the original graphics/dungeon pair. The authentic startup
+  regression now covers this case. The separate French multilingual EUDATA
+  row still requires its English startup-media companion.
 
 - 2026-10-06: Re-ran the authenticated FM Towns English/Japanese startup and
   launcher matrix against the local bilingual ZIP. Direct launch, default

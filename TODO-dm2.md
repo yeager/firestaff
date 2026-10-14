@@ -1,5 +1,22 @@
 # Firestaff TODO — DM2
 
+2026-10-14 supported-platform HUD and viewport retest on the Mac mini M4:
+`dm2_v1_dos_native_cli_boot`, `dm2_v1_mac_native_cli_boot`,
+`dm2_v1_amiga_native_cli_boot`, `dm2_v1_fmtowns_native_cli_boot`,
+`dm2_v1_dm2_viewport_m11_live_enumeration` and
+`dm2_v1_fmtowns_hud_portraits_real_data` passed 6/6 in 739.32 seconds with
+authentic original archives. The four platform boot routes reached runtime
+with original assets and passed their source-region HUD/viewport pixel gates;
+FM Towns also selected as the default for bare `--game dm2`. PC-9821 was
+excluded as unsupported. This verifies the supported DOS, Macintosh, Amiga
+and FM Towns game-data routes on one ARM64 Mac host using SDL dummy video and
+audio. It does not verify native graphics backends on Windows/Linux, M5
+Retina/HiDPI presentation, GPU output or full pixel parity. Existing Actions
+jobs build the host app on Ubuntu, macOS and Windows, but do not run these same
+authentic-media screen checks on all three host operating systems. Keep the
+reported cross-host rendering concerns open until those native captures are
+available.
+
 2026-10-14 complete five-edition HUD and viewport retest on the Mac mini M4:
 `dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
 `dm2_v1_mac_native_cli_boot`, `dm2_v1_amiga_native_cli_boot` and

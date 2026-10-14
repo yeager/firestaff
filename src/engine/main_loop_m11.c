@@ -4096,15 +4096,31 @@ static int m11_play_ftl_swoosh_for_game_if_available(
                 gameId,
                 &dm1Media);
     }
+    /* ReDMCSB APPA.C calls FTL_SWSH through PRIM_26, ignores its result, then
+     * continues into FTL_ANIM. The logo is an optional prelude; installations
+     * containing the authenticated GRAPHICS.DAT/DUNGEON.DAT pair must still
+     * start when SWSH is absent or unreadable. */
     if (!V1_SWSH_Intro_FindLogoPathForGame(menuState,
-                                            dataDir,
-                                            gameId,
-                                            logoPath,
-                                            sizeof(logoPath))) return 0;
+                                           dataDir,
+                                           gameId,
+                                           logoPath,
+                                           sizeof(logoPath))) {
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-source-skip game=%s phase=swsh-intro reason=not-found\n",
+                    gameId ? gameId : "unknown");
+        }
+        return 1;
+    }
     if (!asset_read_path_alloc(logoPath, &logoImg, &logoImgSize) ||
         !logoImg || logoImgSize == 0U || logoImgSize > (size_t)UINT_MAX) {
         free(logoImg);
-        return 0;
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-source-skip game=%s phase=swsh-intro reason=unreadable\n",
+                    gameId ? gameId : "unknown");
+        }
+        return 1;
     }
     g_m11_intro_local_audio = &swshAudio;
     /* Atari ST low-res FTL logo: 4bpp packed, 160 bytes/row, 32000 bytes total.

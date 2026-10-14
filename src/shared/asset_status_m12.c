@@ -4003,11 +4003,11 @@ static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
     return spec ? spec->md5 : NULL;
 }
 
-/* ReDMCSB APPA.C loads SWOOSH before TITLE for both PC 3.4 releases. The
- * French EUDATA package omits that file and depends on the English companion;
- * the English package also needs its original SWOOSH. Do not expose either
- * PC edition as launchable when the exact startup asset is absent. */
-static int m12_dm1_pc34_has_startup_media(
+/* French PC 3.4 EUDATA carries the shared multilingual game data but omits
+ * the FTL startup logo. Admit this edition only when the authentic PC 3.4
+ * English companion is discoverable in the same scanned source tree. The
+ * standalone English edition remains launchable without this optional logo. */
+static int m12_dm1_pc34_multi_has_startup_media(
     const char* matchedMediaPath) {
     static const char* const pc34SwooshMd5s[] = {
         "a66b607f3850e604b6703e90bbfb5189",
@@ -4015,7 +4015,6 @@ static int m12_dm1_pc34_has_startup_media(
     };
     char sourcePath[M12_ASSET_DATA_DIR_CAPACITY];
     char searchRoot[M12_ASSET_DATA_DIR_CAPACITY];
-    char companionRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char matchedPath[ASSET_PATH_MAX];
     char* memberSeparator;
     int matchIndex = -1;
@@ -4028,20 +4027,7 @@ static int m12_dm1_pc34_has_startup_media(
         return 0;
     }
     matchedPath[0] = '\0';
-    if (asset_find_by_md5_list(searchRoot, pc34SwooshMd5s,
-                               matchedPath, (int)sizeof(matchedPath),
-                               &matchIndex, 32)) {
-        return 1;
-    }
-    /* The original loose DOS layout keeps SWOOSH beside DATA/, while the
-     * selected GRAPHICS.DAT is inside DATA/. APPA.C:51-68 loads it from the
-     * package's media tree, so inspect the immediate parent root as well. */
-    if (!FSP_ParentDir(companionRoot, sizeof(companionRoot), searchRoot) ||
-        strcmp(companionRoot, searchRoot) == 0) {
-        return 0;
-    }
-    matchedPath[0] = '\0';
-    return asset_find_by_md5_list(companionRoot, pc34SwooshMd5s,
+    return asset_find_by_md5_list(searchRoot, pc34SwooshMd5s,
                                   matchedPath, (int)sizeof(matchedPath),
                                   &matchIndex, 32);
 }
@@ -4726,9 +4712,8 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
             if (rootMatched[rootIndex][i]) {
                 if (strcmp(gameSpec->gameId, "dm1") == 0 &&
                     spec->versionId &&
-                    (strcmp(spec->versionId, "pc34-en") == 0 ||
-                     strcmp(spec->versionId, "pc34-multi") == 0) &&
-                    !m12_dm1_pc34_has_startup_media(
+                    strcmp(spec->versionId, "pc34-multi") == 0 &&
+                    !m12_dm1_pc34_multi_has_startup_media(
                         rootMatchedPaths[rootIndex][i])) {
                     continue;
                 }

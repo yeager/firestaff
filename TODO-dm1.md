@@ -1,5 +1,24 @@
 # Firestaff TODO — DM1
 
+2026-10-14 issue #13 version comparison: ran the published Linux x86_64
+AppImages for 3.0.361, 3.0.362 and 3.0.380 in an x86_64 container under QEMU
+on the local ARM64 Mac mini M4. The authentic PC 3.4 English GRAPHICS.DAT and
+DUNGEON.DAT pair starts on 3.0.361, but 3.0.362 and 3.0.380 reject the same
+pair when the separate `SWOOSH` file is absent. All versions reach runtime
+when the original `SWOOSH` is present. ReDMCSB `APPA.C:51-68` ignores the
+`FTL_SWSH` load result and continues to `FTL_ANIM`; therefore the English
+PC 3.4 logo is optional. Commit `25fec5d7c` began treating a missing logo as a
+failed launch, and `e7119f2ed` later also hid PC 3.4 English from the catalogue
+when it was absent. Firestaff now admits the authenticated English graphics
+and proceeds to the real dungeon while logging the skipped logo. The same M4
+boot probe with only the authentic graphics/dungeon pair reached
+`phase=dm1-runtime` and `levelLoaded=1`. The full
+`dm1_v1_pc34_native_cli_boot` CTest passes on the Mac mini M4 with the original
+retail archive (359.57 seconds), including the loose-file, missing-SWOOSH,
+title, Entrance, Hall and input routes.
+This reproduces the release failure under x86_64 emulation; it does not replace
+a native Linux run on the reporter's machine. The issue status has not changed.
+
 2026-10-14 chest-close evidence audit: ReDMCSB `CHEST.C`
 `F0334_INVENTORY_CloseChest` (lines 79–132) clears `G0426` and rebuilds the
 container chain from the eight visible `G0425` entries; the `CHANGE8_09_FIX`

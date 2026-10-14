@@ -60,9 +60,9 @@ PY
 rm -f "$title_quit_probe"
 rm -rf "$title_quit_home"
 
-# The PC34 launch plan requires the original SWSH prelude. Keep all other
-# files from the authentic archive, remove only this source asset in a private
-# test copy, and verify the CLI does not claim a completed launch without it.
+# Keep a private copy of the authentic archive with its optional SWSH logo
+# removed. The original loader continues to FTL_ANIM if FTL_SWSH fails, so the
+# authenticated graphics/dungeon pair must remain playable without the logo.
 missing_swsh_root="$test_scratch/dm1-missing-swsh-$$"
 missing_swsh_home="$missing_swsh_root/home"
 mkdir -p "$missing_swsh_root/data" "$missing_swsh_home"
@@ -92,7 +92,7 @@ PY
 # Issue #13 reported that DM1 PC 3.4 could be marked verified while the
 # extracted DUNGEON.DAT failed to load. Exercise the installed loose-file
 # layout using bytes extracted from the authentic retail ZIP, before the
-# negative missing-SWSH case mutates this private copy.
+# missing-SWSH case mutates this private copy.
 loose_runtime_probe="$test_scratch/dm1-pc34-loose-runtime-$$.json"
 loose_runtime_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$loose_runtime_probe" \
@@ -292,29 +292,32 @@ if len(matches) != 1:
 matches[0].unlink()
 print("PASS: prepared an isolated missing-SWSH test copy from the original archive")
 PY
-missing_swsh_output_file="$missing_swsh_root/output.txt"
-if HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+pair_only_data_root="$missing_swsh_root/pc34-pair"
+mkdir -p "$pair_only_data_root"
+cp "$runtime_data_root/GRAPHICS.DAT" "$runtime_data_root/DUNGEON.DAT" \
+   "$pair_only_data_root/"
+missing_swsh_output="$(HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-   --game dm1 --platform pc --data-dir "$runtime_data_root" \
+   --game dm1 --platform pc --data-dir "$pair_only_data_root" \
    --debug --verbose --boot-probe --boot-probe-frames 120 --duration 0 \
-   >"$missing_swsh_output_file" 2>&1; then
-    cat "$missing_swsh_output_file" >&2
-    echo "FAIL: DM1 reported a successful runtime handoff without the required SWSH asset" >&2
+   2>&1)" || {
+    printf '%s\n' "$missing_swsh_output" >&2
+    echo "FAIL: DM1 did not continue to the dungeon runtime without optional SWSH" >&2
+    exit 1
+}
+if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$missing_swsh_output" ||
+   ! grep -Fq "dm1 platform=PC edition=pc34-en matched source=$pair_only_data_root/GRAPHICS.DAT" \
+       <<<"$missing_swsh_output" ||
+   ! grep -Fq 'phase=dm1-runtime' <<<"$missing_swsh_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$missing_swsh_output" ||
+   ! grep -Fq 'startup-source-skip game=dm1 phase=swsh-intro reason=not-found' \
+       <<<"$missing_swsh_output"; then
+    printf '%s\n' "$missing_swsh_output" >&2
+    echo "FAIL: absent optional SWSH prevented the authentic PC 3.4 dungeon from reaching runtime" >&2
     exit 1
 fi
-if grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' "$missing_swsh_output_file" ||
-   { ! grep -Fq 'game unavailable for --game: dm1' "$missing_swsh_output_file" &&
-     ! grep -Fq 'direct launch failed for --game dm1' "$missing_swsh_output_file"; } ||
-   ! grep -Fq 'dm1 platform=PC edition=pc34-en not matched' \
-       "$missing_swsh_output_file" ||
-   grep -Fq 'dm1 platform=PC edition=pc34-en matched source=' \
-       "$missing_swsh_output_file"; then
-    cat "$missing_swsh_output_file" >&2
-    echo "FAIL: missing SWSH did not remove PC 3.4 from startup matching before runtime" >&2
-    exit 1
-fi
-echo "PASS: DM1 hides PC 3.4 and rejects the launch when its source SWSH prelude is missing"
+echo "PASS: DM1 reaches PC 3.4 runtime and skips the absent optional SWSH logo"
 python3 - "$missing_swsh_root" <<'PY'
 from pathlib import Path
 import shutil
