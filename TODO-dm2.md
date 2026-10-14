@@ -1,5 +1,19 @@
 # Firestaff TODO — DM2
 
+2026-10-14 current-main HUD/viewport retest on the Mac mini M4, commit
+`68972ca0`: the five authentic runtime routes (DOS English, DOS French,
+Macintosh, Amiga and FM Towns) plus live viewport-plan enumeration passed
+6/6 in 795.06 seconds. All routes use original game archives and check a
+presented runtime frame and scripted movement. A closer region audit of the
+FM Towns capture found 25,746 lit pixels in the dungeon aperture and 2,841 in
+the right panel, but zero in both the upper 40-pixel band and lower 24-pixel
+band. The existing gate checks only dungeon and right-panel occupancy, so it
+passes despite these empty HUD bands. The Amiga frame has visible pixels in
+both bands. Keep FM Towns HUD completion open; the generic Towns chrome path
+is intentionally skipped until its source placements are bound. These are
+SDL dummy-video/audio captures on one ARM64 Mac host; they do not establish
+native Windows/Linux presentation, M5 HiDPI behavior or pixel parity.
+
 2026-10-14 fresh HUD and viewport verification on the Mac mini M4 at
 `a0af9764`: all seven authentic-media checks passed in 460.78 seconds:
 DOS English, DOS French, Macintosh, Amiga and FM Towns runtime routes,

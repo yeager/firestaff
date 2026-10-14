@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-14 mixed-original-media AUTO/start-menu retest on the Mac mini M4,
+current source: `csb_v1_fmtowns_m12_auto_mixed_real_media` passed in 321.96
+seconds. With authentic FM Towns, Atari and Amiga archives installed together,
+AUTO chose the default FM Towns route; the menu cards and direct platform
+routes also reached their tested original-media handoffs for all three. This
+uses SDL dummy video/audio on one ARM64 Mac host and does not verify native
+window presentation, physical input, audible output or full visual parity.
+
 2026-10-14 CSB FM Towns per-user data-root end-to-end regression on the
 Mac mini M4: `csb_v1_fmtowns_native_cli_boot` passed in 147.31 seconds using
 the authenticated F31 Japanese/English archive. The test now removes data-root
