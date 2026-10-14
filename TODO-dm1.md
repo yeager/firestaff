@@ -9,6 +9,14 @@ fast-forward. This confirms the tested host did not race through the source
 waits. It does not verify Cocoa/Retina presentation on the MacBook Pro M5 or
 compare the complete title frame and palette against an original capture.
 
+2026-10-14 fresh Mac mini M4 startup rerun against original media:
+`dm1_v1_pc34_native_cli_boot` and `dm1_macos_real_data_boot` passed 2/2.
+The PC 3.4 route completed its CLI, menu, Hall of Champions and input coverage
+in 355.13 seconds; the Mac-specific authenticated media probe passed in 4.15
+seconds. The runtime binary was built from `67b4731ca`; `6dd486e3e` adds only
+documentation. Dummy-video coverage does not verify a physical Retina window,
+native input or visual parity.
+
 2026-10-14 Mac mini M4 HiDPI input regression: the current build passed
 `m11_display_aspect_present_rect` and
 `dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat`. These checks exercise

@@ -1,5 +1,12 @@
 # Firestaff TODO — CSB
 
+2026-10-14 fresh Mac mini M4 original-media startup rerun:
+`csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_native_cli_boot` and
+`csb_v1_fmtowns_native_cli_boot` passed 3/3 in 317.42 seconds. The runtime
+binary was built from `67b4731ca`; `6dd486e3e` adds only documentation. These
+SDL dummy-video/audio routes verify the tested CLI/menu handoffs, not physical
+display, input, audio output or visual parity.
+
 2026-10-14 M4 real-media startup retest: `test_csb_v1_amiga_native_cli_boot.sh`
 passed against the authenticated Amiga archives. CLI startup, the Original and
 Modern title handoffs, the full CLI input matrix, the M12 start-menu route and
