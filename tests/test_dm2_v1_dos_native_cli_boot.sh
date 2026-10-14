@@ -195,7 +195,25 @@ pixels = [blob[offset + y * stride + x * 3:offset + y * stride + x * 3 + 3]
           for y in range(height) for x in range(width)]
 if sum(pixel != b"\0\0\0" for pixel in pixels) < 10000 or len(set(pixels)) < 32:
     raise SystemExit("FAIL: DM2 DOS runtime frame was not visibly presented")
-print("PASS: authentic DM2 DOS start menu reached and presented its first runtime frame")
+viewport_pixels = [pixels[y * width + x]
+                   for y in range(40, 176) for x in range(224)]
+floor_pixels = [pixels[y * width + x]
+                for y in range(136, 176) for x in range(224)]
+top_hud_pixels = [pixels[y * width + x]
+                  for y in range(40) for x in range(width)]
+right_panel_pixels = [pixels[y * width + x]
+                      for y in range(40, 176) for x in range(224, width)]
+viewport_visible = sum(pixel != b"\0\0\0" for pixel in viewport_pixels)
+floor_visible = sum(pixel != b"\0\0\0" for pixel in floor_pixels)
+top_hud_visible = sum(pixel != b"\0\0\0" for pixel in top_hud_pixels)
+right_panel_visible = sum(pixel != b"\0\0\0" for pixel in right_panel_pixels)
+if (viewport_visible < 10000 or floor_visible < 5000 or
+        top_hud_visible < 500 or right_panel_visible < 2000):
+    raise SystemExit(
+        "FAIL: authentic DM2 DOS viewport or HUD is incomplete "
+        f"(viewport={viewport_visible}, floor={floor_visible}, "
+        f"top-HUD={top_hud_visible}, right-panel={right_panel_visible})")
+print("PASS: authentic DM2 DOS start menu reached runtime with visible dungeon viewport, floor and HUD")
 PY
 
 # The ordinary AUTO route must choose the authenticated DOS edition from the
