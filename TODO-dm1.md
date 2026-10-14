@@ -119,6 +119,21 @@ fast-forward. This confirms the tested host did not race through the source
 waits. It does not verify Cocoa/Retina presentation on the MacBook Pro M5 or
 compare the complete title frame and palette against an original capture.
 
+2026-10-14 I34E startup link audit: ReDMCSB's `Toolchains/IBM PC/Source/I34E.LNK`
+contains 36 objects and ends with `STARTUP2.OBJ`; it contains neither a title
+nor an entrance object. In `STARTUP2.C`, the F0437 call is guarded by
+`MEDIA274`, which excludes I34E, and F0441 is guarded by `MEDIA279`, also
+excluding I34E. The I34E-specific `MEDIA707` branch calls F0435 directly and
+ends the program if loading fails. `ENTRANCE.C:1280-1281` includes `TITLE.C`
+only for `MEDIA514`, which also excludes I34E. Firestaff currently plays its
+PC34 C001 title and C004/door animation through the generic DM1 handoff, so
+these frames are not source parity for authentic I34E even when their timing
+matches another PC edition. Split this route by authenticated edition and
+reproduce the I34E startup order before claiming PC34 title/entrance parity;
+retain F0437/F0441 only on editions whose startup source calls them. The
+previously logged PC34 title/entrance captures remain useful Firestaff runtime
+evidence, not evidence that the original I34E startup shows those sequences.
+
 2026-10-14 fresh Mac mini M4 startup rerun against original media:
 `dm1_v1_pc34_native_cli_boot` and `dm1_macos_real_data_boot` passed 2/2.
 The PC 3.4 route completed its CLI, menu, Hall of Champions and input coverage
