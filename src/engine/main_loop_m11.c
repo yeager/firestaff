@@ -4286,6 +4286,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     unsigned char* framebuffer;
     int titlePalette = -1;
     Uint64 presentationStartedMs = 0U;
+    Uint64 titleStartedMs = 0U;
     unsigned int sourceStep;
     unsigned int completedSteps = 0U;
     int autotestQuitInjected = 0;
@@ -4388,10 +4389,15 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
      * animation bank.  That bank is a separate PC title-file animation; the
      * ReDMCSB startup TITLE routine uses GRAPHICS.DAT graphic C001 instead.
      */
+    titleStartedMs = m11_intro_active_ticks();
     for (sourceStep = 1U; sourceStep <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++sourceStep) {
         V1_TitleFrontendSourceAnimationStep step;
         V1_TitleFrontendC001BlitPlan blitPlan;
         int stepPalette;
+        Uint64 stepStartedMs = m11_intro_active_ticks();
+        Uint64 presentElapsedMs = 0U;
+        Uint64 waitElapsedMs = 0U;
+        unsigned int requestedWaitMs = 0U;
         if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
             break;
         }
@@ -4429,25 +4435,46 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (command.palette_before_pre_present_delay &&
             titlePalette != stepPalette) {
             presentationStartedMs = m11_intro_active_ticks();
-            if (!m11_present_dm1_startup_special_palette(
-                    gameView, framebuffer, stepPalette)) {
-                break;
+            {
+                Uint64 presentStartedMs = m11_intro_active_ticks();
+                if (!m11_present_dm1_startup_special_palette(
+                        gameView, framebuffer, stepPalette)) {
+                    break;
+                }
+                presentElapsedMs += m11_intro_active_ticks() - presentStartedMs;
             }
         }
         /* ReDMCSB TITLE.C F0437:385-387 waits before each prepared
          * zoom bitmap is blitted. Steps 20, 21, and 23 model the two
          * post-zoom waits and the final guard individually, so do not add
          * an aggregate delay after this loop. */
-        if (command.pre_present_delay_ms > 0U &&
-            m11_delay_ms_with_intro_event_pump(
-                m11_v20_startup_remaining_delay_ms(
-                    command.pre_present_delay_ms, presentationStartedMs))) {
-            break;
+        if (command.pre_present_delay_ms > 0U) {
+            const unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
+                command.pre_present_delay_ms, presentationStartedMs);
+            const Uint64 waitStartedMs = m11_intro_active_ticks();
+            requestedWaitMs += delayMs;
+            if (m11_delay_ms_with_intro_event_pump(delayMs)) {
+                break;
+            }
+            waitElapsedMs += m11_intro_active_ticks() - waitStartedMs;
         }
         presentationStartedMs = 0U;
         if (!command.present_frame) {
             ++completedSteps;
             gameView->dm1StartupTitleCompletedSteps = completedSteps;
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr,
+                        "firestaff: startup-source-frame game=dm1 platform=pc phase=title-f0437 step=%u/%u event=%u presented=0 requested-wait-ms=%u actual-wait-ms=%llu present-ms=%llu step-elapsed-ms=%llu total-elapsed-ms=%llu fast-forward=%d\n",
+                        sourceStep,
+                        V1_TitleFrontend_GetSourceAnimationStepCount(),
+                        (unsigned int)step.kind,
+                        requestedWaitMs,
+                        (unsigned long long)waitElapsedMs,
+                        (unsigned long long)presentElapsedMs,
+                        (unsigned long long)(m11_intro_active_ticks() - stepStartedMs),
+                        (unsigned long long)(m11_intro_active_ticks() - titleStartedMs),
+                        g_m11_intro_delay_fast_forward);
+            }
             continue;
         }
         if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
@@ -4489,9 +4516,13 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
          * the "PRESENTS" word red instead of plain white. */
         presentationStartedMs = m11_intro_active_ticks();
-        if (!m11_present_dm1_startup_special_palette(
-                gameView, framebuffer, stepPalette)) {
-            break;
+        {
+            Uint64 presentStartedMs = m11_intro_active_ticks();
+            if (!m11_present_dm1_startup_special_palette(
+                    gameView, framebuffer, stepPalette)) {
+                break;
+            }
+            presentElapsedMs += m11_intro_active_ticks() - presentStartedMs;
         }
         if (sourceStep == 1U || sourceStep == 10U || sourceStep == 19U) {
             const char* phase = sourceStep == 1U
@@ -4499,17 +4530,34 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                 : (sourceStep == 10U ? "c001-zoom-mid" : "c001-zoom-full");
             m11_capture_dm1_startup_presented_frame(&dm1Media, phase);
         }
-        if (command.post_present_delay_ms > 0U &&
-            m11_delay_ms_with_intro_event_pump(
-                m11_v20_startup_remaining_delay_ms(
-                    command.post_present_delay_ms, presentationStartedMs))) {
-            break;
+        if (command.post_present_delay_ms > 0U) {
+            const unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
+                command.post_present_delay_ms, presentationStartedMs);
+            const Uint64 waitStartedMs = m11_intro_active_ticks();
+            requestedWaitMs += delayMs;
+            if (m11_delay_ms_with_intro_event_pump(delayMs)) {
+                break;
+            }
+            waitElapsedMs += m11_intro_active_ticks() - waitStartedMs;
         }
         if (command.post_present_delay_ms > 0U) {
             presentationStartedMs = 0U;
         }
         ++completedSteps;
         gameView->dm1StartupTitleCompletedSteps = completedSteps;
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-source-frame game=dm1 platform=pc phase=title-f0437 step=%u/%u event=%u presented=1 requested-wait-ms=%u actual-wait-ms=%llu present-ms=%llu step-elapsed-ms=%llu total-elapsed-ms=%llu fast-forward=%d\n",
+                    sourceStep,
+                    V1_TitleFrontend_GetSourceAnimationStepCount(),
+                    (unsigned int)step.kind,
+                    requestedWaitMs,
+                    (unsigned long long)waitElapsedMs,
+                    (unsigned long long)presentElapsedMs,
+                    (unsigned long long)(m11_intro_active_ticks() - stepStartedMs),
+                    (unsigned long long)(m11_intro_active_ticks() - titleStartedMs),
+                    g_m11_intro_delay_fast_forward);
+        }
         /* Deterministically exercise host close handling against the first
          * rendered source frame. This hook is inert unless both explicit
          * autotest switches are set; ReDMCSB TITLE.C F0437 itself has no
@@ -4533,6 +4581,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         }
     }
     if (completedSteps == V1_TitleFrontend_GetSourceAnimationStepCount()) {
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-source-complete game=dm1 platform=pc phase=title-f0437 steps=%u elapsed-ms=%llu\n",
+                    completedSteps,
+                    (unsigned long long)(m11_intro_active_ticks() - titleStartedMs));
+        }
         if (outCompleted) {
             *outCompleted = 1;
         }

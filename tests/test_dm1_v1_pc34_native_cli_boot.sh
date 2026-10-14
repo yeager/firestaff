@@ -233,6 +233,35 @@ if ! grep -Fq 'handoff=pc-img3' <<<"$default_loose_output"; then
     echo 'FAIL: DM1 AUTO menu did not launch loose PC-34 media from ~/.firestaff/data/dm1 without --data-dir' >&2
     exit 1
 fi
+python3 - "$default_loose_output" <<'PY'
+import re
+import sys
+
+pattern = re.compile(r"startup-source-frame game=dm1 platform=pc phase=title-f0437 (.*)")
+rows = []
+for line in sys.argv[1].splitlines():
+    match = pattern.search(line)
+    if match:
+        fields = dict(part.split("=", 1) for part in match.group(1).split())
+        rows.append(fields)
+
+if len(rows) != 23:
+    raise SystemExit(f"FAIL: expected 23 timed DM1 PC34 C001 events, found {len(rows)}")
+steps = [int(row["step"].split("/", 1)[0]) for row in rows]
+if steps != list(range(1, 24)):
+    raise SystemExit(f"FAIL: DM1 PC34 title events were reordered or skipped: {steps}")
+if any(row["fast-forward"] != "0" for row in rows):
+    raise SystemExit("FAIL: ordinary M12 title run unexpectedly fast-forwarded its source waits")
+total_ms = int(rows[-1]["total-elapsed-ms"])
+if total_ms < 3900:
+    raise SystemExit(
+        f"FAIL: DM1 PC34 C001 title duration was shorter than its source-bound cadence: {total_ms} ms")
+if rows[0]["event"] != "0" or int(rows[0]["requested-wait-ms"]) < 1600:
+    raise SystemExit(f"FAIL: DM1 PRESENTS hold was missing from its timing receipt: {rows[0]}")
+print(
+    f"PASS: DM1 PC34 title timing logged 23 ordered source events in {total_ms} ms; "
+    f"max present={max(int(row['present-ms']) for row in rows)} ms")
+PY
 python3 - "$default_loose_probe" <<'PY'
 import json
 import sys

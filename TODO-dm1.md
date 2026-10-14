@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+2026-10-14 PC 3.4 title timing diagnostics: `--debug` now emits all 23
+source-owned C001 title events with requested and observed waits, presentation
+time, total elapsed time and fast-forward state. The authentic PC 3.4 M12
+CLI/start-menu regression passed on the Mac mini M4; its normal title route
+measured 4,036 ms, with a maximum measured SDL present call of 3 ms and no
+fast-forward. This confirms the tested host did not race through the source
+waits. It does not verify Cocoa/Retina presentation on the MacBook Pro M5 or
+compare the complete title frame and palette against an original capture.
+
 2026-10-14 Mac mini M4 HiDPI input regression: the current build passed
 `m11_display_aspect_present_rect` and
 `dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat`. These checks exercise
