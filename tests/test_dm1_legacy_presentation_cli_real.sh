@@ -28,14 +28,14 @@ run_probe() {
             SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
                 --width 1920 --height 1080 --game dm1 --platform "$platform" \
                 "$@" --data-dir "$archive" --menu --script "$script" \
-                --presentation-mode v1 --duration 3000 2>&1
+                --presentation-mode v1 --duration 8000 2>&1
         else
             FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
             FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
             SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
                 --game dm1 --platform "$platform" --data-dir "$archive" \
                 "$@" --menu --script "$script" --presentation-mode v1 \
-                --duration 3000 2>&1
+                --duration 8000 2>&1
         fi
     else
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

@@ -1712,6 +1712,30 @@ static void m11_capture_dm1_startup_presented_frame(
             phase, output_path);
 }
 
+static void m11_capture_dm1_authenticated_startup_frame(const char* phase)
+{
+    const char* capture_root = getenv("FIRESTAFF_DM1_STARTUP_CAPTURE_DIR");
+    char capture_dir[1024];
+    char output_path[1280];
+    int written;
+
+    if (!capture_root || !capture_root[0] || !phase || !phase[0]) return;
+    written = snprintf(capture_dir, sizeof(capture_dir), "%s/%s",
+                       capture_root, phase);
+    if (written < 0 || written >= (int)sizeof(capture_dir)) {
+        fprintf(stderr, "firestaff: DM1 startup capture path is too long\n");
+        return;
+    }
+    if (!M11_Screenshot_CapturePresentedRGBA(capture_dir, output_path,
+                                              (int)sizeof(output_path))) {
+        fprintf(stderr, "firestaff: DM1 startup presented capture failed: %s\n",
+                phase);
+        return;
+    }
+    fprintf(stderr, "DM1 STARTUP PRESENTED CAPTURE: %s %s\n",
+            phase, output_path);
+}
+
 /* CSB V2.0 has two source-preserving presentation passes: indexed cleanup
  * happens before palette conversion in m11_present_game_frame(), while CRT
  * scanlines operate on the final RGBA surface. Keep the second pass here,
@@ -2097,6 +2121,7 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
 static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
 static int g_m11_startup_intro_quit_requested = 0;
+static int g_m11_dm1_i34e_intro_preplayed = 0;
 static int g_m11_debug_startup_detail = 0;
 static Uint32 g_m11_phase_duration_started_ms;
 static int g_m11_phase_duration_ms = -1;
@@ -4886,6 +4911,7 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     unsigned frames = 0u;
     int step;
     int userAborted = 0;
+    int autotestQuitInjected = 0;
     if (!version || !version->versionId ||
         strcmp(version->versionId, "pc34-en") != 0 ||
         !m11_dm1_i34e_title_read_authentic(menuState, version, &data, &size))
@@ -4921,6 +4947,28 @@ static int m11_play_dm1_i34e_title_anim_if_available(
         }
         ++frames;
         waitedVblanks += frame.source_delay_vblanks;
+        if (frames == 1u)
+            m11_capture_dm1_authenticated_startup_frame("i34e-title-first");
+        else if (frames == 27u)
+            m11_capture_dm1_authenticated_startup_frame("i34e-title-mid");
+        else if (frames == 53u)
+            m11_capture_dm1_authenticated_startup_frame("i34e-title-final");
+        if (!autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+            getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME"),
+                   "1") == 0) {
+            memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            event.type = SDL_EVENT_QUIT;
+#else
+            event.type = SDL_QUIT;
+#endif
+            if (SDL_PushEvent(&event)) {
+                autotestQuitInjected = 1;
+                fprintf(stderr,
+                        "AUTOTEST: DM1 I34E title quit injected after first rendered frame\n");
+            }
+        }
         for (;;) {
             if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) {
                 step = M11_ENTRANCE_COMMAND_QUIT; break;
@@ -5101,12 +5149,13 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
         M11_Render_SetIndexedPaletteRgb8(palette) != M11_RENDER_OK ||
         M11_Render_PresentIndexed(frame, M11_FB_WIDTH, M11_FB_HEIGHT) !=
             M11_RENDER_OK) goto done;
+    m11_capture_dm1_authenticated_startup_frame("i34e-selector-closed");
     vblankStartMs = m11_intro_active_ticks();
     selectorStartMs = vblankStartMs;
 
-    /* Direct CLI selection is the Enter command. F8360 is called once per
-     * source VBlank, with G8248=4; preserve its initial step zero and every
-     * subsequent image rather than using a host tween or a fixed animation. */
+    /* Direct CLI selection and M12 New Game both select the I34E FIRES row.
+     * F8360 is called once per source VBlank, with G8248=4; preserve its
+     * initial step zero and every subsequent image. */
     width = right->width;
     steps = (width + 3u) / 4u;
     for (step = 0u; step < steps; ++step) {
@@ -5118,6 +5167,15 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 view, 224u, 136u, step, frame, sizeof(frame)) ||
             M11_Render_PresentIndexed(frame, M11_FB_WIDTH, M11_FB_HEIGHT) !=
                 M11_RENDER_OK) goto done;
+        if (step == 0u)
+            m11_capture_dm1_authenticated_startup_frame(
+                "i34e-selector-door-step-1");
+        else if (step + 1u == steps / 2u)
+            m11_capture_dm1_authenticated_startup_frame(
+                "i34e-selector-door-mid");
+        else if (step + 1u == steps)
+            m11_capture_dm1_authenticated_startup_frame(
+                "i34e-selector-door-open");
         while (SDL_PollEvent(&event)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (event.type == SDL_EVENT_QUIT) {
@@ -5955,9 +6013,44 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
             strcmp(selectedVersion->versionId, "pc34-en") == 0 &&
             M12_AssetStatus_GetVersionArchitecture(
                 "dm1", (size_t)selectedVersionIndex) == M12_ARCH_PC;
+        const int introWasPreplayed = selectedI34E
+            ? g_m11_dm1_i34e_intro_preplayed : 0;
+        g_m11_dm1_i34e_intro_preplayed = 0;
+        if (selectedI34E && !bootProbe) {
+            int titleResult = 0;
+            if (!introWasPreplayed) {
+                M11_Render_RaiseWindow();
+                (void)m11_play_ftl_swoosh_for_game_if_available(
+                    menuState, dataDir, "dm1", 0, NULL);
+                if (g_m11_startup_intro_quit_requested &&
+                    g_m11_debug_startup_detail) {
+                    fprintf(stderr,
+                            "firestaff: startup-source-quit game=dm1 phase=swsh-intro action=exit\n");
+                }
+                titleResult = g_m11_startup_intro_quit_requested
+                    ? M11_ENTRANCE_COMMAND_QUIT
+                    : m11_play_dm1_i34e_title_anim_if_available(
+                          menuState, selectedVersion);
+            }
+            if (titleResult == M11_ENTRANCE_COMMAND_QUIT) {
+                menuState->launchRequested = 0;
+                menuState->shouldExit = 1;
+                return 1;
+            }
+            if (introWasPreplayed || titleResult > 0) {
+                const int selectorResult = m11_play_dm1_i34e_selector_enter_if_available(
+                    menuState, selectedVersion);
+                if (selectorResult == M11_ENTRANCE_COMMAND_QUIT) {
+                    menuState->launchRequested = 0;
+                    menuState->shouldExit = 1;
+                    return 1;
+                }
+            }
+        }
         /* I34E IBMIO owns ANIM/TITLE and SELECTOR, then starts FIRES. It
          * never enters the shared F0437/F0441 handoff. The pre-menu title
-         * animation below and M12's selected launch state own this route. */
+         * animation or this selected-launch boundary owns the title. M12
+         * replaces I34E's following selector on the menu route. */
         dm1RouteFacts.selected_game_id = selectedI34E
             ? "dm1-i34e"
             : (m11_selected_dm1_is_fmtowns(menuState, launchEntry)
@@ -10535,6 +10628,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
              * that order; only a user/window quit aborts the title/menu route. */
             (void)m11_play_ftl_swoosh_for_game_if_available(
                 &menuState, o->dataDir, "dm1", 0, NULL);
+            g_m11_dm1_i34e_intro_preplayed = 1;
             if (g_m11_startup_intro_quit_requested) {
                 quitRequested = 1;
                 menuState.shouldExit = 1;
@@ -10544,14 +10638,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 if (titleResult == M11_ENTRANCE_COMMAND_QUIT) {
                     quitRequested = 1;
                     menuState.shouldExit = 1;
-                } else if (titleResult > 0 && o->directLaunch) {
-                    const int selectorResult =
-                        m11_play_dm1_i34e_selector_enter_if_available(
-                            &menuState, version);
-                    if (selectorResult == M11_ENTRANCE_COMMAND_QUIT) {
-                        quitRequested = 1;
-                        menuState.shouldExit = 1;
-                    }
                 }
             }
         }

@@ -24,8 +24,8 @@ test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_probe_json="$test_scratch/dm1-menu-runtime-$$.json"
 
-# A host quit after the first authentic PC-34 C001 frame should leave the
-# launched game cleanly instead of reporting corrupt startup media.
+# A host quit after the first authentic PC-34 I34E title frame should leave
+# the launch cleanly instead of reporting corrupt startup media.
 title_quit_home="$test_scratch/dm1-pc34-title-quit-home-$$"
 title_quit_probe="$test_scratch/dm1-pc34-title-quit-$$.json"
 mkdir -p "$title_quit_home"
@@ -40,11 +40,11 @@ title_quit_output=$(HOME="$title_quit_home" XDG_CONFIG_HOME="$title_quit_home" \
         printf '%s\n' "$title_quit_output" >&2
         exit 1
     }
-if ! grep -Fq 'AUTOTEST: DM1 C001 quit injected after first rendered frame' \
+if ! grep -Fq 'AUTOTEST: DM1 I34E title quit injected after first rendered frame' \
         <<< "$title_quit_output" ||
    grep -qi 'launch failed' <<< "$title_quit_output"; then
     printf '%s\n' "$title_quit_output" >&2
-    printf '%s\n' 'FAIL: PC-34 C001 quit was not handled as a clean game exit' >&2
+    printf '%s\n' 'FAIL: PC-34 I34E title quit was not handled as a clean game exit' >&2
     exit 1
 fi
 python3 - "$title_quit_probe" <<'PY'
@@ -54,14 +54,14 @@ import sys
 with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 if probe.get("launchedEver") != 1 or probe.get("active") != 0:
-    raise SystemExit(f"FAIL: PC-34 C001 quit did not exit the game cleanly: {probe}")
-print("PASS: authentic PC-34 C001 host quit exits cleanly after its first frame")
+    raise SystemExit(f"FAIL: PC-34 I34E title quit did not exit cleanly: {probe}")
+print("PASS: authentic PC-34 I34E title host quit exits cleanly after its first frame")
 PY
 rm -f "$title_quit_probe"
 rm -rf "$title_quit_home"
 
 # A host quit during the earlier SWSH logo is also a normal exit. This is a
-# distinct M12 boundary from the C001 title interruption tested above.
+# distinct M12 boundary from the I34E title interruption tested above.
 swsh_quit_home="$test_scratch/dm1-pc34-swsh-quit-home-$$"
 swsh_quit_probe="$test_scratch/dm1-pc34-swsh-quit-$$.json"
 mkdir -p "$swsh_quit_home"
@@ -80,7 +80,7 @@ if ! grep -Fq 'AUTOTEST: DM1 SWSH quit injected after first rendered frame' \
    ! grep -Fq 'startup-source-quit game=dm1 phase=swsh-intro action=exit' \
         <<< "$swsh_quit_output" ||
    grep -qi 'launch failed' <<< "$swsh_quit_output" ||
-   grep -Fq 'AUTOTEST: DM1 C001 quit injected' <<< "$swsh_quit_output"; then
+   grep -Fq 'AUTOTEST: DM1 I34E title quit injected' <<< "$swsh_quit_output"; then
     printf '%s\n' "$swsh_quit_output" >&2
     printf '%s\n' 'FAIL: PC-34 SWSH quit was not handled as a clean startup exit' >&2
     exit 1
@@ -134,13 +134,15 @@ PY
 loose_runtime_probe="$test_scratch/dm1-pc34-loose-runtime-$$.json"
 loose_runtime_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$loose_runtime_probe" \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
     --menu --game dm1 --platform pc --data-dir "$runtime_data_root" \
     --script "$menu_original" --duration 30000 2>&1)" || {
     printf '%s\n' "$loose_runtime_output" >&2
     exit 1
 }
 if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$loose_runtime_output" ||
+   ! grep -Fq 'startup-source-complete game=dm1 platform=pc34 phase=anim-title' \
+       <<<"$loose_runtime_output" ||
    ! grep -Fq "dataDir=$runtime_data_root" <<<"$loose_runtime_output" ||
    ! grep -Fq "graphicsPath=$runtime_data_root/GRAPHICS.DAT" <<<"$loose_runtime_output"; then
     printf '%s\n' "$loose_runtime_output" >&2
@@ -158,11 +160,10 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
         startup["phase"] != "dm1-runtime" or startup["active"] != 1 or
         startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
-        startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1):
+        probe["sourceId"] != "dm1"):
     raise SystemExit(
-        f"FAIL: authentic DM1 PC-34 loose-file menu failed to load DUNGEON.DAT: {probe}")
-print("PASS: authentic DM1 PC-34 loose GRAPHICS.DAT/DUNGEON.DAT reach the first menu runtime frame")
+        f"FAIL: authentic DM1 PC-34 I34E menu failed to load DUNGEON.DAT: {probe}")
+print("PASS: authentic DM1 PC-34 I34E title and loose-file menu reach the loaded runtime")
 PY
 rm -f "$loose_runtime_probe"
 
@@ -266,7 +267,11 @@ default_loose_output="$(
     printf '%s\n' "$default_loose_output" >&2
     exit 1
 }
-if ! grep -Fq 'handoff=pc-img3' <<<"$default_loose_output"; then
+if ! grep -Fq 'handoff=pc-img3' <<<"$default_loose_output" ||
+   ! grep -Fq 'startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=53' \
+       <<<"$default_loose_output" ||
+   ! grep -Fq 'startup-source-complete game=dm1 platform=pc34 phase=selector' \
+       <<<"$default_loose_output"; then
     printf '%s\n' "$default_loose_output" >&2
     echo 'FAIL: DM1 AUTO menu did not launch loose PC-34 media from ~/.firestaff/data/dm1 without --data-dir' >&2
     exit 1
@@ -275,30 +280,39 @@ python3 - "$default_loose_output" <<'PY'
 import re
 import sys
 
-pattern = re.compile(r"startup-source-frame game=dm1 platform=pc phase=title-f0437 (.*)")
-rows = []
-for line in sys.argv[1].splitlines():
-    match = pattern.search(line)
-    if match:
-        fields = dict(part.split("=", 1) for part in match.group(1).split())
-        rows.append(fields)
-
-if len(rows) != 23:
-    raise SystemExit(f"FAIL: expected 23 timed DM1 PC34 C001 events, found {len(rows)}")
-steps = [int(row["step"].split("/", 1)[0]) for row in rows]
-if steps != list(range(1, 24)):
-    raise SystemExit(f"FAIL: DM1 PC34 title events were reordered or skipped: {steps}")
-if any(row["fast-forward"] != "0" for row in rows):
-    raise SystemExit("FAIL: ordinary M12 title run unexpectedly fast-forwarded its source waits")
-total_ms = int(rows[-1]["total-elapsed-ms"])
-if total_ms < 3900:
+match = re.search(
+    r"startup-source-complete game=dm1 platform=pc34 phase=anim-title "
+    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",
+    sys.argv[1])
+if not match:
+    raise SystemExit("FAIL: authentic PC-34 ANIM/TITLE completion receipt was missing")
+frames, source_vblanks, elapsed_ms = map(int, match.groups())
+if frames != 53 or source_vblanks == 0:
     raise SystemExit(
-        f"FAIL: DM1 PC34 C001 title duration was shorter than its source-bound cadence: {total_ms} ms")
-if rows[0]["event"] != "0" or int(rows[0]["requested-wait-ms"]) < 1600:
-    raise SystemExit(f"FAIL: DM1 PRESENTS hold was missing from its timing receipt: {rows[0]}")
+        f"FAIL: authentic PC-34 ANIM/TITLE frame count/cadence mismatch: {match.groups()}")
+if elapsed_ms + 55 < source_vblanks * 55:
+    raise SystemExit(
+        f"FAIL: PC-34 ANIM/TITLE ended before its source VBlank cadence: "
+        f"{elapsed_ms} ms for {source_vblanks} ticks")
 print(
-    f"PASS: DM1 PC34 title timing logged 23 ordered source events in {total_ms} ms; "
-    f"max present={max(int(row['present-ms']) for row in rows)} ms")
+    f"PASS: DM1 PC-34 ANIM/TITLE logged {frames} original frames and "
+    f"{source_vblanks} source VBlanks in {elapsed_ms} ms")
+selector = re.search(
+    r"startup-source-complete game=dm1 platform=pc34 phase=selector .*"
+    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+) modeled-vblank-hz=(\d+)",
+    sys.argv[1])
+if not selector:
+    raise SystemExit("FAIL: authentic PC-34 selector Enter timing receipt was missing")
+door_frames, door_vblanks, door_elapsed_ms, vblank_hz = map(int, selector.groups())
+expected_ms = door_frames * 1000 / vblank_hz
+if (door_frames <= 1 or door_vblanks != door_frames or vblank_hz != 70 or
+        door_elapsed_ms + 20 < expected_ms):
+    raise SystemExit(
+        f"FAIL: PC-34 selector door cadence diverged from 70 Hz VGA waits: "
+        f"{selector.groups()}")
+print(
+    f"PASS: I34E selector door used {door_frames} source-sized steps at "
+    f"{vblank_hz} Hz in {door_elapsed_ms} ms")
 PY
 python3 - "$default_loose_probe" <<'PY'
 import json
@@ -311,11 +325,10 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm1" or
         probe["bootAssetMd5"] != "fa6b1aa29e191418713bf2cda93d962e" or
         startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
-        startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1):
+        startup["active"] != 1):
     raise SystemExit(
         f"FAIL: default-root loose PC-34 media did not reach runtime: {probe}")
-print("PASS: authentic DM1 PC-34 loose media in ~/.firestaff/data/dm1 reaches runtime without --data-dir")
+print("PASS: authentic PC-34 I34E title, selector Enter and loose media reach runtime without --data-dir")
 PY
 rm -rf "$default_loose_home"
 
@@ -371,9 +384,7 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
 if (probe["sourceId"] != "dm1" or startup["phase"] != "dm1-runtime" or
-        startup["levelLoaded"] != 1 or
-        startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1):
+        startup["levelLoaded"] != 1):
     raise SystemExit(f"FAIL: issue #13 mixed-media route did not load PC-34: {probe}")
 print("PASS: issue #13 mixed installed data root selects the matching PC-34 DUNGEON.DAT")
 PY
@@ -394,29 +405,35 @@ PY
 pair_only_data_root="$missing_swsh_root/pc34-pair"
 mkdir -p "$pair_only_data_root"
 cp "$runtime_data_root/GRAPHICS.DAT" "$runtime_data_root/DUNGEON.DAT" \
+   "$missing_swsh_root/data/TITLE" \
+   "$missing_swsh_root/data/SELECTOR" \
    "$pair_only_data_root/"
 missing_swsh_output="$(HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
    --game dm1 --platform pc --data-dir "$pair_only_data_root" \
-   --debug --verbose --boot-probe --boot-probe-frames 120 --duration 0 \
+   --debug --verbose --duration 12000 \
    2>&1)" || {
     printf '%s\n' "$missing_swsh_output" >&2
     echo "FAIL: DM1 did not continue to the dungeon runtime without optional SWSH" >&2
     exit 1
 }
-if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$missing_swsh_output" ||
-   ! grep -Fq "dm1 platform=PC edition=pc34-en matched source=$pair_only_data_root/GRAPHICS.DAT" \
+if ! grep -Fq "dm1 platform=PC edition=pc34-en matched source=$pair_only_data_root/GRAPHICS.DAT" \
        <<<"$missing_swsh_output" ||
-   ! grep -Fq 'phase=dm1-runtime' <<<"$missing_swsh_output" ||
-   ! grep -Fq 'levelLoaded=1' <<<"$missing_swsh_output" ||
    ! grep -Fq 'startup-source-skip game=dm1 phase=swsh-intro reason=not-found' \
+       <<<"$missing_swsh_output" ||
+   ! grep -Fq 'startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=53' \
+       <<<"$missing_swsh_output" ||
+   ! grep -Fq 'startup-source-complete game=dm1 platform=pc34 phase=selector' \
+       <<<"$missing_swsh_output" ||
+   ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$missing_swsh_output" ||
+   ! grep -Fq 'launch phase=runtime-entered game=dm1' \
        <<<"$missing_swsh_output"; then
     printf '%s\n' "$missing_swsh_output" >&2
     echo "FAIL: absent optional SWSH prevented the authentic PC 3.4 dungeon from reaching runtime" >&2
     exit 1
 fi
-echo "PASS: DM1 reaches PC 3.4 runtime and skips the absent optional SWSH logo"
+echo "PASS: DM1 skips absent optional SWSH, runs I34E title and selector, then reaches PC 3.4 runtime"
 python3 - "$missing_swsh_root" <<'PY'
 from pathlib import Path
 import shutil
@@ -445,9 +462,9 @@ probe --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-f
 probe --game dm1 --platform pc --data-dir "$archive" --script "$menu_original" \
     --boot-probe --boot-probe-frames 120 --duration 0
 
-# The public --game CLI route still enters through M12. Its boot probe must
-# retain the source-owned M12-to-M11 startup receipts instead of passing on a
-# runtime-only state.
+# The public --game CLI boot probe checks edition resolution and a loaded
+# runtime. Boot-probe mode intentionally skips the visible I34E animation,
+# which is verified by the non-probe startup checks above.
 direct_probe_json="$test_scratch/dm1-pc34-direct-probe-$$.json"
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$direct_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -461,15 +478,9 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
 if (probe["sourceId"] != "dm1" or startup["phase"] != "dm1-runtime" or
-        startup["dm1StartupTitleRuntimeSource"] != 1 or
-        startup["dm1StartupTitleCompletedSteps"] != 23 or
-        startup["dm1StartupSwshConsumed"] != 1 or
-        startup["dm1StartupTitleConsumed"] != 1 or
-        startup["dm1StartupEntranceConsumed"] != 1 or
-        startup["dm1StartupFullGraphicsConsumed"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1):
-    raise SystemExit(f"FAIL: DM1 --game CLI boot probe missed a source startup phase: {probe}")
-print("PASS: DM1 --game CLI boot probe confirms SWSH, C001, ENTRANCE and the HoC handoff")
+        startup["levelLoaded"] != 1):
+    raise SystemExit(f"FAIL: DM1 --game CLI boot probe missed the loaded runtime: {probe}")
+print("PASS: DM1 --game CLI boot probe reaches the loaded runtime")
 PY
 rm -f "$direct_probe_json"
 
@@ -504,11 +515,8 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
 if (probe["sourceId"] != "dm1" or startup["phase"] != "dm1-runtime" or
-        startup["levelLoaded"] != 1 or startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupSwshConsumed"] != 1 or
-        startup["dm1StartupTitleConsumed"] != 1 or
-        startup["dm1StartupEntranceConsumed"] != 1):
-    raise SystemExit(f"FAIL: bare DM1 CLI missed its PC-34 runtime handoff: {probe}")
+        startup["levelLoaded"] != 1):
+    raise SystemExit(f"FAIL: bare DM1 CLI missed its PC-34 runtime: {probe}")
 print("PASS: bare --game dm1 CLI selected PC 3.4 and reached runtime with original data")
 PY
 rm -f "$auto_cli_probe_json"
@@ -557,12 +565,16 @@ menu_auto_output="$(HOME="$menu_auto_home" XDG_CONFIG_HOME="$menu_auto_home" \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_auto_probe_json" \
     FIRESTAFF_DM1_STARTUP_CAPTURE_DIR="$startup_capture_root" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --data-dir "$menu_auto_data_root" \
+    --debug --menu --game dm1 --data-dir "$menu_auto_data_root" \
     --script "$menu_original" --duration 30000 2>&1)" || {
     printf '%s\n' "$menu_auto_output" >&2
     exit 1
 }
-if ! grep -Fq 'handoff=pc-img3' <<<"$menu_auto_output"; then
+if ! grep -Fq 'handoff=pc-img3' <<<"$menu_auto_output" ||
+   ! grep -Fq 'startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=53' \
+       <<<"$menu_auto_output" ||
+   ! grep -Fq 'startup-source-complete game=dm1 platform=pc34 phase=selector' \
+       <<<"$menu_auto_output"; then
     printf '%s\n' "$menu_auto_output" >&2
     printf '%s\n' 'FAIL: DM1 AUTO route did not discover PC-34 from the installed data root' >&2
     exit 1
@@ -581,18 +593,10 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["receiptReady"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
-        startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupTitleRuntimeSource"] != 1 or
-        startup["dm1StartupTitleCompletedSteps"] != 23 or
-        startup["dm1StartupSwshConsumed"] != 1 or
-        startup["dm1StartupTitleConsumed"] != 1 or
-        startup["dm1StartupEntranceConsumed"] != 1 or
-        startup["dm1StartupFullGraphicsConsumed"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(f"FAIL: authentic DM1 AUTO menu did not reach the PC-34 runtime: {probe}")
-print("PASS: clean-config DM1 AUTO menu used all 23 GRAPHICS.DAT C001 title steps and reached runtime")
+print("PASS: clean-config DM1 AUTO menu ran I34E ANIM/TITLE and SELECTOR Enter before runtime")
 PY
 python3 - "$startup_capture_root" <<'PY'
 from pathlib import Path
@@ -603,8 +607,9 @@ import sys
 root = Path(sys.argv[1])
 frames = {}
 geometry = None
-for phase in ("c001-first-frame", "c001-zoom-mid", "c001-zoom-full",
-              "c004-closed", "c004-door-step-1"):
+for phase in ("i34e-title-first", "i34e-title-mid", "i34e-title-final",
+              "i34e-selector-closed", "i34e-selector-door-step-1",
+              "i34e-selector-door-mid", "i34e-selector-door-open"):
     captures = list((root / phase).glob("*.bmp"))
     if len(captures) != 1:
         raise SystemExit(f"FAIL: expected one presented authentic {phase} frame; found {captures}")
@@ -636,13 +641,15 @@ for phase in ("c001-first-frame", "c001-zoom-mid", "c001-zoom-full",
         raise SystemExit(f"FAIL: {phase} is blank/flat (nonblack={nonblack}, colours={len(colors)})")
     frames[phase] = hashlib.sha256(blob).hexdigest()
     print(f"PASS: authentic {phase} was presented ({nonblack} nonblack pixels, {len(colors)} colours)")
-if (frames["c001-first-frame"] == frames["c001-zoom-mid"] or
-        frames["c001-zoom-mid"] == frames["c001-zoom-full"]):
-    raise SystemExit("FAIL: authentic C001 zoom frames did not change")
-print("PASS: authentic C001 Presents, mid-zoom and full-zoom frames differ")
-if frames["c004-closed"] == frames["c004-door-step-1"]:
-    raise SystemExit("FAIL: Entrance closed-door and first door-animation frames did not change")
-print("PASS: authentic Entrance presentation advanced from closed C004 to door step 1")
+if (frames["i34e-title-first"] == frames["i34e-title-mid"] or
+        frames["i34e-title-mid"] == frames["i34e-title-final"]):
+    raise SystemExit("FAIL: authentic I34E ANIM/TITLE frames did not change")
+print("PASS: authentic I34E ANIM/TITLE first, middle and final frames differ")
+if (frames["i34e-selector-closed"] != frames["i34e-selector-door-step-1"] or
+        frames["i34e-selector-door-step-1"] == frames["i34e-selector-door-mid"] or
+        frames["i34e-selector-door-mid"] == frames["i34e-selector-door-open"]):
+    raise SystemExit("FAIL: authentic I34E selector door animation did not change")
+print("PASS: authentic I34E selector preserved its closed first step and opened progressively")
 print(f"PASS: authentic startup captures share presented geometry {geometry[0]}x{geometry[1]}")
 PY
 rm -rf "$menu_auto_home"
