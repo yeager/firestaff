@@ -1,5 +1,17 @@
 # Firestaff TODO — DM1
 
+2026-10-15 I34E TITLE palette audit: ReDMCSB `ANIM.C F8292_` stores every
+source PL channel in the VGA DAC as `channel << 2`. Firestaff had passed the
+unexpanded byte to its RGB6 renderer, reducing title brightness by four. The
+bounded TITLE parser now validates 4-bit source channels and applies the same
+shift; its synthetic channel test and hash-authenticated PC34 TITLE test pass,
+and the native `firestaff` target builds. A post-fix Firestaff title capture
+confirms the fourfold palette step. The available DOSBox original capture is
+not frame-aligned with Firestaff and its multi-shot capture failed the
+duplicate-frame health gate, so title color parity, title cadence, door
+animation smoothness, and PC34/FM Towns runtime viewport parity remain open.
+No game data or captures are added to Git.
+
 2026-10-14 parity investigation using authentic DM1 media and ReDMCSB source:
 the FM Towns F20 title scaler is now ported from `BLTSHRNK.C` F0129/F0720
 (6-bit fixed-point steps, centre-sampled source pixels). The expanded 18-size

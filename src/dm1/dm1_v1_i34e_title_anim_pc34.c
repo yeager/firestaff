@@ -62,12 +62,18 @@ int dm1_v1_i34e_title_anim_pc34_step(
             if (bytes < 66u || read_be16(payload) != 16u) goto malformed;
             for (i = 0u; i < 16u; ++i) {
                 uint8_t index = payload[2u + i * 4u];
-                if (index >= 16u || payload[3u + i * 4u] > 63u ||
-                    payload[4u + i * 4u] > 63u ||
-                    payload[5u + i * 4u] > 63u) goto malformed;
-                state->palette[index].r = payload[3u + i * 4u];
-                state->palette[index].g = payload[4u + i * 4u];
-                state->palette[index].b = payload[5u + i * 4u];
+                if (index >= 16u || payload[3u + i * 4u] > 15u ||
+                    payload[4u + i * 4u] > 15u ||
+                    payload[5u + i * 4u] > 15u) goto malformed;
+                /* ReDMCSB ANIM.C F8292_ writes each source channel as
+                 * channel << 2 into the VGA DAC palette. The renderer takes
+                 * DAC6 values, so retain that expansion here. */
+                state->palette[index].r =
+                    (uint8_t)(payload[3u + i * 4u] << 2);
+                state->palette[index].g =
+                    (uint8_t)(payload[4u + i * 4u] << 2);
+                state->palette[index].b =
+                    (uint8_t)(payload[5u + i * 4u] << 2);
             }
             continue;
         }

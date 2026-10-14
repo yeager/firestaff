@@ -51,8 +51,8 @@ static void test_stream(void) {
     assert(frame.frame_index == 0u && frame.source_delay_vblanks == 7u);
     assert(frame.break_allowed && frame.pixels[0] == 3u &&
            frame.pixels[63999] == 3u);
-    assert(frame.palette[4].r == 4u && frame.palette[4].g == 11u &&
-           frame.palette[4].b == 3u);
+    assert(frame.palette[4].r == 16u && frame.palette[4].g == 44u &&
+           frame.palette[4].b == 12u);
     assert(dm1_v1_i34e_title_anim_pc34_step(&state, &frame) == 0);
     assert(state.finished);
     assert(!dm1_v1_i34e_title_anim_pc34_init(&state, data, 13u));

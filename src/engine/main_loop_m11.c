@@ -4894,8 +4894,8 @@ static int m11_dm1_i34e_title_read_authentic(
 /* I34E ANIM TITLE runs before SELECTOR; M12's already-selected launch state
  * stands in for that menu. ANIM.C F2275 stores the raw wait attribute and
  * decrements it from F8298's source VBlank callback;
- * PC34's DOS tick is 55 ms. ReDMCSB VIDEODRV.C F8230 expands each DAC channel
- * as (value << 2) + 3, represented here by the indexed RGB6 renderer. */
+ * PC34's DOS tick is 55 ms. ReDMCSB ANIM.C F8292_ expands each PL channel
+ * to VGA DAC6 with (value << 2), represented by the indexed RGB6 renderer. */
 static int m11_play_dm1_i34e_title_anim_if_available(
     const M12_StartupMenuState *menuState,
     const M12_AssetVersionStatus *version) {
