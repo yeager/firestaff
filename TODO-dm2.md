@@ -1,5 +1,19 @@
 # Firestaff TODO — DM2
 
+2026-10-14 current-source authentic-media retest on the Mac mini M4:
+`dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
+`dm2_v1_mac_native_cli_boot`, `dm2_v1_amiga_native_cli_boot`,
+`dm2_v1_fmtowns_native_cli_boot`,
+`dm2_v1_dm2_viewport_m11_live_enumeration` and
+`dm2_v1_fmtowns_hud_portraits_real_data` passed 7/7 in 796.25 seconds.
+The five edition tests reached authentic runtime frames and passed their
+startup, HUD/viewport pixel and scripted input checks; the viewport
+enumeration and FM Towns portrait-binding checks also passed. Fresh captures
+were inspected for FM Towns and Amiga. These tests use SDL dummy video/audio
+on one ARM64 Mac host. They verify the DOS English/French, Macintosh, Amiga
+and FM Towns data routes, not Windows/Linux native presentation, physical Mac
+Retina/HiDPI output, GPU rendering or full pixel parity.
+
 2026-10-14 supported-platform HUD and viewport retest on the Mac mini M4:
 `dm2_v1_dos_native_cli_boot`, `dm2_v1_mac_native_cli_boot`,
 `dm2_v1_amiga_native_cli_boot`, `dm2_v1_fmtowns_native_cli_boot`,
