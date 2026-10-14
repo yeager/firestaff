@@ -57,7 +57,30 @@ int main(void)
     /* First reverse-order zoom frame is 48x12, centred at (136,74). */
     CHECK(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
                                              1u, frame, sizeof(frame)));
-    CHECK(frame[74u * 320u + 136u] == source[0]);
+    CHECK(frame[74u * 320u + 136u] == source[3u * 320u + 3u]);
+
+    /* BLTSHRNK.C F0129/F0720 starts each axis at half a 6-bit fixed-point
+     * source step. Check every pixel of every prepared title size against
+     * that source recurrence, not a top-left nearest-neighbour scale. */
+    for (unsigned int title_frame = 1u; title_frame < 19u; ++title_frame) {
+        const unsigned int zoom_step = title_frame - 1u;
+        const unsigned int zoom_width = 48u + zoom_step * 16u;
+        const unsigned int zoom_height = 12u + zoom_step * 4u;
+        const unsigned int dst_x = (320u - zoom_width) / 2u;
+        const unsigned int dst_y = 40u + (80u - zoom_height) / 2u;
+        const unsigned int x_step = (320u << 6) / zoom_width;
+        const unsigned int y_step = (80u << 6) / zoom_height;
+        CHECK(dm1_v1_fmtowns_title_compose_frame(
+            &startup, source, 320u, 200u, title_frame, frame, sizeof(frame)));
+        for (unsigned int y = 0u; y < zoom_height; ++y) {
+            const unsigned int sy = ((y_step >> 1) + y * y_step) >> 6;
+            for (unsigned int x = 0u; x < zoom_width; ++x) {
+                const unsigned int sx = ((x_step >> 1) + x * x_step) >> 6;
+                CHECK(frame[(dst_y + y) * 320u + dst_x + x] ==
+                      source[sy * 320u + sx]);
+            }
+        }
+    }
 
     CHECK(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
                                              17u, frame, sizeof(frame)));

@@ -24,6 +24,50 @@ static void blit_scaled(const uint8_t *source, uint16_t source_width,
     }
 }
 
+/* ReDMCSB BLTSHRNK.C F0129:1104-1145 and F0720 MEDIA551:69-93 use 6-bit
+ * fixed-point ratios and start each destination axis at half a source step.
+ * TITLE.C:342-350 calls this with no palette remap for the 18 F20 title
+ * sizes. A top-left nearest-neighbour walk produces different pixels for
+ * nearly every shrinking frame. */
+static void blit_shrunk_center_sample(const uint8_t *source,
+                                      uint16_t source_width,
+                                      uint16_t source_height,
+                                      uint8_t *destination,
+                                      int dst_x, int dst_y,
+                                      int dst_width, int dst_height,
+                                      int src_x, int src_y,
+                                      int src_width, int src_height)
+{
+    uint32_t x_step;
+    uint32_t y_step;
+    uint32_t y_accumulator;
+    int x;
+    int y;
+
+    if (!source || !destination || dst_width <= 0 || dst_height <= 0 ||
+        src_width <= 0 || src_height <= 0) return;
+    x_step = ((uint32_t)src_width << 6) / (uint32_t)dst_width;
+    y_step = ((uint32_t)src_height << 6) / (uint32_t)dst_height;
+    y_accumulator = y_step >> 1;
+    for (y = 0; y < dst_height; ++y, y_accumulator += y_step) {
+        const uint32_t source_y = (y_accumulator >> 6) + (uint32_t)src_y;
+        const int destination_y = dst_y + y;
+        uint32_t x_accumulator = x_step >> 1;
+        if (destination_y < 0 || destination_y >= (int)DM1_FMTOWNS_TITLE_HEIGHT ||
+            source_y >= source_height) continue;
+        for (x = 0; x < dst_width; ++x, x_accumulator += x_step) {
+            const uint32_t source_x = (x_accumulator >> 6) + (uint32_t)src_x;
+            const int destination_x = dst_x + x;
+            if (destination_x < 0 ||
+                destination_x >= (int)DM1_FMTOWNS_TITLE_WIDTH ||
+                source_x >= source_width) continue;
+            destination[(size_t)destination_y * DM1_FMTOWNS_TITLE_WIDTH +
+                        (size_t)destination_x] =
+                source[(size_t)source_y * source_width + source_x];
+        }
+    }
+}
+
 int dm1_v1_fmtowns_title_compose_frame(
     const DM1_V1_FmtownsStartupReceipt *startup,
     const uint8_t *title_pixels, uint16_t title_width, uint16_t title_height,
@@ -70,9 +114,10 @@ int dm1_v1_fmtowns_title_compose_frame(
         zoom_height = 12u + zoom_step * 4u;
         zoom_x = ((int)DM1_FMTOWNS_TITLE_WIDTH - (int)zoom_width) / 2;
         zoom_y = 40 + (80 - (int)zoom_height) / 2;
-        blit_scaled(title_pixels, title_width, title_height, out_pixels,
-                    zoom_x, zoom_y, (int)zoom_width, (int)zoom_height,
-                    0, 0, 320, 80);
+        blit_shrunk_center_sample(title_pixels, title_width, title_height,
+                                  out_pixels, zoom_x, zoom_y,
+                                  (int)zoom_width, (int)zoom_height,
+                                  0, 0, 320, 80);
         return 1;
     }
 
