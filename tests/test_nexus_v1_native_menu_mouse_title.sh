@@ -32,7 +32,7 @@ unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 output="$(HOME="$test_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_EXIT_AFTER_LAUNCH=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$firestaff_cli" --width 1920 --height 1080 --menu --game nexus \
-    --platform saturn --data-dir "$cue" \
+    --platform saturn --data-dir "$data_root" \
     --script 'wait20,click:700:728,wait20,click:410:405,wait20,click:450:405,wait20' \
     --duration 12000 2>&1)" || {
     printf '%s\n' "$output" >&2
@@ -44,6 +44,7 @@ if ! printf '%s\n' "$output" | grep -Fq \
    ! printf '%s\n' "$output" | grep -Fq \
         'blocker=menu-bpk-prs3-capture-required' ||
    ! printf '%s\n' "$output" | grep -Fq 'Nexus: supplemental retail ISO ' ||
+   ! printf '%s\n' "$output" | grep -Fq "Nexus: using extracted files from $data_root" ||
    ! printf '%s\n' "$output" | grep -Fq 'TITLE.CG/4bpp-atlas' ||
    ! printf '%s\n' "$output" | grep -Fq \
         'Nexus V1 engine initialized (source: extracted)'; then
