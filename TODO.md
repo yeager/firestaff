@@ -11,6 +11,10 @@
   `m12_data_dir_cancel` covers scanner cancellation at the M12 boundary. The
   full local return/rescan matrix passed against installed originals in 1,178
   seconds; its CTest timeout is now 1,800 seconds to leave runner headroom.
+  A fresh 2026-10-14 `mouse-return` run passed for DM1 PC, CSB FM Towns and
+  DM2 AUTO with original media. Each game returned to the launcher and
+  reported updated availability for all five games. The run used SDL's dummy
+  video/audio drivers; native display and input remain separate checks.
 
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
