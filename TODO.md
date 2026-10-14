@@ -204,6 +204,15 @@
   installed in that data directory, so the interactive Nexus start-menu path
   remains incomplete. This gate checks the direct-launch/M12 handoff contracts,
   not visible physical-menu interaction or all five first runtime frames.
+  A fresh 2026-10-14 run of `m11_direct_launch_prepare_all_games` on the
+  current M4 build with the full installed original-media root passed 219
+  assertions, failed none, and reported three scoped skips. It revalidated
+  all five selected-entry startup paths. The authentic Theron USA Track 02
+  reached level 0 with one champion; Nexus remained fail-closed at
+  `menu-bpk-prs3-capture-required`. This contract test does not simulate
+  physical M12 card interaction or establish first presented gameplay frames
+  for every game; the Nexus launch and remaining per-game menu-to-runtime
+  gaps stay open.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
   language choice; the native Amiga input matrix reaches runtime, and the

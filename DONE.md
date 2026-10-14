@@ -8,6 +8,14 @@
   menu and first champion. These results cover the tested editions and do not
   close the other platform, Nexus or Theron startup gaps in `TODO.md`.
 
+- 2026-10-14: The focused M12 launcher checks passed on the current source:
+  startup-menu state, mouse navigation, AUTO platform priority, selected-root
+  policy, data-scan cancellation, and direct mouse card hit targets. The
+  asynchronous folder-dialog check also passed against the original extracted
+  DM1 PC 3.4 files; it authenticated the source and persisted the selected
+  folder using an isolated configuration. The native file-picker UI itself
+  remains host-permission dependent.
+
 - 2026-10-13: Fixed the shared M11 loop pacing so VSync presentation counts
   toward the 16 ms frame period instead of being followed by a second full
   delay. Cached the M12 1920x1080 decorative backdrop for alternating menu
