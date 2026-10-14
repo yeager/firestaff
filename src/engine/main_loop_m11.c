@@ -698,6 +698,7 @@ typedef struct {
 } M11_DebugStartupTrace;
 
 static int m11_game_option_slot(const char *gameId);
+static int m11_is_supported_game_id(const char *gameId);
 
 static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
                                           const M11_GameViewState* gameView,
@@ -817,9 +818,7 @@ static void m11_debug_log_launch_selection(
     const char* gameId;
     if (!menuState || !gameView || !launchMode) return;
     gameId = gameView->sourceId;
-    if (!gameId[0] ||
-        (strcmp(gameId, "dm1") != 0 && strcmp(gameId, "csb") != 0 &&
-         strcmp(gameId, "dm2") != 0)) return;
+    if (!m11_is_supported_game_id(gameId)) return;
     slot = m11_game_option_slot(gameId);
     versionIndex = menuState->gameOptions[slot].versionIndex;
     version = versionIndex >= 0
@@ -5911,6 +5910,12 @@ static int m11_game_option_slot(const char *gameId) {
     return 0;
 }
 
+static int m11_is_supported_game_id(const char *gameId) {
+    return gameId &&
+        (strcmp(gameId, "dm1") == 0 || strcmp(gameId, "csb") == 0 ||
+         strcmp(gameId, "dm2") == 0);
+}
+
 static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
@@ -10169,18 +10174,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     /* An unqualified game selection follows the edition priority, even when
      * a previous launcher session persisted a different platform choice. */
-    if (runtimeOptions.gameId &&
-        (strcmp(runtimeOptions.gameId, "dm1") == 0 ||
-         strcmp(runtimeOptions.gameId, "csb") == 0 ||
-         strcmp(runtimeOptions.gameId, "dm2") == 0) &&
+    if (m11_is_supported_game_id(runtimeOptions.gameId) &&
         runtimeOptions.architectureOverride < M12_ARCH_AUTO)
         runtimeOptions.architectureOverride = M12_ARCH_AUTO;
     o = &runtimeOptions;
     g_m11_debug_startup_detail = o->debug ? 1 : 0;
-    if (o->verbose && o->gameId &&
-        (strcmp(o->gameId, "dm1") == 0 ||
-         strcmp(o->gameId, "csb") == 0 ||
-         strcmp(o->gameId, "dm2") == 0)) {
+    if (o->verbose && m11_is_supported_game_id(o->gameId)) {
         fprintf(stderr, "firestaff: startup game=%s mode=%s platform=%s data=%s\n",
                 o->gameId, o->directLaunch ? "direct" : "menu",
                 o->architectureOverride == M12_ARCH_AUTO ? "auto" :
@@ -10322,15 +10321,22 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         o->gameId,
                                         &menuInitOptions);
         if (o->verbose) {
+            static const char* const gameIds[] = {
+                "dm1", "csb", "dm2", "nexus", "theron"
+            };
+            size_t gameIndex;
             /* A requested game only sets the initial M12 selection. The
              * interactive menu scans the collection, so report every game
              * it scanned instead of hiding sibling availability. */
-            if (o->menuRequested || !o->gameId || strcmp(o->gameId, "dm1") == 0)
-                m11_verbose_original_media(&menuState.assetStatus, "dm1");
-            if (o->menuRequested || !o->gameId || strcmp(o->gameId, "csb") == 0)
-                m11_verbose_original_media(&menuState.assetStatus, "csb");
-            if (o->menuRequested || !o->gameId || strcmp(o->gameId, "dm2") == 0)
-                m11_verbose_original_media(&menuState.assetStatus, "dm2");
+            for (gameIndex = 0U;
+                 gameIndex < sizeof(gameIds) / sizeof(gameIds[0]);
+                 ++gameIndex) {
+                if (o->menuRequested || !o->gameId ||
+                    strcmp(o->gameId, gameIds[gameIndex]) == 0) {
+                    m11_verbose_original_media(&menuState.assetStatus,
+                                               gameIds[gameIndex]);
+                }
+            }
         }
         if (o->languageOverride >= 0 && o->languageOverride < 20) {
             static const char* const languageCodes[] = {
@@ -10419,10 +10425,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 2;
         }
     }
-    if (o->verbose && !o->debug && o->gameId &&
-        (strcmp(o->gameId, "dm1") == 0 ||
-         strcmp(o->gameId, "csb") == 0 ||
-         strcmp(o->gameId, "dm2") == 0)) {
+    if (o->verbose && !o->debug && m11_is_supported_game_id(o->gameId)) {
         int slot = m11_game_option_slot(o->gameId);
         int selected = menuState.gameOptions[slot].versionIndex;
         const M12_AssetVersionStatus* version = selected >= 0
@@ -10785,10 +10788,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps
          * the ReDMCSB TITLE/ENTRANCE order (TITLE.C F0437 before
          * ENTRANCE.C F0441). */
-        if (o->verbose && o->gameId &&
-            (strcmp(o->gameId, "dm1") == 0 ||
-             strcmp(o->gameId, "csb") == 0 ||
-             strcmp(o->gameId, "dm2") == 0))
+        if (o->verbose && m11_is_supported_game_id(o->gameId))
             fprintf(stderr, "firestaff: launch phase=game-handoff game=%s\n",
                     o->gameId);
         if (!m11_open_requested_launch(&gameView,
@@ -10801,10 +10801,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             goto cleanup;
         }
         launchedEver = 1;
-        if (o->verbose && o->gameId &&
-            (strcmp(o->gameId, "dm1") == 0 ||
-             strcmp(o->gameId, "csb") == 0 ||
-             strcmp(o->gameId, "dm2") == 0)) {
+        if (o->verbose && m11_is_supported_game_id(o->gameId)) {
             M11_BootProbeReceipt startupReceipt;
             fprintf(stderr, "firestaff: launch phase=runtime-entered game=%s\n",
                     o->gameId);

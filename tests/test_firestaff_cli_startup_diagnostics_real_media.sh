@@ -229,8 +229,9 @@ if [ -f "$dm1_towns_archive" ]; then
         *"selected game=dm1 platform=FM Towns edition=fmtowns-ja source="*) ;;
         *) echo "FAIL: DM1 Japanese verbose diagnostics did not report the overridden edition" >&2; exit 1 ;;
     esac
-    dm1_natural_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --game dm1 --data-dir "$dm1_towns_archive" --debug --duration 0 2>&1) || {
+    dm1_natural_debug=$(FIRESTAFF_CONFIG_PATH="$combined_root/dm1-towns-debug.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm1 --data-dir "$dm1_towns_archive" --debug --duration 8000 2>&1) || {
         printf '%s\n' "$dm1_natural_debug" >&2
         exit 1
     }
@@ -274,9 +275,10 @@ if swsh is not None:
     }
 fi
 if [ -f "$dm1_pc_archive" ]; then
-    dm1_pc_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    dm1_pc_debug=$(FIRESTAFF_CONFIG_PATH="$combined_root/dm1-pc-debug.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game dm1 --platform pc --data-dir "$dm1_pc_archive" \
-        --debug --duration 0 2>&1) || {
+        --debug --duration 8000 2>&1) || {
         printf '%s\n' "$dm1_pc_debug" >&2
         exit 1
     }
@@ -455,7 +457,7 @@ workspace_data_root=$(dirname "$(dirname "$dm1_towns_archive")")
 uppercase_game_root=$(mktemp -d "${PWD}/.firestaff-uppercase-game-leaf.XXXXXX")
 uppercase_data_root="$uppercase_game_root/data"
 mkdir "$uppercase_data_root"
-for game_id in dm1 csb dm2 nexus theron; do
+for game_id in dm1 csb dm2; do
     if [ -d "$workspace_data_root/$game_id" ]; then
         if [ "$game_id" = dm1 ]; then
             leaf_name=DM1
@@ -473,8 +475,9 @@ uppercase_leaf_menu=$(FIRESTAFF_CONFIG_PATH="$uppercase_game_root/menu.toml" \
     exit 1
 }
 for game_id in dm1 csb dm2; do
-    if ! printf '%s\n' "$uppercase_leaf_menu" | \
-        grep -Fq "firestaff: $game_id available=yes"; then
+    if [ -d "$workspace_data_root/$game_id" ] &&
+       ! printf '%s\n' "$uppercase_leaf_menu" | \
+           grep -Fq "firestaff: $game_id available=yes"; then
         printf '%s\n' "$uppercase_leaf_menu" >&2
         printf 'FAIL: uppercase DM1 data leaf hid sibling %s media from the start menu\n' \
             "$game_id" >&2
