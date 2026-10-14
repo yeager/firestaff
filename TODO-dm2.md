@@ -260,9 +260,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   graphics/dynamic load occur later in the normal-loop route
   (`sksvgame.cpp:543-546, 616-634`; `startend.cpp:856-857, 1272`). The original
   map-0 GDAT weather zone is therefore not evidence for the selector value at
-  bootstrap. A later source-order trace below establishes the fresh bootstrap
-  seed and draws; the active-map selector at first dispatch and original-data
-  timer receipt remain open.
+  bootstrap. The selector is initialized to zero by `c_dm2data::init`
+  (`dm2data.cpp:1231`), so zero is the bootstrap value. Later,
+  `DM2_LOAD_LOCALLEVEL_DYN` assigns the map's actual weather selector from
+  `(8, v1d6c02, 11, 0x66)` (`sklodlvl.cpp:803-807`) before its initial
+  `DM2_UPDATE_WEATHER(0)` (`sklodlvl.cpp:1079`). The active-map selector is
+  source-defined too; what remains open is Firestaff's fresh-session shared
+  RNG/timer implementation and an original-media receipt through the first
+  `0x54` dispatch.
 
   2026-10-13 New Game event trace: `SKW5_STARTUP_THREAD_MAIN_LOOP_01` calls
   `randdat.init()` before `SKW5_INIT`; the title-menu loop then returns from
