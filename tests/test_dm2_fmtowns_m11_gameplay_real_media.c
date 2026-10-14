@@ -702,7 +702,7 @@ int main(void)
             check(live_ok && live_receipt.valid &&
                       dm2_v1_runtime_get_active_champion_index() == -1 &&
                       live_receipt.hud_material_plan_required &&
-                      live_receipt.hud_material_plan_command_count == 3 &&
+                      live_receipt.hud_material_plan_command_count == 4 &&
                       live_receipt.hud_material_plan_consumed &&
                       live_receipt.hud_material_plan_hash != 0u &&
                       right_panel_pixels > 1000u && squad_icon_pixels > 0u,
@@ -1251,6 +1251,8 @@ int main(void)
             squad.champion_count = 1;
             squad.leader_index = 0;
             squad.towns_squad_route_valid = 1;
+            squad.towns_status_hero_source_bound = 1;
+            squad.towns_status_hero_index = -1;
             squad.towns_party_direction = 0;
             squad.champions[0].occupied = 1;
             squad.champions[0].leader = 1;
@@ -1274,7 +1276,7 @@ int main(void)
                 memset(&plan, 0, sizeof(plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad, &plan) &&
-                      plan.command_count == 3 &&
+                      plan.command_count == 4 &&
                       plan.commands[0].kind ==
                           DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL &&
                       plan.commands[0].destination_rect_id ==
@@ -1298,6 +1300,17 @@ int main(void)
                       plan.commands[2].destination.y == status_rect.y &&
                       plan.commands[2].destination.w == status_rect.w &&
                       plan.commands[2].destination.h == status_rect.h &&
+                      plan.commands[3].kind ==
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE &&
+                      plan.commands[3].gdat_category ==
+                          DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+                      plan.commands[3].gdat_index == 2 &&
+                      plan.commands[3].gdat_field == 0 &&
+                      plan.commands[3].destination_rect_id == 0xa1 &&
+                      plan.commands[3].destination.x == 0 &&
+                      plan.commands[3].destination.y == 0 &&
+                      plan.commands[3].destination.w == 38 &&
+                      plan.commands[3].destination.h == 18 &&
                       (plan.commands[1].source_state_flags &
                        DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4) != 0u &&
                       (plan.commands[2].source_state_flags &
@@ -1348,7 +1361,7 @@ int main(void)
                     dm2_v1_render_ui_chrome(&chrome);
                     check(palette_ready && main_key_sample &&
                               status_key_sample &&
-                              chrome.gdat_hud_material_plan_consumed_count == 3 &&
+                              chrome.gdat_hud_material_plan_consumed_count == 4 &&
                               framebuffer[main_key_y * M11_FB_WIDTH + main_key_x] ==
                                   0xfeu &&
                               framebuffer[status_key_y * M11_FB_WIDTH + status_key_x] ==
@@ -1369,6 +1382,7 @@ int main(void)
                 uint8_t *aura_sheet;
                 squad.towns_selected_hero_source_bound = 1;
                 squad.towns_selected_hero_index = 0;
+                squad.towns_status_hero_index = 0;
                 squad.towns_savegames1_b02_source_bound = 1;
                 squad.towns_game_tick_source_bound = 1;
                 squad.towns_game_tick = 6u;
@@ -1398,7 +1412,7 @@ int main(void)
                                 dm2_v1_boot_gdat_hud_m11_command_plan(
                                     (DM2_V1_BootProfile *)profile, &squad,
                                     &frame_plan) &&
-                                frame_plan.command_count == 5 &&
+                                frame_plan.command_count == 6 &&
                                 frame_plan.commands[4].animation_direction ==
                                     (uint8_t)direction &&
                                 frame_plan.commands[4].animation_frame ==
@@ -1424,9 +1438,12 @@ int main(void)
                 memset(&aura_plan, 0, sizeof(aura_plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad,
-                          &aura_plan) && aura_plan.command_count == 5 &&
+                          &aura_plan) && aura_plan.command_count == 6 &&
                           aura_plan.commands[4].kind ==
                               DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA &&
+                          aura_plan.commands[5].kind ==
+                              DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE &&
+                          aura_plan.commands[5].gdat_field == 9 &&
                           aura_plan.commands[4].gdat_category ==
                               DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
                           aura_plan.commands[4].gdat_index == 7 &&
@@ -1438,7 +1455,7 @@ int main(void)
                           aura_plan.commands[4].destination.w == 21 &&
                           aura_plan.commands[4].destination.h == 21,
                       "FM Towns active enchantment adds original field 7 at selected-hero RECT 0x5e");
-                if (aura_plan.command_count == 5 && aura_sheet) {
+                if (aura_plan.command_count == 6 && aura_sheet) {
                     for (int y = 0; y < 21; ++y) {
                         check(memcmp(aura_plan.commands[4].pixels + y * 21,
                                   aura_sheet + (2 * 21 + y) * 84 + 2 * 21,
@@ -1473,7 +1490,7 @@ int main(void)
                         &chrome, &aura_plan);
                     dm2_v1_render_ui_chrome(&chrome);
                     check(palette_ready &&
-                              chrome.gdat_hud_material_plan_consumed_count == 5,
+                              chrome.gdat_hud_material_plan_consumed_count == 6,
                           "FM Towns renderer consumes aura with authenticated HUD materials");
                     dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
                 }
@@ -1481,17 +1498,21 @@ int main(void)
             }
             squad.champions[0].towns_current_hp = 0;
             squad.champions[0].towns_ench_power = 0;
+            squad.towns_status_hero_index = -1;
             {
                 DM2_V1_GdatHudM11CommandPlan dead_plan;
                 memset(&dead_plan, 0, sizeof(dead_plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad, &dead_plan) &&
-                      dead_plan.command_count == 2 &&
+                      dead_plan.command_count == 3 &&
                       dead_plan.commands[0].kind ==
                           DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL &&
                       dead_plan.commands[1].kind ==
-                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
-                      "FM Towns zero-HP hero retains formation and selected icon without active aura");
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON &&
+                      dead_plan.commands[2].kind ==
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE &&
+                      dead_plan.commands[2].gdat_field == 1,
+                      "FM Towns zero-HP hero keeps formation, selection and death-pane state without active aura");
                 dm2_v1_gdat_hud_m11_command_plan_free(&dead_plan);
             }
         }

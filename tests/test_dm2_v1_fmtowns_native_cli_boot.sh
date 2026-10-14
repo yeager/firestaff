@@ -439,22 +439,26 @@ if ((width, height, bits) != (320, 200, 24) or
 nonblack = 0
 right_panel = 0
 dungeon_scene = 0
+top_status = 0
 for y in range(height):
     row = offset + y * stride
     for x in range(width):
         if any(blob[row + x * 3:row + x * 3 + 3]):
             nonblack += 1
+            if x < 224 and y < 40:
+                top_status += 1
             if x >= 224 and 40 <= y < 176:
                 right_panel += 1
             if x < 224 and 40 <= y < 176:
                 dungeon_scene += 1
-if nonblack < 1000 or right_panel < 2000 or dungeon_scene < 20000:
+if (nonblack < 1000 or right_panel < 2000 or dungeon_scene < 20000 or
+        top_status < 500):
     raise SystemExit(
         "FAIL: DM2 FM Towns runtime frame is incomplete "
-        f"(total={nonblack}, right-panel={right_panel}, "
+        f"(total={nonblack}, top-status={top_status}, right-panel={right_panel}, "
         f"dungeon={dungeon_scene} lit pixels)")
 print("PASS: M12-selected FM Towns edition, authentic TWANIM, New Game and first champion reach the normal-loop runtime")
-print(f"PASS: runtime screenshot captured at 320x200 with {nonblack} nonblack pixels, {right_panel} right-panel pixels and {dungeon_scene} dungeon pixels")
+print(f"PASS: runtime screenshot captured at 320x200 with {nonblack} nonblack pixels, {top_status} top-status pixels, {right_panel} right-panel pixels and {dungeon_scene} dungeon pixels")
 PY
 
 if [ "$archive_hash_before" != "$(firestaff_sha256_file "$archive")" ]; then

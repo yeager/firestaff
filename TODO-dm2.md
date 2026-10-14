@@ -1,6 +1,6 @@
 # Firestaff TODO — DM2
 
-2026-10-14 current-main HUD/viewport retest on the Mac mini M4, commit
+2026-10-14 pre-fix baseline HUD/viewport retest on the Mac mini M4, commit
 `68972ca0`: the five authentic runtime routes (DOS English, DOS French,
 Macintosh, Amiga and FM Towns) plus live viewport-plan enumeration passed
 6/6 in 795.06 seconds. All routes use original game archives and check a
@@ -9,10 +9,35 @@ FM Towns capture found 25,746 lit pixels in the dungeon aperture and 2,841 in
 the right panel, but zero in both the upper 40-pixel band and lower 24-pixel
 band. The existing gate checks only dungeon and right-panel occupancy, so it
 passes despite these empty HUD bands. The Amiga frame has visible pixels in
-both bands. Keep FM Towns HUD completion open; the generic Towns chrome path
-is intentionally skipped until its source placements are bound. These are
-SDL dummy-video/audio captures on one ARM64 Mac host; they do not establish
-native Windows/Linux presentation, M5 HiDPI behavior or pixel parity.
+both bands. This exposed a missing source-bound FM Towns top status pane,
+addressed by the implementation recorded below. These are SDL dummy-video/
+audio captures on one ARM64 Mac host; they do not establish native
+Windows/Linux presentation, M5 HiDPI behavior or pixel parity.
+
+2026-10-14 current-source verification on the Mac mini M4: the authentic
+FM Towns gameplay-plan test passed, then the complete five-edition CLI matrix
+(DOS English, DOS French, Macintosh, Amiga and FM Towns) and the shared live
+viewport enumeration test passed 6/6. The full matrix took 798.54 seconds;
+the separate FM Towns gameplay-plan test took 3.63 seconds. The new Towns
+runtime capture contains 643 lit top-status pixels, 25,746 dungeon pixels
+and 2,841 right-panel pixels. The authentic-material plan checks normal,
+selected and zero-HP panes. Screenshots use SDL dummy video/audio on one ARM64
+Mac host; physical M5 Retina presentation, GPU output and native Windows/Linux
+rendering remain unverified. The capture's lower 24-pixel band still has zero
+nonblack pixels; whether Towns expects UI content there needs a source-backed
+placement audit, so this change does not close all DM2 HUD parity work.
+
+The original FM Towns ZIP was queried through Firestaff's bounded RAW4 reader:
+rectangles `0xA1` through `0xA4` place four `77x37` champion panes at source
+coordinates `(0,0)`, `(81,0)`, `(162,0)` and `(243,0)` in the 640x400 table.
+SKProject `SKULLWIN/c_gui_draw.cpp::DM2_DRAW_PLAYER_3STAT_PANE` selects live
+hero-state material from `INTERFACE_GENERAL/2` and draws it at `0xA1 + hero`.
+Firestaff's Towns `dm2_v1_render_ui_chrome` branch returned after the right-side
+squad panel and skipped these top panes. The HUD plan now binds each occupied
+hero's authentic `INTERFACE_GENERAL/2` state image and exact RAW4 destination;
+runtime verification requires visible pixels in the top-status region. The
+real-media test covers normal, selected and zero-HP pane states. Native runs
+are still needed on Windows and Linux to establish their presentation paths.
 
 2026-10-14 fresh HUD and viewport verification on the Mac mini M4 at
 `a0af9764`: all seven authentic-media checks passed in 460.78 seconds:

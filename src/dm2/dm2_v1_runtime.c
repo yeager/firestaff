@@ -12221,6 +12221,13 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     if (hud.towns_selected_hero_source_bound) {
         hud.towns_selected_hero_index = rt->source_curacthero - 1;
     }
+    /* SKProject c_gui_draw.cpp::DM2_DRAW_PLAYER_3STAT_PANE compares each
+     * hero with source global v1e0976 to select INTERFACE_GENERAL/2 state.
+     * Zero means no status pane is selected at the initial Towns handoff. */
+    hud.towns_status_hero_source_bound = hud.towns_squad_route_valid;
+    hud.towns_status_hero_index = rt->source_v1e0976 > 0 &&
+        rt->source_v1e0976 <= rt->source_party.heros_in_party
+            ? rt->source_v1e0976 - 1 : -1;
     hud.towns_savegames1_b02_source_bound = hud.towns_squad_route_valid;
     hud.towns_savegames1_b02 = rt->source_savegames1[2];
     hud.towns_party_direction = (uint8_t)(party_direction & 3);

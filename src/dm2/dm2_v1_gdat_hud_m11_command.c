@@ -927,6 +927,39 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
             return 0;
         }
     }
+    /* SKProject c_gui_draw.cpp::DM2_DRAW_PLAYER_3STAT_PANE selects an
+     * INTERFACE_GENERAL/2 state image and draws it to RAW4 rect 0xA1+hero.
+     * These are the source's four top-row status panes, distinct from the
+     * Towns right-side squad formation. */
+    for (slot = 0; slot < party->champion_count; ++slot) {
+        const DM2_V1_GdatHudTownsSquadSlot *source = &slots[slot];
+        const DM2_V1_HudChampionState *hero = &party->champions[slot];
+        DM2_V1_GdatHudM11Command *command;
+        if (!source->valid || !hero->occupied) continue;
+        if ((source->status_pane_field != 0 &&
+             source->status_pane_field != 1 &&
+             source->status_pane_field != 9) ||
+            source->status_pane_rect_id != (uint16_t)(0xa1u + slot) ||
+            !source->status_pane_rect_raw4_hash ||
+            source->status_pane_rect.x < 0 ||
+            source->status_pane_rect.y < 0 ||
+            source->status_pane_rect.w <= 0 ||
+            source->status_pane_rect.h <= 0 ||
+            out_plan->command_count >= DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            !dm2_v1_gdat_hud_add_command(
+                loader, out_plan,
+                DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE,
+                0x6500 + slot, &source->status_pane_rect,
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 2,
+                source->status_pane_field)) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        command = &out_plan->commands[out_plan->command_count - 1];
+        command->destination_rect_id = source->status_pane_rect_id;
+        command->destination_table_hash = source->status_pane_rect_raw4_hash;
+        command->source_state_flags = (uint8_t)source->status_pane_field;
+    }
     if (out_plan->command_count == 0) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;

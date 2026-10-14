@@ -981,6 +981,8 @@ typedef struct DM2_V1_HudPartyState {
     int towns_squad_route_valid;
     int towns_selected_hero_source_bound;
     int towns_selected_hero_index;
+    int towns_status_hero_source_bound;
+    int towns_status_hero_index;
     int towns_savegames1_b02_source_bound;
     uint8_t towns_savegames1_b02;
     uint8_t towns_party_direction;

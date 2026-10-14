@@ -21,7 +21,8 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
-    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA,
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE
 };
 
 enum {
@@ -108,6 +109,10 @@ typedef struct {
     DM2_V1_ViewportRect enchantment_aura_rect;
     uint16_t enchantment_aura_rect_id;
     uint32_t enchantment_aura_rect_raw4_hash;
+    int status_pane_field;
+    uint32_t status_pane_rect_raw4_hash;
+    DM2_V1_ViewportRect status_pane_rect;
+    uint16_t status_pane_rect_id;
 } DM2_V1_GdatHudTownsSquadSlot;
 
 typedef struct {

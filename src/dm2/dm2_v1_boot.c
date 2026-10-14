@@ -8403,6 +8403,7 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             const DM2_V1_HudChampionState *hero = &party->champions[slot];
             DM2_V1_GdatHudTownsSquadSlot *destination = &towns_slots[slot];
             DM2_V1_BootExpandedRectReceipt formation;
+            DM2_V1_BootExpandedRectReceipt status_pane;
             int relative;
             int spell_field;
             int status_field;
@@ -8431,6 +8432,22 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             destination->formation_rect = (DM2_V1_ViewportRect){
                 formation.rect.x / 2, formation.rect.y / 2,
                 formation.rect.w / 2, formation.rect.h / 2 };
+            if (!party->towns_status_hero_source_bound ||
+                !dm2_v1_boot_query_expanded_rect_receipt(
+                    profile, (uint16_t)(0xa1u + slot), &status_pane) ||
+                !status_pane.valid || !status_pane.raw4_hash ||
+                status_pane.rect.x < 0 || status_pane.rect.y < 0 ||
+                status_pane.rect.w <= 0 || status_pane.rect.h <= 0) {
+                return 0;
+            }
+            destination->status_pane_field =
+                hero->towns_current_hp == 0 ? 1
+                : party->towns_status_hero_index == slot ? 9 : 0;
+            destination->status_pane_rect_raw4_hash = status_pane.raw4_hash;
+            destination->status_pane_rect_id = status_pane.rect_id;
+            destination->status_pane_rect = (DM2_V1_ViewportRect){
+                status_pane.rect.x / 2, status_pane.rect.y / 2,
+                status_pane.rect.w / 2, status_pane.rect.h / 2 };
             destination->mirror_flip = relative == 1 || relative == 2;
             if (party->towns_selected_hero_source_bound &&
                 party->towns_selected_hero_index == slot) {
