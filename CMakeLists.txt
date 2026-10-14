@@ -2193,6 +2193,23 @@ if(BUILD_TESTING)
         set_tests_properties(dm1_v1_selector_pc34_compat PROPERTIES
             ENVIRONMENT "FIRESTAFF_DM1_I34E_SELECTOR=${_dm1_i34e_selector}")
     endif()
+    set(_dm1_i34e_root
+        "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34")
+    if(EXISTS "${_dm1_i34e_root}/SELECTOR" AND
+       EXISTS "${_dm1_i34e_root}/TITLE" AND
+       EXISTS "${_dm1_i34e_root}/DATA/GRAPHICS.DAT")
+        find_program(_dm1_i34e_bash bash)
+        if(_dm1_i34e_bash)
+            add_test(NAME dm1_v1_i34e_selector_direct_launch
+                COMMAND "${_dm1_i34e_bash}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_i34e_selector_direct_launch.sh"
+                    "$<TARGET_FILE:firestaff>"
+                    "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+            set_tests_properties(dm1_v1_i34e_selector_direct_launch PROPERTIES
+                RUN_SERIAL TRUE
+                TIMEOUT 90)
+        endif()
+    endif()
 endif()
 
 firestaff_add_optional_dm_test(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
@@ -7387,6 +7404,7 @@ set(M11_SOURCES
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/dm1/dm1_v1_i34e_title_anim_pc34.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/shared/firestaff_amiga_adf.c
     src/shared/firestaff_amiga_mfm.c
@@ -7425,6 +7443,8 @@ set(M11_SOURCES
     src/dm1/dm1_v1_save_load.c
     src/dm1/dm1_v1_runtime_sidecar_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_fmtowns_entrance_viewport.c
+    src/dm1/dm1_v1_fmtowns_layout_crop.c
     src/dm1/dm1_v1_viewport_wall_ornament_ordinal_provider_pc34_compat.c
     src/csb/csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
@@ -26570,6 +26590,50 @@ endif()
     )
     set_tests_properties(dm1_v1_fmtowns_entrance_handoff PROPERTIES
         LABELS "dm1;fmtowns;startup;entrance;regression"
+    )
+
+    # Exact deterministic raster and no-partial-output gate for the transient
+    # C255 map behind the DM1 FM Towns Entrance doors.
+    add_executable(test_dm1_v1_fmtowns_entrance_viewport
+        tests/test_dm1_v1_fmtowns_entrance_viewport.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_entrance_viewport PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_fmtowns_entrance_viewport PRIVATE
+        firestaff_m11
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_entrance_viewport PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_entrance_viewport
+        COMMAND test_dm1_v1_fmtowns_entrance_viewport
+    )
+    set_tests_properties(dm1_v1_fmtowns_entrance_viewport PROPERTIES
+        LABELS "dm1;fmtowns;entrance;viewport;regression"
+    )
+
+    add_executable(test_dm1_v1_fmtowns_layout_crop
+        tests/test_dm1_v1_fmtowns_layout_crop.c
+        src/dm1/dm1_v1_fmtowns_layout_crop.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_layout_crop PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_layout_crop PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_layout_crop
+        COMMAND test_dm1_v1_fmtowns_layout_crop
+    )
+    set_tests_properties(dm1_v1_fmtowns_layout_crop PROPERTIES
+        LABELS "dm1;fmtowns;layout;viewport;regression"
     )
 
     add_executable(test_dm1_v1_fmtowns_title
@@ -57158,6 +57222,30 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_anm.c")
     endif()
     add_test(NAME csb_v1_fmtowns_anm COMMAND test_csb_v1_fmtowns_anm)
     set_tests_properties(csb_v1_fmtowns_anm PROPERTIES LABELS "csb;fmtowns")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_i34e_title_anim_pc34.c")
+    add_executable(test_dm1_v1_i34e_title_anim_pc34
+        tests/test_dm1_v1_i34e_title_anim_pc34.c
+        src/dm1/dm1_v1_i34e_title_anim_pc34.c
+        src/csb/csb_v1_fmtowns_anm.c)
+    target_include_directories(test_dm1_v1_i34e_title_anim_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_i34e_title_anim_pc34 PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_i34e_title_anim_pc34 PRIVATE
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm1_v1_i34e_title_anim_pc34
+             COMMAND test_dm1_v1_i34e_title_anim_pc34)
+    set_tests_properties(dm1_v1_i34e_title_anim_pc34 PROPERTIES
+        SKIP_RETURN_CODE 77 LABELS "dm1;pc34;real-media;animation")
+    set(_dm1_i34e_title
+        "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/TITLE")
+    if(EXISTS "${_dm1_i34e_title}")
+        set_tests_properties(dm1_v1_i34e_title_anim_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_I34E_TITLE=${_dm1_i34e_title}")
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_switch.c")

@@ -40,6 +40,16 @@ extern "C" {
     (CSB_FMTOWNS_ANM_MAX_WIDTH * CSB_FMTOWNS_ANM_MAX_HEIGHT)
 #define CSB_FMTOWNS_ANM_MAX_LOOP_DEPTH 16u
 
+/* Shared bounded implementation of ReDMCSB ANIMIMG.C F8288. The expected
+ * dimensions are checked before decoding; malformed streams never write past
+ * pixel_count. */
+int csb_v1_fmtowns_anm_decode_f8288(const uint8_t *source,
+                                    size_t source_size,
+                                    uint8_t *pixels,
+                                    size_t pixel_count,
+                                    uint16_t expected_width,
+                                    uint16_t expected_height);
+
 typedef enum {
     CSB_FMTOWNS_ANM_CHUNK_UNKNOWN = 0,
     CSB_FMTOWNS_ANM_CHUNK_PL = 1,  /* palette */

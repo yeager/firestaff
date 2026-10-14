@@ -22,7 +22,8 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA,
-    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE,
+    DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE
 };
 
 enum {
@@ -186,6 +187,8 @@ int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
     const DM2_V1_HudPartyState *party,
     const DM2_V1_ViewportRect portrait_destinations[4],
     uint32_t portrait_table_hash,
+    const DM2_V1_ViewportRect status_pane_destinations[4],
+    uint32_t status_pane_table_hash,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 /* Binds original INTERFACE_GENERAL/0/dt04 portrait rectangles

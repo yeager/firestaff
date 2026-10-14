@@ -55,6 +55,145 @@ static size_t mac_nonzero_in_rect(const unsigned char *framebuffer,
     return count;
 }
 
+static int mac_status_pane_real_media_plan_checks(
+    DM2_V1_BootProfile *profile)
+{
+    static const int16_t pane_x[4] = { 0, 81, 162, 243 };
+    DM2_V1_HudPartyState party;
+    DM2_V1_InterfaceRect portraits[4];
+    DM2_V1_InterfacePalette interface_palette;
+    uint32_t portrait_table_hash = 0u;
+    int portrait_index = -1;
+    const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(profile);
+    if (!profile || !loader ||
+        !dm2_v1_boot_interface_hud_portrait_destinations(
+            profile, portraits, &portrait_table_hash) ||
+        !portrait_table_hash ||
+        !dm2_v1_asset_load_interface_palette(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+            DM2_GDAT_INTERFACE_PALETTE_FIELD, &interface_palette) ||
+        !interface_palette.hash) return 0;
+
+    /* Find a real Macintosh CHAMPIONS image in this authenticated archive so
+     * all four status slots can be exercised without inventing portrait art. */
+    for (int index = 0; index <= 255; ++index) {
+        DM2_V1_GdatImageMetadata metadata;
+        if (dm2_v1_asset_load_image_metadata(
+                loader, DM2_GDAT_CATEGORY_CHAMPIONS, (uint8_t)index, 0,
+                &metadata) && metadata.bits_per_pixel == 4u &&
+            metadata.width > 0u && metadata.height > 0u) {
+            portrait_index = index;
+            break;
+        }
+    }
+    if (portrait_index < 0) return 0;
+
+    memset(&party, 0, sizeof(party));
+    party.champion_count = 4;
+    party.status_hero_source_bound = 1;
+    for (int slot = 0; slot < 4; ++slot) {
+        party.champions[slot].occupied = 1;
+        party.champions[slot].portrait_type_source_bound = 1;
+        party.champions[slot].portrait_index = (uint8_t)portrait_index;
+        party.champions[slot].current_hp_source_bound = 1;
+        party.champions[slot].current_hp = 10;
+    }
+
+    /* Exercise the authentic normal/dead/selected image selectors while
+     * checking every A1-A4 RAW4 destination against the retail Mac table. */
+    for (int scenario = 0; scenario < 9; ++scenario) {
+        int selected = scenario >= 1 && scenario <= 4 ? scenario - 1 : -1;
+        int dead = scenario >= 5 ? scenario - 5 : -1;
+        DM2_V1_GdatHudM11CommandPlan plan;
+        int pane_count = 0;
+        memset(&plan, 0, sizeof(plan));
+        party.status_hero_index = selected;
+        for (int slot = 0; slot < 4; ++slot)
+            party.champions[slot].current_hp = slot == dead ? 0 : 10;
+        if (!dm2_v1_boot_gdat_hud_m11_command_plan(
+                profile, &party, &plan) || !plan.valid ||
+            !plan.mac_native_layout || plan.command_count != 14 ||
+            plan.command_hash !=
+                dm2_v1_gdat_hud_m11_command_plan_hash(&plan)) {
+            fprintf(stderr, "Mac pane plan build failed scenario=%d valid=%d mac=%d commands=%d hash=%x portrait=%d status-bound=%d status-index=%d\n",
+                    scenario, plan.valid, plan.mac_native_layout,
+                    plan.command_count, plan.command_hash, portrait_index,
+                    party.status_hero_source_bound, party.status_hero_index);
+            dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+            return 0;
+        }
+        for (int i = 0; i < plan.command_count; ++i) {
+            const DM2_V1_GdatHudM11Command *command = &plan.commands[i];
+            int slot;
+            int expected_field;
+            DM2_V1_BootExpandedRectReceipt rect;
+            DM2_V1_GdatImageMetadata metadata;
+            int metadata_ok;
+            uint32_t expected_palette_hash = 2166136261u;
+            for (int color = 0; color < 16; ++color) {
+                expected_palette_hash ^= interface_palette.palette16[color];
+                expected_palette_hash *= 16777619u;
+            }
+            if (command->kind !=
+                    DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE) continue;
+            slot = command->destination_rect_id - 0xa1;
+            if (slot < 0 || slot >= 4) {
+                dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+                return 0;
+            }
+            ++pane_count;
+            expected_field = slot == dead ? 1 : slot == selected ? 9 : 0;
+            metadata_ok = dm2_v1_asset_load_image_metadata(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 2,
+                expected_field, &metadata);
+            if (!dm2_v1_boot_query_expanded_rect_receipt(
+                    profile, (uint16_t)(0xa1 + slot), &rect) ||
+                !rect.valid || !rect.raw4_hash ||
+                rect.rect.x != pane_x[slot] || rect.rect.y != 0 ||
+                rect.rect.w != 77 || rect.rect.h != 37 ||
+                command->viewport_gdat_index != 0x6500 + slot ||
+                command->destination.x != rect.rect.x / 2 ||
+                command->destination.y != rect.rect.y / 2 ||
+                command->destination.w != rect.rect.w / 2 ||
+                command->destination.h != rect.rect.h / 2 ||
+                command->destination_table_hash != rect.raw4_hash ||
+                command->gdat_category !=
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 2 ||
+                command->gdat_field != expected_field ||
+                command->source_state_flags != (uint8_t)expected_field ||
+                command->format != DM2_IMG_FMT_IMG3 || !command->pixels ||
+                command->width != 77 || command->height != 37 ||
+                !command->raw_hash || !command->decoded_hash ||
+                !command->material_receipt_hash ||
+                !metadata_ok ||
+                metadata.bits_per_pixel != 4u || metadata.width != 77u ||
+                metadata.height != 37u ||
+                !command->palette_hash ||
+                expected_palette_hash != command->palette_hash ||
+                memcmp(interface_palette.palette16, command->palette16,
+                       sizeof(interface_palette.palette16)) != 0) {
+                fprintf(stderr, "Mac pane command failed scenario=%d slot=%d field=%d dest=%d,%d,%d,%d dims=%dx%d id=%u hashes=%x/%x palette=%x/%x format=%d metadata=%d/%u/%u/%u\n",
+                        scenario, slot, expected_field,
+                        command->destination.x, command->destination.y,
+                        command->destination.w, command->destination.h,
+                        command->width, command->height,
+                        command->destination_rect_id,
+                        command->destination_table_hash,
+                        rect.raw4_hash, command->palette_hash,
+                        expected_palette_hash, command->format,
+                        metadata_ok, metadata.width, metadata.height,
+                        metadata.bits_per_pixel);
+                dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+                return 0;
+            }
+        }
+        dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+        if (pane_count != 4) return 0;
+    }
+    return 1;
+}
+
 static int mac_live_map_has_nearby_creature(
     const DM2_V1_DungeonData *dungeon, int map, int party_x, int party_y,
     int *out_x, int *out_y)
@@ -508,6 +647,14 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    if (!mac_status_pane_real_media_plan_checks(
+            (DM2_V1_BootProfile *)view.dm2BootProfile)) {
+        fprintf(stderr,
+                "FAIL: Mac status panes did not bind authenticated A1-A4 geometry and normal/dead/selected GDAT images\n");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    puts("PASS: authenticated Mac A1-A4 status panes cover normal, dead and selected source states");
     {
         DM2_V1_G1CreatureMapChipRuntimeReceipt creatures;
         memset(&creatures, 0, sizeof(creatures));
@@ -956,6 +1103,7 @@ int main(void)
         DM2_V1_ViewportM11FrameReceipt hud_receipt;
         size_t viewport_nonblack = 0u;
         size_t mac_hud_nonblack = 0u;
+        size_t mac_status_pane_nonblack = 0u;
         memset(&frame_ownership, 0, sizeof(frame_ownership));
         memset(&hud_receipt, 0, sizeof(hud_receipt));
         memset(framebuffer, 0, sizeof(framebuffer));
@@ -977,13 +1125,16 @@ int main(void)
             for (int x = 0; x < 320; ++x)
                 if (framebuffer[(size_t)y * 320u + (size_t)x] != 0u)
                     ++mac_hud_nonblack;
+        mac_status_pane_nonblack =
+            mac_nonzero_in_rect(framebuffer, 0, 0, 38, 18);
         (void)dm2_v1_runtime_last_m11_frame_receipt(&hud_receipt);
         if (viewport_nonblack < 22000u ||
             mac_hud_nonblack < 100u ||
+            mac_status_pane_nonblack < 100u ||
             !hud_receipt.valid || !hud_receipt.hud_material_plan_required ||
             !hud_receipt.hud_material_plan_consumed ||
             hud_receipt.hud_material_plan_command_count !=
-                6 + dm2_v1_runtime_get_champion_count() ||
+                6 + 2 * dm2_v1_runtime_get_champion_count() ||
             !dm2_v1_runtime_last_frame_ownership(&frame_ownership) ||
             !frame_ownership.full_gdat_frame_valid ||
             !frame_ownership.floor_ceiling_materials_complete ||
@@ -995,8 +1146,9 @@ int main(void)
             frame_ownership.total_runtime_fallback_draws != 0) {
             fprintf(stderr,
                     "FAIL: Mac New Game did not render its source-backed RECT_7/HUD "
-                    "(view=%zu hud=%zu hudReceipt=%d/%d/%d frame=%d planes=%d wall=%d masks=%x/%x fallbacks=%d)\n",
+                    "(view=%zu hud=%zu pane=%zu hudReceipt=%d/%d/%d frame=%d planes=%d wall=%d masks=%x/%x fallbacks=%d)\n",
                     viewport_nonblack, mac_hud_nonblack,
+                    mac_status_pane_nonblack,
                     hud_receipt.hud_material_plan_required,
                     hud_receipt.hud_material_plan_consumed,
                     hud_receipt.hud_material_plan_command_count,

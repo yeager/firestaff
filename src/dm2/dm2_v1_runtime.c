@@ -12228,6 +12228,12 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     hud.towns_status_hero_index = rt->source_v1e0976 > 0 &&
         rt->source_v1e0976 <= rt->source_party.heros_in_party
             ? rt->source_v1e0976 - 1 : -1;
+    hud.status_hero_source_bound = rt->source_party_valid &&
+        rt->source_party.heros_in_party == hud.champion_count &&
+        rt->source_v1e0976 >= 0 &&
+        rt->source_v1e0976 <= rt->source_party.heros_in_party;
+    hud.status_hero_index = rt->source_v1e0976 > 0
+        ? rt->source_v1e0976 - 1 : -1;
     hud.towns_savegames1_b02_source_bound = hud.towns_squad_route_valid;
     hud.towns_savegames1_b02 = rt->source_savegames1[2];
     hud.towns_party_direction = (uint8_t)(party_direction & 3);
@@ -12286,6 +12292,8 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         dst->stat_bar_color = source_default_stat_bar_color[slot];
         dst->stat_bar_color_source_bound = 1;
         dst->state_source_bound = 0;
+        dst->current_hp_source_bound = 0;
+        dst->current_hp = 0;
         dst->portrait_index = 0u;
         /* SKWINDOS/src/c_hero.h places herotype at byte 257 of the PC-DOS
          * 0x107-byte c_hero record.  REVIVE_PLAYER writes it from the source
@@ -12314,6 +12322,11 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             dst->towns_spell_cooldown =
                 (uint8_t)source_hero->handcooldown[2];
             dst->towns_spell_cooldown_source_bound = 1;
+        }
+        if (rt->source_party_valid &&
+            slot < rt->source_party.heros_in_party) {
+            dst->current_hp = rt->source_party.hero[slot].curHP;
+            dst->current_hp_source_bound = 1;
         }
         if (dst->occupied && stat_inputs_valid) {
             const uint8_t *raw = rt->session_snapshot
@@ -13177,10 +13190,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
     dm2_v1_viewport_set_gdat_hud_material_plan(
         &viewport, &hud_material_plan);
-    if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
-        viewport.hud_party_valid &&
-        viewport.hud_party.towns_squad_route_valid &&
-        rt->boot->graphics_dat) {
+    if (rt->boot && rt->boot->graphics_dat &&
+        ((rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
+          viewport.hud_party_valid &&
+          viewport.hud_party.towns_squad_route_valid) ||
+         ((rt->boot->platform == DM2_PLATFORM_MAC_EN ||
+           rt->boot->platform == DM2_PLATFORM_MAC_FR) &&
+          viewport.hud_party_valid && hud_material_plan.valid &&
+          hud_material_plan.mac_native_layout))) {
         dm2_v1_viewport_set_asset_loader(
             &viewport, dm2_v1_boot_asset_loader(rt->boot));
         viewport.asset_profile = rt->boot;

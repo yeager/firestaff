@@ -151,86 +151,67 @@ visual parity.
 byte-for-byte in ZIP transport, now also passes bare `--game csb` direct CLI
 and M12 AUTO routes without `--platform`. Both routes select A35M, pass the
 English language selector and reach first movement. This closes the A35M AUTO
-coverage gap for that ADF source; the separate original CTRaw archive still
-has no legal/documented PACK decoder and remains unsupported.
+coverage gap for that ADF source; native intake of the separate original CTRaw
+archive remains unsupported. See the development-only conversion evidence below.
 
-- Add a source-preserving launch path for the supplied Amiga 3.5 CTRaw media.
-  On 2026-10-10, `--game csb --platform amiga --boot-probe` against the
-  supplied `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` failed with `game
-  unavailable for --game: csb`. The 7z contains four CAPS/SPS CT Raw disk
-  images (English and English/French/German game and utility disks), rather
-  than the ADF images accepted by the current Amiga file path. Repacking those
-  four byte-identical original members into ZIP and retrying the same CLI probe
-  produced the same failure; ZIP handles the container but not the disk-image
-  format. The known-good A31 menu launch script, run against the original
-  A35 archive with `FIRESTAFF_FAIL_IF_NO_LAUNCH=1`, also ended with `no launch
-  reached before exit`. ReDMCSB COMPILE.H:274-298 defines distinct A35E/A35M
-  executable and language-selection routes, so A31/A33 startup tests do not
-  cover this edition. Implement bounded in-process access to the original
-  media or another source-preserving intake path, then verify direct CLI,
-  start-menu selection, A35E/A35M handoff and first runtime input against the
-  authentic disks. Do not treat renamed or converted test images as proof of
-  native CTRaw support, and keep emulator or BIOS dependencies out of runtime.
-  The DMWeb software archive has since yielded a separate authentic A35M ADF
-  member (tested through ZIP transport; see the verification note above), but
-  it is not a decoded sector image from the CTRaw archive. A local search found
-  no independently decoded A35 CTRaw sector image or usable CAPS reader, so
-  the filesystem type is not yet established. The third-party
-  `rsn8887/capsimg` source examined for format research carries a
-  non-commercial restriction in its
-  [license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt); do not
-  bundle or adapt it without a separate license review.
-  A clean-room decoder-source audit on 2026-10-10 confirmed that no
-  independently reusable CTRaw PACK implementation or complete PACK grammar
-  was found. Greaseweazle's permissively licensed CAPS adapter calls
-  `CAPSLockImage`, `CAPSLoadImage` and `CAPSLockTrack`; it does not decode the
-  CT Raw payload itself. The independent disk-utilities frontend also relies
-  on CAPS/SPS, and the published IPF document describes IPF records rather
-  than CTRaw PACK records. The local ReDMCSB tree contains authentic A35E/A35M
-  files (`APPB.FTL`, `VDEO.FTL`, `ANIM.FTL` and `KAOS.FTL`) and documents the
-  distinct edition routes, but supplies no CTRaw decoder or PACK grammar.
-  Preserve those files as future authentic cross-checks; their presence does
-  not prove that a disk stream has been reconstructed. Existing
-  `firestaff_caps_raw_archive_stream` coverage validates four original
-  members' CAPS/DATA/TRCK/PACK framing and packed-payload CRCs only; it does
-  not decode PACK payloads or recover sectors. Continue with a clean-room
-  decoder only after obtaining a documented grammar or a legally usable
-  decoder oracle. References: [Greaseweazle CAPS adapter](https://github.com/keirf/greaseweazle/blob/master/src/greaseweazle/image/caps.py),
-  [Greaseweazle Unlicense](https://github.com/keirf/greaseweazle/blob/master/COPYING),
-  [official SPS Decoder Library listing](https://kryoflux.com/?page=download),
-  and [IPF v1.6 documentation](https://www.kryoflux.com/download/ipf_documentation_v1.6.pdf).
-  A 2026-10-13 review of the public-domain `disk-utilities` README confirmed
-  that its `disk-analyse` CTRaw reader must be built with `caps=y` and CAPS v5.
-  This confirms a possible development-time oracle exists only when that
-  external library is available; it does not provide a standalone PACK codec
-  for Firestaff. Neither `disk-analyse` nor a CAPS image library was found in
-  the current development environment. Do not add that dependency to the
-  Firestaff runtime. A follow-up check on 2026-10-13 also found no local
-  `disk-analyse`, `capsimage` or `capsimg` executable. The SPS Decoder Library
-  v5.1 source distribution describes itself as non-free and points to its
-  license, so do not use it as a development oracle unless its terms have been
-  confirmed for that use; pursue an independently licensed decoder or
-  documented PACK specification otherwise. See the [disk-utilities build
-  requirements](https://github.com/keirf/disk-utilities#ipf--ct-raw-support-the-capssps-ipf-support-library)
-  and [SPS Decoder Library source notice](https://github.com/simonowen/capsimage#readme).
-  Any decoder acceptance run must compare reconstructed files against the
-  existing original-media hashes in `data/asset_validator_checksums_m12.json`
-  and `parity-evidence/csb_v1_l10n_source_catalog.md`.
+- Add native Firestaff intake for the supplied Amiga 3.5 CTRaw media. On
+  2026-10-10, direct CLI and start-menu probes against the original archive
+  failed because Firestaff does not recognize its four CAPS/SPS CT Raw disk
+  images as game data. ZIP repacking did not change that. ReDMCSB COMPILE.H
+  lines 274-298 define distinct A35E/A35M executable and language-selection
+  routes, so A31/A33 startup coverage does not cover this edition. Keep
+  emulator/BIOS and oracle dependencies out of Firestaff runtime.
 
-  2026-10-14 current-main retest at `a7a0fca10`: the authentic archive still
-  fails direct `--game csb --platform amiga --boot-probe` with
-  `game unavailable for --game: csb`. After building its missing test helper,
-  `firestaff_caps_raw_archive_stream` passes against the four original members;
-  that test verifies framing and CRC only, not PACK decompression or startup.
-  The SPS download page identifies its decoder library as private/personal-use
-  software and does not permit redistribution. An audit found the public
-  `CCTRawCodec::DecompressDump` implementation, but its published license has
-  restrictive non-commercial terms. No independent permissively licensed PACK
-  decoder or public PACK grammar was found. Do not copy that implementation or
-  claim CTRaw launch support until a suitable license or independent format
-  specification is available. See the [SPS download and license terms](https://kryoflux.com/?page=download),
+  The archive stream regression `firestaff_caps_raw_archive_stream` validates
+  the four original members' CAPS/DATA/TRCK/PACK framing and packed-payload
+  CRCs only. It does not decode PACK payloads or recover sectors. The separate
+  A35M ADF found in the DMWeb software archive is authentic ADF media but is
+  not a decoded sector image from the CTRaw archive.
+
+  2026-10-14 development-only oracle and boot verification: the original
+  `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` archive in the supplied CSB data
+  directory was converted locally using the official SPS
+  Decoder Library 5.1 source and public-domain `disk-utilities`, built with
+  `caps=y`. The tools, local compatibility/build adjustments, extracted disks,
+  and derived images stayed under the ignored
+  `.codex-scratch/csb-ctraw-oracle/` directory; nothing was added to Firestaff.
+  The source archive SHA-256 remained
+  `e4362e36c65fcde533346ac559698a016ec804b748113f73ac6b510ef67397a8`.
+  All four members converted to 901,120-byte ADFs. `disk-analyse` reported one
+  damaged/unidentified track (`T0.1: Unformatted*`) on each image, but the
+  extracted English and multilingual game files matched the expected original
+  MD5s recorded in `tests/test_csb_archive_required_split.c:942-964` and
+  `data/asset_validator_checksums_m12.json` (including `Graphics.DAT`,
+  `ANIM.FTL`, `APPB.FTL`, `KAOS.FTL` and `TITL.DAT`).
+
+  Firestaff then booted the derived English ADF through a ZIP wrapper with
+  isolated `HOME`/`XDG_CONFIG_HOME` and SDL dummy video/audio drivers. Both
+  `--game csb --platform amiga` and automatic platform detection (`--game csb`)
+  passed the 800-frame direct CLI boot probe with `enter,up`, requiring runtime
+  and a loaded level. The AUTO receipt selected `platform=Amiga
+  edition=amiga35-en`, authenticated `assetMd5=291e1bc6803e3dc4b974c60117ca5d68`,
+  and reported `phase=inactive`, `startupActive=0`, `levelLoaded=1`, `map=0`,
+  `party=9,1,2`, `runtimeTick=1577` and nonzero `csbViewportHash=3733227093`.
+  This proves the converted ADF files can feed the existing Firestaff ADF/ZIP
+  intake and reach runtime; it is not native CTRaw support and does not prove
+  lossless sector recovery or original-disk behavior. The damaged-track
+  warning remains relevant.
+
+  SPS/CAPS is permitted for this non-commercial development environment under
+  its stated terms, but not for commercial use or redistribution. Keep this
+  oracle local and development-only: do not bundle it, link it into Firestaff,
+  copy/adapt its decoder code, or make it a runtime dependency. The public
+  `disk-utilities` reader still depends on CAPS/SPS for CTRaw. See the
+  [disk-utilities build requirements](https://github.com/keirf/disk-utilities#ipf--ct-raw-support-the-capssps-ipf-support-library),
+  [SPS Decoder Library listing and license](https://kryoflux.com/?page=download),
+  [SPS source notice](https://github.com/simonowen/capsimage#readme),
   [CAPS decoder source license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt),
-  and [public-domain disk-utilities framing reader](https://github.com/keirf/Disk-Utilities).
+  and [IPF v1.6 documentation](https://www.kryoflux.com/download/ipf_documentation_v1.6.pdf).
+  Native CTRaw intake, the start-menu A35E/A35M routes, and unconverted original
+  disk parity remain open; verify them separately before claiming CTRaw launch
+  support. Use original-media hashes in
+  `data/asset_validator_checksums_m12.json` and
+  `parity-evidence/csb_v1_l10n_source_catalog.md` for future oracle checks.
 
 - Restore the original French Atari ST preservation ZIP before revalidating
   `csb_v1_atari_french_preservation_zip_cli_boot`. The test currently skips:

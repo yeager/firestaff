@@ -107,15 +107,16 @@ expect_menu_runtime() {
     probe_file="$probe_root/dm1-fmtowns-menu-runtime-$language-$$.json"
     trace_file="$probe_root/dm1-fmtowns-menu-runtime-$language-$$.log"
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe_file" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
         "${edition_args[@]}" --data-dir "$archive" \
         --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
-        --duration 10000 >"$trace_file" 2>&1 || {
+        --duration 20000 >"$trace_file" 2>&1 || {
             cat "$trace_file" >&2
             return 1
         }
-    python3 - "$probe_file" "$trace_file" <<'PY'
+    python3 - "$probe_file" "$trace_file" "$language" <<'PY'
 import json
 import re
 import sys
@@ -142,6 +143,18 @@ door_frames = [line for line in trace if
                "startup-source-frame game=dm1 platform=fm-towns phase=entrance-door " in line]
 if len(title_frames) != 20 or len(door_frames) != 31:
     raise SystemExit(f"FAIL: expected all source title/door frames; got {len(title_frames)} title and {len(door_frames)} door frames")
+language = sys.argv[3]
+edition = "EDM" if language == "en" else "JDM"
+aperture_y = 33 if language == "en" else 31
+c255_prefix = (
+    f"[dm1-fmtowns-c255] edition={edition} language={language} result=ok "
+    f"valid=1 aperture=(0,{aperture_y} 224x136) "
+    "requested=0x00621803 loaded=0x00621803 missing=0x00000000 "
+)
+if not any(line.startswith(c255_prefix) and
+           re.search(r"raster_fnv1a=0x[0-9a-f]{8} reason=none$", line)
+           for line in trace):
+    raise SystemExit("FAIL: authentic C255 micro-dungeon did not render from all Towns source records")
 if ("frame=0/20 palette=PRESENTS" not in title_frames[0] or
         "frame=19/20 palette=MASTER" not in title_frames[-1] or
         any("palette=DUNGEON+MASTER" not in line for line in title_frames[1:-1])):

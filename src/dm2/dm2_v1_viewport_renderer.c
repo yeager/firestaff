@@ -9281,6 +9281,127 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             s->last_hud_core_pixel_count +=
                 (uint32_t)(command->destination.w * command->destination.h);
         }
+        if (!s->hud_party_valid ||
+            !s->hud_party.status_hero_source_bound) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            return;
+        }
+        for (int i = 6; i < mac_plan->command_count; ++i) {
+            const DM2_V1_GdatHudM11Command *command =
+                &mac_plan->commands[i];
+            int hero_slot;
+            int expected_field;
+            DM2_V1_BootExpandedRectReceipt rect_receipt;
+            DM2_V1_GdatImageMetadata metadata;
+            DM2_V1_InterfacePalette source_interface_palette;
+            uint8_t palette16[16];
+            uint32_t palette_hash = 0u;
+            memset(&rect_receipt, 0, sizeof(rect_receipt));
+            memset(&metadata, 0, sizeof(metadata));
+            if (command->kind ==
+                    DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT) {
+                /* The normal portrait pass below consumes this same plan. */
+                continue;
+            }
+            if (command->kind !=
+                    DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                return;
+            }
+            hero_slot = command->viewport_gdat_index - 0x6500;
+            if (hero_slot < 0 || hero_slot >= s->hud_party.champion_count ||
+                !s->hud_party.champions[hero_slot].occupied ||
+                !s->hud_party.champions[hero_slot].current_hp_source_bound) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                return;
+            }
+            expected_field = s->hud_party.champions[hero_slot].current_hp == 0
+                ? 1 : s->hud_party.status_hero_index == hero_slot ? 9 : 0;
+            if (!dm2_v1_asset_load_interface_palette(
+                    s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                    0, DM2_GDAT_INTERFACE_PALETTE_FIELD,
+                    &source_interface_palette) ||
+                source_interface_palette.hash == 0u) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                return;
+            }
+            memcpy(palette16, source_interface_palette.palette16,
+                   sizeof(palette16));
+            palette_hash = dm2_v1_weather_pixels_hash(
+                palette16, 16, 1, 16);
+            if (command->gdat_category !=
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 2 ||
+                command->gdat_field != expected_field ||
+                command->source_state_flags != (uint8_t)expected_field ||
+                command->destination_rect_id !=
+                    (uint16_t)(0xa1 + hero_slot) ||
+                (command->format != DM2_IMG_FMT_IMG3 &&
+                 command->format != DM2_IMG_FMT_U4) || !command->pixels ||
+                command->width <= 0 || command->height <= 0 ||
+                !command->raw_hash || !command->raw_byte_count ||
+                !command->material_source_bytes ||
+                !command->material_source_byte_count ||
+                !command->material_receipt_hash ||
+                !command->destination_table_hash ||
+                command->palette_hash != dm2_v1_weather_pixels_hash(
+                    command->palette16, 16, 1, 16) ||
+                command->decoded_hash !=
+                    dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
+                !dm2_v1_asset_load_image_metadata(
+                    s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                    2, expected_field, &metadata) ||
+                metadata.bits_per_pixel != 4u ||
+                metadata.width != (uint16_t)command->width ||
+                metadata.height != (uint16_t)command->height ||
+                palette_hash == 0u ||
+                palette_hash != command->palette_hash ||
+                !dm2_v1_boot_query_expanded_rect_receipt(
+                    (const DM2_V1_BootProfile *)s->asset_profile,
+                    (uint16_t)(0xa1 + hero_slot), &rect_receipt) ||
+                !rect_receipt.valid ||
+                rect_receipt.raw4_hash != command->destination_table_hash ||
+                command->destination.x != rect_receipt.rect.x / 2 ||
+                command->destination.y != rect_receipt.rect.y / 2 ||
+                command->destination.w != rect_receipt.rect.w / 2 ||
+                command->destination.h != rect_receipt.rect.h / 2 ||
+                command->width != rect_receipt.rect.w ||
+                command->height != rect_receipt.rect.h) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                return;
+            }
+            memcpy(s->active_asset_palette16, command->palette16,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = command->palette_hash;
+            s->active_asset_palette_ready = 1;
+            for (int y = 0; y < command->destination.h; ++y) {
+                int fy = command->destination.y + y;
+                int sy = y * command->height / command->destination.h;
+                if ((unsigned)fy >=
+                    (unsigned)dm2_v1_viewport_draw_height(s)) continue;
+                for (int x = 0; x < command->destination.w; ++x) {
+                    int fx = command->destination.x + x;
+                    int sx = x * command->width / command->destination.w;
+                    if ((unsigned)fx >=
+                        (unsigned)dm2_v1_viewport_draw_width(s)) continue;
+                    vp[fy * stride + fx] = dm2_v1_material_palette_color(
+                        s, command->pixels[sy * command->width + sx],
+                        &s->gdat_interface_palette_consumed_count);
+                }
+            }
+            ++s->gdat_hud_material_plan_consumed_count;
+            ++s->asset_hud_core_drawn_count;
+            s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+                s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+                command->width, command->height);
+            s->last_hud_core_pixel_count +=
+                (uint32_t)(command->destination.w * command->destination.h);
+        }
     }
     if (!plan.outdoor && s->gdat_interface_hud_layout) {
         /* skproject _098d_1208 expands the original 640-wide dt04/0 rect

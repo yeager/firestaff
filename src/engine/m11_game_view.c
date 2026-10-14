@@ -157,6 +157,7 @@
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "firestaff/dm1/v1/projectile/ra_door_projectile_reject_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_fmtowns_entrance_viewport.h"
 #include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
@@ -43804,6 +43805,53 @@ static int m11_dm1_f0098_graphic_provider(void* user_data,
     *out_width = (int)slot->width;
     *out_height = (int)slot->height;
     return 1;
+}
+
+static int m11_dm1_fmtowns_entrance_graphic_provider(
+    void *user_data, unsigned int source_graphic, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    M11_GameViewState *state = (M11_GameViewState *)user_data;
+    const M11_AssetSlot *slot;
+
+    if (!state || !state->assetsAvailable ||
+        !state->dm1FmtownsStartupReceiptValid ||
+        !state->assetLoader.legacyDm1 || state->assetLoader.legacyBigEndian ||
+        !out_pixels || !out_width || !out_height ||
+        !((source_graphic >= DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR &&
+           source_graphic <= DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING) ||
+          (source_graphic >=
+               DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_FIRST &&
+           source_graphic <=
+               DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_LAST))) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load(&state->assetLoader, source_graphic);
+    if (!slot || !slot->loaded || !slot->pixels || !slot->width ||
+        !slot->height) {
+        return 0;
+    }
+    *out_pixels = slot->pixels;
+    *out_width = (int)slot->width;
+    *out_height = (int)slot->height;
+    return 1;
+}
+
+int M11_GameView_RenderDm1FmtownsEntranceC255(
+    M11_GameViewState *state, uint8_t *viewport_pixels,
+    size_t viewport_pixel_count, int viewport_stride,
+    DM1_V1_FmtownsEntranceViewportReceipt *out_receipt)
+{
+    if (!state || !state->active ||
+        !state->dm1FmtownsStartupReceiptValid ||
+        !state->assetLoader.legacyDm1 || state->assetLoader.legacyBigEndian) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm1_v1_fmtowns_entrance_render_c255(
+        viewport_pixels, viewport_pixel_count, viewport_stride,
+        m11_dm1_fmtowns_entrance_graphic_provider, state,
+        state->dm1FmtownsStartupReceipt.language, out_receipt);
 }
 
 static void m11_draw_viewport_background(const M11_GameViewState* state,

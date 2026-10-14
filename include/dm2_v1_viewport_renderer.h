@@ -954,6 +954,8 @@ typedef struct {
     uint8_t portrait_index;
     int portrait_type_source_bound;
     int state_source_bound;
+    int current_hp_source_bound;
+    int16_t current_hp;
     uint8_t hp_pct;
     uint8_t stamina_pct;
     uint8_t mana_pct;
@@ -983,6 +985,9 @@ typedef struct DM2_V1_HudPartyState {
     int towns_selected_hero_index;
     int towns_status_hero_source_bound;
     int towns_status_hero_index;
+    /* Source V1E0976 chooses the highlighted per-champion status pane. */
+    int status_hero_source_bound;
+    int status_hero_index;
     int towns_savegames1_b02_source_bound;
     uint8_t towns_savegames1_b02;
     uint8_t towns_party_direction;

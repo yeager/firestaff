@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -eu
+
+firestaff_bin=$1
+data_root=$2
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-$(dirname "$firestaff_bin")/.codex-scratch}
+mkdir -p "$scratch_root"
+log_file=$scratch_root/dm1-i34e-selector-direct-launch.$$
+trap 'rm -f "$log_file"' EXIT
+
+show_relevant_log() {
+    grep -E '^firestaff: startup-source-|^DM1 READY:|^firestaff: launch phase=runtime-entered|^firestaff: game unavailable' \
+        "$log_file" || true
+}
+
+if ! FIRESTAFF_EXIT_AFTER_LAUNCH=1 "$firestaff_bin" \
+    --game dm1 --platform pc --debug --data-dir "$data_root" \
+    >"$log_file" 2>&1; then
+    show_relevant_log
+    echo "FAIL: authenticated I34E direct launch returned nonzero" >&2
+    exit 1
+fi
+
+require_once() {
+    count=$(grep -c "$1" "$log_file" || true)
+    if [ "$count" -ne 1 ]; then
+        show_relevant_log
+        echo "FAIL: expected one trace matching: $1 (found $count)" >&2
+        exit 1
+    fi
+}
+
+require_once 'phase=swsh-intro frames=17 source-vblanks=30'
+require_once 'phase=anim-title frames=53 source-vblanks=53'
+require_once 'phase=selector .*entrance=320x200 left-door=105x161 right-door=128x161 selector-view=224x136 frames=32 source-vblanks=32 .*modeled-vblank-hz=70 handoff=fires command=enter'
+require_once 'DM1 READY: .*handoff=pc-img3'
+require_once 'launch phase=runtime-entered game=dm1'
+
+swsh_line=$(grep -n 'phase=swsh-intro frames=17' "$log_file" | cut -d: -f1)
+title_line=$(grep -n 'phase=anim-title frames=53' "$log_file" | cut -d: -f1)
+selector_line=$(grep -n 'phase=selector ' "$log_file" | cut -d: -f1)
+fires_line=$(grep -n 'DM1 READY: .*handoff=pc-img3' "$log_file" | cut -d: -f1)
+runtime_line=$(grep -n 'launch phase=runtime-entered game=dm1' "$log_file" | cut -d: -f1)
+if [ "$swsh_line" -ge "$title_line" ] ||
+   [ "$title_line" -ge "$selector_line" ] ||
+   [ "$selector_line" -ge "$fires_line" ] ||
+   [ "$fires_line" -ge "$runtime_line" ]; then
+    show_relevant_log
+    echo "FAIL: I34E startup stages are out of source order" >&2
+    exit 1
+fi
+
+if grep -E 'phase=(redmcsb-title|shared-entrance)|callback=(F0437|F0441)' \
+    "$log_file" >/dev/null; then
+    cat "$log_file"
+    echo "FAIL: I34E direct launch entered the shared title/entrance path" >&2
+    exit 1
+fi
+
+echo "PASS: authenticated I34E SWOOSH -> TITLE -> SELECTOR/F8360 -> FIRES direct launch"

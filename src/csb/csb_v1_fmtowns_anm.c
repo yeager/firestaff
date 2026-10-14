@@ -57,9 +57,10 @@ static int anm_header(const uint8_t *data, size_t size, size_t *out_pos,
 /* ReDMCSB ANIMIMG.C F8288.  The original stores a packed nibble bitmap;
  * Firestaff keeps one index per pixel so the draw code can use the authentic
  * palette without a second, host-specific unpacking rule. */
-static int decode_f8288(const uint8_t *source, size_t source_size,
-                        uint8_t *pixels, size_t pixel_count,
-                        uint16_t expected_width, uint16_t expected_height) {
+int csb_v1_fmtowns_anm_decode_f8288(const uint8_t *source, size_t source_size,
+                                    uint8_t *pixels, size_t pixel_count,
+                                    uint16_t expected_width,
+                                    uint16_t expected_height) {
     size_t cursor = 4u;
     size_t dst = 0u;
     size_t total;
@@ -299,7 +300,7 @@ int csb_v1_fmtowns_anm_decode_frame(const uint8_t *data, size_t size,
             if (bytes >= 2u && payload[0] == 0xffu && payload[1] == 0x81u)
                 payload_offset = 2u;
             if ((size_t)bytes < payload_offset + 4u ||
-                !decode_f8288(payload + payload_offset,
+                !csb_v1_fmtowns_anm_decode_f8288(payload + payload_offset,
                                (size_t)bytes - payload_offset,
                                out_pixels, pixel_count, width, height))
                 return -1;
@@ -465,7 +466,7 @@ int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
             size_t payload_offset = bytes >= 2u && payload[0] == 0xffu &&
                                     payload[1] == 0x81u ? 2u : 0u;
             if ((size_t)bytes < payload_offset + 4u ||
-                !decode_f8288(payload + payload_offset,
+                !csb_v1_fmtowns_anm_decode_f8288(payload + payload_offset,
                               (size_t)bytes - payload_offset,
                               pixels, pixel_count,
                               playback->width, playback->height)) return -1;

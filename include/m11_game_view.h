@@ -4,6 +4,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_hoc_presented_frame_consumer_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
+#include "dm1_v1_fmtowns_entrance_viewport.h"
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
@@ -2196,6 +2197,13 @@ void M11_GameView_StopFmtownsCdda(M11_GameViewState* state);
  * receipt is not admitted. Returns 1 on success or already-loaded,
  * 0 if the load could not be performed. Idempotent. */
 int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state);
+/* Render the source-owned transient C255 viewport behind DM1 FM Towns'
+ * opening Entrance doors. Requires a live, admitted FM Towns DM1 session;
+ * only its authenticated IMG2 GRAPHICS.DAT records are used. */
+int M11_GameView_RenderDm1FmtownsEntranceC255(
+    M11_GameViewState *state, uint8_t *viewport_pixels,
+    size_t viewport_pixel_count, int viewport_stride,
+    DM1_V1_FmtownsEntranceViewportReceipt *out_receipt);
 
 /* End-to-end DM1 FM Towns menu render: composes region + panel
  * colour + label walk + font rasteriser and paints the DYNAMENU

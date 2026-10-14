@@ -19,6 +19,21 @@ int DM1_V1_Selector_DecodeDungeonViewPc34(const unsigned char* executable,
                                           unsigned char** outPixels,
                                           unsigned int* outPixelCount);
 
+/* Compose one original I34E SELECTOR frame from the authenticated source
+ * GRAPHICS.DAT entries 4/2/3 and the embedded SELECTOR viewport. Pixels are
+ * one-byte VGA indices. doorStep follows SELECTOR.C F8360: four pixels per
+ * step; zero is the closed entrance. */
+int DM1_V1_Selector_ComposeFramePc34(
+    const unsigned char* entrance, unsigned int entranceWidth,
+    unsigned int entranceHeight,
+    const unsigned char* leftDoor, unsigned int leftDoorWidth,
+    unsigned int leftDoorHeight,
+    const unsigned char* rightDoor, unsigned int rightDoorWidth,
+    unsigned int rightDoorHeight,
+    const unsigned char* selectorView, unsigned int selectorViewWidth,
+    unsigned int selectorViewHeight, unsigned int doorStep,
+    unsigned char* outFrame, unsigned int outFrameBytes);
+
 #ifdef __cplusplus
 }
 #endif

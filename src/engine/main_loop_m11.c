@@ -39,6 +39,10 @@
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_fmtowns_startup.h"
 #include "dm1_v1_fmtowns_title.h"
+#include "dm1_v1_i34e_title_anim_pc34.h"
+#include "dm1_v1_selector_pc34_compat.h"
+#include "dm1_v1_dos_pc34_real_data_manifest.h"
+#include "firestaff_x68k_media_receipt.h"
 #include "dm1_v1_fmtowns_cd_audio.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
@@ -2632,6 +2636,61 @@ static int m11_play_redmcsb_entrance_transition_impl(
     }
 
     M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    if (gameView->dm1FmtownsStartupReceiptValid) {
+        DM1_V1_FmtownsEntranceViewportReceipt c255Receipt;
+        int row;
+        int c255Rendered = M11_GameView_RenderDm1FmtownsEntranceC255(
+                gameView, dungeonFrame,
+                (size_t)M11_FB_BYTES,
+                DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH,
+                &c255Receipt);
+        int apertureValid = c255Receipt.aperture_x >= 0 &&
+            c255Receipt.aperture_y >= 0 &&
+            c255Receipt.aperture_x +
+                DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH <= M11_FB_WIDTH &&
+            c255Receipt.aperture_y +
+                DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT <= M11_FB_HEIGHT;
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "[dm1-fmtowns-c255] edition=%s language=%s result=%s valid=%d aperture=(%d,%d %dx%d) requested=0x%08x loaded=0x%08x missing=0x%08x raster_fnv1a=0x%08x reason=%s\n",
+                    gameView->dm1FmtownsStartupReceipt.language ==
+                            DM1_FMTOWNS_LANG_JP ? "JDM" : "EDM",
+                    gameView->dm1FmtownsStartupReceipt.language ==
+                            DM1_FMTOWNS_LANG_JP ? "ja" : "en",
+                    c255Rendered && c255Receipt.valid && apertureValid
+                        ? "ok" : "failed",
+                    c255Receipt.valid,
+                    c255Receipt.aperture_x, c255Receipt.aperture_y,
+                    DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH,
+                    DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT,
+                    (unsigned)c255Receipt.requested_source_graphics,
+                    (unsigned)c255Receipt.loaded_source_graphics,
+                    (unsigned)c255Receipt.missing_source_graphics,
+                    (unsigned)c255Receipt.pixel_hash_fnv1a,
+                    !c255Rendered ? "renderer-or-authenticated-assets-rejected"
+                        : !c255Receipt.valid ? "receipt-invalid"
+                        : !apertureValid ? "aperture-out-of-framebuffer"
+                        : "none");
+        }
+        if (!c255Rendered || !c255Receipt.valid || !apertureValid ||
+            c255Receipt.missing_source_graphics != 0u) {
+            free(dungeonFrame);
+            return 0;
+        }
+        /* ENTRANCE.C F0797 renders into the live viewport before F0439
+         * snapshots the dungeon page. COORD.C G2067/G2068 owns its origin:
+         * (0,33) for English and (0,31) for Japanese. Keep the HUD and the
+         * rest of the page from M11_GameView_Draw byte-for-byte intact. */
+        for (row = 0; row < DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT; ++row) {
+            memcpy(framebuffer +
+                       (size_t)(c255Receipt.aperture_y + row) * M11_FB_WIDTH +
+                       (size_t)c255Receipt.aperture_x,
+                   dungeonFrame +
+                       (size_t)row *
+                           DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH,
+                   DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH);
+        }
+    }
     memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
 
     /* ENTRANCE.C F0439 first composites the micro-dungeon, curtains it to
@@ -4717,6 +4776,397 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     return 0;
 }
 
+static int m11_dm1_title_candidate_matches_pc34(const uint8_t *bytes,
+                                                 size_t size) {
+    char hex[65];
+    uint8_t digest[32];
+    size_t i;
+    if (!bytes || firestaff_x68k_media_receipt_sha256_hex(
+                      bytes, size, hex, sizeof(hex)) != 0) return 0;
+    for (i = 0u; i < sizeof(digest); ++i) {
+        unsigned int hi, lo;
+        char a = hex[i * 2u], b = hex[i * 2u + 1u];
+        hi = a >= '0' && a <= '9' ? (unsigned)(a - '0')
+           : a >= 'a' && a <= 'f' ? (unsigned)(a - 'a' + 10) : 255u;
+        lo = b >= '0' && b <= '9' ? (unsigned)(b - '0')
+           : b >= 'a' && b <= 'f' ? (unsigned)(b - 'a' + 10) : 255u;
+        if (hi > 15u || lo > 15u) return 0;
+        digest[i] = (uint8_t)((hi << 4u) | lo);
+    }
+    return dm1_v1_dos_pc34_file_fp_matches_pc34("TITLE", size, digest);
+}
+
+static int m11_dm1_i34e_title_read_authentic(
+    const M12_StartupMenuState *menuState,
+    const M12_AssetVersionStatus *version,
+    uint8_t **outBytes, size_t *outSize) {
+    char root[FSP_PATH_MAX];
+    char candidate[FSP_PATH_MAX];
+    char parent[FSP_PATH_MAX];
+    const char *suffix;
+    const char *ext;
+    size_t rootBytes;
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int attempts;
+    if (outBytes) *outBytes = NULL;
+    if (outSize) *outSize = 0u;
+    if (!menuState || !version || !version->matched || !version->versionId ||
+        strcmp(version->versionId, "pc34-en") != 0 || !outBytes || !outSize) {
+        return 0;
+    }
+    if (!M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+            &menuState->assetStatus, "dm1", version->versionId,
+            root, sizeof(root))) {
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr, "firestaff: startup-source-skip game=dm1 platform=pc34 phase=anim-title reason=runtime-data-dir-unresolved\n");
+        return 0;
+    }
+    if (g_m11_debug_startup_detail)
+        fprintf(stderr, "firestaff: startup-source-probe game=dm1 platform=pc34 phase=anim-title root=%s\n", root);
+    rootBytes = strlen(root);
+    ext = strrchr(root, '.');
+    for (attempts = 0; attempts < 2; ++attempts) {
+        suffix = ext && m11_ascii_path_equal_ignore_case(ext, ".zip")
+                     ? "::TITLE" : "/TITLE";
+        if (rootBytes + strlen(suffix) >= sizeof(candidate)) return 0;
+        memcpy(candidate, root, rootBytes);
+        strcpy(candidate + rootBytes, suffix);
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr, "firestaff: startup-source-probe game=dm1 platform=pc34 phase=anim-title file=%s\n", candidate);
+        if (((ext && m11_ascii_path_equal_ignore_case(ext, ".zip"))
+                 ? asset_read_virtual_path_alloc(candidate, &bytes, &size)
+                 : asset_read_path_alloc(candidate, &bytes, &size))) {
+            if (m11_dm1_title_candidate_matches_pc34(bytes, size)) {
+                *outBytes = bytes;
+                *outSize = size;
+                if (g_m11_debug_startup_detail)
+                    fprintf(stderr, "firestaff: startup-source-ready game=dm1 platform=pc34 phase=anim-title bytes=%zu\n", size);
+                return 1;
+            }
+            if (g_m11_debug_startup_detail)
+                fprintf(stderr, "firestaff: startup-source-reject game=dm1 platform=pc34 phase=anim-title bytes=%zu reason=fingerprint-mismatch\n", size);
+            free(bytes); bytes = NULL; size = 0u;
+        }
+        if (attempts == 0 && !(ext &&
+              m11_ascii_path_equal_ignore_case(ext, ".zip")) &&
+            FSP_ParentDir(parent, sizeof(parent), root) &&
+            strcmp(parent, root) != 0) {
+            const char *leaf = strrchr(root, '/');
+            if (leaf && strcmp(leaf + 1, "DATA") == 0) {
+                strcpy(root, parent);
+                rootBytes = strlen(root);
+                ext = strrchr(root, '.');
+                continue;
+            }
+        }
+        break;
+    }
+    if (g_m11_debug_startup_detail)
+        fprintf(stderr, "firestaff: startup-source-skip game=dm1 platform=pc34 phase=anim-title reason=title-not-found\n");
+    return 0;
+}
+
+/* I34E ANIM TITLE runs before SELECTOR; M12's already-selected launch state
+ * stands in for that menu. ANIM.C F2275 stores the raw wait attribute and
+ * decrements it from F8298's source VBlank callback;
+ * PC34's DOS tick is 55 ms. ReDMCSB VIDEODRV.C F8230 expands each DAC channel
+ * as (value << 2) + 3, represented here by the indexed RGB6 renderer. */
+static int m11_play_dm1_i34e_title_anim_if_available(
+    const M12_StartupMenuState *menuState,
+    const M12_AssetVersionStatus *version) {
+    DM1_V1_I34ETitleAnimPc34 player;
+    DM1_V1_I34ETitleAnimFramePc34 frame;
+    uint8_t *data = NULL;
+    size_t size = 0u;
+    unsigned char *framebuffer;
+    uint8_t palette[256][3];
+    uint64_t startMs;
+    uint64_t waitedVblanks = 0u;
+    unsigned frames = 0u;
+    int step;
+    int userAborted = 0;
+    if (!version || !version->versionId ||
+        strcmp(version->versionId, "pc34-en") != 0 ||
+        !m11_dm1_i34e_title_read_authentic(menuState, version, &data, &size))
+        return 0;
+    if (!dm1_v1_i34e_title_anim_pc34_init(&player, data, size)) {
+        free(data);
+        return 0;
+    }
+    framebuffer = M11_Render_GetFramebuffer();
+    if (!framebuffer) { free(data); return 0; }
+    memset(palette, 0, sizeof(palette));
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    if (M11_Render_SetIndexedPaletteRgb6(palette) != M11_RENDER_OK ||
+        M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
+        free(data); return 0;
+    }
+    startMs = m11_intro_active_ticks();
+    while ((step = dm1_v1_i34e_title_anim_pc34_step(&player, &frame)) == 1) {
+        SDL_Event event;
+        int abortAnimation = 0;
+        unsigned i;
+        for (i = 0u; i < 16u; ++i) {
+            palette[i][0] = frame.palette[i].r;
+            palette[i][1] = frame.palette[i].g;
+            palette[i][2] = frame.palette[i].b;
+        }
+        memcpy(framebuffer, frame.pixels, (size_t)M11_FB_BYTES);
+        if (M11_Render_SetIndexedPaletteRgb6(palette) != M11_RENDER_OK ||
+            M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                      M11_FB_HEIGHT) != M11_RENDER_OK) {
+            step = -1; break;
+        }
+        ++frames;
+        waitedVblanks += frame.source_delay_vblanks;
+        for (;;) {
+            if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) {
+                step = M11_ENTRANCE_COMMAND_QUIT; break;
+            }
+            while (SDL_PollEvent(&event)) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                if (event.type == SDL_EVENT_QUIT) {
+#else
+                if (event.type == SDL_QUIT) {
+#endif
+                    g_m11_startup_intro_quit_requested = 1;
+                    step = M11_ENTRANCE_COMMAND_QUIT;
+                    break;
+                }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                if (frame.break_allowed &&
+                    (event.type == SDL_EVENT_KEY_DOWN ||
+                     event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)) {
+                    abortAnimation = 1;
+                    break;
+                }
+#else
+                if (frame.break_allowed &&
+                    (event.type == SDL_KEYDOWN ||
+                     event.type == SDL_MOUSEBUTTONDOWN)) {
+                    abortAnimation = 1;
+                    break;
+                }
+#endif
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                if (event.type == SDL_EVENT_WINDOW_RESIZED)
+                    M11_Render_HandleResize(event.window.data1, event.window.data2);
+#else
+                if (event.type == SDL_WINDOWEVENT &&
+                    event.window.event == SDL_WINDOWEVENT_RESIZED)
+                    M11_Render_HandleResize(event.window.data1, event.window.data2);
+#endif
+            }
+            if (step == M11_ENTRANCE_COMMAND_QUIT || abortAnimation) break;
+            if ((m11_intro_active_ticks() - startMs) >= waitedVblanks * 55u)
+                break;
+            SDL_Delay(1u);
+        }
+        if (step == M11_ENTRANCE_COMMAND_QUIT) break;
+        if (abortAnimation) { userAborted = 1; break; }
+    }
+    if (step == M11_ENTRANCE_COMMAND_QUIT) {
+        free(data);
+        return M11_ENTRANCE_COMMAND_QUIT;
+    }
+    if (step < 0 || (!player.finished && !userAborted) || frames == 0u) {
+        free(data);
+        return 0;
+    }
+    /* `-as` blackens VRAM after the animation; `-ah` leaves the palette live
+     * for the following startup menu. */
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
+        free(data); return 0;
+    }
+    if (g_m11_debug_startup_detail)
+        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=%u source-vblanks=%llu elapsed-ms=%llu\n",
+                frames, (unsigned long long)waitedVblanks,
+                (unsigned long long)(m11_intro_active_ticks() - startMs));
+    free(data);
+    return 1;
+}
+
+/* I34E's SELECTOR is the source-owned screen immediately following ANIM
+ * TITLE. A direct `--game dm1` launch maps to its Enter choice. Reconstruct
+ * only that route from authenticated SELECTOR + GRAPHICS.DAT media; the M12
+ * interactive launcher keeps its own input/menu lifecycle. SELECTOR.C
+ * F8360 and VIDEODRV.C G8148 own the pixels, frame cadence and palette. */
+static int m11_play_dm1_i34e_selector_enter_if_available(
+    const M12_StartupMenuState *menuState,
+    const M12_AssetVersionStatus *version) {
+    static const char selectorMd5[] = "165ae5438ce2686ae62f2fbb61f3e831";
+    M11_AssetLoader loader;
+    uint8_t *graphics = NULL, *selector = NULL;
+    size_t graphicsBytes = 0u, selectorBytes = 0u;
+    char root[FSP_PATH_MAX], graphicsPath[FSP_PATH_MAX];
+    char selectorPath[FSP_PATH_MAX], parent[FSP_PATH_MAX], md5[33];
+    const char *zipSep;
+    const char *zipExt;
+    size_t rootBytes;
+    const M11_AssetSlot *entrance, *left, *right;
+    unsigned char *view = NULL;
+    unsigned int viewBytes = 0u, step, steps;
+    unsigned char frame[M11_FB_BYTES];
+    unsigned char palette[256][3];
+    unsigned int width;
+    uint64_t vblankStartMs;
+    uint64_t selectorStartMs;
+    int result = 0;
+
+    memset(&loader, 0, sizeof(loader));
+    if (!menuState || !version || !version->matched || !version->versionId ||
+        strcmp(version->versionId, "pc34-en") != 0 ||
+        !M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+            &menuState->assetStatus, "dm1", version->versionId,
+            root, sizeof(root))) return 0;
+
+    zipSep = strstr(root, "::");
+    zipExt = NULL;
+    {
+        const char *scan = root;
+        while ((scan = strstr(scan, ".zip")) != NULL) {
+            zipExt = scan;
+            scan += 4;
+        }
+    }
+    rootBytes = strlen(root);
+    if (zipExt && !zipSep) {
+        if (rootBytes + sizeof("::DATA/GRAPHICS.DAT") >= sizeof(graphicsPath) ||
+            rootBytes + sizeof("::SELECTOR") >= sizeof(selectorPath)) goto done;
+        memcpy(graphicsPath, root, rootBytes);
+        strcpy(graphicsPath + rootBytes, "::DATA/GRAPHICS.DAT");
+        memcpy(selectorPath, root, rootBytes);
+        strcpy(selectorPath + rootBytes, "::SELECTOR");
+    } else if (zipSep && rootBytes + sizeof("/GRAPHICS.DAT") < sizeof(graphicsPath)) {
+        memcpy(graphicsPath, root, rootBytes);
+        strcpy(graphicsPath + rootBytes, "/GRAPHICS.DAT");
+        /* The canonical I34E archive stores SELECTOR beside DATA/. */
+        if ((size_t)(zipExt - root) + sizeof("::SELECTOR") >= sizeof(selectorPath)) goto done;
+        memcpy(selectorPath, root, (size_t)(zipExt - root) + 4u);
+        strcpy(selectorPath + (size_t)(zipExt - root) + 4u, "::SELECTOR");
+    } else if (!zipSep && rootBytes + sizeof("/GRAPHICS.DAT") < sizeof(graphicsPath)) {
+        memcpy(graphicsPath, root, rootBytes);
+        strcpy(graphicsPath + rootBytes, "/GRAPHICS.DAT");
+        if (rootBytes + sizeof("/SELECTOR") < sizeof(selectorPath)) {
+            memcpy(selectorPath, root, rootBytes);
+            strcpy(selectorPath + rootBytes, "/SELECTOR");
+        } else goto done;
+        if (!asset_file_md5_hex(selectorPath, md5) || strcmp(md5, selectorMd5)) {
+            /* The runtime root commonly resolves to DATA/. SELECTOR lives
+             * beside it in the retail distribution. */
+            if (FSP_ParentDir(parent, sizeof(parent), root) &&
+                strcmp(parent, root) != 0 &&
+                strlen(parent) + sizeof("/SELECTOR") < sizeof(selectorPath)) {
+                snprintf(selectorPath, sizeof(selectorPath), "%s/SELECTOR", parent);
+            }
+        }
+    } else goto done;
+
+    if (!asset_file_md5_hex(selectorPath, md5) || strcmp(md5, selectorMd5) != 0 ||
+        !(zipExt ? asset_read_virtual_path_alloc(graphicsPath, &graphics,
+                                                  &graphicsBytes)
+                 : asset_read_path_alloc(graphicsPath, &graphics,
+                                          &graphicsBytes)) ||
+        !(zipExt ? asset_read_virtual_path_alloc(selectorPath, &selector,
+                                                  &selectorBytes)
+                 : asset_read_path_alloc(selectorPath, &selector,
+                                          &selectorBytes)) ||
+        !M11_AssetLoader_InitFromBuffer(&loader, graphics,
+                                        (long)graphicsBytes) ||
+        !DM1_V1_Selector_DecodeDungeonViewPc34(
+            selector, (unsigned int)selectorBytes, &view, &viewBytes) ||
+        viewBytes != 224u * 136u ||
+        !(entrance = M11_AssetLoader_Load(&loader, 4u)) ||
+        !(left = M11_AssetLoader_Load(&loader, 2u)) ||
+        !(right = M11_AssetLoader_Load(&loader, 3u)) ||
+        entrance->width != 320u || entrance->height != 200u ||
+        left->height < 161u || right->height < 161u ||
+        right->width == 0u || right->width > 256u) goto done;
+
+    memset(palette, 0, sizeof(palette));
+    for (step = 0u; step < 16u; ++step) {
+        memcpy(palette[step],
+               G9013_auc_VgaPaletteSpecial_Compat
+                   [VGA_PALETTE_PC34_SPECIAL_ENTRANCE][step], 3u);
+    }
+    if (!DM1_V1_Selector_ComposeFramePc34(
+            entrance->pixels, entrance->width, entrance->height,
+            left->pixels, left->width, left->height,
+            right->pixels, right->width, right->height,
+            view, 224u, 136u, 0u, frame, sizeof(frame)) ||
+        M11_Render_SetIndexedPaletteRgb8(palette) != M11_RENDER_OK ||
+        M11_Render_PresentIndexed(frame, M11_FB_WIDTH, M11_FB_HEIGHT) !=
+            M11_RENDER_OK) goto done;
+    vblankStartMs = m11_intro_active_ticks();
+    selectorStartMs = vblankStartMs;
+
+    /* Direct CLI selection is the Enter command. F8360 is called once per
+     * source VBlank, with G8248=4; preserve its initial step zero and every
+     * subsequent image rather than using a host tween or a fixed animation. */
+    width = right->width;
+    steps = (width + 3u) / 4u;
+    for (step = 0u; step < steps; ++step) {
+        SDL_Event event;
+        if (!DM1_V1_Selector_ComposeFramePc34(
+                entrance->pixels, entrance->width, entrance->height,
+                left->pixels, left->width, left->height,
+                right->pixels, right->width, right->height,
+                view, 224u, 136u, step, frame, sizeof(frame)) ||
+            M11_Render_PresentIndexed(frame, M11_FB_WIDTH, M11_FB_HEIGHT) !=
+                M11_RENDER_OK) goto done;
+        while (SDL_PollEvent(&event)) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            if (event.type == SDL_EVENT_QUIT) {
+#else
+            if (event.type == SDL_QUIT) {
+#endif
+                g_m11_startup_intro_quit_requested = 1;
+                result = M11_ENTRANCE_COMMAND_QUIT;
+                goto done;
+            }
+        }
+        if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) {
+            result = M11_ENTRANCE_COMMAND_QUIT;
+            goto done;
+        }
+        /* SELECTOR.C F8353 -> VIDEODRV.C F8153 polls VGA status port 0x3DA
+         * until the next vertical retrace. Model that retrace with Firestaff's
+         * shared 70 Hz VGA clock (DM1_V1_VGA_VBLANK_HZ), using a rational
+         * deadline so 32 frames do not drift from rounding to 14 ms each.
+         * This path must not use ANIM/TITLE's 18.2 Hz DOS-tick wait. */
+        {
+            const uint64_t targetMs =
+                ((uint64_t)(step + 1u) * 1000u +
+                 DM1_V1_VGA_VBLANK_HZ - 1u) /
+                DM1_V1_VGA_VBLANK_HZ;
+            while (m11_intro_active_ticks() - vblankStartMs < targetMs) {
+                SDL_Delay(1u);
+            }
+        }
+    }
+    result = M11_ENTRANCE_COMMAND_ENTER;
+    if (g_m11_debug_startup_detail)
+        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=selector graphics=%s entrance=%ux%u left-door=%ux%u right-door=%ux%u selector-view=%ux%u frames=%u source-vblanks=%u elapsed-ms=%llu modeled-vblank-hz=%u handoff=fires command=enter\n",
+                graphicsPath, (unsigned)entrance->width,
+                (unsigned)entrance->height, (unsigned)left->width,
+                (unsigned)left->height, (unsigned)right->width,
+                (unsigned)right->height, 224u, 136u, steps, steps,
+                (unsigned long long)(m11_intro_active_ticks() - selectorStartMs),
+                DM1_V1_VGA_VBLANK_HZ);
+done:
+    free(view);
+    free(selector);
+    free(graphics);
+    M11_AssetLoader_Shutdown(&loader);
+    if (result == 0 && g_m11_debug_startup_detail)
+        fprintf(stderr, "firestaff: startup-source-skip game=dm1 platform=pc34 phase=selector reason=missing-or-unverified-source-media\n");
+    return result;
+}
+
 static int m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
                                                      M11_GameViewState* gameView,
                                                      const char* sourceId,
@@ -5493,11 +5943,28 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
     dm1SelectedLaunchCallbacks.draw_opened = m11_dm1_selected_launch_draw_opened;
     dm1SelectedLaunchCallbacks.mark_launch_failed =
         m11_dm1_selected_launch_mark_failed;
-    dm1RouteFacts.selected_game_id =
-        m11_selected_dm1_is_fmtowns(menuState, launchEntry)
-            ? "dm1-fmtowns"
-            : ((launchEntry && launchEntry->gameId) ? launchEntry->gameId
-                                                     : NULL);
+    {
+        int selectedVersionIndex = m11_selected_dm1_launch_version_index(
+            menuState, launchEntry);
+        const M12_AssetVersionStatus* selectedVersion = selectedVersionIndex >= 0
+            ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                         (size_t)selectedVersionIndex)
+            : NULL;
+        const int selectedI34E = selectedVersion &&
+            selectedVersion->versionId &&
+            strcmp(selectedVersion->versionId, "pc34-en") == 0 &&
+            M12_AssetStatus_GetVersionArchitecture(
+                "dm1", (size_t)selectedVersionIndex) == M12_ARCH_PC;
+        /* I34E IBMIO owns ANIM/TITLE and SELECTOR, then starts FIRES. It
+         * never enters the shared F0437/F0441 handoff. The pre-menu title
+         * animation below and M12's selected launch state own this route. */
+        dm1RouteFacts.selected_game_id = selectedI34E
+            ? "dm1-i34e"
+            : (m11_selected_dm1_is_fmtowns(menuState, launchEntry)
+                ? "dm1-fmtowns"
+                : ((launchEntry && launchEntry->gameId)
+                    ? launchEntry->gameId : NULL));
+    }
     if (!dm1_v1_startup_selected_launch_route_receipt_pc34(
             &dm1RouteFacts,
             &dm1RouteReceipt)) {
@@ -10020,6 +10487,75 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         &fallbackCtx);
     }
     M11_ApplyStartupMenuRuntime(&menuState);
+    /* Direct CLI selection normally resolves after startup presentation. Move
+     * that preparation ahead of the source-owned I34E TITLE animation so its
+     * authenticated edition and runtime data root are available to the player.
+     * Keep the existing failure and unsupported-CSB handling unchanged. */
+    if (o->directLaunch && !quitRequested && !o->csbHintOracle) {
+        if (o->gameId && strcmp(o->gameId, "csb") == 0 &&
+            o->architectureOverride == M12_ARCH_PC) {
+            fprintf(stderr,
+                    "firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns\n");
+            runRc = 2;
+            goto cleanup;
+        }
+        if (!M11_PrepareDirectLaunchForGame(&menuState, o->gameId)) {
+            fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
+                    o->gameId ? o->gameId : "(null)");
+            runRc = 2;
+            goto cleanup;
+        }
+    }
+    /* IBMIO.C:2411-2418 runs ANIM TITLE before SELECTOR. In Firestaff the
+     * launcher has already resolved the initial game/edition, so show only
+     * its authenticated I34E title here and let the M12 menu take the
+     * selector's place. Keep this outside the later F0437/F0441 transaction:
+     * I34E never calls either routine. */
+    if (!quitRequested && !o->bootProbe && o->durationMs < 0 &&
+        getenv("FIRESTAFF_SKIP_INTRO") == NULL &&
+        ((o->directLaunch && o->gameId && strcmp(o->gameId, "dm1") == 0) ||
+         (!o->directLaunch &&
+          menuState.selectedGameId == M12_GAME_SELECT_DM1))) {
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr, "firestaff: startup-source-route game=dm1 platform=pc34 phase=anim-title direct=%d selected-game=%d cli-game=%s\n",
+                    o->directLaunch, (int)menuState.selectedGameId,
+                    o->gameId ? o->gameId : "(none)");
+        int versionIndex = menuState.gameOptions[0].versionIndex;
+        const M12_AssetVersionStatus *version = versionIndex >= 0
+            ? M12_AssetStatus_GetVersion(&menuState.assetStatus, "dm1",
+                                         (size_t)versionIndex)
+            : NULL;
+        if (version && version->matched && version->versionId &&
+            strcmp(version->versionId, "pc34-en") == 0 &&
+            M12_AssetStatus_GetVersionArchitecture(
+                "dm1", (size_t)versionIndex) == M12_ARCH_PC) {
+            M11_Render_RaiseWindow();
+            /* IBMIO.C:2411-2418 owns the preceding SWOOSH process and ignores
+             * its media/playback result, then continues to ANIM TITLE. Preserve
+             * that order; only a user/window quit aborts the title/menu route. */
+            (void)m11_play_ftl_swoosh_for_game_if_available(
+                &menuState, o->dataDir, "dm1", 0, NULL);
+            if (g_m11_startup_intro_quit_requested) {
+                quitRequested = 1;
+                menuState.shouldExit = 1;
+            } else {
+                int titleResult = m11_play_dm1_i34e_title_anim_if_available(
+                    &menuState, version);
+                if (titleResult == M11_ENTRANCE_COMMAND_QUIT) {
+                    quitRequested = 1;
+                    menuState.shouldExit = 1;
+                } else if (titleResult > 0 && o->directLaunch) {
+                    const int selectorResult =
+                        m11_play_dm1_i34e_selector_enter_if_available(
+                            &menuState, version);
+                    if (selectorResult == M11_ENTRANCE_COMMAND_QUIT) {
+                        quitRequested = 1;
+                        menuState.shouldExit = 1;
+                    }
+                }
+            }
+        }
+    }
     firestaff_ra_runtime_init(&raRuntime);
     if (o->retroAchievementsEnabled ||
         menuState.settings.retroAchievementsEnabled) {
@@ -10095,27 +10631,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     g_m11_phase_duration_expired = 0;
 
     /* Always present at least once so the window actually has content. */
-    if (o->directLaunch && !quitRequested && !o->csbHintOracle) {
-        /* Direct launch normally delegates platform selection to M12 so a
-         * selected original archive remains the only media owner. CSB is a
-         * special closed boundary: there was no retail DOS/PC edition, and a
-         * later generic "game unavailable" error hides that fact after the
-         * catalogue scan found no media. Reject before any fallback/cache
-         * selection can occur. */
-        if (o->gameId && strcmp(o->gameId, "csb") == 0 &&
-            o->architectureOverride == M12_ARCH_PC) {
-            fprintf(stderr,
-                    "firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns\n");
-            runRc = 2;
-            goto cleanup;
-        }
-        if (!M11_PrepareDirectLaunchForGame(&menuState, o->gameId)) {
-            fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
-                    o->gameId ? o->gameId : "(null)");
-            runRc = 2;
-            goto cleanup;
-        }
-    }
     /* Keep an explicit CLI resume on the same M12 intent -> M11 launch
      * contract as the save browser.  This belongs outside directLaunch: with
      * `--menu --game ... --save ...`, the selected menu row must carry the

@@ -1032,9 +1032,13 @@ int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
     const DM2_V1_HudPartyState *party,
     const DM2_V1_ViewportRect portrait_destinations[4],
     uint32_t portrait_table_hash,
+    const DM2_V1_ViewportRect status_pane_destinations[4],
+    uint32_t status_pane_table_hash,
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     if (!party || !portrait_destinations || !portrait_table_hash ||
+        !status_pane_destinations || !status_pane_table_hash ||
+        !party->status_hero_source_bound ||
         party->champion_count > 4 ||
         !dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
             loader, arrow_destinations, out_plan)) return 0;
@@ -1056,6 +1060,31 @@ int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
             &out_plan->commands[out_plan->command_count - 1];
         command->destination_rect_id = (uint16_t)(173 + slot);
         command->destination_table_hash = portrait_table_hash;
+    }
+    for (int slot = 0; slot < party->champion_count; ++slot) {
+        const DM2_V1_HudChampionState *champion = &party->champions[slot];
+        const DM2_V1_ViewportRect *destination =
+            &status_pane_destinations[slot];
+        const int pane_field = !champion->current_hp_source_bound ? -1
+            : champion->current_hp == 0 ? 1
+            : party->status_hero_index == slot ? 9 : 0;
+        DM2_V1_GdatHudM11Command *command;
+        if (!champion->occupied) continue;
+        if (pane_field < 0 || destination->x < 0 || destination->y < 0 ||
+            destination->w <= 0 || destination->h <= 0 ||
+            destination->x + destination->w > DM2_VP_WIDTH ||
+            destination->y + destination->h > DM2_VP_HEIGHT ||
+            !dm2_v1_gdat_hud_add_command(loader, out_plan,
+                DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE,
+                0x6500 + slot, destination,
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 2, pane_field)) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        command = &out_plan->commands[out_plan->command_count - 1];
+        command->destination_rect_id = (uint16_t)(0xa1 + slot);
+        command->destination_table_hash = status_pane_table_hash;
+        command->source_state_flags = (uint8_t)pane_field;
     }
     out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
     if (!out_plan->command_hash) {

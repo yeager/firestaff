@@ -1289,13 +1289,13 @@ first runtime viewport against the original DOS capture. The existing
 C001/Entrance timing captures remain valid Firestaff measurements, but are
 not original-I34E parity evidence.
 
-2026-10-14 follow-up: a shared bounded LZEXE 0.91 decoder now extracts the
-original embedded 224x136 selector preview from the canonical I34E `SELECTOR`
-executable (MD5 `165ae5438ce2686ae62f2fbb61f3e831`) and expands its IMG3 pixels
-without bundling game media. A local sanitizer harness verified all 30,464
-palette indices against checksum `00c6756a`. Extraction is not yet connected
-to the visible menu or F8360 door animation; title-stream playback, selector
-input, and the full DOS comparison remain open.
+2026-10-14 earlier status (superseded by the direct-launch implementation
+below): the bounded LZEXE 0.91 decoder extracted the original embedded
+224x136 selector preview from the canonical I34E `SELECTOR` executable (MD5
+`165ae5438ce2686ae62f2fbb61f3e831`) and expanded its IMG3 pixels without
+bundling game media. A local sanitizer harness verified all 30,464 palette
+indices against checksum `00c6756a`; at that point extraction was not yet
+connected to the presentation or F8360 door animation.
 
 2026-10-14 F0097 palette correction: Firestaff now preserves the I34E VGA
 viewport bank 16..31 and maps it through the selected `G8151`..`G8156` row;
@@ -1306,3 +1306,9 @@ geometry, wall/floor asset selection, title startup, or entrance animation
 matches I34E. Capture the same map, party position and facing from original
 FIRES and Firestaff, then compare the 224x136 viewport before claiming those
 routes as parity.
+
+2026-10-14 I34E TITLE and direct-launch SELECTOR implementation: ReDMCSB `ANIM.C:1975-1980` initializes `-as`, `ANIM.C:2041-2093` handles EN/DL frame records, P8 and PL, and `ANIM.C:2125-2134` applies the final `-as` clear while retaining palette under `-ah`. The bounded Firestaff parser validates the authentic PC34 `TITLE` SHA-256, dimensions and frame records; it reuses the shared F8288 decoder and presents the source palette and raw VBlank delays. Firestaff runs authenticated `SWOOSH -> ANIM TITLE` before the launcher menu. For direct `--game dm1`, it now also loads the hash-authenticated I34E `SELECTOR` executable and the already matched PC34 `GRAPHICS.DAT`, extracts the original embedded G8250 224x136 preview, applies the source `G8148_ENTRANCE` palette and composes GRAPHICS.DAT indices 4/2/3 using ReDMCSB `SELECTOR.C:F8360` at four pixels per source VBlank. Direct launch is the selector's Enter choice: the source-sized door sequence completes before the existing FIRES/runtime handoff; that route avoids the later C001/F0437 and F0441 transaction. A local authentic-media `--game dm1 --platform pc --debug` probe reports 53 TITLE frames, 32 selector frames, and then `handoff=pc-img3`/`runtime-entered`; the selector CTest validates the extracted preview hash and checks closed/first-open F8360 composition. This does not port interactive SELECTOR input, the R/Q/Credits choices, button hover/click feedback, or SONG.DAT switch/door samples. It also does not replace M12's interactive launcher boundary, prove all-platform startup parity, or establish retail-hardware visual parity. Capture and compare the same selector and first FIRES runtime frames against the original PC34 executable before making broader parity claims.
+
+2026-10-14 I34E cadence and integration test: `SELECTOR.C F8353` reaches `VIDEODRV.C F8153`, which waits on VGA status port 0x3DA. The host loop follows the existing 70 Hz PC34 VGA retrace model with rational deadlines rather than the 18.2 Hz DOS tick. A media-gated app CTest verifies the complete direct-launch stage order when authentic PC34 files are available and is omitted when those files are absent.
+
+2026-10-14 FM Towns Entrance micro-dungeon: ReDMCSB `ENTRANCE.C F0797` constructs transient map C255 as a 5x5 wall grid with a south-facing corridor at column 2 and source square 7 open at (1,2); `COORD.C G2067/G2068` places the 224x136 view at (0,33) for EDM and (0,31) for JDM. Firestaff draws that transient map immediately before the original door-frame sequence and changes only that aperture. It reads MEDIA720 floor/ceiling records 78/79 and only wall-set-zero records required by the trace from the selected authenticated Towns GRAPHICS.DAT. The final-binary archive CTest verifies `requested=loaded=0x00621803`, no missing records, both apertures, and first runtime entry for EDM and JDM. Four fresh-process captures (two per language) returned raster FNV-1a `0x54cd8b95`; the standalone renderer test also checks repeatability, bounds, and no partial output. This verifies source map setup, bounded source-asset composition, and aperture placement, but does not compare rendered pixels to a Tsugaru or retail-hardware capture; broader DM1 FM Towns gameplay viewport parity remains open.

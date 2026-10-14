@@ -8361,6 +8361,8 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_BootGraphicsDat *gfx;
     DM2_V1_InterfaceRect source_portraits[4];
     DM2_V1_ViewportRect portrait_destinations[4];
+    DM2_V1_ViewportRect status_pane_destinations[4];
+    uint32_t status_pane_table_hash = 0u;
     uint32_t table_hash = 0u;
     int slot;
 
@@ -8379,6 +8381,7 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             return 0;
         }
         for (slot = 0; slot < 4; ++slot) {
+            DM2_V1_BootExpandedRectReceipt pane_receipt;
             if (source_portraits[slot].x < 0 ||
                 source_portraits[slot].y < 0 ||
                 source_portraits[slot].w <= 0 ||
@@ -8388,10 +8391,27 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
                 source_portraits[slot].y / 2,
                 source_portraits[slot].w / 2,
                 source_portraits[slot].h / 2 };
+            if (!dm2_v1_boot_query_expanded_rect_receipt(
+                    profile, (uint16_t)(0xa1u + slot), &pane_receipt) ||
+                !pane_receipt.valid || !pane_receipt.raw4_hash ||
+                pane_receipt.rect.x < 0 || pane_receipt.rect.y < 0 ||
+                pane_receipt.rect.w <= 0 || pane_receipt.rect.h <= 0 ||
+                (slot != 0 &&
+                 pane_receipt.raw4_hash != status_pane_table_hash))
+                return 0;
+            status_pane_table_hash = pane_receipt.raw4_hash;
+            status_pane_destinations[slot] = (DM2_V1_ViewportRect){
+                pane_receipt.rect.x / 2,
+                pane_receipt.rect.y / 2,
+                pane_receipt.rect.w / 2,
+                pane_receipt.rect.h / 2 };
+            if (status_pane_destinations[slot].w <= 0 ||
+                status_pane_destinations[slot].h <= 0) return 0;
         }
         return dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
             &gfx->loader, arrow_destinations, party,
-            portrait_destinations, table_hash, out_plan);
+            portrait_destinations, table_hash, status_pane_destinations,
+            status_pane_table_hash, out_plan);
     }
     if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
         party->towns_squad_route_valid) {
