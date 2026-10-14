@@ -154,10 +154,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   LCG draws, so the fresh weather call's seed is statically established as 0.
   With selector 1, the fresh branch consumes three draws: `RAND16(500)` gives
   the first timer delay 0; the common `RANDDIR()` gives field `v1e1483=3`; and
-  the common `RAND16(4)+4` gives field `v1e1470=4`. The branch sets
+  the common `RAND16(4)+4` gives field `v1e1470=6`. The branch sets
   `v1e1478=3` and `v1e1484=1` without additional random draws. The shared LCG
-  state after the weather bootstrap is `0x46f91084`
-  (`skweathr.cpp:541-566`).
+  state immediately after the weather bootstrap is `0x11cfaefd`
+  (`skweathr.cpp:541-566`). The previously recorded `0x46f91084` is the fourth
+  successive raw LCG state from seed zero, after one additional draw; its
+  exact later consumer is not established here and must not be assigned to
+  the weather bootstrap.
 
   Keep the fresh weather chain disabled pending the shared session-LCG owner.
   The source timer table is in fact initialized empty before the bootstrap:
