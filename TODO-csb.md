@@ -1,5 +1,12 @@
 # Firestaff TODO — CSB
 
+2026-10-14 current-main authentic-media startup retest on the Mac mini M4:
+`csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_native_cli_boot` and
+`csb_v1_fmtowns_native_cli_boot` passed 3/3 in 318.87 seconds. All three
+reached their tested runtime handoffs with original media. These SDL
+dummy-video/audio tests do not verify native display, physical input, audio
+output or full visual parity.
+
 2026-10-14 fresh Mac mini M4 original-media startup rerun:
 `csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_native_cli_boot` and
 `csb_v1_fmtowns_native_cli_boot` passed 3/3 in 317.42 seconds. The runtime

@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-14 current-main runtime retest on the Mac mini M4:
+`dm1_v1_pc34_native_cli_boot` passed in 356.45 seconds using authentic PC 3.4
+media. It confirmed direct `--game dm1`, clean-config AUTO/start-menu launch,
+and runtime handoff when the optional SWSH logo is absent. The same run passed
+the C001 title, C004 Entrance animation, Hall route and scripted input checks.
+GitHub issue #13 remains closed; its latest reporter comment compares
+3.0.361 with 3.0.362 and later, while this test covers current main. No
+released build containing the optional-SWSH fix has been verified by the
+reporter. This SDL dummy-video/audio run does not replace a native Linux run.
+
 2026-10-14 issue #13 version comparison: ran the published Linux x86_64
 AppImages for 3.0.361, 3.0.362 and 3.0.380 in an x86_64 container under QEMU
 on the local ARM64 Mac mini M4. The authentic PC 3.4 English GRAPHICS.DAT and
