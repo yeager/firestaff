@@ -1,3 +1,15 @@
+# Firestaff v3.0.381
+
+## User-facing changes
+
+- `DM2 FM Towns champion status panes`: restore the original top-row champion
+  panels using the edition's authentic status images and placement data.
+
+## Developer changes
+
+- `DM2 HUD and viewport regression coverage`: require visible FM Towns status
+  pixels and verify all five supported edition routes against original media.
+
 # Firestaff v3.0.380
 
 ## Developer changes
