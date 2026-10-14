@@ -2866,13 +2866,12 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 amigaDoorFrameOrdinal = 0U;
             } else if (fmtownsDoorFrameOrdinal != 0U &&
                 presentationStartedMs != 0U) {
-                /* FM Towns presents at 60 Hz. Measure each door step from
-                 * the start of its palette/present transaction, so SDL's
-                 * vsynced Present counts as the VBlank instead of adding a
-                 * second 20 ms PAL wait after it. The old 20 ms delay landed
-                 * between 60 Hz retraces and made the 4 px door steps judder. */
+                /* ReDMCSB ENTRANCE.C F0438 waits for the VBlank counter to
+                 * advance by three between FM Towns door steps. Measure that
+                 * source interval from the palette/present transaction so
+                 * SDL's first retrace is included rather than added twice. */
                 const unsigned int frameIntervalMs =
-                    dm1_v1_fmtowns_title_vblank_delay_ms(
+                    dm1_v1_fmtowns_door_step_delay_ms(
                         fmtownsDoorFrameOrdinal);
                 const Uint64 elapsedMs = m11_intro_active_ticks() -
                                           presentationStartedMs;

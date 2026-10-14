@@ -180,9 +180,8 @@ for line in door_frames[1:]:
     if not match:
         raise SystemExit(f"FAIL: missing FM Towns entrance frame timing: {line}")
     door_intervals.append(int(match.group(1)))
-if (any(interval < 10 or interval > 30 for interval in door_intervals) or
-        max(door_intervals) - min(door_intervals) > 12):
-    raise SystemExit(f"FAIL: FM Towns entrance frame cadence is not stable at 60 Hz: {door_intervals}")
+if any(interval < 45 or interval > 55 for interval in door_intervals):
+    raise SystemExit(f"FAIL: FM Towns entrance cadence does not match three 60 Hz VBlanks: {door_intervals}")
 print("PASS: authentic DM1 FM Towns M12 reached the first runtime frame")
 print("PASS: authentic DM1 FM Towns title palette, 60 Hz pacing, master hold, and entrance cadence")
 PY

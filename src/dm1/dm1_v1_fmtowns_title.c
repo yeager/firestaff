@@ -168,3 +168,15 @@ unsigned int dm1_v1_fmtowns_title_vblank_delay_ms(unsigned int ordinal)
     current = (ordinal * 1000u + 30u) / 60u;
     return current - previous;
 }
+
+unsigned int dm1_v1_fmtowns_door_step_delay_ms(unsigned int ordinal)
+{
+    unsigned int previous_vblank;
+    unsigned int current_vblank;
+    if (ordinal == 0u) return 0u;
+    previous_vblank = (ordinal - 1u) * 3u;
+    current_vblank = ordinal * 3u;
+    return dm1_v1_fmtowns_title_vblank_delay_ms(previous_vblank + 1u) +
+           dm1_v1_fmtowns_title_vblank_delay_ms(previous_vblank + 2u) +
+           dm1_v1_fmtowns_title_vblank_delay_ms(current_vblank);
+}

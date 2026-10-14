@@ -50,6 +50,10 @@ int dm1_v1_fmtowns_title_palette_for_frame(
  * accumulating the +2% drift produced by rounding every blank to 17 ms. */
 unsigned int dm1_v1_fmtowns_title_vblank_delay_ms(unsigned int ordinal);
 
+/* ReDMCSB ENTRANCE.C F0438: FM Towns advances an opening-door step after
+ * three 60 Hz VBlank intervals. */
+unsigned int dm1_v1_fmtowns_door_step_delay_ms(unsigned int ordinal);
+
 #ifdef __cplusplus
 }
 #endif

@@ -145,6 +145,14 @@ int main(void)
         for (titleFrame = 1u; titleFrame <= 31u; ++titleFrame)
             elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(titleFrame);
         CHECK(elapsed == 517u);
+        elapsed = 0u;
+        for (titleFrame = 1u; titleFrame <= 31u; ++titleFrame) {
+            unsigned int delay =
+                dm1_v1_fmtowns_door_step_delay_ms(titleFrame);
+            CHECK(delay == 50u);
+            elapsed += delay;
+        }
+        CHECK(elapsed == 1550u);
     }
     puts("PASS: dm1_v1_fmtowns_title");
     return 0;
