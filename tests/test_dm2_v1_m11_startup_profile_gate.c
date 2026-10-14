@@ -624,7 +624,7 @@ static int dm2_test_caii_storage_is_source_reset_ready(
     int index;
 
     if (!owner || !owner->caii_capacity.valid || !owner->caii_slots.valid ||
-        !owner->caii_rng_initialized || owner->caii_rng.random != 0u ||
+        !owner->caii_rng_initialized ||
         owner->caii_slots.capacity !=
             (int)owner->caii_capacity.source_capacity ||
         owner->caii_slots.alloc_count != 0) {
@@ -688,14 +688,15 @@ static int dm2_test_owner_static_gaf_uses_private_ai(
 }
 
 static int dm2_test_static_caii_materialization(
-    const DM2_V1_GameLoadWorldOwner *owner)
+    const DM2_V1_GameLoadWorldOwner *owner, uint32_t expected_rng_state)
 {
     const DM2_V1_RecordPool *db4;
     int index;
 
     if (!owner || !owner->caii_static_animation.valid ||
         !owner->caii_map_candidates || !owner->caii_slots.valid ||
-        owner->caii_rng.random != 0u || owner->caii_slots.alloc_count != 0 ||
+        owner->caii_rng.random != expected_rng_state ||
+        owner->caii_slots.alloc_count != 0 ||
         owner->caii_static_animation.db4_slot_reset_count != 299u ||
         owner->caii_static_animation.static_animation_count !=
             owner->caii_map_receipt.static_candidate_count ||
@@ -3629,6 +3630,7 @@ int main(void) {
         entry->w_05 = saved_raw_index;
     }
     {
+        const uint32_t post_weather_rng_state = 0x11cfaefdu;
         int s_prepare = profile &&
             dm2_v1_game_load_world_owner_prepare_new_game(
                 &static_caii_world_owner, profile);
@@ -3641,11 +3643,18 @@ int main(void) {
         int s_spatial = s_map &&
             dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
                 &static_caii_world_owner);
+        /* SKProject's fresh weather bootstrap from seed zero consumes three
+         * source LCG draws and ends at 0x11cfaefd. Seed the authentic-data
+         * static CAII check with that verified state so it proves the static
+         * animation route does not require or consume a zero RNG state. */
+        if (s_spatial)
+            static_caii_world_owner.caii_rng.random = post_weather_rng_state;
         int s_static = s_spatial &&
             dm2_v1_game_load_world_owner_materialize_static_caii(
                 &static_caii_world_owner);
         int s_static_check = s_static &&
-            dm2_test_static_caii_materialization(&static_caii_world_owner);
+            dm2_test_static_caii_materialization(
+                &static_caii_world_owner, post_weather_rng_state);
         int s_local = s_static_check &&
             dm2_v1_game_load_world_owner_materialize_caii_local_context(
                 &static_caii_world_owner);

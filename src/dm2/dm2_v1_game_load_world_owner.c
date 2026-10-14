@@ -604,6 +604,7 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
     uint8_t *snapshot;
     size_t db4_bytes;
     uint32_t hash = 0x43535441u; /* "CSTA" */
+    DM2_V1_DropRng rng_snapshot;
     int index;
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
@@ -623,6 +624,7 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
     snapshot = (uint8_t *)malloc(db4_bytes);
     if (!snapshot) return 0;
     memcpy(snapshot, db4->bytes, db4_bytes);
+    rng_snapshot = owner->caii_rng;
 
     /* RESET_CAII clears the owner byte on every DB4 record before
      * FILL_ORPHAN_CAII begins its map traversal.  This is source state, not
@@ -705,7 +707,12 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
     hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)db4->record_count);
     hash = dm2_v1_game_load_owner_hash_step(
         hash, owner->caii_map_receipt.static_candidate_count);
-    if (hash == 0u || owner->caii_rng.random != 0u) goto rollback;
+    /* SKProject's static GET_CREATURE_ANIMATION_FRAME route consumes no
+     * random values. Preserve the caller's session state; it may already
+     * include the fresh-weather and dungeon-arrangement draws that precede
+     * RESET_CAII in source order. */
+    if (hash == 0u ||
+        owner->caii_rng.random != rng_snapshot.random) goto rollback;
     owner->caii_static_animation.valid = 1;
     owner->caii_static_animation.db4_slot_reset_count =
         (uint16_t)db4->record_count;
@@ -717,6 +724,7 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
 
 rollback:
     memcpy(db4->bytes, snapshot, db4_bytes);
+    owner->caii_rng = rng_snapshot;
     free(snapshot);
     return 0;
 }
