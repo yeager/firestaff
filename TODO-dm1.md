@@ -1,5 +1,18 @@
 # Firestaff TODO — DM1
 
+2026-10-14 chest-close evidence audit: ReDMCSB `CHEST.C`
+`F0334_INVENTORY_CloseChest` (lines 79–132) clears `G0426` and rebuilds the
+container chain from the eight visible `G0425` entries; the `CHANGE8_09_FIX`
+media branch also clears consumed `G0425` entries. The existing
+`firestaff_dm1_v1_chest_action_hand_close_runtime_probe` loads the selected
+DM1 runtime and original graphics, then calls `seed_records` to replace
+container 0, junk 0 and the champion hand with a constructed chest/item before
+exercising the pointer route. It verifies source-pixel rendering and command
+dispatch, but it does not verify closing an actual original-dungeon container
+or edition-specific Thing ownership. Keep chest shutdown across authentic
+editions open until a real loaded container is opened, mutated, closed and
+checked through the normal M11 loop.
+
 2026-10-14 native Cocoa retest on the Mac mini M4 with authenticated FM Towns
 media: bare `--game dm1 --debug` selected FM Towns under AUTO and completed all
 20 title frames. The title trace used PRESENTS, DUNGEON+MASTER, then MASTER;
