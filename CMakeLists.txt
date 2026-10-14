@@ -2177,9 +2177,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0931_f0932_prim_checksums_pc3
 endif()
 
 firestaff_add_optional_dm_test(test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat
-    SOURCES src/dm1/dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c src/frontend/swsh_frontend_pc34_compat.c
+    SOURCES src/dm1/dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c src/frontend/swsh_frontend_pc34_compat.c src/shared/lzexe_unpack_v091.c
     NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
 )
+
+if(BUILD_TESTING)
+    add_executable(test_dm1_v1_selector_pc34_compat
+        tests/test_dm1_v1_selector_pc34_compat.c)
+    target_link_libraries(test_dm1_v1_selector_pc34_compat PRIVATE firestaff_m10)
+    add_test(NAME dm1_v1_selector_pc34_compat
+        COMMAND test_dm1_v1_selector_pc34_compat)
+    set(_dm1_i34e_selector
+        "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/SELECTOR")
+    if(EXISTS "${_dm1_i34e_selector}")
+        set_tests_properties(dm1_v1_selector_pc34_compat PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_I34E_SELECTOR=${_dm1_i34e_selector}")
+    endif()
+endif()
 
 firestaff_add_optional_dm_test(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
     SOURCES src/dm1/dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c src/dm1/dm1_v1_graphics_loader_pc34_compat.c
@@ -6607,6 +6621,7 @@ list(REMOVE_ITEM M10_SOURCES
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
+    src/shared/lzexe_unpack_v091.c
     # Native game presentation domains share one process-wide catalog owner.
     # DM2_QUERY_GDAT_TEXT lives in M10, so the loader must live here rather
     # than only in the downstream M11 renderer.
@@ -15602,6 +15617,7 @@ if(BUILD_TESTING)
         src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
         src/frontend/entrance_frontend_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -39685,6 +39701,7 @@ if(BUILD_TESTING)
     add_executable(test_swsh_frontend_pc34_compat_integration
         tests/test_swsh_frontend_pc34_compat_integration.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/shared/bitmap_call_pc34_compat.c
         src/shared/image_expand_pc34_compat.c
         src/shared/image_backend_pc34_compat.c
@@ -39707,6 +39724,7 @@ if(BUILD_TESTING)
         tests/test_v1_swsh_intro_pathfinder_pc34_compat.c
         src/frontend/v1_swsh_intro_pathfinder_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
     )
@@ -39775,6 +39793,7 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_startup_intro_state_machine_gate
         tests/test_dm1_v1_startup_intro_state_machine_gate.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/shared/bitmap_call_pc34_compat.c
         src/shared/image_expand_pc34_compat.c
         src/shared/image_backend_pc34_compat.c
@@ -39808,6 +39827,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_v1_ftl_swoosh_palette_regression_probe
         probes/v1/firestaff_v1_ftl_swoosh_palette_regression_probe.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/shared/bitmap_call_pc34_compat.c
         src/shared/image_expand_pc34_compat.c
         src/shared/image_backend_pc34_compat.c
@@ -39838,6 +39858,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_v1_ftl_swoosh_ascii_probe
         probes/v1/firestaff_v1_ftl_swoosh_ascii_probe.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/shared/bitmap_call_pc34_compat.c
         src/shared/image_expand_pc34_compat.c
         src/shared/image_backend_pc34_compat.c
@@ -39876,6 +39897,7 @@ if(BUILD_TESTING)
         src/frontend/entrance_frontend_pc34_compat.c
         src/frontend/entrance_mouse_routes_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
         src/shared/vga_palette_pc34_compat.c
@@ -40082,6 +40104,7 @@ if(BUILD_TESTING)
         src/frontend/entrance_frontend_pc34_compat.c
         src/frontend/entrance_mouse_routes_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -40100,6 +40123,7 @@ if(BUILD_TESTING)
         src/frontend/entrance_frontend_pc34_compat.c
         src/frontend/entrance_mouse_routes_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -40118,6 +40142,7 @@ if(BUILD_TESTING)
         src/frontend/entrance_frontend_pc34_compat.c
         src/frontend/entrance_mouse_routes_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -40156,6 +40181,7 @@ if(BUILD_TESTING)
         src/frontend/entrance_frontend_pc34_compat.c
         src/frontend/entrance_mouse_routes_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/lzexe_unpack_v091.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
         src/dm1/dm1_v1_title_screen_pc34_compat.c

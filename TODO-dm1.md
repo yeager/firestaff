@@ -1270,3 +1270,11 @@ stream and SELECTOR behavior from those source functions, then compare the
 first runtime viewport against the original DOS capture. The existing
 C001/Entrance timing captures remain valid Firestaff measurements, but are
 not original-I34E parity evidence.
+
+2026-10-14 follow-up: a shared bounded LZEXE 0.91 decoder now extracts the
+original embedded 224x136 selector preview from the canonical I34E `SELECTOR`
+executable (MD5 `165ae5438ce2686ae62f2fbb61f3e831`) and expands its IMG3 pixels
+without bundling game media. A local sanitizer harness verified all 30,464
+palette indices against checksum `00c6756a`. Extraction is not yet connected
+to the visible menu or F8360 door animation; title-stream playback, selector
+input, and the full DOS comparison remain open.
