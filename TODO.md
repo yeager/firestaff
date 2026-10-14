@@ -25,6 +25,10 @@
   The DM1 window-close cancellation matrix also passed for keyboard and mouse
   return: closing during an authentic originals rescan cancels it without
   completing a scan or leaving the process stuck.
+  On 2026-10-14, the data-free `asset_scan_access_denied` and
+  `m12_data_dir_cancel` checks also passed locally. They cover unreadable-path
+  messaging and M12 cancellation; they do not emulate macOS's native privacy
+  consent dialog.
 
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
