@@ -22,6 +22,9 @@
   removing CSB media during authentic DM1 gameplay made CSB unavailable after
   return while DM1 and DM2 remained available; adding the original CSB archive
   during gameplay made it available on return.
+  The DM1 window-close cancellation matrix also passed for keyboard and mouse
+  return: closing during an authentic originals rescan cancels it without
+  completing a scan or leaving the process stuck.
 
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
