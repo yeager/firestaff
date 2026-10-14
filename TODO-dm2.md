@@ -1,5 +1,30 @@
 # Firestaff TODO — DM2
 
+2026-10-14 complete five-edition HUD and viewport retest on the Mac mini M4:
+`dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
+`dm2_v1_mac_native_cli_boot`, `dm2_v1_amiga_native_cli_boot` and
+`dm2_v1_fmtowns_native_cli_boot` passed 5/5 in 798.13 seconds using the
+authenticated original archives. The routes reached a real-asset runtime
+frame, checked source-owned HUD and dungeon regions, and exercised their
+scripted movement paths. The Amiga capture contained 25,731 non-black pixels
+in RECT_7, 8,754 in its lower floor band, 4,897 in the top HUD and 9,101 in
+the right panel. The FM Towns capture contained 25,746 in the dungeon
+aperture and 2,841 in its right panel. The screenshots and pixel gates
+confirm populated source regions; they do not prove full pixel parity. These
+tests use SDL dummy video and audio, so physical M5 Retina presentation,
+input and sound remain unverified. A same-state original-game comparison is
+still needed for the reported visual-quality problems, especially the
+Macintosh and FM Towns views. CTest used the build from `67b4731ca`; the
+current `14a86b0e1` commit adds documentation only.
+
+The user's 2026-10-06 MacBook Pro screenshot was inspected during this retest.
+It shows a rendered dungeon in the left 224-pixel source aperture while the
+right and bottom source-interface areas appear black. The screenshot does not
+identify the selected edition or provide logical/drawable dimensions, so it
+cannot distinguish a platform HUD binding problem from native HiDPI
+presentation. Keep the reported M5 HUD issue open until a native capture logs
+those dimensions and is compared at the same game state.
+
 2026-10-14 authentic-media viewport audit on the Mac mini M4: the DOS
 English, FM Towns Japanese, Macintosh English and Amiga English
 `*_native_cli_boot` routes completed from their original archives. DOS and
