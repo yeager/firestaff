@@ -1241,3 +1241,32 @@ operator-supplied corpus becomes available, add its hashes and provenance,
 then promote only the routes it directly proves. A fixture-derived save may
 exercise the original runtime, but cannot by itself close the preservation
 evidence gap.
+
+2026-10-14 I34E DOS launcher/source correlation: ReDMCSB
+`Toolchains/Common/Source/DM.C:689-695, 1029-1055, 1087-1112` confirms that
+`DM.EXE` is the hardware/configuration launcher: it defaults the game child
+to `FIRES`, selects `VGA`, `EGA`, or `TANDY`, and `execl`s the selected driver
+with `IBMIO`, the game executable, and options. `MKII.BAT:95-115` builds
+`DM.EXE` only from `DMASM.ASM` and `DM.C`; `SWOOSH`, `ANIM`, `SELECTOR`, and
+`FIRES` are separate executable targets. Together with `I34E.LNK` and
+`STARTUP2.C:1443-1453`, this confirms that I34E FIRES itself loads directly
+through F0435 and does not call the shared F0437 title or F0441 entrance.
+The parent process chain is in `IBMIO.C:2411-2418, 2559-2572`: IBMIO runs
+`swoosh`, then `anim title -ah -as`, then `selector`; selecting Enter or
+Resume launches the game executable passed in as its first argument. The
+full source route is `DM.EXE` -> VGA -> IBMIO -> SWOOSH -> ANIM/TITLE ->
+SELECTOR -> FIRES. `VIDEODRV.C:3856-3992` confirms VGA installs mode 13h and
+executes the IBMIO child. The I34E `ANIM` player reads a named animation file
+(`ANIM.C:1806-1918`), and `SELECTOR.C:866-1000` builds the entrance/menu view
+from GRAPHICS.DAT and handles Enter/Resume/Quit itself. `SWSH.C:1783-2180`
+implements the separate FTL logo animation. Therefore Firestaff's current
+23-step GRAPHICS.DAT C001 title and shared F0441 entrance are the wrong PC34
+startup contract; the PC34 CLI test must cover the standalone title animation,
+selector state and FIRES handoff. An authentic DOSBox run from the extracted
+PC 3.4 distribution showed the `ANIM` title program, the `SELECTOR` menu, and
+the FIRES screen after Enter. Captures are in local scratch only and do not
+claim an M5 or release comparison. Next parity step: port the I34E ANIM/TITLE
+stream and SELECTOR behavior from those source functions, then compare the
+first runtime viewport against the original DOS capture. The existing
+C001/Entrance timing captures remain valid Firestaff measurements, but are
+not original-I34E parity evidence.
