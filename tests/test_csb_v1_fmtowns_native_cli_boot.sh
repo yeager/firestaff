@@ -398,6 +398,51 @@ if [ -f "$data_dir" ]; then
         exit 1
     fi
     echo 'PASS: CSB start menu discovers authentic FM Towns data from ~/.firestaff/data/csb without --data-dir'
+
+    # Follow the same per-user discovery path through the normal M12 title,
+    # entrance and MINI.DAT handoff. The separate explicit --data-dir route
+    # below already checks these source-owned transitions; this proves the
+    # discovered default path remains attached after the menu launches CSB.
+    default_runtime_probe="$isolated_home/default-data-runtime.json"
+    default_runtime_log="$isolated_home/default-data-runtime.log"
+    (
+        unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+        HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+        APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$default_runtime_probe" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --width 320 --height 200 --menu --game csb --platform fm-towns $edition_arg \
+            --script 'enter,enter,enter,wait700,click:52:110,wait10,click:250:50,wait240' \
+            --duration 30000
+    ) >"$default_runtime_log" 2>&1 || {
+        cat "$default_runtime_log" >&2
+        exit 1
+    }
+    if ! grep -Fq "CSB READY: gameId=csb dataDir=$default_archive" "$default_runtime_log" ||
+       ! grep -Fq "variant=csb-fmtowns-$language" "$default_runtime_log" ||
+       ! grep -Fq 'handoff=f31-title-anm' "$default_runtime_log"; then
+        echo 'FAIL: CSB default-data M12 route did not retain the discovered FM Towns edition through launch' >&2
+        cat "$default_runtime_log" >&2
+        exit 1
+    fi
+    python3 - "$default_runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["sourceId"] != "csb" or
+        startup["phase"] != "inactive" or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or probe.get("csbViewportHash", 0) == 0 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (4, 22, 18, 2, 1)):
+    raise SystemExit(
+        f"FAIL: default-data CSB FM Towns menu did not reach the original MINI.DAT party: {probe}")
+PY
+    echo "PASS: CSB FM Towns $language M12 route discovers ~/.firestaff/data/csb and reaches the authentic MINI.DAT party"
 else
     echo 'SKIP: per-user CSB data-root route requires an archive file'
 fi

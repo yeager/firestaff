@@ -1,5 +1,16 @@
 # Firestaff TODO — CSB
 
+2026-10-14 CSB FM Towns per-user data-root end-to-end regression on the
+Mac mini M4: `csb_v1_fmtowns_native_cli_boot` passed in 147.31 seconds using
+the authenticated F31 Japanese/English archive. The test now removes data-root
+environment overrides, exposes the original archive under the isolated
+`~/.firestaff/data/csb`, starts through M12 without `--data-dir`, and follows
+the original TITLE.ANM, SWITCHTW and C004 route to the MINI.DAT party at
+`(map 4, x=22, y=18, direction 2)` with a nonzero viewport receipt. This
+closes the prior test gap between default-path discovery and the playable
+runtime handoff. The run used SDL dummy video/audio on one ARM64 Mac host; it
+does not verify physical display/input or audible output.
+
 2026-10-14 current-main authentic-media startup retest on the Mac mini M4:
 `csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_native_cli_boot` and
 `csb_v1_fmtowns_native_cli_boot` passed 3/3 in 318.87 seconds. All three
