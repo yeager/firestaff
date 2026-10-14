@@ -6,6 +6,9 @@ data_source=${FIRESTAFF_DM1_DOS_FR_SOURCE:-"$HOME/.firestaff/data/dm1/Dungeon-Ma
 companion_source=${FIRESTAFF_DM1_PC34_EN_SOURCE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 expected_graphics_md5=f934d97e43e1ba6e5159839acbcd0611
 expected_swsh_md5=a66b607f3850e604b6703e90bbfb5189
+# Drive M12 with gaps so the authenticated title handoff cannot consume the
+# remaining scripted key events in a single host frame.
+menu_original='wait20,enter,wait20,enter,wait20,enter'
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable not found: %s\n' "$app" >&2
@@ -94,11 +97,11 @@ fi
 probe --game dm1 --platform pc --data-dir "$data_source" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --game dm1 --platform pc --data-dir "$data_source" \
-    --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
+    --script "$menu_original" --boot-probe --boot-probe-frames 2 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
-    --platform pc --data-dir "$data_source" --script enter,enter,enter --duration 1000 2>&1)" || {
+    --platform pc --data-dir "$data_source" --script "$menu_original" --duration 30000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
@@ -118,7 +121,7 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform pc --data-dir "$data_source" \
-    --script enter,enter,enter --duration 10000 >/dev/null 2>&1
+    --script "$menu_original" --duration 30000 >/dev/null 2>&1
 python3 - "$menu_runtime_probe_json" "$expected_graphics_md5" <<'PY'
 import json
 import sys

@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-14 issue #13 mixed-media reproduction on the Mac mini M4: the current
+main build scanned the full staged DM1 data root, including FM Towns, PC EN/FR,
+Atari ST and Amiga editions. With `--game dm1 --platform pc`, it selected the
+PC 3.4 English graphics from `dos_extract` and loaded that edition's matching
+`DUNGEON.DAT`; the boot receipt reported `phase=dm1-runtime` and
+`levelLoaded=1`. This does not reproduce the reporter's Linux v3.0.380 failure
+or prove a release fix. Issue #13 remains closed; the reporter explicitly
+asked not to reopen it. The French DOS ZIP menu regression also passed after
+its scripted Enter presses were spaced across startup frames (45.04 seconds).
+
 2026-10-14 current-main runtime retest on the Mac mini M4:
 `dm1_v1_pc34_native_cli_boot` passed in 356.45 seconds using authentic PC 3.4
 media. It confirmed direct `--game dm1`, clean-config AUTO/start-menu launch,
