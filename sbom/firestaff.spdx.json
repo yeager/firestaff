@@ -12,8 +12,8 @@
   "documentDescribes": [
     "SPDXRef-Package-Firestaff"
   ],
-  "documentNamespace": "https://github.com/yeager/firestaff/spdx/3.0.380",
-  "name": "Firestaff-3.0.380",
+  "documentNamespace": "https://github.com/yeager/firestaff/spdx/3.0.381",
+  "name": "Firestaff-3.0.381",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Firestaff",
@@ -24,7 +24,7 @@
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
       "name": "Firestaff",
-      "versionInfo": "3.0.380"
+      "versionInfo": "3.0.381"
     },
     {
       "SPDXID": "SPDXRef-Package-miniz",
