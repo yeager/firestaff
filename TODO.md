@@ -15,6 +15,9 @@
   DM2 AUTO with original media. Each game returned to the launcher and
   reported updated availability for all five games. The run used SDL's dummy
   video/audio drivers; native display and input remain separate checks.
+  The companion 2026-10-14 `direct-exit` variant also passed for DM1, CSB and
+  DM2: a direct `--game` launch exits after Return to Menu without reopening
+  the launcher.
 
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
