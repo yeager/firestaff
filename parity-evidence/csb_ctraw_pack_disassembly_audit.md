@@ -51,9 +51,25 @@ The local ARM64 CAPSImage binary retains symbols for `CCTRawCodec`, including
   packed payload and fills the output buffer backward. Its control flow has
   several token classes, short and extended copy/fill paths, and an ARM64
   vectorized path for bulk expansion.
-- The token grammar is not yet reconstructed. These observations are not an
-  implementation specification and must not be used to claim native CTRaw
-  support.
+- The ARM64 control flow identifies four token classes. These details describe
+  the observed little-endian ARM64 build and still require CRC validation
+  across original records before they can serve as a portable implementation
+  specification:
+  - Class `token & 3 == 0` expands literal data. Without bit 3, the count is
+    `(token >> 4) + 1`. With bit 3, the decoder reads one preceding byte and
+    combines it with the token's high nibble as upper count bits. Bit 2 selects
+    four-byte input words; otherwise input bytes go through vector lookup
+    tables. Both paths reverse byte or word order while filling backward.
+  - Classes 1 and 2 copy earlier output. Their count is `(token >> 2) + 1`.
+    Class 1 reads a one-byte distance and adds one. Class 2 reads a 16-bit
+    distance directly.
+  - Class 3 reads a 16-bit count and combines a preceding byte with the token's
+    upper six bits for the distance. Its pre-indexed load uses a four-byte
+    command footprint; the distance byte is two positions after the count
+    load address.
+  - Scalar tails and vectorized bulk paths use backward copy direction. A
+    clean-room parser has not yet matched the pack CRCs, so these observations
+    must not be used to claim native CTRaw support.
 
 The disassembly was inspected from the local development-only binary at
 `.codex-scratch/csb-ctraw-oracle/sps/CAPSImage.framework/CAPSImage`. No vendor
