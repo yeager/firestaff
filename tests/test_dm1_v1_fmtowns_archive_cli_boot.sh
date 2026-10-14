@@ -192,6 +192,61 @@ PY
 expect_menu_runtime en
 expect_menu_runtime ja
 
+# Closing the host window after the first authenticated EDM/JDM title frame
+# must leave the game launch cleanly. It must not be confused with successful
+# title completion and fall through into Entrance or a launch-failed message.
+expect_menu_title_quit() {
+    local scratch probe trace result
+    scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+    scratch="$scratch/dm1-fmtowns-title-quit-$$"
+    mkdir -p "$scratch/home"
+    probe="$scratch/runtime.json"
+    trace="$scratch/startup.log"
+    HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" \
+    FIRESTAFF_CONFIG_PATH="$scratch/config.toml" \
+    FIRESTAFF_AUTOTEST=1 \
+    FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME=1 \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
+        --width 1920 --height 1080 --menu --game dm1 --platform fm-towns \
+        --data-dir "$archive" \
+        --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
+        --duration 10000 >"$trace" 2>&1 || {
+            cat "$trace" >&2
+            rm -rf "$scratch"
+            return 1
+        }
+    if ! grep -Fq \
+            'AUTOTEST: DM1 FM Towns title quit injected after first rendered frame' \
+            "$trace" ||
+       grep -qi 'launch failed' "$trace" ||
+       grep -Fq 'phase=entrance-door' "$trace"; then
+        cat "$trace" >&2
+        printf '%s\n' 'FAIL: FM Towns title quit did not stop the startup handoff cleanly' >&2
+        rm -rf "$scratch"
+        return 1
+    fi
+    if python3 - "$probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+if probe.get("launchedEver") != 1 or probe.get("active") != 0:
+    raise SystemExit(f"FAIL: FM Towns title quit did not exit cleanly: {probe}")
+print("PASS: authentic DM1 FM Towns M12 quit exits after the first title frame")
+PY
+    then
+        result=0
+    else
+        result=$?
+    fi
+    rm -rf "$scratch"
+    return "$result"
+}
+expect_menu_title_quit
+
 # Also exercise the edition selector itself.  The CLI platform filter leaves
 # both authentic FM Towns languages available; select the Japanese package
 # through the Version tile without --dm1-fmtowns-ja, then require the original

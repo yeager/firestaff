@@ -1,5 +1,18 @@
 # Firestaff TODO — DM1
 
+2026-10-14 FM Towns title interruption fix on the Mac mini M4: closing the
+host window after the first authentic EDM title frame previously returned
+the same truthy result as a completed title. The caller then continued into
+Entrance and reported launch failure. The title helper now returns the
+explicit quit command for close/escape events, and the caller follows the
+same clean application-exit path as the Atari title route. Quit checks now
+cover VBlank waits and the final MASTER hold as well as the zoom loop. The
+authentic `dm1_v1_fmtowns_archive_cli_boot` regression passed in 279.14
+seconds with original English/Japanese FM Towns media; its injected M12 quit
+asserts `launchedEver=1`, `active=0`, no launch-failed trace, and no Entrance
+frames. This SDL dummy-video/audio test verifies the launcher control flow,
+not native Cocoa close delivery or display parity.
+
 2026-10-14 issue #13 mixed-media reproduction on the Mac mini M4: the current
 main build scanned the full staged DM1 data root, including FM Towns, PC EN/FR,
 Atari ST and Amiga editions. With `--game dm1 --platform pc`, it selected the

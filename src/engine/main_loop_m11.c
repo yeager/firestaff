@@ -5113,6 +5113,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
     uint8_t titlePaletteRgb6[256][3];
     unsigned int frame;
     unsigned int waitedVblanks = 0u;
+    int autotestQuitInjected = 0;
     Uint64 titleStartedMs;
     if (outPlayedAnyFrame) *outPlayedAnyFrame = 0;
     if (!gameView || !gameView->dm1FmtownsStartupReceiptValid ||
@@ -5172,6 +5173,25 @@ static int m11_play_dm1_fmtowns_title_if_available(
         if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                       M11_FB_HEIGHT) != M11_RENDER_OK) return 0;
         if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
+        /* Exercise the native title's close path after a real source frame,
+         * matching the PC/Atari M12 interruption regressions. */
+        if (!autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+            getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME"),
+                   "1") == 0) {
+            SDL_Event event;
+            memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            event.type = SDL_EVENT_QUIT;
+#else
+            event.type = SDL_QUIT;
+#endif
+            if (SDL_PushEvent(&event)) {
+                autotestQuitInjected = 1;
+                fprintf(stderr,
+                        "AUTOTEST: DM1 FM Towns title quit injected after first rendered frame\n");
+            }
+        }
         {
             const unsigned int frameWaitVblanks =
                 dm1_v1_fmtowns_title_frame_wait_vblanks(frame);
@@ -5189,7 +5209,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
                 ++waitedVblanks;
                 if (m11_delay_ms_with_intro_event_pump(
                         dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks))) {
-                    return 1;
+                    return M11_ENTRANCE_COMMAND_QUIT;
                 }
             }
         }
@@ -5202,7 +5222,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
         ++waitedVblanks;
         if (m11_delay_ms_with_intro_event_pump(
                 dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks))) {
-            return 1;
+            return M11_ENTRANCE_COMMAND_QUIT;
         }
     }
     if (!dm1_v1_fmtowns_title_compose_frame(
@@ -5230,14 +5250,18 @@ static int m11_play_dm1_fmtowns_title_if_available(
     }
     /* The source's final M526_WaitVerticalBlank follows the master blit. */
     ++waitedVblanks;
-    (void)m11_delay_ms_with_intro_event_pump(
-        dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks));
+    if (m11_delay_ms_with_intro_event_pump(
+            dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks))) {
+        return M11_ENTRANCE_COMMAND_QUIT;
+    }
     /* TITLE_MASTER is the only full-size, legible Dungeon Master screen.
      * The original blit leaves that page resident until another screen is
      * drawn; the host handoff immediately starts Entrance, so retain it for
      * a readable interval instead of replacing it on the next host call. */
-    (void)m11_delay_ms_with_intro_event_pump(
-        DM1_FMTOWNS_TITLE_MASTER_HOLD_MS);
+    if (m11_delay_ms_with_intro_event_pump(
+            DM1_FMTOWNS_TITLE_MASTER_HOLD_MS)) {
+        return M11_ENTRANCE_COMMAND_QUIT;
+    }
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
                 "firestaff: startup-source-complete game=dm1 platform=fm-towns phase=title frames=%u source-vblanks=%u master-hold-ms=%u elapsed-ms=%llu\n",
@@ -5247,7 +5271,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
                 (unsigned long long)(m11_intro_active_ticks() -
                                      titleStartedMs));
     }
-    return 1;
+    return M11_ENTRANCE_COMMAND_ENTER;
 }
 
 static int m11_game_display_aspect(int aspectRatio) {
@@ -5648,13 +5672,24 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
             if (bootProbe) {
                 g_m11_intro_delay_fast_forward = 1;
             }
-            if (!m11_play_dm1_fmtowns_title_if_available(gameView, &played) ||
-                !played) {
-                g_m11_intro_delay_fast_forward = oldFastForward;
-                M11_GameView_Shutdown(gameView);
-                M11_GameView_Init(gameView);
-                m11_set_launch_failed_message(menuState);
-                return 0;
+            {
+                const int titleResult =
+                    m11_play_dm1_fmtowns_title_if_available(gameView, &played);
+                if (titleResult == M11_ENTRANCE_COMMAND_QUIT) {
+                    g_m11_intro_delay_fast_forward = oldFastForward;
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    menuState->launchRequested = 0;
+                    menuState->shouldExit = 1;
+                    return 1;
+                }
+                if (titleResult != M11_ENTRANCE_COMMAND_ENTER || !played) {
+                    g_m11_intro_delay_fast_forward = oldFastForward;
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
             }
             g_m11_intro_delay_fast_forward = oldFastForward;
             /* EDM/JDM owns the Towns title, but completing that title is not
