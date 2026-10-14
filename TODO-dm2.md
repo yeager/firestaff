@@ -17,6 +17,10 @@ regions, and the complete movement input matrix. Final captures used SDL's
 dummy video/audio drivers; they do not establish physical M5 HiDPI output.
 Evidence is under `.codex-scratch/dm2-verify/visual/` and
 `.codex-scratch/build-m4-current-xcode/test-dm2-amiga-startup/capture/`.
+The shared `m11_display_aspect_present_rect` regression also passed on the
+M4 build and covers 2x Retina drawable geometry, independent X/Y scale ratios,
+and logical mouse mapping. This verifies the shared mapping arithmetic, not a
+live DM2 Retina window or physical M5 rendering.
 
 2026-10-14 M4 real-media startup retest: `test_dm2_v1_mac_native_cli_boot.sh`
 passed using the authenticated Macintosh retail ZIP. The direct launch and
