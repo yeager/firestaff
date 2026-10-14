@@ -1,5 +1,23 @@
 # Firestaff TODO — DM2
 
+2026-10-14 fresh HUD and viewport verification on the Mac mini M4 at
+`a0af9764`: all seven authentic-media checks passed in 460.78 seconds:
+DOS English, DOS French, Macintosh, Amiga and FM Towns runtime routes,
+live viewport-plan enumeration, and FM Towns portrait binding. The DOS,
+Macintosh, Amiga and FM Towns routes captured presented 320x200 runtime
+frames and checked their source-owned HUD and dungeon regions; the routes
+also verified first-party state and scripted movement. FM Towns measured
+25,746 lit dungeon pixels and 2,841 right-panel pixels. The Macintosh route
+also checked its top HUD, `RECT_7` viewport, lower floor band, and scaled
+1920x1080 window geometry. DOS French shares the DOS renderer and passed its
+authentic startup and movement route. This run used original archives and
+SDL dummy video/audio on one ARM64 Mac host. GitHub Actions run
+`38543825065` for the same source commit passed its macOS, Ubuntu and Windows
+build and portable contracts, but has no original media for the same pixel
+checks. Neither run verifies a live physical MacBook Pro M5 Retina display,
+GPU output, or native Windows/Linux rendering. The reported M5 display issue
+therefore remains open pending a native HiDPI capture and size/pixel evidence.
+
 2026-10-14 post-push HUD and viewport verification on the Mac mini M4,
 against `main` after commit `d07e3b3a0`: the five authentic-media CLI routes
 (DOS English, DOS French, Macintosh, Amiga and FM Towns),
