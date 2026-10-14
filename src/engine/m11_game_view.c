@@ -69751,6 +69751,25 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
         (void)csb_v22_inplace_draw_set_indexed_palette_rgb6(rgb6);
         }
     } else if (state && m11_is_dm1_source_kind(state->sourceKind) &&
+               state->assetLoader.fileState &&
+               !state->assetLoader.legacyDm1 &&
+               !state->assetLoader.atariStDm1 &&
+               !state->assetLoader.dm1Amiga36) {
+        uint8_t rgb6[256][3];
+        int dungeon_level = m11_compute_dungeon_palette_index(state);
+        if (dungeon_level < 0) dungeon_level = 0;
+        if (dungeon_level > 5) dungeon_level = 5;
+        /* I34E DRAWVIEW.C F0097 selects C00..C05 for VGA entries 16..31;
+         * VIDEODRV.C F8161 adds 0x10 to every C007 viewport pixel while
+         * the top/HUD bank remains at 0..15. Keep the two banks distinct
+         * in SDL's indexed palette, including its per-frame light change. */
+        if (dm1_viewport_3d_build_pc34_indexed_palette(dungeon_level, rgb6)) {
+            (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+        } else {
+            M11_Render_ClearIndexedPaletteRgb6();
+        }
+        csb_v22_inplace_draw_clear_indexed_palette();
+    } else if (state && m11_is_dm1_source_kind(state->sourceKind) &&
                state->assetLoader.atariStDm1) {
         uint8_t rgb6[256][3];
         /* Atari startup reaches M11 with authentic ST indices in its live

@@ -119,6 +119,7 @@ Optional environment:
                     nonDuplicate expectation.
   DM1_DOSBOX_SCREENSHOT_HOTKEY=cmd-f5
                     macOS Swift route injector screenshot accelerator. Use
+                    f12+p for DOSBox-X host-key screenshots. Use
                     ctrl-f5 for CLI DOSBox Staging builds whose mapper does not
                     respond to Cmd+F5. Linux/xdotool uses Ctrl+F5.
   DM1_DOSBOX_CAPTURE_BACKEND=host
@@ -600,6 +601,15 @@ func ctrlS() {
     usleep(120_000)
 }
 func cmdF5() {
+    if screenshotHotkey == "f12+p" {
+        print("screenshot-hotkey \(screenshotHotkey)")
+        post(111, true)                   // F12 host key in DOSBox-X
+        usleep(30_000)
+        tap(35, 80_000)                   // P captures a screenshot
+        post(111, false)
+        usleep(180_000)
+        return
+    }
     let modifierKey: CGKeyCode
     let modifierFlags: CGEventFlags
     if screenshotHotkey == "ctrl-f5" || screenshotHotkey == "control-f5" {
@@ -1587,9 +1597,9 @@ case "$mode" in
                 exit 6
                 ;;
         esac
-        # DOSBox-X on Linux maps screenshot capture to the host-key sequence
-        # F12+P; Ctrl+F5 copies DOS text there. Vanilla DOSBox continues to
-        # use Ctrl+F5. Keep an explicit caller override authoritative.
+        # DOSBox-X maps screenshot capture to the host-key sequence F12+P;
+        # Ctrl+F5 copies DOS text there. Vanilla DOSBox continues to use
+        # Ctrl+F5. Keep an explicit caller override authoritative.
         if [[ -z "${DM1_DOSBOX_SCREENSHOT_HOTKEY:-}" &&
               "$(basename "$DOSBOX")" == "dosbox-x" ]]; then
             export DM1_DOSBOX_SCREENSHOT_HOTKEY="F12+p"

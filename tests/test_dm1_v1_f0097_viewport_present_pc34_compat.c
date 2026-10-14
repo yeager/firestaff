@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -16,6 +17,7 @@ int main(void)
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
     uint8_t screen[DM1_VIEWPORT_SCREEN_WIDTH * DM1_VIEWPORT_SCREEN_HEIGHT];
     DM1_ViewportPresentReceiptPc34 receipt;
+    uint8_t rgb6[256][3];
     int cached_palette = -1;
     int x;
     int y;
@@ -26,6 +28,9 @@ int main(void)
                 (uint8_t)((x + y * 3) & 0xff);
         }
     }
+    /* Host palette-level bits are not DOS VGA pixel bits. F8161 adds the
+     * viewport's separate 0x10 DAC bank to the low source color nibble. */
+    viewport[1] = 0xa7;
     memset(screen, 0xa5, sizeof(screen));
 
     CHECK(dm1_viewport_3d_present_pc34(
@@ -45,9 +50,11 @@ int main(void)
               receipt.palette_action == DM1_VIEWPORT_PRESENT_PALETTE_DUNGEON_PC34 &&
               cached_palette == 3,
           "F0097 selects the changed dungeon palette exactly once");
-    CHECK(screen[33 * DM1_VIEWPORT_SCREEN_WIDTH] == viewport[0] &&
+    CHECK(screen[33 * DM1_VIEWPORT_SCREEN_WIDTH] == 0x10 &&
+              screen[33 * DM1_VIEWPORT_SCREEN_WIDTH + 1] == 0x17 &&
               screen[(33 + 135) * DM1_VIEWPORT_SCREEN_WIDTH + 223] ==
-                  viewport[135 * DM1_VIEWPORT_WIDTH + 223] &&
+                  (uint8_t)(0x10 |
+                      (viewport[135 * DM1_VIEWPORT_WIDTH + 223] & 0x0f)) &&
               screen[32 * DM1_VIEWPORT_SCREEN_WIDTH] == 0xa5 &&
               screen[(33 + 136) * DM1_VIEWPORT_SCREEN_WIDTH] == 0xa5 &&
               screen[33 * DM1_VIEWPORT_SCREEN_WIDTH + 224] == 0xa5,
@@ -81,6 +88,24 @@ int main(void)
           "F0097 rejects an undersized real G0296 source");
     CHECK(screen[33 * DM1_VIEWPORT_SCREEN_WIDTH] == 0x4e && !receipt.valid,
           "F0097 failure does not synthesize or partially present a viewport");
+
+    CHECK(!dm1_viewport_3d_build_pc34_indexed_palette(-1, rgb6) &&
+              !dm1_viewport_3d_build_pc34_indexed_palette(6, rgb6),
+          "I34E indexed palette rejects invalid dungeon light rows");
+    CHECK(dm1_viewport_3d_build_pc34_indexed_palette(3, rgb6),
+          "I34E indexed palette accepts the active dungeon light row");
+    CHECK(rgb6[4][0] == (G9010_auc_VgaPaletteAll_Compat[0][4][0] >> 2) &&
+              rgb6[4][1] == (G9010_auc_VgaPaletteAll_Compat[0][4][1] >> 2) &&
+              rgb6[4][2] == (G9010_auc_VgaPaletteAll_Compat[0][4][2] >> 2),
+          "I34E retains the full-bright top and HUD color bank at 0..15");
+    CHECK(rgb6[20][0] == (G9010_auc_VgaPaletteAll_Compat[3][4][0] >> 2) &&
+              rgb6[20][1] == (G9010_auc_VgaPaletteAll_Compat[3][4][1] >> 2) &&
+              rgb6[20][2] == (G9010_auc_VgaPaletteAll_Compat[3][4][2] >> 2),
+          "I34E maps viewport bank 16..31 through its selected light palette");
+    CHECK(rgb6[0xff][0] == (G9010_auc_VgaPaletteAll_Compat[5][15][0] >> 2) &&
+              rgb6[0xff][1] == (G9010_auc_VgaPaletteAll_Compat[5][15][1] >> 2) &&
+              rgb6[0xff][2] == (G9010_auc_VgaPaletteAll_Compat[5][15][2] >> 2),
+          "unused host palette metadata remains bounded to the last VGA row");
 
     printf("%d/%d tests passed\n", passes, tests);
     return passes == tests ? 0 : 1;

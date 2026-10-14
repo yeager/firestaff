@@ -1,3 +1,16 @@
+- 2026-10-14: Restored the I34E PC 3.4 two-bank VGA viewport presentation.
+  ReDMCSB `DRAWVIEW.C:F0097` selects the active dungeon palette for VGA
+  entries 16–31, and `VIDEODRV.C:F8161` ORs `0x10` into each 4-bit C007 pixel
+  while leaving the surrounding screen on entries 0–15. Firestaff had copied
+  host brightness bits as if they were VGA color indices and resolved the
+  viewport and HUD through one 16-color bank. The presenter now writes the
+  source color nibble into bank 16–31, and a tested palette builder maps that
+  bank to the selected `G8151`–`G8156` row while preserving the screen bank.
+  The F0097 regression, authentic `dm1_v1_pc34_native_cli_boot` (365.44 s),
+  `dm1_macos_real_data_boot`, and PO catalog validation pass. These checks
+  establish the code path and original-media boot, not a native Retina color
+  capture or geometric viewport parity; those remain open in `TODO-dm1.md`.
+
 - 2026-10-13: Closed a PC 3.4 startup-media mismatch in the M12 catalogue.
   The launcher previously admitted original GRAPHICS.DAT and DUNGEON.DAT as
   a playable PC release even when its required SWSH intro file was absent;

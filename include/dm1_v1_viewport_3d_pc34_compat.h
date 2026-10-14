@@ -1244,6 +1244,12 @@ bool dm1_viewport_3d_present_pc34(const uint8_t *viewport_pixels,
                                   int *cached_palette_index,
                                   DM1_ViewportPresentReceiptPc34 *out_receipt);
 
+/* Build the I34E VGA display palette with UI colors at 0..15 and the active
+ * dungeon-light colors at 16..31. RGB6 output matches the VGA DAC source. */
+bool dm1_viewport_3d_build_pc34_indexed_palette(
+    int dungeon_palette_index,
+    uint8_t out_rgb6[256][3]);
+
 /*
  * Legacy wrapper for caller-owned DM1_Viewport3DState storage.
  *

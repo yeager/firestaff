@@ -12,6 +12,7 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 #include "firestaff/dm1/v1/G0164_pc34_compat.h"
 #include "firestaff/dm1/v1/G0165_pc34_compat.h"
 #include "firestaff/dm1/v1/G0166_pc34_compat.h"
@@ -2571,13 +2572,20 @@ bool dm1_viewport_3d_present_pc34(const uint8_t *viewport_pixels,
     }
     receipt.cached_palette_index = (int16_t)*cached_palette_index;
 
-    /* DRAWVIEW.C:878-893, VIDRV_09_BlitViewPort(G0296, C007). */
+    /* ReDMCSB VIDEODRV.C F8161 sets G8177_c_ViewportColorIndexOffset to
+     * 0x10 around the C007 blit. Its F8151 copy path ORs that value with
+     * each 4-bit source pixel (VIDEODRV.C:1270-1274), selecting VGA DAC
+     * entries 16..31. The host's high nibble is palette-level metadata and
+     * is not part of the original pixel, so retain only its source nibble. */
     for (y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
-        memmove(screen_pixels +
-                    (DM1_VIEWPORT_SCREEN_Y + y) * screen_stride +
-                    DM1_VIEWPORT_SCREEN_X,
-                viewport_pixels + y * viewport_stride,
-                (size_t)DM1_VIEWPORT_WIDTH);
+        const uint8_t *source = viewport_pixels + y * viewport_stride;
+        uint8_t *destination = screen_pixels +
+            (DM1_VIEWPORT_SCREEN_Y + y) * screen_stride +
+            DM1_VIEWPORT_SCREEN_X;
+        int x;
+        for (x = 0; x < DM1_VIEWPORT_WIDTH; ++x) {
+            destination[x] = (uint8_t)(0x10u | (source[x] & 0x0fu));
+        }
     }
     receipt.valid = true;
     if (out_receipt) *out_receipt = receipt;
@@ -2607,6 +2615,33 @@ void dm1_viewport_3d_present(DM1_Viewport3DState *state,
                                         &cached_palette_index,
                                         NULL);
     state->palette_index = (int16_t)cached_palette_index;
+}
+
+bool dm1_viewport_3d_build_pc34_indexed_palette(
+    int dungeon_palette_index,
+    uint8_t out_rgb6[256][3])
+{
+    int color;
+    if (!out_rgb6 || dungeon_palette_index < 0 ||
+        dungeon_palette_index >= VGA_PALETTE_PC34_BRIGHTNESS_LEVELS) {
+        return false;
+    }
+    for (color = 0; color < 256; ++color) {
+        const int index = color & 0x0f;
+        int level = color >> 4;
+        const uint8_t *rgb;
+        if (color >= 16 && color < 32) {
+            level = dungeon_palette_index;
+        }
+        if (level >= VGA_PALETTE_PC34_BRIGHTNESS_LEVELS) {
+            level = VGA_PALETTE_PC34_BRIGHTNESS_LEVELS - 1;
+        }
+        rgb = G9010_auc_VgaPaletteAll_Compat[level][index];
+        out_rgb6[color][0] = (uint8_t)(rgb[0] >> 2);
+        out_rgb6[color][1] = (uint8_t)(rgb[1] >> 2);
+        out_rgb6[color][2] = (uint8_t)(rgb[2] >> 2);
+    }
+    return true;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

@@ -1296,3 +1296,13 @@ without bundling game media. A local sanitizer harness verified all 30,464
 palette indices against checksum `00c6756a`. Extraction is not yet connected
 to the visible menu or F8360 door animation; title-stream playback, selector
 input, and the full DOS comparison remain open.
+
+2026-10-14 F0097 palette correction: Firestaff now preserves the I34E VGA
+viewport bank 16..31 and maps it through the selected `G8151`..`G8156` row;
+the surrounding screen continues to use entries 0..15. The source-backed
+F0097 pixel/palette tests and authentic PC34 CLI boot pass. This closes only
+the palette-indexing mismatch. It does not establish that the viewport's
+geometry, wall/floor asset selection, title startup, or entrance animation
+matches I34E. Capture the same map, party position and facing from original
+FIRES and Firestaff, then compare the 224x136 viewport before claiming those
+routes as parity.
