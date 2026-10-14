@@ -10,6 +10,7 @@
  */
 
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_weather.h"
 #include <stdio.h>
@@ -27,6 +28,28 @@ static int failed;
         printf("  FAIL: %s\n", msg); \
     } \
 } while (0)
+
+static void test_fresh_weather_bootstrap_rng_receipt(void)
+{
+    DM2_V1_SkprojectRandomData randdat = {0};
+    uint16_t first_timer_delay;
+    uint8_t wind_direction;
+    uint16_t cloud_timer;
+
+    dm2_v1_skproject_random_init(&randdat);
+    first_timer_delay = dm2_v1_skproject_rand16(&randdat, 500u);
+    wind_direction = dm2_v1_skproject_randdir(&randdat);
+    cloud_timer = (uint16_t)(dm2_v1_skproject_rand16(&randdat, 4u) + 4u);
+
+    CHECK(first_timer_delay == 0u,
+          "fresh weather bootstrap schedules its first timer at tick zero");
+    CHECK(wind_direction == 3u,
+          "fresh weather bootstrap derives v1e1483 from the second LCG draw");
+    CHECK(cloud_timer == 6u,
+          "fresh weather bootstrap derives v1e1470 from the third LCG draw");
+    CHECK(randdat.random == 0x11cfaefdu,
+          "fresh weather bootstrap consumes exactly three source LCG draws");
+}
 
 static void test_weather_seed_advances_with_reproducible_lcg(void)
 {
@@ -129,6 +152,9 @@ static void test_weather_ticks_require_source_chain_state(void)
 int main(void)
 {
     printf("=== DM2 V1 Weather Seed Regression Test ===\n\n");
+
+    printf("--- test_fresh_weather_bootstrap_rng_receipt ---\n");
+    test_fresh_weather_bootstrap_rng_receipt();
 
     printf("--- test_weather_seed_advances_with_reproducible_lcg ---\n");
     test_weather_seed_advances_with_reproducible_lcg();
