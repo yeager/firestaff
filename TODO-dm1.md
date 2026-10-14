@@ -13,6 +13,14 @@ asserts `launchedEver=1`, `active=0`, no launch-failed trace, and no Entrance
 frames. This SDL dummy-video/audio test verifies the launcher control flow,
 not native Cocoa close delivery or display parity.
 
+The same close-during-title contract now covers the authentic Amiga v2.0
+F0437 C001 zoom. A M12 launch closed after its first rendered zoom frame used
+the supplied ZIP → ZIP → ADF preservation image; the regression passed in
+`dm1_v1_amiga_v20_archive_cli_boot` and asserted a clean process exit with no
+F0441 Entrance frames or launch-failed message. The SDL dummy-video/audio
+route verifies cancellation and handoff cleanup, not native window events or
+visual parity on Amiga hardware.
+
 2026-10-14 issue #13 mixed-media reproduction on the Mac mini M4: the current
 main build scanned the full staged DM1 data root, including FM Towns, PC EN/FR,
 Atari ST and Amiga editions. With `--game dm1 --platform pc`, it selected the

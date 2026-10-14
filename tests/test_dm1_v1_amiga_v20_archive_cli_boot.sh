@@ -108,8 +108,12 @@ resume_probe_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$resume_probe_root"
 resume_probe="$resume_probe_root/dm1-amiga-save-menu-runtime-$$.json"
 menu_probe="$resume_probe_root/dm1-amiga-new-game-menu-runtime-$$.json"
+title_quit_scratch="$resume_probe_root/dm1-amiga-title-quit-$$"
+title_quit_probe="$title_quit_scratch/runtime.json"
+title_quit_trace="$title_quit_scratch/startup.log"
 cleanup_resume_probe() {
     rm -f "$resume_probe" "$menu_probe"
+    rm -rf "$title_quit_scratch"
 }
 trap cleanup_resume_probe EXIT HUP INT TERM
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
@@ -135,6 +139,44 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["gameTick"] != 292):
     raise SystemExit(f"FAIL: authentic DM1 Amiga M12 Quick Resume failed: {probe}")
 print("PASS: authentic DM1 Amiga M12 Quick Resume restored the saved runtime pose")
+PY
+
+# Closing after the first authenticated C001 zoom frame must unwind the
+# selected-launch transaction as a clean quit. It must not be mistaken for a
+# rejected title and fall through into the mouse-only F0441 entrance.
+mkdir -p "$title_quit_scratch/home"
+HOME="$title_quit_scratch/home" XDG_CONFIG_HOME="$title_quit_scratch/home" \
+FIRESTAFF_CONFIG_PATH="$title_quit_scratch/config.toml" \
+FIRESTAFF_AUTOTEST=1 FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME=1 \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$title_quit_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
+    --width 1920 --height 1080 --menu --game dm1 --platform amiga \
+    --data-dir "$archive" \
+    --script 'wait20,click:700:262,wait20,click:410:679,wait20,click:450:405,wait20' \
+    --duration 10000 >"$title_quit_trace" 2>&1 || {
+        cat "$title_quit_trace" >&2
+        exit 1
+    }
+if ! grep -Fq \
+        'AUTOTEST: DM1 Amiga title quit injected after first rendered frame' \
+        "$title_quit_trace" ||
+   grep -qi 'launch failed' "$title_quit_trace" ||
+   grep -Fq 'phase=entrance-f0441' "$title_quit_trace" ||
+   grep -Fq 'phase=entrance-door' "$title_quit_trace"; then
+    cat "$title_quit_trace" >&2
+    printf '%s\n' 'FAIL: Amiga title quit did not stop the startup handoff cleanly' >&2
+    exit 1
+fi
+python3 - "$title_quit_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+if probe.get("launchedEver") != 1 or probe.get("active") != 0:
+    raise SystemExit(f"FAIL: Amiga title quit did not exit cleanly: {probe}")
+print("PASS: authentic DM1 Amiga M12 quit exits after the first title frame")
 PY
 
 # Keep M12 active through the native IMG2 handoff. Require the authenticated

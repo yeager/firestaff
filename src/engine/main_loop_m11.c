@@ -3265,13 +3265,26 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
  * the renderer's VSync wait to every period and slows Amiga title frames on
  * 60 Hz desktop displays. Absolute deadlines let a VSync present count toward
  * the source interval while preserving the original 20 ms cadence. */
-static int m11_wait_for_intro_active_tick(Uint64 deadlineMs) {
-    if (g_m11_intro_delay_fast_forward) return M11_Render_PumpEvents();
+static int m11_wait_for_intro_active_tick(Uint64 deadlineMs,
+                                          int *outQuitRequested) {
+    if (g_m11_intro_delay_fast_forward) {
+        const int quit = M11_Render_PumpEvents();
+        if (quit && outQuitRequested) *outQuitRequested = 1;
+        return quit;
+    }
     for (;;) {
         Uint64 nowMs;
         unsigned int remainingMs;
-        if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) return 1;
-        if (M11_Render_PumpEvents()) return 1;
+        if (m11_phase_duration_expired()) return 1;
+        if (m11_intro_wait_for_focus()) {
+            if (outQuitRequested && !m11_phase_duration_expired())
+                *outQuitRequested = 1;
+            return 1;
+        }
+        if (M11_Render_PumpEvents()) {
+            if (outQuitRequested) *outQuitRequested = 1;
+            return 1;
+        }
         nowMs = m11_intro_active_ticks();
         if (nowMs >= deadlineMs) return 0;
         remainingMs = (unsigned int)(deadlineMs - nowMs);
@@ -3284,10 +3297,12 @@ static int m11_wait_for_intro_active_tick(Uint64 deadlineMs) {
  * renderer is not beam-synchronised, so represent that source event on the
  * original PAL 50 Hz clock. Keep a single absolute deadline to avoid adding
  * the host Present interval to every source frame. */
-static int m11_dm1_amiga_wait_bovp(Uint64* nextVblankMs) {
+static int m11_dm1_amiga_wait_bovp(Uint64* nextVblankMs,
+                                   int *outQuitRequested) {
     if (!nextVblankMs) return 0;
     *nextVblankMs += 20u;
-    return m11_wait_for_intro_active_tick(*nextVblankMs) == 0;
+    return m11_wait_for_intro_active_tick(*nextVblankMs,
+                                          outQuitRequested) == 0;
 }
 
 /* ReDMCSB NECIO.C F0022 lines 3592-3609 and TITLE.C F0437 lines 319-409:
@@ -3590,7 +3605,8 @@ static int m11_dm1_amiga_present_entrance_palette(
 static int m11_dm1_amiga_fade_title_palette(
     const uint16_t source[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES],
     const uint16_t target[DM1_V1_AMIGA_TITLE_RGB4_ENTRIES],
-    uint8_t* framebuffer) {
+    uint8_t* framebuffer,
+    int *outQuitRequested) {
     DM1_V1_AmigaRgb4Palette sourcePalette = {
         source, DM1_V1_AMIGA_TITLE_RGB4_ENTRIES, 1, 1, 1
     };
@@ -3607,7 +3623,8 @@ static int m11_dm1_amiga_fade_title_palette(
     }
     for (frame = 0u; frame < DM1_V1_AMIGA_RGB4_FADE_FRAMES; ++frame) {
         nextVblankMs += 20u;
-        if (m11_wait_for_intro_active_tick(nextVblankMs) ||
+        if (m11_wait_for_intro_active_tick(nextVblankMs,
+                                           outQuitRequested) ||
             !dm1_v1_amiga_palette_fade_step(&fade, &step) ||
             !m11_dm1_amiga_present_title_palette(step.rgb4, framebuffer)) {
             return 0;
@@ -3619,7 +3636,8 @@ static int m11_dm1_amiga_fade_title_palette(
 static int m11_play_dm1_amiga_title_f0437_if_available(
     const M12_StartupMenuState* menuState,
     const M12_MenuEntry* entry,
-    M11_GameViewState* gameView) {
+    M11_GameViewState* gameView,
+    int *outQuitRequested) {
     int versionIndex;
     const M12_AssetVersionStatus* version;
     char swooshPath[FSP_PATH_MAX];
@@ -3647,6 +3665,9 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     Uint64 nextSourceVblankMs = 0u;
     unsigned int paletteFadeCount = 0u;
     int completed = 0;
+    int autotestQuitInjected = 0;
+
+    if (outQuitRequested) *outQuitRequested = 0;
 
     if (!menuState || !entry || !entry->gameId ||
         strcmp(entry->gameId, "dm1") != 0 || !gameView ||
@@ -3719,7 +3740,8 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
         /* ReDMCSB TITLE.C F0437 A20 lines 113-124 first fades the preceding
          * SWSH image to the dark-blue palette, then fills the screen. */
         if (!m11_dm1_amiga_fade_title_palette(
-                activePalette, receipt.initial_palette, framebuffer)) {
+                activePalette, receipt.initial_palette, framebuffer,
+                outQuitRequested)) {
             goto cleanup;
         }
         ++paletteFadeCount;
@@ -3727,7 +3749,8 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
                sizeof(activePalette));
     }
     nextSourceVblankMs = m11_intro_active_ticks();
-    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs,
+                                 outQuitRequested)) goto cleanup;
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                   M11_FB_HEIGHT) != M11_RENDER_OK) {
@@ -3738,7 +3761,8 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
            c001 + (size_t)receipt.presents_source_y * M11_FB_WIDTH,
            (size_t)M11_FB_WIDTH * receipt.presents_source_height);
     if (!m11_dm1_amiga_fade_title_palette(
-            activePalette, receipt.presents_palette, framebuffer)) {
+            activePalette, receipt.presents_palette, framebuffer,
+            outQuitRequested)) {
         goto cleanup;
     }
     ++paletteFadeCount;
@@ -3746,20 +3770,23 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     /* ReDMCSB TITLE.C F0437 A20 lines 171-184 fades PRESENTS back to
      * dark blue and clears it before the zoom palette is installed. */
     if (!m11_dm1_amiga_fade_title_palette(
-            activePalette, receipt.initial_palette, framebuffer)) {
+            activePalette, receipt.initial_palette, framebuffer,
+            outQuitRequested)) {
         goto cleanup;
     }
     ++paletteFadeCount;
     memcpy(activePalette, receipt.initial_palette, sizeof(activePalette));
     nextSourceVblankMs = m11_intro_active_ticks();
-    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs,
+                                 outQuitRequested)) goto cleanup;
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                   M11_FB_HEIGHT) != M11_RENDER_OK) {
         goto cleanup;
     }
     if (!m11_dm1_amiga_fade_title_palette(
-            activePalette, receipt.zoom_palette, framebuffer)) {
+            activePalette, receipt.zoom_palette, framebuffer,
+            outQuitRequested)) {
         goto cleanup;
     }
     ++paletteFadeCount;
@@ -3784,7 +3811,8 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
                 &receipt, stepIndex, &step)) {
             goto cleanup;
         }
-        if (m11_wait_for_intro_active_tick(nextZoomFrameMs)) {
+        if (m11_wait_for_intro_active_tick(nextZoomFrameMs,
+                                           outQuitRequested)) {
             goto cleanup;
         }
         presentStartedMs = m11_intro_active_ticks();
@@ -3805,6 +3833,27 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
                                       M11_FB_HEIGHT) != M11_RENDER_OK) {
             goto cleanup;
         }
+        /* TITLE.C F0437's first Amiga C001 zoom blit is the first distinct
+         * source frame. Keep the close injection scoped to this event so the
+         * regression follows the real title wait and cleanup path. */
+        if (stepIndex == 0u && !autotestQuitInjected &&
+            getenv("FIRESTAFF_AUTOTEST") &&
+            getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME"),
+                   "1") == 0) {
+            SDL_Event event;
+            memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            event.type = SDL_EVENT_QUIT;
+#else
+            event.type = SDL_QUIT;
+#endif
+            if (SDL_PushEvent(&event)) {
+                autotestQuitInjected = 1;
+                fprintf(stderr,
+                        "AUTOTEST: DM1 Amiga title quit injected after first rendered frame\n");
+            }
+        }
         presentReturnedMs = m11_intro_active_ticks();
         if (g_m11_debug_startup_detail) {
             fprintf(stderr,
@@ -3822,10 +3871,13 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     nextSourceVblankMs = holdStartedMs;
     if (m11_delay_ms_with_intro_event_pump(
             receipt.source_delay_ticks * 20u)) {
+        if (outQuitRequested && !m11_phase_duration_expired())
+            *outQuitRequested = 1;
         goto cleanup;
     }
     holdElapsedMs = m11_intro_active_ticks() - holdStartedMs;
-    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs,
+                                 outQuitRequested)) goto cleanup;
     {
         unsigned int y;
         for (y = 0u; y < receipt.master_source_height; ++y) {
@@ -3840,10 +3892,12 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
         }
     }
     nextSourceVblankMs = m11_intro_active_ticks();
-    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs)) goto cleanup;
+    if (!m11_dm1_amiga_wait_bovp(&nextSourceVblankMs,
+                                 outQuitRequested)) goto cleanup;
     finalFadeStartedMs = m11_intro_active_ticks();
     if (!m11_dm1_amiga_fade_title_palette(
-            activePalette, receipt.final_palette, framebuffer)) {
+            activePalette, receipt.final_palette, framebuffer,
+            outQuitRequested)) {
         goto cleanup;
     }
     ++paletteFadeCount;
@@ -4651,6 +4705,7 @@ typedef struct M11_DM1StartupHandoffContext {
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 activePostLaunchPlan;
     int activePreludePlanValid;
     int activePostLaunchPlanValid;
+    int titleQuitRequested;
 } M11_DM1StartupHandoffContext;
 
 static int m11_dm1_handoff_report_source_order_failure(void* user,
@@ -4767,9 +4822,12 @@ static int m11_dm1_handoff_play_title(void* user,
          strcmp(version->versionId, "amiga21-en") == 0 ||
          strcmp(version->versionId, "amiga-demo-en") == 0) &&
         strstr(version->matchedPath, "[HD]") == NULL) {
+        int quitRequested = 0;
         const int played = m11_play_dm1_amiga_title_f0437_if_available(
-            ctx->menuState, ctx->launchEntry, ctx->gameView);
-        if (played <= 0 && g_m11_debug_startup_detail) {
+            ctx->menuState, ctx->launchEntry, ctx->gameView,
+            &quitRequested);
+        if (quitRequested) ctx->titleQuitRequested = 1;
+        if (!quitRequested && played <= 0 && g_m11_debug_startup_detail) {
             fprintf(stderr,
                     "firestaff: startup-source-rejected game=dm1 phase=title-f0437 edition=%s assets=%d graphics=%s\n",
                     version->versionId,
@@ -5433,6 +5491,13 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                 &dm1SelectedLaunchCallbacks,
                 &dm1SelectedLaunchResult)) {
             g_m11_intro_delay_fast_forward = oldFastForward;
+            if (dm1HandoffContext.titleQuitRequested) {
+                M11_GameView_Shutdown(gameView);
+                M11_GameView_Init(gameView);
+                menuState->launchRequested = 0;
+                menuState->shouldExit = 1;
+                return 1;
+            }
             m11_set_launch_failed_message(menuState);
             return 0;
         }
