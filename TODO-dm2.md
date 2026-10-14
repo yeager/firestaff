@@ -22,6 +22,15 @@ M4 build and covers 2x Retina drawable geometry, independent X/Y scale ratios,
 and logical mouse mapping. This verifies the shared mapping arithmetic, not a
 live DM2 Retina window or physical M5 rendering.
 
+2026-10-14 full authentic-media DM2 CLI matrix rerun on the Mac mini M4:
+`dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
+`dm2_v1_mac_native_cli_boot`, `dm2_v1_amiga_native_cli_boot` and
+`dm2_v1_fmtowns_native_cli_boot` passed 5/5 in 447.08 seconds. The binary was
+built from `67b4731ca`; current `288866b69` adds documentation only. These
+tests exercise authentic startup/runtime frames, platform HUD and viewport
+regions, and scripted input. They use SDL dummy video/audio and do not prove
+physical M5 HiDPI output or full visual parity.
+
 2026-10-14 M4 real-media startup retest: `test_dm2_v1_mac_native_cli_boot.sh`
 passed using the authenticated Macintosh retail ZIP. The direct launch and
 AUTO selection retained Macintosh assets; the scripted M12 route completed
