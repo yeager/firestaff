@@ -179,6 +179,49 @@ if probe.get("launchedEver") != 1 or probe.get("active") != 0:
 print("PASS: authentic DM1 Amiga M12 quit exits after the first title frame")
 PY
 
+# A close during the preceding Amiga SWSH prelude must also exit cleanly and
+# stop before TITLE or F0441 Entrance begins.
+swsh_quit_home="$title_quit_scratch/swsh-home"
+swsh_quit_probe="$title_quit_scratch/swsh-runtime.json"
+swsh_quit_trace="$title_quit_scratch/swsh-startup.log"
+mkdir -p "$swsh_quit_home"
+HOME="$swsh_quit_home" XDG_CONFIG_HOME="$swsh_quit_home" \
+FIRESTAFF_CONFIG_PATH="$title_quit_scratch/swsh-config.toml" \
+FIRESTAFF_AUTOTEST=1 FIRESTAFF_AUTOTEST_DM1_SWSH_QUIT_AFTER_FRAME=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$swsh_quit_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --debug --width 1920 --height 1080 --menu --game dm1 --platform amiga \
+    --data-dir "$archive" \
+    --script 'wait20,click:700:262,wait20,click:410:679,wait20,click:450:405,wait20' \
+    --duration 10000 >"$swsh_quit_trace" 2>&1 || {
+        cat "$swsh_quit_trace" >&2
+        exit 1
+    }
+if ! grep -Fq \
+        'AUTOTEST: DM1 SWSH quit injected after first rendered frame' \
+        "$swsh_quit_trace" ||
+   ! grep -Fq \
+        'startup-source-quit game=dm1 phase=swsh-intro action=exit' \
+        "$swsh_quit_trace" ||
+   grep -qi 'launch failed' "$swsh_quit_trace" ||
+   grep -Fq 'phase=title-f0437' "$swsh_quit_trace" ||
+   grep -Fq 'phase=entrance-f0441' "$swsh_quit_trace" ||
+   grep -Fq 'phase=entrance-door' "$swsh_quit_trace"; then
+    cat "$swsh_quit_trace" >&2
+    printf '%s\n' 'FAIL: Amiga SWSH quit did not stop the startup handoff cleanly' >&2
+    exit 1
+fi
+python3 - "$swsh_quit_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+if probe.get("active") != 0:
+    raise SystemExit(f"FAIL: Amiga SWSH quit left the game active: {probe}")
+print("PASS: authentic DM1 Amiga SWSH quit exits before TITLE")
+PY
+
 # Keep M12 active through the native IMG2 handoff. Require the authenticated
 # Amiga SWSH profile, the complete C001 title, and the source-owned Hall frame;
 # a generic launch-ready line alone must not mask a skipped startup phase.

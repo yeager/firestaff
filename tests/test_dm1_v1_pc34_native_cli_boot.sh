@@ -60,6 +60,44 @@ PY
 rm -f "$title_quit_probe"
 rm -rf "$title_quit_home"
 
+# A host quit during the earlier SWSH logo is also a normal exit. This is a
+# distinct M12 boundary from the C001 title interruption tested above.
+swsh_quit_home="$test_scratch/dm1-pc34-swsh-quit-home-$$"
+swsh_quit_probe="$test_scratch/dm1-pc34-swsh-quit-$$.json"
+mkdir -p "$swsh_quit_home"
+swsh_quit_output=$(HOME="$swsh_quit_home" XDG_CONFIG_HOME="$swsh_quit_home" \
+    APPDATA="$swsh_quit_home" FIRESTAFF_CONFIG_PATH="$swsh_quit_home/config.toml" \
+    FIRESTAFF_AUTOTEST=1 FIRESTAFF_AUTOTEST_DM1_SWSH_QUIT_AFTER_FRAME=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$swsh_quit_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --debug --menu --game dm1 --platform pc --data-dir "$archive" \
+    --script "$menu_original" --duration 10000 2>&1) || {
+        printf '%s\n' "$swsh_quit_output" >&2
+        exit 1
+    }
+if ! grep -Fq 'AUTOTEST: DM1 SWSH quit injected after first rendered frame' \
+        <<< "$swsh_quit_output" ||
+   ! grep -Fq 'startup-source-quit game=dm1 phase=swsh-intro action=exit' \
+        <<< "$swsh_quit_output" ||
+   grep -qi 'launch failed' <<< "$swsh_quit_output" ||
+   grep -Fq 'AUTOTEST: DM1 C001 quit injected' <<< "$swsh_quit_output"; then
+    printf '%s\n' "$swsh_quit_output" >&2
+    printf '%s\n' 'FAIL: PC-34 SWSH quit was not handled as a clean startup exit' >&2
+    exit 1
+fi
+python3 - "$swsh_quit_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+if probe.get("active") != 0:
+    raise SystemExit(f"FAIL: PC-34 SWSH quit left the game active: {probe}")
+print("PASS: authentic PC-34 SWSH host quit exits without entering TITLE")
+PY
+rm -f "$swsh_quit_probe"
+rm -rf "$swsh_quit_home"
+
 # Keep a private copy of the authentic archive with its optional SWSH logo
 # removed. The original loader continues to FTL_ANIM if FTL_SWSH fails, so the
 # authenticated graphics/dungeon pair must remain playable without the logo.

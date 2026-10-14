@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-14 startup interruption: closing the host window during the source
+SWSH prelude previously looked like a corrupt launch, although the same event
+after the title was already handled as a clean exit. M11 now carries the
+prelude's quit result through the DM1 selected-launch transaction and exits
+without opening TITLE or Entrance. Authentic PC 3.4 and Amiga 2.0 regressions
+inject a close after the first SWSH frame and check that runtime never starts;
+their existing title-close checks remain in place. These SDL dummy-driver
+checks verify interruption handling and source order, not native window event
+delivery or visual parity.
+
 2026-10-14 FM Towns title interruption fix on the Mac mini M4: closing the
 host window after the first authentic EDM title frame previously returned
 the same truthy result as a completed title. The caller then continued into

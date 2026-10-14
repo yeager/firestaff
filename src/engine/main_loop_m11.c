@@ -2092,6 +2092,7 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
 
 static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
+static int g_m11_startup_intro_quit_requested = 0;
 static int g_m11_debug_startup_detail = 0;
 static Uint32 g_m11_phase_duration_started_ms;
 static int g_m11_phase_duration_ms = -1;
@@ -2236,7 +2237,11 @@ static int m11_intro_wait_for_focus_impl(void) {
     while (!(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS)) {
         /* Pump quit/resize while suspended; no source animation advances. */
         if (m11_phase_duration_expired()) { quit = 1; break; }
-        if (M11_Render_PumpEvents()) { quit = 1; break; }
+        if (M11_Render_PumpEvents()) {
+            g_m11_startup_intro_quit_requested = 1;
+            quit = 1;
+            break;
+        }
         SDL_Delay(10U);
         SDL_PumpEvents();
     }
@@ -3238,10 +3243,14 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     if (m11_phase_duration_expired()) return 1;
     if (m11_intro_wait_for_focus()) return 1;
     if (g_m11_intro_delay_fast_forward) {
-        return M11_Render_PumpEvents();
+        const int quit = M11_Render_PumpEvents();
+        if (quit) g_m11_startup_intro_quit_requested = 1;
+        return quit;
     }
     if (delayMs == 0U) {
-        return M11_Render_PumpEvents();
+        const int quit = M11_Render_PumpEvents();
+        if (quit) g_m11_startup_intro_quit_requested = 1;
+        return quit;
     }
     start = m11_intro_active_ticks();
     while ((m11_intro_active_ticks() - start) < (Uint64)delayMs) {
@@ -3249,6 +3258,7 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
         unsigned int remaining;
         if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) return 1;
         if (M11_Render_PumpEvents()) {
+            g_m11_startup_intro_quit_requested = 1;
             return 1;
         }
         elapsed = m11_intro_active_ticks() - start;
@@ -3259,6 +3269,25 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
         SDL_Delay(remaining > 10U ? 10U : remaining);
     }
     return 0;
+}
+
+static void m11_autotest_dm1_swsh_quit_after_first_frame(void) {
+    if (getenv("FIRESTAFF_AUTOTEST") &&
+        getenv("FIRESTAFF_AUTOTEST_DM1_SWSH_QUIT_AFTER_FRAME") &&
+        strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_SWSH_QUIT_AFTER_FRAME"),
+               "1") == 0) {
+        SDL_Event event;
+        memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        event.type = SDL_EVENT_QUIT;
+#else
+        event.type = SDL_QUIT;
+#endif
+        if (SDL_PushEvent(&event)) {
+            fprintf(stderr,
+                    "AUTOTEST: DM1 SWSH quit injected after first rendered frame\n");
+        }
+    }
 }
 
 /* Keep source 50 Hz animation events on one clock. A delay after Present adds
@@ -3339,6 +3368,7 @@ static int m11_prepare_swsh_source_clock_after_launcher_handoff(
         return 0;
     }
     if (M11_Render_PumpEvents()) {
+        g_m11_startup_intro_quit_requested = 1;
         return 0;
     }
     if (vblankMs != 0U && m11_delay_ms_with_intro_event_pump(vblankMs)) {
@@ -3965,6 +3995,7 @@ static int m11_play_dm1_amiga_swsh_if_available(
          DM1_V1_AMIGA_SWSH_PAULA_PERIOD * 1000u + 3579544u) / 3579545u;
 
     g_m11_dm1_amiga_swsh_palette_valid = 0;
+    g_m11_startup_intro_quit_requested = 0;
     if (!menuState || !entry || !entry->gameId ||
         strcmp(entry->gameId, "dm1") != 0) return -1;
     versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
@@ -3998,8 +4029,11 @@ static int m11_play_dm1_amiga_swsh_if_available(
     memset(palette, 0, sizeof(palette));
     m11_swsh_indexed_to_rgba(indexed, rgba, palette);
     if (M11_Render_PresentRGBA(rgba, DM1_V1_AMIGA_SWSH_WIDTH,
-                               DM1_V1_AMIGA_SWSH_HEIGHT) != M11_RENDER_OK ||
-        !m11_prepare_swsh_source_clock_after_launcher_handoff(
+                               DM1_V1_AMIGA_SWSH_HEIGHT) != M11_RENDER_OK) {
+        goto cleanup;
+    }
+    m11_autotest_dm1_swsh_quit_after_first_frame();
+    if (!m11_prepare_swsh_source_clock_after_launcher_handoff(
             rgba, DM1_V1_AMIGA_SWSH_WIDTH, DM1_V1_AMIGA_SWSH_HEIGHT,
             vblankMs)) {
         goto cleanup;
@@ -4023,9 +4057,12 @@ static int m11_play_dm1_amiga_swsh_if_available(
          eventIndex < DM1_V1_AMIGA_SWSH_PALETTE_PAIRS; ++eventIndex) {
         int paletteIndex;
         unsigned int value;
-        if (M11_Render_PumpEvents() ||
-            !dm1_v1_amiga_swsh_palette_event(&assets, eventIndex,
-                                             &paletteIndex, &value)) {
+        if (M11_Render_PumpEvents()) {
+            g_m11_startup_intro_quit_requested = 1;
+            goto cleanup;
+        }
+        if (!dm1_v1_amiga_swsh_palette_event(&assets, eventIndex,
+                                            &paletteIndex, &value)) {
             goto cleanup;
         }
         if (paletteIndex >= 0) {
@@ -4131,6 +4168,7 @@ static int m11_play_ftl_swoosh_for_game_if_available(
     CSB_V1_BootProfile csbBoot;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
+    g_m11_startup_intro_quit_requested = 0;
     if (skipSwoosh) return 1;
     /* SWSH is a source-owned prelude, not a V2 post-process input.  A prior
      * Modern session can otherwise leave its target/palette state latched
@@ -4267,8 +4305,11 @@ static int m11_play_ftl_swoosh_for_game_if_available(
                   : SWSH_COMPAT_RUNTIME_VBLANK_MS;
           m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
           if (M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH,
-                                     M11_FB_HEIGHT) != M11_RENDER_OK ||
-              !m11_prepare_swsh_source_clock_after_launcher_handoff(
+                                     M11_FB_HEIGHT) != M11_RENDER_OK) {
+              goto cleanup;
+          }
+          m11_autotest_dm1_swsh_quit_after_first_frame();
+          if (!m11_prepare_swsh_source_clock_after_launcher_handoff(
                   screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT, vblankMs) ||
               m11_delay_ms_with_intro_event_pump(initialHoldMs)) {
               goto cleanup;
@@ -4276,7 +4317,10 @@ static int m11_play_ftl_swoosh_for_game_if_available(
       }
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
           SWSH_CompatSourceAnimationStep step;
-          if (M11_Render_PumpEvents()) goto cleanup;
+          if (M11_Render_PumpEvents()) {
+              g_m11_startup_intro_quit_requested = 1;
+              goto cleanup;
+          }
           if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) goto cleanup;
           if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
               SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
@@ -4706,6 +4750,7 @@ typedef struct M11_DM1StartupHandoffContext {
     int activePreludePlanValid;
     int activePostLaunchPlanValid;
     int titleQuitRequested;
+    int startupQuitRequested;
 } M11_DM1StartupHandoffContext;
 
 static int m11_dm1_handoff_report_source_order_failure(void* user,
@@ -4782,11 +4827,19 @@ static int m11_dm1_handoff_play_swsh(void* user,
         ctx ? ctx->menuState : NULL,
         ctx ? ctx->launchEntry : NULL,
         preserve_audio);
-    if (amigaResult >= 0) return amigaResult;
-    return m11_play_ftl_swoosh_if_available(ctx ? ctx->menuState : NULL,
-                                            ctx ? ctx->dataDir : NULL,
-                                            preserve_audio,
-                                            media);
+    if (amigaResult >= 0) {
+        if (!amigaResult && ctx && g_m11_startup_intro_quit_requested)
+            ctx->startupQuitRequested = 1;
+        return amigaResult;
+    }
+    {
+        int result = m11_play_ftl_swoosh_if_available(
+            ctx ? ctx->menuState : NULL, ctx ? ctx->dataDir : NULL,
+            preserve_audio, media);
+        if (!result && ctx && g_m11_startup_intro_quit_requested)
+            ctx->startupQuitRequested = 1;
+        return result;
+    }
 }
 
 static int m11_dm1_handoff_discard_presentation_texture(void* user) {
@@ -5491,7 +5544,13 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                 &dm1SelectedLaunchCallbacks,
                 &dm1SelectedLaunchResult)) {
             g_m11_intro_delay_fast_forward = oldFastForward;
-            if (dm1HandoffContext.titleQuitRequested) {
+            if (dm1HandoffContext.titleQuitRequested ||
+                dm1HandoffContext.startupQuitRequested) {
+                if (dm1HandoffContext.startupQuitRequested &&
+                    g_m11_debug_startup_detail) {
+                    fprintf(stderr,
+                            "firestaff: startup-source-quit game=dm1 phase=swsh-intro action=exit\n");
+                }
                 M11_GameView_Shutdown(gameView);
                 M11_GameView_Init(gameView);
                 menuState->launchRequested = 0;
