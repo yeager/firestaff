@@ -1,5 +1,15 @@
 # Firestaff TODO — DM2
 
+2026-10-14 post-push HUD and viewport verification on the Mac mini M4,
+against `main` after commit `d07e3b3a0`: the five authentic-media CLI routes
+(DOS English, DOS French, Macintosh, Amiga and FM Towns),
+`dm2_v1_dm2_viewport_m11_live_enumeration` and
+`dm2_v1_fmtowns_hud_portraits_real_data` passed 7/7. The long-running routes
+checked source-owned HUD/viewport regions and scripted movement. Total CTest
+wall time was 351.30 seconds. This uses SDL dummy video/audio on one ARM64 Mac
+host and does not verify native Windows/Linux presentation, physical M5 Retina
+output, GPU rendering or full pixel parity.
+
 2026-10-14 current-source authentic-media retest on the Mac mini M4:
 `dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
 `dm2_v1_mac_native_cli_boot`, `dm2_v1_amiga_native_cli_boot`,
