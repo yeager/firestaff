@@ -1,5 +1,26 @@
 # Firestaff TODO — DM1
 
+2026-10-14 native Cocoa retest on the Mac mini M4 with authenticated FM Towns
+media: bare `--game dm1 --debug` selected FM Towns under AUTO and completed all
+20 title frames. The title trace used PRESENTS, DUNGEON+MASTER, then MASTER;
+frame 19 appeared at 423 ms and the complete title transaction took 1,641 ms,
+including the configured 1,200 ms readability hold. A separate native
+`--platform fm-towns` run accepted Return, presented all 31 entrance-door
+frames at 16–18 ms intervals, and reached the first runtime frame at map 0,
+party `(1,3)`, direction 2. Cocoa reported 1900×998 and 1920×1018
+window/drawable pairs across the two runs, so this does not verify Retina
+HiDPI output. The palette phase and frame cadence match the source in this M4
+run, but a timing trace alone does not rule out perceived judder or verify the
+exact release the user tested. The reported visual issue remains open pending
+frame-by-frame evidence from that route.
+
+The same native M4 build also completed `--game dm1 --platform pc --debug`
+using the authentic PC 3.4 loose `GRAPHICS.DAT` and matching `DUNGEON.DAT`
+under the installed `dos_extract` tree. It completed all 23 C001 title steps
+in 4,045 ms and reached the first runtime frame. This verifies that this M4
+data layout does not reproduce issue #13; it does not reproduce the reporter's
+Linux host or close that issue's reported failure.
+
 2026-10-14 PC 3.4 title timing diagnostics: `--debug` now emits all 23
 source-owned C001 title events with requested and observed waits, presentation
 time, total elapsed time and fast-forward state. The authentic PC 3.4 M12
