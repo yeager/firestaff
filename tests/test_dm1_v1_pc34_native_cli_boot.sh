@@ -280,6 +280,67 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 print("PASS: authentic DM1 PC-34 loose media in ~/.firestaff/data/dm1 reaches runtime without --data-dir")
 PY
 rm -rf "$default_loose_home"
+
+# Issue #13's reported install root contains several editions side by side.
+# Keep the authenticated loose PC-34 pair in ~/.firestaff/data/dm1 and expose
+# the original ZIPs from its source directory so scanning sees real mixed
+# media while `--game dm1 --platform pc` still has to bind the PC dungeon.
+mixed_media_home="$test_scratch/dm1-pc34-mixed-default-$$"
+mixed_media_data="$mixed_media_home/.firestaff/data/dm1"
+mixed_media_pc34="$mixed_media_data/dos_extract/Dungeon-Master_DOS_EN_Version-34"
+mixed_media_probe="$mixed_media_home/runtime.json"
+mkdir -p "$mixed_media_pc34"
+cp -R "$missing_swsh_root/data/." "$mixed_media_pc34/"
+archive_source_dir=$(cd "$(dirname "$archive")" && pwd)
+for sibling_archive in "$archive_source_dir"/*.zip; do
+    [[ -f "$sibling_archive" ]] || continue
+    ln -s "$sibling_archive" \
+        "$mixed_media_data/$(basename "$sibling_archive")"
+done
+mixed_media_output="$(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$mixed_media_home" XDG_CONFIG_HOME="$mixed_media_home/.config" \
+    APPDATA="$mixed_media_home" \
+    FIRESTAFF_CONFIG_PATH="$mixed_media_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$mixed_media_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --platform pc --debug --script "$menu_original" \
+        --boot-probe --boot-probe-frames 120 --duration 0 2>&1
+)" || {
+    printf '%s\n' "$mixed_media_output" >&2
+    exit 1
+}
+if ! grep -Fq \
+        "dm1 platform=PC edition=pc34-en matched source=$mixed_media_pc34/DATA/GRAPHICS.DAT" \
+        <<< "$mixed_media_output" ||
+   ! grep -Fq \
+        "LOADING DUNGEON: [$mixed_media_pc34/DATA/DUNGEON.DAT]" \
+        <<< "$mixed_media_output" ||
+   ! grep -Fq "dataDir=$mixed_media_pc34/DATA" <<< "$mixed_media_output" ||
+   ! grep -Fq 'handoff=pc-img3' <<< "$mixed_media_output" ||
+   ! grep -Fq 'phase=dm1-runtime' <<< "$mixed_media_output" ||
+   ! grep -Fq 'levelLoaded=1' <<< "$mixed_media_output"; then
+    printf '%s\n' "$mixed_media_output" >&2
+    echo 'FAIL: mixed installed DM1 media did not bind PC-34 English graphics to its matching DUNGEON.DAT' >&2
+    exit 1
+fi
+python3 - "$mixed_media_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["sourceId"] != "dm1" or startup["phase"] != "dm1-runtime" or
+        startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1):
+    raise SystemExit(f"FAIL: issue #13 mixed-media route did not load PC-34: {probe}")
+print("PASS: issue #13 mixed installed data root selects the matching PC-34 DUNGEON.DAT")
+PY
+rm -rf "$mixed_media_home"
+
 python3 - "$missing_swsh_root/data" <<'PY'
 from pathlib import Path
 import sys

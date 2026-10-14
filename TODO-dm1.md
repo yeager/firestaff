@@ -9,6 +9,12 @@ PC 3.4 English graphics from `dos_extract` and loaded that edition's matching
 or prove a release fix. Issue #13 remains closed; the reporter explicitly
 asked not to reopen it. The French DOS ZIP menu regression also passed after
 its scripted Enter presses were spaced across startup frames (45.04 seconds).
+The PC34 CLI regression now also stages the authentic loose release under
+`~/.firestaff/data/dm1/dos_extract` beside the original sibling ZIPs, then
+starts with `--game dm1 --platform pc` and no `--data-dir`. It passed in
+373.10 seconds and asserted the selected PC 3.4 `GRAPHICS.DAT`, matching
+`DUNGEON.DAT`, PC handoff, and loaded runtime. This guards the mixed-media
+discovery route but still does not reproduce the reporter's Linux release.
 
 2026-10-14 current-main runtime retest on the Mac mini M4:
 `dm1_v1_pc34_native_cli_boot` passed in 356.45 seconds using authentic PC 3.4
