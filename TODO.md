@@ -18,6 +18,10 @@
   The companion 2026-10-14 `direct-exit` variant also passed for DM1, CSB and
   DM2: a direct `--game` launch exits after Return to Menu without reopening
   the launcher.
+  `return_to_menu_rescans_media_mutations_real_media` passed in 94.22 seconds:
+  removing CSB media during authentic DM1 gameplay made CSB unavailable after
+  return while DM1 and DM2 remained available; adding the original CSB archive
+  during gameplay made it available on return.
 
 - Extend selected-root M12-to-M11 launch verification beyond the original-media
   DM1 PC 3.4, CSB FM Towns and DM2 DOS cases to other supported editions and
