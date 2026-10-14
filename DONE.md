@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-14: Re-ran the authentic DM1 PC 3.4, CSB FM Towns and DM2 FM Towns
+  startup suites on the current macOS M4 build. Each direct `--game` route
+  and M12 start-menu route reached a source-owned runtime using the installed
+  original media. DM1 also passed its title, entrance and Hall input checks;
+  CSB reached its original `MINI.DAT` party; DM2 reached the original New Game
+  menu and first champion. These results cover the tested editions and do not
+  close the other platform, Nexus or Theron startup gaps in `TODO.md`.
+
 - 2026-10-13: Fixed the shared M11 loop pacing so VSync presentation counts
   toward the 16 ms frame period instead of being followed by a second full
   delay. Cached the M12 1920x1080 decorative backdrop for alternating menu
