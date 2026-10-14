@@ -8196,17 +8196,26 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     /* LOAD_GDAT_INTERFACE_00_02 is optional in the original programs.
      * SKProject's _32cb_0804 consequently takes the non-0b36 palette path
-     * when its dt07/2 entry is not loadable.  HME-242 has no such GDAT
-     * entry: its image-local palette is already the source-owned physical
-     * palette.  Keep that exact palette instead of borrowing PC dt07/2 or
-     * rejecting the authenticated indoor frame. */
+     * when its dt07/2 entry is not loadable. HME-242 U4 planes use the
+     * active physical palette. Amiga v5 IMG3 planes carry a source-local
+     * 16-colour palette. Keep each native palette domain instead of
+     * borrowing the PC-only dt07/2 table or rejecting the indoor frame. */
     if (!dm2_v1_boot_interface_action_table(profile, &table)) {
-        if (profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
+        if (profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
+            profile->platform == DM2_PLATFORM_AMIGA_EN) {
             candidate = *plan;
+            int native_plane_count = 0;
             for (size_t i = 0u; i < 2u; ++i) {
                 DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
-                if (command->format == DM2_IMG_FMT_U4 &&
-                    command->physical_palette_indices) {
+                int native_palette_plane =
+                    (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+                     command->format == DM2_IMG_FMT_U4 &&
+                     command->physical_palette_indices) ||
+                    (profile->platform == DM2_PLATFORM_AMIGA_EN &&
+                     command->format == DM2_IMG_FMT_IMG3 &&
+                     !command->physical_palette_indices);
+                if (native_palette_plane && command->palette_hash != 0u) {
+                    ++native_plane_count;
                     command->palette_translation_field = 0u;
                     command->palette_translation_hash = 0u;
                     command->palette_darkness = 0u;
@@ -8224,7 +8233,8 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
                     command->palette_transform_hash = hash ? hash : 1u;
                 }
             }
-            if (!dm2_v1_gdat_scene_m11_command_plan_refresh_draw_order(
+            if (native_plane_count != 2 ||
+                !dm2_v1_gdat_scene_m11_command_plan_refresh_draw_order(
                     &candidate)) return 0;
             *plan = candidate;
             return 1;

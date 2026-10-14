@@ -91,6 +91,26 @@ pixels = [blob[offset + y * stride + x * 3:offset + y * stride + x * 3 + 3]
           for y in range(height) for x in range(width)]
 if sum(pixel != b"\0\0\0" for pixel in pixels) < 10000 or len(set(pixels)) < 8:
     raise SystemExit("FAIL: DM2 Amiga runtime frame was not visibly presented")
+viewport_pixels = [pixels[y * width + x]
+                   for y in range(40, 176) for x in range(224)]
+if sum(pixel != b"\0\0\0" for pixel in viewport_pixels) < 10000:
+    raise SystemExit(
+        "FAIL: authentic DM2 Amiga dungeon viewport is mostly unpainted; "
+        "expected its source-backed 224x136 RECT_7 aperture to contain the scene")
+floor_pixels = [pixels[y * width + x]
+                for y in range(136, 176) for x in range(224)]
+if sum(pixel != b"\0\0\0" for pixel in floor_pixels) < 5000:
+    raise SystemExit(
+        "FAIL: authentic DM2 Amiga floor is missing from the lower "
+        "RECT_7 aperture")
+top_hud_pixels = [pixels[y * width + x]
+                  for y in range(40) for x in range(224)]
+if sum(pixel != b"\0\0\0" for pixel in top_hud_pixels) < 2000:
+    raise SystemExit("FAIL: authentic DM2 Amiga top HUD is missing")
+right_panel_pixels = [pixels[y * width + x]
+                      for y in range(height) for x in range(224, width)]
+if sum(pixel != b"\0\0\0" for pixel in right_panel_pixels) < 5000:
+    raise SystemExit("FAIL: authentic DM2 Amiga right HUD panel is missing")
 print("PASS: authentic DM2 Amiga start menu reached and presented a runtime frame")
 PY
 

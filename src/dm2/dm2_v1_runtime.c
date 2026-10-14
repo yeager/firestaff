@@ -12777,19 +12777,19 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
-    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the PC, FM Towns and Macintosh indoor
-     * scenes into the local 0xe0x88 bitmap.  Their c_gfx_main
+    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the PC, Amiga, FM Towns and
+     * Macintosh indoor scenes into the local 0xe0x88 bitmap. Their c_gfx_main
      * DM2_DRAWINGS_COMPLETED route copies that exact surface through
      * expanded RECT_7; it does not use the 320x200 HUD as a dungeon scratch
      * buffer. Authenticated retail RECT_7 receipts for PC, Towns and
-     * Macintosh are (0,40,224,136). Treating Mac IMG3/IMG9 scenes as a direct
-     * 320x200 surface left their 224x136 scene at the framebuffer origin,
-     * 40 pixels above the source aperture. Amiga does not yet have a verified
-     * compatible RECT_7 route, so its admitted GDAT surface remains direct. */
+     * Amiga and Macintosh are (0,40,224,136). Treating Amiga/Mac IMG3 scenes
+     * as a direct 320x200 surface left their 224x136 scene at the framebuffer
+     * origin, 40 pixels above the source aperture. */
     use_rect7_backbuffer = rt->boot &&
         (rt->boot->platform == DM2_PLATFORM_PC_EN ||
          rt->boot->platform == DM2_PLATFORM_PC_FR ||
          rt->boot->platform == DM2_PLATFORM_PC_JEWEL ||
+         rt->boot->platform == DM2_PLATFORM_AMIGA_EN ||
          rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA ||
          rt->boot->platform == DM2_PLATFORM_MAC_EN ||
          rt->boot->platform == DM2_PLATFORM_MAC_FR);
@@ -13025,7 +13025,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
              * can still present them. */
             scene_material_plan_for_m11 =
                 (rt->outdoor ||
-                 (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA))
+                 (rt->boot &&
+                  (rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA ||
+                   rt->boot->platform == DM2_PLATFORM_AMIGA_EN)))
                 ? &rt->gdat_scene_material_plan : NULL;
         } else {
             scene_material_plan_for_m11 = &scene_material_plan;

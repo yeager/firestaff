@@ -1319,6 +1319,10 @@ int dm2_v1_asset_load_interface_palette(
     int index,
     int field,
     DM2_V1_InterfacePalette *out_palette);
+/* True when an authenticated big-endian V5 interface palette has only the
+ * original physical 16-color bank; Macintosh V5 uses a 256-color bank. */
+int dm2_v1_asset_loader_uses_physical_16_color_palette(
+    const DM2_V1_AssetLoader *loader);
 
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.

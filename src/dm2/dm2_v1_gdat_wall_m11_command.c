@@ -106,6 +106,19 @@ static int load_graphicsset_wall_local_palette(
         if (out_hash) *out_hash = hash ? hash : 1u;
         return 1;
     }
+    /* Amiga C4 decode expands the six embedded palette entries into the
+     * physical four-bit color indexes already. Its plane tail must not be
+     * applied as another translation; retain Macintosh's 256-color path. */
+    if (dm2_v1_asset_loader_uses_physical_16_color_palette(loader)) {
+        uint32_t hash = 2166136261u;
+        for (unsigned color = 0;
+             color < DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE; ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash = hash_bytes(hash, &out_palette16[color], 1u);
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
     /* FM Towns IMG2/IMG6 has no PC IMG3 local-palette trailer.  Its C4
      * stream is variable length, so the last sixteen bytes are picture
      * payload, never a palette.  The active GRAPHICSSET physical palette

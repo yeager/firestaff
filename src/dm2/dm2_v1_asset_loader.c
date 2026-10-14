@@ -551,6 +551,22 @@ static int dm2_v1_asset_load_image_local_palette(
     if (out_hash) *out_hash = 0u;
     if (!out_palette16) return 0;
     memset(out_palette16, 0, 16u);
+    /* Amiga V5 IMG3 decoding already applies its six in-stream palette
+     * entries to the returned 4-bit pixels (ReDMCSB IMAGE3.C, selector
+     * route). Those values address the Amiga's physical 16-colour palette.
+     * The final 16 bytes are not a second pixel-index translation table;
+     * applying them again maps common scene colors to invalid >15 indices.
+     * Detect the physical palette by its authenticated source record shape
+     * so Macintosh V5 keeps its separate 256-colour local-palette route. */
+    if (dm2_v1_asset_loader_uses_physical_16_color_palette(loader)) {
+        uint32_t hash = 2166136261u;
+        for (int color = 0; color < 16; ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash = (hash ^ out_palette16[color]) * 16777619u;
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
     /* FM Towns GDAT v4 uses IMG2/IMG6.  It has no IMG3 local-palette tail;
      * C4's final bytes are compressed picture data, not a translation table.
      * The source pixels are direct entries in the active GRAPHICSSET palette. */
@@ -4539,6 +4555,26 @@ int dm2_v1_asset_load_interface_palette(
         hash = (hash ^ out_palette->palette16[color]) * 16777619u;
     }
     out_palette->hash = hash ? hash : 1u;
+    return 1;
+}
+
+int dm2_v1_asset_loader_uses_physical_16_color_palette(
+    const DM2_V1_AssetLoader *loader)
+{
+    DM2_V1_InterfacePalette palette;
+    if (!loader || !loader->big_endian || loader->gdat_version != 5u ||
+        !dm2_v1_asset_load_interface_palette(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+            DM2_GDAT_INTERFACE_PALETTE_FIELD, &palette)) {
+        return 0;
+    }
+    for (int color = 16; color < 256; ++color) {
+        if (palette.rgb6[color][0] != 0u ||
+            palette.rgb6[color][1] != 0u ||
+            palette.rgb6[color][2] != 0u) {
+            return 0;
+        }
+    }
     return 1;
 }
 

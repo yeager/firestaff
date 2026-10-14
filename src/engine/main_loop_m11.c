@@ -6623,6 +6623,8 @@ static void m11_write_autotest_runtime_probe(const char* path,
     int windowWidth = 0;
     int windowHeight = 0;
     int drawableWidth = 0;
+    DM2_V1_RuntimeFrameOwnershipReceipt dm2FrameOwnership = { 0 };
+    DM2_V1_ViewportM11FrameReceipt dm2M11FrameReceipt = { 0 };
     int drawableHeight = 0;
     if (!path || path[0] == '\0') {
         return;
@@ -6639,6 +6641,8 @@ static void m11_write_autotest_runtime_probe(const char* path,
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         gameView->dm2BootProfile) {
         dm2Platform = ((const DM2_V1_BootProfile *)gameView->dm2BootProfile)->platform;
+        (void)dm2_v1_runtime_last_frame_ownership(&dm2FrameOwnership);
+        (void)dm2_v1_runtime_last_m11_frame_receipt(&dm2M11FrameReceipt);
     }
     if (gameView && gameView->dm1FmtownsStartupReceiptValid &&
         dm1_v1_fmtowns_startup_receipt_is_native(
@@ -6703,6 +6707,8 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"dm1FmtownsStartup\": {\"program\": \"%s\", \"programMd5\": \"%s\", \"menuSelectsProgram\": %d},\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
             "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
+            "  \"dm2FrameOwnership\": {\"runtimeOwned\": %d, \"fullGdatValid\": %d, \"valid\": %d, \"floorCeilingBlits\": %d, \"floorCeilingRequiredMask\": %u, \"floorCeilingConsumedMask\": %u, \"floorCeilingPaletteBlits\": %d, \"wallBlits\": %d, \"hudBlits\": %d, \"sceneControlConsumed\": %d, \"blockedMaterials\": %d, \"fallbackDraws\": %d},\n"
+            "  \"dm2M11Frame\": {\"valid\": %d, \"floorCeilingComplete\": %d, \"mapLoadToken\": %u, \"sceneControlHash\": %u, \"sceneLightHash\": %u, \"floorMaterialHash\": %u, \"ceilingMaterialHash\": %u, \"wallPlanHash\": %u, \"presentationStateHash\": %u},\n"
             "  \"dm2FmtownsStartup\": {\"titleBound\": %d, \"titleFinished\": %d, \"titleRejected\": %d, \"swooshActive\": %d, \"frameIndex\": %u, \"frameCount\": %u, \"frameTicksRemaining\": %u, \"timerAccumulatorUs\": %u},\n"
             "  \"csbViewportHash\": %u,\n"
             "  \"script\": {\"waitFramesRemaining\": %d, \"pending\": %d},\n"
@@ -6734,6 +6740,27 @@ static void m11_write_autotest_runtime_probe(const char* path,
             startupReceipt.dm2RuntimeRealAssetsReady,
             startupReceipt.dm2RuntimeNoCoreFallbacks,
             startupReceipt.dm2RuntimeFallbackDrawCount,
+            dm2FrameOwnership.runtime_frame_owned,
+            dm2FrameOwnership.full_gdat_frame_valid,
+            dm2FrameOwnership.valid,
+            dm2FrameOwnership.floor_ceiling_gdat_blits,
+            (unsigned int)dm2FrameOwnership.floor_ceiling_material_required_mask,
+            (unsigned int)dm2FrameOwnership.floor_ceiling_material_consumed_mask,
+            dm2FrameOwnership.gdat_material_palette_floor_ceiling_consumed,
+            dm2FrameOwnership.wall_gdat_blits,
+            dm2FrameOwnership.hud_gdat_blits,
+            dm2FrameOwnership.gdat_scene_control_consumed,
+            dm2FrameOwnership.blocked_material_draws,
+            dm2FrameOwnership.total_runtime_fallback_draws,
+            dm2M11FrameReceipt.valid,
+            dm2M11FrameReceipt.floor_ceiling_materials_complete,
+            (unsigned int)dm2M11FrameReceipt.map_load_token,
+            (unsigned int)dm2M11FrameReceipt.scene_control_hash,
+            (unsigned int)dm2M11FrameReceipt.scene_light_hash,
+            (unsigned int)dm2M11FrameReceipt.floor_material_hash,
+            (unsigned int)dm2M11FrameReceipt.ceiling_material_hash,
+            (unsigned int)dm2M11FrameReceipt.wall_material_plan_hash,
+            (unsigned int)dm2M11FrameReceipt.presentation_state_hash,
             gameView ? gameView->dm2FmtownsTitleBound : 0,
             gameView ? gameView->dm2FmtownsTitleFinished : 0,
             gameView ? gameView->dm2FmtownsTitleRejected : 0,

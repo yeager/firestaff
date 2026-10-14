@@ -35,6 +35,7 @@ int main(void)
     DM2_V1_GdatImageMetadata ceiling_metadata;
     DM2_V1_GdatSceneM11CommandPlan scene_plan;
     DM2_V1_GdatSceneQueryBlitRectReceipt rect_receipt;
+    DM2_V1_BootExpandedRectReceipt rect7_receipt;
     DM2_V1_GdatWallM11CommandPlan wall_plan;
     int floor_metadata_ok;
     int ceiling_metadata_ok;
@@ -114,6 +115,26 @@ int main(void)
                    scene_plan.commands[1].width == ceiling_metadata.width &&
                    scene_plan.commands[1].height == ceiling_metadata.height,
                "the real Amiga GRAPHICSSET 2 scene builds a complete plane plan");
+        expect(scene_plan.commands[0].format == DM2_IMG_FMT_IMG3 &&
+                   scene_plan.commands[1].format == DM2_IMG_FMT_IMG3 &&
+                   scene_plan.commands[0].palette_hash != 0u &&
+                   scene_plan.commands[1].palette_hash != 0u,
+               "the Amiga floor and ceiling retain their decoded IMG3 local palettes");
+        {
+            int physical_palette_indices = 1;
+            for (int color = 0; color < 16; ++color) {
+                if (scene_plan.commands[0].palette16[color] != (uint8_t)color ||
+                    scene_plan.commands[1].palette16[color] != (uint8_t)color) {
+                    physical_palette_indices = 0;
+                    break;
+                }
+            }
+            expect(physical_palette_indices,
+                   "Amiga C4-decoded scene indices bind directly to its physical 16-colour palette");
+        }
+        expect(dm2_v1_gdat_scene_m11_command_plan_draw_order_valid(
+                   &scene_plan),
+               "the Amiga source RECT_700/RECT_701 draw order binds to the scene plan");
         expect(dm2_v1_gdat_wall_m11_command_plan_build(
                    &graphics_loader, 2u, &wall_plan) && wall_plan.valid &&
                    wall_plan.command_count > 0u && wall_plan.command_hash != 0u,
@@ -153,6 +174,15 @@ int main(void)
     expect(dm2_v1_boot_interface_palette(&profile, &interface_palette) &&
                interface_palette.hash != 0u,
            "the native Amiga interface palette binds without a PC palette-table fallback");
+    memset(&rect7_receipt, 0, sizeof(rect7_receipt));
+    expect(dm2_v1_boot_query_expanded_rect_receipt(&profile, 7u,
+                                                   &rect7_receipt) &&
+               rect7_receipt.valid && rect7_receipt.rect_id == 7u &&
+               rect7_receipt.rect.x == 0 && rect7_receipt.rect.y == 40 &&
+               rect7_receipt.rect.w == 224 && rect7_receipt.rect.h == 136 &&
+               rect7_receipt.raw4_bytes && rect7_receipt.raw4_byte_count &&
+               rect7_receipt.receipt_hash,
+           "Amiga runtime clips its 224x136 room viewport through authenticated RECT_7");
     dm2_v1_boot_cleanup(&profile);
     if (failures != 0) {
         return 1;

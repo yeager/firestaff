@@ -93,6 +93,21 @@ static int dm2_v1_gdat_scene_image_local_palette(
         if (out_hash) *out_hash = hash ? hash : 1u;
         return 1;
     }
+    /* Big-endian Amiga C4 decoding expands its six in-stream palette entries
+     * to physical 4-bit screen colors. The image tail is not a second
+     * 256-color translation for that route. Detect the original physical
+     * palette layout through INTERFACE_GENERAL's authenticated palette
+     * receipt; Macintosh GDAT retains its 256-color mapping. */
+    if (dm2_v1_asset_loader_uses_physical_16_color_palette(loader)) {
+        uint32_t hash = 2166136261u;
+        for (unsigned color = 0;
+             color < DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE; ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash = hash_bytes(hash, &out_palette16[color], 1u);
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
     if (loader && loader->gdat_version == 4u) {
         DM2_V1_InterfacePalette palette;
         if (!dm2_v1_asset_load_interface_palette(
