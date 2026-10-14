@@ -184,6 +184,21 @@ has no legal/documented PACK decoder and remains unsupported.
   existing original-media hashes in `data/asset_validator_checksums_m12.json`
   and `parity-evidence/csb_v1_l10n_source_catalog.md`.
 
+  2026-10-14 current-main retest at `a7a0fca10`: the authentic archive still
+  fails direct `--game csb --platform amiga --boot-probe` with
+  `game unavailable for --game: csb`. After building its missing test helper,
+  `firestaff_caps_raw_archive_stream` passes against the four original members;
+  that test verifies framing and CRC only, not PACK decompression or startup.
+  The SPS download page identifies its decoder library as private/personal-use
+  software and does not permit redistribution. An audit found the public
+  `CCTRawCodec::DecompressDump` implementation, but its published license has
+  restrictive non-commercial terms. No independent permissively licensed PACK
+  decoder or public PACK grammar was found. Do not copy that implementation or
+  claim CTRaw launch support until a suitable license or independent format
+  specification is available. See the [SPS download and license terms](https://kryoflux.com/?page=download),
+  [CAPS decoder source license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt),
+  and [public-domain disk-utilities framing reader](https://github.com/keirf/Disk-Utilities).
+
 - Restore the original French Atari ST preservation ZIP before revalidating
   `csb_v1_atari_french_preservation_zip_cli_boot`. The test currently skips:
   `/Users/bosse/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip` is absent
