@@ -1,3 +1,18 @@
+# Firestaff v3.0.382
+
+## User-facing changes
+
+- `DM1 FM Towns intro and entrance`: restore source-paced title frames, native-height dungeon surfaces and smoother entrance-door timing.
+- `DM1 PC v3.4 startup`: restore the original VGA palette banks and show the authentic DOS selector before the title and entrance sequence.
+- `DM2 Mac HUD`: restore the original four status panes in their source positions, including selected and fallen champion states.
+
+## Developer changes
+
+- `DM1 PC v3.4 launch route`: follow the original I34E selector handoff and verify it with the original DOS media.
+- `CSB FM Towns animation decoder`: add its bounded F8288 decoder to the DM1 PC v3.4 title sequence.
+- `DM1, CSB and DM2 startup verification`: exercise source-backed launch, title timing, viewport and HUD paths against original media.
+- `Startup diagnostic regression`: verify verbose media selection and run timed title probes for the complete DM1 source sequence.
+
 # Firestaff v3.0.381
 
 ## User-facing changes
