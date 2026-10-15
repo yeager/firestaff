@@ -1,3 +1,25 @@
+- 2026-10-15: Discover a complete later loose installation when the first
+  graphics copy with the same hash lacks its dungeon. The native boot owner
+  and M12 use one shared same-parent pair finder. The common ordinary-file
+  collector enumerates repeated hashes with heap buffers, sorts paths, and
+  uses a 257th sentinel to reject more than 256 matching graphics paths
+  without publishing an arbitrary partial result. Allocation failures remain
+  distinct for this API, while legacy batch-finder return behavior is retained.
+  Exact selected graphics remain terminal: an incomplete selected copy cannot
+  borrow a complete sibling. FM Towns AUTO priority is retained.
+  Authentic two-copy baselines failed on all four platforms at c7f719851;
+  the production finder established actual encounter order before the later
+  copy received its original dungeon. The extended original-media matrix now
+  passes 49 positive routes, 20 rejection routes and four 257-copy capacity
+  checks in 185.01 seconds on macOS, including a canonical original ZIP
+  beside each selected orphan for CLI and scoped/unscoped menu rejection.
+  Original ZIP hashes remain unchanged;
+  the additional copies are byte-identical originals in ignored test scratch.
+  The reused staging probe and shell matrix add no runtime extraction or new
+  executable target. This verifies ownership/startup admission, not visual or
+  audio parity or Windows/Linux execution. The existing 15-route original ZIP
+  regression also passes in 67.97 seconds after the candidate-discovery changes.
+
 - 2026-10-15: Repair retail loose-pair startup for DOS, Macintosh, FM Towns
   and Amiga. The old native scanner selected only the DOS dungeon identity;
   Towns depended on an uppercase filename fallback, while Macintosh M12
@@ -12,8 +34,8 @@
   the four exact retail pairs from production native readers after hash/size
   admission. Original archives remain unchanged and runtime writes no game
   payloads. The source boundary follows pinned SKProject SKULLWIN
-  c_gdatfile.cpp:21-24,368-377 and c_savegame.cpp:616-634. The separate
-  orphan-first same-graphics-hash discovery gap remains in TODO-dm2.md.
+  c_gdatfile.cpp:21-24,368-377 and c_savegame.cpp:616-634. The subsequent
+  same-hash orphan-first recovery is recorded above.
   Final macOS original-media checks pass: the loose matrix covers 37 positive
   routes (directory/selected-file CLI and scoped/unscoped M12, four child-cache
   recovery cases, mixed four-platform AUTO defaulting to Towns, selected Mac

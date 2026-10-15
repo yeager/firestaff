@@ -2580,6 +2580,44 @@ static int dm2_bind_loose_hash_pair(const char *graphics,
     return 0;
 }
 
+int dm2_v1_boot_find_loose_pair(const char* root, const char* graphics_md5,
+                                int max_depth, char graphics_path[512],
+                                char dungeon_path[512]) {
+    char (*paths)[ASSET_PATH_MAX];
+    char found_graphics[512], found_dungeon[512];
+    char actual_graphics_md5[33], actual_dungeon_md5[33];
+    size_t pair;
+    int count;
+    int i;
+    if (!graphics_path || !dungeon_path) return -1;
+    graphics_path[0] = dungeon_path[0] = '\0';
+    if (!root || !graphics_md5) return -1;
+    for (pair = 0u; pair < sizeof(g_dm2_asset_hash_pairs) /
+                                  sizeof(g_dm2_asset_hash_pairs[0]); ++pair) {
+        if (md5_matches(graphics_md5, g_dm2_asset_hash_pairs[pair].graphics_md5)) break;
+    }
+    if (pair == sizeof(g_dm2_asset_hash_pairs) / sizeof(g_dm2_asset_hash_pairs[0])) return 0;
+    paths = calloc(256u, sizeof(*paths));
+    if (!paths) return -1;
+    count = asset_collect_files_by_md5(root, graphics_md5, paths, 256u, max_depth);
+    if (count < 0) {
+        free(paths);
+        return count;
+    }
+    for (i = 0; i < count; ++i) {
+        if (dm2_bind_loose_hash_pair(paths[i], graphics_md5,
+                found_graphics, NULL, actual_graphics_md5,
+                found_dungeon, NULL, actual_dungeon_md5)) {
+            snprintf(graphics_path, 512, "%s", found_graphics);
+            snprintf(dungeon_path, 512, "%s", found_dungeon);
+            free(paths);
+            return 1;
+        }
+    }
+    free(paths);
+    return 0;
+}
+
 static int dm2_try_hash_scan_root(const char *root,
                                   char graphics_path[512],
                                   size_t *graphics_size,
@@ -2594,10 +2632,17 @@ static int dm2_try_hash_scan_root(const char *root,
     if (!root || !root[0]) return 0;
     while (g_dm2_graphics_hashes[count]) ++count;
     if (count > 16) return 0;
-    (void)asset_find_all_files_by_md5_list(root, g_dm2_graphics_hashes,
-                                           paths, matched, count, 8);
     for (i = 0; i < count; ++i) {
-        if (matched[i] && dm2_bind_loose_hash_pair(paths[i],
+        char selected_graphics[512], selected_dungeon[512];
+        int found = dm2_v1_boot_find_loose_pair(root, g_dm2_graphics_hashes[i],
+                                                8, selected_graphics,
+                                                selected_dungeon);
+        if (found < 0) {
+            fprintf(stderr, "firestaff: media-discovery-incomplete game=dm2 path=%s reason=%s\n",
+                    root, found == -2 ? "candidate-limit" : "allocation");
+            return 0;
+        }
+        if (found == 1 && dm2_bind_loose_hash_pair(selected_graphics,
                 g_dm2_graphics_hashes[i], graphics_path, graphics_size,
                 graphics_md5, dungeon_path, dungeon_size, dungeon_md5)) return 1;
     }

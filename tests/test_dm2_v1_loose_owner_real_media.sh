@@ -112,6 +112,71 @@ for i in 0 1 2 3; do
     run_route "$platform-cache-recovery" "$platform" "$selected_root" \
         "$alias_path" "${hashes[$i]}" cli
 done
+# Choose the orphan using the production finder's actual encounter order,
+# rather than relying on filesystem insertion order or lexicographic names.
+for i in 0 1 2 3; do
+    platform=${platforms[$i]}
+    collection="$scratch/$platform-two-copy/data"
+    mkdir -p "$collection/copy-a" "$collection/copy-b"
+    for copy in copy-a copy-b; do
+        cp -p "$scratch/$platform/data/Maze-art.dat" "$collection/$copy/Maze-art.dat"
+    done
+    owners=$("$stage_probe" --orphan-order "$collection" "$i")
+    orphan=${owners%%$'\n'*}
+    complete=${owners#*$'\n'}
+    cp -p "$scratch/$platform/data/Level-layout.dat" "$(dirname "$complete")/Level-layout.dat"
+    for route in cli menu unscoped-menu; do
+        run_route "$platform-orphan-first" "$platform" "$collection" \
+            "$complete" "${hashes[$i]}" "$route"
+    done
+    # Native archive publishers must not override the selected loose orphan.
+    # Add the unchanged canonical original only after collection positives.
+    ln -s "$data_root/dm2/${files[$i]}" "$(dirname "$orphan")/${files[$i]}"
+    for route in cli menu unscoped-menu; do
+        home="$scratch/$platform-selected-orphan-$route-home"
+        mkdir -p "$home"
+        log="$scratch/$platform-selected-orphan-$route.log"
+        args=(--data-dir "$orphan" --width 320 --height 200 --debug --duration 10000)
+        if [[ "$route" != unscoped-menu ]]; then args+=(--game dm2 --platform "$platform"); fi
+        if [[ "$route" = cli ]]; then
+            unset FIRESTAFF_EXIT_AFTER_LAUNCH
+            args+=(--boot-probe --boot-probe-frames 0)
+        else
+            export FIRESTAFF_EXIT_AFTER_LAUNCH=1
+            inputs=key:enter,key:enter,key:enter
+            if [[ "$route" = unscoped-menu ]]; then inputs=key:down,key:down,$inputs; fi
+            args+=(--menu --script "$inputs")
+        fi
+        if HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
+            FIRESTAFF_CONFIG_PATH="$home/config.toml" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+            "$app" "${args[@]}" >"$log" 2>&1; then
+            echo "FAIL: $platform $route selected orphan borrowed a complete sibling" >&2; exit 1
+        else
+            rc=$?
+            if [[ "$rc" != 1 ]]; then
+                echo "FAIL: $platform $route unexpected rejection status $rc" >&2; exit 1
+            fi
+        fi
+        if [[ "$route" = cli ]]; then
+            grep -Fq 'game unavailable for --game: dm2' "$log"
+        else
+            grep -Fq 'launch smoke failed: no launch reached before exit' "$log"
+        fi
+        if grep -Eq 'launch phase=game-handoff.*game=dm2|phase=dm2-runtime' "$log"; then
+            echo "FAIL: $platform $route selected orphan changed owner" >&2; exit 1
+        fi
+    done
+    # Genuine, byte-identical path copies exercise the bounded overflow gate.
+    capacity_root="$scratch/$platform-capacity"
+    mkdir -p "$capacity_root"
+    for ((copy=0; copy<257; ++copy)); do
+        ln "$scratch/$platform/data/Maze-art.dat" "$capacity_root/Copy-$copy.dat"
+    done
+    cp -p "$scratch/$platform/data/Level-layout.dat" "$capacity_root/Level-layout.dat"
+    "$stage_probe" --capacity "$capacity_root" "$i"
+    echo "PASS: $platform orphan-first recovery, selected orphan rejection and capacity boundary"
+done
 # A mixed collection still defaults to Towns, while an explicitly selected
 # graphics payload retains its own edition despite the neighboring installs.
 mkdir -p "$scratch/mixed/data"

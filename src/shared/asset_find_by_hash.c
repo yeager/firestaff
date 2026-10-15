@@ -6788,7 +6788,7 @@ static int asset_find_all_by_md5_list_internal(
         free(normalizedPaths);
         free(normalizedMatched);
         free(originalIndices);
-        return 0;
+        return -1;
     }
 
     for (i = 0; i < inputCount; ++i) {
@@ -6879,7 +6879,7 @@ int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List
     result = asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
                                                   outMatched, maxMatches, maxDepth, 1);
     scan_cache_end();
-    return result;
+    return result < 0 ? 0 : result;
 }
 
 int asset_find_all_files_by_md5_list(const char *searchDir,
@@ -6892,6 +6892,54 @@ int asset_find_all_files_by_md5_list(const char *searchDir,
     result = asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
                                                   outMatched, maxMatches, maxDepth, 0);
     scan_cache_end();
+    return result < 0 ? 0 : result;
+}
+
+static int asset_path_compare(const void* left, const void* right) {
+    return strcmp((const char*)left, (const char*)right);
+}
+
+int asset_collect_files_by_md5(const char* searchDir, const char* expectedMd5,
+                                char outPaths[][ASSET_PATH_MAX],
+                                size_t capacity, int maxDepth) {
+    const char** hashes;
+    char (*paths)[ASSET_PATH_MAX];
+    int* matched;
+    char normalized[33];
+    size_t count = 0u;
+    size_t i;
+    int result = -1;
+    if (!outPaths || capacity == 0u || capacity > 256u) return -1;
+    memset(outPaths, 0, capacity * sizeof(*outPaths));
+    if (!searchDir || !normalize_md5(expectedMd5, normalized)) return -1;
+    hashes = calloc(capacity + 2u, sizeof(*hashes));
+    paths = calloc(capacity + 1u, sizeof(*paths));
+    matched = calloc(capacity + 1u, sizeof(*matched));
+    if (!hashes || !paths || !matched) goto cleanup;
+    for (i = 0u; i <= capacity; ++i) hashes[i] = normalized;
+    scan_cache_begin();
+    result = asset_find_all_by_md5_list_internal(searchDir, hashes, paths,
+                                                  matched, (int)capacity + 1,
+                                                  maxDepth, 0);
+    scan_cache_end();
+    if (result < 0) goto cleanup;
+    for (i = 0u; i <= capacity; ++i) {
+        if (matched[i]) {
+            if (count != i) memcpy(paths[count], paths[i], sizeof(*paths));
+            ++count;
+        }
+    }
+    if (count > capacity) {
+        result = -2;
+        goto cleanup;
+    }
+    qsort(paths, count, sizeof(*paths), asset_path_compare);
+    memcpy(outPaths, paths, count * sizeof(*paths));
+    result = (int)count;
+cleanup:
+    free(hashes);
+    free(paths);
+    free(matched);
     return result;
 }
 

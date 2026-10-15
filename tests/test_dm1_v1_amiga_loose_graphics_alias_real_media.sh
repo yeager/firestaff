@@ -37,9 +37,17 @@ with zipfile.ZipFile(sys.argv[1]) as package:
   with target.open('xb') as out:out.write(data)
   if target.read_bytes()!=data:raise SystemExit('FAIL: original staging altered bytes')
 PY
-for selection in directory file; do
+mkdir -p "$scratch/duplicates/z-complete"
+cp "$scratch/media/Maze-art.dat" "$scratch/duplicates/graphics.dat"
+cp "$scratch/media/"* "$scratch/duplicates/z-complete/"
+for selection in directory file duplicates; do
     selected="$scratch/media"
+    expected_graphics="$scratch/media/Maze-art.dat"
     if [[ "$selection" = file ]]; then selected="$scratch/media/Maze-art.dat"; fi
+    if [[ "$selection" = duplicates ]]; then
+        selected="$scratch/duplicates"
+        expected_graphics="$scratch/duplicates/z-complete/Maze-art.dat"
+    fi
     for route in cli menu; do
         home="$scratch/$selection-$route-home"
         mkdir -p "$home"
@@ -59,7 +67,7 @@ for selection in directory file; do
         fi
         grep -Fq 'edition=amiga-demo-en' "$log"
         if [[ "$route" = cli ]]; then
-            grep -Fq "inventory-file=graphics matched source=$scratch/media/Maze-art.dat" "$log"
+            grep -Fq "inventory-file=graphics matched source=$expected_graphics" "$log"
             grep -Fq 'assetMd5=491ca939f9abb33ceeb26619b841fe91' "$log"
             grep -Fq 'phase=dm1-runtime' "$log"
             grep -Fq 'levelLoaded=1' "$log"
@@ -68,10 +76,26 @@ for selection in directory file; do
                 grep -Eq "startup-source-complete .*phase=$phase([[:space:]]|$)" "$log"
             done
             grep -Fq 'DM1 READY: gameId=dm1' "$log"
-            grep -Fq "graphicsPath=$scratch/media/Maze-art.dat" "$log"
+            grep -Fq "graphicsPath=$expected_graphics" "$log"
         fi
         echo "PASS: original loose graphics alias $selection $route retains Maze-art.dat ownership"
     done
+done
+# A canonical original archive beside the selected loose orphan must not
+# replace that explicit owner during later archive receipt publication.
+cp "$archive" "$scratch/duplicates/dm-amiga-demo-en.zip"
+for route in cli menu; do
+    home="$scratch/orphan-$route-home"
+    mkdir -p "$home"
+    args=(--game dm1 --platform amiga --data-dir "$scratch/duplicates/graphics.dat" --debug --duration 1000)
+    if [[ "$route" = menu ]]; then args+=(--menu --script enter,enter,enter); else args+=(--boot-probe --boot-probe-frames 2); fi
+    if HOME="$home" XDG_CONFIG_HOME="$home" FIRESTAFF_CONFIG_PATH="$home/config.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" "${args[@]}" >"$scratch/orphan-$route.log" 2>&1; then
+        echo 'FAIL: explicitly selected orphan borrowed a complete neighboring installation' >&2; exit 1
+    fi
+    if grep -Fq 'DM1 READY:' "$scratch/orphan-$route.log"; then exit 1; fi
+    echo "PASS: explicit Amiga orphan $route remains rejected"
 done
 [[ "$archive_hash_before" = "$(firestaff_sha256_file "$archive")" ]]
 python3 - "$archive" "$scratch/media" <<'PY'

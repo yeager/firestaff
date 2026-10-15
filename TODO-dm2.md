@@ -1,13 +1,14 @@
 # Firestaff TODO — DM2
 
-2026-10-15 loose discovery still uses the shared one-path-per-hash inventory.
-An orphan graphics file encountered before a complete install with the same
-identity can hide the later install. Add an original-media orphan-first versus
-complete-later regression and a bounded candidate traversal before claiming
-complete discovery of multiple loose installations. The existing batch hash
-finder's repeated-hash handling is a candidate lead for bounded enumeration
-of distinct graphics paths in the next audit. Macintosh demo payloads
-are outside the current retail loose-pair verification scope.
+2026-10-15 orphan-first loose graphics discovery is verified with two authentic
+copies on DOS, Macintosh, FM Towns and Amiga. Selected orphan rejection also
+passes with the untouched canonical original ZIP beside the selected graphics. More than 256 matching graphics
+paths per root/identity are explicitly reported as incomplete and publish no
+partial candidate selection. Broader filesystem layouts and native
+Windows/Linux execution remain unverified. Macintosh demo payloads are
+outside this retail loose-pair verification scope. The shared candidate
+collector checks bounded depth/count and does not invoke progress callbacks;
+callers retain cancellation checks around the scan.
 
 2026-10-15 directory cancellation now polls within enumeration and publishes
 progress in 32-entry chunks. The authenticated original DOS scoped/unscoped

@@ -25901,9 +25901,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
              * direct STX file is not mistaken for an FM Towns archive. */
             requestedCsbVariant = CSB_V1_VARIANT_ST21_EN;
         }
+        if (spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
+                "21197b1d4994fd835c403d5a33dcac2b") == 0)
+            requestedCsbVariant = CSB_V1_VARIANT_AMIGA31_EN;
+        else if (spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
+                "291e1bc6803e3dc4b974c60117ca5d68") == 0)
+            requestedCsbVariant = CSB_V1_VARIANT_AMIGA35_EN;
         if (!(spec->verifiedAssetPath && spec->verifiedAssetMd5 &&
               (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
-               requestedCsbVariant == CSB_V1_VARIANT_ST21_EN)
+               requestedCsbVariant == CSB_V1_VARIANT_ST21_EN ||
+               requestedCsbVariant == CSB_V1_VARIANT_AMIGA31_EN ||
+               requestedCsbVariant == CSB_V1_VARIANT_AMIGA35_EN)
                   ? csb_v1_boot_startup_launch_alloc_with_verified_graphics_pc34(
                         dd, utility_search_dir, spec->savePath,
                         spec->csbImportDm1SavePath,
@@ -26040,13 +26048,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 }
             }
             fprintf(stderr,
-                    "CSB READY: gameId=csb dataDir=%s variant=%s route=%s handoff=%s handoffHash=%08x\n",
+                    "CSB READY: gameId=csb dataDir=%s variant=%s route=%s handoff=%s handoffHash=%08x graphicsPath=%s dungeonPath=%s\n",
                 spec->dataDir ? spec->dataDir : "(null)",
                 variant,
                 (spec->savePath && spec->savePath[0] != '\0')
                     ? "f0435-resume" : "startup",
                 handoff,
-                (unsigned int)handoff_hash);
+                (unsigned int)handoff_hash,
+                selected_profile ? selected_profile->graphics_path : "",
+                selected_profile ? selected_profile->dungeon_path : "");
         }
         return 1;
     }
@@ -26206,7 +26216,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (!spec->dm1Fmtowns && spec->verifiedAssetPath &&
             (strstr(spec->verifiedAssetPath, "::") != NULL ||
              m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
-             m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5))) {
+             m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5) ||
+             ((!spec->dungeonPath || !spec->dungeonPath[0]) &&
+              spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
+                 "fa6b1aa29e191418713bf2cda93d962e") == 0))) {
             const char *last = NULL;
             const char *sep = strstr(spec->verifiedAssetPath, "::");
             size_t prefix;
@@ -26234,10 +26247,22 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 /* ReDMCSB LOADSAVE.C F0435:2336-2343 opens the selected
                  * Atari/Amiga installation's dungeon through its native
                  * case-insensitive filesystem, not a POSIX spelling gate. */
-                if (!FSP_ParentDir(parent, sizeof(parent), spec->verifiedAssetPath) ||
-                    m11_find_unique_loose_sibling(parent, dungeonMember,
-                                                   dungeonPath, sizeof(dungeonPath)) != 1)
+                if (!FSP_ParentDir(parent, sizeof(parent), spec->verifiedAssetPath))
                     return 0;
+                int found = m11_find_unique_loose_sibling(parent, dungeonMember,
+                                                          dungeonPath, sizeof(dungeonPath));
+                /* PC34 already admits renamed original dungeon payloads.
+                 * Keep that compatibility within the selected parent only;
+                 * an ambiguous native filename never triggers this fallback. */
+                if (found == 0 && spec->verifiedAssetMd5 &&
+                    strcmp(spec->verifiedAssetMd5,
+                           "fa6b1aa29e191418713bf2cda93d962e") == 0) {
+                    char renamed[1][ASSET_PATH_MAX];
+                    if (asset_collect_files_by_md5(parent,
+                        "766450c940651fc021c92fe5d0d0b3a6", renamed, 1U, 0) != 1)
+                        return 0;
+                    snprintf(dungeonPath, sizeof(dungeonPath), "%s", renamed[0]);
+                } else if (found != 1) return 0;
             }
             dm1_dungeon_path_hash_resolved = 1;
             dm1VirtualDiskPath = 1;

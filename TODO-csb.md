@@ -6,6 +6,13 @@ Windows/Linux behavior, English A31/A35 action-name presentation and visual
 parity remain separate verification work. English A31/A35 required-program
 admission is enforced at M12 and native boot; original A35E positive/negative
 coverage is in `csb_v1_amiga35_english_package_real_media`.
+Loose English duplicate candidates have complete bounded enumeration up to
+256 paths. Native-container English and A33M title rescue retain their
+existing eight-candidate search limit; arbitrary large preservation packages
+need separate completeness/ownership coverage.
+The final loose-file selector pin currently covers English A31/A35 only;
+non-English/Atari/FM Towns explicit-file selector boundaries still require
+their own authenticated package audit.
 
 2026-10-14 mixed-original-media AUTO/start-menu retest on the Mac mini M4,
 current source: `csb_v1_fmtowns_m12_auto_mixed_real_media` passed in 321.96

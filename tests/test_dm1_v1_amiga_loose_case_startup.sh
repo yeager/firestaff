@@ -84,9 +84,12 @@ if run_menu ambiguous; then
     echo 'FAIL: ambiguous original startup companions were accepted' >&2
     exit 1
 fi
-if ! grep -Fq 'startup-sibling-rejected game=dm1 platform=amiga wanted=swoosh ' "$scratch/ambiguous.log" ||
-    ! grep -Fq 'reason=ambiguous' "$scratch/ambiguous.log"; then
-    echo 'FAIL: ambiguous source companion rejection lacks its debug reason' >&2
+# Complete-installation admission may reject the duplicate before native
+# startup binds it; either boundary must leave the edition unavailable.
+if ! grep -Fq 'platform=Amiga edition=amiga-demo-en not matched' "$scratch/ambiguous.log" &&
+    ! { grep -Fq 'startup-sibling-rejected game=dm1 platform=amiga wanted=swoosh ' "$scratch/ambiguous.log" &&
+        grep -Fq 'reason=ambiguous' "$scratch/ambiguous.log"; }; then
+    echo 'FAIL: ambiguous original companion was not rejected by inventory or startup' >&2
     exit 1
 fi
 if grep -Eq 'startup-source-complete .*phase=(amiga-swsh|title-f0437|entrance-f0441)|launch phase=runtime-entered' \

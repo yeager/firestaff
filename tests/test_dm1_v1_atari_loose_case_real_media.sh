@@ -59,12 +59,13 @@ for source, name, size, expected in (
 PY
 run_cli() {
     local route=$1
+    local selected=${2:-"$scratch/media"}
     mkdir -p "$scratch/$route-home"
     HOME="$scratch/$route-home" XDG_CONFIG_HOME="$scratch/$route-home" \
     APPDATA="$scratch/$route-home" FIRESTAFF_CONFIG_PATH="$scratch/$route-home/config.toml" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --width 320 --height 200 --game dm1 --platform atari-st \
-        --data-dir "$scratch/media" --debug --boot-probe --boot-probe-frames 2 \
+        --data-dir "$selected" --debug --boot-probe --boot-probe-frames 2 \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --boot-probe-expect-asset-md5 9ce2eaf7a9e78620e3f17594437caffa \
         --duration 0 >"$scratch/$route.log" 2>&1
@@ -82,6 +83,16 @@ for route in uppercase lowercase; do
     grep -Fq 'levelLoaded=1' "$scratch/$route.log"
     grep -Fq 'handoff=atari-st-dmcsb1' "$scratch/$route.log"
 done
+mkdir -p "$scratch/duplicates/z-complete"
+cp "$scratch/media/graphics.dat" "$scratch/duplicates/graphics.dat"
+cp "$scratch/media/"* "$scratch/duplicates/z-complete/"
+run_cli orphan-first "$scratch/duplicates"
+grep -Fq "source=$scratch/duplicates/z-complete/graphics.dat" "$scratch/orphan-first.log"
+if run_cli selected-orphan "$scratch/duplicates/graphics.dat"; then
+    echo 'FAIL: explicit Atari orphan borrowed neighboring complete media' >&2; exit 1
+fi
+if grep -Fq 'levelLoaded=1' "$scratch/selected-orphan.log"; then exit 1; fi
+echo 'PASS: Atari duplicate inventory selects complete same-parent original pair'
 mkdir -p "$scratch/menu-home"
 # Existing Atari M12 handoff smoke route: the three menu commands select the
 # game/card/options, then the test exits after successful source admission.

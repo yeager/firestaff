@@ -53,16 +53,58 @@ static int write_original(const char* directory, const char* leaf,
     return ok && asset_file_matches_md5(path, expected_md5);
 }
 
+static int inspect_copies(const char* mode, const char* directory,
+                            const Identity* identity) {
+    char (*paths)[ASSET_PATH_MAX];
+    char graphics[512], dungeon[512];
+    int result;
+    paths = calloc(256u, sizeof(*paths));
+    if (!paths) return 1;
+    if (strcmp(mode, "--orphan-order") == 0) {
+        const char* hashes[3] = {identity->graphics, identity->graphics, NULL};
+        int matched[2] = {0};
+        result = asset_find_all_files_by_md5_list(directory, hashes, paths,
+                                                  matched, 2, 8);
+        if (result == 2 && matched[0] && matched[1] &&
+            strcmp(paths[0], paths[1]) != 0) {
+            printf("%s\n%s\n", paths[0], paths[1]);
+            free(paths);
+            return 0;
+        }
+    } else {
+        result = asset_collect_files_by_md5(directory, identity->graphics,
+                                              paths, 256u, 8);
+        if (result == -2) {
+            size_t i;
+            for (i = 0u; i < 256u; ++i) {
+                if (paths[i][0] != '\0') break;
+            }
+            if (i == 256u && dm2_v1_boot_find_loose_pair(directory,
+                    identity->graphics, 8, graphics, dungeon) == -2 &&
+                graphics[0] == '\0' && dungeon[0] == '\0') {
+                free(paths);
+                return 0;
+            }
+        }
+    }
+    free(paths);
+    return 1;
+}
+
 int main(int argc, char** argv) {
     DM2_V1_BootProfile profile;
     unsigned index;
     const Identity* identity;
     int ok;
     if (argc != 4) return 2;
-    if (!FSP_FileExists(argv[1])) return 77;
     if (strlen(argv[3]) != 1u || argv[3][0] < '0' || argv[3][0] > '3') return 2;
     index = (unsigned)(argv[3][0] - '0');
     identity = &identities[index];
+    if (strcmp(argv[1], "--orphan-order") == 0 ||
+        strcmp(argv[1], "--capacity") == 0) {
+        return inspect_copies(argv[1], argv[2], identity);
+    }
+    if (!FSP_FileExists(argv[1])) return 77;
     dm2_v1_boot_profile_init(&profile);
     ok = dm2_v1_boot_scan_assets(&profile, argv[1]) == 0 &&
         profile.assets_verified &&

@@ -1816,6 +1816,14 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile);
 /* Scan and verify DM2 assets in data_dir by known hashes first.
  * Sets asset_root, graphics_path, dungeon_path, assets_verified.
  * Returns 0 on success, -1 if no valid DM2 assets found. */
+/* Discover a complete same-directory loose pair for one graphics identity.
+ * At most 256 matching graphics paths are admitted per root, sorted by path.
+ * Returns 1 complete, 0 absent, -1 allocation/argument or -2 candidate limit;
+ * outputs remain empty on failure. This only identifies original files. */
+int dm2_v1_boot_find_loose_pair(const char* root, const char* graphics_md5,
+                                int max_depth, char graphics_path[512],
+                                char dungeon_path[512]);
+
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir);
 

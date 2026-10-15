@@ -3239,7 +3239,7 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     return 1;
 }
 
-static int csb_v1_boot_scan_selected_atari_graphics_pc34(
+static int csb_v1_boot_scan_selected_graphics_pc34(
     CSB_V1_BootProfile *profile, const char *data_dir,
     const char *graphics_path, const char *graphics_md5);
 
@@ -3301,8 +3301,10 @@ static int csb_v1_boot_startup_launch_alloc_internal_pc34(
     if (((verified_graphics_path && verified_graphics_path[0] &&
           verified_graphics_md5 && verified_graphics_md5[0] &&
           (effective_variant == CSB_V1_VARIANT_ST20_EN ||
-           effective_variant == CSB_V1_VARIANT_ST21_EN))
-             ? !csb_v1_boot_scan_selected_atari_graphics_pc34(
+           effective_variant == CSB_V1_VARIANT_ST21_EN ||
+           effective_variant == CSB_V1_VARIANT_AMIGA31_EN ||
+           effective_variant == CSB_V1_VARIANT_AMIGA35_EN))
+             ? !csb_v1_boot_scan_selected_graphics_pc34(
                    out_launch->profile, data_dir, verified_graphics_path,
                    verified_graphics_md5)
              : csb_v1_boot_scan_assets(out_launch->profile, data_dir) != 0) &&
@@ -9673,9 +9675,9 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
 
     if (profile->graphics_verified &&
         ((profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN &&
-          !csb_v1_amiga_english_programs_ready(profile->graphics_path, "amiga31-en")) ||
+          !csb_v1_amiga_english_package_ready(profile->graphics_path, "amiga31-en")) ||
          (profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN &&
-          !csb_v1_amiga_english_programs_ready(profile->graphics_path, "amiga35-en")))) {
+          !csb_v1_amiga_english_package_ready(profile->graphics_path, "amiga35-en")))) {
         profile->graphics_verified = 0;
     }
     profile->assets_verified = profile->graphics_verified && profile->dungeon_verified;
@@ -9770,7 +9772,7 @@ static int csb_v1_boot_selected_atari_dungeon_path_pc34(
     return written > 0 && (size_t)written < dungeon_path_size;
 }
 
-static int csb_v1_boot_scan_selected_atari_graphics_pc34(
+static int csb_v1_boot_scan_selected_graphics_pc34(
     CSB_V1_BootProfile *profile, const char *data_dir,
     const char *graphics_path, const char *graphics_md5)
 {
@@ -9780,9 +9782,7 @@ static int csb_v1_boot_scan_selected_atari_graphics_pc34(
     int graphics_index;
     int dungeon_index;
 
-    if (!profile || !data_dir || !graphics_path || !graphics_md5 ||
-        !csb_v1_boot_selected_atari_dungeon_path_pc34(
-            graphics_path, dungeon_path, sizeof(dungeon_path))) return 0;
+    if (!profile || !data_dir || !graphics_path || !graphics_md5) return 0;
     for (graphics_index = 0;
          g_csb_boot_graphics_hashes[graphics_index] != NULL;
          ++graphics_index) {
@@ -9793,11 +9793,22 @@ static int csb_v1_boot_scan_selected_atari_graphics_pc34(
         (g_csb_boot_graphics_variants[graphics_index] !=
              CSB_V1_VARIANT_ST20_EN &&
          g_csb_boot_graphics_variants[graphics_index] !=
-             CSB_V1_VARIANT_ST21_EN) ||
+             CSB_V1_VARIANT_ST21_EN &&
+         g_csb_boot_graphics_variants[graphics_index] != CSB_V1_VARIANT_AMIGA31_EN &&
+         g_csb_boot_graphics_variants[graphics_index] != CSB_V1_VARIANT_AMIGA35_EN) ||
         !asset_file_matches_md5(graphics_path, graphics_md5)) return 0;
     variant = csb_v1_runtime_get_variant_info(
         g_csb_boot_graphics_variants[graphics_index]);
     if (!variant || !variant->md5_dungeon) return 0;
+    if (variant->id == CSB_V1_VARIANT_AMIGA31_EN ||
+        variant->id == CSB_V1_VARIANT_AMIGA35_EN) {
+        const char *id = variant->id == CSB_V1_VARIANT_AMIGA31_EN
+            ? "amiga31-en" : "amiga35-en";
+        if (!csb_v1_amiga_english_package_ready(graphics_path, id) ||
+            !csb_v1_amiga_selected_companion(graphics_path, "DUNGEON.DAT",
+                dungeon_path, sizeof(dungeon_path))) return 0;
+    } else if (!csb_v1_boot_selected_atari_dungeon_path_pc34(
+            graphics_path, dungeon_path, sizeof(dungeon_path))) return 0;
     expected_dungeon_md5 = variant->md5_dungeon;
     for (dungeon_index = 0; g_csb_boot_dungeon_hashes[dungeon_index] != NULL;
          ++dungeon_index) {
@@ -9827,6 +9838,14 @@ static int csb_v1_boot_scan_selected_atari_graphics_pc34(
         profile->dungeon_verified = 0;
         return 0;
     }
+    if (variant->id == CSB_V1_VARIANT_AMIGA31_EN ||
+        variant->id == CSB_V1_VARIANT_AMIGA35_EN) {
+        /* Keep the optional startup consumers from ordinary boot admission. */
+        (void)csb_v1_boot_load_swoosh_source_pc34(profile);
+        csb_v1_boot_startup_assets_resolve_pc34(profile);
+    }
+    csb_v1_boot_copy(profile->variant_label, sizeof(profile->variant_label), variant->name);
+    csb_v1_boot_copy(profile->media_ref, sizeof(profile->media_ref), variant->media_ref);
     csb_v1_boot_copy(profile->version_id, sizeof(profile->version_id),
                      graphics_md5);
     profile->state = CSB_V1_BOOT_STATE_ASSETS_READY;

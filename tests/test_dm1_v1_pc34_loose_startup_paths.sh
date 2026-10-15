@@ -49,8 +49,19 @@ if len(title) != 12002 or hashlib.sha256(title).hexdigest() != "adc7f1916eeef343
 manifest = {str(p.relative_to(original)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in original.rglob("*") if p.is_file()}
 (root / "original-hashes.json").write_text(json.dumps(manifest), encoding="utf-8")
-for fixture in ("canonical", "lower", "bad-title", "neighbor-selector"):
+for fixture in ("canonical", "lower", "bad-title", "neighbor-selector",
+                "renamed", "renamed-neighbor", "renamed-duplicates", "wrong-native"):
     shutil.copytree(original, root / fixture)
+(root / "renamed/DATA/DUNGEON.DAT").rename(root / "renamed/DATA/Maze-world.bin")
+(root / "renamed-neighbor/DATA/z-neighbor").mkdir()
+(root / "renamed-neighbor/DATA/DUNGEON.DAT").rename(
+    root / "renamed-neighbor/DATA/z-neighbor/Maze-world.bin")
+(root / "renamed-duplicates/DATA/DUNGEON.DAT").rename(
+    root / "renamed-duplicates/DATA/Maze-world.bin")
+shutil.copyfile(root / "renamed-duplicates/DATA/Maze-world.bin",
+                root / "renamed-duplicates/DATA/Other-world.bin")
+(root / "wrong-native/DATA/DUNGEON.DAT").rename(root / "wrong-native/DATA/Maze-world.bin")
+shutil.copyfile(original / "DATA/GRAPHICS.DAT", root / "wrong-native/DATA/DUNGEON.DAT")
 (root / "lower/DATA").rename(root / "lower/data")
 (root / "lower/TITLE").rename(root / "lower/Title")
 (root / "lower/SELECTOR").rename(root / "lower/selector")
@@ -95,6 +106,31 @@ for route in cli menu; do
     require_startup "lower-$route" "$scratch/lower/data/GRAPHICS.DAT"
     run_route "selected-file-$route" "$scratch/lower/data/GRAPHICS.DAT" "$route"
     require_startup "selected-file-$route" "$scratch/lower/data/GRAPHICS.DAT"
+done
+mkdir -p "$scratch/duplicates/z-complete"
+cp "$scratch/canonical/DATA/GRAPHICS.DAT" "$scratch/duplicates/GRAPHICS.DAT"
+cp -R "$scratch/canonical/"* "$scratch/duplicates/z-complete/"
+for route in cli menu; do
+    run_route "orphan-first-$route" "$scratch/duplicates" "$route"
+    require_startup "orphan-first-$route" "$scratch/duplicates/z-complete/DATA/GRAPHICS.DAT"
+    if run_route "selected-orphan-$route" "$scratch/duplicates/GRAPHICS.DAT" "$route"; then
+        echo 'FAIL: explicit PC34 orphan borrowed neighboring dungeon' >&2; exit 1
+    fi
+    if grep -Fq 'DM1 READY:' "$scratch/selected-orphan-$route.log"; then exit 1; fi
+done
+for route in cli menu; do
+    run_route "renamed-$route" "$scratch/renamed/DATA" "$route"
+    require_startup "renamed-$route" "$scratch/renamed/DATA/GRAPHICS.DAT"
+    if run_route "renamed-neighbor-$route" "$scratch/renamed-neighbor/DATA" "$route"; then
+        echo 'FAIL: renamed PC34 dungeon borrowed from a subdirectory' >&2; exit 1
+    fi
+    if grep -Fq 'DM1 READY:' "$scratch/renamed-neighbor-$route.log"; then exit 1; fi
+done
+for fixture in renamed-duplicates wrong-native; do
+    if run_route "$fixture" "$scratch/$fixture/DATA" cli; then
+        echo 'FAIL: PC34 dungeon fallback accepted ambiguity or an invalid native file' >&2; exit 1
+    fi
+    if grep -Fq 'DM1 READY:' "$scratch/$fixture.log"; then exit 1; fi
 done
 run_route bad-title "$scratch/bad-title/DATA" cli
 if grep -Fq 'phase=anim-title frames=53' "$scratch/bad-title.log"; then

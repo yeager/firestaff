@@ -1,3 +1,26 @@
+- 2026-10-15: English Amiga inventory now checks all collected loose graphics
+  candidates before choosing a complete original package (bounded to 256,
+  sorted, fail-closed on overflow). A root-level A35E orphan previously hid
+  a complete child installation. The extended original A35E regression now
+  passes root plus nine orphan copies before a complete child, CLI and M12
+  runtime with exact chosen graphics/dungeon paths, selected-orphan rejection
+  and missing-owned-dungeon rejection despite a matching neighboring file.
+  A further original-media reproduction showed a selected incomplete A35E
+  graphics file launching a neighboring A33M edition. A final English file
+  pin now rejects that replacement in CLI, scoped and unscoped M12, while
+  complete explicitly selected English graphics still reach runtime. Required
+  English dungeon receipts retain the selected loose or virtual disk owner.
+  Final English-pin A31E archive CLI/M12/AUTO regression passes; original
+  native A35E CTRaw regression passes in 33.46 seconds. The new scan-only
+  257-copy original-file boundary passes in 0.62 seconds, reports
+  `media-discovery-incomplete ... reason=candidate-limit`, and publishes no
+  arbitrary partial English owner. Allocation failures also report their path
+  and clear affected English rows; allocation fault injection was not run.
+  Native English Amiga startup consumes M12's verified graphics receipt and
+  same-owner dungeon instead of rediscovering a different copy. A31E retains
+  its existing required startup-media checks. These are macOS dummy-driver
+  functional checks, not visual/audio parity evidence.
+
 - 2026-10-15: English Amiga A31/A35 readiness now requires the authenticated
   APPB.FTL C03 game and BJELoad_R C02 launcher beside the selected graphics.
   One shared check serves M12, native boot-profile admission and the M11

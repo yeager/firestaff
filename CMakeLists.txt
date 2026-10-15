@@ -63053,9 +63053,12 @@ if(BUILD_TESTING AND UNIX)
         LABELS "dm2;real-media;cli;menu;startup;ownership;skip-safe")
     set(FIRESTAFF_CSB_AMIGA35_ENGLISH_LOOSE_MEDIA "" CACHE PATH
         "Original CSB Amiga 3.5 English loose files for startup package verification")
+    set(FIRESTAFF_CSB_AMIGA_MULTI_LOOSE_MEDIA "" CACHE PATH
+        "Original CSB Amiga multilingual loose files for selected-owner verification")
     add_test(NAME csb_v1_amiga35_english_package_real_media
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_english_package_real_media.sh
-            $<TARGET_FILE:firestaff> "${FIRESTAFF_CSB_AMIGA35_ENGLISH_LOOSE_MEDIA}")
+            $<TARGET_FILE:firestaff> "${FIRESTAFF_CSB_AMIGA35_ENGLISH_LOOSE_MEDIA}"
+            "${FIRESTAFF_CSB_AMIGA_MULTI_LOOSE_MEDIA}")
     set_tests_properties(csb_v1_amiga35_english_package_real_media PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 120
         LABELS "csb;amiga;real-media;case-sensitive;cli;menu;startup;skip-safe")
@@ -63065,7 +63068,7 @@ if(BUILD_TESTING AND UNIX)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_pc34_loose_startup_paths.sh
             $<TARGET_FILE:firestaff> "${FIRESTAFF_DM1_PC34_LOOSE_INSTALL}")
     set_tests_properties(dm1_v1_pc34_loose_startup_paths_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 180
+        SKIP_RETURN_CODE 77 TIMEOUT 300
         LABELS "dm1;pc;real-media;case-sensitive;cli;menu;startup;skip-safe")
     set(FIRESTAFF_CSB_AMIGA_LOOSE_MEDIA "" CACHE PATH
         "Original CSB Amiga 3.3 multilingual loose files for case-sensitive verification")

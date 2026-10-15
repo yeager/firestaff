@@ -1,3 +1,21 @@
+- 2026-10-15: Repeated loose graphics copies no longer hide a complete
+  original installation behind an earlier orphan. Bounded ordinary-file
+  enumeration selects a complete same-directory owner before publishing
+  DM1 readiness; selected loose files remain terminal even beside canonical
+  original ZIPs. Atari and Amiga retail candidates use the existing original
+  dungeon catalog within that parent, with the original Amiga SWSH pairing
+  (and A22G four-file tuple); demo and PC34 English retain exact dungeon
+  hashes. PC34 also retains uniquely hash-identified renamed dungeons in the
+  same directory, without recursive neighbor fallback. Original Amiga demo,
+  Atari 1.2 English and PC34 English regressions pass CLI/M12 duplicate-owner
+  and explicit-orphan cases. The PC34 case-sensitive matrix now passes
+  twenty routes, including renamed-dungeon positives, duplicate renamed
+  payloads, invalid native filenames and subdirectory rejection. Existing
+  Amiga case/ambiguity and Atari unscoped full-startup checks still pass;
+  final demo/Atari runtime probes also pass on the latest app. Original
+  archive and installation hashes remain unchanged. This verifies media
+  ownership and startup, not display/audio parity across platforms.
+
 - 2026-10-15: Restore authentic PC34 TITLE/SELECTOR startup for loose
   installations whose DATA directory or program filenames use other case.
   Before the fix, a byte-identical `data` copy skipped native TITLE and then

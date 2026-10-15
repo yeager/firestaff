@@ -1,5 +1,17 @@
 # Firestaff TODO — DM1
 
+2026-10-15 repeated loose graphics: complete same-parent ownership is now
+verified with original Amiga demo, Atari 1.2 English and PC34 English media,
+including explicit orphan rejection beside a canonical original demo ZIP.
+PC34 renamed original dungeon compatibility remains supported within the
+selected graphics directory; duplicate aliases and unrelated subdirectories
+are rejected. Other Atari/Amiga retail editions reuse existing catalog and
+startup constraints but still need independent complete/orphan original-media
+matrices. Amiga 3.6 and PC34 multilingual startup ownership need separate
+source review. Detailed inventory rejection diagnostics and shared Amiga
+startup metadata deduplication remain followups; no visual or audio parity
+completion is claimed.
+
 2026-10-15 PC34 loose startup: canonical and lowercase DATA/program spellings
 now retain authenticated native TITLE and SELECTOR through CLI and M12,
 including explicit graphics-file selection. Original-media HFSX tests reject

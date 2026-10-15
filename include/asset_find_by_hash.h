@@ -16,12 +16,12 @@
 
 #define ASSET_PATH_MAX 512
 
-/* Verify one ordinary file against an expected lowercase MD5 hex digest.
- * Virtual archive paths are not accepted by this direct-file helper. */
+/* Verify one ordinary file or bounded virtual member against an expected
+ * lowercase MD5 hex digest. Virtual members are read into RAM, never extracted. */
 int asset_file_matches_md5(const char *path, const char *expectedMd5);
 
-/* Compute an ordinary file's lowercase MD5 identity.  This is intentionally
- * exposed alongside asset_file_matches_md5 so a user-selected package can be
+/* Compute an ordinary file or bounded virtual member's lowercase MD5 identity.
+ * Exposed alongside asset_file_matches_md5 so a user-selected package can be
  * pinned once and subsequently revalidated without trusting its filename. */
 int asset_file_md5_hex(const char *path, char outHex[33]);
 
@@ -70,6 +70,18 @@ int asset_find_all_files_by_md5_list(const char *searchDir,
                                      char outPaths[][ASSET_PATH_MAX],
                                      int *outMatched, int maxMatches,
                                      int maxDepth);
+
+/* Collect distinct ordinary-file path spellings for one hash, in strcmp
+ * order. Capacity must be 1..256; depth has the same meaning as the batch
+ * finder. Uses one extra repeated-hash slot to detect overflow. Returns the
+ * complete count (0..capacity), -1 for invalid arguments/allocation, or -2
+ * when more matching paths exist than capacity. No partial paths are published
+ * on failure. Callers must check cancellation before/after this bounded scan;
+ * this API does not invoke callbacks. Files are neither copied nor opened as
+ * containers. Physical-file hash caching remains enabled. */
+int asset_collect_files_by_md5(const char* searchDir, const char* expectedMd5,
+                                char outPaths[][ASSET_PATH_MAX],
+                                size_t capacity, int maxDepth);
 
 /*
  * Materialize a virtual container path returned by asset_find_by_md5(), for
