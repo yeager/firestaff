@@ -1123,7 +1123,7 @@ static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5);
 static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
                                             const char* dungeonMd5);
 static int m12_dm1_amiga36_package_ready(const char* graphics);
-static int m12_dm1_complete_loose_owner(const char* graphics,
+static int m12_dm1_complete_default_owner(const char* graphics,
                                         const char* graphicsMd5,
                                         char dungeon[ASSET_PATH_MAX]);
 
@@ -1551,11 +1551,7 @@ static int m12_dm1_default_dungeon_owner(const char* graphics, const char* graph
     const char* allowed = m12_dm1_loose_dungeon_md5(graphicsMd5);
     const char* match;
     if (!allowed || !graphics) return 0;
-    if (strstr(graphics, "::")) {
-        const char* name = strcmp(graphicsMd5,
-            "491ca939f9abb33ceeb26619b841fe91") == 0 ? "DemoDun.dat" : "DUNGEON.DAT";
-        if (!csb_v1_amiga_selected_companion(graphics, name, dungeon, ASSET_PATH_MAX)) return 0;
-    } else if (!m12_dm1_complete_loose_owner(graphics, graphicsMd5, dungeon)) return 0;
+    if (!m12_dm1_complete_default_owner(graphics, graphicsMd5, dungeon)) return 0;
     if (!asset_file_md5_hex(dungeon, dungeonMd5) ||
         !m12_dm1_dungeon_compatible(graphicsMd5, dungeonMd5)) return 0;
     match = strstr(allowed, dungeonMd5);
@@ -4429,7 +4425,7 @@ static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
     return 1;
 }
 
-static int m12_dm1_complete_loose_owner(const char* graphics,
+static int m12_dm1_complete_default_owner(const char* graphics,
                                         const char* graphicsMd5,
                                         char dungeon[ASSET_PATH_MAX]) {
     static const struct { const char* graphics; const char* swoosh; } amiga[] = {
@@ -4445,10 +4441,14 @@ static int m12_dm1_complete_loose_owner(const char* graphics,
     size_t i;
     int demo = graphicsMd5 &&
         strcmp(graphicsMd5, "491ca939f9abb33ceeb26619b841fe91") == 0;
-    if (!allowed || !graphics || strstr(graphics, "::") ||
-        !FSP_ParentDir(parent, sizeof(parent), graphics)) return 0;
-    {
-        int found = FSP_FindUniqueFileIgnoreCase(parent,
+    if (!allowed || !graphics) return 0;
+    if (strstr(graphics, "::")) {
+        if (!csb_v1_amiga_selected_companion(graphics,
+                demo ? "DemoDun.dat" : "DUNGEON.DAT", dungeon, ASSET_PATH_MAX)) return 0;
+    } else {
+        int found;
+        if (!FSP_ParentDir(parent, sizeof(parent), graphics)) return 0;
+        found = FSP_FindUniqueFileIgnoreCase(parent,
             demo ? "DemoDun.dat" : "DUNGEON.DAT", dungeon, ASSET_PATH_MAX);
         if (found == 0 &&
             (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
@@ -4473,13 +4473,13 @@ static int m12_dm1_complete_loose_owner(const char* graphics,
     for (i = 0U; i < sizeof(amiga) / sizeof(amiga[0]); ++i) {
         if (strcmp(graphicsMd5, amiga[i].graphics) == 0) {
             char swoosh[ASSET_PATH_MAX], swooshMd5[33];
-            if (FSP_FindUniqueFileIgnoreCase(parent, "swoosh", swoosh, sizeof(swoosh)) != 1 ||
+            if (!csb_v1_amiga_selected_companion(graphics, "swoosh", swoosh, sizeof(swoosh)) ||
                 !asset_file_md5_hex(swoosh, swooshMd5)) return 0;
             if (strcmp(swooshMd5, amiga[i].swoosh) == 0) return 1;
             if (strcmp(graphicsMd5, "0679e39da9dcc2e855cb33c6c64ddcb5") == 0 &&
                 strcmp(actualMd5, "59e332cf47852d5c7c88a9538f0adcea") == 0 &&
                 strcmp(swooshMd5, "1038138978975415571a878bb08f54be") == 0 &&
-                FSP_FindUniqueFileIgnoreCase(parent, "dm", swoosh, sizeof(swoosh)) == 1 &&
+                csb_v1_amiga_selected_companion(graphics, "dm", swoosh, sizeof(swoosh)) &&
                 asset_file_md5_hex(swoosh, swooshMd5) &&
                 strcmp(swooshMd5, "e8fc5da52d69aa61b8b5ac7b2e294ebd") == 0) return 1;
             return 0;
@@ -5214,13 +5214,16 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                 char (*candidates)[ASSET_PATH_MAX];
                 char dungeon[ASSET_PATH_MAX];
                 int count, candidate, found = 0;
-                if (!m12_dm1_loose_dungeon_md5(md5) || !rootMatched[rootIndex][i] ||
-                    m12_path_is_virtual_asset(rootMatchedPaths[rootIndex][i])) continue;
+                if (!m12_dm1_loose_dungeon_md5(md5) || !rootMatched[rootIndex][i]) continue;
+                /* Keep a complete discovered owner. Enumerate duplicates only
+                 * when its own world/startup companions cannot launch. */
+                if (m12_dm1_complete_default_owner(rootMatchedPaths[rootIndex][i], md5, dungeon))
+                    continue;
                 candidates = calloc(256U, sizeof(*candidates));
-                count = candidates ? asset_collect_files_by_md5(
+                count = candidates ? asset_collect_paths_by_md5(
                     roots[rootIndex], md5, candidates, 256U, 32) : -1;
                 for (candidate = 0; candidate < count; ++candidate) {
-                    if (m12_dm1_complete_loose_owner(candidates[candidate], md5, dungeon)) {
+                    if (m12_dm1_complete_default_owner(candidates[candidate], md5, dungeon)) {
                         m12_copy_string(rootMatchedPaths[rootIndex][i],
                             sizeof(rootMatchedPaths[rootIndex][i]), candidates[candidate]);
                         rootMatched[rootIndex][i] = found = 1;
@@ -5228,8 +5231,7 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                     }
                 }
                 free(candidates);
-                if (!found && (count < 0 || (rootMatched[rootIndex][i] &&
-                    !m12_path_is_virtual_asset(rootMatchedPaths[rootIndex][i])))) {
+                if (!found) {
                     rootMatched[rootIndex][i] = 0;
                     rootMatchedPaths[rootIndex][i][0] = '\0';
                 }
@@ -6171,7 +6173,7 @@ static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
          * materialization when its programs or language dungeon are absent. */
         ownerReady = 1;
     } else {
-        ownerReady = m12_dm1_complete_loose_owner(selected, md5, dungeon);
+        ownerReady = m12_dm1_complete_default_owner(selected, md5, dungeon);
     }
     for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
@@ -6283,7 +6285,7 @@ static int m12_fill_required_files(M12_AssetStatus* status,
             const M12_AssetVersionStatus* owner =
                 m12_first_matched_required_version(status, gameIndex, spec);
             char dungeon[ASSET_PATH_MAX];
-            if (m12_dm1_complete_loose_owner(owner->matchedPath,
+            if (m12_dm1_complete_default_owner(owner->matchedPath,
                                              owner->matchedMd5, dungeon)) {
                 fileStatus->matched = 1;
                 m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), dungeon);

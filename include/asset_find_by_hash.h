@@ -88,6 +88,18 @@ int asset_collect_files_by_md5(const char* searchDir, const char* expectedMd5,
                                 char outPaths[][ASSET_PATH_MAX],
                                 size_t capacity, int maxDepth);
 
+/* Collect distinct ordinary and virtual path spellings for one hash, sorted
+ * by strcmp, using the same bounded container readers and depth rules as the
+ * batch finder. Capacity must be 1..256. Returns the complete count within
+ * those reader limits, -1 for invalid arguments/allocation/path overflow, or
+ * -2 for more distinct matches than capacity. No partial paths are published
+ * on failure. Container inventory shortcuts are disabled; physical-file hash
+ * caching remains enabled. Callers check cancellation before/after the scan.
+ * Unsupported formats and absent/unreadable media follow finder semantics. */
+int asset_collect_paths_by_md5(const char *searchDir, const char *expectedMd5,
+                                char outPaths[][ASSET_PATH_MAX],
+                                size_t capacity, int maxDepth);
+
 /*
  * Materialize a virtual container path returned by asset_find_by_md5(), for
  * example "game-data.zip::dm2/GRAPHICS.DAT" or "disc.iso::DUNGEON.DAT".

@@ -563,6 +563,53 @@ static int normalize_md5(const char *expectedMd5, char outExpected[33]) {
     return 1;
 }
 
+/* Record exact matches before best-entry reduction. During collection the
+ * normal match slots stay empty, so first-match exits cannot hide later paths.
+ * Scope this state to the calling thread, including independent UI scans. */
+typedef struct {
+    const char *md5;
+    char (*paths)[ASSET_PATH_MAX];
+    size_t capacity;
+    size_t count;
+    int error;
+} AssetPathCollection;
+#ifdef _MSC_VER
+static __declspec(thread) AssetPathCollection *s_path_collection;
+#else
+static _Thread_local AssetPathCollection *s_path_collection;
+#endif
+
+static void collect_matching_path(const char *hex, const char *owner,
+                                   const char *member, const char *inner) {
+    AssetPathCollection *collection = s_path_collection;
+    char path[ASSET_PATH_MAX];
+    int length;
+    size_t i;
+    if (!collection || collection->error || !hex ||
+        strcmp(hex, collection->md5) != 0) return;
+    if (!owner) { collection->error = -1; return; }
+    if (inner) {
+        if (!member) { collection->error = -1; return; }
+        length = snprintf(path, sizeof(path), "%s::%s::%s", owner, member, inner);
+    } else if (member) {
+        length = snprintf(path, sizeof(path), "%s::%s", owner, member);
+    } else {
+        length = snprintf(path, sizeof(path), "%s", owner);
+    }
+    if (length < 0 || length >= (int)sizeof(path)) {
+        collection->error = -1;
+        return;
+    }
+    for (i = 0u; i < collection->count; ++i) {
+        if (strcmp(collection->paths[i], path) == 0) return;
+    }
+    if (collection->count == collection->capacity) {
+        collection->error = -2;
+        return;
+    }
+    memcpy(collection->paths[collection->count++], path, (size_t)length + 1u);
+}
+
 static int copy_match_path(const char *path, char *outPath, int outPathLen) {
     size_t len;
     if (!path || !outPath || outPathLen <= 0) return 0;
@@ -1061,7 +1108,7 @@ static int external_archive_entry_may_match_md5_list(
 static int md5_list_match_index(const char *hex, const char *const *md5List,
                                 const int *matched, int md5Count) {
     int i;
-    if (!hex || !md5List || md5Count <= 0) return -1;
+    if (s_path_collection || !hex || !md5List || md5Count <= 0) return -1;
     for (i = 0; i < md5Count; ++i) {
         if ((!matched || !matched[i]) && strcmp(hex, md5List[i]) == 0) {
             return i;
@@ -2047,6 +2094,7 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
                 }
             }
         }
+        collect_matching_path(hex, zipPath, name, NULL);
         matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
         if (matchIndex >= 0) {
             int shouldUpdate;
@@ -2275,6 +2323,7 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
                     char hex[33];
                     int matchIndex;
                     if (iso_file_md5(fp, raw2352, lba, size, hex)) {
+                        collect_matching_path(hex, isoPath, fullName, NULL);
                         matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
                         if (matchIndex >= 0 && matchIndex < ASSET_ISO_LIST_BEST_MAX &&
                             is_better_iso_entry(fullName, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
@@ -2452,7 +2501,8 @@ static int scan_iso_by_md5_list(const char *isoPath, const char *const *md5List,
     }
     /* Fallback: whole-file MD5 for raw CD images without ISO 9660 PVD. */
     if (file_md5(isoPath, hex)) {
-        for (i = 0; i < md5Count; ++i) {
+        collect_matching_path(hex, isoPath, NULL, NULL);
+        for (i = 0; !s_path_collection && i < md5Count; ++i) {
             if (matched[i]) continue;
             if (md5List[i] && strcmp(hex, md5List[i]) == 0) {
                 if (copy_match_path(isoPath, outPaths[i],
@@ -2815,6 +2865,7 @@ static int tar_scan_file_by_md5_list(const char *tarPath,
             size <= ASSET_TAR_MAX_ENTRY_BYTES &&
             tar_entry_name(hdr, name, sizeof(name)) &&
             file_range_md5(fp, (long)dataOffset, size, hex)) {
+            collect_matching_path(hex, tarPath, name, NULL);
             matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
             if (matchIndex >= 0 &&
                 is_better_zip_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
@@ -3081,6 +3132,7 @@ static int tar_scan_memory_by_md5_list(const unsigned char *tarData,
             size <= ASSET_TAR_MAX_ENTRY_BYTES &&
             tar_entry_name(hdr, name, sizeof(name)) &&
             memory_range_md5(tarData + dataOffset, size, hex)) {
+            collect_matching_path(hex, containerPath, name, NULL);
             matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
             if (matchIndex >= 0 &&
                 is_better_zip_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
@@ -3244,6 +3296,7 @@ static int scan_gzip_by_md5_list(const char *gzipPath,
     if (!inflate_gzip_file_to_memory(gzipPath, &data, &size)) return 0;
     if (size >= 16U && memory_range_md5(data, size, hex) &&
         gzip_entry_name(gzipPath, entryName, sizeof(entryName))) {
+        collect_matching_path(hex, gzipPath, entryName, NULL);
         matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
         if (matchIndex >= 0 &&
             copy_virtual_match_path(gzipPath, entryName,
@@ -3405,6 +3458,7 @@ static int scan_lha_by_md5_list(const char *lhaPath,
         if (lha_entry_is_stored(method, packedSize, originalSize) &&
             originalSize >= 16U &&
             file_range_md5(fp, dataOffset, originalSize, hex)) {
+            collect_matching_path(hex, lhaPath, name, NULL);
             matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
             if (matchIndex >= 0 &&
                 is_better_zip_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
@@ -3800,6 +3854,7 @@ static int nested_disk_find_list_visitor(const char *name, const uint8_t *bytes,
     md5_init(&ctx);
     md5_update(&ctx, bytes, (unsigned int)byte_count);
     md5_final(&ctx, hex);
+    collect_matching_path(hex, matches->archive, matches->disk, name);
     index = md5_list_match_index(hex, matches->md5_list, matches->matched,
                                  matches->md5_count);
     if (index >= 0 && !matches->matched[index] &&
@@ -3947,6 +4002,7 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
                 md5_init(&image_md5);
                 md5_update(&image_md5, image, (unsigned int)image_size);
                 md5_final(&image_md5, image_hex);
+                collect_matching_path(image_hex, zip_path, name, NULL);
                 image_index = md5_list_match_index(image_hex, md5_list,
                                                    matched, md5_count);
                 if (image_index >= 0 && !matched[image_index] &&
@@ -4214,6 +4270,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
                     external_archive_entry_may_match_md5_list(line, md5List,
                                                               md5Count) &&
                     external_entry_md5(archivePath, line, hex)) {
+                    collect_matching_path(hex, archivePath, line, NULL);
                     matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                     if (matchIndex >= 0 &&
                         is_better_zip_entry(line,
@@ -4248,6 +4305,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
                 external_archive_entry_may_match_md5_list(entryName, md5List,
                                                           md5Count) &&
                 external_entry_md5(archivePath, entryName, hex)) {
+                collect_matching_path(hex, archivePath, entryName, NULL);
                 matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                 if (matchIndex >= 0 &&
                     is_better_zip_entry(entryName,
@@ -4291,6 +4349,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
             external_archive_entry_may_match_md5_list(entryName, md5List,
                                                       md5Count) &&
             external_entry_md5(archivePath, entryName, hex)) {
+            collect_matching_path(hex, archivePath, entryName, NULL);
             matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
             if (matchIndex >= 0 &&
                 is_better_zip_entry(entryName,
@@ -4311,6 +4370,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     }
     return foundCount;
 }
+
 #else
 static int scan_chd_by_md5(const char *chdPath, const char *expectedMd5,
                            char *outPath, int outPathLen) {
@@ -4987,6 +5047,7 @@ static int scan_adf_by_md5(const char *adfPath, const char *expectedMd5,
 
 typedef struct {
     const char *container;
+    const char *collection_member;
     const char *const *md5_list;
     int md5_count;
     char (*out_paths)[ASSET_PATH_MAX];
@@ -5003,6 +5064,11 @@ static int adf_find_list_visitor(const char *name, const uint8_t *bytes,
     md5_init(&ctx);
     md5_update(&ctx, bytes, (unsigned int)byte_count);
     md5_final(&ctx, hex);
+    if (matches->collection_member) {
+        collect_matching_path(hex, matches->container, matches->collection_member, name);
+    } else {
+        collect_matching_path(hex, matches->container, name, NULL);
+    }
     index = md5_list_match_index(hex, matches->md5_list, matches->matched,
                                  matches->md5_count);
     if (index >= 0) {
@@ -5327,6 +5393,7 @@ static int native_7z_member_list_visitor(const char *name,
     int index;
     if (!matches || !name || !bytes || byte_count == 0u) return -1;
     asset_memory_md5_hex(bytes, byte_count, actual_md5);
+    collect_matching_path(actual_md5, matches->archive_path, name, NULL);
     index = md5_list_match_index(actual_md5, matches->md5_list, NULL,
                                  matches->md5_count);
     if (index >= 0 && !matches->matched[index]) {
@@ -5489,6 +5556,7 @@ static int scan_native_7z_atari_stx_by_md5_list(
     memset(local_paths, 0, sizeof(local_paths));
     memset(local_matched, 0, sizeof(local_matched));
     matches.container = archive_path;
+    matches.collection_member = member_name;
     matches.md5_list = md5_list;
     matches.md5_count = md5_count;
     matches.out_paths = local_paths;
@@ -5816,6 +5884,7 @@ static int external_adf_find_list_visitor(const char *name, const uint8_t *bytes
     md5_update(&ctx, bytes, (unsigned int)byte_count);
     md5_final(&ctx, hex);
     external_adf_cache_store_file(matches->archive, matches->adf, name, hex);
+    collect_matching_path(hex, matches->archive, matches->adf, name);
     index = md5_list_match_index(hex, matches->md5_list, matches->matched,
                                  matches->md5_count);
     if (index >= 0 && !matches->matched[index] &&
@@ -5913,6 +5982,7 @@ static int scan_external_atari_st_by_md5_list(
     memset(local_paths, 0, sizeof(local_paths));
     memset(local_matched, 0, sizeof(local_matched));
     matches.container = archive_path;
+    matches.collection_member = st_entry;
     matches.md5_list = md5_list;
     matches.md5_count = md5_count;
     matches.out_paths = local_paths;
@@ -5987,6 +6057,7 @@ static int scan_external_atari_msa_by_md5_list(
     memset(local_paths, 0, sizeof(local_paths));
     memset(local_matched, 0, sizeof(local_matched));
     matches.container = archive_path;
+    matches.collection_member = msa_entry;
     matches.md5_list = md5_list;
     matches.md5_count = md5_count;
     matches.out_paths = local_paths;
@@ -6301,8 +6372,10 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     allowLargeWholeFile = md5_list_contains_large_whole_file_hash(md5List, md5Count);
 
     while ((ent = readdir(d)) != NULL) {
+        if (s_path_collection && s_path_collection->error) break;
         if (ent->d_name[0] == '.') continue;
         if (snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name) >= (int)sizeof(path)) {
+            if (s_path_collection) s_path_collection->error = -1;
             continue;
         }
         if (stat(path, &st) != 0) {
@@ -6323,6 +6396,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
             if ((st.st_size <= ASSET_SCAN_MAX_FILE_BYTES ||
                  allowLargeWholeFile) &&
                 st.st_size >= 16 && file_md5(path, hex)) {
+                collect_matching_path(hex, path, NULL, NULL);
                 matchIndex = md5_list_match_index(hex, md5List, matched,
                                                    md5Count);
                 if (matchIndex >= 0 &&
@@ -6353,6 +6427,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
             }
             if (st.st_size < 16) continue;
             if (!file_md5(path, hex)) continue;
+            collect_matching_path(hex, path, NULL, NULL);
             matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
             if (matchIndex >= 0 &&
                 copy_match_path(path, outPaths[matchIndex], ASSET_PATH_MAX)) {
@@ -6451,7 +6526,10 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     int foundCount = 0;
     int allowLargeWholeFile;
     if (depth > maxDepth) return 0;
-    if (snprintf(pattern, sizeof(pattern), "%s\\*", dir) >= (int)sizeof(pattern)) return 0;
+    if (snprintf(pattern, sizeof(pattern), "%s\\*", dir) >= (int)sizeof(pattern)) {
+        if (s_path_collection) s_path_collection->error = -1;
+        return 0;
+    }
     h = FindFirstFileA(pattern, &fd);
     if (h == INVALID_HANDLE_VALUE) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
@@ -6461,8 +6539,12 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     }
     allowLargeWholeFile = md5_list_contains_large_whole_file_hash(md5List, md5Count);
     do {
+        if (s_path_collection && s_path_collection->error) break;
         if (fd.cFileName[0] == '.') continue;
-        if (snprintf(path, sizeof(path), "%s\\%s", dir, fd.cFileName) >= (int)sizeof(path)) continue;
+        if (snprintf(path, sizeof(path), "%s\\%s", dir, fd.cFileName) >= (int)sizeof(path)) {
+            if (s_path_collection) s_path_collection->error = -1;
+            continue;
+        }
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             foundCount += scan_dir_by_md5_list(path, md5List, md5Count,
                                                outPaths, matched,
@@ -6480,6 +6562,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
             if (!((sz.QuadPart > ASSET_SCAN_MAX_FILE_BYTES &&
                    !allowLargeWholeFile) || sz.QuadPart < 16) &&
                 file_md5(path, hex)) {
+                collect_matching_path(hex, path, NULL, NULL);
                 matchIndex = md5_list_match_index(hex, md5List, matched,
                                                    md5Count);
                 if (matchIndex >= 0 &&
@@ -6510,6 +6593,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
                 continue;
             }
             if (!file_md5(path, hex)) continue;
+            collect_matching_path(hex, path, NULL, NULL);
             matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
             if (matchIndex >= 0 &&
                 copy_match_path(path, outPaths[matchIndex], ASSET_PATH_MAX)) {
@@ -6822,7 +6906,7 @@ static int asset_find_all_by_md5_list_internal(
             /* Container inventory does not retain traversal depth. Ordinary
              * file lookups must walk their bounded tree; file_md5 still uses
              * its physical-file cache without admitting virtual/child hits. */
-            if (!duplicateHash && scanContainers &&
+            if (!s_path_collection && !duplicateHash && scanContainers &&
                 scache_inventory_lookup(s_scan_cache, searchDir,
                                         normalizedPtrs[i], normalizedPaths[i],
                                         ASSET_PATH_MAX)) {
@@ -6843,6 +6927,9 @@ static int asset_find_all_by_md5_list_internal(
         if (foundCount < normalizedCount) {
             char direct_hex[33];
             int direct_index;
+            if (s_path_collection && file_md5(searchDir, direct_hex)) {
+                collect_matching_path(direct_hex, searchDir, NULL, NULL);
+            }
             if (file_md5(searchDir, direct_hex) &&
                 (direct_index = md5_list_match_index(
                      direct_hex, normalizedPtrs, normalizedMatched,
@@ -6904,6 +6991,45 @@ int asset_find_all_files_by_md5_list(const char *searchDir,
 
 static int asset_path_compare(const void* left, const void* right) {
     return strcmp((const char*)left, (const char*)right);
+}
+
+int asset_collect_paths_by_md5(const char *searchDir, const char *expectedMd5,
+                                char outPaths[][ASSET_PATH_MAX],
+                                size_t capacity, int maxDepth) {
+    AssetPathCollection collection;
+    char normalized[33];
+    const char *hashes[2];
+    char ignoredPath[1][ASSET_PATH_MAX];
+    int ignoredMatch[1];
+    int result;
+    if (!outPaths || capacity == 0u || capacity > 256u) return -1;
+    memset(outPaths, 0, capacity * sizeof(*outPaths));
+    if (!searchDir || s_path_collection ||
+        !normalize_md5(expectedMd5, normalized)) return -1;
+    memset(&collection, 0, sizeof(collection));
+    collection.md5 = normalized;
+    collection.capacity = capacity;
+    collection.paths = calloc(capacity, sizeof(*collection.paths));
+    if (!collection.paths) return -1;
+    hashes[0] = normalized;
+    hashes[1] = NULL;
+    scan_cache_begin();
+    s_path_collection = &collection;
+    result = asset_find_all_by_md5_list_internal(
+        searchDir, hashes, ignoredPath, ignoredMatch, 1, maxDepth, 1);
+    s_path_collection = NULL;
+    scan_cache_end();
+    if (result >= 0 && !collection.error) {
+        qsort(collection.paths, collection.count, sizeof(*collection.paths),
+              asset_path_compare);
+        memcpy(outPaths, collection.paths,
+               collection.count * sizeof(*collection.paths));
+        result = (int)collection.count;
+    } else {
+        result = collection.error ? collection.error : -1;
+    }
+    free(collection.paths);
+    return result;
 }
 
 int asset_collect_files_by_md5(const char* searchDir, const char* expectedMd5,

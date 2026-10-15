@@ -7310,3 +7310,12 @@ Explicit DM1 FM Towns file selections now report missing dungeon data or
 native startup programs without incorrectly listing a verified GRAPHICS.DAT
 as missing. The menu continues to block the incomplete installation and
 does not switch to a neighboring copy.
+
+### DM1 duplicate archive discovery
+
+- Directory discovery can now select a complete original installation when an
+  earlier ZIP copy has the same graphics but an incompatible dungeon.
+- Preserve each selected owner's required startup companions and exact file
+  provenance. Explicitly selected incomplete archives remain unavailable.
+- Bound duplicate candidate collection and reject overflow without reporting
+  a partial candidate set as complete.

@@ -3432,3 +3432,25 @@ Access-denied CTest passed (14.50 s); deterministic cancellation and catalog
 consistency passed. The cancellation executable's two full five-game corpus
 cases remained intentionally skipped. Redacted patch Gitleaks found no leaks.
 Preceding GitHub Actions run 38818707400 completed successfully before publication.
+
+- 2026-10-16: Fixed incomplete virtual DM1 copies hiding complete duplicate
+  originals during directory discovery. Reused existing readers with a bounded,
+  thread-local exact-path collection mode, preserving normal best-match APIs.
+  Candidate output is sorted and distinct; capacity and path overflow fail
+  without partial publication. Complete initial owners avoid extra enumeration.
+  Unified loose/virtual completeness preserves Amiga SWSH, A22G tuple, A36
+  driver and PC multilingual startup-media requirements. Final native publication
+  reapplies completeness so late admission cannot restore missing companions.
+  Original ST12 ZIP regression covers both scans, same-owner file receipts,
+  runtime level loading, explicit bad-source rejection, collector overflow and
+  duplicate members in one archive. Original A20 missing-SWSH admission is
+  rejected. Focused final CTests: 2/2, 8.53 s, no missing-media skips. Full
+  A20/A36/demo CLI probes pass with levelLoaded and unchanged source SHA-256.
+  These are source/startup checks, not display or full platform parity proof.
+
+Final duplicate-owner verification: rebuilt original-media CLI startup diagnostics
+passed (215.49 s), including both unavailable remembered-root cases. Rebuilt
+access-denied test passed (14.30 s); rebuilt deterministic cancellation passed
+with its two full five-game corpus cases intentionally skipped. Localization
+catalog checks passed. Independent source review resolved directory path-overflow
+handling and found no remaining blocker. Redacted patch Gitleaks found no leaks.

@@ -147,6 +147,45 @@ cleanup:
     if(dir[0]) rmdir(dir);
     return result==0;
 }
+/* A20 TITLE.C F0437 requires its original SWSH beside the selected world. */
+static int check_amiga_virtual_startup_companion(const char* root, const char* original) {
+    static const char* const names[2]={"GRAPHICS.DAT","DUNGEON.DAT"};
+    static const char* const nativeNames[2]={"graphics.dat","Dungeon.dat"};
+    static const char* const hashes[2]={"6a2f135b53c2220f0251fa103e2a6e7e",
+        "30028fb6a301ecb20127ef0b3af32b05"};
+    unsigned char* bytes[2]={NULL,NULL}; size_t sizes[2]={0,0};
+    char archive[FSP_PATH_MAX]={0}, member[ASSET_PATH_MAX];
+    M12_AssetStatus* status=NULL;
+    int result=1;
+    if (!original || !FSP_FileExists(original)) {
+        puts("SKIP: authentic Amiga A20 archive unavailable for missing SWSH case");
+        return 1;
+    }
+    for (int i=0; i<2; ++i) {
+        REQUIRE(snprintf(member,sizeof(member),
+            "%s::Dungeon Master v2.0 (1988)(FTL).zip::Dungeon Master v2.0 (1988)(FTL).adf::%s",
+            original,nativeNames[i])<(int)sizeof(member) &&
+            asset_read_path_alloc(member,&bytes[i],&sizes[i]) &&
+            asset_memory_matches_md5(bytes[i],sizes[i],hashes[i]),
+            "read unchanged authentic A20 startup owner members");
+    }
+    REQUIRE(FSP_JoinPath(archive,sizeof(archive),root,"a20-without-swoosh.zip") &&
+        write_original_pair(archive,names,bytes,sizes),
+        "frame authentic A20 graphics and world without required SWSH");
+    status=SDL_calloc(1,sizeof(*status));
+    REQUIRE(status,"allocate A20 incomplete startup scan");
+    for (int mode=0; mode<2; ++mode) {
+        if (mode) M12_AssetStatus_Scan(status,archive);
+        else M12_AssetStatus_ScanGame(status,archive,"dm1");
+        REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+            "original A20 graphics and dungeon cannot launch without their required SWSH");
+    }
+    result=0;
+cleanup:
+    SDL_free(status); free(bytes[0]); free(bytes[1]);
+    if (archive[0]) unlink(archive);
+    return result==0;
+}
 static int check_atari_virtual_dungeon_compatibility(const char* root, const char* original,
     const char* pcOriginal, const unsigned char* pcDungeon, size_t pcDungeonSize) {
     static const char* const hashes[]={"9ce2eaf7a9e78620e3f17594437caffa",
@@ -156,7 +195,7 @@ static int check_atari_virtual_dungeon_compatibility(const char* root, const cha
     unsigned char* bytes[2]={NULL,NULL};
     size_t sizes[2]={0,0};
     char dir[FSP_PATH_MAX]={0}, archive[FSP_PATH_MAX]={0}, pcAlias[FSP_PATH_MAX]={0};
-    char nativeAlias[FSP_PATH_MAX]={0};
+    char nativeAlias[FSP_PATH_MAX]={0}, completeArchive[FSP_PATH_MAX]={0};
     const char* amigaOriginal=getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
     char member[ASSET_PATH_MAX], graphics[ASSET_PATH_MAX], dungeon[ASSET_PATH_MAX];
     char pcGraphics[ASSET_PATH_MAX], pcDungeonPath[ASSET_PATH_MAX], physical[FSP_PATH_MAX];
@@ -169,6 +208,8 @@ static int check_atari_virtual_dungeon_compatibility(const char* root, const cha
         puts("SKIP: authentic Atari archive unavailable for virtual dungeon compatibility case");
         return 1;
     }
+    REQUIRE(check_amiga_virtual_startup_companion(root,amigaOriginal),
+        "virtual A20 retains required original startup companion gate");
     REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"atari-virtual") && FSP_CreateDirectory(dir) &&
         /* Exercise the preservation-name parent-scan branch as well as
          * hash-based native identity; the filename must not select a sibling. */
@@ -290,10 +331,99 @@ static int check_atari_virtual_dungeon_compatibility(const char* root, const cha
             pcAlias[0]='\0';
         }
     }
+    /* Directory discovery must continue beyond an incompatible first copy.
+     * Both containers retain unchanged, independently authenticated originals. */
+    REQUIRE(FSP_JoinPath(completeArchive,sizeof(completeArchive),dir,"zz-complete-original-Dungeon-Master_Atari-ST_EN_Version-12-copy.zip") &&
+        write_original_pair(completeArchive,names,bytes,sizes),"frame complete original duplicate ZIP");
+    {
+        unsigned char* incompatible[2]={bytes[0],(unsigned char*)pcDungeon};
+        size_t incompatibleSizes[2]={sizes[0],pcDungeonSize};
+        REQUIRE(write_original_pair(archive,names,incompatible,incompatibleSizes),
+            "replace first duplicate's dungeon with incompatible original");
+    }
+    REQUIRE(asset_find_by_md5(dir,hashes[0],member,sizeof(member),32),
+        "locate first duplicate using production hash discovery");
+    if (strcmp(member,graphics)!=0) {
+        unsigned char* incompatible[2]={bytes[0],(unsigned char*)pcDungeon};
+        size_t incompatibleSizes[2]={sizes[0],pcDungeonSize};
+        char swap[FSP_PATH_MAX];
+        REQUIRE(strncmp(member,completeArchive,strlen(completeArchive))==0,
+            "first discovery belongs to one of the two isolated duplicates");
+        REQUIRE(write_original_pair(archive,names,bytes,sizes) &&
+            write_original_pair(completeArchive,names,incompatible,incompatibleSizes),
+            "place incompatible dungeon in actual first-discovered duplicate");
+        memcpy(swap,archive,sizeof(swap));
+        memcpy(archive,completeArchive,sizeof(archive));
+        memcpy(completeArchive,swap,sizeof(completeArchive));
+    }
+    REQUIRE(asset_find_by_md5(dir,hashes[0],member,sizeof(member),32) &&
+        strncmp(member,archive,strlen(archive))==0 &&
+        strncmp(member+strlen(archive),"::",2)==0,
+        "confirm incompatible duplicate remains first after unchanged graphics rewrite");
+    {
+        char paths[2][ASSET_PATH_MAX];
+        REQUIRE(asset_collect_paths_by_md5(dir,hashes[0],paths,2U,32)==2 &&
+            strcmp(paths[0],paths[1])<0,
+            "bounded virtual collector returns both distinct original graphics in sorted order");
+        REQUIRE(asset_collect_paths_by_md5(dir,hashes[0],paths,1U,32)==-2 && !paths[0][0],
+            "bounded virtual collector reports overflow without partial publication");
+        {
+            const char* const duplicateNames[2]={"first/GRAPHICS.DAT","second/GRAPHICS.DAT"};
+            unsigned char* duplicateBytes[2]={bytes[0],bytes[0]};
+            size_t duplicateSizes[2]={sizes[0],sizes[0]};
+            REQUIRE(FSP_JoinPath(nativeAlias,sizeof(nativeAlias),dir,"collector-only.zip") &&
+                write_original_pair(nativeAlias,duplicateNames,duplicateBytes,duplicateSizes),
+                "frame two unchanged original graphics members in one ZIP");
+            REQUIRE(asset_collect_paths_by_md5(nativeAlias,hashes[0],paths,2U,0)==2 &&
+                strcmp(paths[0],paths[1])<0,
+                "virtual collector retains distinct same-hash members within a selected archive");
+            REQUIRE(unlink(nativeAlias)==0,"remove only task-owned collector ZIP");
+            nativeAlias[0]='\0';
+        }
+    }
+
+    for (int mode=0; mode<2; ++mode) {
+        const M12_AssetVersionStatus* owner;
+        if (mode) M12_AssetStatus_Scan(status,dir);
+        else M12_AssetStatus_ScanGame(status,dir,"dm1");
+        owner=M12_AssetStatus_GetFirstMatchedVersion(status,"dm1");
+        REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1") && owner &&
+            strncmp(owner->matchedPath,completeArchive,strlen(completeArchive))==0 &&
+            strncmp(owner->matchedPath+strlen(completeArchive),"::",2)==0,
+            "directory scan selects complete native ZIP beyond incompatible duplicate");
+        {
+            int graphicsReported=0, dungeonReported=0;
+            char expectedDungeon[ASSET_PATH_MAX];
+            REQUIRE(snprintf(expectedDungeon,sizeof(expectedDungeon),"%s::DUNGEON.DAT",completeArchive)<
+                (int)sizeof(expectedDungeon),"construct complete duplicate's dungeon receipt");
+            for (size_t i=0; i<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++i) {
+                const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",i);
+                const char* reported=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                if (strcmp(required->roleId,"graphics")==0)
+                    graphicsReported=required->matched && strcmp(reported,owner->matchedPath)==0 &&
+                        strcmp(required->matchedHash,hashes[0])==0;
+                if (strcmp(required->roleId,"dungeon")==0)
+                    dungeonReported=required->matched && strcmp(reported,expectedDungeon)==0 &&
+                        strcmp(required->matchedHash,hashes[1])==0;
+            }
+            REQUIRE(graphicsReported && dungeonReported,
+                "directory duplicate selection reports both original members from complete owner");
+        }
+        spec.dataDir=completeArchive; spec.verifiedAssetPath=owner->matchedPath;
+        REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
+            M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+            "directory-selected complete duplicate starts actual native world");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        if (mode) M12_AssetStatus_Scan(status,archive);
+        else M12_AssetStatus_ScanGame(status,archive,"dm1");
+        REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+            "explicit incompatible duplicate remains terminal beside complete same-edition ZIP");
+    }
     result=0;
 cleanup:
     if (initialized) M11_GameView_Shutdown(game);
     SDL_free(game); SDL_free(status); free(bytes[0]); free(bytes[1]);
+    if (completeArchive[0]) unlink(completeArchive);
     if (nativeAlias[0]) unlink(nativeAlias);
     if (pcAlias[0]) unlink(pcAlias);
     if (archive[0]) unlink(archive);

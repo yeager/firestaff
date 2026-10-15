@@ -1766,6 +1766,18 @@ also pass. Selected physical archives now exclude neighboring editions, includin
 late native preservation recovery after parent-directory scanning. Amiga demo,
 A20 and A36 CLI probes retain their exact archive-owned dungeon reports; A20 also
 passes a relative selected path. This does not establish arbitrary custom-format
-validation or edition-exact compatibility for every native dungeon. Verify later
-complete virtual duplicates and remaining native owner combinations; native
+validation or edition-exact compatibility for every native dungeon. Verify remaining
+native owner combinations and archive-reader limits; native
 Windows original-media staging remains open.
+
+2026-10-16 duplicate virtual-owner follow-up: original ST12 ZIP copies reproduced
+an incomplete first owner hiding a complete same-graphics installation. Bounded
+container-aware candidate enumeration now selects a complete default owner,
+including its startup companions, while explicit bad archive selections remain
+terminal. Focused authentic-media coverage passes both scan APIs, exact graphics
+and dungeon receipts, actual native runtime handoff, overflow without partial
+results, and distinct same-hash members within a single ZIP. A20 without SWSH
+is rejected; full original A20/A36/demo CLI probes load their worlds. This does
+not establish every archive format/platform combination or visual parity.
+Existing container/depth limits still apply; generic nested ZIP/ZIP/ADF discovery
+remains separate from the canonical preservation-package admission path.
