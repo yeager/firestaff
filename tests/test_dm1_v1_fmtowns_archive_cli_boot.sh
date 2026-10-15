@@ -149,8 +149,8 @@ aperture_y = 33 if language == "en" else 31
 c255_prefix = (
     f"[dm1-fmtowns-c255] edition={edition} language={language} result=ok "
     f"valid=1 aperture=(0,{aperture_y} 224x136) "
-    "requested=0x0000c433 loaded=0x0000c433 missing=0x00000000 "
-    "source-records=0x00003803 "
+    "requested=0x0000f43f loaded=0x0000f43f missing=0x00000000 "
+    "source-records=0x00007e03 "
 )
 if not any(line.startswith(c255_prefix) and
            re.search(r"raster_fnv1a=0x[0-9a-f]{8} reason=none$", line)

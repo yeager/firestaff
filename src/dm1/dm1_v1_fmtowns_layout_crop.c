@@ -25,23 +25,30 @@ int dm1_v1_fmtowns_wall_panel_route(unsigned int pc34_graphic_index,
                                    int flip_walls,
                                    DM1_V1_FmtownsWallPanelRoute *out_route)
 {
-    DM1_V1_FmtownsWallPanelRoute route;
+    DM1_V1_FmtownsWallPanelRoute route = {0};
+    /* PC zones identify the shared scheduler's semantic only. F20 uses
+     * different native zone ids and G2002 negative-bitmap aliases:
+     * COORD.C:169-198/F0630:1939-1993, DEFS.H:4030-4038. */
+    static const unsigned int pc_zones[15] = {
+        717,716,714,713,712,708,707,711,710,709,703,702,706,705,704
+    };
+    if (pc34_graphic_index >= 93u && pc34_graphic_index <= 107u)
+        route.pc34_zone = pc_zones[pc34_graphic_index - 93u];
     switch (pc34_graphic_index) {
-    case 93u: route.source_graphic_base = 84u; route.layout_zone = 717u; break;
-    case 94u: route.source_graphic_base = 85u; route.layout_zone = 716u; break;
-    case 95u: route.source_graphic_base = 86u; route.layout_zone = 714u; break;
-    case 96u: route.source_graphic_base = 86u; route.layout_zone = 713u; break;
-    case 97u: route.source_graphic_base = 86u; route.layout_zone = 712u; break;
-    case 98u: route.source_graphic_base = 87u; route.layout_zone = 708u; break;
-    case 99u: route.source_graphic_base = 87u; route.layout_zone = 707u; break;
-    case 100u: route.source_graphic_base = 87u; route.layout_zone = 711u; break;
-    case 101u: route.source_graphic_base = 87u; route.layout_zone = 710u; break;
-    case 102u: route.source_graphic_base = 87u; route.layout_zone = 709u; break;
+    case 93u: route.source_graphic_base = 84u; route.layout_zone = 715u; break;
+    case 94u: route.source_graphic_base = 85u; route.layout_zone = 714u; break;
+    case 95u: route.source_graphic_base = 86u; route.layout_zone = 712u; route.logical_width = 60; break;
+    case 96u: route.source_graphic_base = 86u; route.layout_zone = 711u; route.source_x = 188; route.logical_width = 60; break;
+    case 97u: route.source_graphic_base = 86u; route.layout_zone = 710u; route.source_x = 44; route.logical_width = 160; break;
+    /* F0128:8498-8510 emits D2L2/R2 only for MEDIA720, excluding F20. */
+    case 100u: route.source_graphic_base = 87u; route.layout_zone = 709u; route.logical_width = 75; break;
+    case 101u: route.source_graphic_base = 87u; route.layout_zone = 708u; route.source_x = 61; route.logical_width = 75; break;
+    case 102u: route.source_graphic_base = 87u; route.layout_zone = 707u; route.source_x = 16; route.logical_width = 104; break;
     case 103u: route.source_graphic_base = 89u; route.layout_zone = 703u; break;
     case 104u: route.source_graphic_base = 89u; route.layout_zone = 702u; break;
-    case 105u: route.source_graphic_base = 88u; route.layout_zone = 706u; break;
-    case 106u: route.source_graphic_base = 88u; route.layout_zone = 705u; break;
-    case 107u: route.source_graphic_base = 88u; route.layout_zone = 704u; break;
+    case 105u: route.source_graphic_base = 88u; route.layout_zone = 706u; route.logical_width = 85; break;
+    case 106u: route.source_graphic_base = 88u; route.layout_zone = 705u; route.source_x = 32; route.logical_width = 84; break;
+    case 107u: route.source_graphic_base = 88u; route.layout_zone = 704u; route.source_x = 18; route.logical_width = 76; break;
     default:
         if (out_route) memset(out_route, 0, sizeof(*out_route));
         return 0;
@@ -61,6 +68,22 @@ int dm1_v1_fmtowns_wall_panel_route(unsigned int pc34_graphic_index,
         }
     }
     if (out_route) *out_route = route;
+    return 1;
+}
+
+int dm1_v1_fmtowns_wall_resolve_crop(
+    const DM1_V1_FmtownsWallPanelRoute *route,
+    int bitmap_width, int bitmap_height, DM1_V1_FmtownsLayoutCrop *out_crop)
+{
+    int width;
+    if (out_crop) memset(out_crop, 0, sizeof(*out_crop));
+    if (!route || !out_crop || bitmap_width <= 0 || bitmap_height <= 0 ||
+        route->source_x < 0 || route->source_x >= bitmap_width) return 0;
+    width = route->logical_width ? route->logical_width : bitmap_width;
+    if (width <= 0 || width > bitmap_width - route->source_x ||
+        !dm1_v1_fmtowns_layout_resolve_crop(route->layout_zone, width,
+                                           bitmap_height, out_crop)) return 0;
+    out_crop->source_x += route->source_x;
     return 1;
 }
 
@@ -151,16 +174,15 @@ int dm1_v1_fmtowns_layout_resolve_crop(unsigned int zone_index,
     return 1;
 }
 
-int dm1_v1_fmtowns_layout_blit(uint8_t *destination,
+static int dm1_fmtowns_blit_crop(uint8_t *destination,
                               size_t destination_size,
                               int destination_stride,
                               const uint8_t *source,
                               size_t source_size, int source_stride,
                               int bitmap_width, int bitmap_height,
-                              unsigned int zone_index,
-                              int transparent_index)
+                              DM1_V1_FmtownsLayoutCrop crop,
+                              int flip, int transparent_index)
 {
-    DM1_V1_FmtownsLayoutCrop crop;
     size_t dest_required;
     size_t source_required;
     int row;
@@ -169,9 +191,7 @@ int dm1_v1_fmtowns_layout_blit(uint8_t *destination,
     if (!destination || !source || destination_stride <
             DM1_V1_FMTOWNS_LAYOUT_VIEW_WIDTH || source_stride < bitmap_width ||
         bitmap_width <= 0 || bitmap_height <= 0 || transparent_index < -1 ||
-        transparent_index > 255 ||
-        !dm1_v1_fmtowns_layout_resolve_crop(zone_index, bitmap_width,
-                                             bitmap_height, &crop)) return 0;
+        transparent_index > 255) return 0;
     if ((size_t)(DM1_V1_FMTOWNS_LAYOUT_VIEW_HEIGHT - 1) >
             (SIZE_MAX - DM1_V1_FMTOWNS_LAYOUT_VIEW_WIDTH) /
                 (size_t)destination_stride ||
@@ -190,16 +210,46 @@ int dm1_v1_fmtowns_layout_blit(uint8_t *destination,
             (size_t)(crop.destination_y + row) * (size_t)destination_stride +
             (size_t)crop.destination_x;
         const uint8_t *src = source +
-            (size_t)(crop.source_y + row) * (size_t)source_stride +
-            (size_t)crop.source_x;
-        if (transparent_index < 0) {
-            memcpy(dst, src, (size_t)crop.width);
-        } else {
-            for (column = 0; column < crop.width; ++column) {
-                if (src[column] != (uint8_t)transparent_index)
-                    dst[column] = src[column];
-            }
+            (size_t)(crop.source_y + row) * (size_t)source_stride;
+        for (column = 0; column < crop.width; ++column) {
+            int sx = crop.source_x + column;
+            uint8_t color;
+            /* F1000 mirrors the full native content before G2002's alias
+             * is selected, not a previously cropped left/right strip. */
+            if (flip) sx = bitmap_width - 1 - sx;
+            color = src[sx];
+            if (transparent_index < 0 || color != (uint8_t)transparent_index)
+                dst[column] = color;
         }
     }
     return 1;
+}
+
+int dm1_v1_fmtowns_layout_blit(
+    uint8_t *destination, size_t destination_size, int destination_stride,
+    const uint8_t *source, size_t source_size, int source_stride,
+    int bitmap_width, int bitmap_height, unsigned int zone_index,
+    int transparent_index)
+{
+    DM1_V1_FmtownsLayoutCrop crop;
+    if (!dm1_v1_fmtowns_layout_resolve_crop(zone_index, bitmap_width,
+                                           bitmap_height, &crop)) return 0;
+    return dm1_fmtowns_blit_crop(destination, destination_size,
+        destination_stride, source, source_size, source_stride,
+        bitmap_width, bitmap_height, crop, 0, transparent_index);
+}
+
+int dm1_v1_fmtowns_wall_blit(
+    uint8_t *destination, size_t destination_size, int destination_stride,
+    const uint8_t *source, size_t source_size, int source_stride,
+    int bitmap_width, int bitmap_height,
+    const DM1_V1_FmtownsWallPanelRoute *route, int transparent_index)
+{
+    DM1_V1_FmtownsLayoutCrop crop;
+    if (!dm1_v1_fmtowns_wall_resolve_crop(route, bitmap_width, bitmap_height,
+                                         &crop)) return 0;
+    return dm1_fmtowns_blit_crop(destination, destination_size,
+        destination_stride, source, source_size, source_stride,
+        bitmap_width, bitmap_height, crop, route->flip_horizontally,
+        transparent_index);
 }

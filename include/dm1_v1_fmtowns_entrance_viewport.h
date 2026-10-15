@@ -26,9 +26,8 @@ typedef int (*DM1_V1_FmtownsEntranceGraphicProvider)(
 
 typedef struct DM1_V1_FmtownsEntranceViewportReceipt {
     int valid;
-    /* Bit 0 = floor 75, bit 1 = ceiling 76, bits 2..16 identify semantic
-     * I34E-compatible wall draw slots 93..107, and bit 31 reports an
-     * unsupported renderer request. */
+    /* Bit 0 = floor 75, bit 1 = ceiling 76; bits 2..16 identify shared
+     * wall semantics 93..107, resolved to native F20 records and zones. */
     uint32_t requested_source_graphics;
     uint32_t loaded_source_graphics;
     uint32_t missing_source_graphics;

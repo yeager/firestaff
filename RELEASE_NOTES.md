@@ -2,6 +2,16 @@
 
 ## User-facing changes
 
+- `DM1 FM Towns walls`: use native wall strips, layout zones and mirror
+  order instead of PC geometry. Restore the entrance corridor's near and
+  outer walls and ceiling orientation. Present the Japanese dungeon view
+  two rows higher so the message area cannot erase its bottom edge.
+  Match Japanese viewport click coordinates to that placement while
+  preserving HUD coordinates and diagnostic controls.
+  Original-data pixel checks cover both editions' entrance scene and the
+  nearby/exposed walls at the Hall start and after movement; full viewport
+  and interaction parity remain under verification.
+
 - `DM1 early Amiga/Atari floor details`: read ornament lists from expanded
   dungeon data and render their native graphics and coordinates. Correct
   the unrelated cyan/orange floor image seen near the Hall stairs.
@@ -25,7 +35,7 @@
   viewport's top rows. Original PC34 startup and one accepted movement pass
   native pixel and palette checks. Apply native D2 wall geometry to normal
   catalogue launches as well as direct-dungeon starts; both routes now have
-  original full Draw coverage. Towns/A36 live verification and original
+  original full Draw coverage. Remaining Towns/A36 gameplay materials and original
   emulator pose/movement comparisons remain open.
 
 - `DM1 Amiga 3.6 media`: require the original video driver beside the selected

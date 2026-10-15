@@ -1,5 +1,22 @@
 # Firestaff TODO — DM1
 
+2026-10-15 next PC34 wall priority: authentic HoC replay at (4,15,N)
+confirms that F0107 incorrectly adds G0190's derived-cache index to the
+native graphic index (326 instead of original side graphic 323), and
+scales D1 by 21/32 instead of using its native raster. Correct both rules
+and replace the corresponding self-confirming unit oracle. Early Amiga/
+Atari additionally require their native 121-based ornament bank and tables.
+PC material placement also requires native C696/F0635 anchors and clipping,
+not the current legacy G0205 boxes; fixing only the bitmap index is insufficient.
+
+2026-10-15 F20 wall follow-up: native aliases, full-bitmap mirroring,
+nine-wall C255 composition and JDM's y31 final C007 placement now pass
+original-media pixel checks. Full Draw covers D0 and exposed D2L at the
+authentic start and after one step, including both source program palettes.
+Native viewport boundary and real mirror-edge clicks now pass; retain the
+source F20 throw-zone audit separately. Keep other materials, inventory and frame-aligned
+original-emulator comparisons open; this is not complete F20 viewport parity.
+
 2026-10-15 early Amiga/Atari ornament follow-up: the lower-floor cyan/orange
 rectangle is traced and corrected through bounded dungeon decompression
 and native F0108 material routing. Original full-raster and actual-world
@@ -31,8 +48,9 @@ real catalogue route; both real startup routes now have original full Draw
 coverage. The updated CLI start matches all 30,464 viewport RGB pixels in
 image0004, but its emulator pose is still unproven. Keep actual original
 pose and movement comparisons open; image equality alone is insufficient. Add
-actual Towns/A36 D0 runtime checks before extending this execution claim to
-those editions. A20E/Atari regression passes do not establish full parity.
+actual A36 D0 gameplay checks before extending this execution claim to
+that edition. F20 HoC D0/D2L checks now pass as described above; remaining
+materials still require verification. A20E/Atari passes do not establish full parity.
 
 2026-10-15 A36 package ownership: desktop READY/preparation now require
 same-owner authenticated graphics, VDEO.FTL and DUNGEON.DAT. Original bytes

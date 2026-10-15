@@ -1,3 +1,18 @@
+- 2026-10-15: F20 wall materials now use native G2002 aliases and G3019
+  zones, mirroring the complete bitmap before selecting source columns.
+  Remove the nonexistent F20 D2-outer fallback. C255 follows its nine-wall
+  F0128 order, including D0/D3 outer panels, opaque floor and the source's
+  even-parity mirrored ceiling. Both authenticated EDM/JDM owners pass all
+  30,464 C255 indexed pixels against an independent source oracle. Full
+  gameplay Draw at the real HoC start and one accepted step verifies D0's
+  full 136 rows, exposed D2L aliases, both parities and original program RGB.
+  Native JDM C007 is presented at y31, ending before C015 at y167; EDM
+  retains y33. JDM viewport clicks alone translate to the internal working
+  page: original boundary rows, a real C127 mirror's top-edge click and the
+  debug control strip pass; native pointer/HUD coordinates stay intact.
+  Other gameplay materials, inventory, native F20 throw-zone selection and
+  original-emulator alignment still need separate verification.
+
 - 2026-10-15: Early Amiga/Atari F0108 floor ornaments now use native
   M616=247, the selected graphic 558's coordinate/frame selectors and
   original padded-row blits. Expand compressed dungeon metadata in bounded

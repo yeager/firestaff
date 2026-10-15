@@ -8,115 +8,85 @@ static int failures;
     fprintf(stderr, "FAIL:%d: %s\n", __LINE__, #x); ++failures; \
 } } while (0)
 
-static void check_crop(unsigned int zone, int width, int height,
-                       int sx, int sy, int dx, int dy, int cw, int ch)
-{
-    DM1_V1_FmtownsLayoutCrop crop;
-    int ok = dm1_v1_fmtowns_layout_resolve_crop(zone, width, height, &crop);
-    if (!ok || crop.source_x != sx || crop.source_y != sy ||
-        crop.destination_x != dx || crop.destination_y != dy ||
-        crop.width != cw || crop.height != ch) {
-        fprintf(stderr, "crop zone=%u ok=%d got=%d,%d %dx%d src=%d,%d expected=%d,%d %dx%d src=%d,%d\n",
-                zone, ok, crop.destination_x, crop.destination_y, crop.width,
-                crop.height, crop.source_x, crop.source_y, dx, dy, cw, ch, sx, sy);
-    }
-    CHECK(ok);
-    CHECK(crop.source_x == sx && crop.source_y == sy);
-    CHECK(crop.destination_x == dx && crop.destination_y == dy);
-    CHECK(crop.width == cw && crop.height == ch);
-}
+/* Source oracle: COORD.C G2002 negative-bitmap aliases (169-198),
+ * G3019 F20 zones, and DUNVIEW.C F0116..F0126. The native bitmap is
+ * mirrored by F1000 before F0630 selects an alias's source columns. */
+static const struct {
+    unsigned int semantic, graphic, zone, pc_zone;
+    int alias_x, alias_width, native_width, height, x, y;
+} walls[] = {
+    {93,84,715,717,0,0,32,136,192,0},
+    {94,85,714,716,0,0,32,136,0,0},
+    {95,86,712,714,0,60,248,111,164,9},
+    {96,86,711,713,188,60,248,111,0,9},
+    {97,86,710,712,44,160,248,111,32,9},
+    {100,87,709,711,0,75,136,71,149,20},
+    {101,87,708,710,61,75,136,71,0,20},
+    {102,87,707,709,16,104,136,71,60,20},
+    {103,89,703,703,0,0,16,49,208,25},
+    {104,89,702,702,0,0,16,49,0,25},
+    {105,88,706,706,0,85,117,51,139,25},
+    {106,88,705,705,32,84,117,51,0,25},
+    {107,88,704,704,18,76,117,51,74,25}
+};
 
 int main(void)
 {
-    uint8_t source[248 * 111];
-    uint8_t destination[224 * 136];
+    uint8_t source[248 * 136], actual[231 * 136], expected[231 * 136];
+    DM1_V1_FmtownsWallPanelRoute route;
     DM1_V1_FmtownsLayoutCrop crop;
-    int x;
-    int y;
-
-    /* ReDMCSB DEFS.H F20 M661..M663/C086..C088 and DUNVIEW.C
-     * F0128/F0104 select a distinct layout-696 zone for each wall semantic. */
-    {
-        static const struct { unsigned int pc, graphic, zone; } routes[] = {
-            {93, 84, 717}, {94, 85, 716}, {95, 86, 714},
-            {96, 86, 713}, {97, 86, 712}, {98, 87, 708},
-            {99, 87, 707}, {100, 87, 711}, {101, 87, 710},
-            {102, 87, 709}, {103, 89, 703}, {104, 89, 702},
-            {105, 88, 706}, {106, 88, 705}, {107, 88, 704}
-        };
-        DM1_V1_FmtownsWallPanelRoute route;
-        for (x = 0; x < (int)(sizeof(routes) / sizeof(routes[0])); ++x) {
-            CHECK(dm1_v1_fmtowns_wall_panel_route(routes[x].pc, 0, &route));
-            CHECK(route.source_graphic_base == routes[x].graphic);
-            CHECK(route.layout_zone == routes[x].zone);
-            CHECK(route.flip_horizontally == (routes[x].pc == 103));
-            CHECK(dm1_v1_fmtowns_wall_panel_route(routes[x].pc, 1, &route));
-            CHECK(route.layout_zone == routes[x].zone);
-            CHECK(route.flip_horizontally == (routes[x].pc != 104));
-            if (routes[x].pc == 93) CHECK(route.source_graphic_base == 85);
-            else if (routes[x].pc == 94) CHECK(route.source_graphic_base == 84);
-            else CHECK(route.source_graphic_base == routes[x].graphic);
+    for (size_t i = 0; i < sizeof(walls) / sizeof(walls[0]); ++i) {
+        for (int parity = 0; parity < 2; ++parity) {
+            const int width = walls[i].alias_width ? walls[i].alias_width : walls[i].native_width;
+            const int flip = walls[i].semantic == 103 || (parity && walls[i].semantic != 104);
+            unsigned int graphic = walls[i].graphic;
+            if (parity && walls[i].semantic == 93) graphic = 85;
+            if (parity && walls[i].semantic == 94) graphic = 84;
+            CHECK(dm1_v1_fmtowns_wall_panel_route(walls[i].semantic, parity, &route));
+            CHECK(route.source_graphic_base == graphic && route.layout_zone == walls[i].zone);
+            CHECK(route.pc34_zone == walls[i].pc_zone);
+            CHECK(route.source_x == walls[i].alias_x && route.logical_width == walls[i].alias_width);
+            CHECK(route.flip_horizontally == flip);
+            CHECK(dm1_v1_fmtowns_wall_resolve_crop(&route, walls[i].native_width, walls[i].height, &crop));
+            CHECK(crop.source_x == walls[i].alias_x && crop.source_y == 0);
+            CHECK(crop.destination_x == walls[i].x && crop.destination_y == walls[i].y);
+            CHECK(crop.width == width && crop.height == walls[i].height);
+            for (int y = 0; y < walls[i].height; ++y)
+                for (int x = 0; x < walls[i].native_width; ++x)
+                    source[y * walls[i].native_width + x] = (uint8_t)((x * 3 + y * 7) & 15);
+            memset(actual, 0x55, sizeof(actual));
+            memset(expected, 0x55, sizeof(expected));
+            for (int y = 0; y < walls[i].height; ++y) for (int x = 0; x < width; ++x) {
+                int sx = walls[i].alias_x + x;
+                if (flip) sx = walls[i].native_width - 1 - sx;
+                const uint8_t color = source[y * walls[i].native_width + sx];
+                if (color != 10) expected[(walls[i].y + y) * 231 + walls[i].x + x] = color;
+            }
+            CHECK(dm1_v1_fmtowns_wall_blit(actual, sizeof(actual), 231,
+                source, (size_t)walls[i].native_width * walls[i].height,
+                walls[i].native_width, walls[i].native_width, walls[i].height, &route, 10));
+            CHECK(memcmp(actual, expected, sizeof(actual)) == 0);
+            memset(actual, 0x55, sizeof(actual));
+            CHECK(!dm1_v1_fmtowns_wall_blit(actual, sizeof(actual), 231,
+                source, (size_t)walls[i].native_width * walls[i].height - 1,
+                walls[i].native_width, walls[i].native_width, walls[i].height, &route, 10));
+            for (size_t j = 0; j < sizeof(actual); ++j) CHECK(actual[j] == 0x55);
         }
-        CHECK(!dm1_v1_fmtowns_wall_panel_route(92u, 0, &route));
-        CHECK(!dm1_v1_fmtowns_wall_panel_route(108u, 0, &route));
     }
-
-    /* ReDMCSB COORD.C G3019/G3016 exact F20E/F20J geometry. */
-    check_crop(705, 158, 100, 0, 0, 0, 25, 158, 100); /* D3L */
-    check_crop(706, 20, 39, 0, 0, 204, 25, 20, 39);   /* D3R */
-    check_crop(707, 136, 71, 0, 0, 44, 20, 136, 71); /* D2L2 */
-    check_crop(708, 32, 44, 0, 0, 0, 20, 32, 44);    /* D2R2 */
-    check_crop(709, 158, 100, 0, 0, 66, 20, 158, 100);/* D2C */
-    check_crop(710, 32, 44, 0, 0, 96, 9, 32, 44);    /* D2L */
-    check_crop(711, 20, 39, 0, 0, 0, 9, 20, 39);    /* D2R */
-    check_crop(712, 158, 100, 0, 0, 66, 9, 158, 100); /* D1C */
-    check_crop(713, 32, 44, 0, 0, 0, 0, 32, 44);     /* D1L */
-    check_crop(714, 20, 39, 0, 0, 0, 0, 20, 39);     /* D1R */
-    check_crop(715, 158, 100, 0, 0, 66, 0, 158, 100); /* D0C */
-    check_crop(716, 32, 44, 0, 0, 12, 28, 32, 44);   /* D0L */
-    check_crop(717, 158, 100, 0, 0, 54, 28, 158, 100);/* D0R */
+    /* F20 has no D2 outer-wall calls (MEDIA720 alone calls F0678/F0679). */
+    CHECK(!dm1_v1_fmtowns_wall_panel_route(98, 0, &route));
+    CHECK(!dm1_v1_fmtowns_wall_panel_route(99, 1, &route));
+    CHECK(!dm1_v1_fmtowns_wall_panel_route(92, 0, &route));
+    CHECK(!dm1_v1_fmtowns_wall_panel_route(108, 0, &route));
+    CHECK(dm1_v1_fmtowns_layout_resolve_crop(700, 224, 29, &crop));
+    CHECK(crop.source_x == 0 && crop.source_y == 0 && crop.destination_x == 0 &&
+          crop.destination_y == 0 && crop.width == 224 && crop.height == 29);
+    CHECK(dm1_v1_fmtowns_layout_resolve_crop(701, 224, 70, &crop));
+    CHECK(crop.source_x == 0 && crop.source_y == 0 && crop.destination_x == 0 &&
+          crop.destination_y == 66 && crop.width == 224 && crop.height == 70);
     CHECK(!dm1_v1_fmtowns_layout_resolve_crop(718, 20, 39, &crop));
     CHECK(!dm1_v1_fmtowns_layout_resolve_crop(705, 0, 39, &crop));
-
-    /* Wide native LCR source: right-aligned F0635 crop advances source x. */
-    check_crop(706, 248, 111, 24, 0, 0, 25, 224, 111);
-    memset(source, 3, sizeof(source));
-    source[24] = 10;
-    source[25] = 7;
-    memset(destination, 0x55, sizeof(destination));
-    CHECK(dm1_v1_fmtowns_layout_blit(destination, sizeof(destination), 224,
-        source, sizeof(source), 248, 248, 111, 706, 10));
-    CHECK(destination[25u * 224u] == 0x55);
-    CHECK(destination[25u * 224u + 1u] == 7);
-    CHECK(destination[24u * 224u] == 0x55);
-
-    /* Validate complete extents before writing, so a rejected first blit is
-     * transactional for both source and destination buffer bounds. */
-    memset(destination, 0x55, sizeof(destination));
-    CHECK(!dm1_v1_fmtowns_layout_blit(destination, sizeof(destination), 224,
-        source, sizeof(source) - 1u, 248, 248, 111, 706, 10));
-    CHECK(destination[0] == 0x55 && destination[sizeof(destination) - 1] == 0x55);
-    CHECK(!dm1_v1_fmtowns_layout_blit(destination, sizeof(destination), 223,
-        source, sizeof(source), 248, 248, 111, 706, 10));
-    CHECK(destination[0] == 0x55 && destination[sizeof(destination) - 1] == 0x55);
-
-    /* Explicitly cover the authentic IMG2 dimension table used by the
-     * archive receipt. Each image is bounded by its decoded native stride. */
-    {
-        static const struct { unsigned int graphic, zone; int width, height; } images[] = {
-            {78, 701, 25, 94}, {79, 700, 21, 65}, {95, 712, 158, 100},
-            {96, 713, 32, 44}, {101, 710, 32, 91},
-            {105, 706, 20, 43}, {106, 705, 20, 39}
-        };
-        for (x = 0; x < (int)(sizeof(images) / sizeof(images[0])); ++x) {
-            CHECK(dm1_v1_fmtowns_layout_resolve_crop(
-                images[x].zone, images[x].width, images[x].height, &crop));
-            CHECK(crop.width <= images[x].width &&
-                  crop.height <= images[x].height);
-        }
-    }
-    (void)y;
     if (failures) return 1;
-    puts("PASS: DM1 FM Towns G2174 F0635 layout crops");
+    puts("PASS: F20's thirteen source aliases, full-native mirror before crop, C10 and bounded writes");
     return 0;
 }

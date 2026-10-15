@@ -39083,6 +39083,31 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP &&
+        !state->inventoryPanelActive) {
+        /* COMMAND.C C080 and COORD.C G3016/G2068 use JDM's C007 y31.
+         * C080's targets still belong to the internal y33 working page;
+         * translate only this viewport call, retaining native HUD/pointer
+         * coordinates and rejecting the C015 rows beginning at y167. */
+        if (m11_point_in_rect(x, y, M11_VIEWPORT_X, 31,
+                             M11_VIEWPORT_W, M11_VIEWPORT_H)) {
+            if (state->showDebugHUD)
+                return M11_GameView_HandleInput(state,
+                    m11_pointer_viewport_input(state, x,
+                                               y + M11_VIEWPORT_Y - 31));
+            return m11_process_v1_c080_click(state, x,
+                                            y + M11_VIEWPORT_Y - 31);
+        }
+        /* Debug controls below C007 retain their later input owner, but
+         * the generic y33 viewport must not re-admit its old bottom rows. */
+        if (!state->showDebugHUD ||
+            m11_point_in_rect(x, y, M11_VIEWPORT_X, 31 + M11_VIEWPORT_H,
+                             M11_VIEWPORT_W, M11_VIEWPORT_Y - 31))
+            return M11_GAME_INPUT_IGNORED;
+    }
+
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
         m11_point_in_rect(x, y,
                           M11_VIEWPORT_X,
@@ -44245,7 +44270,7 @@ static unsigned int m11_fmtowns_wall_semantic_index(unsigned int pc34Index) {
     case 93u: return 84u; /* M661 D0R */
     case 94u: return 85u; /* M662 D0L */
     case 95u: case 96u: case 97u: return 86u; /* C086 D1LCR */
-    case 98u: case 99u: case 100u: case 101u: case 102u:
+    case 100u: case 101u: case 102u:
         return 87u; /* C087 D2LCR */
     case 103u: case 104u: return 89u; /* M663 narrow D3 side */
     case 105u: case 106u: case 107u: return 88u; /* C088 D3LCR */
@@ -44280,52 +44305,32 @@ static int m11_draw_fmtowns_wall_layout_asset(
     int* outHandled)
 {
     DM1_V1_FmtownsWallPanelRoute route;
-    DM1_V1_FmtownsLayoutCrop crop;
     const M11_AssetSlot* slot;
     unsigned int graphicIndex;
     int wallSet;
-    int y;
 
     if (outHandled) *outHandled = 0;
     if (!dm1_v1_fmtowns_wall_panel_route(pc34GraphicIndex, flipWalls,
                                           &route)) return 0;
     if (outHandled) *outHandled = 1;
     if (!state || !state->assetsAvailable || !framebuffer ||
+        fbW < M11_VIEWPORT_X + DM1_VIEWPORT_WIDTH ||
+        fbH < M11_VIEWPORT_Y + DM1_VIEWPORT_HEIGHT ||
         !m11_current_map_wall_set(state, &wallSet)) return 0;
     graphicIndex = 77u + (unsigned int)wallSet * 13u +
         (route.source_graphic_base - 77u);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
     if (!slot || !slot->loaded || !slot->pixels ||
-        slot->width == 0u || slot->height == 0u ||
-        !dm1_v1_fmtowns_layout_resolve_crop(route.layout_zone,
-                                            (int)slot->width,
-                                            (int)slot->height, &crop)) {
+        slot->width == 0u || slot->height == 0u) {
         return 0;
     }
-    for (y = 0; y < crop.height; ++y) {
-        const int sourceY = crop.source_y + y;
-        const int fbY = M11_VIEWPORT_Y + crop.destination_y + y;
-        int x;
-        if (fbY < 0 || fbY >= fbH || sourceY < 0 ||
-            sourceY >= (int)slot->height) continue;
-        for (x = 0; x < crop.width; ++x) {
-            const int sourceX = crop.source_x + x;
-            const int sx = route.flip_horizontally
-                ? (int)slot->width - 1 - sourceX : sourceX;
-            const int fbX = M11_VIEWPORT_X + crop.destination_x + x;
-            unsigned char pixel;
-            if (sourceX < 0 || sourceX >= (int)slot->width || sx < 0 ||
-                sx >= (int)slot->width || fbX < 0 || fbX >= fbW ||
-                fbX < M11_VIEWPORT_X ||
-                fbX >= M11_VIEWPORT_X + DM1_VIEWPORT_WIDTH) continue;
-            pixel = slot->pixels[sourceY * (int)slot->width + sx];
-            if (transparentColor >= 0 &&
-                pixel == (unsigned char)transparentColor) continue;
-            framebuffer[fbY * fbW + fbX] = pixel;
-        }
-    }
-    return 1;
+    return dm1_v1_fmtowns_wall_blit(
+        framebuffer + M11_VIEWPORT_Y * fbW + M11_VIEWPORT_X,
+        (size_t)(fbH - M11_VIEWPORT_Y) * (size_t)fbW - M11_VIEWPORT_X,
+        fbW, slot->pixels, (size_t)slot->width * slot->height,
+        (int)slot->width, (int)slot->width, (int)slot->height,
+        &route, transparentColor);
 }
 
 static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
@@ -44917,7 +44922,7 @@ static int m11_draw_dm1_side_wall_host_receipt(
         for (semantic = 93u; semantic <= 107u; ++semantic) {
             DM1_V1_FmtownsWallPanelRoute route;
             if (dm1_v1_fmtowns_wall_panel_route(semantic, 0, &route) &&
-                route.layout_zone == (unsigned int)receipt->pc34_zone) {
+                route.pc34_zone == (unsigned int)receipt->pc34_zone) {
                 int handled;
                 return m11_draw_fmtowns_wall_layout_asset(
                     state, framebuffer, fbW, fbH, semantic,
@@ -44925,13 +44930,9 @@ static int m11_draw_dm1_side_wall_host_receipt(
                     receipt->material.transparent_color, &handled);
             }
         }
-        return m11_draw_fmtowns_scaled_asset(
-            state, framebuffer, fbW, fbH,
-            m11_wallset_graphic_index_for_state(
-                state, (unsigned int)receipt->material.graphic_index),
-            receipt->dst_x, receipt->dst_y, receipt->width, receipt->height,
-            receipt->material.transparent_color,
-            receipt->material.flip_horizontally);
+        /* F20 has no F0678/F0679 D2-outer material. Its native F0128
+         * selection must not fall back to scaling another wall bitmap. */
+        return 0;
     }
     nativePc34 = m11_is_dm1_source_kind(state->sourceKind) &&
         strcmp(state->sourceId, "dm1") == 0 && !state->assetLoader.legacyDm1 &&
@@ -65259,14 +65260,39 @@ skip_debug_legacy_texture_tiling:
                        M11_VIEWPORT_X,
                    DM1_VIEWPORT_WIDTH);
         }
-        (void)dm1_viewport_3d_present_pc34(
-            presented_viewport, DM1_VIEWPORT_WIDTH,
-            framebuffer, framebufferWidth, framebufferHeight, framebufferWidth,
-            1, m11_compute_dungeon_palette_index(state),
-            state->world.party.mapIndex, 255,
-            -1, -1,
-            &mutable_state->dm1ViewportPresentedPaletteIndex,
-            &present_receipt);
+        if (m11_is_dm1_fmtowns(state) &&
+            state->dm1FmtownsStartupReceiptValid) {
+            /* DRAWVIEW.C F0097:841-843, COORD.C G3016:1650-1657 and
+             * G2068:1695-1698: the shared
+             * working page uses y33, but native F20J C007 starts at y31
+             * and ends before its C015 message area at y167. Present all
+             * 136 rows before later HUD composition. Bank 16 is only the
+             * existing indexed host transport; the owner supplies RGB. */
+            const int origin_y = state->dm1FmtownsStartupReceipt.language ==
+                DM1_FMTOWNS_LANG_JP ? 31 : 33;
+            if (origin_y != M11_VIEWPORT_Y)
+                for (y = origin_y + DM1_VIEWPORT_HEIGHT;
+                     y < M11_VIEWPORT_Y + DM1_VIEWPORT_HEIGHT; ++y)
+                    memset(framebuffer + y * framebufferWidth +
+                           M11_VIEWPORT_X, 0, DM1_VIEWPORT_WIDTH);
+            for (y = 0; y < DM1_VIEWPORT_HEIGHT; ++y)
+                for (int x = 0; x < DM1_VIEWPORT_WIDTH; ++x)
+                    framebuffer[(origin_y + y) * framebufferWidth +
+                        M11_VIEWPORT_X + x] = (uint8_t)(
+                            (presented_viewport[y * DM1_VIEWPORT_WIDTH + x]
+                             & 15u) | 16u);
+            mutable_state->dm1ViewportPresentedPaletteIndex =
+                m11_compute_dungeon_palette_index(state);
+        } else {
+            (void)dm1_viewport_3d_present_pc34(
+                presented_viewport, DM1_VIEWPORT_WIDTH,
+                framebuffer, framebufferWidth, framebufferHeight, framebufferWidth,
+                1, m11_compute_dungeon_palette_index(state),
+                state->world.party.mapIndex, 255,
+                -1, -1,
+                &mutable_state->dm1ViewportPresentedPaletteIndex,
+                &present_receipt);
+        }
     }
 }
 
