@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-10-15 PC34 first-view comparison: the authentic `DM.EXE` and `DATA`
+files from the user's English PC34 ZIP were run in DOSBox-X and compared with
+Firestaff direct launch using the same archive. Both captured C007 pages are
+320x200; 57,911 of 64,000 pixels match exactly, including the palette and main
+corridor geometry. The original executable did not emit its map tuple, so
+same-position parity is not established; the remaining differences lie around
+C007 wall/floor edges. This startup-view sample does not establish full
+gameplay viewport parity. The user's saved `display_brightness = 50` scales
+presented RGB channels to one half; repeating with an isolated default profile
+at 100 produces the same RGB palette values as the original capture. Thus the
+dark colors in the saved-profile run come from its display-brightness setting,
+not a PC34 palette-table mismatch. No user settings were changed, and original
+media/captures remain untracked.
+
 2026-10-15 FM Towns C255 entrance raster correction: the authenticated F20
 source crops were being composed into the same framebuffer that the PC34
 geometry-order pass subsequently drew over using its inert zero page. The
