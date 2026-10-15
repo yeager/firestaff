@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-10-15 FM Towns C255 entrance raster correction: the authenticated F20
+source crops were being composed into the same framebuffer that the PC34
+geometry-order pass subsequently drew over using its inert zero page. The
+geometry walk now renders into a separate private buffer, preserving the real
+FM Towns crop composition for presentation. The regression test requires
+nonzero source pixels to survive that pass. The targeted viewport test passes,
+and an authentic FM Towns `--boot-probe --debug` run reached `dm1-runtime`
+with the expected DATA/GRAPHICS.DAT hash and a valid C255 receipt
+(`requested=loaded=0x0000c433`, no missing records, viewport hash
+`0x4fa3b1e8`, distinct from an all-zero raster). This proves the source-backed
+entrance raster is populated; FM Towns viewport image parity still requires a
+frame-aligned comparison against the original. No game data or captures are
+tracked.
+
 2026-10-15 FM Towns viewport capture test audit: the opt-in visual smoke test
 captured an ordinary five-second launch, so its BMP could still show the
 launcher scanning at 0% and pass by counting pixels across the whole screen.

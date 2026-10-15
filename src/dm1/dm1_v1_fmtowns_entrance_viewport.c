@@ -197,6 +197,8 @@ int dm1_v1_fmtowns_entrance_render_c255(
 {
     uint8_t staged[DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH *
                    DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT];
+    uint8_t geometry_oracle[DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH *
+                            DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT];
     uint8_t grid[DM1_C255_SIDE * DM1_C255_SIDE];
     DM1_Viewport3DState renderer;
     DM1_C255ProviderContext provider_context;
@@ -228,13 +230,18 @@ int dm1_v1_fmtowns_entrance_render_c255(
     grid[2 * DM1_C255_SIDE + 1] = DM1_C255_ELEMENT_CORRIDOR << 5;
 
     memset(staged, 0, sizeof(staged));
+    memset(geometry_oracle, 0, sizeof(geometry_oracle));
     memset(&provider_context, 0, sizeof(provider_context));
     provider_context.provider = provider;
     provider_context.user_data = provider_user_data;
     provider_context.receipt = &receipt;
     provider_context.towns_viewport = staged;
 
-    dm1_viewport_3d_init(&renderer, staged,
+    /* The callback composes authentic FM Towns crops into `staged` and
+     * returns inert PC34 pixels only to let the legacy renderer determine
+     * which source records are visible. Keep that geometry pass isolated:
+     * drawing it over `staged` erases the real Towns pixels with zeroes. */
+    dm1_viewport_3d_init(&renderer, geometry_oracle,
                          DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH);
     renderer.party_map_index = DM1_C255_MAP_INDEX;
     renderer.dungeon_grid = grid;

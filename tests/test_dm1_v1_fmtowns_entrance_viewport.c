@@ -78,6 +78,8 @@ int main(void)
     DM1_V1_FmtownsEntranceViewportReceipt receipt;
     DM1_V1_FmtownsEntranceViewportReceipt repeat_receipt;
     int provider_calls = 0;
+    size_t i;
+    size_t nonzero_pixels = 0u;
 
     memset(viewport, 0xee, sizeof(viewport));
     {
@@ -94,6 +96,13 @@ int main(void)
     CHECK((receipt.requested_source_graphics & UINT32_C(0x00fffffc)) != 0u);
     CHECK(provider_calls > 2);
     CHECK(receipt.pixel_hash_fnv1a != 0u);
+    for (i = 0u; i < sizeof(viewport); ++i) {
+        if (viewport[i] != 0u) ++nonzero_pixels;
+    }
+    CHECK(nonzero_pixels > 0u);
+    /* Pin the complete deterministic crop result. Sharing the renderer's
+     * inert geometry framebuffer used to produce 0xa5e2e562 here. */
+    CHECK(receipt.pixel_hash_fnv1a == UINT32_C(0x54c9b861));
     memset(repeat, 0x55, sizeof(repeat));
     CHECK(dm1_v1_fmtowns_entrance_render_c255(
         repeat, sizeof(repeat), 224, native_towns_graphic, NULL,
