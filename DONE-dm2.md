@@ -1,5 +1,14 @@
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
 
+- 2026-10-15: Fixed rejected parent-link append mutating dungeon records.
+  `dm2_v1_skproject_append_record_to` now checks a missing parent pointer
+  before replacing the appended record's next link with END_MARKER.
+  An original-data regression failed before the fix and passes with DOS EN
+  and FM Towns data afterward. The loader gate passes all 125 checks after
+  correcting its existing 0x05 expectation for a fixture that writes 0x15
+  into the six-bit map-level field. This does not complete fresh-game
+  arrangement; the teleporter/session-order gap remains in TODO-dm2.md.
+
 - 2026-10-15: Reverified direct `--game` exit on source `8939e58fe` with
   authentic FM Towns media and an isolated configuration. DM1, CSB and DM2
   each reached runtime and exited after Return to Menu without reopening

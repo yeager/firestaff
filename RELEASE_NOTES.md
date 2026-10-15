@@ -8,6 +8,8 @@
 
 ## Developer changes
 
+- `DM2 record linking`: reject a missing parent pointer before modifying the original next link; verified with authentic DOS and FM Towns dungeon records.
+
 - `DM1 FM Towns wall host routing`: use native layout-696 crops for front and side walls; restore the source one-VBlank entrance-door wait. Original-media startup probes and route/crop unit checks cover this change; complete visual parity remains open.
 
 - `DM1 PC v3.4 launch route`: follow the original I34E selector handoff and verify it with the original DOS media.

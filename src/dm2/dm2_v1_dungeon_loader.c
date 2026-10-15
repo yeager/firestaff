@@ -1915,6 +1915,14 @@ int dm2_v1_skproject_append_record_to(
         return 0;
     }
     receipt.appended_previous_next = dm2_v1_dungeon_rd16(d, append_record);
+    /* SKProject skrecord.cpp DM2_APPEND_RECORD_TO:63-81 assumes a valid
+     * parent pointer for x < 0. Reject a missing host argument before the
+     * source's first write so a failed admission cannot sever its chain. */
+    if (x < 0 && !parent_link) {
+        receipt.blocked_invalid_parent = 1;
+        *out = receipt;
+        return 0;
+    }
     dm2_v1_dungeon_wr16(d, append_record, DM2_THING_END_MARKER);
 
     if (x < 0) {

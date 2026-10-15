@@ -54,6 +54,31 @@ static int check(int condition, const char *label)
     return condition ? 0 : 1;
 }
 
+static int check_rejected_append_preserves_original(DM2_V1_DungeonData *dungeon)
+{
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        for (int x = 0; x < dungeon->level_widths[map]; ++x) {
+            for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+                int link = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+                int next;
+                DM2_V1_SkprojectAppendRecordReceipt receipt;
+                if (link < 0 || link == DM2_THING_END_MARKER ||
+                    link == DM2_THING_NULL_MARKER) continue;
+                next = dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)link);
+                if (next < 0 || next == DM2_THING_END_MARKER ||
+                    next == DM2_THING_NULL_MARKER) continue;
+                return check(
+                    !dm2_v1_skproject_append_record_to(
+                        dungeon, (uint16_t)link, NULL, map, -1, -1, &receipt) &&
+                    receipt.blocked_invalid_parent &&
+                    dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)link) == next,
+                    "rejected parent-link append preserves original next link");
+            }
+        }
+    }
+    return check(0, "original dungeon supplies a nonterminal record link");
+}
+
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
@@ -114,6 +139,7 @@ int main(void)
         failures = 1;
         goto done;
     }
+    failures += check_rejected_append_preserves_original(&dungeon);
     failures += check(dungeon.record_graph_complete &&
                           !dungeon.g1_w0_chains_disabled,
                       "edition exposes complete source-linked record graph");
