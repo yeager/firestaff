@@ -97,7 +97,10 @@ int dm1_v1_i34e_title_anim_pc34_step(
             out_frame->palette = state->palette;
             out_frame->width = state->width;
             out_frame->height = state->height;
-            out_frame->source_delay_vblanks = attributes;
+            /* ReDMCSB ANIM.C:F2275 clamps every EN/DL frame to at least five
+             * VBlanks before decoding it. F8298 decrements this from the
+             * platform's vertical-blank callback. */
+            out_frame->source_delay_vblanks = attributes < 5u ? 5u : attributes;
             out_frame->frame_index = state->frame_index++;
             out_frame->break_allowed = state->break_allowed;
             return 1;

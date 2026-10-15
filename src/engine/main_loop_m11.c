@@ -4893,9 +4893,9 @@ static int m11_dm1_i34e_title_read_authentic(
 }
 
 /* I34E ANIM TITLE runs before SELECTOR; M12's already-selected launch state
- * stands in for that menu. ANIM.C F2275 stores the raw wait attribute and
- * decrements it from F8298's source VBlank callback;
- * PC34's DOS tick is 55 ms. ReDMCSB ANIM.C F8292_ dispatches PL channels to
+ * stands in for that menu. ANIM.C F2275 clamps each frame delay to at least
+ * five VBlanks; F8298 decrements it from the source VBlank callback. ReDMCSB
+ * ANIM.C F8292_ dispatches PL channels to
  * VGA VIDEODRV.C F8230, which writes (value << 2) + 3 to DAC6; the indexed
  * RGB6 renderer preserves those values. */
 static int m11_play_dm1_i34e_title_anim_if_available(
@@ -5010,7 +5010,9 @@ static int m11_play_dm1_i34e_title_anim_if_available(
 #endif
             }
             if (step == M11_ENTRANCE_COMMAND_QUIT || abortAnimation) break;
-            if ((m11_intro_active_ticks() - startMs) >= waitedVblanks * 55u)
+            if ((m11_intro_active_ticks() - startMs) >=
+                (waitedVblanks * 1000u + DM1_V1_VGA_VBLANK_HZ - 1u) /
+                    DM1_V1_VGA_VBLANK_HZ)
                 break;
             SDL_Delay(1u);
         }

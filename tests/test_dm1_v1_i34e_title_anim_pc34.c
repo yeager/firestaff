@@ -20,6 +20,7 @@ static void put_record(uint8_t *p, const char id[2], unsigned bytes,
 static void test_stream(void) {
     uint8_t data[14 + 6 + 6 + 6 + 66 + 6 + 504 + 6];
     size_t pos = 0u;
+    size_t en_delay_offset;
     unsigned i;
     DM1_V1_I34ETitleAnimPc34 state;
     DM1_V1_I34ETitleAnimFramePc34 frame;
@@ -38,7 +39,9 @@ static void test_stream(void) {
         data[pos + 5u + i * 4u] = 3u;
     }
     pos += 66u;
-    put_record(data + pos, "EN", 504, 7); pos += 6u;
+    put_record(data + pos, "EN", 504, 7);
+    en_delay_offset = pos + 4u;
+    pos += 6u;
     put_be16(data + pos, 320); put_be16(data + pos + 2, 200); pos += 4u;
     for (i = 0u; i < 250u; ++i) {
         data[pos++] = 0x83u;
@@ -55,6 +58,10 @@ static void test_stream(void) {
            frame.palette[4].b == 15u);
     assert(dm1_v1_i34e_title_anim_pc34_step(&state, &frame) == 0);
     assert(state.finished);
+    put_be16(data + en_delay_offset, 1u);
+    assert(dm1_v1_i34e_title_anim_pc34_init(&state, data, sizeof(data)));
+    assert(dm1_v1_i34e_title_anim_pc34_step(&state, &frame) == 1);
+    assert(frame.source_delay_vblanks == 5u);
     assert(!dm1_v1_i34e_title_anim_pc34_init(&state, data, 13u));
 }
 
