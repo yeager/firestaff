@@ -1121,6 +1121,12 @@ static int m12_admit_dm1_fmtowns_archive(
 static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5);
 static int m12_dm1_amiga36_package_ready(const char* graphics);
 
+static int m12_dm1_towns_graphics_language(const char* md5) {
+    if (md5 && strcmp(md5, "c10c512f63461ebe79b5ac365115b61b") == 0) return 0;
+    if (md5 && strcmp(md5, "edf47d7da5de8184604d6d80477ef01f") == 0) return 1;
+    return -1;
+}
+
 /* Explicit original loose graphics remain the terminal owner even when a
  * canonical original archive is also present in the same scan directory. */
 static int m12_dm1_requested_loose_owner(const char* selected) {
@@ -1128,7 +1134,8 @@ static int m12_dm1_requested_loose_owner(const char* selected) {
     return selected && FSP_FileExists(selected) &&
         !FSP_DirExists(selected) && !strstr(selected, "::") &&
         !m12_explicit_path_is_archive(selected) &&
-        asset_file_md5_hex(selected, md5) && m12_dm1_loose_dungeon_md5(md5);
+        asset_file_md5_hex(selected, md5) &&
+        (m12_dm1_loose_dungeon_md5(md5) || m12_dm1_towns_graphics_language(md5) >= 0);
 }
 
 static int m12_admit_dm1_amiga_archive_packages(
@@ -6045,14 +6052,22 @@ static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
                                       const char* selected) {
     char md5[33], dungeon[ASSET_PATH_MAX];
     size_t i;
+    int townsLanguage, ownerReady;
     if (strcmp(g_games[gameIndex].gameId, "dm1") != 0 || !selected ||
-        !FSP_FileExists(selected) || !asset_file_md5_hex(selected, md5) ||
-        !m12_dm1_loose_dungeon_md5(md5)) return;
+        !FSP_FileExists(selected) || !asset_file_md5_hex(selected, md5)) return;
+    townsLanguage = m12_dm1_towns_graphics_language(md5);
+    if (!m12_dm1_loose_dungeon_md5(md5) && townsLanguage < 0) return;
+    if (townsLanguage >= 0) {
+        char startupRoot[M12_ASSET_DATA_DIR_CAPACITY];
+        ownerReady = m12_dm1_towns_loose_launcher_ready(selected, townsLanguage, startupRoot) &&
+            m12_dm1_towns_loose_dungeon_ready(selected, townsLanguage);
+    } else {
+        ownerReady = m12_dm1_complete_loose_owner(selected, md5, dungeon);
+    }
     for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
-        version->matched = strcmp(md5, m12_effective_version_md5(
-            &g_games[gameIndex].versions[i])) == 0 &&
-            m12_dm1_complete_loose_owner(selected, md5, dungeon);
+        version->matched = ownerReady && strcmp(md5, m12_effective_version_md5(
+            &g_games[gameIndex].versions[i])) == 0;
         version->matchedPath[0] = version->matchedMd5[0] = '\0';
         if (version->matched) {
             m12_copy_string(version->matchedPath, sizeof(version->matchedPath), selected);

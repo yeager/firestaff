@@ -223,7 +223,7 @@ int main(void) {
         symlink(physical,destination)==0,"restore unchanged English dungeon link");
     /* A complete second installation must survive an earlier same-edition
      * graphics/dungeon pair whose native launcher is incomplete. */
-    REQUIRE(FSP_JoinPath(duplicate,sizeof(duplicate),root,"zz-complete") &&
+    REQUIRE(FSP_JoinPath(duplicate,sizeof(duplicate),data,"zz-complete") &&
         FSP_CreateDirectory(duplicate) &&
         FSP_JoinPath(duplicateData,sizeof(duplicateData),duplicate,"DATA") &&
         FSP_CreateDirectory(duplicateData),"create second native owner directories");
@@ -233,6 +233,37 @@ int main(void) {
             FSP_JoinPath(destination,sizeof(destination),duplicate,files[i]) &&
             symlink(physical,destination)==0,"stage complete second original owner");
         ++duplicateLinked;
+    }
+    {
+        char selectedGraphics[FSP_PATH_MAX];
+        REQUIRE(FSP_JoinPath(selectedGraphics,sizeof(selectedGraphics),data,"GRAPHICS.DAT"),
+            "locate explicitly selected native graphics");
+        M12_AssetStatus_ScanGame(fresh,selectedGraphics,"dm1");
+        version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index);
+        REQUIRE(version && version->matched && strcmp(version->matchedPath,selectedGraphics)==0,
+            "explicit complete native graphics retain exact owner beside duplicate");
+        M12_StartupMenu_Destroy(menu);
+        M12_StartupMenu_InitWithOptions(menu,selectedGraphics,"dm1",&options);
+        menu->selectedIndex=0; menu->activatedIndex=0; menu->launchRequested=1;
+        menu->gameOptions[0].architectureIndex=M12_ARCH_FM_TOWNS;
+        menu->gameOptions[0].versionIndex=index;
+        menu->gameOptions[0].presentationModeIndex=M12_PRESENTATION_V1_ORIGINAL;
+        menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+        REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) &&
+            M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded && game->active,
+            "explicit complete native graphics start their selected original world");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        REQUIRE(FSP_JoinPath(destination,sizeof(destination),data,"DUNGEON.DAT") &&
+            unlink(destination)==0,"remove explicit owner's dungeon");
+        REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+            "stale explicit native owner cannot fall back to complete duplicate");
+        M12_AssetStatus_ScanGame(fresh,selectedGraphics,"dm1");
+        REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched &&
+            !M12_AssetStatus_GameAvailable(fresh,"dm1"),
+            "explicit incomplete native graphics cannot select complete duplicate");
+        REQUIRE(FSP_JoinPath(source,sizeof(source),original,"DATA/DUNGEON.DAT") &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+            symlink(physical,destination)==0,"restore explicit owner's original dungeon");
     }
     REQUIRE(FSP_JoinPath(destination,sizeof(destination),data,"DUNGEON.DAT") &&
         unlink(destination)==0,"remove first owner's dungeon beside complete duplicate");

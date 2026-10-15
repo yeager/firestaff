@@ -1719,3 +1719,12 @@ original-media staging remain open. Missing/wrong-language dungeon ownership
 and recovery to a complete duplicate now have authentic local coverage; both
 English and Japanese loose native worlds start with their own buffer decoder.
 Cross-root runtime evidence and native Windows staging remain separate gaps.
+
+2026-10-15 explicit Towns file selection: complete loose GRAPHICS.DAT requests
+retain their exact owner; incomplete requested owners reject without selecting
+a neighboring complete copy. Original-data scan and runtime assertions pass.
+Improve missing-companion feedback: a rejected explicit file may currently
+show the generic missing-graphics explanation rather than native program or
+dungeon detail. Also bind loose Towns required-file report provenance to its
+selected owner in mixed PC/Towns collections; runtime ownership is checked,
+but the report can still name a different edition's dungeon.

@@ -7271,3 +7271,9 @@ uses the Japanese decoder. English and Japanese native startups authenticate
 the exact consumed dungeon buffer. Discovery rejects loose installations
 whose dungeon is missing or belongs to the other language, and can select a
 complete duplicate without borrowing another installation's dungeon.
+
+### Explicit FM Towns file selection
+
+An explicitly selected DM1 FM Towns GRAPHICS.DAT now retains its own native
+installation. Missing required companions reject that selection instead of
+silently switching to another complete copy found in the same directory tree.
