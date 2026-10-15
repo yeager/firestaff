@@ -4933,13 +4933,6 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0451_g0500_graphic560_source_audit_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m451_m500_source_audit_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_p0866_p0885_parameter_source_audit_pc34_compat.c")
-# `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
-# Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
-# authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
-# table directly.  Keep this generated data probe out of the production M10
-# archive until a source-material consumer owns the frame.
-list(REMOVE_ITEM M10_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0117_pc34_compat.c")
 # `dm1_v1_g0212_pc34_compat.c` is a generated copy of the smoke palette map
 # and has no production caller.  The data-owned F0663 smoke-material route
 # is the live consumer, binding this map to authenticated GRAPHICS.DAT
@@ -7486,6 +7479,8 @@ set(M11_SOURCES
     src/dm1/dm1_v1_amiga_title_f0437.c
     src/dm1/dm1_v1_i34e_title_anim_pc34.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
+    src/shared/firestaff_ftl_container.c
+    src/shared/firestaff_ftl_hunk_data_zero_run.c
     src/shared/firestaff_amiga_adf.c
     src/shared/firestaff_amiga_mfm.c
     src/csb/csb_v1_fmtowns_portrait.c

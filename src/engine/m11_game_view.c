@@ -237,6 +237,57 @@
 #include "dm1_v1_wall_inscription_presentation_pc34_compat.h"
 #include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_stairs_render_pc34_compat.h"
+#include "firestaff/dm1/v1/G0110_pc34_compat.h"
+#include "firestaff/dm1/v1/G0111_pc34_compat.h"
+#include "firestaff/dm1/v1/G0112_pc34_compat.h"
+#include "firestaff/dm1/v1/G0113_pc34_compat.h"
+#include "firestaff/dm1/v1/G0114_pc34_compat.h"
+#include "firestaff/dm1/v1/G0115_pc34_compat.h"
+#include "firestaff/dm1/v1/G0116_pc34_compat.h"
+#include "firestaff/dm1/v1/G0117_pc34_compat.h"
+#include "firestaff/dm1/v1/G0118_pc34_compat.h"
+#include "firestaff/dm1/v1/G0119_pc34_compat.h"
+#include "firestaff/dm1/v1/G0120_pc34_compat.h"
+#include "firestaff/dm1/v1/G0121_pc34_compat.h"
+#include "firestaff/dm1/v1/G0122_pc34_compat.h"
+#include "firestaff/dm1/v1/G0123_pc34_compat.h"
+#include "firestaff/dm1/v1/G0124_pc34_compat.h"
+#include "firestaff/dm1/v1/G0125_pc34_compat.h"
+#include "firestaff/dm1/v1/G0126_pc34_compat.h"
+#include "firestaff/dm1/v1/G0127_pc34_compat.h"
+#include "firestaff/dm1/v1/G0128_pc34_compat.h"
+#include "firestaff/dm1/v1/G0129_pc34_compat.h"
+#include "firestaff/dm1/v1/G0130_pc34_compat.h"
+#include "firestaff/dm1/v1/G0131_pc34_compat.h"
+#include "firestaff/dm1/v1/G0132_pc34_compat.h"
+#include "firestaff/dm1/v1/G0133_pc34_compat.h"
+#include "firestaff/dm1/v1/G0134_pc34_compat.h"
+#include "firestaff/dm1/v1/G0135_pc34_compat.h"
+#include "firestaff/dm1/v1/G0136_pc34_compat.h"
+#include "firestaff/dm1/v1/G0137_pc34_compat.h"
+#include "firestaff/dm1/v1/G0138_pc34_compat.h"
+#include "firestaff/dm1/v1/G0139_pc34_compat.h"
+#include "firestaff/dm1/v1/G0164_pc34_compat.h"
+#include "firestaff/dm1/v1/G0165_pc34_compat.h"
+#include "firestaff/dm1/v1/G0166_pc34_compat.h"
+#include "firestaff/dm1/v1/G0167_pc34_compat.h"
+#include "firestaff/dm1/v1/G0168_pc34_compat.h"
+#include "firestaff/dm1/v1/G0169_pc34_compat.h"
+#include "firestaff/dm1/v1/G0170_pc34_compat.h"
+#include "firestaff/dm1/v1/G0171_pc34_compat.h"
+#include "firestaff/dm1/v1/G0172_pc34_compat.h"
+#include "firestaff/dm1/v1/G0173_pc34_compat.h"
+#include "firestaff/dm1/v1/G0174_pc34_compat.h"
+#include "firestaff/dm1/v1/G0175_pc34_compat.h"
+#include "firestaff/dm1/v1/G0176_pc34_compat.h"
+#include "firestaff/dm1/v1/G0177_pc34_compat.h"
+#include "firestaff/dm1/v1/G0178_pc34_compat.h"
+#include "firestaff/dm1/v1/G0180_pc34_compat.h"
+#include "firestaff/dm1/v1/G0183_pc34_compat.h"
+#include "firestaff/dm1/v1/G0186_pc34_compat.h"
+#include "firestaff/dm1/v1/G0200_pc34_compat.h"
+#include "firestaff/dm1/v1/G0201_pc34_compat.h"
+#include "firestaff/dm1/v1/G0207_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "firestaff/dm1/v1/G0192_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
@@ -44341,6 +44392,166 @@ static int m11_is_dm1_media009(const M11_GameViewState* state)
          (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian));
 }
 
+/* MEDIA009 frames are padded IMG1 rows, not the later C696 zones. Reuse
+ * the original G tables (their historical API names say pc34), and validate
+ * the stride/height before any crop or whole-row horizontal mirror. */
+static int m11_dm1_media009_blit_pixels(
+    const unsigned char* pixels, int sourceWidth, int sourceHeight,
+    const int frame[8], int flipMask,
+    unsigned char* framebuffer, int fbW, int fbH)
+{
+    DM1_WallFrame f;
+    DM1_ViewportBlitClipGate clip;
+    if (!pixels || !frame || !framebuffer || frame[4] <= 0 ||
+        sourceWidth != frame[4] * 2 || sourceHeight != frame[5]) return 0;
+    f.left_x = (uint8_t)frame[0]; f.right_x = (uint8_t)frame[1];
+    f.top_y = (uint8_t)frame[2]; f.bottom_y = (uint8_t)frame[3];
+    f.byte_width = (uint8_t)frame[4]; f.height = (uint8_t)frame[5];
+    f.blit_x = (uint8_t)frame[6]; f.blit_y = (uint8_t)frame[7];
+    clip = dm1_viewport_3d_resolve_wall_blit_clip_gate(&f, sourceWidth, sourceHeight);
+    if (!clip.visible) return 0;
+    for (int y = 0; y < clip.height; ++y) {
+        const int dy = M11_VIEWPORT_Y + clip.dst_y + y;
+        int sy = clip.src_y + y;
+        if (flipMask & 2) sy = sourceHeight - 1 - sy;
+        if (dy < 0 || dy >= fbH) continue;
+        for (int x = 0; x < clip.width; ++x) {
+            const int dx = M11_VIEWPORT_X + clip.dst_x + x;
+            int sx = clip.src_x + x;
+            if (flipMask & 1) sx = sourceWidth - 1 - sx;
+            if (dx >= 0 && dx < fbW && pixels[sy * sourceWidth + sx] != 10)
+                framebuffer[dy * fbW + dx] = pixels[sy * sourceWidth + sx];
+        }
+    }
+    return 1;
+}
+
+static int m11_dm1_media009_blit(
+    const M11_GameViewState* state, unsigned int graphic,
+    const int frame[8], int flipMask,
+    unsigned char* framebuffer, int fbW, int fbH)
+{
+    const M11_AssetSlot* source;
+    if (!m11_is_dm1_media009(state) || !state->assetsAvailable) return 0;
+    source = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, graphic);
+    return source && source->loaded && m11_dm1_media009_blit_pixels(
+        source->pixels, source->width, source->height, frame, flipMask,
+        framebuffer, fbW, fbH);
+}
+
+static int m11_draw_dm1_media009_stairs(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int forward, int side, int square)
+{
+    typedef const int* (*FrameGetter)(void);
+    static const FrameGetter front[2][11] = {
+        {dm1_v1_g0110_table_pc34,dm1_v1_g0111_table_pc34,dm1_v1_g0112_table_pc34,
+         dm1_v1_g0113_table_pc34,dm1_v1_g0114_table_pc34,dm1_v1_g0115_table_pc34,
+         dm1_v1_g0116_table_pc34,dm1_v1_g0117_table_pc34,dm1_v1_g0118_table_pc34,
+         dm1_v1_g0119_table_pc34,dm1_v1_g0120_table_pc34},
+        {dm1_v1_g0121_table_pc34,dm1_v1_g0122_table_pc34,dm1_v1_g0123_table_pc34,
+         dm1_v1_g0124_table_pc34,dm1_v1_g0125_table_pc34,dm1_v1_g0126_table_pc34,
+         dm1_v1_g0127_table_pc34,dm1_v1_g0128_table_pc34,dm1_v1_g0129_table_pc34,
+         dm1_v1_g0130_table_pc34,dm1_v1_g0131_table_pc34}
+    };
+    static const FrameGetter lateral[8] = {
+        dm1_v1_g0132_table_pc34,dm1_v1_g0133_table_pc34,
+        dm1_v1_g0134_table_pc34,dm1_v1_g0135_table_pc34,
+        dm1_v1_g0136_table_pc34,dm1_v1_g0137_table_pc34,
+        dm1_v1_g0138_table_pc34,dm1_v1_g0139_table_pc34
+    };
+    const int* frame;
+    int wallSet, member, down, index;
+    if (!m11_is_dm1_media009(state) || forward < 0 || forward > 3 ||
+        side < -1 || side > 1 || !m11_current_map_wall_set(state,&wallSet)) return 0;
+    down = !dm1_v1_stairs_square_is_up_pc34(square);
+    if (dm1_v1_stairs_front_facing_pc34(square,state->world.party.direction)) {
+        if (!forward) {
+            if (!side) return 0;
+            index = side < 0 ? 9 : 10;
+            member = 6;
+        } else {
+            index = (3-forward)*3 + side+1;
+            member = (3-forward)*2 + (side == 0);
+        }
+        frame = front[down][index]();
+        member += down * 7;
+    } else {
+        if (forward > 2 || !side) return 0;
+        if (forward == 2) { index = side > 0; member = 14; }
+        else if (forward == 1) { index = 2+down*2+(side>0); member = 15+down; }
+        else { index = 6+(side>0); member = 17; }
+        frame = lateral[index]();
+    }
+    /* F0095 fills G0675..G0692 from M645=90 with C018=18 per wallset.
+     * MEDIA007's descending pointers reflect the ST compiler's declaration
+     * layout; the authentic native family remains D3L..D0L in this order. */
+    return m11_dm1_media009_blit(state,90u+(unsigned)wallSet*18u+(unsigned)member,
+        frame,side>0,framebuffer,fbW,fbH);
+}
+
+static int m11_draw_dm1_media009_door_frames(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int forward, int side, int square)
+{
+    int wallSet, drawn = 0;
+    unsigned int base;
+    if (!m11_current_map_wall_set(state,&wallSet) || side < -1 || side > 1 ||
+        forward < 0 || forward > 3) return 0;
+    base = 77u + (unsigned)wallSet*13u;
+    if (forward == 0) {
+        const M11_AssetSlot *source, *hole;
+        unsigned char pixels[32*123];
+        /* F0172/F0127 draw G0172 only across the door's axis. The
+         * historical D0 scheduler emits a SIDE step for either axis. */
+        if (side || ((square & 8) != 0) ==
+                    ((state->world.party.direction & 1u) == 0u)) return 0;
+        if (!state->world.lifecycle.status.thievesEyeCount)
+            return m11_dm1_media009_blit(state,base,
+                dm1_v1_g0172_table_pc34(),0,framebuffer,fbW,fbH);
+        /* F0127:8188-8197 copies the native frame and C041's centre
+         * 32x95 hole through G0108 before the G0172 viewport blit. */
+        source=M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,base);
+        hole=M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,41u);
+        if (!source || !source->pixels || source->width!=32 || source->height!=123 ||
+            !hole || !hole->pixels || hole->width!=96 || hole->height!=95) return 0;
+        memcpy(pixels,source->pixels,sizeof(pixels));
+        for (int y=0;y<95;++y) for (int x=0;x<32;++x) {
+            unsigned char pixel=hole->pixels[y*96+32+x];
+            if (pixel!=9) pixels[(y+19)*32+x]=pixel;
+        }
+        return m11_dm1_media009_blit_pixels(pixels,32,123,
+            dm1_v1_g0172_table_pc34(),0,framebuffer,fbW,fbH);
+    }
+    if (side == 0) {
+        typedef const int* (*FrameGetter)(void);
+        static const FrameGetter left[3] = {dm1_v1_g0170_table_pc34,
+            dm1_v1_g0168_table_pc34,dm1_v1_g0166_table_pc34};
+        static const FrameGetter right[3] = {dm1_v1_g0171_table_pc34,
+            dm1_v1_g0169_table_pc34,dm1_v1_g0167_table_pc34};
+        drawn += m11_dm1_media009_blit(state,base+(unsigned)forward,
+            left[forward-1](),0,framebuffer,fbW,fbH);
+        drawn += m11_dm1_media009_blit(state,base+(unsigned)forward,
+            right[forward-1](),1,framebuffer,fbW,fbH);
+        if (forward < 3) drawn += m11_dm1_media009_blit(
+            state,base+(forward==1?5u:6u),forward==1?
+                dm1_v1_g0177_table_pc34():dm1_v1_g0174_table_pc34(),
+            0,framebuffer,fbW,fbH);
+    } else if (forward == 3) {
+        drawn += m11_dm1_media009_blit(state,base+4u,side<0?
+            dm1_v1_g0164_table_pc34():dm1_v1_g0165_table_pc34(),side>0,
+            framebuffer,fbW,fbH);
+    } else {
+        const int* frame = forward==1
+            ? (side<0?dm1_v1_g0176_table_pc34():dm1_v1_g0178_table_pc34())
+            : (side<0?dm1_v1_g0173_table_pc34():dm1_v1_g0175_table_pc34());
+        drawn += m11_dm1_media009_blit(state,base+(forward==1?5u:6u),frame,
+            0,framebuffer,fbW,fbH);
+    }
+    return drawn;
+}
+
+
 static int m11_draw_dm1_media009_wall(
     const M11_GameViewState* state, unsigned char* framebuffer,
     int fbW, int fbH, DM1_ViewSquareIndex square, int transparentColor)
@@ -47101,6 +47312,124 @@ static int m11_dm1_side_wall_blit_for_rel(int relForward,
     return 1;
 }
 
+/* F0109 composes into the full native G0074 door before animation and the
+ * state-specific F0102 crop. G0207 is shared by MEDIA009; its dimensions
+ * include padded rows. BLTSHRNK.C:258-279,887-911 samples at the centre of
+ * each source interval using the original truncated 10-bit ratios. */
+static int m11_dm1_media009_door_ornament(
+    M11_GameViewState* state, unsigned char* pixels, int width, int height,
+    int global, int view)
+{
+    /* MEDIA009 G0196:917-929 differs from MEDIA529's block/corner locks. */
+    static const unsigned char coordinateSet[12] = {0,1,1,1,0,2,3,1,2,2,1,1};
+    const M11_AssetSlot* source;
+    const unsigned char* coords;
+    const unsigned char* native;
+    const int* palette = NULL;
+    unsigned int graphic;
+    unsigned int xstep, ystep;
+    int dw, dh, set;
+    if (global < 0 || (global >= 12 && global < 15) || global > 16 ||
+        view < 0 || view > 2) return 0;
+    set = global < 12 ? coordinateSet[global] : 1;
+    graphic = global < 12 ? 303u+(unsigned)global : 301u+(unsigned)(global-15);
+    source = M11_AssetLoader_Load(&state->assetLoader,graphic);
+    coords = dm1_v1_g0207_table_pc34() + (set*3+view)*6;
+    native = dm1_v1_g0207_table_pc34() + (set*3+2)*6;
+    if (!source || !source->loaded || !source->pixels ||
+        source->width != native[4]*2 || source->height != native[5]) return 0;
+    dw = coords[1]-coords[0]+1;
+    dh = coords[5];
+    if (dw <= 0 || dh <= 0 || coords[0]+dw > width || coords[2]+dh > height) return 0;
+    if (view < 2) palette = view == 0 ? dm1_v1_g0200_table_pc34()
+                                         : dm1_v1_g0201_table_pc34();
+    xstep = ((unsigned)source->width*1024u/(unsigned)dw)*64u;
+    ystep = ((unsigned)source->height*1024u/(unsigned)dh)*64u;
+    for (int y=0; y<dh; ++y) {
+        const unsigned int sy = (ystep/2u+32767u+(unsigned)y*ystep)>>16;
+        if (sy >= source->height) return 0;
+        for (int x=0; x<dw; ++x) {
+            const unsigned int sx = (xstep/2u+32767u+(unsigned)x*xstep)>>16;
+            unsigned char pixel;
+            if (sx >= source->width) return 0;
+            pixel = source->pixels[sy*source->width+sx];
+            if (palette) pixel = (unsigned char)palette[pixel&15];
+            if (pixel != 9) pixels[(coords[2]+y)*width+coords[0]+x] = pixel;
+        }
+    }
+    return 1;
+}
+
+static int m11_draw_dm1_media009_door(
+    M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int forward, int side, const M11_ViewportCell* cell)
+{
+    typedef const unsigned char* (*DoorFramesGetter)(void);
+    static const DoorFramesGetter frames[3][3] = {
+        {dm1_v1_g0185_table_pc34,dm1_v1_g0186_table_pc34,dm1_v1_g0187_table_pc34},
+        {dm1_v1_g0182_table_pc34,dm1_v1_g0183_table_pc34,dm1_v1_g0184_table_pc34},
+        {dm1_v1_g0179_table_pc34,dm1_v1_g0180_table_pc34,dm1_v1_g0181_table_pc34}
+    };
+    const unsigned char* table;
+    const M11_AssetSlot* source;
+    unsigned char pixels[96*88];
+    int doorSet, frame[8], first, last;
+    if (!m11_is_dm1_media009(state) || !cell || forward<1 || forward>3 ||
+        side < -1 || side > 1 || cell->doorState<0 || cell->doorState>5) return 0;
+    if (!cell->doorState) return 1;
+    doorSet = m11_dm1_current_door_set(state,cell);
+    if (doorSet < 0 || doorSet > 3) return 0;
+    /* MEDIA020 M633=108, C003=3. Both admitted ST and early Amiga native
+     * records are D3,D2,D1; Type selects the active map's DoorSet0/1. */
+    source = M11_AssetLoader_Load(&state->assetLoader,
+        108u+(unsigned)doorSet*3u+(unsigned)(3-forward));
+    table = frames[forward-1][side+1]();
+    if (!source || !source->loaded || !source->pixels ||
+        source->width != table[4]*2 || source->height != table[5] ||
+        (size_t)source->width*source->height > sizeof(pixels)) return 0;
+    memcpy(pixels,source->pixels,(size_t)source->width*source->height);
+    if (cell->doorOrnamentOrdinal > 0) {
+        int graphic, global;
+        if (!m11_dm1_door_ornament_info(state,cell->doorOrnamentOrdinal,&graphic,&global) ||
+            !m11_dm1_media009_door_ornament(state,pixels,source->width,source->height,
+                                            global,3-forward)) return 0;
+    }
+    /* F0111:4265-4270 consumes two Random(2) draws, unlike the later
+     * Random(4) branch. Flip the composed bitmap before applying masks. */
+    if (doorSet == 3) {
+        if (F0732_COMBAT_RngRandom_Compat(&state->world.masterRng,2)) {
+            for (int y=0; y<source->height; ++y)
+                for (int x=0; x<source->width/2; ++x) {
+                    int a=y*source->width+x,b=(y+1)*source->width-1-x;
+                    unsigned char t=pixels[a];pixels[a]=pixels[b];pixels[b]=t;
+                }
+        }
+        if (F0732_COMBAT_RngRandom_Compat(&state->world.masterRng,2)) {
+            for (int y=0; y<source->height/2; ++y)
+                for (int x=0; x<source->width; ++x) {
+                    int a=y*source->width+x,b=(source->height-1-y)*source->width+x;
+                    unsigned char t=pixels[a];pixels[a]=pixels[b];pixels[b]=t;
+                }
+        }
+    }
+    if (forward==1 && side==0 && state->world.lifecycle.status.thievesEyeCount>0 &&
+        !m11_dm1_media009_door_ornament(state,pixels,source->width,source->height,16,2)) return 0;
+    if (cell->doorState==5 && !m11_dm1_media009_door_ornament(
+            state,pixels,source->width,source->height,15,3-forward)) return 0;
+    first = last = 0;
+    if (cell->doorState < 4) {
+        first = cell->doorState + (cell->doorVertical ? 0 : 3);
+        last = cell->doorVertical ? first : first+3;
+    }
+    for (int row=first; row<=last; row+=3) {
+        for (int i=0;i<8;++i) frame[i] = table[row*8+i];
+        /* Source zero-width horizontal rows are intentional no-draw. */
+        if (frame[4] && !m11_dm1_media009_blit_pixels(pixels,
+                source->width,source->height,frame,0,framebuffer,fbW,fbH)) return 0;
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
@@ -47114,6 +47443,21 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
     int planCount;
     (void)cells;
     if (!state || !state->assetsAvailable) {
+        return;
+    }
+    if (m11_is_dm1_media009(state)) {
+        for (int forward = minVisibleForward; forward <= maxVisibleForward; ++forward) {
+            if (forward < 0 || forward > 3 ||
+                (onlyRelForward >= 0 && forward != onlyRelForward)) continue;
+            for (int side = -1; side <= 1; ++side) {
+                M11_ViewportCell cell;
+                if ((onlyRelSide >= -2 && onlyRelSide <= 2 && side != onlyRelSide) ||
+                    !m11_sample_viewport_cell(state,forward,side,&cell) ||
+                    !cell.valid || cell.elementType != DUNGEON_ELEMENT_STAIRS) continue;
+                (void)m11_draw_dm1_media009_stairs(state,framebuffer,fbW,fbH,
+                                                   forward,side,cell.square);
+            }
+        }
         return;
     }
     planCount = dm1_v1_stairs_render_plan_count_pc34();
@@ -62871,7 +63215,9 @@ static int m11_dm1_f0128_scheduler_element_for_cell(
                    : DM1_V1_F0128_ELEMENT_STAIRS_SIDE;
     case DUNGEON_ELEMENT_DOOR:
         if (relForward > 0) {
-            int doorNorthSouth = cell->doorVertical != 0;
+            /* F0172 DUNGEON.C:2699 uses the square orientation on every
+             * DM1 platform. Door.Vertical owns opening animation only. */
+            int doorNorthSouth = (cell->square & 0x08) != 0;
             int partyNorthSouth =
                 ((state->world.party.direction & 3u) & 1u) == 0u;
             if (doorNorthSouth == partyNorthSouth) {
@@ -63239,8 +63585,16 @@ static void m11_dm1_f0128_execute_source_step(
 
     if (dispatch->executionPhase == M11_DM1_F0128_EXECUTE_DOOR_FRAME) {
         if (step->square != dispatch->targetSquare ||
-            step->op != DM1_V1_F0128_STEP_F0104_DOOR_FRAME ||
-            relForward < 1 || relForward > 3) return;
+            step->op != DM1_V1_F0128_STEP_F0104_DOOR_FRAME) return;
+        if (m11_is_dm1_media009(dispatch->state)) {
+            (void)m11_draw_dm1_media009_door_frames(
+                dispatch->state,dispatch->framebuffer,
+                dispatch->framebufferWidth,dispatch->framebufferHeight,
+                relForward,relSide,0);
+            ++dispatch->rasterStepCount;
+            return;
+        }
+        if (relForward < 1 || relForward > 3) return;
         if (relSide == 0) {
             m11_draw_dm1_center_door_frames(
                 dispatch->mutableState, dispatch->framebuffer,
@@ -63291,6 +63645,16 @@ static void m11_dm1_f0128_execute_source_step(
         if (step->square != dispatch->targetSquare ||
             step->op != DM1_V1_F0128_STEP_F0111_DOOR ||
             relForward < 1 || relForward > 3) {
+            return;
+        }
+        if (m11_is_dm1_media009(dispatch->state)) {
+            M11_ViewportCell cell;
+            if (m11_sample_viewport_cell(dispatch->state,relForward,relSide,&cell) &&
+                cell.valid && cell.elementType == DUNGEON_ELEMENT_DOOR)
+                (void)m11_draw_dm1_media009_door(dispatch->mutableState,
+                    dispatch->framebuffer,dispatch->framebufferWidth,
+                    dispatch->framebufferHeight,relForward,relSide,&cell);
+            ++dispatch->rasterStepCount;
             return;
         }
         if (relSide == 0) {
@@ -63494,6 +63858,18 @@ static void m11_dm1_f0128_execute_source_step(
 
     if (step->op == DM1_V1_F0128_STEP_F0113_FIELD) return;
     switch (step->op) {
+    case DM1_V1_F0128_STEP_F0104_DOOR_FRAME:
+        if (m11_is_dm1_media009(dispatch->state)) {
+            M11_ViewportCell cell;
+            if (m11_sample_viewport_cell(dispatch->state,0,relSide,&cell) &&
+                cell.valid && cell.elementType == DUNGEON_ELEMENT_DOOR)
+                (void)m11_draw_dm1_media009_door_frames(
+                    dispatch->state,dispatch->framebuffer,
+                    dispatch->framebufferWidth,dispatch->framebufferHeight,
+                    0,relSide,cell.square);
+            ++dispatch->rasterStepCount;
+        }
+        break;
     case DM1_V1_F0128_STEP_F0104_PIT:
         m11_draw_dm1_floor_pits(
             dispatch->state, dispatch->framebuffer,
@@ -72596,6 +72972,27 @@ void M11_GameView_ProbeDrawDm1ViewportBackground(
 {
     m11_draw_viewport_background(state, framebuffer, framebufferWidth,
         framebufferHeight, 0, 33, DM1_VIEWPORT_WIDTH, DM1_VIEWPORT_HEIGHT);
+}
+
+int M11_GameView_ProbeDrawDm1LegacyMaterial(
+    M11_GameViewState* state, const M11_Dm1LegacyMaterialProbe* input,
+    unsigned char* framebuffer, int framebufferWidth, int framebufferHeight)
+{
+    M11_ViewportCell cell;
+    if (!input || !m11_is_dm1_media009(state)) return 0;
+    if (input->kind == 0) return m11_draw_dm1_media009_stairs(
+        state,framebuffer,framebufferWidth,framebufferHeight,
+        input->forward,input->side,input->square);
+    if (input->kind == 1) return m11_draw_dm1_media009_door_frames(
+        state,framebuffer,framebufferWidth,framebufferHeight,
+        input->forward,input->side,input->square);
+    if (input->kind != 2) return 0;
+    memset(&cell,0,sizeof(cell));
+    cell.doorType=input->doorType; cell.doorState=input->doorState;
+    cell.doorVertical=input->doorVertical;
+    cell.doorOrnamentOrdinal=input->doorOrnamentOrdinal;
+    return m11_draw_dm1_media009_door(state,framebuffer,framebufferWidth,
+        framebufferHeight,input->forward,input->side,&cell);
 }
 
 int M11_GameView_ProbeDrawDm1LegacyWall(

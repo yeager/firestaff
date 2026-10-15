@@ -2,10 +2,53 @@
 #include "asset_find_by_hash.h"
 #include "render_sdl_m11.h"
 #include "asset_status_m12.h"
+#include "memory_combat_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static int check_original_legacy_materials(M11_GameViewState* state, const char* edition);
+
+/* Real original Hall entrance door: two accepted turns reach its view from
+ * the original start. Its square N/S axis differs from Door.Vertical; no
+ * tile, door record, party position or map is replaced by this regression. */
+static int check_original_door_orientation(const M11_GameLaunchSpec* spec,
+                                           const char* edition)
+{
+    M11_GameViewState* state=calloc(1,sizeof(*state));
+    unsigned char framebuffer[64000];
+    M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+    unsigned short thing;
+    int square, index, ok=0;
+    if(!state)return 0;
+    M11_GameView_Init(state);
+    if(!M11_GameView_Start(state,spec)||!state->world.dungeon||
+       state->world.party.mapIndex!=0||state->world.party.mapX!=1||
+       state->world.party.mapY!=3||state->world.party.direction!=2)goto done;
+    square=state->world.dungeon->tiles[0].squareData[
+        state->world.dungeon->maps[0].height+2];
+    thing=F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon,state->world.things,0,1,2);
+    index=thing&1023;
+    if((square>>5)!=DUNGEON_ELEMENT_DOOR||((thing>>10)&15)!=0||
+       index>=state->world.things->doorCount||
+       ((square&8)!=0)==(state->world.things->doors[index].vertical!=0))goto done;
+    if(M11_GameView_HandleInput(state,M12_MENU_INPUT_LEFT)!=M11_GAME_INPUT_REDRAW||
+       M11_GameView_HandleInput(state,M12_MENU_INPUT_LEFT)!=M11_GAME_INPUT_REDRAW||
+       state->world.party.mapX!=1||state->world.party.mapY!=3||
+       state->world.party.direction!=0)goto done;
+    M11_GameView_Draw(state,framebuffer,320,200);
+    M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(&receipt);
+    if(!receipt.valid||!receipt.planReady||!receipt.sourcePlanDispatched||
+       receipt.doorMaterialCallbackStepCount!=1||receipt.doorFrameCallbackStepCount!=1)goto done;
+    printf("PASS: original %s actual Hall door square-axis%d animation-axis%d reached by two turns, F0111/frame callbacks=1\n",
+        edition,(square&8)!=0,state->world.things->doors[index].vertical!=0);
+    ok=1;
+done:
+    if(!ok)fprintf(stderr,"FAIL: original %s actual door orientation route\n",edition);
+    M11_GameView_Shutdown(state);free(state);return ok;
+}
 
 static const char* pc34_graphics_path(void)
 {
@@ -101,6 +144,7 @@ static int check_original_amiga_background(void)
         state.world.dungeon->maps[state.world.party.mapIndex].floorSet != 0 ||
         !asset_file_matches_md5(state.assetLoader.graphicsDatPath,
                                "6a2f135b53c2220f0251fa103e2a6e7e")) goto done;
+    if (!check_original_door_orientation(&spec,"A20E")) goto done;
     floor = M11_AssetLoader_Load(&state.assetLoader, 75u);
     ceiling = M11_AssetLoader_Load(&state.assetLoader, 76u);
     if (!floor || !ceiling || floor->width != 224 || floor->height != 70 ||
@@ -134,6 +178,9 @@ static int check_original_amiga_background(void)
         }
         printf("PASS: original A20E F0098 parity%d floor75=224x70 ceiling76=224x29\n", parity);
     }
+    if (!check_original_legacy_materials(&state,"A20E") ||
+        !asset_file_matches_md5(state.assetLoader.graphicsDatPath,
+                               "6a2f135b53c2220f0251fa103e2a6e7e")) goto done;
     ok = 1;
 done:
     M11_GameView_Shutdown(&state);
@@ -149,6 +196,238 @@ static unsigned int source_pixel_hash(const M11_AssetSlot* slot)
     unsigned int hash=2166136261u;
     for (size_t i=0; i<(size_t)slot->width*slot->height; ++i) hash=(hash^slot->pixels[i])*16777619u;
     return hash;
+}
+
+/* Independent MEDIA009 DUNVIEW.C:526-717 original frame oracle. */
+static const int oracle_g0110[8] = {0,79,25,70,40,46,0,0};
+static const int oracle_g0111[8] = {64,159,25,70,48,46,0,0};
+static const int oracle_g0112[8] = {149,223,25,70,40,46,5,0};
+static const int oracle_g0113[8] = {0,63,22,83,32,62,0,0};
+static const int oracle_g0114[8] = {64,159,22,83,48,62,0,0};
+static const int oracle_g0115[8] = {160,223,22,83,32,62,0,0};
+static const int oracle_g0116[8] = {0,31,9,108,16,100,0,0};
+static const int oracle_g0117[8] = {32,191,9,108,80,100,0,0};
+static const int oracle_g0118[8] = {192,223,9,108,16,100,0,0};
+static const int oracle_g0119[8] = {0,31,58,101,16,44,0,0};
+static const int oracle_g0120[8] = {192,223,58,101,16,44,0,0};
+static const int oracle_g0121[8] = {0,79,28,68,40,41,0,0};
+static const int oracle_g0122[8] = {64,159,28,70,48,43,0,0};
+static const int oracle_g0123[8] = {149,223,28,68,40,41,5,0};
+static const int oracle_g0124[8] = {0,63,24,85,32,62,0,0};
+static const int oracle_g0125[8] = {64,159,24,85,48,62,0,0};
+static const int oracle_g0126[8] = {160,223,24,85,32,62,0,0};
+static const int oracle_g0127[8] = {0,31,18,108,16,91,0,0};
+static const int oracle_g0128[8] = {32,191,18,108,80,91,0,0};
+static const int oracle_g0129[8] = {192,223,18,108,16,91,0,0};
+static const int oracle_g0130[8] = {0,31,76,135,16,60,0,0};
+static const int oracle_g0131[8] = {192,223,76,135,16,60,0,0};
+static const int oracle_g0132[8] = {60,75,57,61,8,5,0,0};
+static const int oracle_g0133[8] = {148,163,57,61,8,5,0,0};
+static const int oracle_g0134[8] = {32,63,57,99,16,43,0,0};
+static const int oracle_g0135[8] = {160,191,57,99,16,43,0,0};
+static const int oracle_g0136[8] = {32,63,60,98,16,39,0,0};
+static const int oracle_g0137[8] = {160,191,60,98,16,39,0,0};
+static const int oracle_g0138[8] = {0,15,73,85,8,13,0,0};
+static const int oracle_g0139[8] = {208,223,73,85,8,13,0,0};
+static const int oracle_g0164[8] = {0,31,28,70,16,43,0,0};
+static const int oracle_g0165[8] = {192,223,28,70,16,43,0,0};
+static const int oracle_g0166[8] = {64,95,27,70,16,44,0,0};
+static const int oracle_g0167[8] = {128,159,27,70,16,44,0,0};
+static const int oracle_g0168[8] = {48,95,22,86,24,65,0,0};
+static const int oracle_g0169[8] = {128,175,22,86,24,65,0,0};
+static const int oracle_g0170[8] = {43,74,14,107,16,94,0,0};
+static const int oracle_g0171[8] = {149,180,14,107,16,94,0,0};
+static const int oracle_g0172[8] = {96,127,0,122,16,123,0,0};
+static const int oracle_g0173[8] = {0,59,22,24,48,3,16,0};
+static const int oracle_g0174[8] = {64,159,22,24,48,3,0,0};
+static const int oracle_g0175[8] = {164,223,22,24,48,3,16,0};
+static const int oracle_g0176[8] = {0,31,14,17,64,4,16,0};
+static const int oracle_g0177[8] = {48,175,14,17,64,4,0,0};
+static const int oracle_g0178[8] = {192,223,14,17,64,4,16,0};
+static const int oracle_g0179[80] = {24,71,28,67,24,41,0,0,24,71,28,38,24,41,0,30,24,71,28,48,24,41,0,20,24,71,28,58,24,41,0,10,24,29,28,67,24,41,18,0,24,35,28,67,24,41,12,0,24,41,28,67,24,41,6,0,66,71,28,67,24,41,24,0,60,71,28,67,24,41,24,0,54,71,28,67,24,41,24,0};
+static const int oracle_g0180[80] = {88,135,28,67,24,41,0,0,88,135,28,38,24,41,0,30,88,135,28,48,24,41,0,20,88,135,28,58,24,41,0,10,88,93,28,67,24,41,18,0,88,99,28,67,24,41,12,0,88,105,28,67,24,41,6,0,130,135,28,67,24,41,24,0,124,135,28,67,24,41,24,0,118,135,28,67,24,41,24,0};
+static const int oracle_g0181[80] = {150,197,28,67,24,41,0,0,150,197,28,38,24,41,0,30,150,197,28,48,24,41,0,20,150,197,28,58,24,41,0,10,150,153,28,67,24,41,18,0,150,161,28,67,24,41,12,0,150,167,28,67,24,41,6,0,192,197,28,67,24,41,24,0,186,197,28,67,24,41,24,0,180,197,28,67,24,41,24,0};
+static const int oracle_g0182[80] = {0,63,24,82,32,61,0,0,0,63,24,39,32,61,0,45,0,63,24,54,32,61,0,30,0,63,24,69,32,61,0,15,0,7,24,82,32,61,24,0,0,15,24,82,32,61,16,0,0,23,24,82,32,61,8,0,56,63,24,82,32,61,32,0,48,63,24,82,32,61,32,0,40,63,24,82,32,61,32,0};
+static const int oracle_g0183[80] = {80,143,24,82,32,61,0,0,80,143,24,39,32,61,0,45,80,143,24,54,32,61,0,30,80,143,24,69,32,61,0,15,80,87,24,82,32,61,24,0,80,95,24,82,32,61,16,0,80,103,24,82,32,61,8,0,136,143,24,82,32,61,32,0,128,143,24,82,32,61,32,0,120,143,24,82,32,61,32,0};
+static const int oracle_g0184[80] = {160,223,24,82,32,61,0,0,160,223,24,39,32,61,0,45,160,223,24,54,32,61,0,30,160,223,24,69,32,61,0,15,160,167,24,82,32,61,24,0,160,175,24,82,32,61,16,0,160,183,24,82,32,61,8,0,216,223,24,82,32,61,32,0,208,223,24,82,32,61,32,0,200,223,24,82,32,61,32,0};
+static const int oracle_g0185[80] = {0,31,17,102,48,88,64,0,0,31,17,38,48,88,64,66,0,31,17,60,48,88,64,44,0,31,17,82,48,88,64,22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,31,17,102,48,88,48,0,8,31,17,102,48,88,48,0,0,31,17,102,48,88,52,0};
+static const int oracle_g0186[80] = {64,159,17,102,48,88,0,0,64,159,17,38,48,88,0,66,64,159,17,60,48,88,0,44,64,159,17,82,48,88,0,22,64,75,17,102,48,88,36,0,64,87,17,102,48,88,24,0,64,99,17,102,48,88,12,0,148,159,17,102,48,88,48,0,136,159,17,102,48,88,48,0,124,159,17,102,48,88,48,0};
+static const int oracle_g0187[80] = {192,223,17,102,48,88,0,0,192,223,17,38,48,88,0,66,192,223,17,60,48,88,0,44,192,223,17,82,48,88,0,22,192,203,17,102,48,88,36,0,192,215,17,102,48,88,24,0,192,223,17,102,48,88,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+static void oracle_native_frame(unsigned char* output,
+    const unsigned char* pixels,int width,int height,const int* frame,int flip)
+{
+    if (!frame[4]) return;
+    for(int y=frame[2];y<=frame[3];++y) for(int x=frame[0];x<=frame[1];++x) {
+        int sx=frame[6]+x-frame[0],sy=frame[7]+y-frame[2];
+        if(flip&1)sx=width-1-sx;
+        if(flip&2)sy=height-1-sy;
+        if(sx>=0&&sx<width&&sy>=0&&sy<height&&x<224&&y<136&&pixels[sy*width+sx]!=10)
+            output[(y+33)*320+x]=pixels[sy*width+sx];
+    }
+}
+static int oracle_native_record(M11_GameViewState* state,unsigned char* output,
+    int graphic,const int* frame,int flip)
+{
+    const M11_AssetSlot* source=M11_AssetLoader_Load(&state->assetLoader,(unsigned)graphic);
+    if(!source||!source->pixels||source->width!=frame[4]*2||source->height!=frame[5])return 0;
+    oracle_native_frame(output,source->pixels,source->width,source->height,frame,flip);
+    return 1;
+}
+static int oracle_native_mask(M11_GameViewState* state,unsigned char* pixels,
+    int width,int height,int graphic,int view)
+{
+    static const int palette[2][16]={
+        {0,12,1,3,4,3,0,6,3,9,10,11,0,2,0,13},
+        {0,1,2,3,4,3,6,7,5,9,10,11,12,13,14,15}};
+    const M11_AssetSlot* source=M11_AssetLoader_Load(&state->assetLoader,(unsigned)graphic);
+    if(!source||!source->pixels||source->width!=96||source->height!=88)return 0;
+    /* G0207 set1 covers the entire native door. F0129 samples source-cell
+     * centres with a truncated 10-bit increment before the C9 blit. */
+    unsigned xr=((96u<<10)/(unsigned)width)<<6,yr=((88u<<10)/(unsigned)height)<<6;
+    for(int y=0;y<height;++y)for(int x=0;x<width;++x){
+        unsigned sx=(xr/2+32767u+(unsigned)x*xr)>>16;
+        unsigned sy=(yr/2+32767u+(unsigned)y*yr)>>16;
+        unsigned char pixel=source->pixels[sy*96+sx];
+        if(view<2)pixel=(unsigned char)palette[view][pixel&15];
+        if(pixel!=9)pixels[y*width+x]=pixel;
+    }
+    return 1;
+}
+
+static int check_original_legacy_materials(M11_GameViewState* state,const char* edition)
+{
+    static const int* front[2][11]={
+        {oracle_g0110,oracle_g0111,oracle_g0112,oracle_g0113,oracle_g0114,oracle_g0115,
+         oracle_g0116,oracle_g0117,oracle_g0118,oracle_g0119,oracle_g0120},
+        {oracle_g0121,oracle_g0122,oracle_g0123,oracle_g0124,oracle_g0125,oracle_g0126,
+         oracle_g0127,oracle_g0128,oracle_g0129,oracle_g0130,oracle_g0131}};
+    static const int* lateral[8]={oracle_g0132,oracle_g0133,oracle_g0134,oracle_g0135,
+        oracle_g0136,oracle_g0137,oracle_g0138,oracle_g0139};
+    static const int* doorFrames[3][3]={
+        {oracle_g0185,oracle_g0186,oracle_g0187},
+        {oracle_g0182,oracle_g0183,oracle_g0184},
+        {oracle_g0179,oracle_g0180,oracle_g0181}};
+    static const int* left[3]={oracle_g0170,oracle_g0168,oracle_g0166};
+    static const int* right[3]={oracle_g0171,oracle_g0169,oracle_g0167};
+    unsigned char output[64000],expected[64000],pixels[96*88];
+    unsigned int hashes[43];
+    M11_Dm1LegacyMaterialProbe input={0};
+    int mapIndex=state->world.party.mapIndex,checks=0;
+    struct RngState_Compat savedRng=state->world.masterRng;
+    const int wallSet=state->world.dungeon->maps[mapIndex].wallSet;
+    if(wallSet!=0)return 0;
+    for(int record=77;record<120;++record){
+        const M11_AssetSlot* source=M11_AssetLoader_Load(&state->assetLoader,(unsigned)record);
+        if(!source||!source->pixels)return 0;
+        hashes[record-77]=source_pixel_hash(source);
+    }
+    for(int down=0;down<2;++down)for(int facing=0;facing<2;++facing)
+    for(int forward=0;forward<=3;++forward)for(int side=-1;side<=1;++side){
+        int member,index; const int* frame;
+        if((!forward&&!side)||(!facing&&(forward==3||!side)))continue;
+        input.kind=0;input.forward=forward;input.side=side;
+        input.square=0x60|(down?0:4)|
+            (((state->world.party.direction&1)==0)==facing?8:0);
+        if(facing){
+            index=forward?(3-forward)*3+side+1:(side<0?9:10);
+            member=(forward?(3-forward)*2+(side==0):6)+down*7;
+            frame=front[down][index];
+        }else{
+            index=forward==2?(side>0):forward==1?2+down*2+(side>0):6+(side>0);
+            member=forward==2?14:forward==1?15+down:17;
+            frame=lateral[index];
+        }
+        memset(output,0xe7,sizeof(output));memset(expected,0xe7,sizeof(expected));
+        if(!oracle_native_record(state,expected,90+member,frame,side>0)||
+           !M11_GameView_ProbeDrawDm1LegacyMaterial(state,&input,output,320,200)||
+           memcmp(output,expected,sizeof(output)))goto failed;
+        ++checks;
+    }
+    input.kind=1;
+    input.square=0x80|((state->world.party.direction&1)?8:0);
+    for(int forward=0;forward<=3;++forward)for(int side=-1;side<=1;++side){
+        if(!forward&&side)continue;
+        input.forward=forward;input.side=side;
+        memset(output,0xe7,sizeof(output));memset(expected,0xe7,sizeof(expected));
+        if(!forward){if(!oracle_native_record(state,expected,77,oracle_g0172,0))goto failed;}
+        else if(!side){
+            if(!oracle_native_record(state,expected,77+forward,left[forward-1],0)||
+               !oracle_native_record(state,expected,77+forward,right[forward-1],1))goto failed;
+            if(forward<3&&!oracle_native_record(state,expected,forward==1?82:83,
+                forward==1?oracle_g0177:oracle_g0174,0))goto failed;
+        }else if(forward==3){
+            if(!oracle_native_record(state,expected,81,side<0?oracle_g0164:oracle_g0165,side>0))goto failed;
+        }else if(!oracle_native_record(state,expected,forward==1?82:83,
+            forward==1?(side<0?oracle_g0176:oracle_g0178):(side<0?oracle_g0173:oracle_g0175),0))goto failed;
+        if(!M11_GameView_ProbeDrawDm1LegacyMaterial(state,&input,output,320,200)||
+           memcmp(output,expected,sizeof(output)))goto failed;
+        ++checks;
+    }
+    {
+        int direction=state->world.party.direction;
+        input.forward=input.side=0;
+        for(int axis=0;axis<2;++axis)for(int facing=0;facing<4;++facing){
+            int sourceSide=axis==(facing&1);
+            state->world.party.direction=facing;input.square=0x80|(axis?8:0);
+            memset(output,0xe7,sizeof(output));memset(expected,0xe7,sizeof(expected));
+            if(sourceSide&&!oracle_native_record(state,expected,77,oracle_g0172,0))goto failed;
+            int drawn=M11_GameView_ProbeDrawDm1LegacyMaterial(state,&input,output,320,200);
+            if((drawn!=0)!=sourceSide||memcmp(output,expected,sizeof(output)))goto failed;
+            ++checks;
+        }
+        state->world.party.direction=direction;
+    }
+    input.kind=2;
+    for(int set=0;set<4;++set){
+        int found=0;
+        for(int map=0;map<state->world.dungeon->header.mapCount&&!found;++map){
+            const struct DungeonMapDesc_Compat* desc=&state->world.dungeon->maps[map];
+            for(int type=0;type<2;++type)if((type?desc->doorSet1:desc->doorSet0)==set){
+                state->world.party.mapIndex=map;input.doorType=type;found=1;break;
+            }
+        }
+        if(!found){fprintf(stderr,"missing authentic map DoorSet%d\n",set);goto failed;}
+        for(int forward=1;forward<=3;++forward)for(int side=-1;side<=1;++side)
+        for(int vertical=0;vertical<2;++vertical)for(int doorState=0;doorState<=5;++doorState){
+            const int* table=doorFrames[forward-1][side+1];
+            const M11_AssetSlot* source=M11_AssetLoader_Load(&state->assetLoader,(unsigned)(108+set*3+3-forward));
+            struct RngState_Compat expectedRng=state->world.masterRng;
+            int flip=0,first=0,last=0;
+            input.forward=forward;input.side=side;input.doorVertical=vertical;input.doorState=doorState;
+            if(!source||source->width!=table[4]*2||source->height!=table[5])goto failed;
+            memset(output,0xe7,sizeof(output));memset(expected,0xe7,sizeof(expected));
+            memcpy(pixels,source->pixels,(size_t)source->width*source->height);
+            if(doorState){
+                if(set==3){
+                    flip=F0732_COMBAT_RngRandom_Compat(&expectedRng,2)!=0;
+                    flip|=(F0732_COMBAT_RngRandom_Compat(&expectedRng,2)!=0)*2;
+                    for(int y=0;y<source->height;++y)for(int x=0;x<source->width;++x)
+                        pixels[y*source->width+x]=source->pixels[
+                            ((flip&2)?source->height-1-y:y)*source->width+
+                            ((flip&1)?source->width-1-x:x)];
+                }
+                if(doorState==5&&!oracle_native_mask(state,pixels,source->width,source->height,301,3-forward))goto failed;
+                if(doorState<4){first=doorState+(vertical?0:3);last=vertical?first:first+3;}
+                for(int row=first;row<=last;row+=3)
+                    oracle_native_frame(expected,pixels,source->width,source->height,table+row*8,0);
+            }
+            if(!M11_GameView_ProbeDrawDm1LegacyMaterial(state,&input,output,320,200)||
+               memcmp(output,expected,sizeof(output))||
+               memcmp(&expectedRng,&state->world.masterRng,sizeof(expectedRng)))goto failed;
+            ++checks;
+        }
+    }
+    state->world.party.mapIndex=mapIndex;state->world.masterRng=savedRng;
+    for(int record=77;record<120;++record)if(hashes[record-77]!=source_pixel_hash(
+        M11_AssetLoader_Load(&state->assetLoader,(unsigned)record)))goto failed;
+    printf("PASS: original %s MEDIA009 %d full-raster stairs/frame/door state cases, native pixels unchanged\n",edition,checks);
+    return 1;
+failed:
+    fprintf(stderr,"FAIL: original %s MEDIA009 material kind%d forward%d side%d state%d vertical%d after%d cases\n",
+        edition,input.kind,input.forward,input.side,input.doorState,input.doorVertical,checks);
+    state->world.party.mapIndex=mapIndex;state->world.masterRng=savedRng;
+    return 0;
 }
 
 /* Independent G0163/F0096 oracle, using only pixels decoded from originals.
@@ -349,6 +628,9 @@ static int check_original_legacy_arrows(const char *env_name,
     }
     if (!nonblack) goto done;
     if (!check_original_legacy_walls(state,edition)) goto done;
+    if (atari && !check_original_door_orientation(&spec,edition)) goto done;
+    if (atari && (!check_original_legacy_materials(state,edition) ||
+        !asset_file_matches_md5(state->assetLoader.graphicsDatPath,graphics_md5))) goto done;
     if (!atari && !check_original_amiga_palette(state,path,framebuffer)) goto done;
     printf("PASS: original %s C013 matches all 4320 presented indices\n", edition);
     {
@@ -398,6 +680,14 @@ int main(void)
     if (!asset_file_matches_md5(graphicsPath, "fa6b1aa29e191418713bf2cda93d962e")) {
         fprintf(stderr, "original I34E graphics identity mismatch\n");
         return 1;
+    }
+    {
+        M11_GameLaunchSpec spec={0};
+        spec.title="Dungeon Master";spec.gameId=spec.sourceId="dm1";
+        spec.dataDir=getenv("FIRESTAFF_DM1_DATA_DIR");
+        spec.verifiedAssetPath=graphicsPath;
+        spec.verifiedAssetMd5="fa6b1aa29e191418713bf2cda93d962e";
+        if(!check_original_door_orientation(&spec,"PC34"))return 1;
     }
     M11_GameView_Init(&state);
     if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {

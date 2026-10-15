@@ -3638,6 +3638,23 @@ void M11_GameView_ProbeDrawDm1ViewportBackground(
     const M11_GameViewState* state, unsigned char* framebuffer,
     int framebufferWidth, int framebufferHeight);
 
+/* Test-only original-media entry to the production MEDIA009 material routes.
+ * kind: 0 stairs, 1 door frame, 2 door panel. Values select source frames;
+ * the initialized loader and active map retain authenticated ownership. */
+typedef struct M11_Dm1LegacyMaterialProbe {
+    int kind;
+    int forward;
+    int side;
+    int square;
+    int doorType;
+    int doorState;
+    int doorVertical;
+    int doorOrnamentOrdinal;
+} M11_Dm1LegacyMaterialProbe;
+int M11_GameView_ProbeDrawDm1LegacyMaterial(
+    M11_GameViewState* state, const M11_Dm1LegacyMaterialProbe* input,
+    unsigned char* framebuffer, int framebufferWidth, int framebufferHeight);
+
 /* Test-only route through the production MEDIA009 front/side endpoints. */
 int M11_GameView_ProbeDrawDm1LegacyWall(
     M11_GameViewState* state, DM1_ViewSquareIndex square,

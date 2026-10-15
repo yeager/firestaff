@@ -6,6 +6,7 @@ unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 app=${1:?usage: test_dm1_v1_amiga36_original_media_cli_boot.sh <firestaff-binary>}
 archive=${FIRESTAFF_DM1_AMIGA36_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Amiga_36.zip"}
 expected_md5=7f9458e4a3972d06e649a6fa85a7f34b
+capture_root=${FIRESTAFF_DM1_STARTUP_CAPTURE_DIR:-}
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 scan_root=$test_scratch/dm1-amiga36-scan-$$
 menu_runtime_probe=$test_scratch/dm1-amiga36-menu-runtime-$$.json
@@ -23,8 +24,9 @@ if [[ ! -x "$app" || ! -f "$archive" ]]; then
 fi
 
 probe() {
-    local output
-    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {
+    local output route=$1
+    shift
+    output=$(FIRESTAFF_DM1_STARTUP_CAPTURE_DIR="${capture_root:+$capture_root/$route}" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {
         printf '%s\n' "$output" >&2
         return 1
     }
@@ -33,27 +35,32 @@ probe() {
     grep -Fq 'phase=dm1-runtime ' <<<"$output" &&
     grep -Fq 'map=0 party=1,3,2 champions=0' <<<"$output" &&
     grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$output" &&
+    grep -Fq 'platform=amiga-v36 phase=entrance-door frame=64/64 step-pixels=2 vblanks=2' <<<"$output" &&
+    grep -Fq 'platform=amiga-v36 frames=15 driver=d86f045085481448f6ae3db8d3d640d2' <<<"$output" &&
     grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=$expected_md5 input=keyboard+mouse palette=rgb4 visual-parity=unverified" <<<"$output"
 }
 
-probe --debug --game dm1 --platform amiga --data-dir "$archive" \
+probe cli-archive --debug --game dm1 --platform amiga --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 
 mkdir -p "$scan_root/dm1"
 ln -s "$archive" "$scan_root/dm1/Dungeon-Master_Amiga_36.zip"
-probe --debug --game dm1 --platform amiga --data-dir "$scan_root" \
+probe cli-directory --debug --game dm1 --platform amiga --data-dir "$scan_root" \
     --boot-probe --boot-probe-frames 2 --duration 0
 
 mkdir -p "$(dirname "$menu_runtime_probe")"
 menu_output=${menu_runtime_probe%.json}.log
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return \
+FIRESTAFF_DM1_STARTUP_CAPTURE_DIR="${capture_root:+$capture_root/menu}" \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
     --menu --game dm1 --platform amiga --data-dir "$scan_root" \
     --script enter,enter,enter --duration 10000 >"$menu_output" 2>&1
 grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=$expected_md5 input=keyboard+mouse palette=rgb4 visual-parity=unverified" "$menu_output"
 grep -Fq 'startup-input-source keyboard command=' "$menu_output"
+grep -Fq 'platform=amiga-v36 phase=entrance-door frame=64/64 step-pixels=2 vblanks=2' "$menu_output"
+grep -Fq 'platform=amiga-v36 frames=15 driver=d86f045085481448f6ae3db8d3d640d2' "$menu_output"
 python3 - "$menu_runtime_probe" "$expected_md5" <<'PY'
 import json
 import sys
@@ -78,4 +85,5 @@ PY
 printf '%s\n' \
     'PASS: authentic DM1 Amiga 3.6 CLI and start-menu authenticated entrance handoff routes' \
     'PASS: M12 consumed a fresh Return after launch-input drain and reached the expected first A36 runtime pose' \
-    'NOTE: A36 visual entrance parity is unverified; C430/C431/C432/C427/C435 zones and C011 button placement are not yet rendered from original layout records'
+    'PASS: native A36 C696 zones, 64 two-pixel door steps and fifteen native driver palette steps run in CLI and M12' \
+    'NOTE: original emulator frame alignment, native audible output and full viewport parity remain unverified'

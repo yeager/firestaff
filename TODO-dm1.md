@@ -8,22 +8,59 @@ for their native runtime/startup gaps before claiming all-platform support.
 PC-9821 support remains excluded by user instruction. Native Windows/Linux
 and a physically active HiDPI display require separate execution evidence.
 
+2026-10-15 A36 package ownership: desktop READY/preparation now require
+same-owner authenticated graphics, VDEO.FTL and DUNGEON.DAT. Original bytes
+for all three dungeon languages pass the explicit DUNGEON.DAT role; missing
+or wrong drivers, another owner's driver and missing default files beside
+DungeonF/G.dat fail admission. Implement and verify native language selection
+from FILENAME.C (Dungeon~.dat) before admitting French/German-only filenames.
+This package gate does not establish language routing or full visual parity.
+
+2026-10-15 A36M entrance: the dedicated path now authenticates C696 and
+same-owner VDEO.FTL, resolves the original door/viewport/transfer/button
+zones, renders F0797's authored C255 scene, and uses the driver's fifteen
+palette steps. Actual source widths and G2349=2 produce 64 opening frames,
+not the previously assumed A20 count of 31. Original-pixel checks cover the
+visible native C255 wall/ceiling/floor strips and all 65 closed/opening
+pages. CLI archive, CLI directory and M12 captures agree at closed, first,
+middle and final frames, with exact RGB4 channels. This does not establish
+frame-aligned original-emulator parity, native audible output, or complete
+runtime viewport/palette parity. Credits and Resume still need dedicated
+interactive end-to-end evidence beyond the retained source control flow.
+
+2026-10-15 native doors/stairs: A20E retail and Atari ST 1.2 now have 484
+original-pixel material cases each for native stair/frame/door routing and
+state clipping. The raw-square door-facing fix is shared across DM1; actual
+PC34/A20E/ST12 original starts verify the differing square/animation axes.
+A20E/ST12 command replays also reach the real stair view and operate the
+button door after walking the original Hall. Extend execution coverage to
+other catalogue editions and original-emulator pose comparisons. The stair
+capture still has a large cyan champion portrait overlapping its right side:
+investigate MEDIA009 HoC mirror/portrait projection, transparency and scaling
+against F0107/F0124 and original C026. This remaining visible defect prevents
+any claim of complete native viewport parity.
+
 2026-10-15 early Amiga/Atari runtime layers: original A20E background,
 demo/Atari 1.2 native arrows, turn-button click strips and eleven MEDIA009
 wall positions now have complete original-pixel regressions. Actual demo
 and Atari dungeon captures show these layers. The bounded host cache
 capability models native allocation ownership, not original hardware heap
-accounting. Verify other catalogue editions, door/stair/ornament routes,
-HUD interactions, frame-aligned original captures and native audio. Early
+accounting. Native A20E/ST12 door/stair material progress is recorded above;
+verify other editions, remaining ornament routes, HUD interactions,
+frame-aligned original captures and native audio. Early
 Amiga base RGB4/copper-strip presentation is now original-data verified;
 A36 external-driver bands and F0093 creature palette replacements remain
 open. These targeted fixes do not complete all DM1 support.
 
 2026-10-15 PC34 viewport followup: the specific D2 side-wall geometry and
 fresh-key input delay have original-data/source evidence. These fixes do not
-establish full viewport parity at every map/pose. Obtain the reported scene
-and compare matching original poses for remaining wall artifacts. Debug
-performance: source redraws and compose costs are now counted, with an
+establish full viewport parity at every map/pose. The user clarified that
+remaining wall artifacts and delayed wall presentation appear immediately
+on entering the Hall of Champions, not only in distant D2 visibility. Keep
+this first-view issue open and compare an authenticated matching original
+pose; the earlier image0004 original capture has no proven map tuple. The
+latest original-emulator capture attempt was blocked by active user input
+and provides no new parity evidence. Debug performance: source redraws and compose costs are now counted, with an
 original-media dummy SDL regression. A native M4/Cocoa PC34 initial-Hall
 run reaches 60 source-draw/present FPS at density 1. HiDPI, other scenes and
 platforms still require coverage; GPU utilization remains unavailable.
@@ -599,13 +636,14 @@ parity.
   media passes the real-media receipt test. Its CLI and M12 regressions now
   verify entrance completion and the first runtime pose. The ordinary data
   directory scan now discovers its ZIP -> ADF package as well as direct archive
-  selection; an isolated original-media root exercises the M12 route. Visual
-  parity remains
-  unverified: resolve C430/C431/C432/C427/C435 from authenticated A36 layout
-  records and draw C011 at C435. The current generic 38-event compatibility
-  sequence and A20/PC door boxes do not implement A36's source zones,
-  2-VBlank cadence, or 31-step loop. Do not claim entrance parity until the
-  asymmetric 105x161 / 128x161 door zones and button overlay are rendered.
+  selection; an isolated original-media root exercises the M12 route.
+  C696 now owns C427/C429/C430/C431/C432/C435/C436, including the native
+  asymmetric doors and C011 overlay. Original VDEO.FTL supplies the
+  fifteen-step palette increments; native source widths and the two-pixel
+  G2349 advance produce 64 two-VBlank opening steps. The original-media
+  crop regression and CLI/M12 phase captures pass. Original-emulator
+  frame alignment, interactive Credits/Resume evidence, native audible
+  output and full runtime viewport/palette parity remain unverified.
 
 - Diagnose the 2026-10-06 MacBook Pro M5 dungeon report before changing the
   shared SDL presentation path. The attached screenshot's dungeon pixels are

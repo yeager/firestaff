@@ -1119,6 +1119,7 @@ static int m12_admit_dm1_fmtowns_archive(
  * Member names only locate the original medium; GRAPHICS.DAT and DUNGEON.DAT
  * hashes remain the admission criteria. */
 static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5);
+static int m12_dm1_amiga36_package_ready(const char* graphics);
 
 /* Explicit original loose graphics remain the terminal owner even when a
  * canonical original archive is also present in the same scan directory. */
@@ -1274,6 +1275,8 @@ static int m12_admit_dm1_amiga_archive_packages(
                 if (g_games[gameIndex].versions[versionIndex].architecture ==
                         M12_ARCH_AMIGA &&
                     strcmp(md5, g_games[gameIndex].versions[versionIndex].md5) == 0) {
+                    if (strcmp(md5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0 &&
+                        !m12_dm1_amiga36_package_ready(virtualGraphics)) continue;
                     size_t requiredIndex;
                     version->matched = 1;
                     m12_copy_string(version->matchedPath,
@@ -4279,12 +4282,38 @@ static int m12_dm1_pc34_multi_has_startup_media(
                                   &matchIndex, 32);
 }
 
+/* A36 AMIGAVID.C F1138:9-18 requires the FTL_DRIA_Video owner;
+ * VDEOAMIG.C G3248 supplies F0441's driver palette increments. FILENAME.C
+ * :23-25,85-100 selects the three original dungeon languages. The current
+ * desktop loader opens DUNGEON.DAT, so accept those original role bytes
+ * there, but do not publish F/G-only packages without language routing. */
+static const char s_m12_a36_dungeon_hashes[] =
+    "30028fb6a301ecb20127ef0b3af32b05;c0e1bf1b9c5578681879d624bb28e663;59e332cf47852d5c7c88a9538f0adcea";
+
+static int m12_dm1_amiga36_package_ready(const char* graphics) {
+    char companion[ASSET_PATH_MAX], dungeonMd5[33];
+    const char* match;
+    if (!graphics ||
+        !asset_file_matches_md5(graphics, "7f9458e4a3972d06e649a6fa85a7f34b") ||
+        !csb_v1_amiga_selected_companion(graphics, "VDEO.FTL", companion,
+                                        sizeof(companion)) ||
+        !asset_file_matches_md5(companion, "d86f045085481448f6ae3db8d3d640d2") ||
+        !csb_v1_amiga_selected_companion(graphics, "DUNGEON.DAT", companion,
+                                        sizeof(companion)) ||
+        !asset_file_md5_hex(companion, dungeonMd5)) return 0;
+    match = strstr(s_m12_a36_dungeon_hashes, dungeonMd5);
+    return match && (match == s_m12_a36_dungeon_hashes || match[-1] == ';') &&
+        (match[32] == '\0' || match[32] == ';');
+}
+
 /* ReDMCSB LOADSAVE.C F0435:2336-2343 opens the selected installation's
  * dungeon. These original loose editions also have independently verified
  * startup media; an orphan graphics copy must not hide a later complete one. */
 static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5) {
     size_t i;
     if (!graphicsMd5) return NULL;
+    if (strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
+        return s_m12_a36_dungeon_hashes;
     if (strcmp(graphicsMd5, "491ca939f9abb33ceeb26619b841fe91") == 0)
         return "78848e1a2d3d5a11e5954deb8c7b772b";
     if (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0)
@@ -4338,6 +4367,8 @@ static int m12_dm1_complete_loose_owner(const char* graphics,
     match = strstr(allowed, actualMd5);
     if (!match || (match != allowed && match[-1] != ';') ||
         (match[32] != '\0' && match[32] != ';')) return 0;
+    if (strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
+        return m12_dm1_amiga36_package_ready(graphics);
     /* TITLE.C F0437's original edition/SWSH pairing remains authoritative.
      * A22G shares A20F's SWSH only with its exact original game/dungeon tuple. */
     for (i = 0U; i < sizeof(amiga) / sizeof(amiga[0]); ++i) {
@@ -5102,6 +5133,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                         rootMatchedPaths[rootIndex][i])) {
                     continue;
                 }
+                if (strcmp(gameSpec->gameId, "dm1") == 0 &&
+                    strcmp(md5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0 &&
+                    !m12_dm1_amiga36_package_ready(rootMatchedPaths[rootIndex][i])) continue;
                 version->matched = 1;
                 matchedAny = 1;
                 m12_copy_string(version->matchedPath,
@@ -6283,6 +6317,17 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
     }
     gameId = g_games[gameIndex].gameId;
     if (strcmp(gameId, "dm1") == 0) {
+        int rejected = 0;
+        for (size_t index = 0U; index < g_games[gameIndex].versionCount; ++index) {
+            M12_AssetVersionStatus* version = &status->versions[gameIndex][index];
+            if (version->matched && strcmp(version->versionId, "amiga36-multi") == 0 &&
+                !m12_dm1_amiga36_package_ready(version->matchedPath)) {
+                version->matched = 0;
+                version->matchedPath[0] = version->matchedMd5[0] = '\0';
+                rejected = 1;
+            }
+        }
+        if (rejected && !m12_first_matched_version(status, gameIndex)) available = 0;
         status->dm1Available = available;
     } else if (strcmp(gameId, "csb") == 0) {
         status->csbAvailable = available;
@@ -8400,6 +8445,8 @@ int M12_AssetStatus_PrepareDM1RuntimeVersion(
     if (versionIndex < 0) return 0;
     version = &status->versions[gameIndex][versionIndex];
     if (!version->matched || !version->matchedPath[0]) return 0;
+    if (strcmp(versionId, "amiga36-multi") == 0 &&
+        !m12_dm1_amiga36_package_ready(version->matchedPath)) return 0;
     if (strcmp(versionId, "fmtowns-en") == 0 ||
         strcmp(versionId, "fmtowns-ja") == 0) {
         return M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(

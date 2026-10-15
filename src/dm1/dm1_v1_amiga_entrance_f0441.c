@@ -3,6 +3,13 @@
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_amiga_title_f0437.h"
 #include "asset_loader_m11.h"
+#include "memory_graphics_dat_state_pc34_compat.h"
+#include "memory_graphics_dat_select_pc34_compat.h"
+#include "memory_graphics_dat_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "asset_status_m12.h"
+#include "firestaff_ftl_container.h"
+#include "firestaff_ftl_hunk_data_zero_run.h"
 
 #include <stdio.h>
 #include <limits.h>
@@ -151,6 +158,120 @@ int dm1_v1_amiga_entrance_f0441_receipt_for_startup(
         media->swsh_executable, media->swsh_executable_bytes, out_receipt, media);
 }
 
+typedef struct { int type, parent, x, y; } A36LayoutRecord;
+
+static unsigned int a36_be16(const uint8_t *p) {
+    return ((unsigned int)p[0] << 8) | p[1];
+}
+
+/* COORD.C F0639: ranges precede contiguous eight-byte records. Only the
+ * selected original C696 is accepted; never substitute PC layout tables. */
+static int a36_layout_record(const uint8_t *data, size_t bytes, int zone,
+                             A36LayoutRecord *out) {
+    size_t count, cursor;
+    int found = 0;
+    if (!data || bytes < 4 || a36_be16(data) != 0xfc0d) return 0;
+    count = a36_be16(data + 2);
+    if (count == 0 || count > 256 || count > (bytes - 4) / 4) return 0;
+    cursor = 4 + count * 4;
+    for (size_t i = 0; i < count; ++i) {
+        unsigned int first = a36_be16(data + 4 + i * 4);
+        unsigned int last = a36_be16(data + 6 + i * 4);
+        size_t length;
+        if (last < first) return 0;
+        length = ((size_t)last - first + 1) * 8;
+        if (length > bytes - cursor) return 0;
+        if (zone >= (int)first && zone <= (int)last) {
+            const uint8_t *p = data + cursor + (size_t)(zone - (int)first) * 8;
+            if (found) return 0;
+            out->type = (int)a36_be16(p);
+            out->parent = (int)(int16_t)a36_be16(p + 2);
+            out->x = (int)(int16_t)a36_be16(p + 4);
+            out->y = (int)(int16_t)a36_be16(p + 6);
+            found = 1;
+        }
+        cursor += length;
+    }
+    return found && cursor == bytes;
+}
+
+/* The authenticated entrance chains contain top-left offsets, right anchors
+ * and explicit parent dimensions only. Reject other F0635 record types
+ * rather than approximating the rest of the game's layout language. */
+static int a36_layout_rect(const uint8_t *data, size_t bytes, int zone,
+                           int width, int height, DM1_V1_AmigaEntranceRect *out) {
+    A36LayoutRecord leaf, parent;
+    int x, y, right_anchor;
+    if (!a36_layout_record(data, bytes, zone, &leaf) ||
+        (leaf.type != 1 && leaf.type != 11 && leaf.type != 12) ||
+        width <= 0 || height <= 0) return 0;
+    x = leaf.x; y = leaf.y; right_anchor = leaf.type == 12;
+    for (unsigned int depth = 0; depth < 16; ++depth) {
+        if (!leaf.parent ||
+            !a36_layout_record(data, bytes, leaf.parent, &parent)) return 0;
+        if (parent.type == 9) {
+            if (right_anchor) x += parent.x - width;
+            if (x < 0 || y < 0 || x + width > parent.x ||
+                y + height > parent.y) return 0;
+            *out = (DM1_V1_AmigaEntranceRect){x, y, width, height};
+            return 1;
+        }
+        if (parent.type != 1) return 0;
+        x += parent.x; y += parent.y; leaf = parent;
+    }
+    return 0;
+}
+
+static int a36_bind_layout(M11_AssetLoader *loader,
+                           DM1_V1_AmigaEntranceF0441Receipt *receipt) {
+    struct MemoryGraphicsDatRuntimeState_Compat *rt = loader->runtimeState;
+    struct MemoryGraphicsDatHeader_Compat header = {0};
+    struct MemoryGraphicsDatSelection_Compat item;
+    A36LayoutRecord working;
+    uint8_t *data;
+    int ok;
+    if (!rt) return 0;
+    header.format = rt->format; header.graphicCount = rt->graphicCount;
+    header.compressedByteCounts = rt->compressedByteCounts;
+    header.decompressedByteCounts = rt->decompressedByteCounts;
+    header.widthHeight = rt->widthHeight;
+    if (!F0490_MEMORY_SelectGraphicFromHeader_Compat(&header, 696, &item) ||
+        item.compressedByteCount != item.decompressedByteCount ||
+        item.compressedByteCount < 4) return 0;
+    data = malloc(item.compressedByteCount);
+    if (!data) return 0;
+    ok = F0474_MEMORY_LoadGraphic_CPSDF_Compat(item.offset,
+        item.compressedByteCount, loader->fileState, data) &&
+        a36_layout_record(data, item.compressedByteCount, 428, &working) &&
+        working.type == 9 && working.parent == 0 &&
+        working.x > 0 && working.x <= 320 && working.y > 0 && working.y <= 200 &&
+        a36_layout_rect(data, item.compressedByteCount, 429,
+            working.x, working.y, &receipt->a36_working) &&
+        a36_layout_rect(data, item.compressedByteCount, 427,
+            working.x, working.y, &receipt->a36_transfer) &&
+        a36_layout_rect(data, item.compressedByteCount, 430,
+            (int)receipt->left_door_width, (int)receipt->left_door_height,
+            &receipt->a36_left) &&
+        a36_layout_rect(data, item.compressedByteCount, 431,
+            (int)receipt->right_door_width, (int)receipt->right_door_height,
+            &receipt->a36_right) &&
+        a36_layout_rect(data, item.compressedByteCount, 432,
+            224, 136, &receipt->a36_viewport) &&
+        a36_layout_rect(data, item.compressedByteCount, 435,
+            14, 13, &receipt->a36_enter_button) &&
+        a36_layout_rect(data, item.compressedByteCount, 436,
+            14, 13, &receipt->a36_resume_button);
+    free(data);
+    if (!ok) return 0;
+    receipt->a36_step_pixels = 2; /* COORD.C G2349_, MEDIA746 A36M. */
+    receipt->opening_steps = (unsigned int)
+        ((receipt->a36_left.w > receipt->a36_right.w
+            ? receipt->a36_left.w : receipt->a36_right.w) + 1) / 2;
+    receipt->door_frame_count = 2; /* Original native left/right bitmaps. */
+    receipt->a36_layout_valid = 1;
+    return 1;
+}
+
 int dm1_v1_amiga36_entrance_f0441_receipt(
     const uint8_t *graphics_dat,
     size_t graphics_dat_bytes,
@@ -235,6 +356,7 @@ int dm1_v1_amiga36_entrance_f0441_receipt(
         buttons->pixels, (size_t)buttons->width * buttons->height) > 0u;
     memcpy(receipt.entrance_palette_rgb4, a36_entrance_palette_rgb4,
            sizeof(a36_entrance_palette_rgb4));
+    if (!a36_bind_layout(&loader, &receipt)) goto cleanup;
     receipt.source_evidence =
         "ReDMCSB STARTUP2.C F0441 A36M: STARTUP1.C skips F0437; "
         "ENTRANCE.C loads C004/C005, C002/C003/C011, waits for C200; "
@@ -250,4 +372,229 @@ int dm1_v1_amiga36_entrance_f0441_receipt(
 cleanup:
     M11_AssetLoader_Shutdown(&loader);
     return valid;
+}
+
+typedef struct {
+    M11_AssetLoader *loader;
+    const uint8_t *layout;
+    size_t layout_bytes;
+    uint8_t *staged;
+    int failed;
+    unsigned int loaded;
+} A36C255Context;
+
+static int a36_c255_provider(void *user, int graphic,
+                              const uint8_t **pixels, int *width, int *height) {
+    static const unsigned int zones[15] = {
+        717, 716, 714, 713, 712, 708, 707, 711, 710, 709,
+        703, 702, 706, 705, 704
+    };
+    static const uint8_t inert[224 * 136] = {0};
+    A36C255Context *context = user;
+    unsigned int index, zone;
+    A36LayoutRecord record;
+    const M11_AssetSlot *slot;
+    int x, y;
+    if (graphic == -1) { index = 78; zone = 701; }
+    else if (graphic == -2) { index = 79; zone = 700; }
+    else if (graphic >= 93 && graphic <= 107) {
+        index = (unsigned int)graphic; zone = zones[graphic - 93];
+    } else { context->failed = 1; return 0; }
+    slot = M11_AssetLoader_Load(context->loader, index);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        !a36_layout_record(context->layout, context->layout_bytes, (int)zone,
+                            &record) || record.parent != 4 ||
+        (record.type != 11 && record.type != 12 &&
+         record.type != 14 && record.type != 15)) {
+        context->failed = 1; return 0;
+    }
+    x = record.x; y = record.y;
+    if (record.type == 12) x += 224 - slot->width;
+    if (record.type == 15) x += (224 + 1) / 2 - (slot->width + 1) / 2;
+    if (record.type == 14) y += 136 - slot->height;
+    for (int sy = 0; sy < slot->height; ++sy) {
+        for (int sx = 0; sx < slot->width; ++sx) {
+            int dx = x + sx, dy = y + sy;
+            if (dx >= 0 && dx < 224 && dy >= 0 && dy < 136)
+                context->staged[dy * 224 + dx] = slot->pixels[sy * slot->width + sx];
+        }
+    }
+    ++context->loaded;
+    /* Use the source F0128 geometry walker only for visibility and order.
+     * C696 crops above own every actual pixel, including native D2 78x74. */
+    *pixels = inert; *width = 224; *height = 136;
+    return 1;
+}
+
+int dm1_v1_amiga36_entrance_render_c255(M11_AssetLoader *loader,
+                                        uint8_t *viewport, size_t bytes) {
+    DM1_Viewport3DState renderer;
+    struct MemoryGraphicsDatRuntimeState_Compat *rt;
+    struct MemoryGraphicsDatHeader_Compat header = {0};
+    struct MemoryGraphicsDatSelection_Compat item;
+    uint8_t grid[25] = {0}, geometry[224 * 136], staged[224 * 136];
+    A36C255Context context = {0};
+    uint8_t *layout;
+    if (!loader || !loader->dm1Amiga36 || !viewport || bytes < sizeof(staged) ||
+        !(rt = loader->runtimeState)) return 0;
+    header.format = rt->format; header.graphicCount = rt->graphicCount;
+    header.compressedByteCounts = rt->compressedByteCounts;
+    header.decompressedByteCounts = rt->decompressedByteCounts;
+    header.widthHeight = rt->widthHeight;
+    if (!F0490_MEMORY_SelectGraphicFromHeader_Compat(&header, 696, &item) ||
+        item.compressedByteCount != item.decompressedByteCount) return 0;
+    layout = malloc(item.compressedByteCount);
+    if (!layout) return 0;
+    if (!F0474_MEMORY_LoadGraphic_CPSDF_Compat(item.offset,
+            item.compressedByteCount, loader->fileState, layout)) {
+        free(layout); return 0;
+    }
+    /* ENTRANCE.C F0797: source column-major squares10..14 and7 are
+     * corridors. This exact source-authored map is transposed to row-major;
+     * no loaded dungeon, champion or Thing chain enters C255. */
+    for (int y = 0; y < 5; ++y) grid[y * 5 + 2] = 1u << 5;
+    grid[2 * 5 + 1] = 1u << 5;
+    memset(staged, 0, sizeof(staged));
+    memset(geometry, 0, sizeof(geometry));
+    context.loader = loader; context.layout = layout;
+    context.layout_bytes = item.compressedByteCount; context.staged = staged;
+    dm1_viewport_3d_init(&renderer, geometry, 224);
+    renderer.party_map_index = 255;
+    renderer.dungeon_grid = grid;
+    renderer.dungeon_width = renderer.dungeon_height = 5;
+    renderer.graphic_provider_callback = a36_c255_provider;
+    renderer.graphic_provider_user_data = &context;
+    renderer.source_graphics_required = true;
+    dm1_viewport_3d_load_wall_set(&renderer, 0, 0);
+    dm1_viewport_3d_draw_frame(&renderer, 2, 2, 0);
+    free(layout);
+    if (context.failed || context.loaded < 3 ||
+        !count_nonzero(staged, sizeof(staged))) return 0;
+    memcpy(viewport, staged, sizeof(staged));
+    return 1;
+}
+
+int dm1_v1_amiga36_entrance_compose(
+    M11_AssetLoader *loader, const DM1_V1_AmigaEntranceF0441Receipt *r,
+    const uint8_t *dungeon, unsigned int frame, int selected_button,
+    uint8_t *out, size_t bytes) {
+    const M11_AssetSlot *screen, *left, *right, *buttons;
+    unsigned int shift;
+    if (!loader || !loader->dm1Amiga36 || !r || !r->valid ||
+        !r->a36_layout_valid || !dungeon || !out || bytes < 64000 ||
+        frame > r->opening_steps || selected_button < -1 || selected_button > 1)
+        return 0;
+    screen = M11_AssetLoader_Load(loader, 4);
+    left = M11_AssetLoader_Load(loader, 2);
+    right = M11_AssetLoader_Load(loader, 3);
+    buttons = M11_AssetLoader_Load(loader, 11);
+    if (!screen || !left || !right || !buttons || !screen->pixels ||
+        !left->pixels || !right->pixels || !buttons->pixels ||
+        screen->width != 320 || screen->height != 200 ||
+        left->width != r->left_door_width || left->height != r->left_door_height ||
+        right->width != r->right_door_width || right->height != r->right_door_height ||
+        buttons->width < 14 || buttons->height < 26) return 0;
+    memcpy(out, screen->pixels, 64000);
+    shift = frame * r->a36_step_pixels;
+    for (int y = 0; y < r->a36_working.h; ++y) {
+        for (int x = 0; x < r->a36_working.w; ++x) {
+            uint8_t pixel = screen->pixels[(y + r->a36_transfer.y) * 320 +
+                                           x + r->a36_transfer.x];
+            if (frame && x >= r->a36_viewport.x &&
+                x < r->a36_viewport.x + r->a36_viewport.w &&
+                y >= r->a36_viewport.y &&
+                y < r->a36_viewport.y + r->a36_viewport.h)
+                pixel = dungeon[(y - r->a36_viewport.y) * 224 +
+                                 x - r->a36_viewport.x];
+            if (y >= r->a36_left.y && y < r->a36_left.y + r->a36_left.h &&
+                x >= r->a36_left.x &&
+                x < r->a36_left.x + r->a36_left.w - (int)shift)
+                pixel = left->pixels[(y - r->a36_left.y) * left->width +
+                                      x - r->a36_left.x + shift];
+            if (y >= r->a36_right.y && y < r->a36_right.y + r->a36_right.h &&
+                x >= r->a36_right.x + (int)shift &&
+                x < r->a36_right.x + r->a36_right.w)
+                pixel = right->pixels[(y - r->a36_right.y) * right->width +
+                                       x - r->a36_right.x - shift];
+            out[(y + r->a36_transfer.y) * 320 + x + r->a36_transfer.x] = pixel;
+        }
+    }
+    if (selected_button >= 0) {
+        const DM1_V1_AmigaEntranceRect *button = selected_button
+            ? &r->a36_resume_button : &r->a36_enter_button;
+        M11_AssetLoader_BlitRegion(buttons, 0, selected_button * 13, 14, 13,
+            out, 320, 200, button->x, button->y, -1);
+    }
+    return 1;
+}
+
+int dm1_v1_amiga36_entrance_bind_driver(
+    DM1_V1_AmigaEntranceF0441Receipt *receipt,
+    const uint8_t *driver, size_t driver_bytes) {
+    FirestaffFtlContainer container;
+    const FirestaffFtlHunkHeader *data;
+    uint8_t decoded[1110];
+    char md5[33];
+    size_t written = 0;
+    if (!receipt) return 0;
+    receipt->a36_fade_valid = 0;
+    memset(receipt->a36_fade_increments, 0, sizeof(receipt->a36_fade_increments));
+    receipt->a36_driver_md5[0] = '\0';
+    if (!receipt->valid || !receipt->a36_layout_valid || !driver ||
+        driver_bytes != 12554 || !m12_bytes_md5_hex(driver, driver_bytes, md5) ||
+        strcmp(md5, "d86f045085481448f6ae3db8d3d640d2") ||
+        FirestaffFtlContainer_Parse(driver, driver_bytes, &container) != 0 ||
+        !container.has_bss_metadata || container.data_index < 0 ||
+        container.bss.data_area1_memory_size != sizeof(decoded)) return 0;
+    data = &container.hunks[container.data_index];
+    /* PRIM.H DATASEGMENTHEADER is ten bytes; PRIM2B.C:466-487 expands
+     * only DATACompressedSize, never the following relocation words. */
+    if (data->size != 846 || data->payload[0] != 0 || data->payload[1] != 1 ||
+        data->payload[2] != 0 || data->payload[3] != 0 ||
+        a36_be16(data->payload + 4) != 798 ||
+        data->payload[6] != 0 || data->payload[7] != 0 ||
+        a36_be16(data->payload + 8) != 38 ||
+        FirestaffFtlHunkData_DecompressZeroRun(data->payload + 10, 798,
+            sizeof(decoded), decoded, &written) != FIRESTAFF_FTL_HUNK_DATA_OK ||
+        written != sizeof(decoded)) return 0;
+    memcpy(receipt->a36_fade_increments, decoded + 584,
+           sizeof(receipt->a36_fade_increments));
+    /* VDEOAMIG.C G3248: every delta reaches its target after fifteen
+     * one-VBlank increments. Validate the native table before publication. */
+    for (int delta = 0; delta < 16; ++delta) {
+        unsigned int sum = 0;
+        for (int frame = 0; frame < 15; ++frame) {
+            unsigned int increment = receipt->a36_fade_increments[frame][delta];
+            if (increment > 1) return 0;
+            sum += increment;
+        }
+        if (sum != (unsigned int)delta) return 0;
+    }
+    memcpy(receipt->a36_driver_md5, md5, sizeof(md5));
+    receipt->a36_fade_valid = 1;
+    return 1;
+}
+
+int dm1_v1_amiga36_entrance_fade_step(
+    const DM1_V1_AmigaEntranceF0441Receipt *receipt,
+    const uint16_t source[16], const uint16_t target[16],
+    unsigned int frame, uint16_t out[16]) {
+    if (!receipt || !receipt->a36_fade_valid || !source || !target || !out ||
+        frame == 0 || frame > 15) return 0;
+    /* PALETTE.C F1127: both display banks receive the same destination
+     * sixteen colours (index&15). Host 4-bit pixels need one bank here. */
+    for (int color = 0; color < 16; ++color) {
+        unsigned int packed = 0;
+        if ((source[color] | target[color]) & 0xf000) return 0;
+        for (unsigned int shift = 0; shift <= 8; shift += 4) {
+            int start = (source[color] >> shift) & 15;
+            int end = (target[color] >> shift) & 15;
+            unsigned int delta = (unsigned int)abs(end - start), step = 0;
+            for (unsigned int i = 0; i < frame; ++i)
+                step += receipt->a36_fade_increments[i][delta];
+            packed |= (unsigned int)(start + (end < start ? -(int)step : (int)step)) << shift;
+        }
+        out[color] = (uint16_t)packed;
+    }
+    return 1;
 }

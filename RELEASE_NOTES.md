@@ -2,6 +2,25 @@
 
 ## User-facing changes
 
+- `DM1 Amiga 3.6 media`: require the original video driver beside the selected
+  game files before reporting ready. Skip incomplete duplicate installations
+  without borrowing files from another copy. Native French/German filename
+  selection remains under verification.
+
+- `DM1 Amiga 3.6 entrance`: render the native asymmetric doors and button
+  overlay using the original layout, with 64 opening steps and the original
+  driver palette fades. Render the authored entrance corridor from A36
+  assets. CLI and start-menu phase captures agree; full original-emulator
+  visual and audible parity remains under verification.
+
+- `DM1 early Amiga/Atari doors and stairs`: use the native records,
+  source frame geometry and opening-state crops. Door facing now follows
+  the original square axis across DM1 instead of the door's opening axis.
+  Original PC34/A20E/ST12 starts verify the facing correction; A20E/ST12
+  also pass native pixel checks and a real Hall walk/button-door interaction.
+  A misplaced champion portrait remains visible in the native stair view;
+  complete viewport parity remains under verification.
+
 - `DM1 early Amiga colours`: present the original RGB4 dungeon/UI palettes
   with their full-width middle-screen switching and inventory behaviour.
 

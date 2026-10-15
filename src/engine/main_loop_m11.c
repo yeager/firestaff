@@ -2619,12 +2619,136 @@ static M11_EntranceCommand m11_entrance_command_path_from_source_command(int com
     return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromSourceCommand(commandId);
 }
 
+static int m11_dm1_amiga36_fade(
+    M11_GameViewState *gameView,
+    const DM1_V1_AmigaEntranceF0441Receipt *receipt,
+    const uint16_t source[16], const uint16_t target[16], uint8_t *page) {
+    for (unsigned int frame = 1; frame <= 15; ++frame) {
+        uint16_t palette[16];
+        Uint64 started = m11_intro_active_ticks();
+        Uint64 elapsed;
+        unsigned int remaining;
+        if (!dm1_v1_amiga36_entrance_fade_step(receipt, source, target,
+                frame, palette) ||
+            !m11_dm1_amiga_present_entrance_palette(gameView, palette, page))
+            return 0;
+        elapsed = m11_intro_active_ticks() - started;
+        remaining = elapsed >= 20u ? 0u : 20u - (unsigned int)elapsed;
+        if (remaining && m11_delay_ms_with_intro_event_pump(remaining)) return 0;
+    }
+    if (g_m11_debug_startup_detail)
+        fprintf(stderr, "firestaff: startup-source-fade game=dm1 platform=amiga-v36 frames=15 driver=%s\n",
+                receipt->a36_driver_md5);
+    return 1;
+}
+
+/* A36M ENTRANCE.C F0439/F0438 uses C696, not the older A20 door boxes. */
+static int m11_play_dm1_amiga36_entrance(
+    M11_GameViewState *gameView, int autoEnterAfterMs,
+    const DM1_V1_AmigaEntranceF0441Receipt *receipt) {
+    static const uint16_t credits_palette[16] = {
+        0x006,0x0aa,0xff6,0x840,0xff8,0x000,0x080,0xa00,
+        0xc84,0xffa,0xf84,0xfc0,0xfa0,0x000,0x620,0xffc
+    }; /* DATA.C G0019, MEDIA424 including A36M. */
+    static const uint16_t blank_palette[16] = {0};
+    uint8_t *page = M11_Render_GetFramebuffer();
+    uint8_t *micro = malloc(224u * 136u);
+    M11_EntranceCommand command;
+    if (!page || !micro || !receipt || !receipt->a36_layout_valid || !receipt->a36_fade_valid ||
+        !dm1_v1_amiga36_entrance_render_c255(&gameView->assetLoader,
+                                            micro, 224u * 136u)) {
+        free(micro); return 0;
+    }
+    for (;;) {
+        if (!dm1_v1_amiga36_entrance_compose(&gameView->assetLoader,
+                receipt, micro, 0, -1, page, M11_FB_BYTES) ||
+            !m11_dm1_amiga_present_entrance_palette(gameView, blank_palette, page) ||
+            !m11_dm1_amiga36_fade(gameView, receipt, blank_palette,
+                receipt->entrance_palette_rgb4, page)) {
+            free(micro); return 0;
+        }
+        m11_capture_dm1_authenticated_startup_frame("a36-closed");
+        command = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs, 0);
+        if (command != M11_ENTRANCE_COMMAND_CREDITS) break;
+        {
+            const M11_AssetSlot *credits =
+                M11_AssetLoader_Load(&gameView->assetLoader, 5);
+            Uint64 started;
+            if (!credits || !credits->pixels || credits->width != 320 ||
+                credits->height != 200) { free(micro); return 0; }
+            if (!m11_dm1_amiga36_fade(gameView, receipt,
+                    receipt->entrance_palette_rgb4, blank_palette, page)) {
+                free(micro); return M11_ENTRANCE_COMMAND_QUIT;
+            }
+            memcpy(page, credits->pixels, M11_FB_BYTES);
+            if (!m11_dm1_amiga36_fade(gameView, receipt, blank_palette,
+                    credits_palette, page)) { free(micro); return 0; }
+            /* ENTRANCE.C F0442:993 starts its 1800-VBlank wait after
+             * presenting the credits palette. */
+            started = m11_intro_active_ticks();
+            if (m11_wait_for_entrance_credits_done(1800, 0, 20, started) ==
+                    M11_ENTRANCE_COMMAND_QUIT) {
+                free(micro); return M11_ENTRANCE_COMMAND_QUIT;
+            }
+            if (!m11_dm1_amiga36_fade(gameView, receipt, credits_palette,
+                    blank_palette, page)) {
+                free(micro); return M11_ENTRANCE_COMMAND_QUIT;
+            }
+        }
+    }
+    if (command == M11_ENTRANCE_COMMAND_QUIT ||
+        command == M11_ENTRANCE_COMMAND_NONE) { free(micro); return command; }
+    if (!dm1_v1_amiga36_entrance_compose(&gameView->assetLoader,
+            receipt, micro, 0, command == M11_ENTRANCE_COMMAND_RESUME,
+            page, M11_FB_BYTES) ||
+        !m11_dm1_amiga_present_entrance_palette(gameView,
+            receipt->entrance_palette_rgb4, page)) { free(micro); return 0; }
+    (void)M11_Audio_EmitSourceSoundIndex(&gameView->audioState, 1);
+    if (m11_delay_ms_with_intro_event_pump(receipt->switch_delay_ticks * 20u)) {
+        free(micro); return M11_ENTRANCE_COMMAND_QUIT;
+    }
+    if (command == M11_ENTRANCE_COMMAND_RESUME) { free(micro); return command; }
+    for (unsigned int frame = 1; frame <= receipt->opening_steps; ++frame) {
+        Uint64 started = m11_intro_active_ticks();
+        Uint64 elapsed;
+        unsigned int remaining;
+        if (!dm1_v1_amiga36_entrance_compose(&gameView->assetLoader,
+                receipt, micro, frame, 0, page, M11_FB_BYTES) ||
+            !m11_dm1_amiga_present_entrance_palette(gameView,
+                receipt->entrance_palette_rgb4, page)) { free(micro); return 0; }
+        if (frame == 1 || frame == (receipt->opening_steps / 2) ||
+            frame == receipt->opening_steps) {
+            char phase[48];
+            snprintf(phase, sizeof(phase), "a36-door-%u", frame);
+            m11_capture_dm1_authenticated_startup_frame(phase);
+        }
+        /* F0438's rattle deadline is forty VBlanks; each A36 frame is two. */
+        if ((frame - 1) % 20 == 0)
+            (void)M11_Audio_EmitSourceSoundIndex(&gameView->audioState, 3);
+        elapsed = m11_intro_active_ticks() - started;
+        remaining = elapsed >= 40u ? 0u : 40u - (unsigned int)elapsed;
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr, "firestaff: startup-source-frame game=dm1 platform=amiga-v36 phase=entrance-door frame=%u/%u step-pixels=%u vblanks=2 wait-ms=%u\n",
+                frame, receipt->opening_steps, receipt->a36_step_pixels, remaining);
+        if (frame < receipt->opening_steps && remaining &&
+            m11_delay_ms_with_intro_event_pump(remaining)) {
+            free(micro); return M11_ENTRANCE_COMMAND_QUIT;
+        }
+    }
+    free(micro);
+    return M11_ENTRANCE_COMMAND_ENTER;
+}
+
 static int m11_play_redmcsb_entrance_transition_impl(
     M11_GameViewState* gameView,
     int autoEnterAfterMs,
     const DM1_V1_EntranceFullStartRenderReceiptPc34* entranceReceipt,
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* mediaReceipt,
     const DM1_V1_AmigaEntranceF0441Receipt* amigaReceipt) {
+    if (gameView && gameView->active && amigaReceipt &&
+        amigaReceipt->valid && amigaReceipt->a36_layout_valid)
+        return m11_play_dm1_amiga36_entrance(gameView, autoEnterAfterMs,
+                                            amigaReceipt);
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
@@ -3724,6 +3848,9 @@ static int m11_dm1_amiga36_entrance_f0441_receipt_if_selected(
     const M12_AssetVersionStatus* version;
     uint8_t* graphics = NULL;
     size_t graphicsBytes = 0U;
+    uint8_t *driver = NULL;
+    size_t driverBytes = 0;
+    char driverPath[FSP_PATH_MAX];
     int authenticated = 0;
     if (outReceipt) memset(outReceipt, 0, sizeof(*outReceipt));
     if (!menuState || !entry || !entry->gameId ||
@@ -3748,9 +3875,14 @@ static int m11_dm1_amiga36_entrance_f0441_receipt_if_selected(
         goto cleanup;
     }
     authenticated = dm1_v1_amiga36_entrance_f0441_receipt(
-        graphics, graphicsBytes, outReceipt);
+        graphics, graphicsBytes, outReceipt) &&
+        m11_dm1_amiga_sibling_path(version, "VDEO.FTL", driverPath,
+                                   sizeof(driverPath)) &&
+        asset_read_path_alloc(driverPath, &driver, &driverBytes) &&
+        dm1_v1_amiga36_entrance_bind_driver(outReceipt, driver, driverBytes);
 
 cleanup:
+    free(driver);
     free(graphics);
     return authenticated;
 }
@@ -3790,8 +3922,21 @@ static int m11_dm1_amiga_present_entrance_palette(
     int targetH = M11_FB_HEIGHT;
     int result;
     if (!gameView || !colors || !framebuffer) return 0;
-    m11_dm1_amiga_rgb4_to_rgb6(colors, palette);
-    if (M11_Render_SetIndexedPaletteRgb6(palette) != M11_RENDER_OK) return 0;
+    if (gameView->assetLoader.dm1Amiga36) {
+        uint8_t rgb4[256][3] = {{0}};
+        /* A36's native DRIA words are RGB4; passing through DAC6 loses
+         * precision (for example source6 becomes101 instead of102). */
+        for (unsigned int color = 0; color < 256; ++color) {
+            unsigned int word = colors[color & 15];
+            rgb4[color][0] = (uint8_t)((word >> 8) & 15);
+            rgb4[color][1] = (uint8_t)((word >> 4) & 15);
+            rgb4[color][2] = (uint8_t)(word & 15);
+        }
+        if (M11_Render_SetIndexedPaletteRgb4(rgb4) != M11_RENDER_OK) return 0;
+    } else {
+        m11_dm1_amiga_rgb4_to_rgb6(colors, palette);
+        if (M11_Render_SetIndexedPaletteRgb6(palette) != M11_RENDER_OK) return 0;
+    }
     M11_Render_SetV2PresentationActive(0);
     M11_Render_SetModernPresentationActive(0);
     if (gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {

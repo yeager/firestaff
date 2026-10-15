@@ -1,3 +1,51 @@
+- 2026-10-15: Desktop A36 readiness and preparation now require the
+  authenticated VDEO.FTL driver beside the selected graphics and dungeon,
+  preserving the exact loose directory or nested virtual disk. Missing or
+  wrong drivers cannot borrow an original from another installation; an
+  incomplete first graphics copy cannot hide a later complete copy. Original
+  media tests verify scoped/unscoped inventory, exact selected-file rejection,
+  duplicate-owner rescue, all three original English/French/German dungeon
+  payloads in the existing DUNGEON.DAT role, and missing default files beside
+  DungeonF/G.dat. The native receipt test and CLI archive, CLI directory and
+  M12 startup routes pass after the final deadline fixes. Low-level media
+  APIs retain their documented contracts. Native source-filename language
+  switching remains open; localized filenames alone are not marked ready.
+
+- 2026-10-15: Early Amiga/Atari production stairs, door frames and door
+  panels now use MEDIA009/020 native records and original G0110..G0187
+  frames, padded strides, crops and transparency. Wall sets use their
+  separate 13-record wall and 18-record stair families; active map DoorSet0/1
+  selects the 108-based three-record door family. Native F0111 composes
+  ornaments and masks before state clipping, retains native G0196 lock
+  coordinates, and consumes the two original Random(2) animation decisions.
+  A20E retail and Atari ST 1.2 each pass 484 isolated full-raster original-media
+  cases covering stairs, frames, all four map-owned door sets, states 0..5,
+  both opening directions and both D0 axes. Original decoded pixels and
+  graphics hashes remain unchanged. The shared DM1 scheduler now reads the
+  raw square's facing axis instead of Door.Vertical, which controls opening
+  animation. Original PC34/A20E/ST12 worlds each reproduce the mismatched
+  axes behind the initial position; two real turns now invoke the expected
+  F0111/frame callbacks. Separate A20E/ST12 production-world command replays
+  walk 42 original squares, capture the stair view and open the actual button
+  door at (1,14) by clicking from (1,15,N), changing its state from 4 to 0.
+  These are targeted material and interaction checks, not complete viewport
+  parity: a large cyan champion portrait still overlaps the captured MEDIA009
+  stair view and needs its own source routing/colour-key investigation.
+
+- 2026-10-15: A36M entrance now consumes its authenticated C696 layout
+  and same-owner VDEO.FTL DATA palette increments. Native 105x161 / 128x161
+  doors open in 64 two-pixel steps, with two VBlanks between presentations;
+  the older A20 31-step schedule is not used. C011 uses C435/C436, and the
+  dedicated F0797 map uses original A36 floor, ceiling and wall pixels,
+  independently of the loaded gameplay dungeon. Fifteen-step driver fades
+  and exact RGB4 presentation preserve the source colours. The original
+  regression verifies exposed native C255 scenery and all 65 closed/opening
+  pages against an independent crop oracle. CLI archive, CLI directory and
+  M12 routes pass; all twelve captured phase images agree across routes.
+  The original archive SHA256 is unchanged. Frame-aligned original-emulator
+  comparison, native audible output, complete runtime palette ownership and
+  full dungeon viewport parity remain open.
+
 - 2026-10-15: Early Amiga runtime presentation now uses authentic RGB4
   palettes instead of VGA fallback. One shared source table preserves CSB's
   existing values; UI bank zero remains immutable and dungeon banks 1..6
