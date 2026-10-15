@@ -1,3 +1,19 @@
+- 2026-10-15: Correct F0107 wall-ornament material selection: G0190
+  addresses derived cache entries, not native side/front graphics; D1 uses
+  the unscaled bitmap. PC34 resolves all nine coordinate sets through the
+  selected original C696 records and F0635/F0791 clipping. Early A20E/ST12
+  use their native 121-based bank, selected G0194/G0205 frames and palettes,
+  with the original padded-row shrink/flip rules. Independent original-data
+  raster checks pass 120 PC and 104 cases per early native edition. A real
+  recruitment/pickup/throw replay at HoC (4,15,N), tick 301, verifies PC
+  graphic 323 at 16x19 and native graphic 197 at 32x48, including every
+  visible opaque source pixel and original program RGB. This is original
+  media/source evidence, not frame-aligned emulator or full viewport parity.
+  The explicit PC inscription test also resolves selected C696 geometry
+  for original map 1 text at wall (30,2): view 3 draws graphic 260 at
+  (95,71), 39x13. Preserve side/depth receipts through the final readable
+  text repaint; frame entry still clears both surfaces before every turn.
+
 - 2026-10-15: F20 wall materials now use native G2002 aliases and G3019
   zones, mirroring the complete bitmap before selecting source columns.
   Remove the nonexistent F20 D2-outer fallback. C255 follows its nine-wall

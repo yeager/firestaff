@@ -922,11 +922,18 @@ typedef struct {
     const void* dm1NativeObjectMetadataSource;
     long dm1NativeObjectMetadataSourceSize;
     int dm1NativeObjectMetadataValid;
+    /* Selected PC C696 ornament records; reset at every launch. */
+    int dm1PcWallOrnamentLayoutStatus;
+    int16_t dm1PcWallOrnamentLayout[135][4];
     unsigned char dm1NativeObjectCoordinates[300];
     unsigned char dm1NativeObjectAspects[510];
     unsigned char dm1NativeObjectPalettes[32];
     unsigned char dm1NativeFloorCoordinateSets[9];
     unsigned char dm1NativeFloorBitmapIncrements[9];
+    unsigned char dm1NativeWallCoordinateSets[60];
+    unsigned char dm1NativeWallFrames[8][13][6];
+    unsigned char dm1NativeWallPalettes[2][16];
+    unsigned char dm1NativeUnreadableInscriptionY2[15];
     M11_AudioState audioState;
     int audioEventCount;
     /* CSB's SOUND.C runtime owns delayed/immediate arbitration. M11 keeps
@@ -3696,6 +3703,9 @@ int M11_GameView_ProbeDrawDm1SideWallHostReceipt(
     int framebufferHeight);
 
 /* Test-only entry to the production F0107 side-wall ornament route. */
+int M11_GameView_ProbeDrawDm1WallOrnamentAt(
+    M11_GameViewState* state, unsigned char* framebuffer, int width, int height,
+    int globalIndex, int viewWallIndex);
 int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
     M11_GameViewState* state,
     unsigned char* framebuffer,

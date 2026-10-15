@@ -1,13 +1,11 @@
 # Firestaff TODO — DM1
 
-2026-10-15 next PC34 wall priority: authentic HoC replay at (4,15,N)
-confirms that F0107 incorrectly adds G0190's derived-cache index to the
-native graphic index (326 instead of original side graphic 323), and
-scales D1 by 21/32 instead of using its native raster. Correct both rules
-and replace the corresponding self-confirming unit oracle. Early Amiga/
-Atari additionally require their native 121-based ornament bank and tables.
-PC material placement also requires native C696/F0635 anchors and clipping,
-not the current legacy G0205 boxes; fixing only the bitmap index is insufficient.
+2026-10-15 wall-ornament follow-up: PC34 native material selection and
+C696 placement, plus early A20E/ST12 native bank/frame/palette routing,
+pass independent original-data raster cases and the affected HoC replay.
+Continue with native F20/A36 gameplay ornaments, early native door ornaments,
+C127 mirror-specific backing and frame-aligned original-emulator comparisons.
+These fixes do not close full viewport, native display or HiDPI verification.
 
 2026-10-15 F20 wall follow-up: native aliases, full-bitmap mirroring,
 nine-wall C255 composition and JDM's y31 final C007 placement now pass
@@ -21,7 +19,7 @@ original-emulator comparisons open; this is not complete F20 viewport parity.
 rectangle is traced and corrected through bounded dungeon decompression
 and native F0108 material routing. Original full-raster and actual-world
 pixel checks pass. The same metadata fix restores wall/door ornament lists,
-but their separate native material banks still require source/pixel audits;
+but door ornaments still require a native material source/pixel audit;
 do not extend the floor result to full ornament or viewport parity.
 
 2026-10-15 A36 C255 follow-up: all 30,464 original-media indexed pixels,

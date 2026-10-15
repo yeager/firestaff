@@ -2,6 +2,12 @@
 
 ## User-facing changes
 
+- `DM1 wall details`: correct PC side/front bitmap selection and native
+  D1 size; place decorations using the original PC layout and clipping.
+  Early Amiga/Atari use their own wall decoration bank, frames and palettes.
+  Original-data raster tests and the affected Hall replay pass; complete
+  viewport parity remains under verification.
+
 - `DM1 FM Towns walls`: use native wall strips, layout zones and mirror
   order instead of PC geometry. Restore the entrance corridor's near and
   outer walls and ceiling orientation. Present the Japanese dungeon view

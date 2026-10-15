@@ -165,6 +165,109 @@ static int check_original_native_floor_ornaments(M11_GameViewState* state, const
 
 /* Real C127 recruitment and WATER pickup/throw. The compact strings encode
  * the existing original Hall route, not assigned party coordinates or things. */
+/* MEDIA009 F0107 frame/scaled-source oracle, consuming the selected
+ * original M558 rather than PC C696 or production coordinate helpers. */
+static int native_wall_oracle(M11_GameViewState* state, const unsigned char raw[4720],
+    int global, int view, unsigned char expected[64000], int* outGraphic)
+{
+    const int set = raw[3146 + global];
+    const int side = view == 0 || view == 1 || view == 5 || view == 6 || view == 10 || view == 11;
+    const int flip = view == 1 || view == 6 || view == 11;
+    const int graphic = 121 + global * 2 + !side;
+    const unsigned char* target;
+    const unsigned char* source;
+    const unsigned char* palette = view < 5 ? raw + 3106 : view < 10 ? raw + 3090 : NULL;
+    const M11_AssetSlot* slot = M11_AssetLoader_Load(&state->assetLoader, (unsigned)graphic);
+    int scaledWidth, scaledHeight, sourceX = 0, sourceWidth, sourceHeight;
+    if (set >= 8 || view < 0 || view >= 13 || !slot || !slot->pixels) return 0;
+    target = raw + 2410 + (set * 13 + view) * 6;
+    source = raw + 2410 + (set * 13 + (side ? (flip ? 11 : 10) : 12)) * 6;
+    sourceWidth = source[4] * 2;
+    sourceHeight = source[5];
+    scaledWidth = sourceWidth;
+    scaledHeight = sourceHeight;
+    if (view < 10) {
+        const unsigned char* sizing = raw + 2410 + (set * 13 + (view == 7 || view == 9 ? 8 : view)) * 6;
+        scaledWidth = sizing[1] - sizing[0] + 1;
+        scaledHeight = target[5];
+        if (flip) sourceX = 15 - ((scaledWidth - 1) & 15);
+        else if (view == 7) sourceX = scaledWidth - (target[1] - target[0] + 1);
+    }
+    if (scaledWidth <= 0 || scaledHeight <= 0 || !sourceWidth || !sourceHeight ||
+        slot->width > sourceWidth || slot->height < sourceHeight) return 0;
+    for (int y = 0; y <= target[3] - target[2]; ++y)
+    for (int x = 0; x <= target[1] - target[0]; ++x) {
+        int sx = sourceX + x;
+        unsigned int u, v;
+        unsigned char color;
+        const int dx = target[0] + x, dy = target[2] + y;
+        if (flip) sx = (view < 10 ? (scaledWidth + 15) & ~15 : sourceWidth) - 1 - sx;
+        if (sx < 0 || sx >= scaledWidth || y >= scaledHeight) continue;
+        if (view < 10) {
+            const unsigned int xs = ((unsigned int)sourceWidth * 1024 / (unsigned int)scaledWidth) * 64;
+            const unsigned int ys = ((unsigned int)sourceHeight * 1024 / (unsigned int)scaledHeight) * 64;
+            u = (xs / 2 + 32767u + (unsigned int)sx * xs) >> 16;
+            v = (ys / 2 + 32767u + (unsigned int)y * ys) >> 16;
+        } else { u = (unsigned int)sx; v = (unsigned int)y; }
+        if (u >= (unsigned int)sourceWidth || v >= (unsigned int)sourceHeight) return 0;
+        color = u < slot->width ? slot->pixels[v * slot->width + u] : 0;
+        if (palette) color = palette[color & 15] / 10;
+        if (color != 10 && dx < 224 && dy < 136) expected[(33 + dy) * 320 + dx] = color;
+    }
+    *outGraphic = graphic;
+    return 1;
+}
+
+static int check_original_native_wall_ornaments(M11_GameViewState* state, const char* edition)
+{
+    static const int globals[] = {0,1,4,11,38,40,43,56};
+    unsigned char raw[4720], actual[64000], expected[64000];
+    size_t length = 0;
+    int cases = 0;
+    if (state->assetLoader.atariStDm1) {
+        DM1_V1_AtariStGraphicsDat dat;
+        if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
+                (size_t)state->assetLoader.atariStDataSize, &dat) ||
+            dm1_v1_atari_st_graphics_read(&dat, 558, raw, sizeof(raw)) != (int)sizeof(raw)) return 0;
+        length = sizeof(raw);
+    } else if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+        (size_t)state->assetLoader.legacyDataSize, 1, 558, raw, sizeof(raw), &length)) return 0;
+    if (length != sizeof(raw)) return 0;
+    for (size_t i = 0; i < sizeof(globals) / sizeof(globals[0]); ++i)
+    for (int view = 0; view < 13; ++view) {
+        M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+        int graphic;
+        memset(actual, 0x55, sizeof(actual)); memset(expected, 0x55, sizeof(expected));
+        if (!native_wall_oracle(state, raw, globals[i], view, expected, &graphic) ||
+            !M11_GameView_ProbeDrawDm1WallOrnamentAt(state, actual, 320, 200, globals[i], view)) {
+            fprintf(stderr, "%s native F0107 unavailable global%d view%d\n", edition, globals[i], view);
+            return 0;
+        }
+        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(&receipt);
+        if (!receipt.valid || receipt.graphicIndex != graphic || receipt.viewWallIndex != view) {
+            fprintf(stderr, "%s native F0107 receipt global%d view%d valid%d graphic%d expected%d receiptView%d\n",
+                edition, globals[i], view, receipt.valid, receipt.graphicIndex, graphic, receipt.viewWallIndex);
+            return 0;
+        }
+        for (size_t pixel = 0; pixel < sizeof(actual); ++pixel) if (actual[pixel] != expected[pixel]) {
+            fprintf(stderr, "%s native F0107 global%d view%d pixel%zu,%zu got%u expected%u\n",
+                edition, globals[i], view, pixel % 320, pixel / 320, actual[pixel], expected[pixel]);
+            return 0;
+        }
+        ++cases;
+    }
+    for (int view = 13; view < 15; ++view) {
+        M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+        memset(actual, 0x55, sizeof(actual));
+        if (M11_GameView_ProbeDrawDm1WallOrnamentAt(state, actual, 320, 200, 38, view)) return 0;
+        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(&receipt);
+        if (receipt.valid) { fprintf(stderr, "%s unsupported native outer%d retains receipt global%d view%d\n", edition, view, receipt.globalOrnamentIndex, receipt.viewWallIndex); return 0; }
+        for (size_t pixel = 0; pixel < sizeof(actual); ++pixel) if (actual[pixel] != 0x55) return 0;
+    }
+    printf("PASS: original %s F0107 %d full-raster native G0194/G0205/121-bank views and unsupported outer views\n", edition, cases);
+    return 1;
+}
+
 static int replay_native_cast_route(M11_GameViewState* state, const char* route)
 {
     for (size_t i = 0; route[i]; ++i) {
@@ -270,6 +373,42 @@ static int check_original_native_cast(const M11_GameLaunchSpec* spec, const char
         if(!puddlePixels)goto done;
         printf("PASS: original %s actual F0108 D1C puddle300 at80,125; %d opaque native pixels and same-owner map ornament lists\n",
             edition,puddlePixels);
+    }
+    {
+        unsigned char raw[4720], expectedWall[64000];
+        size_t length = 0;
+        int graphic, wallPixels = 0;
+        M11_Dm1WallOrnamentHostPresentationReceipt wall;
+        if (state->assetLoader.atariStDm1) {
+            DM1_V1_AtariStGraphicsDat dat;
+            if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
+                    (size_t)state->assetLoader.atariStDataSize, &dat) ||
+                dm1_v1_atari_st_graphics_read(&dat, 558, raw, sizeof(raw)) != (int)sizeof(raw)) goto done;
+            length = sizeof(raw);
+        } else if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+            (size_t)state->assetLoader.legacyDataSize, 1, 558, raw, sizeof(raw), &length)) goto done;
+        memset(expectedWall, 0x55, sizeof(expectedWall));
+        if (length != sizeof(raw) || !native_wall_oracle(state, raw, 38, 10, expectedWall, &graphic) ||
+            graphic != 197 || state->world.gameTick != 301) goto done;
+        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(&wall);
+        if (!wall.valid || wall.globalOrnamentIndex != 38 || wall.viewWallIndex != 10 ||
+            wall.graphicIndex != 197 || wall.width != 32 || wall.height != 48) {
+            fprintf(stderr, "%s native live torchholder receipt global%d view%d graphic%d %dx%d\n",
+                edition, wall.globalOrnamentIndex, wall.viewWallIndex, wall.graphicIndex, wall.width, wall.height);
+            goto done;
+        }
+        for (size_t i = 0; i < sizeof(framebuffer); ++i) {
+            if (expectedWall[i] == 0x55) continue;
+            if (framebuffer[i] != (unsigned char)(16 | expectedWall[i])) {
+                fprintf(stderr, "%s native live torchholder197 pixel%zu,%zu got%u expected%u\n",
+                    edition, i % 320, i / 320, framebuffer[i], 16 | expectedWall[i]);
+                goto done;
+            }
+            ++wallPixels;
+        }
+        if (!wallPixels) goto done;
+        printf("PASS: original %s actual HoC(4,15,N) tick301 torchholder197 32x48, %d opaque native pixels\n",
+            edition, wallPixels);
     }
     printf("PASS: original %s C127 recruitment, WATER0x280b pickup and live C14slot0 cast at tick%u; native367 48x13@(53,68), G0218/Y47/C10/bank ownership\n", edition, state->world.gameTick);
     ok = 1;
@@ -577,6 +716,7 @@ static int check_original_amiga_background(void)
     if (!check_original_door_orientation(&spec,"A20E") ||
         !check_original_native_objects(&state,"A20E") ||
         !check_original_native_floor_ornaments(&state,"A20E") ||
+        !check_original_native_wall_ornaments(&state,"A20E") ||
         !check_original_native_item_walk(&spec,"A20E") ||
         !check_original_native_cast(&spec,"A20E")) goto done;
     floor = M11_AssetLoader_Load(&state.assetLoader, 75u);
@@ -1067,7 +1207,8 @@ static int check_original_legacy_arrows(const char *env_name,
         !check_original_native_item_walk(&spec,edition) ||
         !check_original_native_cast(&spec,edition) ||
         !check_original_native_objects(state,edition) ||
-        !check_original_native_floor_ornaments(state,edition))) goto done;
+        !check_original_native_floor_ornaments(state,edition) ||
+        !check_original_native_wall_ornaments(state,edition))) goto done;
     if (atari && (!check_original_legacy_materials(state,edition) ||
         !asset_file_matches_md5(state->assetLoader.graphicsDatPath,graphics_md5))) goto done;
     if (!atari && !check_original_amiga_palette(state,path,framebuffer)) goto done;
@@ -1100,6 +1241,222 @@ done:
     return result;
 }
 
+/* Independent original I34E C696/F0635/F0791 oracle. Only the source
+ * record forms actually used by these wall ornaments are admitted. */
+static unsigned int pc_ornament_u16(const unsigned char* p)
+{
+    return (unsigned int)p[0] | ((unsigned int)p[1] << 8);
+}
+
+static const unsigned char* pc_ornament_record(const unsigned char* bytes,
+    size_t size, int index)
+{
+    const size_t base = 0x47a6fu;
+    size_t cursor, count;
+    if (size < base + 4 || pc_ornament_u16(bytes + base) != 0xfc0du) return NULL;
+    count = pc_ornament_u16(bytes + base + 2);
+    if (count > 256 || size - base - 4 < count * 4) return NULL;
+    cursor = base + 4 + count * 4;
+    for (size_t i = 0; i < count; ++i) {
+        const int first = (int)pc_ornament_u16(bytes + base + 4 + i * 4);
+        const int last = (int)pc_ornament_u16(bytes + base + 6 + i * 4);
+        size_t length;
+        if (last < first) return NULL;
+        length = (size_t)(last - first + 1) * 8;
+        if (cursor > size || length > size - cursor) return NULL;
+        if (index >= first && index <= last) return bytes + cursor + (index - first) * 8;
+        cursor += length;
+    }
+    return NULL;
+}
+
+static int pc_ornament_oracle(M11_GameViewState* state,
+    const unsigned char* original, size_t originalSize,
+    int global, int set, int view, unsigned char* expected,
+    int* outGraphic, int* outX, int* outY, int* outWidth, int* outHeight)
+{
+    static const unsigned char d3[16] = {0,0,12,3,4,3,0,6,3,9,10,11,0,1,0,2};
+    static const unsigned char d2[16] = {0,12,1,3,4,3,6,7,5,9,10,11,0,2,14,13};
+    const int sourceView = view >= 13 ? view - 13 : view + 2;
+    const int side = view == 0 || view == 1 || view == 5 || view == 6 ||
+                     view == 10 || view == 11 || view >= 13;
+    const int flip = view == 1 || view == 6 || view == 11 || view == 14;
+    const int graphic = 259 + global * 2 + !side;
+    const int scaleX = view >= 13 ? 30 : view < 5 ? 14 : view < 10 ? 21 : 32;
+    const int scaleY = view >= 13 ? 14 : scaleX;
+    const unsigned char* palette = view >= 13 || view < 5 ? d3 : view < 10 ? d2 : NULL;
+    const unsigned char* record = pc_ornament_record(original, originalSize, 1004 + set * 15 + sourceView);
+    const unsigned char* parent = pc_ornament_record(original, originalSize, 4);
+    const unsigned char* root = pc_ornament_record(original, originalSize, 3);
+    const M11_AssetSlot* slot = M11_AssetLoader_Load(&state->assetLoader, (unsigned)graphic);
+    int type, width, height, left, top;
+    unsigned int stepX, stepY;
+    if (!record || !parent || !root || !slot || !slot->pixels ||
+        pc_ornament_u16(record + 2) != 4 || pc_ornament_u16(parent) != 1 ||
+        pc_ornament_u16(parent + 2) != 3 || pc_ornament_u16(parent + 4) ||
+        pc_ornament_u16(parent + 6) || pc_ornament_u16(root) != 9 ||
+        pc_ornament_u16(root + 2) || pc_ornament_u16(root + 4) != 224 ||
+        pc_ornament_u16(root + 6) != 136) return 0;
+    type = (int)pc_ornament_u16(record);
+    width = (slot->width * scaleX + scaleX / 2) >> 5;
+    height = (slot->height * scaleY + scaleY / 2) >> 5;
+    if (width <= 0 || height <= 0) return 0;
+    left = (short)pc_ornament_u16(record + 4) - ((width + 1) >> 1);
+    top = (short)pc_ornament_u16(record + 6);
+    if (type == 0) top -= (height + 1) >> 1;
+    else if (type == 7) top -= height - 1;
+    else if (type != 5) return 0;
+    stepX = ((unsigned int)slot->width << 6) / (unsigned int)width;
+    stepY = ((unsigned int)slot->height << 6) / (unsigned int)height;
+    for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
+        const int dx = left + x, dy = top + y;
+        const unsigned int sx = (stepX / 2 + (unsigned int)(flip ? width - 1 - x : x) * stepX) >> 6;
+        const unsigned int sy = (stepY / 2 + (unsigned int)y * stepY) >> 6;
+        unsigned char color;
+        if (sx >= slot->width || sy >= slot->height) return 0;
+        color = slot->pixels[sy * slot->width + sx];
+        if (palette) color = palette[color & 15];
+        if (dx >= 0 && dx < 224 && dy >= 0 && dy < 136 && color != 10)
+            expected[(dy + 33) * 320 + dx] = color;
+    }
+    *outGraphic = graphic;
+    *outX = left < 0 ? 0 : left;
+    *outY = (top < 0 ? 0 : top) + 33;
+    *outWidth = (left + width > 224 ? 224 : left + width) - *outX;
+    *outHeight = (top + height > 136 ? 136 : top + height) - (*outY - 33);
+    if (*outWidth < 0) *outWidth = 0;
+    if (*outHeight < 0) *outHeight = 0;
+    return 1;
+}
+
+static int check_original_pc34_wall_ornaments(M11_GameViewState* state, const char* path)
+{
+    /* G0194 source coordinate sets; no production geometry/table getter. */
+    static const int ornaments[][2] = {{32,0},{1,1},{11,2},{40,4},{43,5},{56,6},{0,7},{7,8}};
+    unsigned char actual[64000], expected[64000];
+    unsigned char* original = NULL;
+    size_t size = 0;
+    int result = 0, cases = 0;
+    if (!asset_read_path_alloc(path, &original, &size)) return 0;
+    for (size_t i = 0; i < sizeof(ornaments) / sizeof(ornaments[0]); ++i)
+    for (int view = 0; view < 15; ++view) {
+        M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+        int graphic, x, y, width, height;
+        memset(actual, 0x55, sizeof(actual));
+        memset(expected, 0x55, sizeof(expected));
+        int drawn;
+        if (!pc_ornament_oracle(state, original, size, ornaments[i][0], ornaments[i][1], view,
+                expected, &graphic, &x, &y, &width, &height)) {
+            fprintf(stderr, "PC34 original oracle unavailable global%d view%d\n", ornaments[i][0], view);
+            goto done;
+        }
+        drawn = M11_GameView_ProbeDrawDm1WallOrnamentAt(state, actual, 320, 200,
+            ornaments[i][0], view);
+        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(&receipt);
+        if (!width || !height) {
+            if (drawn || receipt.valid || memcmp(actual, expected, sizeof(actual))) goto done;
+            ++cases;
+            continue;
+        }
+        if (!drawn || !receipt.valid || receipt.graphicIndex != graphic || receipt.viewWallIndex != view ||
+            receipt.destinationX != x || receipt.destinationY != y ||
+            receipt.width != width || receipt.height != height) {
+            fprintf(stderr, "PC34 original F0107 geometry global%d view%d got%d (%d,%d,%d,%d) expected%d (%d,%d,%d,%d)\n",
+                ornaments[i][0], view, receipt.graphicIndex, receipt.destinationX, receipt.destinationY,
+                receipt.width, receipt.height, graphic, x, y, width, height);
+            goto done;
+        }
+        for (size_t pixel = 0; pixel < sizeof(actual); ++pixel) if (actual[pixel] != expected[pixel]) {
+            fprintf(stderr, "PC34 original F0107 global%d view%d pixel%zu,%zu got%u expected%u\n",
+                ornaments[i][0], view, pixel % 320, pixel / 320, actual[pixel], expected[pixel]);
+            goto done;
+        }
+        ++cases;
+    }
+    printf("PASS: original PC34 F0107 %d full-raster source C696 views, native side/front, scale, C10 and viewport clipping\n", cases);
+    result = 1;
+done:
+    free(original);
+    return result;
+}
+
+static int check_original_pc34_live_wall_ornament(const M11_GameLaunchSpec* spec)
+{
+    M11_GameViewState* state = calloc(1, sizeof(*state));
+    unsigned char actual[64000], expected[64000], rgb[256][3];
+    unsigned char* original = NULL;
+    size_t originalSize = 0;
+    M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+    int result = 0, graphic, left, top, width, height, opaque = 0;
+    if (!state) return 0;
+    M11_GameView_Init(state);
+    if (!asset_read_path_alloc(spec->verifiedAssetPath, &original, &originalSize) ||
+        !M11_GameView_Start(state, spec) || state->world.party.championCount ||
+        !replay_native_cast_route(state, "UUUUULLLDDDDDLLULLULLLLLDLRR") ||
+        state->world.party.mapX != 14 || state->world.party.mapY != 3 ||
+        state->world.party.direction != 0 ||
+        M11_GameView_HandlePointerButton(state, 112, 83, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state->candidateMirrorPanelActive || state->candidateMirrorOrdinal != 5 ||
+        M11_GameView_HandlePointerButton(state, 130, 115, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state->world.party.championCount != 1 ||
+        !replay_native_cast_route(state, "DLLLDDDLLDDLLLLLDDDDDD")) goto done;
+    M11_GameView_Draw(state, actual, 320, 200);
+    if (M11_GameView_HandlePointerButton(state, 66, 160, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != 0x280bu ||
+        M11_GameView_HandlePointerButton(state, 80, 80, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE ||
+        state->world.projectiles.count != 1 || state->world.party.mapIndex != 0 ||
+        state->world.party.mapX != 4 || state->world.party.mapY != 15 ||
+        state->world.party.direction != 0 || state->world.gameTick != 301) {
+        fprintf(stderr, "PC34 original wall ornament route failed at(%d,%d,%d) tick%u\n",
+            state->world.party.mapX, state->world.party.mapY, state->world.party.direction, state->world.gameTick);
+        goto done;
+    }
+    memset(expected, 0x55, sizeof(expected));
+    if (!pc_ornament_oracle(state, original, originalSize, 32, 0, 10,
+            expected, &graphic, &left, &top, &width, &height) ||
+        graphic != 323 || width != 16 || height != 19) goto done;
+    M11_GameView_Draw(state, actual, 320, 200);
+    M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(&receipt);
+    if (!receipt.valid || receipt.globalOrnamentIndex != 32 || receipt.viewWallIndex != 10 ||
+        receipt.graphicIndex != 323 || receipt.destinationX != left || receipt.destinationY != top ||
+        receipt.width != 16 || receipt.height != 19 || receipt.sourceScaleX32 != 32 ||
+        receipt.sourceScaleY32 != 32 || receipt.paletteMapValid) {
+        fprintf(stderr, "PC34 original live wall receipt global%d view%d graphic%d rect%d,%d %dx%d\n",
+            receipt.globalOrnamentIndex, receipt.viewWallIndex, receipt.graphicIndex,
+            receipt.destinationX, receipt.destinationY, receipt.width, receipt.height);
+        goto done;
+    }
+    for (int y = 0; y < 200; ++y) for (int x = 0; x < 320; ++x) {
+        const size_t i = (size_t)y * 320 + x;
+        if (expected[i] == 0x55) continue;
+        if (actual[i] != (unsigned char)(expected[i] | 16)) {
+            fprintf(stderr, "PC34 original live wall ornament pixel%d,%d got%u expected%u\n",
+                x, y, actual[i], expected[i] | 16);
+            goto done;
+        }
+        ++opaque;
+    }
+    /* The PC F8161 transport tags the dungeon bank16..31; verify its
+     * actual source VGA palette as well as the complete indexed byte. */
+    if (!opaque || !M11_Render_CopyIndexedPaletteRgb8(rgb)) goto done;
+    {
+        const unsigned int level = M11_GameView_GetDungeonPaletteIndex(state);
+        if (level > 5) goto done;
+        for (int color = 0; color < 16; ++color) for (int channel = 0; channel < 3; ++channel) {
+            const unsigned int dac = G9010_auc_VgaPaletteAll_Compat[level][color][channel] >> 2;
+            if (rgb[color + 16][channel] != (unsigned char)((dac << 2) | (dac >> 4))) goto done;
+        }
+    }
+    printf("PASS: original PC34 C127 recruitment/WATER throw atHoC(4,15,N) tick301: native wall323 16x19 unscaled, %d opaque original pixels and bank16\n", opaque);
+    result = 1;
+done:
+    free(original);
+    M11_GameView_Shutdown(state);
+    free(state);
+    return result;
+}
+
 int main(void)
 {
     const char* graphicsPath = pc34_graphics_path();
@@ -1126,7 +1483,8 @@ int main(void)
         spec.dataDir=getenv("FIRESTAFF_DM1_DATA_DIR");
         spec.verifiedAssetPath=graphicsPath;
         spec.verifiedAssetMd5="fa6b1aa29e191418713bf2cda93d962e";
-        if(!check_original_door_orientation(&spec,"PC34") ||
+        if(!check_original_pc34_live_wall_ornament(&spec) ||
+           !check_original_door_orientation(&spec,"PC34") ||
            !check_original_pc34_d0_walls(&spec))return 1;
         {
             char dungeonPath[2048];
@@ -1146,7 +1504,8 @@ int main(void)
     state.assetsAvailable = 1;
     state.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
     strcpy(state.sourceId, "dm1");
-    if (!check_original_d2_pixels(&state)) {
+    if (!check_original_pc34_wall_ornaments(&state, graphicsPath) ||
+        !check_original_d2_pixels(&state)) {
         M11_GameView_Shutdown(&state);
         return 1;
     }

@@ -96,6 +96,8 @@ typedef struct DM1_WallOrnamentHostMaterialReceiptPc34 {
     int valid;
     int globalOrnamentIndex;
     int viewWallIndex;
+    /* F0107's decoded inscription line count; zero for ordinary ornaments. */
+    int unreadableLineCount;
     DM1_WallOrnamentRenderPlanPc34 plan;
 } DM1_WallOrnamentHostMaterialReceiptPc34;
 
@@ -161,6 +163,11 @@ int dm1_v1_wall_ornament_view_draw_order_at_pc34(int drawIndex);
 int dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(
     int coordinateSet, int internalViewWallIndex,
     int* outRecordType, int* outAnchorX, int* outAnchorY);
+/* Native PC material facts only, for all nine C696 coordinate sets.
+ * Geometry remains zero until the owning original layout resolves F0635. */
+int dm1_v1_wall_ornament_native_material_pc34(
+    int globalIndex, int viewWallIndex,
+    DM1_WallOrnamentHostMaterialReceiptPc34* outReceipt);
 int dm1_v1_wall_ornament_render_plan_pc34(
     int globalIndex,
     int viewWallIndex,

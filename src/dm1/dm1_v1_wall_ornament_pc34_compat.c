@@ -92,13 +92,13 @@ int dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(
     return 1;
 }
 
-/* ReDMCSB DUNVIEW.C G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement
- * for PC34/I34E.  This is indexed by the 13 G0205 view-wall rows; it is not
- * equivalent to a depth/side heuristic. */
+/* F0174 assigns two native bitmaps per ornament. F0107 selects the side
+ * bitmap or its following front bitmap; G0190 indexes derived cache entries
+ * and must never be added to the native graphic index. */
 static const unsigned char s_wallOrnamentNativeOffsetPc34[13] = {
-    0, 0, 0, 0, 1,
-    1, 1, 2, 2, 3,
-    3, 3, 4
+    0, 0, 1, 1, 1,
+    0, 0, 1, 1, 1,
+    0, 0, 1
 };
 
 static const unsigned char s_wallOrnamentPaletteD3[16] = {
@@ -324,93 +324,75 @@ int dm1_v1_wall_ornament_view_draw_order_at_pc34(int drawIndex)
     return (int)s_wallOrnamentDrawOrderPc34[drawIndex];
 }
 
+int dm1_v1_wall_ornament_native_material_pc34(
+    int globalIndex, int viewWallIndex,
+    DM1_WallOrnamentHostMaterialReceiptPc34* outReceipt)
+{
+    DM1_WallOrnamentRenderPlanPc34* plan;
+    int scale;
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (globalIndex < 0 || globalIndex >= DM1_WALL_ORNAMENT_GLOBAL_COUNT_PC34 ||
+        viewWallIndex < 0 || viewWallIndex >= 15 ||
+        dm1_v1_g0194_get_pc34(globalIndex) < 0 ||
+        dm1_v1_g0194_get_pc34(globalIndex) > 8) return 0;
+    plan = &outReceipt->plan;
+    /* Geometry belongs to original layout 696, including coordinate set 8.
+     * Leave it unpublished here; the renderer must resolve F0635. */
+    plan->graphicIndex = DM1_GFX_WALL_ORNAMENT_BASE_PC34 + globalIndex * 2 +
+        (viewWallIndex < 13 ? s_wallOrnamentNativeOffsetPc34[viewWallIndex] : 0);
+    plan->transparentColor = DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34;
+    plan->flipHorizontal = dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex) ||
+        viewWallIndex == 14;
+    plan->paletteMapValid = viewWallIndex < 10 || viewWallIndex >= 13;
+    if (plan->paletteMapValid)
+        copy_palette(plan->paletteMap, viewWallIndex <= 4 || viewWallIndex >= 13 ?
+                     s_wallOrnamentPaletteD3 : s_wallOrnamentPaletteD2);
+    scale = viewWallIndex <= 4 || viewWallIndex >= 13 ? 14 :
+        (viewWallIndex <= 9 ? 21 : 32);
+    plan->sourceScaleX32 = viewWallIndex >= 13 ? 30 : scale;
+    plan->sourceScaleY32 = scale;
+    plan->usesDerivedBitmap = viewWallIndex < 10 || viewWallIndex >= 13;
+    plan->isAlcove = dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
+    outReceipt->valid = 1;
+    outReceipt->globalOrnamentIndex = globalIndex;
+    outReceipt->viewWallIndex = viewWallIndex;
+    return 1;
+}
+
 int dm1_v1_wall_ornament_render_plan_pc34(
-    int globalIndex,
-    int viewWallIndex,
-    int maxHeight,
-    DM1_WallOrnamentRenderPlanPc34* outPlan) {
+    int globalIndex, int viewWallIndex, int maxHeight,
+    DM1_WallOrnamentRenderPlanPc34* outPlan)
+{
+    DM1_WallOrnamentHostMaterialReceiptPc34 material;
     DM1_WallOrnamentZoneBlitPc34 blit;
     int coordSet;
-    int nativeOffset;
-    if (!outPlan || globalIndex < 0 ||
-        globalIndex >= DM1_WALL_ORNAMENT_GLOBAL_COUNT_PC34) {
-        return 0;
-    }
+    if (!outPlan || !dm1_v1_wall_ornament_native_material_pc34(
+            globalIndex, viewWallIndex, &material)) return 0;
     coordSet = dm1_v1_wall_ornament_coord_set_index_pc34(globalIndex);
-    if (viewWallIndex == 13 || viewWallIndex == 14) {
+    if (viewWallIndex >= 13) {
         int recordType, anchorX, anchorY;
         if (!dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(
                 coordSet, viewWallIndex, &recordType, &anchorX, &anchorY)) return 0;
         (void)recordType;
-        memset(outPlan, 0, sizeof(*outPlan));
-        outPlan->graphicIndex = DM1_GFX_WALL_ORNAMENT_BASE_PC34 + globalIndex * 2;
+        *outPlan = material.plan;
         outPlan->dstX = anchorX;
         outPlan->dstY = anchorY;
         outPlan->width = 224;
         outPlan->height = 136;
-        outPlan->transparentColor = DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34;
-        outPlan->flipHorizontal = viewWallIndex == 14;
-        outPlan->paletteMapValid = 1;
-        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD3);
-        outPlan->isAlcove = dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
-        outPlan->sourceScaleX32 = 30;
-        outPlan->sourceScaleY32 = 14;
-        outPlan->usesDerivedBitmap = 1;
         return 1;
     }
-    if (!dm1_v1_wall_ornament_zone_pc34(coordSet, viewWallIndex, &blit)) {
-        return 0;
-    }
-    if (maxHeight > 0 && maxHeight < blit.height) {
-        blit.height = maxHeight;
-    }
-    if (blit.width <= 0 || blit.height <= 0) {
-        return 0;
-    }
-
-    if (viewWallIndex < 0 || viewWallIndex >= 13) {
-        return 0;
-    }
-    nativeOffset = s_wallOrnamentNativeOffsetPc34[viewWallIndex];
-
-    outPlan->graphicIndex =
-        DM1_GFX_WALL_ORNAMENT_BASE_PC34 + globalIndex * 2 + nativeOffset;
+    /* Retain the legacy G0205 geometry contract for its existing callers. */
+    if (!dm1_v1_wall_ornament_zone_pc34(coordSet, viewWallIndex, &blit)) return 0;
+    if (maxHeight > 0 && maxHeight < blit.height) blit.height = maxHeight;
+    if (blit.width <= 0 || blit.height <= 0) return 0;
+    *outPlan = material.plan;
     outPlan->srcX = blit.srcX;
     outPlan->srcY = blit.srcY;
     outPlan->dstX = blit.dstX;
     outPlan->dstY = blit.dstY;
     outPlan->width = blit.width;
     outPlan->height = blit.height;
-    outPlan->transparentColor = DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34;
-    outPlan->flipHorizontal =
-        dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
-    outPlan->paletteMapValid = 1;
-    if (viewWallIndex <= 4) {
-        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD3);
-    } else if (viewWallIndex <= 9) {
-        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD2);
-    } else {
-        /* ReDMCSB F0107/F0110: D1/D0 uses the native C10 ornament pixels.
-         * G0198/G0199 are the D3/D2 derived-bitmap palette changes only.
-         * Applying the D2 map here converts real torch-holder colours into
-         * black silhouettes on the HoC wall. */
-        memset(outPlan->paletteMap, 0, sizeof(outPlan->paletteMap));
-        outPlan->paletteMapValid = 0;
-    }
-    outPlan->isAlcove =
-        dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
-    /* ReDMCSB DUNVIEW.C F0107/F0675 uses the source platform's derived
-     * bitmap scales before F0791 clips to G0205. PC34/I34E is 14/32 for D3
-     * and 21/32 for D2 and nearer views; it never stretches the full native
-     * bitmap to the destination zone. */
-    if (viewWallIndex <= 4) {
-        outPlan->sourceScaleX32 = 14;
-        outPlan->sourceScaleY32 = 14;
-    } else {
-        outPlan->sourceScaleX32 = 21;
-        outPlan->sourceScaleY32 = 21;
-    }
-    outPlan->usesDerivedBitmap = 1;
     return 1;
 }
 

@@ -249,7 +249,7 @@ int main(void)
 
     expect_int("plan.inscription.d1c.ok",
                dm1_v1_wall_ornament_render_plan_pc34(0, 12, 0, &plan), 1);
-    expect_int("plan.inscription.d1c.graphic", plan.graphicIndex, 263);
+    expect_int("plan.inscription.d1c.graphic", plan.graphicIndex, 260);
     expect_int("plan.inscription.d1c.dstX", plan.dstX, 32);
     expect_int("plan.inscription.d1c.dstY", plan.dstY, 9);
     expect_int("plan.inscription.d1c.width", plan.width, 160);
@@ -264,7 +264,7 @@ int main(void)
 
     expect_int("plan.mirror.d1c.ok",
                dm1_v1_wall_ornament_render_plan_pc34(43, 12, 0, &plan), 1);
-    expect_int("plan.mirror.d1c.graphic", plan.graphicIndex, 349);
+    expect_int("plan.mirror.d1c.graphic", plan.graphicIndex, 346);
     expect_int("plan.mirror.d1c.dstX", plan.dstX, 80);
     expect_int("plan.mirror.d1c.dstY", plan.dstY, 29);
     expect_int("plan.mirror.d1c.width", plan.width, 64);
@@ -279,28 +279,58 @@ int main(void)
 
     expect_int("plan.d2r_left.ok",
                dm1_v1_wall_ornament_render_plan_pc34(1, 6, 0, &plan), 1);
-    expect_int("plan.d2r_left.graphic", plan.graphicIndex, 262);
+    expect_int("plan.d2r_left.graphic", plan.graphicIndex, 261);
     expect_int("plan.d2r_left.flip", plan.flipHorizontal, 1);
     expect_int("plan.d2r_left.palette1", plan.paletteMap[1], 12);
 
-    /* ReDMCSB DUNVIEW.C G0190: all 13 PC34 derived-bitmap increments.
-     * In particular D3L-front and D3C-front stay on the base bitmap; the
-     * former generic depth heuristic selected the following bitmap there. */
+    /* F0174/F0107: the two original graphics are side/front variants.
+     * G0190 belongs to the derived cache, not this native bitmap lookup. */
     {
         static const int expectedOffsets[13] = {
-            0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4
+            0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1
         };
         int view;
         for (view = 0; view < 13; ++view) {
             char name[64];
-            snprintf(name, sizeof(name), "plan.g0190.view%d.graphic", view);
+            int scale = view <= 4 ? 14 : (view <= 9 ? 21 : 32);
+            snprintf(name, sizeof(name), "plan.source.view%d.ok", view);
             expect_int(name,
                        dm1_v1_wall_ornament_render_plan_pc34(
                            1, view, 0, &plan), 1);
-            snprintf(name, sizeof(name), "plan.g0190.view%d.index", view);
+            snprintf(name, sizeof(name), "plan.source.view%d.index", view);
             expect_int(name, plan.graphicIndex,
                        259 + 2 + expectedOffsets[view]);
+            snprintf(name, sizeof(name), "plan.source.view%d.scale_x", view);
+            expect_int(name, plan.sourceScaleX32, scale);
+            snprintf(name, sizeof(name), "plan.source.view%d.scale_y", view);
+            expect_int(name, plan.sourceScaleY32, scale);
+            snprintf(name, sizeof(name), "plan.source.view%d.derived", view);
+            expect_int(name, plan.usesDerivedBitmap, view <= 9);
         }
+    }
+
+    /* The geometry-free PC admission includes native coordinate set 8,
+     * which the eight-set legacy G0205 accessor cannot represent. */
+    {
+        DM1_WallOrnamentHostMaterialReceiptPc34 native;
+        int global, view;
+        expect_int("native.null", dm1_v1_wall_ornament_native_material_pc34(0, 0, NULL), 0);
+        expect_int("native.bad_global", dm1_v1_wall_ornament_native_material_pc34(60, 0, &native), 0);
+        expect_int("native.bad_view", dm1_v1_wall_ornament_native_material_pc34(0, 15, &native), 0);
+        for (global = 0; global < 60; ++global) {
+            for (view = 0; view < 15; ++view) {
+                static const int front[15] = {0,0,1,1,1,0,0,1,1,1,0,0,1,0,0};
+                int scale = view >= 13 || view <= 4 ? 14 : (view <= 9 ? 21 : 32);
+                expect_int("native.all.ok", dm1_v1_wall_ornament_native_material_pc34(global, view, &native), 1);
+                expect_int("native.all.graphic", native.plan.graphicIndex, 259 + global * 2 + front[view]);
+                expect_int("native.all.scale_x", native.plan.sourceScaleX32, view >= 13 ? 30 : scale);
+                expect_int("native.all.scale_y", native.plan.sourceScaleY32, scale);
+                expect_int("native.all.no_geometry", native.plan.width | native.plan.height | native.plan.dstX | native.plan.dstY, 0);
+            }
+        }
+        expect_int("native.set8.global7", dm1_v1_wall_ornament_coord_set_index_pc34(7), 8);
+        expect_int("native.set8.global9", dm1_v1_wall_ornament_coord_set_index_pc34(9), 8);
+        expect_int("legacy.set8.rejected", dm1_v1_wall_ornament_render_plan_pc34(7, 10, 0, &plan), 0);
     }
 
     /* DUNVIEW.C:3913-3928 front champion mirror render plan:

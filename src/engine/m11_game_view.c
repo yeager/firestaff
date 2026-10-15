@@ -1,5 +1,9 @@
 #include "csb_v1_amiga_english_programs.h"
 #include "m11_game_view.h"
+#include "memory_graphics_dat_state_pc34_compat.h"
+#include "memory_graphics_dat_select_pc34_compat.h"
+#include "memory_graphics_dat_pc34_compat.h"
+#include "redmcsb_f0791_dungeonview_draw_bitmap_xx_pc34_compat.h"
 #include "m11_loose_sibling.h"
 #include "soundtrack_selector_m11.h"
 #include "csb_v22_modern_assets_pc34.h"
@@ -1021,6 +1025,9 @@ static int m11_draw_creature_sprite_source_anchored(
     int creatureType,
     int creatureDir);
 static int m11_dm1_media009_metadata(M11_GameViewState* state);
+static int m11_draw_dm1_media009_wall_ornament(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int globalIndex, int viewWallIndex, int unreadableLineCount);
 static int m11_is_dm1_media009(const M11_GameViewState* state);
 static int m11_dm1_media009_object_graphic(const M11_GameViewState* state, int aspectIndex);
 static int m11_dm1_media009_projectile_visible(const M11_GameViewState* state,
@@ -25779,6 +25786,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     state->dm1NativeObjectMetadataSource = NULL;
     state->dm1NativeObjectMetadataSourceSize = 0;
     state->dm1NativeObjectMetadataValid = 0;
+    state->dm1PcWallOrnamentLayoutStatus = 0;
     state->presentationMode = spec->presentationMode;
     state->presentationWidth = spec->presentationWidth;
     state->presentationHeight = spec->presentationHeight;
@@ -44510,6 +44518,92 @@ static int m11_dm1_media009_blit(
         framebuffer, fbW, fbH);
 }
 
+/* MEDIA009 F0107: native side/front pairs, source-owned G0205 frames and
+ * F0129 derived pixels. G0190 is a cache key, never a bitmap increment. */
+static int m11_draw_dm1_media009_wall_ornament(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int global, int view, int unreadableLineCount)
+{
+    const unsigned char *target, *nativeFrame;
+    const M11_AssetSlot* slot;
+    unsigned char* derived = NULL;
+    const unsigned char* pixels;
+    int frame[8], graphic, front, flip, width, height, sourceWidth, sourceX = 0;
+    int coordinateSet, nativeRow, drawn;
+    if (!state || !framebuffer || global < 0 || global >= 60 || view < 0 ||
+        view >= 13 || !m11_dm1_media009_metadata((M11_GameViewState*)state)) return 0;
+    coordinateSet = state->dm1NativeWallCoordinateSets[global];
+    target = state->dm1NativeWallFrames[coordinateSet][view];
+    front = view == 2 || view == 3 || view == 4 || view == 7 ||
+            view == 8 || view == 9 || view == 12;
+    flip = view == 1 || view == 6 || view == 11;
+    nativeRow = front ? 12 : (flip ? 11 : 10);
+    nativeFrame = state->dm1NativeWallFrames[coordinateSet][nativeRow];
+    graphic = 121 + global*2 + front;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned)graphic);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != nativeFrame[4]*2 || slot->height != nativeFrame[5] ||
+        target[1] < target[0] || target[3] < target[2] || !target[4] || !target[5]) return 0;
+    for (int j = 0; j < 6; ++j) frame[j] = target[j];
+    frame[6] = frame[7] = 0;
+    pixels = slot->pixels;
+    sourceWidth = slot->width;
+    height = slot->height;
+    if (view < 10) {
+        const int widthRow = view == 7 || view == 9 ? 8 : view;
+        const unsigned char* widthFrame = state->dm1NativeWallFrames[coordinateSet][widthRow];
+        unsigned xstep, ystep;
+        width = widthFrame[1]-widthFrame[0]+1;
+        height = target[5];
+        sourceWidth = ((width+15)&~15);
+        if (width <= 0 || height <= 0 || sourceWidth != target[4]*2) return 0;
+        derived = malloc((size_t)sourceWidth*height);
+        if (!derived) return 0;
+        memset(derived, 10, (size_t)sourceWidth*height);
+        xstep = ((unsigned)slot->width*1024u/(unsigned)width)*64u;
+        ystep = ((unsigned)slot->height*1024u/(unsigned)height)*64u;
+        for (int y = 0; y < height; ++y) {
+            unsigned sy = (ystep/2u+32767u+(unsigned)y*ystep)>>16;
+            if (sy >= slot->height) { free(derived); return 0; }
+            for (int x = 0; x < width; ++x) {
+                unsigned sx = (xstep/2u+32767u+(unsigned)x*xstep)>>16;
+                if (sx >= slot->width) { free(derived); return 0; }
+                derived[y*sourceWidth+x] = state->dm1NativeWallPalettes[view <= 4 ? 0 : 1]
+                    [slot->pixels[sy*slot->width+sx]&15]/10;
+            }
+        }
+        pixels = derived;
+        sourceX = flip ? 15-((width-1)&15) : (view == 7 ? width-(target[1]-target[0]+1) : 0);
+    }
+    frame[6] = sourceX;
+    /* F0107 G0204 contains absolute viewport Y2, not a clip height. */
+    if (unreadableLineCount >= 1 && unreadableLineCount <= 3 && view < 12) {
+        const int group = view < 2 ? 0 : (view < 5 ? 1 :
+            (view < 7 ? 2 : (view < 10 ? 3 : 4)));
+        frame[3] = state->dm1NativeUnreadableInscriptionY2[
+            group*3+unreadableLineCount-1];
+    }
+    drawn = m11_dm1_media009_blit_pixels(pixels, sourceWidth, height, frame,
+                                        flip, framebuffer, fbW, fbH);
+    free(derived);
+    if (drawn) {
+        M11_Dm1WallOrnamentHostPresentationReceipt* receipt =
+            &s_m11_dm1_wall_ornament_host_presentation_receipt;
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->valid = 1; receipt->globalOrnamentIndex = global;
+        receipt->viewWallIndex = view; receipt->graphicIndex = graphic;
+        receipt->destinationX = M11_VIEWPORT_X+frame[0];
+        receipt->destinationY = M11_VIEWPORT_Y+frame[2];
+        receipt->width = frame[1]-frame[0]+1; receipt->height = frame[3]-frame[2]+1;
+        receipt->transparentColor = 10; receipt->flipHorizontal = flip;
+        receipt->paletteMapValid = view < 10;
+        receipt->sourceScaleX32 = receipt->sourceScaleY32 = view >= 10 ? 32 : 0;
+        if (view < 10) for (int j = 0; j < 16; ++j)
+            receipt->paletteMap[j] = state->dm1NativeWallPalettes[view <= 4 ? 0 : 1][j]/10;
+    }
+    return drawn;
+}
+
 static int m11_draw_dm1_media009_stairs(
     const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
     int forward, int side, int square)
@@ -46551,8 +46645,10 @@ static void m11_draw_dm1_front_wall_inscription_material(
         }
     }
     /* Publish only after the real M648 source slots were accepted and the
-     * completed M10 receipt was consumed. No host text/font fallback exists. */
-    m11_dm1_invalidate_wall_inscription_material();
+     * completed M10 receipt was consumed. F0107's other side/depth surfaces
+     * belong to this same frame and retain their own receipt. */
+    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     s_m11_dm1_inscription_host_presentation_receipt.valid = 1;
     s_m11_dm1_inscription_host_presentation_receipt.textStringIndex =
         material.textStringIndex;
@@ -47030,17 +47126,212 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     }
 }
 
+static int m11_dm1_pc_wall_ornaments(const M11_GameViewState* state)
+{
+    return state && m11_is_dm1_source_kind(state->sourceKind) &&
+        strcmp(state->sourceId, "dm1") == 0 &&
+        !state->assetLoader.legacyDm1 && !state->assetLoader.atariStDm1 &&
+        !state->assetLoader.dm1Amiga36 && state->assetLoader.fileState;
+}
+
+static unsigned int m11_ornament_le16(const unsigned char* p)
+{
+    return (unsigned int)p[0] | ((unsigned int)p[1] << 8);
+}
+
+/* COORD.C F0639's selected C696, not the older Graphic558 G0205 boxes.
+ * All nine PC ornament sets use the same authenticated 4 -> 3 viewport
+ * chain. Reject a different chain rather than guessing its geometry. */
+static int m11_dm1_pc_ornament_layout(M11_GameViewState* state)
+{
+    struct MemoryGraphicsDatRuntimeState_Compat* rt = state->assetLoader.runtimeState;
+    struct MemoryGraphicsDatHeader_Compat header = {0};
+    struct MemoryGraphicsDatSelection_Compat item;
+    unsigned char raw[16384], seen[135] = {0};
+    size_t bytes, count, cursor;
+    int roots = 0, records = 0;
+    if (state->dm1PcWallOrnamentLayoutStatus)
+        return state->dm1PcWallOrnamentLayoutStatus > 0;
+    state->dm1PcWallOrnamentLayoutStatus = -1;
+    if (!rt) return 0;
+    header.format = rt->format; header.graphicCount = rt->graphicCount;
+    header.compressedByteCounts = rt->compressedByteCounts;
+    header.decompressedByteCounts = rt->decompressedByteCounts;
+    header.widthHeight = rt->widthHeight;
+    if (!F0490_MEMORY_SelectGraphicFromHeader_Compat(&header, 696, &item) ||
+        item.compressedByteCount != item.decompressedByteCount ||
+        item.compressedByteCount < 4 || item.compressedByteCount > sizeof(raw) ||
+        !F0474_MEMORY_LoadGraphic_CPSDF_Compat(item.offset,
+            item.compressedByteCount, state->assetLoader.fileState, raw)) return 0;
+    bytes = item.compressedByteCount;
+    if (m11_ornament_le16(raw) != 0xfc0d) return 0;
+    count = m11_ornament_le16(raw + 2);
+    if (!count || count > 256 || count > (bytes - 4)/4) return 0;
+    cursor = 4 + count*4;
+    for (size_t bank = 0; bank < count; ++bank) {
+        unsigned int first = m11_ornament_le16(raw + 4 + bank*4);
+        unsigned int last = m11_ornament_le16(raw + 6 + bank*4);
+        size_t length;
+        if (last < first) return 0;
+        length = ((size_t)last - first + 1)*8;
+        if (length > bytes - cursor) return 0;
+        for (unsigned int zone = first; zone <= last; ++zone) {
+            const unsigned char* p = raw + cursor + (zone-first)*8;
+            int16_t record[4];
+            if (zone != 3 && zone != 4 && (zone < 1004 || zone > 1138)) continue;
+            for (int i = 0; i < 4; ++i) record[i] = (int16_t)m11_ornament_le16(p+i*2);
+            if (zone == 3) {
+                if ((roots & 1) || record[0] != 9 || record[1] ||
+                    record[2] != 224 || record[3] != 136) return 0;
+                roots |= 1;
+            } else if (zone == 4) {
+                if ((roots & 2) || record[0] != 1 || record[1] != 3 ||
+                    record[2] || record[3]) return 0;
+                roots |= 2;
+            } else {
+                if (seen[zone-1004] || record[0] < 0 || record[0] > 8 ||
+                    record[1] != 4) return 0;
+                seen[zone-1004] = 1;
+                memcpy(state->dm1PcWallOrnamentLayout[zone-1004], record, sizeof(record));
+                ++records;
+            }
+        }
+        cursor += length;
+    }
+    if (cursor != bytes || roots != 3 || records != 135) return 0;
+    state->dm1PcWallOrnamentLayoutStatus = 1;
+    return 1;
+}
+
+typedef struct M11_PcOrnamentRaster {
+    const M11_AssetSlot* slot;
+    M11_GameViewState* state;
+    unsigned char* framebuffer;
+    const unsigned char* palette;
+    int width, height, fbWidth, fbHeight, drawn;
+    int16_t rect[4];
+} M11_PcOrnamentRaster;
+
+/* COORD.C F0635:2300-2419, restricted to C696's checked ornament chain.
+ * F0791 owns the subsequent flip adjustment of these source offsets. */
+static int m11_pc_ornament_zone(void* user, const void* bitmap, int16_t xyz[4],
+    int16_t zone, int16_t* source_x, int16_t* source_y)
+{
+    M11_PcOrnamentRaster* raster = user;
+    const int16_t* record;
+    int type, x, y, width, height, sx, sy;
+    (void)bitmap;
+    if (zone < 1004 || zone > 1138) return 0;
+    record = raster->state->dm1PcWallOrnamentLayout[zone-1004];
+    type = record[0]; x = record[2]; y = record[3];
+    width = *source_x ? *source_x : raster->width;
+    height = *source_y ? *source_y : raster->height;
+    if (width <= 0 || height <= 0 || width > raster->width || height > raster->height) return 0;
+    if (type == 2 || type == 3 || type == 6) x -= width-1;
+    else if (type == 0 || type == 5 || type == 7) x -= (width+1)>>1;
+    if (type == 3 || type == 4 || type == 7) y -= height-1;
+    else if (type == 0 || type == 6 || type == 8) y -= (height+1)>>1;
+    sx = x < 0 ? -x : 0; sy = y < 0 ? -y : 0;
+    width -= sx; height -= sy;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (width > 224-x) width = 224-x;
+    if (height > 136-y) height = 136-y;
+    if (width <= 0 || height <= 0) return 0;
+    xyz[0] = (int16_t)x; xyz[1] = (int16_t)y;
+    xyz[2] = (int16_t)width; xyz[3] = (int16_t)height;
+    *source_x = (int16_t)sx; *source_y = (int16_t)sy;
+    return 1;
+}
+
+static int16_t m11_pc_ornament_width(void* user, const void* bitmap)
+{
+    M11_PcOrnamentRaster* raster = user;
+    return (int16_t)(bitmap == raster ? raster->width : 224);
+}
+
+static int16_t m11_pc_ornament_height(void* user, const void* bitmap)
+{
+    M11_PcOrnamentRaster* raster = user;
+    return (int16_t)(bitmap == raster ? raster->height : 136);
+}
+
+static void m11_pc_ornament_blit(void* user, const void* source, void* destination,
+    const int16_t xyz[4], int16_t source_x, int16_t source_y,
+    int16_t source_width, int16_t destination_width, int16_t transparent, uint16_t flip)
+{
+    M11_PcOrnamentRaster* r = user;
+    const unsigned int dx = ((unsigned int)r->slot->width << 6)/r->width;
+    const unsigned int dy = ((unsigned int)r->slot->height << 6)/r->height;
+    (void)source; (void)destination; (void)source_width; (void)destination_width;
+    if (source_x < 0 || source_y < 0 || source_x+xyz[2] > r->width ||
+        source_y+xyz[3] > r->height) return;
+    /* BLTSHRNK.C F0129:1136-1145 samples from Q6 cell centres. Palette
+     * changes precede F0132's C10 test. F0791 has already corrected the
+     * flipped source origin; reverse only this clipped source span. */
+    for (int y = 0; y < xyz[3]; ++y) for (int x = 0; x < xyz[2]; ++x) {
+        int sx = source_x + ((flip & 1) ? xyz[2]-1-x : x);
+        int sy = source_y + ((flip & 2) ? xyz[3]-1-y : y);
+        unsigned char pixel = r->slot->pixels[
+            ((dy/2+(unsigned int)sy*dy)>>6)*r->slot->width +
+            ((dx/2+(unsigned int)sx*dx)>>6)];
+        if (r->palette) pixel = r->palette[pixel & 15];
+        if (pixel != transparent)
+            r->framebuffer[(M11_VIEWPORT_Y+xyz[1]+y)*r->fbWidth +
+                M11_VIEWPORT_X+xyz[0]+x] = pixel;
+    }
+    memcpy(r->rect, xyz, sizeof(r->rect));
+    r->drawn = 1;
+}
+
+static int m11_dm1_ornament_material(const M11_GameViewState* state,
+    int global, int view, int maxHeight, DM1_WallOrnamentHostMaterialReceiptPc34* out)
+{
+    if (m11_is_dm1_media009(state)) {
+        if (view < 0 || view >= 13 ||
+            !dm1_v1_wall_ornament_native_material_pc34(global, view, out)) return 0;
+        out->plan.height = maxHeight;
+        return 1;
+    }
+    if (!m11_dm1_pc_wall_ornaments(state))
+        return dm1_v1_wall_ornament_host_material_receipt_pc34(global, view, maxHeight, out);
+    if (!dm1_v1_wall_ornament_native_material_pc34(global, view, out)) return 0;
+    /* F0791's unreadable-inscription seed overrides only its zone height. */
+    out->plan.height = maxHeight;
+    return 1;
+}
+
 static int m11_draw_dm1_wall_ornament_host_material_receipt(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
     int fbW,
     int fbH,
-    const DM1_WallOrnamentHostMaterialReceiptPc34* material)
+    DM1_WallOrnamentHostMaterialReceiptPc34* material)
 {
     const M11_AssetSlot* slot;
     const DM1_WallOrnamentRenderPlanPc34* plan;
+    DM1_WallOrnamentRenderPlanPc34 presentedPlan;
+    memset(&s_m11_dm1_wall_ornament_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
     if (!state || !framebuffer || !material || !material->valid) {
         return 0;
+    }
+    if (m11_is_dm1_media009(state)) {
+        int drawn = m11_draw_dm1_media009_wall_ornament(state, framebuffer, fbW, fbH,
+            material->globalOrnamentIndex, material->viewWallIndex, material->unreadableLineCount);
+        if (drawn) {
+            const M11_Dm1WallOrnamentHostPresentationReceipt* r =
+                &s_m11_dm1_wall_ornament_host_presentation_receipt;
+            material->plan.graphicIndex = r->graphicIndex;
+            material->plan.dstX = r->destinationX-M11_VIEWPORT_X;
+            material->plan.dstY = r->destinationY-M11_VIEWPORT_Y;
+            material->plan.width = r->width; material->plan.height = r->height;
+            material->plan.transparentColor = r->transparentColor;
+            material->plan.flipHorizontal = r->flipHorizontal;
+            material->plan.paletteMapValid = r->paletteMapValid;
+            memcpy(material->plan.paletteMap, r->paletteMap, 16);
+        }
+        return drawn;
     }
     plan = &material->plan;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
@@ -47049,9 +47340,41 @@ static int m11_draw_dm1_wall_ornament_host_material_receipt(
         slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
-    /* ReDMCSB DUNVIEW.C F0107/F0675/F0791: consume the real PC34 graphic,
-     * create the depth-scaled source, then clip it to the G0205 zone. */
-    {
+    if (m11_dm1_pc_wall_ornaments(state)) {
+        M11_PcOrnamentRaster raster = {0};
+        const redmcsb_f0791_renderer_pc34_compat renderer = {
+            m11_pc_ornament_zone, m11_pc_ornament_width,
+            m11_pc_ornament_height, m11_pc_ornament_blit, &raster
+        };
+        int set = dm1_v1_wall_ornament_coord_set_index_pc34(material->globalOrnamentIndex);
+        int row = material->viewWallIndex >= 13 ? material->viewWallIndex-13 : material->viewWallIndex+2;
+        int16_t zone = (int16_t)(1004+set*15+row);
+        uint16_t flip = plan->flipHorizontal ? 1 : 0;
+        if (set < 0 || set > 8 || row < 0 || row > 14 ||
+            fbW < M11_VIEWPORT_X+224 || fbH < M11_VIEWPORT_Y+136 ||
+            !m11_dm1_pc_ornament_layout((M11_GameViewState*)state)) return 0;
+        raster.slot = slot; raster.state = (M11_GameViewState*)state;
+        raster.framebuffer = framebuffer; raster.fbWidth = fbW; raster.fbHeight = fbH;
+        raster.palette = plan->paletteMapValid ? plan->paletteMap : NULL;
+        /* DEFS.H M078 rounds by scale/2, not by a constant sixteen. */
+        raster.width = ((int)slot->width*plan->sourceScaleX32 + (plan->sourceScaleX32>>1))>>5;
+        raster.height = ((int)slot->height*plan->sourceScaleY32 + (plan->sourceScaleY32>>1))>>5;
+        if (raster.width <= 0 || raster.height <= 0 ||
+            raster.width > INT16_MAX || raster.height > INT16_MAX) return 0;
+        if (plan->height > 0) zone |= REDMCSB_F0791_SHIFT_UNREADABLE_INSCRIPTION_PC34_COMPAT;
+        redmcsb_f0791_dungeonview_draw_bitmap_xx_pc34_compat(
+            &renderer, &raster, framebuffer, zone,
+            flip, (int16_t)plan->transparentColor, (int16_t)raster.width,
+            (int16_t)plan->height);
+        if (!raster.drawn) return 0;
+        presentedPlan = *plan;
+        presentedPlan.dstX = raster.rect[0]; presentedPlan.dstY = raster.rect[1];
+        presentedPlan.width = raster.rect[2]; presentedPlan.height = raster.rect[3];
+        material->plan = presentedPlan;
+        plan = &presentedPlan;
+    } else {
+    /* Other editions retain their own legacy geometry pending their native
+     * ornament-bank adapters; no PC C696 is borrowed across asset owners. */
     int zoneX = plan->dstX;
     int zoneY = plan->dstY;
     int zoneW = plan->width;
@@ -47283,8 +47606,9 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                 maxHeight = unreadableHeight;
             }
         }
-        if (dm1_v1_wall_ornament_host_material_receipt_pc34(
+        if (m11_dm1_ornament_material(state,
                 ornGlobalIdx, spec.viewWallIndex, maxHeight, &material)) {
+            material.unreadableLineCount = isInscription && inscription.valid ? inscription.lineCount : 0;
             const DM1_WallOrnamentRenderPlanPc34* plan = &material.plan;
             /* ReDMCSB DUNVIEW.C F0107 lines 3590-3639 decodes the current
              * map inscription, and lines 3608-3717 handle D1C front-facing
@@ -48959,6 +49283,14 @@ static int m11_dm1_media009_metadata(M11_GameViewState* state)
         if (raw[1518+i] > 150 || raw[1518+i] % 10) return 0;
     for (int i = 0; i < 9; ++i)
         if (raw[3136+i] >= 3 || raw[3212+i] >= 6) return 0;
+    for (int i = 0; i < 60; ++i) if (raw[3146+i] >= 8) return 0;
+    for (int i = 0; i < 32; ++i)
+        if (raw[3090+i] > 150 || raw[3090+i] % 10) return 0;
+    memcpy(state->dm1NativeWallCoordinateSets, raw+3146, 60);
+    memcpy(state->dm1NativeWallFrames, raw+2410, 624);
+    memcpy(state->dm1NativeUnreadableInscriptionY2, raw+3034, 15);
+    memcpy(state->dm1NativeWallPalettes[0], raw+3106, 16);
+    memcpy(state->dm1NativeWallPalettes[1], raw+3090, 16);
     memcpy(state->dm1NativeFloorCoordinateSets, raw+3136, 9);
     memcpy(state->dm1NativeFloorBitmapIncrements, raw+3212, 9);
     memcpy(state->dm1NativeObjectCoordinates, raw+1156, 300);
@@ -63451,7 +63783,10 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
         !viewportReceipt.clearPreviousMaterial) {
         return;
     }
-    m11_dm1_invalidate_wall_inscription_material();
+    /* F0128:8318-8616 already cleared both surfaces at frame entry.
+     * This post-palette D1C pass must preserve F0107's side/depth material. */
+    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     if (!state || !framebuffer ||
         !m11_sample_viewport_cell(state, 1, 0, &frontCell) ||
         !frontCell.valid || !m11_viewport_cell_is_wall_like(&frontCell)) {
@@ -73448,21 +73783,25 @@ int M11_GameView_ProbeDrawDm1SideWallHostReceipt(
         framebufferWidth, framebufferHeight, receipt);
 }
 
-int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight)
+int M11_GameView_ProbeDrawDm1WallOrnamentAt(
+    M11_GameViewState* state, unsigned char* framebuffer, int width, int height,
+    int globalIndex, int viewWallIndex)
 {
     DM1_WallOrnamentHostMaterialReceiptPc34 material;
-    /* ReDMCSB DUNVIEW.C F0107 D3R-left: G0194/G0205 selects the actual
-     * PC34 graphic 261, D3 palette, C10 key, and horizontal flip. */
-    if (!state || !dm1_v1_wall_ornament_host_material_receipt_pc34(
-            1, 1, 0, &material)) {
-        return 0;
-    }
+    memset(&s_m11_dm1_wall_ornament_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
+    if (!state || !m11_dm1_ornament_material(state, globalIndex,
+            viewWallIndex, 0, &material)) return 0;
     return m11_draw_dm1_wall_ornament_host_material_receipt(
-        state, framebuffer, framebufferWidth, framebufferHeight, &material);
+        state, framebuffer, width, height, &material);
+}
+
+int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
+    M11_GameViewState* state, unsigned char* framebuffer,
+    int framebufferWidth, int framebufferHeight)
+{
+    return M11_GameView_ProbeDrawDm1WallOrnamentAt(state, framebuffer,
+        framebufferWidth, framebufferHeight, 1, 1);
 }
 
 int M11_GameView_ProbeDrawDm1ChampionMirrorBackingHostReceipt(
@@ -73504,7 +73843,7 @@ int M11_GameView_ProbeDrawDm1ChampionMirrorBackingHostReceipt(
         projection.suppressGenericWallOrnament ||
         !projection.drawWallOrnamentBacking ||
         !projection.suppressHostFallbackVisuals ||
-        !dm1_v1_wall_ornament_host_material_receipt_pc34(
+        !m11_dm1_ornament_material(state,
             projection.globalOrnamentIndex, projection.viewWallIndex, 0,
             &material)) {
         return 0;
