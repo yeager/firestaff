@@ -138,7 +138,9 @@ static int csb_v1_boot_root_is_selected_amiga31_cache(const char *root)
 /* Bind the A31M/A33M title discriminator to the selected graphics package.
  * A nested original ZIP -> ADF receipt keeps its full virtual path, while an
  * installed AmigaDOS folder uses TITL.DAT beside Graphics.DAT. Never search
- * the outer archive or an unrelated neighbouring host directory. */
+ * the outer archive or an unrelated neighbouring host directory.
+ * ReDMCSB APPA.C:51-81 selects TITL/ANIM/APPB in this disk context;
+ * unique ASCII case matching preserves AmigaDOS companion names on POSIX. */
 static int csb_v1_boot_selected_amiga31_title_path(
     const char *graphics_path, char *out, size_t out_size)
 {
@@ -149,7 +151,7 @@ static int csb_v1_boot_selected_amiga31_title_path(
     if (!graphics_path || !out || out_size == 0u) return 0;
     if (!strstr(graphics_path, "::")) {
         return FSP_ParentDir(parent, sizeof(parent), graphics_path) &&
-               FSP_JoinPath(out, out_size, parent, "TITL.DAT");
+               FSP_FindUniqueFileIgnoreCase(parent, "TITL.DAT", out, out_size) == 1;
     }
     component = graphics_path;
     while ((next = strstr(component, "::")) != NULL) component = next + 2;
@@ -1279,8 +1281,11 @@ static int csb_v1_boot_amiga_program_locator(const CSB_V1_BootProfile *profile,
         strcpy(out + prefix_size, program_name);
         return 1;
     }
-    return profile->asset_root[0] &&
-        FSP_JoinPath(out, out_size, profile->asset_root, program_name);
+    {
+        char parent[ASSET_PATH_MAX];
+        return FSP_ParentDir(parent, sizeof(parent), profile->graphics_path) &&
+            FSP_FindUniqueFileIgnoreCase(parent, program_name, out, out_size) == 1;
+    }
 }
 
 static int csb_v1_boot_load_amiga_english_action_names(CSB_V1_BootProfile *profile)
@@ -9640,8 +9645,8 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
             char amigaTitlePath[ASSET_PATH_MAX];
             int samePackageTitle =
                 csb_v1_boot_root_is_selected_amiga31_cache(root)
-                    ? FSP_JoinPath(amigaTitlePath, sizeof(amigaTitlePath), root,
-                                   "TITL.DAT")
+                    ? FSP_FindUniqueFileIgnoreCase(root, "TITL.DAT", amigaTitlePath,
+                                                   sizeof(amigaTitlePath)) == 1
                     : csb_v1_boot_selected_amiga31_title_path(
                         graphics_path, amigaTitlePath, sizeof(amigaTitlePath));
             if (!samePackageTitle ||

@@ -2,6 +2,13 @@
 
 ## User-facing changes
 
+- `DM2 scanning`: respond to cancellation while enumerating ZIP directories,
+  preserving the unpublished scan boundary without repainting for every file.
+
+- CSB Amiga loose installations accept uniquely named mixed-case title and
+  startup companions in the selected graphics directory and reject ambiguous
+  duplicates. Archive ownership remains unchanged.
+
 - `DM1 Atari start menu`: verify AUTO selection from lowercase original loose files through the normal title, entrance and continued first-Hall gameplay, with no game/platform override.
 
 - `DM1 Amiga loose graphics`: accept renamed original graphics files through CLI and the start menu after checking the selected file's hash; keep startup companions in that same installation.

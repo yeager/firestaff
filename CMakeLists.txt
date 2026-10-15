@@ -63038,6 +63038,26 @@ if(BUILD_TESTING AND UNIX)
 endif()
 
 if(BUILD_TESTING AND UNIX)
+    set(FIRESTAFF_CSB_AMIGA_LOOSE_MEDIA "" CACHE PATH
+        "Original CSB Amiga 3.3 multilingual loose files for case-sensitive verification")
+    add_test(NAME csb_v1_amiga_loose_case_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_loose_case_real_media.sh
+            $<TARGET_FILE:firestaff> "${FIRESTAFF_CSB_AMIGA_LOOSE_MEDIA}")
+    set_tests_properties(csb_v1_amiga_loose_case_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 120
+        LABELS "csb;amiga;real-media;case-sensitive;menu;startup;skip-safe")
+    add_executable(test_dm2_v1_directory_scan_cancel
+        tests/test_dm2_v1_directory_scan_cancel.c)
+    target_link_libraries(test_dm2_v1_directory_scan_cancel PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_directory_scan_cancel PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_directory_scan_cancel_real_media
+        COMMAND test_dm2_v1_directory_scan_cancel
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip")
+    set_tests_properties(dm2_v1_directory_scan_cancel_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 90
+        LABELS "dm2;real-media;scanner;cancellation;skip-safe")
     add_test(NAME dm2_v1_renamed_zip_directory_real_media
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_renamed_zip_directory.sh
             $<TARGET_FILE:firestaff> "${FIRESTAFF_WORKSPACE_DATA_DIR}")

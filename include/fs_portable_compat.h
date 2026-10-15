@@ -62,6 +62,12 @@ int FSP_PathExists(const char* path);
  */
 int FSP_FileExists(const char* path);
 
+/* Resolve one ordinary file in exactly this directory using ASCII case.
+ * Returns 1 unique, 0 missing/output too small, -1 enumeration/argument error,
+ * -2 ambiguous case-equivalent files. Never searches parents or children. */
+int FSP_FindUniqueFileIgnoreCase(const char* directory, const char* name,
+                                 char* out, size_t outSize);
+
 /*
  * Check whether `path` exists and is a directory.
  * Returns 1 if it is a directory, 0 otherwise.

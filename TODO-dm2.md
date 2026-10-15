@@ -1,5 +1,10 @@
 # Firestaff TODO — DM2
 
+2026-10-15 directory cancellation now polls within enumeration and publishes
+progress in 32-entry chunks. The authenticated original DOS scoped/unscoped
+regression passes; native Windows cancellation and network-filesystem
+responsiveness remain unverified.
+
 2026-10-15 selected-file return: existing and deleted selected ZIP aliases
 now rescan their surrounding collection using admitted member provenance.
 Both original DOS runtime/return regressions pass. Broader runtime/input

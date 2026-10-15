@@ -1,3 +1,16 @@
+- 2026-10-15: Poll cancellation inside DM2 ZIP directory enumeration.
+  Shared cancel flags are checked for each non-dot entry; progress callbacks
+  occur every 32 entries so synchronous scan presentation does not repaint
+  for every file. Cancellation rolls back the directory's candidate additions
+  and propagates separately from I/O/path/limit failures. Overlong non-ZIP
+  names cannot invalidate otherwise admissible ZIP candidates merely because
+  a progress path does not fit. The production-linked original DOS regression
+  authenticates the native graphics/dungeon pair, cancels during enumeration
+  in scoped and unscoped scans, verifies no matched versions are published,
+  and preserves the original archive MD5. It passes in 0.88 seconds on macOS;
+  the target build and strict C11 syntax check pass. Windows enumeration uses
+  the same polling policy but has not been executed here.
+
 - 2026-10-15: Discover renamed ZIP media in directory scans by complete
   native profile identity, across immediate search roots and dm2 children.
   Inventory is bounded to 256 ZIP candidates and sorted; the final version

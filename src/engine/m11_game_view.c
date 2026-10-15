@@ -6966,9 +6966,11 @@ static int m11_csb_amiga_program_locator(const CSB_V1_BootProfile *profile,
             strlen(out) >= out_size) return 0;
         return 1;
     }
-    return profile->asset_root[0] &&
-        snprintf(out, out_size, "%s/%s", profile->asset_root, program_name) > 0 &&
-        strlen(out) < out_size;
+    {
+        char parent[FSP_PATH_MAX];
+        return FSP_ParentDir(parent, sizeof(parent), profile->graphics_path) &&
+            m11_find_unique_loose_sibling(parent, program_name, out, out_size) == 1;
+    }
 }
 
 /* ReDMCSB COMPILE.H:274-280 assigns A35E APPB.FTL directly to C03_GAME;

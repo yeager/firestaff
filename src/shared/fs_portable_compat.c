@@ -21,6 +21,7 @@
 #define FSP_ALT_SEP '/'
 #else
 #include <unistd.h>
+#include <dirent.h>
 #define FSP_SEP '/'
 #define FSP_ALT_SEP '\\'
 #endif
@@ -30,6 +31,71 @@
 #endif
 
 /* ── Internal helpers ───────────────────────────────────────────────── */
+
+static int fsp_ascii_name_equal(const char* a, const char* b) {
+    while (*a && *b) {
+        unsigned char x = (unsigned char)*a++, y = (unsigned char)*b++;
+        if (x >= 'A' && x <= 'Z') x = (unsigned char)(x + ('a' - 'A'));
+        if (y >= 'A' && y <= 'Z') y = (unsigned char)(y + ('a' - 'A'));
+        if (x != y) return 0;
+    }
+    return *a == *b;
+}
+
+static int fsp_unique_file_candidate(const char* directory, const char* wanted,
+                                      const char* name, char* selected,
+                                      int found) {
+    char candidate[FSP_PATH_MAX];
+    if (!fsp_ascii_name_equal(wanted, name)) return found;
+    if (!FSP_JoinPath(candidate, sizeof(candidate), directory, name)) return -1;
+    if (!FSP_FileExists(candidate)) return found;
+    if (found) return -2;
+    strcpy(selected, candidate);
+    return 1;
+}
+
+int FSP_FindUniqueFileIgnoreCase(const char* directory, const char* name,
+                                 char* out, size_t outSize) {
+    char selected[FSP_PATH_MAX] = {0};
+    int found = 0;
+    if (!out || !outSize) return -1;
+    out[0] = '\0';
+    if (!directory || !name || !name[0] || strchr(name, '/') ||
+        strchr(name, '\\') || strchr(name, ':')) return -1;
+#ifdef _WIN32
+    WIN32_FIND_DATAA entry;
+    HANDLE search;
+    char pattern[FSP_PATH_MAX];
+    if (!FSP_JoinPath(pattern, sizeof(pattern), directory, "*")) return -1;
+    search = FindFirstFileA(pattern, &entry);
+    if (search == INVALID_HANDLE_VALUE)
+        return GetLastError() == ERROR_FILE_NOT_FOUND ? 0 : -1;
+    do {
+        found = fsp_unique_file_candidate(directory, name, entry.cFileName,
+                                           selected, found);
+        if (found < 0) break;
+    } while (FindNextFileA(search, &entry));
+    if (found >= 0 && GetLastError() != ERROR_NO_MORE_FILES) found = -1;
+    FindClose(search);
+#else
+    DIR* dir = opendir(directory);
+    struct dirent* entry;
+    if (!dir) return -1;
+    for (;;) {
+        errno = 0;
+        entry = readdir(dir);
+        if (!entry) { if (errno) found = -1; break; }
+        found = fsp_unique_file_candidate(directory, name, entry->d_name,
+                                           selected, found);
+        if (found < 0) break;
+    }
+    if (closedir(dir) != 0 && found >= 0) found = -1;
+#endif
+    if (found <= 0) return found;
+    if (strlen(selected) >= outSize) return 0;
+    strcpy(out, selected);
+    return 1;
+}
 
 static int fsp_is_separator(char c) {
     return c == '/' || c == '\\';

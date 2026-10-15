@@ -1,3 +1,18 @@
+- 2026-10-15: Loose original Amiga companions now resolve by a unique ASCII
+  case match beside the admitted graphics file. Boot admission, M12 and the
+  native startup owner share this policy for TITL.DAT and startup programs,
+  including APPB.FTL; duplicate case-equivalent files reject ownership.
+  The shared portable helper also replaces the existing DM1 engine enumerator.
+  Original A33M mixed Titl.dat failed inventory admission before this change.
+  The focused case-sensitive HFSX regression verifies uppercase baseline and
+  mixed Titl.dat/Appb.ftl CLI runtime, mixed-case M12 runtime, both ambiguity
+  rejections and unchanged original/staged four-file hashes. These are SDL
+  dummy-driver checks on macOS, not native display/audio parity evidence.
+  Shared-helper nonregression also passes authentic DM1 Atari full CLI/M12
+  case ownership (including unscoped AUTO), Amiga demo startup/ambiguity and
+  the four-route loose graphics alias matrix. Original A22G archive CLI and
+  M12 startup also pass after the shared-helper change.
+
 - 2026-10-15: Direct original English CAPS raw capture also passes M12
   AUTO to loaded runtime and first movement (35.99 seconds). The regression
   requires raw::Graphics.DAT ownership without a substituted outer archive,

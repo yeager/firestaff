@@ -1624,12 +1624,26 @@ static int m12_dm2_collect_zip_candidate(M12_Dm2ZipCandidates* list,
     return 1;
 }
 
-/* Negative results describe only this directory: -1 I/O, -2 candidate
- * limit, -3 path capacity. Roll back its entire unsorted contribution so a
+/* Poll the shared cancel flag for every entry, but publish progress only in
+ * bounded chunks: synchronous progress callbacks can repaint an entire UI. */
+static int m12_dm2_directory_progress(M12_ScanProgressContext* progress,
+                                       const char* path, size_t* visited) {
+    ++*visited;
+    if ((progress && progress->options && progress->options->cancelFlag &&
+         *progress->options->cancelFlag) || (*visited % 32u) == 0u)
+        return m12_scan_progress_update(progress, "enumerating ZIP candidates",
+                                          "dm2", path, 0);
+    return 1;
+}
+
+/* Zero means cancellation; negative results describe only this directory:
+ * -1 I/O, -2 candidate limit, -3 path capacity. Roll back its entire unsorted contribution so a
  * directory's enumeration order cannot select an arbitrary partial subset. */
 static int m12_dm2_collect_directory_zips(M12_Dm2ZipCandidates* list,
-                                          const char* directory) {
+                                          const char* directory,
+                                          M12_ScanProgressContext* progress) {
     int result = 1;
+    size_t entriesVisited = 0u;
     const size_t previousCount = list->count;
     if (!FSP_DirExists(directory)) return 1;
 #ifdef _WIN32
@@ -1641,6 +1655,16 @@ static int m12_dm2_collect_directory_zips(M12_Dm2ZipCandidates* list,
     if (search == INVALID_HANDLE_VALUE)
         return GetLastError() == ERROR_FILE_NOT_FOUND ? 1 : -1;
     do {
+        if (strcmp(entry.cFileName, ".") == 0 ||
+            strcmp(entry.cFileName, "..") == 0) continue;
+        char entryPath[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* progressPath = FSP_JoinPath(entryPath, sizeof(entryPath),
+                                                 directory, entry.cFileName)
+            ? entryPath : directory;
+        if (!m12_dm2_directory_progress(progress, progressPath, &entriesVisited)) {
+            result = 0;
+            break;
+        }
         result = m12_dm2_collect_zip_candidate(list, directory, entry.cFileName);
         if (result < 0) break;
     } while (FindNextFileA(search, &entry));
@@ -1659,12 +1683,22 @@ static int m12_dm2_collect_directory_zips(M12_Dm2ZipCandidates* list,
             if (errno != 0) result = -1;
             break;
         }
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0) continue;
+        char entryPath[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* progressPath = FSP_JoinPath(entryPath, sizeof(entryPath),
+                                                 directory, entry->d_name)
+            ? entryPath : directory;
+        if (!m12_dm2_directory_progress(progress, progressPath, &entriesVisited)) {
+            result = 0;
+            break;
+        }
         result = m12_dm2_collect_zip_candidate(list, directory, entry->d_name);
         if (result < 0) break;
     }
     if (closedir(dir) != 0 && result > 0) result = -1;
 #endif
-    if (result < 0) list->count = previousCount;
+    if (result <= 0) list->count = previousCount;
     return result;
 }
 
@@ -1674,7 +1708,8 @@ static int m12_dm2_enumerate_zip_directory(M12_Dm2ZipCandidates* list,
     int result;
     if (!m12_scan_progress_update(progress, "enumerating ZIP candidates",
                                     "dm2", directory, 0)) return 0;
-    result = m12_dm2_collect_directory_zips(list, directory);
+    result = m12_dm2_collect_directory_zips(list, directory, progress);
+    if (result == 0) return 0;
     if (result < 0) {
         fprintf(stderr, "firestaff: media-discovery-incomplete game=dm2 path=%s reason=%s\n",
                 directory, result == -2 ? "candidate-limit" :
@@ -5263,8 +5298,8 @@ static void m12_admit_csb_amiga31_title_package(
                 } else {
                     char parent[M12_ASSET_DATA_DIR_CAPACITY];
                     if (!FSP_ParentDir(parent, sizeof(parent), titlePath) ||
-                        !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), parent,
-                                      graphicsNames[nameIndex])) continue;
+                        FSP_FindUniqueFileIgnoreCase(parent, graphicsNames[nameIndex],
+                            graphicsPath, sizeof(graphicsPath)) != 1) continue;
                 }
                 if (!m12_path_md5_hex(graphicsPath, md5) ||
                     strcmp(md5, graphicsMd5) != 0 ||
@@ -5328,8 +5363,8 @@ static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
                          titleNames[titleIndex]) >= (int)sizeof(titlePath)) {
                 continue;
             }
-        } else if (!FSP_JoinPath(titlePath, sizeof(titlePath), parent,
-                                 titleNames[titleIndex])) {
+        } else if (FSP_FindUniqueFileIgnoreCase(parent, titleNames[titleIndex],
+                                                titlePath, sizeof(titlePath)) != 1) {
             continue;
         }
         if (!m12_path_md5_hex(titlePath, md5)) {
@@ -5395,8 +5430,8 @@ static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath,
             if (snprintf(startupPath, sizeof(startupPath), "%.*s%s",
                          (int)prefixLength, graphicsPath,
                          dungeonNames[index]) >= (int)sizeof(startupPath)) continue;
-        } else if (!FSP_JoinPath(startupPath, sizeof(startupPath), parent,
-                                 dungeonNames[index])) continue;
+        } else if (FSP_FindUniqueFileIgnoreCase(parent, dungeonNames[index],
+                                                startupPath, sizeof(startupPath)) != 1) continue;
         if (m12_path_md5_hex(startupPath, md5) &&
             strcmp(md5, "6695d2acebce49f95db1d8f3a5c733de") == 0) {
             break;
@@ -5413,8 +5448,8 @@ static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath,
                          startupLabels[index]) >= (int)sizeof(startupPath)) {
                 return 0;
             }
-        } else if (!FSP_JoinPath(startupPath, sizeof(startupPath), parent,
-                                 startupLabels[index])) return 0;
+        } else if (FSP_FindUniqueFileIgnoreCase(parent, startupLabels[index],
+                                                startupPath, sizeof(startupPath)) != 1) return 0;
         if (!m12_path_md5_hex(startupPath, md5) ||
             !m12_csb_amiga_sidecar_md5_matches(versionId,
                                                 startupLabels[index], md5)) {
