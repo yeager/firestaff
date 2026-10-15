@@ -29,6 +29,7 @@ if [ -d "$data_dir" ]; then
     mkdir -p "$test_scratch"
     python3 - "$data_dir" "$firestaff_cli" "$test_scratch" <<'PY'
 import shutil
+import os
 import subprocess
 import sys
 import tempfile
@@ -61,6 +62,24 @@ with tempfile.TemporaryDirectory(prefix="csb-amiga-missing-kaos-",
             "FIRESTAFF BOOT PROBE READY:" in launch.stdout):
         raise SystemExit("FAIL: direct CSB CLI accepted Amiga media without "
                          f"original KAOS.FTL:\n{launch.stdout}")
+
+    menu = subprocess.run(
+        [app, "--menu", "--game", "csb", "--platform", "amiga",
+         "--data-dir", str(incomplete), "--script", "enter,enter,enter",
+         "--duration", "1000"],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        check=False,
+        env={**os.environ,
+             "SDL_VIDEODRIVER": "dummy",
+             "FIRESTAFF_FAIL_IF_NO_LAUNCH": "1",
+             "FIRESTAFF_EXIT_AFTER_LAUNCH": "1"})
+    if (menu.returncode == 0 or
+            "CSB READY:" in menu.stdout or
+            "FIRESTAFF BOOT PROBE READY:" in menu.stdout or
+            "launch smoke failed: no launch reached before exit"
+            not in menu.stdout):
+        raise SystemExit("FAIL: M12 accepted incomplete A31M/A33M media "
+                         f"without original KAOS.FTL:\n{menu.stdout}")
     print("PASS: M12 and direct CSB launch reject original A31M/A33M "
           "media missing KAOS.FTL")
 PY
