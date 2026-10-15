@@ -3513,3 +3513,26 @@ CTest passed (14.71 s); deterministic cancellation and catalog consistency
 passed. Two full five-game corpus cancellation cases remained intentionally
 skipped. Redacted patch Gitleaks found no leaks. This report change adds no
 per-frame I/O and does not weaken native startup admission.
+
+- 2026-10-16: Reproduced native wrong-world receipts accepting a game-wide
+  PC/Towns hash despite correct native launch rejection. Reused the former
+  same-owner lookup/hash/compatibility logic as default_dungeon_identity, shared
+  by complete-owner admission and unavailable explicit-file reporting. Invalid
+  worlds are no longer marked verified. Separately reproduced missing A20 SWSH
+  having no startup role. A shared missing_startup_companion check retains the
+  original table and A22G exact alternate tuple, A36 driver gate and PC ML
+  parent-tree policy; it supplies precise diagnostic filenames without changing
+  availability. Added authentic A36 graphics/world/VDEO staging to the existing
+  real-media matrix; no synthetic payload or parser was introduced. Final focused
+  CTests passed 2/2 (14.04 s), no missing-media skips, covering both scans,
+  normal menu messages, incompatible runtime rejection, restoration and mixed
+  surviving-owner provenance. Original A20/A36/demo CLI probes load worlds and
+  preserve source SHA-256. Source review found no blocker; A22G runtime and
+  virtual diagnostic expansion remain separate gaps.
+
+Final companion-report verification: rebuilt original-media CLI startup suite
+passed (217.37 s), including both unavailable remembered-root cases. Rebuilt
+access-denied CTest passed (14.20 s); deterministic cancellation and PO/catalog
+consistency passed. The two full five-game corpus cancellation cases remained
+intentionally skipped. Positive A20/A36/demo CLI sources retained SHA-256.
+Redacted patch Gitleaks found no leaks; no per-frame I/O was added.

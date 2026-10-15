@@ -49,10 +49,24 @@ static int write_original_bytes(const char* path, const unsigned char* bytes, si
     if (fclose(file)!=0) ok=0;
     return ok;
 }
+static int native_report_has_graphics_without_world(const M12_AssetStatus* status,
+    const char* graphics, const char* graphicsMd5) {
+    int graphicsReported=0, dungeonMissing=0;
+    for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
+        const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
+        const char* path=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+        if (strcmp(required->roleId,"graphics")==0)
+            graphicsReported=required->matched && strcmp(path,graphics)==0 &&
+                strcmp(required->matchedHash,graphicsMd5)==0;
+        if (strcmp(required->roleId,"dungeon")==0) dungeonMissing=!required->matched;
+    }
+    return graphicsReported && dungeonMissing;
+}
 static int native_rejects_pc_towns_dungeons(M12_AssetStatus* status, M11_GameViewState* game,
     const char* dir, const char* graphics, const char* dungeon,
     const char* pcOriginal, const char* townsOriginal, M12_StartupMenuState* menu,
-    const M12_StartupMenuInitOptions* options, int architecture) {
+    const M12_StartupMenuInitOptions* options, int architecture,
+    const char* startupName, const char* startupMd5) {
     static const char* const foreignHashes[]={
         "766450c940651fc021c92fe5d0d0b3a6", "3dc0a932d0e0adfe59878f07c51700c5",
         "fe098f70ce83cfe3f2333565093daf35"};
@@ -74,23 +88,53 @@ static int native_rejects_pc_towns_dungeons(M12_AssetStatus* status, M11_GameVie
     REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
         M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
         "original native companion loads before incompatible replacement");
+    if (startupName) {
+        char swoosh[ASSET_PATH_MAX];
+        unsigned char* startup=NULL; size_t startupSize=0;
+        int restored=0;
+        REQUIRE(FSP_JoinPath(swoosh,sizeof(swoosh),dir,startupName) &&
+            asset_read_path_alloc(swoosh,&startup,&startupSize) &&
+            asset_memory_matches_md5(startup,startupSize,startupMd5),
+            "retain authenticated original native startup companion before incomplete-owner diagnostic");
+        REQUIRE(unlink(swoosh)==0,"remove only staged original native startup companion");
+        /* Restore before assertions so failure cannot leave staged original
+         * startup material behind or affect later source-owner checks. */
+        for (int mode=0; mode<2; ++mode) {
+            int graphicsFound=0, worldFound=0, startupMissing=0, blocked, menuCorrect;
+            if (mode) M12_AssetStatus_Scan(status,graphics);
+            else M12_AssetStatus_ScanGame(status,graphics,"dm1");
+            blocked=!M12_AssetStatus_GameAvailable(status,"dm1");
+            for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
+                const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
+                const char* path=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                if (strcmp(required->roleId,"graphics")==0)
+                    graphicsFound=required->matched && strcmp(path,graphics)==0;
+                if (strcmp(required->roleId,"dungeon")==0)
+                    worldFound=required->matched && strcmp(path,dungeon)==0;
+                if (required->label && strcmp(required->label,startupName)==0)
+                    startupMissing=required->required && !required->matched;
+            }
+            menuCorrect=menu_reports_missing_companion(menu,graphics,options,architecture,startupName) &&
+                !strstr(menu->messageLine2,"DUNGEON.DAT");
+            if (!blocked || !graphicsFound || !worldFound || !startupMissing || !menuCorrect) {
+                restored=write_original_bytes(swoosh,startup,startupSize);
+                free(startup);
+                REQUIRE(restored,"restore staged native startup companion after failed diagnostic assertion");
+                REQUIRE(0,"missing native startup companion is reported separately from verified graphics and world");
+            }
+        }
+        restored=write_original_bytes(swoosh,startup,startupSize);
+        free(startup);
+        REQUIRE(restored,"restore unchanged staged original native startup companion");
+    }
     M11_GameView_Shutdown(game); M11_GameView_Init(game);
     replaced=1;
     REQUIRE(unlink(dungeon)==0,"remove only staged native dungeon for exact missing-role feedback");
     for (int mode=0; mode<2; ++mode) {
-        int graphicsReported=0, dungeonMissing=0;
         if (mode) M12_AssetStatus_Scan(status,graphics);
         else M12_AssetStatus_ScanGame(status,graphics,"dm1");
         REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),"missing native dungeon blocks selected owner");
-        for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
-            const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
-            const char* path=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
-            if (strcmp(required->roleId,"graphics")==0)
-                graphicsReported=required->matched && strcmp(path,graphics)==0 &&
-                    strcmp(required->matchedHash,graphicsMd5)==0;
-            if (strcmp(required->roleId,"dungeon")==0) dungeonMissing=!required->matched;
-        }
-        REQUIRE(graphicsReported && dungeonMissing,
+        REQUIRE(native_report_has_graphics_without_world(status,graphics,graphicsMd5),
             "selected original native graphics remains verified when only its dungeon is missing");
         REQUIRE(menu_reports_missing_companion(menu,graphics,options,architecture,"DUNGEON.DAT"),
             "native menu reports missing dungeon without claiming verified graphics are missing");
@@ -125,6 +169,10 @@ static int native_rejects_pc_towns_dungeons(M12_AssetStatus* status, M11_GameVie
                     graphicsMd5,foreignHashes[original],mode);
             REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
                 "both scan APIs reject PC or Towns dungeon paired with native graphics");
+            REQUIRE(native_report_has_graphics_without_world(status,graphics,graphicsMd5),
+                "incompatible original dungeon is not reported as a verified native world");
+            REQUIRE(menu_reports_missing_companion(menu,graphics,options,architecture,"DUNGEON.DAT"),
+                "native menu identifies incompatible world instead of generic verified-data failure");
         }
         REQUIRE(!M11_GameView_Start(game,&spec) && !game->active,
             "native runtime rejects replaced PC or Towns dungeon with stale original graphics identity");
@@ -167,6 +215,7 @@ int main(void) {
     const char* pcOriginal=getenv("FIRESTAFF_DM1_PC_ARCHIVE");
     const char* atariOriginal=getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
     const char* amigaOriginal=getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    const char* amiga36Original=getenv("FIRESTAFF_DM1_AMIGA_V36_ARCHIVE");
     char nativeDir[FSP_PATH_MAX]={0}, nativeFiles[3][FSP_PATH_MAX]={{0}};
     unsigned char* nativeBytes=NULL;
     size_t nativeSize=0;
@@ -307,46 +356,50 @@ int main(void) {
         "fresh scan admits restored authentic native FM Towns startup");
     version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex);
     REQUIRE(version && version->matched,"restored common menu admits Japanese startup too");
-    for (int sibling=0; sibling<3; ++sibling) {
-        const char* siblingOriginal=sibling==0 ? pcOriginal : sibling==1 ? atariOriginal : amigaOriginal;
+    for (int sibling=0; sibling<4; ++sibling) {
+        const char* siblingOriginal=sibling==0 ? pcOriginal : sibling==1 ? atariOriginal : sibling==2 ? amigaOriginal : amiga36Original;
         char japaneseProgram[FSP_PATH_MAX];
         int phase;
         size_t nativeCount=sibling==1 ? 2U : 3U;
         if (!siblingOriginal || !FSP_FileExists(siblingOriginal)) {
             printf("SKIP: authentic %s archive unavailable for mixed-owner report case\n",
-                sibling==0 ? "PC" : sibling==1 ? "Atari ST" : "Amiga 2.0");
+                sibling==0 ? "PC" : sibling==1 ? "Atari ST" : sibling==2 ? "Amiga 2.0" : "Amiga 3.6");
             continue;
         }
         if (sibling!=0) {
-            static const char* const nativeHashes[2][3]={
+            static const char* const nativeHashes[3][3]={
                 {"9ce2eaf7a9e78620e3f17594437caffa", "050fb2cfded1b502ec2c53956b94c5bd", NULL},
                 {"6a2f135b53c2220f0251fa103e2a6e7e", "30028fb6a301ecb20127ef0b3af32b05",
-                 "a0ffbcc7ae8cecac03128ddb32887ef4"}};
-            static const size_t nativeSizes[2][3]={{271918U,33442U,0U},{411960U,25006U,78480U}};
+                 "a0ffbcc7ae8cecac03128ddb32887ef4"},
+                {"7f9458e4a3972d06e649a6fa85a7f34b", "30028fb6a301ecb20127ef0b3af32b05",
+                 "d86f045085481448f6ae3db8d3d640d2"}};
+            /* Zero-size expectations still require the exact complete-file
+             * MD5 below and the existing bounded original-media reader. */
+            static const size_t nativeSizes[3][3]={{271918U,33442U,0U},{411960U,25006U,78480U},{0U,25006U,0U}};
             static const char* const names[]={"GRAPHICS.DAT","DUNGEON.DAT","swoosh"};
             const char* const* hashes=nativeHashes[sibling-1];
             const size_t* sizes=nativeSizes[sibling-1];
-            REQUIRE(FSP_JoinPath(nativeDir,sizeof(nativeDir),root,sibling==1 ? "st12-original" : "a20-original") &&
+            REQUIRE(FSP_JoinPath(nativeDir,sizeof(nativeDir),root,sibling==1 ? "st12-original" : sibling==2 ? "a20-original" : "a36-original") &&
                 FSP_CreateDirectory(nativeDir),"create isolated original native owner");
             for (i=0; i<nativeCount; ++i) {
                 if (sibling==2) {
                     static const char* const amigaMembers[]={"graphics.dat","Dungeon.dat","swoosh"};
                     /* The original A20 package is ZIP -> ZIP -> ADF. Use
                      * its native bounded member reader; the generic hash
-                     * walker does not enumerate this nested filesystem. */
+                     * walker is tested separately for renamed archives. */
                     REQUIRE(snprintf(source,sizeof(source),
                         "%s::Dungeon Master v2.0 (1988)(FTL).zip::Dungeon Master v2.0 (1988)(FTL).adf::%s",
                         siblingOriginal,amigaMembers[i])<(int)sizeof(source),
                         "locate original nested Amiga member");
                 } else REQUIRE(asset_find_by_md5(siblingOriginal,hashes[i],source,sizeof(source),0),
-                    "locate original Atari member by identity");
+                    "locate original native member by identity");
                 if (!asset_read_path_alloc(source,&nativeBytes,&nativeSize) ||
-                    nativeSize!=sizes[i] || !asset_memory_matches_md5(nativeBytes,nativeSize,hashes[i])) {
+                    (sizes[i] && nativeSize!=sizes[i]) || !asset_memory_matches_md5(nativeBytes,nativeSize,hashes[i])) {
                     fprintf(stderr,"original member rejected: sibling=%d member=%zu path=%s bytes=%zu expected=%zu\n",
                         sibling,i,source,nativeSize,sizes[i]);
                     REQUIRE(0,"read bounded authentic native original member");
                 }
-                REQUIRE(FSP_JoinPath(nativeFiles[i],sizeof(nativeFiles[i]),nativeDir,names[i]) &&
+                REQUIRE(FSP_JoinPath(nativeFiles[i],sizeof(nativeFiles[i]),nativeDir,sibling==3 && i==2 ? "VDEO.FTL" : names[i]) &&
                     (nativeOutput=fopen(nativeFiles[i],"wb"))!=NULL,
                     "create task-owned native member copy");
                 REQUIRE(fwrite(nativeBytes,1,nativeSize,nativeOutput)==nativeSize,
@@ -361,7 +414,9 @@ int main(void) {
                     "authenticate unchanged staged native member bytes");
             }
             REQUIRE(native_rejects_pc_towns_dungeons(fresh,game,nativeDir,nativeFiles[0],nativeFiles[1],
-                pcOriginal,original,menu,&options,sibling==1 ? M12_ARCH_ATARI_ST : M12_ARCH_AMIGA),
+                pcOriginal,original,menu,&options,sibling==1 ? M12_ARCH_ATARI_ST : M12_ARCH_AMIGA,
+                sibling==1 ? NULL : sibling==2 ? "swoosh" : "VDEO.FTL",
+                sibling==1 ? NULL : hashes[2]),
                 "native original companion compatibility and recovery");
         } else REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) &&
@@ -380,7 +435,7 @@ int main(void) {
                 owner=M12_AssetStatus_GetFirstMatchedVersion(fresh,"dm1");
                 REQUIRE(M12_AssetStatus_GameAvailable(fresh,"dm1") && owner &&
                     strcmp(owner->versionId,phase==0 ? "fmtowns-en" :
-                    phase==1 ? "fmtowns-ja" : sibling==0 ? "pc34-en" : sibling==1 ? "st12-en" : "amiga20-en")==0,"report follows first surviving original edition");
+                    phase==1 ? "fmtowns-ja" : sibling==0 ? "pc34-en" : sibling==1 ? "st12-en" : sibling==2 ? "amiga20-en" : "amiga36-multi")==0,"report follows first surviving original edition");
                 for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
                     const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
                     const char* reported=required->sourcePath[0] ? required->sourcePath : required->matchedPath;

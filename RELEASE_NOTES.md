@@ -7329,3 +7329,9 @@ does not switch to a neighboring copy.
 - Missing-dungeon feedback for explicitly selected original DM1 graphics keeps
   the verified GRAPHICS.DAT receipt instead of incorrectly listing it as missing.
   Incomplete installations remain blocked from startup.
+
+- Validate a selected DM1 installation's dungeon independently in missing-data
+  reports; incompatible original PC/Towns worlds are not shown as verified for
+  Atari/Amiga graphics.
+- Identify missing native startup companions such as A20 `swoosh` and A36
+  `VDEO.FTL` separately from valid graphics and dungeon files.

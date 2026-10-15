@@ -1820,3 +1820,13 @@ world with missing SWSH also needs a dedicated startup-companion diagnostic;
 otherwise both base roles may match while availability is correctly false and
 the menu falls back to generic VERIFIED GAME DATA text. Preserve admission
 and exact selected-source boundaries while fixing these reports.
+
+2026-10-16 selected-owner role follow-up: authentic ST12/A20/A36 originals
+now reproduce and cover incompatible PC/Towns dungeon diagnostics, independently
+verified world receipts, and missing A20 SWSH/A36 VDEO.FTL. Default-world
+identity and startup-companion readiness are separate shared checks; the report
+reuses both without restoring availability or edition matches. Original-data
+menu input identifies the actual missing role. Both scan APIs, explicit runtime
+rejection, restored native starts and mixed surviving-owner reports pass. A22G
+normal/alternate tuple equivalence is source-reviewed; original runtime coverage
+for that tuple and equivalent virtual-archive diagnostics remain open.

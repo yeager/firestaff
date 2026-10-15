@@ -4428,20 +4428,13 @@ static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
     return 1;
 }
 
-static int m12_dm1_complete_default_owner(const char* graphics,
-                                        const char* graphicsMd5,
-                                        char dungeon[ASSET_PATH_MAX]) {
-    static const struct { const char* graphics; const char* swoosh; } amiga[] = {
-        {"491ca939f9abb33ceeb26619b841fe91", "28d406007e99b0ae8da0c6f7fc7f183b"},
-        {"6a2f135b53c2220f0251fa103e2a6e7e", "a0ffbcc7ae8cecac03128ddb32887ef4"},
-        {"dd373954b3fb127db7387946131ea322", "1038138978975415571a878bb08f54be"},
-        {"0679e39da9dcc2e855cb33c6c64ddcb5", "916cb3cd462e7582d2a39c73e40b3339"},
-        {"b35931b55db649a1bd2d415b61b29801", "658db79c6bb87f3ab09eb7005cd91313"}
-    };
-    char parent[FSP_PATH_MAX], actualMd5[33];
+/* LOADSAVE.C F0435 keeps the default world beside its selected graphics.
+ * Verify that role independently from TITLE.C startup companions. */
+static int m12_dm1_default_dungeon_identity(const char* graphics,
+    const char* graphicsMd5, char dungeon[ASSET_PATH_MAX], char actualMd5[33]) {
+    char parent[FSP_PATH_MAX];
     const char* allowed = m12_dm1_loose_dungeon_md5(graphicsMd5);
     const char* match;
-    size_t i;
     int demo = graphicsMd5 &&
         strcmp(graphicsMd5, "491ca939f9abb33ceeb26619b841fe91") == 0;
     if (!allowed || !graphics) return 0;
@@ -4467,28 +4460,52 @@ static int m12_dm1_complete_default_owner(const char* graphics,
     match = strstr(allowed, actualMd5);
     if (!match || (match != allowed && match[-1] != ';') ||
         (match[32] != '\0' && match[32] != ';')) return 0;
+    return 1;
+}
+
+/* Return a static filename only after its selected default world is known.
+ * Admission and diagnostics share the original TITLE.C F0437 pairing table. */
+static const char* m12_dm1_missing_startup_companion(const char* graphics,
+    const char* graphicsMd5, const char* dungeonMd5) {
+    static const struct { const char* graphics; const char* swoosh; } amiga[] = {
+        {"491ca939f9abb33ceeb26619b841fe91", "28d406007e99b0ae8da0c6f7fc7f183b"},
+        {"6a2f135b53c2220f0251fa103e2a6e7e", "a0ffbcc7ae8cecac03128ddb32887ef4"},
+        {"dd373954b3fb127db7387946131ea322", "1038138978975415571a878bb08f54be"},
+        {"0679e39da9dcc2e855cb33c6c64ddcb5", "916cb3cd462e7582d2a39c73e40b3339"},
+        {"b35931b55db649a1bd2d415b61b29801", "658db79c6bb87f3ab09eb7005cd91313"}
+    };
+    size_t i;
     if (strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
-        return m12_dm1_amiga36_package_ready(graphics);
+        return m12_dm1_amiga36_package_ready(graphics) ? NULL : "VDEO.FTL";
     if (strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)
-        return m12_dm1_pc34_multi_has_startup_media(graphics);
-    /* TITLE.C F0437's original edition/SWSH pairing remains authoritative.
-     * A22G shares A20F's SWSH only with its exact original game/dungeon tuple. */
+        return m12_dm1_pc34_multi_has_startup_media(graphics) ? NULL : "SWOOSH";
+    /* A22G shares A20F's SWSH only with its exact game/dungeon tuple. */
     for (i = 0U; i < sizeof(amiga) / sizeof(amiga[0]); ++i) {
         if (strcmp(graphicsMd5, amiga[i].graphics) == 0) {
             char swoosh[ASSET_PATH_MAX], swooshMd5[33];
             if (!csb_v1_amiga_selected_companion(graphics, "swoosh", swoosh, sizeof(swoosh)) ||
-                !asset_file_md5_hex(swoosh, swooshMd5)) return 0;
-            if (strcmp(swooshMd5, amiga[i].swoosh) == 0) return 1;
+                !asset_file_md5_hex(swoosh, swooshMd5)) return "swoosh";
+            if (strcmp(swooshMd5, amiga[i].swoosh) == 0) return NULL;
             if (strcmp(graphicsMd5, "0679e39da9dcc2e855cb33c6c64ddcb5") == 0 &&
-                strcmp(actualMd5, "59e332cf47852d5c7c88a9538f0adcea") == 0 &&
-                strcmp(swooshMd5, "1038138978975415571a878bb08f54be") == 0 &&
-                csb_v1_amiga_selected_companion(graphics, "dm", swoosh, sizeof(swoosh)) &&
-                asset_file_md5_hex(swoosh, swooshMd5) &&
-                strcmp(swooshMd5, "e8fc5da52d69aa61b8b5ac7b2e294ebd") == 0) return 1;
-            return 0;
+                strcmp(dungeonMd5, "59e332cf47852d5c7c88a9538f0adcea") == 0 &&
+                strcmp(swooshMd5, "1038138978975415571a878bb08f54be") == 0) {
+                if (csb_v1_amiga_selected_companion(graphics, "dm", swoosh, sizeof(swoosh)) &&
+                    asset_file_md5_hex(swoosh, swooshMd5) &&
+                    strcmp(swooshMd5, "e8fc5da52d69aa61b8b5ac7b2e294ebd") == 0) return NULL;
+                return "dm";
+            }
+            return "swoosh";
         }
     }
-    return 1;
+    return NULL;
+}
+
+static int m12_dm1_complete_default_owner(const char* graphics,
+                                        const char* graphicsMd5,
+                                        char dungeon[ASSET_PATH_MAX]) {
+    char actualMd5[33];
+    return m12_dm1_default_dungeon_identity(graphics, graphicsMd5, dungeon, actualMd5) &&
+        !m12_dm1_missing_startup_companion(graphics, graphicsMd5, actualMd5);
 }
 
 static const char* m12_effective_required_md5(const M12_RequiredFileSpec* spec) {
@@ -6191,9 +6208,10 @@ static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
 }
 
 /* Rejected startup completeness must not erase a separately authenticated
- * selected graphics file from the missing-file report. This is evidence only:
- * no version row or launch-availability flag is changed. */
-static void m12_report_dm1_selected_loose_graphics(M12_AssetStatus* status,
+ * selected files from the missing-file report. Verify the selected default
+ * world independently and identify missing startup companions. This is evidence
+ * only: no version row or launch-availability flag is changed. */
+static void m12_report_dm1_selected_loose_files(M12_AssetStatus* status,
     int gameIndex, const char* selected) {
     char md5[33];
     size_t i;
@@ -6210,6 +6228,35 @@ static void m12_report_dm1_selected_loose_graphics(M12_AssetStatus* status,
         m12_copy_string(file->matchedHash, sizeof(file->matchedHash), md5);
         status->originalFileCandidateFound = 1;
         break;
+    }
+    if (m12_dm1_loose_dungeon_md5(md5)) {
+        char dungeon[ASSET_PATH_MAX], dungeonMd5[33];
+        int valid = m12_dm1_default_dungeon_identity(selected, md5, dungeon, dungeonMd5);
+        for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+            M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex][i];
+            if (!file->roleId || strcmp(file->roleId, "dungeon") != 0) continue;
+            file->matched = valid;
+            file->matchedPath[0] = file->sourcePath[0] = file->matchedHash[0] = '\0';
+            if (valid) {
+                m12_copy_string(file->matchedPath, sizeof(file->matchedPath), dungeon);
+                m12_copy_string(file->sourcePath, sizeof(file->sourcePath), dungeon);
+                m12_copy_string(file->matchedHash, sizeof(file->matchedHash), dungeonMd5);
+            }
+            break;
+        }
+        if (valid) {
+            const char* missing = m12_dm1_missing_startup_companion(selected, md5, dungeonMd5);
+            if (missing && status->requiredFileCounts[gameIndex] < M12_ASSET_MAX_REQUIRED_FILES_PER_GAME) {
+                M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex]
+                    [status->requiredFileCounts[gameIndex]++];
+                memset(file, 0, sizeof(*file));
+                file->gameId = "dm1";
+                file->roleId = "startup-companion";
+                file->label = missing;
+                file->required = 1;
+                m12_copy_string(file->sourcePath, sizeof(file->sourcePath), selected);
+            }
+        }
     }
 }
 
@@ -8151,7 +8198,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
         m12_normalize_dm2_runtime_owner(status, i);
         m12_preserve_dm1_game_data_root(status, i);
-        m12_report_dm1_selected_loose_graphics(status, i, requestedDataDir);
+        m12_report_dm1_selected_loose_files(status, i, requestedDataDir);
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "refreshing media metadata",
@@ -8591,7 +8638,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);
     m12_normalize_dm2_runtime_owner(status, gameIndex);
     m12_preserve_dm1_game_data_root(status, gameIndex);
-    m12_report_dm1_selected_loose_graphics(status, gameIndex, requestedDataDir);
+    m12_report_dm1_selected_loose_files(status, gameIndex, requestedDataDir);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
         m12_refresh_theron_track02_loader_receipt(status);
