@@ -10,7 +10,7 @@
  */
 
 #include "dm2_v1_runtime.h"
-#include "dm2_v1_skproject_core.h"
+#include "dm2_v1_drops.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_weather.h"
 #include <stdio.h>
@@ -31,24 +31,24 @@ static int failed;
 
 static void test_fresh_weather_bootstrap_rng_receipt(void)
 {
-    DM2_V1_SkprojectRandomData randdat = {0};
-    uint16_t first_timer_delay;
-    uint8_t wind_direction;
-    uint16_t cloud_timer;
+    DM2_V1_UpdateWeatherState state = {0};
+    DM2_V1_WeatherTransitionReceipt receipt = {0};
+    DM2_V1_DropRng rng = {0};
 
-    dm2_v1_skproject_random_init(&randdat);
-    first_timer_delay = dm2_v1_skproject_rand16(&randdat, 500u);
-    wind_direction = dm2_v1_skproject_randdir(&randdat);
-    cloud_timer = (uint16_t)(dm2_v1_skproject_rand16(&randdat, 4u) + 4u);
-
-    CHECK(first_timer_delay == 0u,
+    /* ddat.init() sets v1d7188 to one on New Game, selecting the source's
+     * forced-storm bootstrap branch. */
+    state.storm_request = 1;
+    CHECK(dm2_v1_weather_transition(&state, 0, 0, &rng, &receipt) == 0,
+          "fresh source transition returns zero elapsed days");
+    CHECK(receipt.valid && receipt.reseeded && receipt.storm_path,
+          "fresh source transition follows the forced-storm bootstrap");
+    CHECK(receipt.queue_delay == 0,
           "fresh weather bootstrap schedules its first timer at tick zero");
-    CHECK(wind_direction == 3u,
-          "fresh weather bootstrap derives v1e1483 from the second LCG draw");
-    CHECK(cloud_timer == 6u,
-          "fresh weather bootstrap derives v1e1470 from the third LCG draw");
-    CHECK(randdat.random == 0x11cfaefdu,
-          "fresh weather bootstrap consumes exactly three source LCG draws");
+    CHECK(receipt.pattern_row == 3 && receipt.step == 1 &&
+              state.wind_dir == 3 && receipt.cloud_timer == 6,
+          "fresh source transition stores the expected pattern, wind and cloud timer");
+    CHECK(receipt.draws == 3 && rng.random == 0x11cfaefdu,
+          "fresh source transition consumes exactly three source LCG draws");
 }
 
 static void test_weather_seed_advances_with_reproducible_lcg(void)
