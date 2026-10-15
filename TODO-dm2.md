@@ -22,6 +22,19 @@ the returned head. Candidate traversal must reread mutated links rather than
 `dm2_v1_dungeon_get_next_thing` on the immutable input graph.
 
 
+2026-10-15 post-arrangement RNG audit at the same pinned SKProject commit:
+`SKULLWIN/startend.cpp:1194-1195` calls LOAD_NEWMAP then RESET_CAII.
+`c_loadlevel.cpp:1357-1362` conditionally fills current-map CAII;
+RESET_CAII also reaches FILL_ORPHAN_CAII, which visits maps in ascending
+order (`c_1c9a.cpp:10005-10019`). Normal creature allocation reaches
+CREATURE_SOMETHING and animation selection. Its DM2_4FCC branch draws RAND
+when the animation entry's high nibble is nonzero and its low nibble is not
+0xF (`c_creature.cpp:3354-3359`). AI-spec bit0-set animation lookup returns
+early and does not reach that RAND site. Preserve these gates and repeated
+candidate draws; counting allocation calls alone cannot reconstruct RNG.
+This establishes an additional conditional RNG phase, not the complete
+pre-weather or post-arrangement stream. No runtime arrangement is enabled.
+
 2026-10-15 SKProject cold-start order check: `main.cpp` calls
 `randdat.init()` before the menu loop, and `c_random.cpp` sets its LCG state to
 zero. The no-save New Game path in `c_savegame.cpp::DM2_GAME_LOAD` loads the
