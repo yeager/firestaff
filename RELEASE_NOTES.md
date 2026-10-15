@@ -8,7 +8,7 @@
 
 ## Developer changes
 
-- `DM2 record linking`: reject a missing parent pointer before modifying the original next link; verified with authentic DOS and FM Towns dungeon records.
+- `DM2 record linking`: preserve original dungeon bytes when rejecting missing parents, invalid parent chains or invalid destinations; verified with authentic DOS and FM Towns records.
 
 - `DM1 FM Towns wall host routing`: use native layout-696 crops for front and side walls; restore the source one-VBlank entrance-door wait. Original-media startup probes and route/crop unit checks cover this change; complete visual parity remains open.
 

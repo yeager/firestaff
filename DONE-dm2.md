@@ -1,5 +1,13 @@
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
 
+- 2026-10-15: Extended append rejection rollback to invalid parent chains
+  and invalid tile destinations. Original DOS and FM Towns dungeon tests
+  reproduce both failures before the change and now verify byte-for-byte
+  preservation for missing parents, invalid chains and invalid tiles.
+  Column-index writes are checked before ground-root insertion so a later
+  bounds rejection cannot leave a moved table. The existing loader gate
+  continues to pass all 125 checks.
+
 - 2026-10-15: Fixed rejected parent-link append mutating dungeon records.
   `dm2_v1_skproject_append_record_to` now checks a missing parent pointer
   before replacing the appended record's next link with END_MARKER.

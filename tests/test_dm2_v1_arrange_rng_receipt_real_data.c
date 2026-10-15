@@ -67,12 +67,40 @@ static int check_rejected_append_preserves_original(DM2_V1_DungeonData *dungeon)
                 next = dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)link);
                 if (next < 0 || next == DM2_THING_END_MARKER ||
                     next == DM2_THING_NULL_MARKER) continue;
-                return check(
-                    !dm2_v1_skproject_append_record_to(
-                        dungeon, (uint16_t)link, NULL, map, -1, -1, &receipt) &&
-                    receipt.blocked_invalid_parent &&
-                    dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)link) == next,
-                    "rejected parent-link append preserves original next link");
+                {
+                    uint8_t *snapshot = malloc((size_t)dungeon->raw_size);
+                    uint16_t invalid_parent = DM2_THING_NULL_MARKER;
+                    int failures = 0;
+                    if (!snapshot) return 1;
+                    memcpy(snapshot, dungeon->raw_data, (size_t)dungeon->raw_size);
+                    failures += check(
+                        !dm2_v1_skproject_append_record_to(
+                            dungeon, (uint16_t)link, NULL, map, -1, -1, &receipt) &&
+                        receipt.blocked_invalid_parent &&
+                        memcmp(snapshot, dungeon->raw_data,
+                               (size_t)dungeon->raw_size) == 0,
+                        "missing append parent preserves original dungeon bytes");
+                    memcpy(dungeon->raw_data, snapshot, (size_t)dungeon->raw_size);
+                    failures += check(
+                        !dm2_v1_skproject_append_record_to(
+                            dungeon, (uint16_t)link, &invalid_parent, map,
+                            -1, -1, &receipt) && receipt.blocked_unbounded_graph &&
+                        memcmp(snapshot, dungeon->raw_data,
+                               (size_t)dungeon->raw_size) == 0 &&
+                        invalid_parent == DM2_THING_NULL_MARKER,
+                        "invalid append chain preserves original dungeon bytes");
+                    memcpy(dungeon->raw_data, snapshot, (size_t)dungeon->raw_size);
+                    failures += check(
+                        !dm2_v1_skproject_append_record_to(
+                            dungeon, (uint16_t)link, NULL, dungeon->level_count,
+                            0, 0, &receipt) && receipt.blocked_invalid_tile &&
+                        memcmp(snapshot, dungeon->raw_data,
+                               (size_t)dungeon->raw_size) == 0,
+                        "invalid append tile preserves original dungeon bytes");
+                    memcpy(dungeon->raw_data, snapshot, (size_t)dungeon->raw_size);
+                    free(snapshot);
+                    return failures;
+                }
             }
         }
     }

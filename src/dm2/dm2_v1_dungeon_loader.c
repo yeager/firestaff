@@ -1930,11 +1930,6 @@ int dm2_v1_skproject_append_record_to(
         int steps = 0;
         int max_steps = 0;
 
-        if (!parent_link || !d) {
-            receipt.blocked_invalid_parent = 1;
-            *out = receipt;
-            return 0;
-        }
         for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type)
             max_steps += d->thing_type_counts[type] +
                          d->g1_extension_record_counts[type];
@@ -1955,8 +1950,7 @@ int dm2_v1_skproject_append_record_to(
             uint16_t next;
             if (!record || ++steps > max_steps) {
                 receipt.blocked_unbounded_graph = 1;
-                *out = receipt;
-                return 0;
+                goto reject;
             }
             next = dm2_v1_dungeon_rd16(d, record);
             if (next == DM2_THING_END_MARKER) {
@@ -1975,8 +1969,7 @@ int dm2_v1_skproject_append_record_to(
     if (!d || !d->raw_data || square_offset < 0 ||
         d->square_first_thing_count <= 0) {
         receipt.blocked_invalid_tile = 1;
-        *out = receipt;
-        return 0;
+        goto reject;
     }
 
     if ((d->raw_data[square_offset] & 0x10u) != 0u) {
@@ -1987,8 +1980,7 @@ int dm2_v1_skproject_append_record_to(
 
         if (first < 0 || first == (int)DM2_THING_END_MARKER) {
             receipt.blocked_invalid_tile = 1;
-            *out = receipt;
-            return 0;
+            goto reject;
         }
         for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type)
             max_steps += d->thing_type_counts[type] +
@@ -2002,8 +1994,7 @@ int dm2_v1_skproject_append_record_to(
             uint16_t next;
             if (!record || ++steps > max_steps) {
                 receipt.blocked_unbounded_graph = 1;
-                *out = receipt;
-                return 0;
+                goto reject;
             }
             next = dm2_v1_dungeon_rd16(d, record);
             if (next == DM2_THING_END_MARKER) {
@@ -2026,8 +2017,7 @@ int dm2_v1_skproject_append_record_to(
         if (!dm2_v1_dungeon_compute_object_index_for_square(
                 d, level, x, y, &object_index, &object_index_offset)) {
             receipt.blocked_invalid_tile = 1;
-            *out = receipt;
-            return 0;
+            goto reject;
         }
         last_offset = d->square_first_thing_base +
                       (d->square_first_thing_count - 1) * 2;
@@ -2035,8 +2025,18 @@ int dm2_v1_skproject_append_record_to(
             dm2_v1_dungeon_rd16(d, d->raw_data + last_offset) !=
                 DM2_THING_NULL_MARKER) {
             receipt.blocked_no_ground_stack_space = 1;
-            *out = receipt;
-            return 0;
+            goto reject;
+        }
+        /* Validate all column writes before moving the table. A rejected
+         * host request must not publish a partially inserted ground root. */
+        column_base = dm2_v1_dungeon_column_base_index(d, level);
+        total_columns = dm2_v1_dungeon_total_columns(d);
+        for (int col = column_base + x + 1; col < total_columns; ++col) {
+            int offset = d->column_index_base + col * 2;
+            if (offset < 0 || offset + 1 >= d->raw_size) {
+                receipt.blocked_invalid_tile = 1;
+                goto reject;
+            }
         }
         memmove(d->raw_data + object_index_offset + 2,
                 d->raw_data + object_index_offset,
@@ -2047,16 +2047,9 @@ int dm2_v1_skproject_append_record_to(
             (uint8_t)(record_to_append >> 8);
         d->raw_data[square_offset] |= 0x10u;
 
-        column_base = dm2_v1_dungeon_column_base_index(d, level);
-        total_columns = dm2_v1_dungeon_total_columns(d);
         for (int col = column_base + x + 1; col < total_columns; ++col) {
             int offset = d->column_index_base + col * 2;
             uint16_t value;
-            if (offset < 0 || offset + 1 >= d->raw_size) {
-                receipt.blocked_invalid_tile = 1;
-                *out = receipt;
-                return 0;
-            }
             value = (uint16_t)(dm2_v1_dungeon_rd16(
                 d, d->raw_data + offset) + 1u);
             dm2_v1_dungeon_wr16(d, d->raw_data + offset, value);
@@ -2074,6 +2067,8 @@ int dm2_v1_skproject_append_record_to(
     }
 
     receipt.blocked_unbounded_graph = 1;
+reject:
+    dm2_v1_dungeon_wr16(d, append_record, receipt.appended_previous_next);
     *out = receipt;
     return 0;
 }
