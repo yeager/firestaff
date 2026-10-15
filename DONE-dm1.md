@@ -1,3 +1,15 @@
+- 2026-10-15: Restore F0125/F0126's terminal D0L/D0R wall material
+  callbacks in their source scheduler transactions. The original PC34 Hall
+  start (1,3,S) and one accepted forward step (1,4,S) each draw both native
+  C716/C717 rectangles, including all opaque pixels, both wall parities,
+  VGA bank 16 and the current source G9010 RGB palette. Remove the unrelated
+  host poison-label fallback clear that erased viewport rows
+  33..43. CLI captures confirm both real poses. Original A20E/Atari 1.2
+  material and interaction regressions also pass. The old emulator image0004
+  has an unproven pose: diagnostic RGB overlap is now 29,805/30,464 viewport
+  pixels, with the 659 differences confined to x60..77,y52..123. This is not
+  a parity claim. New Towns/A36 live D0 execution evidence remains open.
+
 - 2026-10-15: Desktop A36 readiness and preparation now require the
   authenticated VDEO.FTL driver beside the selected graphics and dungeon,
   preserving the exact loose directory or nested virtual disk. Missing or

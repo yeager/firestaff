@@ -63818,6 +63818,32 @@ static void m11_dm1_f0128_execute_source_step(
     if (dispatch->executionPhase == M11_DM1_F0128_EXECUTE_D0_BEFORE_THINGS &&
         (step->square == DM1_V1_F0128_VIEW_SQUARE_D0L ||
          step->square == DM1_V1_F0128_VIEW_SQUARE_D0R)) {
+        if (step->op == DM1_V1_F0128_STEP_F0104_WALL_MATERIAL) {
+            DM1_ViewportSideWallHostReceiptPc34 receipt;
+            DM1_ViewportLaneVisibilityReceiptPc34 visibility =
+                dm1_viewport_3d_lane_visibility_from_cells_pc34(
+                    NULL, NULL, NULL, NULL, NULL);
+            const DM1_ViewSquareIndex square = relSide < 0
+                ? DM1_VIEW_SQUARE_D0L : DM1_VIEW_SQUARE_D0R;
+            int wallSet;
+            /* F0125/F0126 terminate on a wall after its own F0104/F0105
+             * (C716/C717). D0 has no forward-lane occlusion gate. Keep the
+             * native edition endpoint and source parity selection shared
+             * with the other wall callbacks, in this square's transaction. */
+            if (m11_current_map_wall_set(dispatch->state, &wallSet) &&
+                dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+                    square, wallSet, m11_dm1_use_flipped_walls(dispatch->state),
+                    true, false, 0, &visibility, &receipt) &&
+                m11_draw_dm1_side_wall_host_receipt(
+                    dispatch->state, dispatch->framebuffer,
+                    dispatch->framebufferWidth, dispatch->framebufferHeight,
+                    &receipt)) {
+                ++s_m11_dm1_f0128_per_square_scheduler_receipt
+                    .d0WallMaterialCallbackStepCount;
+                ++dispatch->rasterStepCount;
+            }
+            return;
+        }
         if (step->op == DM1_V1_F0128_STEP_F0115_MAIN) {
             m11_draw_dm1_d0_side_f0115_creatures(
                 dispatch->state, dispatch->framebuffer,
@@ -65693,12 +65719,11 @@ static void m11_clear_dm1_v1_top_row_receipt_zones(unsigned char* framebuffer,
                           iconRect.x, iconRect.y, iconRect.w, iconRect.h,
                           M11_COLOR_BLACK);
         }
-        if (dm1_v1_champion_poison_label_rect_pc34(slot, 96, 15,
-                                                    &statusRect)) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          statusRect.x, statusRect.y,
-                          statusRect.w, statusRect.h, M11_COLOR_BLACK);
-        }
+        /* CHAMDRAW.C F0292:908-920 marks poison through the inventory mouth
+         * slot; F0293:1134-1138 redraws only actual party champions.
+         * The host's optional poison label below the status box is not a
+         * source top-row surface. Clearing it here erases viewport rows
+         * 33..43 after F0128, even in the empty initial Hall of Champions. */
         if (dm1_v1_champion_damage_indicator_rect_pc34(slot, 45, 7,
                                                         &statusRect)) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,

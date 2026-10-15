@@ -2,6 +2,12 @@
 
 ## User-facing changes
 
+- `DM1 near walls`: restore the two walls beside the party in source
+  rendering order. Stop an inventory-only fallback clear from erasing the
+  viewport's top rows. Original PC34 startup and one accepted movement pass
+  native pixel and palette checks; remaining D2-strip differences and
+  Towns/A36 live verification remain under investigation.
+
 - `DM1 Amiga 3.6 media`: require the original video driver beside the selected
   game files before reporting ready. Skip incomplete duplicate installations
   without borrowing files from another copy. Native French/German filename

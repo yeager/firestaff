@@ -3610,6 +3610,7 @@ typedef struct M11_Dm1F0128PerSquareSchedulerReceipt {
     int stepCount;                /* merged plan step count */
     unsigned long scheduleHash;   /* plan FNV-1a receipt hash */
     int f0115ContentSquareCount;  /* of D3L..D1C, squares with an F0115 step */
+    int d0WallMaterialCallbackStepCount; /* F0125/F0126 terminal wall material */
     int d0PrimitiveCallbackStepCount; /* F0125-F0127 primitives rasterized by the scheduler callback */
     int d0SideThingFieldCallbackStepCount; /* F0125/F0126 F0115 creature and F0113 field steps */
     int d0ThingCallbackStepCount; /* F0127 D0C F0115 item/projectile/explosion transaction */

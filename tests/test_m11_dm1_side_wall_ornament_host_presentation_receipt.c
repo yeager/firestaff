@@ -3,6 +3,7 @@
 #include "render_sdl_m11.h"
 #include "asset_status_m12.h"
 #include "memory_combat_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +49,67 @@ static int check_original_door_orientation(const M11_GameLaunchSpec* spec,
 done:
     if(!ok)fprintf(stderr,"FAIL: original %s actual door orientation route\n",edition);
     M11_GameView_Shutdown(state);free(state);return ok;
+}
+
+/* Original HoC world and material bytes, through the full production Draw.
+ * Advance once using accepted input to change source wall parity. */
+static int check_original_pc34_d0_walls(const M11_GameLaunchSpec* spec)
+{
+    M11_GameViewState* state = calloc(1, sizeof(*state));
+    unsigned char framebuffer[64000];
+    int ok = 0;
+    if (!state) return 0;
+    M11_GameView_Init(state);
+    if (!M11_GameView_Start(state, spec) || !state->world.dungeon) goto done;
+    for (int pose = 0; pose < 2; ++pose) {
+        M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+        const int px = state->world.party.mapX;
+        const int py = state->world.party.mapY;
+        const int parity = (px + py + state->world.party.direction) & 1;
+        const int height = state->world.dungeon->maps[0].height;
+        int walls = 0;
+        if (px != 1 || py != 3 + pose || state->world.party.direction != 2) goto done;
+        M11_GameView_Draw(state, framebuffer, 320, 200);
+        M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(&receipt);
+        {
+            uint8_t rgb8[256][3];
+            const int level = M11_GameView_GetDungeonPaletteIndex(state);
+            if (level < 0 || level > 5 || !M11_Render_CopyIndexedPaletteRgb8(rgb8)) goto done;
+            for (int color = 0; color < 16; ++color) for (int channel = 0; channel < 3; ++channel) {
+                const unsigned int dac = G9010_auc_VgaPaletteAll_Compat[level][color][channel] >> 2;
+                if (rgb8[color + 16][channel] != (unsigned char)((dac << 2) | (dac >> 4))) goto done;
+            }
+        }
+        for (int right = 0; right < 2; ++right) {
+            const int mx = right ? px - 1 : px + 1;
+            const unsigned char square = state->world.dungeon->tiles[0].squareData[mx * height + py];
+            const unsigned int graphic = parity ? (right ? 94u : 93u) : (right ? 93u : 94u);
+            const M11_AssetSlot* slot;
+            const int left = right ? 191 : 0;
+            if ((square >> 5) != DUNGEON_ELEMENT_WALL) continue;
+            ++walls;
+            slot = M11_AssetLoader_Load(&state->assetLoader, graphic);
+            if (!slot || slot->width != 33 || slot->height != 136) goto done;
+            /* I34E VIDEODRV.C F8161 adds16 to C007 viewport indices;
+             * assert the source-owned bank as well as all material nibbles. */
+            for (int y = 0; y < 136; ++y) for (int x = 0; x < 33; ++x) {
+                const unsigned char pixel = slot->pixels[y * 33 + (parity ? 32 - x : x)];
+                if (pixel != 10 && framebuffer[(33 + y) * 320 + left + x] != (unsigned char)(pixel + 16)) {
+                    fprintf(stderr, "PC34 D0 parity%d side%d pixel%d,%d got%u expected%u callbacks%d mismatch\n", parity, right, x, y, framebuffer[(33 + y) * 320 + left + x], pixel, receipt.d0WallMaterialCallbackStepCount);
+                    goto done;
+                }
+            }
+        }
+        if (!walls || receipt.d0WallMaterialCallbackStepCount != walls) goto done;
+        printf("PASS: original PC34 HoC(%d,%d,S) parity%d D0 wall callbacks%d, complete native C716/C717 pixels\n", px, py, parity, walls);
+        if (!pose && M11_GameView_HandleInput(state, M12_MENU_INPUT_UP) != M11_GAME_INPUT_REDRAW) goto done;
+    }
+    ok = 1;
+done:
+    if (!ok) fprintf(stderr, "FAIL: original PC34 D0 wall production route\n");
+    M11_GameView_Shutdown(state);
+    free(state);
+    return ok;
 }
 
 static const char* pc34_graphics_path(void)
@@ -687,7 +749,8 @@ int main(void)
         spec.dataDir=getenv("FIRESTAFF_DM1_DATA_DIR");
         spec.verifiedAssetPath=graphicsPath;
         spec.verifiedAssetMd5="fa6b1aa29e191418713bf2cda93d962e";
-        if(!check_original_door_orientation(&spec,"PC34"))return 1;
+        if(!check_original_door_orientation(&spec,"PC34") ||
+           !check_original_pc34_d0_walls(&spec))return 1;
     }
     M11_GameView_Init(&state);
     if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {

@@ -8,6 +8,17 @@ for their native runtime/startup gaps before claiming all-platform support.
 PC-9821 support remains excluded by user instruction. Native Windows/Linux
 and a physically active HiDPI display require separate execution evidence.
 
+2026-10-15 PC34 near walls: source D0L/D0R callbacks and the unrelated
+inventory poison-label fallback clear are corrected. Original full Draw
+checks at (1,3,S) and after one real forward step verify both native wall
+rectangles, source parity, complete VGA bank ownership and RGB palette.
+Retain the first-view viewport follow-up: image0004's emulator pose is still
+unproven. Diagnostic comparison leaves 659 differing pixels entirely within
+x60..77,y52..123, the exposed D2L strip; audit native records 101/100,
+C710/F0119 crops, parity and source overpainting before changing it. Add
+actual Towns/A36 D0 runtime checks before extending this execution claim to
+those editions. A20E/Atari regression passes do not establish full parity.
+
 2026-10-15 A36 package ownership: desktop READY/preparation now require
 same-owner authenticated graphics, VDEO.FTL and DUNGEON.DAT. Original bytes
 for all three dungeon languages pass the explicit DUNGEON.DAT role; missing
