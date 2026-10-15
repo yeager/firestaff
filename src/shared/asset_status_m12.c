@@ -6102,9 +6102,10 @@ static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
     townsLanguage = m12_dm1_towns_graphics_language(md5);
     if (!m12_dm1_loose_dungeon_md5(md5) && townsLanguage < 0) return;
     if (townsLanguage >= 0) {
-        char startupRoot[M12_ASSET_DATA_DIR_CAPACITY];
-        ownerReady = m12_dm1_towns_loose_launcher_ready(selected, townsLanguage, startupRoot) &&
-            m12_dm1_towns_loose_dungeon_ready(selected, townsLanguage);
+        /* Retain authenticated graphics evidence for the required-file
+         * report. Native admission below rejects this exact owner before
+         * materialization when its programs or language dungeon are absent. */
+        ownerReady = 1;
     } else {
         ownerReady = m12_dm1_complete_loose_owner(selected, md5, dungeon);
     }

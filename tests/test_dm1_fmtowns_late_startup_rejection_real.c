@@ -21,6 +21,24 @@ unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 #define REQUIRE(c,m) do { if (!(c)) { fprintf(stderr,"FAIL: %s\n",m); goto cleanup; } } while (0)
 
+#ifndef _WIN32
+static int menu_reports_missing_companion(M12_StartupMenuState* menu,
+                                           const char* selectedGraphics,
+                                           const M12_StartupMenuInitOptions* options,
+                                           const char* missing) {
+    M12_StartupMenu_Destroy(menu);
+    M12_StartupMenu_InitWithOptions(menu,selectedGraphics,"dm1",options);
+    menu->view=M12_MENU_VIEW_MAIN;
+    menu->selectedIndex=0;
+    menu->gameOptions[0].architectureIndex=M12_ARCH_FM_TOWNS;
+    M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+    return menu->messageIsMissingGameData && !menu->launchRequested &&
+        menu->messageLine2 && strstr(menu->messageLine2,missing) &&
+        !strstr(menu->messageLine2,"GRAPHICS.DAT");
+}
+#endif
+
 int main(void) {
 #ifdef _WIN32
     puts("SKIP: native FM Towns source staging requires symlinks");
@@ -321,9 +339,66 @@ int main(void) {
         REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched &&
             !M12_AssetStatus_GameAvailable(fresh,"dm1"),
             "explicit incomplete native graphics cannot select complete duplicate");
+        {
+            int scanMode, wrongLanguage;
+            for (wrongLanguage=0; wrongLanguage<2; ++wrongLanguage) {
+                if (wrongLanguage) REQUIRE(FSP_JoinPath(source,sizeof(source),original,"JDATA/DUNGEON.DAT") &&
+                    FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+                    symlink(physical,destination)==0,"stage wrong original language dungeon for explicit diagnostics");
+                for (scanMode=0; scanMode<2; ++scanMode) {
+                    int graphicsFound=0, dungeonMissing=0;
+                    if (scanMode==0) M12_AssetStatus_ScanGame(fresh,selectedGraphics,"dm1");
+                    else M12_AssetStatus_Scan(fresh,selectedGraphics);
+                    REQUIRE(!M12_AssetStatus_GameAvailable(fresh,"dm1") &&
+                        !M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched,
+                        "explicit missing-dungeon diagnostics never admit another source");
+                    for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
+                        const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
+                        if (strcmp(required->roleId,"graphics")==0)
+                            graphicsFound=required->matched && strcmp(required->matchedPath,selectedGraphics)==0;
+                        if (strcmp(required->roleId,"dungeon")==0)
+                            dungeonMissing=required->required && !required->matched;
+                    }
+                    REQUIRE(graphicsFound && dungeonMissing,
+                        "explicit incomplete source reports found graphics and missing dungeon");
+                }
+                REQUIRE(menu_reports_missing_companion(menu,selectedGraphics,&options,"DUNGEON.DAT"),
+                    "normal menu input reports missing dungeon without claiming graphics are missing");
+            }
+            REQUIRE(unlink(destination)==0,"remove only staged wrong-language dungeon link");
+        }
         REQUIRE(FSP_JoinPath(source,sizeof(source),original,"DATA/DUNGEON.DAT") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
             symlink(physical,destination)==0,"restore explicit owner's original dungeon");
+        REQUIRE(unlink(menuProgram)==0,"remove explicit owner's native menu program");
+        {
+            int scanMode;
+            for (scanMode=0; scanMode<2; ++scanMode) {
+                int graphicsFound=0, dungeonFound=0, launcherMissing=0;
+                if (scanMode==0) M12_AssetStatus_ScanGame(fresh,selectedGraphics,"dm1");
+                else M12_AssetStatus_Scan(fresh,selectedGraphics);
+                REQUIRE(!M12_AssetStatus_GameAvailable(fresh,"dm1") &&
+                    !M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched,
+                    "explicit missing-program diagnostics never admit duplicate installation");
+                for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
+                    const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
+                    if (strcmp(required->roleId,"graphics")==0)
+                        graphicsFound=required->matched && strcmp(required->matchedPath,selectedGraphics)==0;
+                    if (strcmp(required->roleId,"dungeon")==0)
+                        dungeonFound=required->matched && strcmp(required->matchedPath,destination)==0;
+                    if (strcmp(required->roleId,"native-launcher")==0)
+                        launcherMissing=required->required && !required->matched &&
+                            required->label && strstr(required->label,"TMENU.EXP");
+                }
+                REQUIRE(graphicsFound && dungeonFound && launcherMissing,
+                    "explicit missing-program source reports graphics/dungeon found and native menu missing");
+            }
+        }
+        REQUIRE(menu_reports_missing_companion(menu,selectedGraphics,&options,"TMENU.EXP"),
+            "normal menu input identifies missing native menu program");
+        REQUIRE(FSP_JoinPath(source,sizeof(source),original,"TMENU.EXP") &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+            symlink(physical,menuProgram)==0,"restore explicit owner's native menu program");
     }
     REQUIRE(FSP_JoinPath(destination,sizeof(destination),data,"DUNGEON.DAT") &&
         unlink(destination)==0,"remove first owner's dungeon beside complete duplicate");

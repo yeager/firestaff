@@ -1723,10 +1723,21 @@ Cross-root runtime evidence and native Windows staging remain separate gaps.
 2026-10-15 explicit Towns file selection: complete loose GRAPHICS.DAT requests
 retain their exact owner; incomplete requested owners reject without selecting
 a neighboring complete copy. Original-data scan and runtime assertions pass.
-Improve missing-companion feedback: a rejected explicit file may currently
-show the generic missing-graphics explanation rather than native program or
-dungeon detail. Mixed loose Towns/PC34 English reports now refresh graphics
+Explicit Towns missing-companion feedback now retains authenticated graphics
+and identifies missing/wrong-language dungeon data or native programs; normal
+menu input and both scan APIs have original-data coverage. Extend equivalent
+feedback to other native owners and mixed-collection selected-edition failures.
+Mixed loose Towns/PC34 English reports now refresh graphics
 and dungeon provenance after incomplete native owners are removed. Both the
 full inventory and selected-game scan have authentic EN→JP→PC coverage.
 Other editions' companion report ownership and native Windows original-media
 staging remain separate verification work.
+
+2026-10-16 source audit follow-up: explicit PC34 multilingual graphics
+(`f934d97e43e1ba6e5159839acbcd0611`) are still outside the terminal loose-owner
+selector and preservation guards. A parent scan can therefore retain a
+neighboring English/Towns edition; M11 also lacks the English route's strict
+multilingual dungeon binding. Reproduce using unchanged French EUDATA and
+English PC34 archive members, preserving the multilingual swoosh dependency.
+Require exact selected-file ownership and rejection after its dungeon is
+removed. This is source evidence, not yet an executed regression.

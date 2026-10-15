@@ -7285,3 +7285,10 @@ from the surviving original installation. Removing an English or Japanese
 Towns launcher no longer leaves that edition's dungeon listed beside the
 next playable edition. The same checks apply to the start menu's full scan
 and game-specific discovery.
+
+### Missing native companions
+
+Explicit DM1 FM Towns file selections now report missing dungeon data or
+native startup programs without incorrectly listing a verified GRAPHICS.DAT
+as missing. The menu continues to block the incomplete installation and
+does not switch to a neighboring copy.
