@@ -1,3 +1,13 @@
+- 2026-10-15: Added transactional arrangement serialization/reload. A private
+  raw dungeon receives validated pool/extension spans and map columns, then
+  the existing loader regenerates caches. Exact pool/tile comparison and
+  bounded full tile-chain traversal precede publication, including LE editions
+  whose generic loader admission only checks roots. Original DOS EN, FM Towns,
+  Mac and Amiga tests pass; truncated tiles, forged spans, cyclic chains and
+  occupied outputs reject without changing callers. The test also checks the
+  active SKULLWIN cold-weather final seed 0x11cfaefd, zero queue delay, wind 3
+  and cloud timer 6. This remains outside the production archive.
+
 - 2026-10-15: Loose-media arrangement tests now require a supported original
   graphics/dungeon hash pair, matching archive admission. DOS EN and FM Towns
   checks pass and report both source hashes.

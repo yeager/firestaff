@@ -133,6 +133,76 @@ static int original_pool_bytes_equal(const DM2_V1_RecordPoolSet *a,
     return 1;
 }
 
+static int check_arranged_reload(const DM2_V1_DungeonData *source,
+                                  DM2_V1_ArrangeDungeonOwner *arranged)
+{
+    DM2_V1_DungeonData loaded = {0}, rejected = {0};
+    DM2_V1_RecordPoolSet pools = {0};
+    int failures = 0;
+    size_t original_count = arranged->tile_count;
+    failures += check(dm2_v1_arrange_dungeon_owner_reload(
+        source,arranged,&loaded) && loaded.record_graph_complete &&
+        loaded.raw_data != source->raw_data &&
+        dm2_v1_record_pool_set_init_from_dungeon(&pools,&loaded) &&
+        original_pool_bytes_equal(&pools,&arranged->pools),
+        "arranged raw dungeon reload preserves every candidate pool byte");
+    if (loaded.raw_data) {
+        int tiles_match = 1;
+        for (int m = 0; m < loaded.level_count; ++m)
+            for (int x = 0; x < loaded.level_widths[m]; ++x)
+                for (int y = 0; y < loaded.level_heights[m]; ++y)
+                    if (dm2_v1_dungeon_get_tile_raw(&loaded,m,x,y) !=
+                        arranged->tiles[arranged->map_offsets[m] +
+                            x * loaded.level_heights[m] + y]) tiles_match = 0;
+        failures += check(tiles_match,
+            "arranged raw dungeon reload preserves every candidate tile");
+        uint8_t *before = loaded.raw_data;
+        failures += check(!dm2_v1_arrange_dungeon_owner_reload(
+            source,arranged,&loaded) && loaded.raw_data == before,
+            "occupied dungeon output is preserved on rejection");
+    }
+    arranged->tile_count = original_count - 1;
+    failures += check(!dm2_v1_arrange_dungeon_owner_reload(
+        source,arranged,&rejected) && !rejected.raw_data,
+        "truncated tile candidate rejects without publishing a dungeon");
+    arranged->tile_count = original_count;
+    {
+        int base = arranged->pools.pools[4].source_base;
+        arranged->pools.pools[4].source_base = source->raw_size;
+        failures += check(!dm2_v1_arrange_dungeon_owner_reload(
+            source,arranged,&rejected) && !rejected.raw_data,
+            "forged pool span rejects without publishing a dungeon");
+        arranged->pools.pools[4].source_base = base;
+    }
+    {
+        int tested = 0;
+        for (int m = 0; m < source->level_count && !tested; ++m)
+            for (int x = 0; x < source->level_widths[m] && !tested; ++x)
+                for (int y = 0; y < source->level_heights[m] && !tested; ++y) {
+                    int root = dm2_v1_dungeon_get_first_thing(source,m,x,y);
+                    uint8_t *record;
+                    uint8_t saved[2];
+                    if (root < 0 || root == DM2_THING_END_MARKER ||
+                        root == DM2_THING_NULL_MARKER) continue;
+                    record = dm2_v1_record_pool_address_mut(
+                        &arranged->pools,(int16_t)root);
+                    if (!record) continue;
+                    memcpy(saved,record,2);
+                    write_u16(source,record,(uint16_t)root);
+                    failures += check(!dm2_v1_arrange_dungeon_owner_reload(
+                        source,arranged,&rejected) && !rejected.raw_data,
+                        "cyclic candidate rejects before raw dungeon publication");
+                    memcpy(record,saved,2);
+                    tested = 1;
+                }
+        failures += check(tested,"original dungeon provides a reload cycle probe");
+    }
+    dm2_v1_record_pool_set_free(&pools);
+    dm2_v1_dungeon_free(&loaded);
+    dm2_v1_dungeon_free(&rejected);
+    return failures;
+}
+
 static int check_complete_arranger(const DM2_V1_DungeonData *d,
     const DM2_V1_AssetLoader *loader, const DM2_V1_CaiiSourceOwner *ai,
     const DM2_V1_RecordPoolSet *pools, const DM2_V1_DropRng *rng,
@@ -160,6 +230,7 @@ static int check_complete_arranger(const DM2_V1_DungeonData *d,
         d,pools,ai,rng,&queries,&owner) && owner.valid,
         "full-branch arranger builds an original-data candidate");
     if (owner.valid) {
+        failures += check_arranged_reload(d,&owner);
         failures += check(owner.rng_draws == expected_draws &&
             owner.rng.random == expected_rng.random,
             "original-edition arrangement preserves observed RANDDIR census");
@@ -457,9 +528,12 @@ int main(void)
                                           &session_rng, &weather_receipt) == 0 &&
                     weather_receipt.valid && weather_receipt.storm_path &&
                     weather_receipt.draws == 3 &&
+                    weather_receipt.queue_delay == 0 &&
                     cold_weather.pattern_row == 3 && cold_weather.step == 1 &&
+                    cold_weather.wind_dir == 3 && cold_weather.cloud_timer == 6 &&
+                    session_rng.random == 0x11cfaefdu &&
                     session_rng.random == expected_rng.random,
-                "conditional zero-seeded weather advances the shared RNG by three draws");
+                "cold direct SKULLWIN weather prefix matches source RNG state and values");
             failures += check_complete_arranger(&dungeon, &loader, &ai,
                                                    &pools, &session_rng,
                                                    baseline.rng_draws);

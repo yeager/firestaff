@@ -1,3 +1,16 @@
+2026-10-15 synchronization prerequisite completed: the test-only arranger now
+serializes/reloads pools and tiles together and validates their full resulting
+chains. Original DOS/FM Towns/Mac/Amiga inputs pass. Integrate this helper into
+the private prepared-world transaction described below; do not publish only
+pools or enable it before rebuilding downstream receipts.
+Active SKULLWIN first weather inserts timer 0x54 with map/actor/tick all zero
+between RNG draws two and three (c_weather.cpp:22-30, 557); the transition
+helper reports delay but does not enqueue that timer or clear globalb[0].
+It leaves seed 0x11cfaefd. Preserve those effects and the shared stream during
+integration; do not use the simplified independent weather model. Day offset
+is clamp(GDAT(3,0,11,0),0,23)*0x555 (c_savegame.cpp:538-542). This source result
+does not prove equivalent original executable behavior for every edition.
+
 2026-10-15 integration boundary audit: publish arrangement only as a complete
 private GameLoadWorldOwner transaction. Synchronize pool record spans and map
 columns into owned raw dungeon bytes, reload/validate the dungeon, then

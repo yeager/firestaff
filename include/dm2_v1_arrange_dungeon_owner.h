@@ -39,4 +39,12 @@ int dm2_v1_arrange_dungeon_owner_build(
     const DM2_V1_DropRng *rng,
     const DM2_V1_ArrangeDungeonQueries *queries,
     DM2_V1_ArrangeDungeonOwner *out);
+/* Serialize the complete private candidate and reload its dungeon metadata.
+ * out must be empty. On failure every caller-owned object, including out,
+ * is unchanged. On success out owns its allocation (dungeon_free releases it).
+ * This does not publish the candidate RNG or install a GAME_LOAD session. */
+int dm2_v1_arrange_dungeon_owner_reload(
+    const DM2_V1_DungeonData *original,
+    const DM2_V1_ArrangeDungeonOwner *arranged,
+    DM2_V1_DungeonData *out);
 #endif
