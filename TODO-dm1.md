@@ -4,8 +4,20 @@
 C696 placement, plus early A20E/ST12 native bank/frame/palette routing,
 pass independent original-data raster cases and the affected HoC replay.
 Continue with native F20/A36 gameplay ornaments, early native door ornaments,
-C127 mirror-specific backing and frame-aligned original-emulator comparisons.
+C127 backing for the other native owners and frame-aligned emulator comparisons.
 These fixes do not close full viewport, native display or HiDPI verification.
+
+2026-10-15 PC C127 follow-up: actual PC presentation now resolves its
+native 48x43 backing through selected C696 without the former stretch or
+D2 recolor. Retire the legacy shared front-mirror geometry/palette plan and
+query API after other edition owners have their own verified adapters;
+these compatibility tables are not authoritative PC presentation evidence.
+
+2026-10-15 native-door audit: original ST graphic 558 matches the existing
+G0196/G0207 mappings and both door palettes; the production native route
+composes decorations before animation/cropping. No new decoder is justified
+by that audit. Compare the Amiga metadata directly and broaden independent
+decoration coverage before claiming all native door materials complete.
 
 2026-10-15 F20 wall follow-up: native aliases, full-bitmap mirroring,
 nine-wall C255 composition and JDM's y31 final C007 placement now pass

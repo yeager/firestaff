@@ -46926,9 +46926,14 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 }
 #endif
 
+static int m11_dm1_pc_wall_ornaments(const M11_GameViewState* state);
+static int m11_draw_dm1_wall_ornament_host_material_receipt(
+    const M11_GameViewState* state, unsigned char* framebuffer,
+    int fbW, int fbH, DM1_WallOrnamentHostMaterialReceiptPc34* material);
+
 static int m11_draw_dm1_front_mirror_backing_host_receipt(
     const M11_GameViewState* state,
-    const DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt,
     unsigned char* framebuffer,
     int fbW,
     int fbH) {
@@ -46938,6 +46943,26 @@ static int m11_draw_dm1_front_mirror_backing_host_receipt(
         receipt->backingSourceWidth <= 0 || receipt->backingSourceHeight <= 0 ||
         receipt->backingWidth <= 0 || receipt->backingHeight <= 0) {
         return 0;
+    }
+    if (m11_dm1_pc_wall_ornaments(state)) {
+        DM1_WallOrnamentHostMaterialReceiptPc34 material;
+        /* DUNGEON.C F0174:2678-2679 selects native 345 for global 43;
+         * DUNVIEW.C F0107:3722-3750 selects its following front bitmap.
+         * D1C uses native pixels without a derived palette or rescaling.
+         * Resolve selected C696 through the ordinary F0635/F0791 path. */
+        if (!dm1_v1_wall_ornament_native_material_pc34(
+                DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
+                12, &material) ||
+            !m11_draw_dm1_wall_ornament_host_material_receipt(
+                state, framebuffer, fbW, fbH, &material)) return 0;
+        receipt->backingDstX = material.plan.dstX;
+        receipt->backingDstY = material.plan.dstY;
+        receipt->backingWidth = material.plan.width;
+        receipt->backingHeight = material.plan.height;
+        receipt->backingPaletteMapValid = material.plan.paletteMapValid;
+        memcpy(receipt->backingPaletteMap, material.plan.paletteMap,
+               sizeof(receipt->backingPaletteMap));
+        return 1;
     }
     backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                    (unsigned int)receipt->backingGraphicIndex);

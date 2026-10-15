@@ -1380,6 +1380,84 @@ done:
     return result;
 }
 
+/* Original I34E C696 1093 and 737, DUNVIEW F0107:3913-3928.
+ * This oracle uses full native C346 and the selected C026 portrait, never
+ * the production ornament plan or its perspective palette mapping. */
+static int check_original_pc34_front_mirror(const M11_GameLaunchSpec* spec)
+{
+    M11_GameViewState* state = calloc(1, sizeof(*state));
+    unsigned char frame[64000], rgb[256][3];
+    unsigned char* original = NULL;
+    size_t originalSize = 0;
+    const M11_AssetSlot *mirror, *portraits;
+    const unsigned char *zone, *portraitZone;
+    int result = 0, pixels = 0, portraitPixels = 0;
+    if (!state) return 0;
+    M11_GameView_Init(state);
+    if (!asset_read_path_alloc(spec->verifiedAssetPath, &original, &originalSize) ||
+        !M11_GameView_Start(state, spec) ||
+        !replay_native_cast_route(state, "UUUUULLLDDDDDLLULLULLLLLDLRR")) goto done;
+    M11_GameView_Draw(state, frame, 320, 200);
+    if (state->world.party.mapIndex != 0 || state->world.party.mapX != 14 ||
+        state->world.party.mapY != 3 || state->world.party.direction != 0 ||
+        M11_GameView_GetFrontMirrorOrdinal(state) != 5) {
+        fprintf(stderr, "PC34 initial mirror pose (%d,%d,%d,%d) ordinal%d\n",
+            state->world.party.mapIndex, state->world.party.mapX,
+            state->world.party.mapY, state->world.party.direction,
+            M11_GameView_GetFrontMirrorOrdinal(state));
+        goto done;
+    }
+    zone = pc_ornament_record(original, originalSize, 1093);
+    portraitZone = pc_ornament_record(original, originalSize, 737);
+    mirror = M11_AssetLoader_Load(&state->assetLoader, 346);
+    portraits = M11_AssetLoader_Load(&state->assetLoader, 26);
+    if (!zone || !portraitZone || !mirror || !portraits ||
+        !mirror->pixels || !portraits->pixels || mirror->width != 48 ||
+        mirror->height != 43 || portraits->width != 256 || portraits->height != 87 ||
+        pc_ornament_u16(zone) != 0 || pc_ornament_u16(zone+2) != 4 ||
+        pc_ornament_u16(zone+4) != 112 || pc_ornament_u16(zone+6) != 51 ||
+        pc_ornament_u16(portraitZone) != 15 || pc_ornament_u16(portraitZone+2) != 4 ||
+        pc_ornament_u16(portraitZone+4) != 0 || pc_ornament_u16(portraitZone+6) != 35)
+        goto done;
+    M11_GameView_Draw(state, frame, 320, 200);
+    if (!M11_Render_CopyIndexedPaletteRgb8(rgb)) goto done;
+    for (int y = 0; y < 43; ++y) {
+        for (int x = 0; x < 48; ++x) {
+            const int dx = 88+x, dy = 29+y;
+            unsigned char color = mirror->pixels[y*48+x] & 15;
+            int portrait = 0;
+            if (dx >= 96 && dx < 128 && dy >= 35 && dy < 64) {
+                const unsigned char pc = portraits->pixels[(dy-35)*256+160+dx-96] & 15;
+                if (pc != 1) { color = pc; portrait = 1; }
+            }
+            if (!portrait && color == 10) continue;
+            if (frame[(dy+33)*320+dx] != (unsigned char)(16 | color)) {
+                fprintf(stderr, "PC34 C127 native pixel(%d,%d) got%u expected%u portrait%d\n",
+                    dx,dy,frame[(dy+33)*320+dx],16|color,portrait);
+                goto done;
+            }
+            for (int channel = 0; channel < 3; ++channel) {
+                const unsigned int level = M11_GameView_GetDungeonPaletteIndex(state);
+                unsigned int dac;
+                if (level > 5) goto done;
+                dac = G9010_auc_VgaPaletteAll_Compat[level][color][channel] >> 2;
+                if (rgb[16|color][channel] != (unsigned char)((dac<<2)|(dac>>4)))
+                    goto done;
+            }
+            ++pixels;
+            portraitPixels += portrait;
+        }
+    }
+    if (!pixels || !portraitPixels) goto done;
+    printf("PASS: original PC34 HoC(14,3,N) C127 ordinal5 native346 48x43@(88,29), C026 32x29@(96,35), %d source pixels (%d portrait), unremapped bank16 RGB\n", pixels, portraitPixels);
+    result = 1;
+done:
+    free(original);
+    M11_GameView_Shutdown(state);
+    free(state);
+    return result;
+}
+
 static int check_original_pc34_live_wall_ornament(const M11_GameLaunchSpec* spec)
 {
     M11_GameViewState* state = calloc(1, sizeof(*state));
@@ -1483,7 +1561,8 @@ int main(void)
         spec.dataDir=getenv("FIRESTAFF_DM1_DATA_DIR");
         spec.verifiedAssetPath=graphicsPath;
         spec.verifiedAssetMd5="fa6b1aa29e191418713bf2cda93d962e";
-        if(!check_original_pc34_live_wall_ornament(&spec) ||
+        if(!check_original_pc34_front_mirror(&spec) ||
+           !check_original_pc34_live_wall_ornament(&spec) ||
            !check_original_door_orientation(&spec,"PC34") ||
            !check_original_pc34_d0_walls(&spec))return 1;
         {

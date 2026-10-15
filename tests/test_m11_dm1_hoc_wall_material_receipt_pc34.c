@@ -79,13 +79,26 @@ static int verify_front_mirror_backing_pixel(
     const unsigned char *framebuffer,
     int renderIndex)
 {
-    DM1_FrontMirrorRenderPlanPc34 plan;
+    DM1_FrontMirrorRenderPlanPc34 plan = {0};
     M11_Dm1HoCMirrorHostPresentationReceipt presented;
     const M11_AssetSlot *backing;
-    if (!state || !framebuffer ||
-        !dm1_v1_front_mirror_render_plan_pc34(renderIndex, &plan)) {
+    int opaque = 0;
+    if (!state || !framebuffer || renderIndex < 0 || renderIndex >= 24)
         return 0;
-    }
+    /* Authentic PC C696 1093={0,4,112,51}, C346=48x43;
+     * F0107 D1C keeps native indices. C737={15,4,0,35} selects C026.
+     * Do not use the legacy G0205/D2 host plan as the pixel oracle. */
+    plan.ornament.graphicIndex = 346;
+    plan.ornament.transparentColor = 10;
+    plan.backingSourceWidth = plan.backingWidth = 48;
+    plan.backingSourceHeight = plan.backingHeight = 43;
+    plan.backingDstX = 88; plan.backingDstY = 29;
+    plan.portraitGraphicIndex = 26;
+    plan.portraitSrcX = (renderIndex % 8)*32;
+    plan.portraitSrcY = (renderIndex / 8)*29;
+    plan.portraitDstX = 96; plan.portraitDstY = 35;
+    plan.portraitWidth = 32; plan.portraitHeight = 29;
+    plan.portraitTransparentColor = 1;
     backing = M11_AssetLoader_Load(&state->assetLoader,
                                    (unsigned int)plan.ornament.graphicIndex);
     if (!backing || !backing->loaded || !backing->pixels ||
@@ -145,12 +158,13 @@ static int verify_front_mirror_backing_pixel(
                 if (plan.ornament.paletteMapValid) {
                     expected = plan.ornament.paletteMap[expected & 0x0f];
                 }
-                return framebuffer[(33 + dstY) * kFramebufferWidth + dstX] ==
-                    expected;
+                if (framebuffer[(33 + dstY) * kFramebufferWidth + dstX] !=
+                    (unsigned char)(16 | expected)) return 0;
+                ++opaque;
             }
         }
     }
-    return 1;
+    return opaque > 0;
 }
 
 /* A receipt alone is not visual proof: F0107 may have selected the correct
@@ -204,7 +218,8 @@ static int verify_wall_ornament_pixel(
             }
             return framebuffer[(receipt->destinationY + destinationY) *
                                    kFramebufferWidth +
-                               receipt->destinationX + destinationX] == expected;
+                               receipt->destinationX + destinationX] ==
+                (unsigned char)(16 | expected);
         }
     }
     return 0;

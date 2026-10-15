@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 PC Hall mirrors`: draw the original frame at its native size and
+  source layout position, without stretching it or altering its colors
+  with the distant-wall palette. Preserve the original portrait overlay.
+
 - `DM1 wall details`: correct PC side/front bitmap selection and native
   D1 size; place decorations using the original PC layout and clipping.
   Early Amiga/Atari use their own wall decoration bank, frames and palettes.

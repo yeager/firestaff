@@ -1,3 +1,13 @@
+- 2026-10-15: The PC C127 front-mirror backing now follows the same
+  selected C696/F0635/F0791 material path as ordinary wall ornaments.
+  F0107's D1C branch uses native C346 at 48x43, centered at (88,29),
+  without the host's former 64x43 stretch or invented D2 palette remap.
+  The independent original-data test follows real inputs to (14,3,N),
+  selects original C127 ordinal 5 and checks the native frame and C026
+  portrait at (96,35), including VGA-bank ownership. Other editions'
+  front-mirror paths and the legacy shared plan/query API remain separate
+  work; this does not establish complete HoC or emulator parity.
+
 - 2026-10-15: Correct F0107 wall-ornament material selection: G0190
   addresses derived cache entries, not native side/front graphics; D1 uses
   the unscaled bitmap. PC34 resolves all nine coordinate sets through the
