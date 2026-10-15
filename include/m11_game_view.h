@@ -2229,6 +2229,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
                                               M12_MenuInput input);
 int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state);
+/* Read-only command-core preview; rejects queued, cooldown or blocked steps. */
+int M11_GameView_Dm1V1FreshMotionClosesInputWait(
+    const M11_GameViewState* state, M12_MenuInput input);
 
 /* Resolve the host idle cadence for the active source state. CSB startup
  * advances one source VBlank per M11 idle tick using its authenticated
@@ -3621,8 +3624,16 @@ typedef struct M11_Dm1F0128PerSquareSchedulerReceipt {
 void M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
     M11_Dm1F0128PerSquareSchedulerReceipt* outReceipt);
 
-/* Test-only entry to the production F0107 side-wall ornament route.
+/* Test-only entry to the production F0104/F0105 wall-material endpoint.
  * The caller must initialize an original PC34 GRAPHICS.DAT loader. */
+int M11_GameView_ProbeDrawDm1SideWallHostReceipt(
+    M11_GameViewState* state,
+    const DM1_ViewportSideWallHostReceiptPc34* receipt,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
+/* Test-only entry to the production F0107 side-wall ornament route. */
 int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
     M11_GameViewState* state,
     unsigned char* framebuffer,

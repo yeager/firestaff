@@ -77,6 +77,22 @@ DM1_V1_LayoutZoneRectPc34 dm1_v1_viewport_rect_pc34(void) {
     return rect;
 }
 
+int dm1_v1_d2_side_wall_rect_pc34(int zone, DM1_V1_LayoutZoneRectPc34* outRect) {
+    /* Original I34E C696: C710={11,4,0,19}, C711={12,4,0,19};
+     * parent 4={1,3,0,0}, parent 3={9,0,224,136}. COORD.C F0635
+     * lines 2308-2330 anchors the native 78x74 bitmap left/right. F0104/
+     * F0105 (DUNVIEW.C:3141-3145,3214-3218) retain that full rectangle.
+     * G0163's 75x71 at y20 belongs to the older frame-based media path. */
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!outRect || (zone != 710 && zone != 711)) return 0;
+    rect.x = zone == 710 ? 0 : 146;
+    rect.y = 19;
+    rect.w = 78;
+    rect.h = 74;
+    *outRect = rect;
+    return 1;
+}
+
 int dm1_v1_leader_hand_object_name_zone_id_pc34(void) {
     return 17;
 }

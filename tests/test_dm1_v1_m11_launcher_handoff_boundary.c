@@ -852,6 +852,42 @@ static void run_empty_launcher_boundary(void) {
     M12_StartupMenu_Destroy(&menu);
 }
 
+static void expect_fresh_motion_preview_unchanged(M11_GameViewState* view,
+                                                   int expected,
+                                                   const char* label) {
+    struct PartyState_Compat party = view->world.party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline = view->dm1V1MovementPipeline;
+    unsigned int tick = view->world.gameTick;
+    int actual = M11_GameView_Dm1V1FreshMotionClosesInputWait(view, M12_MENU_INPUT_UP);
+    expect_true(actual == expected, label);
+    expect_true(memcmp(&party, &view->world.party, sizeof(party)) == 0 &&
+                memcmp(&pipeline, &view->dm1V1MovementPipeline, sizeof(pipeline)) == 0 &&
+                view->world.gameTick == tick,
+                "original movement preview leaves entire party/pipeline and world tick unchanged");
+}
+
+static void run_real_fresh_motion_preview(M11_GameViewState* view) {
+    struct PartyState_Compat party = view->world.party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline = view->dm1V1MovementPipeline;
+    expect_true(party.mapIndex == 0 && party.mapX == 1 && party.mapY == 3 &&
+                party.direction == 2, "original PC34 initial Hall owns motion preview");
+    expect_fresh_motion_preview_unchanged(view, 1, "fresh original forward step closes input wait");
+    view->world.party.direction = 3;
+    expect_fresh_motion_preview_unchanged(view, 0, "original Hall boundary wall keeps input wait");
+    view->world.party = party;
+    view->dm1V1MovementPipeline.disabledMovementTicks = 2;
+    expect_fresh_motion_preview_unchanged(view, 0, "movement cooldown keeps input wait");
+    view->dm1V1MovementPipeline = pipeline;
+    view->dm1V1MovementPipeline.projectileDisabledMovementTicks = 2;
+    view->dm1V1MovementPipeline.lastProjectileDisabledMovementDirection = party.direction;
+    expect_fresh_motion_preview_unchanged(view, 0, "matching projectile cooldown keeps input wait");
+    view->dm1V1MovementPipeline = pipeline;
+    (void)DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(
+        &view->dm1V1MovementPipeline, DM1_V1_COMMAND_MOVE_BACKWARD, 0, 0);
+    expect_fresh_motion_preview_unchanged(view, 0, "existing source FIFO is not bypassed");
+    view->dm1V1MovementPipeline = pipeline;
+}
+
 static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M11_GameViewState direct_view;
@@ -919,6 +955,8 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(M11_GameView_Dm1StartupIntroBypassed(&direct_view) == 1,
                 "M11 direct DM1 game-view start is the explicit intro bypass");
 
+    if (direct_view.active && direct_view.world.dungeon)
+        run_real_fresh_motion_preview(&direct_view);
     M11_GameView_Shutdown(&direct_view);
     M12_StartupMenu_Destroy(&menu);
 }

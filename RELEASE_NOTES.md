@@ -2,6 +2,14 @@
 
 ## User-facing changes
 
+- `DM1 input`: accepted fresh keyboard movement no longer waits for the
+  idle input timeout. Blocked steps, cooldowns and held-repeat pacing retain
+  their existing gates.
+
+- `DM1 PC34 viewport`: draw the complete two-square side walls at their
+  original PC coordinates, preserving their edges, transparency and mirroring
+  instead of cropping them to older Atari frame dimensions.
+
 - `DM1 loose installations`: choose complete same-directory originals after
   orphan graphics copies, retain explicit file ownership, and preserve uniquely
   renamed PC34 English dungeons without borrowing neighboring files.

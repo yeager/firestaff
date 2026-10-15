@@ -28,6 +28,8 @@ int dm1_v1_message_area_zone_id_pc34(void);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_message_area_rect_pc34(void);
 int dm1_v1_viewport_zone_id_pc34(void);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_viewport_rect_pc34(void);
+/* Native PC34 C710/C711 use the complete 78x74 bitmap, not G0163. */
+int dm1_v1_d2_side_wall_rect_pc34(int zone, DM1_V1_LayoutZoneRectPc34* outRect);
 int dm1_v1_leader_hand_object_name_zone_id_pc34(void);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_leader_hand_object_name_rect_pc34(void);
 int dm1_v1_champion_icon_zone_id_pc34(int championSlot);

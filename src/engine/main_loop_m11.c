@@ -11796,13 +11796,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     input != M12_MENU_INPUT_GRAPHICS_POPUP &&
                     M11_GameView_InputConsumesDm1V1SourceTick(&gameView, input) &&
                     !m11_dm1_v1_input_is_immediate_turn(input) &&
-                    !M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
-                    /* ReDMCSB COMMAND.C F0359/F0361 queues key commands while
-                     * GAMELOOP.C waits for G0321.  COMMAND.C F0361 lines
-                     * 1744-1768 admits up to C5 queued keyboard commands
-                     * while reserving two queue slots; mirror that bounded
-                     * pending shape here so quick Q/E/Home/End/keypad turn
-                     * taps are not overwritten before the vblank gate opens. */
+                    !M11_GameView_Dm1V1SourceTickReadyForInput(&gameView) &&
+                    (DM1_V1_PendingMotionQueue_CountPc34Compat(&pendingDm1V1MotionQueue) > 0U ||
+                     !M11_GameView_Dm1V1FreshMotionClosesInputWait(&gameView, input))) {
+                    /* GAMELOOP.C:215 polls F0380 while G0321 is false;
+                     * a fresh accepted step closes the wait immediately.
+                     * Preserve pending FIFO order and defer blocked/cooldown
+                     * commands without aging a tick for each host key. */
                     (void)DM1_V1_PendingMotionQueue_PushPc34Compat(
                         &pendingDm1V1MotionQueue, (int)input);
                     input = M12_MENU_INPUT_NONE;

@@ -1,3 +1,17 @@
+- 2026-10-15: Fresh accepted DM1 keyboard steps can close the source
+  input wait immediately instead of waiting for its idle deadline. A
+  read-only preview uses copied command-core state, preserving blocked
+  steps, cooldowns, existing pending commands and held-repeat scheduling.
+  The original PC34 launcher regression passes 343 checks with zero skips,
+  including unchanged party/pipeline/world-tick snapshots after preview.
+  Normal-loop keyboard turn-to-step presentation improved from 217 ms to
+  16–20 ms on the same original map0 (1,3,S) -> (1,4,S) route. This measures
+  command admission and presentation, not GPU utilization or full-render FPS.
+  All 20 existing original PC34 startup/ownership cases pass; the corrected
+  320x200 motion tail passes keyboard 20 ms and native-pointer 19 ms, with
+  original installation hashes unchanged. Atari original startup/forward
+  captures remain visible; the Amiga-demo visual limitation is open in TODO.
+
 - 2026-10-15: Repeated loose graphics copies no longer hide a complete
   original installation behind an earlier orphan. Bounded ordinary-file
   enumeration selects a complete same-directory owner before publishing
@@ -15,6 +29,15 @@
   final demo/Atari runtime probes also pass on the latest app. Original
   archive and installation hashes remain unchanged. This verifies media
   ownership and startup, not display/audio parity across platforms.
+
+- 2026-10-15: Correct PC34 D2 side-wall material placement using authentic
+  I34E C696 zones C710/C711 and ReDMCSB F0635/F0104/F0105: full 78x74
+  images at (0,19)/(146,19), including 77-x horizontal mirroring. The old
+  75x71/y20 Atari frame geometry remains on legacy paths. An original-data
+  production-endpoint regression checks every framebuffer pixel for both
+  sides and parities, including 5,523 opaque pixels and 249 C10 holes per
+  image. All four cases pass. This is a specific wall-material correction,
+  not a claim of complete dungeon viewport parity.
 
 - 2026-10-15: Restore authentic PC34 TITLE/SELECTOR startup for loose
   installations whose DATA directory or program filenames use other case.

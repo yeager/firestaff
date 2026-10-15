@@ -81,6 +81,7 @@ run_route() {
     if [[ "$route" = menu ]]; then
         args+=(--menu --script wait20,enter,wait20,enter,wait20,enter)
     fi
+    if [[ -n ${4:-} ]]; then args+=(--width 320 --height 200 --script "$4"); fi
     HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     FIRESTAFF_CONFIG_PATH="$home/config.toml" FIRESTAFF_AUTOTEST=1 \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
@@ -170,6 +171,33 @@ else
     rm "$scratch/Case"
     echo 'SKIP: case-sensitive storage required for PC34 ambiguity subcases'
 fi
+# A fresh unblocked step closes the source input wait; it must not wait
+# for the idle VBlank timeout after a turn. Compare keyboard and native PC
+# C070 pointer routes with the same authentic initial Hall coordinates.
+run_route motion-keyboard "$scratch/lower/data" cli 'wait20,left,right,up'
+run_route motion-pointer "$scratch/lower/data" cli 'wait20,left,right,click:275:135'
+for route in keyboard pointer; do
+    require_startup "motion-$route" "$scratch/lower/data/GRAPHICS.DAT"
+done
+python3 - "$scratch" <<'PYMOTION'
+import pathlib
+import re
+import sys
+for route in ("keyboard", "pointer"):
+    stages = []
+    for line in pathlib.Path(sys.argv[1], f"motion-{route}.log").read_text().splitlines():
+        if "startup-frame game=dm1" not in line or "phase=dm1-runtime " not in line:
+            continue
+        match = re.search(r"elapsed-ms=(\d+).*party=(\d+),(\d+) dir=(\d+)", line)
+        if match:
+            stages.append(tuple(map(int, match.groups())))
+    turn = next((frame for frame in stages if frame[1:] == (1, 3, 1)), None)
+    reset = next((frame for frame in stages if turn and frame[0] > turn[0] and frame[1:] == (1, 3, 2)), None)
+    moved = next((frame for frame in stages if reset and frame[0] > reset[0] and frame[1:] == (1, 4, 2)), None)
+    if not reset or not moved or moved[0] - reset[0] >= 100:
+        raise SystemExit(f"FAIL: fresh original PC34 {route} step waited for idle tick: {stages}")
+    print(f"PASS: original PC34 {route} turn-to-step presentation {moved[0] - reset[0]} ms")
+PYMOTION
 python3 - "$original" "$scratch/original-hashes.json" <<'PYHASH'
 import hashlib
 import json

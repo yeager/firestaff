@@ -1,5 +1,21 @@
 # Firestaff TODO — DM1
 
+2026-10-15 legacy smoke limitation: original Atari 1.2 loads, accepts a
+forward step and presents a visible dungeon in the short headless capture.
+The original Amiga demo loads and accepts movement, but both idle and moved
+completed presented pages are black. No same-media before-change capture is
+available, so this does not establish a regression or visual nonregression.
+Inspect the Amiga runtime palette/presentation path before claiming a pass.
+
+2026-10-15 PC34 viewport followup: the specific D2 side-wall geometry and
+fresh-key input delay have original-data/source evidence. These fixes do not
+establish full viewport parity at every map/pose. Obtain the reported scene
+and compare matching original poses for remaining wall artifacts. Debug
+performance followup: `--debug-full-redraw` currently requests presentation
+without forcing source composition, and compose timing starts after source
+Draw; correct both before using these counters to claim full-render FPS or
+CPU/GPU parity.
+
 2026-10-15 repeated loose graphics: complete same-parent ownership is now
 verified with original Amiga demo, Atari 1.2 English and PC34 English media,
 including explicit orphan rejection beside a canonical original demo ZIP.

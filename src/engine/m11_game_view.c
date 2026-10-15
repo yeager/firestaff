@@ -32050,6 +32050,35 @@ int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state) {
     return state->vblankTiming.stopWaitingForInput ? 1 : 0;
 }
 
+/* GAMELOOP.C:215 polls F0380 during the input wait. CLIKMENU.C:237
+ * closes that wait for an accepted step, rather than waiting for F0577's
+ * idle deadline. Preview the existing core on value copies: no cooldown,
+ * game time, party, sensor, RNG or audio state is committed here. */
+int M11_GameView_Dm1V1FreshMotionClosesInputWait(
+    const M11_GameViewState* state, M12_MenuInput input) {
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    struct PartyState_Compat party;
+    struct Dm1V1MovementCommandCoreResultPc34Compat result;
+    int command = DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat((int)input);
+    if (!state || !state->active || strcmp(state->sourceId, "dm1") != 0 ||
+        !state->world.dungeon || state->dm1V1MovementPipeline.commandQueue.count ||
+        command < DM1_V1_COMMAND_MOVE_FORWARD || command > DM1_V1_COMMAND_MOVE_LEFT)
+        return 0;
+    queue = state->dm1V1MovementPipeline.commandQueue;
+    party = state->world.party;
+    if (!DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(&queue, command, 0, 0) ||
+        !DM1_V1_MovementCommandCore_ProcessOnePc34Compat(&queue,
+            state->world.dungeon, state->world.things, &party,
+            state->dm1V1MovementPipeline.disabledMovementTicks,
+            state->dm1V1MovementPipeline.projectileDisabledMovementTicks,
+            state->dm1V1MovementPipeline.lastProjectileDisabledMovementDirection,
+            state->dm1V1MovementPipeline.gameTick,
+            state->dm1V1MovementPipeline.lastPartyMovementTime, NULL, &result))
+        return 0;
+    return result.queue.dequeued && result.stopWaitingForPlayerInput &&
+           !result.movementBlocked;
+}
+
 static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
     /* v2.8.x keyboard layout contract (see menu_input_m12.h): arrow keys
      * strafe, Home/End (and Q/E) turn.  M12_MENU_INPUT_LEFT/RIGHT are the
@@ -44404,6 +44433,8 @@ static int m11_draw_dm1_side_wall_host_receipt(
     const DM1_ViewportSideWallHostReceiptPc34* receipt)
 {
     const M11_AssetSlot* slot;
+    DM1_ViewportSideWallHostReceiptPc34 nativeReceipt;
+    int nativePc34;
     int source_backing_accepts_zone;
     int y;
     if (!state || !state->assetsAvailable || !framebuffer || !receipt ||
@@ -44433,15 +44464,26 @@ static int m11_draw_dm1_side_wall_host_receipt(
             receipt->material.transparent_color,
             receipt->material.flip_horizontally);
     }
+    nativePc34 = state->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON &&
+        strcmp(state->sourceId, "dm1") == 0 && !state->assetLoader.legacyDm1 &&
+        !state->assetLoader.atariStDm1 && !state->assetLoader.dm1Amiga36 &&
+        !state->assetLoader.csbAmiga && !state->assetLoader.csbFmtowns;
+    if (nativePc34 && (receipt->pc34_zone == 710 || receipt->pc34_zone == 711)) {
+        DM1_V1_LayoutZoneRectPc34 rect;
+        if (!dm1_v1_d2_side_wall_rect_pc34(receipt->pc34_zone, &rect)) return 0;
+        nativeReceipt = *receipt;
+        nativeReceipt.dst_x = rect.x;
+        nativeReceipt.dst_y = rect.y;
+        nativeReceipt.width = nativeReceipt.material.expected_width = rect.w;
+        nativeReceipt.height = nativeReceipt.material.expected_height = rect.h;
+        receipt = &nativeReceipt;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)receipt->material.graphic_index);
-    /* ReDMCSB DUNVIEW.C F0119/F0120 send the G0163 D2L/D2R frame
-     * (C710/C711: 75x71) to F0104/F0105.  The PC34 material backing is
-     * 78x74, so demanding bitmap and destination-zone identity silently
-     * drops both two-forward side walls.  This is a source crop, not a
-     * scaled substitute; the blit below remains bounded by the 75x71 zone. */
-    source_backing_accepts_zone = receipt->pc34_zone == 710 ||
-        receipt->pc34_zone == 711;
+    /* Keep the legacy frame-based acceptance separate from PC34's full
+     * C696/F0635 rectangle; PC34 must not crop or flip a 75-column subset. */
+    source_backing_accepts_zone = !nativePc34 &&
+        (receipt->pc34_zone == 710 || receipt->pc34_zone == 711);
     if (!slot || !slot->loaded || !slot->pixels ||
         ((slot->width != (unsigned int)receipt->material.expected_width ||
           slot->height != (unsigned int)receipt->material.expected_height) &&
@@ -72323,6 +72365,17 @@ void M11_GameView_GetDm1HocPresentedFrameConsumerReceipt(
     if (outReceipt) {
         *outReceipt = s_m11_dm1_hoc_presented_frame_consumer_receipt;
     }
+}
+
+int M11_GameView_ProbeDrawDm1SideWallHostReceipt(
+    M11_GameViewState* state,
+    const DM1_ViewportSideWallHostReceiptPc34* receipt,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    return m11_draw_dm1_side_wall_host_receipt(state, framebuffer,
+        framebufferWidth, framebufferHeight, receipt);
 }
 
 int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
