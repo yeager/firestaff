@@ -2647,6 +2647,7 @@ int dm2_v1_record_pool_set_clone(DM2_V1_RecordPoolSet *out,
     }
     candidate.valid = 1;
     candidate.record_graph_complete = 1;
+    candidate.words_big_endian = source->words_big_endian;
     candidate.source_words_big_endian = source->source_words_big_endian;
     *out = candidate;
     return 1;

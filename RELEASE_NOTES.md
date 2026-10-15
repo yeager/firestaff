@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `DM2 Macintosh and Amiga`: preserve big endian word order when cloning record pools for game-state transactions.
+
 - `DM1 FM Towns intro and entrance`: restore source-paced title frames, native-height dungeon surfaces and smoother entrance-door timing.
 - `DM1 PC v3.4 startup`: restore the original VGA palette banks and show the authentic DOS selector before the title and entrance sequence.
 - `DM2 Mac HUD`: restore the original four status panes in their source positions, including selected and fallen champion states.

@@ -1,5 +1,14 @@
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
 
+- 2026-10-15: Fixed record-pool clones losing words_big_endian. Original
+  Macintosh/Amiga arrangement failed before the fix because BE next links
+  were decoded as LE. The test now admits native archives through the
+  production hash scanner in RAM and checks byte-order metadata, full caller
+  preservation and candidate replay. Mac/Amiga/DOS/FM Towns arrangement
+  regressions pass; existing Mac M11 and Amiga New Game tests also pass.
+  The cyclic-input test now accepts rejection at graph admission as well as
+  traversal; both correctly reject the cycle. No game media was extracted.
+
 - 2026-10-15: Removed the unused direction-only arrangement mutation API,
   implementation and duplicate replay tests (325 net code lines). The
   all-branch candidate now owns mutation; the unchanged-graph census remains

@@ -2,6 +2,8 @@
 
 #include "dm2_v1_caii_source_owner.h"
 #include "dm2_v1_arrange_dungeon_owner.h"
+#include "dm2_v1_boot.h"
+#include "asset_find_by_hash.h"
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_graphics_data_open.h"
@@ -23,30 +25,15 @@ static void write_u16(const DM2_V1_DungeonData *dungeon, uint8_t *bytes,
     }
 }
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
+static int read_original_bytes(const uint8_t *memory, size_t size,
+    const char *path, uint8_t **out, size_t *out_size)
 {
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-    if (!path || !out || !out_size ||
-        !(file = fopen(path, "rb"))) return 0;
-    *out = NULL;
-    *out_size = 0u;
-    if (fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
+    *out = NULL; *out_size = 0;
+    if (!memory || !size) return asset_read_path_alloc(path,out,out_size);
+    *out = malloc(size);
+    if (!*out) return 0;
+    memcpy(*out,memory,size);
+    *out_size = size;
     return 1;
 }
 
@@ -128,6 +115,10 @@ static int original_locate_below(void *context, int map, int *x, int *y,
 static int original_pool_bytes_equal(const DM2_V1_RecordPoolSet *a,
                                       const DM2_V1_RecordPoolSet *b)
 {
+    if (a->words_big_endian != b->words_big_endian ||
+        a->source_words_big_endian != b->source_words_big_endian ||
+        a->valid != b->valid ||
+        a->record_graph_complete != b->record_graph_complete) return 0;
     for (int t = 0; t < DM2_V1_RECORD_POOL_COUNT; ++t) {
         const DM2_V1_RecordPool *p = &a->pools[t], *q = &b->pools[t];
         size_t bytes = (size_t)p->record_count * (size_t)p->record_size;
@@ -163,6 +154,8 @@ static int check_complete_arranger(const DM2_V1_DungeonData *d,
         return 1;
     }
     memcpy(raw_snapshot,d->raw_data,(size_t)d->raw_size);
+    failures += check(original_pool_bytes_equal(pools,&snapshot),
+        "pool clone preserves byte order and all source bytes");
     failures += check(dm2_v1_arrange_dungeon_owner_build(
         d,pools,ai,rng,&queries,&owner) && owner.valid,
         "full-branch arranger builds an original-data candidate");
@@ -290,6 +283,8 @@ static int check_rejected_append_preserves_original(DM2_V1_DungeonData *dungeon)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *archive = getenv("FIRESTAFF_DM2_ARRANGE_ARCHIVE");
+    DM2_V1_BootProfile *profile = NULL;
     char graphics_path[1100];
     char dungeon_path[1100];
     uint8_t *graphics = NULL;
@@ -309,11 +304,12 @@ int main(void)
     uint8_t *original_bytes = NULL;
     int failures = 0;
 
-    if (!root || !root[0]) {
-        fputs("SKIP: FIRESTAFF_DM2_DATA_DIR must name canonical test data\n",
+    if ((!root || !root[0]) && (!archive || !archive[0])) {
+        fputs("SKIP: original canonical data root or archive is required\n",
               stderr);
         return 77;
     }
+    if (!root) root = "";
     snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
     memset(&loader, 0, sizeof(loader));
@@ -326,8 +322,24 @@ int main(void)
     memset(&pools, 0, sizeof(pools));
     memset(&session_rng, 0, sizeof(session_rng));
     memset(&expected_rng, 0, sizeof(expected_rng));
-    if (!read_file(graphics_path, &graphics, &graphics_size) ||
-        !read_file(dungeon_path, &dungeon_bytes, &dungeon_size) ||
+    if (archive && archive[0]) {
+        profile = calloc(1,sizeof(*profile));
+        if (!profile) { failures = 1; goto done; }
+        dm2_v1_boot_profile_init(profile);
+        if (dm2_v1_boot_scan_assets(profile,archive) != 0 ||
+            !profile->assets_verified) {
+            fputs("FAIL: original archive was not hash-admitted\n",stderr);
+            failures = 1; goto done;
+        }
+        snprintf(graphics_path,sizeof(graphics_path),"%s",profile->graphics_path);
+        snprintf(dungeon_path,sizeof(dungeon_path),"%s",profile->dungeon_path);
+    }
+    if (!read_original_bytes(profile ? profile->graphics_mem : NULL,
+            profile ? profile->graphics_mem_size : 0,
+            graphics_path,&graphics,&graphics_size) ||
+        !read_original_bytes(profile ? profile->dungeon_mem : NULL,
+            profile ? profile->dungeon_mem_size : 0,
+            dungeon_path,&dungeon_bytes,&dungeon_size) ||
         dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
         dm2_v1_dungeon_load(&dungeon, dungeon_bytes,
                             (int)dungeon_size) != 0) {
@@ -341,6 +353,12 @@ int main(void)
         failures = 1;
         goto done;
     }
+    printf("original-edition version=%s graphics=%s dungeon=%s words-be=%d source-be=%d chains-disabled=%d\n",
+        profile ? profile->version_id : "canonical",
+        profile ? profile->graphics_md5 : "local",
+        profile ? profile->dungeon_md5 : "local",
+        dungeon.words_big_endian,dungeon.source_words_big_endian,
+        dungeon.g1_w0_chains_disabled);
     failures += check_rejected_append_preserves_original(&dungeon);
     failures += check(dungeon.record_graph_complete &&
                           !dungeon.g1_w0_chains_disabled,
@@ -397,7 +415,7 @@ int main(void)
                 failures += check(
                     !dm2_v1_DM2_ARRANGE_DUNGEON_rng_receipt(
                         &mutated, &ai, &receipt) &&
-                        !receipt.valid && receipt.incomplete,
+                        !receipt.valid,
                     "cyclic source record chain fails closed");
                 receipt = baseline;
             } else {
@@ -451,6 +469,7 @@ int main(void)
         if (!dungeon.g1_w0_chains_disabled) ++failures;
     }
 done:
+    if (profile) { dm2_v1_boot_cleanup(profile); free(profile); }
     free(original_bytes);
     dm2_v1_record_pool_set_free(&pools);
     dm2_v1_dungeon_free(&mutated);

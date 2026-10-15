@@ -1,5 +1,15 @@
 # Firestaff TODO — DM2
 
+2026-10-15 Macintosh/Amiga original-data arrangement verification exposed a
+shared clone defect: record_pool_set_clone copied source endianness but lost
+words_big_endian. The candidate decoded BE next links as LE. The scalar is
+now preserved. Native hash-admitted Mac and Amiga archive tests pass (33
+merges, 28 draws, 12,242 tiles each); independent New Game tests also pass.
+DOS and FM Towns remain green. These checks establish byte-order ownership
+and the tested candidate/handoff behavior, not source-executable equivalence
+or live full-arranger publication.
+
+
 2026-10-15 full-branch arrangement candidate: the new test-only
 `dm2_v1_arrange_dungeon_owner` ports DB1/DB2/DB3/DB4 and pit processing into
 one cloned pool/tile/RNG transaction. Original DOS EN and FM Towns tests
@@ -9,8 +19,8 @@ preserve all caller bytes/RNG. Static review compared branch masks and chain
 mutation order with pinned skmap.cpp. This is not an original-executable
 state comparison or a live GAME_LOAD publisher. Bind the authentic queries
 and candidate pools/tiles/RNG into the session after proving pre-weather and
-later CAII ordering; verify Macintosh/Amiga sources and then the complete
-CLI/menu New Game transition. The module remains outside the product archive.
+later CAII ordering; compare candidate states against source execution and
+then verify the complete CLI/menu New Game transition. The module remains outside the product archive.
 
 
 2026-10-15 teleporter ordering audit, SKProject commit
