@@ -313,6 +313,20 @@ if (door_frames <= 1 or door_vblanks != door_frames or vblank_hz != 70 or
 print(
     f"PASS: I34E selector door used {door_frames} source-sized steps at "
     f"{vblank_hz} Hz in {door_elapsed_ms} ms")
+sound = re.search(
+    r"startup-source-complete game=dm1 platform=pc34 phase=selector .*"
+    r"switch-event-queued=(\d+) door-events-queued=(\d+) snd3-events-loaded=(\d+)",
+    sys.argv[1])
+if not sound:
+    raise SystemExit("FAIL: authentic PC-34 selector SND3 audio receipt was missing")
+switch_queued, door_queued, snd3_loaded = map(int, sound.groups())
+if switch_queued != 1 or door_queued < 1 or snd3_loaded < 3:
+    raise SystemExit(
+        f"FAIL: authentic PC-34 selector did not queue original switch/door SND3: "
+        f"{sound.groups()}")
+print(
+    f"PASS: I34E selector queued switch/door SND3 events from its "
+    f"{snd3_loaded}-event GRAPHICS.DAT bank")
 PY
 python3 - "$default_loose_probe" <<'PY'
 import json

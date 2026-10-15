@@ -195,6 +195,8 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state,
 /* Source-owned DM1 SND3 events never substitute a generated marker. Missing
  * or unplayable source material is silent and returns 0. */
 int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex);
+/* Flush the host SFX stream and report when queued samples have played. */
+int M11_Audio_SfxDrained(M11_AudioState* state);
 /* SWSH.C V0901005 is emulated from its original PSG program.  This does not
  * permit a marker/SND3/procedural substitute when the source program fails. */
 int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,

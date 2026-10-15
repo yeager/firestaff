@@ -1499,6 +1499,21 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
     return emitted;
 }
 
+int M11_Audio_SfxDrained(M11_AudioState* state) {
+#if M11_HAVE_SDL_AUDIO
+    if (state && state->initialized &&
+        state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        SDL_AudioStream *stream = (SDL_AudioStream *)state->sdlStream;
+        (void)SDL_FlushAudioStream(stream);
+        return SDL_GetAudioStreamQueued(stream) <= 0 &&
+               SDL_GetAudioStreamAvailable(stream) <= 0;
+    }
+#else
+    (void)state;
+#endif
+    return 1;
+}
+
 int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
                                         const unsigned char* program,
                                         int programBytes,

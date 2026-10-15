@@ -5045,6 +5045,7 @@ static int m11_play_dm1_i34e_title_anim_if_available(
  * interactive launcher keeps its own input/menu lifecycle. SELECTOR.C
  * F8360 and VIDEODRV.C G8148 own the pixels, frame cadence and palette. */
 static int m11_play_dm1_i34e_selector_enter_if_available(
+    M11_GameViewState *gameView,
     const M12_StartupMenuState *menuState,
     const M12_AssetVersionStatus *version) {
     static const char selectorMd5[] = "165ae5438ce2686ae62f2fbb61f3e831";
@@ -5062,12 +5063,15 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     unsigned char frame[M11_FB_BYTES];
     unsigned char palette[256][3];
     unsigned int width;
+    unsigned int doorSoundTimer = 21u;
+    unsigned int doorSoundCount = 0u;
+    int switchSoundQueued = 0;
     uint64_t vblankStartMs;
     uint64_t selectorStartMs;
     int result = 0;
 
     memset(&loader, 0, sizeof(loader));
-    if (!menuState || !version || !version->matched || !version->versionId ||
+    if (!gameView || !menuState || !version || !version->matched || !version->versionId ||
         strcmp(version->versionId, "pc34-en") != 0 ||
         !M12_AssetStatus_ResolveRuntimeDataDirForVersion(
             &menuState->assetStatus, "dm1", version->versionId,
@@ -5136,6 +5140,16 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
         left->height < 161u || right->height < 161u ||
         right->width == 0u || right->width > 256u) goto done;
 
+    /* SELECTOR.C loads SND3 items 672/673 from this same GRAPHICS.DAT, then
+     * plays event 1 (switch) and event 2 (door rattle). Bind the selected
+     * installation here so an unrelated default user's bank cannot leak in. */
+    if (gameView->audioState.initialized) {
+        (void)M11_ApplyIntroAudioPreferences(&gameView->audioState,
+                                              menuState);
+        (void)M11_Audio_BindOriginalSnd3Path(&gameView->audioState,
+                                             graphicsPath);
+    }
+
     memset(palette, 0, sizeof(palette));
     for (step = 0u; step < 16u; ++step) {
         memcpy(palette[step],
@@ -5153,6 +5167,8 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     m11_capture_dm1_authenticated_startup_frame("i34e-selector-closed");
     vblankStartMs = m11_intro_active_ticks();
     selectorStartMs = vblankStartMs;
+    switchSoundQueued = M11_Audio_EmitSourceSoundIndex(
+        &gameView->audioState, 1);
 
     /* Direct CLI selection and M12 New Game both select the I34E FIRES row.
      * F8360 is called once per source VBlank, with G8248=4; preserve its
@@ -5206,16 +5222,50 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 SDL_Delay(1u);
             }
         }
+        /* SELECTOR.C starts G8232 at 21 and its video interrupt advances the
+         * counter once per retrace. The I34E door sample is retriggered each
+         * time it passes 20; keep that source cadence on the 70 Hz clock. */
+        ++doorSoundTimer;
+        if (doorSoundTimer > 20u) {
+            doorSoundTimer = 0u;
+            if (M11_Audio_EmitSourceSoundIndex(&gameView->audioState, 2))
+                ++doorSoundCount;
+        }
+    }
+    while (!M11_Audio_SfxDrained(&gameView->audioState)) {
+        SDL_Event event;
+        if (M11_Render_PumpEvents()) {
+            g_m11_startup_intro_quit_requested = 1;
+            result = M11_ENTRANCE_COMMAND_QUIT;
+            goto done;
+        }
+        while (SDL_PollEvent(&event)) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            if (event.type == SDL_EVENT_QUIT) {
+#else
+            if (event.type == SDL_QUIT) {
+#endif
+                g_m11_startup_intro_quit_requested = 1;
+                result = M11_ENTRANCE_COMMAND_QUIT;
+                goto done;
+            }
+        }
+        if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) {
+            result = M11_ENTRANCE_COMMAND_QUIT;
+            goto done;
+        }
+        SDL_Delay(1u);
     }
     result = M11_ENTRANCE_COMMAND_ENTER;
     if (g_m11_debug_startup_detail)
-        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=selector graphics=%s entrance=%ux%u left-door=%ux%u right-door=%ux%u selector-view=%ux%u frames=%u source-vblanks=%u elapsed-ms=%llu modeled-vblank-hz=%u handoff=fires command=enter\n",
+        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=selector graphics=%s entrance=%ux%u left-door=%ux%u right-door=%ux%u selector-view=%ux%u frames=%u source-vblanks=%u elapsed-ms=%llu modeled-vblank-hz=%u switch-event-queued=%d door-events-queued=%u snd3-events-loaded=%d handoff=fires command=enter\n",
                 graphicsPath, (unsigned)entrance->width,
                 (unsigned)entrance->height, (unsigned)left->width,
                 (unsigned)left->height, (unsigned)right->width,
                 (unsigned)right->height, 224u, 136u, steps, steps,
                 (unsigned long long)(m11_intro_active_ticks() - selectorStartMs),
-                DM1_V1_VGA_VBLANK_HZ);
+                DM1_V1_VGA_VBLANK_HZ, switchSoundQueued,
+                doorSoundCount, gameView->audioState.originalSnd3LoadedCount);
 done:
     free(view);
     free(selector);
@@ -6046,7 +6096,7 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
             }
             if (introWasPreplayed || titleResult > 0) {
                 const int selectorResult = m11_play_dm1_i34e_selector_enter_if_available(
-                    menuState, selectedVersion);
+                    gameView, menuState, selectedVersion);
                 if (selectorResult == M11_ENTRANCE_COMMAND_QUIT) {
                     menuState->launchRequested = 0;
                     menuState->shouldExit = 1;
