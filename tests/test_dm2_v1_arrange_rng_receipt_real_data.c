@@ -373,6 +373,7 @@ int main(void)
     DM2_V1_RecordPoolSet pools;
     DM2_V1_DropRng session_rng;
     DM2_V1_DropRng expected_rng;
+    uint16_t authored_hour = 0;
     uint8_t *original_bytes = NULL;
     int failures = 0;
 
@@ -519,6 +520,13 @@ int main(void)
              * arrangement, consuming RAND16(500), RANDDIR, RAND16(4). */
             dm2_v1_drops_rng_init(&session_rng);
             cold_weather.storm_request = 1;
+            /* Active SKULLWIN c_savegame.cpp:538-542: absent optional GDAT
+             * returns zero, then clamp the authored start hour to 0..23. */
+            (void)dm2_v1_query_gdat_entry_data_index(
+                &loader,3,0,11,0,&authored_hour);
+            if (authored_hour > 23) authored_hour = 23;
+            cold_weather.day_offset =
+                (int32_t)authored_hour * DM2_V1_WEATHER_DAY_TICKS;
             expected_rng = session_rng;
             (void)dm2_v1_drops_rand16(&expected_rng, 500u);
             (void)dm2_v1_drops_randdir(&expected_rng);
@@ -531,6 +539,10 @@ int main(void)
                     weather_receipt.queue_delay == 0 &&
                     cold_weather.pattern_row == 3 && cold_weather.step == 1 &&
                     cold_weather.wind_dir == 3 && cold_weather.cloud_timer == 6 &&
+                    weather_receipt.hour == authored_hour &&
+                    cold_weather.day_word ==
+                        dm2_v1_weather_table1d70f0[authored_hour] &&
+                    cold_weather.day_tick == DM2_V1_WEATHER_DAY_TICKS &&
                     session_rng.random == 0x11cfaefdu &&
                     session_rng.random == expected_rng.random,
                 "cold direct SKULLWIN weather prefix matches source RNG state and values");

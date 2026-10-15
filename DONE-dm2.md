@@ -1,3 +1,12 @@
+- 2026-10-15: DYN4 and post-preparation champion/transaction queries now use
+  a borrowed profile view of the owned dungeon. Mounted media remains unchanged
+  and no local view pointer is retained. The original DOS startup/profile gate
+  passes with the mounted dungeon pointer temporarily removed during incremental
+  selection, proving queries use their owner. Focused DOS M11, FM Towns M11,
+  Macintosh and Amiga original-media New Game tests pass. The authored GDAT
+  start hour/day word is now checked by the arrangement regression (DOS EN).
+  No full arranger or fresh-weather runtime integration is enabled yet.
+
 - 2026-10-15: Added transactional arrangement serialization/reload. A private
   raw dungeon receives validated pool/extension spans and map columns, then
   the existing loader regenerates caches. Exact pool/tile comparison and

@@ -3445,7 +3445,14 @@ int main(void) {
                 "DM2 replaces an existing private File_header owner atomically");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_prepare_new_game(
-                        &incremental_new_game_world_owner, profile) &&
+                        &incremental_new_game_world_owner, profile),
+                "DM2 prepares an owned dungeon before incremental selection");
+    {
+    void *mounted_dungeon = profile ? profile->dungeon_data : NULL;
+    /* Once prepared, selection must query the owned dungeon, not depend on
+     * the mounted profile's original dungeon pointer remaining installed. */
+    if (profile) profile->dungeon_data = NULL;
+    expect_true(profile &&
                     dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                         &incremental_new_game_world_owner, NULL) &&
                     dm2_v1_game_load_world_owner_materialize_source_map_context(
@@ -3467,7 +3474,9 @@ int main(void) {
                         &party_selections[1]) &&
                     !incremental_new_game_world_owner.committed &&
                     !profile->source_game_load_session_ready,
-                "DM2 keeps the original mirror click order in a private GAME_LOAD owner");
+                "DM2 keeps mirror click order using its owned dungeon view");
+    if (profile) profile->dungeon_data = mounted_dungeon;
+    }
     new_game_owner_initialized = profile &&
         dm2_v1_game_load_world_owner_init_new_game(
             &new_game_world_owner, profile, party_selections, 2);

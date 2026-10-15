@@ -1,152 +1,57 @@
-2026-10-15 synchronization prerequisite completed: the test-only arranger now
-serializes/reloads pools and tiles together and validates their full resulting
-chains. Original DOS/FM Towns/Mac/Amiga inputs pass. Integrate this helper into
-the private prepared-world transaction described below; do not publish only
-pools or enable it before rebuilding downstream receipts.
-Active SKULLWIN first weather inserts timer 0x54 with map/actor/tick all zero
-between RNG draws two and three (c_weather.cpp:22-30, 557); the transition
-helper reports delay but does not enqueue that timer or clear globalb[0].
-It leaves seed 0x11cfaefd. Preserve those effects and the shared stream during
-integration; do not use the simplified independent weather model. Day offset
-is clamp(GDAT(3,0,11,0),0,23)*0x555 (c_savegame.cpp:538-542). This source result
-does not prove equivalent original executable behavior for every edition.
-
-2026-10-15 integration boundary audit: publish arrangement only as a complete
-private GameLoadWorldOwner transaction. Synchronize pool record spans and map
-columns into owned raw dungeon bytes, reload/validate the dungeon, then
-regenerate all derived preselection receipts. prepare_new_game currently
-computes those receipts too early. init_new_game, select_champion and
-materialize_dyn4 must also use the owned arranged dungeon instead of immutable
-boot-profile bytes. Preserve shared weather/arranger RNG across CAII storage
-initialization; it currently reseeds. Cold direct New Game pre-weather zero
-state is now supported by active SKULLWIN static analysis (DONE-dm2.md), but
-original executable comparison and later CAII draw ordering remain open.
-
 # Firestaff TODO — DM2
 
-2026-10-15 Macintosh/Amiga original-data arrangement verification exposed a
-shared clone defect: record_pool_set_clone copied source endianness but lost
-words_big_endian. The candidate decoded BE next links as LE. The scalar is
-now preserved. Native hash-admitted Mac and Amiga archive tests pass (33
-merges, 28 draws, 12,242 tiles each); independent New Game tests also pass.
-DOS and FM Towns remain green. These checks establish byte-order ownership
-and the tested candidate/handoff behavior, not source-executable equivalence
-or live full-arranger publication.
+## Fresh New Game integration (2026-10-15)
 
+The full-branch arrangement candidate and its transactional raw-dungeon
+serializer pass original DOS EN, FM Towns, Mac and Amiga tests. They remain
+outside the production archive. Open work:
 
-2026-10-15 full-branch arrangement candidate: the new test-only
-`dm2_v1_arrange_dungeon_owner` ports DB1/DB2/DB3/DB4 and pit processing into
-one cloned pool/tile/RNG transaction. Original DOS EN and FM Towns tests
-complete with 33 teleporter merges each, 28/27 RNG draws and 12,254/12,115
-map tiles. Repeated candidates match; success and unavailable-query failure
-preserve all caller bytes/RNG. Static review compared branch masks and chain
-mutation order with pinned skmap.cpp. This is not an original-executable
-state comparison or a live GAME_LOAD publisher. Bind the authentic queries
-and candidate pools/tiles/RNG into the session after proving pre-weather and
-later CAII ordering; compare candidate states against source execution and
-then verify the complete CLI/menu New Game transition. The module remains outside the product archive.
+- Integrate arrangement into the private GameLoadWorldOwner before derived
+  preselection receipts, generator processing and CAII map candidates.
+- Publish synchronized raw records, extension spans, map tiles and the shared
+  RNG together. Reuse arrange_dungeon_owner_reload; do not publish only pools.
+- Regenerate preselection entrance/world/generator/map/mirror/DYN4 receipts
+  and their hashes from that owned dungeon. Later init/select/DYN4 queries
+  must use the same owned dungeon, preserving immutable mounted media.
+- Preserve the weather/arranger RNG across CAII storage initialization, which
+  currently seeds it again. Finish the later CAII draw sequence and compare
+  original executable state before claiming complete New Game fidelity.
+- Bind authentic GDAT and level-location callbacks and verify complete CLI/menu
+  transitions. Original-input property tests do not prove executable parity.
 
+### Source order and constraints
 
-2026-10-15 teleporter ordering audit, SKProject commit
-`2c59a2c5a7978923ff5c822c15c3479e4d448493`,
-`SKWINSPX/src/v5/skmap.cpp`: lines 927-998 validate reciprocal teleporter
-coordinates/maps, call `DM2_map_2066_1f37` on both record chains, and may
-replace both teleporter next links with `DM2_map_2066_1ec9`'s merged chain.
-The first helper (715-760) writes uninitialized type-3 subtype-0x27 actuator
-map fields and counts writes; the merge helper (763-808) rewires links and
-calls APPEND_RECORD_TO. The outer loop then reads the current record's next
-link (1219-1222). Consequently the unchanged-graph RNG census cannot prove
-the complete arranger visitation/draw order. Whether this affects each
-installed original dungeon remains unmeasured. Implement reciprocal-link and
-actuator updates transactionally, trace APPEND_RECORD_TO, and validate the
-resulting traversal on original data before integrating arrangement into
-fresh GAME_LOAD. The former direction-only mutator has been removed; the full-branch candidate
-remains test-only.
-The merge reverses the leading DB0..DB3 prefix of its second chain and then
-uses APPEND_RECORD_TO (`skrecord.cpp:63-81`), which resets the first appended
-DB4+ record's next link to END. It must not be replaced by a conventional
-suffix-preserving list merge. Both teleporter successors intentionally alias
-the returned head. Candidate traversal must reread mutated links rather than
-`dm2_v1_dungeon_get_next_thing` on the immutable input graph.
+Reference: SKProject commit 2c59a2c5a7978923ff5c822c15c3479e4d448493.
+Active SKULLWIN main.cpp:177 initializes RNG to zero. The first cold direct
+New Game (events 215/216) reaches c_savegame.cpp:546 weather without an RNG
+consumer. This is scoped static evidence; arbitrary Resume/menu histories and
+cross-edition executable behavior remain unproven. SPX sk5start.cpp:177-259
+is commented out and is not evidence of active menu order.
 
+The first weather consumes RAND16(500), RANDDIR, RAND16(4), leaving seed
+0x11cfaefd, delay 0, wind 3 and cloud timer 6. c_weather.cpp:22-30,557 inserts
+timer 0x54 with map/actor/tick zero between draws two and three. The existing
+weather_transition helper reports but does not apply timer/global-byte effects.
+Day offset is clamp(GDAT(3,0,11,0),0,23)*0x555 (c_savegame.cpp:538-542).
+Do not use the simplified independent weather model for this shared stream.
 
-2026-10-15 post-arrangement RNG audit at the same pinned SKProject commit:
-`SKULLWIN/startend.cpp:1194-1195` calls LOAD_NEWMAP then RESET_CAII.
-`c_loadlevel.cpp:1357-1362` conditionally fills current-map CAII;
-RESET_CAII also reaches FILL_ORPHAN_CAII, which visits maps in ascending
-order (`c_1c9a.cpp:10005-10019`). Normal creature allocation reaches
-CREATURE_SOMETHING and animation selection. Its DM2_4FCC branch draws RAND
-when the animation entry's high nibble is nonzero and its low nibble is not
-0xF (`c_creature.cpp:3354-3359`). AI-spec bit0-set animation lookup returns
-early and does not reach that RAND site. Preserve these gates and repeated
-candidate draws; counting allocation calls alone cannot reconstruct RNG.
-This establishes an additional conditional RNG phase, not the complete
-pre-weather or post-arrangement stream. No runtime arrangement is enabled.
+SKWINSPX/v5/skmap.cpp:927-998 validates reciprocal teleporters, updates subtype
+0x27 actuators (715-760), and rewires shared successor chains (763-808).
+The merge reverses the leading DB0..DB3 prefix, then APPEND_RECORD_TO
+(skrecord.cpp:63-81) resets the first appended DB4+ successor to END. Preserve
+aliasing, truncation and dynamic-next traversal (1219-1222). The unchanged-graph
+RNG census alone cannot establish this mutation order. The candidate implements
+DB2/DB3, creature and pit branches (1001-1247); source execution comparison
+remains open. Observed original-data arrangement draws: DOS EN 28, Towns 27,
+Mac/Amiga 28, each with 33 teleporter merges. Details belong in DONE-dm2.md.
 
-2026-10-15 SKProject cold-start order check: `main.cpp` calls
-`randdat.init()` before the menu loop, and `c_random.cpp` sets its LCG state to
-zero. The no-save New Game path in `c_savegame.cpp::DM2_GAME_LOAD` loads the
-new dungeon without restoring a save buffer's random state. `dm2data.cpp`
-initializes `v1d652d = 1` and `v1d7188 = 1`. The first
-`DM2_weather_3df7_0037(0)` call precedes map processing and
-`DM2_ARRANGE_DUNGEON`; its initial storm-request branch draws `RAND16(500)`,
-then the shared transition draws `RANDDIR` and the common tail draws
-`RAND16(4)`, for three draws total. It then clears `v1d7188`; the load path
-clears `v1d652d` after arrangement.
-Remaining proof: audit every function reachable between `randdat.init()` and
-that first weather call for indirect RNG use, then model the entire ordered
-GAME_LOAD/arrangement/CAII RNG stream. A real-data regression now exercises
-the known zero-seeded, three-draw weather prefix followed by the direction
-mutator as one RNG stream. Firestaff's New Game owner still does not own this
-complete source-ordered state, so this test does not enable the partial
-arranger during fresh GAME_LOAD.
-
-Direct call-site audit: `c_savegame.cpp` calls weather before arrangement and
-has no direct RNG call between them. `skmap.cpp::DM2_ARRANGE_DUNGEON` has two
-direct `RANDDIR` sites, both covered by the creature/possession direction
-mutator. This confirms direct call order only; it does not rule out RNG use in
-the callees of the load loop or establish the later CAII/session sequence.
-
-2026-10-15 authentic `DM2_ARRANGE_DUNGEON` RNG-census verification: the
-read-only source-order census passed against the installed original DOS EN,
-DOS FR, and FM Towns JP data. EN and FR have identical dungeon bytes but
-different `GRAPHICS.DAT` bytes; both independently report 44 maps, 2,809
-creature records, 16 eligible static creatures, 12 possession records, 28
-`RANDDIR` draws, and order hash `62645a40`. FM Towns reports 44 maps, 2,581
-creature records, 15 eligible static creatures, 12 possession records, 27
-draws, and order hash `fe67f576`. The test also verified that authentic
-dungeon bytes remain unchanged, a cyclic record link is rejected, the
-transactional mutation matches the census, and the cold-weather prefix and
-arrangement share one RNG in source order. These edition-specific results do
-not audit every function before the first weather call, implement full map
-arrangement, or prove fresh-GAME_LOAD/CAII ordering. Keep the full source-
-mutation and runtime integration gap below open.
-
-2026-10-15 historical partial `DM2_ARRANGE_DUNGEON` direction mutation
-(retired after the full-branch candidate replaced its tests): Firestaff now
-replays only the source's conditional static-creature and possession
-`RANDDIR` assignments against a cloned mutable record-pool candidate. It keeps
-the caller-provided RNG state, follows source map/column/row/record order, and
-atomically commits pool bytes plus RNG only after the source-ordered census,
-record identities, links and expected write/draw counts all validate. The
-focused real-data test starts at zero, applies the source storm-weather prefix,
-then verifies successful arrangement mutation and exact shared RNG advance.
-Authentic DOS EN and FM Towns JP originals pass (28 and 27 arrangement draws,
-respectively). This API is not yet called from fresh `GAME_LOAD`; indirect RNG
-before weather and later CAII ordering remain unaudited. This partial mutation
-does not complete or enable `DM2_ARRANGE_DUNGEON`.
-
-Remaining source work is broader than those random direction writes. In
-SKProject `SKWINSPX/src/v5/skmap.cpp`, teleporter counterpart/map validation
-and relocation are in lines 927-998; ladder/text/recharge link updates are at
-1001-1035; actuator destination/door and tile mutations are at 1037-1115;
-creature AI-derived HP, position and animation initialization follows at
-1117-1184; pit/void cross-level tile resolution is at 1219-1247. These branches
-are now represented in the test-only candidate, but require original-state
-comparison and session publication before fresh-game completion can use it. The shared RNG boundary also remains
-open: SKProject `sksvgame.cpp:538-546` performs fresh weather setup before
-`DM2_ARRANGE_DUNGEON` at 573, with later CAII work in the same session. No
-standalone zero-seeded arrangement is source-faithful.
+SKULLWIN/startend.cpp:1194-1195 calls LOAD_NEWMAP then RESET_CAII.
+c_loadlevel.cpp:1357-1362 conditionally fills current-map CAII;
+FILL_ORPHAN_CAII visits maps ascending (c_1c9a.cpp:10005-10019).
+Normal creature animation draws RAND conditionally at c_creature.cpp:3354-3359
+(high nibble nonzero, low nibble not 0xF), including rejected candidates.
+AI-spec bit0-set lookup returns before that site. Allocation counts alone
+cannot establish later RNG state.
 
 2026-10-14 pre-fix baseline HUD/viewport retest on the Mac mini M4, commit
 `68972ca0`: the five authentic runtime routes (DOS English, DOS French,

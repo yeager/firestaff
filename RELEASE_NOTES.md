@@ -10,6 +10,8 @@
 
 ## Developer changes
 
+- `DM2 New Game ownership`: query the prepared world's dungeon for later champion and DYN4 receipts. Original-media startup tests cover DOS, FM Towns, Mac and Amiga. The test-only arranger can now serialize and reload synchronized record/map data; full session integration remains open.
+
 - `DM2 code cleanup`: remove the unused direction-only arranger and duplicate tests; retain one all-branch candidate with original-data rollback checks.
 
 - `DM2 arrangement study`: add an all-branch transactional candidate and original-data checks for DOS and FM Towns. It remains test-only pending complete New Game session integration.

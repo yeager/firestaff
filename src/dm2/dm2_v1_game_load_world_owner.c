@@ -55,6 +55,21 @@ static int dm2_v1_game_load_runtime_candidate_is_initialized(
 static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash,
                                                   uint32_t value);
 
+/* GAME_LOAD operates on its owned map/record allocation after admission.
+ * Receipt queries must follow that allocation, including any preceding
+ * ARRANGE_DUNGEON mutations (SKProject skmap.cpp:851-1254). This borrowed
+ * view is local to a query; the mounted profile remains immutable. */
+static int dm2_v1_game_load_owner_profile_view(
+    DM2_V1_GameLoadWorldOwner *owner, DM2_V1_BootProfile *view)
+{
+    if (!owner || !view || !owner->boot_profile ||
+        !owner->dungeon.raw_data || owner->dungeon.raw_size <= 0 ||
+        !owner->dungeon.record_graph_complete) return 0;
+    *view = *owner->boot_profile;
+    view->dungeon_data = &owner->dungeon;
+    return 1;
+}
+
 /* These are c_dm2data's explicit fresh-game writes, not inferred values.
  * Keep this separate from c_move execution: DM2_PERFORM_MOVE also requires
  * c_moverec, timer, actuator and creature dispatch ownership. */
@@ -1413,10 +1428,12 @@ static int dm2_v1_game_load_owner_materialize_dyn4(
     const DM2_V1_BootChampionDyn4RosterReceipt *roster;
     DM2_V1_BootChampionSelectionCensus census;
     DM2_V1_GdatDyn4SoundState sound_state;
+    DM2_V1_BootProfile profile_view;
     uint32_t hash = 2166136261u;
     int i;
 
-    if (!owner || !owner->asset_loader) return 0;
+    if (!owner || !owner->asset_loader ||
+        !dm2_v1_game_load_owner_profile_view(owner, &profile_view)) return 0;
     roster = owner->source_preselection_ready
         ? &owner->preselection_dyn4_roster : &owner->transaction.dyn4_roster;
     if (!roster->valid || !roster->incomplete_champion_activation ||
@@ -1424,7 +1441,7 @@ static int dm2_v1_game_load_owner_materialize_dyn4(
             DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) return 0;
     memset(&census, 0, sizeof(census));
     if (!dm2_v1_boot_champion_selection_census(
-            owner->boot_profile, &census) || !census.valid ||
+            &profile_view, &census) || !census.valid ||
         census.candidate_count != roster->selector_count) {
         return 0;
     }
@@ -10179,6 +10196,7 @@ int dm2_v1_game_load_world_owner_init_new_game(
     int selection_count)
 {
     DM2_V1_GameLoadWorldOwner candidate;
+    DM2_V1_BootProfile profile_view;
 
     if (!owner) return 0;
     /* Constructor callers pass a fresh/zeroed owner.  Do not inspect a
@@ -10190,8 +10208,9 @@ int dm2_v1_game_load_world_owner_init_new_game(
         !dm2_v1_game_load_world_owner_prepare_new_game(&candidate, profile) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(
             &candidate) ||
+        !dm2_v1_game_load_owner_profile_view(&candidate, &profile_view) ||
         !dm2_v1_boot_new_game_transaction_receipt(
-            profile, selections, selection_count, &candidate.transaction) ||
+            &profile_view, selections, selection_count, &candidate.transaction) ||
         !candidate.transaction.valid ||
         !candidate.transaction.incomplete_game_load ||
         candidate.transaction.entrance.receipt_hash !=
@@ -10225,6 +10244,7 @@ int dm2_v1_game_load_world_owner_select_champion(
     DM2_V1_SksaveItemBonusReceipt old_bonus;
     DM2_V1_GameLoadChampionSelectionReceipt old_receipt;
     DM2_V1_EventQueue old_event_queue;
+    DM2_V1_BootProfile profile_view;
     int16_t old_next_number;
     int16_t old_event_hero;
     uint8_t old_count;
@@ -10236,7 +10256,8 @@ int dm2_v1_game_load_world_owner_select_champion(
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) || !selection ||
         !owner->source_preselection_ready || !owner->boot_profile ||
         !owner->source_map_context_materialized || owner->committed ||
-        owner->selected_mirror_count >= DM2_MAX_HEROES) return 0;
+        owner->selected_mirror_count >= DM2_MAX_HEROES ||
+        !dm2_v1_game_load_owner_profile_view(owner, &profile_view)) return 0;
     count = owner->selected_mirror_count;
     for (i = 0; i < count; ++i) {
         if (owner->selected_mirrors[i].mirror_object_id ==
@@ -10245,24 +10266,24 @@ int dm2_v1_game_load_world_owner_select_champion(
     }
     next[count] = *selection;
     memset(&transaction, 0, sizeof(transaction));
-    if (owner->boot_profile->platform == DM2_PLATFORM_MAC_EN) {
+    if (profile_view.platform == DM2_PLATFORM_MAC_EN) {
         transaction.entrance = owner->preselection_entrance;
         transaction.world_interactions = owner->preselection_world_interactions;
         transaction.actuator_generators = owner->preselection_actuator_generators;
         transaction.entrance_map = owner->preselection_entrance_map;
         transaction.dyn4_roster = owner->preselection_dyn4_roster;
-        if (!dm2_v1_boot_new_game_party_receipt(owner->boot_profile, next,
+        if (!dm2_v1_boot_new_game_party_receipt(&profile_view, next,
                 (int)count + 1, &transaction.party) ||
             !transaction.party.valid ||
             !dm2_v1_boot_new_game_possession_receipt(
-                owner->boot_profile, &transaction.party,
+                &profile_view, &transaction.party,
                 &transaction.possessions) || !transaction.possessions.valid) {
             return 0;
         }
         transaction.hero_count = (int)count + 1;
         transaction.incomplete_game_load = 1;
         transaction.valid = 1;
-    } else if (!dm2_v1_boot_new_game_transaction_receipt(owner->boot_profile, next,
+    } else if (!dm2_v1_boot_new_game_transaction_receipt(&profile_view, next,
             (int)count + 1, &transaction) || !transaction.valid ||
         !transaction.incomplete_game_load ||
         transaction.entrance.receipt_hash !=
