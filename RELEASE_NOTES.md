@@ -7227,3 +7227,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### Diagnostic archive discovery
 
 - Implicit `--boot-probe` launches now use ordinary bounded, authenticated archive discovery, so original DM1 PC ZIP media in the default collection remain available without `--data-dir`, including when the remembered external folder is offline.
+
+### Empty data-folder feedback
+
+- Selecting an empty data folder now preserves installation guidance after both direct and background scans. Access and archive-tool diagnostics keep their existing priority.

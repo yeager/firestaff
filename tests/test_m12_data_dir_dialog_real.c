@@ -75,6 +75,26 @@ int main(void)
     memset(&options, 0, sizeof(options));
     options.skipScreenshotGalleryScan = 1;
     M12_StartupMenu_InitWithOptions(menu, empty, "dm1", &options);
+    menu->languageExplicit = 1;
+    menu->settings.languageIndex = 0;
+    CHECK(M12_StartupMenu_SetDataDirectory(menu, empty),
+          "synchronous empty folder scan completes");
+    CHECK(menu->messageLine1 && strcmp(menu->messageLine1, "NO GAME DATA FOUND") == 0,
+          "synchronous empty folder preserves installation guidance");
+    completion.token = M12_StartupMenu_BeginDataDirDialog(menu);
+    CHECK(completion.token != NULL, "begin empty folder request");
+    if (!completion.token) goto cleanup;
+    M12_StartupMenu_CompleteDataDirDialog(completion.token, empty);
+    (void)M12_StartupMenu_Update(menu);
+    deadline = SDL_GetTicks() + 15000U;
+    while (menu->dataDirScanJob && SDL_GetTicks() < deadline) {
+        (void)M12_StartupMenu_Update(menu);
+        SDL_Delay(2);
+    }
+    CHECK(!menu->dataDirScanJob && !menu->dataDirScanActive,
+          "asynchronous empty folder scan completes");
+    CHECK(menu->messageLine1 && strcmp(menu->messageLine1, "NO GAME DATA FOUND") == 0,
+          "asynchronous empty folder preserves installation guidance");
     completion.token = M12_StartupMenu_BeginDataDirDialog(menu);
     completion.path = mediaDir;
     CHECK(completion.token != NULL, "begin data folder request");

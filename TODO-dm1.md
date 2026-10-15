@@ -1645,9 +1645,9 @@ PC graphics MD5, archive member owner and loaded-level receipt, then verifies
 ordinary startup and accepted movement for both offline folder and game-leaf
 preferences. This admission check does not prove visual or physical display parity.
 
-Follow-up menu feedback audit: `m12_apply_completed_asset_scan` supplies the
-zero-ready installation popup, but `M12_StartupMenu_SetDataDirectory` and the
-async update completion path appear to overwrite it with the generic directory
-result popup. Reproduce an authentic empty/required-data-missing selection and
-preserve actionable installation guidance in both paths. Source audit only;
-not yet verified at runtime.
+2026-10-15 folder-feedback follow-up: synchronous selection and asynchronous
+completion now share one message policy. Empty selections retain installation
+guidance; candidate-only and warning priorities retain their prior paths.
+Both empty-directory regressions and authentic PC34 callback/persistence checks
+pass. Native OS dialog presentation and candidate-only UI text still need their
+own interaction evidence; callback tests do not establish physical dialog parity.

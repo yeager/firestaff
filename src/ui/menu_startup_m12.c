@@ -2477,10 +2477,20 @@ static void m12_apply_completed_asset_scan(M12_StartupMenuState* state) {
                          (unsigned int)time(NULL));
     m12_probe_quick_resume(state);
     m12_save_config(state);
+}
+
+static void m12_show_completed_data_dir_scan_message(M12_StartupMenuState* state) {
+    /* Keep actionable scan results intact for both synchronous selection and
+     * a dialog's asynchronous completion. Candidates without a ready edition
+     * still need the directory result's incomplete-data explanation. */
+    if (m12_show_access_denied_popup(state) ||
+        m12_show_missing_archive_tool_popup(state)) return;
     if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
-        !m12_show_missing_archive_tool_popup(state)) {
+        !M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
         m12_show_no_game_data_popup(state);
+        return;
     }
+    m12_show_data_dir_result_popup(state, 1);
 }
 
 static void m12_update_data_dir_scan_message(M12_StartupMenuState* state) {
@@ -2803,13 +2813,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     state->assetStatus = scannedAssetStatus;
     m12_preserve_selected_data_directory(state, selectedDataDir);
     m12_apply_completed_asset_scan(state);
-    if (m12_show_access_denied_popup(state)) {
-        /* Report inaccessible folders even when another game is available. */
-        return 1;
-    }
-    if (!m12_show_missing_archive_tool_popup(state)) {
-        m12_show_data_dir_result_popup(state, 1);
-    }
+    m12_show_completed_data_dir_scan_message(state);
     return 1;
 }
 
@@ -13940,11 +13944,7 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
             m12_preserve_selected_data_directory(state,
                                                  job->selectedDataDir);
             m12_apply_completed_asset_scan(state);
-            /* Report access failures even when another game is available. */
-            if (!m12_show_access_denied_popup(state) &&
-                !m12_show_missing_archive_tool_popup(state)) {
-                m12_show_data_dir_result_popup(state, 1);
-            }
+            m12_show_completed_data_dir_scan_message(state);
         } else {
             char line3[160];
             m12_format_data_dir_line(state, line3, sizeof(line3));
