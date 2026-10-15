@@ -6921,6 +6921,8 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # for its admitted 0x01/0x04 cases.  Keep the broad helpers test-only until a
 # full GAME_LOAD session can own every mutation and rollback together.
 list(REMOVE_ITEM DM2_SOURCES
+    # The complete arranger candidate has no proven session-order publisher yet.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_arrange_dungeon_owner.c"
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
     # object would duplicate the decoder and leave M10-only users unresolved.
@@ -24134,6 +24136,7 @@ endif()
 
     add_executable(test_dm2_v1_arrange_rng_receipt_real_data
         tests/test_dm2_v1_arrange_rng_receipt_real_data.c
+        src/dm2/dm2_v1_arrange_dungeon_owner.c
         src/dm2/dm2_v1_graphics_data_open.c
     )
     target_include_directories(

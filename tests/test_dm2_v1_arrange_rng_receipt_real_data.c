@@ -1,6 +1,8 @@
 /* Authentic-data census and transactional RANDDIR replay for DM2 arrangement. */
 
 #include "dm2_v1_caii_source_owner.h"
+#include "dm2_v1_arrange_dungeon_owner.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_graphics_data_open.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
@@ -52,6 +54,143 @@ static int check(int condition, const char *label)
 {
     printf("%s: %s\n", condition ? "PASS" : "FAIL", label);
     return condition ? 0 : 1;
+}
+
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+    int pit_queries;
+    int reject_pit;
+} OriginalArrangeQueries;
+
+static int original_pit_gdat(void *context, int map, uint16_t *value)
+{
+    OriginalArrangeQueries *q = context;
+    int style = dm2_v1_dungeon_get_map_graphics_style(q->dungeon, map);
+    ++q->pit_queries;
+    if (q->reject_pit) return 0;
+    if (style < 0 || !q->loader->loaded || !value) return 0;
+    /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero for absent optional entries. */
+    *value = 0;
+    (void)dm2_v1_asset_load_word_value(q->loader, 8, style, 0x6a, value);
+    return 1;
+}
+
+static int original_locate_below(void *context, int map, int *x, int *y,
+                                  int *result_map)
+{
+    OriginalArrangeQueries *q = context;
+    const DM2_V1_DungeonData *d = q->dungeon;
+    DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
+    uint8_t candidates[DM2_V1_MAX_LEVELS];
+    uint16_t count = 0;
+    int16_t tx = (int16_t)*x, ty = (int16_t)*y;
+    DM2_V1_SkprojectLocateOtherLevelReceipt receipt;
+    if (map < 0 || map >= d->level_count) return 0;
+    if (d->map_level_number[map] + 1 >= 63) {
+        *result_map = -1;
+        return 1;
+    }
+    memset(maps, 0, sizeof(maps));
+    /* c_savegame.cpp:579-611 builds each level's scan list in map order. */
+    for (int m = 0; m < d->level_count; ++m) {
+        int lx = *x + d->map_offset_x[map] - d->map_offset_x[m];
+        int ly = *y + d->map_offset_y[map] - d->map_offset_y[m];
+        int raw = dm2_v1_dungeon_c_map_get_tile_value(d, m, lx, ly);
+        if (raw < 0) return 0;
+        maps[m].map_id = (uint8_t)m;
+        maps[m].level = d->map_level_number[m];
+        maps[m].world_x = d->map_offset_x[m];
+        maps[m].world_y = d->map_offset_y[m];
+        maps[m].width = d->level_widths[m] - 1;
+        maps[m].height = d->level_heights[m] - 1;
+        maps[m].tile_type_at_local = (uint8_t)(raw >> 5);
+        if ((raw >> 5) == 5) {
+            int link = dm2_v1_dungeon_get_first_thing(d, m, lx, ly);
+            int size = 0;
+            const uint8_t *r = dm2_v1_dungeon_get_thing_record(
+                d, (uint16_t)link, NULL, NULL, &size);
+            if (!r || size < 6) return 0;
+            maps[m].teleporter_record_active = (uint8_t)(
+                dm2_v1_dungeon_read_record_u16(d, r + 4) & 1);
+        }
+        if (d->map_level_number[m] == d->map_level_number[map] + 1)
+            candidates[count++] = (uint8_t)m;
+    }
+    if (!count) { *result_map = -1; return 1; }
+    *result_map = dm2_v1_skproject_locate_other_level(
+        maps, (uint16_t)d->level_count, (int16_t)map, 1, &tx, &ty,
+        candidates, count, 0, NULL, &receipt);
+    *x = tx; *y = ty;
+    return receipt.valid;
+}
+
+static int original_pool_bytes_equal(const DM2_V1_RecordPoolSet *a,
+                                      const DM2_V1_RecordPoolSet *b)
+{
+    for (int t = 0; t < DM2_V1_RECORD_POOL_COUNT; ++t) {
+        const DM2_V1_RecordPool *p = &a->pools[t], *q = &b->pools[t];
+        size_t bytes = (size_t)p->record_count * (size_t)p->record_size;
+        size_t extra = (size_t)p->extension_count * (size_t)p->record_size;
+        if (p->record_count != q->record_count ||
+            p->record_size != q->record_size ||
+            p->extension_count != q->extension_count ||
+            (bytes && (!p->bytes || !q->bytes || memcmp(p->bytes,q->bytes,bytes))) ||
+            (extra && (!p->extension_bytes || !q->extension_bytes ||
+                memcmp(p->extension_bytes,q->extension_bytes,extra)))) return 0;
+    }
+    return 1;
+}
+
+static int check_complete_arranger(const DM2_V1_DungeonData *d,
+    const DM2_V1_AssetLoader *loader, const DM2_V1_CaiiSourceOwner *ai,
+    const DM2_V1_RecordPoolSet *pools, const DM2_V1_DropRng *rng)
+{
+    OriginalArrangeQueries context = {d, loader, 0, 0};
+    DM2_V1_ArrangeDungeonQueries queries = {
+        &context, original_pit_gdat, original_locate_below};
+    DM2_V1_ArrangeDungeonOwner owner = {0}, repeat = {0}, rejected = {0};
+    DM2_V1_RecordPoolSet snapshot = {0};
+    uint8_t *raw_snapshot = malloc((size_t)d->raw_size);
+    uint32_t before = rng->random;
+    int failures = 0;
+    if (!raw_snapshot || !dm2_v1_record_pool_set_clone(&snapshot,pools)) {
+        free(raw_snapshot);
+        return 1;
+    }
+    memcpy(raw_snapshot,d->raw_data,(size_t)d->raw_size);
+    failures += check(dm2_v1_arrange_dungeon_owner_build(
+        d,pools,ai,rng,&queries,&owner) && owner.valid,
+        "full-branch arranger builds an original-data candidate");
+    if (owner.valid) {
+        failures += check(dm2_v1_arrange_dungeon_owner_build(
+            d,pools,ai,rng,&queries,&repeat) && repeat.valid &&
+            repeat.tile_count == owner.tile_count &&
+            memcmp(repeat.tiles,owner.tiles,owner.tile_count) == 0 &&
+            original_pool_bytes_equal(&repeat.pools,&owner.pools) &&
+            repeat.rng.random == owner.rng.random &&
+            repeat.rng_draws == owner.rng_draws,
+            "original-data arrangement candidate is reproducible");
+        printf("complete-arranger visits=%u merges=%u draws=%u tiles=%zu\n",
+            owner.record_visits,owner.teleporter_merges,owner.rng_draws,
+            owner.tile_count);
+    }
+    context.pit_queries = 0;
+    context.reject_pit = 1;
+    failures += check(!dm2_v1_arrange_dungeon_owner_build(
+        d,pools,ai,rng,&queries,&rejected) && context.pit_queries > 0 &&
+        !rejected.valid && !rejected.pools.valid && !rejected.tiles,
+        "unavailable authentic query discards the entire candidate");
+    failures += check(rng->random == before &&
+        original_pool_bytes_equal(pools,&snapshot) &&
+        memcmp(raw_snapshot,d->raw_data,(size_t)d->raw_size) == 0,
+        "successful and rejected arrangement preserve all caller bytes and RNG");
+    dm2_v1_arrange_dungeon_owner_free(&owner);
+    dm2_v1_arrange_dungeon_owner_free(&repeat);
+    dm2_v1_arrange_dungeon_owner_free(&rejected);
+    dm2_v1_record_pool_set_free(&snapshot);
+    free(raw_snapshot);
+    return failures;
 }
 
 static int check_rejected_append_preserves_original(DM2_V1_DungeonData *dungeon)
@@ -178,7 +317,7 @@ int main(void)
             &dungeon, &ai, &receipt);
         DM2_V1_ArrangeDungeonRngReceipt baseline = receipt;
         failures += check(complete && receipt.valid && !receipt.incomplete,
-                          "source-ordered arrangement RNG census is complete");
+                          "unchanged-graph arrangement RNG census is complete");
         if (complete) {
             int map;
             int found_record = 0;
@@ -261,7 +400,9 @@ int main(void)
                     weather_receipt.draws == 3 &&
                     cold_weather.pattern_row == 3 && cold_weather.step == 1 &&
                     session_rng.random == expected_rng.random,
-                "authentic cold-start weather advances the zero-seeded shared RNG by three draws");
+                "conditional zero-seeded weather advances the shared RNG by three draws");
+            failures += check_complete_arranger(&dungeon, &loader, &ai,
+                                                   &pools, &session_rng);
             expected_rng = session_rng;
             for (uint32_t i = 0; i < baseline.rng_draws; ++i)
                 (void)dm2_v1_drops_randdir(&expected_rng);
@@ -271,7 +412,7 @@ int main(void)
                         &dungeon, &ai, &pools, &session_rng, &apply_receipt) &&
                         apply_receipt.valid && apply_receipt.committed &&
                         !apply_receipt.incomplete,
-                    "source-ordered direction replay commits on private pools");
+                    "isolated direction replay commits on private pools");
                 failures += check(
                     apply_receipt.rng_draws == baseline.rng_draws &&
                         apply_receipt.creature_direction_writes ==

@@ -1,5 +1,18 @@
 # Firestaff TODO — DM2
 
+2026-10-15 full-branch arrangement candidate: the new test-only
+`dm2_v1_arrange_dungeon_owner` ports DB1/DB2/DB3/DB4 and pit processing into
+one cloned pool/tile/RNG transaction. Original DOS EN and FM Towns tests
+complete with 33 teleporter merges each, 28/27 RNG draws and 12,254/12,115
+map tiles. Repeated candidates match; success and unavailable-query failure
+preserve all caller bytes/RNG. Static review compared branch masks and chain
+mutation order with pinned skmap.cpp. This is not an original-executable
+state comparison or a live GAME_LOAD publisher. Bind the authentic queries
+and candidate pools/tiles/RNG into the session after proving pre-weather and
+later CAII ordering; verify Macintosh/Amiga sources and then the complete
+CLI/menu New Game transition. The module remains outside the product archive.
+
+
 2026-10-15 teleporter ordering audit, SKProject commit
 `2c59a2c5a7978923ff5c822c15c3479e4d448493`,
 `SKWINSPX/src/v5/skmap.cpp`: lines 927-998 validate reciprocal teleporter
@@ -93,8 +106,8 @@ and relocation are in lines 927-998; ladder/text/recharge link updates are at
 1001-1035; actuator destination/door and tile mutations are at 1037-1115;
 creature AI-derived HP, position and animation initialization follows at
 1117-1184; pit/void cross-level tile resolution is at 1219-1247. These branches
-must be source-mapped and implemented transactionally before the full arranger
-can be wired into fresh-game completion. The shared RNG boundary also remains
+are now represented in the test-only candidate, but require original-state
+comparison and session publication before fresh-game completion can use it. The shared RNG boundary also remains
 open: SKProject `sksvgame.cpp:538-546` performs fresh weather setup before
 `DM2_ARRANGE_DUNGEON` at 573, with later CAII work in the same session. No
 standalone zero-seeded arrangement is source-faithful.

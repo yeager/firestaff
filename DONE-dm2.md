@@ -1,5 +1,13 @@
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
 
+- 2026-10-15: Added an isolated all-branch arrangement candidate with cloned
+  record pools, tiles and RNG. Source review covers teleporter aliases,
+  dynamic link traversal, DB2/DB3 mutations, creature initialization and pit
+  flags. Original DOS EN and FM Towns tests pass candidate construction,
+  deterministic replay, caller-byte preservation and unavailable-query
+  rollback. The owner is compiled only by the focused original-data test;
+  complete live New Game support remains open in TODO-dm2.md.
+
 - 2026-10-15: Fixed a NULL output dereference in the partial arrangement
   admission guard. Missing output now returns failure without advancing
   session RNG. The original-data regression passes with DOS EN and FM Towns
