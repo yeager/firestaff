@@ -3354,3 +3354,24 @@ deterministic cancellation and catalog consistency passed. The cancellation
 executable's two full five-game corpus checks remained intentionally skipped.
 Independent source review found no remaining blocker in the PC path changes.
 Redacted patch Gitleaks found no leaks.
+
+- 2026-10-16: Reproduced a mixed DM1 collection reporting the rejected Towns
+  dungeon after selecting a surviving loose ST12 installation. Final native
+  publication now refreshes the complete same-owner dungeon path and observed
+  supported hash for loose native owners, clearing stale receipts on failure.
+  Reused the existing admission helper and retained its compatibility policy.
+  Original PC/ST12/A20 English sibling cases pass both scan APIs through
+  EN Towns -> JP Towns -> surviving sibling selection. A20 staging reads original
+  nested ZIP/ZIP/ADF members in bounded memory and verifies sizes/hashes before
+  writing task-owned copies; its SWSH remains required. Targeted original-media
+  tests passed (2/2, 4.79 s), without missing-media skips. Independent review
+  found no blocker, including fake-catalog and platform boundaries. This proves
+  collection admission/report provenance, not native Windows or visual parity.
+
+Final native surviving-owner binary passed the complete original-media CLI
+startup diagnostics suite (214.55 s), including both offline remembered-root
+cases. Access-denied CTest passed (14.33 s); deterministic cancellation and
+catalog consistency passed. The cancellation executable's two full five-game
+corpus cases remained intentionally skipped. Redacted patch Gitleaks found no
+leaks. Preceding GitHub Actions run 38816079690 completed successfully before
+publication of this batch.

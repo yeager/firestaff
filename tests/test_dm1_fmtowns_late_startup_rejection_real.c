@@ -5,6 +5,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 #include "asset_status_m12.h"
+#include "asset_find_by_hash.h"
 #include "dm1_v1_fmtowns_startup.h"
 #include "fs_portable_compat.h"
 #include "m11_game_view.h"
@@ -55,6 +56,12 @@ int main(void) {
     const char* original=getenv("FIRESTAFF_DM1_FMTOWNS_LOOSE_ROOT");
     const char* scratch=getenv("TMPDIR");
     const char* pcOriginal=getenv("FIRESTAFF_DM1_PC_ARCHIVE");
+    const char* atariOriginal=getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
+    const char* amigaOriginal=getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    char nativeDir[FSP_PATH_MAX]={0}, nativeFiles[3][FSP_PATH_MAX]={{0}};
+    unsigned char* nativeBytes=NULL;
+    size_t nativeSize=0;
+    FILE* nativeOutput=NULL;
     char root[FSP_PATH_MAX]={0}, data[FSP_PATH_MAX]={0};
     char config[FSP_PATH_MAX]={0}, menuProgram[FSP_PATH_MAX]={0};
     char japaneseData[FSP_PATH_MAX]={0}, englishProgram[FSP_PATH_MAX]={0}, pcAlias[FSP_PATH_MAX]={0};
@@ -191,19 +198,69 @@ int main(void) {
         "fresh scan admits restored authentic native FM Towns startup");
     version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex);
     REQUIRE(version && version->matched,"restored common menu admits Japanese startup too");
-    if (pcOriginal && FSP_FileExists(pcOriginal)) {
+    for (int sibling=0; sibling<3; ++sibling) {
+        const char* siblingOriginal=sibling==0 ? pcOriginal : sibling==1 ? atariOriginal : amigaOriginal;
         char japaneseProgram[FSP_PATH_MAX];
         int phase;
-        REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
+        size_t nativeCount=sibling==1 ? 2U : 3U;
+        if (!siblingOriginal || !FSP_FileExists(siblingOriginal)) {
+            printf("SKIP: authentic %s archive unavailable for mixed-owner report case\n",
+                sibling==0 ? "PC" : sibling==1 ? "Atari ST" : "Amiga 2.0");
+            continue;
+        }
+        if (sibling!=0) {
+            static const char* const nativeHashes[2][3]={
+                {"9ce2eaf7a9e78620e3f17594437caffa", "050fb2cfded1b502ec2c53956b94c5bd", NULL},
+                {"6a2f135b53c2220f0251fa103e2a6e7e", "30028fb6a301ecb20127ef0b3af32b05",
+                 "a0ffbcc7ae8cecac03128ddb32887ef4"}};
+            static const size_t nativeSizes[2][3]={{271918U,33442U,0U},{411960U,25006U,78480U}};
+            static const char* const names[]={"GRAPHICS.DAT","DUNGEON.DAT","swoosh"};
+            const char* const* hashes=nativeHashes[sibling-1];
+            const size_t* sizes=nativeSizes[sibling-1];
+            REQUIRE(FSP_JoinPath(nativeDir,sizeof(nativeDir),root,sibling==1 ? "st12-original" : "a20-original") &&
+                FSP_CreateDirectory(nativeDir),"create isolated original native owner");
+            for (i=0; i<nativeCount; ++i) {
+                if (sibling==2) {
+                    static const char* const amigaMembers[]={"graphics.dat","Dungeon.dat","swoosh"};
+                    /* The original A20 package is ZIP -> ZIP -> ADF. Use
+                     * its native bounded member reader; the generic hash
+                     * walker does not enumerate this nested filesystem. */
+                    REQUIRE(snprintf(source,sizeof(source),
+                        "%s::Dungeon Master v2.0 (1988)(FTL).zip::Dungeon Master v2.0 (1988)(FTL).adf::%s",
+                        siblingOriginal,amigaMembers[i])<(int)sizeof(source),
+                        "locate original nested Amiga member");
+                } else REQUIRE(asset_find_by_md5(siblingOriginal,hashes[i],source,sizeof(source),0),
+                    "locate original Atari member by identity");
+                if (!asset_read_path_alloc(source,&nativeBytes,&nativeSize) ||
+                    nativeSize!=sizes[i] || !asset_memory_matches_md5(nativeBytes,nativeSize,hashes[i])) {
+                    fprintf(stderr,"original member rejected: sibling=%d member=%zu path=%s bytes=%zu expected=%zu\n",
+                        sibling,i,source,nativeSize,sizes[i]);
+                    REQUIRE(0,"read bounded authentic native original member");
+                }
+                REQUIRE(FSP_JoinPath(nativeFiles[i],sizeof(nativeFiles[i]),nativeDir,names[i]) &&
+                    (nativeOutput=fopen(nativeFiles[i],"wb"))!=NULL,
+                    "create task-owned native member copy");
+                REQUIRE(fwrite(nativeBytes,1,nativeSize,nativeOutput)==nativeSize,
+                    "stage unchanged original native member bytes");
+                {
+                    int closeResult=fclose(nativeOutput);
+                    nativeOutput=NULL;
+                    REQUIRE(closeResult==0,"close original native member copy");
+                }
+                free(nativeBytes); nativeBytes=NULL;
+                REQUIRE(asset_file_matches_md5(nativeFiles[i],hashes[i]),
+                    "authenticate unchanged staged native member bytes");
+            }
+        } else REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) &&
-            symlink(physical,pcAlias)==0 &&
-            FSP_JoinPath(japaneseProgram,sizeof(japaneseProgram),root,"JDM.EXP"),
-            "stage original PC archive for mixed-owner report");
+            symlink(physical,pcAlias)==0,"stage original PC archive for mixed-owner report");
+        REQUIRE(FSP_JoinPath(japaneseProgram,sizeof(japaneseProgram),root,"JDM.EXP"),
+            "locate task-owned Japanese launcher link");
         for (phase=0; phase<3; ++phase) {
             const M12_AssetVersionStatus* owner;
             int graphicsReported=0, dungeonReported=0, scanMode;
             if (phase==1) REQUIRE(unlink(englishProgram)==0,"reject English owner for report fallback");
-            if (phase==2) REQUIRE(unlink(japaneseProgram)==0,"reject Japanese owner for PC report fallback");
+            if (phase==2) REQUIRE(unlink(japaneseProgram)==0,"reject Japanese owner for sibling report fallback");
             for (scanMode=0; scanMode<2; ++scanMode) {
                 graphicsReported=dungeonReported=0;
                 if (scanMode==0) M12_AssetStatus_ScanGame(fresh,root,"dm1");
@@ -211,7 +268,7 @@ int main(void) {
                 owner=M12_AssetStatus_GetFirstMatchedVersion(fresh,"dm1");
                 REQUIRE(M12_AssetStatus_GameAvailable(fresh,"dm1") && owner &&
                     strcmp(owner->versionId,phase==0 ? "fmtowns-en" :
-                    phase==1 ? "fmtowns-ja" : "pc34-en")==0,"report follows first surviving original edition");
+                    phase==1 ? "fmtowns-ja" : sibling==0 ? "pc34-en" : sibling==1 ? "st12-en" : "amiga20-en")==0,"report follows first surviving original edition");
                 for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
                     const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
                     const char* reported=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
@@ -225,9 +282,13 @@ int main(void) {
                             dungeonReported=required->matched && strcmp(reported,destination)==0 &&
                                 strcmp(required->matchedHash,phase==0 ? "3dc0a932d0e0adfe59878f07c51700c5" :
                                     "fe098f70ce83cfe3f2333565093daf35")==0;
-                        } else {
+                        } else if (sibling==0) {
                             dungeonReported=required->matched && strncmp(reported,pcAlias,strlen(pcAlias))==0 &&
                                 strcmp(required->matchedHash,"766450c940651fc021c92fe5d0d0b3a6")==0;
+                        } else {
+                            dungeonReported=required->matched && strcmp(reported,nativeFiles[1])==0 &&
+                                strcmp(required->matchedHash,sibling==1 ? "050fb2cfded1b502ec2c53956b94c5bd" :
+                                    "30028fb6a301ecb20127ef0b3af32b05")==0;
                         }
                     }
                 }
@@ -248,8 +309,16 @@ int main(void) {
             FSP_ResolvePhysicalPath(physical,sizeof(physical),source) && symlink(physical,englishProgram)==0 &&
             FSP_JoinPath(source,sizeof(source),original,"JDM.EXP") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),source) && symlink(physical,japaneseProgram)==0 &&
-            unlink(pcAlias)==0,"restore only staged source links after report cases");
+            (sibling!=0 || unlink(pcAlias)==0),"restore only staged source links after report cases");
         pcAlias[0]='\0';
+        if (sibling!=0) {
+            for (i=0; i<nativeCount; ++i) {
+                REQUIRE(unlink(nativeFiles[i])==0,"remove only task-owned native member copy");
+                nativeFiles[i][0]='\0';
+            }
+            REQUIRE(rmdir(nativeDir)==0,"remove isolated native owner directory");
+            nativeDir[0]='\0';
+        }
     }
     REQUIRE(unlink(englishProgram)==0,"remove only staged English program link");
     M12_AssetStatus_ScanGame(fresh,root,"dm1");
@@ -452,6 +521,10 @@ int main(void) {
     result=0;
     puts("PASS: native Towns admission preserves language ownership and playable sibling editions");
 cleanup:
+    if (nativeOutput) fclose(nativeOutput);
+    free(nativeBytes);
+    for (i=0; i<3; ++i) if (nativeFiles[i][0]) unlink(nativeFiles[i]);
+    if (nativeDir[0]) rmdir(nativeDir);
     if (initialized) M11_GameView_Shutdown(game);
     if (menu) M12_StartupMenu_Destroy(menu);
     SDL_free(game); SDL_free(menu); SDL_free(fresh);

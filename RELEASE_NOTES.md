@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM1 mixed installations`: refresh the reported dungeon file when an
+  incomplete FM Towns launcher leaves an Atari or Amiga installation available.
+
 - `DM1 multilingual PC startup`: retain explicitly selected graphics and their
   own standard dungeon, including renamed original files. Reject stale or
   replaced standard worlds without borrowing another installation's files.

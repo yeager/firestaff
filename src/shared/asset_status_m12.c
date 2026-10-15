@@ -1537,6 +1537,8 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
     const char* separator;
     const char* dungeonHash;
     char dungeon[M12_ASSET_DATA_DIR_CAPACITY];
+    char looseDungeonMd5[33];
+    int looseNativeOwner;
     size_t i;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return;
@@ -1550,7 +1552,9 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
         m12_copy_string(required->sourcePath, sizeof(required->sourcePath), version->matchedPath);
         m12_copy_string(required->matchedHash, sizeof(required->matchedHash), version->matchedMd5);
     }
-    if (strcmp(version->versionId, "pc34-en") != 0 &&
+    looseNativeOwner = !strstr(version->matchedPath, "::") &&
+        m12_dm1_loose_dungeon_md5(version->matchedMd5) != NULL;
+    if (!looseNativeOwner && strcmp(version->versionId, "pc34-en") != 0 &&
         strcmp(version->versionId, "pc34-multi") != 0 &&
         strcmp(version->versionId, "fmtowns-en") != 0 &&
         strcmp(version->versionId, "fmtowns-ja") != 0) return;
@@ -1571,7 +1575,20 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
         }
     }
     separator = strstr(version->matchedPath, "::");
-    if (strcmp(version->versionId, "pc34-en") == 0 ||
+    if (looseNativeOwner) {
+        const char* allowed = m12_dm1_loose_dungeon_md5(version->matchedMd5);
+        const char* match;
+        /* LOADSAVE.C F0435:2336-2343 opens each Atari/Amiga installation's
+         * own world. Final native rejection can change the surviving owner
+         * after the initial required-file report was filled. */
+        if (!m12_dm1_complete_loose_owner(version->matchedPath,
+                version->matchedMd5, dungeon) ||
+            !asset_file_md5_hex(dungeon, looseDungeonMd5)) return;
+        match = strstr(allowed, looseDungeonMd5);
+        if (!match || (match != allowed && match[-1] != ';') ||
+            (match[32] != '\0' && match[32] != ';')) return;
+        dungeonHash = looseDungeonMd5;
+    } else if (strcmp(version->versionId, "pc34-en") == 0 ||
         strcmp(version->versionId, "pc34-multi") == 0) {
         dungeonHash = "766450c940651fc021c92fe5d0d0b3a6";
         if (separator) {

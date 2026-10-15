@@ -1730,8 +1730,10 @@ feedback to other native owners and mixed-collection selected-edition failures.
 Mixed loose Towns/PC34 English reports now refresh graphics
 and dungeon provenance after incomplete native owners are removed. Both the
 full inventory and selected-game scan have authentic EN→JP→PC coverage.
-Other editions' companion report ownership and native Windows original-media
-staging remain separate verification work.
+Final surviving loose-owner reports now also refresh Atari/Amiga dungeon
+provenance. Original ST12 and A20 English cases pass beside rejected Towns
+launchers through both scan APIs. Other native virtual-owner combinations and
+native Windows original-media staging remain separate verification work.
 
 2026-10-16 multilingual owner follow-up: original EUDATA regression tests
 now prove exact selected-file ownership in both scan APIs, matching required
@@ -1752,3 +1754,10 @@ F0095:2153-2165. Preserve that original mapping. ScummVM's
 setMultipleColorsInPalette (6108-6157) substitutes its dungeon palette for
 G8175_CREAT_PAL, so native video-driver tables remain authoritative. Source
 comparison found no newly proven Firestaff defect and did not execute ScummVM.
+
+2026-10-16 native companion compatibility audit: the existing retail Atari/early
+Amiga loose-owner helper still accepts the game-wide dungeon hash list. A PC34
+original dungeon beside ST12 graphics can therefore pass scan-time admission,
+although the ST runtime's big-endian normalizer rejects its header bounds.
+This is source/header evidence only; add an original-data red regression before
+changing compatibility policy. Preserve intentional explicit PC dungeon paths.
