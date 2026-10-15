@@ -295,3 +295,24 @@ for case_item in up:1,7,0 down:1,8,2 left:1,8,3 right:1,8,1 \
     probe_input "${case_item%%:*}" "${case_item#*:}"
 done
 echo 'PASS: native DM2 DOS ZIP start menu -> MVE -> SKULL -> New Game accepts the complete observed input matrix in memory'
+
+# The scanner admits ZIP suffixes without regard to case. Keep the selected
+# unchanged retail medium through the production IBMIOP/MVE startup owner.
+uppercase_root="$auto_home/uppercase-zip"
+mkdir -p "$uppercase_root/config"
+archive_dir=$(cd "$(dirname "$archive")" && pwd)
+uppercase_archive="$uppercase_root/Dungeon-Master-II-Skullkeep_DOS_EN.ZIP"
+ln -s "$archive_dir/${archive##*/}" "$uppercase_archive"
+uppercase_output=$(HOME="$uppercase_root/config" XDG_CONFIG_HOME="$uppercase_root/config" \
+    APPDATA="$uppercase_root/config" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --platform pc --data-dir "$uppercase_archive" --boot-probe \
+    --boot-probe-frames 100 --script key:enter,key:enter,key:enter \
+    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+    --duration 0 2>&1) || {
+    printf '%s\n' "$uppercase_output" >&2
+    exit 1
+}
+printf '%s\n' "$uppercase_output" | grep -Fq 'phase=dm2-runtime'
+printf '%s\n' "$uppercase_output" | grep -Fq 'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'
+echo 'PASS: unchanged DOS retail media boots from uppercase ZIP alias'

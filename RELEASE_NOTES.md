@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `DM2 DOS and Macintosh startup`: accept uppercase ZIP extensions on the documented retail archive names while retaining original-file verification.
+
 - `DM1 Amiga loose files`: start the original demo through CLI and the start menu when its files are stored in a directory, preserving authenticated title and entrance companions.
 
 - `DM1 Amiga 2.2 German`: admit the original disk's complete startup tuple and run its title/entrance through CLI and the start menu.

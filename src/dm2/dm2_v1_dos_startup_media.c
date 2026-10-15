@@ -1,4 +1,5 @@
 #include "dm2_v1_dos_startup_media.h"
+#include "dm2_v1_media_path.h"
 
 #include "asset_find_by_hash.h"
 #include "dm2_v1_dos_real_data_manifest.h"
@@ -183,7 +184,7 @@ static int dm2_v1_dos_startup_read_verified(const char *root,
     if (!expected) {
         return 0;
     }
-    if (strstr(root, ".zip") != NULL) {
+    if (dm2_v1_media_path_is_zip(root)) {
         uint8_t *bytes = NULL;
         size_t byte_count = 0u;
         DM2_V1_DosSha256Fast sha;
@@ -390,7 +391,7 @@ static int dm2_v1_dos_startup_load_verified_member(
         !(expected = dm2_v1_dos_file_fp_lookup_pc34(name))) {
         return 0;
     }
-    if (strstr(install_root, ".zip") != NULL) {
+    if (dm2_v1_media_path_is_zip(install_root)) {
         if (snprintf(path, sizeof(path), "%s::%s", install_root, name) <= 0 ||
             strlen(path) >= sizeof(path) ||
             !asset_read_virtual_path_alloc(path, &bytes, &read_total) ||

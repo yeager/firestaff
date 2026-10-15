@@ -4,7 +4,7 @@ set -eu
 
 app=${1:?usage: test_dm2_v1_mac_native_cli_boot.sh <firestaff>}
 data_root=${FIRESTAFF_DM2_DATA_ROOT:-"$HOME/.firestaff/data"}
-test_scratch=${FIRESTAFF_TEST_SCRATCH:-"${TMPDIR:-$PWD/.codex-scratch}"}
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 
 # The CUE/BIN archive is a production-native reader path, never an external
 # extractor wrapper.
@@ -375,3 +375,21 @@ if [ "$archive_hash_before" != "$(firestaff_sha256_file "$archive")" ]; then
     exit 1
 fi
 echo 'PASS: native DM2 Macintosh ZIP AUTO start menu, title, mirror selection, and post-launch movement run in memory'
+
+# Preserve the explicit Macintosh archive owner for case-insensitive suffixes.
+uppercase_root="$menu_data_root/uppercase-zip"
+mkdir -p "$uppercase_root/config"
+uppercase_archive="$uppercase_root/Dungeon-Master-II-Skullkeep_Mac_EN.ZIP"
+ln -s "$archive_dir/$archive_name" "$uppercase_archive"
+uppercase_output=$(HOME="$uppercase_root/config" XDG_CONFIG_HOME="$uppercase_root/config" \
+    APPDATA="$uppercase_root/config" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --platform mac --data-dir "$uppercase_archive" --boot-probe \
+    --boot-probe-frames 500 --script key:enter,key:enter,click:100:60,up \
+    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+    --duration 0 2>&1) || {
+    printf '%s\n' "$uppercase_output" >&2
+    exit 1
+}
+printf '%s\n' "$uppercase_output" | grep -Fq 'phase=dm2-runtime'
+echo 'PASS: unchanged Macintosh retail media boots from uppercase ZIP alias'

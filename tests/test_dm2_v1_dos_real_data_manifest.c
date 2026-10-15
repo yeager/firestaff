@@ -87,11 +87,13 @@ int main(void) {
     printf("PASS: %d/%d DM2 DOS ZIP members match manifest size in RAM\n",
         ok, DM2_V1_DOS_FILE_COUNT);
     assert(ok == DM2_V1_DOS_FILE_COUNT);
-    /* This older helper takes a host directory.  Keep it as an optional
-     * diagnostic only; the admitted archive path above is the real test. */
-    if (root && root[0]) {
+    /* Admit this exact original archive spelling through production startup,
+     * including uppercase aliases supplied by the media runner. An explicit
+     * loose install root remains an additional diagnostic. */
+    for (int source = 0; source < ((root && root[0]) ? 2 : 1); ++source) {
+        const char *startup_root = source == 0 ? archive : root;
         DM2_V1_DosStartupMediaReceipt startup;
-        assert(dm2_v1_dos_startup_media_probe(root, &startup) == 1);
+        assert(dm2_v1_dos_startup_media_probe(startup_root, &startup) == 1);
         assert(startup.valid && startup.complete &&
                startup.batch_dispatches_ibmiop && startup.ibmiop_verified &&
                startup.splash_verified && startup.ftl_verified &&

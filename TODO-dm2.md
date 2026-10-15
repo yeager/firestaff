@@ -1,5 +1,14 @@
 # Firestaff TODO — DM2
 
+2026-10-15 archive ownership: original DOS/Mac canonical-name .ZIP aliases
+now reach loaded runtime after replacing case-sensitive transport checks.
+An unrelated explicit-name gap remains: original DOS media aliased as
+DM2.ZIP is hash-discovered but rejected as unavailable because the boot owner
+still requires its canonical edition-family prefix. Preserve hash-based
+identity and explicit selection when removing this naming dependency; do not
+fall through to sibling packages. Existing uppercase-prefix tests do not
+prove arbitrary archive-name support or cross-platform native rendering.
+
 ## Fresh New Game verification (2026-10-15)
 
 Default preparation now runs source cold weather, complete dungeon arrangement

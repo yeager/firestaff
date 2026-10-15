@@ -1,3 +1,13 @@
+- 2026-10-15: Fixed DOS/Macintosh ZIP transport checks that used a
+  case-sensitive substring instead of the scanner's case-insensitive suffix
+  policy. Original canonical-name ZIP aliases ending in .ZIP now retain the
+  selected media through startup. Production app probes reached loaded
+  one-champion runtime in DOS (1,8,0) and Macintosh (1,7,0 after movement),
+  with authenticated graphics identities and zero fallback draws. Existing
+  CLI regressions now include those unchanged original-media aliases with
+  isolated configuration. This is SDL-dummy functional evidence on one Mac,
+  not native display/audio or visual parity verification.
+
 - 2026-10-15: Enabled complete dungeon arrangement in default private New
   Game preparation after source cold weather and before derived receipts.
   Synchronized raw/pools and shared RNG remain owned across CAII, candidate

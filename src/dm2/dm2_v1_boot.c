@@ -19,6 +19,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_media_path.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
@@ -84,7 +85,7 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
     char candidates[5][512];
     size_t i;
     if (!profile || !base) return 0;
-    if (strstr(base, ".zip") != NULL && FSP_FileExists(base)) {
+    if (dm2_v1_media_path_is_zip(base) && FSP_FileExists(base)) {
         snprintf(candidates[0], sizeof(candidates[0]), "%s", base);
         i = 1;
     } else {
@@ -3762,7 +3763,7 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             memcpy(dos_install_root, profile->asset_root, archive_length);
             dos_install_root[archive_length] = '\0';
         } else if (FSP_FileExists(profile->asset_root) &&
-                   strstr(profile->asset_root, ".zip") != NULL) {
+                   dm2_v1_media_path_is_zip(profile->asset_root)) {
             snprintf(dos_install_root, sizeof(dos_install_root), "%s",
                      profile->asset_root);
         } else {
