@@ -1,3 +1,16 @@
+- 2026-10-15: Direct original CAPS .raw selection now follows the bounded
+  signature-based Amiga reader instead of the generic raw-CD classification.
+  Single/list scans and direct virtual reads preserve raw::Graphics.DAT
+  ownership. Before the fix the original English capture was unavailable;
+  the four-route CLI regression now passes AUTO/explicit English archive,
+  multilingual ZIP and direct original English raw to loaded runtime/movement
+  (35.31 seconds). English and multilingual M12 both reach first movement
+  (40.17 and 36.70 seconds); all three tests pass in 72.06 seconds at -j2.
+  Source/archive SHA-256s remain unchanged, including the original raw capture.
+  Localization checks pass. These Mac dummy-driver checks do not establish
+  native Windows/Linux behavior, direct-raw M12, utility play or visual/audio
+  parity.
+
 - 2026-10-15: Native in-memory CTRaw OFS intake now preserves sector
   presence, accepts identical revolutions and rejects conflicting valid sector
   payloads. Signature-aware nested 7z/ZIP routing keeps exact raw-member

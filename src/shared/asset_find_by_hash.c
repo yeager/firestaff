@@ -870,6 +870,15 @@ static AssetContainerKind asset_container_kind_from_magic(const char *path) {
         fclose(fp);
         return ASSET_CONTAINER_ADF;
     }
+    /* Whole CAPS CTRaw disks share .raw with CD and flux formats. Inspect
+     * the bounded header before selecting the existing OFS intake; suffix
+     * alone must never redirect ordinary raw images away from their reader. */
+    if (got >= 12U && memcmp(header, "CAPS", 4U) == 0 &&
+        header[4] == 0U && header[5] == 0U && header[6] == 0U &&
+        header[7] == 12U) {
+        fclose(fp);
+        return ASSET_CONTAINER_ADF;
+    }
     if (got >= 2U && header[0] == 0x0eU && header[1] == 0x0fU) {
         fclose(fp);
         return ASSET_CONTAINER_ATARI_MSA;
@@ -1578,7 +1587,8 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
         container[length] = '\0';
         if (strstr(separator + 2, "::") == NULL &&
             (is_atari_stx_path(container) || is_atari_st_path(container) ||
-             is_atari_msa_path(container) || is_adf_path(container))) {
+             is_atari_msa_path(container) ||
+             asset_container_kind_for_path(container) == ASSET_CONTAINER_ADF)) {
             return asset_read_virtual_path_alloc(path, outBytes, outSize);
         }
         /* Nested disk images have format-specific readers (FM Towns,
@@ -7193,7 +7203,8 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
          * Read the user-owned image into bounded RAM and dispatch through the
          * exact native file visitor rather than requiring a cache copy. */
         if (is_atari_stx_path(container) || is_atari_st_path(container) ||
-            is_atari_msa_path(container) || is_adf_path(container)) {
+            is_atari_msa_path(container) ||
+            asset_container_kind_for_path(container) == ASSET_CONTAINER_ADF) {
             uint8_t *diskImage = NULL;
             size_t diskImageSize = 0U;
             AssetReadVirtualMatch directMatch;
@@ -7203,7 +7214,7 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
             }
             memset(&directMatch, 0, sizeof(directMatch));
             directMatch.wanted = first + 2;
-            if (is_adf_path(container)) {
+            if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ADF) {
                 directResult = firestaff_amiga_adf_visit_ofs_files(
                     diskImage, diskImageSize, asset_read_virtual_visitor,
                     &directMatch);

@@ -40,7 +40,9 @@ trap cleanup EXIT
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS FIRESTAFF_EXIT_AFTER_LAUNCH
 source_hash_before=$(firestaff_sha256_file "$source_archive")
 multi_archive="$scratch/CSB-Multilingual.zip"
-python3 - "$source_archive" "$multi_archive" <<'PYMEDIA'
+raw_capture="$scratch/CSB-English.raw"
+python3 - "$source_archive" "$multi_archive" "$raw_capture" <<'PYMEDIA'
+import hashlib
 import pathlib
 import subprocess
 import sys
@@ -59,13 +61,27 @@ with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as output:
 with zipfile.ZipFile(archive) as output:
     if output.namelist() != [member] or output.read(member) != raw:
         raise SystemExit("FAIL: staging changed the original multilingual CTRaw bytes")
+english_member = "ChaosStrikesBack_Disk1of2 GameDisk_English.raw"
+english = subprocess.run(["7zz", "x", "-so", "-bd", sys.argv[1], english_member],
+                         stdout=subprocess.PIPE, check=True).stdout
+if (len(english) != 3158314 or english[:4] != b"CAPS" or
+        zlib.crc32(english) != 0x170047F1 or
+        hashlib.sha256(english).hexdigest() !=
+        "08645a7efaef450af23e886a46e44b7992bb25e02f5b8460262839e8aaa206c3"):
+    raise SystemExit("FAIL: original English CTRaw member identity changed")
+raw_path = pathlib.Path(sys.argv[3])
+raw_path.write_bytes(english)
+if raw_path.read_bytes() != english:
+    raise SystemExit("FAIL: direct staging changed original English CTRaw bytes")
 PYMEDIA
+raw_hash_before=$(firestaff_sha256_file "$raw_capture")
 multi_hash_before=$(firestaff_sha256_file "$multi_archive")
 
 # Mount the unchanged preservation archive for English, and the single-member
-# ZIP above for multilingual. Runtime ZIP/7z and CAPS/OFS reads stay native;
+# ZIP above for multilingual, plus the byte-identical English raw capture.
+# Runtime ZIP/7z and CAPS/OFS reads stay native;
 # development staging never repairs or replaces any original capture bytes.
-for route in auto amiga multi; do
+for route in auto amiga multi raw; do
     selected_archive=$source_archive
     expected_edition=amiga35-en
     expected_graphics_md5=291e1bc6803e3dc4b974c60117ca5d68
@@ -75,6 +91,11 @@ for route in auto amiga multi; do
         expected_edition=amiga35-multi
         expected_graphics_md5=cefaddfdf5651df2c91f61b5611a8362
         member='ChaosStrikesBack_Disk1of2_GameDisk_EnglishFrenchGerman.raw'
+    fi
+    expected_owner="$selected_archive::$member::Graphics.DAT"
+    if [[ "$route" = raw ]]; then
+        selected_archive=$raw_capture
+        expected_owner="$raw_capture::Graphics.DAT"
     fi
     input_script=enter,up
     if [[ "$route" = multi ]]; then input_script=click:138:70,click:250:50,up; fi
@@ -94,7 +115,7 @@ for route in auto amiga multi; do
     fi
     for required in \
         "platform=Amiga edition=$expected_edition" \
-        "source=$selected_archive::$member::Graphics.DAT" \
+        "source=$expected_owner" \
         "assetMd5=$expected_graphics_md5" \
         'phase=inactive' \
         'startupActive=0' \
@@ -111,6 +132,10 @@ for route in auto amiga multi; do
     fi
     echo "PASS: original CSB CTRaw $route CLI reaches loaded runtime and moves using native archive/raw provenance"
 done
+if [[ "$raw_hash_before" != "$(firestaff_sha256_file "$raw_capture")" ]]; then
+    echo 'FAIL: staged original English CTRaw capture changed during launch' >&2
+    exit 1
+fi
 if [[ "$multi_hash_before" != "$(firestaff_sha256_file "$multi_archive")" ]]; then
     echo 'FAIL: staged original multilingual CTRaw ZIP changed during launch' >&2
     exit 1
