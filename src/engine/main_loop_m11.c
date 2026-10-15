@@ -5221,8 +5221,9 @@ static int m11_dm1_i34e_title_read_authentic(
 }
 
 /* I34E ANIM TITLE runs before SELECTOR; M12's already-selected launch state
- * stands in for that menu. ANIM.C F2275 clamps each frame delay to at least
- * five VBlanks; F8298 decrements it from the source VBlank callback. ReDMCSB
+ * stands in for that menu. The existing five-tick/70 Hz presentation model
+ * is not proven PC34 timing: ANIM.C:2043-2048 only clamps PC98, while
+ * IBMIO.C F8114:1280-1290 returns callback decrement 3. ReDMCSB
  * ANIM.C F8292_ dispatches PL channels to
  * VGA VIDEODRV.C F8230, which writes (value << 2) + 3 to DAC6; the indexed
  * RGB6 renderer preserves those values. */
@@ -5252,6 +5253,79 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     }
     framebuffer = M11_Render_GetFramebuffer();
     if (!framebuffer) { free(data); return 0; }
+    /* IBMIO.C:2413 selects -as (ANIM.C main:1894-1898,1974-1976):
+     * erase the previous phase before clearing/playing TITLE. F8169's
+     * pixel order is exact; the existing chunk presentation cadence is a
+     * host approximation, not a measured original CPU-duration receipt. */
+    {
+        DM1_V1_I34ETitleErasePc34 erase;
+        uint64_t eraseStartedMs = m11_intro_active_ticks();
+        unsigned eraseFrames = 0u;
+        int eraseResult;
+        dm1_v1_i34e_title_erase_pc34_init(&erase);
+        do {
+            SDL_Event event;
+            eraseResult = dm1_v1_i34e_title_erase_pc34_step(
+                &erase, framebuffer, (size_t)M11_FB_BYTES, 1024u);
+            if (eraseResult < 0 ||
+                M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                          M11_FB_HEIGHT) != M11_RENDER_OK) {
+                free(data); return 0;
+            }
+            ++eraseFrames;
+            if (eraseFrames == 1u)
+                m11_capture_dm1_authenticated_startup_frame(
+                    "i34e-title-erase-first");
+            else if (eraseFrames == 32u)
+                m11_capture_dm1_authenticated_startup_frame(
+                    "i34e-title-erase-mid");
+            else if (eraseResult == 0)
+                m11_capture_dm1_authenticated_startup_frame(
+                    "i34e-title-erase-final");
+            if (eraseResult == 0) break;
+            for (;;) {
+                if (m11_phase_duration_expired() ||
+                    m11_intro_wait_for_focus()) {
+                    free(data);
+                    return M11_ENTRANCE_COMMAND_QUIT;
+                }
+                while (SDL_PollEvent(&event)) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                    if (event.type == SDL_EVENT_QUIT) {
+#else
+                    if (event.type == SDL_QUIT) {
+#endif
+                        g_m11_startup_intro_quit_requested = 1;
+                        free(data);
+                        return M11_ENTRANCE_COMMAND_QUIT;
+                    }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                    if (event.type == SDL_EVENT_WINDOW_RESIZED)
+                        M11_Render_HandleResize(event.window.data1,
+                                                event.window.data2);
+#else
+                    if (event.type == SDL_WINDOWEVENT &&
+                        event.window.event == SDL_WINDOWEVENT_RESIZED)
+                        M11_Render_HandleResize(event.window.data1,
+                                                event.window.data2);
+#endif
+                }
+                if (m11_intro_active_ticks() - eraseStartedMs >=
+                    ((uint64_t)eraseFrames * 1000u +
+                     DM1_V1_VGA_VBLANK_HZ - 1u) /
+                        DM1_V1_VGA_VBLANK_HZ)
+                    break;
+                SDL_Delay(1u);
+            }
+        } while (1);
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr,
+                    "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title-erase pixels=%u frames=%u elapsed-ms=%llu modeled-vblank-hz=%u\n",
+                    (unsigned)erase.pixels_cleared, eraseFrames,
+                    (unsigned long long)(m11_intro_active_ticks() -
+                                         eraseStartedMs),
+                    DM1_V1_VGA_VBLANK_HZ);
+    }
     memset(palette, 0, sizeof(palette));
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     if (M11_Render_SetIndexedPaletteRgb6(palette) != M11_RENDER_OK ||
@@ -5357,81 +5431,16 @@ static int m11_play_dm1_i34e_title_anim_if_available(
         return 0;
     }
     if (g_m11_debug_startup_detail)
-        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=%u source-vblanks=%llu elapsed-ms=%llu\n",
+        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=%u source-vblanks=%llu elapsed-ms=%llu timing-model=host-unverified\n",
                 frames, (unsigned long long)waitedVblanks,
                 (unsigned long long)(animationEndMs - startMs));
-    /* `-as` runs VIDEODRV F8169's maximal-length LFSR over VGA memory. Show
-     * the source pixel order at PC34 VGA retrace cadence instead of clearing
-     * the whole image in one host frame. `-ah` keeps the palette. */
-    {
-        DM1_V1_I34ETitleErasePc34 erase;
-        uint64_t eraseStartedMs = m11_intro_active_ticks();
-        unsigned eraseFrames = 0u;
-        int eraseResult;
-        dm1_v1_i34e_title_erase_pc34_init(&erase);
-        do {
-            SDL_Event event;
-            eraseResult = dm1_v1_i34e_title_erase_pc34_step(
-                &erase, framebuffer, (size_t)M11_FB_BYTES, 1024u);
-            if (eraseResult < 0 ||
-                M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
-                                          M11_FB_HEIGHT) != M11_RENDER_OK) {
-                free(data); return 0;
-            }
-            ++eraseFrames;
-            if (eraseFrames == 1u)
-                m11_capture_dm1_authenticated_startup_frame(
-                    "i34e-title-erase-first");
-            else if (eraseFrames == 32u)
-                m11_capture_dm1_authenticated_startup_frame(
-                    "i34e-title-erase-mid");
-            else if (eraseResult == 0)
-                m11_capture_dm1_authenticated_startup_frame(
-                    "i34e-title-erase-final");
-            if (eraseResult == 0) break;
-            for (;;) {
-                if (m11_phase_duration_expired() ||
-                    m11_intro_wait_for_focus()) {
-                    free(data);
-                    return M11_ENTRANCE_COMMAND_QUIT;
-                }
-                while (SDL_PollEvent(&event)) {
-#if SDL_VERSION_ATLEAST(3, 0, 0)
-                    if (event.type == SDL_EVENT_QUIT) {
-#else
-                    if (event.type == SDL_QUIT) {
-#endif
-                        g_m11_startup_intro_quit_requested = 1;
-                        free(data);
-                        return M11_ENTRANCE_COMMAND_QUIT;
-                    }
-#if SDL_VERSION_ATLEAST(3, 0, 0)
-                    if (event.type == SDL_EVENT_WINDOW_RESIZED)
-                        M11_Render_HandleResize(event.window.data1,
-                                                event.window.data2);
-#else
-                    if (event.type == SDL_WINDOWEVENT &&
-                        event.window.event == SDL_WINDOWEVENT_RESIZED)
-                        M11_Render_HandleResize(event.window.data1,
-                                                event.window.data2);
-#endif
-                }
-                if (m11_intro_active_ticks() - eraseStartedMs >=
-                    ((uint64_t)eraseFrames * 1000u +
-                     DM1_V1_VGA_VBLANK_HZ - 1u) /
-                        DM1_V1_VGA_VBLANK_HZ)
-                    break;
-                SDL_Delay(1u);
-            }
-        } while (1);
-        if (g_m11_debug_startup_detail)
-            fprintf(stderr,
-                    "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title-erase pixels=%u frames=%u elapsed-ms=%llu modeled-vblank-hz=%u\n",
-                    (unsigned)erase.pixels_cleared, eraseFrames,
-                    (unsigned long long)(m11_intro_active_ticks() -
-                                         eraseStartedMs),
-                    DM1_V1_VGA_VBLANK_HZ);
-    }
+    /* IBMIO.C:2413 invokes `anim title -ah -as`, not -ae. ANIM.C
+     * main:1880-1898,1974-1976,2127-2135 erases before playback and retains
+     * the final image/palette afterwards. The next source phase owns the
+     * next screen change; do not synthesize a terminal fade or wipe. */
+    m11_capture_dm1_authenticated_startup_frame("i34e-title-held");
+    if (g_m11_debug_startup_detail)
+        fprintf(stderr, "firestaff: startup-source-held game=dm1 platform=pc34 phase=anim-title flags=-ah,-as terminal-erase=0\n");
     free(data);
     return 1;
 }

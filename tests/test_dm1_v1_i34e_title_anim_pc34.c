@@ -1,5 +1,6 @@
 #include "dm1_v1_i34e_title_anim_pc34.h"
 #include "firestaff_x68k_media_receipt.h"
+#include "lzexe_unpack_v091.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -92,6 +93,49 @@ static void test_source_ordered_erase(void) {
                                               sizeof(pixels) - 1u, 1u) == -1);
 }
 
+/* The original launch table distinguishes TITLE's start erase from END's
+ * end erase. ReDMCSB IBMIO.C G8102:2411-2418; ANIM.C main:1880-1898. */
+static int test_authentic_program(void) {
+    const char *path = getenv("FIRESTAFF_DM1_I34E_IBMIO");
+    uint8_t packed[8151];
+    unsigned char *module = NULL;
+    unsigned int module_bytes = 0u;
+    char digest[65];
+    FILE *file;
+    unsigned int i;
+    unsigned int title_matches = 0u, end_matches = 0u;
+    static const char title[] = "title -ah -as";
+    static const char end[] = "end -as -ae";
+    if (!path || !path[0]) return 77;
+    file = fopen(path, "rb");
+    if (!file) return 1;
+    if (fread(packed, 1u, sizeof(packed), file) != sizeof(packed) ||
+        fgetc(file) != EOF) {
+        fclose(file);
+        return 1;
+    }
+    fclose(file);
+    if (firestaff_x68k_media_receipt_sha256_hex(packed, sizeof(packed),
+            digest, sizeof(digest)) != 0 ||
+        strcmp(digest, "b3f7148643c95c595c9dafd88b0f00e84364bcdac19d63867549fce53759bad8") != 0 ||
+        !V1_LZEXE_UnpackLoadModule091(packed, sizeof(packed),
+                                    &module, &module_bytes)) return 1;
+    for (i = 0u; i < module_bytes; ++i) {
+        if (module_bytes - i >= sizeof(title) &&
+            memcmp(module + i, title, sizeof(title)) == 0) ++title_matches;
+        if (module_bytes - i >= sizeof(end) &&
+            memcmp(module + i, end, sizeof(end)) == 0) ++end_matches;
+    }
+    free(module);
+    if (title_matches != 1u || end_matches != 1u) {
+        fprintf(stderr, "FAIL: original IBMIO launch flags title=%u end=%u\n",
+                title_matches, end_matches);
+        return 1;
+    }
+    puts("PASS: authenticated IBMIO selects TITLE -ah -as and END -as -ae");
+    return 0;
+}
+
 static int test_authentic_media(void) {
     const char *path = getenv("FIRESTAFF_DM1_I34E_TITLE");
     FILE *file;
@@ -143,6 +187,14 @@ int main(void) {
         int result = test_authentic_media();
         if (result == 77) {
             puts("SKIP: set FIRESTAFF_DM1_I34E_TITLE for authentic-media verification");
+            return 77;
+        }
+        if (result != 0) return result;
+    }
+    {
+        int result = test_authentic_program();
+        if (result == 77) {
+            puts("SKIP: set FIRESTAFF_DM1_I34E_IBMIO for original launch-flag verification");
             return 77;
         }
         if (result != 0) return result;

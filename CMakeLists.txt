@@ -57345,8 +57345,16 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_i34e_title_anim_pc34.c"
     set(_dm1_i34e_title
         "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/TITLE")
     if(EXISTS "${_dm1_i34e_title}")
+        set(_dm1_i34e_title_environment
+            "FIRESTAFF_DM1_I34E_TITLE=${_dm1_i34e_title}")
+        set(_dm1_i34e_ibmio
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/IBMIO")
+        if(EXISTS "${_dm1_i34e_ibmio}")
+            list(APPEND _dm1_i34e_title_environment
+                "FIRESTAFF_DM1_I34E_IBMIO=${_dm1_i34e_ibmio}")
+        endif()
         set_tests_properties(dm1_v1_i34e_title_anim_pc34 PROPERTIES
-            ENVIRONMENT "FIRESTAFF_DM1_I34E_TITLE=${_dm1_i34e_title}")
+            ENVIRONMENT "${_dm1_i34e_title_environment}")
     endif()
 endif()
 

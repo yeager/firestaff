@@ -1019,6 +1019,11 @@ static int m11_draw_creature_sprite_source_anchored(
     const DM1_CreatureDrawPlacement* placement,
     int creatureType,
     int creatureDir);
+static int m11_draw_dm1_media009_object(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int thingType, int subtype, int relativeCell, int pileIndex,
+    int forward, int side, int alcove);
+
 static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
@@ -25764,6 +25769,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     free(state->dm1LegacyWallCache);
     state->dm1LegacyWallCache = NULL;
     state->dm1LegacyWallCacheCapability = 0;
+    state->dm1NativeObjectMetadataSource = NULL;
+    state->dm1NativeObjectMetadataSourceSize = 0;
+    state->dm1NativeObjectMetadataValid = 0;
     state->presentationMode = spec->presentationMode;
     state->presentationWidth = spec->presentationWidth;
     state->presentationHeight = spec->presentationHeight;
@@ -45974,6 +45982,16 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                 continue;
             }
         }
+        if (m11_is_dm1_media009(state)) {
+            int pile = 2 + (((state->world.party.direction+2)&1)<<3);
+            for (int previous = 0; previous < ii; ++previous)
+                if (cell->floorItemCells[previous] == alcoveCellRelativeToParty)
+                    ++pile;
+            (void)m11_draw_dm1_media009_object(state, framebuffer, fbW, fbH,
+                cell->floorItemTypes[ii], sourceSubtype, alcoveCellRelativeToParty,
+                pile, cell->relForward, cell->relSide, 1);
+            continue;
+        }
         if (!dm1_v1_f0115_alcove_item_material_plan_pc34(
                 &material, cell->floorItemTypes[ii], sourceSubtype,
                 cell->relForward, cell->relSide, cell->floorItemCells[ii])) {
@@ -48809,6 +48827,156 @@ static unsigned int m11_inventory_thing_sprite_index(
     return dm1_item_sprite_index(thingType, subtype);
 }
 
+/* ReDMCSB DUNVIEW.C F0115:4853-4915 (MEDIA009). M558 owns
+ * G0218 coordinates, G0213/14 palettes and the six-byte G0209 aspects.
+ * Both original A20E and S12E store these at the same offsets. Read the
+ * selected owner's tables: the native D2 palette differs from the PC
+ * constants, which cannot stand in for this data. No bitmap/table is borrowed from a peer. */
+static int m11_dm1_media009_object_metadata(M11_GameViewState* state)
+{
+    unsigned char raw[4720];
+    const void* source;
+    long sourceSize;
+    size_t length = 0;
+    if (!m11_is_dm1_media009(state)) return 0;
+    source = state->assetLoader.atariStDm1 ? state->assetLoader.atariStData
+                                         : state->assetLoader.legacyData;
+    sourceSize = state->assetLoader.atariStDm1 ? state->assetLoader.atariStDataSize
+                                              : state->assetLoader.legacyDataSize;
+    if (state->dm1NativeObjectMetadataSource == source &&
+        state->dm1NativeObjectMetadataSourceSize == sourceSize)
+        return state->dm1NativeObjectMetadataValid;
+    state->dm1NativeObjectMetadataSource = source;
+    state->dm1NativeObjectMetadataSourceSize = sourceSize;
+    state->dm1NativeObjectMetadataValid = 0;
+    if (state->assetLoader.atariStDm1) {
+        DM1_V1_AtariStGraphicsDat dat;
+        int count;
+        if (!dm1_v1_atari_st_graphics_open(source, (size_t)sourceSize, &dat)) return 0;
+        count = dm1_v1_atari_st_graphics_read(&dat, 558, raw, sizeof(raw));
+        if (count != (int)sizeof(raw)) return 0;
+        length = (size_t)count;
+    } else if (!dm1_v1_legacy_graphics_read_raw(source, (size_t)sourceSize,
+                   1, 558, raw, sizeof(raw), &length)) return 0;
+    if (length != sizeof(raw)) return 0;
+    /* Reject a different record layout instead of treating arbitrary bytes
+     * as a native object aspect or a palette-change table. */
+    for (int i = 0; i < 85; ++i) {
+        const unsigned char* aspect = raw + 1642 + i*6;
+        if (!aspect[2] || !aspect[3] || aspect[5] >= 3 ||
+            360 + aspect[0] >= 446) return 0;
+    }
+    for (int i = 0; i < 32; ++i)
+        if (raw[1518+i] > 150 || raw[1518+i] % 10) return 0;
+    memcpy(state->dm1NativeObjectCoordinates, raw+1156, 300);
+    memcpy(state->dm1NativeObjectAspects, raw+1642, 510);
+    memcpy(state->dm1NativeObjectPalettes, raw+1518, 32);
+    state->dm1NativeObjectMetadataValid = 1;
+    return 1;
+}
+
+static int m11_draw_dm1_media009_object(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int thingType, int subtype, int relativeCell, int pileIndex,
+    int forward, int side, int alcove)
+{
+    M11_Dm1FloorItemHostPresentationReceipt* receipt = alcove
+        ? &s_m11_dm1_alcove_item_host_presentation_receipt
+        : &s_m11_dm1_floor_item_host_presentation_receipt;
+    const M11_AssetSlot* slot;
+    const unsigned char *aspect, *coordinate, *palette = NULL;
+    unsigned int xstep, ystep;
+    int aspectIndex, square, lane, viewCell, graphic, flip, byteWidth, height;
+    int shiftSet = 0, shiftX, shiftY, center, bottom, left, right, top;
+    int padding = 0, sourceX, drawn = 0;
+    if (!state || !framebuffer || forward < 0 || forward > 3 ||
+        side < -1 || side > 1 || (!forward && side) || relativeCell < 0 ||
+        relativeCell > 3 || !m11_dm1_media009_object_metadata((M11_GameViewState*)state))
+        return 0;
+    aspectIndex = dm1_item_aspect_index(thingType, subtype);
+    if (aspectIndex < 0 || aspectIndex >= 85) return 0;
+    square = forward ? (3-forward)*3 + (side < 0 ? 1 : side > 0 ? 2 : 0) : 9;
+    lane = (square+3)%3;
+    viewCell = alcove ? 4 : relativeCell;
+    aspect = state->dm1NativeObjectAspects + aspectIndex*6;
+    coordinate = state->dm1NativeObjectCoordinates +
+                 ((aspect[5]*10+square)*5+viewCell)*2;
+    if (!coordinate[1]) return 0;
+    graphic = 360 + aspect[0];
+    alcove = alcove && !lane && (aspect[4]&0x10);
+    if (alcove) ++graphic;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned)graphic);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != aspect[2]*2 || slot->height != aspect[3]) return 0;
+    byteWidth = aspect[2];
+    height = aspect[3];
+    flip = (aspect[4]&1) && !alcove &&
+           (lane == 2 || (!lane && (viewCell == 1 || viewCell == 2)));
+    if (!(square == 9 || (square >= 6 && viewCell >= 2))) {
+        const int scale = square >= 6 || (square >= 3 && viewCell >= 2) ? 20 : 16;
+        shiftSet = scale == 20 ? 1 : 2;
+        byteWidth = (byteWidth*scale + scale/2)>>5;
+        height = (height*scale + scale/2)>>5;
+        palette = state->dm1NativeObjectPalettes + (scale == 20 ? 16 : 0);
+        if (flip) padding = (7-((byteWidth-1)&7))*2;
+    }
+    if (byteWidth <= 0 || height <= 0) return 0;
+    dm1_viewport_3d_object_pile_shift_indices(pileIndex, &shiftX, &shiftY);
+    center = coordinate[0] + dm1_viewport_3d_object_source_shift_value(shiftSet, shiftX);
+    bottom = coordinate[1] + dm1_viewport_3d_object_source_shift_value(shiftSet, shiftY);
+    top = bottom-height+1;
+    if (bottom > 135) bottom = 135;
+    left = center-byteWidth+1;
+    if (left < 0) left = 0;
+    right = center+byteWidth;
+    if (right > 223) right = 223;
+    sourceX = left ? padding : byteWidth-center-1;
+    if (left > right || top > bottom) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->valid = 1;
+    receipt->floorItemLane = viewCell != 4;
+    receipt->graphicsId = graphic;
+    receipt->transparentColor = 10;
+    /* MEDIA009 calls F0132 directly, not PC34 F0791/C2500. */
+    receipt->sourceZone = -1;
+    receipt->sourceZoneRow = square;
+    receipt->destinationX = M11_VIEWPORT_X+left;
+    receipt->destinationY = M11_VIEWPORT_Y+top;
+    receipt->destinationW = right-left+1;
+    receipt->destinationH = bottom-top+1;
+    receipt->assetWidth = slot->width;
+    receipt->assetHeight = slot->height;
+    receipt->destinationBeforeFNV1a = m11_framebuffer_rect_fnv1a(framebuffer,
+        fbW, fbH, receipt->destinationX, receipt->destinationY,
+        receipt->destinationW, receipt->destinationH);
+    xstep = ((unsigned)slot->width*1024u/(unsigned)(byteWidth*2))*64u;
+    ystep = ((unsigned)slot->height*1024u/(unsigned)height)*64u;
+    for (int y = top; y <= bottom; ++y) {
+        const int dy = M11_VIEWPORT_Y+y;
+        unsigned sy = (ystep/2u+32767u+(unsigned)(y-top)*ystep)>>16;
+        if (y < 0 || dy < 0 || dy >= fbH || sy >= slot->height) continue;
+        for (int x = left; x <= right; ++x) {
+            int nativeX = sourceX+x-left;
+            const int dx = M11_VIEWPORT_X+x;
+            unsigned sx;
+            unsigned char color;
+            if (flip) nativeX = ((byteWidth+7)&~7)*2-1-nativeX;
+            if (nativeX < 0 || nativeX >= byteWidth*2 || dx < 0 || dx >= fbW) continue;
+            sx = (xstep/2u+32767u+(unsigned)nativeX*xstep)>>16;
+            if (sx >= slot->width) continue;
+            color = slot->pixels[sy*slot->width+sx];
+            if (palette) color = palette[color&15]/10;
+            if (color != 10) { framebuffer[dy*fbW+dx] = color; drawn = 1; }
+        }
+    }
+    receipt->destinationAfterFNV1a = m11_framebuffer_rect_fnv1a(framebuffer,
+        fbW, fbH, receipt->destinationX, receipt->destinationY,
+        receipt->destinationW, receipt->destinationH);
+    receipt->destinationPixelsChanged = receipt->destinationBeforeFNV1a !=
+                                         receipt->destinationAfterFNV1a;
+    return drawn;
+}
+
 static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -48838,6 +49006,9 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     int csb_native_graphic = -1;
 
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
+    /* MEDIA009 floor/alcove callers use their original F0132 coordinate
+     * route above; a PC C2500 rectangle is not a native fallback. */
+    if (m11_is_dm1_media009(state)) return 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         csb_native_graphic =
             csb_v1_viewport_f0115_object_native_graphic_for_source_zone_pc34(
@@ -49033,10 +49204,35 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
         s_m11_dm1_f0115_floor_item_capture_request.requested = 1;
     }
     s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane = 1;
-    drawn = m11_draw_item_sprite_material(
-        state, framebuffer, fbW, fbH, x, y, w, h,
-        thingType, subtype, relativeCell, pileIndex, depthIndex,
-        -1, sourceZoneRow, 10, 1, 1);
+    if (m11_is_dm1_media009(state)) {
+        static const int directionX[4] = {0,1,0,-1};
+        static const int directionY[4] = {-1,0,1,0};
+        const int direction = state->world.party.direction&3;
+        const int dx = mapX-state->world.party.mapX;
+        const int dy = mapY-state->world.party.mapY;
+        const int forward = dx*directionX[direction]+dy*directionY[direction];
+        const int side = dx*directionX[(direction+1)&3]+dy*directionY[(direction+1)&3];
+        unsigned short cursor = m11_get_flagged_square_first_thing(&state->world,
+            state->world.party.mapIndex, mapX, mapY);
+        int pile = ((thing>>14)&1)<<3;
+        /* F0115 resets its shift index per absolute cell, not per square.
+         * Count the selected cell's preceding source objects only. */
+        for (int guard = 0; guard < 1024 && cursor != thing &&
+             cursor != THING_NONE && cursor != THING_ENDOFLIST; ++guard) {
+            const int type = THING_GET_TYPE(cursor);
+            if (((cursor^thing)&0xc000u) == 0 && type >= THING_TYPE_WEAPON &&
+                type <= THING_TYPE_JUNK) ++pile;
+            cursor = m11_raw_next_thing(state->world.things, cursor);
+        }
+        drawn = cursor == thing && m11_draw_dm1_media009_object(state,
+            framebuffer, fbW, fbH, thingType, subtype, relativeCell, pile,
+            forward, side, 0);
+    } else {
+        drawn = m11_draw_item_sprite_material(
+            state, framebuffer, fbW, fbH, x, y, w, h,
+            thingType, subtype, relativeCell, pileIndex, depthIndex,
+            -1, sourceZoneRow, 10, 1, 1);
+    }
     /* DUNVIEW.C F0115 updates G0292 and G2210 after each successful object
      * blit. Keep the exact final F0791 destination and its source THING so
      * C080 cannot pick an unseen neighbour from the compact chain. */
@@ -72801,6 +72997,15 @@ void M11_GameView_GetDm1F0115C2900RuntimeCaptureReceipt(
 int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent)
 {
     return m11_dm1_hoc_floor_item_capture_observed(itemPresent);
+}
+
+int M11_GameView_ProbeDrawDm1Media009Object(
+    M11_GameViewState* state, unsigned char* framebuffer, int width, int height,
+    int thingType, int subtype, int relativeCell, int pileIndex,
+    int forward, int side, int alcove)
+{
+    return m11_draw_dm1_media009_object(state, framebuffer, width, height,
+        thingType, subtype, relativeCell, pileIndex, forward, side, alcove);
 }
 
 int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(

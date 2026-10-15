@@ -918,6 +918,13 @@ typedef struct {
     char dm1ObjectNames[199][96]; /* UTF-8 presentation keys; CP932 may expand 3x. */
     M11_FontState originalFont; /* DM1 font from GRAPHICS.DAT */
     int originalFontAvailable;
+    /* MEDIA009 F0115 metadata from this asset owner's original M558. */
+    const void* dm1NativeObjectMetadataSource;
+    long dm1NativeObjectMetadataSourceSize;
+    int dm1NativeObjectMetadataValid;
+    unsigned char dm1NativeObjectCoordinates[300];
+    unsigned char dm1NativeObjectAspects[510];
+    unsigned char dm1NativeObjectPalettes[32];
     M11_AudioState audioState;
     int audioEventCount;
     /* CSB's SOUND.C runtime owns delayed/immediate arbitration. M11 keeps
@@ -3295,11 +3302,17 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     int destinationH;
     int assetWidth;
     int assetHeight;
-    /* The final F0791 blit must visibly alter its destination region. */
+    /* The final F0132/F0791 blit must visibly alter its destination region. */
     unsigned int destinationBeforeFNV1a;
     unsigned int destinationAfterFNV1a;
     int destinationPixelsChanged;
 } M11_Dm1FloorItemHostPresentationReceipt;
+
+/* Isolated original MEDIA009 F0115 material parameters, not a world edit. */
+int M11_GameView_ProbeDrawDm1Media009Object(
+    M11_GameViewState* state, unsigned char* framebuffer, int width, int height,
+    int thingType, int subtype, int relativeCell, int pileIndex,
+    int forward, int side, int alcove);
 
 void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     M11_Dm1FloorItemHostPresentationReceipt* outReceipt);

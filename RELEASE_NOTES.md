@@ -2,6 +2,16 @@
 
 ## User-facing changes
 
+- `DM1 PC title`: run the original start erase before the title, retain
+  its final image and palette, and remove the incorrect ending wipe.
+  Original PC timing calibration remains open.
+
+- `DM1 early Amiga/Atari objects`: render floor and alcove items with the
+  native object bank, positions, scaling and palette changes. Correct the
+  large cyan creature image that appeared over the Hall stair view when
+  the actual object was bread. Original A20E/ST12 pixel checks and real
+  Hall walks verify the corrected item; full viewport parity remains open.
+
 - `DM1 near walls`: restore the two walls beside the party in source
   rendering order. Stop an inventory-only fallback clear from erasing the
   viewport's top rows. Original PC34 startup and one accepted movement pass
@@ -26,8 +36,8 @@
   the original square axis across DM1 instead of the door's opening axis.
   Original PC34/A20E/ST12 starts verify the facing correction; A20E/ST12
   also pass native pixel checks and a real Hall walk/button-door interaction.
-  A misplaced champion portrait remains visible in the native stair view;
-  complete viewport parity remains under verification.
+  The stair view's unrelated cyan sprite is corrected by the native object
+  routing described above; complete viewport parity remains under verification.
 
 - `DM1 early Amiga colours`: present the original RGB4 dungeon/UI palettes
   with their full-width middle-screen switching and inventory behaviour.

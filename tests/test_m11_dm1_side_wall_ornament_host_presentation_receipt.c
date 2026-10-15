@@ -4,12 +4,180 @@
 #include "asset_status_m12.h"
 #include "memory_combat_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
+#include "dm1_v1_atari_st_graphics_dat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 static int check_original_legacy_materials(M11_GameViewState* state, const char* edition);
+
+/* Independent MEDIA009 F0115 original-M558 oracle. These are isolated
+ * material parameters; the second check below walks the untouched world. */
+static int check_original_native_objects(M11_GameViewState* state, const char* edition)
+{
+    static const int objects[][2] = {{10,1},{5,0},{8,0},{9,0},{10,51}};
+    static const unsigned char shifts[16][2] = {
+        {2,5},{0,6},{5,7},{3,0},{7,1},{1,2},{6,3},{3,3},
+        {5,5},{2,6},{7,7},{1,0},{3,1},{6,2},{1,3},{5,3}};
+    static const signed char values[3][8] = {
+        {0,1,2,3,0,-3,-2,-1},{0,1,1,2,0,-2,-1,-1},{0,1,1,1,0,-1,-1,-1}};
+    unsigned char raw[4720], actual[64000], expected[64000];
+    size_t length = 0;
+    int cases = 0;
+    if (state->assetLoader.atariStDm1) {
+        DM1_V1_AtariStGraphicsDat dat;
+        if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
+                (size_t)state->assetLoader.atariStDataSize,&dat)) return 0;
+        int count = dm1_v1_atari_st_graphics_read(&dat,558,raw,sizeof(raw));
+        if (count != (int)sizeof(raw)) return 0;
+        length = (size_t)count;
+    } else if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+        (size_t)state->assetLoader.legacyDataSize,1,558,raw,sizeof(raw),&length)) return 0;
+    if (length != sizeof(raw)) return 0;
+    for (unsigned object=0; object<sizeof(objects)/sizeof(objects[0]); ++object)
+    for (int square=0; square<10; ++square)
+    for (int cell=0; cell<5; ++cell)
+    for (int parity=0; parity<2; ++parity) {
+        const int aspectIndex=dm1_item_aspect_index(objects[object][0],objects[object][1]);
+        const unsigned char* aspect=raw+1642+aspectIndex*6;
+        const unsigned char* xy=raw+1156+((aspect[5]*10+square)*5+cell)*2;
+        const int forward=square==9?0:3-square/3;
+        const int side=square%3==1?-1:square%3==2?1:0;
+        const int alcove=cell==4;
+        const int alt=alcove && square%3==0 && (aspect[4]&16);
+        const int graphic=360+aspect[0]+(alt!=0);
+        const int pile=(alcove?2:0)+parity*8;
+        const M11_AssetSlot* slot=M11_AssetLoader_Load(&state->assetLoader,(unsigned)graphic);
+        int width=aspect[2],height=aspect[3],set=0,padding=0;
+        int flip=(aspect[4]&1) && !alt &&
+            (square%3==2 || (square%3==0 && (cell==1 || cell==2)));
+        const unsigned char* palette=NULL;
+        if (!slot || !slot->pixels || slot->width!=width*2 || slot->height!=height) return 0;
+        if (!(square==9 || (square>=6 && cell>=2))) {
+            int scale=square>=6 || (square>=3 && cell>=2)?20:16;
+            width=(width*scale+scale/2)/32;
+            height=(height*scale+scale/2)/32;
+            set=scale==20?1:2;
+            palette=raw+(scale==20?1534:1518);
+            if (flip) padding=(7-((width-1)&7))*2;
+        }
+        memset(actual,17,sizeof(actual));
+        memset(expected,17,sizeof(expected));
+        if (xy[1]) {
+            int center=xy[0]+values[set][shifts[pile][0]];
+            int bottom=xy[1]+values[set][shifts[pile][1]];
+            int top=bottom-height+1,left=center-width+1,right=center+width;
+            if (left<0) left=0;
+            if (right>223) right=223;
+            if (bottom>135) bottom=135;
+            int sourceX=left?padding:width-center-1;
+            unsigned xs=((unsigned)slot->width*1024u/(unsigned)(width*2))*64u;
+            unsigned ys=((unsigned)slot->height*1024u/(unsigned)height)*64u;
+            for (int y=top;y<=bottom;++y) for(int x=left;x<=right;++x) {
+                int sx=sourceX+x-left;
+                if(flip)sx=((width+7)&~7)*2-1-sx;
+                if(sx<0||sx>=width*2||y<0)continue;
+                unsigned u=(xs/2+32767+(unsigned)sx*xs)>>16;
+                unsigned v=(ys/2+32767+(unsigned)(y-top)*ys)>>16;
+                if(u>=slot->width||v>=slot->height)return 0;
+                unsigned char color=slot->pixels[v*slot->width+u];
+                if(palette)color=palette[color&15]/10;
+                if(color!=10)expected[(33+y)*320+x]=color;
+            }
+        }
+        (void)M11_GameView_ProbeDrawDm1Media009Object(state,actual,320,200,
+            objects[object][0],objects[object][1],alcove?2:cell,pile,forward,side,alcove);
+        if(memcmp(actual,expected,sizeof(actual))) {
+            fprintf(stderr,"FAIL: original %s F0115 object%d square%d cell%d parity%d graphic%d\n",
+                edition,object,square,cell,parity,graphic);return 0;
+        }
+        ++cases;
+    }
+    printf("PASS: original %s F0115 %d full-raster object cases, native M558 positions/palettes/flip/C10\n",edition,cases);
+    return 1;
+}
+
+static int check_original_native_item_walk(const M11_GameLaunchSpec* spec, const char* edition)
+{
+    static const char path[]="SSSSEEENNNNNEESEESESSSSSWWWWWSSSSSS";
+    M11_GameViewState* state=calloc(1,sizeof(*state));
+    unsigned char framebuffer[64000];
+    M11_Dm1FloorItemHostPresentationReceipt receipt={0};
+    int ok=0;
+    if(!state)return 0;
+    M11_GameView_Init(state);
+    if(!M11_GameView_Start(state,spec)||state->world.party.mapIndex!=0||
+       state->world.party.mapX!=1||state->world.party.mapY!=3||state->world.party.direction!=2)goto done;
+    for(unsigned step=0;step<sizeof(path)-1;++step) {
+        int direction=path[step]=='N'?0:path[step]=='E'?1:path[step]=='S'?2:3;
+        int x=state->world.party.mapX,y=state->world.party.mapY;
+        for(int turn=0;turn<4&&state->world.party.direction!=direction;++turn)
+            M11_GameView_HandleInput(state,M12_MENU_INPUT_RIGHT);
+        for(int attempt=0;attempt<100&&state->world.party.mapX==x&&state->world.party.mapY==y;++attempt) {
+            M11_GameView_HandleInput(state,M12_MENU_INPUT_UP);
+            for(int wait=0;wait<5;++wait)M11_GameView_HandleInput(state,M12_MENU_INPUT_NONE);
+        }
+        if(state->world.party.mapIndex!=0||
+           (state->world.party.mapX==x&&state->world.party.mapY==y))goto done;
+    }
+    for(int turn=0;turn<4&&state->world.party.direction!=3;++turn)
+        M11_GameView_HandleInput(state,M12_MENU_INPUT_RIGHT);
+    if(state->world.party.mapX!=4||state->world.party.mapY!=15||state->world.party.direction!=3)goto done;
+    M11_GameView_Draw(state,framebuffer,320,200);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
+    if(!receipt.valid||!receipt.floorItemLane||receipt.graphicsId!=367||
+       receipt.assetWidth!=48||receipt.assetHeight!=13||receipt.transparentColor!=10||
+       receipt.usesF0791Blit||!receipt.destinationPixelsChanged||
+       receipt.destinationW>48||receipt.destinationH>13)goto done;
+    printf("PASS: original %s actual 35-step Hall walk to (4,15,W), F0115 object367 48x13, no creature505\n",edition);
+    ok=1;
+done:
+    if(!ok)fprintf(stderr,"FAIL: original %s actual native object walk at %d,%d,%d\n",edition,
+        state->world.party.mapX,state->world.party.mapY,state->world.party.direction);
+    if(!ok)fprintf(stderr,"native object receipt valid%d floor%d graphic%d asset%dx%d destination%d,%d %dx%d changed%d F0791%d\n",
+        receipt.valid,receipt.floorItemLane,receipt.graphicsId,receipt.assetWidth,receipt.assetHeight,
+        receipt.destinationX,receipt.destinationY,receipt.destinationW,receipt.destinationH,
+        receipt.destinationPixelsChanged,receipt.usesF0791Blit);
+    M11_GameView_Shutdown(state);free(state);return ok;
+}
+
+/* Reuse one public M11 state across real native owners. Start must
+ * invalidate metadata even if malloc later reuses an address. */
+static int check_original_native_object_rebind(M11_GameViewState* state,
+                                                const M11_GameLaunchSpec* amiga)
+{
+    const char* atari=getenv("FIRESTAFF_DM1_ATARI_ARROWS_ARCHIVE");
+    M12_AssetStatus* scan;
+    M11_GameLaunchSpec spec={0};
+    const M12_AssetVersionStatus* version;
+    char runtime[M12_ASSET_DATA_DIR_CAPACITY];
+    int index,ok=0;
+    if(!atari||!atari[0])return 1;
+    scan=calloc(1,sizeof(*scan));
+    if(!scan)return 0;
+    M12_AssetStatus_ScanGame(scan,atari,"dm1");
+    index=M12_AssetStatus_FindVersionIndex("dm1","st12-en");
+    version=index<0?NULL:M12_AssetStatus_GetVersion(scan,"dm1",(size_t)index);
+    if(!version||!version->matched||strcmp(version->matchedMd5,"9ce2eaf7a9e78620e3f17594437caffa")||
+       !M12_AssetStatus_PrepareDM1RuntimeVersion(scan,"st12-en",runtime,sizeof(runtime)))goto done;
+    spec.title="Dungeon Master";spec.gameId=spec.sourceId="dm1";
+    spec.dataDir=runtime;spec.verifiedAssetPath=version->matchedPath;
+    spec.verifiedAssetMd5=version->matchedMd5;
+    for(int route=0;route<2;++route) {
+        if(!M11_GameView_Start(state,route?amiga:&spec)||
+           state->dm1NativeObjectMetadataValid||state->dm1NativeObjectMetadataSource||
+           !check_original_native_objects(state,route?"A20E rebound":"S12E rebound")||
+           state->dm1NativeObjectPalettes[21]!=50)goto done;
+    }
+    puts("PASS: original same-state A20E -> S12E -> A20E metadata invalidation and original native D2 palette");
+    ok=1;
+done:
+    if(!ok)fputs("FAIL: original native object owner rebind\n",stderr);
+    free(scan);return ok;
+}
 
 /* Real original Hall entrance door: two accepted turns reach its view from
  * the original start. Its square N/S axis differs from Door.Vertical; no
@@ -226,7 +394,9 @@ static int check_original_amiga_background(void)
         state.world.dungeon->maps[state.world.party.mapIndex].floorSet != 0 ||
         !asset_file_matches_md5(state.assetLoader.graphicsDatPath,
                                "6a2f135b53c2220f0251fa103e2a6e7e")) goto done;
-    if (!check_original_door_orientation(&spec,"A20E")) goto done;
+    if (!check_original_door_orientation(&spec,"A20E") ||
+        !check_original_native_objects(&state,"A20E") ||
+        !check_original_native_item_walk(&spec,"A20E")) goto done;
     floor = M11_AssetLoader_Load(&state.assetLoader, 75u);
     ceiling = M11_AssetLoader_Load(&state.assetLoader, 76u);
     if (!floor || !ceiling || floor->width != 224 || floor->height != 70 ||
@@ -261,6 +431,7 @@ static int check_original_amiga_background(void)
         printf("PASS: original A20E F0098 parity%d floor75=224x70 ceiling76=224x29\n", parity);
     }
     if (!check_original_legacy_materials(&state,"A20E") ||
+        !check_original_native_object_rebind(&state,&spec) ||
         !asset_file_matches_md5(state.assetLoader.graphicsDatPath,
                                "6a2f135b53c2220f0251fa103e2a6e7e")) goto done;
     ok = 1;
@@ -710,7 +881,9 @@ static int check_original_legacy_arrows(const char *env_name,
     }
     if (!nonblack) goto done;
     if (!check_original_legacy_walls(state,edition)) goto done;
-    if (atari && !check_original_door_orientation(&spec,edition)) goto done;
+    if (atari && (!check_original_door_orientation(&spec,edition) ||
+        !check_original_native_item_walk(&spec,edition) ||
+        !check_original_native_objects(state,edition))) goto done;
     if (atari && (!check_original_legacy_materials(state,edition) ||
         !asset_file_matches_md5(state->assetLoader.graphicsDatPath,graphics_md5))) goto done;
     if (!atari && !check_original_amiga_palette(state,path,framebuffer)) goto done;

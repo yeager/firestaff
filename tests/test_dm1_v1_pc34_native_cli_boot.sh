@@ -298,7 +298,8 @@ if elapsed_ms + 20 < expected_ms:
         f"at least {expected_ms} ms)")
 print(
     f"PASS: DM1 PC-34 ANIM/TITLE logged {frames} original frames and "
-    f"{source_vblanks} source VBlanks at 70 Hz in {elapsed_ms} ms")
+    f"{source_vblanks} modeled ticks at 70 Hz in {elapsed_ms} ms "
+    "(original PC34 timing remains unverified)")
 selector = re.search(
     r"startup-source-complete game=dm1 platform=pc34 phase=selector .*"
     r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+) modeled-vblank-hz=(\d+)",
@@ -614,16 +615,24 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
     raise SystemExit(f"FAIL: authentic DM1 AUTO menu did not reach the PC-34 runtime: {probe}")
 print("PASS: clean-config DM1 AUTO menu ran I34E ANIM/TITLE and SELECTOR Enter before runtime")
 PY
-python3 - "$startup_capture_root" <<'PY'
+python3 - "$startup_capture_root" "$menu_auto_output" <<'PY'
 from pathlib import Path
 import hashlib
 import struct
 import sys
 
 root = Path(sys.argv[1])
+log = sys.argv[2]
+markers = ("phase=anim-title-erase pixels=64000", "phase=anim-title frames=53",
+           "startup-source-held game=dm1 platform=pc34 phase=anim-title flags=-ah,-as terminal-erase=0",
+           "phase=selector graphics=")
+positions = [log.find(marker) for marker in markers]
+if any(position < 0 for position in positions) or positions != sorted(positions):
+    raise SystemExit(f"FAIL: original -ah -as startup phase order differs: {positions}")
 frames = {}
 geometry = None
 for phase in ("i34e-title-first", "i34e-title-mid", "i34e-title-final",
+              "i34e-title-held",
               "i34e-selector-closed", "i34e-selector-door-step-1",
               "i34e-selector-door-mid", "i34e-selector-door-open"):
     captures = list((root / phase).glob("*.bmp"))
@@ -661,6 +670,9 @@ if (frames["i34e-title-first"] == frames["i34e-title-mid"] or
         frames["i34e-title-mid"] == frames["i34e-title-final"]):
     raise SystemExit("FAIL: authentic I34E ANIM/TITLE frames did not change")
 print("PASS: authentic I34E ANIM/TITLE first, middle and final frames differ")
+if frames["i34e-title-final"] != frames["i34e-title-held"]:
+    raise SystemExit("FAIL: -ah -as modified the final TITLE pixels/palette before SELECTOR")
+print("PASS: -ah -as retained the actual final TITLE presentation until SELECTOR")
 if (frames["i34e-selector-closed"] != frames["i34e-selector-door-step-1"] or
         frames["i34e-selector-door-step-1"] == frames["i34e-selector-door-mid"] or
         frames["i34e-selector-door-mid"] == frames["i34e-selector-door-open"]):

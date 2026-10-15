@@ -1,3 +1,30 @@
+- 2026-10-15: Correct PC34 TITLE's `-ah -as` lifecycle. The original
+  IBMIO launch table selects a start erase and retained final palette;
+  the previous terminal wipe incorrectly treated S as E. Run the source
+  LFSR erase before TITLE and retain its final presentation until SELECTOR.
+  The authentic TITLE/IBMIO regression checks 53 frames, exact program
+  identity and both original TITLE/END flag strings. Presented CLI captures
+  compare the final and retained TITLE image byte for byte. This does not
+  establish PC34 callback/decode timing: the existing pacing remains a
+  documented host model pending original-program calibration.
+
+- 2026-10-15: Early Amiga/Atari F0115 floor and alcove objects now use
+  their original M612=360 bank, six-byte G0209 aspects, G0218 coordinates
+  and G0213/14 palette changes from the selected owner's graphic 558.
+  Native F0132 uses original byte widths, centre sampling, mirrored padding,
+  cell-specific pile shifts, clipping and C10 transparency. Metadata is
+  invalidated on every new launch; original A20E -> S12E -> A20E starts
+  reuse one state and recheck its native tables. Each retail original passes
+  500 isolated full-raster object cases across five object aspects, ten
+  view squares, floor/alcove cells and two pile phases. The shared G0237
+  object-aspect lookup was compared with all 180 ReDMCSB source entries.
+  Real 35-step walks from both original starts reach (4,15,W): the floor
+  bread is now graphic 367 (48x13), drawn at (137,149), replacing the
+  unrelated creature 505 (64x89) previously projected as a cyan rectangle.
+  Original hashes and prior native door/stair, PC wall and demo controls
+  remain intact. These material and actual-world checks do not establish
+  full viewport parity; native thrown-object projectiles remain separate.
+
 - 2026-10-15: Apply native PC34 C710/C711 D2 geometry to the real
   catalogue startup route as well as direct-dungeon starts. The previous
   format guard only covered the latter; its isolated endpoint test missed
@@ -53,8 +80,8 @@
   walk 42 original squares, capture the stair view and open the actual button
   door at (1,14) by clicking from (1,15,N), changing its state from 4 to 0.
   These are targeted material and interaction checks, not complete viewport
-  parity: a large cyan champion portrait still overlaps the captured MEDIA009
-  stair view and needs its own source routing/colour-key investigation.
+  parity. The cyan rectangle then observed in the MEDIA009 stair view was
+  subsequently identified as a floor-object bank error and corrected above.
 
 - 2026-10-15: A36M entrance now consumes its authenticated C696 layout
   and same-owner VDEO.FTL DATA palette increments. Native 105x161 / 128x161
