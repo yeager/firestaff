@@ -13,9 +13,11 @@ inventory poison-label fallback clear are corrected. Original full Draw
 checks at (1,3,S) and after one real forward step verify both native wall
 rectangles, source parity, complete VGA bank ownership and RGB palette.
 Retain the first-view viewport follow-up: image0004's emulator pose is still
-unproven. Diagnostic comparison leaves 659 differing pixels entirely within
-x60..77,y52..123, the exposed D2L strip; audit native records 101/100,
-C710/F0119 crops, parity and source overpainting before changing it. Add
+unproven. The exposed D2L discrepancy was traced to a native-PC guard excluding the
+real catalogue route; both real startup routes now have original full Draw
+coverage. The updated CLI start matches all 30,464 viewport RGB pixels in
+image0004, but its emulator pose is still unproven. Keep actual original
+pose and movement comparisons open; image equality alone is insufficient. Add
 actual Towns/A36 D0 runtime checks before extending this execution claim to
 those editions. A20E/Atari regression passes do not establish full parity.
 

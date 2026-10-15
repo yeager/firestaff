@@ -100,8 +100,28 @@ static int check_original_pc34_d0_walls(const M11_GameLaunchSpec* spec)
                 }
             }
         }
+        for (int right = 0; right < 2; ++right) {
+            const int mx = right ? px - 1 : px + 1;
+            const int square = state->world.dungeon->tiles[0].squareData[mx * height + py + 2];
+            const unsigned int graphic = parity ? (right ? 101u : 100u) : (right ? 100u : 101u);
+            const M11_AssetSlot* slot = M11_AssetLoader_Load(&state->assetLoader, graphic);
+            if ((square >> 5) != DUNGEON_ELEMENT_WALL) continue;
+            if (!slot || slot->width != 78 || slot->height != 74) goto done;
+            /* D1L/R cover the adjacent60columns; these18columns expose
+             * C710/C711's full native width and authored y19 anchor. */
+            for (int y = 0; y < 74; ++y) for (int x = 0; x < 18; ++x) {
+                const int dx = right ? 146 + x : 60 + x;
+                const int localX = right ? x : 60 + x;
+                const int sx = parity ? 77 - localX : localX;
+                const unsigned char pixel = slot->pixels[y * 78 + sx];
+                if (pixel != 10 && framebuffer[(52 + y) * 320 + dx] != (unsigned char)(pixel + 16)) {
+                    fprintf(stderr, "PC34 route%d D2 side%d parity%d pixel%d,%d mismatch\n", state->sourceKind, right, parity, dx, 52 + y);
+                    goto done;
+                }
+            }
+        }
         if (!walls || receipt.d0WallMaterialCallbackStepCount != walls) goto done;
-        printf("PASS: original PC34 HoC(%d,%d,S) parity%d D0 wall callbacks%d, complete native C716/C717 pixels\n", px, py, parity, walls);
+        printf("PASS: original PC34 HoC(%d,%d,S) parity%d D0 wall callbacks%d, complete native C716/C717 and exposed C710/C711 pixels route%d\n", px, py, parity, walls, state->sourceKind);
         if (!pose && M11_GameView_HandleInput(state, M12_MENU_INPUT_UP) != M11_GAME_INPUT_REDRAW) goto done;
     }
     ok = 1;
@@ -751,6 +771,14 @@ int main(void)
         spec.verifiedAssetMd5="fa6b1aa29e191418713bf2cda93d962e";
         if(!check_original_door_orientation(&spec,"PC34") ||
            !check_original_pc34_d0_walls(&spec))return 1;
+        {
+            char dungeonPath[2048];
+            const int length = snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", spec.dataDir);
+            if (length < 0 || (size_t)length >= sizeof(dungeonPath)) return 1;
+            spec.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+            spec.dungeonPath = dungeonPath;
+            if (!check_original_pc34_d0_walls(&spec)) return 1;
+        }
     }
     M11_GameView_Init(&state);
     if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {

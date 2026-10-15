@@ -44867,7 +44867,7 @@ static int m11_draw_dm1_side_wall_host_receipt(
             receipt->material.transparent_color,
             receipt->material.flip_horizontally);
     }
-    nativePc34 = state->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON &&
+    nativePc34 = m11_is_dm1_source_kind(state->sourceKind) &&
         strcmp(state->sourceId, "dm1") == 0 && !state->assetLoader.legacyDm1 &&
         !state->assetLoader.atariStDm1 && !state->assetLoader.dm1Amiga36 &&
         !state->assetLoader.csbAmiga && !state->assetLoader.csbFmtowns;

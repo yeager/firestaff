@@ -1,3 +1,15 @@
+- 2026-10-15: Apply native PC34 C710/C711 D2 geometry to the real
+  catalogue startup route as well as direct-dungeon starts. The previous
+  format guard only covered the latter; its isolated endpoint test missed
+  the real catalogue route's old 75x71 crop. Original full Draw now verifies
+  the exposed D2 wall strips at the real start and after accepted movement,
+  through both launch routes, with native 78x74 material, y19 and VGA bank
+  ownership. The existing endpoint test covers both C710/C711 parities;
+  the initial D2R square is a corridor, so it is not falsely asserted as a
+  wall. A20E/Atari original regressions pass. The CLI start viewport now
+  matches all 30,464 RGB pixels of emulator image0004, whose pose remains
+  unproven; this is diagnostic image equality, not complete runtime parity.
+
 - 2026-10-15: Restore F0125/F0126's terminal D0L/D0R wall material
   callbacks in their source scheduler transactions. The original PC34 Hall
   start (1,3,S) and one accepted forward step (1,4,S) each draw both native
