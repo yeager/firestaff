@@ -287,6 +287,11 @@ import re
 import sys
 
 trace = sys.stdin.read()
+if not re.search(
+    r"renderer backend=(software|unavailable) vsync=(-?\d+|unavailable) "
+    r"drawable-scale=1\.000x1\.000", trace
+):
+    raise SystemExit("FAIL: DM1 PC debug omitted actual renderer, VSync or drawable scale")
 swsh = re.search(
     r"startup-source-complete game=dm1 phase=swsh-intro "
     r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",

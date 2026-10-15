@@ -1,26 +1,16 @@
 # Firestaff TODO — DM1
 
-2026-10-15 nearest-upscale follow-up: repeated-row reuse now passes full
-original-frame RGBA comparisons through 3840x2160 without changing the
-output contract. Native 1920x1018 Cocoa full-redraw still costs roughly
-90.5 percent of one core. Identify the actual SDL renderer backend and
-remaining stage costs before attributing this to GPU or source drawing.
-A native-size GPU texture path must preserve screenshot/startup-capture
-contracts and prove non-integer sampling and hard pixel edges on Metal;
-ordinary V1 indexed HUD/TTF does not require a high-resolution RGBA overlay.
-
-2026-10-15 HoC performance follow-up: SDL 3.2+ precise host pacing now
-reaches the configured 62.5 full-redraw rate on original PC34 with dummy
-640x400 output. Continue native HiDPI execution and separately measure
-received input, queued/accepted movement, completed Draw and successful
-Present return. Existing viewport-dirty counters prove ordering only.
-The V1 renderer currently expands/scales into output-sized RGBA on CPU
-before uploading even on Metal; audit high-resolution font/filter overlays
-before replacing that work with a native-sized texture/GPU scaling path.
-A native Cocoa run at the actual 1920x1018 drawable reaches 61.90 full-
-redraw FPS but consumes 96.6-96.8 percent of one CPU core. Its drawable
-is 1x, not a physical Retina test, and renderer/GPU utilization is unmeasured.
-Do not infer Metal utilization from dummy software-renderer CPU readings.
+2026-10-15 HoC performance follow-up: precise host pacing reaches the
+configured 62.5 full-redraw rate at 640x400 with original PC34 and dummy
+output. Repeated-row reuse preserves every original-frame RGBA byte through
+3840x2160; native Cocoa 1920x1018 full-redraw CPU remains about 90.5 percent
+of one core. The applied renderer diagnostic confirms Metal and a 1x drawable
+on this host; GPU utilization and physical Retina behavior remain unmeasured.
+Measure remaining stage costs and received input, queue/accept, Draw and
+successful Present-return timestamps. Existing dirty counters prove ordering
+only. A GPU texture path must preserve capture dimensions and non-integer
+sampling/hard edges. Ordinary V1 indexed HUD/TTF needs no high-resolution
+RGBA overlay; the launcher's separate true-color text path must remain intact.
 
 2026-10-15 secondary reference audit: ScummVM DM at
 [`5eefba1a2cd412016e83a89eaae31376a95c9367`](https://github.com/scummvm/scummvm/tree/5eefba1a2cd412016e83a89eaae31376a95c9367/engines/dm)

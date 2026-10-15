@@ -10764,6 +10764,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 windowWidth, windowHeight, drawableWidth, drawableHeight,
                 presentX, presentY, presentWidth, presentHeight,
                 o->scaleMode, M11_Render_GetDisplayAspectMode());
+
     }
     if (o->debug) debugStartupTrace.startedMs = SDL_GetTicks();
     /* SDL's dummy driver can retain its default 1024x768 logical window even
@@ -11117,6 +11118,29 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         &fallbackCtx);
     }
     M11_ApplyStartupMenuRuntime(&menuState);
+    /* Query the applied renderer state, after saved settings and CLI
+     * overrides. Creation-time VSync alone is not the gameplay policy. */
+    if (o->verbose) {
+        int windowWidth = 0, windowHeight = 0;
+        int drawableWidth = 0, drawableHeight = 0;
+        const char* rendererName = NULL;
+        int vsyncInterval = 0;
+        int vsyncAvailable = 0;
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+        SDL_Renderer* renderer = M11_Render_GetRenderer();
+        rendererName = SDL_GetRendererName(renderer);
+        vsyncAvailable = SDL_GetRenderVSync(renderer, &vsyncInterval);
+#endif
+        (void)M11_Render_GetWindowAndDrawableSize(
+            &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
+        fprintf(stderr, "firestaff: renderer backend=%s vsync=",
+                rendererName ? rendererName : "unavailable");
+        if (vsyncAvailable) fprintf(stderr, "%d", vsyncInterval);
+        else fprintf(stderr, "unavailable");
+        fprintf(stderr, " drawable-scale=%.3fx%.3f\n",
+                windowWidth > 0 ? (double)drawableWidth/windowWidth : 0.0,
+                windowHeight > 0 ? (double)drawableHeight/windowHeight : 0.0);
+    }
     /* Direct CLI selection normally resolves after startup presentation. Move
      * that preparation ahead of the source-owned I34E TITLE animation so its
      * authenticated edition and runtime data root are available to the player.

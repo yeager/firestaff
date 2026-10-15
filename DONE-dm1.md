@@ -1,3 +1,12 @@
+- 2026-10-15: Verbose/debug startup diagnostics now query the actual SDL
+  renderer name, VSync interval and drawable/window scale after saved settings
+  and CLI overrides are applied. Native Metal checks with isolated settings
+  report VSync 1, then 0 with --no-vsync, and a 1x drawable. The complete
+  original-media startup diagnostics suite passes for DM1, CSB and DM2;
+  its ordinary PC route also requires the renderer diagnostic fields.
+  Renderer identity does not measure GPU utilization or physical Retina
+  behavior, and the existing viewport-dirty counters do not measure latency.
+
 - 2026-10-15: Reuse the completed RGBA row when nearest CPU upscaling
   repeats a source row. This is an intra-call optimization; palette state,
   sampling, alpha, output dimensions and screenshot contracts are unchanged.

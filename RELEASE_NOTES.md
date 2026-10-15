@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Startup diagnostics`: report the actual renderer backend, applied VSync
+  interval and drawable scale with `--verbose` or `--debug`.
+
 - `Original graphics scaling`: reduce repeated CPU work when enlarging
   indexed frames, while preserving the exact pixels and colors.
 
