@@ -23,6 +23,8 @@
 
 ## Developer changes
 
+- Correct standard Amiga MFM checksum and payload-plane decoding; verify native CSB CTRaw track-0 sectors against all four original disks while retaining DM1 original-media startup coverage. Complete CTRaw launch support remains unfinished.
+
 - `DM2 weather ownership`: share the runtime RNG with gameplay, preserve it during creature binding, retain bound indoor weather timers and reject out-of-range zone reads. Run the source cold-weather/timer transaction before dungeon arrangement.
 
 - `DM2 New Game ownership`: query the prepared world's dungeon for later champion and DYN4 receipts. Original-media startup tests cover DOS, FM Towns, Mac and Amiga. Default preparation now arranges and reloads synchronized record/map data before deriving receipts, and live champion food/water continues the shared RNG.

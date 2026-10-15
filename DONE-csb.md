@@ -1,3 +1,13 @@
+- 2026-10-15: Corrected shared standard Amiga MFM header/data checksums
+  and odd/even payload-plane layout. The native CTRaw archive test now recovers
+  eleven unique checksum-valid sectors from each of five track-0 variants on
+  all four original game/utility disks (220 deliveries), retaining all
+  164-track PACK CRC and malformed-input checks. Passed in 1.64 seconds without
+  an SPS runtime dependency. Focused codec and authentic DM1 UAE-1ADF checks
+  also pass; original DM1 Amiga 2.2 German CLI/menu startup passes in 7.52
+  seconds. This establishes native sector recovery, not complete CTRaw intake,
+  launch or visual parity.
+
 - 2026-10-15: Shared explicit-file scanner regression: unscoped M12 with
   the original FM Towns ZIP selects CSB and preserves its exact archive owner,
   entering the authenticated F31 TITLE.ANM route. This is a menu-to-startup

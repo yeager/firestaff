@@ -1,4 +1,5 @@
 #include "firestaff_caps_raw.h"
+#include "firestaff_amiga_mfm.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,10 @@ typedef struct VisitorState {
     size_t track_packs;
     size_t track_decode_failures;
     size_t track_negative_failures;
+    size_t track_zero_variants;
+    size_t track_zero_sector_reads;
+    size_t track_zero_sector_failures;
+    uint32_t track_zero_payload_hash;
     int invalid_order;
 } VisitorState;
 
@@ -47,6 +52,24 @@ static uint32_t header_crc(const uint8_t *bytes, size_t size) {
     crc = crc32_update(crc, zero, sizeof(zero));
     crc = crc32_update(crc, bytes + 12u, size - 12u);
     return crc ^ 0xffffffffu;
+}
+
+typedef struct SectorCapture {
+    unsigned mask;
+    unsigned count;
+    uint32_t hash;
+} SectorCapture;
+
+static int capture_track_zero_sector(const FirestaffAmigaMfmSector *sector,
+                                      void *opaque) {
+    SectorCapture *capture = (SectorCapture *)opaque;
+    if (!sector || sector->track != 0u || sector->sector >= 11u) return -1;
+    capture->mask |= 1u << sector->sector;
+    ++capture->count;
+    capture->hash = (capture->hash ^ sector->sector) * 16777619u;
+    for (size_t i = 0u; i < sizeof(sector->payload); ++i)
+        capture->hash = (capture->hash ^ sector->payload[i]) * 16777619u;
+    return 0;
 }
 
 static int visit_pack(const FirestaffCapsRawPack *pack, void *opaque) {
@@ -98,6 +121,28 @@ static int visit_pack(const FirestaffCapsRawPack *pack, void *opaque) {
         if (decode_status != FIRESTAFF_CAPS_RAW_OK ||
             tracks.variant_count == 0u || !tracks.variant_bytes) {
             ++state->track_decode_failures;
+        }
+        /* PACK CRC success alone does not prove a bit-cell stream. Recover
+         * all eleven checksum-validated sectors from every authentic track-0
+         * revolution directly, with no SDK or timing conversion. Keep this
+         * focused boundary bounded rather than rescanning entire disks. */
+        if (decode_status == FIRESTAFF_CAPS_RAW_OK &&
+            pack->track_index == 0u && tracks.variant_bytes) {
+            size_t offset = 0u;
+            for (size_t variant = 0u; variant < tracks.variant_count; ++variant) {
+                const size_t size = tracks.variant_sizes[variant];
+                SectorCapture capture = {0u, 0u, 2166136261u};
+                int sectors = firestaff_amiga_mfm_scan_track(
+                    tracks.variant_bytes + offset, size, size * 8u,
+                    0u, 11u, capture_track_zero_sector, &capture);
+                ++state->track_zero_variants;
+                state->track_zero_sector_reads += capture.count;
+                if (sectors != 11 || capture.count != 11u ||
+                    capture.mask != 0x7ffu) ++state->track_zero_sector_failures;
+                state->track_zero_payload_hash =
+                    (state->track_zero_payload_hash ^ capture.hash) * 16777619u;
+                offset += size;
+            }
         }
         if (tracks.variant_bytes) {
             firestaff_caps_raw_free_tracks(&tracks);
@@ -188,7 +233,7 @@ int main(void) {
     uint8_t *bytes;
     size_t count = 0;
     int extra;
-    VisitorState state = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    VisitorState state = {0};
     FirestaffCapsRawResult result;
     FirestaffCapsRawStatus status;
 
@@ -239,6 +284,19 @@ int main(void) {
         free(bytes);
         return 1;
     }
+    if (state.track_zero_variants == 0u ||
+        state.track_zero_sector_reads != state.track_zero_variants * 11u ||
+        state.track_zero_sector_failures != 0u) {
+        fprintf(stderr,
+                "FAIL: native track0 variants=%zu sectors=%zu failures=%zu\n",
+                state.track_zero_variants, state.track_zero_sector_reads,
+                state.track_zero_sector_failures);
+        free(bytes);
+        return 1;
+    }
+    printf("PASS: native track0 variants=%zu checksum-valid sectors=%zu payload-hash=%08x\n",
+           state.track_zero_variants, state.track_zero_sector_reads,
+           (unsigned)state.track_zero_payload_hash);
     if (!malformed_cases(bytes, count)) {
         fputs("FAIL: malformed-input checks did not reject every mutation\n",
               stderr);

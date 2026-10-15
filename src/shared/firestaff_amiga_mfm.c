@@ -3,10 +3,8 @@
 #include <limits.h>
 
 #define AMIGA_MFM_SYNC 0x44894489u
-#define AMIGA_MFM_SECTOR_BYTES_ON_TRACK 1088u
-#define AMIGA_MFM_POST_SYNC_BYTES (AMIGA_MFM_SECTOR_BYTES_ON_TRACK - 8u)
+#define AMIGA_MFM_SECTOR_BYTES_ON_TRACK 1084u
 #define AMIGA_MFM_DATA_LONGS 128u
-#define AMIGA_MFM_HEADER_LONGS 5u
 
 /* ADFlib's ADF format FAQ, sections 2.2-2.4, documents the $4489 sync,
  * sector field layout, odd/even planes and XOR checksums. Its version history
@@ -63,7 +61,6 @@ int firestaff_amiga_mfm_scan_track(
         return -1;
 
     for (start = 0; start < bit_count; ++start) {
-        uint32_t fields[AMIGA_MFM_HEADER_LONGS];
         uint32_t header_xor = 0;
         uint32_t data_xor = 0;
         uint32_t data_words[AMIGA_MFM_DATA_LONGS];
@@ -80,22 +77,24 @@ int firestaff_amiga_mfm_scan_track(
         /* ADFlib ADF FAQ 2.2-2.3 defines two 16-bit $4489 sync words before
          * the header. See also WinUAE diskutil.cpp:isamigatrack. */
         body_start = start + 32u;
-        /* Each MFM sector occupies 1088 bytes from sync start through its
+        /* Each MFM sector occupies 1084 bytes from sync start through its
          * data end. A smaller capture cannot contain the full sector. */
         if (bit_count < (size_t)AMIGA_MFM_SECTOR_BYTES_ON_TRACK * 8u)
             break;
 
-        for (i = 0; i < AMIGA_MFM_HEADER_LONGS; ++i) {
-            fields[i] = read_pair_u32(bit_cells, bit_count,
-                                      body_start + (size_t)i * 64u);
-            header_xor ^= fields[i];
-        }
-        header_xor ^= read_pair_u32(bit_cells, bit_count,
-                                    body_start + 5u * 64u);
-        if (header_xor != 0u)
+        /* Standard AmigaDOS layout after sync: info odd/even (8 bytes),
+         * label odd/even planes (32), header checksum (8), data checksum
+         * (8), complete odd data plane (512), complete even plane (512).
+         * ADF FAQ 2.2-2.4: XOR encoded header/data words and mask clocks;
+         * XORing decoded payload words is not the on-disk checksum. */
+        for (i = 0; i < 10u; ++i)
+            header_xor ^= read_u32_be_wrapped(bit_cells, bit_count,
+                body_start + (size_t)i * 32u);
+        if ((header_xor & 0x55555555u) !=
+            read_pair_u32(bit_cells, bit_count, body_start + 10u * 32u))
             continue;
 
-        raw_info = fields[0];
+        raw_info = read_pair_u32(bit_cells, bit_count, body_start);
         sector_no = (raw_info >> 8) & 0xffu;
         sectors_to_gap = raw_info & 0xffu;
         if ((raw_info >> 24) != 0xffu ||
@@ -104,14 +103,17 @@ int firestaff_amiga_mfm_scan_track(
             sectors_to_gap == 0u || sectors_to_gap > sectors_per_track)
             continue;
 
-        data_xor = read_pair_u32(bit_cells, bit_count,
-                                 body_start + 6u * 64u);
         for (i = 0; i < AMIGA_MFM_DATA_LONGS; ++i) {
-            data_words[i] = read_pair_u32(bit_cells, bit_count,
-                                          body_start + (size_t)(7u + i) * 64u);
-            data_xor ^= data_words[i];
+            const uint32_t odd = read_u32_be_wrapped(bit_cells, bit_count,
+                body_start + (size_t)(14u + i) * 32u);
+            const uint32_t even = read_u32_be_wrapped(bit_cells, bit_count,
+                body_start + (size_t)(142u + i) * 32u);
+            data_xor ^= odd ^ even;
+            data_words[i] = ((odd & 0x55555555u) << 1) |
+                            (even & 0x55555555u);
         }
-        if (data_xor != 0u)
+        if ((data_xor & 0x55555555u) !=
+            read_pair_u32(bit_cells, bit_count, body_start + 12u * 32u))
             continue;
 
         sector.track = (uint8_t)expected_track;

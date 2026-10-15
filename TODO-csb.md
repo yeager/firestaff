@@ -165,10 +165,10 @@ archive remains unsupported. See the development-only conversion evidence below.
   emulator/BIOS and oracle dependencies out of Firestaff runtime.
 
   The archive stream regression `firestaff_caps_raw_archive_stream` validates
-  the four original members' CAPS/DATA/TRCK/PACK framing and packed-payload
-  CRCs only. It does not decode PACK payloads or recover sectors. The separate
-  A35M ADF found in the DMWeb software archive is authentic ADF media but is
-  not a decoded sector image from the CTRaw archive.
+  the four original members' framing and packed/unpacked CRCs across all 164
+  tracks. It also recovers all eleven checksum-valid sectors from every native
+  track-0 variant. Full sector-image assembly, file admission and launch remain
+  open. The separate A35M ADF is not a decoded image from this CTRaw archive.
 
   2026-10-14 development-only oracle and boot verification: the original
   `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` archive in the supplied CSB data
@@ -199,21 +199,18 @@ archive remains unsupported. See the development-only conversion evidence below.
   lossless sector recovery or original-disk behavior. The damaged-track
   warning remains relevant.
 
-  2026-10-15 investigation: Firestaff's bounded density-PACK decoder now
-  expands pack 0 and verifies its uncompressed CRC. The native pack 1 decoder
-  also reconstructs every track variant and verifies the combined CRC. The
-  original-media test covers all 164 tracks on each of the four
-  English/multilingual game and utility members. CAPS SDK `trackbuf` and
-  `trackdata[0]` exports are byte identical for this source; passing those
-  exports to `firestaff_amiga_mfm_scan_track()` found zero sectors. Scanning
-  the five directly decoded pack 1 variants for track 0 also found no sectors.
-  The SDK exposes a same-length timing array of 32-bit words. These outputs
-  still are not verified MFM bit-cell streams. Do not wire them into the ADF
-  sector reader based only on matching track sizes; derive timing-to-bit-cell
-  normalization and verify recovered sectors against original-sector
-  checksums first. Probes and extracted media stayed in ignored
-  `.codex-scratch/csb-ctraw-oracle/` and `/tmp`; neither is tracked game data
-  or a runtime dependency.
+  2026-10-15 native-sector verification: the density and track PACK decoders
+  verify all 164 tracks on each original disk. Earlier zero-sector results
+  were caused by the shared MFM scanner: it checked decoded-word XOR instead
+  of encoded masked XOR and interleaved data words instead of separate odd
+  and even planes. After correcting that standard disk layout, all five native
+  track-0 variants on all four disks yield eleven unique checksum-valid
+  sectors each (220 deliveries). No timing normalization or SPS dependency is
+  required for this boundary. The authentic archive regression passes in 1.64
+  seconds; DM1 Amiga 2.2 German original-media recovery and CLI/menu startup
+  also pass. Full-disk sector assembly, conflicting-revolution policy, original
+  file hashes and direct CTRaw CLI/menu launch still require implementation
+  and verification. Keep original media and local oracle artifacts ignored.
 
   SPS/CAPS is permitted for this non-commercial development environment under
   its stated terms, but not for commercial use or redistribution. Keep this

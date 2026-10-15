@@ -203,7 +203,8 @@ endif()
 if(BUILD_TESTING)
     add_executable(test_firestaff_caps_raw_reader
         tests/test_firestaff_caps_raw_reader.c
-        src/shared/firestaff_caps_raw.c)
+        src/shared/firestaff_caps_raw.c
+        src/shared/firestaff_amiga_mfm.c)
     target_include_directories(test_firestaff_caps_raw_reader PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
