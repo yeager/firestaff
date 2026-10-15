@@ -4,6 +4,8 @@
 
 #define I34E_TITLE_MAX_BYTES (1024u * 1024u)
 #define I34E_TITLE_MAX_RECORDS 512u
+#define I34E_PC34_SCREEN_PIXELS 64000u
+#define I34E_PC34_LFSR_STEPS 65535u
 
 static uint16_t read_be16(const uint8_t *p) {
     return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
@@ -109,4 +111,44 @@ int dm1_v1_i34e_title_anim_pc34_step(
 malformed:
     state->valid = 0;
     return -1;
+}
+
+void dm1_v1_i34e_title_erase_pc34_init(DM1_V1_I34ETitleErasePc34 *state) {
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    state->lfsr = 1u;
+    state->valid = 1;
+}
+
+int dm1_v1_i34e_title_erase_pc34_step(DM1_V1_I34ETitleErasePc34 *state,
+                                      uint8_t *pixels, size_t pixel_count,
+                                      uint32_t max_steps) {
+    uint32_t remaining;
+    uint32_t count;
+    if (!state || !state->valid || !pixels ||
+        pixel_count < I34E_PC34_SCREEN_PIXELS || max_steps == 0u)
+        return -1;
+    if (state->finished) return 0;
+    remaining = I34E_PC34_LFSR_STEPS - state->lfsr_steps;
+    count = max_steps < remaining ? max_steps : remaining;
+    while (count--) {
+        uint16_t pixel = state->lfsr;
+        if (pixel < I34E_PC34_SCREEN_PIXELS) {
+            pixels[pixel] = 0u;
+            ++state->pixels_cleared;
+        }
+        state->lfsr = (pixel & 1u)
+            ? (uint16_t)((pixel >> 1) ^ 0xb400u)
+            : (uint16_t)(pixel >> 1);
+        ++state->lfsr_steps;
+    }
+    if (state->lfsr_steps == I34E_PC34_LFSR_STEPS) {
+        /* The source LFSR visits every nonzero 16-bit state and clears pixel
+         * zero explicitly after it wraps back to its seed. */
+        pixels[0] = 0u;
+        ++state->pixels_cleared;
+        state->finished = 1;
+        return 0;
+    }
+    return 1;
 }

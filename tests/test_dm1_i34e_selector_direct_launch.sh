@@ -32,17 +32,27 @@ require_once() {
 
 require_once 'phase=swsh-intro frames=17 source-vblanks=30'
 require_once 'phase=anim-title frames=53 source-vblanks=53'
-require_once 'phase=selector .*entrance=320x200 left-door=105x161 right-door=128x161 selector-view=224x136 frames=32 source-vblanks=32 .*modeled-vblank-hz=70 handoff=fires command=enter'
+require_once 'phase=anim-title-erase pixels=64000 frames=64 .*modeled-vblank-hz=70'
+require_once 'phase=selector .*entrance=320x200 left-door=105x161 right-door=128x161 selector-view=224x136 frames=32 source-vblanks=32 .*modeled-vblank-hz=70 .*handoff=fires command=enter'
 require_once 'DM1 READY: .*handoff=pc-img3'
 require_once 'launch phase=runtime-entered game=dm1'
 
+erase_elapsed=$(sed -n 's/.*phase=anim-title-erase pixels=64000 frames=64 elapsed-ms=\([0-9][0-9]*\) modeled-vblank-hz=70.*/\1/p' "$log_file")
+if [ -z "$erase_elapsed" ] || [ "$erase_elapsed" -lt 850 ]; then
+    show_relevant_log
+    echo "FAIL: I34E source-ordered title erase completed too quickly (${erase_elapsed:-missing} ms)" >&2
+    exit 1
+fi
+
 swsh_line=$(grep -n 'phase=swsh-intro frames=17' "$log_file" | cut -d: -f1)
 title_line=$(grep -n 'phase=anim-title frames=53' "$log_file" | cut -d: -f1)
+erase_line=$(grep -n 'phase=anim-title-erase pixels=64000 frames=64' "$log_file" | cut -d: -f1)
 selector_line=$(grep -n 'phase=selector ' "$log_file" | cut -d: -f1)
 fires_line=$(grep -n 'DM1 READY: .*handoff=pc-img3' "$log_file" | cut -d: -f1)
 runtime_line=$(grep -n 'launch phase=runtime-entered game=dm1' "$log_file" | cut -d: -f1)
 if [ "$swsh_line" -ge "$title_line" ] ||
-   [ "$title_line" -ge "$selector_line" ] ||
+   [ "$title_line" -ge "$erase_line" ] ||
+   [ "$erase_line" -ge "$selector_line" ] ||
    [ "$selector_line" -ge "$fires_line" ] ||
    [ "$fires_line" -ge "$runtime_line" ]; then
     show_relevant_log

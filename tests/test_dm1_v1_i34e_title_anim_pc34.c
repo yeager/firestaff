@@ -58,6 +58,33 @@ static void test_stream(void) {
     assert(!dm1_v1_i34e_title_anim_pc34_init(&state, data, 13u));
 }
 
+static void test_source_ordered_erase(void) {
+    uint8_t pixels[64000];
+    DM1_V1_I34ETitleErasePc34 state;
+    unsigned frames = 1u;
+    memset(pixels, 7, sizeof(pixels));
+    dm1_v1_i34e_title_erase_pc34_init(&state);
+    assert(state.valid && state.lfsr == 1u);
+    assert(dm1_v1_i34e_title_erase_pc34_step(&state, pixels,
+                                              sizeof(pixels), 1024u) == 1);
+    assert(pixels[1] == 0u && pixels[0] == 7u);
+    do {
+        int result = dm1_v1_i34e_title_erase_pc34_step(
+            &state, pixels, sizeof(pixels), 1024u);
+        ++frames;
+        assert(result == 0 || result == 1);
+        if (result == 0) break;
+    } while (frames < 100u);
+    assert(state.finished && state.lfsr == 1u);
+    assert(state.lfsr_steps == 65535u && state.pixels_cleared == 64000u);
+    assert(frames == 64u);
+    assert(pixels[0] == 0u && pixels[63999] == 0u);
+    assert(dm1_v1_i34e_title_erase_pc34_step(&state, pixels,
+                                              sizeof(pixels), 1024u) == 0);
+    assert(dm1_v1_i34e_title_erase_pc34_step(&state, pixels,
+                                              sizeof(pixels) - 1u, 1u) == -1);
+}
+
 static int test_authentic_media(void) {
     const char *path = getenv("FIRESTAFF_DM1_I34E_TITLE");
     FILE *file;
@@ -104,6 +131,7 @@ static int test_authentic_media(void) {
 
 int main(void) {
     test_stream();
+    test_source_ordered_erase();
     {
         int result = test_authentic_media();
         if (result == 77) {
