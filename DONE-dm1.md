@@ -7,8 +7,8 @@
   title/selector path remains independently covered by
   `dm1_v1_pc34_native_cli_boot`. The mixed AUTO/CLI/menu matrix passed with
   authentic FM Towns, PC34, Atari ST, and Amiga media (93.61 s). This fixes a
-  false test failure; the outstanding I34E startup/parity gap in
-  `TODO-dm1.md` remains open.
+  false test failure. The remaining I34E items are legacy selector interaction
+  and first-runtime visual comparison, as tracked in `TODO-dm1.md`.
 
 - 2026-10-14: Restored the I34E PC 3.4 two-bank VGA viewport presentation.
   ReDMCSB `DRAWVIEW.C:F0097` selects the active dungeon palette for VGA

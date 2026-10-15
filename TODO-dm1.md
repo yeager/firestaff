@@ -63,12 +63,13 @@ dimensions, checks the selected bitmap against its flip-buffer capacity, and
 copies back only the flipped source height. The native Xcode-configured
 `firestaff` target build and the targeted viewport source-lock test pass. An
 original FM Towns runtime frame comparison is still required before visual
-parity can be marked complete. The I34E
-startup audit also confirms its DOS parent runs ANIM/TITLE and SELECTOR before
-FIRES; Firestaff's current in-process PC34 C001/F0441 route does not match that
-chain. Port the authentic I34E animation and selector path before claiming PC
-startup parity. Neither investigation has established full cross-platform
-visual parity yet.
+parity can be marked complete. The I34E startup audit also confirms its DOS
+parent runs ANIM/TITLE and SELECTOR before FIRES. Firestaff's authentic I34E
+title/selector Enter path has since been implemented and is covered by
+`dm1_v1_pc34_native_cli_boot` (see the records below); the earlier C001/F0441
+gap statement is historical. Interactive legacy selector choices and the
+first-runtime viewport comparison remain open. Neither investigation has
+established full cross-platform visual parity yet.
 
 2026-10-14 startup interruption: closing the host window during the source
 SWSH prelude previously looked like a corrupt launch, although the same event
@@ -195,14 +196,13 @@ nor an entrance object. In `STARTUP2.C`, the F0437 call is guarded by
 `MEDIA274`, which excludes I34E, and F0441 is guarded by `MEDIA279`, also
 excluding I34E. The I34E-specific `MEDIA707` branch calls F0435 directly and
 ends the program if loading fails. `ENTRANCE.C:1280-1281` includes `TITLE.C`
-only for `MEDIA514`, which also excludes I34E. Firestaff currently plays its
-PC34 C001 title and C004/door animation through the generic DM1 handoff, so
-these frames are not source parity for authentic I34E even when their timing
-matches another PC edition. Split this route by authenticated edition and
-reproduce the I34E startup order before claiming PC34 title/entrance parity;
-retain F0437/F0441 only on editions whose startup source calls them. The
-previously logged PC34 title/entrance captures remain useful Firestaff runtime
-evidence, not evidence that the original I34E startup shows those sequences.
+only for `MEDIA514`, which also excludes I34E. At the time of this audit,
+Firestaff still played its PC34 C001 title and C004/door animation through the
+generic DM1 handoff. The authenticated I34E direct-launch route has since been
+implemented as described below. Retain F0437/F0441 only on editions whose
+startup source calls them. The previously logged PC34 title/entrance captures
+remain useful Firestaff runtime evidence, not evidence that the original I34E
+startup shows those sequences.
 
 2026-10-14 fresh Mac mini M4 startup rerun against original media:
 `dm1_v1_pc34_native_cli_boot` and `dm1_macos_real_data_boot` passed 2/2.
@@ -1329,14 +1329,13 @@ SELECTOR -> FIRES. `VIDEODRV.C:3856-3992` confirms VGA installs mode 13h and
 executes the IBMIO child. The I34E `ANIM` player reads a named animation file
 (`ANIM.C:1806-1918`), and `SELECTOR.C:866-1000` builds the entrance/menu view
 from GRAPHICS.DAT and handles Enter/Resume/Quit itself. `SWSH.C:1783-2180`
-implements the separate FTL logo animation. Therefore Firestaff's current
-23-step GRAPHICS.DAT C001 title and shared F0441 entrance are the wrong PC34
-startup contract; the PC34 CLI test must cover the standalone title animation,
-selector state and FIRES handoff. An authentic DOSBox run from the extracted
-PC 3.4 distribution showed the `ANIM` title program, the `SELECTOR` menu, and
-the FIRES screen after Enter. Captures are in local scratch only and do not
-claim an M5 or release comparison. Next parity step: port the I34E ANIM/TITLE
-stream and SELECTOR behavior from those source functions, then compare the
+implements the separate FTL logo animation. Firestaff now plays the standalone
+I34E title and the selector Enter transition before FIRES; the authentic
+`dm1_v1_pc34_native_cli_boot` test verifies this path against PC34 media. An
+authentic DOSBox run from the extracted PC 3.4 distribution showed the same
+program order. Captures are in local scratch only and do not claim an M5 or
+release comparison. Remaining work: implement the legacy selector's
+interactive Resume/Quit/Credits choices where appropriate, then compare the
 first runtime viewport against the original DOS capture. The existing
 C001/Entrance timing captures remain valid Firestaff measurements, but are
 not original-I34E parity evidence.
