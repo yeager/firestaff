@@ -1,3 +1,19 @@
+- 2026-10-15: Native in-memory CTRaw OFS intake now preserves sector
+  presence, accepts identical revolutions and rejects conflicting valid sector
+  payloads. Signature-aware nested 7z/ZIP routing keeps exact raw-member
+  provenance and existing ISO/Atari transport rules. Original English and
+  multilingual graphics plus all eight startup programs match independent
+  hashes (1.32-second file test). English AUTO/explicit CLI and multilingual
+  explicit CLI reach loaded runtime and movement (30.92 seconds); the original
+  English 7z also passes production M12 to first movement (40.11 seconds).
+  Multilingual ZIP staging preserves the original raw bytes, and source archive
+  SHA-256 remains unchanged. Rolling MFM sync search avoids rereading 32 bits
+  for every candidate position. Five shared codec/original-media regressions
+  pass in 7.24 seconds, including DM1 A22G CLI/menu; DM2 original Amiga LZX
+  recovery also passes (0.45 seconds). SDL dummy tests on one Mac do not prove
+  native Windows/Linux behavior, multilingual menu, utility gameplay, audible
+  output or visual parity. No SPS library is linked or bundled.
+
 - 2026-10-15: Corrected shared standard Amiga MFM header/data checksums
   and odd/even payload-plane layout. The native CTRaw archive test now recovers
   eleven unique checksum-valid sectors from each of five track-0 variants on

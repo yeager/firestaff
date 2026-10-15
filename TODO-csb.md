@@ -101,8 +101,8 @@ and production M12 startup; both M12 routes reached first movement at `(9,1)`
 with a nonzero viewport receipt. The dedicated A35E M12-to-M11 boundary test
 reported 45 passed, 0 failed, 0 skipped. The original DMWeb archive SHA-256
 remained unchanged. These headless checks do not verify native display output
-or audible playback. Native CTRaw track PACK decoding and sector recovery
-remain unsupported.
+or audible playback. Native CTRaw recovery and launch were subsequently added
+on 2026-10-15; see the verification limits below.
 
 2026-10-12 A35E original-ADF retest: the published v3.0.379 macOS arm64
 binary authenticated the English Amiga 3.5 original ADF from the DMWeb
@@ -135,10 +135,9 @@ language selection and entrance, and reached the first runtime movement at
 `(9,1)` with a nonzero viewport receipt. The original DMWeb archive remained
 unchanged. This verifies this ADF source through ZIP transport in Firestaff;
 it does not establish that the disk image works in its original hardware.
-Native CTRaw support remains a separate open item: density PACK decoding is
-now implemented with CRC verification, but track PACK decoding, sector
-recovery and the start routes are not. The ADF member is not a decoded CTRaw
-stream.
+Native CTRaw support was still open at that check. Native PACK/sector
+recovery and original-file admission now pass separately (2026-10-15); the
+ADF member itself is not a decoded CTRaw stream.
 
 2026-10-11 local startup retest: the current source passed the authentic
 FM Towns, Atari ST and Amiga ADF CLI/start-menu regressions
@@ -154,9 +153,10 @@ byte-for-byte in ZIP transport, now also passes bare `--game csb` direct CLI
 and M12 AUTO routes without `--platform`. Both routes select A35M, pass the
 English language selector and reach first movement. This closes the A35M AUTO
 coverage gap for that ADF source; native intake of the separate original CTRaw
-archive remains unsupported. See the development-only conversion evidence below.
+archive was not covered by that ADF test. See the separate native and
+development-only conversion evidence below.
 
-- Add native Firestaff intake for the supplied Amiga 3.5 CTRaw media. On
+- Complete remaining native CTRaw platform/presentation coverage. On
   2026-10-10, direct CLI and start-menu probes against the original archive
   failed because Firestaff does not recognize its four CAPS/SPS CT Raw disk
   images as game data. ZIP repacking did not change that. ReDMCSB COMPILE.H
@@ -206,11 +206,16 @@ archive remains unsupported. See the development-only conversion evidence below.
   and even planes. After correcting that standard disk layout, all five native
   track-0 variants on all four disks yield eleven unique checksum-valid
   sectors each (220 deliveries). No timing normalization or SPS dependency is
-  required for this boundary. The authentic archive regression passes in 1.64
-  seconds; DM1 Amiga 2.2 German original-media recovery and CLI/menu startup
-  also pass. Full-disk sector assembly, conflicting-revolution policy, original
-  file hashes and direct CTRaw CLI/menu launch still require implementation
-  and verification. Keep original media and local oracle artifacts ignored.
+  required. The bounded OFS reader now assembles a presence-tracked volume,
+  accepts identical repetitions and rejects conflicting valid sector payloads.
+  Missing sectors cannot satisfy file pointers. Original English/multilingual
+  graphics and all four startup programs match their independent MD5s through
+  native in-memory intake. The original archive remains SHA-256 unchanged.
+  English AUTO/explicit CLI and production M12 reach loaded runtime and first
+  movement using exact archive::raw::file provenance. Multilingual explicit CLI
+  also reaches first movement through a byte-preserving ZIP transport. Native Windows/Linux runtime,
+  multilingual menu launch, utility interaction and visual/audio/hardware parity
+  still require verification. Keep originals and local oracle artifacts ignored.
 
   SPS/CAPS is permitted for this non-commercial development environment under
   its stated terms, but not for commercial use or redistribution. Keep this
@@ -222,9 +227,8 @@ archive remains unsupported. See the development-only conversion evidence below.
   [SPS source notice](https://github.com/simonowen/capsimage#readme),
   [CAPS decoder source license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt),
   and [IPF v1.6 documentation](https://www.kryoflux.com/download/ipf_documentation_v1.6.pdf).
-  Native CTRaw intake, the start-menu A35E/A35M routes, and unconverted original
-  disk parity remain open; verify them separately before claiming CTRaw launch
-  support. Use original-media hashes in
+  The native intake has no oracle dependency. Multilingual start-menu coverage,
+  native display/audio and full original-disk parity remain open. Use hashes in
   `data/asset_validator_checksums_m12.json` and
   `parity-evidence/csb_v1_l10n_source_catalog.md` for future oracle checks.
 

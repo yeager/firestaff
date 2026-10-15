@@ -51,6 +51,7 @@ int firestaff_amiga_mfm_scan_track(
     void *context)
 {
     size_t start;
+    uint32_t sync_window;
     int delivered = 0;
 
     if (bit_cells == NULL || visitor == NULL || byte_count == 0u ||
@@ -60,6 +61,9 @@ int firestaff_amiga_mfm_scan_track(
         (sectors_per_track != 11u && sectors_per_track != 22u))
         return -1;
 
+    if (bit_count < (size_t)AMIGA_MFM_SECTOR_BYTES_ON_TRACK * 8u)
+        return 0;
+    sync_window = read_u32_be_wrapped(bit_cells, bit_count, 0u);
     for (start = 0; start < bit_count; ++start) {
         uint32_t header_xor = 0;
         uint32_t data_xor = 0;
@@ -71,16 +75,16 @@ int firestaff_amiga_mfm_scan_track(
         size_t body_start;
         FirestaffAmigaMfmSector sector;
 
-        if (read_u32_be_wrapped(bit_cells, bit_count, start) != AMIGA_MFM_SYNC)
-            continue;
+        /* Roll by one bit, including windows across the capture boundary.
+         * Only candidate sectors need the wider wrapped field reads. */
+        if (start != 0u)
+            sync_window = (sync_window << 1) |
+                read_bit_wrapped(bit_cells, bit_count, start + 31u);
+        if (sync_window != AMIGA_MFM_SYNC) continue;
 
         /* ADFlib ADF FAQ 2.2-2.3 defines two 16-bit $4489 sync words before
          * the header. See also WinUAE diskutil.cpp:isamigatrack. */
         body_start = start + 32u;
-        /* Each MFM sector occupies 1084 bytes from sync start through its
-         * data end. A smaller capture cannot contain the full sector. */
-        if (bit_count < (size_t)AMIGA_MFM_SECTOR_BYTES_ON_TRACK * 8u)
-            break;
 
         /* Standard AmigaDOS layout after sync: info odd/even (8 bytes),
          * label odd/even planes (32), header checksum (8), data checksum

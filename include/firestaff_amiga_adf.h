@@ -20,8 +20,10 @@ typedef int (*FirestaffAmigaAdfFileVisitor)(const char *name,
 #endif
 
 /* Visit every validated root-volume file in a 512-byte-sector AmigaDOS OFS
- * image. Accepts ordinary DOS\0 sector images and UAE-1ADF containers whose
- * decoded OFS sectors are present. Missing raw-track sectors remain absent:
+ * image. Accepts ordinary DOS\0 sector images, UAE-1ADF containers and native
+ * CAPS CTRaw captures whose checksum-validated OFS sectors are present.
+ * Conflicting valid CAPS sector captures reject the disk. Missing raw-track
+ * sectors remain absent:
  * any file that references one is rejected. FFS payloads are not supported.
  * Returns the number of delivered files, or -1 for malformed media. */
 FIRESTAFF_AMIGA_ADF_API int firestaff_amiga_adf_visit_ofs_files(

@@ -1,5 +1,6 @@
 #include "firestaff_amiga_adf.h"
 #include "firestaff_amiga_mfm.h"
+#include "firestaff_caps_raw.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,7 @@ typedef struct AdfMfmTrack {
     uint8_t *present;
     unsigned track;
     int invalid;
+    int allow_identical;
 } AdfMfmTrack;
 
 static int adf_mfm_sector(const FirestaffAmigaMfmSector *sector, void *opaque) {
@@ -50,6 +52,9 @@ static int adf_mfm_sector(const FirestaffAmigaMfmSector *sector, void *opaque) {
     }
     block = (size_t)track->track * ADF_SECTORS_PER_TRACK + sector->sector;
     if (track->present[block]) {
+        if (track->allow_identical &&
+            memcmp(track->image + block * ADF_BLOCK, sector->payload,
+                   ADF_BLOCK) == 0) return 0;
         track->invalid = 1;
         return 1;
     }
@@ -116,6 +121,7 @@ static int adf_decode_uae1adf(const uint8_t *container, size_t container_size,
             decoded.present = present;
             decoded.track = track;
             decoded.invalid = 0;
+            decoded.allow_identical = 0;
             if (byte_length == 0U && bit_count == 0U) {
                 data_pos += byte_length;
                 continue;
@@ -142,6 +148,79 @@ done:
     free(image);
     free(present);
     return ok;
+}
+
+typedef struct AdfCapsDecode {
+    uint8_t *image;
+    uint8_t *present;
+} AdfCapsDecode;
+
+static int adf_caps_pack(const FirestaffCapsRawPack *pack, void *opaque) {
+    AdfCapsDecode *decoded = (AdfCapsDecode *)opaque;
+    FirestaffCapsRawTrackSet tracks = {0};
+    AdfMfmTrack track;
+    size_t offset = 0u;
+    int valid = 0;
+    if (!pack || !decoded || pack->track_index >= ADF_UAE_MAX_TRACKS)
+        return 1;
+    if (pack->pack_index == 0u) return 0; /* Timing is not sector data. */
+    if (pack->pack_index != 1u) return 1;
+    /* The ordinary OFS volume has 160 tracks. Additional preservation
+     * tracks cannot address its filesystem blocks. The container reader
+     * still checks their framing and compressed payload CRCs. */
+    if (pack->track_index >= ADF_TRACKS) return 0;
+    if (pack->unpacked_size > FIRESTAFF_CAPS_RAW_MAX_TRACK_VARIANTS *
+                              ADF_UAE_MAX_RAW_TRACK_BYTES ||
+        firestaff_caps_raw_unpack_tracks(pack, &tracks) !=
+            FIRESTAFF_CAPS_RAW_OK || !tracks.variant_bytes ||
+        tracks.variant_count == 0u) goto done;
+    track.image = decoded->image;
+    track.present = decoded->present;
+    track.track = pack->track_index;
+    track.invalid = 0;
+    track.allow_identical = 1;
+    for (size_t i = 0u; i < tracks.variant_count; ++i) {
+        const size_t size = tracks.variant_sizes[i];
+        int sectors;
+        if (size == 0u || size > ADF_UAE_MAX_RAW_TRACK_BYTES) goto done;
+        sectors = firestaff_amiga_mfm_scan_track(
+            tracks.variant_bytes + offset, size, size * 8u,
+            track.track, ADF_SECTORS_PER_TRACK, adf_mfm_sector, &track);
+        if (sectors < 0 || track.invalid) goto done;
+        offset += size;
+    }
+    valid = 1;
+done:
+    firestaff_caps_raw_free_tracks(&tracks);
+    return valid ? 0 : 1;
+}
+
+/* Native CAPS PACK output is already an MFM bit-cell stream. Preserve only
+ * sectors whose standard header/data checksums pass. Multiple captures may
+ * agree on a sector, but conflicting valid payloads reject the entire disk.
+ * Unrecovered sectors remain absent and cannot satisfy an OFS file pointer. */
+static int adf_decode_caps(const uint8_t *container, size_t container_size,
+                           uint8_t **out_image, uint8_t **out_present) {
+    const size_t blocks = (size_t)ADF_TRACKS * ADF_SECTORS_PER_TRACK;
+    AdfCapsDecode decoded = {NULL, NULL};
+    FirestaffCapsRawResult result;
+    if (out_image) *out_image = NULL;
+    if (out_present) *out_present = NULL;
+    if (!container || !out_image || !out_present) return 0;
+    decoded.image = calloc(blocks, ADF_BLOCK);
+    decoded.present = calloc(blocks, 1u);
+    if (!decoded.image || !decoded.present ||
+        firestaff_caps_raw_read(container, container_size, adf_caps_pack,
+            &decoded, &result) != FIRESTAFF_CAPS_RAW_OK ||
+        result.track_count < ADF_TRACKS ||
+        result.track_count > ADF_UAE_MAX_TRACKS) {
+        free(decoded.image);
+        free(decoded.present);
+        return 0;
+    }
+    *out_image = decoded.image;
+    *out_present = decoded.present;
+    return 1;
 }
 
 static int adf_append_pointers(const uint8_t *image, const uint8_t *present,
@@ -235,6 +314,11 @@ FIRESTAFF_AMIGA_ADF_API int firestaff_amiga_adf_visit_ofs_files(
     if (!image) return -1;
     if (image_size >= 8U && memcmp(image, "UAE-1ADF", 8U) == 0) {
         if (!adf_decode_uae1adf(image, image_size, &decoded_image, &present)) return -1;
+        source = decoded_image;
+        image_size = (size_t)ADF_TRACKS * ADF_SECTORS_PER_TRACK * ADF_BLOCK;
+    }
+    if (image_size >= 4U && memcmp(image, "CAPS", 4U) == 0) {
+        if (!adf_decode_caps(image, image_size, &decoded_image, &present)) return -1;
         source = decoded_image;
         image_size = (size_t)ADF_TRACKS * ADF_SECTORS_PER_TRACK * ADF_BLOCK;
     }

@@ -62943,3 +62943,64 @@ foreach(_firestaff_target IN LISTS _firestaff_all_targets)
         endforeach()
     endif()
 endforeach()
+
+# The bounded OFS reader also admits native CAPS CTRaw members. Every direct
+# consumer needs the same native PACK decoder, including standalone probes.
+get_property(_firestaff_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+foreach(_firestaff_target IN LISTS _firestaff_all_targets)
+    get_target_property(_firestaff_target_sources ${_firestaff_target} SOURCES)
+    string(FIND "${_firestaff_target_sources}" "firestaff_amiga_adf.c"
+        _firestaff_has_amiga_adf)
+    if(_firestaff_has_amiga_adf GREATER -1)
+        list(FIND _firestaff_target_sources "src/shared/firestaff_caps_raw.c"
+            _firestaff_has_caps_raw)
+        if(_firestaff_has_caps_raw EQUAL -1)
+            target_sources(${_firestaff_target} PRIVATE
+                src/shared/firestaff_caps_raw.c)
+        endif()
+    endif()
+endforeach()
+
+if(BUILD_TESTING)
+    add_executable(test_firestaff_amiga_ctraw_real_media
+        tests/test_firestaff_amiga_ctraw_real_media.c
+        src/shared/firestaff_amiga_adf.c
+        src/shared/firestaff_amiga_mfm.c
+        src/shared/firestaff_caps_raw.c)
+    target_include_directories(test_firestaff_amiga_ctraw_real_media PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_firestaff_amiga_ctraw_real_media PRIVATE firestaff_m12)
+    if(MSVC)
+        target_compile_options(test_firestaff_amiga_ctraw_real_media PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(test_firestaff_amiga_ctraw_real_media PRIVATE -UNDEBUG)
+    endif()
+    add_test(NAME firestaff_amiga_ctraw_original_files
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_amiga_ctraw_real_media.py
+            $<TARGET_FILE:test_firestaff_amiga_ctraw_real_media>
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga 3.5 CTRaw.7z")
+    set_tests_properties(firestaff_amiga_ctraw_original_files PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        LABELS "csb;amiga;ctraw;real-media;in-memory;skip-safe")
+endif()
+
+if(BUILD_TESTING AND UNIX)
+    add_test(NAME csb_v1_amiga35_ctraw_native_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_ctraw_boot.sh
+            $<TARGET_FILE:firestaff>
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga 3.5 CTRaw.7z")
+    set_tests_properties(csb_v1_amiga35_ctraw_native_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 240
+        LABELS "csb;amiga;ctraw;real-media;cli;startup;skip-safe")
+endif()
+
+if(BUILD_TESTING AND UNIX)
+    add_test(NAME csb_v1_amiga35_ctraw_native_menu_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_ctraw_menu_boot.sh
+            $<TARGET_FILE:firestaff>
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga 3.5 CTRaw.7z")
+    set_tests_properties(csb_v1_amiga35_ctraw_native_menu_boot PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        LABELS "csb;amiga;ctraw;real-media;menu;startup;skip-safe")
+endif()

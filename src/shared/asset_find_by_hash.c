@@ -731,6 +731,17 @@ static int is_adf_path(const char *path) {
     return has_case_suffix(path, ".adf");
 }
 
+/* .raw also names ISO/BIN and flux streams. Only a bounded CAPS signature
+ * selects the Amiga filesystem reader; that reader validates its full
+ * framing, PACK CRCs, MFM checksums and sector presence before yielding files. */
+static int is_amiga_disk_payload(const char *path, const uint8_t *bytes,
+                                  size_t byte_count) {
+    return is_adf_path(path) ||
+           (has_case_suffix(path, ".raw") && bytes && byte_count >= 12U &&
+            memcmp(bytes, "CAPS", 4U) == 0 && bytes[4] == 0U &&
+            bytes[5] == 0U && bytes[6] == 0U && bytes[7] == 12U);
+}
+
 /* A plain .ST image is a sector-for-sector GEMDOS floppy, unlike protected
  * .STX and compressed .MSA media.  It is safe to parse without invoking an
  * emulator or a host archive tool. */
@@ -3897,8 +3908,9 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
                 free(inner);
             }
         } else if (!has_cracked_member_marker(name) &&
-                   (is_adf_path(name) || is_atari_st_path(name) || is_atari_stx_path(name) ||
-                   is_atari_msa_path(name))) {
+                   (is_adf_path(name) || has_case_suffix(name, ".raw") ||
+                    is_atari_st_path(name) || is_atari_stx_path(name) ||
+                    is_atari_msa_path(name))) {
             size_t image_size = 0U;
             uint8_t *image = zip_load_entry_bytes(zip_path, name, &image_size);
             NestedDiskListMatch matches;
@@ -3928,7 +3940,7 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
                     ++found_count;
                 }
             }
-            if (is_adf_path(name)) {
+            if (is_amiga_disk_payload(name, image, image_size)) {
                 result = firestaff_amiga_adf_visit_ofs_files(
                     image, image_size, nested_disk_find_list_visitor, &matches);
             } else if (is_atari_stx_path(name)) {
@@ -3937,7 +3949,7 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
             } else if (is_atari_st_path(name)) {
                 result = atari_st_visit_files(image, image_size,
                                               nested_disk_find_list_visitor, &matches);
-            } else {
+            } else if (is_atari_msa_path(name)) {
                 uint8_t *decoded;
                 size_t decoded_size;
                 decoded = atari_msa_decode_image(image, image_size, &decoded_size);
@@ -5227,7 +5239,7 @@ static int native_7z_member_md5_visitor(const char *name,
                                 (int)sizeof(candidate))) {
         native_7z_record_candidate(match, candidate);
     }
-    if (is_adf_path(name)) {
+    if (is_amiga_disk_payload(name, bytes, byte_count)) {
         AdfSingleMatch nested;
         int visit_result;
         memset(&nested, 0, sizeof(nested));
@@ -5307,7 +5319,8 @@ static int native_7z_member_list_visitor(const char *name,
             ++matches->found_count;
         }
     }
-    if (matches->found_count < matches->md5_count && is_adf_path(name)) {
+    if (matches->found_count < matches->md5_count &&
+        is_amiga_disk_payload(name, bytes, byte_count)) {
         AdfListMatch nested;
         char disk_path[ASSET_PATH_MAX];
         int visit_result;
@@ -5576,7 +5589,7 @@ static int zip_extract_nested_disk_entry_to_path(const char *zip_path,
     extract.entry = entry;
     extract.out_path = out_file_path;
     extract.extracted = 0;
-    if (is_adf_path(disk_entry)) {
+    if (is_amiga_disk_payload(disk_entry, image, image_size)) {
         result = firestaff_amiga_adf_visit_ofs_files(image, image_size,
                                                       adf_extract_visitor, &extract);
     } else if (is_atari_stx_path(disk_entry)) {
@@ -7278,7 +7291,7 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     if (!image) return 0;
     memset(&match, 0, sizeof(match));
     match.wanted = second + 2;
-    if (is_adf_path(disk)) {
+    if (is_amiga_disk_payload(disk, image, imageSize)) {
         result = firestaff_amiga_adf_visit_ofs_files(
             image, imageSize, asset_read_virtual_visitor, &match);
     } else if (is_atari_stx_path(disk)) {

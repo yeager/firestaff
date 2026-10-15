@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `CSB Amiga CTRaw`: load the original English preservation archive directly and start its native game through CLI or the start menu, without converting disks. Multilingual original disk bytes also pass CLI startup through ZIP transport. Native display/audio parity remains unverified.
+
 - `Return to start menu`: rescan the surrounding game collection after a game launched from an explicit archive, so other installed games reappear, including when the selected archive disappears during gameplay.
 - `--debug performance`: reset measurements across session/menu transitions and report zero gameplay ticks while the launcher is inactive.
 
@@ -23,7 +25,7 @@
 
 ## Developer changes
 
-- Correct standard Amiga MFM checksum and payload-plane decoding; verify native CSB CTRaw track-0 sectors against all four original disks while retaining DM1 original-media startup coverage. Complete CTRaw launch support remains unfinished.
+- Correct standard Amiga MFM checksum and payload-plane decoding; verify native CSB CTRaw track-0 sectors against all four original disks while retaining DM1 original-media startup coverage. Native English CLI/menu and multilingual CLI startup now pass original-media tests; broader platform, utility and visual/audio coverage remains open.
 
 - `DM2 weather ownership`: share the runtime RNG with gameplay, preserve it during creature binding, retain bound indoor weather timers and reject out-of-range zone reads. Run the source cold-weather/timer transaction before dungeon arrangement.
 
