@@ -2190,6 +2190,91 @@ static double m11_counter_milliseconds(Uint64 ticks) {
     return frequency ? (double)ticks * 1000.0 / (double)frequency : 0.0;
 }
 
+/* Host stage timings begin at the completed source command outcome. They do
+ * not include SDL delivery or command FIFO wait, and Present return is not
+ * proof that a physical display has scanned out the image. */
+static struct {
+    unsigned int launchSerial;
+    uint64_t observedSerial;
+    uint64_t drawnSerial;
+    Uint64 sourceCounter;
+    Uint64 drawCounter;
+    int moved;
+    int turned;
+    int blocked;
+    unsigned int superseded;
+} g_m11_debug_motion;
+
+static void m11_debug_motion_drawn(const M11_GameViewState* state,
+                                    Uint64 completed) {
+    if (!state || !state->active || !state->debugMovementTraceEnabled ||
+        strcmp(state->sourceId, "dm1") != 0) return;
+    if (g_m11_debug_motion.launchSerial != g_m11_sync_launch_serial) {
+        memset(&g_m11_debug_motion, 0, sizeof(g_m11_debug_motion));
+        g_m11_debug_motion.launchSerial = g_m11_sync_launch_serial;
+    }
+    if (state->dm1V1MovementOutcomeSerial == g_m11_debug_motion.observedSerial) {
+        /* A retained outcome may be drawn again before the first successful
+         * Present. Time the latest completed Draw of that outcome's frame. */
+        if (g_m11_debug_motion.drawnSerial == state->dm1V1MovementOutcomeSerial)
+            g_m11_debug_motion.drawCounter = completed;
+        return;
+    }
+    g_m11_debug_motion.observedSerial = state->dm1V1MovementOutcomeSerial;
+    if (!state->dm1V1MovementOutcomeCounter ||
+        !state->lastDm1V1MovementPipelineResult.core.queue.dequeued) {
+        /* A newer source result invalidates the old frame association, even
+         * if it did not dequeue a command. Never time that new image as the
+         * previous movement's presentation. */
+        if (g_m11_debug_motion.drawnSerial)
+            fprintf(stderr, "firestaff: dm1-motion-discard outcome-serial=%llu "
+                    "reason=new-source-outcome-without-command\n",
+                    (unsigned long long)g_m11_debug_motion.drawnSerial);
+        g_m11_debug_motion.drawnSerial = 0;
+        g_m11_debug_motion.superseded = 0;
+        return;
+    }
+    if (g_m11_debug_motion.drawnSerial) ++g_m11_debug_motion.superseded;
+    g_m11_debug_motion.drawnSerial = state->dm1V1MovementOutcomeSerial;
+    g_m11_debug_motion.sourceCounter = state->dm1V1MovementOutcomeCounter;
+    g_m11_debug_motion.drawCounter = completed;
+    g_m11_debug_motion.moved = state->lastDm1V1MovementPipelineResult.anyMovementOccurred;
+    g_m11_debug_motion.turned = state->lastDm1V1MovementPipelineResult.anyTurnOccurred;
+    g_m11_debug_motion.blocked = state->lastDm1V1MovementPipelineResult.core.movementBlocked;
+}
+
+static void m11_debug_motion_presented(const M11_GameViewState* state,
+                                        Uint64 completed) {
+    if (!state || !state->debugMovementTraceEnabled ||
+        !g_m11_debug_motion.drawnSerial ||
+        g_m11_debug_motion.launchSerial != g_m11_sync_launch_serial) return;
+    if (!state->active || strcmp(state->sourceId, "dm1") != 0 ||
+        state->dm1V1MovementOutcomeSerial != g_m11_debug_motion.drawnSerial) {
+        fprintf(stderr, "firestaff: dm1-motion-discard outcome-serial=%llu "
+                "reason=new-source-outcome-after-draw\n",
+                (unsigned long long)g_m11_debug_motion.drawnSerial);
+        g_m11_debug_motion.drawnSerial = 0;
+        g_m11_debug_motion.superseded = 0;
+        return;
+    }
+    fprintf(stderr,
+            "firestaff: dm1-motion-present launch=%u outcome-serial=%llu "
+            "moved=%d turned=%d blocked=%d superseded-before-present=%u "
+            "source-outcome-to-draw-ms=%.3f draw-to-present-return-ms=%.3f "
+            "source-outcome-to-present-return-ms=%.3f "
+            "input-queue-latency=unmeasured physical-scanout=unmeasured\n",
+            g_m11_debug_motion.launchSerial,
+            (unsigned long long)g_m11_debug_motion.drawnSerial,
+            g_m11_debug_motion.moved, g_m11_debug_motion.turned,
+            g_m11_debug_motion.blocked, g_m11_debug_motion.superseded,
+            m11_counter_milliseconds(g_m11_debug_motion.drawCounter -
+                                      g_m11_debug_motion.sourceCounter),
+            m11_counter_milliseconds(completed - g_m11_debug_motion.drawCounter),
+            m11_counter_milliseconds(completed - g_m11_debug_motion.sourceCounter));
+    g_m11_debug_motion.drawnSerial = 0;
+    g_m11_debug_motion.superseded = 0;
+}
+
 static void m11_draw_game_frame_for_loop(M11_GameViewState* state,
                                            int debug,
                                            double* drawMs,
@@ -2197,7 +2282,11 @@ static void m11_draw_game_frame_for_loop(M11_GameViewState* state,
     const Uint64 start = debug ? SDL_GetPerformanceCounter() : 0;
     M11_GameView_Draw(state, M11_Render_GetFramebuffer(), M11_FB_WIDTH, M11_FB_HEIGHT);
     ++*drawCount;
-    if (debug) *drawMs += m11_counter_milliseconds(SDL_GetPerformanceCounter() - start);
+    if (debug) {
+        const Uint64 completed = SDL_GetPerformanceCounter();
+        *drawMs += m11_counter_milliseconds(completed - start);
+        m11_debug_motion_drawn(state, completed);
+    }
 }
 
 static void m11_reset_debug_perf_window(Uint64* windowStart,
@@ -11752,6 +11841,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #else
         const Uint32 loopStartMs = (Uint32)SDL_GetTicks();
 #endif
+        gameView.debugMovementTraceEnabled = o->debug;
         double perfLoopDrawMs = 0.0;
         Uint64 perfLoopDrawCount = 0;
         if (o->debug) ++perfLoopCount;
@@ -12236,7 +12326,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     const uint64_t foodFrameSerial = gameView.v1FoodPresentationSerial;
                     const int presented = m11_present_game_frame_and_publish_startup_capture(
                         &gameView, &menuState);
-                    if (o->debug && presented) ++perfPresentedCount;
+                    if (o->debug && presented) {
+                        ++perfPresentedCount;
+                        m11_debug_motion_presented(&gameView, SDL_GetPerformanceCounter());
+                    }
                     if (gameView.v1FoodAwaitingPresentation) {
                         const uint32_t presentedAtMs = (uint32_t)SDL_GetTicks();
                         /* Edges during render/present belong to the wait for

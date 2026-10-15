@@ -7197,3 +7197,10 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 - Scope startup capture evidence to each launch and clear it on menu return.
 - Native Metal measurement retained 62.5 fps while reducing CPU usage from
   about 90.5 to 31.7-32.1 percent of one core; Retina verification remains open.
+
+### DM1 movement diagnostics (2026-10-15)
+
+- `--debug` reports elapsed time from completed source command outcomes to
+  Draw and successful Present return, distinguishing movement, turns and blocks.
+- SDL delivery, command queue wait and physical scanout are explicitly
+  unmeasured; the new stage figures do not claim complete input latency.

@@ -25779,6 +25779,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (!state || !spec || !spec->title) {
         return 0;
     }
+    state->dm1V1MovementOutcomeSerial = 0;
+    state->dm1V1MovementOutcomeCounter = 0;
     /* A fresh launch cannot retain a derived generation from an old loader. */
     free(state->dm1LegacyWallCache);
     state->dm1LegacyWallCache = NULL;
@@ -32262,9 +32264,21 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     return m11_process_dm1_v1_pipeline_tick(state, actionLabel);
 }
 
+/* ReDMCSB COMMAND.C:2045 F0380_COMMAND_ProcessQueue_CPSC outcome identity
+ * is published after all corresponding
+ * source/world effects. Rejected processing publishes its cleared result too.
+ * The optional host timestamp never advances or gates any source clock. */
+static void m11_publish_dm1_v1_movement_outcome(M11_GameViewState* state)
+{
+    ++state->dm1V1MovementOutcomeSerial;
+    state->dm1V1MovementOutcomeCounter = state->debugMovementTraceEnabled
+        ? SDL_GetPerformanceCounter() : 0;
+}
+
 static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                             const char* actionLabel) {
     struct PartyState_Compat beforeParty;
+    int pipelineProcessed;
     if (!state || !state->active) {
         return 0;
     }
@@ -32282,14 +32296,16 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
         &state->dm1V1MovementPipeline);
 
-    if (!DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+    pipelineProcessed = DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
             &state->dm1V1MovementPipeline,
             state->world.dungeon,
             state->world.things,
             &state->world.party,
             NULL,
-            &state->lastDm1V1MovementPipelineResult)) {
+            &state->lastDm1V1MovementPipelineResult);
+    if (!pipelineProcessed) {
         m11_set_status(state, actionLabel, "PIPELINE REJECTED");
+        m11_publish_dm1_v1_movement_outcome(state);
         return 0;
     }
 
@@ -32479,6 +32495,7 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
 
     DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
+    m11_publish_dm1_v1_movement_outcome(state);
     return state->lastDm1V1MovementPipelineResult.viewportDirty ||
            state->lastDm1V1MovementPipelineResult.core.queue.dequeued;
 }

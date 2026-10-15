@@ -10,16 +10,21 @@ turn changes the explicit hash. Native Metal full-redraw measurement at
 with 62.5 rendered/presented fps and 4.14-4.21 ms average compose/present.
 Physical Retina, GPU utilization and input-to-present latency remain open.
 
-Input latency instrumentation must retain one timestamp/identity through SDL
+Movement stage diagnostics now identify completed source outcomes with a
+per-session serial and optional performance-counter timestamp. --debug reports
+source-outcome-to-Draw and successful Present-return timing for dequeued DM1
+commands, with movement/turn/block flags. Fresh outcomes invalidate older draw
+associations; retained-frame redraws do not duplicate the outcome report.
+This timestamp is after the source/world effects, not at initial acceptance.
+
+Full input latency remains open: retain one timestamp/identity through SDL
 receipt, the pending host FIFO and actual source movement acceptance. Pointer
 handling occurs inside m11_poll_menu_input before it returns. Do not equate
 M11_GAME_INPUT_REDRAW with movement: inventory, cursor and resize also redraw.
-Use a new movement outcome serial alongside the freshly published
-lastDm1V1MovementPipelineResult (anyMovementOccurred/anyTurnOccurred), then
-associate Draw completion with successful Present return. RecordPresentedFrame
-runs before Present and cannot prove host completion. Mark held samples and
-script dispatch separately from physical event receipt; report blocked commands
-without attributing a later unrelated draw to them.
+Mark held samples and script dispatch separately from physical event receipt;
+report blocked commands without attributing a later unrelated draw to them.
+RecordPresentedFrame runs before Present and cannot prove host completion.
+Successful Present return still does not establish physical scanout latency.
 
 2026-10-15 HoC performance follow-up: precise host pacing reaches the
 configured 62.5 full-redraw rate at 640x400 with original PC34 and dummy

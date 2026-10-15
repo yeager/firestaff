@@ -1,3 +1,13 @@
+- 2026-10-15: Added opt-in --debug DM1 source-outcome/Draw/Present-return
+  stage diagnostics. Fresh outcome identity prevents stale pipeline results
+  from masquerading as movement; accepted moves, turns and blocked commands
+  remain distinct. No timestamp is captured when diagnostics are disabled.
+  Original PC34/A20/demo/ST material tests pass, including the new outcome
+  serial/timestamp assertions. The original-media CLI regression also passes:
+  repeated full redraws preserve unique movement/turn/block outcome reports,
+  stage durations add up, and ordinary runs emit no motion diagnostics.
+  Physical input/FIFO/scanout latency is unmeasured.
+
 - 2026-10-15: Removed per-frame diagnostic RGBA hashing from ordinary DM1
   presentation and startup tracing. Full capture requests remain fresh;
   lightweight/full receipt regression and original-media RGBA oracles pass.

@@ -862,6 +862,15 @@ typedef struct {
      * the viewport redraw result is returned to main_loop_m11.c. */
     struct Dm1V1MovementPipelinePc34Compat dm1V1MovementPipeline;
     struct Dm1V1MovementPipelineResultPc34Compat lastDm1V1MovementPipelineResult;
+    /* Diagnostic publication identity for COMMAND.C F0380 pipeline outcomes.
+     * Starts at zero on each launch; increments once after every actual
+     * ProcessOneTick result, including rejection. It does not mean a move
+     * was accepted: inspect the freshly published result's movement flags. */
+    uint64_t dm1V1MovementOutcomeSerial;
+    /* SDL performance-counter domain, captured at completed publication
+     * only when enabled by the host. Zero means timing was not captured. */
+    int debugMovementTraceEnabled;
+    uint64_t dm1V1MovementOutcomeCounter;
     struct ChampionMirrorCatalog_Compat mirrorCatalog;
     int mirrorCatalogAvailable;
     /* Source-backed champion mirror candidate panel.  Mirrors the

@@ -4063,6 +4063,17 @@ if(BUILD_TESTING)
             "$<TARGET_FILE:test_dm2_v1_fmtowns_menu_source_rgb>"
     )
     add_test(
+        NAME dm1_motion_present_diagnostics_real_media
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_motion_present_diagnostics_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(dm1_motion_present_diagnostics_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm1;cli;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        TIMEOUT 90
+    )
+    add_test(
         NAME firestaff_cli_startup_diagnostics_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_cli_startup_diagnostics_real_media.sh"
             "$<TARGET_FILE:firestaff>"

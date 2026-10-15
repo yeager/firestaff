@@ -1457,7 +1457,21 @@ static int check_original_pc34_presented_rgba(M11_GameViewState* state,
         printf("PASS: original PC34 HoC complete nearest RGBA %dx%d (%zu bytes), independent floor sampling and source palette\n",
             width,height,(size_t)width*height*4u);
     }
-    if (!replay_native_cast_route(state,"R")) goto done;
+    if (!state->dm1V1MovementOutcomeSerial || state->dm1V1MovementOutcomeCounter) {
+        fprintf(stderr,"PC34 movement diagnostic identity/timing invalid with debug disabled\n");
+        goto done;
+    }
+    {
+        const uint64_t previousSerial = state->dm1V1MovementOutcomeSerial;
+        state->debugMovementTraceEnabled = 1;
+        if (!replay_native_cast_route(state,"R") ||
+            state->dm1V1MovementOutcomeSerial <= previousSerial ||
+            !state->dm1V1MovementOutcomeCounter) {
+            fprintf(stderr,"PC34 movement outcome did not publish fresh debug timing\n");
+            goto done;
+        }
+        state->debugMovementTraceEnabled = 0;
+    }
     M11_GameView_Draw(state,source,320,200);
     if (!memcmp(frame,source,sizeof(source)) ||
         M11_Render_SetWindowSize(640,400) != M11_RENDER_OK ||
