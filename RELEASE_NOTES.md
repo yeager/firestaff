@@ -2,7 +2,9 @@
 
 ## User-facing changes
 
-- `CSB Amiga CTRaw`: load the original English preservation archive directly and start its native game through CLI or the start menu, without converting disks. Multilingual original disk bytes also pass CLI and start-menu startup through ZIP transport; direct original CAPS `.raw` selection passes CLI startup. Native display/audio parity remains unverified.
+- `DM1 Amiga loose files`: resolve startup companions with their actual filename case inside the selected installation; reject ambiguous case variants and explain failures with `--debug`.
+
+- `CSB Amiga CTRaw`: load the original English preservation archive directly and start its native game through CLI or the start menu, without converting disks. Multilingual original disk bytes also pass CLI and start-menu startup through ZIP transport; direct original CAPS `.raw` selection passes CLI and start-menu startup. Native display/audio parity remains unverified.
 
 - `Return to start menu`: rescan the surrounding game collection after a game launched from an explicit archive, so other installed games reappear, including when the selected archive disappears during gameplay.
 - `--debug performance`: reset measurements across session/menu transitions and report zero gameplay ticks while the launcher is inactive.

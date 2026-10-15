@@ -63015,3 +63015,24 @@ if(BUILD_TESTING AND UNIX)
         SKIP_RETURN_CODE 77 TIMEOUT 180
         LABELS "csb;amiga;ctraw;real-media;menu;startup;skip-safe")
 endif()
+
+if(BUILD_TESTING AND UNIX)
+    add_test(NAME csb_v1_amiga35_ctraw_direct_raw_menu_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_ctraw_menu_boot.sh
+            $<TARGET_FILE:firestaff>
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga 3.5 CTRaw.7z"
+            raw)
+    set_tests_properties(csb_v1_amiga35_ctraw_direct_raw_menu_boot PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        LABELS "csb;amiga;ctraw;real-media;menu;startup;skip-safe")
+endif()
+
+if(BUILD_TESTING AND UNIX)
+    add_test(NAME dm1_v1_amiga_loose_case_startup_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga_loose_case_startup.sh
+            $<TARGET_FILE:firestaff>
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dm-amiga-demo-en.zip")
+    set_tests_properties(dm1_v1_amiga_loose_case_startup_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 90
+        LABELS "dm1;amiga;real-media;case-sensitive;menu;startup;skip-safe")
+endif()

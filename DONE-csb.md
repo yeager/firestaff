@@ -1,3 +1,10 @@
+- 2026-10-15: Direct original English CAPS raw capture also passes M12
+  AUTO to loaded runtime and first movement (35.99 seconds). The regression
+  requires raw::Graphics.DAT ownership without a substituted outer archive,
+  the original graphics hash, drained input and unchanged source/raw SHA-256.
+  This closes direct-raw menu coverage on the Mac dummy-driver route; native
+  Windows/Linux, utility gameplay and display/audio parity remain open.
+
 - 2026-10-15: Direct original CAPS .raw selection now follows the bounded
   signature-based Amiga reader instead of the generic raw-CD classification.
   Single/list scans and direct virtual reads preserve raw::Graphics.DAT

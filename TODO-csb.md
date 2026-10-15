@@ -213,9 +213,10 @@ development-only conversion evidence below.
   native in-memory intake. The original archive remains SHA-256 unchanged.
   English AUTO/explicit CLI and production M12 reach loaded runtime and first
   movement using exact archive::raw::file provenance. Multilingual explicit CLI
-  also reaches first movement through a byte-preserving ZIP transport. Native Windows/Linux runtime,
-  multilingual menu launch, utility interaction and visual/audio/hardware parity
-  still require verification. Keep originals and local oracle artifacts ignored.
+  also reaches first movement through a byte-preserving ZIP transport. Both
+  language editions now pass M12; the direct original English raw also passes
+  CLI and M12. Native Windows/Linux runtime, utility interaction and
+  visual/audio/hardware parity still require verification. Keep originals and local oracle artifacts ignored.
 
   SPS/CAPS is permitted for this non-commercial development environment under
   its stated terms, but not for commercial use or redistribution. Keep this
@@ -227,8 +228,8 @@ development-only conversion evidence below.
   [SPS source notice](https://github.com/simonowen/capsimage#readme),
   [CAPS decoder source license](https://github.com/rsn8887/capsimg/blob/master/LICENCE.txt),
   and [IPF v1.6 documentation](https://www.kryoflux.com/download/ipf_documentation_v1.6.pdf).
-  The native intake has no oracle dependency. Native display/audio, direct-raw
-  M12 coverage and full original-disk parity remain open. Use hashes in
+  The native intake has no oracle dependency. Native display/audio, utility
+  gameplay and full original-disk parity remain open. Use hashes in
   `data/asset_validator_checksums_m12.json` and
   `parity-evidence/csb_v1_l10n_source_catalog.md` for future oracle checks.
 

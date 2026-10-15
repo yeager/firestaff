@@ -3,14 +3,14 @@ set -euo pipefail
 . "$(dirname "$0")/lib/portable_sha256.sh"
 
 if [[ $# -lt 2 || $# -gt 3 ]]; then
-    printf 'usage: %s <firestaff-binary> <original-CSB-CTRaw.7z> [en|multi]\n' "$0" >&2
+    printf 'usage: %s <firestaff-binary> <original-CSB-CTRaw.7z> [en|multi|raw]\n' "$0" >&2
     exit 2
 fi
 app=$1
 source_archive=$2
 mode=${3:-en}
-if [[ "$mode" != en && "$mode" != multi ]]; then
-    echo 'FAIL: expected mode en or multi' >&2
+if [[ "$mode" != en && "$mode" != multi && "$mode" != raw ]]; then
+    echo 'FAIL: expected mode en, multi, or raw' >&2
     exit 2
 fi
 if [[ ! -x "$app" || ! -f "$source_archive" ]] ||
@@ -68,7 +68,33 @@ with zipfile.ZipFile(sys.argv[2]) as output:
     if output.namelist() != [sys.argv[3]] or output.read(sys.argv[3]) != raw:
         raise SystemExit("FAIL: staging changed original multilingual CTRaw bytes")
 PYMEDIA
+elif [[ "$mode" = raw ]]; then
+    if ! command -v 7zz >/dev/null 2>&1; then
+        echo 'SKIP: development-only direct CTRaw staging requires 7zz'
+        exit 77
+    fi
+    selected_archive="$scratch/CSB-English.raw"
+    python3 - "$source_archive" "$selected_archive" "$member" <<'PYMEDIA'
+import hashlib
+import pathlib
+import subprocess
+import sys
+import zlib
+
+raw = subprocess.run(["7zz", "x", "-so", "-bd", sys.argv[1], sys.argv[3]],
+                     stdout=subprocess.PIPE, check=True).stdout
+if (len(raw) != 3158314 or raw[:4] != b"CAPS" or
+        zlib.crc32(raw) != 0x170047F1 or hashlib.sha256(raw).hexdigest() !=
+        "08645a7efaef450af23e886a46e44b7992bb25e02f5b8460262839e8aaa206c3"):
+    raise SystemExit("FAIL: original English CTRaw member identity changed")
+output = pathlib.Path(sys.argv[2])
+output.write_bytes(raw)
+if output.read_bytes() != raw:
+    raise SystemExit("FAIL: direct staging changed original English CTRaw bytes")
+PYMEDIA
 fi
+selected_graphics="$selected_archive::$member::Graphics.DAT"
+if [[ "$mode" = raw ]]; then selected_graphics="$selected_archive::Graphics.DAT"; fi
 selected_hash_before=$(firestaff_sha256_file "$selected_archive")
 mkdir -p "$scratch/home"
 # M12 AUTO must retain the selected native capture, consume fresh language
@@ -85,13 +111,13 @@ if ! FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     exit 1
 fi
 for required in \
-    "mode=menu game=csb platform=Amiga edition=$expected_edition source=$selected_archive::$member::Graphics.DAT"; do
+    "mode=menu game=csb platform=Amiga edition=$expected_edition source=$selected_graphics"; do
     if ! grep -Fq "$required" "$log"; then
         printf 'FAIL: CSB CTRaw M12 launch lacks %s\n' "$required" >&2
         exit 1
     fi
 done
-if [[ "$mode" = en ]] && ! grep -Fq 'phase=csb-entrance-0' "$log"; then
+if [[ "$mode" != multi ]] && ! grep -Fq 'phase=csb-entrance-0' "$log"; then
     echo 'FAIL: English CTRaw M12 did not reach its native entrance' >&2
     exit 1
 fi

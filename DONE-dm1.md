@@ -1,3 +1,13 @@
+- 2026-10-15: Resolve loose Amiga startup companions by their actual
+  filename case within the admitted graphics parent. The authenticated demo
+  with Swoosh failed to launch on a case-sensitive HFSX volume before the fix;
+  it now completes source SWSH/title/entrance through M12. Adding the identical
+  original as both Swoosh and swoosh rejects the ambiguous owner and --debug
+  reports wanted/parent/reason=ambiguous. The two-case original-media regression
+  passes. Archive paths retain their existing readers; other retail loose-file
+  tuples and native Linux/Windows runtime remain unverified. The temporary
+  test volume was detached and removed after retaining diagnostic logs.
+
 - 2026-10-15: Shared explicit-file scanner regression: unscoped M12 with
   the original nested Amiga 2.0 ZIP keeps its selected outer archive even
   beside other DM1 editions. The source SWSH, all 18 F0437 title frames and
