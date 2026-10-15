@@ -147,6 +147,159 @@ cleanup:
     if(dir[0]) rmdir(dir);
     return result==0;
 }
+static int check_atari_virtual_dungeon_compatibility(const char* root, const char* original,
+    const char* pcOriginal, const unsigned char* pcDungeon, size_t pcDungeonSize) {
+    static const char* const hashes[]={"9ce2eaf7a9e78620e3f17594437caffa",
+        "050fb2cfded1b502ec2c53956b94c5bd"};
+    static const size_t expectedSizes[]={271918U,33442U};
+    static const char* const names[]={"GRAPHICS.DAT","DUNGEON.DAT"};
+    unsigned char* bytes[2]={NULL,NULL};
+    size_t sizes[2]={0,0};
+    char dir[FSP_PATH_MAX]={0}, archive[FSP_PATH_MAX]={0}, pcAlias[FSP_PATH_MAX]={0};
+    char nativeAlias[FSP_PATH_MAX]={0};
+    const char* amigaOriginal=getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    char member[ASSET_PATH_MAX], graphics[ASSET_PATH_MAX], dungeon[ASSET_PATH_MAX];
+    char pcGraphics[ASSET_PATH_MAX], pcDungeonPath[ASSET_PATH_MAX], physical[FSP_PATH_MAX];
+    M12_AssetStatus* status=NULL;
+    M11_GameViewState* game=NULL;
+    M11_GameLaunchSpec spec;
+    M11_BootProbeReceipt receipt;
+    int result=1, initialized=0;
+    if (!original || !FSP_FileExists(original)) {
+        puts("SKIP: authentic Atari archive unavailable for virtual dungeon compatibility case");
+        return 1;
+    }
+    REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"atari-virtual") && FSP_CreateDirectory(dir) &&
+        /* Exercise the preservation-name parent-scan branch as well as
+         * hash-based native identity; the filename must not select a sibling. */
+        FSP_JoinPath(archive,sizeof(archive),dir,"selected-Dungeon-Master_Amiga_EN_Version-20.zip") &&
+        snprintf(graphics,sizeof(graphics),"%s::GRAPHICS.DAT",archive)<(int)sizeof(graphics) &&
+        snprintf(dungeon,sizeof(dungeon),"%s::DUNGEON.DAT",archive)<(int)sizeof(dungeon),
+        "construct isolated native ZIP owner");
+    for (int i=0; i<2; ++i) {
+        REQUIRE(asset_find_by_md5(original,hashes[i],member,sizeof(member),0) &&
+            asset_read_path_alloc(member,&bytes[i],&sizes[i]) && sizes[i]==expectedSizes[i] &&
+            asset_memory_matches_md5(bytes[i],sizes[i],hashes[i]),
+            "read unchanged authentic Atari ZIP payload");
+    }
+    REQUIRE(asset_memory_matches_md5(pcDungeon,pcDungeonSize,"766450c940651fc021c92fe5d0d0b3a6"),
+        "authenticate incompatible original PC ZIP payload");
+    status=SDL_calloc(1,sizeof(*status)); game=SDL_calloc(1,sizeof(*game));
+    REQUIRE(status && game,"allocate native ZIP scan and runtime");
+    M11_GameView_Init(game); initialized=1;
+    memset(&spec,0,sizeof(spec));
+    spec.title="DUNGEON MASTER"; spec.gameId=spec.sourceId="dm1";
+    spec.dataDir=archive; spec.verifiedAssetPath=graphics; spec.verifiedAssetMd5=hashes[0];
+    spec.sourceKind=M11_GAME_SOURCE_BUILTIN_CATALOG;
+    spec.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+    spec.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+    for (int phase=0; phase<3; ++phase) {
+        unsigned char* payloads[2]={bytes[0],phase==1 ? (unsigned char*)pcDungeon : bytes[1]};
+        size_t payloadSizes[2]={sizes[0],phase==1 ? pcDungeonSize : sizes[1]};
+        REQUIRE(write_original_pair(archive,names,payloads,payloadSizes),
+            "frame unchanged original bytes in selected native ZIP");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        if (phase==1) REQUIRE(!M11_GameView_Start(game,&spec) && !game->active,
+            "virtual native runtime rejects stale original graphics with PC dungeon bytes");
+        else REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
+            M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+            "original native ZIP pair starts before replacement and after restoration");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        for (int mode=0; mode<2; ++mode) {
+            const M12_AssetVersionStatus* owner;
+            int graphicsReported=0, dungeonReported=0;
+            if (mode) M12_AssetStatus_Scan(status,archive);
+            else M12_AssetStatus_ScanGame(status,archive,"dm1");
+            if (phase==1) {
+                REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+                    "both scan APIs reject selected native ZIP with incompatible PC original dungeon");
+                continue;
+            }
+            owner=M12_AssetStatus_GetFirstMatchedVersion(status,"dm1");
+            REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1") && owner &&
+                strcmp(owner->versionId,"st12-en")==0 && strcmp(owner->matchedPath,graphics)==0,
+                "both scan APIs retain original native ZIP graphics owner");
+            for (size_t i=0; i<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++i) {
+                const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",i);
+                const char* reported=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                if (strcmp(required->roleId,"graphics")==0)
+                    graphicsReported=required->matched && strcmp(reported,graphics)==0 &&
+                        strcmp(required->matchedHash,hashes[0])==0;
+                if (strcmp(required->roleId,"dungeon")==0)
+                    dungeonReported=required->matched && strcmp(reported,dungeon)==0 &&
+                        strcmp(required->matchedHash,hashes[1])==0;
+            }
+            REQUIRE(graphicsReported && dungeonReported,"original native ZIP reports its exact own members");
+        }
+        if (phase==1) {
+            REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),dir,"pc-original.zip") &&
+                FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) && symlink(physical,pcAlias)==0,
+                "link authentic PC ZIP beside incompatible native ZIP");
+            for (int role=0; role<2; ++role) {
+                const char* separator;
+                const char* hash=role==0 ? "fa6b1aa29e191418713bf2cda93d962e" :
+                    "766450c940651fc021c92fe5d0d0b3a6";
+                char* expected=role==0 ? pcGraphics : pcDungeonPath;
+                REQUIRE(asset_find_by_md5(pcOriginal,hash,member,sizeof(member),0) &&
+                    (separator=strstr(member,"::"))!=NULL &&
+                    snprintf(expected,ASSET_PATH_MAX,"%s%s",pcAlias,separator)<ASSET_PATH_MAX,
+                    "locate exact original PC ZIP companion paths");
+            }
+            for (int mode=0; mode<2; ++mode) {
+                const M12_AssetVersionStatus* owner;
+                const M12_AssetVersionStatus* native;
+                int nativeIndex=M12_AssetStatus_FindVersionIndex("dm1","st12-en");
+                int graphicsReported=0, dungeonReported=0;
+                if (mode) M12_AssetStatus_Scan(status,dir);
+                else M12_AssetStatus_ScanGame(status,dir,"dm1");
+                owner=M12_AssetStatus_GetFirstMatchedVersion(status,"dm1");
+                native=nativeIndex>=0 ? M12_AssetStatus_GetVersion(status,"dm1",(size_t)nativeIndex) : NULL;
+                REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1") && owner &&
+                    strcmp(owner->versionId,"pc34-en")==0 && strcmp(owner->matchedPath,pcGraphics)==0 &&
+                    native && !native->matched,"mixed directory preserves PC and rejects incompatible native edition");
+                for (size_t i=0; i<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++i) {
+                    const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",i);
+                    const char* reported=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                    if (strcmp(required->roleId,"graphics")==0)
+                        graphicsReported=required->matched && strcmp(reported,pcGraphics)==0 &&
+                            strcmp(required->matchedHash,"fa6b1aa29e191418713bf2cda93d962e")==0;
+                    if (strcmp(required->roleId,"dungeon")==0)
+                        dungeonReported=required->matched && strcmp(reported,pcDungeonPath)==0 &&
+                            strcmp(required->matchedHash,"766450c940651fc021c92fe5d0d0b3a6")==0;
+                }
+                REQUIRE(graphicsReported && dungeonReported,"mixed directory reports surviving PC ZIP's exact original members");
+                if (mode) M12_AssetStatus_Scan(status,archive);
+                else M12_AssetStatus_ScanGame(status,archive,"dm1");
+                REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+                    "explicit incompatible native ZIP cannot substitute complete neighboring PC ZIP");
+            }
+            if (amigaOriginal && FSP_FileExists(amigaOriginal)) {
+                REQUIRE(FSP_JoinPath(nativeAlias,sizeof(nativeAlias),dir,"Dungeon-Master_Amiga_EN_Version-20.zip") &&
+                    FSP_ResolvePhysicalPath(physical,sizeof(physical),amigaOriginal) && symlink(physical,nativeAlias)==0,
+                    "link canonical authentic Amiga preservation archive beside explicit incompatible Atari ZIP");
+                for (int mode=0; mode<2; ++mode) {
+                    if (mode) M12_AssetStatus_Scan(status,archive);
+                    else M12_AssetStatus_ScanGame(status,archive,"dm1");
+                    REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+                        "explicit incompatible Atari ZIP cannot substitute canonical neighboring Amiga preservation archive");
+                }
+                REQUIRE(unlink(nativeAlias)==0,"remove only task-owned Amiga preservation link");
+                nativeAlias[0]='\0';
+            } else puts("SKIP: authentic Amiga archive unavailable for explicit native ZIP neighbor case");
+            REQUIRE(unlink(pcAlias)==0,"remove only task-owned PC ZIP link");
+            pcAlias[0]='\0';
+        }
+    }
+    result=0;
+cleanup:
+    if (initialized) M11_GameView_Shutdown(game);
+    SDL_free(game); SDL_free(status); free(bytes[0]); free(bytes[1]);
+    if (nativeAlias[0]) unlink(nativeAlias);
+    if (pcAlias[0]) unlink(pcAlias);
+    if (archive[0]) unlink(archive);
+    if (dir[0]) rmdir(dir);
+    return result==0;
+}
 static int check_multilingual_loose_selection(const char* root, const char* original, const char* multi,
     const unsigned char* graphicsBytes, size_t graphicsSize,
     const unsigned char* dungeonBytes, size_t dungeonSize) {
@@ -297,6 +450,7 @@ int main(void) {
 #else
     const char* original=getenv("FIRESTAFF_DM1_PC_ARCHIVE");
     const char* multi=getenv("FIRESTAFF_DM1_PC_MULTI_ARCHIVE");
+    const char* atari=getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
     const char* scratchParent=getenv("TMPDIR");
     char root[FSP_PATH_MAX]={0}, alias[FSP_PATH_MAX]={0}, replacement[FSP_PATH_MAX]={0};
     char configPath[FSP_PATH_MAX]={0}, virtualDungeon[ASSET_PATH_MAX], multiGraphics[ASSET_PATH_MAX];
@@ -477,6 +631,8 @@ int main(void) {
         "loose selected original media rejects stale ownership");
     REQUIRE(check_multilingual_loose_selection(root,original,multi,bytes[0],sizes[0],bytes[1],sizes[1]),
         "multilingual loose selection retains its exact original owner");
+    REQUIRE(check_atari_virtual_dungeon_compatibility(root,atari,original,bytes[1],sizes[1]),
+        "selected native ZIP retains compatible original dungeon ownership");
     result=0; puts("PASS: original ZIP and loose media reject stale selected graphics and sibling fallback");
 cleanup:
     if(gameInitialized) M11_GameView_Shutdown(game);

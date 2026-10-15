@@ -63155,7 +63155,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_stale_zip_selected_media_r
         COMMAND test_dm1_stale_zip_selected_media_real)
     set_tests_properties(dm1_stale_zip_selected_media_real PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 60
-        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/dm1-stale-zip-scratch;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_PC_MULTI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_FR_EUDATA.zip"
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/dm1-stale-zip-scratch;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_PC_MULTI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_FR_EUDATA.zip;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip;FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
         LABELS "dm1;pc34;real-media;menu;startup;skip-safe")
 endif()
 

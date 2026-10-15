@@ -2,6 +2,11 @@
 
 ## User-facing changes
 
+- `DM1 archive selection`: validate each native archive's own dungeon before
+  offering that edition. Keep a valid PC sibling available when a native ZIP is
+  incompatible. Explicit archive selections and their file reports stay bound
+  to that container through native recovery.
+
 - `DM1 native startup`: reject known PC and FM Towns original dungeons paired
   with Atari or Amiga graphics, during loose-data scanning and runtime loading.
   Replacing stale files cannot bypass the runtime check; restoring the native

@@ -3396,3 +3396,39 @@ Access-denied CTest passed (14.11 s); deterministic cancellation and catalog
 consistency passed. The cancellation executable's two full five-game corpus
 cases remained intentionally skipped. Runtime diagnostics explicitly confirmed
 all six ST12/A20 foreign-original rejections in the focused test log.
+
+- 2026-10-16: Reproduced a selected ST12 ZIP advertising availability after its
+  original dungeon was replaced with unchanged PC34 bytes, even though M11
+  rejected the consumed buffer. Also reproduced the invalid native edition
+  remaining matched beside a valid PC ZIP. Reused one exact default-dungeon
+  validator for final native/PC reports and each virtual edition's admission;
+  native package readers apply the same original compatibility rule. Own,
+  foreign and restored ST12 ZIP phases now pass both scans and runtime; mixed
+  collections retain the valid PC edition and its exact graphics/world members.
+  Only ZIP framing is generated; all stored game bytes are unchanged originals.
+
+- 2026-10-16: Reproduced late native recovery substituting a neighboring Amiga
+  preservation set for an explicitly selected incompatible ZIP through the
+  preservation-name parent-scan branch. Scope DM1 archive rows before role
+  discovery and limit late native candidate enumeration to the selected physical
+  archive. Directories and nonexistent/offline selections retain their existing
+  root policy. The regression deliberately varies the container name while
+  retaining authentic ST12 bytes: hashes still determine edition. Explicit bad
+  selections reject beside complete PC/Amiga archives; restoring ST12 recovers.
+  Focused original-media tests passed (2/2, 7.94 s), without skips. Independent
+  source review found no remaining blocker after the late-reader boundary fix.
+
+- 2026-10-16: The final native archive binary also loaded original Amiga demo,
+  A20 and A36 worlds through CLI while reporting each selected archive's own
+  dungeon. A20 also passed a relative archive path. The demo repack's original
+  graphics, DemoDun.dat and SWSH were independently authenticated before use;
+  installed A20/A36 preservation archives were read directly. SHA-256 before and
+  after every probe confirms unchanged source archives. These are headless
+  startup/ownership checks, not original-display or physical HiDPI proof.
+
+Final virtual-owner binary passed the complete original-media CLI startup
+diagnostics suite (214.90 s), including both offline remembered-root cases.
+Access-denied CTest passed (14.50 s); deterministic cancellation and catalog
+consistency passed. The cancellation executable's two full five-game corpus
+cases remained intentionally skipped. Redacted patch Gitleaks found no leaks.
+Preceding GitHub Actions run 38818707400 completed successfully before publication.

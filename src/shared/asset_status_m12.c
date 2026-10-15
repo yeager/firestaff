@@ -1120,7 +1120,7 @@ static int m12_admit_dm1_fmtowns_archive(
  * Member names only locate the original medium; GRAPHICS.DAT and DUNGEON.DAT
  * hashes remain the admission criteria. */
 static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5);
-static int m12_dm1_loose_dungeon_compatible(const char* graphicsMd5,
+static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
                                             const char* dungeonMd5);
 static int m12_dm1_amiga36_package_ready(const char* graphics);
 static int m12_dm1_complete_loose_owner(const char* graphics,
@@ -1131,6 +1131,11 @@ static int m12_dm1_towns_graphics_language(const char* md5) {
     if (md5 && strcmp(md5, "c10c512f63461ebe79b5ac365115b61b") == 0) return 0;
     if (md5 && strcmp(md5, "edf47d7da5de8184604d6d80477ef01f") == 0) return 1;
     return -1;
+}
+
+static int m12_dm1_requested_archive_owner(const char* selected) {
+    return selected && FSP_FileExists(selected) && !FSP_DirExists(selected) &&
+        m12_explicit_path_is_archive(selected);
 }
 
 /* Explicit original loose graphics remain the terminal owner even when a
@@ -1180,6 +1185,9 @@ static int m12_admit_dm1_amiga_archive_packages(
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
     if (m12_dm1_requested_loose_owner(preferredArchive)) return 0;
+    /* Native recovery must not re-admit a neighboring preservation set
+     * after the explicit archive's edition rows have been scoped. */
+    if (m12_dm1_requested_archive_owner(preferredArchive)) rootCount = 0U;
     for (rootIndex = 0U; rootIndex < rootCount ||
                               (rootIndex == 0U && preferredArchive &&
                                preferredArchive[0] != '\0');
@@ -1279,7 +1287,8 @@ static int m12_admit_dm1_amiga_archive_packages(
             }
             m12_bytes_md5_hex(dungeon, dungeonSize, dungeonMd5);
             free(dungeon);
-            if (strstr(g_requiredFiles[1].md5, dungeonMd5) == NULL)
+            if (strstr(g_requiredFiles[1].md5, dungeonMd5) == NULL ||
+                !m12_dm1_dungeon_compatible(md5, dungeonMd5))
                 continue;
             for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
                  ++versionIndex) {
@@ -1376,6 +1385,9 @@ static int m12_admit_dm1_atari_st_nested_archive(
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
     if (m12_dm1_requested_loose_owner(preferredArchive)) return 0;
+    /* Native recovery must not re-admit a neighboring preservation set
+     * after the explicit archive's edition rows have been scoped. */
+    if (m12_dm1_requested_archive_owner(preferredArchive)) rootCount = 0U;
     for (rootIndex = 0U; rootIndex < rootCount ||
                               (rootIndex == 0U && preferredArchive &&
                                preferredArchive[0] != '\0');
@@ -1469,7 +1481,8 @@ static int m12_admit_dm1_atari_st_nested_archive(
             }
             m12_bytes_md5_hex(dungeon, dungeonSize, dungeonMd5);
             free(dungeon);
-            if (strstr(g_requiredFiles[1].md5, dungeonMd5) == NULL)
+            if (strstr(g_requiredFiles[1].md5, dungeonMd5) == NULL ||
+                !m12_dm1_dungeon_compatible(md5, dungeonMd5))
                 continue;
             for (versionIndex = 0U;
                  versionIndex < g_games[gameIndex].versionCount;
@@ -1531,6 +1544,25 @@ static int m12_admit_dm1_atari_st_nested_archive(
     return admitted;
 }
 
+/* LOADSAVE.C F0435:2336-2375 keeps a default world in its selected
+ * installation. The archive reader preserves the final member directory. */
+static int m12_dm1_default_dungeon_owner(const char* graphics, const char* graphicsMd5,
+                                         char dungeon[ASSET_PATH_MAX], char dungeonMd5[33]) {
+    const char* allowed = m12_dm1_loose_dungeon_md5(graphicsMd5);
+    const char* match;
+    if (!allowed || !graphics) return 0;
+    if (strstr(graphics, "::")) {
+        const char* name = strcmp(graphicsMd5,
+            "491ca939f9abb33ceeb26619b841fe91") == 0 ? "DemoDun.dat" : "DUNGEON.DAT";
+        if (!csb_v1_amiga_selected_companion(graphics, name, dungeon, ASSET_PATH_MAX)) return 0;
+    } else if (!m12_dm1_complete_loose_owner(graphics, graphicsMd5, dungeon)) return 0;
+    if (!asset_file_md5_hex(dungeon, dungeonMd5) ||
+        !m12_dm1_dungeon_compatible(graphicsMd5, dungeonMd5)) return 0;
+    match = strstr(allowed, dungeonMd5);
+    return match && (match == allowed || match[-1] == ';') &&
+        (match[32] == '\0' || match[32] == ';');
+}
+
 /* Required-file reports follow the surviving first owner after native
  * admission. Never let a broad dungeon-hash search describe another edition
  * beside Towns graphics (LOADSAVE.C F0435:2363-2367 selects DATA/JDATA). */
@@ -1540,8 +1572,8 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
     const char* separator;
     const char* dungeonHash;
     char dungeon[M12_ASSET_DATA_DIR_CAPACITY];
-    char looseDungeonMd5[33];
-    int looseNativeOwner;
+    char nativeDungeonMd5[33];
+    const char* nativeDungeonHashes;
     size_t i;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return;
@@ -1555,9 +1587,8 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
         m12_copy_string(required->sourcePath, sizeof(required->sourcePath), version->matchedPath);
         m12_copy_string(required->matchedHash, sizeof(required->matchedHash), version->matchedMd5);
     }
-    looseNativeOwner = !strstr(version->matchedPath, "::") &&
-        m12_dm1_loose_dungeon_md5(version->matchedMd5) != NULL;
-    if (!looseNativeOwner && strcmp(version->versionId, "pc34-en") != 0 &&
+    nativeDungeonHashes = m12_dm1_loose_dungeon_md5(version->matchedMd5);
+    if (!nativeDungeonHashes && strcmp(version->versionId, "pc34-en") != 0 &&
         strcmp(version->versionId, "pc34-multi") != 0 &&
         strcmp(version->versionId, "fmtowns-en") != 0 &&
         strcmp(version->versionId, "fmtowns-ja") != 0) return;
@@ -1578,37 +1609,10 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
         }
     }
     separator = strstr(version->matchedPath, "::");
-    if (looseNativeOwner) {
-        const char* allowed = m12_dm1_loose_dungeon_md5(version->matchedMd5);
-        const char* match;
-        /* LOADSAVE.C F0435:2336-2343 opens each Atari/Amiga installation's
-         * own world. Final native rejection can change the surviving owner
-         * after the initial required-file report was filled. */
-        if (!m12_dm1_complete_loose_owner(version->matchedPath,
-                version->matchedMd5, dungeon) ||
-            !asset_file_md5_hex(dungeon, looseDungeonMd5)) return;
-        if (!m12_dm1_loose_dungeon_compatible(version->matchedMd5, looseDungeonMd5)) return;
-        match = strstr(allowed, looseDungeonMd5);
-        if (!match || (match != allowed && match[-1] != ';') ||
-            (match[32] != '\0' && match[32] != ';')) return;
-        dungeonHash = looseDungeonMd5;
-    } else if (strcmp(version->versionId, "pc34-en") == 0 ||
-        strcmp(version->versionId, "pc34-multi") == 0) {
-        dungeonHash = "766450c940651fc021c92fe5d0d0b3a6";
-        if (separator) {
-            const char* member = separator + 2;
-            const char* next;
-            const char* slash;
-            size_t prefix;
-            while ((next = strstr(member, "::")) != NULL) member = next + 2;
-            slash = strrchr(member, '/');
-            prefix = (size_t)((slash ? slash + 1 : member) - version->matchedPath);
-            if (prefix + sizeof("DUNGEON.DAT") > sizeof(dungeon)) return;
-            memcpy(dungeon, version->matchedPath, prefix);
-            memcpy(dungeon + prefix, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
-            if (!asset_file_matches_md5(dungeon, dungeonHash)) return;
-        } else if (!m12_dm1_complete_loose_owner(version->matchedPath,
-                                                  version->matchedMd5, dungeon)) return;
+    if (nativeDungeonHashes) {
+        if (!m12_dm1_default_dungeon_owner(version->matchedPath,
+                version->matchedMd5, dungeon, nativeDungeonMd5)) return;
+        dungeonHash = nativeDungeonMd5;
     } else {
         dungeonHash = strcmp(version->versionId, "fmtowns-en") == 0
             ? "3dc0a932d0e0adfe59878f07c51700c5"
@@ -4413,7 +4417,7 @@ static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5) {
     return NULL;
 }
 
-static int m12_dm1_loose_dungeon_compatible(const char* graphicsMd5,
+static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
                                             const char* dungeonMd5) {
     size_t i;
     if (!graphicsMd5 || !dungeonMd5) return 0;
@@ -4456,7 +4460,7 @@ static int m12_dm1_complete_loose_owner(const char* graphics,
         } else if (found != 1) return 0;
     }
     if (!asset_file_md5_hex(dungeon, actualMd5)) return 0;
-    if (!m12_dm1_loose_dungeon_compatible(graphicsMd5, actualMd5)) return 0;
+    if (!m12_dm1_dungeon_compatible(graphicsMd5, actualMd5)) return 0;
     match = strstr(allowed, actualMd5);
     if (!match || (match != allowed && match[-1] != ';') ||
         (match[32] != '\0' && match[32] != ';')) return 0;
@@ -6136,6 +6140,22 @@ static void m12_select_dm2_loose_file(M12_AssetStatus* status, int gameIndex,
     }
 }
 
+/* A selected container owns the DM1 result even beside other ready copies. */
+static void m12_select_dm1_archive_owner(M12_AssetStatus* status, int gameIndex,
+                                         const char* selected) {
+    size_t i, size;
+    if (strcmp(g_games[gameIndex].gameId, "dm1") != 0 ||
+        !m12_dm1_requested_archive_owner(selected)) return;
+    size = strlen(selected);
+    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        if (version->matched && strncmp(version->matchedPath, selected, size) == 0 &&
+            strncmp(version->matchedPath + size, "::", 2U) == 0) continue;
+        version->matched = 0;
+        version->matchedPath[0] = version->matchedMd5[0] = '\0';
+    }
+}
+
 static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
                                       const char* selected) {
     char md5[33], dungeon[ASSET_PATH_MAX];
@@ -6507,6 +6527,19 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
         char rejectedRoot[M12_ASSET_DATA_DIR_CAPACITY] = {0};
         for (size_t index = 0U; index < g_games[gameIndex].versionCount; ++index) {
             M12_AssetVersionStatus* version = &status->versions[gameIndex][index];
+            if (version->matched && strstr(version->matchedPath, "::") &&
+                m12_dm1_loose_dungeon_md5(version->matchedMd5)) {
+                char dungeon[ASSET_PATH_MAX], md5[33];
+                if (!m12_dm1_default_dungeon_owner(version->matchedPath,
+                        version->matchedMd5, dungeon, md5)) {
+                    fprintf(stderr, "firestaff: DM1 %s virtual dungeon owner rejected: %s\n",
+                            version->versionId, version->matchedPath);
+                    version->matched = 0;
+                    version->matchedPath[0] = version->matchedMd5[0] = '\0';
+                    rejected = missingDungeon = 1;
+                    continue;
+                }
+            }
             if (version->matched && !strstr(version->matchedPath, "::") &&
                 (strcmp(version->versionId, "fmtowns-en") == 0 ||
                  strcmp(version->versionId, "fmtowns-ja") == 0)) {
@@ -7965,6 +7998,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
             selected && selected->versionId &&
             (strcmp(selected->versionId, "fmtowns-en") == 0 ||
              strcmp(selected->versionId, "fmtowns-ja") == 0);
+        m12_select_dm1_archive_owner(status, i, requestedDataDir);
         m12_select_dm1_loose_file(status, i, requestedDataDir);
         m12_select_dm2_loose_file(status, i, requestedDataDir);
         m12_select_csb_english_loose_file(status, i, requestedDataDir);
@@ -8427,6 +8461,7 @@ void M12_AssetStatus_ScanGameWithOptions(
             }
         }
     }
+    m12_select_dm1_archive_owner(status, gameIndex, requestedDataDir);
     m12_select_dm1_loose_file(status, gameIndex, requestedDataDir);
     m12_select_dm2_loose_file(status, gameIndex, requestedDataDir);
     m12_select_csb_english_loose_file(status, gameIndex, requestedDataDir);
