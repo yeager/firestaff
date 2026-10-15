@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-15 fresh original-media startup diagnostics retest on the Mac mini M4:
+`test_firestaff_cli_startup_diagnostics_real_media.sh` passed for DM1, CSB and
+DM2. It verified bare `--game` discovery from each per-game data directory,
+DM2's complete 225-frame FM Towns title trace and source completion time,
+mixed-edition selection, DM1's FM Towns and PC intro traces, CSB AUTO priority,
+and uppercase game selection with authentic availability reporting. The test
+uses SDL dummy video/audio and local original media; it does not establish
+native display/input/audio parity or replace the pending GitHub Actions result
+for commit `3fd0f5886`.
+
 - Verify the data-free SDL3 close-event test in Actions on Windows, macOS and
   Linux, and run the end-to-end originals-rescan test with authentic media on
   the other supported hosts. On macOS, the latter passes against authentic
