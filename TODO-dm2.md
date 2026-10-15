@@ -1038,3 +1038,10 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   identifies a valid route.
 - Bind renderer/HUD V2.2 material, clipping and outdoor routes to original
   GDAT/capture evidence; synthetic V2.2 art is allowed only as a fixture.
+
+2026-10-15 source-only menu ownership audit: selected loose DM2 graphics are
+reduced to their parent in `M11_GameView_OpenSelectedMenuEntry`; DM2 boot scans
+that root with PC English priority without enforcing the selected graphics hash.
+Reproduce with authentic renamed EN/French graphics and shared dungeon, then
+preserve the explicit selected file and validate boot profile ownership. No
+runtime reproduction yet; complete DM1 work remains the priority.

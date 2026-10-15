@@ -3529,10 +3529,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
     memset(&hoc_boot_full_graphics, 0, sizeof(hoc_boot_full_graphics));
     snprintf(corpus_dir_template,
              sizeof(corpus_dir_template),
-             "/tmp/firestaff-dm1-save-corpus-%ld-XXXXXX",
+             ".codex-scratch/firestaff-dm1-save-corpus-%ld-XXXXXX",
              (long)getpid());
     snprintf(corpus_dir, sizeof(corpus_dir), "%s", corpus_dir_template);
-    if (mkdtemp(corpus_dir)) {
+    if (FSP_CreateDirectoryRecursive(".codex-scratch") && mkdtemp(corpus_dir)) {
         FILE *fp;
         DM1OriginalSavePC34FixtureSpec fixture;
         memset(&fixture, 0, sizeof(fixture));

@@ -1661,3 +1661,8 @@ the authentic PC34 variant also preserves playable availability. The interposed
 thread-creation test runs on macOS/Linux and explicitly skips on Windows; add
 equivalent native Windows execution evidence without relying on sleep timing.
 The two full five-game corpus cases were not part of this scoped run.
+
+2026-10-15 CI follow-up: Windows run 38804393070 failed
+`dm1_v1_startup_intro_state_machine_gate` while creating a hardcoded `/tmp`
+fixture directory. The task-local scratch replacement passes local CTest;
+confirm its native Windows result in the next Actions run.
