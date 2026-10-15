@@ -1,3 +1,12 @@
+- 2026-10-15: Inspected ScummVM's current DM engine at pinned revision
+  5eefba1a2cd412016e83a89eaae31376a95c9367 as a secondary reference.
+  Detection, graphics-format endian/version branches, separate material
+  banks, dungeon decompression and per-square D0 drawing corroborate the
+  corresponding original-source rules. Recorded targeted comparison work
+  and known non-original approximations in TODO-dm1.md. This was a source
+  audit, not a ScummVM runtime or cross-engine parity test; no third-party
+  implementation was added to Firestaff.
+
 - 2026-10-15: The PC C127 front-mirror backing now follows the same
   selected C696/F0635/F0791 material path as ordinary wall ornaments.
   F0107's D1C branch uses native C346 at 48x43, centered at (88,29),

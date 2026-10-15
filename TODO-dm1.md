@@ -1,5 +1,35 @@
 # Firestaff TODO — DM1
 
+2026-10-15 secondary reference audit: ScummVM DM at
+[`5eefba1a2cd412016e83a89eaae31376a95c9367`](https://github.com/scummvm/scummvm/tree/5eefba1a2cd412016e83a89eaae31376a95c9367/engines/dm)
+is useful for Amiga 2.0 English and DOS 3.4 USA English comparisons;
+its detector marks those editions as testing and Atari as unstable. It
+provides no verification of our other edition owners. Follow-up checklist:
+
+- Audit remaining material banks against `gfx.cpp:getGraphicIndex`
+  (2026-2068): wall ornaments 121/259, floor ornaments 247/385 and door
+  ornaments 303/441 are platform-specific bases. Verify against each
+  owner's original metadata before changing a constant.
+- Compare palette state transitions, including inventory return and darkness,
+  with `gfx.cpp:drawViewport` (1952-2020): DOS VGA and Amiga palette switching
+  are separate paths. Keep original program tables authoritative.
+- Compare entrance background restoration with `dm.cpp:openEntranceDoors`
+  (808-838). Its 31-step, four-pixel, delay(3) loop is a comparison case,
+  not a universal timing rule for PC/Towns/A36. `DMEngine::delay` (242-248)
+  approximates a vertical blank as 20 ms; do not replace original PC IRQ
+  timing with this value.
+- For the reported movement lag, compare input-to-compose ordering with
+  `dm.cpp:gameloop` and `eventman.cpp:processCommandQueue/commandMoveParty`:
+  accepted movement ends the input wait and the next loop composes the view.
+  Native HiDPI/GPU latency still needs execution evidence.
+
+Do not treat ScummVM screenshots as independent original-game proof. Its
+DOS ornament route retains G0205 rather than native C696 for those draws,
+its DOS portrait x88 differs from original C737's x96, and its shrink sampling
+is not the source-verified PC Q6/early-native Q10 implementation. Preserve
+our original-media oracles when comparing these paths. Detector MD5 values
+cover a file prefix; they must not replace full-file authentication hashes.
+
 2026-10-15 wall-ornament follow-up: PC34 native material selection and
 C696 placement, plus early A20E/ST12 native bank/frame/palette routing,
 pass independent original-data raster cases and the affected HoC replay.
