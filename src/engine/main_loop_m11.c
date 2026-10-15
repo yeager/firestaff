@@ -5133,8 +5133,11 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     unsigned int doorSoundTimer = 21u;
     unsigned int doorSoundCount = 0u;
     int switchSoundQueued = 0;
+    int configuredVsync = M11_VSYNC_OFF;
+    int selectorVsyncOverride = 0;
     uint64_t vblankStartMs;
     uint64_t selectorStartMs;
+    uint64_t previousDoorPresentMs = 0u;
     int result = 0;
 
     memset(&loader, 0, sizeof(loader));
@@ -5217,6 +5220,15 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                                              graphicsPath);
     }
 
+    /* SELECTOR.C waits for VGA vertical retrace before every door step. Keep
+     * that source behavior even when the user's general runtime VSync option
+     * is disabled, then restore the user's setting on every exit path. */
+    configuredVsync = M11_Render_GetVSync();
+    if (configuredVsync != M11_VSYNC_ON) {
+        (void)M11_Render_SetVSync(M11_VSYNC_ON);
+        selectorVsyncOverride = 1;
+    }
+
     memset(palette, 0, sizeof(palette));
     for (step = 0u; step < 16u; ++step) {
         memcpy(palette[step],
@@ -5236,6 +5248,28 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     selectorStartMs = vblankStartMs;
     switchSoundQueued = M11_Audio_EmitSourceSoundIndex(
         &gameView->audioState, 1);
+    if (g_m11_debug_startup_detail) {
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+        SDL_DisplayID displayId = SDL_GetDisplayForWindow(
+            M11_Render_GetWindow());
+        const SDL_DisplayMode *displayMode = displayId
+            ? SDL_GetCurrentDisplayMode(displayId) : NULL;
+        int effectiveVsync = -1;
+        const int hasEffectiveVsync = SDL_GetRenderVSync(
+            M11_Render_GetRenderer(), &effectiveVsync);
+        fprintf(stderr,
+                "firestaff: startup-pacing game=dm1 platform=pc34 phase=selector-pacing configured-vsync=%d requested-vsync=%d effective-vsync-known=%d effective-vsync=%d display-refresh-hz=%.3f display-brightness-percent=%d\n",
+                configuredVsync, M11_Render_GetVSync(),
+                hasEffectiveVsync ? 1 : 0, effectiveVsync,
+                displayMode ? (double)displayMode->refresh_rate : 0.0,
+                M11_Render_GetGlobalBrightness());
+#else
+        fprintf(stderr,
+                "firestaff: startup-pacing game=dm1 platform=pc34 phase=selector-pacing configured-vsync=%d requested-vsync=%d effective-vsync-known=0 effective-vsync=-1 display-refresh-hz=0.000 display-brightness-percent=%d\n",
+                configuredVsync, M11_Render_GetVSync(),
+                M11_Render_GetGlobalBrightness());
+#endif
+    }
 
     /* Direct CLI selection and M12 New Game both select the I34E FIRES row.
      * F8360 is called once per source VBlank, with G8248=4; preserve its
@@ -5244,13 +5278,29 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     steps = (width + 3u) / 4u;
     for (step = 0u; step < steps; ++step) {
         SDL_Event event;
+        uint64_t presentStartedMs;
+        uint64_t presentedAtMs;
         if (!DM1_V1_Selector_ComposeFramePc34(
                 entrance->pixels, entrance->width, entrance->height,
                 left->pixels, left->width, left->height,
                 right->pixels, right->width, right->height,
-                view, 224u, 136u, step, frame, sizeof(frame)) ||
-            M11_Render_PresentIndexed(frame, M11_FB_WIDTH, M11_FB_HEIGHT) !=
-                M11_RENDER_OK) goto done;
+                view, 224u, 136u, step, frame, sizeof(frame))) goto done;
+        presentStartedMs = m11_intro_active_ticks();
+        if (M11_Render_PresentIndexed(frame, M11_FB_WIDTH, M11_FB_HEIGHT) !=
+            M11_RENDER_OK) goto done;
+        presentedAtMs = m11_intro_active_ticks();
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-source-frame game=dm1 platform=pc34 phase=selector-door frame=%u/%u elapsed-ms=%llu interval-ms=%llu present-ms=%llu vsync=%d source-step-px=4\n",
+                    step + 1u, steps,
+                    (unsigned long long)(presentedAtMs - selectorStartMs),
+                    (unsigned long long)(previousDoorPresentMs
+                        ? presentedAtMs - previousDoorPresentMs
+                        : presentedAtMs - selectorStartMs),
+                    (unsigned long long)(presentedAtMs - presentStartedMs),
+                    M11_Render_GetVSync());
+        }
+        previousDoorPresentMs = presentedAtMs;
         if (step == 0u)
             m11_capture_dm1_authenticated_startup_frame(
                 "i34e-selector-door-step-1");
@@ -5334,6 +5384,21 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 DM1_V1_VGA_VBLANK_HZ, switchSoundQueued,
                 doorSoundCount, gameView->audioState.originalSnd3LoadedCount);
 done:
+    if (selectorVsyncOverride) {
+        (void)M11_Render_SetVSync(configuredVsync);
+        if (g_m11_debug_startup_detail) {
+            int effectiveVsync = -1;
+            int effectiveVsyncKnown = 0;
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+            effectiveVsyncKnown = SDL_GetRenderVSync(
+                M11_Render_GetRenderer(), &effectiveVsync) ? 1 : 0;
+#endif
+            fprintf(stderr,
+                    "firestaff: startup-pacing game=dm1 platform=pc34 phase=selector-vsync-restore configured-vsync=%d requested-vsync=%d effective-vsync-known=%d effective-vsync=%d\n",
+                    configuredVsync, M11_Render_GetVSync(),
+                    effectiveVsyncKnown, effectiveVsync);
+        }
+    }
     free(view);
     free(selector);
     free(graphics);

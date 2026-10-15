@@ -1365,7 +1365,13 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
-    g_state.vsync = M11_VSYNC_ON;
+    /* SDL renderers commonly start with VSync disabled. Keep the value read
+     * from the backend here so M11_ApplyStartupMenuRuntime applies the user's
+     * saved VSync choice instead of assuming that the renderer already did. */
+    g_state.vsync = M11_VSYNC_OFF;
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+    (void)SDL_GetRenderVSync(g_state.renderer, &g_state.vsync);
+#endif
     g_state.quitRequested = 0;
     g_state.contentW = M11_FB_WIDTH;
     g_state.contentH = M11_FB_HEIGHT;
