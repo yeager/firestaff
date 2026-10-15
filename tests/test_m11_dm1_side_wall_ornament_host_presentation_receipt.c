@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "asset_find_by_hash.h"
+#include "asset_status_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +65,145 @@ static int check_original_d2_pixels(M11_GameViewState* state)
     return 1;
 }
 
+/* The archive is original A20E media; production startup supplies both the
+ * dungeon map/floor-set and its admitted graphics loader. No fixture map or
+ * reconstructed raster is used. */
+static int check_original_amiga_background(void)
+{
+    const char* archive = getenv("FIRESTAFF_DM1_AMIGA_BACKGROUND_ARCHIVE");
+    M11_GameViewState state;
+    unsigned char framebuffer[320 * 200];
+    const M11_AssetSlot *floor, *ceiling;
+    int parity, x, y, ok = 0, index;
+    M12_AssetStatus* scan;
+    const M12_AssetVersionStatus* version;
+    M11_GameLaunchSpec spec = {0};
+    char runtime[M12_ASSET_DATA_DIR_CAPACITY];
+    if (!archive || !archive[0]) return 1;
+    scan = calloc(1, sizeof(*scan));
+    if (!scan) return 0;
+    M11_GameView_Init(&state);
+    M12_AssetStatus_ScanGame(scan, archive, "dm1");
+    index = M12_AssetStatus_FindVersionIndex("dm1", "amiga20-en");
+    version = index < 0 ? NULL : M12_AssetStatus_GetVersion(scan, "dm1", (size_t)index);
+    if (!version || !version->matched ||
+        strcmp(version->matchedMd5, "6a2f135b53c2220f0251fa103e2a6e7e") ||
+        !M12_AssetStatus_PrepareDM1RuntimeVersion(scan, "amiga20-en", runtime, sizeof(runtime))) goto done;
+    spec.title = "Dungeon Master";
+    spec.gameId = spec.sourceId = "dm1";
+    spec.dataDir = runtime;
+    spec.verifiedAssetPath = version->matchedPath;
+    spec.verifiedAssetMd5 = version->matchedMd5;
+    if (!M11_GameView_Start(&state, &spec) || !state.assetsAvailable ||
+        !state.assetLoader.legacyDm1 || !state.assetLoader.legacyBigEndian ||
+        !state.world.dungeon || !state.world.dungeon->maps ||
+        state.world.dungeon->maps[state.world.party.mapIndex].floorSet != 0 ||
+        !asset_file_matches_md5(state.assetLoader.graphicsDatPath,
+                               "6a2f135b53c2220f0251fa103e2a6e7e")) goto done;
+    floor = M11_AssetLoader_Load(&state.assetLoader, 75u);
+    ceiling = M11_AssetLoader_Load(&state.assetLoader, 76u);
+    if (!floor || !ceiling || floor->width != 224 || floor->height != 70 ||
+        ceiling->width != 224 || ceiling->height != 29) goto done;
+    /* The original78/79 are door frames, not an alternate floor pair.
+     * Their real dimensions cannot satisfy the complete75/76 raster oracle. */
+    for (x = 78; x <= 79; ++x) {
+        const M11_AssetSlot* wrong = M11_AssetLoader_Load(&state.assetLoader, (unsigned)x);
+        if (!wrong || !wrong->pixels ||
+            (wrong->width == 224 && (wrong->height == 70 || wrong->height == 29))) goto done;
+    }
+    for (parity = 0; parity < 2; ++parity) {
+        state.world.party.mapX = parity;
+        state.world.party.mapY = state.world.party.direction = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_ProbeDrawDm1ViewportBackground(&state, framebuffer, 320, 200);
+        for (y = 0; y < 200; ++y) for (x = 0; x < 320; ++x) {
+            unsigned char expected = 0;
+            if (x < 224 && y >= 33 && y < 33 + 29) {
+                const int sx = parity ? x : 223 - x;
+                expected = ceiling->pixels[(y - 33) * 224 + sx];
+            } else if (x < 224 && y >= 33 + 66 && y < 33 + 136) {
+                const int sx = parity ? 223 - x : x;
+                expected = floor->pixels[(y - 33 - 66) * 224 + sx];
+            }
+            if (framebuffer[y * 320 + x] != expected) {
+                fprintf(stderr, "Amiga F0098 parity%d pixel%d,%d got%u expected%u\n",
+                    parity, x, y, framebuffer[y * 320 + x], expected);
+                goto done;
+            }
+        }
+        printf("PASS: original A20E F0098 parity%d floor75=224x70 ceiling76=224x29\n", parity);
+    }
+    ok = 1;
+done:
+    M11_GameView_Shutdown(&state);
+    free(scan);
+    if (!ok) fprintf(stderr, "original A20E background oracle failed\n");
+    return ok;
+}
+
+/* Original MEDIA009 C013, not a generated arrow raster. Optional so the
+ * ordinary PC-only test keeps its existing corpus requirement. */
+static int check_original_legacy_arrows(const char *env_name,
+                                        const char *edition,
+                                        const char *graphics_md5,
+                                        int atari)
+{
+    const char *path = getenv(env_name);
+    const M12_AssetVersionStatus *version;
+    M12_AssetStatus *scan;
+    M11_GameViewState *state;
+    M11_GameLaunchSpec spec = {0};
+    const M11_AssetSlot *arrows;
+    unsigned char framebuffer[320 * 200];
+    char runtime[M12_ASSET_DATA_DIR_CAPACITY];
+    int index, result = 0, nonblack = 0;
+    if (!path || !path[0]) return 1;
+    scan = calloc(1, sizeof(*scan));
+    state = calloc(1, sizeof(*state));
+    if (!scan || !state) { free(scan); free(state); return 0; }
+    M11_GameView_Init(state);
+    M12_AssetStatus_ScanGame(scan, path, "dm1");
+    index = M12_AssetStatus_FindVersionIndex("dm1", edition);
+    version = index < 0 ? NULL :
+        M12_AssetStatus_GetVersion(scan, "dm1", (size_t)index);
+    if (!version || !version->matched ||
+        strcmp(version->matchedMd5, graphics_md5) ||
+        !M12_AssetStatus_PrepareDM1RuntimeVersion(scan, edition,
+                                               runtime, sizeof(runtime))) goto done;
+    spec.title = "Dungeon Master";
+    spec.gameId = "dm1";
+    spec.sourceId = "dm1";
+    spec.dataDir = runtime;
+    spec.verifiedAssetPath = version->matchedPath;
+    spec.verifiedAssetMd5 = version->matchedMd5;
+    if (!M11_GameView_Start(state, &spec) ||
+        (atari ? !state->assetLoader.atariStDm1 :
+         (!state->assetLoader.legacyDm1 || !state->assetLoader.legacyBigEndian)))
+        goto done;
+    arrows = M11_AssetLoader_Load(&state->assetLoader, 13);
+    if (!arrows || !arrows->loaded || !arrows->pixels ||
+        arrows->width != 96 || arrows->height != 45) goto done;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    for (int y = 0; y < 45; ++y) {
+        for (int x = 0; x < 96; ++x) {
+            unsigned char source = arrows->pixels[y * 96 + x] & 15;
+            if ((framebuffer[(124 + y) * 320 + 224 + x] & 15) != source)
+                goto done;
+            nonblack += source != 0;
+        }
+    }
+    if (!nonblack) goto done;
+    printf("PASS: original %s C013 matches all 4320 presented indices\n", edition);
+    result = 1;
+done:
+    if (!result) fprintf(stderr, "FAIL: original %s native movement arrows\n", edition);
+    M11_GameView_Shutdown(state);
+    free(state);
+    free(scan);
+    return result;
+}
+
 int main(void)
 {
     const char* graphicsPath = pc34_graphics_path();
@@ -71,6 +211,11 @@ int main(void)
     M11_Dm1WallOrnamentHostPresentationReceipt receipt;
     unsigned char framebuffer[320 * 200];
 
+    if (!check_original_amiga_background()) return 1;
+    if (!check_original_legacy_arrows("FIRESTAFF_DM1_AMIGA_DEMO_ARROWS_ARCHIVE",
+            "amiga-demo-en", "491ca939f9abb33ceeb26619b841fe91", 0) ||
+        !check_original_legacy_arrows("FIRESTAFF_DM1_ATARI_ARROWS_ARCHIVE",
+            "st12-en", "9ce2eaf7a9e78620e3f17594437caffa", 1)) return 1;
     if (!graphicsPath) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;

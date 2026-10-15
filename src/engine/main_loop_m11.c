@@ -2178,12 +2178,23 @@ static double m11_counter_milliseconds(Uint64 ticks) {
     return frequency ? (double)ticks * 1000.0 / (double)frequency : 0.0;
 }
 
+static void m11_draw_game_frame_for_loop(M11_GameViewState* state,
+                                           int debug,
+                                           double* drawMs,
+                                           Uint64* drawCount) {
+    const Uint64 start = debug ? SDL_GetPerformanceCounter() : 0;
+    M11_GameView_Draw(state, M11_Render_GetFramebuffer(), M11_FB_WIDTH, M11_FB_HEIGHT);
+    ++*drawCount;
+    if (debug) *drawMs += m11_counter_milliseconds(SDL_GetPerformanceCounter() - start);
+}
+
 static void m11_reset_debug_perf_window(Uint64* windowStart,
                                         Uint64* lastLoopEnd,
                                         Uint64* loopCount,
                                         Uint64* overBudgetLoops,
                                         Uint64* gameTickCount,
                                         Uint64* presentedCount,
+                                        Uint64* drawCount,
                                         double* renderTotalMs,
                                         double* renderMaxMs,
                                         double* loopMaxMs,
@@ -2196,6 +2207,7 @@ static void m11_reset_debug_perf_window(Uint64* windowStart,
     *overBudgetLoops = 0;
     *gameTickCount = 0;
     *presentedCount = 0;
+    *drawCount = 0;
     *renderTotalMs = 0.0;
     *renderMaxMs = 0.0;
     *loopMaxMs = 0.0;
@@ -11522,6 +11534,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     Uint64 perfOverBudgetLoops = 0;
     Uint64 perfGameTickCount = 0;
     Uint64 perfPresentedCount = 0;
+    Uint64 perfDrawCount = 0;
     double perfRenderTotalMs = 0.0;
     double perfRenderMaxMs = 0.0;
     double perfLoopMaxMs = 0.0;
@@ -11533,6 +11546,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
            !M11_RunDurationHasElapsed(o->durationMs, (Uint32)start,
                                      (Uint32)now)) {
         const Uint32 loopStartMs = (Uint32)SDL_GetTicks();
+        double perfLoopDrawMs = 0.0;
+        Uint64 perfLoopDrawCount = 0;
         if (o->debug) ++perfLoopCount;
         M12_MenuInput input = M12_MENU_INPUT_NONE;
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
@@ -11595,8 +11610,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             foodClockLastMs = (uint32_t)now;
             if (M11_GameView_AdvanceFoodClockMs(&gameView, foodElapsedMs) ==
                 M11_GAME_INPUT_REDRAW) {
-                M11_GameView_Draw(&gameView, M11_Render_GetFramebuffer(),
-                                  M11_FB_WIDTH, M11_FB_HEIGHT);
+                m11_draw_game_frame_for_loop(&gameView, o->debug,
+                    &perfLoopDrawMs, &perfLoopDrawCount);
                 gameFrameNeedsPresent = 1;
             }
             /* Source F0349 cannot run ordinary game-loop work during its
@@ -11615,8 +11630,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 timerPauseBefore != gameView.sessionTimerForcedPauseDialogActive) {
                 if (gameView.sessionTimerForcedPauseDialogActive)
                     idleAccumulatorMs = 0;
-                M11_GameView_Draw(&gameView, M11_Render_GetFramebuffer(),
-                                  M11_FB_WIDTH, M11_FB_HEIGHT);
+                m11_draw_game_frame_for_loop(&gameView, o->debug,
+                    &perfLoopDrawMs, &perfLoopDrawCount);
                 gameFrameNeedsPresent = 1;
             }
             firestaff_ra_overlay_tick(&gameView.retroAchievementsOverlay,
@@ -11691,7 +11706,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     m11_reset_debug_perf_window(
                         &perfWindowStart, &perfLastLoopEnd,
                         &perfLoopCount, &perfOverBudgetLoops,
-                        &perfGameTickCount, &perfPresentedCount,
+                        &perfGameTickCount, &perfPresentedCount, &perfDrawCount,
                         &perfRenderTotalMs, &perfRenderMaxMs,
                         &perfLoopMaxMs, &perfCpuWindowStart,
                         &perfCpuAvailable);
@@ -11754,10 +11769,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 if (gameView.graphicsPopupActive) {
                     m11_sync_runtime_graphics_popup_to_menu(&gameView, &menuState);
                 }
-                M11_GameView_Draw(&gameView,
-                                  M11_Render_GetFramebuffer(),
-                                  M11_FB_WIDTH,
-                                  M11_FB_HEIGHT);
+                m11_draw_game_frame_for_loop(&gameView, o->debug,
+                    &perfLoopDrawMs, &perfLoopDrawCount);
                 gameFrameNeedsPresent = 1;
                 if (gameView.world.gameTick != tickBeforeEvents) {
                     idleAccumulatorMs = 0;
@@ -11867,10 +11880,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                     int redrawWasAfterViewportDirty =
                         gameView.lastDm1V1MovementPipelineResult.viewportDirty;
-                    M11_GameView_Draw(&gameView,
-                                      M11_Render_GetFramebuffer(),
-                                      M11_FB_WIDTH,
-                                      M11_FB_HEIGHT);
+                    m11_draw_game_frame_for_loop(&gameView, o->debug,
+                        &perfLoopDrawMs, &perfLoopDrawCount);
                     gameFrameNeedsPresent = 1;
                     inputRedrawDrawCount++;
                     if (redrawWasAfterViewportDirty) {
@@ -11927,7 +11938,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             m11_reset_debug_perf_window(
                                 &perfWindowStart, &perfLastLoopEnd,
                                 &perfLoopCount, &perfOverBudgetLoops,
-                                &perfGameTickCount, &perfPresentedCount,
+                                &perfGameTickCount, &perfPresentedCount, &perfDrawCount,
                                 &perfRenderTotalMs, &perfRenderMaxMs,
                                 &perfLoopMaxMs, &perfCpuWindowStart,
                                 &perfCpuAvailable);
@@ -11955,10 +11966,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                          gameView.dm2FmtownsTitleFinished)) {
                         dm2TimedMediaRedraw = 1;
                     } else {
-                        M11_GameView_Draw(&gameView,
-                                          M11_Render_GetFramebuffer(),
-                                          M11_FB_WIDTH,
-                                          M11_FB_HEIGHT);
+                        m11_draw_game_frame_for_loop(&gameView, o->debug,
+                            &perfLoopDrawMs, &perfLoopDrawCount);
                         gameFrameNeedsPresent = 1;
                     }
                 }
@@ -11972,10 +11981,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (dm2TimedMediaRedraw) {
-                M11_GameView_Draw(&gameView,
-                                  M11_Render_GetFramebuffer(),
-                                  M11_FB_WIDTH,
-                                  M11_FB_HEIGHT);
+                m11_draw_game_frame_for_loop(&gameView, o->debug,
+                    &perfLoopDrawMs, &perfLoopDrawCount);
                 gameFrameNeedsPresent = 1;
             }
         }
@@ -11984,7 +11991,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
              * Resurrecting a champion enables the full HUD/champion render
              * path, so keep CPU bounded by presenting only after input,
              * resize, launch, restart, or a source tick dirties the frame. */
-            if (o->debugFullRedraw) gameFrameNeedsPresent = 1;
+            if (o->debugFullRedraw) {
+                /* Count real source composition, not another presentation
+                 * of the retained framebuffer. Existing dirty draws already
+                 * satisfy this host frame's full-redraw request. */
+                if (perfLoopDrawCount == 0U)
+                    m11_draw_game_frame_for_loop(&gameView, o->debug,
+                        &perfLoopDrawMs, &perfLoopDrawCount);
+                gameFrameNeedsPresent = 1;
+            }
             if (gameFrameNeedsPresent) {
                 const Uint64 perfRenderStart = o->debug
                     ? SDL_GetPerformanceCounter() : 0;
@@ -12030,7 +12045,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
                 if (o->debug) {
                     const double renderMs = m11_counter_milliseconds(
-                        SDL_GetPerformanceCounter() - perfRenderStart);
+                        SDL_GetPerformanceCounter() - perfRenderStart) + perfLoopDrawMs;
                     perfRenderTotalMs += renderMs;
                     if (renderMs > perfRenderMaxMs)
                         perfRenderMaxMs = renderMs;
@@ -12071,7 +12086,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             m11_reset_debug_perf_window(
                 &perfWindowStart, &perfLastLoopEnd,
                 &perfLoopCount, &perfOverBudgetLoops,
-                &perfGameTickCount, &perfPresentedCount,
+                &perfGameTickCount, &perfPresentedCount, &perfDrawCount,
                 &perfRenderTotalMs, &perfRenderMaxMs,
                 &perfLoopMaxMs, &perfCpuWindowStart,
                 &perfCpuAvailable);
@@ -12081,6 +12096,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 const uint32_t tickDelta = m11_debug_game_tick_count(&gameView) -
                                            perfTickBefore;
                 perfGameTickCount += tickDelta;
+                perfDrawCount += perfLoopDrawCount;
             }
             const Uint64 perfNow = SDL_GetPerformanceCounter();
             const double loopMs = m11_counter_milliseconds(
@@ -12110,7 +12126,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         " target-loop-fps=%.2f loops-per-sec=%.1f "
                         "loop-ms-max=%.2f "
                         "loop-over-budget-count=%llu game-ticks-per-sec=%.2f "
-                        "game-frames-rendered-per-sec=%.2f "
+                        "game-frames-rendered-per-sec=%.2f game-frames-presented-per-sec=%.2f "
+                        "source-draw-count=%llu presented-frame-count=%llu "
                         "frame-compose-present-call-ms-avg=%.2f "
                         "frame-compose-present-call-ms-max=%.2f "
                         "gpu-utilization=unavailable\n",
@@ -12119,7 +12136,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         perfLoopMaxMs,
                         (unsigned long long)perfOverBudgetLoops,
                         (double)perfGameTickCount * 1000.0 / elapsedMs,
+                        (double)perfDrawCount * 1000.0 / elapsedMs,
                         (double)perfPresentedCount * 1000.0 / elapsedMs,
+                        (unsigned long long)perfDrawCount,
+                        (unsigned long long)perfPresentedCount,
                         perfPresentedCount
                             ? perfRenderTotalMs / (double)perfPresentedCount
                             : 0.0,
@@ -12129,6 +12149,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 perfOverBudgetLoops = 0;
                 perfGameTickCount = 0;
                 perfPresentedCount = 0;
+                perfDrawCount = 0;
                 perfRenderTotalMs = 0.0;
                 perfRenderMaxMs = 0.0;
                 perfLoopMaxMs = 0.0;

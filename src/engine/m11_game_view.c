@@ -43950,13 +43950,12 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                DM1_VIEWPORT_WIDTH);
     }
     provider.state = state;
-    /* Atari ST and FM Towns use the MEDIA020 graphics order, not PC 3.4
-     * MEDIA720. ReDMCSB DEFS.H:2270-2289 assigns M650/M651 to records 75/76;
-     * PC34's 78/79 are unrelated door records in these original packages. */
+    /* ReDMCSB DEFS.H:2270-2289 (MEDIA020) includes Atari, early Amiga
+     * A20ED..A22G and FM Towns: M650/M651 are records75/76. A36M is
+     * excluded from MEDIA020 and retains the later78/79 order. */
     provider.floor_graphic = (unsigned int)
         ((state->assetLoader.atariStDm1 ||
-          (state->assetLoader.legacyDm1 &&
-           !state->assetLoader.legacyBigEndian))
+          state->assetLoader.legacyDm1)
              ? 75 + floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT
              : M11_GFX_FIRST_FLOOR_SET +
                    floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
@@ -43965,15 +43964,15 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
     f0098.graphic_provider_callback = m11_dm1_f0098_graphic_provider;
     f0098.graphic_provider_user_data = &provider;
     dm1_viewport_3d_draw_floor_ceiling(&f0098);
-    /* ReDMCSB DEFS.H MEDIA020:2286-2288 maps Towns floor/ceiling to 75/76;
+    /* ReDMCSB DEFS.H MEDIA020:2270,2286-2288 maps early Amiga and Towns
+     * floor/ceiling to75/76;
      * DUNVIEW.C F0098:2962-3000 and F0128:8333-8434 (MEDIA544) use their
      * native 224x70 floor and 224x29 ceiling.
      * The Towns black band is 37 rows, so floor begins at row 66. PC34
      * instead uses a 39-row ceiling / 97-row floor split at row 39. Read the
      * loaded Towns records for F0130's dimensions; reusing the PC34 rectangle flips
      * 27 rows of unrelated viewport material into the floor. */
-    if (state->assetLoader.legacyDm1 &&
-        !state->assetLoader.legacyBigEndian) {
+    if (state->assetLoader.legacyDm1) {
         const uint8_t *ceiling_pixels = NULL;
         const uint8_t *floor_pixels = NULL;
         int ceiling_width = 0;
@@ -61548,6 +61547,18 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
          state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) {
         return;
     }
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        (state->assetLoader.atariStDm1 ||
+         (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian &&
+          !state->assetLoader.dm1Amiga36))) {
+        /* ReDMCSB MENUDRAW.C F0395:12-13, MEDIA009 (Atari and early
+         * Amiga), blits C013 at its native 48-byte width and 45 rows.
+         * DATA.C G0002 is inclusive (224,319,124,168). The later PC
+         * C009 zone is only 87 pixels wide and cannot admit this bitmap. */
+        (void)m11_blit_panel_asset_native(state, framebuffer,
+            framebufferWidth, framebufferHeight, 13, 96, 45, 224, 124);
+        return;
+    }
     if (state->dm1FmtownsStartupReceiptValid &&
         state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
         /* MENUDRAW.C F0395:16 delegates to F0660 without a DOS-box
@@ -72365,6 +72376,14 @@ void M11_GameView_GetDm1HocPresentedFrameConsumerReceipt(
     if (outReceipt) {
         *outReceipt = s_m11_dm1_hoc_presented_frame_consumer_receipt;
     }
+}
+
+void M11_GameView_ProbeDrawDm1ViewportBackground(
+    const M11_GameViewState* state, unsigned char* framebuffer,
+    int framebufferWidth, int framebufferHeight)
+{
+    m11_draw_viewport_background(state, framebuffer, framebufferWidth,
+        framebufferHeight, 0, 33, DM1_VIEWPORT_WIDTH, DM1_VIEWPORT_HEIGHT);
 }
 
 int M11_GameView_ProbeDrawDm1SideWallHostReceipt(

@@ -2,6 +2,14 @@
 
 ## User-facing changes
 
+- `DM1 Amiga/Atari`: use the original early Amiga floor and ceiling records
+  and restore the native movement panel for early Amiga and Atari ST.
+  Legacy wall composition remains under correction.
+
+- `Debug rendering`: `--debug-full-redraw` performs actual source redraws;
+  performance logs separate source draws from presents and include source
+  composition in the reported frame cost.
+
 - `DM1 input`: accepted fresh keyboard movement no longer waits for the
   idle input timeout. Blocked steps, cooldowns and held-repeat pacing retain
   their existing gates.

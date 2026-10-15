@@ -1092,12 +1092,34 @@ if ! grep -Eq 'firestaff: perf game=dm1 active=1 .*process-cpu-of-one-core-perce
    ! grep -Fq 'game-frames-rendered-per-sec=' <<< "$perf_output" ||
    ! grep -Fq 'target-loop-fps=' <<< "$perf_output" ||
    ! grep -Fq 'debug-full-redraw=1' <<< "$perf_output" ||
+   ! grep -Fq 'DM1 READY: gameId=dm1' <<< "$perf_output" ||
+   ! grep -Fq 'runtime game=dm1 startup-phase=dm1-runtime' <<< "$perf_output" ||
    ! grep -Fq 'frame-compose-present-call-ms-max=' <<< "$perf_output" ||
    ! grep -Fq 'gpu-utilization=unavailable' <<< "$perf_output"; then
     printf '%s\n' "$perf_output" >&2
     printf '%s\n' 'FAIL: --debug-full-redraw did not emit complete DM1 performance telemetry' >&2
     exit 1
 fi
+# Actual source Draw calls must accompany forced presentations. A repeated
+# retained framebuffer is not evidence of full-render throughput.
+python3 - "$perf_output" <<'PYDRAWS'
+import re
+import sys
+samples = [line for line in sys.argv[1].splitlines()
+           if "firestaff: perf game=dm1 active=1 " in line]
+if not samples:
+    raise SystemExit("FAIL: no active original-media Draw sample")
+line = samples[-1]
+draw = re.search(r"source-draw-count=(\d+)", line)
+present = re.search(r"presented-frame-count=(\d+)", line)
+render = re.search(r"game-frames-rendered-per-sec=([0-9.]+)", line)
+ticks = re.search(r"game-ticks-per-sec=([0-9.]+)", line)
+if (not draw or not present or not render or not ticks or
+        int(present[1]) <= 0 or int(draw[1]) < int(present[1]) or
+        float(render[1]) <= float(ticks[1])):
+    raise SystemExit("FAIL: forced presentations do not contain actual per-frame source Draw calls: " + line)
+print("PASS: original full-redraw sample counts actual source Draw calls separately from presents")
+PYDRAWS
 render_fps=$(sed -n 's/.*game-frames-rendered-per-sec=\([0-9.]*\).*/\1/p' \
     <<< "$perf_output" | tail -n 1)
 if [[ -z "$render_fps" ]] || ! awk -v fps="$render_fps" 'BEGIN { exit !(fps > 0.0) }'; then

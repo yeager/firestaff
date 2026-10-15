@@ -1,3 +1,24 @@
+- 2026-10-15: Restore early Amiga F0098 floor/ceiling records 75/76 and
+  their native 224x70 / 224x29 parity regions; A36 keeps its later order.
+  Restore the MEDIA009 C013 movement panel at (224,124), 96x45, for early
+  Amiga and Atari instead of rejecting it against PC's 87x45 dimensions.
+  The production original-data test passes both complete A20E background
+  rasters, every Amiga-demo and Atari 1.2 arrow pixel, and the existing PC34
+  D2/F0107 checks. No generated game raster or fixture map is used. Legacy
+  wall-compound composition and native Amiga runtime palettes remain open.
+  A completed original-demo capture at the same (7,1,S), tick 120 changes
+  from a black page to visible background and controls (17,790 nonblack
+  viewport pixels). This does not verify missing wall layers.
+
+- 2026-10-15: `--debug-full-redraw` now performs source Draw work each host
+  frame, rather than presenting a retained page. Debug telemetry separately
+  counts source draws and successful presents, and compose/present timing
+  includes preceding source composition. The existing original PC34 perf
+  block passes: dummy SDL samples contain 275/276 real draws and equal
+  presents per five-second window (54.94/55.08 draws per second), with
+  source ticks near 5/s. This verifies instrumentation, not physical-display
+  60 FPS, GPU utilization or full gameplay performance parity.
+
 - 2026-10-15: Fresh accepted DM1 keyboard steps can close the source
   input wait immediately instead of waiting for its idle deadline. A
   read-only preview uses copied command-core state, preserving blocked

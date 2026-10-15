@@ -1,20 +1,29 @@
 # Firestaff TODO — DM1
 
-2026-10-15 legacy smoke limitation: original Atari 1.2 loads, accepts a
-forward step and presents a visible dungeon in the short headless capture.
-The original Amiga demo loads and accepts movement, but both idle and moved
-completed presented pages are black. No same-media before-change capture is
-available, so this does not establish a regression or visual nonregression.
-Inspect the Amiga runtime palette/presentation path before claiming a pass.
+2026-10-15 early Amiga runtime layers: direct original-demo Draw probing
+confirms assets decode but the old page has only black low-nibble indices.
+Three independent material admissions are wrong: floor/ceiling use PC78/79
+instead of native75/76, the C01396x45 panel is rejected by the PC87x45 gate,
+and native wall compounds77..89 are addressed as separate PC93..107 images
+(the demo supplies black16x4 placeholders there). Background and arrow fixes
+have production original-data regressions; wall composition remains open.
+For MEDIA009 walls reuse G0163 frames with pixel stride twice byteWidth,
+original D0L/R84/85, D1/2/3 compounds86/87/88 and narrowD389. F0096
+(DUNVIEW.C2389–2408) creates shifted flipped caches: D3 flip128 then source
+x11/copy116 into C10 padding, D2 flip144 then sourcex8/copy136, D1 flip256,
+D0 swap plus flip32. Preserve F0128's large-memory condition (8378–8393),
+C10 side transparency, opaque centers and immutable native records. Towns
+C696 crops are a distinct source path. Native Amiga palette selection also
+remains open; missing palette alone did not explain the original black page.
 
 2026-10-15 PC34 viewport followup: the specific D2 side-wall geometry and
 fresh-key input delay have original-data/source evidence. These fixes do not
 establish full viewport parity at every map/pose. Obtain the reported scene
 and compare matching original poses for remaining wall artifacts. Debug
-performance followup: `--debug-full-redraw` currently requests presentation
-without forcing source composition, and compose timing starts after source
-Draw; correct both before using these counters to claim full-render FPS or
-CPU/GPU parity.
+performance: source redraws and compose costs are now counted, with an
+original-media dummy SDL regression. Verify native display throughput and
+CPU cost across platforms before claiming 60 FPS; GPU utilization remains
+unavailable.
 
 2026-10-15 repeated loose graphics: complete same-parent ownership is now
 verified with original Amiga demo, Atari 1.2 English and PC34 English media,

@@ -3624,6 +3624,11 @@ typedef struct M11_Dm1F0128PerSquareSchedulerReceipt {
 void M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
     M11_Dm1F0128PerSquareSchedulerReceipt* outReceipt);
 
+/* Test-only entry to the production F0098 floor/ceiling material blit. */
+void M11_GameView_ProbeDrawDm1ViewportBackground(
+    const M11_GameViewState* state, unsigned char* framebuffer,
+    int framebufferWidth, int framebufferHeight);
+
 /* Test-only entry to the production F0104/F0105 wall-material endpoint.
  * The caller must initialize an original PC34 GRAPHICS.DAT loader. */
 int M11_GameView_ProbeDrawDm1SideWallHostReceipt(
