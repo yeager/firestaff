@@ -287,6 +287,7 @@
 #include "firestaff/dm1/v1/G0186_pc34_compat.h"
 #include "firestaff/dm1/v1/G0200_pc34_compat.h"
 #include "firestaff/dm1/v1/G0201_pc34_compat.h"
+#include "firestaff/dm1/v1/G0206_pc34_compat.h"
 #include "firestaff/dm1/v1/G0207_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "firestaff/dm1/v1/G0192_pc34_compat.h"
@@ -1019,6 +1020,7 @@ static int m11_draw_creature_sprite_source_anchored(
     const DM1_CreatureDrawPlacement* placement,
     int creatureType,
     int creatureDir);
+static int m11_dm1_media009_metadata(M11_GameViewState* state);
 static int m11_is_dm1_media009(const M11_GameViewState* state);
 static int m11_dm1_media009_object_graphic(const M11_GameViewState* state, int aspectIndex);
 static int m11_dm1_media009_projectile_visible(const M11_GameViewState* state,
@@ -40960,6 +40962,33 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         return;
     }
 
+    /* DECOMPDU.C F0455 precedes DUNGEON.C F0173's metadata copy.
+     * The live world header describes the expanded body, while an Amiga
+     * archive path still owns its original 8104-compressed bytes. Offsets
+     * into that compressed stream are unrelated data, not ornament IDs.
+     * Bound expansion by the already loaded owner's body plus its optional
+     * two-byte parser trailer. Metadata bytes themselves need no word swap. */
+    if (dungeonByteCount >= 8u && dungeonBytes[0] == 0x81u &&
+        dungeonBytes[1] == 0x04u) {
+        const size_t expandedSize = ((size_t)dungeonBytes[2]<<24) |
+            ((size_t)dungeonBytes[3]<<16) | ((size_t)dungeonBytes[4]<<8) |
+            (size_t)dungeonBytes[5];
+        unsigned char* expanded = NULL;
+        if (dun->fileSize > 0 && expandedSize >= DUNGEON_HEADER_SIZE &&
+            (unsigned long long)expandedSize <= (unsigned long long)dun->fileSize+2u)
+            expanded = malloc(expandedSize);
+        if (!expanded || !ftl_decompress_dungeon(dungeonBytes+8u,
+                dungeonByteCount-8u, expanded, (long)expandedSize)) {
+            free(expanded);
+            free(dungeonBytes);
+            state->ornamentCacheLoaded[mapIndex] = 1;
+            return;
+        }
+        free(dungeonBytes);
+        dungeonBytes = expanded;
+        dungeonByteCount = expandedSize;
+    }
+
     /* Compute the raw data section offset with the same complete layout as
      * F0502_DUNGEON_LoadTileData_Compat.  Text words precede the typed Thing
      * records in PC34 DUNGEON.DAT; omitting them shifts every map metadata
@@ -45890,6 +45919,31 @@ static void m11_draw_dm1_ceiling_pits(const M11_GameViewState* state,
     }
 }
 
+/* DUNVIEW.C F0108:3965-3990 uses G0191's native perspective record,
+ * G0195's coordinate family and full padded rows before mirroring. G0206
+ * is identical in original A20E/S12E M558 and the existing shared table. */
+static int m11_draw_dm1_media009_floor_ornament(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int globalIndex, int viewFloorIndex, int useFlippedFootprints)
+{
+    const unsigned char* coordinate;
+    int frame[8], coordinateSet, graphic, flip;
+    if (viewFloorIndex < 0 || viewFloorIndex >= 9 ||
+        (globalIndex != 15 && (globalIndex < 0 || globalIndex >= 9)) ||
+        !m11_dm1_media009_metadata((M11_GameViewState*)state)) return 0;
+    /* STARTUP2.C:712-714: footprints have their own six records and set1. */
+    coordinateSet = globalIndex == 15 ? 1 : state->dm1NativeFloorCoordinateSets[globalIndex];
+    graphic = (globalIndex == 15 ? 241 : 247+globalIndex*6) +
+              state->dm1NativeFloorBitmapIncrements[viewFloorIndex];
+    coordinate = dm1_v1_g0206_table_pc34()+(coordinateSet*9+viewFloorIndex)*6;
+    for (int i = 0; i < 6; ++i) frame[i] = coordinate[i];
+    frame[6] = frame[7] = 0;
+    flip = viewFloorIndex%3 == 2 ||
+           (globalIndex == 15 && viewFloorIndex%3 == 1 && useFlippedFootprints);
+    return m11_dm1_media009_blit(state, (unsigned)graphic, frame, flip,
+                                framebuffer, fbW, fbH);
+}
+
 static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -45939,6 +45993,11 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                 state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
                 state->floorOrnamentIndices[mapIdx], 16,
                 cell.floorOrnamentOrdinal, &ornGlobalIdx)) {
+            continue;
+        }
+        if (m11_is_dm1_media009(state)) {
+            (void)m11_draw_dm1_media009_floor_ornament(state, framebuffer,
+                fbW, fbH, ornGlobalIdx, i, m11_dm1_use_flipped_walls(state));
             continue;
         }
         if (!dm1_v1_floor_ornament_render_plan_at_pc34(i, ornGlobalIdx, &plan)) {
@@ -48861,7 +48920,7 @@ static unsigned int m11_inventory_thing_sprite_index(
  * Both original A20E and S12E store these at the same offsets. Read the
  * selected owner's tables: the native D2 palette differs from the PC
  * constants, which cannot stand in for this data. No bitmap/table is borrowed from a peer. */
-static int m11_dm1_media009_object_metadata(M11_GameViewState* state)
+static int m11_dm1_media009_metadata(M11_GameViewState* state)
 {
     unsigned char raw[4720];
     const void* source;
@@ -48897,6 +48956,10 @@ static int m11_dm1_media009_object_metadata(M11_GameViewState* state)
     }
     for (int i = 0; i < 32; ++i)
         if (raw[1518+i] > 150 || raw[1518+i] % 10) return 0;
+    for (int i = 0; i < 9; ++i)
+        if (raw[3136+i] >= 3 || raw[3212+i] >= 6) return 0;
+    memcpy(state->dm1NativeFloorCoordinateSets, raw+3136, 9);
+    memcpy(state->dm1NativeFloorBitmapIncrements, raw+3212, 9);
     memcpy(state->dm1NativeObjectCoordinates, raw+1156, 300);
     memcpy(state->dm1NativeObjectAspects, raw+1642, 510);
     memcpy(state->dm1NativeObjectPalettes, raw+1518, 32);
@@ -48917,7 +48980,7 @@ static int m11_dm1_media009_object_graphic(const M11_GameViewState* state, int a
     const M11_AssetSlot* slot;
     int graphic;
     if (aspectIndex < 0 || aspectIndex >= 85 ||
-        !m11_dm1_media009_object_metadata((M11_GameViewState*)state)) return -1;
+        !m11_dm1_media009_metadata((M11_GameViewState*)state)) return -1;
     aspect = state->dm1NativeObjectAspects+aspectIndex*6;
     graphic = 360+aspect[0];
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned)graphic);
@@ -48931,7 +48994,7 @@ static int m11_dm1_media009_projectile_visible(const M11_GameViewState* state,
     const int square = m11_dm1_media009_square(forward, side);
     /* DUNVIEW.C F0115:5647 uses set0's X, not floor Y or PC C2900. */
     return square >= 0 && cell >= 0 && cell < 4 &&
-        m11_dm1_media009_object_metadata((M11_GameViewState*)state) &&
+        m11_dm1_media009_metadata((M11_GameViewState*)state) &&
         state->dm1NativeObjectCoordinates[(square*5+cell)*2] != 0;
 }
 
@@ -48952,7 +49015,7 @@ static int m11_draw_dm1_media009_object(
     int padding = 0, sourceX, drawn = 0;
     if (!state || !framebuffer || forward < 0 || forward > 3 ||
         side < -1 || side > 1 || (!forward && side) || relativeCell < 0 ||
-        relativeCell > 3 || !m11_dm1_media009_object_metadata((M11_GameViewState*)state))
+        relativeCell > 3 || !m11_dm1_media009_metadata((M11_GameViewState*)state))
         return 0;
     aspectIndex = projectile ? projectileAspect : dm1_item_aspect_index(thingType, subtype);
     if (aspectIndex < 0 || aspectIndex >= 85) return 0;
@@ -73083,6 +73146,14 @@ void M11_GameView_GetDm1F0115C2900RuntimeCaptureReceipt(
 int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent)
 {
     return m11_dm1_hoc_floor_item_capture_observed(itemPresent);
+}
+
+int M11_GameView_ProbeDrawDm1Media009FloorOrnament(
+    M11_GameViewState* state, unsigned char* framebuffer, int width, int height,
+    int globalIndex, int viewFloorIndex, int useFlippedFootprints)
+{
+    return m11_draw_dm1_media009_floor_ornament(state, framebuffer, width, height,
+        globalIndex, viewFloorIndex, useFlippedFootprints);
 }
 
 int M11_GameView_ProbeDrawDm1Media009Projectile(

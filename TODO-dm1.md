@@ -1,5 +1,12 @@
 # Firestaff TODO — DM1
 
+2026-10-15 early Amiga/Atari ornament follow-up: the lower-floor cyan/orange
+rectangle is traced and corrected through bounded dungeon decompression
+and native F0108 material routing. Original full-raster and actual-world
+pixel checks pass. The same metadata fix restores wall/door ornament lists,
+but their separate native material banks still require source/pixel audits;
+do not extend the floor result to full ornament or viewport parity.
+
 2026-10-15 A36 C255 follow-up: all 30,464 original-media indexed pixels,
 including outer and D0 walls, now pass an independent source-coordinate
 oracle. Archive/directory CLI and M12 startup checks pass. Keep actual

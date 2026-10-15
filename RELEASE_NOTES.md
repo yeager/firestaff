@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 early Amiga/Atari floor details`: read ornament lists from expanded
+  dungeon data and render their native graphics and coordinates. Correct
+  the unrelated cyan/orange floor image seen near the Hall stairs.
+
 - `DM1 PC title`: run the original start erase before the title, retain
   its final image and palette, and remove the incorrect ending wipe.
   Use the original default IBMIO timer counters rather than the borrowed

@@ -1,3 +1,14 @@
+- 2026-10-15: Early Amiga/Atari F0108 floor ornaments now use native
+  M616=247, the selected graphic 558's coordinate/frame selectors and
+  original padded-row blits. Expand compressed dungeon metadata in bounded
+  RAM before reading ornament lists; compressed bytes previously selected
+  unrelated graphics, producing the cyan/orange floor rectangle. Each
+  original A20E/ST12 passes 180 independent full-raster ornament cases;
+  actual recruitment/pickup/throw replays verify all 217 opaque native
+  puddle pixels in the affected rectangle. Previous object/projectile,
+  door/stair, owner-rebinding, Hall-walk, demo and PC wall checks pass.
+  Native wall/door ornament banks and complete viewport parity remain open.
+
 - 2026-10-15: A36 C255 now follows the original F0797 map and F0128
   wall order, including outer panels and terminal D0L/D0R, without the PC
   diagnostic walker's global bitmap dependency. Floor/ceiling are opaque;

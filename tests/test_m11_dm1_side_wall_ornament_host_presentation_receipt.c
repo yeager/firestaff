@@ -115,6 +115,54 @@ static int check_original_native_objects(M11_GameViewState* state, const char* e
     return 1;
 }
 
+/* Independent original M558 G0191/G0195/G0206, including the native
+ * STARTUP2 footprints family. No replacement game map or image is supplied. */
+static int check_original_native_floor_ornaments(M11_GameViewState* state, const char* edition)
+{
+    unsigned char raw[4720], actual[64000], expected[64000];
+    size_t length = 0;
+    int cases = 0;
+    if (state->assetLoader.atariStDm1) {
+        DM1_V1_AtariStGraphicsDat dat;
+        if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
+                (size_t)state->assetLoader.atariStDataSize,&dat)) return 0;
+        int count = dm1_v1_atari_st_graphics_read(&dat,558,raw,sizeof(raw));
+        if (count != (int)sizeof(raw)) return 0;
+        length = (size_t)count;
+    } else if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+        (size_t)state->assetLoader.legacyDataSize,1,558,raw,sizeof(raw),&length)) return 0;
+    if (length != sizeof(raw)) return 0;
+    for (int ornament=0;ornament<10;++ornament)
+    for (int view=0;view<9;++view)
+    for (int parity=0;parity<2;++parity) {
+        int global=ornament==9?15:ornament;
+        int set=global==15?1:raw[3136+global];
+        int graphic=(global==15?241:247+global*6)+raw[3212+view];
+        const unsigned char* coordinate=raw+2248+(set*9+view)*6;
+        const M11_AssetSlot* slot=M11_AssetLoader_Load(&state->assetLoader,(unsigned)graphic);
+        int flip=view%3==2 || (global==15&&view%3==1&&parity);
+        if(!slot||!slot->pixels||slot->width!=coordinate[4]*2||
+           slot->height!=coordinate[5])return 0;
+        memset(actual,17,sizeof(actual));memset(expected,17,sizeof(expected));
+        for(int y=coordinate[2];y<=coordinate[3];++y)
+        for(int x=coordinate[0];x<=coordinate[1];++x) {
+            int sx=x-coordinate[0],sy=y-coordinate[2];
+            if(flip)sx=slot->width-1-sx;
+            if(sx<0||sx>=slot->width||sy<0||sy>=slot->height)return 0;
+            unsigned char color=slot->pixels[sy*slot->width+sx];
+            if(color!=10)expected[(33+y)*320+x]=color;
+        }
+        if(!M11_GameView_ProbeDrawDm1Media009FloorOrnament(state,actual,320,200,
+                global,view,parity)||memcmp(actual,expected,sizeof(actual))) {
+            fprintf(stderr,"FAIL: original %s F0108 global%d view%d parity%d graphic%d\n",
+                edition,global,view,parity,graphic);return 0;
+        }
+        ++cases;
+    }
+    printf("PASS: original %s F0108 %d full-raster ornament/footprints cases, native G0191/G0195/G0206/C10\n",edition,cases);
+    return 1;
+}
+
 /* Real C127 recruitment and WATER pickup/throw. The compact strings encode
  * the existing original Hall route, not assigned party coordinates or things. */
 static int replay_native_cast_route(M11_GameViewState* state, const char* route)
@@ -202,6 +250,27 @@ static int check_original_native_cast(const M11_GameLaunchSpec* spec, const char
         ++opaque;
     }
     if (!opaque) goto done;
+    {
+        static const int floorGlobals[4]={2,8,6,1};
+        static const int wallGlobals[10]={4,33,34,6,2,59,38,46,36,43};
+        const M11_AssetSlot* puddle=M11_AssetLoader_Load(&state->assetLoader,300);
+        int puddlePixels=0;
+        if(!state->ornamentCacheLoaded[0]||!puddle||!puddle->pixels||
+           puddle->width!=64||puddle->height!=25)goto done;
+        for(int i=0;i<4;++i)if(state->floorOrnamentIndices[0][i]!=floorGlobals[i])goto done;
+        for(int i=0;i<10;++i)if(state->wallOrnamentIndices[0][i]!=wallGlobals[i])goto done;
+        /* Original F0108 D1C puddle: the previous compressed-metadata /
+         * PC-bank route accidentally drew creature498 in this rectangle. */
+        for(int y=0;y<25;++y)for(int x=0;x<64;++x) {
+            unsigned char color=puddle->pixels[y*64+x];
+            if(color==10)continue;
+            if(framebuffer[(125+y)*320+80+x]!=(unsigned char)(16|color))goto done;
+            ++puddlePixels;
+        }
+        if(!puddlePixels)goto done;
+        printf("PASS: original %s actual F0108 D1C puddle300 at80,125; %d opaque native pixels and same-owner map ornament lists\n",
+            edition,puddlePixels);
+    }
     printf("PASS: original %s C127 recruitment, WATER0x280b pickup and live C14slot0 cast at tick%u; native367 48x13@(53,68), G0218/Y47/C10/bank ownership\n", edition, state->world.gameTick);
     ok = 1;
 done:
@@ -507,6 +576,7 @@ static int check_original_amiga_background(void)
                                "6a2f135b53c2220f0251fa103e2a6e7e")) goto done;
     if (!check_original_door_orientation(&spec,"A20E") ||
         !check_original_native_objects(&state,"A20E") ||
+        !check_original_native_floor_ornaments(&state,"A20E") ||
         !check_original_native_item_walk(&spec,"A20E") ||
         !check_original_native_cast(&spec,"A20E")) goto done;
     floor = M11_AssetLoader_Load(&state.assetLoader, 75u);
@@ -996,7 +1066,8 @@ static int check_original_legacy_arrows(const char *env_name,
     if (atari && (!check_original_door_orientation(&spec,edition) ||
         !check_original_native_item_walk(&spec,edition) ||
         !check_original_native_cast(&spec,edition) ||
-        !check_original_native_objects(state,edition))) goto done;
+        !check_original_native_objects(state,edition) ||
+        !check_original_native_floor_ornaments(state,edition))) goto done;
     if (atari && (!check_original_legacy_materials(state,edition) ||
         !asset_file_matches_md5(state->assetLoader.graphicsDatPath,graphics_md5))) goto done;
     if (!atari && !check_original_amiga_palette(state,path,framebuffer)) goto done;

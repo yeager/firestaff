@@ -918,13 +918,15 @@ typedef struct {
     char dm1ObjectNames[199][96]; /* UTF-8 presentation keys; CP932 may expand 3x. */
     M11_FontState originalFont; /* DM1 font from GRAPHICS.DAT */
     int originalFontAvailable;
-    /* MEDIA009 F0115 metadata from this asset owner's original M558. */
+    /* MEDIA009 F0108/F0115 metadata from this asset owner's original M558. */
     const void* dm1NativeObjectMetadataSource;
     long dm1NativeObjectMetadataSourceSize;
     int dm1NativeObjectMetadataValid;
     unsigned char dm1NativeObjectCoordinates[300];
     unsigned char dm1NativeObjectAspects[510];
     unsigned char dm1NativeObjectPalettes[32];
+    unsigned char dm1NativeFloorCoordinateSets[9];
+    unsigned char dm1NativeFloorBitmapIncrements[9];
     M11_AudioState audioState;
     int audioEventCount;
     /* CSB's SOUND.C runtime owns delayed/immediate arbitration. M11 keeps
@@ -3307,6 +3309,11 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     unsigned int destinationAfterFNV1a;
     int destinationPixelsChanged;
 } M11_Dm1FloorItemHostPresentationReceipt;
+
+/* Isolated F0108 material from the selected MEDIA009 original graphics. */
+int M11_GameView_ProbeDrawDm1Media009FloorOrnament(
+    M11_GameViewState* state, unsigned char* framebuffer, int width, int height,
+    int globalIndex, int viewFloorIndex, int useFlippedFootprints);
 
 /* Positive F0142 aspect through the native F0115 projectile material route. */
 int M11_GameView_ProbeDrawDm1Media009Projectile(
