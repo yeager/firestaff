@@ -368,14 +368,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   RNG/timer implementation and an original-media receipt through the first
   `0x54` dispatch.
 
-  2026-10-13 New Game event trace: `SKW5_STARTUP_THREAD_MAIN_LOOP_01` calls
-  `randdat.init()` before `SKW5_INIT`; the title-menu loop then returns from
-  `DM2_SHOW_MENU_SCREEN` to `DM2_GAME_LOAD` (`sk5start.cpp:106, 235-241`). The
-  New Game and New Game-with-option UI events (215/216) only set
-  `glbSpecialScreen` (and, for 216, `savegamew1`) in `DM2_HANDLE_UI_EVENT`
-  (`uiinput.cpp:504-513`); these branches do not draw RNG. This closes the
-  event action itself. A later source-order trace below closes the remaining
-  pre-weather RNG path and establishes its zero seed.
+  2026-10-15 correction to the earlier New Game event trace:
+  `sk5start.cpp:177-259` is a block comment, including the purported
+  SHOW_MENU_SCREEN/GAME_LOAD loop at 235-241. It cannot establish active
+  SKWINSPX startup order. Active SKULLWIN instead initializes RNG in
+  `main.cpp:177`, reaches WATCOM_STARTUP at 216 and DM2_INIT in
+  `startend.cpp:508-566`; its full pre-menu/indirect event path remains open.
+  New Game UI events 215/216 themselves set `glbSpecialScreen` (and, for
+  216, `savegamew1`) without drawing RNG (`uiinput.cpp:504-513`), but this
+  local fact does not establish the seed at weather initialization.
 
   The real-media GDAT/dungeon reader also confirms that map 0 uses GRAPHICSSET
   2 and GDAT `(8,2,11,0x66)` resolves weather zone 2 in both the installed DOS
@@ -396,7 +397,7 @@ Reviewed 2026-08-29. Only open work is listed here.
   the first timer delay 0; the common `RANDDIR()` gives field `v1e1483=3`; and
   the common `RAND16(4)+4` gives field `v1e1470=6`. The branch sets
   `v1e1478=3` and `v1e1484=1` without additional random draws. The shared LCG
-  state immediately after the weather bootstrap is `0x11cfaefd`
+  state after that conditional zero-seeded weather calculation is `0x11cfaefd`
   (`skweathr.cpp:541-566`). The previously recorded `0x46f91084` is the fourth
   successive raw LCG state from seed zero, after one additional draw; its
   exact later consumer is not established here and must not be assigned to
