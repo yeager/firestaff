@@ -51,6 +51,8 @@ int main(void) {
     int matched[1] = {0};
     const char *hashes[] = {"00000000000000000000000000000000", NULL};
     int count;
+    int deferredFailure = 0;
+    int deferredMenuLive = 0;
     M12_StartupMenuState menu;
     M12_StartupMenuInitOptions menuOptions;
 
@@ -431,11 +433,78 @@ int main(void) {
                 return 1;
             }
             M12_StartupMenu_Destroy(&menu);
+            /* Deferred completion must publish messages on the caller's UI
+             * thread, including a later return-menu rescan of original media. */
+            memset(&partialOptions, 0, sizeof(partialOptions));
+            partialOptions.skipAssetScan = 1;
+            partialOptions.skipScreenshotGalleryScan = 1;
+            M12_StartupMenu_InitWithOptions(&menu, root, NULL, &partialOptions);
+            deferredMenuLive = 1;
+            menu.settings.languageIndex = 0;
+            menu.view = M12_MENU_VIEW_MAIN;
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menu);
+            if (menu.view != M12_MENU_VIEW_MAIN) goto deferred_scan_failure;
+            if (chmod(denied, 0000) != 0) goto deferred_scan_failure;
+            M12_StartupMenu_RunDeferredScan(&menu, NULL, NULL);
+            if (menu.view != M12_MENU_VIEW_MAIN) {
+                fprintf(stderr, "FAIL: deferred worker published a modal message\n");
+                goto deferred_scan_failure;
+            }
+            menu.assetStatus.scanProgress.cancelled = 1;
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menu);
+            if (menu.view != M12_MENU_VIEW_MAIN) goto deferred_scan_failure;
+            menu.assetStatus.scanProgress.cancelled = 0;
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menu);
+            if (menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine1 ||
+                strcmp(menu.messageLine1, "1 FOLDER REQUIRES ACCESS") != 0 ||
+                !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
+                fprintf(stderr, "FAIL: deferred completion lost denied-folder/original-media result\n");
+                goto deferred_scan_failure;
+            }
+            if (chmod(denied, 0700) != 0) goto deferred_scan_failure;
+            menu.view = M12_MENU_VIEW_MAIN;
+            M12_StartupMenu_RescanAllGames(&menu, NULL, NULL);
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menu);
+            if (menu.view != M12_MENU_VIEW_MAIN ||
+                !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
+                fprintf(stderr, "FAIL: return-menu rescan did not recover original media after access grant\n");
+                goto deferred_scan_failure;
+            }
+            if (chmod(denied, 0000) != 0) goto deferred_scan_failure;
+            M12_StartupMenu_RescanAllGames(&menu, NULL, NULL);
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menu);
+            if (menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine1 ||
+                strcmp(menu.messageLine1, "1 FOLDER REQUIRES ACCESS") != 0) {
+                fprintf(stderr, "FAIL: return-menu rescan omitted denied-folder message\n");
+                goto deferred_scan_failure;
+            }
+            if (chmod(denied, 0700) != 0 || unlink(archiveLink) != 0) goto deferred_scan_failure;
+            archiveLink[0] = '\0';
+            menu.view = M12_MENU_VIEW_MAIN;
+            M12_StartupMenu_RescanAllGames(&menu, NULL, NULL);
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menu);
+            if (M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") ||
+                menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine1 ||
+                strcmp(menu.messageLine1, "NO GAME DATA FOUND") != 0) {
+                fprintf(stderr, "FAIL: removing last original link did not publish no-data message\n");
+                goto deferred_scan_failure;
+            }
+            M12_StartupMenu_Destroy(&menu);
+            deferredMenuLive = 0;
             puts("PASS: startup and rescan report denied folders beside authentic DM1 media");
             puts("PASS: same-process rescan and fresh startup recover after folder access is granted");
         }
     }
 
+    goto cleanup_permission_fixture;
+
+deferred_scan_failure:
+    deferredFailure = 1;
+    if (deferredMenuLive) M12_StartupMenu_Destroy(&menu);
+    /* Restore task-owned permissions before touching staged paths. */
+    (void)chmod(denied, 0700);
+
+cleanup_permission_fixture:
     if (archiveLink[0] != '\0' && unlink(archiveLink) != 0 &&
         errno != ENOENT) {
         perror("remove authentic DM1 archive link");
@@ -454,6 +523,7 @@ int main(void) {
         return 1;
     }
 
+    if (deferredFailure) return 1;
     puts("PASS: denied directories are recorded and diagnostics can be cleared");
     return 0;
 }

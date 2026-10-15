@@ -7204,3 +7204,9 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
   Draw and successful Present return, distinguishing movement, turns and blocks.
 - SDL delivery, command queue wait and physical scanout are explicitly
   unmeasured; the new stage figures do not claim complete input latency.
+
+### Scan completion feedback (2026-10-15)
+
+- Show existing folder-access and missing-data explanations after deferred
+  startup scans and scans on return from a game. Publish messages on the UI
+  thread after scan completion, and suppress them for cancelled scans.

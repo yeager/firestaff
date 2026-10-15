@@ -615,6 +615,8 @@ static void m11_rescan_launcher_asset_status(
     M12_StartupMenu_RescanAllGames(menuState,
                                    m11_scan_progress_callback,
                                    &scanCtx);
+    if (!quitRequested || !*quitRequested)
+        M12_StartupMenu_FinalizeDeferredScanMessages(menuState);
     if (debug && quitRequested && *quitRequested) {
         fprintf(stderr, "firestaff: return-menu rescan-cancelled by window close\n");
     } else if (debug) {
@@ -1066,6 +1068,9 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     }
     if (scanThread) {
         SDL_WaitThread(scanThread, NULL);
+        /* The worker owns only scan results. Publish dialogs after joining
+         * it, when the launcher state is again owned by the UI thread. */
+        M12_StartupMenu_FinalizeDeferredScanMessages(menuState);
     }
     if (scanJob.mutex) SDL_DestroyMutex(scanJob.mutex);
     free(rgba);
@@ -11223,6 +11228,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,
                                         &fallbackCtx);
+        if (!quitRequested && !o->directLaunch)
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menuState);
     }
     M11_ApplyStartupMenuRuntime(&menuState);
     /* Query the applied renderer state, after saved settings and CLI

@@ -4938,6 +4938,25 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
 }
 
 
+static void m12_finalize_scan_messages(M12_StartupMenuState* state) {
+    /* A denied folder matters even when another authentic game is ready.
+     * Optional extractor/no-data messages must not hide a playable card. */
+    if (!m12_show_access_denied_popup(state) &&
+        m12_asset_ready_game_count(&state->assetStatus) == 0 &&
+        !m12_show_missing_archive_tool_popup(state)) {
+        m12_show_no_game_data_popup(state);
+    }
+}
+
+void M12_StartupMenu_FinalizeDeferredScanMessages(M12_StartupMenuState* state) {
+    if (!state || state->deferredScanPending ||
+        state->assetStatus.scanProgress.active ||
+        !state->assetStatus.scanProgress.complete ||
+        state->assetStatus.scanProgress.cancelRequested ||
+        state->assetStatus.scanProgress.cancelled) return;
+    m12_finalize_scan_messages(state);
+}
+
 void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
                                      M12_AssetStatusScanProgressFn progressFn,
                                      void* progressUserData) {
@@ -5286,16 +5305,7 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
      * scan is still pending; the completion path above reports it only after
      * an actual empty scan. */
     if (!(options && options->skipAssetScan)) {
-        /* An unrelated archive that needs an optional diagnostic extractor
-         * must not put a modal dialog in front of a verified game card.  In
-         * particular, a CSB STX can be launched natively while a separately
-         * staged .7z utility image remains unavailable.  Surface that
-         * archive warning only when no supported game media was found. */
-        if (!m12_show_access_denied_popup(state) &&
-            m12_asset_ready_game_count(&state->assetStatus) == 0 &&
-            !m12_show_missing_archive_tool_popup(state)) {
-            m12_show_no_game_data_popup(state);
-        }
+        m12_finalize_scan_messages(state);
     }
     state->frameTick = 0;
     state->hoverX = -1;

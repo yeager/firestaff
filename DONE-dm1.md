@@ -1,3 +1,12 @@
+- 2026-10-15: Deferred startup/return-menu scans now publish access-denied
+  and no-data explanations on the UI thread after completion/join, reusing
+  the existing startup policy. Incomplete/cancelled scans stay quiet.
+  Original DM1 archive tests pass for denial beside playable media, granting
+  access, renewed denial and removing the last staged archive link. The
+  regression also verifies that RunDeferredScan itself does not open a modal.
+  Original-PC keyboard and mouse return/close during rescan still pass.
+  Catalog validation passes; refreshed catalogs change reference lines only.
+
 - 2026-10-15: Bounded the uppercase DM1 menu-leaf regression to selected
   authentic DM1/CSB/DM2 archives instead of every installed edition. The
   complete original-media startup diagnostic suite passes in 167.34 seconds;

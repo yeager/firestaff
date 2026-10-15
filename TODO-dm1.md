@@ -1,12 +1,13 @@
 # Firestaff TODO — DM1
 
-2026-10-15 startup scan feedback source audit: RunDeferredScan updates game
-availability but does not show access-denied/no-data feedback after completion.
-InitEx and the manual folder worker have notification paths; return-menu and
-intro-worker completion do not. Add shared finalization on the UI thread after
-successful, non-cancelled deferred scans, then verify with authentic archive
-removal and denied access to a task-owned staging directory. Do not mutate UI
-message fields from the intro scan worker. This is not implemented yet.
+2026-10-15 startup scan feedback: deferred startup and return-menu scans now
+finalize permission/no-data messages on the UI thread after completed work.
+Pending, incomplete and cancelled scans do not publish dialogs. Authentic DM1
+permission tests cover denial beside available media, restored access and
+removing the last staged original-archive link. These use POSIX permission
+bits; actual macOS privacy prompts remain a separate OS integration check.
+The pre-existing no-data helper's attempt to create a missing data root is
+unchanged; review disconnected-volume behavior separately before changing it.
 
 2026-10-15 diagnostic hashing correction: lightweight trace/scriptwait metadata
 and launch-scoped M12 host capture publication are implemented. Explicit full

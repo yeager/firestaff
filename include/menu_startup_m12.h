@@ -725,6 +725,10 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
 void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
                                      M12_AssetStatusScanProgressFn progressFn,
                                      void* progressUserData);
+/* UI thread only, after a deferred scan worker has completed and joined,
+ * or after synchronous RescanAllGames returns. Never call from the worker.
+ * Pending, incomplete and cancelled scans do not publish modal messages. */
+void M12_StartupMenu_FinalizeDeferredScanMessages(M12_StartupMenuState* state);
 void M12_StartupMenu_RescanAllGames(
     M12_StartupMenuState* state,
     M12_AssetStatusScanProgressFn progressFn,
