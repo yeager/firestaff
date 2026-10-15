@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Frame pacing`: avoid oversleeping the remaining host frame interval
+  on SDL 3.2 and newer. The original game clocks remain unchanged.
+
 - `DM1 PC Hall mirrors`: draw the original frame at its native size and
   source layout position, without stretching it or altering its colors
   with the distant-wall palette. Preserve the original portrait overlay.

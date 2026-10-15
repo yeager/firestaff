@@ -1,5 +1,18 @@
 # Firestaff TODO — DM1
 
+2026-10-15 HoC performance follow-up: SDL 3.2+ precise host pacing now
+reaches the configured 62.5 full-redraw rate on original PC34 with dummy
+640x400 output. Continue native HiDPI execution and separately measure
+received input, queued/accepted movement, completed Draw and successful
+Present return. Existing viewport-dirty counters prove ordering only.
+The V1 renderer currently expands/scales into output-sized RGBA on CPU
+before uploading even on Metal; audit high-resolution font/filter overlays
+before replacing that work with a native-sized texture/GPU scaling path.
+A native Cocoa run at the actual 1920x1018 drawable reaches 61.90 full-
+redraw FPS but consumes 96.6-96.8 percent of one CPU core. Its drawable
+is 1x, not a physical Retina test, and renderer/GPU utilization is unmeasured.
+Do not infer Metal utilization from dummy software-renderer CPU readings.
+
 2026-10-15 secondary reference audit: ScummVM DM at
 [`5eefba1a2cd412016e83a89eaae31376a95c9367`](https://github.com/scummvm/scummvm/tree/5eefba1a2cd412016e83a89eaae31376a95c9367/engines/dm)
 is useful for Amiga 2.0 English and DOS 3.4 USA English comparisons;

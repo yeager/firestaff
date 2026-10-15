@@ -1,3 +1,13 @@
+- 2026-10-15: Correct host-loop pacing on SDL 3.2+ by measuring the
+  remaining frame interval in nanoseconds and using SDL_DelayPrecise.
+  The original source tick and startup VBlank policies are unchanged.
+  A matched original PC34 HoC full-redraw run at 640x400 with SDL dummy
+  output improves from 54.29 to 62.50 rendered/presented frames per second
+  against the unchanged 62.5 target; CPU rises from 28.3 to 30.9 percent
+  of one core. The five-second corrected window has zero over-budget loops.
+  This proves host-loop pacing, not physical HiDPI/GPU scanout or complete
+  input-to-display latency. Older SDL headers retain the existing wait path.
+
 - 2026-10-15: Inspected ScummVM's current DM engine at pinned revision
   5eefba1a2cd412016e83a89eaae31376a95c9367 as a secondary reference.
   Detection, graphics-format endian/version branches, separate material

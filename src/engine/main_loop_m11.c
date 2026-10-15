@@ -11705,7 +11705,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     while (!quitRequested && !menuState.shouldExit &&
            !M11_RunDurationHasElapsed(o->durationMs, (Uint32)start,
                                      (Uint32)now)) {
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+        const Uint64 loopStartNs = SDL_GetTicksNS();
+#else
         const Uint32 loopStartMs = (Uint32)SDL_GetTicks();
+#endif
         double perfLoopDrawMs = 0.0;
         Uint64 perfLoopDrawCount = 0;
         if (o->debug) ++perfLoopCount;
@@ -12228,11 +12232,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * wait only for the portion of the target interval spent outside
          * rendering and event handling. */
         {
+#if SDL_VERSION_ATLEAST(3, 2, 0)
+            /* SDL_Delay may oversleep by several milliseconds on macOS.
+             * Keep the existing host interval, but measure its remainder
+             * without millisecond truncation and request a precise wait.
+             * Original game clocks and startup VBlank waits are separate. */
+            const Uint64 intervalNs = interval * SDL_NS_PER_MS;
+            const Uint64 elapsedNs = SDL_GetTicksNS() - loopStartNs;
+            if (elapsedNs < intervalNs)
+                SDL_DelayPrecise(intervalNs - elapsedNs);
+#else
             const Uint32 elapsedMs =
                 (Uint32)SDL_GetTicks() - loopStartMs;
-            if ((Uint64)elapsedMs < interval) {
+            if ((Uint64)elapsedMs < interval)
                 SDL_Delay((Uint32)(interval - (Uint64)elapsedMs));
-            }
+#endif
         }
         now = SDL_GetTicks();
         if (o->debug &&
