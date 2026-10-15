@@ -1,3 +1,9 @@
+- 2026-10-15: The entrance HiDPI regression now retains drawable dimensions
+  through production mouse mapping, Original 320x200 conversion, hit-testing
+  and command dispatch for all five entrance actions. Existing display and
+  entrance tests pass at logical 1512x982 -> drawable 3024x1964, plus separate
+  X2/Y1.5 scaling. These are geometry tests, not a physical Retina capture.
+
 - 2026-10-15: Early Amiga/Atari production wall endpoints now consume
   native MEDIA009 compounds and G0163 pixel strides, not separate PC wall
   records. F0096-derived buffers preserve shifted D3/D2 flips, D1 flips,

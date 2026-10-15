@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+Completion scope: the current catalogue has sixteen editions on four source
+platforms; that inventory does not prove all DM1 platforms are supported.
+Apple IIGS, Sharp X68000 and SNES media archive names also exist locally but
+are not admitted by this catalogue. Authenticate their contents and account
+for their native runtime/startup gaps before claiming all-platform support.
+PC-9821 support remains excluded by user instruction. Native Windows/Linux
+and a physically active HiDPI display require separate execution evidence.
+
 2026-10-15 early Amiga/Atari runtime layers: original A20E background,
 demo/Atari 1.2 native arrows, turn-button click strips and eleven MEDIA009
 wall positions now have complete original-pixel regressions. Actual demo

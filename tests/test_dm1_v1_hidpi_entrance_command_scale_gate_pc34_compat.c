@@ -130,6 +130,47 @@ static void expect_route_on_surface(const EntranceMouseRouteCompat* route,
            hit.zoneIndex, hit.commandId);
 }
 
+/* Keep the resolved drawable pair through the same pure mapping function
+ * used by M11_Render_MapWindowToFramebuffer, then dispatch the source command.
+ * These are geometry fixtures, not a claim of a physical Retina display. */
+static void expect_route_on_drawable(const EntranceMouseRouteCompat* route,
+                                     int windowW,
+                                     int windowH,
+                                     int drawableW,
+                                     int drawableH) {
+    int rectX = -1, rectY = -1, rectW = -1, rectH = -1;
+    int windowX, windowY;
+    int fbX = -1, fbY = -1;
+    EntranceMouseRouteCompat hit;
+    CHECK(M11_Render_ComputeDrawablePresentationRect(
+        windowW, windowH, drawableW, drawableH,
+        M11_FB_WIDTH, M11_FB_HEIGHT, M11_SCALE_FIT, 0,
+        M11_DISPLAY_ASPECT_CONTENT,
+        &rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK);
+    /* Pick the centre of a source pixel in drawable space, then deliver its
+     * logical-window coordinate as SDL does. */
+    windowX = (int)(((long long)(rectX + presented_center_for_source_axis(
+        route->x + route->w / 2, M11_FB_WIDTH, rectW)) * windowW) / drawableW);
+    windowY = (int)(((long long)(rectY + presented_center_for_source_axis(
+        route->y + route->h / 2, M11_FB_HEIGHT, rectH)) * windowH) / drawableH);
+    CHECK(M11_Render_MapPointToDrawableFramebuffer(
+        windowX, windowY, windowW, windowH, drawableW, drawableH,
+        M11_FB_WIDTH, M11_FB_HEIGHT, M11_SCALE_FIT, 0,
+        M11_DISPLAY_ASPECT_CONTENT, &fbX, &fbY) == 1);
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+        M12_PRESENTATION_V1_ORIGINAL, M11_FB_WIDTH, M11_FB_HEIGHT,
+        &fbX, &fbY) == 0);
+    CHECK(fbX >= route->x && fbX < route->x + route->w);
+    CHECK(fbY >= route->y && fbY < route->y + route->h);
+    CHECK(ENTRANCE_Compat_HitTestMouseRoute(fbX, fbY, route->buttonMask, &hit) == 1);
+    CHECK(hit.zoneIndex == route->zoneIndex);
+    CHECK(hit.commandId == route->commandId);
+    CHECK(M11_Entrance_DispatchSourceLockedPointerCommand(
+        fbX, fbY, route->buttonMask) == (int)route->commandId);
+    printf("drawable=%dx%d logical=%dx%d route=%s fb=%d,%d\n",
+           drawableW, drawableH, windowW, windowH, route->name, fbX, fbY);
+}
+
 static void expect_route_after_sdl3_pixel_resize(const EntranceMouseRouteCompat* route) {
     int windowW = -1;
     int windowH = -1;
@@ -154,10 +195,9 @@ static void expect_route_after_sdl3_pixel_resize(const EntranceMouseRouteCompat*
     CHECK(windowH == 982);
     CHECK(renderW == 3024);
     CHECK(renderH == 1964);
-    expect_route_on_surface(route,
-                            windowW,
-                            windowH,
-                            "sdl3_pixel_resize_keeps_logical_mouse_1512x982");
+    expect_route_on_drawable(route, windowW, windowH, renderW, renderH);
+    /* Independent axis densities must use the same production transform. */
+    expect_route_on_drawable(route, windowW, windowH, renderW, 1473);
 }
 
 static void expect_right_edge_misses(const EntranceMouseRouteCompat* route,
