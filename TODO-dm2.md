@@ -1,5 +1,18 @@
 # Firestaff TODO — DM2
 
+2026-10-15 SKProject cold-start order check: `dm2data.cpp` initializes
+`v1d652d = 1` and `v1d7188 = 1`. On the first `DM2_GAME_LOAD`,
+`sksvgame.cpp` calls `DM2_weather_3df7_0037(0)` before map processing and
+`DM2_ARRANGE_DUNGEON`. In `c_weather.cpp`, this initial storm-request branch
+draws `RAND16(500)` and the common tail draws `RAND16(4)`; it does not draw
+either `RANDDIR` in the non-storm branch. The function then clears
+`v1d7188`, and the load path clears `v1d652d` after arrangement. This pins the
+first-load weather branch and its two draws, but not the incoming RNG seed or
+all state initialized between fresh-game setup and `DM2_GAME_LOAD`. The
+Firestaff New Game owner currently has no transaction that owns that complete
+pre-arrangement state, so do not prepend two draws to the arrangement receipt
+or infer a seed from the dungeon data.
+
 2026-10-15 authentic `DM2_ARRANGE_DUNGEON` RNG-census verification: the
 read-only source-order census passed against the installed original DOS EN,
 DOS FR, and FM Towns JP data. EN and FR have identical dungeon bytes but
