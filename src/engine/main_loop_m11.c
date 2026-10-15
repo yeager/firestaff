@@ -3547,11 +3547,19 @@ static int m11_dm1_amiga_sibling_path(const M12_AssetVersionStatus* version,
         if (!slash || (backslash && backslash > slash)) slash = backslash;
         if (slash) leaf = slash + 1;
     }
-    memberBytes = strlen(leaf);
-    if (memberBytes != sizeof(graphicsMember) - 1U) return 0;
-    for (i = 0u; i < memberBytes; ++i)
-        if ((unsigned char)toupper((unsigned char)leaf[i]) !=
-            (unsigned char)graphicsMember[i]) return 0;
+    if (separator) {
+        memberBytes = strlen(leaf);
+        if (memberBytes != sizeof(graphicsMember) - 1U) return 0;
+        for (i = 0u; i < memberBytes; ++i)
+            if ((unsigned char)toupper((unsigned char)leaf[i]) !=
+                (unsigned char)graphicsMember[i]) return 0;
+    } else if (!version->matched || !version->matchedMd5[0] ||
+               !asset_file_matches_md5(path, version->matchedMd5)) {
+        /* Loose discovery admits original graphics by content, including
+         * renamed files. Recheck this selected file before F0437/F0441's
+         * same-parent companion lookup; archive member policy stays above. */
+        return 0;
+    }
     prefixBytes = (size_t)(leaf - path);
     siblingBytes = strlen(sibling) + 1u;
     if (prefixBytes >= outPathBytes ||

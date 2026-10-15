@@ -63057,3 +63057,13 @@ if(BUILD_TESTING AND UNIX)
         SKIP_RETURN_CODE 77 TIMEOUT 90
         LABELS "dm1;atari;real-media;case-sensitive;cli;menu;startup;skip-safe")
 endif()
+
+if(BUILD_TESTING AND UNIX)
+    add_test(NAME dm1_v1_amiga_loose_graphics_alias_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga_loose_graphics_alias_real_media.sh
+            $<TARGET_FILE:firestaff>)
+    set_tests_properties(dm1_v1_amiga_loose_graphics_alias_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 90
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/dm-amiga-demo-en.zip"
+        LABELS "dm1;amiga;real-media;cli;menu;startup;skip-safe")
+endif()

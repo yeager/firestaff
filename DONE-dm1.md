@@ -1,3 +1,15 @@
+- 2026-10-15: Admit renamed loose Amiga graphics by their recorded original
+  identity, rechecking the exact selected file before same-parent companion
+  resolution. Archive member naming policy remains unchanged. The authentic
+  demo named Maze-art.dat failed M12 before the fix; its new original-media
+  matrix now passes directory/file selection through CLI runtime and M12
+  SWSH/title/entrance, retaining exact alias ownership and unchanged original
+  ZIP/staged bytes. Original A22G renamed German-art.dat also passes four-file
+  identity and selected-file M12 into loaded runtime. The A22G archive CLI/menu
+  regression passes in 7.10 seconds. Locale catalogs are current. These are
+  functional checks with SDL dummy drivers on one Mac, not native platform
+  or visual/audio parity proof.
+
 - 2026-10-15: Reuse one private same-directory case resolver for Amiga
   startup companions and Atari/Amiga loose dungeons. Before the fix, unchanged
   original Atari 1.2 DUNGEON.DAT booted but dungeon.dat failed on case-sensitive
