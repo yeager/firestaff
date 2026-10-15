@@ -4957,6 +4957,27 @@ static int m12_admit_nexus_7z_directory_source(
     return 0;
 }
 
+/* Native directory receipts bind TMENU and EDM/JDM to the same owner as
+ * selected graphics. Keep DATA/JDATA stripping independent of AUTOEXEC so
+ * an incomplete first copy cannot redirect validation to a sibling. */
+static int m12_dm1_towns_loose_launcher_ready(const char* graphics,
+                                               int japanese,
+                                               char startupRoot[M12_ASSET_DATA_DIR_CAPACITY]) {
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    DM1_V1_FmtownsStartupReceipt receipt;
+    startupRoot[0] = '\0';
+    if (!graphics || strstr(graphics, "::") ||
+        !FSP_ParentDir(dataRoot, sizeof(dataRoot), graphics)) return 0;
+    if (m12_ascii_equals_ignore_case(m12_path_leaf(dataRoot), "DATA") ||
+        m12_ascii_equals_ignore_case(m12_path_leaf(dataRoot), "JDATA")) {
+        if (!FSP_ParentDir(startupRoot, M12_ASSET_DATA_DIR_CAPACITY, dataRoot)) return 0;
+    } else {
+        m12_copy_string(startupRoot, M12_ASSET_DATA_DIR_CAPACITY, dataRoot);
+    }
+    return dm1_v1_fmtowns_startup_receipt_from_directory(startupRoot, japanese, &receipt) &&
+        dm1_v1_fmtowns_startup_receipt_is_native(&receipt);
+}
+
 static void m12_fill_game_versions(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -5106,6 +5127,51 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                 if (count < 0) fprintf(stderr,
                     "firestaff: media-discovery-incomplete game=dm1 path=%s reason=%s\n",
                     roots[rootIndex], count == -2 ? "candidate-limit" : "allocation");
+            }
+        }
+    }
+    if (strcmp(gameSpec->gameId, "dm1") == 0) {
+        for (i = 0U; i < gameSpec->versionCount; ++i) {
+            const char* id = gameSpec->versions[i].versionId;
+            int readyRoots[M12_SEARCH_ROOT_COUNT] = {0};
+            int anyReady = 0;
+            if (strcmp(id, "fmtowns-en") != 0 && strcmp(id, "fmtowns-ja") != 0) continue;
+            for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+                char startupRoot[M12_ASSET_DATA_DIR_CAPACITY];
+                char (*candidates)[ASSET_PATH_MAX];
+                int count, candidate;
+                if (!rootMatched[rootIndex][i]) continue;
+                if (m12_path_is_virtual_asset(rootMatchedPaths[rootIndex][i])) {
+                    readyRoots[rootIndex] = anyReady = 1;
+                    continue;
+                }
+                if (m12_dm1_towns_loose_launcher_ready(rootMatchedPaths[rootIndex][i],
+                        strcmp(id, "fmtowns-ja") == 0, startupRoot)) {
+                    readyRoots[rootIndex] = anyReady = 1;
+                    continue;
+                }
+                candidates = calloc(256U, sizeof(*candidates));
+                count = candidates ? asset_collect_files_by_md5(roots[rootIndex],
+                    m12_effective_version_md5(&gameSpec->versions[i]), candidates, 256U, 32) : -1;
+                for (candidate = 0; candidate < count; ++candidate) {
+                    if (m12_dm1_towns_loose_launcher_ready(candidates[candidate],
+                            strcmp(id, "fmtowns-ja") == 0, startupRoot)) {
+                        m12_copy_string(rootMatchedPaths[rootIndex][i],
+                            sizeof(rootMatchedPaths[rootIndex][i]), candidates[candidate]);
+                        readyRoots[rootIndex] = anyReady = 1;
+                        break;
+                    }
+                }
+                free(candidates);
+                if (count < 0) fprintf(stderr,
+                    "firestaff: media-discovery-incomplete game=dm1 path=%s reason=%s\n",
+                    roots[rootIndex], count == -2 ? "candidate-limit" : "allocation");
+            }
+            /* Preserve an invalid row only when none can launch, so the
+             * final availability pass retains missing-program diagnostics. */
+            if (anyReady) {
+                for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex)
+                    if (!readyRoots[rootIndex]) rootMatched[rootIndex][i] = 0;
             }
         }
     }
@@ -6325,22 +6391,10 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
             if (version->matched && !strstr(version->matchedPath, "::") &&
                 (strcmp(version->versionId, "fmtowns-en") == 0 ||
                  strcmp(version->versionId, "fmtowns-ja") == 0)) {
-                char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
-                char startupRoot[M12_ASSET_DATA_DIR_CAPACITY] = {0};
-                DM1_V1_FmtownsStartupReceipt receipt;
+                char startupRoot[M12_ASSET_DATA_DIR_CAPACITY];
                 const int japanese = strcmp(version->versionId, "fmtowns-ja") == 0;
-                int nativeReady = FSP_ParentDir(dataRoot, sizeof(dataRoot),
-                                                 version->matchedPath);
-                if (nativeReady &&
-                    (m12_ascii_equals_ignore_case(m12_path_leaf(dataRoot), "DATA") ||
-                     m12_ascii_equals_ignore_case(m12_path_leaf(dataRoot), "JDATA")))
-                    nativeReady = FSP_ParentDir(startupRoot, sizeof(startupRoot), dataRoot);
-                else if (nativeReady)
-                    m12_copy_string(startupRoot, sizeof(startupRoot), dataRoot);
-                nativeReady = nativeReady &&
-                    dm1_v1_fmtowns_startup_receipt_from_directory(startupRoot,
-                                                                  japanese, &receipt) &&
-                    dm1_v1_fmtowns_startup_receipt_is_native(&receipt);
+                int nativeReady = m12_dm1_towns_loose_launcher_ready(
+                    version->matchedPath, japanese, startupRoot);
                 if (!nativeReady) {
                     missingLauncher = japanese
                         ? "AUTOEXEC.BAT / TMENU.EXP / TMENU.ICN / TMENU.INF / JDM.EXP"

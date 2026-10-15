@@ -1709,7 +1709,11 @@ playable edition survives, existing required-file feedback lists the launcher
 filenames. Valid Japanese/PC siblings remain available. Program reads use a
 1 MiB per-file cap on the same open file; original supported native programs
 pass. Virtual archive admission is unchanged and no per-frame I/O is added.
-Remaining: duplicate loose candidates still use the scanner's first matching
-source; add completeness/ownership coverage for a broken first copy beside a
-complete copy. Per-selected-edition diagnostics in mixed ready collections and
-native Windows original-media staging also remain open.
+Duplicate native launcher owners are now searched in bounded, hash-matched
+loose candidates before edition publication. A broken first copy no longer
+hides a complete English copy; the authentic menu handoff and stale-source
+rejection are covered. Invalid earlier roots are bypassed when another ready
+root exists (cross-root behavior is source-reviewed, not runtime-tested).
+Per-selected-edition diagnostics in mixed ready collections and native Windows
+original-media staging remain open. Separate duplicate completeness cases for
+missing dungeon data still need authentic evidence.

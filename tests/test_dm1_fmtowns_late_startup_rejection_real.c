@@ -41,6 +41,8 @@ int main(void) {
     char config[FSP_PATH_MAX]={0}, menuProgram[FSP_PATH_MAX]={0};
     char japaneseData[FSP_PATH_MAX]={0}, englishProgram[FSP_PATH_MAX]={0}, pcAlias[FSP_PATH_MAX]={0};
     char source[FSP_PATH_MAX], destination[FSP_PATH_MAX], physical[FSP_PATH_MAX];
+    char duplicate[FSP_PATH_MAX]={0}, duplicateData[FSP_PATH_MAX]={0};
+    size_t duplicateLinked=0;
     M12_StartupMenuState* menu=NULL;
     M11_GameViewState* game=NULL;
     M12_AssetStatus* fresh=NULL;
@@ -179,6 +181,58 @@ int main(void) {
     M12_AssetStatus_ScanGame(fresh,root,"dm1");
     REQUIRE(M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched,
         "restoring EDM admits English native startup again");
+    /* A complete second installation must survive an earlier same-edition
+     * graphics/dungeon pair whose native launcher is incomplete. */
+    REQUIRE(FSP_JoinPath(duplicate,sizeof(duplicate),root,"zz-complete") &&
+        FSP_CreateDirectory(duplicate) &&
+        FSP_JoinPath(duplicateData,sizeof(duplicateData),duplicate,"DATA") &&
+        FSP_CreateDirectory(duplicateData),"create second native owner directories");
+    for (i=0; i<7; ++i) {
+        REQUIRE(FSP_JoinPath(source,sizeof(source),original,files[i]) &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+            FSP_JoinPath(destination,sizeof(destination),duplicate,files[i]) &&
+            symlink(physical,destination)==0,"stage complete second original owner");
+        ++duplicateLinked;
+    }
+    REQUIRE(unlink(menuProgram)==0,"make first native owner incomplete");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index);
+    REQUIRE(version && version->matched &&
+        strncmp(version->matchedPath,duplicateData,strlen(duplicateData))==0 &&
+        M12_AssetStatus_GameAvailable(fresh,"dm1"),
+        "complete duplicate native owner survives earlier incomplete Towns installation");
+    REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex)->matched,
+        "English duplicate does not substitute for incomplete Japanese owner");
+    M12_StartupMenu_Destroy(menu);
+    M12_StartupMenu_InitWithOptions(menu,root,"dm1",&options);
+    menu->selectedIndex=0; menu->activatedIndex=0; menu->launchRequested=1;
+    menu->gameOptions[0].architectureIndex=M12_ARCH_FM_TOWNS;
+    menu->gameOptions[0].versionIndex=index;
+    menu->gameOptions[0].presentationModeIndex=M12_PRESENTATION_V1_ORIGINAL;
+    menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+    REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) &&
+        M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded && game->active &&
+        game->dm1FmtownsStartupReceiptValid &&
+        strcmp(game->dm1FmtownsStartupReceipt.game_program_name,"EDM.EXP")==0,
+        "complete duplicate selected through menu starts authentic native world");
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    REQUIRE(FSP_JoinPath(destination,sizeof(destination),duplicate,"TMENU.EXP") &&
+        unlink(destination)==0,"remove selected duplicate task menu link after scan");
+    REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+        "stale duplicate owner rejects without falling back or retaining active world");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched &&
+        !M12_AssetStatus_GameAvailable(fresh,"dm1"),
+        "all incomplete duplicate native owners remain unavailable");
+    {
+        int nativeMissing=0;
+        for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
+            const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
+            if (required && required->roleId && strcmp(required->roleId,"native-launcher")==0)
+                nativeMissing=required->required && !required->matched;
+        }
+        REQUIRE(nativeMissing,"all incomplete duplicates retain missing launcher feedback");
+    }
     result=0;
     puts("PASS: native Towns admission preserves language ownership and playable sibling editions");
 cleanup:
@@ -188,6 +242,11 @@ cleanup:
     for (i=0; i<linked; ++i) {
         if (FSP_JoinPath(destination,sizeof(destination),root,files[i])) unlink(destination);
     }
+    for (i=0; i<duplicateLinked; ++i) {
+        if (FSP_JoinPath(destination,sizeof(destination),duplicate,files[i])) unlink(destination);
+    }
+    if (duplicateData[0]) rmdir(duplicateData);
+    if (duplicate[0]) rmdir(duplicate);
     if (pcAlias[0]) unlink(pcAlias);
     if (config[0]) unlink(config);
     if (data[0]) rmdir(data);

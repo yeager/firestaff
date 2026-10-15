@@ -7255,3 +7255,11 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### FM Towns launcher inventory
 
 - Loose DM1 FM Towns editions now require verified native launcher files during scanning. Missing English files do not hide Japanese or PC editions that remain usable; required filenames are reported when no usable edition remains. Native startup-file reads are bounded before allocation.
+
+### Duplicate FM Towns launcher owners
+
+DM1 discovery now checks later authentic loose copies when the first copy has
+an incomplete native launcher. A complete owner is selected without borrowing
+EDM/JDM or TMENU from another installation. When every copy is incomplete,
+the existing missing-program feedback remains available. Archive admission is
+unchanged.
