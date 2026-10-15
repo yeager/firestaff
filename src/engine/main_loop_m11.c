@@ -10329,6 +10329,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 "firestaff: --boot-probe exercises direct launch and cannot be combined with --menu\n");
         return 2;
     }
+    /* CSB has no original DOS/PC release. Reject this explicit CLI pairing
+     * before SDL, renderer setup, or the synchronous media scan. Keep the
+     * later catalogue guard as protection for selections made in the menu. */
+    if (runtimeOptions.gameId &&
+        strcmp(runtimeOptions.gameId, "csb") == 0 &&
+        runtimeOptions.architectureOverride == M12_ARCH_PC) {
+        fprintf(stderr,
+                "firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns\n");
+        return 2;
+    }
     if (runtimeOptions.bootProbe) {
         char invalidToken[64];
         int invalidCount = M11_BootProbeScript_Validate(runtimeOptions.script,

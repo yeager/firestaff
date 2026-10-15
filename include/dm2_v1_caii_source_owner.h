@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-typedef struct {
+typedef struct DM2_V1_CaiiSourceOwner {
     int valid;
     /* All bytes below are copied from the mounted, hash-admitted profile.
      * No accessor falls back to process-global creature state. */
@@ -46,6 +46,24 @@ typedef struct {
      * owner, so this object must never fabricate an array from DB4 count. */
     int slots_unowned;
 } DM2_V1_CaiiSourceOwner;
+
+/* Read-only source-order census of conditional RANDDIR calls in
+ * DM2_ARRANGE_DUNGEON. It does not replay map/record mutations. */
+typedef struct {
+    int valid;
+    int incomplete;
+    uint32_t creature_records_seen;
+    uint32_t eligible_static_creatures;
+    uint32_t skipped_direction_flag;
+    uint32_t possession_records;
+    uint32_t rng_draws;
+    uint32_t source_order_hash;
+} DM2_V1_ArrangeDungeonRngReceipt;
+
+int dm2_v1_DM2_ARRANGE_DUNGEON_rng_receipt(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_CaiiSourceOwner *caii_source,
+    DM2_V1_ArrangeDungeonRngReceipt *out);
 
 /* Materializes a private read-only CAII prerequisite owner from one
  * hash-admitted GDAT loader and one fully validated File_header dungeon.

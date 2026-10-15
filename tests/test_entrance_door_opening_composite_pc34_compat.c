@@ -42,6 +42,7 @@ int main(void) {
     unsigned char leftDoor[DOOR_W * DOOR_H];
     unsigned char rightDoor[DOOR_W * DOOR_H];
     EntranceCompatDoorStep door;
+    EntranceCompatDoorStep sourceFrames;
     EntranceCompatClosedDoorBlit closedLeft;
     EntranceCompatClosedDoorBlit closedRight;
     EntranceCompatCompositePixels pixels;
@@ -55,6 +56,13 @@ int main(void) {
     fill_door(rightDoor, 64);
 
     ok &= ENTRANCE_Compat_GetDoorAnimationStep(16u, &door);
+    ok &= ENTRANCE_Compat_GetDoorAnimationStep(5u, &sourceFrames);
+    if (sourceFrames.leftSourceX != 20u || sourceFrames.rightSourceX != 0u) {
+        fprintf(stderr,
+                "raw C002/C003 sampling did not account for ReDMCSB prepared frames: left=%u right=%u\n",
+                sourceFrames.leftSourceX, sourceFrames.rightSourceX);
+        ok = 0;
+    }
     ok &= ENTRANCE_Compat_GetClosedDoorBlit(1u, &closedLeft);
     ok &= ENTRANCE_Compat_GetClosedDoorBlit(2u, &closedRight);
     if (closedLeft.assetId != 2u || closedLeft.width != 105u ||

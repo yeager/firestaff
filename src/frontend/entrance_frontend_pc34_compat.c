@@ -72,14 +72,21 @@ int ENTRANCE_Compat_GetDoorAnimationStep(unsigned int animationStep,
         step.leftBoxY = 0u;
         step.leftBoxW = leftRight + 1u;
         step.leftBoxH = 161u;
-        step.leftSourceX = (animationStep & 0x00fcu) << 2;
+        /* ENTRANCE.C:790-824 prepares three left-door frames by copying C002
+         * from source x=4/8/12 into frame bitmaps. F0438 then adds the
+         * high-order source offset at :191-203. Since this runtime samples raw
+         * C002 instead of those prepared frames, include both offsets here. */
+        step.leftSourceX = animationStep << 2;
     }
     if (rightLeft <= 231u) {
         step.rightBoxX = rightLeft;
         step.rightBoxY = 0u;
         step.rightBoxW = 231u - rightLeft + 1u;
         step.rightBoxH = 161u;
-        step.rightSourceX = (animationStep & 0x0003u) << 2;
+        /* The right-door frames are prepared at :817-824 with their door box
+         * shifted right by 4px per frame. F0438's matching source-x offset
+         * cancels that shift, so raw C003 must always be sampled from x=0. */
+        step.rightSourceX = 0u;
     }
     step.sourceLineEvidence = "ENTRANCE.C:142-304 loops animationStep=1..31; lines 152-168 rattle every step%3==1; lines 189-231 move door boxes by 4px; line 239 waits one VBlank per step";
     *outStep = step;

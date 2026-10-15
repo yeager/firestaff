@@ -3907,6 +3907,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_7Z=$ENV{HOME}/.firestaff/data/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"
         SKIP_RETURN_CODE 77)
     add_test(
+        NAME csb_pc_cli_rejected_before_renderer
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_reject_pc_before_renderer.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_pc_cli_rejected_before_renderer PROPERTIES
+        LABELS "csb;startup;cli;fail-fast;no-media-required"
+        TIMEOUT 10)
+    add_test(
         NAME csb_v1_hint_oracle_native_7z_cli_boot
         COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_hint_oracle_native_7z_cli_boot.sh
             $<TARGET_FILE:firestaff>
@@ -24111,6 +24119,33 @@ endif()
         NAME dm2_v1_scene_weather_light_runtime_chain_real_data
         COMMAND test_dm2_v1_scene_weather_light_runtime_chain_real_data
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    add_executable(test_dm2_v1_arrange_rng_receipt_real_data
+        tests/test_dm2_v1_arrange_rng_receipt_real_data.c
+        src/dm2/dm2_v1_graphics_data_open.c
+    )
+    target_include_directories(
+        test_dm2_v1_arrange_rng_receipt_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(
+        test_dm2_v1_arrange_rng_receipt_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(
+            test_dm2_v1_arrange_rng_receipt_real_data PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_arrange_rng_receipt_real_data
+        COMMAND test_dm2_v1_arrange_rng_receipt_real_data
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+    set_tests_properties(dm2_v1_arrange_rng_receipt_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
     )
 
     add_executable(test_dm2_v1_weather_environment_materials
