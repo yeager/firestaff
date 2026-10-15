@@ -36,23 +36,23 @@ static const uint8_t g_dm1_c255_pc_frame_safety_pixels[
     DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH *
     DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT] = {0};
 
-static int dm1_c255_zone_for_graphic(unsigned int graphic,
+static int dm1_c255_zone_for_graphic(int graphic,
                                      unsigned int *out_zone)
 {
     static const unsigned short wall_zones[10] = {
         717, 716, 714, 713, 712, 708, 707, 711, 710, 709
     };
     if (!out_zone) return 0;
-    if (graphic == DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR) {
+    if (graphic == -1) {
         *out_zone = 701u;
         return 1;
     }
-    if (graphic == DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING) {
+    if (graphic == -2) {
         *out_zone = 700u;
         return 1;
     }
-    if (graphic >= 93u && graphic <= 107u) {
-        if (graphic <= 102u) {
+    if (graphic >= 93 && graphic <= 107) {
+        if (graphic <= 102) {
             *out_zone = wall_zones[graphic - 93u];
         } else {
             static const unsigned short near_zones[5] = {
@@ -60,17 +60,41 @@ static int dm1_c255_zone_for_graphic(unsigned int graphic,
             };
             *out_zone = near_zones[graphic - 103u];
         }
-        return *out_zone >= 700u && *out_zone <= 717u;
+        return 1;
     }
     return 0;
+}
+
+static int dm1_c255_source_graphic_for_renderer(int renderer_graphic,
+                                                 unsigned int *out_graphic)
+{
+    /* ReDMCSB STARTUP2.C F0460/F0095 and DUNVIEW.C F0095 map MEDIA020/F20
+     * wall slots onto six source images. F20's LCR records are cropped by
+     * the same viewport zones; they are not the PC34 MEDIA720 records. */
+    static const uint8_t wall_records[15] = {
+        84, 85, 86, 86, 86, 87, 87, 87, 87, 87, 89, 89, 88, 88, 88
+    };
+    if (!out_graphic) return 0;
+    if (renderer_graphic == -1) {
+        *out_graphic = DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR;
+        return 1;
+    }
+    if (renderer_graphic == -2) {
+        *out_graphic = DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING;
+        return 1;
+    }
+    if (renderer_graphic < 93 || renderer_graphic > 107) return 0;
+    *out_graphic = wall_records[renderer_graphic - 93];
+    return 1;
 }
 
 static int dm1_c255_known_native_dimensions(unsigned int graphic,
                                             int width, int height)
 {
     static const struct { unsigned short graphic, width, height; } expected[] = {
-        {78, 25, 94}, {79, 21, 65}, {95, 158, 100},
-        {96, 32, 44}, {101, 32, 91}, {105, 20, 43}, {106, 20, 39}
+        {75, 224, 70}, {76, 224, 29}, {84, 32, 136},
+        {85, 32, 136}, {86, 248, 111}, {87, 136, 71},
+        {88, 117, 51}, {89, 16, 49}
     };
     size_t i;
     for (i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
@@ -78,26 +102,6 @@ static int dm1_c255_known_native_dimensions(unsigned int graphic,
             return width == expected[i].width && height == expected[i].height;
         }
     }
-    return 1;
-}
-
-static int dm1_c255_graphic_bit(unsigned int graphic, uint32_t *out_bit)
-{
-    unsigned int bit;
-
-    if (!out_bit) return 0;
-    if (graphic == DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR) {
-        bit = 0u;
-    } else if (graphic == DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING) {
-        bit = 1u;
-    } else if (graphic >= DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_FIRST &&
-               graphic <= DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_LAST) {
-        bit = 2u + graphic -
-            DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_FIRST;
-    } else {
-        return 0;
-    }
-    *out_bit = UINT32_C(1) << bit;
     return 1;
 }
 
@@ -114,22 +118,22 @@ static int dm1_c255_renderer_graphic_provider(
         !out_pixels || !out_width || !out_height) {
         return 0;
     }
-    if (renderer_graphic == -1) {
-        source_graphic = DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR;
-    } else if (renderer_graphic == -2) {
-        source_graphic = DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING;
-    } else if (renderer_graphic >= 86 && renderer_graphic <= 107) {
-        /* The transient startup cache is wall-set zero. ReDMCSB DEFS.H's
-         * MEDIA720 records 86..107 are its Towns door-frame and wall art. */
-        source_graphic = (unsigned int)renderer_graphic;
-    } else {
+    if (!dm1_c255_source_graphic_for_renderer(renderer_graphic,
+                                              &source_graphic)) {
         context->receipt->requested_source_graphics |=
             UINT32_C(1) << DM1_C255_UNSUPPORTED_GRAPHIC_BIT;
         context->receipt->missing_source_graphics |=
             UINT32_C(1) << DM1_C255_UNSUPPORTED_GRAPHIC_BIT;
         return 0;
     }
-    if (!dm1_c255_graphic_bit(source_graphic, &bit)) return 0;
+    if (!dm1_c255_zone_for_graphic(renderer_graphic, &zone_index) ||
+        (renderer_graphic == -1 && source_graphic !=
+            DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR) ||
+        (renderer_graphic == -2 && source_graphic !=
+            DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING)) return 0;
+    if (renderer_graphic == -1) bit = UINT32_C(1);
+    else if (renderer_graphic == -2) bit = UINT32_C(2);
+    else bit = UINT32_C(1) << (2u + (unsigned int)(renderer_graphic - 93));
     context->receipt->requested_source_graphics |= bit;
     *out_pixels = NULL;
     *out_width = 0;
@@ -142,7 +146,6 @@ static int dm1_c255_renderer_graphic_provider(
     }
     if (!dm1_c255_known_native_dimensions(source_graphic, *out_width,
                                            *out_height) ||
-        !dm1_c255_zone_for_graphic(source_graphic, &zone_index) ||
         !context->towns_viewport ||
         (size_t)*out_width > SIZE_MAX / (size_t)*out_height ||
         !dm1_v1_fmtowns_layout_blit(context->towns_viewport,
@@ -159,7 +162,9 @@ static int dm1_c255_renderer_graphic_provider(
         return 0;
     }
     context->receipt->loaded_source_graphics |= bit;
-    if (source_graphic >= 93u) ++context->loaded_wall_surfaces;
+    context->receipt->source_graphic_record_mask |=
+        UINT32_C(1) << (source_graphic - 75u);
+    if (renderer_graphic >= 93) ++context->loaded_wall_surfaces;
     /* Keep the existing geometry walk as an ordering oracle only. Its
      * renderer sees a bounded inert page; all pixels come from the native
      * Towns image cropped through the authenticated G2174/F0635 layout. */
@@ -239,7 +244,7 @@ int dm1_v1_fmtowns_entrance_render_c255(
     renderer.graphic_provider_user_data = &provider_context;
     renderer.source_graphics_required = true;
     /* F0797's transient C255 has no MAP descriptor. STARTUP2's cache is
-     * wall-set zero; map/floor selection must not leak in from gameplay. */
+     * MEDIA020 wall-set zero; map/floor selection must not leak in from gameplay. */
     dm1_viewport_3d_load_wall_set(&renderer, 0, 0);
     dm1_viewport_3d_draw_frame(&renderer, DM1_C255_DIRECTION_SOUTH,
                                DM1_C255_CENTER_X, DM1_C255_CENTER_Y);

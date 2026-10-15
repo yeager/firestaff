@@ -65,15 +65,15 @@ int dm1_v1_i34e_title_anim_pc34_step(
                 if (index >= 16u || payload[3u + i * 4u] > 15u ||
                     payload[4u + i * 4u] > 15u ||
                     payload[5u + i * 4u] > 15u) goto malformed;
-                /* ReDMCSB ANIM.C F8292_ writes each source channel as
-                 * channel << 2 into the VGA DAC palette. The renderer takes
-                 * DAC6 values, so retain that expansion here. */
+                /* ReDMCSB ANIM.C F8292_ dispatches to VGA VIDEODRV.C
+                 * F8230, which writes (channel << 2) + 3 into the DAC6
+                 * palette. Preserve both the expansion and offset. */
                 state->palette[index].r =
-                    (uint8_t)(payload[3u + i * 4u] << 2);
+                    (uint8_t)((payload[3u + i * 4u] << 2) + 3u);
                 state->palette[index].g =
-                    (uint8_t)(payload[4u + i * 4u] << 2);
+                    (uint8_t)((payload[4u + i * 4u] << 2) + 3u);
                 state->palette[index].b =
-                    (uint8_t)(payload[5u + i * 4u] << 2);
+                    (uint8_t)((payload[5u + i * 4u] << 2) + 3u);
             }
             continue;
         }

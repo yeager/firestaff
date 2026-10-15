@@ -3,52 +3,15 @@
 #include <stdio.h>
 #include <string.h>
 
-static uint8_t assets[30][224 * 136];
+static uint8_t assets[15][248 * 136];
 static int failures;
-
-#define CHECK(expression) do { \
-    if (!(expression)) { \
-        fprintf(stderr, "FAIL: %s:%d: %s\n", __FILE__, __LINE__, #expression); \
-        ++failures; \
-    } \
-} while (0)
-
-static int source_graphic(void *user_data, unsigned int record,
-                         const uint8_t **pixels, int *width, int *height)
-{
-    unsigned int x;
-    unsigned int y;
-    int *calls = (int *)user_data;
-
-    if (record < 78u || record > 107u || !pixels || !width || !height) {
-        return 0;
-    }
-    if (calls) ++*calls;
-    for (y = 0; y < 136u; ++y) {
-        for (x = 0; x < 224u; ++x) {
-            assets[record - 78u][y * 224u + x] =
-                (uint8_t)(record + x * 3u + y * 7u);
-        }
-    }
-    *pixels = assets[record - 78u];
-    *width = 224;
-    *height = 136;
-    return 1;
-}
-
-static int missing_wall_graphic(void *user_data, unsigned int record,
-                               const uint8_t **pixels, int *width, int *height)
-{
-    if (record >= 86u && record <= 107u) return 0;
-    return source_graphic(user_data, record, pixels, width, height);
-}
 
 static int fmtowns_native_size(unsigned int record, int *width, int *height)
 {
     static const struct { unsigned short record, width, height; } native[] = {
-        { 78, 25, 94 }, { 79, 21, 65 }, { 95, 158, 100 },
-        { 96, 32, 44 }, { 101, 32, 91 }, { 105, 20, 43 },
-        { 106, 20, 39 }
+        { 75, 224, 70 }, { 76, 224, 29 }, { 84, 32, 136 },
+        { 85, 32, 136 }, { 86, 248, 111 }, { 87, 136, 71 },
+        { 88, 117, 51 }, { 89, 16, 49 }
     };
     size_t i;
 
@@ -62,12 +25,50 @@ static int fmtowns_native_size(unsigned int record, int *width, int *height)
     return 0;
 }
 
+#define CHECK(expression) do { \
+    if (!(expression)) { \
+        fprintf(stderr, "FAIL: %s:%d: %s\n", __FILE__, __LINE__, #expression); \
+        ++failures; \
+    } \
+} while (0)
+
+static int source_graphic(void *user_data, unsigned int record,
+                         const uint8_t **pixels, int *width, int *height)
+{
+    unsigned int x;
+    unsigned int y;
+    int native_width;
+    int native_height;
+    int *calls = (int *)user_data;
+
+    if (record < 75u || record > 89u || !pixels || !width || !height ||
+        !fmtowns_native_size(record, &native_width, &native_height)) {
+        return 0;
+    }
+    if (calls) ++*calls;
+    for (y = 0; y < (unsigned int)native_height; ++y) {
+        for (x = 0; x < (unsigned int)native_width; ++x) {
+            assets[record - 75u][y * (unsigned int)native_width + x] =
+                (uint8_t)(record + x * 3u + y * 7u);
+        }
+    }
+    *pixels = assets[record - 75u];
+    *width = native_width;
+    *height = native_height;
+    return 1;
+}
+
+static int missing_wall_graphic(void *user_data, unsigned int record,
+                               const uint8_t **pixels, int *width, int *height)
+{
+    if (record >= 86u && record <= 88u) return 0;
+    return source_graphic(user_data, record, pixels, width, height);
+}
+
 static int native_towns_graphic(void *user_data, unsigned int record,
                                 const uint8_t **pixels, int *width, int *height)
 {
-    if (!source_graphic(user_data, record, pixels, width, height)) return 0;
-    (void)fmtowns_native_size(record, width, height);
-    return 1;
+    return source_graphic(user_data, record, pixels, width, height);
 }
 
 int main(void)
@@ -88,6 +89,7 @@ int main(void)
     CHECK(receipt.valid);
     CHECK(receipt.aperture_x == 0 && receipt.aperture_y == 33);
     CHECK(receipt.missing_source_graphics == 0u);
+    CHECK(receipt.source_graphic_record_mask == UINT32_C(0x00003803));
     CHECK((receipt.loaded_source_graphics & 3u) == 3u);
     CHECK((receipt.requested_source_graphics & UINT32_C(0x00fffffc)) != 0u);
     CHECK(provider_calls > 2);
@@ -111,6 +113,7 @@ int main(void)
     CHECK(!receipt.valid);
     CHECK(receipt.aperture_y == 31);
     CHECK(receipt.missing_source_graphics != 0u);
+    CHECK(receipt.source_graphic_record_mask != UINT32_C(0x00003803));
     CHECK(viewport[0] == 0xee && viewport[sizeof(viewport) - 1] == 0xee);
 
     if (failures) return 1;

@@ -1,16 +1,16 @@
 # Firestaff TODO — DM1
 
-2026-10-15 I34E TITLE palette audit: ReDMCSB `ANIM.C F8292_` stores every
-source PL channel in the VGA DAC as `channel << 2`. Firestaff had passed the
-unexpanded byte to its RGB6 renderer, reducing title brightness by four. The
-bounded TITLE parser now validates 4-bit source channels and applies the same
-shift; its synthetic channel test and hash-authenticated PC34 TITLE test pass,
-and the native `firestaff` target builds. A post-fix Firestaff title capture
-confirms the fourfold palette step. The available DOSBox original capture is
-not frame-aligned with Firestaff and its multi-shot capture failed the
-duplicate-frame health gate, so title color parity, title cadence, door
-animation smoothness, and PC34/FM Towns runtime viewport parity remain open.
-No game data or captures are added to Git.
+2026-10-15 I34E TITLE palette audit: ReDMCSB `ANIM.C F8292_` dispatches to
+VGA `VIDEODRV.C F8230`, which stores each source PL channel as
+`(channel << 2) + 3` in the DAC6 palette. Firestaff had passed source channel
+bytes to its RGB6 renderer; the first correction added the shift but omitted
+the VGA offset. The bounded TITLE parser now validates 4-bit channels and
+applies the complete VGA conversion. The authentic PC34 TITLE parser test and
+native PC34 CLI startup passed against the original archive, including the
+complete title and selector handoff. Title pixel parity still needs a
+frame-aligned reference capture; cadence, entrance smoothness, and PC34/FM
+Towns runtime viewport parity remain open. No game data or captures are added
+to Git.
 
 2026-10-14 parity investigation using authentic DM1 media and ReDMCSB source:
 the FM Towns F20 title scaler is now ported from `BLTSHRNK.C` F0129/F0720
@@ -1323,6 +1323,6 @@ routes as parity.
 
 2026-10-14 I34E cadence and integration test: `SELECTOR.C F8353` reaches `VIDEODRV.C F8153`, which waits on VGA status port 0x3DA. The host loop follows the existing 70 Hz PC34 VGA retrace model with rational deadlines rather than the 18.2 Hz DOS tick. A media-gated app CTest verifies the complete direct-launch stage order when authentic PC34 files are available and is omitted when those files are absent.
 
-2026-10-14 FM Towns Entrance micro-dungeon: ReDMCSB `ENTRANCE.C F0797` constructs transient map C255 as a 5x5 wall grid with a south-facing corridor at column 2 and source square 7 open at (1,2); `COORD.C G2067/G2068` places the 224x136 view at (0,33) for EDM and (0,31) for JDM. Firestaff draws that transient map immediately before the original door-frame sequence and changes only that aperture. It reads MEDIA720 floor/ceiling records 78/79 and only wall-set-zero records required by the trace from the selected authenticated Towns GRAPHICS.DAT. The final-binary archive CTest verifies `requested=loaded=0x00621803`, no missing records, both apertures, and first runtime entry for EDM and JDM. Four fresh-process captures (two per language) returned raster FNV-1a `0x54cd8b95`; the standalone renderer test also checks repeatability, bounds, and no partial output. This verifies source map setup, bounded source-asset composition, and aperture placement, but does not compare rendered pixels to a Tsugaru or retail-hardware capture; broader DM1 FM Towns gameplay viewport parity remains open.
+2026-10-14 FM Towns Entrance micro-dungeon: ReDMCSB `ENTRANCE.C F0797` constructs transient map C255 as a 5x5 wall grid with a south-facing corridor at column 2 and source square 7 open at (1,2); `COORD.C G2067/G2068` places the 224x136 view at (0,33) for EDM and (0,31) for JDM. Firestaff draws that transient map immediately before the original door-frame sequence and changes only that aperture. The first implementation mistakenly read PC34 MEDIA720 records 78/79 and wall IDs 95/96/101/105/106 from the Towns archive. MEDIA020 instead maps floor/ceiling to records 75/76 and the requested wall compounds to records 86/87/88. The corrected receipt reports semantic renderer slots and source record masks; the final-binary archive CTest requires `requested=loaded=0x0000c433`, `source-records=0x00003803`, and no missing records for EDM and JDM. The standalone renderer test uses authentic F20 dimensions and rejects unrelated PC34 graphic IDs. This verifies source map setup, asset-family selection, bounded source-asset composition, and aperture placement, but does not compare rendered pixels to a Tsugaru or retail-hardware capture; broader DM1 FM Towns gameplay viewport parity remains open.
 
 2026-10-14 PC34 M12 menu launch: the authentic startup transition now continues from the I34E `ANIM/TITLE` frames into the source-sized `SELECTOR` Enter door sequence when the M12 launcher accepts New Game. Direct and menu launches share that single selector transition before FIRES, and the preplayed-title marker is consumed at the launch boundary so a later choice of another edition cannot skip PC34's title. `dm1_v1_pc34_native_cli_boot` passed against the original PC34 ZIP: 53 title frames and source VBlanks, 32 selector steps at 70 Hz, captured first/middle/final title frames and closed/step-zero/middle/open selector frames, authenticated matching dungeon data, menu runtime and movement, and 1920x1080 HiDPI-scaled launch probes. The first selector step is deliberately identical to the closed image; the later source frames show progressive opening. Boot-probe mode skips visible startup animation and is checked only for edition/runtime selection. This does not implement interactive I34E selector choices or establish first-dungeon viewport parity against the original DOS executable.

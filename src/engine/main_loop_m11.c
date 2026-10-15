@@ -2676,7 +2676,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT <= M11_FB_HEIGHT;
         if (g_m11_debug_startup_detail) {
             fprintf(stderr,
-                    "[dm1-fmtowns-c255] edition=%s language=%s result=%s valid=%d aperture=(%d,%d %dx%d) requested=0x%08x loaded=0x%08x missing=0x%08x raster_fnv1a=0x%08x reason=%s\n",
+                    "[dm1-fmtowns-c255] edition=%s language=%s result=%s valid=%d aperture=(%d,%d %dx%d) requested=0x%08x loaded=0x%08x missing=0x%08x source-records=0x%08x raster_fnv1a=0x%08x reason=%s\n",
                     gameView->dm1FmtownsStartupReceipt.language ==
                             DM1_FMTOWNS_LANG_JP ? "JDM" : "EDM",
                     gameView->dm1FmtownsStartupReceipt.language ==
@@ -2690,6 +2690,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
                     (unsigned)c255Receipt.requested_source_graphics,
                     (unsigned)c255Receipt.loaded_source_graphics,
                     (unsigned)c255Receipt.missing_source_graphics,
+                    (unsigned)c255Receipt.source_graphic_record_mask,
                     (unsigned)c255Receipt.pixel_hash_fnv1a,
                     !c255Rendered ? "renderer-or-authenticated-assets-rejected"
                         : !c255Receipt.valid ? "receipt-invalid"
@@ -4894,8 +4895,9 @@ static int m11_dm1_i34e_title_read_authentic(
 /* I34E ANIM TITLE runs before SELECTOR; M12's already-selected launch state
  * stands in for that menu. ANIM.C F2275 stores the raw wait attribute and
  * decrements it from F8298's source VBlank callback;
- * PC34's DOS tick is 55 ms. ReDMCSB ANIM.C F8292_ expands each PL channel
- * to VGA DAC6 with (value << 2), represented by the indexed RGB6 renderer. */
+ * PC34's DOS tick is 55 ms. ReDMCSB ANIM.C F8292_ dispatches PL channels to
+ * VGA VIDEODRV.C F8230, which writes (value << 2) + 3 to DAC6; the indexed
+ * RGB6 renderer preserves those values. */
 static int m11_play_dm1_i34e_title_anim_if_available(
     const M12_StartupMenuState *menuState,
     const M12_AssetVersionStatus *version) {

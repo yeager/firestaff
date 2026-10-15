@@ -12,25 +12,28 @@ extern "C" {
 enum {
     DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH = 224,
     DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT = 136,
-    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR = 78,
-    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING = 79,
-    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_FIRST = 86,
-    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_LAST = 107
+    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR = 75,
+    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING = 76,
+    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_FIRST = 84,
+    DM1_V1_FMTOWNS_ENTRANCE_SOURCE_WALL_SET_ZERO_LAST = 89
 };
 
-/* Supplies one expanded IMG2 image from the authenticated DM1 FM Towns
- * GRAPHICS.DAT. source_graphic is a ReDMCSB MEDIA720 record number. */
+/* Supplies one expanded IMG2 image from authenticated DM1 FM Towns
+ * GRAPHICS.DAT. source_graphic is a ReDMCSB MEDIA020/F20 record number. */
 typedef int (*DM1_V1_FmtownsEntranceGraphicProvider)(
     void *user_data, unsigned int source_graphic, const uint8_t **pixels,
     int *width, int *height);
 
 typedef struct DM1_V1_FmtownsEntranceViewportReceipt {
     int valid;
-    /* Bit 0 = floor 78, bit 1 = ceiling 79, bits 2..23 = records 86..107;
-     * bit 31 reports a request outside the source-bounded F0797 renderer. */
+    /* Bit 0 = floor 75, bit 1 = ceiling 76, bits 2..16 identify semantic
+     * I34E-compatible wall draw slots 93..107, and bit 31 reports an
+     * unsupported renderer request. */
     uint32_t requested_source_graphics;
     uint32_t loaded_source_graphics;
     uint32_t missing_source_graphics;
+    /* Bit N identifies authenticated F20 GRAPHICS.DAT record N+75. */
+    uint32_t source_graphic_record_mask;
     /* FNV-1a over only the 224x136 viewport pixels, excluding row padding. */
     uint32_t pixel_hash_fnv1a;
     /* COORD.C G2067/G2068 origin for the authenticated Towns language. */
