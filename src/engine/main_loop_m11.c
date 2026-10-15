@@ -10929,8 +10929,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         memset(&menuInitOptions, 0, sizeof(menuInitOptions));
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
-        menuInitOptions.looseFilesOnlyAssetScan =
-            (o->bootProbe && (!o->dataDir || !o->dataDir[0])) ? 1 : 0;
+        /* A diagnostic launch uses the same bounded, authenticated media
+         * admission as ordinary startup, including persisted/default ZIPs. */
+        menuInitOptions.looseFilesOnlyAssetScan = 0;
         /* In an interactive menu, --game is only an initial selection. Scan
          * the complete data root so every other installed game remains
          * available from its card. An explicit file/container path is already

@@ -1634,3 +1634,20 @@ routes as parity.
 2026-10-14 PC34 M12 menu launch: the authentic startup transition now continues from the I34E `ANIM/TITLE` frames into the source-sized `SELECTOR` Enter door sequence when the M12 launcher accepts New Game. Direct and menu launches share that single selector transition before FIRES, and the preplayed-title marker is consumed at the launch boundary so a later choice of another edition cannot skip PC34's title. `dm1_v1_pc34_native_cli_boot` passed against the original PC34 ZIP: 53 title frames and source VBlanks, 32 selector steps at 70 Hz, captured first/middle/final title frames and closed/step-zero/middle/open selector frames, authenticated matching dungeon data, menu runtime and movement, and 1920x1080 HiDPI-scaled launch probes. The first selector step is deliberately identical to the closed image; the later source frames show progressive opening. Boot-probe mode skips visible startup animation and is checked only for edition/runtime selection. This does not implement interactive I34E selector choices or establish first-dungeon viewport parity against the original DOS executable.
 
 2026-10-15 I34E TITLE lifecycle correction: IBMIO G8102 (`IBMIO.C:2411-2418`) selects `title -ah -as`: ANIM's S flag erases before TITLE, E erases afterwards, and H retains the final palette (`ANIM.C:1880-1898,1974-1976,2127-2135`). The previous terminal wipe was incorrect. Frame timing remains open: PC34 uses raw EN/DL attributes, while the min-five branch at `ANIM.C:2044-2048` is PC98 and F2275 is FM Towns. IBMIO F8114 returns callback decrement 3; F8091 polling and the PIT interrupt path can invoke that callback (`IBMIO.C:671-672,1280-1290,1649-1650`). The TITLE scheduler now uses raw counters, callback decrement 3 and the default BIOS/PIT period (65536/1193182 seconds), resetting before decode and consuming callback boundaries during decode/presentation. Counter debt does not carry across EN/DL assignments. Its host phase starts at title-handler entry; the historical initial BIOS phase and original CPU decode duration remain unmeasured. The 64-chunk pre-erase is still a host presentation approximation. Calibrate against the authentic executable before claiming measured timing parity. There is no source-specified extra final hold or fade in this route.
+
+### Implicit diagnostic archive admission (2026-10-15)
+
+An original PC 3.4 ZIP in an isolated default originals root launches through
+ordinary CLI startup, but the former implicit `--boot-probe` loose-only scan
+rejected it with `game unavailable`. Diagnostic startup now uses the ordinary
+bounded, hash-authenticated intake policy. The regression checks the exact
+PC graphics MD5, archive member owner and loaded-level receipt, then verifies
+ordinary startup and accepted movement for both offline folder and game-leaf
+preferences. This admission check does not prove visual or physical display parity.
+
+Follow-up menu feedback audit: `m12_apply_completed_asset_scan` supplies the
+zero-ready installation popup, but `M12_StartupMenu_SetDataDirectory` and the
+async update completion path appear to overwrite it with the generic directory
+result popup. Reproduce an authentic empty/required-data-missing selection and
+preserve actionable installation guidance in both paths. Source audit only;
+not yet verified at runtime.

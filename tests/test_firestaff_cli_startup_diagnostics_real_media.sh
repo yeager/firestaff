@@ -530,8 +530,23 @@ if [ -f "$dm1_pc_archive" ]; then
             echo "FAIL: offline remembered root hid authentic default DM1 media" >&2
             exit 1
         }
-        # A no-data-dir boot probe deliberately scans loose files only. Exercise
-        # the ordinary CLI here so original ZIP admission is actually covered.
+        # Diagnostic startup must admit the same authenticated ZIP fallback
+        # as ordinary startup, even without an explicit --data-dir.
+        run_offline_profile --game dm1 --presentation-mode v1 --verbose --debug \
+            --boot-probe --boot-probe-frames 0 \
+            >"$offline_home/offline-probe.log" 2>&1 || {
+            cat "$offline_home/offline-probe.log" >&2
+            echo "FAIL: diagnostic startup rejected authentic fallback ZIP media" >&2
+            exit 1
+        }
+        grep -F 'FIRESTAFF BOOT PROBE READY: gameId=dm1 ' "$offline_home/offline-probe.log" |
+            grep -F 'assetMd5=fa6b1aa29e191418713bf2cda93d962e ' |
+            grep -F "dataDir=$offline_default/dm1/$(basename "$dm1_pc_archive")::DATA/GRAPHICS.DAT " |
+            grep -Fq 'levelLoaded=1 ' || {
+            cat "$offline_home/offline-probe.log" >&2
+            echo "FAIL: diagnostic startup selected a different DM1 source" >&2
+            exit 1
+        }
         run_offline_profile --game dm1 --presentation-mode v1 --verbose --debug --duration 20000 \
             --script wait-game-runtime,up \
             >"$offline_home/offline-runtime.log" 2>&1 || {

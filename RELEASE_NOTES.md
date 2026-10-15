@@ -7223,3 +7223,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
   default media can still start without replacing that saved preference.
 - Retry reconnected selected collections on return to the menu, including
   archive-member locators whose outer container has returned.
+
+### Diagnostic archive discovery
+
+- Implicit `--boot-probe` launches now use ordinary bounded, authenticated archive discovery, so original DM1 PC ZIP media in the default collection remain available without `--data-dir`, including when the remembered external folder is offline.

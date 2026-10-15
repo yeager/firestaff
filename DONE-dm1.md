@@ -3281,3 +3281,5 @@ Reviewed 2026-08-29. Completed work only.
   open in TODO.
 
 - 2026-10-15: Final offline-selection verification passed on the exact built binary: full original-media CLI startup suite (214.31 s), both targeted CTest cases (26.02 s), and translation catalog consistency check. Physical volume unmount and macOS permission-dialog interaction remain separate manual checks.
+
+- 2026-10-15: Fixed implicit `--boot-probe` ZIP admission. Reproduced rejection of authentic PC 3.4 default-root media before the fix; both offline preference cases now prove the exact original graphics MD5/member owner and loaded runtime, plus ordinary accepted movement. Full original-media startup diagnostics suite passed (213.97 s), including DM1/CSB/DM2 defaults, mixed DM2 platform selections and unsupported PC-98 rejection. Incremental build, shell syntax, catalog consistency and redacted Gitleaks checks passed. No visual-parity claim.
