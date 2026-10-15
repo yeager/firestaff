@@ -287,16 +287,18 @@ match = re.search(
 if not match:
     raise SystemExit("FAIL: authentic PC-34 ANIM/TITLE completion receipt was missing")
 frames, source_vblanks, elapsed_ms = map(int, match.groups())
-if frames != 53 or source_vblanks == 0:
+if frames != 53 or source_vblanks < frames * 5:
     raise SystemExit(
         f"FAIL: authentic PC-34 ANIM/TITLE frame count/cadence mismatch: {match.groups()}")
-if elapsed_ms + 55 < source_vblanks * 55:
+expected_ms = (source_vblanks * 1000 + 69) // 70
+if elapsed_ms + 20 < expected_ms:
     raise SystemExit(
         f"FAIL: PC-34 ANIM/TITLE ended before its source VBlank cadence: "
-        f"{elapsed_ms} ms for {source_vblanks} ticks")
+        f"{elapsed_ms} ms for {source_vblanks} ticks at 70 Hz (expected "
+        f"at least {expected_ms} ms)")
 print(
     f"PASS: DM1 PC-34 ANIM/TITLE logged {frames} original frames and "
-    f"{source_vblanks} source VBlanks in {elapsed_ms} ms")
+    f"{source_vblanks} source VBlanks at 70 Hz in {elapsed_ms} ms")
 selector = re.search(
     r"startup-source-complete game=dm1 platform=pc34 phase=selector .*"
     r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+) modeled-vblank-hz=(\d+)",

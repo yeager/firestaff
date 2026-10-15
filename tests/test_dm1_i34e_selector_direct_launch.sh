@@ -31,7 +31,7 @@ require_once() {
 }
 
 require_once 'phase=swsh-intro frames=17 source-vblanks=30'
-require_once 'phase=anim-title frames=53 source-vblanks=53'
+require_once 'phase=anim-title frames=53 source-vblanks=265'
 require_once 'phase=anim-title-erase pixels=64000 frames=64 .*modeled-vblank-hz=70'
 require_once 'phase=selector .*entrance=320x200 left-door=105x161 right-door=128x161 selector-view=224x136 frames=32 source-vblanks=32 .*modeled-vblank-hz=70 .*handoff=fires command=enter'
 require_once 'DM1 READY: .*handoff=pc-img3'
