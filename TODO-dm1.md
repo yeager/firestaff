@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-15 FM Towns wall routing: the current implementation now selects
+native F20 wall graphics and layout-696 crops for front and side wall host
+handoffs, rather than stretching the LCR compounds to PC34 dimensions.
+The route/crop and title unit checks pass and the application builds.
+The complete authentic FM Towns archive CLI/menu, EDM/JDM startup, input
+matrices and Hall-of-Champions handoff regression passed.
+An original-media 720-frame boot reaches a loaded level and a nonblank
+presented viewport (700,000 nonblack pixels, five colours). Runtime pixel comparisons
+and remaining zone-blit routes are still open; this is not a parity claim.
+
 2026-10-15 PC34 nested-ZIP I34E title fix: when starting from the authentic
 `Dungeon-Master_DOS_EN.zip`, Firestaff found `GRAPHICS.DAT` under
 `dungeon-master/dmaster/DATA` but looked for `TITLE` only at the archive root.

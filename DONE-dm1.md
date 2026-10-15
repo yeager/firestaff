@@ -1,4 +1,16 @@
 - 2026-10-15: Fixed I34E title lookup in the authentic nested DM1 DOS ZIP.
+
+- 2026-10-15: Restored F20 entrance-door waits to one 60 Hz VBlank per
+  step, matching ReDMCSB ENTRANCE.C F0438:230-240. The 31-step unit
+  contract is 517 ms. Both English and Japanese original-media startup
+  timing probes pass; the complete CLI/menu, EDM/JDM input matrices and
+  Hall-of-Champions regression also pass. Scheduler tolerance is distinct
+  from source timing.
+  Front and side wall host handoffs now use the native F20 layout-696
+  route/crop instead of PC34 rescaling. Route/crop tests pass, the app
+  builds, and an authentic 720-frame boot reaches a loaded runtime and
+  a nonblank presented frame. Remaining wall routes and visual parity
+  are tracked in TODO-dm1.md.
   Firestaff now derives the sibling `dungeon-master/dmaster/TITLE` archive
   member from the authenticated `GRAPHICS.DAT` path instead of checking only
   the ZIP root. The original 12,002-byte title played all 53 frames and 265

@@ -21,6 +21,18 @@ typedef struct DM1_V1_FmtownsLayoutCrop {
     int height;
 } DM1_V1_FmtownsLayoutCrop;
 
+typedef struct DM1_V1_FmtownsWallPanelRoute {
+    unsigned int source_graphic_base;
+    unsigned int layout_zone;
+    int flip_horizontally;
+} DM1_V1_FmtownsWallPanelRoute;
+
+/* Translate the shared PC34 wall semantic into ReDMCSB's F20 source graphic
+ * and layout-696 zone. `flip_walls` is F0128's map/direction parity state. */
+int dm1_v1_fmtowns_wall_panel_route(unsigned int pc34_graphic_index,
+                                   int flip_walls,
+                                   DM1_V1_FmtownsWallPanelRoute *out_route);
+
 /* Resolve the F20E/F20J static G2174 zone records from ReDMCSB COORD.C
  * G3019 (700..717) against a native Towns bitmap's dimensions. */
 int dm1_v1_fmtowns_layout_resolve_crop(unsigned int zone_index,

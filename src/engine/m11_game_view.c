@@ -158,6 +158,7 @@
 #include "firestaff/dm1/v1/projectile/ra_door_projectile_reject_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_fmtowns_entrance_viewport.h"
+#include "dm1_v1_fmtowns_layout_crop.h"
 #include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
@@ -44026,6 +44027,68 @@ static int m11_fmtowns_wall_is_lcr_compound(unsigned int graphic_index) {
     return member >= 9u && member <= 11u;
 }
 
+/* ReDMCSB F20 DUNVIEW.C F0128:8451-8462 and F0104/F0765 submit native
+ * wall panels through COORD.C F0635_ and G3019 layout-696 zones. Preserve
+ * that native crop instead of stretching the bitmap to PC34 dimensions. */
+static int m11_draw_fmtowns_wall_layout_asset(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    unsigned int pc34GraphicIndex,
+    int flipWalls,
+    int transparentColor,
+    int* outHandled)
+{
+    DM1_V1_FmtownsWallPanelRoute route;
+    DM1_V1_FmtownsLayoutCrop crop;
+    const M11_AssetSlot* slot;
+    unsigned int graphicIndex;
+    int wallSet;
+    int y;
+
+    if (outHandled) *outHandled = 0;
+    if (!dm1_v1_fmtowns_wall_panel_route(pc34GraphicIndex, flipWalls,
+                                          &route)) return 0;
+    if (outHandled) *outHandled = 1;
+    if (!state || !state->assetsAvailable || !framebuffer ||
+        !m11_current_map_wall_set(state, &wallSet)) return 0;
+    graphicIndex = 77u + (unsigned int)wallSet * 13u +
+        (route.source_graphic_base - 77u);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0u || slot->height == 0u ||
+        !dm1_v1_fmtowns_layout_resolve_crop(route.layout_zone,
+                                            (int)slot->width,
+                                            (int)slot->height, &crop)) {
+        return 0;
+    }
+    for (y = 0; y < crop.height; ++y) {
+        const int sourceY = crop.source_y + y;
+        const int fbY = M11_VIEWPORT_Y + crop.destination_y + y;
+        int x;
+        if (fbY < 0 || fbY >= fbH || sourceY < 0 ||
+            sourceY >= (int)slot->height) continue;
+        for (x = 0; x < crop.width; ++x) {
+            const int sourceX = crop.source_x + x;
+            const int sx = route.flip_horizontally
+                ? (int)slot->width - 1 - sourceX : sourceX;
+            const int fbX = M11_VIEWPORT_X + crop.destination_x + x;
+            unsigned char pixel;
+            if (sourceX < 0 || sourceX >= (int)slot->width || sx < 0 ||
+                sx >= (int)slot->width || fbX < 0 || fbX >= fbW ||
+                fbX < M11_VIEWPORT_X ||
+                fbX >= M11_VIEWPORT_X + DM1_VIEWPORT_WIDTH) continue;
+            pixel = slot->pixels[sourceY * (int)slot->width + sx];
+            if (transparentColor >= 0 &&
+                pixel == (unsigned char)transparentColor) continue;
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+    return 1;
+}
+
 static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW, int fbH,
@@ -44153,6 +44216,12 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
         return 0;
     }
     if (m11_is_dm1_fmtowns(state)) {
+        int handled;
+        int drawn = m11_draw_fmtowns_wall_layout_asset(
+            state, framebuffer, fbW, fbH,
+            (unsigned int)blit->graphicIndex, 1,
+            transparentColor, &handled);
+        if (handled) return drawn;
         return m11_draw_fmtowns_scaled_asset(
             state, framebuffer, fbW, fbH,
             m11_wallset_graphic_index_for_state(
@@ -44255,6 +44324,12 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
         return 0;
     }
     if (m11_is_dm1_fmtowns(state)) {
+        int handled;
+        int drawn = m11_draw_fmtowns_wall_layout_asset(
+            state, framebuffer, fbW, fbH,
+            (unsigned int)blit->graphicIndex, 0,
+            transparentColor, &handled);
+        if (handled) return drawn;
         return m11_draw_fmtowns_scaled_asset(
             state, framebuffer, fbW, fbH,
             m11_wallset_graphic_index_for_state(
@@ -44305,6 +44380,20 @@ static int m11_draw_dm1_side_wall_host_receipt(
         return 0;
     }
     if (m11_is_dm1_fmtowns(state)) {
+        unsigned int semantic;
+        /* The receipt's PC graphic may already contain a wall-set offset
+         * or parity swap. Its zone preserves the original wall identity. */
+        for (semantic = 93u; semantic <= 107u; ++semantic) {
+            DM1_V1_FmtownsWallPanelRoute route;
+            if (dm1_v1_fmtowns_wall_panel_route(semantic, 0, &route) &&
+                route.layout_zone == (unsigned int)receipt->pc34_zone) {
+                int handled;
+                return m11_draw_fmtowns_wall_layout_asset(
+                    state, framebuffer, fbW, fbH, semantic,
+                    m11_dm1_use_flipped_walls(state),
+                    receipt->material.transparent_color, &handled);
+            }
+        }
         return m11_draw_fmtowns_scaled_asset(
             state, framebuffer, fbW, fbH,
             m11_wallset_graphic_index_for_state(

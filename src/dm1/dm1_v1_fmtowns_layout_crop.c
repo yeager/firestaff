@@ -21,6 +21,49 @@ static const DM1_FmtownsLayoutRecord g_zone_records_700_717[18] = {
     {12, 4,   0,  0}, {11, 4,  12, 28}, {12, 4, -12, 28}
 };
 
+int dm1_v1_fmtowns_wall_panel_route(unsigned int pc34_graphic_index,
+                                   int flip_walls,
+                                   DM1_V1_FmtownsWallPanelRoute *out_route)
+{
+    DM1_V1_FmtownsWallPanelRoute route;
+    switch (pc34_graphic_index) {
+    case 93u: route.source_graphic_base = 84u; route.layout_zone = 717u; break;
+    case 94u: route.source_graphic_base = 85u; route.layout_zone = 716u; break;
+    case 95u: route.source_graphic_base = 86u; route.layout_zone = 714u; break;
+    case 96u: route.source_graphic_base = 86u; route.layout_zone = 713u; break;
+    case 97u: route.source_graphic_base = 86u; route.layout_zone = 712u; break;
+    case 98u: route.source_graphic_base = 87u; route.layout_zone = 708u; break;
+    case 99u: route.source_graphic_base = 87u; route.layout_zone = 707u; break;
+    case 100u: route.source_graphic_base = 87u; route.layout_zone = 711u; break;
+    case 101u: route.source_graphic_base = 87u; route.layout_zone = 710u; break;
+    case 102u: route.source_graphic_base = 87u; route.layout_zone = 709u; break;
+    case 103u: route.source_graphic_base = 89u; route.layout_zone = 703u; break;
+    case 104u: route.source_graphic_base = 89u; route.layout_zone = 702u; break;
+    case 105u: route.source_graphic_base = 88u; route.layout_zone = 706u; break;
+    case 106u: route.source_graphic_base = 88u; route.layout_zone = 705u; break;
+    case 107u: route.source_graphic_base = 88u; route.layout_zone = 704u; break;
+    default:
+        if (out_route) memset(out_route, 0, sizeof(*out_route));
+        return 0;
+    }
+
+    route.flip_horizontally = 0;
+    if (pc34_graphic_index == 103u) {
+        /* F20 F0128 uses the startup-created mirrored M663 for C703. */
+        route.flip_horizontally = 1;
+    } else if (flip_walls && pc34_graphic_index != 104u) {
+        if (pc34_graphic_index == 93u || pc34_graphic_index == 94u) {
+            /* STARTUP2.C swaps the D0L/D0R sources in the flipped family. */
+            route.source_graphic_base = pc34_graphic_index == 93u ? 85u : 84u;
+            route.flip_horizontally = 1;
+        } else {
+            route.flip_horizontally = 1;
+        }
+    }
+    if (out_route) *out_route = route;
+    return 1;
+}
+
 static int dm1_crop_axis(int anchor, int extent, int alignment,
                          int *out_origin, int *out_source)
 {

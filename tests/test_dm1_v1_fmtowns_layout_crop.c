@@ -34,6 +34,33 @@ int main(void)
     int x;
     int y;
 
+    /* ReDMCSB DEFS.H F20 M661..M663/C086..C088 and DUNVIEW.C
+     * F0128/F0104 select a distinct layout-696 zone for each wall semantic. */
+    {
+        static const struct { unsigned int pc, graphic, zone; } routes[] = {
+            {93, 84, 717}, {94, 85, 716}, {95, 86, 714},
+            {96, 86, 713}, {97, 86, 712}, {98, 87, 708},
+            {99, 87, 707}, {100, 87, 711}, {101, 87, 710},
+            {102, 87, 709}, {103, 89, 703}, {104, 89, 702},
+            {105, 88, 706}, {106, 88, 705}, {107, 88, 704}
+        };
+        DM1_V1_FmtownsWallPanelRoute route;
+        for (x = 0; x < (int)(sizeof(routes) / sizeof(routes[0])); ++x) {
+            CHECK(dm1_v1_fmtowns_wall_panel_route(routes[x].pc, 0, &route));
+            CHECK(route.source_graphic_base == routes[x].graphic);
+            CHECK(route.layout_zone == routes[x].zone);
+            CHECK(route.flip_horizontally == (routes[x].pc == 103));
+            CHECK(dm1_v1_fmtowns_wall_panel_route(routes[x].pc, 1, &route));
+            CHECK(route.layout_zone == routes[x].zone);
+            CHECK(route.flip_horizontally == (routes[x].pc != 104));
+            if (routes[x].pc == 93) CHECK(route.source_graphic_base == 85);
+            else if (routes[x].pc == 94) CHECK(route.source_graphic_base == 84);
+            else CHECK(route.source_graphic_base == routes[x].graphic);
+        }
+        CHECK(!dm1_v1_fmtowns_wall_panel_route(92u, 0, &route));
+        CHECK(!dm1_v1_fmtowns_wall_panel_route(108u, 0, &route));
+    }
+
     /* ReDMCSB COORD.C G3019/G3016 exact F20E/F20J geometry. */
     check_crop(705, 158, 100, 0, 0, 0, 25, 158, 100); /* D3L */
     check_crop(706, 20, 39, 0, 0, 204, 25, 20, 39);   /* D3R */

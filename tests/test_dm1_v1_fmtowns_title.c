@@ -149,10 +149,10 @@ int main(void)
         for (titleFrame = 1u; titleFrame <= 31u; ++titleFrame) {
             unsigned int delay =
                 dm1_v1_fmtowns_door_step_delay_ms(titleFrame);
-            CHECK(delay == 50u);
+            CHECK(delay == 16u || delay == 17u);
             elapsed += delay;
         }
-        CHECK(elapsed == 1550u);
+        CHECK(elapsed == 517u);
     }
     puts("PASS: dm1_v1_fmtowns_title");
     return 0;

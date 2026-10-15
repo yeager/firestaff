@@ -8,6 +8,8 @@
 
 ## Developer changes
 
+- `DM1 FM Towns wall host routing`: use native layout-696 crops for front and side walls; restore the source one-VBlank entrance-door wait. Original-media startup probes and route/crop unit checks cover this change; complete visual parity remains open.
+
 - `DM1 PC v3.4 launch route`: follow the original I34E selector handoff and verify it with the original DOS media.
 - `CSB FM Towns animation decoder`: add its bounded F8288 decoder to the DM1 PC v3.4 title sequence.
 - `DM1, CSB and DM2 startup verification`: exercise source-backed launch, title timing, viewport and HUD paths against original media.
