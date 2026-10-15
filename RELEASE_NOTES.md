@@ -7251,3 +7251,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### DM1 late startup rejection
 
 - Failed FM Towns native-launcher admission now clears the partial game session and reports the selected launcher root/program. PC fresh-world allocation failure also clears its session.
+
+### FM Towns launcher inventory
+
+- Loose DM1 FM Towns editions now require verified native launcher files during scanning. Missing English files do not hide Japanese or PC editions that remain usable; required filenames are reported when no usable edition remains. Native startup-file reads are bounded before allocation.

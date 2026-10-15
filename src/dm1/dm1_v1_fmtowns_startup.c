@@ -714,8 +714,10 @@ static int read_startup_file(const char *root, const char *name,
     if (!root || !name || !out_data || !out_size ||
         !FSP_JoinPath(path, sizeof(path), root, name) ||
         !(file = fopen(path, "rb"))) return 0;
+    /* Retail EDM/JDM and TMENU startup files are each below 320 KiB.
+     * Bound the same open file before allocation, including during scans. */
     if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
+        size > 1024L * 1024L || fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
     data = (uint8_t *)malloc((size_t)size);
     if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
         free(data); fclose(file); return 0;

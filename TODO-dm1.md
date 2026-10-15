@@ -1703,7 +1703,13 @@ TMENU.EXP link after scan rejects and leaves the state inactive. PC fresh-pool
 allocation failure also tears down, but that allocation branch lacks fault
 injection evidence. Native Windows symlink staging remains skipped.
 
-Inventory follow-up: loose Towns graphics/dungeon admission can still present
-a valid data card while native launcher files are incomplete. Native M11 startup
-rejects this correctly; improve actionable required-launcher inventory without
-turning discovery into repeated large-disc program reads.
+Loose Towns inventory follow-up (2026-10-15): scan-time native receipt validation
+now rejects incomplete English/Japanese source owners independently. When no
+playable edition survives, existing required-file feedback lists the launcher
+filenames. Valid Japanese/PC siblings remain available. Program reads use a
+1 MiB per-file cap on the same open file; original supported native programs
+pass. Virtual archive admission is unchanged and no per-frame I/O is added.
+Remaining: duplicate loose candidates still use the scanner's first matching
+source; add completeness/ownership coverage for a broken first copy beside a
+complete copy. Per-selected-edition diagnostics in mixed ready collections and
+native Windows original-media staging also remain open.

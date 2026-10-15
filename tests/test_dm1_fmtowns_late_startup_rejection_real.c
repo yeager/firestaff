@@ -31,21 +31,25 @@ int main(void) {
      * selected directory cannot escape to the original installation. */
     static const char* const files[]={
         "AUTOEXEC.BAT", "EDM.EXP", "TMENU.EXP", "TMENU.ICN", "TMENU.INF",
-        "DATA/GRAPHICS.DAT", "DATA/DUNGEON.DAT"
+        "DATA/GRAPHICS.DAT", "DATA/DUNGEON.DAT",
+        "JDM.EXP", "JDATA/GRAPHICS.DAT", "JDATA/DUNGEON.DAT"
     };
     const char* original=getenv("FIRESTAFF_DM1_FMTOWNS_LOOSE_ROOT");
     const char* scratch=getenv("TMPDIR");
+    const char* pcOriginal=getenv("FIRESTAFF_DM1_PC_ARCHIVE");
     char root[FSP_PATH_MAX]={0}, data[FSP_PATH_MAX]={0};
     char config[FSP_PATH_MAX]={0}, menuProgram[FSP_PATH_MAX]={0};
+    char japaneseData[FSP_PATH_MAX]={0}, englishProgram[FSP_PATH_MAX]={0}, pcAlias[FSP_PATH_MAX]={0};
     char source[FSP_PATH_MAX], destination[FSP_PATH_MAX], physical[FSP_PATH_MAX];
     M12_StartupMenuState* menu=NULL;
     M11_GameViewState* game=NULL;
+    M12_AssetStatus* fresh=NULL;
     M12_StartupMenuInitOptions options;
     M12_LaunchIntent intent;
     M11_BootProbeReceipt receipt;
     const M12_AssetVersionStatus* version;
     size_t i, linked=0;
-    int created=0, initialized=0, index, result=1;
+    int created=0, initialized=0, index, japaneseIndex, result=1;
     if (!original || !FSP_DirExists(original)) {
         puts("SKIP: FIRESTAFF_DM1_FMTOWNS_LOOSE_ROOT authentic installation required");
         return 77;
@@ -64,6 +68,8 @@ int main(void) {
     REQUIRE(FSP_ResolvePhysicalPath(physical,sizeof(physical),root),"resolve task directory");
     snprintf(root,sizeof(root),"%s",physical);
     REQUIRE(FSP_JoinPath(data,sizeof(data),root,"DATA") && FSP_CreateDirectory(data) &&
+        FSP_JoinPath(japaneseData,sizeof(japaneseData),root,"JDATA") && FSP_CreateDirectory(japaneseData) &&
+        FSP_JoinPath(englishProgram,sizeof(englishProgram),root,"EDM.EXP") &&
         FSP_JoinPath(config,sizeof(config),root,"menu.toml") &&
         FSP_JoinPath(menuProgram,sizeof(menuProgram),root,"TMENU.EXP"),"construct isolated paths");
     for (i=0; i<sizeof(files)/sizeof(files[0]); ++i) {
@@ -106,17 +112,86 @@ int main(void) {
     REQUIRE(unlink(menuProgram)==0,"remove staged TMENU link without modifying original");
     REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu),"missing native menu rejects stale selected startup");
     REQUIRE(!game->active,"native startup rejection leaves no running partial world");
+    /* A later inventory must reject the incomplete native package before
+     * offering it to the player, not merely fail its eventual handoff. */
+    fresh=SDL_calloc(1,sizeof(*fresh));
+    REQUIRE(fresh,"allocate independent fresh inventory");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index);
+    REQUIRE(version && !version->matched && !M12_AssetStatus_GameAvailable(fresh,"dm1"),
+        "fresh scan does not advertise incomplete native FM Towns startup");
+    japaneseIndex=M12_AssetStatus_FindVersionIndex("dm1","fmtowns-ja");
+    version=japaneseIndex>=0 ? M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex) : NULL;
+    REQUIRE(version && !version->matched,"missing common TMENU rejects Japanese native startup too");
+    {
+        int nativeMissing=0;
+        for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
+            const M12_AssetRequiredFileStatus* required=
+                M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
+            if (required && required->roleId && strcmp(required->roleId,"native-launcher")==0) {
+                nativeMissing=required->required && !required->matched && required->label &&
+                    strstr(required->label,"TMENU.EXP")!=NULL;
+            }
+        }
+        REQUIRE(nativeMissing,"incomplete native package reports missing launcher filenames");
+    }
+    if (pcOriginal && FSP_FileExists(pcOriginal)) {
+        int pcIndex=M12_AssetStatus_FindVersionIndex("dm1","pc34-en");
+        REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) &&
+            symlink(physical,pcAlias)==0,"stage authentic PC sibling beside incomplete native Towns");
+        M12_AssetStatus_ScanGame(fresh,root,"dm1");
+        version=pcIndex>=0 ? M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)pcIndex) : NULL;
+        REQUIRE(version && version->matched && M12_AssetStatus_GameAvailable(fresh,"dm1"),
+            "incomplete Towns launcher does not hide authenticated PC sibling");
+        REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched &&
+            !M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex)->matched,
+            "PC availability does not restore rejected native Towns editions");
+        REQUIRE(unlink(pcAlias)==0,"remove only task-owned PC archive link");
+        pcAlias[0]='\0';
+    } else {
+        puts("SKIP: authentic PC archive unavailable for mixed-platform preservation case");
+    }
+    REQUIRE(FSP_JoinPath(source,sizeof(source),original,"TMENU.EXP") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+        symlink(physical,menuProgram)==0,"restore only task-owned original menu link");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index);
+    REQUIRE(version && version->matched && M12_AssetStatus_GameAvailable(fresh,"dm1"),
+        "fresh scan admits restored authentic native FM Towns startup");
+    version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex);
+    REQUIRE(version && version->matched,"restored common menu admits Japanese startup too");
+    REQUIRE(unlink(englishProgram)==0,"remove only staged English program link");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched &&
+        M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex)->matched &&
+        M12_AssetStatus_GameAvailable(fresh,"dm1"),
+        "missing EDM rejects English while preserving original Japanese startup");
+    for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
+        const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
+        REQUIRE(!required || !required->roleId || strcmp(required->roleId,"native-launcher")!=0 ||
+            !required->required || required->matched,
+            "ready Japanese edition is not blocked by English native launcher requirement");
+    }
+    REQUIRE(FSP_JoinPath(source,sizeof(source),original,"EDM.EXP") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),source) && symlink(physical,englishProgram)==0,
+        "restore staged original English program link");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    REQUIRE(M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched,
+        "restoring EDM admits English native startup again");
     result=0;
-    puts("PASS: complete native Towns startup opens; missing TMENU rejects and clears the world");
+    puts("PASS: native Towns admission preserves language ownership and playable sibling editions");
 cleanup:
     if (initialized) M11_GameView_Shutdown(game);
     if (menu) M12_StartupMenu_Destroy(menu);
-    SDL_free(game); SDL_free(menu);
+    SDL_free(game); SDL_free(menu); SDL_free(fresh);
     for (i=0; i<linked; ++i) {
         if (FSP_JoinPath(destination,sizeof(destination),root,files[i])) unlink(destination);
     }
+    if (pcAlias[0]) unlink(pcAlias);
     if (config[0]) unlink(config);
     if (data[0]) rmdir(data);
+    if (japaneseData[0]) rmdir(japaneseData);
     if (created) rmdir(root);
     SDL_Quit();
     return result;

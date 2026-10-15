@@ -6318,8 +6318,42 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
     gameId = g_games[gameIndex].gameId;
     if (strcmp(gameId, "dm1") == 0) {
         int rejected = 0;
+        const char* missingLauncher = NULL;
+        char rejectedRoot[M12_ASSET_DATA_DIR_CAPACITY] = {0};
         for (size_t index = 0U; index < g_games[gameIndex].versionCount; ++index) {
             M12_AssetVersionStatus* version = &status->versions[gameIndex][index];
+            if (version->matched && !strstr(version->matchedPath, "::") &&
+                (strcmp(version->versionId, "fmtowns-en") == 0 ||
+                 strcmp(version->versionId, "fmtowns-ja") == 0)) {
+                char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+                char startupRoot[M12_ASSET_DATA_DIR_CAPACITY] = {0};
+                DM1_V1_FmtownsStartupReceipt receipt;
+                const int japanese = strcmp(version->versionId, "fmtowns-ja") == 0;
+                int nativeReady = FSP_ParentDir(dataRoot, sizeof(dataRoot),
+                                                 version->matchedPath);
+                if (nativeReady &&
+                    (m12_ascii_equals_ignore_case(m12_path_leaf(dataRoot), "DATA") ||
+                     m12_ascii_equals_ignore_case(m12_path_leaf(dataRoot), "JDATA")))
+                    nativeReady = FSP_ParentDir(startupRoot, sizeof(startupRoot), dataRoot);
+                else if (nativeReady)
+                    m12_copy_string(startupRoot, sizeof(startupRoot), dataRoot);
+                nativeReady = nativeReady &&
+                    dm1_v1_fmtowns_startup_receipt_from_directory(startupRoot,
+                                                                  japanese, &receipt) &&
+                    dm1_v1_fmtowns_startup_receipt_is_native(&receipt);
+                if (!nativeReady) {
+                    missingLauncher = japanese
+                        ? "AUTOEXEC.BAT / TMENU.EXP / TMENU.ICN / TMENU.INF / JDM.EXP"
+                        : "AUTOEXEC.BAT / TMENU.EXP / TMENU.ICN / TMENU.INF / EDM.EXP";
+                    m12_copy_string(rejectedRoot, sizeof(rejectedRoot),
+                                    startupRoot[0] ? startupRoot : version->matchedPath);
+                    fprintf(stderr, "firestaff: DM1 %s loose launcher incomplete: %s\n",
+                            version->versionId, version->matchedPath);
+                    version->matched = 0;
+                    version->matchedPath[0] = version->matchedMd5[0] = '\0';
+                    rejected = 1;
+                }
+            }
             if (version->matched && strcmp(version->versionId, "amiga36-multi") == 0 &&
                 !m12_dm1_amiga36_package_ready(version->matchedPath)) {
                 version->matched = 0;
@@ -6327,7 +6361,22 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
                 rejected = 1;
             }
         }
-        if (rejected && !m12_first_matched_version(status, gameIndex)) available = 0;
+        if (rejected && !m12_first_matched_version(status, gameIndex)) {
+            available = 0;
+            /* These roles are game-wide. Never hide a playable sibling
+             * edition because only the Towns native launcher is missing. */
+            if (missingLauncher && status->requiredFileCounts[gameIndex] <
+                                       M12_ASSET_MAX_REQUIRED_FILES_PER_GAME) {
+                M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex]
+                    [status->requiredFileCounts[gameIndex]++];
+                memset(required, 0, sizeof(*required));
+                required->gameId = "dm1";
+                required->roleId = "native-launcher";
+                required->label = missingLauncher;
+                required->required = 1;
+                m12_copy_string(required->sourcePath, sizeof(required->sourcePath), rejectedRoot);
+            }
+        }
         status->dm1Available = available;
     } else if (strcmp(gameId, "csb") == 0) {
         status->csbAvailable = available;
