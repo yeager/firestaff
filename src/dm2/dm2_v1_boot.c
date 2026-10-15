@@ -2688,6 +2688,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     char zip_path[512];
     char nested_zip_path[512];
     char image_member[512];
+    int explicit_zip;
     uint8_t *cue_data = NULL;
     size_t cue_size = 0;
     uint8_t *img_data = NULL;
@@ -2741,7 +2742,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
-    if (strstr(data_dir, archive_name) != NULL && FSP_FileExists(data_dir)) {
+    explicit_zip = dm2_v1_media_path_is_zip(data_dir) && FSP_FileExists(data_dir);
+    if (explicit_zip) {
         snprintf(zip_path, sizeof(zip_path), "%s", data_dir);
         nested_zip_path[0] = '\0';
     } else {
@@ -2752,6 +2754,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
 
     if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
                                         &cue_data, &cue_size) != 0) {
+        /* An explicit file never authorizes a sibling or parent medium. */
+        if (explicit_zip) return;
         snprintf(zip_path, sizeof(zip_path), "%s", nested_zip_path);
         if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
                                             &cue_data, &cue_size) != 0) {
@@ -3009,7 +3013,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                                       profile->graphics_md5);
                     snprintf(profile->graphics_path,
                              sizeof(profile->graphics_path),
-                             "%s (FM Towns disc image)", zip_path);
+                             "%s::DATA/GRAPHICS.DAT", zip_path);
                     profile->platform = DM2_PLATFORM_FMTOWNS_JA;
                     strncpy(profile->platform_label, "FM Towns Japanese",
                             sizeof(profile->platform_label) - 1);
@@ -3030,7 +3034,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                                       profile->dungeon_md5);
                     snprintf(profile->dungeon_path,
                              sizeof(profile->dungeon_path),
-                             "%s (FM Towns disc image)", zip_path);
+                             "%s::DATA/DUNGEON.DAT", zip_path);
                 }
             }
         }
@@ -3274,7 +3278,7 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
     /* A direct archive selection is a valid launcher handoff.  It avoids
      * letting a sibling PC install decide the platform when the user chose
      * the Amiga release explicitly. */
-    if (strstr(data_dir, archive_name) != NULL && FSP_FileExists(data_dir)) {
+    if (dm2_v1_media_path_is_zip(data_dir) && FSP_FileExists(data_dir)) {
         snprintf(candidates[0], sizeof(candidates[0]), "%s", data_dir);
         candidates[1][0] = '\0';
     } else {
@@ -3471,7 +3475,7 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
     char dungeon_virtual_path[sizeof(profile->dungeon_path)];
 
     if (!profile || !archive_path || !FSP_FileExists(archive_path) ||
-        !strstr(archive_path, "Dungeon-Master-II-Skullkeep_DOS_")) {
+        !dm2_v1_media_path_is_zip(archive_path)) {
         return 0;
     }
     /* Keep the selected archive as the media owner.  The generic ZIP helper
@@ -3535,25 +3539,55 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
     return 1;
 }
 
+/* Every reader receives the same explicit archive. Failed readers may own
+ * partial disc/movie buffers, so release them before trying another format.
+ * Platform identity is the authenticated DAT pair, never the outer name. */
+static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
+                                         const char *archive)
+{
+    char save_root[sizeof(profile->save_root)];
+    int reader;
+    memcpy(save_root, profile->save_root, sizeof(save_root));
+    for (reader = 0; reader < 4; ++reader) {
+        int reader_family;
+        switch (reader) {
+            case 0: (void)dm2_v1_boot_load_pc_dos_archive(profile, archive); break;
+            case 1: (void)dm2_v1_boot_load_mac_zip(profile, archive); break;
+            case 2: dm2_v1_boot_load_fmtowns_disc_from_zip(profile, archive); break;
+            case 3: (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, archive); break;
+        }
+        /* A recognised pair from another platform is not authority for this
+         * transport reader. In particular, Mega CD pairs remain excluded. */
+        reader_family = reader == 0
+            ? (md5_matches(profile->graphics_md5, "25247ede4dabb6a71e5dabdfbcd5907d") ||
+               md5_matches(profile->graphics_md5, "b4d733576ea60c41737f79f212faf528") ||
+               md5_matches(profile->graphics_md5, "e52ab5e01715042b16a4dcff02052e5d"))
+            : reader == 1
+                ? (md5_matches(profile->graphics_md5, "5cab25f6b975957eae4a203174e7f2a6") ||
+                   md5_matches(profile->graphics_md5, "4bf28b3d84e6799d7686c6aaf96cbf23"))
+                : reader == 2
+                    ? md5_matches(profile->graphics_md5, "027ff3b8ddc2c4c4cdda7ada0b0bc46c")
+                    : md5_matches(profile->graphics_md5, "1c940ea95703eaea0ecdf84d17e954b9");
+        if (reader_family && profile->graphics_path[0] && profile->dungeon_path[0] &&
+            dm2_v1_boot_asset_hash_pair_supported(profile->graphics_md5,
+                                                  profile->dungeon_md5))
+            return 1;
+        dm2_v1_boot_cleanup(profile);
+        dm2_v1_boot_profile_init(profile);
+        memcpy(profile->save_root, save_root, sizeof(save_root));
+    }
+    return 0;
+}
+
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir) {
     char path[512];
     char save_root[sizeof(profile->save_root)];
-    int explicit_amiga_archive;
-    int explicit_mac_archive;
-    int explicit_pc_dos_archive;
+    int explicit_zip;
     (void)path;
     const char *base = data_dir ? data_dir : ".";
 
-    explicit_amiga_archive = strstr(base,
-                                    "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL &&
-        FSP_FileExists(base);
-    explicit_pc_dos_archive = strstr(base,
-                                     "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
-        FSP_FileExists(base);
-    explicit_mac_archive = strstr(base,
-                                  "Dungeon-Master-II-Skullkeep_Mac_") != NULL &&
-        FSP_FileExists(base);
+    explicit_zip = dm2_v1_media_path_is_zip(base) && FSP_FileExists(base);
 
     if (!profile) return -1;
     /* A rescan selects a new user-owned medium.  No parsed world, mounted
@@ -3575,19 +3609,8 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not
      * depend on PC install names or directory layout. */
-    if (explicit_pc_dos_archive) {
-        (void)dm2_v1_boot_load_pc_dos_archive(profile, base);
-    } else if (explicit_amiga_archive) {
-        (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
-    } else if (explicit_mac_archive) {
-        /* A Macintosh retail ZIP is a raw CD image with a CUE sheet.  Its
-         * HFS reader is the selected-medium owner; scanning the containing
-         * data directory first can otherwise bind a sibling FM Towns
-         * GRAPHICS.DAT and silently launch the wrong platform. */
-        /* A selected Macintosh archive is authoritative. If it is a demo,
-         * corrupt, or otherwise lacks the supported HFS payload, fail now;
-         * later platform probes must not substitute a neighboring edition. */
-        if (!dm2_v1_boot_load_mac_zip(profile, base)) return -1;
+    if (explicit_zip) {
+        if (!dm2_v1_boot_load_explicit_zip(profile, base)) return -1;
     } else {
         (void)dm2_scan_known_hash_assets(base,
                                          profile->graphics_path,
@@ -3630,16 +3653,16 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     /* A selected Macintosh ZIP also has a CUE sheet.  Probe its HFS owner
      * before the generic disc-image route, otherwise the MODE1 track can be
      * mistaken for FM Towns merely because the container carries a cue. */
-    if (!explicit_mac_archive &&
+    if (!explicit_zip &&
         (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
         (void)dm2_v1_boot_load_mac_zip(profile, base);
     }
     /* If no loose files found, try FM Towns disc image in ZIP */
-    if (!explicit_mac_archive &&
+    if (!explicit_zip &&
         (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
         dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
     }
-    if (!explicit_mac_archive &&
+    if (!explicit_zip &&
         (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
         (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
     }
@@ -3710,7 +3733,9 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
      * DOS install where the real files live in <root>/data/.  SKULL.ASM
      * T560 owns the DUNGEON.DAT load; this helper only normalizes the
      * Firestaff launch path before that parser runs. */
-    if (profile->dungeon_path[0]) {
+    if (explicit_zip) {
+        snprintf(profile->asset_root, sizeof(profile->asset_root), "%s", base);
+    } else if (profile->dungeon_path[0]) {
         copy_parent_dir(profile->asset_root, profile->dungeon_path);
     } else if (profile->graphics_path[0]) {
         copy_parent_dir(profile->asset_root, profile->graphics_path);

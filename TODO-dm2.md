@@ -1,13 +1,13 @@
 # Firestaff TODO — DM2
 
-2026-10-15 archive ownership: original DOS/Mac canonical-name .ZIP aliases
-now reach loaded runtime after replacing case-sensitive transport checks.
-An unrelated explicit-name gap remains: original DOS media aliased as
-DM2.ZIP is hash-discovered but rejected as unavailable because the boot owner
-still requires its canonical edition-family prefix. Preserve hash-based
-identity and explicit selection when removing this naming dependency; do not
-fall through to sibling packages. Existing uppercase-prefix tests do not
-prove arbitrary archive-name support or cross-platform native rendering.
+2026-10-15 explicit ZIP ownership now uses the original paired identities
+for DOS, Macintosh, FM Towns and Amiga rather than preservation filenames.
+Directory discovery still uses its existing bounded candidate inventory;
+arbitrary filenames inside a collection need separate coverage. Unscoped
+DM1/CSB ZIP selection requires exact selected-archive provenance. The nested
+DM1 Amiga 2.0 SWSH/title/entrance and CSB Towns title handoff pass, but their
+larger gameplay/input matrices have not been rerun after this shared change. Native display/audio behavior
+and visual parity are not established by the SDL-dummy DM2 ownership matrix.
 
 ## Fresh New Game verification (2026-10-15)
 

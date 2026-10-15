@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `Selected DM2 ZIP files`: authenticate DOS, Macintosh, FM Towns and Amiga media by their original contents through CLI and the start menu, including renamed archives. Reject unreadable selections instead of borrowing a neighboring archive.
+
 - `DM2 DOS and Macintosh startup`: accept uppercase ZIP extensions on the documented retail archive names while retaining original-file verification.
 
 - `DM1 Amiga loose files`: start the original demo through CLI and the start menu when its files are stored in a directory, preserving authenticated title and entrance companions.

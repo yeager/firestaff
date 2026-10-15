@@ -1,3 +1,11 @@
+- 2026-10-15: Shared explicit-file scanner regression: unscoped M12 with
+  the original nested Amiga 2.0 ZIP keeps its selected outer archive even
+  beside other DM1 editions. The source SWSH, all 18 F0437 title frames and
+  31-step F0441 entrance complete before the Amiga runtime handoff. The
+  ownership filter retains all matching editions from that ZIP and discards
+  sibling-package rows. This SDL-dummy check does not establish native
+  presentation/input or visual parity.
+
 - 2026-10-15: Fixed loose original Amiga startup: scanning admitted the demo
   graphics/dungeon, but M11 bypassed compressed Motorola dungeon intake and
   required virtual paths for SWSH/title/entrance. Loose admitted media now

@@ -1540,45 +1540,67 @@ static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,
 }
 
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
-/* A direct PC-DOS ZIP is an explicit medium selection.  The DM2 boot owner
- * verifies its two original DAT members in RAM; M12 records that receipt so
- * sibling archives cannot replace the selected source. */
-static int m12_admit_dm2_pc_dos_archive(M12_AssetStatus* status,
-                                        int gameIndex,
-                                        const char* archive) {
+/* Packed ownership is proved by a supported original pair in the exact
+ * selected archive. A filename is only a locator, never an edition identity. */
+static int m12_dm2_profile_has_exact_zip_owner(
+    const DM2_V1_BootProfile* profile, const char* archive) {
+    size_t n = strlen(archive);
+    return profile->assets_verified &&
+        (profile->platform == DM2_PLATFORM_PC_EN ||
+         profile->platform == DM2_PLATFORM_PC_FR ||
+         profile->platform == DM2_PLATFORM_PC_JEWEL ||
+         profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
+         profile->platform == DM2_PLATFORM_MAC_EN ||
+         profile->platform == DM2_PLATFORM_AMIGA_EN) &&
+        dm2_v1_boot_asset_hash_pair_supported(profile->graphics_md5,
+                                               profile->dungeon_md5) &&
+        strncmp(profile->graphics_path, archive, n) == 0 &&
+        strncmp(profile->graphics_path + n, "::", 2u) == 0 &&
+        strncmp(profile->dungeon_path, archive, n) == 0 &&
+        strncmp(profile->dungeon_path + n, "::", 2u) == 0;
+}
+
+/* Directory inventory registers DOS candidates without erasing other ports.
+ * An explicit ZIP selection instead owns the entire result, including failure. */
+static int m12_admit_dm2_zip_profile(M12_AssetStatus* status, int gameIndex,
+                                      const char* archive, int exclusive) {
     size_t i;
+    int admitted = 0;
     DM2_V1_BootProfile profile;
-    if (!status || !archive || !FSP_FileExists(archive) ||
-        !strstr(archive, "Dungeon-Master-II-Skullkeep_DOS_") ||
-        gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
-        strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
-    dm2_v1_boot_profile_init(&profile);
-    if (dm2_v1_boot_scan_assets(&profile, archive) != 0 ||
-        !profile.assets_verified ||
-        (profile.platform != DM2_PLATFORM_PC_EN &&
-         profile.platform != DM2_PLATFORM_PC_FR &&
-         profile.platform != DM2_PLATFORM_PC_JEWEL) ||
-        (strcmp(profile.graphics_md5, "25247ede4dabb6a71e5dabdfbcd5907d") != 0 &&
-         strcmp(profile.graphics_md5, "b4d733576ea60c41737f79f212faf528") != 0 &&
-         strcmp(profile.graphics_md5, "e52ab5e01715042b16a4dcff02052e5d") != 0) ||
-        strcmp(profile.dungeon_md5, "6caccd7875009e82fe2e28e7f6d6adc0") != 0) {
-        dm2_v1_boot_cleanup(&profile);
-        return 0;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0 || !archive ||
+        !FSP_FileExists(archive) ||
+        !m12_ascii_equals_ignore_case(strrchr(archive, '.'), ".zip")) return 0;
+    if (exclusive) {
+        for (i = 0u; i < g_games[gameIndex].versionCount; ++i) {
+            status->versions[gameIndex][i].matched = 0;
+            status->versions[gameIndex][i].matchedPath[0] = '\0';
+            status->versions[gameIndex][i].matchedMd5[0] = '\0';
+        }
+        status->runtimeDataDirs[gameIndex][0] = '\0';
     }
-    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
-        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
-        if (strcmp(version->versionId, profile.version_id) == 0) {
+    dm2_v1_boot_profile_init(&profile);
+    if (dm2_v1_boot_scan_assets(&profile, archive) == 0 &&
+        m12_dm2_profile_has_exact_zip_owner(&profile, archive) &&
+        (exclusive || profile.platform == DM2_PLATFORM_PC_EN ||
+         profile.platform == DM2_PLATFORM_PC_FR ||
+         profile.platform == DM2_PLATFORM_PC_JEWEL)) {
+        for (i = 0u; i < g_games[gameIndex].versionCount; ++i) {
+            M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+            if (strcmp(version->versionId, profile.version_id) != 0) continue;
             version->matched = 1;
-            snprintf(version->matchedPath, sizeof(version->matchedPath), "%s",
-                     profile.graphics_path);
-            snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s",
-                     profile.graphics_md5);
+            m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
+                            profile.graphics_path);
+            m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
+                            profile.graphics_md5);
+            m12_copy_string(status->runtimeDataDirs[gameIndex],
+                            sizeof(status->runtimeDataDirs[gameIndex]), archive);
+            admitted = 1;
+            break;
         }
     }
-    m12_copy_string(status->runtimeDataDirs[gameIndex],
-                    sizeof(status->runtimeDataDirs[gameIndex]), archive);
     dm2_v1_boot_cleanup(&profile);
-    return 1;
+    return admitted;
 }
 
 /* A game-specific directory is allowed to hold several original DM2 media
@@ -1586,7 +1608,7 @@ static int m12_admit_dm2_pc_dos_archive(M12_AssetStatus* status,
  * disc rather than letting whichever scanner happened to run last become the
  * runtime owner.  The command line and the launcher select an architecture
  * only after this inventory is complete.  Every candidate still passes the
- * native GRAPHICS.DAT + DUNGEON.DAT hash gate in m12_admit_dm2_pc_dos_archive;
+ * native GRAPHICS.DAT + DUNGEON.DAT hash gate in m12_admit_dm2_zip_profile;
  * names merely bound the otherwise-expensive archive search. */
 static void m12_admit_dm2_pc_dos_archives_in_roots(
     M12_AssetStatus* status,
@@ -1611,10 +1633,10 @@ static void m12_admit_dm2_pc_dos_archives_in_roots(
             char candidate[M12_ASSET_DATA_DIR_CAPACITY];
             snprintf(candidate, sizeof(candidate), "%s/%s", roots[rootIndex],
                      archiveNames[archiveIndex]);
-            (void)m12_admit_dm2_pc_dos_archive(status, gameIndex, candidate);
+            (void)m12_admit_dm2_zip_profile(status, gameIndex, candidate, 0);
             snprintf(candidate, sizeof(candidate), "%s/dm2/%s", roots[rootIndex],
                      archiveNames[archiveIndex]);
-            (void)m12_admit_dm2_pc_dos_archive(status, gameIndex, candidate);
+            (void)m12_admit_dm2_zip_profile(status, gameIndex, candidate, 0);
         }
     }
 }
@@ -2682,22 +2704,39 @@ static int m12_path_is_virtual_asset(const char* path) {
     return path && strstr(path, "::") != NULL;
 }
 
-/* Hash discovery is intentionally filename-agnostic, but DM2 archive launch
- * is not: each supported packed edition has its own bounded in-memory boot
- * owner.  Do not let a generic ZIP member receipt claim a runtime route that
- * was never admitted by one of those owners. */
+/* Generic hash discovery alone cannot establish a native packed owner.
+ * Revalidate the selected original archive before publishing its runtime root. */
 static int m12_dm2_virtual_path_has_native_owner(
     const M12_AssetVersionStatus* version) {
     if (!version || !version->versionId ||
-        !m12_path_is_virtual_asset(version->matchedPath)) {
-        return 0;
+        !m12_path_is_virtual_asset(version->matchedPath)) return 0;
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+    {
+        const char* separator = strstr(version->matchedPath, "::");
+        size_t n = (size_t)(separator - version->matchedPath);
+        char archive[M12_ASSET_DATA_DIR_CAPACITY];
+        DM2_V1_BootProfile profile;
+        int admitted;
+        if (n == 0u || n >= sizeof(archive)) return 0;
+        memcpy(archive, version->matchedPath, n);
+        archive[n] = '\0';
+        if (!m12_ascii_equals_ignore_case(strrchr(archive, '.'), ".zip") ||
+            !FSP_FileExists(archive)) return 0;
+        dm2_v1_boot_profile_init(&profile);
+        admitted = dm2_v1_boot_scan_assets(&profile, archive) == 0 &&
+            m12_dm2_profile_has_exact_zip_owner(&profile, archive) &&
+            strcmp(profile.version_id, version->versionId) == 0 &&
+            strcmp(profile.graphics_md5, version->matchedMd5) == 0 &&
+            strcmp(profile.graphics_path, version->matchedPath) == 0;
+        dm2_v1_boot_cleanup(&profile);
+        return admitted;
     }
+#else
     if ((strcmp(version->versionId, "pc-en") == 0 ||
          strcmp(version->versionId, "pc-fr") == 0 ||
          strcmp(version->versionId, "pc-jewel") == 0) &&
-        strstr(version->matchedPath, "Dungeon-Master-II-Skullkeep_DOS_") != NULL) {
+        strstr(version->matchedPath, "Dungeon-Master-II-Skullkeep_DOS_") != NULL)
         return 1;
-    }
     if (strcmp(version->versionId, "fmtowns-ja") == 0 &&
         strstr(version->matchedPath,
                "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL) {
@@ -2711,6 +2750,7 @@ static int m12_dm2_virtual_path_has_native_owner(
     return strcmp(version->versionId, "mac-en-retail") == 0 &&
            strstr(version->matchedPath,
                   "Dungeon-Master-II-Skullkeep_Mac_EN") != NULL;
+#endif
 }
 
 /* Production must never turn a packed game file into a second game-data
@@ -6612,13 +6652,52 @@ static int m12_scan_direct_nexus_request(M12_AssetStatus* status,
 }
 
 static int m12_scan_explicit_file_request(M12_AssetStatus* status,
-                                          const char* requestedDataDir) {
+                                          const char* requestedDataDir,
+                                          const M12_AssetStatusScanOptions* options) {
     char parent[M12_ASSET_DATA_DIR_CAPACITY];
     char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
     int i;
     if (!status || !requestedDataDir || !FSP_FileExists(requestedDataDir)) {
         return 0;
     }
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+    /* A single archive is a media selection, not permission to scan siblings.
+     * Reuse the complete game-specific owners before the generic file fallback. */
+    if (m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip")) {
+        static const char* const games[] = {"dm2", "dm1", "csb"};
+        size_t g;
+        for (g = 0u; g < sizeof(games) / sizeof(games[0]); ++g) {
+            M12_AssetStatus_ScanGameWithOptions(status, requestedDataDir, games[g], options);
+            size_t n = strlen(requestedDataDir);
+            int index = m12_game_index_from_id(games[g]);
+            int owned = 0;
+            size_t v;
+            if (status->scanProgress.cancelled || status->scanProgress.cancelRequested ||
+                (options && options->cancelFlag && *options->cancelFlag)) return 1;
+            /* A source-specific scan may inspect a preservation package's
+             * parent. Retain every edition from this selected ZIP only. */
+            for (v = 0u; v < g_games[index].versionCount; ++v) {
+                M12_AssetVersionStatus* version = &status->versions[index][v];
+                if (version->matched &&
+                    strncmp(version->matchedPath, requestedDataDir, n) == 0 &&
+                    strncmp(version->matchedPath + n, "::", 2u) == 0) {
+                    owned = 1;
+                } else {
+                    version->matched = 0;
+                    version->matchedPath[0] = '\0';
+                    version->matchedMd5[0] = '\0';
+                }
+            }
+            if (owned && M12_AssetStatus_GameAvailable(status, games[g])) {
+                m12_copy_string(status->runtimeDataDirs[index],
+                                sizeof(status->runtimeDataDirs[index]), requestedDataDir);
+                return 1;
+            }
+        }
+    }
+#else
+    (void)options;
+#endif
     memset(status, 0, sizeof(*status));
     FirestaffTheronMedia_Init(&status->theronMedia);
     if (FSP_ParentDir(parent, sizeof(parent), requestedDataDir)) {
@@ -6917,6 +6996,19 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_scan_progress_finish(status, 1, 0);
         return 1;
     }
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+    if (requestedDataDir &&
+        m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip") &&
+        m12_scan_explicit_file_request(status, requestedDataDir, options)) {
+        if (status->scanProgress.cancelled || status->scanProgress.cancelRequested ||
+            (options && options->cancelFlag && *options->cancelFlag)) {
+            m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
+            return 0;
+        }
+        m12_scan_progress_finish(status, 1, 0);
+        return 1;
+    }
+#endif
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
         m12_explicit_path_is_archive(requestedDataDir)) {
@@ -6964,7 +7056,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         return 0;
     }
     if (!requestedFileScanParent &&
-        m12_scan_explicit_file_request(status, requestedDataDir)) {
+        m12_scan_explicit_file_request(status, requestedDataDir, options)) {
         m12_scan_progress_finish(status, 1, 0);
         return 1;
     }
@@ -7338,11 +7430,6 @@ void M12_AssetStatus_ScanGameWithOptions(
         strstr(requestedDataDir,
                "Dungeon-Master-II-Skullkeep_PC-9821_JA.zip") != NULL &&
         FSP_FileExists(requestedDataDir) && !FSP_DirExists(requestedDataDir);
-#ifndef FIRESTAFF_ASSET_STATUS_TESTING
-    int dm2ExplicitAmiga = 0;
-    int dm2ExplicitMac = 0;
-    int dm2ExplicitPcDos = 0;
-#endif
     int nexusArchiveAdmitted = 0;
     int reqMatch;
     M12_ScanProgressContext progressCtx;
@@ -7514,58 +7601,24 @@ void M12_AssetStatus_ScanGameWithOptions(
          * archive only to restore them. */
     if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
-            dm2ExplicitPcDos = requestedDataDir && requestedDataDir[0] &&
-                strstr(requestedDataDir,
-                       "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
-                FSP_FileExists(requestedDataDir);
-            dm2ExplicitAmiga = requestedDataDir && requestedDataDir[0] &&
-                strstr(requestedDataDir,
-                       "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL &&
-                FSP_FileExists(requestedDataDir);
-            dm2ExplicitMac = requestedDataDir && requestedDataDir[0] &&
-                strstr(requestedDataDir, "Dungeon-Master-II-Skullkeep_Mac_EN") != NULL &&
-                FSP_FileExists(requestedDataDir);
-#endif
-            /* A direct edition archive is a user selection.  Admit that
-             * edition before sibling-archive discovery; otherwise a shared
-             * DM2 root can let the Towns archive win an explicitly selected
-             * Amiga/Mac launch. */
-            /* Nested Amiga/Mac archive admission is intentionally absent from
-             * FIRESTAFF_ASSET_STATUS_TESTING builds; those tests use the
-             * lightweight status corpus and must not reference the production
-             * archive owner symbols. */
-#ifndef FIRESTAFF_ASSET_STATUS_TESTING
-            if (dm2ExplicitPcDos) {
-                (void)m12_admit_dm2_pc_dos_archive(status, gameIndex,
-                                                    requestedDataDir);
-            } else if (dm2ExplicitAmiga) {
-                (void)m12_admit_dm2_amiga_archive(status, gameIndex,
-                                                   roots, rootCount,
-                                                   requestedDataDir);
-            } else if (dm2ExplicitMac) {
-                (void)m12_admit_dm2_mac_archive(status, gameIndex, roots,
-                                                rootCount, requestedDataDir);
+            if (requestedDataDir && FSP_FileExists(requestedDataDir) &&
+                m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip")) {
+                (void)m12_admit_dm2_zip_profile(status, gameIndex,
+                                                requestedDataDir, 1);
             } else
 #endif
-            (void)m12_admit_dm2_fmtowns_archive(
-                status, gameIndex, roots, rootCount, requestedDataDir);
+            {
+                (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
+                                                     roots, rootCount, requestedDataDir);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
-            if (!dm2ExplicitAmiga)
                 (void)m12_admit_dm2_amiga_archive(status, gameIndex,
-                                                  roots, rootCount, requestedDataDir);
-            if (!dm2ExplicitMac && !dm2ExplicitAmiga)
-                (void)m12_admit_dm2_mac_archive(status, gameIndex, roots, rootCount,
-                                                 requestedDataDir);
-#endif
-            /* A directory-form --data-dir is a collection, not an implicit
-             * FM Towns choice.  Add verified DOS packages after the Towns
-             * probe so the architecture selector sees all real media. */
- #ifndef FIRESTAFF_ASSET_STATUS_TESTING
-            if (!dm2ExplicitPcDos) {
+                                                   roots, rootCount, requestedDataDir);
+                (void)m12_admit_dm2_mac_archive(status, gameIndex,
+                                                 roots, rootCount, requestedDataDir);
                 m12_admit_dm2_pc_dos_archives_in_roots(status, gameIndex,
                                                         roots, rootCount);
+#endif
             }
- #endif
         }
     }
     reqMatch = m12_fill_required_files(status,

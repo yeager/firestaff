@@ -1,3 +1,18 @@
+- 2026-10-15: Unified explicit ZIP ownership across DOS, Macintosh, FM
+  Towns and Amiga. Native readers authenticate original paired identities,
+  release rejected partial profiles, and never replace an explicit selection
+  with a neighboring archive. Towns/Amiga accept renamed ZIPs; Towns publishes
+  real virtual DAT locators instead of diagnostic pseudo-paths. M12 reuses
+  one exact-profile admission path, including the menu without --game, and
+  retains only versions belonging to the selected outer archive. The shared
+  original-media CTest passed in 100.55 seconds: canonical names and renamed
+  aliases for all four platforms, CLI to loaded runtime, game-scoped and
+  unscoped menu handoffs, unchanged source SHA-256s, and rejection of unrelated
+  DM1/unsupported PC-9821 originals beside a genuine Towns package. Production
+  callback cancellation was separately verified against the original DOS ZIP
+  (nested=1, rc=0, cancelled=1, complete=0, available=0). These are SDL-dummy
+  functional checks on one Mac, not native display/audio or pixel parity.
+
 - 2026-10-15: Fixed DOS/Macintosh ZIP transport checks that used a
   case-sensitive substring instead of the scanner's case-insensitive suffix
   policy. Original canonical-name ZIP aliases ending in .ZIP now retain the

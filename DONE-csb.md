@@ -1,3 +1,8 @@
+- 2026-10-15: Shared explicit-file scanner regression: unscoped M12 with
+  the original FM Towns ZIP selects CSB and preserves its exact archive owner,
+  entering the authenticated F31 TITLE.ANM route. This is a menu-to-startup
+  handoff check, not a new completed gameplay/input or native display test.
+
 - 2026-10-13: After the shared M11 frame-pacing change, the Mac mini M4 passed
 
 - 2026-10-15: Reverified direct `--game` exit on source `8939e58fe` with

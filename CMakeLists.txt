@@ -3950,6 +3950,18 @@ if(BUILD_TESTING)
         TIMEOUT 600
     )
     add_test(
+        NAME dm2_v1_explicit_zip_ownership
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_explicit_zip_ownership.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}"
+    )
+    set_tests_properties(dm2_v1_explicit_zip_ownership PROPERTIES
+        SKIP_RETURN_CODE 77
+        PASS_REGULAR_EXPRESSION "PASS: explicit DM2 ZIP ownership matrix"
+        LABELS "tier2;dm2;startup;cli;menu;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 240
+    )
+    add_test(
         NAME dm2_v1_dos_sksave_archive_menu_resume
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dos_sksave_archive_menu_resume.sh"
             "$<TARGET_FILE:firestaff>"
