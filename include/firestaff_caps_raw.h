@@ -9,6 +9,7 @@
 #define FIRESTAFF_CAPS_RAW_MAX_PACK_UNPACKED_BYTES (64u * 1024u * 1024u)
 #define FIRESTAFF_CAPS_RAW_MAX_TOTAL_UNPACKED_BYTES (256u * 1024u * 1024u)
 #define FIRESTAFF_CAPS_RAW_PACKS_PER_TRACK 2u
+#define FIRESTAFF_CAPS_RAW_MAX_TRACK_VARIANTS 5u
 
 typedef enum FirestaffCapsRawStatus {
     FIRESTAFF_CAPS_RAW_OK = 0,
@@ -41,6 +42,12 @@ typedef struct FirestaffCapsRawResult {
     size_t error_offset;
 } FirestaffCapsRawResult;
 
+typedef struct FirestaffCapsRawTrackSet {
+    size_t variant_count;
+    size_t variant_sizes[FIRESTAFF_CAPS_RAW_MAX_TRACK_VARIANTS];
+    uint8_t *variant_bytes;
+} FirestaffCapsRawTrackSet;
+
 /* Reads one complete in-memory CAPS CTRaw member. The visitor sees borrowed
  * payload spans, valid for the duration of this call. This module checks
  * framing and CRCs but deliberately leaves PACK decompression to a codec. */
@@ -60,5 +67,14 @@ FirestaffCapsRawStatus firestaff_caps_raw_unpack_density(
     const FirestaffCapsRawPack *pack,
     uint8_t *out_bytes,
     size_t out_capacity);
+
+/* Decode the Amiga track-variant PACK. variant_bytes contains each decoded
+ * variant consecutively in variant_sizes order. Release it with the free
+ * function below. The decoder checks all source/output ranges and the PACK's
+ * uncompressed CRC before returning success. */
+FirestaffCapsRawStatus firestaff_caps_raw_unpack_tracks(
+    const FirestaffCapsRawPack *pack,
+    FirestaffCapsRawTrackSet *out_tracks);
+void firestaff_caps_raw_free_tracks(FirestaffCapsRawTrackSet *tracks);
 
 #endif

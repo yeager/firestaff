@@ -200,17 +200,20 @@ archive remains unsupported. See the development-only conversion evidence below.
   warning remains relevant.
 
   2026-10-15 investigation: Firestaff's bounded density-PACK decoder now
-  expands pack 0 and verifies its uncompressed CRC. The original-media test
-  covers all 164 tracks on each of the four English/multilingual game and
-  utility members. CAPS SDK `trackbuf` and `trackdata[0]` exports are byte
-  identical for this source; passing all 164 to
-  `firestaff_amiga_mfm_scan_track()` found zero sectors. The corresponding API
-  also exposes a same-length timing array of 32-bit words. Do not wire either
-  array into the ADF sector reader based only on matching track sizes; derive
-  and verify timing-to-bit-cell normalization and track-PACK decoding against
-  original-sector checksums first. Probes and extracted media stayed in
-  ignored `.codex-scratch/csb-ctraw-oracle/` and `/tmp`; neither is tracked
-  game data or a runtime dependency.
+  expands pack 0 and verifies its uncompressed CRC. The native pack 1 decoder
+  also reconstructs every track variant and verifies the combined CRC. The
+  original-media test covers all 164 tracks on each of the four
+  English/multilingual game and utility members. CAPS SDK `trackbuf` and
+  `trackdata[0]` exports are byte identical for this source; passing those
+  exports to `firestaff_amiga_mfm_scan_track()` found zero sectors. Scanning
+  the five directly decoded pack 1 variants for track 0 also found no sectors.
+  The SDK exposes a same-length timing array of 32-bit words. These outputs
+  still are not verified MFM bit-cell streams. Do not wire them into the ADF
+  sector reader based only on matching track sizes; derive timing-to-bit-cell
+  normalization and verify recovered sectors against original-sector
+  checksums first. Probes and extracted media stayed in ignored
+  `.codex-scratch/csb-ctraw-oracle/` and `/tmp`; neither is tracked game data
+  or a runtime dependency.
 
   SPS/CAPS is permitted for this non-commercial development environment under
   its stated terms, but not for commercial use or redistribution. Keep this

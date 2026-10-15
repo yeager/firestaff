@@ -1,5 +1,6 @@
 #include "firestaff_caps_raw.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #define CAPS_RAW_OUTER_HEADER_SIZE 12u
@@ -362,6 +363,155 @@ FirestaffCapsRawStatus firestaff_caps_raw_unpack_density(
         return FIRESTAFF_CAPS_RAW_BAD_CRC;
     }
     return FIRESTAFF_CAPS_RAW_OK;
+}
+
+static uint16_t caps_raw_be16(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
+FirestaffCapsRawStatus firestaff_caps_raw_unpack_tracks(
+    const FirestaffCapsRawPack *pack,
+    FirestaffCapsRawTrackSet *out_tracks) {
+    size_t sizes[FIRESTAFF_CAPS_RAW_MAX_TRACK_VARIANTS] = { 0 };
+    size_t offsets[FIRESTAFF_CAPS_RAW_MAX_TRACK_VARIANTS] = { 0 };
+    size_t total = 0;
+    size_t source;
+    size_t i;
+    size_t base_size;
+    uint8_t variant_count;
+    uint8_t *decoded;
+
+    if (!out_tracks) return FIRESTAFF_CAPS_RAW_INVALID_ARGUMENT;
+    memset(out_tracks, 0, sizeof(*out_tracks));
+    if (!pack || !pack->packed_bytes || pack->pack_index != 1u ||
+        pack->packed_size < 3u || pack->unpacked_size == 0u) {
+        return FIRESTAFF_CAPS_RAW_INVALID_ARGUMENT;
+    }
+    if (pack->unpacked_size > FIRESTAFF_CAPS_RAW_MAX_PACK_UNPACKED_BYTES) {
+        return FIRESTAFF_CAPS_RAW_LIMIT_EXCEEDED;
+    }
+
+    variant_count = pack->packed_bytes[0];
+    if (variant_count == 0u ||
+        variant_count > FIRESTAFF_CAPS_RAW_MAX_TRACK_VARIANTS ||
+        pack->packed_size < 1u + (size_t)variant_count * 2u) {
+        return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+    }
+
+    source = 1u;
+    for (i = 0; i < variant_count; ++i) {
+        sizes[i] = caps_raw_be16(pack->packed_bytes + source);
+        source += 2u;
+        if (sizes[i] == 0u || sizes[i] > pack->unpacked_size - total) {
+            return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+        }
+        offsets[i] = total;
+        total += sizes[i];
+    }
+    if (total != (size_t)pack->unpacked_size) {
+        return FIRESTAFF_CAPS_RAW_BAD_LENGTH;
+    }
+
+    decoded = (uint8_t *)malloc(total);
+    if (!decoded) return FIRESTAFF_CAPS_RAW_LIMIT_EXCEEDED;
+    base_size = sizes[0];
+    if (base_size > pack->packed_size - source) {
+        free(decoded);
+        return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+    }
+    memcpy(decoded, pack->packed_bytes + source, base_size);
+    source += base_size;
+
+    for (i = 1u; i < variant_count; ++i) {
+        size_t produced = 0u;
+        size_t target_size = sizes[i];
+        uint8_t *target = decoded + offsets[i];
+
+        while (produced < target_size) {
+            uint8_t command;
+            size_t count;
+            if (source >= pack->packed_size) {
+                free(decoded);
+                return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+            }
+            command = pack->packed_bytes[source++];
+            if ((command & 0x80u) == 0u) {
+                size_t literal_count;
+                if (source >= pack->packed_size) {
+                    free(decoded);
+                    return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+                }
+                literal_count = ((size_t)command << 8) |
+                                pack->packed_bytes[source++];
+                if (literal_count == 0u ||
+                    literal_count > target_size - produced ||
+                    literal_count > pack->packed_size - source) {
+                    free(decoded);
+                    return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+                }
+                memcpy(target + produced, pack->packed_bytes + source,
+                       literal_count);
+                source += literal_count;
+                produced += literal_count;
+                continue;
+            }
+
+            if (!caps_raw_fits(pack->packed_size, source, 3u)) {
+                free(decoded);
+                return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+            }
+            count = (((size_t)command & 0x0fu) << 8) |
+                    pack->packed_bytes[source++];
+            {
+                unsigned shift = (unsigned)((command >> 4) & 7u);
+                size_t base_offset = ((size_t)pack->packed_bytes[source] << 8) |
+                                     pack->packed_bytes[source + 1u];
+                const uint8_t *base = decoded;
+                size_t needed = count;
+                size_t j;
+                uint32_t accumulator;
+                source += 2u;
+                if (count == 0u || count > target_size - produced ||
+                    base_offset > base_size ||
+                    (shift == 0u ? count : count + 1u) >
+                        base_size - base_offset) {
+                    free(decoded);
+                    return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+                }
+                if (shift == 0u) {
+                    memcpy(target + produced, base + base_offset, count);
+                    produced += count;
+                    continue;
+                }
+                accumulator = base[base_offset++];
+                needed = count;
+                for (j = 0; j < needed; ++j) {
+                    accumulator = (accumulator << 8) | base[base_offset++];
+                    target[produced++] = (uint8_t)(accumulator >> shift);
+                }
+            }
+        }
+    }
+
+    if (source != pack->packed_size) {
+        free(decoded);
+        return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+    }
+    if (caps_raw_crc32(decoded, total) != pack->unpacked_crc32) {
+        free(decoded);
+        return FIRESTAFF_CAPS_RAW_BAD_CRC;
+    }
+
+    out_tracks->variant_count = variant_count;
+    memcpy(out_tracks->variant_sizes, sizes, sizeof(sizes));
+    out_tracks->variant_bytes = decoded;
+    return FIRESTAFF_CAPS_RAW_OK;
+}
+
+void firestaff_caps_raw_free_tracks(FirestaffCapsRawTrackSet *tracks) {
+    if (!tracks) return;
+    free(tracks->variant_bytes);
+    memset(tracks, 0, sizeof(*tracks));
 }
 
 const char *firestaff_caps_raw_status_name(FirestaffCapsRawStatus status) {

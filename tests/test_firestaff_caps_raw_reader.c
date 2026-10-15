@@ -9,6 +9,9 @@ typedef struct VisitorState {
     size_t density_packs;
     size_t density_decode_failures;
     size_t density_negative_failures;
+    size_t track_packs;
+    size_t track_decode_failures;
+    size_t track_negative_failures;
     int invalid_order;
 } VisitorState;
 
@@ -87,6 +90,34 @@ static int visit_pack(const FirestaffCapsRawPack *pack, void *opaque) {
         ++state->density_packs;
         free(packed_copy);
         free(unpacked);
+    } else if (pack && pack->pack_index == 1u) {
+        FirestaffCapsRawTrackSet tracks = { 0 };
+        FirestaffCapsRawPack mutated = *pack;
+        FirestaffCapsRawStatus decode_status =
+            firestaff_caps_raw_unpack_tracks(pack, &tracks);
+        if (decode_status != FIRESTAFF_CAPS_RAW_OK ||
+            tracks.variant_count == 0u || !tracks.variant_bytes) {
+            ++state->track_decode_failures;
+        }
+        if (tracks.variant_bytes) {
+            firestaff_caps_raw_free_tracks(&tracks);
+            mutated.unpacked_crc32 ^= 1u;
+            if (firestaff_caps_raw_unpack_tracks(&mutated, &tracks) !=
+                FIRESTAFF_CAPS_RAW_BAD_CRC) {
+                ++state->track_negative_failures;
+            }
+            firestaff_caps_raw_free_tracks(&tracks);
+            mutated = *pack;
+            if (mutated.packed_size != 0u) --mutated.packed_size;
+            if (firestaff_caps_raw_unpack_tracks(&mutated, &tracks) ==
+                FIRESTAFF_CAPS_RAW_OK) {
+                ++state->track_negative_failures;
+            }
+        } else {
+            ++state->track_negative_failures;
+        }
+        firestaff_caps_raw_free_tracks(&tracks);
+        ++state->track_packs;
     }
     ++state->calls;
     return 0;
@@ -157,7 +188,7 @@ int main(void) {
     uint8_t *bytes;
     size_t count = 0;
     int extra;
-    VisitorState state = { 0, 0, 0, 0, 0 };
+    VisitorState state = { 0, 0, 0, 0, 0, 0, 0, 0 };
     FirestaffCapsRawResult result;
     FirestaffCapsRawStatus status;
 
@@ -199,14 +230,24 @@ int main(void) {
         free(bytes);
         return 1;
     }
+    if (state.track_packs != 164u || state.track_decode_failures != 0u ||
+        state.track_negative_failures != 0u) {
+        fprintf(stderr,
+                "FAIL: track packs=%zu decode_failures=%zu negative_failures=%zu\n",
+                state.track_packs, state.track_decode_failures,
+                state.track_negative_failures);
+        free(bytes);
+        return 1;
+    }
     if (!malformed_cases(bytes, count)) {
         fputs("FAIL: malformed-input checks did not reject every mutation\n",
               stderr);
         free(bytes);
         return 1;
     }
-    printf("PASS: tracks=%zu packs=%zu density=%zu mutation checks passed\n",
-           result.track_count, result.pack_count, state.density_packs);
+    printf("PASS: tracks=%zu packs=%zu density=%zu tracksets=%zu mutation checks passed\n",
+           result.track_count, result.pack_count, state.density_packs,
+           state.track_packs);
     free(bytes);
     return 0;
 }
