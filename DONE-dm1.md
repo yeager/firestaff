@@ -1,3 +1,8 @@
+- 2026-10-15: Refreshed startup-menu catalog source references after the
+  diagnostic/runtime edits. Verified all 21 changed POT/PO files differ only
+  in source-reference lines; translation text is unchanged. po/update.sh
+  --check passes, addressing CI run 38798285559's stale-catalog failure.
+
 - 2026-10-15: Added opt-in --debug DM1 source-outcome/Draw/Present-return
   stage diagnostics. Fresh outcome identity prevents stale pipeline results
   from masquerading as movement; accepted moves, turns and blocked commands
