@@ -1694,3 +1694,16 @@ native buffers are reused, and rejected binding tears down the partial world.
 Original English/multilingual canonical-replacement and renamed-file-removal
 cases pass alongside positive starts. Keep negative Towns/native-edition and
 Windows staging expansion open; broad platform/visual parity is not established.
+
+### Native launcher rejection lifecycle (2026-10-15)
+
+FM Towns native startup rejection now clears its already activated partial
+world. A complete authentic English launcher starts; removing only the staged
+TMENU.EXP link after scan rejects and leaves the state inactive. PC fresh-pool
+allocation failure also tears down, but that allocation branch lacks fault
+injection evidence. Native Windows symlink staging remains skipped.
+
+Inventory follow-up: loose Towns graphics/dungeon admission can still present
+a valid data card while native launcher files are incomplete. Native M11 startup
+rejects this correctly; improve actionable required-launcher inventory without
+turning discovery into repeated large-disc program reads.

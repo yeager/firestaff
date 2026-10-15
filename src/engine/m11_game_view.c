@@ -26738,7 +26738,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if ((!spec->savePath || !spec->savePath[0]) && !spec->dm1Fmtowns &&
             !state->assetLoader.atariStDm1 && !state->assetLoader.legacyDm1 &&
             !F0506_DUNGEON_ReserveFreshPc34Pools_Compat(
-                state->world.dungeon, state->world.things)) return 0;
+                state->world.dungeon, state->world.things)) {
+            M11_GameView_Shutdown(state);
+            return 0;
+        }
         /* Report the decoder that admitted the selected original package.
          * This is emitted after both DUNGEON.DAT and GRAPHICS.DAT are bound,
          * so a start-menu launch cannot be mistaken for a generic successful
@@ -26796,6 +26799,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             if (!state->dm1FmtownsStartupReceiptValid ||
                 !dm1_v1_fmtowns_startup_receipt_is_native(
                     &state->dm1FmtownsStartupReceipt)) {
+                fprintf(stderr,
+                        "firestaff: DM1 FM Towns native launcher rejected: root=%s program=%s\n",
+                        startupRoot ? startupRoot : "(none)",
+                        spec->dm1FmtownsJapanese ? "JDM.EXP" : "EDM.EXP");
+                /* Graphics/world admission precedes the native launcher
+                 * proof. Rejection must also discard that partial session. */
+                M11_GameView_Shutdown(state);
                 return 0;
             }
             DM1_V1_VBlankTiming_ConfigureFmTowns(&state->vblankTiming);

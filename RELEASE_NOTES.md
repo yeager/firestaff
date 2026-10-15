@@ -7247,3 +7247,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### DM1 loose graphics ownership
 
 - DM1 verifies and retains selected loose graphics in bounded memory, preventing changed or missing files from falling back to another graphics file. Rejected graphics binding now clears the partial game state.
+
+### DM1 late startup rejection
+
+- Failed FM Towns native-launcher admission now clears the partial game session and reports the selected launcher root/program. PC fresh-world allocation failure also clears its session.

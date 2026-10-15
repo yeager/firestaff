@@ -63158,3 +63158,16 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_stale_zip_selected_media_r
         ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/dm1-stale-zip-scratch;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_PC_MULTI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_FR_EUDATA.zip"
         LABELS "dm1;pc34;real-media;menu;startup;skip-safe")
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_fmtowns_late_startup_rejection_real.c")
+    add_executable(test_dm1_fmtowns_late_startup_rejection_real
+        tests/test_dm1_fmtowns_late_startup_rejection_real.c)
+    target_link_libraries(test_dm1_fmtowns_late_startup_rejection_real PRIVATE
+        firestaff_m11 firestaff_m12 SDL3::SDL3)
+    add_test(NAME dm1_fmtowns_late_startup_rejection_real
+        COMMAND test_dm1_fmtowns_late_startup_rejection_real)
+    set_tests_properties(dm1_fmtowns_late_startup_rejection_real PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 60
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/dm1-towns-late-rejection-scratch;FIRESTAFF_DM1_FMTOWNS_LOOSE_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/fmtowns_iso"
+        LABELS "dm1;fmtowns;real-media;menu;startup;skip-safe")
+endif()
