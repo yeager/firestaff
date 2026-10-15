@@ -1,5 +1,10 @@
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
 
+- 2026-10-15: Fixed a NULL output dereference in the partial arrangement
+  admission guard. Missing output now returns failure without advancing
+  session RNG. The original-data regression passes with DOS EN and FM Towns
+  sources. This does not enable the incomplete arranger during GAME_LOAD.
+
 - 2026-10-15: Extended append rejection rollback to invalid parent chains
   and invalid tile destinations. Original DOS and FM Towns dungeon tests
   reproduce both failures before the change and now verify byte-for-byte

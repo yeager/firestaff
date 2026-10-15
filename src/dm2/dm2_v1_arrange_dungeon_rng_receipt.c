@@ -226,7 +226,7 @@ int dm2_v1_DM2_ARRANGE_DUNGEON_apply_rng_directions(
             dungeon, caii_source, &census) ||
         !dm2_v1_record_pool_set_clone(&candidate, record_pools)) {
         receipt.incomplete = 1;
-        *out = receipt;
+        if (out) *out = receipt;
         return 0;
     }
 

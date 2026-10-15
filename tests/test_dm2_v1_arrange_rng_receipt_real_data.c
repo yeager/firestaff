@@ -244,6 +244,11 @@ int main(void)
              * cold GAME_LOAD takes c_weather.cpp's storm-request path before
              * arrangement, consuming RAND16(500), RANDDIR, RAND16(4). */
             dm2_v1_drops_rng_init(&session_rng);
+            failures += check(
+                !dm2_v1_DM2_ARRANGE_DUNGEON_apply_rng_directions(
+                    &dungeon, &ai, &pools, &session_rng, NULL) &&
+                session_rng.random == 0u,
+                "missing arrangement output rejects without advancing RNG");
             cold_weather.storm_request = 1;
             expected_rng = session_rng;
             (void)dm2_v1_drops_rand16(&expected_rng, 500u);

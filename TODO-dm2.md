@@ -8,12 +8,18 @@ replace both teleporter next links with `DM2_map_2066_1ec9`'s merged chain.
 The first helper (715-760) writes uninitialized type-3 subtype-0x27 actuator
 map fields and counts writes; the merge helper (763-808) rewires links and
 calls APPEND_RECORD_TO. The outer loop then reads the current record's next
-link (1214-1217). Consequently the unchanged-graph RNG census cannot prove
+link (1219-1222). Consequently the unchanged-graph RNG census cannot prove
 the complete arranger visitation/draw order. Whether this affects each
 installed original dungeon remains unmeasured. Implement reciprocal-link and
 actuator updates transactionally, trace APPEND_RECORD_TO, and validate the
 resulting traversal on original data before integrating arrangement into
 fresh GAME_LOAD. The current partial direction mutator stays disconnected.
+The merge reverses the leading DB0..DB3 prefix of its second chain and then
+uses APPEND_RECORD_TO (`skrecord.cpp:63-81`), which resets the first appended
+DB4+ record's next link to END. It must not be replaced by a conventional
+suffix-preserving list merge. Both teleporter successors intentionally alias
+the returned head. Candidate traversal must reread mutated links rather than
+`dm2_v1_dungeon_get_next_thing` on the immutable input graph.
 
 
 2026-10-15 SKProject cold-start order check: `main.cpp` calls
