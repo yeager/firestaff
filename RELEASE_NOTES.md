@@ -7319,3 +7319,6 @@ does not switch to a neighboring copy.
   provenance. Explicitly selected incomplete archives remain unavailable.
 - Bound duplicate candidate collection and reject overflow without reporting
   a partial candidate set as complete.
+
+- Prevent late Amiga preservation-package detection from replacing a complete
+  DM1 installation with an incomplete duplicate carrying a standard filename.

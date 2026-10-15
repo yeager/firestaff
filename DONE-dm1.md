@@ -3454,3 +3454,21 @@ access-denied test passed (14.30 s); rebuilt deterministic cancellation passed
 with its two full five-game corpus cases intentionally skipped. Localization
 catalog checks passed. Independent source review resolved directory path-overflow
 handling and found no remaining blocker. Redacted patch Gitleaks found no leaks.
+
+- 2026-10-16: Reproduced and fixed late canonical Amiga admission overwriting
+  a complete duplicate with an incomplete original demo package. The authentic
+  regression failed at "late canonical admission cannot replace complete demo
+  with missing-SWSH duplicate" before the fix. The complete-owner gate now runs
+  before any native version/required-file publication, retaining the original
+  A36 driver and other startup gates. Both scan APIs preserve the complete demo,
+  actual runtime loads its original dungeon, and explicit incomplete selection
+  remains unavailable. Demo/A20 subcases run independently of Atari availability.
+  Full A20/A36/demo CLI probes still load worlds; source SHA-256 values remain
+  unchanged. Independent source review found no blocker. Visual parity remains
+  outside this startup verification.
+
+Final late-admission CTests: 2/2 passed in 8.41 s with the authentic demo path
+supplied, no missing-media skips. The wider 215.49 s CLI suite belongs to the
+preceding duplicate-collector commit; this native-admission-only follow-up was
+checked with both focused tests and all three original Amiga CLI probes.
+Redacted patch Gitleaks found no leaks.

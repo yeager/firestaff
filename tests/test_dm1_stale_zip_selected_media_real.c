@@ -186,6 +186,74 @@ cleanup:
     if (archive[0]) unlink(archive);
     return result==0;
 }
+static int check_demo_duplicate_startup_owner(const char* root) {
+    const char* original=getenv("FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE");
+    static const char* const names[2]={"graphics.dat","DemoDun.dat"};
+    static const char* const hashes[2]={"491ca939f9abb33ceeb26619b841fe91",
+        "78848e1a2d3d5a11e5954deb8c7b772b"};
+    unsigned char* bytes[2]={NULL,NULL}; size_t sizes[2]={0,0};
+    char dir[FSP_PATH_MAX]={0}, incomplete[FSP_PATH_MAX]={0}, ready[FSP_PATH_MAX]={0};
+    char member[ASSET_PATH_MAX], physical[FSP_PATH_MAX];
+    M12_AssetStatus* status=NULL;
+    M11_GameViewState* game=NULL;
+    int result=1, initialized=0;
+    if (!original || !FSP_FileExists(original)) {
+        puts("SKIP: authentic Amiga demo unavailable for late duplicate owner case");
+        return 1;
+    }
+    for (int i=0; i<2; ++i) {
+        REQUIRE(asset_find_by_md5(original,hashes[i],member,sizeof(member),0) &&
+            asset_read_path_alloc(member,&bytes[i],&sizes[i]) &&
+            asset_memory_matches_md5(bytes[i],sizes[i],hashes[i]),
+            "read unchanged original demo owner members");
+    }
+    REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"demo-duplicates") && FSP_CreateDirectory(dir) &&
+        FSP_JoinPath(incomplete,sizeof(incomplete),dir,"dm-amiga-demo-en.zip") &&
+        FSP_JoinPath(ready,sizeof(ready),dir,"ready-demo.zip") &&
+        write_original_pair(incomplete,names,bytes,sizes) &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),original) && symlink(physical,ready)==0,
+        "stage incomplete canonical demo beside complete original duplicate");
+    status=SDL_calloc(1,sizeof(*status));
+    game=SDL_calloc(1,sizeof(*game));
+    REQUIRE(status && game,"allocate demo duplicate scan and runtime");
+    M11_GameView_Init(game); initialized=1;
+    for (int mode=0; mode<2; ++mode) {
+        const M12_AssetVersionStatus* owner;
+        if (mode) M12_AssetStatus_Scan(status,dir);
+        else M12_AssetStatus_ScanGame(status,dir,"dm1");
+        owner=M12_AssetStatus_GetFirstMatchedVersion(status,"dm1");
+        REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1") && owner &&
+            strncmp(owner->matchedPath,ready,strlen(ready))==0 &&
+            strncmp(owner->matchedPath+strlen(ready),"::",2)==0,
+            "late canonical admission cannot replace complete demo with missing-SWSH duplicate");
+        {
+            M11_GameLaunchSpec spec;
+            M11_BootProbeReceipt receipt;
+            memset(&spec,0,sizeof(spec));
+            spec.title="DUNGEON MASTER"; spec.gameId=spec.sourceId="dm1";
+            spec.dataDir=ready; spec.verifiedAssetPath=owner->matchedPath;
+            spec.verifiedAssetMd5=hashes[0]; spec.sourceKind=M11_GAME_SOURCE_BUILTIN_CATALOG;
+            spec.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+            spec.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+            REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
+                M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+                "surviving complete demo owner loads its actual original dungeon");
+            M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        }
+        if (mode) M12_AssetStatus_Scan(status,incomplete);
+        else M12_AssetStatus_ScanGame(status,incomplete,"dm1");
+        REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+            "explicit missing-SWSH demo cannot substitute its complete neighbor");
+    }
+    result=0;
+cleanup:
+    if (initialized) M11_GameView_Shutdown(game);
+    SDL_free(game); SDL_free(status); free(bytes[0]); free(bytes[1]);
+    if (ready[0]) unlink(ready);
+    if (incomplete[0]) unlink(incomplete);
+    if (dir[0]) rmdir(dir);
+    return result==0;
+}
 static int check_atari_virtual_dungeon_compatibility(const char* root, const char* original,
     const char* pcOriginal, const unsigned char* pcDungeon, size_t pcDungeonSize) {
     static const char* const hashes[]={"9ce2eaf7a9e78620e3f17594437caffa",
@@ -204,12 +272,14 @@ static int check_atari_virtual_dungeon_compatibility(const char* root, const cha
     M11_GameLaunchSpec spec;
     M11_BootProbeReceipt receipt;
     int result=1, initialized=0;
+    REQUIRE(check_demo_duplicate_startup_owner(root),
+        "complete demo survives late canonical duplicate admission");
+    REQUIRE(check_amiga_virtual_startup_companion(root,amigaOriginal),
+        "virtual A20 retains required original startup companion gate");
     if (!original || !FSP_FileExists(original)) {
         puts("SKIP: authentic Atari archive unavailable for virtual dungeon compatibility case");
         return 1;
     }
-    REQUIRE(check_amiga_virtual_startup_companion(root,amigaOriginal),
-        "virtual A20 retains required original startup companion gate");
     REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"atari-virtual") && FSP_CreateDirectory(dir) &&
         /* Exercise the preservation-name parent-scan branch as well as
          * hash-based native identity; the filename must not select a sibling. */

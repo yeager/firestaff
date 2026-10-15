@@ -1781,3 +1781,13 @@ is rejected; full original A20/A36/demo CLI probes load their worlds. This does
 not establish every archive format/platform combination or visual parity.
 Existing container/depth limits still apply; generic nested ZIP/ZIP/ADF discovery
 remains separate from the canonical preservation-package admission path.
+
+2026-10-16 late native admission follow-up: an incomplete canonical Amiga demo
+could overwrite an already complete duplicate before final validation, hiding
+that working installation again. Native Amiga admission now verifies full
+same-owner startup completeness before changing any version or required-file
+receipt. Authentic demo duplicate discovery, runtime handoff and explicit bad
+source rejection pass both scan APIs. Demo coverage accepts the optional
+FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE original-media path and does not depend on
+Atari media being installed. Other native preservation shapes still need their
+own original-media cases; this does not establish arbitrary archive parity.

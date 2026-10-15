@@ -1297,8 +1297,11 @@ static int m12_admit_dm1_amiga_archive_packages(
                 if (g_games[gameIndex].versions[versionIndex].architecture ==
                         M12_ARCH_AMIGA &&
                     strcmp(md5, g_games[gameIndex].versions[versionIndex].md5) == 0) {
-                    if (strcmp(md5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0 &&
-                        !m12_dm1_amiga36_package_ready(virtualGraphics)) continue;
+                    char checkedDungeon[ASSET_PATH_MAX];
+                    /* TITLE.C F0437 startup companions must be ready before
+                     * replacing an already complete directory-discovered owner. */
+                    if (!m12_dm1_complete_default_owner(virtualGraphics, md5,
+                                                        checkedDungeon)) continue;
                     size_t requiredIndex;
                     version->matched = 1;
                     m12_copy_string(version->matchedPath,
