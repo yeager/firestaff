@@ -140,7 +140,10 @@ static int creature(DM2_V1_ArrangeDungeonOwner *o,
 {
     uint8_t *p = record(o, r, 16);
     const DM2_AIDefinition *ai = NULL;
-    if (!p || !dm2_v1_caii_source_owner_ai_spec_def(caii, p[4], &ai) || !ai)
+    uint8_t source_type;
+    if (!p || !dm2_v1_caii_source_owner_db4_type(
+            caii, r & 0x03ffu, &source_type) || source_type != p[4] ||
+        !dm2_v1_caii_source_owner_ai_spec_def(caii, p[4], &ai) || !ai)
         return 0;
     write_word(o, p + 6, ai->BaseHP);
     write_word(o, p + 10, 0);

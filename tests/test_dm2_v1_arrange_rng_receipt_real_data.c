@@ -144,7 +144,8 @@ static int original_pool_bytes_equal(const DM2_V1_RecordPoolSet *a,
 
 static int check_complete_arranger(const DM2_V1_DungeonData *d,
     const DM2_V1_AssetLoader *loader, const DM2_V1_CaiiSourceOwner *ai,
-    const DM2_V1_RecordPoolSet *pools, const DM2_V1_DropRng *rng)
+    const DM2_V1_RecordPoolSet *pools, const DM2_V1_DropRng *rng,
+    uint32_t expected_draws)
 {
     OriginalArrangeQueries context = {d, loader, 0, 0};
     DM2_V1_ArrangeDungeonQueries queries = {
@@ -153,7 +154,10 @@ static int check_complete_arranger(const DM2_V1_DungeonData *d,
     DM2_V1_RecordPoolSet snapshot = {0};
     uint8_t *raw_snapshot = malloc((size_t)d->raw_size);
     uint32_t before = rng->random;
+    DM2_V1_DropRng expected_rng = *rng;
     int failures = 0;
+    for (uint32_t i = 0; i < expected_draws; ++i)
+        (void)dm2_v1_drops_randdir(&expected_rng);
     if (!raw_snapshot || !dm2_v1_record_pool_set_clone(&snapshot,pools)) {
         free(raw_snapshot);
         return 1;
@@ -163,6 +167,11 @@ static int check_complete_arranger(const DM2_V1_DungeonData *d,
         d,pools,ai,rng,&queries,&owner) && owner.valid,
         "full-branch arranger builds an original-data candidate");
     if (owner.valid) {
+        failures += check(owner.rng_draws == expected_draws &&
+            owner.rng.random == expected_rng.random,
+            "original-edition arrangement preserves observed RANDDIR census");
+        failures += check(!original_pool_bytes_equal(&owner.pools,pools),
+            "original-data candidate changes its private record pools");
         failures += check(dm2_v1_arrange_dungeon_owner_build(
             d,pools,ai,rng,&queries,&repeat) && repeat.valid &&
             repeat.tile_count == owner.tile_count &&
@@ -171,10 +180,42 @@ static int check_complete_arranger(const DM2_V1_DungeonData *d,
             repeat.rng.random == owner.rng.random &&
             repeat.rng_draws == owner.rng_draws,
             "original-data arrangement candidate is reproducible");
+        {
+            const DM2_V1_RecordPool *source_db4 = &pools->pools[4];
+            const DM2_V1_RecordPool *changed_db4 = &owner.pools.pools[4];
+            DM2_V1_RecordPoolSet bad = {0}, bad_snapshot = {0};
+            DM2_V1_ArrangeDungeonOwner bad_owner = {0};
+            int index;
+            for (index = 0; index < source_db4->record_count; ++index) {
+                size_t offset = (size_t)index * (size_t)source_db4->record_size;
+                if (memcmp(source_db4->bytes + offset,
+                           changed_db4->bytes + offset,
+                           (size_t)source_db4->record_size) != 0) break;
+            }
+            if (index < source_db4->record_count &&
+                dm2_v1_record_pool_set_clone(&bad,pools)) {
+                bad.pools[4].bytes[(size_t)index * source_db4->record_size + 4] ^= 1;
+                if (dm2_v1_record_pool_set_clone(&bad_snapshot,&bad)) {
+                    failures += check(!dm2_v1_arrange_dungeon_owner_build(
+                        d,&bad,ai,rng,&queries,&bad_owner) &&
+                        !bad_owner.valid && !bad_owner.tiles &&
+                        !bad_owner.pools.valid &&
+                        original_pool_bytes_equal(&bad,&bad_snapshot) &&
+                        rng->random == before,
+                        "source identity mismatch rejects without changing caller state");
+                } else ++failures;
+            } else failures += check(0,"original candidate changes a DB4 row");
+            dm2_v1_arrange_dungeon_owner_free(&bad_owner);
+            dm2_v1_record_pool_set_free(&bad_snapshot);
+            dm2_v1_record_pool_set_free(&bad);
+        }
         printf("complete-arranger visits=%u merges=%u draws=%u tiles=%zu\n",
             owner.record_visits,owner.teleporter_merges,owner.rng_draws,
             owner.tile_count);
     }
+    failures += check(!dm2_v1_arrange_dungeon_owner_build(
+        d,pools,ai,rng,&queries,NULL) && rng->random == before,
+        "missing arrangement output rejects without advancing RNG");
     context.pit_queries = 0;
     context.reject_pit = 1;
     failures += check(!dm2_v1_arrange_dungeon_owner_build(
@@ -260,12 +301,9 @@ int main(void)
     DM2_V1_DungeonData mutated;
     DM2_V1_CaiiSourceOwner ai;
     DM2_V1_ArrangeDungeonRngReceipt receipt;
-    DM2_V1_ArrangeDungeonRngApplyReceipt apply_receipt;
     DM2_V1_UpdateWeatherState cold_weather;
     DM2_V1_WeatherTransitionReceipt weather_receipt;
     DM2_V1_RecordPoolSet pools;
-    DM2_V1_RecordPoolSet pool_snapshot;
-    DM2_V1_RecordPoolSet bad_pools;
     DM2_V1_DropRng session_rng;
     DM2_V1_DropRng expected_rng;
     uint8_t *original_bytes = NULL;
@@ -283,12 +321,9 @@ int main(void)
     memset(&mutated, 0, sizeof(mutated));
     memset(&ai, 0, sizeof(ai));
     memset(&receipt, 0, sizeof(receipt));
-    memset(&apply_receipt, 0, sizeof(apply_receipt));
     memset(&cold_weather, 0, sizeof(cold_weather));
     memset(&weather_receipt, 0, sizeof(weather_receipt));
     memset(&pools, 0, sizeof(pools));
-    memset(&pool_snapshot, 0, sizeof(pool_snapshot));
-    memset(&bad_pools, 0, sizeof(bad_pools));
     memset(&session_rng, 0, sizeof(session_rng));
     memset(&expected_rng, 0, sizeof(expected_rng));
     if (!read_file(graphics_path, &graphics, &graphics_size) ||
@@ -321,7 +356,6 @@ int main(void)
         if (complete) {
             int map;
             int found_record = 0;
-            int pool_bytes_changed = 0;
             original_bytes = (uint8_t *)malloc((size_t)dungeon.raw_size);
             if (!original_bytes) {
                 failures++;
@@ -383,11 +417,6 @@ int main(void)
              * cold GAME_LOAD takes c_weather.cpp's storm-request path before
              * arrangement, consuming RAND16(500), RANDDIR, RAND16(4). */
             dm2_v1_drops_rng_init(&session_rng);
-            failures += check(
-                !dm2_v1_DM2_ARRANGE_DUNGEON_apply_rng_directions(
-                    &dungeon, &ai, &pools, &session_rng, NULL) &&
-                session_rng.random == 0u,
-                "missing arrangement output rejects without advancing RNG");
             cold_weather.storm_request = 1;
             expected_rng = session_rng;
             (void)dm2_v1_drops_rand16(&expected_rng, 500u);
@@ -402,123 +431,8 @@ int main(void)
                     session_rng.random == expected_rng.random,
                 "conditional zero-seeded weather advances the shared RNG by three draws");
             failures += check_complete_arranger(&dungeon, &loader, &ai,
-                                                   &pools, &session_rng);
-            expected_rng = session_rng;
-            for (uint32_t i = 0; i < baseline.rng_draws; ++i)
-                (void)dm2_v1_drops_randdir(&expected_rng);
-            if (dm2_v1_record_pool_set_clone(&pool_snapshot, &pools)) {
-                failures += check(
-                    dm2_v1_DM2_ARRANGE_DUNGEON_apply_rng_directions(
-                        &dungeon, &ai, &pools, &session_rng, &apply_receipt) &&
-                        apply_receipt.valid && apply_receipt.committed &&
-                        !apply_receipt.incomplete,
-                    "isolated direction replay commits on private pools");
-                failures += check(
-                    apply_receipt.rng_draws == baseline.rng_draws &&
-                        apply_receipt.creature_direction_writes ==
-                            baseline.eligible_static_creatures &&
-                        apply_receipt.possession_direction_writes ==
-                            baseline.possession_records &&
-                        apply_receipt.source_order_hash ==
-                            baseline.source_order_hash &&
-                        session_rng.random == expected_rng.random &&
-                        apply_receipt.rng_after == expected_rng.random,
-                    "direction replay preserves census order and shared RNG advance");
-                for (int type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type) {
-                    const DM2_V1_RecordPool *a = &pools.pools[type];
-                    const DM2_V1_RecordPool *b = &pool_snapshot.pools[type];
-                    if ((a->bytes && b->bytes && a->record_count > 0 &&
-                         memcmp(a->bytes, b->bytes,
-                                (size_t)a->record_count *
-                                    (size_t)a->record_size) != 0) ||
-                        (a->extension_bytes && b->extension_bytes &&
-                         a->extension_count > 0 &&
-                         memcmp(a->extension_bytes, b->extension_bytes,
-                                (size_t)a->extension_count *
-                                    (size_t)a->record_size) != 0)) {
-                        pool_bytes_changed = 1;
-                    }
-                }
-                failures += check(pool_bytes_changed,
-                                  "direction replay mutates only its private record-pool copy");
-                {
-                    int source_db4_handle = -1;
-                    uint8_t *bad_record = NULL;
-                    uint32_t rng_before_failure = session_rng.random;
-                    int changed_after_failure = 0;
-                    for (int map = 0; map < dungeon.level_count &&
-                                      source_db4_handle < 0; ++map) {
-                        for (int x = 0; x < dungeon.level_widths[map] &&
-                                        source_db4_handle < 0; ++x) {
-                            for (int y = 0; y < dungeon.level_heights[map]; ++y) {
-                                int raw = dm2_v1_dungeon_get_tile_raw(
-                                    &dungeon, map, x, y);
-                                int thing;
-                                uint32_t guard = 0u;
-                                if (raw < 0 || ((unsigned)raw & 0x10u) == 0u)
-                                    continue;
-                                thing = dm2_v1_dungeon_get_first_thing(
-                                    &dungeon, map, x, y);
-                                while (thing != (int)DM2_THING_END_MARKER &&
-                                       thing != (int)DM2_THING_NULL_MARKER &&
-                                       thing >= 0 && ++guard <= 4096u) {
-                                    if (((thing >> 10) & 0x0f) == 4) {
-                                        source_db4_handle = thing;
-                                        break;
-                                    }
-                                    thing = dm2_v1_dungeon_get_next_thing(
-                                        &dungeon, (uint16_t)thing);
-                                }
-                                if (source_db4_handle >= 0) break;
-                            }
-                        }
-                    }
-                    if (source_db4_handle >= 0 &&
-                        dm2_v1_record_pool_set_clone(&bad_pools, &pools) &&
-                        (bad_record = dm2_v1_record_pool_address_mut(
-                             &bad_pools, (int16_t)source_db4_handle)) != NULL) {
-                        bad_record[4] ^= 0x01u;
-                        dm2_v1_record_pool_set_free(&pool_snapshot);
-                        if (!dm2_v1_record_pool_set_clone(&pool_snapshot,
-                                                         &bad_pools)) {
-                            failures += check(0,
-                                "corrupted pool can be snapshotted before rejection");
-                            goto done;
-                        }
-                        failures += check(
-                            !dm2_v1_DM2_ARRANGE_DUNGEON_apply_rng_directions(
-                                &dungeon, &ai, &bad_pools, &session_rng,
-                                &apply_receipt) &&
-                                apply_receipt.incomplete &&
-                                !apply_receipt.committed &&
-                                session_rng.random == rng_before_failure,
-                            "source identity mismatch rejects the mutation transaction");
-                        for (int type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type) {
-                            const DM2_V1_RecordPool *a = &bad_pools.pools[type];
-                            const DM2_V1_RecordPool *b = &pool_snapshot.pools[type];
-                            if ((a->bytes && b->bytes && a->record_count > 0 &&
-                                 memcmp(a->bytes, b->bytes,
-                                        (size_t)a->record_count *
-                                            (size_t)a->record_size) != 0) ||
-                                (a->extension_bytes && b->extension_bytes &&
-                                 a->extension_count > 0 &&
-                                 memcmp(a->extension_bytes, b->extension_bytes,
-                                        (size_t)a->extension_count *
-                                            (size_t)a->record_size) != 0))
-                                changed_after_failure = 1;
-                        }
-                        failures += check(!changed_after_failure,
-                            "failed mutation preserves caller-owned pool bytes");
-                        dm2_v1_record_pool_set_free(&bad_pools);
-                        dm2_v1_record_pool_set_free(&pool_snapshot);
-                    } else {
-                        failures += check(0,
-                            "authentic map exposes a DB4 handle for rollback coverage");
-                    }
-                }
-            } else {
-                failures += check(0, "mutable record pools can be snapshotted");
-            }
+                                                   &pools, &session_rng,
+                                                   baseline.rng_draws);
             printf("edition maps=%d creature-records=%u eligible-static=%u "
                    "possessions=%u RANDDIR-draws=%u order-hash=%08x\n",
                    dungeon.level_count,
@@ -538,8 +452,6 @@ int main(void)
     }
 done:
     free(original_bytes);
-    dm2_v1_record_pool_set_free(&bad_pools);
-    dm2_v1_record_pool_set_free(&pool_snapshot);
     dm2_v1_record_pool_set_free(&pools);
     dm2_v1_dungeon_free(&mutated);
     dm2_v1_caii_source_owner_free(&ai);

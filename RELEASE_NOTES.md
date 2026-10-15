@@ -8,6 +8,8 @@
 
 ## Developer changes
 
+- `DM2 code cleanup`: remove the unused direction-only arranger and duplicate tests; retain one all-branch candidate with original-data rollback checks.
+
 - `DM2 arrangement study`: add an all-branch transactional candidate and original-data checks for DOS and FM Towns. It remains test-only pending complete New Game session integration.
 
 - `DM2 record linking`: preserve original dungeon bytes when rejecting missing parents, invalid parent chains or invalid destinations; verified with authentic DOS and FM Towns records.

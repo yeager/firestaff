@@ -26,7 +26,8 @@ the complete arranger visitation/draw order. Whether this affects each
 installed original dungeon remains unmeasured. Implement reciprocal-link and
 actuator updates transactionally, trace APPEND_RECORD_TO, and validate the
 resulting traversal on original data before integrating arrangement into
-fresh GAME_LOAD. The current partial direction mutator stays disconnected.
+fresh GAME_LOAD. The former direction-only mutator has been removed; the full-branch candidate
+remains test-only.
 The merge reverses the leading DB0..DB3 prefix of its second chain and then
 uses APPEND_RECORD_TO (`skrecord.cpp:63-81`), which resets the first appended
 DB4+ record's next link to END. It must not be replaced by a conventional
@@ -87,7 +88,8 @@ not audit every function before the first weather call, implement full map
 arrangement, or prove fresh-GAME_LOAD/CAII ordering. Keep the full source-
 mutation and runtime integration gap below open.
 
-2026-10-15 partial `DM2_ARRANGE_DUNGEON` direction mutation: Firestaff now
+2026-10-15 historical partial `DM2_ARRANGE_DUNGEON` direction mutation
+(retired after the full-branch candidate replaced its tests): Firestaff now
 replays only the source's conditional static-creature and possession
 `RANDDIR` assignments against a cloned mutable record-pool candidate. It keeps
 the caller-provided RNG state, follows source map/column/row/record order, and

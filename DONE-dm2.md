@@ -1,5 +1,13 @@
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
 
+- 2026-10-15: Removed the unused direction-only arrangement mutation API,
+  implementation and duplicate replay tests (325 net code lines). The
+  all-branch candidate now owns mutation; the unchanged-graph census remains
+  read-only. Source DB4 identity is checked before creature writes. DOS EN
+  and FM Towns original-data regressions pass replay, observed draw counts,
+  private-pool mutation and source-mismatch rollback. No production caller
+  was removed; live session publication remains open.
+
 - 2026-10-15: Added an isolated all-branch arrangement candidate with cloned
   record pools, tiles and RNG. Source review covers teleporter aliases,
   dynamic link traversal, DB2/DB3 mutations, creature initialization and pit
