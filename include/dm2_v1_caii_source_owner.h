@@ -48,8 +48,10 @@ typedef struct DM2_V1_CaiiSourceOwner {
     int slots_unowned;
 } DM2_V1_CaiiSourceOwner;
 
-/* Read-only source-order census of conditional RANDDIR calls in
- * DM2_ARRANGE_DUNGEON. It does not replay map/record mutations. */
+/* Read-only conditional RANDDIR census over the supplied, unchanged record
+ * graph in DM2_ARRANGE_DUNGEON map/tile order. It does not replay mutations.
+ * SKProject skmap.cpp:715-808,927-998 can relink teleporter chains before
+ * later record visits, so this is not proof of the full arranger RNG order. */
 typedef struct {
     int valid;
     int incomplete;
@@ -86,8 +88,9 @@ int dm2_v1_DM2_ARRANGE_DUNGEON_rng_receipt(
  * a private mutable pool candidate, in DM2_ARRANGE_DUNGEON map/tile/record
  * order. Both pool bytes and RNG are committed only after the complete
  * census and every source link validate. The caller supplies the shared
- * session RNG at the exact source call boundary (after fresh weather
- * bootstrap); this function does not initialize or reseed it. */
+ * session RNG after its weather bootstrap; this function does not initialize
+ * or reseed it. The unchanged-graph census does not establish the full
+ * arranger call boundary/order when earlier teleporter relinking applies. */
 int dm2_v1_DM2_ARRANGE_DUNGEON_apply_rng_directions(
     const DM2_V1_DungeonData *dungeon,
     const DM2_V1_CaiiSourceOwner *caii_source,

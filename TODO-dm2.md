@@ -1,5 +1,21 @@
 # Firestaff TODO — DM2
 
+2026-10-15 teleporter ordering audit, SKProject commit
+`2c59a2c5a7978923ff5c822c15c3479e4d448493`,
+`SKWINSPX/src/v5/skmap.cpp`: lines 927-998 validate reciprocal teleporter
+coordinates/maps, call `DM2_map_2066_1f37` on both record chains, and may
+replace both teleporter next links with `DM2_map_2066_1ec9`'s merged chain.
+The first helper (715-760) writes uninitialized type-3 subtype-0x27 actuator
+map fields and counts writes; the merge helper (763-808) rewires links and
+calls APPEND_RECORD_TO. The outer loop then reads the current record's next
+link (1214-1217). Consequently the unchanged-graph RNG census cannot prove
+the complete arranger visitation/draw order. Whether this affects each
+installed original dungeon remains unmeasured. Implement reciprocal-link and
+actuator updates transactionally, trace APPEND_RECORD_TO, and validate the
+resulting traversal on original data before integrating arrangement into
+fresh GAME_LOAD. The current partial direction mutator stays disconnected.
+
+
 2026-10-15 SKProject cold-start order check: `main.cpp` calls
 `randdat.init()` before the menu loop, and `c_random.cpp` sets its LCG state to
 zero. The no-save New Game path in `c_savegame.cpp::DM2_GAME_LOAD` loads the
