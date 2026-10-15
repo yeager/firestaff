@@ -155,8 +155,10 @@ static int check_amiga_virtual_startup_companion(const char* root, const char* o
         "30028fb6a301ecb20127ef0b3af32b05"};
     unsigned char* bytes[2]={NULL,NULL}; size_t sizes[2]={0,0};
     char archive[FSP_PATH_MAX]={0}, member[ASSET_PATH_MAX];
+    char dir[FSP_PATH_MAX]={0}, renamed[FSP_PATH_MAX]={0}, physical[FSP_PATH_MAX];
     M12_AssetStatus* status=NULL;
-    int result=1;
+    M11_GameViewState* game=NULL;
+    int result=1, initialized=0;
     if (!original || !FSP_FileExists(original)) {
         puts("SKIP: authentic Amiga A20 archive unavailable for missing SWSH case");
         return 1;
@@ -180,9 +182,59 @@ static int check_amiga_virtual_startup_companion(const char* root, const char* o
         REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
             "original A20 graphics and dungeon cannot launch without their required SWSH");
     }
+    REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"a20-renamed") && FSP_CreateDirectory(dir) &&
+        FSP_JoinPath(renamed,sizeof(renamed),dir,"original.zip") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),original) && symlink(physical,renamed)==0,
+        "link unchanged complete original A20 under an arbitrary archive filename");
+    game=SDL_calloc(1,sizeof(*game));
+    REQUIRE(game,"allocate renamed A20 runtime");
+    M11_GameView_Init(game); initialized=1;
+    for (int mode=0; mode<4; ++mode) {
+        const char* selected=(mode&2) ? dir : renamed;
+        const M12_AssetVersionStatus* owner;
+        M11_GameLaunchSpec spec;
+        M11_BootProbeReceipt receipt;
+        if (mode&1) M12_AssetStatus_Scan(status,selected);
+        else M12_AssetStatus_ScanGame(status,selected,"dm1");
+        owner=M12_AssetStatus_GetFirstMatchedVersion(status,"dm1");
+        REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1") && owner &&
+            strcmp(owner->matchedMd5,hashes[0])==0 &&
+            strncmp(owner->matchedPath,renamed,strlen(renamed))==0 &&
+            strncmp(owner->matchedPath+strlen(renamed),"::",2)==0,
+            "renamed nested original A20 is discovered by file and directory scans");
+        if (mode==0) {
+            char collected[8][ASSET_PATH_MAX];
+            int collectedCount=asset_collect_paths_by_md5(renamed,hashes[0],collected,8U,0);
+            int selectedFound=0;
+            REQUIRE(collectedCount>0,"bounded collector finds original nested A20 graphics");
+            /* This preservation set also contains an alternate disk with
+             * byte-identical graphics; distinct original member paths survive. */
+            for (int entry=0; entry<collectedCount; ++entry) {
+                REQUIRE(strncmp(collected[entry],renamed,strlen(renamed))==0 &&
+                    strncmp(collected[entry]+strlen(renamed),"::",2)==0 &&
+                    asset_file_matches_md5(collected[entry],hashes[0]),
+                    "nested collector retains exact original owner and authenticated member bytes");
+                if (strcmp(collected[entry],owner->matchedPath)==0) selectedFound=1;
+            }
+            REQUIRE(selectedFound,"bounded collector preserves renamed nested A20 container provenance");
+        }
+        memset(&spec,0,sizeof(spec));
+        spec.title="DUNGEON MASTER"; spec.gameId=spec.sourceId="dm1";
+        spec.dataDir=selected; spec.verifiedAssetPath=owner->matchedPath;
+        spec.verifiedAssetMd5=hashes[0]; spec.sourceKind=M11_GAME_SOURCE_BUILTIN_CATALOG;
+        spec.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+        spec.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+        REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
+            M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+            "renamed nested A20 handoff loads its original world");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    }
     result=0;
 cleanup:
-    SDL_free(status); free(bytes[0]); free(bytes[1]);
+    if (initialized) M11_GameView_Shutdown(game);
+    SDL_free(game); SDL_free(status); free(bytes[0]); free(bytes[1]);
+    if (renamed[0]) unlink(renamed);
+    if (dir[0]) rmdir(dir);
     if (archive[0]) unlink(archive);
     return result==0;
 }

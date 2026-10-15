@@ -1779,8 +1779,9 @@ and dungeon receipts, actual native runtime handoff, overflow without partial
 results, and distinct same-hash members within a single ZIP. A20 without SWSH
 is rejected; full original A20/A36/demo CLI probes load their worlds. This does
 not establish every archive format/platform combination or visual parity.
-Existing container/depth limits still apply; generic nested ZIP/ZIP/ADF discovery
-remains separate from the canonical preservation-package admission path.
+Existing container/depth limits still apply. The later renamed-A20 follow-up
+below extends generic ZIP/ZIP/OFS-ADF discovery; other disk formats remain
+subject to their existing readers.
 
 2026-10-16 late native admission follow-up: an incomplete canonical Amiga demo
 could overwrite an already complete duplicate before final validation, hiding
@@ -1791,3 +1792,12 @@ source rejection pass both scan APIs. Demo coverage accepts the optional
 FIRESTAFF_DM1_AMIGA_DEMO_ARCHIVE original-media path and does not depend on
 Atari media being installed. Other native preservation shapes still need their
 own original-media cases; this does not establish arbitrary archive parity.
+
+2026-10-16 renamed A20 follow-up: the unchanged original retail archive failed
+CLI startup under an arbitrary outer ZIP filename. Generic nested disk discovery
+now routes ZIP/ZIP/ADF through the existing bounded OFS visitor, preserving all
+actual container/member names. Both scan APIs discover an original archive alias
+as an explicit file and through an isolated directory; all four handoffs load
+its original world. Final focused CTests pass 2/2 (9.57 s), with demo original supplied
+and no media skips. This covers the existing OFS decoder, not arbitrary Amiga
+raw/MFM disks or multiple matching disk members within an inner ZIP.

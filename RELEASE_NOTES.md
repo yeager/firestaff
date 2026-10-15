@@ -7322,3 +7322,6 @@ does not switch to a neighboring copy.
 
 - Prevent late Amiga preservation-package detection from replacing a complete
   DM1 installation with an incomplete duplicate carrying a standard filename.
+
+- Discover supported nested Amiga OFS-ADF game data under arbitrary outer ZIP
+  filenames, including direct archive selection and directory scanning.

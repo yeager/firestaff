@@ -3923,7 +3923,7 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
         name[name_len] = '\0';
         pos += 46U + name_len + extra_len + comment_len;
         if (has_case_suffix(name, ".zip") && !has_cracked_member_marker(name)) {
-            static const char *const disk_suffixes[] = { ".stx", ".st", ".msa" };
+            static const char *const disk_suffixes[] = { ".stx", ".st", ".msa", ".adf" };
             size_t inner_size = 0U;
             uint8_t *inner = zip_load_entry_bytes(zip_path, name, &inner_size);
             if (inner) {
@@ -3953,7 +3953,10 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
                     matches.md5_count = md5_count;
                     matches.out_paths = out_paths;
                     matches.matched = matched;
-                    if (has_case_suffix(disk_name, ".stx")) {
+                    if (is_adf_path(disk_name)) {
+                        result = firestaff_amiga_adf_visit_ofs_files(
+                            image, disk_size, nested_disk_find_list_visitor, &matches);
+                    } else if (has_case_suffix(disk_name, ".stx")) {
                         result = atari_stx_visit_files(image, disk_size,
                                                        nested_disk_find_list_visitor,
                                                        &matches);

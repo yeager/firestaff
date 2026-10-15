@@ -3472,3 +3472,27 @@ supplied, no missing-media skips. The wider 215.49 s CLI suite belongs to the
 preceding duplicate-collector commit; this native-admission-only follow-up was
 checked with both focused tests and all three original Amiga CLI probes.
 Redacted patch Gitleaks found no leaks.
+
+- 2026-10-16: Removed the outer-filename dependency for nested original Amiga
+  A20 discovery. The original archive alias failed CLI startup and the focused
+  test failed at "renamed nested original A20 is discovered by file and directory
+  scans" before the fix. Added ADF dispatch to the existing nested ZIP disk
+  visitor; no new parser or archive-name table. Both scan APIs × file/directory
+  selection now pass with exact alias/hash ownership and actual world loading.
+  Final focused tests: 2/2, 10.15 s, no missing-media skips. Source review found
+  no blocker and confirms exact outer/inner/disk/member provenance. This proves
+  supported OFS-ADF startup, not every Amiga disk representation or visual parity.
+
+Final renamed-A20 verification: extended collector provenance checks authenticate
+both original-graphics disk member paths in the preservation set. Focused tests
+passed 2/2 (9.57 s), no media skips. Original renamed-archive CLI startup passed
+with expected graphics/levelLoaded and unchanged source SHA-256. The rebuilt
+original-media CLI suite passed (218.48 s), including both offline remembered-root
+cases. Rebuilt access-denied test passed (14.16 s) and cancellation passed with
+two full five-game corpus cases intentionally skipped. No full platform or
+visual parity claim follows from these headless checks.
+
+Additional current-build original-media CLI checks passed for Atari ST English
+1.2, German 1.2 and French 1.3. Each required its catalog graphics MD5 and a
+loaded world; each complete source archive retained its SHA-256. These are
+headless launch checks, not rendering or native Windows staging evidence.
