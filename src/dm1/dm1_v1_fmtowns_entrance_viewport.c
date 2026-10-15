@@ -36,55 +36,26 @@ static const uint8_t g_dm1_c255_pc_frame_safety_pixels[
     DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_WIDTH *
     DM1_V1_FMTOWNS_ENTRANCE_VIEWPORT_HEIGHT] = {0};
 
-static int dm1_c255_zone_for_graphic(int graphic,
-                                     unsigned int *out_zone)
+/* ReDMCSB COORD.C G3019 and DUNVIEW.C F0095/F0128 use the same wall
+ * source/zone identities for the C255 entrance and the loaded dungeon. */
+static int dm1_c255_graphic_route(int graphic,
+                                  unsigned int *out_graphic,
+                                  unsigned int *out_zone)
 {
-    static const unsigned short wall_zones[10] = {
-        717, 716, 714, 713, 712, 708, 707, 711, 710, 709
-    };
-    if (!out_zone) return 0;
-    if (graphic == -1) {
-        *out_zone = 701u;
+    DM1_V1_FmtownsWallPanelRoute route;
+    if (!out_graphic || !out_zone) return 0;
+    if (graphic == -1 || graphic == -2) {
+        *out_graphic = graphic == -1
+            ? DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR
+            : DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING;
+        *out_zone = graphic == -1 ? 701u : 700u;
         return 1;
     }
-    if (graphic == -2) {
-        *out_zone = 700u;
-        return 1;
-    }
-    if (graphic >= 93 && graphic <= 107) {
-        if (graphic <= 102) {
-            *out_zone = wall_zones[graphic - 93u];
-        } else {
-            static const unsigned short near_zones[5] = {
-                703, 702, 706, 705, 704
-            };
-            *out_zone = near_zones[graphic - 103u];
-        }
-        return 1;
-    }
-    return 0;
-}
-
-static int dm1_c255_source_graphic_for_renderer(int renderer_graphic,
-                                                 unsigned int *out_graphic)
-{
-    /* ReDMCSB STARTUP2.C F0460/F0095 and DUNVIEW.C F0095 map MEDIA020/F20
-     * wall slots onto six source images. F20's LCR records are cropped by
-     * the same viewport zones; they are not the PC34 MEDIA720 records. */
-    static const uint8_t wall_records[15] = {
-        84, 85, 86, 86, 86, 87, 87, 87, 87, 87, 89, 89, 88, 88, 88
-    };
-    if (!out_graphic) return 0;
-    if (renderer_graphic == -1) {
-        *out_graphic = DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR;
-        return 1;
-    }
-    if (renderer_graphic == -2) {
-        *out_graphic = DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING;
-        return 1;
-    }
-    if (renderer_graphic < 93 || renderer_graphic > 107) return 0;
-    *out_graphic = wall_records[renderer_graphic - 93];
+    if (graphic < 0 ||
+        !dm1_v1_fmtowns_wall_panel_route((unsigned int)graphic, 0,
+                                          &route)) return 0;
+    *out_graphic = route.source_graphic_base;
+    *out_zone = route.layout_zone;
     return 1;
 }
 
@@ -118,19 +89,14 @@ static int dm1_c255_renderer_graphic_provider(
         !out_pixels || !out_width || !out_height) {
         return 0;
     }
-    if (!dm1_c255_source_graphic_for_renderer(renderer_graphic,
-                                              &source_graphic)) {
+    if (!dm1_c255_graphic_route(renderer_graphic, &source_graphic,
+                                  &zone_index)) {
         context->receipt->requested_source_graphics |=
             UINT32_C(1) << DM1_C255_UNSUPPORTED_GRAPHIC_BIT;
         context->receipt->missing_source_graphics |=
             UINT32_C(1) << DM1_C255_UNSUPPORTED_GRAPHIC_BIT;
         return 0;
     }
-    if (!dm1_c255_zone_for_graphic(renderer_graphic, &zone_index) ||
-        (renderer_graphic == -1 && source_graphic !=
-            DM1_V1_FMTOWNS_ENTRANCE_SOURCE_FLOOR) ||
-        (renderer_graphic == -2 && source_graphic !=
-            DM1_V1_FMTOWNS_ENTRANCE_SOURCE_CEILING)) return 0;
     if (renderer_graphic == -1) bit = UINT32_C(1);
     else if (renderer_graphic == -2) bit = UINT32_C(2);
     else bit = UINT32_C(1) << (2u + (unsigned int)(renderer_graphic - 93));

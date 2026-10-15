@@ -1,5 +1,12 @@
 - 2026-10-15: Fixed I34E title lookup in the authentic nested DM1 DOS ZIP.
 
+- 2026-10-15: Removed duplicate FM Towns entrance wall-source and zone
+  tables. The C255 entrance now uses the same source/zone lookup as the
+  dungeon host path, preserving its existing floor/ceiling and crop handling
+  while removing 34 net source lines. Both entrance-viewport and layout-crop
+  tests pass; a rebuilt binary reaches authenticated EDM runtime using the
+  original FM Towns archive. No visual parity claim is implied.
+
 - 2026-10-15: Reverified direct `--game` exit on source `8939e58fe` with
   authentic FM Towns media and an isolated configuration. DM1, CSB and DM2
   each reached runtime and exited after Return to Menu without reopening
