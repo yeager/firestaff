@@ -17,6 +17,7 @@
 #include "csb_v1_fmtowns_cd.h"
 #include "firestaff_fmtowns_disc.h"
 #include "dm1_v1_fmtowns_startup.h"
+#include "dm1_v1_native_dungeon_compat.h"
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
 #include "dm2_v1_boot.h"
 #endif
@@ -1119,6 +1120,8 @@ static int m12_admit_dm1_fmtowns_archive(
  * Member names only locate the original medium; GRAPHICS.DAT and DUNGEON.DAT
  * hashes remain the admission criteria. */
 static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5);
+static int m12_dm1_loose_dungeon_compatible(const char* graphicsMd5,
+                                            const char* dungeonMd5);
 static int m12_dm1_amiga36_package_ready(const char* graphics);
 static int m12_dm1_complete_loose_owner(const char* graphics,
                                         const char* graphicsMd5,
@@ -1584,6 +1587,7 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
         if (!m12_dm1_complete_loose_owner(version->matchedPath,
                 version->matchedMd5, dungeon) ||
             !asset_file_md5_hex(dungeon, looseDungeonMd5)) return;
+        if (!m12_dm1_loose_dungeon_compatible(version->matchedMd5, looseDungeonMd5)) return;
         match = strstr(allowed, looseDungeonMd5);
         if (!match || (match != allowed && match[-1] != ';') ||
             (match[32] != '\0' && match[32] != ';')) return;
@@ -4409,6 +4413,18 @@ static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5) {
     return NULL;
 }
 
+static int m12_dm1_loose_dungeon_compatible(const char* graphicsMd5,
+                                            const char* dungeonMd5) {
+    size_t i;
+    if (!graphicsMd5 || !dungeonMd5) return 0;
+    if (!dm1_v1_dungeon_is_pc_towns_original_md5(dungeonMd5)) return 1;
+    for (i = 0U; i < sizeof(g_dm1Versions) / sizeof(g_dm1Versions[0]); ++i)
+        if (strcmp(graphicsMd5, g_dm1Versions[i].md5) == 0 &&
+            (g_dm1Versions[i].architecture == M12_ARCH_ATARI_ST ||
+             g_dm1Versions[i].architecture == M12_ARCH_AMIGA)) return 0;
+    return 1;
+}
+
 static int m12_dm1_complete_loose_owner(const char* graphics,
                                         const char* graphicsMd5,
                                         char dungeon[ASSET_PATH_MAX]) {
@@ -4440,6 +4456,7 @@ static int m12_dm1_complete_loose_owner(const char* graphics,
         } else if (found != 1) return 0;
     }
     if (!asset_file_md5_hex(dungeon, actualMd5)) return 0;
+    if (!m12_dm1_loose_dungeon_compatible(graphicsMd5, actualMd5)) return 0;
     match = strstr(allowed, actualMd5);
     if (!match || (match != allowed && match[-1] != ';') ||
         (match[32] != '\0' && match[32] != ';')) return 0;

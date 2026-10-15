@@ -3375,3 +3375,24 @@ catalog consistency passed. The cancellation executable's two full five-game
 corpus cases remained intentionally skipped. Redacted patch Gitleaks found no
 leaks. Preceding GitHub Actions run 38816079690 completed successfully before
 publication of this batch.
+
+- 2026-10-16: Reproduced ST12 graphics with unchanged PC34 dungeon bytes being
+  admitted by the launcher despite incompatible native loading. Added one shared
+  identity boundary for the three authenticated little-endian PC/Towns original
+  dungeons. Native loose-owner validation and final report revalidation reject
+  these pairings; M11 checks its retained source buffer before decompression or
+  endian conversion, including stale scan receipts. Other native compatibility
+  rules and explicit PC custom paths remain intact. Reused the existing original
+  media test loop for ST12 and A20: both scan APIs reject each foreign original,
+  runtime rejects it, and restored original worlds load again. Focused tests
+  passed (2/2, 7.48 s), without missing-media skips, including the existing PC
+  custom loose/virtual cases. Independent source review found no blocker. This
+  is a known-original compatibility check, not a general custom-format validator
+  or complete edition/platform/visual parity proof.
+
+Final native-compatibility binary passed the complete original-media CLI startup
+diagnostics suite (214.40 s), including both offline remembered-root cases.
+Access-denied CTest passed (14.11 s); deterministic cancellation and catalog
+consistency passed. The cancellation executable's two full five-game corpus
+cases remained intentionally skipped. Runtime diagnostics explicitly confirmed
+all six ST12/A20 foreign-original rejections in the focused test log.

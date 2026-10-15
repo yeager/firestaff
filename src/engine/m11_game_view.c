@@ -5,6 +5,7 @@
 #include "memory_graphics_dat_pc34_compat.h"
 #include "redmcsb_f0791_dungeonview_draw_bitmap_xx_pc34_compat.h"
 #include "m11_loose_sibling.h"
+#include "dm1_v1_native_dungeon_compat.h"
 #include "soundtrack_selector_m11.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
@@ -26457,6 +26458,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             fprintf(stderr,
                     "firestaff: DM1 startup failed while reading virtual "
                     "DUNGEON.DAT path=%s\n", dungeonPath);
+            return 0;
+        }
+        if ((m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
+             m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5)) &&
+            dm1_v1_dungeon_is_pc_towns_original_bytes(dm1VirtualDungeonBytes, dm1VirtualDungeonSize)) {
+            fprintf(stderr, "firestaff: DM1 native dungeon rejected PC/Towns original: %s\n", dungeonPath);
+            free(dm1VirtualDungeonBytes);
             return 0;
         }
         if (dm1Pc34Graphics && !dm1Pc34ExplicitDungeon &&

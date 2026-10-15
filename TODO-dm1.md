@@ -1755,9 +1755,12 @@ setMultipleColorsInPalette (6108-6157) substitutes its dungeon palette for
 G8175_CREAT_PAL, so native video-driver tables remain authoritative. Source
 comparison found no newly proven Firestaff defect and did not execute ScummVM.
 
-2026-10-16 native companion compatibility audit: the existing retail Atari/early
-Amiga loose-owner helper still accepts the game-wide dungeon hash list. A PC34
-original dungeon beside ST12 graphics can therefore pass scan-time admission,
-although the ST runtime's big-endian normalizer rejects its header bounds.
-This is source/header evidence only; add an original-data red regression before
-changing compatibility policy. Preserve intentional explicit PC dungeon paths.
+2026-10-16 native companion compatibility follow-up: original-data tests
+reproduced scan admission of an incompatible PC34 dungeon beside ST12 graphics.
+Loose native scans and retained runtime buffers now reject the three known
+little-endian PC/Towns originals, sharing their exact identities. ST12 and A20
+English original startup, both scan APIs, all three foreign replacements and
+restoration pass; explicit PC custom dungeon paths retain their existing tests.
+This does not establish arbitrary custom-format validation, edition-exact
+compatibility for every native dungeon, or admission/reporting for every virtual
+native owner. Keep those cases and native Windows original-media staging open.

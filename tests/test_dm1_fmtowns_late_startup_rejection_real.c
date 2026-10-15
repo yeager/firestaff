@@ -40,6 +40,89 @@ static int menu_reports_missing_companion(M12_StartupMenuState* menu,
 }
 #endif
 
+#ifndef _WIN32
+static int write_original_bytes(const char* path, const unsigned char* bytes, size_t size) {
+    FILE* file=fopen(path,"wb");
+    int ok;
+    if (!file) return 0;
+    ok=fwrite(bytes,1,size,file)==size;
+    if (fclose(file)!=0) ok=0;
+    return ok;
+}
+static int native_rejects_pc_towns_dungeons(M12_AssetStatus* status, M11_GameViewState* game,
+    const char* dir, const char* graphics, const char* dungeon,
+    const char* pcOriginal, const char* townsOriginal) {
+    static const char* const foreignHashes[]={
+        "766450c940651fc021c92fe5d0d0b3a6", "3dc0a932d0e0adfe59878f07c51700c5",
+        "fe098f70ce83cfe3f2333565093daf35"};
+    unsigned char *own=NULL, *foreign=NULL;
+    size_t ownSize=0, foreignSize=0;
+    char member[ASSET_PATH_MAX], graphicsMd5[33];
+    M11_GameLaunchSpec spec;
+    M11_BootProbeReceipt receipt;
+    int result=1, replaced=0;
+    REQUIRE(asset_read_path_alloc(dungeon,&own,&ownSize) &&
+        asset_file_md5_hex(graphics,graphicsMd5),"retain unchanged native original dungeon bytes");
+    memset(&spec,0,sizeof(spec));
+    spec.title="DUNGEON MASTER"; spec.gameId=spec.sourceId="dm1";
+    spec.dataDir=dir; spec.verifiedAssetPath=graphics; spec.verifiedAssetMd5=graphicsMd5;
+    spec.sourceKind=M11_GAME_SOURCE_BUILTIN_CATALOG;
+    spec.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+    spec.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
+        M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+        "original native companion loads before incompatible replacement");
+    for (int original=0; original<3; ++original) {
+        if (original==0) {
+            if (!pcOriginal || !FSP_FileExists(pcOriginal)) {
+                puts("SKIP: authentic PC original unavailable for native compatibility case");
+                continue;
+            }
+            REQUIRE(asset_find_by_md5(pcOriginal,foreignHashes[original],member,sizeof(member),0),
+                "locate authentic incompatible PC dungeon");
+        } else REQUIRE(FSP_JoinPath(member,sizeof(member),townsOriginal,
+                original==1 ? "DATA/DUNGEON.DAT" : "JDATA/DUNGEON.DAT"),
+                "locate authentic incompatible Towns dungeon");
+        REQUIRE(asset_read_path_alloc(member,&foreign,&foreignSize) &&
+            asset_memory_matches_md5(foreign,foreignSize,foreignHashes[original]),
+            "authenticate unchanged incompatible PC or Towns original dungeon bytes");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        replaced=1;
+        REQUIRE(write_original_bytes(dungeon,foreign,foreignSize),
+            "stage unchanged PC or Towns dungeon beside native graphics");
+        for (int mode=0; mode<2; ++mode) {
+            if (mode) M12_AssetStatus_Scan(status,graphics);
+            else M12_AssetStatus_ScanGame(status,graphics,"dm1");
+            if (M12_AssetStatus_GameAvailable(status,"dm1"))
+                fprintf(stderr,"incompatible original admitted: graphics=%s dungeon=%s scan=%d\n",
+                    graphicsMd5,foreignHashes[original],mode);
+            REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+                "both scan APIs reject PC or Towns dungeon paired with native graphics");
+        }
+        REQUIRE(!M11_GameView_Start(game,&spec) && !game->active,
+            "native runtime rejects replaced PC or Towns dungeon with stale original graphics identity");
+        REQUIRE(write_original_bytes(dungeon,own,ownSize),"restore task-owned native dungeon bytes");
+        replaced=0;
+        for (int mode=0; mode<2; ++mode) {
+            if (mode) M12_AssetStatus_Scan(status,graphics);
+            else M12_AssetStatus_ScanGame(status,graphics,"dm1");
+            REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1"),"both scan APIs recover restored native original");
+        }
+        REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
+            M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+            "restored original native dungeon remains launchable");
+        free(foreign); foreign=NULL;
+    }
+    result=0;
+cleanup:
+    if (replaced && own) (void)write_original_bytes(dungeon,own,ownSize);
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    free(own); free(foreign);
+    return result==0;
+}
+#endif
+
 int main(void) {
 #ifdef _WIN32
     puts("SKIP: native FM Towns source staging requires symlinks");
@@ -251,6 +334,8 @@ int main(void) {
                 REQUIRE(asset_file_matches_md5(nativeFiles[i],hashes[i]),
                     "authenticate unchanged staged native member bytes");
             }
+            REQUIRE(native_rejects_pc_towns_dungeons(fresh,game,nativeDir,nativeFiles[0],nativeFiles[1],
+                pcOriginal,original),"native original companion compatibility and recovery");
         } else REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) &&
             symlink(physical,pcAlias)==0,"stage original PC archive for mixed-owner report");

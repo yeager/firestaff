@@ -2,6 +2,11 @@
 
 ## User-facing changes
 
+- `DM1 native startup`: reject known PC and FM Towns original dungeons paired
+  with Atari or Amiga graphics, during loose-data scanning and runtime loading.
+  Replacing stale files cannot bypass the runtime check; restoring the native
+  originals recovers startup.
+
 - `DM1 mixed installations`: refresh the reported dungeon file when an
   incomplete FM Towns launcher leaves an Atari or Amiga installation available.
 
