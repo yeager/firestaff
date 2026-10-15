@@ -7210,3 +7210,9 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 - Show existing folder-access and missing-data explanations after deferred
   startup scans and scans on return from a game. Publish messages on the UI
   thread after scan completion, and suppress them for cancelled scans.
+
+### Missing external data paths (2026-10-15)
+
+- Do not recreate missing selected game-data paths, archive paths or originals
+  overrides when reporting missing data. Continue bootstrapping the built-in
+  default originals directory for a fresh desktop profile.

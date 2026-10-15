@@ -4062,6 +4062,18 @@ if(BUILD_TESTING)
             "$<TARGET_FILE:firestaff>"
             "$<TARGET_FILE:test_dm2_v1_fmtowns_menu_source_rgb>"
     )
+    # This CLI fixture uses desktop profile paths, not mobile Documents paths.
+    if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        add_test(
+            NAME missing_selected_data_root
+            COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_missing_selected_data_root.sh"
+                "$<TARGET_FILE:firestaff>"
+        )
+        set_tests_properties(missing_selected_data_root PROPERTIES
+            LABELS "tier2;dm1;startup;cli"
+            TIMEOUT 30
+        )
+    endif()
     add_test(
         NAME dm1_motion_present_diagnostics_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_motion_present_diagnostics_real_media.sh"

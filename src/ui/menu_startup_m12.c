@@ -2191,7 +2191,20 @@ static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
     }
     dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
     if (dataDir && dataDir[0] != '\0' && !FSP_DirExists(dataDir)) {
-        FSP_CreateDirectoryRecursive(dataDir);
+        char defaultOriginals[M12_ASSET_DATA_DIR_CAPACITY];
+        char selectedPath[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* originalsOverride = getenv("FIRESTAFF_ORIGINALS_DIR");
+        /* Bootstrap only the built-in default. A missing selected path or
+         * process override may belong to an unplugged volume or be an
+         * archive; a diagnostic must not create a replacement directory. */
+        if ((!originalsOverride || !originalsOverride[0]) &&
+            FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
+            snprintf(selectedPath, sizeof(selectedPath), "%s", dataDir);
+            FSP_NormalizeSeparators(selectedPath);
+            FSP_NormalizeSeparators(defaultOriginals);
+            if (strcmp(selectedPath, defaultOriginals) == 0)
+                (void)FSP_CreateDirectoryRecursive(dataDir);
+        }
     }
     instructions = m12_platform_data_instructions(state);
     m12_format_data_dir_line(state, line3, sizeof(line3));

@@ -6,8 +6,10 @@ Pending, incomplete and cancelled scans do not publish dialogs. Authentic DM1
 permission tests cover denial beside available media, restored access and
 removing the last staged original-archive link. These use POSIX permission
 bits; actual macOS privacy prompts remain a separate OS integration check.
-The pre-existing no-data helper's attempt to create a missing data root is
-unchanged; review disconnected-volume behavior separately before changing it.
+Missing selected roots, archive paths and process-selected originals roots are
+no longer recreated by no-data feedback. Only the built-in default root is
+bootstrapped. The desktop CLI absence/default regression passes; actual OS
+unmount/reconnect and mobile Documents paths remain separate integration checks.
 
 2026-10-15 diagnostic hashing correction: lightweight trace/scriptwait metadata
 and launch-scoped M12 host capture publication are implemented. Explicit full

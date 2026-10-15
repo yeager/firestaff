@@ -1,3 +1,11 @@
+- 2026-10-15: Reproduced the launcher recreating a missing selected data root
+  while showing its no-data message. Restricted bootstrap to the built-in
+  default root, without a FIRESTAFF_ORIGINALS_DIR override, and normalized
+  separators for Windows. Desktop CLI/CTest regression passes for missing
+  selected directories, archive paths and process overrides, while ordinary
+  default-directory creation still works. No synthetic game media is used:
+  these are filesystem absence checks. Catalog validation also passes.
+
 - 2026-10-15: Deferred startup/return-menu scans now publish access-denied
   and no-data explanations on the UI thread after completion/join, reusing
   the existing startup policy. Incomplete/cancelled scans stay quiet.
