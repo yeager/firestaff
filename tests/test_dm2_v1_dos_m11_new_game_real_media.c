@@ -3,6 +3,7 @@
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
@@ -92,7 +93,8 @@ int main(void)
         return 1;
     }
     memset(&runtime, 0, sizeof(runtime));
-    if (!dm2_v1_boot_runtime_capture(
+    if (!dm2_v1_runtime_weather_chain_started() ||
+        !dm2_v1_boot_runtime_capture(
             (DM2_V1_BootProfile *)view.dm2BootProfile, &runtime) ||
         !runtime.runtime_ready || runtime.current_level != 0 ||
         runtime.outdoor) {

@@ -869,8 +869,15 @@ done:
 static int dm2_test_owned_weather(DM2_V1_GameLoadWorldOwner *owner)
 {
     DM2_V1_GameLoadTimerProcessReceipt receipt;
-    if (!dm2_v1_game_load_world_owner_materialize_new_game_weather(owner) ||
-        !owner->source_weather_chain_valid || owner->caii_rng.random != 0x11cfaefdu ||
+    DM2_V1_DropRng expected;
+    dm2_v1_drops_rng_init(&expected);
+    (void)dm2_v1_drops_rand16(&expected,500);
+    (void)dm2_v1_drops_randdir(&expected);
+    (void)dm2_v1_drops_rand16(&expected,4);
+    /* This gate admits the pinned DOS EN pair: its complete original-data
+     * arranger consumes 28 RANDDIR draws after the three weather draws. */
+    for (int n = 0; n < 28; ++n) (void)dm2_v1_drops_randdir(&expected);
+    if (!owner->source_weather_chain_valid || owner->caii_rng.random != expected.random ||
         owner->timer_queue.num_timers != 1 ||
         owner->source_weather_bootstrap.draws != 3 ||
         owner->source_weather_globalb0 != 0) return 0;
@@ -2863,6 +2870,7 @@ int main(void) {
     DM2_V1_BootNewGamePartyReceipt source_party;
     DM2_V1_BootNewGamePossessionReceipt source_possessions;
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
+    DM2_V1_BootNewGameTransactionReceipt arranged_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
     DM2_V1_GameLoadWorldOwner incremental_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner preselection_move_world_owner;
@@ -3486,6 +3494,12 @@ int main(void) {
                 "DM2 prepares an owned dungeon before incremental selection");
     {
     void *mounted_dungeon = profile ? profile->dungeon_data : NULL;
+    DM2_V1_DropRng champion_rng = incremental_new_game_world_owner.caii_rng;
+    int16_t expected_food[2], expected_water[2];
+    for (int i = 0; i < 2; ++i) {
+        expected_food[i] = (int16_t)(1500 + (uint8_t)dm2_v1_drops_rand24(&champion_rng));
+        expected_water[i] = (int16_t)(1500 + (uint8_t)dm2_v1_drops_rand24(&champion_rng));
+    }
     /* Once prepared, selection must query the owned dungeon, not depend on
      * the mounted profile's original dungeon pointer remaining installed. */
     if (profile) profile->dungeon_data = NULL;
@@ -3512,11 +3526,25 @@ int main(void) {
                     !incremental_new_game_world_owner.committed &&
                     !profile->source_game_load_session_ready,
                 "DM2 keeps mirror click order using its owned dungeon view");
+    expect_true(incremental_new_game_world_owner.caii_rng.random == champion_rng.random &&
+        incremental_new_game_world_owner.selected_party.hero[0].food == expected_food[0] &&
+        incremental_new_game_world_owner.selected_party.hero[0].water == expected_water[0] &&
+        incremental_new_game_world_owner.selected_party.hero[1].food == expected_food[1] &&
+        incremental_new_game_world_owner.selected_party.hero[1].water == expected_water[1],
+        "DM2 draws food/water once per new champion and preserves RNG after rejected duplicate");
     if (profile) profile->dungeon_data = mounted_dungeon;
     }
     new_game_owner_initialized = profile &&
         dm2_v1_game_load_world_owner_init_new_game(
             &new_game_world_owner, profile, party_selections, 2);
+    memset(&arranged_transaction,0,sizeof(arranged_transaction));
+    if (new_game_owner_initialized) {
+        DM2_V1_BootProfile arranged_view = *profile;
+        arranged_view.dungeon_data = &new_game_world_owner.dungeon;
+        expect_true(dm2_v1_boot_new_game_transaction_receipt(
+            &arranged_view,party_selections,2,&arranged_transaction),
+            "DM2 independently derives transaction evidence from arranged owned bytes");
+    }
     if (new_game_owner_initialized &&
         new_game_world_owner.sound_owner.valid &&
         new_game_world_owner.sound_owner.sample_binding_count > 0u) {
@@ -3558,7 +3586,7 @@ int main(void) {
                     new_game_world_owner.load_new_dungeon_reset.receipt_hash != 0u &&
                     new_game_world_owner.current_map == 0 &&
                     new_game_world_owner.source_transaction_hash ==
-                        source_transaction.transaction_hash &&
+                        arranged_transaction.transaction_hash &&
                     new_game_world_owner.dungeon.level_count == 44 &&
                     new_game_world_owner.dungeon.initial_party_pose_valid &&
                     new_game_world_owner.dungeon.initial_party_x == 1 &&
@@ -3632,7 +3660,7 @@ int main(void) {
                     new_game_world_owner.timer_capacity > 50u &&
                     new_game_world_owner.timer_queue.max_timers ==
                         (int16_t)new_game_world_owner.timer_capacity &&
-                    new_game_world_owner.timer_queue.num_timers == 0 &&
+                    new_game_world_owner.timer_queue.num_timers == 1 &&
                     new_game_world_owner.timer_queue.gametick == 0 &&
                     new_game_world_owner.fresh_game_mode &&
                     new_game_world_owner.record_capacities[4] >=
@@ -3730,7 +3758,7 @@ int main(void) {
                         source_transaction.actuator_generators.control_bit2_set_count &&
                     new_game_generators.queued_timer_count == 0 &&
                     new_game_world_owner.timer_queue.num_timers ==
-                        (int16_t)new_game_generators.queued_timer_count &&
+                        1 + (int16_t)new_game_generators.queued_timer_count &&
                     new_game_world_owner.actuator_generators_processed &&
                     !new_game_world_owner.source_map_context_materialized &&
                     !profile->source_game_load_session_ready &&
@@ -4073,6 +4101,10 @@ int main(void) {
                     dm2_v1_game_load_world_owner_init_new_game(
                         &timer_process_world_owner, profile,
                         party_selections, 2) &&
+                    dm2_v1_game_load_world_owner_process_next_due_timer(
+                        &timer_process_world_owner, &new_game_timer_process) &&
+                    new_game_timer_process.timer_type == 0x54u &&
+                    new_game_timer_process.weather.valid &&
                     (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
                         (int16_t)new_game_noop_map, 0), 1) &&
                     ((new_game_actuate_timer.ttype = 0x04u), 1) &&
@@ -4088,7 +4120,7 @@ int main(void) {
                     new_game_timer_process.timer_type == 0x04u &&
                     new_game_timer_process.timer_map == new_game_noop_map &&
                     new_game_timer_process.actuate.source_noop &&
-                    timer_process_world_owner.timer_queue.num_timers == 0 &&
+                    timer_process_world_owner.timer_queue.num_timers == 1 &&
                     timer_process_world_owner.current_map == new_game_noop_map &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
@@ -4109,7 +4141,7 @@ int main(void) {
                     !new_game_timer_process.timer_dequeued &&
                     new_game_timer_process.blocked_unowned_timer &&
                     new_game_timer_process.timer_type == 0x05u &&
-                    timer_process_world_owner.timer_queue.num_timers == 1 &&
+                    timer_process_world_owner.timer_queue.num_timers == 2 &&
                     timer_process_world_owner.timer_entries[
                         timer_process_world_owner.timer_queue.indices[0]].ttype == 0x05u,
                 "M11 keeps an unowned private timer pending instead of dropping it");
@@ -7285,9 +7317,14 @@ int main(void) {
             uint8_t slot_snapshot[DM2_V1_CAII_SLOT_SIZE];
             DM2_V1_TimerQueue queue_snapshot;
             uint8_t *candidate_slot;
-            int16_t timer_slot = (int16_t)(
-                dm2_v1_record_pool_address(&runtime_session_candidate.record_pools,
-                                            probe->record_handle)[5]);
+            /* DB4 byte5 selects CAII, whose word2 selects c_tim. Weather
+             * occupies a timer slot before creature slots are allocated. */
+            int caii_index = dm2_v1_record_pool_address(
+                &runtime_session_candidate.record_pools,probe->record_handle)[5];
+            const uint8_t *source_slot = runtime_session_candidate.caii_slots.slots +
+                (size_t)caii_index * DM2_V1_CAII_SLOT_SIZE;
+            int16_t timer_slot = (int16_t)((uint16_t)source_slot[2] |
+                ((uint16_t)source_slot[3] << 8));
             memset(&caii_receipt, 0, sizeof(caii_receipt));
             timer_before = runtime_session_candidate.timer_entries[timer_slot];
             expect_true(dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
@@ -7776,6 +7813,17 @@ int main(void) {
             DM2_V1_GameLoadCandidateTimerProcessReceipt timer_receipt;
             uint32_t due_tick = 0u;
             int timers_before = runtime_session_candidate.timer_queue.num_timers;
+            if (timers_before > 0 && runtime_session_candidate.timer_entries[
+                    runtime_session_candidate.timer_queue.indices[0]].ttype == 0x54u) {
+                const DM2_V1_TimerEntry *head = &runtime_session_candidate.timer_entries[
+                    runtime_session_candidate.timer_queue.indices[0]];
+                expect_true(dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                    &runtime_session_candidate,(uint32_t)dm2_v1_timer_get_ticks(head),
+                    &timer_receipt) && timer_receipt.valid &&
+                    timer_receipt.timer_type == 0x54u &&
+                    runtime_session_candidate.timer_queue.num_timers == timers_before,
+                    "DM2 advances and requeues weather before the next due creature event");
+            }
             if (timers_before > 0) {
                 const int16_t head = runtime_session_candidate.timer_queue.indices[0];
                 due_tick = (uint32_t)dm2_v1_timer_get_ticks(

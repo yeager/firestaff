@@ -1,6 +1,7 @@
 /* Opt-in real-media Mac NEW GAME/runtime handoff regression. */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_hand_action_gdat.h"
@@ -90,7 +91,8 @@ int main(void)
     memset(&runtime, 0, sizeof(runtime));
     expect(dm2_v1_boot_commit_new_game_session(profile) == 1,
            "Mac retail commits the source-owned NEW GAME session");
-    expect(dm2_v1_boot_runtime_capture(profile, &runtime) == 1 &&
+    expect(dm2_v1_runtime_weather_chain_started() == 1 &&
+               dm2_v1_boot_runtime_capture(profile, &runtime) == 1 &&
                runtime.runtime_ready && runtime.party_x == 1 &&
                runtime.party_y == 8 && runtime.party_dir == 0 &&
                runtime.leader_hand_object == 0xffffu,

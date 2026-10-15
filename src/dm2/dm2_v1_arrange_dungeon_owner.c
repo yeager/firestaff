@@ -1,11 +1,87 @@
 /* Source: pinned SKProject SKWINSPX/v5/skmap.cpp:715-1255. */
 #include "dm2_v1_arrange_dungeon_owner.h"
+#include "dm2_v1_skproject_core.h"
 #include <stdlib.h>
 #include <string.h>
 
 #define END 0xfffeu
 #define NULL_LINK 0xffffu
 #define WALK_LIMIT 65536u
+
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+} ArrangeAssetQueries;
+
+static int asset_pit_gdat(void *context, int map, uint16_t *value)
+{
+    ArrangeAssetQueries *q = context;
+    int style = dm2_v1_dungeon_get_map_graphics_style(q->dungeon, map);
+    if (style < 0 || style > 255 || !q->loader->loaded || !value) return 0;
+    *value = 0;
+    (void)dm2_v1_asset_load_word_value(q->loader, 8, style, 0x6a, value);
+    return 1;
+}
+
+static int asset_locate_below(void *context, int map, int *x, int *y,
+                              int *result_map)
+{
+    ArrangeAssetQueries *q = context;
+    const DM2_V1_DungeonData *d = q->dungeon;
+    DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS] = {{0}};
+    uint8_t candidates[DM2_V1_MAX_LEVELS];
+    uint16_t count = 0;
+    int16_t tx = (int16_t)*x, ty = (int16_t)*y;
+    DM2_V1_SkprojectLocateOtherLevelReceipt receipt;
+    if (map < 0 || map >= d->level_count) return 0;
+    if (d->map_level_number[map] + 1 >= 63) {
+        *result_map = -1;
+        return 1;
+    }
+    /* c_savegame.cpp:579-611 constructs level scan lists in map order. */
+    for (int m = 0; m < d->level_count; ++m) {
+        int lx = *x + d->map_offset_x[map] - d->map_offset_x[m];
+        int ly = *y + d->map_offset_y[map] - d->map_offset_y[m];
+        int raw = dm2_v1_dungeon_c_map_get_tile_value(d, m, lx, ly);
+        if (raw < 0) return 0;
+        maps[m].map_id = (uint8_t)m;
+        maps[m].level = d->map_level_number[m];
+        maps[m].world_x = d->map_offset_x[m];
+        maps[m].world_y = d->map_offset_y[m];
+        maps[m].width = d->level_widths[m] - 1;
+        maps[m].height = d->level_heights[m] - 1;
+        maps[m].tile_type_at_local = (uint8_t)(raw >> 5);
+        if ((raw >> 5) == 5) {
+            int link = dm2_v1_dungeon_get_first_thing(d, m, lx, ly), size = 0;
+            const uint8_t *r = dm2_v1_dungeon_get_thing_record(
+                d, (uint16_t)link, NULL, NULL, &size);
+            if (!r || size < 6) return 0;
+            maps[m].teleporter_record_active = (uint8_t)(
+                dm2_v1_dungeon_read_record_u16(d, r + 4) & 1);
+        }
+        if (d->map_level_number[m] == d->map_level_number[map] + 1)
+            candidates[count++] = (uint8_t)m;
+    }
+    if (!count) { *result_map = -1; return 1; }
+    *result_map = dm2_v1_skproject_locate_other_level(
+        maps, (uint16_t)d->level_count, (int16_t)map, 1, &tx, &ty,
+        candidates, count, 0, NULL, &receipt);
+    *x = tx; *y = ty;
+    return receipt.valid;
+}
+
+int dm2_v1_arrange_dungeon_owner_build_from_assets(
+    const DM2_V1_DungeonData *dungeon, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_CaiiSourceOwner *caii, const DM2_V1_DropRng *rng,
+    const DM2_V1_AssetLoader *loader, DM2_V1_ArrangeDungeonOwner *out)
+{
+    ArrangeAssetQueries context = {dungeon, loader};
+    DM2_V1_ArrangeDungeonQueries queries = {
+        &context, asset_pit_gdat, asset_locate_below};
+    if (!loader || !loader->loaded) return 0;
+    return dm2_v1_arrange_dungeon_owner_build(dungeon, pools, caii, rng,
+                                               &queries, out);
+}
 
 static uint16_t read_word(const DM2_V1_ArrangeDungeonOwner *o,
                           const uint8_t *p)

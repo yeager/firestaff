@@ -98,6 +98,8 @@ extern int dm2_v1_wield_weapon(
 static void dm2_v1_runtime_append_mac_wall_targets(
     const DM2_V1_DungeonData *dungeon, const DM2_V1_GameState *game);
 typedef struct DM2_V1_RuntimeState DM2_V1_RuntimeState;
+static void dm2_runtime_refresh_source_weather_zone(
+    DM2_V1_RuntimeState *rt);
 static void dm2_runtime_refresh_map_transition_context(
     DM2_V1_RuntimeState *rt);
 static void dm2_runtime_try_light_mode8(
@@ -503,6 +505,7 @@ static void dm2_runtime_apply_entered_db1_teleporter(
     rt->view_dir = gs->party_dir;
     rt->outdoor = gs->outdoor;
     dm2_runtime_refresh_map_transition_context(rt);
+    dm2_runtime_refresh_source_weather_zone(rt);
 }
 
 /* SKProject's stair query resolves a map by shared world coordinates rather
@@ -2525,6 +2528,28 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
  * map together.  A level handoff cannot retain any material from the prior
  * map: rebuild the map lists, bounded G1 record receipts and GDAT plans as
  * one fail-closed transaction. */
+/* LOAD_LOCALLEVEL_DYN assigns v1e1472 after loading the map's graphics
+ * style (SKProject SKULLWIN/c_loadlevel.cpp:803-807). An absent optional
+ * word is source zero. Preserve the running chain and RNG across maps. */
+static void dm2_runtime_refresh_source_weather_zone(DM2_V1_RuntimeState *rt)
+{
+    const DM2_V1_AssetLoader *loader;
+    uint16_t zone = 0u;
+    if (!rt || !rt->weather_chain_started) return;
+    loader = rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL;
+    if (!loader || rt->map_graphics_style < 0 ||
+        rt->map_graphics_style > UINT8_MAX) {
+        rt->weather_chain.zone_index = -1;
+        return;
+    }
+    (void)dm2_v1_query_gdat_entry_data_index(loader, 8,
+        rt->map_graphics_style, 11, 0x66, &zone);
+    /* Invalid authored selectors remain invalid; the timer handler defers
+     * rather than indexing beyond table1d6b76 or clamping to another zone. */
+    rt->weather_chain.zone_index = zone <= DM2_V1_UPDATE_WEATHER_MAX_ZONE
+        ? (int16_t)zone : -1;
+}
+
 static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
 {
     DM2_V1_DungeonData *dungeon;
@@ -3056,6 +3081,7 @@ static void dm2_runtime_apply_trigger_event(DM2_V1_RuntimeState *rt,
                 rt->outdoor = gs->outdoor;
             }
             dm2_runtime_refresh_map_transition_context(rt);
+            dm2_runtime_refresh_source_weather_zone(rt);
             break;
         case DM2_TRIGGER_TARGET_SPAWN_CREATURE:
             /* A generic trigger target has no DB14/CCM/timer payload.  The
@@ -3252,6 +3278,7 @@ static void dm2_runtime_refresh_g1_map0_teleporter_transition(
             rt->view_dir = state->party_dir;
             rt->outdoor = state->outdoor;
             dm2_runtime_refresh_map_transition_context(rt);
+            dm2_runtime_refresh_source_weather_zone(rt);
         }
         rt->g1_map0_teleporter_transition = candidate;
         return;
@@ -4360,6 +4387,8 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->dungeon_level = game->current_level;
     rt->view_dir = game->party_dir;
     rt->outdoor = game->outdoor;
+    if (candidate->source_weather_globalb0_valid)
+        game->glob_vars.byte_vars[0] = candidate->source_weather_globalb0;
     /* GAME_LOAD owns one c_random stream. Resume restores its saved seed;
      * fresh sessions continue after weather, arrangement and CAII. */
     rt->session_rng.random = sksave_source
@@ -4430,6 +4459,7 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
      * map/GDAT/light/material context only after the source party, savegame
      * globals, weather and light state have become the runtime's owners. */
     dm2_runtime_refresh_map_transition_context(rt);
+    dm2_runtime_refresh_source_weather_zone(rt);
 
     boot_profile->source_game_load_session_ready = 1;
     return 1;
@@ -7734,6 +7764,7 @@ static int dm2_runtime_process_moverec_timer(
         game->party_y = y;
         rt->view_dir = game->party_dir & 3;
         dm2_runtime_refresh_map_transition_context(rt);
+        dm2_runtime_refresh_source_weather_zone(rt);
     }
 
     /* WALK_NOW already supplied an authenticated source cell.  Preserve that
@@ -7890,6 +7921,7 @@ moverec_rollback:
         game->party_dir = old_party_dir;
         rt->view_dir = old_party_dir & 3;
         dm2_runtime_refresh_map_transition_context(rt);
+        dm2_runtime_refresh_source_weather_zone(rt);
     }
     free(dungeon_backup);
     free(caii_backup);
@@ -8001,6 +8033,7 @@ static int dm2_runtime_move_record_rotate_timer(
     game->party_dir = dir;
     rt->view_dir = dir;
     dm2_runtime_refresh_map_transition_context(rt);
+    dm2_runtime_refresh_source_weather_zone(rt);
     dm2_v1_record_pool_set_free(&pool_backup);
     free(dungeon_backup);
     if (receipt && receipt->handler_rejected_count > 0)
@@ -16193,6 +16226,7 @@ int dm2_v1_runtime_move(int dir) {
             rt->outdoor = gs->outdoor;
             rt->view_dir = gs->party_dir;
             dm2_runtime_refresh_map_transition_context(rt);
+            dm2_runtime_refresh_source_weather_zone(rt);
             if ((entered_stairs || entered_pit) && rt->stairs_callback) {
                 rt->stairs_callback(old_x, old_y, special_x, special_y,
                                     (float)(special_map - move_request.current_level));
@@ -16351,6 +16385,7 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     gs->outdoor = rt->outdoor;
     dm2_runtime_refresh_g1_map0_teleporter_transition(rt, level, x, y);
     dm2_runtime_refresh_map_transition_context(rt);
+    dm2_runtime_refresh_source_weather_zone(rt);
 }
 
 int dm2_v1_runtime_last_music_map_receipt(

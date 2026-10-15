@@ -1,30 +1,26 @@
 # Firestaff TODO — DM2
 
-## Fresh New Game integration (2026-10-15)
+## Fresh New Game verification (2026-10-15)
 
-The full-branch arrangement candidate and its transactional raw-dungeon
-serializer pass original DOS EN, FM Towns, Mac and Amiga tests. They remain
-outside the production archive. Open work:
+Default preparation now runs source cold weather, complete dungeon arrangement
+and synchronized raw/pool reload before deriving its receipts. CAII storage
+preserves the shared stream. Fresh runtime candidates retain weather/timer/RNG
+and global-byte state; source map loading binds the authored weather zone.
+Live champion food/water uses two shared draws per newly selected hero, retaining
+previous heroes' values. Original DOS EN, FM Towns, Mac and Amiga New Game tests
+reach runtime with a bound weather chain. The larger DOS startup/profile gate
+passes timer ordering, source preservation and incremental-selection RNG checks.
 
-- Integrate arrangement into the private GameLoadWorldOwner before derived
-  preselection receipts, generator processing and CAII map candidates.
-- Publish synchronized raw records, extension spans, map tiles and the shared
-  RNG together. Reuse arrange_dungeon_owner_reload; do not publish only pools.
-- Regenerate preselection entrance/world/generator/map/mirror/DYN4 receipts
-  and their hashes from that owned dungeon. Later init/select/DYN4 queries
-  must use the same owned dungeon, preserving immutable mounted media.
-- Preserve the weather/arranger RNG across CAII storage initialization, which
-  currently seeds it again. Finish the later CAII draw sequence and compare
-  original executable state before claiming complete New Game fidelity.
-- Bind authentic GDAT and level-location callbacks and verify complete CLI/menu
-  transitions. Original-input property tests do not prove executable parity.
+Remaining verification:
 
-The private weather bootstrap/0x54 dispatcher is now implemented explicitly,
-with weather/RNG/global-byte rollback and source-generated timer tests. Runtime
-uses one session RNG, preserves it during creature binding and keeps bound
-weather timers running indoors. Complete fresh world-to-candidate weather
-transfer and authored map-load zone binding before enabling the full sequence.
-Unbound runtime weather timers are retained by the dispatcher until owned.
+- Compare resulting dungeon, CAII, hero and RNG states with original executable
+  traces. Cold initialization is statically proven for active SKULLWIN; Mac and
+  Amiga currently have original-media integration tests, not binary RNG proof.
+- Extend authentic coverage beyond these four tested edition routes and the
+  Mac-host SDL dummy-driver environment. These tests do not prove native
+  Windows/Linux presentation or complete gameplay/visual parity.
+- Keep checking source phase order during later map/CAII/gameplay work; a green
+  startup test does not establish every conditional animation/random consumer.
 
 ### Source order and constraints
 

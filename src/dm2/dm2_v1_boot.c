@@ -1250,11 +1250,10 @@ int dm2_v1_boot_new_game_first_champion_receipt(
         !candidate.admission.incomplete_game_load) {
         return 0;
     }
-    /* SKProject skhero.cpp::DM2_REVIVE_PLAYER lines 959-1052.  The first
-     * selection starts after c_randomdata::init (skrandom.cpp:7-10), whose
-     * state is exactly zero. The two draws below are food then water; retain
-     * their state transition so a later transaction cannot replace it with
-     * a host seed. This function owns no global random state. */
+    /* Diagnostic projection of SKProject skhero.cpp::DM2_REVIVE_PLAYER
+     * (959-1052), conditional on a zero input seed. Live selection follows
+     * weather/arrangement/CAII and draws food then water from the world
+     * owner's shared stream. This receipt owns no session random state. */
     dm2_v1_random_init(&random);
     candidate.source_rng_state_before = random.state;
     {

@@ -99,7 +99,8 @@ int main(void)
         return 1;
     }
     memset(&runtime, 0, sizeof(runtime));
-    if (!dm2_v1_boot_runtime_capture(
+    if (!dm2_v1_runtime_weather_chain_started() ||
+        !dm2_v1_boot_runtime_capture(
             (DM2_V1_BootProfile *)view.dm2BootProfile, &runtime) ||
         !runtime.runtime_ready || runtime.current_level != 0) {
         fputs("FAIL: Towns first mirror did not publish the source map-0 runtime\n",

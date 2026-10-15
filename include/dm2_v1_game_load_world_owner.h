@@ -724,14 +724,15 @@ typedef struct {
      * this candidate can become playable. */
     uint8_t source_savegames1[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
     int source_savegames1_valid;
-    /* Exact s_savegamebuffer fields restored by DM2_GAME_LOAD before the
-     * saved timer heap is sorted.  These are deliberately separate from the
-     * host presentation weather state: they are the resumable c_random /
-     * c_weather owner and are populated only by an authenticated SKSAVE. */
+    /* Exact source clock/RNG/weather, cloned from fresh GAME_LOAD or restored
+     * from SKSAVE before sorting its heap. Separate from host presentation. */
     uint32_t source_game_tick;
     uint32_t source_random_seed;
     DM2_V1_UpdateWeatherState source_weather_chain;
     int source_weather_chain_valid;
+    uint8_t source_weather_globalb0;
+    int source_weather_globalb0_valid;
+    int source_weather_fresh_game;
     int16_t source_light_level;
     DM2_V1_CaiiArray caii_slots;
     /* Deep clone of the exact AI-definition table that admitted this
@@ -1557,6 +1558,8 @@ typedef struct {
     DM2_V1_GameLoadCandidateDoorStepReceipt door_step;
     DM2_V1_GameLoadRecordFlagTimerReceipt record_flag;
     DM2_V1_GameLoadMoverecTimerReceipt moverec;
+    DM2_V1_UpdateWeatherReceipt weather;
+    DM2_V1_WeatherTransitionReceipt weather_transition;
 } DM2_V1_GameLoadCandidateTimerProcessReceipt;
 
 /* Clone every already-owned mutable GAME_LOAD predecessor atomically, but
@@ -2005,13 +2008,6 @@ int dm2_v1_game_load_world_owner_init_new_game(
 void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner);
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner);
-
-/* Explicit cold GAME_LOAD weather predecessor. Requires an untouched fresh
- * prepared owner (empty heap, tick/RNG zero); retains its shared RNG and
- * queues the authentic map-0/actor-0 0x54 timer transactionally. Not called
- * automatically until the complete GAME_LOAD order is installed. */
-int dm2_v1_game_load_world_owner_materialize_new_game_weather(
-    DM2_V1_GameLoadWorldOwner *owner);
 
 /* Source port of c_tim_proc.cpp::DM2_PROCESS_ACTUATOR_TICK_GENERATOR for
  * the prepared fresh-game owner. It changes only owned DB3 bytes and its

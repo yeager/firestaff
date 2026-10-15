@@ -1,3 +1,17 @@
+- 2026-10-15: Enabled complete dungeon arrangement in default private New
+  Game preparation after source cold weather and before derived receipts.
+  Synchronized raw/pools and shared RNG remain owned across CAII, candidate
+  cloning and runtime commit. Added private candidate 0x54 dispatch, authored
+  map-load weather-zone refresh and globalb[0] transfer. Live hero food/water
+  draws from the same stream exactly once per new hero; duplicate selection
+  leaves it unchanged. DOS EN startup/profile gate and original DOS M11,
+  Towns M11, Mac and Amiga New Game tests pass; all four assert bound runtime
+  weather. Corrected a test confusing DB4's CAII index with CAII's timer index,
+  and retained the real weather timer before targeted creature/tile events.
+  Admission receipts use the arranged owned bytes; mounted originals remain
+  unchanged. Binary state equivalence and untested host/edition paths remain
+  open. No visual parity claim or release is implied.
+
 - 2026-10-15: Added private cold-weather bootstrap and type-0x54 timer
   ownership, including ordinary requeue, forced transition, exact globalb[0]
   write and rollback of weather/RNG/heap state. The original DOS gate exercises

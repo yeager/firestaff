@@ -3,8 +3,8 @@
 
 #include "dm2_v1_caii_source_owner.h"
 
-/* Complete skmap.cpp:715-1255 transformation, deliberately disconnected from
- * GAME_LOAD until the session's weather/arranger/RNG ordering is proven.
+/* Complete skmap.cpp:715-1255 private transformation. GAME_LOAD publishes its
+ * synchronized dungeon/pools only after the preceding weather transaction.
  * Queries must read authenticated source data; zero is a valid GDAT value,
  * so callbacks report success separately. They must not mutate session state.
  * locate_other_level implements DM_LOCATE_OTHER_LEVEL(map,+1,&x,&y,NULL),
@@ -47,4 +47,13 @@ int dm2_v1_arrange_dungeon_owner_reload(
     const DM2_V1_DungeonData *original,
     const DM2_V1_ArrangeDungeonOwner *arranged,
     DM2_V1_DungeonData *out);
+/* Bind original optional GDAT pit flags and LOCATE_OTHER_LEVEL map-order
+ * queries directly to this admitted dungeon/asset allocation. */
+int dm2_v1_arrange_dungeon_owner_build_from_assets(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_CaiiSourceOwner *caii,
+    const DM2_V1_DropRng *rng,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_ArrangeDungeonOwner *out);
 #endif

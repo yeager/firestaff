@@ -18,6 +18,7 @@
 #include "dm2_v1_sound_queue_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_timer_ops_pc34_compat.h"
+#include "dm2_v1_arrange_dungeon_owner.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -54,6 +55,8 @@ static int dm2_v1_game_load_runtime_candidate_is_initialized(
 
 static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash,
                                                   uint32_t value);
+static int dm2_v1_game_load_owner_materialize_cold_weather(
+    DM2_V1_GameLoadWorldOwner *owner);
 
 /* GAME_LOAD operates on its owned map/record allocation after admission.
  * Receipt queries must follow that allocation, including any preceding
@@ -68,6 +71,64 @@ static int dm2_v1_game_load_owner_profile_view(
     *view = *owner->boot_profile;
     view->dungeon_data = &owner->dungeon;
     return 1;
+}
+
+/* c_loadlevel.cpp:803-807 binds the weather selector from the map's GDAT
+ * graphics set. An absent optional entry is the original query's zero. */
+static int dm2_v1_game_load_weather_zone(
+    const DM2_V1_DungeonData *dungeon, const DM2_V1_AssetLoader *loader,
+    int map, int16_t *out)
+{
+    uint16_t zone = 0;
+    int style;
+    if (!dungeon || !loader || !loader->loaded || !out || map < 0 ||
+        map >= dungeon->level_count) return 0;
+    style = dm2_v1_dungeon_get_map_graphics_style(dungeon, map);
+    if (style < 0 || style > UINT8_MAX) return 0;
+    (void)dm2_v1_query_gdat_entry_data_index(loader, 8, style, 11, 0x66, &zone);
+    if (zone > DM2_V1_UPDATE_WEATHER_MAX_ZONE ||
+        4u * zone + DM2_V1_UPDATE_WEATHER_FLAG_BASE >=
+            DM2_V1_UPDATE_WEATHER_TABLE1D6B76_LEN) return 0;
+    *out = (int16_t)zone;
+    return 1;
+}
+
+/* c_weather.cpp:23-31: weather timers always use map/actor zero. */
+static int dm2_v1_game_load_queue_weather_timer(DM2_V1_TimerQueue *queue,
+                                                int delay)
+{
+    DM2_V1_TimerEntry timer;
+    if (!queue || delay < 0) return 0;
+    dm2_v1_timer_entry_init(&timer);
+    dm2_v1_timer_set_mticks(&timer, 0,
+        (uint32_t)queue->gametick + (uint32_t)delay);
+    timer.ttype = 0x54u;
+    timer.actor = 0;
+    return dm2_v1_timer_queue(queue, &timer) >= 0;
+}
+
+/* Both private owners execute the same immediate 0x54 effects. Their outer
+ * transactions retain heap/state backups before invoking this atom. */
+static int dm2_v1_game_load_step_weather(
+    DM2_V1_UpdateWeatherState *weather, DM2_V1_DropRng *rng,
+    DM2_V1_TimerQueue *queue, uint8_t *globalb0,
+    DM2_V1_UpdateWeatherReceipt *step,
+    DM2_V1_WeatherTransitionReceipt *transition)
+{
+    int delay;
+    if (weather->zone_index < 0 ||
+        4u * (unsigned)weather->zone_index + DM2_V1_UPDATE_WEATHER_FLAG_BASE >=
+            DM2_V1_UPDATE_WEATHER_TABLE1D6B76_LEN ||
+        !dm2_v1_update_weather_1(weather, rng, step) || !step->valid) return 0;
+    delay = step->reschedule_delay;
+    if (step->transition_forced) {
+        (void)dm2_v1_weather_transition(weather, queue->gametick, 0, rng,
+                                         transition);
+        if (!transition->valid || !transition->light_update_requested) return 0;
+        *globalb0 = 0;
+        delay = transition->queue_delay;
+    }
+    return dm2_v1_game_load_queue_weather_timer(queue, delay);
 }
 
 /* These are c_dm2data's explicit fresh-game writes, not inferred values.
@@ -186,6 +247,9 @@ static int dm2_v1_game_load_restore_saved_weather(
         return 0;
     }
     candidate->source_weather_chain_valid = 1;
+    candidate->source_weather_globalb0 = source->globalb[0];
+    candidate->source_weather_globalb0_valid = 1;
+    candidate->source_weather_fresh_game = 0;
     return 1;
 }
 
@@ -297,13 +361,14 @@ static int dm2_v1_game_load_owner_materialize_caii_capacity(
     int nonstatic_count = 0;
 
     if (!owner || !owner->asset_loader || !owner->asset_loader->loaded ||
-        owner->caii_source.valid || owner->caii_capacity.valid ||
+        owner->caii_capacity.valid ||
         !owner->record_pools.valid) return 0;
     db4 = &owner->record_pools.pools[4];
     if (!db4->bytes || db4->record_size < 6 || db4->record_count <= 0 ||
         db4->record_count > UINT16_MAX ||
-        !dm2_v1_caii_source_owner_init(&owner->caii_source,
-                                       owner->asset_loader, &owner->dungeon)) {
+        (!owner->caii_source.valid &&
+         !dm2_v1_caii_source_owner_init(&owner->caii_source,
+                                       owner->asset_loader, &owner->dungeon))) {
         return 0;
     }
     memset(&candidate, 0, sizeof(candidate));
@@ -595,7 +660,8 @@ static int dm2_v1_game_load_owner_materialize_caii_storage(
 {
     if (!owner || !owner->caii_capacity.valid ||
         owner->caii_capacity.source_capacity == 0u ||
-        owner->caii_slots.valid || owner->caii_rng_initialized) {
+        owner->caii_slots.valid ||
+        (owner->caii_rng_initialized && !owner->source_weather_chain_valid)) {
         return 0;
     }
     dm2_v1_caii_array_init(&owner->caii_slots,
@@ -607,8 +673,10 @@ static int dm2_v1_game_load_owner_materialize_caii_storage(
         dm2_v1_caii_array_free(&owner->caii_slots);
         return 0;
     }
-    dm2_v1_drops_rng_init(&owner->caii_rng);
-    owner->caii_rng_initialized = 1;
+    if (!owner->caii_rng_initialized) {
+        dm2_v1_drops_rng_init(&owner->caii_rng);
+        owner->caii_rng_initialized = 1;
+    }
     return 1;
 }
 
@@ -9017,6 +9085,55 @@ missile_fail:
     return receipt.valid;
 }
 
+static int dm2_v1_game_load_candidate_proceed_weather(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTimerProcessReceipt *receipt)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *backup = NULL;
+    DM2_V1_TimerEntry *entries = NULL;
+    int16_t *indices = NULL;
+    DM2_V1_TimerEntry timer;
+    int success = 0;
+    if (!candidate->source_weather_chain_valid ||
+        !candidate->source_weather_globalb0_valid ||
+        !candidate->caii_rng_initialized || game_tick > INT32_MAX) return 0;
+    backup = malloc(sizeof(*backup));
+    entries = malloc((size_t)candidate->timer_capacity * sizeof(*entries));
+    indices = malloc((size_t)candidate->timer_capacity * sizeof(*indices));
+    if (!backup || !entries || !indices) goto done;
+    *backup = *candidate;
+    memcpy(entries, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*entries));
+    memcpy(indices, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*indices));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer);
+    if (timer.ttype != 0x54u || dm2_v1_timer_get_map(&timer) != 0 ||
+        timer.actor != 0 ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, 0, 0) ||
+        !dm2_v1_game_load_step_weather(&candidate->source_weather_chain,
+            &candidate->caii_rng, &candidate->timer_queue,
+            &candidate->source_weather_globalb0, &receipt->weather,
+            &receipt->weather_transition)) {
+        *candidate = *backup;
+        memcpy(candidate->timer_entries, entries,
+               (size_t)candidate->timer_capacity * sizeof(*entries));
+        memcpy(candidate->timer_indices, indices,
+               (size_t)candidate->timer_capacity * sizeof(*indices));
+        goto done;
+    }
+    candidate->source_game_tick = game_tick;
+    candidate->source_random_seed = candidate->caii_rng.random;
+    receipt->valid = 1;
+    receipt->consumed = 1;
+    success = 1;
+done:
+    free(indices);
+    free(entries);
+    free(backup);
+    return success;
+}
+
 int dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
     uint32_t game_tick,
@@ -9056,7 +9173,10 @@ int dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
     }
     timer_type = candidate->timer_entries[timer_slot].ttype;
     receipt.timer_type = timer_type;
-    if (timer_type == 0x21u || timer_type == 0x22u) {
+    if (timer_type == 0x54u) {
+        (void)dm2_v1_game_load_candidate_proceed_weather(candidate, game_tick,
+                                                         &receipt);
+    } else if (timer_type == 0x21u || timer_type == 0x22u) {
         result = dm2_v1_game_load_runtime_session_candidate_proceed_think_timer(
             candidate, game_tick, &receipt.think);
         receipt.valid = result && receipt.think.valid;
@@ -9893,6 +10013,27 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.init_game_ui = source->preselection_init_game_ui;
     candidate.caii_rng = source->caii_rng;
     candidate.caii_rng_initialized = 1;
+    if (source->source_weather_chain_valid) {
+        int16_t zone;
+        if (!source->source_weather_bootstrap.valid ||
+            source->timer_queue.gametick < 0 ||
+            !dm2_v1_game_load_weather_zone(&source->dungeon,
+                source->asset_loader, source->current_map, &zone) ||
+            source->source_weather_chain.zone_index != zone ||
+            source->source_weather_chain.pattern_row < 0 ||
+            source->source_weather_chain.pattern_row >=
+                DM2_V1_UPDATE_WEATHER_PATTERN_ROWS ||
+            source->source_weather_chain.intensity < 0 ||
+            source->source_weather_chain.intensity > 255) goto fail;
+        candidate.source_weather_chain = source->source_weather_chain;
+        candidate.source_weather_chain_valid = 1;
+        candidate.source_game_tick = (uint32_t)source->timer_queue.gametick;
+        /* CAII may have consumed the same stream since weather bootstrap. */
+        candidate.source_random_seed = source->caii_rng.random;
+        candidate.source_weather_globalb0 = source->source_weather_globalb0;
+        candidate.source_weather_globalb0_valid = 1;
+        candidate.source_weather_fresh_game = 1;
+    }
     candidate.source_party_map = source->source_party_map;
     candidate.source_party_x = source->source_party_x;
     candidate.source_party_y = source->source_party_y;
@@ -9942,6 +10083,20 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     hash = dm2_v1_game_load_owner_hash_step(hash, source->sound_owner.receipt_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash, source->caii_source.source_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.timer_capacity);
+    if (candidate.source_weather_chain_valid) {
+        hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_game_tick);
+        hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_random_seed);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+            dm2_v1_game_load_owner_hash_bytes(
+                (const uint8_t *)&candidate.source_weather_chain,
+                sizeof(candidate.source_weather_chain)));
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+            candidate.source_weather_globalb0);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+            candidate.source_weather_globalb0_valid);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+            candidate.source_weather_fresh_game);
+    }
     hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)candidate.party.heros_in_party);
     /* Fresh GAME_LOAD owns the source c_wbbb block from zero. Keep the
      * complete block in the candidate even though its b_04 consumer is the
@@ -10106,6 +10261,54 @@ fail:
     return 0;
 }
 
+/* c_savegame.cpp GAME_LOAD runs the cold weather transition before the
+ * complete skmap.cpp:851-1254 arranger. Both remain private until every
+ * derived receipt and later owner allocation has validated. */
+static int dm2_v1_game_load_owner_prepare_arranged_dungeon(
+    DM2_V1_GameLoadWorldOwner *owner, const DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_DungeonData *source = profile
+        ? (const DM2_V1_DungeonData *)profile->dungeon_data : NULL;
+    DM2_V1_ArrangeDungeonOwner arranged = {0};
+    DM2_V1_DungeonData reloaded = {0};
+    int success = 0;
+    if (!profile || !profile->assets_verified || !source ||
+        !source->raw_data || source->raw_size <= 0 ||
+        !source->record_graph_complete) return 0;
+    owner->boot_profile = profile;
+    owner->asset_loader = dm2_v1_boot_asset_loader(profile);
+    if (!owner->asset_loader || !owner->asset_loader->loaded ||
+        dm2_v1_dungeon_load(&owner->dungeon, source->raw_data,
+                              source->raw_size) != 0 ||
+        !owner->dungeon.record_graph_complete ||
+        !dm2_v1_record_pool_set_init_from_dungeon(&owner->record_pools,
+                                                    &owner->dungeon) ||
+        !dm2_v1_game_load_owner_prepare_timer_capacity(owner) ||
+        !dm2_v1_caii_source_owner_init(&owner->caii_source,
+                                        owner->asset_loader, &owner->dungeon))
+        goto done;
+    dm2_v1_drops_rng_init(&owner->caii_rng);
+    owner->caii_rng_initialized = 1;
+    if (!dm2_v1_game_load_owner_materialize_cold_weather(owner) ||
+        !dm2_v1_arrange_dungeon_owner_build_from_assets(&owner->dungeon,
+            &owner->record_pools, &owner->caii_source, &owner->caii_rng,
+            owner->asset_loader, &arranged) ||
+        !dm2_v1_arrange_dungeon_owner_reload(&owner->dungeon, &arranged,
+                                               &reloaded)) goto done;
+    dm2_v1_dungeon_free(&owner->dungeon);
+    dm2_v1_record_pool_set_free(&owner->record_pools);
+    owner->dungeon = reloaded;
+    memset(&reloaded, 0, sizeof(reloaded));
+    owner->record_pools = arranged.pools;
+    memset(&arranged.pools, 0, sizeof(arranged.pools));
+    owner->caii_rng = arranged.rng;
+    success = 1;
+done:
+    dm2_v1_dungeon_free(&reloaded);
+    dm2_v1_arrange_dungeon_owner_free(&arranged);
+    return success;
+}
+
 /* Build the source-owned half of GAME_LOAD that precedes the mirror event
  * loop.  The receipts here are deliberately selection-free: a title click
  * must never turn the first roster entry into an invented party choice.
@@ -10115,6 +10318,7 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     DM2_V1_GameLoadWorldOwner *owner, const DM2_V1_BootProfile *profile)
 {
     const DM2_V1_DungeonData *source;
+    DM2_V1_BootProfile profile_view;
     DM2_V1_GameLoadWorldOwner candidate;
     uint32_t hash = 0x4e475052u; /* "NGPR": New Game preparation. */
     const int owner_was_initialized =
@@ -10125,26 +10329,25 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
     candidate.lifecycle_tag = DM2_V1_GAME_LOAD_WORLD_OWNER_LIFECYCLE_TAG;
-    if (!DM2_OWNER_PREPARE_DEBUG("profile", profile && profile->assets_verified) ||
-        !DM2_OWNER_PREPARE_DEBUG("source", (source = (const DM2_V1_DungeonData *)profile->dungeon_data) != NULL) ||
-        !DM2_OWNER_PREPARE_DEBUG("source-bytes", source->raw_data && source->raw_size > 0) ||
-        !DM2_OWNER_PREPARE_DEBUG("source-graph", source->record_graph_complete) ||
-        !DM2_OWNER_PREPARE_DEBUG("entrance", dm2_v1_boot_new_game_entrance_receipt(profile, &candidate.preselection_entrance)) ||
+    if (!dm2_v1_game_load_owner_prepare_arranged_dungeon(&candidate, profile) ||
+        !dm2_v1_game_load_owner_profile_view(&candidate, &profile_view)) {
+        dm2_v1_game_load_world_owner_free(&candidate);
+        return 0;
+    }
+    source = &candidate.dungeon;
+    if (
+        !DM2_OWNER_PREPARE_DEBUG("entrance", dm2_v1_boot_new_game_entrance_receipt(&profile_view, &candidate.preselection_entrance)) ||
         !DM2_OWNER_PREPARE_DEBUG("entrance-fields", candidate.preselection_entrance.valid && candidate.preselection_entrance.incomplete_game_load) ||
-        !DM2_OWNER_PREPARE_DEBUG("world", dm2_v1_boot_file_header_world_interaction_receipt(profile, &candidate.preselection_world_interactions) && candidate.preselection_world_interactions.valid && candidate.preselection_world_interactions.incomplete_world) ||
-        !DM2_OWNER_PREPARE_DEBUG("generators", dm2_v1_boot_file_header_actuator_generator_receipt(profile, &candidate.preselection_actuator_generators) && candidate.preselection_actuator_generators.valid && candidate.preselection_actuator_generators.incomplete_game_load) ||
-        !DM2_OWNER_PREPARE_DEBUG("map", dm2_v1_boot_file_header_runtime_map_receipt(profile, candidate.preselection_entrance.map, &candidate.preselection_entrance_map) && candidate.preselection_entrance_map.committed && candidate.preselection_entrance_map.incomplete_world) ||
-        !DM2_OWNER_PREPARE_DEBUG("census", dm2_v1_boot_champion_selection_census(profile, &candidate.preselection_mirror_roster) && candidate.preselection_mirror_roster.valid && candidate.preselection_mirror_roster.incomplete_game_load && candidate.preselection_mirror_roster.candidate_count > 0 && candidate.preselection_mirror_roster.candidate_count <= DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) ||
-        !DM2_OWNER_PREPARE_DEBUG("dyn4", dm2_v1_boot_champion_dyn4_roster_receipt(profile, &candidate.preselection_dyn4_roster) && candidate.preselection_dyn4_roster.valid && candidate.preselection_dyn4_roster.incomplete_champion_activation) ||
+        !DM2_OWNER_PREPARE_DEBUG("world", dm2_v1_boot_file_header_world_interaction_receipt(&profile_view, &candidate.preselection_world_interactions) && candidate.preselection_world_interactions.valid && candidate.preselection_world_interactions.incomplete_world) ||
+        !DM2_OWNER_PREPARE_DEBUG("generators", dm2_v1_boot_file_header_actuator_generator_receipt(&profile_view, &candidate.preselection_actuator_generators) && candidate.preselection_actuator_generators.valid && candidate.preselection_actuator_generators.incomplete_game_load) ||
+        !DM2_OWNER_PREPARE_DEBUG("map", dm2_v1_boot_file_header_runtime_map_receipt(&profile_view, candidate.preselection_entrance.map, &candidate.preselection_entrance_map) && candidate.preselection_entrance_map.committed && candidate.preselection_entrance_map.incomplete_world) ||
+        !DM2_OWNER_PREPARE_DEBUG("census", dm2_v1_boot_champion_selection_census(&profile_view, &candidate.preselection_mirror_roster) && candidate.preselection_mirror_roster.valid && candidate.preselection_mirror_roster.incomplete_game_load && candidate.preselection_mirror_roster.candidate_count > 0 && candidate.preselection_mirror_roster.candidate_count <= DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) ||
+        !DM2_OWNER_PREPARE_DEBUG("dyn4", dm2_v1_boot_champion_dyn4_roster_receipt(&profile_view, &candidate.preselection_dyn4_roster) && candidate.preselection_dyn4_roster.valid && candidate.preselection_dyn4_roster.incomplete_champion_activation) ||
         !DM2_OWNER_PREPARE_DEBUG("map-range", candidate.preselection_entrance.map >= 0 && candidate.preselection_entrance.map < source->level_count) ||
         !DM2_OWNER_PREPARE_DEBUG("map-count", candidate.preselection_world_interactions.map_count == source->level_count && candidate.preselection_actuator_generators.map_count == source->level_count) ||
         !DM2_OWNER_PREPARE_DEBUG("map-match", candidate.preselection_entrance_map.map == candidate.preselection_entrance.map) ||
         !DM2_OWNER_PREPARE_DEBUG("dyn4-count", candidate.preselection_mirror_roster.candidate_count == candidate.preselection_dyn4_roster.selector_count) ||
-        !DM2_OWNER_PREPARE_DEBUG("reload", dm2_v1_dungeon_load(&candidate.dungeon, source->raw_data, source->raw_size) == 0) ||
-        !DM2_OWNER_PREPARE_DEBUG("reload-graph", candidate.dungeon.record_graph_complete) ||
-        !DM2_OWNER_PREPARE_DEBUG("pose", candidate.dungeon.initial_party_pose_valid && candidate.dungeon.initial_party_x == candidate.preselection_entrance.x && candidate.dungeon.initial_party_y == candidate.preselection_entrance.y && candidate.dungeon.initial_party_dir == candidate.preselection_entrance.direction) ||
-        !DM2_OWNER_PREPARE_DEBUG("pools", dm2_v1_record_pool_set_init_from_dungeon(&candidate.record_pools, &candidate.dungeon) && candidate.record_pools.valid && candidate.record_pools.record_graph_complete) ||
-        !DM2_OWNER_PREPARE_DEBUG("timer", dm2_v1_game_load_owner_prepare_timer_capacity(&candidate))) {
+        !DM2_OWNER_PREPARE_DEBUG("pose", candidate.dungeon.initial_party_pose_valid && candidate.dungeon.initial_party_x == candidate.preselection_entrance.x && candidate.dungeon.initial_party_y == candidate.preselection_entrance.y && candidate.dungeon.initial_party_dir == candidate.preselection_entrance.direction)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
@@ -10160,6 +10363,11 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
         hash, candidate.preselection_dyn4_roster.selector_roster_hash);
     hash = dm2_v1_game_load_owner_hash_step(
         hash, candidate.preselection_mirror_roster.roster_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.caii_rng.random);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        dm2_v1_game_load_owner_hash_bytes(
+            (const uint8_t *)&candidate.source_weather_chain,
+            sizeof(candidate.source_weather_chain)));
     if (hash == 0u) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
@@ -10336,10 +10544,13 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
     DM2_V1_Party candidate;
     DM2_V1_GameLoadChampionSelectionReceipt selection_receipt;
     DM2_V1_EventQueue source_event_queue;
+    DM2_V1_DropRng session_rng;
+    int previous_hero_count;
     int hero_index;
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         owner->champion_selection_materialized || !owner->fresh_game_mode ||
+        !owner->caii_rng_initialized ||
         !owner->source_map_context_materialized || owner->committed ||
         !owner->load_new_dungeon_reset.valid ||
         owner->load_new_dungeon_reset.party_count != 0 ||
@@ -10354,6 +10565,10 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
      * DM2_SELECT_CHAMPION (1119-1128), DM2_SELECT_CHAMPION_LEADER (2327-2354).
      */
     candidate = owner->transaction.possessions.projected_party;
+    previous_hero_count = owner->selected_party.heros_in_party;
+    if (previous_hero_count < 0 ||
+        previous_hero_count > candidate.heros_in_party) return 0;
+    session_rng = owner->caii_rng;
     if (!dm2_v1_game_load_owner_validate_possessions(owner) ||
         !dm2_v1_game_load_owner_validate_selected_party(owner, &candidate) ||
         !dm2_v1_new_game_apply_source_item_bonuses(&candidate,
@@ -10444,6 +10659,24 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
         return 0;
     }
     source_event_queue.event_heroidx = 0;
+    /* The diagnostic admission party has a private zero-seeded RNG. Live
+     * SELECT_CHAMPION continues GAME_LOAD's weather/arrangement/CAII stream:
+     * SKULLWIN/c_hero.cpp:1047-1048 draws food, then water. Earlier mirror
+     * selections retain their values when another champion joins. */
+    for (hero_index = 0; hero_index < candidate.heros_in_party; ++hero_index) {
+        if (hero_index < previous_hero_count) {
+            candidate.hero[hero_index].food =
+                owner->selected_party.hero[hero_index].food;
+            candidate.hero[hero_index].water =
+                owner->selected_party.hero[hero_index].water;
+        } else {
+            candidate.hero[hero_index].food = (int16_t)(1500 +
+                (uint8_t)dm2_v1_drops_rand24(&session_rng));
+            candidate.hero[hero_index].water = (int16_t)(1500 +
+                (uint8_t)dm2_v1_drops_rand24(&session_rng));
+        }
+    }
+    owner->caii_rng = session_rng;
     owner->selected_party = candidate;
     owner->source_next_champion_number = candidate.heros_in_party;
     owner->source_event_hero_index = 0;
@@ -10541,6 +10774,7 @@ int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
     int wall_count;
     int floor_count;
     int ornate_count;
+    int16_t weather_zone = 0;
     uint32_t hash = 0x4c4c4758u; /* "LLGX": local-level graphics. */
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
@@ -10551,6 +10785,9 @@ int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
         owner->source_party_map >= owner->dungeon.level_count) {
         return 0;
     }
+    if (owner->source_weather_chain_valid &&
+        !dm2_v1_game_load_weather_zone(&owner->dungeon, owner->asset_loader,
+            owner->source_party_map, &weather_zone)) return 0;
     memset(&candidate, 0, sizeof(candidate));
     wall_count = dm2_v1_dungeon_get_map_wall_gfx_list(&owner->dungeon,
         owner->source_party_map, candidate.wall_gfx,
@@ -10589,6 +10826,8 @@ int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
     candidate.source_list_hash = hash;
     candidate.valid = 1;
     owner->preselection_local_graphics = candidate;
+    if (owner->source_weather_chain_valid)
+        owner->source_weather_chain.zone_index = weather_zone;
     return 1;
 }
 
@@ -13140,21 +13379,7 @@ static void dm2_v1_game_load_owner_timer_snapshot_restore(
     }
 }
 
-/* c_weather.cpp:23-31: map zero, type 0x54, actor zero, source clock+delay. */
-static int dm2_v1_game_load_owner_queue_weather(
-    DM2_V1_GameLoadWorldOwner *owner, int delay)
-{
-    DM2_V1_TimerEntry timer;
-    if (delay < 0) return 0;
-    dm2_v1_timer_entry_init(&timer);
-    dm2_v1_timer_set_mticks(&timer, 0,
-        (uint32_t)owner->timer_queue.gametick + (uint32_t)delay);
-    timer.ttype = 0x54u;
-    timer.actor = 0;
-    return dm2_v1_timer_queue(&owner->timer_queue, &timer) >= 0;
-}
-
-int dm2_v1_game_load_world_owner_materialize_new_game_weather(
+static int dm2_v1_game_load_owner_materialize_cold_weather(
     DM2_V1_GameLoadWorldOwner *owner)
 {
     DM2_V1_GameLoadTimerSnapshot snapshot;
@@ -13162,7 +13387,8 @@ int dm2_v1_game_load_world_owner_materialize_new_game_weather(
     DM2_V1_WeatherTransitionReceipt receipt;
     DM2_V1_DropRng rng;
     uint16_t hour = 0;
-    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+    if (!owner || !dm2_v1_game_load_world_owner_is_initialized(owner) ||
+        !owner->dungeon.raw_data || !owner->record_pools.valid ||
         !owner->fresh_game_mode || owner->committed ||
         !owner->asset_loader || !owner->asset_loader->loaded ||
         owner->source_weather_chain_valid ||
@@ -13181,7 +13407,7 @@ int dm2_v1_game_load_world_owner_materialize_new_game_weather(
     (void)dm2_v1_weather_transition(&weather, 0, 0, &rng, &receipt);
     if (!receipt.valid || !receipt.light_update_requested ||
         !dm2_v1_game_load_owner_timer_snapshot_take(owner, &snapshot)) return 0;
-    if (!dm2_v1_game_load_owner_queue_weather(owner, receipt.queue_delay)) {
+    if (!dm2_v1_game_load_queue_weather_timer(&owner->timer_queue, receipt.queue_delay)) {
         dm2_v1_game_load_owner_timer_snapshot_restore(owner, &snapshot);
         dm2_v1_game_load_owner_timer_snapshot_free(&snapshot);
         return 0;
@@ -13199,28 +13425,14 @@ static int dm2_v1_game_load_owner_dispatch_weather(
     DM2_V1_GameLoadWorldOwner *owner, const DM2_V1_TimerEntry *timer,
     DM2_V1_GameLoadTimerProcessReceipt *receipt)
 {
-    int delay;
     if (!owner->source_weather_chain_valid || !owner->caii_rng_initialized ||
         !owner->asset_loader || !owner->asset_loader->loaded ||
         dm2_v1_timer_get_map(timer) != 0 || timer->actor != 0) return 0;
-    /* c_tim_proc.cpp:4007 changes the current map to the timer map, but
-     * does not run LOAD_LOCALLEVEL_DYN. v1e1472 remains the selector owned
-     * by that separate map-load phase (c_loadlevel.cpp:807). Never replace
-     * it with the weather timer's deliberately constant map zero. */
-    if (!dm2_v1_update_weather_1(&owner->source_weather_chain, &owner->caii_rng,
-                                  &receipt->weather) || !receipt->weather.valid)
-        return 0;
-    delay = receipt->weather.reschedule_delay;
-    if (receipt->weather.transition_forced) {
-        (void)dm2_v1_weather_transition(&owner->source_weather_chain,
-            owner->timer_queue.gametick, 0, &owner->caii_rng,
-            &receipt->weather_transition);
-        if (!receipt->weather_transition.valid ||
-            !receipt->weather_transition.light_update_requested) return 0;
-        owner->source_weather_globalb0 = 0;
-        delay = receipt->weather_transition.queue_delay;
-    }
-    return dm2_v1_game_load_owner_queue_weather(owner, delay);
+    /* CHANGE_CURRENT_MAP_TO does not run LOAD_LOCALLEVEL_DYN; retain the
+     * latter phase's weather selector rather than deriving it from map 0. */
+    return dm2_v1_game_load_step_weather(&owner->source_weather_chain,
+        &owner->caii_rng, &owner->timer_queue, &owner->source_weather_globalb0,
+        &receipt->weather, &receipt->weather_transition);
 }
 
 int dm2_v1_game_load_world_owner_process_next_due_timer(
