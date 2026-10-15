@@ -1,3 +1,4 @@
+#include "csb_v1_amiga_english_programs.h"
 #include "csb_v1_boot.h"
 #include "firestaff_x68k_media_receipt.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
@@ -9670,6 +9671,13 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
                          g_csb_boot_dungeon_hashes[dungeon_match]);
     }
 
+    if (profile->graphics_verified &&
+        ((profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN &&
+          !csb_v1_amiga_english_programs_ready(profile->graphics_path, "amiga31-en")) ||
+         (profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN &&
+          !csb_v1_amiga_english_programs_ready(profile->graphics_path, "amiga35-en")))) {
+        profile->graphics_verified = 0;
+    }
     profile->assets_verified = profile->graphics_verified && profile->dungeon_verified;
     if (profile->assets_verified &&
         !csb_v1_boot_load_native_runtime_pair_pc34(profile)) {

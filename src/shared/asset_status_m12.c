@@ -11,6 +11,7 @@
 #endif
 
 #include "asset_status_m12.h"
+#include "csb_v1_amiga_english_programs.h"
 #include "asset_find_by_hash.h"
 #include "dm2_v1_fmtowns_disc.h"
 #include "csb_v1_fmtowns_cd.h"
@@ -5468,6 +5469,24 @@ static void m12_require_csb_amiga31_package_identity(
         strcmp(g_games[gameIndex].gameId, "csb") != 0) {
         return;
     }
+    /* English C03/C02 programs must be present even when the generic
+     * graphics hash scan already matched the edition. A later rescue pass
+     * cannot revoke an incomplete earlier match. */
+    {
+        static const char *const englishIds[] = { "amiga31-en", "amiga35-en" };
+        size_t i;
+        for (i = 0u; i < 2u; ++i) {
+            int index = M12_AssetStatus_FindVersionIndex("csb", englishIds[i]);
+            if (index < 0) continue;
+            M12_AssetVersionStatus *english = &status->versions[gameIndex][index];
+            if (english->matched && !csb_v1_amiga_english_programs_ready(
+                    english->matchedPath, englishIds[i])) {
+                english->matched = 0;
+                english->matchedPath[0] = '\0';
+                english->matchedMd5[0] = '\0';
+            }
+        }
+    }
     amigaIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
     if (amigaIndex < 0) {
         return;
@@ -5575,7 +5594,8 @@ static const char* m12_dm2_dungeon_md5_for_matched_version(
     if (strcmp(version->versionId, "fmtowns-ja") == 0) {
         return "74c7549f174574201988bf936385841a";
     }
-    if (strcmp(version->versionId, "amiga-en") == 0) {
+    if (strcmp(version->versionId, "amiga-en") == 0 ||
+        strcmp(version->versionId, "mac-en-retail") == 0) {
         return "719ae78bc124027806c65491a256827d";
     }
     return m12_effective_required_md5(required);
@@ -5702,6 +5722,28 @@ static int m12_required_hash_matches_alternatives(
     return 0;
 }
 
+/* A direct loose graphics selection owns the DM2 receipt. Its parent is
+ * searched for companions, never used to replace it with another edition. */
+static void m12_select_dm2_loose_file(M12_AssetStatus* status, int gameIndex,
+                                      const char* selected) {
+    char md5[33];
+    size_t i;
+    if (strcmp(g_games[gameIndex].gameId, "dm2") != 0 || !selected ||
+        !FSP_FileExists(selected) || m12_explicit_path_is_archive(selected)) return;
+    if (!asset_file_md5_hex(selected, md5)) md5[0] = '\0';
+    for (i = 0u; i < g_games[gameIndex].versionCount; ++i) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        const char* expected = m12_effective_version_md5(&g_games[gameIndex].versions[i]);
+        version->matched = expected && strcmp(md5, expected) == 0;
+        version->matchedPath[0] = '\0';
+        version->matchedMd5[0] = '\0';
+        if (version->matched) {
+            m12_copy_string(version->matchedPath, sizeof(version->matchedPath), selected);
+            m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5), md5);
+        }
+    }
+}
+
 static int m12_fill_required_files(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -5762,6 +5804,34 @@ static int m12_fill_required_files(M12_AssetStatus* status,
                 fileStatus->matched = 1;
                 m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), version->matchedPath);
                 m12_copy_string(fileStatus->matchedHash, sizeof(fileStatus->matchedHash), version->matchedMd5);
+            }
+        } else if (strcmp(gameId, "dm2") == 0 &&
+                   strcmp(spec->roleId, "dungeon") == 0) {
+            const M12_AssetVersionStatus* owner =
+                m12_first_matched_required_version(status, gameIndex, spec);
+            char parent[M12_ASSET_DATA_DIR_CAPACITY];
+            if (owner && !m12_path_is_virtual_asset(owner->matchedPath) &&
+                FSP_ParentDir(parent, sizeof(parent), owner->matchedPath)) {
+                const char* hashes[2] = {requiredMd5, NULL};
+                char paths[1][ASSET_PATH_MAX];
+                char dungeonParent[M12_ASSET_DATA_DIR_CAPACITY];
+                int matched[1] = {0};
+                if (asset_find_all_files_by_md5_list(parent, hashes, paths,
+                                                      matched, 1, 0) > 0 &&
+                    matched[0] &&
+                    FSP_ParentDir(dungeonParent, sizeof(dungeonParent), paths[0]) &&
+                    strcmp(parent, dungeonParent) == 0) {
+                    fileStatus->matched = 1;
+                    m12_copy_string(fileStatus->matchedPath,
+                                    sizeof(fileStatus->matchedPath), paths[0]);
+                    m12_copy_string(fileStatus->matchedHash,
+                                    sizeof(fileStatus->matchedHash), requiredMd5);
+                }
+            } else if (m12_required_hash_matches_alternatives(
+                           roots, rootCount, spec, requiredMd5,
+                           fileStatus->matchedPath, fileStatus->matchedHash,
+                           looseFilesOnly)) {
+                fileStatus->matched = 1;
             }
         } else if (m12_required_hash_matches_alternatives(
                        roots, rootCount, spec, requiredMd5,
@@ -7348,6 +7418,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
             selected && selected->versionId &&
             (strcmp(selected->versionId, "fmtowns-en") == 0 ||
              strcmp(selected->versionId, "fmtowns-ja") == 0);
+        m12_select_dm2_loose_file(status, i, requestedDataDir);
         int reqMatch = m12_fill_required_files(status, i, roots, rootCount,
                                                skipNestedArchiveScan);
         int nexusArchiveAdmitted = strcmp(g_games[i].gameId, "nexus") == 0 &&
@@ -7807,6 +7878,7 @@ void M12_AssetStatus_ScanGameWithOptions(
             }
         }
     }
+    m12_select_dm2_loose_file(status, gameIndex, requestedDataDir);
     reqMatch = m12_fill_required_files(status,
                                        gameIndex,
                                        roots,

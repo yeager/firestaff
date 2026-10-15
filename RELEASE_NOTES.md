@@ -2,6 +2,16 @@
 
 ## User-facing changes
 
+- `DM2 loose files`: select the authenticated dungeon belonging to the chosen
+  graphics file for DOS, Macintosh, FM Towns and Amiga, including renamed
+  payloads. Keep explicit file ownership and FM Towns AUTO priority when
+  several original installations are present.
+
+- `DM1 PC34 loose startup`: play the original TITLE and SELECTOR when installation folders or program filenames use different letter case; retain the selected installation and reject ambiguous companions.
+
+- `CSB English Amiga`: reject incomplete or ambiguous game/launcher programs
+  before marking an installation ready, while retaining other complete editions.
+
 - `DM2 scanning`: respond to cancellation while enumerating ZIP directories,
   preserving the unpublished scan boundary without repainting for every file.
 

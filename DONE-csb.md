@@ -1,3 +1,19 @@
+- 2026-10-15: English Amiga A31/A35 readiness now requires the authenticated
+  APPB.FTL C03 game and BJELoad_R C02 launcher beside the selected graphics.
+  One shared check serves M12, native boot-profile admission and the M11
+  handoff, replacing the repeated handoff loops. ReDMCSB COMPILE.H:199-213
+  and :274-282 establish these program roles; A35E SWSH remains optional.
+  Before the fix, an authentic A35E install without APPB still reported
+  READY/FOUND. The original A35E regression now passes mixed-case CLI/M12
+  runtime, missing/ambiguous/wrong-authentic-hash APPB and missing-loader
+  rejection, neighboring-file isolation and original/staged hash checks.
+  A mixed incomplete A35E plus complete A33M scan keeps A33M selectable.
+  Existing authentic A31E CLI, both presentation modes, runtime input matrix,
+  M12 and clean-config AUTO startup also pass after the shared check.
+  Native original A35E CTRaw CLI regression passes in 37.41 seconds, covering
+  archive and direct raw ownership through the same required-program check.
+  These macOS dummy-driver tests do not establish native display/audio parity.
+
 - 2026-10-15: Loose original Amiga companions now resolve by a unique ASCII
   case match beside the admitted graphics file. Boot admission, M12 and the
   native startup owner share this policy for TITL.DAT and startup programs,

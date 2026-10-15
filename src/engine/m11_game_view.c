@@ -1,3 +1,4 @@
+#include "csb_v1_amiga_english_programs.h"
 #include "m11_game_view.h"
 #include "m11_loose_sibling.h"
 #include "soundtrack_selector_m11.h"
@@ -6980,29 +6981,12 @@ static int m11_csb_amiga_program_locator(const CSB_V1_BootProfile *profile,
 static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
 {
     CSB_V1_BootProfile *profile;
-    static const struct {
-        const char *name;
-        const char *md5;
-    } required_programs[] = {
-        { "APPB.FTL", "11d8d059cd8f241d6f68ec09c5c8b66d" },
-        { "BJELoad_R", "6aec320606f014a149548e664719cf5b" }
-    };
-    char path[FSP_PATH_MAX];
-    char md5[33];
-    size_t index;
-
     if (!state || !state->csbBootProfile) return 0;
     profile = (CSB_V1_BootProfile *)state->csbBootProfile;
     if (!m11_csb_is_amiga_a35e_profile(profile) || !profile->asset_root[0] ||
         !profile->runtime.dungeon_handle) return 0;
-    for (index = 0u; index < sizeof(required_programs) /
-             sizeof(required_programs[0]); ++index) {
-        if (!m11_csb_amiga_program_locator(profile,
-                                            required_programs[index].name,
-                                            path, sizeof(path)) ||
-            !asset_file_md5_hex(path, md5) ||
-            strcmp(md5, required_programs[index].md5) != 0) return 0;
-    }
+    if (!csb_v1_amiga_english_programs_ready(profile->graphics_path,
+                                                "amiga35-en")) return 0;
     profile->amiga_language_index = 0u;
     profile->runtime.state = CSB_STATE_GAME;
     state->csbState.startup_title_active = 0;
@@ -7024,29 +7008,12 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
 static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
 {
     CSB_V1_BootProfile *profile;
-    static const struct {
-        const char *name;
-        const char *md5;
-    } required_programs[] = {
-        { "APPB.FTL", "af50ff33c61c22e20784d74266d81d1e" },
-        { "BJELoad_R", "2788ef63f246b4d3c74c64dff9dcdbde" }
-    };
-    char path[FSP_PATH_MAX];
-    char md5[33];
-    size_t index;
-
     if (!state || !state->csbBootProfile) return 0;
     profile = (CSB_V1_BootProfile *)state->csbBootProfile;
     if (!m11_csb_is_amiga_a31e_profile(profile) || !profile->asset_root[0] ||
         !profile->runtime.dungeon_handle) return 0;
-    for (index = 0u; index < sizeof(required_programs) /
-             sizeof(required_programs[0]); ++index) {
-        if (!m11_csb_amiga_program_locator(profile,
-                                            required_programs[index].name,
-                                            path, sizeof(path)) ||
-            !asset_file_md5_hex(path, md5) ||
-            strcmp(md5, required_programs[index].md5) != 0) return 0;
-    }
+    if (!csb_v1_amiga_english_programs_ready(profile->graphics_path,
+                                                "amiga31-en")) return 0;
     profile->amiga_language_index = 0u;
     profile->runtime.state = CSB_STATE_GAME;
     state->csbState.startup_title_active = 0;

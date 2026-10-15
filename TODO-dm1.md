@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+2026-10-15 PC34 loose startup: canonical and lowercase DATA/program spellings
+now retain authenticated native TITLE and SELECTOR through CLI and M12,
+including explicit graphics-file selection. Original-media HFSX tests reject
+invalid/ambiguous local companions and unrelated parent fallback. Additional
+retail editions, native Windows/Linux and display/audio parity remain open.
+
 2026-10-15 loose-file startup: the authentic Amiga demo now passes CLI and
 M12 using the same original bytes as its ZIP regression. The old scanner-to-
 runtime failure is fixed, including the exact graphics filename handoff.

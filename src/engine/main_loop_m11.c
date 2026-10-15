@@ -4926,13 +4926,53 @@ static int m11_dm1_title_candidate_matches_pc34(const uint8_t *bytes,
     return dm1_v1_dos_pc34_file_fp_matches_pc34("TITLE", size, digest);
 }
 
+/* IBMIO.C:2411-2418 starts ANIM TITLE and SELECTOR from one installation.
+ * Loose DATA layouts may retain the original DOS filename case; resolve only
+ * that directory and its DATA parent, never an unrelated neighboring install. */
+static int m11_dm1_i34e_loose_companion_path(
+    const M12_AssetVersionStatus* version, const char* wanted,
+    char* outPath, size_t outBytes) {
+    char root[FSP_PATH_MAX];
+    char parent[FSP_PATH_MAX];
+    const char* leaf;
+    const char* backslash;
+    int resolved;
+    if (!version || !version->matched || !version->versionId ||
+        strcmp(version->versionId, "pc34-en") != 0 ||
+        !version->matchedPath[0] || strstr(version->matchedPath, "::") ||
+        !version->matchedMd5[0] ||
+        !asset_file_matches_md5(version->matchedPath, version->matchedMd5) ||
+        !FSP_ParentDir(root, sizeof(root), version->matchedPath)) return 0;
+    resolved = m11_find_unique_loose_sibling(root, wanted, outPath, outBytes);
+    leaf = strrchr(root, '/');
+    backslash = strrchr(root, '\\');
+    if (!leaf || (backslash && backslash > leaf)) leaf = backslash;
+    leaf = leaf ? leaf + 1 : root;
+    /* A missing companion may belong beside DATA. A present ambiguous or
+     * invalid companion must not fall through to another source directory. */
+    if (resolved == 0 && m11_ascii_path_equal_ignore_case(leaf, "DATA") &&
+        FSP_ParentDir(parent, sizeof(parent), root) && strcmp(parent, root) != 0) {
+        snprintf(root, sizeof(root), "%s", parent);
+        resolved = m11_find_unique_loose_sibling(root, wanted, outPath, outBytes);
+    }
+    if (g_m11_debug_startup_detail) {
+        if (resolved == 1)
+            fprintf(stderr, "firestaff: startup-sibling-resolved game=dm1 platform=pc34 wanted=%s parent=%s source=%s\n",
+                    wanted, root, outPath);
+        else
+            fprintf(stderr, "firestaff: startup-sibling-rejected game=dm1 platform=pc34 wanted=%s parent=%s reason=%s\n",
+                    wanted, root, resolved == -2 ? "ambiguous" :
+                    resolved == -1 ? "enumeration" : "missing");
+    }
+    return resolved == 1;
+}
+
 static int m11_dm1_i34e_title_read_authentic(
     const M12_StartupMenuState *menuState,
     const M12_AssetVersionStatus *version,
     uint8_t **outBytes, size_t *outSize) {
     char root[FSP_PATH_MAX];
     char candidate[FSP_PATH_MAX];
-    char parent[FSP_PATH_MAX];
     const char *ext;
     char candidates[3][FSP_PATH_MAX];
     size_t candidateCount = 0u;
@@ -4993,22 +5033,9 @@ static int m11_dm1_i34e_title_read_authentic(
             strcpy(candidates[candidateCount] + rootBytes, "::TITLE");
             ++candidateCount;
         }
-    } else {
-        if (rootBytes + sizeof("/TITLE") <= sizeof(candidates[0])) {
-            memcpy(candidates[candidateCount], root, rootBytes);
-            strcpy(candidates[candidateCount] + rootBytes, "/TITLE");
-            ++candidateCount;
-        }
-        if (FSP_ParentDir(parent, sizeof(parent), root) &&
-            strcmp(parent, root) != 0) {
-            const char *leaf = strrchr(root, '/');
-            if (leaf && strcmp(leaf + 1, "DATA") == 0 &&
-                snprintf(candidates[candidateCount],
-                         sizeof(candidates[candidateCount]),
-                         "%s/TITLE", parent) > 0) {
-                ++candidateCount;
-            }
-        }
+    } else if (m11_dm1_i34e_loose_companion_path(
+                   version, "TITLE", candidates[0], sizeof(candidates[0]))) {
+        candidateCount = 1u;
     }
     for (candidateIndex = 0u; candidateIndex < candidateCount;
          ++candidateIndex) {
@@ -5265,8 +5292,8 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     M11_AssetLoader loader;
     uint8_t *graphics = NULL, *selector = NULL;
     size_t graphicsBytes = 0u, selectorBytes = 0u;
-    char root[FSP_PATH_MAX], graphicsPath[FSP_PATH_MAX];
-    char selectorPath[FSP_PATH_MAX], parent[FSP_PATH_MAX], md5[33];
+    char graphicsPath[FSP_PATH_MAX];
+    char selectorPath[FSP_PATH_MAX], md5[33];
     const char *memberSeparator = NULL;
     const char *scan;
     int virtualPath;
@@ -5325,18 +5352,9 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
         }
         if (prefixBytes + sizeof("SELECTOR") > sizeof(selectorPath)) goto done;
         memcpy(selectorPath + prefixBytes, "SELECTOR", sizeof("SELECTOR"));
-    } else {
-        if (!FSP_ParentDir(root, sizeof(root), graphicsPath) ||
-            snprintf(selectorPath, sizeof(selectorPath), "%s/SELECTOR", root) < 0 ||
-            strlen(root) + sizeof("/SELECTOR") > sizeof(selectorPath)) goto done;
-        if (!asset_file_md5_hex(selectorPath, md5) || strcmp(md5, selectorMd5)) {
-            /* Preserve loose distributions whose graphics root is DATA/. */
-            if (FSP_ParentDir(parent, sizeof(parent), root) &&
-                strcmp(parent, root) != 0 &&
-                strlen(parent) + sizeof("/SELECTOR") <= sizeof(selectorPath)) {
-                snprintf(selectorPath, sizeof(selectorPath), "%s/SELECTOR", parent);
-            }
-        }
+    } else if (!m11_dm1_i34e_loose_companion_path(
+                   version, "SELECTOR", selectorPath, sizeof(selectorPath))) {
+        goto done;
     }
 
     if (!asset_file_md5_hex(selectorPath, md5) || strcmp(md5, selectorMd5) != 0 ||

@@ -63038,6 +63038,35 @@ if(BUILD_TESTING AND UNIX)
 endif()
 
 if(BUILD_TESTING AND UNIX)
+    add_executable(test_dm2_v1_stage_loose_real_media
+        tests/test_dm2_v1_stage_loose_real_media.c)
+    target_link_libraries(test_dm2_v1_stage_loose_real_media PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_stage_loose_real_media PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_loose_owner_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_loose_owner_real_media.sh
+            $<TARGET_FILE:firestaff> $<TARGET_FILE:test_dm2_v1_stage_loose_real_media>
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(dm2_v1_loose_owner_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 420
+        LABELS "dm2;real-media;cli;menu;startup;ownership;skip-safe")
+    set(FIRESTAFF_CSB_AMIGA35_ENGLISH_LOOSE_MEDIA "" CACHE PATH
+        "Original CSB Amiga 3.5 English loose files for startup package verification")
+    add_test(NAME csb_v1_amiga35_english_package_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_english_package_real_media.sh
+            $<TARGET_FILE:firestaff> "${FIRESTAFF_CSB_AMIGA35_ENGLISH_LOOSE_MEDIA}")
+    set_tests_properties(csb_v1_amiga35_english_package_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 120
+        LABELS "csb;amiga;real-media;case-sensitive;cli;menu;startup;skip-safe")
+    set(FIRESTAFF_DM1_PC34_LOOSE_INSTALL "" CACHE PATH
+        "Original DM1 PC 3.4 installation for loose startup path verification")
+    add_test(NAME dm1_v1_pc34_loose_startup_paths_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_pc34_loose_startup_paths.sh
+            $<TARGET_FILE:firestaff> "${FIRESTAFF_DM1_PC34_LOOSE_INSTALL}")
+    set_tests_properties(dm1_v1_pc34_loose_startup_paths_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        LABELS "dm1;pc;real-media;case-sensitive;cli;menu;startup;skip-safe")
     set(FIRESTAFF_CSB_AMIGA_LOOSE_MEDIA "" CACHE PATH
         "Original CSB Amiga 3.3 multilingual loose files for case-sensitive verification")
     add_test(NAME csb_v1_amiga_loose_case_real_media

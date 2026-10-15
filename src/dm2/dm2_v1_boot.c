@@ -2536,6 +2536,50 @@ static int path_md5_hex(const char *path, char out_hex[33]) {
     return 1;
 }
 
+/* SKProject SKULLWIN c_gdatfile.cpp:21-24,368-377 and
+ * c_savegame.cpp:616-634 bind GDAT and the new dungeon to one medium.
+ * Host discovery may rename the payloads, but must retain that owner. */
+static int dm2_bind_loose_hash_pair(const char *graphics,
+                                    const char *graphics_hash,
+                                    char graphics_path[512],
+                                    size_t *graphics_size,
+                                    char graphics_md5[33],
+                                    char dungeon_path[512],
+                                    size_t *dungeon_size,
+                                    char dungeon_md5[33]) {
+    char parent[512];
+    size_t pair;
+    if (!graphics || strlen(graphics) >= 512u ||
+        strstr(graphics, "::") != NULL) return 0;
+    if (!FSP_ParentDir(parent, sizeof(parent), graphics)) {
+        if (strchr(graphics, '/') || strchr(graphics, '\\')) return 0;
+        snprintf(parent, sizeof(parent), ".");
+    }
+    for (pair = 0u; pair < sizeof(g_dm2_asset_hash_pairs) /
+                                  sizeof(g_dm2_asset_hash_pairs[0]); ++pair) {
+        const DM2_V1_AssetHashPair *identity = &g_dm2_asset_hash_pairs[pair];
+        const char *hashes[2] = {identity->dungeon_md5, NULL};
+        char paths[1][ASSET_PATH_MAX];
+        char dungeon_parent[512];
+        int matched[1] = {0};
+        if (!md5_matches(graphics_hash, identity->graphics_md5)) continue;
+        /* Ordinary files only, depth zero: a sibling archive or child install
+         * is not the selected graphics file's dungeon owner. */
+        if (asset_find_all_files_by_md5_list(parent, hashes, paths, matched,
+                                              1, 0) <= 0 || !matched[0] ||
+            !FSP_ParentDir(dungeon_parent, sizeof(dungeon_parent), paths[0]) ||
+            strcmp(parent, dungeon_parent) != 0) continue;
+        snprintf(graphics_path, 512, "%s", graphics);
+        snprintf(dungeon_path, 512, "%s", paths[0]);
+        snprintf(graphics_md5, 33, "%s", identity->graphics_md5);
+        snprintf(dungeon_md5, 33, "%s", identity->dungeon_md5);
+        if (graphics_size) *graphics_size = file_size(graphics_path);
+        if (dungeon_size) *dungeon_size = file_size(dungeon_path);
+        return 1;
+    }
+    return 0;
+}
+
 static int dm2_try_hash_scan_root(const char *root,
                                   char graphics_path[512],
                                   size_t *graphics_size,
@@ -2543,53 +2587,56 @@ static int dm2_try_hash_scan_root(const char *root,
                                   char dungeon_path[512],
                                   size_t *dungeon_size,
                                   char dungeon_md5[33]) {
-    /* Keep room for every supported graphics and dungeon identity. */
-    const char *hashes[16];
     char paths[16][ASSET_PATH_MAX];
-    int matched[16];
-    int hash_count = 0;
-    int graphics_index = -1;
-    int dungeon_index = -1;
+    int matched[16] = {0};
+    int count = 0;
     int i;
-
     if (!root || !root[0]) return 0;
-    for (i = 0; g_dm2_graphics_hashes[i] &&
-         hash_count < (int)(sizeof(hashes) / sizeof(hashes[0])) - 1; ++i) {
-        hashes[hash_count++] = g_dm2_graphics_hashes[i];
+    while (g_dm2_graphics_hashes[count]) ++count;
+    if (count > 16) return 0;
+    (void)asset_find_all_files_by_md5_list(root, g_dm2_graphics_hashes,
+                                           paths, matched, count, 8);
+    for (i = 0; i < count; ++i) {
+        if (matched[i] && dm2_bind_loose_hash_pair(paths[i],
+                g_dm2_graphics_hashes[i], graphics_path, graphics_size,
+                graphics_md5, dungeon_path, dungeon_size, dungeon_md5)) return 1;
     }
-    dungeon_index = hash_count;
-    for (i = 0; g_dm2_dungeon_hashes[i] &&
-         hash_count < (int)(sizeof(hashes) / sizeof(hashes[0])) - 1; ++i) {
-        hashes[hash_count++] = g_dm2_dungeon_hashes[i];
-    }
-    hashes[hash_count] = NULL;
-    memset(paths, 0, sizeof(paths));
-    memset(matched, 0, sizeof(matched));
-    if (asset_find_all_by_md5_list(root, hashes, paths, matched,
-                                   hash_count, 8) <= 0) {
-        return 0;
-    }
-    for (i = 0; g_dm2_graphics_hashes[i]; ++i) {
-        if (matched[i]) {
-            graphics_index = i;
-            break;
+    /* Preserve generic ZIP-member discovery for existing directory callers.
+     * Only members under the exact same virtual directory may form a pair. */
+    (void)asset_find_all_by_md5_list(root, g_dm2_graphics_hashes,
+                                     paths, matched, count, 8);
+    for (i = 0; i < count; ++i) {
+        size_t pair;
+        const char* slash;
+        const char* member;
+        const char* next;
+        size_t prefix;
+        if (!matched[i] || !strstr(paths[i], "::")) continue;
+        member = paths[i];
+        while ((next = strstr(member, "::")) != NULL) member = next + 2;
+        slash = strrchr(member, '/');
+        prefix = slash ? (size_t)(slash - paths[i]) + 1u
+                       : (size_t)(member - paths[i]);
+        for (pair = 0u; pair < sizeof(g_dm2_asset_hash_pairs) /
+                                      sizeof(g_dm2_asset_hash_pairs[0]); ++pair) {
+            char candidate[ASSET_PATH_MAX];
+            const DM2_V1_AssetHashPair* identity = &g_dm2_asset_hash_pairs[pair];
+            if (!md5_matches(g_dm2_graphics_hashes[i], identity->graphics_md5) ||
+                !asset_find_by_md5(root, identity->dungeon_md5, candidate,
+                                    sizeof(candidate), 8) ||
+                strncmp(paths[i], candidate, prefix) != 0 ||
+                strchr(candidate + prefix, '/') != NULL ||
+                strstr(candidate + prefix, "::") != NULL) continue;
+            snprintf(graphics_path, 512, "%s", paths[i]);
+            snprintf(dungeon_path, 512, "%s", candidate);
+            snprintf(graphics_md5, 33, "%s", identity->graphics_md5);
+            snprintf(dungeon_md5, 33, "%s", identity->dungeon_md5);
+            if (graphics_size) *graphics_size = file_size(graphics_path);
+            if (dungeon_size) *dungeon_size = file_size(dungeon_path);
+            return 1;
         }
     }
-    if (graphics_index >= 0 && !graphics_path[0]) {
-        strncpy(graphics_path, paths[graphics_index], 511);
-        graphics_path[511] = '\0';
-        if (graphics_size) *graphics_size = file_size(graphics_path);
-        strncpy(graphics_md5, hashes[graphics_index], 32);
-        graphics_md5[32] = '\0';
-    }
-    if (dungeon_index >= 0 && matched[dungeon_index] && !dungeon_path[0]) {
-        strncpy(dungeon_path, paths[dungeon_index], 511);
-        dungeon_path[511] = '\0';
-        if (dungeon_size) *dungeon_size = file_size(dungeon_path);
-        strncpy(dungeon_md5, hashes[dungeon_index], 32);
-        dungeon_md5[32] = '\0';
-    }
-    return graphics_path[0] && dungeon_path[0];
+    return 0;
 }
 
 static int dm2_scan_known_hash_assets(const char *base,
@@ -3584,10 +3631,12 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     char path[512];
     char save_root[sizeof(profile->save_root)];
     int explicit_zip;
+    int explicit_loose;
     (void)path;
     const char *base = data_dir ? data_dir : ".";
 
     explicit_zip = dm2_v1_media_path_is_zip(base) && FSP_FileExists(base);
+    explicit_loose = !explicit_zip && FSP_FileExists(base);
 
     if (!profile) return -1;
     /* A rescan selects a new user-owned medium.  No parsed world, mounted
@@ -3611,6 +3660,13 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
      * depend on PC install names or directory layout. */
     if (explicit_zip) {
         if (!dm2_v1_boot_load_explicit_zip(profile, base)) return -1;
+    } else if (explicit_loose) {
+        char selected_md5[33];
+        if (!asset_file_md5_hex(base, selected_md5) ||
+            !dm2_bind_loose_hash_pair(base, selected_md5,
+                profile->graphics_path, &profile->graphics_size,
+                profile->graphics_md5, profile->dungeon_path,
+                &profile->dungeon_size, profile->dungeon_md5)) return -1;
     } else {
         (void)dm2_scan_known_hash_assets(base,
                                          profile->graphics_path,

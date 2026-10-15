@@ -6812,7 +6812,10 @@ static int asset_find_all_by_md5_list_internal(
                     break;
                 }
             }
-            if (!duplicateHash &&
+            /* Container inventory does not retain traversal depth. Ordinary
+             * file lookups must walk their bounded tree; file_md5 still uses
+             * its physical-file cache without admitting virtual/child hits. */
+            if (!duplicateHash && scanContainers &&
                 scache_inventory_lookup(s_scan_cache, searchDir,
                                         normalizedPtrs[i], normalizedPaths[i],
                                         ASSET_PATH_MAX)) {

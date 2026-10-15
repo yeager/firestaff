@@ -1,3 +1,19 @@
+- 2026-10-15: Restore authentic PC34 TITLE/SELECTOR startup for loose
+  installations whose DATA directory or program filenames use other case.
+  Before the fix, a byte-identical `data` copy skipped native TITLE and then
+  SELECTOR while still reaching runtime; the canonical DATA baseline played
+  53 TITLE frames and 32 SELECTOR frames. One selected-graphics companion
+  resolver now admits unique actual-case names in that directory or its
+  DOS DATA parent. Invalid or ambiguous local programs never fall through to
+  another directory, and arbitrary graphics folders cannot borrow a parent's
+  SELECTOR. Ten original-media HFSX cases pass canonical/lowercase and direct
+  selected-file CLI/M12 routes plus wrong-program, neighbor and ambiguity
+  rejection. The original installation's SHA-256 manifest is unchanged.
+  The existing uppercase/wrapped archive regression also passes all four
+  CLI/M12 routes after the loose-source change.
+  These are functional source-startup checks with SDL dummy drivers, not
+  native display/audio or timing-parity evidence.
+
 - 2026-10-15: Preserve the unscoped Atari ST 1.2 start-menu route as an
   original-media regression. With no `--game` or `--platform`, isolated
   configuration and unchanged lowercase loose graphics/dungeon files, the

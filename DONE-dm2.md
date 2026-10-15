@@ -1,3 +1,29 @@
+- 2026-10-15: Repair retail loose-pair startup for DOS, Macintosh, FM Towns
+  and Amiga. The old native scanner selected only the DOS dungeon identity;
+  Towns depended on an uppercase filename fallback, while Macintosh M12
+  required the wrong dungeon hash. Bind the selected graphics identity to its
+  authenticated dungeon in the same directory, without relying on either
+  filename. Pin explicitly selected graphics in scoped/unscoped M12 inventory
+  and retain exact same-final-member-directory ownership for generic ZIP
+  discovery. Validate returned parents even when a lookup requested depth zero.
+  Ordinary-file hash scans now bypass the container inventory shortcut, whose
+  entries do not retain traversal depth; bounded enumeration still uses the
+  physical-file MD5 cache. Original-media staging is test-only and copies only
+  the four exact retail pairs from production native readers after hash/size
+  admission. Original archives remain unchanged and runtime writes no game
+  payloads. The source boundary follows pinned SKProject SKULLWIN
+  c_gdatfile.cpp:21-24,368-377 and c_savegame.cpp:616-634. The separate
+  orphan-first same-graphics-hash discovery gap remains in TODO-dm2.md.
+  Final macOS original-media checks pass: the loose matrix covers 37 positive
+  routes (directory/selected-file CLI and scoped/unscoped M12, four child-cache
+  recovery cases, mixed four-platform AUTO defaulting to Towns, selected Mac
+  and Amiga owners) plus eight cross-directory rejection cases in 65.49 seconds.
+  Existing renamed-ZIP 15-route ownership/runtime regression passes in 68.11
+  seconds against the same final app. The combined run takes 68.17 seconds at
+  two test processes; strict native/staging syntax checks and incremental app
+  plus probe builds pass. This proves startup ownership and CLI runtime
+  admission, not visual/audio parity or native Windows/Linux execution.
+
 - 2026-10-15: Poll cancellation inside DM2 ZIP directory enumeration.
   Shared cancel flags are checked for each non-dot entry; progress callbacks
   occur every 32 entries so synchronous scan presentation does not repaint

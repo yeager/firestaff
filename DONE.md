@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-15: Re-ran the original FM Towns direct-exit matrix for DM1,
+  CSB and DM2 on the macOS build containing `66854d163`. Each `--game`
+  session reached its source-owned runtime and exited after the in-game
+  return command, without reopening or rescanning the launcher. All three
+  routes passed with isolated configuration and SDL dummy drivers; this
+  verifies session exit behavior, not native display/audio parity.
+
 - 2026-10-15: M12 permission/error regressions passed on `8939e58fe`.
   `asset_scan_access_denied` used the authentic DM1 FM Towns archive and
   verified unreadable roots, partial collection access, and revoked archive
