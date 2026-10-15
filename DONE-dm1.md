@@ -1,3 +1,10 @@
+- 2026-10-15: Bounded the uppercase DM1 menu-leaf regression to selected
+  authentic DM1/CSB/DM2 archives instead of every installed edition. The
+  complete original-media startup diagnostic suite passes in 167.34 seconds;
+  the isolated optional-media case also finds DM2 beside an empty DM1 leaf.
+  Increased the suite timeout from 180 to 240 seconds to allow slower media
+  I/O without weakening its timed-intro or game-selection assertions.
+
 - 2026-10-15: Refreshed startup-menu catalog source references after the
   diagnostic/runtime edits. Verified all 21 changed POT/PO files differ only
   in source-reference lines; translation text is unchanged. po/update.sh

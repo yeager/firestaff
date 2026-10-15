@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-10-15 startup scan feedback source audit: RunDeferredScan updates game
+availability but does not show access-denied/no-data feedback after completion.
+InitEx and the manual folder worker have notification paths; return-menu and
+intro-worker completion do not. Add shared finalization on the UI thread after
+successful, non-cancelled deferred scans, then verify with authentic archive
+removal and denied access to a task-owned staging directory. Do not mutate UI
+message fields from the intro scan worker. This is not implemented yet.
+
 2026-10-15 diagnostic hashing correction: lightweight trace/scriptwait metadata
 and launch-scoped M12 host capture publication are implemented. Explicit full
 capture requests still hash the current presented image. Capture proof is
