@@ -4148,6 +4148,17 @@ if(BUILD_TESTING)
         TIMEOUT 360
     )
     add_test(
+        NAME dm1_v1_pc34_nested_title_archive
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_pc34_nested_title_archive.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(dm1_v1_pc34_nested_title_archive PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;pc34;dos;real-media;archive;cli;menu;startup;title;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_NESTED_TITLE_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN.zip"
+        TIMEOUT 30
+    )
+    add_test(
         NAME dm1_v1_boot_probe_terminal_exit
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_boot_probe_terminal_exit.sh
             $<TARGET_FILE:firestaff>

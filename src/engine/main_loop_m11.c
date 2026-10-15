@@ -4828,12 +4828,13 @@ static int m11_dm1_i34e_title_read_authentic(
     char root[FSP_PATH_MAX];
     char candidate[FSP_PATH_MAX];
     char parent[FSP_PATH_MAX];
-    const char *suffix;
     const char *ext;
+    char candidates[3][FSP_PATH_MAX];
+    size_t candidateCount = 0u;
     size_t rootBytes;
     uint8_t *bytes = NULL;
     size_t size = 0u;
-    int attempts;
+    size_t candidateIndex;
     if (outBytes) *outBytes = NULL;
     if (outSize) *outSize = 0u;
     if (!menuState || !version || !version->matched || !version->versionId ||
@@ -4851,12 +4852,63 @@ static int m11_dm1_i34e_title_read_authentic(
         fprintf(stderr, "firestaff: startup-source-probe game=dm1 platform=pc34 phase=anim-title root=%s\n", root);
     rootBytes = strlen(root);
     ext = strrchr(root, '.');
-    for (attempts = 0; attempts < 2; ++attempts) {
-        suffix = ext && m11_ascii_path_equal_ignore_case(ext, ".zip")
-                     ? "::TITLE" : "/TITLE";
-        if (rootBytes + strlen(suffix) >= sizeof(candidate)) return 0;
-        memcpy(candidate, root, rootBytes);
-        strcpy(candidate + rootBytes, suffix);
+    if (ext && m11_ascii_path_equal_ignore_case(ext, ".zip")) {
+        const char *member = strstr(version->matchedPath, "::");
+        if (member) {
+            size_t memberBytes = strlen(member + 2u);
+            if (memberBytes + 1u < sizeof(candidate)) {
+                memcpy(candidate, member + 2u, memberBytes + 1u);
+                char *graphicsSlash = strrchr(candidate, '/');
+                if (graphicsSlash &&
+                    m11_ascii_path_equal_ignore_case(
+                        graphicsSlash + 1, "GRAPHICS.DAT")) {
+                    *graphicsSlash = '\0';
+                    char *dataSlash = strrchr(candidate, '/');
+                    if (dataSlash &&
+                        m11_ascii_path_equal_ignore_case(
+                            dataSlash + 1, "DATA")) {
+                        *dataSlash = '\0';
+                        int written = snprintf(candidates[candidateCount],
+                                     sizeof(candidates[candidateCount]),
+                                     "%.*s::%s/TITLE",
+                                     (int)(member - version->matchedPath),
+                                     version->matchedPath,
+                                     candidate);
+                        if (written > 0 &&
+                            (size_t)written <
+                                sizeof(candidates[candidateCount])) {
+                            ++candidateCount;
+                        }
+                    }
+                }
+            }
+        }
+        if (rootBytes + sizeof("::TITLE") <= sizeof(candidates[0])) {
+            memcpy(candidates[candidateCount], root, rootBytes);
+            strcpy(candidates[candidateCount] + rootBytes, "::TITLE");
+            ++candidateCount;
+        }
+    } else {
+        if (rootBytes + sizeof("/TITLE") <= sizeof(candidates[0])) {
+            memcpy(candidates[candidateCount], root, rootBytes);
+            strcpy(candidates[candidateCount] + rootBytes, "/TITLE");
+            ++candidateCount;
+        }
+        if (FSP_ParentDir(parent, sizeof(parent), root) &&
+            strcmp(parent, root) != 0) {
+            const char *leaf = strrchr(root, '/');
+            if (leaf && strcmp(leaf + 1, "DATA") == 0 &&
+                snprintf(candidates[candidateCount],
+                         sizeof(candidates[candidateCount]),
+                         "%s/TITLE", parent) > 0) {
+                ++candidateCount;
+            }
+        }
+    }
+    for (candidateIndex = 0u; candidateIndex < candidateCount;
+         ++candidateIndex) {
+        snprintf(candidate, sizeof(candidate), "%s",
+                 candidates[candidateIndex]);
         if (g_m11_debug_startup_detail)
             fprintf(stderr, "firestaff: startup-source-probe game=dm1 platform=pc34 phase=anim-title file=%s\n", candidate);
         if (((ext && m11_ascii_path_equal_ignore_case(ext, ".zip"))
@@ -4873,19 +4925,6 @@ static int m11_dm1_i34e_title_read_authentic(
                 fprintf(stderr, "firestaff: startup-source-reject game=dm1 platform=pc34 phase=anim-title bytes=%zu reason=fingerprint-mismatch\n", size);
             free(bytes); bytes = NULL; size = 0u;
         }
-        if (attempts == 0 && !(ext &&
-              m11_ascii_path_equal_ignore_case(ext, ".zip")) &&
-            FSP_ParentDir(parent, sizeof(parent), root) &&
-            strcmp(parent, root) != 0) {
-            const char *leaf = strrchr(root, '/');
-            if (leaf && strcmp(leaf + 1, "DATA") == 0) {
-                strcpy(root, parent);
-                rootBytes = strlen(root);
-                ext = strrchr(root, '.');
-                continue;
-            }
-        }
-        break;
     }
     if (g_m11_debug_startup_detail)
         fprintf(stderr, "firestaff: startup-source-skip game=dm1 platform=pc34 phase=anim-title reason=title-not-found\n");

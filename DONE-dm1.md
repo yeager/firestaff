@@ -1,3 +1,11 @@
+- 2026-10-15: Fixed I34E title lookup in the authentic nested DM1 DOS ZIP.
+  Firestaff now derives the sibling `dungeon-master/dmaster/TITLE` archive
+  member from the authenticated `GRAPHICS.DAT` path instead of checking only
+  the ZIP root. The original 12,002-byte title played all 53 frames and 265
+  source VBlanks in 3,786 ms; the nested-ZIP regression passed. This verifies
+  this archive layout's title handoff, not full platform intro or viewport
+  parity. See `TODO-dm1.md`.
+
 - 2026-10-15: Fixed PC entrance-door source sampling. ReDMCSB prepares shifted
   C002 left-door frames but cancels the C003 right-door source offset;
   Firestaff samples the raw source images. The raw-frame mapping now uses

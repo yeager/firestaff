@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-15 PC34 nested-ZIP I34E title fix: when starting from the authentic
+`Dungeon-Master_DOS_EN.zip`, Firestaff found `GRAPHICS.DAT` under
+`dungeon-master/dmaster/DATA` but looked for `TITLE` only at the archive root.
+It therefore skipped the original I34E title animation. Runtime now derives
+the sibling `dungeon-master/dmaster/TITLE` member from the authenticated
+graphics path. The real ZIP run loaded the 12,002-byte original and presented
+53 frames/265 source VBlanks in 3,786 ms; the nested-ZIP regression passed.
+This closes the title-file lookup gap for this archive layout, not full
+cross-platform intro or viewport parity.
+
 2026-10-15 PC entrance-door source-offset correction: ReDMCSB
 `ENTRANCE.C:790-824` prepares left-door C002 frames with 4/8/12-pixel
 source shifts before `F0438` adds its frame offset; the prepared right-door
