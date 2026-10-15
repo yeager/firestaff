@@ -3517,8 +3517,8 @@ static unsigned int m11_dm1_amiga_swsh_fnv1a(const uint8_t* bytes,
     return hash;
 }
 
-/* Startup companions belong beside the selected graphics member, inside
- * its final virtual container. Preserve every nested transport and directory. */
+/* Startup companions belong beside the selected graphics file or member.
+ * Preserve every nested transport and directory; never search other media. */
 static int m11_dm1_amiga_sibling_path(const M12_AssetVersionStatus* version,
                                       const char* sibling,
                                       char* outPath, size_t outPathBytes) {
@@ -3539,9 +3539,13 @@ static int m11_dm1_amiga_sibling_path(const M12_AssetVersionStatus* version,
     if (!path[0]) return 0;
     for (scan = path; (scan = strstr(scan, "::")) != NULL; scan += 2)
         separator = scan;
-    if (!separator) return 0;
-    leaf = strrchr(separator + 2, '/');
-    leaf = leaf ? leaf + 1 : separator + 2;
+    leaf = separator ? separator + 2 : path;
+    {
+        const char* slash = strrchr(leaf, '/');
+        const char* backslash = strrchr(leaf, '\\');
+        if (!slash || (backslash && backslash > slash)) slash = backslash;
+        if (slash) leaf = slash + 1;
+    }
     memberBytes = strlen(leaf);
     if (memberBytes != sizeof(graphicsMember) - 1U) return 0;
     for (i = 0u; i < memberBytes; ++i)
@@ -3571,9 +3575,9 @@ static int m11_dm1_amiga_read_startup_companions(
     *dm = NULL;
     *dmBytes = 0u;
     if (!m11_dm1_amiga_sibling_path(version, "dungeon.dat", path, sizeof(path)) ||
-        !asset_read_virtual_path_alloc(path, dungeonData, dungeonBytes) ||
+        !asset_read_path_alloc(path, dungeonData, dungeonBytes) ||
         !m11_dm1_amiga_sibling_path(version, "dm", path, sizeof(path)) ||
-        !asset_read_virtual_path_alloc(path, dm, dmBytes)) {
+        !asset_read_path_alloc(path, dm, dmBytes)) {
         free(*dungeonData);
         free(*dm);
         *dungeonData = *dm = NULL;
@@ -3624,10 +3628,10 @@ static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
         strcmp(gameView->assetLoader.graphicsDatPath,
                version->matchedPath) != 0 ||
         !m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
-        !asset_read_virtual_path_alloc(
+        !asset_read_path_alloc(
             gameView->assetLoader.graphicsDatPath, &graphics,
             &graphicsBytes) ||
-        !asset_read_virtual_path_alloc(swooshPath, &executable,
+        !asset_read_path_alloc(swooshPath, &executable,
                                        &executableBytes)) {
         goto cleanup;
     }
@@ -3693,7 +3697,7 @@ static int m11_dm1_amiga36_entrance_f0441_receipt_if_selected(
         !gameView->assetLoader.graphicsDatPath[0] ||
         !m11_ascii_path_equal_ignore_case(
             gameView->assetLoader.graphicsDatPath, version->matchedPath) ||
-        !asset_read_virtual_path_alloc(
+        !asset_read_path_alloc(
             gameView->assetLoader.graphicsDatPath, &graphics,
             &graphicsBytes)) {
         goto cleanup;
@@ -3854,10 +3858,10 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
         strcmp(gameView->assetLoader.graphicsDatPath,
                version->matchedPath) != 0 ||
         !m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
-        !asset_read_virtual_path_alloc(
+        !asset_read_path_alloc(
             gameView->assetLoader.graphicsDatPath, &graphics,
             &graphicsBytes) ||
-        !asset_read_virtual_path_alloc(swooshPath, &executable,
+        !asset_read_path_alloc(swooshPath, &executable,
                                        &executableBytes)) {
         goto cleanup;
     }
@@ -4118,7 +4122,7 @@ cleanup:
 /* ReDMCSB SWSH.C F0902/F0904 and SWSHSND.C F0908/F0909 use the embedded
  * Amiga Hunk executable's four bitplanes, 27 source palette rows, and Paula
  * sample. Accept only the selected authenticated Amiga executable profile,
- * read directly from the selected nested ADF, and leave the transaction on
+ * read directly from its selected file/container, and leave the transaction on
  * its existing title/entrance path after this prelude. */
 static int m11_play_dm1_amiga_swsh_if_available(
     const M12_StartupMenuState* menuState,
@@ -4161,7 +4165,7 @@ static int m11_play_dm1_amiga_swsh_if_available(
     if (!version || strstr(version->matchedPath, "[HD]") != NULL) return -1;
     if (skipSwoosh) return 1;
     if (!m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
-        !asset_read_virtual_path_alloc(swooshPath, &executable,
+        !asset_read_path_alloc(swooshPath, &executable,
                                        &executableBytes) ||
         !executable ||
         !dm1_v1_amiga_swsh_parse(executable, executableBytes, &assets)) {

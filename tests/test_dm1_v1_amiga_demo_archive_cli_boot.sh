@@ -54,11 +54,63 @@ grep -Fq 'edition=amiga-demo-en' <<<"$menu_output"
 grep -Fq "DM1 READY: gameId=dm1 dataDir=$archive" <<<"$menu_output"
 grep -Fq "graphicsPath=$archive::graphics.dat" <<<"$menu_output"
 
+# The scanner also admits these original files in an ordinary directory.
+# Exercise the same bytes without archive transport: compressed Motorola
+# dungeon intake and startup companion reads must not depend on "::".
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$scratch_root"
+scratch=$(mktemp -d "$scratch_root/amiga-demo-loose.XXXXXX")
+trap 'rm -rf "$scratch"' EXIT
+python3 - "$archive" "$scratch" <<'PY'
+import pathlib
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as package:
+    for name in ("graphics.dat", "DemoDun.dat", "swoosh"):
+        pathlib.Path(sys.argv[2], name).write_bytes(package.read(name))
+PY
+for route in direct menu; do
+    args=(--game dm1 --platform amiga --data-dir "$scratch" --debug)
+    if [[ "$route" = direct ]]; then
+        args+=(--boot-probe --boot-probe-frames 2 --duration 0)
+    else
+        args+=(--menu --script enter,enter,enter --duration 10000)
+    fi
+    if ! FIRESTAFF_CONFIG_PATH="$scratch/$route.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" "${args[@]}" >"$scratch/$route.log" 2>&1; then
+        cat "$scratch/$route.log" >&2
+        exit 1
+    fi
+    grep -Fq "graphicsPath=$scratch/graphics.dat" "$scratch/$route.log"
+    if [[ "$route" = direct ]]; then
+        grep -Fq 'phase=dm1-runtime' "$scratch/$route.log"
+        grep -Fq 'levelLoaded=1' "$scratch/$route.log"
+    else
+        grep -Fq 'phase=amiga-swsh' "$scratch/$route.log"
+        grep -Fq 'phase=title-f0437' "$scratch/$route.log"
+        grep -Fq 'phase=entrance-f0441' "$scratch/$route.log"
+        grep -Fq 'DM1 READY: gameId=dm1' "$scratch/$route.log"
+    fi
+done
+python3 - "$archive" "$scratch" <<'PY'
+import pathlib
+import sys
+import zipfile
+
+with zipfile.ZipFile(sys.argv[1]) as package:
+    for name in ("graphics.dat", "DemoDun.dat", "swoosh"):
+        if pathlib.Path(sys.argv[2], name).read_bytes() != package.read(name):
+            raise SystemExit(f"FAIL: original loose media changed: {name}")
+PY
+
 archive_hash_after=$(firestaff_sha256_file "$archive")
 if [[ "$archive_hash_before" != "$archive_hash_after" ]]; then
     printf '%s\n' 'FAIL: Firestaff modified the original DM1 Amiga demo archive' >&2
     exit 1
 fi
 
-printf 'PASS: authentic DM1 Amiga demo starts from CLI and M12 menu; graphics=%s dungeon=%s archive=read-only\n' \
+printf 'PASS: authentic DM1 Amiga demo starts from archive and loose files via CLI and M12; graphics=%s dungeon=%s originals=read-only\n' \
     "$expected_graphics_md5" "$expected_dungeon_md5"

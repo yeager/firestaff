@@ -16370,6 +16370,25 @@ static int m11_dm1_graphics_is_atari_st(const char *md5) {
     return 0;
 }
 
+/* These independently admitted Amiga graphics identities select the same
+ * memory-backed original-media loader used for archived Amiga files. */
+static int m11_dm1_graphics_is_amiga(const char *md5) {
+    static const char *const hashes[] = {
+        "6a2f135b53c2220f0251fa103e2a6e7e",
+        "dd373954b3fb127db7387946131ea322",
+        "0679e39da9dcc2e855cb33c6c64ddcb5",
+        "b35931b55db649a1bd2d415b61b29801",
+        "7f9458e4a3972d06e649a6fa85a7f34b",
+        "491ca939f9abb33ceeb26619b841fe91",
+        NULL
+    };
+    int i;
+    if (!md5) return 0;
+    for (i = 0; hashes[i]; ++i)
+        if (strcmp(md5, hashes[i]) == 0) return 1;
+    return 0;
+}
+
 int M11_GameView_NormalizeDm1BigEndianDungeon(uint8_t **bytes,
                                               size_t *size) {
     uint8_t *grown;
@@ -26212,11 +26231,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 facts.explicit_dungeon_path = dungeonPath;
             }
         }
-        /* Original Atari/Amiga editions use a virtual disk root.  Derive the
-         * sibling dungeon file from the verified graphics member so the
-         * native loader reads the original disk image directly. */
+        /* Original Atari/Amiga companions stay beside the verified graphics
+         * file/member, whether the selected medium is loose or archived. */
         if (!spec->dm1Fmtowns && spec->verifiedAssetPath &&
-            strstr(spec->verifiedAssetPath, "::") != NULL) {
+            (strstr(spec->verifiedAssetPath, "::") != NULL ||
+             m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
+             m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5))) {
             const char *last = NULL;
             const char *sep = strstr(spec->verifiedAssetPath, "::");
             size_t prefix;
@@ -26224,8 +26244,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 last = sep;
                 sep = strstr(sep + 2, "::");
             }
-            if (!last) return 0;
-            prefix = (size_t)(last - spec->verifiedAssetPath) + 2u;
+            const char *leaf = last ? last + 2 : spec->verifiedAssetPath;
+            const char *slash = strrchr(leaf, '/');
+            const char *backslash = strrchr(leaf, '\\');
+            if (!slash || (backslash && backslash > slash)) slash = backslash;
+            if (slash) leaf = slash + 1;
+            prefix = (size_t)(leaf - spec->verifiedAssetPath);
             const char* dungeonMember =
                 spec->verifiedAssetMd5 &&
                 strcmp(spec->verifiedAssetMd5,
@@ -26304,8 +26328,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
         dm1_dungeon_path_hash_resolved &&
         !spec->dm1Fmtowns &&
-        strstr(dungeonPath, "::") != NULL) {
-        if (!asset_read_virtual_path_alloc(dungeonPath,
+        (strstr(dungeonPath, "::") != NULL ||
+         m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
+         m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5))) {
+        if (!asset_read_path_alloc(dungeonPath,
                                            &dm1VirtualDungeonBytes,
                                            &dm1VirtualDungeonSize)) {
             fprintf(stderr,
@@ -26408,9 +26434,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         uint8_t *graphicsBytes = NULL;
         size_t graphicsSize = 0U;
         int usedVerifiedGraphicsPath = 0;
-        if (spec->verifiedAssetPath && strstr(spec->verifiedAssetPath, "::") &&
-            (strstr(spec->verifiedAssetPath, "GRAPHICS.DAT") ||
-             strstr(spec->verifiedAssetPath, "graphics.dat")) &&
+        if (spec->verifiedAssetPath && spec->verifiedAssetPath[0] &&
             snprintf(graphicsVirtual, sizeof(graphicsVirtual), "%s",
                      spec->verifiedAssetPath) < (int)sizeof(graphicsVirtual)) {
             usedVerifiedGraphicsPath = 1;
@@ -26441,7 +26465,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             memcpy(graphicsVirtual + siblingPrefix,
                    "GRAPHICS.DAT", sizeof("GRAPHICS.DAT"));
         }
-        if (!asset_read_virtual_path_alloc(graphicsVirtual, &graphicsBytes,
+        if (!asset_read_path_alloc(graphicsVirtual, &graphicsBytes,
                                             &graphicsSize) ||
             ((dm1AtariDungeonFormat)
                  ? !M11_AssetLoader_InitDm1AtariStFromBuffer(
@@ -26466,8 +26490,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         free(graphicsBytes);
-        /* Keep archive provenance for source-owned audio, names and fonts
-         * applied after the dungeon handoff. */
+        /* Keep exact selected provenance for source-owned audio, names and
+         * fonts applied after the dungeon handoff. */
         snprintf(state->assetLoader.graphicsDatPath,
                  sizeof(state->assetLoader.graphicsDatPath), "%s",
                  graphicsVirtual);
@@ -26569,13 +26593,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         graphicsBindReceipt = receipt.graphics_bind_receipt;
-        /* M12's selected graphics file and M11's matching dungeon may live
-         * in separate directories in a mixed installation. Keep the
-         * authenticated PC34 graphics path instead of deriving GRAPHICS.DAT
-         * from the matching dungeon's directory. */
+        /* Keep M12's exact authenticated loose graphics path. PC34 may use
+         * a different directory from the dungeon in mixed installations;
+         * Atari/Amiga startup also requires the selected filename's spelling
+         * for the title and entrance ownership check. */
         if (spec->verifiedAssetPath && spec->verifiedAssetMd5 &&
-            strcmp(spec->verifiedAssetMd5,
-                   "fa6b1aa29e191418713bf2cda93d962e") == 0 &&
+            (strcmp(spec->verifiedAssetMd5,
+                    "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
+             m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
+             m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5)) &&
             strstr(spec->verifiedAssetPath, "::") == NULL &&
             asset_file_matches_md5(spec->verifiedAssetPath,
                                    spec->verifiedAssetMd5) &&

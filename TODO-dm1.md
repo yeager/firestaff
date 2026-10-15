@@ -1,5 +1,12 @@
 # Firestaff TODO — DM1
 
+2026-10-15 loose-file startup: the authentic Amiga demo now passes CLI and
+M12 using the same original bytes as its ZIP regression. The old scanner-to-
+runtime failure is fixed, including the exact graphics filename handoff.
+Retail Amiga/Atari loose-file routes and mixed-case companion names on
+case-sensitive filesystems still need original-media coverage. Do not infer
+that the demo check establishes those routes or native display/audio parity.
+
 2026-10-15 I34E archive selector routing is verified for uppercase ZIP names
 and wrapper directories through CLI and M12. Lookup uses the admitted graphics
 member and retains its container/prefix. The original-media regression requires

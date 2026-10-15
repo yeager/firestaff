@@ -1,3 +1,14 @@
+- 2026-10-15: Fixed loose original Amiga startup: scanning admitted the demo
+  graphics/dungeon, but M11 bypassed compressed Motorola dungeon intake and
+  required virtual paths for SWSH/title/entrance. Loose admitted media now
+  uses the existing bounded memory loader, and runtime preserves the exact
+  hash-verified graphics filename. The original demo passes CLI and M12 from
+  both ZIP and loose files; M12 requires authenticated SWSH, F0437, F0441 and
+  runtime handoff. The regression compares every staged original file against
+  its archive after launch. SDL dummy drivers on one Mac do not establish
+  native display, audio or cross-platform filename behavior. Existing A22G,
+  A36 and PC34 selector original-media regressions passed 3/3 (48.93 seconds).
+
 - 2026-10-15: Admitted the original A22G startup through an explicit four-file
   identity: graphics, dungeon, dm and swoosh from the selected volume. The
   legacy pair gate remains strict. Same-container sibling lookup loads the
