@@ -5095,14 +5095,42 @@ void M12_StartupMenu_RescanAllGames(
     currentDataDir = M12_StartupMenu_AssetDataDir(state);
     if (currentDataDir && currentDataDir[0]) {
         char* virtualMember;
+        int selectedArchive;
         snprintf(selectedDataDir, sizeof(selectedDataDir), "%s", currentDataDir);
         snprintf(scanBaseDir, sizeof(scanBaseDir), "%s", currentDataDir);
         virtualMember = strstr(scanBaseDir, "::");
         if (virtualMember) *virtualMember = '\0';
+        selectedArchive = virtualMember != NULL || FSP_FileExists(scanBaseDir);
+        if (!selectedArchive && !FSP_DirExists(scanBaseDir)) {
+            static const char* const games[] = {"dm1", "csb", "dm2"};
+            const size_t sourceLength = strlen(selectedDataDir);
+            size_t game;
+            /* The file may have been removed while its RAM-backed game was
+             * running. Its admitted member provenance still identifies the
+             * lexical archive location without guessing from an extension. */
+            for (game = 0u; game < sizeof(games) / sizeof(games[0]) &&
+                            !selectedArchive; ++game) {
+                size_t versionIndex;
+                for (versionIndex = 0u;
+                     versionIndex < M12_AssetStatus_GetVersionCount(games[game]);
+                     ++versionIndex) {
+                    const M12_AssetVersionStatus* version =
+                        M12_AssetStatus_GetVersion(&state->assetStatus,
+                                                     games[game], versionIndex);
+                    if (version && version->matched &&
+                        strncmp(version->matchedPath, selectedDataDir,
+                                sourceLength) == 0 &&
+                        strncmp(version->matchedPath + sourceLength, "::", 2u) == 0) {
+                        selectedArchive = 1;
+                        break;
+                    }
+                }
+            }
+        }
         /* Returning to M12 refreshes the collection beside the selected file,
          * rather than admitting that one archive again. Keep the lexical alias
          * location; resolving a symlink would change the user's collection. */
-        if (virtualMember || FSP_FileExists(scanBaseDir)) {
+        if (selectedArchive) {
             char parentDir[M12_ASSET_DATA_DIR_CAPACITY];
             if (FSP_ParentDir(parentDir, sizeof(parentDir), scanBaseDir))
                 snprintf(scanBaseDir, sizeof(scanBaseDir), "%s", parentDir);

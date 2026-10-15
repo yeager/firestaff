@@ -17,7 +17,7 @@ dm2_mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-S
 dm2_amiga_archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
 
 if [ ! -x "$app" ] ||
-   { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm2-sourcefile ] &&
+   { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm2-sourcefile ] && [ "$test_mode" != dm2-sourcefile-removed ] &&
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
      [ "$test_mode" != direct-exit ] &&
      [ "$test_mode" != mouse-return ] &&
@@ -32,7 +32,7 @@ if [ ! -x "$app" ] ||
        [ ! -f "$dm2_archive" ]; }; } ||
    { [ "$test_mode" = return-window-close ] &&
      [ ! -f "$dm1_archive" ]; } ||
-   { [ "$test_mode" = dm2-sourcefile ] &&
+   { { [ "$test_mode" = dm2-sourcefile ] || [ "$test_mode" = dm2-sourcefile-removed ]; } &&
      { [ ! -f "$dm1_archive" ] || [ ! -f "$csb_archive" ] ||
        [ ! -f "$dm2_dos_archive" ]; }; } ||
    { [ "$test_mode" = dm2-amiga ] && [ ! -f "$dm2_amiga_archive" ]; } ||
@@ -47,7 +47,12 @@ mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/return-rescan.XXXXXX")
 mutation_scratch=
 addition_scratch=
+removal_pid=
 cleanup() {
+    if [ -n "$removal_pid" ]; then
+        kill "$removal_pid" 2>/dev/null || true
+        wait "$removal_pid" 2>/dev/null || true
+    fi
     if [ "${FIRESTAFF_KEEP_TEST_SCRATCH:-0}" = 1 ]; then
         echo "TEST SCRATCH PRESERVED: $scratch"
     else
@@ -92,6 +97,33 @@ run_return_to_menu_case() {
     fi
     set -- "$@" --data-dir "$case_data_root" --debug \
         --script "$script" --duration "$duration_ms"
+    removal_report="$case_root/source-removed.offset"
+    if [ "$case_label" = dm2-sourcefile-removed ]; then
+        # Remove only the task-owned staged selection after real gameplay is
+        # observed; the original media and its other staged link remain intact.
+        python3 - "$run_log" "$case_data_root" "$scratch" "$removal_report" <<'PYWATCH' &
+import pathlib
+import re
+import sys
+import time
+
+log, selected, scratch, report = map(pathlib.Path, sys.argv[1:])
+selected.relative_to(scratch)
+if selected.name != "Selected-PC.ZIP":
+    raise SystemExit("FAIL: removal target is not the staged selection")
+deadline = time.monotonic() + 50
+while time.monotonic() < deadline:
+    trace = log.read_text(encoding="utf-8") if log.exists() else ""
+    if re.search(r"startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1", trace):
+        selected.unlink()
+        report.write_text(str(len(trace)), encoding="ascii")
+        break
+    time.sleep(0.02)
+else:
+    raise SystemExit("FAIL: no original runtime before selected-file removal")
+PYWATCH
+        removal_pid=$!
+    fi
     FIRESTAFF_CONFIG_PATH="$case_root/config.toml" \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
     HOME="$case_root" XDG_CONFIG_HOME="$case_root" APPDATA="$case_root" \
@@ -102,14 +134,19 @@ run_return_to_menu_case() {
             return 1
         }
 
+    if [ -n "$removal_pid" ]; then
+        wait "$removal_pid" || return 1
+        removal_pid=
+    fi
+
     python3 - "$game" "$run_log" "$runtime_probe" "$runtime_pattern" \
-        "$launch_pattern" "$case_label" "$case_data_root" <<'PY'
+        "$launch_pattern" "$case_label" "$case_data_root" "$removal_report" <<'PY'
 import json
 import os
 import re
 import sys
 
-game_id, log_path, probe_path, runtime_pattern, launch_pattern, case_label, data_path = sys.argv[1:]
+game_id, log_path, probe_path, runtime_pattern, launch_pattern, case_label, data_path, removal_report = sys.argv[1:]
 with open(log_path, encoding="utf-8") as stream:
     trace = stream.read()
 with open(probe_path, encoding="utf-8") as stream:
@@ -140,17 +177,23 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 0 or
     raise SystemExit(
         f"FAIL: {game_id} did not finish back at the launcher: {probe}")
 
-if case_label == "dm2-sourcefile":
+if case_label.startswith("dm2-sourcefile"):
     expected_root = os.path.dirname(os.path.dirname(data_path))
     root = re.search(r"return-menu rescan-complete data=([^\n]+)", trace)
     if root is None or os.path.normpath(root.group(1)) != os.path.normpath(expected_root):
         raise SystemExit(f"FAIL: selected archive did not rescan its lexical collection: {root}")
 
+if case_label == "dm2-sourcefile-removed":
+    with open(removal_report, encoding="ascii") as stream:
+        removal_offset = int(stream.read())
+    if os.path.lexists(data_path) or removal_offset >= complete.start():
+        raise SystemExit("FAIL: selected archive was not removed before the return scan")
+
 inactive_rates = re.findall(
     r"perf game=\S+ active=0[^\n]* game-ticks-per-sec=(\S+)", trace)
 if any(float(rate) != 0.0 for rate in inactive_rates):
     raise SystemExit(f"FAIL: inactive launcher reports gameplay ticks: {inactive_rates}")
-if case_label == "dm2-sourcefile" and not inactive_rates:
+if case_label.startswith("dm2-sourcefile") and not inactive_rates:
     raise SystemExit("FAIL: selected-archive return omitted inactive performance windows")
 
 print(f"PASS: authentic {game_id} gameplay returned to the launcher and "
@@ -325,19 +368,26 @@ stage_dm1_return_data_root() {
 
 # File selection remains exact at launch; returning to the launcher must
 # inventory the surrounding data/<game> collection, not only that file.
+for sourcefile_case in dm2-sourcefile dm2-sourcefile-removed; do
 if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
-     [ "$test_mode" = dm2-sourcefile ]; } && [ -f "$dm2_dos_archive" ]; then
-    sourcefile_root="$scratch/selected-file/data"
+     [ "$test_mode" = "$sourcefile_case" ]; } && [ -f "$dm2_dos_archive" ]; then
+    sourcefile_root="$scratch/$sourcefile_case/data"
     mkdir -p "$sourcefile_root/dm1" "$sourcefile_root/csb" "$sourcefile_root/dm2"
     ln -s "$dm1_archive" "$sourcefile_root/dm1/$(basename "$dm1_archive")"
     ln -s "$csb_archive" "$sourcefile_root/csb/$(basename "$csb_archive")"
     ln -s "$dm2_dos_archive" "$sourcefile_root/dm2/Selected-PC.ZIP"
+    sourcefile_script='key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter,wait-game-runtime'
+    if [ "$sourcefile_case" = dm2-sourcefile-removed ]; then
+        ln -s "$dm2_dos_archive" "$sourcefile_root/dm2/$(basename "$dm2_dos_archive")"
+        sourcefile_script="$sourcefile_script,wait:90"
+    fi
     run_return_to_menu_case dm2 pc \
-        'key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter,wait-game-runtime,key:escape,key:enter' \
+        "$sourcefile_script,key:escape,key:enter" \
         55000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
         'launch phase=game-handoff mode=menu game=dm2 platform=PC edition=pc-en source=.*Selected-PC[.]ZIP::data/graphics[.]dat' \
-        "$sourcefile_root/dm2/Selected-PC.ZIP" 320 200 dm2-sourcefile
+        "$sourcefile_root/dm2/Selected-PC.ZIP" 320 200 "$sourcefile_case"
 fi
+done
 
 # The key sequence is the same ordinary M12 game/platform/original choice
 # used by the DM1 PC-34 and CSB FM Towns startup checks. Their source startup

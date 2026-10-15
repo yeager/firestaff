@@ -1,10 +1,9 @@
 # Firestaff TODO — DM2
 
-2026-10-15 selected-file return: existing ZIP and virtual-container roots now
-rescan their surrounding collection and pass the original DOS runtime/return
-regression. A plain archive deleted during gameplay still needs a separate
-source-provenance test: FileExists cannot distinguish that missing archive
-from a missing directory. Broader runtime/input matrices remain open.
+2026-10-15 selected-file return: existing and deleted selected ZIP aliases
+now rescan their surrounding collection using admitted member provenance.
+Both original DOS runtime/return regressions pass. Broader runtime/input
+matrices remain open.
 
 2026-10-15 explicit ZIP ownership now uses the original paired identities
 for DOS, Macintosh, FM Towns and Amiga rather than preservation filenames.

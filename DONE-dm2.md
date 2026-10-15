@@ -1,3 +1,12 @@
+- 2026-10-15: Recover the collection root even when the selected ZIP alias
+  disappears during gameplay. Previously admitted virtual-member provenance
+  identifies the missing outer archive without guessing from its extension.
+  The original DOS runtime regression removes only its staged selection link
+  after dungeon loading, then verifies DM1/CSB/DM2 rediscovery and the exact
+  lexical collection root. Existing and removed selection tests both pass
+  together in 55.93 seconds with SDL dummy drivers. Originals remain untouched;
+  native display/audio and broader gameplay parity remain unproven.
+
 - 2026-10-15: Fixed return-to-launcher inventory after a menu-started ZIP
   session. M12 derives the selected outer file's lexical parent before the
   existing common game-root promotion; it does not follow a symlink into a
