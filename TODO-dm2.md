@@ -19,6 +19,13 @@ outside the production archive. Open work:
 - Bind authentic GDAT and level-location callbacks and verify complete CLI/menu
   transitions. Original-input property tests do not prove executable parity.
 
+The private weather bootstrap/0x54 dispatcher is now implemented explicitly,
+with weather/RNG/global-byte rollback and source-generated timer tests. Runtime
+uses one session RNG, preserves it during creature binding and keeps bound
+weather timers running indoors. Complete fresh world-to-candidate weather
+transfer and authored map-load zone binding before enabling the full sequence.
+Unbound runtime weather timers are retained by the dispatcher until owned.
+
 ### Source order and constraints
 
 Reference: SKProject commit 2c59a2c5a7978923ff5c822c15c3479e4d448493.

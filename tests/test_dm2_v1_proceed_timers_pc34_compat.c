@@ -64,6 +64,13 @@ static int consumed_handler(void *context,
     return 1;
 }
 
+static int deferred_handler(void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index, DM2_V1_ProceedTimersReceipt *receipt)
+{
+    (void)context; (void)timer; (void)source_index; (void)receipt;
+    return -1;
+}
+
 static DM2_V1_SourceTimer mk_timer(uint32_t tick, int map, uint8_t type,
                                    uint8_t actor)
 {
@@ -371,6 +378,25 @@ int main(void)
               "0x02/0x58/0x59/0x5b/0x5c fail closed without handlers");
         CHECK(receipt.dispatched_count == 0,
               "none dispatched without handlers");
+    }
+
+    {
+        DM2_V1_SourceTimer original = mk_timer(0,0,DM2_V1_TIMER_UPDATE_WEATHER,0);
+        DM2_V1_SourceTimer restored;
+        uint16_t index = 0;
+        dm2_v1_source_timer_queue_init(&queue);
+        memset(&dispatcher,0,sizeof(dispatcher));
+        dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] = deferred_handler;
+        CHECK(dm2_v1_source_timer_enqueue(&queue,&original,7) ==
+            DM2_V1_SOURCE_TIMER_OK,"queue source weather event for deferral");
+        CHECK(dm2_v1_proceed_timers(&queue,0,&dispatcher,&receipt) &&
+            receipt.deferred_count == 1 && receipt.due_count == 1 &&
+            receipt.dispatched_count == 0,
+            "deferred event stops this pass without a due-event spin");
+        CHECK(dm2_v1_source_timer_pop_due(&queue,0,&restored,&index) ==
+            DM2_V1_SOURCE_TIMER_OK && index == 7 &&
+            memcmp(&original,&restored,sizeof(original)) == 0,
+            "deferral preserves exact source timer and index");
     }
 
     CHECK(strstr(dm2_v1_proceed_timers_source_evidence(),

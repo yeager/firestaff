@@ -866,11 +866,48 @@ done:
     return result;
 }
 
+static int dm2_test_owned_weather(DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadTimerProcessReceipt receipt;
+    if (!dm2_v1_game_load_world_owner_materialize_new_game_weather(owner) ||
+        !owner->source_weather_chain_valid || owner->caii_rng.random != 0x11cfaefdu ||
+        owner->timer_queue.num_timers != 1 ||
+        owner->source_weather_bootstrap.draws != 3 ||
+        owner->source_weather_globalb0 != 0) return 0;
+    for (int n = 0; n < 32; ++n) {
+        int slot = owner->timer_queue.indices[0];
+        const DM2_V1_TimerEntry *timer = &owner->timer_entries[slot];
+        if (timer->ttype != 0x54 || timer->actor != 0 ||
+            dm2_v1_timer_get_map(timer) != 0) return 0;
+        owner->timer_queue.gametick = dm2_v1_timer_get_ticks(timer);
+        if (n == 0) {
+            DM2_V1_UpdateWeatherState saved = owner->source_weather_chain;
+            DM2_V1_DropRng rng = owner->caii_rng;
+            DM2_V1_TimerEntry original = *timer;
+            owner->source_weather_chain.zone_index =
+                DM2_V1_UPDATE_WEATHER_MAX_ZONE + 1;
+            if (dm2_v1_game_load_world_owner_process_next_due_timer(owner,&receipt) ||
+                !receipt.blocked_unowned_timer || owner->timer_queue.num_timers != 1 ||
+                owner->caii_rng.random != rng.random ||
+                memcmp(&original,&owner->timer_entries[slot],sizeof(original))) return 0;
+            owner->source_weather_chain = saved;
+        }
+        if (!dm2_v1_game_load_world_owner_process_next_due_timer(owner,&receipt) ||
+            !receipt.weather.valid || owner->timer_queue.num_timers != 1 ||
+            (!!receipt.weather.transition_forced != (n == 31))) return 0;
+        if (n == 31 && (!receipt.weather_transition.valid ||
+            owner->source_weather_chain.retry != 0 ||
+            owner->source_weather_globalb0 != 0)) return 0;
+    }
+    return 1;
+}
+
 static int dm2_test_dynamic_caii_materialization(
     DM2_V1_GameLoadWorldOwner *owner)
 {
     DM2_V1_GameLoadCaiiDynamicReceipt receipt;
     int dynamic_index = 0;
+    int initial_timers = owner ? owner->timer_queue.num_timers : 0;
 
     if (!owner || !owner->caii_static_animation.valid ||
         owner->caii_map_receipt.dynamic_candidate_count == 0u ||
@@ -885,7 +922,7 @@ static int dm2_test_dynamic_caii_materialization(
         receipt.think_timer_count != receipt.dynamic_candidate_count ||
         receipt.source_hash == 0u ||
         owner->caii_slots.alloc_count != (int)receipt.dynamic_candidate_count ||
-        owner->timer_queue.num_timers != (int16_t)receipt.think_timer_count ||
+        owner->timer_queue.num_timers != initial_timers + (int16_t)receipt.think_timer_count ||
         owner->sound_owner.positional_count != receipt.noise_queue_count) {
         return 0;
     }
@@ -3639,11 +3676,15 @@ int main(void) {
         entry->w_05 = saved_raw_index;
     }
     {
-        const uint32_t post_weather_rng_state = 0x11cfaefdu;
+        uint32_t post_weather_rng_state;
         int s_prepare = profile &&
             dm2_v1_game_load_world_owner_prepare_new_game(
                 &static_caii_world_owner, profile);
-        int s_generators = s_prepare &&
+        int s_weather = s_prepare && dm2_test_owned_weather(&static_caii_world_owner);
+        post_weather_rng_state = static_caii_world_owner.caii_rng.random;
+        expect_true(s_weather,
+            "DM2 owns original cold weather timers, transition and bounds rollback");
+        int s_generators = s_weather &&
             dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                 &static_caii_world_owner, NULL);
         int s_map = s_generators &&
@@ -3652,12 +3693,6 @@ int main(void) {
         int s_spatial = s_map &&
             dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
                 &static_caii_world_owner);
-        /* SKProject's fresh weather bootstrap from seed zero consumes three
-         * source LCG draws and ends at 0x11cfaefd. Seed the authentic-data
-         * static CAII check with that verified state so it proves the static
-         * animation route does not require or consume a zero RNG state. */
-        if (s_spatial)
-            static_caii_world_owner.caii_rng.random = post_weather_rng_state;
         int s_static = s_spatial &&
             dm2_v1_game_load_world_owner_materialize_static_caii(
                 &static_caii_world_owner);

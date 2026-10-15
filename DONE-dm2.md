@@ -1,3 +1,15 @@
+- 2026-10-15: Added private cold-weather bootstrap and type-0x54 timer
+  ownership, including ordinary requeue, forced transition, exact globalb[0]
+  write and rollback of weather/RNG/heap state. The original DOS gate exercises
+  32 generated timer steps and malformed-zone rejection. Weather table bounds
+  now derive from its 132-byte span (last valid 4*z+0x70 selector is 4, not 31).
+  Runtime weather/gameplay now share one RNG and lazy creature binding no longer
+  resets it. Bound weather timers continue indoors; unavailable handlers defer
+  their exact source event and stop the pass rather than consume or spin.
+  Dispatcher/weather regressions and original DOS/Towns/Mac/Amiga New Game
+  checks pass. Bootstrap remains explicit: default preparation/arrangement,
+  fresh-candidate weather transfer and map-load zone binding remain open.
+
 - 2026-10-15: DYN4 and post-preparation champion/transaction queries now use
   a borrowed profile view of the owned dungeon. Mounted media remains unchanged
   and no local view pointer is retained. The original DOS startup/profile gate

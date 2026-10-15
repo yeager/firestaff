@@ -130,7 +130,7 @@ int dm2_v1_update_weather_1(DM2_V1_UpdateWeatherState *state,
     return 0;
 
   /* Bounds: 4*zone + 0x70 must stay inside table1d6b76[132]
-   * (zone 0..31), and (pattern_row << 5) + retry must stay inside
+   * (zone 0..4), and (pattern_row << 5) + retry must stay inside
    * v1d7108[128] (pattern_row 0..3). Anything else: no mutation. */
   if (state->zone_index < 0 ||
       state->zone_index > DM2_V1_UPDATE_WEATHER_MAX_ZONE)

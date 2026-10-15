@@ -399,6 +399,12 @@ typedef struct {
     DM2_V1_CaiiArray caii_slots;
     DM2_V1_DropRng caii_rng;
     int caii_rng_initialized;
+    /* Private c_weather state and the exact globalb[0] byte it assigns via
+     * UPDATE_GLOB_VAR(0x40,0,6). No other global variables are fabricated. */
+    DM2_V1_UpdateWeatherState source_weather_chain;
+    int source_weather_chain_valid;
+    uint8_t source_weather_globalb0;
+    DM2_V1_WeatherTransitionReceipt source_weather_bootstrap;
     DM2_V1_GameLoadCaiiStaticReceipt caii_static_animation;
     /* Published only after every dynamic DB4 candidate has completed the
      * shared slot/timer/0a48/SOUND9 transaction. */
@@ -1981,6 +1987,8 @@ typedef struct {
     DM2_V1_GameLoadTickGeneratorReceipt tick_generator;
     DM2_V1_GameLoadActuateReceipt actuate;
     DM2_V1_GameLoadDoorStepReceipt door_step;
+    DM2_V1_UpdateWeatherReceipt weather;
+    DM2_V1_WeatherTransitionReceipt weather_transition;
 } DM2_V1_GameLoadTimerProcessReceipt;
 
 /* Build a source-owned, pre-selection world from one currently mounted,
@@ -1997,6 +2005,13 @@ int dm2_v1_game_load_world_owner_init_new_game(
 void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner);
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner);
+
+/* Explicit cold GAME_LOAD weather predecessor. Requires an untouched fresh
+ * prepared owner (empty heap, tick/RNG zero); retains its shared RNG and
+ * queues the authentic map-0/actor-0 0x54 timer transactionally. Not called
+ * automatically until the complete GAME_LOAD order is installed. */
+int dm2_v1_game_load_world_owner_materialize_new_game_weather(
+    DM2_V1_GameLoadWorldOwner *owner);
 
 /* Source port of c_tim_proc.cpp::DM2_PROCESS_ACTUATOR_TICK_GENERATOR for
  * the prepared fresh-game owner. It changes only owned DB3 bytes and its

@@ -160,11 +160,22 @@ int dm2_v1_proceed_timers(DM2_V1_SourceTimerQueue *queue,
             out_receipt->fail_closed_count++;
             continue;
         }
-        if (dispatcher->handlers[type](dispatcher->context, &timer,
-                                       source_index, out_receipt)) {
-            out_receipt->dispatched_count++;
-        } else {
-            out_receipt->handler_rejected_count++;
+        {
+            int result = dispatcher->handlers[type](dispatcher->context,
+                &timer, source_index, out_receipt);
+            if (result < 0) {
+                /* A deferring handler has not mutated the queue, so the pop
+                 * guarantees room to restore this exact source event. */
+                if (dm2_v1_source_timer_enqueue(queue, &timer, source_index) !=
+                    DM2_V1_SOURCE_TIMER_OK) {
+                    out_receipt->valid = 0;
+                    return 0;
+                }
+                out_receipt->deferred_count++;
+                break;
+            }
+            if (result > 0) out_receipt->dispatched_count++;
+            else out_receipt->handler_rejected_count++;
         }
     }
     return 1;

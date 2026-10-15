@@ -318,7 +318,6 @@ struct DM2_V1_RuntimeState {
      * self-perpetuating: DM2_weather_3df7_0037 queues the next 0x54
      * timer and DM2_UPDATE_WEATHER(1) re-queues RAND16(256)+50. */
     DM2_V1_UpdateWeatherState weather_chain;
-    DM2_V1_DropRng weather_rng;
     int weather_chain_started;
     /* DM2-003/005 follow-up: session-owned DM2-002 record pools plus the
      * per-cell DM2_THINK_CREATURE binding (skproject c_querydb.cpp:1486-1507
@@ -353,7 +352,8 @@ struct DM2_V1_RuntimeState {
      * (c_1c9a.cpp:5956-5957) to the COMPLETE DM2_DELETE_CREATURE_RECORD
      * composition.  The session LCG feeds the bound drop slice; the
      * last composition receipt is kept for the runtime accessor. */
-    DM2_V1_DropRng drop_rng;
+    /* One source c_random stream shared by weather, CAII and gameplay. */
+    DM2_V1_DropRng session_rng;
     /* 2026-07-21 (round 23): session receipt for the floor-mecha CAII
      * activation wiring (0x04 timer, square class 1 ->
      * DM2_ACTUATE_FLOOR_MECHA chain walk -> DB3 record type 0x3a ->
@@ -3307,7 +3307,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     dm2_v1_weather_init(&g_dm2_runtime.weather);
     memset(&g_dm2_runtime.weather_chain, 0,
            sizeof(g_dm2_runtime.weather_chain));
-    g_dm2_runtime.weather_rng.random = 0u;
+    g_dm2_runtime.session_rng.random = 0u;
     g_dm2_runtime.weather_chain_started = 0;
     /* skweathr.cpp::DM2_UPDATE_WEATHER derives this from source-owned clock
      * state.  Leave it unknown until an accepted session supplies a value. */
@@ -4360,27 +4360,21 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->dungeon_level = game->current_level;
     rt->view_dir = game->party_dir;
     rt->outdoor = game->outdoor;
-    /* GAME_LOAD restores the s_savegamebuffer clock and c_random state
-     * before it sorts the timer heap.  On Resume, it has also restored the
-     * serialized c_weather fields; the active map's v1e1472 selector was
-     * source-derived while building the candidate.  Preserve that exact
-     * ownership through the M11 boundary rather than restarting at tick
-     * zero or re-seeding environmental randomness. */
-    if (sksave_source) {
+    /* GAME_LOAD owns one c_random stream. Resume restores its saved seed;
+     * fresh sessions continue after weather, arrangement and CAII. */
+    rt->session_rng.random = sksave_source
+        ? candidate->source_random_seed : candidate->caii_rng.random;
+    if (candidate->source_weather_chain_valid) {
         rt->tick_count = (int)candidate->source_game_tick;
-        rt->weather_rng.random = candidate->source_random_seed;
         rt->weather_chain = candidate->source_weather_chain;
-        rt->weather_chain_started = rt->outdoor ? 1 : 0;
-        rt->weather_source_timer_pending =
-            rt->weather_chain_started && source_weather_timer_pending;
-        rt->weather.weather_seed = candidate->source_random_seed;
+        rt->weather_chain_started = 1;
+        rt->weather_source_timer_pending = source_weather_timer_pending;
+        rt->weather.weather_seed = rt->session_rng.random;
         rt->weather.weather_intensity =
             (int)candidate->source_weather_chain.intensity * 100 / 255;
-        rt->source_weather_light_valid =
-            candidate->source_weather_chain_valid;
+        rt->source_weather_light_valid = 1;
     } else {
-        /* dm2data.cpp::c_dm2data initialises the fresh weather fields to
-         * zero before GAME_LOAD. Keep that exact source initial state. */
+        /* An unbound fresh candidate cannot invent an environmental chain. */
         memset(&rt->weather_chain, 0, sizeof(rt->weather_chain));
         rt->weather_chain_started = 0;
         rt->weather_source_timer_pending = 0;
@@ -6617,7 +6611,7 @@ static int16_t dm2_runtime_ccm_rand16(void *context, int16_t max)
 {
     DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
     if (!goal || !goal->runtime || max <= 0) return 0;
-    return (int16_t)dm2_v1_drops_rand16(&goal->runtime->drop_rng,
+    return (int16_t)dm2_v1_drops_rand16(&goal->runtime->session_rng,
                                         (uint16_t)max);
 }
 
@@ -6625,14 +6619,14 @@ static int16_t dm2_runtime_ccm_randdir(void *context)
 {
     DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
     return goal && goal->runtime
-        ? (int16_t)dm2_v1_drops_randdir(&goal->runtime->drop_rng) : 0;
+        ? (int16_t)dm2_v1_drops_randdir(&goal->runtime->session_rng) : 0;
 }
 
 static int dm2_runtime_ccm_randbit(void *context)
 {
     DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
     return goal && goal->runtime
-        ? (int)dm2_v1_drops_randbit(&goal->runtime->drop_rng) : 0;
+        ? (int)dm2_v1_drops_randbit(&goal->runtime->session_rng) : 0;
 }
 
 static int16_t dm2_runtime_ccm_rand_full(void *context)
@@ -7066,7 +7060,7 @@ static int dm2_runtime_apply_pending_creature_damage(
         memset(&death, 0, sizeof(death));
         if (!dm2_v1_delete_creature_record_full(
             &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
-            &rt->drop_rng, map, (unsigned long)rt->tick_count,
+            &rt->session_rng, map, (unsigned long)rt->tick_count,
             x, y, 0, 0, game->party_x, game->party_y,
             game->party_dir, drop_slots, &death))
         {
@@ -7163,7 +7157,7 @@ static int dm2_runtime_think_body(
                     &rt->caii,
                     &rt->timer_queue,
                     loader,
-                    &rt->drop_rng,
+                    &rt->session_rng,
                     creature_record,
                     &timer_copy,
                     0,
@@ -7236,11 +7230,8 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
      * c_record.cpp:1387) get the same proven provenance. */
     dm2_v1_caii_set_ai_base_hp_fn(dm2_v1_creature_ai_base_hp);
     dm2_v1_caii_set_gdat_word1_fn(dm2_v1_creature_gdat_word1);
-    /* Keep the drop RNG source-shaped for the bounded CCM path.  The 0fcb
-     * deletion branch remains unavailable here: it needs one transaction
-     * owner for c_map, 3CE7D, DB allocation cleanup, CAII and the real
-     * timer queue before it may mutate a live record graph. */
-    dm2_v1_drops_rng_init(&rt->drop_rng);
+    /* Binding creature callbacks must preserve the session RNG supplied by
+     * GAME_LOAD; this function also runs after changing maps. */
     rt->think_binding.think_body = dm2_runtime_think_body;
     rt->think_binding.think_body_context = rt;
     rt->think_binding_ready = 1;
@@ -8100,7 +8091,7 @@ static int dm2_runtime_alloc_new_creature_timer(
     memset(&something, 0, sizeof(something));
 
     if (!rt || !timer) return 0;
-    rng_backup = rt->drop_rng;
+    rng_backup = rt->session_rng;
 
     source = rt->game_load_candidate;
     dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
@@ -8154,16 +8145,16 @@ static int dm2_runtime_alloc_new_creature_timer(
     sound_backup_ready = 1;
 
     /* c_tim_proc.cpp:4253-4268 — RANDDIR, then vector direction. */
-    dir = (int)dm2_v1_drops_randdir(&rt->drop_rng);
+    dir = (int)dm2_v1_drops_randdir(&rt->session_rng);
     if (dir == 0) {
-        dir = (int)dm2_v1_drops_randdir(&rt->drop_rng);
+        dir = (int)dm2_v1_drops_randdir(&rt->session_rng);
     } else {
         dx = x - dm2_v1_runtime_get_party_x();
         dy = y - dm2_v1_runtime_get_party_y();
         adx = dx < 0 ? -dx : dx;
         ady = dy < 0 ? -dy : dy;
         if (adx == ady) {
-            if (dm2_v1_drops_randbit(&rt->drop_rng) == 0u) ++ady;
+            if (dm2_v1_drops_randbit(&rt->session_rng) == 0u) ++ady;
             else ++adx;
         }
         dir = adx >= ady ? (dx <= 0 ? 1 : 3) : (dy <= 0 ? 2 : 0);
@@ -8171,7 +8162,7 @@ static int dm2_runtime_alloc_new_creature_timer(
     dir &= 3;
     base_hp = (7 * (int)ai->BaseHP) >> 3;
     hp = base_hp + (int)dm2_v1_drops_rand16(
-        &rt->drop_rng, (uint16_t)((base_hp >> 3) + 1));
+        &rt->session_rng, (uint16_t)((base_hp >> 3) + 1));
     if (hp <= 0 || hp > 0xffff) goto alloc_creature_rollback;
 
     record_handle = dm2_v1_record_pool_alloc_new_record(
@@ -8213,7 +8204,7 @@ static int dm2_runtime_alloc_new_creature_timer(
     }
     if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
             &rt->record_pools, &rt->caii, asset_loader, ai,
-            &rt->drop_rng, record_handle, adj, &animation, map,
+            &rt->session_rng, record_handle, adj, &animation, map,
             source ? source->source_party_map : map, 0, 0, 0, x, y,
             (unsigned long)rt->tick_count, &something) < 0 ||
         !something.valid) {
@@ -8269,7 +8260,7 @@ alloc_creature_rollback:
         memset(&pool_backup, 0, sizeof(pool_backup));
     }
     if (sound_backup_ready) rt->sound_queue = sound_backup;
-    rt->drop_rng = rng_backup;
+    rt->session_rng = rng_backup;
     free(dungeon_backup);
     free(caii_backup);
     return 0;
@@ -8350,9 +8341,8 @@ static int dm2_runtime_think_creature_timer(void *user,
  * dm2_v1_update_weather_1 and re-queues the next 0x54 timer with the
  * source delay (RAND16(256)+50).  When the handler forces a transition
  * (retry > 0x1f) the runtime runs the bound DM2_weather_3df7_0037
- * (c_weather.cpp:509-567), which owns the reseed and queues the next
- * timer itself — the chain is self-perpetuating exactly like the
- * source.  The presentation weather intensity is derived from the
+ * (c_weather.cpp:509-567). The transition receipt supplies its next
+ * delay; this handler commits the replacement timer and state together.  The presentation weather intensity is derived from the
  * source intensity v1e1474 (bounded 0..255 -> 0..100 mapping); the
  * weather enum stays a host presentation selector until the arg==0
  * DM2_UPDATE_WEATHER branch is bound.
@@ -8367,48 +8357,47 @@ static int dm2_runtime_update_weather_timer(void *user,
                                             DM2_V1_ProceedTimersReceipt *receipt) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
     DM2_V1_UpdateWeatherReceipt weather_rc;
-    int delay = -1;
+    DM2_V1_UpdateWeatherState chain;
+    DM2_V1_DropRng rng;
+    DM2_V1_SourceTimer next;
+    int delay;
+    int clear_global = 0;
     (void)timer;
-    (void)source_index;
     (void)receipt;
 
-    if (!rt->outdoor || !rt->weather_chain_started) {
-        /* The chain is not running (indoor or not started); consume the
-         * timer without simulating, mirroring the source's fail-closed
-         * consumption of unowned timers. */
-        return 1;
+    if (!rt || !rt->weather_chain_started) return -1;
+    chain = rt->weather_chain;
+    rng = rt->session_rng;
+    if (!dm2_v1_update_weather_1(&chain, &rng, &weather_rc)) return -1;
+    delay = weather_rc.reschedule_delay;
+    if (weather_rc.transition_forced) {
+        DM2_V1_WeatherTransitionReceipt transition_rc;
+        memset(&transition_rc, 0, sizeof(transition_rc));
+        /* The return value is elapsed days; validity is in the receipt. */
+        (void)dm2_v1_weather_transition(&chain, rt->tick_count, 0,
+                                        &rng, &transition_rc);
+        if (!transition_rc.valid) return -1;
+        delay = transition_rc.queue_delay;
+        clear_global = transition_rc.light_update_requested;
+        if (clear_global && (!rt->boot || !rt->boot->dm2_state)) return -1;
     }
-
-    if (dm2_v1_update_weather_1(&rt->weather_chain, &rt->weather_rng,
-                                &weather_rc)) {
-        delay = weather_rc.reschedule_delay;
-        if (weather_rc.transition_forced) {
-            DM2_V1_WeatherTransitionReceipt transition_rc;
-            memset(&transition_rc, 0, sizeof(transition_rc));
-            /* The return value is days elapsed; gate on the receipt. */
-            (void)dm2_v1_weather_transition(&rt->weather_chain,
-                                            rt->tick_count, 0,
-                                            &rt->weather_rng,
-                                            &transition_rc);
-            if (transition_rc.valid) {
-                delay = transition_rc.queue_delay;
-            }
-        }
-        if (delay >= 0) {
-            DM2_V1_SourceTimer next;
-            memset(&next, 0, sizeof(next));
-            next.ticks_and_map =
-                (uint32_t)(rt->tick_count + delay) &
-                DM2_V1_SOURCE_TIMER_TICK_MASK; /* map 0: outdoor session */
-            next.type = DM2_V1_TIMER_UPDATE_WEATHER; /* 0x54 */
-            next.actor = 0; /* c_weather.cpp:28 tim.setactor(0) */
-            (void)dm2_v1_runtime_enqueue_source_timer(&next, 0);
-        }
-        /* Bounded presentation mapping: the source intensity v1e1474
-         * (0..255) drives the host weather intensity (0..100). */
-        rt->weather.weather_intensity =
-            (int)rt->weather_chain.intensity * 100 / 255;
-    }
+    if (delay < 0) return -1;
+    memset(&next, 0, sizeof(next));
+    next.ticks_and_map = (uint32_t)(rt->tick_count + delay) &
+                        DM2_V1_SOURCE_TIMER_TICK_MASK;
+    next.type = DM2_V1_TIMER_UPDATE_WEATHER; /* source map zero */
+    next.actor = 0;
+    /* Commit weather/RNG only after its continuation is admitted. A deferred
+     * handler returns -1 so the dispatcher restores the popped timer and
+     * stops this pass without advancing the source chain. */
+    if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &next, source_index) !=
+        DM2_V1_SOURCE_TIMER_OK) return -1;
+    if (clear_global)
+        ((DM2_V1_GameState *)rt->boot->dm2_state)->glob_vars.byte_vars[0] = 0;
+    rt->weather_chain = chain;
+    rt->session_rng = rng;
+    rt->weather.weather_seed = rng.random;
+    rt->weather.weather_intensity = (int)chain.intensity * 100 / 255;
     return 1;
 }
 
@@ -9243,19 +9232,19 @@ static int16_t dm2_runtime_cloud_rand16(void *ctx, int16_t n)
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
     if (!rt || n <= 0)
         return 0;
-    return (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, (uint16_t)n);
+    return (int16_t)dm2_v1_drops_rand16(&rt->session_rng, (uint16_t)n);
 }
 
 static bool dm2_runtime_cloud_randbit(void *ctx)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
-    return rt ? dm2_v1_drops_randbit(&rt->drop_rng) != 0u : false;
+    return rt ? dm2_v1_drops_randbit(&rt->session_rng) != 0u : false;
 }
 
 static uint16_t dm2_runtime_cloud_randdir(void *ctx)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
-    return rt ? dm2_v1_drops_randdir(&rt->drop_rng) : 0u;
+    return rt ? dm2_v1_drops_randdir(&rt->session_rng) : 0u;
 }
 
 static uint8_t *dm2_runtime_cloud_ai_spec_from_type(
@@ -9443,7 +9432,7 @@ static int dm2_runtime_process_cloud_timer(
     cloned = 1;
     sound_backup = rt->sound_queue;
     sound_backed_up = 1;
-    rng_backup = rt->drop_rng;
+    rng_backup = rt->session_rng;
     rng_backed_up = 1;
     party_backup = rt->source_party;
     party_backed_up = rt->source_party_valid;
@@ -9592,7 +9581,7 @@ static int dm2_runtime_process_cloud_timer(
             if (damage_receipt.damage > 0 &&
                 !dm2_v1_caii_attack_creature(
                     &rt->record_pools, dungeon, &rt->caii,
-                    &rt->timer_queue, &rt->drop_rng, map,
+                    &rt->timer_queue, &rt->session_rng, map,
                     (unsigned long)rt->tick_count,
                     creature_here, x, y, x, y, 0x200du, 0x64,
                     damage_receipt.damage, &attack_receipt))
@@ -9755,7 +9744,7 @@ cloud_runtime_rollback:
         memset(&pool_backup, 0, sizeof(pool_backup));
     }
     if (sound_backed_up) rt->sound_queue = sound_backup;
-    if (rng_backed_up) rt->drop_rng = rng_backup;
+    if (rng_backed_up) rt->session_rng = rng_backup;
     if (party_backed_up) rt->source_party = party_backup;
     if (timer_queue_backed_up) rt->timer_queue = timer_queue_backup;
     if (caii_backed_up && caii_backup && rt->caii.slots)
@@ -10976,7 +10965,7 @@ static int dm2_runtime_step_missile_timer(
             }
             cloned = 1;
             queue_backup = rt->timer_queue;
-            rng_backup = rt->drop_rng;
+            rng_backup = rt->session_rng;
             rng_cloned = 1;
             if (rt->caii.slots == NULL)
                 goto missile_rollback;
@@ -11012,7 +11001,7 @@ static int dm2_runtime_step_missile_timer(
                  * THINK_CREATURE remains the HP/death/drop owner. */
                 impact_attack_completed = dm2_v1_caii_attack_creature(
                     &rt->record_pools, dungeon, &rt->caii,
-                    &rt->timer_queue, &rt->drop_rng, map,
+                    &rt->timer_queue, &rt->session_rng, map,
                     (unsigned long)rt->tick_count,
                     creature, impact_x, impact_y, impact_x, impact_y,
                     0x200du, 100, impact_receipt.impactAttack,
@@ -11023,7 +11012,7 @@ static int dm2_runtime_step_missile_timer(
             }
             attack_completed = dm2_v1_caii_attack_creature(
                 &rt->record_pools, dungeon, &rt->caii,
-                    &rt->timer_queue, &rt->drop_rng, map,
+                    &rt->timer_queue, &rt->session_rng, map,
                     receipt ? receipt->game_tick : (unsigned long)rt->tick_count,
                     creature, impact_x, impact_y, impact_x, impact_y,
                     0x2006u, 0, 0, &attack_receipt);
@@ -11252,7 +11241,7 @@ missile_rollback:
         memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
     rt->timer_queue = queue_backup;
     if (rng_cloned)
-        rt->drop_rng = rng_backup;
+        rt->session_rng = rng_backup;
     if (caii_cloned && caii_backup && rt->caii.slots)
         memcpy(rt->caii.slots, caii_backup, (size_t)caii_backup_bytes);
     if (cloned) {
@@ -11334,15 +11323,8 @@ void dm2_v1_runtime_tick(void) {
         rt->move_cooldown_ticks--;
     }
 
-    /* SKProject c_savegame.cpp starts c_weather only from the recovered
-     * v1e14xx environment globals.  Firestaff has not yet imported those
-     * globals, so merely entering an outdoor map must not invent a chain,
-     * RNG seed, timers, clouds, rain or lightning.  A future source importer
-     * may set weather_chain_started with its complete record receipt. */
-    if (!rt->outdoor) {
-        rt->weather_chain_started = 0;
-        rt->weather_source_timer_pending = 0;
-    }
+    /* The source weather timer continues indoors. Rendering eligibility is
+     * separate from ownership of the session clock, RNG and timer chain. */
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
 
@@ -11831,7 +11813,7 @@ int dm2_v1_runtime_update_weather_frame(
     memset(&frame, 0, sizeof(frame));
     if (!dm2_v1_update_weather_0(&rt->weather_chain, (int32_t)rt->tick_count,
                                  retrieve_mask, gdat_entry_6c,
-                                 &rt->weather_rng, &frame) ||
+                                 &rt->session_rng, &frame) ||
         !frame.valid) {
         (void)dm2_v1_runtime_bind_weather_distant_environment(NULL, 0u);
         return 0;
@@ -15848,8 +15830,8 @@ static int dm2_runtime_source_party_walk_delay(DM2_V1_RuntimeState *rt,
         int16_t max_load;
 
         /* c_hero::get_adj_ability1 calls DM2_RAND16 only for the matching
-         * active enchantment.  Keep that draw on the restored c_random
-         * stream instead of using Firestaff's unrelated drop stream. */
+         * active enchantment. Keep that draw on the shared session c_random
+         * stream. */
         if (hero->ench_power != 0 && hero->ench_aura >= 3 &&
             hero->ench_aura <= 6 &&
             hero->ench_aura - 2 == DM2_ABILITY_STRENGTH) {
@@ -15859,9 +15841,9 @@ static int dm2_runtime_source_party_walk_delay(DM2_V1_RuntimeState *rt,
                                                    [DM2_CUR]) >> 7) + 1);
             DM2_V1_RandomState rng;
             if (cap <= 0) return 0;
-            rng.state = rt->weather_rng.random;
+            rng.state = rt->session_rng.random;
             source_rand = dm2_v1_rand16(&rng, cap);
-            rt->weather_rng.random = rng.state;
+            rt->session_rng.random = rng.state;
         }
         max_load = dm2_v1_hero_get_max_load_raw(hero, source_rand);
         if (max_load <= 0 || hero->weight < 0 ||
@@ -16866,8 +16848,8 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     /* skproject c_savegame.cpp::DM2_GAME_LOAD reaches the new-dungeon path
      * with a fresh timer clock. A previous session must not leak timers,
      * weather events, or its tick into the source-owned G1 entrance. The
-     * actuator tick-generator walk remains unavailable until its record
-     * owner is bound, so this reset establishes the correct empty base. */
+     * prepared GAME_LOAD candidate subsequently supplies the new session's
+     * source timer heap, environmental state and shared RNG. */
     dm2_v1_source_timer_queue_init(&g_dm2_runtime.timer_queue);
     g_dm2_runtime.tick_count = 0;
     g_dm2_runtime.move_cooldown_ticks = 0;
@@ -16876,8 +16858,8 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     dm2_v1_weather_init(&g_dm2_runtime.weather);
     memset(&g_dm2_runtime.weather_chain, 0,
            sizeof(g_dm2_runtime.weather_chain));
-    memset(&g_dm2_runtime.weather_rng, 0,
-           sizeof(g_dm2_runtime.weather_rng));
+    memset(&g_dm2_runtime.session_rng, 0,
+           sizeof(g_dm2_runtime.session_rng));
     memset(&g_dm2_runtime.timer_post_load, 0,
            sizeof(g_dm2_runtime.timer_post_load));
     memset(&g_dm2_runtime.proceed_timers, 0,
@@ -17673,7 +17655,7 @@ static int dm2_runtime_projectile_rand_mask(int mask, void *userdata)
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)userdata;
     if (!rt || mask < 0) return 0;
     if (mask >= 0x7fff) mask = 0x7fff;
-    return (int)dm2_v1_drops_rand16(&rt->drop_rng, (uint16_t)mask + 1u);
+    return (int)dm2_v1_drops_rand16(&rt->session_rng, (uint16_t)mask + 1u);
 }
 
 static uint8_t dm2_runtime_attack_cls1(void *ctx, uint16_t record)
@@ -18010,9 +17992,9 @@ static int dm2_runtime_attack_creature_at(
     request.hero_dexterity = dm2_v1_hero_use_dexterity_attribute_raw(
         hero, hero->weight, dm2_v1_hero_get_max_load_raw(hero, 0),
         rt->source_sleeping,
-        (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, 8u),
-        (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, 8u),
-        (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, 8u));
+        (int16_t)dm2_v1_drops_rand16(&rt->session_rng, 8u),
+        (int16_t)dm2_v1_drops_rand16(&rt->session_rng, 8u),
+        (int16_t)dm2_v1_drops_rand16(&rt->session_rng, 8u));
     request.hero_strength = hero->ability[DM2_ABILITY_STRENGTH][DM2_CUR];
     g_dm2_last_wield_attack.hero_dexterity = request.hero_dexterity;
     g_dm2_last_wield_attack.hero_strength = request.hero_strength;
@@ -18195,10 +18177,10 @@ static int dm2_runtime_attack_creature_at(
     }
     g_dm2_last_wield_attack.map_difficulty = request.map_difficulty;
     g_dm2_last_wield_attack.party_power_level = request.party_power_level;
-    request.rand_hit = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
-    request.rand_defense = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
-    request.rand_armor = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
-    request.rand_poison = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
+    request.rand_hit = dm2_v1_drops_rand16(&rt->session_rng, 0x100u);
+    request.rand_defense = dm2_v1_drops_rand16(&rt->session_rng, 0x100u);
+    request.rand_armor = dm2_v1_drops_rand16(&rt->session_rng, 0x100u);
+    request.rand_poison = dm2_v1_drops_rand16(&rt->session_rng, 0x100u);
     g_dm2_last_wield_attack.command_power = request.power_base;
     memset(&calculation, 0, sizeof(calculation));
     memset(&attack, 0, sizeof(attack));
@@ -18207,7 +18189,7 @@ static int dm2_runtime_attack_creature_at(
      * observability copy; it never invokes the caller-authored receipt seam. */
     if (!dm2_v1_combat_attack_creature_source(
         &request, &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
-        &rt->drop_rng, map, (unsigned long)rt->tick_count, x, y,
+        &rt->session_rng, map, (unsigned long)rt->tick_count, x, y,
         target_x, target_y, &calculation, &attack) && !attack.hp_applied)
         return 0;
     g_dm2_last_wield_attack.calculation_valid = calculation.valid;

@@ -13014,6 +13014,12 @@ typedef struct {
     int16_t *timer_indices;
     DM2_V1_TimerQueue timer_queue;
     int current_map;
+    DM2_V1_DropRng rng;
+    int rng_initialized;
+    DM2_V1_UpdateWeatherState weather;
+    int weather_valid;
+    uint8_t weather_globalb0;
+    DM2_V1_WeatherTransitionReceipt weather_bootstrap;
 } DM2_V1_GameLoadTimerSnapshot;
 
 /* The timer heap is only a small part of a source timer step: 0x04 can alter
@@ -13060,6 +13066,12 @@ static int dm2_v1_game_load_owner_timer_snapshot_take(
            (size_t)owner->timer_capacity * sizeof(*snapshot->timer_indices));
     snapshot->timer_queue = owner->timer_queue;
     snapshot->current_map = owner->current_map;
+    snapshot->rng = owner->caii_rng;
+    snapshot->rng_initialized = owner->caii_rng_initialized;
+    snapshot->weather = owner->source_weather_chain;
+    snapshot->weather_valid = owner->source_weather_chain_valid;
+    snapshot->weather_globalb0 = owner->source_weather_globalb0;
+    snapshot->weather_bootstrap = owner->source_weather_bootstrap;
     for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
         const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
         size_t main_size;
@@ -13109,6 +13121,12 @@ static void dm2_v1_game_load_owner_timer_snapshot_restore(
            (size_t)owner->timer_capacity * sizeof(*snapshot->timer_indices));
     owner->timer_queue = snapshot->timer_queue;
     owner->current_map = snapshot->current_map;
+    owner->caii_rng = snapshot->rng;
+    owner->caii_rng_initialized = snapshot->rng_initialized;
+    owner->source_weather_chain = snapshot->weather;
+    owner->source_weather_chain_valid = snapshot->weather_valid;
+    owner->source_weather_globalb0 = snapshot->weather_globalb0;
+    owner->source_weather_bootstrap = snapshot->weather_bootstrap;
     for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
         DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
         const size_t main_size = (size_t)pool->record_count * (size_t)pool->record_size;
@@ -13120,6 +13138,89 @@ static void dm2_v1_game_load_owner_timer_snapshot_restore(
             memcpy(pool->extension_bytes, snapshot->pool_extension_bytes[db],
                    extension_size);
     }
+}
+
+/* c_weather.cpp:23-31: map zero, type 0x54, actor zero, source clock+delay. */
+static int dm2_v1_game_load_owner_queue_weather(
+    DM2_V1_GameLoadWorldOwner *owner, int delay)
+{
+    DM2_V1_TimerEntry timer;
+    if (delay < 0) return 0;
+    dm2_v1_timer_entry_init(&timer);
+    dm2_v1_timer_set_mticks(&timer, 0,
+        (uint32_t)owner->timer_queue.gametick + (uint32_t)delay);
+    timer.ttype = 0x54u;
+    timer.actor = 0;
+    return dm2_v1_timer_queue(&owner->timer_queue, &timer) >= 0;
+}
+
+int dm2_v1_game_load_world_owner_materialize_new_game_weather(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadTimerSnapshot snapshot;
+    DM2_V1_UpdateWeatherState weather = {0};
+    DM2_V1_WeatherTransitionReceipt receipt;
+    DM2_V1_DropRng rng;
+    uint16_t hour = 0;
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || owner->committed ||
+        !owner->asset_loader || !owner->asset_loader->loaded ||
+        owner->source_weather_chain_valid ||
+        !owner->caii_rng_initialized || owner->caii_rng.random != 0 ||
+        owner->actuator_generators_processed ||
+        owner->timer_queue.num_timers != 0 || owner->timer_queue.gametick != 0)
+        return 0;
+    /* SKULLWIN c_savegame.cpp:538-542: absent optional GDAT returns zero,
+     * authored hour clamps to 23. dm2data.cpp initializes storm request=1. */
+    (void)dm2_v1_query_gdat_entry_data_index(owner->asset_loader, 3, 0,
+                                             11, 0, &hour);
+    if (hour > 23) hour = 23;
+    weather.day_offset = (int32_t)hour * DM2_V1_WEATHER_DAY_TICKS;
+    weather.storm_request = 1;
+    rng = owner->caii_rng;
+    (void)dm2_v1_weather_transition(&weather, 0, 0, &rng, &receipt);
+    if (!receipt.valid || !receipt.light_update_requested ||
+        !dm2_v1_game_load_owner_timer_snapshot_take(owner, &snapshot)) return 0;
+    if (!dm2_v1_game_load_owner_queue_weather(owner, receipt.queue_delay)) {
+        dm2_v1_game_load_owner_timer_snapshot_restore(owner, &snapshot);
+        dm2_v1_game_load_owner_timer_snapshot_free(&snapshot);
+        return 0;
+    }
+    owner->source_weather_chain = weather;
+    owner->source_weather_chain_valid = 1;
+    owner->source_weather_globalb0 = 0;
+    owner->source_weather_bootstrap = receipt;
+    owner->caii_rng = rng;
+    dm2_v1_game_load_owner_timer_snapshot_free(&snapshot);
+    return 1;
+}
+
+static int dm2_v1_game_load_owner_dispatch_weather(
+    DM2_V1_GameLoadWorldOwner *owner, const DM2_V1_TimerEntry *timer,
+    DM2_V1_GameLoadTimerProcessReceipt *receipt)
+{
+    int delay;
+    if (!owner->source_weather_chain_valid || !owner->caii_rng_initialized ||
+        !owner->asset_loader || !owner->asset_loader->loaded ||
+        dm2_v1_timer_get_map(timer) != 0 || timer->actor != 0) return 0;
+    /* c_tim_proc.cpp:4007 changes the current map to the timer map, but
+     * does not run LOAD_LOCALLEVEL_DYN. v1e1472 remains the selector owned
+     * by that separate map-load phase (c_loadlevel.cpp:807). Never replace
+     * it with the weather timer's deliberately constant map zero. */
+    if (!dm2_v1_update_weather_1(&owner->source_weather_chain, &owner->caii_rng,
+                                  &receipt->weather) || !receipt->weather.valid)
+        return 0;
+    delay = receipt->weather.reschedule_delay;
+    if (receipt->weather.transition_forced) {
+        (void)dm2_v1_weather_transition(&owner->source_weather_chain,
+            owner->timer_queue.gametick, 0, &owner->caii_rng,
+            &receipt->weather_transition);
+        if (!receipt->weather_transition.valid ||
+            !receipt->weather_transition.light_update_requested) return 0;
+        owner->source_weather_globalb0 = 0;
+        delay = receipt->weather_transition.queue_delay;
+    }
+    return dm2_v1_game_load_owner_queue_weather(owner, delay);
 }
 
 int dm2_v1_game_load_world_owner_process_next_due_timer(
@@ -13154,6 +13255,10 @@ int dm2_v1_game_load_world_owner_process_next_due_timer(
         goto blocked;
     owner->current_map = receipt.timer_map;
     switch (timer.ttype) {
+        case 0x54u:
+            accepted = dm2_v1_game_load_owner_dispatch_weather(
+                owner, &timer, &receipt);
+            break;
         case 0x56u:
             accepted = dm2_v1_game_load_world_owner_continue_tick_generator(
                 owner, &timer, &receipt.tick_generator);

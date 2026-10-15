@@ -63,8 +63,11 @@ enum {
 
 typedef struct DM2_V1_ProceedTimersReceipt DM2_V1_ProceedTimersReceipt;
 
-/* Return 1 when the handler consumed the timer, 0 to reject (counted,
- * dispatch continues — the source loop never aborts on a timer). */
+/* Return positive when consumed, zero to reject and continue. Negative is
+ * a host transaction deferral: leave state and queue unchanged, restore the
+ * popped timer and stop this pass. This preserves source events when their
+ * complete owner is temporarily unavailable; it is not source gameplay.
+ * Deferral applies to handlers[]; actuator_tile callbacks remain boolean. */
 typedef int (*DM2_V1_TimerTypeHandler)(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -94,6 +97,7 @@ struct DM2_V1_ProceedTimersReceipt {
     int skipped_unknown_type;     /* source `continue` on unmatched type */
     int fail_closed_count;        /* known type without a bound handler */
     int handler_rejected_count;   /* handler returned 0 */
+    int deferred_count;           /* retained event; host owner unavailable */
     int map_switches;             /* DM2_CHANGE_CURRENT_MAP_TO per pop */
     int last_map;
     int type_tally[DM2_V1_TIMER_TYPE_MATRIX_SIZE];

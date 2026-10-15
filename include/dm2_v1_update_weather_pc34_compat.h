@@ -79,7 +79,9 @@ extern "C" {
 #define DM2_V1_UPDATE_WEATHER_TABLE1D6B76_LEN 132
 #define DM2_V1_UPDATE_WEATHER_PATTERN_LEN 128
 #define DM2_V1_UPDATE_WEATHER_PATTERN_ROWS 4
-#define DM2_V1_UPDATE_WEATHER_MAX_ZONE 31
+/* Last zone whose 4*zone+0x70 flag is inside the original table. */
+#define DM2_V1_UPDATE_WEATHER_MAX_ZONE \
+    ((DM2_V1_UPDATE_WEATHER_TABLE1D6B76_LEN - 1 - 0x70) / 4)
 
 /* Weather-flag offset of zone z inside table1d6b76: 4*z + 0x70. */
 #define DM2_V1_UPDATE_WEATHER_FLAG_BASE 0x70
@@ -155,7 +157,7 @@ extern const int8_t
  *      to [0, 0xff];
  *   4. draw RAND16(256) from `rng` and report the requeue delay.
  *
- * Bounds: zone_index in 0..31 and pattern_row in 0..3 are required;
+ * Bounds: zone_index in 0..4 and pattern_row in 0..3 are required;
  * anything else returns 0 with no state mutation and receipt->valid=0.
  * `rng` is only advanced on the requeue path.
  *
@@ -299,7 +301,7 @@ typedef struct DM2_V1_UpdateWeatherFrameReceipt {
  * QUERY_GDAT_ENTRY_DATA_INDEX(8, v1d6c02, 0xb, 0x6c) value, 0 = entry
  * absent -> cloud placement path).
  *
- * Bounds / fail-closed: zone_index 0..31 is required (table read);
+ * Bounds / fail-closed: zone_index 0..4 is required (table read);
  * intensity != 0 with step == 0 is rejected up front (the source would
  * divide by v1e1484 in the thunder-volume path). NULL state or rng
  * returns 0 with no mutation (the source draws on every path). */

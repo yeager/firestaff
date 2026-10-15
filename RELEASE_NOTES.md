@@ -10,6 +10,8 @@
 
 ## Developer changes
 
+- `DM2 weather ownership`: share the runtime RNG with gameplay, preserve it during creature binding, retain bound indoor weather timers and reject out-of-range zone reads. Add an explicit private cold-weather/timer transaction; full fresh-game arrangement integration remains open.
+
 - `DM2 New Game ownership`: query the prepared world's dungeon for later champion and DYN4 receipts. Original-media startup tests cover DOS, FM Towns, Mac and Amiga. The test-only arranger can now serialize and reload synchronized record/map data; full session integration remains open.
 
 - `DM2 code cleanup`: remove the unused direction-only arranger and duplicate tests; retain one all-branch candidate with original-data rollback checks.
