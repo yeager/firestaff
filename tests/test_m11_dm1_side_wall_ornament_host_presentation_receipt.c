@@ -143,6 +143,94 @@ done:
 
 /* Original MEDIA009 C013, not a generated arrow raster. Optional so the
  * ordinary PC-only test keeps its existing corpus requirement. */
+static unsigned int source_pixel_hash(const M11_AssetSlot* slot)
+{
+    unsigned int hash=2166136261u;
+    for (size_t i=0; i<(size_t)slot->width*slot->height; ++i) hash=(hash^slot->pixels[i])*16777619u;
+    return hash;
+}
+
+/* Independent G0163/F0096 oracle, using only pixels decoded from originals.
+ * DUNVIEW.C:581-594 and2389-2408 specify padded source strides and crops. */
+static int check_original_legacy_walls(M11_GameViewState* state, const char* edition)
+{
+    static const struct {
+        DM1_ViewSquareIndex square; int record, stride, height, left, top, width, sourceX; int center;
+    } cases[] = {
+        {DM1_VIEW_SQUARE_D3L,88,128,51,0,25,84,32,0},
+        {DM1_VIEW_SQUARE_D3C,88,128,51,74,25,76,18,1},
+        {DM1_VIEW_SQUARE_D3R,88,128,51,139,25,85,0,0},
+        {DM1_VIEW_SQUARE_D2L,87,144,71,0,20,75,61,0},
+        {DM1_VIEW_SQUARE_D2C,87,144,71,60,20,104,16,1},
+        {DM1_VIEW_SQUARE_D2R,87,144,71,149,20,75,0,0},
+        {DM1_VIEW_SQUARE_D1L,86,256,111,0,9,64,192,0},
+        {DM1_VIEW_SQUARE_D1C,86,256,111,32,9,160,48,1},
+        {DM1_VIEW_SQUARE_D1R,86,256,111,160,9,64,0,0},
+        {DM1_VIEW_SQUARE_D0L,85,32,136,0,0,32,0,0},
+        {DM1_VIEW_SQUARE_D0R,84,32,136,192,0,32,0,0}
+    };
+    const M11_AssetSlot* originals[5];
+    unsigned int hashes[5];
+    unsigned char framebuffer[320*200];
+    int mapX=state->world.party.mapX, mapY=state->world.party.mapY;
+    int direction=state->world.party.direction;
+    int wallSet=state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
+    for (int i=0;i<5;++i) {
+        originals[i]=M11_AssetLoader_Load(&state->assetLoader,(unsigned int)(84+i+wallSet*13));
+        if (!originals[i] || !originals[i]->pixels) return 0;
+        hashes[i]=source_pixel_hash(originals[i]);
+    }
+    /* The preceding full Draw may already own the real cache. Release it
+     * before deliberately exercising a failed-allocation capability. */
+    free(state->dm1LegacyWallCache);
+    state->dm1LegacyWallCache = NULL;
+    for (int capability=0;capability<2;++capability) {
+        /* Deliberately exercise the allocation-failure/native capability
+         * state. This changes ownership policy, never original media bytes. */
+        state->dm1LegacyWallCacheCapability=capability ? 0 : -1;
+        for (int parity=0;parity<2;++parity) for (size_t c=0;c<sizeof(cases)/sizeof(cases[0]);++c) {
+            const int flipped=capability && parity;
+            int record=cases[c].record;
+            const M11_AssetSlot* source;
+            state->world.party.mapX=parity;
+            state->world.party.mapY=state->world.party.direction=0;
+            if (flipped && record==84) record=85;
+            else if (flipped && record==85) record=84;
+            source=originals[record-84];
+            if (source->width!=cases[c].stride || source->height!=cases[c].height) return 0;
+            memset(framebuffer,0xe7,sizeof(framebuffer));
+            if (!M11_GameView_ProbeDrawDm1LegacyWall(state,cases[c].square,framebuffer,320,200) ||
+                state->dm1LegacyWallCacheCapability!=(capability ? 1 : -1)) return 0;
+            for (int y=0;y<200;++y) for (int x=0;x<320;++x) {
+                unsigned char expected=0xe7;
+                if (x>=cases[c].left && x<cases[c].left+cases[c].width &&
+                    y>=33+cases[c].top && y<33+cases[c].top+cases[c].height) {
+                    int sx=cases[c].sourceX+x-cases[c].left;
+                    const int sy=y-33-cases[c].top;
+                    unsigned char pixel;
+                    if (flipped) {
+                        int content=record==88 ? 116 : record==87 ? 136 : cases[c].stride;
+                        int shift=record==88 ? 11 : record==87 ? 8 : 0;
+                        pixel=sx>=content ? 10 : source->pixels[sy*cases[c].stride+cases[c].stride-1-sx-shift];
+                    } else pixel=source->pixels[sy*cases[c].stride+sx];
+                    if (cases[c].center || pixel!=10) expected=pixel;
+                }
+                if (framebuffer[y*320+x]!=expected) {
+                    fprintf(stderr,"%s legacy wall capability%d parity%d case%zu pixel%d,%d got%u expected%u\n",
+                        edition,capability,parity,c,x,y,framebuffer[y*320+x],expected);
+                    return 0;
+                }
+            }
+        }
+        printf("PASS: original %s MEDIA009 capability%d eleven full wall rasters both parities\n",edition,capability);
+    }
+    for (int i=0;i<5;++i) if (source_pixel_hash(originals[i])!=hashes[i]) return 0;
+    state->world.party.mapX=mapX;
+    state->world.party.mapY=mapY;
+    state->world.party.direction=direction;
+    return 1;
+}
+
 static int check_original_legacy_arrows(const char *env_name,
                                         const char *edition,
                                         const char *graphics_md5,
@@ -194,7 +282,27 @@ static int check_original_legacy_arrows(const char *env_name,
         }
     }
     if (!nonblack) goto done;
+    if (!check_original_legacy_walls(state,edition)) goto done;
     printf("PASS: original %s C013 matches all 4320 presented indices\n", edition);
+    {
+        static const int turn_x[4] = { 257, 243, 314, 300 };
+        for (int click = 0; click < 4; ++click) {
+            int direction, expected;
+            M11_GameView_Shutdown(state);
+            M11_GameView_Init(state);
+            if (!M11_GameView_Start(state, &spec)) goto done;
+            direction = state->world.party.direction;
+            expected = (direction + (click < 2 ? 3 : 1)) & 3;
+            if (M11_GameView_HandlePointer(state, turn_x[click], 135, 1) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state->world.party.direction != expected) {
+                fprintf(stderr, "FAIL: %s turn click at %d,135 direction %d expected %d\n",
+                    edition, turn_x[click], state->world.party.direction, expected);
+                goto done;
+            }
+        }
+        printf("PASS: original %s native turn edges and centers change direction\n", edition);
+    }
     result = 1;
 done:
     if (!result) fprintf(stderr, "FAIL: original %s native movement arrows\n", edition);

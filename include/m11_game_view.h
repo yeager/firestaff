@@ -909,6 +909,10 @@ typedef struct {
     /* Asset loader for GRAPHICS.DAT-backed rendering */
     M11_AssetLoader assetLoader;
     int assetsAvailable; /* 1 if assetLoader is ready */
+    /* Host-owned F0461 capability, not an emulated original heap-size fact.
+     * 0=unattempted, 1=all five buffers owned, -1=allocation failed/native. */
+    void* dm1LegacyWallCache;
+    int dm1LegacyWallCacheCapability;
     /* ReDMCSB OBJECT.C F0031: raw M564 stream, indexed by F0033 icon. */
     int dm1ObjectNameTableValid;
     char dm1ObjectNames[199][96]; /* UTF-8 presentation keys; CP932 may expand 3x. */
@@ -3628,6 +3632,11 @@ void M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
 void M11_GameView_ProbeDrawDm1ViewportBackground(
     const M11_GameViewState* state, unsigned char* framebuffer,
     int framebufferWidth, int framebufferHeight);
+
+/* Test-only route through the production MEDIA009 front/side endpoints. */
+int M11_GameView_ProbeDrawDm1LegacyWall(
+    M11_GameViewState* state, DM1_ViewSquareIndex square,
+    unsigned char* framebuffer, int framebufferWidth, int framebufferHeight);
 
 /* Test-only entry to the production F0104/F0105 wall-material endpoint.
  * The caller must initialize an original PC34 GRAPHICS.DAT loader. */

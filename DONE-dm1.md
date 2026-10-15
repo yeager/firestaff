@@ -1,3 +1,17 @@
+- 2026-10-15: Early Amiga/Atari production wall endpoints now consume
+  native MEDIA009 compounds and G0163 pixel strides, not separate PC wall
+  records. F0096-derived buffers preserve shifted D3/D2 flips, D1 flips,
+  D0 source swaps, C10 side transparency and opaque center walls. A bounded
+  host-owned 53,872-pixel allocation admits cache capability; allocation
+  failure consistently retains native walls, without claiming original
+  hardware heap accounting. Shutdown and fresh launch release ownership.
+  Original demo and Atari 1.2 regressions pass eleven complete wall rasters,
+  both parities and both capability states, with immutable source hashes.
+  Their completed dungeon captures contain real walls, background and
+  controls. Native 28-pixel turn-button dead strips are also corrected;
+  original center/outer-strip clicks pass on both editions. Other editions,
+  native palettes and complete frame parity remain open.
+
 - 2026-10-15: Restore early Amiga F0098 floor/ceiling records 75/76 and
   their native 224x70 / 224x29 parity regions; A36 keeps its later order.
   Restore the MEDIA009 C013 movement panel at (224,124), 96x45, for early
@@ -18,6 +32,10 @@
   presents per five-second window (54.94/55.08 draws per second), with
   source ticks near 5/s. This verifies instrumentation, not physical-display
   60 FPS, GPU utilization or full gameplay performance parity.
+  A subsequent native Cocoa run on Apple M4 passes three stable 60.00
+  source-draw/present FPS windows with original PC34 media, including
+  301 draws and 301 presents over 5.017 s. Its actual 1920x1018 drawable
+  uses density 1, so this does not verify HiDPI 2x or GPU utilization.
 
 - 2026-10-15: Fresh accepted DM1 keyboard steps can close the source
   input wait immediately instead of waiting for its idle deadline. A

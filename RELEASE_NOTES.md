@@ -2,9 +2,13 @@
 
 ## User-facing changes
 
+- `DM1 early Amiga/Atari walls`: draw the native compound wall images with
+  original cropping, row strides and shifted mirrored caches. Restore the
+  full turn-button click areas beside the native movement panel.
+
 - `DM1 Amiga/Atari`: use the original early Amiga floor and ceiling records
   and restore the native movement panel for early Amiga and Atari ST.
-  Legacy wall composition remains under correction.
+  Other editions and complete frame parity remain under verification.
 
 - `Debug rendering`: `--debug-full-redraw` performs actual source redraws;
   performance logs separate source draws from presents and include source

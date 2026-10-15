@@ -24845,6 +24845,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     nexus_v2_lighting_runtime_shutdown();
     nexus_v2_smooth_movement_runtime_shutdown();
     nexus_v2_touch_runtime_shutdown();
+    free(state->dm1LegacyWallCache);
+    state->dm1LegacyWallCache = NULL;
+    state->dm1LegacyWallCacheCapability = 0;
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -25665,6 +25668,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (!state || !spec || !spec->title) {
         return 0;
     }
+    /* A fresh launch cannot retain a derived generation from an old loader. */
+    free(state->dm1LegacyWallCache);
+    state->dm1LegacyWallCache = NULL;
+    state->dm1LegacyWallCacheCapability = 0;
     state->presentationMode = spec->presentationMode;
     state->presentationWidth = spec->presentationWidth;
     state->presentationHeight = spec->presentationHeight;
@@ -38912,6 +38919,21 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 }
             }
         }
+        if (m11_is_dm1_source_kind(state->sourceKind) &&
+            (state->assetLoader.atariStDm1 ||
+             (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian &&
+              !state->assetLoader.dm1Amiga36))) {
+            /* COMMAND.C:106-114, MEDIA009 G0448, uses inclusive 28-pixel
+             * turn boxes. Later C068/C069 zone widths omit their rightmost
+             * nine pixels, although the native C013 button remains there. */
+            if (m11_point_in_rect(x, y, 234, 125, 28, 21)) {
+                command = 1;
+                zoneId = 68;
+            } else if (m11_point_in_rect(x, y, 291, 125, 28, 21)) {
+                command = 2;
+                zoneId = 69;
+            }
+        }
         (void)space;
         /* ReDMCSB COMMAND.C G0448: C068/C070/C069/C073/C072/C071 →
          * commands 1/3/2/6/5/4. Commands 1/2 are absolute turn;
@@ -44258,6 +44280,120 @@ static int m11_dm1_use_flipped_walls(const M11_GameViewState* state) {
         state->world.party.direction);
 }
 
+/* MEDIA009 uses G0163 frames and padded IMG1 rows, never C696 zones.
+ * ReDMCSB DEFS.H:2270-2301; DUNVIEW.C:581-594,2389-2408,3048-3080.
+ * The five bounded buffers model F0461 ownership on the host: allocation
+ * success admits flipped-cache capability; failure consistently selects the
+ * source low-memory native-wall path. This does not claim original heap
+ * bounds or G0661 accounting (MEMORY.C:983-1030). */
+typedef struct M11_DM1LegacyWallCache {
+    const void* sourceIdentity;
+    int wallSet;
+    int valid;
+    unsigned char pixels[53872];
+} M11_DM1LegacyWallCache;
+
+static int m11_is_dm1_media009(const M11_GameViewState* state)
+{
+    return state && strcmp(state->sourceId, "dm1") == 0 &&
+        (state->assetLoader.atariStDm1 ||
+         (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian));
+}
+
+static int m11_draw_dm1_media009_wall(
+    const M11_GameViewState* state, unsigned char* framebuffer,
+    int fbW, int fbH, DM1_ViewSquareIndex square, int transparentColor)
+{
+    static const unsigned int records[5] = {88,87,86,84,85};
+    static const int widths[5] = {128,144,256,32,32};
+    static const int heights[5] = {51,71,111,136,136};
+    static const size_t offsets[5] = {0,6528,16752,45168,49520};
+    M11_GameViewState* owner = (M11_GameViewState*)state;
+    M11_DM1LegacyWallCache* cache;
+    const DM1_WallFrame* frame;
+    const M11_AssetSlot* source;
+    const unsigned char* pixels;
+    DM1_ViewportBlitClipGate clip;
+    int member, wallSet, flip, x, y;
+    const void* identity;
+    if (!m11_is_dm1_media009(state) || !framebuffer ||
+        !state->assetsAvailable || !m11_current_map_wall_set(state, &wallSet)) return 0;
+    switch (square) {
+    case DM1_VIEW_SQUARE_D3L: case DM1_VIEW_SQUARE_D3C: case DM1_VIEW_SQUARE_D3R: member=0; break;
+    case DM1_VIEW_SQUARE_D2L: case DM1_VIEW_SQUARE_D2C: case DM1_VIEW_SQUARE_D2R: member=1; break;
+    case DM1_VIEW_SQUARE_D1L: case DM1_VIEW_SQUARE_D1C: case DM1_VIEW_SQUARE_D1R: member=2; break;
+    case DM1_VIEW_SQUARE_D0L: member=3; break;
+    case DM1_VIEW_SQUARE_D0R: member=4; break;
+    default: return 0;
+    }
+    frame = dm1_viewport_3d_get_wall_frame(square);
+    if (!frame || (int)frame->byte_width * 2 != widths[member] ||
+        frame->height != heights[member]) return 0;
+    /* D0 original order is right84/left85; the derived order is left/right. */
+    source = M11_AssetLoader_Load(&owner->assetLoader,
+        (unsigned int)wallSet * 13u +
+        (member == 3 ? 85u : member == 4 ? 84u : records[member]));
+    if (!source || !source->loaded || !source->pixels ||
+        source->width != widths[member] || source->height != heights[member]) return 0;
+    if (owner->dm1LegacyWallCacheCapability == 0) {
+        owner->dm1LegacyWallCache = malloc(sizeof(M11_DM1LegacyWallCache));
+        owner->dm1LegacyWallCacheCapability = owner->dm1LegacyWallCache ? 1 : -1;
+        if (owner->dm1LegacyWallCache) memset(owner->dm1LegacyWallCache, 0, sizeof(M11_DM1LegacyWallCache));
+    }
+    cache = (M11_DM1LegacyWallCache*)owner->dm1LegacyWallCache;
+    flip = m11_dm1_use_flipped_walls(state) && owner->dm1LegacyWallCacheCapability == 1;
+    pixels = source->pixels;
+    if (flip) {
+        const M11_AssetSlot* originals[5];
+        identity = state->assetLoader.atariStDm1
+            ? state->assetLoader.atariStData : state->assetLoader.legacyData;
+        if (!cache || !identity) return 0;
+        if (!cache->valid || cache->sourceIdentity != identity || cache->wallSet != wallSet) {
+            for (int i = 0; i < 5; ++i) {
+                originals[i] = M11_AssetLoader_Load(&owner->assetLoader,
+                    (unsigned int)wallSet * 13u + records[i]);
+                if (!originals[i] || !originals[i]->loaded || !originals[i]->pixels ||
+                    originals[i]->width != widths[i] || originals[i]->height != heights[i]) return 0;
+            }
+            /* F0096 flips complete padded rows, then copies116 D3 pixels
+             * from source11 and136 D2 pixels from source8 into C10-filled buffers.
+             * The native records are never modified or aliased as derived. */
+            for (int i = 0; i < 5; ++i) {
+                const int shift = i == 0 ? 11 : i == 1 ? 8 : 0;
+                const int contentWidth = i == 0 ? 116 : i == 1 ? 136 : widths[i];
+                for (y = 0; y < heights[i]; ++y) {
+                    for (x = 0; x < widths[i]; ++x) {
+                        cache->pixels[offsets[i] + (size_t)y * widths[i] + x] =
+                            x < contentWidth
+                                ? originals[i]->pixels[y * widths[i] + widths[i] - 1 - x - shift]
+                                : 10;
+                    }
+                }
+            }
+            cache->sourceIdentity = identity;
+            cache->wallSet = wallSet;
+            cache->valid = 1;
+        }
+        pixels = cache->pixels + offsets[member];
+    }
+    clip = dm1_viewport_3d_resolve_wall_blit_clip_gate(
+        frame, widths[member], heights[member]);
+    if (!clip.visible) return 0;
+    for (y = 0; y < clip.height; ++y) {
+        for (x = 0; x < clip.width; ++x) {
+            const int dx = clip.dst_x + x;
+            const int dy = M11_VIEWPORT_Y + clip.dst_y + y;
+            const unsigned char pixel = pixels[
+                (clip.src_y + y) * widths[member] + clip.src_x + x];
+            if (dx >= 0 && dx < fbW && dy >= 0 && dy < fbH &&
+                (transparentColor < 0 || pixel != (unsigned char)transparentColor)) {
+                framebuffer[dy * fbW + dx] = pixel;
+            }
+        }
+    }
+    return 1;
+}
+
 /* Blit a wall-front graphic with horizontal flip (no transparency).
  * Mirrors ReDMCSB F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally
  * for the wall-set swap path. */
@@ -44273,6 +44409,12 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
     int y;
     if (!state || !state->assetsAvailable || !blit || !framebuffer) {
         return 0;
+    }
+    if (m11_is_dm1_media009(state)) {
+        const DM1_ViewSquareIndex centers[3] = {DM1_VIEW_SQUARE_D1C, DM1_VIEW_SQUARE_D2C, DM1_VIEW_SQUARE_D3C};
+        return blit->depthIndex >= 0 && blit->depthIndex < 3 &&
+            m11_draw_dm1_media009_wall(state, framebuffer, fbW, fbH,
+                centers[blit->depthIndex], transparentColor);
     }
     if (m11_is_dm1_fmtowns(state)) {
         int handled;
@@ -44382,6 +44524,12 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
     }
+    if (m11_is_dm1_media009(state)) {
+        const DM1_ViewSquareIndex centers[3] = {DM1_VIEW_SQUARE_D1C, DM1_VIEW_SQUARE_D2C, DM1_VIEW_SQUARE_D3C};
+        return blit->depthIndex >= 0 && blit->depthIndex < 3 &&
+            m11_draw_dm1_media009_wall(state, framebuffer, fbW, fbH,
+                centers[blit->depthIndex], transparentColor);
+    }
     if (m11_is_dm1_fmtowns(state)) {
         int handled;
         int drawn = m11_draw_fmtowns_wall_layout_asset(
@@ -44439,6 +44587,10 @@ static int m11_draw_dm1_side_wall_host_receipt(
     if (!state || !state->assetsAvailable || !framebuffer || !receipt ||
         !receipt->handled || !receipt->draw_wall || !receipt->material.valid) {
         return 0;
+    }
+    if (m11_is_dm1_media009(state)) {
+        return m11_draw_dm1_media009_wall(state, framebuffer, fbW, fbH,
+            receipt->square, receipt->material.transparent_color);
     }
     if (m11_is_dm1_fmtowns(state)) {
         unsigned int semantic;
@@ -72384,6 +72536,27 @@ void M11_GameView_ProbeDrawDm1ViewportBackground(
 {
     m11_draw_viewport_background(state, framebuffer, framebufferWidth,
         framebufferHeight, 0, 33, DM1_VIEWPORT_WIDTH, DM1_VIEWPORT_HEIGHT);
+}
+
+int M11_GameView_ProbeDrawDm1LegacyWall(
+    M11_GameViewState* state, DM1_ViewSquareIndex square,
+    unsigned char* framebuffer, int framebufferWidth, int framebufferHeight)
+{
+    const DM1_ViewportWallDrawSpec* spec = dm1_viewport_3d_get_wall_draw_spec_for_square(square);
+    DM1_ViewportSideWallHostReceiptPc34 receipt;
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility =
+        dm1_viewport_3d_lane_visibility_from_cells_pc34(NULL,NULL,NULL,NULL,NULL);
+    int wallSet;
+    if (!spec || !m11_is_dm1_media009(state) || !m11_current_map_wall_set(state,&wallSet)) return 0;
+    if (square==DM1_VIEW_SQUARE_D1C || square==DM1_VIEW_SQUARE_D2C || square==DM1_VIEW_SQUARE_D3C) {
+        M11_DM1WallFrontBlit blit;
+        memset(&blit,0,sizeof(blit));
+        blit.depthIndex=square==DM1_VIEW_SQUARE_D1C ? 0 : square==DM1_VIEW_SQUARE_D2C ? 1 : 2;
+        return m11_draw_dm1_front_wall_blit(state,framebuffer,framebufferWidth,framebufferHeight,&blit);
+    }
+    if (!dm1_viewport_3d_build_side_wall_host_receipt_pc34(square,wallSet,
+            m11_dm1_use_flipped_walls(state)!=0,true,false,3,&visibility,&receipt)) return 0;
+    return m11_draw_dm1_side_wall_host_receipt(state,framebuffer,framebufferWidth,framebufferHeight,&receipt);
 }
 
 int M11_GameView_ProbeDrawDm1SideWallHostReceipt(

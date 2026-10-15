@@ -1,29 +1,23 @@
 # Firestaff TODO — DM1
 
-2026-10-15 early Amiga runtime layers: direct original-demo Draw probing
-confirms assets decode but the old page has only black low-nibble indices.
-Three independent material admissions are wrong: floor/ceiling use PC78/79
-instead of native75/76, the C01396x45 panel is rejected by the PC87x45 gate,
-and native wall compounds77..89 are addressed as separate PC93..107 images
-(the demo supplies black16x4 placeholders there). Background and arrow fixes
-have production original-data regressions; wall composition remains open.
-For MEDIA009 walls reuse G0163 frames with pixel stride twice byteWidth,
-original D0L/R84/85, D1/2/3 compounds86/87/88 and narrowD389. F0096
-(DUNVIEW.C2389–2408) creates shifted flipped caches: D3 flip128 then source
-x11/copy116 into C10 padding, D2 flip144 then sourcex8/copy136, D1 flip256,
-D0 swap plus flip32. Preserve F0128's large-memory condition (8378–8393),
-C10 side transparency, opaque centers and immutable native records. Towns
-C696 crops are a distinct source path. Native Amiga palette selection also
-remains open; missing palette alone did not explain the original black page.
+2026-10-15 early Amiga/Atari runtime layers: original A20E background,
+demo/Atari 1.2 native arrows, turn-button click strips and eleven MEDIA009
+wall positions now have complete original-pixel regressions. Actual demo
+and Atari dungeon captures show these layers. The bounded host cache
+capability models native allocation ownership, not original hardware heap
+accounting. Verify other catalogue editions, door/stair/ornament routes,
+HUD interactions, frame-aligned original captures and native audio. Amiga
+runtime palette selection remains open; current VGA fallback is not an
+original Amiga palette. These targeted fixes do not complete all DM1 support.
 
 2026-10-15 PC34 viewport followup: the specific D2 side-wall geometry and
 fresh-key input delay have original-data/source evidence. These fixes do not
 establish full viewport parity at every map/pose. Obtain the reported scene
 and compare matching original poses for remaining wall artifacts. Debug
 performance: source redraws and compose costs are now counted, with an
-original-media dummy SDL regression. Verify native display throughput and
-CPU cost across platforms before claiming 60 FPS; GPU utilization remains
-unavailable.
+original-media dummy SDL regression. A native M4/Cocoa PC34 initial-Hall
+run reaches 60 source-draw/present FPS at density 1. HiDPI, other scenes and
+platforms still require coverage; GPU utilization remains unavailable.
 
 2026-10-15 repeated loose graphics: complete same-parent ownership is now
 verified with original Amiga demo, Atari 1.2 English and PC34 English media,
