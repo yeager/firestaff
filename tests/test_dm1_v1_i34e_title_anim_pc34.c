@@ -52,7 +52,7 @@ static void test_stream(void) {
     assert(pos == sizeof(data));
     assert(dm1_v1_i34e_title_anim_pc34_init(&state, data, sizeof(data)));
     assert(dm1_v1_i34e_title_anim_pc34_step(&state, &frame) == 1);
-    assert(frame.frame_index == 0u && frame.source_delay_vblanks == 7u);
+    assert(frame.frame_index == 0u && frame.source_counter_units == 7u);
     assert(frame.break_allowed && frame.pixels[0] == 3u &&
            frame.pixels[63999] == 3u);
     assert(frame.palette[4].r == 19u && frame.palette[4].g == 47u &&
@@ -62,7 +62,7 @@ static void test_stream(void) {
     put_be16(data + en_delay_offset, 1u);
     assert(dm1_v1_i34e_title_anim_pc34_init(&state, data, sizeof(data)));
     assert(dm1_v1_i34e_title_anim_pc34_step(&state, &frame) == 1);
-    assert(frame.source_delay_vblanks == 5u);
+    assert(frame.source_counter_units == 1u);
     assert(!dm1_v1_i34e_title_anim_pc34_init(&state, data, 13u));
 }
 
@@ -91,6 +91,37 @@ static void test_source_ordered_erase(void) {
                                               sizeof(pixels), 1024u) == 0);
     assert(dm1_v1_i34e_title_erase_pc34_step(&state, pixels,
                                               sizeof(pixels) - 1u, 1u) == -1);
+}
+
+static void test_default_pit_timing(void) {
+    uint64_t deadline, next;
+    /* Active-clock milliseconds either side of the first 54.9254 ms IRQ. */
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(0u, 54u, 1u) == 55u);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(0u, 55u, 1u) == 110u);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(0u, 56u, 1u) == 110u);
+    /* This phase is exactly on an IRQ in rational PIT time. */
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(0u, 65536000u, 1u) == 65536055u);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(1000u, 1000u, 0u) == 1000u);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(1000u, 1000u, 1u) == 1055u);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(1000u, 1000u, 3u) == 1055u);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(1000u, 1000u, 4u) == 1110u);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(0u, 0u, 65535u) ==
+           (UINT64_C(21845) * 65536000u + 1193181u) / 1193182u);
+    /* Counter assignment precedes decode. Overrun consumes the wait; the
+     * next assignment discards the old negative counter, not future time. */
+    deadline = dm1_v1_i34e_title_pc34_deadline_ms(0u, 0u, 1u);
+    assert(100u >= deadline);
+    next = dm1_v1_i34e_title_pc34_deadline_ms(0u, 100u, 1u);
+    assert(next == 110u && next > 100u);
+    /* m11_intro_active_ticks is wall time minus accumulated focus pauses.
+     * A paused wall clock must not consume callbacks or shift phase. */
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(0u, 1040u - 1000u, 1u) ==
+           dm1_v1_i34e_title_pc34_deadline_ms(0u, 40u, 1u));
+    assert(1054u - 1000u < deadline && 1055u - 1000u >= deadline);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(10u, 9u, 1u) == UINT64_MAX);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(UINT64_MAX - 1u,
+           UINT64_MAX - 1u, 1u) == UINT64_MAX);
+    assert(dm1_v1_i34e_title_pc34_deadline_ms(0u, UINT64_MAX, 65535u) == UINT64_MAX);
 }
 
 /* The original launch table distinguishes TITLE's start erase from END's
@@ -145,6 +176,7 @@ static int test_authentic_media(void) {
     DM1_V1_I34ETitleAnimPc34 state;
     DM1_V1_I34ETitleAnimFramePc34 frame;
     unsigned frames = 0u;
+    unsigned counter_units = 0u;
     int result;
     int sha_ok, hash_ok, init_ok;
     if (!path || !path[0]) return 77;
@@ -168,10 +200,16 @@ static int test_authentic_media(void) {
                 digest, size, sha_ok, hash_ok, init_ok);
         free(data); return 1;
     }
-    while ((result = dm1_v1_i34e_title_anim_pc34_step(&state, &frame)) == 1)
+    while ((result = dm1_v1_i34e_title_anim_pc34_step(&state, &frame)) == 1) {
+        if (frame.source_counter_units != 1u) {
+            free(data);
+            return 1;
+        }
+        counter_units += frame.source_counter_units;
         ++frames;
+    }
     free(data);
-    if (result != 0 || frames != 53u || !state.finished) {
+    if (result != 0 || frames != 53u || counter_units != 53u || !state.finished) {
         fprintf(stderr, "FAIL: authentic TITLE result=%d frames=%u offset=%zu size=%zu\n",
                 result, frames, state.offset, state.size);
         return 1;
@@ -182,6 +220,7 @@ static int test_authentic_media(void) {
 
 int main(void) {
     test_stream();
+    test_default_pit_timing();
     test_source_ordered_erase();
     {
         int result = test_authentic_media();

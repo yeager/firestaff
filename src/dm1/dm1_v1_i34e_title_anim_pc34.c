@@ -97,11 +97,9 @@ int dm1_v1_i34e_title_anim_pc34_step(
             out_frame->palette = state->palette;
             out_frame->width = state->width;
             out_frame->height = state->height;
-            /* Retained host timing approximation pending IBMIO callback
-             * calibration. PC34 ANIM.C:2043 uses raw attributes; the min-5
-             * branch at2044-2048 is PC98, and F2275 is FM Towns. Do not claim
-             * these modeled ticks establish PC34 source timing parity. */
-            out_frame->source_delay_vblanks = attributes < 5u ? 5u : attributes;
+            /* PC34 ANIM.C main:2043 assigns raw attributes before F8288;
+             * only PC98's conditional branch imposes a five-unit minimum. */
+            out_frame->source_counter_units = attributes;
             out_frame->frame_index = state->frame_index++;
             out_frame->break_allowed = state->break_allowed;
             return 1;
@@ -155,4 +153,31 @@ int dm1_v1_i34e_title_erase_pc34_step(DM1_V1_I34ETitleErasePc34 *state,
         return 0;
     }
     return 1;
+}
+
+uint64_t dm1_v1_i34e_title_pc34_deadline_ms(uint64_t epoch_ms,
+    uint64_t frame_started_ms, uint16_t counter_units) {
+    /* IBMIO.C F8114:1280-1290 returns 3; F8117:1608-1650 preserves
+     * the BIOS cadence through the PIT reload accumulator. ANIM.C F8298:
+     * 1628 subtracts that value. Each EN/DL resets, rather than adds to,
+     * G8204 before decoding (2043-2060), so negative debt never carries. */
+    const uint64_t pit_hz = UINT64_C(1193182);
+    const uint64_t period_numerator = UINT64_C(65536000);
+    uint64_t elapsed, whole, remainder, ordinal, callbacks, deadline;
+    if (frame_started_ms < epoch_ms) return UINT64_MAX;
+    if (counter_units == 0u) return frame_started_ms;
+    elapsed = frame_started_ms - epoch_ms;
+    whole = elapsed / period_numerator;
+    remainder = ((elapsed % period_numerator) * pit_hz) / period_numerator;
+    if (whole > (UINT64_MAX - remainder) / pit_hz) return UINT64_MAX;
+    ordinal = whole * pit_hz + remainder;
+    callbacks = ((uint64_t)counter_units + 2u) / 3u;
+    if (ordinal > UINT64_MAX - callbacks) return UINT64_MAX;
+    ordinal += callbacks;
+    whole = ordinal / pit_hz;
+    remainder = ((ordinal % pit_hz) * period_numerator + pit_hz - 1u) / pit_hz;
+    if (whole > (UINT64_MAX - remainder) / period_numerator) return UINT64_MAX;
+    deadline = whole * period_numerator + remainder;
+    if (epoch_ms > UINT64_MAX - deadline) return UINT64_MAX;
+    return epoch_ms + deadline;
 }

@@ -4,13 +4,17 @@
 
 - `DM1 PC title`: run the original start erase before the title, retain
   its final image and palette, and remove the incorrect ending wipe.
-  Original PC timing calibration remains open.
+  Use the original default IBMIO timer counters rather than the borrowed
+  PC98/Towns minimum and 70 Hz cadence. Historical IRQ phase and CPU timing
+  calibration remain open.
 
 - `DM1 early Amiga/Atari objects`: render floor and alcove items with the
   native object bank, positions, scaling and palette changes. Correct the
   large cyan creature image that appeared over the Hall stair view when
-  the actual object was bread. Original A20E/ST12 pixel checks and real
-  Hall walks verify the corrected item; full viewport parity remains open.
+  the actual object was a waterskin. Thrown ordinary objects also use
+  native projectile positions and materials. Original A20E/ST12 pixel
+  checks, real Hall walks and recruitment/pickup/throw replays verify these
+  routes; other projectile families and full viewport parity remain open.
 
 - `DM1 near walls`: restore the two walls beside the party in source
   rendering order. Stop an inventory-only fallback clear from erasing the

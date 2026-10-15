@@ -3308,6 +3308,11 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     int destinationPixelsChanged;
 } M11_Dm1FloorItemHostPresentationReceipt;
 
+/* Positive F0142 aspect through the native F0115 projectile material route. */
+int M11_GameView_ProbeDrawDm1Media009Projectile(
+    M11_GameViewState* state, unsigned char* framebuffer, int width, int height,
+    int aspectIndex, int relativeCell, int forward, int side);
+
 /* Isolated original MEDIA009 F0115 material parameters, not a world edit. */
 int M11_GameView_ProbeDrawDm1Media009Object(
     M11_GameViewState* state, unsigned char* framebuffer, int width, int height,

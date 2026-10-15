@@ -5221,9 +5221,8 @@ static int m11_dm1_i34e_title_read_authentic(
 }
 
 /* I34E ANIM TITLE runs before SELECTOR; M12's already-selected launch state
- * stands in for that menu. The existing five-tick/70 Hz presentation model
- * is not proven PC34 timing: ANIM.C:2043-2048 only clamps PC98, while
- * IBMIO.C F8114:1280-1290 returns callback decrement 3. ReDMCSB
+ * stands in for that menu. ANIM.C:2043 assigns raw counters; default IBMIO
+ * F8114:1280-1290 returns decrement 3 at the BIOS/PIT cadence. ReDMCSB
  * ANIM.C F8292_ dispatches PL channels to
  * VGA VIDEODRV.C F8230, which writes (value << 2) + 3 to DAC6; the indexed
  * RGB6 renderer preserves those values. */
@@ -5238,7 +5237,8 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     uint8_t palette[256][3];
     uint64_t startMs;
     uint64_t animationEndMs;
-    uint64_t waitedVblanks = 0u;
+    uint64_t counterUnits = 0u;
+    uint64_t pitEpochMs;
     unsigned frames = 0u;
     int step;
     int userAborted = 0;
@@ -5253,6 +5253,7 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     }
     framebuffer = M11_Render_GetFramebuffer();
     if (!framebuffer) { free(data); return 0; }
+    pitEpochMs = m11_intro_active_ticks();
     /* IBMIO.C:2413 selects -as (ANIM.C main:1894-1898,1974-1976):
      * erase the previous phase before clearing/playing TITLE. F8169's
      * pixel order is exact; the existing chunk presentation cadence is a
@@ -5334,10 +5335,17 @@ static int m11_play_dm1_i34e_title_anim_if_available(
         free(data); return 0;
     }
     startMs = m11_intro_active_ticks();
-    while ((step = dm1_v1_i34e_title_anim_pc34_step(&player, &frame)) == 1) {
+    for (;;) {
+        const uint64_t frameStartedMs = m11_intro_active_ticks();
+        uint64_t frameDeadlineMs;
         SDL_Event event;
         int abortAnimation = 0;
         unsigned i;
+        step = dm1_v1_i34e_title_anim_pc34_step(&player, &frame);
+        if (step != 1) break;
+        frameDeadlineMs = dm1_v1_i34e_title_pc34_deadline_ms(
+            pitEpochMs, frameStartedMs, frame.source_counter_units);
+        if (frameDeadlineMs == UINT64_MAX) { step = -1; break; }
         for (i = 0u; i < 16u; ++i) {
             palette[i][0] = frame.palette[i].r;
             palette[i][1] = frame.palette[i].g;
@@ -5350,7 +5358,7 @@ static int m11_play_dm1_i34e_title_anim_if_available(
             step = -1; break;
         }
         ++frames;
-        waitedVblanks += frame.source_delay_vblanks;
+        counterUnits += frame.source_counter_units;
         if (frames == 1u)
             m11_capture_dm1_authenticated_startup_frame("i34e-title-first");
         else if (frames == 27u)
@@ -5412,9 +5420,7 @@ static int m11_play_dm1_i34e_title_anim_if_available(
 #endif
             }
             if (step == M11_ENTRANCE_COMMAND_QUIT || abortAnimation) break;
-            if ((m11_intro_active_ticks() - startMs) >=
-                (waitedVblanks * 1000u + DM1_V1_VGA_VBLANK_HZ - 1u) /
-                    DM1_V1_VGA_VBLANK_HZ)
+            if (m11_intro_active_ticks() >= frameDeadlineMs)
                 break;
             SDL_Delay(1u);
         }
@@ -5431,8 +5437,8 @@ static int m11_play_dm1_i34e_title_anim_if_available(
         return 0;
     }
     if (g_m11_debug_startup_detail)
-        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=%u source-vblanks=%llu elapsed-ms=%llu timing-model=host-unverified\n",
-                frames, (unsigned long long)waitedVblanks,
+        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=%u source-counter-units=%llu elapsed-ms=%llu timing-model=ibmio-default-pit callback-decrement=3 pit-input-hz=1193182 pit-divisor=65536\n",
+                frames, (unsigned long long)counterUnits,
                 (unsigned long long)(animationEndMs - startMs));
     /* IBMIO.C:2413 invokes `anim title -ah -as`, not -ae. ANIM.C
      * main:1880-1898,1974-1976,2127-2135 erases before playback and retains

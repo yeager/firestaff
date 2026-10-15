@@ -1,3 +1,37 @@
+- 2026-10-15: Early Amiga/Atari positive F0142 thrown-object aspects
+  now bind to their selected owner's G0209/M612=360 material at admission,
+  use G0218 set0 X visibility, and render through the shared native F0115
+  object raster with Y47. Projectiles apply no floor pile shifts and publish
+  neither floor/alcove receipts nor clickable floor targets. Each original
+  A20E/ST12 suite now checks 900 full-raster floor/alcove/projectile cases
+  (including source scaling, flip, palette changes and C10), plus same-state
+  owner rebinding. Actual original-world replays recruit champion ordinal5,
+  pick up waterskin Thing0x280b, and throw it into live C14 slot0 at (4,14),
+  cell3, tick301. The resulting native graphic367 is 48x13 at (53,68), with
+  exact source pixels and original RGB4/RGB3 row0 colours. Final bank1 is
+  host compatibility transport, not an Atari hardware-bank claim. Previous
+  native door/stair, real Hall-walk and PC wall checks remain green. This
+  verifies positive object aspects; the separate native G0210 projectile
+  family, energy-dependent scaling and original-emulator frame parity remain
+  open. A separate cyan/orange lower-floor rectangle remains in the actual
+  Amiga cast capture outside the verified projectile. No party/map fixtures
+  or projectile-physics changes were used.
+
+- 2026-10-15: Replace PC34 TITLE's borrowed PC98/Towns five-unit minimum
+  and 70 Hz scheduler with its default IBMIO contract. ANIM assigns each
+  raw EN/DL counter before decode; IBMIO subtracts three on the BIOS/PIT
+  cadence (65536/1193182 seconds). The bounded rational deadline helper
+  resets each frame, includes decode/presentation overrun, and uses the
+  focus-paused active clock without accumulating negative counter debt.
+  The authentic TITLE has all 53 raw attributes equal to one. Original
+  TITLE/IBMIO CTest, zero/max-counter, IRQ-boundary, overrun, active-clock
+  pause and overflow checks pass. A completed original CLI startup presents
+  all 53 frames in 2890 ms, keeps the exact previous final RGB image and
+  retained palette, and reaches SELECTOR/runtime. Historical initial IRQ
+  phase and original CPU decode costs remain unmeasured; this is default
+  driver scheduling fidelity, not frame-aligned emulator timing parity.
+  Original driver -D polling behavior is not implemented by this scheduler.
+
 - 2026-10-15: Correct PC34 TITLE's `-ah -as` lifecycle. The original
   IBMIO launch table selects a start erase and retained final palette;
   the previous terminal wipe incorrectly treated S as E. Run the source
@@ -19,11 +53,12 @@
   view squares, floor/alcove cells and two pile phases. The shared G0237
   object-aspect lookup was compared with all 180 ReDMCSB source entries.
   Real 35-step walks from both original starts reach (4,15,W): the floor
-  bread is now graphic 367 (48x13), drawn at (137,149), replacing the
+  waterskin is now graphic 367 (48x13), drawn at (137,149), replacing the
   unrelated creature 505 (64x89) previously projected as a cyan rectangle.
   Original hashes and prior native door/stair, PC wall and demo controls
   remain intact. These material and actual-world checks do not establish
-  full viewport parity; native thrown-object projectiles remain separate.
+  full viewport parity. The positive thrown-object route was subsequently
+  verified as described above; the native G0210 projectile family remains open.
 
 - 2026-10-15: Apply native PC34 C710/C711 D2 geometry to the real
   catalogue startup route as well as direct-dungeon starts. The previous

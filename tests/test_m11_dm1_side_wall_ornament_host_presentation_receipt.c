@@ -37,16 +37,18 @@ static int check_original_native_objects(M11_GameViewState* state, const char* e
     } else if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
         (size_t)state->assetLoader.legacyDataSize,1,558,raw,sizeof(raw),&length)) return 0;
     if (length != sizeof(raw)) return 0;
+    for (int projectile = 0; projectile < 2; ++projectile)
     for (unsigned object=0; object<sizeof(objects)/sizeof(objects[0]); ++object)
     for (int square=0; square<10; ++square)
     for (int cell=0; cell<5; ++cell)
     for (int parity=0; parity<2; ++parity) {
+        if (projectile && cell == 4) continue;
         const int aspectIndex=dm1_item_aspect_index(objects[object][0],objects[object][1]);
         const unsigned char* aspect=raw+1642+aspectIndex*6;
-        const unsigned char* xy=raw+1156+((aspect[5]*10+square)*5+cell)*2;
+        const unsigned char* xy=raw+1156+(((projectile ? 0 : aspect[5])*10+square)*5+cell)*2;
         const int forward=square==9?0:3-square/3;
         const int side=square%3==1?-1:square%3==2?1:0;
-        const int alcove=cell==4;
+        const int alcove=!projectile && cell==4;
         const int alt=alcove && square%3==0 && (aspect[4]&16);
         const int graphic=360+aspect[0]+(alt!=0);
         const int pile=(alcove?2:0)+parity*8;
@@ -66,9 +68,9 @@ static int check_original_native_objects(M11_GameViewState* state, const char* e
         }
         memset(actual,17,sizeof(actual));
         memset(expected,17,sizeof(expected));
-        if (xy[1]) {
-            int center=xy[0]+values[set][shifts[pile][0]];
-            int bottom=xy[1]+values[set][shifts[pile][1]];
+        if (projectile ? xy[0] != 0 : xy[1] != 0) {
+            int center=xy[0]+(projectile ? 0 : values[set][shifts[pile][0]]);
+            int bottom=projectile ? 47 : xy[1]+values[set][shifts[pile][1]];
             int top=bottom-height+1,left=center-width+1,right=center+width;
             if (left<0) left=0;
             if (right>223) right=223;
@@ -88,16 +90,125 @@ static int check_original_native_objects(M11_GameViewState* state, const char* e
                 if(color!=10)expected[(33+y)*320+x]=color;
             }
         }
-        (void)M11_GameView_ProbeDrawDm1Media009Object(state,actual,320,200,
-            objects[object][0],objects[object][1],alcove?2:cell,pile,forward,side,alcove);
+        if (projectile) {
+            M11_Dm1FloorItemHostPresentationReceipt floorBefore, floorAfter;
+            M11_Dm1FloorItemHostPresentationReceipt alcoveBefore, alcoveAfter;
+            M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floorBefore);
+            M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(&alcoveBefore);
+            (void)M11_GameView_ProbeDrawDm1Media009Projectile(state, actual,
+                320, 200, aspectIndex, cell, forward, side);
+            M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floorAfter);
+            M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(&alcoveAfter);
+            if (memcmp(&floorBefore, &floorAfter, sizeof(floorBefore)) ||
+                memcmp(&alcoveBefore, &alcoveAfter, sizeof(alcoveBefore))) return 0;
+        } else {
+            (void)M11_GameView_ProbeDrawDm1Media009Object(state,actual,320,200,
+                objects[object][0],objects[object][1],alcove?2:cell,pile,forward,side,alcove);
+        }
         if(memcmp(actual,expected,sizeof(actual))) {
-            fprintf(stderr,"FAIL: original %s F0115 object%d square%d cell%d parity%d graphic%d\n",
-                edition,object,square,cell,parity,graphic);return 0;
+            fprintf(stderr,"FAIL: original %s F0115 object%d square%d cell%d parity%d graphic%d projectile%d\n",
+                edition,object,square,cell,parity,graphic,projectile);return 0;
         }
         ++cases;
     }
-    printf("PASS: original %s F0115 %d full-raster object cases, native M558 positions/palettes/flip/C10\n",edition,cases);
+    printf("PASS: original %s F0115 %d full-raster floor/alcove/projectile cases, native M558 positions/palettes/flip/C10\n",edition,cases);
     return 1;
+}
+
+/* Real C127 recruitment and WATER pickup/throw. The compact strings encode
+ * the existing original Hall route, not assigned party coordinates or things. */
+static int replay_native_cast_route(M11_GameViewState* state, const char* route)
+{
+    for (size_t i = 0; route[i]; ++i) {
+        M12_MenuInput input = route[i] == 'U' ? M12_MENU_INPUT_UP :
+            route[i] == 'D' ? M12_MENU_INPUT_DOWN :
+            route[i] == 'L' ? M12_MENU_INPUT_STRAFE_LEFT : M12_MENU_INPUT_TURN_RIGHT;
+        if (M11_GameView_HandleInput(state, input) == M11_GAME_INPUT_IGNORED) return 0;
+        for (int tick = 0; tick < 5; ++tick) M11_GameView_AdvanceIdleTick(state);
+    }
+    return 1;
+}
+
+static int check_original_native_cast(const M11_GameLaunchSpec* spec, const char* edition)
+{
+    M11_GameViewState* state = calloc(1, sizeof(*state));
+    M11_Dm1ProjectileHostPresentationReceipt receipt = {0};
+    unsigned char framebuffer[64000];
+    const M11_AssetSlot* water;
+    int ok = 0, opaque = 0;
+    if (!state) return 0;
+    M11_GameView_Init(state);
+    if (!M11_GameView_Start(state, spec) || state->world.party.championCount ||
+        !replay_native_cast_route(state, "UUUUULLLDDDDDLLULLULLLLLDLRR") ||
+        state->world.party.mapX != 14 || state->world.party.mapY != 3 ||
+        state->world.party.direction != 0 ||
+        M11_GameView_HandlePointerButton(state, 112, 83, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state->candidateMirrorPanelActive || state->candidateMirrorOrdinal != 5 ||
+        M11_GameView_HandlePointerButton(state, 130, 115, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state->world.party.championCount != 1 ||
+        !replay_native_cast_route(state, "DLLLDDDLLDDLLLLLDDDDDD") ||
+        state->world.party.mapIndex != 0 || state->world.party.mapX != 4 ||
+        state->world.party.mapY != 15 || state->world.party.direction != 0) goto done;
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    if (M11_GameView_HandlePointerButton(state, 66, 160, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != 0x280bu ||
+        M11_GameView_HandlePointerButton(state, 80, 80, M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE ||
+        state->world.projectiles.count != 1) goto done;
+    {
+        const struct ProjectileInstance_Compat* projectile = &state->world.projectiles.entries[0];
+        if (projectile->slotIndex != 0 || projectile->reserved1 != 0x280b ||
+            projectile->mapIndex != 0 || projectile->mapX != 4 || projectile->mapY != 14 ||
+            projectile->cell != 3 || projectile->direction != 0) goto done;
+    }
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    M11_GameView_GetDm1ProjectileHostPresentationReceipt(&receipt);
+    /* Original M558 aspect6={7,16,24,13,0,0}; G0218 set0/D1C/cell3
+     * supplies X76. F0115:5893-5900 substitutes Y47, without pile shifts. */
+    if (!receipt.valid || !receipt.projectileLane || !receipt.objectMaterial ||
+        receipt.graphicsId != 367 || receipt.objectAspectIndex != 6 ||
+        receipt.transparentColor != 10 || receipt.sourceZoneRow != -1 ||
+        receipt.destinationX != 53 || receipt.destinationY != 68 ||
+        receipt.destinationW != 48 || receipt.destinationH != 13 ||
+        receipt.assetWidth != 48 || receipt.assetHeight != 13) goto done;
+    water = M11_AssetLoader_Load(&state->assetLoader, 367);
+    if (!water || !water->pixels || water->width != 48 || water->height != 13) goto done;
+    {
+        /* Source DATA.C row0. Amiga expands native RGB4 directly; Atari
+         * uses the corresponding RGB3 nibbles through its RGB6 DAC bridge.
+         * Atari's existing shared F0097 transport tags bank1, whose palette
+         * duplicates its native row; this does not claim Atari hardware banks. */
+        static const unsigned short rgb4[16] = {0x000,0x666,0x888,0x620,
+            0x0cc,0x840,0x080,0x0c0,0xf00,0xfa0,0xc86,0xff0,0x444,0xaaa,0x00f,0xfff};
+        uint8_t rgb8[256][3];
+        if (M11_GameView_GetDungeonPaletteIndex(state) != 0 ||
+            !M11_Render_CopyIndexedPaletteRgb8(rgb8)) goto done;
+        for (int color = 0; color < 16; ++color) for (int channel = 0; channel < 3; ++channel) {
+            const unsigned int nibble = (rgb4[color] >> (8 - channel * 4)) & 15;
+            const unsigned int dac = (nibble >> 1) * 9;
+            const unsigned char expected = state->assetLoader.atariStDm1
+                ? (unsigned char)((dac << 2) | (dac >> 4)) : (unsigned char)(nibble * 17);
+            if (rgb8[color + 16][channel] != expected) goto done;
+        }
+    }
+    for (int y = 0; y < 13; ++y) for (int x = 0; x < 48; ++x) {
+        const unsigned char pixel = water->pixels[y * 48 + x];
+        const int bank = 1;
+        if (pixel == 10) continue;
+        if (framebuffer[(68 + y) * 320 + 53 + x] != (unsigned char)((bank << 4) | pixel)) {
+            fprintf(stderr, "%s native cast pixel%d,%d got%u expected%u bank%d\n", edition, x, y, framebuffer[(68 + y) * 320 + 53 + x], (bank << 4) | pixel, bank);
+            goto done;
+        }
+        ++opaque;
+    }
+    if (!opaque) goto done;
+    printf("PASS: original %s C127 recruitment, WATER0x280b pickup and live C14slot0 cast at tick%u; native367 48x13@(53,68), G0218/Y47/C10/bank ownership\n", edition, state->world.gameTick);
+    ok = 1;
+done:
+    if (!ok) fprintf(stderr, "FAIL: original %s actual native projectile route pose%d,%d,%d champions%d projectiles%d receipt%d graphic%d aspect%d rect%d,%d,%d,%d bank%d\n", edition, state->world.party.mapX, state->world.party.mapY, state->world.party.direction, state->world.party.championCount, state->world.projectiles.count, receipt.valid, receipt.graphicsId, receipt.objectAspectIndex, receipt.destinationX, receipt.destinationY, receipt.destinationW, receipt.destinationH, M11_GameView_GetDungeonPaletteIndex(state));
+    M11_GameView_Shutdown(state);
+    free(state);
+    return ok;
 }
 
 static int check_original_native_item_walk(const M11_GameLaunchSpec* spec, const char* edition)
@@ -396,7 +507,8 @@ static int check_original_amiga_background(void)
                                "6a2f135b53c2220f0251fa103e2a6e7e")) goto done;
     if (!check_original_door_orientation(&spec,"A20E") ||
         !check_original_native_objects(&state,"A20E") ||
-        !check_original_native_item_walk(&spec,"A20E")) goto done;
+        !check_original_native_item_walk(&spec,"A20E") ||
+        !check_original_native_cast(&spec,"A20E")) goto done;
     floor = M11_AssetLoader_Load(&state.assetLoader, 75u);
     ceiling = M11_AssetLoader_Load(&state.assetLoader, 76u);
     if (!floor || !ceiling || floor->width != 224 || floor->height != 70 ||
@@ -883,6 +995,7 @@ static int check_original_legacy_arrows(const char *env_name,
     if (!check_original_legacy_walls(state,edition)) goto done;
     if (atari && (!check_original_door_orientation(&spec,edition) ||
         !check_original_native_item_walk(&spec,edition) ||
+        !check_original_native_cast(&spec,edition) ||
         !check_original_native_objects(state,edition))) goto done;
     if (atari && (!check_original_legacy_materials(state,edition) ||
         !asset_file_matches_md5(state->assetLoader.graphicsDatPath,graphics_md5))) goto done;

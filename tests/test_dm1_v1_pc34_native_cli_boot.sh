@@ -282,24 +282,26 @@ import sys
 
 match = re.search(
     r"startup-source-complete game=dm1 platform=pc34 phase=anim-title "
-    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",
+    r"frames=(\d+) source-counter-units=(\d+) elapsed-ms=(\d+)",
     sys.argv[1])
 if not match:
     raise SystemExit("FAIL: authentic PC-34 ANIM/TITLE completion receipt was missing")
-frames, source_vblanks, elapsed_ms = map(int, match.groups())
-if frames != 53 or source_vblanks < frames * 5:
+frames, source_counter_units, elapsed_ms = map(int, match.groups())
+if frames != 53 or source_counter_units != 53:
     raise SystemExit(
         f"FAIL: authentic PC-34 ANIM/TITLE frame count/cadence mismatch: {match.groups()}")
-expected_ms = (source_vblanks * 1000 + 69) // 70
+# Every assignment must cross a new default BIOS/PIT callback. The first
+# callback phase is not recovered from the historical machine.
+expected_ms = (frames - 1) * 65536000 // 1193182
 if elapsed_ms + 20 < expected_ms:
     raise SystemExit(
-        f"FAIL: PC-34 ANIM/TITLE ended before its source VBlank cadence: "
-        f"{elapsed_ms} ms for {source_vblanks} ticks at 70 Hz (expected "
+        f"FAIL: PC-34 ANIM/TITLE ended before its default IBMIO PIT cadence: "
+        f"{elapsed_ms} ms for {source_counter_units} raw counter units (expected "
         f"at least {expected_ms} ms)")
 print(
     f"PASS: DM1 PC-34 ANIM/TITLE logged {frames} original frames and "
-    f"{source_vblanks} modeled ticks at 70 Hz in {elapsed_ms} ms "
-    "(original PC34 timing remains unverified)")
+    f"{source_counter_units} raw counter units in {elapsed_ms} ms "
+    "(default IBMIO PIT cadence; original initial phase/CPU remain unmeasured)")
 selector = re.search(
     r"startup-source-complete game=dm1 platform=pc34 phase=selector .*"
     r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+) modeled-vblank-hz=(\d+)",
