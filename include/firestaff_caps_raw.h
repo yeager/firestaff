@@ -19,7 +19,8 @@ typedef enum FirestaffCapsRawStatus {
     FIRESTAFF_CAPS_RAW_BAD_LENGTH,
     FIRESTAFF_CAPS_RAW_BAD_CRC,
     FIRESTAFF_CAPS_RAW_LIMIT_EXCEEDED,
-    FIRESTAFF_CAPS_RAW_CALLBACK_ABORTED
+    FIRESTAFF_CAPS_RAW_CALLBACK_ABORTED,
+    FIRESTAFF_CAPS_RAW_CODEC_ERROR
 } FirestaffCapsRawStatus;
 
 typedef struct FirestaffCapsRawPack {
@@ -51,5 +52,13 @@ FirestaffCapsRawStatus firestaff_caps_raw_read(
     FirestaffCapsRawResult *out_result);
 
 const char *firestaff_caps_raw_status_name(FirestaffCapsRawStatus status);
+
+/* Decode a CAPS density PACK to portable big-endian 32-bit timing values.
+ * The output buffer must be at least pack->unpacked_size bytes. This verifies
+ * both bounded token consumption and the PACK's uncompressed CRC. */
+FirestaffCapsRawStatus firestaff_caps_raw_unpack_density(
+    const FirestaffCapsRawPack *pack,
+    uint8_t *out_bytes,
+    size_t out_capacity);
 
 #endif

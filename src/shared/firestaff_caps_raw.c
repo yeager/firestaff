@@ -264,6 +264,106 @@ FirestaffCapsRawStatus firestaff_caps_raw_read(
     return FIRESTAFF_CAPS_RAW_OK;
 }
 
+FirestaffCapsRawStatus firestaff_caps_raw_unpack_density(
+    const FirestaffCapsRawPack *pack,
+    uint8_t *out_bytes,
+    size_t out_capacity) {
+    size_t source;
+    size_t word_count;
+    size_t destination;
+
+    if (!pack || !pack->packed_bytes || !out_bytes ||
+        pack->pack_index != 0u || pack->packed_size == 0u ||
+        pack->unpacked_size == 0u || (pack->unpacked_size & 3u) != 0u ||
+        pack->unpacked_size > out_capacity) {
+        return FIRESTAFF_CAPS_RAW_INVALID_ARGUMENT;
+    }
+
+    word_count = (size_t)pack->unpacked_size / 4u;
+    source = pack->packed_size;
+    destination = word_count;
+
+    /* Density PACK is decoded from the end of both streams. Each destination
+     * item is a 32-bit timing symbol serialized big-endian for stable CRCs. */
+    while (destination != 0u) {
+        uint8_t control;
+        unsigned mode;
+        size_t count;
+        size_t distance = 0u;
+
+        if (source == 0u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+        control = pack->packed_bytes[--source];
+        mode = control & 3u;
+
+        if (mode == 0u) {
+            if ((control & 8u) != 0u) {
+                if (source == 0u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+                count = (((size_t)control >> 4) << 8) |
+                        pack->packed_bytes[--source];
+            } else {
+                count = ((size_t)control >> 4) + 1u;
+            }
+            if (count == 0u || count > destination)
+                return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+
+            while (count-- != 0u) {
+                size_t output = --destination * 4u;
+                if ((control & 4u) != 0u) {
+                    if (source < 4u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+                    source -= 4u;
+                    out_bytes[output] = pack->packed_bytes[source + 3u];
+                    out_bytes[output + 1u] = pack->packed_bytes[source + 2u];
+                    out_bytes[output + 2u] = pack->packed_bytes[source + 1u];
+                    out_bytes[output + 3u] = pack->packed_bytes[source];
+                } else {
+                    if (source == 0u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+                    out_bytes[output] = 0u;
+                    out_bytes[output + 1u] = 0u;
+                    out_bytes[output + 2u] = 0u;
+                    out_bytes[output + 3u] = pack->packed_bytes[--source];
+                }
+            }
+            continue;
+        }
+
+        if (mode == 1u) {
+            count = ((size_t)control >> 2) + 1u;
+            if (source == 0u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+            distance = (size_t)pack->packed_bytes[--source] + 1u;
+        } else if (mode == 2u) {
+            count = ((size_t)control >> 2) + 1u;
+            if (source < 2u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+            source -= 2u;
+            distance = (size_t)pack->packed_bytes[source] |
+                       ((size_t)pack->packed_bytes[source + 1u] << 8);
+        } else {
+            if (source < 3u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+            source -= 3u;
+            count = (((size_t)control >> 2) << 8) |
+                    pack->packed_bytes[source + 2u];
+            distance = (size_t)pack->packed_bytes[source] |
+                       ((size_t)pack->packed_bytes[source + 1u] << 8);
+        }
+
+        if (count == 0u || count > destination || distance == 0u ||
+            distance > word_count - destination) {
+            return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+        }
+        while (count-- != 0u) {
+            size_t output = --destination;
+            size_t input = output + distance;
+            memcpy(out_bytes + output * 4u, out_bytes + input * 4u, 4u);
+        }
+    }
+
+    if (source != 0u) return FIRESTAFF_CAPS_RAW_CODEC_ERROR;
+    if (caps_raw_crc32(out_bytes, (size_t)pack->unpacked_size) !=
+        pack->unpacked_crc32) {
+        return FIRESTAFF_CAPS_RAW_BAD_CRC;
+    }
+    return FIRESTAFF_CAPS_RAW_OK;
+}
+
 const char *firestaff_caps_raw_status_name(FirestaffCapsRawStatus status) {
     switch (status) {
         case FIRESTAFF_CAPS_RAW_OK: return "ok";
@@ -275,6 +375,7 @@ const char *firestaff_caps_raw_status_name(FirestaffCapsRawStatus status) {
         case FIRESTAFF_CAPS_RAW_BAD_CRC: return "bad-crc";
         case FIRESTAFF_CAPS_RAW_LIMIT_EXCEEDED: return "limit-exceeded";
         case FIRESTAFF_CAPS_RAW_CALLBACK_ABORTED: return "callback-aborted";
+        case FIRESTAFF_CAPS_RAW_CODEC_ERROR: return "codec-error";
         default: return "unknown";
     }
 }

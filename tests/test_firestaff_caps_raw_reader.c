@@ -6,6 +6,9 @@
 
 typedef struct VisitorState {
     size_t calls;
+    size_t density_packs;
+    size_t density_decode_failures;
+    size_t density_negative_failures;
     int invalid_order;
 } VisitorState;
 
@@ -52,6 +55,38 @@ static int visit_pack(const FirestaffCapsRawPack *pack, void *opaque) {
     }
     if (pack && pack->pack_index != (state->calls % 2u)) {
         state->invalid_order = 1;
+    }
+    if (pack && pack->pack_index == 0u) {
+        uint8_t *unpacked = (uint8_t *)malloc(pack->unpacked_size);
+        uint8_t *packed_copy = (uint8_t *)malloc(pack->packed_size);
+        if (!unpacked || firestaff_caps_raw_unpack_density(
+                             pack, unpacked, pack->unpacked_size) !=
+                             FIRESTAFF_CAPS_RAW_OK) {
+            ++state->density_decode_failures;
+        }
+        if (packed_copy && unpacked) {
+            FirestaffCapsRawPack mutated = *pack;
+            memcpy(packed_copy, pack->packed_bytes, pack->packed_size);
+            packed_copy[pack->packed_size - 1u] ^= 0xffu;
+            mutated.packed_bytes = packed_copy;
+            if (firestaff_caps_raw_unpack_density(
+                    &mutated, unpacked, pack->unpacked_size) ==
+                FIRESTAFF_CAPS_RAW_OK) {
+                ++state->density_negative_failures;
+            }
+            mutated = *pack;
+            mutated.unpacked_crc32 ^= 1u;
+            if (firestaff_caps_raw_unpack_density(
+                    &mutated, unpacked, pack->unpacked_size) !=
+                FIRESTAFF_CAPS_RAW_BAD_CRC) {
+                ++state->density_negative_failures;
+            }
+        } else {
+            ++state->density_negative_failures;
+        }
+        ++state->density_packs;
+        free(packed_copy);
+        free(unpacked);
     }
     ++state->calls;
     return 0;
@@ -122,7 +157,7 @@ int main(void) {
     uint8_t *bytes;
     size_t count = 0;
     int extra;
-    VisitorState state = { 0, 0 };
+    VisitorState state = { 0, 0, 0, 0, 0 };
     FirestaffCapsRawResult result;
     FirestaffCapsRawStatus status;
 
@@ -156,14 +191,22 @@ int main(void) {
         free(bytes);
         return 1;
     }
+    if (state.density_packs != 164u || state.density_decode_failures != 0u ||
+        state.density_negative_failures != 0u) {
+        fprintf(stderr, "FAIL: density packs=%zu decode_failures=%zu negative_failures=%zu\n",
+                state.density_packs, state.density_decode_failures,
+                state.density_negative_failures);
+        free(bytes);
+        return 1;
+    }
     if (!malformed_cases(bytes, count)) {
         fputs("FAIL: malformed-input checks did not reject every mutation\n",
               stderr);
         free(bytes);
         return 1;
     }
-    printf("PASS: tracks=%zu packs=%zu malformed-input checks passed\n",
-           result.track_count, result.pack_count);
+    printf("PASS: tracks=%zu packs=%zu density=%zu mutation checks passed\n",
+           result.track_count, result.pack_count, state.density_packs);
     free(bytes);
     return 0;
 }

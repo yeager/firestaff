@@ -101,7 +101,8 @@ and production M12 startup; both M12 routes reached first movement at `(9,1)`
 with a nonzero viewport receipt. The dedicated A35E M12-to-M11 boundary test
 reported 45 passed, 0 failed, 0 skipped. The original DMWeb archive SHA-256
 remained unchanged. These headless checks do not verify native display output
-or audible playback. Native CTRaw PACK decoding remains unsupported.
+or audible playback. Native CTRaw track PACK decoding and sector recovery
+remain unsupported.
 
 2026-10-12 A35E original-ADF retest: the published v3.0.379 macOS arm64
 binary authenticated the English Amiga 3.5 original ADF from the DMWeb
@@ -134,8 +135,9 @@ language selection and entrance, and reached the first runtime movement at
 `(9,1)` with a nonzero viewport receipt. The original DMWeb archive remained
 unchanged. This verifies this ADF source through ZIP transport in Firestaff;
 it does not establish that the disk image works in its original hardware.
-Native CTRaw support remains a separate open item: no CTRaw PACK decoding or
-sector recovery is implemented, and the ADF member is not a decoded CTRaw
+Native CTRaw support remains a separate open item: density PACK decoding is
+now implemented with CRC verification, but track PACK decoding, sector
+recovery and the start routes are not. The ADF member is not a decoded CTRaw
 stream.
 
 2026-10-11 local startup retest: the current source passed the authentic
@@ -197,16 +199,18 @@ archive remains unsupported. See the development-only conversion evidence below.
   lossless sector recovery or original-disk behavior. The damaged-track
   warning remains relevant.
 
-  2026-10-15 investigation: the SPS development oracle's per-track
-  `trackdata` output is not directly consumable as Firestaff's packed MFM
-  bit-cell input. A local harness passed all 164 exported tracks to
-  `firestaff_amiga_mfm_scan_track()` and found zero sectors. The corresponding
-  API also exposes a same-length timing array of 32-bit words. Do not wire
-  either array into the ADF sector reader based only on matching track sizes;
-  derive and verify the timing-to-bit-cell conversion against sector checksums
-  from original CTRaw media first. The probe and extracted media stayed in
-  ignored `.codex-scratch/csb-ctraw-oracle/` and `/tmp`; neither is a product
-  dependency or tracked game data.
+  2026-10-15 investigation: Firestaff's bounded density-PACK decoder now
+  expands pack 0 and verifies its uncompressed CRC. The original-media test
+  covers all 164 tracks on each of the four English/multilingual game and
+  utility members. CAPS SDK `trackbuf` and `trackdata[0]` exports are byte
+  identical for this source; passing all 164 to
+  `firestaff_amiga_mfm_scan_track()` found zero sectors. The corresponding API
+  also exposes a same-length timing array of 32-bit words. Do not wire either
+  array into the ADF sector reader based only on matching track sizes; derive
+  and verify timing-to-bit-cell normalization and track-PACK decoding against
+  original-sector checksums first. Probes and extracted media stayed in
+  ignored `.codex-scratch/csb-ctraw-oracle/` and `/tmp`; neither is tracked
+  game data or a runtime dependency.
 
   SPS/CAPS is permitted for this non-commercial development environment under
   its stated terms, but not for commercial use or redistribution. Keep this
