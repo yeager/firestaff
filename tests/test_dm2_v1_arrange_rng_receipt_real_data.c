@@ -287,6 +287,7 @@ int main(void)
     DM2_V1_BootProfile *profile = NULL;
     char graphics_path[1100];
     char dungeon_path[1100];
+    char graphics_md5[33], dungeon_md5[33];
     uint8_t *graphics = NULL;
     uint8_t *dungeon_bytes = NULL;
     size_t graphics_size = 0u;
@@ -334,6 +335,18 @@ int main(void)
         snprintf(graphics_path,sizeof(graphics_path),"%s",profile->graphics_path);
         snprintf(dungeon_path,sizeof(dungeon_path),"%s",profile->dungeon_path);
     }
+    if (profile) {
+        memcpy(graphics_md5,profile->graphics_md5,sizeof(graphics_md5));
+        memcpy(dungeon_md5,profile->dungeon_md5,sizeof(dungeon_md5));
+    } else if (!asset_file_md5_hex(graphics_path,graphics_md5) ||
+               !asset_file_md5_hex(dungeon_path,dungeon_md5)) {
+        fputs("FAIL: canonical source hashes unavailable\n",stderr);
+        failures = 1; goto done;
+    }
+    if (!dm2_v1_boot_asset_hash_pair_supported(graphics_md5,dungeon_md5)) {
+        fputs("FAIL: source files are not a supported original hash pair\n",stderr);
+        failures = 1; goto done;
+    }
     if (!read_original_bytes(profile ? profile->graphics_mem : NULL,
             profile ? profile->graphics_mem_size : 0,
             graphics_path,&graphics,&graphics_size) ||
@@ -355,8 +368,7 @@ int main(void)
     }
     printf("original-edition version=%s graphics=%s dungeon=%s words-be=%d source-be=%d chains-disabled=%d\n",
         profile ? profile->version_id : "canonical",
-        profile ? profile->graphics_md5 : "local",
-        profile ? profile->dungeon_md5 : "local",
+        graphics_md5, dungeon_md5,
         dungeon.words_big_endian,dungeon.source_words_big_endian,
         dungeon.g1_w0_chains_disabled);
     failures += check_rejected_append_preserves_original(&dungeon);

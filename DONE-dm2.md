@@ -1,3 +1,18 @@
+- 2026-10-15: Loose-media arrangement tests now require a supported original
+  graphics/dungeon hash pair, matching archive admission. DOS EN and FM Towns
+  checks pass and report both source hashes.
+
+- 2026-10-15: Active SKULLWIN cold direct New Game source audit establishes
+  zero RNG state before the first weather bootstrap. At pinned SKProject
+  2c59a2c5a7978923ff5c822c15c3479e4d448493, main.cpp:177 initializes RNG;
+  startend.cpp:288 selects menu mode zero; its v1d338c.dat list contains
+  events 215/216/217/224/218. New Game 215/216 uses c_input.cpp:229's 0x86
+  program and only assigns flags at 495-501. GAME_LOAD:1429 skips restore
+  and reaches LOAD_NEW_DUNGEON:1541, then c_savegame.cpp:546 weather without
+  an intervening RNG consumer. Timer callback ints.cpp:14-34 only ticks.
+  This is a scoped static source result, not an original binary trace,
+  arbitrary menu-history proof, or cross-edition equivalence claim.
+
 - 2026-10-13: After the shared M11 frame-pacing change, the authentic FM Towns
 
 - 2026-10-15: Fixed record-pool clones losing words_big_endian. Original

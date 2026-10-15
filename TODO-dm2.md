@@ -1,3 +1,14 @@
+2026-10-15 integration boundary audit: publish arrangement only as a complete
+private GameLoadWorldOwner transaction. Synchronize pool record spans and map
+columns into owned raw dungeon bytes, reload/validate the dungeon, then
+regenerate all derived preselection receipts. prepare_new_game currently
+computes those receipts too early. init_new_game, select_champion and
+materialize_dyn4 must also use the owned arranged dungeon instead of immutable
+boot-profile bytes. Preserve shared weather/arranger RNG across CAII storage
+initialization; it currently reseeds. Cold direct New Game pre-weather zero
+state is now supported by active SKULLWIN static analysis (DONE-dm2.md), but
+original executable comparison and later CAII draw ordering remain open.
+
 # Firestaff TODO — DM2
 
 2026-10-15 Macintosh/Amiga original-data arrangement verification exposed a
