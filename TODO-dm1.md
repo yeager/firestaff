@@ -1,24 +1,31 @@
 # Firestaff TODO — DM1
 
-2026-10-15 confirmed next CPU bottleneck: ordinary DM1 Present calls
-main_loop_m11.c:m11_publish_dm1_hoc_presented_capture_to_m12, which builds
-GetBootProbeReceipt and serial-FNV hashes the entire output RGBA buffer.
-Debug startup trace performs a second full getter before Present, before
-checking whether its lightweight fields changed. GetPresentedRGBA itself
-is O(1); startup_sequence's presented_rgba_hash is the output-sized pass.
-Preserve fresh hashes for explicit boot/capture requests, but use lightweight
-metadata for trace/scriptwait and publish M12 startup capture once per
-successful launch serial. M12 currently clears its nested capture only at
-init/setter, not at launch/restart/return: add lifecycle invalidation before
-caching. Keep source admission, real-host provenance and Towns CDDA behavior
-intact; a dummy window needs no M12 host-capture attempt. This audit identifies
-the hot path and safe boundaries; the correction is not implemented yet.
+2026-10-15 diagnostic hashing correction: lightweight trace/scriptwait metadata
+and launch-scoped M12 host capture publication are implemented. Explicit full
+capture requests still hash the current presented image. Capture proof is
+cleared on launch/restart/return; dummy output cannot establish host proof.
+Original-media tests preserve all RGBA bytes in five output sizes; a real
+turn changes the explicit hash. Native Metal full-redraw measurement at
+1920x1018 fell from about 90.5 percent to 31.7-32.1 percent of one CPU core,
+with 62.5 rendered/presented fps and 4.14-4.21 ms average compose/present.
+Physical Retina, GPU utilization and input-to-present latency remain open.
+
+Input latency instrumentation must retain one timestamp/identity through SDL
+receipt, the pending host FIFO and actual source movement acceptance. Pointer
+handling occurs inside m11_poll_menu_input before it returns. Do not equate
+M11_GAME_INPUT_REDRAW with movement: inventory, cursor and resize also redraw.
+Use a new movement outcome serial alongside the freshly published
+lastDm1V1MovementPipelineResult (anyMovementOccurred/anyTurnOccurred), then
+associate Draw completion with successful Present return. RecordPresentedFrame
+runs before Present and cannot prove host completion. Mark held samples and
+script dispatch separately from physical event receipt; report blocked commands
+without attributing a later unrelated draw to them.
 
 2026-10-15 HoC performance follow-up: precise host pacing reaches the
 configured 62.5 full-redraw rate at 640x400 with original PC34 and dummy
 output. Repeated-row reuse preserves every original-frame RGBA byte through
-3840x2160; native Cocoa 1920x1018 full-redraw CPU remains about 90.5 percent
-of one core. The applied renderer diagnostic confirms Metal and a 1x drawable
+3840x2160. Before the diagnostic hashing correction above, native Cocoa
+1920x1018 full-redraw CPU measured about 90.5 percent of one core. The applied renderer diagnostic confirms Metal and a 1x drawable
 on this host; GPU utilization and physical Retina behavior remain unmeasured.
 Measure remaining stage costs and received input, queue/accept, Draw and
 successful Present-return timestamps. Existing dirty counters prove ordering

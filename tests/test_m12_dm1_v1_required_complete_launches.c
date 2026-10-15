@@ -177,6 +177,15 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(gate.blockedLabel &&
           strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0);
     seed_dm1_hoc_presented_capture_receipt(&state);
+    /* A new launch must not inherit the previous host presentation proof. */
+    state.dm1HoCPresentedCaptureLaunchSerial = 42u;
+    M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(&state, NULL);
+    CHECK(state.dm1HoCPresentedCaptureLaunchSerial == 0u);
+    CHECK(state.dm1HoCPresentedCaptureReceipt.handled == 0);
+    CHECK(state.dm1HoCPresentedCaptureReceipt.presentedCaptureReady == 0);
+    state.dm1HoCPresentedCaptureLaunchSerial = 43u;
+    seed_dm1_hoc_presented_capture_receipt(&state);
+    CHECK(state.dm1HoCPresentedCaptureLaunchSerial == 0u);
 
     /* Required hash-set completeness, mirroring the assertions in
      * test_m12_missing_dungeon_launch_blocker.c. */

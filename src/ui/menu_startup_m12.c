@@ -9824,6 +9824,7 @@ int M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(
     if (!state) {
         return 0;
     }
+    state->dm1HoCPresentedCaptureLaunchSerial = 0U;
     memset(&state->dm1HoCPresentedCaptureReceipt,
            0,
            sizeof(state->dm1HoCPresentedCaptureReceipt));

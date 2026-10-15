@@ -7189,3 +7189,11 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 - DM1: track prior-square movement history outside the save layout, use the
   chosen movement direction rather than creature facing, and keep blocked
   move retries on their source square. Preserve active storage capacity.
+
+### DM1 diagnostic overhead (2026-10-15)
+
+- Avoid hashing the complete output image on every gameplay frame for startup
+  diagnostics. Explicit capture requests retain current-image validation.
+- Scope startup capture evidence to each launch and clear it on menu return.
+- Native Metal measurement retained 62.5 fps while reducing CPU usage from
+  about 90.5 to 31.7-32.1 percent of one core; Retina verification remains open.

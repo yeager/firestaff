@@ -1,3 +1,13 @@
+- 2026-10-15: Removed per-frame diagnostic RGBA hashing from ordinary DM1
+  presentation and startup tracing. Full capture requests remain fresh;
+  lightweight/full receipt regression and original-media RGBA oracles pass.
+  DM1 launcher capture clear/reimport and original-PC keyboard/mouse return
+  during the queued originals rescan pass; close completes in both cases.
+  The complete original-media startup diagnostics suite passes for DM1, CSB
+  and DM2, including FM Towns defaults and uppercase menu data leaves.
+  Native Metal CPU fell from about 90.5 to 31.7-32.1 percent of one core
+  at 62.5 fps. This does not establish physical Retina or visual parity.
+
 - 2026-10-15: Verbose/debug startup diagnostics now query the actual SDL
   renderer name, VSync interval and drawable/window scale after saved settings
   and CLI overrides are applied. Native Metal checks with isolated settings

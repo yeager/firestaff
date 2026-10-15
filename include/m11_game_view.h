@@ -2094,6 +2094,10 @@ int M11_GameView_StartCsbHintOracle(M11_GameViewState* state,
  * Atari R1 Hint Oracle utility. */
 int M11_GameView_EnterCsbFmtownsUtility(M11_GameViewState *state);
 int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state);
+/* Startup/pose metadata only. DM1 presented-capture proof fields remain
+ * zero; explicit capture consumers must use GetBootProbeReceipt instead. */
+int M11_GameView_GetStartupTraceReceipt(const M11_GameViewState* state,
+                                        M11_BootProbeReceipt* out);
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                                      M11_BootProbeReceipt* out);
 /* Record the already-rendered CSB source framebuffer after M11 presents it.

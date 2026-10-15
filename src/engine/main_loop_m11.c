@@ -712,7 +712,7 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
         (strcmp(tracedGameId, "dm1") != 0 &&
          strcmp(tracedGameId, "csb") != 0 &&
          strcmp(tracedGameId, "dm2") != 0) ||
-        !M11_GameView_GetBootProbeReceipt(gameView, &current)) {
+        !M11_GameView_GetStartupTraceReceipt(gameView, &current)) {
         return;
     }
     changed = !trace->valid ||
@@ -1491,44 +1491,57 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     return result == M11_RENDER_OK;
 }
 
+static unsigned int g_m11_sync_launch_serial;
+
 static void m11_publish_dm1_hoc_presented_capture_to_m12(
     M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
-    M11_BootProbeReceipt boot;
-    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 export_receipt;
-    M12_DM1HoCPresentedCaptureReceipt capture;
-
-    if (!gameView || !menuState ||
-        !M11_GameView_GetBootProbeReceipt(gameView, &boot) ||
-        strcmp(boot.sourceId, "dm1") != 0) {
+    if (!gameView || !menuState || strcmp(gameView->sourceId, "dm1") != 0) {
         return;
     }
 
-    memset(&export_receipt, 0, sizeof(export_receipt));
-    if (!dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
-            &boot.dm1HoCBootSummary,
-            &export_receipt) ||
-        !export_receipt.ready) {
-        return;
+    /* This is M12's startup observation, not a current-frame render gate.
+     * Explicit boot/capture getters still inspect fresh presented pixels.
+     * A failed or cleared publication must remain retryable, and only this
+     * menu instance's successfully imported launch receipt may be reused. */
+    if ((!menuState->dm1HoCPresentedCaptureLaunchSerial ||
+         menuState->dm1HoCPresentedCaptureLaunchSerial != g_m11_sync_launch_serial ||
+         !menuState->dm1HoCPresentedCaptureReceipt.presentedCaptureReady) &&
+        M11_Render_HasHostPresentationWindow()) {
+        M11_BootProbeReceipt boot;
+        DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 export_receipt;
+        M12_DM1HoCPresentedCaptureReceipt capture;
+        memset(&export_receipt, 0, sizeof(export_receipt));
+        if (M11_GameView_GetBootProbeReceipt(gameView, &boot) &&
+            strcmp(boot.sourceId, "dm1") == 0 &&
+            dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
+                &boot.dm1HoCBootSummary, &export_receipt) &&
+            export_receipt.ready) {
+            memset(&capture, 0, sizeof(capture));
+            capture.handled = export_receipt.handled;
+            capture.presentedCaptureReady = export_receipt.presented_capture_ready;
+            capture.hostWindowPresent = export_receipt.host_window_present;
+            capture.capturedFromMacWindow = export_receipt.captured_from_mac_window;
+            capture.capturedFromReleaseApp = export_receipt.captured_from_release_app;
+            capture.width = export_receipt.width;
+            capture.height = export_receipt.height;
+            capture.byteCount = export_receipt.byte_count;
+            capture.framebufferHash = export_receipt.framebuffer_hash;
+            capture.consumerMask = export_receipt.consumer_mask;
+            capture.chainHash = export_receipt.chain_hash;
+            if (M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(menuState, &capture) &&
+                menuState->dm1HoCPresentedCaptureReceipt.presentedCaptureReady) {
+                menuState->dm1HoCPresentedCaptureLaunchSerial = g_m11_sync_launch_serial;
+            }
+        }
     }
 
-    memset(&capture, 0, sizeof(capture));
-    capture.handled = export_receipt.handled;
-    capture.presentedCaptureReady = export_receipt.presented_capture_ready;
-    capture.hostWindowPresent = export_receipt.host_window_present;
-    capture.capturedFromMacWindow = export_receipt.captured_from_mac_window;
-    capture.capturedFromReleaseApp = export_receipt.captured_from_release_app;
-    capture.width = export_receipt.width;
-    capture.height = export_receipt.height;
-    capture.byteCount = export_receipt.byte_count;
-    capture.framebufferHash = export_receipt.framebuffer_hash;
-    capture.consumerMask = export_receipt.consumer_mask;
-    capture.chainHash = export_receipt.chain_hash;
-    (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(menuState,
-                                                           &capture);
-
+    /* The source HoC CD event remains live on every present; freezing the
+     * startup capture must not suppress a later required track transition. */
     if (gameView->dm1FmtownsStartupReceiptValid &&
-        capture.presentedCaptureReady) {
+        menuState->dm1HoCPresentedCaptureLaunchSerial != 0U &&
+        menuState->dm1HoCPresentedCaptureLaunchSerial == g_m11_sync_launch_serial &&
+        menuState->dm1HoCPresentedCaptureReceipt.presentedCaptureReady) {
         int hocTrack = dm1_v1_fmtowns_cd_track_for_event(1);
         if (hocTrack > 0 &&
             gameView->dm1FmtownsCddaCurrentTrack != hocTrack) {
@@ -2118,7 +2131,6 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
            (!videoDriver || strcmp(videoDriver, "dummy") != 0);
 }
 
-static unsigned int g_m11_sync_launch_serial;
 static int g_m11_intro_delay_fast_forward = 0;
 static int g_m11_startup_intro_quit_requested = 0;
 static int g_m11_dm1_i34e_intro_preplayed = 0;
@@ -7016,10 +7028,17 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     M11_AudioState* previousAudio = g_m11_intro_local_audio;
     Uint64 previousPausedMs = g_m11_intro_paused_ms;
     int result;
+    if (menuState && menuState->launchRequested) {
+        /* A previous session's pixels cannot authorize this launch, including
+         * a failed attempt, restart, or a different selected media owner. */
+        (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(menuState, NULL);
+    }
     g_m11_intro_menu = menuState;
     g_m11_intro_game_view = gameView;
     g_m11_intro_local_audio = NULL;
     g_m11_intro_paused_ms = 0U;
+    /* Synchronous startup frames belong to this attempt as well. */
+    ++g_m11_sync_launch_serial;
     result = m11_open_requested_launch_impl(gameView, menuState,
                                             idleAccumulatorMs, dataDir, bootProbe);
     /* Source-faithful title and entrance helpers may run synchronously before
@@ -7036,7 +7055,6 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     g_m11_intro_game_view = previousView;
     g_m11_intro_local_audio = previousAudio;
     g_m11_intro_paused_ms = previousPausedMs;
-    ++g_m11_sync_launch_serial;
     return result;
 }
 
@@ -11836,7 +11854,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (scriptWaitForRuntime) {
             M11_BootProbeReceipt runtimeReceipt;
             memset(&runtimeReceipt, 0, sizeof(runtimeReceipt));
-            if (M11_GameView_GetBootProbeReceipt(&gameView, &runtimeReceipt) &&
+            if (M11_GameView_GetStartupTraceReceipt(&gameView, &runtimeReceipt) &&
                 m11_boot_probe_runtime_receipt_ready(&runtimeReceipt)) {
                 scriptWaitForRuntime = 0;
             }
@@ -11922,6 +11940,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                     break;
                 }
+                (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(&menuState, NULL);
                 M11_GameView_Shutdown(&gameView);
                 M11_GameView_Init(&gameView);
                 DM1_V1_PendingMotionQueue_ClearPc34Compat(
@@ -12030,6 +12049,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         }
                         break;
                     }
+                    (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(&menuState, NULL);
                     M11_GameView_Shutdown(&gameView);
                     M11_GameView_Init(&gameView);
                     DM1_V1_PendingMotionQueue_ClearPc34Compat(

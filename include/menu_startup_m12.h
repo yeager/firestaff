@@ -695,6 +695,8 @@ typedef struct M12_StartupMenuState {
     M12_AssetScanProgress dataDirScanProgress;
     void* dataDirScanJob;
     M12_DM1HoCPresentedCaptureReceipt dm1HoCPresentedCaptureReceipt;
+    /* Successful M12 publication only; zero/cleared receipts always retry. */
+    unsigned int dm1HoCPresentedCaptureLaunchSerial;
     int deferredScanPending;
     char deferredDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char deferredGameId[16];

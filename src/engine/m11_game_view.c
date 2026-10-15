@@ -27563,8 +27563,9 @@ static int m11_dm1_hoc_boot_complete_support_facts(
     return 1;
 }
 
-int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
-                                     M11_BootProbeReceipt* out) {
+static int m11_get_boot_receipt(const M11_GameViewState* state,
+                                M11_BootProbeReceipt* out,
+                                int includePresentedCapture) {
     if (!out) {
         return 0;
     }
@@ -27988,7 +27989,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->runtimeTick = receipt.runtime_tick;
             out->dm1WorldTick = receipt.world_tick;
         }
-        if (m11_dm1_hoc_full_graphics_host_probe_facts(state, &hoc_facts) &&
+        if (includePresentedCapture &&
+            m11_dm1_hoc_full_graphics_host_probe_facts(state, &hoc_facts) &&
             m11_dm1_hoc_boot_complete_support_facts(state,
                                                     &hoc_complete_facts)) {
             if (dm1_v1_startup_hoc_boot_probe_summary_from_host_facts_pc34(
@@ -28114,6 +28116,18 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->startupTitleReady = out->levelLoaded ? 1 : 0;
     }
     return 1;
+}
+
+int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
+                                     M11_BootProbeReceipt* out)
+{
+    return m11_get_boot_receipt(state, out, 1);
+}
+
+int M11_GameView_GetStartupTraceReceipt(const M11_GameViewState* state,
+                                        M11_BootProbeReceipt* out)
+{
+    return m11_get_boot_receipt(state, out, 0);
 }
 
 void M11_GameView_RecordCSBPresentedIndexedFrame(

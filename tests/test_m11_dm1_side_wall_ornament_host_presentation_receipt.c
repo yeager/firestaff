@@ -8,6 +8,7 @@
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1380,6 +1381,35 @@ done:
     return result;
 }
 
+static int check_original_pc34_trace_receipts(M11_GameViewState* state,
+                                             M11_BootProbeReceipt* outFull)
+{
+    M11_BootProbeReceipt full, light, again, normalized;
+    const size_t captureStart = offsetof(M11_BootProbeReceipt, dm1HoCFullGraphicsReady);
+    const size_t captureBytes = offsetof(M11_BootProbeReceipt, startupInitializeV2Runtime) - captureStart;
+    const unsigned char* lightBytes = (const unsigned char*)&light;
+    if (!M11_GameView_GetBootProbeReceipt(state,&full) ||
+        !M11_GameView_GetStartupTraceReceipt(state,&light) ||
+        !M11_GameView_GetBootProbeReceipt(state,&again)) return 0;
+    for (size_t i = 0; i < captureBytes; ++i) {
+        if (lightBytes[captureStart+i]) {
+            fprintf(stderr,"PC34 lightweight trace published capture byte%zu\n",i);
+            return 0;
+        }
+    }
+    normalized = full;
+    memset((unsigned char*)&normalized+captureStart,0,captureBytes);
+    if (memcmp(&normalized,&light,sizeof(light)) || memcmp(&full,&again,sizeof(full)) ||
+        light.partyX != state->world.party.mapX || light.partyY != state->world.party.mapY ||
+        light.partyDir != state->world.party.direction ||
+        light.runtimeTick != (int)state->world.gameTick) {
+        fprintf(stderr,"PC34 lightweight/full startup receipt mismatch or mutated full capture\n");
+        return 0;
+    }
+    *outFull = full;
+    return 1;
+}
+
 /* Exercise the actual CPU nearest presentation with a completed original
  * HoC page. Division here is independent of the production remainder walk. */
 static int check_original_pc34_presented_rgba(M11_GameViewState* state,
@@ -1388,6 +1418,7 @@ static int check_original_pc34_presented_rgba(M11_GameViewState* state,
     static const int sizes[][2] = {{640,400},{1920,1080},{853,479},{157,93},{3840,2160}};
     int result = 0;
     unsigned char source[64000], rgb[256][3];
+    M11_BootProbeReceipt before, after;
     if (M11_Render_IsInitialized() ||
         M11_Render_Init(640,400,0) != M11_RENDER_OK) return 0;
     if (M11_Render_SetScaleFilter(M11_SCALE_FILTER_NEAREST) != M11_RENDER_OK ||
@@ -1403,6 +1434,7 @@ static int check_original_pc34_presented_rgba(M11_GameViewState* state,
             !M11_Render_CopyIndexedPaletteRgb8(rgb) ||
             M11_Render_PresentIndexedToResolution(source,320,200,wantedW,wantedH) != M11_RENDER_OK ||
             memcmp(frame,source,sizeof(source))) goto done;
+        if (!check_original_pc34_trace_receipts(state,&before)) goto done;
         actual = M11_Render_GetPresentedRGBA(&width,&height);
         if (!actual || width != wantedW || height != wantedH) {
             fprintf(stderr,"PC34 RGBA requested%dx%d actual%dx%d\n",wantedW,wantedH,width,height);
@@ -1425,6 +1457,22 @@ static int check_original_pc34_presented_rgba(M11_GameViewState* state,
         printf("PASS: original PC34 HoC complete nearest RGBA %dx%d (%zu bytes), independent floor sampling and source palette\n",
             width,height,(size_t)width*height*4u);
     }
+    if (!replay_native_cast_route(state,"R")) goto done;
+    M11_GameView_Draw(state,source,320,200);
+    if (!memcmp(frame,source,sizeof(source)) ||
+        M11_Render_SetWindowSize(640,400) != M11_RENDER_OK ||
+        M11_Render_PresentIndexedToResolution(source,320,200,640,400) != M11_RENDER_OK ||
+        !check_original_pc34_trace_receipts(state,&after) ||
+        after.partyDir != ((before.partyDir+1)&3) ||
+        after.runtimeTick <= before.runtimeTick ||
+        (before.dm1HoCPresentedCaptureHash &&
+         after.dm1HoCPresentedCaptureHash == before.dm1HoCPresentedCaptureHash)) {
+        fprintf(stderr,"PC34 explicit capture receipt stale after original turn/present\n");
+        goto done;
+    }
+    printf("PASS: original PC34 lightweight/full startup receipts match, capture omitted only in trace, turn %d->%d tick%d->%d capturehash%u->%u\n",
+        before.partyDir,after.partyDir,before.runtimeTick,after.runtimeTick,
+        before.dm1HoCPresentedCaptureHash,after.dm1HoCPresentedCaptureHash);
     result = 1;
 done:
     M11_Render_Shutdown();
