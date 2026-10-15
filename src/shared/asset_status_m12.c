@@ -1120,6 +1120,9 @@ static int m12_admit_dm1_fmtowns_archive(
  * hashes remain the admission criteria. */
 static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5);
 static int m12_dm1_amiga36_package_ready(const char* graphics);
+static int m12_dm1_complete_loose_owner(const char* graphics,
+                                        const char* graphicsMd5,
+                                        char dungeon[ASSET_PATH_MAX]);
 
 static int m12_dm1_towns_graphics_language(const char* md5) {
     if (md5 && strcmp(md5, "c10c512f63461ebe79b5ac365115b61b") == 0) return 0;
@@ -1525,44 +1528,85 @@ static int m12_admit_dm1_atari_st_nested_archive(
     return admitted;
 }
 
-static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,
-                                                     int gameIndex) {
+/* Required-file reports follow the surviving first owner after native
+ * admission. Never let a broad dungeon-hash search describe another edition
+ * beside Towns graphics (LOADSAVE.C F0435:2363-2367 selects DATA/JDATA). */
+static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameIndex,
+                                            int finalValidation) {
     const M12_AssetVersionStatus* version;
     const char* separator;
-    size_t i, archiveLength;
-    const char* directory;
     const char* dungeonHash;
+    char dungeon[M12_ASSET_DATA_DIR_CAPACITY];
+    size_t i;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return;
     version = m12_first_matched_version(status, gameIndex);
-    if (!version || !version->versionId ||
-        (strcmp(version->versionId, "fmtowns-en") != 0 &&
-         strcmp(version->versionId, "fmtowns-ja") != 0)) return;
-    separator = strstr(version->matchedPath, "::");
-    if (!separator) return;
-    archiveLength = (size_t)(separator - version->matchedPath);
-    directory = strcmp(version->versionId, "fmtowns-en") == 0 ? "DATA" : "JDATA";
-    dungeonHash = strcmp(version->versionId, "fmtowns-en") == 0
-        ? "3dc0a932d0e0adfe59878f07c51700c5"
-        : "fe098f70ce83cfe3f2333565093daf35";
+    if (!version || !version->versionId) return;
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
-        M12_AssetRequiredFileStatus* required =
-            &status->requiredFiles[gameIndex][i];
-        const char* member = NULL;
-        const char* md5 = NULL;
-        if (strcmp(required->roleId, "graphics") == 0) {
-            member = "GRAPHICS.DAT";
-            md5 = version->matchedMd5;
-        } else if (strcmp(required->roleId, "dungeon") == 0) {
-            member = "DUNGEON.DAT";
-            md5 = dungeonHash;
-        }
-        if (!member) continue;
+        M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex][i];
+        if (strcmp(required->roleId, "graphics") != 0) continue;
         required->matched = 1;
-        snprintf(required->matchedPath, sizeof(required->matchedPath),
-                 "%.*s::%s/%s", (int)archiveLength, version->matchedPath,
-                 directory, member);
-        snprintf(required->matchedHash, sizeof(required->matchedHash), "%s", md5);
+        m12_copy_string(required->matchedPath, sizeof(required->matchedPath), version->matchedPath);
+        m12_copy_string(required->sourcePath, sizeof(required->sourcePath), version->matchedPath);
+        m12_copy_string(required->matchedHash, sizeof(required->matchedHash), version->matchedMd5);
+    }
+    if (strcmp(version->versionId, "pc34-en") != 0 &&
+        strcmp(version->versionId, "fmtowns-en") != 0 &&
+        strcmp(version->versionId, "fmtowns-ja") != 0) return;
+    /* Bind this native PC receipt to the original English graphics hash,
+     * not just an edition label. */
+    if (strcmp(version->versionId, "pc34-en") == 0 &&
+        strcmp(version->matchedMd5, "fa6b1aa29e191418713bf2cda93d962e") != 0) return;
+    if (finalValidation) {
+        /* A failed final companion read must not leave an earlier owner's
+         * matched dungeon receipt behind when media changes during a scan. */
+        for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+            M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex][i];
+            if (strcmp(required->roleId, "dungeon") != 0) continue;
+            required->matched = 0;
+            required->matchedPath[0] = required->sourcePath[0] = required->matchedHash[0] = '\0';
+        }
+    }
+    separator = strstr(version->matchedPath, "::");
+    if (strcmp(version->versionId, "pc34-en") == 0) {
+        dungeonHash = "766450c940651fc021c92fe5d0d0b3a6";
+        if (separator) {
+            const char* member = separator + 2;
+            const char* next;
+            const char* slash;
+            size_t prefix;
+            while ((next = strstr(member, "::")) != NULL) member = next + 2;
+            slash = strrchr(member, '/');
+            prefix = (size_t)((slash ? slash + 1 : member) - version->matchedPath);
+            if (prefix + sizeof("DUNGEON.DAT") > sizeof(dungeon)) return;
+            memcpy(dungeon, version->matchedPath, prefix);
+            memcpy(dungeon + prefix, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
+            if (!asset_file_matches_md5(dungeon, dungeonHash)) return;
+        } else if (!m12_dm1_complete_loose_owner(version->matchedPath,
+                                                  version->matchedMd5, dungeon)) return;
+    } else {
+        dungeonHash = strcmp(version->versionId, "fmtowns-en") == 0
+            ? "3dc0a932d0e0adfe59878f07c51700c5"
+            : "fe098f70ce83cfe3f2333565093daf35";
+        if (separator) {
+            if (snprintf(dungeon, sizeof(dungeon), "%.*s::%s/DUNGEON.DAT",
+                    (int)(separator - version->matchedPath), version->matchedPath,
+                    strcmp(version->versionId, "fmtowns-en") == 0 ? "DATA" : "JDATA") >=
+                    (int)sizeof(dungeon)) return;
+        } else {
+            char parent[M12_ASSET_DATA_DIR_CAPACITY];
+            if (!FSP_ParentDir(parent, sizeof(parent), version->matchedPath) ||
+                FSP_FindUniqueFileIgnoreCase(parent, "DUNGEON.DAT", dungeon, sizeof(dungeon)) != 1 ||
+                !asset_file_matches_md5(dungeon, dungeonHash)) return;
+        }
+    }
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex][i];
+        if (strcmp(required->roleId, "dungeon") != 0) continue;
+        required->matched = 1;
+        m12_copy_string(required->matchedPath, sizeof(required->matchedPath), dungeon);
+        m12_copy_string(required->sourcePath, sizeof(required->sourcePath), dungeon);
+        m12_copy_string(required->matchedHash, sizeof(required->matchedHash), dungeonHash);
     }
 }
 
@@ -6473,6 +6517,11 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
                 m12_copy_string(required->sourcePath, sizeof(required->sourcePath), rejectedRoot);
             }
         }
+        m12_publish_dm1_required_owner(status, gameIndex, 1);
+        for (size_t index = 0U; index < status->requiredFileCounts[gameIndex]; ++index) {
+            const M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex][index];
+            if (required->required && !required->matched) available = 0;
+        }
         status->dm1Available = available;
     } else if (strcmp(gameId, "csb") == 0) {
         status->csbAvailable = available;
@@ -7903,7 +7952,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         }
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
             size_t requiredIndex;
-            m12_publish_dm1_fmtowns_required_files(status, i);
+            m12_publish_dm1_required_owner(status, i, 0);
             /* The Atari preservation set is ZIP -> ZIP -> STX.  The generic
              * required-file pass cannot enumerate the STX filesystem and
              * resets its role rows, so restore the same already hash-verified
@@ -8373,7 +8422,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     }
     if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
         size_t requiredIndex;
-        m12_publish_dm1_fmtowns_required_files(status, gameIndex);
+        m12_publish_dm1_required_owner(status, gameIndex, 0);
         (void)m12_admit_dm1_atari_st_nested_archive(
             status, gameIndex, roots, rootCount, requestedDataDir);
         (void)m12_admit_dm1_amiga_archive_packages(

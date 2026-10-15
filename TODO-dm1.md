@@ -1725,6 +1725,8 @@ retain their exact owner; incomplete requested owners reject without selecting
 a neighboring complete copy. Original-data scan and runtime assertions pass.
 Improve missing-companion feedback: a rejected explicit file may currently
 show the generic missing-graphics explanation rather than native program or
-dungeon detail. Also bind loose Towns required-file report provenance to its
-selected owner in mixed PC/Towns collections; runtime ownership is checked,
-but the report can still name a different edition's dungeon.
+dungeon detail. Mixed loose Towns/PC34 English reports now refresh graphics
+and dungeon provenance after incomplete native owners are removed. Both the
+full inventory and selected-game scan have authentic EN→JP→PC coverage.
+Other editions' companion report ownership and native Windows original-media
+staging remain separate verification work.

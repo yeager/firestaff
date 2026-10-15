@@ -7277,3 +7277,11 @@ complete duplicate without borrowing another installation's dungeon.
 An explicitly selected DM1 FM Towns GRAPHICS.DAT now retains its own native
 installation. Missing required companions reject that selection instead of
 silently switching to another complete copy found in the same directory tree.
+
+### DM1 required-file provenance
+
+Mixed FM Towns and PC34 English inventories now report graphics and dungeon
+from the surviving original installation. Removing an English or Japanese
+Towns launcher no longer leaves that edition's dungeon listed beside the
+next playable edition. The same checks apply to the start menu's full scan
+and game-specific discovery.

@@ -173,6 +173,66 @@ int main(void) {
         "fresh scan admits restored authentic native FM Towns startup");
     version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex);
     REQUIRE(version && version->matched,"restored common menu admits Japanese startup too");
+    if (pcOriginal && FSP_FileExists(pcOriginal)) {
+        char japaneseProgram[FSP_PATH_MAX];
+        int phase;
+        REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) &&
+            symlink(physical,pcAlias)==0 &&
+            FSP_JoinPath(japaneseProgram,sizeof(japaneseProgram),root,"JDM.EXP"),
+            "stage original PC archive for mixed-owner report");
+        for (phase=0; phase<3; ++phase) {
+            const M12_AssetVersionStatus* owner;
+            int graphicsReported=0, dungeonReported=0, scanMode;
+            if (phase==1) REQUIRE(unlink(englishProgram)==0,"reject English owner for report fallback");
+            if (phase==2) REQUIRE(unlink(japaneseProgram)==0,"reject Japanese owner for PC report fallback");
+            for (scanMode=0; scanMode<2; ++scanMode) {
+                graphicsReported=dungeonReported=0;
+                if (scanMode==0) M12_AssetStatus_ScanGame(fresh,root,"dm1");
+                else M12_AssetStatus_Scan(fresh,root);
+                owner=M12_AssetStatus_GetFirstMatchedVersion(fresh,"dm1");
+                REQUIRE(M12_AssetStatus_GameAvailable(fresh,"dm1") && owner &&
+                    strcmp(owner->versionId,phase==0 ? "fmtowns-en" :
+                    phase==1 ? "fmtowns-ja" : "pc34-en")==0,"report follows first surviving original edition");
+                for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
+                    const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
+                    const char* reported=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                    if (strcmp(required->roleId,"graphics")==0)
+                        graphicsReported=required->matched && strcmp(reported,owner->matchedPath)==0 &&
+                            strcmp(required->matchedHash,owner->matchedMd5)==0;
+                    if (strcmp(required->roleId,"dungeon")==0) {
+                        if (phase<2) {
+                            REQUIRE(FSP_JoinPath(destination,sizeof(destination),phase==0 ? data : japaneseData,
+                                "DUNGEON.DAT"),"locate expected reported Towns dungeon");
+                            dungeonReported=required->matched && strcmp(reported,destination)==0 &&
+                                strcmp(required->matchedHash,phase==0 ? "3dc0a932d0e0adfe59878f07c51700c5" :
+                                    "fe098f70ce83cfe3f2333565093daf35")==0;
+                        } else {
+                            dungeonReported=required->matched && strncmp(reported,pcAlias,strlen(pcAlias))==0 &&
+                                strcmp(required->matchedHash,"766450c940651fc021c92fe5d0d0b3a6")==0;
+                        }
+                    }
+                }
+                if (!graphicsReported || !dungeonReported) {
+                    fprintf(stderr,"report phase=%d scan=%d owner=%s graphics=%d dungeon=%d\n",
+                        phase,scanMode,owner->versionId,graphicsReported,dungeonReported);
+                    for (i=0; i<M12_AssetStatus_GetRequiredFileCount(fresh,"dm1"); ++i) {
+                        const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(fresh,"dm1",i);
+                        fprintf(stderr,"report role=%s matched=%d path=%s source=%s md5=%s\n",
+                            required->roleId,required->matched,required->matchedPath,required->sourcePath,
+                            required->matchedHash);
+                    }
+                }
+                REQUIRE(graphicsReported && dungeonReported,"required-file report retains surviving owner's original provenance");
+            }
+        }
+        REQUIRE(FSP_JoinPath(source,sizeof(source),original,"EDM.EXP") &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),source) && symlink(physical,englishProgram)==0 &&
+            FSP_JoinPath(source,sizeof(source),original,"JDM.EXP") &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),source) && symlink(physical,japaneseProgram)==0 &&
+            unlink(pcAlias)==0,"restore only staged source links after report cases");
+        pcAlias[0]='\0';
+    }
     REQUIRE(unlink(englishProgram)==0,"remove only staged English program link");
     M12_AssetStatus_ScanGame(fresh,root,"dm1");
     REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched &&
