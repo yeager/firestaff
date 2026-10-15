@@ -3,6 +3,7 @@
 #include "dm2_v1_caii_source_owner.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_graphics_data_open.h"
+#include "dm2_v1_update_weather_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +69,8 @@ int main(void)
     DM2_V1_CaiiSourceOwner ai;
     DM2_V1_ArrangeDungeonRngReceipt receipt;
     DM2_V1_ArrangeDungeonRngApplyReceipt apply_receipt;
+    DM2_V1_UpdateWeatherState cold_weather;
+    DM2_V1_WeatherTransitionReceipt weather_receipt;
     DM2_V1_RecordPoolSet pools;
     DM2_V1_RecordPoolSet pool_snapshot;
     DM2_V1_RecordPoolSet bad_pools;
@@ -89,6 +92,8 @@ int main(void)
     memset(&ai, 0, sizeof(ai));
     memset(&receipt, 0, sizeof(receipt));
     memset(&apply_receipt, 0, sizeof(apply_receipt));
+    memset(&cold_weather, 0, sizeof(cold_weather));
+    memset(&weather_receipt, 0, sizeof(weather_receipt));
     memset(&pools, 0, sizeof(pools));
     memset(&pool_snapshot, 0, sizeof(pool_snapshot));
     memset(&bad_pools, 0, sizeof(bad_pools));
@@ -181,11 +186,23 @@ int main(void)
             }
             failures += check(pools.valid && pools.record_graph_complete,
                               "authenticated mutable record pools initialized");
-            /* The caller owns seeding. Use a nonzero test state to verify the
-             * mutator preserves the supplied state and advances by exactly
-             * the source-censused RANDDIR count. This test state is not a
-             * claim about fresh-weather gameplay initialization. */
-            session_rng.random = 0x11cfaefdu;
+            /* SKProject main.cpp initializes randdat to zero. The first
+             * cold GAME_LOAD takes c_weather.cpp's storm-request path before
+             * arrangement, consuming RAND16(500), RANDDIR, RAND16(4). */
+            dm2_v1_drops_rng_init(&session_rng);
+            cold_weather.storm_request = 1;
+            expected_rng = session_rng;
+            (void)dm2_v1_drops_rand16(&expected_rng, 500u);
+            (void)dm2_v1_drops_randdir(&expected_rng);
+            (void)dm2_v1_drops_rand16(&expected_rng, 4u);
+            failures += check(
+                dm2_v1_weather_transition(&cold_weather, 0, 0,
+                                          &session_rng, &weather_receipt) == 0 &&
+                    weather_receipt.valid && weather_receipt.storm_path &&
+                    weather_receipt.draws == 3 &&
+                    cold_weather.pattern_row == 3 && cold_weather.step == 1 &&
+                    session_rng.random == expected_rng.random,
+                "authentic cold-start weather advances the zero-seeded shared RNG by three draws");
             expected_rng = session_rng;
             for (uint32_t i = 0; i < baseline.rng_draws; ++i)
                 (void)dm2_v1_drops_randdir(&expected_rng);

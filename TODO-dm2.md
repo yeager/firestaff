@@ -12,10 +12,17 @@ then the shared transition draws `RANDDIR` and the common tail draws
 clears `v1d652d` after arrangement.
 Remaining proof: audit every function reachable between `randdat.init()` and
 that first weather call for indirect RNG use, then model the entire ordered
-GAME_LOAD/arrangement/CAII RNG stream. Firestaff's New Game owner currently
-has no single transaction for that complete source-ordered state; do not
-prepend these three draws to a partial arrangement receipt or infer a seed
-from the dungeon data alone.
+GAME_LOAD/arrangement/CAII RNG stream. A real-data regression now exercises
+the known zero-seeded, three-draw weather prefix followed by the direction
+mutator as one RNG stream. Firestaff's New Game owner still does not own this
+complete source-ordered state, so this test does not enable the partial
+arranger during fresh GAME_LOAD.
+
+Direct call-site audit: `c_savegame.cpp` calls weather before arrangement and
+has no direct RNG call between them. `skmap.cpp::DM2_ARRANGE_DUNGEON` has two
+direct `RANDDIR` sites, both covered by the creature/possession direction
+mutator. This confirms direct call order only; it does not rule out RNG use in
+the callees of the load loop or establish the later CAII/session sequence.
 
 2026-10-15 authentic `DM2_ARRANGE_DUNGEON` RNG-census verification: the
 read-only source-order census passed against the installed original DOS EN,
@@ -24,12 +31,13 @@ different `GRAPHICS.DAT` bytes; both independently report 44 maps, 2,809
 creature records, 16 eligible static creatures, 12 possession records, 28
 `RANDDIR` draws, and order hash `62645a40`. FM Towns reports 44 maps, 2,581
 creature records, 15 eligible static creatures, 12 possession records, 27
-draws, and order hash `fe67f576`. The test also verified that the authentic
-dungeon bytes remain unchanged and that a cyclic record link is rejected.
-These edition-specific counts confirm the arrangement draw order; they do not
-execute the source mutator, prove the complete shared session RNG state, or
-authorize enabling fresh-game weather. Keep the source-mutation and single-RNG
-integration gap below open.
+draws, and order hash `fe67f576`. The test also verified that authentic
+dungeon bytes remain unchanged, a cyclic record link is rejected, the
+transactional mutation matches the census, and the cold-weather prefix and
+arrangement share one RNG in source order. These edition-specific results do
+not audit every function before the first weather call, implement full map
+arrangement, or prove fresh-GAME_LOAD/CAII ordering. Keep the full source-
+mutation and runtime integration gap below open.
 
 2026-10-15 partial `DM2_ARRANGE_DUNGEON` direction mutation: Firestaff now
 replays only the source's conditional static-creature and possession
@@ -37,12 +45,11 @@ replays only the source's conditional static-creature and possession
 the caller-provided RNG state, follows source map/column/row/record order, and
 atomically commits pool bytes plus RNG only after the source-ordered census,
 record identities, links and expected write/draw counts all validate. The
-focused real-data test verifies successful mutation, exact draw advancement,
-authentic dungeon immutability, and rollback after an injected pool identity
-mismatch. DOS EN and FM Towns JP originals both pass (28 and 27 draws,
-respectively). This API is not yet called from fresh `GAME_LOAD`; callers must
-provide the already-correct shared session RNG state, and Firestaff has not
-integrated/proven the preceding fresh-weather bootstrap. This partial mutation
+focused real-data test starts at zero, applies the source storm-weather prefix,
+then verifies successful arrangement mutation and exact shared RNG advance.
+Authentic DOS EN and FM Towns JP originals pass (28 and 27 arrangement draws,
+respectively). This API is not yet called from fresh `GAME_LOAD`; indirect RNG
+before weather and later CAII ordering remain unaudited. This partial mutation
 does not complete or enable `DM2_ARRANGE_DUNGEON`.
 
 Remaining source work is broader than those random direction writes. In
