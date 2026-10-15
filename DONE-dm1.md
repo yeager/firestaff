@@ -1,5 +1,13 @@
 - 2026-10-15: Fixed I34E title lookup in the authentic nested DM1 DOS ZIP.
 
+- 2026-10-15: Reverified direct `--game` exit on source `8939e58fe` with
+  authentic FM Towns media and an isolated configuration. DM1, CSB and DM2
+  each reached runtime and exited after Return to Menu without reopening
+  the launcher. The shared-library M12 session also launched DM1, rescanned,
+  launched CSB, returned and rescanned again; both scans rediscovered DM1,
+  CSB and DM2. These SDL dummy-driver checks verify launch/exit/rescan
+  behavior on the Mac host, not native display, audio or visual parity.
+
 - 2026-10-15: Restored F20 entrance-door waits to one 60 Hz VBlank per
   step, matching ReDMCSB ENTRANCE.C F0438:230-240. The 31-step unit
   contract is 517 ms. Both English and Japanese original-media startup

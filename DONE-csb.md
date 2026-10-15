@@ -1,4 +1,12 @@
 - 2026-10-13: After the shared M11 frame-pacing change, the Mac mini M4 passed
+
+- 2026-10-15: Reverified direct `--game` exit on source `8939e58fe` with
+  authentic FM Towns media and an isolated configuration. DM1, CSB and DM2
+  each reached runtime and exited after Return to Menu without reopening
+  the launcher. The shared-library M12 session also launched DM1, rescanned,
+  launched CSB, returned and rescanned again; both scans rediscovered DM1,
+  CSB and DM2. These SDL dummy-driver checks verify launch/exit/rescan
+  behavior on the Mac host, not native display, audio or visual parity.
   `csb_v1_fmtowns_native_cli_boot` in 114.55 seconds against authentic FM
   Towns media. This headless test covers original-media startup, menu, audio
   routing, and game-start

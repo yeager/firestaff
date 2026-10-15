@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-15: M12 permission/error regressions passed on `8939e58fe`.
+  `asset_scan_access_denied` used the authentic DM1 FM Towns archive and
+  verified unreadable roots, partial collection access, and revoked archive
+  access after cache population. `m12_no_data_popup_once_gate` passed its
+  empty-directory popup lifecycle checks. These tests simulate filesystem
+  permission failures; they do not exercise the native macOS privacy dialog.
+
 - 2026-10-14: Re-ran the authentic DM1 PC 3.4, CSB FM Towns and DM2 FM Towns
   startup suites on the current macOS M4 build. Each direct `--game` route
   and M12 start-menu route reached a source-owned runtime using the installed
