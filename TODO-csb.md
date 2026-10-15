@@ -197,6 +197,17 @@ archive remains unsupported. See the development-only conversion evidence below.
   lossless sector recovery or original-disk behavior. The damaged-track
   warning remains relevant.
 
+  2026-10-15 investigation: the SPS development oracle's per-track
+  `trackdata` output is not directly consumable as Firestaff's packed MFM
+  bit-cell input. A local harness passed all 164 exported tracks to
+  `firestaff_amiga_mfm_scan_track()` and found zero sectors. The corresponding
+  API also exposes a same-length timing array of 32-bit words. Do not wire
+  either array into the ADF sector reader based only on matching track sizes;
+  derive and verify the timing-to-bit-cell conversion against sector checksums
+  from original CTRaw media first. The probe and extracted media stayed in
+  ignored `.codex-scratch/csb-ctraw-oracle/` and `/tmp`; neither is a product
+  dependency or tracked game data.
+
   SPS/CAPS is permitted for this non-commercial development environment under
   its stated terms, but not for commercial use or redistribution. Keep this
   oracle local and development-only: do not bundle it, link it into Firestaff,
