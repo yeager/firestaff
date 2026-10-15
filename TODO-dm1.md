@@ -1715,5 +1715,7 @@ hides a complete English copy; the authentic menu handoff and stale-source
 rejection are covered. Invalid earlier roots are bypassed when another ready
 root exists (cross-root behavior is source-reviewed, not runtime-tested).
 Per-selected-edition diagnostics in mixed ready collections and native Windows
-original-media staging remain open. Separate duplicate completeness cases for
-missing dungeon data still need authentic evidence.
+original-media staging remain open. Missing/wrong-language dungeon ownership
+and recovery to a complete duplicate now have authentic local coverage; both
+English and Japanese loose native worlds start with their own buffer decoder.
+Cross-root runtime evidence and native Windows staging remain separate gaps.

@@ -26294,19 +26294,22 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * the language-specific, source-locked member hash selected by M12. */
         if (spec->dm1Fmtowns && spec->dataDir && spec->dataDir[0] != '\0') {
             const char *prefix = spec->dm1FmtownsJapanese ? "JDATA/" : "DATA/";
-            if (FSP_DirExists(spec->dataDir) &&
-                ((!spec->dm1FmtownsJapanese &&
-                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), spec->dataDir,
-                               "DUNGEON.DAT") &&
-                  FSP_FileExists(dungeonPath)) ||
-                 (spec->dm1FmtownsJapanese &&
-                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), spec->dataDir,
-                               "JDATA/DUNGEON.DAT") &&
-                  FSP_FileExists(dungeonPath)) ||
-                 (!spec->dm1FmtownsJapanese &&
-                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), spec->dataDir,
-                               "DATA/DUNGEON.DAT") &&
-                  FSP_FileExists(dungeonPath)))) {
+            if (FSP_DirExists(spec->dataDir)) {
+                char owner[FSP_PATH_MAX];
+                /* ReDMCSB LOADSAVE.C F0435:2363-2367 opens the selected
+                 * owner's dungeon; F20J uses its distinct native buffer decoder.
+                 * M12 supplies DATA or JDATA as the loose runtime root. */
+                if (spec->verifiedAssetPath && spec->verifiedAssetPath[0] &&
+                    !strstr(spec->verifiedAssetPath, "::")) {
+                    if (!FSP_ParentDir(owner, sizeof(owner), spec->verifiedAssetPath)) return 0;
+                } else {
+                    if (!FSP_JoinPath(owner, sizeof(owner), spec->dataDir,
+                            spec->dm1FmtownsJapanese ? "JDATA" : "DATA") ||
+                        !FSP_DirExists(owner))
+                        snprintf(owner, sizeof(owner), "%s", spec->dataDir);
+                }
+                if (m11_find_unique_loose_sibling(owner, "DUNGEON.DAT",
+                        dungeonPath, sizeof(dungeonPath)) != 1) return 0;
                 dm1FmtownsPath = 1;
                 dm1_dungeon_path_hash_resolved = 1;
                 facts.explicit_dungeon_path = dungeonPath;
@@ -26351,7 +26354,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                    strlen(dungeonMember) + 1u);
             if (!last && (!spec->dungeonPath || !spec->dungeonPath[0])) {
                 char parent[FSP_PATH_MAX];
-                /* ReDMCSB LOADSAVE.C F0435:2336-2343 opens the selected
+                /* ReDMCSB LOADSAVE.C F0435:2363-2367 opens the selected
                  * Atari/Amiga installation's dungeon through its native
                  * case-insensitive filesystem, not a POSIX spelling gate. */
                 if (!FSP_ParentDir(parent, sizeof(parent), spec->verifiedAssetPath))
@@ -26624,11 +26627,22 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             F0882_WORLD_InitFromDungeonDatBuffer_Compat(
                 dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
                 0xF1A5U, &state->world);
-    } else if (spec->dm1Fmtowns && spec->dataDir && !FSP_DirExists(spec->dataDir) &&
-        m11_dm1_fmtowns_read_archive_member(
-            spec->dataDir,
-            spec->dm1FmtownsJapanese ? "JDATA/DUNGEON.DAT" : "DATA/DUNGEON.DAT",
-            &dm1FmtownsDungeonBytes, &dm1FmtownsDungeonSize)) {
+    } else if (spec->dm1Fmtowns && spec->dataDir) {
+        int read = FSP_DirExists(spec->dataDir)
+            ? asset_read_path_alloc(dungeonPath, &dm1FmtownsDungeonBytes,
+                                    &dm1FmtownsDungeonSize)
+            : m11_dm1_fmtowns_read_archive_member(spec->dataDir,
+                spec->dm1FmtownsJapanese ? "JDATA/DUNGEON.DAT" : "DATA/DUNGEON.DAT",
+                &dm1FmtownsDungeonBytes, &dm1FmtownsDungeonSize);
+        const char* expected = spec->dm1FmtownsJapanese
+            ? "fe098f70ce83cfe3f2333565093daf35"
+            : "3dc0a932d0e0adfe59878f07c51700c5";
+        if (!read || !asset_memory_matches_md5(dm1FmtownsDungeonBytes,
+                                               dm1FmtownsDungeonSize, expected)) {
+            fprintf(stderr, "firestaff: DM1 FM Towns dungeon identity rejected: %s\n", dungeonPath);
+            free(dm1FmtownsDungeonBytes);
+            return 0;
+        }
         dm1FmtownsBufferLoaded = spec->dm1FmtownsJapanese
             ? F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
                   dm1FmtownsDungeonBytes, (int)dm1FmtownsDungeonSize,

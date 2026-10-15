@@ -7263,3 +7263,11 @@ an incomplete native launcher. A complete owner is selected without borrowing
 EDM/JDM or TMENU from another installation. When every copy is incomplete,
 the existing missing-program feedback remains available. Archive admission is
 unchanged.
+
+### Native FM Towns dungeon ownership
+
+DM1 Japanese loose-file startup now resolves its selected JDATA dungeon and
+uses the Japanese decoder. English and Japanese native startups authenticate
+the exact consumed dungeon buffer. Discovery rejects loose installations
+whose dungeon is missing or belongs to the other language, and can select a
+complete duplicate without borrowing another installation's dungeon.

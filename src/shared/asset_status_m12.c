@@ -4978,6 +4978,16 @@ static int m12_dm1_towns_loose_launcher_ready(const char* graphics,
         dm1_v1_fmtowns_startup_receipt_is_native(&receipt);
 }
 
+static int m12_dm1_towns_loose_dungeon_ready(const char* graphics, int japanese) {
+    char parent[FSP_PATH_MAX], dungeon[FSP_PATH_MAX];
+    return graphics && !strstr(graphics, "::") &&
+        FSP_ParentDir(parent, sizeof(parent), graphics) &&
+        FSP_FindUniqueFileIgnoreCase(parent, "DUNGEON.DAT", dungeon, sizeof(dungeon)) == 1 &&
+        asset_file_matches_md5(dungeon, japanese
+            ? "fe098f70ce83cfe3f2333565093daf35"
+            : "3dc0a932d0e0adfe59878f07c51700c5");
+}
+
 static void m12_fill_game_versions(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -5146,7 +5156,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                     continue;
                 }
                 if (m12_dm1_towns_loose_launcher_ready(rootMatchedPaths[rootIndex][i],
-                        strcmp(id, "fmtowns-ja") == 0, startupRoot)) {
+                        strcmp(id, "fmtowns-ja") == 0, startupRoot) &&
+                    m12_dm1_towns_loose_dungeon_ready(rootMatchedPaths[rootIndex][i],
+                        strcmp(id, "fmtowns-ja") == 0)) {
                     readyRoots[rootIndex] = anyReady = 1;
                     continue;
                 }
@@ -5155,7 +5167,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                     m12_effective_version_md5(&gameSpec->versions[i]), candidates, 256U, 32) : -1;
                 for (candidate = 0; candidate < count; ++candidate) {
                     if (m12_dm1_towns_loose_launcher_ready(candidates[candidate],
-                            strcmp(id, "fmtowns-ja") == 0, startupRoot)) {
+                            strcmp(id, "fmtowns-ja") == 0, startupRoot) &&
+                        m12_dm1_towns_loose_dungeon_ready(candidates[candidate],
+                            strcmp(id, "fmtowns-ja") == 0)) {
                         m12_copy_string(rootMatchedPaths[rootIndex][i],
                             sizeof(rootMatchedPaths[rootIndex][i]), candidates[candidate]);
                         readyRoots[rootIndex] = anyReady = 1;
@@ -6385,6 +6399,7 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
     if (strcmp(gameId, "dm1") == 0) {
         int rejected = 0;
         const char* missingLauncher = NULL;
+        int missingDungeon = 0;
         char rejectedRoot[M12_ASSET_DATA_DIR_CAPACITY] = {0};
         for (size_t index = 0U; index < g_games[gameIndex].versionCount; ++index) {
             M12_AssetVersionStatus* version = &status->versions[gameIndex][index];
@@ -6395,13 +6410,15 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
                 const int japanese = strcmp(version->versionId, "fmtowns-ja") == 0;
                 int nativeReady = m12_dm1_towns_loose_launcher_ready(
                     version->matchedPath, japanese, startupRoot);
-                if (!nativeReady) {
-                    missingLauncher = japanese
+                int dungeonReady = m12_dm1_towns_loose_dungeon_ready(version->matchedPath, japanese);
+                if (!nativeReady || !dungeonReady) {
+                    if (!dungeonReady) missingDungeon = 1;
+                    if (!nativeReady) missingLauncher = japanese
                         ? "AUTOEXEC.BAT / TMENU.EXP / TMENU.ICN / TMENU.INF / JDM.EXP"
                         : "AUTOEXEC.BAT / TMENU.EXP / TMENU.ICN / TMENU.INF / EDM.EXP";
                     m12_copy_string(rejectedRoot, sizeof(rejectedRoot),
                                     startupRoot[0] ? startupRoot : version->matchedPath);
-                    fprintf(stderr, "firestaff: DM1 %s loose launcher incomplete: %s\n",
+                    fprintf(stderr, "firestaff: DM1 %s loose native owner incomplete: %s\n",
                             version->versionId, version->matchedPath);
                     version->matched = 0;
                     version->matchedPath[0] = version->matchedMd5[0] = '\0';
@@ -6417,6 +6434,16 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
         }
         if (rejected && !m12_first_matched_version(status, gameIndex)) {
             available = 0;
+            if (missingDungeon) {
+                for (size_t index = 0U; index < status->requiredFileCounts[gameIndex]; ++index) {
+                    M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex][index];
+                    if (required->roleId && strcmp(required->roleId, "dungeon") == 0) {
+                        required->matched = 0;
+                        required->matchedPath[0] = required->matchedHash[0] = '\0';
+                        m12_copy_string(required->sourcePath, sizeof(required->sourcePath), rejectedRoot);
+                    }
+                }
+            }
             /* These roles are game-wide. Never hide a playable sibling
              * edition because only the Towns native launcher is missing. */
             if (missingLauncher && status->requiredFileCounts[gameIndex] <

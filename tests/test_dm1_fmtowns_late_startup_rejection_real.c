@@ -88,7 +88,7 @@ int main(void) {
     menu=SDL_calloc(1,sizeof(*menu)); game=SDL_calloc(1,sizeof(*game));
     REQUIRE(menu && game,"allocate real launcher and runtime");
     memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
-    M12_StartupMenu_InitWithOptions(menu,data,"dm1",&options);
+    M12_StartupMenu_InitWithOptions(menu,root,"dm1",&options);
     index=M12_AssetStatus_FindVersionIndex("dm1","fmtowns-en");
     version=index>=0 ? M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index) : NULL;
     REQUIRE(version && version->matched && strncmp(version->matchedPath,data,strlen(data))==0,
@@ -109,6 +109,16 @@ int main(void) {
         strcmp(game->dm1FmtownsStartupReceipt.game_program_name,"EDM.EXP")==0,
         "positive startup binds original EDM and TMENU with loaded world");
     M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    japaneseIndex=M12_AssetStatus_FindVersionIndex("dm1","fmtowns-ja");
+    REQUIRE(japaneseIndex>=0,"Japanese native edition exists");
+    menu->gameOptions[0].versionIndex=japaneseIndex;
+    REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) &&
+        M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded && game->active &&
+        game->dm1FmtownsStartupReceiptValid &&
+        strcmp(game->dm1FmtownsStartupReceipt.game_program_name,"JDM.EXP")==0,
+        "complete authentic Japanese loose owner starts native world");
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    menu->gameOptions[0].versionIndex=index;
     /* Remove only the task-owned link after scanning. Source graphics and
      * dungeon remain valid, so failure occurs at native startup admission. */
     REQUIRE(unlink(menuProgram)==0,"remove staged TMENU link without modifying original");
@@ -181,6 +191,36 @@ int main(void) {
     M12_AssetStatus_ScanGame(fresh,root,"dm1");
     REQUIRE(M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched,
         "restoring EDM admits English native startup again");
+    REQUIRE(FSP_JoinPath(destination,sizeof(destination),data,"DUNGEON.DAT") &&
+        unlink(destination)==0,"remove only staged English dungeon");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched &&
+        M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)japaneseIndex)->matched &&
+        M12_AssetStatus_GameAvailable(fresh,"dm1"),
+        "Japanese sibling dungeon does not admit English owner missing its dungeon");
+    {
+        char japaneseDungeon[FSP_PATH_MAX];
+        REQUIRE(FSP_JoinPath(japaneseDungeon,sizeof(japaneseDungeon),japaneseData,"DUNGEON.DAT") &&
+            unlink(japaneseDungeon)==0,"remove second language dungeon task link");
+        M12_AssetStatus_ScanGame(fresh,root,"dm1");
+        REQUIRE(!M12_AssetStatus_GameAvailable(fresh,"dm1"),
+            "complete native programs cannot admit owners with both dungeons missing");
+        REQUIRE(FSP_JoinPath(source,sizeof(source),original,"JDATA/DUNGEON.DAT") &&
+            FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+            symlink(physical,japaneseDungeon)==0,"restore original Japanese dungeon link");
+    }
+    REQUIRE(FSP_JoinPath(source,sizeof(source),original,"JDATA/DUNGEON.DAT") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+        symlink(physical,destination)==0,"stage authentic Japanese dungeon under English owner");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    REQUIRE(!M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index)->matched,
+        "wrong authentic language dungeon does not admit English owner");
+    REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+        "stale English menu rejects consumed wrong-language dungeon bytes");
+    REQUIRE(unlink(destination)==0 &&
+        FSP_JoinPath(source,sizeof(source),original,"DATA/DUNGEON.DAT") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+        symlink(physical,destination)==0,"restore unchanged English dungeon link");
     /* A complete second installation must survive an earlier same-edition
      * graphics/dungeon pair whose native launcher is incomplete. */
     REQUIRE(FSP_JoinPath(duplicate,sizeof(duplicate),root,"zz-complete") &&
@@ -194,6 +234,16 @@ int main(void) {
             symlink(physical,destination)==0,"stage complete second original owner");
         ++duplicateLinked;
     }
+    REQUIRE(FSP_JoinPath(destination,sizeof(destination),data,"DUNGEON.DAT") &&
+        unlink(destination)==0,"remove first owner's dungeon beside complete duplicate");
+    M12_AssetStatus_ScanGame(fresh,root,"dm1");
+    version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index);
+    REQUIRE(version && version->matched &&
+        strncmp(version->matchedPath,duplicateData,strlen(duplicateData))==0,
+        "complete duplicate wins over launcher-ready owner missing its dungeon");
+    REQUIRE(FSP_JoinPath(source,sizeof(source),original,"DATA/DUNGEON.DAT") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&
+        symlink(physical,destination)==0,"restore first owner's original dungeon");
     REQUIRE(unlink(menuProgram)==0,"make first native owner incomplete");
     M12_AssetStatus_ScanGame(fresh,root,"dm1");
     version=M12_AssetStatus_GetVersion(fresh,"dm1",(size_t)index);
