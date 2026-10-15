@@ -1684,3 +1684,13 @@ saved editions before interaction. Deferred or cancelled scans must not infer
 absence before inventory is known. Deferred original-media tests retain installed
 Multilanguage and recover English only when the selected edition is absent.
 Equivalent manual edition-row interaction evidence for CSB/DM2 remains open.
+
+### Loose selected graphics ownership (2026-10-15)
+
+The selected loose graphics path now remains authoritative; changed or removed
+files cannot silently choose a canonical sibling. Decoding consumes the same
+buffer that passed its selected MD5 check. Already admitted virtual and loose
+native buffers are reused, and rejected binding tears down the partial world.
+Original English/multilingual canonical-replacement and renamed-file-removal
+cases pass alongside positive starts. Keep negative Towns/native-edition and
+Windows staging expansion open; broad platform/visual parity is not established.

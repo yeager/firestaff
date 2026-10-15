@@ -8329,71 +8329,53 @@ static void m11_bind_verified_i34e_archive_food_clock(M11_GameViewState* state) 
 
 static int m11_apply_dm1_startup_graphics_bind_receipt(
     M11_GameViewState* state,
-    const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt) {
+    const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt,
+    const char* expectedMd5) {
     if (!state || !receipt || !receipt->handled) {
         return 0;
     }
     if (!receipt->bind_graphics_dat) {
         return 1;
     }
-    /* The virtual path has already bound its authenticated member in RAM.
-     * Do not reopen it, but still bind every source-owned post-load surface
-     * from the retained virtual identity. */
-    if (strstr(receipt->graphics_dat_path, "::") != NULL &&
-        state->assetLoader.initialized) {
-        state->assetsAvailable = 1;
-        (void)M11_Audio_BindOriginalSnd3Path(
-            &state->audioState,
-            state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1
-                ? NULL : state->assetLoader.graphicsDatPath);
-        m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
-        (void)m11_dm1_load_object_names_m564(state);
-        (void)m11_dm1_bind_original_font(state);
-        m11_bind_verified_i34e_archive_food_clock(state);
-        return 1;
-    }
-    /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
-     * recognise that source format before trying the PC34 IMG3 loader.
-     * Otherwise a permissive PC34 header match can hide the legacy binding
-     * and prevent the native title/menu owner from starting. */
-    {
-        int legacyLoaded =
-            M11_AssetLoader_InitDm1LegacyFromFile(
-                &state->assetLoader, receipt->graphics_dat_path, 0) ||
-            M11_AssetLoader_InitDm1LegacyFromFile(
-                &state->assetLoader, receipt->graphics_dat_path, 1) ||
-            M11_AssetLoader_InitDm1AtariStFromFile(
-                &state->assetLoader, receipt->graphics_dat_path);
-        /* A packed FM Towns source has no filesystem pathname that the
-         * legacy loader can open.  Prefer the authenticated legacy parser
-         * over the generic IMG3 probe: both formats may accept a loose
-         * prefix, but only the legacy binding supplies the FM Towns title
-         * and menu graphics contract. */
-        if (!legacyLoaded && state->fmtownsGraphicsDat &&
-            state->fmtownsGraphicsDatSize > 0) {
-            legacyLoaded =
-                M11_AssetLoader_InitDm1LegacyFromBuffer(
-                    &state->assetLoader,
-                    state->fmtownsGraphicsDat,
-                    (long)state->fmtownsGraphicsDatSize,
-                    0);
+    /* Earlier native/virtual ingestion has already authenticated this exact
+     * source. Reuse its retained loader instead of reopening a loose file. */
+    if (!state->assetLoader.initialized ||
+        strcmp(state->assetLoader.graphicsDatPath, receipt->graphics_dat_path) != 0) {
+        uint8_t* readBytes = NULL;
+        const uint8_t* bytes;
+        size_t byteCount;
+        int loaded;
+        if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0) {
+            bytes = state->fmtownsGraphicsDat;
+            byteCount = state->fmtownsGraphicsDatSize;
+        } else {
+            if (!asset_read_path_alloc(receipt->graphics_dat_path,
+                                       &readBytes, &byteCount)) return 0;
+            bytes = readBytes;
         }
-        if (!legacyLoaded &&
-            !M11_AssetLoader_Init(&state->assetLoader,
-                                   receipt->graphics_dat_path)) {
-            if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0) {
-                if (!M11_AssetLoader_InitFromBuffer(&state->assetLoader,
-                        state->fmtownsGraphicsDat,
-                        (long)state->fmtownsGraphicsDatSize) &&
-                    !M11_AssetLoader_InitDm1LegacyFromBuffer(
-                        &state->assetLoader, state->fmtownsGraphicsDat,
-                        (long)state->fmtownsGraphicsDatSize, 0)) {
-                    return 0;
-                }
-            } else {
-                return 0;
-            }
+        if (!bytes || byteCount == 0 || byteCount > (size_t)LONG_MAX ||
+            (expectedMd5 && expectedMd5[0] &&
+             !asset_memory_matches_md5(bytes, byteCount, expectedMd5))) {
+            fprintf(stderr, "firestaff: DM1 graphics source identity rejected: %s\n",
+                    receipt->graphics_dat_path);
+            free(readBytes);
+            return 0;
         }
+        /* Preserve legacy/Atari/PC decoder precedence, consuming only the
+         * bytes just authenticated. Each successful decoder owns its copy. */
+        loaded = M11_AssetLoader_InitDm1LegacyFromBuffer(
+                     &state->assetLoader, bytes, (long)byteCount, 0) ||
+                 M11_AssetLoader_InitDm1LegacyFromBuffer(
+                     &state->assetLoader, bytes, (long)byteCount, 1) ||
+                 M11_AssetLoader_InitDm1AtariStFromBuffer(
+                     &state->assetLoader, bytes, (long)byteCount) ||
+                 M11_AssetLoader_InitFromBuffer(
+                     &state->assetLoader, bytes, (long)byteCount);
+        free(readBytes);
+        if (!loaded) return 0;
+        snprintf(state->assetLoader.graphicsDatPath,
+                 sizeof(state->assetLoader.graphicsDatPath), "%s",
+                 receipt->graphics_dat_path);
     }
     state->assetsAvailable = 1;
     /* ReDMCSB F0060 reads the SND3 bank from the same verified PC34
@@ -8407,6 +8389,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
     m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
     (void)m11_dm1_load_object_names_m564(state);
     (void)m11_dm1_bind_original_font(state);
+    m11_bind_verified_i34e_archive_food_clock(state);
     return 1;
 }
 
@@ -26728,30 +26711,25 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         graphicsBindReceipt = receipt.graphics_bind_receipt;
-        /* Keep M12's exact authenticated loose graphics path. PC34 may use
-         * a different directory from the dungeon in mixed installations;
-         * Atari/Amiga startup also requires the selected filename's spelling
-         * for the title and entrance ownership check. */
-        if (spec->verifiedAssetPath && spec->verifiedAssetMd5 &&
-            (strcmp(spec->verifiedAssetMd5,
-                    "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
-             m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
-             m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5)) &&
-            strstr(spec->verifiedAssetPath, "::") == NULL &&
-            asset_file_matches_md5(spec->verifiedAssetPath,
-                                   spec->verifiedAssetMd5) &&
-            strlen(spec->verifiedAssetPath) <
-                sizeof(graphicsBindReceipt.graphics_dat_path)) {
+        /* The selected source is authoritative, including renamed loose
+         * graphics. A missing or changed selection must fail binding rather
+         * than fall back to a canonical sibling. The binder authenticates
+         * the exact retained bytes before decoding. */
+        if (spec->verifiedAssetPath && spec->verifiedAssetPath[0] &&
+            spec->verifiedAssetMd5 && spec->verifiedAssetMd5[0]) {
+            if (strlen(spec->verifiedAssetPath) >=
+                sizeof(graphicsBindReceipt.graphics_dat_path)) return 0;
             snprintf(graphicsBindReceipt.graphics_dat_path,
                      sizeof(graphicsBindReceipt.graphics_dat_path),
                      "%s", spec->verifiedAssetPath);
         }
         if (!m11_apply_dm1_startup_runtime_start_receipt(
-                state,
-                &receipt.runtime_start_receipt) ||
-            !m11_apply_dm1_startup_graphics_bind_receipt(
-                state,
-                &graphicsBindReceipt)) {
+                state, &receipt.runtime_start_receipt)) return 0;
+        if (!m11_apply_dm1_startup_graphics_bind_receipt(
+                state, &graphicsBindReceipt, spec->verifiedAssetMd5)) {
+            /* The runtime receipt activated the freshly loaded world. A
+             * rejected source must not leave it running behind the menu. */
+            M11_GameView_Shutdown(state);
             return 0;
         }
         /* LOADSAVE.C F0434:2040-2074 adds G0236 pools on a new game,

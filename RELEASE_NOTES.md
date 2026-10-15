@@ -7243,3 +7243,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### Explicit edition selection
 
 - DM1, CSB and DM2 block an explicitly selected missing edition instead of silently launching a sibling edition. AUTO and stale platform/configuration recovery remain available; deferred scans preserve saved choices until inventory is known.
+
+### DM1 loose graphics ownership
+
+- DM1 verifies and retains selected loose graphics in bounded memory, preventing changed or missing files from falling back to another graphics file. Rejected graphics binding now clears the partial game state.

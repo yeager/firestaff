@@ -62,6 +62,92 @@ static int write_original_pair(const char* path, const char* const names[2],
 }
 #endif
 #define REQUIRE(c,m) do { if(!(c)) { fprintf(stderr,"FAIL: %s\n",m); goto cleanup; } } while(0)
+#ifndef _WIN32
+static int write_original_bytes(const char* path, const unsigned char* bytes, size_t size) {
+    FILE* file=fopen(path,"wb"); int ok;
+    if(!file) return 0;
+    ok=fwrite(bytes,1,size,file)==size;
+    if(fclose(file)) ok=0;
+    return ok;
+}
+static int check_loose_selected_media(const char* root, const char* original,
+    const unsigned char* multilingual, size_t multilingualSize,
+    const unsigned char* dungeon, size_t dungeonSize) {
+    char dir[FSP_PATH_MAX]={0}, graphics[FSP_PATH_MAX]={0};
+    char selected[FSP_PATH_MAX]={0}, dungeonPath[FSP_PATH_MAX]={0};
+    char originalGraphics[ASSET_PATH_MAX];
+    unsigned char* english=NULL; size_t englishSize=0;
+    M12_StartupMenuState* menu=NULL; M11_GameViewState* game=NULL;
+    M12_StartupMenuInitOptions options; M12_LaunchIntent intent;
+    M11_BootProbeReceipt receipt; int index, mode, initialized=0, result=1;
+    REQUIRE(asset_find_by_md5(original,"fa6b1aa29e191418713bf2cda93d962e",
+        originalGraphics,sizeof(originalGraphics),0)&&
+        asset_read_path_alloc(originalGraphics,&english,&englishSize),
+        "read unchanged authentic English graphics for loose staging");
+    menu=SDL_calloc(1,sizeof(*menu)); game=SDL_calloc(1,sizeof(*game));
+    REQUIRE(menu&&game,"allocate isolated loose-media launcher");
+    for(mode=0;mode<2;mode++) {
+        REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,mode?"loose-renamed":"loose-canonical")&&
+            FSP_CreateDirectory(dir)&&FSP_JoinPath(graphics,sizeof(graphics),dir,"GRAPHICS.DAT")&&
+            FSP_JoinPath(dungeonPath,sizeof(dungeonPath),dir,"DUNGEON.DAT")&&
+            FSP_JoinPath(selected,sizeof(selected),dir,mode?"selected-original.payload":"GRAPHICS.DAT"),
+            "construct task-owned loose original-media paths");
+        REQUIRE(write_original_bytes(selected,english,englishSize)&&
+            write_original_bytes(dungeonPath,dungeon,dungeonSize)&&
+            (!mode||write_original_bytes(graphics,multilingual,multilingualSize)),
+            "stage unmodified original loose graphics and dungeon bytes");
+        memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+        M12_StartupMenu_InitWithOptions(menu,dir,"dm1",&options);
+        index=M12_AssetStatus_FindVersionIndex("dm1","pc34-en");
+        {
+            const M12_AssetVersionStatus* version=index>=0?
+                M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index):NULL;
+            REQUIRE(version&&version->matched&&strcmp(version->matchedPath,selected)==0,
+                "scan binds exact selected loose English graphics pathname");
+        }
+        menu->selectedIndex=0; menu->activatedIndex=0; menu->launchRequested=1;
+        menu->gameOptions[0].architectureIndex=M12_ARCH_PC;
+        menu->gameOptions[0].versionIndex=index;
+        menu->gameOptions[0].presentationModeIndex=M12_PRESENTATION_V1_ORIGINAL;
+        menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+        intent=M12_StartupMenu_GetLaunchIntent(menu);
+        REQUIRE(intent.valid&&intent.versionId&&strcmp(intent.versionId,"pc34-en")==0,
+            "loose English source has a valid selected launch intent");
+        M11_GameView_Init(game); initialized=1;
+        REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu)&&
+            M11_GameView_GetBootProbeReceipt(game,&receipt)&&receipt.levelLoaded&&
+            strcmp(receipt.bootAssetMd5,"fa6b1aa29e191418713bf2cda93d962e")==0,
+            "unchanged exact loose English source launches with authenticated receipt");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        if(mode) {
+            REQUIRE(unlink(selected)==0&&asset_file_matches_md5(graphics,
+                "f934d97e43e1ba6e5159839acbcd0611"),
+                "remove renamed selected source while authentic multilingual sibling remains");
+        } else {
+            REQUIRE(write_original_bytes(selected,multilingual,multilingualSize)&&
+                asset_file_matches_md5(selected,"f934d97e43e1ba6e5159839acbcd0611"),
+                "replace loose selected source with unchanged authentic multilingual graphics");
+        }
+        REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu),
+            "stale loose English selection rejects replacement or canonical sibling fallback");
+        REQUIRE(!game->active,"rejected loose graphics cannot leave a running partial world");
+        M11_GameView_Shutdown(game); initialized=0;
+        M12_StartupMenu_Destroy(menu); memset(menu,0,sizeof(*menu));
+        unlink(selected); unlink(graphics); unlink(dungeonPath); rmdir(dir);
+        selected[0]=graphics[0]=dungeonPath[0]=dir[0]='\0';
+    }
+    result=0;
+cleanup:
+    if(initialized) M11_GameView_Shutdown(game);
+    if(menu) M12_StartupMenu_Destroy(menu);
+    SDL_free(menu); SDL_free(game); free(english);
+    if(selected[0]) unlink(selected);
+    if(graphics[0]) unlink(graphics);
+    if(dungeonPath[0]) unlink(dungeonPath);
+    if(dir[0]) rmdir(dir);
+    return result==0;
+}
+#endif
 int main(void) {
 #ifdef _WIN32
     puts("SKIP: original-media ZIP replacement requires symlink staging"); return 77;
@@ -243,7 +329,10 @@ int main(void) {
     REQUIRE(asset_file_matches_md5(version->matchedPath,
         "f934d97e43e1ba6e5159839acbcd0611"),"replacement retains authentic multilingual graphics");
     REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu),"stale English receipt rejects consumed multilingual graphics");
-    result=0; puts("PASS: unchanged original ZIP launches; replaced graphics cannot reuse stale admission");
+    REQUIRE(!game->active,"rejected virtual graphics cannot leave a running partial world");
+    REQUIRE(check_loose_selected_media(root,original,bytes[0],sizes[0],bytes[1],sizes[1]),
+        "loose selected original media rejects stale ownership");
+    result=0; puts("PASS: original ZIP and loose media reject stale selected graphics and sibling fallback");
 cleanup:
     if(gameInitialized) M11_GameView_Shutdown(game);
     if(menu) M12_StartupMenu_Destroy(menu);
