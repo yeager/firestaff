@@ -1,5 +1,17 @@
 # Firestaff TODO — DM1
 
+2026-10-15 FM Towns viewport capture test audit: the opt-in visual smoke test
+captured an ordinary five-second launch, so its BMP could still show the
+launcher scanning at 0% and pass by counting pixels across the whole screen.
+It now captures a frame only after the authentic boot probe reports
+`phase=dm1-runtime`, `startupActive=0`, `levelLoaded=1`, and the expected
+FM Towns asset hash. The pixel check is restricted to the source viewport
+rectangle `(0,33,224,136)` from ReDMCSB `COORD.C`/`DEFS.H`. This proves that the
+runtime viewport is populated with rendered F20 scenery; it is a smoke check,
+not a pixel-parity result. The full authentic FM Towns CLI/menu regression
+with this opt-in check is running on original data. No game media or captures
+are tracked.
+
 2026-10-15 I34E TITLE palette audit: ReDMCSB `ANIM.C F8292_` dispatches to
 VGA `VIDEODRV.C F8230`, which stores each source PL channel as
 `(channel << 2) + 3` in the DAC6 palette. Firestaff had passed source channel

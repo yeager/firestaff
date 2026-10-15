@@ -386,17 +386,28 @@ for receipt in 'assetMd5=c10c512f63461ebe79b5ac365115b61b' \
 done
 
 if [[ ${FIRESTAFF_TEST_VISUAL_PARITY:-0} == 1 ]]; then
-    # Visual parity is tracked separately from start and input support. Opt
-    # in only when the image review is ready to be resumed.
+    # This is a runtime viewport smoke check, not a visual parity claim. The
+    # boot receipt prevents a launcher/scanning frame from satisfying it.
     scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
     mkdir -p "$scratch_root"
     capture_dir=$(mktemp -d "$scratch_root/dm1-fmtowns-live-frame.XXXXXX")
     cleanup_capture() { rm -rf "$capture_dir"; }
     trap cleanup_capture EXIT HUP INT TERM
-    FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir" \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    runtime_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --game dm1 --platform fm-towns --data-dir "$archive" \
-        --script wait300 --duration 5000 >/dev/null 2>&1
+        --boot-probe --boot-probe-frames 720 --duration 0 2>&1) || {
+        printf '%s\n' "$runtime_output" >&2
+        exit 1
+    }
+    for receipt in 'phase=dm1-runtime' 'startupActive=0' 'levelLoaded=1' \
+        "assetMd5=$expected_md5"; do
+        if ! grep -Fq "$receipt" <<<"$runtime_output"; then
+            printf '%s\n' "$runtime_output" >&2
+            printf 'FAIL: DM1 FM Towns viewport capture did not reach %s\n' "$receipt" >&2
+            exit 1
+        fi
+    done
     python3 - "$capture_dir" <<'PY'
 import pathlib
 import struct
@@ -415,20 +426,32 @@ bits = struct.unpack_from("<H", blob, 28)[0]
 stride = ((width * bits + 31) // 32) * 4
 if width <= 0 or height <= 0 or bits != 24 or offset + stride * height > len(blob):
     raise SystemExit("FAIL: invalid DM1 FM Towns capture geometry")
+# Firestaff's source framebuffer is 320x200. ReDMCSB COORD.C sets the
+# gameplay viewport origin to (0,33), with DEFS.H dimensions 224x136.
+if width % 320 or height % 200 or width // 320 != height // 200:
+    raise SystemExit(f"FAIL: unexpected DM1 FM Towns presentation size {width}x{height}")
+scale = width // 320
+left, top = 0, 33
+right, bottom = left + 224, top + 136
 nonblack = 0
 colours = set()
 for row in range(height):
+    source_y = row if struct.unpack_from("<i", blob, 22)[0] < 0 else height - 1 - row
+    if not (top * scale <= source_y < bottom * scale):
+        continue
     start = offset + row * stride
     for column in range(width):
+        if not (left * scale <= column < right * scale):
+            continue
         pixel = blob[start + column * 3:start + column * 3 + 3]
         if pixel != b"\0\0\0":
             nonblack += 1
             colours.add(pixel)
-if nonblack < 100000 or len(colours) < 4:
+if nonblack < 500000 or len(colours) < 4:
     raise SystemExit(
-        "FAIL: DM1 FM Towns live view lacks original F20 scenery "
+        "FAIL: DM1 FM Towns runtime viewport lacks visible F20 scenery "
         f"(nonblack={nonblack}, colours={len(colours)})")
-print(f"PASS: DM1 FM Towns live F20 view nonblack={nonblack} colours={len(colours)}")
+print(f"PASS: DM1 FM Towns runtime viewport nonblack={nonblack} colours={len(colours)}")
 PY
 fi
 
