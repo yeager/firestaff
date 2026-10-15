@@ -1105,7 +1105,7 @@ msgstr "REFRESHING MEDIA METADATA"
 
 #: src/ui/menu_startup_m12.c:2035 src/ui/menu_startup_m12.c:2402
 #: src/ui/menu_startup_m12.c:2510 src/ui/menu_startup_m12.c:2723
-#: src/ui/menu_startup_m12.c:2778 src/ui/menu_startup_m12.c:13994
+#: src/ui/menu_startup_m12.c:2778 src/ui/menu_startup_m12.c:14003
 msgid "SCANNING GAME DATA"
 msgstr "正在扫描游戏数据"
 
@@ -1165,19 +1165,19 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr "未找到游戏数据"
 
 #: src/ui/menu_startup_m12.c:2689 src/ui/menu_startup_m12.c:2763
-#: src/ui/menu_startup_m12.c:2809 src/ui/menu_startup_m12.c:13961
+#: src/ui/menu_startup_m12.c:2809 src/ui/menu_startup_m12.c:13970
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "CHOOSE AN EXISTING FOLDER"
 
-#: src/ui/menu_startup_m12.c:2805 src/ui/menu_startup_m12.c:13957
+#: src/ui/menu_startup_m12.c:2805 src/ui/menu_startup_m12.c:13966
 msgid "DATA SCAN CANCELLED"
 msgstr "DATA SCAN CANCELLED"
 
-#: src/ui/menu_startup_m12.c:2806 src/ui/menu_startup_m12.c:13958
+#: src/ui/menu_startup_m12.c:2806 src/ui/menu_startup_m12.c:13967
 msgid "DATA SCAN FAILED"
 msgstr "DATA SCAN FAILED"
 
-#: src/ui/menu_startup_m12.c:2808 src/ui/menu_startup_m12.c:13960
+#: src/ui/menu_startup_m12.c:2808 src/ui/menu_startup_m12.c:13969
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "GAME AVAILABILITY WAS NOT UPDATED"
 

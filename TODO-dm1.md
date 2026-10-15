@@ -1651,3 +1651,13 @@ guidance; candidate-only and warning priorities retain their prior paths.
 Both empty-directory regressions and authentic PC34 callback/persistence checks
 pass. Native OS dialog presentation and candidate-only UI text still need their
 own interaction evidence; callback tests do not establish physical dialog parity.
+
+### Late folder-scan cancellation (2026-10-15)
+
+UI cancellation now wins until the completed worker result is published, even
+when its final progress callback ran before Cancel. A deterministic semaphore
+regression verifies old selection, runtime source and saved config are retained;
+the authentic PC34 variant also preserves playable availability. The interposed
+thread-creation test runs on macOS/Linux and explicitly skips on Windows; add
+equivalent native Windows execution evidence without relying on sleep timing.
+The two full five-game corpus cases were not part of this scoped run.

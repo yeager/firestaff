@@ -14,6 +14,8 @@
 
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_mutex.h>
+#include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_timer.h>
 
@@ -94,6 +96,64 @@ void SDLCALL SDL_ShowOpenFolderDialog(SDL_DialogFileCallback callback,
         callback(userdata, canceledSelection, -1);
     }
 }
+
+#ifndef _WIN32
+/* Interpose only thread creation, keeping the actual private scan job and
+ * worker intact. The separate SDL properties entry avoids recursive calls. */
+static SDL_Semaphore* scanWorkerStart;
+static SDL_Semaphore* scanWorkerFinished;
+static int gateScanWorker;
+typedef struct ScanWorkerLatch {
+    SDL_ThreadFunction function;
+    void* userdata;
+} ScanWorkerLatch;
+
+static int SDLCALL run_latched_scan_worker(void* userdata) {
+    ScanWorkerLatch* latch = (ScanWorkerLatch*)userdata;
+    SDL_ThreadFunction function = latch->function;
+    void* originalUserdata = latch->userdata;
+    int result;
+    SDL_free(latch);
+    SDL_WaitSemaphore(scanWorkerStart);
+    result = function(originalUserdata);
+    /* The real scan entry has returned, including publication of job->done.
+     * No menu Update has consumed that completion yet. */
+    SDL_SignalSemaphore(scanWorkerFinished);
+    return result;
+}
+
+SDL_Thread* SDLCALL SDL_CreateThreadRuntime(
+    SDL_ThreadFunction function, const char* name, void* userdata,
+    SDL_FunctionPointer beginThread, SDL_FunctionPointer endThread) {
+    SDL_PropertiesID properties = SDL_CreateProperties();
+    SDL_Thread* thread = NULL;
+    ScanWorkerLatch* latch = NULL;
+    union { SDL_ThreadFunction function; void* pointer; } entry;
+    if (!properties) return NULL;
+    if (gateScanWorker && name && strcmp(name, "m12-data-dir-scan") == 0) {
+        latch = (ScanWorkerLatch*)SDL_malloc(sizeof(*latch));
+        if (!latch) { SDL_DestroyProperties(properties); return NULL; }
+        latch->function = function;
+        latch->userdata = userdata;
+        function = run_latched_scan_worker;
+        userdata = latch;
+    }
+    entry.function = function;
+    if (SDL_SetPointerProperty(properties,
+            SDL_PROP_THREAD_CREATE_ENTRY_FUNCTION_POINTER, entry.pointer) &&
+        SDL_SetPointerProperty(properties,
+            SDL_PROP_THREAD_CREATE_USERDATA_POINTER, userdata) &&
+        (!name || SDL_SetStringProperty(properties,
+            SDL_PROP_THREAD_CREATE_NAME_STRING, name))) {
+        thread = SDL_CreateThreadWithPropertiesRuntime(properties,
+                                                        beginThread, endThread);
+    }
+    SDL_DestroyProperties(properties);
+    if (!thread) SDL_free(latch);
+    return thread;
+}
+
+#endif
 
 static void complete_pending_dialog_cancel(void) {
     const char* canceledSelection[] = { NULL };
@@ -577,7 +637,7 @@ static void check_selected_folder_scans_asynchronously(void) {
     CHECK(state.dataDirScanJob == NULL);
     CHECK(state.dataDirScanCancelled == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
-    CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UPDATED") == 0);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "NO GAME DATA FOUND") == 0);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
                  selectedPhysical) == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
@@ -592,6 +652,83 @@ static void check_selected_folder_scans_asynchronously(void) {
                  selectedPhysical) == 0);
     M12_StartupMenu_Destroy(&reloadedState);
     M12_StartupMenu_Destroy(&state);
+}
+
+static void check_cancel_after_worker_completion_preserves_selection(void) {
+#ifdef _WIN32
+    puts("SKIP: completed-worker cancellation latch requires desktop SDL symbol interposition");
+#else
+    M12_StartupMenuState state;
+    M12_Config config;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char replacement[M12_ASSET_DATA_DIR_CAPACITY];
+    char beforeDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char beforeSelected[M12_ASSET_DATA_DIR_CAPACITY];
+    char beforeConfig[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* originalRoot = getenv("FIRESTAFF_DM1_PICKER_TEST_DATA_DIR");
+    char beforeRuntime[M12_ASSET_DATA_DIR_CAPACITY];
+    void* token;
+    int workerFinished, beforeAvailable;
+    reset_dialog_stub();
+    CHECK(create_build_scratch_and_data_root(dataRoot));
+    if (failures) return;
+    CHECK(FSP_JoinPath(replacement, sizeof(replacement), dataRoot,
+                       "replacement-empty") && FSP_CreateDirectory(replacement));
+    if (failures) return;
+    M12_StartupMenu_InitWithDataDir(&state,
+        originalRoot && originalRoot[0] ? originalRoot : dataRoot, NULL);
+    beforeAvailable = M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1");
+    if (originalRoot && originalRoot[0]) CHECK(beforeAvailable);
+    snprintf(beforeRuntime, sizeof(beforeRuntime), "%s",
+             M12_AssetStatus_GetRuntimeDataDir(&state.assetStatus, "dm1"));
+    use_english_for_text_assertions(&state);
+    M12_StartupMenu_SaveConfig(&state);
+    M12_Config_Load(&config, NULL);
+    snprintf(beforeConfig, sizeof(beforeConfig), "%s", config.dataDir);
+    snprintf(beforeDataDir, sizeof(beforeDataDir), "%s",
+             M12_AssetStatus_GetDataDir(&state.assetStatus));
+    snprintf(beforeSelected, sizeof(beforeSelected), "%s", state.selectedDataDir);
+    scanWorkerStart = SDL_CreateSemaphore(0);
+    scanWorkerFinished = SDL_CreateSemaphore(0);
+    CHECK(scanWorkerStart && scanWorkerFinished);
+    if (!scanWorkerStart || !scanWorkerFinished) goto cleanup;
+    gateScanWorker = 1;
+    token = M12_StartupMenu_BeginDataDirDialog(&state);
+    CHECK(token != NULL);
+    if (!token) goto cleanup;
+    M12_StartupMenu_CompleteDataDirDialog(token, replacement);
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.dataDirScanJob && state.dataDirScanActive);
+    if (!state.dataDirScanJob) goto cleanup;
+    SDL_SignalSemaphore(scanWorkerStart);
+    workerFinished = SDL_WaitSemaphoreTimeout(scanWorkerFinished, 15000);
+    CHECK(workerFinished);
+    if (!workerFinished) goto cleanup;
+    /* Actual worker completion is observed above, not inferred from a delay.
+     * Match the host loop: accept Cancel before consuming scan completion. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.dataDirScanCancelRequested);
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(!state.dataDirScanJob && !state.dataDirScanActive);
+    CHECK(state.dataDirScanCancelled);
+    CHECK(state.messageLine1 &&
+          strcmp(state.messageLine1, "DATA SCAN CANCELLED") == 0);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), beforeDataDir) == 0);
+    CHECK(strcmp(state.selectedDataDir, beforeSelected) == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == beforeAvailable);
+    CHECK(strcmp(M12_AssetStatus_GetRuntimeDataDir(&state.assetStatus, "dm1"),
+                 beforeRuntime) == 0);
+    M12_Config_Load(&config, NULL);
+    CHECK(strcmp(config.dataDir, beforeConfig) == 0);
+cleanup:
+    gateScanWorker = 0;
+    if (scanWorkerStart) SDL_SignalSemaphore(scanWorkerStart);
+    M12_StartupMenu_Destroy(&state);
+    if (scanWorkerFinished) SDL_DestroySemaphore(scanWorkerFinished);
+    if (scanWorkerStart) SDL_DestroySemaphore(scanWorkerStart);
+    scanWorkerFinished = NULL;
+    scanWorkerStart = NULL;
+#endif
 }
 
 static void check_dot_dialog_result_preserves_data_directory(void) {
@@ -1153,6 +1290,7 @@ int main(void) {
     check_data_dir_callback_isolated_from_state_lifetime();
     check_active_scan_message_requests_cancel();
     check_selected_folder_scans_asynchronously();
+    check_cancel_after_worker_completion_preserves_selection();
     check_dot_dialog_result_preserves_data_directory();
     check_parent_dialog_result_is_not_a_placeholder();
     check_default_data_dir_scans_asynchronously();

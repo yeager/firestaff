@@ -13937,7 +13937,16 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         state->dataDirScanProgress =
             *M12_AssetStatus_GetScanProgress(&job->assetStatus);
         state->dataDirScanActive = 0;
-        state->dataDirScanCancelled = state->dataDirScanProgress.cancelled;
+        /* Input can cancel after the worker's final progress callback but
+         * before this UI-thread publication. Honor that accepted request even
+         * when the completed worker did not observe it. */
+        state->dataDirScanCancelled = state->dataDirScanProgress.cancelled ||
+            state->dataDirScanCancelRequested ||
+            SDL_GetAtomicInt(&job->cancelRequested);
+        if (state->dataDirScanCancelled) {
+            state->dataDirScanProgress.cancelRequested = 1;
+            state->dataDirScanProgress.cancelled = 1;
+        }
         state->dataDirScanJob = NULL;
         if (job->result && !state->dataDirScanCancelled) {
             state->assetStatus = job->assetStatus;

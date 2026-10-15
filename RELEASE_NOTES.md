@@ -7231,3 +7231,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### Empty data-folder feedback
 
 - Selecting an empty data folder now preserves installation guidance after both direct and background scans. Access and archive-tool diagnostics keep their existing priority.
+
+### Folder scan cancellation
+
+- Cancelling before scan results are published now preserves the previous data folder and game availability even if the background worker has already finished.
