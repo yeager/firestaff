@@ -17,7 +17,7 @@ dm2_mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-S
 dm2_amiga_archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
 
 if [ ! -x "$app" ] ||
-   { [ "$test_mode" != dm2-amiga ] &&
+   { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm2-sourcefile ] &&
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
      [ "$test_mode" != direct-exit ] &&
      [ "$test_mode" != mouse-return ] &&
@@ -32,6 +32,9 @@ if [ ! -x "$app" ] ||
        [ ! -f "$dm2_archive" ]; }; } ||
    { [ "$test_mode" = return-window-close ] &&
      [ ! -f "$dm1_archive" ]; } ||
+   { [ "$test_mode" = dm2-sourcefile ] &&
+     { [ ! -f "$dm1_archive" ] || [ ! -f "$csb_archive" ] ||
+       [ ! -f "$dm2_dos_archive" ]; }; } ||
    { [ "$test_mode" = dm2-amiga ] && [ ! -f "$dm2_amiga_archive" ]; } ||
    { [ "$test_mode" = dm1-atari ] && [ ! -f "$dm1_atari_archive" ]; } ||
    { [ "$test_mode" = dm1-amiga36 ] && [ ! -f "$dm1_amiga36_archive" ]; }; then
@@ -100,12 +103,13 @@ run_return_to_menu_case() {
         }
 
     python3 - "$game" "$run_log" "$runtime_probe" "$runtime_pattern" \
-        "$launch_pattern" <<'PY'
+        "$launch_pattern" "$case_label" "$case_data_root" <<'PY'
 import json
+import os
 import re
 import sys
 
-game_id, log_path, probe_path, runtime_pattern, launch_pattern = sys.argv[1:]
+game_id, log_path, probe_path, runtime_pattern, launch_pattern, case_label, data_path = sys.argv[1:]
 with open(log_path, encoding="utf-8") as stream:
     trace = stream.read()
 with open(probe_path, encoding="utf-8") as stream:
@@ -135,6 +139,19 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 0 or
         probe.get("script") != {"waitFramesRemaining": 0, "pending": 0}):
     raise SystemExit(
         f"FAIL: {game_id} did not finish back at the launcher: {probe}")
+
+if case_label == "dm2-sourcefile":
+    expected_root = os.path.dirname(os.path.dirname(data_path))
+    root = re.search(r"return-menu rescan-complete data=([^\n]+)", trace)
+    if root is None or os.path.normpath(root.group(1)) != os.path.normpath(expected_root):
+        raise SystemExit(f"FAIL: selected archive did not rescan its lexical collection: {root}")
+
+inactive_rates = re.findall(
+    r"perf game=\S+ active=0[^\n]* game-ticks-per-sec=(\S+)", trace)
+if any(float(rate) != 0.0 for rate in inactive_rates):
+    raise SystemExit(f"FAIL: inactive launcher reports gameplay ticks: {inactive_rates}")
+if case_label == "dm2-sourcefile" and not inactive_rates:
+    raise SystemExit("FAIL: selected-archive return omitted inactive performance windows")
 
 print(f"PASS: authentic {game_id} gameplay returned to the launcher and "
       "reported availability for all five games")
@@ -305,6 +322,22 @@ stage_dm1_return_data_root() {
     ln -s "$csb_archive" "$stage_root/csb/$(basename "$csb_archive")"
     ln -s "$dm2_archive" "$stage_root/dm2/$(basename "$dm2_archive")"
 }
+
+# File selection remains exact at launch; returning to the launcher must
+# inventory the surrounding data/<game> collection, not only that file.
+if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
+     [ "$test_mode" = dm2-sourcefile ]; } && [ -f "$dm2_dos_archive" ]; then
+    sourcefile_root="$scratch/selected-file/data"
+    mkdir -p "$sourcefile_root/dm1" "$sourcefile_root/csb" "$sourcefile_root/dm2"
+    ln -s "$dm1_archive" "$sourcefile_root/dm1/$(basename "$dm1_archive")"
+    ln -s "$csb_archive" "$sourcefile_root/csb/$(basename "$csb_archive")"
+    ln -s "$dm2_dos_archive" "$sourcefile_root/dm2/Selected-PC.ZIP"
+    run_return_to_menu_case dm2 pc \
+        'key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter,wait-game-runtime,key:escape,key:enter' \
+        55000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
+        'launch phase=game-handoff mode=menu game=dm2 platform=PC edition=pc-en source=.*Selected-PC[.]ZIP::data/graphics[.]dat' \
+        "$sourcefile_root/dm2/Selected-PC.ZIP" 320 200 dm2-sourcefile
+fi
 
 # The key sequence is the same ordinary M12 game/platform/original choice
 # used by the DM1 PC-34 and CSB FM Towns startup checks. Their source startup

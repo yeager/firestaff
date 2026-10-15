@@ -66,11 +66,11 @@ msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
-#: src/ui/menu_startup_m12.c:274 src/ui/menu_startup_m12.c:5953
+#: src/ui/menu_startup_m12.c:274 src/ui/menu_startup_m12.c:5963
 msgid "ACCESSIBILITY"
 msgstr "ERİŞİLEBİLİRLİK"
 
-#: src/ui/menu_startup_m12.c:274 src/ui/menu_startup_m12.c:5950
+#: src/ui/menu_startup_m12.c:274 src/ui/menu_startup_m12.c:5960
 msgid "AUDIO"
 msgstr "SES"
 
@@ -83,12 +83,12 @@ msgstr "KONTROLLER"
 msgid "GAME"
 msgstr "OYUN"
 
-#: src/ui/menu_startup_m12.c:274 src/ui/menu_startup_m12.c:5935
-#: src/ui/menu_startup_m12.c:10978
+#: src/ui/menu_startup_m12.c:274 src/ui/menu_startup_m12.c:5945
+#: src/ui/menu_startup_m12.c:10988
 msgid "GRAPHICS"
 msgstr "GRAFİKLER"
 
-#: src/ui/menu_startup_m12.c:275 src/ui/menu_startup_m12.c:5956
+#: src/ui/menu_startup_m12.c:275 src/ui/menu_startup_m12.c:5966
 msgid "ONLINE"
 msgstr "ÇEVRİMİÇİ"
 
@@ -268,7 +268,7 @@ msgstr "TR"
 
 #: src/ui/menu_startup_m12.c:481 src/ui/menu_startup_m12.c:487
 #: src/ui/menu_startup_m12.c:509 src/ui/menu_startup_m12.c:512
-#: src/ui/menu_startup_m12.c:5400 src/ui/menu_startup_m12.c:5544
+#: src/ui/menu_startup_m12.c:5410 src/ui/menu_startup_m12.c:5554
 msgid "AUTO"
 msgstr "AUTO"
 
@@ -355,7 +355,7 @@ msgstr "РУССКИЙ"
 #: src/ui/menu_startup_m12.c:491 src/ui/menu_startup_m12.c:507
 #: src/ui/menu_startup_m12.c:513 src/ui/menu_startup_m12.c:515
 #: src/ui/menu_startup_m12.c:516 src/ui/menu_startup_m12.c:517
-#: src/ui/menu_startup_m12.c:5530 src/ui/menu_startup_m12.c:5635
+#: src/ui/menu_startup_m12.c:5540 src/ui/menu_startup_m12.c:5645
 msgid "OFF"
 msgstr "OFF"
 
@@ -412,8 +412,8 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:510 src/ui/menu_startup_m12.c:11003
-#: src/ui/menu_startup_m12.c:13168 src/ui/menu_startup_render_modern_m12.c:2126
+#: src/ui/menu_startup_m12.c:510 src/ui/menu_startup_m12.c:11013
+#: src/ui/menu_startup_m12.c:13178 src/ui/menu_startup_render_modern_m12.c:2126
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -526,14 +526,14 @@ msgid "REMASTERED"
 msgstr "YENİDEN DÜZENLENMİŞ"
 
 #: src/ui/menu_startup_m12.c:799 src/ui/menu_startup_m12.c:820
-#: src/ui/menu_startup_m12.c:10418 src/ui/menu_startup_m12.c:10861
+#: src/ui/menu_startup_m12.c:10428 src/ui/menu_startup_m12.c:10871
 #: src/ui/menu_startup_render_modern_m12.c:1543
 #: src/ui/menu_startup_render_modern_m12.c:2778
 msgid "DUNGEON MASTER"
 msgstr "Dungeon Master"
 
 #: src/ui/menu_startup_m12.c:800 src/ui/menu_startup_m12.c:830
-#: src/ui/menu_startup_m12.c:10420 src/ui/menu_startup_m12.c:10875
+#: src/ui/menu_startup_m12.c:10430 src/ui/menu_startup_m12.c:10885
 #: src/ui/menu_startup_render_modern_m12.c:1544
 #: src/ui/menu_startup_render_modern_m12.c:2781
 msgid "CHAOS STRIKES BACK"
@@ -560,16 +560,16 @@ msgstr "CSB YARDIMCI DİSK (FM ŞEHİRLERİ)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB YARDIMCI DİSK — HINT ORACLE"
 
-#: src/ui/menu_startup_m12.c:807 src/ui/menu_startup_m12.c:11947
-#: src/ui/menu_startup_m12.c:11950 src/ui/menu_startup_render_modern_m12.c:1901
+#: src/ui/menu_startup_m12.c:807 src/ui/menu_startup_m12.c:11957
+#: src/ui/menu_startup_m12.c:11960 src/ui/menu_startup_render_modern_m12.c:1901
 #: src/ui/menu_startup_render_modern_m12.c:2174
 msgid "MUSEUM OF LORE"
 msgstr "TARİH MÜZESİ"
 
-#: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:8773
-#: src/ui/menu_startup_m12.c:9342 src/ui/menu_startup_m12.c:10614
-#: src/ui/menu_startup_m12.c:11982 src/ui/menu_startup_m12.c:11985
-#: src/ui/menu_startup_m12.c:12130
+#: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:8783
+#: src/ui/menu_startup_m12.c:9352 src/ui/menu_startup_m12.c:10624
+#: src/ui/menu_startup_m12.c:11992 src/ui/menu_startup_m12.c:11995
+#: src/ui/menu_startup_m12.c:12140
 msgid "SETTINGS"
 msgstr "SETTINGS"
 
@@ -789,8 +789,8 @@ msgstr "V1 TEMEL DAVRANIŞI KORUR"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL HAYATİ TARİHİ BELGELEDİ"
 
-#: src/ui/menu_startup_m12.c:854 src/ui/menu_startup_m12.c:11964
-#: src/ui/menu_startup_m12.c:11967
+#: src/ui/menu_startup_m12.c:854 src/ui/menu_startup_m12.c:11974
+#: src/ui/menu_startup_m12.c:11977
 msgid "CREDITS"
 msgstr "EMEĞİ GEÇENLER"
 
@@ -934,8 +934,8 @@ msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 msgid "PERSISTED OPTIONS"
 msgstr "PERSISTED OPTIONS"
 
-#: src/ui/menu_startup_m12.c:1078 src/ui/menu_startup_m12.c:10976
-#: src/ui/menu_startup_m12.c:13180
+#: src/ui/menu_startup_m12.c:1078 src/ui/menu_startup_m12.c:10986
+#: src/ui/menu_startup_m12.c:13190
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
@@ -959,8 +959,8 @@ msgstr "WINDOW MODE"
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
 msgstr "CHANGES SAVE IMMEDIATELY TO CONFIG"
 
-#: src/ui/menu_startup_m12.c:1084 src/ui/menu_startup_m12.c:11302
-#: src/ui/menu_startup_m12.c:11344
+#: src/ui/menu_startup_m12.c:1084 src/ui/menu_startup_m12.c:11312
+#: src/ui/menu_startup_m12.c:11354
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 
@@ -968,7 +968,7 @@ msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER OR ESC RETURNS TO MENU"
 
-#: src/ui/menu_startup_m12.c:1086 src/ui/menu_startup_m12.c:8783
+#: src/ui/menu_startup_m12.c:1086 src/ui/menu_startup_m12.c:8793
 msgid "READY TO LAUNCH"
 msgstr "READY TO LAUNCH"
 
@@ -1042,11 +1042,11 @@ msgstr "ARCHIVE: %s  OPTION: %s"
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 
-#: src/ui/menu_startup_m12.c:1969 src/ui/menu_startup_m12.c:9353
+#: src/ui/menu_startup_m12.c:1969 src/ui/menu_startup_m12.c:9363
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:1971 src/ui/menu_startup_m12.c:9353
+#: src/ui/menu_startup_m12.c:1971 src/ui/menu_startup_m12.c:9363
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
@@ -1058,7 +1058,7 @@ msgstr "Dungeon Master II: Skullkeep Efsanesi"
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:1978 src/ui/menu_startup_m12.c:9354
+#: src/ui/menu_startup_m12.c:1978 src/ui/menu_startup_m12.c:9364
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
@@ -1104,7 +1104,7 @@ msgid "REFRESHING MEDIA METADATA"
 msgstr "MEDYA META VERİLERİNİ YENİLEME"
 
 #: src/ui/menu_startup_m12.c:2076 src/ui/menu_startup_m12.c:3308
-#: src/ui/menu_startup_m12.c:5651 src/ui/menu_startup_m12.c:5891
+#: src/ui/menu_startup_m12.c:5661 src/ui/menu_startup_m12.c:5901
 msgid "NOT SET"
 msgstr "AYARLANMAMIŞ"
 
@@ -1133,8 +1133,8 @@ msgstr "%d FOLDER REQUIRES ACCESS"
 msgid "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"
 msgstr "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"
 
-#: src/ui/menu_startup_m12.c:2281 src/ui/menu_startup_m12.c:10106
-#: src/ui/menu_startup_m12.c:10221
+#: src/ui/menu_startup_m12.c:2281 src/ui/menu_startup_m12.c:10116
+#: src/ui/menu_startup_m12.c:10231
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
@@ -1148,7 +1148,7 @@ msgstr "VERİ DİZİNİ DEĞİŞTİ"
 
 #: src/ui/menu_startup_m12.c:2371 src/ui/menu_startup_m12.c:2469
 #: src/ui/menu_startup_m12.c:2682 src/ui/menu_startup_m12.c:2737
-#: src/ui/menu_startup_m12.c:13914
+#: src/ui/menu_startup_m12.c:13924
 msgid "SCANNING GAME DATA"
 msgstr "OYUN VERİLERİ TARANIYOR"
 
@@ -1165,19 +1165,19 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr "OYUN VERİLERİ BULUNAMADI"
 
 #: src/ui/menu_startup_m12.c:2648 src/ui/menu_startup_m12.c:2722
-#: src/ui/menu_startup_m12.c:2768 src/ui/menu_startup_m12.c:13881
+#: src/ui/menu_startup_m12.c:2768 src/ui/menu_startup_m12.c:13891
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "MEVCUT BİR KLASÖR SEÇİN"
 
-#: src/ui/menu_startup_m12.c:2764 src/ui/menu_startup_m12.c:13877
+#: src/ui/menu_startup_m12.c:2764 src/ui/menu_startup_m12.c:13887
 msgid "DATA SCAN CANCELLED"
 msgstr "VERİ TARAMA İPTAL EDİLDİ"
 
-#: src/ui/menu_startup_m12.c:2765 src/ui/menu_startup_m12.c:13878
+#: src/ui/menu_startup_m12.c:2765 src/ui/menu_startup_m12.c:13888
 msgid "DATA SCAN FAILED"
 msgstr "VERİ TARAMA BAŞARISIZ"
 
-#: src/ui/menu_startup_m12.c:2767 src/ui/menu_startup_m12.c:13880
+#: src/ui/menu_startup_m12.c:2767 src/ui/menu_startup_m12.c:13890
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "OYUN KULLANILABİLİRLİĞİ GÜNCELLENDİ"
 
@@ -1209,7 +1209,7 @@ msgstr "PC34 DIŞA AKTARMA BAŞARISIZ OLDU"
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "HIZLI DEVAM ET KAYDETMEYİ KONTROL EDİN"
 
-#: src/ui/menu_startup_m12.c:2949 src/ui/menu_startup_m12.c:13469
+#: src/ui/menu_startup_m12.c:2949 src/ui/menu_startup_m12.c:13479
 msgid "NO SAVES FOUND"
 msgstr "HİÇ KAYIT BULUNAMADI"
 
@@ -1245,12 +1245,12 @@ msgstr "OYUN VERİLERİ BULUNAMADI"
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "BAŞLATICI SEÇİMDEN SONRA YENİDEN TARAMA YAPILACAK"
 
-#: src/ui/menu_startup_m12.c:3307 src/ui/menu_startup_m12.c:5825
+#: src/ui/menu_startup_m12.c:3307 src/ui/menu_startup_m12.c:5835
 msgid "CUSTOM MUSIC"
 msgstr "ÖZEL"
 
 #: src/ui/menu_startup_m12.c:3312 src/ui/menu_startup_m12.c:3321
-#: src/ui/menu_startup_m12.c:13704 src/ui/menu_startup_m12.c:13709
+#: src/ui/menu_startup_m12.c:13714 src/ui/menu_startup_m12.c:13719
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
 msgstr "CUSTOM MUSIC FOLDER UNCHANGED"
 
@@ -1273,7 +1273,7 @@ msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "GENİŞ BİR TTF VEYA OTF YAZI TİPİ SEÇİN"
 
 #: src/ui/menu_startup_m12.c:3349 src/ui/menu_startup_m12.c:3357
-#: src/ui/menu_startup_m12.c:13741
+#: src/ui/menu_startup_m12.c:13751
 msgid "UNICODE FONT UNCHANGED"
 msgstr "UNICODE YAZI TİPİ DEĞİŞTİRİLMEDİ"
 
@@ -1286,587 +1286,587 @@ msgid "SELECT A .FSART FILE"
 msgstr "BİR HEDEF SEÇİN"
 
 #: src/ui/menu_startup_m12.c:3407 src/ui/menu_startup_m12.c:3415
-#: src/ui/menu_startup_m12.c:13782
+#: src/ui/menu_startup_m12.c:13792
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 ARTPACK DEĞİŞMEDİ"
 
-#: src/ui/menu_startup_m12.c:5628
+#: src/ui/menu_startup_m12.c:5638
 msgid "NEEDS LOGIN"
 msgstr "GİRİŞ YAPILMASI GEREKİYOR"
 
-#: src/ui/menu_startup_m12.c:5630 src/ui/menu_startup_m12.c:11294
-#: src/ui/menu_startup_m12.c:11339
+#: src/ui/menu_startup_m12.c:5640 src/ui/menu_startup_m12.c:11304
+#: src/ui/menu_startup_m12.c:11349
 msgid "READY"
 msgstr "HAZIR"
 
-#: src/ui/menu_startup_m12.c:5632
+#: src/ui/menu_startup_m12.c:5642
 msgid "BACKEND PENDING"
 msgstr "ARKA UÇ BEKLEMEDE"
 
-#: src/ui/menu_startup_m12.c:5657
+#: src/ui/menu_startup_m12.c:5667
 msgid "SET"
 msgstr "UZAT"
 
-#: src/ui/menu_startup_m12.c:5674 src/ui/menu_startup_m12.c:5887
+#: src/ui/menu_startup_m12.c:5684 src/ui/menu_startup_m12.c:5897
 msgid "EDITING"
 msgstr "AYARLAR"
 
-#: src/ui/menu_startup_m12.c:5779
+#: src/ui/menu_startup_m12.c:5789
 msgid "SCALE"
 msgstr "SCALE"
 
-#: src/ui/menu_startup_m12.c:5780 src/ui/menu_startup_m12.c:13228
+#: src/ui/menu_startup_m12.c:5790 src/ui/menu_startup_m12.c:13238
 msgid "ASPECT RATIO"
 msgstr "ASPECT RATIO"
 
-#: src/ui/menu_startup_m12.c:5781
+#: src/ui/menu_startup_m12.c:5791
 msgid "PIXEL SNAP"
 msgstr "PIXEL SNAP"
 
-#: src/ui/menu_startup_m12.c:5782
+#: src/ui/menu_startup_m12.c:5792
 msgid "FILTER"
 msgstr "FILTER"
 
-#: src/ui/menu_startup_m12.c:5783
+#: src/ui/menu_startup_m12.c:5793
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:5784
+#: src/ui/menu_startup_m12.c:5794
 msgid "FPS OVERLAY"
 msgstr "FPS YER Paylaşımı"
 
-#: src/ui/menu_startup_m12.c:5785
+#: src/ui/menu_startup_m12.c:5795
 msgid "VIEWPORT STYLE"
 msgstr "GÖRÜNÜM ALANI STİLİ"
 
-#: src/ui/menu_startup_m12.c:5786
+#: src/ui/menu_startup_m12.c:5796
 msgid "INPUT MODE"
 msgstr "PENCERE MODU"
 
-#: src/ui/menu_startup_m12.c:5788
+#: src/ui/menu_startup_m12.c:5798
 msgid "TOUCH CONTROLS"
 msgstr "KONTROLLER"
 
-#: src/ui/menu_startup_m12.c:5789
+#: src/ui/menu_startup_m12.c:5799
 msgid "MOVEMENT MODE"
 msgstr "HAREKET MODU"
 
-#: src/ui/menu_startup_m12.c:5790
+#: src/ui/menu_startup_m12.c:5800
 msgid "SMOOTH TURN PAN"
 msgstr "DÜZ DÖNÜŞLÜ TAVA"
 
-#: src/ui/menu_startup_m12.c:5791
+#: src/ui/menu_startup_m12.c:5801
 msgid "DATA DIRECTORY"
 msgstr "VERİ DİZİNİ"
 
-#: src/ui/menu_startup_m12.c:5792
+#: src/ui/menu_startup_m12.c:5802
 msgid "ORIGINAL DATA"
 msgstr "ORİJİNAL"
 
-#: src/ui/menu_startup_m12.c:5793
+#: src/ui/menu_startup_m12.c:5803
 msgid "DEBUG OVERLAY"
 msgstr "HATA AYIKLAMA KAPLAMASI"
 
-#: src/ui/menu_startup_m12.c:5794
+#: src/ui/menu_startup_m12.c:5804
 msgid "DEVELOPER GATES"
 msgstr "GELİŞTİRİCİ KAPILARI"
 
-#: src/ui/menu_startup_m12.c:5795
+#: src/ui/menu_startup_m12.c:5805
 msgid "MASTER VOLUME"
 msgstr "YENİDEN DÜZENLENMİŞ"
 
-#: src/ui/menu_startup_m12.c:5796
+#: src/ui/menu_startup_m12.c:5806
 msgid "MUSIC VOLUME"
 msgstr "MÜZİK SES SEVİYESİ"
 
-#: src/ui/menu_startup_m12.c:5797
+#: src/ui/menu_startup_m12.c:5807
 msgid "SFX VOLUME"
 msgstr "SFX HACMİ"
 
-#: src/ui/menu_startup_m12.c:5798
+#: src/ui/menu_startup_m12.c:5808
 msgid "MUTE AUDIO"
 msgstr "SES"
 
-#: src/ui/menu_startup_m12.c:5799
+#: src/ui/menu_startup_m12.c:5809
 msgid "AUDIO DEVICE"
 msgstr "SES CİHAZI"
 
-#: src/ui/menu_startup_m12.c:5800
+#: src/ui/menu_startup_m12.c:5810
 msgid "BRIGHTNESS"
 msgstr "PARLAKLIK"
 
-#: src/ui/menu_startup_m12.c:5801
+#: src/ui/menu_startup_m12.c:5811
 msgid "FONT SCALE"
 msgstr "YAZI TİPİ ÖLÇEĞİ"
 
-#: src/ui/menu_startup_m12.c:5802
+#: src/ui/menu_startup_m12.c:5812
 msgid "UNICODE FONT"
 msgstr "UNICODE YAZI TİPİ"
 
-#: src/ui/menu_startup_m12.c:5803
+#: src/ui/menu_startup_m12.c:5813
 msgid "HIGH CONTRAST"
 msgstr "YÜKSEK KONTRAST"
 
-#: src/ui/menu_startup_m12.c:5804
+#: src/ui/menu_startup_m12.c:5814
 msgid "COLORBLIND"
 msgstr "RENKLİ"
 
-#: src/ui/menu_startup_m12.c:5805
+#: src/ui/menu_startup_m12.c:5815
 msgid "AUTO PAUSE"
 msgstr "OTOMATİK DURAKLATMA"
 
-#: src/ui/menu_startup_m12.c:5806
+#: src/ui/menu_startup_m12.c:5816
 msgid "THEME"
 msgstr "TEMA"
 
-#: src/ui/menu_startup_m12.c:5807
+#: src/ui/menu_startup_m12.c:5817
 msgid "BACKGROUND"
 msgstr "ARKA PLAN"
 
-#: src/ui/menu_startup_m12.c:5808
+#: src/ui/menu_startup_m12.c:5818
 msgid "QUICK RESUME"
 msgstr "HIZLI DEVAM"
 
-#: src/ui/menu_startup_m12.c:5809
+#: src/ui/menu_startup_m12.c:5819
 msgid "V2.2 ARTPACK"
 msgstr "V2.2 ARTPACK'İ"
 
-#: src/ui/menu_startup_m12.c:5810
+#: src/ui/menu_startup_m12.c:5820
 msgid "RETROACHIEVEMENTS"
 msgstr "GERİ BAŞARILAR"
 
-#: src/ui/menu_startup_m12.c:5811
+#: src/ui/menu_startup_m12.c:5821
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "GERİ BAŞARILAR HARDCORE"
 
-#: src/ui/menu_startup_m12.c:5812
+#: src/ui/menu_startup_m12.c:5822
 msgid "RETROACHIEVEMENTS USER"
 msgstr "GERİ BAŞARILAR KULLANICI"
 
-#: src/ui/menu_startup_m12.c:5813
+#: src/ui/menu_startup_m12.c:5823
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "GERİ BAŞARILAR API JETONU"
 
-#: src/ui/menu_startup_m12.c:5814
+#: src/ui/menu_startup_m12.c:5824
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "GERİ BAŞARILAR SUNUCUSU"
 
-#: src/ui/menu_startup_m12.c:5815 src/ui/menu_startup_m12.c:13424
+#: src/ui/menu_startup_m12.c:5825 src/ui/menu_startup_m12.c:13434
 msgid "SAVE BROWSER"
 msgstr "TARAYICIYI KAYDET"
 
-#: src/ui/menu_startup_m12.c:5816
+#: src/ui/menu_startup_m12.c:5826
 msgid "SESSION TIMER"
 msgstr "OTURUM ZAMANLAYICI"
 
-#: src/ui/menu_startup_m12.c:5817
+#: src/ui/menu_startup_m12.c:5827
 msgid "MINIMAP"
 msgstr "MİNİMAL"
 
-#: src/ui/menu_startup_m12.c:5818
+#: src/ui/menu_startup_m12.c:5828
 msgid "AUTOMAP"
 msgstr "OTOMATİK"
 
-#: src/ui/menu_startup_m12.c:5819
+#: src/ui/menu_startup_m12.c:5829
 msgid "COMBAT LOG"
 msgstr "SAVAŞ GÜNLÜĞÜ"
 
-#: src/ui/menu_startup_m12.c:5820
+#: src/ui/menu_startup_m12.c:5830
 msgid "SOUNDTRACK"
 msgstr "MÜZİK"
 
-#: src/ui/menu_startup_m12.c:5821
+#: src/ui/menu_startup_m12.c:5831
 msgid "AMBIENT SOUND"
 msgstr "OYUN VERİLERİ BULUNAMADI"
 
-#: src/ui/menu_startup_m12.c:5822
+#: src/ui/menu_startup_m12.c:5832
 msgid "AMBIENT VOLUME"
 msgstr "ORTAM HACMİ"
 
-#: src/ui/menu_startup_m12.c:5823
+#: src/ui/menu_startup_m12.c:5833
 msgid "UI SCALE"
 msgstr "UI ÖLÇEĞİ"
 
-#: src/ui/menu_startup_m12.c:5824
+#: src/ui/menu_startup_m12.c:5834
 msgid "UI FONT"
 msgstr "UI YAZI TİPİ"
 
-#: src/ui/menu_startup_m12.c:5826
+#: src/ui/menu_startup_m12.c:5836
 msgid "CUSTOM DUNGEONS"
 msgstr "ZİNDAN"
 
-#: src/ui/menu_startup_m12.c:5827
+#: src/ui/menu_startup_m12.c:5837
 msgid "SCREENSHOTS"
 msgstr "EKRAN GÖRÜNTÜLERİ"
 
-#: src/ui/menu_startup_m12.c:5828
+#: src/ui/menu_startup_m12.c:5838
 msgid "ARTPACK"
 msgstr "ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5829
+#: src/ui/menu_startup_m12.c:5839
 msgid "STREAMER MODE"
 msgstr "YAYINCI MODU"
 
-#: src/ui/menu_startup_m12.c:5833
+#: src/ui/menu_startup_m12.c:5843
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "DIŞA AKTAR DM1 PC34 KAYDET"
 
-#: src/ui/menu_startup_m12.c:5834
+#: src/ui/menu_startup_m12.c:5844
 msgid "EXPORT SAVE MANIFEST"
 msgstr "İHRACAT KAYDETME BİLDİRİMİ"
 
-#: src/ui/menu_startup_m12.c:5835
+#: src/ui/menu_startup_m12.c:5845
 msgid "IMPORT SAVE MANIFEST"
 msgstr "İTHAL KAYDET MANİFESTESİ"
 
-#: src/ui/menu_startup_m12.c:5896
+#: src/ui/menu_startup_m12.c:5906
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:5914
+#: src/ui/menu_startup_m12.c:5924
 msgid "WRITE PC34..."
 msgstr "PC34 YAZIN..."
 
-#: src/ui/menu_startup_m12.c:5915
+#: src/ui/menu_startup_m12.c:5925
 msgid "WRITE..."
 msgstr "YAZ..."
 
-#: src/ui/menu_startup_m12.c:5916
+#: src/ui/menu_startup_m12.c:5926
 msgid "READ..."
 msgstr "OKU..."
 
-#: src/ui/menu_startup_m12.c:5932
+#: src/ui/menu_startup_m12.c:5942
 msgid "GENERAL"
 msgstr "GENEL"
 
-#: src/ui/menu_startup_m12.c:5938 src/ui/menu_startup_m12.c:13119
+#: src/ui/menu_startup_m12.c:5948 src/ui/menu_startup_m12.c:13129
 msgid "RENDERER"
 msgstr "RENDERER"
 
-#: src/ui/menu_startup_m12.c:5941
+#: src/ui/menu_startup_m12.c:5951
 msgid "INPUT"
 msgstr "GİRİŞ"
 
-#: src/ui/menu_startup_m12.c:5944
+#: src/ui/menu_startup_m12.c:5954
 msgid "DATA"
 msgstr "VERİ DİZİNİ"
 
-#: src/ui/menu_startup_m12.c:5947
+#: src/ui/menu_startup_m12.c:5957
 msgid "DEBUG"
 msgstr "HATA AYIKLAMA"
 
-#: src/ui/menu_startup_m12.c:5958
+#: src/ui/menu_startup_m12.c:5968
 msgid "APPEARANCE"
 msgstr "GÖRÜNÜM"
 
-#: src/ui/menu_startup_m12.c:6422 src/ui/menu_startup_m12.c:6477
-#: src/ui/menu_startup_m12.c:11295 src/ui/menu_startup_m12.c:11340
+#: src/ui/menu_startup_m12.c:6432 src/ui/menu_startup_m12.c:6487
+#: src/ui/menu_startup_m12.c:11305 src/ui/menu_startup_m12.c:11350
 msgid "DATA FILES NOT FOUND"
 msgstr "ORİJİNAL DOSYALAR BULUNAMADI"
 
-#: src/ui/menu_startup_m12.c:6477
+#: src/ui/menu_startup_m12.c:6487
 msgid "ENTER FOR GAME MENU"
 msgstr "ENTER VEYA ESC MENÜYE DÖNER"
 
-#: src/ui/menu_startup_m12.c:6478
+#: src/ui/menu_startup_m12.c:6488
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "BU OYUN HENÜZ DESTEKLENMİYOR"
 
-#: src/ui/menu_startup_m12.c:6589
+#: src/ui/menu_startup_m12.c:6599
 msgid "NO DM1 SAVES FOUND"
 msgstr "HİÇ DM1 KAYDI BULUNAMADI"
 
-#: src/ui/menu_startup_m12.c:6590
+#: src/ui/menu_startup_m12.c:6600
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "ÖNCE DM1'İ KAYDEDİN VEYA İÇA AKTARIN"
 
-#: src/ui/menu_startup_m12.c:7016
+#: src/ui/menu_startup_m12.c:7026
 msgid "LOADING SAVE"
 msgstr "YÜKLENİYOR KAYDET"
 
-#: src/ui/menu_startup_m12.c:7056
+#: src/ui/menu_startup_m12.c:7066
 msgid "IMPORTING PARTY"
 msgstr "İTHALATÇI TARAF"
 
-#: src/ui/menu_startup_m12.c:7095
+#: src/ui/menu_startup_m12.c:7105
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "DM1 PARTİSİ CSB'YE İTHAL EDİLSİN Mİ?"
 
-#: src/ui/menu_startup_m12.c:7097
+#: src/ui/menu_startup_m12.c:7107
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "İTHALAT/ESC İPTALLERİNİ GİRİN"
 
-#: src/ui/menu_startup_m12.c:7109
+#: src/ui/menu_startup_m12.c:7119
 msgid "ESC SETTINGS"
 msgstr "AYARLAR"
 
-#: src/ui/menu_startup_m12.c:7113
+#: src/ui/menu_startup_m12.c:7123
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "GİRİŞ EYLEMİ İÇERİYİ CSB'YE YÜKLE DIŞA AKTARMALARI KAYDET PC34 ESC AYARLARI"
 
-#: src/ui/menu_startup_m12.c:7115
+#: src/ui/menu_startup_m12.c:7125
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "ENTER VEYA ESC MENÜYE DÖNER"
 
-#: src/ui/menu_startup_m12.c:8568 src/ui/menu_startup_m12.c:8780
+#: src/ui/menu_startup_m12.c:8578 src/ui/menu_startup_m12.c:8790
 msgid "NO SOURCE"
 msgstr "KAYNAK YOK"
 
-#: src/ui/menu_startup_m12.c:8776
+#: src/ui/menu_startup_m12.c:8786
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "ORİJİNAL"
 
-#: src/ui/menu_startup_m12.c:8785
+#: src/ui/menu_startup_m12.c:8795
 msgid "MISSING OR MISMATCHED"
 msgstr "EKSİK VEYA UYUŞMUYOR"
 
-#: src/ui/menu_startup_m12.c:9342 src/ui/menu_startup_render_modern_m12.c:2102
+#: src/ui/menu_startup_m12.c:9352 src/ui/menu_startup_render_modern_m12.c:2102
 msgid "EXTRAS"
 msgstr "EKSTRALAR"
 
-#: src/ui/menu_startup_m12.c:9342
+#: src/ui/menu_startup_m12.c:9352
 msgid "PLAY"
 msgstr "OYNA"
 
-#: src/ui/menu_startup_m12.c:9342
+#: src/ui/menu_startup_m12.c:9352
 msgid "QUIT"
 msgstr "ÇIKIŞ"
 
-#: src/ui/menu_startup_m12.c:9346
+#: src/ui/menu_startup_m12.c:9356
 msgid "Start or continue a game"
 msgstr "Bir oyuna başlayın veya devam edin"
 
-#: src/ui/menu_startup_m12.c:9347
+#: src/ui/menu_startup_m12.c:9357
 msgid "Display, video, audio and controls"
 msgstr "Görüntü, video, ses ve kontroller"
 
-#: src/ui/menu_startup_m12.c:9348
+#: src/ui/menu_startup_m12.c:9358
 msgid "Museum, bestiary, spell reference and more"
 msgstr "Müze, canavar rehberi, büyü referansı ve daha fazlası"
 
-#: src/ui/menu_startup_m12.c:9349
+#: src/ui/menu_startup_m12.c:9359
 msgid "Exit Firestaff"
 msgstr "Firestaff'tan çık"
 
-#: src/ui/menu_startup_m12.c:9354
+#: src/ui/menu_startup_m12.c:9364
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:9354
+#: src/ui/menu_startup_m12.c:9364
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:9363
+#: src/ui/menu_startup_m12.c:9373
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:9364 src/ui/menu_startup_m12.c:9365
+#: src/ui/menu_startup_m12.c:9374 src/ui/menu_startup_m12.c:9375
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:9366
+#: src/ui/menu_startup_m12.c:9376
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / SATURN YAKALAMA KİLİTLİ"
 
-#: src/ui/menu_startup_m12.c:9367
+#: src/ui/menu_startup_m12.c:9377
 msgid "V1 Only (Phase 1)"
 msgstr "Yalnızca V1 (Aşama 1)"
 
-#: src/ui/menu_startup_m12.c:9370 src/ui/menu_startup_m12.c:9371
-#: src/ui/menu_startup_m12.c:9372 src/ui/menu_startup_m12.c:9373
-#: src/ui/menu_startup_m12.c:9374
+#: src/ui/menu_startup_m12.c:9380 src/ui/menu_startup_m12.c:9381
+#: src/ui/menu_startup_m12.c:9382 src/ui/menu_startup_m12.c:9383
+#: src/ui/menu_startup_m12.c:9384
 msgid "No data files"
 msgstr "Veri dosyası yok"
 
-#: src/ui/menu_startup_m12.c:10107
+#: src/ui/menu_startup_m12.c:10117
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:10108
+#: src/ui/menu_startup_m12.c:10118
 msgid "TITLE START"
 msgstr "TITLE START"
 
-#: src/ui/menu_startup_m12.c:10109
+#: src/ui/menu_startup_m12.c:10119
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIED SOURCE DATA"
 
-#: src/ui/menu_startup_m12.c:10225
+#: src/ui/menu_startup_m12.c:10235
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:10263
+#: src/ui/menu_startup_m12.c:10273
 msgid "New Game (Original)"
 msgstr "Yeni Oyun (Orijinal)"
 
-#: src/ui/menu_startup_m12.c:10264
+#: src/ui/menu_startup_m12.c:10274
 msgid "New Game (Original + Filters)"
 msgstr "Yeni Oyun (Orijinal + Filtreler)"
 
-#: src/ui/menu_startup_m12.c:10265
+#: src/ui/menu_startup_m12.c:10275
 msgid "New Game (Original 10x Upscale)"
 msgstr "Yeni Oyun (Orijinal 10x Ölçekleme)"
 
-#: src/ui/menu_startup_m12.c:10266
+#: src/ui/menu_startup_m12.c:10276
 msgid "Continue Saved Game"
 msgstr "Kayıtlı Oyuna Devam Et"
 
-#: src/ui/menu_startup_m12.c:10267
+#: src/ui/menu_startup_m12.c:10277
 msgid "New Game (Modern Graphics)"
 msgstr "Yeni Oyun (Modern Grafikler)"
 
-#: src/ui/menu_startup_m12.c:10275
+#: src/ui/menu_startup_m12.c:10285
 msgid "Museum of Lore"
 msgstr "Tarih Müzesi"
 
-#: src/ui/menu_startup_m12.c:10276
+#: src/ui/menu_startup_m12.c:10286
 msgid "Manual / Docs"
 msgstr "Kılavuz / Belgeler"
 
-#: src/ui/menu_startup_m12.c:10277
+#: src/ui/menu_startup_m12.c:10287
 msgid "Bestiary"
 msgstr "Canavar Rehberi"
 
-#: src/ui/menu_startup_m12.c:10278
+#: src/ui/menu_startup_m12.c:10288
 msgid "Spell Reference"
 msgstr "Büyü Referansı"
 
-#: src/ui/menu_startup_m12.c:10279
+#: src/ui/menu_startup_m12.c:10289
 msgid "Map Viewer"
 msgstr "Harita Görüntüleyici"
 
-#: src/ui/menu_startup_m12.c:10280
+#: src/ui/menu_startup_m12.c:10290
 msgid "Item Encyclopedia"
 msgstr "Eşya Ansiklopedisi"
 
-#: src/ui/menu_startup_m12.c:10281
+#: src/ui/menu_startup_m12.c:10291
 msgid "Changelog"
 msgstr "Değişiklik Günlüğü"
 
-#: src/ui/menu_startup_m12.c:10282
+#: src/ui/menu_startup_m12.c:10292
 msgid "Screenshot Gallery"
 msgstr "Ekran Görüntüsü Galerisi"
 
-#: src/ui/menu_startup_m12.c:10311
+#: src/ui/menu_startup_m12.c:10321
 msgid "NO DATA SOURCE YET"
 msgstr "KAYNAK YOK"
 
-#: src/ui/menu_startup_m12.c:10384
+#: src/ui/menu_startup_m12.c:10394
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "Yukarı/Aşağı Gezinme |  Gir Seç"
 
-#: src/ui/menu_startup_m12.c:10408
+#: src/ui/menu_startup_m12.c:10418
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Geri Kaçış |  Yukarı/Aşağı Gezinme |  Gir Seç"
 
-#: src/ui/menu_startup_m12.c:10437
+#: src/ui/menu_startup_m12.c:10447
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Geri Kaçış |  Yukarı/Aşağı Gezinme |  Başlat'a girin"
 
-#: src/ui/menu_startup_m12.c:10461
+#: src/ui/menu_startup_m12.c:10471
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Geri Kaçış |  Yukarı/Aşağı Gezinme |  Açık girin"
 
-#: src/ui/menu_startup_m12.c:10605
+#: src/ui/menu_startup_m12.c:10615
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > Sekmeyi değiştir Yukarı/Aşağı Gezin Enter Değiştir"
 
-#: src/ui/menu_startup_m12.c:11263 src/ui/menu_startup_render_modern_m12.c:2320
+#: src/ui/menu_startup_m12.c:11273 src/ui/menu_startup_render_modern_m12.c:2320
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "DESTEKLENEN YEREL PLATFORM YOK"
 
-#: src/ui/menu_startup_m12.c:11264
+#: src/ui/menu_startup_m12.c:11274
 msgid "ESC BACK"
 msgstr "ESC BACK"
 
-#: src/ui/menu_startup_m12.c:11282
+#: src/ui/menu_startup_m12.c:11292
 msgid "V2.1 UPSCALED"
 msgstr "V2.1 UPSCALED"
 
-#: src/ui/menu_startup_m12.c:13096
+#: src/ui/menu_startup_m12.c:13106
 msgid "GAME OPTIONS"
 msgstr "KALICI SEÇENEKLER"
 
-#: src/ui/menu_startup_m12.c:13133
+#: src/ui/menu_startup_m12.c:13143
 msgid "ARCHITECTURE"
 msgstr "ARŞİV DURUMU"
 
-#: src/ui/menu_startup_m12.c:13146
+#: src/ui/menu_startup_m12.c:13156
 msgid "VERSION"
 msgstr "VERSİYON"
 
-#: src/ui/menu_startup_m12.c:13167
+#: src/ui/menu_startup_m12.c:13177
 msgid "PATCH"
 msgstr "PATCH"
 
-#: src/ui/menu_startup_m12.c:13193
+#: src/ui/menu_startup_m12.c:13203
 msgid "CHEATS"
 msgstr "CHEATS"
 
-#: src/ui/menu_startup_m12.c:13206
+#: src/ui/menu_startup_m12.c:13216
 msgid "SPEED"
 msgstr "SPEED"
 
-#: src/ui/menu_startup_m12.c:13218
+#: src/ui/menu_startup_m12.c:13228
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "HIZIN / KISA TUŞLARIN KİLİDİNİ AÇMAK İÇİN HİLELERİ ETKİNLEŞTİRİN"
 
-#: src/ui/menu_startup_m12.c:13240
+#: src/ui/menu_startup_m12.c:13250
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "V1 ORİJİNAL MOD TARAFINDAN KİLİTLENMİŞTİR"
 
-#: src/ui/menu_startup_m12.c:13250
+#: src/ui/menu_startup_m12.c:13260
 msgid "RESOLUTION"
 msgstr "RESOLUTION"
 
-#: src/ui/menu_startup_m12.c:13264
+#: src/ui/menu_startup_m12.c:13274
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "V2.0 FİLTRELENMİŞ MOD İLE KİLİTLENMİŞTİR"
 
-#: src/ui/menu_startup_m12.c:13285
+#: src/ui/menu_startup_m12.c:13295
 msgid "> DATA FILES NOT FOUND"
 msgstr "ORİJİNAL DOSYALAR BULUNAMADI"
 
-#: src/ui/menu_startup_m12.c:13287
+#: src/ui/menu_startup_m12.c:13297
 msgid "> RENDERER UNAVAILABLE"
 msgstr "İŞLEME ARKA UCU KULLANILAMIYOR"
 
-#: src/ui/menu_startup_m12.c:13288
+#: src/ui/menu_startup_m12.c:13298
 msgid "> LAUNCH"
 msgstr "BAŞLATMAYA HAZIR"
 
-#: src/ui/menu_startup_m12.c:13301
+#: src/ui/menu_startup_m12.c:13311
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: GERİ OKLAR: GEZİN GİRİŞ: SEÇ"
 
-#: src/ui/menu_startup_m12.c:13699
+#: src/ui/menu_startup_m12.c:13709
 msgid "CUSTOM MUSIC FOLDER SELECTED"
 msgstr "CUSTOM MUSIC FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13705
+#: src/ui/menu_startup_m12.c:13715
 msgid "NO FOLDER SELECTED"
 msgstr "NO FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:13710
+#: src/ui/menu_startup_m12.c:13720
 msgid "FOLDER MISSING OR PATH TOO LONG"
 msgstr "FOLDER MISSING OR PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13735
+#: src/ui/menu_startup_m12.c:13745
 msgid "UNICODE FONT SELECTED"
 msgstr "UNICODE YAZI TİPİ SEÇİLDİ"
 
-#: src/ui/menu_startup_m12.c:13743 src/ui/menu_startup_m12.c:13784
+#: src/ui/menu_startup_m12.c:13753 src/ui/menu_startup_m12.c:13794
 msgid "NO FILE SELECTED"
 msgstr "HİÇBİR DOSYA SEÇİLMEDİ"
 
-#: src/ui/menu_startup_m12.c:13744 src/ui/menu_startup_m12.c:13785
+#: src/ui/menu_startup_m12.c:13754 src/ui/menu_startup_m12.c:13795
 msgid "FILE PATH TOO LONG"
 msgstr "FILE PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:13769
+#: src/ui/menu_startup_m12.c:13779
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 ARTPACK SEÇİLDİ"
 
-#: src/ui/menu_startup_m12.c:13775
+#: src/ui/menu_startup_m12.c:13785
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 ARTPACK REDDEDİLDİ"
 

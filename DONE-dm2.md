@@ -1,3 +1,16 @@
+- 2026-10-15: Fixed return-to-launcher inventory after a menu-started ZIP
+  session. M12 derives the selected outer file's lexical parent before the
+  existing common game-root promotion; it does not follow a symlink into a
+  different collection. The original DOS session reaches loaded runtime,
+  returns through its confirmation and rediscovers DM1/CSB/DM2 in the staged
+  collection. The selected-file regression requires that exact collection
+  root and a finished inactive launcher. It passes in 55.58 seconds with SDL
+  dummy drivers. Debug measurement windows now reset on active/source/session
+  changes, avoiding the observed unsigned reset that reported 857 million
+  ticks/second after return; inactive windows must report zero gameplay ticks.
+  Same-session 32-bit counter wrapping remains supported. This does not
+  establish native presentation/audio or full gameplay parity.
+
 - 2026-10-15: Unified explicit ZIP ownership across DOS, Macintosh, FM
   Towns and Amiga. Native readers authenticate original paired identities,
   release rejected partial profiles, and never replace an explicit selection

@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Return to start menu`: rescan the surrounding game collection after a game launched from an explicit archive, so other installed games reappear.
+- `--debug performance`: reset measurements across session/menu transitions and report zero gameplay ticks while the launcher is inactive.
+
 - `Selected DM2 ZIP files`: authenticate DOS, Macintosh, FM Towns and Amiga media by their original contents through CLI and the start menu, including renamed archives. Reject unreadable selections instead of borrowing a neighboring archive.
 
 - `DM2 DOS and Macintosh startup`: accept uppercase ZIP extensions on the documented retail archive names while retaining original-file verification.

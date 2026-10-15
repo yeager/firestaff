@@ -11490,6 +11490,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         int theronTickBeforeInput = gameView.theronState.tick_count;
         const uint32_t perfTickBefore = o->debug
             ? m11_debug_game_tick_count(&gameView) : 0U;
+        const int perfActiveBefore = gameView.active;
+        const int perfSourceBefore = (int)gameView.sourceKind;
+        const unsigned int perfLaunchSerialBefore = g_m11_sync_launch_serial;
 
         /* Settings may change while the launcher is visible. Apply the
          * persisted input-mode choice before either event or held-state
@@ -12006,10 +12009,28 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             }
         }
         now = SDL_GetTicks();
-        if (o->debug) {
-            const uint32_t tickDelta = m11_debug_game_tick_count(&gameView) -
-                                       perfTickBefore;
-            perfGameTickCount += tickDelta;
+        if (o->debug &&
+            (gameView.active != perfActiveBefore ||
+             (int)gameView.sourceKind != perfSourceBefore ||
+             g_m11_sync_launch_serial != perfLaunchSerialBefore)) {
+            /* A return/restart may reset the source tick counter and spend
+             * synchronous time scanning media or presenting startup. Start a
+             * fresh measurement window instead of mixing sessions or counting
+             * that reset as an unsigned tick-counter wrap. */
+            m11_reset_debug_perf_window(
+                &perfWindowStart, &perfLastLoopEnd,
+                &perfLoopCount, &perfOverBudgetLoops,
+                &perfGameTickCount, &perfPresentedCount,
+                &perfRenderTotalMs, &perfRenderMaxMs,
+                &perfLoopMaxMs, &perfCpuWindowStart,
+                &perfCpuAvailable);
+        } else if (o->debug) {
+            if (gameView.active) {
+                /* Unsigned subtraction retains genuine same-session wrap. */
+                const uint32_t tickDelta = m11_debug_game_tick_count(&gameView) -
+                                           perfTickBefore;
+                perfGameTickCount += tickDelta;
+            }
             const Uint64 perfNow = SDL_GetPerformanceCounter();
             const double loopMs = m11_counter_milliseconds(
                 perfNow - perfLastLoopEnd);

@@ -5072,6 +5072,7 @@ void M12_StartupMenu_RescanAllGames(
     M12_Config savedConfig;
     char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char scanDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char scanBaseDir[M12_ASSET_DATA_DIR_CAPACITY];
     char deferredDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char deferredGameId[sizeof(state->deferredGameId)];
     int deferredLooseFilesOnly;
@@ -5093,18 +5094,27 @@ void M12_StartupMenu_RescanAllGames(
     M12_Config_Load(&savedConfig, NULL);
     currentDataDir = M12_StartupMenu_AssetDataDir(state);
     if (currentDataDir && currentDataDir[0]) {
+        char* virtualMember;
         snprintf(selectedDataDir, sizeof(selectedDataDir), "%s", currentDataDir);
-        m12_parent_game_data_root(currentDataDir, scanDataDir,
-                                  sizeof(scanDataDir));
-        if (strcmp(scanDataDir, currentDataDir) != 0) {
-            preserveSelectedDataDir = 1;
-        } else {
-            m12_common_game_data_root(currentDataDir, scanDataDir,
-                                      sizeof(scanDataDir));
-            if (scanDataDir[0] && strcmp(scanDataDir, currentDataDir) != 0) {
-                preserveSelectedDataDir = 1;
-            }
+        snprintf(scanBaseDir, sizeof(scanBaseDir), "%s", currentDataDir);
+        virtualMember = strstr(scanBaseDir, "::");
+        if (virtualMember) *virtualMember = '\0';
+        /* Returning to M12 refreshes the collection beside the selected file,
+         * rather than admitting that one archive again. Keep the lexical alias
+         * location; resolving a symlink would change the user's collection. */
+        if (virtualMember || FSP_FileExists(scanBaseDir)) {
+            char parentDir[M12_ASSET_DATA_DIR_CAPACITY];
+            if (FSP_ParentDir(parentDir, sizeof(parentDir), scanBaseDir))
+                snprintf(scanBaseDir, sizeof(scanBaseDir), "%s", parentDir);
         }
+        m12_parent_game_data_root(scanBaseDir, scanDataDir,
+                                  sizeof(scanDataDir));
+        if (strcmp(scanDataDir, scanBaseDir) == 0) {
+            m12_common_game_data_root(scanBaseDir, scanDataDir,
+                                      sizeof(scanDataDir));
+        }
+        if (scanDataDir[0] && strcmp(scanDataDir, currentDataDir) != 0)
+            preserveSelectedDataDir = 1;
     }
     if (!scanDataDir[0]) {
         snprintf(scanDataDir, sizeof(scanDataDir), "%s", savedConfig.dataDir);
