@@ -3325,3 +3325,32 @@ Final required-file report binary passed the complete original-media CLI startup
 - 2026-10-16: Reproduced an explicit incomplete Towns installation reporting its valid GRAPHICS.DAT as missing. The selector now retains that exact authenticated candidate for the existing final native admission gate, which still clears rejected versions before materialization while preserving required-file evidence. Original-data tests cover missing and authentic wrong-language dungeons, missing TMENU, full/game-specific scans, and ordinary two-Accept menu input: only the affected companions are listed, no duplicate installation is substituted, and no runtime launch is requested. Two final original-media CTest cases passed (3.91 s), without missing-media skips; deterministic cancellation and independent source review passed. Broader per-selected-edition feedback and native Windows original-media staging remain open.
 
 Final missing-companion feedback binary passed the complete original-media CLI startup diagnostics suite (214.36 s), including both offline remembered-root cases. Access-denied CTest passed (13.68 s); catalog consistency and deterministic cancellation passed. The cancellation executable's two full five-game corpus cases remained skipped. Redacted staged Gitleaks found no leaks.
+
+- 2026-10-16: Reproduced three original-media PC34 multilingual owner bugs:
+  explicit loose graphics admitted a neighboring English edition; stale starts
+  borrowed its dungeon; virtual PC graphics overrode explicit dungeon paths.
+  Scanner publication and runtime now retain the selected multilingual owner,
+  authenticate the consumed default dungeon buffer, and honor explicit PC
+  dungeon paths. The test independently compares the unchanged English and
+  EUDATA standard dungeon bytes before staging them. Both scan APIs report the
+  selected owner, missing/replaced standard worlds reject, renamed same-owner
+  originals start, and explicit French originals start with loose/virtual
+  graphics. Final targeted original-media tests passed (2/2, 3.96 s), including
+  existing Towns lifecycle/feedback cases. No synthetic media or game data is
+  committed; native Windows symlink staging remains skipped. Automatic language
+  routing and full platform/visual parity remain unproven.
+
+- 2026-10-16: Refreshed the read-only ScummVM DM reference audit at
+  a3cf3746e44070528badfbdbb292edd9dd4e6340; gfx.cpp is byte-identical to the
+  previous pinned audit. Recorded a potential unpopulated DOS D3R2 source buffer
+  and a DOS creature-palette approximation as comparison limitations. Native
+  original wall mapping remains intact; no speculative engine change or
+  third-party implementation was introduced.
+
+Final multilingual-owner verification: the rebuilt application passed the
+complete original-media CLI startup diagnostics suite (215.37 s), including
+both offline remembered-root cases. Access-denied CTest passed (13.79 s);
+deterministic cancellation and catalog consistency passed. The cancellation
+executable's two full five-game corpus checks remained intentionally skipped.
+Independent source review found no remaining blocker in the PC path changes.
+Redacted patch Gitleaks found no leaks.

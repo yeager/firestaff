@@ -1551,12 +1551,15 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
         m12_copy_string(required->matchedHash, sizeof(required->matchedHash), version->matchedMd5);
     }
     if (strcmp(version->versionId, "pc34-en") != 0 &&
+        strcmp(version->versionId, "pc34-multi") != 0 &&
         strcmp(version->versionId, "fmtowns-en") != 0 &&
         strcmp(version->versionId, "fmtowns-ja") != 0) return;
-    /* Bind this native PC receipt to the original English graphics hash,
-     * not just an edition label. */
-    if (strcmp(version->versionId, "pc34-en") == 0 &&
-        strcmp(version->matchedMd5, "fa6b1aa29e191418713bf2cda93d962e") != 0) return;
+    /* Bind native PC receipts to their original graphics hashes and
+     * edition labels. */
+    if ((strcmp(version->versionId, "pc34-en") == 0 &&
+         strcmp(version->matchedMd5, "fa6b1aa29e191418713bf2cda93d962e") != 0) ||
+        (strcmp(version->versionId, "pc34-multi") == 0 &&
+         strcmp(version->matchedMd5, "f934d97e43e1ba6e5159839acbcd0611") != 0)) return;
     if (finalValidation) {
         /* A failed final companion read must not leave an earlier owner's
          * matched dungeon receipt behind when media changes during a scan. */
@@ -1568,7 +1571,8 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
         }
     }
     separator = strstr(version->matchedPath, "::");
-    if (strcmp(version->versionId, "pc34-en") == 0) {
+    if (strcmp(version->versionId, "pc34-en") == 0 ||
+        strcmp(version->versionId, "pc34-multi") == 0) {
         dungeonHash = "766450c940651fc021c92fe5d0d0b3a6";
         if (separator) {
             const char* member = separator + 2;
@@ -4367,7 +4371,10 @@ static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5) {
         return s_m12_a36_dungeon_hashes;
     if (strcmp(graphicsMd5, "491ca939f9abb33ceeb26619b841fe91") == 0)
         return "78848e1a2d3d5a11e5954deb8c7b772b";
-    if (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0)
+    /* FILENAME.C:44-52 / LOADSAVE.C F0435:2374-2375 bind I34M's
+     * standard EUDATA dungeon beside its own multilingual graphics. */
+    if (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
+        strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)
         return "766450c940651fc021c92fe5d0d0b3a6";
     for (i = 0U; i < sizeof(g_dm1Versions) / sizeof(g_dm1Versions[0]); ++i) {
         const M12_VersionSpec* spec = &g_dm1Versions[i];
@@ -4406,8 +4413,9 @@ static int m12_dm1_complete_loose_owner(const char* graphics,
     {
         int found = FSP_FindUniqueFileIgnoreCase(parent,
             demo ? "DemoDun.dat" : "DUNGEON.DAT", dungeon, ASSET_PATH_MAX);
-        if (found == 0 && strcmp(graphicsMd5,
-                                "fa6b1aa29e191418713bf2cda93d962e") == 0) {
+        if (found == 0 &&
+            (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
+             strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)) {
             char renamed[1][ASSET_PATH_MAX];
             if (asset_collect_files_by_md5(parent, allowed, renamed, 1U, 0) != 1)
                 return 0;
@@ -4420,6 +4428,8 @@ static int m12_dm1_complete_loose_owner(const char* graphics,
         (match[32] != '\0' && match[32] != ';')) return 0;
     if (strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
         return m12_dm1_amiga36_package_ready(graphics);
+    if (strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)
+        return m12_dm1_pc34_multi_has_startup_media(graphics);
     /* TITLE.C F0437's original edition/SWSH pairing remains authoritative.
      * A22G shares A20F's SWSH only with its exact original game/dungeon tuple. */
     for (i = 0U; i < sizeof(amiga) / sizeof(amiga[0]); ++i) {

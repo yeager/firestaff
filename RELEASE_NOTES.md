@@ -2,6 +2,11 @@
 
 ## User-facing changes
 
+- `DM1 multilingual PC startup`: retain explicitly selected graphics and their
+  own standard dungeon, including renamed original files. Reject stale or
+  replaced standard worlds without borrowing another installation's files.
+  Honor explicitly supplied PC dungeon paths with both loose and ZIP graphics.
+
 - `Startup diagnostics`: report the actual renderer backend, applied VSync
   interval and drawable scale with `--verbose` or `--debug`.
 

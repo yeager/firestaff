@@ -147,6 +147,149 @@ cleanup:
     if(dir[0]) rmdir(dir);
     return result==0;
 }
+static int check_multilingual_loose_selection(const char* root, const char* original, const char* multi,
+    const unsigned char* graphicsBytes, size_t graphicsSize,
+    const unsigned char* dungeonBytes, size_t dungeonSize) {
+    char dir[FSP_PATH_MAX]={0}, selected[FSP_PATH_MAX]={0};
+    char dungeon[FSP_PATH_MAX]={0}, english[FSP_PATH_MAX]={0}, renamed[FSP_PATH_MAX]={0};
+    char foreignPath[ASSET_PATH_MAX], multiAlias[FSP_PATH_MAX]={0};
+    unsigned char* foreignDungeon=NULL; size_t foreignSize=0;
+    M12_StartupMenuState* menu=NULL;
+    M11_GameViewState* game=NULL;
+    M12_StartupMenuInitOptions options;
+    M11_BootProbeReceipt receipt;
+    const M12_AssetVersionStatus* version;
+    const M12_AssetVersionStatus* first;
+    int index, englishIndex, scanMode, initialized=0, result=1;
+    REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"loose-multilingual") && FSP_CreateDirectory(dir) &&
+        FSP_JoinPath(selected,sizeof(selected),dir,"selected-multi.payload") &&
+        FSP_JoinPath(dungeon,sizeof(dungeon),dir,"DUNGEON.DAT") &&
+        FSP_JoinPath(renamed,sizeof(renamed),dir,"original-world.payload") &&
+        FSP_JoinPath(english,sizeof(english),dir,"english-original.zip"),"construct authentic multilingual owner");
+    /* The original EUDATA standard dungeon is byte-identical to PC34 English
+     * (766450c940651fc021c92fe5d0d0b3a6). Only task-owned framing is changed. */
+    REQUIRE(asset_find_by_md5(multi,"766450c940651fc021c92fe5d0d0b3a6",foreignPath,sizeof(foreignPath),0) &&
+        asset_read_path_alloc(foreignPath,&foreignDungeon,&foreignSize) &&
+        foreignSize==dungeonSize && memcmp(foreignDungeon,dungeonBytes,dungeonSize)==0,
+        "original multilingual standard dungeon is byte-identical to English source bytes");
+    free(foreignDungeon); foreignDungeon=NULL; foreignSize=0;
+    REQUIRE(write_original_bytes(selected,graphicsBytes,graphicsSize) &&
+        write_original_bytes(dungeon,dungeonBytes,dungeonSize) && symlink(original,english)==0,
+        "stage unchanged multilingual graphics/dungeon and original swoosh companion");
+    menu=SDL_calloc(1,sizeof(*menu)); game=SDL_calloc(1,sizeof(*game));
+    REQUIRE(menu && game,"allocate multilingual launcher and runtime");
+    memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+    M12_StartupMenu_InitWithOptions(menu,selected,"dm1",&options);
+    index=M12_AssetStatus_FindVersionIndex("dm1","pc34-multi");
+    englishIndex=M12_AssetStatus_FindVersionIndex("dm1","pc34-en");
+    REQUIRE(index>=0 && englishIndex>=0,"find both original PC catalogue editions");
+    for (scanMode=0; scanMode<2; ++scanMode) {
+        int reportedDungeon=0;
+        if (scanMode) M12_AssetStatus_Scan(&menu->assetStatus,selected);
+        version=M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index);
+        first=M12_AssetStatus_GetFirstMatchedVersion(&menu->assetStatus,"dm1");
+        REQUIRE(version && version->matched && strcmp(version->matchedPath,selected)==0 &&
+            first && strcmp(first->versionId,"pc34-multi")==0 &&
+            !M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)englishIndex)->matched,
+            "explicit multilingual graphics remain terminal beside complete English archive");
+        for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(&menu->assetStatus,"dm1"); ++role) {
+            const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(&menu->assetStatus,"dm1",role);
+            if (strcmp(required->roleId,"dungeon")==0)
+                reportedDungeon=required->matched && strcmp(required->matchedPath,dungeon)==0;
+        }
+        REQUIRE(reportedDungeon,"both scan APIs report selected multilingual dungeon provenance");
+    }
+    REQUIRE(FSP_JoinPath(multiAlias,sizeof(multiAlias),dir,"multi-original.zip") && symlink(multi,multiAlias)==0,
+        "stage unchanged original multilingual archive for report check");
+    M12_AssetStatus_ScanGame(&menu->assetStatus,multiAlias,"dm1");
+    REQUIRE(M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1"),"original multilingual archive remains available");
+    {
+        int reportedDungeon=0;
+        for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(&menu->assetStatus,"dm1"); ++role) {
+            const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(&menu->assetStatus,"dm1",role);
+            if (strcmp(required->roleId,"dungeon")==0)
+                reportedDungeon=required->matched && strncmp(required->matchedPath,multiAlias,strlen(multiAlias))==0;
+        }
+        REQUIRE(reportedDungeon,"multilingual archive reports its own dungeon rather than English companion");
+    }
+    REQUIRE(unlink(multiAlias)==0,"remove only task multilingual archive link");
+    multiAlias[0]='\0';
+    M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+    menu->selectedIndex=0; menu->activatedIndex=0; menu->launchRequested=1;
+    menu->gameOptions[0].architectureIndex=M12_ARCH_PC;
+    menu->gameOptions[0].versionIndex=index;
+    menu->gameOptions[0].presentationModeIndex=M12_PRESENTATION_V1_ORIGINAL;
+    menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+    M11_GameView_Init(game); initialized=1;
+    REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) &&
+        M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded && game->active &&
+        strcmp(receipt.bootAssetMd5,"f934d97e43e1ba6e5159839acbcd0611")==0,
+        "explicit original multilingual owner starts its authenticated world");
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    REQUIRE(asset_find_by_md5(multi,"82c7802122e9cfb2dc117bc9d197f457",foreignPath,sizeof(foreignPath),0) &&
+        asset_read_path_alloc(foreignPath,&foreignDungeon,&foreignSize) &&
+        write_original_bytes(dungeon,foreignDungeon,foreignSize),
+        "replace default dungeon with unchanged original French dungeon bytes");
+    REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+        "stale standard-dungeon receipt rejects consumed different original dungeon");
+    {
+        M11_GameLaunchSpec custom;
+        memset(&custom,0,sizeof(custom));
+        custom.title="DUNGEON MASTER"; custom.gameId=custom.sourceId="dm1";
+        custom.dataDir=dir; custom.dungeonPath=dungeon;
+        custom.verifiedAssetPath=selected;
+        custom.verifiedAssetMd5="f934d97e43e1ba6e5159839acbcd0611";
+        custom.sourceKind=M11_GAME_SOURCE_DIRECT_DUNGEON;
+        custom.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+        custom.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+        REQUIRE(M11_GameView_Start(game,&custom) && game->active &&
+            M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+            "explicit direct dungeon path retains authentic nonstandard-dungeon support");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        REQUIRE(FSP_JoinPath(multiAlias,sizeof(multiAlias),dir,"multi-original.zip") &&
+            symlink(multi,multiAlias)==0 &&
+            snprintf(foreignPath,sizeof(foreignPath),"%s::GRAPHICS.DAT",multiAlias)<(int)sizeof(foreignPath),
+            "stage authenticated virtual graphics for explicit dungeon path");
+        custom.dataDir=foreignPath;
+        custom.verifiedAssetPath=foreignPath;
+        REQUIRE(M11_GameView_Start(game,&custom) && game->active &&
+            strcmp(game->dungeonPath,dungeon)==0,
+            "virtual PC graphics preserve explicitly supplied original dungeon path");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        REQUIRE(unlink(multiAlias)==0,"remove only task virtual graphics archive link");
+        multiAlias[0]='\0';
+    }
+    REQUIRE(write_original_bytes(dungeon,dungeonBytes,dungeonSize) && rename(dungeon,renamed)==0,
+        "rename unchanged original standard dungeon within selected owner");
+    M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+    REQUIRE(M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1") &&
+        M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index)->matched &&
+        M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+        strcmp(game->dungeonPath,renamed)==0,
+        "renamed original multilingual dungeon retains exact same-owner startup");
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    REQUIRE(unlink(renamed)==0,"remove only selected multilingual dungeon");
+    REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+        "stale multilingual owner cannot borrow English archive dungeon");
+    M12_StartupMenu_Destroy(menu);
+    M12_StartupMenu_InitWithOptions(menu,selected,"dm1",&options);
+    REQUIRE(!M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1") &&
+        !M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index)->matched &&
+        !M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)englishIndex)->matched,
+        "fresh incomplete multilingual file rejects without English substitution");
+    result=0;
+cleanup:
+    if(initialized) M11_GameView_Shutdown(game);
+    if(menu) M12_StartupMenu_Destroy(menu);
+    SDL_free(game); SDL_free(menu); free(foreignDungeon);
+    if(renamed[0]) unlink(renamed);
+    if(multiAlias[0]) unlink(multiAlias);
+    if(selected[0]) unlink(selected);
+    if(dungeon[0]) unlink(dungeon);
+    if(english[0]) unlink(english);
+    if(dir[0]) rmdir(dir);
+    return result==0;
+}
 #endif
 int main(void) {
 #ifdef _WIN32
@@ -332,6 +475,8 @@ int main(void) {
     REQUIRE(!game->active,"rejected virtual graphics cannot leave a running partial world");
     REQUIRE(check_loose_selected_media(root,original,bytes[0],sizes[0],bytes[1],sizes[1]),
         "loose selected original media rejects stale ownership");
+    REQUIRE(check_multilingual_loose_selection(root,original,multi,bytes[0],sizes[0],bytes[1],sizes[1]),
+        "multilingual loose selection retains its exact original owner");
     result=0; puts("PASS: original ZIP and loose media reject stale selected graphics and sibling fallback");
 cleanup:
     if(gameInitialized) M11_GameView_Shutdown(game);

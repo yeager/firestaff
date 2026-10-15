@@ -25759,6 +25759,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     int dm1AtariDungeonFormat = 0;
     int dm1EndianDungeonFormat = 0;
     int dm1VirtualGraphicsRequired = 0;
+    int dm1Pc34Graphics = 0;
+    int dm1Pc34ExplicitDungeon = 0;
     if (!state || !spec || !spec->title) {
         return 0;
     }
@@ -26281,6 +26283,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         DM1_V1_StartupDungeonPathReceipt_PC34 receipt;
         int dm1FmtownsPath = 0;
         int dm1VirtualDiskPath = 0;
+        dm1Pc34Graphics = spec->verifiedAssetMd5 &&
+            (strcmp(spec->verifiedAssetMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
+             strcmp(spec->verifiedAssetMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0);
+        dm1Pc34ExplicitDungeon = dm1Pc34Graphics && spec->dungeonPath && spec->dungeonPath[0];
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         facts.game_id = spec->gameId;
@@ -26321,15 +26327,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 facts.explicit_dungeon_path = dungeonPath;
             }
         }
-        /* Original Atari/Amiga companions stay beside the verified graphics
-         * file/member, whether the selected medium is loose or archived. */
-        if (!spec->dm1Fmtowns && spec->verifiedAssetPath &&
+        /* Native companions stay beside the verified graphics file/member.
+         * I34E/I34M FILENAME.C:5-9,44-52 and LOADSAVE.C:2374-2375 retain each
+         * installation's own standard dungeon. Explicit custom paths keep
+         * their existing separate receipt. */
+        if (!spec->dm1Fmtowns && !dm1Pc34ExplicitDungeon && spec->verifiedAssetPath &&
             (strstr(spec->verifiedAssetPath, "::") != NULL ||
              m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
              m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5) ||
-             ((!spec->dungeonPath || !spec->dungeonPath[0]) &&
-              spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
-                 "fa6b1aa29e191418713bf2cda93d962e") == 0))) {
+             ((!spec->dungeonPath || !spec->dungeonPath[0]) && dm1Pc34Graphics))) {
             const char *last = NULL;
             const char *sep = strstr(spec->verifiedAssetPath, "::");
             size_t prefix;
@@ -26354,7 +26360,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                    strlen(dungeonMember) + 1u);
             if (!last && (!spec->dungeonPath || !spec->dungeonPath[0])) {
                 char parent[FSP_PATH_MAX];
-                /* ReDMCSB LOADSAVE.C F0435:2363-2367 opens the selected
+                /* ReDMCSB LOADSAVE.C F0435:2336-2343 opens the selected
                  * Atari/Amiga installation's dungeon through its native
                  * case-insensitive filesystem, not a POSIX spelling gate. */
                 if (!FSP_ParentDir(parent, sizeof(parent), spec->verifiedAssetPath))
@@ -26364,9 +26370,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 /* PC34 already admits renamed original dungeon payloads.
                  * Keep that compatibility within the selected parent only;
                  * an ambiguous native filename never triggers this fallback. */
-                if (found == 0 && spec->verifiedAssetMd5 &&
-                    strcmp(spec->verifiedAssetMd5,
-                           "fa6b1aa29e191418713bf2cda93d962e") == 0) {
+                if (found == 0 && dm1Pc34Graphics) {
                     char renamed[1][ASSET_PATH_MAX];
                     if (asset_collect_files_by_md5(parent,
                         "766450c940651fc021c92fe5d0d0b3a6", renamed, 1U, 0) != 1)
@@ -26415,7 +26419,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         return 0;
     }
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
-        !spec->dm1Fmtowns && spec->verifiedAssetPath &&
+        !spec->dm1Fmtowns && !dm1Pc34ExplicitDungeon && spec->verifiedAssetPath &&
         spec->dataDir && strstr(spec->dataDir, "::") != NULL &&
         strstr(spec->verifiedAssetPath, "::") != NULL) {
         const char *last = NULL;
@@ -26445,13 +26449,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         !spec->dm1Fmtowns &&
         (strstr(dungeonPath, "::") != NULL ||
          m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
-         m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5))) {
+         m11_dm1_graphics_is_amiga(spec->verifiedAssetMd5) ||
+         (dm1Pc34Graphics && !dm1Pc34ExplicitDungeon))) {
         if (!asset_read_path_alloc(dungeonPath,
                                            &dm1VirtualDungeonBytes,
                                            &dm1VirtualDungeonSize)) {
             fprintf(stderr,
                     "firestaff: DM1 startup failed while reading virtual "
                     "DUNGEON.DAT path=%s\n", dungeonPath);
+            return 0;
+        }
+        if (dm1Pc34Graphics && !dm1Pc34ExplicitDungeon &&
+            !asset_memory_matches_md5(dm1VirtualDungeonBytes, dm1VirtualDungeonSize,
+                                      "766450c940651fc021c92fe5d0d0b3a6")) {
+            fprintf(stderr, "firestaff: DM1 PC34 dungeon identity rejected: %s\n", dungeonPath);
+            free(dm1VirtualDungeonBytes);
             return 0;
         }
         dm1VirtualGraphicsRequired = 1;

@@ -1733,11 +1733,22 @@ full inventory and selected-game scan have authentic EN→JP→PC coverage.
 Other editions' companion report ownership and native Windows original-media
 staging remain separate verification work.
 
-2026-10-16 source audit follow-up: explicit PC34 multilingual graphics
-(`f934d97e43e1ba6e5159839acbcd0611`) are still outside the terminal loose-owner
-selector and preservation guards. A parent scan can therefore retain a
-neighboring English/Towns edition; M11 also lacks the English route's strict
-multilingual dungeon binding. Reproduce using unchanged French EUDATA and
-English PC34 archive members, preserving the multilingual swoosh dependency.
-Require exact selected-file ownership and rejection after its dungeon is
-removed. This is source evidence, not yet an executed regression.
+2026-10-16 multilingual owner follow-up: original EUDATA regression tests
+now prove exact selected-file ownership in both scan APIs, matching required
+file provenance and runtime startup. Removing or replacing its standard
+dungeon rejects without borrowing an English sibling. Same-directory renamed
+original standard dungeons remain supported, as do explicitly supplied French
+original dungeons with loose or virtual PC graphics. Automatic French/German
+language-dungeon routing, other native owners' companion feedback and native
+Windows original-media staging remain open; this is not full edition parity.
+
+2026-10-16 ScummVM audit refresh: current master
+`a3cf3746e44070528badfbdbb292edd9dd4e6340` has the same gfx.cpp blob as the
+pinned audit above. DOS loadWallSet (3864-3909) skips offset 17 while publishing
+the D3R2 buffer in the negative bitmap table. Its actual use depends on the
+DOS layout route; no visible ScummVM defect was established. Firestaff's native
+C10 maps to graphics 103 (86+17), consistent with original DUNVIEW.C
+F0095:2153-2165. Preserve that original mapping. ScummVM's
+setMultipleColorsInPalette (6108-6157) substitutes its dungeon palette for
+G8175_CREAT_PAL, so native video-driver tables remain authoritative. Source
+comparison found no newly proven Firestaff defect and did not execute ScummVM.
