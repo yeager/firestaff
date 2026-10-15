@@ -202,17 +202,22 @@ launch = (
     f"launch phase=game-handoff mode=direct game=dm1 platform={display_platform} "
     f"edition={edition} source={data_root}/{archive_name}")
 startup = probe["startup"]
+# PC 3.4 is the I34E DOS runtime. Its SWOOSH/TITLE/SELECTOR chain is covered
+# by test_dm1_v1_pc34_native_cli_boot.sh; boot-probe mode skips that visible
+# chain and must not require the separate F0437/F0441 Hall receipt.
+shared_hoc_handoff_required = platform != "pc"
 if (launch not in trace or probe.get("launchedEver") != 1 or
         probe.get("active") != 1 or probe.get("sourceId") != "dm1" or
         probe.get("bootAssetMd5") != asset_md5 or
         startup.get("phase") != "dm1-runtime" or
         startup.get("levelLoaded") != 1 or
-        startup.get("dm1StartupHandoffExecuted") != 1 or
-        startup.get("dm1StartupHoCFirstFrameReady") != 1 or
+        (shared_hoc_handoff_required and
+         (startup.get("dm1StartupHandoffExecuted") != 1 or
+          startup.get("dm1StartupHoCFirstFrameReady") != 1)) or
         startup.get("startupActive") != 0):
     raise SystemExit(
         f"FAIL: mixed-root direct --game dm1 --platform {platform} did not "
-        f"reach its source-owned first runtime: {probe}\n{trace}")
+        f"reach its expected authentic runtime: {probe}\n{trace}")
 
 print(f"PASS: mixed-root direct DM1 CLI selected {edition} for {platform} "
       "and reached its authentic first runtime frame")
@@ -274,6 +279,9 @@ with open(probe_path, encoding="utf-8") as stream:
     probe = json.load(stream)
 startup = probe["startup"]
 party = probe["party"]
+# PC 3.4 uses the I34E FIRES route rather than the common F0437/F0441 HoC
+# receipt. Its complete title and selector route is tested separately above.
+shared_hoc_handoff_required = platform != "pc"
 expected_ready = (
     f"DM1 READY: gameId=dm1 dataDir={data_root}/"
 )
@@ -284,13 +292,14 @@ if (expected_ready not in trace or f"handoff={handoff}" not in trace or
         startup["receiptReady"] != 1 or startup["active"] != 1 or
         startup["startupActive"] != 0 or startup["phase"] != "dm1-runtime" or
         startup["levelLoaded"] != 1 or
-        startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        (shared_hoc_handoff_required and
+         (startup["dm1StartupHandoffExecuted"] != 1 or
+          startup["dm1StartupHoCFirstFrameReady"] != 1)) or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(
         f"FAIL: mixed-library DM1 M12 {platform} selection did not reach its "
-        f"source-owned first runtime frame: {probe}\n{trace}")
+        f"expected authentic runtime: {probe}\n{trace}")
 print(f"PASS: mixed-library DM1 M12 {platform} selected {handoff} and reached its authentic first runtime frame")
 PY
 }

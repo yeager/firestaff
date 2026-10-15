@@ -1,3 +1,15 @@
+- 2026-10-15: Corrected the authentic mixed-library platform test contract for
+  PC 3.4. Its I34E DOS route uses SWOOSH/TITLE/SELECTOR and reaches FIRES; it
+  does not emit the shared F0437/F0441 Hall-of-Champions receipt. The boot
+  probe intentionally skips I34E's visible startup chain, so this platform
+  matrix now checks the selected PC34 source identity and loaded runtime while
+  retaining the Hall receipt checks for Atari ST and Amiga. The full I34E
+  title/selector path remains independently covered by
+  `dm1_v1_pc34_native_cli_boot`. The mixed AUTO/CLI/menu matrix passed with
+  authentic FM Towns, PC34, Atari ST, and Amiga media (93.61 s). This fixes a
+  false test failure; the outstanding I34E startup/parity gap in
+  `TODO-dm1.md` remains open.
+
 - 2026-10-14: Restored the I34E PC 3.4 two-bank VGA viewport presentation.
   ReDMCSB `DRAWVIEW.C:F0097` selects the active dungeon palette for VGA
   entries 16–31, and `VIDEODRV.C:F8161` ORs `0x10` into each 4-bit C007 pixel
