@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+2026-10-15 A36 C255 follow-up: all 30,464 original-media indexed pixels,
+including outer and D0 walls, now pass an independent source-coordinate
+oracle. Archive/directory CLI and M12 startup checks pass. Keep actual
+gameplay viewport, audible output and original-emulator alignment separate
+from this completed entrance-scene verification.
+
 Completion scope: the current catalogue has sixteen editions on four source
 platforms; that inventory does not prove all DM1 platforms are supported.
 Apple IIGS, Sharp X68000 and SNES media archive names also exist locally but

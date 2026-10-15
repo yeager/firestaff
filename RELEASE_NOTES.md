@@ -32,7 +32,9 @@
 - `DM1 Amiga 3.6 entrance`: render the native asymmetric doors and button
   overlay using the original layout, with 64 opening steps and the original
   driver palette fades. Render the authored entrance corridor from A36
-  assets. CLI and start-menu phase captures agree; full original-emulator
+  assets, including previously omitted outer and nearby walls. All 30,464
+  entrance-scene pixels match the original-data source-coordinate oracle.
+  CLI and start-menu phase captures agree; full original-emulator
   visual and audible parity remains under verification.
 
 - `DM1 early Amiga/Atari doors and stairs`: use the native records,

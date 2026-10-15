@@ -6,7 +6,6 @@
 #include "memory_graphics_dat_state_pc34_compat.h"
 #include "memory_graphics_dat_select_pc34_compat.h"
 #include "memory_graphics_dat_pc34_compat.h"
-#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "asset_status_m12.h"
 #include "firestaff_ftl_container.h"
 #include "firestaff_ftl_hunk_data_zero_run.h"
@@ -374,67 +373,58 @@ cleanup:
     return valid;
 }
 
-typedef struct {
-    M11_AssetLoader *loader;
-    const uint8_t *layout;
-    size_t layout_bytes;
-    uint8_t *staged;
-    int failed;
-    unsigned int loaded;
-} A36C255Context;
-
-static int a36_c255_provider(void *user, int graphic,
-                              const uint8_t **pixels, int *width, int *height) {
-    static const unsigned int zones[15] = {
-        717, 716, 714, 713, 712, 708, 707, 711, 710, 709,
-        703, 702, 706, 705, 704
-    };
-    static const uint8_t inert[224 * 136] = {0};
-    A36C255Context *context = user;
-    unsigned int index, zone;
+/* F0797 (ENTRANCE.C:58-81) authors this column-major C255 map. It
+ * has no Things, ornaments, stairs or loaded dungeon state. F0128's A36
+ * order includes both D3/D2 outer walls and terminal D0L/D0R (DUNVIEW.C:
+ * 8478-8538). Do not delegate its visibility to the PC diagnostic walker. */
+static int a36_c255_blit(M11_AssetLoader *loader, const uint8_t *layout,
+                         size_t layout_bytes, uint8_t *staged,
+                         unsigned int graphic, unsigned int zone,
+                         int transparent, uint32_t *mask) {
     A36LayoutRecord record;
-    const M11_AssetSlot *slot;
+    const M11_AssetSlot *slot = M11_AssetLoader_Load(loader, graphic);
     int x, y;
-    if (graphic == -1) { index = 78; zone = 701; }
-    else if (graphic == -2) { index = 79; zone = 700; }
-    else if (graphic >= 93 && graphic <= 107) {
-        index = (unsigned int)graphic; zone = zones[graphic - 93];
-    } else { context->failed = 1; return 0; }
-    slot = M11_AssetLoader_Load(context->loader, index);
     if (!slot || !slot->loaded || !slot->pixels ||
-        !a36_layout_record(context->layout, context->layout_bytes, (int)zone,
-                            &record) || record.parent != 4 ||
-        (record.type != 11 && record.type != 12 &&
-         record.type != 14 && record.type != 15)) {
-        context->failed = 1; return 0;
-    }
-    x = record.x; y = record.y;
+        graphic < 78u || graphic > 107u ||
+        !a36_layout_record(layout, layout_bytes, (int)zone, &record) ||
+        record.parent != 4 || (record.type != 11 && record.type != 12 &&
+                              record.type != 14 && record.type != 15)) return 0;
+    x = record.x;
+    y = record.y;
     if (record.type == 12) x += 224 - slot->width;
     if (record.type == 15) x += (224 + 1) / 2 - (slot->width + 1) / 2;
     if (record.type == 14) y += 136 - slot->height;
     for (int sy = 0; sy < slot->height; ++sy) {
         for (int sx = 0; sx < slot->width; ++sx) {
             int dx = x + sx, dy = y + sy;
-            if (dx >= 0 && dx < 224 && dy >= 0 && dy < 136)
-                context->staged[dy * 224 + dx] = slot->pixels[sy * slot->width + sx];
+            uint8_t pixel = slot->pixels[sy * slot->width + sx];
+            /* F0104:3141-3155 passes C10 to the native A36 blitter.
+             * F0098/F0674's complete floor/ceiling copies are opaque. */
+            if (dx >= 0 && dx < 224 && dy >= 0 && dy < 136 &&
+                (!transparent || pixel != 10u)) staged[dy * 224 + dx] = pixel;
         }
     }
-    ++context->loaded;
-    /* Use the source F0128 geometry walker only for visibility and order.
-     * C696 crops above own every actual pixel, including native D2 78x74. */
-    *pixels = inert; *width = 224; *height = 136;
+    *mask |= UINT32_C(1) << (graphic - 78u);
     return 1;
 }
 
 int dm1_v1_amiga36_entrance_render_c255(M11_AssetLoader *loader,
                                         uint8_t *viewport, size_t bytes) {
-    DM1_Viewport3DState renderer;
+    static const struct { int depth, lateral; unsigned int graphic, zone; } walls[] = {
+        {3,-2,104,702}, {3,2,103,703},
+        {3,-1,106,705}, {3,1,105,706}, {3,0,107,704},
+        {2,-2,99,707}, {2,2,98,708},
+        {2,-1,101,710}, {2,1,100,711}, {2,0,102,709},
+        {1,-1,96,713}, {1,1,95,714}, {1,0,97,712},
+        {0,-1,94,716}, {0,1,93,717}
+    };
     struct MemoryGraphicsDatRuntimeState_Compat *rt;
     struct MemoryGraphicsDatHeader_Compat header = {0};
     struct MemoryGraphicsDatSelection_Compat item;
-    uint8_t grid[25] = {0}, geometry[224 * 136], staged[224 * 136];
-    A36C255Context context = {0};
+    uint8_t grid[25] = {0}, staged[224 * 136];
     uint8_t *layout;
+    uint32_t mask = 0u;
+    int valid;
     if (!loader || !loader->dm1Amiga36 || !viewport || bytes < sizeof(staged) ||
         !(rt = loader->runtimeState)) return 0;
     header.format = rt->format; header.graphicCount = rt->graphicCount;
@@ -449,27 +439,25 @@ int dm1_v1_amiga36_entrance_render_c255(M11_AssetLoader *loader,
             item.compressedByteCount, loader->fileState, layout)) {
         free(layout); return 0;
     }
-    /* ENTRANCE.C F0797: source column-major squares10..14 and7 are
-     * corridors. This exact source-authored map is transposed to row-major;
-     * no loaded dungeon, champion or Thing chain enters C255. */
-    for (int y = 0; y < 5; ++y) grid[y * 5 + 2] = 1u << 5;
-    grid[2 * 5 + 1] = 1u << 5;
+    for (int y = 0; y < 5; ++y) grid[10 + y] = 1u << 5;
+    grid[7] = 1u << 5;
     memset(staged, 0, sizeof(staged));
-    memset(geometry, 0, sizeof(geometry));
-    context.loader = loader; context.layout = layout;
-    context.layout_bytes = item.compressedByteCount; context.staged = staged;
-    dm1_viewport_3d_init(&renderer, geometry, 224);
-    renderer.party_map_index = 255;
-    renderer.dungeon_grid = grid;
-    renderer.dungeon_width = renderer.dungeon_height = 5;
-    renderer.graphic_provider_callback = a36_c255_provider;
-    renderer.graphic_provider_user_data = &context;
-    renderer.source_graphics_required = true;
-    dm1_viewport_3d_load_wall_set(&renderer, 0, 0);
-    dm1_viewport_3d_draw_frame(&renderer, 2, 2, 0);
+    valid = a36_c255_blit(loader, layout, item.compressedByteCount, staged,
+                         79u, 700u, 0, &mask) &&
+            a36_c255_blit(loader, layout, item.compressedByteCount, staged,
+                         78u, 701u, 0, &mask);
+    for (size_t i = 0; valid && i < sizeof(walls) / sizeof(walls[0]); ++i) {
+        /* South from (2,0): left increases map X, depth increases map Y. */
+        int x = 2 - walls[i].lateral, y = walls[i].depth;
+        if (x < 0 || x >= 5 || y < 0 || y >= 5) { valid = 0; break; }
+        if (grid[x * 5 + y] == 0u)
+            valid = a36_c255_blit(loader, layout, item.compressedByteCount,
+                staged, walls[i].graphic, walls[i].zone, 1, &mask);
+    }
     free(layout);
-    if (context.failed || context.loaded < 3 ||
-        !count_nonzero(staged, sizeof(staged))) return 0;
+    /* Bit zero is record 78. All eleven source-visible wall records plus
+     * floor/ceiling must be admitted before publishing the private raster. */
+    if (!valid || mask != UINT32_C(0x1eb78003)) return 0;
     memcpy(viewport, staged, sizeof(staged));
     return 1;
 }

@@ -1,3 +1,12 @@
+- 2026-10-15: A36 C255 now follows the original F0797 map and F0128
+  wall order, including outer panels and terminal D0L/D0R, without the PC
+  diagnostic walker's global bitmap dependency. Floor/ceiling are opaque;
+  walls retain C10 transparency. The original-media regression compares all
+  30,464 indexed pixels and the admitted native record mask 0x1eb78003.
+  Archive CLI, installed-directory CLI and M12 checks complete the 64 door
+  steps and fifteen original driver fades. This verifies the entrance scene;
+  original-emulator frame alignment and full gameplay parity remain open.
+
 - 2026-10-15: Early Amiga/Atari positive F0142 thrown-object aspects
   now bind to their selected owner's G0209/M612=360 material at admission,
   use G0218 set0 X visibility, and render through the shared native F0115

@@ -297,43 +297,55 @@ int main(void) {
             M11_AssetLoader_Shutdown(&loader); goto cleanup;
         }
         {
-            const M11_AssetSlot *floor = M11_AssetLoader_Load(&loader, 78);
-            const M11_AssetSlot *ceiling = M11_AssetLoader_Load(&loader, 79);
-            const M11_AssetSlot *wall_left = M11_AssetLoader_Load(&loader, 96);
-            const M11_AssetSlot *wall_right = M11_AssetLoader_Load(&loader, 95);
-            if (!floor || !ceiling || !wall_left || !wall_right ||
-                floor->width != 224 || floor->height != 97 ||
-                ceiling->width != 224 || ceiling->height != 39 ||
-                wall_left->width != 60 || wall_left->height != 111 ||
-                wall_right->width != 60 || wall_right->height != 111) {
+            /* Independent original C696/native sizes, source F0797 visibility
+             * and F0128 call order. No production crop/visibility helper is
+             * used to construct this full 224x136 expected source raster. */
+            static const struct { unsigned int graphic; int x,y,w,h; } draws[] = {
+                {79,0,0,224,39}, {78,0,39,224,97},
+                {104,0,25,44,49}, {103,180,25,44,49},
+                {106,7,25,83,49}, {105,134,25,83,49},
+                {99,0,24,8,52}, {98,216,24,8,52},
+                {101,0,19,78,74}, {96,0,9,60,111}, {95,164,9,60,111},
+                {94,0,0,33,136}, {93,191,0,33,136}
+            };
+            uint8_t expected[224 * 136];
+            uint32_t mask = 0u;
+            /* Inspect the actual render's admitted records before the oracle
+             * loads anything. Bit zero is original graphic 78. */
+            for (int i = 0; i < loader.cacheUsed; ++i) {
+                const M11_AssetSlot *slot = &loader.cache[i];
+                if (slot->loaded && slot->graphicIndex >= 78u &&
+                    slot->graphicIndex <= 107u)
+                    mask |= UINT32_C(1) << (slot->graphicIndex - 78u);
+            }
+            if (mask != UINT32_C(0x1eb78003)) {
+                fprintf(stderr, "FAIL: actual C255 admitted record mask 0x%08x\n", mask);
                 M11_AssetLoader_Shutdown(&loader); goto cleanup;
             }
-            /* Independent F0797 map proof: at South(2,0), both D1 side
-             * squares are walls, while the center stays corridor. C713/714
-             * place their native 60x111 panels at(0,9)/(164,9). C716/717
-             * cover only x0..32/x191..223. The exposed strips below must
-             * therefore retain the actual original96/95 pixels, and the
-             * unobstructed center must retain native79/78 ceiling/floor.
-             * This checks source-visible crops, not emulator frame parity. */
-            for (int y = 0; y < 136; ++y) {
-                for (int x = 0; x < 224; ++x) {
-                    int expected = -1;
-                    if (y < 9 && x >= 33 && x < 191)
-                        expected = ceiling->pixels[y * 224 + x];
-                    if (y >= 120 && x >= 60 && x < 164)
-                        expected = floor->pixels[(y - 39) * 224 + x];
-                    if (y >= 9 && y < 120 && x >= 33 && x < 60)
-                        expected = wall_left->pixels[(y - 9) * 60 + x];
-                    if (y >= 9 && y < 120 && x >= 164 && x < 191)
-                        expected = wall_right->pixels[(y - 9) * 60 + x - 164];
-                    if (expected >= 0 && micro[y * 224 + x] != expected) {
-                        fprintf(stderr, "FAIL: source C255 crop at%d,%d got%u expected%d\n",
-                            x, y, micro[y * 224 + x], expected);
-                        M11_AssetLoader_Shutdown(&loader); goto cleanup;
+            memset(expected, 0, sizeof(expected));
+            for (size_t i = 0; i < sizeof(draws) / sizeof(draws[0]); ++i) {
+                const M11_AssetSlot *slot = M11_AssetLoader_Load(&loader, draws[i].graphic);
+                if (!slot || !slot->pixels || slot->width != draws[i].w ||
+                    slot->height != draws[i].h) {
+                    fprintf(stderr, "FAIL: original C255 native %u dimensions\n", draws[i].graphic);
+                    M11_AssetLoader_Shutdown(&loader); goto cleanup;
+                }
+                for (int y = 0; y < draws[i].h; ++y) {
+                    for (int x = 0; x < draws[i].w; ++x) {
+                        uint8_t pixel = slot->pixels[y * draws[i].w + x];
+                        if (i < 2u || pixel != 10u)
+                            expected[(draws[i].y + y) * 224 + draws[i].x + x] = pixel;
                     }
                 }
             }
-            puts("ok: source F0797 visible D1 walls, ceiling and floor match original native pixels");
+            for (size_t i = 0; i < sizeof(expected); ++i) {
+                if (micro[i] != expected[i]) {
+                    fprintf(stderr, "FAIL: source C255 full raster at %zu,%zu got %u expected %u\n",
+                            i % 224u, i / 224u, micro[i], expected[i]);
+                    M11_AssetLoader_Shutdown(&loader); goto cleanup;
+                }
+            }
+            puts("ok: all 30,464 original C255 pixels and source mask 0x1eb78003 match including D0/outer walls");
         }
         for (unsigned int frame = 0; frame <= 64; ++frame) {
             if (!dm1_v1_amiga36_entrance_compose(&loader, &receipt, micro,
