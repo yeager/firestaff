@@ -14,6 +14,32 @@ execute the source mutator, prove the complete shared session RNG state, or
 authorize enabling fresh-game weather. Keep the source-mutation and single-RNG
 integration gap below open.
 
+2026-10-15 partial `DM2_ARRANGE_DUNGEON` direction mutation: Firestaff now
+replays only the source's conditional static-creature and possession
+`RANDDIR` assignments against a cloned mutable record-pool candidate. It keeps
+the caller-provided RNG state, follows source map/column/row/record order, and
+atomically commits pool bytes plus RNG only after the source-ordered census,
+record identities, links and expected write/draw counts all validate. The
+focused real-data test verifies successful mutation, exact draw advancement,
+authentic dungeon immutability, and rollback after an injected pool identity
+mismatch. DOS EN and FM Towns JP originals both pass (28 and 27 draws,
+respectively). This API is not yet called from fresh `GAME_LOAD`; callers must
+provide the already-correct shared session RNG state, and Firestaff has not
+integrated/proven the preceding fresh-weather bootstrap. This partial mutation
+does not complete or enable `DM2_ARRANGE_DUNGEON`.
+
+Remaining source work is broader than those random direction writes. In
+SKProject `SKWINSPX/src/v5/skmap.cpp`, teleporter counterpart/map validation
+and relocation are in lines 927-998; ladder/text/recharge link updates are at
+1001-1035; actuator destination/door and tile mutations are at 1037-1115;
+creature AI-derived HP, position and animation initialization follows at
+1117-1184; pit/void cross-level tile resolution is at 1219-1247. These branches
+must be source-mapped and implemented transactionally before the full arranger
+can be wired into fresh-game completion. The shared RNG boundary also remains
+open: SKProject `sksvgame.cpp:538-546` performs fresh weather setup before
+`DM2_ARRANGE_DUNGEON` at 573, with later CAII work in the same session. No
+standalone zero-seeded arrangement is source-faithful.
+
 2026-10-14 pre-fix baseline HUD/viewport retest on the Mac mini M4, commit
 `68972ca0`: the five authentic runtime routes (DOS English, DOS French,
 Macintosh, Amiga and FM Towns) plus live viewport-plan enumeration passed

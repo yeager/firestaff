@@ -20,6 +20,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
+#include "dm2_v1_drops.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 
@@ -60,10 +61,39 @@ typedef struct {
     uint32_t source_order_hash;
 } DM2_V1_ArrangeDungeonRngReceipt;
 
+/* Transaction receipt for the random-direction record writes in
+ * DM2_ARRANGE_DUNGEON. This is intentionally narrower than the full map
+ * arranger: teleporter, ladder, actuator, creature-position/animation and pit
+ * mutations remain required before GAME_LOAD can claim source completeness. */
+typedef struct {
+    int valid;
+    int committed;
+    int incomplete;
+    uint32_t rng_before;
+    uint32_t rng_after;
+    uint32_t rng_draws;
+    uint32_t creature_direction_writes;
+    uint32_t possession_direction_writes;
+    uint32_t source_order_hash;
+} DM2_V1_ArrangeDungeonRngApplyReceipt;
+
 int dm2_v1_DM2_ARRANGE_DUNGEON_rng_receipt(
     const DM2_V1_DungeonData *dungeon,
     const DM2_V1_CaiiSourceOwner *caii_source,
     DM2_V1_ArrangeDungeonRngReceipt *out);
+
+/* Apply only the source's static-creature/possession RANDDIR assignments to
+ * a private mutable pool candidate, in DM2_ARRANGE_DUNGEON map/tile/record
+ * order. Both pool bytes and RNG are committed only after the complete
+ * census and every source link validate. The caller supplies the shared
+ * session RNG at the exact source call boundary (after fresh weather
+ * bootstrap); this function does not initialize or reseed it. */
+int dm2_v1_DM2_ARRANGE_DUNGEON_apply_rng_directions(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_CaiiSourceOwner *caii_source,
+    DM2_V1_RecordPoolSet *record_pools,
+    DM2_V1_DropRng *session_rng,
+    DM2_V1_ArrangeDungeonRngApplyReceipt *out);
 
 /* Materializes a private read-only CAII prerequisite owner from one
  * hash-admitted GDAT loader and one fully validated File_header dungeon.
