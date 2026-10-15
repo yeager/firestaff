@@ -3628,6 +3628,11 @@ typedef struct M11_Dm1F0128PerSquareSchedulerReceipt {
 void M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
     M11_Dm1F0128PerSquareSchedulerReceipt* outReceipt);
 
+/* Test-only source palette/copper producer; dungeonLevel is G0304 (0..5). */
+int M11_GameView_ProbeApplyDm1AmigaRuntimePalette(
+    unsigned char* framebuffer, int width, int height,
+    int dungeonLevel, int nonDungeonView);
+
 /* Test-only entry to the production F0098 floor/ceiling material blit. */
 void M11_GameView_ProbeDrawDm1ViewportBackground(
     const M11_GameViewState* state, unsigned char* framebuffer,

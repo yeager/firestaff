@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM1 early Amiga colours`: present the original RGB4 dungeon/UI palettes
+  with their full-width middle-screen switching and inventory behaviour.
+
 - `DM1 early Amiga/Atari walls`: draw the native compound wall images with
   original cropping, row strides and shifted mirrored caches. Restore the
   full turn-button click areas beside the native movement panel.

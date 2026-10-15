@@ -7067,6 +7067,61 @@ static int m11_dm1_atari_st_dungeon_palette_rgb6(
     return 1;
 }
 
+/* ReDMCSB DATA.C:832-845 MEDIA425: six source RGB4 dungeon rows shared
+ * by early Amiga DM, A36 and Amiga CSB. PALETTE.C:28-40 supplies the same
+ * row-zero UI palette for A36. Keep one table; the platform owners below
+ * retain their distinct palette switching and framebuffer conventions. */
+static const uint16_t s_amiga_dungeon_palette_rgb4[6][16] = {
+        {0x000u,0x666u,0x888u,0x620u,0x0ccu,0x840u,0x080u,0x0c0u,
+         0xf00u,0xfa0u,0xc86u,0xff0u,0x444u,0xaaau,0x00fu,0xfffu},
+        {0x000u,0x444u,0x666u,0x620u,0x0ccu,0x820u,0x060u,0x0a0u,
+         0xc00u,0x000u,0x000u,0xfc0u,0x222u,0x888u,0x00cu,0xcccu},
+        {0x000u,0x222u,0x444u,0x420u,0x0ccu,0x620u,0x040u,0x080u,
+         0xa00u,0x000u,0x000u,0xfa0u,0x000u,0x666u,0x00au,0xaaau},
+        {0x000u,0x000u,0x222u,0x200u,0x0ccu,0x420u,0x020u,0x060u,
+         0x800u,0x000u,0x000u,0xc80u,0x000u,0x444u,0x008u,0x888u},
+        {0x000u,0x000u,0x000u,0x000u,0x0ccu,0x200u,0x000u,0x040u,
+         0x600u,0x000u,0x000u,0xa60u,0x000u,0x222u,0x006u,0x666u},
+        {0x000u,0x000u,0x000u,0x000u,0x0ccu,0x000u,0x000u,0x020u,
+         0x400u,0x000u,0x000u,0x640u,0x000u,0x000u,0x004u,0x444u}
+    };
+
+/* EXEC.C F0508:350-376 sets the early Amiga copper's full-width middle
+ * palette after 31 lines and restores the UI palette at 170. STARTUP1.C:275
+ * initializes the top/bottom palette from G0021[0]. DRAWVIEW.C:767-799,
+ * PANEL.C:1817,1960 and REVIVE.C:411,585 select the UI palette for inventory
+ * and champion panels. RGB4 goes directly through the RGB4 renderer API,
+ * never through VGA DAC6 rounding. Bank0 preserves the immutable UI copy;
+ * banks1..6 own dungeon rows0..5 so later F0093 changes cannot recolor UI.
+ * A36's external driver band is separate. */
+static int m11_dm1_amiga_apply_runtime_palette(
+    unsigned char* framebuffer, int width, int height,
+    int dungeonLevel, int nonDungeonView)
+{
+    uint8_t rgb4[256][3];
+    int raw, x, y;
+    if (!framebuffer || width < 320 || height < 200 ||
+        dungeonLevel < 0 || dungeonLevel > 5) return 0;
+    for (raw = 0; raw < 256; ++raw) {
+        const int bank = raw >> M11_FB_LEVEL_SHIFT;
+        const uint16_t source = s_amiga_dungeon_palette_rgb4[
+            bank >= 1 && bank <= 6 ? bank - 1 : 0][raw & M11_FB_INDEX_MASK];
+        rgb4[raw][0] = (uint8_t)((source >> 8) & 15u);
+        rgb4[raw][1] = (uint8_t)((source >> 4) & 15u);
+        rgb4[raw][2] = (uint8_t)(source & 15u);
+    }
+    if (M11_Render_SetIndexedPaletteRgb4(rgb4) != M11_RENDER_OK) return 0;
+    for (y = 0; y < 200; ++y) {
+        const int level = !nonDungeonView && y >= 31 && y < 170
+            ? dungeonLevel + 1 : 0;
+        for (x = 0; x < 320; ++x) {
+            framebuffer[y * width + x] =
+                M11_FB_ENCODE(framebuffer[y * width + x], level);
+        }
+    }
+    return 1;
+}
+
 /* The Amiga APPB/KAOS routes enter C03_GAME outside the PC3.4
  * C017/C040 runtime-session consumer below.  The first independently-bound
  * live game surface is C013: PANEL.C F0395 calls MENUDRAW.C F0021/F0660 to
@@ -7093,20 +7148,6 @@ static int m11_csb_present_amiga_runtime_surface(
     /* ReDMCSB DATA.C G0021_aaui_Graphic562_Palette_DungeonView,
      * MEDIA425 A31/A35: the original Amiga RGB4 registers, not a generated
      * darkening curve. */
-    static const uint16_t dungeon_palette_rgb4[6][16] = {
-        {0x000u,0x666u,0x888u,0x620u,0x0ccu,0x840u,0x080u,0x0c0u,
-         0xf00u,0xfa0u,0xc86u,0xff0u,0x444u,0xaaau,0x00fu,0xfffu},
-        {0x000u,0x444u,0x666u,0x620u,0x0ccu,0x820u,0x060u,0x0a0u,
-         0xc00u,0x000u,0x000u,0xfc0u,0x222u,0x888u,0x00cu,0xcccu},
-        {0x000u,0x222u,0x444u,0x420u,0x0ccu,0x620u,0x040u,0x080u,
-         0xa00u,0x000u,0x000u,0xfa0u,0x000u,0x666u,0x00au,0xaaau},
-        {0x000u,0x000u,0x222u,0x200u,0x0ccu,0x420u,0x020u,0x060u,
-         0x800u,0x000u,0x000u,0xc80u,0x000u,0x444u,0x008u,0x888u},
-        {0x000u,0x000u,0x000u,0x000u,0x0ccu,0x200u,0x000u,0x040u,
-         0x600u,0x000u,0x000u,0xa60u,0x000u,0x222u,0x006u,0x666u},
-        {0x000u,0x000u,0x000u,0x000u,0x0ccu,0x000u,0x000u,0x020u,
-         0x400u,0x000u,0x000u,0x640u,0x000u,0x000u,0x004u,0x444u}
-    };
     const CSB_V1_BootProfile *profile;
     DM1_V1_MovementArrowRectPc34 outer_rect;
     DM1_V1_MovementArrowRectPc34 graphic_rect;
@@ -7210,7 +7251,7 @@ static int m11_csb_present_amiga_runtime_surface(
     if (palette_index > 5) palette_index = 5;
     memset(rgb4, 0, sizeof(rgb4));
     for (color = 0; color < 256; ++color) {
-        const uint16_t source = dungeon_palette_rgb4[palette_index][color & 15];
+        const uint16_t source = s_amiga_dungeon_palette_rgb4[palette_index][color & 15];
         rgb4[color][0] = (uint8_t)((source >> 8) & 15u);
         rgb4[color][1] = (uint8_t)((source >> 4) & 15u);
         rgb4[color][2] = (uint8_t)(source & 15u);
@@ -71693,6 +71734,17 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
         }
     }
 
+    if (state && state->active && state->assetsAvailable &&
+        strcmp(state->sourceId, "dm1") == 0 &&
+        state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian &&
+        state->world.dungeon) {
+        (void)m11_dm1_amiga_apply_runtime_palette(
+            framebuffer, framebufferWidth, framebufferHeight,
+            m11_compute_dungeon_palette_index(state),
+            state->inventoryPanelActive || state->candidateMirrorPanelActive ||
+                state->candidateMirrorRenameActive);
+    }
+
     /* Capture only the final indexed DM1 page and only after C13, HoC,
      * champion top-row, and active action/spell receipts have independently
      * admitted this tick. Accessibility and RetroAchievements are host
@@ -72528,6 +72580,14 @@ void M11_GameView_GetDm1HocPresentedFrameConsumerReceipt(
     if (outReceipt) {
         *outReceipt = s_m11_dm1_hoc_presented_frame_consumer_receipt;
     }
+}
+
+int M11_GameView_ProbeApplyDm1AmigaRuntimePalette(
+    unsigned char* framebuffer, int width, int height,
+    int dungeonLevel, int nonDungeonView)
+{
+    return m11_dm1_amiga_apply_runtime_palette(
+        framebuffer, width, height, dungeonLevel, nonDungeonView);
 }
 
 void M11_GameView_ProbeDrawDm1ViewportBackground(

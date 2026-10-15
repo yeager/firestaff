@@ -14,9 +14,10 @@ wall positions now have complete original-pixel regressions. Actual demo
 and Atari dungeon captures show these layers. The bounded host cache
 capability models native allocation ownership, not original hardware heap
 accounting. Verify other catalogue editions, door/stair/ornament routes,
-HUD interactions, frame-aligned original captures and native audio. Amiga
-runtime palette selection remains open; current VGA fallback is not an
-original Amiga palette. These targeted fixes do not complete all DM1 support.
+HUD interactions, frame-aligned original captures and native audio. Early
+Amiga base RGB4/copper-strip presentation is now original-data verified;
+A36 external-driver bands and F0093 creature palette replacements remain
+open. These targeted fixes do not complete all DM1 support.
 
 2026-10-15 PC34 viewport followup: the specific D2 side-wall geometry and
 fresh-key input delay have original-data/source evidence. These fixes do not

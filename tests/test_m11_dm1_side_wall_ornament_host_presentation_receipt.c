@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "asset_find_by_hash.h"
+#include "render_sdl_m11.h"
 #include "asset_status_m12.h"
 
 #include <stdio.h>
@@ -231,6 +232,71 @@ static int check_original_legacy_walls(M11_GameViewState* state, const char* edi
     return 1;
 }
 
+/* Original demo dm contains the complete source G0021 RGB4 table at
+ * file0x1142. Compare the renderer's actual RGB8 palette, not a copy of the
+ * C constants, and preserve the real frame's pixel indices through copper
+ * tagging at all six source light levels and the inventory switch. */
+static int check_original_amiga_palette(
+    M11_GameViewState* state, const char* archive,
+    const unsigned char* originalFrame)
+{
+    char programPath[M12_ASSET_DATA_DIR_CAPACITY];
+    unsigned char* program = NULL;
+    size_t programBytes = 0;
+    unsigned char frame[320 * 200];
+    uint8_t rgb8[256][3];
+    int ok = 0;
+    const int length = snprintf(programPath, sizeof(programPath), "%s::dm", archive);
+    if (length < 0 || (size_t)length >= sizeof(programPath) ||
+        !asset_file_matches_md5(programPath,"f402d7fe70d1df20141e6e520a242f74") ||
+        !asset_read_path_alloc(programPath,&program,&programBytes) ||
+        programBytes != 163236u) goto done;
+    for (int inventory = 0; inventory < 2; ++inventory) {
+        for (int level = 0; level < 6; ++level) {
+            memcpy(frame,originalFrame,sizeof(frame));
+            if (!M11_GameView_ProbeApplyDm1AmigaRuntimePalette(
+                    frame,320,200,level,inventory) ||
+                !M11_Render_CopyIndexedPaletteRgb8(rgb8)) goto done;
+            for (int raw = 0; raw < 256; ++raw) {
+                const int bank = raw >> 4;
+                const size_t offset = 0x1142u + 2u *
+                    ((size_t)(bank >= 1 && bank <= 6 ? bank - 1 : 0) * 16u + (unsigned)(raw & 15));
+                const unsigned int source = ((unsigned)program[offset] << 8) | program[offset+1];
+                for (int channel = 0; channel < 3; ++channel) {
+                    const unsigned char expected = (unsigned char)(((source >> (8-4*channel)) & 15u) * 17u);
+                    if (rgb8[raw][channel] != expected) goto done;
+                }
+            }
+            for (int y = 0; y < 200; ++y) {
+                const int bank = !inventory && y >= 31 && y < 170 ? level + 1 : 0;
+                for (int x = 0; x < 320; ++x) {
+                    const unsigned char expected = (unsigned char)
+                        ((bank << 4) | (originalFrame[y*320+x] & 15));
+                    if (frame[y*320+x] != expected) goto done;
+                }
+            }
+        }
+    }
+    /* Verify the public live Draw actually publishes the source palette
+     * and full-width band tags, rather than only the test producer. */
+    M11_GameView_Draw(state,frame,320,200);
+    if (!M11_Render_CopyIndexedPaletteRgb8(rgb8)) goto done;
+    for (int y = 0; y < 200; ++y) {
+        const int bank = y >= 31 && y < 170 ? M11_GameView_GetDungeonPaletteIndex(state) + 1 : 0;
+        for (int x = 0; x < 320; ++x) {
+            if ((frame[y*320+x] >> 4) != bank) goto done;
+        }
+    }
+    if (rgb8[15][0] != 255 || rgb8[15][1] != 255 || rgb8[15][2] != 255 ||
+        rgb8[2][0] != 136 || rgb8[2][1] != 136 || rgb8[2][2] != 136) goto done;
+    puts("PASS: original demo executable RGB4 palette all256 RGB8 entries, six light levels, copper boundaries and inventory switch");
+    ok = 1;
+done:
+    free(program);
+    if (!ok) fprintf(stderr,"original Amiga palette/copper oracle failed\n");
+    return ok;
+}
+
 static int check_original_legacy_arrows(const char *env_name,
                                         const char *edition,
                                         const char *graphics_md5,
@@ -283,6 +349,7 @@ static int check_original_legacy_arrows(const char *env_name,
     }
     if (!nonblack) goto done;
     if (!check_original_legacy_walls(state,edition)) goto done;
+    if (!atari && !check_original_amiga_palette(state,path,framebuffer)) goto done;
     printf("PASS: original %s C013 matches all 4320 presented indices\n", edition);
     {
         static const int turn_x[4] = { 257, 243, 314, 300 };

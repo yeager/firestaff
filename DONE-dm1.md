@@ -1,3 +1,15 @@
+- 2026-10-15: Early Amiga runtime presentation now uses authentic RGB4
+  palettes instead of VGA fallback. One shared source table preserves CSB's
+  existing values; UI bank zero remains immutable and dungeon banks 1..6
+  own the six G0021 rows. The full-width copper middle strip (31..169) is
+  tagged before source-frame publication; inventory/champion views use the
+  UI palette. Original demo executable bytes verify every RGB8 bank entry,
+  all light rows, band boundaries and inventory switching. All activated
+  original-media wall/background/control/PC regressions pass. A completed
+  same-pose demo capture preserves geometry while correcting 26,342 RGB
+  pixels. A36 driver-band ownership, creature replacement colours and full
+  palette lifecycle parity remain separate open work.
+
 - 2026-10-15: The entrance HiDPI regression now retains drawable dimensions
   through production mouse mapping, Original 320x200 conversion, hit-testing
   and command dispatch for all five entrance actions. Existing display and
