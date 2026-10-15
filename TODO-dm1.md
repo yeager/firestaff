@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-10-15 confirmed next CPU bottleneck: ordinary DM1 Present calls
+main_loop_m11.c:m11_publish_dm1_hoc_presented_capture_to_m12, which builds
+GetBootProbeReceipt and serial-FNV hashes the entire output RGBA buffer.
+Debug startup trace performs a second full getter before Present, before
+checking whether its lightweight fields changed. GetPresentedRGBA itself
+is O(1); startup_sequence's presented_rgba_hash is the output-sized pass.
+Preserve fresh hashes for explicit boot/capture requests, but use lightweight
+metadata for trace/scriptwait and publish M12 startup capture once per
+successful launch serial. M12 currently clears its nested capture only at
+init/setter, not at launch/restart/return: add lifecycle invalidation before
+caching. Keep source admission, real-host provenance and Towns CDDA behavior
+intact; a dummy window needs no M12 host-capture attempt. This audit identifies
+the hot path and safe boundaries; the correction is not implemented yet.
+
 2026-10-15 HoC performance follow-up: precise host pacing reaches the
 configured 62.5 full-redraw rate at 640x400 with original PC34 and dummy
 output. Repeated-row reuse preserves every original-frame RGBA byte through
