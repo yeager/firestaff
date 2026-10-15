@@ -391,7 +391,7 @@ static int m12_game_slot_from_id(const char* gameId);
 static const char* m12_game_select_game_id(int index);
 static int m12_game_supported(const char* gameId);
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex);
-static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex);
+static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex, int recoverMissingEdition);
 static void m12_sanitize_runtime_state(M12_StartupMenuState* state);
 static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
                                                                  int gameIndex);
@@ -2468,7 +2468,7 @@ static void m12_apply_completed_asset_scan(M12_StartupMenuState* state) {
      * version just as InitWithOptions does after a synchronous scan, so the
      * options panel and the launch gate describe the same matched edition. */
     for (gameIndex = 0; gameIndex < M12_CONFIG_GAME_COUNT; ++gameIndex) {
-        m12_normalize_game_version_index(state, gameIndex);
+        m12_normalize_game_version_index(state, gameIndex, 1);
     }
     m12_publish_game_availability(state);
     m12_sync_card_art(state);
@@ -4948,7 +4948,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
         config.v22_modern_assets_installed = M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
     }
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
-        m12_normalize_game_version_index(state, gi);
+        m12_normalize_game_version_index(state, gi,
+            !state->deferredScanPending && !state->assetStatus.scanProgress.cancelled);
     }
 }
 
@@ -5011,7 +5012,8 @@ void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
     {
         int gameIndex;
         for (gameIndex = 0; gameIndex < M12_CONFIG_GAME_COUNT; ++gameIndex) {
-            m12_normalize_game_version_index(state, gameIndex);
+            m12_normalize_game_version_index(state, gameIndex,
+                !state->assetStatus.scanProgress.cancelled);
         }
     }
     m12_publish_game_availability(state);
@@ -6226,7 +6228,7 @@ static void m12_select_game_version(M12_StartupMenuState* state,
     if (gameIndex == 2) m12_probe_quick_resume(state);
 }
 
-static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex) {
+static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex, int recoverMissingEdition) {
     static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {
         "dm1", "csb", "dm2", "nexus", "theron"
     };
@@ -6273,9 +6275,14 @@ static void m12_normalize_game_version_index(M12_StartupMenuState* state, int ga
     } else {
         int selectedArchitecture = M12_AssetStatus_GetVersionArchitecture(
             gameIds[gameIndex], (size_t)versionIndex);
+        const M12_AssetVersionStatus* selectedVersion =
+            M12_AssetStatus_GetVersion(&state->assetStatus, gameIds[gameIndex],
+                                       (size_t)versionIndex);
         if (!m12_version_architecture_launchable(gameIds[gameIndex],
                                                  (size_t)versionIndex) ||
-            selectedArchitecture != architecture) {
+            selectedArchitecture != architecture ||
+            (recoverMissingEdition && gameIndex < 3 && selectedVersion &&
+             !selectedVersion->matched)) {
             int matchedVersion =
                 M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
                     &state->assetStatus, gameIds[gameIndex], architecture);
@@ -6604,7 +6611,7 @@ static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
                 state->gameOptions[qrSlot].presentationModeIndex,
                 M12_PRESENTATION_MODE_COUNT);
             state->activatedIndex = qrSlot;
-            m12_normalize_game_version_index(state, qrSlot);
+            m12_normalize_game_version_index(state, qrSlot, 0);
             m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
             if (pmode == M12_PRESENTATION_V22_MODERN) {
                 M12_StartupLaunchGate gate;
@@ -7085,7 +7092,7 @@ static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
     pmode = m12_clamp_index(state->gameOptions[slot].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
     state->activatedIndex = slot;
-    m12_normalize_game_version_index(state, slot);
+    m12_normalize_game_version_index(state, slot, 0);
     m12_enforce_mode_constraints(&state->gameOptions[slot], pmode);
     snprintf(state->quickResumeGameId, sizeof(state->quickResumeGameId),
              "%s", entry->gameId);
@@ -7122,7 +7129,7 @@ static void m12_save_browser_commit_csb_import(M12_StartupMenuState* state) {
     pmode = m12_clamp_index(state->gameOptions[csbSlot].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
     state->activatedIndex = csbSlot;
-    m12_normalize_game_version_index(state, csbSlot);
+    m12_normalize_game_version_index(state, csbSlot, 0);
     m12_enforce_mode_constraints(&state->gameOptions[csbSlot], pmode);
     snprintf(state->csbImportDm1SavePath,
              sizeof(state->csbImportDm1SavePath),
@@ -10093,6 +10100,16 @@ static int m12_first_matched_version_index_for_game(
     architecture = gameIndex >= 0
         ? state->gameOptions[gameIndex].architectureIndex
         : M12_ARCH_AUTO;
+    /* Preserve an explicit edition even when a sibling edition is installed.
+     * Scan-time normalization handles stale saved rows before interaction. */
+    if (gameIndex >= 0 && gameIndex < 3 && architecture != M12_ARCH_AUTO) {
+        int selected = state->gameOptions[gameIndex].versionIndex;
+        if (selected >= 0 &&
+            M12_AssetStatus_GetVersion(&state->assetStatus, gameId, (size_t)selected) &&
+            m12_version_architecture_launchable(gameId, (size_t)selected) &&
+            M12_AssetStatus_GetVersionArchitecture(gameId, (size_t)selected) == architecture)
+            return -1;
+    }
     /* A stale version row may be recovered only within the selected source
      * architecture. AUTO keeps its normal media-priority policy; an explicit
      * platform must never silently launch a different platform's package. */
@@ -14783,9 +14800,12 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         }
     }
     if (!version || !version->matched) {
-        int archVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-            &state->assetStatus, intent.gameId,
-            state->gameOptions[gi].architectureIndex);
+        /* For DM1/CSB/DM2 the gate owns recovery policy. Do not replace an
+         * explicitly chosen missing edition with a sibling at this boundary. */
+        int archVersion = gi < 3 ? gate.autoSelectedVersionIndex :
+            M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &state->assetStatus, intent.gameId,
+                state->gameOptions[gi].architectureIndex);
         if (archVersion >= 0) {
             version = M12_AssetStatus_GetVersion(&state->assetStatus,
                                                  intent.gameId,

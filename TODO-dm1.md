@@ -1676,8 +1676,11 @@ Amiga 2.0 and Atari ST 1.2 still reach loaded probe states. Towns is a separate
 unchanged path. Expand equivalent original-media stale-source checks to the
 other loaders and native Windows staging; this does not establish full parity.
 
-Source-only edition-selection follow-up: the Custom version row can explicitly
-select an unavailable DM1 edition, but GetLaunchGate/GetLaunchIntent may silently
-replace it with another matched edition in the same architecture. Reproduce
-with PC34 English installed and PC34 multilingual explicitly chosen; distinguish
-manual edition intent from legitimate stale-config/AUTO recovery before fixing.
+Explicit edition-selection follow-up (2026-10-15): original-media input tests
+reproduced and now block unavailable Multilanguage selection without substituting
+English. DM1/CSB/DM2 launch intents follow the gate's recovery policy. AUTO and
+platform/version mismatch recovery remain; completed scans recover unavailable
+saved editions before interaction. Deferred or cancelled scans must not infer
+absence before inventory is known. Deferred original-media tests retain installed
+Multilanguage and recover English only when the selected edition is absent.
+Equivalent manual edition-row interaction evidence for CSB/DM2 remains open.

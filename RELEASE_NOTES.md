@@ -7239,3 +7239,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### DM1 selected archive identity
 
 - DM1 validates loaded virtual graphics against the selected edition hash before decoding, rejecting archives replaced with different graphics after scanning.
+
+### Explicit edition selection
+
+- DM1, CSB and DM2 block an explicitly selected missing edition instead of silently launching a sibling edition. AUTO and stale platform/configuration recovery remain available; deferred scans preserve saved choices until inventory is known.

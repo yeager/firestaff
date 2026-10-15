@@ -6,6 +6,7 @@
 #endif
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
+#include "config_m12.h"
 #include "fs_portable_compat.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
@@ -72,8 +73,10 @@ int main(void) {
     char configPath[FSP_PATH_MAX]={0}, virtualDungeon[ASSET_PATH_MAX], multiGraphics[ASSET_PATH_MAX];
     char namesStorage[2][ASSET_PATH_MAX]; const char* names[2]={namesStorage[0],namesStorage[1]};
     unsigned char* bytes[2]={NULL,NULL}; size_t sizes[2]={0,0};
-    M12_StartupMenuState* menu=NULL; M11_GameViewState* game=NULL;
+    M12_StartupMenuState* menu=NULL; M12_StartupMenuState* deferredMenu=NULL;
+    M11_GameViewState* game=NULL;
     M12_StartupMenuInitOptions options; M12_LaunchIntent intent; M11_BootProbeReceipt receipt;
+    M12_StartupLaunchGate gate;
     const M12_AssetVersionStatus* version; const char* member; const char* slash;
     int index, result=1, gameInitialized=0, created=0;
     if(!original||!multi||!FSP_FileExists(original)||!FSP_FileExists(multi)) {
@@ -119,6 +122,116 @@ int main(void) {
     menu->gameOptions[0].architectureIndex=M12_ARCH_PC; menu->gameOptions[0].versionIndex=index;
     menu->gameOptions[0].presentationModeIndex=M12_PRESENTATION_V1_ORIGINAL;
     menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+    /* Persist an edition using genuine scanned catalogue identities. Deferred
+     * startup must wait for evidence before repairing this saved choice. */
+    {
+        M12_Config saved;
+        M12_StartupMenuInitOptions deferredOptions=options;
+        int multilingual=M12_AssetStatus_FindVersionIndex("dm1","pc34-multi");
+        REQUIRE(multilingual>=0,"find saved multilingual edition");
+        deferredMenu=SDL_calloc(1,sizeof(*deferredMenu));
+        REQUIRE(deferredMenu,"allocate deferred launcher");
+        deferredOptions.skipAssetScan=1;
+        M12_Config_Load(&saved,NULL);
+        saved.gameArchitectureIndex[0]=M12_ARCH_PC;
+        saved.gameVersionIndex[0]=multilingual;
+        REQUIRE(M12_Config_Save(&saved),"persist explicit multilingual selection");
+        M12_StartupMenu_InitWithOptions(deferredMenu,root,"dm1",&deferredOptions);
+        REQUIRE(deferredMenu->deferredScanPending&&
+            deferredMenu->gameOptions[0].versionIndex==multilingual,
+            "deferred initialization preserves saved edition before inventory exists");
+        M12_StartupMenu_RunDeferredScan(deferredMenu,NULL,NULL);
+        REQUIRE(!deferredMenu->deferredScanPending&&
+            deferredMenu->gameOptions[0].versionIndex==multilingual,
+            "completed mixed-original scan preserves installed saved multilingual edition");
+        {
+            const M12_AssetVersionStatus* admitted=M12_AssetStatus_GetVersion(
+                &deferredMenu->assetStatus,"dm1",(size_t)multilingual);
+            REQUIRE(admitted&&admitted->matched,"mixed inventory authenticates saved multilingual edition");
+        }
+        M12_StartupMenu_Destroy(deferredMenu);
+        memset(deferredMenu,0,sizeof(*deferredMenu));
+        /* The same saved choice is unavailable when scoped to English only. */
+        M12_Config_Load(&saved,NULL);
+        saved.gameArchitectureIndex[0]=M12_ARCH_PC;
+        saved.gameVersionIndex[0]=multilingual;
+        REQUIRE(M12_Config_Save(&saved),"persist missing saved edition for deferred recovery");
+        M12_StartupMenu_InitWithOptions(deferredMenu,alias,"dm1",&deferredOptions);
+        REQUIRE(deferredMenu->deferredScanPending&&
+            deferredMenu->gameOptions[0].versionIndex==multilingual,
+            "English-only deferred initialization still waits for scan evidence");
+        M12_StartupMenu_RunDeferredScan(deferredMenu,NULL,NULL);
+        REQUIRE(!deferredMenu->deferredScanPending&&
+            deferredMenu->gameOptions[0].versionIndex==index,
+            "completed English-only scan repairs unavailable saved edition");
+        M12_StartupMenu_Destroy(deferredMenu);
+        memset(deferredMenu,0,sizeof(*deferredMenu));
+        M12_Config_Load(&saved,NULL);
+        saved.gameArchitectureIndex[0]=M12_ARCH_PC;
+        saved.gameVersionIndex[0]=multilingual;
+        REQUIRE(M12_Config_Save(&saved),"persist missing saved edition for synchronous recovery");
+        M12_StartupMenu_InitWithOptions(deferredMenu,alias,"dm1",&options);
+        REQUIRE(deferredMenu->gameOptions[0].versionIndex==index,
+            "ordinary English-only startup repairs unavailable saved edition");
+        M12_StartupMenu_Destroy(deferredMenu);
+        SDL_free(deferredMenu); deferredMenu=NULL;
+        M12_StartupMenu_SaveConfig(menu);
+    }
+    /* Exercise the actual Custom version-row handler, rather than fabricating
+     * an admission row. This selected root has only English original media. */
+    menu->launchRequested=0;
+    menu->view=M12_MENU_VIEW_GAME_OPTIONS;
+    menu->gameCardFlowStage=2;
+    menu->gameOptSelectedRow=M12_GAME_OPT_ROW_VERSION;
+    menu->languageExplicit=1;
+    menu->settings.languageIndex=0;
+    M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_RIGHT);
+    {
+        int unavailable=M12_AssetStatus_FindVersionIndex("dm1","pc34-multi");
+        int stalePlatform=M12_AssetStatus_FindVersionIndex("dm1","fmtowns-en");
+        const M12_AssetVersionStatus* unavailableVersion=unavailable>=0?
+            M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)unavailable):NULL;
+        REQUIRE(unavailableVersion&&!unavailableVersion->matched&&
+            menu->gameOptions[0].versionIndex==unavailable&&
+            menu->gameOptions[0].architectureIndex==M12_ARCH_PC,
+            "version-row input explicitly selects unavailable multilingual edition");
+        REQUIRE(M12_StartupMenu_GetLaunchGate(menu,0,&gate)&&gate.dataReady&&
+            !gate.versionReady&&!gate.canLaunch&&gate.autoSelectedVersionIndex<0,
+            "explicit unavailable edition is blocked without substitution");
+        intent=M12_StartupMenu_GetLaunchIntent(menu);
+        REQUIRE(!intent.valid&&intent.versionId&&strcmp(intent.versionId,"pc34-multi")==0,
+            "invalid launch intent preserves explicitly requested edition");
+        menu->gameOptSelectedRow=M12_GAME_OPT_ROW_COUNT;
+        M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+        REQUIRE(!menu->launchRequested&&menu->gameOptions[0].versionIndex==unavailable,
+            "Launch action preserves unavailable edition and does not request runtime");
+        REQUIRE(menu->messageLine1&&strcmp(menu->messageLine1,"SELECTED VERSION NOT FOUND")==0,
+            "Launch action explains unavailable selected edition");
+        /* AUTO remains a discovery policy; a mismatched saved row likewise
+         * remains recoverable inside the explicitly requested platform. */
+        menu->gameOptions[0].architectureIndex=M12_ARCH_AUTO;
+        REQUIRE(M12_StartupMenu_GetLaunchGate(menu,0,&gate)&&gate.canLaunch&&
+            gate.autoSelectedVersionIndex==index,"AUTO recovers an authenticated English edition");
+        intent=M12_StartupMenu_GetLaunchIntent(menu);
+        REQUIRE(intent.valid&&intent.options.versionIndex==index,"AUTO launch intent follows recovery");
+        REQUIRE(stalePlatform>=0,"find stale different-platform catalogue row");
+        menu->gameOptions[0].architectureIndex=M12_ARCH_PC;
+        menu->gameOptions[0].versionIndex=stalePlatform;
+        REQUIRE(M12_StartupMenu_GetLaunchGate(menu,0,&gate)&&gate.canLaunch&&
+            gate.autoSelectedVersionIndex==index,"wrong-platform row recovers within requested PC platform");
+        intent=M12_StartupMenu_GetLaunchIntent(menu);
+        REQUIRE(intent.valid&&intent.options.versionIndex==index,
+            "wrong-platform launch intent follows authenticated PC recovery");
+        /* Return through the same version-row input to the installed edition. */
+        menu->view=M12_MENU_VIEW_GAME_OPTIONS;
+        menu->gameCardFlowStage=2;
+        menu->gameOptSelectedRow=M12_GAME_OPT_ROW_VERSION;
+        menu->gameOptions[0].versionIndex=unavailable;
+        M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_LEFT);
+        REQUIRE(menu->gameOptions[0].versionIndex==index,
+            "version-row input returns to authenticated English edition");
+    }
+    menu->launchRequested=1;
     intent=M12_StartupMenu_GetLaunchIntent(menu);
     REQUIRE(intent.valid&&intent.versionId&&strcmp(intent.versionId,"pc34-en")==0,"English selected launch intent");
     M11_GameView_Init(game); gameInitialized=1;
@@ -134,6 +247,8 @@ int main(void) {
 cleanup:
     if(gameInitialized) M11_GameView_Shutdown(game);
     if(menu) M12_StartupMenu_Destroy(menu);
+    if(deferredMenu) M12_StartupMenu_Destroy(deferredMenu);
+    SDL_free(deferredMenu);
     SDL_free(game); SDL_free(menu); free(bytes[0]); free(bytes[1]);
     if(alias[0]) unlink(alias);
     if(replacement[0]) unlink(replacement);
