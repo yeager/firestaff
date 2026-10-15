@@ -1,5 +1,18 @@
 # Firestaff TODO — DM2
 
+2026-10-15 authentic `DM2_ARRANGE_DUNGEON` RNG-census verification: the
+read-only source-order census passed against the installed original DOS EN
+`GRAPHICS.DAT`/`dungeon.dat` and the original FM Towns JP pair. DOS reports 44
+maps, 2,809 creature records, 16 eligible static creatures, 12 possession
+records, 28 `RANDDIR` draws, and order hash `62645a40`; FM Towns reports 44
+maps, 2,581 creature records, 15 eligible static creatures, 12 possession
+records, 27 draws, and order hash `fe67f576`. The test also verified that the
+authentic dungeon bytes remain unchanged and that a cyclic record link is
+rejected. These edition-specific counts confirm the arrangement draw order;
+they do not execute the source mutator, prove the complete shared session RNG
+state, or authorize enabling fresh-game weather. Keep the source-mutation and
+single-RNG integration gap below open.
+
 2026-10-14 pre-fix baseline HUD/viewport retest on the Mac mini M4, commit
 `68972ca0`: the five authentic runtime routes (DOS English, DOS French,
 Macintosh, Amiga and FM Towns) plus live viewport-plan enumeration passed
