@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `Original graphics scaling`: reduce repeated CPU work when enlarging
+  indexed frames, while preserving the exact pixels and colors.
+
 - `Frame pacing`: avoid oversleeping the remaining host frame interval
   on SDL 3.2 and newer. The original game clocks remain unchanged.
 

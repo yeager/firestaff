@@ -1,3 +1,14 @@
+- 2026-10-15: Reuse the completed RGBA row when nearest CPU upscaling
+  repeats a source row. This is an intra-call optimization; palette state,
+  sampling, alpha, output dimensions and screenshot contracts are unchanged.
+  Authentic PC34 HoC frames pass every RGBA byte at 640x400, 1920x1080,
+  853x479, 157x93 and 3840x2160 against independent floor-sampling/palette
+  oracles. The full original PC/early Amiga/Atari suite also passes without
+  skips. A matched Cocoa full-redraw run at the actual 1920x1018 drawable
+  reduces CPU from 96.6-96.8 to 90.5-90.6 percent of one core, with mean
+  compose/present cost reduced from 15.09-15.15 to 13.97 ms. The 4K buffer
+  check is not physical HiDPI evidence; GPU load remains unmeasured.
+
 - 2026-10-15: Correct host-loop pacing on SDL 3.2+ by measuring the
   remaining frame interval in nanoseconds and using SDL_DelayPrecise.
   The original source tick and startup VBlank policies are unchanged.

@@ -1380,6 +1380,57 @@ done:
     return result;
 }
 
+/* Exercise the actual CPU nearest presentation with a completed original
+ * HoC page. Division here is independent of the production remainder walk. */
+static int check_original_pc34_presented_rgba(M11_GameViewState* state,
+                                             const unsigned char frame[64000])
+{
+    static const int sizes[][2] = {{640,400},{1920,1080},{853,479},{157,93},{3840,2160}};
+    int result = 0;
+    unsigned char source[64000], rgb[256][3];
+    if (M11_Render_IsInitialized() ||
+        M11_Render_Init(640,400,0) != M11_RENDER_OK) return 0;
+    if (M11_Render_SetScaleFilter(M11_SCALE_FILTER_NEAREST) != M11_RENDER_OK ||
+        M11_Render_SetDisplayAspectMode(M11_DISPLAY_ASPECT_CONTENT) != M11_RENDER_OK)
+        goto done;
+    for (size_t route = 0; route < sizeof(sizes)/sizeof(sizes[0]); ++route) {
+        const int wantedW = sizes[route][0], wantedH = sizes[route][1];
+        int width = 0, height = 0;
+        const unsigned char* actual;
+        if (M11_Render_SetWindowSize(wantedW,wantedH) != M11_RENDER_OK) goto done;
+        M11_GameView_Draw(state,source,320,200);
+        if (memcmp(frame,source,sizeof(source)) ||
+            !M11_Render_CopyIndexedPaletteRgb8(rgb) ||
+            M11_Render_PresentIndexedToResolution(source,320,200,wantedW,wantedH) != M11_RENDER_OK ||
+            memcmp(frame,source,sizeof(source))) goto done;
+        actual = M11_Render_GetPresentedRGBA(&width,&height);
+        if (!actual || width != wantedW || height != wantedH) {
+            fprintf(stderr,"PC34 RGBA requested%dx%d actual%dx%d\n",wantedW,wantedH,width,height);
+            goto done;
+        }
+        for (int y = 0; y < height; ++y) {
+            const size_t sy = (size_t)y*200u/(size_t)height;
+            for (int x = 0; x < width; ++x) {
+                const size_t sx = (size_t)x*320u/(size_t)width;
+                const unsigned char color = frame[sy*320u+sx];
+                const unsigned char* pixel = actual+((size_t)y*width+x)*4u;
+                if (pixel[0] != rgb[color][0] || pixel[1] != rgb[color][1] ||
+                    pixel[2] != rgb[color][2] || pixel[3] != 255) {
+                    fprintf(stderr,"PC34 RGBA %dx%d mismatch(%d,%d) source(%zu,%zu) index%u\n",
+                        width,height,x,y,sx,sy,color);
+                    goto done;
+                }
+            }
+        }
+        printf("PASS: original PC34 HoC complete nearest RGBA %dx%d (%zu bytes), independent floor sampling and source palette\n",
+            width,height,(size_t)width*height*4u);
+    }
+    result = 1;
+done:
+    M11_Render_Shutdown();
+    return result;
+}
+
 /* Original I34E C696 1093 and 737, DUNVIEW F0107:3913-3928.
  * This oracle uses full native C346 and the selected C026 portrait, never
  * the production ornament plan or its perspective palette mapping. */
@@ -1448,7 +1499,8 @@ static int check_original_pc34_front_mirror(const M11_GameLaunchSpec* spec)
             portraitPixels += portrait;
         }
     }
-    if (!pixels || !portraitPixels) goto done;
+    if (!pixels || !portraitPixels ||
+        !check_original_pc34_presented_rgba(state, frame)) goto done;
     printf("PASS: original PC34 HoC(14,3,N) C127 ordinal5 native346 48x43@(88,29), C026 32x29@(96,35), %d source pixels (%d portrait), unremapped bank16 RGB\n", pixels, portraitPixels);
     result = 1;
 done:

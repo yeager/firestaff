@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+2026-10-15 nearest-upscale follow-up: repeated-row reuse now passes full
+original-frame RGBA comparisons through 3840x2160 without changing the
+output contract. Native 1920x1018 Cocoa full-redraw still costs roughly
+90.5 percent of one core. Identify the actual SDL renderer backend and
+remaining stage costs before attributing this to GPU or source drawing.
+A native-size GPU texture path must preserve screenshot/startup-capture
+contracts and prove non-integer sampling and hard pixel edges on Metal;
+ordinary V1 indexed HUD/TTF does not require a high-resolution RGBA overlay.
+
 2026-10-15 HoC performance follow-up: SDL 3.2+ precise host pacing now
 reaches the configured 62.5 full-redraw rate on original PC34 with dummy
 640x400 output. Continue native HiDPI execution and separately measure

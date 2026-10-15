@@ -804,6 +804,7 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
     int yAdvance;
     int yRemainder;
     int srcY = 0;
+    int previousSrcY = -1;
     int yError = 0;
     unsigned char rgbaLut[256][4];
     int lutIndex;
@@ -833,7 +834,13 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
         int srcX = 0;
         int xError = 0;
         int x;
-        for (x = 0; x < targetWidth; ++x) {
+        /* Nearest upscaling repeats source rows. Reuse the completed RGBA
+         * row within this call; the palette and sampling stay identical.
+         * Advance the vertical remainder below on copied rows as well. */
+        if (srcY == previousSrcY) {
+            memcpy(dstRow, dstRow - (size_t)targetWidth * 4u,
+                   (size_t)targetWidth * 4u);
+        } else for (x = 0; x < targetWidth; ++x) {
             unsigned char raw = srcRow[srcX];
             unsigned char* px = dstRow + (size_t)x * 4u;
             memcpy(px, rgbaLut[raw], 4u);
@@ -844,6 +851,7 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
                 xError -= targetWidth;
             }
         }
+        previousSrcY = srcY;
         srcY += yAdvance;
         yError += yRemainder;
         if (yError >= targetHeight) {
