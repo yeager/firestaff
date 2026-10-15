@@ -1,3 +1,19 @@
+- 2026-10-15: Fixed I34E selector lookup using a case-sensitive .zip search
+  and discarding the authenticated member's wrapper directory. An unchanged
+  original archive named DM1.ZIP reproduced a selector-skip receipt before the
+  fix despite reaching runtime. Lookup now retains the exact graphics locator
+  and its final container/member directory. The new real-media regression
+  passes uppercase flat ZIP direct/menu and wrapped-folder ZIP direct/menu,
+  requiring the 32-frame selector Enter completion and loaded runtime. Original
+  member payloads are unchanged; wrappers stay untracked. This is startup
+  routing verification on SDL dummy video/audio, not visual/audio parity.
+
+- 2026-10-15: Reverified the original A22G UAE-1ADF file reader. It visits
+  12 OFS files and authenticates the same-volume graphics, dungeon, dm and
+  swoosh identities. Updated the stale reader-blocked TODO: title/entrance
+  admission still needs an edition-bound complete startup tuple. No A22G
+  support is claimed merely from successful file extraction.
+
 - 2026-10-15: Fixed I34E title lookup in the authentic nested DM1 DOS ZIP.
 
 - 2026-10-15: Removed duplicate FM Towns entrance wall-source and zone

@@ -1,5 +1,10 @@
 # Firestaff TODO — DM1
 
+2026-10-15 I34E archive selector routing is verified for uppercase ZIP names
+and wrapper directories through CLI and M12. Lookup uses the admitted graphics
+member and retains its container/prefix. The original-media regression requires
+selector completion as well as runtime, preventing another silent skip.
+
 2026-10-15 FM Towns wall routing: the current implementation now selects
 native F20 wall graphics and layout-696 crops for front and side wall host
 handoffs, rather than stretching the LCR compounds to PC34 dimensions.
@@ -513,40 +518,22 @@ parity.
   C002/C003/C004 entrance assets, and reaches the first runtime frame in CLI
   and M12 flows. Amiga 2.2 German and native
   renderer/input timing on each supported desktop remain open; these tests do
-  not establish pixel parity or HiDPI behavior. The only local A22 German
-  archive member is labeled "Original (Not working)" and is a 910,058-byte
-  `UAE-` stream, not a standard 901,120-byte AmigaDOS ADF; the in-process ODS
-  reader rejects it. A bounded format inspection found 159 sector-data tracks
-  and one raw MFM track at physical record 1 (12,566 bytes, 100,523 bits),
-  followed by six empty track records. The Amiga MFM scanner had skipped 64
-  bits after the 32-bit pair of `$4489` sync words, and its synthetic fixture
-  repeated that offset. It now begins the header after the two 16-bit sync
-  words, matching ADF FAQ 2.2-2.3 and WinUAE `diskutil.cpp:isamigatrack`; the
-  corrected standard-sector round-trip test passes. The untouched A22G raw
-  track still yields no standard AmigaDOS sectors, and this generic scanner is
-  not connected to UAE-1ADF archive ingestion. For inspection only, a temporary
-  sector image omitted that track; the ODS reader then validated 12 files from
-  the remaining authentic sectors. `GRAPHICS.DAT` and `Dungeon.dat` match the
-  known German A20 hashes, and the extracted `dm` executable is byte-identical
-  to the authenticated ReDMCSB A22G `dm` reference. The extracted `SWSH` matches the French A20F
-  hash (`1038138978975415571a878bb08f54be`), not the German A20G hash
-  (`916cb3cd462e7582d2a39c73e40b3339`). This source therefore has an unresolved
-  raw track and a mixed-language media set; the startup executable itself is
-  confirmed as A22G. The inspection image and its zero-filled track are not
-  runtime data. Do not infer A22 German support from the A20 German profile;
-  authenticate the complete startup media before adding a profile or claiming
-  A22G support. A read-only UAE-1ADF follow-up records the archive member's
-  CRC-32 `4ccde643` and SHA-256
-  `5abc4f549941eed4e6af48bd52d348212b38b0a17fd3e83609c8aaabc2e4cd73`, and
-  confirms 166 track records beginning at table end offset 2,004. Track record
-  1 is raw MFM with 12,566 bytes and 100,523 valid bits; it contains headers
-  for sectors 1–10, with one of the 11 sectors absent. Any UAE-1ADF intake must
-  retain sector-presence metadata and fail closed when a requested OFS block
-  is missing; zero-filling the absent sector is not acceptable. WinUAE's
-  documented container layout can guide a clean-room bounded parser, but its
-  implementation is GPL-licensed and must not be copied into Firestaff. The
-  remaining admission gate is an exact same-volume A22G pair with independently
-  authenticated `GRAPHICS.DAT`, `Dungeon.dat`, `SWSH` and executable identities.
+  not establish pixel parity or HiDPI behavior. The original A22 German archive contains a 910,058-byte UAE-1ADF stream.
+  The current bounded reader now decodes its sector-data and raw MFM tracks,
+  retains sector-presence metadata and rejects requested missing sectors.
+  A current original-media test visits 12 OFS files and independently verifies
+  the same-volume GRAPHICS.DAT (0679e39da9dcc2e855cb33c6c64ddcb5), dungeon
+  (59e332cf47852d5c7c88a9538f0adcea), A22G dm executable
+  (e8fc5da52d69aa61b8b5ac7b2e294ebd) and swoosh
+  (1038138978975415571a878bb08f54be). The latter also occurs in A20F; its
+  presence on this disk does not justify replacing it with another edition's
+  file. TITLE.C's MEDIA413 path includes A22G, but the current two-input title
+  receipt accepts the German graphics only with swoosh 916cb3..., so startup
+  still rejects this original tuple. Add an edition receipt authenticating the
+  same container/volume, A22G executable and all four observed identities;
+  pass it through title/entrance admission before claiming A22G support.
+  Do not globally permit arbitrary cross-edition graphics/swoosh combinations.
+  The missing raw-track sector must remain unavailable, never zero-filled.
   A36M intentionally
   skips F0437: STARTUP1/STARTUP2 enter
   F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash

@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `DM1 PC 3.4 startup`: preserve the original selector animation and sound route when ZIP names use uppercase extensions or contain a wrapper folder.
+
 - `DM2 Macintosh and Amiga`: preserve big endian word order when cloning record pools for game-state transactions.
 
 - `DM1 FM Towns intro and entrance`: restore source-paced title frames, native-height dungeon surfaces and smoother entrance-door timing.

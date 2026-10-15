@@ -5162,9 +5162,9 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     size_t graphicsBytes = 0u, selectorBytes = 0u;
     char root[FSP_PATH_MAX], graphicsPath[FSP_PATH_MAX];
     char selectorPath[FSP_PATH_MAX], parent[FSP_PATH_MAX], md5[33];
-    const char *zipSep;
-    const char *zipExt;
-    size_t rootBytes;
+    const char *memberSeparator = NULL;
+    const char *scan;
+    int virtualPath;
     const M11_AssetSlot *entrance, *left, *right;
     unsigned char *view = NULL;
     unsigned int viewBytes = 0u, step, steps;
@@ -5182,60 +5182,64 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     int result = 0;
 
     memset(&loader, 0, sizeof(loader));
-    if (!gameView || !menuState || !version || !version->matched || !version->versionId ||
-        strcmp(version->versionId, "pc34-en") != 0 ||
-        !M12_AssetStatus_ResolveRuntimeDataDirForVersion(
-            &menuState->assetStatus, "dm1", version->versionId,
-            root, sizeof(root))) return 0;
-
-    zipSep = strstr(root, "::");
-    zipExt = NULL;
-    {
-        const char *scan = root;
-        while ((scan = strstr(scan, ".zip")) != NULL) {
-            zipExt = scan;
-            scan += 4;
+    if (!gameView || !menuState || !version || !version->matched ||
+        !version->versionId || strcmp(version->versionId, "pc34-en") != 0 ||
+        !version->matchedPath[0] ||
+        strlen(version->matchedPath) >= sizeof(graphicsPath)) return 0;
+    /* The admitted graphics member identifies its installation, including
+     * archive case, nested transports and any wrapper directory. Keep every
+     * outer locator; only the last member supplies the companion directory. */
+    strcpy(graphicsPath, version->matchedPath);
+    for (scan = graphicsPath; (scan = strstr(scan, "::")) != NULL; scan += 2)
+        memberSeparator = scan;
+    virtualPath = memberSeparator != NULL;
+    if (virtualPath) {
+        size_t memberOffset = (size_t)(memberSeparator - graphicsPath) + 2u;
+        char *member;
+        char *slash;
+        char *directory;
+        size_t prefixBytes;
+        strcpy(selectorPath, graphicsPath);
+        member = selectorPath + memberOffset;
+        slash = strrchr(member, '/');
+        if (!m11_ascii_path_equal_ignore_case(slash ? slash + 1 : member,
+                                                "GRAPHICS.DAT")) goto done;
+        if (slash) {
+            *slash = '\0';
+            directory = strrchr(member, '/');
+            directory = directory ? directory + 1 : member;
+            /* SELECTOR.C lives beside DATA, not inside it. */
+            if (m11_ascii_path_equal_ignore_case(directory, "DATA")) {
+                prefixBytes = (size_t)(directory - selectorPath);
+            } else {
+                *slash = '/';
+                prefixBytes = (size_t)(slash - selectorPath) + 1u;
+            }
+        } else {
+            prefixBytes = memberOffset;
         }
-    }
-    rootBytes = strlen(root);
-    if (zipExt && !zipSep) {
-        if (rootBytes + sizeof("::DATA/GRAPHICS.DAT") >= sizeof(graphicsPath) ||
-            rootBytes + sizeof("::SELECTOR") >= sizeof(selectorPath)) goto done;
-        memcpy(graphicsPath, root, rootBytes);
-        strcpy(graphicsPath + rootBytes, "::DATA/GRAPHICS.DAT");
-        memcpy(selectorPath, root, rootBytes);
-        strcpy(selectorPath + rootBytes, "::SELECTOR");
-    } else if (zipSep && rootBytes + sizeof("/GRAPHICS.DAT") < sizeof(graphicsPath)) {
-        memcpy(graphicsPath, root, rootBytes);
-        strcpy(graphicsPath + rootBytes, "/GRAPHICS.DAT");
-        /* The canonical I34E archive stores SELECTOR beside DATA/. */
-        if ((size_t)(zipExt - root) + sizeof("::SELECTOR") >= sizeof(selectorPath)) goto done;
-        memcpy(selectorPath, root, (size_t)(zipExt - root) + 4u);
-        strcpy(selectorPath + (size_t)(zipExt - root) + 4u, "::SELECTOR");
-    } else if (!zipSep && rootBytes + sizeof("/GRAPHICS.DAT") < sizeof(graphicsPath)) {
-        memcpy(graphicsPath, root, rootBytes);
-        strcpy(graphicsPath + rootBytes, "/GRAPHICS.DAT");
-        if (rootBytes + sizeof("/SELECTOR") < sizeof(selectorPath)) {
-            memcpy(selectorPath, root, rootBytes);
-            strcpy(selectorPath + rootBytes, "/SELECTOR");
-        } else goto done;
+        if (prefixBytes + sizeof("SELECTOR") > sizeof(selectorPath)) goto done;
+        memcpy(selectorPath + prefixBytes, "SELECTOR", sizeof("SELECTOR"));
+    } else {
+        if (!FSP_ParentDir(root, sizeof(root), graphicsPath) ||
+            snprintf(selectorPath, sizeof(selectorPath), "%s/SELECTOR", root) < 0 ||
+            strlen(root) + sizeof("/SELECTOR") > sizeof(selectorPath)) goto done;
         if (!asset_file_md5_hex(selectorPath, md5) || strcmp(md5, selectorMd5)) {
-            /* The runtime root commonly resolves to DATA/. SELECTOR lives
-             * beside it in the retail distribution. */
+            /* Preserve loose distributions whose graphics root is DATA/. */
             if (FSP_ParentDir(parent, sizeof(parent), root) &&
                 strcmp(parent, root) != 0 &&
-                strlen(parent) + sizeof("/SELECTOR") < sizeof(selectorPath)) {
+                strlen(parent) + sizeof("/SELECTOR") <= sizeof(selectorPath)) {
                 snprintf(selectorPath, sizeof(selectorPath), "%s/SELECTOR", parent);
             }
         }
-    } else goto done;
+    }
 
     if (!asset_file_md5_hex(selectorPath, md5) || strcmp(md5, selectorMd5) != 0 ||
-        !(zipExt ? asset_read_virtual_path_alloc(graphicsPath, &graphics,
+        !(virtualPath ? asset_read_virtual_path_alloc(graphicsPath, &graphics,
                                                   &graphicsBytes)
                  : asset_read_path_alloc(graphicsPath, &graphics,
                                           &graphicsBytes)) ||
-        !(zipExt ? asset_read_virtual_path_alloc(selectorPath, &selector,
+        !(virtualPath ? asset_read_virtual_path_alloc(selectorPath, &selector,
                                                   &selectorBytes)
                  : asset_read_path_alloc(selectorPath, &selector,
                                           &selectorBytes)) ||
