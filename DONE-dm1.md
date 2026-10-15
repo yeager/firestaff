@@ -3496,3 +3496,20 @@ Additional current-build original-media CLI checks passed for Atari ST English
 1.2, German 1.2 and French 1.3. Each required its catalog graphics MD5 and a
 loaded world; each complete source archive retained its SHA-256. These are
 headless launch checks, not rendering or native Windows staging evidence.
+
+- 2026-10-16: Reproduced false missing-GRAPHICS.DAT feedback for explicit
+  original ST12/A20 files after removing only their staged dungeon. A report-only
+  final step now retains the exact original graphics path/hash while leaving
+  version matches and availability unchanged. Focused tests cover both scans,
+  normal menu refusal with DUNGEON.DAT feedback, direct runtime rejection and
+  subsequent restoration of authentic bytes. Final focused CTests passed 2/2
+  (9.99 s), with supplied original demo and no missing-media skips. Source review
+  found no blocker. This fixes missing-world feedback, not every companion
+  diagnostic or physical native-dialog behavior.
+
+Final missing-world report verification: rebuilt original-media CLI suite passed
+(217.17 s), including both offline remembered-root cases. Rebuilt access-denied
+CTest passed (14.71 s); deterministic cancellation and catalog consistency
+passed. Two full five-game corpus cancellation cases remained intentionally
+skipped. Redacted patch Gitleaks found no leaks. This report change adds no
+per-frame I/O and does not weaken native startup admission.

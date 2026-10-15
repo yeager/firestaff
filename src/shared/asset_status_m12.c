@@ -6190,6 +6190,29 @@ static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
     }
 }
 
+/* Rejected startup completeness must not erase a separately authenticated
+ * selected graphics file from the missing-file report. This is evidence only:
+ * no version row or launch-availability flag is changed. */
+static void m12_report_dm1_selected_loose_graphics(M12_AssetStatus* status,
+    int gameIndex, const char* selected) {
+    char md5[33];
+    size_t i;
+    if (strcmp(g_games[gameIndex].gameId, "dm1") != 0 || status->dm1Available ||
+        !selected || strstr(selected, "::") || FSP_DirExists(selected) ||
+        !FSP_FileExists(selected) || !asset_file_md5_hex(selected, md5) ||
+        (!m12_dm1_loose_dungeon_md5(md5) && m12_dm1_towns_graphics_language(md5) < 0)) return;
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex][i];
+        if (!file->roleId || strcmp(file->roleId, "graphics") != 0) continue;
+        file->matched = 1;
+        m12_copy_string(file->matchedPath, sizeof(file->matchedPath), selected);
+        m12_copy_string(file->sourcePath, sizeof(file->sourcePath), selected);
+        m12_copy_string(file->matchedHash, sizeof(file->matchedHash), md5);
+        status->originalFileCandidateFound = 1;
+        break;
+    }
+}
+
 /* A selected original English Amiga graphics file is terminal. Later
  * preservation-package publishers may inventory neighboring editions, but
  * none may replace this C03/C02/dungeon owner (COMPILE.H:207-213,274-282). */
@@ -8128,6 +8151,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
         m12_normalize_dm2_runtime_owner(status, i);
         m12_preserve_dm1_game_data_root(status, i);
+        m12_report_dm1_selected_loose_graphics(status, i, requestedDataDir);
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "refreshing media metadata",
@@ -8567,6 +8591,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);
     m12_normalize_dm2_runtime_owner(status, gameIndex);
     m12_preserve_dm1_game_data_root(status, gameIndex);
+    m12_report_dm1_selected_loose_graphics(status, gameIndex, requestedDataDir);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
         m12_refresh_theron_track02_loader_receipt(status);

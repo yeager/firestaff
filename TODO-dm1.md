@@ -1801,3 +1801,22 @@ as an explicit file and through an isolated directory; all four handoffs load
 its original world. Final focused CTests pass 2/2 (9.57 s), with demo original supplied
 and no media skips. This covers the existing OFS decoder, not arbitrary Amiga
 raw/MFM disks or multiple matching disk members within an inner ZIP.
+
+2026-10-16 selected native missing-world feedback: original ST12 and A20
+explicit loose graphics were incorrectly reported missing when their own dungeon
+was absent. Unavailable DM1 scans now retain a separately authenticated selected
+original graphics receipt after final launch gates, without restoring edition
+rows or availability. Both APIs and ordinary menu input identify the missing
+dungeon, and direct runtime remains blocked. Other missing native startup
+companions, incompatible-world diagnostics and mixed-collection edition-specific
+messages remain separate coverage gaps.
+
+Source-audited next diagnostic cases (not yet original-media UI reproductions):
+`m12_select_dm1_loose_file` clears incomplete native rows, after which
+`m12_fill_required_files` may use the game-wide dungeon hash alternatives.
+That list includes incompatible PC/Towns originals, so verify the selected
+native sibling independently before publishing its dungeon receipt. An A20
+world with missing SWSH also needs a dedicated startup-companion diagnostic;
+otherwise both base roles may match while availability is correctly false and
+the menu falls back to generic VERIFIED GAME DATA text. Preserve admission
+and exact selected-source boundaries while fixing these reports.

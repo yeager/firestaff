@@ -26,12 +26,12 @@ unsigned char* G2160_puc_Bitmap_Destination;
 static int menu_reports_missing_companion(M12_StartupMenuState* menu,
                                            const char* selectedGraphics,
                                            const M12_StartupMenuInitOptions* options,
-                                           const char* missing) {
+                                           int architecture, const char* missing) {
     M12_StartupMenu_Destroy(menu);
     M12_StartupMenu_InitWithOptions(menu,selectedGraphics,"dm1",options);
     menu->view=M12_MENU_VIEW_MAIN;
     menu->selectedIndex=0;
-    menu->gameOptions[0].architectureIndex=M12_ARCH_FM_TOWNS;
+    menu->gameOptions[0].architectureIndex=architecture;
     M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
     M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
     return menu->messageIsMissingGameData && !menu->launchRequested &&
@@ -51,7 +51,8 @@ static int write_original_bytes(const char* path, const unsigned char* bytes, si
 }
 static int native_rejects_pc_towns_dungeons(M12_AssetStatus* status, M11_GameViewState* game,
     const char* dir, const char* graphics, const char* dungeon,
-    const char* pcOriginal, const char* townsOriginal) {
+    const char* pcOriginal, const char* townsOriginal, M12_StartupMenuState* menu,
+    const M12_StartupMenuInitOptions* options, int architecture) {
     static const char* const foreignHashes[]={
         "766450c940651fc021c92fe5d0d0b3a6", "3dc0a932d0e0adfe59878f07c51700c5",
         "fe098f70ce83cfe3f2333565093daf35"};
@@ -73,6 +74,31 @@ static int native_rejects_pc_towns_dungeons(M12_AssetStatus* status, M11_GameVie
     REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
         M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
         "original native companion loads before incompatible replacement");
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    replaced=1;
+    REQUIRE(unlink(dungeon)==0,"remove only staged native dungeon for exact missing-role feedback");
+    for (int mode=0; mode<2; ++mode) {
+        int graphicsReported=0, dungeonMissing=0;
+        if (mode) M12_AssetStatus_Scan(status,graphics);
+        else M12_AssetStatus_ScanGame(status,graphics,"dm1");
+        REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),"missing native dungeon blocks selected owner");
+        for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
+            const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
+            const char* path=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+            if (strcmp(required->roleId,"graphics")==0)
+                graphicsReported=required->matched && strcmp(path,graphics)==0 &&
+                    strcmp(required->matchedHash,graphicsMd5)==0;
+            if (strcmp(required->roleId,"dungeon")==0) dungeonMissing=!required->matched;
+        }
+        REQUIRE(graphicsReported && dungeonMissing,
+            "selected original native graphics remains verified when only its dungeon is missing");
+        REQUIRE(menu_reports_missing_companion(menu,graphics,options,architecture,"DUNGEON.DAT"),
+            "native menu reports missing dungeon without claiming verified graphics are missing");
+    }
+    REQUIRE(!M11_GameView_Start(game,&spec) && !game->active,
+        "verified graphics report does not permit runtime startup without its own dungeon");
+    REQUIRE(write_original_bytes(dungeon,own,ownSize),"restore staged native dungeon after missing-role feedback");
+    replaced=0;
     for (int original=0; original<3; ++original) {
         if (original==0) {
             if (!pcOriginal || !FSP_FileExists(pcOriginal)) {
@@ -335,7 +361,8 @@ int main(void) {
                     "authenticate unchanged staged native member bytes");
             }
             REQUIRE(native_rejects_pc_towns_dungeons(fresh,game,nativeDir,nativeFiles[0],nativeFiles[1],
-                pcOriginal,original),"native original companion compatibility and recovery");
+                pcOriginal,original,menu,&options,sibling==1 ? M12_ARCH_ATARI_ST : M12_ARCH_AMIGA),
+                "native original companion compatibility and recovery");
         } else REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) &&
             symlink(physical,pcAlias)==0,"stage original PC archive for mixed-owner report");
@@ -516,7 +543,7 @@ int main(void) {
                     REQUIRE(graphicsFound && dungeonMissing,
                         "explicit incomplete source reports found graphics and missing dungeon");
                 }
-                REQUIRE(menu_reports_missing_companion(menu,selectedGraphics,&options,"DUNGEON.DAT"),
+                REQUIRE(menu_reports_missing_companion(menu,selectedGraphics,&options,M12_ARCH_FM_TOWNS,"DUNGEON.DAT"),
                     "normal menu input reports missing dungeon without claiming graphics are missing");
             }
             REQUIRE(unlink(destination)==0,"remove only staged wrong-language dungeon link");
@@ -548,7 +575,7 @@ int main(void) {
                     "explicit missing-program source reports graphics/dungeon found and native menu missing");
             }
         }
-        REQUIRE(menu_reports_missing_companion(menu,selectedGraphics,&options,"TMENU.EXP"),
+        REQUIRE(menu_reports_missing_companion(menu,selectedGraphics,&options,M12_ARCH_FM_TOWNS,"TMENU.EXP"),
             "normal menu input identifies missing native menu program");
         REQUIRE(FSP_JoinPath(source,sizeof(source),original,"TMENU.EXP") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),source) &&

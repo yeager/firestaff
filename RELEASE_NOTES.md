@@ -7325,3 +7325,7 @@ does not switch to a neighboring copy.
 
 - Discover supported nested Amiga OFS-ADF game data under arbitrary outer ZIP
   filenames, including direct archive selection and directory scanning.
+
+- Missing-dungeon feedback for explicitly selected original DM1 graphics keeps
+  the verified GRAPHICS.DAT receipt instead of incorrectly listing it as missing.
+  Incomplete installations remain blocked from startup.
