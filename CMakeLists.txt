@@ -12091,6 +12091,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_move_2fcf_0434.c"
         src/dm2/dm2_v1_move_2fcf_0434.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_caii_source_owner.c
+    )
+    target_link_libraries(test_dm2_v1_move_2fcf_0434 PRIVATE
+        firestaff_dm2 firestaff_m10 m
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_move_2fcf_0434 PRIVATE -Wall -Wextra -O2)
