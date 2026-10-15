@@ -391,9 +391,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   bootstrap selector `v1d7188` to 1 (`dm2data.cpp:1032,1402`); the weather
   routine later clears it (`skweathr.cpp:574`). The fresh dungeon reader calls
   `DM2_weather_3df7_0037(0)` before `DM2_ARRANGE_DUNGEON()`
-  (`sksvgame.cpp:540-573`). The startup/menu/New Game path has no intervening
-  LCG draws, so the fresh weather call's seed is statically established as 0.
-  With selector 1, the fresh branch consumes three draws: `RAND16(500)` gives
+  (`sksvgame.cpp:540-573`). The active startup/menu/New Game path is not
+  proven free of intervening LCG draws. Assuming zero seed and selector 1,
+  the fresh branch consumes three draws: `RAND16(500)` gives
   the first timer delay 0; the common `RANDDIR()` gives field `v1e1483=3`; and
   the common `RAND16(4)+4` gives field `v1e1470=6`. The branch sets
   `v1e1478=3` and `v1e1484=1` without additional random draws. The shared LCG
