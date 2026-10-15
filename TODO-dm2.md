@@ -1,17 +1,20 @@
 # Firestaff TODO — DM2
 
-2026-10-15 SKProject cold-start order check: `dm2data.cpp` initializes
-`v1d652d = 1` and `v1d7188 = 1`. On the first `DM2_GAME_LOAD`,
-`sksvgame.cpp` calls `DM2_weather_3df7_0037(0)` before map processing and
-`DM2_ARRANGE_DUNGEON`. In `c_weather.cpp`, this initial storm-request branch
-draws `RAND16(500)` and the common tail draws `RAND16(4)`; it does not draw
-either `RANDDIR` in the non-storm branch. The function then clears
-`v1d7188`, and the load path clears `v1d652d` after arrangement. This pins the
-first-load weather branch and its two draws, but not the incoming RNG seed or
-all state initialized between fresh-game setup and `DM2_GAME_LOAD`. The
-Firestaff New Game owner currently has no transaction that owns that complete
-pre-arrangement state, so do not prepend two draws to the arrangement receipt
-or infer a seed from the dungeon data.
+2026-10-15 SKProject cold-start order check: `main.cpp` calls
+`randdat.init()` before the menu loop, and `c_random.cpp` sets its LCG state to
+zero. The no-save New Game path in `c_savegame.cpp::DM2_GAME_LOAD` loads the
+new dungeon without restoring a save buffer's random state. `dm2data.cpp`
+initializes `v1d652d = 1` and `v1d7188 = 1`. The first
+`DM2_weather_3df7_0037(0)` call precedes map processing and
+`DM2_ARRANGE_DUNGEON`; its initial storm-request branch draws `RAND16(500)`
+and the common tail draws `RAND16(4)`, with no `RANDDIR` in that branch. It
+then clears `v1d7188`; the load path clears `v1d652d` after arrangement.
+Remaining proof: audit every function reachable between `randdat.init()` and
+that first weather call for indirect RNG use, then model the entire ordered
+GAME_LOAD/arrangement/CAII RNG stream. Firestaff's New Game owner currently
+has no single transaction for that complete source-ordered state; do not
+prepend two draws to a partial arrangement receipt or infer a seed from the
+dungeon data alone.
 
 2026-10-15 authentic `DM2_ARRANGE_DUNGEON` RNG-census verification: the
 read-only source-order census passed against the installed original DOS EN,
