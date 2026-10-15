@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `DM1 Amiga 2.2 German`: admit the original disk's complete startup tuple and run its title/entrance through CLI and the start menu.
+
 - `DM1 PC 3.4 startup`: preserve the original selector animation and sound route when ZIP names use uppercase extensions or contain a wrapper folder.
 
 - `DM2 Macintosh and Amiga`: preserve big endian word order when cloning record pools for game-state transactions.

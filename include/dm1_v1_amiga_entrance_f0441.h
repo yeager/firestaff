@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "dm1_v1_amiga_title_f0437.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +55,11 @@ int dm1_v1_amiga_entrance_f0441_receipt(
  * A36 has no F0437/SWSH title pair: it runs F0441 after F1051_ directly.
  * This receipt also proves C005 credits and C011 entrance-button assets,
  * which F0441 loads before waiting for C200. */
+/* Exact four-file A22G startup admission; buffers remain caller-owned. */
+int dm1_v1_amiga_entrance_f0441_receipt_for_startup(
+    const DM1_V1_AmigaStartupMedia *media,
+    DM1_V1_AmigaEntranceF0441Receipt *out_receipt);
+
 int dm1_v1_amiga36_entrance_f0441_receipt(
     const uint8_t *graphics_dat,
     size_t graphics_dat_bytes,

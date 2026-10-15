@@ -1,3 +1,15 @@
+- 2026-10-15: Admitted the original A22G startup through an explicit four-file
+  identity: graphics, dungeon, dm and swoosh from the selected volume. The
+  legacy pair gate remains strict. Same-container sibling lookup loads the
+  additional files only for the explicit path; debug records A22G tuple
+  admission. Original UAE-1ADF tests validate title/entrance and rejection of
+  changed dm, missing dungeon and insufficient pair provenance. New direct
+  CLI and M12 tests preserve the complete original disk in ZIP transport,
+  run F0437/F0441 and reach runtime. Existing original Amiga title/entrance
+  checks also pass (four tests, 7.83 seconds total on the Mac host with SDL
+  dummy drivers). No game files are replaced or tracked; visual/audio timing
+  and original executable state comparisons remain open.
+
 - 2026-10-15: Fixed I34E selector lookup using a case-sensitive .zip search
   and discarding the authenticated member's wrapper directory. An unchanged
   original archive named DM1.ZIP reproduced a selector-skip receipt before the

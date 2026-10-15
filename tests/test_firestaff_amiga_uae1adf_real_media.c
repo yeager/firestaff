@@ -1,6 +1,8 @@
 #include "asset_status_m12.h"
 #include "firestaff_7z_extract.h"
 #include "firestaff_amiga_adf.h"
+#include "dm1_v1_amiga_title_f0437.h"
+#include "dm1_v1_amiga_entrance_f0441.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +11,8 @@
 typedef struct {
     unsigned int file_count;
     unsigned int verified_mask;
+    uint8_t *payloads[4];
+    size_t sizes[4];
 } A22GFiles;
 
 static int verify_file(const char *name, const uint8_t *bytes, size_t size,
@@ -33,6 +37,11 @@ static int verify_file(const char *name, const uint8_t *bytes, size_t size,
         if (size != file_sizes[i] ||
             !m12_bytes_md5_hex(bytes, size, md5) ||
             strcmp(md5, file_md5[i]) != 0) return -1;
+        if (files->payloads[i]) return -1;
+        files->payloads[i] = malloc(size);
+        if (!files->payloads[i]) return -1;
+        memcpy(files->payloads[i],bytes,size);
+        files->sizes[i] = size;
         files->verified_mask |= 1U << i;
         break;
     }
@@ -64,13 +73,35 @@ int main(void) {
     result = firestaff_amiga_adf_visit_ofs_files(
         image, image_size, verify_file, &files);
     free(image);
-    if (result != 12 || files.file_count != 12U || files.verified_mask != 0x0fU) {
-        fprintf(stderr,
-                "FAIL: UAE-1ADF OFS files result=%d visited=%u verified=%x\n",
-                result, files.file_count, files.verified_mask);
+    if (result == 12 && files.file_count == 12U && files.verified_mask == 0x0fU) {
+        DM1_V1_AmigaStartupMedia media = {
+            files.payloads[0],files.sizes[0], files.payloads[1],files.sizes[1],
+            files.payloads[2],files.sizes[2], files.payloads[3],files.sizes[3]};
+        DM1_V1_AmigaTitleF0437Receipt title;
+        DM1_V1_AmigaEntranceF0441Receipt entrance;
+        int admitted = dm1_v1_amiga_startup_media_is_a22g(&media) &&
+            dm1_v1_amiga_title_f0437_receipt_for_startup(&media,&title) && title.valid &&
+            dm1_v1_amiga_entrance_f0441_receipt_for_startup(&media,&entrance) && entrance.valid;
+        int strict_rejects = !dm1_v1_amiga_title_f0437_receipt(
+            media.graphics_dat,media.graphics_dat_bytes,
+            media.swsh_executable,media.swsh_executable_bytes,&title);
+        uint8_t original = files.payloads[2][0];
+        files.payloads[2][0] ^= 1;
+        int changed_rejects = !dm1_v1_amiga_startup_media_is_a22g(&media) &&
+            !dm1_v1_amiga_title_f0437_receipt_for_startup(&media,&title) && !title.valid &&
+            !dm1_v1_amiga_entrance_f0441_receipt_for_startup(&media,&entrance) && !entrance.valid;
+        files.payloads[2][0] = original;
+        media.dungeon_dat = NULL;
+        int missing_rejects = !dm1_v1_amiga_startup_media_is_a22g(&media) &&
+            !dm1_v1_amiga_title_f0437_receipt_for_startup(&media,&title) && !title.valid;
+        result = admitted && strict_rejects && changed_rejects && missing_rejects ? 0 : 1;
+    } else result = 1;
+    for (unsigned int i = 0; i < 4; ++i) free(files.payloads[i]);
+    if (result) {
+        fputs("FAIL: authentic A22G startup admission or rejection boundary\n",stderr);
         return 1;
     }
-    puts("PASS: authentic A22G UAE-1ADF yields original OFS files and identities");
-    puts("NOTE: its SWSH is the French A20F asset; this test does not admit A22G");
+    puts("PASS: original same-volume A22G title/entrance admitted with four authenticated files");
+    puts("PASS: legacy pair, modified executable and missing dungeon remain rejected");
     return 0;
 }

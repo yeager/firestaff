@@ -28,12 +28,13 @@ static unsigned int count_nonzero(const uint8_t *pixels, size_t count) {
     return nonzero;
 }
 
-int dm1_v1_amiga_entrance_f0441_receipt(
+static int entrance_receipt_impl(
     const uint8_t *graphics_dat,
     size_t graphics_dat_bytes,
     const uint8_t *swsh_executable,
     size_t swsh_executable_bytes,
-    DM1_V1_AmigaEntranceF0441Receipt *out_receipt) {
+    DM1_V1_AmigaEntranceF0441Receipt *out_receipt,
+    const DM1_V1_AmigaStartupMedia *startup) {
     static const uint16_t a20_entrance_palette_rgb4[
         DM1_V1_AMIGA_ENTRANCE_F0441_PALETTE_ENTRIES] = {
         0x000u, 0x666u, 0x888u, 0x840u, 0xca8u, 0x0c0u, 0x080u, 0x0a0u,
@@ -56,9 +57,10 @@ int dm1_v1_amiga_entrance_f0441_receipt(
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!graphics_dat || !swsh_executable || !out_receipt ||
-        !dm1_v1_amiga_title_f0437_receipt(
+        !(startup ? dm1_v1_amiga_title_f0437_receipt_for_startup(
+            startup, &title_receipt) : dm1_v1_amiga_title_f0437_receipt(
             graphics_dat, graphics_dat_bytes, swsh_executable,
-            swsh_executable_bytes, &title_receipt) ||
+            swsh_executable_bytes, &title_receipt)) ||
         dm1_v1_amiga_graphics_receipt(
             graphics_dat, graphics_dat_bytes, &graphics_receipt) != 0) {
         return 0;
@@ -129,6 +131,24 @@ cleanup:
     free(left);
     free(right);
     return valid;
+}
+
+int dm1_v1_amiga_entrance_f0441_receipt(
+    const uint8_t *graphics_dat, size_t graphics_dat_bytes,
+    const uint8_t *swsh_executable, size_t swsh_executable_bytes,
+    DM1_V1_AmigaEntranceF0441Receipt *out_receipt) {
+    return entrance_receipt_impl(graphics_dat, graphics_dat_bytes,
+        swsh_executable, swsh_executable_bytes, out_receipt, NULL);
+}
+
+int dm1_v1_amiga_entrance_f0441_receipt_for_startup(
+    const DM1_V1_AmigaStartupMedia *media,
+    DM1_V1_AmigaEntranceF0441Receipt *out_receipt) {
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm1_v1_amiga_startup_media_is_a22g(media)) return 0;
+    /* STARTUP1.C:249ff and TITLE.C MEDIA413 retain the A22G shared path. */
+    return entrance_receipt_impl(media->graphics_dat, media->graphics_dat_bytes,
+        media->swsh_executable, media->swsh_executable_bytes, out_receipt, media);
 }
 
 int dm1_v1_amiga36_entrance_f0441_receipt(

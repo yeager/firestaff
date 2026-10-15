@@ -4379,6 +4379,18 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME dm1_v1_amiga22_german_archive_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga22_german_archive_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_amiga22_german_archive_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        PASS_REGULAR_EXPRESSION "PASS: original A22G CLI and menu startup"
+        TIMEOUT 120
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_SOFTWARE_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Amiga,Software.7z"
+        LABELS "dm1;amiga;real-media;cli;startup;skip-safe"
+    )
+    add_test(
         NAME dm1_v1_amiga20_german_archive_cli_boot
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_amiga20_german_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>

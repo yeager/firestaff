@@ -3517,37 +3517,69 @@ static unsigned int m11_dm1_amiga_swsh_fnv1a(const uint8_t* bytes,
     return hash;
 }
 
-static int m11_dm1_amiga_swsh_path(const M12_AssetVersionStatus* version,
-                                   char* outPath,
-                                   size_t outPathBytes) {
+/* Startup companions belong beside the selected graphics member, inside
+ * its final virtual container. Preserve every nested transport and directory. */
+static int m11_dm1_amiga_sibling_path(const M12_AssetVersionStatus* version,
+                                      const char* sibling,
+                                      char* outPath, size_t outPathBytes) {
     const char* path;
     const char* separator = NULL;
     const char* scan;
+    const char* leaf;
     size_t prefixBytes;
     size_t memberBytes;
+    size_t siblingBytes;
     size_t i;
     static const char graphicsMember[] = "GRAPHICS.DAT";
-    static const char swooshMember[] = "::swoosh";
-    if (!version || !outPath || outPathBytes == 0U) return 0;
+    if (!version || !sibling || !sibling[0] || !outPath || !outPathBytes ||
+        strchr(sibling, '/') || strchr(sibling, ':') ||
+        strchr(sibling, '\\')) return 0;
     outPath[0] = '\0';
     path = version->matchedPath;
-    if (!path || !path[0]) return 0;
-    for (scan = path; (scan = strstr(scan, "::")) != NULL; scan += 2) {
+    if (!path[0]) return 0;
+    for (scan = path; (scan = strstr(scan, "::")) != NULL; scan += 2)
         separator = scan;
-    }
     if (!separator) return 0;
-    memberBytes = strlen(separator + 2);
+    leaf = strrchr(separator + 2, '/');
+    leaf = leaf ? leaf + 1 : separator + 2;
+    memberBytes = strlen(leaf);
     if (memberBytes != sizeof(graphicsMember) - 1U) return 0;
-    for (i = 0u; i < memberBytes; ++i) {
-        if ((unsigned char)toupper((unsigned char)separator[2u + i]) !=
-            (unsigned char)graphicsMember[i]) {
-            return 0;
-        }
-    }
-    prefixBytes = (size_t)(separator - path);
-    if (prefixBytes + sizeof(swooshMember) > outPathBytes) return 0;
+    for (i = 0u; i < memberBytes; ++i)
+        if ((unsigned char)toupper((unsigned char)leaf[i]) !=
+            (unsigned char)graphicsMember[i]) return 0;
+    prefixBytes = (size_t)(leaf - path);
+    siblingBytes = strlen(sibling) + 1u;
+    if (prefixBytes >= outPathBytes ||
+        siblingBytes > outPathBytes - prefixBytes) return 0;
     memcpy(outPath, path, prefixBytes);
-    memcpy(outPath + prefixBytes, swooshMember, sizeof(swooshMember));
+    memcpy(outPath + prefixBytes, sibling, siblingBytes);
+    return 1;
+}
+
+static int m11_dm1_amiga_swsh_path(const M12_AssetVersionStatus* version,
+                                   char* outPath, size_t outPathBytes) {
+    return m11_dm1_amiga_sibling_path(version, "swoosh", outPath, outPathBytes);
+}
+
+static int m11_dm1_amiga_read_startup_companions(
+    const M12_AssetVersionStatus* version,
+    uint8_t** dungeonData, size_t* dungeonBytes,
+    uint8_t** dm, size_t* dmBytes) {
+    char path[FSP_PATH_MAX];
+    *dungeonData = NULL;
+    *dungeonBytes = 0u;
+    *dm = NULL;
+    *dmBytes = 0u;
+    if (!m11_dm1_amiga_sibling_path(version, "dungeon.dat", path, sizeof(path)) ||
+        !asset_read_virtual_path_alloc(path, dungeonData, dungeonBytes) ||
+        !m11_dm1_amiga_sibling_path(version, "dm", path, sizeof(path)) ||
+        !asset_read_virtual_path_alloc(path, dm, dmBytes)) {
+        free(*dungeonData);
+        free(*dm);
+        *dungeonData = *dm = NULL;
+        *dungeonBytes = *dmBytes = 0u;
+        return 0;
+    }
     return 1;
 }
 
@@ -3563,6 +3595,10 @@ static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
     size_t graphicsBytes = 0U;
     uint8_t* executable = NULL;
     size_t executableBytes = 0U;
+    uint8_t* dungeonData = NULL;
+    size_t dungeonBytes = 0U;
+    uint8_t* dm = NULL;
+    size_t dmBytes = 0U;
     int authenticated = 0;
     if (outReceipt) memset(outReceipt, 0, sizeof(*outReceipt));
     if (!menuState || !entry || !entry->gameId ||
@@ -3597,10 +3633,24 @@ static int m11_dm1_amiga_entrance_f0441_receipt_if_selected(
     }
     authenticated = dm1_v1_amiga_entrance_f0441_receipt(
         graphics, graphicsBytes, executable, executableBytes, outReceipt);
+    if (!authenticated && m11_dm1_amiga_read_startup_companions(
+            version, &dungeonData, &dungeonBytes, &dm, &dmBytes)) {
+        const DM1_V1_AmigaStartupMedia media = {
+            graphics, graphicsBytes, dungeonData, dungeonBytes,
+            dm, dmBytes, executable, executableBytes};
+        authenticated = dm1_v1_amiga_entrance_f0441_receipt_for_startup(
+            &media, outReceipt);
+        if (authenticated && g_m11_debug_startup_detail) {
+            fprintf(stderr, "firestaff: startup-media-authenticated game=dm1 edition=amiga22-de tuple=a22g-four-files phase=entrance source=%s\n",
+                    version->matchedPath);
+        }
+    }
 
 cleanup:
     free(graphics);
     free(executable);
+    free(dungeonData);
+    free(dm);
     return authenticated;
 }
 
@@ -3758,6 +3808,10 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
     size_t graphicsBytes = 0u;
     uint8_t* executable = NULL;
     size_t executableBytes = 0u;
+    uint8_t* dungeonData = NULL;
+    size_t dungeonBytes = 0u;
+    uint8_t* dm = NULL;
+    size_t dmBytes = 0u;
     uint8_t* c001 = NULL;
     uint8_t* dungeon = NULL;
     uint8_t* master = NULL;
@@ -3804,10 +3858,22 @@ static int m11_play_dm1_amiga_title_f0437_if_available(
             gameView->assetLoader.graphicsDatPath, &graphics,
             &graphicsBytes) ||
         !asset_read_virtual_path_alloc(swooshPath, &executable,
-                                       &executableBytes) ||
-        !dm1_v1_amiga_title_f0437_receipt(
-            graphics, graphicsBytes, executable, executableBytes, &receipt)) {
+                                       &executableBytes)) {
         goto cleanup;
+    }
+    if (!dm1_v1_amiga_title_f0437_receipt(
+            graphics, graphicsBytes, executable, executableBytes, &receipt)) {
+        if (!m11_dm1_amiga_read_startup_companions(
+                version, &dungeonData, &dungeonBytes, &dm, &dmBytes)) goto cleanup;
+        const DM1_V1_AmigaStartupMedia media = {
+            graphics, graphicsBytes, dungeonData, dungeonBytes,
+            dm, dmBytes, executable, executableBytes};
+        if (!dm1_v1_amiga_title_f0437_receipt_for_startup(&media, &receipt))
+            goto cleanup;
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr, "firestaff: startup-media-authenticated game=dm1 edition=amiga22-de tuple=a22g-four-files phase=title source=%s\n",
+                    version->matchedPath);
+        }
     }
     c001 = (uint8_t*)malloc((size_t)DM1_V1_AMIGA_TITLE_WIDTH *
                             DM1_V1_AMIGA_TITLE_HEIGHT);
@@ -4044,6 +4110,8 @@ cleanup:
     free(c001);
     free(dungeon);
     free(master);
+    free(dungeonData);
+    free(dm);
     return completed;
 }
 

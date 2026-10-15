@@ -16,6 +16,23 @@ enum {
     DM1_V1_AMIGA_TITLE_RGB4_ENTRIES = 16
 };
 
+/* Borrowed files from one selected original volume. The caller retains all
+ * allocations and must resolve the four siblings from that same volume. */
+typedef struct DM1_V1_AmigaStartupMedia {
+    const uint8_t *graphics_dat;
+    size_t graphics_dat_bytes;
+    const uint8_t *dungeon_dat;
+    size_t dungeon_dat_bytes;
+    const uint8_t *game_executable;
+    size_t game_executable_bytes;
+    const uint8_t *swsh_executable;
+    size_t swsh_executable_bytes;
+} DM1_V1_AmigaStartupMedia;
+
+/* Authenticate the exact observed A22G four-file tuple. */
+int dm1_v1_amiga_startup_media_is_a22g(
+    const DM1_V1_AmigaStartupMedia *media);
+
 typedef struct DM1_V1_AmigaTitleF0437Receipt {
     int valid;
     char graphics_md5[33];
@@ -68,6 +85,13 @@ int dm1_v1_amiga_title_f0437_receipt(
     size_t graphics_dat_bytes,
     const uint8_t *swsh_executable,
     size_t swsh_executable_bytes,
+    DM1_V1_AmigaTitleF0437Receipt *out_receipt);
+
+/* A22G startup admission requires all four original identities. Unlike the
+ * legacy pair API, this admits the original disk's shared A20F swoosh only
+ * when its A22G game executable and German dungeon are also authenticated. */
+int dm1_v1_amiga_title_f0437_receipt_for_startup(
+    const DM1_V1_AmigaStartupMedia *media,
     DM1_V1_AmigaTitleF0437Receipt *out_receipt);
 
 /* Return one authored A20 C001 zoom frame. Indices are presented in ascending

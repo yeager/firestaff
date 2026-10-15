@@ -2,6 +2,7 @@
 
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_amiga_swsh.h"
+#include "asset_status_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,12 +42,35 @@ static unsigned int count_nonzero(const uint8_t *pixels,
     return count;
 }
 
-int dm1_v1_amiga_title_f0437_receipt(
+static int original_file_matches(const uint8_t *bytes, size_t size,
+                                 size_t expected_size, const char *expected_md5) {
+    char md5[33];
+    return bytes && size == expected_size &&
+        m12_bytes_md5_hex(bytes, size, md5) &&
+        strcmp(md5, expected_md5) == 0;
+}
+
+int dm1_v1_amiga_startup_media_is_a22g(
+    const DM1_V1_AmigaStartupMedia *media) {
+    return media &&
+        original_file_matches(media->graphics_dat, media->graphics_dat_bytes,
+            399581u, "0679e39da9dcc2e855cb33c6c64ddcb5") &&
+        original_file_matches(media->dungeon_dat, media->dungeon_dat_bytes,
+            25380u, "59e332cf47852d5c7c88a9538f0adcea") &&
+        original_file_matches(media->game_executable,
+            media->game_executable_bytes, 177352u,
+            "e8fc5da52d69aa61b8b5ac7b2e294ebd") &&
+        original_file_matches(media->swsh_executable,
+            media->swsh_executable_bytes, 78568u,
+            "1038138978975415571a878bb08f54be");
+}
+
+static int title_receipt_impl(
     const uint8_t *graphics_dat,
     size_t graphics_dat_bytes,
     const uint8_t *swsh_executable,
     size_t swsh_executable_bytes,
-    DM1_V1_AmigaTitleF0437Receipt *out_receipt) {
+    DM1_V1_AmigaTitleF0437Receipt *out_receipt, int authenticated_a22g) {
     static const uint8_t a20e_graphics_md5[16] = {
         0x6a, 0x2f, 0x13, 0x5b, 0x53, 0xc2, 0x22, 0x0f,
         0x02, 0x51, 0xfa, 0x10, 0x3e, 0x2a, 0x6e, 0x7e
@@ -96,7 +120,8 @@ int dm1_v1_amiga_title_f0437_receipt(
         (graphics_receipt.version != DM1_AMIGA_VER_2_0 &&
          graphics_receipt.version != DM1_AMIGA_VER_2_1 &&
          graphics_receipt.version != DM1_AMIGA_VER_DEMO) ||
-        !((graphics_receipt.lang == DM1_AMIGA_LANG_EN &&
+        !((authenticated_a22g) ||
+          (graphics_receipt.lang == DM1_AMIGA_LANG_EN &&
            graphics_receipt.version == DM1_AMIGA_VER_DEMO &&
            memcmp(graphics_receipt.md5, a20ed_graphics_md5,
                   sizeof(a20ed_graphics_md5)) == 0 &&
@@ -197,6 +222,25 @@ int dm1_v1_amiga_title_f0437_receipt(
     else memset(out_receipt, 0, sizeof(*out_receipt));
     free(c001_pixels);
     return result;
+}
+
+int dm1_v1_amiga_title_f0437_receipt(
+    const uint8_t *graphics_dat, size_t graphics_dat_bytes,
+    const uint8_t *swsh_executable, size_t swsh_executable_bytes,
+    DM1_V1_AmigaTitleF0437Receipt *out_receipt) {
+    return title_receipt_impl(graphics_dat, graphics_dat_bytes,
+        swsh_executable, swsh_executable_bytes, out_receipt, 0);
+}
+
+int dm1_v1_amiga_title_f0437_receipt_for_startup(
+    const DM1_V1_AmigaStartupMedia *media,
+    DM1_V1_AmigaTitleF0437Receipt *out_receipt) {
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm1_v1_amiga_startup_media_is_a22g(media)) return 0;
+    /* ReDMCSB TITLE.C:39,68,121 MEDIA413 includes A22G; the original
+     * four-file identity selects that shared title implementation. */
+    return title_receipt_impl(media->graphics_dat, media->graphics_dat_bytes,
+        media->swsh_executable, media->swsh_executable_bytes, out_receipt, 1);
 }
 
 int dm1_v1_amiga_title_f0437_zoom_step(

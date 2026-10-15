@@ -516,24 +516,19 @@ parity.
   does not claim bootable ADFs. The authentic Amiga demo ZIP now authenticates
   its A20ED SWSH and graphics pair, renders the original C001 title, validates
   C002/C003/C004 entrance assets, and reaches the first runtime frame in CLI
-  and M12 flows. Amiga 2.2 German and native
-  renderer/input timing on each supported desktop remain open; these tests do
-  not establish pixel parity or HiDPI behavior. The original A22 German archive contains a 910,058-byte UAE-1ADF stream.
-  The current bounded reader now decodes its sector-data and raw MFM tracks,
-  retains sector-presence metadata and rejects requested missing sectors.
-  A current original-media test visits 12 OFS files and independently verifies
-  the same-volume GRAPHICS.DAT (0679e39da9dcc2e855cb33c6c64ddcb5), dungeon
-  (59e332cf47852d5c7c88a9538f0adcea), A22G dm executable
-  (e8fc5da52d69aa61b8b5ac7b2e294ebd) and swoosh
-  (1038138978975415571a878bb08f54be). The latter also occurs in A20F; its
-  presence on this disk does not justify replacing it with another edition's
-  file. TITLE.C's MEDIA413 path includes A22G, but the current two-input title
-  receipt accepts the German graphics only with swoosh 916cb3..., so startup
-  still rejects this original tuple. Add an edition receipt authenticating the
-  same container/volume, A22G executable and all four observed identities;
-  pass it through title/entrance admission before claiming A22G support.
-  Do not globally permit arbitrary cross-edition graphics/swoosh combinations.
-  The missing raw-track sector must remain unavailable, never zero-filled.
+  and M12 flows. Native renderer/input timing on each supported desktop remains open;
+  these tests do not establish pixel parity or HiDPI behavior. The original A22 German 910,058-byte UAE-1ADF now passes file and
+  startup admission. The bounded reader retains sector-presence metadata;
+  no missing raw-track sector is synthesized. CLI and M12 tests run F0437,
+  F0441 and reach runtime with the unchanged original disk in ZIP transport.
+  The four-file gate binds graphics 0679e39da9dcc2e855cb33c6c64ddcb5,
+  dungeon 59e332cf47852d5c7c88a9538f0adcea,
+  dm e8fc5da52d69aa61b8b5ac7b2e294ebd and
+  swoosh 1038138978975415571a878bb08f54be from the same selected volume.
+  Legacy two-file admission still rejects this pair; modified dm and missing
+  dungeon also reject. ReDMCSB TITLE.C MEDIA413 includes A22G. Native display,
+  audio timing and executable-state parity remain unverified; the archive's
+  "Original (Not working)" label is not a native-port incompatibility result.
   A36M intentionally
   skips F0437: STARTUP1/STARTUP2 enter
   F0441 without calling the A20 title routine. A36M's exact GRAPHICS.DAT hash
