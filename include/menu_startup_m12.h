@@ -852,6 +852,8 @@ int M12_StartupMenu_GetRendererBackend(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
 int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
+/* Remembered user selection, including temporarily offline paths; display
+ * only. Streamer mode masks it. Use AssetDataDir for runtime source ownership. */
 const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRetroAchievementsStatusValue(const M12_StartupMenuState* state);

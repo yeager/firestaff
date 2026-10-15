@@ -1,5 +1,17 @@
 # Firestaff TODO — DM1
 
+2026-10-15 offline-selection recovery: configured/selected path intent now
+survives missing media and scanner recovery. The Settings path remains the
+remembered preference; runtime access uses published scanner ownership.
+Zero-ready, non-cancelled saved game-leaf scans may recover default media;
+explicit selections and usable configured collections retain precedence.
+Return-menu rescan retries reconnected directories, archives and virtual
+locators by checking their outer container, without changing hash admission.
+Actual OS volume unmount/reconnect and macOS privacy prompts remain integration
+checks; task-owned filesystem absence/reconnect and original-media alias tests
+cover the path/state contracts. Physical Retina and complete input latency
+remain separate open work.
+
 2026-10-15 startup scan feedback: deferred startup and return-menu scans now
 finalize permission/no-data messages on the UI thread after completed work.
 Pending, incomplete and cancelled scans do not publish dialogs. Authentic DM1

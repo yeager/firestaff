@@ -1,6 +1,8 @@
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
+#include "menu_startup_state_access_m12.h"
+#include "fs_portable_compat.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -31,6 +33,96 @@ static int copy_file(const char *source, const char *destination) {
     if (fclose(input) != 0) ok = 0;
     if (fclose(output) != 0) ok = 0;
     return ok;
+}
+
+/* Only UI metadata is perturbed; every ready game row below comes from
+ * the installed original archive. Reconnection is staged with a symlink. */
+static int check_offline_runtime_owner(M12_StartupMenuState* menu,
+                                       const char* root, const char* archive) {
+    char physicalRoot[ASSET_PATH_MAX], selected[ASSET_PATH_MAX];
+    char link[ASSET_PATH_MAX], owner[ASSET_PATH_MAX];
+    char pcLink[ASSET_PATH_MAX] = {0}, locator[ASSET_PATH_MAX];
+    const char* pcArchive = getenv("FIRESTAFF_DM1_PC_ARCHIVE");
+    const char* leaf = strrchr(archive, '/');
+    M12_StartupMenuInitOptions options = {0};
+    M12_Config config;
+    int created = 0, linked = 0, result = 0;
+    const char* stage = "initial admission";
+    if (!FSP_ResolvePhysicalPath(physicalRoot, sizeof(physicalRoot), root) ||
+        snprintf(selected, sizeof(selected), "%s/reconnected-originals", physicalRoot) >= (int)sizeof(selected) ||
+        snprintf(link, sizeof(link), "%s/%s", selected, leaf ? leaf+1 : archive) >= (int)sizeof(link))
+        return 0;
+    options.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(menu, root, NULL, &options);
+    if (!M12_AssetStatus_GameAvailable(&menu->assetStatus, "dm1")) goto done;
+    snprintf(owner, sizeof(owner), "%s", M12_AssetStatus_GetRuntimeDataDir(&menu->assetStatus, "dm1"));
+    snprintf(menu->selectedDataDir, sizeof(menu->selectedDataDir), "%s", selected);
+    snprintf(menu->assetStatus.dataDir, sizeof(menu->assetStatus.dataDir), ".");
+    stage = "display/runtime separation";
+    if (strcmp(M12_StartupMenu_GetVisibleDataDir(menu), selected) ||
+        strcmp(M12_StartupMenu_AssetDataDir(menu), owner)) goto done;
+    /* Saving an unrelated setting must keep runtime ownership separate. */
+    menu->view = M12_MENU_VIEW_SETTINGS;
+    menu->settingsSelectedIndex = 8; /* VSync toggle; language opens a picker. */
+    M12_StartupMenu_HandleInput(menu, M12_MENU_INPUT_VALUE_RIGHT);
+    M12_Config_Load(&config, NULL);
+    stage = "settings save preference";
+    if (strcmp(config.dataDir, selected)) {
+        fprintf(stderr, "saved=%s expected=%s\n", config.dataDir, selected);
+        goto done;
+    }
+    stage = "settings save runtime owner";
+    if (strcmp(M12_StartupMenu_AssetDataDir(menu), owner)) {
+        fprintf(stderr, "runtime=%s expected=%s\n", M12_StartupMenu_AssetDataDir(menu), owner);
+        goto done;
+    }
+    if (mkdir(selected, 0700) != 0) goto done;
+    created = 1;
+    if (symlink(archive, link) != 0) goto done;
+    linked = 1;
+    menu->view = M12_MENU_VIEW_MAIN;
+    M12_StartupMenu_RescanAllGames(menu, NULL, NULL);
+    stage = "reconnected media admission";
+    if (!M12_AssetStatus_GameAvailable(&menu->assetStatus, "dm1") ||
+        !strstr(M12_AssetStatus_GetRuntimeDataDir(&menu->assetStatus, "dm1"), selected) ||
+        strcmp(M12_StartupMenu_GetVisibleDataDir(menu), selected)) goto done;
+    M12_Config_Load(&config, NULL);
+    if (strcmp(config.dataDir, selected)) goto done;
+    if (pcArchive && access(pcArchive, R_OK) == 0) {
+        const char* pcLeaf = strrchr(pcArchive, '/');
+        int pcMatched = 0;
+        stage = "reconnected original PC34 virtual locator";
+        if (snprintf(pcLink, sizeof(pcLink), "%s/%s", selected,
+                     pcLeaf ? pcLeaf+1 : pcArchive) >= (int)sizeof(pcLink) ||
+            symlink(pcArchive, pcLink) != 0 ||
+            snprintf(locator, sizeof(locator), "%s::DATA", pcLink) >= (int)sizeof(locator))
+            goto done;
+        M12_StartupMenu_Destroy(menu);
+        M12_StartupMenu_InitWithOptions(menu, root, NULL, &options);
+        snprintf(menu->selectedDataDir, sizeof(menu->selectedDataDir), "%s", locator);
+        M12_StartupMenu_RescanAllGames(menu, NULL, NULL);
+        for (size_t i = 0; i < M12_AssetStatus_GetVersionCount("dm1"); ++i) {
+            const M12_AssetVersionStatus* version = M12_AssetStatus_GetVersion(&menu->assetStatus, "dm1", i);
+            if (version && version->matched && version->versionId &&
+                strcmp(version->versionId, "pc34-en") == 0 &&
+                strncmp(version->matchedPath, pcLink, strlen(pcLink)) == 0)
+                pcMatched = 1;
+        }
+        M12_Config_Load(&config, NULL);
+        if (!pcMatched || strcmp(M12_AssetStatus_GetDataDir(&menu->assetStatus), selected) ||
+            strcmp(config.dataDir, locator)) goto done;
+    } else {
+        puts("SKIP: authentic PC34 archive not staged for virtual reconnect check");
+    }
+    result = 1;
+done:
+    M12_StartupMenu_Destroy(menu);
+    if (pcLink[0]) unlink(pcLink);
+    if (linked) unlink(link);
+    if (created) rmdir(selected);
+    if (!result) fprintf(stderr, "FAIL: offline runtime owner check at %s\n", stage);
+    else puts("PASS: original DM1 runtime owner survives display-token repair and reconnect rescan uses selected media");
+    return result;
 }
 
 int main(void) {
@@ -433,6 +525,8 @@ int main(void) {
                 return 1;
             }
             M12_StartupMenu_Destroy(&menu);
+            if (!check_offline_runtime_owner(&menu, root, archive))
+                goto deferred_scan_failure;
             /* Deferred completion must publish messages on the caller's UI
              * thread, including a later return-menu rescan of original media. */
             memset(&partialOptions, 0, sizeof(partialOptions));

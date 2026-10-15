@@ -7216,3 +7216,10 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 - Do not recreate missing selected game-data paths, archive paths or originals
   overrides when reporting missing data. Continue bootstrapping the built-in
   default originals directory for a fresh desktop profile.
+
+### Offline originals selection (2026-10-15)
+
+- Remember the selected originals location while it is unavailable. Verified
+  default media can still start without replacing that saved preference.
+- Retry reconnected selected collections on return to the menu, including
+  archive-member locators whose outer container has returned.

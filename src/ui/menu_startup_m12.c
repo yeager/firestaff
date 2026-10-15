@@ -1125,22 +1125,35 @@ int M12_StartupMenu_GetEntryCount(void) {
     return m12_entry_count();
 }
 
+/* Recover a published source owner when a dialog exposes a display token.
+ * Runtime paths can be archive members or temporarily offline; their owner
+ * comes from admitted scan metadata, never the user's directory preference. */
+static const char* m12_published_runtime_root(const M12_StartupMenuState* state) {
+    int first;
+    if (!state) return NULL;
+    first = state->selectedGameId >= 0 && state->selectedGameId < M12_ASSET_GAME_COUNT
+        ? state->selectedGameId : 0;
+    for (int i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        const int game = (first + i) % M12_ASSET_GAME_COUNT;
+        const char* runtime = state->assetStatus.runtimeDataDirs[game];
+        if (M12_AssetStatus_GameAvailable(&state->assetStatus,
+                                         m12_game_select_game_id(game)) &&
+            runtime[0] && !m12_data_directory_dialog_token_is_placeholder(runtime))
+            return runtime;
+    }
+    return NULL;
+}
+
 const char* M12_StartupMenu_AssetDataDir(const M12_StartupMenuState* state) {
-    /* The native macOS folder dialog can transiently expose "." through the
-     * scanner while it completes.  Runtime pathfinders use this accessor, so
-     * give them the last accepted physical folder just as the Settings row
-     * does; never let a display token become an asset root. */
-    if (!state) {
-        return NULL;
-    }
-    if (!m12_data_directory_dialog_token_is_placeholder(state->selectedDataDir) &&
-        FSP_DirExists(state->selectedDataDir)) {
-        return state->selectedDataDir;
-    }
-    /* Do not expose a scanner/dialog current-directory token to a launch
-     * path.  GetVisibleDataDir falls back through the persisted selection and
-     * then the normal originals root, so this accessor has the same durable
-     * contract as the Settings row. */
+    const char* scanned;
+    /* Authenticated fallback media retain their scanner-owned runtime root;
+     * the separately remembered selection may be temporarily offline. */
+    if (!state) return NULL;
+    scanned = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (scanned && scanned[0] &&
+        !m12_data_directory_dialog_token_is_placeholder(scanned)) return scanned;
+    scanned = m12_published_runtime_root(state);
+    if (scanned) return scanned;
     return M12_StartupMenu_GetVisibleDataDir(state);
 }
 
@@ -4201,7 +4214,6 @@ void M12_StartupMenu_SaveConfig(M12_StartupMenuState* state) {
 
 static void m12_save_config(M12_StartupMenuState* state) {
     M12_Config config;
-    char canonicalDataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     const char* activeDataDir;
     int gi;
     if (!state) {
@@ -4334,56 +4346,43 @@ static void m12_save_config(M12_StartupMenuState* state) {
     }
     /* Do not let a platform dialog's relative display token leak back into
      * the launcher config through an asset-status fallback. */
-    activeDataDir = state->selectedDataDir[0]
-                        ? state->selectedDataDir
-                        : M12_AssetStatus_GetDataDir(&state->assetStatus);
-    if (!m12_data_directory_dialog_token_is_placeholder(activeDataDir) &&
-        FSP_DirExists(activeDataDir)) {
-        /* Persist the normalised path selected by the player, not the
-         * physical /private alias returned by a scanner on macOS. */
-        snprintf(canonicalDataDir, sizeof(canonicalDataDir), "%s", activeDataDir);
-        FSP_NormalizeSeparators(canonicalDataDir);
-        snprintf(config.dataDir, sizeof(config.dataDir), "%s", canonicalDataDir);
-    } else if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
-               FSP_DirExists(config.dataDir)) {
-        /* A scanner/backend can temporarily expose a relative display token
-         * while another setting is being saved.  Preserve the last accepted
-         * directory instead of replacing it with that token or a fallback. */
+    activeDataDir = state->selectedDataDir;
+    if (activeDataDir[0] &&
+        !m12_data_directory_dialog_token_is_placeholder(activeDataDir)) {
+        snprintf(config.dataDir, sizeof(config.dataDir), "%s", activeDataDir);
+        FSP_NormalizeSeparators(config.dataDir);
+    } else if (config.dataDir[0] &&
+               !m12_data_directory_dialog_token_is_placeholder(config.dataDir)) {
+        /* An offline selected volume remains a durable preference. */
         FSP_NormalizeSeparators(config.dataDir);
     } else {
-        /* No previously accepted directory is available.  Use the stable
-         * per-user default rather than FSP_ResolveDataDir(), whose explicit
-         * environment override may itself be the invalid "." token. */
-        (void)FSP_GetDefaultOriginalsDir(config.dataDir,
-                                         sizeof(config.dataDir));
+        activeDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+        if (activeDataDir && activeDataDir[0] &&
+            !m12_data_directory_dialog_token_is_placeholder(activeDataDir)) {
+            snprintf(config.dataDir, sizeof(config.dataDir), "%s", activeDataDir);
+            FSP_NormalizeSeparators(config.dataDir);
+        } else {
+            (void)FSP_GetDefaultOriginalsDir(config.dataDir, sizeof(config.dataDir));
+        }
     }
     snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", state->quickResumeSavePath);
     M12_Config_Save(&config);
-    /* Saving an unrelated setting may race a platform scanner that briefly
-     * reports its current-directory display token.  Keep the live launcher
-     * view aligned with the durable path too; otherwise the config is fixed
-     * on disk while the Settings row continues to show '.'. */
+    /* A display-token repair must never replace authenticated fallback
+     * ownership with a remembered volume that has since reconnected. */
     if (m12_data_directory_dialog_token_is_placeholder(
             M12_AssetStatus_GetDataDir(&state->assetStatus))) {
-        /* A scanner/backend may leave a relative token in the live status
-         * even though the persisted path is already valid.  Prefer that
-         * durable path verbatim (preserving the user's selected spelling),
-         * then fall back to physical canonicalization only when needed. */
-        if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
-            FSP_DirExists(config.dataDir)) {
-            snprintf(state->assetStatus.dataDir,
-                     sizeof(state->assetStatus.dataDir),
-                     "%s",
-                     config.dataDir);
-        } else if (m12_canonicalize_data_directory(config.dataDir,
-                                                   canonicalDataDir,
-                                                   sizeof(canonicalDataDir))) {
-            snprintf(state->assetStatus.dataDir,
-                     sizeof(state->assetStatus.dataDir),
-                     "%s",
-                     canonicalDataDir);
+        const char* ownedRoot = m12_published_runtime_root(state);
+        if (ownedRoot) {
+            snprintf(state->assetStatus.dataDir, sizeof(state->assetStatus.dataDir),
+                     "%s", ownedRoot);
+        } else if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
+                   config.dataDir[0] && FSP_DirExists(config.dataDir) &&
+                   !m12_data_directory_dialog_token_is_placeholder(config.dataDir)) {
+            snprintf(state->assetStatus.dataDir, sizeof(state->assetStatus.dataDir),
+                     "%s", config.dataDir);
         }
     }
+
 }
 
 static const char* m12_startup_data_dir_leaf(const char* dataDir,
@@ -4482,7 +4481,10 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
                                               allGamesRoot,
                                               &scanOptions);
-        return;
+        if (hasExplicitDataDirOverride ||
+            state->assetStatus.scanProgress.cancelled ||
+            m12_asset_ready_game_count(&state->assetStatus) > 0) return;
+        goto startup_scan_complete;
     }
     if (hasExplicitDataDirOverride) {
         if (gameId && gameId[0] != '\0' && !scanAllGames) {
@@ -4549,6 +4551,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                               config->dataDir,
                                               &scanOptions);
     }
+startup_scan_complete:
     /* A cancelled progress-aware scan is final. Falling through to the
      * default-root recovery below would launch another full scan without the
      * caller's progress/cancel callback, so closing the intro could still
@@ -4584,10 +4587,8 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                 gameId && gameId[0] != '\0' && !scanAllGames,
                 gameId ? M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) : 0,
                 gameId ? M12_AssetStatus_GameAvailable(&defaultStatus, gameId) : 0)) {
+            /* Recovery changes availability, never the durable selection. */
             state->assetStatus = defaultStatus;
-            snprintf(config->dataDir, sizeof(config->dataDir), "%s",
-                     M12_AssetStatus_GetDataDir(&state->assetStatus));
-            M12_Config_Save(config);
             return;
         }
     }
@@ -4615,9 +4616,6 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                     gameId ? M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) : 0,
                     gameId ? M12_AssetStatus_GameAvailable(&fallbackStatus, gameId) : 0)) {
                 state->assetStatus = fallbackStatus;
-                snprintf(config->dataDir, sizeof(config->dataDir), "%s",
-                         M12_AssetStatus_GetDataDir(&state->assetStatus));
-                M12_Config_Save(config);
             }
         }
     }
@@ -4931,8 +4929,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     {
         char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         const char* scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
-        if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
-            FSP_DirExists(config.dataDir)) {
+        if (config.dataDir[0] &&
+            !m12_data_directory_dialog_token_is_placeholder(config.dataDir)) {
             snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
                      "%s", config.dataDir);
         } else if (m12_canonicalize_data_directory(scannedDataDir,
@@ -4991,8 +4989,8 @@ void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
     {
         char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         const char* scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
-        if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
-            FSP_DirExists(config.dataDir)) {
+        if (config.dataDir[0] &&
+            !m12_data_directory_dialog_token_is_placeholder(config.dataDir)) {
             snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
                      "%s", config.dataDir);
         } else if (m12_canonicalize_data_directory(scannedDataDir,
@@ -5130,17 +5128,32 @@ void M12_StartupMenu_RescanAllGames(
     deferredScanAllGames = state->deferredScanAllGames;
     M12_Config_Load(&savedConfig, NULL);
     currentDataDir = M12_StartupMenu_AssetDataDir(state);
+    /* Prefer the intended collection again once its directory or selected
+     * archive becomes available; while offline keep the actual fallback. */
+    if (state->selectedDataDir[0] &&
+        !m12_data_directory_dialog_token_is_placeholder(state->selectedDataDir)) {
+        char* member;
+        /* A virtual locator reconnects when its outer container returns. */
+        snprintf(scanBaseDir, sizeof(scanBaseDir), "%s", state->selectedDataDir);
+        member = strstr(scanBaseDir, "::");
+        if (member) *member = '\0';
+        if (FSP_DirExists(scanBaseDir) || FSP_FileExists(scanBaseDir))
+            currentDataDir = state->selectedDataDir;
+    }
     if (currentDataDir && currentDataDir[0]) {
         char* virtualMember;
         int selectedArchive;
-        snprintf(selectedDataDir, sizeof(selectedDataDir), "%s", currentDataDir);
+        snprintf(selectedDataDir, sizeof(selectedDataDir), "%s",
+                 state->selectedDataDir[0] &&
+                 !m12_data_directory_dialog_token_is_placeholder(state->selectedDataDir)
+                     ? state->selectedDataDir : currentDataDir);
         snprintf(scanBaseDir, sizeof(scanBaseDir), "%s", currentDataDir);
         virtualMember = strstr(scanBaseDir, "::");
         if (virtualMember) *virtualMember = '\0';
         selectedArchive = virtualMember != NULL || FSP_FileExists(scanBaseDir);
         if (!selectedArchive && !FSP_DirExists(scanBaseDir)) {
             static const char* const games[] = {"dm1", "csb", "dm2"};
-            const size_t sourceLength = strlen(selectedDataDir);
+            const size_t sourceLength = strlen(currentDataDir);
             size_t game;
             /* The file may have been removed while its RAM-backed game was
              * running. Its admitted member provenance still identifies the
@@ -5155,7 +5168,7 @@ void M12_StartupMenu_RescanAllGames(
                         M12_AssetStatus_GetVersion(&state->assetStatus,
                                                      games[game], versionIndex);
                     if (version && version->matched &&
-                        strncmp(version->matchedPath, selectedDataDir,
+                        strncmp(version->matchedPath, currentDataDir,
                                 sourceLength) == 0 &&
                         strncmp(version->matchedPath + sourceLength, "::", 2u) == 0) {
                         selectedArchive = 1;
@@ -5178,13 +5191,14 @@ void M12_StartupMenu_RescanAllGames(
             m12_common_game_data_root(scanBaseDir, scanDataDir,
                                       sizeof(scanDataDir));
         }
-        if (scanDataDir[0] && strcmp(scanDataDir, currentDataDir) != 0)
+        if (selectedDataDir[0])
             preserveSelectedDataDir = 1;
     }
     if (!scanDataDir[0]) {
         snprintf(scanDataDir, sizeof(scanDataDir), "%s", savedConfig.dataDir);
     }
-    if (selectedDataDir[0] && FSP_DirExists(selectedDataDir)) {
+    if (selectedDataDir[0] &&
+        !m12_data_directory_dialog_token_is_placeholder(selectedDataDir)) {
         snprintf(savedConfig.dataDir, sizeof(savedConfig.dataDir), "%s",
                  selectedDataDir);
     }
@@ -5206,8 +5220,7 @@ void M12_StartupMenu_RescanAllGames(
     state->deferredLooseFilesOnly = deferredLooseFilesOnly;
     state->deferredHasExplicitDataDir = deferredHasExplicitDataDir;
     state->deferredScanAllGames = deferredScanAllGames;
-    if (preserveSelectedDataDir && selectedDataDir[0] &&
-        FSP_DirExists(selectedDataDir)) {
+    if (preserveSelectedDataDir && selectedDataDir[0]) {
         snprintf(state->selectedDataDir, sizeof(state->selectedDataDir), "%s",
                  selectedDataDir);
     }
@@ -5809,8 +5822,8 @@ const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state)
     if (!state) {
         return "";
     }
-    if (!m12_data_directory_dialog_token_is_placeholder(state->selectedDataDir) &&
-        FSP_DirExists(state->selectedDataDir)) {
+    if (state->selectedDataDir[0] &&
+        !m12_data_directory_dialog_token_is_placeholder(state->selectedDataDir)) {
         return state->selectedDataDir;
     }
     activeDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
@@ -5821,10 +5834,10 @@ const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state)
      * The persisted config is the authoritative last accepted selection. */
     {
         M12_Config config;
-        if (M12_Config_Load(&config, NULL) &&
-            m12_canonicalize_data_directory(config.dataDir,
-                                            persistedDataDir,
-                                            sizeof(persistedDataDir))) {
+        if (M12_Config_Load(&config, NULL) && config.dataDir[0] &&
+            !m12_data_directory_dialog_token_is_placeholder(config.dataDir)) {
+            snprintf(persistedDataDir, sizeof(persistedDataDir), "%s", config.dataDir);
+            FSP_NormalizeSeparators(persistedDataDir);
             return persistedDataDir;
         }
     }

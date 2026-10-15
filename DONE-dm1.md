@@ -1,3 +1,12 @@
+- 2026-10-15: Reproduced offline selected roots being silently replaced in
+  saved settings. Preserve the durable selection separately from admitted
+  runtime roots; default recovery no longer overwrites it. Saved /dm1 leaves
+  can recover original default media, and return-menu rescan retries a
+  reconnected selection, including genuine PC34 ZIP::DATA locators.
+  Original FM Towns/PC34 tests pass for display-token repair, unrelated setting
+  saves, physical/virtual reconnect and unchanged permission recovery. Desktop
+  absence/reconnect tests also pass. No readiness or hash gate is relaxed.
+
 - 2026-10-15: Reproduced the launcher recreating a missing selected data root
   while showing its no-data message. Restricted bootstrap to the built-in
   default root, without a FIRESTAFF_ORIGINALS_DIR override, and normalized
@@ -3270,3 +3279,5 @@ Reviewed 2026-08-29. Completed work only.
 - This does not implement or verify Amiga 3.6 F0437 title playback, F0441
   entrance playback, viewport parity, or native HiDPI behavior. Those remain
   open in TODO.
+
+- 2026-10-15: Final offline-selection verification passed on the exact built binary: full original-media CLI startup suite (214.31 s), both targeted CTest cases (26.02 s), and translation catalog consistency check. Physical volume unmount and macOS permission-dialog interaction remain separate manual checks.

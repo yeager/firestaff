@@ -96,7 +96,8 @@ csb_combined_root=
 dm1_combined_root=
 default_home=
 uppercase_game_root=
-trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root"' EXIT
+offline_home=
+trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root" "$offline_home"' EXIT
 
 # Exercise the real default path layout without --data-dir and without
 # inheriting a developer's saved config. Stage only links to the original
@@ -494,5 +495,69 @@ for game_id in $uppercase_expected_games; do
     fi
 done
 echo "PASS: uppercase DM1 menu selection reports authentic availability:$uppercase_expected_games"
+
+# An offline remembered root must not block authenticated fallback media or
+# be replaced by that fallback in the user's saved selection.
+if [ -f "$dm1_pc_archive" ]; then
+    for offline_leaf in external-originals collection/dm1; do
+        offline_home=$(mktemp -d "${PWD}/.firestaff-offline-root.XXXXXX")
+        offline_default="$offline_home/.firestaff/data"
+        offline_selected="$offline_home/$offline_leaf"
+        mkdir -p "$offline_default/dm1" "$offline_selected"
+        ln -s "$dm1_pc_archive" "$offline_default/dm1/$(basename "$dm1_pc_archive")"
+        run_offline_profile() {
+            HOME="$offline_home" USERPROFILE="$offline_home" \
+            XDG_CONFIG_HOME="$offline_home" APPDATA="$offline_home" \
+            FIRESTAFF_CONFIG_PATH="$offline_home/config.toml" \
+            FIRESTAFF_ORIGINALS_DIR="$offline_default" FIRESTAFF_DATA= \
+            FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return \
+            FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$offline_home/runtime.json" \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+                "$firestaff_cli" "$@"
+        }
+        run_offline_profile --menu --game dm1 --data-dir "$offline_selected" \
+            --duration 1000 --verbose >"$offline_home/selected.log" 2>&1
+        offline_selection=$(grep '^data_dir = ' "$offline_home/config.toml")
+        case "$offline_selection" in
+            *"$offline_leaf"*) ;;
+            *) echo "FAIL: original fallback setup lost selected root" >&2; exit 1 ;;
+        esac
+        rmdir "$offline_selected"
+        run_offline_profile --menu --duration 1000 --verbose \
+            >"$offline_home/offline-menu.log" 2>&1
+        grep -Fq 'firestaff: dm1 available=yes' "$offline_home/offline-menu.log" || {
+            cat "$offline_home/offline-menu.log" >&2
+            echo "FAIL: offline remembered root hid authentic default DM1 media" >&2
+            exit 1
+        }
+        # A no-data-dir boot probe deliberately scans loose files only. Exercise
+        # the ordinary CLI here so original ZIP admission is actually covered.
+        run_offline_profile --game dm1 --presentation-mode v1 --verbose --debug --duration 20000 \
+            --script wait-game-runtime,up \
+            >"$offline_home/offline-runtime.log" 2>&1 || {
+            cat "$offline_home/offline-runtime.log" >&2
+            exit 1
+        }
+        grep -Fq 'startup-source-frame game=dm1 platform=pc34' "$offline_home/offline-runtime.log" || {
+            cat "$offline_home/offline-runtime.log" >&2
+            echo "FAIL: authentic fallback did not select PC media" >&2
+            exit 1
+        }
+        grep -Eq 'dm1-motion-present .*moved=1' "$offline_home/offline-runtime.log" || {
+            cat "$offline_home/offline-runtime.log" >&2
+            if [ -f "$offline_home/runtime.json" ]; then cat "$offline_home/runtime.json" >&2; fi
+            echo "FAIL: authentic fallback did not present an accepted DM1 movement" >&2
+            exit 1
+        }
+        if [ "$offline_selection" != "$(grep '^data_dir = ' "$offline_home/config.toml")" ] ||
+           [ -e "$offline_selected" ]; then
+            echo "FAIL: authentic default fallback forgot or recreated the offline selection" >&2
+            exit 1
+        fi
+        echo "PASS: authentic DM1 PC menu/CLI fallback preserves offline selection ($offline_leaf)"
+        rm -rf "$offline_home"
+        offline_home=
+    done
+fi
 
 echo "PASS: original-media startup diagnostics and FM Towns defaults"
