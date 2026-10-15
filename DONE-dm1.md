@@ -1,3 +1,15 @@
+- 2026-10-15: Preserve the unscoped Atari ST 1.2 start-menu route as an
+  original-media regression. With no `--game` or `--platform`, isolated
+  configuration and unchanged lowercase loose graphics/dungeon files, the
+  normal title and entrance finish before active runtime: the source handoff,
+  full graphics and first Hall receipts are consumed at map 0 (1,3), with
+  positive gameplay ticks and drained scripted input. The complete existing
+  case-sensitive HFSX regression passes uppercase/lowercase CLI admission,
+  lowercase M12 handoff, denied incidental DM2 inventory, unscoped continued
+  runtime and ambiguous-dungeon rejection. SDL dummy drivers establish
+  functional startup only. The temporary image was detached and removed;
+  the earlier two-second launch failure has no proven cause.
+
 - 2026-10-15: Admit renamed loose Amiga graphics by their recorded original
   identity, rechecking the exact selected file before same-parent companion
   resolution. Archive member naming policy remains unchanged. The authentic

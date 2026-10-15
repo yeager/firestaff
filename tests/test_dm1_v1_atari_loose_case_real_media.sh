@@ -125,6 +125,51 @@ else
     echo 'SKIP: current account can read permission-restricted directories'
 fi
 chmod 700 "$scratch/inventory/dm2"
+# Continue beyond admission with no --game or --platform override. The normal
+# Atari title and entrance consume their source inputs before the first Hall
+# frame, so this must not use FIRESTAFF_EXIT_AFTER_LAUNCH.
+mkdir -p "$scratch/unscoped-home"
+unscoped_probe="$scratch/unscoped-runtime.json"
+if ! HOME="$scratch/unscoped-home" XDG_CONFIG_HOME="$scratch/unscoped-home" \
+    APPDATA="$scratch/unscoped-home" \
+    FIRESTAFF_CONFIG_PATH="$scratch/unscoped-home/config.toml" \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$unscoped_probe" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --width 320 --height 200 --menu --data-dir "$scratch/inventory" \
+    --debug --script enter,enter,enter,wait30,enter,wait60,enter --duration 15000 \
+    >"$scratch/unscoped.log" 2>&1; then
+    echo 'FAIL: unscoped M12 did not continue through authentic Atari startup' >&2
+    exit 1
+fi
+grep -Fq "mode=menu game=dm1 platform=Atari ST edition=st12-en source=$scratch/inventory/dm1/graphics.dat" \
+    "$scratch/unscoped.log"
+python3 - "$unscoped_probe" <<'PYRUNTIME'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    probe = json.load(stream)
+startup = probe["startup"]
+party = probe["party"]
+placement = startup["dm1StartupPartyPlacement"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or
+        probe["bootAssetMd5"] != "9ce2eaf7a9e78620e3f17594437caffa" or
+        startup["receiptReady"] != 1 or startup["phase"] != "dm1-runtime" or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupTitleConsumed"] != 1 or
+        startup["dm1StartupEntranceConsumed"] != 1 or
+        startup["dm1StartupFullGraphicsConsumed"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        placement["executed"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0) or
+        probe["gameTick"] <= 0 or
+        probe["script"] != {"waitFramesRemaining": 0, "pending": 0}):
+    raise SystemExit(f"FAIL: unscoped original Atari startup did not reach continued runtime: {probe}")
+print("PASS: unscoped M12 AUTO consumes original Atari title/entrance and continues in the first Hall")
+PYRUNTIME
 # Even identical original payloads cannot disambiguate two native filenames.
 cp "$scratch/media/dungeon.dat" "$scratch/media/DUNGEON.DAT"
 if run_cli ambiguous; then

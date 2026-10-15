@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `DM1 Atari start menu`: verify AUTO selection from lowercase original loose files through the normal title, entrance and continued first-Hall gameplay, with no game/platform override.
+
 - `DM1 Amiga loose graphics`: accept renamed original graphics files through CLI and the start menu after checking the selected file's hash; keep startup companions in that same installation.
 
 - `DM2 data folders`: discover renamed original ZIPs for DOS, Macintosh, FM Towns and Amiga, retaining FM Towns as the default and the selected archive as runtime owner. An unreadable directory reports incomplete discovery without hiding other games.

@@ -7,7 +7,11 @@ The original demo now also passes mixed-case Swoosh lookup and ambiguous
 Swoosh/swoosh rejection on a case-sensitive HFSX volume. Original A22G retail
 GRAPHICS.DAT/Dungeon.dat/DM/Swoosh also reaches source startup and runtime.
 Original Atari 1.2 now passes unique upper/lower dungeon names via CLI and
-lowercase via M12, rejecting ambiguity. Renamed loose graphics now pass the
+lowercase via M12, rejecting ambiguity. The same original Atari files now
+also pass unscoped M12 AUTO through the complete source title/entrance and
+continued first-Hall runtime; the former handoff-only smoke remains separate.
+The earlier two-second launch failure is not attributed to a specific cause.
+Renamed loose graphics now pass the
 original demo directory/file CLI and M12 matrix; original A22G also passes
 selected-file M12 with renamed graphics. Other retail editions, filename
 extensions/layouts and native Windows/Linux still need coverage. These checks
