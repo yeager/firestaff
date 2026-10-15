@@ -26596,6 +26596,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         if (!asset_read_path_alloc(graphicsVirtual, &graphicsBytes,
                                             &graphicsSize) ||
+            /* The menu's hash describes the selected source at scan time.
+             * Revalidate the consumed buffer before decoding: replacing a
+             * ZIP between scan and launch must not inherit that identity. */
+            (spec->verifiedAssetMd5 && spec->verifiedAssetMd5[0] &&
+             !asset_memory_matches_md5(graphicsBytes, graphicsSize,
+                                       spec->verifiedAssetMd5)) ||
             ((dm1AtariDungeonFormat)
                  ? !M11_AssetLoader_InitDm1AtariStFromBuffer(
                        &state->assetLoader, graphicsBytes, (long)graphicsSize)

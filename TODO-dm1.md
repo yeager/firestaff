@@ -1666,3 +1666,18 @@ The two full five-game corpus cases were not part of this scoped run.
 `dm1_v1_startup_intro_state_machine_gate` while creating a hardcoded `/tmp`
 fixture directory. The task-local scratch replacement passes local CTest;
 confirm its native Windows result in the next Actions run.
+
+### Selected virtual graphics identity (2026-10-15)
+
+DM1 virtual GRAPHICS.DAT is now authenticated on the exact consumed buffer,
+so swapping a selected archive after scan cannot retain its previous graphics
+identity. Original-only PC English/multilingual replacement regression passes;
+Amiga 2.0 and Atari ST 1.2 still reach loaded probe states. Towns is a separate
+unchanged path. Expand equivalent original-media stale-source checks to the
+other loaders and native Windows staging; this does not establish full parity.
+
+Source-only edition-selection follow-up: the Custom version row can explicitly
+select an unavailable DM1 edition, but GetLaunchGate/GetLaunchIntent may silently
+replace it with another matched edition in the same architecture. Reproduce
+with PC34 English installed and PC34 multilingual explicitly chosen; distinguish
+manual edition intent from legitimate stale-config/AUTO recovery before fixing.

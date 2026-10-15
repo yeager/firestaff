@@ -129,7 +129,6 @@ static void md5_final(AssetMd5Ctx *ctx, char outHex[33]) {
     outHex[32] = 0;
 }
 
-#ifdef FIRESTAFF_HAS_NATIVE_7Z
 static void asset_memory_md5_hex(const uint8_t *bytes, size_t byte_count,
                                  char outHex[33]) {
     AssetMd5Ctx ctx;
@@ -143,7 +142,15 @@ static void asset_memory_md5_hex(const uint8_t *bytes, size_t byte_count,
     }
     md5_final(&ctx, outHex);
 }
-#endif
+
+int asset_memory_matches_md5(const uint8_t *bytes, size_t byte_count,
+                             const char *expectedMd5) {
+    char actual[33];
+    if ((!bytes && byte_count) || !expectedMd5 || strlen(expectedMd5) != 32U)
+        return 0;
+    asset_memory_md5_hex(bytes, byte_count, actual);
+    return strcmp(actual, expectedMd5) == 0;
+}
 
 static void md5_body(AssetMd5Ctx *ctx, const unsigned char *block) {
     unsigned int a = ctx->state[0], b = ctx->state[1];

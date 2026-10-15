@@ -20,6 +20,11 @@
  * lowercase MD5 hex digest. Virtual members are read into RAM, never extracted. */
 int asset_file_matches_md5(const char *path, const char *expectedMd5);
 
+/* Verify the exact retained bytes consumed by a loader, without reopening a
+ * path that could have changed after discovery or after the buffer read. */
+int asset_memory_matches_md5(const uint8_t *bytes, size_t byte_count,
+                             const char *expectedMd5);
+
 /* Compute an ordinary file or bounded virtual member's lowercase MD5 identity.
  * Exposed alongside asset_file_matches_md5 so a user-selected package can be
  * pinned once and subsequently revalidated without trusting its filename. */

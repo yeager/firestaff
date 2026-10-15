@@ -7235,3 +7235,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 ### Folder scan cancellation
 
 - Cancelling before scan results are published now preserves the previous data folder and game availability even if the background worker has already finished.
+
+### DM1 selected archive identity
+
+- DM1 validates loaded virtual graphics against the selected edition hash before decoding, rejecting archives replaced with different graphics after scanning.
