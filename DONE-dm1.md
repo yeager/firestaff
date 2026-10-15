@@ -1,3 +1,11 @@
+- 2026-10-15: Fixed PC entrance-door source sampling. ReDMCSB prepares shifted
+  C002 left-door frames but cancels the C003 right-door source offset;
+  Firestaff samples the raw source images. The raw-frame mapping now uses
+  `4 * animationStep` for C002 and zero for C003. The focused composite
+  regression passed, including the step-5 source offsets. This closes the
+  identified frame-strip coordinate mismatch, not native presentation cadence
+  or full title/entrance visual parity; see `TODO-dm1.md`.
+
 - 2026-10-15: Corrected the authentic mixed-library platform test contract for
   PC 3.4. Its I34E DOS route uses SWOOSH/TITLE/SELECTOR and reaches FIRES; it
   does not emit the shared F0437/F0441 Hall-of-Champions receipt. The boot

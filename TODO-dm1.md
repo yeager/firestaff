@@ -1,5 +1,16 @@
 # Firestaff TODO — DM1
 
+2026-10-15 PC entrance-door source-offset correction: ReDMCSB
+`ENTRANCE.C:790-824` prepares left-door C002 frames with 4/8/12-pixel
+source shifts before `F0438` adds its frame offset; the prepared right-door
+C003 frame shift cancels `F0438`'s source offset. Firestaff samples raw C002/
+C003, so its prior left/right offsets produced the wrong moving door strips.
+`ENTRANCE_Compat_GetDoorAnimationStep` now maps the raw left source to
+`4 * animationStep` and the right source to zero. The focused composite
+regression passed and checks the step-5 offsets. This fixes the identified
+asset-coordinate mismatch; it does not establish native display cadence,
+physical-window smoothness, or full title/entrance parity.
+
 2026-10-15 PC34 first-view comparison: the authentic `DM.EXE` and `DATA`
 files from the user's English PC34 ZIP were run in DOSBox-X and compared with
 Firestaff direct launch using the same archive. Both captured C007 pages are
