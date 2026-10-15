@@ -1,3 +1,20 @@
+- 2026-10-15: Discover renamed ZIP media in directory scans by complete
+  native profile identity, across immediate search roots and dm2 children.
+  Inventory is bounded to 256 ZIP candidates and sorted; the final version
+  priority selects its exact runtime owner. The original-media matrix passes
+  15 routes in 66.68 seconds: DOS/Mac/Towns/Amiga isolated CLI runtime plus
+  scoped/unscoped M12 handoffs, then mixed AUTO routes selecting FM Towns.
+  Original SHA-256s and renamed alias ownership remain unchanged. Earlier
+  explicit-file ownership regression passes in 101.24 seconds. Selected and
+  removed archive return tests pass in 55.60/55.83 seconds after this change.
+  Directory I/O/limit/allocation errors now report incomplete discovery and
+  preserve other games; failed directory contributions are rolled back.
+  An actual denied DM2 child preserves authenticated Atari DM1 READY status;
+  actual callback cancellation still yields rc=0, cancelled=1, complete=0,
+  available=0 in a production-linked probe. UI phase labels reuse existing
+  translations. Native Windows/Linux, further layouts/languages and visual
+  or audio parity are not established by these Mac dummy-driver checks.
+
 - 2026-10-15: Recover the collection root even when the selected ZIP alias
   disappears during gameplay. Previously admitted virtual-member provenance
   identifies the missing outer archive without guessing from its extension.

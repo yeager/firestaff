@@ -7,6 +7,7 @@
  */
 
 #include "main_loop_m11.h"
+#include "m11_loose_sibling.h"
 #include "config_m12.h"
 
 #include "menu_startup_m12.h"
@@ -3517,31 +3518,6 @@ static unsigned int m11_dm1_amiga_swsh_fnv1a(const uint8_t* bytes,
     return hash;
 }
 
-typedef struct M11_AmigaLooseSibling {
-    const char* wanted;
-    char path[FSP_PATH_MAX];
-    int found;
-} M11_AmigaLooseSibling;
-
-static SDL_EnumerationResult SDLCALL m11_dm1_amiga_match_loose_sibling(
-    void* opaque, const char* directory, const char* name) {
-    M11_AmigaLooseSibling* match = (M11_AmigaLooseSibling*)opaque;
-    char candidate[FSP_PATH_MAX];
-    if (SDL_strcasecmp(name, match->wanted) != 0) return SDL_ENUM_CONTINUE;
-    if (!FSP_JoinPath(candidate, sizeof(candidate), directory, name))
-        return SDL_ENUM_FAILURE;
-    if (!FSP_FileExists(candidate)) return SDL_ENUM_CONTINUE;
-    /* Even an exact-case entry cannot choose between two source siblings
-     * that differ only by case on a case-sensitive host filesystem. */
-    if (match->found) {
-        match->found = 2;
-        return SDL_ENUM_FAILURE;
-    }
-    strcpy(match->path, candidate);
-    match->found = 1;
-    return SDL_ENUM_CONTINUE;
-}
-
 /* Startup companions belong beside the selected graphics file or member.
  * Preserve every nested transport and directory; never search other media. */
 static int m11_dm1_amiga_sibling_path(const M12_AssetVersionStatus* version,
@@ -3584,26 +3560,23 @@ static int m11_dm1_amiga_sibling_path(const M12_AssetVersionStatus* version,
     memcpy(outPath + prefixBytes, sibling, siblingBytes);
     if (!separator) {
         char parent[FSP_PATH_MAX] = {0};
-        M11_AmigaLooseSibling match = {sibling, {0}, 0};
-        int enumerated;
+        int resolved;
         /* ReDMCSB TITLE.C:12 F0437 / ENTRANCE.C:620 F0441 run over the
          * selected AmigaDOS installation without imposing POSIX case.
          * Resolve only this admitted parent;
          * archive members retain their existing native reader semantics. */
-        enumerated = FSP_ParentDir(parent, sizeof(parent), path) &&
-            SDL_EnumerateDirectory(parent, m11_dm1_amiga_match_loose_sibling,
-                                      &match);
-        if (!enumerated ||
-            !match.found || strlen(match.path) >= outPathBytes) {
+        resolved = FSP_ParentDir(parent, sizeof(parent), path)
+            ? m11_find_unique_loose_sibling(parent, sibling, outPath, outPathBytes)
+            : -1;
+        if (resolved != 1) {
             if (g_m11_debug_startup_detail) {
                 fprintf(stderr, "firestaff: startup-sibling-rejected game=dm1 platform=amiga wanted=%s parent=%s reason=%s\n",
-                        sibling, parent, match.found == 2 ? "ambiguous" :
-                        !enumerated ? "enumeration" : "missing");
+                        sibling, parent, resolved == -2 ? "ambiguous" :
+                        resolved == -1 ? "enumeration" : "missing");
             }
             outPath[0] = '\0';
             return 0;
         }
-        strcpy(outPath, match.path);
         if (g_m11_debug_startup_detail) {
             fprintf(stderr, "firestaff: startup-sibling-resolved game=dm1 platform=amiga wanted=%s parent=%s source=%s\n",
                     sibling, parent, outPath);

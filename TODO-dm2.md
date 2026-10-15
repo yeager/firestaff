@@ -7,8 +7,11 @@ matrices remain open.
 
 2026-10-15 explicit ZIP ownership now uses the original paired identities
 for DOS, Macintosh, FM Towns and Amiga rather than preservation filenames.
-Directory discovery still uses its existing bounded candidate inventory;
-arbitrary filenames inside a collection need separate coverage. Unscoped
+Directory discovery now checks sorted ZIP candidates in existing roots and
+their dm2 children, authenticating all four supported native profiles. The
+renamed-directory matrix passes CLI runtime and scoped/unscoped M12 handoffs,
+including mixed AUTO selection of FM Towns. Deeper arbitrary subdirectories,
+other language editions and native Windows/Linux runtime still need coverage. Unscoped
 DM1/CSB ZIP selection requires exact selected-archive provenance. The nested
 DM1 Amiga 2.0 SWSH/title/entrance and CSB Towns title handoff pass, but their
 larger gameplay/input matrices have not been rerun after this shared change. Native display/audio behavior

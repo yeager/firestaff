@@ -63036,3 +63036,24 @@ if(BUILD_TESTING AND UNIX)
         SKIP_RETURN_CODE 77 TIMEOUT 90
         LABELS "dm1;amiga;real-media;case-sensitive;menu;startup;skip-safe")
 endif()
+
+if(BUILD_TESTING AND UNIX)
+    add_test(NAME dm2_v1_renamed_zip_directory_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_renamed_zip_directory.sh
+            $<TARGET_FILE:firestaff> "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(dm2_v1_renamed_zip_directory_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 300
+        LABELS "dm2;real-media;cli;menu;startup;directory;skip-safe")
+    set(FIRESTAFF_DM1_ATARI_LOOSE_GRAPHICS "" CACHE FILEPATH
+        "Original Atari ST 1.2 graphics for loose-file case-sensitive verification")
+    set(FIRESTAFF_DM1_ATARI_LOOSE_DUNGEON "" CACHE FILEPATH
+        "Original Atari ST 1.2 dungeon for loose-file case-sensitive verification")
+    add_test(NAME dm1_v1_atari_loose_case_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_loose_case_real_media.sh
+            $<TARGET_FILE:firestaff>
+            "${FIRESTAFF_DM1_ATARI_LOOSE_GRAPHICS}"
+            "${FIRESTAFF_DM1_ATARI_LOOSE_DUNGEON}")
+    set_tests_properties(dm1_v1_atari_loose_case_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 90
+        LABELS "dm1;atari;real-media;case-sensitive;cli;menu;startup;skip-safe")
+endif()

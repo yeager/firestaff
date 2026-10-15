@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #ifdef _WIN32
 #include <sys/stat.h>
 #include <sys/utime.h>
@@ -38,6 +39,7 @@
 #include <sys/stat.h>
 #include <utime.h>
 #include <unistd.h>
+#include <dirent.h>
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
@@ -1581,10 +1583,7 @@ static int m12_admit_dm2_zip_profile(M12_AssetStatus* status, int gameIndex,
     }
     dm2_v1_boot_profile_init(&profile);
     if (dm2_v1_boot_scan_assets(&profile, archive) == 0 &&
-        m12_dm2_profile_has_exact_zip_owner(&profile, archive) &&
-        (exclusive || profile.platform == DM2_PLATFORM_PC_EN ||
-         profile.platform == DM2_PLATFORM_PC_FR ||
-         profile.platform == DM2_PLATFORM_PC_JEWEL)) {
+        m12_dm2_profile_has_exact_zip_owner(&profile, archive)) {
         for (i = 0u; i < g_games[gameIndex].versionCount; ++i) {
             M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
             if (strcmp(version->versionId, profile.version_id) != 0) continue;
@@ -1593,14 +1592,148 @@ static int m12_admit_dm2_zip_profile(M12_AssetStatus* status, int gameIndex,
                             profile.graphics_path);
             m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
                             profile.graphics_md5);
-            m12_copy_string(status->runtimeDataDirs[gameIndex],
-                            sizeof(status->runtimeDataDirs[gameIndex]), archive);
+            if (exclusive) {
+                m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                sizeof(status->runtimeDataDirs[gameIndex]), archive);
+            }
             admitted = 1;
             break;
         }
     }
     dm2_v1_boot_cleanup(&profile);
     return admitted;
+}
+
+enum { M12_DM2_ZIP_CANDIDATES_MAX = 256 };
+typedef struct {
+    char paths[M12_DM2_ZIP_CANDIDATES_MAX][M12_ASSET_DATA_DIR_CAPACITY];
+    size_t count;
+} M12_Dm2ZipCandidates;
+
+static int m12_dm2_collect_zip_candidate(M12_Dm2ZipCandidates* list,
+                                         const char* directory,
+                                         const char* name) {
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    if (!m12_ascii_equals_ignore_case(strrchr(name, '.'), ".zip")) return 1;
+    if (!FSP_JoinPath(path, sizeof(path), directory, name)) return -3;
+    if (!FSP_FileExists(path)) return 1;
+    for (size_t i = 0u; i < list->count; ++i)
+        if (strcmp(list->paths[i], path) == 0) return 1;
+    if (list->count == M12_DM2_ZIP_CANDIDATES_MAX) return -2;
+    m12_copy_string(list->paths[list->count++], sizeof(list->paths[0]), path);
+    return 1;
+}
+
+/* Negative results describe only this directory: -1 I/O, -2 candidate
+ * limit, -3 path capacity. Roll back its entire unsorted contribution so a
+ * directory's enumeration order cannot select an arbitrary partial subset. */
+static int m12_dm2_collect_directory_zips(M12_Dm2ZipCandidates* list,
+                                          const char* directory) {
+    int result = 1;
+    const size_t previousCount = list->count;
+    if (!FSP_DirExists(directory)) return 1;
+#ifdef _WIN32
+    WIN32_FIND_DATAA entry;
+    char pattern[M12_ASSET_DATA_DIR_CAPACITY];
+    HANDLE search;
+    if (!FSP_JoinPath(pattern, sizeof(pattern), directory, "*")) return -3;
+    search = FindFirstFileA(pattern, &entry);
+    if (search == INVALID_HANDLE_VALUE)
+        return GetLastError() == ERROR_FILE_NOT_FOUND ? 1 : -1;
+    do {
+        result = m12_dm2_collect_zip_candidate(list, directory, entry.cFileName);
+        if (result < 0) break;
+    } while (FindNextFileA(search, &entry));
+    if (result > 0 && GetLastError() != ERROR_NO_MORE_FILES) result = -1;
+    FindClose(search);
+#else
+    DIR* dir = opendir(directory);
+    struct dirent* entry;
+    if (!dir) return -1;
+    for (;;) {
+        /* Candidate stat calls may change errno. Only the immediately
+         * preceding readdir determines whether NULL means EOF or failure. */
+        errno = 0;
+        entry = readdir(dir);
+        if (!entry) {
+            if (errno != 0) result = -1;
+            break;
+        }
+        result = m12_dm2_collect_zip_candidate(list, directory, entry->d_name);
+        if (result < 0) break;
+    }
+    if (closedir(dir) != 0 && result > 0) result = -1;
+#endif
+    if (result < 0) list->count = previousCount;
+    return result;
+}
+
+static int m12_dm2_enumerate_zip_directory(M12_Dm2ZipCandidates* list,
+                                           const char* directory,
+                                           M12_ScanProgressContext* progress) {
+    int result;
+    if (!m12_scan_progress_update(progress, "enumerating ZIP candidates",
+                                    "dm2", directory, 0)) return 0;
+    result = m12_dm2_collect_directory_zips(list, directory);
+    if (result < 0) {
+        fprintf(stderr, "firestaff: media-discovery-incomplete game=dm2 path=%s reason=%s\n",
+                directory, result == -2 ? "candidate-limit" :
+                result == -3 ? "path-capacity" : "directory-io");
+        return m12_scan_progress_update(progress, "ZIP directory incomplete",
+                                          "dm2", directory, 0);
+    }
+    return 1;
+}
+
+static int m12_dm2_zip_candidate_compare(const void* a, const void* b) {
+    return strcmp((const char*)a, (const char*)b);
+}
+
+/* ZIP names are discovery hints, never edition identities. Bound inventory
+ * to immediate roots and their dm2 child, then authenticate complete native
+ * profiles in stable path order. The later priority pass owns runtimeDir. */
+static int m12_admit_dm2_directory_zips(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount, M12_ScanProgressContext* progress) {
+    M12_Dm2ZipCandidates* list;
+    int ok = 1;
+    if (!m12_scan_progress_update(progress, "enumerating ZIP candidates",
+                                    "dm2", NULL, 0)) return 0;
+    list = calloc(1u, sizeof(*list));
+    if (!list) {
+        fprintf(stderr, "firestaff: media-discovery-incomplete game=dm2 path=%s reason=allocation\n",
+                rootCount ? roots[0] : "");
+        return m12_scan_progress_update(progress, "ZIP inventory incomplete",
+                                          "dm2", rootCount ? roots[0] : "", 0);
+    }
+    for (size_t r = 0u; ok && r < rootCount; ++r) {
+        char child[M12_ASSET_DATA_DIR_CAPACITY];
+        ok = m12_dm2_enumerate_zip_directory(list, roots[r], progress);
+        if (!ok || !FSP_DirExists(roots[r])) continue;
+        if (FSP_JoinPath(child, sizeof(child), roots[r], "dm2")) {
+            ok = m12_dm2_enumerate_zip_directory(list, child, progress);
+        } else {
+            fprintf(stderr, "firestaff: media-discovery-incomplete game=dm2 path=%s reason=child-path-capacity\n",
+                    roots[r]);
+            ok = m12_scan_progress_update(progress, "ZIP directory incomplete",
+                                            "dm2", roots[r], 0);
+        }
+    }
+    if (ok) {
+        qsort(list->paths, list->count, sizeof(list->paths[0]),
+              m12_dm2_zip_candidate_compare);
+        for (size_t i = 0u; i < list->count; ++i) {
+            if (!m12_scan_progress_update(progress, "authenticating ZIP candidate",
+                                            "dm2", list->paths[i], 0)) {
+                ok = 0;
+                break;
+            }
+            (void)m12_admit_dm2_zip_profile(status, gameIndex, list->paths[i], 0);
+        }
+    }
+    free(list);
+    return ok;
 }
 
 /* A game-specific directory is allowed to hold several original DM2 media
@@ -7151,6 +7284,15 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
             m12_require_csb_amiga31_package_identity(status, i);
         }
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+            if ((!requestedDataDir || !FSP_FileExists(requestedDataDir) ||
+                 FSP_DirExists(requestedDataDir)) &&
+                !m12_admit_dm2_directory_zips(status, i, roots, rootCount,
+                                               &progressCtx)) {
+                m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
+                return 0;
+            }
+#endif
             (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount,
                                                 requestedDataDir);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
@@ -7608,6 +7750,15 @@ void M12_AssetStatus_ScanGameWithOptions(
             } else
 #endif
             {
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+                if ((!requestedDataDir || !FSP_FileExists(requestedDataDir) ||
+                     FSP_DirExists(requestedDataDir)) &&
+                    !m12_admit_dm2_directory_zips(status, gameIndex, roots,
+                                                   rootCount, &progressCtx)) {
+                    m12_scan_publish_cancelled_status(status, requestedDataDir, gameId);
+                    return;
+                }
+#endif
                 (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
                                                      roots, rootCount, requestedDataDir);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING

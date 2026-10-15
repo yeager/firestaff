@@ -4,9 +4,12 @@
 M12 using the same original bytes as its ZIP regression. The old scanner-to-
 runtime failure is fixed, including the exact graphics filename handoff.
 The original demo now also passes mixed-case Swoosh lookup and ambiguous
-Swoosh/swoosh rejection on a case-sensitive HFSX volume. Retail Amiga/Atari
-loose-file routes and their other mixed-case companions still need coverage. Do not infer
-that the demo check establishes those routes or native display/audio parity.
+Swoosh/swoosh rejection on a case-sensitive HFSX volume. Original A22G retail
+GRAPHICS.DAT/Dungeon.dat/DM/Swoosh also reaches source startup and runtime.
+Original Atari 1.2 now passes unique upper/lower dungeon names via CLI and
+lowercase via M12, rejecting ambiguity. Other retail editions, arbitrary
+loose graphics filenames and native Windows/Linux still need coverage; these
+checks do not establish display/audio parity.
 
 2026-10-15 I34E archive selector routing is verified for uppercase ZIP names
 and wrapper directories through CLI and M12. Lookup uses the admitted graphics

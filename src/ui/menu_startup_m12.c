@@ -2005,9 +2005,11 @@ static const char* m12_scan_task_for_locale(int localeIndex,
         return m12_translate_for_locale(locale, "CHECKING EXPLICIT FILE REQUEST");
     if (strcmp(task, "building search roots") == 0)
         return m12_translate_for_locale(locale, "BUILDING SEARCH ROOTS");
-    if (strcmp(task, "checking original file candidates") == 0)
+    if (strcmp(task, "checking original file candidates") == 0 ||
+        strcmp(task, "enumerating ZIP candidates") == 0)
         return m12_translate_for_locale(locale, "CHECKING ORIGINAL FILE CANDIDATES");
-    if (strcmp(task, "matching game versions") == 0)
+    if (strcmp(task, "matching game versions") == 0 ||
+        strcmp(task, "authenticating ZIP candidate") == 0)
         return m12_translate_for_locale(locale, "MATCHING GAME VERSIONS");
     if (strcmp(task, "matching required files") == 0)
         return m12_translate_for_locale(locale, "MATCHING REQUIRED FILES");
@@ -2015,6 +2017,9 @@ static const char* m12_scan_task_for_locale(int localeIndex,
         return m12_translate_for_locale(locale, "MATERIALIZING LAUNCH CACHE");
     if (strcmp(task, "refreshing media metadata") == 0)
         return m12_translate_for_locale(locale, "REFRESHING MEDIA METADATA");
+    if (strcmp(task, "ZIP directory incomplete") == 0 ||
+        strcmp(task, "ZIP inventory incomplete") == 0)
+        return m12_translate_for_locale(locale, "SCANNING GAME DATA");
     return task;
 }
 

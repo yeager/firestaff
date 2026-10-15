@@ -1079,6 +1079,18 @@ static void check_modern_scan_progress_standalone_render(void) {
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
                      0, "matching game versions"),
                  "MATCHING GAME VERSIONS") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     0, "enumerating ZIP candidates"),
+                 "CHECKING ORIGINAL FILE CANDIDATES") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     0, "authenticating ZIP candidate"),
+                 "MATCHING GAME VERSIONS") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     0, "ZIP directory incomplete"),
+                 "SCANNING GAME DATA") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     0, "ZIP inventory incomplete"),
+                 "SCANNING GAME DATA") == 0);
     free(rgba);
 }
 

@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "m11_loose_sibling.h"
 #include "soundtrack_selector_m11.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
@@ -26259,6 +26260,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
             memcpy(dungeonPath + prefix, dungeonMember,
                    strlen(dungeonMember) + 1u);
+            if (!last && (!spec->dungeonPath || !spec->dungeonPath[0])) {
+                char parent[FSP_PATH_MAX];
+                /* ReDMCSB LOADSAVE.C F0435:2336-2343 opens the selected
+                 * Atari/Amiga installation's dungeon through its native
+                 * case-insensitive filesystem, not a POSIX spelling gate. */
+                if (!FSP_ParentDir(parent, sizeof(parent), spec->verifiedAssetPath) ||
+                    m11_find_unique_loose_sibling(parent, dungeonMember,
+                                                   dungeonPath, sizeof(dungeonPath)) != 1)
+                    return 0;
+            }
             dm1_dungeon_path_hash_resolved = 1;
             dm1VirtualDiskPath = 1;
         }

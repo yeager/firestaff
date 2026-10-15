@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM2 data folders`: discover renamed original ZIPs for DOS, Macintosh, FM Towns and Amiga, retaining FM Towns as the default and the selected archive as runtime owner. An unreadable directory reports incomplete discovery without hiding other games.
+- `DM1 loose dungeons`: accept unique original Atari/Amiga dungeon filenames regardless of letter case within the selected graphics directory; reject ambiguous variants.
+
 - `DM1 Amiga loose files`: resolve startup companions with their actual filename case inside the selected installation; reject ambiguous case variants and explain failures with `--debug`.
 
 - `CSB Amiga CTRaw`: load the original English preservation archive directly and start its native game through CLI or the start menu, without converting disks. Multilingual original disk bytes also pass CLI and start-menu startup through ZIP transport; direct original CAPS `.raw` selection passes CLI and start-menu startup. Native display/audio parity remains unverified.

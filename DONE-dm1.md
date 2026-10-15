@@ -1,3 +1,16 @@
+- 2026-10-15: Reuse one private same-directory case resolver for Amiga
+  startup companions and Atari/Amiga loose dungeons. Before the fix, unchanged
+  original Atari 1.2 DUNGEON.DAT booted but dungeon.dat failed on case-sensitive
+  HFSX. The authentic regression now passes both CLI spellings, lowercase M12
+  handoff, ambiguous-filename rejection and unchanged input SHA-256s. It also
+  verifies that a denied incidental DM2 directory does not hide DM1 in the
+  production scan. Original A22G files with GRAPHICS.DAT/Dungeon.dat/DM/Swoosh
+  pass four-file identity, source title/entrance and loaded runtime; original
+  demo mixed/ambiguous Swoosh regression and A22G archive CLI/menu regression
+  pass after the shared refactor (archive CTest: 7.12 seconds). The temporary
+  HFSX volume was removed. Other original editions and native Windows/Linux
+  runtime, physical input and display/audio parity remain unverified.
+
 - 2026-10-15: Resolve loose Amiga startup companions by their actual
   filename case within the admitted graphics parent. The authenticated demo
   with Swoosh failed to launch on a case-sensitive HFSX volume before the fix;
