@@ -1,63 +1,39 @@
-- `DM1 IIGS audio`: add original-bank DOC stereo mixing and a separate SDL
-  transport with source pitch, channel volumes, overlapping voices and sound
-  memory ownership. Wire exit-door and food effects; wall-bump damage and
-  audible-sensor cues remain unfinished. Hardware audio parity is unverified.
-- `DM1 IIGS food`: consume original food through the native mouth control
-  with correct recipient and carried weight, plus presentation-gated mouth
-  animation. Nominal NTSC 60 Hz is the current host profile; PAL, drinks and
-  remaining inventory interactions are unfinished.
-- `DM1 IIGS carrying capacity`: refresh the source calculation after
-  equipment changes and during native play, including Elven Boots.
-- `DM1 IIGS inventory`: connect ordinary body/backpack transfers and hero
-  inventory switching to native tables and icons. Preserve leader ownership,
-  equipment effects and native held-item drawing. Chest/consumption and other
-  interaction gaps remain; this is not complete IIGS support.
-- `DM1 IIGS progression`: execute floor sensors and door events, descend
-  from the Hall of Champions with native monster ownership, and apply
-  torch-dependent dungeon palettes. Complete IIGS gameplay remains unfinished.
-- `DM1 lighting`: ordinary objects in a hand no longer invalidate torch
-  lighting; the calculation follows original torch charge rules.
-- `DM1 IIGS interaction`: add native mirror selection, cancellation and
-  resurrection, with original champion skills and possession ownership.
-  ELIJA, ZED, CHANI and BORIS are verified in both original editions, including
-  torch, Moonstone and Rabbit's Foot effects. Other champion coverage,
-  reincarnation and full gameplay remain unfinished.
-- `DM1 scrolls`: opening a scroll now selects its open icon from the actual
-  Closed field, preserving the original text reference.
-- `DM1 media discovery`: retain FM Towns AUTO priority when its unchanged
-  original ZIP is renamed beside an IIGS disk.
-- `DM1 IIGS startup`: both original editions can enter the first world from
-  CLI (`--platform apple-iigs` or `iigs`) and the start menu with native data
-  ownership and keyboard movement. Intro, audio and full game interaction
-  remain unfinished; this is not complete IIGS support.
-- `DM1 runtime groundwork`: bind original IIGS creature values per game world
-  and preserve existing default profiles. Complete IIGS launch remains unfinished.
-- `DM1 data intake`: read native IIGS creature/projectile metadata and preserve
-  signed coordinates and map-order color replacements. Actual world construction
-  is verified; complete IIGS launch remains unfinished.
-- `DM1 data intake`: validate complete IIGS installations from a single native
-  disk and decode native sound data/volume rules. IIGS launch and playback
-  remain unfinished.
-- `DM1 data intake`: read original IIGS executable-owned startup tables and
-  add explicit native font rendering. Game selection/startup remains unfinished.
-- `DM1 data intake`: connect authenticated Apple IIGS bitmaps to an explicit
-  M11 graphics profile with owned source memory and the existing asset cache.
-  This does not enable IIGS game selection or startup.
-- `DM1 data intake`: decode original Apple IIGS main/bonus dungeon files
-  in bounded memory and validate their complete native world/checksum data.
-  Playable IIGS startup remains unfinished.
-- `DM1 data intake`: add a separate Apple IIGS native bitmap decoder.
-  Palette selection and playable IIGS startup remain unfinished.
-- `DM1 data intake`: read original Apple IIGS ProDOS files in memory through
-  raw PO, ZIP and native 7z transports. Playable IIGS startup remains unfinished.
-- `DM1 verification`: require an active first Hall of Champions after Amiga
-  2.2 German menu startup through both the original disk and ZIP transport.
-- `DM1 media selection`: preserve directly selected Atari disks with mixed-case
-  extensions when an identical neighboring disk is present during a full scan.
-- `DM1 verification`: exercise Hall champion selection and movement through
-  both preservation archives and directly selected Atari ST original disks.
-- `CI`: update the launcher-options handoff test for authenticated language
-  snapshots and explicitly retain rejection of stale scan results.
+# Firestaff v3.0.383
+
+## User-facing changes
+
+- `DM1 Apple IIGS startup`: add launch from the original 2.0 and 2.1 disks
+  through CLI or the game menu. The Hall of Champions, native mirror
+  recruitment, floor sensors, doors, stairs, torch lighting and first dungeon
+  handoff use original data. Full campaign play remains unfinished.
+- `DM1 Apple IIGS inventory`: enable original body and backpack transfers,
+  champion selection, equipment effects, carrying capacity and food use.
+  Original graphics and presentation timing are used for these interactions.
+  Chest, drink and remaining interaction paths are unfinished.
+- `DM1 Apple IIGS audio`: add original-bank Ensoniq DOC stereo effects and a
+  separate SDL transport. Exit-door and food cues use the source sound IDs,
+  volumes and positions. Wall-damage and audible-sensor cues remain unfinished;
+  parity with physical hardware recordings is unverified.
+- `DM1 Apple IIGS media`: read original ProDOS, ZIP and 7z game files in bounded
+  memory, and decode native dungeon, graphics, font, creature and sound data.
+  Original game files are not included in this release.
+- `DM1 Amiga startup`: verify the active first Hall after Amiga 2.2 German menu
+  startup from the original disk and ZIP archive.
+- `DM1 Atari media selection`: fix directly selected disks with mixed-case
+  extensions when an identical neighboring disk appears in a full scan.
+- `DM1 scrolls and lighting`: fix open-scroll icon selection and ordinary
+  hand-object lighting against the original source rules.
+- `DM1 FM Towns media discovery`: retain the AUTO selection priority for an
+  unchanged original ZIP with a different filename beside an IIGS disk.
+
+## Developer changes
+
+- `Original-media regression gates`: add Apple IIGS startup, inventory,
+  original-bank audio and SDL transport checks for both disk editions, plus
+  selected Amiga and Atari startup/media checks.
+- `CI launcher handoff`: update the authenticated language snapshot checks and
+  retain rejection of stale scan results.
+
 # Firestaff v3.0.382
 
 ## User-facing changes
