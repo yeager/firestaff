@@ -1830,3 +1830,22 @@ menu input identifies the actual missing role. Both scan APIs, explicit runtime
 rejection, restored native starts and mixed surviving-owner reports pass. A22G
 normal/alternate tuple equivalence is source-reviewed; original runtime coverage
 for that tuple and equivalent virtual-archive diagnostics remain open.
+
+2026-10-16 explicit archive diagnostic follow-up: selected unavailable DM1
+archives now recover independently authenticated original graphics within that
+exact physical owner and reuse the world/startup role checks. Authentic A20
+without SWSH and ST12 with incompatible PC world cover both scan APIs, precise
+same-owner receipts and ordinary menu refusal. Full ZIP scanning previously
+cleared the more precise DM1 failure report after checking other games; it now
+preserves only the bounded required-file rows through generic initialization,
+without restoring versions, availability or runtime directories. Batch diagnostic
+lookup chooses one graphics path per catalog hash; this does not prove complete
+intra-archive duplicate diagnostics or directory-selected/mixed-edition messages.
+
+Source-audited next intake case (not yet reproduced with original media):
+`m12_explicit_path_is_archive` treats ST/STX/MSA as precise disk roots but omits
+ADF. Explicit ADF input can therefore promote to its parent and skip native
+owner scoping before late preservation-package admission. Reproduce using an
+unchanged original OFS ADF beside another canonical ready Amiga archive, then
+verify the selected physical owner and failure isolation. Do not infer raw/MFM
+ADF support from an OFS intake fix.

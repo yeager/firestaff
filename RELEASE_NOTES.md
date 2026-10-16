@@ -7335,3 +7335,7 @@ does not switch to a neighboring copy.
   Atari/Amiga graphics.
 - Identify missing native startup companions such as A20 `swoosh` and A36
   `VDEO.FTL` separately from valid graphics and dungeon files.
+
+- Keep precise DM1 missing-world/startup-file diagnostics for explicitly selected
+  archives, including the generic full scan's fallback path. Verified member
+  receipts remain tied to the selected archive; incomplete games stay blocked.

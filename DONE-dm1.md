@@ -3536,3 +3536,26 @@ access-denied CTest passed (14.20 s); deterministic cancellation and PO/catalog
 consistency passed. The two full five-game corpus cancellation cases remained
 intentionally skipped. Positive A20/A36/demo CLI sources retained SHA-256.
 Redacted patch Gitleaks found no leaks; no per-frame I/O was added.
+
+- 2026-10-16: Reproduced explicit original A20 ZIP reporting no precise SWSH
+  failure despite verified graphics/world. Added one bounded original-catalog
+  lookup confined to the explicitly selected physical archive, with observed
+  MD5 verification, then reused existing world/startup diagnostic policy.
+  Towns archive language routing remains separate. A further full-Scan red case
+  showed the generic ZIP fallback discarding DM1 failure evidence after its
+  game-specific scan; a bounded four-row snapshot now retains only that report
+  if no game can launch, leaving versions, availability and runtime roots alone.
+  Both source changes passed independent review. Final focused CTests: 2/2,
+  13.97 s, no missing-media skips with authentic demo supplied. Original A20 ZIP
+  missing-SWSH receipts and normal menu input identify only SWSH; ST12 incompatible
+  world ZIP retains its own graphics and rejects its world receipt. Positive
+  native, duplicate, stale-source and mixed-owner tests remain covered. These
+  are headless intake checks, not all archive/edition or display parity proof.
+
+Final explicit-archive report verification: rebuilt original-media CLI startup
+suite passed (217.00 s), including both offline remembered-root cases. Rebuilt
+access-denied test passed (14.64 s); deterministic cancellation and PO/catalog
+consistency passed. The two full five-game corpus cancellation cases remained
+intentionally skipped. Redacted patch Gitleaks found no leaks. The earlier
+216.16 s intermediate CLI run preceded the final diagnostic handoff fix and is
+not used as its final verification.

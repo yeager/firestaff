@@ -6207,31 +6207,69 @@ static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
     }
 }
 
-/* Rejected startup completeness must not erase a separately authenticated
+/* Archive diagnostics stay inside the explicit physical owner. Batch lookup
+ * chooses one original graphics candidate per hash; it does not admit a game. */
+static int m12_dm1_selected_report_graphics(const char* selected,
+    char graphics[ASSET_PATH_MAX], char md5[33]) {
+    enum { count = sizeof(g_dm1Versions) / sizeof(g_dm1Versions[0]) };
+    const char* hashes[count + 1];
+    int matched[count];
+    char (*paths)[ASSET_PATH_MAX];
+    size_t i, used = 0U, length = strlen(selected);
+    int found = 0;
+    if (length >= ASSET_PATH_MAX) return 0;
+    if (!m12_dm1_requested_archive_owner(selected)) {
+        if (!asset_file_md5_hex(selected, md5) ||
+            (!m12_dm1_loose_dungeon_md5(md5) && m12_dm1_towns_graphics_language(md5) < 0)) return 0;
+        m12_copy_string(graphics, ASSET_PATH_MAX, selected);
+        return 1;
+    }
+    for (i = 0U; i < count; ++i)
+        if (m12_dm1_loose_dungeon_md5(g_dm1Versions[i].md5))
+            hashes[used++] = g_dm1Versions[i].md5;
+    hashes[used] = NULL;
+    paths = calloc(count, sizeof(*paths));
+    if (!paths) return 0;
+    memset(matched, 0, sizeof(matched));
+    (void)asset_find_all_by_md5_list(selected, hashes, paths, matched, (int)used, 0);
+    for (i = 0U; i < used; ++i) {
+        if (!matched[i] || (strcmp(paths[i], selected) != 0 &&
+            !(strncmp(paths[i], selected, length) == 0 &&
+              strncmp(paths[i] + length, "::", 2U) == 0))) continue;
+        if (!asset_file_md5_hex(paths[i], md5) || strcmp(md5, hashes[i]) != 0) continue;
+        m12_copy_string(graphics, ASSET_PATH_MAX, paths[i]);
+        found = 1;
+        break;
+    }
+    free(paths);
+    return found;
+}
+
+/* Rejected startup completeness must not erase separately authenticated
  * selected files from the missing-file report. Verify the selected default
  * world independently and identify missing startup companions. This is evidence
  * only: no version row or launch-availability flag is changed. */
-static void m12_report_dm1_selected_loose_files(M12_AssetStatus* status,
+static void m12_report_dm1_selected_files(M12_AssetStatus* status,
     int gameIndex, const char* selected) {
-    char md5[33];
+    char md5[33], graphics[ASSET_PATH_MAX];
     size_t i;
     if (strcmp(g_games[gameIndex].gameId, "dm1") != 0 || status->dm1Available ||
         !selected || strstr(selected, "::") || FSP_DirExists(selected) ||
-        !FSP_FileExists(selected) || !asset_file_md5_hex(selected, md5) ||
-        (!m12_dm1_loose_dungeon_md5(md5) && m12_dm1_towns_graphics_language(md5) < 0)) return;
+        !FSP_FileExists(selected) ||
+        !m12_dm1_selected_report_graphics(selected, graphics, md5)) return;
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex][i];
         if (!file->roleId || strcmp(file->roleId, "graphics") != 0) continue;
         file->matched = 1;
-        m12_copy_string(file->matchedPath, sizeof(file->matchedPath), selected);
-        m12_copy_string(file->sourcePath, sizeof(file->sourcePath), selected);
+        m12_copy_string(file->matchedPath, sizeof(file->matchedPath), graphics);
+        m12_copy_string(file->sourcePath, sizeof(file->sourcePath), graphics);
         m12_copy_string(file->matchedHash, sizeof(file->matchedHash), md5);
         status->originalFileCandidateFound = 1;
         break;
     }
     if (m12_dm1_loose_dungeon_md5(md5)) {
         char dungeon[ASSET_PATH_MAX], dungeonMd5[33];
-        int valid = m12_dm1_default_dungeon_identity(selected, md5, dungeon, dungeonMd5);
+        int valid = m12_dm1_default_dungeon_identity(graphics, md5, dungeon, dungeonMd5);
         for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
             M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex][i];
             if (!file->roleId || strcmp(file->roleId, "dungeon") != 0) continue;
@@ -6245,7 +6283,7 @@ static void m12_report_dm1_selected_loose_files(M12_AssetStatus* status,
             break;
         }
         if (valid) {
-            const char* missing = m12_dm1_missing_startup_companion(selected, md5, dungeonMd5);
+            const char* missing = m12_dm1_missing_startup_companion(graphics, md5, dungeonMd5);
             if (missing && status->requiredFileCounts[gameIndex] < M12_ASSET_MAX_REQUIRED_FILES_PER_GAME) {
                 M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex]
                     [status->requiredFileCounts[gameIndex]++];
@@ -6254,7 +6292,7 @@ static void m12_report_dm1_selected_loose_files(M12_AssetStatus* status,
                 file->roleId = "startup-companion";
                 file->label = missing;
                 file->required = 1;
-                m12_copy_string(file->sourcePath, sizeof(file->sourcePath), selected);
+                m12_copy_string(file->sourcePath, sizeof(file->sourcePath), graphics);
             }
         }
     }
@@ -7549,6 +7587,10 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
                                           const M12_AssetStatusScanOptions* options) {
     char parent[M12_ASSET_DATA_DIR_CAPACITY];
     char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+    M12_AssetRequiredFileStatus dm1RejectedFiles[M12_ASSET_MAX_REQUIRED_FILES_PER_GAME];
+    size_t dm1RejectedCount = 0U;
+#endif
     int i;
     if (!status || !requestedDataDir || !FSP_FileExists(requestedDataDir)) {
         return 0;
@@ -7579,6 +7621,24 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
                     version->matched = 0;
                     version->matchedPath[0] = '\0';
                     version->matchedMd5[0] = '\0';
+                }
+            }
+            /* Keep verified DM1 failure evidence while checking whether
+             * another game can actually launch this selected archive. */
+            if (strcmp(games[g], "dm1") == 0 && !status->dm1Available &&
+                status->requiredFileCounts[index] <= M12_ASSET_MAX_REQUIRED_FILES_PER_GAME) {
+                for (v = 0U; v < status->requiredFileCounts[index]; ++v) {
+                    const M12_AssetRequiredFileStatus* file = &status->requiredFiles[index][v];
+                    const char* path = file->sourcePath[0] ? file->sourcePath : file->matchedPath;
+                    if (file->roleId && strcmp(file->roleId, "graphics") == 0 && file->matched &&
+                        m12_dm1_loose_dungeon_md5(file->matchedHash) &&
+                        (strcmp(path, requestedDataDir) == 0 ||
+                         (strncmp(path, requestedDataDir, n) == 0 && strncmp(path + n, "::", 2U) == 0))) {
+                        dm1RejectedCount = status->requiredFileCounts[index];
+                        memcpy(dm1RejectedFiles, status->requiredFiles[index],
+                               dm1RejectedCount * sizeof(*dm1RejectedFiles));
+                        break;
+                    }
                 }
             }
             if (owned && M12_AssetStatus_GameAvailable(status, games[g])) {
@@ -7612,6 +7672,14 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         m12_init_required_file_metadata(status, i);
     }
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+    if (dm1RejectedCount) {
+        int index = m12_game_index_from_id("dm1");
+        memcpy(status->requiredFiles[index], dm1RejectedFiles,
+               dm1RejectedCount * sizeof(*dm1RejectedFiles));
+        status->requiredFileCounts[index] = dm1RejectedCount;
+    }
+#endif
     status->originalFileCandidateFound = 1;
     m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
     m12_classify_theron_media_path(status, requestedDataDir);
@@ -8198,7 +8266,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
         m12_normalize_dm2_runtime_owner(status, i);
         m12_preserve_dm1_game_data_root(status, i);
-        m12_report_dm1_selected_loose_files(status, i, requestedDataDir);
+        m12_report_dm1_selected_files(status, i, requestedDataDir);
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "refreshing media metadata",
@@ -8638,7 +8706,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);
     m12_normalize_dm2_runtime_owner(status, gameIndex);
     m12_preserve_dm1_game_data_root(status, gameIndex);
-    m12_report_dm1_selected_loose_files(status, gameIndex, requestedDataDir);
+    m12_report_dm1_selected_files(status, gameIndex, requestedDataDir);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
         m12_refresh_theron_track02_loader_receipt(status);

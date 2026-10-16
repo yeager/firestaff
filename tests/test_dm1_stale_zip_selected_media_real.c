@@ -158,7 +158,9 @@ static int check_amiga_virtual_startup_companion(const char* root, const char* o
     char dir[FSP_PATH_MAX]={0}, renamed[FSP_PATH_MAX]={0}, physical[FSP_PATH_MAX];
     M12_AssetStatus* status=NULL;
     M11_GameViewState* game=NULL;
-    int result=1, initialized=0;
+    M12_StartupMenuState* menu=NULL;
+    M12_StartupMenuInitOptions options;
+    int result=1, initialized=0, menuInitialized=0;
     if (!original || !FSP_FileExists(original)) {
         puts("SKIP: authentic Amiga A20 archive unavailable for missing SWSH case");
         return 1;
@@ -175,12 +177,58 @@ static int check_amiga_virtual_startup_companion(const char* root, const char* o
         write_original_pair(archive,names,bytes,sizes),
         "frame authentic A20 graphics and world without required SWSH");
     status=SDL_calloc(1,sizeof(*status));
-    REQUIRE(status,"allocate A20 incomplete startup scan");
+    menu=SDL_calloc(1,sizeof(*menu));
+    memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+    REQUIRE(status && menu,"allocate A20 incomplete startup scan and menu");
     for (int mode=0; mode<2; ++mode) {
         if (mode) M12_AssetStatus_Scan(status,archive);
         else M12_AssetStatus_ScanGame(status,archive,"dm1");
         REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
             "original A20 graphics and dungeon cannot launch without their required SWSH");
+        {
+            int graphicsFound=0, worldFound=0, startupMissing=0;
+            for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
+                const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
+                const char* path=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                char expected[ASSET_PATH_MAX];
+                if (strcmp(required->roleId,"graphics")==0) {
+                    REQUIRE(snprintf(expected,sizeof(expected),"%s::GRAPHICS.DAT",archive)<(int)sizeof(expected),
+                        "construct incomplete archive's authenticated graphics receipt");
+                    graphicsFound=required->matched && strcmp(path,expected)==0 &&
+                        strcmp(required->matchedHash,hashes[0])==0;
+                }
+                if (strcmp(required->roleId,"dungeon")==0) {
+                    REQUIRE(snprintf(expected,sizeof(expected),"%s::DUNGEON.DAT",archive)<(int)sizeof(expected),
+                        "construct incomplete archive's authenticated world receipt");
+                    worldFound=required->matched && strcmp(path,expected)==0 &&
+                        strcmp(required->matchedHash,hashes[1])==0;
+                }
+                if (required->label && strcmp(required->label,"swoosh")==0)
+                    startupMissing=required->required && !required->matched;
+            }
+            if (!graphicsFound || !worldFound || !startupMissing) {
+                fprintf(stderr,"archive-report scan=%d graphics=%d world=%d startup=%d\n",
+                    mode,graphicsFound,worldFound,startupMissing);
+                for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
+                    const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
+                    fprintf(stderr,"archive-report role=%s label=%s matched=%d path=%s source=%s hash=%s\n",
+                        required->roleId,required->label ? required->label : "",required->matched,
+                        required->matchedPath,required->sourcePath,required->matchedHash);
+                }
+            }
+            REQUIRE(graphicsFound && worldFound && startupMissing,
+                "explicit original archive reports missing SWSH separately from its own verified members");
+        }
+        if (menuInitialized) M12_StartupMenu_Destroy(menu);
+        M12_StartupMenu_InitWithOptions(menu,archive,"dm1",&options); menuInitialized=1;
+        menu->view=M12_MENU_VIEW_MAIN; menu->selectedIndex=0;
+        menu->gameOptions[0].architectureIndex=M12_ARCH_AMIGA;
+        M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+        M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+        REQUIRE(menu->messageIsMissingGameData && !menu->launchRequested && menu->messageLine2 &&
+            strstr(menu->messageLine2,"swoosh") && !strstr(menu->messageLine2,"GRAPHICS.DAT") &&
+            !strstr(menu->messageLine2,"DUNGEON.DAT"),
+            "ordinary menu input identifies only missing SWSH for selected original archive");
     }
     REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"a20-renamed") && FSP_CreateDirectory(dir) &&
         FSP_JoinPath(renamed,sizeof(renamed),dir,"original.zip") &&
@@ -231,6 +279,8 @@ static int check_amiga_virtual_startup_companion(const char* root, const char* o
     }
     result=0;
 cleanup:
+    if (menuInitialized) M12_StartupMenu_Destroy(menu);
+    SDL_free(menu);
     if (initialized) M11_GameView_Shutdown(game);
     SDL_free(game); SDL_free(status); free(bytes[0]); free(bytes[1]);
     if (renamed[0]) unlink(renamed);
@@ -376,6 +426,19 @@ static int check_atari_virtual_dungeon_compatibility(const char* root, const cha
             if (phase==1) {
                 REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
                     "both scan APIs reject selected native ZIP with incompatible PC original dungeon");
+                {
+                    int ownGraphics=0, missingWorld=0;
+                    for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
+                        const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
+                        const char* path=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                        if (strcmp(required->roleId,"graphics")==0)
+                            ownGraphics=required->matched && strcmp(path,graphics)==0 &&
+                                strcmp(required->matchedHash,hashes[0])==0;
+                        if (strcmp(required->roleId,"dungeon")==0) missingWorld=!required->matched;
+                    }
+                    REQUIRE(ownGraphics && missingWorld,
+                        "selected native archive reports its own graphics and rejects incompatible world receipt");
+                }
                 continue;
             }
             owner=M12_AssetStatus_GetFirstMatchedVersion(status,"dm1");
