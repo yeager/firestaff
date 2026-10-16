@@ -87,7 +87,8 @@ PY
        ! grep -Fq 'levelLoaded=1' <<<"$direct_output" ||
        ! grep -Fq 'platform=amiga-v21 phase=title-f0437' <<<"$direct_output" ||
        ! grep -Fq 'platform=amiga-v21 phase=entrance-f0441' <<<"$direct_output" ||
-       ! grep -Fq "inventory-file=dungeon matched source=$archive::Dungeon-Master-Amiga-2.${minor}-EN.adf::Dungeon.dat" <<<"$direct_output"; then
+       ! grep -Fq "inventory-file=dungeon matched source=$archive::Dungeon-Master-Amiga-2.${minor}-EN.adf::DUNGEON.DAT" <<<"$direct_output" ||
+       ! grep -Fq "dungeonPath=$archive::Dungeon-Master-Amiga-2.${minor}-EN.adf::DUNGEON.DAT" <<<"$direct_output"; then
         printf '%s\n' "$direct_output" >&2
         echo "FAIL: authentic $version_name CLI launch did not complete startup and dungeon load" >&2
         exit 1

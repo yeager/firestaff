@@ -943,6 +943,77 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
                 asset_file_matches_md5(game->dungeonPath,hashes[0]),
                 "completed ordinary language-change scan launches exact original French world");
             M11_GameView_Shutdown(game); M11_GameView_Init(game);
+            /* BACK cancels publication, including a worker that has already
+             * finished. Retain the chosen language but require an explicit
+             * Launch action before retrying the authentic-media scan. */
+            menu->launchRequested=0;
+            menu->view=M12_MENU_VIEW_GAME_OPTIONS;
+            menu->gameCardFlowStage=2;
+            menu->gameOptSelectedRow=M12_GAME_OPT_ROW_LANGUAGE;
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_RIGHT);
+            REQUIRE(menu->gameOptions[0].languageIndex==3 && menu->dataDirScanJob,
+                "ordinary German choice starts an original-media scan before cancellation check");
+            deadline=SDL_GetTicks()+30000U;
+            while (menu->dataDirScanJob && SDL_GetTicks()<deadline) {
+                M12_StartupMenu_Update(menu);
+                if (menu->dataDirScanJob) SDL_Delay(1);
+            }
+            REQUIRE(!menu->dataDirScanJob && !menu->dataDirScanActive &&
+                menu->assetStatus.dm1DungeonLanguage==2 &&
+                menu->view==M12_MENU_VIEW_GAME_OPTIONS,
+                "German snapshot is ready before explicit French-scan cancellation");
+            menu->gameOptSelectedRow=M12_GAME_OPT_ROW_LANGUAGE;
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_LEFT);
+            REQUIRE(menu->gameOptions[0].languageIndex==2 && menu->dataDirScanJob &&
+                !M12_StartupMenu_GetLaunchIntent(menu).valid,
+                "French scan is pending before ordinary BACK input");
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_BACK);
+            REQUIRE(menu->dataDirScanCancelRequested && !menu->launchRequested,
+                "ordinary BACK accepts language-scan cancellation before UI publication");
+            deadline=SDL_GetTicks()+30000U;
+            while (menu->dataDirScanJob && SDL_GetTicks()<deadline) {
+                M12_StartupMenu_Update(menu);
+                REQUIRE(menu->assetStatus.dm1DungeonLanguage==2,
+                    "cancelled French worker never replaces the previous German snapshot");
+                if (menu->dataDirScanJob) SDL_Delay(1);
+            }
+            for (int update=0; update<3; ++update) M12_StartupMenu_Update(menu);
+            REQUIRE(menu->view==M12_MENU_VIEW_MESSAGE &&
+                menu->messageReturnView==M12_MENU_VIEW_GAME_OPTIONS && !menu->dataDirScanJob,
+                "language cancellation feedback retains the original options return view");
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_BACK);
+            REQUIRE(!menu->dataDirScanJob && !menu->dataDirScanActive &&
+                menu->dataDirScanCancelled && !menu->dm1LanguageRescanPending &&
+                menu->gameOptions[0].languageIndex==2 && menu->assetStatus.dm1DungeonLanguage==2 &&
+                menu->view==M12_MENU_VIEW_GAME_OPTIONS && !menu->launchRequested &&
+                !M12_StartupMenu_GetLaunchIntent(menu).valid,
+                "cancelled language scan returns to options without automatic retry or stale launch");
+            menu->gameOptSelectedRow=M12_GAME_OPT_ROW_COUNT;
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+            REQUIRE(menu->dataDirScanJob && menu->dataDirScanActive && !menu->launchRequested &&
+                !M12_StartupMenu_GetLaunchIntent(menu).valid && !game->active,
+                "first explicit Launch after cancellation retries the chosen-language scan without starting runtime");
+            deadline=SDL_GetTicks()+30000U;
+            while (menu->dataDirScanJob && SDL_GetTicks()<deadline) {
+                M12_StartupMenu_Update(menu);
+                if (menu->dataDirScanJob) SDL_Delay(1);
+            }
+            version=M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index);
+            REQUIRE(!menu->dataDirScanJob && !menu->dataDirScanActive && !menu->dataDirScanCancelled &&
+                menu->assetStatus.dm1DungeonLanguage==1 &&
+                menu->view==M12_MENU_VIEW_GAME_OPTIONS && !menu->launchRequested &&
+                strcmp(menu->selectedDataDir,scanRoot)==0 && version && version->matched &&
+                strcmp(version->matchedPath,selected)==0,
+                "explicit retry completes the French snapshot for the same original owner and returns to options");
+            menu->gameOptSelectedRow=M12_GAME_OPT_ROW_COUNT;
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+            REQUIRE(menu->launchRequested && M12_StartupMenu_GetLaunchIntent(menu).valid &&
+                M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+                M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded &&
+                strcmp(game->dungeonPath,languageWorlds[0])==0 &&
+                asset_file_matches_md5(game->dungeonPath,hashes[0]),
+                "second explicit Launch after retry starts the authenticated original French world");
+            M11_GameView_Shutdown(game); M11_GameView_Init(game);
         }
         REQUIRE(unlink(multiAlias)==0,"remove only task language archive link");
         multiAlias[0]='\0';

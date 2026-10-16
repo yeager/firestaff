@@ -3688,3 +3688,28 @@ not used as its final verification.
   Catalog validation passed; the 21 catalog changes contain source references
   only. Independent scanner/menu review found no remaining blocker after the
   AUTO export correction. Complete language/platform support remains open.
+
+- 2026-10-16: Fixed recovery after cancelling a DM1 language scan. The
+  original-media regression failed against the previous menu implementation
+  at its incorrect return view (5.15 s), then passed with explicit retry.
+  Cancellation retains the previous inventory and requested language; BACK
+  returns to options without restarting work. Start explicitly retries the
+  scan and a later Start loads the exact original French world. Resume/Load
+  retries retain their original views, and catalogue-language policy does not
+  affect custom DM1 entries. Independent review found no remaining blocker.
+  Focused original-media CTest passed 3/3 (43.79 s, no media skips), including
+  cancellation/retry, stale worker rejection, PCML/A36 worlds and access denial.
+  Generic cancellation passed; two full five-game corpus checks remain skipped.
+  Amiga 2.1/2.2 English and 2.2 German CLI/menu startup tests passed 2/2.
+  Updated the English test's obsolete Dungeon.dat diagnostic expectation to
+  the canonical DUNGEON.DAT receipt and added the exact runtime world path;
+  no engine change was needed for those editions. Startup smoke investigation
+  established that accepted/aborted intro transactions can set launchedEver
+  without loading a world; scan-time interruptions already fail correctly.
+  The suspected cleanup-guard defect was not established and no guard was
+  changed. Catalog messages/translations are unchanged; source references and
+  their entry ordering were refreshed.
+
+  Final scoped DM1/CSB/DM2 original-media startup diagnostics passed again
+  (220.66 s), including both disconnected remembered-root recovery cases.
+  Catalog consistency and redacted patch/staged Gitleaks checks passed.

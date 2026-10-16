@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 language scan recovery`: retry an interrupted language scan with Start.
+  Cancellation keeps the selected language and returns to the original view;
+  Resume/Load stays in its own view after rescanning.
+
 - `DM1 language-only installations`: scan the requested French/German original
   world for PC multilingual and Amiga 3.6, without requiring the English world.
   Menu language changes rescan the same source before enabling launch.

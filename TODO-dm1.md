@@ -1903,9 +1903,20 @@ The separate wrapped route retains interactive Hall of Champions, C127 selection
 and movement checks. Raw-STX interactive entrance/Hall completion and complete
 platform startup coverage remain open; loading-only probes do not prove them.
 
-2026-10-16 startup-test follow-up: a short-duration menu launch can exit before
-loading a game with status zero even when FIRESTAFF_FAIL_IF_NO_LAUNCH is set.
-The current language-only verification therefore requires DM1 READY, exact
-world provenance and the runtime probe's launchedEver receipt. Move the smoke
-failure guard across early cleanup paths and add a regression before using
-exit status alone as a launch assertion.
+2026-10-16 startup-test scope correction: FIRESTAFF_FAIL_IF_NO_LAUNCH checks
+whether a launch transaction was accepted, not whether the world finished
+loading. An original PC34 SWSH interruption reports launchedEver=1, active=0,
+levelLoaded=0 and exits normally even with that guard. A scan-time interruption
+reports launchedEver=0 and a failing exit status for both CLI and menu. No
+cleanup-guard defect was established; do not move it based on the earlier
+short-duration observation. Functional startup proof must additionally require
+a loaded world and its exact original graphics/dungeon provenance.
+
+2026-10-16 language-scan cancellation: an interrupted language worker leaves
+its previous inventory intact and preserves the requested language. The user
+can now retry explicitly through Start; BACK and Update do not restart scans.
+Quick Resume and Load return to their own views for the repeated action rather
+than redirecting to New Game. Retry and the language snapshot gate apply only
+to built-in DM1 catalogue entries. Worker creation failures use the existing
+failure dialog with the original return view; allocation-failure injection and
+native OS thread failures remain unexecuted integration cases.

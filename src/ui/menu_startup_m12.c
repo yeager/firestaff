@@ -2685,11 +2685,33 @@ static void m12_preserve_selected_data_directory(M12_StartupMenuState* state,
              selectedDataDir);
 }
 
+static void m12_show_language_scan_result(M12_StartupMenuState* state, int cancelled,
+                                           int returnView, int returnNavLevel) {
+    char line3[160];
+    state->dataDirScanActive=0;
+    state->dataDirScanCancelRequested=0;
+    state->dataDirScanCancelled=cancelled;
+    state->dm1LanguageRescanPending=0;
+    state->dataDirScanProgress.cancelled=cancelled;
+    m12_format_data_dir_line(state,line3,sizeof(line3));
+    m12_enter_message_view(state);
+    state->messageReturnView=returnView;
+    state->messageReturnNavLevel=returnNavLevel;
+    m12_set_buffered_message(state,
+        m12_tr(state,cancelled ? "DATA SCAN CANCELLED" : "DATA SCAN FAILED"),
+        m12_tr(state,"GAME AVAILABILITY WAS NOT UPDATED"),line3);
+}
+
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
                                          const char* dataDir, int languageRescan) {
     M12_DataDirScanJob* job;
     char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
-    if (!state || !dataDir || dataDir[0] == '\0') {
+    int returnView, returnNavLevel;
+    if (!state) return 0;
+    returnView=state->view;
+    returnNavLevel=(int)g_nav_level;
+    if (!dataDir || dataDir[0] == '\0') {
+        if (languageRescan) m12_show_language_scan_result(state,0,returnView,returnNavLevel);
         return 0;
     }
     if (m12_data_directory_dialog_token_is_placeholder(dataDir)) {
@@ -2697,7 +2719,10 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
         return 0;
     }
     if (languageRescan) {
-        if (strlen(dataDir)>=sizeof(canonicalDataDir)) return 0;
+        if (strlen(dataDir)>=sizeof(canonicalDataDir)) {
+            m12_show_language_scan_result(state,0,returnView,returnNavLevel);
+            return 0;
+        }
         snprintf(canonicalDataDir,sizeof(canonicalDataDir),"%s",dataDir);
     } else if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
                                          sizeof(canonicalDataDir))) {
@@ -2722,12 +2747,20 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
     }
     job = (M12_DataDirScanJob*)calloc(1U, sizeof(*job));
     if (!job) {
-        return languageRescan ? 0 : M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
+        if (languageRescan) {
+            m12_show_language_scan_result(state,0,returnView,returnNavLevel);
+            return 0;
+        }
+        return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
     job->mutex = SDL_CreateMutex();
     if (!job->mutex) {
         m12_free_data_dir_scan_job(job);
-        return languageRescan ? 0 : M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
+        if (languageRescan) {
+            m12_show_language_scan_result(state,0,returnView,returnNavLevel);
+            return 0;
+        }
+        return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
     job->dm1DungeonLanguage=m12_dm1_dungeon_language(state);
     job->languageRescan=languageRescan;
@@ -2760,7 +2793,11 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
         state->dataDirScanJob = NULL;
         state->dataDirScanActive = 0;
         m12_free_data_dir_scan_job(job);
-        return languageRescan ? 0 : M12_StartupMenu_SetDataDirectory(state, dataDir);
+        if (languageRescan) {
+            m12_show_language_scan_result(state,0,returnView,returnNavLevel);
+            return 0;
+        }
+        return M12_StartupMenu_SetDataDirectory(state, dataDir);
     }
     return 1;
 }
@@ -2780,7 +2817,34 @@ static void m12_request_dm1_language_scan(M12_StartupMenuState* state) {
     }
     root=state->selectedDataDir[0] ? state->selectedDataDir :
         M12_AssetStatus_GetDataDir(&state->assetStatus);
-    if (root && root[0]) (void)m12_begin_async_data_dir_scan(state,root,1);
+    (void)m12_begin_async_data_dir_scan(state,root,1);
+}
+
+/* A cancelled language request stays selected. Only an explicit start action
+ * retries it; returning from its message or drawing a frame never scans. */
+static int m12_retry_dm1_language_scan(M12_StartupMenuState* state, int entryIndex,
+                                       int returnToOptions) {
+    const M12_MenuEntry* entry;
+    if (!state) return 0;
+    entry=M12_StartupMenu_GetEntry(state,entryIndex);
+    if (!entry || entry->kind!=M12_MENU_ENTRY_GAME ||
+        entry->sourceKind!=M12_MENU_SOURCE_BUILTIN_CATALOG ||
+        !entry->gameId || strcmp(entry->gameId,"dm1")!=0 ||
+        state->assetStatus.dm1DungeonLanguage==m12_dm1_dungeon_language(state)) return 0;
+    state->launchRequested=0;
+    state->quickResumeLaunchRequested=0;
+    if (!state->dataDirScanJob) {
+        /* Resume/Load keeps its original view and selected save. The player
+         * repeats that action after scanning; it must not become New Game. */
+        if (returnToOptions) {
+            state->activatedIndex=entryIndex;
+            state->view=M12_MENU_VIEW_GAME_OPTIONS;
+            state->gameCardFlowStage=2;
+            state->gameOptSelectedRow=M12_GAME_OPT_ROW_COUNT;
+        }
+        m12_request_dm1_language_scan(state);
+    }
+    return 1;
 }
 
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
@@ -6602,6 +6666,7 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     if (!entry) {
         return;
     }
+    if (m12_retry_dm1_language_scan(state,state->selectedIndex,1)) return;
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         state->view = M12_MENU_VIEW_SETTINGS;
         return;
@@ -6716,6 +6781,7 @@ static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
     }
     if (state->quickResumeAvailable && state->selectedIndex == -1) {
         int qrSlot = m12_game_slot_from_id(state->quickResumeGameId);
+        if (m12_retry_dm1_language_scan(state,qrSlot,0)) return;
         if (qrSlot >= 0 && qrSlot < m12_entry_count() &&
             state->entries[qrSlot].available) {
             /* Quick Resume belongs to this game's options. V2.2 is allowed
@@ -7199,6 +7265,7 @@ static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
     if (slot < 0 || slot >= m12_entry_count()) {
         return;
     }
+    if (m12_retry_dm1_language_scan(state,slot,0)) return;
     if (!state->entries[slot].available) {
         m12_show_missing_game_data_popup(state, entry->gameId);
         return;
@@ -7429,6 +7496,7 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
                 return;
             }
             if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                if (m12_retry_dm1_language_scan(state,state->activatedIndex,1)) return;
                 if (state->gameCardFlowStage == 0) {
                     int platforms[M12_ARCH_COUNT];
                     int count = M12_StartupMenu_GetPlatformCardArchitectures(
@@ -7609,6 +7677,7 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
             case M12_MENU_INPUT_ACCEPT:
             case M12_MENU_INPUT_ACTION:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
+                    if (m12_retry_dm1_language_scan(state,state->activatedIndex,1)) return;
                     const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
                     M12_StartupLaunchGate launchGate;
                     const M12_AssetVersionStatus* theronVersion = NULL;
@@ -10394,11 +10463,14 @@ int M12_StartupMenu_GetLaunchGate(
         }
     }
     gate.dataReady = gate.boot.dataReady;
-    if (entry->gameId && strcmp(entry->gameId,"dm1")==0 &&
+    if (entry->sourceKind==M12_MENU_SOURCE_BUILTIN_CATALOG &&
+        entry->gameId && strcmp(entry->gameId,"dm1")==0 &&
         (state->assetStatus.dm1DungeonLanguage!=m12_dm1_dungeon_language(state) ||
          state->dm1LanguageRescanPending)) {
         gate.dataReady=gate.boot.dataReady=0;
-        gate.boot.statusLabel=m12_tr(state,"SCANNING GAME DATA");
+        gate.boot.statusLabel=m12_tr(state,
+            state->dataDirScanJob || state->dm1LanguageRescanPending ? "SCANNING GAME DATA" :
+            state->dataDirScanCancelled ? "DATA SCAN CANCELLED" : "DATA SCAN FAILED");
         gate.boot.detailLabel=m12_tr(state,"GAME AVAILABILITY WAS NOT UPDATED");
     }
     gate.versionReady = gate.boot.versionReady;
@@ -14116,6 +14188,9 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
                 state->view=job->returnView;
                 g_nav_level=(M12_NavLevel)job->returnNavLevel;
             } else m12_show_completed_data_dir_scan_message(state);
+        } else if (job->languageRescan) {
+            m12_show_language_scan_result(state,state->dataDirScanCancelled,
+                job->returnView,job->returnNavLevel);
         } else {
             char line3[160];
             m12_format_data_dir_line(state, line3, sizeof(line3));
@@ -14134,10 +14209,10 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         }
         m12_free_data_dir_scan_job(job);
         state->dm1LanguageRescanPending=0;
-        if (restartRoot[0] && m12_begin_async_data_dir_scan(state,restartRoot,1)) {
-            M12_DataDirScanJob* replacement=(M12_DataDirScanJob*)state->dataDirScanJob;
-            replacement->returnView=returnView;
-            replacement->returnNavLevel=returnNavLevel;
+        if (restartRoot[0]) {
+            state->view=returnView;
+            g_nav_level=(M12_NavLevel)returnNavLevel;
+            (void)m12_begin_async_data_dir_scan(state,restartRoot,1);
         }
         changed = 1;
     }
