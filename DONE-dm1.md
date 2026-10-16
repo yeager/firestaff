@@ -3963,3 +3963,18 @@ not used as its final verification.
   reject missing companions and BONUS substituted for the main world beside
   complete original installations. Independent source reviews found no blocker.
   This does not provide a mixer, establish audible timing, or admit IIGS launch.
+
+- 2026-10-16: Bound the remaining native GS creature/projectile/explosion
+  metadata from exact source-matched spans in both original G20/G21 programs.
+  Explicit types preserve 27 creature aspects, 14 projectile aspects, 13 RGB4
+  replacement sets, native remaps and signed coordinate/shift words. Explosion
+  tables have fifteen X/Y views, not ten XYZ rows despite equal byte counts.
+  Native map-order palette replacement restores defaults then applies nonzero
+  ordinals minus one, with the last request winning independently per color.
+  The separate 1332-byte original-program oracle passes alongside the existing
+  2493-byte startup oracle; all 27 authentic creature requests, reversed map
+  order, negative/over-255 coordinates and invalid requests are covered.
+  Seven original-media tests pass without skips. Main and bonus dungeon tests
+  now also invoke the actual WORLD constructor and check native initial party
+  state. This does not prove active input, native creature gameplay profiles,
+  CLI/M12 startup or full rendering; those remain open in TODO-dm1.md.

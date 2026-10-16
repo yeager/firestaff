@@ -1,3 +1,6 @@
+- `DM1 data intake`: read native IIGS creature/projectile metadata and preserve
+  signed coordinates and map-order color replacements. Actual world construction
+  is verified; complete IIGS launch remains unfinished.
 - `DM1 data intake`: validate complete IIGS installations from a single native
   disk and decode native sound data/volume rules. IIGS launch and playback
   remain unfinished.

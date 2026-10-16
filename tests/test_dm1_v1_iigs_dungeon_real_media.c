@@ -2,6 +2,7 @@
 #include "dm1_v1_iigs_dungeon.h"
 #include "firestaff_prodos.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,9 +40,10 @@ static int check_world(const uint8_t *source, size_t size, const OriginalWorld *
     DM1_V1_IigsDungeonReceipt receipt;
     struct DungeonDatState_Compat state;
     struct DungeonThings_Compat things;
+    struct GameWorld_Compat *world=NULL;
     size_t decoded=0u, required=0u;
     unsigned checksum=0u;
-    int result=0;
+    int result=0, world_loaded=0;
     memset(&state,0,sizeof(state)); memset(&things,0,sizeof(things));
     REQUIRE(size==expected->source_size && asset_memory_matches_md5(source,size,expected->source_hash),
         "native original compressed world identity");
@@ -77,6 +79,19 @@ static int check_world(const uint8_t *source, size_t size, const OriginalWorld *
             (int)state.maps[i].width*state.maps[i].height,"all native map tile arrays are complete");
     for (unsigned i=0u; i<16u; ++i)
         REQUIRE(things.thingCounts[i]==state.header.thingCounts[i],"all original Thing section counts survive LE parsing");
+    /* Exercise the actual world constructor, beyond the structural parser.
+     * Native GS STARTUP2.C:1381-1393 decodes the original party location;
+     * this does not establish M11/CLI admission or platform gameplay rules. */
+    world=calloc(1,sizeof(*world));
+    REQUIRE(world,"allocate actual native world test state");
+    world_loaded=F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+        out+1u,(int)decoded,0xF1A5U,world);
+    REQUIRE(world_loaded==1 && world->ownsDungeon &&
+        world->dungeon && world->things && world->partyMapIndex==0 &&
+        world->party.mapIndex==0 && world->party.mapX==(int)expected->x &&
+        world->party.mapY==(int)expected->y && world->party.direction==2 &&
+        world->party.championCount==0,
+        "actual world constructor preserves original GS first map, location and empty party");
     REQUIRE(rejected(source,size,badout,required-1u),"insufficient output capacity rejects without stale receipt or overflow");
     REQUIRE(rejected(source,size-1u,badout,required) && rejected(source,27u,badout,required),
         "truncated original payload and frequency table reject safely");
@@ -102,6 +117,8 @@ static int check_world(const uint8_t *source, size_t size, const OriginalWorld *
     REQUIRE(asset_memory_matches_md5(source,size,expected->source_hash),"original compressed source remains unchanged");
     result=1;
 cleanup:
+    if (world_loaded==1) F0883_WORLD_Free_Compat(world);
+    free(world);
     F0504_DUNGEON_FreeThingData_Compat(&things); F0500_DUNGEON_FreeDatHeader_Compat(&state);
     free(changed); free(badout); free(out);
     return result;

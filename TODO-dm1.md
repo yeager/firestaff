@@ -2048,3 +2048,17 @@ composition/presentation against ReDMCSB before changing rendering. ScummVM's
 20 ms VBlank assumption and altered command-queue cooldown semantics are not
 cross-platform original timing evidence; no new runtime bug was proven by
 this read-only comparison.
+
+2026-10-16 native IIGS runtime integration audit: the actual shared WORLD
+constructor accepts the complete decoded LE original main/bonus worlds and
+preserves their first map, location, south direction and empty party. This
+is a constructor test, not CLI/M12 launch or movement evidence. Before native
+launch, bind GS gameplay profiles between F0881 reset and F0195 activation.
+F0890d currently hardcodes PC creature data, and direct CREATURE_GetProfile
+consumers bypass that accessor. Both sets require per-world profile routing;
+a global mutable platform switch would affect unrelated games. Full GS
+CREATURE_INFO is 27x26 bytes at original program offset 45084, MD5
+a158c8dd19f97c8cd4a8b905ff5d0e6a (both G20/G21). Scorpion Properties is
+0x299B, versus PC 0x29AB. Fresh-pool G0236 values are shared with PC in the
+original source; compiler flags F0306/F0307 are both zero for GS. Native
+rendering/input/audio consumers and catalogue integration remain unfinished.

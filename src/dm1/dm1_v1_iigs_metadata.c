@@ -21,6 +21,22 @@ static int iigs_meta_words(const uint8_t *program, size_t size, size_t offset,
     }
     return 1;
 }
+static uint16_t iigs_meta_u16(const uint8_t *p) {
+    return (uint16_t)((uint16_t)p[0]|((uint16_t)p[1]<<8));
+}
+static int iigs_meta_signed_words(const uint8_t *program, size_t size,
+                                  size_t offset, void *out, size_t count) {
+    size_t i;
+    uint8_t *destination=(uint8_t *)out;
+    if (offset>size || count>(size-offset)/2U) return 0;
+    for (i=0; i<count; ++i) {
+        uint16_t bits=iigs_meta_u16(program+offset+2U*i);
+        int16_t word=(int16_t)(bits<0x8000U ? (int32_t)bits : (int32_t)bits-65536);
+        memcpy(destination+2U*i,&word,sizeof(word));
+    }
+    return 1;
+}
+
 static int iigs_meta_frames_valid(const uint8_t *frames, size_t count) {
     size_t i;
     for (i=0; i<count; ++i) {
@@ -83,6 +99,73 @@ int dm1_v1_iigs_metadata_read(const uint8_t *program, size_t size,
     IIGS_COPY(object_palette_changes,54427U);
     IIGS_COPY(object_coordinates,54503U);
 #undef IIGS_COPY
+    /* Additional complete GS source initializers independently matched both
+     * programs: DUNVIEW.C G0210/11:1303–1324, G0212:1533,
+     * G0215..17:1541–1591, G0219:1625–1653, G0220:1705–1720,
+     * G0221..24:1821–1869, G0225..28:1871–1923. Native field widths are
+     * DEFS.H CREATURE_ASPECT:2001–2014, PROJECTIL_ASPECT:2034–2044,
+     * CREATURE_REPLACEMENT_COLOR_SET:1979–1984. */
+    if (size<55127U+182U || size<54803U+324U || size<54319U+84U) return 0;
+    for (i=0; i<27U; ++i) {
+        const uint8_t *p=program+54803U+12U*i;
+        DM1_V1_IigsCreatureAspect *a=&value.creature_aspects[i];
+        a->first_native_bitmap_relative_index=iigs_meta_u16(p);
+        a->first_derived_bitmap_index=iigs_meta_u16(p+2U);
+        a->byte_width_front=p[4]; a->height_front=p[5];
+        a->byte_width_side=p[6]; a->height_side=p[7];
+        a->byte_width_attack=p[8]; a->height_attack=p[9];
+        a->coordinate_set_transparent_color=p[10];
+        a->replacement_color_set_ordinals=p[11];
+        if (a->first_native_bitmap_relative_index>86U ||
+            !a->byte_width_front || !a->height_front ||
+            a->byte_width_front>112U || a->height_front>136U ||
+            a->byte_width_side>112U || a->height_side>136U ||
+            a->byte_width_attack>112U || a->height_attack>136U ||
+            (!!a->byte_width_side != !!a->height_side) ||
+            (!!a->byte_width_attack != !!a->height_attack) ||
+            (a->coordinate_set_transparent_color>>4)>=3U ||
+            (a->replacement_color_set_ordinals&15U)>13U ||
+            (a->replacement_color_set_ordinals>>4)>13U) return 0;
+    }
+    for (i=0; i<14U; ++i) {
+        const uint8_t *p=program+54319U+6U*i;
+        DM1_V1_IigsProjectileAspect *a=&value.projectile_aspects[i];
+        a->first_native_bitmap_relative_index=p[0];
+        a->first_derived_bitmap_relative_index=p[1];
+        a->byte_width=p[2]; a->height=p[3]; a->graphic_info=iigs_meta_u16(p+4U);
+        if (a->first_native_bitmap_relative_index>31U || !a->byte_width ||
+            a->byte_width>112U || !a->height || a->height>136U ||
+            (a->graphic_info&~0x0113U)) return 0;
+    }
+    for (i=0; i<13U; ++i) {
+        const uint8_t *p=program+55127U+14U*i;
+        DM1_V1_IigsCreatureReplacementColorSet *r=&value.creature_replacement_colors[i];
+        for (j=0; j<6U; ++j) {
+            r->rgb[j]=iigs_meta_u16(p+2U*j);
+            if (r->rgb[j]>0x0fffU) return 0;
+        }
+        r->d2_replacement_color=p[12]; r->d3_replacement_color=p[13];
+        if (p[12]>15U || p[13]>15U) return 0;
+    }
+#define IIGS_COPY(field, offset) \
+    if (!iigs_meta_bytes(program,size,(offset),value.field,sizeof(value.field))) return 0
+    IIGS_COPY(creature_palette_changes,55309U);
+    IIGS_COPY(creature_coordinates,55389U);
+    IIGS_COPY(explosion_aspects,54403U);
+    IIGS_COPY(smoke_palette_changes,54411U);
+    IIGS_COPY(projectile_scales,54459U);
+    IIGS_COPY(explosion_base_scales,54466U);
+    IIGS_COPY(object_pile_shift_sets,54471U);
+#undef IIGS_COPY
+    if (!iigs_meta_signed_words(program,size,55341U,value.shift_sets,24U) ||
+        !iigs_meta_signed_words(program,size,55719U,value.centered_explosion_coordinates,30U) ||
+        !iigs_meta_signed_words(program,size,55779U,value.explosion_coordinates,60U) ||
+        !iigs_meta_signed_words(program,size,55899U,value.rebirth_step2_coordinates,21U) ||
+        !iigs_meta_signed_words(program,size,55941U,value.rebirth_step1_coordinates,21U)) return 0;
+    for (i=0; i<16U; ++i)
+        if (value.creature_palette_changes[0][i]>15U ||
+            value.creature_palette_changes[1][i]>15U || value.smoke_palette_changes[i]>15U)
+            return 0;
     for (i=0; i<16U; ++i) {
         if (value.credits_palette[i]>0x0fffU || value.entrance_palette[i]>0x0fffU ||
             value.interface_palette[i]>0x0fffU || value.palette_no_changes[i]!=i) return 0;
@@ -109,6 +192,54 @@ int dm1_v1_iigs_metadata_read(const uint8_t *program, size_t size,
         !iigs_meta_frames_valid(&value.floor_frames[0][0][0],27U) ||
         !iigs_meta_frames_valid(&value.door_frames[0][0][0],12U) ||
         !iigs_meta_frames_valid(&value.door_button_frames[0][0],4U)) return 0;
+    *out=value;
+    return 1;
+}
+
+static int iigs_meta_apply_replacement(const DM1_V1_IigsMetadata *metadata,
+    DM1_V1_IigsCreaturePalette *palette, unsigned color, unsigned index) {
+    const DM1_V1_IigsCreatureReplacementColorSet *set;
+    size_t i;
+    if (index>=13U || color>=16U) return 0;
+    set=&metadata->creature_replacement_colors[index];
+    if (set->d2_replacement_color>15U || set->d3_replacement_color>15U) return 0;
+    for (i=0; i<6U; ++i) {
+        if (set->rgb[i]>0x0fffU) return 0;
+        palette->dungeon_palettes[i][color]=set->rgb[i];
+    }
+    palette->creature_palette_changes[0][color]=set->d3_replacement_color;
+    palette->creature_palette_changes[1][color]=set->d2_replacement_color;
+    return 1;
+}
+
+int dm1_v1_iigs_metadata_creature_palette(const DM1_V1_IigsMetadata *metadata,
+    const uint8_t *allowed_creatures, size_t count,
+    DM1_V1_IigsCreaturePalette *out) {
+    DM1_V1_IigsCreaturePalette value;
+    size_t i;
+    if (!out) return 0;
+    memset(out,0,sizeof(*out));
+    if (!metadata || count>15U || (count && !allowed_creatures) ||
+        (metadata->program_version!=DM1_V1_IIGS_PROGRAM_G20 &&
+         metadata->program_version!=DM1_V1_IIGS_PROGRAM_G21)) return 0;
+    memcpy(value.dungeon_palettes,metadata->dungeon_palettes,sizeof(value.dungeon_palettes));
+    memcpy(value.creature_palette_changes,metadata->creature_palette_changes,
+           sizeof(value.creature_palette_changes));
+    /* DUNVIEW.C F0095:2805–2815 resets defaults, then processes native
+     * allowed-creature order. DEFS.H M073/M074:2018–2019 extracts ORDINALS;
+     * zero leaves the current color, nonzero uses ordinal-1, so later map
+     * entries win independently for colors 9 and 10. F0093:2008–2014 updates
+     * six RGB4 palettes plus native D2 and D3 remaps. */
+    if (!iigs_meta_apply_replacement(metadata,&value,9U,8U) ||
+        !iigs_meta_apply_replacement(metadata,&value,10U,12U)) return 0;
+    for (i=0; i<count; ++i) {
+        unsigned ordinals,color9,color10;
+        if (allowed_creatures[i]>=27U) return 0;
+        ordinals=metadata->creature_aspects[allowed_creatures[i]].replacement_color_set_ordinals;
+        color9=ordinals&15U; color10=ordinals>>4;
+        if ((color9 && !iigs_meta_apply_replacement(metadata,&value,9U,color9-1U)) ||
+            (color10 && !iigs_meta_apply_replacement(metadata,&value,10U,color10-1U))) return 0;
+    }
     *out=value;
     return 1;
 }

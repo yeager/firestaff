@@ -17,6 +17,131 @@ static void words_le(uint8_t *out, size_t *used, const void *source, size_t byte
         out[(*used)++]=(uint8_t)word; out[(*used)++]=(uint8_t)(word>>8);
     }
 }
+static unsigned original_word(const uint8_t *p) { return (unsigned)p[0] | ((unsigned)p[1]<<8); }
+static void reference_replacement(const uint8_t *program, DM1_V1_IigsCreaturePalette *out,
+    unsigned color, unsigned set) {
+    const uint8_t *source=program+55127u+14u*set;
+    for (unsigned light=0u; light<6u; ++light)
+        out->dungeon_palettes[light][color]=(uint16_t)original_word(source+2u*light);
+    out->creature_palette_changes[0][color]=source[13];
+    out->creature_palette_changes[1][color]=source[12];
+}
+static void reference_creature_palette(const uint8_t *program, const uint8_t *allowed,
+    size_t count, DM1_V1_IigsCreaturePalette *out) {
+    memset(out,0,sizeof(*out));
+    for (unsigned light=0u; light<6u; ++light) for (unsigned color=0u; color<16u; ++color)
+        out->dungeon_palettes[light][color]=(uint16_t)original_word(program+57711u+(light*16u+color)*2u);
+    memcpy(out->creature_palette_changes,program+55309u,32u);
+    /* Native F0095 restores these zero-based sets before processing each
+     * allowed creature in map order; packed requests are ordinal-based. */
+    reference_replacement(program,out,9u,8u); reference_replacement(program,out,10u,12u);
+    for (size_t i=0u; i<count; ++i) {
+        unsigned ordinals=program[54803u+12u*allowed[i]+11u];
+        if (ordinals&15u) reference_replacement(program,out,9u,(ordinals&15u)-1u);
+        if (ordinals>>4) reference_replacement(program,out,10u,(ordinals>>4)-1u);
+    }
+}
+static int check_creature_palette(const uint8_t *program, const DM1_V1_IigsMetadata *metadata) {
+    DM1_V1_IigsCreaturePalette actual, expected, forward, reverse;
+    DM1_V1_IigsMetadata changed;
+    uint8_t zero[sizeof(actual)]={0}, saved[sizeof(*metadata)], allowed[16];
+    int result=0;
+    memcpy(saved,metadata,sizeof(saved));
+    reference_creature_palette(program,NULL,0u,&expected);
+    REQUIRE(dm1_v1_iigs_metadata_creature_palette(metadata,NULL,0u,&actual) &&
+        memcmp(&actual,&expected,sizeof(actual))==0,"native empty map restores original color-nine/eight and color-ten/twelve defaults");
+    for (uint8_t creature=0u; creature<27u; ++creature) {
+        reference_creature_palette(program,&creature,1u,&expected);
+        REQUIRE(dm1_v1_iigs_metadata_creature_palette(metadata,&creature,1u,&actual) &&
+            memcmp(&actual,&expected,sizeof(actual))==0,
+            "all 27 authentic creature aspect ordinals select native RGB4 colors and D3/D2 indices");
+    }
+    allowed[0]=0u; allowed[1]=4u;
+    reference_creature_palette(program,allowed,2u,&expected);
+    REQUIRE(dm1_v1_iigs_metadata_creature_palette(metadata,allowed,2u,&forward) &&
+        memcmp(&forward,&expected,sizeof(forward))==0,"native creature map order applies ordinal-minus-one replacement sets");
+    allowed[0]=4u; allowed[1]=0u;
+    reference_creature_palette(program,allowed,2u,&expected);
+    REQUIRE(dm1_v1_iigs_metadata_creature_palette(metadata,allowed,2u,&reverse) &&
+        memcmp(&reverse,&expected,sizeof(reverse))==0 && memcmp(&forward,&reverse,sizeof(forward))!=0,
+        "reversing authentic creature requests changes the final shared replacement color");
+    for (unsigned i=0u; i<16u; ++i) allowed[i]=(uint8_t)i;
+    memset(&actual,0xa5,sizeof(actual));
+    REQUIRE(!dm1_v1_iigs_metadata_creature_palette(metadata,allowed,16u,&actual) &&
+        memcmp(&actual,zero,sizeof(actual))==0,"map count above native four-bit limit clears output");
+    allowed[0]=27u; memset(&actual,0xa5,sizeof(actual));
+    REQUIRE(!dm1_v1_iigs_metadata_creature_palette(metadata,allowed,1u,&actual) &&
+        memcmp(&actual,zero,sizeof(actual))==0,"invalid creature index cannot produce a partial native palette");
+    changed=*metadata; changed.creature_aspects[0].replacement_color_set_ordinals=15u;
+    allowed[0]=0u; memset(&actual,0xa5,sizeof(actual));
+    REQUIRE(!dm1_v1_iigs_metadata_creature_palette(&changed,allowed,1u,&actual) &&
+        memcmp(&actual,zero,sizeof(actual))==0,"original-derived invalid replacement ordinal clears output");
+    REQUIRE(memcmp(metadata,saved,sizeof(saved))==0,"native palette calculation never changes copied program metadata");
+    result=1;
+cleanup:
+    return result;
+}
+static int check_extra_metadata(const uint8_t *program, const DM1_V1_IigsMetadata *metadata) {
+    uint8_t aggregate[1332]; size_t used=0u; int result=0;
+    for (unsigned i=0u; i<27u; ++i) {
+        const DM1_V1_IigsCreatureAspect *c=&metadata->creature_aspects[i];
+        unsigned packed=program[54803u+12u*i+11u];
+        words_le(aggregate,&used,&c->first_native_bitmap_relative_index,2u);
+        words_le(aggregate,&used,&c->first_derived_bitmap_index,2u);
+        aggregate[used++]=c->byte_width_front; aggregate[used++]=c->height_front;
+        aggregate[used++]=c->byte_width_side; aggregate[used++]=c->height_side;
+        aggregate[used++]=c->byte_width_attack; aggregate[used++]=c->height_attack;
+        aggregate[used++]=c->coordinate_set_transparent_color;
+        aggregate[used++]=c->replacement_color_set_ordinals;
+        REQUIRE((c->replacement_color_set_ordinals&15u)==(packed&15u) &&
+            (c->replacement_color_set_ordinals>>4)==(packed>>4),
+            "creature color-nine/ten requests retain distinct packed low/high ordinal nibbles");
+    }
+    for (unsigned i=0u; i<14u; ++i) {
+        const DM1_V1_IigsProjectileAspect *p=&metadata->projectile_aspects[i];
+        aggregate[used++]=p->first_native_bitmap_relative_index;
+        aggregate[used++]=p->first_derived_bitmap_relative_index;
+        aggregate[used++]=p->byte_width; aggregate[used++]=p->height;
+        words_le(aggregate,&used,&p->graphic_info,2u);
+    }
+    for (unsigned i=0u; i<13u; ++i) {
+        const DM1_V1_IigsCreatureReplacementColorSet *r=&metadata->creature_replacement_colors[i];
+        words_le(aggregate,&used,r->rgb,sizeof(r->rgb));
+        aggregate[used++]=r->d2_replacement_color; aggregate[used++]=r->d3_replacement_color;
+    }
+#define EXTRA_WORDS(field) do { REQUIRE(used+sizeof(metadata->field)<=sizeof(aggregate),"bounded extra metadata words"); words_le(aggregate,&used,metadata->field,sizeof(metadata->field)); } while (0)
+#define EXTRA_BYTES(field) do { REQUIRE(used+sizeof(metadata->field)<=sizeof(aggregate),"bounded extra metadata bytes"); memcpy(aggregate+used,metadata->field,sizeof(metadata->field)); used+=sizeof(metadata->field); } while (0)
+    EXTRA_BYTES(creature_palette_changes); EXTRA_WORDS(shift_sets); EXTRA_BYTES(creature_coordinates);
+    EXTRA_BYTES(explosion_aspects); EXTRA_BYTES(smoke_palette_changes); EXTRA_BYTES(projectile_scales);
+    EXTRA_BYTES(explosion_base_scales); EXTRA_BYTES(object_pile_shift_sets);
+    EXTRA_WORDS(centered_explosion_coordinates); EXTRA_WORDS(explosion_coordinates);
+    EXTRA_WORDS(rebirth_step2_coordinates); EXTRA_WORDS(rebirth_step1_coordinates);
+#undef EXTRA_WORDS
+#undef EXTRA_BYTES
+    /* Independent original-program slice oracle: creature54803/324,
+     * projectile54319/84, replacements55127/182, remaps55309/32,
+     * shifts55341/48, coordinates55389/330, explosion54403/8,
+     * smoke54411/16, scales54459/7+54466/5, pile54471/32,
+     * centered55719/60, explosion55779/120, rebirth55899/42+55941/42.
+     * Both complete original programs give this same 1332-byte digest. */
+    REQUIRE(used==sizeof(aggregate) && asset_memory_matches_md5(aggregate,used,"352ae93537c2c8b49128497869606ca0"),
+        "all native creature/projectile/replacement fields match independent executable-section oracle");
+    REQUIRE(metadata->shift_sets[0][5]==-3 &&
+        metadata->centered_explosion_coordinates[13][0]==-53 &&
+        metadata->centered_explosion_coordinates[14][0]==276 &&
+        metadata->explosion_coordinates[13][0][0]==-73 &&
+        metadata->explosion_coordinates[14][0][0]==256 && metadata->explosion_coordinates[14][1][0]==296,
+        "all fifteen native explosion views preserve signed coordinates and values above one byte");
+    REQUIRE(metadata->creature_aspects[19].replacement_color_set_ordinals==0xa9u &&
+        metadata->creature_aspects[22].replacement_color_set_ordinals==0xcbu &&
+        metadata->projectile_aspects[3].graphic_info==0x0112u,
+        "native packed replacement ordinals and sixteen-bit projectile flags retain source meaning");
+    REQUIRE(check_creature_palette(program,metadata),"native creature palette defaults and ordered replacement helper");
+    result=1;
+cleanup:
+    return result;
+}
+
 static int check_metadata(const uint8_t *program, size_t size, unsigned edition) {
     static const char *const hashes[]={"51b9d22c7418651ee49ad77f37c80a3c","eccc49e7b29ee233cfb10615e8ec86f3"};
     DM1_V1_IigsMetadata metadata, rejected;
@@ -49,6 +174,7 @@ static int check_metadata(const uint8_t *program, size_t size, unsigned edition)
     REQUIRE(used==sizeof(aggregate) && asset_memory_matches_md5(aggregate,used,
         "307939a44cf5fc0e1b59203aacf95329"),
         "all native startup/dungeon metadata fields retain independently source-matched original bytes after caller lifetime ends");
+    REQUIRE(check_extra_metadata(program,&metadata),"independent native creature and projectile metadata foundation");
     for (unsigned i=0u; i<16u; ++i) {
         REQUIRE(metadata.palette_no_changes[i]==i && metadata.credits_palette[i]<=0xfffu &&
             metadata.entrance_palette[i]<=0xfffu && metadata.interface_palette[i]<=0xfffu,
