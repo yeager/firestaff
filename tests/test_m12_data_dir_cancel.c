@@ -1254,6 +1254,16 @@ static void check_scan_progress_uses_display_names(void) {
     CHECK(strcmp(nexus, "nexus") != 0);
     CHECK(strcmp(theron, "theron") != 0);
 
+    CHECK(strcmp(M12_StartupMenu_TranslateForLocale(
+                     1, "SCANNING GAME DATA"),
+                 "SÖKER EFTER SPELDATA") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     1, "starting"),
+                 "STARTAR") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     1, "matching game versions"),
+                 "MATCHAR SPELVERSIONER") == 0);
+
     for (languageIndex = 0; languageIndex < 19; ++languageIndex) {
         CHECK(strcmp(M12_StartupMenu_GameDisplayTitleForLocale(
                          languageIndex, "dm1"),
