@@ -615,6 +615,32 @@ cleanup:
     if (dir[0]) rmdir(dir);
     return result==0;
 }
+static int check_missing_pc_language_feedback(const char* selected, int language,
+    const char* filename, int automatic) {
+    M12_StartupMenuState* menu=SDL_calloc(1,sizeof(*menu));
+    M12_StartupMenuInitOptions options;
+    int ok;
+    if (!menu) return 0;
+    memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+    M12_StartupMenu_InitWithOptions(menu,selected,"dm1",&options);
+    menu->view=M12_MENU_VIEW_MAIN; menu->selectedIndex=0;
+    menu->gameOptions[0].architectureIndex=automatic ? M12_ARCH_AUTO : M12_ARCH_PC;
+    menu->gameOptions[0].versionIndex=M12_AssetStatus_FindVersionIndex("dm1",
+        automatic ? "pc34-en" : "pc34-multi");
+    menu->gameOptions[0].languageIndex=language;
+    menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+    for (int input=0; input<3 && !menu->messageIsMissingGameData; ++input)
+        M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+    ok=menu->messageIsMissingGameData && !menu->launchRequested && menu->messageLine2 &&
+        strstr(menu->messageLine2,filename) && !strstr(menu->messageLine2,"GRAPHICS.DAT") &&
+        !strstr(menu->messageLine2,"DUNGEON.DAT");
+    M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_BACK);
+    ok=ok && !menu->launchRequested && !menu->messageIsMissingGameData &&
+        menu->view==M12_MENU_VIEW_GAME_OPTIONS && menu->activatedIndex==0 &&
+        menu->gameOptions[0].languageIndex==language;
+    M12_StartupMenu_Destroy(menu); SDL_free(menu);
+    return ok;
+}
 static int check_multilingual_loose_selection(const char* root, const char* original, const char* multi,
     const unsigned char* graphicsBytes, size_t graphicsSize,
     const unsigned char* dungeonBytes, size_t dungeonSize) {
@@ -741,10 +767,17 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
             M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
             REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
                 "selected-language hash gate rejects a different original under the expected filename");
+            REQUIRE(check_missing_pc_language_feedback(selected,language==0 ? 2 : 3,names[language],0) &&
+                check_missing_pc_language_feedback(selected,language==0 ? 2 : 3,names[language],1),
+                "menu reports the exact invalid chosen-language file before requesting launch");
             REQUIRE(unlink(languageWorlds[language])==0,"remove only staged selected-language dungeon");
             M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
             REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
                 "missing chosen-language dungeon rejects without English or archive substitution");
+            REQUIRE(!M12_StartupMenu_GetLaunchIntent(menu).valid &&
+                check_missing_pc_language_feedback(selected,language==0 ? 2 : 3,names[language],0) &&
+                check_missing_pc_language_feedback(selected,language==0 ? 2 : 3,names[language],1),
+                "missing chosen-language file blocks both direct intent and ordinary menu input");
             REQUIRE(write_original_bytes(languageWorlds[language],foreignDungeon,foreignSize),
                 "restore unchanged selected-language original dungeon");
             free(foreignDungeon); foreignDungeon=NULL;

@@ -1740,9 +1740,10 @@ now prove exact selected-file ownership in both scan APIs, matching required
 file provenance and runtime startup. Removing or replacing its standard
 dungeon rejects without borrowing an English sibling. Same-directory renamed
 original standard dungeons remain supported, as do explicitly supplied French
-original dungeons with loose or virtual PC graphics. Automatic French/German
-language-dungeon routing, other native owners' companion feedback and native
-Windows original-media staging remain open; this is not full edition parity.
+original dungeons with loose or virtual PC graphics. The subsequent PC language
+routing and launcher-feedback entries below cover automatic French/German
+selection. Language-only packages, other native owners' companion feedback and
+native Windows original-media staging remain open; this is not full edition parity.
 
 2026-10-16 ScummVM audit refresh: current master
 `a3cf3746e44070528badfbdbb292edd9dd4e6340` has the same gfx.cpp blob as the
@@ -1869,3 +1870,11 @@ packages without the standard English world remains open: ordinary inventory
 still authenticates the default owner before any per-game language selection.
 Complete in-game translation and other multilingual platforms remain separate
 work; this change targets original PC34 dungeon-language routing.
+
+2026-10-16 PC multilingual launch feedback: a requested French/German world
+is now revalidated at the launcher input and intent boundaries. Missing or
+incorrect selected-language originals produce the existing localized missing-data
+dialog naming only DUNGEONF.DAT/DUNGEONG.DAT. AUTO uses the actual chosen
+edition rather than a stale saved version. The rendered launch gate remains
+an inventory snapshot and performs no added language-file I/O. This does not
+change the open language-only-package discovery requirement above.

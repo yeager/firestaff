@@ -48,6 +48,7 @@
 #include "manual_docs_m12.h"
 #include "cloud_sync_m12.h"
 #include "asset_find_by_hash.h"
+#include "dm1_v1_native_dungeon_compat.h"
 
 #include <SDL3/SDL_atomic.h>
 #include <SDL3/SDL_misc.h>
@@ -2150,8 +2151,9 @@ static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
     }
 }
 
-static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
-                                             const char* gameId) {
+static void m12_show_missing_game_data_file_popup(M12_StartupMenuState* state,
+                                                  const char* gameId,
+                                                  const char* filename) {
     char line1[128];
     char line2[256];
     char line3[160];
@@ -2161,7 +2163,8 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
     }
     gameIndex = m12_entry_index_for_game_id(state, gameId);
     snprintf(line1, sizeof(line1), "%s %s", m12_game_display_title(state, gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
-    m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
+    if (filename) snprintf(line2, sizeof(line2), "%s", filename);
+    else m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
     if (gameIndex >= 0) {
@@ -2180,6 +2183,11 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
              sizeof(state->messageGameId),
              "%s",
              gameId ? gameId : "");
+}
+
+static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
+                                             const char* gameId) {
+    m12_show_missing_game_data_file_popup(state, gameId, NULL);
 }
 
 static const char* m12_platform_data_instructions(const M12_StartupMenuState* state) {
@@ -6349,6 +6357,52 @@ static const M12_AssetVersionStatus* m12_selected_version_status(const M12_Start
     }
 }
 
+/* Run only when a launch is requested. GetLaunchGate is also used while
+ * drawing, so it must not hash original files every frame. FILENAME.C F0745
+ * and LOADSAVE.C F0435 bind the chosen language to the selected owner. */
+static const char* m12_missing_dm1_pc_language_file(
+    const M12_StartupMenuState* state, const M12_AssetVersionStatus* version) {
+    const M12_MenuEntry* entry;
+    const char *language, *name, *md5, *leaf, *cursor, *slash, *backslash;
+    char path[ASSET_PATH_MAX], parent[FSP_PATH_MAX];
+    size_t prefix;
+    int found;
+    if (!state || state->activatedIndex < 0) return NULL;
+    entry=M12_StartupMenu_GetEntry(state,state->activatedIndex);
+    if (!entry || !entry->gameId || strcmp(entry->gameId,"dm1")!=0 ||
+        entry->sourceKind!=M12_MENU_SOURCE_BUILTIN_CATALOG) return NULL;
+    if (!version && state->gameOptions[0].architectureIndex==M12_ARCH_AUTO) {
+        int selected=M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &state->assetStatus,"dm1",M12_ARCH_AUTO);
+        if (selected>=0) version=M12_AssetStatus_GetVersion(&state->assetStatus,"dm1",(size_t)selected);
+    } else if (!version) version=m12_selected_version_status(state,0);
+    if (!version || !version->matched ||
+        strcmp(version->matchedMd5,"f934d97e43e1ba6e5159839acbcd0611")!=0) return NULL;
+    language=M12_StartupMenu_GetLanguageCode(state->gameOptions[0].languageIndex);
+    name=dm1_v1_pc34_multilang_dungeon_name(language);
+    if (strcmp(name,"DUNGEON.DAT")==0) return NULL;
+    md5=dm1_v1_pc34_multilang_dungeon_md5(language);
+    leaf=NULL;
+    for (cursor=version->matchedPath; (cursor=strstr(cursor,"::"))!=NULL; cursor+=2)
+        leaf=cursor+2;
+    if (leaf) {
+        slash=strrchr(leaf,'/'); backslash=strrchr(leaf,'\\');
+        if (!slash || (backslash && backslash>slash)) slash=backslash;
+        prefix=(size_t)((slash ? slash+1 : leaf)-version->matchedPath);
+        if (prefix+strlen(name)>=sizeof(path)) return name;
+        memcpy(path,version->matchedPath,prefix); strcpy(path+prefix,name);
+    } else {
+        if (!FSP_ParentDir(parent,sizeof(parent),version->matchedPath)) return name;
+        found=FSP_FindUniqueFileIgnoreCase(parent,name,path,sizeof(path));
+        if (found==0) {
+            char renamed[1][ASSET_PATH_MAX];
+            if (asset_collect_files_by_md5(parent,md5,renamed,1U,0)!=1) return name;
+            snprintf(path,sizeof(path),"%s",renamed[0]);
+        } else if (found!=1) return name;
+    }
+    return asset_file_matches_md5(path,md5) ? NULL : name;
+}
+
 static const char* m12_selected_version_label(const M12_StartupMenuState* state,
                                               int gameIndex,
                                               int shortLabel) {
@@ -7205,7 +7259,7 @@ const char* M12_StartupMenu_SaveBrowserFooterText(
     return m12_tr(state, "ENTER LOAD   ESC SETTINGS");
 }
 
-void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
+static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
                                  M12_MenuInput input) {
     int count;
     if (!state) {
@@ -8100,6 +8154,15 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         default:
             break;
     }
+}
+
+void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
+                                  M12_MenuInput input) {
+    const char* missing;
+    m12_startup_menu_handle_input(state,input);
+    if (state && state->launchRequested &&
+        (missing=m12_missing_dm1_pc_language_file(state,NULL))!=NULL)
+        m12_show_missing_game_data_file_popup(state,"dm1",missing);
 }
 
 static void m12_put_pixel(unsigned char* framebuffer,
@@ -14881,6 +14944,8 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
      * game id the launcher does not support. */
     intent.valid = m12_game_supported(intent.gameId) &&
                    gate.canLaunch && version && version->matched ? 1 : 0;
+    if (intent.valid && state->launchRequested &&
+        m12_missing_dm1_pc_language_file(state,version)) intent.valid=0;
     if (intent.valid && intent.gameId && strcmp(intent.gameId, "theron") == 0) {
         const Theron_V1Track02CampaignMediaDiscoveryReceipt* media =
             M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);

@@ -3604,3 +3604,24 @@ not used as its final verification.
   as did all four FR/DE direct/menu CLI checks and catalog validation.
   Independent source review found no blocker. These checks establish the
   tested startup/data-routing paths, not complete visual/platform parity.
+
+- 2026-10-16: Reproduced the ordinary PC ML menu requesting launch even when
+  the selected French/German world was absent or held a different original.
+  Input now blocks that request with the existing localized missing-data
+  dialog and the precise original filename. The final launch intent separately
+  rechecks the resolved owner; custom sources and other games retain their
+  paths. Shared pure filename/hash helpers keep M11 and M12 in agreement.
+  AUTO resolves its actual admitted edition, including stale saved English
+  version rows. No language-file hashing was added to rendered launch gates.
+  Original-data tests cover missing/incorrect FR/DE files through both PC and
+  AUTO menu input, direct intent rejection and recovery using renamed originals.
+  Final focused checks passed (3/3, 26.92 s), including access denial and BACK
+  returning to the game options with language preserved. Catalog refresh changes
+  source references only in 21 startup-menu catalogs.
+
+  The scoped DM1/CSB/DM2 original-media CLI startup suite also passed
+  (217.35 s), as did four actual FR/DE direct/menu CLI launches, deterministic
+  cancellation and catalog validation. The cancellation test's two full
+  five-game corpus cases remained intentionally skipped. Independent source
+  review found no blocker; no original media or synthetic replacement artwork
+  is committed. This is startup/feedback evidence, not full platform parity.

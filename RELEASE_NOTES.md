@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+- `DM1 language feedback`: report a missing or incorrect French/German
+  dungeon in the launcher before handing off, including automatic PC selection.
+
 - `DM1 multilingual PC`: use the selected French or German original dungeon
   from the chosen installation. Read those originals without requiring a
   checksum they do not contain, while keeping save-buffer validation strict.

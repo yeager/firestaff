@@ -4,6 +4,19 @@
 #include "asset_find_by_hash.h"
 #include <string.h>
 
+/* ReDMCSB FILENAME.C F0745:84-104 selects I34M's original world.
+ * These helpers are pure; source authentication stays at launch boundaries. */
+static inline const char* dm1_v1_pc34_multilang_dungeon_name(const char* language) {
+    if (language && strcmp(language,"FR")==0) return "DUNGEONF.DAT";
+    if (language && strcmp(language,"DE")==0) return "DUNGEONG.DAT";
+    return "DUNGEON.DAT";
+}
+static inline const char* dm1_v1_pc34_multilang_dungeon_md5(const char* language) {
+    if (language && strcmp(language,"FR")==0) return "82c7802122e9cfb2dc117bc9d197f457";
+    if (language && strcmp(language,"DE")==0) return "b9487db563ff9e89605c77ee44d17d14";
+    return "766450c940651fc021c92fe5d0d0b3a6";
+}
+
 /* Original LOADSAVE.C F0434:1859-1937 reads native Motorola-order dungeon
  * headers, optionally after the 0x8104 wrapper. F0435:2336-2343 selects the
  * Atari/Amiga world; :2363-2375 selects distinct Towns/PC worlds. These three

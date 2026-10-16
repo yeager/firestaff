@@ -26297,13 +26297,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (spec->verifiedAssetMd5 &&
             strcmp(spec->verifiedAssetMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0) {
             const char* language = M12_StartupMenu_GetLanguageCode(spec->languageIndex);
-            if (language && strcmp(language, "FR") == 0) {
-                dm1Pc34DungeonMember = "DUNGEONF.DAT";
-                dm1Pc34DungeonMd5 = "82c7802122e9cfb2dc117bc9d197f457";
-            } else if (language && strcmp(language, "DE") == 0) {
-                dm1Pc34DungeonMember = "DUNGEONG.DAT";
-                dm1Pc34DungeonMd5 = "b9487db563ff9e89605c77ee44d17d14";
-            }
+            dm1Pc34DungeonMember = dm1_v1_pc34_multilang_dungeon_name(language);
+            dm1Pc34DungeonMd5 = dm1_v1_pc34_multilang_dungeon_md5(language);
         }
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
