@@ -4499,6 +4499,67 @@ static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
     return 1;
 }
 
+/* ReDMCSB LOADSAVE.C F0435 resolves the dungeon owned by the selected game
+ * installation. A matching file elsewhere below a broad search root cannot
+ * complete an orphan GRAPHICS.DAT: that would combine two installations and
+ * can hide a later complete original copy. Preserve renamed-world discovery,
+ * but admit only a unique catalogued hash from the graphics file's own
+ * directory. */
+static int m12_dm1_find_same_directory_dungeon(
+    const char* graphics, const char* allowedHashes,
+    char dungeon[ASSET_PATH_MAX]) {
+    char graphicsParent[FSP_PATH_MAX];
+    char hash[33];
+    const char* cursor;
+    char (*candidates)[ASSET_PATH_MAX];
+    char selected[ASSET_PATH_MAX] = "";
+    int matchCount = 0;
+    if (!graphics || !allowedHashes || !allowedHashes[0] || !dungeon ||
+        !FSP_ParentDir(graphicsParent, sizeof(graphicsParent), graphics)) {
+        return 0;
+    }
+    candidates = calloc(256U, sizeof(*candidates));
+    if (!candidates) return 0;
+    cursor = allowedHashes;
+    while (*cursor) {
+        size_t length = strcspn(cursor, ";");
+        int count;
+        int i;
+        if (length != 32U) {
+            free(candidates);
+            return 0;
+        }
+        memcpy(hash, cursor, 32U);
+        hash[32] = '\0';
+        count = asset_collect_files_by_md5(graphicsParent, hash, candidates,
+                                           256U, 32);
+        if (count < 0) {
+            free(candidates);
+            return 0;
+        }
+        for (i = 0; i < count; ++i) {
+            char candidateParent[FSP_PATH_MAX];
+            if (!FSP_ParentDir(candidateParent, sizeof(candidateParent),
+                               candidates[i]) ||
+                strcmp(candidateParent, graphicsParent) != 0) {
+                continue;
+            }
+            if (selected[0] && strcmp(selected, candidates[i]) != 0) {
+                free(candidates);
+                return 0;
+            }
+            m12_copy_string(selected, sizeof(selected), candidates[i]);
+            ++matchCount;
+        }
+        cursor += length;
+        if (*cursor == ';') ++cursor;
+    }
+    free(candidates);
+    if (matchCount != 1 || !selected[0]) return 0;
+    m12_copy_string(dungeon, ASSET_PATH_MAX, selected);
+    return 1;
+}
+
 /* LOADSAVE.C F0435 keeps the default world beside its selected graphics.
  * Verify that role independently from TITLE.C startup companions. */
 static int m12_dm1_default_dungeon_identity(const char* graphics,
@@ -4512,10 +4573,12 @@ static int m12_dm1_default_dungeon_identity(const char* graphics,
                 m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX)) return 0;
     } else {
         int found;
+        int namedSiblingPresent = 0;
         char siblingMd5[33];
         if (!FSP_ParentDir(parent, sizeof(parent), graphics)) return 0;
         found = FSP_FindUniqueFileIgnoreCase(parent,
             m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX);
+        namedSiblingPresent = found == 1;
         if (found == 1) {
             const char* siblingMatch;
             if (!asset_file_md5_hex(dungeon, siblingMd5)) {
@@ -4529,29 +4592,25 @@ static int m12_dm1_default_dungeon_identity(const char* graphics,
                 }
             }
         }
-        /* A PC-34 install can have authenticated loose GRAPHICS.DAT at its
-         * selected root while the matching original DUNGEON.DAT remains in
-         * the nested DOS package. Ignore a same-name sibling unless its hash
-         * belongs to the selected graphics edition; then accept only one
-         * unique catalogued dungeon hash from the install tree. */
-        if (found == 0 &&
+        /* A renamed PC34 world may share the graphics owner's directory, but
+         * a matching dungeon in a nested sibling installation cannot make
+         * this graphics copy launchable. */
+        if (found == 0 && !namedSiblingPresent &&
             (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
              strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)) {
-            char candidates[1][ASSET_PATH_MAX];
-            if (asset_collect_files_by_md5(parent, allowed, candidates, 1U, 32) == 1) {
-                m12_copy_string(dungeon, ASSET_PATH_MAX, candidates[0]);
+            if (m12_dm1_find_same_directory_dungeon(graphics, allowed,
+                                                    dungeon)) {
                 found = 1;
             }
         }
-        if (found == 0 &&
+        if (found == 0 && !namedSiblingPresent &&
             (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
              strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
              ((language == 1 || language == 2) &&
               strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0))) {
-            char renamed[1][ASSET_PATH_MAX];
-            if (asset_collect_files_by_md5(parent, allowed, renamed, 1U, 0) != 1)
+            if (!m12_dm1_find_same_directory_dungeon(graphics, allowed,
+                                                     dungeon))
                 return 0;
-            m12_copy_string(dungeon, ASSET_PATH_MAX, renamed[0]);
         } else if (found != 1) return 0;
     }
     if (!asset_file_md5_hex(dungeon, actualMd5)) return 0;
