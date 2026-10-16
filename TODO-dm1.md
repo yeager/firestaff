@@ -1900,8 +1900,10 @@ beside an independent identical disk copy and its wrapped archive. CLI checks
 require the expected graphics identity and loaded world; CLI and M12 loading
 both require graphics and dungeon paths rooted in the explicitly selected disk.
 The separate wrapped route retains interactive Hall of Champions, C127 selection
-and movement checks. Raw-STX interactive entrance/Hall completion and complete
-platform startup coverage remain open; loading-only probes do not prove them.
+and movement checks. Direct original STX 1.0a/1.0b/1.1 now also reach the first active Hall
+frame through M12, with the original startup placement (see DONE). Raw-STX
+interactive champion confirmation/movement and complete platform startup
+coverage remain open; loading-only probes do not prove them.
 
 2026-10-16 startup-test scope correction: FIRESTAFF_FAIL_IF_NO_LAUNCH checks
 whether a launch transaction was accepted, not whether the world finished

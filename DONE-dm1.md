@@ -3750,3 +3750,15 @@ not used as its final verification.
   The separate cancellation CTest also passed (45.09 s) with the locally
   configured corpus. All three launcher-settings tests from the failing CI
   step now pass locally. Redacted patch Gitleaks found no leaks.
+
+- 2026-10-16: Extended execution evidence beyond direct-STX loading for original
+  Atari ST 1.0a, 1.0b and 1.1. Ran verify_dm1_atari_first_hall_handoff.sh against
+  each explicitly selected uppercase-extension STX beside an independent
+  byte-identical disk. All three M12 sessions reached active DM1 runtime with a
+  loaded world, executed startup handoff, first Hall frame and F0267 placement
+  at map 0 (1,3), direction 2, zero champions and zero sensor effects. Compared
+  all six staged disks byte for byte with unchanged original preservation
+  archive members. Earlier direct-path provenance checks remain separate;
+  this run proves initial Hall completion, not champion confirmation, continued
+  raw-disk movement or visual parity. Task logs and media remain ignored under
+  .codex-scratch/dm1-direct-stx-hall-20261016.
