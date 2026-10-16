@@ -124,6 +124,16 @@ static int direct_adf_preserves_selected_owner(M12_AssetStatus* status,
             M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
             "explicit selected ADF starts original Amiga 3.6 world");
         M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        for (int language=0; language<2; ++language) {
+            const char* hash=language==0 ? "c0e1bf1b9c5578681879d624bb28e663" : "59e332cf47852d5c7c88a9538f0adcea";
+            spec.languageIndex=language==0 ? 2 : 3;
+            REQUIRE(M11_GameView_Start(game,&spec) && game->active &&
+                M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded &&
+                asset_file_matches_md5(game->dungeonPath,hash) &&
+                strncmp(game->dungeonPath,selected,prefix)==0,
+                "direct original ADF starts its chosen French/German world");
+            M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        }
         if (mode) M12_AssetStatus_Scan(status,unsupported);
         else M12_AssetStatus_ScanGame(status,unsupported,"dm1");
         REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
@@ -146,6 +156,108 @@ cleanup:
     if (neighbor[0]) unlink(neighbor);
     if (selected[0]) unlink(selected);
     if (dir[0]) rmdir(dir);
+    return result==0;
+}
+static int amiga36_language_menu_worlds(M11_GameViewState* game,
+    const char* dir, const char* originalArchive) {
+    static const char* const names[]={"DUNGEONF.DAT","DUNGEONG.DAT"};
+    static const char* const hashes[]={"c0e1bf1b9c5578681879d624bb28e663",
+        "59e332cf47852d5c7c88a9538f0adcea"};
+    static const size_t sizes[]={25414U,25380U};
+    char files[2][FSP_PATH_MAX]={{0}}, member[ASSET_PATH_MAX], english[FSP_PATH_MAX];
+    char graphics[FSP_PATH_MAX];
+    unsigned char* bytes[2]={NULL,NULL};
+    unsigned char* standard=NULL;
+    size_t size[2]={0,0}, standardSize=0;
+    M12_StartupMenuState* menu=NULL;
+    M12_StartupMenuInitOptions options;
+    M11_BootProbeReceipt receipt;
+    int result=1, initialized=0;
+    REQUIRE(FSP_JoinPath(graphics,sizeof(graphics),dir,"GRAPHICS.DAT") &&
+        FSP_JoinPath(english,sizeof(english),dir,"DUNGEON.DAT") &&
+        asset_read_path_alloc(english,&standard,&standardSize) && standardSize==25006U &&
+        asset_memory_matches_md5(standard,standardSize,"30028fb6a301ecb20127ef0b3af32b05"),
+        "retain authenticated original English A36 dungeon for wrong-language cases");
+    for (int language=0; language<2; ++language) {
+        REQUIRE(asset_find_by_md5(originalArchive,hashes[language],member,sizeof(member),0) &&
+            asset_read_path_alloc(member,&bytes[language],&size[language]) && size[language]==sizes[language] &&
+            asset_memory_matches_md5(bytes[language],size[language],hashes[language]) &&
+            FSP_JoinPath(files[language],sizeof(files[language]),dir,names[language]) &&
+            write_original_bytes(files[language],bytes[language],size[language]),
+            "stage unchanged authenticated compressed A36 French/German originals");
+    }
+    menu=SDL_calloc(1,sizeof(*menu));
+    REQUIRE(menu,"allocate A36 language launcher");
+    memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+    for (int source=0; source<2; ++source) {
+        if (initialized) M12_StartupMenu_Destroy(menu);
+        M12_StartupMenu_InitWithOptions(menu,source ? originalArchive : dir,"dm1",&options);
+        initialized=1;
+        menu->selectedIndex=menu->activatedIndex=0; menu->launchRequested=1;
+        menu->gameOptions[0].architectureIndex=M12_ARCH_AMIGA;
+        menu->gameOptions[0].versionIndex=M12_AssetStatus_FindVersionIndex("dm1","amiga36-multi");
+        menu->gameOptions[0].presentationModeIndex=M12_PRESENTATION_V1_ORIGINAL;
+        menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+        for (int language=0; language<2; ++language) {
+            menu->gameOptions[0].languageIndex=language==0 ? 2 : 3;
+            REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+                game->assetLoader.dm1Amiga36 && M11_GameView_GetBootProbeReceipt(game,&receipt) &&
+                receipt.levelLoaded && asset_file_matches_md5(game->dungeonPath,hashes[language]) &&
+                (source ? strncmp(game->dungeonPath,originalArchive,strlen(originalArchive))==0 :
+                    strcmp(game->dungeonPath,files[language])==0),
+                "loose/ZIP A36 menu starts the exact chosen original language world");
+            M11_GameView_Shutdown(game); M11_GameView_Init(game);
+            if (!source) {
+                M11_GameLaunchSpec direct;
+                memset(&direct,0,sizeof(direct));
+                direct.title="DUNGEON MASTER"; direct.gameId=direct.sourceId="dm1";
+                direct.dataDir=dir; direct.verifiedAssetPath=graphics;
+                direct.verifiedAssetMd5="7f9458e4a3972d06e649a6fa85a7f34b";
+                direct.sourceKind=M11_GAME_SOURCE_BUILTIN_CATALOG;
+                direct.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+                direct.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+                direct.languageIndex=language==0 ? 2 : 3;
+                REQUIRE(write_original_bytes(files[language],standard,standardSize),
+                    "replace only staged language world with unchanged English original");
+                REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+                    "A36 chosen-language identity rejects wrong original under expected filename");
+                REQUIRE(!M11_GameView_Start(game,&direct) && !game->active,
+                    "direct runtime independently rejects wrong chosen-language original");
+                REQUIRE(unlink(files[language])==0,"remove only staged A36 language world");
+                REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+                    "missing A36 language world cannot borrow English or source archive");
+                REQUIRE(!M11_GameView_Start(game,&direct) && !game->active,
+                    "direct runtime independently rejects missing chosen-language original");
+                menu->view=M12_MENU_VIEW_MAIN; menu->selectedIndex=0; menu->launchRequested=0;
+                for (int input=0; input<3 && !menu->messageIsMissingGameData; ++input)
+                    M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+                REQUIRE(menu->messageIsMissingGameData && !menu->launchRequested &&
+                    menu->messageLine2 && strstr(menu->messageLine2,names[language]) &&
+                    !strstr(menu->messageLine2,"GRAPHICS.DAT"),
+                    "A36 ordinary menu reports the missing selected-language original");
+                M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_BACK);
+                REQUIRE(menu->view==M12_MENU_VIEW_GAME_OPTIONS &&
+                    menu->gameOptions[0].languageIndex==direct.languageIndex,
+                    "A36 missing-language dialog returns with chosen language intact");
+                menu->launchRequested=1;
+                REQUIRE(write_original_bytes(files[language],bytes[language],size[language]),
+                    "restore unchanged original A36 chosen-language world");
+                REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+                    M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+                    "restored original A36 language world recovers runtime startup");
+                M11_GameView_Shutdown(game); M11_GameView_Init(game);
+            }
+        }
+    }
+    result=0;
+cleanup:
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    if (initialized) M12_StartupMenu_Destroy(menu);
+    SDL_free(menu); free(standard);
+    for (int language=0; language<2; ++language) {
+        free(bytes[language]);
+        if (files[language][0]) unlink(files[language]);
+    }
     return result==0;
 }
 static int native_report_has_graphics_without_world(const M12_AssetStatus* status,
@@ -517,6 +629,9 @@ int main(void) {
                 sibling==1 ? NULL : sibling==2 ? "swoosh" : "VDEO.FTL",
                 sibling==1 ? NULL : hashes[2]),
                 "native original companion compatibility and recovery");
+            if (sibling==3)
+                REQUIRE(amiga36_language_menu_worlds(game,nativeDir,siblingOriginal),
+                    "A36 original language ownership through loose/archive menu startup");
             if (sibling==3 && amigaOriginal && FSP_FileExists(amigaOriginal))
                 REQUIRE(direct_adf_preserves_selected_owner(fresh,game,root,siblingOriginal,
                     amigaOriginal,nativeFiles[2]),"explicit ADF source ownership and runtime recovery");

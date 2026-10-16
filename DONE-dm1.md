@@ -3625,3 +3625,26 @@ not used as its final verification.
   five-game corpus cases remained intentionally skipped. Independent source
   review found no blocker; no original media or synthetic replacement artwork
   is committed. This is startup/feedback evidence, not full platform parity.
+
+- 2026-10-16: Reproduced --lang fr on an original Amiga 3.6 ADF loading the
+  English world. Shared filename selection now follows A36 FILENAME.C F0745;
+  full original French/German compressed identities are checked before native
+  decompression. Their declared body lengths are retained, matching the same
+  originals in earlier French/German editions. Original-data tests cover both
+  languages on direct ADFs, ZIP members and loose files, plus menu handoff,
+  direct-runtime rejection of wrong/missing language files, restoration and
+  precise missing-language feedback with BACK preserving the selection.
+  Final expanded focused checks passed (3/3, 28.53 s), including access denial.
+  This proves these world-loading paths, not full language-graphics parity.
+
+  Eight actual A36 CLI launches passed (FR/DE, direct/menu, ZIP/ADF), as did
+  the scoped DM1/CSB/DM2 startup suite (217.54 s). Additional authentic A20
+  French/German CLI/title/entrance/menu regressions passed (2/2, 21.73 s).
+  Their German test now expects the canonical DUNGEON.DAT report spelling and
+  separately asserts the runtime dungeon path, retaining the exact archive
+  prefix. The initial failure was that spelling expectation, not failed
+  runtime loading; all later German steps were rerun successfully afterward.
+  Catalog validation and cancellation passed; the cancellation test's two
+  full five-game corpus cases remained intentionally skipped. Refreshed
+  startup-menu catalogs change source references only. Independent review
+  found no blocker. No original media is committed.

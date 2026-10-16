@@ -1878,3 +1878,13 @@ dialog naming only DUNGEONF.DAT/DUNGEONG.DAT. AUTO uses the actual chosen
 edition rather than a stale saved version. The rendered launch gate remains
 an inventory snapshot and performs no added language-file I/O. This does not
 change the open language-only-package discovery requirement above.
+
+2026-10-16 A36 original language worlds: CLI/menu language selection now
+routes French/German to the selected Amiga 3.6 owner's DungeonF/DungeonG
+compressed originals. Authenticate those exact retained bytes before native
+decoding and retain their full declared decompressed lengths, as for the same
+payloads in the earlier French/German releases. Original ADF, ZIP and loose
+world startup are covered; wrong or missing language files reject without
+borrowing English. Full source-language graphics selection via G2004 remains
+open, as does language-only inventory without the standard world. These
+world-loading results do not establish full translated or visual parity.

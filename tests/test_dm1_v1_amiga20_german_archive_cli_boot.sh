@@ -65,7 +65,8 @@ direct_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     exit 1
 }
 if ! grep -Fq "selected game=dm1 platform=Amiga edition=amiga20-de source=$archive::Dungeon-Master-Amiga-2.0-DE.adf::graphics.dat" <<<"$direct_output" ||
-   ! grep -Fq "inventory-file=dungeon matched source=$archive::Dungeon-Master-Amiga-2.0-DE.adf::Dungeon.dat" <<<"$direct_output" ||
+   ! grep -Fq "inventory-file=dungeon matched source=$archive::Dungeon-Master-Amiga-2.0-DE.adf::DUNGEON.DAT" <<<"$direct_output" ||
+   ! grep -Fq "dungeonPath=$archive::Dungeon-Master-Amiga-2.0-DE.adf::DUNGEON.DAT" <<<"$direct_output" ||
    ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$direct_output" ||
    ! grep -Fq 'phase=dm1-runtime' <<<"$direct_output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$direct_output"; then

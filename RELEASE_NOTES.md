@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 Amiga 3.6 languages`: load the chosen original French/German dungeon
+  from the selected disk, archive or loose installation. Validate its original
+  compressed bytes and report missing language files before launch.
+
 - `DM1 language feedback`: report a missing or incorrect French/German
   dungeon in the launcher before handing off, including automatic PC selection.
 

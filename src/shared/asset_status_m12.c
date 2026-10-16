@@ -4371,9 +4371,9 @@ static int m12_dm1_pc34_multi_has_startup_media(
 
 /* A36 AMIGAVID.C F1138:9-18 requires the FTL_DRIA_Video owner;
  * VDEOAMIG.C G3248 supplies F0441's driver palette increments. FILENAME.C
- * :23-25,85-100 selects the three original dungeon languages. The current
- * desktop loader opens DUNGEON.DAT, so accept those original role bytes
- * there, but do not publish F/G-only packages without language routing. */
+ * :23-25,85-100 selects the three original dungeon languages. Inventory
+ * still authenticates the standard owner before a language is selected;
+ * do not publish F/G-only packages until inventory handles that selection. */
 static const char s_m12_a36_dungeon_hashes[] =
     "30028fb6a301ecb20127ef0b3af32b05;c0e1bf1b9c5578681879d624bb28e663;59e332cf47852d5c7c88a9538f0adcea";
 

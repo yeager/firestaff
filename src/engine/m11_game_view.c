@@ -25762,8 +25762,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     int dm1VirtualGraphicsRequired = 0;
     int dm1Pc34Graphics = 0;
     int dm1Pc34ExplicitDungeon = 0;
-    const char* dm1Pc34DungeonMember = "DUNGEON.DAT";
-    const char* dm1Pc34DungeonMd5 = "766450c940651fc021c92fe5d0d0b3a6";
+    int dm1Amiga36LanguageWorld = 0;
+    const char* dm1DefaultDungeonMember = "DUNGEON.DAT";
+    const char* dm1DefaultDungeonMd5 = "766450c940651fc021c92fe5d0d0b3a6";
     if (!state || !spec || !spec->title) {
         return 0;
     }
@@ -26297,8 +26298,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (spec->verifiedAssetMd5 &&
             strcmp(spec->verifiedAssetMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0) {
             const char* language = M12_StartupMenu_GetLanguageCode(spec->languageIndex);
-            dm1Pc34DungeonMember = dm1_v1_pc34_multilang_dungeon_name(language);
-            dm1Pc34DungeonMd5 = dm1_v1_pc34_multilang_dungeon_md5(language);
+            dm1DefaultDungeonMember = dm1_v1_multilang_dungeon_name(language);
+            dm1DefaultDungeonMd5 = dm1_v1_pc34_multilang_dungeon_md5(language);
+        }
+        /* A36M FILENAME.C:23-25 and MAINLIB.C:22 use the same selected
+         * language suffix, with distinct compressed native world identities. */
+        if (spec->verifiedAssetMd5 &&
+            strcmp(spec->verifiedAssetMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0) {
+            const char* language = M12_StartupMenu_GetLanguageCode(spec->languageIndex);
+            dm1DefaultDungeonMember = dm1_v1_multilang_dungeon_name(language);
+            dm1DefaultDungeonMd5 = dm1_v1_amiga36_multilang_dungeon_md5(language);
+            dm1Amiga36LanguageWorld = strcmp(dm1DefaultDungeonMember, "DUNGEON.DAT") != 0;
         }
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
@@ -26366,7 +26376,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 spec->verifiedAssetMd5 &&
                 strcmp(spec->verifiedAssetMd5,
                        "491ca939f9abb33ceeb26619b841fe91") == 0
-                    ? "DemoDun.dat" : dm1Pc34DungeonMember;
+                    ? "DemoDun.dat" : dm1DefaultDungeonMember;
             if (prefix + strlen(dungeonMember) + 1u > sizeof(dungeonPath)) return 0;
             memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
             memcpy(dungeonPath + prefix, dungeonMember,
@@ -26383,10 +26393,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 /* PC34 already admits renamed original dungeon payloads.
                  * Keep that compatibility within the selected parent only;
                  * an ambiguous native filename never triggers this fallback. */
-                if (found == 0 && dm1Pc34Graphics) {
+                if (found == 0 && (dm1Pc34Graphics || dm1Amiga36LanguageWorld)) {
                     char renamed[1][ASSET_PATH_MAX];
                     if (asset_collect_files_by_md5(parent,
-                        dm1Pc34DungeonMd5, renamed, 1U, 0) != 1)
+                        dm1DefaultDungeonMd5, renamed, 1U, 0) != 1)
                         return 0;
                     snprintf(dungeonPath, sizeof(dungeonPath), "%s", renamed[0]);
                 } else if (found != 1) return 0;
@@ -26448,7 +26458,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 spec->verifiedAssetMd5 &&
                 strcmp(spec->verifiedAssetMd5,
                        "491ca939f9abb33ceeb26619b841fe91") == 0
-                    ? "DemoDun.dat" : dm1Pc34DungeonMember;
+                    ? "DemoDun.dat" : dm1DefaultDungeonMember;
             if (prefix + strlen(dungeonMember) + 1u < sizeof(dungeonPath)) {
                 memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
                 memcpy(dungeonPath + prefix, dungeonMember,
@@ -26481,8 +26491,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         if (dm1Pc34Graphics && !dm1Pc34ExplicitDungeon &&
             !asset_memory_matches_md5(dm1VirtualDungeonBytes, dm1VirtualDungeonSize,
-                                      dm1Pc34DungeonMd5)) {
+                                      dm1DefaultDungeonMd5)) {
             fprintf(stderr, "firestaff: DM1 PC34 dungeon identity rejected: %s\n", dungeonPath);
+            free(dm1VirtualDungeonBytes);
+            return 0;
+        }
+        if (dm1Amiga36LanguageWorld &&
+            !asset_memory_matches_md5(dm1VirtualDungeonBytes, dm1VirtualDungeonSize,
+                                      dm1DefaultDungeonMd5)) {
+            fprintf(stderr, "firestaff: DM1 A36 selected-language dungeon rejected: %s\n", dungeonPath);
             free(dm1VirtualDungeonBytes);
             return 0;
         }
@@ -26522,13 +26539,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             /* The authentic A20F French and A20D German dungeons declare
              * the full raw-map size. English A20E and Atari packages retain
              * the two-byte trailer rule. Bind the exceptions to the
-             * independently hash-verified original GRAPHICS.DAT identity. */
+             * independently hash-verified original GRAPHICS.DAT identity.
+             * A36's selected FR/DE worlds have these same complete original
+             * payload hashes, authenticated above before decompression. */
             dm1VirtualDungeonSize =
                 spec->verifiedAssetMd5 &&
                 (strcmp(spec->verifiedAssetMd5,
                         "dd373954b3fb127db7387946131ea322") == 0 ||
                  strcmp(spec->verifiedAssetMd5,
-                        "0679e39da9dcc2e855cb33c6c64ddcb5") == 0)
+                        "0679e39da9dcc2e855cb33c6c64ddcb5") == 0 ||
+                 dm1Amiga36LanguageWorld)
                     ? decompressedSize
                     : decompressedSize - 2u;
             dm1EndianDungeonFormat = 1;
@@ -26659,7 +26679,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * omit the checksum. Preserve the exact original bytes and keep
          * the generic/save buffer reader's trailer requirement intact. */
         dm1FmtownsBufferLoaded = dm1Pc34Graphics && !dm1Pc34ExplicitDungeon &&
-            strcmp(dm1Pc34DungeonMd5, "766450c940651fc021c92fe5d0d0b3a6") != 0
+            strcmp(dm1DefaultDungeonMd5, "766450c940651fc021c92fe5d0d0b3a6") != 0
             ? F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
                   dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
                   0xF1A5U, &state->world)
