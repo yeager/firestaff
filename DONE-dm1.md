@@ -3762,3 +3762,20 @@ not used as its final verification.
   this run proves initial Hall completion, not champion confirmation, continued
   raw-disk movement or visual parity. Task logs and media remain ignored under
   .codex-scratch/dm1-direct-stx-hall-20261016.
+
+- 2026-10-16: Verified direct original STX 1.0a, 1.0b and 1.1 interactive M12
+  startup, C127 ordinal-14 confirmation and subsequent movement. Separate
+  original-media sessions retained each explicitly selected disk for GRAPHICS
+  and DUNGEON beside an identical neighboring disk; all reached map 0 (10,4),
+  direction 1, one champion and a closed candidate panel in active runtime.
+  Original disk hashes remained unchanged. Extended the existing regression
+  with a two-owner loop, separate HOME/config/probe/log paths, full original
+  graphics-hash assertions, exact raw-disk provenance and unchanged-copy checks.
+  Unset the early-exit harness flag so inherited settings cannot replace the
+  interactive run. Only the three affected test timeouts increased to 150 s.
+  Independent source review found no blocker; no game runtime behavior changed.
+  Other champions, routes, platforms and visual parity remain unproven.
+  Final rebuilt-binary regressions passed for all three editions without media
+  skips: 1.1 (111.76 s), 1.0b (107.27 s) and 1.0a (see recorded CTest log).
+  Each regression executes both archive and direct-disk interactive routes.
+  Bash syntax, diff whitespace and redacted patch Gitleaks checks passed.

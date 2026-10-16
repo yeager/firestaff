@@ -2,6 +2,7 @@
 set -euo pipefail
 
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+unset FIRESTAFF_EXIT_AFTER_LAUNCH
 
 if [[ $# -ne 1 ]]; then
     printf 'usage: %s <firestaff-binary>\n' "$0" >&2
@@ -145,9 +146,6 @@ echo "PASS: authentic Atari ST $edition direct STX retains its owner through CLI
 bash "$(dirname "${BASH_SOURCE[0]}")/verify_dm1_atari_first_hall_handoff.sh" \
     "$app" "$outer" "English v$edition"
 
-runtime_probe="$stage/runtime.json"
-menu_home="$stage/menu-home"
-mkdir -p "$menu_home"
 # The default 960x540 host view presents a centered 640x400 game image. This
 # point maps to the source C127 portrait hit point (112,83).
 m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
@@ -157,12 +155,31 @@ for token in up up up up turn-left up up up turn-left \
     m12_hoc_route+=",wait30,$token"
 done
 m12_hoc_route+=',wait30,click:384:236,wait10,click:420:300,wait30,key:kp6,wait60'
-HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
-FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
-    --platform atari-st --data-dir "$outer" \
-    --script "$m12_hoc_route" --duration 45000 >/dev/null 2>&1
-python3 - "$runtime_probe" "$edition" <<'PY'
+# Run the same source-derived C127 choice and movement sequence through both
+# physical owners. Each session starts with its own empty config and HOME.
+for media_kind in archive disk; do
+    media_path="$outer"
+    if [[ "$media_kind" == disk ]]; then media_path="$selected_stx"; fi
+    run_root="$stage/runtime-$media_kind"
+    mkdir -p "$run_root/home"
+    runtime_probe="$run_root/runtime.json"
+    if ! HOME="$run_root/home" FIRESTAFF_CONFIG_PATH="$run_root/config.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+        --platform atari-st --data-dir "$media_path" --debug \
+        --script "$m12_hoc_route" --duration 45000 >"$run_root/runtime.log" 2>&1; then
+        cat "$run_root/runtime.log" >&2
+        exit 1
+    fi
+    if [[ "$media_kind" == disk ]] &&
+       { ! grep -Fq "graphicsPath=$selected_stx::GRAPHICS.DAT" "$run_root/runtime.log" ||
+         ! grep -Fq "dungeonPath=$selected_stx::DUNGEON.DAT" "$run_root/runtime.log"; }; then
+        cat "$run_root/runtime.log" >&2
+        echo "FAIL: Atari ST $edition live input lost its selected disk owner" >&2
+        exit 1
+    fi
+python3 - "$runtime_probe" "$edition $media_kind" "$expected_graphics_md5" <<'PY'
 import json
 import sys
 
@@ -170,7 +187,8 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
 party = probe["party"]
-if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+if (probe["bootAssetMd5"] != sys.argv[3] or
+        probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["dm1StartupHandoffExecuted"] != 1 or
@@ -183,5 +201,8 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
     raise SystemExit(f"FAIL: authentic DM1 Atari ST {sys.argv[2]} menu did not confirm C127 ordinal 14 and route input: {probe}")
 print(f"PASS: authentic DM1 Atari ST {sys.argv[2]} M12 confirms C127 ordinal 14 and routes live input")
 PY
+done
+cmp "$stx" "$selected_stx"
+cmp "$stx" "$stage/000-duplicate.stx"
 
-echo "PASS: authentic DM1 Atari ST $edition source reaches CLI and confirms Hall choice through M12"
+echo "PASS: authentic DM1 Atari ST $edition archive and direct disk confirm Hall choice and route live input through M12"

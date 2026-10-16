@@ -1,3 +1,5 @@
+- `DM1 verification`: exercise Hall champion selection and movement through
+  both preservation archives and directly selected Atari ST original disks.
 - `CI`: update the launcher-options handoff test for authenticated language
   snapshots and explicitly retain rejection of stale scan results.
 # Firestaff v3.0.382
