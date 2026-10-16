@@ -1866,8 +1866,18 @@ the retained original buffer against that language's complete-file hash.
 The authentic French/German bodies omit a checksum trailer; the separate
 bounded body reader follows LOADSAVE.C F0434's optional-checksum behavior
 without relaxing generic save-tail validation. Discovery of language-only
-packages without the standard English world remains open: ordinary inventory
-still authenticates the default owner before any per-game language selection.
+packages without the standard English world is now reproduced through actual
+CLI and menu launches: original PCML graphics f934d97e43e1ba6e5159839acbcd0611
+and French world 82c7802122e9cfb2dc117bc9d197f457 start with the original
+standard world present, reject after removing only that staged standard world,
+and start again after restoration. English correctly rejects without its world.
+Ordinary inventory authenticates the default owner before per-game language
+selection (`m12_dm1_complete_default_owner` and `m12_select_dm1_loose_file`).
+Fix with an explicit zero-default EN/FR/DE scan policy, retained in the result
+snapshot and captured by asynchronous jobs; use the same policy for admission,
+required-file reporting and runtime preparation. CLI must provide it before
+initial scanning; menu language changes must rescan and discard stale results.
+Keep unspecified scans EN-strict and keep file I/O out of GetLaunchGate.
 Complete in-game translation and other multilingual platforms remain separate
 work; this change targets original PC34 dungeon-language routing.
 

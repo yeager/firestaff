@@ -3660,3 +3660,11 @@ not used as its final verification.
   (336.53 s), including German 1.2 and French 1.3. Direct raw-STX interactive
   entrance/Hall completion is not established by the loading-only checks.
   Independent read-only review found no blocker. No runtime change was needed.
+
+- 2026-10-16: Reproduced the remaining PCML language-only discovery failure
+  with unchanged original files and isolated CLI configurations: FR passes
+  with the standard world, fails after removing only that world, and passes
+  after restoration. The ordinary FR launcher also fails without the standard
+  world. ReDMCSB FILENAME.C:44-52,84-104 explicitly selects DUNGEONF.DAT.
+  This is diagnostic evidence for the open scan-policy fix, not a fixed bug
+  or a claim of language-only support.
