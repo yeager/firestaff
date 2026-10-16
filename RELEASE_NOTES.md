@@ -17,6 +17,26 @@
 - `DM1 Apple IIGS media`: read original ProDOS, ZIP and 7z game files in bounded
   memory, and decode native dungeon, graphics, font, creature and sound data.
   Original game files are not included in this release.
+- `DM1 PC presentation`: fix the original title and selector timing, VGA palette,
+  entrance-door animation, Hall mirrors, near and side walls, ornaments and
+  viewport materials. Restore the original PC title lifecycle and selector
+  door sounds, with source-sized images and responsive movement redraws.
+- `DM1 Amiga and FM Towns presentation`: restore native entrance walls,
+  dungeon materials, wall crops, door cadence and early Amiga RGB4 palettes.
+  Correct Towns wall aliases and viewport origin using the selected edition's
+  original assets.
+- `DM1 installation ownership`: bind selected disks, archives and loose files
+  to their authenticated graphics, dungeon and program companions. Reject
+  incomplete or incompatible combinations with file-specific diagnostics;
+  recover collection scanning when a selected archive disappears.
+- `DM1 language selection`: load the selected French or German PC and Amiga
+  dungeon from its original installation, including language-only media.
+  Restore canceled scans and report missing selected-language files before
+  launch. Supported Amiga saves and PC multilingual startup companions are
+  recognized under their original filenames.
+- `DM1 Amiga original media`: add bounded MFM checksum and payload decoding
+  for native startup media, including the authenticated Amiga 2.2 German
+  installation and its selected disk ownership.
 - `DM1 Amiga startup`: verify the active first Hall after Amiga 2.2 German menu
   startup from the original disk and ZIP archive.
 - `DM1 Atari media selection`: fix directly selected disks with mixed-case
@@ -25,6 +45,19 @@
   hand-object lighting against the original source rules.
 - `DM1 FM Towns media discovery`: retain the AUTO selection priority for an
   unchanged original ZIP with a different filename beside an IIGS disk.
+- `CSB Amiga media`: add native OFS intake for original CTRaw disks, decode
+  supported track and density packs, and admit direct CAPS disks. Multilingual
+  menu and missing-file behavior are checked with original media. Remaining
+  unsupported CTRaw variants still fail closed.
+- `DM2 new game`: arrange the original dungeon transactionally and initialize
+  its records in source order. Preserve map links, weather timer and random
+  state while rolling back rejected record operations safely.
+- `DM2 media selection`: verify retail ZIP contents, accept uppercase
+  ZIP filenames and keep the selected archive's ownership through startup.
+- `Launcher and rendering`: rescan game collections after returning from a
+  session, preserve explicit edition choices and missing-file guidance, pace
+  host frames more precisely and reuse nearest-scaled image rows. Debug output
+  now reports the applied renderer and drawable scale.
 
 ## Developer changes
 
@@ -33,6 +66,11 @@
   selected Amiga and Atari startup/media checks.
 - `CI launcher handoff`: update the authenticated language snapshot checks and
   retain rejection of stale scan results.
+- `Source and runtime checks`: add original-media startup contracts for DM1,
+  CSB and DM2, selected-disk provenance checks, HiDPI entrance geometry and
+  renderer presentation receipts. Correct the Nexus startup test data root.
+- `Release metadata`: update the project version, embedded changelog and
+  reproducible SPDX source inventory for v3.0.383.
 
 # Firestaff v3.0.382
 

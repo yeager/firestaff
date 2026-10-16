@@ -70,3 +70,12 @@ SPDX SBOM with `python3 tools/generate_spdx_sbom.py`. Run
 `python3 tests/test_generate_spdx_sbom.py` before pushing the release
 candidate; the release-notes-policy CI job requires the committed SBOM to
 match the current version.
+For every release, compare the candidate with the most recent published tag
+using `git log --no-merges --oneline <previous-tag>..HEAD` and
+`git diff --stat <previous-tag>..HEAD`. Write that version's release-notes
+section from this interval: cover every user-facing and developer change
+since the previous release, grouping related commits where useful and
+including work from other contributors. State important remaining
+limitations. Do not carry changes already
+released under an earlier tag into the new section. Check the published
+GitHub Release text against the same interval before considering it complete.
