@@ -131,6 +131,22 @@ long M11_Render_ClearFramebuffer(unsigned char colorIndex);
 /* Present: scale framebuffer via the palette to the SDL texture,
    copy to the window, and flip. Returns M11_RENDER_OK on success or
    an error code. Safe to call with an all-zero framebuffer. */
+typedef struct {
+    double framebufferConvertMs;
+    double textureUploadMs;
+    double rendererSubmitMs;
+    double presentCallMs;
+    int width;
+    int height;
+    int cpuNearestUpscale;
+    int valid;
+} M11_RenderPresentTiming;
+
+/* Optional diagnostic timing for the most recent indexed presentation.
+ * Disabled by default; SDL_RenderPresent-call time is host API latency and
+ * does not claim GPU execution or physical scanout time. */
+void M11_Render_SetPresentTimingEnabled(int enabled);
+int  M11_Render_GetLastPresentTiming(M11_RenderPresentTiming* outTiming);
 int  M11_Render_Present(void);
 int  M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
                                       int logicalWidth,

@@ -49,6 +49,15 @@ for line in trace.splitlines():
         "source-outcome-to-present-return-ms")]
     assert all(value >= 0 for value in values), line
     assert abs(values[0] + values[1] - values[2]) <= 0.003, line
+    assert fields["present-timing"] == "available", line
+    stage_values = [float(fields[name]) for name in (
+        "framebuffer-convert-ms", "texture-upload-ms", "renderer-submit-ms",
+        "sdl-present-call-ms")]
+    assert all(value >= 0 for value in stage_values), line
+    assert sum(stage_values) <= values[1] + 2.0, line
+    assert fields["cpu-nearest-upscale"] in {"0", "1"}, line
+    width, height = map(int, fields["texture-size"].split("x"))
+    assert width > 0 and height > 0, line
     rows.append(fields)
 assert rows, "No source outcome reached successful presentation"
 identities = [(row["launch"], row["outcome-serial"]) for row in rows]
@@ -57,7 +66,7 @@ assert any(row["moved"] == "1" for row in rows), "No accepted original-world mov
 assert any(row["turned"] == "1" for row in rows), "No accepted original-world turn"
 assert any(row["blocked"] == "1" and row["moved"] == "0" for row in rows), "No blocked command distinguished"
 assert any(row["input-event-timing"] == "1" for row in rows), "No SDL event-to-present sample"
-print("PASS: original PC34 movement/turn/block stages, unique outcome timing and explicit measurement limits")
+print("PASS: original PC34 movement stages, per-stage presentation timing and explicit measurement limits")
 CHECK
 run_case >"$work/ordinary.log" 2>&1
 if grep -q 'firestaff: dm1-motion-' "$work/ordinary.log"; then

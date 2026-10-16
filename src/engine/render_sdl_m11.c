@@ -127,12 +127,38 @@ typedef struct {
 } M11_RenderState;
 
 static M11_RenderState g_state = {0};
+static int g_present_timing_enabled = 0;
+static M11_RenderPresentTiming g_last_present_timing = {0};
 static unsigned char *g_epx_present_buffer = NULL;
 static int g_epx_present_w = 0;
 static int g_epx_present_h = 0;
 static unsigned char *g_epx_second_present_buffer = NULL;
 static int g_epx_second_present_w = 0;
 static int g_epx_second_present_h = 0;
+
+static Uint64 m11_present_timing_now(void) {
+    return g_present_timing_enabled ? SDL_GetPerformanceCounter() : 0;
+}
+
+static double m11_present_timing_elapsed_ms(Uint64 start) {
+    Uint64 frequency;
+    if (!g_present_timing_enabled || start == 0) return 0.0;
+    frequency = SDL_GetPerformanceFrequency();
+    if (frequency == 0) return 0.0;
+    return (double)(SDL_GetPerformanceCounter() - start) * 1000.0 /
+           (double)frequency;
+}
+
+void M11_Render_SetPresentTimingEnabled(int enabled) {
+    g_present_timing_enabled = enabled ? 1 : 0;
+    memset(&g_last_present_timing, 0, sizeof(g_last_present_timing));
+}
+
+int M11_Render_GetLastPresentTiming(M11_RenderPresentTiming* outTiming) {
+    if (!outTiming || !g_last_present_timing.valid) return 0;
+    *outTiming = g_last_present_timing;
+    return 1;
+}
 
 static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
                                                        int *out_level)
@@ -1420,6 +1446,8 @@ void M11_Render_Shutdown(void) {
      * reset all scalar, palette, indexed-mode, and V2 presentation fields
      * after the owned SDL resources and buffers have been released. */
     memset(&g_state, 0, sizeof(g_state));
+    g_present_timing_enabled = 0;
+    memset(&g_last_present_timing, 0, sizeof(g_last_present_timing));
 }
 
 void M11_Render_DiscardPresentationTexture(void) {
@@ -1734,6 +1762,7 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     int uploadW;
     int uploadH;
     int cpuNearestPresent = 0;
+    Uint64 stageStart;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     SDL_FRect sourceRect;
     SDL_FRect destRect;
@@ -1750,6 +1779,9 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
         targetWidth <= 0 || targetHeight <= 0 ||
         targetWidth > 4096 || targetHeight > 4096) {
         return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (g_present_timing_enabled) {
+        memset(&g_last_present_timing, 0, sizeof(g_last_present_timing));
     }
     if (targetWidth == logicalWidth && targetHeight == logicalHeight) {
         return M11_Render_PresentIndexed(framebuffer, logicalWidth, logicalHeight);
@@ -1777,6 +1809,7 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
+    stageStart = m11_present_timing_now();
     if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
@@ -1796,6 +1829,12 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
                                           uploadH);
     }
     m11_apply_v2_filters_rgba_post(uploadW, uploadH);
+    g_last_present_timing.framebufferConvertMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    g_last_present_timing.width = uploadW;
+    g_last_present_timing.height = uploadH;
+    g_last_present_timing.cpuNearestUpscale = cpuNearestPresent;
+    stageStart = m11_present_timing_now();
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
@@ -1815,6 +1854,9 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
             return M11_RENDER_ERR_TEXTURE;
         }
     }
+    g_last_present_timing.textureUploadMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     if (!SDL_RenderClear(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1831,9 +1873,14 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     }
     m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
                                  targetWidth, targetHeight);
+    g_last_present_timing.rendererSubmitMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     if (!SDL_RenderPresent(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
+    g_last_present_timing.presentCallMs =
+        m11_present_timing_elapsed_ms(stageStart);
 #else
     sourceRect.x = 0;
     sourceRect.y = 0;
@@ -1845,6 +1892,9 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
                           uploadW * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
+    g_last_present_timing.textureUploadMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     if (SDL_RenderClear(g_state.renderer) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1861,8 +1911,14 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     }
     m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
                                  targetWidth, targetHeight);
+    g_last_present_timing.rendererSubmitMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     SDL_RenderPresent(g_state.renderer);
+    g_last_present_timing.presentCallMs =
+        m11_present_timing_elapsed_ms(stageStart);
 #endif
+    g_last_present_timing.valid = g_present_timing_enabled;
     return M11_RENDER_OK;
 }
 
@@ -2010,11 +2066,15 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     int uploadW;
     int uploadH;
     int cpuNearestPresent = 0;
+    Uint64 stageStart;
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
     }
     if (!framebuffer || logicalWidth <= 0 || logicalHeight <= 0) {
         return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (g_present_timing_enabled) {
+        memset(&g_last_present_timing, 0, sizeof(g_last_present_timing));
     }
 
     int destX = 0;
@@ -2053,6 +2113,7 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
+    stageStart = m11_present_timing_now();
     if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
@@ -2080,6 +2141,12 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
         }
     }
     m11_apply_v2_filters_rgba_post(uploadW, uploadH);
+    g_last_present_timing.framebufferConvertMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    g_last_present_timing.width = uploadW;
+    g_last_present_timing.height = uploadH;
+    g_last_present_timing.cpuNearestUpscale = cpuNearestPresent;
+    stageStart = m11_present_timing_now();
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
@@ -2100,6 +2167,9 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
             return M11_RENDER_ERR_TEXTURE;
         }
     }
+    g_last_present_timing.textureUploadMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     if (!SDL_RenderClear(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -2116,9 +2186,14 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     }
     m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
                                  logicalWidth, logicalHeight);
+    g_last_present_timing.rendererSubmitMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     if (!SDL_RenderPresent(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
+    g_last_present_timing.presentCallMs =
+        m11_present_timing_elapsed_ms(stageStart);
 #else
     sourceRect.x = 0;
     sourceRect.y = 0;
@@ -2131,6 +2206,9 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
             uploadW * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
+    g_last_present_timing.textureUploadMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     if (SDL_RenderClear(g_state.renderer) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -2147,8 +2225,14 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     }
     m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
                                  logicalWidth, logicalHeight);
+    g_last_present_timing.rendererSubmitMs =
+        m11_present_timing_elapsed_ms(stageStart);
+    stageStart = m11_present_timing_now();
     SDL_RenderPresent(g_state.renderer);
+    g_last_present_timing.presentCallMs =
+        m11_present_timing_elapsed_ms(stageStart);
 #endif
+    g_last_present_timing.valid = g_present_timing_enabled;
     return M11_RENDER_OK;
 }
 

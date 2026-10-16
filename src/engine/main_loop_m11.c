@@ -2287,6 +2287,9 @@ static void m11_debug_motion_drawn(const M11_GameViewState* state,
 
 static void m11_debug_motion_presented(const M11_GameViewState* state,
                                         Uint64 completed) {
+    M11_RenderPresentTiming presentTiming;
+    const int hasPresentTiming =
+        M11_Render_GetLastPresentTiming(&presentTiming);
     if (!state || !state->debugMovementTraceEnabled ||
         !g_m11_debug_motion.drawnSerial ||
         g_m11_debug_motion.launchSerial != g_m11_sync_launch_serial) return;
@@ -2306,7 +2309,11 @@ static void m11_debug_motion_presented(const M11_GameViewState* state,
             "source-outcome-to-present-return-ms=%.3f "
             "input-event-timing=%d event-queue-age-ms=%.3f "
             "input-event-to-source-outcome-ms=%.3f "
-            "input-event-to-present-return-ms=%.3f physical-scanout=unmeasured\n",
+            "input-event-to-present-return-ms=%.3f "
+            "present-timing=%s framebuffer-convert-ms=%.3f texture-upload-ms=%.3f "
+            "renderer-submit-ms=%.3f sdl-present-call-ms=%.3f "
+            "cpu-nearest-upscale=%d texture-size=%dx%d "
+            "physical-scanout=unmeasured\n",
             g_m11_debug_motion.launchSerial,
             (unsigned long long)g_m11_debug_motion.drawnSerial,
             g_m11_debug_motion.moved, g_m11_debug_motion.turned,
@@ -2334,7 +2341,15 @@ static void m11_debug_motion_presented(const M11_GameViewState* state,
                     completed >= g_m11_debug_motion.inputEventCounter
                 ? m11_counter_milliseconds(
                       completed - g_m11_debug_motion.inputEventCounter)
-                : 0.0);
+                : 0.0,
+            hasPresentTiming ? "available" : "unavailable",
+            hasPresentTiming ? presentTiming.framebufferConvertMs : 0.0,
+            hasPresentTiming ? presentTiming.textureUploadMs : 0.0,
+            hasPresentTiming ? presentTiming.rendererSubmitMs : 0.0,
+            hasPresentTiming ? presentTiming.presentCallMs : 0.0,
+            hasPresentTiming ? presentTiming.cpuNearestUpscale : 0,
+            hasPresentTiming ? presentTiming.width : 0,
+            hasPresentTiming ? presentTiming.height : 0);
     g_m11_debug_motion.drawnSerial = 0;
     g_m11_debug_motion.superseded = 0;
 }
@@ -11215,6 +11230,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     if (rc != M11_RENDER_OK) {
         return rc;
     }
+    M11_Render_SetPresentTimingEnabled(o->debug);
     if (o->verbose) {
         int windowWidth = 0;
         int windowHeight = 0;
