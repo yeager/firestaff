@@ -1849,3 +1849,11 @@ owner scoping before late preservation-package admission. Reproduce using an
 unchanged original OFS ADF beside another canonical ready Amiga archive, then
 verify the selected physical owner and failure isolation. Do not infer raw/MFM
 ADF support from an OFS intake fix.
+
+2026-10-16 explicit ADF ownership: direct original Amiga 3.6 disk selection
+previously launched a neighboring canonical Amiga 2.0 archive. DM1 intake now
+keeps the selected OFS disk as its source root; shared CSB/DM2 per-game search
+classification remains unchanged. Full file inventory retains the existing
+per-game discovery paths and only accepts a selected container's own files.
+Raw/MFM protection formats, every edition and complete visual parity remain
+separate requirements; this change does not add a universal ADF decoder.

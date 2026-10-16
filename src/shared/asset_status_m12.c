@@ -1133,9 +1133,17 @@ static int m12_dm1_towns_graphics_language(const char* md5) {
     return -1;
 }
 
+/* A DM1 OFS disk is a complete selected source. Other games retain their
+ * existing multi-disk/package search policy; this is not a shared ADF claim. */
+static int m12_dm1_explicit_adf(const char* selected) {
+    return selected && !strstr(selected, "::") &&
+        m12_ascii_equals_ignore_case(strrchr(selected, '.'), ".adf") &&
+        FSP_FileExists(selected) && !FSP_DirExists(selected);
+}
+
 static int m12_dm1_requested_archive_owner(const char* selected) {
     return selected && FSP_FileExists(selected) && !FSP_DirExists(selected) &&
-        m12_explicit_path_is_archive(selected);
+        (m12_explicit_path_is_archive(selected) || m12_dm1_explicit_adf(selected));
 }
 
 /* Explicit original loose graphics remain the terminal owner even when a
@@ -7598,10 +7606,13 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
     /* A single archive is a media selection, not permission to scan siblings.
      * Reuse the complete game-specific owners before the generic file fallback. */
-    if (m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip")) {
+    if (m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip") ||
+        m12_dm1_explicit_adf(requestedDataDir)) {
         static const char* const games[] = {"dm2", "dm1", "csb"};
         size_t g;
         for (g = 0u; g < sizeof(games) / sizeof(games[0]); ++g) {
+            /* Keep CSB's existing raw-disk discovery available too. The
+             * ownership check below still rejects neighboring packages. */
             M12_AssetStatus_ScanGameWithOptions(status, requestedDataDir, games[g], options);
             size_t n = strlen(requestedDataDir);
             int index = m12_game_index_from_id(games[g]);
@@ -7959,7 +7970,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
     }
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
     if (requestedDataDir &&
-        m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip") &&
+        (m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip") ||
+         m12_dm1_explicit_adf(requestedDataDir)) &&
         m12_scan_explicit_file_request(status, requestedDataDir, options)) {
         if (status->scanProgress.cancelled || status->scanProgress.cancelRequested ||
             (options && options->cancelFlag && *options->cancelFlag)) {
@@ -8443,7 +8455,8 @@ void M12_AssetStatus_ScanGameWithOptions(
     }
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
-        (!m12_explicit_path_is_archive(requestedDataDir) ||
+        ((!m12_explicit_path_is_archive(requestedDataDir) &&
+          !(gameId && strcmp(gameId, "dm1") == 0 && m12_dm1_explicit_adf(requestedDataDir))) ||
          /* The DM1 Amiga v2.0 preservation package is ZIP -> ZIP -> ADF.
           * Its native admission is a named, hash-verified bounded reader;
           * give that reader the package's containing search root while the

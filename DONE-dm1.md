@@ -3559,3 +3559,25 @@ consistency passed. The two full five-game corpus cancellation cases remained
 intentionally skipped. Redacted patch Gitleaks found no leaks. The earlier
 216.16 s intermediate CLI run preceded the final diagnostic handoff fix and is
 not used as its final verification.
+
+- 2026-10-16: Reproduced direct selection of an unchanged original Amiga 3.6
+  ADF starting a neighboring canonical Amiga 2.0 ZIP. DM1 now keeps the
+  selected disk as the exact hash-search and admission owner; full inventory
+  uses source-owned per-game file discovery without changing CSB/DM2's shared
+  disk classification. Original-data regression covers same-edition and
+  different-edition neighbors, both inventory APIs, graphics/world receipts,
+  actual A36 runtime loading, unsupported original VDEO bytes named as an ADF,
+  and collection directories with an ADF suffix. No original media is committed.
+  Direct CLI confirms the selected A36 graphics and loaded original level;
+  actual launcher input also hands off the selected A36 disk. The same-edition
+  neighbor is an independent byte-for-byte disk copy, not a symlink alias.
+  An authentic CSB 3.3 raw ADF still reaches its title, Original/Modern runtime
+  movement, runtime input matrix and launcher handoff. Its separate adjacent
+  AUTO/FTL-archive comparison is skipped when that archive is absent.
+
+  Final focused original-media tests passed (2/2, 12.33 s), with no media
+  skips. Access-denied verification passed (14.23 s); cancellation and catalog
+  checks passed, with the cancellation test's two full five-game corpus cases
+  intentionally skipped. The DM1/CSB/DM2 original-media CLI startup diagnostics
+  suite passed (218.19 s). Independent source review found no blocker. These
+  startup checks do not establish full platform or visual parity.

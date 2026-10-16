@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 Amiga disk selection`: keep an explicitly selected ADF bound to its
+  own original files when other complete disks or archives are nearby.
+  Reject an unsupported selected disk instead of starting a neighboring copy.
+
 - `DM1 archive selection`: validate each native archive's own dungeon before
   offering that edition. Keep a valid PC sibling available when a native ZIP is
   incompatible. Explicit archive selections and their file reports stay bound

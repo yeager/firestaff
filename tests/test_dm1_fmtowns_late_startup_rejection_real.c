@@ -49,6 +49,105 @@ static int write_original_bytes(const char* path, const unsigned char* bytes, si
     if (fclose(file)!=0) ok=0;
     return ok;
 }
+/* Stage the unchanged original disk, rather than rebuilding an ADF from
+ * members: explicit source ownership must survive both inventory APIs. */
+static int direct_adf_preserves_selected_owner(M12_AssetStatus* status,
+    M11_GameViewState* game, const char* root, const char* originalArchive,
+    const char* neighborArchive, const char* originalVideo) {
+    char dir[FSP_PATH_MAX]={0}, selected[FSP_PATH_MAX]={0};
+    char neighbor[FSP_PATH_MAX]={0}, duplicate[FSP_PATH_MAX]={0};
+    char unsupported[FSP_PATH_MAX]={0}, physical[FSP_PATH_MAX], member[ASSET_PATH_MAX];
+    unsigned char* bytes=NULL;
+    size_t size=0;
+    int result=1;
+    const char* graphicsMd5="7f9458e4a3972d06e649a6fa85a7f34b";
+    M11_GameLaunchSpec spec;
+    M11_BootProbeReceipt receipt;
+    REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"direct-adf-owner.adf") && FSP_CreateDirectory(dir),
+        "create isolated direct ADF owner fixture");
+    REQUIRE(snprintf(member,sizeof(member),"%s::Dungeon Master Amiga 3.6.adf",originalArchive)<(int)sizeof(member) &&
+        asset_read_path_alloc(member,&bytes,&size) && size==901120U &&
+        asset_memory_matches_md5(bytes,size,"3ff177c27abe1a15ba36946669b2e512"),
+        "authenticate complete unchanged original Amiga 3.6 disk");
+    REQUIRE(FSP_JoinPath(selected,sizeof(selected),dir,"selected.ADF") &&
+        write_original_bytes(selected,bytes,size),"stage unchanged selected original ADF");
+    free(bytes); bytes=NULL;
+    REQUIRE(FSP_JoinPath(neighbor,sizeof(neighbor),dir,"Dungeon-Master_Amiga_EN_Version-20.zip") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),neighborArchive) && symlink(physical,neighbor)==0,
+        "stage complete original different-edition neighbor");
+    REQUIRE(FSP_JoinPath(duplicate,sizeof(duplicate),dir,"000-neighbor.adf") &&
+        asset_read_path_alloc(selected,&bytes,&size) &&
+        asset_memory_matches_md5(bytes,size,"3ff177c27abe1a15ba36946669b2e512") &&
+        write_original_bytes(duplicate,bytes,size),
+        "stage independent unchanged same-edition disk before selected image");
+    free(bytes); bytes=NULL;
+    REQUIRE(FSP_JoinPath(unsupported,sizeof(unsupported),dir,"unsupported.ADF") &&
+        FSP_ResolvePhysicalPath(physical,sizeof(physical),originalVideo) && symlink(physical,unsupported)==0,
+        "stage unchanged original video payload with unsupported disk extension");
+    for (int mode=0; mode<2; ++mode) {
+        const M12_AssetVersionStatus* owner=NULL;
+        int graphicsFound=0, worldFound=0;
+        size_t prefix=strlen(selected);
+        if (mode) M12_AssetStatus_Scan(status,selected);
+        else M12_AssetStatus_ScanGame(status,selected,"dm1");
+        for (size_t version=0; version<M12_AssetStatus_GetVersionCount("dm1"); ++version) {
+            const M12_AssetVersionStatus* candidate=M12_AssetStatus_GetVersion(status,"dm1",version);
+            if (candidate && candidate->matched) {
+                REQUIRE(strcmp(candidate->matchedMd5,graphicsMd5)==0 &&
+                    strncmp(candidate->matchedPath,selected,prefix)==0 &&
+                    strncmp(candidate->matchedPath+prefix,"::",2)==0,
+                    "every admitted edition belongs to explicitly selected ADF");
+                owner=candidate;
+            }
+        }
+        REQUIRE(owner && M12_AssetStatus_GameAvailable(status,"dm1"),
+            "selected original ADF stays available beside complete same/different-edition neighbors");
+        for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++role) {
+            const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",role);
+            const char* path=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+            if (strcmp(required->roleId,"graphics")==0)
+                graphicsFound=required->matched && strcmp(required->matchedHash,graphicsMd5)==0 &&
+                    strncmp(path,selected,prefix)==0 && strncmp(path+prefix,"::",2)==0;
+            if (strcmp(required->roleId,"dungeon")==0)
+                worldFound=required->matched && strcmp(required->matchedHash,"30028fb6a301ecb20127ef0b3af32b05")==0 &&
+                    strncmp(path,selected,prefix)==0 && strncmp(path+prefix,"::",2)==0;
+        }
+        REQUIRE(graphicsFound && worldFound,"required-file receipts retain selected disk provenance");
+        memset(&spec,0,sizeof(spec));
+        spec.title="DUNGEON MASTER"; spec.gameId=spec.sourceId="dm1";
+        spec.dataDir=selected; spec.verifiedAssetPath=owner->matchedPath; spec.verifiedAssetMd5=graphicsMd5;
+        spec.sourceKind=M11_GAME_SOURCE_BUILTIN_CATALOG;
+        spec.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+        spec.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        REQUIRE(M11_GameView_Start(game,&spec) && game->active && game->assetLoader.dm1Amiga36 &&
+            M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+            "explicit selected ADF starts original Amiga 3.6 world");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        if (mode) M12_AssetStatus_Scan(status,unsupported);
+        else M12_AssetStatus_ScanGame(status,unsupported,"dm1");
+        REQUIRE(!M12_AssetStatus_GameAvailable(status,"dm1"),
+            "unsupported selected disk cannot borrow complete neighboring originals");
+    }
+    for (int mode=0; mode<2; ++mode) {
+        if (mode) M12_AssetStatus_Scan(status,dir);
+        else M12_AssetStatus_ScanGame(status,dir,"dm1");
+        REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1"),
+            "directory with ADF suffix retains ordinary collection discovery");
+    }
+    REQUIRE(asset_file_matches_md5(selected,"3ff177c27abe1a15ba36946669b2e512"),
+        "original selected disk remains unchanged after scans and runtime starts");
+    result=0;
+cleanup:
+    M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    free(bytes);
+    if (unsupported[0]) unlink(unsupported);
+    if (duplicate[0]) unlink(duplicate);
+    if (neighbor[0]) unlink(neighbor);
+    if (selected[0]) unlink(selected);
+    if (dir[0]) rmdir(dir);
+    return result==0;
+}
 static int native_report_has_graphics_without_world(const M12_AssetStatus* status,
     const char* graphics, const char* graphicsMd5) {
     int graphicsReported=0, dungeonMissing=0;
@@ -418,6 +517,9 @@ int main(void) {
                 sibling==1 ? NULL : sibling==2 ? "swoosh" : "VDEO.FTL",
                 sibling==1 ? NULL : hashes[2]),
                 "native original companion compatibility and recovery");
+            if (sibling==3 && amigaOriginal && FSP_FileExists(amigaOriginal))
+                REQUIRE(direct_adf_preserves_selected_owner(fresh,game,root,siblingOriginal,
+                    amigaOriginal,nativeFiles[2]),"explicit ADF source ownership and runtime recovery");
         } else REQUIRE(FSP_JoinPath(pcAlias,sizeof(pcAlias),root,"pc-original.zip") &&
             FSP_ResolvePhysicalPath(physical,sizeof(physical),pcOriginal) &&
             symlink(physical,pcAlias)==0,"stage original PC archive for mixed-owner report");
