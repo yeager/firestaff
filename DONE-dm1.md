@@ -3997,3 +3997,25 @@ not used as its final verification.
   Source comparison proves all 27 remaining defense, size and poison helper
   inputs equal the original GS values, so those helpers need no duplicate API.
   This does not yet connect IIGS to CLI/M12 or prove complete gameplay.
+
+- 2026-10-16: Connected authentic IIGS 2.0/2.1 installations to actual M11
+  first-world startup through CLI and M12. Both scanners require the same
+  authenticated four-file ProDOS owner; explicit virtual PO/graphics locators
+  retain that owner and cannot borrow another executable edition. Runtime
+  preparation revalidates the selected edition without extraction/cache.
+  Native startup binds the complete LE world, copied gameplay profile, fresh
+  pools, graphics, font and program metadata. Native keyboard turns/steps and
+  idle use WORLD; native base-wall/HUD presentation avoids PC metadata.
+  Boot diagnostics report dm1-iigs-runtime with no invented title frames.
+  The separate source gate requires native world/assets/font/draw ownership;
+  existing PC startup validators remain intact. Eleven targeted tests pass
+  without skips (13.49 s): nine original-media tests plus two existing PC
+  creature-info tests. Both original editions pass actual CLI rotation and
+  menu launch; M11 additionally verifies HoC forward/back steps, restart and
+  double shutdown. Both public scan APIs verify exact file provenance and
+  reject a missing-program disk beside complete originals. FM Towns keeps
+  AUTO priority with its canonical original archive beside IIGS; a rebuilt
+  PC34 CLI also reaches the first world. Catalog checks pass; 21 catalogs
+  change source-reference lines only. This is basic native first-world
+  functionality, not full IIGS support: intro, DOC audio, champion/UI actions,
+  mouse input and remaining scene consumers are still unfinished.

@@ -6297,6 +6297,14 @@ static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
             strcmp(version->versionId, "fmtowns-ja") == 0);
 }
 
+static int m11_selected_dm1_is_iigs(const M12_StartupMenuState* menuState,
+                                    const M12_MenuEntry* entry) {
+    int versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
+    return versionIndex >= 0 &&
+           M12_AssetStatus_GetVersionArchitecture("dm1", (size_t)versionIndex) ==
+               M12_ARCH_APPLE_IIGS;
+}
+
 static int m11_selected_dm1_is_atari(const M12_StartupMenuState* menuState,
                                      const M12_MenuEntry* entry) {
     int versionIndex =
@@ -6703,6 +6711,13 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
      * source-visible transaction is only for the DOS launcher and would
      * incorrectly force the native edition through the entrance handoff. */
     if (m11_selected_dm1_is_fmtowns(menuState, launchEntry)) {
+        dm1RouteReceipt.use_dm1_transaction = 0;
+        dm1RouteReceipt.use_generic_launch = 1;
+    }
+    /* Native GS startup consumes its own ProDOS installation and LE world.
+     * The PC/A20 title/entrance transaction cannot interpret those sources.
+     * Native intro/entrance playback remains separate unfinished work. */
+    if (m11_selected_dm1_is_iigs(menuState, launchEntry)) {
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
     }
@@ -7841,6 +7856,10 @@ static void m11_phase_a_print_boot_probe_receipt(
         fmtownsMenuSelectsProgram =
             gameView->dm1FmtownsStartupReceipt.menu_info_selects_game;
     }
+    if (gameView && gameView->dm1IigsActive) {
+        platformHandoff = gameView->dm1IigsInstallation.metadata.program_version ==
+            DM1_V1_IIGS_PROGRAM_G20 ? "iigs-g20-native" : "iigs-g21-native";
+    }
     if (gameView && receipt.sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         dm2SceneReady = dm2_v1_runtime_graphicsset_scene_receipt(&dm2Scene);
     }
@@ -8029,6 +8048,22 @@ static int m11_boot_probe_expected_phase_is_runtime(const char *phase) {
     }
     return len > suffix_len &&
            strcmp(phase + len - suffix_len, suffix) == 0;
+}
+
+static int m11_boot_probe_iigs_source_ready(const M11_GameViewState* view,
+    const M11_BootProbeReceipt* receipt, const char* expectedGame) {
+    return view && receipt && expectedGame && strcmp(expectedGame, "dm1") == 0 &&
+        view->dm1IigsActive && view->dm1IigsDrawCount > 0 &&
+        view->assetLoader.iigsDm1 && view->world.iigsCreatureProfileBound &&
+        view->originalFontAvailable && view->originalFont.iigsNative &&
+        (view->dm1IigsInstallation.metadata.program_version == DM1_V1_IIGS_PROGRAM_G20 ||
+         view->dm1IigsInstallation.metadata.program_version == DM1_V1_IIGS_PROGRAM_G21) &&
+        receipt->active && receipt->startedFromLauncher && receipt->levelLoaded &&
+        receipt->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG &&
+        strcmp(receipt->sourceId, "dm1") == 0 &&
+        strcmp(receipt->bootAssetMd5, "1045a36952e64eb2bc7b4c7b2965b112") == 0 &&
+        strcmp(view->assetLoader.graphicsDatPath,
+               view->dm1IigsInstallation.graphics_path) == 0;
 }
 
 static int m11_boot_probe_runtime_receipt_ready(
@@ -11551,18 +11586,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 runRc = 4;
                 goto boot_probe_terminal_exit;
             }
-            if ((selectedFacts.expected_game_id = o->gameId,
-                 selectedFacts.actual_source_id = receipt.sourceId,
-                 selectedFacts.active = receipt.active,
-                 selectedFacts.started_from_launcher =
-                     receipt.startedFromLauncher,
-                 selectedFacts.intro_bypassed =
-                     receipt.dm1StartupIntroBypassed,
-                 selectedFacts.verified_asset_md5 = receipt.bootAssetMd5,
-                 !dm1_v1_startup_selected_boot_probe_receipt_pc34(
-                     &selectedFacts,
-                     &selectedReceipt)) ||
-                !selectedReceipt.valid ||
+            selectedFacts.expected_game_id = o->gameId;
+            selectedFacts.actual_source_id = receipt.sourceId;
+            selectedFacts.active = receipt.active;
+            selectedFacts.started_from_launcher = receipt.startedFromLauncher;
+            selectedFacts.intro_bypassed = receipt.dm1StartupIntroBypassed;
+            selectedFacts.verified_asset_md5 = receipt.bootAssetMd5;
+            /* GS first-world startup has its own authenticated native route.
+             * Preserve the PC startup validator and its intro requirements. */
+            int selectedSourceReady = gameView.dm1IigsActive
+                ? m11_boot_probe_iigs_source_ready(&gameView, &receipt, o->gameId)
+                : (dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                       &selectedFacts, &selectedReceipt) && selectedReceipt.valid);
+            if (!selectedSourceReady ||
                 (selectedKindFacts.expected_game_id = o->gameId,
                  selectedKindFacts.actual_source_kind = (int)receipt.sourceKind,
                  selectedKindFacts.dm1_builtin_source_kind =

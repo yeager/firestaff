@@ -201,6 +201,27 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
+    add_test(NAME firestaff_iigs_cli_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_iigs_cli_real_media.sh"
+            $<TARGET_FILE:firestaff>)
+    set_tests_properties(firestaff_iigs_cli_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 90
+        ENVIRONMENT "FIRESTAFF_DM1_IIGS_SOFTWARE_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,Apple_IIGS,Software.7z"
+        LABELS "dm1;iigs;cli;startup;menu;real-media;skip-safe")
+
+    add_executable(test_m11_dm1_iigs_startup_real_media
+        tests/test_m11_dm1_iigs_startup_real_media.c)
+    target_include_directories(test_m11_dm1_iigs_startup_real_media PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_m11_dm1_iigs_startup_real_media PRIVATE firestaff_m12)
+    add_test(NAME m11_dm1_iigs_startup_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_iigs_startup_real_media.sh"
+            $<TARGET_FILE:test_m11_dm1_iigs_startup_real_media>)
+    set_tests_properties(m11_dm1_iigs_startup_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 120
+        ENVIRONMENT "FIRESTAFF_DM1_IIGS_SOFTWARE_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,Apple_IIGS,Software.7z;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        LABELS "dm1;iigs;startup;input;real-media;in-memory;skip-safe")
+
     add_executable(test_dm1_v1_iigs_audio_real_media
         tests/test_dm1_v1_iigs_audio_real_media.c
         src/shared/firestaff_prodos.c)

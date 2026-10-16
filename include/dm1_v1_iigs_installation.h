@@ -19,7 +19,8 @@ typedef struct DM1_V1_IigsInstallation {
 } DM1_V1_IigsInstallation;
 
 /* Inspect every matching graphics owner under the selected directory or
- * physical container, without promoting it to its parent. Require all four
+ * physical container, without promoting it to its parent. An explicit virtual
+ * PO image or GRAPHICS.GAME locator validates only that exact disk. Require all four
  * authentic files in the same native .po image; no neighboring disk supplies
  * companions. expected_version is 0 (either), 20 or 21. Returns 1 for the
  * first complete owner in sorted path order, 0 if none, -1 on invalid input

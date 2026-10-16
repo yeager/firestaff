@@ -84,6 +84,28 @@ int dm1_v1_iigs_installation_find(const char *selected_root,
     if (!selected_root || !selected_root[0] ||
         (expected_version != 0 && expected_version != 20 && expected_version != 21))
         return -1;
+    /* A selected virtual native image/graphics locator is already an exact
+     * owner. Do not promote it to the outer archive and choose a sibling.
+     * MEMORY.C F0477 and LOADSAVE.C F0434 consume companions on that disk. */
+    if (strstr(selected_root, "::")) {
+        char graphics[ASSET_PATH_MAX];
+        size_t length = strlen(selected_root);
+        const char *tail = strrchr(selected_root, ':');
+        memset(&owner, 0, sizeof(owner));
+        if (tail && strcmp(tail + 1, "GRAPHICS.GAME") == 0) {
+            if (length >= sizeof(graphics)) return -1;
+            memcpy(graphics, selected_root, length + 1U);
+        } else {
+            static const char member[] = "::GRAPHICS.GAME";
+            if (length + sizeof(member) > sizeof(graphics)) return -1;
+            memcpy(graphics, selected_root, length);
+            memcpy(graphics + length, member, sizeof(member));
+        }
+        if (!iigs_owner_paths(graphics, &owner)) return 0;
+        result = iigs_owner_validate(&owner, expected_version);
+        if (result == 1) *out = owner;
+        return result;
+    }
     candidates = calloc(IIGS_OWNER_CAPACITY, sizeof(*candidates));
     if (!candidates) return -1;
     /* Complete bounded inventory precedes owner choice: identical graphics

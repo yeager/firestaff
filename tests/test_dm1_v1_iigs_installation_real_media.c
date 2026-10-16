@@ -120,6 +120,21 @@ int main(int argc, char **argv) {
             dm1_v1_iigs_installation_find(argv[3],version,&installation)==1 &&
             check_owner(&installation,prefix,version),"archive collection skips incomplete shared-graphics owners and admits each exact original edition");
     }
+    for (int edition=0; edition<2; ++edition) {
+        int version=edition ? 21 : 20;
+        char graphics[ASSET_PATH_MAX];
+        REQUIRE(snprintf(prefix,sizeof(prefix),"%s::Dungeon Master for Apple IIGS %s (English) Original (Not working).po",
+            argv[3],edition ? "2.1" : "2.0")<(int)sizeof(prefix),"bounded explicit native image locator");
+        REQUIRE(dm1_v1_iigs_installation_find(prefix,version,&installation)==1 &&
+            check_owner(&installation,prefix,version),"selected virtual PO keeps its exact complete native owner");
+        REQUIRE(snprintf(graphics,sizeof(graphics),"%s::GRAPHICS.GAME",prefix)<(int)sizeof(graphics) &&
+            dm1_v1_iigs_installation_find(graphics,version,&installation)==1 &&
+            check_owner(&installation,prefix,version),"selected virtual graphics locator owns every native companion");
+        memset(&installation,0xa5,sizeof(installation));
+        REQUIRE(dm1_v1_iigs_installation_find(graphics,edition ? 20 : 21,&installation)==0 &&
+            memcmp(&installation,zero,sizeof(installation))==0,
+            "selected virtual owner cannot borrow the other executable edition from its outer archive");
+    }
     REQUIRE(snprintf(prefix,sizeof(prefix),"%s::media.po",argv[4])<(int)sizeof(prefix) &&
         dm1_v1_iigs_installation_find(argv[4],0,&installation)==1 && check_owner(&installation,prefix,20),
         "authentic installation admission does not depend on Original or canonical archive/member filenames");

@@ -20,6 +20,7 @@
 #include "dm1_v1_native_dungeon_compat.h"
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
 #include "dm2_v1_boot.h"
+#include "dm1_v1_iigs_installation.h"
 #endif
 #include "firestaff_zip_extract.h"
 #include "fs_portable_compat.h"
@@ -336,6 +337,7 @@ void M12_AssetStatus_TestSetTheronSyntheticHash(const char* track02Md5) {
 }
 #endif
 
+static const char* const g_dm1IigsGraphicsNames[] = {"GRAPHICS.GAME", NULL};
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
 static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
 static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
@@ -376,7 +378,9 @@ static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "amiga20-de", "Amiga 2.0/2.2 German", "Amiga 2.x DE", g_dm1GraphicsNames, "0679e39da9dcc2e855cb33c6c64ddcb5", M12_ARCH_AMIGA},
     {"dm1", "amiga21-en", "Amiga 2.1/2.2 English", "Amiga 2.x EN", g_dm1GraphicsNames, "b35931b55db649a1bd2d415b61b29801", M12_ARCH_AMIGA},
     {"dm1", "amiga36-multi", "Amiga 3.6 Multilanguage", "Amiga 3.6 ML", g_dm1GraphicsNames, "7f9458e4a3972d06e649a6fa85a7f34b", M12_ARCH_AMIGA},
-    {"dm1", "amiga-demo-en", "Amiga Demo English", "Amiga Demo EN", g_dm1GraphicsNames, "491ca939f9abb33ceeb26619b841fe91", M12_ARCH_AMIGA}
+    {"dm1", "amiga-demo-en", "Amiga Demo English", "Amiga Demo EN", g_dm1GraphicsNames, "491ca939f9abb33ceeb26619b841fe91", M12_ARCH_AMIGA},
+    {"dm1", "iigs20-en", "Apple IIGS 2.0 English", "IIGS 2.0 EN", g_dm1IigsGraphicsNames, "1045a36952e64eb2bc7b4c7b2965b112", M12_ARCH_APPLE_IIGS},
+    {"dm1", "iigs21-en", "Apple IIGS 2.1 English", "IIGS 2.1 EN", g_dm1IigsGraphicsNames, "1045a36952e64eb2bc7b4c7b2965b112", M12_ARCH_APPLE_IIGS}
 };
 
 static const M12_VersionSpec g_csbVersions[] = {
@@ -1165,17 +1169,18 @@ static int m12_dm1_towns_graphics_language(const char* md5) {
     return -1;
 }
 
-/* A DM1 OFS disk is a complete selected source. Other games retain their
- * existing multi-disk/package search policy; this is not a shared ADF claim. */
-static int m12_dm1_explicit_adf(const char* selected) {
+/* A DM1 OFS or ProDOS disk is a complete selected source. Other games retain their
+ * existing multi-disk/package search policy; this is not a shared disk-format claim. */
+static int m12_dm1_explicit_disk(const char* selected) {
     return selected && !strstr(selected, "::") &&
-        m12_ascii_equals_ignore_case(strrchr(selected, '.'), ".adf") &&
+        (m12_ascii_equals_ignore_case(strrchr(selected, '.'), ".adf") ||
+         m12_ascii_equals_ignore_case(strrchr(selected, '.'), ".po")) &&
         FSP_FileExists(selected) && !FSP_DirExists(selected);
 }
 
 static int m12_dm1_requested_archive_owner(const char* selected) {
     return selected && FSP_FileExists(selected) && !FSP_DirExists(selected) &&
-        (m12_explicit_path_is_archive(selected) || m12_dm1_explicit_adf(selected));
+        (m12_explicit_path_is_archive(selected) || m12_dm1_explicit_disk(selected));
 }
 
 /* Explicit original loose graphics remain the terminal owner even when a
@@ -5355,6 +5360,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
         const M12_VersionSpec* spec = &gameSpec->versions[i];
         const char* md5 = m12_effective_version_md5(spec);
+        /* Shared GS graphics identifies neither executable edition nor owner. */
+        if (strcmp(gameSpec->gameId, "dm1") == 0 &&
+            spec->architecture == M12_ARCH_APPLE_IIGS) continue;
         if (!md5 || md5[0] == '\0') {
             continue;
         }
@@ -6283,6 +6291,87 @@ static int m12_dm1_selected_report_graphics(const char* selected,
     }
     free(paths);
     return found;
+}
+
+/* GS admission is deliberately separate from the shared graphics hash pass.
+ * All four files must be authenticated in the same original ProDOS owner. */
+static void m12_admit_dm1_iigs(M12_AssetStatus* status, size_t gameIndex,
+    char roots[][M12_ASSET_DATA_DIR_CAPACITY], size_t rootCount,
+    const char* requested, const M12_AssetStatusScanOptions* options) {
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+    DM1_V1_IigsInstallation* owners;
+    int found[2] = {0, 0}, edition, failed = 0;
+    size_t root;
+    if (strcmp(g_games[gameIndex].gameId, "dm1") != 0) return;
+    owners = calloc(2U, sizeof(*owners));
+    if (!owners) return;
+    for (edition = 0; edition < 2 && !failed; ++edition) {
+        size_t count = requested && requested[0] ? 1U : rootCount;
+        for (root = 0; root < count; ++root) {
+            const char* path = requested && requested[0] ? requested : roots[root];
+            int result;
+            if (status->scanProgress.cancelRequested ||
+                (options && options->cancelFlag && *options->cancelFlag)) {
+                failed = 1;
+                break;
+            }
+            result = dm1_v1_iigs_installation_find(path, 20 + edition, &owners[edition]);
+            if (result < 0) {
+                fprintf(stderr, "firestaff: media-discovery-incomplete game=dm1 platform=apple-iigs path=%s reason=%s\n",
+                    path, result == -2 ? "candidate-limit" : "invalid-or-allocation");
+                failed = 1;
+                break;
+            }
+            if (result == 1) { found[edition] = 1; break; }
+        }
+    }
+    if (status->scanProgress.cancelRequested ||
+        (options && options->cancelFlag && *options->cancelFlag)) failed = 1;
+    if (!failed) for (edition = 0; edition < 2; ++edition) {
+        int index;
+        M12_AssetVersionStatus* version;
+        if (!found[edition]) continue;
+        index = M12_AssetStatus_FindVersionIndex("dm1", edition ? "iigs21-en" : "iigs20-en");
+        if (index < 0) continue;
+        version = &status->versions[gameIndex][index];
+        version->matched = 1;
+        m12_copy_string(version->matchedPath, sizeof(version->matchedPath), owners[edition].graphics_path);
+        m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5), "1045a36952e64eb2bc7b4c7b2965b112");
+        status->originalFileCandidateFound = 1;
+    }
+    if (!failed && (found[0] || found[1])) {
+        int selectedIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            status, "dm1", M12_ARCH_AUTO);
+        const M12_AssetVersionStatus* selected = selectedIndex >= 0 ?
+            &status->versions[gameIndex][selectedIndex] : NULL;
+        status->dm1Available = 1;
+        if (selected && (strcmp(selected->versionId, "iigs20-en") == 0 ||
+                         strcmp(selected->versionId, "iigs21-en") == 0)) {
+            const DM1_V1_IigsInstallation* owner = &owners[strcmp(selected->versionId, "iigs21-en") == 0];
+            const char* paths[4] = {owner->graphics_path, owner->dungeon_path, owner->program_path, owner->start_path};
+            const char* roles[4] = {"graphics", "dungeon", "program", "startup"};
+            const char* labels[4] = {"GRAPHICS.GAME", "DUNGEON.GAME", "DUNGEON.MASTER", "SYSTEM/START"};
+            const char* hashes[4] = {"1045a36952e64eb2bc7b4c7b2965b112", "e10959de5ce74e48a17e2cc84d1c0b92",
+                strcmp(selected->versionId, "iigs21-en") == 0 ? "eccc49e7b29ee233cfb10615e8ec86f3" : "51b9d22c7418651ee49ad77f37c80a3c",
+                "3bcae225346ac24fb1975aa6d93f0fa6"};
+            size_t role;
+            memset(status->requiredFiles[gameIndex], 0, sizeof(status->requiredFiles[gameIndex]));
+            status->requiredFileCounts[gameIndex] = 4U;
+            for (role = 0; role < 4U; ++role) {
+                M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex][role];
+                file->gameId = "dm1"; file->roleId = roles[role]; file->label = labels[role];
+                file->required = file->matched = 1;
+                m12_copy_string(file->matchedPath, sizeof(file->matchedPath), paths[role]);
+                m12_copy_string(file->sourcePath, sizeof(file->sourcePath), paths[role]);
+                m12_copy_string(file->matchedHash, sizeof(file->matchedHash), hashes[role]);
+            }
+            m12_copy_string(status->runtimeDataDirs[gameIndex], sizeof(status->runtimeDataDirs[gameIndex]), owner->graphics_path);
+        }
+    }
+    free(owners);
+#else
+    (void)status; (void)gameIndex; (void)roots; (void)rootCount; (void)requested; (void)options;
+#endif
 }
 
 /* Rejected startup completeness must not erase separately authenticated
@@ -7647,7 +7736,7 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
     /* A single archive is a media selection, not permission to scan siblings.
      * Reuse the complete game-specific owners before the generic file fallback. */
     if (m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip") ||
-        m12_dm1_explicit_adf(requestedDataDir)) {
+        m12_dm1_explicit_disk(requestedDataDir)) {
         static const char* const games[] = {"dm2", "dm1", "csb"};
         size_t g;
         for (g = 0u; g < sizeof(games) / sizeof(games[0]); ++g) {
@@ -8013,7 +8102,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
     if (requestedDataDir &&
         (m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip") ||
-         m12_dm1_explicit_adf(requestedDataDir)) &&
+         m12_dm1_explicit_disk(requestedDataDir)) &&
         m12_scan_explicit_file_request(status, requestedDataDir, options)) {
         if (status->scanProgress.cancelled || status->scanProgress.cancelRequested ||
             (options && options->cancelFlag && *options->cancelFlag)) {
@@ -8322,6 +8411,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_normalize_dm2_runtime_owner(status, i);
         m12_preserve_dm1_game_data_root(status, i);
         m12_report_dm1_selected_files(status, i, requestedDataDir);
+        m12_admit_dm1_iigs(status, i, roots, rootCount, requestedDataDir, options);
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "refreshing media metadata",
@@ -8500,7 +8590,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
         ((!m12_explicit_path_is_archive(requestedDataDir) &&
-          !(gameId && strcmp(gameId, "dm1") == 0 && m12_dm1_explicit_adf(requestedDataDir))) ||
+          !(gameId && strcmp(gameId, "dm1") == 0 && m12_dm1_explicit_disk(requestedDataDir))) ||
          /* The DM1 Amiga v2.0 preservation package is ZIP -> ZIP -> ADF.
           * Its native admission is a named, hash-verified bounded reader;
           * give that reader the package's containing search root while the
@@ -8765,6 +8855,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     m12_normalize_dm2_runtime_owner(status, gameIndex);
     m12_preserve_dm1_game_data_root(status, gameIndex);
     m12_report_dm1_selected_files(status, gameIndex, requestedDataDir);
+    m12_admit_dm1_iigs(status, gameIndex, roots, rootCount, requestedDataDir, options);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
         m12_refresh_theron_track02_loader_receipt(status);
@@ -8922,6 +9013,20 @@ int M12_AssetStatus_PrepareDM1RuntimeVersion(
     if (versionIndex < 0) return 0;
     version = &status->versions[gameIndex][versionIndex];
     if (!version->matched || !version->matchedPath[0]) return 0;
+    if (strcmp(versionId, "iigs20-en") == 0 || strcmp(versionId, "iigs21-en") == 0) {
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+        DM1_V1_IigsInstallation* owner = calloc(1U, sizeof(*owner));
+        int valid = owner && dm1_v1_iigs_installation_find(version->matchedPath,
+            strcmp(versionId, "iigs21-en") == 0 ? 21 : 20, owner) == 1 &&
+            strcmp(owner->graphics_path, version->matchedPath) == 0 &&
+            strlen(owner->graphics_path) < outPathSize;
+        if (valid) m12_copy_string(outPath, outPathSize, owner->graphics_path);
+        free(owner);
+        return valid;
+#else
+        return 0;
+#endif
+    }
     if (strcmp(versionId, "amiga36-multi") == 0 &&
         !m12_dm1_amiga36_package_ready(version->matchedPath, status->dm1DungeonLanguage)) return 0;
     if (strcmp(versionId, "fmtowns-en") == 0 ||

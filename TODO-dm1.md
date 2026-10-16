@@ -2074,3 +2074,20 @@ actual M11 startup, then CLI/M12. Native playback and first active Hall input
 remain unverified. Save serialization of GS profile/admission is deferred.
 Full builds/sanitizers remain on trv2; the host name still fails to resolve,
 so this batch used bounded local builds and local-original targeted checks.
+
+2026-10-16 IIGS CLI/M12 first-world startup is now exercised for both original
+editions, including native keyboard turns, HoC forward/back steps, idle and
+restart. Both scan APIs and launch preparation keep all four files on the
+selected ProDOS disk; wrong/incomplete owners fail closed. Native diagnostic
+phase is dm1-iigs-runtime; title counters stay zero because no title ran.
+This is not complete game/platform support. Next bind native champion/mirror,
+mouse, inventory/spell/interaction paths and the remaining door/ornament/
+creature/scene consumers; complete source intro/entrance and DOC playback.
+Basic source floor/ceiling/walls and HUD are drawn, with visual parity deferred.
+Do not promote this constructor/first-world proof to a complete IIGS campaign.
+
+Additional source-discovery evidence: the FM Towns AUTO comparison passes
+with its original archive basename beside an authentic IIGS disk. The same
+original Towns archive linked as towns.zip was not detected in that mixed
+root. Investigate renamed-archive discovery separately; do not claim the
+canonical-name priority test proves arbitrary archive-name handling.

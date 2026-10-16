@@ -6,6 +6,7 @@
 #include "redmcsb_f0791_dungeonview_draw_bitmap_xx_pc34_compat.h"
 #include "m11_loose_sibling.h"
 #include "dm1_v1_native_dungeon_compat.h"
+#include "dm1_v1_iigs_graphics_dat.h"
 #include "soundtrack_selector_m11.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
@@ -8267,7 +8268,14 @@ static int m11_dm1_bind_original_font(M11_GameViewState *state) {
     state->originalFontAvailable = 0;
     /* TEXT.C:2013-2022 loads M653 with NOT_EXPANDED. The legacy and
      * Atari asset owners retain original bytes without a PC34 fileState. */
-    if (state->assetLoader.atariStDm1) {
+    if (state->assetLoader.iigsDm1) {
+        if (!dm1_v1_iigs_graphics_read_raw(state->assetLoader.iigsData,
+                (size_t)state->assetLoader.iigsDataSize, 557, raw,
+                sizeof(raw), &length)) return 0;
+        state->originalFontAvailable = M11_Font_LoadIigsFromRawBitmap(
+            &state->originalFont, raw, length);
+        return state->originalFontAvailable;
+    } else if (state->assetLoader.atariStDm1) {
         DM1_V1_AtariStGraphicsDat dat;
         int count;
         if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
@@ -27000,6 +27008,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     int hasLaunchIntent = 0;
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     int gameOptionSlot = -1;
+    int selectedIigsVersion = 0;
     char selectedDm2RuntimeDataDir[FSP_PATH_MAX] = {0};
     char selectedDm1RuntimeDataDir[FSP_PATH_MAX] = {0};
     char selectedCsbRuntimeDataDir[FSP_PATH_MAX] = {0};
@@ -27078,6 +27087,13 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             version->matchedMd5[0] != '\0') {
             spec.verifiedAssetPath = version->matchedPath;
             spec.verifiedAssetMd5 = version->matchedMd5;
+            if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
+                version->versionId) {
+                if (strcmp(version->versionId, "iigs20-en") == 0)
+                    selectedIigsVersion = 20;
+                else if (strcmp(version->versionId, "iigs21-en") == 0)
+                    selectedIigsVersion = 21;
+            }
             /* The menu's version picker is authoritative.  A shared CSB
              * data root may contain PC, Atari, Amiga and FM Towns packages;
              * materialize the selected package privately instead of letting
@@ -27359,11 +27375,20 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
      * it at launch so the runtime can tick + surface the reminder /
      * forced-pause events during gameplay. */
     {
-        int ok = M11_GameView_Start(state, &spec);
+        int ok = selectedIigsVersion
+            ? ((!spec.savePath || !spec.savePath[0]) &&
+               (!spec.entranceResumeSavePath || !spec.entranceResumeSavePath[0]) &&
+               M11_GameView_StartIigs(state, spec.verifiedAssetPath,
+                                      selectedIigsVersion))
+            : M11_GameView_Start(state, &spec);
+        if (ok && selectedIigsVersion) {
+            state->startedFromLauncher = 1;
+            m11_apply_launcher_options_handoff(state, &spec);
+        }
         /* Per-game startup reinitializes the view, so seed the timer only
          * after successful startup has established the live session. */
         if (ok) M11_GameView_InitFromMenuSessionTimer(state, menuState);
-        if (ok && entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+        if (ok && !state->dm1IigsActive && entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
             (void)m11_apply_dm1_startup_launch_path_receipt(
                 state,
                 DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34);
@@ -27375,6 +27400,100 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         }
         return ok;
     }
+}
+
+int M11_GameView_StartIigs(M11_GameViewState* state,
+    const char* selectedRoot, int expectedVersion)
+{
+    DM1_V1_IigsInstallation installation;
+    DM1_V1_IigsMetadata metadata;
+    DM1_V1_IigsDungeonReceipt worldReceipt;
+    unsigned char *graphics = NULL, *program = NULL, *start = NULL;
+    unsigned char *dungeon = NULL, *expanded = NULL;
+    size_t graphicsSize = 0, programSize = 0, startSize = 0, dungeonSize = 0;
+    size_t expandedSize = 0, produced = 0;
+    char root[ASSET_PATH_MAX];
+    int result = 0, debugHUD;
+    if (!state || !selectedRoot || !selectedRoot[0] ||
+        strlen(selectedRoot) >= sizeof(root)) return 0;
+    snprintf(root, sizeof(root), "%s", selectedRoot);
+    debugHUD = state->showDebugHUD;
+    M11_GameView_Shutdown(state);
+    M11_GameView_Init(state);
+    state->showDebugHUD = debugHUD;
+    /* This is native first-world startup, not a PC/Towns title shortcut.
+     * ReDMCSB LOADSAVE.C F0434 owns GAME and the program's G0243 tables.
+     * Reauthenticate retained bytes after discovery, including both native
+     * executable siblings, before any initialized world becomes active. */
+    if (dm1_v1_iigs_installation_find(root, expectedVersion, &installation) != 1 ||
+        !asset_read_path_alloc(installation.graphics_path, &graphics, &graphicsSize) ||
+        !asset_read_path_alloc(installation.program_path, &program, &programSize) ||
+        !dm1_v1_iigs_metadata_read(program, programSize, &metadata) ||
+        metadata.program_version != installation.metadata.program_version ||
+        !asset_read_path_alloc(installation.start_path, &start, &startSize) ||
+        startSize != 14603U || !asset_memory_matches_md5(start, startSize,
+            "3bcae225346ac24fb1975aa6d93f0fa6") ||
+        !asset_read_path_alloc(installation.dungeon_path, &dungeon, &dungeonSize) ||
+        dungeonSize != 25006U || !asset_memory_matches_md5(dungeon, dungeonSize,
+            "e10959de5ce74e48a17e2cc84d1c0b92") ||
+        !dm1_v1_iigs_dungeon_query(dungeon, dungeonSize, &expandedSize)) goto cleanup;
+    expanded = malloc(expandedSize);
+    if (!expanded || !dm1_v1_iigs_dungeon_decode(dungeon, dungeonSize,
+            expanded, expandedSize, &produced, &worldReceipt) ||
+        produced != expandedSize || worldReceipt.dungeon_id != 10U ||
+        !M11_AssetLoader_InitDm1IigsFromBuffer(&state->assetLoader,
+            graphics, (long)graphicsSize)) goto cleanup;
+    state->assetsAvailable = 1;
+    if (!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(expanded,
+            (int)expandedSize, 0xF1A5U, metadata.creature_info, 27U,
+            &state->world)) goto cleanup;
+    state->active = 1;
+    if (!F0506_DUNGEON_ReserveFreshPc34Pools_Compat(state->world.dungeon,
+            state->world.things) || !m11_dm1_bind_original_font(state)) goto cleanup;
+    /* G0236's allocation increments are identical under native GS MEDIA365
+     * (DUNGEON.C:62-79), including the 300 extra square-first-thing slots.
+     * Keep the complete LE checksum body; no BE normalization is involved. */
+    installation.metadata = metadata;
+    installation.world = worldReceipt;
+    state->dm1IigsInstallation = installation;
+    state->dm1IigsActive = 1;
+    state->active = 1;
+    state->assetsAvailable = 1;
+    state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+    state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+    state->presentationWidth = 320;
+    state->presentationHeight = 200;
+    state->fontScale = 1;
+    state->dm1StartupIntroBypassed = 1;
+    snprintf(state->title, sizeof(state->title), "%s", "Dungeon Master");
+    snprintf(state->sourceId, sizeof(state->sourceId), "%s", "dm1");
+    snprintf(state->bootAssetMd5, sizeof(state->bootAssetMd5), "%s",
+             "1045a36952e64eb2bc7b4c7b2965b112");
+    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
+             installation.dungeon_path);
+    snprintf(state->assetLoader.graphicsDatPath,
+             sizeof(state->assetLoader.graphicsDatPath), "%s",
+             installation.graphics_path);
+    state->mirrorCatalogAvailable = F0652_CHAMPION_BuildMirrorCatalog_Compat(
+        state->world.things, &state->mirrorCatalog) > 0;
+    if (!F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash))
+        goto cleanup;
+    /* Native DOC audio/backend wiring is not complete. Never inherit a
+     * previously discovered PC SND3/SONG source in this GS lifecycle. */
+    M11_Audio_Shutdown(&state->audioState);
+    state->dm1MusicSourceBound = 0;
+    state->dm1MusicOn = 0;
+    fprintf(stderr, "DM1 IIGS READY: version=%d graphicsPath=%s dungeonPath=%s "
+        "programPath=%s map=%d x=%d y=%d dir=%d audio=unbound intro=deferred\n",
+        (int)metadata.program_version, installation.graphics_path,
+        installation.dungeon_path, installation.program_path,
+        state->world.party.mapIndex, state->world.party.mapX,
+        state->world.party.mapY, state->world.party.direction);
+    result = 1;
+cleanup:
+    free(expanded); free(dungeon); free(start); free(program); free(graphics);
+    if (!result) M11_GameView_Shutdown(state);
+    return result;
 }
 
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
@@ -28002,6 +28121,24 @@ static int m11_get_boot_receipt(const M11_GameViewState* state,
     out->partyDir = state->world.party.direction;
     out->championCount = state->world.party.championCount;
     out->runtimeTick = (int)state->world.gameTick;
+    if (state->dm1IigsActive) {
+        /* The GS entry currently opens its actual first world directly.
+         * No SWSH/title/entrance frames have been presented: never synthesize
+         * the PC title-session counters merely because sourceId is DM1. */
+        if (!state->active || !state->assetLoader.iigsDm1 ||
+            !state->world.iigsCreatureProfileBound ||
+            !state->world.dungeon || !state->world.dungeon->loaded ||
+            !state->world.things || !state->world.things->loaded) return 0;
+        snprintf(out->startupPhase, sizeof(out->startupPhase), "%s", "dm1-iigs-runtime");
+        snprintf(out->startupAnimation, sizeof(out->startupAnimation), "%s", "none");
+        out->dm1StartupIntroBypassed = state->dm1StartupIntroBypassed ? 1 : 0;
+        out->startupActive = 0;
+        out->startupAnimationActive = 0;
+        out->startupTitleFrame = 0;
+        out->startupTitleFrameMax = 0;
+        out->startupTitleReady = 0;
+        return 1;
+    }
     if (strcmp(state->sourceId, "dm1") == 0) {
         DM1_V1_StartupBootProbeFacts_PC34 facts;
         DM1_V1_StartupBootProbeReceipt_PC34 receipt;
@@ -31774,6 +31911,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (!state || !state->active || M11_GameView_IsPaused(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (state->dm1IigsActive)
+        return m11_apply_tick(state, CMD_NONE, "WAIT")
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     /* F0349's synchronous source command does not run the game loop while
      * waiting. The host pumps events and services the source clock instead. */
     if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
@@ -35632,6 +35772,31 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (state->dm1IigsActive) {
+        /* Native first-world scope: feed real WORLD commands without
+         * entering PC-specific spell/inventory/save or startup overlays.
+         * LOADSAVE.C F0434 starts GS at its native party coordinates. */
+        uint8_t nativeCommand;
+        if (input == M12_MENU_INPUT_BACK) return M11_GAME_INPUT_RETURN_TO_MENU;
+        if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
+        switch (input) {
+        case M12_MENU_INPUT_UP:
+            nativeCommand = m11_forward_command_for_direction(state->world.party.direction); break;
+        case M12_MENU_INPUT_DOWN:
+            nativeCommand = m11_backward_command_for_direction(state->world.party.direction); break;
+        case M12_MENU_INPUT_LEFT:
+        case M12_MENU_INPUT_TURN_LEFT: nativeCommand = CMD_TURN_LEFT; break;
+        case M12_MENU_INPUT_RIGHT:
+        case M12_MENU_INPUT_TURN_RIGHT: nativeCommand = CMD_TURN_RIGHT; break;
+        case M12_MENU_INPUT_STRAFE_LEFT:
+            nativeCommand = m11_strafe_left_command_for_direction(state->world.party.direction); break;
+        case M12_MENU_INPUT_STRAFE_RIGHT:
+            nativeCommand = m11_strafe_right_command_for_direction(state->world.party.direction); break;
+        default: return M11_GAME_INPUT_IGNORED;
+        }
+        return m11_apply_tick(state, nativeCommand, "MOVE")
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     if (m11_dm1_v1_blocks_host_map_overlay(state)) {
         state->mapOverlayActive = 0;
     }
@@ -37554,6 +37719,7 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
 M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
                                                    int x,
                                                    int y) {
+    if (state && state->dm1IigsActive) return M11_GAME_INPUT_IGNORED;
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -37580,6 +37746,7 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int x,
     int y,
     int buttonMask) {
+    if (state && state->dm1IigsActive) return M11_GAME_INPUT_IGNORED;
     int space;
     int zoneId;
     int command;
@@ -37998,6 +38165,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
                                                      int buttonMask) {
+    if (state && state->dm1IigsActive) return M11_GAME_INPUT_IGNORED;
     int slot;
     if (M11_GameView_IsPaused(state))
         return M11_GAME_INPUT_IGNORED;
@@ -71228,6 +71396,115 @@ static int m11_draw_dm2_source_inventory_panel(
     return 1;
 }
 
+static void m11_iigs_blit(M11_GameViewState* state, unsigned char* target,
+    unsigned index, int x, int y, int width, int height,
+    int sourceX, int sourceY, int flip, int viewport)
+{
+    const M11_AssetSlot* asset = M11_AssetLoader_Load(&state->assetLoader, index);
+    int row, col;
+    if (!asset || sourceX < 0 || sourceY < 0 || width <= 0 || height <= 0 ||
+        sourceX + width > asset->width || sourceY + height > asset->height) return;
+    for (row = 0; row < height; ++row) {
+        int dy = y + row;
+        if (dy < 0 || dy >= 200) continue;
+        for (col = 0; col < width; ++col) {
+            int dx = x + col;
+            int sx = sourceX + col;
+            if (dx < 0 || dx >= 320 || (viewport && dx >= 224)) continue;
+            if (flip) sx = asset->width - 1 - sx;
+            target[dy * 320 + dx] = asset->pixels[
+                (sourceY + row) * asset->width + sx] + (viewport ? 16 : 0);
+        }
+    }
+}
+
+static int m11_iigs_relative_wall(const M11_GameViewState* state, int depth, int side)
+{
+    static const int east[4] = {0,1,0,-1}, south[4] = {-1,0,1,0};
+    const struct DungeonDatState_Compat* dungeon = state->world.dungeon;
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int direction = state->world.party.direction & 3;
+    int x = state->world.party.mapX + east[direction]*depth - south[direction]*side;
+    int y = state->world.party.mapY + south[direction]*depth + east[direction]*side;
+    unsigned char square;
+    int mapIndex = state->world.party.mapIndex;
+    if (!dungeon || !dungeon->maps || !dungeon->tiles || mapIndex < 0 ||
+        mapIndex >= dungeon->header.mapCount) return 1;
+    map = dungeon->maps + mapIndex; tiles = dungeon->tiles + mapIndex;
+    if (x < 0 || x >= map->width || y < 0 || y >= map->height || !tiles->squareData)
+        return 1;
+    square = tiles->squareData[x * map->height + y];
+    return (square >> 5) == 0 || ((square >> 5) == 6 && !(square & 4));
+}
+
+static void m11_iigs_draw_first_world(M11_GameViewState* state,
+    unsigned char* framebuffer, int width, int height)
+{
+    /* Native GS base-wall frames, ReDMCSB DUNVIEW.C:581-594 G0163.
+     * This bounded first-world renderer deliberately does not call PC C696
+     * or the incompatible Amiga M558 parser. Door/ornament/creature and
+     * inventory presentation remain unimplemented here, not peer fallbacks. */
+    static const unsigned char frames[9][8] = {
+        {74,149,25,75,64,51,18,0}, {0,83,25,75,64,51,32,0},
+        {139,223,25,75,64,51,0,0}, {60,163,20,90,72,71,16,0},
+        {0,74,20,90,72,71,61,0}, {149,223,20,90,72,71,0,0},
+        {32,191,9,119,128,111,48,0}, {0,63,9,119,128,111,192,0},
+        {160,223,9,119,128,111,0,0}
+    };
+    unsigned char native[320 * 200] = {0};
+    unsigned char rgb6[256][3] = {{0}};
+    const DM1_V1_IigsMetadata* metadata = &state->dm1IigsInstallation.metadata;
+    const struct DungeonMapDesc_Compat* map = state->world.dungeon->maps +
+        state->world.party.mapIndex;
+    int flip = (state->world.party.mapX + state->world.party.mapY +
+                state->world.party.direction) & 1;
+    unsigned wallBase = 77U + 13U * map->wallSet;
+    int i, depth, side, x, y;
+    for (i = 0; i < 32; ++i) {
+        uint16_t color = i < 16 ? metadata->interface_palette[i] :
+                                 metadata->dungeon_palettes[0][i-16];
+        unsigned r = (color >> 8) & 15, g = (color >> 4) & 15, b = color & 15;
+        rgb6[i][0] = (unsigned char)((r << 2) | (r >> 2));
+        rgb6[i][1] = (unsigned char)((g << 2) | (g >> 2));
+        rgb6[i][2] = (unsigned char)((b << 2) | (b >> 2));
+    }
+    (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+    /* GS DRAWVIEW.C F2172 presents 224x136 at screen line33. */
+    memset(native + 33*320, 16, 136*320);
+    m11_iigs_blit(state,native,76U+2U*map->floorSet,0,33,224,29,0,0,!flip,1);
+    m11_iigs_blit(state,native,75U+2U*map->floorSet,0,99,224,70,0,0,flip,1);
+    if (m11_iigs_relative_wall(state,3,-2))
+        m11_iigs_blit(state,native,wallBase+12,0,58,16,49,0,0,0,1);
+    if (m11_iigs_relative_wall(state,3,2))
+        m11_iigs_blit(state,native,wallBase+12,208,58,16,49,0,0,1,1);
+    for (depth = 3; depth >= 1; --depth) {
+        static const int order[3] = {-1,1,0};
+        for (i = 0; i < 3; ++i) {
+            const unsigned char* f;
+            side = order[i];
+            if (!m11_iigs_relative_wall(state,depth,side)) continue;
+            f = frames[(3-depth)*3 + (side < 0 ? 1 : side > 0 ? 2 : 0)];
+            m11_iigs_blit(state,native,wallBase+8U+(unsigned)depth,
+                f[0],33+f[2],f[1]-f[0]+1,f[3]-f[2]+1,f[6],f[7],flip,1);
+        }
+    }
+    for (side = -1; side <= 1; side += 2)
+        if (m11_iigs_relative_wall(state,0,side))
+            m11_iigs_blit(state,native,wallBase+(side < 0 ? (flip ? 7U : 8U) :
+                (flip ? 8U : 7U)),side < 0 ? 0 : 192,33,32,136,0,0,flip,1);
+    for (i = 0; i < 3; ++i) {
+        const uint16_t* box = metadata->ui_boxes[i];
+        m11_iigs_blit(state,native,i == 0 ? 9U : i == 1 ? 10U : 13U,
+            box[0],box[2],box[1]-box[0]+1,box[3]-box[2]+1,0,0,0,0);
+    }
+    for (y = 0; y < height; ++y)
+        for (x = 0; x < width; ++x)
+            framebuffer[(size_t)y*(size_t)width+(size_t)x] = native[
+                (size_t)((int64_t)y*200/height)*320U + (size_t)((int64_t)x*320/width)];
+    ++state->dm1IigsDrawCount;
+}
+
 static void m11_game_view_draw_source(M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
@@ -71246,6 +71523,13 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
     int avgWater = 0;
     char champion[24];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return;
+    }
+    if (state && state->active && state->dm1IigsActive) {
+        if (state->world.dungeon && state->world.dungeon->maps &&
+            state->world.party.mapIndex >= 0 &&
+            state->world.party.mapIndex < state->world.dungeon->header.mapCount)
+            m11_iigs_draw_first_world(state,framebuffer,framebufferWidth,framebufferHeight);
         return;
     }
     if (state && state->active &&

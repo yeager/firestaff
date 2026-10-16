@@ -1,3 +1,7 @@
+- `DM1 IIGS startup`: both original editions can enter the first world from
+  CLI (`--platform apple-iigs` or `iigs`) and the start menu with native data
+  ownership and keyboard movement. Intro, audio and full game interaction
+  remain unfinished; this is not complete IIGS support.
 - `DM1 runtime groundwork`: bind original IIGS creature values per game world
   and preserve existing default profiles. Complete IIGS launch remains unfinished.
 - `DM1 data intake`: read native IIGS creature/projectile metadata and preserve

@@ -19,6 +19,7 @@
 #include "asset_loader_m11.h"
 #include "audio_sdl_m11.h"
 #include "font_m11.h"
+#include "dm1_v1_iigs_installation.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_light_runtime.h"
 #include "dm1_v1_vblank_timing.h"
@@ -826,6 +827,9 @@ typedef struct {
                            * / world / save state. See
                            * include/theron_v2_hud_launch_mode_pc34.h. */
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
+    int dm1IigsActive;
+    unsigned int dm1IigsDrawCount;
+    DM1_V1_IigsInstallation dm1IigsInstallation;
     char lastAction[32];
     char lastOutcome[64];
     char inspectTitle[64];
@@ -2091,6 +2095,12 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
     M11_GameViewState* state,
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* receipt);
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
+/* Explicit native GS first-world entry. Revalidates the complete selected
+ * owner; no catalog inference, PC/Towns intro, save import or audio fallback.
+ * expectedVersion is 0,20,21. Native title/entrance and full presentation
+ * parity remain separate from this direct first-world lifecycle. */
+int M11_GameView_StartIigs(M11_GameViewState* state,
+    const char* selectedRoot, int expectedVersion);
 int M11_GameView_StartCsbHintOracle(M11_GameViewState* state,
                                     const char *dataDir,
                                     /* NULL scans the selected data root for
