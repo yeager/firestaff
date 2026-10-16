@@ -16,9 +16,14 @@ while [ "$step" -lt 20 ]; do
     step=$((step + 1))
 done
 run_case() {
+    motion_event=""
+    if [ "$#" -gt 0 ]; then
+        motion_event=key:kp5
+    fi
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     FIRESTAFF_CONFIG_PATH="$work/config.toml" \
     FIRESTAFF_AUTOTEST=1 \
+    FIRESTAFF_AUTOTEST_MOTION_EVENT="$motion_event" \
     FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return "$app" \
         --game dm1 --platform pc --data-dir "$archive" --presentation-mode v1 \
         --width 640 --height 400 --duration 20000 \
@@ -51,6 +56,7 @@ assert len(identities) == len(set(identities)), "Repeated redraw duplicated outc
 assert any(row["moved"] == "1" for row in rows), "No accepted original-world move"
 assert any(row["turned"] == "1" for row in rows), "No accepted original-world turn"
 assert any(row["blocked"] == "1" and row["moved"] == "0" for row in rows), "No blocked command distinguished"
+assert any(row["input-event-timing"] == "1" for row in rows), "No SDL event-to-present sample"
 print("PASS: original PC34 movement/turn/block stages, unique outcome timing and explicit measurement limits")
 CHECK
 run_case >"$work/ordinary.log" 2>&1

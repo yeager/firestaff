@@ -125,6 +125,8 @@ int ENTRANCE_Compat_NormalizedTouchToWindowPoint(int windowWidth,
 int ENTRANCE_Compat_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
                                               int autoEnterAfterMs,
                                               unsigned long long elapsedMs);
+int ENTRANCE_Compat_IsFreshInputCounter(unsigned long long eventCounter,
+                                       unsigned long long waitStartedCounter);
 int ENTRANCE_Compat_ResolveDm1ResumeSavePath(const char* sourceId,
                                              int quickResumeAvailable,
                                              const char* quickResumeGameId,

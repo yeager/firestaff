@@ -2726,6 +2726,22 @@ static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
                                                      door);
 }
 
+static int m11_entrance_input_event_is_fresh(const SDL_Event* event,
+                                              Uint64 waitStartedCounter,
+                                              const char* inputKind) {
+    if (!event || ENTRANCE_Compat_IsFreshInputCounter(
+            m11_sdl_event_timestamp_to_counter(event->common.timestamp),
+            waitStartedCounter)) {
+        return 1;
+    }
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: startup-input-ignore game=dm1 phase=entrance reason=stale-event input=%s\n",
+                inputKind ? inputKind : "unknown");
+    }
+    return 0;
+}
+
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
     int autoEnterAfterMs,
     int mouseOnly);
@@ -2921,6 +2937,7 @@ static int m11_play_redmcsb_entrance_transition_impl(
     unsigned int fmtownsDoorFrameOrdinal = 0U;
     Uint64 previousAmigaDoorPresentationMs = 0U;
     Uint64 previousFmtownsDoorPresentationMs = 0U;
+    Uint64 previousPcDoorPresentationMs = 0U;
     int entrancePalette;
     const int amigaReceiptValid = amigaReceipt && amigaReceipt->valid;
     if (!gameView || !gameView->active || !mediaReceipt ||
@@ -3282,6 +3299,26 @@ static int m11_play_redmcsb_entrance_transition_impl(
                     : m11_v20_startup_remaining_delay_ms(
                           command.delay_ms, presentationStartedMs);
             }
+            if (!amigaReceiptValid &&
+                mediaReceipt->platform ==
+                    DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 &&
+                command.render_kind ==
+                    DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34 &&
+                presentationStartedMs != 0U) {
+                if (g_m11_debug_startup_detail) {
+                    const Uint64 frameInterval =
+                        previousPcDoorPresentationMs == 0U
+                            ? 0U
+                            : presentationStartedMs -
+                                  previousPcDoorPresentationMs;
+                    fprintf(stderr,
+                            "firestaff: startup-source-frame game=dm1 platform=pc phase=entrance-door frame=%u/31 interval-ms=%llu requested-wait-ms=%u wait-ms=%u\n",
+                            command.door_animation_step,
+                            (unsigned long long)frameInterval,
+                            command.delay_ms, delayMs);
+                }
+                previousPcDoorPresentationMs = presentationStartedMs;
+            }
             if (delayMs > 0U && m11_delay_ms_with_intro_event_pump(delayMs)) {
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_QUIT;
@@ -3444,6 +3481,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
      * Do the same at the SDL boundary: drain the launch key/button that got
      * us here, then require a new Enter/Space/click before the doors open. */
     Uint64 started;
+    Uint64 waitStartedCounter;
     int allowHeadlessTimeout = 0;
     int drained = 0;
     SDL_Event ev;
@@ -3462,6 +3500,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
         drained += 1;
     }
     (void)drained;
+    waitStartedCounter = SDL_GetPerformanceCounter();
     /* Tests can request one fresh entrance input after the launch event has
      * been drained. This exercises the same SDL event path as a physical
      * Amiga Return key without making normal startup self-advancing. */
@@ -3486,9 +3525,18 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
         (void)SDL_PushEvent(&repeatedReturn);
     }
     if (g_m11_intro_delay_fast_forward) {
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-input-autoenter game=dm1 phase=entrance reason=explicit-fast-forward\n");
+        }
         return M11_ENTRANCE_COMMAND_ENTER;
     }
     started = m11_intro_active_ticks();
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: startup-input-wait game=dm1 phase=entrance drained-events=%d timeout-enabled=%d timeout-ms=%d mouse-only=%d\n",
+                drained, allowHeadlessTimeout, autoEnterAfterMs, mouseOnly);
+    }
 
     for (;;) {
         if (m11_phase_duration_expired()) return M11_ENTRANCE_COMMAND_QUIT;
@@ -3508,6 +3556,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 continue;
             }
             if (!mouseOnly && ev.type == SDL_EVENT_KEY_DOWN) {
+                if (!m11_entrance_input_event_is_fresh(
+                        &ev, waitStartedCounter, "keyboard")) continue;
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
                         m11_entrance_dispatch_source_locked_key_command((int)ev.key.key));
@@ -3520,6 +3570,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 }
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                if (!m11_entrance_input_event_is_fresh(
+                        &ev, waitStartedCounter, "mouse")) continue;
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
                 {
                     M11_EntranceCommand pointerCommand =
@@ -3531,6 +3583,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 continue;
             }
             if (ev.type == SDL_EVENT_FINGER_DOWN) {
+                if (!m11_entrance_input_event_is_fresh(
+                        &ev, waitStartedCounter, "touch")) continue;
                 M11_EntranceCommand touchCommand =
                     m11_entrance_route_normalized_touch(ev.tfinger.x, ev.tfinger.y);
                 if (touchCommand != M11_ENTRANCE_COMMAND_NONE) return touchCommand;
@@ -3553,6 +3607,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 continue;
             }
             if (!mouseOnly && ev.type == SDL_KEYDOWN) {
+                if (!m11_entrance_input_event_is_fresh(
+                        &ev, waitStartedCounter, "keyboard")) continue;
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
                         m11_entrance_dispatch_source_locked_key_command((int)ev.key.keysym.sym));
@@ -3565,6 +3621,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 }
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
+                if (!m11_entrance_input_event_is_fresh(
+                        &ev, waitStartedCounter, "mouse")) continue;
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
                 {
                     M11_EntranceCommand pointerCommand =
@@ -3576,6 +3634,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 continue;
             }
             if (ev.type == SDL_FINGERDOWN) {
+                if (!m11_entrance_input_event_is_fresh(
+                        &ev, waitStartedCounter, "touch")) continue;
                 M11_EntranceCommand touchCommand =
                     m11_entrance_route_normalized_touch(ev.tfinger.x, ev.tfinger.y);
                 if (touchCommand != M11_ENTRANCE_COMMAND_NONE) return touchCommand;
@@ -3598,6 +3658,11 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                 allowHeadlessTimeout,
                 autoEnterAfterMs,
                 (unsigned long long)(m11_intro_active_ticks() - started))) {
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr,
+                        "firestaff: startup-input-autoenter game=dm1 phase=entrance reason=headless-timeout elapsed-ms=%llu\n",
+                        (unsigned long long)(m11_intro_active_ticks() - started));
+            }
             return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);
@@ -12098,6 +12163,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     double perfCpuWindowStart = 0.0;
     int perfCpuAvailable = o->debug &&
         m11_process_cpu_seconds(&perfCpuWindowStart);
+    int autotestMotionEventInjected = 0;
 
     while (!quitRequested && !menuState.shouldExit &&
            !M11_RunDurationHasElapsed(o->durationMs, (Uint32)start,
@@ -12229,6 +12295,23 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             scriptWaitForRuntime = waitForRuntime;
         }
         int menuPointerChanged = 0;
+        if (!autotestMotionEventInjected && input == M12_MENU_INPUT_NONE &&
+            getenv("FIRESTAFF_AUTOTEST") && gameView.active &&
+            strcmp(gameView.sourceId, "dm1") == 0 &&
+            g_m11_debug_motion.observedSerial >= 5) {
+            const char* eventToken =
+                getenv("FIRESTAFF_AUTOTEST_MOTION_EVENT");
+            if (eventToken && eventToken[0]) {
+                (void)m11_push_script_event_token(eventToken,
+                                                  strlen(eventToken));
+                autotestMotionEventInjected = 1;
+                if (o->debug) {
+                    fprintf(stderr,
+                            "firestaff: autotest input-event-injected game=dm1 token=%s\n",
+                            eventToken);
+                }
+            }
+        }
         if (input == M12_MENU_INPUT_NONE) {
             input = m11_poll_menu_input(&gameView,
                                         &menuState,

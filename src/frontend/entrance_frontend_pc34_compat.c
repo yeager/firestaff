@@ -283,6 +283,11 @@ int ENTRANCE_Compat_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
     return elapsedMs > 5000ull;
 }
 
+int ENTRANCE_Compat_IsFreshInputCounter(unsigned long long eventCounter,
+                                        unsigned long long waitStartedCounter) {
+    return eventCounter >= waitStartedCounter;
+}
+
 int ENTRANCE_Compat_ResolveDm1ResumeSavePath(const char* sourceId,
                                              int quickResumeAvailable,
                                              const char* quickResumeGameId,

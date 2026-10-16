@@ -21,6 +21,9 @@ int main(void) {
     unsigned int rattleCount = 0u;
     unsigned int vblankDoorCount = 0u;
     int ok = 1;
+    if (!ENTRANCE_Compat_IsFreshInputCounter(100u, 100u) ||
+        !ENTRANCE_Compat_IsFreshInputCounter(101u, 100u) ||
+        ENTRANCE_Compat_IsFreshInputCounter(99u, 100u)) ok = 0;
     EntranceCompatDoorStep first;
     EntranceCompatDoorStep last;
     memset(&first, 0, sizeof(first));
