@@ -2166,11 +2166,10 @@ sound IDs and original channel lookup. Both original editions verify complete
 PCM against an independent scalar oracle, residency and ownership; SDL dummy
 transport verifies format, volume, callback progress, pause/resume and teardown.
 This closes the previously unbound DOC-backend gap for the wired requests.
-Remaining: source F0321 wall-bump damage consumer and resulting native C18 at
-the blocked target, F0268 audible/source-owner receipt for C01, original-runtime
+Remaining: F0268 audible/source-owner receipt for C01, original-runtime
 projectile/creature sound scenarios and actual hardware recording comparisons.
 The old host metallic/switch substitutes are deliberately not used for GS.
-The next bump patch should reuse F0286, F0739b/c and the existing WORLD pending
-combat staging/F0889 boundary in source order, not directly subtract HP.
+The native wall-bump path now uses F0286 and the WORLD pending combat/F0889
+boundary in source order; original-media tests cover the living ELIJA collision.
 Nominal clock 7159090 Hz and fixed host headroom remain explicit profiles.
 Hardware reference: https://www.brutaldeluxe.fr/documentation/cortland/v4_13_EnsoniqDOC.pdf

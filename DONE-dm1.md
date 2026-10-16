@@ -4165,3 +4165,12 @@ not used as its final verification.
   requires the native SDL backend and verifies callbacks/pause/volume/restart
   in both original editions. The rebuilt PC34 CLI first-world/turn probe,
   localization catalog check and redacted staged Gitleaks scan pass.
+
+- 2026-10-16: Connected native IIGS blocked-wall damage to the original
+  F0286/F0321 selector order and WORLD pending combat owner. Ordinary input
+  against ELIJA's original Hall mirror wall stages torso/leg self damage,
+  advances the source RNG in order, plays positioned DOC sound 18 at the
+  blocked destination, and applies HP damage once on the next F0320 tick.
+  The original-media startup test passes for both 2.0 and 2.1 editions with
+  SDL dummy audio. Audible sensor C01 and full campaign/hardware parity remain
+  open.

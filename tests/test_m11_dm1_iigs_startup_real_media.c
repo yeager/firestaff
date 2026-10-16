@@ -826,6 +826,67 @@ cleanup:
     free(frame); free(view); return result;
 }
 
+static int check_native_wall_bump(M11_GameViewState *view) {
+    DM1_V1_IigsDocSnapshot audio_before,audio_after;
+    struct GameWorld_Compat *staged=calloc(1,sizeof(*staged));
+    DM1IigsWallBumpResult_Compat receipt;
+    unsigned hp, pending; uint32_t expected_seed; int cloned=0, result=0;
+    REQUIRE(view->world.party.mapIndex==0 && view->world.party.mapX==9 && view->world.party.mapY==7 &&
+        view->world.party.direction==3 && view->world.party.championCount==1 &&
+        memcmp(view->world.party.champions[0].name,"ELIJA",5u)==0,
+        "native living bump starts at original ELIJA mirror approach without relocating champion");
+    for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+    hp=view->world.party.champions[0].hp.current;
+    REQUIRE(!view->world.pendingChampionCombat[0].damageApplied &&
+        M11_Audio_GetDm1IigsSnapshot(&view->audioState,&audio_before),"native living bump starts without staged damage and with actual DOC owner");
+    REQUIRE(staged,"bounded copy of actual source ELIJA world for native staging boundary");
+    cloned=F0880b_WORLD_Clone_Compat(&view->world,staged);
+    REQUIRE(cloned && !view->world.party.champions[0].wounds,
+        "original unwounded ELIJA source state supplies independent native bump contract");
+    expected_seed=view->world.masterRng.seed;
+    /* Native CHAMPION.C F0286/F0228: one draw per axial selector,
+     * including second selector even when it finds the same sole champion.
+     * F0321/F0313: torso then legs each draw RANDOM((36>>3)+1),
+     * then RANDOM128 for wounds; attack1 cannot cross its >=10 threshold.
+     * No existing wounds add RANDOM4 and no duplicate second F0321 runs. */
+    for (unsigned draw=0u; draw<5u; ++draw)
+        expected_seed=expected_seed*UINT32_C(0xBB40E62D)+UINT32_C(11);
+    REQUIRE(F0321G_WORLD_StageIigsWallBump_Compat(staged,8,7,1u,2u,&receipt) &&
+        receipt.championIndex[0]==0 && receipt.championIndex[1]==0 &&
+        receipt.damage[0]>0 && !receipt.damage[1] && !receipt.woundMask[0] && !receipt.woundMask[1] &&
+        receipt.totalDamage==receipt.damage[0] && receipt.damagePositive && receipt.rngCallCount==5 &&
+        staged->masterRng.seed==expected_seed && staged->party.champions[0].hp.current==hp &&
+        staged->pendingChampionCombat[0].damageApplied==receipt.totalDamage,
+        "native WORLD operation preserves original first-hit/second-selector RNG ordering and stages without applying HP");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+    pending=(unsigned)view->world.pendingChampionCombat[0].damageApplied;
+    REQUIRE(view->lastDm1V1MovementPipelineResult.core.movementBlocked &&
+        view->lastDm1V1MovementPipelineResult.core.blockedByWallOrDoorDamageRequested &&
+        view->lastDm1V1MovementPipelineResult.core.blockedByWallOrDoorDamageAttack==1 &&
+        view->lastDm1V1MovementPipelineResult.core.blockedByWallOrDoorDamageAttackTypeSelf==2 &&
+        view->lastDm1V1MovementPipelineResult.core.blockedByWallOrDoorDamageAllowedWounds==0x18u &&
+        view->world.party.mapIndex==0 && view->world.party.mapX==9 && view->world.party.mapY==7 &&
+        view->world.party.direction==3,"ordinary native forward input blocks at original mirror wall and requests source self attack");
+    REQUIRE(pending==(unsigned)receipt.totalDamage && view->world.masterRng.seed==expected_seed &&
+        pending>0u && pending<hp && view->world.party.champions[0].hp.current==hp &&
+        view->world.pendingChampionCombatTargetReceipt[0]!=0,
+        "native wall bump stages original F0321 damage without subtracting champion HP before F0320");
+    REQUIRE(M11_Audio_GetDm1IigsSnapshot(&view->audioState,&audio_after) &&
+        audio_after.triggers==audio_before.triggers+1u && audio_after.latest_pair[18]>=0 &&
+        audio_after.left[audio_after.latest_pair[18]]==225u && audio_after.right[audio_after.latest_pair[18]]==225u &&
+        !view->audioState.playedMarkerCount,
+        "positive native wall damage plays original DOC18 at blocked wall eight-seven with front-one-square attenuation");
+    (void)M11_GameView_AdvanceIdleTick(view);
+    REQUIRE(view->world.party.champions[0].hp.current==hp-pending &&
+        !view->world.pendingChampionCombat[0].damageApplied && !view->world.pendingChampionCombatTargetReceipt[0] &&
+        view->world.party.mapX==9 && view->world.party.mapY==7,
+        "next ordinary native tick applies staged F0320 damage once and clears pending owner");
+    result=1;
+cleanup:
+    if (cloned) F0883_WORLD_Free_Compat(staged);
+    free(staged); return result;
+}
+
 static int check_session(const char *root, int version, const char *owner) {
     M11_GameViewState *view=calloc(1,sizeof(*view));
     uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
@@ -906,6 +967,7 @@ static int check_session(const char *root, int version, const char *owner) {
             view->world.party.mapY==3 && view->world.party.direction==2,
             "ordinary backward input returns to authentic HoC entry after native movement cooldown");
         REQUIRE(check_recruitment(view,frame),"authentic native HoC champion recruitment through ordinary input");
+        REQUIRE(check_native_wall_bump(view),"authentic native wall collision damage and source sound");
         REQUIRE(check_equipped_heroes(view,frame),"authentic native equipment modifier and activation lifecycle");
         REQUIRE(check_first_descent(view,frame),"actual native first descent and functional lighting");
         REQUIRE(check_native_inventory(view,frame),"actual native inventory source transactions and modifier inverse");

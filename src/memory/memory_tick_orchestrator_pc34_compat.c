@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
 int F0884_WORLD_AwardSkillExperience_Compat(
     struct GameWorld_Compat* world, int championIndex, int skillIndex,
@@ -3101,6 +3102,144 @@ static int orch_build_defender_champion_snapshot_compat(
             world->lifecycle.champions[championIndex].shieldDefense +
             world->magic.partyShieldDefense;
     }
+    return 1;
+}
+
+/* GS F0313 uses the original inventory wound indexes, unlike the older
+ * generic combat snapshot's reordered hand/head/torso labels. Build only
+ * the two native wall-bump slots here; do not alter other media policies. */
+static int orch_iigs_bump_wound_defense_compat(
+    const struct GameWorld_Compat* world, int championIndex, int slot,
+    struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng, int* rngCalls, int* outDefense)
+{
+    static const int hands[2] = {CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_ACTION_HAND};
+    static const int factors[6] = {5,5,4,6,3,1};
+    const struct ChampionState_Compat* champion = &world->party.champions[championIndex];
+    int baseline = 0, hand, bodySlot, bodyDefense = 0, isShield = 0;
+    for (hand = 0; hand < 2; ++hand) {
+        int defense = 0, weight = 0;
+        if (orch_defender_armour_defense_for_thing_compat(world,
+                champion->inventory[hands[hand]], 0, &defense, &isShield, &weight) && isShield) {
+            struct ChampionState_Compat strengthChampion = *champion;
+            int strength;
+            /* F0313:1345 calls F0312 once per shield per wound slot,
+             * BEFORE that slot's random vitality and old-wound penalty.
+             * A shield is armour, so F0312's weapon-skill branch is absent. */
+            strengthChampion.maxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(champion,
+                dm1_v1_dungeon_get_object_icon_index_pc34(world->things,
+                    champion->inventory[CHAMPION_SLOT_FEET],world->party.direction));
+            strengthChampion.attributes[CHAMPION_ATTR_STRENGTH] +=
+                F0732_COMBAT_RngRandom_Compat(rng,16);
+            ++*rngCalls;
+            strength = orch_f0312_hand_strength_baseline_compat(world,
+                &strengthChampion,hand,weight);
+            baseline += ((strength+defense)*factors[slot]) >> (hand == slot ? 4 : 5);
+        }
+    }
+    bodySlot = slot == 3 ? CHAMPION_SLOT_TORSO : CHAMPION_SLOT_LEGS;
+    (void)orch_defender_armour_defense_for_thing_compat(world,
+        champion->inventory[bodySlot],0,&bodyDefense,&isShield,NULL);
+    defender->woundDefense[slot] = baseline+bodyDefense;
+    {
+        int calls = 0;
+        if (!F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(defender,slot,0,
+                rng,outDefense,&calls)) return 0;
+        *rngCalls += calls;
+    }
+    return 1;
+}
+
+int F0321G_WORLD_StageIigsWallBump_Compat(
+    struct GameWorld_Compat* world, int targetMapX, int targetMapY,
+    unsigned firstCell, unsigned secondCell,
+    DM1IigsWallBumpResult_Compat* outResult)
+{
+    DM1IigsWallBumpResult_Compat result;
+    struct CombatantChampionSnapshot_Compat defenders[CHAMPION_MAX_PARTY];
+    struct CombatResult_Compat combats[2];
+    struct RngState_Compat rng;
+    int i, distanceX, distanceY;
+    const struct DungeonMapDesc_Compat* map;
+    memset(&result,0,sizeof(result));
+    result.championIndex[0] = result.championIndex[1] = -1;
+    if (outResult) *outResult = result;
+    if (!world || !outResult || !world->iigsCreatureProfileBound ||
+        !world->dungeon || !world->dungeon->loaded || !world->dungeon->maps ||
+        !world->things || !world->things->loaded || world->gameWon ||
+        world->party.mapIndex < 0 || world->party.mapIndex >= world->dungeon->header.mapCount ||
+        world->party.championCount < 0 || world->party.championCount > CHAMPION_MAX_PARTY ||
+        firstCell > 3U || secondCell != ((firstCell+1U)&3U)) return 0;
+    map = &world->dungeon->maps[world->party.mapIndex];
+    /* A blocked destination can be just outside the map. F0286 needs
+     * its adjacent source coordinates, not a readable destination tile. */
+    if (world->party.mapX < 0 || world->party.mapY < 0 ||
+        world->party.mapX >= map->width || world->party.mapY >= map->height ||
+        targetMapX < -1 || targetMapY < -1 || targetMapX > map->width || targetMapY > map->height)
+        return 0;
+    distanceX = targetMapX-world->party.mapX;
+    distanceY = targetMapY-world->party.mapY;
+    if (distanceX < 0) distanceX = -distanceX;
+    if (distanceY < 0) distanceY = -distanceY;
+    if (distanceX+distanceY != 1) return 0;
+    if (!world->party.championCount) return 1;
+    /* Validate source equipment before consuming any random numbers. Retain
+     * snapshots per champion; pending damage never changes selector-two HP. */
+    for (i = 0; i < world->party.championCount; ++i) {
+        static const int slots[5] = {CHAMPION_SLOT_HAND_LEFT,CHAMPION_SLOT_ACTION_HAND,
+            CHAMPION_SLOT_TORSO,CHAMPION_SLOT_LEGS,CHAMPION_SLOT_FEET};
+        int j;
+        if (!world->party.champions[i].present || !world->party.champions[i].hp.current) continue;
+        if (world->pendingChampionCombat[i].damageApplied < 0 ||
+            world->pendingChampionCombat[i].damageApplied > INT_MAX-2 ||
+            !orch_build_defender_champion_snapshot_compat(world,i,COMBAT_ATTACK_SELF,&defenders[i])) return 0;
+        for (j = 0; j < 5; ++j) {
+            unsigned short thing = world->party.champions[i].inventory[slots[j]];
+            if (thing == THING_NONE) continue;
+            if (dm1_v1_dungeon_get_object_type_pc34(world->things,thing) < 0) return 0;
+            if (THING_GET_TYPE(thing) == THING_TYPE_ARMOUR) {
+                int defense, shield;
+                if (!orch_defender_armour_defense_for_thing_compat(world,thing,0,
+                        &defense,&shield,NULL)) return 0;
+            }
+        }
+    }
+    rng = world->masterRng;
+    memset(combats,0,sizeof(combats));
+    /* CLIKMENU.C:293-308: selector-one -> complete F0321 -> selector-two
+     * -> distinct F0321. Even one living champion consumes selector two's
+     * F0228 random draw. Empty parties above consume none. */
+    for (i = 0; i < 2; ++i) {
+        int champion, defense3, defense4, damage, calls = 0;
+        unsigned cell = i ? secondCell : firstCell;
+        champion = F0286_CHAMPION_GetTargetChampionIndex_Compat(&world->party,
+            targetMapX,targetMapY,cell,&rng);
+        ++result.rngCallCount; /* Adjacent F0228 always draws once. */
+        result.championIndex[i] = champion;
+        if (champion < 0 || (i && champion == result.championIndex[0])) continue;
+        if (!orch_iigs_bump_wound_defense_compat(world,champion,3,&defenders[champion],
+                &rng,&result.rngCallCount,&defense3) ||
+            !orch_iigs_bump_wound_defense_compat(world,champion,4,&defenders[champion],
+                &rng,&result.rngCallCount,&defense4)) return 0;
+        /* F0321:1884-1888 SELF halves the average F0313 defense. GS is
+         * excluded from MEDIA720's later Ninja-defense addition. */
+        damage = (130-(((defense3+defense4)/2)/2)) >> 6;
+        if (damage <= 0) continue;
+        if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(damage,0x18,
+                &defenders[champion],&rng,&result.woundMask[i],&calls)) return 0;
+        result.rngCallCount += calls;
+        result.damage[i] = damage;
+        result.totalDamage += damage;
+        combats[i].outcome = COMBAT_OUTCOME_HIT_DAMAGE;
+        combats[i].damageApplied = damage;
+        combats[i].woundMaskAdded = result.woundMask[i];
+    }
+    world->masterRng = rng;
+    for (i = 0; i < 2; ++i) if (result.damage[i] > 0)
+        orch_stage_champion_combat_compat(world,result.championIndex[i],
+            world->party.champions[result.championIndex[i]].cell,&combats[i]);
+    result.damagePositive = result.totalDamage > 0;
+    *outResult = result;
     return 1;
 }
 

@@ -32582,6 +32582,27 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         return 0;
     }
 
+    if (state->dm1IigsActive) {
+        struct TickResult_Compat pendingDamageResult;
+        memset(&pendingDamageResult, 0, sizeof(pendingDamageResult));
+        /* ReDMCSB GAMELOOP.C:117-124 runs F0320 after the preceding
+         * command/timeline effects and before F0380 accepts another input.
+         * Wall bumps stage F0321 here; they must reach the normal pending
+         * damage owner on the next loop, not subtract HP at collision time. */
+        F0889_ORCH_ApplyPendingDamage_Compat(&state->world,
+                                             &pendingDamageResult);
+        if (pendingDamageResult.emissionCount > 0) {
+            state->lastTickResult = pendingDamageResult;
+            M11_GameView_ProcessTickEmissions(state);
+            m11_check_party_death(state);
+            if (state->partyDead || state->world.partyDead) {
+                (void)F0891_ORCH_WorldHash_Compat(
+                    &state->world, &state->lastWorldHash);
+                return 1;
+            }
+        }
+    }
+
     /* F0310/F0312 consume F0309's current result, including any native
      * equipment, stamina or wound change since the previous command. */
     if (state->dm1IigsActive) m11_dm1_refresh_carried_loads(state);
@@ -32621,10 +32642,45 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         m11_audio_emit_source_sound(state, DM1_SND_METALLIC_THUD,
                                     M11_AUDIO_MARKER_FOOTSTEP);
     }
-    /* GS CLIKMENU.C:293-308 emits C18 at the blocked target only after
-     * F0321 champion damage. Empty-party collisions are silent. The source
-     * pipeline exposes that damage request but its native F0321 consumer
-     * remains unbound; do not substitute the PC host's metallic cue. */
+    if (state->dm1IigsActive &&
+        state->lastDm1V1MovementPipelineResult.core
+            .blockedByWallOrDoorDamageRequested) {
+        const struct Dm1V1MovementCommandCoreResultPc34Compat* core =
+            &state->lastDm1V1MovementPipelineResult.core;
+        DM1IigsWallBumpResult_Compat bump;
+        int dx = 0;
+        int dy = 0;
+        int targetX;
+        int targetY;
+        if (core->queue.command < DM1_V1_COMMAND_MOVE_FORWARD ||
+            core->queue.command > DM1_V1_COMMAND_MOVE_LEFT ||
+            core->blockedByWallOrDoorDamageAttack != 1 ||
+            core->blockedByWallOrDoorDamageAttackTypeSelf != 2 ||
+            core->blockedByWallOrDoorDamageAllowedWounds != 0x0018u) {
+            state->world.party = beforeParty;
+            state->dm1V1MovementPipeline = beforePipeline;
+            m11_set_status(state,actionLabel,"NATIVE WALL DAMAGE REJECTED");
+            return 0;
+        }
+        F0701_MOVEMENT_GetStepDelta_Compat(core->sourceDirection,
+            core->queue.command - DM1_V1_COMMAND_MOVE_FORWARD,&dx,&dy);
+        targetX = core->sourceMapX + dx;
+        targetY = core->sourceMapY + dy;
+        /* ReDMCSB CLIKMENU.C:293-308: F0286/F0321 resolve at the blocked
+         * destination, then C18 plays immediately there only for actual
+         * positive damage. F0320 consumes the staged damage next loop. */
+        if (!F0321G_WORLD_StageIigsWallBump_Compat(&state->world,
+                targetX,targetY,
+                (unsigned)core->blockedByWallOrDoorDamageFirstCell,
+                (unsigned)core->blockedByWallOrDoorDamageSecondCell,&bump)) {
+            state->world.party = beforeParty;
+            state->dm1V1MovementPipeline = beforePipeline;
+            m11_set_status(state,actionLabel,"NATIVE WALL DAMAGE REJECTED");
+            return 0;
+        }
+        if (bump.damagePositive)
+            m11_iigs_request_sound(state,18,targetX,targetY,0);
+    }
 
     state->world.gameTick++;
     /* GAMELOOP.C:60-68 processes the next-loop native map handoff at

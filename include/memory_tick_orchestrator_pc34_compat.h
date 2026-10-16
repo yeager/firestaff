@@ -652,6 +652,25 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
     int doubledMapDifficulty,
     struct CombatantCreatureSnapshot_Compat* outSnapshot);
 
+/* Native GS CLIKMENU.C:293-308: first F0286 selection and complete F0321,
+ * then second selection, resolving only a distinct second champion. Native
+ * wound slots are 0 ready,1 action,2 head,3 torso,4 legs,5 feet.
+ * This operation stages only; F0889 owns subsequent HP/wounds/partyDead.
+ * Invalid requests leave RNG and pending combat unchanged. Empty parties are
+ * successful, silent requests consuming no RNG. No audio is emitted here. */
+typedef struct DM1IigsWallBumpResult_Compat {
+    int championIndex[2];
+    int damage[2];
+    int woundMask[2];
+    int rngCallCount;
+    int totalDamage;
+    int damagePositive;
+} DM1IigsWallBumpResult_Compat;
+int F0321G_WORLD_StageIigsWallBump_Compat(
+    struct GameWorld_Compat* world, int targetMapX, int targetMapY,
+    unsigned firstCell, unsigned secondCell,
+    DM1IigsWallBumpResult_Compat* outResult);
+
 void F0889_ORCH_ApplyPendingDamage_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
