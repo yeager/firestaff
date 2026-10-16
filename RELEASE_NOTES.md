@@ -1,3 +1,7 @@
+- `DM1 IIGS food`: consume original food through the native mouth control
+  with correct recipient and carried weight, plus presentation-gated mouth
+  animation. Nominal NTSC 60 Hz is the current host profile; PAL, drinks and
+  remaining inventory interactions are unfinished.
 - `DM1 IIGS carrying capacity`: refresh the source calculation after
   equipment changes and during native play, including Elven Boots.
 - `DM1 IIGS inventory`: connect ordinary body/backpack transfers and hero

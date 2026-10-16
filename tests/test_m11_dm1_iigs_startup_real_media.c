@@ -694,6 +694,109 @@ cleanup:
     free(view); return result;
 }
 
+static int check_original_food(const char *root, int version) {
+    M11_GameViewState *view=calloc(1,sizeof(*view));
+    uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
+    int result=0, leader; unsigned short leader_load; int target_food, leader_food; uint32_t world_tick;
+    REQUIRE(view && frame,"bounded original native food session"); M11_GameView_Init(view);
+    REQUIRE(M11_GameView_StartIigs(view,root,version) && check_recruitment(view,frame),
+        "fresh authentic ELIJA leader reaches original neighboring SYRA food mirror");
+    leader=view->world.party.activeChampionIndex;
+    REQUIRE(leader==0,"original ELIJA remains leader for separate food recipient");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+    REQUIRE(view->inventoryPanelActive &&
+        M11_GameView_HandlePointerButton(view,74,74,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        view->leaderHandThing==0x6800u && view->leaderHandObjectPresent,"original ELIJA Blue Box is held for native nonfood rejection");
+    { int food=view->world.party.champions[0].food; unsigned short load=view->world.party.champions[0].load;
+      uint32_t tick=view->world.gameTick;
+      (void)M11_GameView_HandlePointerButton(view,64,54,DM1_V1_MOUSE_MASK_LEFT_PC34);
+      REQUIRE(!view->v1FoodCommandPending && view->leaderHandObjectPresent && view->leaderHandThing==0x6800u &&
+          view->world.party.champions[0].food==food && view->world.party.champions[0].load==load &&
+          view->world.gameTick==tick && original_thing_owners(view,0x6800u)==1,
+          "native mouth rejects authentic Blue Box without state, ownership or clock mutation"); }
+    (void)M11_GameView_HandlePointerButton(view,74,74,DM1_V1_MOUSE_MASK_LEFT_PC34);
+    REQUIRE(!view->leaderHandObjectPresent,"original nonfood returns to its source inventory slot");
+    (void)M11_GameView_HandlePointerButton(view,214,40,DM1_V1_MOUSE_MASK_LEFT_PC34);
+    for (unsigned turn=0u; view->world.party.direction!=2 && turn<4u; ++turn)
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+    for (int y=8; y<=9; ++y) {
+        for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+        REQUIRE(view->world.party.mapX==9 && view->world.party.mapY==y,"ordinary native movement reaches original SYRA mirror");
+    }
+    REQUIRE(M11_GameView_GetFrontMirrorOrdinal(view)==2,"source wall resolves original SYRA food owner");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACTION);
+    REQUIRE(view->candidateMirrorPanelActive && view->candidateMirrorOrdinal==2,"native action selects original SYRA");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACCEPT);
+    REQUIRE(view->world.party.championCount==2 && view->world.party.activeChampionIndex==leader &&
+        memcmp(view->world.party.champions[1].name,"SYRA",4u)==0 &&
+        view->world.party.champions[1].inventory[CHAMPION_SLOT_BACKPACK_1]==0x28b4u,
+        "original SYRA owns authentic Apple while original ELIJA remains leader");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_2_INVENTORY);
+    REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==2 &&
+        M11_GameView_HandlePointerButton(view,74,74,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        view->leaderHandObjectPresent && view->leaderHandThing==0x28b4u && original_thing_owners(view,0x28b4u)==1,
+        "native SYRA backpack source click transfers original Apple to separate leader mouse hand");
+    target_food=view->world.party.champions[1].food; leader_food=view->world.party.champions[leader].food;
+    leader_load=view->world.party.champions[leader].load; world_tick=view->world.gameTick;
+    REQUIRE(M11_GameView_HandlePointerButton(view,64,54,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        !view->leaderHandObjectPresent && original_thing_owners(view,0x28b4u)==0 &&
+        view->world.things->rawThingData[THING_TYPE_JUNK][180u*4u]==0xffu &&
+        view->world.things->rawThingData[THING_TYPE_JUNK][180u*4u+1u]==0xffu &&
+        view->world.things->junks[180].next==THING_NONE &&
+        view->world.party.champions[1].food==(target_food+500>2048 ? 2048 : target_food+500) &&
+        view->world.lifecycle.champions[1].food==view->world.party.champions[1].food &&
+        view->world.party.champions[leader].food==leader_food &&
+        view->world.party.champions[leader].load==leader_load-4u && view->world.gameTick==world_tick,
+        "native source mouth consumes original Apple for selected recipient with exact food, free record and separate leader weight");
+    { static const int icons[]={206,205,206,205};
+      unsigned completion=view->v1FoodCompletionCount, edges=0u;
+      int x=view->world.party.mapX, y=view->world.party.mapY;
+      REQUIRE(view->v1FoodCommandPending && view->v1FoodAwaitingPresentation &&
+          !view->v1FoodPaletteWaitPending && view->v1MouthAnimationFrameIndex==0 &&
+          view->v1MouthVisualIconIndex==206 && view->v1MouthAnimationDelayRemaining==8,
+          "native first mouth frame awaits presentation immediately without PC palette-wait edge");
+      (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+      (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+      (void)M11_GameView_AdvanceIdleTick(view);
+      REQUIRE(view->dm1InventoryChampionOrdinal==2 && view->world.party.mapX==x && view->world.party.mapY==y &&
+          view->world.gameTick==world_tick && view->v1FoodCommandPending,
+          "pending native consumption blocks inventory switch, movement and world idle advancement");
+      for (unsigned index=0u; index<4u; ++index) {
+          unsigned draws=view->dm1IigsDrawCount; uint64_t serial=view->v1FoodPresentationSerial;
+          REQUIRE(view->v1FoodAwaitingPresentation && !view->v1FoodPaletteWaitPending &&
+              view->v1MouthAnimationFrameIndex==(int)index && view->v1MouthVisualIconIndex==icons[index] &&
+              view->v1MouthAnimationDelayRemaining==8,"native consumption publishes each original alternating mouth frame");
+          M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+          REQUIRE(view->dm1IigsDrawCount==draws+1u,"actual native Draw presents source mouth animation frame");
+          (void)M11_GameView_AdvanceFoodSourceVblank(view);
+          REQUIRE(view->v1FoodAwaitingPresentation && view->v1MouthAnimationDelayRemaining==8 &&
+              view->world.gameTick==world_tick,"unacknowledged mouth frame cannot spend native delay edges");
+          REQUIRE(M11_GameView_AcknowledgeFoodPresentation(view,serial),"native mouth frame presentation is explicitly acknowledged");
+          for (unsigned edge=1u; edge<=8u; ++edge) {
+              if (version==21 && edge==8u) {
+                  REQUIRE(view->v1FoodVblankHzNumerator==60u && view->v1FoodVblankHzDenominator==1u,
+                      "native host food clock explicitly selects nominal NTSC 60 Hz profile");
+                  (void)M11_GameView_AdvanceFoodClockMs(view,17u);
+              } else (void)M11_GameView_AdvanceFoodSourceVblank(view);
+              ++edges;
+              if (edge<8u) REQUIRE(view->v1FoodCommandPending && !view->v1FoodAwaitingPresentation &&
+                  view->v1MouthAnimationFrameIndex==(int)index && view->v1MouthAnimationDelayRemaining==(int)(8u-edge),
+                  "each native mouth frame retains exactly eight source delay edges");
+          }
+      }
+      REQUIRE(edges==32u && !view->v1FoodCommandPending && !view->v1FoodAwaitingPresentation &&
+          view->v1FoodCompletionCount==completion+1u && view->world.gameTick==world_tick &&
+          view->world.party.champions[1].food==(target_food+500>2048 ? 2048 : target_food+500) &&
+          view->world.party.champions[leader].food==leader_food,
+          "native food completes after four times eight edges with one completion and no world tick or recipient drift");
+    }
+    result=1;
+cleanup:
+    if (view) M11_GameView_Shutdown(view);
+    free(frame); free(view); return result;
+}
+
 static int check_session(const char *root, int version, const char *owner) {
     M11_GameViewState *view=calloc(1,sizeof(*view));
     uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
@@ -824,6 +927,7 @@ int main(int argc, char **argv) {
         int version=20+i;
         if (!check_scan(argv[1+i],version,0) || !check_session(argv[1+i],version,argv[1+i])) return 1;
         if (!check_linflas_capacity(argv[1+i],version)) return 1;
+        if (!check_original_food(argv[1+i],version)) return 1;
         if (snprintf(owner,sizeof(owner),"%s::Dungeon Master for Apple IIGS 2.%d (English) Original (Not working).po",argv[3],i)>=(int)sizeof(owner) ||
             !check_session(argv[3],version,owner)) return 1;
     }

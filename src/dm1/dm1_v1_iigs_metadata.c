@@ -71,7 +71,8 @@ int dm1_v1_iigs_metadata_read(const uint8_t *program, size_t size,
     if (!iigs_meta_words(program,size,57947U,value.icon_first,7U) ||
         !iigs_meta_signed_words(program,size,57989U,value.slot_boxes,138U) ||
         !iigs_meta_signed_words(program,size,46961U,value.inventory_mouse,228U) ||
-        !iigs_meta_words(program,size,58313U,value.slot_masks,38U)) return 0;
+        !iigs_meta_words(program,size,58313U,value.slot_masks,38U) ||
+        !iigs_meta_words(program,size,45068U,value.food_amounts,8U)) return 0;
     if (!iigs_meta_words(program,size,57615U,value.credits_palette,16U) ||
         !iigs_meta_words(program,size,57647U,value.entrance_palette,16U) ||
         !iigs_meta_words(program,size,57679U,value.interface_palette,16U) ||

@@ -18347,6 +18347,7 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
     }
 }
 
+static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
                                            const char* actionLabel);
@@ -27483,6 +27484,14 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     installation.world = worldReceipt;
     state->dm1IigsInstallation = installation;
     state->dm1IigsActive = 1;
+    /* VBLANK.C:538-567/626: F2177 count=1 heartbeat clears F0693's
+     * wait flag once per VBL. Toolbox Reference Vol.1 pp.14-48/49 defines
+     * these as video interrupts; p.14-12 exposes 50/60 selection. Bind an
+     * explicit nominal NTSC 60 Hz host profile, not a universal GS or exact
+     * hardware-frequency claim. PAL 50 Hz selection remains unbound. */
+    state->v1FoodVblankHzNumerator = 60U;
+    state->v1FoodVblankHzDenominator = 1U;
+    state->v1FoodVblankPhase = 0;
     state->active = 1;
     state->assetsAvailable = 1;
     state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
@@ -31937,7 +31946,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (!state || !state->active || M11_GameView_IsPaused(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (state->dm1IigsActive && state->candidateMirrorPanelActive)
+    if (state->dm1IigsActive && (state->candidateMirrorPanelActive || state->v1FoodCommandPending))
         return M11_GAME_INPUT_IGNORED;
     if (state->dm1IigsActive) {
         (void)m11_process_dm1_v1_pipeline_tick(state,"WAIT");
@@ -34819,7 +34828,7 @@ static int m11_iigs_exchange_slot(M11_GameViewState* state, int champion, int so
     int host, weight;
     unsigned short incoming, outgoing;
     if (!state || !state->active || !state->dm1IigsActive ||
-        state->candidateMirrorPanelActive || champion < 0 ||
+        state->v1FoodCommandPending || state->candidateMirrorPanelActive || champion < 0 ||
         champion >= state->world.party.championCount || sourceSlot < 0 || sourceSlot >= 30 ||
         !state->world.party.champions[champion].present ||
         !state->world.party.champions[champion].hp.current) return 0;
@@ -36222,6 +36231,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         /* Native first-world scope: feed real WORLD commands without
          * entering PC-specific spell/inventory/save or startup overlays.
          * LOADSAVE.C F0434 starts GS at its native party coordinates. */
+        if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
         if (state->candidateMirrorPanelActive) {
             if (input == M12_MENU_INPUT_BACK)
                 return M11_GameView_CancelMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -37977,6 +37987,14 @@ M11_GameInputResult M11_GameView_AdvanceFoodSourceVblank(M11_GameViewState* stat
     }
     if (--state->v1MouthAnimationDelayRemaining > 0) return M11_GAME_INPUT_IGNORED;
     if (++state->v1MouthAnimationFrameIndex < state->v1MouthAnimationFrameCount) {
+        if (state->dm1IigsActive) {
+            state->v1MouthAnimationDelayRemaining = state->v1MouthAnimationDelays[state->v1MouthAnimationFrameIndex];
+            state->v1MouthVisualIconIndex = state->v1MouthAnimationIcons[state->v1MouthAnimationFrameIndex];
+            state->v1FoodAwaitingPresentation = 1;
+            ++state->v1FoodPresentationSerial;
+            if (!state->v1FoodPresentationSerial) ++state->v1FoodPresentationSerial;
+            return M11_GAME_INPUT_REDRAW;
+        }
         state->v1FoodPaletteWaitPending = 1;
         state->v1MouthAnimationDelayRemaining =
             state->v1MouthAnimationDelays[state->v1MouthAnimationFrameIndex];
@@ -38172,6 +38190,7 @@ M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
                                                    int x,
                                                    int y) {
     if (state && state->dm1IigsActive) {
+        if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
         state->pointerPositionKnown = 1;
         state->pointerX = x; state->pointerY = y;
         return state->leaderHandObjectPresent ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -38623,10 +38642,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int buttonMask) {
     if (state && state->dm1IigsActive) {
         int handled = 0;
+        const DM1_V1_IigsMetadata* meta = &state->dm1IigsInstallation.metadata;
+        if (!state->active || state->v1FoodCommandPending || M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         state->pointerPositionKnown = 1;
         state->pointerX = x; state->pointerY = y;
-        const DM1_V1_IigsMetadata* meta = &state->dm1IigsInstallation.metadata;
-        if (!state->active || M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         if (state->candidateMirrorPanelActive) {
             if (!(buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)) return M11_GAME_INPUT_IGNORED;
             if (x >= 104 && x <= 158 && y >= 86 && y <= 142)
@@ -38641,6 +38660,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 if (!(buttonMask & row[5]) || x < row[1] || x > row[2] || y < row[3] || y > row[4]) continue;
                 if (row[0] == 11)
                     return m11_toggle_champion_inventory(state,m11_inventory_champion_index(state));
+                if (row[0] == 70) handled = m11_process_v1_mouth_click(state);
                 if (row[0] >= 28 && row[0] <= 57)
                     handled = m11_iigs_exchange_slot(state,m11_inventory_champion_index(state),row[0]-28);
                 break;
@@ -60597,6 +60617,18 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     if (!state || !state->inventoryPanelActive) return 0;
 
     thing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+    if (state->dm1IigsActive) {
+        int icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,state->world.party.direction);
+        /* Native food is proven by its own G0242 and original LE record.
+         * Retained drinks/potions and empty-hand panel need separate binding. */
+        if (state->v1FoodCommandPending || thing == THING_NONE ||
+            state->candidateMirrorPanelActive || THING_GET_TYPE(thing) != THING_TYPE_JUNK ||
+            !m11_iigs_equipment_valid(state,thing) || icon < 168 || icon >= 176 ||
+            !(dm1_v1_dungeon_get_object_allowed_slots_pc34(state->world.things,thing)&1U) ||
+            state->dm1IigsInstallation.metadata.food_amounts[icon-168] !=
+                dm1_inventory_food_amount_from_icon_pc34(icon) ||
+            !state->v1FoodVblankHzNumerator || !state->v1FoodVblankHzDenominator) return 0;
+    }
     if (thing == THING_NONE) {
         if (state->v1FoodWaterPanelActive) {
             return 0;
@@ -60735,7 +60767,18 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
             state, (int)(champ - state->world.party.champions), &consumableResult);
         if (consumableResult.removeLeaderHandObject) {
             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
-            if (!m11_start_i34e_food_command(state, &consumableResult,
+            if (state->dm1IigsActive) {
+                /* GS F0037 draws directly, then F0022 waits eight native
+                 * heartbeat blanks. There is no VGA pre-blit palette edge. */
+                (void)m11_start_v1_mouth_animation(state,&consumableResult);
+                state->v1FoodCommandPending = 1;
+                state->v1FoodPaletteWaitPending = 0;
+                state->v1FoodAwaitingPresentation = 1;
+                ++state->v1FoodPresentationSerial;
+                if (!state->v1FoodPresentationSerial) ++state->v1FoodPresentationSerial;
+                state->world.lifecycle.champions[championIndex].food = champ->food;
+                state->world.lifecycle.champions[championIndex].water = champ->water;
+            } else if (!m11_start_i34e_food_command(state, &consumableResult,
                                              championIndex, foodBefore))
                 (void)m11_start_v1_mouth_animation(state, &consumableResult);
             else
@@ -72086,6 +72129,10 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
             (champion->portraitIndex&7)*32,(champion->portraitIndex>>3)*29,0,0);
         (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,3,40,name,13,0);
     }
+    if (state->dm1IigsActive && state->v1FoodCommandPending &&
+        (state->v1MouthVisualIconIndex == 205 || state->v1MouthVisualIconIndex == 206))
+        m11_iigs_blit(state,native,48,56,46,16,16,
+            (state->v1MouthVisualIconIndex-192)*16,0,0,0);
     if (!state->candidateMirrorPanelActive && state->leaderHandObjectPresent)
         m11_iigs_draw_thing_icon(state,native,state->leaderHandThing,state->pointerX,state->pointerY);
     for (y = 0; y < height; ++y)

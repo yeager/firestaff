@@ -4112,3 +4112,25 @@ not used as its final verification.
   PC source/inventory/movement regression tests and the rebuilt PC34 CLI
   first-world/turn probe pass. Original runtime stamina-depletion/wound
   capacity scenarios and complete native interaction remain open.
+
+- 2026-10-16: Connected native IIGS food consumption through its original
+  G0449 mouth command, G0242 nutrition table and C048 mouth icons. The bounded
+  existing LE transaction retires the actual food record and updates the
+  selected inventory champion, independently of the leader's carried weight.
+  Both original editions recruit ELIJA and SYRA through actual corridors;
+  ELIJA's BlueBox is rejected and SYRA's original Apple is consumed once.
+  Food/lifecycle values, free raw/typed record, ownership and leader-load
+  changes are checked. Four actual native Draw frames alternate 206/205 and
+  require matching presentation acknowledgements and eight source edges each;
+  input and idle cannot advance the world during those waits. Edition 2.1
+  also exercises the elapsed-ms host adapter at the final edge of each frame.
+  The host profile explicitly uses nominal NTSC 60 Hz. Original SetHeartBeat
+  follows the machine video mode; PAL 50 Hz selection and exact hardware-rate
+  capture remain open. Retained drinks, potions and the empty-hand food/water
+  panel are not enabled by this food-only change. This is not complete native
+  inventory or game support.
+  Nineteen targeted tests pass without skips (166.55 s), including ten
+  original-media tests and the rebuilt PC object corpus with deferred food
+  completion. The rebuilt PC34 CLI first-world/turn probe, localization
+  catalog check and staged Gitleaks scan also pass. Source review found no
+  blockers; this does not establish original hardware timing or visual parity.

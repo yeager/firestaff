@@ -19,13 +19,14 @@ static void words_le(uint8_t *out, size_t *used, const void *source, size_t byte
 }
 static unsigned original_word(const uint8_t *p) { return (unsigned)p[0] | ((unsigned)p[1]<<8); }
 static int check_inventory_metadata(const uint8_t *program, const DM1_V1_IigsMetadata *metadata) {
-    /* Independently located G0026/G0030/G0038 and COMMAND.C G0449 spans
+    /* Independently located G0026/G0030/G0038/G0242 and COMMAND.C G0449 spans
      * are identical in the two authenticated original executables. */
     const struct { const void *words; size_t size, offset; const char *md5; } spans[]={
         {metadata->icon_first,sizeof(metadata->icon_first),57947u,"3059b448b9e146ba8f7f2ebfa972f4da"},
         {metadata->slot_boxes,sizeof(metadata->slot_boxes),57989u,"c2dbd8f115dfba3fc1860a42454829b8"},
         {metadata->inventory_mouse,sizeof(metadata->inventory_mouse),46961u,"e69ce735c79633a098f8d82aafb0c5bb"},
-        {metadata->slot_masks,sizeof(metadata->slot_masks),58313u,"87aee6b76afe98ea434ebb49813a6dde"}};
+        {metadata->slot_masks,sizeof(metadata->slot_masks),58313u,"87aee6b76afe98ea434ebb49813a6dde"},
+        {metadata->food_amounts,sizeof(metadata->food_amounts),45068u,"22ee439e4ff28605f1659ed134b40f8a"}};
     uint8_t encoded[456]; int result=0;
     for (size_t i=0u; i<sizeof(spans)/sizeof(spans[0]); ++i) {
         size_t used=0u;

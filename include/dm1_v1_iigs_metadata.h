@@ -81,6 +81,7 @@ typedef struct DM1_V1_IigsMetadata {
     int16_t inventory_mouse[38][6]; /* G0449: command, inclusive box, button */
     uint16_t icon_first[7];
     uint16_t slot_masks[38];
+    uint16_t food_amounts[8]; /* Native G0242, apple through dragon steak */
     uint8_t palette_no_changes[16];
     uint16_t mandatory_graphics[70];
     uint8_t object_aspects[85][6];

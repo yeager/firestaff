@@ -2147,3 +2147,14 @@ prove 490/460/490 without changed champion or object fixtures. This closes
 the stale-capacity/boots gap above. Runtime capacity under authentic wound,
 stamina-depletion and strength-changing equipment scenarios still needs
 coverage; these are not proved by the unhurt full-stamina LINFLAS case.
+
+2026-10-16 native food follow-up: G0242 is decoded from offset 45068 in
+both authenticated programs and checked over its full 16-byte original span.
+Original SYRA Apple consumption is wired to the selected recipient with native
+mouth frames and four presentation-gated Delay(8) waits. The host cadence is
+an explicit nominal NTSC 60 Hz profile. Toolbox Reference Volume 1 pp.14-48/49
+states that SetHeartBeat counts VBL interrupts; p.14-12 documents the machine's
+50/60 selection, which these original game bytes do not select. PAL 50 Hz and
+exact hardware-frequency validation remain open. Drinks, potions, empty-hand
+food/water panel and remaining chest/eye/interaction paths remain unfinished.
+Reference: https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/programming/65816_gs/Apple%20IIGS%20Toolbox%20Reference%20Volume%201.pdf
