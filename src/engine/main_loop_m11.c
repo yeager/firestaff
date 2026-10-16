@@ -11734,9 +11734,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
      * I34E never calls either routine. */
     if (!quitRequested && !o->bootProbe && o->durationMs < 0 &&
         getenv("FIRESTAFF_SKIP_INTRO") == NULL &&
-        ((o->directLaunch && o->gameId && strcmp(o->gameId, "dm1") == 0) ||
-         (!o->directLaunch &&
-          menuState.selectedGameId == M12_GAME_SELECT_DM1))) {
+        (o->directLaunch && o->gameId && strcmp(o->gameId, "dm1") == 0)) {
         if (g_m11_debug_startup_detail)
             fprintf(stderr, "firestaff: startup-source-route game=dm1 platform=pc34 phase=anim-title direct=%d selected-game=%d cli-game=%s\n",
                     o->directLaunch, (int)menuState.selectedGameId,

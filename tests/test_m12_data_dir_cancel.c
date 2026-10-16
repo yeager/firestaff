@@ -1254,16 +1254,32 @@ static void check_scan_progress_uses_display_names(void) {
     CHECK(strcmp(nexus, "nexus") != 0);
     CHECK(strcmp(theron, "theron") != 0);
 
-    /* Scan names are retail names, never localized or reduced to ids. */
     for (languageIndex = 0; languageIndex < 19; ++languageIndex) {
-        const char* localizedNexus =
-            M12_StartupMenu_GameDisplayTitleForLocale(languageIndex, "nexus");
-        const char* localizedTheron =
-            M12_StartupMenu_GameDisplayTitleForLocale(languageIndex, "theron");
-        CHECK(localizedNexus &&
-              strcmp(localizedNexus, "Dungeon Master Nexus") == 0);
-        CHECK(localizedTheron &&
-              strcmp(localizedTheron, "Theron's Quest") == 0);
+        CHECK(strcmp(M12_StartupMenu_GameDisplayTitleForLocale(
+                         languageIndex, "dm1"),
+                     M12_StartupMenu_TranslateForLocale(
+                         languageIndex, "Dungeon Master")) == 0);
+        CHECK(strcmp(M12_StartupMenu_GameDisplayTitleForLocale(
+                         languageIndex, "csb"),
+                     M12_StartupMenu_TranslateForLocale(
+                         languageIndex, "Chaos Strikes Back")) == 0);
+        CHECK(strcmp(M12_StartupMenu_GameDisplayTitleForLocale(
+                         languageIndex, "dm2"),
+                     M12_StartupMenu_TranslateForLocale(
+                         languageIndex,
+                         "Dungeon Master II: The Legend of Skullkeep")) == 0);
+    }
+
+    /* Scan names use the same locale-aware titles as the launcher cards. */
+    for (languageIndex = 0; languageIndex < 19; ++languageIndex) {
+        const char* ids[] = {"dm1", "csb", "dm2", "nexus", "theron"};
+        size_t i;
+        for (i = 0U; i < sizeof(ids) / sizeof(ids[0]); ++i) {
+            const char* title =
+                M12_StartupMenu_GameDisplayTitleForLocale(languageIndex,
+                                                          ids[i]);
+            CHECK(title && title[0] != '\0');
+        }
     }
 }
 

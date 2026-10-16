@@ -2061,26 +2061,7 @@ const char* M12_StartupMenu_ScanTaskDisplayForLocale(int languageIndex,
  * labels may retain their established catalogue wording. */
 static const char* m12_scan_game_display_title_for_locale(int localeIndex,
                                                             const char* gameId) {
-    (void)localeIndex;
-    if (!gameId) {
-        return "GAME";
-    }
-    if (strcmp(gameId, "dm1") == 0) {
-        return "Dungeon Master";
-    }
-    if (strcmp(gameId, "csb") == 0) {
-        return "Chaos Strikes Back";
-    }
-    if (strcmp(gameId, "dm2") == 0) {
-        return "Dungeon Master II: The Legend of Skullkeep";
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return "Dungeon Master Nexus";
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return "Theron's Quest";
-    }
-    return "GAME";
+    return m12_game_display_title_for_locale(localeIndex, gameId);
 }
 
 static void m12_append_text(char* out, size_t outSize, const char* text) {

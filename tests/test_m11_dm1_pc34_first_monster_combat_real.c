@@ -45,6 +45,7 @@ int main(void)
     int tick;
     unsigned char actions[3];
     unsigned short first;
+    int clickX, clickY, clickW, clickH;
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM1_PC34_ARCHIVE is not set");
@@ -183,15 +184,24 @@ int main(void)
     for (int round = 0; round < 4; ++round) {
         /* ReDMCSB MENU.C:803-840, F0391 selects an action-list row and
          * dispatches F0407 before clearing the acting champion. */
-        if (!M11_GameView_SetActingChampion(&state, 0) ||
+        if (!M11_GameView_GetV1ActionIconCellZone(0,
+                &clickX, &clickY, &clickW, &clickH) ||
+            M11_GameView_HandlePointerButton(&state,
+                clickX + clickW / 2, clickY + clickH / 2,
+                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+            state.actingChampionOrdinal != 1 ||
             !M11_GameView_GetActingActionIndices(&state, actions) ||
             actions[0] != 6 || actions[1] != 7 || actions[2] != 8) {
-            fputs("FAIL: first-monster action list unavailable\n", stderr);
+            fputs("FAIL: pointer click did not open first champion action list\n", stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        if (!M11_GameView_TriggerActionRow(&state, 0)) {
-            fputs("FAIL: first-monster action did not commit\n", stderr);
+        if (!M11_GameView_GetV1ActionMenuRowZone(0,
+                &clickX, &clickY, &clickW, &clickH) ||
+            M11_GameView_HandlePointerButton(&state,
+                clickX + clickW / 2, clickY + clickH / 2,
+                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED) {
+            fputs("FAIL: pointer click did not dispatch first-monster action\n", stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
