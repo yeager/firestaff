@@ -57,11 +57,12 @@ int main(void)
      * than manufacturing an extracted data directory or borrowing the
      * first scan match. */
     check_version(&status, "pc-en", "Dungeon-Master-II-Skullkeep_DOS_EN.zip");
+    check_version(&status, "pc-fr", "Dungeon-Master-II-Skullkeep_DOS_FR.zip");
     check_version(&status, "amiga-en", "Dungeon-Master-II-Skullkeep_Amiga_EN.zip");
     check_version(&status, "fmtowns-ja", "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip");
     check_version(&status, "mac-en-retail", "Dungeon-Master-II-Skullkeep_Mac_EN");
 
     if (failures) return 1;
-    puts("PASS: shared DM2 root selects DOS, Amiga, FM Towns and Mac owners");
+    puts("PASS: shared DM2 root selects English/French DOS, Amiga, FM Towns and Mac owners");
     return 0;
 }
