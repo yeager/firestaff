@@ -4100,3 +4100,15 @@ not used as its final verification.
   existing PC regressions. This does not complete inventory/gameplay: chest,
   eye/mouth, consumption, names, reincarnation and derived maximum-load refresh
   remain open, along with the previously documented native audio/scene gaps.
+
+- 2026-10-16: Replaced the duplicated initial champion capacity formula
+  with the existing complete F0309 calculation and refreshed native IIGS
+  capacity after equipment/periodic effects and before movement. Authentic
+  LINFLAS recruitment in both original editions reproduces Elven Boots
+  capacity 490, removal 460 and re-equipment 490 through ordinary inventory
+  clicks, preserving unique Thing ownership, carried weight and original
+  strength/stamina. Eight later idle ticks preserve the equipped result.
+  Three original-media tests pass without skips (17.55 s); four rebuilt
+  PC source/inventory/movement regression tests and the rebuilt PC34 CLI
+  first-world/turn probe pass. Original runtime stamina-depletion/wound
+  capacity scenarios and complete native interaction remain open.

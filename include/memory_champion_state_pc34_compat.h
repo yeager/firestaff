@@ -578,4 +578,8 @@ int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
     const struct ChampionMirrorCatalog_Compat* catalog,
     int textStringIndex);
 
+/* F0309: current vitals and native equipped feet icon determine capacity. */
+unsigned short F0309_CHAMPION_GetMaximumLoad_Compat(
+    const struct ChampionState_Compat* champion, int feetIconIndex);
+
 #endif

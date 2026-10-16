@@ -1,3 +1,5 @@
+- `DM1 IIGS carrying capacity`: refresh the source calculation after
+  equipment changes and during native play, including Elven Boots.
 - `DM1 IIGS inventory`: connect ordinary body/backpack transfers and hero
   inventory switching to native tables and icons. Preserve leader ownership,
   equipment effects and native held-item drawing. Chest/consumption and other

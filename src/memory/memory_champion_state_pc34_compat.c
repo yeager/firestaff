@@ -1,4 +1,5 @@
 #include "memory_champion_state_pc34_compat.h"
+#include "dm1_v1_champion_stats_pc34_compat.h"
 #include "csb_v1_reincarnation_penalty_pc34_compat.h"
 #include <string.h>
 
@@ -110,37 +111,19 @@ static unsigned short mirror_text_decode_value(const unsigned char* packed,
     return (unsigned short)value;
 }
 
-static unsigned short champion_max_load_from_current_state(
-    const struct ChampionState_Compat* champ)
+unsigned short F0309_CHAMPION_GetMaximumLoad_Compat(
+    const struct ChampionState_Compat* champ, int feetIconIndex)
 {
-    int maximumLoad;
-    int halfMaximumStamina;
-    int currentStamina;
-    int maximumStamina;
-
+    DM1_V1_ChampionStatsPc34 source = {0};
     if (!champ) return 0;
-
-    /* ReDMCSB CHAMPION.C F0309 lines 1157-1177 computes the cached
-     * maximum load from strength and stamina after REVIVE.C F0280 has
-     * materialized a mirror candidate's current/maximum statistics. */
-    maximumLoad = ((int)champ->attributes[CHAMPION_ATTR_STRENGTH] << 3) + 100;
-    currentStamina = (int)champ->stamina.current;
-    maximumStamina = (int)champ->stamina.maximum;
-    halfMaximumStamina = maximumStamina >> 1;
-    if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
-        maximumLoad >>= 1;
-        maximumLoad += (int)(((long)maximumLoad * (long)currentStamina) /
-                             (long)halfMaximumStamina);
-    }
-    if (champ->wounds) {
-        maximumLoad -= maximumLoad >>
-            ((champ->wounds & CHAMPION_WOUND_LEGS_MASK) ? 2 : 3);
-    }
-    maximumLoad += 9;
-    maximumLoad -= maximumLoad % 10;
-    if (maximumLoad < 0) maximumLoad = 0;
-    if (maximumLoad > 65535) maximumLoad = 65535;
-    return (unsigned short)maximumLoad;
+    /* ReDMCSB CHAMPION.C F0309:1157-1177: share the full existing
+     * calculation, including equipped Elven Boots before rounding. */
+    source.stats[DM1_STAT_STRENGTH] = champ->attributes[CHAMPION_ATTR_STRENGTH];
+    source.stats[DM1_STAT_STAMINA] = champ->stamina.current;
+    source.maxStats[DM1_STAT_STAMINA] = champ->stamina.maximum;
+    source.wounds = champ->wounds;
+    source.feetIconIndex = feetIconIndex;
+    return (unsigned short)DM1_V1_ChampionStats_MaximumLoadPc34Compat(&source);
 }
 
 static void apply_mirror_candidate_values(struct ChampionState_Compat* champ) {
@@ -178,7 +161,7 @@ static void apply_mirror_candidate_values(struct ChampionState_Compat* champ) {
     }
     champ->food = 1500;
     champ->water = 1500;
-    champ->maxLoad = champion_max_load_from_current_state(champ);
+    champ->maxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(champ, -1);
 }
 
 int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(

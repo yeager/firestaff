@@ -637,6 +637,63 @@ cleanup:
     return result;
 }
 
+static int check_linflas_capacity(const char *root, int version) {
+    static const uint8_t route[][2]={{1,4},{1,5},{1,6},{1,7},{2,7},{3,7},{4,7},{4,6},{4,5},{4,4},
+        {4,3},{4,2},{5,2},{6,2},{6,3},{7,3},{8,3},{8,4},{9,4},{9,5},{9,6},{9,7},{9,8},{9,9},{10,9},{11,9},{12,9}};
+    M11_GameViewState *view=calloc(1,sizeof(*view));
+    struct ChampionState_Compat *linflas; unsigned short load; int result=0;
+    REQUIRE(view,"bounded original LINFLAS startup state"); M11_GameView_Init(view);
+    REQUIRE(M11_GameView_StartIigs(view,root,version) && view->dm1IigsActive && !view->world.party.championCount,
+        "separate authentic native entry leaves room for original LINFLAS recruitment");
+    for (unsigned step=0u; step<sizeof(route)/sizeof(route[0]); ++step) {
+        int dx=(int)route[step][0]-view->world.party.mapX, dy=(int)route[step][1]-view->world.party.mapY;
+        int direction=dx>0 ? 1 : dx<0 ? 3 : dy>0 ? 2 : 0;
+        REQUIRE(abs(dx)+abs(dy)==1,"original LINFLAS route follows adjacent native corridor squares");
+        for (unsigned turn=0u; view->world.party.direction!=direction && turn<4u; ++turn)
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+        for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+        REQUIRE(view->world.party.mapX==route[step][0] && view->world.party.mapY==route[step][1],
+            "ordinary native footsteps reach each authentic LINFLAS approach square");
+    }
+    for (unsigned turn=0u; view->world.party.direction!=0 && turn<4u; ++turn)
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+    REQUIRE(M11_GameView_GetFrontMirrorOrdinal(view)==12,"source mirror twelve identifies original LINFLAS");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACTION);
+    linflas=&view->world.party.champions[0];
+    REQUIRE(view->candidateMirrorPanelActive && view->candidateMirrorOrdinal==12 &&
+        linflas->present && memcmp(linflas->name,"LINFLAS",7u)==0 && linflas->hp.maximum==65u &&
+        linflas->stamina.current==500u && linflas->stamina.maximum==500u && linflas->mana.maximum==12u &&
+        linflas->attributes[CHAMPION_ATTR_STRENGTH]==45u &&
+        linflas->inventory[CHAMPION_SLOT_FEET]==0x9822u && linflas->maxLoad==490u,
+        "authentic LINFLAS candidate computes F0309 capacity with original Elven Boots");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACCEPT);
+    REQUIRE(!view->candidateMirrorPanelActive && view->world.party.championCount==1 && linflas->maxLoad==490u,
+        "native original LINFLAS resurrection retains source boot-adjusted carrying capacity");
+    load=linflas->load;
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+    REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==1 &&
+        M11_GameView_HandlePointerButton(view,42,126,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        view->leaderHandObjectPresent && view->leaderHandThing==0x9822u &&
+        linflas->inventory[CHAMPION_SLOT_FEET]==THING_NONE && linflas->maxLoad==460u && linflas->load==load &&
+        linflas->attributes[CHAMPION_ATTR_STRENGTH]==45u && linflas->stamina.current==500u &&
+        original_thing_owners(view,0x9822u)==1,
+        "native original boots pickup removes F0309 bonus while leader-held object retains weight and unique ownership");
+    REQUIRE(M11_GameView_HandlePointerButton(view,42,126,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        !view->leaderHandObjectPresent && linflas->inventory[CHAMPION_SLOT_FEET]==0x9822u &&
+        linflas->maxLoad==490u && linflas->load==load && original_thing_owners(view,0x9822u)==1,
+        "native same-slot Elven Boots re-equipment restores original carrying-capacity bonus once");
+    REQUIRE(M11_GameView_HandlePointerButton(view,214,40,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        !view->inventoryPanelActive,"original LINFLAS inventory closes through native source box");
+    for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+    REQUIRE(linflas->maxLoad==490u && linflas->inventory[CHAMPION_SLOT_FEET]==0x9822u,
+        "ordinary native idle synchronization preserves source Elven Boots capacity");
+    result=1;
+cleanup:
+    if (view) M11_GameView_Shutdown(view);
+    free(view); return result;
+}
+
 static int check_session(const char *root, int version, const char *owner) {
     M11_GameViewState *view=calloc(1,sizeof(*view));
     uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
@@ -766,6 +823,7 @@ int main(int argc, char **argv) {
     for (int i=0; i<2; ++i) {
         int version=20+i;
         if (!check_scan(argv[1+i],version,0) || !check_session(argv[1+i],version,argv[1+i])) return 1;
+        if (!check_linflas_capacity(argv[1+i],version)) return 1;
         if (snprintf(owner,sizeof(owner),"%s::Dungeon Master for Apple IIGS 2.%d (English) Original (Not working).po",argv[3],i)>=(int)sizeof(owner) ||
             !check_session(argv[3],version,owner)) return 1;
     }

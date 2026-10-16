@@ -17777,8 +17777,17 @@ static void m11_dm1_refresh_carried_loads(M11_GameViewState* state)
         }
         loads[c] = (unsigned short)total;
     }
-    for (int c = 0; c < CHAMPION_MAX_PARTY; ++c)
-        if (state->world.party.champions[c].present) state->world.party.champions[c].load = loads[c];
+    for (int c = 0; c < CHAMPION_MAX_PARTY; ++c) {
+        struct ChampionState_Compat* champ = &state->world.party.champions[c];
+        if (!champ->present) continue;
+        champ->load = loads[c];
+        if (state->dm1IigsActive) {
+            int feetIcon = dm1_v1_dungeon_get_object_icon_index_pc34(
+                state->world.things, champ->inventory[CHAMPION_SLOT_FEET],
+                state->world.party.direction);
+            champ->maxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(champ, feetIcon);
+        }
+    }
 }
 
 static void m11_refresh_hash(M11_GameViewState* state) {
@@ -32510,6 +32519,9 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         return 0;
     }
 
+    /* F0310/F0312 consume F0309's current result, including any native
+     * equipment, stamina or wound change since the previous command. */
+    if (state->dm1IigsActive) m11_dm1_refresh_carried_loads(state);
     beforeParty = state->world.party;
     beforePipeline = state->dm1V1MovementPipeline;
     memset(&state->lastDm1V1MovementPipelineResult, 0,
@@ -32562,8 +32574,10 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
     /* GAMELOOP.C:124-126 burns native hand torches after GameTime++;
      * the source movement queue does not invoke the generic tick wrapper. */
-    if (state->dm1IigsActive)
+    if (state->dm1IigsActive) {
         F0890_ORCH_ApplyPeriodicEffects_Compat(&state->world,&state->lastTickResult);
+        m11_dm1_refresh_carried_loads(state);
+    }
     if (state->dm1MusicSourceBound && state->dm1MusicOn) {
         DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
         (void)dm1_v1_f0743_update_music_pc34(

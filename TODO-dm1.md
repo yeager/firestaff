@@ -2139,3 +2139,11 @@ all other interaction gaps. Savegame work remains deferred. Derived maxLoad
 still needs source F0309 recomputation after strength/stamina/wound/Elven Boots
 changes; these current gear cases do not prove that behavior. DOC playback,
 intro/entrance and complete scene/campaign functionality remain unfinished.
+
+2026-10-16 maximum-load correction: native IIGS now refreshes capacity
+through the existing full F0309 routine, including original Elven Boots.
+Both original LINFLAS recruitments and real inventory removal/re-equipment
+prove 490/460/490 without changed champion or object fixtures. This closes
+the stale-capacity/boots gap above. Runtime capacity under authentic wound,
+stamina-depletion and strength-changing equipment scenarios still needs
+coverage; these are not proved by the unhurt full-stamina LINFLAS case.
