@@ -3811,3 +3811,32 @@ not used as its final verification.
   movement, native display/audio timing or visual parity for A22G.
   Final original-media CTest passed (32.78 s), without a missing-media skip.
   Bash syntax, diff whitespace and redacted patch Gitleaks checks passed.
+
+- 2026-10-16: Added native read-only ProDOS intake for the authentic Apple IIGS
+  2.0/2.1 logical-block images. Seedling/sapling/tree files, subdirectories,
+  source-defined sparse holes, bitmap/block ownership and directory links are
+  validated within explicit image/EOF/entry/path/depth limits before callbacks.
+  One transient delivery buffer is allocated after preflight. An independent
+  review exposed inactive directory-slot handling; an original-derived metadata
+  probe reproduced the failure before the storage-nibble correction.
+  Public single/batch hash discovery, distinct-path collection and memory reads
+  now cover raw PO, ZIP->PO, ZIP->ZIP->PO and existing native 7z transport.
+  ZIP magic retains precedence over a misleading PO suffix. The older physical
+  materialization route rejects ProDOS; no runtime extractor/cache was added.
+  Full original GRAPHICS.GAME, DUNGEON.GAME, SYSTEM/START and both programs are
+  authenticated. Both programs match ReDMCSB Reference/Original/G20E/G21E.
+  The six shared graphics/world paths in the source archive are preserved as
+  distinct byte-hash results; modified historical disk labels are not new game
+  admission. The two original executable/START owners remain independently
+  identified. Malformed original-derived metadata, truncated raw/ZIP inputs,
+  collection overflow and visitor stop are covered, with source hashes retained.
+  Final public-intake CTest passed (1.06 s), without a media skip or enabled
+  external runtime tool. Independent parser/integration reviews found no blocker.
+  This is file intake only: catalogue admission, native graphics/palettes/world
+  adaptation, audio and playable IIGS startup remain open in TODO-dm1.md.
+  Final rebuilt application passed the complete original-media DM1/CSB/DM2
+  startup diagnostics suite (217.15 s) and all three selected existing archive
+  regressions (148.09 s combined), without missing-media skips. Localization
+  consistency and diff whitespace checks passed. Redacted staged Gitleaks found
+  no leaks. Native Windows/Linux original-media execution and cancellation or
+  allocator-failure injection remain separate verification requirements.

@@ -201,6 +201,22 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
+    add_executable(test_firestaff_prodos_real_media
+        tests/test_firestaff_prodos_real_media.c
+        src/shared/firestaff_prodos.c)
+    target_include_directories(test_firestaff_prodos_real_media PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_firestaff_prodos_real_media PRIVATE firestaff_m12)
+    add_test(NAME firestaff_prodos_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_prodos_real_media.sh"
+            $<TARGET_FILE:test_firestaff_prodos_real_media>)
+    set_tests_properties(firestaff_prodos_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 60
+        ENVIRONMENT "FIRESTAFF_DM1_IIGS_SOFTWARE_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,Apple_IIGS,Software.7z"
+        LABELS "dm1;iigs;prodos;real-media;in-memory;skip-safe")
+endif()
+
+if(BUILD_TESTING)
     add_executable(test_firestaff_caps_raw_reader
         tests/test_firestaff_caps_raw_reader.c
         src/shared/firestaff_caps_raw.c

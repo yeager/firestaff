@@ -133,9 +133,11 @@ from this completed entrance-scene verification.
 
 Completion scope: the current catalogue has sixteen editions on four source
 platforms; that inventory does not prove all DM1 platforms are supported.
-Apple IIGS, Sharp X68000 and SNES media archive names also exist locally but
-are not admitted by this catalogue. Authenticate their contents and account
-for their native runtime/startup gaps before claiming all-platform support.
+Apple IIGS 2.0/2.1 original ProDOS contents are now authenticated and readable
+through the native media APIs, but remain unadmitted by the game catalogue.
+Sharp X68000 and SNES media archive names also exist locally; their content
+and native runtime/startup gaps still need investigation. Do not infer playable
+support from file intake or claim all-platform support from this inventory.
 PC-9821 support remains excluded by user instruction. Native Windows/Linux
 and a physically active HiDPI display require separate execution evidence.
 
@@ -1955,3 +1957,32 @@ M12 initialization; actual ST11 full-menu startup reaches the first active Hall.
 Mixed-case ST/MSA preservation inputs and other editions retain separate corpus
 coverage requirements. Check the analogous CSB extension predicate during the
 CSB phase; the DM1 reproduction does not establish CSB runtime behavior.
+
+2026-10-16 Apple IIGS native intake: original G20E/G21E 800 KiB logical ProDOS
+volumes now expose authenticated root/subdirectory files through raw PO, ZIP,
+nested ZIP and native 7z APIs. No extraction/cache or new game admission follows.
+The complete volume structure is checked before callbacks, and one reusable
+buffer is reserved before delivery. Extended forks, DOS sector reordering and
+2MG wrappers are outside the current reader. Windows execution still needs
+original-media verification; CI compilation is a separate gate. Preflight has
+bounded block/entry/depth/path counts but no cooperative cancellation callback.
+
+Remaining native IIGS startup work:
+
+- Bind GRAPHICS.GAME, DUNGEON.GAME, edition-specific DUNGEON.MASTER and
+  SYSTEM/START to one volume. The preservation archive has six byte-identical
+  graphics/world sources, but only two original START/program owners. A shared
+  graphics digest alone cannot admit a complete edition.
+- Reuse only the bounded old-format 575-record LE table access after verifying
+  MEMORY.C F0477:1330-1385. Implement IIGS EXPAND.C F0466:324-450 bitmap
+  semantics explicitly; its packed 4bpp layout and A/E count branches must not
+  inherit an assumed FM Towns command set.
+- Adapt the native LE 0x8104 dungeon wrapper/structures while retaining the
+  MSB-first compressed stream in DECOMPDU.C:258-392 (including XBA at 380).
+- Obtain native palette/aspect/UI metadata from each authenticated executable.
+  STARTUP2.C:571-577 excludes IIGS from Atari's 558-562 metadata loads;
+  authentic IIGS 558/562 are placeholders, not usable replacement tables.
+- Follow STARTUP1.C:192-205, STARTUP2.C:1381-1393, GSTHINGS.C F2179 and
+  SWSHIIGS.C for SDL startup. Native audio and first active Hall/input checks
+  remain unfinished. Do not advertise a playable IIGS platform until its own
+  CLI and M12 execution proves that state with unchanged originals.

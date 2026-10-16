@@ -1,3 +1,5 @@
+- `DM1 data intake`: read original Apple IIGS ProDOS files in memory through
+  raw PO, ZIP and native 7z transports. Playable IIGS startup remains unfinished.
 - `DM1 verification`: require an active first Hall of Champions after Amiga
   2.2 German menu startup through both the original disk and ZIP transport.
 - `DM1 media selection`: preserve directly selected Atari disks with mixed-case
