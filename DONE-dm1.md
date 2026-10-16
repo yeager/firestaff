@@ -4084,3 +4084,19 @@ not used as its final verification.
   admission. The rebuilt PC34 CLI first-world/turn probe and localization
   catalog check also pass. Build output contains no C compiler warnings;
   existing local SDL deployment/linker warnings remain environmental.
+
+- 2026-10-16: Connected ordinary native IIGS inventory opening/switching and
+  all thirty body/backpack slots to the original G0030/G0449 coordinates,
+  G0038 allowed-slot masks and C042..C048 icon banks. Both executable editions
+  verify complete original table spans and independently pinned digests.
+  Source F0300/F0301 removal/addition preserves typed/raw activation and
+  lifecycle modifiers while inventory selection remains separate from leader.
+  Real ZED torch, CHANI Moonstone and BORIS Rabbit's Foot checks cover pickup,
+  rejected head placement, re-equipping and occupied cross-champion exchanges;
+  exact Thing ownership, carried loads, fuel and current mana are preserved.
+  Held pointer movement uses the native icon; the generic PC cursor cannot
+  overdraw it. Native Draw is exercised after swaps. Seventeen targeted tests
+  pass without skips (16.85 s), including nine original-media tests and eight
+  existing PC regressions. This does not complete inventory/gameplay: chest,
+  eye/mouth, consumption, names, reincarnation and derived maximum-load refresh
+  remain open, along with the previously documented native audio/scene gaps.

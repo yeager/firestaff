@@ -18,6 +18,27 @@ static void words_le(uint8_t *out, size_t *used, const void *source, size_t byte
     }
 }
 static unsigned original_word(const uint8_t *p) { return (unsigned)p[0] | ((unsigned)p[1]<<8); }
+static int check_inventory_metadata(const uint8_t *program, const DM1_V1_IigsMetadata *metadata) {
+    /* Independently located G0026/G0030/G0038 and COMMAND.C G0449 spans
+     * are identical in the two authenticated original executables. */
+    const struct { const void *words; size_t size, offset; const char *md5; } spans[]={
+        {metadata->icon_first,sizeof(metadata->icon_first),57947u,"3059b448b9e146ba8f7f2ebfa972f4da"},
+        {metadata->slot_boxes,sizeof(metadata->slot_boxes),57989u,"c2dbd8f115dfba3fc1860a42454829b8"},
+        {metadata->inventory_mouse,sizeof(metadata->inventory_mouse),46961u,"e69ce735c79633a098f8d82aafb0c5bb"},
+        {metadata->slot_masks,sizeof(metadata->slot_masks),58313u,"87aee6b76afe98ea434ebb49813a6dde"}};
+    uint8_t encoded[456]; int result=0;
+    for (size_t i=0u; i<sizeof(spans)/sizeof(spans[0]); ++i) {
+        size_t used=0u;
+        REQUIRE(spans[i].size<=sizeof(encoded),"native inventory span fits its bounded comparison buffer");
+        words_le(encoded,&used,spans[i].words,spans[i].size);
+        REQUIRE(used==spans[i].size && memcmp(encoded,program+spans[i].offset,used)==0 &&
+            asset_memory_matches_md5(encoded,used,spans[i].md5),
+            "all original native icon bases, slot coordinates, masks and mouse records survive LE decoding");
+    }
+    result=1;
+cleanup:
+    return result;
+}
 static void reference_replacement(const uint8_t *program, DM1_V1_IigsCreaturePalette *out,
     unsigned color, unsigned set) {
     const uint8_t *source=program+55127u+14u*set;
@@ -200,6 +221,7 @@ static int check_metadata(const uint8_t *program, size_t size, unsigned edition)
         "all native startup/dungeon metadata fields retain independently source-matched original bytes after caller lifetime ends");
     REQUIRE(check_creature_info(program,&metadata),"independent native creature information oracle");
     REQUIRE(check_extra_metadata(program,&metadata),"independent native creature and projectile metadata foundation");
+    REQUIRE(check_inventory_metadata(program,&metadata),"complete original native inventory metadata spans");
     for (unsigned i=0u; i<16u; ++i) {
         REQUIRE(metadata.palette_no_changes[i]==i && metadata.credits_palette[i]<=0xfffu &&
             metadata.entrance_palette[i]<=0xfffu && metadata.interface_palette[i]<=0xfffu,

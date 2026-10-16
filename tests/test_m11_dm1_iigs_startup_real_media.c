@@ -469,6 +469,174 @@ cleanup:
     return result;
 }
 
+static int original_thing_owners(const M11_GameViewState *view, unsigned short identity) {
+    const struct GameWorld_Compat *world=&view->world; int owners=0;
+    for (int c=0; c<4; ++c) for (int slot=0; slot<CHAMPION_SLOT_COUNT; ++slot)
+        if (world->party.champions[c].inventory[slot]!=THING_NONE &&
+            (world->party.champions[c].inventory[slot]&0x3fffu)==(identity&0x3fffu)) ++owners;
+    if (view->leaderHandObjectPresent && (view->leaderHandThing&0x3fffu)==(identity&0x3fffu)) ++owners;
+    for (int map=0; map<world->dungeon->header.mapCount; ++map)
+        for (int x=0; x<world->dungeon->maps[map].width; ++x)
+            for (int y=0; y<world->dungeon->maps[map].height; ++y) {
+                unsigned short thing=F0511_DUNGEON_GetSquareFirstThing_Compat(world->dungeon,world->things,map,x,y);
+                unsigned links=0u;
+                while (thing!=THING_NONE && thing!=THING_ENDOFLIST) {
+                    unsigned type=THING_GET_TYPE(thing), index=THING_GET_INDEX(thing); const uint8_t *raw;
+                    if (++links>1024u || type>=16u || !s_thingDataByteCount[type] ||
+                        index>=(unsigned)world->things->thingCounts[type] || !world->things->rawThingData[type]) return -1;
+                    if ((thing&0x3fffu)==(identity&0x3fffu)) ++owners;
+                    raw=world->things->rawThingData[type]+index*s_thingDataByteCount[type];
+                    thing=(unsigned short)(raw[0]|((unsigned)raw[1]<<8));
+                }
+            }
+    return owners;
+}
+static int check_native_inventory(M11_GameViewState *view, uint8_t *frame) {
+    static const M12_MenuInput keys[]={M12_MENU_INPUT_CHAMPION_2_INVENTORY,
+        M12_MENU_INPUT_CHAMPION_3_INVENTORY,M12_MENU_INPUT_CHAMPION_4_INVENTORY};
+    static const unsigned short things[]={0x1459,0xa802,0x2803};
+    static const unsigned slots[]={CHAMPION_SLOT_ACTION_HAND,CHAMPION_SLOT_NECK,CHAMPION_SLOT_BACKPACK_1};
+    static const int points[][2]={{70,94},{14,74},{74,74}}, weights[]={11,2,1};
+    int leader=view->world.party.activeChampionIndex, result=0;
+    REQUIRE(leader>=0 && leader<4 && !view->leaderHandObjectPresent,"original four-hero party has a leader and empty mouse hand");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+    REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==1 &&
+        view->world.party.activeChampionIndex==leader,"native first champion inventory opens without leader reassignment");
+    for (unsigned item=0u; item<3u; ++item) {
+        int champion=(int)item+1; unsigned short loads[4], head=view->world.party.champions[champion].inventory[CHAMPION_SLOT_HEAD];
+        struct ChampionLifecycleState_Compat before=view->world.lifecycle.champions[champion];
+        unsigned charge=view->world.things->weapons[89].chargeCount;
+        unsigned current_mana=view->world.party.champions[champion].mana.current;
+        for (int c=0; c<4; ++c) loads[c]=view->world.party.champions[c].load;
+        REQUIRE(view->world.party.champions[champion].inventory[slots[item]]==things[item] &&
+            original_thing_owners(view,things[item])==1,"original equipment has exactly one source-owned location before inventory input");
+        (void)M11_GameView_HandleInput(view,keys[item]);
+        REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==champion+1 &&
+            view->world.party.activeChampionIndex==leader,"native champion inventory key opens or switches owner without changing leader");
+        { unsigned draws=view->dm1IigsDrawCount;
+          M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+          REQUIRE(view->dm1IigsDrawCount==draws+1u,"actual native inventory draws through GS source route"); }
+        REQUIRE(M11_GameView_HandlePointerButton(view,points[item][0],points[item][1],DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+            view->leaderHandObjectPresent && view->leaderHandThing==things[item] &&
+            view->world.party.champions[champion].inventory[slots[item]]==THING_NONE &&
+            original_thing_owners(view,things[item])==1,"native source slot click transfers exact original Thing to unique mouse-hand owner");
+        REQUIRE(M11_GameView_HandlePointerMove(view,110,120)==M11_GAME_INPUT_REDRAW &&
+            view->pointerPositionKnown && view->pointerX==110 && view->pointerY==120,
+            "actual mouse-held native item movement publishes known source pointer coordinates");
+        { uint8_t native_frame[M11_FB_WIDTH*M11_FB_HEIGHT]; unsigned draws=view->dm1IigsDrawCount;
+          M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+          REQUIRE(view->dm1IigsDrawCount==draws+1u,"held original item is drawn by native inventory source renderer");
+          memcpy(native_frame,frame,sizeof(native_frame));
+          M11_GameView_DrawLeaderHandCursor(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+          REQUIRE(memcmp(native_frame,frame,sizeof(native_frame))==0,
+              "generic PC cursor renderer cannot overdraw native GS mouse-held source icon"); }
+
+        for (int c=0; c<4; ++c)
+            REQUIRE(view->world.party.champions[c].load==(unsigned short)((int)loads[c]+(c==leader ? weights[item] : 0)-(c==champion ? weights[item] : 0)),
+                "native object removal transfers original source weight from inventory owner to existing leader");
+        if (item==0u) {
+            const uint8_t *raw=view->world.things->rawThingData[THING_TYPE_WEAPON]+89u*4u;
+            struct DungeonViewLight_Compat light;
+            REQUIRE(!view->world.things->weapons[89].lit && !(raw[3]&0x80u) &&
+                view->world.things->weapons[89].chargeCount==charge &&
+                F0890b_ORCH_ComputeDungeonViewLight_Compat(&view->world,&light) && light.paletteIndex==5,
+                "real torch removal clears typed/raw Lit without consuming fuel and removes held light");
+            (void)M11_GameView_HandlePointerButton(view,42,66,DM1_V1_MOUSE_MASK_LEFT_PC34);
+            REQUIRE(view->leaderHandObjectPresent && view->leaderHandThing==things[item] &&
+                view->world.party.champions[champion].inventory[CHAMPION_SLOT_HEAD]==head &&
+                view->world.party.champions[champion].inventory[slots[item]]==THING_NONE &&
+                original_thing_owners(view,things[item])==1,"native AllowedSlots rejects original torch in occupied head slot without ownership mutation");
+        } else if (item==1u) REQUIRE(view->world.party.champions[champion].mana.maximum==17u &&
+            view->world.lifecycle.champions[champion].maxMana==17u,"actual Moonstone removal reverses native maximum-mana bonus");
+        else for (unsigned row=0u; row<3u; ++row)
+            REQUIRE(view->world.lifecycle.champions[champion].statistics[LIFECYCLE_STAT_LUCK][row]==
+                (uint8_t)(before.statistics[LIFECYCLE_STAT_LUCK][row]-10u),"actual Rabbit's Foot pickup reverses all three native Luck modifier rows");
+        REQUIRE(M11_GameView_HandlePointerButton(view,points[item][0],points[item][1],DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+            !view->leaderHandObjectPresent && view->world.party.champions[champion].inventory[slots[item]]==things[item] &&
+            original_thing_owners(view,things[item])==1,"native source slot drop re-equips original Thing without duplication");
+        for (int c=0; c<4; ++c) REQUIRE(view->world.party.champions[c].load==loads[c],"source item re-equipment restores every champion load");
+        REQUIRE(view->world.party.champions[champion].mana.current==current_mana,
+            "native remove/re-equip clicks preserve actual current mana while only maximum modifiers change");
+        if (!item) {
+            const uint8_t *raw=view->world.things->rawThingData[THING_TYPE_WEAPON]+89u*4u;
+            REQUIRE(view->world.things->weapons[89].lit && (raw[3]&0x80u) &&
+                view->world.things->weapons[89].chargeCount==charge,"actual native torch re-equipment restores typed/raw activation without fuel mutation");
+        } else if (item==1u) REQUIRE(view->world.party.champions[champion].mana.maximum==20u &&
+            view->world.lifecycle.champions[champion].maxMana==20u,"actual Moonstone re-equipment restores native maximum mana");
+        else for (unsigned row=0u; row<3u; ++row)
+            REQUIRE(view->world.lifecycle.champions[champion].statistics[LIFECYCLE_STAT_LUCK][row]==before.statistics[LIFECYCLE_STAT_LUCK][row],
+                "actual Rabbit's Foot re-equipment restores each original modified Luck row");
+        REQUIRE(M11_GameView_HandlePointerButton(view,214,40,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+            !view->inventoryPanelActive && !view->leaderHandObjectPresent && view->world.party.activeChampionIndex==leader,
+            "native source close box returns to dungeon without changing leader or item ownership");
+        for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        REQUIRE(original_thing_owners(view,things[item])==1 &&
+            view->world.party.champions[2].mana.maximum==20u && view->world.lifecycle.champions[2].maxMana==20u &&
+            view->world.lifecycle.champions[3].statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_MAXIMUM]==35u,
+            "ordinary native idle ticks preserve re-equipped source item ownership and committed modifiers");
+    }
+    { unsigned short loads[4];
+      unsigned current_mana=view->world.party.champions[2].mana.current;
+      uint8_t luck[3];
+      for (int c=0; c<4; ++c) loads[c]=view->world.party.champions[c].load;
+      memcpy(luck,view->world.lifecycle.champions[3].statistics[LIFECYCLE_STAT_LUCK],sizeof(luck));
+      (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_3_INVENTORY);
+      REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==3 &&
+          M11_GameView_HandlePointerButton(view,14,74,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+          view->leaderHandObjectPresent && view->leaderHandThing==0xa802u &&
+          view->world.party.champions[2].inventory[CHAMPION_SLOT_NECK]==THING_NONE &&
+          view->world.party.champions[2].mana.maximum==17u && view->world.lifecycle.champions[2].maxMana==17u,
+          "cross-champion swap begins with original CHANI Moonstone removal and maximum-mana inverse");
+      (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_4_INVENTORY);
+      REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==4 &&
+          view->world.party.activeChampionIndex==leader && view->leaderHandThing==0xa802u,
+          "native inventory owner switch retains existing leader and original mouse-held Moonstone");
+      for (unsigned swap=0u; swap<2u; ++swap) {
+          unsigned short cursor=swap ? 0xa802u : 0x2803u, backpack=swap ? 0x2803u : 0xa802u;
+          REQUIRE(M11_GameView_HandlePointerButton(view,74,74,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+              view->leaderHandObjectPresent && view->leaderHandThing==cursor &&
+              view->leaderHandIconIndex==M11_GameView_GetObjectIconIndexForThing(view,cursor) &&
+              view->world.party.champions[3].inventory[CHAMPION_SLOT_BACKPACK_1]==backpack &&
+              original_thing_owners(view,0xa802u)==1 && original_thing_owners(view,0x2803u)==1 &&
+              view->world.party.champions[2].mana.maximum==17u && view->world.lifecycle.champions[2].maxMana==17u,
+              "occupied native backpack click atomically swaps two authentic source Things without Moonstone neck bonus");
+          for (unsigned row=0u; row<3u; ++row)
+              REQUIRE(view->world.lifecycle.champions[3].statistics[LIFECYCLE_STAT_LUCK][row]==
+                  (uint8_t)(luck[row]-(swap ? 0u : 10u)),
+                  "native occupied swap removes and restores Rabbit's Foot Luck in source order");
+          for (int c=0; c<4; ++c) {
+              int delta=(c==2 ? -2 : 0)+(c==3 && !swap ? 1 : 0)+(c==leader ? (swap ? 2 : 1) : 0);
+              REQUIRE(view->world.party.champions[c].load==(unsigned short)((int)loads[c]+delta),
+                  "cross-champion occupied swap accounts original item weights in owner and leader mouse hand");
+          }
+          { unsigned draws=view->dm1IigsDrawCount;
+            M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+            REQUIRE(view->dm1IigsDrawCount==draws+1u && view->dm1InventoryChampionOrdinal==4,
+                "occupied native swap redraw retains actual inventory owner and native asset route"); }
+      }
+      (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_3_INVENTORY);
+      REQUIRE(view->dm1InventoryChampionOrdinal==3 && view->world.party.activeChampionIndex==leader &&
+          M11_GameView_HandlePointerButton(view,14,74,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+          !view->leaderHandObjectPresent && view->world.party.champions[2].inventory[CHAMPION_SLOT_NECK]==0xa802u &&
+          view->world.party.champions[2].mana.maximum==20u && view->world.lifecycle.champions[2].maxMana==20u &&
+          view->world.party.champions[2].mana.current==current_mana &&
+          original_thing_owners(view,0xa802u)==1 && original_thing_owners(view,0x2803u)==1,
+          "returning original Moonstone to CHANI neck restores maximum mana and empties unique mouse hand");
+      for (int c=0; c<4; ++c) REQUIRE(view->world.party.champions[c].load==loads[c],
+          "completed original occupied-swap round trip restores every champion load");
+      REQUIRE(M11_GameView_HandlePointerButton(view,214,40,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+          !view->inventoryPanelActive,"native cross-champion inventory sequence closes through source close box");
+    }
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_INVENTORY_TOGGLE);
+    REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==leader+1,
+        "native inventory toggle opens original leader inventory");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_INVENTORY_TOGGLE);
+    REQUIRE(!view->inventoryPanelActive,"native repeated leader inventory toggle closes panel");
+    result=1;
+cleanup:
+    return result;
+}
+
 static int check_session(const char *root, int version, const char *owner) {
     M11_GameViewState *view=calloc(1,sizeof(*view));
     uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
@@ -551,6 +719,7 @@ static int check_session(const char *root, int version, const char *owner) {
         REQUIRE(check_recruitment(view,frame),"authentic native HoC champion recruitment through ordinary input");
         REQUIRE(check_equipped_heroes(view,frame),"authentic native equipment modifier and activation lifecycle");
         REQUIRE(check_first_descent(view,frame),"actual native first descent and functional lighting");
+        REQUIRE(check_native_inventory(view,frame),"actual native inventory source transactions and modifier inverse");
         M11_GameView_Shutdown(view); M11_GameView_Shutdown(view);
         REQUIRE(!view->active && !view->dm1IigsActive && !view->world.iigsCreatureProfileBound &&
             !view->assetLoader.iigsDm1,"repeated shutdown clears native runtime resources and profile");

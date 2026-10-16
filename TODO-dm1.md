@@ -2128,3 +2128,14 @@ The shared light admission now accepts bounded ordinary hand objects as zero
 light and uses torch charge without an extra Lit condition, as F0337 does.
 Remaining interaction, scene, intro and DOC gaps above are still open;
 timeline-driven transfers and further levels need authentic runtime checks.
+
+2026-10-16 ordinary IIGS inventory follow-up: native source tables now own
+opening, hero switching and thirty body/backpack slots, with native icon banks
+and source equipment removal/addition. Original torch/Moonstone/Rabbit's Foot
+and occupied cross-champion swaps have runtime coverage. Inventory selection
+must remain separate from leader ownership. Remaining: chest contents,
+eye/mouth and consumption, native names/scroll text, reincarnation, rest and
+all other interaction gaps. Savegame work remains deferred. Derived maxLoad
+still needs source F0309 recomputation after strength/stamina/wound/Elven Boots
+changes; these current gear cases do not prove that behavior. DOC playback,
+intro/entrance and complete scene/campaign functionality remain unfinished.

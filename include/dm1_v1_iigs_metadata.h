@@ -77,6 +77,10 @@ typedef struct DM1_V1_IigsMetadata {
     uint16_t interface_palette[16];
     uint16_t dungeon_palettes[6][16];
     uint16_t ui_boxes[17][4];
+    int16_t slot_boxes[46][3]; /* G0030: x,y,cached icon; viewport for8+ */
+    int16_t inventory_mouse[38][6]; /* G0449: command, inclusive box, button */
+    uint16_t icon_first[7];
+    uint16_t slot_masks[38];
     uint8_t palette_no_changes[16];
     uint16_t mandatory_graphics[70];
     uint8_t object_aspects[85][6];

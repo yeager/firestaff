@@ -1,3 +1,7 @@
+- `DM1 IIGS inventory`: connect ordinary body/backpack transfers and hero
+  inventory switching to native tables and icons. Preserve leader ownership,
+  equipment effects and native held-item drawing. Chest/consumption and other
+  interaction gaps remain; this is not complete IIGS support.
 - `DM1 IIGS progression`: execute floor sensors and door events, descend
   from the Hall of Champions with native monster ownership, and apply
   torch-dependent dungeon palettes. Complete IIGS gameplay remains unfinished.

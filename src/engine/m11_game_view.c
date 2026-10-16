@@ -27455,6 +27455,12 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
         !M11_AssetLoader_InitDm1IigsFromBuffer(&state->assetLoader,
             graphics, (long)graphicsSize)) goto cleanup;
     state->assetsAvailable = 1;
+    /* F0036/F0039 native icon banks: seven 16-column, two-row
+     * 16x16 strips. Authenticate through the selected native bank profile. */
+    for (unsigned iconBank = 42; iconBank <= 48; ++iconBank) {
+        const M11_AssetSlot* icons = M11_AssetLoader_Load(&state->assetLoader,iconBank);
+        if (!icons || icons->width != 256 || icons->height != 32) goto cleanup;
+    }
     if (!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(expanded,
             (int)expandedSize, 0xF1A5U, metadata.creature_info, 27U,
             &state->world)) goto cleanup;
@@ -34698,6 +34704,134 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     return 1;
 }
 
+/* CHAMPION.C F0299:327-487 and F0300/F0301:510-651. Called only
+ * after authentic raw/typed records and source destination are preflighted. */
+static void m11_iigs_equipment_change(M11_GameViewState* state, int champion,
+    unsigned short thing, int sourceSlot, int factor)
+{
+    struct ChampionState_Compat* champ = &state->world.party.champions[champion];
+    struct ChampionLifecycleState_Compat* life = &state->world.lifecycle.champions[champion];
+    int type = THING_GET_TYPE(thing);
+
+    unsigned char* raw = state->world.things->rawThingData[type] +
+        THING_GET_INDEX(thing)*(type == THING_TYPE_CONTAINER ? 8 : 4);
+    int icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,state->world.party.direction);
+    int stat = -1, modifier = 0;
+    /* F0299: curse takes priority over every positive bonus. */
+    if ((type == 5 || type == 6) && sourceSlot >= 0 && sourceSlot <= 12 && (raw[3]&1)) {
+        stat = LIFECYCLE_STAT_LUCK; modifier = -3;
+    } else if (icon == 137 && sourceSlot < 30) {
+        stat = LIFECYCLE_STAT_LUCK; modifier = 10;
+    } else if (sourceSlot == 1) {
+        if (icon == 45) { stat = LIFECYCLE_STAT_STRENGTH; modifier = 5; }
+        else {
+            stat = LIFECYCLE_STAT_COUNT; /* maximum mana */
+            if (icon >= 20 && icon <= 22) modifier = 4;
+            else if (icon >= 58 && icon <= 66) {
+                static const int mana[9] = {2,1,6,4,10,8,16,7,5};
+                modifier = mana[icon-58];
+            } else if (icon == 38) modifier = 1;
+            else if (icon == 41) modifier = 2;
+            else if (icon == 40) modifier = 4;
+        }
+    } else if (sourceSlot == 4 && icon == 142) {
+        stat = LIFECYCLE_STAT_STRENGTH; modifier = 10;
+    } else if (sourceSlot == 2 && icon == 104) {
+        stat = LIFECYCLE_STAT_WISDOM; modifier = 10;
+    } else if (sourceSlot == 2 && icon == 140) {
+        stat = LIFECYCLE_STAT_DEXTERITY; modifier = 10;
+    } else if (sourceSlot == 3 && icon == 141) {
+        stat = LIFECYCLE_STAT_ANTIFIRE; modifier = 12;
+    } else if ((sourceSlot == 3 || sourceSlot == 10) && icon == 81) {
+        stat = LIFECYCLE_STAT_DEXTERITY; modifier = 8;
+    } else if (sourceSlot == 10 && (icon == 10 || icon == 11)) {
+        stat = LIFECYCLE_STAT_ANTIMAGIC; modifier = 15;
+    } else if (sourceSlot == 10 && icon == 122) {
+        stat = LIFECYCLE_STAT_COUNT; modifier = 3;
+    }
+    if (modifier && stat == LIFECYCLE_STAT_COUNT)
+        life->maxMana = (uint16_t)(life->maxMana+modifier*factor);
+    else if (modifier && stat >= 0)
+        for (int value = 0; value < 3; ++value)
+            life->statistics[stat][value] = (uint8_t)(life->statistics[stat][value]+modifier*factor);
+    /* F0301 activation follows modifier application. Cancel
+     * F0282 never removes these wall-owned object side effects. */
+    if (sourceSlot < 2) {
+        if (sourceSlot == 1 && (icon == 30 || icon == 31)) {
+            raw[3] = (raw[3]&3U) | (factor > 0 ? 0 : 4U);
+            state->world.things->scrolls[THING_GET_INDEX(thing)].closed = factor > 0 ? 0 : 1;
+        }
+        if ((factor > 0 && icon == 4) || (factor < 0 && icon >= 4 && icon <= 7)) {
+            raw[3] = factor > 0 ? (raw[3]|0x80U) : (raw[3]&0x7fU);
+            state->world.things->weapons[THING_GET_INDEX(thing)].lit = factor > 0 ? 1 : 0;
+        }
+    } else if (sourceSlot == 10) {
+        if (icon == 12 || icon == 13) {
+            raw[3] = (raw[3]&0x3fU)|(factor > 0 ? 0x40U : 0);
+            state->world.things->junks[THING_GET_INDEX(thing)].chargeCount = factor > 0 ? 1 : 0;
+            state->world.magic.magicalLightAmount += 12*factor; /* G0039[2] */
+        } else if (icon == 10 || icon == 11) {
+            raw[3] = (raw[3]&0x3fU)|(factor > 0 ? 0x40U : 0);
+            state->world.things->junks[THING_GET_INDEX(thing)].chargeCount = factor > 0 ? 1 : 0;
+        }
+    }
+    for (int i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+        champ->attributes[i] = life->statistics[i+1][LIFECYCLE_STAT_CURRENT];
+        champ->attributeMaximums[i] = life->statistics[i+1][LIFECYCLE_STAT_MAXIMUM];
+    }
+    champ->mana.maximum = life->maxMana;
+}
+
+/* Preflight original GS LE records before any slot, statistic or flag write. */
+static int m11_iigs_equipment_valid(const M11_GameViewState* state, unsigned short thing)
+{
+    int type, index;
+    if (thing == THING_NONE) return 1;
+    if (thing == THING_ENDOFLIST || !state->world.things) return 0;
+    type = THING_GET_TYPE(thing); index = THING_GET_INDEX(thing);
+    if (type < 5 || type > 10 || !state->world.things->rawThingData[type] ||
+        index >= state->world.things->thingCounts[type] ||
+        dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,state->world.party.direction) < 0) return 0;
+    if (type == 5) return state->world.things->weapons && index < state->world.things->weaponCount;
+    if (type == 7) return state->world.things->scrolls && index < state->world.things->scrollCount;
+    if (type == 10) return state->world.things->junks && index < state->world.things->junkCount;
+    return 1;
+}
+
+/* CHAMPION.C F0302:697-715: AllowedSlots first, then remove outgoing
+ * modifiers/activation before inserting the original mouse-hand object. */
+static int m11_iigs_exchange_slot(M11_GameViewState* state, int champion, int sourceSlot)
+{
+    int host, weight;
+    unsigned short incoming, outgoing;
+    if (!state || !state->active || !state->dm1IigsActive ||
+        state->candidateMirrorPanelActive || champion < 0 ||
+        champion >= state->world.party.championCount || sourceSlot < 0 || sourceSlot >= 30 ||
+        !state->world.party.champions[champion].present ||
+        !state->world.party.champions[champion].hp.current) return 0;
+    host = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(sourceSlot+8);
+    if (host < 0 || host >= CHAMPION_SLOT_COUNT) return 0;
+    incoming = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+    outgoing = state->world.party.champions[champion].inventory[host];
+    if (!m11_iigs_equipment_valid(state,incoming) || !m11_iigs_equipment_valid(state,outgoing) ||
+        !m11_dm1_carried_object_weight(state,incoming,&weight) ||
+        !m11_dm1_carried_object_weight(state,outgoing,&weight) ||
+        (incoming == THING_NONE && outgoing == THING_NONE) ||
+        (incoming != THING_NONE && !(dm1_v1_dungeon_get_object_allowed_slots_pc34(
+            state->world.things,incoming) & state->dm1IigsInstallation.metadata.slot_masks[sourceSlot]))) return 0;
+    if (outgoing != THING_NONE) m11_iigs_equipment_change(state,champion,outgoing,sourceSlot,-1);
+    state->world.party.champions[champion].inventory[host] = incoming;
+    if (incoming != THING_NONE) m11_iigs_equipment_change(state,champion,incoming,sourceSlot,1);
+    state->leaderHandObjectPresent = outgoing != THING_NONE;
+    state->leaderHandThing = outgoing;
+    state->leaderHandIconIndex = outgoing == THING_NONE ? -1 :
+        dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,outgoing,state->world.party.direction);
+    state->leaderHandObjectName[0] = '\0';
+    state->v1ScrollPanelActive = 0; state->v1FoodWaterPanelActive = 0;
+    m11_refresh_hash(state);
+    return 1;
+}
+
 static int m11_iigs_candidate_equipment(M11_GameViewState* state,
     struct ChampionState_Compat* candidate)
 {
@@ -34767,7 +34901,7 @@ static int m11_iigs_select_front_candidate(M11_GameViewState* state)
     char text[DUNGEON_TEXT_MAX_STRING_LEN], *skills;
     DM1_ChampionSkillState skillState;
     if (!state || !state->active || !state->dm1IigsActive ||
-        state->candidateMirrorPanelActive || state->leaderHandObjectPresent ||
+        state->inventoryPanelActive || state->candidateMirrorPanelActive || state->leaderHandObjectPresent ||
         !m11_party_has_pc34_candidate_layout(&state->world.party) ||
         state->world.party.championCount >= 4) return 0;
     ordinal = m11_front_cell_mirror_ordinal(state);
@@ -34877,70 +35011,7 @@ static int m11_iigs_select_front_candidate(M11_GameViewState* state)
                 if (champ->inventory[i] == thing) { host = i; break; }
             if (host >= 0) {
                 int sourceSlot = M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(host)-8;
-                int type = THING_GET_TYPE(thing);
-                if (sourceSlot < 0 || sourceSlot >= 30) return 0;
-                unsigned char* raw = state->world.things->rawThingData[type] +
-                    THING_GET_INDEX(thing)*(type == THING_TYPE_CONTAINER ? 8 : 4);
-                int icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,direction);
-                int stat = -1, modifier = 0;
-                /* F0299: curse takes priority over every positive bonus. */
-                if ((type == 5 || type == 6) && sourceSlot >= 0 && sourceSlot <= 12 && (raw[3]&1)) {
-                    stat = LIFECYCLE_STAT_LUCK; modifier = -3;
-                } else if (icon == 137 && sourceSlot < 30) {
-                    stat = LIFECYCLE_STAT_LUCK; modifier = 10;
-                } else if (sourceSlot == 1) {
-                    if (icon == 45) { stat = LIFECYCLE_STAT_STRENGTH; modifier = 5; }
-                    else {
-                        stat = LIFECYCLE_STAT_COUNT; /* maximum mana */
-                        if (icon >= 20 && icon <= 22) modifier = 4;
-                        else if (icon >= 58 && icon <= 66) {
-                            static const int mana[9] = {2,1,6,4,10,8,16,7,5};
-                            modifier = mana[icon-58];
-                        } else if (icon == 38) modifier = 1;
-                        else if (icon == 41) modifier = 2;
-                        else if (icon == 40) modifier = 4;
-                    }
-                } else if (sourceSlot == 4 && icon == 142) {
-                    stat = LIFECYCLE_STAT_STRENGTH; modifier = 10;
-                } else if (sourceSlot == 2 && icon == 104) {
-                    stat = LIFECYCLE_STAT_WISDOM; modifier = 10;
-                } else if (sourceSlot == 2 && icon == 140) {
-                    stat = LIFECYCLE_STAT_DEXTERITY; modifier = 10;
-                } else if (sourceSlot == 3 && icon == 141) {
-                    stat = LIFECYCLE_STAT_ANTIFIRE; modifier = 12;
-                } else if ((sourceSlot == 3 || sourceSlot == 10) && icon == 81) {
-                    stat = LIFECYCLE_STAT_DEXTERITY; modifier = 8;
-                } else if (sourceSlot == 10 && (icon == 10 || icon == 11)) {
-                    stat = LIFECYCLE_STAT_ANTIMAGIC; modifier = 15;
-                } else if (sourceSlot == 10 && icon == 122) {
-                    stat = LIFECYCLE_STAT_COUNT; modifier = 3;
-                }
-                if (modifier && stat == LIFECYCLE_STAT_COUNT)
-                    life->maxMana = (uint16_t)(life->maxMana+modifier);
-                else if (modifier && stat >= 0)
-                    for (int value = 0; value < 3; ++value)
-                        life->statistics[stat][value] = (uint8_t)(life->statistics[stat][value]+modifier);
-                /* F0301 activation follows modifier application. Cancel
-                 * F0282 never removes these wall-owned object side effects. */
-                if (sourceSlot < 2) {
-                    if (sourceSlot == 1 && (icon == 30 || icon == 31)) {
-                        raw[3] &= 3U;
-                        state->world.things->scrolls[THING_GET_INDEX(thing)].closed = 0;
-                    }
-                    if (icon == 4) {
-                        raw[3] |= 0x80U;
-                        state->world.things->weapons[THING_GET_INDEX(thing)].lit = 1;
-                    }
-                } else if (sourceSlot == 10) {
-                    if (icon == 12 || icon == 13) {
-                        raw[3] = (raw[3]&0x3fU)|0x40U;
-                        state->world.things->junks[THING_GET_INDEX(thing)].chargeCount = 1;
-                        state->world.magic.magicalLightAmount += 12; /* G0039[2] */
-                    } else if (icon == 10 || icon == 11) {
-                        raw[3] = (raw[3]&0x3fU)|0x40U;
-                        state->world.things->junks[THING_GET_INDEX(thing)].chargeCount = 1;
-                    }
-                }
+                m11_iigs_equipment_change(state,slot,thing,sourceSlot,1);
             }
             thing = m11_raw_next_thing(state->world.things,thing);
         }
@@ -36144,8 +36215,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GameView_ConfirmMirrorCandidate(state,0) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
             return M11_GAME_INPUT_IGNORED;
         }
-        if (input == M12_MENU_INPUT_BACK) return M11_GAME_INPUT_RETURN_TO_MENU;
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
+        if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY && input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY)
+            return m11_toggle_champion_inventory(state,input-M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+        if (input == M12_MENU_INPUT_INVENTORY_TOGGLE || input == M12_MENU_INPUT_LEADER_INVENTORY)
+            return m11_toggle_champion_inventory(state,state->world.party.activeChampionIndex);
+        if (input == M12_MENU_INPUT_BACK && state->inventoryPanelActive)
+            return m11_toggle_champion_inventory(state,m11_inventory_champion_index(state));
+        if (input == M12_MENU_INPUT_BACK) return M11_GAME_INPUT_RETURN_TO_MENU;
         if (input == M12_MENU_INPUT_ACTION || input == M12_MENU_INPUT_ACCEPT)
             return M11_GameView_SelectFrontMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         if (input == M12_MENU_INPUT_USE_STAIRS) {
@@ -38080,7 +38157,11 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
 M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
                                                    int x,
                                                    int y) {
-    if (state && state->dm1IigsActive) return M11_GAME_INPUT_IGNORED;
+    if (state && state->dm1IigsActive) {
+        state->pointerPositionKnown = 1;
+        state->pointerX = x; state->pointerY = y;
+        return state->leaderHandObjectPresent ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -38528,20 +38609,45 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int buttonMask) {
     if (state && state->dm1IigsActive) {
         int handled = 0;
-        if (!state->active || M11_GameView_IsPaused(state) ||
-            !(buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)) return M11_GAME_INPUT_IGNORED;
-        /* Native GS COMMAND.C:228-234 G0457, not the PC C696 zones. */
+        state->pointerPositionKnown = 1;
+        state->pointerX = x; state->pointerY = y;
+        const DM1_V1_IigsMetadata* meta = &state->dm1IigsInstallation.metadata;
+        if (!state->active || M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         if (state->candidateMirrorPanelActive) {
+            if (!(buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)) return M11_GAME_INPUT_IGNORED;
             if (x >= 104 && x <= 158 && y >= 86 && y <= 142)
                 handled = M11_GameView_ConfirmMirrorCandidate(state,0);
             else if (x >= 104 && x <= 217 && y >= 146 && y <= 156)
                 handled = M11_GameView_CancelMirrorCandidate(state);
-            /* C161 requires the native F0281 rename/reincarnation path,
-             * which remains closed rather than using the PC modal. */
-        } else if (x >= 96 && x <= 127 && y >= 68 && y <= 96) {
-            /* DUNVIEW.C:525 G0109 plus F2172's screen line33. */
-            handled = M11_GameView_SelectFrontMirrorCandidate(state);
+        } else if (state->inventoryPanelActive) {
+            /* Authenticated old GS G0449 screen-coordinate table. Mouth,
+             * eye, chest, rest and save remain separate unbound commands. */
+            for (int i = 0; i < 38 && meta->inventory_mouse[i][0]; ++i) {
+                const int16_t* row = meta->inventory_mouse[i];
+                if (!(buttonMask & row[5]) || x < row[1] || x > row[2] || y < row[3] || y > row[4]) continue;
+                if (row[0] == 11)
+                    return m11_toggle_champion_inventory(state,m11_inventory_champion_index(state));
+                if (row[0] >= 28 && row[0] <= 57)
+                    handled = m11_iigs_exchange_slot(state,m11_inventory_champion_index(state),row[0]-28);
+                break;
+            }
         }
+        if (!state->candidateMirrorPanelActive && y >= 0 && y <= 28) {
+            int champion = x >= 0 ? x/69 : -1;
+            if (champion >= 0 && champion < state->world.party.championCount && x%69 <= 66) {
+                if (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34)
+                    return m11_toggle_champion_inventory(state,champion);
+                if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) && y >= 10 && y <= 25 &&
+                    (!state->inventoryPanelActive || champion != m11_inventory_champion_index(state))) {
+                    int local = x%69;
+                    if (local >= 4 && local <= 19) handled = m11_iigs_exchange_slot(state,champion,0);
+                    else if (local >= 24 && local <= 39) handled = m11_iigs_exchange_slot(state,champion,1);
+                }
+            }
+        }
+        if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive &&
+            (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) && x >= 96 && x <= 127 && y >= 68 && y <= 96)
+            handled = M11_GameView_SelectFrontMirrorCandidate(state);
         return handled ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
     int slot;
@@ -60025,7 +60131,8 @@ void M11_GameView_DrawLeaderHandCursor(const M11_GameViewState* state,
     uint8_t objectBitmap[REDMCSB_F0702_OBJECT_BITMAP_BYTES_PC34];
     uint8_t pointerBitmap[REDMCSB_F0702_POINTER_BITMAP_BYTES_PC34];
     int iconIndex;
-    if (!state || !framebuffer || !state->pointerPositionKnown ||
+    /* GS composes its source-owned icon cursor in the native Draw path. */
+    if (!state || state->dm1IigsActive || !framebuffer || !state->pointerPositionKnown ||
         !state->leaderHandObjectPresent ||
         state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         return;
@@ -61293,6 +61400,7 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     unsigned short slotThing;
 
     if (!state || !state->inventoryPanelActive) return 0;
+    if (state->dm1IigsActive) return m11_iigs_exchange_slot(state,m11_inventory_champion_index(state),sourceSlotBoxIndex-8);
     /* ReDMCSB COMMAND.C F0380 dispatches F0302 against the live M516 table.
      * CSB M11's party is presentation-only and can be refreshed by a timer,
      * death, equip filter, or runtime handoff while C017 remains open.  The
@@ -66505,6 +66613,11 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
     int sameOpen;
     char champion[16];
     if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
+    if (state && state->dm1IigsActive &&
+        (state->candidateMirrorPanelActive || state->v1EyePressActive ||
+         (championIndex >= 0 && championIndex < state->world.party.championCount &&
+          !state->world.party.champions[championIndex].hp.current)))
+        return M11_GAME_INPUT_IGNORED;
 
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         /* ReDMCSB PANEL.C F0355:2267-2302 validates
@@ -71816,6 +71929,22 @@ static int m11_iigs_relative_wall(const M11_GameViewState* state, int depth, int
     return (square >> 5) == 0 || ((square >> 5) == 6 && !(square & 4));
 }
 
+static void m11_iigs_draw_thing_icon(M11_GameViewState* state, unsigned char* native,
+    unsigned short thing, int x, int y)
+{
+    int icon, bank = 0, relative;
+    const DM1_V1_IigsMetadata* meta = &state->dm1IigsInstallation.metadata;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return;
+    icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,state->world.party.direction);
+    if (icon < 0 || icon >= 224) return;
+    while (bank < 6 && meta->icon_first[bank+1] <= icon) ++bank;
+    relative = icon-meta->icon_first[bank];
+    if (relative < 0 || relative >= 32) return;
+    /* OBJECT.C F0036:315-326, GS packed-pixel strips, no PC C696. */
+    m11_iigs_blit(state,native,42U+(unsigned)bank,x,y,16,16,
+        (relative&15)*16,relative&16,0,0);
+}
+
 static void m11_iigs_draw_first_world(M11_GameViewState* state,
     unsigned char* framebuffer, int width, int height)
 {
@@ -71905,6 +72034,32 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
         (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,
             i*69+1,5,name,13,1);
     }
+    for (i = 0; i < 8; ++i) {
+        int owner = i/2;
+        int host = (i&1) ? CHAMPION_SLOT_ACTION_HAND : CHAMPION_SLOT_HAND_LEFT;
+        if (owner < state->world.party.championCount &&
+            !(state->inventoryPanelActive && owner == m11_inventory_champion_index(state)))
+            m11_iigs_draw_thing_icon(state,native,state->world.party.champions[owner].inventory[host],
+                metadata->slot_boxes[i][0],metadata->slot_boxes[i][1]);
+    }
+    if (state->inventoryPanelActive && !state->candidateMirrorPanelActive) {
+        int owner = m11_inventory_champion_index(state);
+        if (owner >= 0 && owner < state->world.party.championCount) {
+            const struct ChampionState_Compat* champion = &state->world.party.champions[owner];
+            char name[CHAMPION_NAME_TEXT_CAPACITY];
+            m11_iigs_blit(state,native,17,0,33,224,136,0,0,0,0);
+            m11_iigs_blit(state,native,26,owner*69+7,0,32,29,
+                (champion->portraitIndex&7)*32,(champion->portraitIndex>>3)*29,0,0);
+            m11_format_champion_name(champion->name,name,sizeof(name));
+            (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,3,40,name,13,0);
+            for (i = 8; i < 38; ++i) {
+                int host = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(i);
+                if (host >= 0 && host < CHAMPION_SLOT_COUNT)
+                    m11_iigs_draw_thing_icon(state,native,champion->inventory[host],
+                        metadata->slot_boxes[i][0],metadata->slot_boxes[i][1]+33);
+            }
+        }
+    }
     if (state->candidateMirrorPanelActive && state->candidateMirrorPartyIndex >= 0 &&
         state->candidateMirrorPartyIndex < state->world.party.championCount) {
         int slot = state->candidateMirrorPartyIndex;
@@ -71917,6 +72072,8 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
             (champion->portraitIndex&7)*32,(champion->portraitIndex>>3)*29,0,0);
         (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,3,40,name,13,0);
     }
+    if (!state->candidateMirrorPanelActive && state->leaderHandObjectPresent)
+        m11_iigs_draw_thing_icon(state,native,state->leaderHandThing,state->pointerX,state->pointerY);
     for (y = 0; y < height; ++y)
         for (x = 0; x < width; ++x)
             framebuffer[(size_t)y*(size_t)width+(size_t)x] = native[
@@ -73932,6 +74089,12 @@ int M11_GameView_IsMapOverlayActive(const M11_GameViewState* state) {
 
 int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
     if (!state) return 0;
+    if (state->dm1IigsActive) {
+        if (state->candidateMirrorPanelActive) return 0;
+        (void)m11_toggle_champion_inventory(state,state->inventoryPanelActive ?
+            m11_inventory_champion_index(state) : state->world.party.activeChampionIndex);
+        return state->inventoryPanelActive;
+    }
     if (state->v1FoodCommandPending) return state->inventoryPanelActive;
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         /* SKProject CHANGE_VIEWPORT_TO_INVENTORY renders the DM2 inventory
