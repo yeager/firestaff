@@ -1094,6 +1094,7 @@ mkdir -p "$perf_home"
 # Keep a full sample window after that setup so telemetry remains deterministic.
 perf_output=$(HOME="$perf_home" XDG_CONFIG_HOME="$perf_home" \
     APPDATA="$perf_home" FIRESTAFF_CONFIG_PATH="$perf_home/config.toml" \
+    FIRESTAFF_AUTOTEST=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform pc --data-dir "$archive" --debug-full-redraw \
     --duration 30000 \

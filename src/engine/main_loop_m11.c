@@ -2139,12 +2139,15 @@ int M11_FocusPauseRequired(int enabled, int hasFocus, const char* videoDriver) {
 static int g_m11_intro_delay_fast_forward = 0;
 static int g_m11_startup_intro_quit_requested = 0;
 static int g_m11_dm1_i34e_intro_preplayed = 0;
+static int g_m11_dm1_direct_cli_launch = 0;
 static int g_m11_debug_startup_detail = 0;
 static Uint32 g_m11_phase_duration_started_ms;
 static int g_m11_phase_duration_ms = -1;
 static int g_m11_phase_duration_expired;
 static uint16_t g_m11_dm1_amiga_swsh_palette[16];
 static int g_m11_dm1_amiga_swsh_palette_valid = 0;
+
+static int m11_event_requests_window_close(const SDL_Event* event);
 
 int M11_RunDurationHasElapsed(int durationMs,
                               uint32_t startedAtMs,
@@ -5348,6 +5351,9 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     unsigned frames = 0u;
     int step;
     int userAborted = 0;
+    Uint32 userAbortEventType = 0u;
+    Sint32 userAbortKey = 0;
+    Uint8 userAbortButton = 0u;
     int autotestQuitInjected = 0;
     if (!version || !version->versionId ||
         strcmp(version->versionId, "pc34-en") != 0 ||
@@ -5506,6 +5512,11 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                     (event.type == SDL_EVENT_KEY_DOWN ||
                      event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)) {
                     abortAnimation = 1;
+                    userAbortEventType = event.type;
+                    if (event.type == SDL_EVENT_KEY_DOWN)
+                        userAbortKey = event.key.key;
+                    else
+                        userAbortButton = event.button.button;
                     break;
                 }
 #else
@@ -5513,6 +5524,11 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                     (event.type == SDL_KEYDOWN ||
                      event.type == SDL_MOUSEBUTTONDOWN)) {
                     abortAnimation = 1;
+                    userAbortEventType = event.type;
+                    if (event.type == SDL_KEYDOWN)
+                        userAbortKey = event.key.keysym.sym;
+                    else
+                        userAbortButton = event.button.button;
                     break;
                 }
 #endif
@@ -5542,6 +5558,12 @@ static int m11_play_dm1_i34e_title_anim_if_available(
         free(data);
         return 0;
     }
+    if (userAborted && g_m11_debug_startup_detail)
+        fprintf(stderr,
+                "firestaff: startup-source-abort game=dm1 platform=pc34 phase=anim-title event=%u key=%d button=%u frame=%u source-counter-units=%llu\n",
+                (unsigned)userAbortEventType, (int)userAbortKey,
+                (unsigned)userAbortButton, frames,
+                (unsigned long long)counterUnits);
     if (g_m11_debug_startup_detail)
         fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=%u source-counter-units=%llu elapsed-ms=%llu timing-model=ibmio-default-pit callback-decrement=3 pit-input-hz=1193182 pit-divisor=65536\n",
                 frames, (unsigned long long)counterUnits,
@@ -5690,6 +5712,77 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
         M11_Render_PresentIndexed(frame, M11_FB_WIDTH, M11_FB_HEIGHT) !=
             M11_RENDER_OK) goto done;
     m11_capture_dm1_authenticated_startup_frame("i34e-selector-closed");
+    /* The original I34E SELECTOR waits for a user command after drawing the
+     * closed entrance. `--game dm1` selects the edition, not SELECTOR's Enter
+     * button. Keep automated boot receipts non-interactive; normal direct
+     * launches wait for Enter or a click on the source Enter button. */
+    if (g_m11_dm1_direct_cli_launch &&
+        !getenv("FIRESTAFF_EXIT_AFTER_LAUNCH") &&
+        !getenv("FIRESTAFF_AUTOTEST")) {
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr,
+                    "firestaff: startup-source-wait game=dm1 platform=pc34 phase=selector action=await-enter-or-click\n");
+        for (;;) {
+            SDL_Event event;
+            int accepted = 0;
+            while (SDL_PollEvent(&event)) {
+                int keyDown = 0;
+                int enterClick = 0;
+                if (m11_event_requests_window_close(&event)) {
+                    g_m11_startup_intro_quit_requested = 1;
+                    result = M11_ENTRANCE_COMMAND_QUIT;
+                    goto done;
+                }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                if (event.type == SDL_EVENT_KEY_DOWN) {
+#else
+                if (event.type == SDL_KEYDOWN) {
+#endif
+                    keyDown = 1;
+                }
+                if (keyDown && (event.key.key == SDLK_RETURN ||
+                                event.key.key == SDLK_KP_ENTER ||
+                                event.key.key == SDLK_E)) {
+                    accepted = 1;
+                    break;
+                }
+                if (keyDown && (event.key.key == SDLK_ESCAPE ||
+                                event.key.key == SDLK_Q)) {
+                    g_m11_startup_intro_quit_requested = 1;
+                    result = M11_ENTRANCE_COMMAND_QUIT;
+                    goto done;
+                }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+#else
+                if (event.type == SDL_MOUSEBUTTONDOWN &&
+#endif
+                    event.button.button == SDL_BUTTON_LEFT) {
+                    int sourceX = -1, sourceY = -1;
+                    if (M11_Render_MapWindowToFramebuffer(
+                            (int)event.button.x, (int)event.button.y,
+                            &sourceX, &sourceY) &&
+                        sourceX >= 243 && sourceX < 257 &&
+                        sourceY >= 46 && sourceY < 59) {
+                        enterClick = 1;
+                    }
+                }
+                if (enterClick) {
+                    accepted = 1;
+                    break;
+                }
+            }
+            if (accepted) break;
+            if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) {
+                result = M11_ENTRANCE_COMMAND_QUIT;
+                goto done;
+            }
+            SDL_Delay(1u);
+        }
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr,
+                    "firestaff: startup-source-input game=dm1 platform=pc34 phase=selector command=enter\n");
+    }
     vblankStartMs = m11_intro_active_ticks();
     selectorStartMs = vblankStartMs;
     switchSoundQueued = M11_Audio_EmitSourceSoundIndex(
@@ -11504,15 +11597,20 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (o->verbose && m11_is_supported_game_id(o->gameId))
             fprintf(stderr, "firestaff: launch phase=game-handoff game=%s\n",
                     o->gameId);
+        g_m11_dm1_direct_cli_launch = 1;
         if (!m11_open_requested_launch(&gameView,
                                        &menuState,
                                        &idleAccumulatorMs,
                                        o->dataDir,
                                        o->bootProbe)) {
+            g_m11_dm1_direct_cli_launch = 0;
             fprintf(stderr, "firestaff: direct launch failed for --game %s\n", o->gameId);
             runRc = 3;
             goto cleanup;
         }
+        g_m11_dm1_direct_cli_launch = 0;
+        if (menuState.shouldExit || g_m11_phase_duration_expired)
+            goto cleanup;
         launchedEver = 1;
         if (o->verbose && m11_is_supported_game_id(o->gameId)) {
             M11_BootProbeReceipt startupReceipt;

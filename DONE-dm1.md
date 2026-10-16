@@ -4191,3 +4191,16 @@ not used as its final verification.
   and 2.1 media verify the Hall exit pressure plate at (6,9) through ordinary
   input, with one local stereo C01 trigger. Wall-click and object/group
   audible sensor paths remain open.
+
+- 2026-10-16: Corrected the direct PC34 CLI selector boundary. ReDMCSB's
+  I34E selector waits for a command after drawing its closed entrance; choosing
+  `--game dm1` identifies the edition and no longer synthesizes that Enter
+  command. The direct route now waits for Enter/E or a click on the source
+  Enter hitbox, while the M12 New Game choice remains the explicit command.
+  Close/Escape exits the wait, and a finite CLI duration does not claim that
+  gameplay started. Manual Cocoa verification confirmed the closed selector
+  stays visible until input and Enter reaches FIRES. The 32 door steps remain
+  one VGA retrace each: 0.53 s at this 60 Hz display versus 0.46 s at the
+  source's modeled 70 Hz; adding frames would diverge from I34E timing.
+  Native mouse click acceptance, slower-than-source user preference, first
+  dungeon pose parity and motion presentation latency remain open.

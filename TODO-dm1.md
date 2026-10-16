@@ -302,6 +302,15 @@ movement interpolation or scanout latency. Profile a real accepted movement
 on the target PC before changing the source-owned viewport cadence. Viewport
 wall raster and motion parity against DOSBox-X remain incomplete.
 
+The I34E direct `--game dm1 --platform pc` route now stops at the closed
+selector until Enter/E or a click on its original Enter hitbox; M12 New Game
+remains the explicit Enter action. Its door animation already advances one
+source VGA retrace per four-pixel step. On a 60 Hz display the 32 frames take
+about 0.53 s, while the modeled 70 Hz PC source takes 0.46 s. Do not add
+presentation frames without a new original comparison. Verify the native
+mouse hitbox and first dungeon frame against a same-pose PC34 capture. If the
+reported fast animation is a different door, identify that route separately.
+
 2026-10-15 PC34 first-view comparison: the authentic `DM.EXE` and `DATA`
 files from the user's English PC34 ZIP were run in DOSBox-X and compared with
 Firestaff direct launch using the same archive. Both captured C007 pages are
