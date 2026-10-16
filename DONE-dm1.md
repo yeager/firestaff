@@ -3840,3 +3840,25 @@ not used as its final verification.
   consistency and diff whitespace checks passed. Redacted staged Gitleaks found
   no leaks. Native Windows/Linux original-media execution and cancellation or
   allocator-failure injection remain separate verification requirements.
+
+- 2026-10-16: Implemented a separate Apple IIGS GRAPHICS.GAME record reader
+  and indexed-pixel decoder from ReDMCSB EXPAND.C F0466:324-845. It reuses
+  only the bounded 575-record little-endian table/raw access, following
+  MEMORY.C F0479:1330/1361-1381. Native short/extended fills, literal pairs
+  and overlapping previous-row copies retain their GS semantics; A/E commands
+  consume their counts without output. Raster record 21 remains usable while
+  unused font 12 and sound/text/global records are excluded from bitmap APIs.
+  Output stays palette indices; no platform admission or fallback was added.
+  Independent source review found no correctness/bounds blocker. A strict
+  C11 warning build and direct calls against both unchanged original banks
+  matched an independently derived assembly-oracle aggregate over all 532
+  rasters (1,692,424 framed bytes, MD5 cf735a173ec8294f393a07c540595d6a).
+  Original streams do not cover A/E commands. Palette rendering, native
+  startup and runtime platform execution remain open.
+  CMake-built original-media CTest passed both IIGS graphics (0.28 s) and
+  existing ProDOS intake (0.89 s), with no missing-media skip. All 575 raw
+  records preserve their bytes; every native raster also rejects insufficient
+  output capacity and a truncated original command stream with cleared output
+  dimensions and intact boundary canaries. Both source disks and their archive
+  retain their original identities. Native Windows/Linux media execution is
+  unverified; the module is not connected to playable runtime admission.

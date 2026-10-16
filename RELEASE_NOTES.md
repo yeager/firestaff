@@ -1,3 +1,5 @@
+- `DM1 data intake`: add a separate Apple IIGS native bitmap decoder.
+  Palette selection and playable IIGS startup remain unfinished.
 - `DM1 data intake`: read original Apple IIGS ProDOS files in memory through
   raw PO, ZIP and native 7z transports. Playable IIGS startup remains unfinished.
 - `DM1 verification`: require an active first Hall of Champions after Amiga

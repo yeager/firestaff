@@ -201,6 +201,22 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
+    add_executable(test_dm1_v1_iigs_graphics_real_media
+        tests/test_dm1_v1_iigs_graphics_real_media.c
+        src/shared/firestaff_prodos.c
+        src/dm1/dm1_v1_iigs_graphics_dat.c
+        src/dm1/dm1_v1_legacy_graphics_dat.c)
+    target_include_directories(test_dm1_v1_iigs_graphics_real_media PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_dm1_v1_iigs_graphics_real_media PRIVATE firestaff_m12)
+    add_test(NAME dm1_v1_iigs_graphics_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_iigs_graphics_real_media.sh"
+            $<TARGET_FILE:test_dm1_v1_iigs_graphics_real_media>)
+    set_tests_properties(dm1_v1_iigs_graphics_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 60
+        ENVIRONMENT "FIRESTAFF_DM1_IIGS_SOFTWARE_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,Apple_IIGS,Software.7z"
+        LABELS "dm1;iigs;graphics;real-media;in-memory;skip-safe")
+
     add_executable(test_firestaff_prodos_real_media
         tests/test_firestaff_prodos_real_media.c
         src/shared/firestaff_prodos.c)
@@ -6799,6 +6815,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_atari_st_graphics_dat.c
     src/dm1/dm1_v1_fmtowns_graphics_dat.c
+    src/dm1/dm1_v1_iigs_graphics_dat.c
     src/dm1/dm1_v1_fmtowns_dungeon_dat.c
     src/dm1/dm1_v1_fmtowns_iso9660.c
     src/dm1/dm1_v1_fmtowns_cd_audio.c

@@ -1973,10 +1973,11 @@ Remaining native IIGS startup work:
   SYSTEM/START to one volume. The preservation archive has six byte-identical
   graphics/world sources, but only two original START/program owners. A shared
   graphics digest alone cannot admit a complete edition.
-- Reuse only the bounded old-format 575-record LE table access after verifying
-  MEMORY.C F0477:1330-1385. Implement IIGS EXPAND.C F0466:324-450 bitmap
-  semantics explicitly; its packed 4bpp layout and A/E count branches must not
-  inherit an assumed FM Towns command set.
+- Wire the independent IIGS graphics reader/decoder into an explicitly native
+  startup profile after its original-media verification. The shared envelope
+  follows MEMORY.C F0479:1330/1361-1381; native raster commands follow
+  EXPAND.C F0466:324-845. Do not route IIGS through the FM Towns bitmap decoder.
+  Keep record 21 as a native bitmap and record 12 as the unused native font.
 - Adapt the native LE 0x8104 dungeon wrapper/structures while retaining the
   MSB-first compressed stream in DECOMPDU.C:258-392 (including XBA at 380).
 - Obtain native palette/aspect/UI metadata from each authenticated executable.
