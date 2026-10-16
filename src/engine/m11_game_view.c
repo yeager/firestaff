@@ -39620,6 +39620,17 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             zoneId >= 187 && zoneId <= 190) {
             return m11_toggle_champion_inventory(state, command - 7);
         }
+        if (command >= 20 && command <= 27 &&
+            zoneId >= 211 && zoneId <= 218) {
+            int slotBoxIndex = command - 20;
+            if (!m11_process_v1_status_hand_slot_box_click(state,
+                                                           slotBoxIndex)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->v1InventoryDragActive = 1;
+            state->v1InventoryDragSourceSlotBox = slotBoxIndex;
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (command >= 12 && command <= 15 &&
             zoneId >= 151 && zoneId <= 154) {
             return m11_set_active_champion(state, command - 12)
@@ -54060,8 +54071,7 @@ static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
     unsigned short leaderThing;
     unsigned short slotThing;
 
-    if (!state || !state->inventoryPanelActive ||
-        slotBoxIndex < 0 || slotBoxIndex >= 8) {
+    if (!state || slotBoxIndex < 0 || slotBoxIndex >= 8) {
         return 0;
     }
 
@@ -54088,7 +54098,8 @@ static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
     if (championIndex < 0 ||
         championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
-        championIndex == state->world.party.activeChampionIndex) {
+        (state->inventoryPanelActive &&
+         championIndex == m11_inventory_champion_index(state))) {
         return 0;
     }
     champ = &state->world.party.champions[championIndex];
