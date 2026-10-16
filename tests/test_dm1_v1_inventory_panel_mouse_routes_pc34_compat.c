@@ -604,6 +604,25 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
     ASSERT_EQ(state.world.party.activeChampionIndex, 0,
               "C012 selects champion 0 through the source status box");
 
+    /* C013 is champion 1's name/status zone (69px PC34 stride). Exercise the
+     * reported name click and switching back without opening inventory. */
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 77, 8,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C013 name click reaches champion selection");
+    ASSERT_EQ(state.world.party.activeChampionIndex, 1,
+              "C013 selects champion 1 through the source status box");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "champion name click does not open inventory");
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 8, 8,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C012 name click switches back to champion 0");
+    ASSERT_EQ(state.world.party.activeChampionIndex, 0,
+              "C012 restores champion 0 as active");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "switching champion does not open inventory");
+
     /* The V2 composed HUD has its own visual x=12/77 geometry.  Each
      * rendered portrait/name area must remain a live champion target, not
      * merely the old x=0/69 source hit-table position. */
@@ -621,19 +640,19 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
                           &state, kV2PortraitX[champion], 14,
                           M11_DM1_MOUSE_MASK_LEFT),
                       M11_GAME_INPUT_REDRAW,
-                      "visible V2 champion portrait opens inventory");
-            ASSERT_EQ(state.inventoryPanelActive, 1,
-                      "V2 portrait keeps inventory open");
+                      "visible V2 champion name selects champion");
+            ASSERT_EQ(state.inventoryPanelActive, 0,
+                      "V2 status click does not open inventory");
             ASSERT_EQ(state.world.party.activeChampionIndex, champion,
-                      "V2 portrait selects its champion");
+                      "V2 name selects its champion");
         }
         ASSERT_EQ(M11_GameView_HandlePointerButton(
-                      &state, kV2PortraitX[3], 14,
+                      &state, kV2PortraitX[0], 14,
                       M11_DM1_MOUSE_MASK_LEFT),
                   M11_GAME_INPUT_REDRAW,
-                  "second V2 fourth portrait click closes inventory");
-        ASSERT_EQ(state.inventoryPanelActive, 0,
-                  "same V2 portrait toggles inventory closed");
+                  "V2 first name switches back to champion zero");
+        ASSERT_EQ(state.world.party.activeChampionIndex, 0,
+                  "V2 status click switches active champion back");
     }
 }
 
