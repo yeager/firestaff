@@ -12092,6 +12092,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_four_platform_catalog_r
         ENVIRONMENT "FIRESTAFF_DM2_SHARED_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_dm1_catalog_real_media.c")
+    add_executable(test_m12_dm1_catalog_real_media
+        tests/test_m12_dm1_catalog_real_media.c)
+    target_include_directories(test_m12_dm1_catalog_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_m12_dm1_catalog_real_media PRIVATE
+        firestaff_m12 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_m12_dm1_catalog_real_media PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m12_dm1_catalog_real_media
+        COMMAND test_m12_dm1_catalog_real_media)
+    set_tests_properties(m12_dm1_catalog_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;pc;atari-st;amiga;fmtowns;real-media;in-memory;catalog;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_SHARED_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.c")
     add_executable(test_dm2_v1_mac_movie_decoder_real
         tests/test_dm2_v1_mac_movie_decoder_real.c)
