@@ -5736,9 +5736,19 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                 }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
                 if (event.type == SDL_EVENT_KEY_DOWN) {
+                    if (frame.break_allowed) {
+                        abortAnimation = 1;
+                        userAbortEventType = event.type;
+                        userAbortKey = event.key.key;
+                        userAbortScancode = event.key.scancode;
+                        userAbortWindowId = event.key.windowID;
+                        userAbortTimestamp = event.key.timestamp;
+                        userAbortRepeat = event.key.repeat;
+                        break;
+                    }
                     if (g_m11_debug_startup_detail)
                         fprintf(stderr,
-                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=startup-key event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u frame=%u\n",
+                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=source-break-disabled event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u frame=%u\n",
                                 (unsigned)event.type,
                                 (unsigned)event.key.windowID,
                                 (unsigned long long)event.key.timestamp,
@@ -5758,9 +5768,19 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                 }
 #else
                 if (event.type == SDL_KEYDOWN) {
+                    if (frame.break_allowed) {
+                        abortAnimation = 1;
+                        userAbortEventType = event.type;
+                        userAbortKey = event.key.keysym.sym;
+                        userAbortScancode = event.key.keysym.scancode;
+                        userAbortWindowId = event.key.windowID;
+                        userAbortTimestamp = event.key.timestamp;
+                        userAbortRepeat = event.key.repeat;
+                        break;
+                    }
                     if (g_m11_debug_startup_detail)
                         fprintf(stderr,
-                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=startup-key event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u frame=%u\n",
+                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=source-break-disabled event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u frame=%u\n",
                                 (unsigned)event.type,
                                 (unsigned)event.key.windowID,
                                 (unsigned long long)event.key.timestamp,

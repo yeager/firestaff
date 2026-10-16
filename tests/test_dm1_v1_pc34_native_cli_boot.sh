@@ -469,16 +469,16 @@ if ! grep -Fq \
        'AUTOTEST: DM1 I34E title key injected after first rendered frame' \
        <<<"$repeat_title_output" ||
    ! grep -Fq \
-       'startup-input-ignore game=dm1 phase=anim-title reason=startup-key' \
+       'startup-source-abort game=dm1 platform=pc34 phase=anim-title' \
        <<<"$repeat_title_output" ||
-   ! grep -Fq \
+   grep -Fq \
        'startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=53' \
        <<<"$repeat_title_output"; then
     printf '%s\n' "$repeat_title_output" >&2
-    echo "FAIL: DM1 startup key prematurely aborted the authentic animation" >&2
+    echo "FAIL: DM1 title input did not follow the authentic BR interrupt flag" >&2
     exit 1
 fi
-echo "PASS: PC34 title animation ignores a fresh keydown and plays all 53 source frames"
+echo "PASS: PC34 title animation accepts keydown because its authentic BR record allows interruption"
 repeat_selector_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return-repeat \
    HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
