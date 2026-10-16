@@ -39587,19 +39587,17 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         int zoneId = 0;
         int command;
 
-        /* V2 keeps the original champion-input behaviour, but its composed
-         * four-slot HUD starts at x=12 with a 77px stride.  The source C187
-         * table is anchored at x=0/69, so using it alone makes the visible
-         * portrait area (most noticeably champion four) miss the input
-         * route.  Bind the rendered portrait/name region to C007..C010;
-         * hand cells on the right remain available to their own routes. */
+        /* V2 composes the four status boxes at x=12 with a 77px stride.
+         * Keep the PC34 status-box command semantics from COMMAND.C G0447:
+         * C012..C015 selects the champion over the 43px status/name area;
+         * C007..C010 remains the separate inventory command region. */
         if (m11_v2_vertical_slice_enabled(state)) {
             for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
                 int slotX = m11_party_panel_x(state) +
                             slot * m11_party_slot_step(state);
                 if (m11_point_in_rect(x, y, slotX, M11_PARTY_PANEL_Y,
-                                      47, M11_PARTY_SLOT_H)) {
-                    return m11_toggle_champion_inventory(state, slot);
+                                      43, M11_PARTY_SLOT_H)) {
+                    return m11_set_active_champion(state, slot);
                 }
             }
         }
