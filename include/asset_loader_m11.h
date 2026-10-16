@@ -65,6 +65,12 @@ typedef struct {
     int legacyBigEndian;
     int legacyDm1;
 
+    /* Explicit Apple IIGS GRAPHICS.GAME owner; its packed F0466 commands
+     * never select the legacy FM Towns decoder through a shared LE header. */
+    unsigned char *iigsData;
+    long iigsDataSize;
+    int iigsDm1;
+
     /* DM1 Amiga 3.6 reuses the PC 0x8001 table envelope, but its entries are
      * expanded by ReDMCSB EXPAND.C F0466 rather than the PC IMG3 decoder. */
     int dm1Amiga36;
@@ -118,6 +124,17 @@ int M11_AssetLoader_InitDm1LegacyFromBuffer(M11_AssetLoader* loader,
 int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
                                           const char *graphicsDatPath,
                                           int big_endian);
+
+/* Explicit native IIGS profile (575-record LE bank, GS F0466 bitmap
+ * commands). Authenticates the original shared G20/G21 graphics bank and
+ * retains a private copy capped at 1 MiB. Complete game/source-owner admission
+ * remains the caller's responsibility; no generic LE-bank inference selects
+ * this profile. Initialize a fresh or shut-down loader, as for the other
+ * initialization APIs. */
+int M11_AssetLoader_InitDm1IigsFromBuffer(M11_AssetLoader* loader,
+                                         const unsigned char *data, long size);
+int M11_AssetLoader_InitDm1IigsFromFile(M11_AssetLoader* loader,
+                                       const char *graphicsDatPath);
 
 /* Initialize from a DM1 Atari ST DMCSB1 GRAPHICS.DAT (563 records,
  * Atari-LZW compressed, big-endian IMG1 pixels). */

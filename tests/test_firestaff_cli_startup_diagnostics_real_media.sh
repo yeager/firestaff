@@ -120,9 +120,10 @@ link_default_game_archive csb "$csb_towns_archive"
 
 for game_id in dm1 csb dm2; do
     if [ -d "$default_data_root/$game_id" ]; then
-        default_output=$(HOME="$default_home" \
+        default_output=$(HOME="$default_home" USERPROFILE="$default_home" \
             XDG_CONFIG_HOME="$default_home/.config" \
             APPDATA="$default_home/AppData" \
+            FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
             SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
             --game "$game_id" --verbose --boot-probe \
             --boot-probe-frames 0 2>&1) || {
@@ -541,7 +542,8 @@ if [ -f "$dm1_pc_archive" ]; then
         }
         grep -F 'FIRESTAFF BOOT PROBE READY: gameId=dm1 ' "$offline_home/offline-probe.log" |
             grep -F 'assetMd5=fa6b1aa29e191418713bf2cda93d962e ' |
-            grep -F "dataDir=$offline_default/dm1/$(basename "$dm1_pc_archive")::DATA/GRAPHICS.DAT " |
+            grep -F "dataDir=$offline_default/dm1/$(basename "$dm1_pc_archive")::" |
+            grep -E '(::|/)DATA/GRAPHICS[.]DAT ' |
             grep -Fq 'levelLoaded=1 ' || {
             cat "$offline_home/offline-probe.log" >&2
             echo "FAIL: diagnostic startup selected a different DM1 source" >&2

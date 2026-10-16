@@ -1991,6 +1991,16 @@ Remaining native IIGS startup work:
   executable ownership before wiring them.
   STARTUP2.C:571-577 excludes IIGS from Atari's 558-562 metadata loads;
   authentic IIGS 558/562 are placeholders, not usable replacement tables.
+  Independent source/binary comparison also located all 85 native six-byte
+  OBJECT_ASPECT entries (DUNVIEW.C:1216-1302, DEFS.H:2020-2030) at file
+  offset 53809 in both original programs, and the native UI box table starts
+  at 57323. The early Amiga metadata adapter expects a real 4720-byte M558
+  record and cannot be pointed at GS placeholders. Native TEXT.C:2016 loads
+  record 557 unchanged into G1103: 768 bytes, MD5
+  c2e4a7671e51524d85e25430be5ba818. TEXT.C:1094-1207 uses six rows of
+  128 character bytes, glyph bits 4..0, a sixth background pixel, advance 6
+  and top baseline-4. Reuse raw-font storage, but add explicit GS metrics;
+  generic DrawChar advances 8 and the CEDT helper subtracts character 32.
 - Follow STARTUP1.C:192-205, STARTUP2.C:1381-1393, GSTHINGS.C F2179 and
   SWSHIIGS.C for SDL startup. Native audio and first active Hall/input checks
   remain unfinished. Do not advertise a playable IIGS platform until its own

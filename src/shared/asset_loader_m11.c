@@ -17,6 +17,7 @@
 #include "memory_frontend_pc34_compat.h"
 #include "graphics_dat_entry_classify_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_iigs_graphics_dat.h"
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "csb_v1_amiga_graphics_dat.h"
@@ -217,6 +218,54 @@ int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
     return ok;
 }
 
+/* Bound the resident original GS bank independently of a caller's long size.
+ * The two native editions use 398713 bytes; this is a resource cap, not an
+ * edition admission check. The explicit profile below also authenticates
+ * the shared original G20/G21 graphics bank; executable ownership remains
+ * the responsibility of a future complete platform profile. */
+#define M11_DM1_IIGS_MAX_BANK_BYTES (1024U * 1024U)
+
+int M11_AssetLoader_InitDm1IigsFromBuffer(M11_AssetLoader* loader,
+                                         const unsigned char *data, long size) {
+    unsigned char *copy;
+    if (!loader || !data || size<=0 ||
+        (unsigned long)size>M11_DM1_IIGS_MAX_BANK_BYTES ||
+        size!=398713L ||
+        !asset_memory_matches_md5(data,(size_t)size,
+                                   "1045a36952e64eb2bc7b4c7b2965b112") ||
+        !dm1_v1_iigs_graphics_probe(data,(size_t)size)) return 0;
+    copy=(unsigned char *)malloc((size_t)size);
+    if (!copy) return 0;
+    memcpy(copy,data,(size_t)size);
+    memset(loader,0,sizeof(*loader));
+    loader->iigsData=copy;
+    loader->iigsDataSize=size;
+    loader->iigsDm1=1;
+    loader->graphicCount=575U;
+    loader->initialized=1;
+    snprintf(loader->graphicsDatPath,sizeof(loader->graphicsDatPath),
+             "(DM1 Apple IIGS, %ld bytes)",size);
+    return 1;
+}
+
+int M11_AssetLoader_InitDm1IigsFromFile(M11_AssetLoader* loader,
+                                       const char *graphicsDatPath) {
+    uint8_t *data=NULL;
+    size_t byte_count=0U;
+    int ok;
+    if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
+        !asset_read_path_alloc(graphicsDatPath,&data,&byte_count) ||
+        !data || byte_count==0U || byte_count>M11_DM1_IIGS_MAX_BANK_BYTES) {
+        free(data);
+        return 0;
+    }
+    ok=M11_AssetLoader_InitDm1IigsFromBuffer(loader,data,(long)byte_count);
+    free(data);
+    if (ok) snprintf(loader->graphicsDatPath,sizeof(loader->graphicsDatPath),
+                     "%s",graphicsDatPath);
+    return ok;
+}
+
 int M11_AssetLoader_InitDm1AtariStFromBuffer(M11_AssetLoader* loader,
                                              const unsigned char *data,
                                              long size) {
@@ -351,6 +400,7 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
         return;
     }
     free(loader->legacyData);
+    free(loader->iigsData);
     free(loader->ownedBuffer);
     free(loader->atariStData);
     free(loader->csbAmigaData);
@@ -385,6 +435,15 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
     const struct MemoryGraphicsDatRuntimeState_Compat* rt;
     if (!loader || !loader->initialized) {
         return 0;
+    }
+    if (loader->iigsDm1) {
+        if (graphicIndex>=575U) {
+            if (outWidth) *outWidth=0;
+            if (outHeight) *outHeight=0;
+            return 0;
+        }
+        return dm1_v1_iigs_graphics_query(loader->iigsData,
+            (size_t)loader->iigsDataSize,(uint16_t)graphicIndex,outWidth,outHeight);
     }
     if (loader->legacyDm1) {
         return dm1_v1_legacy_graphics_query(loader->legacyData,
@@ -555,6 +614,29 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     slot = m11_find_cached(loader, graphicIndex);
     if (slot) {
         return slot;
+    }
+
+    if (loader->iigsDm1) {
+        uint16_t width=0U,height=0U;
+        size_t capacity;
+        unsigned char *pixels;
+        int installed;
+        if (graphicIndex>=575U || !dm1_v1_iigs_graphics_query(
+                loader->iigsData,(size_t)loader->iigsDataSize,
+                (uint16_t)graphicIndex,&width,&height)) return NULL;
+        capacity=(size_t)width*height;
+        pixels=(unsigned char *)malloc(capacity);
+        if (!pixels) return NULL;
+        if (!dm1_v1_iigs_graphics_decode(loader->iigsData,
+                (size_t)loader->iigsDataSize,(uint16_t)graphicIndex,
+                pixels,capacity,&width,&height)) {
+            free(pixels);
+            return NULL;
+        }
+        installed=M11_AssetLoader_InstallDecodedPixels(loader,graphicIndex,
+                                                       pixels,width,height);
+        free(pixels);
+        return installed ? m11_find_cached(loader,graphicIndex) : NULL;
     }
 
     if (loader->legacyDm1) {

@@ -1,3 +1,6 @@
+- `DM1 data intake`: connect authenticated Apple IIGS bitmaps to an explicit
+  M11 graphics profile with owned source memory and the existing asset cache.
+  This does not enable IIGS game selection or startup.
 - `DM1 data intake`: decode original Apple IIGS main/bonus dungeon files
   in bounded memory and validate their complete native world/checksum data.
   Playable IIGS startup remains unfinished.

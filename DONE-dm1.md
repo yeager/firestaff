@@ -3889,3 +3889,33 @@ not used as its final verification.
   execution remain unverified. No playable IIGS support is advertised.
   The rebuilt Firestaff application linked successfully; the new reader remains
   outside runtime platform admission.
+
+- 2026-10-16: Connected the verified native Apple IIGS bitmap decoder to an
+  explicit M11 asset profile. Buffer/file initialization requires the exact
+  shared G20/G21 graphics bank size and full MD5, then retains a private copy
+  capped at 1 MiB. Native query/load dispatch is separate from the generic LE
+  transport and PC/Amiga/Towns decoders. Record indexes are checked before
+  narrowing; record 21 uses GS raster semantics and font/sound records reject.
+  Loads allocate only the queried native pixel count before installing the
+  existing stable cache; shutdown releases source and all cached pixels.
+  Native source and independent ownership/bounds reviews found no blocker.
+  Both original PO editions pass three buffer/file/reinitialization cycles
+  through actual M11 query/load/cache, all 532 rasters matching the independent
+  assembly oracle. Caller buffers are overwritten/freed after initialization;
+  native virtual-member file reads, cache pointer stability, double shutdown,
+  wide indexes and structurally valid altered-bank rejection are covered.
+  Six original-media CTests passed (2.43 s): the M11 profile plus native
+  dungeon/graphics/ProDOS tests, the complete PC34 713-record asset audit,
+  and the FM Towns English/Japanese plus Amiga 2.0 raster corpus. No media
+  skip was observed. The rebuilt application linked successfully. This
+  provides the source profile only; native executable metadata/font/audio,
+  edition ownership, catalogue selection and playable IIGS startup remain open.
+  The complete DM1/CSB/DM2 original-media startup suite also passed with
+  both original PC ZIP layouts: nested-member CTest (221.20 s) and root-DATA
+  direct-script execution. The harness now binds the exact archive and full
+  graphics hash while allowing the authentic member directory prefix, and
+  explicitly isolates the default-HOME configuration from an inherited
+  FIRESTAFF_CONFIG_PATH/USERPROFILE. Initial failures exposed those test
+  assumptions, not an incorrect runtime world/source. Independent review
+  confirmed the owner/hash assertions remain intact. Localization consistency,
+  shell syntax and diff whitespace checks passed.
