@@ -65,3 +65,8 @@ then continue another in-scope issue without lowering the parity target.
 For an explicitly requested release, CMakeLists.txt owns the version.
 CMake generates firestaff_version.h from include/firestaff_version.h.in;
 never commit that generated header. Keep src/shared/changelog_m12.c in sync.
+After changing the CMake version, always regenerate and commit the source
+SPDX SBOM with `python3 tools/generate_spdx_sbom.py`. Run
+`python3 tests/test_generate_spdx_sbom.py` before pushing the release
+candidate; the release-notes-policy CI job requires the committed SBOM to
+match the current version.
