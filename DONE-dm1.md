@@ -3581,3 +3581,26 @@ not used as its final verification.
   intentionally skipped. The DM1/CSB/DM2 original-media CLI startup diagnostics
   suite passed (218.19 s). Independent source review found no blocker. These
   startup checks do not establish full platform or visual parity.
+
+- 2026-10-16: Reproduced French PC34 multilingual menu selection silently
+  loading the English standard world. Runtime now selects the original
+  DUNGEONF.DAT/DUNGEONG.DAT by language within its authenticated graphics
+  owner, for loose files and virtual ZIP members. The original French body
+  is 33,687 bytes (82c7802122e9cfb2dc117bc9d197f457); German is 33,705 bytes
+  (b9487db563ff9e89605c77ee44d17d14). Both end at raw map data without a
+  checksum trailer, which ReDMCSB LOADSAVE.C F0434:2087-2088 permits.
+  A separate bounded original-body reader consumes those exact retained,
+  hash-verified bytes; generic/save checksum validation remains mandatory.
+  The actual CLI and launcher start FR/DE worlds from the selected original
+  ZIP, and DM1 READY now includes the chosen dungeon path. Original-media
+  tests also cover wrong originals under expected language filenames, missing
+  language worlds beside complete English/ZIP siblings, truncated buffers,
+  unchanged strict save validation, renamed language files, and Swedish's
+  English fallback. Explicit custom-dungeon behavior remains covered.
+
+  Final original-media regression passed (3/3, 13.37 s), including the Towns
+  Japanese checksumless-reader boundary, with no missing-media skips. The
+  full scoped DM1/CSB/DM2 CLI startup diagnostics suite passed (217.10 s),
+  as did all four FR/DE direct/menu CLI checks and catalog validation.
+  Independent source review found no blocker. These checks establish the
+  tested startup/data-routing paths, not complete visual/platform parity.

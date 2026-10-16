@@ -1515,7 +1515,7 @@ static int world_init_from_dungeon_dat_buffer_compat(
     int dungeonByteCount,
     uint32_t seed,
     struct GameWorld_Compat* outWorld,
-    int fmtownsJapanese)
+    int originalBodyFormat)
 {
     struct DungeonDatState_Compat* dungeon = NULL;
     struct DungeonThings_Compat* things = NULL;
@@ -1525,11 +1525,14 @@ static int world_init_from_dungeon_dat_buffer_compat(
     dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));
     things = (struct DungeonThings_Compat*)calloc(1, sizeof(*things));
     if (!dungeon || !things) goto fail;
-    if (!(fmtownsJapanese
+    if (!(originalBodyFormat == 1
               ? F0504J_DUNGEON_LoadTailBufferFmTownsJp_Compat(
                     dungeonBytes, dungeonByteCount, dungeon, things)
-              : F0504_DUNGEON_LoadTailBuffer_Compat(
-                    dungeonBytes, dungeonByteCount, dungeon, things))) goto fail;
+              : originalBodyFormat == 2
+                  ? F0504M_DUNGEON_LoadPcMultilangBodyBuffer_Compat(
+                        dungeonBytes, dungeonByteCount, dungeon, things)
+                  : F0504_DUNGEON_LoadTailBuffer_Compat(
+                        dungeonBytes, dungeonByteCount, dungeon, things))) goto fail;
     (void)F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(dungeon, things);
     memset(outWorld, 0, sizeof(*outWorld));
     outWorld->dungeon = dungeon;
@@ -1569,6 +1572,16 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
 {
     return world_init_from_dungeon_dat_buffer_compat(
         dungeonBytes, dungeonByteCount, seed, outWorld, 0);
+}
+
+int F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld)
+{
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 2);
 }
 
 int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(

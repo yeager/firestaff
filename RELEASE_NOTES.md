@@ -2,6 +2,11 @@
 
 ## User-facing changes
 
+- `DM1 multilingual PC`: use the selected French or German original dungeon
+  from the chosen installation. Read those originals without requiring a
+  checksum they do not contain, while keeping save-buffer validation strict.
+  Startup diagnostics now include the actual dungeon path.
+
 - `DM1 Amiga disk selection`: keep an explicitly selected ADF bound to its
   own original files when other complete disks or archives are nearby.
   Reject an unsupported selected disk instead of starting a neighboring copy.

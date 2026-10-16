@@ -408,6 +408,14 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
     uint32_t seed,
     struct GameWorld_Compat* outWorld);
 
+/* Original I34M French/German body handoff. Caller must authenticate the
+ * complete original buffer before entering this checksumless media path. */
+int F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld);
+
 /* F20J retail JDATA handoff.  Kept separate so checksumless Japanese CD
  * media cannot relax validation for any generic dungeon/save buffer. */
 int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(

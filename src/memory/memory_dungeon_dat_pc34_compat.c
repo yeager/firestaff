@@ -1241,6 +1241,21 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
                                               0, 2);
 }
 
+/* LOADSAVE.C F0434:2087-2088 accepts EOF where the optional dungeon
+ * checksum would be read. Original PC ML French/German media end exactly
+ * at RawMapData. The caller must authenticate the complete original bytes
+ * before using this body reader; generic/save tails remain trailer-strict. */
+int F0504M_DUNGEON_LoadPcMultilangBodyBuffer_Compat(
+        const unsigned char* bytes,
+        int byteCount,
+        struct DungeonDatState_Compat* state,
+        struct DungeonThings_Compat* things)
+{
+        if (byteCount != 33687 && byteCount != 33705) return 0;
+        return load_tail_buffer_compat_endian(bytes, byteCount, state, things,
+                                              0, 0);
+}
+
 int F0504J_DUNGEON_LoadTailBufferFmTownsJp_Compat(
         const unsigned char* bytes,
         int byteCount,

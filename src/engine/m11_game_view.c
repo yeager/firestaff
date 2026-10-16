@@ -25762,6 +25762,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     int dm1VirtualGraphicsRequired = 0;
     int dm1Pc34Graphics = 0;
     int dm1Pc34ExplicitDungeon = 0;
+    const char* dm1Pc34DungeonMember = "DUNGEON.DAT";
+    const char* dm1Pc34DungeonMd5 = "766450c940651fc021c92fe5d0d0b3a6";
     if (!state || !spec || !spec->title) {
         return 0;
     }
@@ -26288,6 +26290,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             (strcmp(spec->verifiedAssetMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
              strcmp(spec->verifiedAssetMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0);
         dm1Pc34ExplicitDungeon = dm1Pc34Graphics && spec->dungeonPath && spec->dungeonPath[0];
+        /* ReDMCSB FILENAME.C F0745:84-104 replaces I34M's dungeon tilde
+         * with F/G for French/German; STARTUP2.C:1339 selects it before
+         * LOADSAVE.C F0435:2375 opens that same installation's world.
+         * Other launcher languages keep the original English world. */
+        if (spec->verifiedAssetMd5 &&
+            strcmp(spec->verifiedAssetMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0) {
+            const char* language = M12_StartupMenu_GetLanguageCode(spec->languageIndex);
+            if (language && strcmp(language, "FR") == 0) {
+                dm1Pc34DungeonMember = "DUNGEONF.DAT";
+                dm1Pc34DungeonMd5 = "82c7802122e9cfb2dc117bc9d197f457";
+            } else if (language && strcmp(language, "DE") == 0) {
+                dm1Pc34DungeonMember = "DUNGEONG.DAT";
+                dm1Pc34DungeonMd5 = "b9487db563ff9e89605c77ee44d17d14";
+            }
+        }
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         facts.game_id = spec->gameId;
@@ -26354,7 +26371,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 spec->verifiedAssetMd5 &&
                 strcmp(spec->verifiedAssetMd5,
                        "491ca939f9abb33ceeb26619b841fe91") == 0
-                    ? "DemoDun.dat" : "DUNGEON.DAT";
+                    ? "DemoDun.dat" : dm1Pc34DungeonMember;
             if (prefix + strlen(dungeonMember) + 1u > sizeof(dungeonPath)) return 0;
             memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
             memcpy(dungeonPath + prefix, dungeonMember,
@@ -26374,7 +26391,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 if (found == 0 && dm1Pc34Graphics) {
                     char renamed[1][ASSET_PATH_MAX];
                     if (asset_collect_files_by_md5(parent,
-                        "766450c940651fc021c92fe5d0d0b3a6", renamed, 1U, 0) != 1)
+                        dm1Pc34DungeonMd5, renamed, 1U, 0) != 1)
                         return 0;
                     snprintf(dungeonPath, sizeof(dungeonPath), "%s", renamed[0]);
                 } else if (found != 1) return 0;
@@ -26436,7 +26453,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 spec->verifiedAssetMd5 &&
                 strcmp(spec->verifiedAssetMd5,
                        "491ca939f9abb33ceeb26619b841fe91") == 0
-                    ? "DemoDun.dat" : "DUNGEON.DAT";
+                    ? "DemoDun.dat" : dm1Pc34DungeonMember;
             if (prefix + strlen(dungeonMember) + 1u < sizeof(dungeonPath)) {
                 memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
                 memcpy(dungeonPath + prefix, dungeonMember,
@@ -26469,7 +26486,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         if (dm1Pc34Graphics && !dm1Pc34ExplicitDungeon &&
             !asset_memory_matches_md5(dm1VirtualDungeonBytes, dm1VirtualDungeonSize,
-                                      "766450c940651fc021c92fe5d0d0b3a6")) {
+                                      dm1Pc34DungeonMd5)) {
             fprintf(stderr, "firestaff: DM1 PC34 dungeon identity rejected: %s\n", dungeonPath);
             free(dm1VirtualDungeonBytes);
             return 0;
@@ -26643,10 +26660,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * authenticated DUNGEON.DAT's F0434 checksum trailer and scalar
          * fields are little-endian. Keep dungeon parsing independent of the
          * graphics loader's legacyBigEndian flag. */
-        dm1FmtownsBufferLoaded =
-            F0882_WORLD_InitFromDungeonDatBuffer_Compat(
-                dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
-                0xF1A5U, &state->world);
+        /* Only the selected I34M FR/DE originals, authenticated above,
+         * omit the checksum. Preserve the exact original bytes and keep
+         * the generic/save buffer reader's trailer requirement intact. */
+        dm1FmtownsBufferLoaded = dm1Pc34Graphics && !dm1Pc34ExplicitDungeon &&
+            strcmp(dm1Pc34DungeonMd5, "766450c940651fc021c92fe5d0d0b3a6") != 0
+            ? F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
+                  dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
+                  0xF1A5U, &state->world)
+            : F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+                  dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
+                  0xF1A5U, &state->world);
     } else if (spec->dm1Fmtowns && spec->dataDir) {
         int read = FSP_DirExists(spec->dataDir)
             ? asset_read_path_alloc(dungeonPath, &dm1FmtownsDungeonBytes,
@@ -26790,10 +26814,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     ? "amiga-img2"
                     : "pc-img3";
             fprintf(stderr,
-                    "DM1 READY: gameId=dm1 dataDir=%s handoff=%s graphicsPath=%s\n",
+                    "DM1 READY: gameId=dm1 dataDir=%s handoff=%s graphicsPath=%s dungeonPath=%s\n",
                     spec->dataDir ? spec->dataDir : "(null)", handoff,
                     state->assetLoader.graphicsDatPath[0]
-                        ? state->assetLoader.graphicsDatPath : "(none)");
+                        ? state->assetLoader.graphicsDatPath : "(none)",
+                    dungeonPath);
         }
         /* FM Towns owns its startup in EDM/JDM and the legacy IMG2
          * GRAPHICS.DAT.  Admit the native startup receipt only from the

@@ -621,6 +621,7 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
     char dir[FSP_PATH_MAX]={0}, selected[FSP_PATH_MAX]={0};
     char dungeon[FSP_PATH_MAX]={0}, english[FSP_PATH_MAX]={0}, renamed[FSP_PATH_MAX]={0};
     char foreignPath[ASSET_PATH_MAX], multiAlias[FSP_PATH_MAX]={0};
+    char languageWorlds[2][FSP_PATH_MAX]={{0}};
     unsigned char* foreignDungeon=NULL; size_t foreignSize=0;
     M12_StartupMenuState* menu=NULL;
     M11_GameViewState* game=NULL;
@@ -694,6 +695,80 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
         strcmp(receipt.bootAssetMd5,"f934d97e43e1ba6e5159839acbcd0611")==0,
         "explicit original multilingual owner starts its authenticated world");
     M11_GameView_Shutdown(game); M11_GameView_Init(game);
+    {
+        static const char* const names[]={"DUNGEONF.DAT","DUNGEONG.DAT"};
+        static const char* const hashes[]={"82c7802122e9cfb2dc117bc9d197f457",
+            "b9487db563ff9e89605c77ee44d17d14"};
+        static const size_t sizes[]={33687U,33705U};
+        REQUIRE(FSP_JoinPath(multiAlias,sizeof(multiAlias),dir,"multi-original.zip") &&
+            symlink(multi,multiAlias)==0,"stage unchanged multilingual archive for language handoff");
+        for (int language=0; language<2; ++language) {
+            REQUIRE(FSP_JoinPath(languageWorlds[language],sizeof(languageWorlds[language]),dir,names[language]) &&
+                asset_find_by_md5(multi,hashes[language],foreignPath,sizeof(foreignPath),0) &&
+                asset_read_path_alloc(foreignPath,&foreignDungeon,&foreignSize) &&
+                foreignSize==sizes[language] && asset_memory_matches_md5(foreignDungeon,foreignSize,hashes[language]) &&
+                write_original_bytes(languageWorlds[language],foreignDungeon,foreignSize),
+                "stage authenticated original French/German dungeon beside multilingual graphics");
+            {
+                struct GameWorld_Compat strictWorld;
+                memset(&strictWorld,0,sizeof(strictWorld));
+                REQUIRE(!F0882_WORLD_InitFromDungeonDatBuffer_Compat(foreignDungeon,
+                    (int)foreignSize,0xF1A5U,&strictWorld) && !strictWorld.dungeon,
+                    "generic save-tail reader still rejects authentic checksumless language media");
+                REQUIRE(!F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(foreignDungeon,
+                    (int)foreignSize-1,0xF1A5U,&strictWorld) && !strictWorld.dungeon,
+                    "original-language body reader rejects truncated original bytes");
+            }
+            free(foreignDungeon); foreignDungeon=NULL;
+            for (int virtualOwner=0; virtualOwner<2; ++virtualOwner) {
+                const char* owner=virtualOwner ? multiAlias : selected;
+                M12_AssetStatus_ScanGame(&menu->assetStatus,owner,"dm1");
+                menu->gameOptions[0].languageIndex=language==0 ? 2 : 3;
+                REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+                    M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
+                    "menu French/German option starts the selected original multilingual world");
+                REQUIRE(asset_file_matches_md5(game->dungeonPath,hashes[language]) &&
+                    (virtualOwner ? strncmp(game->dungeonPath,multiAlias,strlen(multiAlias))==0 :
+                        strcmp(game->dungeonPath,languageWorlds[language])==0),
+                    "multilingual menu handoff consumes selected language dungeon from its own loose/ZIP owner");
+                M11_GameView_Shutdown(game); M11_GameView_Init(game);
+            }
+            /* A previously scanned French/German selection must not fall
+             * back to English when only its task-owned dungeon disappears. */
+            REQUIRE(asset_read_path_alloc(languageWorlds[language],&foreignDungeon,&foreignSize) &&
+                write_original_bytes(languageWorlds[language],dungeonBytes,dungeonSize),
+                "replace only staged language file with unchanged different original English bytes");
+            M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+            REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+                "selected-language hash gate rejects a different original under the expected filename");
+            REQUIRE(unlink(languageWorlds[language])==0,"remove only staged selected-language dungeon");
+            M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+            REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+                "missing chosen-language dungeon rejects without English or archive substitution");
+            REQUIRE(write_original_bytes(languageWorlds[language],foreignDungeon,foreignSize),
+                "restore unchanged selected-language original dungeon");
+            free(foreignDungeon); foreignDungeon=NULL;
+            REQUIRE(rename(languageWorlds[language],renamed)==0,
+                "rename only staged original chosen-language dungeon");
+            REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+                strcmp(game->dungeonPath,renamed)==0 && asset_file_matches_md5(game->dungeonPath,hashes[language]),
+                "renamed chosen-language original resolves by hash within selected loose owner only");
+            M11_GameView_Shutdown(game); M11_GameView_Init(game);
+            REQUIRE(rename(renamed,languageWorlds[language])==0,
+                "restore staged original chosen-language filename");
+        }
+        REQUIRE(unlink(multiAlias)==0,"remove only task language archive link");
+        multiAlias[0]='\0';
+        menu->gameOptions[0].languageIndex=1;
+        M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+        REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+            strcmp(game->dungeonPath,dungeon)==0 &&
+            asset_file_matches_md5(game->dungeonPath,"766450c940651fc021c92fe5d0d0b3a6"),
+            "unsupported original language retains the English dungeon");
+        M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        menu->gameOptions[0].languageIndex=0;
+        M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+    }
     REQUIRE(asset_find_by_md5(multi,"82c7802122e9cfb2dc117bc9d197f457",foreignPath,sizeof(foreignPath),0) &&
         asset_read_path_alloc(foreignPath,&foreignDungeon,&foreignSize) &&
         write_original_bytes(dungeon,foreignDungeon,foreignSize),
@@ -750,6 +825,8 @@ cleanup:
     if(initialized) M11_GameView_Shutdown(game);
     if(menu) M12_StartupMenu_Destroy(menu);
     SDL_free(game); SDL_free(menu); free(foreignDungeon);
+    for (int language=0; language<2; ++language)
+        if(languageWorlds[language][0]) unlink(languageWorlds[language]);
     if(renamed[0]) unlink(renamed);
     if(multiAlias[0]) unlink(multiAlias);
     if(selected[0]) unlink(selected);

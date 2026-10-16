@@ -1857,3 +1857,15 @@ classification remains unchanged. Full file inventory retains the existing
 per-game discovery paths and only accepts a selected container's own files.
 Raw/MFM protection formats, every edition and complete visual parity remain
 separate requirements; this change does not add a universal ADF decoder.
+
+2026-10-16 PC multilingual language routing: ReDMCSB FILENAME.C F0745 and
+STARTUP2.C select DUNGEONF.DAT/DUNGEONG.DAT for French/German. Runtime now
+binds these choices to the selected multilingual graphics owner and validates
+the retained original buffer against that language's complete-file hash.
+The authentic French/German bodies omit a checksum trailer; the separate
+bounded body reader follows LOADSAVE.C F0434's optional-checksum behavior
+without relaxing generic save-tail validation. Discovery of language-only
+packages without the standard English world remains open: ordinary inventory
+still authenticates the default owner before any per-game language selection.
+Complete in-game translation and other multilingual platforms remain separate
+work; this change targets original PC34 dungeon-language routing.

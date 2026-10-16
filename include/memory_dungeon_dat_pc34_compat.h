@@ -490,6 +490,15 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
     struct DungeonDatState_Compat* state,
     struct DungeonThings_Compat* things);
 
+/* Original I34M French/German dungeon bodies have no checksum trailer.
+ * Only use after full original-file identity validation. This bounded reader
+ * requires the complete original size/layout; generic save tails stay strict. */
+int F0504M_DUNGEON_LoadPcMultilangBodyBuffer_Compat(
+    const unsigned char* bytes,
+    int byteCount,
+    struct DungeonDatState_Compat* state,
+    struct DungeonThings_Compat* things);
+
 /* Exact retail FM Towns Japanese F20J JDATA/DUNGEON.DAT reader.  That
  * 33,931-byte source ends after raw map data and has no checksum trailer;
  * other releases and save-game tails remain checksum-mandatory. */
