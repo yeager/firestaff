@@ -18,6 +18,7 @@ done
 run_case() {
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     FIRESTAFF_CONFIG_PATH="$work/config.toml" \
+    FIRESTAFF_AUTOTEST=1 \
     FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return "$app" \
         --game dm1 --platform pc --data-dir "$archive" --presentation-mode v1 \
         --width 640 --height 400 --duration 20000 \
@@ -33,7 +34,10 @@ for line in trace.splitlines():
     if "firestaff: dm1-motion-present " not in line:
         continue
     fields = dict(re.findall(r"([a-z-]+)=([^ ]+)", line))
-    assert fields["input-queue-latency"] == "unmeasured", line
+    assert fields["input-event-timing"] in {"0", "1"}, line
+    for name in ("event-queue-age-ms", "input-event-to-source-outcome-ms",
+                 "input-event-to-present-return-ms"):
+        assert float(fields[name]) >= 0, line
     assert fields["physical-scanout"] == "unmeasured", line
     values = [float(fields[name]) for name in (
         "source-outcome-to-draw-ms", "draw-to-present-return-ms",

@@ -2198,6 +2198,28 @@ static double m11_counter_milliseconds(Uint64 ticks) {
     return frequency ? (double)ticks * 1000.0 / (double)frequency : 0.0;
 }
 
+static Uint64 m11_sdl_event_timestamp_to_counter(Uint64 eventTimestamp) {
+    const Uint64 nowCounter = SDL_GetPerformanceCounter();
+    const Uint64 frequency = SDL_GetPerformanceFrequency();
+    double ageCounter = 0.0;
+    if (!eventTimestamp || !frequency) return nowCounter;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    {
+        const Uint64 nowNs = SDL_GetTicksNS();
+        if (eventTimestamp > nowNs) return nowCounter;
+        ageCounter = (double)(nowNs - eventTimestamp) *
+                     (double)frequency / 1000000000.0;
+    }
+#else
+    {
+        const Uint32 ageMs = (Uint32)SDL_GetTicks() - (Uint32)eventTimestamp;
+        ageCounter = (double)ageMs * (double)frequency / 1000.0;
+    }
+#endif
+    if (ageCounter >= (double)nowCounter) return 0;
+    return nowCounter - (Uint64)ageCounter;
+}
+
 /* Host stage timings begin at the completed source command outcome. They do
  * not include SDL delivery or command FIFO wait, and Present return is not
  * proof that a physical display has scanned out the image. */
@@ -2207,11 +2229,17 @@ static struct {
     uint64_t drawnSerial;
     Uint64 sourceCounter;
     Uint64 drawCounter;
+    Uint64 pendingInputEventCounter;
+    Uint64 pendingInputPollCounter;
+    Uint64 inputEventCounter;
+    Uint64 inputPollCounter;
     int moved;
     int turned;
     int blocked;
     unsigned int superseded;
 } g_m11_debug_motion;
+static Uint64 g_m11_debug_polled_event_counter;
+static Uint64 g_m11_debug_polled_at_counter;
 
 static void m11_debug_motion_drawn(const M11_GameViewState* state,
                                     Uint64 completed) {
@@ -2246,6 +2274,12 @@ static void m11_debug_motion_drawn(const M11_GameViewState* state,
     g_m11_debug_motion.drawnSerial = state->dm1V1MovementOutcomeSerial;
     g_m11_debug_motion.sourceCounter = state->dm1V1MovementOutcomeCounter;
     g_m11_debug_motion.drawCounter = completed;
+    g_m11_debug_motion.inputEventCounter =
+        g_m11_debug_motion.pendingInputEventCounter;
+    g_m11_debug_motion.inputPollCounter =
+        g_m11_debug_motion.pendingInputPollCounter;
+    g_m11_debug_motion.pendingInputEventCounter = 0;
+    g_m11_debug_motion.pendingInputPollCounter = 0;
     g_m11_debug_motion.moved = state->lastDm1V1MovementPipelineResult.anyMovementOccurred;
     g_m11_debug_motion.turned = state->lastDm1V1MovementPipelineResult.anyTurnOccurred;
     g_m11_debug_motion.blocked = state->lastDm1V1MovementPipelineResult.core.movementBlocked;
@@ -2270,7 +2304,9 @@ static void m11_debug_motion_presented(const M11_GameViewState* state,
             "moved=%d turned=%d blocked=%d superseded-before-present=%u "
             "source-outcome-to-draw-ms=%.3f draw-to-present-return-ms=%.3f "
             "source-outcome-to-present-return-ms=%.3f "
-            "input-queue-latency=unmeasured physical-scanout=unmeasured\n",
+            "input-event-timing=%d event-queue-age-ms=%.3f "
+            "input-event-to-source-outcome-ms=%.3f "
+            "input-event-to-present-return-ms=%.3f physical-scanout=unmeasured\n",
             g_m11_debug_motion.launchSerial,
             (unsigned long long)g_m11_debug_motion.drawnSerial,
             g_m11_debug_motion.moved, g_m11_debug_motion.turned,
@@ -2278,7 +2314,27 @@ static void m11_debug_motion_presented(const M11_GameViewState* state,
             m11_counter_milliseconds(g_m11_debug_motion.drawCounter -
                                       g_m11_debug_motion.sourceCounter),
             m11_counter_milliseconds(completed - g_m11_debug_motion.drawCounter),
-            m11_counter_milliseconds(completed - g_m11_debug_motion.sourceCounter));
+            m11_counter_milliseconds(completed - g_m11_debug_motion.sourceCounter),
+            g_m11_debug_motion.inputEventCounter ? 1 : 0,
+            g_m11_debug_motion.inputEventCounter &&
+                    g_m11_debug_motion.inputPollCounter >=
+                        g_m11_debug_motion.inputEventCounter
+                ? m11_counter_milliseconds(
+                      g_m11_debug_motion.inputPollCounter -
+                      g_m11_debug_motion.inputEventCounter)
+                : 0.0,
+            g_m11_debug_motion.inputEventCounter &&
+                    g_m11_debug_motion.sourceCounter >=
+                        g_m11_debug_motion.inputEventCounter
+                ? m11_counter_milliseconds(
+                      g_m11_debug_motion.sourceCounter -
+                      g_m11_debug_motion.inputEventCounter)
+                : 0.0,
+            g_m11_debug_motion.inputEventCounter &&
+                    completed >= g_m11_debug_motion.inputEventCounter
+                ? m11_counter_milliseconds(
+                      completed - g_m11_debug_motion.inputEventCounter)
+                : 0.0);
     g_m11_debug_motion.drawnSerial = 0;
     g_m11_debug_motion.superseded = 0;
 }
@@ -9720,7 +9776,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
     if (menuPointerChanged) {
         *menuPointerChanged = 0;
     }
+    g_m11_debug_polled_event_counter = 0;
+    g_m11_debug_polled_at_counter = 0;
     while (SDL_PollEvent(&ev)) {
+        if (gameView && gameView->debugMovementTraceEnabled &&
+            gameView->active && strcmp(gameView->sourceId, "dm1") == 0) {
+            g_m11_debug_polled_event_counter =
+                m11_sdl_event_timestamp_to_counter(ev.common.timestamp);
+            g_m11_debug_polled_at_counter = SDL_GetPerformanceCounter();
+        }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
         if (m11_event_requests_window_close(&ev)) {
             if (quitRequested) {
@@ -12119,6 +12183,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         &pointerResult,
                                         &quitRequested,
                                         &menuPointerChanged);
+        }
+        if (input != M12_MENU_INPUT_NONE && o->debug && gameView.active &&
+            strcmp(gameView.sourceId, "dm1") == 0 &&
+            M11_GameView_InputConsumesDm1V1SourceTick(&gameView, input) &&
+            g_m11_debug_polled_event_counter &&
+            g_m11_debug_polled_at_counter >=
+                g_m11_debug_polled_event_counter) {
+            g_m11_debug_motion.pendingInputEventCounter =
+                g_m11_debug_polled_event_counter;
+            g_m11_debug_motion.pendingInputPollCounter =
+                g_m11_debug_polled_at_counter;
         }
         m11_sync_startup_text_input(&menuState,
                                     useModern && !gameView.active,
