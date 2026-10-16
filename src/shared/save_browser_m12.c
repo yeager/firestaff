@@ -14,6 +14,8 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm1_v1_original_save_amiga_handoff.h"
+#include "asset_find_by_hash.h"
 #include "dm1_v1_save_load.h"
 #include "dm2_v1_new_game.h"
 #include "memory_savegame_pc34_compat.h"
@@ -163,6 +165,20 @@ static int ascii_equal_ci(const char* a, const char* b) {
         ++b;
     }
     return *a == '\0' && *b == '\0';
+}
+
+/* ReDMCSB FILENAME.C:37-42,84-104 uses DMGAME~ with EN/FR/DE
+ * suffixes. This admits names only; the format-5 receipt below owns validity. */
+static int is_dm1_original_save_basename(const char* name) {
+    static const char* const names[]={
+        "DMGAME.DAT", "DMGAME.BAK", "DMGAMEF.DAT", "DMGAMEF.BAK",
+        "DMGAMEG.DAT", "DMGAMEG.BAK"
+    };
+    size_t i;
+    if (!name) return 0;
+    for (i=0U; i<sizeof(names)/sizeof(names[0]); ++i)
+        if (ascii_equal_ci(name,names[i])) return 1;
+    return 0;
 }
 
 static int is_csb_original_save_basename(const char* name) {
@@ -546,6 +562,7 @@ static int validate_theron_srm_import_path(const char* path) {
 static int is_save_file(const char* name) {
     size_t len;
     if (!name) return 0;
+    if (is_dm1_original_save_basename(name)) return 1;
     if (is_csb_original_save_basename(name)) return 1;
     if (nexus_save_slot_from_basename(name, NULL)) return 1;
 #if !defined(FIRESTAFF_THERON_PRODUCTION)
@@ -568,6 +585,10 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
     int len;
 
     outId[0] = '\0';
+    if (is_dm1_original_save_basename(filename)) {
+        snprintf(outId,(size_t)outSize,"dm1");
+        return;
+    }
     if (is_csb_original_save_basename(filename)) {
         snprintf(outId, (size_t)outSize, "csb");
         return;
@@ -1314,6 +1335,35 @@ static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     return 1;
 }
 
+static int try_parse_dm1_amiga_entry(M12_SaveBrowserEntry* entry) {
+    const size_t maximumBytes=SAVEGAME_PC34_MAX_FILE_SIZE;
+    unsigned char* bytes=NULL;
+    size_t size=0U;
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    int result;
+    if (!entry || entry->expectedGameCode!=SAVEGAME_PC34_GAME_CODE_DM1 ||
+        (entry->manifestStatus!=SAVE_BROWSER_MANIFEST_NOT_PRESENT &&
+         entry->manifestStatus!=SAVE_BROWSER_MANIFEST_UNKNOWN) ||
+        entry->fileSize<=0 || (unsigned long)entry->fileSize>maximumBytes) return 0;
+    if (!asset_read_path_alloc(entry->fullPath,&bytes,&size)) return 0;
+    memset(&receipt,0,sizeof(receipt));
+    /* ReDMCSB LOADSAVE.C F0435:2665-2827 and READWRIT.C F0417/F0419:
+     * accept only the existing authenticated Amiga format-5 body and tail.
+     * A language filename alone does not establish A36 save compatibility. */
+    result=size<=maximumBytes &&
+        dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes,size,&receipt)==DM1_V1_AMIGA_SAVE_F0435_OK &&
+        receipt.header_authenticated && receipt.body_authenticated && receipt.tail_authenticated &&
+        receipt.parts_authenticated==DM1_V1_AMIGA_SAVE_F0435_PART_COUNT;
+    free(bytes);
+    if (!result) return 0;
+    entry->valid=1;
+    entry->mapLevel=receipt.party_map_index;
+    entry->championCount=(int)receipt.party_champion_count;
+    entry->champions[0]='\0';
+    snprintf(entry->label,SAVE_BROWSER_LABEL_MAX,"%s  L%d",entry->gameId,entry->mapLevel);
+    return 1;
+}
+
 static int try_parse_dm1_native_entry(M12_SaveBrowserEntry* entry) {
     struct GameWorld_Compat world;
     struct DM1SaveHeader hdr;
@@ -1437,6 +1487,8 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
         try_parse_dm1_pc34_vanilla_entry(entry)) {
         return 1;
     }
+
+    if (try_parse_dm1_amiga_entry(entry)) return 1;
 
     memset(&sg, 0, sizeof(sg));
     rc = F0786_SAVEGAME_LoadFromFile_Compat(entry->fullPath, &sg);

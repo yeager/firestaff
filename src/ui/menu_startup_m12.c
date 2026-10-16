@@ -3625,22 +3625,18 @@ static int m12_is_valid_dm1_quicksave_path(const char* path) {
         return 0;
     }
 
-    /* The A20 save disk has no host-side loose file: its authenticated
-     * DMGAMEG.DAT member can remain inside ZIP -> ADF virtual media.  M11
-     * already resumes this exact byte route in memory, so M12 must admit it
-     * with the same F0435 receipt instead of hiding a valid Continue entry.
-     * Do not use the PC34 loader here; it has different byte order and
-     * record layout. */
-    if (strstr(path, "::") != NULL &&
-        asset_read_path_alloc(path, &virtualBytes, &virtualByteCount)) {
+    /* ReDMCSB LOADSAVE.C F0435:2665-2827 authenticates the Amiga format.
+     * A loose original copy and its ZIP/ADF member use the same receipt.
+     * PC34/native saves retain their established validation below. */
+    if (asset_read_path_alloc(path, &virtualBytes, &virtualByteCount)) {
         memset(&amigaReceipt, 0, sizeof(amigaReceipt));
         rc = dm1_v1_original_save_amiga_f0435_receipt_bytes(
             virtualBytes, virtualByteCount, &amigaReceipt);
         free(virtualBytes);
-        return rc == DM1_V1_AMIGA_SAVE_F0435_OK &&
-               amigaReceipt.header_authenticated &&
-               amigaReceipt.body_authenticated &&
-               amigaReceipt.tail_authenticated;
+        if (rc == DM1_V1_AMIGA_SAVE_F0435_OK &&
+            amigaReceipt.header_authenticated &&
+            amigaReceipt.body_authenticated &&
+            amigaReceipt.tail_authenticated) return 1;
     }
 
     memset(&world, 0, sizeof(world));

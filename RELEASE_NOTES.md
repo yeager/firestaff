@@ -2,6 +2,11 @@
 
 ## User-facing changes
 
+- `DM1 original installations`: recognize supported Amiga saves under their
+  native filenames and resume loose copies through CLI, Continue and Load.
+  Multilingual PC installations now find the authenticated root SWOOSH beside
+  their EUDATA directory.
+
 - `DM1 language scan recovery`: retry an interrupted language scan with Start.
   Cancellation keeps the selected language and returns to the original view;
   Resume/Load stays in its own view after rescanning.

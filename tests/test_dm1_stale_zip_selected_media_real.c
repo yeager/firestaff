@@ -643,6 +643,67 @@ static int check_missing_pc_language_feedback(const char* selected, int language
     M12_StartupMenu_Destroy(menu); SDL_free(menu);
     return ok;
 }
+static int check_multilingual_installed_layout(const char* root, const char* original,
+    const unsigned char* graphicsBytes, size_t graphicsSize,
+    const unsigned char* dungeonBytes, size_t dungeonSize) {
+    char install[FSP_PATH_MAX]={0}, data[FSP_PATH_MAX]={0}, other[FSP_PATH_MAX]={0};
+    char graphics[FSP_PATH_MAX]={0}, dungeon[FSP_PATH_MAX]={0}, swoosh[FSP_PATH_MAX]={0};
+    char source[ASSET_PATH_MAX], otherGraphics[FSP_PATH_MAX];
+    unsigned char* startup=NULL; size_t startupSize=0;
+    M12_AssetStatus* status=SDL_calloc(1,sizeof(*status));
+    int index=M12_AssetStatus_FindVersionIndex("dm1","pc34-multi"), result=1;
+    REQUIRE(status && index>=0 &&
+        FSP_JoinPath(install,sizeof(install),root,"installed-pc-multi") && FSP_CreateDirectory(install) &&
+        FSP_JoinPath(data,sizeof(data),install,"eUdAtA") && FSP_CreateDirectory(data) &&
+        FSP_JoinPath(other,sizeof(other),install,"other-data") &&
+        FSP_JoinPath(graphics,sizeof(graphics),data,"GRAPHICS.DAT") &&
+        FSP_JoinPath(dungeon,sizeof(dungeon),data,"DUNGEON.DAT") &&
+        FSP_JoinPath(swoosh,sizeof(swoosh),install,"SwOoSh") &&
+        write_original_bytes(graphics,graphicsBytes,graphicsSize) &&
+        write_original_bytes(dungeon,dungeonBytes,dungeonSize) &&
+        asset_find_by_md5(original,"a66b607f3850e604b6703e90bbfb5189",source,sizeof(source),0) &&
+        asset_read_path_alloc(source,&startup,&startupSize),
+        "stage unchanged original PCML EUDATA layout and root startup source");
+    for (int condition=0; condition<3; ++condition) {
+        if (condition==0) REQUIRE(write_original_bytes(swoosh,startup,startupSize),
+            "stage authenticated startup original in installation root");
+        else if (condition==1) REQUIRE(write_original_bytes(swoosh,graphicsBytes,graphicsSize),
+            "replace only staged root startup with different unchanged original bytes");
+        else REQUIRE(unlink(swoosh)==0,"remove only staged root startup");
+        for (int full=0; full<2; ++full) {
+            const M12_AssetVersionStatus* version;
+            if (full) M12_AssetStatus_Scan(status,graphics);
+            else M12_AssetStatus_ScanGame(status,graphics,"dm1");
+            version=M12_AssetStatus_GetVersion(status,"dm1",(size_t)index);
+            REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1")== (condition==0) &&
+                version && version->matched==(condition==0) &&
+                (condition!=0 || strcmp(version->matchedPath,graphics)==0),
+                "both scan APIs require authentic root SWOOSH for the exact EUDATA owner");
+        }
+    }
+    REQUIRE(write_original_bytes(swoosh,startup,startupSize) &&
+        FSP_JoinPath(otherGraphics,sizeof(otherGraphics),other,"GRAPHICS.DAT") &&
+        rename(data,other)==0,"rename only staged EUDATA directory for boundary check");
+    M12_AssetStatus_ScanGame(status,otherGraphics,"dm1");
+    {
+        int rejected=!M12_AssetStatus_GameAvailable(status,"dm1");
+        REQUIRE(rename(other,data)==0,"restore original EUDATA directory spelling");
+        REQUIRE(rejected,"arbitrary child directory cannot borrow its parent's startup file");
+    }
+    M12_AssetStatus_ScanGame(status,graphics,"dm1");
+    REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1"),
+        "restored original installation layout recovers admission");
+    result=0;
+cleanup:
+    free(startup); SDL_free(status);
+    if (graphics[0]) unlink(graphics);
+    if (dungeon[0]) unlink(dungeon);
+    if (swoosh[0]) unlink(swoosh);
+    if (data[0]) rmdir(data);
+    if (install[0]) rmdir(install);
+    return result==0;
+}
+
 static int check_multilingual_loose_selection(const char* root, const char* original, const char* multi,
     const unsigned char* graphicsBytes, size_t graphicsSize,
     const unsigned char* dungeonBytes, size_t dungeonSize) {
@@ -1295,6 +1356,8 @@ int main(void) {
     REQUIRE(!game->active,"rejected virtual graphics cannot leave a running partial world");
     REQUIRE(check_loose_selected_media(root,original,bytes[0],sizes[0],bytes[1],sizes[1]),
         "loose selected original media rejects stale ownership");
+    REQUIRE(check_multilingual_installed_layout(root,original,bytes[0],sizes[0],bytes[1],sizes[1]),
+        "original multilingual EUDATA installation binds its root startup companion");
     REQUIRE(check_multilingual_loose_selection(root,original,multi,bytes[0],sizes[0],bytes[1],sizes[1]),
         "multilingual loose selection retains its exact original owner");
     REQUIRE(check_atari_virtual_dungeon_compatibility(root,atari,original,bytes[1],sizes[1]),

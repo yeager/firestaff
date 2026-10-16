@@ -3713,3 +3713,28 @@ not used as its final verification.
   Final scoped DM1/CSB/DM2 original-media startup diagnostics passed again
   (220.66 s), including both disconnected remembered-root recovery cases.
   Catalog consistency and redacted patch/staged Gitleaks checks passed.
+
+- 2026-10-16: Connected the existing authenticated Amiga format-5 save reader
+  to native DMGAME/DMGAMEF/DMGAMEG DAT/BAK discovery, loose Continue validation
+  and physical M11 resume. Original A20 save bytes resumed through direct CLI
+  and actual Load menu for DAT and explicit BAK (four cases), preserving hashes,
+  map 0, position (4,15), direction 2 and four champions. The expanded real-media
+  preference test covers language-scan return views, selected physical paths,
+  remembered Continue and rejection of unrelated original bytes. Automatic
+  native backup selection/promotion and other save formats remain deferred.
+- 2026-10-16: Reproduced and fixed missing root SWOOSH admission for authentic
+  PC multilingual EUDATA installations, following FILENAME.C:45-51 and IBMIO.C
+  G8102:2411-2413. Both scan APIs accept only the named layout and authenticated
+  unique sibling; wrong bytes, missing media and arbitrary child names reject.
+  Original French DMSAVE.DAT/BAK resumed through CLI and Quick Resume at map 5,
+  position (4,18), direction 2, four champions and original tick 195221.
+  Final focused tests passed 4/4 (61.90 s), without missing-media skips.
+  Deterministic cancellation passed; its two optional five-game corpus checks
+  were intentionally skipped. Catalog update/check passed; catalog differences
+  only refresh source references. These results establish launcher integration,
+  not visual or all-platform parity.
+  The final rebuilt binary also passed the complete original-media DM1/CSB/DM2
+  CLI startup diagnostics suite (219.61 s), including both offline remembered
+  root cases. Redacted patch Gitleaks found no leaks. Independent source review
+  found no blocker; the existing strict loaders and source ownership guards
+  remain authoritative.

@@ -1920,3 +1920,19 @@ than redirecting to New Game. Retry and the language snapshot gate apply only
 to built-in DM1 catalogue entries. Worker creation failures use the existing
 failure dialog with the original return view; allocation-failure injection and
 native OS thread failures remain unexecuted integration cases.
+
+2026-10-16 native Amiga launcher integration: supported format-5 save copies
+now use the existing strict Amiga reader in the browser, Continue and physical
+M11 resume path. Exact DMGAME/DMGAMEF/DMGAMEG DAT/BAK names are discovery hints;
+header, all five parts and dungeon-tail authentication remain required.
+Explicit original backup copies resume; automatic native Amiga backup selection
+and promotion remain separate deferred work. Other Amiga save formats and
+nonzero-active-group corpus coverage remain open. Audit the PC multilingual
+DMSAVEF/DMSAVEG browser filename variants against authentic saves separately.
+
+2026-10-16 PC installation layout: original multilingual data under EUDATA
+now authenticates the installation root's uniquely named SWOOSH. Both scan
+APIs reject wrong original bytes, missing SWOOSH and arbitrary child directory
+names; standalone original EUDATA transport behavior remains covered. Source:
+FILENAME.C:45-51 and IBMIO.C G8102:2411-2413. Full desktop/platform coverage
+remains open.

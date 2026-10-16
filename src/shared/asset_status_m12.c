@@ -4385,6 +4385,22 @@ static int m12_dm1_pc34_multi_has_startup_media(
         !FSP_ParentDir(searchRoot, sizeof(searchRoot), sourcePath)) {
         return 0;
     }
+    if (!memberSeparator) {
+        const char* leaf = strrchr(searchRoot, '/');
+        const char* backslash = strrchr(searchRoot, '\\');
+        char installRoot[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!leaf || (backslash && backslash > leaf)) leaf = backslash;
+        leaf = leaf ? leaf + 1 : searchRoot;
+        /* FILENAME.C:45-51 keeps I34M data below EUDATA, while IBMIO.C
+         * G8102:2411-2413 launches SWOOSH from that installation's root.
+         * This named layout permits one exact parent sibling, never an
+         * expanded parent-tree search or another installation's logo. */
+        if (m12_ascii_equals_ignore_case(leaf, "EUDATA") &&
+            FSP_ParentDir(installRoot, sizeof(installRoot), searchRoot) &&
+            FSP_FindUniqueFileIgnoreCase(installRoot, "SWOOSH", matchedPath,
+                                         sizeof(matchedPath)) == 1 &&
+            asset_file_matches_md5(matchedPath, pc34SwooshMd5s[0])) return 1;
+    }
     matchedPath[0] = '\0';
     return asset_find_by_md5_list(searchRoot, pc34SwooshMd5s,
                                   matchedPath, (int)sizeof(matchedPath),

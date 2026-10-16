@@ -15965,12 +15965,10 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
         return 0;
     }
 
-    /* A selected ADF member is represented as archive::disk.adf::FILE.  The
-     * Amiga F0435 loader consumes its already-authenticated bytes directly;
-     * never pass the virtual path to stdio or materialize it as a loose save.
-     * Ordinary filesystem saves retain the established PC34/native route. */
-    if (strstr(path, "::") != NULL &&
-        asset_read_path_alloc(path, &virtualSaveBytes, &virtualSaveByteCount)) {
+    /* ReDMCSB LOADSAVE.C F0435:2665-2827 authenticates the retained Amiga
+     * bytes equally for a loose save and an archive::disk.adf::FILE member.
+     * Other formats retain the established PC34/native route below. */
+    if (asset_read_path_alloc(path, &virtualSaveBytes, &virtualSaveByteCount)) {
         const int adopted = M11_GameView_LoadDm1OriginalAmigaSaveBytes(
             state, virtualSaveBytes, virtualSaveByteCount, path);
         free(virtualSaveBytes);
