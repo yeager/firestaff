@@ -31911,6 +31911,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (!state || !state->active || M11_GameView_IsPaused(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (state->dm1IigsActive && state->candidateMirrorPanelActive)
+        return M11_GAME_INPUT_IGNORED;
     if (state->dm1IigsActive)
         return m11_apply_tick(state, CMD_NONE, "WAIT")
             ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -34665,13 +34667,235 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_iigs_candidate_equipment(M11_GameViewState* state,
+    struct ChampionState_Compat* candidate)
+{
+    static const int east[4] = {0,1,0,-1}, south[4] = {-1,0,1,0};
+    int direction = state->world.party.direction & 3;
+    int x = state->world.party.mapX + east[direction];
+    int y = state->world.party.mapY + south[direction];
+    int head = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+        state->world.dungeon,state->world.party.mapIndex,x,y);
+    unsigned short thing;
+    int limit = 0, sourceBackpack = 13;
+    if (head < 0 || head >= state->world.things->squareFirstThingCount) return 0;
+    for (int i = 0; i < 16; ++i) limit += state->world.things->thingCounts[i];
+    thing = state->world.things->squareFirstThings[head];
+    /* REVIVE.C F0280:297-350: original Thing traversal order, opposite
+     * wall cell, armour/head..feet, weapon/action, pouch, neck, backpack.
+     * G0237 AllowedSlots and G0038 slot masks are shared by GS MEDIA365. */
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && limit-- > 0) {
+        int type = THING_GET_TYPE(thing), sourceSlot = -1, hostSlot;
+        if (type > 3 && THING_GET_CELL(thing) == ((direction+2)&3)) {
+            unsigned allowed = dm1_v1_dungeon_get_object_allowed_slots_pc34(
+                state->world.things,thing);
+            if (type < 5 || type > 10 || !allowed) return 0;
+            if (type == 6) {
+                for (int slot = 2; slot <= 5; ++slot)
+                    if (allowed & m11_v1_inventory_source_slot_box_mask(slot+8)) {
+                        sourceSlot = slot; break;
+                    }
+            } else if (type == 5) sourceSlot = 1;
+            else if (type == 7 || type == 8) {
+                int pouch = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(19);
+                sourceSlot = candidate->inventory[pouch] == THING_NONE ? 11 : 6;
+            }
+            hostSlot = sourceSlot >= 0
+                ? M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(sourceSlot+8) : -1;
+            if (hostSlot < 0 || candidate->inventory[hostSlot] != THING_NONE) {
+                int neck = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(18);
+                if ((allowed & m11_v1_inventory_source_slot_box_mask(18)) &&
+                    candidate->inventory[neck] == THING_NONE) sourceSlot = 10;
+                else sourceSlot = sourceBackpack++;
+                if (sourceSlot >= 30) return 0;
+                hostSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(sourceSlot+8);
+            }
+            if (hostSlot < 0 || hostSlot >= CHAMPION_SLOT_COUNT ||
+                candidate->inventory[hostSlot] != THING_NONE) return 0;
+            candidate->inventory[hostSlot] = thing;
+        }
+        thing = m11_raw_next_thing(state->world.things,thing);
+    }
+    return thing == THING_ENDOFLIST || thing == THING_NONE;
+}
+
+static int m11_iigs_select_front_candidate(M11_GameViewState* state)
+{
+    struct ChampionState_Compat candidate;
+    const M11_AssetSlot* panel;
+    int ordinal, sensor, textIndex, slot, cell;
+    char text[DUNGEON_TEXT_MAX_STRING_LEN], *skills;
+    DM1_ChampionSkillState skillState;
+    if (!state || !state->active || !state->dm1IigsActive ||
+        state->candidateMirrorPanelActive || state->leaderHandObjectPresent ||
+        !m11_party_has_pc34_candidate_layout(&state->world.party) ||
+        state->world.party.championCount >= 4) return 0;
+    ordinal = m11_front_cell_mirror_ordinal(state);
+    if (ordinal < 0 || !m11_front_mirror_first_sensor_index_pc34(state,&sensor) ||
+        state->world.things->sensors[sensor].sensorType != 127 ||
+        state->world.things->sensors[sensor].sensorData != ordinal ||
+        !m11_party_square_mirror_text_string_index_pc34(state,&textIndex)) return 0;
+    F0600_CHAMPION_InitEmpty_Compat(&candidate);
+    if (!F0607_CHAMPION_ParseMirrorTextString_Compat(state->world.things,textIndex,&candidate) ||
+        F0626_PARTY_ContainsChampionName_Compat(&state->world.party,candidate.name) ||
+        F0507_DUNGEON_DecodeTextAtOffset_Compat(state->world.things->textData,
+            state->world.things->textDataWordCount,
+            state->world.things->textStrings[textIndex].textDataWordOffset,
+            text,sizeof(text)) <= 0) return 0;
+    /* REVIVE.C F0280:248-270: sixteen native hidden-skill nibbles, then
+     * four base experience sums. F0607 already supplies original vitals and
+     * the six public statistics; all seven also bind to lifecycle below. */
+    skills = text;
+    for (int i = 0; i < 6; ++i) {
+        skills = strchr(skills,'\n');
+        if (!skills) return 0;
+        ++skills;
+    }
+    if (strlen(skills) < 16 || (skills[16] && skills[16] != '\n')) return 0;
+    {
+        const char* stats = text;
+        for (int i = 0; i < 5; ++i) { stats = strchr(stats,'\n'); if (!stats) return 0; ++stats; }
+        for (int i = 0; i < 14; ++i) if (stats[i] < 'A' || stats[i] > 'P') return 0;
+        if (stats[14] != '\n') return 0;
+    }
+    memset(&skillState,0,sizeof(skillState));
+    for (int i = 0; i < 16; ++i) {
+        unsigned value = (unsigned char)skills[i] - 'A';
+        if (value > 15) return 0;
+        skillState.skills[i+4].experience = value ? 125UL << value : 0;
+    }
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
+            skillState.skills[i].experience += skillState.skills[4+i*4+j].experience;
+    for (int i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
+        candidate.skillExperience[i] = skillState.skills[i].experience;
+        candidate.skillLevels[i] = dm1_skill_get_level(&skillState,i,1);
+    }
+    if (!m11_iigs_candidate_equipment(state,&candidate)) return 0;
+    panel = M11_AssetLoader_Load(&state->assetLoader,40);
+    if (!panel || panel->width != 144 || panel->height != 73) return 0;
+    slot = state->world.party.championCount;
+    candidate.present = 1; candidate.portraitIndex = ordinal;
+    candidate.direction = state->world.party.direction;
+    cell = state->world.party.direction & 3;
+    for (int attempts = 0; attempts < 4; ++attempts) {
+        int used = 0;
+        for (int i = 0; i < slot; ++i)
+            used |= state->world.party.champions[i].cell == cell;
+        if (!used) break;
+        cell = (cell+1)&3;
+    }
+    candidate.cell = cell;
+    state->world.party.champions[slot] = candidate;
+    ++state->world.party.championCount;
+    if (!m11_pack_recruited_champion_portrait(state,slot,ordinal)) {
+        F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,slot); return 0;
+    }
+    state->world.party.champions[slot].food = 1500 +
+        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng,256);
+    state->world.party.champions[slot].water = 1500 +
+        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng,256);
+    /* Native lifecycle owns all twenty skills and all seven statistics. */
+    {
+        struct ChampionLifecycleState_Compat* life = &state->world.lifecycle.champions[slot];
+        const char* stats = text;
+        memset(life,0,sizeof(*life));
+        for (int i = 0; i < 5; ++i) { stats = strchr(stats,'\n'); if (!stats) return 0; ++stats; }
+        for (int i = 0; i < 20; ++i) life->skills20[i].experience = skillState.skills[i].experience;
+        for (int i = 0; i < LIFECYCLE_STAT_COUNT; ++i) {
+            unsigned value = (((unsigned char)stats[i*2]-'A') << 4) | ((unsigned char)stats[i*2+1]-'A');
+            life->statistics[i][LIFECYCLE_STAT_CURRENT] = (uint8_t)value;
+            life->statistics[i][LIFECYCLE_STAT_MAXIMUM] = (uint8_t)value;
+            life->statistics[i][LIFECYCLE_STAT_MINIMUM] = i == LIFECYCLE_STAT_LUCK ? 10 : 30;
+        }
+        life->food = state->world.party.champions[slot].food;
+        life->water = state->world.party.champions[slot].water;
+        life->maxHealth = candidate.hp.maximum;
+        life->maxStamina = candidate.stamina.maximum;
+        life->maxMana = candidate.mana.maximum;
+    }
+    if (slot == 0) state->world.party.activeChampionIndex = 0;
+    state->candidateMirrorOrdinal = ordinal; state->candidateMirrorPartyIndex = slot;
+    state->candidateMirrorPanelActive = 1; state->inventoryPanelActive = 1;
+    state->dm1IigsCandidateSensorIndex = sensor;
+    state->dm1IigsCandidateMap = state->world.party.mapIndex;
+    state->dm1IigsCandidateX = state->world.party.mapX;
+    state->dm1IigsCandidateY = state->world.party.mapY;
+    state->dm1IigsCandidateDirection = state->world.party.direction;
+    m11_dm1_refresh_carried_loads(state);
+    m11_refresh_hash(state);
+    return 1;
+}
+
+static int m11_iigs_finish_candidate(M11_GameViewState* state, int cancel)
+{
+    if (!state || !state->active || !state->world.things || !state->world.dungeon) return 0;
+    int slot = state->candidateMirrorPartyIndex;
+    int sensor = state->dm1IigsCandidateSensorIndex;
+    static const int east[4] = {0,1,0,-1}, south[4] = {-1,0,1,0};
+    int direction = state->world.party.direction & 3;
+    int x = state->world.party.mapX + east[direction], y = state->world.party.mapY + south[direction];
+    if (!state->candidateMirrorPanelActive || slot < 0 ||
+        slot != state->world.party.championCount-1 ||
+        !state->world.party.champions[slot].present) return 0;
+    if (!cancel) {
+        unsigned short inventory[CHAMPION_SLOT_COUNT];
+        int head;
+        if (state->world.party.mapIndex != state->dm1IigsCandidateMap ||
+            state->world.party.mapX != state->dm1IigsCandidateX ||
+            state->world.party.mapY != state->dm1IigsCandidateY ||
+            state->world.party.direction != state->dm1IigsCandidateDirection ||
+            sensor < 0 || sensor >= state->world.things->sensorCount ||
+            state->world.things->sensors[sensor].sensorType != 127 ||
+            state->world.things->sensors[sensor].sensorData != state->candidateMirrorOrdinal) return 0;
+        memcpy(inventory,state->world.party.champions[slot].inventory,sizeof(inventory));
+        head = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(state->world.dungeon,
+            state->world.party.mapIndex,x,y);
+        if (head < 0 || head >= state->world.things->squareFirstThingCount) return 0;
+        /* F0282:787-800 unlinks only on accept. Validate every possession
+         * before the first write; cancel leaves all source wall chains intact. */
+        for (int i = 0; i < CHAMPION_SLOT_COUNT; ++i) if (inventory[i] != THING_NONE) {
+            unsigned short thing = state->world.things->squareFirstThings[head];
+            int remaining = 65536, found = 0;
+            while (thing != THING_NONE && thing != THING_ENDOFLIST && remaining-- > 0) {
+                if (thing == inventory[i]) { found = 1; break; }
+                thing = m11_raw_next_thing(state->world.things,thing);
+            }
+            if (!found) return 0;
+        }
+        for (int i = 0; i < CHAMPION_SLOT_COUNT; ++i) if (inventory[i] != THING_NONE)
+            if (!F0515_DUNGEON_UnlinkThingFromList_Compat(state->world.dungeon,
+                state->world.things,inventory[i],0,state->world.party.mapIndex,x,y)) return 0;
+        if (!m11_disable_front_mirror_sensor_owner(state,sensor)) return 0;
+        if (state->world.things->rawThingData[THING_TYPE_SENSOR]) {
+            unsigned char* raw = state->world.things->rawThingData[THING_TYPE_SENSOR]+sensor*8;
+            raw[2] &= 0x80U;
+        }
+        if (state->world.party.championCount == 1) state->lastPartyMovementTick = state->world.gameTick;
+    } else {
+        if (!F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,slot)) return 0;
+        memset(&state->world.lifecycle.champions[slot],0,sizeof(state->world.lifecycle.champions[slot]));
+    }
+    state->candidateMirrorPanelActive = 0; state->inventoryPanelActive = 0;
+    state->candidateMirrorOrdinal = -1; state->candidateMirrorPartyIndex = -1;
+    m11_repair_dead_party_leader(state);
+    m11_dm1_refresh_carried_loads(state);
+    m11_refresh_hash(state);
+    return 1;
+}
+
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
+    if (state && state->dm1IigsActive) return m11_iigs_select_front_candidate(state);
     return m11_select_mirror_candidate_by_ordinal(
         state, m11_front_cell_mirror_ordinal(state));
 }
 
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate) {
+    /* Native GS reincarnation/rename has its own older F0281/F0282 rules;
+     * do not inherit the later PC halving or a PC keyboard panel. */
+    if (state && state->dm1IigsActive)
+        return reincarnate ? 0 : m11_iigs_finish_candidate(state,0);
     DM1_V1_HocCandidateConfirmationReceiptPc34 confirmation;
     DM1_V1_HocCandidateApplyReceiptPc34 apply;
     int championIndex;
@@ -35031,6 +35255,7 @@ int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
 }
 
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
+    if (state && state->dm1IigsActive) return m11_iigs_finish_candidate(state,1);
     DM1_V1_HocCandidateConfirmationReceiptPc34 confirmation;
     DM1_V1_HocCandidateApplyReceiptPc34 apply;
     int championIndex;
@@ -35777,8 +36002,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * entering PC-specific spell/inventory/save or startup overlays.
          * LOADSAVE.C F0434 starts GS at its native party coordinates. */
         uint8_t nativeCommand;
+        if (state->candidateMirrorPanelActive) {
+            if (input == M12_MENU_INPUT_BACK)
+                return M11_GameView_CancelMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION)
+                return M11_GameView_ConfirmMirrorCandidate(state,0) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (input == M12_MENU_INPUT_BACK) return M11_GAME_INPUT_RETURN_TO_MENU;
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
+        if (input == M12_MENU_INPUT_ACTION || input == M12_MENU_INPUT_ACCEPT)
+            return M11_GameView_SelectFrontMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         switch (input) {
         case M12_MENU_INPUT_UP:
             nativeCommand = m11_forward_command_for_direction(state->world.party.direction); break;
@@ -38165,7 +38399,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
                                                      int buttonMask) {
-    if (state && state->dm1IigsActive) return M11_GAME_INPUT_IGNORED;
+    if (state && state->dm1IigsActive) {
+        int handled = 0;
+        if (!state->active || M11_GameView_IsPaused(state) ||
+            !(buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)) return M11_GAME_INPUT_IGNORED;
+        /* Native GS COMMAND.C:228-234 G0457, not the PC C696 zones. */
+        if (state->candidateMirrorPanelActive) {
+            if (x >= 104 && x <= 158 && y >= 86 && y <= 142)
+                handled = M11_GameView_ConfirmMirrorCandidate(state,0);
+            else if (x >= 104 && x <= 217 && y >= 146 && y <= 156)
+                handled = M11_GameView_CancelMirrorCandidate(state);
+            /* C161 requires the native F0281 rename/reincarnation path,
+             * which remains closed rather than using the PC modal. */
+        } else if (x >= 96 && x <= 127 && y >= 68 && y <= 96) {
+            /* DUNVIEW.C:525 G0109 plus F2172's screen line33. */
+            handled = M11_GameView_SelectFrontMirrorCandidate(state);
+        }
+        return handled ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     int slot;
     if (M11_GameView_IsPaused(state))
         return M11_GAME_INPUT_IGNORED;
@@ -71497,6 +71748,36 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
         const uint16_t* box = metadata->ui_boxes[i];
         m11_iigs_blit(state,native,i == 0 ? 9U : i == 1 ? 10U : 13U,
             box[0],box[2],box[1]-box[0]+1,box[3]-box[2]+1,0,0,0,0);
+    }
+    {
+        int portrait = m11_front_cell_mirror_ordinal(state);
+        if (portrait >= 0 && portrait < 24 && !state->candidateMirrorPanelActive)
+            m11_iigs_blit(state,native,26,96,68,32,29,
+                (portrait&7)*32,(portrait>>3)*29,0,1);
+    }
+    /* Native PANEL.C F0354 uses seven-pixel status portrait margins.
+     * CHAMDRAW.C:824/855 uses GS F0040 metrics for names; C040's native
+     * panel is DATA.C G0032 at viewport80,52, with GS G0457 hitboxes. */
+    for (i = 0; i < state->world.party.championCount; ++i) {
+        const struct ChampionState_Compat* champion = state->world.party.champions+i;
+        char name[CHAMPION_NAME_TEXT_CAPACITY];
+        if (!champion->present) continue;
+        m11_format_champion_name(champion->name,name,sizeof(name));
+        m11_iigs_blit(state,native,7,i*69,0,67,29,0,0,0,0);
+        (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,
+            i*69+1,5,name,13,1);
+    }
+    if (state->candidateMirrorPanelActive && state->candidateMirrorPartyIndex >= 0 &&
+        state->candidateMirrorPartyIndex < state->world.party.championCount) {
+        int slot = state->candidateMirrorPartyIndex;
+        const struct ChampionState_Compat* champion = state->world.party.champions+slot;
+        char name[CHAMPION_NAME_TEXT_CAPACITY];
+        m11_format_champion_name(champion->name,name,sizeof(name));
+        m11_iigs_blit(state,native,17,0,33,224,136,0,0,0,0);
+        m11_iigs_blit(state,native,40,80,85,144,73,0,0,0,0);
+        m11_iigs_blit(state,native,26,slot*69+7,0,32,29,
+            (champion->portraitIndex&7)*32,(champion->portraitIndex>>3)*29,0,0);
+        (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,3,40,name,13,0);
     }
     for (y = 0; y < height; ++y)
         for (x = 0; x < width; ++x)

@@ -1,3 +1,9 @@
+- `DM1 IIGS interaction`: add native mirror selection, cancellation and
+  resurrection, with original champion skills and possession ownership.
+  ELIJA is verified in both original editions; other champion coverage,
+  equipment bonuses, reincarnation and full gameplay remain unfinished.
+- `DM1 media discovery`: retain FM Towns AUTO priority when its unchanged
+  original ZIP is renamed beside an IIGS disk.
 - `DM1 IIGS startup`: both original editions can enter the first world from
   CLI (`--platform apple-iigs` or `iigs`) and the start menu with native data
   ownership and keyboard movement. Intro, audio and full game interaction

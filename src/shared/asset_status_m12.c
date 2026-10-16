@@ -1026,17 +1026,37 @@ static int m12_admit_dm1_fmtowns_archive(
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        char candidate[3][M12_ASSET_DATA_DIR_CAPACITY];
+        char (*candidate)[ASSET_PATH_MAX] = calloc(259U, sizeof(*candidate));
         size_t candidateCount = 0U;
         size_t candidateIndex;
-        if (preferredArchive && preferredArchive[0] != '\0' &&
-            strstr(preferredArchive, archiveName) != NULL)
+        int exactFile = preferredArchive && FSP_FileExists(preferredArchive) &&
+            !FSP_DirExists(preferredArchive);
+        if (!candidate) return 0;
+        if (exactFile) {
+            /* An explicit source remains terminal even when it is renamed. */
             m12_copy_string(candidate[candidateCount++], sizeof(candidate[0]),
                             preferredArchive);
-        snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/%s",
-                 roots[rootIndex], archiveName);
-        snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/dm1/%s",
-                 roots[rootIndex], archiveName);
+        } else {
+            int discovered;
+            snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/%s",
+                     roots[rootIndex], archiveName);
+            snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/dm1/%s",
+                     roots[rootIndex], archiveName);
+            /* Exact original container fingerprint locates renamed copies
+             * without opening unrelated archives. The ordinary-file collector
+             * reuses the scan's physical hash cache; inner CUE/BIN and both
+             * language graphics/world hashes below still decide admission. */
+            discovered = asset_collect_files_by_md5(roots[rootIndex],
+                "1fa2aaf81c1ed47ae6cf58d0bfda87f0", candidate + candidateCount,
+                256U, 32);
+            if (discovered < 0) {
+                fprintf(stderr, "firestaff: media-discovery-incomplete game=dm1 platform=fm-towns path=%s reason=%s\n",
+                    roots[rootIndex], discovered == -2 ? "candidate-limit" : "allocation-or-path");
+                free(candidate);
+                return 0;
+            }
+            candidateCount += (size_t)discovered;
+        }
         for (candidateIndex = 0U; candidateIndex < candidateCount;
              ++candidateIndex) {
             uint8_t* image = NULL;
@@ -1048,6 +1068,10 @@ static int m12_admit_dm1_fmtowns_archive(
             int language;
             int accepted = 0;
             int anyAccepted = 0;
+            size_t previous;
+            for (previous = 0U; previous < candidateIndex; ++previous)
+                if (strcmp(candidate[previous], candidate[candidateIndex]) == 0) break;
+            if (previous != candidateIndex) continue;
             if (firestaff_zip_extract_by_suffix(candidate[candidateIndex], ".cue",
                                                 &cue, &cueSize) != 0 ||
                 !fmtowns_cue_parse_image_member((const char *)cue, cueSize,
@@ -1117,8 +1141,10 @@ static int m12_admit_dm1_fmtowns_archive(
                 }
             }
             free(image);
-            if (anyAccepted) return 1;
+            if (anyAccepted) { free(candidate); return 1; }
         }
+        free(candidate);
+        if (exactFile) return 0;
     }
     return 0;
 }

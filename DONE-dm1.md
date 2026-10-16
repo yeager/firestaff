@@ -4019,3 +4019,25 @@ not used as its final verification.
   change source-reference lines only. This is basic native first-world
   functionality, not full IIGS support: intro, DOC audio, champion/UI actions,
   mouse input and remaining scene consumers are still unfinished.
+
+- 2026-10-16: Connected native IIGS C127 mirror selection, cancel and
+  resurrection to original party-square TEXTSTRING data, C026 portraits,
+  C040 panel and native input zones. Hidden skill experience lives in the
+  twenty-skill lifecycle owner; only four base skills occupy ChampionState.
+  Native hexadecimal statistics, Luck minimum, food/water RNG and vitals
+  are retained. Equipment follows original Thing order and native slot
+  selection; cancellation preserves the wall chain and acceptance unlinks
+  possessions and disables the source sensor. Original-media tests follow
+  22 normal corridor steps to ELIJA in both editions, through raw PO and
+  native 7z, and verify identity, attributes, skills and all four original
+  possessions across selection/cancel/accept. This does not prove all heroes,
+  equipment modifier side effects, reincarnation or full IIGS gameplay.
+  Actual native modal and post-accept Draw dispatch, source pointer selection
+  and pointer cancellation are also exercised. Eleven targeted tests pass
+  without skips (12.77 s), including nine original-media tests and two PC
+  creature-info regressions. The rebuilt PC34 CLI first-world/turn probe,
+  localization catalog check and hash harmonization check also pass.
+- 2026-10-16: Fixed discovery of the unchanged original FM Towns ZIP after
+  renaming. A bounded physical MD5 search and explicit large-original-file
+  admission locate it; existing inner media hashes still authenticate launch.
+  The real mixed `towns.zip`/IIGS CLI test retains FM Towns AUTO priority.

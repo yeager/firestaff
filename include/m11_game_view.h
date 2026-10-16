@@ -830,6 +830,9 @@ typedef struct {
     int dm1IigsActive;
     unsigned int dm1IigsDrawCount;
     DM1_V1_IigsInstallation dm1IigsInstallation;
+    int dm1IigsCandidateSensorIndex;
+    int dm1IigsCandidateMap, dm1IigsCandidateX, dm1IigsCandidateY;
+    int dm1IigsCandidateDirection;
     char lastAction[32];
     char lastOutcome[64];
     char inspectTitle[64];

@@ -53,7 +53,7 @@ towns=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master
 if [[ -f "$towns" ]]; then
     mkdir "$scratch/mixed"
     ln -s "$scratch/g20.po" "$scratch/mixed/iigs.po"
-    ln -s "$towns" "$scratch/mixed/$(basename "$towns")"
+    ln -s "$towns" "$scratch/mixed/towns.zip"
     FIRESTAFF_CONFIG_PATH="$scratch/mixed.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --game dm1 --data-dir "$scratch/mixed" --debug \
         --boot-probe --boot-probe-frames 2 --boot-probe-expect-runtime \

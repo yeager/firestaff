@@ -2091,3 +2091,18 @@ with its original archive basename beside an authentic IIGS disk. The same
 original Towns archive linked as towns.zip was not detected in that mixed
 root. Investigate renamed-archive discovery separately; do not claim the
 canonical-name priority test proves arbitrary archive-name handling.
+
+2026-10-16 follow-up: the original FM Towns ZIP is now discovered by its
+whole-container fingerprint, including the existing large-original-file
+hash admission. The mixed `towns.zip`/IIGS CLI regression passes and retains
+FM Towns AUTO priority. Inner graphics/world authentication is unchanged.
+Renamed repacked containers are not covered by that original fingerprint.
+
+Native IIGS mirror selection, cancellation and resurrection now preserve
+original equipment ownership and bind all twenty gameplay skill experiences
+and seven lifecycle statistics. Both original editions exercise ELIJA through
+ordinary HoC movement, without a synthetic champion or relocation. This is
+partial recruitment coverage, not proof for all 24 champions. Remaining:
+native F0301/F0299 equipment bonuses and torch/scroll/neck activation,
+reincarnation/rename, full inventory/spell/interaction and scene consumers,
+intro/entrance and audible DOC playback. Visual parity remains deferred.

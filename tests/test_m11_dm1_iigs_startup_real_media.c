@@ -2,6 +2,7 @@
 #include "m11_game_view.h"
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "render_sdl_m11.h"
 #include <stdint.h>
@@ -98,6 +99,138 @@ cleanup:
     free(status); return result;
 }
 
+static int check_elija_equipment(const M11_GameViewState *view, int committed, int candidate) {
+    static const unsigned short chain[]={0x4c12u,0x5807u,0x6800u,0x5808u,0x5809u};
+    static const unsigned slots[]={CHAMPION_SLOT_FEET,CHAMPION_SLOT_BACKPACK_1,CHAMPION_SLOT_TORSO,CHAMPION_SLOT_LEGS};
+    const struct DungeonThings_Compat *things=view->world.things;
+    unsigned short thing=F0511_DUNGEON_GetSquareFirstThing_Compat(view->world.dungeon,things,0,8,7);
+    int result=0;
+    for (unsigned i=0u; i<(committed ? 1u : 5u); ++i) {
+        unsigned type,index; const uint8_t *raw;
+        REQUIRE(thing==chain[i],"ELIJA original mirror chain retains exact source Thing ownership");
+        type=THING_GET_TYPE(thing); index=THING_GET_INDEX(thing);
+        REQUIRE(type<16u && index<(unsigned)things->thingCounts[type] && things->rawThingData[type],"bounded original mirror chain");
+        raw=things->rawThingData[type]+index*s_thingDataByteCount[type];
+        thing=(unsigned short)((unsigned)raw[0]|((unsigned)raw[1]<<8));
+    }
+    REQUIRE(thing==THING_ENDOFLIST,"ELIJA wall chain contains exactly its original remaining owners");
+    REQUIRE(things->sensors[18].sensorType==(committed ? 0u : 127u),
+        "only confirmed resurrection disables original C127 sensor");
+    if (candidate || committed) for (unsigned slot=0u; slot<CHAMPION_SLOT_COUNT; ++slot) {
+        unsigned short expected=THING_NONE;
+        for (unsigned i=0u; i<4u; ++i) if (slot==slots[i]) expected=chain[i+1u];
+        REQUIRE(view->world.party.champions[0].inventory[slot]==expected,
+            "ELIJA exact original sandals, blue box and robe pieces occupy native-selected host slots");
+    }
+    result=1;
+cleanup:
+    return result;
+}
+
+/* Independent original bitstream/TEXTSTRING oracle: C127 at(8,7), cell1,
+ * ordinal0; party-square(9,7) textThing6/word112. The route follows only
+ * authentic map-zero corridor squares, without relocating the party. */
+static int check_recruitment(M11_GameViewState *view, uint8_t *frame) {
+    static const uint8_t route[][2]={
+        {1,4},{1,5},{1,6},{1,7},{2,7},{3,7},{4,7},{4,6},{4,5},{4,4},{4,3},
+        {4,2},{5,2},{6,2},{6,3},{7,3},{8,3},{8,4},{9,4},{9,5},{9,6},{9,7}};
+    static const unsigned short attributes[]={42,40,42,36,53,40};
+    static const unsigned long experience[]={1000,0,3250,0,
+        250,250,500,0,0,0,0,0,500,250,2000,500,0,0,0,0};
+    struct ChampionState_Compat *champion;
+    int result=0;
+    REQUIRE(view->world.party.mapX==1 && view->world.party.mapY==3 &&
+        !view->world.party.championCount,"native recruitment starts at authentic empty HoC entry");
+    for (size_t i=0u; i<sizeof(route)/sizeof(route[0]); ++i) {
+        int dx=(int)route[i][0]-view->world.party.mapX;
+        int dy=(int)route[i][1]-view->world.party.mapY;
+        int direction=dx>0 ? 1 : dx<0 ? 3 : dy>0 ? 2 : 0;
+        REQUIRE(abs(dx)+abs(dy)==1,"source-pinned HoC route contains adjacent squares");
+        for (unsigned turns=0u; view->world.party.direction!=direction && turns<4u; ++turns)
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+        for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+        REQUIRE(view->world.party.mapX==route[i][0] && view->world.party.mapY==route[i][1],
+            "ordinary native footsteps reach each authentic source corridor square");
+    }
+    for (unsigned turns=0u; view->world.party.direction!=3 && turns<4u; ++turns)
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+    REQUIRE(M11_GameView_GetFrontMirrorOrdinal(view)==0,
+        "actual source C127 wall resolves ELIJA portrait ordinal zero");
+    REQUIRE(check_elija_equipment(view,0,0),"original equipment is linked to native mirror before selection");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACTION);
+    REQUIRE(view->candidateMirrorPanelActive && view->candidateMirrorOrdinal==0 &&
+        view->world.party.championCount==1,"native action selects original mirror candidate");
+    REQUIRE(check_elija_equipment(view,0,1),"tentative candidate references original equipment without unlinking it");
+    { unsigned draws=view->dm1IigsDrawCount; int panel=0,portraits=0;
+      M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+      for (unsigned i=0u; i<M11_ASSET_CACHE_SLOTS; ++i) if (view->assetLoader.cache[i].loaded) {
+          if (view->assetLoader.cache[i].graphicIndex==40u) panel=1;
+          if (view->assetLoader.cache[i].graphicIndex==26u) portraits=1;
+      }
+      REQUIRE(view->dm1IigsDrawCount==draws+1u && panel && portraits && view->candidateMirrorPanelActive,
+          "actual native modal Draw consumes original C040 panel and C026 portrait atlas"); }
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_BACK);
+    REQUIRE(view->active && view->dm1IigsActive && !view->candidateMirrorPanelActive &&
+        view->world.party.championCount==0,"native candidate cancel removes tentative champion without exiting game");
+    REQUIRE(check_elija_equipment(view,0,0),"cancel retains all four original wall possessions");
+    REQUIRE(M11_GameView_HandlePointerButton(view,110,80,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        view->candidateMirrorPanelActive && view->candidateMirrorOrdinal==0 &&
+        check_elija_equipment(view,0,1),"native source portrait hitbox selects original candidate without unlinking possessions");
+    { unsigned draws=view->dm1IigsDrawCount;
+      M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+      REQUIRE(view->dm1IigsDrawCount==draws+1u && view->candidateMirrorPanelActive,
+          "pointer-selected candidate presents through actual native modal Draw"); }
+    REQUIRE(M11_GameView_HandlePointerButton(view,110,150,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        !view->candidateMirrorPanelActive && !view->world.party.championCount && view->active &&
+        check_elija_equipment(view,0,0),"native source cancel hitbox preserves original mirror and all possessions");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACTION);
+    REQUIRE(view->candidateMirrorPanelActive && view->candidateMirrorOrdinal==0,
+        "canceled authentic mirror remains available for selection");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACCEPT);
+    champion=&view->world.party.champions[0];
+    REQUIRE(!view->candidateMirrorPanelActive && view->world.party.championCount==1 &&
+        champion->present && champion->portraitIndex==0 && champion->sex=='M' &&
+        memcmp(champion->name,"ELIJA",5u)==0 && memcmp(champion->title,"LION OF YAITOPYA",sizeof("LION OF YAITOPYA")-1u)==0 &&
+        champion->hp.current==60u && champion->hp.maximum==60u &&
+        champion->stamina.current==580u && champion->stamina.maximum==580u &&
+        champion->mana.current==22u && champion->mana.maximum==22u &&
+        memcmp(champion->attributes,attributes,sizeof(attributes))==0 && champion->portraitBitmapValid,
+        "native accept resurrects original ELIJA identity, vitals, statistics and source portrait");
+    { static const uint8_t native_statistics[]={50,42,40,42,36,53,40};
+      const struct ChampionLifecycleState_Compat *life=&view->world.lifecycle.champions[0];
+      REQUIRE(life->maxHealth==60u && life->maxStamina==580u && life->maxMana==22u,
+          "native lifecycle maximum vitals decode original four-nibble hex values");
+      for (unsigned stat=0u; stat<7u; ++stat)
+          REQUIRE(life->statistics[stat][LIFECYCLE_STAT_MAXIMUM]==native_statistics[stat] &&
+              life->statistics[stat][LIFECYCLE_STAT_CURRENT]==native_statistics[stat] &&
+              life->statistics[stat][LIFECYCLE_STAT_MINIMUM]==(stat==LIFECYCLE_STAT_LUCK ? 10u : 30u),
+              "all seven original native lifecycle statistics retain hex values and source Luck minimum"); }
+    for (unsigned skill=0u; skill<4u; ++skill)
+        REQUIRE(champion->skillExperience[skill]==experience[skill],"original four base-class sums survive resurrection");
+    for (unsigned skill=0u; skill<20u; ++skill) {
+        unsigned long effective=experience[skill]; int level=1;
+        REQUIRE(view->world.lifecycle.champions[0].skills20[skill].experience==(int32_t)experience[skill] &&
+            !view->world.lifecycle.champions[0].skills20[skill].temporaryExperience,
+            "all twenty native skills reach actual lifecycle authority without temporary XP");
+        /* CHAMPION.C F0303: hidden skills average base+hidden, then
+         * repeatedly halve at500; original ELIJA equipment grants no bonus. */
+        if (skill>=4u) effective=(effective+experience[(skill-4u)/4u])/2u;
+        while (effective>=500u) { effective>>=1; ++level; }
+        REQUIRE(M11_GameView_GetSkillLevel(view,0,(int)skill)==level,
+            "public skill level reads native lifecycle base/hidden experience using source formula");
+    }
+    REQUIRE(check_elija_equipment(view,1,0) && M11_GameView_GetFrontMirrorOrdinal(view)<0,
+        "accept unlinks exactly four original possessions and makes the source mirror unavailable");
+    { unsigned draws=view->dm1IigsDrawCount;
+      M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+      REQUIRE(view->dm1IigsDrawCount==draws+1u && !view->candidateMirrorPanelActive &&
+          view->world.party.championCount==1,"accepted original champion presents through actual native runtime Draw"); }
+    result=1;
+cleanup:
+    return result;
+}
+
 static int check_session(const char *root, int version, const char *owner) {
     M11_GameViewState *view=calloc(1,sizeof(*view));
     uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
@@ -175,6 +308,7 @@ static int check_session(const char *root, int version, const char *owner) {
         REQUIRE(view->world.party.mapIndex==0 && view->world.party.mapX==1 &&
             view->world.party.mapY==3 && view->world.party.direction==2,
             "ordinary backward input returns to authentic HoC entry after native movement cooldown");
+        REQUIRE(check_recruitment(view,frame),"authentic native HoC champion recruitment through ordinary input");
         M11_GameView_Shutdown(view); M11_GameView_Shutdown(view);
         REQUIRE(!view->active && !view->dm1IigsActive && !view->world.iigsCreatureProfileBound &&
             !view->assetLoader.iigsDm1,"repeated shutdown clears native runtime resources and profile");
