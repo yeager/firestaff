@@ -1,3 +1,5 @@
+- `DM1 runtime groundwork`: bind original IIGS creature values per game world
+  and preserve existing default profiles. Complete IIGS launch remains unfinished.
 - `DM1 data intake`: read native IIGS creature/projectile metadata and preserve
   signed coordinates and map-order color replacements. Actual world construction
   is verified; complete IIGS launch remains unfinished.

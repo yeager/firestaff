@@ -1268,6 +1268,30 @@ int F0891_ORCH_WorldHash_Compat(
     }
     h = crc32_ieee(buf, (size_t)written);
     free(buf);
+    /* Native profiles are edition configuration, not a new save section.
+     * Include canonical scalar values in GS hashes without changing any
+     * existing default-world hash or hashing C struct padding. */
+    if (world->iigsCreatureProfileBound) {
+        int i;
+        h = (h ^ 0x47533237U) * 16777619U;
+        for (i = 0; i < 27; ++i) {
+            const DM1_V1_IigsCreatureInfo* r = world->iigsCreatureInfo + i;
+            const uint32_t values[] = {
+                r->creature_aspect_index, r->attack_sound_ordinal,
+                r->attributes, r->graphic_info, r->movement_ticks,
+                r->attack_ticks, r->defense, r->base_health, r->attack,
+                r->poison_attack, r->dexterity, r->a_unreferenced,
+                r->ranges, r->properties, r->resistances, r->animation_ticks,
+                r->wound_probabilities, r->attack_type, r->b_unreferenced
+            };
+            size_t j;
+            for (j = 0; j < sizeof(values)/sizeof(values[0]); ++j) {
+                unsigned shift;
+                for (shift = 0; shift < 32U; shift += 8U)
+                    h = (h ^ ((values[j] >> shift) & 255U)) * 16777619U;
+            }
+        }
+    }
     *outHash = h;
     return 1;
 }
@@ -1510,12 +1534,52 @@ fail:
     return 0;
 }
 
+static int orch_bind_iigs_creature_profile(struct GameWorld_Compat* world,
+    const DM1_V1_IigsCreatureInfo* rows)
+{
+    int i;
+    /* ReDMCSB DUNGEON.C:439-498 GS G0243, DEFS.H:1573-1594.
+     * Copy every native field; only host AI implementation policy remains
+     * from the existing kernel's per-type implementation tier/aggression. */
+    for (i = 0; i < 27; ++i) {
+        const DM1_V1_IigsCreatureInfo* r = rows + i;
+        const struct CreatureBehaviorProfile_Compat* base = CREATURE_GetProfile_Compat(i);
+        struct CreatureBehaviorProfile_Compat* p = world->iigsCreatureProfiles + i;
+        if (!base || r->creature_aspect_index >= 27) return 0;
+        world->iigsCreatureInfo[i] = *r;
+        *p = *base;
+        p->creatureType = i;
+        p->sightRange = r->ranges & 15;
+        p->smellRange = (r->ranges >> 8) & 15;
+        p->movementTicks = r->movement_ticks;
+        p->attackTicks = r->attack_ticks;
+        p->baseAttack = r->attack;
+        p->baseDefense = r->defense;
+        p->baseHealth = r->base_health;
+        p->dexterity = r->dexterity;
+        p->poisonAttack = r->poison_attack;
+        p->attackType = r->attack_type;
+        p->woundProbabilities = r->wound_probabilities;
+        p->attributes = r->attributes;
+        p->properties = r->properties;
+    }
+    world->iigsCreatureProfileBound = 1;
+    /* CHAMPION.C F0304 MEDIA029 uses RANDOM(3); F0306:1095 identifies
+     * MPW IIGS as second-operand-first. F0307's Megamax bug is Atari-only. */
+    world->levelUpAntimagicModulus = 3;
+    world->skillAccumulatorPolicy = DM1_SKILL_ACCUMULATOR_SIGNED_EARLY;
+    world->pc34F0306FirstOperandFirst = 0;
+    world->pc34PreserveMegamaxF0307Bug = 0;
+    return 1;
+}
+
 static int world_init_from_dungeon_dat_buffer_compat(
     const unsigned char* dungeonBytes,
     int dungeonByteCount,
     uint32_t seed,
     struct GameWorld_Compat* outWorld,
-    int originalBodyFormat)
+    int originalBodyFormat,
+    const DM1_V1_IigsCreatureInfo* nativeRows)
 {
     struct DungeonDatState_Compat* dungeon = NULL;
     struct DungeonThings_Compat* things = NULL;
@@ -1541,6 +1605,7 @@ static int world_init_from_dungeon_dat_buffer_compat(
     outWorld->dungeonFingerprint = dungeon_file_fingerprint(
         "dm1-fmtowns-dungeon-buffer");
     if (!F0881_WORLD_InitDefault_Compat(outWorld, seed)) goto fail;
+    if (nativeRows && !orch_bind_iigs_creature_profile(outWorld, nativeRows)) goto fail;
     F0501_DUNGEON_DecodePartyLocation_Compat(
         dungeon->header.initialPartyLocation, &direction, &py, &px);
     outWorld->party.mapIndex = 0;
@@ -1561,7 +1626,18 @@ fail:
         F0504_DUNGEON_FreeThingData_Compat(things);
         free(things);
     }
+    if (nativeRows && outWorld) memset(outWorld, 0, sizeof(*outWorld));
     return 0;
+}
+
+int F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(
+    const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
+    const DM1_V1_IigsCreatureInfo* rows, size_t rowCount,
+    struct GameWorld_Compat* outWorld)
+{
+    if (!rows || rowCount != 27U) return 0;
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 0, rows);
 }
 
 int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
@@ -1571,7 +1647,7 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
     struct GameWorld_Compat* outWorld)
 {
     return world_init_from_dungeon_dat_buffer_compat(
-        dungeonBytes, dungeonByteCount, seed, outWorld, 0);
+        dungeonBytes, dungeonByteCount, seed, outWorld, 0, NULL);
 }
 
 int F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
@@ -1581,7 +1657,7 @@ int F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
     struct GameWorld_Compat* outWorld)
 {
     return world_init_from_dungeon_dat_buffer_compat(
-        dungeonBytes, dungeonByteCount, seed, outWorld, 2);
+        dungeonBytes, dungeonByteCount, seed, outWorld, 2, NULL);
 }
 
 int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
@@ -1591,7 +1667,7 @@ int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
     struct GameWorld_Compat* outWorld)
 {
     return world_init_from_dungeon_dat_buffer_compat(
-        dungeonBytes, dungeonByteCount, seed, outWorld, 1);
+        dungeonBytes, dungeonByteCount, seed, outWorld, 1, NULL);
 }
 
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world) {
@@ -1610,6 +1686,9 @@ void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world) {
     world->dungeon = NULL;
     world->things = NULL;
     world->ownsDungeon = 0;
+    world->iigsCreatureProfileBound = 0;
+    memset(world->iigsCreatureInfo, 0, sizeof(world->iigsCreatureInfo));
+    memset(world->iigsCreatureProfiles, 0, sizeof(world->iigsCreatureProfiles));
 }
 
 int F0880b_WORLD_Clone_Compat(
@@ -1726,6 +1805,46 @@ int F0890d_ORCH_GetCreatureInfoPc34Compat(
     out->animationTicks = s_dm1_i34_creature_animation_ticks[creatureType];
     out->woundProbabilities = profile->woundProbabilities;
     out->attackType = profile->attackType;
+    return 1;
+}
+
+const struct CreatureBehaviorProfile_Compat*
+F0890e_ORCH_GetCreatureProfileForWorld_Compat(
+    const struct GameWorld_Compat* world, int creatureType)
+{
+    if (creatureType < 0 || creatureType >= 27) return NULL;
+    if (world && world->iigsCreatureProfileBound)
+        return world->iigsCreatureProfiles + creatureType;
+    return CREATURE_GetProfile_Compat(creatureType);
+}
+
+int F0890d_ORCH_GetCreatureInfoForWorld_Compat(
+    const struct GameWorld_Compat* world, int creatureType,
+    struct DM1CreatureInfo_Compat* out)
+{
+    const DM1_V1_IigsCreatureInfo* r;
+    if (!out || creatureType < 0 || creatureType >= 27) return 0;
+    if (!world || !world->iigsCreatureProfileBound)
+        return F0890d_ORCH_GetCreatureInfoPc34Compat(creatureType, out);
+    r = world->iigsCreatureInfo + creatureType;
+    memset(out, 0, sizeof(*out));
+    out->creatureAspectIndex = r->creature_aspect_index;
+    out->attackSoundOrdinal = r->attack_sound_ordinal;
+    out->attributes = r->attributes;
+    out->graphicInfo = r->graphic_info;
+    out->movementTicks = r->movement_ticks;
+    out->attackTicks = r->attack_ticks;
+    out->defense = r->defense;
+    out->baseHealth = r->base_health;
+    out->attack = r->attack;
+    out->poisonAttack = r->poison_attack;
+    out->dexterity = r->dexterity;
+    out->ranges = r->ranges;
+    out->properties = r->properties;
+    out->resistances = r->resistances;
+    out->animationTicks = r->animation_ticks;
+    out->woundProbabilities = r->wound_probabilities;
+    out->attackType = r->attack_type;
     return 1;
 }
 
@@ -2575,7 +2694,7 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
 
     group = &world->things->groups[groupIndex];
     if (creatureIndex > (int)group->count) return 0;
-    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, group->creatureType);
     if (!profile) return 0;
 
     memset(&in, 0, sizeof(in));
@@ -3614,7 +3733,7 @@ static int orch_cmd_attack_f0177_creature_slot_compat(
     in.creatureSize = 0;
     {
         const struct CreatureBehaviorProfile_Compat* profile =
-            CREATURE_GetProfile_Compat((int)group->creatureType);
+            F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, (int)group->creatureType);
         if (profile) {
             in.creatureSize = (int)(profile->attributes & DM1_ATTR_SIZE_MASK);
         }
@@ -3683,7 +3802,7 @@ static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
 
     creatureType = world->things->groups[groupIndex].creatureType;
-    profile = CREATURE_GetProfile_Compat(creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, creatureType);
     if (!profile) return 0;
 
     memset(&in, 0, sizeof(in));
@@ -6117,7 +6236,7 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
             groupIndex < world->things->groupCount) {
             struct DungeonGroup_Compat* group = &world->things->groups[groupIndex];
             const struct CreatureBehaviorProfile_Compat* profile =
-                CREATURE_GetProfile_Compat((int)group->creatureType);
+                F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, (int)group->creatureType);
             DM1_V1_TeleporterDefPc34 rotationTeleporter;
             unsigned int rotatedDirections;
             unsigned int rotatedCells;
@@ -7452,6 +7571,7 @@ static void orch_schedule_group_reaction_compat(
     int reactionKind);
 
 static int orch_apply_projectile_creature_precheck_with_plan_compat(
+    const struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     int creatureIndex,
     const struct ProjectileInstance_Compat* projectile,
@@ -7463,7 +7583,7 @@ static int orch_apply_projectile_creature_precheck_with_plan_compat(
     DM1_ProjectileCreaturePrecheckDamagePlanPc34 plan;
 
     if (!group || !projectile || creatureIndex < 0 || creatureIndex > 3) return 0;
-    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, group->creatureType);
     if (profile && (profile->attributes & CREATURE_ATTR_MASK_ARCHENEMY)) return 0;
 
     defense = (profile && profile->baseDefense > 0) ? profile->baseDefense : 64;
@@ -7488,7 +7608,7 @@ int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     const struct ProjectileInstance_Compat* projectile)
 {
     return orch_apply_projectile_creature_precheck_with_plan_compat(
-        group, creatureIndex, projectile, NULL);
+        NULL, group, creatureIndex, projectile, NULL);
 }
 
 static void orch_build_precheck_projectile_instance_compat(
@@ -7606,7 +7726,7 @@ authenticated_projectile_scan_complete:
 
                 orch_build_precheck_projectile_instance_compat(
                     projectile, index, &compatProjectile);
-                profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+                profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, (int)group->creatureType);
                 if (profile) {
                     creatureAttributes = profile->attributes;
                     creatureProperties = profile->properties;
@@ -7635,7 +7755,7 @@ authenticated_projectile_scan_complete:
                 F0813_PROJECTILE_Despawn_Compat(&world->projectiles, index);
                 memset(&precheckPlan, 0, sizeof(precheckPlan));
                 outcome = orch_apply_projectile_creature_precheck_with_plan_compat(
-                    group, creatureIndex, &compatProjectile, &precheckPlan);
+                    world, group, creatureIndex, &compatProjectile, &precheckPlan);
                 if (outcome == 1) { /* F0190 C1 killed some */
                     orch_compact_active_group_after_f0190_killed_some_compat(
                         world, group, mapIndex, creatureIndex,
@@ -7820,7 +7940,7 @@ static int orch_build_projectile_digest_compat(
             groupIndex < world->things->groupCount) {
             unsigned char cells[4];
             const struct DungeonGroup_Compat* group = &world->things->groups[groupIndex];
-            const struct CreatureBehaviorProfile_Compat* profile = CREATURE_GetProfile_Compat(group->creatureType);
+            const struct CreatureBehaviorProfile_Compat* profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, group->creatureType);
             orch_build_group_projectile_impact_cells_compat(group, cells);
             creatureType = group->creatureType;
             nonMaterial = profile && (profile->attributes & CREATURE_ATTR_MASK_NON_MATERIAL);
@@ -7951,7 +8071,7 @@ static int orch_build_projectile_digest_compat(
         if (ai->groupMapIndex == projectile->mapIndex &&
             ai->groupMapX == destX && ai->groupMapY == destY) {
             const struct CreatureBehaviorProfile_Compat* profile =
-                CREATURE_GetProfile_Compat(ai->creatureType);
+                F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, ai->creatureType);
             out->destHasCreatureGroup = 1;
             out->destCreatureType = ai->creatureType;
             out->destCreatureCellMask = 0x0F;
@@ -9059,7 +9179,7 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
     if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return 0;
 
-    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, (int)group->creatureType);
 
     weaponIndex = THING_GET_INDEX(associatedThing);
     if (!world->things->weapons ||
@@ -9157,7 +9277,7 @@ static int orch_apply_projectile_group_action_compat(
         orch_projectile_associated_weapon_type_compat(world, projectile);
     {
         const struct CreatureBehaviorProfile_Compat* profile =
-            CREATURE_GetProfile_Compat(originalCreatureType);
+            F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, originalCreatureType);
         if (profile) creatureAttributes = profile->attributes;
     }
     memset(&actionPlan, 0, sizeof(actionPlan));
@@ -9185,7 +9305,7 @@ static int orch_apply_projectile_group_action_compat(
     if (!F0888_ORCH_GetCreatureSnapshot_Compat(
             world, groupIndex, creatureIndex, 0, &creatureSnapshot)) {
         const struct CreatureBehaviorProfile_Compat* profile =
-            CREATURE_GetProfile_Compat(originalCreatureType);
+            F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, originalCreatureType);
         creatureSnapshot.creatureType = originalCreatureType;
         if (profile) {
             creatureSnapshot.attributes = profile->attributes;
@@ -9327,7 +9447,7 @@ static void orch_schedule_group_reaction_compat(
     if (!world || !group || !action || groupIndex < 0) return;
 
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
-    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, (int)group->creatureType);
 
     memset(&ctx, 0, sizeof(ctx));
     memset(&activeGroup, 0, sizeof(activeGroup));
@@ -9462,7 +9582,7 @@ static int orch_build_explosion_digest_compat(
             ai->groupMapX == explosion->mapX &&
             ai->groupMapY == explosion->mapY) {
             const struct CreatureBehaviorProfile_Compat* profile =
-                CREATURE_GetProfile_Compat(ai->creatureType);
+                F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, ai->creatureType);
             out->destHasCreatureGroup = 1;
             out->destCreatureType = ai->creatureType;
             out->destCreatureCellMask = 0x0F;
@@ -9506,7 +9626,7 @@ static int orch_apply_initial_explosion_burst_compat(
         &groupIndex);
     if (!digest.destHasChampion && digest.destHasCreatureGroup) {
         if (!world->things || groupIndex < 0 || groupIndex >= world->things->groupCount ||
-            !F0890d_ORCH_GetCreatureInfoPc34Compat(
+            !F0890d_ORCH_GetCreatureInfoForWorld_Compat(world,
                 world->things->groups[groupIndex].creatureType, &info)) return 0;
         resistance = (info.resistances >> 4) & 15;
         digest.destCreatureIsNonMaterial = (info.attributes & 0x0040) != 0;
@@ -9741,7 +9861,7 @@ static int orch_apply_door_group_damage_f0191_compat(
     group = &world->things->groups[groupIndex];
     if (attack <= 0) return 1;
     memset(&creatureInfo, 0, sizeof(creatureInfo));
-    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(
+    if (!F0890d_ORCH_GetCreatureInfoForWorld_Compat(world,
             (int)group->creatureType, &creatureInfo)) {
         return 0;
     }
@@ -10741,8 +10861,8 @@ static int orch_drop_creature_fixed_possessions_compat(
     }
     /* ReDMCSB GROUP.C F0186:644 requests the classified sound even when
      * every F0166 allocation failed; materialized count is independent. */
-    if (outSoundId && CREATURE_GetProfile_Compat(creatureType) &&
-        (CREATURE_GetProfile_Compat(creatureType)->attributes & CREATURE_ATTR_MASK_DROP_FIXED)) {
+    if (outSoundId && F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, creatureType) &&
+        (F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, creatureType)->attributes & CREATURE_ATTR_MASK_DROP_FIXED)) {
         *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
     }
     return ctx.droppedAny;
@@ -10898,7 +11018,7 @@ static void orch_apply_moving_killed_all_afterplay_f0190_compat(
     DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34 plan;
 
     if (!world || !group || !sourceSquareKnown) return;
-    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(
+    if (!F0890d_ORCH_GetCreatureInfoForWorld_Compat(world,
             (int)group->creatureType, &creatureInfo)) {
         return;
     }
@@ -11572,7 +11692,7 @@ static int orch_add_generated_group_active_state_compat(
         int creature;
         memset(&active, 0, sizeof(active));
         active.groupThingIndex = groupIndex;
-        if (!F0890d_ORCH_GetCreatureInfoPc34Compat(group->creatureType, &info) ||
+        if (!F0890d_ORCH_GetCreatureInfoForWorld_Compat(world, group->creatureType, &info) ||
             !F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
                 &active, group, &info, -1, 0, world->gameTick, &rng, &receipt) ||
             !receipt.valid) return 0;
@@ -12414,7 +12534,7 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     destMapY = movePlan.destinationMapY;
 
     memset(&creatureInfo, 0, sizeof(creatureInfo));
-    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(
+    if (!F0890d_ORCH_GetCreatureInfoForWorld_Compat(world,
             (int)group->creatureType, &creatureInfo)) {
         return 0;
     }
@@ -13155,7 +13275,7 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.creatureType = group->creatureType;
     ctx.groupBehavior = orch_ai_state_to_dm1_behavior_compat(ai->stateKind);
     ctx.creatureCount = group->count;
-    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(group->creatureType,
+    if (!F0890d_ORCH_GetCreatureInfoForWorld_Compat(world, group->creatureType,
                                                  &ctx.creatureInfo)) {
         return 0;
     }

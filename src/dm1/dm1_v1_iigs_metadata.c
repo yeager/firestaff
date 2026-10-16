@@ -99,6 +99,28 @@ int dm1_v1_iigs_metadata_read(const uint8_t *program, size_t size,
     IIGS_COPY(object_palette_changes,54427U);
     IIGS_COPY(object_coordinates,54503U);
 #undef IIGS_COPY
+    /* DUNGEON.C:439 onward, G0243 native GS CREATURE_INFO initializer;
+     * DEFS.H:1575–1594 defines its 26-byte layout. The complete 702-byte
+     * table independently matches BOTH original programs at offset 45084
+     * (MD5 a158c8dd19f97c8cd4a8b905ff5d0e6a). Decode each field instead of
+     * borrowing PC gameplay defaults or depending on host struct padding. */
+    if (size<45084U+702U) return 0;
+    for (i=0; i<27U; ++i) {
+        const uint8_t *p=program+45084U+26U*i;
+        DM1_V1_IigsCreatureInfo *c=&value.creature_info[i];
+        c->creature_aspect_index=p[0]; c->attack_sound_ordinal=p[1];
+        c->attributes=iigs_meta_u16(p+2U); c->graphic_info=iigs_meta_u16(p+4U);
+        c->movement_ticks=p[6]; c->attack_ticks=p[7]; c->defense=p[8];
+        c->base_health=p[9]; c->attack=p[10]; c->poison_attack=p[11];
+        c->dexterity=p[12]; c->a_unreferenced=p[13];
+        c->ranges=iigs_meta_u16(p+14U); c->properties=iigs_meta_u16(p+16U);
+        c->resistances=iigs_meta_u16(p+18U); c->animation_ticks=iigs_meta_u16(p+20U);
+        c->wound_probabilities=iigs_meta_u16(p+22U);
+        c->attack_type=p[24]; c->b_unreferenced=p[25];
+        if (c->creature_aspect_index>=27U || c->attack_sound_ordinal>34U ||
+            !c->movement_ticks || !c->attack_ticks) return 0;
+    }
+
     /* Additional complete GS source initializers independently matched both
      * programs: DUNVIEW.C G0210/11:1303–1324, G0212:1533,
      * G0215..17:1541–1591, G0219:1625–1653, G0220:1705–1720,

@@ -3978,3 +3978,22 @@ not used as its final verification.
   now also invoke the actual WORLD constructor and check native initial party
   state. This does not prove active input, native creature gameplay profiles,
   CLI/M12 startup or full rendering; those remain open in TODO-dm1.md.
+
+- 2026-10-16: Read the native GS G0243 CREATURE_INFO table (27x26 bytes)
+  from authenticated G20/G21 programs and bind copied rows/derived behavior
+  profiles to each WORLD before initial active-group activation. WORLD and
+  M11 consumers now select their own world profile; default PC/CSB accessors
+  retain their prior values. Reset/free discard the profile, clone copies it,
+  and GS-only canonical hash fields avoid changing existing default hashes.
+  Original-media tests cover all native creature fields, interleaved default
+  worlds, source-buffer lifetime and clone profile lifetime for both editions'
+  main/bonus worlds. A separate 702-byte source oracle passes alongside the
+  earlier metadata oracles. Seven original-media tests and two existing PC
+  creature-info regression tests passed (1.47 s total); rebuilt CLI probes
+  reach DM1 PC34 and FM Towns first worlds, while CSB FM Towns remains in its
+  expected active title phase after two probe frames. An initial CSB probe
+  wrongly expected gameplay after two title frames; the corrected startup
+  assertion passes and does not claim Prison runtime coverage.
+  Source comparison proves all 27 remaining defense, size and poison helper
+  inputs equal the original GS values, so those helpers need no duplicate API.
+  This does not yet connect IIGS to CLI/M12 or prove complete gameplay.

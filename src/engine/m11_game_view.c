@@ -22801,7 +22801,7 @@ static int m11_check_group_death_and_drop(
      * CREATURE_INFO attributes.  The size bits select the source C040
      * attack (110/190/255), while the fixed-possession bit controls the
      * group drop table.  A zero-filled substitute silently loses both. */
-    profile = CREATURE_GetProfile_Compat((int)g->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, (int)g->creatureType);
     if (!profile) return 0;
 
     for (slotI = 0; slotI <= (int)g->count; ++slotI) {
@@ -23078,7 +23078,7 @@ static void m11_creature_attack_party(
 
     if (!state || !group) return;
 
-    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, group->creatureType);
     if (!profile) return;
     creatureCount = (int)group->count + 1;  /* count field is 0-based */
 
@@ -23511,7 +23511,7 @@ static void m11_process_one_creature_group(
         return;
     }
     group = &state->world.things->groups[groupIndex];
-    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, group->creatureType);
     if (!profile) return;
 
     /* Check if any creature in the group is alive */
@@ -23722,7 +23722,7 @@ int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
         return 0;
     }
     group = &state->world.things->groups[groupIndex];
-    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, group->creatureType);
     if (!profile) return 0;
     dist = abs(state->world.party.mapX - groupMapX) +
            abs(state->world.party.mapY - groupMapY);
@@ -23951,7 +23951,7 @@ static int m11_dm1_kill_notify_plan(
     int champIdx;
 
     if (!state || !outPlan) return 0;
-    profile = CREATURE_GetProfile_Compat(creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, creatureType);
     champIdx = state->world.party.activeChampionIndex;
     memset(&in, 0, sizeof(in));
     in.creatureType = creatureType;
@@ -54609,7 +54609,7 @@ static int m11_spawn_f0190_death_smoke(
     struct TimelineEvent_Compat eFirst;
     int slot = -1;
     if (!state) return 0;
-    profile = CREATURE_GetProfile_Compat(creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, creatureType);
     memset(&smokeIn, 0, sizeof(smokeIn));
     memset(&smokePlan, 0, sizeof(smokePlan));
     smokeIn.shouldCreate = 1;
@@ -54718,7 +54718,7 @@ static int m11_apply_f0190_fear(
     if (group->behavior != DM1_BEHAVIOR_ATTACK) return 0;
     if (mapIndex != state->world.partyMapIndex) return 0;
 
-    profile = CREATURE_GetProfile_Compat(creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, creatureType);
     if (!profile) return 0;
 
     memset(&stateIn, 0, sizeof(stateIn));
@@ -55849,7 +55849,7 @@ static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
     }
 
     group = &state->world.things->groups[groupIndex];
-    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, group->creatureType);
     if (!profile) return 0;
 
     influenceLevel = M11_GameView_GetSkillLevel(
@@ -56134,7 +56134,7 @@ static int m11_build_projectile_digest(
                 && ai->groupMapX == destX
                 && ai->groupMapY == destY) {
             const struct CreatureBehaviorProfile_Compat* profile =
-                CREATURE_GetProfile_Compat(ai->creatureType);
+                F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, ai->creatureType);
             out->destHasCreatureGroup = 1;
             out->destCreatureType     = ai->creatureType;
             out->destCreatureCellMask = 0x0F;
@@ -56994,7 +56994,7 @@ static void m11_schedule_creature_reaction_f0209(
     memset(&schedulePlan, 0, sizeof(schedulePlan));
 
     aiIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
-    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+    profile = F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, (int)group->creatureType);
     ctx.currentMapIndex = mapIndex;
     ctx.currentGroupMapX = mapX;
     ctx.currentGroupMapY = mapY;
@@ -57173,7 +57173,7 @@ static void m11_projectile_apply_impact(
             if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
                 struct DungeonGroup_Compat* g = &state->world.things->groups[gIdx];
                 const struct CreatureBehaviorProfile_Compat* profile =
-                    CREATURE_GetProfile_Compat((int)g->creatureType);
+                    F0890e_ORCH_GetCreatureProfileForWorld_Compat(&state->world, (int)g->creatureType);
                 int creatureAttributes = profile ? profile->attributes : 0;
                 DM1_ProjectileCreatureActionPlanPc34 actionPlan;
                 DM1_ProjectileCreatureActionApplyPlanPc34 actionApply;
@@ -57542,7 +57542,7 @@ static int m11_build_explosion_digest(
                 && ai->groupMapX == e->mapX
                 && ai->groupMapY == e->mapY) {
             const struct CreatureBehaviorProfile_Compat* profile =
-                CREATURE_GetProfile_Compat(ai->creatureType);
+                F0890e_ORCH_GetCreatureProfileForWorld_Compat(world, ai->creatureType);
             out->destHasCreatureGroup = 1;
             out->destCreatureType     = ai->creatureType;
             out->destCreatureCellMask = 0x0F;

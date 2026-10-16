@@ -2062,3 +2062,15 @@ a158c8dd19f97c8cd4a8b905ff5d0e6a (both G20/G21). Scorpion Properties is
 0x299B, versus PC 0x29AB. Fresh-pool G0236 values are shared with PC in the
 original source; compiler flags F0306/F0307 are both zero for GS. Native
 rendering/input/audio consumers and catalogue integration remain unfinished.
+
+2026-10-16 IIGS native gameplay profiles: G0243 rows now bind per WORLD after
+F0881 reset and before F0195 activation. Native-aware WORLD/M11 lookups,
+compiler/skill flags, clone/reset/free and hash identity are implemented and
+covered by targeted original tests/source review. No global platform switch.
+All 27 defense, size and poison helper inputs exactly match GS originals;
+these shared pure helpers can stay shared. Next connect the complete native
+installation, world constructor, graphics/font and metadata consumers into
+actual M11 startup, then CLI/M12. Native playback and first active Hall input
+remain unverified. Save serialization of GS profile/admission is deferred.
+Full builds/sanitizers remain on trv2; the host name still fails to resolve,
+so this batch used bounded local builds and local-original targeted checks.

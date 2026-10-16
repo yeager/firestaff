@@ -97,6 +97,7 @@ struct DM1CreatureInfo_Compat;
 #include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
+#include "dm1_v1_iigs_metadata.h"
 #include "memory_projectile_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
@@ -306,6 +307,11 @@ struct GameWorld_Compat {
     struct RngState_Compat             masterRng;          /* Phase 13 */
     uint8_t levelUpAntimagicModulus; /* Edition configuration: 0/4 PC34, 3 F20. */
     enum DM1SkillAccumulatorPolicy skillAccumulatorPolicy; /* Source edition, not save data. */
+    /* Native program-owned GS G0243 rows, copied before active groups enter
+     * the world. Default PC/CSB worlds keep the explicit bound flag zero. */
+    int iigsCreatureProfileBound;
+    DM1_V1_IigsCreatureInfo iigsCreatureInfo[27];
+    struct CreatureBehaviorProfile_Compat iigsCreatureProfiles[27];
     struct CombatResult_Compat         pendingCombat;      /* Phase 13 */
     /* ReDMCSB CHAMPION.C F0321 adds each hit to G0409/G0410 by champion;
      * F0320 drains all four entries at the game-loop boundary.  Keep the
@@ -406,6 +412,13 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
     const unsigned char* dungeonBytes,
     int dungeonByteCount,
     uint32_t seed,
+    struct GameWorld_Compat* outWorld);
+/* The caller authenticates the native program owner that supplied 27 rows.
+ * Copies its profile after default initialization and before active groups.
+ * The input is the complete native LE body including its checksum. */
+int F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(
+    const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
+    const DM1_V1_IigsCreatureInfo* rows, size_t rowCount,
     struct GameWorld_Compat* outWorld);
 
 /* Original I34M French/German body handoff. Caller must authenticate the
@@ -674,6 +687,12 @@ int F0890b_ORCH_ComputeDungeonViewLight_Compat(
  * reduced behaviour profile. */
 int F0890d_ORCH_GetCreatureInfoPc34Compat(
     int creatureType, struct DM1CreatureInfo_Compat* out);
+int F0890d_ORCH_GetCreatureInfoForWorld_Compat(
+    const struct GameWorld_Compat* world, int creatureType,
+    struct DM1CreatureInfo_Compat* out);
+const struct CreatureBehaviorProfile_Compat*
+F0890e_ORCH_GetCreatureProfileForWorld_Compat(
+    const struct GameWorld_Compat* world, int creatureType);
 
 int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     struct DungeonGroup_Compat* group,

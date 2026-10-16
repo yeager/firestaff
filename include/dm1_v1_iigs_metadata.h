@@ -14,6 +14,30 @@ typedef enum DM1_V1_IigsProgramVersion {
     DM1_V1_IIGS_PROGRAM_G21=21
 } DM1_V1_IigsProgramVersion;
 
+/* Native CREATURE_INFO, DEFS.H:1575–1594. Both unreferenced bytes are
+ * retained so the original 26-byte record can be reconstructed exactly. */
+typedef struct DM1_V1_IigsCreatureInfo {
+    uint8_t creature_aspect_index;
+    uint8_t attack_sound_ordinal;
+    uint16_t attributes;
+    uint16_t graphic_info;
+    uint8_t movement_ticks;
+    uint8_t attack_ticks;
+    uint8_t defense;
+    uint8_t base_health;
+    uint8_t attack;
+    uint8_t poison_attack;
+    uint8_t dexterity;
+    uint8_t a_unreferenced;
+    uint16_t ranges;
+    uint16_t properties;
+    uint16_t resistances;
+    uint16_t animation_ticks;
+    uint16_t wound_probabilities;
+    uint8_t attack_type;
+    uint8_t b_unreferenced;
+} DM1_V1_IigsCreatureInfo;
+
 /* Native DEFS.H structures: decode fields explicitly, never fread host structs. */
 typedef struct DM1_V1_IigsCreatureAspect {
     uint16_t first_native_bitmap_relative_index;
@@ -87,6 +111,7 @@ typedef struct DM1_V1_IigsMetadata {
     int16_t explosion_coordinates[15][2][2];
     int16_t rebirth_step2_coordinates[7][3];
     int16_t rebirth_step1_coordinates[7][3];
+    DM1_V1_IigsCreatureInfo creature_info[27];
 } DM1_V1_IigsMetadata;
 
 /* Require exact original G20E or G21E DUNGEON.MASTER identity before

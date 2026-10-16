@@ -1,5 +1,7 @@
 #include "asset_find_by_hash.h"
 #include "dm1_v1_iigs_dungeon.h"
+#include "dm1_v1_iigs_metadata.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "firestaff_prodos.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -35,7 +37,65 @@ static int rejected(const uint8_t *source, size_t size, uint8_t *guarded, size_t
         !decoded && memcmp(&receipt,zero,sizeof(receipt))==0 &&
         guarded[0]==0xa5u && guarded[capacity+1u]==0xa5u;
 }
-static int check_world(const uint8_t *source, size_t size, const OriginalWorld *expected) {
+static int check_native_profile(const uint8_t *body, size_t size,
+    const DM1_V1_IigsMetadata *metadata, const struct GameWorld_Compat *control) {
+    struct GameWorld_Compat *native=calloc(1,sizeof(*native)), *clone=calloc(1,sizeof(*clone));
+    DM1_V1_IigsCreatureInfo copied[27];
+    int loaded=0, cloned=0, result=0;
+    REQUIRE(native && clone,"bounded native profile worlds");
+    memcpy(copied,metadata->creature_info,sizeof(copied));
+    REQUIRE(!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(body,(int)size,0xF1A5u,copied,26u,native) &&
+        !native->iigsCreatureProfileBound,"native constructor requires all 27 original creature rows");
+    loaded=F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(body,(int)size,0xF1A5u,copied,27u,native);
+    memset(copied,0,sizeof(copied));
+    REQUIRE(loaded && native->iigsCreatureProfileBound && !control->iigsCreatureProfileBound &&
+        native->party.mapX==control->party.mapX && native->party.mapY==control->party.mapY &&
+        memcmp(native->iigsCreatureInfo,metadata->creature_info,sizeof(copied))==0,
+        "actual native world owns authentic creature rows independently of caller lifetime");
+    for (int i=0; i<27; ++i) {
+        const DM1_V1_IigsCreatureInfo *r=&metadata->creature_info[i];
+        struct DM1CreatureInfo_Compat actual, pc, baseline;
+        const struct CreatureBehaviorProfile_Compat *profile=F0890e_ORCH_GetCreatureProfileForWorld_Compat(native,i);
+        REQUIRE(F0890d_ORCH_GetCreatureInfoForWorld_Compat(native,i,&actual),"native creature accessor");
+#define SAME(host,field) REQUIRE(actual.host==r->field,"native typed creature accessor retains original " #field)
+        SAME(creatureAspectIndex,creature_aspect_index); SAME(attackSoundOrdinal,attack_sound_ordinal);
+        SAME(attributes,attributes); SAME(graphicInfo,graphic_info); SAME(movementTicks,movement_ticks);
+        SAME(attackTicks,attack_ticks); SAME(defense,defense); SAME(baseHealth,base_health);
+        SAME(attack,attack); SAME(poisonAttack,poison_attack); SAME(dexterity,dexterity);
+        SAME(ranges,ranges); SAME(properties,properties); SAME(resistances,resistances);
+        SAME(animationTicks,animation_ticks); SAME(woundProbabilities,wound_probabilities); SAME(attackType,attack_type);
+#undef SAME
+        REQUIRE(profile && profile->sightRange==(r->ranges&15) && profile->smellRange==((r->ranges>>8)&15) &&
+            profile->movementTicks==r->movement_ticks && profile->attackTicks==r->attack_ticks &&
+            profile->baseAttack==r->attack && profile->baseDefense==r->defense && profile->baseHealth==r->base_health &&
+            profile->dexterity==r->dexterity && profile->poisonAttack==r->poison_attack &&
+            profile->attackType==r->attack_type && profile->woundProbabilities==r->wound_probabilities &&
+            profile->attributes==r->attributes && profile->properties==r->properties,
+            "all authentic native behavior fields derive from scoped source rows");
+        memset(&pc,0,sizeof(pc)); memset(&baseline,0,sizeof(baseline));
+        REQUIRE(F0890d_ORCH_GetCreatureInfoForWorld_Compat(control,i,&pc) &&
+            F0890d_ORCH_GetCreatureInfoPc34Compat(i,&baseline) && memcmp(&pc,&baseline,sizeof(pc))==0 &&
+            F0890e_ORCH_GetCreatureProfileForWorld_Compat(control,i)==CREATURE_GetProfile_Compat(i),
+            "interleaved default world keeps original PC behavior without global profile mutation");
+    }
+    cloned=F0880b_WORLD_Clone_Compat(native,clone);
+    REQUIRE(cloned && clone->iigsCreatureProfileBound &&
+        memcmp(clone->iigsCreatureInfo,native->iigsCreatureInfo,sizeof(copied))==0 &&
+        memcmp(clone->iigsCreatureProfiles,native->iigsCreatureProfiles,sizeof(native->iigsCreatureProfiles))==0,
+        "world clone retains copied native rows and derived profiles");
+    F0883_WORLD_Free_Compat(native); loaded=0;
+    REQUIRE(!native->iigsCreatureProfileBound && clone->iigsCreatureProfileBound &&
+        F0890e_ORCH_GetCreatureProfileForWorld_Compat(clone,0)->baseHealth==metadata->creature_info[0].base_health,
+        "free resets original profile while independent clone retains native behavior");
+    result=1;
+cleanup:
+    if (cloned) F0883_WORLD_Free_Compat(clone);
+    if (loaded) F0883_WORLD_Free_Compat(native);
+    free(clone); free(native); return result;
+}
+
+static int check_world(const uint8_t *source, size_t size, const OriginalWorld *expected,
+    const DM1_V1_IigsMetadata *metadata) {
     uint8_t *out=NULL, *badout=NULL, *changed=NULL;
     DM1_V1_IigsDungeonReceipt receipt;
     struct DungeonDatState_Compat state;
@@ -92,6 +152,7 @@ static int check_world(const uint8_t *source, size_t size, const OriginalWorld *
         world->party.mapY==(int)expected->y && world->party.direction==2 &&
         world->party.championCount==0,
         "actual world constructor preserves original GS first map, location and empty party");
+    REQUIRE(check_native_profile(out+1u,decoded,metadata,world),"actual main/bonus native creature world profile");
     REQUIRE(rejected(source,size,badout,required-1u),"insufficient output capacity rejects without stale receipt or overflow");
     REQUIRE(rejected(source,size-1u,badout,required) && rejected(source,27u,badout,required),
         "truncated original payload and frequency table reject safely");
@@ -124,12 +185,12 @@ cleanup:
     return result;
 }
 
-typedef struct { unsigned found; int valid; } WorldVisit;
+typedef struct { uint8_t *bytes[3]; size_t sizes[3]; int valid; } WorldVisit;
 static int visit_world(const char *path, const uint8_t *bytes, size_t size, void *user) {
     WorldVisit *visit=user;
-    for (unsigned i=0u; i<2u; ++i) if (strcmp(path,worlds[i].name)==0) {
-        if ((visit->found&(1u<<i)) || !check_world(bytes,size,&worlds[i])) { visit->valid=0; return 1; }
-        visit->found|=1u<<i;
+    for (unsigned i=0u; i<3u; ++i) if (strcmp(path,i<2u ? worlds[i].name : "DUNGEON.MASTER")==0) {
+        if (visit->bytes[i] || size>300000u || !(visit->bytes[i]=malloc(size))) { visit->valid=0; return 1; }
+        memcpy(visit->bytes[i],bytes,size); visit->sizes[i]=size;
     }
     return 0;
 }
@@ -137,7 +198,8 @@ static int check_disk(const char *path, unsigned edition) {
     static const char *const hashes[]={"15e3f954f408612fd2f15a474a182f9f","d38f00e5ad8516553c5cba3214b29bef"};
     FILE *file=NULL;
     uint8_t *disk=NULL;
-    WorldVisit visit={0u,1};
+    WorldVisit visit={{NULL,NULL,NULL},{0u,0u,0u},1};
+    DM1_V1_IigsMetadata metadata;
     int result=0;
     file=fopen(path,"rb");
     REQUIRE(file && fseek(file,0,SEEK_END)==0 && ftell(file)==819200 && fseek(file,0,SEEK_SET)==0,
@@ -146,12 +208,19 @@ static int check_disk(const char *path, unsigned edition) {
     REQUIRE(disk && fread(disk,1,819200u,file)==819200u,"read bounded original disk bytes");
     { int closed=fclose(file); file=NULL; REQUIRE(closed==0,"close original disk"); }
     REQUIRE(asset_memory_matches_md5(disk,819200u,hashes[edition]),"unchanged original IIGS disk identity");
-    REQUIRE(firestaff_prodos_visit_files(disk,819200u,visit_world,&visit)>0 && visit.valid && visit.found==3u,
+    REQUIRE(firestaff_prodos_visit_files(disk,819200u,visit_world,&visit)>0 && visit.valid && visit.bytes[0] && visit.bytes[1] && visit.bytes[2],
         "both native original main and bonus worlds pass bounded decoding and complete LE parsing");
+    REQUIRE(dm1_v1_iigs_metadata_read(visit.bytes[2],visit.sizes[2],&metadata) &&
+        metadata.program_version==(edition ? DM1_V1_IIGS_PROGRAM_G21 : DM1_V1_IIGS_PROGRAM_G20),
+        "same original disk supplies its authenticated native creature program rows");
+    for (unsigned i=0u; i<2u; ++i)
+        REQUIRE(check_world(visit.bytes[i],visit.sizes[i],&worlds[i],&metadata),
+            "main and bonus actual worlds retain authentic native creature profiles");
     REQUIRE(asset_memory_matches_md5(disk,819200u,hashes[edition]),"original disk bytes remain unchanged");
     result=1;
 cleanup:
     if (file) fclose(file);
+    for (unsigned i=0u; i<3u; ++i) free(visit.bytes[i]);
     free(disk);
     return result;
 }

@@ -142,6 +142,30 @@ cleanup:
     return result;
 }
 
+/* Independent DEFS.H GS 26-byte rows, authenticated executable offset45084. */
+static int check_creature_info(const uint8_t *program, const DM1_V1_IigsMetadata *metadata) {
+    uint8_t serialized[702]; size_t used=0u; int result=0;
+    for (unsigned i=0u; i<27u; ++i) {
+        const DM1_V1_IigsCreatureInfo *r=&metadata->creature_info[i];
+#define BYTE(field) serialized[used++]=r->field
+#define WORD(field) words_le(serialized,&used,&r->field,2u)
+        BYTE(creature_aspect_index); BYTE(attack_sound_ordinal);
+        WORD(attributes); WORD(graphic_info);
+        BYTE(movement_ticks); BYTE(attack_ticks); BYTE(defense); BYTE(base_health);
+        BYTE(attack); BYTE(poison_attack); BYTE(dexterity); BYTE(a_unreferenced);
+        WORD(ranges); WORD(properties); WORD(resistances); WORD(animation_ticks);
+        WORD(wound_probabilities); BYTE(attack_type); BYTE(b_unreferenced);
+#undef BYTE
+#undef WORD
+    }
+    REQUIRE(used==sizeof(serialized) && memcmp(serialized,program+45084u,used)==0 &&
+        asset_memory_matches_md5(serialized,used,"a158c8dd19f97c8cd4a8b905ff5d0e6a"),
+        "all 27 typed native creature rows preserve every original byte and packed word");
+    result=1;
+cleanup:
+    return result;
+}
+
 static int check_metadata(const uint8_t *program, size_t size, unsigned edition) {
     static const char *const hashes[]={"51b9d22c7418651ee49ad77f37c80a3c","eccc49e7b29ee233cfb10615e8ec86f3"};
     DM1_V1_IigsMetadata metadata, rejected;
@@ -174,6 +198,7 @@ static int check_metadata(const uint8_t *program, size_t size, unsigned edition)
     REQUIRE(used==sizeof(aggregate) && asset_memory_matches_md5(aggregate,used,
         "307939a44cf5fc0e1b59203aacf95329"),
         "all native startup/dungeon metadata fields retain independently source-matched original bytes after caller lifetime ends");
+    REQUIRE(check_creature_info(program,&metadata),"independent native creature information oracle");
     REQUIRE(check_extra_metadata(program,&metadata),"independent native creature and projectile metadata foundation");
     for (unsigned i=0u; i<16u; ++i) {
         REQUIRE(metadata.palette_no_changes[i]==i && metadata.credits_palette[i]<=0xfffu &&
