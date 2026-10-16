@@ -117,6 +117,7 @@ typedef struct DM1_V1_IigsMetadata {
     int16_t rebirth_step2_coordinates[7][3];
     int16_t rebirth_step1_coordinates[7][3];
     DM1_V1_IigsCreatureInfo creature_info[27];
+    uint8_t creature_attack_sounds[11]; /* Native G0244 ordinal table */
 } DM1_V1_IigsMetadata;
 
 /* Require exact original G20E or G21E DUNGEON.MASTER identity before

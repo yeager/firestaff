@@ -75,6 +75,10 @@ typedef struct {
     int titleMusicQueuedCount;
     int titleMusicPlayRequestCount;
     int titleMusicEnabled;
+    /* Explicit GS transport: native stereo DOC voices, no mono SFX fallback. */
+    void* iigsStream;
+    void* iigsMixer;
+    int hostResumeIigsStream;
     void* sdlStream;
     /* Independent native SONG.DAT transport; never contains SFX PCM. */
     void* musicStream;
@@ -171,6 +175,18 @@ int M11_Audio_EmitDm1AmigaSound(M11_AudioState* state,
     const unsigned char* graphics, size_t graphicsSize, int pc34Index);
 
 int M11_Audio_Init(M11_AudioState* state);
+/* Like Init, requires an empty/shut-down state. Authenticates and owns the
+ * native sources; device failure leaves the native core usable, without
+ * procedural or another platform's audio. Caller serializes lifecycle calls. */
+int M11_Audio_InitDm1Iigs(M11_AudioState* state,
+    const unsigned char* program, size_t programSize,
+    const unsigned char* graphics, size_t graphicsSize);
+int M11_Audio_PlayDm1IigsSound(M11_AudioState* state, unsigned soundIndex,
+    unsigned char left, unsigned char right, unsigned masterLevel);
+struct DM1_V1_IigsDocSnapshot;
+int M11_Audio_GetDm1IigsSnapshot(M11_AudioState* state,
+    struct DM1_V1_IigsDocSnapshot* out);
+
 /* Empty selects SDL's system default.  The name is matched against the live
  * SDL playback-device list at each game start, so disconnected devices fail
  * safely back to the system default instead of inventing an output. */

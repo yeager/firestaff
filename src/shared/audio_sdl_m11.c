@@ -1,4 +1,5 @@
 #include "audio_sdl_m11.h"
+#include "dm1_v1_iigs_audio.h"
 #include "firestaff_audio_device.h"
 #include "asset_find_by_hash.h"
 #include "graphics_dat_snd3_loader_v1.h"
@@ -1069,6 +1070,92 @@ static void SDLCALL m11_cdda_repeat_callback(void *userdata,
 
 /* ── public API ──────────────────────────────────────────────────── */
 
+#if M11_HAVE_SDL_AUDIO
+/* SDL owns the callback's stream lock. The main thread takes the same lock
+ * when changing oscillator ownership or reading a snapshot. No allocation,
+ * source decoding or file access occurs on this callback. */
+static void SDLCALL m11_iigs_doc_callback(void *userdata, SDL_AudioStream *stream,
+    int additional_amount, int total_amount)
+{
+    M11_AudioState *state = (M11_AudioState *)userdata;
+    float pcm[512U * 2U];
+    size_t frames;
+    (void)total_amount;
+    if (!state || !state->iigsMixer || additional_amount <= 0) return;
+    frames = ((size_t)additional_amount + sizeof(float)*2U-1U)/(sizeof(float)*2U);
+    while (frames) {
+        size_t chunk = frames > 512U ? 512U : frames;
+        if (!dm1_v1_iigs_doc_mixer_render_f32_stereo(state->iigsMixer, pcm, chunk) ||
+            !SDL_PutAudioStreamData(stream, pcm, (int)(chunk*2U*sizeof(float)))) return;
+        frames -= chunk;
+    }
+}
+#endif
+
+int M11_Audio_InitDm1Iigs(M11_AudioState* state,
+    const unsigned char* program, size_t programSize,
+    const unsigned char* graphics, size_t graphicsSize)
+{
+    if (!state) return 0;
+    memset(state, 0, sizeof(*state));
+    state->iigsMixer = dm1_v1_iigs_doc_mixer_create(program, programSize,
+        graphics, graphicsSize, 7159090U, 1U, 48000U);
+    if (!state->iigsMixer) return 0;
+    state->initialized = 1;
+    state->masterVolume = state->sfxVolume = state->musicVolume =
+        state->uiVolume = M11_AUDIO_VOLUME_MAX;
+    state->lastSoundIndex = state->lastMusicTrackId = -1;
+#if M11_HAVE_SDL_AUDIO
+    if (m11_sdl_audio_backend_enabled() && Firestaff_AudioDevice_PreparePlayback()) {
+        SDL_AudioSpec spec;
+        SDL_AudioStream* stream;
+        spec.format = SDL_AUDIO_F32; spec.channels = 2; spec.freq = 48000;
+        stream = FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(
+            Firestaff_AudioDevice_ResolvePlayback(), &spec, m11_iigs_doc_callback, state);
+        if (stream) {
+            state->iigsStream = stream;
+            if (SDL_ResumeAudioStreamDevice(stream)) state->backend = M11_AUDIO_BACKEND_SDL3;
+            else { SDL_DestroyAudioStream(stream); state->iigsStream = NULL; }
+        }
+    }
+#endif
+    return 1;
+}
+
+int M11_Audio_PlayDm1IigsSound(M11_AudioState* state, unsigned soundIndex,
+    unsigned char left, unsigned char right, unsigned masterLevel)
+{
+    DM1_V1_IigsSoundVolume volume;
+    int accepted;
+    if (!state || !state->initialized || !state->iigsMixer) return 0;
+    volume.left = left; volume.right = right;
+#if M11_HAVE_SDL_AUDIO
+    if (state->iigsStream && !SDL_LockAudioStream(state->iigsStream)) return 0;
+#endif
+    accepted = dm1_v1_iigs_doc_mixer_trigger(state->iigsMixer, soundIndex, volume, masterLevel);
+#if M11_HAVE_SDL_AUDIO
+    if (state->iigsStream) SDL_UnlockAudioStream(state->iigsStream);
+#endif
+    if (accepted) state->lastSoundIndex = (int)soundIndex;
+    return accepted;
+}
+
+int M11_Audio_GetDm1IigsSnapshot(M11_AudioState* state,
+    struct DM1_V1_IigsDocSnapshot* out)
+{
+    int result;
+    if (out) memset(out, 0, sizeof(*out));
+    if (!state || !state->initialized || !state->iigsMixer || !out) return 0;
+#if M11_HAVE_SDL_AUDIO
+    if (state->iigsStream && !SDL_LockAudioStream(state->iigsStream)) return 0;
+#endif
+    result = dm1_v1_iigs_doc_mixer_snapshot(state->iigsMixer, out);
+#if M11_HAVE_SDL_AUDIO
+    if (state->iigsStream) SDL_UnlockAudioStream(state->iigsStream);
+#endif
+    return result;
+}
+
 int M11_Audio_Init(M11_AudioState* state) {
     if (!state) return 0;
     memset(state, 0, sizeof(*state));
@@ -1190,6 +1277,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     if (!state) return;
 
 #if M11_HAVE_SDL_AUDIO
+    if (state->iigsStream) {
+        SDL_DestroyAudioStream((SDL_AudioStream*)state->iigsStream);
+        state->iigsStream = NULL;
+    }
     if (state->movieStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->movieStream);
         state->movieStream = NULL;
@@ -1227,6 +1318,9 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     }
 #endif
 
+    dm1_v1_iigs_doc_mixer_destroy(state->iigsMixer);
+    state->iigsMixer = NULL;
+    state->hostResumeIigsStream = 0;
     {
         int i;
         for (i = 0; i < M11_AUDIO_MARKER_COUNT; ++i) {
@@ -1332,6 +1426,11 @@ int M11_Audio_SetVolumes(M11_AudioState* state,
     state->uiVolume     = m11_clamp_volume(uiVolume);
 
 #if M11_HAVE_SDL_AUDIO
+    if (state->iigsStream) {
+        float gain = ((float)state->masterVolume / M11_AUDIO_VOLUME_MAX) *
+                     ((float)state->sfxVolume / M11_AUDIO_VOLUME_MAX);
+        SDL_SetAudioStreamGain((SDL_AudioStream*)state->iigsStream, gain);
+    }
     if (state->sdlStream) {
         float gain = (float)state->masterVolume / (float)M11_AUDIO_VOLUME_MAX;
         SDL_SetAudioStreamGain((SDL_AudioStream*)state->sdlStream,
@@ -2648,6 +2747,12 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
         /* Remember only transitions owned by the host. In particular an
          * F0740-paused CDDA device must stay paused after focus returns. */
         state->hostPaused = 1;
+        if (state->iigsStream &&
+            !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->iigsStream)) {
+            if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->iigsStream))
+                state->hostResumeIigsStream = 1;
+            else ok = 0;
+        }
         if (state->sdlStream &&
             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->sdlStream)) {
             if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->sdlStream))
@@ -2673,6 +2778,11 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
             else ok = 0;
         }
     } else {
+        if (state->hostResumeIigsStream) {
+            if (!state->iigsStream || SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->iigsStream))
+                state->hostResumeIigsStream = 0;
+            else ok = 0;
+        }
         if (state->hostResumeSdlStream) {
             if (!state->sdlStream ||
                 SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->sdlStream))

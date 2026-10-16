@@ -15523,6 +15523,28 @@ static unsigned int m11_audio_source_fnv1a(const uint8_t *bytes, size_t count) {
     return hash;
 }
 
+static void m11_iigs_play_pending(unsigned sound,
+    DM1_V1_IigsSoundVolume volume, void* userdata)
+{
+    M11_GameViewState* state = (M11_GameViewState*)userdata;
+    (void)M11_Audio_PlayDm1IigsSound(&state->audioState,(int)sound,
+        volume.left,volume.right,15);
+}
+static void m11_iigs_request_sound(M11_GameViewState* state,
+    int nativeIndex, int x, int y, int pending)
+{
+    DM1_V1_IigsSoundVolume volume;
+    if (!state || !state->dm1IigsActive || nativeIndex < 0 || nativeIndex >= 34 ||
+        !dm1_v1_iigs_audio_volume(&state->dm1IigsAudioMetadata,
+            state->world.party.mapX,state->world.party.mapY,
+            (unsigned)state->world.party.direction,x,y,&volume)) return;
+    /* SOUND.C F0064:1648-1654 / F0065:1792-1802 retain native LR
+     * arbitration until the end-of-loop flush. Direct local effects use C00. */
+    if (pending) (void)dm1_v1_iigs_audio_pending_merge(
+        &state->dm1IigsPendingSounds,(unsigned)nativeIndex,volume);
+    else m11_iigs_play_pending((unsigned)nativeIndex,volume,state);
+}
+
 static void m11_audio_emit_source_sound_with_volume(
     M11_GameViewState* state,
     int soundIndex,
@@ -15535,9 +15557,12 @@ static void m11_audio_emit_source_sound_with_volume(
     if (!state) {
         return;
     }
-    /* Native GS DOC playback is not wired yet. Never route native sample
-     * requests through the PC, Amiga, Atari or Towns decoder/backend. */
-    if (state->dm1IigsActive) return;
+    if (state->dm1IigsActive) {
+        /* Local requests retain native stereo lookup, not PC scalar gain. */
+        m11_iigs_request_sound(state,dm1_v1_iigs_audio_sound_index_from_pc34(soundIndex),
+            state->world.party.mapX,state->world.party.mapY,0);
+        return;
+    }
     if (m11_is_dm1_source_kind(state->sourceKind)) {
         if (state->assetLoader.atariStDm1) {
             (void)M11_Audio_EmitDm1AtariSoundResident(&state->audioState,
@@ -15688,6 +15713,15 @@ static void m11_audio_emit_creature_attack_sound_ex(M11_GameViewState* state,
     if (!state) {
         return;
     }
+    if (state->dm1IigsActive) {
+        unsigned ordinal = creatureType >= 0 && creatureType < 27 ?
+            state->dm1IigsInstallation.metadata.creature_info[creatureType].attack_sound_ordinal : 0;
+        /* GROUP.C F0207:1802-1803 uses GS G0244, not PC's 18-row table
+         * or its later spell-sound fallback. */
+        if (ordinal > 0 && ordinal <= 11)
+            m11_iigs_request_sound(state,state->dm1IigsInstallation.metadata.creature_attack_sounds[ordinal-1],mapX,mapY,1);
+        return;
+    }
     (void)mapX;
     (void)mapY;
     soundIndex = DM1_CreatureSound_AttackIndexForType(creatureType, useSpellFallback);
@@ -15717,7 +15751,11 @@ static void m11_audio_emit_creature_movement_sound(M11_GameViewState* state,
     soundIndex = DM1_CreatureSound_MovementIndexForType(creatureType,
                                                         state->resting);
     if (soundIndex != DM1_SND_NONE) {
-        m11_audio_emit_source_sound(state, soundIndex,
+        /* All 27 admitted GS movement classes match the shared semantic
+         * F0514 result; translate once and retain the actual source square. */
+        if (state->dm1IigsActive)
+            m11_iigs_request_sound(state,dm1_v1_iigs_audio_sound_index_from_pc34(soundIndex),mapX,mapY,1);
+        else m11_audio_emit_source_sound(state, soundIndex,
                                     M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
     }
 }
@@ -15726,6 +15764,15 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
                                         const struct TickEmission_Compat* emission) {
     DM1_V1_AudioEmissionPlanPc34 plan;
     if (!state || !emission) {
+        return;
+    }
+    if (state->dm1IigsActive) {
+        if (emission->kind == EMIT_SOUND_REQUEST &&
+            emission->payload[3] == state->world.party.mapIndex) {
+            m11_iigs_request_sound(state,dm1_v1_iigs_audio_sound_index_from_pc34((int)emission->payload[0]),
+                (int)emission->payload[1],(int)emission->payload[2],1);
+            ++state->audioEventCount;
+        }
         return;
     }
     if (!DM1_V1_BuildAudioEmissionPlanPc34(emission, &plan)) {
@@ -18282,7 +18329,9 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                 m11_set_status(state, "SENSOR", "DOOR TRIGGERED");
                 /* ReDMCSB: audible sensors play C01_SOUND_SWITCH.
                  * Route through M11 audio backend when available. */
-                if (state->audioState.lastSoundIndex >= -1) { /* audio available */
+                /* The legacy effect carries no audible/source-owner receipt.
+                 * GS F0268 needs that receipt before it may request C01. */
+                if (!state->dm1IigsActive && state->audioState.lastSoundIndex >= -1) {
                     m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR); /* C01_SOUND_SWITCH */
                 }
             } else if (targetElement == DUNGEON_ELEMENT_PIT) {
@@ -24720,6 +24769,9 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
      * emit their damage action on the first advance and despawn the
      * slot) rather than leaving a single frozen burst frame. */
     m11_advance_explosions_v1(state);
+    if (state->dm1IigsActive)
+        (void)dm1_v1_iigs_audio_pending_flush(&state->dm1IigsPendingSounds,
+            m11_iigs_play_pending,state);
 }
 
 static void m11_dm1_f0740_bind_driver(M11_GameViewState *state);
@@ -27513,13 +27565,15 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
         state->world.things, &state->mirrorCatalog) > 0;
     if (!F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash))
         goto cleanup;
-    /* Native DOC audio/backend wiring is not complete. Never inherit a
-     * previously discovered PC SND3/SONG source in this GS lifecycle. */
+    /* Bind only this authenticated program/bank; own sample copies before
+     * releasing the source buffers. Device failure stays silent, never PC. */
     M11_Audio_Shutdown(&state->audioState);
+    if (!dm1_v1_iigs_audio_metadata_read(program,programSize,&state->dm1IigsAudioMetadata) ||
+        !M11_Audio_InitDm1Iigs(&state->audioState,program,programSize,graphics,graphicsSize)) goto cleanup;
     state->dm1MusicSourceBound = 0;
     state->dm1MusicOn = 0;
     fprintf(stderr, "DM1 IIGS READY: version=%d graphicsPath=%s dungeonPath=%s "
-        "programPath=%s map=%d x=%d y=%d dir=%d audio=unbound intro=deferred\n",
+        "programPath=%s map=%d x=%d y=%d dir=%d audio=doc-stereo-bound intro=deferred\n",
         (int)metadata.program_version, installation.graphics_path,
         installation.dungeon_path, installation.program_path,
         state->world.party.mapIndex, state->world.party.mapX,
@@ -32561,11 +32615,16 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     /* CLIKMENU.C blocked wall/door steps use the source metallic thud
      * (C00_SOUND_METALLIC_THUD).  Emit it only for a dequeued step rejected
      * by the source collision gate; turns and cooldown drops stay silent. */
-    if (state->lastDm1V1MovementPipelineResult.core.queue.dispatchedMove &&
+    if (!state->dm1IigsActive &&
+        state->lastDm1V1MovementPipelineResult.core.queue.dispatchedMove &&
         state->lastDm1V1MovementPipelineResult.core.movementBlocked) {
         m11_audio_emit_source_sound(state, DM1_SND_METALLIC_THUD,
                                     M11_AUDIO_MARKER_FOOTSTEP);
     }
+    /* GS CLIKMENU.C:293-308 emits C18 at the blocked target only after
+     * F0321 champion damage. Empty-party collisions are silent. The source
+     * pipeline exposes that damage request but its native F0321 consumer
+     * remains unbound; do not substitute the PC host's metallic cue. */
 
     state->world.gameTick++;
     /* GAMELOOP.C:60-68 processes the next-loop native map handoff at
@@ -57801,7 +57860,13 @@ static void m11_projectile_apply_impact(
         dm1_v1_projectile_impact_source_sound_index_pc34(p, r);
     int associatedThingMovedToGroup = 0;
     if (sourceSoundIndex >= 0) {
-        m11_audio_emit_source_sound(state, sourceSoundIndex,
+        /* PROJEXPL.C F0217 impact sounds retain their actual source square
+         * through F0064; GS must not center a distant projectile on party. */
+        if (state->dm1IigsActive) {
+            if (r->newMapIndex == state->world.party.mapIndex)
+                m11_iigs_request_sound(state,dm1_v1_iigs_audio_sound_index_from_pc34(sourceSoundIndex),
+                    r->newMapX,r->newMapY,1);
+        } else m11_audio_emit_source_sound(state, sourceSoundIndex,
                                     M11_Audio_FallbackMarkerForSoundIndex(sourceSoundIndex));
     }
     m11_schedule_open_door_spell_toggle(state, r);

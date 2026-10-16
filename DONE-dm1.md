@@ -4134,3 +4134,34 @@ not used as its final verification.
   completion. The rebuilt PC34 CLI first-world/turn probe, localization
   catalog check and staged Gitleaks scan also pass. Source review found no
   blockers; this does not establish original hardware timing or visual parity.
+
+- 2026-10-16: Implemented source-specific native IIGS DOC stereo playback
+  from authenticated original program/graphics bytes. The owned 34-sound bank
+  feeds fifteen oscillator pairs with native integer channel volumes, zero
+  stops, aligned 64 KB page residency, source LRU eviction and latest-pair
+  replacement semantics. Rendering uses exact rational DOC scan time and the
+  original accumulator order; allocation and decoding occur only at binding.
+  The SDL transport is independent stereo F32 at 48000 Hz, shares device and
+  user settings, locks requests/snapshots, preserves host pause ownership and
+  destroys the stream before its source bank. It never uses PC decoders or
+  generated fallback. Nominal DOC clock 7159090 Hz and fixed float headroom
+  are explicit host policies, not claims of captured analog hardware parity.
+- 2026-10-16: Connected native local, positioned and pending sound requests
+  without flattening stereo/source coordinates. Shared semantic IDs translate
+  to the GS bank once; native attacks use authenticated G0244 and native
+  creature ordinals. Both programs verify the complete G0244 byte span and
+  all 35 semantic translations / 27 creature attack and movement classes.
+  Original gameplay checks cover the actual exit-door rattle at (5,9) from
+  party (6,9), selected-recipient Apple completion sound 8 after its final
+  wait, and silent empty-party wall collision. Generic host switch/bump cues
+  are excluded until their GS source-owner/damage consumers are bound.
+  Native wall-bump damage/C18 and audible-sensor C01 remain open; projectile
+  impact coordinates were source-reviewed but lack authentic runtime coverage.
+  Full native interaction/campaign and hardware audio parity remain unfinished.
+  Final validation: nineteen targeted tests pass without skips (153.95 s),
+  including ten original-media tests and the rebuilt 976-record PC object
+  corpus. The SDL dummy device is enabled for this run: its PC C08 transport
+  assertion correctly fails when SDL is globally disabled. A separate run
+  requires the native SDL backend and verifies callbacks/pause/volume/restart
+  in both original editions. The rebuilt PC34 CLI first-world/turn probe,
+  localization catalog check and redacted staged Gitleaks scan pass.

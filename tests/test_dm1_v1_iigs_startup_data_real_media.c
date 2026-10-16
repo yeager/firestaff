@@ -1,3 +1,5 @@
+#include "dm1_v1_iigs_audio.h"
+#include "dm1_v1_creature_sound_pc34_compat.h"
 #include "asset_find_by_hash.h"
 #include "dm1_v1_iigs_graphics_dat.h"
 #include "dm1_v1_iigs_metadata.h"
@@ -35,6 +37,29 @@ static int check_inventory_metadata(const uint8_t *program, const DM1_V1_IigsMet
         REQUIRE(used==spans[i].size && memcmp(encoded,program+spans[i].offset,used)==0 &&
             asset_memory_matches_md5(encoded,used,spans[i].md5),
             "all original native icon bases, slot coordinates, masks and mouse records survive LE decoding");
+    }
+    REQUIRE(memcmp(metadata->creature_attack_sounds,program+45786u,11u)==0 &&
+        asset_memory_matches_md5(metadata->creature_attack_sounds,11u,"e8c7f991406b0be1ef94075171f8595e"),
+        "complete native G0244 attack ordinal span matches both original executables");
+    {
+        /* Independent DEFS.H:75-127 / MOVESENS.C F0514 native source IDs. */
+        static const int map[35]={0,1,2,-1,4,5,20,6,8,9,10,11,12,16,17,18,13,28,25,
+            14,15,19,21,3,29,7,30,31,22,23,24,26,27,32,33};
+        static const int movement[27]={26,27,24,-1,26,26,26,26,-1,24,24,-1,33,23,24,26,24,23,22,-1,27,26,24,-1,32,-1,-1};
+        for (int event=0;event<35;++event)
+            REQUIRE(dm1_v1_iigs_audio_sound_index_from_pc34(event)==map[event],"all shared sound IDs select the correct native bank row");
+        REQUIRE(dm1_v1_iigs_audio_sound_index_from_pc34(-1)==-1 &&
+            dm1_v1_iigs_audio_sound_index_from_pc34(35)==-1,"out-of-range shared sound IDs reject");
+        for (int type=0;type<27;++type) {
+            unsigned ordinal=metadata->creature_info[type].attack_sound_ordinal;
+            int semantic=DM1_CreatureSound_AttackIndexForType(type,0);
+            REQUIRE(ordinal<=11 && dm1_v1_iigs_audio_sound_index_from_pc34(semantic)==
+                (ordinal ? metadata->creature_attack_sounds[ordinal-1] : -1),
+                "all original native attack rows agree with normalized shared semantic emissions");
+            REQUIRE(dm1_v1_iigs_audio_sound_index_from_pc34(DM1_CreatureSound_MovementIndexForType(type,0))==movement[type] &&
+                DM1_CreatureSound_MovementIndexForType(type,1)==-1,
+                "all original native movement classes and resting suppression match F0514");
+        }
     }
     result=1;
 cleanup:

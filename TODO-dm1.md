@@ -2158,3 +2158,19 @@ states that SetHeartBeat counts VBL interrupts; p.14-12 documents the machine's
 exact hardware-frequency validation remain open. Drinks, potions, empty-hand
 food/water panel and remaining chest/eye/interaction paths remain unfinished.
 Reference: https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/programming/65816_gs/Apple%20IIGS%20Toolbox%20Reference%20Volume%201.pdf
+
+2026-10-16 native audio follow-up: authenticated DOC bank, 15 stereo pairs,
+64 KB source page allocator/eviction, rational scan clock and isolated SDL
+transport are implemented. Native local/positioned/pending routing uses GS
+sound IDs and original channel lookup. Both original editions verify complete
+PCM against an independent scalar oracle, residency and ownership; SDL dummy
+transport verifies format, volume, callback progress, pause/resume and teardown.
+This closes the previously unbound DOC-backend gap for the wired requests.
+Remaining: source F0321 wall-bump damage consumer and resulting native C18 at
+the blocked target, F0268 audible/source-owner receipt for C01, original-runtime
+projectile/creature sound scenarios and actual hardware recording comparisons.
+The old host metallic/switch substitutes are deliberately not used for GS.
+The next bump patch should reuse F0286, F0739b/c and the existing WORLD pending
+combat staging/F0889 boundary in source order, not directly subtract HP.
+Nominal clock 7159090 Hz and fixed host headroom remain explicit profiles.
+Hardware reference: https://www.brutaldeluxe.fr/documentation/cortland/v4_13_EnsoniqDOC.pdf

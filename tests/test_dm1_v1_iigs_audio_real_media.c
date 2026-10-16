@@ -2,6 +2,10 @@
 #include "dm1_v1_iigs_audio.h"
 #include "dm1_v1_iigs_graphics_dat.h"
 #include "firestaff_prodos.h"
+#include "audio_sdl_m11.h"
+#ifndef FIRESTAFF_NO_SDL_AUDIO
+#include <SDL3/SDL.h>
+#endif
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -61,6 +65,269 @@ static int check_volume(const DM1_V1_IigsAudioMetadata *metadata) {
 cleanup:
     return result;
 }
+/* Independent scalar DOC oracle: native F0060 programs Period as phase
+ * increment; size==resolution selects shift9. Read the OLD accumulator at
+ * each DOC scan, then advance. E1FF=32 gives34 oscillator scan slots. */
+typedef struct { uint8_t *bytes; size_t count; unsigned period; } OriginalDoc;
+typedef struct { int active, sound; unsigned phase, left, right, base, mask; } ReferencePair;
+typedef struct {
+    OriginalDoc sounds[34]; ReferencePair pairs[15]; unsigned next_pair;
+    uint64_t clock_num, threshold, remainder, frames, scans, triggers, evictions;
+    uint8_t ram[65536], owner[256]; int resident[34], latest[34];
+    unsigned pages[34]; uint64_t used[34]; int held_left,held_right,primed,asymmetric;
+} ReferenceDoc;
+static void reference_reset(ReferenceDoc *r, uint64_t num, uint64_t den, unsigned rate) {
+    OriginalDoc sounds[34]; memcpy(sounds,r->sounds,sizeof(sounds)); memset(r,0,sizeof(*r));
+    memcpy(r->sounds,sounds,sizeof(sounds)); r->clock_num=num; r->threshold=den*272u*rate;
+    memset(r->owner,255,sizeof(r->owner));
+    for (unsigned i=0u; i<34u; ++i) r->resident[i]=r->latest[i]=-1;
+    for (unsigned i=0u; i<15u; ++i) r->pairs[i].sound=-1;
+}
+static void reference_evict(ReferenceDoc *r, unsigned sound) {
+    if (r->resident[sound]<0) return;
+    for (unsigned i=0u; i<r->pages[sound]; ++i) r->owner[(unsigned)r->resident[sound]+i]=255u;
+    if (r->latest[sound]>=0) r->pairs[r->latest[sound]].active=0;
+    r->resident[sound]=-1; ++r->evictions;
+}
+static void reference_trigger(ReferenceDoc *r, unsigned sound, DM1_V1_IigsSoundVolume volume, unsigned master) {
+    unsigned align=1u, pages=(unsigned)((r->sounds[sound].count+256u)/256u);
+    while (align*256u<r->sounds[sound].count+1u) align*=2u;
+    if (r->resident[sound]<0) {
+        unsigned chosen=256u;
+        for (unsigned start=0u; start<256u; start+=align) {
+            unsigned i=0u; while (i<pages && r->owner[start+i]==255u) ++i;
+            if (i==pages) { chosen=start; break; }
+        }
+        if (chosen==256u) {
+            chosen=0u;
+            for (unsigned start=0u; start<256u; start+=align) {
+                if (r->owner[start]==255u) { chosen=start; break; }
+                if (r->used[r->owner[start]]<r->used[r->owner[chosen]]) chosen=start;
+            }
+            for (unsigned i=0u; i<pages; ++i)
+                if (r->owner[chosen+i]!=255u) reference_evict(r,r->owner[chosen+i]);
+        }
+        r->resident[sound]=(int)chosen; r->pages[sound]=pages;
+        for (unsigned i=0u; i<pages; ++i) r->owner[chosen+i]=(uint8_t)sound;
+        memcpy(r->ram+chosen*256u,r->sounds[sound].bytes,r->sounds[sound].count+1u);
+    }
+    { ReferencePair *pair=&r->pairs[r->next_pair];
+      for (unsigned i=0u; i<34u; ++i) if (r->latest[i]==(int)r->next_pair) r->latest[i]=-1;
+      r->latest[sound]=(int)r->next_pair;
+      memset(pair,0,sizeof(*pair)); pair->active=1; pair->sound=(int)sound;
+      pair->base=(unsigned)r->resident[sound]*256u; pair->mask=align*256u-1u;
+      pair->left=(volume.left/15u)*master; pair->right=(volume.right/15u)*master;
+      r->next_pair=(r->next_pair+1u)%15u;
+    }
+    r->used[sound]=++r->triggers;
+}
+static void reference_scan(ReferenceDoc *r) {
+    int left=0,right=0;
+    for (unsigned i=0u; i<15u; ++i) {
+        ReferencePair *pair=&r->pairs[i]; unsigned sample;
+        if (!pair->active) continue;
+        unsigned address=(pair->phase>>9)&pair->mask;
+        sample=r->ram[pair->base+address];
+        pair->phase+=r->sounds[pair->sound].period;
+        if (!sample) pair->active=0;
+        else { left+=((int)sample-128)*(int)pair->left; right+=((int)sample-128)*(int)pair->right;
+            if (address==pair->mask) pair->active=0; }
+    }
+    r->held_left=left; r->held_right=right; ++r->scans;
+}
+static void reference_render(ReferenceDoc *r, float *out, size_t frames) {
+    if (!r->primed) { reference_scan(r); r->primed=1; }
+    for (size_t frame=0u; frame<frames; ++frame) {
+        int left=r->held_left,right=r->held_right;
+        out[2u*frame]=(float)((double)left/(128.0*255.0*15.0));
+        out[2u*frame+1u]=(float)((double)right/(128.0*255.0*15.0));
+        if (left!=right) r->asymmetric=1;
+        r->remainder+=r->clock_num;
+        while (r->remainder>=r->threshold) { r->remainder-=r->threshold; reference_scan(r); }
+        ++r->frames;
+    }
+}
+
+static int compare_doc_state(DM1_V1_IigsDocMixer *mixer, const ReferenceDoc *r) {
+    DM1_V1_IigsDocSnapshot actual; int result=0; unsigned active=0u;
+    REQUIRE(dm1_v1_iigs_doc_mixer_snapshot(mixer,&actual) && actual.rendered_frames==r->frames &&
+        actual.doc_scans==r->scans && actual.triggers==r->triggers && actual.next_pair==r->next_pair &&
+        actual.evictions==r->evictions && memcmp(actual.page_owner,r->owner,256u)==0,
+        "native DOC counters and complete 64K page ownership match independent source allocator");
+    for (unsigned sound=0u; sound<34u; ++sound)
+        REQUIRE(actual.resident_page[sound]==r->resident[sound] && actual.latest_pair[sound]==r->latest[sound] &&
+            actual.last_use[sound]==r->used[sound] && (r->resident[sound]<0 || actual.resident_pages[sound]==r->pages[sound]),
+            "native source aligned residency, latest pair and allocation-before-use LRU identity match oracle");
+    for (unsigned pair=0u; pair<15u; ++pair) {
+        active+=(unsigned)r->pairs[pair].active;
+        REQUIRE(actual.sound_index[pair]==r->pairs[pair].sound && actual.active[pair]==r->pairs[pair].active &&
+            actual.left[pair]==r->pairs[pair].left && actual.right[pair]==r->pairs[pair].right &&
+            (!r->pairs[pair].active || actual.accumulator[pair]==r->pairs[pair].phase),
+            "all fifteen native pair identities, active phases and asymmetric channels match old-accumulator oracle");
+    }
+    REQUIRE(actual.active_pairs==active,"native active-pair count matches distinct source voices");
+    result=1;
+cleanup:
+    return result;
+}
+static int compare_doc_frames(DM1_V1_IigsDocMixer *mixer, ReferenceDoc *r, size_t frames) {
+    float actual[514], expected[514]; int result=0;
+    while (frames) {
+        size_t block=frames>257u ? 257u : frames;
+        REQUIRE(dm1_v1_iigs_doc_mixer_render_f32_stereo(mixer,actual,block),"bounded original DOC stereo render");
+        reference_render(r,expected,block);
+        for (size_t i=0u; i<block*2u; ++i) {
+            double difference=(double)actual[i]-expected[i];
+            REQUIRE(difference>=-0.000001 && difference<=0.000001,
+                "every host stereo sample matches independent rational DOC scan and source signed-byte oracle");
+        }
+        frames-=block;
+    }
+    REQUIRE(compare_doc_state(mixer,r),"complete native DOC state after chunked original sound stream"); result=1;
+cleanup:
+    return result;
+}
+static int check_doc_mixer(const uint8_t *bank, size_t bank_size, const uint8_t *program, size_t program_size,
+    const DM1_V1_IigsAudioMetadata *metadata) {
+    ReferenceDoc *reference=calloc(1,sizeof(*reference));
+    DM1_V1_IigsDocMixer *mixer=NULL,*invalid=NULL;
+    uint8_t *raw=malloc(65535u), *bank_copy=malloc(bank_size), *program_copy=malloc(program_size);
+    DM1_V1_IigsSoundVolume volume={metadata->distance_volume[12][11],metadata->distance_volume[12][13]};
+    DM1_V1_IigsDocSnapshot before,after; int result=0;
+    REQUIRE(reference && raw && bank_copy && program_copy && volume.left!=volume.right && volume.left && volume.right,
+        "bounded native DOC fixtures and authentic asymmetric source-table channel volumes");
+    for (unsigned sound=0u; sound<34u; ++sound) {
+        size_t size=0u; OriginalDoc *original=&reference->sounds[sound];
+        REQUIRE(dm1_v1_iigs_graphics_read_raw(bank,bank_size,(uint16_t)metadata->sounds[sound].graphic_index,raw,65535u,&size),
+            "independent DOC oracle reads all34 genuine event-owned original PCM records");
+        original->count=((size_t)raw[0]<<8)|raw[1]; original->period=metadata->sounds[sound].period;
+        original->bytes=malloc(original->count+1u); REQUIRE(original->bytes,"bounded authentic DOC oracle sample copy");
+        for (size_t i=0u; i<original->count; ++i) {
+            unsigned value=((unsigned)raw[i+2u]+128u)&255u; original->bytes[i]=(uint8_t)(value ? value : 1u);
+        }
+        original->bytes[original->count]=0u;
+    }
+    memcpy(bank_copy,bank,bank_size); memcpy(program_copy,program,program_size);
+    mixer=dm1_v1_iigs_doc_mixer_create(program_copy,program_size,bank_copy,bank_size,7159090u,1u,48000u);
+    REQUIRE(mixer,"native DOC mixer authenticates original complete bank and program");
+    memset(bank_copy,0,bank_size); memset(program_copy,0,program_size);
+    reference_reset(reference,7159090u,1u,48000u);
+    for (unsigned sound=0u; sound<34u; ++sound) {
+        uint64_t stop_scan=(reference->sounds[sound].count*512u+reference->sounds[sound].period-1u)/reference->sounds[sound].period;
+        size_t frames=(size_t)((stop_scan*reference->threshold+reference->clock_num-1u)/reference->clock_num)+3u;
+        REQUIRE(dm1_v1_iigs_doc_mixer_trigger(mixer,sound,volume,11u),"all original native events trigger with independent channel quantization");
+        reference_trigger(reference,sound,volume,11u);
+        REQUIRE(compare_doc_state(mixer,reference) && compare_doc_frames(mixer,reference,frames),
+            "all34 complete original sound streams reach exact zero-stop under rational DOC clock");
+        REQUIRE(dm1_v1_iigs_doc_mixer_snapshot(mixer,&after) && !after.active_pairs,
+            "original terminal DOC zero halts each complete native event without table-padding playback");
+    }
+    REQUIRE(reference->asymmetric && reference->evictions>0u,
+        "genuine bank exercises left/right asymmetry and original aggregate exceeding 64K RAM");
+    dm1_v1_iigs_doc_mixer_reset(mixer); reference_reset(reference,7159090u,1u,48000u);
+    for (unsigned sound=0u; sound<16u; ++sound) {
+        REQUIRE(dm1_v1_iigs_doc_mixer_trigger(mixer,sound,volume,15u),"concurrent native original event trigger");
+        reference_trigger(reference,sound,volume,15u);
+        REQUIRE(compare_doc_frames(mixer,reference,7u),"overlapping source sounds retain fixed headroom across pair wrap");
+    }
+    REQUIRE(dm1_v1_iigs_doc_mixer_snapshot(mixer,&after) && after.replacements>0u && after.next_pair==1u,
+        "sixteenth actual native event replaces first of fifteen oscillator pairs");
+    for (unsigned repeated=0u; repeated<20u; ++repeated) {
+        unsigned sound=repeated%3u ? 33u : 0u;
+        REQUIRE(dm1_v1_iigs_doc_mixer_trigger(mixer,sound,volume,9u),"native same-event retrigger preserves earlier pair semantics");
+        reference_trigger(reference,sound,volume,9u);
+        REQUIRE(compare_doc_frames(mixer,reference,19u),"same-sound overlap and source latest-mapping eviction match independent RAM oracle");
+    }
+    REQUIRE(dm1_v1_iigs_doc_mixer_snapshot(mixer,&before) &&
+        !dm1_v1_iigs_doc_mixer_trigger(mixer,34u,volume,15u) &&
+        !dm1_v1_iigs_doc_mixer_trigger(mixer,0u,volume,16u) &&
+        dm1_v1_iigs_doc_mixer_snapshot(mixer,&after) && before.triggers==after.triggers && before.next_pair==after.next_pair,
+        "invalid event/master cannot mutate native playback pair allocation");
+    dm1_v1_iigs_doc_mixer_destroy(mixer); mixer=NULL;
+    memcpy(bank_copy,bank,bank_size); memcpy(program_copy,program,program_size); bank_copy[0]^=1u;
+    invalid=dm1_v1_iigs_doc_mixer_create(program,program_size,bank_copy,bank_size,7159090u,1u,48000u);
+    REQUIRE(!invalid,"original-derived wrong bank identity rejects native mixer admission");
+    program_copy[program_size-1u]^=1u;
+    invalid=dm1_v1_iigs_doc_mixer_create(program_copy,program_size,bank,bank_size,7159090u,1u,48000u);
+    REQUIRE(!invalid,"original-derived wrong executable identity rejects native mixer admission");
+    mixer=dm1_v1_iigs_doc_mixer_create(program,program_size,bank,bank_size,21477272u,3u,44100u);
+    REQUIRE(mixer,"native mixer rebinds genuine sources to explicitly configured rational host clock");
+    reference_reset(reference,21477272u,3u,44100u);
+    REQUIRE(dm1_v1_iigs_doc_mixer_trigger(mixer,20u,volume,15u),"native remapped sound20 retains source period and record537");
+    reference_trigger(reference,20u,volume,15u);
+    REQUIRE(compare_doc_frames(mixer,reference,8193u),"rational-clock rebind preserves old-accumulator order at alternate host rate");
+    dm1_v1_iigs_doc_mixer_reset(mixer); reference_reset(reference,21477272u,3u,44100u);
+    REQUIRE(compare_doc_frames(mixer,reference,31u),"native reset clears voices, 64K residency and phase before silent rendering");
+    result=1;
+cleanup:
+    dm1_v1_iigs_doc_mixer_destroy(invalid); dm1_v1_iigs_doc_mixer_destroy(mixer);
+    if (reference) for (unsigned i=0u; i<34u; ++i) free(reference->sounds[i].bytes);
+    free(reference); free(raw); free(bank_copy); free(program_copy); return result;
+}
+
+static int check_native_transport(const uint8_t *bank, size_t bank_size, const uint8_t *program,
+    size_t program_size, const DM1_V1_IigsAudioMetadata *metadata) {
+    M11_AudioState state; DM1_V1_IigsDocSnapshot before,after;
+    const char *required=getenv("FIRESTAFF_IIGS_REQUIRE_AUDIO_BACKEND");
+    int require_backend=required && strcmp(required,"1")==0, result=0;
+    unsigned left=metadata->distance_volume[12][11], right=metadata->distance_volume[12][13];
+    memset(&state,0,sizeof(state));
+    REQUIRE(M11_Audio_InitDm1Iigs(&state,program,program_size,bank,bank_size) && state.initialized &&
+        state.iigsMixer && !state.sdlStream && !state.originalSnd3Available && !state.soundPackAvailable &&
+        !state.playedMarkerCount,"actual M11 native transport binds original DOC source without PC or procedural audio");
+    REQUIRE(!require_backend || (M11_Audio_IsAvailable(&state) && state.iigsStream),
+        "requested native SDL backend must actually open and become available");
+    REQUIRE(M11_Audio_PlayDm1IigsSound(&state,0u,(uint8_t)left,(uint8_t)right,15u) &&
+        M11_Audio_PlayDm1IigsSound(&state,8u,(uint8_t)right,(uint8_t)left,11u) &&
+        M11_Audio_GetDm1IigsSnapshot(&state,&before) && before.triggers==2u &&
+        before.left[0]==(left/15u)*15u && before.right[0]==(right/15u)*15u &&
+        before.left[1]==(right/15u)*11u && before.right[1]==(left/15u)*11u,
+        "actual native M11 triggers original sound zero/eight with separate source left/right channel volumes");
+    REQUIRE(M11_Audio_SetVolumes(&state,60,40,90,80),"native transport accepts normal master and SFX volume settings");
+#ifndef FIRESTAFF_NO_SDL_AUDIO
+    if (state.iigsStream) {
+        SDL_AudioStream *stream=(SDL_AudioStream *)state.iigsStream; SDL_AudioSpec input,output;
+        float gain=SDL_GetAudioStreamGain(stream);
+        REQUIRE(SDL_GetAudioStreamFormat(stream,&input,&output) && input.format==SDL_AUDIO_F32 &&
+            input.channels==2 && input.freq==48000,"actual SDL native transport input is 48000Hz interleaved stereo float");
+        REQUIRE(gain>0.146483f && gain<0.146486f,"native SDL stream applies master times SFX gain exactly once");
+        for (unsigned waits=0u; waits<10u; ++waits) {
+            SDL_Delay(20u);
+            REQUIRE(M11_Audio_GetDm1IigsSnapshot(&state,&after),"locked native transport snapshot during callback playback");
+            if (after.rendered_frames>before.rendered_frames) break;
+        }
+        REQUIRE(after.rendered_frames>before.rendered_frames && after.doc_scans>before.doc_scans,
+            "actual SDL callback advances native source mixer within bounded dummy-device wait");
+        REQUIRE(M11_Audio_SetHostPaused(&state,1) && SDL_AudioStreamDevicePaused(stream) &&
+            state.hostResumeIigsStream && M11_Audio_GetDm1IigsSnapshot(&state,&before),
+            "host pause owns native SDL device pause and captures locked playback state");
+        SDL_Delay(40u);
+        REQUIRE(M11_Audio_GetDm1IigsSnapshot(&state,&after) && after.rendered_frames==before.rendered_frames,
+            "paused native device does not advance authentic DOC playback");
+        REQUIRE(M11_Audio_SetHostPaused(&state,0) && !SDL_AudioStreamDevicePaused(stream) && !state.hostResumeIigsStream,
+            "host resume restores native SDL playback ownership");
+        for (unsigned waits=0u; waits<10u; ++waits) {
+            SDL_Delay(20u);
+            REQUIRE(M11_Audio_GetDm1IigsSnapshot(&state,&after),"locked native resume snapshot");
+            if (after.rendered_frames>before.rendered_frames) break;
+        }
+        REQUIRE(after.rendered_frames>before.rendered_frames,"resumed SDL callback continues native source playback");
+    }
+#else
+    REQUIRE(!require_backend,"native SDL backend was required but this test was built without SDL audio");
+#endif
+    REQUIRE(!state.playedMarkerCount && !state.originalSnd3LoadedCount && !state.soundPackLoadedCount,
+        "native transport never substitutes procedural markers or PC sound banks");
+    M11_Audio_Shutdown(&state); M11_Audio_Shutdown(&state);
+    REQUIRE(!state.initialized && !state.iigsStream && !state.iigsMixer,"repeated shutdown releases native SDL stream and DOC owner");
+    REQUIRE(M11_Audio_InitDm1Iigs(&state,program,program_size,bank,bank_size) &&
+        M11_Audio_GetDm1IigsSnapshot(&state,&after) && !after.triggers,
+        "actual native M11 transport can reinitialize authentic sources after shutdown");
+    result=1;
+cleanup:
+    M11_Audio_Shutdown(&state); return result;
+}
+
 static int check_audio(const uint8_t *bank, size_t bankSize, const uint8_t *program, size_t programSize, unsigned edition) {
     DM1_V1_IigsAudioMetadata metadata, bad;
     DM1_V1_IigsPcmReceipt receipt, rejected;
@@ -132,6 +399,8 @@ static int check_audio(const uint8_t *bank, size_t bankSize, const uint8_t *prog
     REQUIRE(!dm1_v1_iigs_audio_metadata_read(program,programSize-1u,&bad) &&
         memcmp(&bad,metadataZero,sizeof(bad))==0,"truncated original program cannot publish audio metadata");
     REQUIRE(check_volume(&metadata),"native distance, quantization and pending semantics");
+    REQUIRE(check_doc_mixer(bank,bankSize,program,programSize,&metadata),"authentic native DOC stereo playback and residency");
+    REQUIRE(check_native_transport(bank,bankSize,program,programSize,&metadata),"actual M11 native SDL transport lifecycle");
     result=1;
 cleanup:
     free(doc); free(raw); free(aggregate); return result;
@@ -163,5 +432,5 @@ cleanup:
 int main(int argc, char **argv) {
     if (argc!=3) { fprintf(stderr,"usage: %s <original-2.0.po> <original-2.1.po>\n",argv[0]); return 2; }
     if (!check_disk(argv[1],0u) || !check_disk(argv[2],1u)) return 1;
-    puts("PASS: original native sound data and channel rules; audible output and game startup unverified"); return 0;
+    puts("PASS: original native DOC stereo oracle and transport; physical hardware audio parity unverified"); return 0;
 }

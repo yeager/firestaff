@@ -405,8 +405,17 @@ static int check_first_descent(M11_GameViewState *view, uint8_t *frame) {
         for (unsigned turn=0u; view->world.party.direction!=direction && turn<4u; ++turn)
             (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
         for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
-        if (step==13u) REQUIRE((view->world.dungeon->tiles[0].squareData[5*19+9]&7u)==0u,
-            "ordinary party pressure sensor at six-nine opens original exit door before passage");
+        if (step==13u) {
+            DM1_V1_IigsDocSnapshot sound;
+            unsigned expected=(view->dm1IigsAudioMetadata.distance_volume[11][12]/15u)*15u;
+            REQUIRE((view->world.dungeon->tiles[0].squareData[5*19+9]&7u)==0u,
+                "ordinary party pressure sensor at six-nine opens original exit door before passage");
+            REQUIRE(view->world.party.mapX==6 && view->world.party.mapY==9 && view->world.party.direction==3 &&
+                M11_Audio_GetDm1IigsSnapshot(&view->audioState,&sound) && sound.latest_pair[2]>=0 &&
+                sound.left[sound.latest_pair[2]]==expected && sound.right[sound.latest_pair[2]]==expected &&
+                !view->audioState.playedMarkerCount,
+                "actual original exit-door rattle retains target five-nine and native front-one-square stereo attenuation");
+        }
         (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
         if (step+1u<sizeof(route)/sizeof(route[0]))
             REQUIRE(view->world.party.mapIndex==0 && view->world.party.mapX==route[step][0] &&
@@ -645,6 +654,21 @@ static int check_linflas_capacity(const char *root, int version) {
     REQUIRE(view,"bounded original LINFLAS startup state"); M11_GameView_Init(view);
     REQUIRE(M11_GameView_StartIigs(view,root,version) && view->dm1IigsActive && !view->world.party.championCount,
         "separate authentic native entry leaves room for original LINFLAS recruitment");
+    {
+        DM1_V1_IigsDocSnapshot before, after;
+        REQUIRE(M11_Audio_GetDm1IigsSnapshot(&view->audioState,&before) &&
+            !view->audioState.originalSnd3Available && !view->audioState.originalSongAvailable &&
+            !view->audioState.playedMarkerCount,"native startup owns DOC bank without PC audio or procedural playback");
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+        for (unsigned tick=0u;tick<8u;++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+        REQUIRE(view->lastDm1V1MovementPipelineResult.core.movementBlocked &&
+            view->world.party.mapX==1 && view->world.party.mapY==3 &&
+            M11_Audio_GetDm1IigsSnapshot(&view->audioState,&after) && after.triggers==before.triggers &&
+            !view->audioState.playedMarkerCount,
+            "actual original empty-party HoC wall collision stays silent without a fabricated metallic cue");
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_LEFT);
+    }
     for (unsigned step=0u; step<sizeof(route)/sizeof(route[0]); ++step) {
         int dx=(int)route[step][0]-view->world.party.mapX, dy=(int)route[step][1]-view->world.party.mapY;
         int direction=dx>0 ? 1 : dx<0 ? 3 : dy>0 ? 2 : 0;
@@ -750,6 +774,8 @@ static int check_original_food(const char *root, int version) {
         view->world.party.champions[leader].load==leader_load-4u && view->world.gameTick==world_tick,
         "native source mouth consumes original Apple for selected recipient with exact food, free record and separate leader weight");
     { static const int icons[]={206,205,206,205};
+      DM1_V1_IigsDocSnapshot audio_before, audio_after;
+      REQUIRE(M11_Audio_GetDm1IigsSnapshot(&view->audioState,&audio_before),"native food begins with source DOC ownership");
       unsigned completion=view->v1FoodCompletionCount, edges=0u;
       int x=view->world.party.mapX, y=view->world.party.mapY;
       REQUIRE(view->v1FoodCommandPending && view->v1FoodAwaitingPresentation &&
@@ -785,6 +811,9 @@ static int check_original_food(const char *root, int version) {
                   "each native mouth frame retains exactly eight source delay edges");
           }
       }
+      REQUIRE(M11_Audio_GetDm1IigsSnapshot(&view->audioState,&audio_after) &&
+          audio_after.triggers==audio_before.triggers+1u && audio_after.sound_index[audio_before.next_pair]==8 &&
+          !view->audioState.playedMarkerCount,"native food completion requests original swallow once after final source wait");
       REQUIRE(edges==32u && !view->v1FoodCommandPending && !view->v1FoodAwaitingPresentation &&
           view->v1FoodCompletionCount==completion+1u && view->world.gameTick==world_tick &&
           view->world.party.champions[1].food==(target_food+500>2048 ? 2048 : target_food+500) &&

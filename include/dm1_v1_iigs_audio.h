@@ -60,6 +60,10 @@ int dm1_v1_iigs_audio_volume(const DM1_V1_IigsAudioMetadata *metadata,
 int dm1_v1_iigs_audio_quantize_volume(DM1_V1_IigsSoundVolume requested,
     unsigned master_level, DM1_V1_IigsSoundVolume *out);
 
+/* Normalize the engine's PC34 semantic event IDs to this native bank.
+ * The separate PC entrance cue has no GS runtime counterpart. */
+int dm1_v1_iigs_audio_sound_index_from_pc34(int semantic_index);
+
 typedef struct DM1_V1_IigsPendingSounds {
     DM1_V1_IigsSoundVolume volumes[DM1_V1_IIGS_SOUND_COUNT];
 } DM1_V1_IigsPendingSounds;
@@ -72,6 +76,43 @@ int dm1_v1_iigs_audio_pending_merge(DM1_V1_IigsPendingSounds *pending,
     unsigned sound_index, DM1_V1_IigsSoundVolume volume);
 int dm1_v1_iigs_audio_pending_flush(DM1_V1_IigsPendingSounds *pending,
     DM1_V1_IigsPendingVisitor visitor, void *user_data);
+
+/* Source-specific DOC playback. No SDL/device or general ES5503 emulation.
+ * Caller serializes trigger/render/reset/snapshot/destroy (e.g. device lock).
+ * Create authenticates both complete original sources and owns decoded copies
+ * of all34 sounds plus native64K RAM; all allocations occur at create. */
+#define DM1_V1_IIGS_DOC_PAIR_COUNT 15U
+typedef struct DM1_V1_IigsDocMixer DM1_V1_IigsDocMixer;
+typedef struct DM1_V1_IigsDocSnapshot {
+    uint64_t rendered_frames, doc_scans, triggers, replacements, stops, evictions;
+    uint64_t clock_numerator, clock_denominator;
+    unsigned host_rate, next_pair, active_pairs;
+    int sound_index[15];
+    uint32_t accumulator[15];
+    uint8_t active[15], left[15], right[15];
+    int resident_page[34], latest_pair[34];
+    uint8_t resident_pages[34], page_owner[256];
+    uint64_t last_use[34];
+} DM1_V1_IigsDocSnapshot;
+DM1_V1_IigsDocMixer *dm1_v1_iigs_doc_mixer_create(
+    const uint8_t *program, size_t program_size,
+    const uint8_t *graphics, size_t graphics_size,
+    uint64_t clock_numerator, uint64_t clock_denominator, unsigned host_rate);
+void dm1_v1_iigs_doc_mixer_destroy(DM1_V1_IigsDocMixer *mixer);
+/* Reset playback, RAM residency, free-running phase and counters; retain bank. */
+void dm1_v1_iigs_doc_mixer_reset(DM1_V1_IigsDocMixer *mixer);
+int dm1_v1_iigs_doc_mixer_trigger(DM1_V1_IigsDocMixer *mixer,
+    unsigned sound_index, DM1_V1_IigsSoundVolume requested, unsigned master_level);
+/* t=0 scan precedes first output. Each host frame emits held DAC output then
+ * advances exact rational scan time through the next host-frame boundary.
+ * Triggers between blocks apply at that boundary, never reset global phase.
+ * Old accumulator is read before adding Period; native size=res gives >>9.
+ * Interleaved LR floats use fixed host headroom 1/(128*255*15), not a claim
+ * of analog DOC gain. No active-voice normalization, user gain or allocation. */
+int dm1_v1_iigs_doc_mixer_render_f32_stereo(DM1_V1_IigsDocMixer *mixer,
+    float *out, size_t frames);
+int dm1_v1_iigs_doc_mixer_snapshot(const DM1_V1_IigsDocMixer *mixer,
+    DM1_V1_IigsDocSnapshot *out);
 
 #ifdef __cplusplus
 }

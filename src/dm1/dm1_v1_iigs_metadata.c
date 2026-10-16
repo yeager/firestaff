@@ -221,6 +221,7 @@ int dm1_v1_iigs_metadata_read(const uint8_t *program, size_t size,
         !iigs_meta_frames_valid(&value.floor_frames[0][0][0],27U) ||
         !iigs_meta_frames_valid(&value.door_frames[0][0][0],12U) ||
         !iigs_meta_frames_valid(&value.door_button_frames[0][0],4U)) return 0;
+    if (!iigs_meta_bytes(program,size,45786U,value.creature_attack_sounds,11U)) return 0;
     *out=value;
     return 1;
 }

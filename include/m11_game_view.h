@@ -20,6 +20,7 @@
 #include "audio_sdl_m11.h"
 #include "font_m11.h"
 #include "dm1_v1_iigs_installation.h"
+#include "dm1_v1_iigs_audio.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_light_runtime.h"
 #include "dm1_v1_vblank_timing.h"
@@ -830,6 +831,8 @@ typedef struct {
     int dm1IigsActive;
     unsigned int dm1IigsDrawCount;
     DM1_V1_IigsInstallation dm1IigsInstallation;
+    DM1_V1_IigsAudioMetadata dm1IigsAudioMetadata;
+    DM1_V1_IigsPendingSounds dm1IigsPendingSounds;
     int dm1IigsCandidateSensorIndex;
     int dm1IigsCandidateMap, dm1IigsCandidateX, dm1IigsCandidateY;
     int dm1IigsCandidateDirection;
